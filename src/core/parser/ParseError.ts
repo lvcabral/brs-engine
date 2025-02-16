@@ -1,5 +1,5 @@
 import { Token, Lexeme } from "../lexer";
-import { BrsError, RuntimeErrorDetail } from "../Error";
+import { BrsError, RuntimeErrorDetail } from "../BrsError";
 import { numberToHex } from "../common";
 
 export class ParseError extends BrsError {

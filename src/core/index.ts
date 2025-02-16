@@ -18,7 +18,7 @@ import {
     parseManifest,
     isAppPayload,
 } from "./common";
-import { BrsError, RuntimeError, RuntimeErrorDetail } from "./Error";
+import { BrsError, RuntimeError, RuntimeErrorDetail } from "./BrsError";
 import { Lexeme, Lexer, Token } from "./lexer";
 import { Parser, Stmt } from "./parser";
 import { ParseResults } from "./parser/Parser";
@@ -37,6 +37,7 @@ import bslDefender from "./libraries/common/v30/bslDefender.brs";
 import Roku_Ads from "./libraries/roku_ads/Roku_Ads.brs";
 import RokuBrowser from "./libraries/roku_browser/RokuBrowser.brs";
 import packageInfo from "../../package.json";
+import { BrsDevice } from "./BrsDevice";
 
 export * as lexer from "./lexer";
 export * as parser from "./parser";
@@ -47,7 +48,6 @@ export { PP as preprocessor };
 export { Preprocessor } from "./preprocessor/Preprocessor";
 export { Interpreter } from "./interpreter";
 export { Environment, Scope } from "./interpreter/Environment";
-export const shared = new Map<string, Int32Array>();
 export const bscs = new Map<string, number>();
 export const stats = new Map<Lexeme, number>();
 export const terminateReasons = ["debug-exit", "end-statement"];
@@ -64,7 +64,7 @@ if (typeof onmessage !== "undefined") {
             postMessage(`version,${packageInfo.version}`);
         } else if (event.data instanceof ArrayBuffer || event.data instanceof SharedArrayBuffer) {
             // Setup Control Shared Array
-            shared.set("buffer", new Int32Array(event.data));
+            BrsDevice.setSharedArray(new Int32Array(event.data));
         } else {
             postMessage(`warning,[worker] Invalid message received: ${event.data}`);
         }
@@ -88,7 +88,7 @@ const arrayLength = dataBufferIndex + dataBufferSize;
 const sharedBuffer = new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT * arrayLength);
 const sharedArray = new Int32Array(sharedBuffer);
 sharedArray.fill(-1);
-shared.set("buffer", sharedArray);
+BrsDevice.setSharedArray(sharedArray);
 
 globalThis.postMessage = (message: any) => {
     if (typeof message === "string") {
@@ -111,7 +111,9 @@ globalThis.postMessage = (message: any) => {
 export function registerCallback(messageCallback: any, sharedBuffer?: SharedArrayBuffer) {
     if (typeof onmessage === "undefined") {
         globalThis.postMessage = messageCallback;
-        if (sharedBuffer) shared.set("buffer", new Int32Array(sharedBuffer));
+        if (sharedBuffer) {
+            BrsDevice.setSharedArray(new Int32Array(sharedBuffer));
+        }
     }
 }
 
@@ -133,7 +135,7 @@ export async function getReplInterpreter(payload: Partial<AppPayload>) {
     replInterpreter.onError(logError);
     if (payload.device) {
         if (payload.device.registry?.size) {
-            replInterpreter.setRegistry(payload.device.registry);
+            BrsDevice.setRegistry(payload.device.registry);
         }
         setupDeviceData(replInterpreter, payload.device);
         setupDeviceFonts(replInterpreter, payload.device);
@@ -376,7 +378,7 @@ interface SourceResult {
 function setupPayload(interpreter: Interpreter, payload: AppPayload): SourceResult {
     interpreter.setManifest(payload.manifest);
     if (payload.device.registry?.size) {
-        interpreter.setRegistry(payload.device.registry);
+        BrsDevice.setRegistry(payload.device.registry);
     }
     setupDeviceData(interpreter, payload.device);
     setupDeviceFonts(interpreter, payload.device);
@@ -422,9 +424,9 @@ function setupDeviceData(interpreter: Interpreter, device: DeviceInfo) {
         if (key !== "registry" && key !== "fonts") {
             if (key === "developerId") {
                 // Prevent the developerId from having dots to avoid issues with the registry persistence
-                interpreter.deviceInfo.set(key, device[key].replace(".", ":"));
+                BrsDevice.deviceInfo.set(key, device[key].replace(".", ":"));
             }
-            interpreter.deviceInfo.set(key, device[key]);
+            BrsDevice.deviceInfo.set(key, device[key]);
         }
     });
     // Internal Libraries
@@ -538,7 +540,7 @@ function setupTranslations(interpreter: Interpreter) {
     let xmlText = "";
     let trType = "";
     let trTarget = "";
-    const locale = interpreter.deviceInfo.get("locale") || "en_US";
+    const locale = BrsDevice.deviceInfo.get("locale") || "en_US";
     try {
         const fsys = interpreter.fileSystem;
         if (fsys?.existsSync(`pkg:/locale/${locale}/translations.ts`)) {

@@ -1,4 +1,4 @@
-import { RuntimeError, RuntimeErrorDetail } from "../Error";
+import { RuntimeError, RuntimeErrorDetail } from "../BrsError";
 import {
     Callable,
     ValueKind,

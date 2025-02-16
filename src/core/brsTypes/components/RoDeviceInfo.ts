@@ -11,6 +11,7 @@ import { IfSetMessagePort, IfGetMessagePort } from "../interfaces/IfMessagePort"
 import { getExternalIp } from "../../interpreter/Network";
 import { v4 as uuidv4 } from "uuid";
 import * as crypto from "crypto";
+import { BrsDevice } from "../../BrsDevice";
 
 export class RoDeviceInfo extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -42,13 +43,13 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     private captionsMode: string;
     private port?: RoMessagePort;
 
-    constructor(interpreter: Interpreter) {
+    constructor() {
         super("roDeviceInfo");
-        this.deviceModel = interpreter.deviceInfo.get("deviceModel");
-        const device = interpreter.deviceInfo?.get("models")?.get(this.deviceModel);
+        this.deviceModel = BrsDevice.deviceInfo.get("deviceModel");
+        const device = BrsDevice.deviceInfo?.get("models")?.get(this.deviceModel);
         this.modelType = device ? device[1] : "STB";
-        this.firmware = interpreter.deviceInfo.get("firmwareVersion");
-        this.displayMode = interpreter.deviceInfo.get("displayMode") ?? "720p";
+        this.firmware = BrsDevice.deviceInfo.get("firmwareVersion");
+        this.displayMode = BrsDevice.deviceInfo.get("displayMode") ?? "720p";
         this.displayAspectRatio = "16x9";
         this.displayResolution = { h: 720, w: 1280 };
         this.displayModeName = "HD";
@@ -60,7 +61,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             this.displayResolution = { h: 1080, w: 1920 };
             this.displayModeName = "FHD";
         }
-        this.captionsMode = interpreter.deviceInfo.get("captionsMode") ?? "Off";
+        this.captionsMode = BrsDevice.deviceInfo.get("captionsMode") ?? "Off";
         const setPortIface = new IfSetMessagePort(this, this.getNewEvents.bind(this));
         const getPortIface = new IfGetMessagePort(this);
         this.registerMethods({
@@ -172,7 +173,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
         impl: (interpreter: Interpreter) => {
             const model = this.deviceModel;
-            const device = interpreter.deviceInfo?.get("models")?.get(model);
+            const device = BrsDevice.deviceInfo?.get("models")?.get(model);
             return new BrsString(
                 device ? device[0].replace(/ *\([^)]*\) */g, "") : `Roku (${model})`
             );
@@ -202,7 +203,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
                 ModelNumber: this.deviceModel,
                 VendorName: "Roku",
                 VendorUSBName: "Roku",
-                SerialNumber: interpreter.deviceInfo?.get("serialNumber"),
+                SerialNumber: BrsDevice.deviceInfo?.get("serialNumber"),
             });
         },
     });
@@ -214,7 +215,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             returns: ValueKind.String,
         },
         impl: (interpreter: Interpreter) => {
-            return new BrsString(interpreter.deviceInfo.get("friendlyName"));
+            return new BrsString(BrsDevice.deviceInfo.get("friendlyName"));
         },
     });
 
@@ -255,7 +256,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             returns: ValueKind.Int32,
         },
         impl: (interpreter: Interpreter) => {
-            return new Int32(interpreter.deviceInfo.get("audioVolume"));
+            return new Int32(BrsDevice.deviceInfo.get("audioVolume"));
         },
     });
 
@@ -266,7 +267,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             returns: ValueKind.String,
         },
         impl: (interpreter: Interpreter) => {
-            return new BrsString(interpreter.deviceInfo.get("clientId"));
+            return new BrsString(BrsDevice.deviceInfo.get("clientId"));
         },
     });
 
@@ -277,7 +278,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             returns: ValueKind.String,
         },
         impl: (interpreter: Interpreter) => {
-            return new BrsString(interpreter.deviceInfo.get("clientId"));
+            return new BrsString(BrsDevice.deviceInfo.get("clientId"));
         },
     });
 
@@ -288,7 +289,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             returns: ValueKind.String,
         },
         impl: (interpreter: Interpreter) => {
-            return new BrsString(interpreter.deviceInfo.get("RIDA"));
+            return new BrsString(BrsDevice.deviceInfo.get("RIDA"));
         },
     });
 
@@ -321,7 +322,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             returns: ValueKind.String,
         },
         impl: (interpreter: Interpreter) => {
-            return new BrsString(interpreter.deviceInfo.get("countryCode"));
+            return new BrsString(BrsDevice.deviceInfo.get("countryCode"));
         },
     });
 
@@ -332,7 +333,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             returns: ValueKind.String,
         },
         impl: (interpreter: Interpreter) => {
-            return new BrsString(interpreter.deviceInfo.get("countryCode"));
+            return new BrsString(BrsDevice.deviceInfo.get("countryCode"));
         },
     });
 
@@ -343,7 +344,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             returns: ValueKind.String,
         },
         impl: (interpreter: Interpreter) => {
-            return new BrsString(interpreter.deviceInfo.get("captionLanguage"));
+            return new BrsString(BrsDevice.deviceInfo.get("captionLanguage"));
         },
     });
 
@@ -354,7 +355,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             returns: ValueKind.String,
         },
         impl: (interpreter: Interpreter) => {
-            return new BrsString(interpreter.deviceInfo.get("timeZone"));
+            return new BrsString(BrsDevice.deviceInfo.get("timeZone"));
         },
     });
 
@@ -365,7 +366,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             returns: ValueKind.String,
         },
         impl: (interpreter: Interpreter) => {
-            return new BrsString(interpreter.deviceInfo.get("locale"));
+            return new BrsString(BrsDevice.deviceInfo.get("locale"));
         },
     });
 
@@ -376,7 +377,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             returns: ValueKind.String,
         },
         impl: (interpreter: Interpreter) => {
-            return new BrsString(interpreter.deviceInfo.get("clockFormat"));
+            return new BrsString(BrsDevice.deviceInfo.get("clockFormat"));
         },
     });
 
@@ -445,7 +446,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.Object,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_: Interpreter) => {
             const props: FlexObject = {
                 ALLM: false, // Auto Low Latency Mode
                 DolbyVision: false,
@@ -461,7 +462,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             };
             if (this.modelType === "TV") {
                 props.internal = true;
-                props.visible = interpreter.displayEnabled;
+                props.visible = BrsDevice.displayEnabled;
             }
             return toAssociativeArray(props);
         },
@@ -530,9 +531,9 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             returns: ValueKind.String,
         },
         impl: (interpreter: Interpreter) => {
-            const device = interpreter.deviceInfo
+            const device = BrsDevice.deviceInfo
                 ?.get("models")
-                ?.get(interpreter.deviceInfo.get("deviceModel"));
+                ?.get(BrsDevice.deviceInfo.get("deviceModel"));
             return new BrsString(device ? device[2] : "opengl");
         },
     });
@@ -545,11 +546,11 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
         impl: (interpreter: Interpreter, feature: BrsString) => {
             const features = ["gaming_hardware", "usb_hardware", "simulation_engine"];
-            const custom = interpreter.deviceInfo.get("customFeatures");
+            const custom = BrsDevice.deviceInfo.get("customFeatures");
             if (custom instanceof Array && custom.length > 0) {
                 features.push(...custom);
             }
-            const platform = interpreter.deviceInfo.get("platform");
+            const platform = BrsDevice.deviceInfo.get("platform");
             if (isPlatform(platform)) {
                 for (const [key, value] of Object.entries(platform)) {
                     if (value) {
@@ -644,7 +645,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         impl: (interpreter: Interpreter, options: RoAssociativeArray) => {
             if (options instanceof RoAssociativeArray) {
                 const decode: FlexObject = {};
-                const codecs = interpreter.deviceInfo.get("audioCodecs") as string[];
+                const codecs = BrsDevice.deviceInfo.get("audioCodecs") as string[];
                 const codec = options.get(new BrsString("codec"));
                 if (codec instanceof BrsString && codecs?.includes(codec.value.toLowerCase())) {
                     decode.result = true;
@@ -692,7 +693,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
         impl: (interpreter: Interpreter, options: RoAssociativeArray) => {
             if (options instanceof RoAssociativeArray) {
-                const formats = interpreter.deviceInfo.get("videoFormats") as Map<string, string[]>;
+                const formats = BrsDevice.deviceInfo.get("videoFormats") as Map<string, string[]>;
                 const codecs = formats?.get("codecs") ?? [];
                 const containers = formats?.get("containers") ?? [];
                 const codec = options.get(new BrsString("codec"));
@@ -778,8 +779,8 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.Int32,
         },
-        impl: (interpreter: Interpreter) => {
-            return new Int32((Date.now() - interpreter.lastKeyTime) / 1000);
+        impl: (_: Interpreter) => {
+            return new Int32((Date.now() - BrsDevice.lastKeyTime) / 1000);
         },
     });
 
@@ -800,8 +801,8 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.String,
         },
-        impl: (interpreter: Interpreter) => {
-            const connInfo: ConnectionInfo = interpreter.deviceInfo.get("connectionInfo");
+        impl: (_: Interpreter) => {
+            const connInfo: ConnectionInfo = BrsDevice.deviceInfo.get("connectionInfo");
             return new BrsString(connInfo.type);
         },
     });
@@ -812,8 +813,8 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.String,
         },
-        impl: (interpreter: Interpreter) => {
-            const connInfo: ConnectionInfo = interpreter.deviceInfo.get("connectionInfo");
+        impl: (_: Interpreter) => {
+            const connInfo: ConnectionInfo = BrsDevice.deviceInfo.get("connectionInfo");
             const result: FlexObject = {
                 active: 1,
                 default: 1,
@@ -827,7 +828,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
                 result.protocol = "IEEE 802.11g";
                 result.signal = -140;
             }
-            const ips = interpreter.deviceInfo.get("localIps") as string[];
+            const ips = BrsDevice.deviceInfo.get("localIps") as string[];
             if (ips.length > 0) {
                 ips.some((iface: string) => {
                     if (iface.split(",")[0] === connInfo.name) {
@@ -919,7 +920,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             returns: ValueKind.Object,
         },
         impl: (interpreter: Interpreter) => {
-            const ips = interpreter.deviceInfo.get("localIps") as string[];
+            const ips = BrsDevice.deviceInfo.get("localIps") as string[];
             const result: FlexObject = {};
             ips.forEach(function (iface: string) {
                 result[iface.split(",")[0]] = iface.split(",")[1];
