@@ -11,7 +11,7 @@ import {
     StdlibArgument,
     ValueKind,
 } from "..";
-import { RuntimeError, RuntimeErrorDetail } from "../../Error";
+import { RuntimeError, RuntimeErrorDetail } from "../../BrsError";
 import { Interpreter } from "../../interpreter";
 import { vsprintf } from "sprintf-js";
 

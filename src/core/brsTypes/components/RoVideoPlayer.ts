@@ -16,11 +16,11 @@ import { Int32 } from "../Int32";
 import { BufferType, DataType, MediaEvent } from "../../common";
 import { BrsHttpAgent, IfHttpAgent } from "../interfaces/IfHttpAgent";
 import { IfSetMessagePort, IfGetMessagePort } from "../interfaces/IfMessagePort";
+import { BrsDevice } from "../../BrsDevice";
 
 export class RoVideoPlayer extends BrsComponent implements BrsValue, BrsHttpAgent {
     readonly kind = ValueKind.Object;
     readonly customHeaders: Map<string, string>;
-    private readonly interpreter: Interpreter;
     private port?: RoMessagePort;
     private contentList: RoAssociativeArray[];
     private notificationPeriod: number;
@@ -31,9 +31,8 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
     private audioTracks: any[];
     cookiesEnabled: boolean;
 
-    constructor(interpreter: Interpreter) {
+    constructor() {
         super("roVideoPlayer");
-        this.interpreter = interpreter;
         this.contentList = new Array();
         this.notificationPeriod = 0;
         this.videoFlags = -1;
@@ -130,32 +129,32 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
 
     getNewEvents() {
         const events: BrsEvent[] = [];
-        const selected = Atomics.load(this.interpreter.sharedArray, DataType.VSE);
+        const selected = Atomics.load(BrsDevice.sharedArray, DataType.VSE);
         if (selected >= 0) {
             events.push(new RoVideoPlayerEvent(MediaEvent.SELECTED, selected));
-            Atomics.store(this.interpreter.sharedArray, DataType.VSE, -1);
+            Atomics.store(BrsDevice.sharedArray, DataType.VSE, -1);
         }
-        const bufferFlag = Atomics.load(this.interpreter.sharedArray, DataType.BUF);
+        const bufferFlag = Atomics.load(BrsDevice.sharedArray, DataType.BUF);
         if (bufferFlag === BufferType.AUDIO_TRACKS) {
-            const strTracks = this.interpreter.readDataBuffer();
+            const strTracks = BrsDevice.readDataBuffer();
             try {
                 this.audioTracks = JSON.parse(strTracks);
             } catch (e) {
                 this.audioTracks = [];
             }
         }
-        const flags = Atomics.load(this.interpreter.sharedArray, DataType.VDO);
-        const index = Atomics.load(this.interpreter.sharedArray, DataType.VDX);
+        const flags = Atomics.load(BrsDevice.sharedArray, DataType.VDO);
+        const index = Atomics.load(BrsDevice.sharedArray, DataType.VDX);
         if (flags !== this.videoFlags || index !== this.videoIndex) {
             this.videoFlags = flags;
             this.videoIndex = index;
             if (this.videoFlags >= 0) {
                 events.push(new RoVideoPlayerEvent(this.videoFlags, this.videoIndex));
-                Atomics.store(this.interpreter.sharedArray, DataType.VDO, -1);
-                Atomics.store(this.interpreter.sharedArray, DataType.VDX, -1);
+                Atomics.store(BrsDevice.sharedArray, DataType.VDO, -1);
+                Atomics.store(BrsDevice.sharedArray, DataType.VDX, -1);
             }
         }
-        const progress = Atomics.load(this.interpreter.sharedArray, DataType.VLP);
+        const progress = Atomics.load(BrsDevice.sharedArray, DataType.VLP);
         if (this.videoProgress !== progress && progress >= 0 && progress <= 1000) {
             this.videoProgress = progress;
             events.push(new RoVideoPlayerEvent(MediaEvent.LOADING, progress));
@@ -164,7 +163,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
             }
         }
         if (this.notificationPeriod >= 1) {
-            const position = Atomics.load(this.interpreter.sharedArray, DataType.VPS);
+            const position = Atomics.load(BrsDevice.sharedArray, DataType.VPS);
             if (Math.abs(this.videoPosition - position) >= this.notificationPeriod) {
                 this.videoPosition = position;
                 events.push(new RoVideoPlayerEvent(MediaEvent.POSITION, position));
@@ -414,7 +413,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
             returns: ValueKind.Int32,
         },
         impl: (interpreter: Interpreter) => {
-            const duration = Atomics.load(interpreter.sharedArray, DataType.VDR);
+            const duration = Atomics.load(BrsDevice.sharedArray, DataType.VDR);
             return duration > 0 ? new Int32(duration) : new Int32(0);
         },
     });

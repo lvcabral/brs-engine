@@ -11,6 +11,7 @@ import {
     isBoxable,
     BrsType,
 } from "../brsTypes";
+import { BrsDevice } from "../BrsDevice";
 import { Interpreter } from "../interpreter";
 
 /** Returns an object version of an intrinsic type, or pass through an object if given one. */
@@ -33,8 +34,8 @@ export const UpTime = new Callable("UpTime", {
         args: [new StdlibArgument("dummy", ValueKind.Int32)],
         returns: ValueKind.Float,
     },
-    impl: (interpreter: Interpreter) => {
-        const startTime = interpreter.deviceInfo.get("startTime");
+    impl: (_: Interpreter) => {
+        const startTime = BrsDevice.deviceInfo.get("startTime");
         return new Float(Math.round((Date.now() - startTime) / 1000));
     },
 });

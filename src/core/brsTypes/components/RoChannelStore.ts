@@ -9,6 +9,7 @@ import { RoAssociativeArray } from "./RoAssociativeArray";
 import { AppData } from "../../common";
 import { parseString, processors } from "xml2js";
 import { IfSetMessagePort, IfGetMessagePort } from "../interfaces/IfMessagePort";
+import { BrsDevice } from "../../BrsDevice";
 
 export class RoChannelStore extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -465,11 +466,11 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
                 json = `{channel_data="${this.credData}"}`;
                 status = 0;
             }
-            const app = interpreter.deviceInfo.get("appList")?.find((app: AppData) => app.running);
+            const app = BrsDevice.deviceInfo.get("appList")?.find((app: AppData) => app.running);
             const channelCred = {
                 channelId: app?.id ?? "dev",
                 json: json,
-                publisherDeviceId: interpreter.deviceInfo.get("clientId") ?? "",
+                publisherDeviceId: BrsDevice.deviceInfo.get("clientId") ?? "",
                 status: status,
             };
             return toAssociativeArray(channelCred);

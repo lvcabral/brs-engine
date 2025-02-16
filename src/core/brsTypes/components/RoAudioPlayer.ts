@@ -14,19 +14,18 @@ import { Int32 } from "../Int32";
 import { DataType } from "../../common";
 import { BrsHttpAgent, IfHttpAgent } from "../interfaces/IfHttpAgent";
 import { IfSetMessagePort, IfGetMessagePort } from "../interfaces/IfMessagePort";
+import { BrsDevice } from "../../BrsDevice";
 
 export class RoAudioPlayer extends BrsComponent implements BrsValue, BrsHttpAgent {
     readonly kind = ValueKind.Object;
     readonly customHeaders: Map<string, string>;
-    private readonly interpreter: Interpreter;
     private port?: RoMessagePort;
     private contentList: RoAssociativeArray[];
     private audioFlags: number;
     cookiesEnabled: boolean;
 
-    constructor(interpreter: Interpreter) {
+    constructor() {
         super("roAudioPlayer");
-        this.interpreter = interpreter;
         this.contentList = new Array();
         this.audioFlags = -1;
         this.cookiesEnabled = false;
@@ -86,14 +85,14 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
 
     private getNewEvents() {
         const events: BrsEvent[] = [];
-        const flags = Atomics.load(this.interpreter.sharedArray, DataType.SND);
+        const flags = Atomics.load(BrsDevice.sharedArray, DataType.SND);
         if (flags !== this.audioFlags) {
             this.audioFlags = flags;
             if (this.audioFlags >= 0) {
                 events.push(
                     new RoAudioPlayerEvent(
                         this.audioFlags,
-                        Atomics.load(this.interpreter.sharedArray, DataType.IDX)
+                        Atomics.load(BrsDevice.sharedArray, DataType.IDX)
                     )
                 );
             }

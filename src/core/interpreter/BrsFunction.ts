@@ -2,7 +2,7 @@ import { Callable, BrsType, BrsInvalid } from "../brsTypes";
 import * as Expr from "../parser/Expression";
 import { Interpreter } from ".";
 import { Stmt } from "../parser";
-import { RuntimeError, RuntimeErrorDetail } from "../Error";
+import { RuntimeError, RuntimeErrorDetail } from "../BrsError";
 
 /**
  * Converts a Function expression to a BrightScript callable representation so

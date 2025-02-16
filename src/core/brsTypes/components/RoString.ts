@@ -8,7 +8,7 @@ import { BrsType, isBrsNumber, isStringComp } from "..";
 import { Unboxable } from "../Boxing";
 import { Int32 } from "../Int32";
 import { Float } from "../Float";
-import { RuntimeError, RuntimeErrorDetail } from "../../Error";
+import { RuntimeError, RuntimeErrorDetail } from "../../BrsError";
 import { sprintf } from "sprintf-js";
 import { IfToStr } from "../interfaces/IfToStr";
 

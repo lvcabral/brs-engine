@@ -10,6 +10,7 @@ import {
     StdlibArgument,
     ValueKind,
 } from "..";
+import { BrsDevice } from "../../BrsDevice";
 import { Interpreter } from "../../interpreter";
 
 /**
@@ -40,7 +41,7 @@ export class IfHttpAgent {
             if (name.value.toLowerCase() === "x-roku-reserved-dev-id") {
                 this.component.customHeaders.set(
                     name.value,
-                    interpreter.deviceInfo.get("developerId")
+                    BrsDevice.deviceInfo.get("developerId")
                 );
             } else {
                 this.component.customHeaders.set(name.value, value.value);
@@ -59,10 +60,7 @@ export class IfHttpAgent {
             this.component.customHeaders.clear();
             headers.elements.forEach((value: BrsType, key: string) => {
                 if (key.toLowerCase() === "x-roku-reserved-dev-id") {
-                    this.component.customHeaders.set(
-                        key,
-                        interpreter.deviceInfo.get("developerId")
-                    );
+                    this.component.customHeaders.set(key, BrsDevice.deviceInfo.get("developerId"));
                 } else {
                     this.component.customHeaders.set(key, (value as BrsString).value);
                 }

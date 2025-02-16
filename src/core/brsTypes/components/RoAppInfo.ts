@@ -3,6 +3,7 @@ import { BrsComponent } from "./BrsComponent";
 import { BrsType } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
+import { BrsDevice } from "../../BrsDevice";
 
 export class RoAppInfo extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -60,7 +61,7 @@ export class RoAppInfo extends BrsComponent implements BrsValue {
             returns: ValueKind.String,
         },
         impl: (interpreter: Interpreter) => {
-            return new BrsString(interpreter.deviceInfo.get("developerId"));
+            return new BrsString(BrsDevice.deviceInfo.get("developerId"));
         },
     });
 

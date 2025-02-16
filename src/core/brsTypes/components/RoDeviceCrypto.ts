@@ -12,6 +12,7 @@ import {
     BrsInvalid,
 } from "..";
 import { Interpreter } from "../../interpreter";
+import { BrsDevice } from "../../BrsDevice";
 
 export class RoDeviceCrypto extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -19,7 +20,7 @@ export class RoDeviceCrypto extends BrsComponent implements BrsValue {
     private readonly algorithm = "aes-256-ctr";
     private readonly keys: Map<string, Buffer>;
 
-    constructor(interpreter: Interpreter) {
+    constructor() {
         super("roDeviceCrypto");
 
         /**
@@ -31,11 +32,11 @@ export class RoDeviceCrypto extends BrsComponent implements BrsValue {
          *  the real device.
          */
         this.keys = new Map();
-        let deviceId = interpreter.deviceInfo.get("clientId").replaceAll("-", "");
+        let deviceId = BrsDevice.deviceInfo.get("clientId").replaceAll("-", "");
         this.keys.set("device", this.format256BitKey(deviceId));
-        let devId = interpreter.deviceInfo.get("developerId");
+        let devId = BrsDevice.deviceInfo.get("developerId");
         this.keys.set("channel", this.format256BitKey(devId));
-        let model = interpreter.deviceInfo.get("deviceModel");
+        let model = BrsDevice.deviceInfo.get("deviceModel");
         this.keys.set("model", this.format256BitKey(`${model}${devId}`));
 
         this.registerMethods({ ifDeviceCrypto: [this.encrypt, this.decrypt] });

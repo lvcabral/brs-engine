@@ -9,7 +9,7 @@ import {
     BrsType,
     toAssociativeArray,
 } from "../brsTypes";
-import { RuntimeError, RuntimeErrorDetail } from "../Error";
+import { RuntimeError, RuntimeErrorDetail } from "../BrsError";
 import { Interpreter } from "../interpreter";
 
 /** Request the system to perform a soft reboot. */

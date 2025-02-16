@@ -5,6 +5,7 @@ import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 import { DebugCommand } from "../../common";
+import { BrsDevice } from "../../BrsDevice";
 
 export class RoMessagePort extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -62,8 +63,9 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
             if (msg !== BrsInvalid.Instance) {
                 return msg;
             }
-            const cmd = interpreter.checkBreakCommand();
+            const cmd = BrsDevice.checkBreakCommand(interpreter.debugMode);
             if (cmd === DebugCommand.BREAK || cmd === DebugCommand.EXIT) {
+                interpreter.debugMode = cmd === DebugCommand.BREAK;
                 return BrsInvalid.Instance;
             }
         }

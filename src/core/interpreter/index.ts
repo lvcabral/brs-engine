@@ -42,29 +42,25 @@ import { tryCoerce } from "../brsTypes/Coercion";
 import { Lexeme, GlobalFunctions } from "../lexer";
 import { isToken, Location } from "../lexer/Token";
 import { Expr, Stmt } from "../parser";
-import { BrsError, RuntimeError, RuntimeErrorDetail, findErrorDetail, ErrorDetail } from "../Error";
+import {
+    BrsError,
+    RuntimeError,
+    RuntimeErrorDetail,
+    findErrorDetail,
+    ErrorDetail,
+} from "../BrsError";
 import { TypeMismatch } from "./TypeMismatch";
 import { generateArgumentMismatchError } from "./ArgumentMismatch";
 import { OutputProxy } from "./OutputProxy";
 import * as StdLib from "../stdlib";
 import Long from "long";
-
 import { Scope, Environment, NotFound } from "./Environment";
 import { toCallable } from "./BrsFunction";
 import { BlockEnd, GotoLabel } from "../parser/Statement";
 import { FileSystem } from "./FileSystem";
 import { runDebugger } from "./MicroDebugger";
-import {
-    DataType,
-    DebugCommand,
-    RemoteType,
-    dataBufferIndex,
-    defaultDeviceInfo,
-    keyArraySpots,
-    keyBufferSize,
-    numberToHex,
-    parseTextFile,
-} from "../common";
+import { DataType, DebugCommand, defaultDeviceInfo, numberToHex, parseTextFile } from "../common";
+import { BrsDevice } from "../BrsDevice";
 /// #if !BROWSER
 import * as v8 from "v8";
 /// #endif
@@ -126,10 +122,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     readonly fileSystem: FileSystem;
     readonly options: ExecutionOptions = defaultExecutionOptions;
     readonly manifest: Map<string, any> = new Map<string, any>();
-    readonly deviceInfo: Map<string, any> = new Map<string, any>();
-    readonly registry: Map<string, string> = new Map<string, string>();
     readonly translations: Map<string, string> = new Map<string, string>();
-    readonly sharedArray = core.shared.get("buffer") || new Int32Array([]);
     readonly isDevMode = process.env.NODE_ENV === "development";
 
     readonly stdout: OutputProxy;
@@ -169,10 +162,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         return this._creationTime;
     }
 
-    public displayEnabled: boolean = true;
-    public lastRemote: number = 0;
-    public lastKeyTime: number = Date.now();
-    public currKeyTime: number = Date.now();
     public debugMode: boolean = false;
 
     /**
@@ -194,16 +183,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             if (key.toLowerCase() === "multi_key_events") {
                 this._singleKeyEvents = value.trim() !== "1";
             }
-        });
-    }
-
-    /**
-     * Updates the interpreter registry with the provided data
-     * @param registry Map with registry content.
-     */
-    public setRegistry(registry: Map<string, string>) {
-        registry.forEach((value: string, key: string) => {
-            this.registry.set(key, value);
         });
     }
 
@@ -241,7 +220,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         this.fileSystem = new FileSystem(this.options.root, this.options.ext);
         for (const [key, value] of Object.entries(defaultDeviceInfo)) {
             if (!["registry", "fonts"].includes(key)) {
-                this.deviceInfo.set(key, value);
+                BrsDevice.deviceInfo.set(key, value);
             }
         }
         const global = new Set<string>();
@@ -1973,8 +1952,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         if (this.environment.gotoLabel !== "") {
             return this.searchLabel(statement);
         }
-        const cmd = this.checkBreakCommand();
+        const cmd = BrsDevice.checkBreakCommand(this.debugMode);
         if (cmd === DebugCommand.BREAK) {
+            this.debugMode = true;
             if (!(statement instanceof Stmt.Block)) {
                 if (!runDebugger(this, statement.location, this.location)) {
                     this.options.stopOnCrash = false;
@@ -2057,8 +2037,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         /// #if BROWSER
         // Only Chromium based browsers support process.memory API, web workers do not have it yet,
         // This information comes from the main thread and does not include the worker thread memory.
-        const limit = Atomics.load(this.sharedArray, DataType.MHSL);
-        const used = Atomics.load(this.sharedArray, DataType.MUHS);
+        const limit = Atomics.load(BrsDevice.sharedArray, DataType.MHSL);
+        const used = Atomics.load(BrsDevice.sharedArray, DataType.MUHS);
         if (limit > 0 && used > 0) {
             heapSizeLimit = limit;
             usedHeapSize = used;
@@ -2200,66 +2180,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         let minorVersion = parseInt(this.manifest.get("minor_version")) || 0;
         let buildVersion = parseInt(this.manifest.get("build_version")) || 0;
         return `${majorVersion}.${minorVersion}.${buildVersion}`;
-    }
-
-    /**
-     * Method to update the control keys buffer, used by roScreen and roSGScreen
-     */
-    updateKeysBuffer(keysBuffer: KeyEvent[]) {
-        for (let i = 0; i < keyBufferSize; i++) {
-            const idx = i * keyArraySpots;
-            const key = Atomics.load(this.sharedArray, DataType.KEY + idx);
-            if (key === -1) {
-                return;
-            } else if (keysBuffer.length === 0 || key !== keysBuffer.at(-1)?.key) {
-                const remoteId = Atomics.load(this.sharedArray, DataType.RID + idx);
-                const remoteType = Math.trunc(remoteId / 10) * 10;
-                const remoteStr = RemoteType[remoteType] ?? RemoteType[RemoteType.SIM];
-                const remoteIdx = remoteId - remoteType;
-                const mod = Atomics.load(this.sharedArray, DataType.MOD + idx);
-                Atomics.store(this.sharedArray, DataType.KEY + idx, -1);
-                keysBuffer.push({ remote: `${remoteStr}:${remoteIdx}`, key: key, mod: mod });
-                this.lastRemote = remoteIdx;
-            }
-        }
-    }
-
-    /**
-     * Method to check if the Break Command is set in the sharedArray
-     * @returns the last debug command
-     */
-    checkBreakCommand(): number {
-        let cmd = this.debugMode ? DebugCommand.BREAK : -1;
-        if (!this.debugMode) {
-            cmd = Atomics.load(this.sharedArray, DataType.DBG);
-            if (cmd === DebugCommand.BREAK) {
-                Atomics.store(this.sharedArray, DataType.DBG, -1);
-                this.debugMode = true;
-            } else if (cmd === DebugCommand.PAUSE) {
-                postMessage("debug,pause");
-                Atomics.wait(this.sharedArray, DataType.DBG, DebugCommand.PAUSE);
-                Atomics.store(this.sharedArray, DataType.DBG, -1);
-                cmd = -1;
-                postMessage("debug,continue");
-            }
-        }
-        return cmd;
-    }
-
-    /**
-     * Method to extract the data buffer from the sharedArray
-     * @returns the data buffer as a string
-     */
-    readDataBuffer(): string {
-        let data = "";
-        this.sharedArray.slice(dataBufferIndex).every((char) => {
-            if (char > 0) {
-                data += String.fromCharCode(char);
-            }
-            return char; // if \0 stops decoding
-        });
-        Atomics.store(this.sharedArray, DataType.BUF, -1);
-        return data;
     }
 
     /**

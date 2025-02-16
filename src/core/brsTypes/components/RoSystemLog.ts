@@ -5,6 +5,7 @@ import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { BufferType, DataType } from "../../common";
 import { IfSetMessagePort, IfGetMessagePort } from "../interfaces/IfMessagePort";
+import { BrsDevice } from "../../BrsDevice";
 
 export class RoSystemLog extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -49,15 +50,15 @@ export class RoSystemLog extends BrsComponent implements BrsValue {
     private getNewEvents() {
         const events: BrsEvent[] = [];
         if (this.enabledEvents.includes("bandwidth.minute")) {
-            const bandwidth = Atomics.load(this.interpreter.sharedArray, DataType.MBWD);
+            const bandwidth = Atomics.load(BrsDevice.sharedArray, DataType.MBWD);
             if (bandwidth > 0) {
-                Atomics.store(this.interpreter.sharedArray, DataType.MBWD, -1);
+                Atomics.store(BrsDevice.sharedArray, DataType.MBWD, -1);
                 events.push(new RoSystemLogEvent("bandwidth.minute", bandwidth));
             }
         }
-        const bufferFlag = Atomics.load(this.interpreter.sharedArray, DataType.BUF);
+        const bufferFlag = Atomics.load(BrsDevice.sharedArray, DataType.BUF);
         if (bufferFlag === BufferType.SYS_LOG) {
-            const strSysLog = this.interpreter.readDataBuffer();
+            const strSysLog = BrsDevice.readDataBuffer();
             try {
                 const sysLog = JSON.parse(strSysLog);
                 if (typeof sysLog.type === "string" && this.enabledEvents.includes(sysLog.type)) {

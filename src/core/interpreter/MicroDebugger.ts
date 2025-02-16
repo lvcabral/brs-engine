@@ -2,7 +2,7 @@ import { bscs } from "..";
 import { Interpreter, TracePoint } from ".";
 import { Lexer, Location } from "../lexer";
 import { Parser } from "../parser";
-import { BrsError } from "../Error";
+import { BrsError } from "../BrsError";
 import { BrsObjects } from "../brsTypes";
 import {
     Statement,
@@ -19,6 +19,7 @@ import {
     While,
 } from "../parser/Statement";
 import { DataType, DebugCommand, debugPrompt, numberToHex, parseTextFile } from "../common";
+import { BrsDevice } from "../BrsDevice";
 /// #if !BROWSER
 import readline from "readline-sync";
 readline.setDefaultOptions({ prompt: debugPrompt });
@@ -138,11 +139,11 @@ function debuggerIntro(
 function nextDebugCommand(interpreter: Interpreter): string {
     let line = "";
     interpreter.stdout.write(`print,\r\n${debugPrompt}`);
-    Atomics.wait(interpreter.sharedArray, DataType.DBG, -1);
-    const cmd = Atomics.load(interpreter.sharedArray, DataType.DBG);
-    Atomics.store(interpreter.sharedArray, DataType.DBG, -1);
+    Atomics.wait(BrsDevice.sharedArray, DataType.DBG, -1);
+    const cmd = Atomics.load(BrsDevice.sharedArray, DataType.DBG);
+    Atomics.store(BrsDevice.sharedArray, DataType.DBG, -1);
     if (cmd === DebugCommand.EXPR) {
-        line = interpreter.readDataBuffer();
+        line = BrsDevice.readDataBuffer();
     }
     return line;
 }

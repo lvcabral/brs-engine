@@ -4,6 +4,7 @@ import { BrsType, Int32 } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { RemoteControl } from "../../common";
+import { BrsDevice } from "../../BrsDevice";
 
 export class RoRemoteInfo extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -67,11 +68,11 @@ export class RoRemoteInfo extends BrsComponent implements BrsValue {
     });
 }
 
-function getRemote(interpreter: Interpreter, index: number): RemoteControl {
-    const remotes = interpreter.deviceInfo.get("remoteControls");
+function getRemote(_: Interpreter, index: number): RemoteControl {
+    const remotes = BrsDevice.deviceInfo.get("remoteControls");
     if (remotes instanceof Array && remotes.length && index < remotes.length) {
         if (index < 0) {
-            index = interpreter.lastRemote;
+            index = BrsDevice.lastRemote;
         }
         return remotes[index];
     }

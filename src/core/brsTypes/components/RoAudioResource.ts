@@ -5,6 +5,7 @@ import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 import { DataType } from "../../common";
+import { BrsDevice } from "../../BrsDevice";
 
 export class RoAudioResource extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -17,7 +18,7 @@ export class RoAudioResource extends BrsComponent implements BrsValue {
 
     constructor(interpreter: Interpreter, name: BrsString) {
         super("roAudioResource");
-        this.maxStreams = Math.min(interpreter.deviceInfo.get("maxSimulStreams"), 3) || 2;
+        this.maxStreams = Math.min(BrsDevice.deviceInfo.get("maxSimulStreams"), 3) || 2;
         this.valid = true;
         const systemwav = ["select", "navsingle", "navmulti", "deadend"];
         const sysIndex = systemwav.findIndex((wav) => wav === name.value.toLowerCase());
@@ -87,7 +88,7 @@ export class RoAudioResource extends BrsComponent implements BrsValue {
         impl: (interpreter: Interpreter) => {
             if (this.audioId) {
                 const currentWav = Atomics.load(
-                    interpreter.sharedArray,
+                    BrsDevice.sharedArray,
                     DataType.WAV + this.currentIndex
                 );
                 this.playing = currentWav === this.audioId;

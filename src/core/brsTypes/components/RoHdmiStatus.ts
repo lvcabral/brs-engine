@@ -6,24 +6,23 @@ import { Interpreter } from "../../interpreter";
 import { DataType } from "../../common";
 import { IfSetMessagePort, IfGetMessagePort } from "../interfaces/IfMessagePort";
 import { RoHdmiStatusEvent } from "../events/RoHdmiStatusEvent";
+import { BrsDevice } from "../../BrsDevice";
 
 export class RoHdmiStatus extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
-    private readonly interpreter: Interpreter;
     private readonly modelType: string;
     private readonly displayMode: string;
     private port?: RoMessagePort;
     private active: number;
 
-    constructor(interpreter: Interpreter) {
+    constructor() {
         super("roHdmiStatus");
-        this.interpreter = interpreter;
         this.active = 1; // Default to active
 
-        const deviceModel = interpreter.deviceInfo.get("deviceModel");
-        const device = interpreter.deviceInfo?.get("models")?.get(deviceModel);
+        const deviceModel = BrsDevice.deviceInfo.get("deviceModel");
+        const device = BrsDevice.deviceInfo?.get("models")?.get(deviceModel);
         this.modelType = device ? device[1] : "STB";
-        this.displayMode = interpreter.deviceInfo.get("displayMode") ?? "720p";
+        this.displayMode = BrsDevice.deviceInfo.get("displayMode") ?? "720p";
         const setPortIface = new IfSetMessagePort(this, this.getNewEvents.bind(this));
         const getPortIface = new IfGetMessagePort(this);
         this.registerMethods({
@@ -53,7 +52,7 @@ export class RoHdmiStatus extends BrsComponent implements BrsValue {
 
     private getNewEvents() {
         const events: BrsEvent[] = [];
-        const hdmiActive = Atomics.load(this.interpreter.sharedArray, DataType.HDMI);
+        const hdmiActive = Atomics.load(BrsDevice.sharedArray, DataType.HDMI);
         if (hdmiActive >= 0 && hdmiActive !== this.active) {
             this.active = hdmiActive;
             events.push(new RoHdmiStatusEvent(this.active !== 0));
@@ -73,7 +72,7 @@ export class RoHdmiStatus extends BrsComponent implements BrsValue {
             if (this.modelType === "TV") {
                 return BrsBoolean.False;
             }
-            const hdmiActive = Atomics.load(interpreter.sharedArray, DataType.HDMI);
+            const hdmiActive = Atomics.load(BrsDevice.sharedArray, DataType.HDMI);
             return BrsBoolean.from(hdmiActive !== 0);
         },
     });

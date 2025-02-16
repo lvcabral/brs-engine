@@ -5,6 +5,7 @@ import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { BufferType, DataType } from "../../common";
 import { IfSetMessagePort, IfGetMessagePort } from "../interfaces/IfMessagePort";
+import { BrsDevice } from "../../BrsDevice";
 
 export class RoInput extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -42,9 +43,9 @@ export class RoInput extends BrsComponent implements BrsValue {
 
     private getNewEvents() {
         const events: BrsEvent[] = [];
-        const bufferFlag = Atomics.load(this.interpreter.sharedArray, DataType.BUF);
+        const bufferFlag = Atomics.load(BrsDevice.sharedArray, DataType.BUF);
         if (bufferFlag === BufferType.INPUT) {
-            const strInput = this.interpreter.readDataBuffer();
+            const strInput = BrsDevice.readDataBuffer();
             try {
                 const input = JSON.parse(strInput);
                 events.push(new RoInputEvent(toAssociativeArray(input)));

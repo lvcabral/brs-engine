@@ -4,15 +4,16 @@ import { BrsType } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
+import { BrsDevice } from "../../BrsDevice";
 
 export class RoLocalization extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
     private readonly locale: string;
 
     // Constructor can only be used by RoFontRegistry()
-    constructor(interpreter: Interpreter) {
+    constructor() {
         super("roLocalization");
-        this.locale = interpreter.deviceInfo.get("locale");
+        this.locale = BrsDevice.deviceInfo.get("locale");
         this.registerMethods({ ifLocalization: [this.getPluralString, this.getLocalizedAsset] });
     }
 

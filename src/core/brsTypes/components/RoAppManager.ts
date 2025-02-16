@@ -6,6 +6,7 @@ import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 import { RoTimespan } from "./RoTimespan";
 import { AppData, AppExitReason, isAppData } from "../../common";
+import { BrsDevice } from "../../BrsDevice";
 
 export class RoAppManager extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -75,8 +76,8 @@ export class RoAppManager extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.Void,
         },
-        impl: (interpreter: Interpreter) => {
-            interpreter.lastKeyTime = Date.now();
+        impl: (_: Interpreter) => {
+            BrsDevice.lastKeyTime = Date.now();
             return BrsInvalid.Instance;
         },
     });
@@ -135,7 +136,7 @@ export class RoAppManager extends BrsComponent implements BrsValue {
             returns: ValueKind.Object,
         },
         impl: (interpreter: Interpreter) => {
-            const app = interpreter.deviceInfo.get("appList")?.find((app: AppData) => app.running);
+            const app = BrsDevice.deviceInfo.get("appList")?.find((app: AppData) => app.running);
             const exitInfo = {
                 exit_code: app?.exitReason ?? AppExitReason.UNKNOWN,
                 media_player_state: "stopped",
@@ -192,7 +193,7 @@ export class RoAppManager extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (interpreter: Interpreter, channelId: BrsString, version: BrsString) => {
-            const appList = interpreter.deviceInfo.get("appList");
+            const appList = BrsDevice.deviceInfo.get("appList");
             if (appList instanceof Array) {
                 const app = appList.find((app) => {
                     return app.id === channelId.value;
@@ -219,7 +220,7 @@ export class RoAppManager extends BrsComponent implements BrsValue {
             version: BrsString,
             params: RoAssociativeArray
         ) => {
-            const appList = interpreter.deviceInfo.get("appList");
+            const appList = BrsDevice.deviceInfo.get("appList");
             if (appList instanceof Array) {
                 const app = appList.find((app) => {
                     return app.id === channelId.value;
@@ -270,7 +271,7 @@ export class RoAppManager extends BrsComponent implements BrsValue {
         },
         impl: (interpreter: Interpreter) => {
             const result = new RoArray([]);
-            const appList = interpreter.deviceInfo.get("appList");
+            const appList = BrsDevice.deviceInfo.get("appList");
             if (appList instanceof Array) {
                 appList.forEach((app) => {
                     const appObj = { id: app.id, title: app.title, version: app.version };
@@ -298,8 +299,8 @@ export class RoAppManager extends BrsComponent implements BrsValue {
             args: [new StdlibArgument("disabled", ValueKind.Boolean)],
             returns: ValueKind.Void,
         },
-        impl: (interpreter: Interpreter, disabled: BrsBoolean) => {
-            interpreter.displayEnabled = !disabled.toBoolean();
+        impl: (_: Interpreter, disabled: BrsBoolean) => {
+            BrsDevice.displayEnabled = !disabled.toBoolean();
             postMessage({ displayEnabled: !disabled.toBoolean() });
             return Uninitialized.Instance;
         },

@@ -1,5 +1,5 @@
 import { ValueKind, SignatureAndMismatches, MismatchReason, Callable, BrsType } from "../brsTypes";
-import { BrsError } from "../Error";
+import { BrsError } from "../BrsError";
 import { Location } from "../lexer";
 
 function formatMismatch(functionName: string, mismatchedSignature: SignatureAndMismatches) {
