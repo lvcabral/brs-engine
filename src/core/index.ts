@@ -387,8 +387,13 @@ export async function executeTask(
         return { exitReason: AppExitReason.CRASHED };
     }
     // Look for SceneGraph components
-    const fileSystem = new FileSystem(options.root, options.ext);
-    const components = await getComponentDefinitionMap(fileSystem);
+    if (options.root) {
+        BrsDevice.fileSystem.setRoot(options.root);
+    }
+    if (options.ext) {
+        BrsDevice.fileSystem.setExt(options.ext);
+    }
+    const components = await getComponentDefinitionMap(BrsDevice.fileSystem, []);
     // Create the interpreter
     let interpreter: Interpreter;
     if (components.size > 0) {
@@ -398,9 +403,9 @@ export async function executeTask(
     }
     interpreter.setManifest(payload.manifest);
     if (payload.device.registry?.size) {
-        interpreter.setRegistry(payload.device.registry);
+        BrsDevice.setRegistry(payload.device.registry);
     }
-    setupDeviceData(interpreter, payload.device);
+    setupDeviceData(payload.device);
     setupTranslations(interpreter);
     console.log(
         "Calling Task in new Worker: ",

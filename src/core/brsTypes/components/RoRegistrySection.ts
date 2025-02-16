@@ -93,10 +93,7 @@ export class RoRegistrySection extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, key: BrsString, value: BrsString) => {
             BrsDevice.refreshRegistry();
-            BrsDevice.registry.set(
-                this.devId + "." + this.section + "." + key.value,
-                value.value
-            );
+            BrsDevice.registry.set(this.devId + "." + this.section + "." + key.value, value.value);
             return BrsBoolean.True;
         },
     });

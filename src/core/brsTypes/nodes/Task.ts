@@ -11,6 +11,7 @@ import {
 import { Field, FieldKind, FieldModel } from "./Field";
 import { Interpreter } from "../../interpreter";
 import { DataType, TaskData, TaskState, TaskUpdate } from "../../common";
+import { BrsDevice } from "../../BrsDevice";
 
 export class Task extends RoSGNode {
     readonly defaultFields: FieldModel[] = [
@@ -98,14 +99,14 @@ export class Task extends RoSGNode {
             postMessage(taskData);
             this.started = true;
         } else {
-            const state = Atomics.load(interpreter.sharedArray, DataType.TASK);
+            const state = Atomics.load(BrsDevice.sharedArray, DataType.TASK);
             if (state === -1) {
                 return;
             }
             if (state === TaskState.STOP || state === TaskState.DONE) {
                 this.set(new BrsString("control"), new BrsString(TaskState[state]));
             }
-            Atomics.store(interpreter.sharedArray, DataType.TASK, -1);
+            Atomics.store(BrsDevice.sharedArray, DataType.TASK, -1);
         }
     }
 }

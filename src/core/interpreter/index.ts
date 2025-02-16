@@ -60,7 +60,15 @@ import { Scope, Environment, NotFound } from "./Environment";
 import { toCallable } from "./BrsFunction";
 import { BlockEnd, GotoLabel } from "../parser/Statement";
 import { runDebugger } from "./MicroDebugger";
-import { DataType, DebugCommand, defaultDeviceInfo, numberToHex, parseTextFile, TaskData, TaskState } from "../common";
+import {
+    DataType,
+    DebugCommand,
+    defaultDeviceInfo,
+    numberToHex,
+    parseTextFile,
+    TaskData,
+    TaskState,
+} from "../common";
 import { BrsDevice } from "../BrsDevice";
 /// #if !BROWSER
 import * as v8 from "v8";
@@ -133,7 +141,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
     /** The set of errors detected from executing an AST. */
     errors: (BrsError | RuntimeError)[] = [];
-
 
     /** Array Buffer to Share the Tasks field updates across threads */
     tasksBuffer?: SharedObjectBuffer;
