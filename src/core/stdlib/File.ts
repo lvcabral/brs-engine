@@ -1,7 +1,8 @@
 import { Callable, ValueKind, BrsString, BrsBoolean, StdlibArgument, RoList } from "../brsTypes";
 import { Interpreter } from "../interpreter";
-import { getVolume, validUri, writeUri } from "../interpreter/FileSystem";
+import { getVolume, validUri, writeUri } from "../FileSystem";
 import * as nanomatch from "nanomatch";
+import { BrsDevice } from "../BrsDevice";
 
 /** Copies a file from src to dst, return true if successful */
 export const CopyFile = new Callable("CopyFile", {
@@ -13,7 +14,7 @@ export const CopyFile = new Callable("CopyFile", {
         returns: ValueKind.Boolean,
     },
     impl: (interpreter: Interpreter, src: BrsString, dst: BrsString) => {
-        const fsys = interpreter.fileSystem;
+        const fsys = BrsDevice.fileSystem;
         try {
             if (!writeUri(dst.value) || !fsys.existsSync(src.value)) {
                 return BrsBoolean.False;
@@ -42,7 +43,7 @@ export const MoveFile = new Callable("MoveFile", {
         returns: ValueKind.Boolean,
     },
     impl: (interpreter: Interpreter, src: BrsString, dst: BrsString) => {
-        const fsys = interpreter.fileSystem;
+        const fsys = BrsDevice.fileSystem;
         try {
             if (
                 !writeUri(src.value) ||
@@ -72,7 +73,7 @@ export const DeleteFile = new Callable("DeleteFile", {
         returns: ValueKind.Boolean,
     },
     impl: (interpreter: Interpreter, file: BrsString) => {
-        const fsys = interpreter.fileSystem;
+        const fsys = BrsDevice.fileSystem;
         try {
             if (!writeUri(file.value)) {
                 return BrsBoolean.False;
@@ -97,7 +98,7 @@ export const DeleteDirectory = new Callable("DeleteDirectory", {
         returns: ValueKind.Boolean,
     },
     impl: (interpreter: Interpreter, dir: BrsString) => {
-        const fsys = interpreter.fileSystem;
+        const fsys = BrsDevice.fileSystem;
         try {
             if (!writeUri(dir.value)) {
                 return BrsBoolean.False;
@@ -122,7 +123,7 @@ export const CreateDirectory = new Callable("CreateDirectory", {
         returns: ValueKind.Boolean,
     },
     impl: (interpreter: Interpreter, dir: BrsString) => {
-        const fsys = interpreter.fileSystem;
+        const fsys = BrsDevice.fileSystem;
         try {
             if (!writeUri(dir.value)) {
                 return BrsBoolean.False;
@@ -164,7 +165,7 @@ export const ListDir = new Callable("ListDir", {
         returns: ValueKind.Object,
     },
     impl: (interpreter: Interpreter, dir: BrsString) => {
-        const fsys = interpreter.fileSystem;
+        const fsys = BrsDevice.fileSystem;
         try {
             if (!validUri(dir.value)) {
                 interpreter.stderr.write(
@@ -192,7 +193,7 @@ export const ReadAsciiFile = new Callable("ReadAsciiFile", {
         returns: ValueKind.String,
     },
     impl: (interpreter: Interpreter, filePath: BrsString) => {
-        const fsys = interpreter.fileSystem;
+        const fsys = BrsDevice.fileSystem;
         try {
             if (!validUri(filePath.value)) {
                 return new BrsString("");
@@ -222,7 +223,7 @@ export const WriteAsciiFile = new Callable("WriteAsciiFile", {
         returns: ValueKind.Boolean,
     },
     impl: (interpreter: Interpreter, filePath: BrsString, text: BrsString) => {
-        const fsys = interpreter.fileSystem;
+        const fsys = BrsDevice.fileSystem;
         try {
             if (!writeUri(filePath.value)) {
                 return BrsBoolean.False;
@@ -250,7 +251,7 @@ export const MatchFiles = new Callable("MatchFiles", {
         returns: ValueKind.Object,
     },
     impl: (interpreter: Interpreter, pathArg: BrsString, patternIn: BrsString) => {
-        const fsys = interpreter.fileSystem;
+        const fsys = BrsDevice.fileSystem;
         try {
             if (!validUri(pathArg.value)) {
                 return new RoList([]);

@@ -2,18 +2,19 @@ import MemoryFileSystem from "memory-fs";
 import * as path from "path";
 import * as zenFS from "@zenfs/core";
 import * as nodeFS from "fs";
+import { Zip } from "@lvcabral/zip";
 
 /** Proxy Object to make File System volumes case insensitive, same as Roku devices */
 
 export class FileSystem {
     private readonly paths: Map<string, string>;
-    readonly root?: string;
-    readonly ext?: string;
-    readonly pfs: typeof zenFS.fs | typeof nodeFS; // pkg:
-    readonly xfs: typeof zenFS.fs | typeof nodeFS; // ext1:
-    readonly tfs: MemoryFileSystem; // tmp:
-    readonly cfs: MemoryFileSystem; // cachefs:
-    readonly mfs: MemoryFileSystem; // common:
+    private root?: string;
+    private ext?: string;
+    private pfs: typeof zenFS.fs | typeof nodeFS; // pkg:
+    private xfs: typeof zenFS.fs | typeof nodeFS; // ext1:
+    private tfs: MemoryFileSystem; // tmp:
+    private cfs: MemoryFileSystem; // cachefs:
+    private mfs: MemoryFileSystem; // common:
 
     constructor(root?: string, ext?: string) {
         this.paths = new Map();
@@ -44,6 +45,22 @@ export class FileSystem {
     }
     private getOriginalPath(uri: string) {
         return this.paths.get(uri.toLowerCase().replace(/\/+/g, "/").trim());
+    }
+
+    setRoot(root: string) {
+        this.root = root;
+        this.pfs = nodeFS;
+    }
+
+    setExt(ext: string) {
+        this.ext = ext;
+        this.xfs = nodeFS;
+    }
+
+    resetMemoryFS() {
+        this.tfs = new MemoryFileSystem();
+        this.cfs = new MemoryFileSystem();
+        this.mfs = new MemoryFileSystem();
     }
 
     getFS(uri: string) {
@@ -202,4 +219,37 @@ export function writeUri(uri: string): boolean {
 export function memoryUri(uri: string): boolean {
     uri = uri.toLowerCase();
     return validUri(uri) && !(uri.startsWith("pkg:/") || uri.startsWith("ext1:/"));
+}
+
+/**
+ * Initializes the File System with the provided zip files.
+ * @param pkgZip ArrayBuffer with the package zip file.
+ * @param extZip ArrayBuffer with the external storage zip file.
+ */
+export async function configureFileSystem(
+    pkgZip?: ArrayBuffer,
+    extZip?: ArrayBuffer
+): Promise<void> {
+    const fsConfig = { mounts: {} };
+    if (zenFS.fs?.existsSync("pkg:/")) {
+        zenFS.umount("pkg:");
+    }
+    if (pkgZip) {
+        Object.assign(fsConfig.mounts, {
+            "pkg:": { backend: Zip, data: pkgZip, caseSensitive: false },
+        });
+    } else {
+        Object.assign(fsConfig.mounts, {
+            "pkg:": zenFS.InMemory,
+        });
+    }
+    if (extZip) {
+        if (zenFS.fs?.existsSync("ext1:/")) {
+            zenFS.umount("ext1:");
+        }
+        Object.assign(fsConfig.mounts, {
+            "ext1:": { backend: Zip, data: extZip, caseSensitive: false },
+        });
+    }
+    return zenFS.configure(fsConfig);
 }

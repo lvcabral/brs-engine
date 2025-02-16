@@ -56,7 +56,6 @@ import Long from "long";
 import { Scope, Environment, NotFound } from "./Environment";
 import { toCallable } from "./BrsFunction";
 import { BlockEnd, GotoLabel } from "../parser/Statement";
-import { FileSystem } from "./FileSystem";
 import { runDebugger } from "./MicroDebugger";
 import { DataType, DebugCommand, defaultDeviceInfo, numberToHex, parseTextFile } from "../common";
 import { BrsDevice } from "../BrsDevice";
@@ -118,7 +117,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         end: { line: -1, column: -1 },
     };
 
-    readonly fileSystem: FileSystem;
     readonly options: ExecutionOptions = defaultExecutionOptions;
     readonly manifest: Map<string, any> = new Map<string, any>();
     readonly translations: Map<string, string> = new Map<string, string>();
@@ -216,7 +214,12 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         Object.assign(this.options, options);
         this.stdout = new OutputProxy(this.options.stdout, this.options.post);
         this.stderr = new OutputProxy(this.options.stderr, this.options.post);
-        this.fileSystem = new FileSystem(this.options.root, this.options.ext);
+        if (this.options.root) {
+            BrsDevice.fileSystem.setRoot(this.options.root);
+        }
+        if (this.options.ext) {
+            BrsDevice.fileSystem.setExt(this.options.ext);
+        }
         for (const [key, value] of Object.entries(defaultDeviceInfo)) {
             if (!["registry", "fonts"].includes(key)) {
                 BrsDevice.deviceInfo.set(key, value);

@@ -11,6 +11,7 @@ import { Callable, StdlibArgument } from "../Callable";
 import { BrsComponent } from "./BrsComponent";
 import { Interpreter } from "../../interpreter";
 import mp3Parser from "mp3-parser";
+import { BrsDevice } from "../../BrsDevice";
 
 export class RoAudioMetadata extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -36,7 +37,7 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
     private loadFile(interpreter: Interpreter, file: string) {
         let audio: Buffer | undefined;
         try {
-            audio = interpreter.fileSystem?.readFileSync(file);
+            audio = BrsDevice.fileSystem?.readFileSync(file);
         } catch (err: any) {
             if (interpreter.isDevMode) {
                 interpreter.stderr.write(

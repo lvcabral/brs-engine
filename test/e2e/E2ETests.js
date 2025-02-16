@@ -44,6 +44,7 @@ exports.createMockStreams = function () {
 
 /** Executes the specified BrightScript files, capturing their output in the provided streams. */
 exports.execute = async function (filenames, options, deepLink) {
+    brs.BrsDevice.fileSystem.resetMemoryFS();
     const payload = await createPayloadFromFiles(filenames, deviceData);
     if (deepLink) {
         payload.deepLink = deepLink;

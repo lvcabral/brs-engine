@@ -1,5 +1,5 @@
 const brs = require("../../bin/brs.node");
-const { Interpreter } = brs;
+const { Interpreter, BrsDevice } = brs;
 const {
     ListDir,
     CopyFile,
@@ -24,7 +24,8 @@ describe("global file I/O functions", () => {
         interpreter = new Interpreter({
             root: "hello/world",
         }); // reset the file systems
-        fsys = interpreter.fileSystem;
+        fsys = BrsDevice.fileSystem;
+        fsys.resetMemoryFS();
     });
 
     describe("ListDir", () => {

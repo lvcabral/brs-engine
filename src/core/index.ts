@@ -7,7 +7,6 @@
  *--------------------------------------------------------------------------------------------*/
 import { ExecutionOptions, Interpreter } from "./interpreter";
 import { download } from "./interpreter/Network";
-import { FileSystem } from "./interpreter/FileSystem";
 import {
     AppExitReason,
     PkgFilePath,
@@ -34,8 +33,6 @@ import * as path from "path";
 import * as xml2js from "xml2js";
 import * as crypto from "crypto";
 import * as fs from "fs";
-import * as zenFS from "@zenfs/core";
-import { Zip } from "@lvcabral/zip";
 import { encode, decode } from "@msgpack/msgpack";
 import { zlibSync, unzlibSync } from "fflate";
 import bslCore from "./libraries/common/v30/bslCore.brs";
@@ -44,6 +41,7 @@ import Roku_Ads from "./libraries/roku_ads/Roku_Ads.brs";
 import RokuBrowser from "./libraries/roku_browser/RokuBrowser.brs";
 import packageInfo from "../../package.json";
 import { BrsDevice } from "./BrsDevice";
+import { configureFileSystem } from "./FileSystem";
 
 export * as lexer from "./lexer";
 export * as parser from "./parser";
@@ -54,6 +52,7 @@ export { PP as preprocessor };
 export { Preprocessor } from "./preprocessor/Preprocessor";
 export { Interpreter } from "./interpreter";
 export { Environment, Scope } from "./interpreter/Environment";
+export { BrsDevice } from "./BrsDevice";
 export { lexParseSync } from "./LexerParser";
 export const bscs = new Map<string, number>();
 export const stats = new Map<Lexeme, number>();
@@ -144,8 +143,8 @@ export async function getReplInterpreter(payload: Partial<AppPayload>) {
         if (payload.device.registry?.size) {
             BrsDevice.setRegistry(payload.device.registry);
         }
-        setupDeviceData(replInterpreter, payload.device);
-        setupDeviceFonts(replInterpreter, payload.device);
+        setupDeviceData(payload.device);
+        setupDeviceFonts(payload.device);
     }
     return replInterpreter;
 }
@@ -329,8 +328,13 @@ export async function executeFile(
         return { exitReason: AppExitReason.CRASHED };
     }
     // Look for SceneGraph components
-    const fileSystem = new FileSystem(options.root, options.ext);
-    const components = await getComponentDefinitionMap(fileSystem, []);
+    if (options.root) {
+        BrsDevice.fileSystem.setRoot(options.root);
+    }
+    if (options.ext) {
+        BrsDevice.fileSystem.setExt(options.ext);
+    }
+    const components = await getComponentDefinitionMap(BrsDevice.fileSystem, []);
     // Create the interpreter
     let interpreter: Interpreter;
     if (components.size > 0) {
@@ -354,36 +358,6 @@ export async function executeFile(
 }
 
 /**
- * Initializes the File System with the provided zip files.
- * @param pkgZip ArrayBuffer with the package zip file.
- * @param extZip ArrayBuffer with the external storage zip file.
- */
-async function configureFileSystem(pkgZip?: ArrayBuffer, extZip?: ArrayBuffer): Promise<void> {
-    const fsConfig = { mounts: {} };
-    if (zenFS.fs?.existsSync("pkg:/")) {
-        zenFS.umount("pkg:");
-    }
-    if (pkgZip) {
-        Object.assign(fsConfig.mounts, {
-            "pkg:": { backend: Zip, data: pkgZip, caseSensitive: false },
-        });
-    } else {
-        Object.assign(fsConfig.mounts, {
-            "pkg:": zenFS.InMemory,
-        });
-    }
-    if (extZip) {
-        if (zenFS.fs?.existsSync("ext1:/")) {
-            zenFS.umount("ext1:");
-        }
-        Object.assign(fsConfig.mounts, {
-            "ext1:": { backend: Zip, data: extZip, caseSensitive: false },
-        });
-    }
-    return zenFS.configure(fsConfig);
-}
-
-/**
  * Setup the interpreter with the provided payload.
  * @param interpreter The interpreter instance to setup
  * @param payload with the source code, manifest and all the assets of the app.
@@ -402,10 +376,10 @@ function setupPayload(interpreter: Interpreter, payload: AppPayload): SourceResu
     if (payload.device.registry?.size) {
         BrsDevice.setRegistry(payload.device.registry);
     }
-    setupDeviceData(interpreter, payload.device);
-    setupDeviceFonts(interpreter, payload.device);
+    setupDeviceData(payload.device);
+    setupDeviceFonts(payload.device);
     setupTranslations(interpreter);
-    return setupPackageFiles(interpreter, payload);
+    return setupPackageFiles(payload);
 }
 
 interface SerializedPCode {
@@ -438,10 +412,9 @@ function setupInputParams(
 /**
  * Updates the interpreter DeviceInfo Map with the provided data and
  * initializes the common: file system with device internal libraries.
- * @param interpreter the Interpreter instance to update
  * @param device object with device info data
  */
-function setupDeviceData(interpreter: Interpreter, device: DeviceInfo) {
+function setupDeviceData(device: DeviceInfo) {
     Object.keys(device).forEach((key) => {
         if (key !== "registry" && key !== "fonts") {
             if (key === "developerId") {
@@ -452,7 +425,7 @@ function setupDeviceData(interpreter: Interpreter, device: DeviceInfo) {
         }
     });
     // Internal Libraries
-    const fsys = interpreter.fileSystem;
+    const fsys = BrsDevice.fileSystem;
     if (fsys) {
         fsys.mkdirSync("common:/LibCore");
         fsys.mkdirSync("common:/LibCore/v30");
@@ -467,15 +440,14 @@ function setupDeviceData(interpreter: Interpreter, device: DeviceInfo) {
 
 /**
  * Updates the interpreter `common:` volume with device internal fonts.
- * @param interpreter the Interpreter instance to update
  * @param device object with device info data
  */
-function setupDeviceFonts(interpreter: Interpreter, device: DeviceInfo) {
+function setupDeviceFonts(device: DeviceInfo) {
     const family = device.defaultFont;
     const sgFamily = device.sgFont;
     const fontPath = device.fontPath ?? "../fonts/";
 
-    const fsys = interpreter.fileSystem;
+    const fsys = BrsDevice.fileSystem;
     if (!fsys?.existsSync("common:/")) {
         postMessage("error,Common file system not found");
         return;
@@ -505,14 +477,13 @@ function setupDeviceFonts(interpreter: Interpreter, device: DeviceInfo) {
 /**
  * Updates the interpreter pkg: file system with the provided package files and
  * loads the translation data based on the configured locale.
- * @param interpreter the Interpreter instance to update
  * @param payload with the source code, manifest and all the assets of the app.
  *
  * @returns a SourceResult object with the source map or the pcode data.
  */
-function setupPackageFiles(interpreter: Interpreter, payload: AppPayload): SourceResult {
+function setupPackageFiles(payload: AppPayload): SourceResult {
     const result: SourceResult = { sourceMap: new Map<string, string>() };
-    const fsys = interpreter.fileSystem;
+    const fsys = BrsDevice.fileSystem;
     if (!fsys || !Array.isArray(payload.paths)) {
         return result;
     }
@@ -550,7 +521,7 @@ function setupTranslations(interpreter: Interpreter) {
     let trTarget = "";
     const locale = BrsDevice.deviceInfo.get("locale") || "en_US";
     try {
-        const fsys = interpreter.fileSystem;
+        const fsys = BrsDevice.fileSystem;
         if (fsys?.existsSync(`pkg:/locale/${locale}/translations.ts`)) {
             xmlText = fsys.readFileSync(`pkg:/locale/${locale}/translations.ts`, "utf8");
             trType = "TS";
@@ -613,7 +584,7 @@ async function runSource(
 ): Promise<RunResult> {
     const password = payload.password ?? "";
     const parseResult = lexParseSync(
-        interpreter.fileSystem,
+        BrsDevice.fileSystem,
         interpreter.manifest,
         sourceMap,
         password,
@@ -687,7 +658,7 @@ async function runEncrypted(
     // Execute the decrypted source code
     try {
         const allStatements = parseDecodedTokens(
-            interpreter.fileSystem,
+            BrsDevice.fileSystem,
             interpreter.manifest,
             decodedTokens
         );
