@@ -6,7 +6,7 @@ import * as PP from "./preprocessor";
 import * as BrsTypes from "./brsTypes";
 export { BrsTypes as types };
 export { PP as preprocessor };
-import { logError } from "./Error";
+import { logError } from "./BrsError";
 import { defaultExecutionOptions, ExecutionOptions } from "./interpreter";
 import { ComponentScript } from "./scenegraph";
 import { FileSystem } from "./interpreter/FileSystem";

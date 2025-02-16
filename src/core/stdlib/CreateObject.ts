@@ -7,7 +7,7 @@ import {
     BrsObjects,
     StdlibArgument,
 } from "../brsTypes";
-import { RuntimeError, RuntimeErrorDetail } from "../Error";
+import { RuntimeError, RuntimeErrorDetail } from "../BrsError";
 import { Interpreter } from "../interpreter";
 
 /** Creates a new instance of a given brightscript component (e.g. roAssociativeArray) */

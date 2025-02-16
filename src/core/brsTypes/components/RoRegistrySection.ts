@@ -6,16 +6,17 @@ import { Interpreter } from "../../interpreter";
 import { RoArray } from "./RoArray";
 import { RoList } from "./RoList";
 import { RoAssociativeArray } from "./RoAssociativeArray";
+import { BrsDevice } from "../../BrsDevice";
 
 export class RoRegistrySection extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
     readonly section: string;
     readonly devId: string;
 
-    constructor(interpreter: Interpreter, section: BrsString) {
+    constructor(section: BrsString) {
         super("roRegistrySection");
         this.section = section.value;
-        this.devId = interpreter.deviceInfo.get("developerId");
+        this.devId = BrsDevice.deviceInfo.get("developerId");
         this.registerMethods({
             ifRegistrySection: [
                 this.read,
@@ -48,9 +49,9 @@ export class RoRegistrySection extends BrsComponent implements BrsValue {
             args: [new StdlibArgument("key", ValueKind.String)],
             returns: ValueKind.String,
         },
-        impl: (interpreter: Interpreter, key: BrsString) => {
-            let devId = interpreter.deviceInfo.get("developerId");
-            let value = interpreter.registry.get(`${devId}.${this.section}.${key.value}`);
+        impl: (_: Interpreter, key: BrsString) => {
+            let devId = BrsDevice.deviceInfo.get("developerId");
+            let value = BrsDevice.registry.get(`${devId}.${this.section}.${key.value}`);
             if (!value) {
                 value = "";
             }
@@ -64,13 +65,13 @@ export class RoRegistrySection extends BrsComponent implements BrsValue {
             args: [new StdlibArgument("keysArray", ValueKind.Object)],
             returns: ValueKind.Dynamic,
         },
-        impl: (interpreter: Interpreter, keysArray: RoArray) => {
-            let devId = interpreter.deviceInfo.get("developerId");
+        impl: (_: Interpreter, keysArray: RoArray) => {
+            let devId = BrsDevice.deviceInfo.get("developerId");
             let keys = keysArray.getElements() as BrsString[];
             let result = new RoAssociativeArray([]);
             keys.forEach((key) => {
                 let fullKey = `${devId}.${this.section}.${key.value}`;
-                let value = interpreter.registry.get(fullKey);
+                let value = BrsDevice.registry.get(fullKey);
                 if (value) {
                     result.set(key, new BrsString(value));
                 }
@@ -88,11 +89,8 @@ export class RoRegistrySection extends BrsComponent implements BrsValue {
             ],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter, key: BrsString, value: BrsString) => {
-            interpreter.registry.set(
-                this.devId + "." + this.section + "." + key.value,
-                value.value
-            );
+        impl: (_: Interpreter, key: BrsString, value: BrsString) => {
+            BrsDevice.registry.set(this.devId + "." + this.section + "." + key.value, value.value);
             return BrsBoolean.True;
         },
     });
@@ -103,11 +101,11 @@ export class RoRegistrySection extends BrsComponent implements BrsValue {
             args: [new StdlibArgument("roAA", ValueKind.Object)],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter, roAA: RoAssociativeArray) => {
+        impl: (_: Interpreter, roAA: RoAssociativeArray) => {
             let elements = roAA.getElements();
             let devSection = `${this.devId}.${this.section}.`;
             elements.forEach(function (value, key) {
-                interpreter.registry.set(`${devSection}${key}`, value.value);
+                BrsDevice.registry.set(`${devSection}${key}`, value.value);
             });
             return BrsBoolean.True;
         },
@@ -119,8 +117,8 @@ export class RoRegistrySection extends BrsComponent implements BrsValue {
             args: [new StdlibArgument("key", ValueKind.String)],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter, key: BrsString) => {
-            let deleted = interpreter.registry.delete(
+        impl: (_: Interpreter, key: BrsString) => {
+            let deleted = BrsDevice.registry.delete(
                 this.devId + "." + this.section + "." + key.value
             );
             return BrsBoolean.from(deleted);
@@ -133,9 +131,9 @@ export class RoRegistrySection extends BrsComponent implements BrsValue {
             args: [new StdlibArgument("key", ValueKind.String)],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter, key: BrsString) => {
+        impl: (_: Interpreter, key: BrsString) => {
             return BrsBoolean.from(
-                interpreter.registry.has(this.devId + "." + this.section + "." + key.value)
+                BrsDevice.registry.has(this.devId + "." + this.section + "." + key.value)
             );
         },
     });
@@ -146,8 +144,8 @@ export class RoRegistrySection extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter) => {
-            postMessage(interpreter.registry);
+        impl: (_: Interpreter) => {
+            postMessage(BrsDevice.registry);
             return BrsBoolean.True;
         },
     });
@@ -158,9 +156,9 @@ export class RoRegistrySection extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.Object,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_: Interpreter) => {
             let keys = new Array<BrsString>();
-            [...interpreter.registry.keys()].forEach((key) => {
+            [...BrsDevice.registry.keys()].forEach((key) => {
                 let regSection = this.devId + "." + this.section;
                 if (key.startsWith(regSection)) {
                     keys.push(new BrsString(key.slice(regSection.length + 1)));

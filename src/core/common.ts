@@ -332,6 +332,13 @@ export enum RemoteType {
 // MHL - Mobile High-Definition Link
 // FP - Front Panel (for on-device controls)
 
+// Key Event Interface
+export interface KeyEvent {
+    remote: string; // Remote Id (Remote Type:Remote Index)
+    key: number; // Key Code
+    mod: number; // Modifier (0 = press, 100 = release)
+}
+
 // Debug prompt
 export const debugPrompt = "Brightscript Debugger> ";
 

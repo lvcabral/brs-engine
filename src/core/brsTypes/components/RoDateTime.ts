@@ -7,6 +7,7 @@ import { Int32 } from "../Int32";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import customParseFormat from "dayjs/plugin/customParseFormat";
+import { BrsDevice } from "../../BrsDevice";
 
 export class RoDateTime extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -263,9 +264,9 @@ export class RoDateTime extends BrsComponent implements BrsValue {
             args: [new StdlibArgument("format", ValueKind.String)],
             returns: ValueKind.String,
         },
-        impl: (interpreter: Interpreter, format: BrsString) => {
+        impl: (_: Interpreter, format: BrsString) => {
             const rokuDateTokens = ["EEEE", "EEE", "dd", "d", "MMMM", "MMM", "MM", "M", "yy", "y"];
-            const locale = (interpreter.deviceInfo.get("locale") ?? "en_US").replace("_", "-");
+            const locale = (BrsDevice.deviceInfo.get("locale") ?? "en_US").replace("_", "-");
             const dateFormat = format.value.trim() === "" ? "short" : format.value;
             let dateString = this.formatDate(dateFormat, locale);
             if (dateString === "") {
@@ -282,9 +283,9 @@ export class RoDateTime extends BrsComponent implements BrsValue {
             args: [new StdlibArgument("format", ValueKind.String)],
             returns: ValueKind.String,
         },
-        impl: (interpreter: Interpreter, format: BrsString) => {
+        impl: (_: Interpreter, format: BrsString) => {
             const rokuTimeTokens = ["HH", "H", "hh", "h", "mm", "m", "a"];
-            const locale = (interpreter.deviceInfo.get("locale") ?? "en_US").replace("_", "-");
+            const locale = (BrsDevice.deviceInfo.get("locale") ?? "en_US").replace("_", "-");
             const dateFormat = format.value.trim() === "" ? "short" : format.value;
             let timeString = this.formatTime(dateFormat, locale);
             if (timeString === "") {
@@ -468,7 +469,7 @@ export class RoDateTime extends BrsComponent implements BrsValue {
                 const tzDate = new Date(date.toLocaleString("en-US", { timeZone: timeZone }));
                 return Math.round((tzDate.getTime() - utcDate.getTime()) / 6e4);
             };
-            return new Int32(-getOffset(interpreter.deviceInfo.get("timeZone")) + 0);
+            return new Int32(-getOffset(BrsDevice.deviceInfo.get("timeZone")) + 0);
         },
     });
 

@@ -2,7 +2,7 @@ import * as path from "path";
 import { XmlDocument, XmlElement } from "xmldoc";
 import pSettle, { PromiseResult } from "p-settle";
 import { Environment } from "../interpreter/Environment";
-import { BrsError } from "../Error";
+import { BrsError } from "../BrsError";
 import { FileSystem } from "../interpreter/FileSystem";
 import { ExecutionOptions, Interpreter } from "../interpreter";
 import { getLexerParserFn } from "../LexerParser";

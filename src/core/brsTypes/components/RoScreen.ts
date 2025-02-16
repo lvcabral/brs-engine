@@ -1,6 +1,6 @@
 import { BrsValue, ValueKind, BrsInvalid, BrsBoolean } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsEvent, BrsType, Double, KeyEvent, RoUniversalControlEvent } from "..";
+import { BrsEvent, BrsType, Double, RoUniversalControlEvent } from "..";
 import { Callable } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
@@ -18,6 +18,8 @@ import {
     rgbaIntToHex,
 } from "../interfaces/IfDraw2D";
 import { IfSetMessagePort, IfGetMessagePort } from "../interfaces/IfMessagePort";
+import { BrsDevice } from "../../BrsDevice";
+import { KeyEvent } from "../../common";
 
 export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     readonly kind = ValueKind.Object;
@@ -52,14 +54,14 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
 
         let defaultWidth = 854;
         let defaultHeight = 480;
-        if (interpreter.deviceInfo.get("displayMode") === "1080p") {
+        if (BrsDevice.deviceInfo.get("displayMode") === "1080p") {
             defaultWidth = 1920;
             defaultHeight = 1080;
-        } else if (interpreter.deviceInfo.get("displayMode") === "720p") {
+        } else if (BrsDevice.deviceInfo.get("displayMode") === "720p") {
             defaultWidth = 1280;
             defaultHeight = 720;
         }
-        const platform = interpreter.deviceInfo.get("platform");
+        const platform = BrsDevice.deviceInfo.get("platform");
         this.disposeCanvas = platform?.inIOS ?? false;
         this.lastMessage = performance.now();
         this.isDirty = true;
@@ -96,7 +98,7 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         this.context = new Array<BrsCanvasContext2D>(this.doubleBuffer ? 2 : 1);
         this.createDisplayBuffer();
         this.alphaEnable = false;
-        const maxFps = interpreter.deviceInfo.get("maxFps") ?? 60;
+        const maxFps = BrsDevice.deviceInfo.get("maxFps") ?? 60;
         this.maxMs = Math.trunc((1 / maxFps) * 1000);
         const ifDraw2D = new IfDraw2D(this);
         const ifSetMsgPort = new IfSetMessagePort(this, this.getNewEvents.bind(this));
@@ -215,7 +217,7 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     // Control Key Events
     private getNewEvents() {
         const events: BrsEvent[] = [];
-        this.interpreter.updateKeysBuffer(this.keysBuffer);
+        BrsDevice.updateKeysBuffer(this.keysBuffer);
         const nextKey = this.keysBuffer.shift();
         if (nextKey && nextKey.key !== this.lastKey) {
             if (this.interpreter.singleKeyEvents) {
@@ -230,8 +232,8 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
                     return events;
                 }
             }
-            this.interpreter.lastKeyTime = this.interpreter.currKeyTime;
-            this.interpreter.currKeyTime = performance.now();
+            BrsDevice.lastKeyTime = BrsDevice.currKeyTime;
+            BrsDevice.currKeyTime = performance.now();
             this.lastKey = nextKey.key;
             events.push(new RoUniversalControlEvent(nextKey));
         }

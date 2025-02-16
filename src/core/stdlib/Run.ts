@@ -28,9 +28,6 @@ function runFiles(interpreter: Interpreter, filenames: BrsString[], args: BrsTyp
         interpreter.manifest.forEach((value, key) => {
             sandbox.manifest.set(key, value);
         });
-        interpreter.deviceInfo.forEach((value, key) => {
-            sandbox.deviceInfo.set(key, value);
-        });
         const sourceMap = new Map<string, string>();
         filenames.forEach((filename) => {
             if (interpreter.fileSystem.existsSync(filename.value)) {
