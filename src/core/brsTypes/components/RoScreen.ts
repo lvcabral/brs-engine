@@ -19,6 +19,7 @@ import {
 } from "../interfaces/IfDraw2D";
 import { DataType, keyArraySpots, keyBufferSize, RemoteType } from "../../common";
 import { IfSetMessagePort, IfGetMessagePort } from "../interfaces/IfMessagePort";
+import { BrsDevice } from "../../BrsDevice";
 
 export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     readonly kind = ValueKind.Object;
@@ -53,14 +54,14 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
 
         let defaultWidth = 854;
         let defaultHeight = 480;
-        if (interpreter.deviceInfo.get("displayMode") === "1080p") {
+        if (BrsDevice.deviceInfo.get("displayMode") === "1080p") {
             defaultWidth = 1920;
             defaultHeight = 1080;
-        } else if (interpreter.deviceInfo.get("displayMode") === "720p") {
+        } else if (BrsDevice.deviceInfo.get("displayMode") === "720p") {
             defaultWidth = 1280;
             defaultHeight = 720;
         }
-        const platform = interpreter.deviceInfo.get("platform");
+        const platform = BrsDevice.deviceInfo.get("platform");
         this.disposeCanvas = platform?.inIOS ?? false;
         this.lastMessage = performance.now();
         this.isDirty = true;
@@ -97,7 +98,7 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         this.context = new Array<BrsCanvasContext2D>(this.doubleBuffer ? 2 : 1);
         this.createDisplayBuffer();
         this.alphaEnable = false;
-        const maxFps = interpreter.deviceInfo.get("maxFps") || 60;
+        const maxFps = BrsDevice.deviceInfo.get("maxFps") || 60;
         this.maxMs = Math.trunc((1 / maxFps) * 1000);
         const ifDraw2D = new IfDraw2D(this);
         const ifSetMsgPort = new IfSetMessagePort(this, this.getNewEvents.bind(this));
@@ -230,8 +231,8 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
                     return events;
                 }
             }
-            this.interpreter.lastKeyTime = this.interpreter.currKeyTime;
-            this.interpreter.currKeyTime = performance.now();
+            BrsDevice.lastKeyTime = BrsDevice.currKeyTime;
+            BrsDevice.currKeyTime = performance.now();
             this.lastKey = nextKey.key;
             events.push(new RoUniversalControlEvent(nextKey));
         }
@@ -241,18 +242,18 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     private updateKeysBuffer() {
         for (let i = 0; i < keyBufferSize; i++) {
             const idx = i * keyArraySpots;
-            const key = Atomics.load(this.interpreter.sharedArray, DataType.KEY + idx);
+            const key = Atomics.load(BrsDevice.sharedArray, DataType.KEY + idx);
             if (key === -1) {
                 return;
             } else if (this.keysBuffer.length === 0 || key !== this.keysBuffer.at(-1)?.key) {
-                const remoteId = Atomics.load(this.interpreter.sharedArray, DataType.RID + idx);
+                const remoteId = Atomics.load(BrsDevice.sharedArray, DataType.RID + idx);
                 const remoteType = Math.trunc(remoteId / 10) * 10;
                 const remoteStr = RemoteType[remoteType] ?? RemoteType[RemoteType.SIM];
                 const remoteIdx = remoteId - remoteType;
-                const mod = Atomics.load(this.interpreter.sharedArray, DataType.MOD + idx);
-                Atomics.store(this.interpreter.sharedArray, DataType.KEY + idx, -1);
+                const mod = Atomics.load(BrsDevice.sharedArray, DataType.MOD + idx);
+                Atomics.store(BrsDevice.sharedArray, DataType.KEY + idx, -1);
                 this.keysBuffer.push({ remote: `${remoteStr}:${remoteIdx}`, key: key, mod: mod });
-                this.interpreter.lastRemote = remoteIdx;
+                BrsDevice.lastRemote = remoteIdx;
             }
         }
     }

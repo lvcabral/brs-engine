@@ -10,6 +10,7 @@ import {
     RoArray,
     isBrsString,
 } from "../brsTypes";
+import { BrsDevice } from "../BrsDevice";
 import { Interpreter } from "../interpreter";
 
 /**
@@ -27,9 +28,6 @@ function runFiles(interpreter: Interpreter, filenames: BrsString[], args: BrsTyp
         const sandbox = new Interpreter(interpreter.options);
         interpreter.manifest.forEach((value, key) => {
             sandbox.manifest.set(key, value);
-        });
-        interpreter.deviceInfo.forEach((value, key) => {
-            sandbox.deviceInfo.set(key, value);
         });
         const sourceMap = new Map<string, string>();
         filenames.forEach((filename) => {

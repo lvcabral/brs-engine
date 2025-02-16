@@ -3,7 +3,7 @@ import { EventEmitter } from "events";
 import { Lexeme } from "./Lexeme";
 import { Token, Location, Comment } from "./Token";
 import { ReservedWords, KeyWords } from "./ReservedWords";
-import { BrsError } from "../Error";
+import { BrsError } from "../BrsError";
 import { isAlpha, isDecimalDigit, isAlphaNumeric, isHexDigit } from "./Characters";
 
 import { BrsType, BrsString, Int32, Int64, Float, Double } from "../brsTypes";

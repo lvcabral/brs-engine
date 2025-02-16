@@ -4,6 +4,7 @@ import { BrsType, Int32 } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { RoList } from "./RoList";
+import { BrsDevice } from "../../BrsDevice";
 
 export class RoRegistry extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -29,12 +30,12 @@ export class RoRegistry extends BrsComponent implements BrsValue {
             args: [new StdlibArgument("section", ValueKind.String)],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter, section: BrsString) => {
-            let devId = interpreter.deviceInfo.get("developerId");
-            [...interpreter.registry.keys()].forEach((key) => {
+        impl: (_: Interpreter, section: BrsString) => {
+            let devId = BrsDevice.deviceInfo.get("developerId");
+            [...BrsDevice.registry.keys()].forEach((key) => {
                 let regSection = `${devId}.${section}`;
                 if (key.startsWith(regSection)) {
-                    interpreter.registry.delete(key);
+                    BrsDevice.registry.delete(key);
                 }
             });
             return BrsBoolean.True;
@@ -47,8 +48,8 @@ export class RoRegistry extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter) => {
-            postMessage(interpreter.registry);
+        impl: (_: Interpreter) => {
+            postMessage(BrsDevice.registry);
             return BrsBoolean.True;
         },
     });
@@ -59,10 +60,10 @@ export class RoRegistry extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.Object,
         },
-        impl: (interpreter: Interpreter) => {
-            let devId = interpreter.deviceInfo.get("developerId");
+        impl: (_: Interpreter) => {
+            let devId = BrsDevice.deviceInfo.get("developerId");
             let sections = new Set<string>();
-            [...interpreter.registry.keys()].forEach((key) => {
+            [...BrsDevice.registry.keys()].forEach((key) => {
                 if (key.split(".")[0] === devId) {
                     sections.add(key.split(".")[1]);
                 }
@@ -81,10 +82,10 @@ export class RoRegistry extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.Int32,
         },
-        impl: (interpreter: Interpreter) => {
-            const devId = interpreter.deviceInfo.get("developerId");
+        impl: (_: Interpreter) => {
+            const devId = BrsDevice.deviceInfo.get("developerId");
             let space = 32 * 1024;
-            interpreter.registry.forEach((value, key) => {
+            BrsDevice.registry.forEach((value, key) => {
                 if (key.split(".")[0] === devId) {
                     space -= Buffer.byteLength(key.substring(devId.length + 1), "utf8");
                     space -= Buffer.byteLength(value, "utf8");
