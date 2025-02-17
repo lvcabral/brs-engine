@@ -19,9 +19,9 @@ export const CreateObject = new Callable("CreateObject", {
         returns: ValueKind.Dynamic,
     },
     impl: (interpreter: Interpreter, objName: BrsString, ...additionalArgs: BrsType[]) => {
-        let ctor = BrsObjects.get(objName.value.toLowerCase());
+        const ctor = BrsObjects.get(objName.value.toLowerCase());
         if (ctor === undefined) {
-            let msg = `BRIGHTSCRIPT: ERROR: Runtime: unknown classname "${
+            const msg = `BRIGHTSCRIPT: ERROR: Runtime: unknown classname "${
                 objName.value
             }": ${interpreter.formatLocation()}`;
             if (["rosgscreen", "rosgnode"].includes(objName.value.toLowerCase())) {
