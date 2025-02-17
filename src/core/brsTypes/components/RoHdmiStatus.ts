@@ -6,7 +6,7 @@ import { Interpreter } from "../../interpreter";
 import { DataType } from "../../common";
 import { IfSetMessagePort, IfGetMessagePort } from "../interfaces/IfMessagePort";
 import { RoHdmiStatusEvent } from "../events/RoHdmiStatusEvent";
-import { BrsDevice } from "../../BrsDevice";
+import { BrsDevice } from "../../device/BrsDevice";
 
 export class RoHdmiStatus extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;

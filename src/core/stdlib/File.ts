@@ -1,8 +1,8 @@
 import { Callable, ValueKind, BrsString, BrsBoolean, StdlibArgument, RoList } from "../brsTypes";
 import { Interpreter } from "../interpreter";
-import { getVolume, validUri, writeUri } from "../FileSystem";
+import { getVolume, validUri, writeUri } from "../device/FileSystem";
 import * as nanomatch from "nanomatch";
-import { BrsDevice } from "../BrsDevice";
+import { BrsDevice } from "../device/BrsDevice";
 
 /** Copies a file from src to dst, return true if successful */
 export const CopyFile = new Callable("CopyFile", {
@@ -13,7 +13,7 @@ export const CopyFile = new Callable("CopyFile", {
         ],
         returns: ValueKind.Boolean,
     },
-    impl: (interpreter: Interpreter, src: BrsString, dst: BrsString) => {
+    impl: (_: Interpreter, src: BrsString, dst: BrsString) => {
         const fsys = BrsDevice.fileSystem;
         try {
             if (!writeUri(dst.value) || !fsys.existsSync(src.value)) {
@@ -23,8 +23,8 @@ export const CopyFile = new Callable("CopyFile", {
             fsys.writeFileSync(dst.value, content);
             return BrsBoolean.True;
         } catch (err: any) {
-            if (interpreter.isDevMode) {
-                interpreter.stderr.write(
+            if (BrsDevice.isDevMode) {
+                BrsDevice.stderr.write(
                     `warning,*** ERROR: Copying '${src.value}' to '${dst.value}': ${err.message}`
                 );
             }
@@ -42,7 +42,7 @@ export const MoveFile = new Callable("MoveFile", {
         ],
         returns: ValueKind.Boolean,
     },
-    impl: (interpreter: Interpreter, src: BrsString, dst: BrsString) => {
+    impl: (_: Interpreter, src: BrsString, dst: BrsString) => {
         const fsys = BrsDevice.fileSystem;
         try {
             if (
@@ -56,8 +56,8 @@ export const MoveFile = new Callable("MoveFile", {
             fsys.renameSync(src.value, dst.value);
             return BrsBoolean.True;
         } catch (err: any) {
-            if (interpreter.isDevMode) {
-                interpreter.stderr.write(
+            if (BrsDevice.isDevMode) {
+                BrsDevice.stderr.write(
                     `warning,*** ERROR: Moving '${src.value}' to '${dst.value}': ${err.message}`
                 );
             }
@@ -72,7 +72,7 @@ export const DeleteFile = new Callable("DeleteFile", {
         args: [new StdlibArgument("file", ValueKind.String)],
         returns: ValueKind.Boolean,
     },
-    impl: (interpreter: Interpreter, file: BrsString) => {
+    impl: (_: Interpreter, file: BrsString) => {
         const fsys = BrsDevice.fileSystem;
         try {
             if (!writeUri(file.value)) {
@@ -81,8 +81,8 @@ export const DeleteFile = new Callable("DeleteFile", {
             fsys.unlinkSync(file.value);
             return BrsBoolean.True;
         } catch (err: any) {
-            if (interpreter.isDevMode) {
-                interpreter.stderr.write(
+            if (BrsDevice.isDevMode) {
+                BrsDevice.stderr.write(
                     `warning,*** ERROR: Deleting '${file.value}': ${err.message}`
                 );
             }
@@ -97,7 +97,7 @@ export const DeleteDirectory = new Callable("DeleteDirectory", {
         args: [new StdlibArgument("dir", ValueKind.String)],
         returns: ValueKind.Boolean,
     },
-    impl: (interpreter: Interpreter, dir: BrsString) => {
+    impl: (_: Interpreter, dir: BrsString) => {
         const fsys = BrsDevice.fileSystem;
         try {
             if (!writeUri(dir.value)) {
@@ -106,8 +106,8 @@ export const DeleteDirectory = new Callable("DeleteDirectory", {
             fsys.rmdirSync(dir.value);
             return BrsBoolean.True;
         } catch (err: any) {
-            if (interpreter.isDevMode) {
-                interpreter.stderr.write(
+            if (BrsDevice.isDevMode) {
+                BrsDevice.stderr.write(
                     `warning,*** ERROR: Deleting '${dir.value}': ${err.message}`
                 );
             }
@@ -122,7 +122,7 @@ export const CreateDirectory = new Callable("CreateDirectory", {
         args: [new StdlibArgument("dir", ValueKind.String)],
         returns: ValueKind.Boolean,
     },
-    impl: (interpreter: Interpreter, dir: BrsString) => {
+    impl: (_: Interpreter, dir: BrsString) => {
         const fsys = BrsDevice.fileSystem;
         try {
             if (!writeUri(dir.value)) {
@@ -131,8 +131,8 @@ export const CreateDirectory = new Callable("CreateDirectory", {
             fsys.mkdirSync(dir.value);
             return BrsBoolean.True;
         } catch (err: any) {
-            if (interpreter.isDevMode) {
-                interpreter.stderr.write(
+            if (BrsDevice.isDevMode) {
+                BrsDevice.stderr.write(
                     `warning,*** ERROR: Creating '${dir.value}': ${err.message}`
                 );
             }
@@ -150,9 +150,9 @@ export const FormatDrive = new Callable("FormatDrive", {
         ],
         returns: ValueKind.Boolean,
     },
-    impl: (interpreter: Interpreter, dir: BrsString) => {
-        if (interpreter.isDevMode) {
-            interpreter.stderr.write("warning,`FormatDrive` is not implemented in `brs-engine`.");
+    impl: (_: Interpreter, dir: BrsString) => {
+        if (BrsDevice.isDevMode) {
+            BrsDevice.stderr.write("warning,`FormatDrive` is not implemented in `brs-engine`.");
         }
         return BrsBoolean.False;
     },
@@ -164,22 +164,18 @@ export const ListDir = new Callable("ListDir", {
         args: [new StdlibArgument("path", ValueKind.String)],
         returns: ValueKind.Object,
     },
-    impl: (interpreter: Interpreter, dir: BrsString) => {
+    impl: (_: Interpreter, dir: BrsString) => {
         const fsys = BrsDevice.fileSystem;
         try {
             if (!validUri(dir.value)) {
-                interpreter.stderr.write(
-                    `warning,*** ERROR: Missing or invalid PHY: '${dir.value}'`
-                );
+                BrsDevice.stderr.write(`warning,*** ERROR: Missing or invalid PHY: '${dir.value}'`);
             } else if (fsys.existsSync(dir.value)) {
                 const subPaths = fsys.readdirSync(dir.value).map((s) => new BrsString(s));
                 return new RoList(subPaths);
             }
         } catch (err: any) {
-            if (interpreter.isDevMode) {
-                interpreter.stderr.write(
-                    `warning,*** ERROR: Listing '${dir.value}': ${err.message}`
-                );
+            if (BrsDevice.isDevMode) {
+                BrsDevice.stderr.write(`warning,*** ERROR: Listing '${dir.value}': ${err.message}`);
             }
         }
         return new RoList([]);
@@ -200,12 +196,12 @@ export const ReadAsciiFile = new Callable("ReadAsciiFile", {
             }
             return new BrsString(fsys.readFileSync(filePath.value, "utf8"));
         } catch (err: any) {
-            if (interpreter.isDevMode) {
-                interpreter.stderr.write(
+            if (BrsDevice.isDevMode) {
+                BrsDevice.stderr.write(
                     `warning,*** ERROR: Reading '${filePath.value}': ${err.message}`
                 );
             }
-            interpreter.stderr.write(
+            BrsDevice.stderr.write(
                 `warning,BRIGHTSCRIPT: ERROR: ReadAsciiFile: file open for read failed: ${interpreter.formatLocation()}`
             );
             return new BrsString("");
@@ -222,7 +218,7 @@ export const WriteAsciiFile = new Callable("WriteAsciiFile", {
         ],
         returns: ValueKind.Boolean,
     },
-    impl: (interpreter: Interpreter, filePath: BrsString, text: BrsString) => {
+    impl: (_: Interpreter, filePath: BrsString, text: BrsString) => {
         const fsys = BrsDevice.fileSystem;
         try {
             if (!writeUri(filePath.value)) {
@@ -231,8 +227,8 @@ export const WriteAsciiFile = new Callable("WriteAsciiFile", {
             fsys.writeFileSync(filePath.value, text.value, "utf8");
             return BrsBoolean.True;
         } catch (err: any) {
-            if (interpreter.isDevMode) {
-                interpreter.stderr.write(
+            if (BrsDevice.isDevMode) {
+                BrsDevice.stderr.write(
                     `warning,*** ERROR: Writing '${filePath.value}': ${err.message}`
                 );
             }
@@ -250,7 +246,7 @@ export const MatchFiles = new Callable("MatchFiles", {
         ],
         returns: ValueKind.Object,
     },
-    impl: (interpreter: Interpreter, pathArg: BrsString, patternIn: BrsString) => {
+    impl: (_: Interpreter, pathArg: BrsString, patternIn: BrsString) => {
         const fsys = BrsDevice.fileSystem;
         try {
             if (!validUri(pathArg.value)) {
@@ -268,8 +264,8 @@ export const MatchFiles = new Callable("MatchFiles", {
 
             return new RoList(matchedFiles);
         } catch (err: any) {
-            if (interpreter.isDevMode) {
-                interpreter.stderr.write(
+            if (BrsDevice.isDevMode) {
+                BrsDevice.stderr.write(
                     `warning,*** ERROR: Matching '${pathArg.value}' with '${patternIn.value}': ${err.message}`
                 );
             }

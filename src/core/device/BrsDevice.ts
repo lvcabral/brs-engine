@@ -1,10 +1,15 @@
-import { dataBufferIndex, DataType, DebugCommand } from "./common";
+import { dataBufferIndex, DataType, DebugCommand } from "../common";
 import { FileSystem } from "./FileSystem";
+import { OutputProxy } from "./OutputProxy";
 
 export class BrsDevice {
     static readonly deviceInfo: Map<string, any> = new Map<string, any>();
     static readonly registry: Map<string, string> = new Map<string, string>();
     static readonly fileSystem: FileSystem = new FileSystem();
+    static readonly isDevMode = process.env.NODE_ENV === "development";
+
+    static stdout: OutputProxy = new OutputProxy(process.stdout, false);
+    static stderr: OutputProxy = new OutputProxy(process.stderr, false);
 
     static sharedArray: Int32Array = new Int32Array(0);
     static displayEnabled: boolean = true;

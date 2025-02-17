@@ -6,7 +6,7 @@ import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 import { RoTimespan } from "./RoTimespan";
 import { AppData, AppExitReason, isAppData } from "../../common";
-import { BrsDevice } from "../../BrsDevice";
+import { BrsDevice } from "../../device/BrsDevice";
 
 export class RoAppManager extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -215,7 +215,7 @@ export class RoAppManager extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (
-            interpreter: Interpreter,
+            _: Interpreter,
             channelId: BrsString,
             version: BrsString,
             params: RoAssociativeArray
@@ -269,7 +269,7 @@ export class RoAppManager extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.Object,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_: Interpreter) => {
             const result = new RoArray([]);
             const appList = BrsDevice.deviceInfo.get("appList");
             if (appList instanceof Array) {

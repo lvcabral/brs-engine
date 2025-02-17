@@ -16,29 +16,27 @@ import {
     toAssociativeArray,
 } from "..";
 import { Interpreter } from "../../interpreter";
-import { validUri } from "../../FileSystem";
+import { validUri } from "../../device/FileSystem";
 import { download } from "../../interpreter/Network";
 import { RoTextureRequestEvent } from "../events/RoTextureRequestEvent";
 import { drawObjectToComponent } from "../interfaces/IfDraw2D";
 import { BrsHttpAgent, IfHttpAgent } from "../interfaces/IfHttpAgent";
 import { IfGetMessagePort, IfSetMessagePort } from "../interfaces/IfMessagePort";
-import { BrsDevice } from "../../BrsDevice";
+import { BrsDevice } from "../../device/BrsDevice";
 
 // Singleton instance of RoTextureManager
 let textureManager: RoTextureManager;
 
 export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpAgent {
     readonly kind = ValueKind.Object;
-    private readonly interpreter: Interpreter;
     readonly requests: Map<number, RoTextureRequest>;
     readonly textures: Map<string, ArrayBuffer>;
     readonly customHeaders: Map<string, string>;
     private port?: RoMessagePort;
     cookiesEnabled: boolean;
 
-    constructor(interpreter: Interpreter) {
+    constructor() {
         super("roTextureManager");
-        this.interpreter = interpreter;
         this.cookiesEnabled = false;
         this.requests = new Map<number, RoTextureRequest>();
         this.textures = new Map<string, ArrayBuffer>();
@@ -88,14 +86,14 @@ export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpA
 
     private createEvent(request: RoTextureRequest) {
         const texture = this.loadTexture(request);
-        let bitmap = texture ? new RoBitmap(this.interpreter, texture) : BrsInvalid.Instance;
+        let bitmap = texture ? new RoBitmap(texture) : BrsInvalid.Instance;
         if (bitmap instanceof RoBitmap && bitmap.isValid()) {
             if (
                 request.size &&
                 (request.size.width !== bitmap.width || request.size.height !== bitmap.height)
             ) {
                 const newDim = toAssociativeArray(request.size);
-                const newBmp = new RoBitmap(this.interpreter, newDim);
+                const newBmp = new RoBitmap(newDim);
                 const scaleX = request.size.width / bitmap.width;
                 const scaleY = request.size.height / bitmap.height;
                 const valid = drawObjectToComponent(
@@ -138,8 +136,8 @@ export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpA
             try {
                 return BrsDevice.fileSystem.readFileSync(request.uri);
             } catch (err: any) {
-                if (this.interpreter.isDevMode) {
-                    this.interpreter.stderr.write(
+                if (BrsDevice.isDevMode) {
+                    BrsDevice.stderr.write(
                         `warning,[roTextureManager] Error requesting texture ${request.uri}: ${err.message}`
                     );
                 }
@@ -159,9 +157,7 @@ export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpA
                 return Uninitialized.Instance;
             }
             if (!validUri(req.uri)) {
-                this.interpreter.stderr.write(
-                    `warning,*** ERROR: Missing or invalid PHY: '${req.uri}'`
-                );
+                BrsDevice.stderr.write(`warning,*** ERROR: Missing or invalid PHY: '${req.uri}'`);
                 req.state = RequestState.Failed;
                 this.port?.pushMessage(new RoTextureRequestEvent(req, BrsInvalid.Instance));
             } else if (req.async) {
@@ -211,9 +207,9 @@ export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpA
 }
 
 // Function to get the singleton instance of RoTextureManager
-export function getTextureManager(interpreter: Interpreter): RoTextureManager {
+export function getTextureManager(): RoTextureManager {
     if (!textureManager) {
-        textureManager = new RoTextureManager(interpreter);
+        textureManager = new RoTextureManager();
     }
     return textureManager;
 }

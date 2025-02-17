@@ -6,6 +6,7 @@ import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 import { RoArray } from "./RoArray";
 import { IfEnum } from "../interfaces/IfEnum";
+import { BrsDevice } from "../../device/BrsDevice";
 
 /** A member of an `AssociativeArray` in BrightScript. */
 export interface AAMember {
@@ -37,15 +38,15 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
             ifAssociativeArray: [
                 this.clear,
                 this.delete,
-                this.addreplace,
+                this.addReplace,
                 this.count,
-                this.doesexist,
+                this.doesExist,
                 this.append,
                 this.keys,
                 this.items,
                 this.lookup,
                 this.lookupCI,
-                this.setmodecasesensitive,
+                this.setModeCaseSensitive,
             ],
             ifEnum: [ifEnum.isEmpty, ifEnum.isNext, ifEnum.next, ifEnum.reset],
         });
@@ -247,7 +248,7 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
     /** Given a key and value, adds an item to the associative array if it doesn't exist
      * Or replaces the value of a key that already exists in the associative array
      */
-    private readonly addreplace = new Callable("addreplace", {
+    private readonly addReplace = new Callable("addReplace", {
         signature: {
             args: [
                 new StdlibArgument("key", ValueKind.String),
@@ -274,7 +275,7 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
     });
 
     /** Returns a boolean indicating whether or not a given key exists in the associative array */
-    private readonly doesexist = new Callable("doesexist", {
+    private readonly doesExist = new Callable("doesExist", {
         signature: {
             args: [new StdlibArgument("str", ValueKind.String)],
             returns: ValueKind.Boolean,
@@ -293,7 +294,7 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
         },
         impl: (interpreter: Interpreter, obj: BrsComponent) => {
             if (!(obj instanceof RoAssociativeArray)) {
-                interpreter.stderr.write(
+                BrsDevice.stderr.write(
                     `warning,BRIGHTSCRIPT: ERROR: roAssociativeArray.Append: invalid parameter type ${obj.getComponentName()}: ${interpreter.formatLocation()}`
                 );
                 return BrsInvalid.Instance;
@@ -368,7 +369,7 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
     });
 
     /** Changes the sensitive case method for lookups */
-    private readonly setmodecasesensitive = new Callable("setModeCaseSensitive", {
+    private readonly setModeCaseSensitive = new Callable("setModeCaseSensitive", {
         signature: {
             args: [],
             returns: ValueKind.Void,
