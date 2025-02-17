@@ -344,9 +344,6 @@ export async function executeFile(
     let interpreter: Interpreter;
     if (components.size > 0) {
         interpreter = await getInterpreterWithSubEnvs(components, payload.manifest, options);
-        if (payload.tasksBuffer) {
-            interpreter.setTasksBuffer(payload.tasksBuffer);
-        }
     } else {
         interpreter = new Interpreter(options);
     }
@@ -412,7 +409,7 @@ export async function executeTask(
         payload.taskData.name,
         payload.taskData.m.top.functionname
     );
-    interpreter.execTask(payload.taskData);
+    interpreter.execTask(payload);
     const result = { exitReason: AppExitReason.FINISHED };
     postMessage(`end,${result.exitReason}`);
     return result;

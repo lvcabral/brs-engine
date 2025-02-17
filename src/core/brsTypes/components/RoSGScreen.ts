@@ -7,7 +7,6 @@ import {
     SGNodeType,
     BrsType,
     createNodeByType,
-    rootObjects,
     RoFontRegistry,
     RoMessagePort,
     Scene,
@@ -16,6 +15,8 @@ import {
     Font,
     getFontRegistry,
     getTextureManager,
+    brsValueOf,
+    rootObjects,
 } from "..";
 import { IfGetMessagePort, IfSetMessagePort } from "../interfaces/IfMessagePort";
 import { RoSGScreenEvent } from "../events/RoSGScreenEvent";
@@ -33,7 +34,7 @@ import {
     rgbaIntToHex,
 } from "../interfaces/IfDraw2D";
 import { BrsDevice } from "../../BrsDevice";
-import { KeyEvent } from "../../common";
+import { KeyEvent, TaskUpdate } from "../../common";
 
 // Roku Remote Mapping
 const rokuKeys: Map<number, string> = new Map([
@@ -216,11 +217,22 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
                 this.finishDraw();
                 this.lastMessage = timeStamp;
             }
-            if (rootObjects.rootScene.processTasks(this.interpreter)) {
+            if (this.processTasks()) {
                 this.isDirty = true;
             }
         }
         return events;
+    }
+
+    private processTasks() {
+        let updates = false;
+        rootObjects.tasks.forEach((task) => {
+            updates = task.updateTask();
+            if (task.active) {
+                task.checkTask();
+            }
+        });
+        return updates;
     }
 
     /** Handle control keys */

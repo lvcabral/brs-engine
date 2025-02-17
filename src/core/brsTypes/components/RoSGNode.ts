@@ -12,29 +12,26 @@ import {
     AAMember,
     BrsType,
     RoMessagePort,
-    Scene,
     Timer,
     Int32,
     RoArray,
     RoAssociativeArray,
     toAssociativeArray,
+    BrsEvent,
+    Scene,
     Task,
-    brsValueOf,
 } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Stmt } from "../../parser";
 import { Interpreter } from "../../interpreter";
 import { generateArgumentMismatchError } from "../../interpreter/ArgumentMismatch";
-import { ComponentDefinition, ComponentNode } from "../../scenegraph";
 import { BoundingRect } from "../../scenegraph/SGUtil";
-import { isSGNodeType, SGNodeFactory, SGNodeType } from "../../scenegraph/SGNodeFactory";
+import { createNodeByType, isSubtypeCheck, subtypeHierarchy } from "../../scenegraph/SGNodeFactory";
 import { Field, FieldKind, FieldModel } from "../nodes/Field";
 import { IfDraw2D } from "../interfaces/IfDraw2D";
-import { TaskData, TaskUpdate } from "../../common";
 
 export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     readonly kind = ValueKind.Object;
-    private lastTaskBuffer = -1;
     protected fields = new Map<string, Field>();
     protected children: RoSGNode[] = [];
     protected parent: RoSGNode | BrsInvalid = BrsInvalid.Instance;
@@ -282,26 +279,6 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         return false;
     }
 
-    processTasks(interpreter: Interpreter) {
-        let updates = false;
-        let taskUpdate: TaskUpdate | null = null;
-        let currentVersion = interpreter.tasksBuffer?.getVersion() ?? -1;
-        if (interpreter.tasksBuffer && currentVersion !== this.lastTaskBuffer) {
-            this.lastTaskBuffer = currentVersion;
-            taskUpdate = interpreter.tasksBuffer?.load();
-        }
-        rootObjects.tasks.forEach((task) => {
-            if (taskUpdate && taskUpdate.id === task.id) {
-                task.set(new BrsString(taskUpdate.field), brsValueOf(taskUpdate.value));
-                updates = true;
-            }
-            if (task.active) {
-                task.checkTask(interpreter);
-            }
-        });
-        return updates;
-    }
-
     processTimers(fired: boolean = false) {
         this.children.forEach((child) => {
             if (child instanceof Timer && child.active && child.checkFire()) {
@@ -322,6 +299,52 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         this.children.forEach((node) => {
             node.renderNode(interpreter, origin, angle, draw2D);
         });
+    }
+
+    addObserver(
+        interpreter: Interpreter,
+        scope: "permanent" | "scoped" | "unscoped",
+        fieldName: BrsString,
+        funcOrPort: BrsString | RoMessagePort,
+        infoFields?: RoArray
+    ) {
+        let result = BrsBoolean.False;
+        const field = this.fields.get(fieldName.value.toLowerCase());
+        if (field instanceof Field) {
+            let callableOrPort: Callable | RoMessagePort | BrsInvalid = BrsInvalid.Instance;
+            if (funcOrPort instanceof BrsString) {
+                callableOrPort = interpreter.getCallableFunction(funcOrPort.value);
+            } else if (funcOrPort instanceof RoMessagePort) {
+                callableOrPort = funcOrPort;
+                funcOrPort.registerCallback(this.getComponentName(), this.getNewEvents.bind(this));
+            }
+            const subscriber = interpreter.environment.hostNode;
+            if (!subscriber) {
+                const location = interpreter.formatLocation();
+                interpreter.stderr.write(
+                    `warning,BRIGHTSCRIPT: ERROR: roSGNode.ObserveField: no active host node: ${location}`
+                );
+            } else if (!(callableOrPort instanceof BrsInvalid)) {
+                field.addObserver(
+                    scope,
+                    interpreter,
+                    callableOrPort,
+                    subscriber,
+                    this,
+                    fieldName,
+                    infoFields
+                );
+                result = BrsBoolean.True;
+            }
+        }
+        return result;
+    }
+
+    /** Message callback to handle observed fields with message port */
+    protected getNewEvents() {
+        const events: BrsEvent[] = [];
+        // To be overridden by the Task class
+        return events;
     }
 
     /* searches the node tree for a node with the given id */
@@ -492,7 +515,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     /**
      * Calls the function specified on this node.
      */
-    private callFunc = new Callable(
+    private readonly callFunc = new Callable(
         "callFunc",
         ...Callable.variadic({
             signature: {
@@ -581,7 +604,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
 
     /** Removes all fields from the node */
     // ToDo: Built-in fields shouldn't be removed
-    private clear = new Callable("clear", {
+    private readonly clear = new Callable("clear", {
         signature: {
             args: [],
             returns: ValueKind.Void,
@@ -594,7 +617,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
 
     /** Removes a given item from the node */
     // ToDo: Built-in fields shouldn't be removed
-    private delete = new Callable("delete", {
+    private readonly delete = new Callable("delete", {
         signature: {
             args: [new StdlibArgument("str", ValueKind.String)],
             returns: ValueKind.Boolean,
@@ -608,7 +631,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     /** Given a key and value, adds an item to the node if it doesn't exist
      * Or replaces the value of a key that already exists in the node
      */
-    private addReplace = new Callable("addReplace", {
+    private readonly addReplace = new Callable("addReplace", {
         signature: {
             args: [
                 new StdlibArgument("key", ValueKind.String),
@@ -634,7 +657,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Returns a boolean indicating whether or not a given key exists in the node */
-    private doesExist = new Callable("doesExist", {
+    private readonly doesExist = new Callable("doesExist", {
         signature: {
             args: [new StdlibArgument("str", ValueKind.String)],
             returns: ValueKind.Boolean,
@@ -645,7 +668,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Appends a new node to another. If two keys are the same, the value of the original AA is replaced with the new one. */
-    private append = new Callable("append", {
+    private readonly append = new Callable("append", {
         signature: {
             args: [new StdlibArgument("obj", ValueKind.Object)],
             returns: ValueKind.Void,
@@ -671,7 +694,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Returns an array of keys from the node in lexicographical order */
-    protected keys = new Callable("keys", {
+    protected readonly keys = new Callable("keys", {
         signature: {
             args: [],
             returns: ValueKind.Object,
@@ -682,7 +705,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Returns an array of key/value pairs in lexicographical order of key. */
-    protected items = new Callable("items", {
+    protected readonly items = new Callable("items", {
         signature: {
             args: [],
             returns: ValueKind.Object,
@@ -697,7 +720,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Given a key, returns the value associated with that key. This method is case insensitive. */
-    private lookup = new Callable("lookup", {
+    private readonly lookup = new Callable("lookup", {
         signature: {
             args: [new StdlibArgument("key", ValueKind.String)],
             returns: ValueKind.Dynamic,
@@ -709,10 +732,10 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Given a key, returns the value associated with that key. This method is case insensitive. */
-    private lookupCI = new Callable("lookupCI", this.lookup.signatures[0]);
+    private readonly lookupCI = new Callable("lookupCI", this.lookup.signatures[0]);
 
     /** Adds a new field to the node, if the field already exists it doesn't change the current value. */
-    private addField = new Callable("addField", {
+    private readonly addField = new Callable("addField", {
         signature: {
             args: [
                 new StdlibArgument("fieldName", ValueKind.String),
@@ -734,7 +757,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Adds one or more fields defined as an associative array of key values. */
-    private addFields = new Callable("addFields", {
+    private readonly addFields = new Callable("addFields", {
         signature: {
             args: [new StdlibArgument("fields", ValueKind.Object)],
             returns: ValueKind.Boolean,
@@ -756,7 +779,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Returns the value of the field passed as argument, if the field doesn't exist it returns invalid. */
-    private getField = new Callable("getField", {
+    private readonly getField = new Callable("getField", {
         signature: {
             args: [new StdlibArgument("fieldName", ValueKind.String)],
             returns: ValueKind.Dynamic,
@@ -767,7 +790,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Returns the names and values of all the fields in the node. */
-    private getFields = new Callable("getFields", {
+    private readonly getFields = new Callable("getFields", {
         signature: {
             args: [],
             returns: ValueKind.Object,
@@ -791,7 +814,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Returns true if the field exists */
-    protected hasField = new Callable("hasField", {
+    protected readonly hasField = new Callable("hasField", {
         signature: {
             args: [new StdlibArgument("fieldName", ValueKind.String)],
             returns: ValueKind.Boolean,
@@ -804,7 +827,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Registers a callback to be executed when the value of the field changes */
-    private observeField = new Callable(
+    private readonly observeField = new Callable(
         "observeField",
         {
             signature: {
@@ -818,33 +841,10 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             impl: (
                 interpreter: Interpreter,
                 fieldName: BrsString,
-                functionName: BrsString,
+                funcName: BrsString,
                 infoFields: RoArray
             ) => {
-                let result = BrsBoolean.False;
-                const field = this.fields.get(fieldName.value.toLowerCase());
-                if (field instanceof Field) {
-                    const callableFunction = interpreter.getCallableFunction(functionName.value);
-                    const subscriber = interpreter.environment.hostNode;
-                    if (!subscriber) {
-                        const location = interpreter.formatLocation();
-                        interpreter.stderr.write(
-                            `warning,BRIGHTSCRIPT: ERROR: roSGNode.ObserveField: no active host node: ${location}`
-                        );
-                    } else if (callableFunction instanceof Callable) {
-                        field.addObserver(
-                            "unscoped",
-                            interpreter,
-                            callableFunction,
-                            subscriber,
-                            this,
-                            fieldName,
-                            infoFields
-                        );
-                        result = BrsBoolean.True;
-                    }
-                }
-                return result;
+                return this.addObserver(interpreter, "unscoped", fieldName, funcName, infoFields);
             },
         },
         {
@@ -862,9 +862,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
                 port: RoMessagePort,
                 infoFields: RoArray
             ) => {
-                let result = BrsBoolean.False;
-                // TODO: Implement this signature
-                return result;
+                return this.addObserver(interpreter, "unscoped", fieldName, port, infoFields);
             },
         }
     );
@@ -872,7 +870,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     /**
      * Removes all observers of a given field, regardless of whether or not the host node is the subscriber.
      */
-    private unobserveField = new Callable("unobserveField", {
+    private readonly unobserveField = new Callable("unobserveField", {
         signature: {
             args: [new StdlibArgument("fieldName", ValueKind.String)],
             returns: ValueKind.Boolean,
@@ -895,45 +893,47 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         },
     });
 
-    private observeFieldScoped = new Callable("observeFieldSCoped", {
-        signature: {
-            args: [
-                new StdlibArgument("fieldName", ValueKind.String),
-                new StdlibArgument("functionName", ValueKind.String),
-            ],
-            returns: ValueKind.Boolean,
+    private readonly observeFieldScoped = new Callable(
+        "observeFieldScoped",
+        {
+            signature: {
+                args: [
+                    new StdlibArgument("fieldName", ValueKind.String),
+                    new StdlibArgument("functionName", ValueKind.String),
+                    new StdlibArgument("infoFields", ValueKind.Object, BrsInvalid.Instance),
+                ],
+                returns: ValueKind.Boolean,
+            },
+            impl: (
+                interpreter: Interpreter,
+                fieldName: BrsString,
+                funcName: BrsString,
+                infoFields: RoArray
+            ) => {
+                return this.addObserver(interpreter, "scoped", fieldName, funcName, infoFields);
+            },
         },
-        impl: (interpreter: Interpreter, fieldName: BrsString, functionName: BrsString) => {
-            let field = this.fields.get(fieldName.value.toLowerCase());
-            if (field instanceof Field) {
-                let callableFunction = interpreter.getCallableFunction(functionName.value);
-                let subscriber = interpreter.environment.hostNode;
-                if (!subscriber) {
-                    let location = interpreter.formatLocation();
-                    interpreter.stderr.write(
-                        `warning,BRIGHTSCRIPT: ERROR: roSGNode.ObserveField: no active host node: ${location}`
-                    );
-                    return BrsBoolean.False;
-                }
+        {
+            signature: {
+                args: [
+                    new StdlibArgument("fieldName", ValueKind.String),
+                    new StdlibArgument("port", ValueKind.Object),
+                    new StdlibArgument("infoFields", ValueKind.Object, BrsInvalid.Instance),
+                ],
+                returns: ValueKind.Boolean,
+            },
+            impl: (
+                interpreter: Interpreter,
+                fieldName: BrsString,
+                port: RoMessagePort,
+                infoFields: RoArray
+            ) => {
+                return this.addObserver(interpreter, "scoped", fieldName, port, infoFields);
+            },
+        }
+    );
 
-                if (callableFunction instanceof Callable && subscriber) {
-                    field.addObserver(
-                        "scoped",
-                        interpreter,
-                        callableFunction,
-                        subscriber,
-                        this,
-                        fieldName
-                    );
-                } else {
-                    return BrsBoolean.False;
-                }
-            }
-            return BrsBoolean.True;
-        },
-    });
-
-    private unobserveFieldScoped = new Callable("unobserveFieldScoped", {
+    private readonly unobserveFieldScoped = new Callable("unobserveFieldScoped", {
         signature: {
             args: [new StdlibArgument("fieldName", ValueKind.String)],
             returns: ValueKind.Boolean,
@@ -958,7 +958,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
 
     /** Removes the given field from the node */
     /** TODO: node built-in fields shouldn't be removable (i.e. id, change, focusable,) */
-    private removeField = new Callable("removeField", {
+    private readonly removeField = new Callable("removeField", {
         signature: {
             args: [new StdlibArgument("fieldName", ValueKind.String)],
             returns: ValueKind.Boolean,
@@ -970,7 +970,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Updates the value of an existing field only if the types match. */
-    private setField = new Callable("setField", {
+    private readonly setField = new Callable("setField", {
         signature: {
             args: [
                 new StdlibArgument("fieldName", ValueKind.String),
@@ -994,7 +994,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Updates the value of multiple existing field only if the types match. */
-    private setFields = new Callable("setFields", {
+    private readonly setFields = new Callable("setFields", {
         signature: {
             args: [new StdlibArgument("fields", ValueKind.Object)],
             returns: ValueKind.Boolean,
@@ -1017,7 +1017,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
 
     /* Updates the value of multiple existing field only if the types match.
     In contrast to setFields method, update always return Uninitialized */
-    private update = new Callable("update", {
+    private readonly update = new Callable("update", {
         signature: {
             args: [
                 new StdlibArgument("aa", ValueKind.Object),
@@ -1043,7 +1043,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
 
     /* Return the current number of children in the subject node list of children.
     This is always a non-negative number. */
-    private getChildCount = new Callable("getChildCount", {
+    private readonly getChildCount = new Callable("getChildCount", {
         signature: {
             args: [],
             returns: ValueKind.Int32,
@@ -1055,7 +1055,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
 
     /* Adds a child node to the end of the subject node list of children so that it is
     traversed last (of those children) during render. */
-    private appendChild = new Callable("appendChild", {
+    private readonly appendChild = new Callable("appendChild", {
         signature: {
             args: [new StdlibArgument("child", ValueKind.Dynamic)],
             returns: ValueKind.Boolean,
@@ -1068,7 +1068,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     /* Retrieves the number of child nodes specified by num_children from the subject
     node, starting at the position specified by index. Returns an array of the child nodes
     retrieved. If num_children is -1, return all the children. */
-    private getChildren = new Callable("getChildren", {
+    private readonly getChildren = new Callable("getChildren", {
         signature: {
             args: [
                 new StdlibArgument("num_children", ValueKind.Int32),
@@ -1099,7 +1099,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     remove it from the list of children. The match is made on the basis of actual
     object identity, that is, the value of the pointer to the child node.
     return false if trying to remove anything that's not a node */
-    private removeChild = new Callable("removeChild", {
+    private readonly removeChild = new Callable("removeChild", {
         signature: {
             args: [new StdlibArgument("child", ValueKind.Dynamic)],
             returns: ValueKind.Boolean,
@@ -1110,7 +1110,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     });
     /* If the subject node has been added to a parent node list of children,
     return the parent node, otherwise return invalid.*/
-    private getParent = new Callable("getParent", {
+    private readonly getParent = new Callable("getParent", {
         signature: {
             args: [],
             returns: ValueKind.Dynamic,
@@ -1122,7 +1122,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
 
     /* Creates a child node of type nodeType, and adds the new node to the end of the
     subject node list of children */
-    private createChild = new Callable("createChild", {
+    private readonly createChild = new Callable("createChild", {
         signature: {
             args: [new StdlibArgument("nodeType", ValueKind.String)],
             returns: ValueKind.Object,
@@ -1142,7 +1142,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
      * node with the newChild node in the subject node list of children, otherwise do nothing.
      */
 
-    private replaceChild = new Callable("replaceChild", {
+    private readonly replaceChild = new Callable("replaceChild", {
         signature: {
             args: [
                 new StdlibArgument("newChild", ValueKind.Dynamic),
@@ -1159,7 +1159,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
      * Removes the child nodes specified by child_nodes from the subject node. Returns
      * true if the child nodes were successfully removed.
      */
-    private removeChildren = new Callable("removeChildren", {
+    private readonly removeChildren = new Callable("removeChildren", {
         signature: {
             args: [new StdlibArgument("child_nodes", ValueKind.Dynamic)],
             returns: ValueKind.Boolean,
@@ -1182,7 +1182,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
      * Removes the number of child nodes specified by num_children from the subject node
      * starting at the position specified by index.
      */
-    private removeChildrenIndex = new Callable("removeChildrenIndex", {
+    private readonly removeChildrenIndex = new Callable("removeChildrenIndex", {
         signature: {
             args: [
                 new StdlibArgument("num_children", ValueKind.Int32),
@@ -1209,7 +1209,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
      * If the subject node has a child node at the index position, return it, otherwise
      * return invalid.
      */
-    private getChild = new Callable("getChild", {
+    private readonly getChild = new Callable("getChild", {
         signature: {
             args: [new StdlibArgument("index", ValueKind.Int32)],
             returns: ValueKind.Dynamic,
@@ -1228,7 +1228,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     /**
      * Appends the nodes specified by child_nodes to the subject node.
      */
-    private appendChildren = new Callable("appendChildren", {
+    private readonly appendChildren = new Callable("appendChildren", {
         signature: {
             args: [new StdlibArgument("child_nodes", ValueKind.Dynamic)],
             returns: ValueKind.Boolean,
@@ -1254,7 +1254,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     /** Creates the number of children specified by num_children for the subject node,
      *  of the type or extended type specified by subtype.
      */
-    private createChildren = new Callable("createChildren", {
+    private readonly createChildren = new Callable("createChildren", {
         signature: {
             args: [
                 new StdlibArgument("num_children", ValueKind.Int32),
@@ -1280,7 +1280,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     /** Replaces the child nodes in the subject node, starting at the position specified
      *  by index, with new child nodes specified by child_nodes.
      */
-    private replaceChildren = new Callable("replaceChildren", {
+    private readonly replaceChildren = new Callable("replaceChildren", {
         signature: {
             args: [
                 new StdlibArgument("child_nodes", ValueKind.Dynamic),
@@ -1310,7 +1310,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
      * Inserts the child nodes specified by child_nodes to the subject node starting
      * at the position specified by index.
      */
-    private insertChildren = new Callable("insertChildren", {
+    private readonly insertChildren = new Callable("insertChildren", {
         signature: {
             args: [
                 new StdlibArgument("child_nodes", ValueKind.Dynamic),
@@ -1339,7 +1339,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
      * node list of children, so that this is the position that the new child node
      * is traversed during render.
      */
-    private insertChild = new Callable("insertChild", {
+    private readonly insertChild = new Callable("insertChild", {
         signature: {
             args: [
                 new StdlibArgument("child", ValueKind.Dynamic),
@@ -1356,7 +1356,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
      * If the subject node has a child node in the index position, remove that child
      * node from the subject node list of children.
      */
-    private removeChildIndex = new Callable("removeChildIndex", {
+    private readonly removeChildIndex = new Callable("removeChildIndex", {
         signature: {
             args: [new StdlibArgument("index", ValueKind.Int32)],
             returns: ValueKind.Boolean,
@@ -1383,7 +1383,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
      * transformation factor fields, in which case, the re-parenting operation could cause the node to jump to a
      * new position on the screen.
      */
-    private reparent = new Callable("reparent", {
+    private readonly reparent = new Callable("reparent", {
         signature: {
             args: [
                 new StdlibArgument("newParent", ValueKind.Dynamic),
@@ -1410,7 +1410,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /* Returns true if the subject node has the remote control focus, and false otherwise */
-    private hasFocus = new Callable("hasFocus", {
+    private readonly hasFocus = new Callable("hasFocus", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -1421,7 +1421,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /* Returns the Node bounding rectangle */
-    private boundingRect = new Callable("boundingRect", {
+    private readonly boundingRect = new Callable("boundingRect", {
         signature: {
             args: [],
             returns: ValueKind.Dynamic,
@@ -1434,7 +1434,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /* Returns the Node local bounding rectangle */
-    private localBoundingRect = new Callable("localBoundingRect", {
+    private readonly localBoundingRect = new Callable("localBoundingRect", {
         signature: {
             args: [],
             returns: ValueKind.Dynamic,
@@ -1447,7 +1447,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /* Returns the bounding rectangle for scene components. */
-    private sceneBoundingRect = new Callable("sceneBoundingRect", {
+    private readonly sceneBoundingRect = new Callable("sceneBoundingRect", {
         signature: {
             args: [],
             returns: ValueKind.Dynamic,
@@ -1467,7 +1467,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
      *  It also runs through all of the ancestors of the node that was focused prior to this call,
      *  and the newly focused node, and sets the `focusedChild` field of each to reflect the new state.
      */
-    private setFocus = new Callable("setFocus", {
+    private readonly setFocus = new Callable("setFocus", {
         signature: {
             args: [new StdlibArgument("on", ValueKind.Boolean)],
             returns: ValueKind.Boolean,
@@ -1535,7 +1535,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
      *  Returns true if the subject node or any of its descendants in the SceneGraph node tree
      *  has remote control focus
      */
-    private isInFocusChain = new Callable("isInFocusChain", {
+    private readonly isInFocusChain = new Callable("isInFocusChain", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -1553,7 +1553,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     /* Returns the node that is a descendant of the nearest component ancestor of the subject node whose id field matches the given name,
         otherwise return invalid.
         Implemented as a DFS from the top of parent hierarchy to match the observed behavior as opposed to the BFS mentioned in the docs. */
-    private findNode = new Callable("findNode", {
+    private readonly findNode = new Callable("findNode", {
         signature: {
             args: [new StdlibArgument("name", ValueKind.String)],
             returns: ValueKind.Dynamic,
@@ -1578,7 +1578,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
      *
      *
      */
-    private isSubtype = new Callable("isSubtype", {
+    private readonly isSubtype = new Callable("isSubtype", {
         signature: {
             args: [new StdlibArgument("nodeType", ValueKind.String)],
             returns: ValueKind.Boolean,
@@ -1591,7 +1591,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     /* Checks whether the subtype of the subject node is a descendant of the subtype nodeType
      * in the SceneGraph node class hierarchy.
      */
-    private parentSubtype = new Callable("parentSubtype", {
+    private readonly parentSubtype = new Callable("parentSubtype", {
         signature: {
             args: [new StdlibArgument("nodeType", ValueKind.String)],
             returns: ValueKind.Object,
@@ -1607,7 +1607,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
 
     /* Returns a Boolean value indicating whether the roSGNode parameter
             refers to the same node object as this node */
-    private isSameNode = new Callable("isSameNode", {
+    private readonly isSameNode = new Callable("isSameNode", {
         signature: {
             args: [new StdlibArgument("roSGNode", ValueKind.Dynamic)],
             returns: ValueKind.Boolean,
@@ -1618,7 +1618,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /* Returns the subtype of this node as specified when it was created */
-    private subtype = new Callable("subtype", {
+    private readonly subtype = new Callable("subtype", {
         signature: {
             args: [],
             returns: ValueKind.String,
@@ -1629,7 +1629,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /* Returns the node's root Scene. This returns a valid Scene even if the node is not parented. */
-    private getScene = new Callable("getScene", {
+    private readonly getScene = new Callable("getScene", {
         signature: {
             args: [],
             returns: ValueKind.Object,
@@ -1639,7 +1639,6 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         },
     });
 }
-
 // An object that holds the Node that represents the m.global, referenced by all other nodes and the root Scene.
 interface RootObjects {
     mGlobal: RoSGNode;
@@ -1647,327 +1646,3 @@ interface RootObjects {
     tasks: Task[];
 }
 export const rootObjects: RootObjects = { mGlobal: new RoSGNode([]), tasks: [] };
-
-export function createNodeByType(interpreter: Interpreter, type: BrsString): RoSGNode | BrsInvalid {
-    // If this is a built-in node component, then return it.
-    let node = SGNodeFactory.createNode(type.value as SGNodeType) ?? BrsInvalid.Instance;
-    if (node instanceof BrsInvalid) {
-        let typeDef = interpreter.environment.nodeDefMap.get(type.value.toLowerCase());
-        if (typeDef) {
-            if (typeDef.extends === SGNodeType.Scene) {
-                node = new Scene([], type.value);
-            } else {
-                node = initializeNode(interpreter, type, typeDef);
-            }
-        } else {
-            interpreter.stderr.write(
-                `warning,BRIGHTSCRIPT: ERROR: roSGNode: Failed to create roSGNode with type ${
-                    type.value
-                }: ${interpreter.formatLocation()}`
-            );
-        }
-    }
-    if (node instanceof Task) {
-        node.id = rootObjects.tasks.length;
-        rootObjects.tasks.push(node);
-    }
-    return node;
-}
-
-export function initializeNode(
-    interpreter: Interpreter,
-    type: BrsString,
-    typeDef?: ComponentDefinition,
-    node?: RoSGNode
-) {
-    if (typeDef) {
-        //use typeDef object to tack on all the bells & whistles of a custom node
-        let typeDefStack: ComponentDefinition[] = [];
-        let currentEnv = typeDef.environment?.createSubEnvironment();
-
-        // Adding all component extensions to the stack to call init methods
-        // in the correct order.
-        typeDefStack.push(typeDef);
-        while (typeDef) {
-            // Add the current typedef to the subtypeHierarchy
-            subtypeHierarchy.set(typeDef.name!.toLowerCase(), typeDef.extends || SGNodeType.Node);
-
-            typeDef = interpreter.environment.nodeDefMap.get(typeDef.extends?.toLowerCase());
-            if (typeDef) typeDefStack.push(typeDef);
-        }
-
-        // Start from the "basemost" component of the tree.
-        typeDef = typeDefStack.pop();
-
-        // If not already created, create the node.
-        if (!node) {
-            // If this extends a built-in node component, create it.
-            node = SGNodeFactory.createNode(typeDef!.extends as SGNodeType, type.value);
-        }
-        // Default to Node as parent.
-        if (!node) {
-            node = new RoSGNode([], type.value);
-        }
-        let mPointer = new RoAssociativeArray([]);
-        currentEnv?.setM(new RoAssociativeArray([]));
-
-        // Add children, fields and call each init method starting from the
-        // "basemost" component of the tree.
-        while (typeDef) {
-            let init: BrsType;
-
-            interpreter.inSubEnv((subInterpreter) => {
-                addChildren(subInterpreter, node!, typeDef!);
-                addFields(subInterpreter, node!, typeDef!);
-                return BrsInvalid.Instance;
-            }, currentEnv);
-
-            // Pre-render default state of the tree.
-            if (node instanceof Scene) {
-                node.renderNode(interpreter, [0, 0], 0);
-            }
-
-            interpreter.inSubEnv((subInterpreter) => {
-                init = subInterpreter.getCallableFunction("init");
-                return BrsInvalid.Instance;
-            }, typeDef.environment);
-
-            interpreter.inSubEnv((subInterpreter) => {
-                subInterpreter.environment.hostNode = node;
-
-                mPointer.set(new BrsString("top"), node!);
-                mPointer.set(new BrsString("global"), rootObjects.mGlobal);
-                subInterpreter.environment.setM(mPointer);
-                subInterpreter.environment.setRootM(mPointer);
-                node!.m = mPointer;
-                if (init instanceof Callable) {
-                    init.call(subInterpreter);
-                }
-                return BrsInvalid.Instance;
-            }, currentEnv);
-
-            typeDef = typeDefStack.pop();
-        }
-        return node;
-    } else {
-        interpreter.stderr.write(
-            `warning,BRIGHTSCRIPT: ERROR: roSGNode: Failed to initialize roSGNode with type ${
-                type.value
-            }: ${interpreter.formatLocation()}`
-        );
-        return BrsInvalid.Instance;
-    }
-}
-
-export function initializeTask(interpreter: Interpreter, taskData: TaskData) {
-    const type = taskData.name;
-    let typeDef = interpreter.environment.nodeDefMap.get(type.toLowerCase());
-    if (typeDef) {
-        //use typeDef object to tack on all the bells & whistles of a custom node
-        let typeDefStack: ComponentDefinition[] = [];
-        let currentEnv = typeDef.environment?.createSubEnvironment();
-
-        // Adding all component extensions to the stack to call init methods
-        // in the correct order.
-        typeDefStack.push(typeDef);
-        while (typeDef) {
-            // Add the current typedef to the subtypeHierarchy
-            subtypeHierarchy.set(typeDef.name!.toLowerCase(), typeDef.extends || SGNodeType.Task);
-
-            typeDef = interpreter.environment.nodeDefMap.get(typeDef.extends?.toLowerCase());
-            if (typeDef) typeDefStack.push(typeDef);
-        }
-
-        // Start from the "basemost" component of the tree.
-        typeDef = typeDefStack.pop();
-
-        // Create the node.
-        let node =
-            SGNodeFactory.createNode(typeDef!.extends as SGNodeType, type) || new Task([], type);
-        let mPointer = new RoAssociativeArray([]);
-        currentEnv?.setM(new RoAssociativeArray([]));
-
-        // Add children and fields starting from the "basemost" component of the tree.
-        while (typeDef) {
-            interpreter.inSubEnv((subInterpreter) => {
-                addChildren(subInterpreter, node!, typeDef!);
-                addFields(subInterpreter, node!, typeDef!);
-                return BrsInvalid.Instance;
-            }, currentEnv);
-
-            interpreter.inSubEnv((subInterpreter) => {
-                subInterpreter.environment.hostNode = node;
-
-                mPointer.set(new BrsString("top"), node!);
-                mPointer.set(new BrsString("global"), rootObjects.mGlobal);
-                subInterpreter.environment.setM(mPointer);
-                subInterpreter.environment.setRootM(mPointer);
-                node!.m = mPointer;
-                return BrsInvalid.Instance;
-            }, currentEnv);
-
-            typeDef = typeDefStack.pop();
-        }
-        // Load the task data into the node
-        if (node instanceof Task) {
-            node.id = taskData.id;
-            node.thread = true;
-        }
-        if (taskData.m?.global) {
-            for (let [key, value] of Object.entries(taskData.m.global)) {
-                rootObjects.mGlobal.setFieldValue(key, brsValueOf(value));
-            }
-        }
-        if (taskData.m?.top) {
-            for (let [key, value] of Object.entries(taskData.m.top)) {
-                node.setFieldValue(key, brsValueOf(value));
-            }
-        }
-        if (taskData.m) {
-            for (let [key, value] of Object.entries(taskData.m)) {
-                if (key === "global" || key === "top") {
-                    continue;
-                }
-                node.m.set(new BrsString(key), brsValueOf(value));
-            }
-        }
-        return node;
-    } else {
-        interpreter.stderr.write(
-            `warning,BRIGHTSCRIPT: ERROR: roSGNode: Failed to initialize Task with type ${type}: ${interpreter.formatLocation()}`
-        );
-        return BrsInvalid.Instance;
-    }
-}
-
-function addFields(interpreter: Interpreter, node: RoSGNode, typeDef: ComponentDefinition) {
-    let fields = typeDef.fields;
-    for (let [key, value] of Object.entries(fields)) {
-        if (value instanceof Object) {
-            // Roku throws a run-time error if any fields are duplicated between inherited components.
-            // TODO: throw exception when fields are duplicated.
-            let fieldName = new BrsString(key);
-
-            let addField = node.getMethod("addField");
-            if (addField) {
-                addField.call(
-                    interpreter,
-                    fieldName,
-                    new BrsString(value.type),
-                    BrsBoolean.from(value.alwaysNotify === "true")
-                );
-            }
-
-            // set default value if it was specified in xml
-            let setField = node.getMethod("setField");
-            if (setField && value.value) {
-                setField.call(
-                    interpreter,
-                    fieldName,
-                    getBrsValueFromFieldType(value.type, value.value)
-                );
-            }
-
-            // Add the onChange callback if it exists.
-            if (value.onChange) {
-                let field = node.getNodeFields().get(fieldName.value.toLowerCase());
-                let callableFunction = interpreter.getCallableFunction(value.onChange);
-                if (callableFunction instanceof Callable && field) {
-                    // observers set via `onChange` can never be removed, despite RBI's documentation claiming
-                    // that "[i]t is equivalent to calling the ifSGNodeField observeField() method".
-                    field.addObserver(
-                        "permanent",
-                        interpreter,
-                        callableFunction,
-                        node,
-                        node,
-                        fieldName
-                    );
-                }
-            }
-        }
-    }
-}
-
-function addChildren(
-    interpreter: Interpreter,
-    node: RoSGNode,
-    typeDef: ComponentDefinition | ComponentNode
-) {
-    const children = typeDef.children;
-    const appendChild = node.getMethod("appendchild");
-
-    for (let child of children) {
-        const newChild = createNodeByType(interpreter, new BrsString(child.name));
-        if (newChild instanceof RoSGNode) {
-            const setField = newChild.getMethod("setfield");
-            if (setField) {
-                const nodeFields = newChild.getNodeFields();
-                for (let [key, value] of Object.entries(child.fields)) {
-                    const field = nodeFields.get(key.toLowerCase());
-                    if (field) {
-                        setField.call(
-                            interpreter,
-                            new BrsString(key),
-                            // use the field type to construct the field value
-                            getBrsValueFromFieldType(field.getType(), value)
-                        );
-                    }
-                }
-            }
-            if (child.fields?.role) {
-                const targetField = child.fields.role;
-                if (node.getNodeFields().get(targetField)) {
-                    node.set(new BrsString(targetField), newChild);
-                } else {
-                    throw new Error(
-                        `Role/Field ${targetField} does not exist in ${node.getId()} node`
-                    );
-                }
-            } else if (appendChild) {
-                appendChild.call(interpreter, newChild);
-                if (child.children.length > 0) {
-                    // we need to add the child's own children
-                    addChildren(interpreter, newChild, child);
-                }
-            }
-        }
-    }
-}
-
-/* Hierarchy of all node Types. Used to discover if a current node is a subtype of another node */
-const subtypeHierarchy = new Map<string, string>();
-
-/**
- *  Checks the node sub type hierarchy to see if the current node is a sub component of the given node type
- *
- * @param {string} currentNodeType
- * @param {string} checkType
- * @returns {boolean}
- */
-function isSubtypeCheck(currentNodeType: string, checkType: string): boolean {
-    checkType = checkType.toLowerCase();
-    currentNodeType = currentNodeType.toLowerCase();
-    if (currentNodeType === checkType) {
-        return true;
-    }
-    let nextNodeType = subtypeHierarchy.get(currentNodeType);
-    if (nextNodeType == null) {
-        return false;
-    }
-    return isSubtypeCheck(nextNodeType, checkType);
-}
-
-export function getNodeType(subType: string) {
-    if (isSGNodeType(subType)) {
-        return subType;
-    }
-    let nextNodeType = subtypeHierarchy.get(subType.toLowerCase());
-    if (nextNodeType == null) {
-        return SGNodeType.Node;
-    } else if (isSGNodeType(nextNodeType)) {
-        return nextNodeType;
-    } else {
-        return getNodeType(nextNodeType);
-    }
-}

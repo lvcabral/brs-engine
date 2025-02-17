@@ -14,6 +14,7 @@ import {
     RoAssociativeArray,
     toAssociativeArray,
     RoSGNode,
+    RoMessagePort,
 } from "..";
 import { Callable } from "../Callable";
 import { Interpreter } from "../../interpreter";
@@ -24,7 +25,7 @@ interface BrsCallback {
     interpreter: Interpreter;
     environment: Environment;
     hostNode: RoSGNode;
-    callable: Callable;
+    callable: Callable | RoMessagePort;
     eventParams: {
         fieldName: BrsString;
         node: RoSGNode;
@@ -156,9 +157,11 @@ export class Field {
         return this.type;
     }
 
-    getValue(): BrsType {
+    getValue(unhide: boolean = true): BrsType {
         // Once a field is accessed, it is no longer hidden.
-        this.hidden = false;
+        if (unhide) {
+            this.hidden = false;
+        }
 
         return this.value;
     }
@@ -212,7 +215,7 @@ export class Field {
     addObserver(
         mode: "permanent" | "unscoped" | "scoped",
         interpreter: Interpreter,
-        callable: Callable,
+        callable: Callable | RoMessagePort,
         subscriber: RoSGNode,
         target: RoSGNode,
         fieldName: BrsString,
@@ -259,6 +262,16 @@ export class Field {
         );
     }
 
+    isPortObserved(hostNode: RoSGNode) {
+        return (
+            this.unscopedObservers.some((callback) => callback.callable instanceof RoMessagePort) ||
+            this.scopedObservers
+                .get(hostNode)
+                ?.some((callback) => callback.callable instanceof RoMessagePort) ||
+            false
+        );
+    }
+
     private executeCallbacks(callback: BrsCallback) {
         const { interpreter, callable, hostNode, environment, eventParams } = callback;
 
@@ -281,6 +294,11 @@ export class Field {
             this.value,
             infoFields
         );
+
+        if (callable instanceof RoMessagePort) {
+            callable.pushMessage(event);
+            return;
+        }
 
         interpreter.inSubEnv((subInterpreter) => {
             subInterpreter.environment.hostNode = hostNode;

@@ -55,7 +55,7 @@ import { generateArgumentMismatchError } from "./ArgumentMismatch";
 import { OutputProxy } from "./OutputProxy";
 import * as StdLib from "../stdlib";
 import Long from "long";
-import SharedObjectBuffer from "../shared";
+import SharedObject from "../SharedObject";
 import { Scope, Environment, NotFound } from "./Environment";
 import { toCallable } from "./BrsFunction";
 import { BlockEnd, GotoLabel } from "../parser/Statement";
@@ -66,7 +66,7 @@ import {
     defaultDeviceInfo,
     numberToHex,
     parseTextFile,
-    TaskData,
+    TaskPayload,
     TaskState,
 } from "../common";
 import { BrsDevice } from "../BrsDevice";
@@ -142,9 +142,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     /** The set of errors detected from executing an AST. */
     errors: (BrsError | RuntimeError)[] = [];
 
-    /** Array Buffer to Share the Tasks field updates across threads */
-    tasksBuffer?: SharedObjectBuffer;
-
     get environment() {
         return this._environment;
     }
@@ -195,11 +192,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 this._singleKeyEvents = value.trim() !== "1";
             }
         });
-    }
-
-    public setTasksBuffer(data: SharedArrayBuffer) {
-        this.tasksBuffer = new SharedObjectBuffer();
-        this.tasksBuffer.setBuffer(data);
     }
 
     /**
@@ -372,10 +364,14 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         return results;
     }
 
-    execTask(taskData: TaskData) {
+    execTask(payload: TaskPayload) {
+        const taskData = payload.taskData;
         const taskNode = initializeTask(this, taskData);
         const functionName = taskData.m?.top?.functionname;
         if (taskNode instanceof Task && functionName) {
+            if (taskData.buffer) {
+                taskNode.setTaskBuffer(taskData.buffer);
+            }
             const typeDef = this.environment.nodeDefMap.get(taskNode.nodeSubtype.toLowerCase());
             const taskEnv = typeDef?.environment;
             if (taskEnv) {

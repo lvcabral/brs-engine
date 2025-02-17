@@ -1,4 +1,4 @@
-import { BrsType } from "..";
+import { BrsType, createNodeByType } from "..";
 import { RoAppManager } from "./RoAppManager";
 import { RoAssociativeArray } from "./RoAssociativeArray";
 import { RoArray } from "./RoArray";
@@ -58,7 +58,6 @@ import { RoCECStatus } from "./RoCECStatus";
 import { RoSocketAddress } from "./RoSocketAddress";
 import { RoStreamSocket } from "./RoStreamSocket";
 import { RoHdmiStatus } from "./RoHdmiStatus";
-import { createNodeByType } from "./RoSGNode";
 import { RoSGScreen } from "./RoSGScreen";
 
 // Class to define a case-insensitive map of BrightScript objects.

@@ -40,9 +40,10 @@ import { RoHdmiStatusEvent } from "./events/RoHdmiStatusEvent";
 import { RoSGNodeEvent } from "./events/RoSGNodeEvent";
 import { RoSGScreenEvent } from "./events/RoSGScreenEvent";
 import { isUnboxable } from "./Boxing";
-import { getNodeType, RoSGNode } from "./components/RoSGNode";
+import { RoSGNode } from "./components/RoSGNode";
 import { Field } from "./nodes/Field";
-import { SGNodeFactory } from "../scenegraph/SGNodeFactory";
+import { getNodeType, SGNodeFactory } from "../scenegraph/SGNodeFactory";
+import { RoMessagePort } from "./components/RoMessagePort";
 
 export * from "./BrsType";
 export * from "./Int32";
@@ -405,20 +406,42 @@ export function brsValueOf(x: any): BrsType {
             }
             return x >= -3.4e38 && x <= 3.4e38 ? new Float(x) : new Double(x);
         case "object":
-            if (isBrsType(x)) {
-                return x;
-            } else if (Array.isArray(x)) {
-                return new RoArray(x.map(brsValueOf));
-            } else if (x["_node_"]) {
-                const node = x["_node_"].split(":");
-                if (node.length === 2) {
-                    return toNode(x, node[0], node[1]);
-                }
-            }
-            return toAssociativeArray(x);
+            return fromObject(x);
+        case "undefined":
+            return Uninitialized.Instance;
         default:
             throw new Error(`brsValueOf not implemented for: ${x} <${t}>`);
     }
+}
+
+/**
+ * Converts a JavaScript object to a BrsType.
+ * @param x The JavaScript object to convert.
+ * @returns A BrsType with the converted object or Invalid if the object is not transferable.
+ */
+function fromObject(x: any): BrsType {
+    if (isBrsType(x)) {
+        return x;
+    } else if (x === null) {
+        return BrsInvalid.Instance;
+    } else if (x instanceof Uint8Array) {
+        return new RoByteArray(x);
+    } else if (Array.isArray(x)) {
+        return new RoArray(x.map(brsValueOf));
+    } else if (x["_node_"]) {
+        const node = x["_node_"].split(":");
+        if (node.length === 2) {
+            return toNode(x, node[0], node[1]);
+        }
+        return BrsInvalid.Instance;
+    } else if (x["_component_"]) {
+        const component = x["_component_"];
+        if (component === "roMessagePort") {
+            return new RoMessagePort();
+        }
+        return BrsInvalid.Instance;
+    }
+    return toAssociativeArray(x);
 }
 
 /**
@@ -428,10 +451,10 @@ export function brsValueOf(x: any): BrsType {
  * @param subtype The subtype of the node.
  * @returns A RoSGNode with the converted fields.
  */
-export function toNode(x: any, type: string, subtype: string): RoSGNode {
+function toNode(x: any, type: string, subtype: string): RoSGNode {
     const node = SGNodeFactory.createNode(type, subtype) ?? new RoSGNode([], subtype);
     for (const key in x) {
-        if (key !== "_node_" && key !== "_children_") {
+        if (key !== "_node_" && key !== "_children_" && key !== "_observed_") {
             node.setFieldValue(key, brsValueOf(x[key]));
         }
     }
@@ -495,8 +518,10 @@ export function jsValueOf(x: BrsType): any {
                 return fromSGNode(x);
             } else if (x instanceof RoAssociativeArray) {
                 return fromAssociativeArray(x);
+            } else if (x instanceof BrsComponent) {
+                return { _component_: x.getComponentName() };
             }
-            return x.toString();
+            break;
         default:
             throw new Error(`jsValueOf not implemented for: ${x} <${x.kind}>`);
     }
@@ -510,16 +535,23 @@ export function jsValueOf(x: BrsType): any {
 export function fromSGNode(node: RoSGNode): FlexObject {
     const result: FlexObject = {};
     const fields = node.getNodeFields();
+    const observed: string[] = [];
 
     result["_node_"] = `${getNodeType(node.nodeSubtype)}:${node.nodeSubtype}`;
 
     fields.forEach((value: Field, key: string) => {
-        let fieldValue = value.getValue();
+        let fieldValue = value.getValue(false);
         if (isUnboxable(fieldValue)) {
             fieldValue = fieldValue.unbox();
         }
+        if (value.isPortObserved(node)) {
+            observed.push(key);
+        }
         result[key] = jsValueOf(fieldValue);
     });
+    if (observed.length) {
+        result["_observed_"] = observed;
+    }
 
     const children = node.getNodeChildren();
     if (children.length > 0) {

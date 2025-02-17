@@ -74,7 +74,7 @@ import {
     switchVideoState,
 } from "./video";
 import { subscribeControl, initControlModule, enableSendKeys, sendKey } from "./control";
-import SharedObjectBuffer from "../core/shared";
+import SharedObject from "../core/SharedObject";
 import packageInfo from "../../package.json";
 
 // Interpreter Library
@@ -122,8 +122,7 @@ let latestBandwidth: number = 0;
 let httpConnectLog: boolean = false;
 
 // App Shared Buffers
-const registryBuffer = new SharedObjectBuffer(registryInitialSize, registryMaxSize);
-let tasksBuffer: SharedObjectBuffer;
+const registryBuffer = new SharedObject(registryInitialSize, registryMaxSize);
 let sharedBuffer: ArrayBufferLike;
 let sharedArray: Int32Array;
 
@@ -252,7 +251,7 @@ export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any 
 
     // Force library download during initialization
     brsWorker = new Worker(brsWrkLib);
-    brsWorker.addEventListener("message", workerCallback);
+    brsWorker.addEventListener("message", mainCallback);
     brsWorker.postMessage("getVersion");
 }
 
@@ -416,13 +415,15 @@ export function debug(command: string): boolean {
 
 // Terminate and reset BrightScript interpreter
 function resetWorker() {
-    brsWorker.removeEventListener("message", workerCallback);
+    brsWorker.removeEventListener("message", mainCallback);
     brsWorker.terminate();
     tasks.forEach((worker) => {
         worker?.removeEventListener("message", taskCallback);
         worker?.terminate();
     });
     tasks.clear();
+    taskSyncFromMain.clear();
+    taskSyncToMain.clear();
     resetArray();
     resetSounds();
     resetVideo();
@@ -470,10 +471,8 @@ function runApp(payload: AppPayload) {
         updateAppList();
         updateMemoryInfo();
         brsWorker = new Worker(brsWrkLib);
-        brsWorker.addEventListener("message", workerCallback);
+        brsWorker.addEventListener("message", mainCallback);
         brsWorker.postMessage(sharedBuffer);
-        tasksBuffer = new SharedObjectBuffer();
-        payload.tasksBuffer = tasksBuffer.getBuffer();
         brsWorker.postMessage(payload);
         currentPayload = payload;
         enableSendKeys(true);
@@ -483,6 +482,8 @@ function runApp(payload: AppPayload) {
 }
 
 const tasks: Map<number, Worker> = new Map();
+const taskSyncFromMain: Map<number, SharedObject> = new Map();
+const taskSyncToMain: Map<number, SharedObject> = new Map();
 
 function runTask(taskData: TaskData) {
     if (tasks.has(taskData.id) || !taskData.m?.top?.functionname) {
@@ -494,6 +495,10 @@ function runTask(taskData: TaskData) {
     const taskWorker = new Worker(brsWrkLib);
     taskWorker.addEventListener("message", taskCallback);
     tasks.set(taskData.id, taskWorker);
+    if (!taskSyncFromMain.has(taskData.id)) {
+        taskSyncFromMain.set(taskData.id, new SharedObject());
+    }
+    taskData.buffer = taskSyncFromMain.get(taskData.id)?.getBuffer();
     const taskPayload: TaskPayload = {
         device: currentPayload.device,
         manifest: currentPayload.manifest,
@@ -512,6 +517,8 @@ function endTask(taskId: number) {
         taskWorker.removeEventListener("message", taskCallback);
         taskWorker.terminate();
         tasks.delete(taskId);
+        taskSyncFromMain.delete(taskId);
+        taskSyncToMain.delete(taskId);
         console.log("Task worker stopped: ", taskId);
     }
 }
@@ -521,8 +528,9 @@ function taskCallback(event: MessageEvent) {
         // TODO: handle end of task
         deviceDebug(event.data);
     } else if (isTaskUpdate(event.data)) {
-        // TODO: Prevent overwrite updates if not received by main thread (use wait)
-        tasksBuffer.store(event.data);
+        // TODO: Prevent overwrite updates if not received by main thread (use asyncWait)
+        console.log("Task update received from Task thread: ", event.data.id, event.data.field);
+        taskSyncToMain.get(event.data.id)?.waitStore(event.data, 1);
     } else {
         apiException("warning", `[api] Invalid task message: ${typeof event.data}`);
     }
@@ -574,8 +582,8 @@ function loadRegistry() {
     deviceData.registryBuffer = registryBuffer.getBuffer();
 }
 
-// Receive Messages from the Interpreter (Web Worker)
-function workerCallback(event: MessageEvent) {
+// Receive Messages from the Main Interpreter (Web Worker)
+function mainCallback(event: MessageEvent) {
     if (event.data instanceof ImageData) {
         updateBuffer(event.data);
     } else if (event.data instanceof Map) {
@@ -605,11 +613,23 @@ function workerCallback(event: MessageEvent) {
     } else if (isTaskData(event.data)) {
         console.log("Task data received: ", event.data.name);
         if (event.data.state === TaskState.RUN) {
+            if (event.data.buffer instanceof SharedArrayBuffer) {
+                const taskBuffer = new SharedObject();
+                taskBuffer.setBuffer(event.data.buffer);
+                taskSyncToMain.set(event.data.id, taskBuffer);
+            }
             runTask(event.data);
             console.log("m =", JSON.stringify(event.data.m, null, 2));
         } else if (event.data.state === TaskState.STOP) {
             endTask(event.data.id);
         }
+    } else if (isTaskUpdate(event.data)) {
+        // TODO: Prevent overwrite updates if not received by task thread (use asyncWait)
+        console.log("Task update received from Main thread: ", event.data.id, event.data.field);
+        if (!taskSyncFromMain.has(event.data.id)) {
+            taskSyncFromMain.set(event.data.id, new SharedObject());
+        }
+        taskSyncFromMain.get(event.data.id)?.waitStore(event.data, 1);
     } else if (isNDKStart(event.data)) {
         if (event.data.app === "roku_browser") {
             const params = event.data.params;

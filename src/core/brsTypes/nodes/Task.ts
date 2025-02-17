@@ -7,11 +7,13 @@ import {
     BrsInvalid,
     fromAssociativeArray,
     jsValueOf,
+    BrsEvent,
+    brsValueOf,
 } from "..";
 import { Field, FieldKind, FieldModel } from "./Field";
-import { Interpreter } from "../../interpreter";
-import { DataType, TaskData, TaskState, TaskUpdate } from "../../common";
 import { BrsDevice } from "../../BrsDevice";
+import { DataType, isTaskUpdate, TaskData, TaskState, TaskUpdate } from "../../common";
+import SharedObject from "../../SharedObject";
 
 export class Task extends RoSGNode {
     readonly defaultFields: FieldModel[] = [
@@ -19,6 +21,8 @@ export class Task extends RoSGNode {
         { name: "state", type: "string", value: "init" },
         { name: "functionName", type: "string" },
     ];
+    private taskBuffer?: SharedObject;
+    private lastTaskBuffer = 0;
 
     id: number;
     active: boolean;
@@ -36,7 +40,13 @@ export class Task extends RoSGNode {
         this.registerInitializedFields(members);
     }
 
-    set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
+    set(
+        index: BrsType,
+        value: BrsType,
+        alwaysNotify: boolean = false,
+        kind?: FieldKind,
+        sync: boolean = true
+    ) {
         if (index.kind !== ValueKind.String) {
             throw new Error("RoSGNode indexes must be strings");
         }
@@ -68,6 +78,10 @@ export class Task extends RoSGNode {
             if (state && control !== "" && control !== "init") {
                 state.setValue(new BrsString(control));
                 this.fields.set("state", state);
+                if (this.id >= 0 && this.thread && sync) {
+                    const taskUpdate: TaskUpdate = { id: this.id, field: "state", value: control };
+                    postMessage(taskUpdate);
+                }
             }
             return BrsInvalid.Instance;
         } else if (field && mapKey === "state" && value instanceof BrsString) {
@@ -75,24 +89,38 @@ export class Task extends RoSGNode {
                 field.setValue(value);
             }
             return BrsInvalid.Instance;
-        } else if (field && this.thread) {
+        } else if (this.id >= 0 && field && sync) {
             const taskUpdate: TaskUpdate = { id: this.id, field: mapKey, value: jsValueOf(value) };
             postMessage(taskUpdate);
         }
         return super.set(index, value, alwaysNotify, kind);
     }
 
-    checkTask(interpreter: Interpreter) {
+    setTaskBuffer(data: SharedArrayBuffer) {
+        this.taskBuffer = new SharedObject();
+        this.taskBuffer.setBuffer(data);
+    }
+
+    /** Message callback to handle observed fields with message port */
+    protected getNewEvents() {
+        const events: BrsEvent[] = [];
+        this.updateTask();
+        return events;
+    }
+
+    checkTask() {
         const functionName = this.getFieldValue("functionName") as BrsString;
         if (!functionName || functionName.value.trim() === "") {
             this.set(new BrsString("control"), new BrsString("stop"));
             return;
         }
         if (!this.started) {
+            this.taskBuffer = new SharedObject();
             const taskData: TaskData = {
                 id: this.id,
                 name: this.nodeSubtype,
                 state: TaskState.RUN,
+                buffer: this.taskBuffer.getBuffer(),
                 m: fromAssociativeArray(this.m),
             };
             console.log("Posting Task Data to RUN: ", this.nodeSubtype, functionName.value);
@@ -108,5 +136,28 @@ export class Task extends RoSGNode {
             }
             Atomics.store(BrsDevice.sharedArray, DataType.TASK, -1);
         }
+    }
+
+    updateTask() {
+        let currentVersion = this.taskBuffer?.getVersion() ?? -1;
+        if (this.taskBuffer && currentVersion !== this.lastTaskBuffer) {
+            this.lastTaskBuffer = currentVersion;
+            const taskUpdate = this.taskBuffer.load(true);
+            if (isTaskUpdate(taskUpdate)) {
+                console.log(
+                    `Received Update from ${this.thread ? "Main thread" : "Task Thread"}: `,
+                    JSON.stringify(taskUpdate, null, 2)
+                );
+                this.set(
+                    new BrsString(taskUpdate.field),
+                    brsValueOf(taskUpdate.value),
+                    undefined,
+                    undefined,
+                    false
+                );
+                return true;
+            }
+        }
+        return false;
     }
 }

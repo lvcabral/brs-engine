@@ -1,3 +1,10 @@
+/*---------------------------------------------------------------------------------------------
+ *  BrightScript Engine (https://github.com/lvcabral/brs-engine)
+ *
+ *  Copyright (c) 2019-2025 Marcelo Lv Cabral. All Rights Reserved.
+ *
+ *  Licensed under the MIT License. See LICENSE in the repository root for license information.
+ *--------------------------------------------------------------------------------------------*/
 import {
     dataBufferIndex,
     DataType,
@@ -10,7 +17,7 @@ import {
     RemoteType,
 } from "./common";
 import { FileSystem } from "./FileSystem";
-import SharedObjectBuffer from "./shared";
+import SharedObject from "./SharedObject";
 
 export class BrsDevice {
     static readonly deviceInfo: Map<string, any> = new Map<string, any>();
@@ -25,7 +32,7 @@ export class BrsDevice {
 
     /** Array Buffer to Share the Registry across threads */
     private static registryVersion: number = 0;
-    static sharedRegistry?: SharedObjectBuffer;
+    static sharedRegistry?: SharedObject;
 
     /**
      * Updates the device registry with the provided data
@@ -34,7 +41,7 @@ export class BrsDevice {
     static setRegistry(data: Map<string, string> | SharedArrayBuffer) {
         let registry: Map<string, string>;
         if (data instanceof SharedArrayBuffer) {
-            this.sharedRegistry = new SharedObjectBuffer(registryInitialSize, registryMaxSize);
+            this.sharedRegistry = new SharedObject(registryInitialSize, registryMaxSize);
             this.sharedRegistry.setBuffer(data);
             this.registryVersion = this.sharedRegistry.getVersion();
             registry = new Map(Object.entries(this.sharedRegistry.load()));

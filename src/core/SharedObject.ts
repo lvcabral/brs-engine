@@ -5,26 +5,29 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-class SharedObjectBuffer {
+class SharedObject {
+    private readonly offset = 8;
+    private lengthIdx = 0;
+    private versionIdx = 1;
     private buffer: SharedArrayBuffer;
     private view: Uint8Array;
     private maxSize: number;
-    private atomicOffsetView: Int32Array;
+    private atomicView: Int32Array;
 
     constructor(initialSize?: number, maxSize?: number) {
         initialSize = initialSize ?? 32 * 1024; // 32KB default
         this.maxSize = maxSize ?? 1024 * 1024; // 1MB default
         this.buffer = new SharedArrayBuffer(initialSize, { maxByteLength: this.maxSize });
         this.view = new Uint8Array(this.buffer);
-        this.atomicOffsetView = new Int32Array(this.buffer, 0, 2);
-        Atomics.store(this.atomicOffsetView, 0, 8); // Initialize offset to 8 to leave space for length and version
-        Atomics.store(this.atomicOffsetView, 1, 0); // Initialize version to 0
+        this.atomicView = new Int32Array(this.buffer, 0, 2);
+        Atomics.store(this.atomicView, this.lengthIdx, 0); // Initialize length to 0
+        Atomics.store(this.atomicView, this.versionIdx, 0); // Initialize version to 0
     }
 
     setBuffer(buffer: SharedArrayBuffer): void {
         this.buffer = buffer;
         this.view = new Uint8Array(this.buffer);
-        this.atomicOffsetView = new Int32Array(this.buffer, 0, 2);
+        this.atomicView = new Int32Array(this.buffer, 0, 2);
         this.maxSize = Math.max(this.maxSize, this.buffer.byteLength);
     }
 
@@ -33,7 +36,22 @@ class SharedObjectBuffer {
     }
 
     getVersion(): number {
-        return Atomics.load(this.atomicOffsetView, 1);
+        return Atomics.load(this.atomicView, this.versionIdx);
+    }
+
+    waitStore(obj: any, version: number, timeout: number = 10000): void {
+        const result = Atomics.waitAsync(this.atomicView, this.versionIdx, version, timeout);
+        if (result.async) {
+            result.value.then((status) => {
+                if (status === "ok") {
+                    this.store(obj);
+                } else {
+                    console.error("Error storing shared data:", status);
+                }
+            });
+        } else if (result.value === "not-equal") {
+            this.store(obj);
+        }
     }
 
     store(obj: any): void {
@@ -46,19 +64,24 @@ class SharedObjectBuffer {
         // Store the data
         this.view.set(data, 8);
 
-        Atomics.store(this.atomicOffsetView, 0, dataLength);
-        Atomics.add(this.atomicOffsetView, 1, 1); // Increment version
-        Atomics.notify(this.atomicOffsetView, 1);
+        Atomics.store(this.atomicView, this.lengthIdx, dataLength);
+        Atomics.add(this.atomicView, this.versionIdx, 1); // Increment version
+        Atomics.notify(this.atomicView, this.versionIdx);
     }
 
-    load(): any | null {
-        const currentOffset = Atomics.load(this.atomicOffsetView, 0);
-        if (currentOffset <= 8) {
+    load(resetVersion: boolean = false): any | null {
+        const currentLength = Atomics.load(this.atomicView, 0);
+        if (currentLength < 1) {
             return {};
         }
 
-        const data = this.view.subarray(8, 8 + currentOffset);
+        const data = this.view.subarray(this.offset, this.offset + currentLength);
         const serialized = new TextDecoder().decode(new Uint8Array(data).buffer);
+
+        if (resetVersion) {
+            Atomics.add(this.atomicView, this.versionIdx, 0); // Reset version
+            Atomics.notify(this.atomicView, this.versionIdx);
+        }
 
         try {
             return JSON.parse(serialized);
@@ -79,7 +102,7 @@ class SharedObjectBuffer {
             try {
                 this.buffer.grow(newSize); // Grow the buffer IN PLACE
                 this.view = new Uint8Array(this.buffer); // Update the view
-                this.atomicOffsetView = new Int32Array(this.buffer, 0, 2); // Update atomic offset view
+                this.atomicView = new Int32Array(this.buffer, 0, 2); // Update atomic offset view
             } catch (e) {
                 console.error("Error growing buffer:", e);
                 throw e;
@@ -88,4 +111,4 @@ class SharedObjectBuffer {
     }
 }
 
-export default SharedObjectBuffer;
+export default SharedObject;
