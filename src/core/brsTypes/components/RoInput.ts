@@ -5,16 +5,14 @@ import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { BufferType, DataType } from "../../common";
 import { IfSetMessagePort, IfGetMessagePort } from "../interfaces/IfMessagePort";
-import { BrsDevice } from "../../BrsDevice";
+import { BrsDevice } from "../../device/BrsDevice";
 
 export class RoInput extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
-    private readonly interpreter: Interpreter;
     private port?: RoMessagePort;
 
-    constructor(interpreter: Interpreter) {
+    constructor() {
         super("roInput");
-        this.interpreter = interpreter;
         const setPortIface = new IfSetMessagePort(this, this.getNewEvents.bind(this));
         const getPortIface = new IfGetMessagePort(this);
         this.registerMethods({
@@ -50,8 +48,8 @@ export class RoInput extends BrsComponent implements BrsValue {
                 const input = JSON.parse(strInput);
                 events.push(new RoInputEvent(toAssociativeArray(input)));
             } catch (e: any) {
-                if (this.interpreter.isDevMode) {
-                    this.interpreter.stdout.write(
+                if (BrsDevice.isDevMode) {
+                    BrsDevice.stdout.write(
                         `warning,[roSystemLog] Error parsing Input buffer: ${e.message}`
                     );
                 }

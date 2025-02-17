@@ -5,7 +5,7 @@ import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 import { DebugCommand } from "../../common";
-import { BrsDevice } from "../../BrsDevice";
+import { BrsDevice } from "../../device/BrsDevice";
 
 export class RoMessagePort extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;

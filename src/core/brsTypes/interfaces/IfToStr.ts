@@ -11,7 +11,8 @@ import {
     StdlibArgument,
     ValueKind,
 } from "..";
-import { RuntimeError, RuntimeErrorDetail } from "../../BrsError";
+import { BrsDevice } from "../../device/BrsDevice";
+import { RuntimeError, RuntimeErrorDetail } from "../../error/BrsError";
 import { Interpreter } from "../../interpreter";
 import { vsprintf } from "sprintf-js";
 
@@ -76,8 +77,8 @@ export class IfToStr {
             try {
                 return new BrsString(vsprintf(format.value, params));
             } catch (err: any) {
-                if (interpreter.isDevMode) {
-                    interpreter.stderr.write(
+                if (BrsDevice.isDevMode) {
+                    BrsDevice.stderr.write(
                         `warning,ifToStr.toStr() Error: ${err.message} - ${format.value}`
                     );
                 }

@@ -1,4 +1,5 @@
 import { BrsComponent, BrsIterable, BrsType, Float, Int32 } from "..";
+import { BrsDevice } from "../../device/BrsDevice";
 import { Interpreter } from "../../interpreter";
 import { BrsBoolean, BrsInvalid, ValueKind } from "../BrsType";
 import { Callable, StdlibArgument } from "../Callable";
@@ -47,7 +48,7 @@ export class IfArray {
             if (this.component.resizable || elements.length < this.component.maxSize) {
                 this.component.add(tvalue, true);
             } else {
-                interpreter.stderr.write(
+                BrsDevice.stderr.write(
                     `warning,BRIGHTSCRIPT: ERROR: ${
                         this.name
                     }.Push: set ignored for index out of bounds on non-resizable array: ${interpreter.formatLocation()}`
@@ -77,7 +78,7 @@ export class IfArray {
             if (this.component.resizable || elements.length < this.component.maxSize) {
                 this.component.add(tvalue, false);
             } else {
-                interpreter.stderr.write(
+                BrsDevice.stderr.write(
                     `warning,BRIGHTSCRIPT: ERROR: ${
                         this.name
                     }.Unshift: set ignored for index out of bounds on non-resizable array: ${interpreter.formatLocation()}`
@@ -128,7 +129,7 @@ export class IfArray {
         },
         impl: (interpreter: Interpreter, array: BrsComponent & BrsArray) => {
             if (this.name !== array.getComponentName()) {
-                interpreter.stderr.write(
+                BrsDevice.stderr.write(
                     `warning,BRIGHTSCRIPT: ERROR: ${
                         this.name
                     }.Append: invalid parameter type ${array.getComponentName()}: ${interpreter.formatLocation()}`

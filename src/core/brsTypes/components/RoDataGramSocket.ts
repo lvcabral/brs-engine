@@ -20,12 +20,12 @@ import {
 } from "../interfaces/IfSocket";
 import { IfGetMessagePort, IfSetMessagePort } from "../interfaces/IfMessagePort";
 import * as net from "net";
+import { BrsDevice } from "../../device/BrsDevice";
 
 export class RoDataGramSocket extends BrsComponent implements BrsValue, BrsSocket {
     readonly kind = ValueKind.Object;
     readonly socket?: net.Socket;
     readonly identity: number;
-    private readonly interpreter: Interpreter;
     private broadcast: boolean;
     private multicastLoop: boolean;
     private multicastTTL: number;
@@ -40,9 +40,8 @@ export class RoDataGramSocket extends BrsComponent implements BrsValue, BrsSocke
     recvTimeout: number;
     errorCode: number;
 
-    constructor(interpreter: Interpreter) {
+    constructor() {
         super("roDataGramSocket");
-        this.interpreter = interpreter;
         this.errorCode = 0;
         this.broadcast = false;
         this.multicastLoop = false;
@@ -57,7 +56,7 @@ export class RoDataGramSocket extends BrsComponent implements BrsValue, BrsSocke
         try {
             this.socket = new net.Socket();
         } catch (err: any) {
-            interpreter.stderr.write(
+            BrsDevice.stderr.write(
                 `warning,[roDataGramSocket] Sockets are not supported in this environment.`
             );
             this.errorCode = 3474;

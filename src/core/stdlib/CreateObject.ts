@@ -7,7 +7,8 @@ import {
     BrsObjects,
     StdlibArgument,
 } from "../brsTypes";
-import { RuntimeError, RuntimeErrorDetail } from "../BrsError";
+import { BrsDevice } from "../device/BrsDevice";
+import { RuntimeError, RuntimeErrorDetail } from "../error/BrsError";
 import { Interpreter } from "../interpreter";
 
 /** Creates a new instance of a given brightscript component (e.g. roAssociativeArray) */
@@ -26,13 +27,13 @@ export const CreateObject = new Callable("CreateObject", {
             if (["rosgscreen", "rosgnode"].includes(objName.value.toLowerCase())) {
                 msg = `WARNING: Attempt to create object "${objName.value}". SceneGraph components are still not supported!`;
             }
-            interpreter.stderr.write(`warning,${msg}`);
+            BrsDevice.stderr.write(`warning,${msg}`);
         } else {
             const minParams = BrsObjects.params(objName.value.toLowerCase());
             if (minParams === -1) {
                 additionalArgs = [];
             } else if (minParams > 0 && additionalArgs.length === 0) {
-                interpreter.stderr.write(
+                BrsDevice.stderr.write(
                     `error,BRIGHTSCRIPT: ERROR: Runtime: "${
                         objName.value
                     }": invalid number of parameters: ${interpreter.formatLocation()}`
@@ -50,7 +51,7 @@ export const CreateObject = new Callable("CreateObject", {
             try {
                 return ctor(interpreter, ...additionalArgs);
             } catch (err: any) {
-                interpreter.stderr.write(`error,${err.message} ${interpreter.formatLocation()}`);
+                BrsDevice.stderr.write(`error,${err.message} ${interpreter.formatLocation()}`);
             }
         }
         return BrsInvalid.Instance;

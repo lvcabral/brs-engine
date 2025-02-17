@@ -11,7 +11,7 @@ import {
     isBoxable,
     BrsType,
 } from "../brsTypes";
-import { BrsDevice } from "../BrsDevice";
+import { BrsDevice } from "../device/BrsDevice";
 import { Interpreter } from "../interpreter";
 
 /** Returns an object version of an intrinsic type, or pass through an object if given one. */
