@@ -7,8 +7,6 @@ import {
     SGNodeType,
     BrsType,
     createNodeByType,
-    KeyEvent,
-    rootObjects,
     RoFontRegistry,
     RoMessagePort,
     Scene,
@@ -17,6 +15,7 @@ import {
     Font,
     getFontRegistry,
     getTextureManager,
+    rootObjects,
 } from "..";
 import { IfGetMessagePort, IfSetMessagePort } from "../interfaces/IfMessagePort";
 import { RoSGScreenEvent } from "../events/RoSGScreenEvent";
@@ -215,8 +214,22 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
                 this.finishDraw();
                 this.lastMessage = timeStamp;
             }
+            if (this.processTasks()) {
+                this.isDirty = true;
+            }
         }
         return events;
+    }
+
+    private processTasks() {
+        let updates = false;
+        rootObjects.tasks.forEach((task) => {
+            updates = task.updateTask();
+            if (task.active) {
+                task.checkTask();
+            }
+        });
+        return updates;
     }
 
     /** Handle control keys */
@@ -258,6 +271,11 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         if (!hostNode) {
             return false;
         }
+        // TODO: Handle onKeyEvent in SceneGraph node tree starting from the focused node down to the scene
+        const typeDef = this.interpreter.environment.nodeDefMap.get(
+            hostNode.nodeSubtype.toLowerCase()
+        );
+        const sceneEnv = typeDef?.environment ?? this.interpreter.environment;
         const handled = this.interpreter.inSubEnv((subInterpreter) => {
             subInterpreter.environment.hostNode = hostNode;
             subInterpreter.environment.setRootM(hostNode.m);
@@ -292,7 +310,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
                 }
             }
             return BrsBoolean.False;
-        }, this.interpreter.environment);
+        }, sceneEnv);
         return handled instanceof BrsBoolean && handled.toBoolean();
     }
 

@@ -1,4 +1,4 @@
-import { FieldKind, FieldModel } from "../components/RoSGNode";
+import { FieldKind, FieldModel } from "./Field";
 import { Group } from "./Group";
 import { Font } from "./Font";
 import { AAMember, BrsBoolean, BrsString, BrsType, Int32, ValueKind } from "..";

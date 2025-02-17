@@ -1,5 +1,23 @@
-import { dataBufferIndex, DataType, DebugCommand } from "./common";
+/*---------------------------------------------------------------------------------------------
+ *  BrightScript Engine (https://github.com/lvcabral/brs-engine)
+ *
+ *  Copyright (c) 2019-2025 Marcelo Lv Cabral. All Rights Reserved.
+ *
+ *  Licensed under the MIT License. See LICENSE in the repository root for license information.
+ *--------------------------------------------------------------------------------------------*/
+import {
+    dataBufferIndex,
+    DataType,
+    DebugCommand,
+    keyArraySpots,
+    keyBufferSize,
+    KeyEvent,
+    registryInitialSize,
+    registryMaxSize,
+    RemoteType,
+} from "./common";
 import { FileSystem } from "./FileSystem";
+import SharedObject from "./SharedObject";
 
 export class BrsDevice {
     static readonly deviceInfo: Map<string, any> = new Map<string, any>();
@@ -12,14 +30,46 @@ export class BrsDevice {
     static lastKeyTime: number = Date.now();
     static currKeyTime: number = Date.now();
 
+    /** Array Buffer to Share the Registry across threads */
+    private static registryVersion: number = 0;
+    private static sharedRegistry?: SharedObject;
+
     /**
      * Updates the device registry with the provided data
-     * @param registry Map with registry content.
+     * @param data Map or Shared Array Buffer with registry content.
      */
-    static setRegistry(registry: Map<string, string>) {
+    static setRegistry(data: Map<string, string> | SharedArrayBuffer) {
+        let registry: Map<string, string>;
+        if (data instanceof SharedArrayBuffer) {
+            this.sharedRegistry = new SharedObject(registryInitialSize, registryMaxSize);
+            this.sharedRegistry.setBuffer(data);
+            this.registryVersion = this.sharedRegistry.getVersion();
+            registry = new Map(Object.entries(this.sharedRegistry.load()));
+        } else {
+            registry = data;
+        }
         registry.forEach((value: string, key: string) => {
             this.registry.set(key, value);
         });
+    }
+
+    /** Stores the registry to the shared buffer */
+    static flushRegistry() {
+        this.sharedRegistry?.store(Object.fromEntries(this.registry));
+    }
+
+    /** Refreshes the registry from the shared buffer (if newer version is available) */
+    static refreshRegistry() {
+        if (this.sharedRegistry && this.sharedRegistry.getVersion() !== this.registryVersion) {
+            this.registryVersion = this.sharedRegistry.getVersion();
+            const registry: Map<string, string> = new Map(
+                Object.entries(this.sharedRegistry.load())
+            );
+            this.registry.clear();
+            registry.forEach((value: string, key: string) => {
+                this.registry.set(key, value);
+            });
+        }
     }
 
     /**
@@ -65,5 +115,28 @@ export class BrsDevice {
         });
         Atomics.store(this.sharedArray, DataType.BUF, -1);
         return data;
+    }
+
+    /**
+     * Method to update the control keys buffer, used by roScreen and roSGScreen
+     * @param keysBuffer Array with the keys buffer
+     */
+    static updateKeysBuffer(keysBuffer: KeyEvent[]) {
+        for (let i = 0; i < keyBufferSize; i++) {
+            const idx = i * keyArraySpots;
+            const key = Atomics.load(this.sharedArray, DataType.KEY + idx);
+            if (key === -1) {
+                return;
+            } else if (keysBuffer.length === 0 || key !== keysBuffer.at(-1)?.key) {
+                const remoteId = Atomics.load(this.sharedArray, DataType.RID + idx);
+                const remoteType = Math.trunc(remoteId / 10) * 10;
+                const remoteStr = RemoteType[remoteType] ?? RemoteType[RemoteType.SIM];
+                const remoteIdx = remoteId - remoteType;
+                const mod = Atomics.load(this.sharedArray, DataType.MOD + idx);
+                Atomics.store(this.sharedArray, DataType.KEY + idx, -1);
+                keysBuffer.push({ remote: `${remoteStr}:${remoteIdx}`, key: key, mod: mod });
+                this.lastRemote = remoteIdx;
+            }
+        }
     }
 }

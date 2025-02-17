@@ -14,12 +14,19 @@ import {
     DebugCommand,
     DeviceInfo,
     RemoteType,
+    TaskData,
+    TaskPayload,
+    TaskState,
     dataBufferIndex,
     dataBufferSize,
     getExitReason,
     isAppData,
     isNDKStart,
+    isTaskData,
+    isTaskUpdate,
     platform,
+    registryInitialSize,
+    registryMaxSize,
 } from "../core/common";
 import {
     source,
@@ -67,6 +74,7 @@ import {
     switchVideoState,
 } from "./video";
 import { subscribeControl, initControlModule, enableSendKeys, sendKey } from "./control";
+import SharedObject from "../core/SharedObject";
 import packageInfo from "../../package.json";
 
 // Interpreter Library
@@ -113,8 +121,9 @@ let bandwidthTimeout: NodeJS.Timeout | null = null;
 let latestBandwidth: number = 0;
 let httpConnectLog: boolean = false;
 
-// App Shared Buffer
-let sharedBuffer: SharedArrayBuffer | ArrayBuffer;
+// App Shared Buffers
+const registryBuffer = new SharedObject(registryInitialSize, registryMaxSize);
+let sharedBuffer: ArrayBufferLike;
 let sharedArray: Int32Array;
 
 // API Methods
@@ -242,7 +251,7 @@ export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any 
 
     // Force library download during initialization
     brsWorker = new Worker(brsWrkLib);
-    brsWorker.addEventListener("message", workerCallback);
+    brsWorker.addEventListener("message", mainCallback);
     brsWorker.postMessage("getVersion");
 }
 
@@ -406,8 +415,15 @@ export function debug(command: string): boolean {
 
 // Terminate and reset BrightScript interpreter
 function resetWorker() {
-    brsWorker.removeEventListener("message", workerCallback);
+    brsWorker.removeEventListener("message", mainCallback);
     brsWorker.terminate();
+    tasks.forEach((worker) => {
+        worker?.removeEventListener("message", taskCallback);
+        worker?.terminate();
+    });
+    tasks.clear();
+    taskSyncFromMain.clear();
+    taskSyncToMain.clear();
     resetArray();
     resetSounds();
     resetVideo();
@@ -445,6 +461,7 @@ function loadSourceCode(fileName: string, fileData: any) {
     reader.readAsText(new Blob([fileData], { type: "text/plain" }));
 }
 
+let currentPayload: AppPayload;
 // Execute Engine Web Worker
 function runApp(payload: AppPayload) {
     try {
@@ -454,17 +471,55 @@ function runApp(payload: AppPayload) {
         updateAppList();
         updateMemoryInfo();
         brsWorker = new Worker(brsWrkLib);
-        brsWorker.addEventListener("message", workerCallback);
+        brsWorker.addEventListener("message", mainCallback);
         brsWorker.postMessage(sharedBuffer);
-        const transfArray = [];
-        if (!manifestMap.get("bs_libs_required")?.includes("Roku_Browser") && payload.pkgZip) {
-            // Transfer array to prevent cloning the zip data in worker (if not needed on main thread)
-            transfArray.push(payload.pkgZip);
-        }
-        brsWorker.postMessage(payload, transfArray);
+        brsWorker.postMessage(payload);
+        currentPayload = payload;
         enableSendKeys(true);
     } catch (err: any) {
         apiException("error", `[api] Error running ${currentApp.title}: ${err.message}`);
+    }
+}
+
+const tasks: Map<number, Worker> = new Map();
+const taskSyncFromMain: Map<number, SharedObject> = new Map();
+const taskSyncToMain: Map<number, SharedObject> = new Map();
+
+function runTask(taskData: TaskData) {
+    if (tasks.has(taskData.id) || !taskData.m?.top?.functionname) {
+        return;
+    } else if (tasks.size === 10) {
+        apiException("warning", `[api] Maximum number of tasks reached: ${tasks.size}`);
+        return;
+    }
+    const taskWorker = new Worker(brsWrkLib);
+    taskWorker.addEventListener("message", taskCallback);
+    tasks.set(taskData.id, taskWorker);
+    if (!taskSyncFromMain.has(taskData.id)) {
+        taskSyncFromMain.set(taskData.id, new SharedObject());
+    }
+    taskData.buffer = taskSyncFromMain.get(taskData.id)?.getBuffer();
+    const taskPayload: TaskPayload = {
+        device: currentPayload.device,
+        manifest: currentPayload.manifest,
+        taskData: taskData,
+        pkgZip: currentPayload.pkgZip,
+        extZip: currentPayload.extZip,
+    };
+    console.log("Calling Task worker: ", taskData.id, taskData.name);
+    taskWorker.postMessage(sharedBuffer);
+    taskWorker.postMessage(taskPayload);
+}
+
+function endTask(taskId: number) {
+    const taskWorker = tasks.get(taskId);
+    if (taskWorker) {
+        taskWorker.removeEventListener("message", taskCallback);
+        taskWorker.terminate();
+        tasks.delete(taskId);
+        taskSyncFromMain.delete(taskId);
+        taskSyncToMain.delete(taskId);
+        console.log("Task worker stopped: ", taskId);
     }
 }
 
@@ -498,28 +553,30 @@ export function updateMemoryInfo(usedMemory?: number, totalMemory?: number) {
 function loadRegistry() {
     const storage: Storage = window.localStorage;
     const transientKeys: string[] = [];
+    const registry: Map<string, string> = new Map();
     for (let index = 0; index < storage.length; index++) {
         const key = storage.key(index);
         if (key?.split(".")[0] === deviceData.developerId) {
             if (key.split(".")[1] !== "Transient") {
-                deviceData.registry?.set(key, storage.getItem(key) ?? "");
+                registry.set(key, storage.getItem(key) ?? "");
             } else {
                 transientKeys.push(key);
             }
         }
     }
     transientKeys.forEach((key) => storage.removeItem(key));
+    registryBuffer.store(Object.fromEntries(registry));
+    deviceData.registryBuffer = registryBuffer.getBuffer();
 }
 
-// Receive Messages from the Interpreter (Web Worker)
-function workerCallback(event: MessageEvent) {
+// Receive Messages from the Main Interpreter (Web Worker)
+function mainCallback(event: MessageEvent) {
     if (event.data instanceof ImageData) {
         updateBuffer(event.data);
     } else if (event.data instanceof Map) {
-        deviceData.registry = event.data;
         if (platform.inBrowser) {
             const storage: Storage = window.localStorage;
-            deviceData.registry.forEach(function (value: string, key: string) {
+            event.data.forEach(function (value: string, key: string) {
                 storage.setItem(key, value);
             });
         }
@@ -540,6 +597,25 @@ function workerCallback(event: MessageEvent) {
         deviceData.captionsMode = event.data.captionsMode;
     } else if (isAppData(event.data)) {
         notifyAll("launch", { app: event.data.id, params: event.data.params ?? new Map() });
+    } else if (isTaskData(event.data)) {
+        console.log("Task data received: ", event.data.name);
+        if (event.data.state === TaskState.RUN) {
+            if (event.data.buffer instanceof SharedArrayBuffer) {
+                const taskBuffer = new SharedObject();
+                taskBuffer.setBuffer(event.data.buffer);
+                taskSyncToMain.set(event.data.id, taskBuffer);
+            }
+            runTask(event.data);
+            console.log("m =", JSON.stringify(event.data.m, null, 2));
+        } else if (event.data.state === TaskState.STOP) {
+            endTask(event.data.id);
+        }
+    } else if (isTaskUpdate(event.data)) {
+        console.log("Task update received from Main thread: ", event.data.id, event.data.field);
+        if (!taskSyncFromMain.has(event.data.id)) {
+            taskSyncFromMain.set(event.data.id, new SharedObject());
+        }
+        taskSyncFromMain.get(event.data.id)?.waitStore(event.data, 1);
     } else if (isNDKStart(event.data)) {
         if (event.data.app === "roku_browser") {
             const params = event.data.params;
@@ -577,36 +653,70 @@ function workerCallback(event: MessageEvent) {
     } else if (typeof event.data !== "string") {
         // All messages beyond this point must be csv string
         apiException("warning", `[api] Invalid worker message: ${event.data}`);
-    } else if (event.data.startsWith("audio,")) {
-        handleSoundEvent(event.data);
-    } else if (event.data.startsWith("video,")) {
-        handleVideoEvent(event.data);
-    } else if (event.data.startsWith("print,")) {
-        deviceDebug(event.data);
-    } else if (event.data.startsWith("warning,")) {
-        deviceDebug(`${event.data}\r\n`);
-    } else if (event.data.startsWith("error,")) {
-        deviceDebug(`${event.data}\r\n`);
-    } else if (event.data.startsWith("debug,")) {
-        const level = event.data.slice(6);
+    } else {
+        handleStringMessage(event.data);
+    }
+}
+
+// Receive Messages from the Task Interpreter (Web Worker)
+function taskCallback(event: MessageEvent) {
+    if (event.data instanceof Map) {
+        if (platform.inBrowser) {
+            const storage: Storage = window.localStorage;
+            event.data.forEach(function (value: string, key: string) {
+                storage.setItem(key, value);
+            });
+        }
+        notifyAll("registry", event.data);
+    } else if (typeof event.data.displayEnabled === "boolean") {
+        setDisplayState(event.data.displayEnabled);
+    } else if (typeof event.data.captionsMode === "string") {
+        deviceData.captionsMode = event.data.captionsMode;
+    } else if (isTaskData(event.data)) {
+        console.log("Task data received from Task thread: ", event.data.name);
+        if (event.data.state === TaskState.STOP) {
+            endTask(event.data.id);
+        }
+    } else if (isTaskUpdate(event.data)) {
+        console.log("Task update received from Task thread: ", event.data.id, event.data.field);
+        taskSyncToMain.get(event.data.id)?.waitStore(event.data, 1);
+    } else if (typeof event.data === "string") {
+        handleStringMessage(event.data);
+    }
+}
+
+// Handles string messages from the Interpreter
+function handleStringMessage(message: string) {
+    if (message.startsWith("audio,")) {
+        handleSoundEvent(message);
+    } else if (message.startsWith("video,")) {
+        handleVideoEvent(message);
+    } else if (message.startsWith("print,")) {
+        deviceDebug(message);
+    } else if (message.startsWith("warning,")) {
+        deviceDebug(`${message}\r\n`);
+    } else if (message.startsWith("error,")) {
+        deviceDebug(`${message}\r\n`);
+    } else if (message.startsWith("debug,")) {
+        const level = message.slice(6);
         const enable = level === "continue";
         enableSendKeys(enable);
         statsUpdate(enable);
         switchSoundState(enable);
         switchVideoState(enable);
         notifyAll("debug", { level: level });
-    } else if (event.data.startsWith("start,")) {
+    } else if (message.startsWith("start,")) {
         const title = currentApp.title;
         const beaconMsg = "[scrpt.ctx.run.enter] UI: Entering";
-        const subName = event.data.split(",")[1];
+        const subName = message.split(",")[1];
         deviceDebug(`print,------ Running dev '${title}' ${subName} ------\r\n`);
         deviceDebug(`beacon,${getNow()} ${beaconMsg} '${title}', id '${currentApp.id}'\r\n`);
         statsUpdate(true);
         notifyAll("started", currentApp);
-    } else if (event.data.startsWith("end,")) {
-        terminate(getExitReason(event.data.slice(4)));
-    } else if (event.data.startsWith("syslog,")) {
-        const type = event.data.slice(7);
+    } else if (message.startsWith("end,")) {
+        terminate(getExitReason(message.slice(4)));
+    } else if (message.startsWith("syslog,")) {
+        const type = message.slice(7);
         if (type === "bandwidth.minute") {
             bandwidthMinute = true;
             if (latestBandwidth === 0) {
@@ -618,10 +728,10 @@ function workerCallback(event: MessageEvent) {
         } else if (type === "http.connect") {
             httpConnectLog = true;
         }
-    } else if (event.data === "reset") {
+    } else if (message === "reset") {
         notifyAll("reset");
-    } else if (event.data.startsWith("version,")) {
-        notifyAll("version", event.data.slice(8));
+    } else if (message.startsWith("version,")) {
+        notifyAll("version", message.slice(8));
     }
 }
 

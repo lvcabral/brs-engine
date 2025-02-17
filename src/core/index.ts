@@ -18,6 +18,8 @@ import {
     defaultDeviceInfo,
     parseManifest,
     isAppPayload,
+    TaskPayload,
+    isTaskPayload,
 } from "./common";
 import { BrsError, RuntimeError, RuntimeErrorDetail } from "./BrsError";
 import { Lexeme, Lexer, Token } from "./lexer";
@@ -66,6 +68,9 @@ if (typeof onmessage !== "undefined") {
     onmessage = function (event: MessageEvent) {
         if (isAppPayload(event.data)) {
             executeFile(event.data);
+        } else if (isTaskPayload(event.data)) {
+            console.log("Task payload received: ", event.data.taskData.name);
+            executeTask(event.data);
         } else if (typeof event.data === "string" && event.data === "getVersion") {
             postMessage(`version,${packageInfo.version}`);
         } else if (event.data instanceof ArrayBuffer || event.data instanceof SharedArrayBuffer) {
@@ -320,16 +325,21 @@ export async function executeFile(
     };
     bscs.clear();
     stats.clear();
-    BrsDevice.lastKeyTime = Date.now();
+    // Setup the File System
     try {
         await configureFileSystem(payload.pkgZip, payload.extZip);
+        if (options.root) {
+            BrsDevice.fileSystem.setRoot(options.root);
+        }
+        if (options.ext) {
+            BrsDevice.fileSystem.setExt(options.ext);
+        }
     } catch (err: any) {
         postMessage(`error,Error mounting File System: ${err.message}`);
         return { exitReason: AppExitReason.CRASHED };
     }
     // Look for SceneGraph components
-    const fileSystem = new FileSystem(options.root, options.ext);
-    const components = await getComponentDefinitionMap(fileSystem, []);
+    const components = await getComponentDefinitionMap(BrsDevice.fileSystem, []);
     // Create the interpreter
     let interpreter: Interpreter;
     if (components.size > 0) {
@@ -340,6 +350,7 @@ export async function executeFile(
     // Process Payload Content
     const sourceResult = setupPayload(interpreter, payload);
     // Run the BrightScript app
+    BrsDevice.lastKeyTime = Date.now();
     let result: RunResult;
     if (sourceResult.pcode && sourceResult.iv) {
         result = await runEncrypted(interpreter, sourceResult, payload);
@@ -350,6 +361,57 @@ export async function executeFile(
         postMessage(`end,${result.exitReason}`);
     }
     return result;
+}
+
+export async function executeTask(payload: TaskPayload, customOptions?: Partial<ExecutionOptions>) {
+    const options = {
+        ...{
+            entryPoint: false,
+            stopOnCrash: payload.device.debugOnCrash ?? false,
+            root: payload.root,
+            ext: payload.extZip ? undefined : payload.ext,
+        },
+        ...customOptions,
+    };
+    stats.clear();
+    // Setup the File System
+    try {
+        await configureFileSystem(payload.pkgZip, payload.extZip);
+        if (options.root) {
+            BrsDevice.fileSystem.setRoot(options.root);
+        }
+        if (options.ext) {
+            BrsDevice.fileSystem.setExt(options.ext);
+        }
+    } catch (err: any) {
+        postMessage(`error,Error mounting File System: ${err.message}`);
+        return;
+    }
+    // Look for SceneGraph components
+    const components = await getComponentDefinitionMap(BrsDevice.fileSystem, []);
+    // Create the interpreter
+    let interpreter: Interpreter;
+    if (components.size > 0) {
+        interpreter = await getInterpreterWithSubEnvs(components, payload.manifest, options);
+    } else {
+        postMessage(`warning,No SceneGraph components found!`);
+        return;
+    }
+    interpreter.setManifest(payload.manifest);
+    if (payload.device.registry?.size) {
+        BrsDevice.setRegistry(payload.device.registry);
+    }
+    setupDeviceData(payload.device);
+    setupTranslations(interpreter);
+    console.log(
+        "Calling Task in new Worker: ",
+        payload.taskData.name,
+        payload.taskData.m.top.functionname
+    );
+    interpreter.execTask(payload);
+    if (interpreter.isDevMode) {
+        postMessage(`debug,Task ${payload.taskData.name} is done.`);
+    }
 }
 
 /**
@@ -368,7 +430,9 @@ interface SourceResult {
 
 function setupPayload(interpreter: Interpreter, payload: AppPayload): SourceResult {
     interpreter.setManifest(payload.manifest);
-    if (payload.device.registry?.size) {
+    if (payload.device.registryBuffer) {
+        BrsDevice.setRegistry(payload.device.registryBuffer);
+    } else if (payload.device.registry?.size) {
         BrsDevice.setRegistry(payload.device.registry);
     }
     setupDeviceData(payload.device);

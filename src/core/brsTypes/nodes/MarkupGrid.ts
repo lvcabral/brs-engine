@@ -1,4 +1,4 @@
-import { FieldModel } from "../components/RoSGNode";
+import { FieldModel } from "./Field";
 import { AAMember } from "../components/RoAssociativeArray";
 import { ArrayGrid } from "./ArrayGrid";
 

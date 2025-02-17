@@ -36,7 +36,8 @@ import {
     BrsInterface,
     toAssociativeArray,
     RoSGNode,
-    KeyEvent,
+    Task,
+    initializeTask,
 } from "../brsTypes";
 import { tryCoerce } from "../brsTypes/Coercion";
 import { Lexeme, GlobalFunctions } from "../lexer";
@@ -58,7 +59,15 @@ import { Scope, Environment, NotFound } from "./Environment";
 import { toCallable } from "./BrsFunction";
 import { BlockEnd, GotoLabel } from "../parser/Statement";
 import { runDebugger } from "./MicroDebugger";
-import { DataType, DebugCommand, defaultDeviceInfo, numberToHex, parseTextFile } from "../common";
+import {
+    DataType,
+    DebugCommand,
+    defaultDeviceInfo,
+    numberToHex,
+    parseTextFile,
+    TaskPayload,
+    TaskUpdate,
+} from "../common";
 import { BrsDevice } from "../BrsDevice";
 /// #if !BROWSER
 import * as v8 from "v8";
@@ -355,16 +364,62 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     /**
+     * Function to run the Task function on a separate Worker thread.
+     * @param payload the Task payload data
+     */
+    execTask(payload: TaskPayload) {
+        const taskData = payload.taskData;
+        const taskNode = initializeTask(this, taskData);
+        const functionName = taskData.m?.top?.functionname;
+        if (taskNode instanceof Task && functionName) {
+            if (taskData.buffer) {
+                taskNode.setTaskBuffer(taskData.buffer);
+            }
+            const typeDef = this.environment.nodeDefMap.get(taskNode.nodeSubtype.toLowerCase());
+            const taskEnv = typeDef?.environment;
+            if (taskEnv) {
+                const mPointer = taskNode.m;
+                this.inSubEnv((subInterpreter) => {
+                    const funcToCall = subInterpreter.getCallableFunction(functionName);
+                    subInterpreter.environment.hostNode = taskNode;
+                    subInterpreter.environment.setM(mPointer);
+                    subInterpreter.environment.setRootM(mPointer);
+                    if (funcToCall instanceof Callable) {
+                        console.log("Task function called: ", taskData.name, functionName);
+                        funcToCall.call(subInterpreter);
+                        console.log("Task function finished: ", taskData.name, functionName);
+                        const taskUpdate: TaskUpdate = {
+                            id: taskNode.id,
+                            field: "control",
+                            value: "stop",
+                        };
+                        postMessage(taskUpdate);
+                    } else {
+                        this.addError(
+                            new BrsError(
+                                `Cannot found the Task function '${functionName}'`,
+                                this.location
+                            )
+                        );
+                    }
+                    return BrsInvalid.Instance;
+                }, taskEnv);
+            }
+        }
+    }
+
+    /**
      * Retrieve the Callable function from the environment.
      * @param functionName the name of the function to retrieve.
+     * @param location the location from the function will be called (optional).
      * @returns the Callable function or BrsInvalid if not found.
      */
-    getCallableFunction(functionName: string): Callable | BrsInvalid {
+    getCallableFunction(functionName: string, location?: Location): Callable | BrsInvalid {
         let callbackVariable = new Expr.Variable({
             kind: Lexeme.Identifier,
             text: functionName,
             isReserved: false,
-            location: Interpreter.InternalLocation,
+            location: location ?? Interpreter.InternalLocation,
         });
         let maybeCallback = this.evaluate(callbackVariable);
         if (maybeCallback.kind === ValueKind.Callable) {
@@ -372,30 +427,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         }
 
         return BrsInvalid.Instance;
-    }
-
-    /**
-     * Returns the init method (if any) in the current environment as a Callable
-     */
-    getInitMethod(): BrsType {
-        let initVariable = new Expr.Variable({
-            kind: Lexeme.Identifier,
-            text: "init",
-            isReserved: false,
-            location: {
-                start: {
-                    line: -1,
-                    column: -1,
-                },
-                end: {
-                    line: -1,
-                    column: -1,
-                },
-                file: "(internal)",
-            },
-        });
-
-        return this.evaluate(initVariable);
     }
 
     visitLibrary(statement: Stmt.Library): BrsInvalid {
