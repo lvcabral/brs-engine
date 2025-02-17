@@ -11,7 +11,6 @@ import {
     ValueKind,
     AAMember,
 } from "..";
-import { Interpreter } from "../../interpreter";
 
 export type FontDef = {
     family: string;
@@ -95,9 +94,9 @@ export class Font extends RoSGNode {
         return false;
     }
 
-    createDrawFont(interpreter: Interpreter) {
+    createDrawFont() {
         let fontFamily = this.getSystemFontFamily(this.systemFont);
-        const fontRegistry = getFontRegistry(interpreter);
+        const fontRegistry = getFontRegistry();
         const uri = this.getUri();
         if (uri !== "") {
             fontFamily = fontRegistry.getFontFamily(uri) ?? fontFamily;

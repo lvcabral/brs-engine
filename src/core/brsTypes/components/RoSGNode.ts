@@ -24,11 +24,12 @@ import {
 import { Callable, StdlibArgument } from "../Callable";
 import { Stmt } from "../../parser";
 import { Interpreter } from "../../interpreter";
-import { generateArgumentMismatchError } from "../../interpreter/ArgumentMismatch";
+import { generateArgumentMismatchError } from "../../error/ArgumentMismatch";
 import { BoundingRect } from "../../scenegraph/SGUtil";
 import { createNodeByType, isSubtypeCheck, subtypeHierarchy } from "../../scenegraph/SGNodeFactory";
 import { Field, FieldKind, FieldModel } from "../nodes/Field";
 import { IfDraw2D } from "../interfaces/IfDraw2D";
+import { BrsDevice } from "../../device/BrsDevice";
 
 export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     readonly kind = ValueKind.Object;
@@ -321,7 +322,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             const subscriber = interpreter.environment.hostNode;
             if (!subscriber) {
                 const location = interpreter.formatLocation();
-                interpreter.stderr.write(
+                BrsDevice.stderr.write(
                     `warning,BRIGHTSCRIPT: ERROR: roSGNode.ObserveField: no active host node: ${location}`
                 );
             } else if (!(callableOrPort instanceof BrsInvalid)) {
@@ -537,7 +538,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
                     return interpreter.inSubEnv((subInterpreter) => {
                         let functionToCall = subInterpreter.getCallableFunction(functionName.value);
                         if (!(functionToCall instanceof Callable)) {
-                            interpreter.stderr.write(
+                            BrsDevice.stderr.write(
                                 `Ignoring attempt to call non-implemented function ${functionName}`
                             );
                             return BrsInvalid.Instance;
@@ -594,7 +595,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
                     }, componentDef.environment);
                 }
 
-                interpreter.stderr.write(
+                BrsDevice.stderr.write(
                     `Warning calling function in ${this.nodeSubtype}: no function interface specified for ${functionName}`
                 );
                 return BrsInvalid.Instance;
@@ -878,7 +879,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         impl: (interpreter: Interpreter, fieldName: BrsString) => {
             if (!interpreter.environment.hostNode) {
                 let location = interpreter.formatLocation();
-                interpreter.stderr.write(
+                BrsDevice.stderr.write(
                     `warning,BRIGHTSCRIPT: ERROR: roSGNode.unObserveField: no active host node: ${location}`
                 );
                 return BrsBoolean.False;
@@ -941,7 +942,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         impl: (interpreter: Interpreter, fieldName: BrsString) => {
             if (!interpreter.environment.hostNode) {
                 let location = interpreter.formatLocation();
-                interpreter.stderr.write(
+                BrsDevice.stderr.write(
                     `warning,BRIGHTSCRIPT: ERROR: roSGNode.unObserveField: no active host node: ${location}`
                 );
                 return BrsBoolean.False;

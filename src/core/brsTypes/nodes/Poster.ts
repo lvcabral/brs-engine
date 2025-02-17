@@ -4,6 +4,7 @@ import { Group } from "./Group";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D } from "../interfaces/IfDraw2D";
 import { rotateTranslation } from "../../scenegraph/SGUtil";
+import { BrsDevice } from "../../device/BrsDevice";
 
 export class Poster extends Group {
     readonly defaultFields: FieldModel[] = [
@@ -45,7 +46,7 @@ export class Poster extends Group {
         const rotation = angle + this.getRotation();
         const uri = this.fields.get("uri")?.getValue();
         if (uri instanceof BrsString && uri.value.trim() !== "") {
-            const textureManager = getTextureManager(interpreter);
+            const textureManager = getTextureManager();
             const bitmap = textureManager.loadTexture(uri.value);
             if (bitmap instanceof RoBitmap && bitmap.isValid()) {
                 const scaleX = size.width !== 0 ? size.width / bitmap.width : 1;
@@ -68,7 +69,7 @@ export class Poster extends Group {
                     draw2D?.doDrawScaledObject(drawTrans[0], drawTrans[1], scaleX, scaleY, bitmap);
                 }
             } else {
-                interpreter.stderr.write(`error,Invalid bitmap:${uri.value}`);
+                BrsDevice.stderr.write(`error,Invalid bitmap:${uri.value}`);
             }
         }
         const rect = { x: drawTrans[0], y: drawTrans[1], width: size.width, height: size.height };

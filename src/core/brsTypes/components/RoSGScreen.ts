@@ -32,6 +32,8 @@ import {
     releaseCanvas,
     rgbaIntToHex,
 } from "../interfaces/IfDraw2D";
+import { BrsDevice } from "../../device/BrsDevice";
+import { KeyEvent } from "../../common";
 
 // Roku Remote Mapping
 const rokuKeys: Map<number, string> = new Map([
@@ -74,9 +76,9 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         super("roSGScreen");
         this.interpreter = interpreter;
         this.draw2D = new IfDraw2D(this);
-        this.textureManager = getTextureManager(interpreter);
-        this.fontRegistry = getFontRegistry(interpreter);
-        const sgFont = interpreter.deviceInfo.get("sgFont");
+        this.textureManager = getTextureManager();
+        this.fontRegistry = getFontRegistry();
+        const sgFont = BrsDevice.deviceInfo.get("sgFont");
         const fontRegular = this.fontRegistry.registerFont(`common:/Fonts/${sgFont}-Regular.ttf`);
         const fontSemiBold = this.fontRegistry.registerFont(`common:/Fonts/${sgFont}-SemiBold.ttf`);
         Font.SystemFonts.forEach((font) => {

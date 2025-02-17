@@ -99,8 +99,10 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
             this.fontPaths.set(fontPath, fontFamily);
             return fontFamily;
         } catch (err: any) {
-            BrsDevice.stderr.write(`error,Error loading font:${fontPath} - ${err.message}`);
-            return BrsBoolean.False;
+            if (BrsDevice.isDevMode) {
+                BrsDevice.stderr.write(`warning,Error loading font:${fontPath} - ${err.message}`);
+            }
+            return "";
         }
     }
 
