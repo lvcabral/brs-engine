@@ -50,7 +50,7 @@ export class RoRegistry extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
-            BrsDevice.sharedRegistry?.store(Object.fromEntries(BrsDevice.registry));
+            BrsDevice.flushRegistry();
             postMessage(BrsDevice.registry);
             return BrsBoolean.True;
         },

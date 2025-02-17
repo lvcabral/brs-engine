@@ -32,7 +32,7 @@ export class BrsDevice {
 
     /** Array Buffer to Share the Registry across threads */
     private static registryVersion: number = 0;
-    static sharedRegistry?: SharedObject;
+    private static sharedRegistry?: SharedObject;
 
     /**
      * Updates the device registry with the provided data
@@ -53,6 +53,13 @@ export class BrsDevice {
         });
     }
 
+
+    /** Stores the registry to the shared buffer */
+    static flushRegistry() {
+        this.sharedRegistry?.store(Object.fromEntries(this.registry));
+    }
+
+    /** Refreshes the registry from the shared buffer (if newer version is available) */
     static refreshRegistry() {
         if (this.sharedRegistry && this.sharedRegistry.getVersion() !== this.registryVersion) {
             this.registryVersion = this.sharedRegistry.getVersion();
@@ -110,8 +117,10 @@ export class BrsDevice {
         Atomics.store(this.sharedArray, DataType.BUF, -1);
         return data;
     }
+
     /**
      * Method to update the control keys buffer, used by roScreen and roSGScreen
+     * @param keysBuffer Array with the keys buffer
      */
     static updateKeysBuffer(keysBuffer: KeyEvent[]) {
         for (let i = 0; i < keyBufferSize; i++) {
