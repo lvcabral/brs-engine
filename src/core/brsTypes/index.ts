@@ -39,6 +39,18 @@ import { RoCECStatusEvent } from "./events/RoCECStatusEvent";
 import { RoHdmiStatusEvent } from "./events/RoHdmiStatusEvent";
 import { RoSGNodeEvent } from "./events/RoSGNodeEvent";
 import { RoSGScreenEvent } from "./events/RoSGScreenEvent";
+import { isUnboxable } from "./Boxing";
+import { RoSGNode } from "./components/RoSGNode";
+import { Field } from "./nodes/Field";
+import { getNodeType, SGNodeFactory } from "../scenegraph/SGNodeFactory";
+import { RoMessagePort } from "./components/RoMessagePort";
+import { RoDeviceInfo } from "./components/RoDeviceInfo";
+import { RoAppManager } from "./components/RoAppManager";
+import { RoFileSystem } from "./components/RoFileSystem";
+import { RoLocalization } from "./components/RoLocalization";
+import { RoRegistry } from "./components/RoRegistry";
+import { RoAppMemoryMonitor } from "./components/RoAppMemoryMonitor";
+import { RoAppInfo } from "./components/RoAppInfo";
 
 export * from "./BrsType";
 export * from "./Int32";
@@ -132,6 +144,7 @@ export * from "./nodes/Poster";
 export * from "./nodes/ArrayGrid";
 export * from "./nodes/MarkupGrid";
 export * from "./nodes/ContentNode";
+export * from "./nodes/Task";
 export * from "./nodes/Timer";
 export * from "./Boxing";
 export * from "./Callable";
@@ -400,13 +413,175 @@ export function brsValueOf(x: any): BrsType {
             }
             return x >= -3.4e38 && x <= 3.4e38 ? new Float(x) : new Double(x);
         case "object":
-            if (isBrsType(x)) {
-                return x;
-            } else if (Array.isArray(x)) {
-                return new RoArray(x.map(brsValueOf));
-            }
-            return toAssociativeArray(x);
+            return fromObject(x);
+        case "undefined":
+            return Uninitialized.Instance;
         default:
             throw new Error(`brsValueOf not implemented for: ${x} <${t}>`);
     }
+}
+
+/**
+ * Converts a JavaScript object to a BrsType.
+ * @param x The JavaScript object to convert.
+ * @returns A BrsType with the converted object or Invalid if the object is not transferable.
+ */
+function fromObject(x: any): BrsType {
+    if (isBrsType(x)) {
+        return x;
+    } else if (x === null) {
+        return BrsInvalid.Instance;
+    } else if (x instanceof Uint8Array) {
+        return new RoByteArray(x);
+    } else if (Array.isArray(x)) {
+        return new RoArray(x.map(brsValueOf));
+    } else if (x["_node_"]) {
+        const node = x["_node_"].split(":");
+        if (node.length === 2) {
+            return toNode(x, node[0], node[1]);
+        }
+        return BrsInvalid.Instance;
+    } else if (x["_component_"]) {
+        const component = x["_component_"];
+        switch (component) {
+            case "roMessagePort":
+                return new RoMessagePort();
+            case "roAppManager":
+                return new RoAppManager();
+            case "roAppInfo":
+                return new RoAppInfo();
+            case "roFileSystem":
+                return new RoFileSystem();
+            case "roLocalization":
+                return new RoLocalization();
+            case "roDeviceInfo":
+                return new RoDeviceInfo();
+            case "roRegistry":
+                return new RoRegistry();
+            case "roMemoryMonitor":
+                return new RoAppMemoryMonitor();
+            case "roXMLElement":
+                return new RoXMLElement();
+            default:
+                return BrsInvalid.Instance;
+        }
+    }
+    return toAssociativeArray(x);
+}
+
+/**
+ * Converts a JavaScript object to a RoSGNode, converting each field to the corresponding BrightScript type.
+ * @param x The JavaScript object to convert.
+ * @param type The type of the node.
+ * @param subtype The subtype of the node.
+ * @returns A RoSGNode with the converted fields.
+ */
+function toNode(x: any, type: string, subtype: string): RoSGNode {
+    const node = SGNodeFactory.createNode(type, subtype) ?? new RoSGNode([], subtype);
+    for (const key in x) {
+        if (key !== "_node_" && key !== "_children_" && key !== "_observed_") {
+            node.setFieldValue(key, brsValueOf(x[key]));
+        }
+    }
+    if (x["_children_"]) {
+        x["_children_"].forEach((child: any) => {
+            if (child["_node_"]) {
+                const nodeName = x["_node_"].split(":");
+                node.getNodeChildren().push(toNode(child, nodeName[0], nodeName[1]));
+            }
+        });
+    }
+    return node;
+}
+
+/**
+ * Converts a RoAssociativeArray to a JavaScript object, converting each property to the corresponding JavaScript type.
+ * @param associativeArray The RoAssociativeArray to convert.
+ * @returns A JavaScript object with the converted properties.
+ */
+export function fromAssociativeArray(associativeArray: RoAssociativeArray): FlexObject {
+    const result: FlexObject = {};
+
+    associativeArray.elements.forEach((value: BrsType, key: string) => {
+        if (isUnboxable(value)) {
+            result[key] = jsValueOf(value.unbox());
+        } else {
+            result[key] = jsValueOf(value);
+        }
+    });
+
+    return result;
+}
+
+/**
+ * Converts a BrsType value to its representation as a JavaScript type.
+ * @param {BrsType} x Some BrsType value.
+ * @return {any} The JavaScript representation of `x`.
+ */
+export function jsValueOf(x: BrsType): any {
+    switch (x.kind) {
+        case ValueKind.Invalid:
+            return null;
+        case ValueKind.Uninitialized:
+            return undefined;
+        case ValueKind.Boolean:
+            return x.toBoolean();
+        case ValueKind.String:
+            return x.value;
+        case ValueKind.Int32:
+        case ValueKind.Float:
+        case ValueKind.Double:
+            return x.getValue();
+        case ValueKind.Int64:
+            return x.getValue().toNumber();
+        case ValueKind.Object:
+            if (x instanceof RoArray || x instanceof RoList) {
+                return x.elements.map(jsValueOf);
+            } else if (x instanceof RoByteArray) {
+                return x.elements;
+            } else if (x instanceof RoSGNode) {
+                return fromSGNode(x);
+            } else if (x instanceof RoAssociativeArray) {
+                return fromAssociativeArray(x);
+            } else if (x instanceof BrsComponent) {
+                return { _component_: x.getComponentName() };
+            }
+            break;
+        default:
+            throw new Error(`jsValueOf not implemented for: ${x} <${x.kind}>`);
+    }
+}
+
+/**
+ * Converts a RoSGNode to a JavaScript object, converting each field to the corresponding JavaScript type.
+ * @param node The RoSGNode to convert.
+ * @returns A JavaScript object with the converted fields.
+ */
+export function fromSGNode(node: RoSGNode): FlexObject {
+    const result: FlexObject = {};
+    const fields = node.getNodeFields();
+    const observed: string[] = [];
+
+    result["_node_"] = `${getNodeType(node.nodeSubtype)}:${node.nodeSubtype}`;
+
+    fields.forEach((value: Field, key: string) => {
+        let fieldValue = value.getValue(false);
+        if (isUnboxable(fieldValue)) {
+            fieldValue = fieldValue.unbox();
+        }
+        if (value.isPortObserved(node)) {
+            observed.push(key);
+        }
+        result[key] = jsValueOf(fieldValue);
+    });
+    if (observed.length) {
+        result["_observed_"] = observed;
+    }
+
+    const children = node.getNodeChildren();
+    if (children.length > 0) {
+        result["_children_"] = children.map((child: RoSGNode) => fromSGNode(child));
+    }
+
+    return result;
 }

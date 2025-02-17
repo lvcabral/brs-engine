@@ -1,4 +1,4 @@
-import { FieldModel } from "../components/RoSGNode";
+import { FieldModel } from "./Field";
 import { Group } from "./Group";
 import { AAMember } from "../components/RoAssociativeArray";
 import { BrsString } from "../BrsType";

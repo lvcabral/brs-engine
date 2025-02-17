@@ -41,7 +41,7 @@ export interface DeviceInfo {
     startTime: number;
     audioVolume: number;
     maxFps: number;
-    registry?: Map<string, string>;
+    registryBuffer?: SharedArrayBuffer;
     audioCodecs?: string[];
     videoFormats?: Map<string, string[]>;
     appList?: AppData[];
@@ -84,15 +84,14 @@ export const defaultDeviceInfo: DeviceInfo = {
     localIps: ["eth1,127.0.0.1"], // In a Browser is not possible to get a real IP, populate it on NodeJS or Electron.
     startTime: Date.now(),
     audioVolume: 40,
-    registry: new Map(),
     maxFps: 60,
     platform: platform,
 };
 
-/* Execution Payload Interface
+/* Execution Payload Interfaces
  *
- * This interface is used to provide information to the interpreter about the
- * device and app that will be executed. It contains the DeviceInfo object,
+ * These interfaces are used to provide information to the interpreter about the
+ * device, app/task that will be executed. It may contain the DeviceInfo object,
  * the app manifest, source code, deep link, encryption password, paths,
  * some execution flags and file system paths.
  *
@@ -126,6 +125,70 @@ export function isAppPayload(value: any): value is AppPayload {
         (typeof value.root === "string" || value.root === undefined) &&
         (typeof value.ext === "string" || value.ext === undefined)
     );
+}
+
+export type TaskPayload = {
+    device: DeviceInfo;
+    manifest: Map<string, string>;
+    taskData: TaskData;
+    pkgZip?: ArrayBuffer;
+    extZip?: ArrayBuffer;
+    root?: string;
+    ext?: string;
+};
+
+export function isTaskPayload(value: any): value is TaskPayload {
+    return (
+        value &&
+        typeof value.device === "object" &&
+        value.manifest instanceof Map &&
+        isTaskData(value.taskData) &&
+        (value.pkgZip instanceof ArrayBuffer || value.pkgZip === undefined) &&
+        (value.extZip instanceof ArrayBuffer || value.extZip === undefined) &&
+        (typeof value.root === "string" || value.root === undefined) &&
+        (typeof value.ext === "string" || value.ext === undefined)
+    );
+}
+
+export type TaskData = {
+    id: number;
+    name: string;
+    state: TaskState;
+    buffer?: SharedArrayBuffer;
+    m?: any;
+};
+
+export function isTaskData(value: any): value is TaskData {
+    return (
+        value &&
+        typeof value.id === "number" &&
+        typeof value.name === "string" &&
+        Object.values(TaskState).includes(value.state) &&
+        (value.buffer instanceof SharedArrayBuffer || value.buffer === undefined) &&
+        (typeof value.m === "object" || value.m === undefined)
+    );
+}
+
+export type TaskUpdate = {
+    id: number;
+    field: string;
+    value: any;
+};
+
+export function isTaskUpdate(value: any): value is TaskUpdate {
+    return (
+        value &&
+        typeof value.id === "number" &&
+        typeof value.field === "string" &&
+        value.value !== undefined
+    );
+}
+
+export enum TaskState {
+    INIT,
+    RUN,
+    STOP,
+    DONE,
 }
 
 /* Package File Path Interface
@@ -310,9 +373,11 @@ export enum DataType {
     MOD, // Key State (down/up)
 }
 
-// Debug constants
+// SharedArrayBuffer constants
 export const dataBufferIndex = 33;
 export const dataBufferSize = 1024;
+export const registryInitialSize = 32 * 1024;
+export const registryMaxSize = 64 * 1024;
 
 // Key Buffer Constants
 export const keyBufferSize = 5; // Max is 5, if needs more space increase `dataBufferIndex`

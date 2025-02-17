@@ -1,4 +1,5 @@
-import { FieldModel, Field, RoSGNode } from "../components/RoSGNode";
+import { RoSGNode } from "../components/RoSGNode";
+import { Field, FieldModel } from "./Field";
 import { BrsType, toAssociativeArray } from "..";
 import { ValueKind, BrsString, BrsBoolean } from "../BrsType";
 import { Interpreter } from "../../interpreter";
@@ -119,10 +120,7 @@ export class ContentNode extends RoSGNode {
         super([], name);
 
         this.registerDefaultFields(this.defaultFields);
-        this.registerMethods({
-            ifAssociativeArray: [this.count, this.keys, this.items],
-            ifSGNodeField: [this.hasField],
-        });
+        this.appendMethods([this.count, this.keys, this.items, this.hasField]);
     }
 
     private getVisibleFields() {

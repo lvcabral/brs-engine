@@ -1,4 +1,5 @@
-import { RoSGNode, FieldModel, FieldKind } from "../components/RoSGNode";
+import { RoSGNode } from "../components/RoSGNode";
+import { FieldKind, FieldModel } from "./Field";
 import {
     Int32,
     Float,

@@ -1,4 +1,4 @@
-import { FieldModel } from "../components/RoSGNode";
+import { FieldModel } from "./Field";
 import { AAMember, BrsString, getTextureManager, RoBitmap } from "..";
 import { Group } from "./Group";
 import { Interpreter } from "../../interpreter";

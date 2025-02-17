@@ -48,7 +48,7 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
         if (audio instanceof Buffer) {
             return new DataView(audio.buffer);
         }
-        return audio ? new DataView(audio as ArrayBuffer) : undefined;
+        return audio ? new DataView(audio as any) : undefined;
     }
 
     private updateTagsFromSection(tags: RoAssociativeArray, frames: any) {
