@@ -11,8 +11,7 @@ import {
     brsValueOf,
 } from "..";
 import { Field, FieldKind, FieldModel } from "./Field";
-import { BrsDevice } from "../../BrsDevice";
-import { DataType, isTaskUpdate, TaskData, TaskState, TaskUpdate } from "../../common";
+import { isTaskUpdate, TaskData, TaskState, TaskUpdate } from "../../common";
 import SharedObject from "../../SharedObject";
 
 export class Task extends RoSGNode {

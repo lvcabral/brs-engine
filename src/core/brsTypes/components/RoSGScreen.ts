@@ -15,7 +15,6 @@ import {
     Font,
     getFontRegistry,
     getTextureManager,
-    brsValueOf,
     rootObjects,
 } from "..";
 import { IfGetMessagePort, IfSetMessagePort } from "../interfaces/IfMessagePort";
@@ -34,7 +33,7 @@ import {
     rgbaIntToHex,
 } from "../interfaces/IfDraw2D";
 import { BrsDevice } from "../../BrsDevice";
-import { KeyEvent, TaskUpdate } from "../../common";
+import { KeyEvent } from "../../common";
 
 // Roku Remote Mapping
 const rokuKeys: Map<number, string> = new Map([

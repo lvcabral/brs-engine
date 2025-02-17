@@ -123,14 +123,14 @@ export type FieldModel = {
 };
 
 export class Field {
-    private permanentObservers: BrsCallback[] = [];
-    private unscopedObservers: BrsCallback[] = [];
-    private scopedObservers: Map<RoSGNode, BrsCallback[]> = new Map();
+    private readonly permanentObservers: BrsCallback[] = [];
+    private readonly unscopedObservers: BrsCallback[] = [];
+    private readonly scopedObservers: Map<RoSGNode, BrsCallback[]> = new Map();
 
     constructor(
         private value: BrsType,
-        private type: FieldKind,
-        private alwaysNotify: boolean,
+        private readonly type: FieldKind,
+        private readonly alwaysNotify: boolean,
         private hidden: boolean = false
     ) {}
 
@@ -187,8 +187,8 @@ export class Field {
         let oldValue = this.value;
         this.value = value;
         if (notify && (this.alwaysNotify || oldValue !== value)) {
-            this.permanentObservers.map(this.executeCallbacks.bind(this));
-            this.unscopedObservers.map(this.executeCallbacks.bind(this));
+            this.permanentObservers.forEach(this.executeCallbacks.bind(this));
+            this.unscopedObservers.forEach(this.executeCallbacks.bind(this));
             this.scopedObservers.forEach((callbacks) =>
                 callbacks.map(this.executeCallbacks.bind(this))
             );
@@ -197,17 +197,21 @@ export class Field {
 
     canAcceptValue(value: BrsType) {
         // Objects are allowed to be set to invalid.
-        let fieldIsObject = getValueKindFromFieldType(this.type) === ValueKind.Object;
-        if (fieldIsObject && (value === BrsInvalid.Instance || value instanceof RoInvalid)) {
-            return true;
-        } else if (isBrsNumber(this.value) && isBrsNumber(value)) {
-            // can convert between number types
+        const fieldIsObject = getValueKindFromFieldType(this.type) === ValueKind.Object;
+        if (
+            (fieldIsObject && (value === BrsInvalid.Instance || value instanceof RoInvalid)) ||
+            (isBrsNumber(this.value) && isBrsNumber(value))
+        ) {
             return true;
         }
 
         const result = this.type === FieldKind.fromBrsType(value);
         if (!result) {
-            console.warn(`type = ${this.type} other type = ${FieldKind.fromBrsType(value)}`);
+            postMessage(
+                `warning,Can't accept Field value: type = ${
+                    this.type
+                } other type = ${FieldKind.fromBrsType(value)}`
+            );
         }
         return result;
     }

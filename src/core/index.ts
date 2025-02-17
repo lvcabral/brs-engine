@@ -373,7 +373,6 @@ export async function executeTask(payload: TaskPayload, customOptions?: Partial<
         },
         ...customOptions,
     };
-    bscs.clear();
     stats.clear();
     // Setup the File System
     try {

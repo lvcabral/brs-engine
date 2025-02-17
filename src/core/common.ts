@@ -163,7 +163,7 @@ export function isTaskData(value: any): value is TaskData {
         value &&
         typeof value.id === "number" &&
         typeof value.name === "string" &&
-        Object.values(TaskState).includes(value.state as any) &&
+        Object.values(TaskState).includes(value.state) &&
         (value.buffer instanceof SharedArrayBuffer || value.buffer === undefined) &&
         (typeof value.m === "object" || value.m === undefined)
     );
