@@ -7,7 +7,7 @@ import { Int32 } from "../Int32";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import customParseFormat from "dayjs/plugin/customParseFormat";
-import { BrsDevice } from "../../BrsDevice";
+import { BrsDevice } from "../../device/BrsDevice";
 
 export class RoDateTime extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;

@@ -3,12 +3,12 @@ import { BrsComponent } from "./BrsComponent";
 import { BrsType } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
-import { validUri } from "../../FileSystem";
+import { validUri } from "../../device/FileSystem";
 import { Int32 } from "../Int32";
 import { RoArray } from "./RoArray";
 import { RoFont } from "./RoFont";
 import * as opentype from "opentype.js";
-import { BrsDevice } from "../../BrsDevice";
+import { BrsDevice } from "../../device/BrsDevice";
 
 export interface FontMetrics {
     ascent: number;
@@ -26,7 +26,7 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
     private readonly defaultFontFamily: string;
     private readonly fontRegistry: Map<string, FontMetrics[]>;
 
-    constructor(interpreter: Interpreter) {
+    constructor() {
         super("roFontRegistry");
         this.registerMethods({
             ifFontRegistry: [
@@ -40,10 +40,10 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
         });
         this.fontRegistry = new Map();
         this.defaultFontFamily = BrsDevice.deviceInfo.get("defaultFont");
-        this.registerFont(interpreter, `common:/Fonts/${this.defaultFontFamily}-Regular.ttf`);
-        this.registerFont(interpreter, `common:/Fonts/${this.defaultFontFamily}-Bold.ttf`);
-        this.registerFont(interpreter, `common:/Fonts/${this.defaultFontFamily}-Italic.ttf`);
-        this.registerFont(interpreter, `common:/Fonts/${this.defaultFontFamily}-BoldItalic.ttf`);
+        this.registerFont(`common:/Fonts/${this.defaultFontFamily}-Regular.ttf`);
+        this.registerFont(`common:/Fonts/${this.defaultFontFamily}-Bold.ttf`);
+        this.registerFont(`common:/Fonts/${this.defaultFontFamily}-Italic.ttf`);
+        this.registerFont(`common:/Fonts/${this.defaultFontFamily}-BoldItalic.ttf`);
     }
 
     toString(parent?: BrsType): string {
@@ -54,7 +54,7 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
         return BrsBoolean.False;
     }
 
-    registerFont(interpreter: Interpreter, fontPath: string) {
+    registerFont(fontPath: string) {
         try {
             const fsys = BrsDevice.fileSystem;
             if (!fsys || !validUri(fontPath)) {
@@ -91,7 +91,7 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
                 this.fontRegistry.set(fontFamily, [fontMetrics]);
             }
         } catch (err: any) {
-            interpreter.stderr.write(`error,Error loading font:${fontPath} - ${err.message}`);
+            BrsDevice.stderr.write(`error,Error loading font:${fontPath} - ${err.message}`);
             return BrsBoolean.False;
         }
         return BrsBoolean.True;
@@ -104,7 +104,7 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (interpreter: Interpreter, fontPath: BrsString) => {
-            return this.registerFont(interpreter, fontPath.value);
+            return this.registerFont(fontPath.value);
         },
     });
 

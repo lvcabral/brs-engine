@@ -16,6 +16,7 @@ import {
     releaseCanvas,
     rgbaIntToHex,
 } from "../interfaces/IfDraw2D";
+import { BrsDevice } from "../../device/BrsDevice";
 
 export class RoCompositor extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -243,7 +244,7 @@ export class RoCompositor extends BrsComponent implements BrsValue {
                 this.setSpriteLayer(sprite, z.getValue());
                 return sprite;
             } else {
-                interpreter.stderr.write(
+                BrsDevice.stderr.write(
                     `warning,BRIGHTSCRIPT: ERROR: roCompositor.newSprite: invalid region parameter type roInvalid: ${interpreter.formatLocation()}`
                 );
             }
@@ -284,7 +285,7 @@ export class RoCompositor extends BrsComponent implements BrsValue {
                 warning = "invalid regionArray parameter type roInvalid";
             }
             if (warning.length) {
-                interpreter.stderr.write(
+                BrsDevice.stderr.write(
                     `warning,BRIGHTSCRIPT: ERROR: roCompositor.newAnimatedSprite: ${warning}: ${interpreter.formatLocation()}`
                 );
             }

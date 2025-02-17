@@ -1,4 +1,4 @@
-import { BrsDevice } from "../../BrsDevice";
+import { BrsDevice } from "../../device/BrsDevice";
 import { BrsValue, ValueKind, BrsString, BrsInvalid, BrsBoolean } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
 import { RoMessagePort } from "./RoMessagePort";
@@ -18,7 +18,6 @@ import { XMLHttpRequest } from "../../polyfill/XMLHttpRequest";
 export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgent {
     readonly kind = ValueKind.Object;
     readonly customHeaders: Map<string, string>;
-    private readonly interpreter: Interpreter;
     private identity: number;
     private url: string;
     private host: string;
@@ -34,9 +33,8 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
     private password?: string;
     cookiesEnabled: boolean;
 
-    constructor(interpreter: Interpreter) {
+    constructor() {
         super("roUrlTransfer");
-        this.interpreter = interpreter;
         this.identity = Math.trunc(Math.random() * 10 * 8);
         this.url = "";
         this.host = "";
@@ -128,8 +126,8 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
             headers = xhr.getAllResponseHeaders();
             this.failureReason = xhr.statusText;
         } catch (e: any) {
-            if (this.interpreter.isDevMode) {
-                this.interpreter.stderr.write(
+            if (BrsDevice.isDevMode) {
+                BrsDevice.stderr.write(
                     `warning,[getToStringEvent] Error getting ${this.url}: ${e.message}`
                 );
             }
@@ -158,8 +156,8 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
                 this.saveDownloadedFile(filePath, xhr.response);
             }
         } catch (e: any) {
-            if (this.interpreter.isDevMode) {
-                this.interpreter.stderr.write(
+            if (BrsDevice.isDevMode) {
+                BrsDevice.stderr.write(
                     `warning,[getToFileEvent] Error getting ${this.url}: ${e.message}`
                 );
             }
@@ -195,8 +193,8 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
             headers = xhr.getAllResponseHeaders();
             this.failureReason = xhr.statusText;
         } catch (e: any) {
-            if (this.interpreter.isDevMode) {
-                this.interpreter.stdout.write(
+            if (BrsDevice.isDevMode) {
+                BrsDevice.stdout.write(
                     `warning,[postFromStringEvent] Error posting to ${this.url}: ${e.message}`
                 );
             }
@@ -246,8 +244,8 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
         } catch (e: any) {
             error = e.message;
         }
-        if (error !== "" && this.interpreter.isDevMode) {
-            this.interpreter.stderr.write(
+        if (error !== "" && BrsDevice.isDevMode) {
+            BrsDevice.stderr.write(
                 `warning,[postFromFileToFileEvent] Error posting to ${this.url}: ${error}`
             );
         }
@@ -278,11 +276,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
         const bytes = data.slice(0, fileType.minimumBytes);
         const type = fileType(bytes);
         if (type && AudioExt.has(type.ext)) {
-            if (this.interpreter.manifest.get("requires_audiometadata") === "1") {
-                fsys.writeFileSync(filePath, Buffer.from(data));
-            } else {
-                fsys.writeFileSync(filePath, "audio");
-            }
+            fsys.writeFileSync(filePath, Buffer.from(data));
             postMessage({
                 audioPath: filePath,
                 audioFormat: type.ext,
@@ -313,8 +307,8 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
                 xhr.getAllResponseHeaders()
             );
         } catch (e: any) {
-            if (this.interpreter.isDevMode) {
-                this.interpreter.stderr.write(
+            if (BrsDevice.isDevMode) {
+                BrsDevice.stderr.write(
                     `warning,[requestHead] Error requesting from ${this.url}: ${e.message}`
                 );
             }
@@ -428,8 +422,8 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
             if (this.port) {
                 this.failureReason = "";
                 this.port.pushCallback(this.getToStringEvent.bind(this));
-            } else if (this.interpreter.isDevMode) {
-                this.interpreter.stderr.write(
+            } else if (BrsDevice.isDevMode) {
+                BrsDevice.stderr.write(
                     "warning,No message port assigned to this roUrlTransfer instance!"
                 );
             }
@@ -450,8 +444,8 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
                 this.failureReason = "";
                 this.outFile.push(filePath.value);
                 this.port.pushCallback(this.getToFileAsync.bind(this));
-            } else if (this.interpreter.isDevMode) {
-                this.interpreter.stderr.write(
+            } else if (BrsDevice.isDevMode) {
+                BrsDevice.stderr.write(
                     "warning,No message port assigned to this roUrlTransfer instance!"
                 );
             }
@@ -497,8 +491,8 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
             if (this.port) {
                 this.failureReason = "";
                 this.port.pushCallback(this.requestHead.bind(this));
-            } else if (this.interpreter.isDevMode) {
-                this.interpreter.stderr.write(
+            } else if (BrsDevice.isDevMode) {
+                BrsDevice.stderr.write(
                     "warning,No message port assigned to this roUrlTransfer instance!"
                 );
             }
@@ -530,8 +524,8 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
                 this.failureReason = "";
                 this.postBody.push(request.value);
                 this.port.pushCallback(this.postFromStringAsync.bind(this));
-            } else if (this.interpreter.isDevMode) {
-                this.interpreter.stderr.write(
+            } else if (BrsDevice.isDevMode) {
+                BrsDevice.stderr.write(
                     "warning,No message port assigned to this roUrlTransfer instance!"
                 );
             }
@@ -552,10 +546,8 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
                 const body = fsys.readFileSync(filePath.value);
                 const reply = this.postFromStringEvent(body);
                 return new Int32(reply.getStatus());
-            } else if (this.interpreter.isDevMode) {
-                this.interpreter.stderr.write(
-                    `warning,[postFromFile] Invalid path: ${filePath.value}`
-                );
+            } else if (BrsDevice.isDevMode) {
+                BrsDevice.stderr.write(`warning,[postFromFile] Invalid path: ${filePath.value}`);
             }
             return new Int32(-26);
         },
@@ -576,8 +568,8 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
                 this.failureReason = "";
                 this.postBody.push(fsys.readFileSync(filePath.value, "utf8"));
                 this.port.pushCallback(this.postFromStringAsync.bind(this));
-            } else if (this.interpreter.isDevMode) {
-                this.interpreter.stderr.write(
+            } else if (BrsDevice.isDevMode) {
+                BrsDevice.stderr.write(
                     "warning,No message port assigned to this roUrlTransfer instance!"
                 );
             }
@@ -605,7 +597,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
                 this.outFile.push(toFile.value);
                 this.port.pushCallback(this.postFromFileToFileAsync.bind(this));
             } else {
-                this.interpreter.stderr.write(
+                BrsDevice.stderr.write(
                     "warning,No message port assigned to this roUrlTransfer instance!"
                 );
             }

@@ -1,6 +1,6 @@
-import { BrsType } from "./brsTypes";
-import type { TracePoint } from "./interpreter";
-import type { Location } from "./lexer";
+import { BrsType } from "../brsTypes";
+import type { TracePoint } from "../interpreter";
+import type { Location } from "../lexer";
 
 export class BrsError extends Error {
     constructor(message: string, readonly location: Location, public backTrace?: TracePoint[]) {

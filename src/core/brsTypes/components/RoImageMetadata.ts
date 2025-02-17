@@ -13,7 +13,7 @@ import { BrsComponent } from "./BrsComponent";
 import { Interpreter } from "../../interpreter";
 import { ExifSections, exifTags, exifTagEnums, ExifTag } from "../ExifTags";
 import * as exifParser from "exif-parser";
-import { BrsDevice } from "../../BrsDevice";
+import { BrsDevice } from "../../device/BrsDevice";
 
 export class RoImageMetadata extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -42,13 +42,13 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
         return BrsBoolean.False;
     }
 
-    private loadFile(interpreter: Interpreter, file: string) {
+    private loadFile(_: Interpreter, file: string) {
         let image: Buffer | undefined;
         try {
             image = BrsDevice.fileSystem?.readFileSync(file);
         } catch (err: any) {
-            if (interpreter.isDevMode) {
-                interpreter.stderr.write(
+            if (BrsDevice.isDevMode) {
+                BrsDevice.stderr.write(
                     `warning,[roImageMetadata] Error loading bitmap:${file} - ${err.message}`
                 );
             }
@@ -206,7 +206,7 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.Object,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_: Interpreter) => {
             if (!this.fileData) {
                 return BrsInvalid.Instance;
             }
@@ -227,8 +227,8 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
                     fields.set("orientation", tagEnum[result.tags["Orientation"] ?? 0] ?? "");
                 }
             } catch (err: any) {
-                if (interpreter.isDevMode) {
-                    interpreter.stderr.write(
+                if (BrsDevice.isDevMode) {
+                    BrsDevice.stderr.write(
                         `warning,[roImageMetadata] Error reading metadata:${err.message}`
                     );
                 }
@@ -249,7 +249,7 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.Object,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_: Interpreter) => {
             if (!this.fileData) {
                 return BrsInvalid.Instance;
             }
@@ -265,8 +265,8 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
                     }
                 }
             } catch (err: any) {
-                if (interpreter.isDevMode) {
-                    interpreter.stderr.write(
+                if (BrsDevice.isDevMode) {
+                    BrsDevice.stderr.write(
                         `warning,[roImageMetadata] Error getting thumbnail:${err.message}`
                     );
                 }
@@ -283,7 +283,7 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.Object,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_: Interpreter) => {
             if (!this.fileData) {
                 return BrsInvalid.Instance;
             }
@@ -328,8 +328,8 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
                 };
                 return toAssociativeArray(rawExif);
             } catch (err: any) {
-                if (interpreter.isDevMode) {
-                    interpreter.stderr.write(
+                if (BrsDevice.isDevMode) {
+                    BrsDevice.stderr.write(
                         `warning,[roImageMetadata] Error getting raw exif:${err.message}`
                     );
                 }
@@ -349,7 +349,7 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
             ],
             returns: ValueKind.Dynamic,
         },
-        impl: (interpreter: Interpreter, ifd: Int32 | Float, tagnum: Int32 | Float) => {
+        impl: (_: Interpreter, ifd: Int32 | Float, tagnum: Int32 | Float) => {
             if (!this.fileData) {
                 return BrsInvalid.Instance;
             }
@@ -372,8 +372,8 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
                 const tag = this.findValue(result.tags, sectionId, tagnum.getValue());
                 return tag ? this.getTagData(tag, tagsMap) : new RoAssociativeArray([]);
             } catch (err: any) {
-                if (interpreter.isDevMode) {
-                    interpreter.stderr.write(
+                if (BrsDevice.isDevMode) {
+                    BrsDevice.stderr.write(
                         `warning,[roImageMetadata] Error getting raw exif tag:${err.message}`
                     );
                 }

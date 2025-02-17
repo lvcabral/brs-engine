@@ -20,12 +20,12 @@ import {
 } from "../interfaces/IfSocket";
 import { IfGetMessagePort, IfSetMessagePort } from "../interfaces/IfMessagePort";
 import * as net from "net";
+import { BrsDevice } from "../../device/BrsDevice";
 
 export class RoStreamSocket extends BrsComponent implements BrsValue, BrsSocket {
     readonly kind = ValueKind.Object;
     readonly socket?: net.Socket;
     readonly identity: number;
-    private readonly interpreter: Interpreter;
     address?: RoSocketAddress;
     sendToAddress?: RoSocketAddress;
     ttl: number;
@@ -37,9 +37,8 @@ export class RoStreamSocket extends BrsComponent implements BrsValue, BrsSocket 
     recvTimeout: number;
     errorCode: number;
 
-    constructor(interpreter: Interpreter) {
+    constructor() {
         super("roStreamSocket");
-        this.interpreter = interpreter;
         this.ttl = 0;
         this.reuseAddr = false;
         this.inline = false;
@@ -51,7 +50,7 @@ export class RoStreamSocket extends BrsComponent implements BrsValue, BrsSocket 
             this.socket = new net.Socket();
             this.errorCode = 0;
         } catch (err: any) {
-            interpreter.stderr.write(
+            BrsDevice.stderr.write(
                 `warning,[roStreamSocket] Sockets are not supported in this environment.`
             );
             this.errorCode = 3474;

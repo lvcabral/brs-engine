@@ -4,7 +4,7 @@ import { BrsType } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
-import { BrsDevice } from "../../BrsDevice";
+import { BrsDevice } from "../../device/BrsDevice";
 
 export class RoLocalization extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -68,7 +68,7 @@ export class RoLocalization extends BrsComponent implements BrsValue {
             ],
             returns: ValueKind.String,
         },
-        impl: (interpreter: Interpreter, dirName: BrsString, fileName: BrsString) => {
+        impl: (_: Interpreter, dirName: BrsString, fileName: BrsString) => {
             const fsys = BrsDevice.fileSystem;
             if (!fsys) {
                 return new BrsString("");
@@ -86,7 +86,7 @@ export class RoLocalization extends BrsComponent implements BrsValue {
                 return new BrsString(assetPath);
             } catch (err: any) {
                 const badPath = `pkg:/locale/${this.locale}/${filePath}`;
-                interpreter.stderr.write(`error,Invalid path: ${badPath} ${err.message}`);
+                BrsDevice.stderr.write(`error,Invalid path: ${badPath} ${err.message}`);
             }
             return new BrsString("");
         },
