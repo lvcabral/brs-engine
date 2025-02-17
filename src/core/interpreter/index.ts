@@ -55,7 +55,6 @@ import { generateArgumentMismatchError } from "./ArgumentMismatch";
 import { OutputProxy } from "./OutputProxy";
 import * as StdLib from "../stdlib";
 import Long from "long";
-import SharedObject from "../SharedObject";
 import { Scope, Environment, NotFound } from "./Environment";
 import { toCallable } from "./BrsFunction";
 import { BlockEnd, GotoLabel } from "../parser/Statement";
@@ -67,7 +66,7 @@ import {
     numberToHex,
     parseTextFile,
     TaskPayload,
-    TaskState,
+    TaskUpdate,
 } from "../common";
 import { BrsDevice } from "../BrsDevice";
 /// #if !BROWSER
@@ -364,6 +363,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         return results;
     }
 
+    /**
+     * Function to run the Task function on a separate Worker thread.
+     * @param payload the Task payload data
+     */
     execTask(payload: TaskPayload) {
         const taskData = payload.taskData;
         const taskNode = initializeTask(this, taskData);
@@ -385,7 +388,12 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                         console.log("Task function called: ", taskData.name, functionName);
                         funcToCall.call(subInterpreter);
                         console.log("Task function finished: ", taskData.name, functionName);
-                        Atomics.store(BrsDevice.sharedArray, DataType.TASK, TaskState.STOP);
+                        const taskUpdate: TaskUpdate = {
+                            id: taskNode.id,
+                            field: "control",
+                            value: "stop",
+                        };
+                        postMessage(taskUpdate);
                     } else {
                         this.addError(
                             new BrsError(

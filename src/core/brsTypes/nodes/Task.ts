@@ -79,12 +79,14 @@ export class Task extends RoSGNode {
                 state.setValue(new BrsString(control));
                 this.fields.set("state", state);
                 if (this.id >= 0 && this.thread && sync) {
-                    const taskUpdate: TaskUpdate = { id: this.id, field: "state", value: control };
+                    const taskUpdate: TaskUpdate = { id: this.id, field: mapKey, value: control };
                     postMessage(taskUpdate);
                 }
             }
             return BrsInvalid.Instance;
         } else if (field && mapKey === "state" && value instanceof BrsString) {
+            // Roku documentation states this is read-only but it allows change the value to valid states
+            // But it does not trigger any action
             if (validStates.includes(value.value.toLowerCase())) {
                 field.setValue(value);
             }
@@ -126,15 +128,6 @@ export class Task extends RoSGNode {
             console.log("Posting Task Data to RUN: ", this.nodeSubtype, functionName.value);
             postMessage(taskData);
             this.started = true;
-        } else {
-            const state = Atomics.load(BrsDevice.sharedArray, DataType.TASK);
-            if (state === -1) {
-                return;
-            }
-            if (state === TaskState.STOP || state === TaskState.DONE) {
-                this.set(new BrsString("control"), new BrsString(TaskState[state]));
-            }
-            Atomics.store(BrsDevice.sharedArray, DataType.TASK, -1);
         }
     }
 

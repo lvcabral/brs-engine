@@ -367,7 +367,6 @@ export enum DataType {
     MBWD, // Measured Bandwidth
     CEC, // Consumer Electronics Control
     HDMI, // HDMI Status
-    TASK, // Task State
     // Key Buffer starts here: KeyBufferSize * KeyArraySpots
     RID, // Remote Id
     KEY, // Key Code
@@ -375,7 +374,7 @@ export enum DataType {
 }
 
 // SharedArrayBuffer constants
-export const dataBufferIndex = 34;
+export const dataBufferIndex = 33;
 export const dataBufferSize = 1024;
 export const registryInitialSize = 32 * 1024;
 export const registryMaxSize = 64 * 1024;

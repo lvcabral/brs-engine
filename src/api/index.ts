@@ -523,19 +523,6 @@ function endTask(taskId: number) {
     }
 }
 
-function taskCallback(event: MessageEvent) {
-    if (typeof event.data === "string") {
-        // TODO: handle end of task
-        deviceDebug(event.data);
-    } else if (isTaskUpdate(event.data)) {
-        // TODO: Prevent overwrite updates if not received by main thread (use asyncWait)
-        console.log("Task update received from Task thread: ", event.data.id, event.data.field);
-        taskSyncToMain.get(event.data.id)?.waitStore(event.data, 1);
-    } else {
-        apiException("warning", `[api] Invalid task message: ${typeof event.data}`);
-    }
-}
-
 // Update App in the App List from the Current App object
 export function updateAppList() {
     if (deviceData.appList?.length) {
@@ -624,7 +611,6 @@ function mainCallback(event: MessageEvent) {
             endTask(event.data.id);
         }
     } else if (isTaskUpdate(event.data)) {
-        // TODO: Prevent overwrite updates if not received by task thread (use asyncWait)
         console.log("Task update received from Main thread: ", event.data.id, event.data.field);
         if (!taskSyncFromMain.has(event.data.id)) {
             taskSyncFromMain.set(event.data.id, new SharedObject());
@@ -667,36 +653,70 @@ function mainCallback(event: MessageEvent) {
     } else if (typeof event.data !== "string") {
         // All messages beyond this point must be csv string
         apiException("warning", `[api] Invalid worker message: ${event.data}`);
-    } else if (event.data.startsWith("audio,")) {
-        handleSoundEvent(event.data);
-    } else if (event.data.startsWith("video,")) {
-        handleVideoEvent(event.data);
-    } else if (event.data.startsWith("print,")) {
-        deviceDebug(event.data);
-    } else if (event.data.startsWith("warning,")) {
-        deviceDebug(`${event.data}\r\n`);
-    } else if (event.data.startsWith("error,")) {
-        deviceDebug(`${event.data}\r\n`);
-    } else if (event.data.startsWith("debug,")) {
-        const level = event.data.slice(6);
+    } else {
+        handleStringMessage(event.data);
+    }
+}
+
+// Receive Messages from the Task Interpreter (Web Worker)
+function taskCallback(event: MessageEvent) {
+    if (event.data instanceof Map) {
+        if (platform.inBrowser) {
+            const storage: Storage = window.localStorage;
+            event.data.forEach(function (value: string, key: string) {
+                storage.setItem(key, value);
+            });
+        }
+        notifyAll("registry", event.data);
+    } else if (typeof event.data.displayEnabled === "boolean") {
+        setDisplayState(event.data.displayEnabled);
+    } else if (typeof event.data.captionsMode === "string") {
+        deviceData.captionsMode = event.data.captionsMode;
+    } else if (isTaskData(event.data)) {
+        console.log("Task data received from Task thread: ", event.data.name);
+        if (event.data.state === TaskState.STOP) {
+            endTask(event.data.id);
+        }
+    } else if (isTaskUpdate(event.data)) {
+        console.log("Task update received from Task thread: ", event.data.id, event.data.field);
+        taskSyncToMain.get(event.data.id)?.waitStore(event.data, 1);
+    } else if (typeof event.data === "string") {
+        handleStringMessage(event.data);
+    }
+}
+
+// Handles string messages from the Interpreter
+function handleStringMessage(message: string) {
+    if (message.startsWith("audio,")) {
+        handleSoundEvent(message);
+    } else if (message.startsWith("video,")) {
+        handleVideoEvent(message);
+    } else if (message.startsWith("print,")) {
+        deviceDebug(message);
+    } else if (message.startsWith("warning,")) {
+        deviceDebug(`${message}\r\n`);
+    } else if (message.startsWith("error,")) {
+        deviceDebug(`${message}\r\n`);
+    } else if (message.startsWith("debug,")) {
+        const level = message.slice(6);
         const enable = level === "continue";
         enableSendKeys(enable);
         statsUpdate(enable);
         switchSoundState(enable);
         switchVideoState(enable);
         notifyAll("debug", { level: level });
-    } else if (event.data.startsWith("start,")) {
+    } else if (message.startsWith("start,")) {
         const title = currentApp.title;
         const beaconMsg = "[scrpt.ctx.run.enter] UI: Entering";
-        const subName = event.data.split(",")[1];
+        const subName = message.split(",")[1];
         deviceDebug(`print,------ Running dev '${title}' ${subName} ------\r\n`);
         deviceDebug(`beacon,${getNow()} ${beaconMsg} '${title}', id '${currentApp.id}'\r\n`);
         statsUpdate(true);
         notifyAll("started", currentApp);
-    } else if (event.data.startsWith("end,")) {
-        terminate(getExitReason(event.data.slice(4)));
-    } else if (event.data.startsWith("syslog,")) {
-        const type = event.data.slice(7);
+    } else if (message.startsWith("end,")) {
+        terminate(getExitReason(message.slice(4)));
+    } else if (message.startsWith("syslog,")) {
+        const type = message.slice(7);
         if (type === "bandwidth.minute") {
             bandwidthMinute = true;
             if (latestBandwidth === 0) {
@@ -708,10 +728,10 @@ function mainCallback(event: MessageEvent) {
         } else if (type === "http.connect") {
             httpConnectLog = true;
         }
-    } else if (event.data === "reset") {
+    } else if (message === "reset") {
         notifyAll("reset");
-    } else if (event.data.startsWith("version,")) {
-        notifyAll("version", event.data.slice(8));
+    } else if (message.startsWith("version,")) {
+        notifyAll("version", message.slice(8));
     }
 }
 

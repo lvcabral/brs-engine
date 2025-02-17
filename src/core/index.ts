@@ -325,20 +325,20 @@ export async function executeFile(
     };
     bscs.clear();
     stats.clear();
-    BrsDevice.lastKeyTime = Date.now();
+    // Setup the File System
     try {
         await configureFileSystem(payload.pkgZip, payload.extZip);
+        if (options.root) {
+            BrsDevice.fileSystem.setRoot(options.root);
+        }
+        if (options.ext) {
+            BrsDevice.fileSystem.setExt(options.ext);
+        }
     } catch (err: any) {
         postMessage(`error,Error mounting File System: ${err.message}`);
         return { exitReason: AppExitReason.CRASHED };
     }
     // Look for SceneGraph components
-    if (options.root) {
-        BrsDevice.fileSystem.setRoot(options.root);
-    }
-    if (options.ext) {
-        BrsDevice.fileSystem.setExt(options.ext);
-    }
     const components = await getComponentDefinitionMap(BrsDevice.fileSystem, []);
     // Create the interpreter
     let interpreter: Interpreter;
@@ -350,6 +350,7 @@ export async function executeFile(
     // Process Payload Content
     const sourceResult = setupPayload(interpreter, payload);
     // Run the BrightScript app
+    BrsDevice.lastKeyTime = Date.now();
     let result: RunResult;
     if (sourceResult.pcode && sourceResult.iv) {
         result = await runEncrypted(interpreter, sourceResult, payload);
@@ -362,10 +363,7 @@ export async function executeFile(
     return result;
 }
 
-export async function executeTask(
-    payload: TaskPayload,
-    customOptions?: Partial<ExecutionOptions>
-): Promise<RunResult> {
+export async function executeTask(payload: TaskPayload, customOptions?: Partial<ExecutionOptions>) {
     const options = {
         ...{
             entryPoint: false,
@@ -377,26 +375,28 @@ export async function executeTask(
     };
     bscs.clear();
     stats.clear();
+    // Setup the File System
     try {
         await configureFileSystem(payload.pkgZip, payload.extZip);
+        if (options.root) {
+            BrsDevice.fileSystem.setRoot(options.root);
+        }
+        if (options.ext) {
+            BrsDevice.fileSystem.setExt(options.ext);
+        }
     } catch (err: any) {
         postMessage(`error,Error mounting File System: ${err.message}`);
-        return { exitReason: AppExitReason.CRASHED };
+        return;
     }
     // Look for SceneGraph components
-    if (options.root) {
-        BrsDevice.fileSystem.setRoot(options.root);
-    }
-    if (options.ext) {
-        BrsDevice.fileSystem.setExt(options.ext);
-    }
     const components = await getComponentDefinitionMap(BrsDevice.fileSystem, []);
     // Create the interpreter
     let interpreter: Interpreter;
     if (components.size > 0) {
         interpreter = await getInterpreterWithSubEnvs(components, payload.manifest, options);
     } else {
-        return { exitReason: AppExitReason.CRASHED };
+        postMessage(`warning,No SceneGraph components found!`);
+        return;
     }
     interpreter.setManifest(payload.manifest);
     if (payload.device.registry?.size) {
@@ -410,9 +410,9 @@ export async function executeTask(
         payload.taskData.m.top.functionname
     );
     interpreter.execTask(payload);
-    const result = { exitReason: AppExitReason.FINISHED };
-    postMessage(`end,${result.exitReason}`);
-    return result;
+    if (interpreter.isDevMode) {
+        postMessage(`debug,Task ${payload.taskData.name} is done.`);
+    }
 }
 
 /**

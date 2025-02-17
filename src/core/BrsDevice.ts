@@ -53,7 +53,6 @@ export class BrsDevice {
         });
     }
 
-
     /** Stores the registry to the shared buffer */
     static flushRegistry() {
         this.sharedRegistry?.store(Object.fromEntries(this.registry));
