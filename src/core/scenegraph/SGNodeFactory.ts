@@ -1,5 +1,5 @@
 import { ComponentDefinition, ComponentNode } from ".";
-import { Interpreter } from "..";
+import { BrsDevice, Interpreter } from "..";
 import {
     RoSGNode,
     Group,
@@ -140,7 +140,7 @@ export function createNodeByType(interpreter: Interpreter, type: BrsString): RoS
                 node = initializeNode(interpreter, type, typeDef);
             }
         } else {
-            interpreter.stderr.write(
+            BrsDevice.stderr.write(
                 `warning,BRIGHTSCRIPT: ERROR: roSGNode: Failed to create roSGNode with type ${
                     type.value
                 }: ${interpreter.formatLocation()}`
@@ -231,7 +231,7 @@ export function initializeNode(
         }
         return node;
     } else {
-        interpreter.stderr.write(
+        BrsDevice.stderr.write(
             `warning,BRIGHTSCRIPT: ERROR: roSGNode: Failed to initialize roSGNode with type ${
                 type.value
             }: ${interpreter.formatLocation()}`
@@ -336,7 +336,7 @@ export function initializeTask(interpreter: Interpreter, taskData: TaskData) {
         }
         return node;
     } else {
-        interpreter.stderr.write(
+        BrsDevice.stderr.write(
             `warning,BRIGHTSCRIPT: ERROR: roSGNode: Failed to initialize Task with type ${type}: ${interpreter.formatLocation()}`
         );
         return BrsInvalid.Instance;

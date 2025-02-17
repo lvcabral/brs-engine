@@ -44,7 +44,7 @@ export class Scene extends Group {
         draw2D?.doClearCanvas(backColor.getValue());
         const backURI = this.getFieldValue("backgroundUri");
         if (draw2D && backURI instanceof BrsString && backURI.value.trim() !== "") {
-            const textureManager = getTextureManager(interpreter);
+            const textureManager = getTextureManager();
             const bitmap = textureManager.loadTexture(backURI.value);
             if (bitmap instanceof RoBitmap && bitmap.isValid()) {
                 const scaleX = this.width / bitmap.width;

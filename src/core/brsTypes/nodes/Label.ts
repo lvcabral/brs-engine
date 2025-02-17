@@ -63,7 +63,7 @@ export class Label extends Group {
             const horizAlign = this.getFieldValue("horizAlign")?.toString() || "left";
             const vertAlign = this.getFieldValue("vertAlign")?.toString() || "top";
             const ellipsis = this.getFieldValue("ellipsisText")?.toString() || "...";
-            const drawFont = font.createDrawFont(interpreter);
+            const drawFont = font.createDrawFont();
             const measured = drawFont.measureTextWidth(textField.value, size.width, ellipsis);
             this.setEllipsized(measured.ellipsized);
             const text = measured.text;
