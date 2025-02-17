@@ -6,6 +6,7 @@ import { Interpreter } from "../../interpreter";
 import { RoAssociativeArray } from "./RoAssociativeArray";
 import { BrsArray, IfArray, IfArrayGet, IfArraySet } from "../interfaces/IfArray";
 import { IfEnum } from "../interfaces/IfEnum";
+import { BrsDevice } from "../../device/BrsDevice";
 
 export class RoArray extends BrsComponent implements BrsValue, BrsArray {
     readonly kind = ValueKind.Object;
@@ -245,14 +246,14 @@ export class RoArray extends BrsComponent implements BrsValue, BrsArray {
             args: [new StdlibArgument("separator", ValueKind.String)],
             returns: ValueKind.String,
         },
-        impl: (interpreter: Interpreter, separator: BrsString) => {
+        impl: (_: Interpreter, separator: BrsString) => {
             if (
                 this.elements.some(function (element) {
                     return !(element instanceof BrsString);
                 })
             ) {
-                if (interpreter.isDevMode) {
-                    interpreter.stderr.write(
+                if (BrsDevice.isDevMode) {
+                    BrsDevice.stderr.write(
                         "warning,roArray.Join: Array contains non-string value(s)."
                     );
                 }
@@ -268,10 +269,10 @@ export class RoArray extends BrsComponent implements BrsValue, BrsArray {
             args: [new StdlibArgument("flags", ValueKind.String, new BrsString(""))],
             returns: ValueKind.Void,
         },
-        impl: (interpreter: Interpreter, flags: BrsString) => {
+        impl: (_: Interpreter, flags: BrsString) => {
             if (flags.toString().match(/([^ir])/g) != null) {
-                if (interpreter.isDevMode) {
-                    interpreter.stderr.write(
+                if (BrsDevice.isDevMode) {
+                    BrsDevice.stderr.write(
                         "warning,roArray.Sort: Flags contains invalid option(s)."
                     );
                 }
@@ -297,10 +298,10 @@ export class RoArray extends BrsComponent implements BrsValue, BrsArray {
             ],
             returns: ValueKind.Void,
         },
-        impl: (interpreter: Interpreter, fieldName: BrsString, flags: BrsString) => {
+        impl: (_: Interpreter, fieldName: BrsString, flags: BrsString) => {
             if (flags.toString().match(/([^ir])/g) != null) {
-                if (interpreter.isDevMode) {
-                    interpreter.stderr.write(
+                if (BrsDevice.isDevMode) {
+                    BrsDevice.stderr.write(
                         "warning,roArray.SortBy: Flags contains invalid option(s)."
                     );
                 }

@@ -9,7 +9,7 @@ import {
     RoSGNode,
     ValueKind,
 } from "../brsTypes";
-import { TypeMismatch } from "./TypeMismatch";
+import { TypeMismatch } from "../error/TypeMismatch";
 import { ComponentDefinition } from "../scenegraph";
 
 /** The logical region from a particular variable or function that defines where it may be accessed from. */

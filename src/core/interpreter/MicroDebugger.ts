@@ -2,7 +2,8 @@ import { bscs } from "..";
 import { Interpreter, TracePoint } from ".";
 import { Lexer, Location } from "../lexer";
 import { Parser } from "../parser";
-import { BrsError } from "../BrsError";
+import { BrsDevice } from "../device/BrsDevice";
+import { BrsError } from "../error/BrsError";
 import { BrsObjects } from "../brsTypes";
 import {
     Statement,
@@ -19,7 +20,6 @@ import {
     While,
 } from "../parser/Statement";
 import { DataType, DebugCommand, debugPrompt, numberToHex, parseTextFile } from "../common";
-import { BrsDevice } from "../BrsDevice";
 /// #if !BROWSER
 import readline from "readline-sync";
 readline.setDefaultOptions({ prompt: debugPrompt });
@@ -52,7 +52,7 @@ export function runDebugger(
         /// #if BROWSER
         line = nextDebugCommand(interpreter);
         /// #else
-        interpreter.stdout.write(`print,\r\n`);
+        BrsDevice.stdout.write(`print,\r\n`);
         line = readline.prompt();
         /// #endif
         const command = parseCommand(line);
@@ -63,7 +63,7 @@ export function runDebugger(
         switch (command.cmd) {
             case DebugCommand.CONT:
                 if (errMessage) {
-                    interpreter.stdout.write("print,Can't continue");
+                    BrsDevice.stdout.write("print,Can't continue");
                     continue;
                 }
                 stepMode = false;
@@ -72,7 +72,7 @@ export function runDebugger(
                 return true;
             case DebugCommand.STEP:
                 if (errMessage) {
-                    interpreter.stdout.write("print,Can't continue");
+                    BrsDevice.stdout.write("print,Can't continue");
                     continue;
                 }
                 stepMode = true;
@@ -105,7 +105,7 @@ function debuggerIntro(
     let lastLine: number = lastLoc.start.line;
     if (stepMode) {
         const line = lastLines[lastLine - 1].trimEnd();
-        interpreter.stdout.write(`print,${lastLine.toString().padStart(3, "0")}: ${line}\r\n`);
+        BrsDevice.stdout.write(`print,${lastLine.toString().padStart(3, "0")}: ${line}\r\n`);
     } else {
         postMessage("debug,stop");
         debugMsg += "Enter any BrightScript statement, debug commands, or HELP\r\n\r\n";
@@ -125,10 +125,10 @@ function debuggerIntro(
             errNumber ? numberToHex(errNumber) : "f7"
         }) in ${interpreter.formatLocation()}`;
         debugMsg += "\r\nBacktrace: \r\n";
-        interpreter.stdout.write(`print,${debugMsg}`);
-        interpreter.stdout.write(`print,${interpreter.formatBacktrace(nextLoc)}`);
-        interpreter.stdout.write(`print,Local variables:\r\n`);
-        interpreter.stdout.write(`print,${interpreter.formatVariables()}`);
+        BrsDevice.stdout.write(`print,${debugMsg}`);
+        BrsDevice.stdout.write(`print,${interpreter.formatBacktrace(nextLoc)}`);
+        BrsDevice.stdout.write(`print,Local variables:\r\n`);
+        BrsDevice.stdout.write(`print,${interpreter.formatVariables()}`);
     }
 }
 
@@ -138,7 +138,7 @@ function debuggerIntro(
  */
 function nextDebugCommand(interpreter: Interpreter): string {
     let line = "";
-    interpreter.stdout.write(`print,\r\n${debugPrompt}`);
+    BrsDevice.stdout.write(`print,\r\n${debugPrompt}`);
     Atomics.wait(BrsDevice.sharedArray, DataType.DBG, -1);
     const cmd = Atomics.load(BrsDevice.sharedArray, DataType.DBG);
     Atomics.store(BrsDevice.sharedArray, DataType.DBG, -1);
@@ -162,12 +162,12 @@ async function debugHandleExpr(interpreter: Interpreter, expr: string) {
     }
     const exprScan = lexer.scan(`${expr}\n`, "debug");
     if (exprScan.errors.length > 0) {
-        interpreter.stderr.write(`error,${exprScan.errors[0].message}\r\n`);
+        BrsDevice.stderr.write(`error,${exprScan.errors[0].message}\r\n`);
         return;
     }
     const exprParse = parser.parse(exprScan.tokens);
     if (exprParse.errors.length > 0) {
-        interpreter.stderr.write(`error,${exprParse.errors[0].message}\r\n`);
+        BrsDevice.stderr.write(`error,${exprParse.errors[0].message}\r\n`);
         return;
     }
     if (exprParse.statements.length > 0) {
@@ -205,14 +205,14 @@ function runStatement(interpreter: Interpreter, exprStmt: Statement) {
         } else if (exprStmt instanceof Function) {
             interpreter.visitNamedFunction(exprStmt);
         } else {
-            interpreter.stderr.write(`warning,Debug command/expression not supported!\r\n`);
+            BrsDevice.stderr.write(`warning,Debug command/expression not supported!\r\n`);
         }
     } catch (err: any) {
         let msg = err.message;
         if (err instanceof BrsError) {
             msg = err.format();
         }
-        interpreter.stderr.write(`error,${msg}\r\n`);
+        BrsDevice.stderr.write(`error,${msg}\r\n`);
     }
 }
 
@@ -304,7 +304,7 @@ function debugHandleCommand(
             break;
     }
     if (debugMsg.length) {
-        interpreter.stdout.write(debugMsg);
+        BrsDevice.stdout.write(debugMsg);
     }
 }
 

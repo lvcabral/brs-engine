@@ -3,12 +3,12 @@ import { BrsComponent } from "./BrsComponent";
 import { BrsType } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
-import { validUri } from "../../FileSystem";
+import { validUri } from "../../device/FileSystem";
 import { Int32 } from "../Int32";
 import { RoArray } from "./RoArray";
 import { RoFont } from "./RoFont";
 import * as opentype from "opentype.js";
-import { BrsDevice } from "../../BrsDevice";
+import { BrsDevice } from "../../device/BrsDevice";
 
 export interface FontMetrics {
     ascent: number;
@@ -24,14 +24,13 @@ let fontRegistry: RoFontRegistry;
 
 export class RoFontRegistry extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
-    private readonly interpreter: Interpreter;
     private readonly defaultFontSize = 40;
     private readonly fallbackFontFamily = "Arial, Helvetica, sans-serif";
     private readonly defaultFontFamily: string;
     private readonly fontRegistry: Map<string, FontMetrics[]>;
     private readonly fontPaths: Map<string, string> = new Map();
 
-    constructor(interpreter: Interpreter) {
+    constructor() {
         super("roFontRegistry");
         this.registerMethods({
             ifFontRegistry: [
@@ -43,7 +42,6 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
                 // this.get, ---> Deprecated as only needed to roImageCanvas
             ],
         });
-        this.interpreter = interpreter;
         this.fontRegistry = new Map();
         this.defaultFontFamily = BrsDevice.deviceInfo.get("defaultFont");
         this.registerFont(`common:/Fonts/${this.defaultFontFamily}-Regular.ttf`);
@@ -153,8 +151,8 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
             this.fontPaths.set(fontPath, fontFamily);
             return fontFamily;
         } catch (err: any) {
-            if (this.interpreter.isDevMode) {
-                this.interpreter.stderr.write(
+            if (BrsDevice.isDevMode) {
+                BrsDevice.stderr.write(
                     `warning,Error loading font:${fontPath} - ${err.message}`
                 );
             }
@@ -239,9 +237,9 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
 }
 
 // Function to get the singleton instance of Font Registry
-export function getFontRegistry(interpreter?: Interpreter): RoFontRegistry {
-    if (!fontRegistry && interpreter) {
-        fontRegistry = new RoFontRegistry(interpreter);
+export function getFontRegistry(): RoFontRegistry {
+    if (!fontRegistry) {
+        fontRegistry = new RoFontRegistry();
     }
     return fontRegistry;
 }

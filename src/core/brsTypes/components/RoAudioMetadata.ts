@@ -11,7 +11,7 @@ import { Callable, StdlibArgument } from "../Callable";
 import { BrsComponent } from "./BrsComponent";
 import { Interpreter } from "../../interpreter";
 import mp3Parser from "mp3-parser";
-import { BrsDevice } from "../../BrsDevice";
+import { BrsDevice } from "../../device/BrsDevice";
 
 export class RoAudioMetadata extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -34,13 +34,13 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
         return BrsBoolean.False;
     }
 
-    private loadFile(interpreter: Interpreter, file: string) {
+    private loadFile(file: string) {
         let audio: Buffer | undefined;
         try {
             audio = BrsDevice.fileSystem?.readFileSync(file);
         } catch (err: any) {
-            if (interpreter.isDevMode) {
-                interpreter.stderr.write(
+            if (BrsDevice.isDevMode) {
+                BrsDevice.stderr.write(
                     `warning,[roAudioMetadata] Error loading audio:${file} - ${err.message}`
                 );
             }
@@ -107,8 +107,8 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
             args: [new StdlibArgument("url", ValueKind.String)],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter, url: BrsString) => {
-            this.fileData = this.loadFile(interpreter, url.value);
+        impl: (_: Interpreter, url: BrsString) => {
+            this.fileData = this.loadFile(url.value);
             return BrsBoolean.from(this.fileData !== undefined);
         },
     });
@@ -121,7 +121,7 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.Object,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_: Interpreter) => {
             if (!this.fileData) {
                 return BrsInvalid.Instance;
             }
@@ -148,8 +148,8 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
                     return tags;
                 }
             } catch (err: any) {
-                if (interpreter.isDevMode) {
-                    interpreter.stderr.write(
+                if (BrsDevice.isDevMode) {
+                    BrsDevice.stderr.write(
                         `warning,[roAudioMetadata] Error getting audio tags:${err.message}`
                     );
                 }
@@ -166,7 +166,7 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.Object,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_: Interpreter) => {
             if (!this.fileData) {
                 return BrsInvalid.Instance;
             }
@@ -193,8 +193,8 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
                     return toAssociativeArray(properties);
                 }
             } catch (err: any) {
-                if (interpreter.isDevMode) {
-                    interpreter.stderr.write(
+                if (BrsDevice.isDevMode) {
+                    BrsDevice.stderr.write(
                         `warning,[roAudioMetadata] Error reading audio properties:${err.message}`
                     );
                 }
@@ -211,7 +211,7 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.Object,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_: Interpreter) => {
             if (!this.fileData) {
                 return BrsInvalid.Instance;
             }
@@ -226,8 +226,8 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
                     }
                 }
             } catch (err: any) {
-                if (interpreter.isDevMode) {
-                    interpreter.stderr.write(
+                if (BrsDevice.isDevMode) {
+                    BrsDevice.stderr.write(
                         `warning,[roAudioMetadata] Error getting cover art:${err.message}`
                     );
                 }

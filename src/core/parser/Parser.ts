@@ -17,7 +17,7 @@ import {
     StdlibArgument,
     BrsType,
 } from "../brsTypes";
-import { RuntimeErrorDetail } from "../BrsError";
+import { RuntimeErrorDetail } from "../error/BrsError";
 
 /** Set of all keywords that end blocks. */
 type BlockTerminator =

@@ -1,5 +1,4 @@
 import * as brs from "..";
-import { BrsDevice } from "..";
 import {
     BrsType,
     BrsComponent,
@@ -11,6 +10,7 @@ import {
     RoArray,
     isBrsString,
 } from "../brsTypes";
+import { BrsDevice } from "../device/BrsDevice";
 import { Interpreter } from "../interpreter";
 
 /**

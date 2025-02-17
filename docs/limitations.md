@@ -4,7 +4,11 @@ There are several features from the **BrightScript** language and components tha
 
 ## In Scope (to be developed/fixed in future releases)
 
-* RSG (Roku SceneGraph) SDK components are not currently supported.
+* RSG (Roku SceneGraph) SDK components are currently being implemented, but still on early stages, so far we have:
+  * Load XML component files and create SceneGraph nodes tree.
+  * Basic support for `roSGNode` and `roSGScreen` components and rendering.
+  * Basic support for `Group`, `Label`, `Poster`, `Rectangle`, `Font`, `Timer` and `Task` nodes.
+  * All other nodes are either mocked or not implemented yet.
 * The following components are also not implemented yet:
   * Text to Speech components: `roAudioGuide`, `roMicrophone` and `roTextToSpeech`
   * Signing Algorithm components: `roDSA` and `roRSA`
@@ -12,7 +16,7 @@ There are several features from the **BrightScript** language and components tha
   * Only one instance of `roAudioPlayer` is supported, if more are created those will share the content playlist.
   * If the `roAudioPlayer` instance is destroyed the audio keeps playing, make sure to call `.stop()` before discarding the object.
   * No `Timed Metadata` support.
-* The component `roAudioMetadata` only supports MP3 (for now) and the manifest entry `requires_audiometadata=1` needs to be used.
+* The component `roAudioMetadata` only supports MP3 (for now).
 * The component `roImageMetadata` only supports JPEG images (for now).
 * Video playback via `roVideoPlayer` is implemented, but with some limitations:
   * If the `roVideoPlayer` instance is destroyed the video keeps playing, make sure to call `.stop()` before discarding the object.

@@ -11,7 +11,7 @@ import { IfSetMessagePort, IfGetMessagePort } from "../interfaces/IfMessagePort"
 import { getExternalIp } from "../../interpreter/Network";
 import { v4 as uuidv4 } from "uuid";
 import * as crypto from "crypto";
-import { BrsDevice } from "../../BrsDevice";
+import { BrsDevice } from "../../device/BrsDevice";
 
 export class RoDeviceInfo extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -935,13 +935,13 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.String,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_: Interpreter) => {
             let ip = "";
             try {
                 ip = getExternalIp();
             } catch (err: any) {
-                if (interpreter.isDevMode) {
-                    interpreter.stderr.write(`warning,${err.message}`);
+                if (BrsDevice.isDevMode) {
+                    BrsDevice.stderr.write(`warning,${err.message}`);
                 }
             }
             return new BrsString(ip);

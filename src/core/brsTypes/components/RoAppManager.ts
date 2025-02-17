@@ -6,7 +6,7 @@ import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 import { RoTimespan } from "./RoTimespan";
 import { AppData, AppExitReason, isAppData } from "../../common";
-import { BrsDevice } from "../../BrsDevice";
+import { BrsDevice } from "../../device/BrsDevice";
 
 export class RoAppManager extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;

@@ -3,12 +3,12 @@ import { BrsComponent } from "./BrsComponent";
 import { BrsType, FlexObject, RoMessagePort, toAssociativeArray } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
-import { FileSystem, getVolume, validUri, writeUri } from "../../FileSystem";
+import { FileSystem, getVolume, validUri, writeUri } from "../../device/FileSystem";
 import { RoList } from "./RoList";
 import { IfSetMessagePort, IfGetMessagePort } from "../interfaces/IfMessagePort";
 import * as nanomatch from "nanomatch";
 import * as path from "path";
-import { BrsDevice } from "../../BrsDevice";
+import { BrsDevice } from "../../device/BrsDevice";
 export class RoFileSystem extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
     private port?: RoMessagePort;
@@ -74,14 +74,14 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.Object,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_: Interpreter) => {
             try {
                 const fsys = BrsDevice.fileSystem;
                 const volumes = fsys.volumesSync().map((s) => new BrsString(s));
                 return new RoList(volumes);
             } catch (err: any) {
-                if (interpreter.isDevMode) {
-                    interpreter.stderr.write(`warning,roFileSystem.getVolumeList: ${err.message}`);
+                if (BrsDevice.isDevMode) {
+                    BrsDevice.stderr.write(`warning,roFileSystem.getVolumeList: ${err.message}`);
                 }
                 return new RoList([]);
             }
@@ -109,7 +109,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
             args: [new StdlibArgument("path", ValueKind.String)],
             returns: ValueKind.Object,
         },
-        impl: (interpreter: Interpreter, pathArg: BrsString) => {
+        impl: (_: Interpreter, pathArg: BrsString) => {
             const fsys = BrsDevice.fileSystem;
             try {
                 if (validUri(pathArg.value) && fsys.existsSync(pathArg.value)) {
@@ -117,8 +117,8 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
                     return new RoList(subPaths);
                 }
             } catch (err: any) {
-                if (interpreter.isDevMode) {
-                    interpreter.stderr.write(
+                if (BrsDevice.isDevMode) {
+                    BrsDevice.stderr.write(
                         `warning,roFileSystem.getDirectoryListing: ${err.message}`
                     );
                 }
@@ -134,7 +134,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
             args: [new StdlibArgument("path", ValueKind.String)],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter, pathArg: BrsString) => {
+        impl: (_: Interpreter, pathArg: BrsString) => {
             try {
                 const fsys = BrsDevice.fileSystem;
                 if (!writeUri(pathArg.value)) {
@@ -143,10 +143,8 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
                 fsys.mkdirSync(pathArg.value);
                 return BrsBoolean.True;
             } catch (err: any) {
-                if (interpreter.isDevMode) {
-                    interpreter.stderr.write(
-                        `warning,roFileSystem.createDirectory: ${err.message}`
-                    );
+                if (BrsDevice.isDevMode) {
+                    BrsDevice.stderr.write(`warning,roFileSystem.createDirectory: ${err.message}`);
                 }
                 return BrsBoolean.False;
             }
@@ -159,7 +157,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
             args: [new StdlibArgument("path", ValueKind.String)],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter, pathArg: BrsString) => {
+        impl: (_: Interpreter, pathArg: BrsString) => {
             const fsys = BrsDevice.fileSystem;
             try {
                 if (!writeUri(pathArg.value)) {
@@ -171,8 +169,8 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
                 }
                 return BrsBoolean.True;
             } catch (err: any) {
-                if (interpreter.isDevMode) {
-                    interpreter.stderr.write(`warning,roFileSystem.delete: ${err.message}`);
+                if (BrsDevice.isDevMode) {
+                    BrsDevice.stderr.write(`warning,roFileSystem.delete: ${err.message}`);
                 }
                 return BrsBoolean.False;
             }
@@ -188,7 +186,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
             ],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter, fromPath: BrsString, toPath: BrsString) => {
+        impl: (_: Interpreter, fromPath: BrsString, toPath: BrsString) => {
             const fsys = BrsDevice.fileSystem;
             try {
                 if (!writeUri(toPath.value) || !fsys.existsSync(fromPath.value)) {
@@ -198,8 +196,8 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
                 fsys.writeFileSync(toPath.value, content);
                 return BrsBoolean.True;
             } catch (err: any) {
-                if (interpreter.isDevMode) {
-                    interpreter.stderr.write(`warning,roFileSystem.copyFile: ${err.message}`);
+                if (BrsDevice.isDevMode) {
+                    BrsDevice.stderr.write(`warning,roFileSystem.copyFile: ${err.message}`);
                 }
                 return BrsBoolean.False;
             }
@@ -215,7 +213,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
             ],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter, fromPath: BrsString, toPath: BrsString) => {
+        impl: (_: Interpreter, fromPath: BrsString, toPath: BrsString) => {
             const fsys = BrsDevice.fileSystem;
             try {
                 if (
@@ -229,8 +227,8 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
                 fsys.renameSync(fromPath.value, toPath.value);
                 return BrsBoolean.True;
             } catch (err: any) {
-                if (interpreter.isDevMode) {
-                    interpreter.stderr.write(`warning,roFileSystem.rename: ${err.message}`);
+                if (BrsDevice.isDevMode) {
+                    BrsDevice.stderr.write(`warning,roFileSystem.rename: ${err.message}`);
                 }
                 return BrsBoolean.False;
             }
@@ -243,13 +241,13 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
             args: [new StdlibArgument("path", ValueKind.String)],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter, pathArg: BrsString) => {
+        impl: (_: Interpreter, pathArg: BrsString) => {
             try {
                 const fsys = BrsDevice.fileSystem;
                 return BrsBoolean.from(fsys.existsSync(pathArg.value));
             } catch (err: any) {
-                if (interpreter.isDevMode) {
-                    interpreter.stderr.write(`warning,roFileSystem.exists: ${err.message}`);
+                if (BrsDevice.isDevMode) {
+                    BrsDevice.stderr.write(`warning,roFileSystem.exists: ${err.message}`);
                 }
                 return BrsBoolean.False;
             }
@@ -265,7 +263,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
             ],
             returns: ValueKind.Object,
         },
-        impl: (interpreter: Interpreter, pathArg: BrsString, regEx: BrsString) => {
+        impl: (_: Interpreter, pathArg: BrsString, regEx: BrsString) => {
             const jsRegex = new RegExp(regEx.value);
             try {
                 const fsys = BrsDevice.fileSystem;
@@ -281,8 +279,8 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
                 });
                 return new RoList(matchedFiles);
             } catch (err: any) {
-                if (interpreter.isDevMode) {
-                    interpreter.stderr.write(`warning,roFileSystem.find: ${err.message}`);
+                if (BrsDevice.isDevMode) {
+                    BrsDevice.stderr.write(`warning,roFileSystem.find: ${err.message}`);
                 }
                 return new RoList([]);
             }
@@ -298,7 +296,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
             ],
             returns: ValueKind.Object,
         },
-        impl: (interpreter: Interpreter, pathArg: BrsString, regEx: BrsString) => {
+        impl: (_: Interpreter, pathArg: BrsString, regEx: BrsString) => {
             const jsRegex = new RegExp(regEx.value);
             try {
                 const fsys = BrsDevice.fileSystem;
@@ -307,8 +305,8 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
                 }
                 return new RoList(this.findOnTree(fsys, jsRegex, pathArg.value));
             } catch (err: any) {
-                if (interpreter.isDevMode) {
-                    interpreter.stderr.write(`warning,roFileSystem.findRecurse: ${err.message}`);
+                if (BrsDevice.isDevMode) {
+                    BrsDevice.stderr.write(`warning,roFileSystem.findRecurse: ${err.message}`);
                 }
                 return new RoList([]);
             }
@@ -324,7 +322,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
             ],
             returns: ValueKind.Object,
         },
-        impl: (interpreter: Interpreter, pathArg: BrsString, pattern: BrsString) => {
+        impl: (_: Interpreter, pathArg: BrsString, pattern: BrsString) => {
             try {
                 if (!validUri(pathArg.value)) {
                     return new RoList([]);
@@ -341,8 +339,8 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
 
                 return new RoList(matchedFiles);
             } catch (err: any) {
-                if (interpreter.isDevMode) {
-                    interpreter.stderr.write(`warning,roFileSystem.match: ${err.message}`);
+                if (BrsDevice.isDevMode) {
+                    BrsDevice.stderr.write(`warning,roFileSystem.match: ${err.message}`);
                 }
                 return new RoList([]);
             }
@@ -355,7 +353,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
             args: [new StdlibArgument("path", ValueKind.String)],
             returns: ValueKind.Object,
         },
-        impl: (interpreter: Interpreter, pathArg: BrsString) => {
+        impl: (_: Interpreter, pathArg: BrsString) => {
             const result: FlexObject = {};
             const arg = pathArg.value;
             try {
@@ -374,8 +372,8 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
                 const perm = arg.startsWith("tmp:") || arg.startsWith("cachefs:") ? "rw" : "r";
                 result.permissions = perm;
             } catch (err: any) {
-                if (interpreter.isDevMode) {
-                    interpreter.stderr.write(`warning,roFileSystem.stat: ${err.message}`);
+                if (BrsDevice.isDevMode) {
+                    BrsDevice.stderr.write(`warning,roFileSystem.stat: ${err.message}`);
                 }
             }
             return toAssociativeArray(result);

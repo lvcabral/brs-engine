@@ -5,9 +5,9 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { BrsType } from "./brsTypes";
-import type { TracePoint } from "./interpreter";
-import type { Location } from "./lexer";
+import { BrsType } from "../brsTypes";
+import type { TracePoint } from "../interpreter";
+import type { Location } from "../lexer";
 
 export class BrsError extends Error {
     constructor(message: string, readonly location: Location, public backTrace?: TracePoint[]) {

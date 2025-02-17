@@ -4,7 +4,7 @@ import { BrsType, Int32 } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { RemoteControl } from "../../common";
-import { BrsDevice } from "../../BrsDevice";
+import { BrsDevice } from "../../device/BrsDevice";
 
 export class RoRemoteInfo extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;

@@ -7,6 +7,7 @@ import { RoAssociativeArray } from "./RoAssociativeArray";
 import { RoList } from "./RoList";
 import { RoXMLList } from "./RoXMLList";
 import * as xml2js from "xml2js";
+import { BrsDevice } from "../../device/BrsDevice";
 
 export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable {
     readonly kind = ValueKind.Object;
@@ -211,7 +212,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
             args: [new StdlibArgument("xml", ValueKind.String)],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter, xml: BrsString) => {
+        impl: (_: Interpreter, xml: BrsString) => {
             let result = false;
             let xmlParser = new xml2js.Parser();
             let parsedXML;
@@ -225,8 +226,8 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
                 } else {
                     errMessage = "warning,Warning: Empty input was provided to parse XML.";
                 }
-                if (errMessage !== "" && interpreter.isDevMode) {
-                    interpreter.stderr.write(errMessage);
+                if (errMessage !== "" && BrsDevice.isDevMode) {
+                    BrsDevice.stderr.write(errMessage);
                 }
             });
             this.parsedXML = parsedXML;
