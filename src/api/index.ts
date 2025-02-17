@@ -447,7 +447,6 @@ function loadSourceCode(fileName: string, fileData: any) {
             manifestMap.set("minor_version", "0");
             manifestMap.set("build_version", "0");
             manifestMap.set("splash_min_time", "0");
-            manifestMap.set("requires_audiometadata", "1");
             currentApp.title = `BrightScript file: ${fileName}`;
             paths.length = 0;
             source.push(this.result);

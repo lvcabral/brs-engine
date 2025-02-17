@@ -4,7 +4,7 @@ import * as Expr from "../parser/Expression";
 import { Scope } from "../interpreter/Environment";
 import { Location } from "../lexer";
 import { tryCoerce } from "./Coercion";
-import { generateArgumentMismatchError } from "../interpreter/ArgumentMismatch";
+import { generateArgumentMismatchError } from "../error/ArgumentMismatch";
 
 let anonCounter = 0;
 

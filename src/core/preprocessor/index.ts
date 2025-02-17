@@ -108,7 +108,7 @@ export function getBsConst(manifest: Map<string, string>): Map<string, boolean> 
 }
 
 import * as Chunk from "./Chunk";
-import { BrsError } from "../BrsError";
+import { BrsError } from "../error/BrsError";
 import { ParseError } from "../parser";
 export { Chunk };
 export { Parser } from "./Parser";

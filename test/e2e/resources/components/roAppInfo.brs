@@ -7,6 +7,6 @@ sub main()
     print appInfo.getTitle()
     print appInfo.getSubtitle()
     print appInfo.getDevID()
-    print appInfo.getValue("requires_audiometadata")
+    print appInfo.getValue("major_version")
 
 end sub

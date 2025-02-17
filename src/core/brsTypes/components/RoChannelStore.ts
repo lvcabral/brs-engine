@@ -9,7 +9,7 @@ import { RoAssociativeArray } from "./RoAssociativeArray";
 import { AppData } from "../../common";
 import { parseString, processors } from "xml2js";
 import { IfSetMessagePort, IfGetMessagePort } from "../interfaces/IfMessagePort";
-import { BrsDevice } from "../../BrsDevice";
+import { BrsDevice } from "../../device/BrsDevice";
 
 export class RoChannelStore extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -68,7 +68,7 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
         this.port?.removeReference();
     }
 
-    private getFakeProductData(interpreter: Interpreter, xml: string) {
+    private getFakeProductData(xml: string) {
         const options = {
             explicitArray: false,
             ignoreAttrs: true,
@@ -115,15 +115,15 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
                     errMessage =
                         "warning,Warning: Empty or invalid result when parsing Product XML.";
                 }
-                if (errMessage !== "" && interpreter.isDevMode) {
-                    interpreter.stderr.write(errMessage);
+                if (errMessage !== "" && BrsDevice.isDevMode) {
+                    BrsDevice.stderr.write(errMessage);
                 }
             });
         }
         return data;
     }
 
-    private getFakeOrderData(interpreter: Interpreter, xml: string) {
+    private getFakeOrderData(xml: string) {
         const options = {
             explicitArray: false,
             ignoreAttrs: true,
@@ -156,8 +156,8 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
                 } else {
                     errMessage = "warning,Warning: Empty or invalid result when parsing Order XML.";
                 }
-                if (errMessage !== "" && interpreter.isDevMode) {
-                    interpreter.stderr.write(errMessage);
+                if (errMessage !== "" && BrsDevice.isDevMode) {
+                    BrsDevice.stderr.write(errMessage);
                 }
             });
         }
@@ -204,12 +204,12 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.Void,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_: Interpreter) => {
             if (this.port) {
                 let catalog: RoAssociativeArray[] = [];
                 let status = { code: -4, message: "Empty List" };
                 if (this.fakeServerEnabled) {
-                    catalog = this.getFakeProductData(interpreter, "GetCatalog");
+                    catalog = this.getFakeProductData("GetCatalog");
                     status = { code: 1, message: "Items Received" };
                 }
                 this.port.pushMessage(new RoChannelStoreEvent(this.id, catalog, status));
@@ -224,12 +224,12 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.Void,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_: Interpreter) => {
             if (this.port) {
                 let catalog: RoAssociativeArray[] = [];
                 let status = { code: -4, message: "Empty List" };
                 if (this.fakeServerEnabled) {
-                    catalog = this.getFakeProductData(interpreter, "GetCatalog");
+                    catalog = this.getFakeProductData("GetCatalog");
                     status = { code: 1, message: "Items Received" };
                 }
                 this.port.pushMessage(new RoChannelStoreEvent(this.id, catalog, status));
@@ -244,12 +244,12 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.Void,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_: Interpreter) => {
             if (this.port) {
                 let purchases: RoAssociativeArray[] = [];
                 let status = { code: -4, message: "Empty List" };
                 if (this.fakeServerEnabled) {
-                    purchases = this.getFakeProductData(interpreter, "GetPurchases");
+                    purchases = this.getFakeProductData("GetPurchases");
                     status = { code: 1, message: "Items Received" };
                 }
                 this.port.pushMessage(new RoChannelStoreEvent(this.id, purchases, status));
@@ -264,12 +264,12 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.Void,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_: Interpreter) => {
             if (this.port) {
                 let purchases: RoAssociativeArray[] = [];
                 let status = { code: -4, message: "Empty List" };
                 if (this.fakeServerEnabled) {
-                    purchases = this.getFakeProductData(interpreter, "GetPurchases");
+                    purchases = this.getFakeProductData("GetPurchases");
                     status = { code: 1, message: "Items Received" };
                 }
                 this.port.pushMessage(new RoChannelStoreEvent(this.id, purchases, status));
@@ -361,7 +361,7 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_: Interpreter) => {
             if (!this.port) {
                 return BrsBoolean.False;
             }
@@ -373,7 +373,7 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
             }
             status.code = 1;
             status.message = "Order Received";
-            const catalog = this.getFakeProductData(interpreter, "GetCatalog");
+            const catalog = this.getFakeProductData("GetCatalog");
             for (let item of this.order) {
                 if (!this.isValidProductOrder(catalog, item)) {
                     status.code = -3;
@@ -381,8 +381,8 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
                 }
             }
             if (status.code === 1) {
-                const orderData = this.getFakeOrderData(interpreter, "PlaceOrder");
-                const checkId = this.getFakeOrderData(interpreter, "CheckOrder").id;
+                const orderData = this.getFakeOrderData("PlaceOrder");
+                const checkId = this.getFakeOrderData("CheckOrder").id;
                 if (orderData.id !== checkId) {
                     status.code = -3;
                     status.message = "Order Mismatch";

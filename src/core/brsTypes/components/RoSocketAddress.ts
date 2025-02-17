@@ -9,20 +9,19 @@ import {
     BrsValue,
     Int32,
 } from "..";
+import { BrsDevice } from "../../device/BrsDevice";
 import { Interpreter } from "../../interpreter";
 import { isValidHostname, isValidIP, resolveHostToIP } from "../../interpreter/Network";
 
 export class RoSocketAddress extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
-    private readonly interpreter: Interpreter;
     private hostName: string;
     private hostIP: string;
     private port: number;
     private valid: boolean;
 
-    constructor(interpreter: Interpreter) {
+    constructor() {
         super("roSocketAddress");
-        this.interpreter = interpreter;
         this.hostName = "0.0.0.0";
         this.hostIP = "0.0.0.0";
         this.port = 0;
@@ -68,8 +67,8 @@ export class RoSocketAddress extends BrsComponent implements BrsValue {
                 return true;
             }
         } catch (err: any) {
-            if (this.interpreter.isDevMode) {
-                this.interpreter.stderr.write(`warning,${err.message}`);
+            if (BrsDevice.isDevMode) {
+                BrsDevice.stderr.write(`warning,${err.message}`);
             }
         }
         return false;
@@ -104,12 +103,12 @@ export class RoSocketAddress extends BrsComponent implements BrsValue {
     /** Returns the IPV4 address in dotted quad format (for example, "192.168.1.120:8888"). */
     private readonly getAddress = new Callable("getAddress", {
         signature: { args: [], returns: ValueKind.String },
-        impl: (_: Interpreter) => {
+        impl: (interpreter: Interpreter) => {
             if (!this.valid) {
-                this.interpreter.stderr.write(
+                BrsDevice.stderr.write(
                     `warning,BRIGHTSCRIPT: ERROR: roSocketAddress.getAddress: Domain name not found: ${
                         this.hostName
-                    }: ${this.interpreter.formatLocation()}`
+                    }: ${interpreter.formatLocation()}`
                 );
             }
             return new BrsString(this.valid ? `${this.hostIP}:${this.port}` : "");
@@ -174,12 +173,12 @@ export class RoSocketAddress extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.Boolean,
         },
-        impl: (_: Interpreter) => {
+        impl: (interpreter: Interpreter) => {
             if (!this.valid) {
-                this.interpreter.stderr.write(
+                BrsDevice.stderr.write(
                     `warning,BRIGHTSCRIPT: ERROR: roSocketAddress.isAddressValid: Domain name not found: ${
                         this.hostName
-                    }: ${this.interpreter.formatLocation()}`
+                    }: ${interpreter.formatLocation()}`
                 );
             }
             return BrsBoolean.from(this.valid);

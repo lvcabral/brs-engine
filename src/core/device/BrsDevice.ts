@@ -1,28 +1,15 @@
-/*---------------------------------------------------------------------------------------------
- *  BrightScript Engine (https://github.com/lvcabral/brs-engine)
- *
- *  Copyright (c) 2019-2025 Marcelo Lv Cabral. All Rights Reserved.
- *
- *  Licensed under the MIT License. See LICENSE in the repository root for license information.
- *--------------------------------------------------------------------------------------------*/
-import {
-    dataBufferIndex,
-    DataType,
-    DebugCommand,
-    keyArraySpots,
-    keyBufferSize,
-    KeyEvent,
-    registryInitialSize,
-    registryMaxSize,
-    RemoteType,
-} from "./common";
+import { dataBufferIndex, DataType, DebugCommand } from "../common";
 import { FileSystem } from "./FileSystem";
-import SharedObject from "./SharedObject";
+import { OutputProxy } from "./OutputProxy";
 
 export class BrsDevice {
     static readonly deviceInfo: Map<string, any> = new Map<string, any>();
     static readonly registry: Map<string, string> = new Map<string, string>();
     static readonly fileSystem: FileSystem = new FileSystem();
+    static readonly isDevMode = process.env.NODE_ENV === "development";
+
+    static stdout: OutputProxy = new OutputProxy(process.stdout, false);
+    static stderr: OutputProxy = new OutputProxy(process.stderr, false);
 
     static sharedArray: Int32Array = new Int32Array(0);
     static displayEnabled: boolean = true;

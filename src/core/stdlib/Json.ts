@@ -14,6 +14,7 @@ import {
     isUnboxable,
     brsValueOf,
 } from "../brsTypes";
+import { BrsDevice } from "../device/BrsDevice";
 
 /**
  * Converts a BrsType value to its representation as a JSON string. If no such
@@ -85,7 +86,7 @@ function jsonOf(x: BrsType, flags: number = 0, key: string = ""): string {
 }
 
 function logBrsErr(interpreter: Interpreter, functionName: string, err: Error): void {
-    interpreter.stderr.write(
+    BrsDevice.stderr.write(
         `warning,BRIGHTSCRIPT: ERROR: ${functionName}: ${
             err.message
         }: ${interpreter.formatLocation()}`

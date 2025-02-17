@@ -8,9 +8,10 @@ import { BrsType, isBrsNumber, isStringComp } from "..";
 import { Unboxable } from "../Boxing";
 import { Int32 } from "../Int32";
 import { Float } from "../Float";
-import { RuntimeError, RuntimeErrorDetail } from "../../BrsError";
+import { RuntimeError, RuntimeErrorDetail } from "../../error/BrsError";
 import { sprintf } from "sprintf-js";
 import { IfToStr } from "../interfaces/IfToStr";
+import { BrsDevice } from "../../device/BrsDevice";
 
 export class RoString extends BrsComponent implements BrsValue, Comparable, Unboxable {
     readonly kind = ValueKind.Object;
@@ -556,8 +557,8 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
             try {
                 return new BrsString(sprintf(this.intrinsic.value, ...args));
             } catch (err: any) {
-                if (interpreter.isDevMode) {
-                    interpreter.stderr.write(`warning,roString.format() Error: ${err.message}`);
+                if (BrsDevice.isDevMode) {
+                    BrsDevice.stderr.write(`warning,roString.format() Error: ${err.message}`);
                 }
                 const errorDetail = err.message?.includes("expecting number")
                     ? RuntimeErrorDetail.TypeMismatch

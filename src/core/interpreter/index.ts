@@ -43,32 +43,24 @@ import { tryCoerce } from "../brsTypes/Coercion";
 import { Lexeme, GlobalFunctions } from "../lexer";
 import { isToken, Location } from "../lexer/Token";
 import { Expr, Stmt } from "../parser";
+import { BrsDevice } from "../device/BrsDevice";
+import { OutputProxy } from "../device/OutputProxy";
 import {
     BrsError,
     RuntimeError,
     RuntimeErrorDetail,
     findErrorDetail,
     ErrorDetail,
-} from "../BrsError";
-import { TypeMismatch } from "./TypeMismatch";
-import { generateArgumentMismatchError } from "./ArgumentMismatch";
-import { OutputProxy } from "./OutputProxy";
+} from "../error/BrsError";
+import { TypeMismatch } from "../error/TypeMismatch";
+import { generateArgumentMismatchError } from "../error/ArgumentMismatch";
 import * as StdLib from "../stdlib";
 import Long from "long";
 import { Scope, Environment, NotFound } from "./Environment";
 import { toCallable } from "./BrsFunction";
 import { BlockEnd, GotoLabel } from "../parser/Statement";
 import { runDebugger } from "./MicroDebugger";
-import {
-    DataType,
-    DebugCommand,
-    defaultDeviceInfo,
-    numberToHex,
-    parseTextFile,
-    TaskPayload,
-    TaskUpdate,
-} from "../common";
-import { BrsDevice } from "../BrsDevice";
+import { DataType, DebugCommand, defaultDeviceInfo, numberToHex, parseTextFile } from "../common";
 /// #if !BROWSER
 import * as v8 from "v8";
 /// #endif
@@ -130,10 +122,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     readonly options: ExecutionOptions = defaultExecutionOptions;
     readonly manifest: Map<string, any> = new Map<string, any>();
     readonly translations: Map<string, string> = new Map<string, string>();
-    readonly isDevMode = process.env.NODE_ENV === "development";
-
-    readonly stdout: OutputProxy;
-    readonly stderr: OutputProxy;
 
     /** Allows consumers to observe errors as they're detected. */
     readonly events = new EventEmitter();
@@ -222,8 +210,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     constructor(options?: Partial<ExecutionOptions>) {
         this._environment = new Environment(new RoAssociativeArray([]));
         Object.assign(this.options, options);
-        this.stdout = new OutputProxy(this.options.stdout, this.options.post);
-        this.stderr = new OutputProxy(this.options.stderr, this.options.post);
+        BrsDevice.stdout = new OutputProxy(this.options.stdout, this.options.post);
+        BrsDevice.stderr = new OutputProxy(this.options.stderr, this.options.post);
         if (this.options.root) {
             BrsDevice.fileSystem.setRoot(this.options.root);
         }
@@ -485,9 +473,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             if (isToken(printable)) {
                 switch (printable.kind) {
                     case Lexeme.Comma: {
-                        const spaces = " ".repeat(16 - (this.stdout.position() % 16));
+                        const spaces = " ".repeat(16 - (BrsDevice.stdout.position() % 16));
                         printStream += spaces;
-                        this.stdout.position(spaces);
+                        BrsDevice.stdout.position(spaces);
                         break;
                     }
                     case Lexeme.Semicolon:
@@ -507,7 +495,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                         ? " " + obj.toString()
                         : obj.toString();
                 printStream += str;
-                this.stdout.position(str);
+                BrsDevice.stdout.position(str);
             }
         });
         let lastExpression = statement.expressions[statement.expressions.length - 1];
@@ -515,7 +503,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             printStream += "\r\n";
         }
 
-        this.stdout.write(`print,${printStream}`);
+        BrsDevice.stdout.write(`print,${printStream}`);
 
         // `tab` is only in-scope when executing print statements, so remove it before we leave
         this.environment.remove("Tab");
@@ -1309,7 +1297,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                         throw new Error(reason.message);
                     } else if (reason instanceof BrsError) {
                         throw reason;
-                    } else if (this.isDevMode && reason.message.length > 0) {
+                    } else if (BrsDevice.isDevMode && reason.message.length > 0) {
                         // Expose the Javascript error stack trace on `development` mode
                         console.error(reason);
                         throw new Error("");
@@ -1647,7 +1635,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 target.kind
             )}`;
             const location = `${statement.item.location.file}(${statement.item.location.start.line})`;
-            this.stderr.write(`warning,${message}: ${location}`);
+            BrsDevice.stderr.write(`warning,${message}: ${location}`);
             return BrsInvalid.Instance;
         }
         let continueAt = 0;

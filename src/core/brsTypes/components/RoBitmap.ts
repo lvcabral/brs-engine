@@ -25,7 +25,7 @@ import UPNG from "upng-js";
 import * as JPEG from "jpeg-js";
 import BMP from "decode-bmp";
 import { WebPRiffParser, WebPDecoder } from "libwebpjs";
-import { BrsDevice } from "../../BrsDevice";
+import { BrsDevice } from "../../device/BrsDevice";
 
 export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
     readonly kind = ValueKind.Object;
@@ -43,7 +43,7 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
     private rgbaLast: number;
     rgbaRedraw: boolean;
 
-    constructor(interpreter: Interpreter, param: BrsType | ArrayBuffer | Buffer) {
+    constructor(param: BrsType | ArrayBuffer | Buffer) {
         super("roBitmap");
         this.alphaEnable = false;
         this.rgbaLast = 0;
@@ -63,8 +63,8 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
                 this.alphaEnable = false;
                 this.name = param.value;
             } catch (err: any) {
-                if (interpreter.isDevMode) {
-                    interpreter.stderr.write(
+                if (BrsDevice.isDevMode) {
+                    BrsDevice.stderr.write(
                         `error,Error loading bitmap:${param.value} - ${err.message}`
                     );
                 }
@@ -96,8 +96,8 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
                 this.alphaEnable = alphaEnable.toBoolean();
             }
         } else {
-            if (interpreter.isDevMode) {
-                interpreter.stderr.write(`warning,Invalid roBitmap param:${typeof param}`);
+            if (BrsDevice.isDevMode) {
+                BrsDevice.stderr.write(`warning,Invalid roBitmap param:${typeof param}`);
             }
             this.valid = false;
         }
@@ -162,14 +162,14 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
                     imageData.data.set(new Uint8Array(data));
                     putImageAtPos(imageData, this.context, 0, 0);
                 } else {
-                    if (interpreter.isDevMode) {
-                        interpreter.stderr.write(`warning,Invalid image format: ${type?.mime}`);
+                    if (BrsDevice.isDevMode) {
+                        BrsDevice.stderr.write(`warning,Invalid image format: ${type?.mime}`);
                     }
                     this.valid = false;
                 }
             } catch (err: any) {
-                if (interpreter.isDevMode) {
-                    interpreter.stderr.write(`error,Error drawing image on canvas: ${err.message}`);
+                if (BrsDevice.isDevMode) {
+                    BrsDevice.stderr.write(`error,Error drawing image on canvas: ${err.message}`);
                 }
                 this.valid = false;
             }
@@ -314,7 +314,7 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
     });
 }
 
-export function createBitmap(interpreter: Interpreter, param: BrsType) {
-    const bmp = new RoBitmap(interpreter, param);
+export function createBitmap(param: BrsType) {
+    const bmp = new RoBitmap(param);
     return bmp.isValid() ? bmp : BrsInvalid.Instance;
 }

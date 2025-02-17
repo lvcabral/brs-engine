@@ -1,4 +1,5 @@
 import { Callable, ValueKind, BrsString, Int32, StdlibArgument } from "../brsTypes";
+import { BrsDevice } from "../device/BrsDevice";
 import { Interpreter } from "../interpreter";
 
 /**
@@ -12,9 +13,9 @@ export const Tab = new Callable("Tab", {
         args: [new StdlibArgument("position", ValueKind.Int32)],
         returns: ValueKind.String,
     },
-    impl: (interpreter: Interpreter, position: Int32) => {
+    impl: (_: Interpreter, position: Int32) => {
         const target = position.getValue();
-        const current = interpreter.stdout.position();
+        const current = BrsDevice.stdout.position();
         if (target < 0 || target < current) {
             return new BrsString("");
         }
@@ -38,7 +39,7 @@ export const Pos = new Callable("Pos", {
         args: [new StdlibArgument("dummy", ValueKind.Dynamic)],
         returns: ValueKind.Int32,
     },
-    impl: (interpreter: Interpreter) => {
-        return new Int32(interpreter.stdout.position());
+    impl: (_: Interpreter) => {
+        return new Int32(BrsDevice.stdout.position());
     },
 });

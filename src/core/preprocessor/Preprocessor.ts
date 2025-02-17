@@ -3,7 +3,7 @@ import { EventEmitter } from "events";
 import * as CC from "./Chunk";
 import { ParseError } from "../parser";
 import { Token, Lexeme } from "../lexer";
-import { BrsError } from "../BrsError";
+import { BrsError } from "../error/BrsError";
 
 /** The results of a Preprocessor's filtering pass. */
 export interface FilterResults {

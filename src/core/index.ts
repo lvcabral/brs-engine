@@ -21,7 +21,6 @@ import {
     TaskPayload,
     isTaskPayload,
 } from "./common";
-import { BrsError, RuntimeError, RuntimeErrorDetail } from "./BrsError";
 import { Lexeme, Lexer, Token } from "./lexer";
 import { Parser, Stmt } from "./parser";
 import {
@@ -43,8 +42,9 @@ import bslDefender from "./libraries/common/v30/bslDefender.brs";
 import Roku_Ads from "./libraries/roku_ads/Roku_Ads.brs";
 import RokuBrowser from "./libraries/roku_browser/RokuBrowser.brs";
 import packageInfo from "../../package.json";
-import { BrsDevice } from "./BrsDevice";
-import { configureFileSystem } from "./FileSystem";
+import { BrsDevice } from "./device/BrsDevice";
+import { configureFileSystem } from "./device/FileSystem";
+import { BrsError, RuntimeError, RuntimeErrorDetail } from "./error/BrsError";
 
 export * as lexer from "./lexer";
 export * as parser from "./parser";
@@ -55,7 +55,7 @@ export { PP as preprocessor };
 export { Preprocessor } from "./preprocessor/Preprocessor";
 export { Interpreter } from "./interpreter";
 export { Environment, Scope } from "./interpreter/Environment";
-export { BrsDevice } from "./BrsDevice";
+export { BrsDevice } from "./device/BrsDevice";
 export const bscs = new Map<string, number>();
 export const stats = new Map<Lexeme, number>();
 export const terminateReasons = ["debug-exit", "end-statement"];
@@ -253,7 +253,6 @@ export async function createPayloadFromFiles(
         manifest.set("minor_version", "0");
         manifest.set("build_version", "0");
         manifest.set("splash_min_time", "0");
-        manifest.set("requires_audiometadata", "1");
     }
     const payload: AppPayload = {
         device: deviceData,

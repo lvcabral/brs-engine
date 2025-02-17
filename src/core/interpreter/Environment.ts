@@ -1,16 +1,7 @@
 import { Identifier } from "../lexer";
 import { Location } from "../lexer/Token";
-import {
-    BrsComponent,
-    BrsInvalid,
-    BrsType,
-    Int32,
-    RoAssociativeArray,
-    RoSGNode,
-    ValueKind,
-} from "../brsTypes";
-import { TypeMismatch } from "./TypeMismatch";
-import { ComponentDefinition } from "../scenegraph";
+import { BrsComponent, BrsType, Int32, RoAssociativeArray, ValueKind } from "../brsTypes";
+import { TypeMismatch } from "../error/TypeMismatch";
 
 /** The logical region from a particular variable or function that defines where it may be accessed from. */
 export enum Scope {

@@ -1,5 +1,5 @@
 import { BrsType, ValueKind } from "../brsTypes";
-import { RuntimeError, RuntimeErrorDetail } from "../BrsError";
+import { RuntimeError, RuntimeErrorDetail } from "../error/BrsError";
 import type { Location } from "../lexer";
 
 /** Wraps up the metadata associated with a type mismatch error. */

@@ -5,11 +5,10 @@ import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { BufferType, DataType } from "../../common";
 import { IfSetMessagePort, IfGetMessagePort } from "../interfaces/IfMessagePort";
-import { BrsDevice } from "../../BrsDevice";
+import { BrsDevice } from "../../device/BrsDevice";
 
 export class RoSystemLog extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
-    private readonly interpreter: Interpreter;
     private readonly validEvents = [
         "bandwidth.minute",
         "http.connect",
@@ -19,9 +18,8 @@ export class RoSystemLog extends BrsComponent implements BrsValue {
     private readonly enabledEvents: string[] = [];
     private port?: RoMessagePort;
 
-    constructor(interpreter: Interpreter) {
+    constructor() {
         super("roSystemLog");
-        this.interpreter = interpreter;
         const setPortIface = new IfSetMessagePort(this, this.getNewEvents.bind(this));
         const getPortIface = new IfGetMessagePort(this);
         this.registerMethods({
@@ -65,8 +63,8 @@ export class RoSystemLog extends BrsComponent implements BrsValue {
                     events.push(new RoSystemLogEvent(sysLog.type, sysLog));
                 }
             } catch (e: any) {
-                if (this.interpreter.isDevMode) {
-                    this.interpreter.stdout.write(
+                if (BrsDevice.isDevMode) {
+                    BrsDevice.stdout.write(
                         `warning,[roSystemLog] Error parsing System Log buffer: ${e.message}`
                     );
                 }

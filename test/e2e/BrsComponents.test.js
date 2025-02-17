@@ -518,7 +518,7 @@ describe("end to end brightscript functions", () => {
             "BRS App",
             "",
             "34c6fceca75e456f25e7e99531e2425c6c1de443",
-            "1",
+            "0",
         ]);
     });
 

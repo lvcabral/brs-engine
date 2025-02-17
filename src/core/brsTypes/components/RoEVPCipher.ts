@@ -13,6 +13,7 @@ import {
     BrsInvalid,
 } from "..";
 import { Interpreter } from "../../interpreter";
+import { BrsDevice } from "../../device/BrsDevice";
 
 export class RoEVPCipher extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -46,7 +47,7 @@ export class RoEVPCipher extends BrsComponent implements BrsValue {
     }
 
     setupCipher(
-        interpreter: Interpreter,
+        _: Interpreter,
         encrypt: boolean,
         format: string,
         key: string,
@@ -78,8 +79,8 @@ export class RoEVPCipher extends BrsComponent implements BrsValue {
             }
             return 0;
         } catch (err: any) {
-            if (interpreter.isDevMode) {
-                interpreter.stderr.write(`warning,[roEVPCipher] Setup error: ${err.message}`);
+            if (BrsDevice.isDevMode) {
+                BrsDevice.stderr.write(`warning,[roEVPCipher] Setup error: ${err.message}`);
             }
             this.cipher = null;
             this.cipherFormat = "";
@@ -100,15 +101,15 @@ export class RoEVPCipher extends BrsComponent implements BrsValue {
         return Buffer.from("");
     }
 
-    finalResult(interpreter: Interpreter) {
+    finalResult(_: Interpreter) {
         if (this.cipher) {
             try {
                 let encrypted = this.cipher.final();
                 this.cipher = null;
                 return encrypted;
             } catch (err: any) {
-                if (interpreter.isDevMode) {
-                    interpreter.stderr.write(`error,[roEVPCipher] Error: ${err.message}`);
+                if (BrsDevice.isDevMode) {
+                    BrsDevice.stderr.write(`error,[roEVPCipher] Error: ${err.message}`);
                 }
                 this.cipher = null;
                 return null;

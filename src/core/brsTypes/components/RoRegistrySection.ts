@@ -6,7 +6,7 @@ import { Interpreter } from "../../interpreter";
 import { RoArray } from "./RoArray";
 import { RoList } from "./RoList";
 import { RoAssociativeArray } from "./RoAssociativeArray";
-import { BrsDevice } from "../../BrsDevice";
+import { BrsDevice } from "../../device/BrsDevice";
 
 export class RoRegistrySection extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;

@@ -5,7 +5,7 @@ import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 import { DataType } from "../../common";
-import { BrsDevice } from "../../BrsDevice";
+import { BrsDevice } from "../../device/BrsDevice";
 
 export class RoAudioResource extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -16,12 +16,12 @@ export class RoAudioResource extends BrsComponent implements BrsValue {
     private currentIndex: number;
     private playing: boolean;
 
-    constructor(interpreter: Interpreter, name: BrsString) {
+    constructor(name: BrsString) {
         super("roAudioResource");
         this.maxStreams = Math.min(BrsDevice.deviceInfo.get("maxSimulStreams"), 3) || 2;
         this.valid = true;
-        const systemwav = ["select", "navsingle", "navmulti", "deadend"];
-        const sysIndex = systemwav.findIndex((wav) => wav === name.value.toLowerCase());
+        const systemWAV = ["select", "navsingle", "navmulti", "deadend"];
+        const sysIndex = systemWAV.findIndex((wav) => wav === name.value.toLowerCase());
         if (sysIndex > -1) {
             this.audioId = sysIndex;
         } else {
@@ -31,11 +31,11 @@ export class RoAudioResource extends BrsComponent implements BrsValue {
                 if (fsys) {
                     const id = parseInt(fsys.readFileSync(name.value, "utf8"));
                     if (id && id >= 0) {
-                        this.audioId = id + systemwav.length;
+                        this.audioId = id + systemWAV.length;
                     }
                 }
             } catch (err: any) {
-                interpreter.stderr.write(
+                BrsDevice.stderr.write(
                     `error,Error loading audio file: ${name.value} - ${err.message}`
                 );
                 this.valid = false;
@@ -85,7 +85,7 @@ export class RoAudioResource extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_: Interpreter) => {
             if (this.audioId) {
                 const currentWav = Atomics.load(
                     BrsDevice.sharedArray,
@@ -122,7 +122,7 @@ export class RoAudioResource extends BrsComponent implements BrsValue {
     });
 }
 
-export function createAudioResource(interpreter: Interpreter, name: BrsString) {
-    const audio = new RoAudioResource(interpreter, name);
+export function createAudioResource(name: BrsString) {
+    const audio = new RoAudioResource(name);
     return audio.isValid() ? audio : BrsInvalid.Instance;
 }
