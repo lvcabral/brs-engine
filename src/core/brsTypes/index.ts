@@ -44,6 +44,13 @@ import { RoSGNode } from "./components/RoSGNode";
 import { Field } from "./nodes/Field";
 import { getNodeType, SGNodeFactory } from "../scenegraph/SGNodeFactory";
 import { RoMessagePort } from "./components/RoMessagePort";
+import { RoDeviceInfo } from "./components/RoDeviceInfo";
+import { RoAppManager } from "./components/RoAppManager";
+import { RoFileSystem } from "./components/RoFileSystem";
+import { RoLocalization } from "./components/RoLocalization";
+import { RoRegistry } from "./components/RoRegistry";
+import { RoAppMemoryMonitor } from "./components/RoAppMemoryMonitor";
+import { RoAppInfo } from "./components/RoAppInfo";
 
 export * from "./BrsType";
 export * from "./Int32";
@@ -436,10 +443,28 @@ function fromObject(x: any): BrsType {
         return BrsInvalid.Instance;
     } else if (x["_component_"]) {
         const component = x["_component_"];
-        if (component === "roMessagePort") {
-            return new RoMessagePort();
+        switch (component) {
+            case "roMessagePort":
+                return new RoMessagePort();
+            case "roAppManager":
+                return new RoAppManager();
+            case "roAppInfo":
+                return new RoAppInfo();
+            case "roFileSystem":
+                return new RoFileSystem();
+            case "roLocalization":
+                return new RoLocalization();
+            case "roDeviceInfo":
+                return new RoDeviceInfo();
+            case "roRegistry":
+                return new RoRegistry();
+            case "roMemoryMonitor":
+                return new RoAppMemoryMonitor();
+            case "roXMLElement":
+                return new RoXMLElement();
+            default:
+                return BrsInvalid.Instance;
         }
-        return BrsInvalid.Instance;
     }
     return toAssociativeArray(x);
 }
