@@ -23,3 +23,4 @@ print Substitute("{0} and {1}", "Mary", "Bob")
 print StrToI("252")
 print String(4, "ab") ' abababab
 print StringI(8, 33)  ' !!!!!!!!
+print Val("1234567890123")' 1.23457e+12
