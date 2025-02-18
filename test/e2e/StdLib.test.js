@@ -61,6 +61,7 @@ describe("end to end standard libary", () => {
             " 252",
             "abababab",
             "!!!!!!!!",
+            " 1.23457e+12",
         ]);
     });
 
@@ -68,12 +69,12 @@ describe("end to end standard libary", () => {
         await execute([resourceFile("stdlib", "math.brs")], outputStreams);
 
         expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
-            " 22.19795",
+            " 22.1979",
             " 2.85647",
-            " 3.342155",
-            " 0.4636476",
-            " 0.7073883",
-            " 0.9999997",
+            " 3.34215",
+            " 0.463648",
+            " 0.707388",
+            " 1",
             " 0.999204",
             " 3.5",
             " 17",

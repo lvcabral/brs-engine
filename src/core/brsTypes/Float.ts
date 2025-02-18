@@ -7,6 +7,7 @@ import { Double } from "./Double";
 import { Int64 } from "./Int64";
 import { RoFloat } from "./components/RoFloat";
 import Long from "long";
+import { vsprintf } from "sprintf-js";
 
 /**
  * Number of significant digits represented in an IEEE 32-bit floating point number.
@@ -213,7 +214,7 @@ export class Float implements Numeric, Comparable, Boxable {
     }
 
     toString(parent?: BrsType): string {
-        return this.value.toPrecision();
+        return vsprintf("%g", [this.value]);
     }
 
     box() {
