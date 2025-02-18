@@ -16,7 +16,7 @@ export const UCase = new Callable("UCase", {
         args: [new StdlibArgument("s", ValueKind.String)],
         returns: ValueKind.String,
     },
-    impl: (interpreter: Interpreter, s: BrsString) => new BrsString(s.value.toUpperCase()),
+    impl: (_: Interpreter, s: BrsString) => new BrsString(s.value.toUpperCase()),
 });
 
 /** Converts the string to all lowercase. */
@@ -25,7 +25,7 @@ export const LCase = new Callable("LCase", {
         args: [new StdlibArgument("s", ValueKind.String)],
         returns: ValueKind.String,
     },
-    impl: (interpreter: Interpreter, s: BrsString) => new BrsString(s.value.toLowerCase()),
+    impl: (_: Interpreter, s: BrsString) => new BrsString(s.value.toLowerCase()),
 });
 
 /**
@@ -37,7 +37,7 @@ export const Asc = new Callable("Asc", {
         args: [new StdlibArgument("letter", ValueKind.String)],
         returns: ValueKind.String,
     },
-    impl: (interpreter: Interpreter, str: BrsString) => new Int32(str.value.charCodeAt(0) || 0),
+    impl: (_: Interpreter, str: BrsString) => new Int32(str.value.charCodeAt(0) || 0),
 });
 
 /**
@@ -51,7 +51,7 @@ export const Chr = new Callable("Chr", {
         args: [new StdlibArgument("ch", ValueKind.Int32)],
         returns: ValueKind.String,
     },
-    impl: (interpreter: Interpreter, ch: Int32) => {
+    impl: (_: Interpreter, ch: Int32) => {
         const num = ch.getValue();
         if (num <= 0) return new BrsString("");
         else return new BrsString(String.fromCharCode(num));
@@ -66,8 +66,7 @@ export const Left = new Callable("Left", {
         args: [new StdlibArgument("s", ValueKind.String), new StdlibArgument("n", ValueKind.Int32)],
         returns: ValueKind.String,
     },
-    impl: (interpreter: Interpreter, s: BrsString, n: Int32) =>
-        new BrsString(s.value.slice(0, n.getValue())),
+    impl: (_: Interpreter, s: BrsString, n: Int32) => new BrsString(s.value.slice(0, n.getValue())),
 });
 
 /**
@@ -78,7 +77,7 @@ export const Right = new Callable("Right", {
         args: [new StdlibArgument("s", ValueKind.String), new StdlibArgument("n", ValueKind.Int32)],
         returns: ValueKind.String,
     },
-    impl: (interpreter: Interpreter, s: BrsString, n: Int32) => {
+    impl: (_: Interpreter, s: BrsString, n: Int32) => {
         if (n.getValue() <= 0) return new BrsString("");
         return new BrsString(s.value.slice(-n.getValue()));
     },
@@ -96,7 +95,7 @@ export const Instr = new Callable("Instr", {
         ],
         returns: ValueKind.String,
     },
-    impl: (interpreter: Interpreter, start: Int32, str: BrsString, search: BrsString) =>
+    impl: (_: Interpreter, start: Int32, str: BrsString, search: BrsString) =>
         new Int32(str.value.indexOf(search.value, start.getValue() - 1) + 1),
 });
 
@@ -108,7 +107,7 @@ export const Len = new Callable("Len", {
         args: [new StdlibArgument("s", ValueKind.String)],
         returns: ValueKind.Int32,
     },
-    impl: (interpreter: Interpreter, s: BrsString) => new Int32(s.value.length),
+    impl: (_: Interpreter, s: BrsString) => new Int32(s.value.length),
 });
 
 /**
@@ -124,7 +123,7 @@ export const Mid = new Callable(
             ],
             returns: ValueKind.String,
         },
-        impl: (interpreter: Interpreter, s: BrsString, p: Int32): BrsString => {
+        impl: (_: Interpreter, s: BrsString, p: Int32): BrsString => {
             let start = p.getValue() - 1;
             return new BrsString(s.value.substring(start));
         },
@@ -138,7 +137,7 @@ export const Mid = new Callable(
             ],
             returns: ValueKind.String,
         },
-        impl: (interpreter: Interpreter, s: BrsString, p: Int32, n: Int32): BrsString => {
+        impl: (_: Interpreter, s: BrsString, p: Int32, n: Int32): BrsString => {
             let start = p.getValue() - 1;
             return new BrsString(s.value.substring(start, start + n.getValue()));
         },
@@ -153,7 +152,7 @@ export const Str = new Callable("Str", {
         args: [new StdlibArgument("value", ValueKind.Float)],
         returns: ValueKind.String,
     },
-    impl: (interpreter: Interpreter, value: Float): BrsString => {
+    impl: (_: Interpreter, value: Float): BrsString => {
         const floatValue = value.getValue();
         const prefix = floatValue >= 0.0 ? " " : "";
         return new BrsString(prefix + String(floatValue));
@@ -171,7 +170,7 @@ export const StrI = new Callable("StrI", {
         ],
         returns: ValueKind.String,
     },
-    impl: (interpreter: Interpreter, value: Int32, brsRadix: Int32): BrsString => {
+    impl: (_: Interpreter, value: Int32, brsRadix: Int32): BrsString => {
         let radix = brsRadix.getValue();
         if (radix < 2 || radix > 36) {
             return new BrsString("");
@@ -196,7 +195,7 @@ export const STRING = new Callable("String", {
         ],
         returns: ValueKind.String,
     },
-    impl: (interpreter: Interpreter, n: Int32, str: BrsString): BrsString => {
+    impl: (_: Interpreter, n: Int32, str: BrsString): BrsString => {
         return new BrsString(str.value.repeat(n.getValue()));
     },
 });
@@ -209,7 +208,7 @@ export const StringI = new Callable("StringI", {
         args: [new StdlibArgument("n", ValueKind.Int32), new StdlibArgument("ch", ValueKind.Int32)],
         returns: ValueKind.String,
     },
-    impl: (interpreter: Interpreter, n: Int32, ch: Int32): BrsString => {
+    impl: (_: Interpreter, n: Int32, ch: Int32): BrsString => {
         return new BrsString(String.fromCharCode(ch.getValue()).repeat(n.getValue()));
     },
 });
@@ -230,7 +229,7 @@ export const Substitute = new Callable("Substitute", {
         returns: ValueKind.String,
     },
     impl: (
-        interpreter: Interpreter,
+        _: Interpreter,
         str: BrsString,
         arg0: BrsString,
         arg1: BrsString,
@@ -257,21 +256,21 @@ export const Val = new Callable("Val", {
         ],
         returns: ValueKind.Dynamic,
     },
-    impl: (interpreter: Interpreter, s: BrsString, brsRadix: Int32 | BrsInvalid): BrsNumber => {
+    impl: (_: Interpreter, s: BrsString, brsRadix: Int32 | BrsInvalid): BrsNumber => {
         const isFloat = s.value.includes(".");
-
-        let retNumber = 0;
         if (isFloat || brsRadix instanceof BrsInvalid) {
-            retNumber = Number(s.value);
+            const retNumber = Number(s.value);
+            if (Number.isNaN(retNumber)) {
+                return new Float(0);
+            }
+            return new Float(retNumber);
         } else {
-            retNumber = parseInt(s.value, brsRadix.getValue());
+            const retNumber = parseInt(s.value, brsRadix.getValue());
+            if (Number.isNaN(retNumber)) {
+                return new Int32(0);
+            }
+            return new Int32(retNumber);
         }
-
-        if (Number.isNaN(retNumber)) {
-            return new Int32(0);
-        }
-
-        return isFloat ? new Float(retNumber) : new Int32(retNumber);
     },
 });
 
@@ -283,7 +282,7 @@ export const StrToI = new Callable("StrToI", {
         args: [new StdlibArgument("s", ValueKind.String)],
         returns: ValueKind.Int32,
     },
-    impl: (interpreter: Interpreter, s: BrsString): BrsNumber => {
+    impl: (_: Interpreter, s: BrsString): BrsNumber => {
         let integerValue = parseInt(s.value);
 
         if (Number.isNaN(integerValue)) {

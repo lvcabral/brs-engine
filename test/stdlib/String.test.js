@@ -304,17 +304,17 @@ describe("global string functions", () => {
         });
 
         it("returns zero if the string is not a number", () => {
-            expect(Val.call(interpreter, new BrsString(""))).toEqual(new Int32(0));
+            expect(Val.call(interpreter, new BrsString(""))).toEqual(new Float(0));
 
-            expect(Val.call(interpreter, new BrsString("Not a Number"))).toEqual(new Int32(0));
+            expect(Val.call(interpreter, new BrsString("Not a Number"))).toEqual(new Float(0));
 
-            expect(Val.call(interpreter, new BrsString("10+2"))).toEqual(new Int32(0));
+            expect(Val.call(interpreter, new BrsString("10+2"))).toEqual(new Float(0));
         });
 
-        it("returns an integer from a string", () => {
-            expect(Val.call(interpreter, new BrsString("65535"))).toEqual(new Int32(65535));
+        it("returns a float from a string", () => {
+            expect(Val.call(interpreter, new BrsString("65535"))).toEqual(new Float(65535));
 
-            expect(Val.call(interpreter, new BrsString("0xFA"))).toEqual(new Int32(250));
+            expect(Val.call(interpreter, new BrsString("0xFA"))).toEqual(new Float(250));
         });
 
         it("returns an integer from a string and radix", () => {

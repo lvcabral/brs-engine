@@ -81,7 +81,7 @@ describe("end to end syntax", () => {
             " 10", // boxed operations
             " 4",
             " 21",
-            " 2.333333",
+            " 2.33333",
             "Integer",
             "roInt",
             "roFloat",
@@ -131,13 +131,13 @@ describe("end to end syntax", () => {
         await execute([resourceFile("to-str-with-format.brs")], outputStreams);
 
         expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
-            "float1 = 10000.45", // RBI 10000.5
-            "float2 = 10000.46", // RBI 10000.5
+            "float1 = 10000.5",
+            "float2 = 10000.5",
             "float3 = 10000.45678",
             "float3.toStr() = 10000.5",
             "0.123 = 0.123",
             "0.123.toStr() = 0.123",
-            "123.4567 = 123.4567", // RBI 123.457
+            "123.4567 = 123.457",
             "123.4567.toStr() = 123.457",
             "double = 10000.46", // RBI 10000.45703125
             "double.toStr() = 10000.5",
