@@ -121,7 +121,7 @@ describe("function argument type checking", () => {
             "longinteger& =  13",
             "assigning RHS of type 'longinteger' with value: 2147483647119",
             "integer% = -881",
-            "float! =  2147484000000",
+            "float! =  2.14748e+12",
             "double# =  2147483647119",
             "longinteger& =  2147483647119",
         ]);
