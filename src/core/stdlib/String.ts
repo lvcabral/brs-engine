@@ -263,13 +263,13 @@ export const Val = new Callable("Val", {
             if (Number.isNaN(retNumber)) {
                 return new Float(0);
             }
-            return new Float(retNumber)
+            return new Float(retNumber);
         } else {
             const retNumber = parseInt(s.value, brsRadix.getValue());
             if (Number.isNaN(retNumber)) {
                 return new Int32(0);
             }
-            return new Int32(retNumber)
+            return new Int32(retNumber);
         }
     },
 });
