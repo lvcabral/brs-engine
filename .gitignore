@@ -1,6 +1,7 @@
 .vscode/
 .idea/
 browser/lib/
+browser/assets/
 bin/
 types/
 node_modules*/

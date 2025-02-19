@@ -61,6 +61,7 @@ import {
     subscribeSound,
     switchSoundState,
     handleSoundEvent,
+    playHomeSound,
 } from "./sound";
 import {
     addVideo,
@@ -80,7 +81,6 @@ import packageInfo from "../../package.json";
 // Interpreter Library
 const brsWrkLib = getWorkerLibPath();
 let brsWorker: Worker;
-let homeWav: Howl;
 
 // Package API
 export {
@@ -178,13 +178,6 @@ export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any 
     }
     sharedArray = new Int32Array(sharedBuffer);
     resetArray();
-    // Setup Home Sound Effect
-    if (homeWav === undefined) {
-        homeWav = new Howl({ src: ["./audio/select.wav"] });
-        homeWav.on("play", function () {
-            terminate(AppExitReason.FINISHED);
-        });
-    }
     // Initialize Display and Control modules
     initDisplayModule(deviceData.displayMode, showStats);
     initControlModule(sharedArray, options);
@@ -206,7 +199,7 @@ export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any 
     subscribeControl("api", (event: string, data: any) => {
         if (event === "home") {
             if (currentApp.running) {
-                homeWav.play();
+                playHomeSound();
             }
         } else if (event === "poweroff") {
             if (currentApp.running) {
@@ -224,6 +217,8 @@ export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any 
     subscribeSound("api", (event: string, data: any) => {
         if (["error", "warning"].includes(event)) {
             apiException(event, data);
+        } else if (event === "home") {
+            terminate(AppExitReason.FINISHED);
         }
     });
     subscribeVideo("api", (event: string, data: any) => {
@@ -253,6 +248,7 @@ export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any 
     brsWorker = new Worker(brsWrkLib);
     brsWorker.addEventListener("message", mainCallback);
     brsWorker.postMessage("getVersion");
+    updateDeviceAssets();
 }
 
 // Observers Handling
@@ -425,7 +421,7 @@ function resetWorker() {
     taskSyncFromMain.clear();
     taskSyncToMain.clear();
     resetArray();
-    resetSounds();
+    resetSounds(deviceData.assets);
     resetVideo();
 }
 
@@ -480,46 +476,26 @@ function runApp(payload: AppPayload) {
     }
 }
 
-const tasks: Map<number, Worker> = new Map();
-const taskSyncFromMain: Map<number, SharedObject> = new Map();
-const taskSyncToMain: Map<number, SharedObject> = new Map();
-
-function runTask(taskData: TaskData) {
-    if (tasks.has(taskData.id) || !taskData.m?.top?.functionname) {
-        return;
-    } else if (tasks.size === 10) {
-        apiException("warning", `[api] Maximum number of tasks reached: ${tasks.size}`);
+// Load Device Assets
+function updateDeviceAssets() {
+    if (deviceData.assets.byteLength) {
         return;
     }
-    const taskWorker = new Worker(brsWrkLib);
-    taskWorker.addEventListener("message", taskCallback);
-    tasks.set(taskData.id, taskWorker);
-    if (!taskSyncFromMain.has(taskData.id)) {
-        taskSyncFromMain.set(taskData.id, new SharedObject());
-    }
-    taskData.buffer = taskSyncFromMain.get(taskData.id)?.getBuffer();
-    const taskPayload: TaskPayload = {
-        device: currentPayload.device,
-        manifest: currentPayload.manifest,
-        taskData: taskData,
-        pkgZip: currentPayload.pkgZip,
-        extZip: currentPayload.extZip,
-    };
-    console.log("Calling Task worker: ", taskData.id, taskData.name);
-    taskWorker.postMessage(sharedBuffer);
-    taskWorker.postMessage(taskPayload);
-}
-
-function endTask(taskId: number) {
-    const taskWorker = tasks.get(taskId);
-    if (taskWorker) {
-        taskWorker.removeEventListener("message", taskCallback);
-        taskWorker.terminate();
-        tasks.delete(taskId);
-        taskSyncFromMain.delete(taskId);
-        taskSyncToMain.delete(taskId);
-        console.log("Task worker stopped: ", taskId);
-    }
+    fetch("./assets/common.zip")
+        .then(async function (response) {
+            if (response.status === 200 || response.status === 0) {
+                return response.blob().then(function (zipBlob) {
+                    zipBlob.arrayBuffer().then(function (zipData) {
+                        deviceData.assets = zipData;
+                    });
+                });
+            } else {
+                return Promise.reject(new Error(response.statusText));
+            }
+        })
+        .catch((err) => {
+            console.error(`Error attempting to load common.zip: ${err.message} (${err.name})`);
+        });
 }
 
 // Update App in the App List from the Current App object

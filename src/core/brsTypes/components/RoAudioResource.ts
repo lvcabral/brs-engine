@@ -4,7 +4,7 @@ import { BrsType } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
-import { DataType } from "../../common";
+import { DataType, DefaultSounds } from "../../common";
 import { BrsDevice } from "../../device/BrsDevice";
 
 export class RoAudioResource extends BrsComponent implements BrsValue {
@@ -20,18 +20,18 @@ export class RoAudioResource extends BrsComponent implements BrsValue {
         super("roAudioResource");
         this.maxStreams = Math.min(BrsDevice.deviceInfo.get("maxSimulStreams"), 3) || 2;
         this.valid = true;
-        const systemWAV = ["select", "navsingle", "navmulti", "deadend"];
-        const sysIndex = systemWAV.findIndex((wav) => wav === name.value.toLowerCase());
+        const sysIndex = DefaultSounds.findIndex((wav) => wav === name.value.toLowerCase());
         if (sysIndex > -1) {
             this.audioId = sysIndex;
         } else {
+            // TODO: Check if this audioId is still valid
             try {
                 const fsys = BrsDevice.fileSystem;
                 this.valid = fsys !== undefined;
                 if (fsys) {
                     const id = parseInt(fsys.readFileSync(name.value, "utf8"));
                     if (id && id >= 0) {
-                        this.audioId = id + systemWAV.length;
+                        this.audioId = id + DefaultSounds.length;
                     }
                 }
             } catch (err: any) {
