@@ -1,4 +1,4 @@
-import { Field, FieldKind, FieldModel } from "./Field";
+import { FieldModel } from "./Field";
 import {
     AAMember,
     BrsString,
@@ -47,10 +47,10 @@ export class Overhang extends Group {
     private readonly rightDivider: Poster;
     private readonly title: Label;
     private readonly clockText: Label;
-    private readonly defaultLogo: string = "pkg:/images/logo_roku_HD.webp";
-    private readonly optionsOn: string = "pkg:/images/icon_options.webp";
-    private readonly optionsOff: string = "pkg:/images/icon_options_off.webp";
-    private readonly dividerVertical: string = "pkg:/images/divider_vertical.webp";
+    private readonly defaultLogo: string = "common:/images/logo_roku_HD.webp";
+    private readonly optionsOn: string = "common:/images/icon_options.webp";
+    private readonly optionsOff: string = "common:/images/icon_options_off.webp";
+    private readonly dividerVertical: string = "common:/images/divider_vertical.webp";
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = "Poster") {
         super([], name);
