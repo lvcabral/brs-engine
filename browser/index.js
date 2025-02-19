@@ -74,8 +74,6 @@ const customDeviceInfo = {
     developerId: "UniqueDeveloperId", // As in Roku devices, segregates Registry data
     locale: "en_US", // Used if app supports localization
     displayMode: "720p", // Supported modes: 480p (SD), 720p (HD) and 1080p (FHD)
-    defaultFont: "Asap", // Default font for Draw2D  "Asap"
-    fontPath: "../fonts/", // To use alternative font "Roboto" change the fontPath to "../fonts-alt/"
     maxFps: 30, // Limited refresh rate to minimize issues with iOS/iPadOS
     appList: appList,
 };

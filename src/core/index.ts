@@ -6,7 +6,6 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { ExecutionOptions, Interpreter } from "./interpreter";
-import { download } from "./interpreter/Network";
 import {
     AppExitReason,
     PkgFilePath,
@@ -36,10 +35,6 @@ import * as crypto from "crypto";
 import * as fs from "fs";
 import { encode, decode } from "@msgpack/msgpack";
 import { zlibSync, unzlibSync } from "fflate";
-import bslCore from "./libraries/common/v30/bslCore.brs";
-import bslDefender from "./libraries/common/v30/bslDefender.brs";
-import Roku_Ads from "./libraries/roku_ads/Roku_Ads.brs";
-import RokuBrowser from "./libraries/roku_browser/RokuBrowser.brs";
 import packageInfo from "../../package.json";
 import { BrsDevice } from "./device/BrsDevice";
 import { configureFileSystem } from "./device/FileSystem";
@@ -133,8 +128,12 @@ export function registerCallback(messageCallback: any, sharedBuffer?: SharedArra
  *
  */
 export async function getReplInterpreter(payload: Partial<AppPayload>) {
+    if (!payload.device?.assets) {
+        postMessage("error,Invalid REPL configuration: Missing assets");
+        return null;
+    }
     try {
-        await configureFileSystem(payload.pkgZip, payload.extZip);
+        await configureFileSystem(payload.device.assets, payload.pkgZip, payload.extZip);
     } catch (err: any) {
         postMessage(`error,Error mounting File System: ${err.message}`);
         return null;
@@ -149,7 +148,6 @@ export async function getReplInterpreter(payload: Partial<AppPayload>) {
             BrsDevice.setRegistry(payload.device.registry);
         }
         setupDeviceData(payload.device);
-        setupDeviceFonts(payload.device);
     }
     return replInterpreter;
 }
@@ -237,14 +235,16 @@ export async function createPayloadFromFiles(
     const deviceData = customDeviceData
         ? Object.assign(defaultDeviceInfo, customDeviceData)
         : defaultDeviceInfo;
-    if (!deviceData.fonts || deviceData.fonts.size === 0) {
-        deviceData.fonts = getFonts(deviceData.fontPath, deviceData.defaultFont, deviceData.sgFont);
-    }
     if (root && !manifest && fs.existsSync(path.join(root, "manifest"))) {
         const fileData = fs.readFileSync(path.join(root, "manifest"));
         if (fileData) {
             manifest = parseManifest(fileData.toString());
         }
+    }
+    if (deviceData.assets.byteLength === 0) {
+        deviceData.assets = fs.readFileSync(
+            path.join(__dirname, "../browser/assets/common.zip")
+        )?.buffer;
     }
     if (manifest === undefined) {
         manifest = new Map();
@@ -274,31 +274,6 @@ export async function createPayloadFromFiles(
     }
     return payload;
 }
-
-/**
- * Get the fonts map for the device.
- * @param fontPath a string with the font path.
- * @param fontFamily a string with the font family name.
- *
- * @returns a Map with the fonts.
- */
-
-export function getFonts(fontPath: string, fontFamily: string, sgFamily: string) {
-    const fonts = new Map();
-    const fontsPath = path.join(__dirname, fontPath, fontFamily);
-    const sgFontsPath = path.join(__dirname, fontPath, sgFamily);
-    try {
-        fonts.set(`${fontFamily}-Regular`, fs.readFileSync(`${fontsPath}-Regular.ttf`));
-        fonts.set(`${fontFamily}-Bold`, fs.readFileSync(`${fontsPath}-Bold.ttf`));
-        fonts.set(`${fontFamily}-Italic`, fs.readFileSync(`${fontsPath}-Italic.ttf`));
-        fonts.set(`${fontFamily}-BoldItalic`, fs.readFileSync(`${fontsPath}-BoldItalic.ttf`));
-        fonts.set(`${sgFamily}-Regular`, fs.readFileSync(`${sgFontsPath}-Regular.ttf`));
-        fonts.set(`${sgFamily}-SemiBold`, fs.readFileSync(`${sgFontsPath}-SemiBold.ttf`));
-    } catch (err: any) {
-        postMessage(`error,Error loading fonts: ${err.message}`);
-    }
-    return fonts;
-}
 /// #endif
 
 /**
@@ -326,7 +301,7 @@ export async function executeFile(
     stats.clear();
     // Setup the File System
     try {
-        await configureFileSystem(payload.pkgZip, payload.extZip);
+        await configureFileSystem(payload.device.assets, payload.pkgZip, payload.extZip);
         if (options.root) {
             BrsDevice.fileSystem.setRoot(options.root);
         }
@@ -375,7 +350,7 @@ export async function executeTask(payload: TaskPayload, customOptions?: Partial<
     stats.clear();
     // Setup the File System
     try {
-        await configureFileSystem(payload.pkgZip, payload.extZip);
+        await configureFileSystem(payload.device.assets, payload.pkgZip, payload.extZip);
         if (options.root) {
             BrsDevice.fileSystem.setRoot(options.root);
         }
@@ -435,7 +410,6 @@ function setupPayload(interpreter: Interpreter, payload: AppPayload): SourceResu
         BrsDevice.setRegistry(payload.device.registry);
     }
     setupDeviceData(payload.device);
-    setupDeviceFonts(payload.device);
     setupTranslations(interpreter);
     return setupPackageFiles(payload);
 }
@@ -474,60 +448,12 @@ function setupInputParams(
  */
 function setupDeviceData(device: DeviceInfo) {
     Object.keys(device).forEach((key) => {
-        if (key !== "registry" && key !== "fonts") {
+        if (key !== "registry" && key !== "assets") {
             if (key === "developerId") {
                 // Prevent the developerId from having dots to avoid issues with the registry persistence
                 BrsDevice.deviceInfo.set(key, device[key].replace(".", ":"));
             }
             BrsDevice.deviceInfo.set(key, device[key]);
-        }
-    });
-    // Internal Libraries
-    const fsys = BrsDevice.fileSystem;
-    if (fsys) {
-        fsys.mkdirSync("common:/LibCore");
-        fsys.mkdirSync("common:/LibCore/v30");
-        fsys.writeFileSync("common:/LibCore/v30/bslCore.brs", bslCore);
-        fsys.writeFileSync("common:/LibCore/v30/bslDefender.brs", bslDefender);
-        fsys.mkdirSync("common:/roku_ads");
-        fsys.writeFileSync("common:/roku_ads/Roku_Ads.brs", Roku_Ads);
-        fsys.mkdirSync("common:/roku_browser");
-        fsys.writeFileSync("common:/roku_browser/RokuBrowser.brs", RokuBrowser);
-    }
-}
-
-/**
- * Updates the interpreter `common:` volume with device internal fonts.
- * @param device object with device info data
- */
-function setupDeviceFonts(device: DeviceInfo) {
-    const family = device.defaultFont;
-    const sgFamily = device.sgFont;
-    const fontPath = device.fontPath ?? "../fonts/";
-
-    const fsys = BrsDevice.fileSystem;
-    if (!fsys?.existsSync("common:/")) {
-        postMessage("error,Common file system not found");
-        return;
-    }
-    fsys.mkdirSync("common:/Fonts");
-    if (typeof XMLHttpRequest !== "undefined") {
-        // Running as a Worker in the browser, download the fonts
-        const fonts = new Map();
-        const rType = "arraybuffer";
-        fonts.set(`${family}-Regular`, download(`${fontPath}${family}-Regular.ttf`, rType));
-        fonts.set(`${family}-Bold`, download(`${fontPath}${family}-Bold.ttf`, rType));
-        fonts.set(`${family}-Italic`, download(`${fontPath}${family}-Italic.ttf`, rType));
-        fonts.set(`${family}-BoldItalic`, download(`${fontPath}${family}-BoldItalic.ttf`, rType));
-        fonts.set(`${sgFamily}-Regular`, download(`${fontPath}${sgFamily}-Regular.ttf`, rType));
-        fonts.set(`${sgFamily}-SemiBold`, download(`${fontPath}${sgFamily}-SemiBold.ttf`, rType));
-        device.fonts = fonts;
-    }
-    device.fonts?.forEach((value, key) => {
-        if (value) {
-            fsys.writeFileSync(`common:/Fonts/${key}.ttf`, Buffer.from(value));
-        } else {
-            postMessage(`warning,Font file not found: ${key}.ttf`);
         }
     });
 }

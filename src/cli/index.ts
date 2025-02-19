@@ -90,12 +90,9 @@ program
         }
         if (typeof deviceData === "object") {
             deviceData.customFeatures.push("ascii_rendering");
-            deviceData.fontPath = "../browser/fonts";
-            deviceData.fonts = brs.getFonts(
-                deviceData.fontPath,
-                deviceData.defaultFont,
-                deviceData.sgFont
-            );
+            deviceData.assets = fs.readFileSync(
+                path.join(__dirname, "../browser/assets/common.zip")
+            )?.buffer;
             deviceData.localIps = getLocalIps();
             try {
                 const { gateway, int } = gateway4sync();

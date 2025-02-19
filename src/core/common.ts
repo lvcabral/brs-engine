@@ -31,8 +31,7 @@ export interface DeviceInfo {
     captionsMode: "Off" | "On" | "Instant replay" | "When mute";
     defaultFont: string;
     sgFont: string;
-    fontPath: string;
-    fonts?: Map<string, any>;
+    assets: ArrayBufferLike;
     maxSimulStreams: 1 | 2 | 3;
     remoteControls: RemoteControl[];
     customFeatures: string[];
@@ -68,8 +67,7 @@ export const defaultDeviceInfo: DeviceInfo = {
     captionsMode: "Off",
     defaultFont: "Asap",
     sgFont: "Metropolis",
-    fontPath: "../fonts/",
-    fonts: new Map(),
+    assets: new ArrayBuffer(0),
     maxSimulStreams: 2,
     remoteControls: [],
     customFeatures: [],

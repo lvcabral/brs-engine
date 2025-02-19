@@ -22,7 +22,7 @@ import {
     DeviceInfo,
     platform,
 } from "../core/common";
-import models from "../core/libraries/common/models.csv";
+import models from "../core/common/models.csv";
 import packageInfo from "../../package.json";
 
 // Device Data Object
