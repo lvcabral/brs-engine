@@ -469,7 +469,7 @@ function updateDeviceAssets() {
         return;
     }
     fetch("./assets/common.zip")
-        .then(function (response) {
+        .then(async function (response) {
             if (response.status === 200 || response.status === 0) {
                 return response.blob().then(function (zipBlob) {
                     zipBlob.arrayBuffer().then(function (zipData) {
