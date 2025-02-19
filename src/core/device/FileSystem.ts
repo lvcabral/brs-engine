@@ -8,13 +8,13 @@ import { Zip } from "@lvcabral/zip";
 
 export class FileSystem {
     private readonly paths: Map<string, string>;
-    private root?: string;
-    private ext?: string;
+    private readonly mfs: typeof zenFS.fs; // common:
     private pfs: typeof zenFS.fs | typeof nodeFS; // pkg:
     private xfs: typeof zenFS.fs | typeof nodeFS; // ext1:
-    private mfs: typeof zenFS.fs; // common:
     private tfs: MemoryFileSystem; // tmp:
     private cfs: MemoryFileSystem; // cachefs:
+    private root?: string;
+    private ext?: string;
 
     constructor(root?: string, ext?: string) {
         this.paths = new Map();

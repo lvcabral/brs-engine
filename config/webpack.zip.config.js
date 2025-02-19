@@ -1,6 +1,6 @@
 const path = require("path");
 const CopyPlugin = require("copy-webpack-plugin");
-var ZipPlugin = require("zip-webpack-plugin");
+const ZipPlugin = require("zip-webpack-plugin");
 
 module.exports = (env) => {
     return {
