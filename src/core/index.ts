@@ -6,7 +6,6 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { ExecutionOptions, Interpreter } from "./interpreter";
-import { download } from "./interpreter/Network";
 import {
     AppExitReason,
     PkgFilePath,
@@ -29,10 +28,6 @@ import * as crypto from "crypto";
 import * as fs from "fs";
 import { encode, decode } from "@msgpack/msgpack";
 import { zlibSync, unzlibSync } from "fflate";
-import bslCore from "./libraries/common/v30/bslCore.brs";
-import bslDefender from "./libraries/common/v30/bslDefender.brs";
-import Roku_Ads from "./libraries/roku_ads/Roku_Ads.brs";
-import RokuBrowser from "./libraries/roku_browser/RokuBrowser.brs";
 import packageInfo from "../../package.json";
 import { BrsDevice } from "./device/BrsDevice";
 import { configureFileSystem } from "./device/FileSystem";
@@ -122,8 +117,12 @@ export function registerCallback(messageCallback: any, sharedBuffer?: SharedArra
  *
  */
 export async function getReplInterpreter(payload: Partial<AppPayload>) {
+    if (!payload.device?.assets) {
+        postMessage("error,Invalid REPL configuration: Missing assets");
+        return null;
+    }
     try {
-        await configureFileSystem(payload.pkgZip, payload.extZip);
+        await configureFileSystem(payload.device.assets, payload.pkgZip, payload.extZip);
     } catch (err: any) {
         postMessage(`error,Error mounting File System: ${err.message}`);
         return null;
@@ -138,7 +137,6 @@ export async function getReplInterpreter(payload: Partial<AppPayload>) {
             BrsDevice.setRegistry(payload.device.registry);
         }
         setupDeviceData(payload.device);
-        setupDeviceFonts(payload.device);
     }
     return replInterpreter;
 }
@@ -226,14 +224,16 @@ export function createPayloadFromFiles(
     const deviceData = customDeviceData
         ? Object.assign(defaultDeviceInfo, customDeviceData)
         : defaultDeviceInfo;
-    if (!deviceData.fonts || deviceData.fonts.size === 0) {
-        deviceData.fonts = getFonts(deviceData.fontPath, deviceData.defaultFont);
-    }
     if (root && !manifest && fs.existsSync(path.join(root, "manifest"))) {
         const fileData = fs.readFileSync(path.join(root, "manifest"));
         if (fileData) {
             manifest = parseManifest(fileData.toString());
         }
+    }
+    if (deviceData.assets.byteLength === 0) {
+        deviceData.assets = fs.readFileSync(
+            path.join(__dirname, "../browser/assets/common.zip")
+        )?.buffer;
     }
     if (manifest === undefined) {
         manifest = new Map();
@@ -260,28 +260,6 @@ export function createPayloadFromFiles(
         }
     }
     return payload;
-}
-
-/**
- * Get the fonts map for the device.
- * @param fontPath a string with the font path.
- * @param fontFamily a string with the font family name.
- *
- * @returns a Map with the fonts.
- */
-
-export function getFonts(fontPath: string, fontFamily: string) {
-    const fonts = new Map();
-    const fontsPath = path.join(__dirname, fontPath, `${fontFamily}`);
-    try {
-        fonts.set("regular", fs.readFileSync(`${fontsPath}-Regular.ttf`));
-        fonts.set("bold", fs.readFileSync(`${fontsPath}-Bold.ttf`));
-        fonts.set("italic", fs.readFileSync(`${fontsPath}-Italic.ttf`));
-        fonts.set("bold-italic", fs.readFileSync(`${fontsPath}-BoldItalic.ttf`));
-    } catch (err: any) {
-        postMessage(`error,Error loading fonts: ${err.message}`);
-    }
-    return fonts;
 }
 /// #endif
 
@@ -310,7 +288,7 @@ export async function executeFile(
     stats.clear();
     BrsDevice.lastKeyTime = Date.now();
     try {
-        await configureFileSystem(payload.pkgZip, payload.extZip);
+        await configureFileSystem(payload.device.assets, payload.pkgZip, payload.extZip);
     } catch (err: any) {
         postMessage(`error,Error mounting File System: ${err.message}`);
         return { exitReason: AppExitReason.CRASHED };
@@ -351,7 +329,6 @@ function setupPayload(interpreter: Interpreter, payload: AppPayload): SourceResu
         BrsDevice.setRegistry(payload.device.registry);
     }
     setupDeviceData(payload.device);
-    setupDeviceFonts(payload.device);
     setupTranslations(interpreter);
     return setupPackageFiles(payload);
 }
@@ -390,7 +367,7 @@ function setupInputParams(
  */
 function setupDeviceData(device: DeviceInfo) {
     Object.keys(device).forEach((key) => {
-        if (key !== "registry" && key !== "fonts") {
+        if (key !== "registry" && key !== "assets") {
             if (key === "developerId") {
                 // Prevent the developerId from having dots to avoid issues with the registry persistence
                 BrsDevice.deviceInfo.set(key, device[key].replace(".", ":"));
@@ -398,68 +375,6 @@ function setupDeviceData(device: DeviceInfo) {
             BrsDevice.deviceInfo.set(key, device[key]);
         }
     });
-    // Internal Libraries
-    const fsys = BrsDevice.fileSystem;
-    if (fsys) {
-        fsys.mkdirSync("common:/LibCore");
-        fsys.mkdirSync("common:/LibCore/v30");
-        fsys.writeFileSync("common:/LibCore/v30/bslCore.brs", bslCore);
-        fsys.writeFileSync("common:/LibCore/v30/bslDefender.brs", bslDefender);
-        fsys.mkdirSync("common:/roku_ads");
-        fsys.writeFileSync("common:/roku_ads/Roku_Ads.brs", Roku_Ads);
-        fsys.mkdirSync("common:/roku_browser");
-        fsys.writeFileSync("common:/roku_browser/RokuBrowser.brs", RokuBrowser);
-    }
-}
-
-/**
- * Updates the interpreter `common:` volume with device internal fonts.
- * @param device object with device info data
- */
-function setupDeviceFonts(device: DeviceInfo) {
-    let fontFamily = device.defaultFont ?? "Asap";
-    let fontPath = device.fontPath ?? "../fonts/";
-
-    const fsys = BrsDevice.fileSystem;
-    if (!fsys?.existsSync("common:/")) {
-        postMessage("error,Common file system not found");
-        return;
-    }
-    fsys.mkdirSync("common:/Fonts");
-    let fontRegular, fontBold, fontItalic, fontBoldIt;
-    if (typeof XMLHttpRequest !== "undefined") {
-        // Running as a Worker in the browser
-        fontRegular = download(`${fontPath}${fontFamily}-Regular.ttf`, "arraybuffer");
-        fontBold = download(`${fontPath}${fontFamily}-Bold.ttf`, "arraybuffer");
-        fontItalic = download(`${fontPath}${fontFamily}-Italic.ttf`, "arraybuffer");
-        fontBoldIt = download(`${fontPath}${fontFamily}-BoldItalic.ttf`, "arraybuffer");
-    } else if (device.fonts) {
-        // Running locally in NodeJS
-        fontRegular = device.fonts.get("regular");
-        fontBold = device.fonts.get("bold");
-        fontItalic = device.fonts.get("italic");
-        fontBoldIt = device.fonts.get("bold-italic");
-    }
-    if (fontRegular) {
-        fsys.writeFileSync(`common:/Fonts/${fontFamily}-Regular.ttf`, Buffer.from(fontRegular));
-    } else {
-        postMessage(`warning,Font file not found: ${fontPath}${fontFamily}-Regular.ttf`);
-    }
-    if (fontBold) {
-        fsys.writeFileSync(`common:/Fonts/${fontFamily}-Bold.ttf`, Buffer.from(fontBold));
-    } else {
-        postMessage(`warning,Font file not found: ${fontPath}${fontFamily}-Bold.ttf`);
-    }
-    if (fontItalic) {
-        fsys.writeFileSync(`common:/Fonts/${fontFamily}-Italic.ttf`, Buffer.from(fontItalic));
-    } else {
-        postMessage(`warning,Font file not found: ${fontPath}${fontFamily}-Italic.ttf`);
-    }
-    if (fontBoldIt) {
-        fsys.writeFileSync(`common:/Fonts/${fontFamily}-BoldItalic.ttf`, Buffer.from(fontBoldIt));
-    } else {
-        postMessage(`warning,Font file not found: ${fontPath}${fontFamily}-BoldItalic.ttf`);
-    }
 }
 
 /**
@@ -823,6 +738,7 @@ function parseLibraries(
     lib: Map<string, string>,
     manifest: Map<string, any>
 ) {
+    const fsys = BrsDevice.fileSystem;
     // Initialize Libraries on first run
     if (!lib.has("v30/bslDefender.brs")) {
         lib.set("v30/bslDefender.brs", "");
@@ -832,22 +748,28 @@ function parseLibraries(
     }
     // Check for Libraries and add to the collection
     if (parseResults.libraries.get("v30/bslDefender.brs") === true) {
-        lib.set("v30/bslDefender.brs", bslDefender);
-        lib.set("v30/bslCore.brs", bslCore);
+        lib.set(
+            "v30/bslDefender.brs",
+            fsys.readFileSync("common:/LibCore/v30/bslDefender.brs", "utf8")
+        );
+        lib.set("v30/bslCore.brs", fsys.readFileSync("common:/LibCore/v30/bslCore.brs", "utf8"));
     } else if (parseResults.libraries.get("v30/bslCore.brs") === true) {
-        lib.set("v30/bslCore.brs", bslCore);
+        lib.set("v30/bslCore.brs", fsys.readFileSync("common:/LibCore/v30/bslCore.brs", "utf8"));
     }
     if (
         parseResults.libraries.get("Roku_Ads.brs") === true &&
         manifest.get("bs_libs_required")?.includes("roku_ads_lib")
     ) {
-        lib.set("Roku_Ads.brs", Roku_Ads);
+        lib.set("Roku_Ads.brs", fsys.readFileSync("common:/roku_ads/Roku_Ads.brs", "utf8"));
     }
     if (
         parseResults.libraries.get("RokuBrowser.brs") === true &&
         manifest.get("bs_libs_required")?.includes("Roku_Browser")
     ) {
-        lib.set("RokuBrowser.brs", RokuBrowser);
+        lib.set(
+            "RokuBrowser.brs",
+            fsys.readFileSync("common:/roku_browser/RokuBrowser.brs", "utf8")
+        );
     }
 }
 

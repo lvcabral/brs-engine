@@ -54,6 +54,7 @@ import {
     subscribeSound,
     switchSoundState,
     handleSoundEvent,
+    playHomeSound,
 } from "./sound";
 import {
     addVideo,
@@ -72,7 +73,6 @@ import packageInfo from "../../package.json";
 // Interpreter Library
 const brsWrkLib = getWorkerLibPath();
 let brsWorker: Worker;
-let homeWav: Howl;
 
 // Package API
 export {
@@ -169,13 +169,6 @@ export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any 
     }
     sharedArray = new Int32Array(sharedBuffer);
     resetArray();
-    // Setup Home Sound Effect
-    if (homeWav === undefined) {
-        homeWav = new Howl({ src: ["./audio/select.wav"] });
-        homeWav.on("play", function () {
-            terminate(AppExitReason.FINISHED);
-        });
-    }
     // Initialize Display and Control modules
     initDisplayModule(deviceData.displayMode, showStats);
     initControlModule(sharedArray, options);
@@ -197,7 +190,7 @@ export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any 
     subscribeControl("api", (event: string, data: any) => {
         if (event === "home") {
             if (currentApp.running) {
-                homeWav.play();
+                playHomeSound();
             }
         } else if (event === "poweroff") {
             if (currentApp.running) {
@@ -215,6 +208,8 @@ export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any 
     subscribeSound("api", (event: string, data: any) => {
         if (["error", "warning"].includes(event)) {
             apiException(event, data);
+        } else if (event === "home") {
+            terminate(AppExitReason.FINISHED);
         }
     });
     subscribeVideo("api", (event: string, data: any) => {
@@ -244,6 +239,7 @@ export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any 
     brsWorker = new Worker(brsWrkLib);
     brsWorker.addEventListener("message", workerCallback);
     brsWorker.postMessage("getVersion");
+    updateDeviceAssets();
 }
 
 // Observers Handling
@@ -409,7 +405,7 @@ function resetWorker() {
     brsWorker.removeEventListener("message", workerCallback);
     brsWorker.terminate();
     resetArray();
-    resetSounds();
+    resetSounds(deviceData.assets);
     resetVideo();
 }
 
@@ -465,6 +461,28 @@ function runApp(payload: AppPayload) {
     } catch (err: any) {
         apiException("error", `[api] Error running ${currentApp.title}: ${err.message}`);
     }
+}
+
+// Load Device Assets
+function updateDeviceAssets() {
+    if (deviceData.assets.byteLength) {
+        return;
+    }
+    fetch("./assets/common.zip")
+        .then(async function (response) {
+            if (response.status === 200 || response.status === 0) {
+                return response.blob().then(function (zipBlob) {
+                    zipBlob.arrayBuffer().then(function (zipData) {
+                        deviceData.assets = zipData;
+                    });
+                });
+            } else {
+                return Promise.reject(new Error(response.statusText));
+            }
+        })
+        .catch((err) => {
+            console.error(`Error attempting to load common.zip: ${err.message} (${err.name})`);
+        });
 }
 
 // Update App in the App List from the Current App object
