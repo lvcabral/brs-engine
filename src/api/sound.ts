@@ -8,6 +8,7 @@
 import { SubscribeCallback } from "./util";
 import { DataType, DefaultSounds, MediaEvent } from "../core/common";
 import { Howl, Howler } from "howler";
+import { unzipSync } from "fflate";
 
 // Sound Objects
 const soundsIdx: Map<string, number> = new Map();
@@ -22,11 +23,12 @@ let sharedArray: Int32Array;
 let maxStreams: number = 2;
 let muted: boolean;
 
+let homeWav: Howl;
+
 // Initialize Sound Module
 export function initSoundModule(array: Int32Array, streams: number, mute: boolean = false) {
     sharedArray = array;
     maxStreams = Math.min(streams, 3) || 2;
-    resetSounds();
     muteSound(mute);
 }
 
@@ -168,7 +170,7 @@ export function addSound(path: string, format: string, data: any) {
     );
 }
 
-export function resetSounds() {
+export function resetSounds(assets: ArrayBuffer) {
     if (soundsDat.length > 0) {
         soundsDat.forEach((sound) => {
             sound.unload();
@@ -177,14 +179,33 @@ export function resetSounds() {
     wavStreams.length = maxStreams;
     soundsIdx.clear();
     soundsDat.length = 0;
-    DefaultSounds.forEach((sound, index) => {
-        soundsIdx.set(sound.toLowerCase(), index);
-        soundsDat.push(new Howl({ src: [`./audio/${sound}.wav`] }));
-    });
+    try {
+        const commonFs = unzipSync(new Uint8Array(assets));
+        DefaultSounds.forEach((sound, index) => {
+            soundsIdx.set(sound.toLowerCase(), index);
+            const audioData = new Blob([commonFs[`audio/${sound}.wav`]]);
+            soundsDat.push(new Howl({ src: [URL.createObjectURL(audioData)], format: "wav" }));
+        });
+        if (homeWav === undefined) {
+            const audioData = new Blob([commonFs["audio/select.wav"]]);
+            homeWav = new Howl({ src: [URL.createObjectURL(audioData)], format: "wav" });
+            homeWav.on("play", function () {
+                notifyAll("home");
+            });
+        }
+    } catch (e: any) {
+        notifyAll("error", `[sound] Error unzipping audio files: ${e.message}`);
+    }
     playList.length = 0;
     playIndex = 0;
     playLoop = false;
     playNext = -1;
+}
+
+export function playHomeSound() {
+    if (homeWav) {
+        homeWav.play();
+    }
 }
 
 function playSound() {

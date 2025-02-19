@@ -8,13 +8,13 @@ import { Zip } from "@lvcabral/zip";
 
 export class FileSystem {
     private readonly paths: Map<string, string>;
-    private root?: string;
-    private ext?: string;
+    private readonly mfs: typeof zenFS.fs; // common:
     private pfs: typeof zenFS.fs | typeof nodeFS; // pkg:
     private xfs: typeof zenFS.fs | typeof nodeFS; // ext1:
     private tfs: MemoryFileSystem; // tmp:
     private cfs: MemoryFileSystem; // cachefs:
-    private mfs: MemoryFileSystem; // common:
+    private root?: string;
+    private ext?: string;
 
     constructor(root?: string, ext?: string) {
         this.paths = new Map();
@@ -30,9 +30,9 @@ export class FileSystem {
         } else {
             this.xfs = zenFS.fs;
         }
+        this.mfs = zenFS.fs;
         this.tfs = new MemoryFileSystem();
         this.cfs = new MemoryFileSystem();
-        this.mfs = new MemoryFileSystem();
     }
     private savePath(uri: string) {
         this.paths.set(
@@ -60,7 +60,6 @@ export class FileSystem {
     resetMemoryFS() {
         this.tfs = new MemoryFileSystem();
         this.cfs = new MemoryFileSystem();
-        this.mfs = new MemoryFileSystem();
     }
 
     getFS(uri: string) {
@@ -84,12 +83,7 @@ export class FileSystem {
         } else {
             uri = uri.toLowerCase();
         }
-        return uri
-            .replace("tmp:", "")
-            .replace("cachefs:", "")
-            .replace("common:", "")
-            .replace(/\/+/g, "/")
-            .trim();
+        return uri.replace("tmp:", "").replace("cachefs:", "").replace(/\/+/g, "/").trim();
     }
 
     volumesSync() {
@@ -100,9 +94,11 @@ export class FileSystem {
         if (this.ext || this.xfs.existsSync("ext1:/")) {
             volumes.push("ext1:");
         }
+        if (this.mfs.existsSync("common:/")) {
+            volumes.push("common:");
+        }
         volumes.push("tmp:");
         volumes.push("cachefs:");
-        volumes.push("common:");
         return volumes;
     }
 
@@ -117,7 +113,7 @@ export class FileSystem {
 
     readdirSync(uri: string) {
         const files = this.getFS(uri).readdirSync(this.getPath(uri));
-        if (memoryUri(uri) && files.length > 0) {
+        if (writeUri(uri) && files.length > 0) {
             const self = this;
             files.forEach(function (file: string, index: number) {
                 const fullPath = path.posix.join(uri.toLowerCase(), file);
@@ -136,7 +132,7 @@ export class FileSystem {
     }
 
     rmdirSync(uri: string) {
-        if (memoryUri(uri)) {
+        if (writeUri(uri)) {
             const files = this.readdirSync(uri);
             if (files.length > 0) {
                 throw new Error("Directory not empty!");
@@ -190,24 +186,23 @@ export function writeUri(uri: string): boolean {
     return validUri(uri) && (uri.startsWith("tmp:/") || uri.startsWith("cachefs:/"));
 }
 
-/*
- * Returns true if the Uri is from one of the in memory volumes (not zip based)
- */
-export function memoryUri(uri: string): boolean {
-    uri = uri.toLowerCase();
-    return validUri(uri) && !(uri.startsWith("pkg:/") || uri.startsWith("ext1:/"));
-}
-
 /**
  * Initializes the File System with the provided zip files.
  * @param pkgZip ArrayBuffer with the package zip file.
  * @param extZip ArrayBuffer with the external storage zip file.
  */
 export async function configureFileSystem(
+    commonZip: ArrayBuffer,
     pkgZip?: ArrayBuffer,
     extZip?: ArrayBuffer
 ): Promise<void> {
     const fsConfig = { mounts: {} };
+    if (zenFS.fs?.existsSync("common:/")) {
+        zenFS.umount("common:");
+    }
+    Object.assign(fsConfig.mounts, {
+        "common:": { backend: Zip, data: commonZip, caseSensitive: false },
+    });
     if (zenFS.fs?.existsSync("pkg:/")) {
         zenFS.umount("pkg:");
     }
