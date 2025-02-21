@@ -67,6 +67,7 @@ import {
     numberToHex,
     parseTextFile,
     TaskPayload,
+    TaskState,
     TaskUpdate,
 } from "../common";
 /// #if !BROWSER
@@ -390,6 +391,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                             value: "stop",
                         };
                         postMessage(taskUpdate);
+                        taskData.state = TaskState.STOP;
+                        postMessage(taskData);
                     } else {
                         this.addError(
                             new BrsError(
@@ -1984,6 +1987,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         }
         const cmd = BrsDevice.checkBreakCommand(this.debugMode);
         if (cmd === DebugCommand.BREAK) {
+            console.log("breakpoint in execute", statement.location, this.location);
             this.debugMode = true;
             if (!(statement instanceof Stmt.Block)) {
                 if (!runDebugger(this, statement.location, this.location)) {
