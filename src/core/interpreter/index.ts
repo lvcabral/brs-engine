@@ -60,7 +60,16 @@ import { Scope, Environment, NotFound } from "./Environment";
 import { toCallable } from "./BrsFunction";
 import { BlockEnd, GotoLabel } from "../parser/Statement";
 import { runDebugger } from "./MicroDebugger";
-import { DataType, DebugCommand, defaultDeviceInfo, numberToHex, parseTextFile } from "../common";
+import {
+    DataType,
+    DebugCommand,
+    defaultDeviceInfo,
+    numberToHex,
+    parseTextFile,
+    TaskPayload,
+    TaskState,
+    TaskUpdate,
+} from "../common";
 /// #if !BROWSER
 import * as v8 from "v8";
 /// #endif
@@ -382,6 +391,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                             value: "stop",
                         };
                         postMessage(taskUpdate);
+                        taskData.state = TaskState.STOP;
+                        postMessage(taskData);
                     } else {
                         this.addError(
                             new BrsError(
@@ -1976,6 +1987,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         }
         const cmd = BrsDevice.checkBreakCommand(this.debugMode);
         if (cmd === DebugCommand.BREAK) {
+            console.log("breakpoint in execute", statement.location, this.location);
             this.debugMode = true;
             if (!(statement instanceof Stmt.Block)) {
                 if (!runDebugger(this, statement.location, this.location)) {

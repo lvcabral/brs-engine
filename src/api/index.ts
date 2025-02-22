@@ -476,6 +476,47 @@ function runApp(payload: AppPayload) {
     }
 }
 
+const tasks: Map<number, Worker> = new Map();
+const taskSyncFromMain: Map<number, SharedObject> = new Map();
+const taskSyncToMain: Map<number, SharedObject> = new Map();
+
+function runTask(taskData: TaskData) {
+    if (tasks.has(taskData.id) || !taskData.m?.top?.functionname) {
+        return;
+    } else if (tasks.size === 10) {
+        apiException("warning", `[api] Maximum number of tasks reached: ${tasks.size}`);
+        return;
+    }
+    const taskWorker = new Worker(brsWrkLib);
+    taskWorker.addEventListener("message", taskCallback);
+    tasks.set(taskData.id, taskWorker);
+    if (!taskSyncFromMain.has(taskData.id)) {
+        taskSyncFromMain.set(taskData.id, new SharedObject());
+    }
+    taskData.buffer = taskSyncFromMain.get(taskData.id)?.getBuffer();
+    const taskPayload: TaskPayload = {
+        device: currentPayload.device,
+        manifest: currentPayload.manifest,
+        taskData: taskData,
+        pkgZip: currentPayload.pkgZip,
+        extZip: currentPayload.extZip,
+    };
+    console.log("[API] Calling Task worker: ", taskData.id, taskData.name);
+    taskWorker.postMessage(sharedBuffer);
+    taskWorker.postMessage(taskPayload);
+}
+
+function endTask(taskId: number) {
+    const taskWorker = tasks.get(taskId);
+    if (taskWorker) {
+        taskWorker.removeEventListener("message", taskCallback);
+        taskWorker.terminate();
+        tasks.delete(taskId);
+        taskSyncFromMain.delete(taskId);
+        taskSyncToMain.delete(taskId);
+        console.log("[API] Task worker stopped: ", taskId);
+    }
+}
 // Load Device Assets
 function updateDeviceAssets() {
     if (deviceData.assets.byteLength) {
@@ -573,7 +614,11 @@ function mainCallback(event: MessageEvent) {
     } else if (isAppData(event.data)) {
         notifyAll("launch", { app: event.data.id, params: event.data.params ?? new Map() });
     } else if (isTaskData(event.data)) {
-        console.log("Task data received: ", event.data.name);
+        console.log(
+            "[API] Task data received from Main Thread: ",
+            event.data.name,
+            TaskState[event.data.state]
+        );
         if (event.data.state === TaskState.RUN) {
             if (event.data.buffer instanceof SharedArrayBuffer) {
                 const taskBuffer = new SharedObject();
@@ -586,7 +631,11 @@ function mainCallback(event: MessageEvent) {
             endTask(event.data.id);
         }
     } else if (isTaskUpdate(event.data)) {
-        console.log("Task update received from Main thread: ", event.data.id, event.data.field);
+        console.log(
+            "[API] Task update received from Main thread: ",
+            event.data.id,
+            event.data.field
+        );
         if (!taskSyncFromMain.has(event.data.id)) {
             taskSyncFromMain.set(event.data.id, new SharedObject());
         }
@@ -648,15 +697,25 @@ function taskCallback(event: MessageEvent) {
     } else if (typeof event.data.captionsMode === "string") {
         deviceData.captionsMode = event.data.captionsMode;
     } else if (isTaskData(event.data)) {
-        console.log("Task data received from Task thread: ", event.data.name);
+        console.log(
+            "[API] Task data received from Task Thread: ",
+            event.data.name,
+            TaskState[event.data.state]
+        );
         if (event.data.state === TaskState.STOP) {
             endTask(event.data.id);
         }
     } else if (isTaskUpdate(event.data)) {
-        console.log("Task update received from Task thread: ", event.data.id, event.data.field);
+        console.log(
+            "[API] Task update received from Task thread: ",
+            event.data.id,
+            event.data.field
+        );
         taskSyncToMain.get(event.data.id)?.waitStore(event.data, 1);
     } else if (typeof event.data === "string") {
         handleStringMessage(event.data);
+    } else {
+        apiException("warning", `[api] Invalid task message: ${event.data}`);
     }
 }
 

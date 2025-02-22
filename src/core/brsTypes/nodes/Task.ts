@@ -21,7 +21,6 @@ export class Task extends RoSGNode {
         { name: "functionName", type: "string" },
     ];
     private taskBuffer?: SharedObject;
-    private lastTaskBuffer = 0;
 
     id: number;
     active: boolean;
@@ -94,6 +93,11 @@ export class Task extends RoSGNode {
             const taskUpdate: TaskUpdate = { id: this.id, field: mapKey, value: jsValueOf(value) };
             postMessage(taskUpdate);
         }
+        console.log(
+            `Setting field in ${this.thread ? "Task thread" : "Main Thread"}: `,
+            mapKey,
+            sync
+        );
         return super.set(index, value, alwaysNotify, kind);
     }
 
@@ -131,14 +135,14 @@ export class Task extends RoSGNode {
     }
 
     updateTask() {
-        let currentVersion = this.taskBuffer?.getVersion() ?? -1;
-        if (this.taskBuffer && currentVersion !== this.lastTaskBuffer) {
-            this.lastTaskBuffer = currentVersion;
+        let currentVersion = this.taskBuffer?.getVersion() ?? 0;
+        if (this.taskBuffer && currentVersion === 1) {
             const taskUpdate = this.taskBuffer.load(true);
             if (isTaskUpdate(taskUpdate)) {
                 console.log(
                     `Received Update from ${this.thread ? "Main thread" : "Task Thread"}: `,
-                    JSON.stringify(taskUpdate, null, 2)
+                    taskUpdate.id,
+                    taskUpdate.field
                 );
                 this.set(
                     new BrsString(taskUpdate.field),
