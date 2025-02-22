@@ -93,7 +93,11 @@ export class Task extends RoSGNode {
             const taskUpdate: TaskUpdate = { id: this.id, field: mapKey, value: jsValueOf(value) };
             postMessage(taskUpdate);
         }
-        console.log(`Setting field in ${this.thread ? "Task thread" : "Main Thread"}: `, mapKey, sync);
+        console.log(
+            `Setting field in ${this.thread ? "Task thread" : "Main Thread"}: `,
+            mapKey,
+            sync
+        );
         return super.set(index, value, alwaysNotify, kind);
     }
 
@@ -137,7 +141,8 @@ export class Task extends RoSGNode {
             if (isTaskUpdate(taskUpdate)) {
                 console.log(
                     `Received Update from ${this.thread ? "Main thread" : "Task Thread"}: `,
-                    taskUpdate.id, taskUpdate.field
+                    taskUpdate.id,
+                    taskUpdate.field
                 );
                 this.set(
                     new BrsString(taskUpdate.field),
