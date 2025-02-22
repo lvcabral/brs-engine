@@ -1,15 +1,5 @@
 import { FieldModel } from "./Field";
-import {
-    AAMember,
-    BrsString,
-    Float,
-    getBrsValueFromFieldType,
-    Label,
-    Poster,
-    Font,
-    Timer,
-    BrsBoolean,
-} from "..";
+import { AAMember, BrsString, Float, Label, Poster, Font, Timer, BrsBoolean, brsValueOf } from "..";
 import { Group } from "./Group";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D } from "../interfaces/IfDraw2D";
@@ -58,15 +48,15 @@ export class Overhang extends Group {
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
 
-        this.background = this.addPoster("", "[0,0]", 115, 1280);
-        this.optionsIcon = this.addPoster(this.optionsOff, "[959,46]", 20, 20);
-        this.optionsText = this.addLabel("optionsColor", "[985,44]", 27, 22, "center", "right");
+        this.background = this.addPoster("", [0, 0], 115, 1280);
+        this.optionsIcon = this.addPoster(this.optionsOff, [959, 46], 20, 20);
+        this.optionsText = this.addLabel("optionsColor", [985, 44], 27, 22, "center", "right");
         this.optionsText.set(new BrsString("text"), new BrsString("for Options"));
-        this.logo = this.addPoster(this.defaultLogo, "[68,42]");
-        this.leftDivider = this.addPoster(this.dividerVertical, "[174,31]");
-        this.rightDivider = this.addPoster(this.dividerVertical, "[1109,33]");
-        this.title = this.addLabel("titleColor", "[196,39]", 35, 30, "bottom");
-        this.clockText = this.addLabel("clockColor", "[1133,44]", 27, 22, "center");
+        this.logo = this.addPoster(this.defaultLogo, [68, 42]);
+        this.leftDivider = this.addPoster(this.dividerVertical, [174, 31]);
+        this.rightDivider = this.addPoster(this.dividerVertical, [1109, 33]);
+        this.title = this.addLabel("titleColor", [196, 39], 35, 30, "bottom");
+        this.clockText = this.addLabel("clockColor", [1133, 44], 27, 22, "center");
         this.clockText.set(new BrsString("text"), new BrsString(this.getTime()));
         const clock = new Timer();
         clock.setCallback(() => {
@@ -89,12 +79,12 @@ export class Overhang extends Group {
             .toLowerCase();
     }
 
-    private addPoster(defaultUri: string, translation: string, height?: number, width?: number) {
+    private addPoster(defaultUri: string, translation: number[], height?: number, width?: number) {
         const poster = new Poster();
         if (defaultUri) {
             poster.set(new BrsString("uri"), new BrsString(defaultUri));
         }
-        poster.set(new BrsString("translation"), getBrsValueFromFieldType("array", translation));
+        poster.set(new BrsString("translation"), brsValueOf(translation));
         if (height) {
             poster.set(new BrsString("height"), new Float(height));
         }
@@ -107,7 +97,7 @@ export class Overhang extends Group {
 
     private addLabel(
         colorField: string,
-        translation: string,
+        translation: number[],
         height: number,
         fontSize: number,
         vertAlign?: string,
@@ -124,7 +114,7 @@ export class Overhang extends Group {
             labelFont.setSize(fontSize);
         }
         label.set(new BrsString("height"), new Float(height));
-        label.set(new BrsString("translation"), getBrsValueFromFieldType("array", translation));
+        label.set(new BrsString("translation"), brsValueOf(translation));
         if (vertAlign) {
             label.set(new BrsString("vertalign"), new BrsString(vertAlign));
         }
@@ -188,7 +178,29 @@ export class Overhang extends Group {
         if (rightDividerUri?.value) {
             this.rightDivider.set(new BrsString("uri"), rightDividerUri);
         }
-        // TODO: Handle other fields and reposition children
+
+        // Align elements
+        const screenWidth = 1280; // Assuming a fixed screen width for alignment
+        const leftAlignX = 68;
+        const logoWidth = this.logo.rectLocal.width;
+        const optionsTextWidth = this.optionsText.rectLocal.width ?? 112;
+        const clockTextWidth = this.clockText.rectLocal.width ?? 90;
+        const rightAlignX = screenWidth - leftAlignX - clockTextWidth;
+
+        const translation = new BrsString("translation");
+
+        this.logo.set(translation, brsValueOf([leftAlignX, 42]));
+        this.leftDivider.set(translation, brsValueOf([leftAlignX + logoWidth + 16, 31]));
+        this.title.set(translation, brsValueOf([leftAlignX + logoWidth + 38, 39]));
+
+        this.optionsIcon.set(translation, brsValueOf([rightAlignX - optionsTextWidth - 65, 46]));
+        this.optionsText.set(translation, brsValueOf([rightAlignX - optionsTextWidth - 40, 44]));
+        this.rightDivider.set(translation, brsValueOf([rightAlignX - 24, 33]));
+        this.clockText.set(translation, brsValueOf([rightAlignX, 44]));
+
+        // TODO: Handle other fields
+
+        // Render children
         const size = this.getDimensions();
         const rect = { x: origin[0], y: origin[1], width: size.width, height: size.height };
         this.updateBoundingRects(rect, origin, angle);
