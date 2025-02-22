@@ -49,8 +49,7 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
         this.rgbaLast = 0;
         this.rgbaRedraw = true;
         this.valid = true;
-        const platform = BrsDevice.deviceInfo.get("platform");
-        this.disposeCanvas = platform?.inIOS ?? false;
+        this.disposeCanvas = BrsDevice.deviceInfo.platform?.inIOS ?? false;
         this.width = 1;
         this.height = 1;
         this.name = "";

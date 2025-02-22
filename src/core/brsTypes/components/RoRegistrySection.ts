@@ -16,7 +16,7 @@ export class RoRegistrySection extends BrsComponent implements BrsValue {
     constructor(section: BrsString) {
         super("roRegistrySection");
         this.section = section.value;
-        this.devId = BrsDevice.deviceInfo.get("developerId");
+        this.devId = BrsDevice.deviceInfo.developerId;
         this.registerMethods({
             ifRegistrySection: [
                 this.read,
@@ -50,8 +50,7 @@ export class RoRegistrySection extends BrsComponent implements BrsValue {
             returns: ValueKind.String,
         },
         impl: (_: Interpreter, key: BrsString) => {
-            let devId = BrsDevice.deviceInfo.get("developerId");
-            let value = BrsDevice.registry.get(`${devId}.${this.section}.${key.value}`);
+            let value = BrsDevice.registry.get(`${this.devId}.${this.section}.${key.value}`);
             if (!value) {
                 value = "";
             }
@@ -66,11 +65,10 @@ export class RoRegistrySection extends BrsComponent implements BrsValue {
             returns: ValueKind.Dynamic,
         },
         impl: (_: Interpreter, keysArray: RoArray) => {
-            let devId = BrsDevice.deviceInfo.get("developerId");
             let keys = keysArray.getElements() as BrsString[];
             let result = new RoAssociativeArray([]);
             keys.forEach((key) => {
-                let fullKey = `${devId}.${this.section}.${key.value}`;
+                let fullKey = `${this.devId}.${this.section}.${key.value}`;
                 let value = BrsDevice.registry.get(fullKey);
                 if (value) {
                     result.set(key, new BrsString(value));

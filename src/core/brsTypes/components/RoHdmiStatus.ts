@@ -19,10 +19,10 @@ export class RoHdmiStatus extends BrsComponent implements BrsValue {
         super("roHdmiStatus");
         this.active = 1; // Default to active
 
-        const deviceModel = BrsDevice.deviceInfo.get("deviceModel");
-        const device = BrsDevice.deviceInfo?.get("models")?.get(deviceModel);
+        const deviceModel = BrsDevice.deviceInfo.deviceModel;
+        const device = BrsDevice.deviceInfo.models?.get(deviceModel);
         this.modelType = device ? device[1] : "STB";
-        this.displayMode = BrsDevice.deviceInfo.get("displayMode") ?? "720p";
+        this.displayMode = BrsDevice.deviceInfo.displayMode;
         const setPortIface = new IfSetMessagePort(this, this.getNewEvents.bind(this));
         const getPortIface = new IfGetMessagePort(this);
         this.registerMethods({
