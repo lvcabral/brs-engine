@@ -5,13 +5,14 @@ import { AAMember, BrsType, BrsBoolean, Float, ValueKind, BrsString, BrsInvalid 
 export class Timer extends RoSGNode {
     readonly defaultFields: FieldModel[] = [
         { name: "control", type: "string" },
-        { name: "repeat", type: "boolean" },
-        { name: "duration", type: "float" },
+        { name: "repeat", type: "boolean", value: "false" },
+        { name: "duration", type: "float", value: "1.0" },
         { name: "fire", type: "object", alwaysNotify: true },
     ];
 
     active: boolean;
     private lastFireTime: number;
+    private jsCallback?: Function;
 
     constructor(members: AAMember[] = [], readonly name: string = "Timer") {
         super([], name);
@@ -47,6 +48,10 @@ export class Timer extends RoSGNode {
         return super.set(index, value, alwaysNotify, kind);
     }
 
+    setCallback(callback: Function) {
+        this.jsCallback = callback;
+    }
+
     checkFire() {
         const now = performance.now();
         const duration = this.getFieldValue("duration") as Float;
@@ -55,6 +60,9 @@ export class Timer extends RoSGNode {
             this.lastFireTime = now;
             this.active = repeat.toBoolean();
             this.fields.get("fire")?.setValue(BrsInvalid.Instance);
+            if (this.jsCallback) {
+                this.jsCallback();
+            }
             return true;
         }
         return false;

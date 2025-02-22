@@ -137,6 +137,7 @@ export * from "./nodes/Poster";
 export * from "./nodes/ArrayGrid";
 export * from "./nodes/MarkupGrid";
 export * from "./nodes/ContentNode";
+export * from "./nodes/Overhang";
 export * from "./nodes/Task";
 export * from "./nodes/Timer";
 export * from "./Boxing";

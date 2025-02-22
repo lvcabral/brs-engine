@@ -26,6 +26,7 @@ import {
     getBrsValueFromFieldType,
     BrsBoolean,
     rootObjects,
+    Overhang,
 } from "../brsTypes";
 import { TaskData } from "../common";
 
@@ -45,6 +46,7 @@ export enum SGNodeType {
     Scene = "Scene",
     MiniKeyboard = "MiniKeyboard",
     TextEditBox = "TextEditBox",
+    Overhang = "Overhang",
 }
 
 export function isSGNodeType(value: string): value is SGNodeType {
@@ -109,6 +111,8 @@ export class SGNodeFactory {
                 return new MiniKeyboard([], name);
             case SGNodeType.TextEditBox:
                 return new TextEditBox([], name);
+            case SGNodeType.Overhang:
+                return new Overhang([], name);
             default:
                 return;
         }
