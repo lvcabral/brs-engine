@@ -31,7 +31,7 @@ export class RoRegistry extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, section: BrsString) => {
-            let devId = BrsDevice.deviceInfo.get("developerId");
+            let devId = BrsDevice.deviceInfo.developerId;
             [...BrsDevice.registry.keys()].forEach((key) => {
                 let regSection = `${devId}.${section}`;
                 if (key.startsWith(regSection)) {
@@ -61,7 +61,7 @@ export class RoRegistry extends BrsComponent implements BrsValue {
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter) => {
-            let devId = BrsDevice.deviceInfo.get("developerId");
+            let devId = BrsDevice.deviceInfo.developerId;
             let sections = new Set<string>();
             [...BrsDevice.registry.keys()].forEach((key) => {
                 if (key.split(".")[0] === devId) {
@@ -83,7 +83,7 @@ export class RoRegistry extends BrsComponent implements BrsValue {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter) => {
-            const devId = BrsDevice.deviceInfo.get("developerId");
+            const devId = BrsDevice.deviceInfo.developerId;
             let space = 32 * 1024;
             BrsDevice.registry.forEach((value, key) => {
                 if (key.split(".")[0] === devId) {

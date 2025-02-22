@@ -37,12 +37,9 @@ export class IfHttpAgent {
             ],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter, name: BrsString, value: BrsString) => {
+        impl: (_: Interpreter, name: BrsString, value: BrsString) => {
             if (name.value.toLowerCase() === "x-roku-reserved-dev-id") {
-                this.component.customHeaders.set(
-                    name.value,
-                    BrsDevice.deviceInfo.get("developerId")
-                );
+                this.component.customHeaders.set(name.value, BrsDevice.deviceInfo.developerId);
             } else {
                 this.component.customHeaders.set(name.value, value.value);
             }
@@ -56,11 +53,11 @@ export class IfHttpAgent {
             args: [new StdlibArgument("headers", ValueKind.Dynamic)],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter, headers: RoAssociativeArray) => {
+        impl: (_: Interpreter, headers: RoAssociativeArray) => {
             this.component.customHeaders.clear();
             headers.elements.forEach((value: BrsType, key: string) => {
                 if (key.toLowerCase() === "x-roku-reserved-dev-id") {
-                    this.component.customHeaders.set(key, BrsDevice.deviceInfo.get("developerId"));
+                    this.component.customHeaders.set(key, BrsDevice.deviceInfo.developerId);
                 } else {
                     this.component.customHeaders.set(key, (value as BrsString).value);
                 }
