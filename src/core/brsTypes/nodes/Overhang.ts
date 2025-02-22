@@ -143,13 +143,13 @@ export class Overhang extends Group {
             this.title.set(new BrsString("text"), title);
         }
         const showOptions = this.getFieldValue("showOptions") as BrsBoolean;
-        if (showOptions?.toBoolean()) {
-            this.optionsIcon.set(new BrsString("visible"), BrsBoolean.True);
-            this.optionsText.set(new BrsString("visible"), BrsBoolean.True);
+        this.optionsIcon.set(new BrsString("visible"), showOptions);
+        this.optionsText.set(new BrsString("visible"), showOptions);
+        const showClock = this.getFieldValue("showClock") as BrsBoolean;
+        this.clockText.set(new BrsString("visible"), showClock);
+        if (showClock.toBoolean() && showOptions.toBoolean()) {
             this.rightDivider.set(new BrsString("visible"), BrsBoolean.True);
         } else {
-            this.optionsIcon.set(new BrsString("visible"), BrsBoolean.False);
-            this.optionsText.set(new BrsString("visible"), BrsBoolean.False);
             this.rightDivider.set(new BrsString("visible"), BrsBoolean.False);
         }
         const optionsAvailable = this.getFieldValue("optionsAvailable") as BrsBoolean;
@@ -184,7 +184,8 @@ export class Overhang extends Group {
         const leftAlignX = 68;
         const logoWidth = this.logo.rectLocal.width;
         const optionsTextWidth = this.optionsText.rectLocal.width ?? 112;
-        const clockTextWidth = this.clockText.rectLocal.width ?? 90;
+        const clockTextWidth = showClock.toBoolean() ? this.clockText.rectLocal.width ?? 90 : 0;
+        const optionsHorizOffset = showClock.toBoolean() ? optionsTextWidth + 40 : optionsTextWidth;
         const rightAlignX = screenWidth - leftAlignX - clockTextWidth;
 
         const translation = new BrsString("translation");
@@ -193,8 +194,8 @@ export class Overhang extends Group {
         this.leftDivider.set(translation, brsValueOf([leftAlignX + logoWidth + 16, 31]));
         this.title.set(translation, brsValueOf([leftAlignX + logoWidth + 38, 39]));
 
-        this.optionsIcon.set(translation, brsValueOf([rightAlignX - optionsTextWidth - 65, 46]));
-        this.optionsText.set(translation, brsValueOf([rightAlignX - optionsTextWidth - 40, 44]));
+        this.optionsIcon.set(translation, brsValueOf([rightAlignX - optionsHorizOffset - 25, 46]));
+        this.optionsText.set(translation, brsValueOf([rightAlignX - optionsHorizOffset, 44]));
         this.rightDivider.set(translation, brsValueOf([rightAlignX - 24, 33]));
         this.clockText.set(translation, brsValueOf([rightAlignX, 44]));
 
