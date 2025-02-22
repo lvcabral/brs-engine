@@ -60,16 +60,7 @@ import { Scope, Environment, NotFound } from "./Environment";
 import { toCallable } from "./BrsFunction";
 import { BlockEnd, GotoLabel } from "../parser/Statement";
 import { runDebugger } from "./MicroDebugger";
-import {
-    DataType,
-    DebugCommand,
-    defaultDeviceInfo,
-    numberToHex,
-    parseTextFile,
-    TaskPayload,
-    TaskState,
-    TaskUpdate,
-} from "../common";
+import { DataType, DebugCommand, numberToHex, parseTextFile } from "../common";
 /// #if !BROWSER
 import * as v8 from "v8";
 /// #endif
@@ -226,11 +217,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         }
         if (this.options.ext) {
             BrsDevice.fileSystem.setExt(this.options.ext);
-        }
-        for (const [key, value] of Object.entries(defaultDeviceInfo)) {
-            if (!["registry", "fonts"].includes(key)) {
-                BrsDevice.deviceInfo.set(key, value);
-            }
         }
         const global = new Set<string>();
         Object.keys(StdLib)

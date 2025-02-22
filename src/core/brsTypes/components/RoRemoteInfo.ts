@@ -69,7 +69,7 @@ export class RoRemoteInfo extends BrsComponent implements BrsValue {
 }
 
 function getRemote(_: Interpreter, index: number): RemoteControl {
-    const remotes = BrsDevice.deviceInfo.get("remoteControls");
+    const remotes = BrsDevice.deviceInfo.remoteControls;
     if (remotes instanceof Array && remotes.length && index < remotes.length) {
         if (index < 0) {
             index = BrsDevice.lastRemote;

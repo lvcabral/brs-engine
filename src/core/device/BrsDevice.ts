@@ -1,9 +1,9 @@
-import { dataBufferIndex, DataType, DebugCommand } from "../common";
+import { dataBufferIndex, DataType, DebugCommand, defaultDeviceInfo, DeviceInfo } from "../common";
 import { FileSystem } from "./FileSystem";
 import { OutputProxy } from "./OutputProxy";
 
 export class BrsDevice {
-    static readonly deviceInfo: Map<string, any> = new Map<string, any>();
+    static readonly deviceInfo: DeviceInfo = defaultDeviceInfo;
     static readonly registry: Map<string, string> = new Map<string, string>();
     static readonly fileSystem: FileSystem = new FileSystem();
     static readonly isDevMode = process.env.NODE_ENV === "development";
@@ -65,6 +65,22 @@ export class BrsDevice {
      */
     static setSharedArray(sharedArray: Int32Array) {
         this.sharedArray = sharedArray;
+    }
+
+    /**
+     * Set the device info
+     * @param deviceInfo DeviceInfo to be set
+     */
+    static setDeviceInfo(deviceInfo: DeviceInfo) {
+        Object.entries(deviceInfo).forEach(([key, value]) => {
+            if (key !== "registry" && key !== "assets") {
+                if (key === "developerId") {
+                    // Prevent developerId from having "." to avoid issues on registry persistence
+                    value = value.replace(".", ":");
+                }
+                this.deviceInfo[key] = value;
+            }
+        });
     }
 
     /**

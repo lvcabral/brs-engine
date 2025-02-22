@@ -45,7 +45,7 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
         });
         this.interpreter = interpreter;
         this.fontRegistry = new Map();
-        this.defaultFontFamily = BrsDevice.deviceInfo.get("defaultFont");
+        this.defaultFontFamily = BrsDevice.deviceInfo.defaultFont;
         this.registerFont(`common:/Fonts/${this.defaultFontFamily}-Regular.ttf`);
         this.registerFont(`common:/Fonts/${this.defaultFontFamily}-Bold.ttf`);
         this.registerFont(`common:/Fonts/${this.defaultFontFamily}-Italic.ttf`);

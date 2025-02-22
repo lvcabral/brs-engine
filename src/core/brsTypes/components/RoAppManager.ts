@@ -136,7 +136,7 @@ export class RoAppManager extends BrsComponent implements BrsValue {
             returns: ValueKind.Object,
         },
         impl: (interpreter: Interpreter) => {
-            const app = BrsDevice.deviceInfo.get("appList")?.find((app: AppData) => app.running);
+            const app = BrsDevice.deviceInfo.appList?.find((app: AppData) => app.running);
             const exitInfo = {
                 exit_code: app?.exitReason ?? AppExitReason.UNKNOWN,
                 media_player_state: "stopped",
@@ -192,13 +192,15 @@ export class RoAppManager extends BrsComponent implements BrsValue {
             ],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter, channelId: BrsString, version: BrsString) => {
-            const appList = BrsDevice.deviceInfo.get("appList");
+        impl: (_: Interpreter, channelId: BrsString, version: BrsString) => {
+            const appList = BrsDevice.deviceInfo.appList;
             if (appList instanceof Array) {
                 const app = appList.find((app) => {
                     return app.id === channelId.value;
                 });
-                return BrsBoolean.from(app && compareVersions(app.version, version.value) >= 0);
+                return BrsBoolean.from(
+                    app !== undefined && compareVersions(app.version, version.value) >= 0
+                );
             }
             return BrsBoolean.False;
         },
@@ -220,7 +222,7 @@ export class RoAppManager extends BrsComponent implements BrsValue {
             version: BrsString,
             params: RoAssociativeArray
         ) => {
-            const appList = BrsDevice.deviceInfo.get("appList");
+            const appList = BrsDevice.deviceInfo.appList;
             if (appList instanceof Array) {
                 const app = appList.find((app) => {
                     return app.id === channelId.value;
@@ -271,7 +273,7 @@ export class RoAppManager extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter) => {
             const result = new RoArray([]);
-            const appList = BrsDevice.deviceInfo.get("appList");
+            const appList = BrsDevice.deviceInfo.appList;
             if (appList instanceof Array) {
                 appList.forEach((app) => {
                     const appObj = { id: app.id, title: app.title, version: app.version };

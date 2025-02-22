@@ -266,7 +266,7 @@ export class RoDateTime extends BrsComponent implements BrsValue {
         },
         impl: (interpreter: Interpreter, format: BrsString) => {
             const rokuDateTokens = ["EEEE", "EEE", "dd", "d", "MMMM", "MMM", "MM", "M", "yy", "y"];
-            const locale = (BrsDevice.deviceInfo.get("locale") ?? "en_US").replace("_", "-");
+            const locale = BrsDevice.deviceInfo.locale.replace("_", "-");
             const dateFormat = format.value.trim() === "" ? "short" : format.value;
             let dateString = this.formatDate(dateFormat, locale);
             if (dateString === "") {
@@ -285,7 +285,7 @@ export class RoDateTime extends BrsComponent implements BrsValue {
         },
         impl: (interpreter: Interpreter, format: BrsString) => {
             const rokuTimeTokens = ["HH", "H", "hh", "h", "mm", "m", "a"];
-            const locale = (BrsDevice.deviceInfo.get("locale") ?? "en_US").replace("_", "-");
+            const locale = BrsDevice.deviceInfo.locale.replace("_", "-");
             const dateFormat = format.value.trim() === "" ? "short" : format.value;
             let timeString = this.formatTime(dateFormat, locale);
             if (timeString === "") {
@@ -469,7 +469,7 @@ export class RoDateTime extends BrsComponent implements BrsValue {
                 const tzDate = new Date(date.toLocaleString("en-US", { timeZone: timeZone }));
                 return Math.round((tzDate.getTime() - utcDate.getTime()) / 6e4);
             };
-            return new Int32(-getOffset(BrsDevice.deviceInfo.get("timeZone")) + 0);
+            return new Int32(-getOffset(BrsDevice.deviceInfo.timeZone) + 0);
         },
     });
 

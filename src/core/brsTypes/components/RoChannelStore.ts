@@ -466,11 +466,11 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
                 json = `{channel_data="${this.credData}"}`;
                 status = 0;
             }
-            const app = BrsDevice.deviceInfo.get("appList")?.find((app: AppData) => app.running);
+            const app = BrsDevice.deviceInfo.appList?.find((app: AppData) => app.running);
             const channelCred = {
                 channelId: app?.id ?? "dev",
                 json: json,
-                publisherDeviceId: BrsDevice.deviceInfo.get("clientId") ?? "",
+                publisherDeviceId: BrsDevice.deviceInfo.clientId,
                 status: status,
             };
             return toAssociativeArray(channelCred);

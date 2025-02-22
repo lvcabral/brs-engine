@@ -146,7 +146,7 @@ export async function getReplInterpreter(payload: Partial<AppPayload>) {
         if (payload.device.registry?.size) {
             BrsDevice.setRegistry(payload.device.registry);
         }
-        setupDeviceData(payload.device);
+        BrsDevice.setDeviceInfo(payload.device);
     }
     return replInterpreter;
 }
@@ -402,7 +402,7 @@ function setupPayload(interpreter: Interpreter, payload: AppPayload): SourceResu
     } else if (payload.device.registry?.size) {
         BrsDevice.setRegistry(payload.device.registry);
     }
-    setupDeviceData(payload.device);
+    BrsDevice.setDeviceInfo(payload.device);
     setupTranslations(interpreter);
     return setupPackageFiles(payload);
 }
@@ -432,23 +432,6 @@ function setupInputParams(
         inputMap.set(key, value);
     });
     return BrsTypes.toAssociativeArray(inputMap);
-}
-
-/**
- * Updates the interpreter DeviceInfo Map with the provided data and
- * initializes the common: file system with device internal libraries.
- * @param device object with device info data
- */
-function setupDeviceData(device: DeviceInfo) {
-    Object.keys(device).forEach((key) => {
-        if (key !== "registry" && key !== "assets") {
-            if (key === "developerId") {
-                // Prevent the developerId from having dots to avoid issues with the registry persistence
-                BrsDevice.deviceInfo.set(key, device[key].replace(".", ":"));
-            }
-            BrsDevice.deviceInfo.set(key, device[key]);
-        }
-    });
 }
 
 /**
@@ -496,7 +479,7 @@ function setupTranslations(interpreter: Interpreter) {
     let xmlText = "";
     let trType = "";
     let trTarget = "";
-    const locale = BrsDevice.deviceInfo.get("locale") || "en_US";
+    const locale = BrsDevice.deviceInfo.locale;
     try {
         const fsys = BrsDevice.fileSystem;
         if (fsys?.existsSync(`pkg:/locale/${locale}/translations.ts`)) {

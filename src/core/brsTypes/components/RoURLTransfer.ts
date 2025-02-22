@@ -776,7 +776,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
             returns: ValueKind.String,
         },
         impl: (_: Interpreter) => {
-            const firmware = BrsDevice.deviceInfo.get("firmwareVersion");
+            const firmware = BrsDevice.deviceInfo.firmwareVersion;
             const os = getRokuOSVersion(firmware);
             const short = `${os.get("major")}.${os.get("minor")}`;
             const long = `${short}.${os.get("revision")}.${os.get("build")}-${os.get("plid")}`;

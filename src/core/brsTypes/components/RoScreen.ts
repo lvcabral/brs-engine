@@ -53,15 +53,14 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
 
         let defaultWidth = 854;
         let defaultHeight = 480;
-        if (BrsDevice.deviceInfo.get("displayMode") === "1080p") {
+        if (BrsDevice.deviceInfo.displayMode === "1080p") {
             defaultWidth = 1920;
             defaultHeight = 1080;
-        } else if (BrsDevice.deviceInfo.get("displayMode") === "720p") {
+        } else if (BrsDevice.deviceInfo.displayMode === "720p") {
             defaultWidth = 1280;
             defaultHeight = 720;
         }
-        const platform = BrsDevice.deviceInfo.get("platform");
-        this.disposeCanvas = platform?.inIOS ?? false;
+        this.disposeCanvas = BrsDevice.deviceInfo.platform?.inIOS ?? false;
         this.lastMessage = performance.now();
         this.isDirty = true;
         this.width = defaultWidth;
@@ -97,7 +96,7 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         this.context = new Array<BrsCanvasContext2D>(this.doubleBuffer ? 2 : 1);
         this.createDisplayBuffer();
         this.alphaEnable = false;
-        const maxFps = BrsDevice.deviceInfo.get("maxFps") || 60;
+        const maxFps = BrsDevice.deviceInfo.maxFps;
         this.maxMs = Math.trunc((1 / maxFps) * 1000);
         const ifDraw2D = new IfDraw2D(this);
         const ifSetMsgPort = new IfSetMessagePort(this, this.getNewEvents.bind(this));
