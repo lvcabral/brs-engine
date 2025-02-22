@@ -35,7 +35,7 @@ export const UpTime = new Callable("UpTime", {
         returns: ValueKind.Float,
     },
     impl: (_: Interpreter) => {
-        const startTime = BrsDevice.deviceInfo.get("startTime");
+        const startTime = BrsDevice.deviceInfo.startTime;
         return new Float(Math.round((Date.now() - startTime) / 1000));
     },
 });

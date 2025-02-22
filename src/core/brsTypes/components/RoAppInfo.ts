@@ -60,8 +60,8 @@ export class RoAppInfo extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.String,
         },
-        impl: (interpreter: Interpreter) => {
-            return new BrsString(BrsDevice.deviceInfo.get("developerId"));
+        impl: (_: Interpreter) => {
+            return new BrsString(BrsDevice.deviceInfo.developerId);
         },
     });
 
