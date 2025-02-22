@@ -125,11 +125,7 @@ export class Overhang extends Group {
         return label;
     }
 
-    renderNode(interpreter: Interpreter, origin: number[], angle: number, draw2D?: IfDraw2D) {
-        if (!this.isVisible()) {
-            return;
-        }
-        // Update children uri and text
+    private updateChildren() {
         const backgroundUri = this.getFieldValue("backgroundUri") as BrsString;
         if (backgroundUri?.value) {
             this.background.set(new BrsString("uri"), backgroundUri);
@@ -178,14 +174,16 @@ export class Overhang extends Group {
         if (rightDividerUri?.value) {
             this.rightDivider.set(new BrsString("uri"), rightDividerUri);
         }
+        this.alignChildren(showOptions.toBoolean(), showClock.toBoolean());
+    }
 
-        // Align elements
-        const screenWidth = 1280; // Assuming a fixed screen width for alignment
+    private alignChildren(showOptions: boolean, showClock: boolean) {
+        const screenWidth = 1280;
         const leftAlignX = 68;
         const logoWidth = this.logo.rectLocal.width;
         const optionsTextWidth = this.optionsText.rectLocal.width ?? 112;
-        const clockTextWidth = showClock.toBoolean() ? this.clockText.rectLocal.width ?? 90 : 0;
-        const optionsHorizOffset = showClock.toBoolean() ? optionsTextWidth + 40 : optionsTextWidth;
+        const clockTextWidth = showClock ? this.clockText.rectLocal.width ?? 90 : 0;
+        const optionsHorizOffset = showClock ? optionsTextWidth + 40 : optionsTextWidth;
         const rightAlignX = screenWidth - leftAlignX - clockTextWidth;
 
         const translation = new BrsString("translation");
@@ -198,10 +196,13 @@ export class Overhang extends Group {
         this.optionsText.set(translation, brsValueOf([rightAlignX - optionsHorizOffset, 44]));
         this.rightDivider.set(translation, brsValueOf([rightAlignX - 24, 33]));
         this.clockText.set(translation, brsValueOf([rightAlignX, 44]));
+    }
 
-        // TODO: Handle other fields
-
-        // Render children
+    renderNode(interpreter: Interpreter, origin: number[], angle: number, draw2D?: IfDraw2D) {
+        if (!this.isVisible()) {
+            return;
+        }
+        this.updateChildren();
         const size = this.getDimensions();
         const rect = { x: origin[0], y: origin[1], width: size.width, height: size.height };
         this.updateBoundingRects(rect, origin, angle);
