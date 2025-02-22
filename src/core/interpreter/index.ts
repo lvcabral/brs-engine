@@ -63,7 +63,6 @@ import { runDebugger } from "./MicroDebugger";
 import {
     DataType,
     DebugCommand,
-    defaultDeviceInfo,
     numberToHex,
     parseTextFile,
     TaskPayload,
@@ -226,11 +225,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         }
         if (this.options.ext) {
             BrsDevice.fileSystem.setExt(this.options.ext);
-        }
-        for (const [key, value] of Object.entries(defaultDeviceInfo)) {
-            if (!["registry", "fonts"].includes(key)) {
-                BrsDevice.deviceInfo.set(key, value);
-            }
         }
         const global = new Set<string>();
         Object.keys(StdLib)
