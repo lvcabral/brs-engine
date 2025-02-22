@@ -125,11 +125,7 @@ export class Overhang extends Group {
         return label;
     }
 
-    renderNode(interpreter: Interpreter, origin: number[], angle: number, draw2D?: IfDraw2D) {
-        if (!this.isVisible()) {
-            return;
-        }
-        // Update children uri and text
+    private updateChildren() {
         const backgroundUri = this.getFieldValue("backgroundUri") as BrsString;
         if (backgroundUri?.value) {
             this.background.set(new BrsString("uri"), backgroundUri);
@@ -143,13 +139,13 @@ export class Overhang extends Group {
             this.title.set(new BrsString("text"), title);
         }
         const showOptions = this.getFieldValue("showOptions") as BrsBoolean;
-        if (showOptions?.toBoolean()) {
-            this.optionsIcon.set(new BrsString("visible"), BrsBoolean.True);
-            this.optionsText.set(new BrsString("visible"), BrsBoolean.True);
+        this.optionsIcon.set(new BrsString("visible"), showOptions);
+        this.optionsText.set(new BrsString("visible"), showOptions);
+        const showClock = this.getFieldValue("showClock") as BrsBoolean;
+        this.clockText.set(new BrsString("visible"), showClock);
+        if (showClock.toBoolean() && showOptions.toBoolean()) {
             this.rightDivider.set(new BrsString("visible"), BrsBoolean.True);
         } else {
-            this.optionsIcon.set(new BrsString("visible"), BrsBoolean.False);
-            this.optionsText.set(new BrsString("visible"), BrsBoolean.False);
             this.rightDivider.set(new BrsString("visible"), BrsBoolean.False);
         }
         const optionsAvailable = this.getFieldValue("optionsAvailable") as BrsBoolean;
@@ -178,13 +174,16 @@ export class Overhang extends Group {
         if (rightDividerUri?.value) {
             this.rightDivider.set(new BrsString("uri"), rightDividerUri);
         }
+        this.alignChildren(showOptions.toBoolean(), showClock.toBoolean());
+    }
 
-        // Align elements
-        const screenWidth = 1280; // Assuming a fixed screen width for alignment
+    private alignChildren(showOptions: boolean, showClock: boolean) {
+        const screenWidth = 1280;
         const leftAlignX = 68;
         const logoWidth = this.logo.rectLocal.width;
         const optionsTextWidth = this.optionsText.rectLocal.width ?? 112;
-        const clockTextWidth = this.clockText.rectLocal.width ?? 90;
+        const clockTextWidth = showClock ? this.clockText.rectLocal.width ?? 90 : 0;
+        const optionsHorizOffset = showClock ? optionsTextWidth + 40 : optionsTextWidth;
         const rightAlignX = screenWidth - leftAlignX - clockTextWidth;
 
         const translation = new BrsString("translation");
@@ -193,14 +192,17 @@ export class Overhang extends Group {
         this.leftDivider.set(translation, brsValueOf([leftAlignX + logoWidth + 16, 31]));
         this.title.set(translation, brsValueOf([leftAlignX + logoWidth + 38, 39]));
 
-        this.optionsIcon.set(translation, brsValueOf([rightAlignX - optionsTextWidth - 65, 46]));
-        this.optionsText.set(translation, brsValueOf([rightAlignX - optionsTextWidth - 40, 44]));
+        this.optionsIcon.set(translation, brsValueOf([rightAlignX - optionsHorizOffset - 25, 46]));
+        this.optionsText.set(translation, brsValueOf([rightAlignX - optionsHorizOffset, 44]));
         this.rightDivider.set(translation, brsValueOf([rightAlignX - 24, 33]));
         this.clockText.set(translation, brsValueOf([rightAlignX, 44]));
+    }
 
-        // TODO: Handle other fields
-
-        // Render children
+    renderNode(interpreter: Interpreter, origin: number[], angle: number, draw2D?: IfDraw2D) {
+        if (!this.isVisible()) {
+            return;
+        }
+        this.updateChildren();
         const size = this.getDimensions();
         const rect = { x: origin[0], y: origin[1], width: size.width, height: size.height };
         this.updateBoundingRects(rect, origin, angle);
