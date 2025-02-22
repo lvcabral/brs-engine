@@ -1,4 +1,4 @@
-export type BoundingRect = { x: number; y: number; width: number; height: number };
+import { BoundingRect } from "../brsTypes/interfaces/IfDraw2D";
 
 /* Function to calculate the bounding box of a rotated rectangle */
 export function rotateRect(rect: BoundingRect, rotation: number, center?: number[]): BoundingRect {

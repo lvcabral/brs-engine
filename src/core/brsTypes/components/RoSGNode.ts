@@ -25,10 +25,9 @@ import { Callable, StdlibArgument } from "../Callable";
 import { Stmt } from "../../parser";
 import { Interpreter } from "../../interpreter";
 import { generateArgumentMismatchError } from "../../error/ArgumentMismatch";
-import { BoundingRect } from "../../scenegraph/SGUtil";
 import { createNodeByType, isSubtypeCheck, subtypeHierarchy } from "../../scenegraph/SGNodeFactory";
 import { Field, FieldKind, FieldModel } from "../nodes/Field";
-import { IfDraw2D } from "../interfaces/IfDraw2D";
+import { BoundingRect, IfDraw2D } from "../interfaces/IfDraw2D";
 import { BrsDevice } from "../../device/BrsDevice";
 
 export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
