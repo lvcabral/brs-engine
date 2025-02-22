@@ -23,6 +23,7 @@ import UPNG from "upng-js";
 export type BrsCanvas = OffscreenCanvas | Canvas;
 export type BrsCanvasContext2D = OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D;
 export type BrsImageData = ImageData | NodeImageData;
+export type BoundingRect = { x: number; y: number; width: number; height: number };
 
 /**
  * BrightScript Interface ifDraw2D
@@ -77,42 +78,26 @@ export class IfDraw2D {
         this.component.makeDirty();
     }
 
-    doDrawRect(x: number, y: number, width: number, height: number, rgba: number) {
-        const baseX = this.component.x;
-        const baseY = this.component.y;
-        const ctx = this.component.getContext();
-        if (this.component instanceof RoScreen && !this.component.getCanvasAlpha()) {
-            ctx.clearRect(x, y, width, height);
-            ctx.fillStyle = rgbaIntToHex(rgba, true);
-        } else {
-            ctx.fillStyle = rgbaIntToHex(rgba, this.component.getCanvasAlpha());
-        }
-        ctx.fillRect(baseX + x, baseY + y, width, height);
-        this.component.makeDirty();
-    }
-
     doDrawRotatedRect(
-        x: number,
-        y: number,
-        width: number,
-        height: number,
+        rect: BoundingRect,
         rgba: number,
         rotation: number,
-        centerX?: number,
-        centerY?: number
+        center?: number[],
+        opacity: number = 1.0
     ) {
         const baseX = this.component.x;
         const baseY = this.component.y;
         const ctx = this.component.getContext();
         ctx.save();
         // Default to top-left corner if centerX and centerY are not provided
-        const rotationCenterX = centerX !== undefined ? centerX : 0;
-        const rotationCenterY = centerY !== undefined ? centerY : 0;
-        ctx.translate(baseX + x + rotationCenterX, baseY + y + rotationCenterY);
+        const rotationCenterX = center !== undefined ? center[0] : 0;
+        const rotationCenterY = center !== undefined ? center[1] : 0;
+        ctx.translate(baseX + rect.x + rotationCenterX, baseY + rect.y + rotationCenterY);
         ctx.rotate(-rotation); // Apply the rotation
         ctx.translate(-rotationCenterX, -rotationCenterY); // Translate back
+        ctx.globalAlpha = opacity; // Set the opacity
         ctx.fillStyle = rgbaIntToHex(rgba, this.component.getCanvasAlpha());
-        ctx.fillRect(0, 0, width, height); // Draw the rectangle at the origin
+        ctx.fillRect(0, 0, rect.width, rect.height); // Draw the rectangle at the origin
         ctx.restore();
         this.component.makeDirty();
     }
@@ -380,13 +365,17 @@ export class IfDraw2D {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, x: Int32, y: Int32, width: Int32, height: Int32, rgba: Int32) => {
-            this.doDrawRect(
-                x.getValue(),
-                y.getValue(),
-                width.getValue(),
-                height.getValue(),
-                rgba.getValue()
-            );
+            const baseX = this.component.x + x.getValue();
+            const baseY = this.component.y + y.getValue();
+            const ctx = this.component.getContext();
+            if (this.component instanceof RoScreen && !this.component.getCanvasAlpha()) {
+                ctx.clearRect(baseX, baseY, width.getValue(), height.getValue());
+                ctx.fillStyle = rgbaIntToHex(rgba.getValue(), true);
+            } else {
+                ctx.fillStyle = rgbaIntToHex(rgba.getValue(), this.component.getCanvasAlpha());
+            }
+            ctx.fillRect(baseX, baseY, width.getValue(), height.getValue());
+            this.component.makeDirty();
             return BrsBoolean.True;
         },
     });
