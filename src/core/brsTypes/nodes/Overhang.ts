@@ -42,7 +42,7 @@ export class Overhang extends Group {
     private readonly optionsOff: string = "common:/images/icon_options_off.webp";
     private readonly dividerVertical: string = "common:/images/divider_vertical.webp";
 
-    constructor(initializedFields: AAMember[] = [], readonly name: string = "Poster") {
+    constructor(initializedFields: AAMember[] = [], readonly name: string = "Overhang") {
         super([], name);
 
         this.registerDefaultFields(this.defaultFields);
