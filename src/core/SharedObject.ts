@@ -40,19 +40,35 @@ class SharedObject {
     }
 
     waitStore(obj: any, version: number, timeout: number = 10000): void {
-        const result = Atomics.waitAsync(this.atomicView, this.versionIdx, version, timeout);
-        if (result.async) {
-            result.value.then((status) => {
-                if (status === "ok") {
-                    console.log("[API] Buffer released. Storing data.");
+        if (typeof Atomics.waitAsync === "function") {
+            const result = Atomics.waitAsync(this.atomicView, this.versionIdx, version, timeout);
+            if (result.async) {
+                result.value.then((status) => {
+                    if (status === "ok") {
+                        console.log("[API] Buffer released. Storing data.");
+                        this.store(obj);
+                    } else {
+                        console.error("[API] Error storing shared data", status);
+                    }
+                });
+            } else if (result.value === "not-equal") {
+                console.log("[API] Buffer is free. Storing data.");
+                this.store(obj);
+            }
+        } else {
+            // Fallback for browsers that do not support Atomics.waitAsync (e.g., Firefox)
+            const start = Date.now();
+            const checkCondition = () => {
+                if (Atomics.load(this.atomicView, this.versionIdx) !== version) {
+                    console.log("[API] Buffer is free. Storing data.");
                     this.store(obj);
+                } else if (Date.now() - start < timeout) {
+                    setTimeout(checkCondition, 10); // Check every 10ms
                 } else {
-                    console.error("[API] Error storing shared data", status);
+                    console.error("[API] Error storing shared data: timeout");
                 }
-            });
-        } else if (result.value === "not-equal") {
-            console.log("[API] Buffer is free. Storing data.");
-            this.store(obj);
+            };
+            checkCondition();
         }
     }
 
