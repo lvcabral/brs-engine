@@ -501,7 +501,7 @@ function runTask(taskData: TaskData) {
         pkgZip: currentPayload.pkgZip,
         extZip: currentPayload.extZip,
     };
-    console.log("Calling Task worker: ", taskData.id, taskData.name);
+    console.log("[API] Calling Task worker: ", taskData.id, taskData.name);
     taskWorker.postMessage(sharedBuffer);
     taskWorker.postMessage(taskPayload);
 }
@@ -514,7 +514,7 @@ function endTask(taskId: number) {
         tasks.delete(taskId);
         taskSyncFromMain.delete(taskId);
         taskSyncToMain.delete(taskId);
-        console.log("Task worker stopped: ", taskId);
+        console.log("[API] Task worker stopped: ", taskId);
     }
 }
 // Load Device Assets
@@ -614,7 +614,11 @@ function mainCallback(event: MessageEvent) {
     } else if (isAppData(event.data)) {
         notifyAll("launch", { app: event.data.id, params: event.data.params ?? new Map() });
     } else if (isTaskData(event.data)) {
-        console.log("Task data received: ", event.data.name);
+        console.log(
+            "[API] Task data received from Main Thread: ",
+            event.data.name,
+            TaskState[event.data.state]
+        );
         if (event.data.state === TaskState.RUN) {
             if (event.data.buffer instanceof SharedArrayBuffer) {
                 const taskBuffer = new SharedObject();
@@ -627,7 +631,11 @@ function mainCallback(event: MessageEvent) {
             endTask(event.data.id);
         }
     } else if (isTaskUpdate(event.data)) {
-        console.log("Task update received from Main thread: ", event.data.id, event.data.field);
+        console.log(
+            "[API] Task update received from Main thread: ",
+            event.data.id,
+            event.data.field
+        );
         if (!taskSyncFromMain.has(event.data.id)) {
             taskSyncFromMain.set(event.data.id, new SharedObject());
         }
@@ -689,15 +697,25 @@ function taskCallback(event: MessageEvent) {
     } else if (typeof event.data.captionsMode === "string") {
         deviceData.captionsMode = event.data.captionsMode;
     } else if (isTaskData(event.data)) {
-        console.log("Task data received from Task thread: ", event.data.name);
+        console.log(
+            "[API] Task data received from Task Thread: ",
+            event.data.name,
+            TaskState[event.data.state]
+        );
         if (event.data.state === TaskState.STOP) {
             endTask(event.data.id);
         }
     } else if (isTaskUpdate(event.data)) {
-        console.log("Task update received from Task thread: ", event.data.id, event.data.field);
+        console.log(
+            "[API] Task update received from Task thread: ",
+            event.data.id,
+            event.data.field
+        );
         taskSyncToMain.get(event.data.id)?.waitStore(event.data, 1);
     } else if (typeof event.data === "string") {
         handleStringMessage(event.data);
+    } else {
+        apiException("warning", `[api] Invalid task message: ${event.data}`);
     }
 }
 

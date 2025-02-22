@@ -44,12 +44,14 @@ class SharedObject {
         if (result.async) {
             result.value.then((status) => {
                 if (status === "ok") {
+                    console.log("[API] Buffer released. Storing data.");
                     this.store(obj);
                 } else {
-                    console.error("Error storing shared data:", status);
+                    console.error("[API] Error storing shared data", status);
                 }
             });
         } else if (result.value === "not-equal") {
+            console.log("[API] Buffer is free. Storing data.");
             this.store(obj);
         }
     }
@@ -79,7 +81,7 @@ class SharedObject {
         const serialized = new TextDecoder().decode(new Uint8Array(data).buffer);
 
         if (resetVersion) {
-            Atomics.add(this.atomicView, this.versionIdx, 0); // Reset version
+            Atomics.store(this.atomicView, this.versionIdx, 0); // Reset version
             Atomics.notify(this.atomicView, this.versionIdx);
         }
 
