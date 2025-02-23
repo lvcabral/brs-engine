@@ -84,7 +84,7 @@ export class Group extends RoSGNode {
         const transField = this.fields.get("translation")?.getValue();
         const translation = [0, 0];
         if (transField instanceof RoArray && transField.elements.length === 2) {
-            transField.elements.map((element, index) => {
+            transField.elements.forEach((element, index) => {
                 if (element instanceof Int32 || element instanceof Float) {
                     translation[index] = element.getValue() / this.scale[index];
                 }
@@ -122,7 +122,7 @@ export class Group extends RoSGNode {
         const scaleRotateCenter = this.fields.get("scalerotatecenter")?.getValue();
         const center = [0, 0];
         if (scaleRotateCenter instanceof RoArray && scaleRotateCenter.elements.length === 2) {
-            scaleRotateCenter.elements.map((element, index) => {
+            scaleRotateCenter.elements.forEach((element, index) => {
                 if (element instanceof Int32 || element instanceof Float) {
                     center[index] = element.getValue() / this.scale[index];
                 }
