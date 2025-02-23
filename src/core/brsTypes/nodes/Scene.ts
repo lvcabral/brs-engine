@@ -1,38 +1,53 @@
-import { FieldModel } from "./Field";
+import { FieldKind, FieldModel } from "./Field";
 import { Group } from "./Group";
 import { AAMember } from "../components/RoAssociativeArray";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D } from "../interfaces/IfDraw2D";
-import { BrsString, getTextureManager, Int32, RoBitmap } from "..";
+import { BrsString, getTextureManager, Int32, RoBitmap, toAssociativeArray } from "..";
 
 export class Scene extends Group {
     readonly defaultFields: FieldModel[] = [
         { name: "backgroundURI", type: "uri" },
-        { name: "backgroundColor", type: "color", value: "0x2F3140FF" },
-        { name: "backExitsScene", type: "boolean", value: "true" },
-        { name: "dialog", type: "node" },
-        { name: "currentDesignResolution", type: "assocarray" },
+        { name: "backgroundColor", type: FieldKind.Color, value: "0x2F3140FF" },
+        { name: "backExitsScene", type: FieldKind.Boolean, value: "true" },
+        { name: "dialog", type: FieldKind.Node },
+        { name: "currentDesignResolution", type: FieldKind.AssocArray },
     ];
-    private width = 1280;
-    private height = 720;
+    readonly ui = { width: 1280, height: 720, resolution: "HD" };
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = "Scene") {
         super([], name);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
+
+        this.setDesignResolution("HD");
     }
 
     protected getDimensions() {
-        return { width: this.width, height: this.height };
+        return { width: this.ui.width, height: this.ui.height };
     }
 
-    setDimensions(width: number, height: number) {
-        this.width = width;
-        this.height = height;
-        this.rectLocal = { x: 0, y: 0, width: this.width, height: this.height };
-        this.rectToParent = { x: 0, y: 0, width: this.width, height: this.height };
-        this.rectToScene = { x: 0, y: 0, width: this.width, height: this.height };
+    setDesignResolution(resolution: string) {
+        if (!["SD", "HD", "FHD"].includes(resolution.toUpperCase())) {
+            // invalid resolution
+            return;
+        }
+        this.ui.resolution = resolution.toUpperCase();
+        if (this.ui.resolution === "FHD") {
+            this.ui.width = 1920;
+            this.ui.height = 1080;
+        } else if (this.ui.resolution === "HD") {
+            this.ui.width = 1280;
+            this.ui.height = 720;
+        } else if (this.ui.resolution === "SD") {
+            this.ui.width = 720;
+            this.ui.height = 480;
+        }
+        this.rectLocal = { x: 0, y: 0, width: this.ui.width, height: this.ui.height };
+        this.rectToParent = { x: 0, y: 0, width: this.ui.width, height: this.ui.height };
+        this.rectToScene = { x: 0, y: 0, width: this.ui.width, height: this.ui.height };
+        this.fields.get("currentdesignresolution")?.setValue(toAssociativeArray(this.ui));
     }
 
     renderNode(interpreter: Interpreter, origin: number[], angle: number, draw2D?: IfDraw2D) {
@@ -47,8 +62,8 @@ export class Scene extends Group {
             const textureManager = getTextureManager();
             const bitmap = textureManager.loadTexture(backURI.value);
             if (bitmap instanceof RoBitmap && bitmap.isValid()) {
-                const scaleX = this.width / bitmap.width;
-                const scaleY = this.height / bitmap.height;
+                const scaleX = this.ui.width / bitmap.width;
+                const scaleY = this.ui.height / bitmap.height;
                 draw2D.doDrawScaledObject(0, 0, scaleX, scaleY, bitmap);
             }
         }

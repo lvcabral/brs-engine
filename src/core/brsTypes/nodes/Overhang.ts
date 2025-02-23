@@ -1,5 +1,16 @@
-import { FieldModel } from "./Field";
-import { AAMember, BrsString, Float, Label, Poster, Font, Timer, BrsBoolean, brsValueOf } from "..";
+import { Field, FieldModel } from "./Field";
+import {
+    AAMember,
+    BrsString,
+    Float,
+    Label,
+    Poster,
+    Font,
+    Timer,
+    BrsBoolean,
+    brsValueOf,
+    rootObjects,
+} from "..";
 import { Group } from "./Group";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D } from "../interfaces/IfDraw2D";
@@ -37,10 +48,14 @@ export class Overhang extends Group {
     private readonly rightDivider: Poster;
     private readonly title: Label;
     private readonly clockText: Label;
-    private readonly defaultLogo: string = "common:/images/logo_roku_HD.webp";
-    private readonly optionsOn: string = "common:/images/icon_options.webp";
-    private readonly optionsOff: string = "common:/images/icon_options_off.webp";
-    private readonly dividerVertical: string = "common:/images/divider_vertical.webp";
+    private readonly defaultLogoHD: string = "common:/images/logo_roku_HD.png";
+    private readonly defaultLogoFHD: string = "common:/images/logo_roku_FHD.png";
+    private readonly optionsOn: string = "common:/images/icon_options.png";
+    private readonly optionsOff: string = "common:/images/icon_options_off.png";
+    private readonly dividerHD: string = "common:/images/divider_vertical_HD.png";
+    private readonly dividerFHD: string = "common:/images/divider_vertical_FHD.png";
+    private readonly width: number;
+    private readonly resolution: string;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = "Overhang") {
         super([], name);
@@ -48,15 +63,33 @@ export class Overhang extends Group {
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
 
-        this.background = this.addPoster("", [0, 0], 115, 1280);
-        this.optionsIcon = this.addPoster(this.optionsOff, [959, 46], 20, 20);
-        this.optionsText = this.addLabel("optionsColor", [985, 44], 27, 22, "center", "right");
+        if (rootObjects.rootScene?.ui && rootObjects.rootScene.ui.resolution === "FHD") {
+            this.width = 1920;
+            this.resolution = "FHD";
+            this.fields.get("width")?.setValue(new Float(this.width));
+            this.fields.get("height")?.setValue(new Float(172));
+            this.background = this.addPoster("", [0, 0], 172, this.width);
+            this.logo = this.addPoster(this.defaultLogoFHD, [102, 63]);
+            this.leftDivider = this.addPoster(this.dividerFHD, [261, 59], 51, 12);
+            this.title = this.addLabel("titleColor", [297, 58], 50, 45, "bottom");
+            this.optionsIcon = this.addPoster(this.optionsOff, [1421, 67], 30, 30);
+            this.optionsText = this.addLabel("optionsColor", [1460, 64], 40, 33, "center", "right");
+            this.rightDivider = this.addPoster(this.dividerFHD, [1646, 59], 51, 12);
+            this.clockText = this.addLabel("clockColor", [1682, 64], 40, 33, "center");
+        } else {
+            this.width = 1280;
+            this.resolution = "HD";
+            this.fields.get("width")?.setValue(new Float(this.width));
+            this.background = this.addPoster("", [0, 0], 115, this.width);
+            this.logo = this.addPoster(this.defaultLogoHD, [68, 42]);
+            this.leftDivider = this.addPoster(this.dividerHD, [174, 39], 34, 8);
+            this.title = this.addLabel("titleColor", [196, 39], 35, 30, "bottom");
+            this.optionsIcon = this.addPoster(this.optionsOff, [959, 46], 20, 20);
+            this.optionsText = this.addLabel("optionsColor", [985, 44], 27, 22, "center", "right");
+            this.rightDivider = this.addPoster(this.dividerHD, [1109, 39], 34, 8);
+            this.clockText = this.addLabel("clockColor", [1133, 44], 27, 22, "center");
+        }
         this.optionsText.set(new BrsString("text"), new BrsString("for Options"));
-        this.logo = this.addPoster(this.defaultLogo, [68, 42]);
-        this.leftDivider = this.addPoster(this.dividerVertical, [174, 31]);
-        this.rightDivider = this.addPoster(this.dividerVertical, [1109, 33]);
-        this.title = this.addLabel("titleColor", [196, 39], 35, 30, "bottom");
-        this.clockText = this.addLabel("clockColor", [1133, 44], 27, 22, "center");
         this.clockText.set(new BrsString("text"), new BrsString(this.getTime()));
         const clock = new Timer();
         clock.setCallback(() => {
@@ -137,6 +170,9 @@ export class Overhang extends Group {
         const title = this.getFieldValue("title") as BrsString;
         if (title?.value) {
             this.title.set(new BrsString("text"), title);
+            this.leftDivider.set(new BrsString("visible"), BrsBoolean.True);
+        } else {
+            this.leftDivider.set(new BrsString("visible"), BrsBoolean.False);
         }
         const showOptions = this.getFieldValue("showOptions") as BrsBoolean;
         this.optionsIcon.set(new BrsString("visible"), showOptions);
@@ -151,16 +187,12 @@ export class Overhang extends Group {
         const optionsAvailable = this.getFieldValue("optionsAvailable") as BrsBoolean;
         if (optionsAvailable?.toBoolean()) {
             this.optionsIcon.set(new BrsString("uri"), new BrsString(this.optionsOn));
-            const optionsColor = this.getNodeFields().get("optionscolor");
-            if (optionsColor) {
-                this.optionsText.getNodeFields().set("color", optionsColor);
-            }
+            const optionsColor = this.getNodeFields().get("optionscolor") as Field;
+            this.optionsText.getNodeFields().set("color", optionsColor);
         } else {
             this.optionsIcon.set(new BrsString("uri"), new BrsString(this.optionsOff));
-            const optionsColor = this.getNodeFields().get("optionsdimcolor");
-            if (optionsColor) {
-                this.optionsText.getNodeFields().set("color", optionsColor);
-            }
+            const optionsColor = this.getNodeFields().get("optionsdimcolor") as Field;
+            this.optionsText.getNodeFields().set("color", optionsColor);
         }
         const optionsText = this.getFieldValue("optionsText") as BrsString;
         if (optionsText?.value) {
@@ -174,28 +206,36 @@ export class Overhang extends Group {
         if (rightDividerUri?.value) {
             this.rightDivider.set(new BrsString("uri"), rightDividerUri);
         }
-        this.alignChildren(showOptions.toBoolean(), showClock.toBoolean());
+        this.alignChildren(showClock.toBoolean());
     }
 
-    private alignChildren(showOptions: boolean, showClock: boolean) {
-        const screenWidth = 1280;
-        const leftAlignX = 68;
+    private alignChildren(showClock: boolean) {
+        const isFHD = this.resolution === "FHD";
+        const leftAlignX = isFHD ? 102 : 68;
         const logoWidth = this.logo.rectLocal.width;
-        const optionsTextWidth = this.optionsText.rectLocal.width ?? 112;
-        const clockTextWidth = showClock ? this.clockText.rectLocal.width ?? 90 : 0;
-        const optionsHorizOffset = showClock ? optionsTextWidth + 40 : optionsTextWidth;
-        const rightAlignX = screenWidth - leftAlignX - clockTextWidth;
-
+        const optionsWidth = this.optionsText.rectLocal.width ?? (isFHD ? 168 : 112);
+        const clockTextWidth = showClock ? this.clockText.rectLocal.width : 0;
+        const clockOffset = isFHD ? 60 : 40;
+        const optionsOffset = showClock ? optionsWidth + clockOffset : optionsWidth;
+        const rightAlignX = this.width - leftAlignX - clockTextWidth;
         const translation = new BrsString("translation");
-
-        this.logo.set(translation, brsValueOf([leftAlignX, 42]));
-        this.leftDivider.set(translation, brsValueOf([leftAlignX + logoWidth + 16, 31]));
-        this.title.set(translation, brsValueOf([leftAlignX + logoWidth + 38, 39]));
-
-        this.optionsIcon.set(translation, brsValueOf([rightAlignX - optionsHorizOffset - 25, 46]));
-        this.optionsText.set(translation, brsValueOf([rightAlignX - optionsHorizOffset, 44]));
-        this.rightDivider.set(translation, brsValueOf([rightAlignX - 24, 33]));
-        this.clockText.set(translation, brsValueOf([rightAlignX, 44]));
+        if (isFHD) {
+            this.logo.set(translation, brsValueOf([leftAlignX, 63]));
+            this.leftDivider.set(translation, brsValueOf([leftAlignX + logoWidth + 24, 59]));
+            this.title.set(translation, brsValueOf([leftAlignX + logoWidth + 56, 58]));
+            this.optionsIcon.set(translation, brsValueOf([rightAlignX - optionsOffset - 36, 67]));
+            this.optionsText.set(translation, brsValueOf([rightAlignX - optionsOffset, 64]));
+            this.rightDivider.set(translation, brsValueOf([rightAlignX - 36, 59]));
+            this.clockText.set(translation, brsValueOf([rightAlignX, 64]));
+        } else {
+            this.logo.set(translation, brsValueOf([leftAlignX, 42]));
+            this.leftDivider.set(translation, brsValueOf([leftAlignX + logoWidth + 16, 41]));
+            this.title.set(translation, brsValueOf([leftAlignX + logoWidth + 38, 39]));
+            this.optionsIcon.set(translation, brsValueOf([rightAlignX - optionsOffset - 24, 46]));
+            this.optionsText.set(translation, brsValueOf([rightAlignX - optionsOffset, 44]));
+            this.rightDivider.set(translation, brsValueOf([rightAlignX - 24, 41]));
+            this.clockText.set(translation, brsValueOf([rightAlignX, 44]));
+        }
     }
 
     renderNode(interpreter: Interpreter, origin: number[], angle: number, draw2D?: IfDraw2D) {

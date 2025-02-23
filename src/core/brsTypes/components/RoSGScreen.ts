@@ -56,6 +56,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     readonly y: number = 0;
     readonly width: number;
     readonly height: number;
+    readonly resolution: string
     private readonly interpreter: Interpreter;
     private readonly draw2D: IfDraw2D;
     private readonly keysBuffer: KeyEvent[];
@@ -99,10 +100,15 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         this.maxMs = Math.trunc((1 / maxFps) * 1000);
         this.width = 1280;
         this.height = 720;
-        const displayMode = interpreter.deviceInfo.get("displayMode") ?? "720p";
-        if (displayMode === "1080p") {
-            this.width = 1920;
-            this.height = 1080;
+        this.resolution = "HD";
+        const res = interpreter.manifest.get("ui_resolutions") ?? "HD";
+        if (res.length && res !== "HD") {
+            const resArray = res.split(",");
+            if (resArray[0].toUpperCase() === "FHD") {
+                this.resolution = "FHD";
+                this.width = 1920;
+                this.height = 1080;
+            }
         }
         this.canvas = createNewCanvas(this.width, this.height);
         this.context = this.canvas.getContext("2d") as BrsCanvasContext2D;
@@ -378,8 +384,8 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
             }
             if (returnValue instanceof Scene) {
                 this.sceneType = sceneType;
-                returnValue.setDimensions(this.width, this.height);
                 rootObjects.rootScene = returnValue;
+                rootObjects.rootScene.setDesignResolution(this.resolution);
             }
             return returnValue;
         },

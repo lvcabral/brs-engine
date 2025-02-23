@@ -120,7 +120,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     };
 
     readonly options: ExecutionOptions = defaultExecutionOptions;
-    readonly manifest: Map<string, any> = new Map<string, any>();
+    readonly manifest: Map<string, string> = new Map<string, string>();
     readonly translations: Map<string, string> = new Map<string, string>();
 
     /** Allows consumers to observe errors as they're detected. */
@@ -2196,9 +2196,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
      * @returns the current app version
      */
     getChannelVersion(): string {
-        let majorVersion = parseInt(this.manifest.get("major_version")) || 0;
-        let minorVersion = parseInt(this.manifest.get("minor_version")) || 0;
-        let buildVersion = parseInt(this.manifest.get("build_version")) || 0;
+        let majorVersion = parseInt(this.manifest.get("major_version") ?? "0") || 0;
+        let minorVersion = parseInt(this.manifest.get("minor_version") ?? "0") || 0;
+        let buildVersion = parseInt(this.manifest.get("build_version") ?? "0") || 0;
         return `${majorVersion}.${minorVersion}.${buildVersion}`;
     }
 
