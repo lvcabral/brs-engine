@@ -34,11 +34,15 @@ export class Group extends RoSGNode {
         { name: "renderTracking", type: "string", value: "disabled" },
     ];
 
+    protected readonly scale: number[];
+
     constructor(initializedFields: AAMember[] = [], readonly name: string = "Group") {
         super([], name);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
+
+        this.scale = [1.0, 1.0];
     }
 
     set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
@@ -80,9 +84,9 @@ export class Group extends RoSGNode {
         const transField = this.fields.get("translation")?.getValue();
         const translation = [0, 0];
         if (transField instanceof RoArray && transField.elements.length === 2) {
-            transField.elements.map((element, index) => {
+            transField.elements.forEach((element, index) => {
                 if (element instanceof Int32 || element instanceof Float) {
-                    translation[index] = element.getValue();
+                    translation[index] = element.getValue() / this.scale[index];
                 }
             });
         }
@@ -93,8 +97,14 @@ export class Group extends RoSGNode {
         const width = this.fields.get("width")?.getValue();
         const height = this.fields.get("height")?.getValue();
         return {
-            width: width instanceof Int32 || width instanceof Float ? width.getValue() : 0,
-            height: height instanceof Int32 || height instanceof Float ? height.getValue() : 0,
+            width:
+                width instanceof Int32 || width instanceof Float
+                    ? width.getValue() / this.scale[0]
+                    : 0,
+            height:
+                height instanceof Int32 || height instanceof Float
+                    ? height.getValue() / this.scale[1]
+                    : 0,
         };
     }
 
@@ -103,13 +113,18 @@ export class Group extends RoSGNode {
         return rotation instanceof Float ? rotation.getValue() : 0;
     }
 
+    setScale(scale: number[]) {
+        this.scale[0] = scale[0];
+        this.scale[1] = scale[1];
+    }
+
     protected getScaleRotateCenter() {
         const scaleRotateCenter = this.fields.get("scalerotatecenter")?.getValue();
         const center = [0, 0];
         if (scaleRotateCenter instanceof RoArray && scaleRotateCenter.elements.length === 2) {
-            scaleRotateCenter.elements.map((element, index) => {
+            scaleRotateCenter.elements.forEach((element, index) => {
                 if (element instanceof Int32 || element instanceof Float) {
-                    center[index] = element.getValue();
+                    center[index] = element.getValue() / this.scale[index];
                 }
             });
         }
