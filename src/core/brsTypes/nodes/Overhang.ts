@@ -215,7 +215,8 @@ export class Overhang extends Group {
         const logoWidth = this.logo.rectLocal.width;
         const optionsWidth = this.optionsText.rectLocal.width ?? (isFHD ? 168 : 112);
         const clockTextWidth = showClock ? this.clockText.rectLocal.width : 0;
-        const optionsOffset = showClock ? optionsWidth + (isFHD ? 60 : 40) : optionsWidth;
+        const clockOffset = isFHD ? 60 : 40;
+        const optionsOffset = showClock ? optionsWidth + clockOffset : optionsWidth;
         const rightAlignX = this.width - leftAlignX - clockTextWidth;
         const translation = new BrsString("translation");
         if (isFHD) {
