@@ -150,11 +150,12 @@ export * from "./Coercion";
  * @returns `true` if `value` is a numeric value, otherwise `false`.
  */
 export function isBrsNumber(value: BrsType): value is BrsNumber {
-    return NumberKinds.has(value?.kind);
-}
-
-export function isNumberKind(kind: ValueKind): boolean {
-    return NumberKinds.has(kind);
+    return (
+        value instanceof Int32 ||
+        value instanceof Int64 ||
+        value instanceof Float ||
+        value instanceof Double
+    );
 }
 
 export const NumberKinds = new Set([
@@ -163,6 +164,10 @@ export const NumberKinds = new Set([
     ValueKind.Double,
     ValueKind.Int64,
 ]);
+
+export function isNumberKind(kind: ValueKind): boolean {
+    return NumberKinds.has(kind);
+}
 
 export const PrimitiveKinds = new Set([
     ValueKind.Uninitialized,

@@ -5,9 +5,9 @@ import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 import { RoRegion } from "./RoRegion";
-import { RoCompositor, Rect, Circle } from "./RoCompositor";
+import { RoCompositor } from "./RoCompositor";
 import { RoArray } from "./RoArray";
-import { BrsImageData } from "../interfaces/IfDraw2D";
+import { BrsImageData, Circle, Rect } from "../interfaces/IfDraw2D";
 
 export class RoSprite extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -114,8 +114,8 @@ export class RoSprite extends BrsComponent implements BrsValue {
         return {
             x: this.x + collRect.x,
             y: this.y + collRect.y,
-            w: collRect.w,
-            h: collRect.h,
+            width: collRect.width,
+            height: collRect.height,
         };
     }
 

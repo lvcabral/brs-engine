@@ -23,7 +23,8 @@ import UPNG from "upng-js";
 export type BrsCanvas = OffscreenCanvas | Canvas;
 export type BrsCanvasContext2D = OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D;
 export type BrsImageData = ImageData | NodeImageData;
-export type BoundingRect = { x: number; y: number; width: number; height: number };
+export type Rect = { x: number; y: number; width: number; height: number };
+export type Circle = { x: number; y: number; r: number };
 
 /**
  * BrightScript Interface ifDraw2D
