@@ -10,9 +10,11 @@ import { RoArray } from "./RoArray";
 import {
     BrsCanvas,
     BrsCanvasContext2D,
+    Circle,
     createNewCanvas,
     drawObjectToComponent,
     getDimensions,
+    Rect,
     releaseCanvas,
     rgbaIntToHex,
 } from "../interfaces/IfDraw2D";
@@ -149,7 +151,7 @@ export class RoCompositor extends BrsComponent implements BrsValue {
             // Only color over where the last drawing happened
             ctx.fillStyle = rgbaIntToHex(rgba);
             for (const prevDraw of this.previousSpriteDraws) {
-                ctx.fillRect(prevDraw.x, prevDraw.y, prevDraw.w, prevDraw.h);
+                ctx.fillRect(prevDraw.x, prevDraw.y, prevDraw.width, prevDraw.height);
             }
         }
         this.previousSpriteDraws = [];
@@ -332,19 +334,6 @@ export class RoCompositor extends BrsComponent implements BrsValue {
     });
 }
 
-export interface Circle {
-    x: number;
-    y: number;
-    r: number;
-}
-
-export interface Rect {
-    x: number;
-    y: number;
-    w: number;
-    h: number;
-}
-
 function hasCollided(
     sourceType: number,
     sourceRect: Rect,
@@ -365,35 +354,35 @@ function hasCollided(
 
 function RectRect(rect1: Rect, rect2: Rect): boolean {
     return (
-        rect1.x < rect2.x + rect2.w &&
-        rect1.x + rect1.w > rect2.x &&
-        rect1.y < rect2.y + rect2.h &&
-        rect1.y + rect1.h > rect2.y
+        rect1.x < rect2.x + rect2.width &&
+        rect1.x + rect1.width > rect2.x &&
+        rect1.y < rect2.y + rect2.height &&
+        rect1.y + rect1.height > rect2.y
     );
 }
 
 // return true if the rectangle and circle are colliding
 // from: https://stackoverflow.com/questions/21089959/detecting-collision-of-rectangle-with-circle
 function RectCircle(rect: Rect, circle: Circle): boolean {
-    const distX = Math.abs(circle.x - rect.x - rect.w / 2);
-    const distY = Math.abs(circle.y - rect.y - rect.h / 2);
+    const distX = Math.abs(circle.x - rect.x - rect.width / 2);
+    const distY = Math.abs(circle.y - rect.y - rect.height / 2);
 
-    if (distX > rect.w / 2 + circle.r) {
+    if (distX > rect.width / 2 + circle.r) {
         return false;
     }
-    if (distY > rect.h / 2 + circle.r) {
+    if (distY > rect.height / 2 + circle.r) {
         return false;
     }
 
-    if (distX <= rect.w / 2) {
+    if (distX <= rect.width / 2) {
         return true;
     }
-    if (distY <= rect.h / 2) {
+    if (distY <= rect.height / 2) {
         return true;
     }
 
-    const dx = distX - rect.w / 2;
-    const dy = distY - rect.h / 2;
+    const dx = distX - rect.width / 2;
+    const dy = distY - rect.height / 2;
     return dx * dx + dy * dy <= circle.r * circle.r;
 }
 
