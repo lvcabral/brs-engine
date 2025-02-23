@@ -13,8 +13,8 @@ import {
     BrsInvalid,
 } from "..";
 import { Interpreter } from "../../interpreter";
-import { IfDraw2D } from "../interfaces/IfDraw2D";
-import { BoundingRect, convertHexColor, rotateRect, unionRect } from "../../scenegraph/SGUtil";
+import { IfDraw2D, Rect } from "../interfaces/IfDraw2D";
+import { convertHexColor, rotateRect, unionRect } from "../../scenegraph/SGUtil";
 
 export class Group extends RoSGNode {
     readonly defaultFields: FieldModel[] = [
@@ -116,7 +116,7 @@ export class Group extends RoSGNode {
         return center;
     }
 
-    protected updateBoundingRects(drawRect: BoundingRect, origin: number[], rotation: number) {
+    protected updateBoundingRects(drawRect: Rect, origin: number[], rotation: number) {
         const nodeTrans = this.getTranslation();
         this.rectLocal = { x: 0, y: 0, width: drawRect.width, height: drawRect.height };
         if (rotation !== 0) {

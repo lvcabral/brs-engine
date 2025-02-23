@@ -27,7 +27,7 @@ import { Interpreter } from "../../interpreter";
 import { generateArgumentMismatchError } from "../../error/ArgumentMismatch";
 import { createNodeByType, isSubtypeCheck, subtypeHierarchy } from "../../scenegraph/SGNodeFactory";
 import { Field, FieldKind, FieldModel } from "../nodes/Field";
-import { BoundingRect, IfDraw2D } from "../interfaces/IfDraw2D";
+import { Rect, IfDraw2D } from "../interfaces/IfDraw2D";
 import { BrsDevice } from "../../device/BrsDevice";
 
 export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
@@ -35,9 +35,9 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     protected fields = new Map<string, Field>();
     protected children: RoSGNode[] = [];
     protected parent: RoSGNode | BrsInvalid = BrsInvalid.Instance;
-    rectLocal: BoundingRect = { x: 0, y: 0, width: 0, height: 0 };
-    rectToParent: BoundingRect = { x: 0, y: 0, width: 0, height: 0 };
-    rectToScene: BoundingRect = { x: 0, y: 0, width: 0, height: 0 };
+    rectLocal: Rect = { x: 0, y: 0, width: 0, height: 0 };
+    rectToParent: Rect = { x: 0, y: 0, width: 0, height: 0 };
+    rectToScene: Rect = { x: 0, y: 0, width: 0, height: 0 };
 
     readonly defaultFields: FieldModel[] = [
         { name: "id", type: FieldKind.String },
