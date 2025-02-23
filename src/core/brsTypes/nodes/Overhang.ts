@@ -1,4 +1,4 @@
-import { FieldModel } from "./Field";
+import { Field, FieldModel } from "./Field";
 import {
     AAMember,
     BrsString,
@@ -187,16 +187,12 @@ export class Overhang extends Group {
         const optionsAvailable = this.getFieldValue("optionsAvailable") as BrsBoolean;
         if (optionsAvailable?.toBoolean()) {
             this.optionsIcon.set(new BrsString("uri"), new BrsString(this.optionsOn));
-            const optionsColor = this.getNodeFields().get("optionscolor");
-            if (optionsColor) {
-                this.optionsText.getNodeFields().set("color", optionsColor);
-            }
+            const optionsColor = this.getNodeFields().get("optionscolor") as Field;
+            this.optionsText.getNodeFields().set("color", optionsColor);
         } else {
             this.optionsIcon.set(new BrsString("uri"), new BrsString(this.optionsOff));
-            const optionsColor = this.getNodeFields().get("optionsdimcolor");
-            if (optionsColor) {
-                this.optionsText.getNodeFields().set("color", optionsColor);
-            }
+            const optionsColor = this.getNodeFields().get("optionsdimcolor") as Field;
+            this.optionsText.getNodeFields().set("color", optionsColor);
         }
         const optionsText = this.getFieldValue("optionsText") as BrsString;
         if (optionsText?.value) {
