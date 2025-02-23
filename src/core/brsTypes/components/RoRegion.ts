@@ -6,15 +6,16 @@ import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 import { RoBitmap } from "./RoBitmap";
 import { RoScreen } from "./RoScreen";
-import { Rect, Circle } from "./RoCompositor";
 import {
     BrsCanvas,
     BrsCanvasContext2D,
     BrsDraw2D,
     BrsImageData,
+    Circle,
     drawImageToContext,
     drawObjectToComponent,
     IfDraw2D,
+    Rect,
     rgbaIntToHex,
 } from "../interfaces/IfDraw2D";
 
@@ -64,7 +65,7 @@ export class RoRegion extends BrsComponent implements BrsValue, BrsDraw2D {
         this.time = 0;
         this.wrap = false;
         this.collisionCircle = { x: 0, y: 0, r: width.getValue() }; // TODO: double check Roku default
-        this.collisionRect = { x: 0, y: 0, w: width.getValue(), h: height.getValue() }; // TODO: double check Roku default
+        this.collisionRect = { x: 0, y: 0, width: width.getValue(), height: height.getValue() }; // TODO: double check Roku default
         this.alphaEnable = true;
 
         if (this.x + this.width <= bitmap.width && this.y + this.height <= bitmap.height) {
@@ -245,7 +246,7 @@ export class RoRegion extends BrsComponent implements BrsValue, BrsDraw2D {
         if (this.collisionType === 1) {
             return this.collisionRect;
         } else {
-            return { x: 0, y: 0, w: this.width, h: this.height };
+            return { x: 0, y: 0, width: this.width, height: this.height };
         }
     }
 
@@ -522,8 +523,8 @@ export class RoRegion extends BrsComponent implements BrsValue, BrsDraw2D {
             this.collisionRect = {
                 x: xOffset.getValue(),
                 y: yOffset.getValue(),
-                w: width.getValue(),
-                h: height.getValue(),
+                width: width.getValue(),
+                height: height.getValue(),
             };
             return BrsInvalid.Instance;
         },
