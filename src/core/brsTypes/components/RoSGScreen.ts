@@ -56,7 +56,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     readonly y: number = 0;
     readonly width: number;
     readonly height: number;
-    readonly resolution: string
+    readonly resolution: string;
     private readonly interpreter: Interpreter;
     private readonly draw2D: IfDraw2D;
     private readonly keysBuffer: KeyEvent[];
