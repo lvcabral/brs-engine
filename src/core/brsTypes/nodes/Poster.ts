@@ -45,14 +45,13 @@ export class Poster extends Group {
         drawTrans[1] += origin[1];
         const size = this.getDimensions();
         const rotation = angle + this.getRotation();
-        const uri = this.fields.get("uri")?.getValue();
-        if (uri instanceof BrsString && uri.value.trim() !== "") {
-            if (this.uri !== uri.value) {
-                this.uri = uri.value;
-                const textureManager = getTextureManager();
-                this.bitmap = textureManager.loadTexture(uri.value);
-            }
-        } else {
+        const uri = this.getFieldValue("uri") as BrsString;
+        if (uri.value.trim() !== "" && this.uri !== uri.value) {
+            this.uri = uri.value;
+            const textureManager = getTextureManager();
+            this.bitmap = textureManager.loadTexture(uri.value);
+        } else if (uri.value.trim() === "") {
+            this.uri = "";
             this.bitmap = undefined;
         }
         if (this.bitmap instanceof RoBitmap && this.bitmap.isValid()) {
