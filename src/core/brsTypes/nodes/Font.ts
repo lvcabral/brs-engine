@@ -1,4 +1,4 @@
-import { RoSGNode } from "../components/RoSGNode";
+import { rootObjects, RoSGNode } from "../components/RoSGNode";
 import { FieldKind, FieldModel } from "./Field";
 import {
     BrsBoolean,
@@ -85,10 +85,11 @@ export class Font extends RoSGNode {
     }
 
     setSystemFont(font: string) {
+        const res = rootObjects.rootScene?.ui.resolution ?? "HD";
         const systemFont = Font.SystemFonts.get(font.toLowerCase());
         if (systemFont) {
             this.systemFont = font;
-            this.setSize(systemFont.hd); // TODO: get the correct size for the device
+            this.setSize(res === "HD" ? systemFont.hd : systemFont.fhd);
             return true;
         }
         return false;
