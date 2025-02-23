@@ -4,7 +4,6 @@ import { Group } from "./Group";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D } from "../interfaces/IfDraw2D";
 import { rotateTranslation } from "../../scenegraph/SGUtil";
-import { BrsDevice } from "../../device/BrsDevice";
 
 export class Poster extends Group {
     readonly defaultFields: FieldModel[] = [
@@ -26,6 +25,8 @@ export class Poster extends Group {
         { name: "failedBitmapOpacity", type: "float", value: "1.0" },
         { name: "audioGuideText", type: "string" },
     ];
+    protected uri: string = "";
+    protected bitmap?: RoBitmap;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = "Poster") {
         super([], name);
@@ -44,32 +45,34 @@ export class Poster extends Group {
         drawTrans[1] += origin[1];
         const size = this.getDimensions();
         const rotation = angle + this.getRotation();
-        const uri = this.fields.get("uri")?.getValue();
-        if (uri instanceof BrsString && uri.value.trim() !== "") {
+        const uri = this.getFieldValue("uri") as BrsString;
+        if (uri.value.trim() !== "" && this.uri !== uri.value) {
+            this.uri = uri.value;
             const textureManager = getTextureManager();
-            const bitmap = textureManager.loadTexture(uri.value);
-            if (bitmap instanceof RoBitmap && bitmap.isValid()) {
-                const scaleX = size.width !== 0 ? size.width / bitmap.width : 1;
-                const scaleY = size.height !== 0 ? size.height / bitmap.height : 1;
-                size.width = scaleX * bitmap.width;
-                size.height = scaleY * bitmap.height;
-                if (rotation !== 0) {
-                    const center = this.getScaleRotateCenter();
-                    draw2D?.doDrawRotatedBitmap(
-                        drawTrans[0],
-                        drawTrans[1],
-                        scaleX,
-                        scaleY,
-                        rotation,
-                        bitmap,
-                        center[0],
-                        center[1]
-                    );
-                } else {
-                    draw2D?.doDrawScaledObject(drawTrans[0], drawTrans[1], scaleX, scaleY, bitmap);
-                }
+            this.bitmap = textureManager.loadTexture(uri.value);
+        } else if (uri.value.trim() === "") {
+            this.uri = "";
+            this.bitmap = undefined;
+        }
+        if (this.bitmap instanceof RoBitmap && this.bitmap.isValid()) {
+            const scaleX = size.width !== 0 ? size.width / this.bitmap.width : 1;
+            const scaleY = size.height !== 0 ? size.height / this.bitmap.height : 1;
+            size.width = scaleX * this.bitmap.width;
+            size.height = scaleY * this.bitmap.height;
+            if (rotation !== 0) {
+                const center = this.getScaleRotateCenter();
+                draw2D?.doDrawRotatedBitmap(
+                    drawTrans[0],
+                    drawTrans[1],
+                    scaleX,
+                    scaleY,
+                    rotation,
+                    this.bitmap,
+                    center[0],
+                    center[1]
+                );
             } else {
-                BrsDevice.stderr.write(`error,Invalid bitmap:${uri.value}`);
+                draw2D?.doDrawScaledObject(drawTrans[0], drawTrans[1], scaleX, scaleY, this.bitmap);
             }
         }
         const rect = { x: drawTrans[0], y: drawTrans[1], width: size.width, height: size.height };
