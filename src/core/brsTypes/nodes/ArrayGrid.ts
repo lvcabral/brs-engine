@@ -1,6 +1,15 @@
-import { FieldModel } from "./Field";
+import { FieldKind, FieldModel } from "./Field";
 import { AAMember } from "../components/RoAssociativeArray";
 import { Group } from "./Group";
+import {
+    BrsInvalid,
+    BrsString,
+    BrsType,
+    getTextureManager,
+    jsValueOf,
+    RoBitmap,
+    ValueKind,
+} from "..";
 
 export class ArrayGrid extends Group {
     readonly defaultFields: FieldModel[] = [
@@ -54,5 +63,74 @@ export class ArrayGrid extends Group {
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
+    }
+    protected focusIndex: number = 0;
+    protected focusBitmapUri: string = "";
+    protected focusBitmap?: RoBitmap;
+    protected focusFootprintUri: string = "";
+    protected focusFootprint?: RoBitmap;
+
+    set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
+        if (index.kind !== ValueKind.String) {
+            throw new Error("RoSGNode indexes must be strings");
+        }
+        const fieldName = index.value.toLowerCase();
+        if (["jumptoitem", "animatetoitem"].includes(fieldName)) {
+            const focusedIndex = jsValueOf(this.getFieldValue("itemFocused"));
+            if (focusedIndex !== jsValueOf(value)) {
+                this.focusIndex = jsValueOf(value);
+                index = new BrsString("itemFocused");
+            } else {
+                return BrsInvalid.Instance;
+            }
+        } else if (fieldName === "itemfocused") {
+            // Read-only field
+            return BrsInvalid.Instance;
+        } else if (
+            fieldName === "vertfocusanimationstyle" &&
+            !["fixedfocuswrap", "floatingfocus", "fixedfocus"].includes(
+                value.toString().toLowerCase()
+            )
+        ) {
+            // Invalid vertFocusAnimationStyle
+            return BrsInvalid.Instance;
+        } else if (
+            fieldName === "horizfocusanimationstyle" &&
+            !["fixedfocuswrap", "floatingfocus"].includes(value.toString().toLowerCase())
+        ) {
+            // Invalid horizFocusAnimationStyle
+            return BrsInvalid.Instance;
+        }
+        return super.set(index, value, alwaysNotify, kind);
+    }
+
+    protected getFocusBitmap() {
+        const uri = jsValueOf(this.getFieldValue("focusBitmapUri")) as string;
+        if (uri.trim() !== "" && this.focusBitmapUri !== uri) {
+            this.focusBitmapUri = uri;
+            const textureManager = getTextureManager();
+            this.focusBitmap = textureManager.loadTexture(uri);
+        } else if (uri.trim() === "") {
+            this.focusBitmapUri = "";
+            this.focusBitmap = undefined;
+        }
+        return this.focusBitmap;
+    }
+
+    protected getFocusFootprint() {
+        const uri = jsValueOf(this.getFieldValue("focusFootprintBitmapUri")) as string;
+        if (uri.trim() !== "" && this.focusFootprintUri !== uri) {
+            this.focusFootprintUri = uri;
+            const textureManager = getTextureManager();
+            this.focusFootprint = textureManager.loadTexture(uri);
+        } else if (uri.trim() === "") {
+            this.focusFootprintUri = "";
+            this.focusFootprint = undefined;
+        }
+        return this.focusFootprint;
+    }
+
+    protected hasNinePatch() {
+        return this.focusBitmap?.ninePatch || this.focusFootprint?.ninePatch;
     }
 }
