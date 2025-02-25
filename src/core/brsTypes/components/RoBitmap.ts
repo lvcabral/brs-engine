@@ -33,6 +33,7 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
     readonly y: number = 0;
     readonly width: number;
     readonly height: number;
+    readonly ninePatch: boolean;
     private readonly canvas: BrsCanvas;
     private readonly context: BrsCanvasContext2D;
     private readonly name: string;
@@ -43,7 +44,7 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
     private rgbaLast: number;
     rgbaRedraw: boolean;
 
-    constructor(param: BrsType | ArrayBuffer | Buffer) {
+    constructor(param: BrsType | ArrayBuffer | Buffer, ninePatch: boolean = false) {
         super("roBitmap");
         this.alphaEnable = false;
         this.rgbaLast = 0;
@@ -53,6 +54,7 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
         this.width = 1;
         this.height = 1;
         this.name = "";
+        this.ninePatch = ninePatch;
         let image;
         if (param instanceof ArrayBuffer || param instanceof Buffer) {
             image = param;
@@ -61,6 +63,7 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
                 image = BrsDevice.fileSystem?.readFileSync(param.value);
                 this.alphaEnable = false;
                 this.name = param.value;
+                this.ninePatch = this.name.toLowerCase().endsWith(".9.png");
             } catch (err: any) {
                 if (BrsDevice.isDevMode) {
                     BrsDevice.stderr.write(
