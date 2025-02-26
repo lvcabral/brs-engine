@@ -55,42 +55,28 @@ export class Label extends Group {
         drawTrans[0] += origin[0];
         drawTrans[1] += origin[1];
         const size = this.getDimensions();
-        const rotation = angle + this.getRotation();
-        const font = this.fields.get("font")?.getValue();
-        if (font instanceof Font) {
-            const color = this.getFieldValue("color") as Int32;
-            const textField = this.getFieldValue("text") as BrsString;
-            const horizAlign = this.getFieldValue("horizAlign")?.toString() || "left";
-            const vertAlign = this.getFieldValue("vertAlign")?.toString() || "top";
-            const ellipsis = this.getFieldValue("ellipsisText")?.toString() || "...";
-            const drawFont = font.createDrawFont();
-            const measured = drawFont.measureTextWidth(textField.value, size.width, ellipsis);
-            this.setEllipsized(measured.ellipsized);
-            const text = measured.text;
-            const textWidth = measured.width;
-            const textHeight = drawFont.measureTextHeight();
-            let textX = drawTrans[0];
-            let textY = drawTrans[1];
-
-            if (size.width > textWidth) {
-                if (horizAlign === "center") {
-                    textX += (size.width - textWidth) / 2;
-                } else if (horizAlign === "right") {
-                    textX += size.width - textWidth;
-                }
-            }
-            if (size.height > textHeight) {
-                if (vertAlign === "center") {
-                    textY += (size.height - textHeight) / 2;
-                } else if (vertAlign === "bottom") {
-                    textY += size.height - textHeight;
-                }
-            }
-            draw2D?.doDrawRotatedText(text, textX, textY, color.getValue(), drawFont, rotation);
-            size.width = Math.max(textWidth, size.width);
-            size.height = Math.max(textHeight, size.height);
-        }
         const rect = { x: drawTrans[0], y: drawTrans[1], width: size.width, height: size.height };
+        const rotation = angle + this.getRotation();
+        const font = this.getFieldValue("font") as Font;
+        const color = this.getFieldValue("color") as Int32;
+        const textField = this.getFieldValue("text") as BrsString;
+        const horizAlign = this.getFieldValue("horizAlign")?.toString() || "left";
+        const vertAlign = this.getFieldValue("vertAlign")?.toString() || "top";
+        const ellipsis = this.getFieldValue("ellipsisText")?.toString() || "...";
+        const measured = this.drawText(
+            textField.value,
+            font,
+            color.getValue(),
+            rect,
+            horizAlign,
+            vertAlign,
+            rotation,
+            draw2D,
+            ellipsis
+        );
+        this.setEllipsized(measured.ellipsized);
+        rect.width = Math.max(measured.width, size.width);
+        rect.height = Math.max(measured.height, size.height);
         this.updateBoundingRects(rect, origin, rotation);
         this.renderChildren(interpreter, drawTrans, rotation, draw2D);
         this.updateParentRects(origin, angle);

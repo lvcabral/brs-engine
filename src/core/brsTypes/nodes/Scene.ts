@@ -3,7 +3,19 @@ import { Group } from "./Group";
 import { AAMember } from "../components/RoAssociativeArray";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D } from "../interfaces/IfDraw2D";
-import { BrsString, getTextureManager, Int32, RoBitmap, toAssociativeArray } from "..";
+import {
+    BrsBoolean,
+    BrsString,
+    Callable,
+    getTextureManager,
+    Int32,
+    RoBitmap,
+    RoSGNode,
+    toAssociativeArray,
+} from "..";
+import { Scope } from "../..";
+import { BlockEnd } from "../../parser/Statement";
+import { Stmt } from "../../parser";
 
 export class Scene extends Group {
     readonly defaultFields: FieldModel[] = [
@@ -68,5 +80,73 @@ export class Scene extends Group {
             }
         }
         this.renderChildren(interpreter, origin, rotation, draw2D);
+    }
+
+    /** Handle SceneGraph onKeyEvent event */
+    handleOnKeyEvent(interpreter: Interpreter, key: BrsString, press: BrsBoolean) {
+        const focusedNode = interpreter.environment.getFocusedNode();
+        if (focusedNode instanceof RoSGNode) {
+            const path = this.createPath(focusedNode, false);
+            for (let node of path) {
+                if (this.handleKeyByNode(interpreter, node, key, press)) {
+                    return true;
+                }
+            }
+        } else {
+            return this.handleKeyByNode(interpreter, this, key, press);
+        }
+        return false;
+    }
+
+    private handleKeyByNode(
+        interpreter: Interpreter,
+        hostNode: RoSGNode,
+        key: BrsString,
+        press: BrsBoolean
+    ): boolean {
+        const typeDef = interpreter.environment.nodeDefMap.get(hostNode.nodeSubtype.toLowerCase());
+        if (typeDef?.environment === undefined) {
+            if (hostNode instanceof Group) {
+                return hostNode.handleKey(key.value, press.toBoolean());
+            }
+            return false;
+        }
+        const nodeEnv = typeDef.environment;
+        const handled = interpreter.inSubEnv((subInterpreter) => {
+            subInterpreter.environment.hostNode = hostNode;
+            subInterpreter.environment.setRootM(hostNode.m);
+            subInterpreter.environment.setM(hostNode.m);
+            let onKeyEvent = subInterpreter.getCallableFunction("onKeyEvent");
+            if (!(onKeyEvent instanceof Callable) || key.value === "") {
+                return BrsBoolean.False;
+            }
+            try {
+                const satisfiedSignature = onKeyEvent?.getFirstSatisfiedSignature([key, press]);
+                if (satisfiedSignature) {
+                    let { signature, impl } = satisfiedSignature;
+                    subInterpreter.environment.define(
+                        Scope.Function,
+                        signature.args[0].name.text,
+                        key,
+                        interpreter.location
+                    );
+                    subInterpreter.environment.define(
+                        Scope.Function,
+                        signature.args[1].name.text,
+                        press,
+                        interpreter.location
+                    );
+                    impl(subInterpreter, key, press);
+                }
+            } catch (err) {
+                if (!(err instanceof BlockEnd)) {
+                    throw err;
+                } else if (err instanceof Stmt.ReturnValue) {
+                    return err.value ?? BrsBoolean.False;
+                }
+            }
+            return BrsBoolean.False;
+        }, nodeEnv);
+        return handled instanceof BrsBoolean && handled.toBoolean();
     }
 }

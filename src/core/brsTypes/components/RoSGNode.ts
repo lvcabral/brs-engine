@@ -57,9 +57,10 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         // After registering default fields, then register fields instantiated with initial values.
         this.registerInitializedFields(initializedFields);
 
-        this.fields
-            .get("change")
-            ?.setValue(toAssociativeArray({ Index1: 0, Index2: 0, Operation: "none" }));
+        this.setFieldValue(
+            "change",
+            toAssociativeArray({ Index1: 0, Index2: 0, Operation: "none" })
+        );
 
         this.registerMethods({
             ifAssociativeArray: [
@@ -434,9 +435,10 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
      * Starting with a leaf node, traverses upward through the parents until it reaches
      * a node without a parent (root node).
      * @param {RoSGNode} node The leaf node to create the tree with
+     * @param {boolean} reverse Whether to return the path in reverse order
      * @returns RoSGNode[] The parent chain starting with root-most parent
      */
-    private createPath(node: RoSGNode): RoSGNode[] {
+    protected createPath(node: RoSGNode, reverse: boolean = true): RoSGNode[] {
         let path: RoSGNode[] = [node];
 
         while (node.parent instanceof RoSGNode) {
@@ -444,7 +446,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             node = node.parent;
         }
 
-        return path.reverse();
+        return reverse ? path.reverse() : path;
     }
 
     /* used for isSubtype */
@@ -1405,17 +1407,6 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         },
     });
 
-    /* Returns true if the subject node has the remote control focus, and false otherwise */
-    private readonly hasFocus = new Callable("hasFocus", {
-        signature: {
-            args: [],
-            returns: ValueKind.Boolean,
-        },
-        impl: (interpreter: Interpreter) => {
-            return BrsBoolean.from(interpreter.environment.getFocusedNode() === this);
-        },
-    });
-
     /* Returns the Node bounding rectangle */
     private readonly boundingRect = new Callable("boundingRect", {
         signature: {
@@ -1452,6 +1443,17 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             const root = this.createPath(this)[0];
             root.renderNode(interpreter, [0, 0], 0);
             return toAssociativeArray(this.rectToScene);
+        },
+    });
+
+    /* Returns true if the subject node has the remote control focus, and false otherwise */
+    private readonly hasFocus = new Callable("hasFocus", {
+        signature: {
+            args: [],
+            returns: ValueKind.Boolean,
+        },
+        impl: (interpreter: Interpreter) => {
+            return BrsBoolean.from(interpreter.environment.getFocusedNode() === this);
         },
     });
 

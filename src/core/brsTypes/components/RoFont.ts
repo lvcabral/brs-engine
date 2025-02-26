@@ -76,6 +76,16 @@ export class RoFont extends BrsComponent implements BrsValue {
         return { width: Math.round(length), text: ellipsizedText, ellipsized };
     }
 
+    measureText(text: string, maxWidth?: number, ellipsis?: string) {
+        let {
+            width,
+            text: ellipsizedText,
+            ellipsized,
+        } = this.measureTextWidth(text, maxWidth, ellipsis);
+        let height = this.measureTextHeight();
+        return { width, height, text: ellipsizedText, ellipsized };
+    }
+
     getTopAdjust(): number {
         const height = this.metrics.lineHeight * this.size;
         const ascent = Math.max(this.metrics.ascent * this.size, this.size);

@@ -261,65 +261,15 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         this.interpreter.lastKeyTime = this.interpreter.currKeyTime;
         this.interpreter.currKeyTime = performance.now();
         this.lastKey = nextKey.key;
-
         const key = new BrsString(rokuKeys.get(nextKey.key - nextKey.mod) ?? "");
         const press = BrsBoolean.from(nextKey.mod === 0);
-        const handled = this.handleOnKeyEvent(key, press);
-
+        const handled =
+            rootObjects.rootScene?.handleOnKeyEvent(this.interpreter, key, press) ?? false;
         if (key.value === "back" && press.toBoolean() && !handled) {
             return new RoSGScreenEvent(BrsBoolean.True);
         }
         this.isDirty = true;
         return BrsInvalid.Instance;
-    }
-
-    /** Handle SceneGraph onKeyEvent event */
-    private handleOnKeyEvent(key: BrsString, press: BrsBoolean): boolean {
-        const hostNode = rootObjects.rootScene;
-        if (!hostNode) {
-            return false;
-        }
-        // TODO: Handle onKeyEvent in SceneGraph node tree starting from the focused node down to the scene
-        const typeDef = this.interpreter.environment.nodeDefMap.get(
-            hostNode.nodeSubtype.toLowerCase()
-        );
-        const sceneEnv = typeDef?.environment ?? this.interpreter.environment;
-        const handled = this.interpreter.inSubEnv((subInterpreter) => {
-            subInterpreter.environment.hostNode = hostNode;
-            subInterpreter.environment.setRootM(hostNode.m);
-            subInterpreter.environment.setM(hostNode.m);
-            let onKeyEvent = subInterpreter.getCallableFunction("onKeyEvent");
-            if (!(onKeyEvent instanceof Callable) || key.value === "") {
-                return BrsBoolean.False;
-            }
-            try {
-                const satisfiedSignature = onKeyEvent?.getFirstSatisfiedSignature([key, press]);
-                if (satisfiedSignature) {
-                    let { signature, impl } = satisfiedSignature;
-                    subInterpreter.environment.define(
-                        Scope.Function,
-                        signature.args[0].name.text,
-                        key,
-                        this.interpreter.location
-                    );
-                    subInterpreter.environment.define(
-                        Scope.Function,
-                        signature.args[1].name.text,
-                        press,
-                        this.interpreter.location
-                    );
-                    impl(subInterpreter, key, press);
-                }
-            } catch (err) {
-                if (!(err instanceof BlockEnd)) {
-                    throw err;
-                } else if (err instanceof Stmt.ReturnValue) {
-                    return err.value ?? BrsBoolean.False;
-                }
-            }
-            return BrsBoolean.False;
-        }, sceneEnv);
-        return handled instanceof BrsBoolean && handled.toBoolean();
     }
 
     /** Returns a global reference object for the SceneGraph application. */

@@ -27,6 +27,8 @@ import {
     BrsBoolean,
     rootObjects,
     Overhang,
+    ButtonGroup,
+    LabelList,
 } from "../brsTypes";
 import { TaskData } from "../common";
 
@@ -34,11 +36,13 @@ export enum SGNodeType {
     Node = "Node",
     Group = "Group",
     LayoutGroup = "LayoutGroup",
+    ButtonGroup = "ButtonGroup",
     Rectangle = "Rectangle",
     Label = "Label",
     Font = "Font",
     Poster = "Poster",
     ArrayGrid = "ArrayGrid",
+    LabelList = "LabelList",
     MarkupGrid = "MarkupGrid",
     ContentNode = "ContentNode",
     Task = "Task",
@@ -81,12 +85,14 @@ export class SGNodeFactory {
             return additionalCtor(name);
         }
         switch (nodeType) {
+            case SGNodeType.Node:
+                return new RoSGNode([], name);
             case SGNodeType.Group:
                 return new Group([], name);
             case SGNodeType.LayoutGroup:
                 return new LayoutGroup([], name);
-            case SGNodeType.Node:
-                return new RoSGNode([], name);
+            case SGNodeType.ButtonGroup:
+                return new ButtonGroup([], name);
             case SGNodeType.Rectangle:
                 return new Rectangle([], name);
             case SGNodeType.Label:
@@ -97,6 +103,8 @@ export class SGNodeFactory {
                 return new Poster([], name);
             case SGNodeType.ArrayGrid:
                 return new ArrayGrid([], name);
+            case SGNodeType.LabelList:
+                return new LabelList([], name);
             case SGNodeType.MarkupGrid:
                 return new MarkupGrid([], name);
             case SGNodeType.ContentNode:
@@ -428,6 +436,10 @@ function addChildren(
                 const targetField = child.fields.role;
                 if (node.getNodeFields().get(targetField)) {
                     node.set(new BrsString(targetField), newChild);
+                    if (child.children.length > 0) {
+                        // we need to add the child's own children
+                        addChildren(interpreter, newChild, child);
+                    }
                 } else {
                     throw new Error(
                         `Role/Field ${targetField} does not exist in ${node.getId()} node`

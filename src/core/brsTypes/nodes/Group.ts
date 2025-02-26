@@ -11,6 +11,9 @@ import {
     BrsString,
     Font,
     BrsInvalid,
+    RoBitmap,
+    jsValueOf,
+    getTextureManager,
 } from "..";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D } from "../interfaces/IfDraw2D";
@@ -113,6 +116,11 @@ export class Group extends RoSGNode {
         return rotation instanceof Float ? rotation.getValue() : 0;
     }
 
+    protected getBitmap(fieldName: string) {
+        const uri = jsValueOf(this.getFieldValue(fieldName)) as string;
+        return uri.trim() ? getTextureManager().loadTexture(uri) : undefined;
+    }
+
     setScale(scale: number[]) {
         this.scale[0] = scale[0];
         this.scale[1] = scale[1];
@@ -131,7 +139,74 @@ export class Group extends RoSGNode {
         return center;
     }
 
-    protected updateBoundingRects(drawRect: BoundingRect, origin: number[], rotation: number) {
+    protected drawText(
+        fullText: string,
+        font: Font,
+        color: number,
+        rect: Rect,
+        horizAlign: string,
+        vertAlign: string,
+        rotation: number,
+        draw2D?: IfDraw2D,
+        ellipsis = "..."
+    ) {
+        const drawFont = font.createDrawFont();
+        const measured = drawFont.measureText(fullText, rect.width, ellipsis);
+        const text = measured.text;
+        const textWidth = measured.width;
+        const textHeight = measured.height;
+        let textX = rect.x;
+        let textY = rect.y;
+
+        if (rect.width > textWidth) {
+            if (horizAlign === "center") {
+                textX += (rect.width - textWidth) / 2;
+            } else if (horizAlign === "right") {
+                textX += rect.width - textWidth;
+            }
+        }
+        if (rect.height > textHeight) {
+            if (vertAlign === "center") {
+                textY += (rect.height - textHeight) / 2;
+            } else if (vertAlign === "bottom") {
+                textY += rect.height - textHeight;
+            }
+        }
+        draw2D?.doDrawRotatedText(text, textX, textY, color, drawFont, rotation);
+        return measured;
+    }
+
+    protected drawImage(bitmap: RoBitmap, rect: Rect, rotation: number, draw2D?: IfDraw2D) {
+        if (bitmap.isValid()) {
+            if (bitmap.ninePatch) {
+                draw2D?.drawNinePatch(bitmap, rect);
+                // TODO: Handle 9-patch rotation
+                return rect;
+            }
+            const scaleX = rect.width !== 0 ? rect.width / bitmap.width : 1;
+            const scaleY = rect.height !== 0 ? rect.height / bitmap.height : 1;
+            rect.width = scaleX * bitmap.width;
+            rect.height = scaleY * bitmap.height;
+            if (rotation !== 0) {
+                const center = this.getScaleRotateCenter();
+                draw2D?.doDrawRotatedBitmap(
+                    rect.x,
+                    rect.y,
+                    scaleX,
+                    scaleY,
+                    rotation,
+                    bitmap,
+                    center[0],
+                    center[1]
+                );
+            } else {
+                draw2D?.doDrawScaledObject(rect.x, rect.y, scaleX, scaleY, bitmap);
+            }
+        }
+        return rect;
+    }
+
+    protected updateBoundingRects(drawRect: Rect, origin: number[], rotation: number) {
         const nodeTrans = this.getTranslation();
         this.rectLocal = { x: 0, y: 0, width: drawRect.width, height: drawRect.height };
         if (rotation !== 0) {
@@ -194,6 +269,11 @@ export class Group extends RoSGNode {
             y += origin[1] - parentTrans[1];
             this.parent.rectToScene = unionRect(this.parent.rectToScene, { x, y, width, height });
         }
+    }
+
+    handleKey(key: string, press: boolean) {
+        // override in derived classes
+        return false;
     }
 
     renderNode(interpreter: Interpreter, origin: number[], angle: number, draw2D?: IfDraw2D) {

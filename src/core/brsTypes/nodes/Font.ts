@@ -38,14 +38,20 @@ export class Font extends RoSGNode {
         ["largeboldsystemfont", { family: "SemiBold", fhd: 45, hd: 30 }],
     ]);
 
+    private readonly defaultSize: number;
+    private readonly resolution: string;
     private systemFont: string;
 
     constructor(members: AAMember[] = [], readonly name: string = "Font") {
         super([], name);
 
+        this.resolution = rootObjects.rootScene?.ui.resolution ?? "HD";
+        this.defaultSize = this.resolution === "HD" ? 24 : 36;
+
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(members);
 
+        this.fields.get("size")?.setValue(new Int32(this.defaultSize), false);
         this.systemFont = "MediumSystemFont";
     }
     set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
@@ -73,7 +79,7 @@ export class Font extends RoSGNode {
 
     getSize() {
         const size = this.fields.get("size")?.getValue();
-        return size instanceof Int32 ? size.getValue() : 24;
+        return size instanceof Int32 ? size.getValue() : this.defaultSize;
     }
 
     setSize(size: number) {
@@ -85,11 +91,10 @@ export class Font extends RoSGNode {
     }
 
     setSystemFont(font: string) {
-        const res = rootObjects.rootScene?.ui.resolution ?? "HD";
         const systemFont = Font.SystemFonts.get(font.toLowerCase());
         if (systemFont) {
             this.systemFont = font;
-            this.setSize(res === "HD" ? systemFont.hd : systemFont.fhd);
+            this.setSize(this.resolution === "HD" ? systemFont.hd : systemFont.fhd);
             return true;
         }
         return false;
