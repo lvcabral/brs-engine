@@ -139,7 +139,7 @@ export class IfDraw2D {
     drawNinePatch(bitmap: RoBitmap, rect: Rect) {
         const ctx = this.component.getContext();
         const image = bitmap.getCanvas();
-        const patchSize = this.getPatchSize(bitmap);
+        const patchSize = bitmap.getPatchSize();
         const x = rect.x;
         const y = rect.y;
         const width = rect.width;
@@ -199,29 +199,7 @@ export class IfDraw2D {
         drawPart(sw - rw, sh - bh, rw - 1, bh - 1, x + width - rw - 1, y + height - bh + 1, rw, bh);
     }
 
-    private getPatchSize(bitmap: RoBitmap): number {
-        const image = bitmap.getCanvas();
-        const ctx = bitmap.getContext();
 
-        const imageData = ctx.getImageData(0, 0, image.width, image.height);
-        const data = imageData.data;
-
-        // Check the top row for the first black pixel
-        for (let i = 0; i < image.width; i++) {
-            const index = (i + 0 * image.width) * 4;
-            const r = data[index];
-            const g = data[index + 1];
-            const b = data[index + 2];
-            const a = data[index + 3];
-
-            // Assuming black pixel (0, 0, 0, 255)
-            if (r === 0 && g === 0 && b === 0 && a === 255) {
-                return i;
-            }
-        }
-
-        throw new Error("Patch size not found");
-    }
 
     /** Clear the bitmap, and fill with the specified RGBA color */
     readonly clear = new Callable("clear", {

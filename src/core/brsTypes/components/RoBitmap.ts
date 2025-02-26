@@ -198,6 +198,10 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
             ],
             ifBitmap: [this.getName],
         });
+        if (this.ninePatch) {
+            // Confirm if it is a 9-patch image
+            this.ninePatch = this.valid && this.getPatchSize() >= 0;
+        }
     }
 
     clearCanvas(rgba: number) {
@@ -300,6 +304,30 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
                 releaseCanvas(this.rgbaCanvas);
             }
         }
+    }
+
+    getPatchSize(): number {
+        const image = this.getCanvas();
+        const ctx = this.getContext();
+
+        const imageData = ctx.getImageData(0, 0, image.width, image.height);
+        const data = imageData.data;
+
+        // Check the top row for the first black pixel
+        for (let i = 0; i < image.width; i++) {
+            const index = (i + 0 * image.width) * 4;
+            const r = data[index];
+            const g = data[index + 1];
+            const b = data[index + 2];
+            const a = data[index + 3];
+
+            // Assuming black pixel (0, 0, 0, 255)
+            if (r === 0 && g === 0 && b === 0 && a === 255) {
+                return i;
+            }
+        }
+
+        return -1; // No black pixel found
     }
 
     // ifBitmap  -----------------------------------------------------------------------------------
