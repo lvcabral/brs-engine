@@ -88,11 +88,12 @@ export class LabelList extends ArrayGrid {
         }
         let handled = false;
         if (key === "up" || key === "down") {
-            const nextIndex = this.getIndex(key === "up" ? -1 : 1);
+            const offset = key === "up" ? -1 : 1;
+            const nextIndex = this.getIndex(offset);
             if (press && nextIndex !== this.focusIndex) {
                 this.set(new BrsString("animateToItem"), new Int32(nextIndex));
                 handled = true;
-                this.currRow = !this.wrap ? this.currRow + (key === "up" ? -1 : 1) : this.currRow;
+                this.currRow += this.wrap ? 0 : offset;
             }
         } else if (key === "OK") {
             if (press) {
@@ -117,40 +118,36 @@ export class LabelList extends ArrayGrid {
         const size = this.getDimensions();
         const rect = { x: drawTrans[0], y: drawTrans[1], width: size.width, height: size.height };
         const rotation = angle + this.getRotation();
-        if (content instanceof ContentNode) {
-            const itemSize = jsValueOf(this.getFieldValue("itemSize"));
-            const numRows = jsValueOf(this.getFieldValue("numRows"));
-            const itemFocused = jsValueOf(this.getFieldValue("itemFocused"));
-            let focusRow = jsValueOf(this.getFieldValue("focusRow"));
-            if (!this.wrap) {
-                this.currRow = Math.max(0, Math.min(this.currRow, numRows - 1));
-                if (this.currRow < focusRow) {
-                    this.currRow = focusRow;
-                }
-                this.currRow = Math.min(this.currRow, itemFocused);
-            } else {
-                this.currRow = focusRow;
-            }
-            const displayRows = Math.min(content.getNodeChildren().length, numRows);
-            const itemRect = { ...rect, width: itemSize[0], height: itemSize[1] };
-            let lastIndex = -1;
-            for (let r = 0; r < displayRows; r++) {
-                const index = this.getIndex(r - this.currRow);
-                if (this.wrap && index < lastIndex) {
-                    this.renderWrapDivider(itemRect, rotation, draw2D);
-                }
-                const row = content.getNodeChildren()[index];
-                const text = jsValueOf(row.getFieldValue("title"));
-                const focused = index === itemFocused;
-                this.renderItem(nodeFocus, text, itemRect, rotation, focused, draw2D);
-                itemRect.y += itemSize[1] + 1;
-                lastIndex = index;
-            }
-            rect.x = rect.x - (this.hasNinePatch ? 24 : 0);
-            rect.y = rect.y - (this.hasNinePatch ? 4 : 0);
-            rect.width = itemSize[0] + (this.hasNinePatch ? 48 : 0);
-            rect.height = displayRows * (itemSize[1] + (this.hasNinePatch ? 9 : 0));
+        const itemSize = jsValueOf(this.getFieldValue("itemSize"));
+        const numRows = jsValueOf(this.getFieldValue("numRows"));
+        const itemFocused = jsValueOf(this.getFieldValue("itemFocused"));
+        let focusRow = jsValueOf(this.getFieldValue("focusRow"));
+        if (!this.wrap) {
+            this.currRow = Math.max(0, Math.min(this.currRow, numRows - 1));
+            this.currRow = Math.min(Math.max(this.currRow, focusRow), itemFocused);
+        } else {
+            this.currRow = focusRow;
         }
+        const childCount = content.getNodeChildren().length;
+        const displayRows = Math.min(childCount, numRows);
+        const itemRect = { ...rect, width: itemSize[0], height: itemSize[1] };
+        let lastIndex = -1;
+        for (let r = 0; r < displayRows; r++) {
+            const index = this.getIndex(r - this.currRow);
+            if (this.wrap && index < lastIndex) {
+                this.renderWrapDivider(itemRect, rotation, draw2D);
+            }
+            const row = content.getNodeChildren()[index];
+            const text = jsValueOf(row.getFieldValue("title"));
+            const focused = index === itemFocused;
+            this.renderItem(nodeFocus, text, itemRect, rotation, focused, draw2D);
+            itemRect.y += itemSize[1] + 1;
+            lastIndex = index;
+        }
+        rect.x = rect.x - (this.hasNinePatch ? 24 : 0);
+        rect.y = rect.y - (this.hasNinePatch ? 4 : 0);
+        rect.width = itemSize[0] + (this.hasNinePatch ? 48 : 0);
+        rect.height = displayRows * (itemSize[1] + (this.hasNinePatch ? 9 : 0));
         this.updateBoundingRects(rect, origin, rotation);
         this.renderChildren(interpreter, drawTrans, rotation, draw2D);
         this.updateParentRects(origin, angle);
@@ -184,7 +181,7 @@ export class LabelList extends ArrayGrid {
         if (drawFocus && drawFocusOnTop) {
             this.renderFocus(itemRect, nodeFocus, rotation, draw2D);
         }
-        this.hasNinePatch = this.hasNinePatch && drawFocus
+        this.hasNinePatch = this.hasNinePatch && drawFocus;
     }
 
     private renderFocus(itemRect: Rect, nodeFocus: boolean, rotation: number, draw2D?: IfDraw2D) {

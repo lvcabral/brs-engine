@@ -5,9 +5,9 @@ import {
     BrsInvalid,
     BrsString,
     BrsType,
+    ContentNode,
     Float,
     jsValueOf,
-    RoBitmap,
     rootObjects,
     ValueKind,
 } from "..";
@@ -65,6 +65,8 @@ export class ArrayGrid extends Group {
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
+
+        this.setFieldValue("content", new ContentNode());
         if (rootObjects.rootScene?.ui && rootObjects.rootScene.ui.resolution === "FHD") {
             this.setFieldValue("wrapDividerHeight", new Float(36));
         } else {

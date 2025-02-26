@@ -57,9 +57,10 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         // After registering default fields, then register fields instantiated with initial values.
         this.registerInitializedFields(initializedFields);
 
-        this.fields
-            .get("change")
-            ?.setValue(toAssociativeArray({ Index1: 0, Index2: 0, Operation: "none" }), false);
+        this.setFieldValue(
+            "change",
+            toAssociativeArray({ Index1: 0, Index2: 0, Operation: "none" })
+        );
 
         this.registerMethods({
             ifAssociativeArray: [
