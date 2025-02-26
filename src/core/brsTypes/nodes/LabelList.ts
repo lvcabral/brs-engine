@@ -202,9 +202,12 @@ export class LabelList extends ArrayGrid {
         const index = itemFocused + offset;
         const content = this.getFieldValue("content") as ContentNode;
         const childCount = content.getNodeChildren().length;
-        if ((index < 0 && this.wrap) || (index >= childCount && !this.wrap)) {
+        if (this.wrap) {
+            return (index + childCount) % childCount;
+        }
+        if (index >= childCount) {
             return childCount - 1;
-        } else if ((index < 0 && !this.wrap) || (index >= childCount && this.wrap)) {
+        } else if (index < 0) {
             return 0;
         }
         return index;
