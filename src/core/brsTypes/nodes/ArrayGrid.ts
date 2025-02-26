@@ -6,7 +6,6 @@ import {
     BrsString,
     BrsType,
     Float,
-    getTextureManager,
     jsValueOf,
     RoBitmap,
     rootObjects,
@@ -59,6 +58,7 @@ export class ArrayGrid extends Group {
         { name: "currFocusColumn", type: "float", value: "0.0" },
         { name: "currFocusSection", type: "float", value: "0.0" },
     ];
+    protected focusIndex: number = 0;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = "ArrayGrid") {
         super([], name);
@@ -71,11 +71,6 @@ export class ArrayGrid extends Group {
             this.setFieldValue("wrapDividerHeight", new Float(24));
         }
     }
-    protected focusIndex: number = 0;
-    protected focusBitmapUri: string = "";
-    protected focusBitmap?: RoBitmap;
-    protected focusFootprintUri: string = "";
-    protected focusFootprint?: RoBitmap;
 
     set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
         if (index.kind !== ValueKind.String) {
@@ -109,40 +104,5 @@ export class ArrayGrid extends Group {
             return BrsInvalid.Instance;
         }
         return super.set(index, value, alwaysNotify, kind);
-    }
-
-    protected getFocusBitmap() {
-        const uri = jsValueOf(this.getFieldValue("focusBitmapUri")) as string;
-        if (uri.trim() !== "" && this.focusBitmapUri !== uri) {
-            this.focusBitmapUri = uri;
-            const textureManager = getTextureManager();
-            this.focusBitmap = textureManager.loadTexture(uri);
-        } else if (uri.trim() === "") {
-            this.focusBitmapUri = "";
-            this.focusBitmap = undefined;
-        }
-        return this.focusBitmap;
-    }
-
-    protected getFocusFootprint() {
-        const uri = jsValueOf(this.getFieldValue("focusFootprintBitmapUri")) as string;
-        if (uri.trim() !== "" && this.focusFootprintUri !== uri) {
-            this.focusFootprintUri = uri;
-            const textureManager = getTextureManager();
-            this.focusFootprint = textureManager.loadTexture(uri);
-        } else if (uri.trim() === "") {
-            this.focusFootprintUri = "";
-            this.focusFootprint = undefined;
-        }
-        return this.focusFootprint;
-    }
-
-    protected getWrapDividerBitmap() {
-        const uri = jsValueOf(this.getFieldValue("wrapDividerBitmapUri")) as string;
-        return uri.trim() ? getTextureManager().loadTexture(uri) : undefined;
-    }
-
-    protected hasNinePatch() {
-        return this.focusBitmap?.ninePatch || this.focusFootprint?.ninePatch;
     }
 }

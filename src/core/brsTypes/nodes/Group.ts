@@ -12,6 +12,8 @@ import {
     Font,
     BrsInvalid,
     RoBitmap,
+    jsValueOf,
+    getTextureManager,
 } from "..";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D, Rect } from "../interfaces/IfDraw2D";
@@ -112,6 +114,11 @@ export class Group extends RoSGNode {
     protected getRotation() {
         const rotation = this.fields.get("rotation")?.getValue();
         return rotation instanceof Float ? rotation.getValue() : 0;
+    }
+
+    protected getBitmap(fieldName: string) {
+        const uri = jsValueOf(this.getFieldValue(fieldName)) as string;
+        return uri.trim() ? getTextureManager().loadTexture(uri) : undefined;
     }
 
     setScale(scale: number[]) {

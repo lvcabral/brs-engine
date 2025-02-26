@@ -33,6 +33,7 @@ export class LabelList extends ArrayGrid {
     private readonly dividerUri = "common:/images/dividerHorizontal.9.png";
     private wrap: boolean;
     private currRow: number;
+    private hasNinePatch: boolean;
     private lastPressHandled: string;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = "LabelList") {
@@ -51,6 +52,7 @@ export class LabelList extends ArrayGrid {
 
         const style = jsValueOf(this.getFieldValue("vertFocusAnimationStyle")) as string;
         this.wrap = style.toLowerCase() !== "floatingfocus";
+        this.hasNinePatch = true;
         this.lastPressHandled = "";
         this.currRow = this.updateCurrRow();
     }
@@ -144,10 +146,10 @@ export class LabelList extends ArrayGrid {
                 itemRect.y += itemSize[1] + 1;
                 lastIndex = index;
             }
-            rect.x = rect.x - (this.hasNinePatch() ? 24 : 0);
-            rect.y = rect.y - (this.hasNinePatch() ? 4 : 0);
-            rect.width = itemSize[0] + (this.hasNinePatch() ? 48 : 0);
-            rect.height = displayRows * (itemSize[1] + (this.hasNinePatch() ? 9 : 0));
+            rect.x = rect.x - (this.hasNinePatch ? 24 : 0);
+            rect.y = rect.y - (this.hasNinePatch ? 4 : 0);
+            rect.width = itemSize[0] + (this.hasNinePatch ? 48 : 0);
+            rect.height = displayRows * (itemSize[1] + (this.hasNinePatch ? 9 : 0));
         }
         this.updateBoundingRects(rect, origin, rotation);
         this.renderChildren(interpreter, drawTrans, rotation, draw2D);
@@ -182,11 +184,13 @@ export class LabelList extends ArrayGrid {
         if (drawFocus && drawFocusOnTop) {
             this.renderFocus(itemRect, nodeFocus, rotation, draw2D);
         }
+        this.hasNinePatch = this.hasNinePatch && drawFocus
     }
 
     private renderFocus(itemRect: Rect, nodeFocus: boolean, rotation: number, draw2D?: IfDraw2D) {
-        const focusBitmap = this.getFocusBitmap();
-        const focusFootprint = this.getFocusFootprint();
+        const focusBitmap = this.getBitmap("focusBitmapUri");
+        const focusFootprint = this.getBitmap("focusFootprintBitmapUri");
+        this.hasNinePatch = (focusBitmap?.ninePatch || focusFootprint?.ninePatch) === true;
         const ninePatchRect = {
             x: itemRect.x - 24,
             y: itemRect.y - 4,
@@ -203,7 +207,7 @@ export class LabelList extends ArrayGrid {
     }
 
     private renderWrapDivider(itemRect: Rect, rotation: number, draw2D?: IfDraw2D) {
-        const bmp = this.getWrapDividerBitmap();
+        const bmp = this.getBitmap("wrapDividerBitmapUri");
         const dividerHeight = jsValueOf(this.getFieldValue("wrapDividerHeight"));
         if (bmp?.isValid()) {
             const rect = { ...itemRect, y: itemRect.y + dividerHeight / 2 - 1, height: 2 };
