@@ -5,9 +5,11 @@ import {
     BrsInvalid,
     BrsString,
     BrsType,
+    Float,
     getTextureManager,
     jsValueOf,
     RoBitmap,
+    rootObjects,
     ValueKind,
 } from "..";
 
@@ -63,6 +65,11 @@ export class ArrayGrid extends Group {
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
+        if (rootObjects.rootScene?.ui && rootObjects.rootScene.ui.resolution === "FHD") {
+            this.setFieldValue("wrapDividerHeight", new Float(36));
+        } else {
+            this.setFieldValue("wrapDividerHeight", new Float(24));
+        }
     }
     protected focusIndex: number = 0;
     protected focusBitmapUri: string = "";
@@ -128,6 +135,11 @@ export class ArrayGrid extends Group {
             this.focusFootprint = undefined;
         }
         return this.focusFootprint;
+    }
+
+    protected getWrapDividerBitmap() {
+        const uri = jsValueOf(this.getFieldValue("wrapDividerBitmapUri")) as string;
+        return uri.trim() ? getTextureManager().loadTexture(uri) : undefined;
     }
 
     protected hasNinePatch() {

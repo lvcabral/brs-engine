@@ -199,8 +199,6 @@ export class IfDraw2D {
         drawPart(sw - rw, sh - bh, rw - 1, bh - 1, x + width - rw - 1, y + height - bh + 1, rw, bh);
     }
 
-
-
     /** Clear the bitmap, and fill with the specified RGBA color */
     readonly clear = new Callable("clear", {
         signature: {

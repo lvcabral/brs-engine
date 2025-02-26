@@ -66,8 +66,8 @@ export class Overhang extends Group {
         if (rootObjects.rootScene?.ui && rootObjects.rootScene.ui.resolution === "FHD") {
             this.width = 1920;
             this.resolution = "FHD";
-            this.fields.get("width")?.setValue(new Float(this.width));
-            this.fields.get("height")?.setValue(new Float(172));
+            this.setFieldValue("width", new Float(this.width));
+            this.setFieldValue("height", new Float(172));
             this.background = this.addPoster("", [0, 0], 172, this.width);
             this.logo = this.addPoster(this.defaultLogoFHD, [102, 63]);
             this.leftDivider = this.addPoster(this.dividerFHD, [261, 59], 51, 12);
@@ -79,7 +79,8 @@ export class Overhang extends Group {
         } else {
             this.width = 1280;
             this.resolution = "HD";
-            this.fields.get("width")?.setValue(new Float(this.width));
+            this.setFieldValue("width", new Float(this.width));
+            this.setFieldValue("height", new Float(115));
             this.background = this.addPoster("", [0, 0], 115, this.width);
             this.logo = this.addPoster(this.defaultLogoHD, [68, 42]);
             this.leftDivider = this.addPoster(this.dividerHD, [174, 39], 34, 8);
