@@ -33,6 +33,7 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
     readonly y: number = 0;
     readonly width: number;
     readonly height: number;
+    readonly ninePatch: boolean;
     private readonly canvas: BrsCanvas;
     private readonly context: BrsCanvasContext2D;
     private readonly name: string;
@@ -43,7 +44,7 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
     private rgbaLast: number;
     rgbaRedraw: boolean;
 
-    constructor(param: BrsType | ArrayBuffer | Buffer) {
+    constructor(param: BrsType | ArrayBuffer | Buffer, ninePatch: boolean = false) {
         super("roBitmap");
         this.alphaEnable = false;
         this.rgbaLast = 0;
@@ -53,6 +54,7 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
         this.width = 1;
         this.height = 1;
         this.name = "";
+        this.ninePatch = ninePatch;
         let image;
         if (param instanceof ArrayBuffer || param instanceof Buffer) {
             image = param;
@@ -61,6 +63,7 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
                 image = BrsDevice.fileSystem?.readFileSync(param.value);
                 this.alphaEnable = false;
                 this.name = param.value;
+                this.ninePatch = this.name.toLowerCase().endsWith(".9.png");
             } catch (err: any) {
                 if (BrsDevice.isDevMode) {
                     BrsDevice.stderr.write(
@@ -195,6 +198,11 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
             ],
             ifBitmap: [this.getName],
         });
+        if (this.ninePatch) {
+            // Confirm if it is a 9-patch image
+            const sizes = this.getPatchSizes();
+            this.ninePatch = this.valid && sizes.horizontal >= 0 && sizes.vertical >= 0;
+        }
     }
 
     clearCanvas(rgba: number) {
@@ -297,6 +305,49 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
                 releaseCanvas(this.rgbaCanvas);
             }
         }
+    }
+
+    getPatchSizes(): { horizontal: number; vertical: number } {
+        const image = this.getCanvas();
+        const ctx = this.getContext();
+
+        const imageData = ctx.getImageData(0, 0, image.width, image.height);
+        const data = imageData.data;
+
+        let horizPatchSize = -1;
+        let vertPatchSize = -1;
+
+        // Check the top row for the first black pixel (horizontal patch size)
+        for (let i = 0; i < image.width; i++) {
+            const index = (i + 0 * image.width) * 4;
+            const r = data[index];
+            const g = data[index + 1];
+            const b = data[index + 2];
+            const a = data[index + 3];
+
+            // Assuming black pixel (0, 0, 0, 255)
+            if (r === 0 && g === 0 && b === 0 && a === 255) {
+                horizPatchSize = i;
+                break;
+            }
+        }
+
+        // Check the left column for the first black pixel (vertical patch size)
+        for (let i = 0; i < image.height; i++) {
+            const index = (0 + i * image.width) * 4;
+            const r = data[index];
+            const g = data[index + 1];
+            const b = data[index + 2];
+            const a = data[index + 3];
+
+            // Assuming black pixel (0, 0, 0, 255)
+            if (r === 0 && g === 0 && b === 0 && a === 255) {
+                vertPatchSize = i;
+                break;
+            }
+        }
+
+        return { horizontal: horizPatchSize, vertical: vertPatchSize };
     }
 
     // ifBitmap  -----------------------------------------------------------------------------------

@@ -44,6 +44,7 @@ export class Poster extends Group {
         drawTrans[0] += origin[0];
         drawTrans[1] += origin[1];
         const size = this.getDimensions();
+        const rect = { x: drawTrans[0], y: drawTrans[1], width: size.width, height: size.height };
         const rotation = angle + this.getRotation();
         const uri = this.getFieldValue("uri") as BrsString;
         if (uri.value.trim() !== "" && this.uri !== uri.value) {
@@ -54,28 +55,9 @@ export class Poster extends Group {
             this.uri = "";
             this.bitmap = undefined;
         }
-        if (this.bitmap instanceof RoBitmap && this.bitmap.isValid()) {
-            const scaleX = size.width !== 0 ? size.width / this.bitmap.width : 1;
-            const scaleY = size.height !== 0 ? size.height / this.bitmap.height : 1;
-            size.width = scaleX * this.bitmap.width;
-            size.height = scaleY * this.bitmap.height;
-            if (rotation !== 0) {
-                const center = this.getScaleRotateCenter();
-                draw2D?.doDrawRotatedBitmap(
-                    drawTrans[0],
-                    drawTrans[1],
-                    scaleX,
-                    scaleY,
-                    rotation,
-                    this.bitmap,
-                    center[0],
-                    center[1]
-                );
-            } else {
-                draw2D?.doDrawScaledObject(drawTrans[0], drawTrans[1], scaleX, scaleY, this.bitmap);
-            }
+        if (this.bitmap instanceof RoBitmap) {
+            this.drawImage(this.bitmap, rect, rotation, draw2D);
         }
-        const rect = { x: drawTrans[0], y: drawTrans[1], width: size.width, height: size.height };
         this.updateBoundingRects(rect, origin, rotation);
         this.renderChildren(interpreter, drawTrans, rotation, draw2D);
         this.updateParentRects(origin, angle);

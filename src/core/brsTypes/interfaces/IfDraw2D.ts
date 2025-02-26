@@ -136,6 +136,69 @@ export class IfDraw2D {
         this.component.makeDirty();
     }
 
+    drawNinePatch(bitmap: RoBitmap, rect: Rect) {
+        const ctx = this.component.getContext();
+        const image = bitmap.getCanvas();
+        const patchSizes = bitmap.getPatchSizes();
+        const x = rect.x;
+        const y = rect.y;
+        const width = rect.width;
+        const height = rect.height;
+        const sw = image.width;
+        const sh = image.height;
+
+        const lw = patchSizes.horizontal; // Left Width
+        const rw = patchSizes.horizontal; // Right Width
+        const th = patchSizes.vertical; // Top Height
+        const bh = patchSizes.vertical; // Bottom Height
+
+        const cw = sw - lw - rw; // Center Width
+        const ch = sh - th - bh; // Center Height
+
+        const targetCW = width - lw - rw;
+        const targetCH = height - th - bh;
+
+        const drawPart = (
+            sx: number,
+            sy: number,
+            sw: number,
+            sh: number,
+            dx: number,
+            dy: number,
+            dw: number,
+            dh: number
+        ) => {
+            drawChunk(ctx, image, { sx, sy, sw, sh, dx, dy, dw, dh });
+        };
+
+        // Top-left corner
+        drawPart(1, 1, lw - 1, th + 1, x, y, lw - 1, th + 1);
+
+        // Top edge
+        drawPart(lw + 1, 1, cw - 2, th + 1, x + lw - 1, y, targetCW, th + 1);
+
+        // Top-right corner
+        drawPart(sw - rw, 1, rw - 1, th + 1, x + width - rw - 1, y, rw, th + 1);
+
+        // Left edge
+        drawPart(1, th + 1, lw - 1, ch - 2, x, y + th + 1, lw - 1, targetCH + 1);
+
+        // Center
+        drawPart(lw + 1, th + 1, cw - 2, ch - 2, x + lw - 1, y + th + 1, targetCW, targetCH + 1);
+
+        // Right edge
+        drawPart(sw - rw, th + 1, rw - 1, ch - 2, x + width - rw - 1, y + th + 1, rw, targetCH + 1);
+
+        // Bottom-left corner
+        drawPart(1, sh - bh, lw - 1, bh - 1, x, y + height - bh + 1, lw - 1, bh);
+
+        // Bottom edge
+        drawPart(lw + 1, sh - bh, cw - 2, bh - 1, x + lw - 1, y + height - bh + 1, targetCW, bh);
+
+        // Bottom-right corner
+        drawPart(sw - rw, sh - bh, rw - 1, bh - 1, x + width - rw - 1, y + height - bh + 1, rw, bh);
+    }
+
     /** Clear the bitmap, and fill with the specified RGBA color */
     readonly clear = new Callable("clear", {
         signature: {
