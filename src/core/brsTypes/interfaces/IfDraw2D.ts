@@ -139,7 +139,7 @@ export class IfDraw2D {
     drawNinePatch(bitmap: RoBitmap, rect: Rect) {
         const ctx = this.component.getContext();
         const image = bitmap.getCanvas();
-        const patchSize = bitmap.getPatchSize();
+        const patchSizes = bitmap.getPatchSizes();
         const x = rect.x;
         const y = rect.y;
         const width = rect.width;
@@ -147,10 +147,10 @@ export class IfDraw2D {
         const sw = image.width;
         const sh = image.height;
 
-        const lw = patchSize; // Left Width
-        const rw = patchSize; // Right Width
-        const th = patchSize; // Top Height
-        const bh = patchSize; // Bottom Height
+        const lw = patchSizes.horizontal; // Left Width
+        const rw = patchSizes.horizontal; // Right Width
+        const th = patchSizes.vertical; // Top Height
+        const bh = patchSizes.vertical; // Bottom Height
 
         const cw = sw - lw - rw; // Center Width
         const ch = sh - th - bh; // Center Height

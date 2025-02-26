@@ -200,7 +200,8 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
         });
         if (this.ninePatch) {
             // Confirm if it is a 9-patch image
-            this.ninePatch = this.valid && this.getPatchSize() >= 0;
+            const sizes = this.getPatchSizes();
+            this.ninePatch = this.valid && sizes.horizontal >= 0 && sizes.vertical >= 0;
         }
     }
 
@@ -306,14 +307,17 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
         }
     }
 
-    getPatchSize(): number {
+    getPatchSizes(): { horizontal: number; vertical: number } {
         const image = this.getCanvas();
         const ctx = this.getContext();
 
         const imageData = ctx.getImageData(0, 0, image.width, image.height);
         const data = imageData.data;
 
-        // Check the top row for the first black pixel
+        let horizPatchSize = -1;
+        let vertPatchSize = -1;
+
+        // Check the top row for the first black pixel (horizontal patch size)
         for (let i = 0; i < image.width; i++) {
             const index = (i + 0 * image.width) * 4;
             const r = data[index];
@@ -323,11 +327,27 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
 
             // Assuming black pixel (0, 0, 0, 255)
             if (r === 0 && g === 0 && b === 0 && a === 255) {
-                return i;
+                horizPatchSize = i;
+                break;
             }
         }
 
-        return -1; // No black pixel found
+        // Check the left column for the first black pixel (vertical patch size)
+        for (let i = 0; i < image.height; i++) {
+            const index = (0 + i * image.width) * 4;
+            const r = data[index];
+            const g = data[index + 1];
+            const b = data[index + 2];
+            const a = data[index + 3];
+
+            // Assuming black pixel (0, 0, 0, 255)
+            if (r === 0 && g === 0 && b === 0 && a === 255) {
+                vertPatchSize = i;
+                break;
+            }
+        }
+
+        return { horizontal: horizPatchSize, vertical: vertPatchSize };
     }
 
     // ifBitmap  -----------------------------------------------------------------------------------
