@@ -30,6 +30,7 @@ export class LabelList extends ArrayGrid {
     ];
 
     private readonly focusUri = "common:/images/focus_list.9.png";
+    private readonly footprintUri = "common:/images/focus_footprint.9.png";
     private readonly dividerUri = "common:/images/dividerHorizontal.9.png";
     private wrap: boolean;
     private currRow: number;
@@ -48,6 +49,7 @@ export class LabelList extends ArrayGrid {
             this.setFieldValue("itemSize", brsValueOf([340, 48]));
         }
         this.setFieldValue("focusBitmapUri", new BrsString(this.focusUri));
+        this.setFieldValue("focusFootprintBitmapUri", new BrsString(this.footprintUri));
         this.setFieldValue("wrapDividerBitmapUri", new BrsString(this.dividerUri));
 
         const style = jsValueOf(this.getFieldValue("vertFocusAnimationStyle")) as string;
