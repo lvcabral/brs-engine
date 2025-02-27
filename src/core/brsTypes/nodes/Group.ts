@@ -176,11 +176,11 @@ export class Group extends RoSGNode {
         return measured;
     }
 
-    protected drawImage(bitmap: RoBitmap, rect: Rect, rotation: number, draw2D?: IfDraw2D) {
+    protected drawImage(bitmap: RoBitmap, rect: Rect, rotation: number, draw2D?: IfDraw2D, rgba?: number) {
         if (bitmap.isValid()) {
             if (bitmap.ninePatch) {
                 draw2D?.drawNinePatch(bitmap, rect);
-                // TODO: Handle 9-patch rotation
+                // TODO: Handle 9-patch rotation and rgba
                 return rect;
             }
             const scaleX = rect.width !== 0 ? rect.width / bitmap.width : 1;
@@ -197,10 +197,11 @@ export class Group extends RoSGNode {
                     rotation,
                     bitmap,
                     center[0],
-                    center[1]
+                    center[1],
+                    rgba
                 );
             } else {
-                draw2D?.doDrawScaledObject(rect.x, rect.y, scaleX, scaleY, bitmap);
+                draw2D?.doDrawScaledObject(rect.x, rect.y, scaleX, scaleY, bitmap, rgba);
             }
         }
         return rect;
