@@ -99,6 +99,7 @@ export class Overhang extends Group {
         clock.set(new BrsString("repeat"), BrsBoolean.True);
         clock.set(new BrsString("control"), new BrsString("start"));
         this.children.push(clock);
+        clock.setNodeParent(this);
     }
 
     private getTime() {
@@ -126,6 +127,7 @@ export class Overhang extends Group {
             poster.set(new BrsString("width"), new Float(width));
         }
         this.children.push(poster);
+        poster.setNodeParent(this);
         return poster;
     }
 
@@ -156,6 +158,7 @@ export class Overhang extends Group {
             label.set(new BrsString("horizalign"), new BrsString(horizAlign));
         }
         this.children.push(label);
+        label.setNodeParent(this);
         return label;
     }
 
@@ -243,6 +246,7 @@ export class Overhang extends Group {
         if (!this.isVisible()) {
             return;
         }
+        // TODO: Check if we can prevent update children all the time, intercepting set() method
         this.updateChildren();
         const size = this.getDimensions();
         const rect = { x: origin[0], y: origin[1], width: size.width, height: size.height };
