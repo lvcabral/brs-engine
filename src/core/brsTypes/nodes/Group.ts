@@ -62,18 +62,15 @@ export class Group extends RoSGNode {
             const strFont = value.value;
             const font = new Font();
             if (strFont.startsWith("font:") && font.setSystemFont(strFont.slice(5).toLowerCase())) {
-                field.setValue(font);
+                value = font;
             } else {
-                field.setValue(BrsInvalid.Instance);
+                value = BrsInvalid.Instance;
             }
-            this.fields.set(mapKey, field);
-            return BrsInvalid.Instance;
         } else if (field && field.getType() === FieldKind.Color && value instanceof BrsString) {
             let strColor = value.value;
             if (strColor.length) {
-                const color = convertHexColor(strColor);
-                field.setValue(new Int32(color));
-                this.fields.set(mapKey, field);
+                value = new Int32(convertHexColor(strColor));
+            } else {
                 return BrsInvalid.Instance;
             }
         }

@@ -94,7 +94,7 @@ export class ButtonGroup extends LayoutGroup {
             } else {
                 return BrsInvalid.Instance;
             }
-        } else if (fieldName === "buttonFocused") {
+        } else if (fieldName === "buttonfocused") {
             // Read-only field
             return BrsInvalid.Instance;
         }
