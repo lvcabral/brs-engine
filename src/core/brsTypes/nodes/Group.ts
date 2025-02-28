@@ -176,7 +176,13 @@ export class Group extends RoSGNode {
         return measured;
     }
 
-    protected drawImage(bitmap: RoBitmap, rect: Rect, rotation: number, draw2D?: IfDraw2D, rgba?: number) {
+    protected drawImage(
+        bitmap: RoBitmap,
+        rect: Rect,
+        rotation: number,
+        draw2D?: IfDraw2D,
+        rgba?: number
+    ) {
         if (bitmap.isValid()) {
             if (bitmap.ninePatch) {
                 draw2D?.drawNinePatch(bitmap, rect);
