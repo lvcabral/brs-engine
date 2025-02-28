@@ -100,8 +100,6 @@ export class ButtonGroup extends LayoutGroup {
         } else if (fieldName === "buttonFocused") {
             // Read-only field
             return BrsInvalid.Instance;
-        } else if (fieldName === "buttons") {
-            this.refreshButtons(jsValueOf(value));
         }
         return super.set(index, value, alwaysNotify, kind);
     }
@@ -132,33 +130,31 @@ export class ButtonGroup extends LayoutGroup {
         if (!this.isVisible()) {
             return;
         }
-        this.refreshButtons();
         this.refreshFocus(interpreter);
         const nodeTrans = this.getTranslation();
         const drawTrans = angle !== 0 ? rotateTranslation(nodeTrans, angle) : nodeTrans.slice();
         drawTrans[0] += origin[0];
         drawTrans[1] += origin[1];
-
         const size = this.getDimensions();
-
-        // Update bounding rects (adjust as needed based on your bounding rect logic)
         const boundingRect: Rect = {
             x: drawTrans[0],
             y: drawTrans[1],
             width: this.width,
             height: size.height,
         };
+        if (this.isDirty) {
+            this.refreshButtons();
+            this.isDirty = false;
+        }
         this.updateBoundingRects(boundingRect, origin, angle);
         this.renderChildren(interpreter, drawTrans, angle, draw2D);
         this.updateParentRects(origin, angle);
     }
 
-    private refreshButtons(buttons?: string[]) {
+    private refreshButtons() {
+        const buttons = jsValueOf(this.getFieldValue("buttons")) as string[];
         if (!buttons) {
-            buttons = jsValueOf(this.getFieldValue("buttons")) as string[];
-            if (!buttons) {
-                return;
-            }
+            return;
         }
         const buttonsCount = Math.max(buttons.length, this.children.length);
         const focusedFont = this.getFieldValue("focusedTextFont") as Font;

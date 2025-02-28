@@ -197,8 +197,10 @@ export class Button extends Group {
         const size = this.getDimensions();
         const rect = { x: drawTrans[0], y: drawTrans[1], width: size.width, height: size.height };
         const rotation = angle + this.getRotation();
-        this.updateChildren(nodeFocus);
-
+        if (this.isDirty) {
+            this.updateChildren(nodeFocus);
+            this.isDirty = false;
+        }
         this.updateBoundingRects(rect, origin, angle);
         this.renderChildren(interpreter, drawTrans, rotation, draw2D);
         this.updateParentRects(origin, angle);

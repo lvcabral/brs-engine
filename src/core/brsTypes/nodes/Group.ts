@@ -38,6 +38,7 @@ export class Group extends RoSGNode {
     ];
 
     protected readonly scale: number[];
+    protected isDirty: boolean;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = "Group") {
         super([], name);
@@ -46,6 +47,7 @@ export class Group extends RoSGNode {
         this.registerInitializedFields(initializedFields);
 
         this.scale = [1.0, 1.0];
+        this.isDirty = true;
     }
 
     set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
@@ -75,7 +77,13 @@ export class Group extends RoSGNode {
                 return BrsInvalid.Instance;
             }
         }
+        this.isDirty = true;
         return super.set(index, value, alwaysNotify, kind);
+    }
+
+    setFieldValue(fieldName: string, value: BrsType, alwaysNotify?: boolean): void {
+        this.isDirty = true;
+        super.setFieldValue(fieldName, value, alwaysNotify);
     }
 
     protected isVisible() {
@@ -306,5 +314,6 @@ export class Group extends RoSGNode {
         };
         this.renderChildren(interpreter, drawTrans, rotation, draw2D);
         this.updateParentRects(origin, angle);
+        this.isDirty = false;
     }
 }
