@@ -13,6 +13,7 @@ import {
     Button,
     Float,
     Font,
+    getTextureManager,
     Int32,
     jsValueOf,
     Label,
@@ -44,9 +45,9 @@ export class ButtonGroup extends LayoutGroup {
 
     private readonly margin: number;
     private readonly gap: number;
-    private readonly verticalOffset: number;
+    private readonly vertOffset: number;
     private width: number;
-    private iconWidth: number;
+    private iconSize: number[] = [0, 0];
     private lastPressHandled: string;
 
     protected focusIndex: number = 0;
@@ -61,18 +62,18 @@ export class ButtonGroup extends LayoutGroup {
         if (rootObjects.rootScene?.ui && rootObjects.rootScene.ui.resolution === "FHD") {
             this.margin = 36;
             this.gap = 18;
-            this.verticalOffset = 21;
-            this.iconWidth = 36;
+            this.vertOffset = 21;
+            this.iconSize = [36, 36];
             this.setFieldValue("buttonHeight", new Float(96));
             this.setFieldValue("iconUri", new BrsString(Button.iconUriFHD));
             this.setFieldValue("focusedIconUri", new BrsString(Button.iconUriFHD));
         } else {
             this.margin = 24;
             this.gap = 12;
-            this.verticalOffset = 14;
-            this.iconWidth = 24;
+            this.vertOffset = 14;
+            this.iconSize = [24, 24];
             this.setFieldValue("buttonHeight", new Float(64));
-            this.setFieldValue("iconUri", new BrsString(Button.iconUriFHD));
+            this.setFieldValue("iconUri", new BrsString(Button.iconUriHD));
             this.setFieldValue("focusedIconUri", new BrsString(Button.iconUriHD));
         }
         this.setFieldValue("focusBitmapUri", new BrsString(Button.focusUri));
@@ -126,7 +127,6 @@ export class ButtonGroup extends LayoutGroup {
         if (!this.isVisible()) {
             return;
         }
-        this.refreshFocus(interpreter);
         const nodeTrans = this.getTranslation();
         const drawTrans = angle !== 0 ? rotateTranslation(nodeTrans, angle) : nodeTrans.slice();
         drawTrans[0] += origin[0];
@@ -142,6 +142,7 @@ export class ButtonGroup extends LayoutGroup {
             this.refreshButtons();
             this.isDirty = false;
         }
+        this.refreshFocus(interpreter);
         this.updateBoundingRects(boundingRect, origin, angle);
         this.renderChildren(interpreter, drawTrans, angle, draw2D);
         this.updateParentRects(origin, angle);
@@ -158,37 +159,35 @@ export class ButtonGroup extends LayoutGroup {
         this.width = this.calculateButtonWidth(buttons, focusedFont.createDrawFont());
         for (let i = 0; i < buttonsCount; i++) {
             const buttonText = buttons[i];
-            let button = this.children[i];
+            let button = this.children[i] as Button;
             if (buttonText) {
                 if (!button) {
                     button = this.createButton();
                 }
+                button.iconSize = this.iconSize;
                 button.setFieldValue("text", new BrsString(buttonText));
-                button.setFieldValue("textColor", this.getFieldValue("textColor"));
-                button.setFieldValue("focusedTextColor", this.getFieldValue("focusedTextColor"));
-                button.setFieldValue("textFont", this.getFieldValue("textFont"));
-                button.setFieldValue("focusedTextFont", this.getFieldValue("focusedTextFont"));
-                button.setFieldValue("focusBitmapUri", this.getFieldValue("focusBitmapUri"));
-                button.setFieldValue(
-                    "focusFootprintBitmapUri",
-                    this.getFieldValue("focusFootprintBitmapUri")
-                );
-                button.setFieldValue("iconUri", this.getFieldValue("iconUri"));
-                button.setFieldValue("focusedIconUri", this.getFieldValue("focusedIconUri"));
-                button.setFieldValue("height", this.getFieldValue("buttonHeight"));
+                this.linkField(button, "textColor");
+                this.linkField(button, "focusedTextColor");
+                this.linkField(button, "textFont");
+                this.linkField(button, "focusedTextFont");
+                this.linkField(button, "focusBitmapUri");
+                this.linkField(button, "focusFootprintBitmapUri");
+                this.linkField(button, "iconUri");
+                this.linkField(button, "focusedIconUri");
+                this.linkField(button, "height", "buttonHeight");
                 button.setFieldValue("minWidth", new Float(this.width));
-                button.setFieldValue("maxWidth", this.getFieldValue("maxWidth"));
+                this.linkField(button, "maxWidth");
                 button.setFieldValue("showFocusFootprint", BrsBoolean.from(this.focusIndex === i));
-                button.setFieldValue(
-                    "translation",
-                    brsValueOf([0, i * (buttonHeight - this.verticalOffset)])
-                );
+                const buttonY = i * (Math.max(buttonHeight, this.iconSize[1]) - this.vertOffset);
+                const offsetY = Math.max((this.iconSize[1] - buttonHeight) / 2, 0);
+                button.setFieldValue("translation", brsValueOf([0, buttonY + offsetY]));
             } else {
                 break;
             }
         }
         this.children.splice(buttons.length);
     }
+
 
     private createButton(): Button {
         const button = new Button();
@@ -218,8 +217,8 @@ export class ButtonGroup extends LayoutGroup {
     private calculateButtonWidth(buttons: string[], font: RoFont): number {
         const minWidth = jsValueOf(this.getFieldValue("minWidth")) as number;
         const maxWidth = jsValueOf(this.getFieldValue("maxWidth")) as number;
-        const iconUri = this.getFieldValue("iconUri") as BrsString;
-        const iconGap = iconUri.value ? this.iconWidth + this.gap : 0;
+        this.iconSize = this.getIconSize();
+        const iconGap = this.iconSize[0] > 0 ? this.iconSize[0] + this.gap : 0;
         const labelMax = maxWidth - this.margin * 2 - iconGap;
 
         let labelWidth = minWidth - this.margin * 2 - iconGap;
@@ -228,6 +227,28 @@ export class ButtonGroup extends LayoutGroup {
             labelWidth = Math.max(measured.width, labelWidth);
         }
         return Math.min(maxWidth, labelWidth + this.margin * 2 + iconGap);
+    }
+
+    private getIconSize() {
+        let uri = jsValueOf(this.getFieldValue("iconUri")) as string;
+        let width = 0;
+        let height = 0;
+        if (uri) {
+            const bmp = getTextureManager().loadTexture(uri);
+            if (bmp) {
+                width = bmp.width;
+                height = bmp.height;
+            }
+        }
+        uri = jsValueOf(this.getFieldValue("focusedIconUri")) as string;
+        if (uri) {
+            const bmp = getTextureManager().loadTexture(uri);
+            if (bmp) {
+                width = Math.max(width, bmp.width);
+                height = Math.max(height, bmp.height);
+            }
+        }
+        return [width, height];
     }
 
     private getIndex(offset: number = 0) {
