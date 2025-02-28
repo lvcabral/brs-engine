@@ -56,6 +56,7 @@ export class Overhang extends Group {
     private readonly dividerFHD: string = "common:/images/divider_vertical_FHD.png";
     private readonly width: number;
     private readonly resolution: string;
+    private realign: boolean = false;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = "Overhang") {
         super([], name);
@@ -99,6 +100,7 @@ export class Overhang extends Group {
         clock.set(new BrsString("repeat"), BrsBoolean.True);
         clock.set(new BrsString("control"), new BrsString("start"));
         this.children.push(clock);
+        clock.setNodeParent(this);
     }
 
     private getTime() {
@@ -126,6 +128,7 @@ export class Overhang extends Group {
             poster.set(new BrsString("width"), new Float(width));
         }
         this.children.push(poster);
+        poster.setNodeParent(this);
         return poster;
     }
 
@@ -156,10 +159,11 @@ export class Overhang extends Group {
             label.set(new BrsString("horizalign"), new BrsString(horizAlign));
         }
         this.children.push(label);
+        label.setNodeParent(this);
         return label;
     }
 
-    private updateChildren() {
+    private updateChildren(realign: boolean) {
         const backgroundUri = this.getFieldValue("backgroundUri") as BrsString;
         if (backgroundUri?.value) {
             this.background.set(new BrsString("uri"), backgroundUri);
@@ -207,7 +211,9 @@ export class Overhang extends Group {
         if (rightDividerUri?.value) {
             this.rightDivider.set(new BrsString("uri"), rightDividerUri);
         }
-        this.alignChildren(showClock.toBoolean());
+        if (realign) {
+            this.alignChildren(showClock.toBoolean());
+        }
     }
 
     private alignChildren(showClock: boolean) {
@@ -243,7 +249,11 @@ export class Overhang extends Group {
         if (!this.isVisible()) {
             return;
         }
-        this.updateChildren();
+        if (this.isDirty) {
+            this.updateChildren(this.realign);
+            this.realign = true;
+            this.isDirty = false;
+        }
         const size = this.getDimensions();
         const rect = { x: origin[0], y: origin[1], width: size.width, height: size.height };
         this.updateBoundingRects(rect, origin, angle);

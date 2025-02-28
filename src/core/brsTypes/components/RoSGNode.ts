@@ -345,6 +345,11 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         return result;
     }
 
+    /** Links a field from this Node with a Child node field */
+    protected linkField(node: RoSGNode, fieldName: string, thisField?: string) {
+        node.setFieldValue(fieldName, this.getFieldValue(thisField ?? fieldName));
+    }
+
     /** Message callback to handle observed fields with message port */
     protected getNewEvents() {
         const events: BrsEvent[] = [];
