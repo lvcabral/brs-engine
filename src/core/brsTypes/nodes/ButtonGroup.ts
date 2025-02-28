@@ -42,10 +42,6 @@ export class ButtonGroup extends LayoutGroup {
         { name: "buttons", type: "array" },
     ];
 
-    private readonly focusUri = "common:/images/focus_list.9.png";
-    private readonly footprintUri = "common:/images/focus_footprint.9.png";
-    private readonly iconUriHD = "common:/images/icon_generic_HD.png";
-    private readonly iconUriFHD = "common:/images/icon_generic_FHD.png";
     private readonly margin: number;
     private readonly gap: number;
     private readonly verticalOffset: number;
@@ -68,19 +64,19 @@ export class ButtonGroup extends LayoutGroup {
             this.verticalOffset = 21;
             this.iconWidth = 36;
             this.setFieldValue("buttonHeight", new Float(96));
-            this.setFieldValue("iconUri", new BrsString(this.iconUriFHD));
-            this.setFieldValue("focusedIconUri", new BrsString(this.iconUriFHD));
+            this.setFieldValue("iconUri", new BrsString(Button.iconUriFHD));
+            this.setFieldValue("focusedIconUri", new BrsString(Button.iconUriFHD));
         } else {
             this.margin = 24;
             this.gap = 12;
             this.verticalOffset = 14;
             this.iconWidth = 24;
             this.setFieldValue("buttonHeight", new Float(64));
-            this.setFieldValue("iconUri", new BrsString(this.iconUriFHD));
-            this.setFieldValue("focusedIconUri", new BrsString(this.iconUriHD));
+            this.setFieldValue("iconUri", new BrsString(Button.iconUriFHD));
+            this.setFieldValue("focusedIconUri", new BrsString(Button.iconUriHD));
         }
-        this.setFieldValue("focusBitmapUri", new BrsString(this.focusUri));
-        this.setFieldValue("focusFootprintBitmapUri", new BrsString(this.footprintUri));
+        this.setFieldValue("focusBitmapUri", new BrsString(Button.focusUri));
+        this.setFieldValue("focusFootprintBitmapUri", new BrsString(Button.footprintUri));
         this.lastPressHandled = "";
     }
 
@@ -165,13 +161,7 @@ export class ButtonGroup extends LayoutGroup {
             let button = this.children[i];
             if (buttonText) {
                 if (!button) {
-                    button = new Button();
-                    for (let child of button.getNodeChildren()) {
-                        if (child instanceof Label) {
-                            child.setFieldValue("horizAlign", new BrsString("left"));
-                            break;
-                        }
-                    }
+                    button = this.createButton();
                 }
                 button.setFieldValue("text", new BrsString(buttonText));
                 button.setFieldValue("textColor", this.getFieldValue("textColor"));
@@ -193,13 +183,24 @@ export class ButtonGroup extends LayoutGroup {
                     "translation",
                     brsValueOf([0, i * (buttonHeight - this.verticalOffset)])
                 );
-                this.children.push(button);
-                button.setNodeParent(this);
             } else {
                 break;
             }
         }
         this.children.splice(buttons.length);
+    }
+
+    private createButton(): Button {
+        const button = new Button();
+        for (let child of button.getNodeChildren()) {
+            if (child instanceof Label) {
+                child.setFieldValue("horizAlign", new BrsString("left"));
+                break;
+            }
+        }
+        this.children.push(button);
+        button.setNodeParent(this);
+        return button;
     }
 
     private refreshFocus(interpreter: Interpreter) {
@@ -211,7 +212,6 @@ export class ButtonGroup extends LayoutGroup {
         ) {
             const focusedButton = this.children[this.focusIndex];
             interpreter.environment.setFocusedNode(focusedButton);
-            return;
         }
     }
 

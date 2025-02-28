@@ -32,10 +32,10 @@ export class Button extends Group {
         { name: "showFocusFootprint", type: "boolean", value: "false" },
         { name: "buttonSelected", type: "boolean", value: "false", alwaysNotify: true },
     ];
-    private readonly focusUri = "common:/images/focus_list.9.png";
-    private readonly footprintUri = "common:/images/focus_footprint.9.png";
-    private readonly iconUriHD = "common:/images/icon_generic_HD.png";
-    private readonly iconUriFHD = "common:/images/icon_generic_FHD.png";
+    static readonly focusUri = "common:/images/focus_list.9.png";
+    static readonly footprintUri = "common:/images/focus_footprint.9.png";
+    static readonly iconUriHD = "common:/images/icon_generic_HD.png";
+    static readonly iconUriFHD = "common:/images/icon_generic_FHD.png";
 
     private readonly background: Poster;
     private readonly textLabel: Label;
@@ -60,10 +60,10 @@ export class Button extends Group {
             this.labelWidth = this.width - this.margin * 2 - this.iconSize - this.gap;
             this.setFieldValue("height", new Float(96));
             this.setFieldValue("minWidth", new Float(375));
-            this.setFieldValue("iconUri", new BrsString(this.iconUriFHD));
-            this.setFieldValue("focusedIconUri", new BrsString(this.iconUriFHD));
+            this.setFieldValue("iconUri", new BrsString(Button.iconUriFHD));
+            this.setFieldValue("focusedIconUri", new BrsString(Button.iconUriFHD));
             this.background = this.addPoster("", [0, 0], 96, this.width);
-            this.icon = this.addPoster(this.iconUriFHD, [this.margin, 30], this.iconSize, 36);
+            this.icon = this.addPoster(Button.iconUriFHD, [this.margin, 30], this.iconSize, 36);
             const labelTrans = [this.margin + this.iconSize + this.gap, 30];
             this.textLabel = this.addLabel(
                 "textColor",
@@ -80,10 +80,10 @@ export class Button extends Group {
             this.labelWidth = this.width - this.margin * 2 - this.iconSize - this.gap;
             this.setFieldValue("height", new Float(64));
             this.setFieldValue("minWidth", new Float(250));
-            this.setFieldValue("iconUri", new BrsString(this.iconUriHD));
-            this.setFieldValue("focusedIconUri", new BrsString(this.iconUriHD));
+            this.setFieldValue("iconUri", new BrsString(Button.iconUriHD));
+            this.setFieldValue("focusedIconUri", new BrsString(Button.iconUriHD));
             this.background = this.addPoster("", [0, 0], 64, this.width);
-            this.icon = this.addPoster(this.iconUriHD, [this.margin, 20], this.iconSize, 24);
+            this.icon = this.addPoster(Button.iconUriHD, [this.margin, 20], this.iconSize, 24);
             const labelTrans = [this.margin + this.iconSize + this.gap, 20];
             this.textLabel = this.addLabel(
                 "textColor",
@@ -93,8 +93,8 @@ export class Button extends Group {
                 "right"
             );
         }
-        this.setFieldValue("focusBitmapUri", new BrsString(this.focusUri));
-        this.setFieldValue("focusFootprintBitmapUri", new BrsString(this.footprintUri));
+        this.setFieldValue("focusBitmapUri", new BrsString(Button.focusUri));
+        this.setFieldValue("focusFootprintBitmapUri", new BrsString(Button.footprintUri));
     }
 
     private addPoster(defaultUri: string, translation: number[], height?: number, width?: number) {
