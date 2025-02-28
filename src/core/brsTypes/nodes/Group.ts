@@ -38,6 +38,7 @@ export class Group extends RoSGNode {
     ];
 
     protected readonly scale: number[];
+    protected isDirty: boolean;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = "Group") {
         super([], name);
@@ -46,6 +47,7 @@ export class Group extends RoSGNode {
         this.registerInitializedFields(initializedFields);
 
         this.scale = [1.0, 1.0];
+        this.isDirty = true;
     }
 
     set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
@@ -60,22 +62,25 @@ export class Group extends RoSGNode {
             const strFont = value.value;
             const font = new Font();
             if (strFont.startsWith("font:") && font.setSystemFont(strFont.slice(5).toLowerCase())) {
-                field.setValue(font);
+                value = font;
             } else {
-                field.setValue(BrsInvalid.Instance);
+                value = BrsInvalid.Instance;
             }
-            this.fields.set(mapKey, field);
-            return BrsInvalid.Instance;
         } else if (field && field.getType() === FieldKind.Color && value instanceof BrsString) {
             let strColor = value.value;
             if (strColor.length) {
-                const color = convertHexColor(strColor);
-                field.setValue(new Int32(color));
-                this.fields.set(mapKey, field);
+                value = new Int32(convertHexColor(strColor));
+            } else {
                 return BrsInvalid.Instance;
             }
         }
+        this.isDirty = true;
         return super.set(index, value, alwaysNotify, kind);
+    }
+
+    setFieldValue(fieldName: string, value: BrsType, alwaysNotify?: boolean): void {
+        this.isDirty = true;
+        super.setFieldValue(fieldName, value, alwaysNotify);
     }
 
     protected isVisible() {
@@ -176,7 +181,13 @@ export class Group extends RoSGNode {
         return measured;
     }
 
-    protected drawImage(bitmap: RoBitmap, rect: Rect, rotation: number, draw2D?: IfDraw2D, rgba?: number) {
+    protected drawImage(
+        bitmap: RoBitmap,
+        rect: Rect,
+        rotation: number,
+        draw2D?: IfDraw2D,
+        rgba?: number
+    ) {
         if (bitmap.isValid()) {
             if (bitmap.ninePatch) {
                 draw2D?.drawNinePatch(bitmap, rect);
@@ -300,5 +311,6 @@ export class Group extends RoSGNode {
         };
         this.renderChildren(interpreter, drawTrans, rotation, draw2D);
         this.updateParentRects(origin, angle);
+        this.isDirty = false;
     }
 }

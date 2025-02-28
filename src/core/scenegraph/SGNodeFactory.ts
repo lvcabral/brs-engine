@@ -28,6 +28,7 @@ import {
     rootObjects,
     Overhang,
     ButtonGroup,
+    Button,
     LabelList,
 } from "../brsTypes";
 import { TaskData } from "../common";
@@ -37,6 +38,7 @@ export enum SGNodeType {
     Group = "Group",
     LayoutGroup = "LayoutGroup",
     ButtonGroup = "ButtonGroup",
+    Button = "Button",
     Rectangle = "Rectangle",
     Label = "Label",
     Font = "Font",
@@ -91,6 +93,8 @@ export class SGNodeFactory {
                 return new Group([], name);
             case SGNodeType.LayoutGroup:
                 return new LayoutGroup([], name);
+            case SGNodeType.Button:
+                return new Button([], name);
             case SGNodeType.ButtonGroup:
                 return new ButtonGroup([], name);
             case SGNodeType.Rectangle:
