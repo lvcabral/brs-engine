@@ -106,6 +106,7 @@ export class ContentNode extends RoSGNode {
         { name: "CompositionMode", type: "string", hidden: true },
         { name: "Text", type: "string", hidden: true },
         { name: "TextAttrs", type: "assocarray", hidden: true },
+        { name: "HideIcon", type: "boolean", hidden: true },
     ];
 
     /**

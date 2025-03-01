@@ -29,10 +29,10 @@ export class ButtonGroup extends LayoutGroup {
         { name: "focusedTextColor", type: "color", value: "0x262626ff" },
         { name: "textFont", type: "font" },
         { name: "focusedTextFont", type: "font", value: "font:MediumBoldSystemFont" },
-        { name: "focusBitmapUri", type: "string", value: "" },
+        { name: "focusBitmapUri", type: "uri", value: "" },
         { name: "focusFootprintBitmapUri", type: "string", value: "" },
-        { name: "iconUri", type: "string", value: "" },
-        { name: "focusedIconUri", type: "string", value: "" },
+        { name: "iconUri", type: "uri", value: "" },
+        { name: "focusedIconUri", type: "uri", value: "" },
         { name: "minWidth", type: "float", value: "0.0" },
         { name: "maxWidth", type: "float", value: "32767" },
         { name: "buttonHeight", type: "float", value: "0.0" },
@@ -188,7 +188,6 @@ export class ButtonGroup extends LayoutGroup {
         this.children.splice(buttons.length);
     }
 
-
     private createButton(): Button {
         const button = new Button();
         for (let child of button.getNodeChildren()) {
@@ -230,19 +229,10 @@ export class ButtonGroup extends LayoutGroup {
     }
 
     private getIconSize() {
-        let uri = jsValueOf(this.getFieldValue("iconUri")) as string;
         let width = 0;
         let height = 0;
-        if (uri) {
-            const bmp = getTextureManager().loadTexture(uri);
-            if (bmp) {
-                width = bmp.width;
-                height = bmp.height;
-            }
-        }
-        uri = jsValueOf(this.getFieldValue("focusedIconUri")) as string;
-        if (uri) {
-            const bmp = getTextureManager().loadTexture(uri);
+        for (const uri of ["iconUri", "focusedIconUri"]) {
+            const bmp = this.getBitmap(uri);
             if (bmp) {
                 width = Math.max(width, bmp.width);
                 height = Math.max(height, bmp.height);
