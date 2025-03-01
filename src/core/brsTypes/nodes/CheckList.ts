@@ -106,6 +106,13 @@ export class CheckList extends LabelList {
             }
         } else if (key === "OK") {
             if (press) {
+                const checkOnSelect = jsValueOf(this.getFieldValue("checkOnSelect"));
+                const checkedState = this.getFieldValue("checkedState");
+                if (checkOnSelect && checkedState instanceof RoArray) {
+                    const states = jsValueOf(checkedState);
+                    states[this.focusIndex] = !states[this.focusIndex];
+                    this.set(new BrsString("checkedState"), brsValueOf(states));
+                }
                 this.set(new BrsString("itemSelected"), new Int32(this.focusIndex));
                 handled = true;
             }
@@ -116,13 +123,15 @@ export class CheckList extends LabelList {
 
     protected renderItem(
         index: number,
-        nodeFocus: boolean,
-        text: string,
+        item: ContentNode,
         itemRect: Rect,
         rotation: number,
-        focused: boolean,
+        nodeFocus: boolean,
+        itemFocus: boolean,
         draw2D?: IfDraw2D
     ) {
+        const text = jsValueOf(item.getFieldValue("title"));
+        const hideIcon = jsValueOf(item.getFieldValue("hideIcon"));
         const iconSize = this.getIconSize();
         const iconGap = iconSize[0] > 0 ? iconSize[0] + this.gap : 0;
         const textRect = { ...itemRect, x: itemRect.x + iconGap };
@@ -130,8 +139,8 @@ export class CheckList extends LabelList {
         let color = jsValueOf(this.getFieldValue("color"));
         const align = jsValueOf(this.getFieldValue("textHorizAlign"));
         const states = jsValueOf(this.getFieldValue("checkedState"));
-        if (!focused) {
-            if (iconGap > 0) {
+        if (!itemFocus) {
+            if (iconGap > 0 && !hideIcon) {
                 const bmpUri = states[index] ? "checkedIconUri" : "uncheckedIconUri";
                 this.drawIcon(bmpUri, itemRect, rotation, draw2D, color);
             }
@@ -147,7 +156,7 @@ export class CheckList extends LabelList {
             font = this.getFieldValue("focusedFont") as Font;
             color = jsValueOf(this.getFieldValue("focusedColor"));
         }
-        if (iconGap > 0) {
+        if (iconGap > 0 && !hideIcon) {
             const bmpUri = states[index] ? "focusedCheckedIconUri" : "focusedUncheckedIconUri";
             this.drawIcon(bmpUri, itemRect, rotation, draw2D, color);
         }

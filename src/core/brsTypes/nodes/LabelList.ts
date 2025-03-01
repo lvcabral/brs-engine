@@ -142,10 +142,11 @@ export class LabelList extends ArrayGrid {
             if (this.wrap && index < lastIndex) {
                 this.renderWrapDivider(itemRect, rotation, draw2D);
             }
-            const row = content.getNodeChildren()[index];
-            const text = jsValueOf(row.getFieldValue("title"));
             const focused = index === itemFocused;
-            this.renderItem(index, nodeFocus, text, itemRect, rotation, focused, draw2D);
+            const item = content.getNodeChildren()[index];
+            if (item instanceof ContentNode) {
+                this.renderItem(index, item, itemRect, rotation, nodeFocus, focused, draw2D);
+            }
             itemRect.y += itemSize[1] + 1;
             lastIndex = index;
         }
@@ -159,18 +160,19 @@ export class LabelList extends ArrayGrid {
     }
 
     protected renderItem(
-        _index: number,
-        nodeFocus: boolean,
-        text: string,
+        _: number,
+        item: ContentNode,
         itemRect: Rect,
         rotation: number,
-        focused: boolean,
+        nodeFocus: boolean,
+        itemFocus: boolean,
         draw2D?: IfDraw2D
     ) {
+        const text = jsValueOf(item.getFieldValue("title"));
         let font = this.getFieldValue("font") as Font;
         let color = jsValueOf(this.getFieldValue("color"));
         const align = jsValueOf(this.getFieldValue("textHorizAlign"));
-        if (!focused) {
+        if (!itemFocus) {
             this.drawText(text, font, color, itemRect, align, "center", rotation, draw2D);
             return;
         }
