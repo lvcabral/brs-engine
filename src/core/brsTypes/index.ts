@@ -141,6 +141,7 @@ export * from "./nodes/Overhang";
 export * from "./nodes/Task";
 export * from "./nodes/Timer";
 export * from "./nodes/LabelList";
+export * from "./nodes/CheckList";
 export * from "./nodes/Button";
 export * from "./nodes/ButtonGroup";
 export * from "./Boxing";
