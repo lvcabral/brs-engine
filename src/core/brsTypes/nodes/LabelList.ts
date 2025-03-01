@@ -93,21 +93,32 @@ export class LabelList extends ArrayGrid {
         }
         let handled = false;
         if (key === "up" || key === "down") {
-            const offset = key === "up" ? -1 : 1;
-            const nextIndex = this.getIndex(offset);
-            if (press && nextIndex !== this.focusIndex) {
-                this.set(new BrsString("animateToItem"), new Int32(nextIndex));
-                handled = true;
-                this.currRow += this.wrap ? 0 : offset;
-            }
+            handled = this.handleUpDown(key, press);
         } else if (key === "OK") {
-            if (press) {
-                this.set(new BrsString("itemSelected"), new Int32(this.focusIndex));
-                handled = true;
-            }
+            handled = this.handleOK(press);
         }
         this.lastPressHandled = handled ? key : "";
         return handled;
+    }
+
+    protected handleUpDown(key:string, press: boolean) {
+        let handled = false;
+        const offset = key === "up" ? -1 : 1;
+        const nextIndex = this.getIndex(offset);
+        if (press && nextIndex !== this.focusIndex) {
+            this.set(new BrsString("animateToItem"), new Int32(nextIndex));
+            handled = true;
+            this.currRow += this.wrap ? 0 : offset;
+        }
+        return handled;
+    }
+
+    protected handleOK(press: boolean) {
+        if (!press) {
+            return false;
+        }
+        this.set(new BrsString("itemSelected"), new Int32(this.focusIndex));
+        return true;
     }
 
     renderNode(interpreter: Interpreter, origin: number[], angle: number, draw2D?: IfDraw2D) {

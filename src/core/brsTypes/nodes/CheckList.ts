@@ -90,35 +90,19 @@ export class CheckList extends LabelList {
         return super.set(index, value, alwaysNotify, kind);
     }
 
-    handleKey(key: string, press: boolean): boolean {
-        if (!press && this.lastPressHandled === key) {
-            this.lastPressHandled = "";
-            return true;
+    protected handleOK(press: boolean) {
+        if (!press) {
+            return false;
         }
-        let handled = false;
-        if (key === "up" || key === "down") {
-            const offset = key === "up" ? -1 : 1;
-            const nextIndex = this.getIndex(offset);
-            if (press && nextIndex !== this.focusIndex) {
-                this.set(new BrsString("animateToItem"), new Int32(nextIndex));
-                handled = true;
-                this.currRow += this.wrap ? 0 : offset;
-            }
-        } else if (key === "OK") {
-            if (press) {
-                const checkOnSelect = jsValueOf(this.getFieldValue("checkOnSelect"));
-                const checkedState = this.getFieldValue("checkedState");
-                if (checkOnSelect && checkedState instanceof RoArray) {
-                    const states = jsValueOf(checkedState);
-                    states[this.focusIndex] = !states[this.focusIndex];
-                    this.set(new BrsString("checkedState"), brsValueOf(states));
-                }
-                this.set(new BrsString("itemSelected"), new Int32(this.focusIndex));
-                handled = true;
-            }
+        const checkOnSelect = jsValueOf(this.getFieldValue("checkOnSelect"));
+        const checkedState = this.getFieldValue("checkedState");
+        if (checkOnSelect && checkedState instanceof RoArray) {
+            const states = jsValueOf(checkedState);
+            states[this.focusIndex] = !states[this.focusIndex];
+            this.set(new BrsString("checkedState"), brsValueOf(states));
         }
-        this.lastPressHandled = handled ? key : "";
-        return handled;
+        this.set(new BrsString("itemSelected"), new Int32(this.focusIndex));
+        return true;
     }
 
     protected renderItem(
