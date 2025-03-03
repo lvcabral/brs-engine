@@ -21,6 +21,7 @@ import {
     Scene,
     Task,
     jsValueOf,
+    getTextureManager,
 } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Stmt } from "../../parser";
@@ -438,6 +439,26 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
 
         // name was not found anywhere in tree
         return BrsInvalid.Instance;
+    }
+
+    /** Load a bitmap based on one of the fields of the node */
+    getBitmap(fieldName: string) {
+        const uri = jsValueOf(this.getFieldValue(fieldName)) as string;
+        return uri?.trim() ? getTextureManager().loadTexture(uri) : undefined;
+    }
+
+    /** Returns the largest dimensions of the icons from the passed fields */
+    getIconSize(fields: string[]) {
+        let width = 0;
+        let height = 0;
+        for (const uri of fields) {
+            const bmp = this.getBitmap(uri);
+            if (bmp) {
+                width = Math.max(width, bmp.width);
+                height = Math.max(height, bmp.height);
+            }
+        }
+        return [width, height];
     }
 
     /** Copies a field value from this Node to a Child node field */
