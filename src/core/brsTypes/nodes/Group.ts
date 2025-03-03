@@ -21,7 +21,6 @@ import { BoundingRect, convertHexColor, rotateRect, unionRect } from "../../scen
 
 export class Group extends RoSGNode {
     readonly defaultFields: FieldModel[] = [
-        { name: "focusable", type: FieldKind.Boolean, value: "true" },
         { name: "visible", type: "boolean", value: "true" },
         { name: "opacity", type: "float", value: "1.0" },
         { name: "translation", type: "array", value: "[0.0,0.0]" },

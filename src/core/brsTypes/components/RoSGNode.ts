@@ -20,6 +20,7 @@ import {
     BrsEvent,
     Scene,
     Task,
+    jsValueOf,
 } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Stmt } from "../../parser";
@@ -35,9 +36,10 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     protected fields = new Map<string, Field>();
     protected children: RoSGNode[] = [];
     protected parent: RoSGNode | BrsInvalid = BrsInvalid.Instance;
-    rectLocal: BoundingRect = { x: 0, y: 0, width: 0, height: 0 };
-    rectToParent: BoundingRect = { x: 0, y: 0, width: 0, height: 0 };
-    rectToScene: BoundingRect = { x: 0, y: 0, width: 0, height: 0 };
+    protected triedInitFocus: boolean = false;
+    rectLocal: Rect = { x: 0, y: 0, width: 0, height: 0 };
+    rectToParent: Rect = { x: 0, y: 0, width: 0, height: 0 };
+    rectToScene: Rect = { x: 0, y: 0, width: 0, height: 0 };
 
     readonly defaultFields: FieldModel[] = [
         { name: "id", type: FieldKind.String },
@@ -231,7 +233,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
 
     getId() {
         const maybeID = this.fields.get("id")?.getValue();
-        return maybeID instanceof BrsString ? maybeID.value : this.subtype;
+        return maybeID instanceof BrsString ? maybeID.value : this.nodeSubtype;
     }
 
     // Used to setup values for the node fields without notifying observers
@@ -282,6 +284,10 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             }
         }
         return false;
+    }
+
+    isFocusable() {
+        return jsValueOf(this.getFieldValue("focusable")) as boolean;
     }
 
     processTimers(fired: boolean = false) {
@@ -345,20 +351,77 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         return result;
     }
 
-    /** Links a field from this Node with a Child node field */
-    protected linkField(node: RoSGNode, fieldName: string, thisField?: string) {
-        node.setFieldValue(fieldName, this.getFieldValue(thisField ?? fieldName));
-    }
+    /** Sets or removes the focus to/from the Node */
+    setNodeFocus(interpreter: Interpreter, focusOn: boolean): boolean {
+        let focusedChildString = new BrsString("focusedchild");
+        let currFocusedNode = interpreter.environment.getFocusedNode();
+        if (focusOn) {
+            if (!this.triedInitFocus) {
+                // Only try initial focus once
+                this.triedInitFocus = true;
+                const typeDef = interpreter.environment.nodeDefMap.get(
+                    this.nodeSubtype.toLowerCase()
+                );
+                if (typeDef?.initialFocus) {
+                    const initialFocus = new BrsString(typeDef.initialFocus);
+                    const childToFocus = this.findNodeById(this, initialFocus);
+                    if (childToFocus instanceof RoSGNode) {
+                        return childToFocus.setNodeFocus(interpreter, true);
+                    }
+                }
+            }
 
-    /** Message callback to handle observed fields with message port */
-    protected getNewEvents() {
-        const events: BrsEvent[] = [];
-        // To be overridden by the Task class
-        return events;
+            interpreter.environment.setFocusedNode(this);
+
+            // Get the focus chain, with lowest ancestor first.
+            let newFocusChain = this.createPath(this);
+
+            // If there's already a focused node somewhere, we need to remove focus
+            // from it and its ancestors.
+            if (currFocusedNode instanceof RoSGNode) {
+                // Get the focus chain, with root-most ancestor first.
+                let currFocusChain = this.createPath(currFocusedNode);
+
+                // Find the lowest common ancestor (LCA) between the newly focused node
+                // and the current focused node.
+                let lcaIndex = 0;
+                while (lcaIndex < newFocusChain.length && lcaIndex < currFocusChain.length) {
+                    if (currFocusChain[lcaIndex] !== newFocusChain[lcaIndex]) break;
+                    lcaIndex++;
+                }
+
+                // Unset all of the not-common ancestors of the current focused node.
+                for (let i = lcaIndex; i < currFocusChain.length; i++) {
+                    currFocusChain[i].set(focusedChildString, BrsInvalid.Instance);
+                }
+            }
+
+            // Set the focusedChild for each ancestor to the next node in the chain,
+            // which is the current node's child.
+            for (let i = 0; i < newFocusChain.length - 1; i++) {
+                newFocusChain[i].set(focusedChildString, newFocusChain[i + 1]);
+            }
+
+            // Finally, set the focusedChild of the newly focused node to itself (to mimic RBI behavior).
+            this.set(focusedChildString, this);
+        } else if (currFocusedNode === this) {
+            // If we're unsetting focus on ourself, we need to unset it on all ancestors as well.
+            interpreter.environment.setFocusedNode(BrsInvalid.Instance);
+            // Get the focus chain, with root-most ancestor first.
+            let currFocusChain = this.createPath(currFocusedNode);
+            currFocusChain.forEach((node) => {
+                node.set(focusedChildString, BrsInvalid.Instance);
+            });
+        } else {
+            // If the node doesn't have focus already, and it's not gaining focus,
+            // we don't need to notify any ancestors.
+            this.set(focusedChildString, BrsInvalid.Instance);
+        }
+        return this.isFocusable();
     }
 
     /* searches the node tree for a node with the given id */
-    private findNodeById(node: RoSGNode, id: BrsString): RoSGNode | BrsInvalid {
+    findNodeById(node: RoSGNode, id: BrsString): RoSGNode | BrsInvalid {
         // test current node in tree
         let currentId = node.get(new BrsString("id"));
         if (currentId.toString() === id.toString()) {
@@ -375,6 +438,18 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
 
         // name was not found anywhere in tree
         return BrsInvalid.Instance;
+    }
+
+    /** Links a field from this Node with a Child node field */
+    protected linkField(node: RoSGNode, fieldName: string, thisField?: string) {
+        node.setFieldValue(fieldName, this.getFieldValue(thisField ?? fieldName));
+    }
+
+    /** Message callback to handle observed fields with message port */
+    protected getNewEvents() {
+        const events: BrsEvent[] = [];
+        // To be overridden by the Task class
+        return events;
     }
 
     private removeChildByReference(child: BrsType): boolean {
@@ -1476,61 +1551,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Boolean,
         },
         impl: (interpreter: Interpreter, on: BrsBoolean) => {
-            let focusedChildString = new BrsString("focusedchild");
-            let currFocusedNode = interpreter.environment.getFocusedNode();
-
-            if (on.toBoolean()) {
-                interpreter.environment.setFocusedNode(this);
-
-                // Get the focus chain, with lowest ancestor first.
-                let newFocusChain = this.createPath(this);
-
-                // If there's already a focused node somewhere, we need to remove focus
-                // from it and its ancestors.
-                if (currFocusedNode instanceof RoSGNode) {
-                    // Get the focus chain, with root-most ancestor first.
-                    let currFocusChain = this.createPath(currFocusedNode);
-
-                    // Find the lowest common ancestor (LCA) between the newly focused node
-                    // and the current focused node.
-                    let lcaIndex = 0;
-                    while (lcaIndex < newFocusChain.length && lcaIndex < currFocusChain.length) {
-                        if (currFocusChain[lcaIndex] !== newFocusChain[lcaIndex]) break;
-                        lcaIndex++;
-                    }
-
-                    // Unset all of the not-common ancestors of the current focused node.
-                    for (let i = lcaIndex; i < currFocusChain.length; i++) {
-                        currFocusChain[i].set(focusedChildString, BrsInvalid.Instance);
-                    }
-                }
-
-                // Set the focusedChild for each ancestor to the next node in the chain,
-                // which is the current node's child.
-                for (let i = 0; i < newFocusChain.length - 1; i++) {
-                    newFocusChain[i].set(focusedChildString, newFocusChain[i + 1]);
-                }
-
-                // Finally, set the focusedChild of the newly focused node to itself (to mimic RBI behavior).
-                this.set(focusedChildString, this);
-            } else {
-                interpreter.environment.setFocusedNode(BrsInvalid.Instance);
-
-                // If we're unsetting focus on ourself, we need to unset it on all ancestors as well.
-                if (currFocusedNode === this) {
-                    // Get the focus chain, with root-most ancestor first.
-                    let currFocusChain = this.createPath(currFocusedNode);
-                    currFocusChain.forEach((node) => {
-                        node.set(focusedChildString, BrsInvalid.Instance);
-                    });
-                } else {
-                    // If the node doesn't have focus already, and it's not gaining focus,
-                    // we don't need to notify any ancestors.
-                    this.set(focusedChildString, BrsInvalid.Instance);
-                }
-            }
-
-            return BrsBoolean.False; //brightscript always returns false for some reason
+            return BrsBoolean.from(this.setNodeFocus(interpreter, on.toBoolean()));
         },
     });
 

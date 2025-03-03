@@ -24,6 +24,7 @@ export class Scene extends Group {
         { name: "backExitsScene", type: FieldKind.Boolean, value: "true" },
         { name: "dialog", type: FieldKind.Node },
         { name: "currentDesignResolution", type: FieldKind.AssocArray },
+        { name: "focusable", type: FieldKind.Boolean, value: "true" },
     ];
     readonly ui = { width: 1280, height: 720, resolution: "HD" };
 

@@ -19,9 +19,6 @@ import {
 } from "..";
 import { IfGetMessagePort, IfSetMessagePort } from "../interfaces/IfMessagePort";
 import { RoSGScreenEvent } from "../events/RoSGScreenEvent";
-import { BlockEnd } from "../../parser/Statement";
-import { Scope } from "../..";
-import { Stmt } from "../../parser";
 import {
     BrsCanvas,
     BrsCanvasContext2D,

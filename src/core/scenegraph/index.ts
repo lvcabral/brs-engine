@@ -84,7 +84,11 @@ export class ComponentDefinition {
     }
 
     public get extends(): string {
-        return this.xmlNode ? this.xmlNode.attr.extends : "";
+        return this.xmlNode?.attr?.extends ?? "";
+    }
+
+    public get initialFocus(): string {
+        return this.xmlNode?.attr?.initialFocus ?? "";
     }
 }
 

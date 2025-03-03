@@ -19,6 +19,7 @@ export class ArrayGrid extends Group {
         { name: "itemSpacing", type: "array", value: "[0,0]" },
         { name: "numRows", type: "integer", value: "0" },
         { name: "numColumns", type: "integer", value: "0" },
+        { name: "focusable", type: "boolean", value: "true" },
         { name: "focusRow", type: "integer", value: "0" },
         { name: "focusColumn", type: "integer", value: "0" },
         { name: "horizFocusAnimationStyle", type: "string", value: "floatingFocus" },
