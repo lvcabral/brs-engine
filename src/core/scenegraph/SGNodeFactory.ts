@@ -31,6 +31,7 @@ import {
     Button,
     LabelList,
     CheckList,
+    RadioButtonList,
 } from "../brsTypes";
 import { TaskData } from "../common";
 
@@ -47,6 +48,7 @@ export enum SGNodeType {
     ArrayGrid = "ArrayGrid",
     LabelList = "LabelList",
     CheckList = "CheckList",
+    RadioButtonList = "RadioButtonList",
     MarkupGrid = "MarkupGrid",
     ContentNode = "ContentNode",
     Task = "Task",
@@ -113,6 +115,8 @@ export class SGNodeFactory {
                 return new LabelList([], name);
             case SGNodeType.CheckList:
                 return new CheckList([], name);
+            case SGNodeType.RadioButtonList:
+                return new RadioButtonList([], name);
             case SGNodeType.MarkupGrid:
                 return new MarkupGrid([], name);
             case SGNodeType.ContentNode:
