@@ -440,8 +440,8 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         return BrsInvalid.Instance;
     }
 
-    /** Links a field from this Node with a Child node field */
-    protected linkField(node: RoSGNode, fieldName: string, thisField?: string) {
+    /** Copies a field value from this Node to a Child node field */
+    protected copyField(node: RoSGNode, fieldName: string, thisField?: string) {
         node.setFieldValue(fieldName, this.getFieldValue(thisField ?? fieldName));
     }
 

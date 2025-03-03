@@ -138,11 +138,7 @@ export class Button extends Group {
         horizAlign?: string
     ) {
         const label = new Label();
-        const labelFields = label.getNodeFields();
-        const color = this.fields.get(colorField.toLowerCase());
-        if (color) {
-            labelFields.set("color", color);
-        }
+        this.copyField(label, "color", colorField);
         if (width) {
             label.set(new BrsString("width"), new Float(width));
         }
