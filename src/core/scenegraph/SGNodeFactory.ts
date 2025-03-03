@@ -32,6 +32,7 @@ import {
     LabelList,
     CheckList,
     RadioButtonList,
+    MarkupList,
 } from "../brsTypes";
 import { TaskData } from "../common";
 
@@ -49,6 +50,7 @@ export enum SGNodeType {
     LabelList = "LabelList",
     CheckList = "CheckList",
     RadioButtonList = "RadioButtonList",
+    MarkupList = "MarkupList",
     MarkupGrid = "MarkupGrid",
     ContentNode = "ContentNode",
     Task = "Task",
@@ -117,6 +119,8 @@ export class SGNodeFactory {
                 return new CheckList([], name);
             case SGNodeType.RadioButtonList:
                 return new RadioButtonList([], name);
+            case SGNodeType.MarkupList:
+                return new MarkupList([], name);
             case SGNodeType.MarkupGrid:
                 return new MarkupGrid([], name);
             case SGNodeType.ContentNode:
@@ -197,7 +201,7 @@ export function initializeNode(
             // Add the current typedef to the subtypeHierarchy
             subtypeHierarchy.set(typeDef.name!.toLowerCase(), typeDef.extends || SGNodeType.Node);
 
-            typeDef = interpreter.environment.nodeDefMap.get(typeDef.extends?.toLowerCase());
+            typeDef = interpreter.environment.nodeDefMap.get(typeDef.extends.toLowerCase());
             if (typeDef) typeDefStack.push(typeDef);
         }
 
@@ -280,7 +284,7 @@ export function initializeTask(interpreter: Interpreter, taskData: TaskData) {
             // Add the current typedef to the subtypeHierarchy
             subtypeHierarchy.set(typeDef.name!.toLowerCase(), typeDef.extends || SGNodeType.Task);
 
-            typeDef = interpreter.environment.nodeDefMap.get(typeDef.extends?.toLowerCase());
+            typeDef = interpreter.environment.nodeDefMap.get(typeDef.extends.toLowerCase());
             if (typeDef) typeDefStack.push(typeDef);
         }
 
