@@ -96,7 +96,9 @@ export class LabelList extends ArrayGrid {
         }
         let handled = false;
         if (key === "up" || key === "down") {
-            handled = this.handleUpDown(key, press);
+            handled = press ? this.handleUpDown(key) : false;
+        } else if (key === "rewind" || key === "fastforward") {
+            handled = press ? this.handlePageUpDown(key) : false;
         } else if (key === "OK") {
             handled = this.handleOK(press);
         }
@@ -104,14 +106,34 @@ export class LabelList extends ArrayGrid {
         return handled;
     }
 
-    protected handleUpDown(key: string, press: boolean) {
+    protected handleUpDown(key: string) {
         let handled = false;
         const offset = key === "up" ? -1 : 1;
         const nextIndex = this.getIndex(offset);
-        if (press && nextIndex !== this.focusIndex) {
+        if (nextIndex !== this.focusIndex) {
             this.set(new BrsString("animateToItem"), new Int32(nextIndex));
             handled = true;
             this.currRow += this.wrap ? 0 : offset;
+        }
+        return handled;
+    }
+
+    protected handlePageUpDown(key: string) {
+        let handled = false;
+        let nextIndex:number;
+        if (this.wrap) {
+            const step = Math.max(1, jsValueOf(this.getFieldValue("numRows")) - 2);
+            const offset = key === "rewind" ? -step : step;
+            nextIndex = this.getIndex(offset);
+        } else {
+            const content = this.getFieldValue("content") as ContentNode;
+            const childCount = content.getNodeChildren().length;
+            nextIndex = key === "rewind" ? 0 : childCount - 1;
+            this.currRow = key === "rewind" ? 0 : jsValueOf(this.getFieldValue("numRows")) - 1;
+        }
+        if (nextIndex !== this.focusIndex) {
+            this.set(new BrsString("animateToItem"), new Int32(nextIndex));
+            handled = true;
         }
         return handled;
     }
