@@ -121,11 +121,6 @@ export class Group extends RoSGNode {
         return rotation instanceof Float ? rotation.getValue() : 0;
     }
 
-    protected getBitmap(fieldName: string) {
-        const uri = jsValueOf(this.getFieldValue(fieldName)) as string;
-        return uri.trim() ? getTextureManager().loadTexture(uri) : undefined;
-    }
-
     setScale(scale: number[]) {
         this.scale[0] = scale[0];
         this.scale[1] = scale[1];

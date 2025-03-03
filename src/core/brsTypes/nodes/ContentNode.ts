@@ -107,6 +107,10 @@ export class ContentNode extends RoSGNode {
         { name: "Text", type: "string", hidden: true },
         { name: "TextAttrs", type: "assocarray", hidden: true },
         { name: "HideIcon", type: "boolean", hidden: true },
+        { name: "HDListItemIconUrl", type: "string", hidden: true },
+        { name: "SDListItemIconUrl", type: "string", hidden: true },
+        { name: "HDListItemIconSelectedUrl", type: "string", hidden: true },
+        { name: "SDListItemIconSelectedUrl", type: "string", hidden: true },
     ];
 
     /**
