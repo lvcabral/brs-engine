@@ -1,7 +1,7 @@
 import { FieldModel } from "./Field";
 import { AAMember } from "../components/RoAssociativeArray";
 import { LabelList } from "./LabelList";
-import { BrsString, ContentNode, Int32, jsValueOf, rootObjects, RoSGNode } from "..";
+import { BrsString, ContentNode, Int32, jsValueOf, rootObjects } from "..";
 import { IfDraw2D, Rect } from "../interfaces/IfDraw2D";
 
 export class RadioButtonList extends LabelList {
@@ -56,7 +56,8 @@ export class RadioButtonList extends LabelList {
         const iconSize = this.getIconSize(icons);
         const iconGap = iconSize[0] > 0 ? iconSize[0] + this.gap : 0;
         const showIcon = index === checked && iconGap > 0;
-        const bmp = showIcon ? this.getBitmap(icons[itemFocus ? 1 : 0]) : undefined;
+        const iconIndex = itemFocus ? 1 : 0;
+        const bmp = showIcon ? this.getBitmap(icons[iconIndex]) : undefined;
         if (!itemFocus) {
             this.renderUnfocused(text, rect, iconGap, true, bmp, draw2D);
         } else {

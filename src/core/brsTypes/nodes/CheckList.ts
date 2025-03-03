@@ -118,7 +118,8 @@ export class CheckList extends LabelList {
         const iconSize = this.getIconSize(icons);
         const text = jsValueOf(item.getFieldValue("title"));
         const iconGap = iconSize[0] > 0 ? iconSize[0] + this.gap : 0;
-        const bmp = !hideIcon && iconGap > 0 ? this.getBitmap(icons[itemFocus ? 1 : 0]) : undefined;
+        const iconIndex = itemFocus ? 1 : 0;
+        const bmp = !hideIcon && iconGap > 0 ? this.getBitmap(icons[iconIndex]) : undefined;
         if (!itemFocus) {
             this.renderUnfocused(text, rect, iconGap, true, bmp, draw2D);
         } else {

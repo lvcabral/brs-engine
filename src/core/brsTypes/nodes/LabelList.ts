@@ -185,7 +185,8 @@ export class LabelList extends ArrayGrid {
         const iconSize = item.getIconSize(icons);
         const text = jsValueOf(item.getFieldValue("title"));
         const iconGap = iconSize[0] > 0 ? iconSize[0] + this.gap : 0;
-        const bmp = iconGap > 0 ? item.getBitmap(icons[itemFocus ? 1 : 0]) : undefined;
+        const iconIndex = itemFocus ? 1 : 0;
+        const bmp = iconGap > 0 ? item.getBitmap(icons[iconIndex]) : undefined;
         if (!itemFocus) {
             this.renderUnfocused(text, rect, iconGap, false, bmp, draw2D);
         } else {
