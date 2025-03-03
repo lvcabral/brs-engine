@@ -57,7 +57,6 @@ export class RadioButtonList extends LabelList {
         const text = jsValueOf(item.getFieldValue("title"));
         const iconSize = this.getIconSize();
         const iconGap = iconSize[0] > 0 ? iconSize[0] + this.gap : 0;
-        console.log("icon gap", iconGap);
         const textRect = { ...itemRect, x: itemRect.x + iconGap };
         let font = this.getFieldValue("font") as Font;
         let color = jsValueOf(this.getFieldValue("color"));
