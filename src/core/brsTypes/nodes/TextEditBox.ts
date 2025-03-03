@@ -14,6 +14,7 @@ export class TextEditBox extends Group {
         { name: "hintTextColor", type: "color", value: "0xFFFFFFFF" },
         { name: "width", type: "float", value: "-1.0" },
         { name: "backgroundUri", type: "string", value: "" },
+        { name: "focusable", type: "boolean", value: "true" },
     ];
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = "TextEditBox") {
