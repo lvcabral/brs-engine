@@ -366,7 +366,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
                     const initialFocus = new BrsString(typeDef.initialFocus);
                     const childToFocus = this.findNodeById(this, initialFocus);
                     if (childToFocus instanceof RoSGNode) {
-                       return childToFocus.setNodeFocus(interpreter, true);
+                        return childToFocus.setNodeFocus(interpreter, true);
                     }
                 }
             }
@@ -404,20 +404,18 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
 
             // Finally, set the focusedChild of the newly focused node to itself (to mimic RBI behavior).
             this.set(focusedChildString, this);
-        } else {
+        } else if (currFocusedNode === this) {
             // If we're unsetting focus on ourself, we need to unset it on all ancestors as well.
-            if (currFocusedNode === this) {
-                interpreter.environment.setFocusedNode(BrsInvalid.Instance);
-                // Get the focus chain, with root-most ancestor first.
-                let currFocusChain = this.createPath(currFocusedNode);
-                currFocusChain.forEach((node) => {
-                    node.set(focusedChildString, BrsInvalid.Instance);
-                });
-            } else {
-                // If the node doesn't have focus already, and it's not gaining focus,
-                // we don't need to notify any ancestors.
-                this.set(focusedChildString, BrsInvalid.Instance);
-            }
+            interpreter.environment.setFocusedNode(BrsInvalid.Instance);
+            // Get the focus chain, with root-most ancestor first.
+            let currFocusChain = this.createPath(currFocusedNode);
+            currFocusChain.forEach((node) => {
+                node.set(focusedChildString, BrsInvalid.Instance);
+            });
+        } else {
+            // If the node doesn't have focus already, and it's not gaining focus,
+            // we don't need to notify any ancestors.
+            this.set(focusedChildString, BrsInvalid.Instance);
         }
         return this.isFocusable();
     }
