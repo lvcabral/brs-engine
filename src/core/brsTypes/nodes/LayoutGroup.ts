@@ -9,6 +9,7 @@ export class LayoutGroup extends Group {
         { name: "vertAlignment", type: "string", value: "top" },
         { name: "itemSpacings", type: "array" },
         { name: "addItemSpacingAfterChild", type: "boolean", value: "true" },
+        { name: "focusable", type: "boolean", value: "true" },
     ];
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = "LayoutGroup") {
