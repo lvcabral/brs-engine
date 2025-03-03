@@ -215,7 +215,7 @@ export class ButtonGroup extends LayoutGroup {
     private calculateButtonWidth(buttons: string[], font: RoFont): number {
         const minWidth = jsValueOf(this.getFieldValue("minWidth")) as number;
         const maxWidth = jsValueOf(this.getFieldValue("maxWidth")) as number;
-        this.iconSize = this.getIconSize();
+        this.iconSize = this.getIconSize(["iconUri", "focusedIconUri"]);
         const iconGap = this.iconSize[0] > 0 ? this.iconSize[0] + this.gap : 0;
         const labelMax = maxWidth - this.margin * 2 - iconGap;
 
@@ -225,19 +225,6 @@ export class ButtonGroup extends LayoutGroup {
             labelWidth = Math.max(measured.width, labelWidth);
         }
         return Math.min(maxWidth, labelWidth + this.margin * 2 + iconGap);
-    }
-
-    private getIconSize() {
-        let width = 0;
-        let height = 0;
-        for (const uri of ["iconUri", "focusedIconUri"]) {
-            const bmp = this.getBitmap(uri);
-            if (bmp) {
-                width = Math.max(width, bmp.width);
-                height = Math.max(height, bmp.height);
-            }
-        }
-        return [width, height];
     }
 
     private getIndex(offset: number = 0) {

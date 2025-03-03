@@ -10,6 +10,7 @@ import {
     ContentNode,
     Int32,
     jsValueOf,
+    RoBitmap,
     rootObjects,
     ValueKind,
 } from "..";
@@ -33,6 +34,7 @@ export class LabelList extends ArrayGrid {
     protected readonly footprintUri = "common:/images/focus_footprint.9.png";
     protected readonly dividerUri = "common:/images/dividerHorizontal.9.png";
     protected readonly margin: number;
+    protected readonly gap: number;
     protected wrap: boolean;
     protected currRow: number;
     protected hasNinePatch: boolean;
@@ -51,6 +53,7 @@ export class LabelList extends ArrayGrid {
             this.margin = 24;
             this.setFieldValue("itemSize", brsValueOf([340, 48]));
         }
+        this.gap = this.margin / 2;
         this.setFieldValue("focusBitmapUri", new BrsString(this.focusUri));
         this.setFieldValue("focusFootprintBitmapUri", new BrsString(this.footprintUri));
         this.setFieldValue("wrapDividerBitmapUri", new BrsString(this.dividerUri));
@@ -151,12 +154,12 @@ export class LabelList extends ArrayGrid {
         for (let r = 0; r < displayRows; r++) {
             const index = this.getIndex(r - this.currRow);
             if (this.wrap && index < lastIndex) {
-                this.renderWrapDivider(itemRect, rotation, draw2D);
+                this.renderWrapDivider(itemRect, draw2D);
             }
             const focused = index === itemFocused;
             const item = content.getNodeChildren()[index];
             if (item instanceof ContentNode) {
-                this.renderItem(index, item, itemRect, rotation, nodeFocus, focused, draw2D);
+                this.renderItem(index, item, itemRect, nodeFocus, focused, draw2D);
             }
             itemRect.y += itemSize[1] + 1;
             lastIndex = index;
@@ -173,37 +176,77 @@ export class LabelList extends ArrayGrid {
     protected renderItem(
         _: number,
         item: ContentNode,
-        itemRect: Rect,
-        rotation: number,
+        rect: Rect,
         nodeFocus: boolean,
         itemFocus: boolean,
         draw2D?: IfDraw2D
     ) {
+        const icons = ["HDListItemIconUrl", "HDListItemIconSelectedUrl"];
+        const iconSize = item.getIconSize(icons);
         const text = jsValueOf(item.getFieldValue("title"));
-        let font = this.getFieldValue("font") as Font;
-        let color = jsValueOf(this.getFieldValue("color"));
-        const align = jsValueOf(this.getFieldValue("textHorizAlign"));
+        const iconGap = iconSize[0] > 0 ? iconSize[0] + this.gap : 0;
+        const iconIndex = itemFocus ? 1 : 0;
+        const bmp = iconGap > 0 ? item.getBitmap(icons[iconIndex]) : undefined;
         if (!itemFocus) {
-            this.drawText(text, font, color, itemRect, align, "center", rotation, draw2D);
-            return;
+            this.renderUnfocused(text, rect, iconGap, false, bmp, draw2D);
+        } else {
+            this.renderFocused(text, rect, nodeFocus, iconGap, false, bmp, draw2D);
         }
+    }
+
+    protected renderUnfocused(
+        text: string,
+        rect: Rect,
+        iconGap: number,
+        iconColor: boolean,
+        iconBmp?: RoBitmap,
+        draw2D?: IfDraw2D
+    ) {
+        const font = this.getFieldValue("font") as Font;
+        const color = jsValueOf(this.getFieldValue("color"));
+        const align = jsValueOf(this.getFieldValue("textHorizAlign"));
+        const textRect = { ...rect, x: rect.x + iconGap };
+        if (iconBmp) {
+            this.renderIcon(iconBmp, rect, draw2D, iconColor ? color : undefined);
+        }
+        this.drawText(text, font, color, textRect, align, "center", 0, draw2D);
+    }
+
+    protected renderFocused(
+        text: string,
+        rect: Rect,
+        nodeFocus: boolean,
+        iconGap: number,
+        iconColor: boolean,
+        iconBmp?: RoBitmap,
+        draw2D?: IfDraw2D
+    ) {
+        const font = this.getFieldValue(nodeFocus ? "focusedFont" : "font") as Font;
+        const color = jsValueOf(this.getFieldValue(nodeFocus ? "focusedColor" : "color"));
+        const align = jsValueOf(this.getFieldValue("textHorizAlign"));
+        const textRect = { ...rect, x: rect.x + iconGap };
         const drawFocus = jsValueOf(this.getFieldValue("drawFocusFeedback"));
         const drawFocusOnTop = jsValueOf(this.getFieldValue("drawFocusFeedbackOnTop"));
         if (drawFocus && !drawFocusOnTop) {
-            this.renderFocus(itemRect, nodeFocus, rotation, draw2D);
+            this.renderFocus(rect, nodeFocus, draw2D);
         }
-        if (nodeFocus) {
-            font = this.getFieldValue("focusedFont") as Font;
-            color = jsValueOf(this.getFieldValue("focusedColor"));
+        if (iconBmp) {
+            this.renderIcon(iconBmp, rect, draw2D, iconColor ? color : undefined);
         }
-        this.drawText(text, font, color, itemRect, align, "center", rotation, draw2D);
+        this.drawText(text, font, color, textRect, align, "center", 0, draw2D);
         if (drawFocus && drawFocusOnTop) {
-            this.renderFocus(itemRect, nodeFocus, rotation, draw2D);
+            this.renderFocus(rect, nodeFocus, draw2D);
         }
         this.hasNinePatch = this.hasNinePatch && drawFocus;
     }
 
-    protected renderFocus(itemRect: Rect, nodeFocus: boolean, rotation: number, draw2D?: IfDraw2D) {
+    protected renderIcon(bmp: RoBitmap, rect: Rect, draw2D?: IfDraw2D, color?: number) {
+        const iconY = rect.y + (rect.height / 2 - bmp.height / 2);
+        const iconRect = { ...rect, y: iconY, width: bmp.width, height: bmp.height };
+        this.drawImage(bmp, iconRect, 0, draw2D, color);
+    }
+
+    protected renderFocus(itemRect: Rect, nodeFocus: boolean, draw2D?: IfDraw2D) {
         const focusBitmap = this.getBitmap("focusBitmapUri");
         const focusFootprint = this.getBitmap("focusFootprintBitmapUri");
         this.hasNinePatch = (focusBitmap?.ninePatch || focusFootprint?.ninePatch) === true;
@@ -215,19 +258,19 @@ export class LabelList extends ArrayGrid {
         };
         if (nodeFocus && focusBitmap) {
             const rect = focusBitmap.ninePatch ? ninePatchRect : itemRect;
-            this.drawImage(focusBitmap, rect, rotation, draw2D);
+            this.drawImage(focusBitmap, rect, 0, draw2D);
         } else if (!nodeFocus && focusFootprint) {
             const rect = focusFootprint.ninePatch ? ninePatchRect : itemRect;
-            this.drawImage(focusFootprint, rect, rotation, draw2D);
+            this.drawImage(focusFootprint, rect, 0, draw2D);
         }
     }
 
-    protected renderWrapDivider(itemRect: Rect, rotation: number, draw2D?: IfDraw2D) {
+    protected renderWrapDivider(itemRect: Rect, draw2D?: IfDraw2D) {
         const bmp = this.getBitmap("wrapDividerBitmapUri");
         const dividerHeight = jsValueOf(this.getFieldValue("wrapDividerHeight"));
         if (bmp?.isValid()) {
             const rect = { ...itemRect, y: itemRect.y + dividerHeight / 2 - 1, height: 2 };
-            this.drawImage(bmp, rect, rotation, draw2D);
+            this.drawImage(bmp, rect, 0, draw2D);
         }
         itemRect.y += dividerHeight;
     }

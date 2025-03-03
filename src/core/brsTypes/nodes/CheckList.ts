@@ -1,7 +1,6 @@
 import { FieldKind, FieldModel } from "./Field";
 import { AAMember } from "../components/RoAssociativeArray";
 import { LabelList } from "./LabelList";
-import { Font } from "./Font";
 import {
     BrsInvalid,
     BrsString,
@@ -30,7 +29,6 @@ export class CheckList extends LabelList {
     private readonly checkOffHDUri = "common:/images/icon_checkboxOFF_HD.png";
     private readonly checkOnFHDUri = "common:/images/icon_checkboxON_FHD.png";
     private readonly checkOffFHDUri = "common:/images/icon_checkboxOFF_FHD.png";
-    private readonly gap: number;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = "CheckList") {
         super([], name);
@@ -38,7 +36,6 @@ export class CheckList extends LabelList {
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
 
-        this.gap = this.margin / 2;
         if (rootObjects.rootScene?.ui && rootObjects.rootScene.ui.resolution === "FHD") {
             this.setFieldValue("checkedIconUri", new BrsString(this.checkOnFHDUri));
             this.setFieldValue("uncheckedIconUri", new BrsString(this.checkOffFHDUri));
@@ -108,74 +105,26 @@ export class CheckList extends LabelList {
     protected renderItem(
         index: number,
         item: ContentNode,
-        itemRect: Rect,
-        rotation: number,
+        rect: Rect,
         nodeFocus: boolean,
         itemFocus: boolean,
         draw2D?: IfDraw2D
     ) {
-        const text = jsValueOf(item.getFieldValue("title"));
-        const hideIcon = jsValueOf(item.getFieldValue("hideIcon"));
-        const iconSize = this.getIconSize();
-        const iconGap = iconSize[0] > 0 ? iconSize[0] + this.gap : 0;
-        const textRect = { ...itemRect, x: itemRect.x + iconGap };
-        let font = this.getFieldValue("font") as Font;
-        let color = jsValueOf(this.getFieldValue("color"));
-        const align = jsValueOf(this.getFieldValue("textHorizAlign"));
         const states = jsValueOf(this.getFieldValue("checkedState"));
+        const hideIcon = jsValueOf(item.getFieldValue("hideIcon"));
+        const icons = states[index]
+            ? ["checkedIconUri", "focusedCheckedIconUri"]
+            : ["uncheckedIconUri", "focusedUncheckedIconUri"];
+        const iconSize = this.getIconSize(icons);
+        const text = jsValueOf(item.getFieldValue("title"));
+        const iconGap = iconSize[0] > 0 ? iconSize[0] + this.gap : 0;
+        const iconIndex = itemFocus ? 1 : 0;
+        const bmp = !hideIcon && iconGap > 0 ? this.getBitmap(icons[iconIndex]) : undefined;
         if (!itemFocus) {
-            if (iconGap > 0 && !hideIcon) {
-                const bmpUri = states[index] ? "checkedIconUri" : "uncheckedIconUri";
-                this.drawIcon(bmpUri, itemRect, rotation, draw2D, color);
-            }
-            this.drawText(text, font, color, textRect, align, "center", rotation, draw2D);
-            return;
+            this.renderUnfocused(text, rect, iconGap, true, bmp, draw2D);
+        } else {
+            this.renderFocused(text, rect, nodeFocus, iconGap, true, bmp, draw2D);
         }
-        const drawFocus = jsValueOf(this.getFieldValue("drawFocusFeedback"));
-        const drawFocusOnTop = jsValueOf(this.getFieldValue("drawFocusFeedbackOnTop"));
-        if (drawFocus && !drawFocusOnTop) {
-            this.renderFocus(itemRect, nodeFocus, rotation, draw2D);
-        }
-        if (nodeFocus) {
-            font = this.getFieldValue("focusedFont") as Font;
-            color = jsValueOf(this.getFieldValue("focusedColor"));
-        }
-        if (iconGap > 0 && !hideIcon) {
-            const bmpUri = states[index] ? "focusedCheckedIconUri" : "focusedUncheckedIconUri";
-            this.drawIcon(bmpUri, itemRect, rotation, draw2D, color);
-        }
-        this.drawText(text, font, color, textRect, align, "center", rotation, draw2D);
-        if (drawFocus && drawFocusOnTop) {
-            this.renderFocus(itemRect, nodeFocus, rotation, draw2D);
-        }
-        this.hasNinePatch = this.hasNinePatch && drawFocus;
-    }
-
-    private drawIcon(uri: string, rect: Rect, angle: number, draw2D?: IfDraw2D, color?: number) {
-        const bmp = this.getBitmap(uri);
-        if (bmp) {
-            const iconY = rect.y + (rect.height / 2 - bmp.height / 2);
-            const iconRect = { ...rect, y: iconY, width: bmp.width, height: bmp.height };
-            this.drawImage(bmp, iconRect, angle, draw2D, color);
-        }
-    }
-
-    private getIconSize() {
-        let width = 0;
-        let height = 0;
-        for (const uri of [
-            "checkedIconUri",
-            "uncheckedIconUri",
-            "focusedCheckedIconUri",
-            "focusedUncheckedIconUri",
-        ]) {
-            const bmp = this.getBitmap(uri);
-            if (bmp) {
-                width = Math.max(width, bmp.width);
-                height = Math.max(height, bmp.height);
-            }
-        }
-        return [width, height];
     }
 
     private refreshCheckedState() {
