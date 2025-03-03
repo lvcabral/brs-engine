@@ -13,7 +13,6 @@ import {
     Button,
     Float,
     Font,
-    getTextureManager,
     Int32,
     jsValueOf,
     Label,
@@ -166,17 +165,17 @@ export class ButtonGroup extends LayoutGroup {
                 }
                 button.iconSize = this.iconSize;
                 button.setFieldValue("text", new BrsString(buttonText));
-                this.linkField(button, "textColor");
-                this.linkField(button, "focusedTextColor");
-                this.linkField(button, "textFont");
-                this.linkField(button, "focusedTextFont");
-                this.linkField(button, "focusBitmapUri");
-                this.linkField(button, "focusFootprintBitmapUri");
-                this.linkField(button, "iconUri");
-                this.linkField(button, "focusedIconUri");
-                this.linkField(button, "height", "buttonHeight");
+                this.copyField(button, "textColor");
+                this.copyField(button, "focusedTextColor");
+                this.copyField(button, "textFont");
+                this.copyField(button, "focusedTextFont");
+                this.copyField(button, "focusBitmapUri");
+                this.copyField(button, "focusFootprintBitmapUri");
+                this.copyField(button, "iconUri");
+                this.copyField(button, "focusedIconUri");
+                this.copyField(button, "height", "buttonHeight");
                 button.setFieldValue("minWidth", new Float(this.width));
-                this.linkField(button, "maxWidth");
+                this.copyField(button, "maxWidth");
                 button.setFieldValue("showFocusFootprint", BrsBoolean.from(this.focusIndex === i));
                 const buttonY = i * (Math.max(buttonHeight, this.iconSize[1]) - this.vertOffset);
                 const offsetY = Math.max((this.iconSize[1] - buttonHeight) / 2, 0);

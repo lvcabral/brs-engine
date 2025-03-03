@@ -101,7 +101,7 @@ export class LabelList extends ArrayGrid {
         return handled;
     }
 
-    protected handleUpDown(key:string, press: boolean) {
+    protected handleUpDown(key: string, press: boolean) {
         let handled = false;
         const offset = key === "up" ? -1 : 1;
         const nextIndex = this.getIndex(offset);
