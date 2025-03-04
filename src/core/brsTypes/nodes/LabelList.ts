@@ -150,8 +150,12 @@ export class LabelList extends ArrayGrid {
         if (!this.isVisible()) {
             return;
         }
-        const nodeFocus = interpreter.environment.getFocusedNode() === this;
         const content = this.getFieldValue("content") as ContentNode;
+        const childCount = content.getNodeChildren().length;
+        if (childCount === 0) {
+            return;
+        }
+        const nodeFocus = interpreter.environment.getFocusedNode() === this;
         const nodeTrans = this.getTranslation();
         const drawTrans = angle !== 0 ? rotateTranslation(nodeTrans, angle) : nodeTrans.slice();
         drawTrans[0] += origin[0];
@@ -161,15 +165,13 @@ export class LabelList extends ArrayGrid {
         const rotation = angle + this.getRotation();
         const itemSize = jsValueOf(this.getFieldValue("itemSize"));
         const numRows = jsValueOf(this.getFieldValue("numRows"));
-        const itemFocused = jsValueOf(this.getFieldValue("itemFocused"));
         let focusRow = jsValueOf(this.getFieldValue("focusRow"));
         if (!this.wrap) {
             this.currRow = Math.max(0, Math.min(this.currRow, numRows - 1));
-            this.currRow = Math.min(Math.max(this.currRow, focusRow), itemFocused);
+            this.currRow = Math.min(Math.max(this.currRow, focusRow), this.focusIndex);
         } else {
             this.currRow = focusRow;
         }
-        const childCount = content.getNodeChildren().length;
         const displayRows = Math.min(childCount, numRows);
         const itemRect = { ...rect, width: itemSize[0], height: itemSize[1] };
         let lastIndex = -1;
@@ -178,7 +180,7 @@ export class LabelList extends ArrayGrid {
             if (this.wrap && index < lastIndex) {
                 this.renderWrapDivider(itemRect, draw2D);
             }
-            const focused = index === itemFocused;
+            const focused = index === this.focusIndex;
             const item = content.getNodeChildren()[index];
             if (item instanceof ContentNode) {
                 this.renderItem(index, item, itemRect, nodeFocus, focused, draw2D);
@@ -298,8 +300,7 @@ export class LabelList extends ArrayGrid {
     }
 
     protected getIndex(offset: number = 0) {
-        const itemFocused = jsValueOf(this.getFieldValue("itemFocused")) as number;
-        const index = itemFocused + offset;
+        const index = this.focusIndex + offset;
         const content = this.getFieldValue("content") as ContentNode;
         const childCount = content.getNodeChildren().length;
         if (this.wrap) {

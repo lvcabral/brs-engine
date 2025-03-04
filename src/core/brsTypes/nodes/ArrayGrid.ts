@@ -7,6 +7,7 @@ import {
     BrsType,
     ContentNode,
     Float,
+    Int32,
     jsValueOf,
     rootObjects,
     ValueKind,
@@ -50,9 +51,9 @@ export class ArrayGrid extends Group {
         { name: "sectionDividerMinWidth", type: "float", value: "0.0" },
         { name: "sectionDividerLeftOffset", type: "float", value: "0.0" },
         { name: "itemClippingRect", type: "array", value: "[ 0.0, 0.0, 0.0, 0.0 ]" },
-        { name: "itemSelected", type: "integer", value: "0" },
-        { name: "itemFocused", type: "integer", value: "0" },
-        { name: "itemUnfocused", type: "integer", value: "0" },
+        { name: "itemSelected", type: "integer", value: "-1" },
+        { name: "itemFocused", type: "integer", value: "-1" },
+        { name: "itemUnfocused", type: "integer", value: "-1" },
         { name: "jumpToItem", type: "integer", value: "0" },
         { name: "animateToItem", type: "integer", value: "0" },
         { name: "currFocusRow", type: "float", value: "0.0" },
@@ -83,13 +84,14 @@ export class ArrayGrid extends Group {
         if (["jumptoitem", "animatetoitem"].includes(fieldName)) {
             const focusedIndex = jsValueOf(this.getFieldValue("itemFocused"));
             if (focusedIndex !== jsValueOf(value)) {
+                super.set(new BrsString("itemUnfocused"), new Int32(this.focusIndex));
                 this.focusIndex = jsValueOf(value);
                 index = new BrsString("itemFocused");
             } else {
                 return BrsInvalid.Instance;
             }
-        } else if (fieldName === "itemfocused") {
-            // Read-only field
+        } else if (fieldName === "itemfocused" || fieldName === "itemunfocused") {
+            // Read-only fields
             return BrsInvalid.Instance;
         } else if (
             fieldName === "vertfocusanimationstyle" &&
