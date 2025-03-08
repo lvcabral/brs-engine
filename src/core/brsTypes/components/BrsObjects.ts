@@ -27,11 +27,8 @@ import { getTextureManager } from "./RoTextureManager";
 import { RoTextureRequest } from "./RoTextureRequest";
 import { RoImageMetadata } from "./RoImageMetadata";
 import { RoAudioMetadata } from "./RoAudioMetadata";
-import { RoAudioPlayer } from "./RoAudioPlayer";
-import { RoVideoPlayer } from "./RoVideoPlayer";
 import { RoXMLElement } from "./RoXMLElement";
 import { RoURLTransfer } from "./RoURLTransfer";
-import { createAudioResource } from "./RoAudioResource";
 import { RoLocalization } from "./RoLocalization";
 import { RoRegistry } from "./RoRegistry";
 import { RoRegistrySection } from "./RoRegistrySection";
@@ -58,7 +55,12 @@ import { RoCECStatus } from "./RoCECStatus";
 import { RoSocketAddress } from "./RoSocketAddress";
 import { RoStreamSocket } from "./RoStreamSocket";
 import { RoHdmiStatus } from "./RoHdmiStatus";
+/// #if !TASK
+import { createAudioResource } from "./RoAudioResource";
+import { RoAudioPlayer } from "./RoAudioPlayer";
+import { RoVideoPlayer } from "./RoVideoPlayer";
 import { RoSGScreen } from "./RoSGScreen";
+/// #endif
 
 // Class to define a case-insensitive map of BrightScript objects.
 class BrsObjectsMap {
@@ -166,10 +168,7 @@ export const BrsObjects = new BrsObjectsMap([
     ["roDeviceInfo", (_?: Interpreter) => new RoDeviceInfo()],
     ["roRemoteInfo", (_?: Interpreter) => new RoRemoteInfo()],
     ["roAppMemoryMonitor", (_?: Interpreter) => new RoAppMemoryMonitor()],
-    ["roAudioPlayer", (_?: Interpreter) => new RoAudioPlayer()],
-    ["roAudioResource", (_: Interpreter, name: BrsString) => createAudioResource(name), 1],
     ["roAudioMetadata", (_?: Interpreter) => new RoAudioMetadata()],
-    ["roVideoPlayer", (_?: Interpreter) => new RoVideoPlayer()],
     ["roCompositor", (_?: Interpreter) => new RoCompositor()],
     [
         "roRegion",
@@ -202,5 +201,10 @@ export const BrsObjects = new BrsObjectsMap([
         (interpreter: Interpreter, nodeType: BrsString) => createNodeByType(interpreter, nodeType),
         1,
     ],
+    /// #if !TASK
+    ["roAudioPlayer", (_?: Interpreter) => new RoAudioPlayer()],
+    ["roAudioResource", (_: Interpreter, name: BrsString) => createAudioResource(name), 1],
+    ["roVideoPlayer", (_?: Interpreter) => new RoVideoPlayer()],
     ["roSGScreen", (interpreter: Interpreter) => new RoSGScreen(interpreter)],
+    /// #endif
 ]);

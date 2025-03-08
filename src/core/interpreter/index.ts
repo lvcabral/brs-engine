@@ -353,7 +353,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
         return results;
     }
-
+/// #if TASK
     /**
      * Function to run the Task function on a separate Worker thread.
      * @param payload the Task payload data
@@ -400,6 +400,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             }
         }
     }
+/// #endif
 
     /**
      * Retrieve the Callable function from the environment.

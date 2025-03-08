@@ -3,7 +3,9 @@ import {
     BrsNumber,
     BrsType,
     Double,
+    /// #if !TASK
     Font,
+    /// #endif
     Int64,
     isBrsNumber,
     isStringComp,
@@ -180,6 +182,7 @@ export function getBrsValueFromFieldType(type: string, value?: string): BrsType 
         case "node":
             returnValue = new RoInvalid();
             break;
+        /// #if !TASK
         case "font":
             returnValue = new Font();
             if (
@@ -190,6 +193,7 @@ export function getBrsValueFromFieldType(type: string, value?: string): BrsType 
                 returnValue = BrsInvalid.Instance;
             }
             break;
+        /// #endif
         case "roarray":
         case "array":
             returnValue = BrsInvalid.Instance;

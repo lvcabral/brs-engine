@@ -1,21 +1,8 @@
 import { ComponentDefinition, ComponentNode } from ".";
 import { BrsDevice, Interpreter } from "..";
 import {
-    RoSGNode,
-    Group,
-    LayoutGroup,
-    Rectangle,
-    Label,
-    Font,
-    Poster,
-    ArrayGrid,
-    MarkupGrid,
-    ContentNode,
-    Task,
-    Timer,
-    Scene,
-    MiniKeyboard,
-    TextEditBox,
+    getBrsValueFromFieldType,
+    rootObjects,
     BrsInvalid,
     RoMessagePort,
     brsValueOf,
@@ -23,15 +10,30 @@ import {
     RoAssociativeArray,
     BrsType,
     Callable,
-    getBrsValueFromFieldType,
     BrsBoolean,
-    rootObjects,
+    RoSGNode,
+    Group,
+    Scene,
+    Task,
+    Timer,
+    ContentNode,
+    /// #if !TASK
+    LayoutGroup,
+    Rectangle,
+    Label,
+    Font,
+    Poster,
+    ArrayGrid,
+    MarkupGrid,
+    MiniKeyboard,
+    TextEditBox,
     Overhang,
     ButtonGroup,
     Button,
     LabelList,
     CheckList,
     RadioButtonList,
+    /// #endif
 } from "../brsTypes";
 import { TaskData } from "../common";
 
@@ -95,6 +97,15 @@ export class SGNodeFactory {
                 return new RoSGNode([], name);
             case SGNodeType.Group:
                 return new Group([], name);
+            case SGNodeType.Scene:
+                return new Scene([], name);
+            case SGNodeType.Task:
+                return new Task([], name);
+            case SGNodeType.Timer:
+                return new Timer([], name);
+            case SGNodeType.ContentNode:
+                return new ContentNode(name);
+            /// #if !TASK
             case SGNodeType.LayoutGroup:
                 return new LayoutGroup([], name);
             case SGNodeType.Button:
@@ -119,20 +130,13 @@ export class SGNodeFactory {
                 return new RadioButtonList([], name);
             case SGNodeType.MarkupGrid:
                 return new MarkupGrid([], name);
-            case SGNodeType.ContentNode:
-                return new ContentNode(name);
-            case SGNodeType.Task:
-                return new Task([], name);
-            case SGNodeType.Timer:
-                return new Timer([], name);
-            case SGNodeType.Scene:
-                return new Scene([], name);
             case SGNodeType.MiniKeyboard:
                 return new MiniKeyboard([], name);
             case SGNodeType.TextEditBox:
                 return new TextEditBox([], name);
             case SGNodeType.Overhang:
                 return new Overhang([], name);
+            /// #endif
             default:
                 return;
         }
@@ -266,6 +270,7 @@ export function initializeNode(
 
 /** Function to Initialize a Task on its own Worker thread */
 export function initializeTask(interpreter: Interpreter, taskData: TaskData) {
+    /// #if TASK
     const type = taskData.name;
     let typeDef = interpreter.environment.nodeDefMap.get(type.toLowerCase());
     if (typeDef) {
@@ -363,8 +368,9 @@ export function initializeTask(interpreter: Interpreter, taskData: TaskData) {
         BrsDevice.stderr.write(
             `warning,BRIGHTSCRIPT: ERROR: roSGNode: Failed to initialize Task with type ${type}: ${interpreter.formatLocation()}`
         );
-        return BrsInvalid.Instance;
     }
+    /// #endif
+    return BrsInvalid.Instance;
 }
 
 /** Function to add Fields to a Node based on its definition */

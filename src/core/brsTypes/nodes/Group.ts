@@ -9,11 +9,11 @@ import {
     BrsType,
     ValueKind,
     BrsString,
+    /// #if !TASK
     Font,
+    /// #endif
     BrsInvalid,
     RoBitmap,
-    jsValueOf,
-    getTextureManager,
 } from "..";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D, Rect } from "../interfaces/IfDraw2D";
@@ -60,12 +60,13 @@ export class Group extends RoSGNode {
 
         if (field && field.getType() === FieldKind.Font && value instanceof BrsString) {
             const strFont = value.value;
+            value = BrsInvalid.Instance;
+            /// #if !TASK
             const font = new Font();
             if (strFont.startsWith("font:") && font.setSystemFont(strFont.slice(5).toLowerCase())) {
                 value = font;
-            } else {
-                value = BrsInvalid.Instance;
             }
+            /// #endif
         } else if (field && field.getType() === FieldKind.Color && value instanceof BrsString) {
             let strColor = value.value;
             if (strColor.length) {
@@ -125,7 +126,7 @@ export class Group extends RoSGNode {
         this.scale[0] = scale[0];
         this.scale[1] = scale[1];
     }
-
+    /// #if !TASK
     protected getScaleRotateCenter() {
         const scaleRotateCenter = this.fields.get("scalerotatecenter")?.getValue();
         const center = [0, 0];
@@ -308,4 +309,5 @@ export class Group extends RoSGNode {
         this.updateParentRects(origin, angle);
         this.isDirty = false;
     }
+    /// #endif
 }

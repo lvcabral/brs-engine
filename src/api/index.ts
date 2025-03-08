@@ -80,6 +80,7 @@ import packageInfo from "../../package.json";
 
 // Interpreter Library
 const brsWrkLib = getWorkerLibPath();
+const brsTaskLib = brsWrkLib.replace(".worker.js", ".task.js");
 let brsWorker: Worker;
 
 // Package API
@@ -487,7 +488,7 @@ function runTask(taskData: TaskData) {
         apiException("warning", `[api] Maximum number of tasks reached: ${tasks.size}`);
         return;
     }
-    const taskWorker = new Worker(brsWrkLib);
+    const taskWorker = new Worker(brsTaskLib);
     taskWorker.addEventListener("message", taskCallback);
     tasks.set(taskData.id, taskWorker);
     if (!taskSyncFromMain.has(taskData.id)) {

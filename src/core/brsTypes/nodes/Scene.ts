@@ -63,6 +63,7 @@ export class Scene extends Group {
         this.fields.get("currentdesignresolution")?.setValue(toAssociativeArray(this.ui));
     }
 
+    /// #if !TASK
     renderNode(interpreter: Interpreter, origin: number[], angle: number, draw2D?: IfDraw2D) {
         if (!this.isVisible()) {
             return;
@@ -150,4 +151,5 @@ export class Scene extends Group {
         }, nodeEnv);
         return handled instanceof BrsBoolean && handled.toBoolean();
     }
+    /// #endif
 }

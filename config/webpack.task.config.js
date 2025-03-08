@@ -1,6 +1,5 @@
 const webpack = require("webpack");
 const path = require("path");
-const { StatsWriterPlugin } = require("webpack-stats-plugin");
 
 module.exports = (env) => {
     let mode, sourceMap;
@@ -16,8 +15,8 @@ module.exports = (env) => {
     const ifdef_opts = {
         DEBUG: mode === "development",
         BROWSER: true,
-        TASK: false,
-        "ifdef-verbose": false,
+        TASK: true,
+        "ifdef-verbose": true,
     };
     return [
         {
@@ -31,6 +30,7 @@ module.exports = (env) => {
                         test: /\.tsx?$/,
                         loader: "ts-loader",
                         options: {
+                            onlyCompileBundledFiles: true,
                             configFile: "tsconfig.json",
                         },
                         exclude: /node_modules/,
@@ -69,14 +69,6 @@ module.exports = (env) => {
                 new webpack.ProvidePlugin({
                     Buffer: ["buffer", "Buffer"],
                 }),
-                // Write out stats file to build directory.
-                new StatsWriterPlugin({
-                    filename: "stats.json",
-                    stats: {
-                        assets: true,
-                        chunkModules: true
-                    }
-                }),
                 new webpack.DefinePlugin({
                     "process.env.CREATION_TIME": JSON.stringify(new Date().toISOString())
                 })
@@ -86,69 +78,10 @@ module.exports = (env) => {
             },
             output: {
                 path: path.join(__dirname, distPath),
-                filename: libName + ".worker.js",
-                library: libName + "-worker",
+                filename: libName + ".task.js",
+                library: libName + "-task",
                 libraryTarget: "umd",
                 umdNamedDefine: true,
-                globalObject: "typeof self !== 'undefined' ? self : this",
-            },
-        },
-        {
-            entry: "./src/api/index.ts",
-            target: "web",
-            mode: mode,
-            devtool: sourceMap,
-            devServer: {
-                https: false,
-                static: "./browser",
-                port: 6502,
-                headers: {
-                    "cross-origin-embedder-policy": "require-corp",
-                    "cross-origin-opener-policy": "same-origin",
-                }
-            },
-            module: {
-                rules: [
-                    {
-                        test: /\.tsx?$/,
-                        loader: "ts-loader",
-                        options: {
-                            configFile: "tsconfig.json",
-                        },
-                        exclude: /node_modules/,
-                    },
-                    {
-                        test: /\.tsx?$/,
-                        loader: "ifdef-loader",
-                        options: ifdef_opts,
-                        exclude: /node_modules/,
-                    },
-                    {
-                        test: /\.csv$/,
-                        type: "asset/source",
-                    },
-                ],
-            },
-            resolve: {
-                modules: [path.resolve("./node_modules"), path.resolve("./src/api")],
-                extensions: [".tsx", ".ts", ".js"],
-            },
-            plugins: [
-                // Write out stats file to build directory.
-                new StatsWriterPlugin({
-                    filename: "stats-api.json",
-                    stats: {
-                        assets: true,
-                        chunkModules: true
-                    }
-                }),
-            ],
-            output: {
-                filename: libName + ".api.js",
-                library: libName,
-                libraryTarget: "umd",
-                umdNamedDefine: true,
-                path: path.resolve(__dirname, distPath),
                 globalObject: "typeof self !== 'undefined' ? self : this",
             },
         },

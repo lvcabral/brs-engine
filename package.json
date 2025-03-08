@@ -35,6 +35,7 @@
   "scripts": {
     "build": "webpack --config ./config/webpack.config.js --env development && webpack --config ./config/webpack.cli.config.js --env development && webpack --config ./config/webpack.zip.config.js",
     "build:libs": "webpack --config ./config/webpack.config.js --env development",
+    "build:task": "webpack --config ./config/webpack.task.config.js --env development",
     "build:cli": "webpack --config ./config/webpack.cli.config.js --env development",
     "build:zip": "webpack --config ./config/webpack.zip.config.js",
     "release": "webpack --config ./config/webpack.config.js --env production && webpack --config ./config/webpack.cli.config.js --env production && webpack --config ./config/webpack.zip.config.js",

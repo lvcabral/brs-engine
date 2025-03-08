@@ -61,16 +61,19 @@ const algorithm = "aes-256-ctr";
 if (typeof onmessage !== "undefined") {
     // Worker event that is triggered by postMessage() calls from the API library
     onmessage = function (event: MessageEvent) {
-        if (isAppPayload(event.data)) {
+        if (event.data instanceof ArrayBuffer || event.data instanceof SharedArrayBuffer) {
+            // Setup Control Shared Array
+            BrsDevice.setSharedArray(new Int32Array(event.data));
+            /// #if !TASK
+        } else if (isAppPayload(event.data)) {
             executeFile(event.data);
+            /// #else
         } else if (isTaskPayload(event.data)) {
             console.log("Task payload received: ", event.data.taskData.name);
             executeTask(event.data);
+            /// #endif
         } else if (typeof event.data === "string" && event.data === "getVersion") {
             postMessage(`version,${packageInfo.version}`);
-        } else if (event.data instanceof ArrayBuffer || event.data instanceof SharedArrayBuffer) {
-            // Setup Control Shared Array
-            BrsDevice.setSharedArray(new Int32Array(event.data));
         } else {
             postMessage(`warning,[worker] Invalid message received: ${event.data}`);
         }
@@ -276,6 +279,7 @@ export async function createPayloadFromFiles(
 }
 /// #endif
 
+/// #if !TASK
 /**
  * Runs a Brightscript app with full zip folder structure.
  * @param payload with the source code, manifest and all the assets of the app.
@@ -337,6 +341,7 @@ export async function executeFile(
     return result;
 }
 
+/// #else
 export async function executeTask(payload: TaskPayload, customOptions?: Partial<ExecutionOptions>) {
     const options = {
         ...{
@@ -387,6 +392,7 @@ export async function executeTask(payload: TaskPayload, customOptions?: Partial<
         postMessage(`debug,Task ${payload.taskData.name} is done.`);
     }
 }
+/// #endif
 
 /**
  * Setup the interpreter with the provided payload.
