@@ -40,6 +40,7 @@ export class Overhang extends Group {
         { name: "rightDividerVertOffset", type: "float", value: "0.0" },
         { name: "height", type: "float", value: "115" },
     ];
+    /// #if !TASK
     private readonly background: Poster;
     private readonly optionsIcon: Poster;
     private readonly optionsText: Label;
@@ -56,6 +57,7 @@ export class Overhang extends Group {
     private readonly dividerFHD: string = "common:/images/divider_vertical_FHD.png";
     private readonly width: number;
     private readonly resolution: string;
+    /// #endif
     private realign: boolean = false;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = "Overhang") {
@@ -64,6 +66,7 @@ export class Overhang extends Group {
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
 
+        /// #if !TASK
         if (rootObjects.rootScene?.ui && rootObjects.rootScene.ui.resolution === "FHD") {
             this.width = 1920;
             this.resolution = "FHD";
@@ -101,8 +104,10 @@ export class Overhang extends Group {
         clock.set(new BrsString("control"), new BrsString("start"));
         this.children.push(clock);
         clock.setNodeParent(this);
+        /// #endif
     }
 
+    /// #if !TASK
     private getTime() {
         // TODO: Format time based on locale
         const now = new Date();
@@ -260,4 +265,5 @@ export class Overhang extends Group {
         this.renderChildren(interpreter, origin, angle, draw2D);
         this.updateParentRects(origin, angle);
     }
+    /// #endif
 }

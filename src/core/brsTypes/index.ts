@@ -105,7 +105,7 @@ export * from "./components/RoTextureManager";
 export * from "./components/RoAudioPlayer";
 export * from "./components/RoAudioResource";
 export * from "./components/RoVideoPlayer";
-export * from "./components/RoSGScreen";
+/// #code export * from "./components/RoSGScreen";
 /// #endif
 export * from "./components/RoSGNode";
 export * from "./events/RoURLEvent";
@@ -127,7 +127,6 @@ export * from "./events/RoUniversalControlEvent";
 export * from "./events/RoSGNodeEvent";
 export * from "./events/RoSGScreenEvent";
 export * from "../scenegraph/SGNodeFactory";
-/// #if !TASK
 export * from "./nodes/MiniKeyboard";
 export * from "./nodes/TextEditBox";
 export * from "./nodes/LayoutGroup";
@@ -143,7 +142,6 @@ export * from "./nodes/CheckList";
 export * from "./nodes/RadioButtonList";
 export * from "./nodes/Button";
 export * from "./nodes/ButtonGroup";
-/// #endif
 export * from "./nodes/Group";
 export * from "./nodes/Scene";
 export * from "./nodes/Task";

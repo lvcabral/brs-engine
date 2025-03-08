@@ -19,7 +19,7 @@ export class Rectangle extends Group {
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
     }
-
+    /// #if !TASK
     renderNode(interpreter: Interpreter, origin: number[], angle: number, draw2D?: IfDraw2D) {
         if (!this.isVisible()) {
             return;
@@ -39,4 +39,5 @@ export class Rectangle extends Group {
         this.renderChildren(interpreter, drawTrans, rotation, draw2D);
         this.updateParentRects(origin, angle);
     }
+    /// #endif
 }

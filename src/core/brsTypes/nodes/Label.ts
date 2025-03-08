@@ -34,6 +34,7 @@ export class Label extends Group {
         this.registerInitializedFields(initializedFields);
     }
 
+    /// #if !TASK
     set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
         if (index.kind !== ValueKind.String) {
             throw new Error("RoSGNode indexes must be strings");
@@ -85,4 +86,5 @@ export class Label extends Group {
     protected setEllipsized(ellipsized: boolean) {
         this.fields.get("istextellipsized")?.setValue(BrsBoolean.from(ellipsized));
     }
+    /// #endif
 }

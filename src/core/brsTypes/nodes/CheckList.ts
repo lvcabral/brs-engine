@@ -50,6 +50,7 @@ export class CheckList extends LabelList {
         this.setFieldValue("checkedState", new RoArray([]));
     }
 
+    /// #if !TASK
     get(index: BrsType) {
         if (index.kind !== ValueKind.String) {
             throw new Error("RoSGNode indexes must be strings");
@@ -145,4 +146,5 @@ export class CheckList extends LabelList {
         this.setFieldValue("checkedState", result);
         return result;
     }
+    /// #endif
 }

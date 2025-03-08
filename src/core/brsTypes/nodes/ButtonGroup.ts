@@ -80,6 +80,7 @@ export class ButtonGroup extends LayoutGroup {
         this.lastPressHandled = "";
     }
 
+    /// #if !TASK
     set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
         if (index.kind !== ValueKind.String) {
             throw new Error("RoSGNode indexes must be strings");
@@ -238,4 +239,5 @@ export class ButtonGroup extends LayoutGroup {
         }
         return index;
     }
+    /// #endif
 }

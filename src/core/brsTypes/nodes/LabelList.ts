@@ -65,6 +65,7 @@ export class LabelList extends ArrayGrid {
         this.currRow = this.updateCurrRow();
     }
 
+    /// #if !TASK
     set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
         if (index.kind !== ValueKind.String) {
             throw new Error("RoSGNode indexes must be strings");
@@ -313,6 +314,7 @@ export class LabelList extends ArrayGrid {
         }
         return index;
     }
+    /// #endif
 
     protected updateCurrRow() {
         if (this.wrap) {

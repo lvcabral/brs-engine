@@ -29,7 +29,7 @@ export class RadioButtonList extends LabelList {
             this.setFieldValue("focusedCheckedIconUri", new BrsString(this.checkmarkHDUri));
         }
     }
-
+    /// #if !TASK
     protected handleOK(press: boolean) {
         if (!press) {
             return false;
@@ -64,4 +64,5 @@ export class RadioButtonList extends LabelList {
             this.renderFocused(text, rect, nodeFocus, iconGap, true, bmp, draw2D);
         }
     }
+    /// #endif
 }

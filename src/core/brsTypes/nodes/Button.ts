@@ -39,6 +39,7 @@ export class Button extends Group {
     static readonly iconUriHD = "common:/images/icon_generic_HD.png";
     static readonly iconUriFHD = "common:/images/icon_generic_FHD.png";
 
+    /// #if !TASK
     private readonly background: Poster;
     private readonly textLabel: Label;
     private readonly icon: Poster;
@@ -48,6 +49,7 @@ export class Button extends Group {
     private iconWidth: number;
     private iconHeight: number;
     private labelWidth: number;
+    /// #endif
     iconSize: number[] = [0, 0];
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = "Button") {
@@ -56,6 +58,7 @@ export class Button extends Group {
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
 
+        /// #if !TASK
         if (rootObjects.rootScene?.ui && rootObjects.rootScene.ui.resolution === "FHD") {
             this.margin = 36;
             this.gap = 18;
@@ -111,8 +114,9 @@ export class Button extends Group {
         }
         this.setFieldValue("focusBitmapUri", new BrsString(Button.focusUri));
         this.setFieldValue("focusFootprintBitmapUri", new BrsString(Button.footprintUri));
+        /// #endif
     }
-
+    /// #if !TASK
     private addPoster(defaultUri: string, translation: number[], height?: number, width?: number) {
         const poster = new Poster();
         if (defaultUri) {
@@ -240,4 +244,5 @@ export class Button extends Group {
         this.renderChildren(interpreter, drawTrans, rotation, draw2D);
         this.updateParentRects(origin, angle);
     }
+    /// #endif
 }

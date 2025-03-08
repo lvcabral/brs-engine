@@ -9,9 +9,7 @@ import {
     BrsType,
     ValueKind,
     BrsString,
-    /// #if !TASK
     Font,
-    /// #endif
     BrsInvalid,
     RoBitmap,
 } from "..";
@@ -61,12 +59,10 @@ export class Group extends RoSGNode {
         if (field && field.getType() === FieldKind.Font && value instanceof BrsString) {
             const strFont = value.value;
             value = BrsInvalid.Instance;
-            /// #if !TASK
             const font = new Font();
             if (strFont.startsWith("font:") && font.setSystemFont(strFont.slice(5).toLowerCase())) {
                 value = font;
             }
-            /// #endif
         } else if (field && field.getType() === FieldKind.Color && value instanceof BrsString) {
             let strColor = value.value;
             if (strColor.length) {

@@ -59,7 +59,7 @@ import { RoHdmiStatus } from "./RoHdmiStatus";
 import { createAudioResource } from "./RoAudioResource";
 import { RoAudioPlayer } from "./RoAudioPlayer";
 import { RoVideoPlayer } from "./RoVideoPlayer";
-import { RoSGScreen } from "./RoSGScreen";
+/// #code import { RoSGScreen } from "./RoSGScreen";
 /// #endif
 
 // Class to define a case-insensitive map of BrightScript objects.
@@ -205,6 +205,6 @@ export const BrsObjects = new BrsObjectsMap([
     ["roAudioPlayer", (_?: Interpreter) => new RoAudioPlayer()],
     ["roAudioResource", (_: Interpreter, name: BrsString) => createAudioResource(name), 1],
     ["roVideoPlayer", (_?: Interpreter) => new RoVideoPlayer()],
-    ["roSGScreen", (interpreter: Interpreter) => new RoSGScreen(interpreter)],
+    /// #code ["roSGScreen", (interpreter: Interpreter) => new RoSGScreen(interpreter)],
     /// #endif
 ]);

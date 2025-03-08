@@ -76,6 +76,7 @@ export class ArrayGrid extends Group {
         }
     }
 
+    /// #if !TASK
     set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
         if (index.kind !== ValueKind.String) {
             throw new Error("RoSGNode indexes must be strings");
@@ -110,4 +111,5 @@ export class ArrayGrid extends Group {
         }
         return super.set(index, value, alwaysNotify, kind);
     }
+    /// #endif
 }

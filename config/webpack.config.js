@@ -17,6 +17,7 @@ module.exports = (env) => {
         DEBUG: mode === "development",
         BROWSER: true,
         TASK: false,
+        "ifdef-uncomment-prefix": "/// #code ",
         "ifdef-verbose": false,
     };
     return [

@@ -17,7 +17,6 @@ import {
     Task,
     Timer,
     ContentNode,
-    /// #if !TASK
     LayoutGroup,
     Rectangle,
     Label,
@@ -33,7 +32,6 @@ import {
     LabelList,
     CheckList,
     RadioButtonList,
-    /// #endif
 } from "../brsTypes";
 import { TaskData } from "../common";
 
@@ -105,7 +103,6 @@ export class SGNodeFactory {
                 return new Timer([], name);
             case SGNodeType.ContentNode:
                 return new ContentNode(name);
-            /// #if !TASK
             case SGNodeType.LayoutGroup:
                 return new LayoutGroup([], name);
             case SGNodeType.Button:
@@ -136,7 +133,6 @@ export class SGNodeFactory {
                 return new TextEditBox([], name);
             case SGNodeType.Overhang:
                 return new Overhang([], name);
-            /// #endif
             default:
                 return;
         }

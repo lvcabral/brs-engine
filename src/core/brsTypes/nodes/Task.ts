@@ -113,6 +113,7 @@ export class Task extends RoSGNode {
         return events;
     }
 
+    /// #if !TASK
     checkTask() {
         const functionName = this.getFieldValue("functionName") as BrsString;
         if (!functionName || functionName.value.trim() === "") {
@@ -133,6 +134,7 @@ export class Task extends RoSGNode {
             this.started = true;
         }
     }
+    /// #endif
 
     updateTask() {
         let currentVersion = this.taskBuffer?.getVersion() ?? 0;
