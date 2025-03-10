@@ -63,7 +63,7 @@ export function convertHexColor(strColor: string): number {
         strColor = strColor.startsWith("#") ? strColor.slice(1) : strColor;
         strColor = strColor.startsWith("0x") ? strColor.slice(2) : strColor;
         strColor = strColor.padStart(6, "0");
-        if (strColor.length == 6) {
+        if (strColor.length === 6) {
             strColor = strColor + "FF";
         }
         color = parseInt(strColor, 16);
