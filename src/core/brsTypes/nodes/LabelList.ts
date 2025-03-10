@@ -120,7 +120,7 @@ export class LabelList extends ArrayGrid {
 
     protected handlePageUpDown(key: string) {
         let handled = false;
-        let nextIndex:number;
+        let nextIndex: number;
         if (this.wrap) {
             const step = Math.max(1, jsValueOf(this.getFieldValue("numRows")) - 2);
             const offset = key === "rewind" ? -step : step;
