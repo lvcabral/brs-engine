@@ -639,6 +639,13 @@
   resolved "https://registry.npmjs.org/@lvcabral/sprintf/-/sprintf-1.2.2.tgz"
   integrity sha512-I42wl+u7zhDNANFxlhh1iGKhnPnWxKsW4zFLEN7+HXYKu+H5JBhJGj62zhS4wgFN6RDpUTU37CXVzXVCAGcY8A==
 
+"@lvcabral/upng@^2.3.0":
+  version "2.3.0"
+  resolved "https://registry.yarnpkg.com/@lvcabral/upng/-/upng-2.3.0.tgz#d7cfcbfa19bdb2fc252f97ab7d3c9f21511f6228"
+  integrity sha512-z+bcFCnDgPchmpIxLQJhk1hoVSH/CXr0IbNrsPJAr3QS9Rzn9yINX05rgAczPszyjgyJNCnIDvXh1B77ClTa1g==
+  dependencies:
+    fflate "^0.8.2"
+
 "@lvcabral/zip@lvcabral/zip":
   version "0.5.4"
   resolved "git+ssh://git@github.com/lvcabral/zip.git#489d032f8e4db6fb6fece95914e1ba2c7e5e9d18"
@@ -7385,12 +7392,6 @@ update-browserslist-db@^1.1.1:
   dependencies:
     escalade "^3.2.0"
     picocolors "^1.1.1"
-
-upng-js@lvcabral/UPNG.js:
-  version "2.2.2"
-  resolved "git+ssh://git@github.com/lvcabral/UPNG.js.git#f56c5eae4b22579ae0df4db22eda312d7544308d"
-  dependencies:
-    fflate "^0.8.2"
 
 uri-js@^4.2.2:
   version "4.4.1"

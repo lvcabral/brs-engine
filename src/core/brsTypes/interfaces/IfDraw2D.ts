@@ -18,7 +18,7 @@ import { BrsComponent } from "../components/BrsComponent";
 import { RoCompositor } from "../components/RoCompositor";
 import { Int32 } from "../Int32";
 import { Canvas, CanvasRenderingContext2D, createCanvas, ImageData as NodeImageData } from "canvas";
-import UPNG from "upng-js";
+import UPNG from "@lvcabral/upng";
 
 export type BrsCanvas = OffscreenCanvas | Canvas;
 export type BrsCanvasContext2D = OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D;

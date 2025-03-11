@@ -57,6 +57,7 @@
   ],
   "dependencies": {
     "@lvcabral/sprintf": "^1.2.2",
+    "@lvcabral/upng": "^2.3.0",
     "@lvcabral/zip": "lvcabral/zip",
     "@msgpack/msgpack": "^2.8.0",
     "@zenfs/core": "1.6.16",
@@ -93,7 +94,6 @@
     "stats.js": "^0.17.0",
     "stream-browserify": "^3.0.0",
     "strip-ansi": "^7.1.0",
-    "upng-js": "lvcabral/UPNG.js",
     "url-parse": "^1.5.10",
     "uuid": "^9.0.1",
     "ws": "^8.17.1",
