@@ -634,6 +634,11 @@
   resolved "https://registry.npmjs.org/@leichtgewicht/ip-codec/-/ip-codec-2.0.5.tgz"
   integrity sha512-Vo+PSpZG2/fmgmiNzYK9qWRh8h/CHrwD0mo1h1DzL4yzHNSfWYujGTYsWGreD000gcgmZ7K4Ys6Tx9TxtsKdDw==
 
+"@lvcabral/libwebp@^0.1.0":
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/@lvcabral/libwebp/-/libwebp-0.1.0.tgz#48eecd2edcef126f3d0a4bc219839b88a14b1f81"
+  integrity sha512-duOVQbw/XoYAenIPao9Xga1YOIFPkX25fiyE46e3Puzj1Rv2CokJ1eZaG1k7iWI2rDxildmJL5zZXx2lLEe9bA==
+
 "@lvcabral/sprintf@^1.2.2":
   version "1.2.2"
   resolved "https://registry.npmjs.org/@lvcabral/sprintf/-/sprintf-1.2.2.tgz"
@@ -5019,10 +5024,6 @@ libphonenumber-js@^1.10.53:
   version "1.11.18"
   resolved "https://registry.npmjs.org/libphonenumber-js/-/libphonenumber-js-1.11.18.tgz"
   integrity sha512-okMm/MCoFrm1vByeVFLBdkFIXLSHy/AIK2AEGgY3eoicfWZeOZqv3GfhtQgICkzs/tqorAMm3a4GBg5qNCrqzg==
-
-libwebpjs@lvcabral/libwebpjs:
-  version "0.0.0"
-  resolved "git+ssh://git@github.com/lvcabral/libwebpjs.git#cf4d208044fbc89cbcb498e40506912d33efac30"
 
 lilconfig@2.0.5:
   version "2.0.5"
