@@ -7,7 +7,7 @@ import { Double } from "./Double";
 import { Int64 } from "./Int64";
 import { RoFloat } from "./components/RoFloat";
 import Long from "long";
-import { vsprintf } from "sprintf-js";
+import { vsprintf } from "@lvcabral/sprintf";
 
 /**
  * Number of significant digits represented in an IEEE 32-bit floating point number.

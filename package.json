@@ -56,6 +56,7 @@
     "types/src/api/"
   ],
   "dependencies": {
+    "@lvcabral/sprintf": "^1.2.2",
     "@lvcabral/zip": "lvcabral/zip",
     "@msgpack/msgpack": "^2.8.0",
     "@zenfs/core": "1.6.16",
@@ -89,7 +90,6 @@
     "readable-stream": "^4.3.0",
     "readline-sync": "^1.4.10",
     "restana": "^5.0.0",
-    "sprintf-js": "lvcabral/sprintf.js",
     "stats.js": "^0.17.0",
     "stream-browserify": "^3.0.0",
     "strip-ansi": "^7.1.0",
