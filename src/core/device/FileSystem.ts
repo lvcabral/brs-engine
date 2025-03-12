@@ -1,8 +1,8 @@
-import MemoryFileSystem from "memory-fs";
 import * as path from "path";
 import * as zenFS from "@zenfs/core";
 import * as nodeFS from "fs";
 import { Zip } from "@lvcabral/zip";
+import MemoryFileSystem from "@lvcabral/memory-fs";
 
 /** Proxy Object to make File System volumes case insensitive, same as Roku devices */
 
