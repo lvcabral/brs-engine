@@ -86,7 +86,8 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
                 this.hasField,
                 this.observeField,
                 this.unobserveField,
-                this.observeFieldScoped,
+                this.observeFieldScoped, // deprecated
+                this.observeFieldScopedEx,
                 this.unobserveFieldScoped,
                 this.removeField,
                 this.setField,
@@ -966,9 +967,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         }
     );
 
-    /**
-     * Removes all observers of a given field, regardless of whether or not the host node is the subscriber.
-     */
+    /** Removes all observers of a given field, regardless of whether or not the host node is the subscriber. */
     private readonly unobserveField = new Callable("unobserveField", {
         signature: {
             args: [new StdlibArgument("fieldName", ValueKind.String)],
@@ -992,6 +991,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         },
     });
 
+    /** Sets up a connection between the observed node's field and the current component from which this call is made. */
     private readonly observeFieldScoped = new Callable(
         "observeFieldScoped",
         {
@@ -1032,6 +1032,48 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         }
     );
 
+    /** Sets up a connection between the observed node's field and the current component from which this call is made. */
+    private readonly observeFieldScopedEx = new Callable(
+        "observeFieldScopedEx",
+        {
+            signature: {
+                args: [
+                    new StdlibArgument("fieldName", ValueKind.String),
+                    new StdlibArgument("functionName", ValueKind.String),
+                    new StdlibArgument("infoFields", ValueKind.Object, BrsInvalid.Instance),
+                ],
+                returns: ValueKind.Boolean,
+            },
+            impl: (
+                interpreter: Interpreter,
+                fieldName: BrsString,
+                funcName: BrsString,
+                infoFields: RoArray
+            ) => {
+                return this.addObserver(interpreter, "scoped", fieldName, funcName, infoFields);
+            },
+        },
+        {
+            signature: {
+                args: [
+                    new StdlibArgument("fieldName", ValueKind.String),
+                    new StdlibArgument("port", ValueKind.Object),
+                    new StdlibArgument("infoFields", ValueKind.Object, BrsInvalid.Instance),
+                ],
+                returns: ValueKind.Boolean,
+            },
+            impl: (
+                interpreter: Interpreter,
+                fieldName: BrsString,
+                port: RoMessagePort,
+                infoFields: RoArray
+            ) => {
+                return this.addObserver(interpreter, "scoped", fieldName, port, infoFields);
+            },
+        }
+    );
+
+    /** Removes the connection between the observing component and the observed node's field. */
     private readonly unobserveFieldScoped = new Callable("unobserveFieldScoped", {
         signature: {
             args: [new StdlibArgument("fieldName", ValueKind.String)],
