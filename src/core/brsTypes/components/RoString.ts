@@ -9,7 +9,7 @@ import { Unboxable } from "../Boxing";
 import { Int32 } from "../Int32";
 import { Float } from "../Float";
 import { RuntimeError, RuntimeErrorDetail } from "../../error/BrsError";
-import { sprintf } from "sprintf-js";
+import { sprintf } from "@lvcabral/sprintf";
 import { IfToStr } from "../interfaces/IfToStr";
 import { BrsDevice } from "../../device/BrsDevice";
 

@@ -21,10 +21,10 @@ import {
 } from "../interfaces/IfDraw2D";
 import { parseGIF, decompressFrames } from "gifuct-js";
 import fileType from "file-type";
-import UPNG from "upng-js";
+import UPNG from "@lvcabral/upng";
 import * as JPEG from "jpeg-js";
 import BMP from "decode-bmp";
-import { WebPRiffParser, WebPDecoder } from "libwebpjs";
+import { WebPRiffParser, WebPDecoder } from "@lvcabral/libwebp";
 import { BrsDevice } from "../../device/BrsDevice";
 
 export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {

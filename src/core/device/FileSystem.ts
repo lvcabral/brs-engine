@@ -1,15 +1,8 @@
-/*---------------------------------------------------------------------------------------------
- *  BrightScript Engine (https://github.com/lvcabral/brs-engine)
- *
- *  Copyright (c) 2019-2025 Marcelo Lv Cabral. All Rights Reserved.
- *
- *  Licensed under the MIT License. See LICENSE in the repository root for license information.
- *--------------------------------------------------------------------------------------------*/
-import MemoryFileSystem from "memory-fs";
 import * as path from "path";
 import * as zenFS from "@zenfs/core";
 import * as nodeFS from "fs";
 import { Zip } from "@lvcabral/zip";
+import MemoryFileSystem from "@lvcabral/memory-fs";
 
 /** Proxy Object to make File System volumes case insensitive, same as Roku devices */
 

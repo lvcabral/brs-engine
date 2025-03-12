@@ -14,7 +14,7 @@ import {
 import { BrsDevice } from "../../device/BrsDevice";
 import { RuntimeError, RuntimeErrorDetail } from "../../error/BrsError";
 import { Interpreter } from "../../interpreter";
-import { vsprintf } from "sprintf-js";
+import { vsprintf } from "@lvcabral/sprintf";
 
 /**
  * BrightScript Interface ifToStr

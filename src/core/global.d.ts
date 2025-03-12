@@ -1,6 +1,6 @@
 // Generic module declarations for libraries without TypeScript support
 declare module "nanomatch";
-declare module "libwebpjs";
+declare module "@lvcabral/libwebp";
 declare module "mp3-parser";
 
 declare module "exif-parser" {
