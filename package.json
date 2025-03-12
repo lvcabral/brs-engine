@@ -57,6 +57,7 @@
   ],
   "dependencies": {
     "@lvcabral/libwebp": "^0.1.0",
+    "@lvcabral/memory-fs": "^0.5.1",
     "@lvcabral/sprintf": "^1.2.2",
     "@lvcabral/upng": "^2.3.0",
     "@lvcabral/zip": "lvcabral/zip",
@@ -81,7 +82,6 @@
     "howler": "^2.2.3",
     "jpeg-js": "^0.4.4",
     "long": "^3.2.0",
-    "memory-fs": "lvcabral/memory-fs",
     "mp3-parser": "^0.3.0",
     "nanomatch": "^1.2.13",
     "node-ssdp": "^4.0.1",
