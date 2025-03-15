@@ -12,8 +12,6 @@ import {
     Font,
     BrsInvalid,
     RoBitmap,
-    jsValueOf,
-    getTextureManager,
 } from "..";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D, Rect } from "../interfaces/IfDraw2D";
