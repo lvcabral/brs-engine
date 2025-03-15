@@ -12,8 +12,6 @@ import {
     Font,
     BrsInvalid,
     RoBitmap,
-    jsValueOf,
-    getTextureManager,
     RoFont,
     jsValueOf,
 } from "..";
