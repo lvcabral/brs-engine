@@ -211,8 +211,8 @@ if (platform.inIOS || platform.inMacOS) {
     keysMap.set("Control+Digit8", "info");
     keysMap.set("Control+Pause", "break");
 }
-keysMap.set("PageDown", "rev");
-keysMap.set("PageUp", "fwd");
+keysMap.set("PageUp", "rev");
+keysMap.set("PageDown", "fwd");
 keysMap.set("Insert", "info");
 keysMap.set("Control+KeyA", "a");
 keysMap.set("Control+KeyZ", "b");
