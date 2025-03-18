@@ -95,6 +95,9 @@ describe("end to end functions", () => {
         expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
             "not root",
             "root",
+            "bar",
+            "bar",
+            "invalid",
         ]);
     });
 
