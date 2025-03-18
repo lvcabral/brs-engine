@@ -1,5 +1,28 @@
 # Changelog
 
+<a name="v1.8.6"></a>
+
+## [v1.8.6 - Fixed `m` context with `IndexedGet`](https://github.com/lvcabral/brs-engine/releases/tag/v1.8.6) - 18 March 2025
+
+Continuing the refactorings v1.8.x to improve the architecture and support `SceneGraph` development, the internal device assets (fonts, sounds, images and libraries)
+are now stored in the `common.zip` file that holds the `common:/` volume in the file system. Created `npm` packages to several dependencies that were forked of archived
+or modified components. And mainly this brings a fix for the `m` context when using indexed get to retrieve functions.
+
+### Release Changes
+
+* Created `BrsDevice` static object with `deviceInfo`, `registry` and `sharedArray` by [@lvcabral](https://github.com/lvcabral) in [#469](https://github.com/lvcabral/brs-engine/pull/469)
+* Moved `FileSystem` to `BrsDevice` by [@lvcabral](https://github.com/lvcabral) in [#470](https://github.com/lvcabral/brs-engine/pull/470)
+* Moved `stdout` and `stderr` from `Interpreter` to `BrsDevice` by [@lvcabral](https://github.com/lvcabral) in [#472](https://github.com/lvcabral/brs-engine/pull/472)
+* Fixed the `Val()` global function to always return `Float` if no `radix` parameter is passed by [@lvcabral](https://github.com/lvcabral) in [#474](https://github.com/lvcabral/brs-engine/pull/474)
+* Moved `fonts`, `audio` and `libraries` to `common:` volume as a `zip` file by [@lvcabral](https://github.com/lvcabral) in [#475](https://github.com/lvcabral/brs-engine/pull/475)
+* Prevent transforming `DeviceInfo` into a `Map` by [@lvcabral](https://github.com/lvcabral) in [#478](https://github.com/lvcabral/brs-engine/pull/478)
+* Moved `Rect` and `Circle` type definitions to `ifDraw2D` by [@lvcabral](https://github.com/lvcabral) in [#481](https://github.com/lvcabral/brs-engine/pull/481)
+* Updating forked dependencies by [@lvcabral](https://github.com/lvcabral) in [#495](https://github.com/lvcabral/brs-engine/pull/495)
+* Invert the remote control mapping for `PageUp` and `PageDown` keys by [@lvcabral](https://github.com/lvcabral) in [#497](https://github.com/lvcabral/brs-engine/pull/497)
+* Fixed `m` context when getting function with `index` [#494](https://github.com/lvcabral/brs-engine/issues/494) by [@lvcabral](https://github.com/lvcabral) in [#498](https://github.com/lvcabral/brs-engine/pull/498)
+
+[Full Changelog][v1.8.6]
+
 <a name="v1.8.5"></a>
 
 ## [v1.8.5 - Implemented `roTextureManager`](https://github.com/lvcabral/brs-engine/releases/tag/v1.8.5) - 31 January 2025
@@ -19,7 +42,7 @@ I believe this is a stable state of the `core` library, and any Roku app develop
 
 <a name="v1.8.4"></a>
 
-## [v1.8.4 - Fixed `roVideoPlayer` and `End` Statement](https://github.com/lvcabral/brs-engine/releases/tag/v1.8.4) - 26 January 2025
+## [v1.8.4 - Improved `roURLTransfer`](https://github.com/lvcabral/brs-engine/releases/tag/v1.8.4) - 26 January 2025
 
 ### Release Changes
 
@@ -935,6 +958,7 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
+[v1.8.6]: https://github.com/lvcabral/brs-engine/compare/v1.8.5...v1.8.6
 [v1.8.5]: https://github.com/lvcabral/brs-engine/compare/v1.8.4...v1.8.5
 [v1.8.4]: https://github.com/lvcabral/brs-engine/compare/v1.8.3...v1.8.4
 [v1.8.3]: https://github.com/lvcabral/brs-engine/compare/v1.8.2...v1.8.3
