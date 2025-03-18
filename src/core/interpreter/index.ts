@@ -1254,7 +1254,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     return arg;
                 });
 
-                if (expression.callee instanceof Expr.DottedGet) {
+                if (
+                    expression.callee instanceof Expr.DottedGet ||
+                    expression.callee instanceof Expr.IndexedGet
+                ) {
                     mPointer = callee.getContext() ?? mPointer;
                 }
                 return this.inSubEnv((subInterpreter) => {
