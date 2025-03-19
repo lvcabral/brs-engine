@@ -87,6 +87,7 @@ export * from "./components/RoAppInfo";
 export * from "./components/RoAppManager";
 export * from "./components/RoPath";
 export * from "./components/RoURLTransfer";
+export * from "./components/RoHttpAgent";
 export * from "./components/RoAudioPlayer";
 export * from "./components/RoAudioResource";
 export * from "./components/RoAudioMetadata";
