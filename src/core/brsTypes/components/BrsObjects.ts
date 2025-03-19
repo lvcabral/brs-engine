@@ -1,4 +1,5 @@
 import { BrsType } from "..";
+import { Interpreter } from "../../interpreter";
 import { RoAppManager } from "./RoAppManager";
 import { RoAssociativeArray } from "./RoAssociativeArray";
 import { RoArray } from "./RoArray";
@@ -31,6 +32,7 @@ import { RoAudioPlayer } from "./RoAudioPlayer";
 import { RoVideoPlayer } from "./RoVideoPlayer";
 import { RoXMLElement } from "./RoXMLElement";
 import { RoURLTransfer } from "./RoURLTransfer";
+import { RoHttpAgent } from "./RoHttpAgent";
 import { createAudioResource } from "./RoAudioResource";
 import { RoLocalization } from "./RoLocalization";
 import { RoRegistry } from "./RoRegistry";
@@ -39,7 +41,6 @@ import { RoAppInfo } from "./RoAppInfo";
 import { RoDeviceInfo } from "./RoDeviceInfo";
 import { RoRemoteInfo } from "./RoRemoteInfo";
 import { RoFileSystem } from "./RoFileSystem";
-import { Interpreter } from "../../interpreter";
 import { RoString } from "./RoString";
 import { RoBoolean } from "./RoBoolean";
 import { RoDouble } from "./RoDouble";
@@ -190,6 +191,7 @@ export const BrsObjects = new BrsObjectsMap([
     ],
     ["roXMLElement", (_: Interpreter) => new RoXMLElement()],
     ["roURLTransfer", (_: Interpreter) => new RoURLTransfer()],
+    ["roHttpAgent", (_: Interpreter) => new RoHttpAgent()],
     ["roInvalid", (_: Interpreter) => new RoInvalid(), -1],
     ["roNDK", (_: Interpreter) => new RoNDK()],
     ["roCECStatus", (_: Interpreter) => new RoCECStatus()],
