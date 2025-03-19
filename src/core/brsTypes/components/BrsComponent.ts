@@ -5,7 +5,7 @@ import { Callable } from "../Callable";
 import { BrsInterface } from "../interfaces/BrsInterface";
 
 export class BrsComponent {
-    private methods: Map<string, Callable> = new Map();
+    private readonly methods: Map<string, Callable> = new Map();
     private readonly componentName: string;
     private filter: string = "";
     protected references: number;
@@ -36,7 +36,6 @@ export class BrsComponent {
     }
 
     protected registerMethods(interfaces: Record<string, Callable[]>) {
-        this.methods = new Map<string, Callable>();
         Object.entries(interfaces).forEach(([interfaceName, methods]) => {
             const methodNames = new Set(
                 methods.filter((m) => m.name?.toLowerCase()).map((m) => m.name?.toLowerCase()!)

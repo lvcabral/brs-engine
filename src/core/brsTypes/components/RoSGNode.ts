@@ -31,6 +31,7 @@ import { createNodeByType, isSubtypeCheck, subtypeHierarchy } from "../../sceneg
 import { Field, FieldKind, FieldModel } from "../nodes/Field";
 import { BoundingRect, IfDraw2D } from "../interfaces/IfDraw2D";
 import { BrsDevice } from "../../device/BrsDevice";
+import { RoHttpAgent } from "./RoHttpAgent";
 
 export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     readonly kind = ValueKind.Object;
@@ -38,6 +39,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     protected children: RoSGNode[] = [];
     protected parent: RoSGNode | BrsInvalid = BrsInvalid.Instance;
     protected triedInitFocus: boolean = false;
+    protected httpAgent: RoHttpAgent;
     rectLocal: Rect = { x: 0, y: 0, width: 0, height: 0 };
     rectToParent: Rect = { x: 0, y: 0, width: 0, height: 0 };
     rectToScene: Rect = { x: 0, y: 0, width: 0, height: 0 };
@@ -127,9 +129,12 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
                 this.boundingRect,
                 this.localBoundingRect,
                 this.sceneBoundingRect,
+                // TODO: Implement the remaining `ifSGNodeBoundingRect` methods
             ],
-            // TODO: Implement the remaining `ifSGNodeBoundingRect` methods
+            ifSGNodeHttpAgentAccess: [this.getHttpAgent, this.setHttpAgent],
         });
+        this.httpAgent = new RoHttpAgent();
+        this.registerHttpAgent(this.httpAgent);
     }
     hasNext(): BrsBoolean {
         throw new Error("Method not implemented.");
@@ -472,6 +477,22 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         const events: BrsEvent[] = [];
         // To be overridden by the Task class
         return events;
+    }
+
+    private registerHttpAgent(agent: RoHttpAgent) {
+        this.registerMethods({
+            ifHttpAgent: [
+                agent.ifHttpAgent.addHeader,
+                agent.ifHttpAgent.setHeaders,
+                agent.ifHttpAgent.initClientCertificates,
+                agent.ifHttpAgent.setCertificatesFile,
+                agent.ifHttpAgent.setCertificatesDepth,
+                agent.ifHttpAgent.enableCookies,
+                agent.ifHttpAgent.getCookies,
+                agent.ifHttpAgent.addCookies,
+                agent.ifHttpAgent.clearCookies,
+            ],
+        });
     }
 
     private removeChildByReference(child: BrsType): boolean {
@@ -1723,6 +1744,33 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         },
         impl: (_: Interpreter) => {
             return rootObjects.rootScene || BrsInvalid.Instance;
+        },
+    });
+
+    /* Returns the roHttpAgent object for the node. */
+    private readonly getHttpAgent = new Callable("getHttpAgent", {
+        signature: {
+            args: [],
+            returns: ValueKind.Object,
+        },
+        impl: (_: Interpreter) => {
+            return this.httpAgent;
+        },
+    });
+
+    /** Sets an roHttpAgent object for the node. */
+    private readonly setHttpAgent = new Callable("setHttpAgent", {
+        signature: {
+            args: [new StdlibArgument("httpAgent", ValueKind.Object)],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter, httpAgent: RoHttpAgent) => {
+            if (httpAgent instanceof RoHttpAgent) {
+                this.httpAgent = httpAgent;
+                this.registerHttpAgent(httpAgent);
+                return BrsBoolean.True;
+            }
+            return BrsBoolean.False;
         },
     });
 }
