@@ -5,6 +5,7 @@ import { BrsHttpAgent, IfHttpAgent } from "../interfaces/IfHttpAgent";
 
 export class RoHttpAgent extends BrsComponent implements BrsValue, BrsHttpAgent {
     readonly kind = ValueKind.Object;
+    readonly ifHttpAgent: IfHttpAgent;
     readonly customHeaders: Map<string, string>;
     cookiesEnabled: boolean;
 
@@ -12,18 +13,18 @@ export class RoHttpAgent extends BrsComponent implements BrsValue, BrsHttpAgent 
         super("roHttpAgent");
         this.cookiesEnabled = false;
         this.customHeaders = new Map<string, string>();
-        const ifHttpAgent = new IfHttpAgent(this);
+        this.ifHttpAgent = new IfHttpAgent(this);
         this.registerMethods({
             ifHttpAgent: [
-                ifHttpAgent.addHeader,
-                ifHttpAgent.setHeaders,
-                ifHttpAgent.initClientCertificates,
-                ifHttpAgent.setCertificatesFile,
-                ifHttpAgent.setCertificatesDepth,
-                ifHttpAgent.enableCookies,
-                ifHttpAgent.getCookies,
-                ifHttpAgent.addCookies,
-                ifHttpAgent.clearCookies,
+                this.ifHttpAgent.addHeader,
+                this.ifHttpAgent.setHeaders,
+                this.ifHttpAgent.initClientCertificates,
+                this.ifHttpAgent.setCertificatesFile,
+                this.ifHttpAgent.setCertificatesDepth,
+                this.ifHttpAgent.enableCookies,
+                this.ifHttpAgent.getCookies,
+                this.ifHttpAgent.addCookies,
+                this.ifHttpAgent.clearCookies,
             ],
         });
     }
