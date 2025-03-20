@@ -625,7 +625,6 @@ function mainCallback(event: MessageEvent) {
                 taskSyncToMain.set(event.data.id, taskBuffer);
             }
             runTask(event.data);
-            console.log("m =", JSON.stringify(event.data.m, null, 2));
         } else if (event.data.state === TaskState.STOP) {
             endTask(event.data.id);
         }

@@ -217,7 +217,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         return this.getMethod(index.value) || BrsInvalid.Instance;
     }
 
-    set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
+    set(index: BrsType, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind) {
         if (index.kind !== ValueKind.String) {
             throw new Error("RoSGNode indexes must be strings");
         }
@@ -229,7 +229,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
 
         if (!field) {
             // RBI does not create a new field if the value isn't valid.
-            if (fieldType) {
+            if (fieldType && alwaysNotify !== undefined) {
                 field = new Field(value, fieldType, alwaysNotify);
                 this.fields.set(mapKey, field);
             } else {
@@ -433,14 +433,14 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
 
                 // Unset all of the not-common ancestors of the current focused node.
                 for (let i = lcaIndex; i < currFocusChain.length; i++) {
-                    currFocusChain[i].set(focusedChildString, BrsInvalid.Instance);
+                    currFocusChain[i].set(focusedChildString, BrsInvalid.Instance, false);
                 }
             }
 
             // Set the focusedChild for each ancestor to the next node in the chain,
             // which is the current node's child.
             for (let i = 0; i < newFocusChain.length - 1; i++) {
-                newFocusChain[i].set(focusedChildString, newFocusChain[i + 1]);
+                newFocusChain[i].set(focusedChildString, newFocusChain[i + 1], false);
             }
 
             // Finally, set the focusedChild of the newly focused node to itself (to mimic RBI behavior).
@@ -452,12 +452,12 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             // Get the focus chain, with root-most ancestor first.
             let currFocusChain = this.createPath(currFocusedNode);
             currFocusChain.forEach((node) => {
-                node.set(focusedChildString, BrsInvalid.Instance);
+                node.set(focusedChildString, BrsInvalid.Instance, false);
             });
         } else {
             // If the node doesn't have focus already, and it's not gaining focus,
             // we don't need to notify any ancestors.
-            this.set(focusedChildString, BrsInvalid.Instance);
+            this.set(focusedChildString, BrsInvalid.Instance, false);
         }
         return this.isFocusable();
     }
@@ -930,7 +930,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             fields.getValue().forEach((value, key) => {
                 let fieldName = new BrsString(key);
                 if (!this.fields.has(key)) {
-                    this.set(fieldName, value);
+                    this.set(fieldName, value, false);
                 }
             });
 
@@ -1234,7 +1234,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             aa.getValue().forEach((value, key) => {
                 let fieldName = new BrsString(key);
                 if (this.fields.has(key.toLowerCase()) || createFields.toBoolean()) {
-                    this.set(fieldName, value);
+                    this.set(fieldName, value, false);
                 }
             });
 
