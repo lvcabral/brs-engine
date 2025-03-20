@@ -188,6 +188,8 @@ export class Field {
                 value = new Int64(value.getValue());
             } else if (this.type === FieldKind.Double) {
                 value = new Double(value.getValue());
+            } else if (this.type === FieldKind.String) {
+                value = new BrsString(value.toString());
             }
         }
 
@@ -207,7 +209,9 @@ export class Field {
         const fieldIsObject = getValueKindFromFieldType(this.type) === ValueKind.Object;
         if (
             (fieldIsObject && (value === BrsInvalid.Instance || value instanceof RoInvalid)) ||
-            (isBrsNumber(this.value) && isBrsNumber(value))
+            (isBrsNumber(this.value) && isBrsNumber(value)) ||
+            (isBrsString(this.value) && isBrsString(value)) ||
+            (isBrsString(this.value) && isBrsNumber(value))
         ) {
             return true;
         }

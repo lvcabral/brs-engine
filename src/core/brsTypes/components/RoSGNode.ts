@@ -248,6 +248,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             }
         } else if (field.canAcceptValue(value)) {
             // Fields are not overwritten if they haven't the same type.
+            // Except Numbers that can be converted to string fields.
             field.setValue(value);
             this.fields.set(mapKey, field);
         } else {
