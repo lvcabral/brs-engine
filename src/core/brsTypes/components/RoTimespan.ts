@@ -17,13 +17,14 @@ export class RoTimespan extends BrsComponent implements BrsValue {
         if (markTime) {
             this.markTime = markTime;
         } else {
-            this.markTime = Date.now();
+            this.markTime = performance.now();
         }
         dayjs.extend(utc);
         dayjs.extend(customParseFormat);
         this.registerMethods({
             ifTimespan: [
                 this.mark,
+                this.totalMicroseconds,
                 this.totalMilliseconds,
                 this.totalSeconds,
                 this.getSecondsToISO8601Date,
@@ -32,7 +33,7 @@ export class RoTimespan extends BrsComponent implements BrsValue {
     }
 
     resetTime() {
-        this.markTime = Date.now();
+        this.markTime = performance.now();
     }
 
     toString(parent?: BrsType): string {
@@ -55,6 +56,16 @@ export class RoTimespan extends BrsComponent implements BrsValue {
         },
     });
 
+    private readonly totalMicroseconds = new Callable("totalMicroseconds", {
+        signature: {
+            args: [],
+            returns: ValueKind.Int32,
+        },
+        impl: (_: Interpreter) => {
+            return new Int32(Math.floor((performance.now() - this.markTime) * 1000));
+        },
+    });
+
     /** Returns total milliseconds from the mark time to now */
     private readonly totalMilliseconds = new Callable("totalMilliseconds", {
         signature: {
@@ -62,7 +73,7 @@ export class RoTimespan extends BrsComponent implements BrsValue {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter) => {
-            return new Int32(Date.now() - this.markTime);
+            return new Int32(Math.floor(performance.now() - this.markTime));
         },
     });
 
@@ -73,7 +84,7 @@ export class RoTimespan extends BrsComponent implements BrsValue {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter) => {
-            return new Int32(Math.floor((Date.now() - this.markTime) / 1000));
+            return new Int32(Math.floor((performance.now() - this.markTime) / 1000));
         },
     });
 
