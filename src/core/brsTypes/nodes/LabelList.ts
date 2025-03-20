@@ -25,7 +25,6 @@ export class LabelList extends ArrayGrid {
         { name: "focusedColor", type: "color", value: "0x262626ff" },
         { name: "font", type: "font" },
         { name: "focusedFont", type: "font", value: "font:MediumBoldSystemFont" },
-        { name: "itemSize", type: "array", value: "[0,0]" },
         { name: "numRows", type: "integer", value: "12" },
         { name: "vertFocusAnimationStyle", type: "string", value: "fixedFocusWrap" },
     ];
