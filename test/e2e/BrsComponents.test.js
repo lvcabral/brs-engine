@@ -1,5 +1,5 @@
 const { execute, createMockStreams, resourceFile, allArgs } = require("./E2ETests");
-const lolex = require("lolex");
+const fakeTimer = require("@sinonjs/fake-timers");
 
 describe("end to end brightscript functions", () => {
     let outputStreams;
@@ -7,21 +7,21 @@ describe("end to end brightscript functions", () => {
     const OLD_ENV = process.env;
 
     beforeAll(() => {
-        clock = lolex.install({ now: 1547072370937 });
         outputStreams = createMockStreams();
         outputStreams.root = __dirname + "/resources";
     });
 
     beforeEach(() => {
+        clock = fakeTimer.install({ now: 1547072370937, toFake: ["Date", "performance"] });
         process.env = { ...OLD_ENV };
     });
 
     afterEach(() => {
+        clock.uninstall();
         jest.resetAllMocks();
     });
 
     afterAll(() => {
-        clock.uninstall();
         jest.restoreAllMocks();
         process.env = OLD_ENV;
     });

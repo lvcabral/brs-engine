@@ -10,7 +10,7 @@ const {
     Int32,
     compareVersions,
 } = brs.types;
-const lolex = require("lolex");
+const fakeTimer = require("@sinonjs/fake-timers");
 
 describe("RoAppManager", () => {
     let interpreter;
@@ -18,10 +18,14 @@ describe("RoAppManager", () => {
     let ts;
 
     beforeEach(() => {
-        clock = lolex.install({ now: 1547072370937 });
+        clock = fakeTimer.install({ toFake: ["Date", "performance"] });
         ts = new RoTimespan();
         interpreter = new Interpreter();
         interpreter.manifest = new Map();
+    });
+
+    afterEach(() => {
+        clock.uninstall();
     });
 
     describe("stringification", () => {
