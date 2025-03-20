@@ -1,18 +1,18 @@
 const brs = require("../../../bin/brs.node");
 const { Interpreter } = brs;
 const { RoTimespan, Int32, BrsString, BrsInvalid } = brs.types;
-const lolex = require("lolex");
+const fakeTimer = require("@sinonjs/fake-timers");
 
 describe("Timespan", () => {
     let ts;
     let clock;
 
     beforeEach(() => {
-        clock = lolex.install({ now: 1547072370937 });
+        clock = fakeTimer.install({ toFake: ["performance"] });
         ts = new RoTimespan();
     });
 
-    afterAll(() => {
+    afterEach(() => {
         clock.uninstall();
     });
 
@@ -47,34 +47,49 @@ describe("Timespan", () => {
             });
         });
 
-        describe("totalmilliseconds", () => {
-            it("returns milliseconds from marked time until now", () => {
+        describe("totalMicroseconds", () => {
+            it("returns microseconds from marked time until now", () => {
                 let advanceTime = 50000;
-                let totalmilliseconds = ts.getMethod("totalmilliseconds");
+                let totalMicroseconds = ts.getMethod("totalmicroseconds");
 
                 clock.tick(advanceTime);
 
-                let result = totalmilliseconds.call(interpreter);
-                expect(totalmilliseconds).toBeTruthy();
+                let result = totalMicroseconds.call(interpreter);
+                expect(totalMicroseconds).toBeTruthy();
+                expect(result).toEqual(new Int32(advanceTime * 1000));
+            });
+        });
+
+        describe("totalMilliseconds", () => {
+            it("returns milliseconds from marked time until now", () => {
+                let advanceTime = 50000;
+                let totalMilliseconds = ts.getMethod("totalmilliseconds");
+
+                clock.tick(advanceTime);
+
+                let result = totalMilliseconds.call(interpreter);
+                expect(totalMilliseconds).toBeTruthy();
                 expect(result).toEqual(new Int32(advanceTime));
             });
         });
 
-        describe("totalseconds", () => {
+        describe("totalSeconds", () => {
             it("returns seconds from marked time until now", () => {
                 let advanceTime = 50000;
-                let totalseconds = ts.getMethod("totalseconds");
+                let totalSeconds = ts.getMethod("totalseconds");
 
                 clock.tick(advanceTime);
 
-                let result = totalseconds.call(interpreter);
-                expect(totalseconds).toBeTruthy();
+                let result = totalSeconds.call(interpreter);
+                expect(totalSeconds).toBeTruthy();
                 expect(result).toEqual(new Int32(50));
             });
         });
 
         describe("getsecondstoiso8601date", () => {
             it("returns seconds from now until a valid ISO8601 date", () => {
+                clock.uninstall();
+                clock = fakeTimer.install({ now: 1547072370937, toFake: ["Date"] });
                 let getsecondstoiso8601date = ts.getMethod("getsecondstoiso8601date");
 
                 let dateToParse1 = "2030-11-10T05:47:52Z";
@@ -95,6 +110,8 @@ describe("Timespan", () => {
             });
 
             it("accepts other ISO8601 formats and returns correct seconds", () => {
+                clock.uninstall();
+                clock = fakeTimer.install({ now: 1547072370937, toFake: ["Date"] });
                 let getsecondstoiso8601date = ts.getMethod("getsecondstoiso8601date");
 
                 let dateToParse = "2020-05-25";

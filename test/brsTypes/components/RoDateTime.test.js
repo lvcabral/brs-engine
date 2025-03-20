@@ -1,18 +1,18 @@
 const brs = require("../../../bin/brs.node");
 const { Interpreter } = brs;
 const { RoDateTime, Int32, Int64, BrsString, BrsInvalid, Uninitialized } = brs.types;
-const lolex = require("lolex");
+const fakeTimer = require("@sinonjs/fake-timers");
 
 describe("RoDateTime", () => {
     let dt;
     let clock;
 
     beforeEach(() => {
-        clock = lolex.install({ now: 1230768000123 });
+        clock = fakeTimer.install({ now: 1230768000123 });
         dt = new RoDateTime();
     });
 
-    afterAll(() => {
+    afterEach(() => {
         clock.uninstall();
     });
 
