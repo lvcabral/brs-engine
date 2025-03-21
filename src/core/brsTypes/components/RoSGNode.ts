@@ -95,6 +95,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
                 this.setField,
                 this.setFields,
                 this.update,
+                this.signalBeacon,
             ],
             ifSGNodeChildren: [
                 this.appendChild,
@@ -228,11 +229,19 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             if (fieldType) {
                 field = new Field(value, fieldType, alwaysNotify);
                 this.fields.set(mapKey, field);
+            } else {
+                let error = `warning,Warning occurred while setting a field of an RoSGNode\n`;
+                error += `-- Tried to set nonexistent field "${index.value}" of a "${this.nodeSubtype}" node`;
+                BrsDevice.stderr.write(error);
             }
         } else if (field.canAcceptValue(value)) {
             // Fields are not overwritten if they haven't the same type.
             field.setValue(value);
             this.fields.set(mapKey, field);
+        } else {
+            BrsDevice.stderr.write(
+                `warning,BRIGHTSCRIPT: ERROR: roSGNode.AddReplace: "${index.value}": Type mismatch!`
+            );
         }
 
         return BrsInvalid.Instance;
@@ -241,6 +250,19 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     getId() {
         const maybeID = this.fields.get("id")?.getValue();
         return maybeID instanceof BrsString ? maybeID.value : this.nodeSubtype;
+    }
+
+    addNodeField(fieldName: string, type: string, alwaysNotify: boolean) {
+        let defaultValue = getBrsValueFromFieldType(type);
+        let fieldKind = FieldKind.fromString(type);
+
+        if (defaultValue !== Uninitialized.Instance && !this.fields.has(fieldName)) {
+            this.set(new BrsString(fieldName), defaultValue, alwaysNotify, fieldKind);
+        }
+    }
+
+    addNodeFieldAlias(fieldName: string, field: Field) {
+        this.fields.set(fieldName.toLowerCase(), field);
     }
 
     // Used to setup values for the node fields without notifying observers
@@ -340,7 +362,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             if (!subscriber) {
                 const location = interpreter.formatLocation();
                 BrsDevice.stderr.write(
-                    `warning,BRIGHTSCRIPT: ERROR: roSGNode.ObserveField: no active host node: ${location}`
+                    `warning,BRIGHTSCRIPT: ERROR: roSGNode.ObserveField: "${this.nodeSubtype}.${fieldName.value}" no active host node: ${location}`
                 );
             } else if (!(callableOrPort instanceof BrsInvalid)) {
                 field.addObserver(
@@ -431,7 +453,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     findNodeById(node: RoSGNode, id: BrsString): RoSGNode | BrsInvalid {
         // test current node in tree
         let currentId = node.get(new BrsString("id"));
-        if (currentId.toString() === id.toString()) {
+        if (currentId.toString().toLowerCase() === id.value.toLowerCase()) {
             return node;
         }
 
@@ -866,13 +888,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, fieldName: BrsString, type: BrsString, alwaysNotify: BrsBoolean) => {
-            let defaultValue = getBrsValueFromFieldType(type.value);
-            let fieldKind = FieldKind.fromString(type.value);
-
-            if (defaultValue !== Uninitialized.Instance && !this.fields.has(fieldName.value)) {
-                this.set(fieldName, defaultValue, alwaysNotify.toBoolean(), fieldKind);
-            }
-
+            this.addNodeField(fieldName.value, type.value, alwaysNotify.toBoolean());
             return BrsBoolean.True;
         },
     });
@@ -998,7 +1014,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             if (!interpreter.environment.hostNode) {
                 let location = interpreter.formatLocation();
                 BrsDevice.stderr.write(
-                    `warning,BRIGHTSCRIPT: ERROR: roSGNode.unObserveField: no active host node: ${location}`
+                    `warning,BRIGHTSCRIPT: ERROR: roSGNode.unObserveField: "${this.nodeSubtype}.${fieldName.value}" no active host node: ${location}`
                 );
                 return BrsBoolean.False;
             }
@@ -1104,7 +1120,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             if (!interpreter.environment.hostNode) {
                 let location = interpreter.formatLocation();
                 BrsDevice.stderr.write(
-                    `warning,BRIGHTSCRIPT: ERROR: roSGNode.unObserveField: no active host node: ${location}`
+                    `warning,BRIGHTSCRIPT: ERROR: roSGNode.unObserveFieldScoped: "${this.nodeSubtype}.${fieldName.value}" no active host node: ${location}`
                 );
                 return BrsBoolean.False;
             }
@@ -1200,6 +1216,24 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             });
 
             return Uninitialized.Instance;
+        },
+    });
+
+    /** Signals start and/or stop points for measuring app launch and Electronic Program Grid (EPG) launch times. */
+    private readonly signalBeacon = new Callable("signalBeacon", {
+        signature: {
+            args: [new StdlibArgument("beacon", ValueKind.String)],
+            returns: ValueKind.Int32,
+        },
+        impl: (_: Interpreter, beacon: BrsString) => {
+            const validBeacons = [
+                "AppLaunchComplete",
+                "AppDialogInitiate",
+                "AppDialogComplete",
+                "EPGLaunchInitiate",
+                "EPGLaunchComplete",
+            ];
+            return new Int32(validBeacons.includes(beacon.value) ? 0 : 2);
         },
     });
 
