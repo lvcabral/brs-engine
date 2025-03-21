@@ -8,11 +8,12 @@ import {
     ContentNode,
     createNodeByType,
     Group,
+    Int32,
     jsValueOf,
     rootObjects,
     ValueKind,
 } from "..";
-import { IfDraw2D } from "../interfaces/IfDraw2D";
+import { IfDraw2D, Rect } from "../interfaces/IfDraw2D";
 import { Interpreter } from "../../interpreter";
 import { rotateTranslation } from "../../scenegraph/SGUtil";
 import { BrsDevice } from "../../device/BrsDevice";
@@ -20,9 +21,9 @@ import { BrsDevice } from "../../device/BrsDevice";
 export class MarkupGrid extends ArrayGrid {
     readonly defaultFields: FieldModel[] = [
         { name: "itemComponentName", type: "string", value: "" },
+        { name: "drawFocusFeedbackOnTop", type: "boolean", value: "true" },
     ];
-    protected readonly focusUri = "common:/images/focus_list.9.png";
-    protected readonly footprintUri = "common:/images/focus_footprint.9.png";
+    protected readonly focusUri = "common:/images/focus_grid.9.png";
     protected readonly dividerUri = "common:/images/dividerHorizontal.9.png";
     protected readonly margin: number;
     protected readonly gap: number;
@@ -44,6 +45,8 @@ export class MarkupGrid extends ArrayGrid {
         } else {
             this.margin = 24;
         }
+        this.setFieldValue("focusBitmapUri", new BrsString(this.focusUri));
+        this.setFieldValue("wrapDividerBitmapUri", new BrsString(this.dividerUri));
         this.gap = this.margin / 2;
         const style = jsValueOf(this.getFieldValue("vertFocusAnimationStyle")) as string;
         this.wrap = style.toLowerCase() !== "floatingfocus";
@@ -63,6 +66,47 @@ export class MarkupGrid extends ArrayGrid {
         return super.set(index, value, alwaysNotify, kind);
     }
 
+    handleKey(key: string, press: boolean): boolean {
+        if (!press && this.lastPressHandled === key) {
+            this.lastPressHandled = "";
+            return true;
+        }
+        let handled = false;
+        if (key === "up" || key === "down") {
+            handled = press ? this.handleUpDown(key) : false;
+        } else if (key === "left" || key === "right") {
+            handled = press ? this.handleLeftRight(key) : false;
+        } else if (key === "OK") {
+            //handled = this.handleOK(press);
+        }
+        this.lastPressHandled = handled ? key : "";
+        return handled;
+    }
+
+    protected handleUpDown(key: string) {
+        let handled = false;
+        const offset = key === "up" ? -1 : 1;
+        const nextIndex = this.focusIndex + offset;
+        if (nextIndex !== this.focusIndex) {
+            this.set(new BrsString("animateToItem"), new Int32(nextIndex));
+            handled = true;
+            this.currRow += this.wrap ? 0 : offset;
+        }
+        return handled;
+    }
+
+    protected handleLeftRight(key: string) {
+        let handled = false;
+        const offset = key === "left" ? -1 : 1;
+        const nextIndex = this.focusIndex + offset;
+        if (nextIndex !== this.focusIndex) {
+            this.set(new BrsString("animateToItem"), new Int32(nextIndex));
+            handled = true;
+            this.currRow += this.wrap ? 0 : offset;
+        }
+        return handled;
+    }
+
     renderNode(interpreter: Interpreter, origin: number[], angle: number, draw2D?: IfDraw2D) {
         if (!this.isVisible()) {
             return;
@@ -80,6 +124,8 @@ export class MarkupGrid extends ArrayGrid {
         const childCount = section.getNodeChildren().length;
         if (childCount === 0 || items === undefined) {
             return;
+        } else if (this.focusIndex < 0) {
+            this.focusIndex = 0;
         }
         const nodeFocus = interpreter.environment.getFocusedNode() === this;
         const nodeTrans = this.getTranslation();
@@ -128,9 +174,17 @@ export class MarkupGrid extends ArrayGrid {
                             break renderRow;
                         }
                     }
+                    const drawFocus = jsValueOf(this.getFieldValue("drawFocusFeedback"));
+                    const drawFocusOnTop = jsValueOf(this.getFieldValue("drawFocusFeedbackOnTop"));
+                    if (focused && drawFocus && !drawFocusOnTop) {
+                        this.renderFocus(itemRect, nodeFocus, draw2D);
+                    }
                     if (items[index] instanceof Group) {
                         const itemOrigin = [itemRect.x, itemRect.y];
                         items[index].renderNode(interpreter, itemOrigin, rotation, draw2D);
+                    }
+                    if (focused && drawFocus && drawFocusOnTop) {
+                        this.renderFocus(itemRect, nodeFocus, draw2D);
                     }
                 }
                 itemRect.x += itemSize[0] + spacing[0];
@@ -145,6 +199,25 @@ export class MarkupGrid extends ArrayGrid {
         this.updateBoundingRects(rect, origin, rotation);
         this.renderChildren(interpreter, drawTrans, rotation, draw2D);
         this.updateParentRects(origin, angle);
+    }
+
+    protected renderFocus(itemRect: Rect, nodeFocus: boolean, draw2D?: IfDraw2D) {
+        const focusBitmap = this.getBitmap("focusBitmapUri");
+        const focusFootprint = this.getBitmap("focusFootprintBitmapUri");
+        this.hasNinePatch = (focusBitmap?.ninePatch || focusFootprint?.ninePatch) === true;
+        const ninePatchRect = {
+            x: itemRect.x - 15,
+            y: itemRect.y - 15,
+            width: itemRect.width + 31,
+            height: itemRect.height + 30,
+        };
+        if (nodeFocus && focusBitmap) {
+            const rect = focusBitmap.ninePatch ? ninePatchRect : itemRect;
+            this.drawImage(focusBitmap, rect, 0, draw2D);
+        } else if (!nodeFocus && focusFootprint) {
+            const rect = focusFootprint.ninePatch ? ninePatchRect : itemRect;
+            this.drawImage(focusFootprint, rect, 0, draw2D);
+        }
     }
 
     protected updateCurrRow() {
