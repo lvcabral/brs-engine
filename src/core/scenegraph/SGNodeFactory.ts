@@ -34,6 +34,8 @@ import {
     CheckList,
     RadioButtonList,
     MarkupList,
+    StandardDialog,
+    StandardProgressDialog,
     RSGPalette,
 } from "../brsTypes";
 import { TaskData } from "../common";
@@ -148,13 +150,17 @@ export class SGNodeFactory {
                 return new TextEditBox([], name);
             case SGNodeType.Overhang:
                 return new Overhang([], name);
+            case SGNodeType.StandardDialog:
+                return new StandardDialog([], name);
+            case SGNodeType.StandardProgressDialog:
+                return new StandardProgressDialog([], name);
             case SGNodeType.RSGPalette:
                 return new RSGPalette([], name);
             default:
                 if (isSGNodeType(nodeType)) {
                     // Temporarily until all node types are implemented
                     BrsDevice.stderr.write(
-                        `warning,The roSGNode with type ${nodeType} is not implemented yet, created as regular "Node".`
+                        `warning,The roSGNode with type "${nodeType}" is not implemented yet, created as regular "Node".`
                     );
                     return new RoSGNode([], name);
                 }
