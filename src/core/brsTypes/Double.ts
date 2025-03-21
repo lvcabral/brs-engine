@@ -202,7 +202,7 @@ export class Double implements Numeric, Comparable, Boxable {
     }
 
     toString(parent?: BrsType): string {
-        return this.value.toPrecision();
+        return Number.isNaN(this.value) ? "nan" : this.value.toPrecision();
     }
 
     box() {
