@@ -15,5 +15,4 @@ export class ScrollingLabel extends Label {
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
     }
-
 }
