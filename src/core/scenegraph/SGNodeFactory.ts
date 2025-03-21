@@ -370,36 +370,54 @@ export function initializeTask(interpreter: Interpreter, taskData: TaskData) {
 /** Function to add Fields to a Node based on its definition */
 function addFields(interpreter: Interpreter, node: RoSGNode, typeDef: ComponentDefinition) {
     let fields = typeDef.fields;
-    for (let [key, value] of Object.entries(fields)) {
-        if (value instanceof Object) {
-            // Roku throws a run-time error if any fields are duplicated between inherited components.
-            // TODO: throw exception when fields are duplicated.
-            let fieldName = new BrsString(key);
-
-            let addField = node.getMethod("addField");
-            if (addField) {
-                addField.call(
-                    interpreter,
-                    fieldName,
-                    new BrsString(value.type),
-                    BrsBoolean.from(value.alwaysNotify === "true")
-                );
-            }
-
-            // set default value if it was specified in xml
-            let setField = node.getMethod("setField");
-            if (setField && value.value) {
-                setField.call(
-                    interpreter,
-                    fieldName,
-                    getBrsValueFromFieldType(value.type, value.value)
-                );
+    for (let [fieldName, fieldValue] of Object.entries(fields)) {
+        if (fieldValue instanceof Object) {
+            if (fieldValue.alias?.includes(".")) {
+                const childName = fieldValue.alias.split(".")[0];
+                const childField = fieldValue.alias.split(".")[1];
+                const childNode = node.findNodeById(node, new BrsString(childName));
+                if (childNode instanceof RoSGNode) {
+                    const field = childNode.getNodeFields().get(childField?.toLowerCase());
+                    if (field) {
+                        node.addNodeFieldAlias(fieldName, field);
+                    } else {
+                        let msg = `error,Error creating XML component ${node.nodeSubtype}\n`;
+                        msg += `-- Interface field alias failed: Node "${childName}" has no field named "${childField}"\n`;
+                        msg += `-- Error found ${typeDef.xmlPath}`;
+                        BrsDevice.stderr.write(msg);
+                        return;
+                    }
+                } else {
+                    let msg = `error,Error creating XML component ${node.nodeSubtype}\n`;
+                    msg += `-- Interface field alias failed: No node named ${childName}\n`;
+                    msg += `-- Error found ${typeDef.xmlPath}`;
+                    BrsDevice.stderr.write(msg);
+                    return;
+                }
+            } else {
+                const field = node.getNodeFields().get(fieldName.toLowerCase());
+                if (field) {
+                    let msg = `error,Error creating XML component ${node.nodeSubtype}\n`;
+                    msg += `-- Attempt to add duplicate field "${fieldName}" to RokuML component "${node.nodeSubtype}"\n`;
+                    msg += `---- Extends node type "${typeDef.extends}" already has a field named ${fieldName}\n`;
+                    msg += `-- Error found ${typeDef.xmlPath}`;
+                    BrsDevice.stderr.write(msg);
+                    return;
+                }
+                node.addNodeField(fieldName, fieldValue.type, fieldValue.alwaysNotify === "true");
+                // set default value if it was specified in xml
+                if (fieldValue.value) {
+                    node.setFieldValue(
+                        fieldName,
+                        getBrsValueFromFieldType(fieldValue.type, fieldValue.value)
+                    );
+                }
             }
 
             // Add the onChange callback if it exists.
-            if (value.onChange) {
-                let field = node.getNodeFields().get(fieldName.value.toLowerCase());
-                let callableFunction = interpreter.getCallableFunction(value.onChange);
+            if (fieldValue.onChange) {
+                const field = node.getNodeFields().get(fieldName.toLowerCase());
+                const callableFunction = interpreter.getCallableFunction(fieldValue.onChange);
                 if (callableFunction instanceof Callable && field) {
                     // observers set via `onChange` can never be removed, despite RBI's documentation claiming
                     // that it is equivalent to calling the ifSGNodeField observeField() method".
@@ -409,7 +427,7 @@ function addFields(interpreter: Interpreter, node: RoSGNode, typeDef: ComponentD
                         callableFunction,
                         node,
                         node,
-                        fieldName
+                        new BrsString(fieldName)
                     );
                 }
             }

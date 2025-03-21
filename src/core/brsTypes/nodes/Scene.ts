@@ -9,7 +9,9 @@ import {
     Callable,
     getTextureManager,
     Int32,
+    RoArray,
     RoBitmap,
+    RoMessagePort,
     RoSGNode,
     toAssociativeArray,
 } from "..";
@@ -39,6 +41,19 @@ export class Scene extends Group {
 
     protected getDimensions() {
         return { width: this.ui.width, height: this.ui.height };
+    }
+
+    addObserver(
+        interpreter: Interpreter,
+        scope: "permanent" | "scoped" | "unscoped",
+        fieldName: BrsString,
+        funcOrPort: BrsString | RoMessagePort,
+        infoFields?: RoArray
+    ) {
+        if (!interpreter.environment.hostNode) {
+            interpreter.environment.hostNode = this;
+        }
+        return super.addObserver(interpreter, scope, fieldName, funcOrPort, infoFields);
     }
 
     setDesignResolution(resolution: string) {
