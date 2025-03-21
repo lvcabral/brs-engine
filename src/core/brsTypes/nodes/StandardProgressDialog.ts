@@ -8,11 +8,13 @@ export class StandardProgressDialog extends StandardDialog {
         { name: "message", type: "string", value: "" },
     ];
 
-    constructor(initializedFields: AAMember[] = [], readonly name: string = "StandardProgressDialog") {
+    constructor(
+        initializedFields: AAMember[] = [],
+        readonly name: string = "StandardProgressDialog"
+    ) {
         super([], name);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
-
     }
 }

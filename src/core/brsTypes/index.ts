@@ -148,8 +148,8 @@ export * from "./nodes/CheckList";
 export * from "./nodes/RadioButtonList";
 export * from "./nodes/Button";
 export * from "./nodes/ButtonGroup";
-export * from "./nodes/StandardDialog"
-export * from "./nodes/StandardProgressDialog"
+export * from "./nodes/StandardDialog";
+export * from "./nodes/StandardProgressDialog";
 export * from "./nodes/RSGPalette";
 export * from "./Boxing";
 export * from "./Callable";

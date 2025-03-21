@@ -18,6 +18,5 @@ export class StandardDialog extends Group {
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
-
     }
 }
