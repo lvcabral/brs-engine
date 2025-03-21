@@ -402,7 +402,7 @@ export function toAssociativeArray(input: Map<string, any> | FlexObject): RoAsso
  * @throws {Error} If `x` cannot be represented as a BrsType.
  */
 export function brsValueOf(x: any): BrsType {
-    if (x === null || x === undefined || Number.isNaN(x)) {
+    if (x === null || x === undefined) {
         return BrsInvalid.Instance;
     }
     const maxInt = 0x80000000;
@@ -415,6 +415,8 @@ export function brsValueOf(x: any): BrsType {
         case "number":
             if (Number.isInteger(x)) {
                 return x >= -maxInt && x < maxInt ? new Int32(x) : new Int64(x);
+            } else if (Number.isNaN(x)) {
+                return new Float(x);
             }
             return x >= -3.4e38 && x <= 3.4e38 ? new Float(x) : new Double(x);
         case "object":
