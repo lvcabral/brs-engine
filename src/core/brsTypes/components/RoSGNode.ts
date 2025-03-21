@@ -252,7 +252,9 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             field.setValue(value);
             this.fields.set(mapKey, field);
         } else {
-            BrsDevice.stderr.write(`warning,BRIGHTSCRIPT: ERROR: roSGNode.AddReplace: "${index.value}": Type mismatch!`);
+            BrsDevice.stderr.write(
+                `warning,BRIGHTSCRIPT: ERROR: roSGNode.AddReplace: "${index.value}": Type mismatch!`
+            );
         }
 
         return BrsInvalid.Instance;
