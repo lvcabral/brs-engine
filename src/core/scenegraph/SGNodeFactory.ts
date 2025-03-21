@@ -372,7 +372,7 @@ function addFields(interpreter: Interpreter, node: RoSGNode, typeDef: ComponentD
     let fields = typeDef.fields;
     for (let [fieldName, fieldValue] of Object.entries(fields)) {
         if (fieldValue instanceof Object) {
-            if (fieldValue.alias && fieldValue.alias.includes(".")) {
+            if (fieldValue.alias?.includes(".")) {
                 const childName = fieldValue.alias.split(".")[0];
                 const childField = fieldValue.alias.split(".")[1];
                 const childNode = node.findNodeById(node, new BrsString(childName));
