@@ -231,7 +231,7 @@ export class Int32 implements Numeric, Comparable, Boxable {
     }
 
     toString(parent?: BrsType): string {
-        return this.value.toString();
+        return Number.isNaN(this.value) ? "nan" : this.value.toString();
     }
 
     box() {
