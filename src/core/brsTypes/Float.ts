@@ -214,7 +214,7 @@ export class Float implements Numeric, Comparable, Boxable {
     }
 
     toString(parent?: BrsType): string {
-        return vsprintf("%g", [this.value]);
+        return Number.isNaN(this.value) ? "nan" : vsprintf("%g", [this.value]);
     }
 
     box() {

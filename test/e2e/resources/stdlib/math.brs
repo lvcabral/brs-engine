@@ -48,4 +48,7 @@ sub main()
     print Fix(lng&) ' => 2147483647
     print Int(lng&) ' => 2147483647
 	print Cint(lng&)' => 2147483647
+
+    ' NaN
+    print Sqr(-1) ' => nan
 end sub

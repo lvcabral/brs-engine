@@ -227,7 +227,7 @@ export class Int64 implements Numeric, Comparable, Boxable {
     }
 
     toString(parent?: BrsType): string {
-        return this.value.toString();
+        return Number.isNaN(this.value.toNumber()) ? "nan" : this.value.toString();
     }
 
     box() {

@@ -2254,7 +2254,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         if (value instanceof Long) {
             return value.isPositive();
         }
-        return value >= 0;
+        return Number.isNaN(value) || value >= 0;
     }
 
     /**

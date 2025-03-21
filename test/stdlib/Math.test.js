@@ -112,6 +112,9 @@ describe("global math functions", () => {
         it("calculates the square root", () => {
             expect(Sqr.call(interpreter, new Float(9.9)).value).toBeCloseTo(3.146426, 5);
         });
+        it("calculates the square root of negative, returns NaN", () => {
+            expect(Sqr.call(interpreter, new Float(-1)).value).toBe(NaN);
+        });
     });
 
     describe("Rnd", () => {
