@@ -147,7 +147,7 @@ export class Task extends RoSGNode {
                 this.set(
                     new BrsString(taskUpdate.field),
                     brsValueOf(taskUpdate.value),
-                    undefined,
+                    false,
                     undefined,
                     false
                 );
