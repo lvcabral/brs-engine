@@ -151,6 +151,7 @@ export class LabelList extends ArrayGrid {
             return;
         }
         const content = this.getFieldValue("content") as ContentNode;
+        // TODO: handle the content with sections
         const childCount = content.getNodeChildren().length;
         if (childCount === 0) {
             return;
