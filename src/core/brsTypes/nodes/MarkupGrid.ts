@@ -127,7 +127,7 @@ export class MarkupGrid extends ArrayGrid {
         } else if (this.focusIndex < 0) {
             this.focusIndex = 0;
         }
-        const nodeFocus = interpreter.environment.getFocusedNode() === this;
+        const nodeFocus = rootObjects.focused === this;
         const nodeTrans = this.getTranslation();
         const drawTrans = angle !== 0 ? rotateTranslation(nodeTrans, angle) : nodeTrans.slice();
         drawTrans[0] += origin[0];
