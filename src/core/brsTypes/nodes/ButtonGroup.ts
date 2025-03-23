@@ -203,14 +203,16 @@ export class ButtonGroup extends LayoutGroup {
     }
 
     private refreshFocus(interpreter: Interpreter) {
-        const focusedNode = interpreter.environment.getFocusedNode();
+        const focusedNode = rootObjects.focused;
         if (
             this.children.length &&
             focusedNode instanceof RoSGNode &&
             (focusedNode === this || focusedNode.getNodeParent() === this)
         ) {
             const focusedButton = this.children[this.focusIndex];
-            interpreter.environment.setFocusedNode(focusedButton);
+            if (focusedNode !== focusedButton) {
+                rootObjects.focused = focusedButton;
+            }
         }
     }
 
