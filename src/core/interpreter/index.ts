@@ -249,13 +249,11 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     inSubEnv(func: (interpreter: Interpreter) => BrsType, environment?: Environment): BrsType {
         let originalEnvironment = this._environment;
         let newEnv = environment ?? this._environment.createSubEnvironment();
-        newEnv.setFocusedNode(this._environment.getFocusedNode());
         let retValue: BrsComponent | undefined = undefined;
         try {
             this._environment = newEnv;
             const returnValue = func(this);
             this._environment = originalEnvironment;
-            this._environment.setFocusedNode(newEnv.getFocusedNode());
             return returnValue;
         } catch (err: any) {
             if (!this._tryMode && this.options.stopOnCrash && !(err instanceof Stmt.BlockEnd)) {
@@ -266,7 +264,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 retValue.setReturn(true);
             }
             this._environment = originalEnvironment;
-            this._environment.setFocusedNode(newEnv.getFocusedNode());
             throw err;
         } finally {
             newEnv.removeReferences();

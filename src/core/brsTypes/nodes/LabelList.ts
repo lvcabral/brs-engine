@@ -151,11 +151,12 @@ export class LabelList extends ArrayGrid {
             return;
         }
         const content = this.getFieldValue("content") as ContentNode;
+        // TODO: handle the content with sections
         const childCount = content.getNodeChildren().length;
         if (childCount === 0) {
             return;
         }
-        const nodeFocus = interpreter.environment.getFocusedNode() === this;
+        const nodeFocus = rootObjects.focused === this;
         const nodeTrans = this.getTranslation();
         const drawTrans = angle !== 0 ? rotateTranslation(nodeTrans, angle) : nodeTrans.slice();
         drawTrans[0] += origin[0];
