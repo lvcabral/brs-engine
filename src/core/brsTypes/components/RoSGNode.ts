@@ -304,11 +304,8 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         if (this.children.length === 0) {
             return false;
         }
-
         for (let childNode of this.children) {
-            if (rootObjects.focused === childNode) {
-                return true;
-            } else if (childNode.isChildrenFocused(interpreter)) {
+            if (rootObjects.focused === childNode || childNode.isChildrenFocused(interpreter)) {
                 return true;
             }
         }

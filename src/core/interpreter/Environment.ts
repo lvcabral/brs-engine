@@ -1,13 +1,6 @@
 import { Identifier } from "../lexer";
 import { Location } from "../lexer/Token";
-import {
-    BrsComponent,
-    BrsType,
-    Int32,
-    RoAssociativeArray,
-    RoSGNode,
-    ValueKind,
-} from "../brsTypes";
+import { BrsComponent, BrsType, Int32, RoAssociativeArray, RoSGNode, ValueKind } from "../brsTypes";
 import { TypeMismatch } from "../error/TypeMismatch";
 import { ComponentDefinition } from "../scenegraph";
 

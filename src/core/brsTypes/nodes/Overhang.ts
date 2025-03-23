@@ -65,9 +65,9 @@ export class Overhang extends Group {
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
 
-        if (rootObjects.rootScene?.ui && rootObjects.rootScene.ui.resolution === "FHD") {
+        this.resolution = rootObjects.rootScene?.ui.resolution ?? "HD";
+        if (this.resolution === "FHD") {
             this.width = 1920;
-            this.resolution = "FHD";
             this.setFieldValue("width", new Float(this.width));
             this.setFieldValue("height", new Float(172));
             this.background = this.addPoster("", [0, 0], 172, this.width);
@@ -80,7 +80,6 @@ export class Overhang extends Group {
             this.clockText = this.addLabel("clockColor", [1682, 64], 40, 33, "center");
         } else {
             this.width = 1280;
-            this.resolution = "HD";
             this.setFieldValue("width", new Float(this.width));
             this.setFieldValue("height", new Float(115));
             this.background = this.addPoster("", [0, 0], 115, this.width);
