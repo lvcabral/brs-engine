@@ -136,6 +136,7 @@ export * from "./nodes/Label";
 export * from "./nodes/ScrollingLabel";
 export * from "./nodes/Font";
 export * from "./nodes/Poster";
+export * from "./nodes/Dialog";
 export * from "./nodes/ArrayGrid";
 export * from "./nodes/MarkupGrid";
 export * from "./nodes/MarkupList";

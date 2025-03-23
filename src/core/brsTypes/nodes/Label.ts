@@ -26,7 +26,6 @@ export class Label extends Group {
         { name: "ellipsisText", type: "string" },
         { name: "isTextEllipsized", type: "boolean", value: "false" },
     ];
-
     protected measured?: MeasuredText;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = "Label") {
