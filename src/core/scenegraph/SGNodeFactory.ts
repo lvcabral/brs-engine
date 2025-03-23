@@ -25,11 +25,11 @@ import {
     BrsType,
     Callable,
     getBrsValueFromFieldType,
-    BrsBoolean,
     rootObjects,
     Overhang,
     ButtonGroup,
     Button,
+    Dialog,
     LabelList,
     CheckList,
     RadioButtonList,
@@ -46,6 +46,7 @@ export enum SGNodeType {
     LayoutGroup = "LayoutGroup",
     ButtonGroup = "ButtonGroup",
     Button = "Button",
+    Dialog = "Dialog",
     Rectangle = "Rectangle",
     Label = "Label",
     ScrollingLabel = "ScrollingLabel",
@@ -114,6 +115,8 @@ export class SGNodeFactory {
                 return new Button([], name);
             case SGNodeType.ButtonGroup:
                 return new ButtonGroup([], name);
+            case SGNodeType.Dialog:
+                return new Dialog([], name);
             case SGNodeType.Rectangle:
                 return new Rectangle([], name);
             case SGNodeType.Label:
@@ -209,6 +212,8 @@ export function createNodeByType(interpreter: Interpreter, type: BrsString): RoS
         if (task.thread && node.getNodeParent() === BrsInvalid.Instance) {
             node.setNodeParent(task);
         }
+    } else if (node instanceof Dialog) {
+        rootObjects.dialog = node;
     }
     return node;
 }
