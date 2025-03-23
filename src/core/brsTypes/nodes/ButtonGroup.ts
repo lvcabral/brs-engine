@@ -142,6 +142,7 @@ export class ButtonGroup extends LayoutGroup {
             this.isDirty = false;
         }
         this.refreshFocus(interpreter);
+        // TODO: update then width/height based on the # of buttons and layout direction
         this.updateBoundingRects(boundingRect, origin, angle);
         this.renderChildren(interpreter, drawTrans, angle, draw2D);
         this.updateParentRects(origin, angle);
@@ -158,8 +159,8 @@ export class ButtonGroup extends LayoutGroup {
         this.width = this.calculateButtonWidth(buttons, focusedFont.createDrawFont());
         for (let i = 0; i < buttonsCount; i++) {
             const buttonText = buttons[i];
-            let button = this.children[i] as Button;
             if (buttonText) {
+                let button = this.children[i] as Button;
                 if (!button) {
                     button = this.createButton();
                 }
@@ -177,6 +178,7 @@ export class ButtonGroup extends LayoutGroup {
                 button.setFieldValue("minWidth", new Float(this.width));
                 this.copyField(button, "maxWidth");
                 button.setFieldValue("showFocusFootprint", BrsBoolean.from(this.focusIndex === i));
+                // TODO: Implement support for field layoutDirection (vert, horiz)
                 const buttonY = i * (Math.max(buttonHeight, this.iconSize[1]) - this.vertOffset);
                 const offsetY = Math.max((this.iconSize[1] - buttonHeight) / 2, 0);
                 button.setFieldValue("translation", brsValueOf([0, buttonY + offsetY]));
@@ -201,14 +203,16 @@ export class ButtonGroup extends LayoutGroup {
     }
 
     private refreshFocus(interpreter: Interpreter) {
-        const focusedNode = interpreter.environment.getFocusedNode();
+        const focusedNode = rootObjects.focused;
         if (
             this.children.length &&
             focusedNode instanceof RoSGNode &&
             (focusedNode === this || focusedNode.getNodeParent() === this)
         ) {
             const focusedButton = this.children[this.focusIndex];
-            interpreter.environment.setFocusedNode(focusedButton);
+            if (focusedNode !== focusedButton) {
+                rootObjects.focused = focusedButton;
+            }
         }
     }
 

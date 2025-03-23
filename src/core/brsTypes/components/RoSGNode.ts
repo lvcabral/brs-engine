@@ -304,11 +304,8 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         if (this.children.length === 0) {
             return false;
         }
-
         for (let childNode of this.children) {
-            if (interpreter.environment.getFocusedNode() === childNode) {
-                return true;
-            } else if (childNode.isChildrenFocused(interpreter)) {
+            if (rootObjects.focused === childNode || childNode.isChildrenFocused(interpreter)) {
                 return true;
             }
         }
@@ -383,7 +380,6 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     /** Sets or removes the focus to/from the Node */
     setNodeFocus(interpreter: Interpreter, focusOn: boolean): boolean {
         let focusedChildString = new BrsString("focusedchild");
-        let currFocusedNode = interpreter.environment.getFocusedNode();
         if (focusOn) {
             if (!this.triedInitFocus) {
                 // Only try initial focus once
@@ -400,16 +396,16 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
                 }
             }
 
-            interpreter.environment.setFocusedNode(this);
+            rootObjects.focused = this;
 
             // Get the focus chain, with lowest ancestor first.
             let newFocusChain = this.createPath(this);
 
             // If there's already a focused node somewhere, we need to remove focus
             // from it and its ancestors.
-            if (currFocusedNode instanceof RoSGNode) {
+            if (rootObjects.focused instanceof RoSGNode) {
                 // Get the focus chain, with root-most ancestor first.
-                let currFocusChain = this.createPath(currFocusedNode);
+                let currFocusChain = this.createPath(rootObjects.focused);
 
                 // Find the lowest common ancestor (LCA) between the newly focused node
                 // and the current focused node.
@@ -432,10 +428,11 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             }
 
             // Finally, set the focusedChild of the newly focused node to itself (to mimic RBI behavior).
-            this.set(focusedChildString, this);
-        } else if (currFocusedNode === this) {
+            this.set(focusedChildString, this, false);
+        } else if (rootObjects.focused === this) {
             // If we're unsetting focus on ourself, we need to unset it on all ancestors as well.
-            interpreter.environment.setFocusedNode(BrsInvalid.Instance);
+            const currFocusedNode = rootObjects.focused;
+            rootObjects.focused = undefined;
             // Get the focus chain, with root-most ancestor first.
             let currFocusChain = this.createPath(currFocusedNode);
             currFocusChain.forEach((node) => {
@@ -491,7 +488,18 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
 
     /** Copies a field value from this Node to a Child node field */
     protected copyField(node: RoSGNode, fieldName: string, thisField?: string) {
-        node.setFieldValue(fieldName, this.getFieldValue(thisField ?? fieldName));
+        const value = this.getFieldValue(thisField ?? fieldName);
+        node.set(new BrsString(fieldName), value);
+        return value;
+    }
+
+    /** Links a field from another node to this node field */
+    protected linkField(node: RoSGNode, fieldName: string, thisField?: string) {
+        const field = node.getNodeFields().get(fieldName.toLowerCase());
+        if (field) {
+            this.fields.set((thisField ?? fieldName).toLowerCase(), field);
+        }
+        return field;
     }
 
     /** Message callback to handle observed fields with message port */
@@ -1650,8 +1658,8 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             args: [],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter) => {
-            return BrsBoolean.from(interpreter.environment.getFocusedNode() === this);
+        impl: (_: Interpreter) => {
+            return BrsBoolean.from(rootObjects.focused === this);
         },
     });
 
@@ -1684,7 +1692,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         },
         impl: (interpreter: Interpreter) => {
             // loop through all children DFS and check if any children has focus
-            if (interpreter.environment.getFocusedNode() === this) {
+            if (rootObjects.focused === this) {
                 return BrsBoolean.True;
             }
 
@@ -1812,6 +1820,8 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
 interface RootObjects {
     mGlobal: RoSGNode;
     rootScene?: Scene;
+    dialog?: RoSGNode;
+    focused?: RoSGNode;
     tasks: Task[];
 }
 export const rootObjects: RootObjects = { mGlobal: new RoSGNode([]), tasks: [] };

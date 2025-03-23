@@ -12,6 +12,7 @@ import {
     RoArray,
     RoBitmap,
     RoMessagePort,
+    rootObjects,
     RoSGNode,
     toAssociativeArray,
 } from "..";
@@ -100,9 +101,8 @@ export class Scene extends Group {
 
     /** Handle SceneGraph onKeyEvent event */
     handleOnKeyEvent(interpreter: Interpreter, key: BrsString, press: BrsBoolean) {
-        const focusedNode = interpreter.environment.getFocusedNode();
-        if (focusedNode instanceof RoSGNode) {
-            const path = this.createPath(focusedNode, false);
+        if (rootObjects.focused instanceof RoSGNode) {
+            const path = this.createPath(rootObjects.focused, false);
             for (let node of path) {
                 if (this.handleKeyByNode(interpreter, node, key, press)) {
                     return true;
