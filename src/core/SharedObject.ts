@@ -13,6 +13,8 @@ class SharedObject {
     private view: Uint8Array;
     private maxSize: number;
     private atomicView: Int32Array;
+    private queue: { obj: any; version: number; timeout: number }[] = [];
+    private isProcessing: boolean = false;
 
     constructor(initialSize?: number, maxSize?: number) {
         initialSize = initialSize ?? 32 * 1024; // 32KB default
@@ -40,20 +42,43 @@ class SharedObject {
     }
 
     waitStore(obj: any, version: number, timeout: number = 10000): void {
+        this.queue.push({ obj, version, timeout });
+        this.processQueue();
+    }
+
+    private processQueue(): void {
+        if (this.isProcessing || this.queue.length === 0) {
+            return;
+        }
+
+        this.isProcessing = true;
+        const { obj, version, timeout } = this.queue[0];
+
         if (typeof Atomics.waitAsync === "function") {
             const result = Atomics.waitAsync(this.atomicView, this.versionIdx, version, timeout);
             if (result.async) {
                 result.value.then((status) => {
                     if (status === "ok") {
-                        console.log("[API] Buffer released. Storing data.");
                         this.store(obj);
+                        console.log("[API] Buffer released. Stored data.", obj.field, this.getVersion());
                     } else {
                         console.error("[API] Error storing shared data", status);
                     }
+                    this.queue.shift();
+                    this.isProcessing = false;
+                    this.processQueue();
                 });
             } else if (result.value === "not-equal") {
-                console.log("[API] Buffer is free. Storing data.");
                 this.store(obj);
+                console.log("[API] Buffer is free. Stored data.", obj.field, this.getVersion());
+                this.queue.shift();
+                this.isProcessing = false;
+                this.processQueue();
+            } else {
+                console.error("[API] Error storing shared data: timeout");
+                this.queue.shift();
+                this.isProcessing = false;
+                this.processQueue();
             }
         } else {
             // Fallback for browsers that do not support Atomics.waitAsync (e.g., Firefox)
@@ -62,10 +87,16 @@ class SharedObject {
                 if (Atomics.load(this.atomicView, this.versionIdx) !== version) {
                     console.log("[API] Buffer is free. Storing data.");
                     this.store(obj);
+                    this.queue.shift();
+                    this.isProcessing = false;
+                    this.processQueue();
                 } else if (Date.now() - start < timeout) {
                     setTimeout(checkCondition, 10); // Check every 10ms
                 } else {
                     console.error("[API] Error storing shared data: timeout");
+                    this.queue.shift();
+                    this.isProcessing = false;
+                    this.processQueue();
                 }
             };
             checkCondition();
