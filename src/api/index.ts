@@ -80,7 +80,6 @@ import packageInfo from "../../package.json";
 
 // Interpreter Library
 const brsWrkLib = getWorkerLibPath();
-let brsWorker: Worker;
 
 // Package API
 export {
@@ -121,7 +120,11 @@ let bandwidthTimeout: NodeJS.Timeout | null = null;
 let latestBandwidth: number = 0;
 let httpConnectLog: boolean = false;
 
-// App Shared Buffers
+// App Workers and Shared Buffers
+let brsWorker: Worker;
+const tasks: Map<number, Worker> = new Map();
+const taskSyncFromMain: Map<number, SharedObject> = new Map();
+const taskSyncToMain: Map<number, SharedObject> = new Map();
 const registryBuffer = new SharedObject(registryInitialSize, registryMaxSize);
 let sharedBuffer: ArrayBufferLike;
 let sharedArray: Int32Array;
@@ -475,10 +478,6 @@ function runApp(payload: AppPayload) {
         apiException("error", `[api] Error running ${currentApp.title}: ${err.message}`);
     }
 }
-
-const tasks: Map<number, Worker> = new Map();
-const taskSyncFromMain: Map<number, SharedObject> = new Map();
-const taskSyncToMain: Map<number, SharedObject> = new Map();
 
 function runTask(taskData: TaskData) {
     if (tasks.has(taskData.id) || !taskData.m?.top?.functionname) {
