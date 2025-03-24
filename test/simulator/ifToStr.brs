@@ -1,6 +1,6 @@
 sub main()
     ' Integer (decimal)
-    print 123.ToStr("%d") ' Fails needs to add () to work
+    print 123.ToStr("%d")
     '=> "123"
 
     n = 300 + 45
