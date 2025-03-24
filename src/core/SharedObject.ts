@@ -60,7 +60,11 @@ class SharedObject {
                 result.value.then((status) => {
                     if (status === "ok") {
                         this.store(obj);
-                        console.log("[API] Buffer released. Stored data.", obj.field, this.getVersion());
+                        console.log(
+                            "[API] Buffer released. Stored data.",
+                            obj.field,
+                            this.getVersion()
+                        );
                     } else {
                         console.error("[API] Error storing shared data", status);
                     }
