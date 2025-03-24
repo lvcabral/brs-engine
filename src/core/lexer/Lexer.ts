@@ -493,12 +493,15 @@ export class Lexer {
             if (!hasSeenDecimal && peek() === ".") {
                 containsDecimal = true;
 
-                // consume the "." parse the fractional part
-                advance();
-
-                // read the remaining digits
-                while (isDecimalDigit(peek())) {
+                // Allow methods with integer literal values
+                if (!isAlpha(peekNext())) {
+                    // consume the "." parse the fractional part
                     advance();
+
+                    // read the remaining digits
+                    while (isDecimalDigit(peek())) {
+                        advance();
+                    }
                 }
             }
 
@@ -682,7 +685,7 @@ export class Lexer {
                 : Lexeme.Identifier;
             if (tokenType === KeyWords.rem) {
                 //the rem keyword can be used as an identifier on objects,
-                //so do a quick look-behind to see if there's a preceeding dot
+                //so do a quick look-behind to see if there's a preceding dot
                 if (checkPrevious(Lexeme.Dot)) {
                     addToken(Lexeme.Identifier);
                 } else {

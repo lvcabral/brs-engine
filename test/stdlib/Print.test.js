@@ -32,7 +32,7 @@ describe("print utility functions", () => {
             expect(Tab.call(interpreter, new Int32(-33))).toEqual(new BrsString(""));
         });
 
-        it("ignores intendations less than current `pos`", () => {
+        it("ignores indentations less than current `pos`", () => {
             BrsDevice.stdout.write("lorem ipsum dolor sit amet");
 
             expect(Tab.call(interpreter, new Int32(8))).toEqual(new BrsString(""));
