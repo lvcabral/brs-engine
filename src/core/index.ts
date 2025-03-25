@@ -727,6 +727,8 @@ function parseLibraries(
         lib.set("v30/bslDefender.brs", "");
         lib.set("v30/bslCore.brs", "");
         lib.set("Roku_Ads.brs", "");
+        lib.set("IMA3.brs", "");
+        lib.set("Roku_Event_Dispatcher.brs", "");
         lib.set("RokuBrowser.brs", "");
     }
     // Check for Libraries and add to the collection
@@ -744,6 +746,21 @@ function parseLibraries(
         manifest.get("bs_libs_required")?.includes("roku_ads_lib")
     ) {
         lib.set("Roku_Ads.brs", fsys.readFileSync("common:/roku_ads/Roku_Ads.brs", "utf8"));
+    }
+    if (
+        parseResults.libraries.get("IMA3.brs") === true &&
+        manifest.get("bs_libs_required")?.includes("googleima3")
+    ) {
+        lib.set("IMA3.brs", fs.readFileSync("common:/roku_ads/IMA3.brs", "utf8"));
+    }
+    if (
+        parseResults.libraries.get("Roku_Event_Dispatcher.brs") === true &&
+        manifest.get("sg_component_libs_required")?.includes("roku_analytics")
+    ) {
+        lib.set(
+            "Roku_Event_Dispatcher.brs",
+            fs.readFileSync("common:/roku_analytics/Roku_Event_Dispatcher.brs", "utf8")
+        );
     }
     if (
         parseResults.libraries.get("RokuBrowser.brs") === true &&
