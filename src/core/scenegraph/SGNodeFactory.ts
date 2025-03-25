@@ -55,6 +55,7 @@ export enum SGNodeType {
     ArrayGrid = "ArrayGrid",
     LabelList = "LabelList",
     CheckList = "CheckList",
+    RowList = "RowList",
     RadioButtonList = "RadioButtonList",
     MarkupList = "MarkupList",
     MarkupGrid = "MarkupGrid",
@@ -69,8 +70,11 @@ export enum SGNodeType {
     RSGPalette = "RSGPalette",
     Video = "Video",
     Audio = "Audio",
+    Animation = "Animation",
+    FloatFieldInterpolator = "FloatFieldInterpolator",
     StandardDialog = "StandardDialog",
     StandardProgressDialog = "StandardProgressDialog",
+    BusySpinner = "BusySpinner",
     ChannelStore = "ChannelStore",
 }
 
@@ -188,7 +192,7 @@ export class SGNodeFactory {
 /** Function to create a Node by its name defined on the XML file */
 export function createNodeByType(interpreter: Interpreter, type: BrsString): RoSGNode | BrsInvalid {
     // If this is a built-in node component, then return it.
-    let node = SGNodeFactory.createNode(type.value as SGNodeType) ?? BrsInvalid.Instance;
+    let node = SGNodeFactory.createNode(type.value) ?? BrsInvalid.Instance;
     if (node instanceof BrsInvalid) {
         let typeDef = interpreter.environment.nodeDefMap.get(type.value.toLowerCase());
         if (typeDef) {
@@ -423,14 +427,14 @@ function addFields(interpreter: Interpreter, node: RoSGNode, typeDef: ComponentD
                     if (field) {
                         node.addNodeFieldAlias(fieldName, field, childName, childField);
                     } else {
-                        let msg = `error,Error creating XML component ${node.nodeSubtype}\n`;
+                        let msg = `warning,Error creating XML component ${node.nodeSubtype}\n`;
                         msg += `-- Interface field alias failed: Node "${childName}" has no field named "${childField}"\n`;
                         msg += `-- Error found ${typeDef.xmlPath}`;
                         BrsDevice.stderr.write(msg);
                         return;
                     }
                 } else {
-                    let msg = `error,Error creating XML component ${node.nodeSubtype}\n`;
+                    let msg = `warning,Error creating XML component ${node.nodeSubtype}\n`;
                     msg += `-- Interface field alias failed: No node named ${childName}\n`;
                     msg += `-- Error found ${typeDef.xmlPath}`;
                     BrsDevice.stderr.write(msg);
@@ -439,7 +443,7 @@ function addFields(interpreter: Interpreter, node: RoSGNode, typeDef: ComponentD
             } else {
                 const field = node.getNodeFields().get(fieldName.toLowerCase());
                 if (field) {
-                    let msg = `error,Error creating XML component ${node.nodeSubtype}\n`;
+                    let msg = `warning,Error creating XML component ${node.nodeSubtype}\n`;
                     msg += `-- Attempt to add duplicate field "${fieldName}" to RokuML component "${node.nodeSubtype}"\n`;
                     msg += `---- Extends node type "${typeDef.extends}" already has a field named ${fieldName}\n`;
                     msg += `-- Error found ${typeDef.xmlPath}`;
