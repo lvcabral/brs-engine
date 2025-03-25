@@ -15,7 +15,7 @@ import { Int32 } from "./Int32";
 import { Int64 } from "./Int64";
 import { Float } from "./Float";
 import { Double } from "./Double";
-import { Callable } from "./Callable";
+import { Callable, StdlibArgument } from "./Callable";
 import { BrsComponent } from "./components/BrsComponent";
 import { RoString } from "./components/RoString";
 import { BrsInterface } from "./interfaces/BrsInterface";
@@ -465,6 +465,17 @@ function fromObject(x: any): BrsType {
             }
         }
         return BrsInvalid.Instance;
+    } else if (x["_callable_"]) {
+        return new Callable(x["_callable_"], {
+            signature: {
+                args: [new StdlibArgument("arg", ValueKind.Dynamic, BrsInvalid.Instance)],
+                variadic: true,
+                returns: ValueKind.Void,
+            },
+            impl: (_: any, ..._arg: BrsType[]) => {
+                return Uninitialized.Instance;
+            },
+        });
     }
     return toAssociativeArray(x);
 }
@@ -547,6 +558,8 @@ export function jsValueOf(x: BrsType): any {
                 return { _component_: x.getComponentName() };
             }
             break;
+        case ValueKind.Callable:
+            return { _callable_: x.name };
         default:
             throw new Error(`jsValueOf not implemented for: ${x} <${x.kind}>`);
     }
