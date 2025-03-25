@@ -22,7 +22,33 @@ function anon_func_context()
       end sub
     }
   a.printM()
-    a["printM"]()
+  a["printM"]()
   x = a["printM"]
   x()
+	' Other test
+	logger = createLogger()
+	for x = 1 to 3
+		logger.log()
+	next
 end function
+
+function createLogger()
+	this = {}
+	this.counter = 0
+	this.method = "getText"
+	this.getText = GET_TEXT
+	this.log = LOG_MSG
+	return this
+end function
+
+function GET_TEXT()
+	if m.counter <> invalid
+		return "Test Succeeded! " + m.counter.toStr()
+	end if
+	return "Test Failed!"
+end function
+
+sub LOG_MSG()
+	m.counter++
+	print "Log: "; m.method; " = "; m[m.method]()
+end sub

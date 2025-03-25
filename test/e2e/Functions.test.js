@@ -98,6 +98,9 @@ describe("end to end functions", () => {
             "bar",
             "bar",
             "invalid",
+            "Log: getText = Test Succeeded! 1",
+            "Log: getText = Test Succeeded! 2",
+            "Log: getText = Test Succeeded! 3",
         ]);
     });
 
