@@ -176,6 +176,8 @@ export class Parser {
         bsLibraries.set("v30/bslCore.brs", false);
         bsLibraries.set("v30/bslDefender.brs", false);
         bsLibraries.set("Roku_Ads.brs", false);
+        bsLibraries.set("IMA3.brs", false);
+        bsLibraries.set("Roku_Event_Dispatcher.brs", false);
         bsLibraries.set("RokuBrowser.brs", false);
         this.stats.set(Lexeme.Integer, new Set());
         this.stats.set(Lexeme.String, new Set());
