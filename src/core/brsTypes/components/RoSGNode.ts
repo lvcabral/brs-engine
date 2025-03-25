@@ -151,7 +151,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     }
 
     toString(parent?: BrsType): string {
-        let componentName = "roSGNode:" + this.nodeSubtype;
+        const componentName = `${this.getComponentName()}:${this.nodeSubtype}`;
 
         if (parent) {
             return `<Component: ${componentName}>`;
