@@ -64,6 +64,7 @@ export enum SGNodeType {
     Scene = "Scene",
     MiniKeyboard = "MiniKeyboard",
     TextEditBox = "TextEditBox",
+    ScrollableText = "ScrollableText",
     Overhang = "Overhang",
     RSGPalette = "RSGPalette",
     Video = "Video",
