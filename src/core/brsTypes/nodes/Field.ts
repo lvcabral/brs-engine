@@ -105,7 +105,7 @@ export namespace FieldKind {
                 return FieldKind.Array;
             case "roassociativearray":
                 return FieldKind.AssocArray;
-            case "node":
+            case "rosgnode":
                 return brsType instanceof Font ? FieldKind.Font : FieldKind.Node;
             default:
                 return undefined;

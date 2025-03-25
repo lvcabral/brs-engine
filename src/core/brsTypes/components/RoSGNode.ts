@@ -53,7 +53,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     m: RoAssociativeArray = new RoAssociativeArray([]);
 
     constructor(initializedFields: AAMember[], readonly nodeSubtype: string = "Node") {
-        super("Node");
+        super("roSGNode");
         this.setExtendsType();
 
         // All nodes start have some built-in fields when created.
