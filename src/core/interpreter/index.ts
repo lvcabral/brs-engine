@@ -1484,7 +1484,11 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 );
             }
             try {
-                return source.get(index, true);
+                const target = source.get(index, true);
+                if (isBrsCallable(target) && source instanceof RoAssociativeArray) {
+                    target.setContext(source);
+                }
+                return target;
             } catch (err: any) {
                 this.addError(new BrsError(err.message, expression.closingSquare.location));
             }
