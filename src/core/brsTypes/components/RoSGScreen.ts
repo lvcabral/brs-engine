@@ -17,7 +17,6 @@ import {
     getTextureManager,
     rootObjects,
     Dialog,
-    RoSGNode,
 } from "..";
 import { IfGetMessagePort, IfSetMessagePort } from "../interfaces/IfMessagePort";
 import { RoSGScreenEvent } from "../events/RoSGScreenEvent";
@@ -328,22 +327,21 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
             let returnValue: BrsType = BrsInvalid.Instance;
             if (sceneType.value === SGNodeType.Scene) {
                 returnValue = new Scene([], SGNodeType.Scene);
+            } else if (interpreter.environment.nodeDefMap.has(sceneType.value.toLowerCase())) {
+                returnValue = createNodeByType(interpreter, sceneType);
             } else {
-                if (interpreter.environment.nodeDefMap.has(sceneType.value.toLowerCase())) {
-                    returnValue = createNodeByType(interpreter, sceneType);
-                } else {
-                    BrsDevice.stderr.write(
-                        `warning,BRIGHTSCRIPT: ERROR: roSGScreen.CreateScene: No such node ${
-                            sceneType.value
-                        }: ${interpreter.formatLocation()}`
-                    );
-                }
+                BrsDevice.stderr.write(
+                    `warning,BRIGHTSCRIPT: ERROR: roSGScreen.CreateScene: No such node ${
+                        sceneType.value
+                    }: ${interpreter.formatLocation()}`
+                );
+                return returnValue;
             }
             if (returnValue instanceof Scene) {
                 this.sceneType = sceneType;
                 rootObjects.rootScene = returnValue;
                 rootObjects.rootScene.setDesignResolution(this.resolution);
-            } else if (returnValue instanceof RoSGNode) {
+            } else {
                 BrsDevice.stderr.write(
                     `warning,BRIGHTSCRIPT: ERROR: roSGScreen.CreateScene: Type mismatch converting from '${
                         sceneType.value
