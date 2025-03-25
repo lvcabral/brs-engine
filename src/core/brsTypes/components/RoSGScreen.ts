@@ -333,7 +333,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
                         sceneType.value
                     }: ${interpreter.formatLocation()}`
                 );
-                return returnValue;
+                return BrsInvalid.Instance;
             }
             if (returnValue instanceof Scene) {
                 this.sceneType = sceneType;
@@ -345,6 +345,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
                         sceneType.value
                     }' to 'Scene': ${interpreter.formatLocation()}`
                 );
+                return BrsInvalid.Instance;
             }
             return returnValue;
         },
