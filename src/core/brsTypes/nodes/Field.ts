@@ -149,6 +149,10 @@ export class Field {
         return this.hidden;
     }
 
+    isAlwaysNotify() {
+        return this.alwaysNotify;
+    }
+
     setHidden(isHidden: boolean) {
         this.hidden = isHidden;
     }

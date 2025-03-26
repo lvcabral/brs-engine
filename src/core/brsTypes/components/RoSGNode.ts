@@ -125,6 +125,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
                 this.callFunc,
                 this.isSubtype,
                 this.parentSubtype,
+                this.clone,
             ],
             ifSGNodeBoundingRect: [
                 this.boundingRect,
@@ -1775,6 +1776,41 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         },
         impl: (_: Interpreter) => {
             return new BrsString(this.nodeSubtype);
+        },
+    });
+
+    /* Returns a copy of the entire node tree or just a shallow copy. */
+    private readonly clone = new Callable("clone", {
+        signature: {
+            args: [new StdlibArgument("isDeepCopy", ValueKind.Boolean)],
+            returns: ValueKind.Object,
+        },
+        impl: (interpreter: Interpreter, isDeepCopy: BrsBoolean) => {
+            const clonedNode = createNodeByType(interpreter, new BrsString(this.nodeSubtype));
+            if (!(clonedNode instanceof RoSGNode)) {
+                return BrsInvalid.Instance;
+            }
+            // Clone fields
+            this.fields.forEach((field, key) => {
+                const clonedField = new Field(
+                    field.getValue(false),
+                    field.getType(),
+                    field.isAlwaysNotify(),
+                    field.isHidden()
+                );
+                clonedNode.fields.set(key, clonedField);
+            });
+            // Clone children if deep copy
+            if (isDeepCopy.toBoolean()) {
+                this.children.forEach((child) => {
+                    const clonedChild = child.clone.call(interpreter, isDeepCopy);
+                    if (clonedChild instanceof RoSGNode) {
+                        clonedNode.children.push(clonedChild);
+                        clonedChild.setNodeParent(clonedNode);
+                    }
+                });
+            }
+            return clonedNode;
         },
     });
 
