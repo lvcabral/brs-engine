@@ -302,7 +302,10 @@ function parseLibraries(
         parseResults.libraries.get("Roku_Event_Dispatcher.brs") === true &&
         manifest.get("sg_component_libs_required")?.includes("roku_analytics")
     ) {
-        lib.set("Roku_Event_Dispatcher.brs", fs.readFileSync("common:/roku_analytics/Roku_Event_Dispatcher.brs", "utf8"));
+        lib.set(
+            "Roku_Event_Dispatcher.brs",
+            fs.readFileSync("common:/roku_analytics/Roku_Event_Dispatcher.brs", "utf8")
+        );
     }
     if (
         parseResults.libraries.get("RokuBrowser.brs") === true &&
