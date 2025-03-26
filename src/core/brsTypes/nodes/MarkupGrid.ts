@@ -77,7 +77,7 @@ export class MarkupGrid extends ArrayGrid {
         } else if (key === "left" || key === "right") {
             handled = press ? this.handleLeftRight(key) : false;
         } else if (key === "OK") {
-            //handled = this.handleOK(press);
+            handled = this.handleOK(press);
         }
         this.lastPressHandled = handled ? key : "";
         return handled;
@@ -85,26 +85,44 @@ export class MarkupGrid extends ArrayGrid {
 
     protected handleUpDown(key: string) {
         let handled = false;
-        const offset = key === "up" ? -1 : 1;
-        const nextIndex = this.focusIndex + offset;
-        if (nextIndex !== this.focusIndex) {
+        const content = this.getFieldValue("content") as ContentNode;
+        const childCount = content.getNodeChildren()[0]?.getNodeChildren().length ?? 0;
+        const numCols = jsValueOf(this.getFieldValue("numColumns")) as number;
+        const offset = key === "up" ? -numCols : numCols;
+        let nextIndex = this.focusIndex + offset;
+
+        if (nextIndex >= 0 && nextIndex < childCount) {
             this.set(new BrsString("animateToItem"), new Int32(nextIndex));
             handled = true;
-            this.currRow += this.wrap ? 0 : offset;
         }
         return handled;
     }
 
     protected handleLeftRight(key: string) {
         let handled = false;
+        const content = this.getFieldValue("content") as ContentNode;
+        const childCount = content.getNodeChildren()[0]?.getNodeChildren().length ?? 0;
         const offset = key === "left" ? -1 : 1;
-        const nextIndex = this.focusIndex + offset;
-        if (nextIndex !== this.focusIndex) {
-            this.set(new BrsString("animateToItem"), new Int32(nextIndex));
-            handled = true;
-            this.currRow += this.wrap ? 0 : offset;
+        let nextIndex = this.focusIndex + offset;
+
+        if (nextIndex >= 0 && nextIndex < childCount) {
+            const numCols = jsValueOf(this.getFieldValue("numColumns")) as number;
+            const currentRow = Math.floor(this.focusIndex / numCols);
+            const nextRow = Math.floor(nextIndex / numCols);
+            if(currentRow === nextRow){
+                this.set(new BrsString("animateToItem"), new Int32(nextIndex));
+                handled = true;
+            }
         }
         return handled;
+    }
+
+    protected handleOK(press: boolean) {
+        if (!press) {
+            return false;
+        }
+        this.set(new BrsString("itemSelected"), new Int32(this.focusIndex));
+        return true;
     }
 
     renderNode(interpreter: Interpreter, origin: number[], angle: number, draw2D?: IfDraw2D) {
