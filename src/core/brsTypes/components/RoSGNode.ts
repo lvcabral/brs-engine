@@ -1192,9 +1192,9 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             }
 
             fields.getValue().forEach((value, key) => {
-                let fieldName = new BrsString(key);
-                if (this.fields.has(key)) {
-                    this.set(fieldName, value);
+                let fieldName = new BrsString(key.toLowerCase());
+                if (this.fields.has(key.toLowerCase())) {
+                    this.set(fieldName, value, false);
                 }
             });
 
