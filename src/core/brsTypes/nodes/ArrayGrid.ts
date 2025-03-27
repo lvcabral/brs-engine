@@ -47,7 +47,7 @@ export class ArrayGrid extends Group {
         { name: "sectionDividerTextColor", type: "color", value: "0xddddddff" },
         { name: "sectionDividerSpacing", type: "float", value: "0.0" },
         { name: "sectionDividerWidth", type: "float", value: "0.0" },
-        { name: "sectionDividerHeight", type: "float", value: "0.0" },
+        { name: "sectionDividerHeight", type: "float", value: "40" },
         { name: "sectionDividerMinWidth", type: "float", value: "0.0" },
         { name: "sectionDividerLeftOffset", type: "float", value: "0.0" },
         { name: "itemClippingRect", type: "array", value: "[ 0.0, 0.0, 0.0, 0.0 ]" },
@@ -69,10 +69,16 @@ export class ArrayGrid extends Group {
         this.registerInitializedFields(initializedFields);
 
         this.setFieldValue("content", new ContentNode());
-        if (rootObjects.rootScene?.ui && rootObjects.rootScene.ui.resolution === "FHD") {
+        if (rootObjects.rootScene?.ui.resolution === "FHD") {
             this.setFieldValue("wrapDividerHeight", new Float(36));
+            this.setFieldValue("sectionDividerHeight", new Float(60));
+            this.setFieldValue("sectionDividerMinWidth", new Float(126));
+            this.setFieldValue("sectionDividerSpacing", new Float(15));
         } else {
             this.setFieldValue("wrapDividerHeight", new Float(24));
+            this.setFieldValue("sectionDividerHeight", new Float(40));
+            this.setFieldValue("sectionDividerMinWidth", new Float(117));
+            this.setFieldValue("sectionDividerSpacing", new Float(10));
         }
     }
 

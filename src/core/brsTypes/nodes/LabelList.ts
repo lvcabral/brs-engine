@@ -12,6 +12,7 @@ import {
     jsValueOf,
     RoBitmap,
     rootObjects,
+    RoSGNode,
     ValueKind,
 } from "..";
 import { Interpreter } from "../..";
@@ -25,7 +26,7 @@ export class LabelList extends ArrayGrid {
         { name: "focusedColor", type: "color", value: "0x262626ff" },
         { name: "font", type: "font" },
         { name: "focusedFont", type: "font", value: "font:MediumBoldSystemFont" },
-        { name: "itemSize", type: "array", value: "[0,0]" },
+        { name: "sectionDividerFont", type: "font", value: "font:SmallestSystemFont" },
         { name: "numRows", type: "integer", value: "12" },
         { name: "vertFocusAnimationStyle", type: "string", value: "fixedFocusWrap" },
     ];
@@ -37,6 +38,7 @@ export class LabelList extends ArrayGrid {
     protected readonly gap: number;
     protected wrap: boolean;
     protected currRow: number;
+    protected listLength: number;
     protected hasNinePatch: boolean;
     protected lastPressHandled: string;
 
@@ -46,7 +48,7 @@ export class LabelList extends ArrayGrid {
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
 
-        if (rootObjects.rootScene?.ui && rootObjects.rootScene.ui.resolution === "FHD") {
+        if (rootObjects.rootScene?.ui.resolution === "FHD") {
             this.margin = 36;
             this.setFieldValue("itemSize", brsValueOf([510, 72]));
         } else {
@@ -57,12 +59,14 @@ export class LabelList extends ArrayGrid {
         this.setFieldValue("focusBitmapUri", new BrsString(this.focusUri));
         this.setFieldValue("focusFootprintBitmapUri", new BrsString(this.footprintUri));
         this.setFieldValue("wrapDividerBitmapUri", new BrsString(this.dividerUri));
+        this.setFieldValue("sectionDividerBitmapUri", new BrsString(this.dividerUri));
 
         const style = jsValueOf(this.getFieldValue("vertFocusAnimationStyle")) as string;
         this.wrap = style.toLowerCase() !== "floatingfocus";
         this.hasNinePatch = true;
         this.lastPressHandled = "";
         this.currRow = this.updateCurrRow();
+        this.listLength = 0;
     }
 
     set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
@@ -150,12 +154,11 @@ export class LabelList extends ArrayGrid {
         if (!this.isVisible()) {
             return;
         }
-        const content = this.getFieldValue("content") as ContentNode;
-        // TODO: handle the content with sections
-        const childCount = content.getNodeChildren().length;
-        if (childCount === 0) {
+        const { items, dividers } = this.getListItems();
+        if (items.length === 0) {
             return;
         }
+        const hasSections = dividers.length > 0;
         const nodeFocus = rootObjects.focused === this;
         const nodeTrans = this.getTranslation();
         const drawTrans = angle !== 0 ? rotateTranslation(nodeTrans, angle) : nodeTrans.slice();
@@ -164,8 +167,9 @@ export class LabelList extends ArrayGrid {
         const size = this.getDimensions();
         const rect = { x: drawTrans[0], y: drawTrans[1], width: size.width, height: size.height };
         const rotation = angle + this.getRotation();
-        const itemSize = jsValueOf(this.getFieldValue("itemSize"));
-        const numRows = jsValueOf(this.getFieldValue("numRows"));
+        const itemSize = jsValueOf(this.getFieldValue("itemSize")) as number[];
+        const numRows = jsValueOf(this.getFieldValue("numRows")) as number;
+        const displayRows = Math.min(this.listLength, numRows);
         let focusRow = jsValueOf(this.getFieldValue("focusRow"));
         if (!this.wrap) {
             this.currRow = Math.max(0, Math.min(this.currRow, numRows - 1));
@@ -173,17 +177,18 @@ export class LabelList extends ArrayGrid {
         } else {
             this.currRow = focusRow;
         }
-        const displayRows = Math.min(childCount, numRows);
-        const itemRect = { ...rect, width: itemSize[0], height: itemSize[1] };
         let lastIndex = -1;
+        const itemRect = { ...rect, width: itemSize[0], height: itemSize[1] };
         for (let r = 0; r < displayRows; r++) {
             const index = this.getIndex(r - this.currRow);
-            if (this.wrap && index < lastIndex) {
-                this.renderWrapDivider(itemRect, draw2D);
-            }
             const focused = index === this.focusIndex;
-            const item = content.getNodeChildren()[index];
+            const item = items[index];
             if (item instanceof ContentNode) {
+                if (!hasSections && this.wrap && index < lastIndex && !focused) {
+                    this.renderWrapDivider(itemRect, draw2D);
+                } else if (hasSections && dividers[index] !== "" && !focused) {
+                    this.renderSectionDivider(dividers[index].substring(1), itemRect, draw2D);
+                }
                 this.renderItem(index, item, itemRect, nodeFocus, focused, draw2D);
             }
             itemRect.y += itemSize[1] + 1;
@@ -290,6 +295,30 @@ export class LabelList extends ArrayGrid {
         }
     }
 
+    protected renderSectionDivider(title: string, itemRect: Rect, draw2D?: IfDraw2D) {
+        const dividerHeight = jsValueOf(this.getFieldValue("sectionDividerHeight")) as number;
+        const dividerSpacing = jsValueOf(this.getFieldValue("sectionDividerSpacing")) as number;
+        const divRect = { ...itemRect, height: dividerHeight };
+        let margin = 0;
+        if (title.length !== 0) {
+            const font = this.getFieldValue("sectionDividerFont") as Font;
+            const color = jsValueOf(this.getFieldValue("sectionDividerTextColor"));
+            const size = this.drawText(title, font, color, divRect, "left", "center", 0, draw2D);
+            margin = size.width + dividerSpacing;
+        }
+        const bmp = this.getBitmap("sectionDividerBitmapUri");
+        if (bmp?.isValid()) {
+            const rect = {
+                x: divRect.x + margin,
+                y: divRect.y + dividerHeight / 2 - 1,
+                width: divRect.width - margin,
+                height: 2,
+            };
+            this.drawImage(bmp, rect, 0, draw2D);
+        }
+        itemRect.y += dividerHeight;
+    }
+
     protected renderWrapDivider(itemRect: Rect, draw2D?: IfDraw2D) {
         const bmp = this.getBitmap("wrapDividerBitmapUri");
         const dividerHeight = jsValueOf(this.getFieldValue("wrapDividerHeight"));
@@ -300,15 +329,34 @@ export class LabelList extends ArrayGrid {
         itemRect.y += dividerHeight;
     }
 
+    protected getListItems() {
+        const content = this.getFieldValue("content") as ContentNode;
+        const sections = content.getNodeChildren();
+        const items: RoSGNode[] = [];
+        const dividers: string[] = [];
+        for (const section of sections) {
+            if (section.getFieldValue("ContentType").toString().toLowerCase() === "section") {
+                const sectItems = section.getNodeChildren();
+                const sectDivs = new Array(sectItems.length).fill("");
+                sectDivs[0] = "-" + section.getFieldValue("title").toString();
+                dividers.push(...sectDivs);
+                items.push(...sectItems);
+            }
+        }
+        if (items.length === 0 && sections.length > 0) {
+            items.push(...sections);
+        }
+        this.listLength = items.length;
+        return { items, dividers };
+    }
+
     protected getIndex(offset: number = 0) {
         const index = this.focusIndex + offset;
-        const content = this.getFieldValue("content") as ContentNode;
-        const childCount = content.getNodeChildren().length;
         if (this.wrap) {
-            return (index + childCount) % childCount;
+            return (index + this.listLength) % this.listLength;
         }
-        if (index >= childCount) {
-            return childCount - 1;
+        if (index >= this.listLength) {
+            return this.listLength - 1;
         } else if (index < 0) {
             return 0;
         }
