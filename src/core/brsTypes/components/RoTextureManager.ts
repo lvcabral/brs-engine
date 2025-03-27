@@ -129,7 +129,20 @@ export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpA
             data = download(uri, "arraybuffer", this.customHeaders, this.cookiesEnabled);
         } else {
             try {
-                data = BrsDevice.fileSystem.readFileSync(uri);
+                const fsys = BrsDevice.fileSystem;
+                let assetPath = uri;
+                if (uri.startsWith("pkg:/locale/images/") && !fsys.existsSync(uri)) {
+                    const locale = BrsDevice.deviceInfo.locale;
+                    const filePath = uri.substring("pkg:/locale/images/".length);
+                    if (fsys.existsSync(`pkg:/locale/${locale}/images/${filePath}`)) {
+                        assetPath = `pkg:/locale/${locale}/images/${filePath}`;
+                    } else if (fsys.existsSync(`pkg:/locale/default/images/${filePath}`)) {
+                        assetPath = `pkg:/locale/default/images/${filePath}`;
+                    } else if (fsys.existsSync(`pkg:/locale/en_US/images/${filePath}`)) {
+                        assetPath = `pkg:/locale/en_US/images/${filePath}`;
+                    }
+                }
+                data = fsys.readFileSync(assetPath);
             } catch (err: any) {
                 if (BrsDevice.isDevMode) {
                     BrsDevice.stderr.write(
