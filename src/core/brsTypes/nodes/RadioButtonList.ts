@@ -21,7 +21,7 @@ export class RadioButtonList extends LabelList {
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
 
-        if (rootObjects.rootScene?.ui && rootObjects.rootScene.ui.resolution === "FHD") {
+        if (rootObjects.rootScene?.ui.resolution === "FHD") {
             this.setFieldValue("checkedIconUri", new BrsString(this.checkmarkFHDUri));
             this.setFieldValue("focusedCheckedIconUri", new BrsString(this.checkmarkFHDUri));
         } else {

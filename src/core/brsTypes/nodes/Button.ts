@@ -56,7 +56,7 @@ export class Button extends Group {
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
 
-        if (rootObjects.rootScene?.ui && rootObjects.rootScene.ui.resolution === "FHD") {
+        if (rootObjects.rootScene?.ui.resolution === "FHD") {
             this.margin = 36;
             this.gap = 18;
             this.width = 375;

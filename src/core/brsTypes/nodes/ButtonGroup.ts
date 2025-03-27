@@ -58,7 +58,7 @@ export class ButtonGroup extends LayoutGroup {
         this.registerInitializedFields(initializedFields);
 
         this.width = 0;
-        if (rootObjects.rootScene?.ui && rootObjects.rootScene.ui.resolution === "FHD") {
+        if (rootObjects.rootScene?.ui.resolution === "FHD") {
             this.margin = 36;
             this.gap = 18;
             this.vertOffset = 21;
