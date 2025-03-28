@@ -5,7 +5,12 @@ import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 import { FontMetrics } from "./RoFontRegistry";
-import { BrsCanvasContext2D, createNewCanvas, releaseCanvas } from "../interfaces/IfDraw2D";
+import {
+    BrsCanvasContext2D,
+    createNewCanvas,
+    MeasuredText,
+    releaseCanvas,
+} from "../interfaces/IfDraw2D";
 
 export class RoFont extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -76,7 +81,7 @@ export class RoFont extends BrsComponent implements BrsValue {
         return { width: Math.round(length), text: ellipsizedText, ellipsized };
     }
 
-    measureText(text: string, maxWidth?: number, ellipsis?: string) {
+    measureText(text: string, maxWidth?: number, ellipsis?: string): MeasuredText {
         let {
             width,
             text: ellipsizedText,

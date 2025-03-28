@@ -14,10 +14,11 @@ import {
     RoBitmap,
     jsValueOf,
     getTextureManager,
+    RoFont,
 } from "..";
 import { Interpreter } from "../../interpreter";
-import { IfDraw2D } from "../interfaces/IfDraw2D";
-import { BoundingRect, convertHexColor, rotateRect, unionRect } from "../../scenegraph/SGUtil";
+import { IfDraw2D, MeasuredText, Rect } from "../interfaces/IfDraw2D";
+import { convertHexColor, rotateRect, unionRect } from "../../scenegraph/SGUtil";
 
 export class Group extends RoSGNode {
     readonly defaultFields: FieldModel[] = [
@@ -148,32 +149,192 @@ export class Group extends RoSGNode {
         vertAlign: string,
         rotation: number,
         draw2D?: IfDraw2D,
-        ellipsis = "..."
+        ellipsis: string = "..."
     ) {
         const drawFont = font.createDrawFont();
-        const measured = drawFont.measureText(fullText, rect.width, ellipsis);
-        const text = measured.text;
-        const textWidth = measured.width;
-        const textHeight = measured.height;
+        let measured = drawFont.measureText(fullText, rect.width, ellipsis);
+        let text = measured.text;
+        if (rect.width === 0) {
+            const newlineIndex = fullText.indexOf("\n");
+            if (newlineIndex !== -1) {
+                text = fullText.substring(0, newlineIndex);
+                measured = drawFont.measureText(text);
+            }
+        }
+
         let textX = rect.x;
         let textY = rect.y;
 
-        if (rect.width > textWidth) {
+        if (rect.width > measured.width) {
             if (horizAlign === "center") {
-                textX += (rect.width - textWidth) / 2;
+                textX += (rect.width - measured.width) / 2;
             } else if (horizAlign === "right") {
-                textX += rect.width - textWidth;
+                textX += rect.width - measured.width;
             }
         }
-        if (rect.height > textHeight) {
+        if (rect.height > measured.height) {
             if (vertAlign === "center") {
-                textY += (rect.height - textHeight) / 2;
+                textY += (rect.height - measured.height) / 2;
             } else if (vertAlign === "bottom") {
-                textY += rect.height - textHeight;
+                textY += rect.height - measured.height;
             }
         }
-        draw2D?.doDrawRotatedText(text, textX, textY, color, drawFont, rotation);
+        if (draw2D) {
+            draw2D.doDrawRotatedText(text, textX, textY, color, drawFont, rotation);
+        }
+
         return measured;
+    }
+
+    protected drawTextWrap(
+        text: string,
+        font: Font,
+        color: number,
+        rect: Rect,
+        horizAlign: string,
+        vertAlign: string,
+        rotation: number,
+        ellipsis: string = "...",
+        numLines: number = 0,
+        maxLines: number = 0,
+        lineSpacing: number = 0,
+        displayPartialLines: boolean = false,
+        draw2D?: IfDraw2D,
+    ): MeasuredText {
+        const drawFont = font.createDrawFont();
+        const lines = this.breakTextIntoLines(text, drawFont, rect.width);
+        let renderedLines = lines;
+        let ellipsized = false;
+        let lineHeight = drawFont.measureText("M").height;
+        let totalHeight = lines.length * lineHeight;
+
+        if (rect.height > 0) {
+            const maxRenderedLines = Math.floor(
+                (rect.height + lineSpacing) / (lineHeight + lineSpacing)
+            );
+            if (lines.length > maxRenderedLines) {
+                renderedLines = lines.slice(0, maxRenderedLines);
+                ellipsized = true;
+            }
+            if (!displayPartialLines && renderedLines.length < lines.length) {
+                totalHeight =
+                    renderedLines.length * lineHeight +
+                    (renderedLines.length > 1 ? (renderedLines.length - 1) * lineSpacing : 0);
+            } else {
+                totalHeight = Math.min(totalHeight, rect.height);
+            }
+        } else if (numLines > 0) {
+            if (lines.length > numLines) {
+                renderedLines = lines.slice(0, numLines);
+                ellipsized = true;
+            }
+            totalHeight = Math.min(
+                totalHeight,
+                numLines * lineHeight + (numLines > 1 ? (numLines - 1) * lineSpacing : 0)
+            );
+        } else if (maxLines > 0) {
+            if (lines.length > maxLines) {
+                renderedLines = lines.slice(0, maxLines);
+                ellipsized = true;
+            }
+            totalHeight = Math.min(
+                totalHeight,
+                maxLines * lineHeight + (maxLines > 1 ? (maxLines - 1) * lineSpacing : 0)
+            );
+        }
+
+        let y = rect.y;
+        if (vertAlign === "center") {
+            y += (rect.height - totalHeight) / 2;
+        } else if (vertAlign === "bottom") {
+            y += rect.height - totalHeight;
+        }
+
+        for (let i = 0; i < renderedLines.length; i++) {
+            let line = renderedLines[i];
+            if (ellipsized && i === renderedLines.length - 1) {
+                line = this.ellipsizeLine(line, drawFont, rect.width, ellipsis);
+            }
+            const lineWidth = drawFont.measureText(line).width;
+            let x = rect.x;
+            if (horizAlign === "center") {
+                x += (rect.width - lineWidth) / 2;
+            } else if (horizAlign === "right") {
+                x += rect.width - lineWidth;
+            }
+            if (draw2D) {
+                draw2D.doDrawRotatedText(line, x, y, color, drawFont, rotation);
+            }
+            y += lineHeight + lineSpacing;
+        }
+
+        return { text, width: rect.width, height: totalHeight, ellipsized: ellipsized };
+    }
+
+    protected breakTextIntoLines(text: string, font: RoFont, width: number): string[] {
+        const lines: string[] = [];
+        if (width <= 0) {
+            return lines;
+        }
+        const words = text.split(/(\s|-)/);
+        let currentLine = "";
+        for (const word of words) {
+            if (word === "\n") {
+                lines.push(currentLine);
+                currentLine = "";
+            } else {
+                const testLine = currentLine + word;
+                if (font.measureText(testLine).width <= width) {
+                    currentLine = testLine;
+                } else if (font.measureText(word).width > width) {
+                    // Word is too long, break it
+                    const brokenWords = this.breakLongWord(word, font, width);
+                    for (const brokenWord of brokenWords) {
+                        if (font.measureText(currentLine + brokenWord).width <= width) {
+                            currentLine += brokenWord;
+                        } else {
+                            lines.push(currentLine);
+                            currentLine = brokenWord;
+                        }
+                    }
+                } else {
+                    lines.push(currentLine);
+                    currentLine = word;
+                }
+            }
+        }
+        lines.push(currentLine);
+        return lines;
+    }
+
+    protected breakLongWord(word: string, font: RoFont, width: number): string[] {
+        const brokenWords: string[] = [];
+        let currentWord = "";
+        for (const char of word) {
+            if (font.measureText(currentWord + char).width <= width) {
+                currentWord += char;
+            } else {
+                brokenWords.push(currentWord);
+                currentWord = char;
+            }
+        }
+        brokenWords.push(currentWord);
+        return brokenWords;
+    }
+
+    protected ellipsizeLine(line: string, font: RoFont, width: number, ellipsis: string): string {
+        if (font.measureText(line).width <= width) {
+            return line;
+        }
+        let ellipsizedLine = "";
+        for (const char of line) {
+            if (font.measureText(ellipsizedLine + char + ellipsis).width <= width) {
+                ellipsizedLine += char;
+            } else {
+                return ellipsizedLine + ellipsis;
+            }
+        }
+        return ellipsizedLine + ellipsis;
     }
 
     protected drawImage(

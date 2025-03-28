@@ -25,6 +25,7 @@ export type BrsCanvasContext2D = OffscreenCanvasRenderingContext2D | CanvasRende
 export type BrsImageData = ImageData | NodeImageData;
 export type Rect = { x: number; y: number; width: number; height: number };
 export type Circle = { x: number; y: number; r: number };
+export type MeasuredText = { text: string; width: number; height: number; ellipsized: boolean };
 
 /**
  * BrightScript Interface ifDraw2D
