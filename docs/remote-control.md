@@ -17,9 +17,9 @@ The default mapping of the keyboard and game pads to Roku remote control is desc
 | Arrow Keys  |Joys & D-Pad|    D-Pad     | Directional controls to navigate on menus and control games.          |
 | Backspace   |   6 or 16  |    Replay    | Instant replay button.                                                |
 | Enter       |     0      |    OK        | Select button.                                                        |
-| Insert      |   4 or 7   |    Info      | Information/Settings button                                           |
-| PageUp      |     2      |    Rewind    | Reverse scan button.                                                  |
-| PageDown    |     3      | Fast Forward | Forward scan button.                                                  |
+| Insert or Ctrl+8|   4 or 7   |    Info      | Information/Settings button                                       |
+| PageUp or Cmd+⬅️|     2      |    Rewind    | Reverse scan button.                                              |
+| PageDown or Cmd+➡️|     3      | Fast Forward | Forward scan button.                                            |
 | End         |   5 or 9   |  Play/Pause  | Play/Pause button.                                                    |
 | Ctrl+A      |    10      |     A        | A game button.                                                        |
 | Ctrl+Z      |    11      |     B        | B game button.                                                        |

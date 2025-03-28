@@ -86,7 +86,6 @@ customKeys.set("KeyA", "a"); // Keep consistency with older versions
 customKeys.set("KeyZ", "b"); // Keep consistency with older versions
 customKeys.set("PageUp", "ignore"); // do not handle on browser
 customKeys.set("PageDown", "ignore"); // do not handle on browser
-customKeys.set("Digit8", "info");
 customKeys.set("ShiftLeft", "playonly"); // Support for Prince of Persia
 customKeys.set("Shift+ArrowRight", "right"); // Support for Prince of Persia
 customKeys.set("Shift+ArrowLeft", "left"); // Support for Prince of Persia
