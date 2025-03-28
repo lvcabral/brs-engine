@@ -109,7 +109,7 @@ export class MarkupGrid extends ArrayGrid {
             const numCols = jsValueOf(this.getFieldValue("numColumns")) as number;
             const currentRow = Math.floor(this.focusIndex / numCols);
             const nextRow = Math.floor(nextIndex / numCols);
-            if(currentRow === nextRow){
+            if (currentRow === nextRow) {
                 this.set(new BrsString("animateToItem"), new Int32(nextIndex));
                 handled = true;
             }
