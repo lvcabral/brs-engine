@@ -119,7 +119,7 @@ export class Label extends Group {
                     maxLines.getValue(),
                     lineSpacing.getValue(),
                     displayPartialLines.toBoolean(),
-                    draw2D,
+                    draw2D
                 );
             } else {
                 measured = { text: "", width: 0, height: 0, ellipsized: false };

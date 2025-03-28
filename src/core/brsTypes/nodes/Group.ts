@@ -199,7 +199,7 @@ export class Group extends RoSGNode {
         maxLines: number = 0,
         lineSpacing: number = 0,
         displayPartialLines: boolean = false,
-        draw2D?: IfDraw2D,
+        draw2D?: IfDraw2D
     ): MeasuredText {
         const drawFont = font.createDrawFont();
         const lines = this.breakTextIntoLines(text, drawFont, rect.width);
