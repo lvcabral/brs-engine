@@ -197,23 +197,24 @@ keysMap.set("Control+Escape", "home");
 keysMap.set("Backspace", "instantreplay");
 keysMap.set("End", "play");
 if (platform.inIOS || platform.inMacOS) {
-    keysMap.set("Command+Backspace", "backspace");
-    keysMap.set("Command+Enter", "play");
-    keysMap.set("Command+ArrowLeft", "rev");
-    keysMap.set("Command+ArrowRight", "fwd");
-    keysMap.set("Command+Digit8", "info");
+    keysMap.set("Meta+Backspace", "backspace");
+    keysMap.set("Meta+Enter", "play");
+    keysMap.set("Meta+ArrowLeft", "rev");
+    keysMap.set("Meta+ArrowRight", "fwd");
     keysMap.set("Control+KeyC", "break");
 } else {
     keysMap.set("Control+Backspace", "backspace");
     keysMap.set("Control+Enter", "play");
     keysMap.set("Control+ArrowLeft", "rev");
     keysMap.set("Control+ArrowRight", "fwd");
-    keysMap.set("Control+Digit8", "info");
     keysMap.set("Control+Pause", "break");
 }
 keysMap.set("PageUp", "rev");
 keysMap.set("PageDown", "fwd");
 keysMap.set("Insert", "info");
+keysMap.set("Help", "info");
+keysMap.set("Alt+Digit8", "info");
+keysMap.set("Control+Digit8", "info");
 keysMap.set("Control+KeyA", "a");
 keysMap.set("Control+KeyZ", "b");
 keysMap.set("F10", "volumemute");
