@@ -40,7 +40,7 @@ export class MarkupGrid extends ArrayGrid {
         this.registerInitializedFields(initializedFields);
 
         this.sections = new Map();
-        if (rootObjects.rootScene?.ui && rootObjects.rootScene.ui.resolution === "FHD") {
+        if (rootObjects.rootScene?.ui.resolution === "FHD") {
             this.margin = 36;
         } else {
             this.margin = 24;
