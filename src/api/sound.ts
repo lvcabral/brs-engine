@@ -170,7 +170,7 @@ export function addSound(path: string, format: string, data: any) {
     );
 }
 
-export function resetSounds(assets: ArrayBuffer) {
+export function resetSounds(assets: ArrayBufferLike) {
     if (soundsDat.length > 0) {
         soundsDat.forEach((sound) => {
             sound.unload();

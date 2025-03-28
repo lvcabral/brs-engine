@@ -29,7 +29,7 @@ import { Interpreter } from "../../interpreter";
 import { generateArgumentMismatchError } from "../../error/ArgumentMismatch";
 import { createNodeByType, isSubtypeCheck, subtypeHierarchy } from "../../scenegraph/SGNodeFactory";
 import { Field, FieldKind, FieldModel } from "../nodes/Field";
-import { BoundingRect, IfDraw2D } from "../interfaces/IfDraw2D";
+import { Rect, IfDraw2D } from "../interfaces/IfDraw2D";
 import { BrsDevice } from "../../device/BrsDevice";
 import { RoHttpAgent } from "./RoHttpAgent";
 

@@ -30,7 +30,8 @@ export interface DeviceInfo {
     displayMode: "480p" | "720p" | "1080p";
     captionsMode: "Off" | "On" | "Instant replay" | "When mute";
     defaultFont: string;
-    assets: ArrayBuffer;
+    sgFont: string;
+    assets: ArrayBufferLike;
     maxSimulStreams: 1 | 2 | 3;
     remoteControls: RemoteControl[];
     customFeatures: string[];
@@ -65,6 +66,7 @@ export const defaultDeviceInfo: DeviceInfo = {
     displayMode: "720p",
     captionsMode: "Off",
     defaultFont: "Asap",
+    sgFont: "Metropolis",
     assets: new ArrayBuffer(0),
     maxSimulStreams: 2,
     remoteControls: [],
@@ -392,6 +394,13 @@ export enum RemoteType {
 // CEC - Consumer Electronics Control
 // MHL - Mobile High-Definition Link
 // FP - Front Panel (for on-device controls)
+
+// Key Event Interface
+export interface KeyEvent {
+    remote: string; // Remote Id (Remote Type:Remote Index)
+    key: number; // Key Code
+    mod: number; // Modifier (0 = press, 100 = release)
+}
 
 // Debug prompt
 export const debugPrompt = "Brightscript Debugger> ";

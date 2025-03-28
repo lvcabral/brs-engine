@@ -81,7 +81,7 @@ export class IfDraw2D {
     }
 
     doDrawRotatedRect(
-        rect: BoundingRect,
+        rect: Rect,
         rgba: number,
         rotation: number,
         center?: number[],

@@ -1,3 +1,10 @@
+/*---------------------------------------------------------------------------------------------
+ *  BrightScript Engine (https://github.com/lvcabral/brs-engine)
+ *
+ *  Copyright (c) 2019-2025 Marcelo Lv Cabral. All Rights Reserved.
+ *
+ *  Licensed under the MIT License. See LICENSE in the repository root for license information.
+ *--------------------------------------------------------------------------------------------*/
 import * as path from "path";
 import * as zenFS from "@zenfs/core";
 import * as nodeFS from "fs";
@@ -211,13 +218,14 @@ export function writeUri(uri: string): boolean {
 
 /**
  * Initializes the File System with the provided zip files.
+ * @param commonZip ArrayBuffer with the common volume zip file.
  * @param pkgZip ArrayBuffer with the package zip file.
  * @param extZip ArrayBuffer with the external storage zip file.
  */
 export async function configureFileSystem(
-    commonZip: ArrayBuffer,
-    pkgZip?: ArrayBuffer,
-    extZip?: ArrayBuffer
+    commonZip: ArrayBufferLike,
+    pkgZip?: ArrayBufferLike,
+    extZip?: ArrayBufferLike
 ): Promise<void> {
     const fsConfig = { mounts: {} };
     if (zenFS.fs?.existsSync("common:/")) {

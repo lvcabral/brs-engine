@@ -272,6 +272,8 @@ function parseLibraries(
         lib.set("v30/bslDefender.brs", "");
         lib.set("v30/bslCore.brs", "");
         lib.set("Roku_Ads.brs", "");
+        lib.set("IMA3.brs", "");
+        lib.set("Roku_Event_Dispatcher.brs", "");
         lib.set("RokuBrowser.brs", "");
     }
     // Check for Libraries and add to the collection

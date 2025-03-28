@@ -1,5 +1,4 @@
 import * as brs from "..";
-import { BrsDevice } from "..";
 import {
     BrsType,
     BrsComponent,

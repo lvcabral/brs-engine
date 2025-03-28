@@ -60,7 +60,15 @@ import { Scope, Environment, NotFound } from "./Environment";
 import { toCallable } from "./BrsFunction";
 import { BlockEnd, GotoLabel } from "../parser/Statement";
 import { runDebugger } from "./MicroDebugger";
-import { DataType, DebugCommand, numberToHex, parseTextFile } from "../common";
+import {
+    DataType,
+    DebugCommand,
+    numberToHex,
+    parseTextFile,
+    TaskPayload,
+    TaskState,
+    TaskUpdate,
+} from "../common";
 /// #if !BROWSER
 import * as v8 from "v8";
 /// #endif

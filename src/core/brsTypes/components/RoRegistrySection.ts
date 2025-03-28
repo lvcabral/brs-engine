@@ -50,6 +50,7 @@ export class RoRegistrySection extends BrsComponent implements BrsValue {
             returns: ValueKind.String,
         },
         impl: (_: Interpreter, key: BrsString) => {
+            BrsDevice.refreshRegistry();
             let value = BrsDevice.registry.get(`${this.devId}.${this.section}.${key.value}`);
             if (!value) {
                 value = "";
@@ -65,6 +66,7 @@ export class RoRegistrySection extends BrsComponent implements BrsValue {
             returns: ValueKind.Dynamic,
         },
         impl: (_: Interpreter, keysArray: RoArray) => {
+            BrsDevice.refreshRegistry();
             let keys = keysArray.getElements() as BrsString[];
             let result = new RoAssociativeArray([]);
             keys.forEach((key) => {

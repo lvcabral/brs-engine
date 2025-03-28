@@ -1,4 +1,4 @@
-import { BrsType } from "..";
+import { BrsType, createNodeByType } from "..";
 import { Interpreter } from "../../interpreter";
 import { RoAppManager } from "./RoAppManager";
 import { RoAssociativeArray } from "./RoAssociativeArray";
@@ -190,13 +190,19 @@ export const BrsObjects = new BrsObjectsMap([
             createScreen(interpreter, dblbuffer, width, height),
         -2,
     ],
-    ["roXMLElement", (_: Interpreter) => new RoXMLElement()],
-    ["roURLTransfer", (_: Interpreter) => new RoURLTransfer()],
+    ["roXMLElement", (_?: Interpreter) => new RoXMLElement()],
+    ["roURLTransfer", (_?: Interpreter) => new RoURLTransfer()],
     ["roHttpAgent", (_: Interpreter) => new RoHttpAgent()],
-    ["roInvalid", (_: Interpreter) => new RoInvalid(), -1],
-    ["roNDK", (_: Interpreter) => new RoNDK()],
-    ["roCECStatus", (_: Interpreter) => new RoCECStatus()],
-    ["roHdmiStatus", (_: Interpreter) => new RoHdmiStatus()],
-    ["roSocketAddress", (_: Interpreter) => new RoSocketAddress()],
-    ["roStreamSocket", (_: Interpreter) => new RoStreamSocket()],
+    ["roInvalid", (_?: Interpreter) => new RoInvalid(), -1],
+    ["roNDK", (_?: Interpreter) => new RoNDK()],
+    ["roCECStatus", (_?: Interpreter) => new RoCECStatus()],
+    ["roHdmiStatus", (_?: Interpreter) => new RoHdmiStatus()],
+    ["roSocketAddress", (_?: Interpreter) => new RoSocketAddress()],
+    ["roStreamSocket", (_?: Interpreter) => new RoStreamSocket()],
+    [
+        "roSGNode",
+        (interpreter: Interpreter, nodeType: BrsString) => createNodeByType(interpreter, nodeType),
+        1,
+    ],
+    ["roSGScreen", (interpreter: Interpreter) => new RoSGScreen(interpreter)],
 ]);

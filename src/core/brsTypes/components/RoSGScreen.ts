@@ -76,7 +76,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         this.draw2D = new IfDraw2D(this);
         this.textureManager = getTextureManager();
         this.fontRegistry = getFontRegistry();
-        const sgFont = BrsDevice.deviceInfo.get("sgFont");
+        const sgFont = BrsDevice.deviceInfo.sgFont;
         const fontRegular = this.fontRegistry.registerFont(`common:/Fonts/${sgFont}-Regular.ttf`);
         const fontSemiBold = this.fontRegistry.registerFont(`common:/Fonts/${sgFont}-SemiBold.ttf`);
         Font.SystemFonts.forEach((font) => {
@@ -90,10 +90,9 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         this.keysBuffer = [];
         this.alphaEnable = true;
         this.isDirty = false;
-        const platform = interpreter.deviceInfo.get("platform");
-        this.disposeCanvas = platform?.inIOS ?? false;
+        this.disposeCanvas = BrsDevice.deviceInfo.platform?.inIOS ?? false;
         this.lastMessage = performance.now();
-        const maxFps = interpreter.deviceInfo.get("maxFps") ?? 60;
+        const maxFps = BrsDevice.deviceInfo.maxFps;
         this.maxMs = Math.trunc((1 / maxFps) * 1000);
         this.width = 1280;
         this.height = 720;
@@ -239,7 +238,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
 
     /** Handle control keys */
     private handleNextKey() {
-        this.interpreter.updateKeysBuffer(this.keysBuffer);
+        BrsDevice.updateKeysBuffer(this.keysBuffer);
         const nextKey = this.keysBuffer.shift();
         if (!nextKey || nextKey.key === this.lastKey) {
             return BrsInvalid.Instance;
@@ -255,8 +254,8 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
                 return BrsInvalid.Instance;
             }
         }
-        this.interpreter.lastKeyTime = this.interpreter.currKeyTime;
-        this.interpreter.currKeyTime = performance.now();
+        BrsDevice.lastKeyTime = BrsDevice.currKeyTime;
+        BrsDevice.currKeyTime = performance.now();
         this.lastKey = nextKey.key;
         const key = new BrsString(rokuKeys.get(nextKey.key - nextKey.mod) ?? "");
         const press = BrsBoolean.from(nextKey.mod === 0);

@@ -1,6 +1,6 @@
 import { BrsValue, ValueKind, BrsInvalid, BrsBoolean } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsEvent, BrsType, Double, KeyEvent, RoUniversalControlEvent } from "..";
+import { BrsEvent, BrsType, Double, RoUniversalControlEvent } from "..";
 import { Callable } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
@@ -18,6 +18,7 @@ import {
     rgbaIntToHex,
 } from "../interfaces/IfDraw2D";
 import { IfSetMessagePort, IfGetMessagePort } from "../interfaces/IfMessagePort";
+import { KeyEvent } from "../../common";
 import { BrsDevice } from "../../device/BrsDevice";
 
 export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
@@ -215,7 +216,7 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     // Control Key Events
     private getNewEvents() {
         const events: BrsEvent[] = [];
-        this.interpreter.updateKeysBuffer(this.keysBuffer);
+        BrsDevice.updateKeysBuffer(this.keysBuffer);
         const nextKey = this.keysBuffer.shift();
         if (nextKey && nextKey.key !== this.lastKey) {
             if (this.interpreter.singleKeyEvents) {
@@ -236,25 +237,6 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
             events.push(new RoUniversalControlEvent(nextKey));
         }
         return events;
-    }
-
-    private updateKeysBuffer() {
-        for (let i = 0; i < keyBufferSize; i++) {
-            const idx = i * keyArraySpots;
-            const key = Atomics.load(BrsDevice.sharedArray, DataType.KEY + idx);
-            if (key === -1) {
-                return;
-            } else if (this.keysBuffer.length === 0 || key !== this.keysBuffer.at(-1)?.key) {
-                const remoteId = Atomics.load(BrsDevice.sharedArray, DataType.RID + idx);
-                const remoteType = Math.trunc(remoteId / 10) * 10;
-                const remoteStr = RemoteType[remoteType] ?? RemoteType[RemoteType.SIM];
-                const remoteIdx = remoteId - remoteType;
-                const mod = Atomics.load(BrsDevice.sharedArray, DataType.MOD + idx);
-                Atomics.store(BrsDevice.sharedArray, DataType.KEY + idx, -1);
-                this.keysBuffer.push({ remote: `${remoteStr}:${remoteIdx}`, key: key, mod: mod });
-                BrsDevice.lastRemote = remoteIdx;
-            }
-        }
     }
 
     // ifScreen ------------------------------------------------------------------------------------

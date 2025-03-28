@@ -197,7 +197,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.Object,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_: Interpreter) => {
             return toAssociativeArray({
                 Manufacturer: "",
                 ModelNumber: this.deviceModel,

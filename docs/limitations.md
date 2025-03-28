@@ -4,7 +4,11 @@ There are several features from the **BrightScript** language and components tha
 
 ## In Scope (to be developed/fixed in future releases)
 
-* RSG (Roku SceneGraph) SDK components are not currently supported.
+* RSG (Roku SceneGraph) SDK components are currently being implemented, but still on early stages, so far we have:
+  * Load XML component files and create SceneGraph nodes tree.
+  * Basic support for `roSGNode` and `roSGScreen` components and rendering.
+  * Basic support for `Group`, `Label`, `Poster`, `Rectangle`, `Font`, `Timer` and `Task` nodes.
+  * All other nodes are either mocked or not implemented yet.
 * The following components are also not implemented yet:
   * Text to Speech components: `roAudioGuide`, `roMicrophone` and `roTextToSpeech`
   * Signing Algorithm components: `roDSA` and `roRSA`

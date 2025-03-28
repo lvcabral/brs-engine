@@ -8,9 +8,11 @@ import { BrsDevice } from "../../device/BrsDevice";
 
 export class RoRegistry extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
+    private readonly devId: string;
 
     constructor() {
         super("roRegistry");
+        this.devId = BrsDevice.deviceInfo.developerId;
         this.registerMethods({
             ifRegistry: [this.delete, this.flush, this.getSectionList, this.getSpaceAvailable],
         });
@@ -31,9 +33,9 @@ export class RoRegistry extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, section: BrsString) => {
-            let devId = BrsDevice.deviceInfo.developerId;
+            BrsDevice.refreshRegistry();
             [...BrsDevice.registry.keys()].forEach((key) => {
-                let regSection = `${devId}.${section}`;
+                let regSection = `${this.devId}.${section}`;
                 if (key.startsWith(regSection)) {
                     BrsDevice.registry.delete(key);
                 }
@@ -62,10 +64,10 @@ export class RoRegistry extends BrsComponent implements BrsValue {
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter) => {
-            let devId = BrsDevice.deviceInfo.developerId;
-            let sections = new Set<string>();
+            BrsDevice.refreshRegistry();
+            const sections = new Set<string>();
             [...BrsDevice.registry.keys()].forEach((key) => {
-                if (key.split(".")[0] === devId) {
+                if (key.split(".")[0] === this.devId) {
                     sections.add(key.split(".")[1]);
                 }
             });
@@ -84,11 +86,11 @@ export class RoRegistry extends BrsComponent implements BrsValue {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter) => {
-            const devId = BrsDevice.deviceInfo.developerId;
+            BrsDevice.refreshRegistry();
             let space = 32 * 1024;
             BrsDevice.registry.forEach((value, key) => {
-                if (key.split(".")[0] === devId) {
-                    space -= Buffer.byteLength(key.substring(devId.length + 1), "utf8");
+                if (key.split(".")[0] === this.devId) {
+                    space -= Buffer.byteLength(key.substring(this.devId.length + 1), "utf8");
                     space -= Buffer.byteLength(value, "utf8");
                 }
             });

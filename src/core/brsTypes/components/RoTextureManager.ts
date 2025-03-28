@@ -29,6 +29,7 @@ let textureManager: RoTextureManager;
 
 export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpAgent {
     readonly kind = ValueKind.Object;
+    private readonly textures: Map<string, RoBitmap>;
     readonly requests: Map<number, RoTextureRequest>;
     readonly customHeaders: Map<string, string>;
     private port?: RoMessagePort;
@@ -88,8 +89,7 @@ export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpA
     }
 
     private createEvent(request: RoTextureRequest) {
-        const texture = this.loadTexture(request);
-        let bitmap = texture ? new RoBitmap(texture) : BrsInvalid.Instance;
+        let bitmap = this.loadTexture(request.uri) ?? BrsInvalid.Instance;
         if (bitmap instanceof RoBitmap && bitmap.isValid()) {
             if (
                 request.size &&
@@ -146,7 +146,7 @@ export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpA
             } catch (err: any) {
                 if (BrsDevice.isDevMode) {
                     BrsDevice.stderr.write(
-                        `warning,[roTextureManager] Error requesting texture ${request.uri}: ${err.message}`
+                        `warning,[roTextureManager] Error requesting texture ${uri}: ${err.message}`
                     );
                 }
             }

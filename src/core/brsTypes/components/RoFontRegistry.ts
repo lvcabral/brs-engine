@@ -24,7 +24,6 @@ let fontRegistry: RoFontRegistry;
 
 export class RoFontRegistry extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
-    private readonly interpreter: Interpreter;
     private readonly defaultFontSize = 40;
     private readonly fallbackFontFamily = "Arial, Helvetica, sans-serif";
     private readonly defaultFontFamily: string;
@@ -43,7 +42,6 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
                 // this.get, ---> Deprecated as only needed to roImageCanvas
             ],
         });
-        this.interpreter = interpreter;
         this.fontRegistry = new Map();
         this.defaultFontFamily = BrsDevice.deviceInfo.defaultFont;
         this.registerFont(`common:/Fonts/${this.defaultFontFamily}-Regular.ttf`);
@@ -60,11 +58,65 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
         return BrsBoolean.False;
     }
 
+    count() {
+        return this.fontRegistry.size;
+    }
+
+    createFont(family: BrsString, size: Int32, bold: BrsBoolean, italic: BrsBoolean): BrsType {
+        /* Roku tries to respect style version of the font (regular, bold, italic, bold+italic),
+            but if it's not available returns the first one registered. */
+        const array = this.fontRegistry.get(family.value);
+        const weight = bold.toBoolean() ? "bold" : "normal";
+        const style = italic.toBoolean() ? "italic" : "normal";
+        if (array) {
+            let metrics;
+            array.some((element) => {
+                if (element.weight === weight && element.style === style) {
+                    metrics = element;
+                    return true;
+                }
+                return false;
+            });
+            if (!metrics) {
+                metrics = array[0];
+                return new RoFont(
+                    family,
+                    size,
+                    BrsBoolean.from(metrics.weight === "bold"),
+                    BrsBoolean.from(metrics.style === "italic"),
+                    metrics
+                );
+            }
+            return new RoFont(family, size, bold, italic, metrics);
+        }
+        if (family.value === this.defaultFontFamily) {
+            // Fallback to browser font if default fonts are not available
+            family = new BrsString(this.fallbackFontFamily);
+            let metrics: FontMetrics = {
+                ascent: 1.06884765625,
+                descent: 0.29296875,
+                maxAdvance: 1.208984375,
+                lineHeight: 1.36181640625,
+                style: bold.toBoolean() ? "bold" : "normal",
+                weight: italic.toBoolean() ? "italic" : "normal",
+            };
+            return new RoFont(family, size, bold, italic, metrics);
+        }
+        return BrsInvalid.Instance;
+    }
+
+    getFontFamily(uri: string) {
+        const family = this.fontPaths.get(uri);
+        return family ?? this.registerFont(uri);
+    }
+
     registerFont(fontPath: string) {
         try {
             const fsys = BrsDevice.fileSystem;
             if (!fsys || !validUri(fontPath)) {
-                return BrsBoolean.False;
+                return "";
+            } else if (this.fontPaths.has(fontPath)) {
+                return this.fontPaths.get(fontPath) ?? "";
             }
             const fontData = BrsDevice.fileSystem.readFileSync(fontPath);
             const fontObj = opentype.parse(fontData.buffer);
@@ -112,8 +164,8 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
             args: [new StdlibArgument("fontPath", ValueKind.String)],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter, fontPath: BrsString) => {
-            return this.registerFont(fontPath.value);
+        impl: (_: Interpreter, fontPath: BrsString) => {
+            return BrsBoolean.from(this.registerFont(fontPath.value) !== "");
         },
     });
 
@@ -183,9 +235,9 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
 }
 
 // Function to get the singleton instance of Font Registry
-export function getFontRegistry(interpreter?: Interpreter): RoFontRegistry {
-    if (!fontRegistry && interpreter) {
-        fontRegistry = new RoFontRegistry(interpreter);
+export function getFontRegistry(): RoFontRegistry {
+    if (!fontRegistry) {
+        fontRegistry = new RoFontRegistry();
     }
     return fontRegistry;
 }

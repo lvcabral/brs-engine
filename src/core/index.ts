@@ -38,7 +38,7 @@ import { zlibSync, unzlibSync } from "fflate";
 import packageInfo from "../../package.json";
 import { BrsDevice } from "./device/BrsDevice";
 import { configureFileSystem } from "./device/FileSystem";
-import { BrsError, RuntimeError, RuntimeErrorDetail } from "./error/BrsError";
+import { BrsError, logError, RuntimeError, RuntimeErrorDetail } from "./error/BrsError";
 
 export * as lexer from "./lexer";
 export * as parser from "./parser";
@@ -50,6 +50,7 @@ export { Preprocessor } from "./preprocessor/Preprocessor";
 export { Interpreter } from "./interpreter";
 export { Environment, Scope } from "./interpreter/Environment";
 export { BrsDevice } from "./device/BrsDevice";
+export { lexParseSync } from "./LexerParser";
 export const bscs = new Map<string, number>();
 export const stats = new Map<Lexeme, number>();
 export const terminateReasons = ["debug-exit", "end-statement"];
@@ -301,6 +302,12 @@ export async function executeFile(
     // Setup the File System
     try {
         await configureFileSystem(payload.device.assets, payload.pkgZip, payload.extZip);
+        if (options.root) {
+            BrsDevice.fileSystem.setRoot(options.root);
+        }
+        if (options.ext) {
+            BrsDevice.fileSystem.setExt(options.ext);
+        }
     } catch (err: any) {
         postMessage(`error,Error mounting File System: ${err.message}`);
         return { exitReason: AppExitReason.CRASHED };
@@ -343,7 +350,7 @@ export async function executeTask(payload: TaskPayload, customOptions?: Partial<
     stats.clear();
     // Setup the File System
     try {
-        await configureFileSystem(payload.pkgZip, payload.extZip);
+        await configureFileSystem(payload.device.assets, payload.pkgZip, payload.extZip);
         if (options.root) {
             BrsDevice.fileSystem.setRoot(options.root);
         }
@@ -368,7 +375,7 @@ export async function executeTask(payload: TaskPayload, customOptions?: Partial<
     if (payload.device.registry?.size) {
         BrsDevice.setRegistry(payload.device.registry);
     }
-    setupDeviceData(payload.device);
+    BrsDevice.setDeviceInfo(payload.device);
     setupTranslations(interpreter);
     console.log(
         "Calling Task in new Worker: ",
@@ -376,7 +383,7 @@ export async function executeTask(payload: TaskPayload, customOptions?: Partial<
         payload.taskData.m.top.functionname
     );
     interpreter.execTask(payload);
-    if (interpreter.isDevMode) {
+    if (BrsDevice.isDevMode) {
         postMessage(`debug,Task ${payload.taskData.name} is done.`);
     }
 }
@@ -544,7 +551,7 @@ async function runSource(
 ): Promise<RunResult> {
     const password = payload.password ?? "";
     const parseResult = lexParseSync(
-        interpreter.fileSystem,
+        BrsDevice.fileSystem,
         interpreter.manifest,
         sourceMap,
         password,
@@ -618,7 +625,7 @@ async function runEncrypted(
     // Execute the decrypted source code
     try {
         const allStatements = parseDecodedTokens(
-            interpreter.fileSystem,
+            BrsDevice.fileSystem,
             interpreter.manifest,
             decodedTokens
         );
@@ -678,75 +685,4 @@ async function executeApp(
         }
     }
     return exitReason;
-}
-
-/**
- * Evaluates parsed BrightScript code and add Libraries source
- * @param parseResults ParseResults object with the parsed code
- * @param lib Collection with the libraries source code
- * @param manifest Map with the manifest data
- */
-function parseLibraries(
-    parseResults: ParseResults,
-    lib: Map<string, string>,
-    manifest: Map<string, any>
-) {
-    const fsys = BrsDevice.fileSystem;
-    // Initialize Libraries on first run
-    if (!lib.has("v30/bslDefender.brs")) {
-        lib.set("v30/bslDefender.brs", "");
-        lib.set("v30/bslCore.brs", "");
-        lib.set("Roku_Ads.brs", "");
-        lib.set("IMA3.brs", "");
-        lib.set("Roku_Event_Dispatcher.brs", "");
-        lib.set("RokuBrowser.brs", "");
-    }
-    // Check for Libraries and add to the collection
-    if (parseResults.libraries.get("v30/bslDefender.brs") === true) {
-        lib.set(
-            "v30/bslDefender.brs",
-            fsys.readFileSync("common:/LibCore/v30/bslDefender.brs", "utf8")
-        );
-        lib.set("v30/bslCore.brs", fsys.readFileSync("common:/LibCore/v30/bslCore.brs", "utf8"));
-    } else if (parseResults.libraries.get("v30/bslCore.brs") === true) {
-        lib.set("v30/bslCore.brs", fsys.readFileSync("common:/LibCore/v30/bslCore.brs", "utf8"));
-    }
-    if (
-        parseResults.libraries.get("Roku_Ads.brs") === true &&
-        manifest.get("bs_libs_required")?.includes("roku_ads_lib")
-    ) {
-        lib.set("Roku_Ads.brs", fsys.readFileSync("common:/roku_ads/Roku_Ads.brs", "utf8"));
-    }
-    if (
-        parseResults.libraries.get("IMA3.brs") === true &&
-        manifest.get("bs_libs_required")?.includes("googleima3")
-    ) {
-        lib.set("IMA3.brs", fs.readFileSync("common:/roku_ads/IMA3.brs", "utf8"));
-    }
-    if (
-        parseResults.libraries.get("Roku_Event_Dispatcher.brs") === true &&
-        manifest.get("sg_component_libs_required")?.includes("roku_analytics")
-    ) {
-        lib.set(
-            "Roku_Event_Dispatcher.brs",
-            fs.readFileSync("common:/roku_analytics/Roku_Event_Dispatcher.brs", "utf8")
-        );
-    }
-    if (
-        parseResults.libraries.get("RokuBrowser.brs") === true &&
-        manifest.get("bs_libs_required")?.includes("Roku_Browser")
-    ) {
-        lib.set(
-            "RokuBrowser.brs",
-            fsys.readFileSync("common:/roku_browser/RokuBrowser.brs", "utf8")
-        );
-    }
-}
-
-/**
- * Logs a detected BRS error to the renderer process.
- * @param err the error to log
- */
-function logError(err: BrsError) {
-    postMessage(`error,${err.format()}`);
 }

@@ -264,7 +264,7 @@ export class RoDateTime extends BrsComponent implements BrsValue {
             args: [new StdlibArgument("format", ValueKind.String)],
             returns: ValueKind.String,
         },
-        impl: (interpreter: Interpreter, format: BrsString) => {
+        impl: (_: Interpreter, format: BrsString) => {
             const rokuDateTokens = ["EEEE", "EEE", "dd", "d", "MMMM", "MMM", "MM", "M", "yy", "y"];
             const locale = BrsDevice.deviceInfo.locale.replace("_", "-");
             const dateFormat = format.value.trim() === "" ? "short" : format.value;
@@ -283,7 +283,7 @@ export class RoDateTime extends BrsComponent implements BrsValue {
             args: [new StdlibArgument("format", ValueKind.String)],
             returns: ValueKind.String,
         },
-        impl: (interpreter: Interpreter, format: BrsString) => {
+        impl: (_: Interpreter, format: BrsString) => {
             const rokuTimeTokens = ["HH", "H", "hh", "h", "mm", "m", "a"];
             const locale = BrsDevice.deviceInfo.locale.replace("_", "-");
             const dateFormat = format.value.trim() === "" ? "short" : format.value;

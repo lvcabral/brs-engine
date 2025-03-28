@@ -1,7 +1,7 @@
-import { BoundingRect } from "../brsTypes/interfaces/IfDraw2D";
+import { Rect } from "../brsTypes/interfaces/IfDraw2D";
 
 /* Function to calculate the bounding box of a rotated rectangle */
-export function rotateRect(rect: BoundingRect, rotation: number, center?: number[]): BoundingRect {
+export function rotateRect(rect: Rect, rotation: number, center?: number[]): Rect {
     // Default to top-left corner if centerX and centerY are not provided
     const rotationCenterX = center !== undefined ? center[0] : 0;
     const rotationCenterY = center !== undefined ? center[1] : 0;
@@ -48,7 +48,7 @@ export function rotateTranslation(translation: number[], rotation: number) {
 }
 
 /* Function to merge two bounding rectangles */
-export function unionRect(rectChild: BoundingRect, rectParent: BoundingRect) {
+export function unionRect(rectChild: Rect, rectParent: Rect) {
     const x = Math.min(rectChild.x, rectParent.x);
     const y = Math.min(rectChild.y, rectParent.y);
     const width = Math.max(rectChild.x + rectChild.width, rectParent.x + rectParent.width) - x;
