@@ -194,12 +194,12 @@ export class Group extends RoSGNode {
         horizAlign: string,
         vertAlign: string,
         rotation: number,
-        draw2D?: IfDraw2D,
         ellipsis: string = "...",
         numLines: number = 0,
         maxLines: number = 0,
+        lineSpacing: number = 0,
         displayPartialLines: boolean = false,
-        lineSpacing: number = 0
+        draw2D?: IfDraw2D,
     ): MeasuredText {
         const drawFont = font.createDrawFont();
         const lines = this.breakTextIntoLines(text, drawFont, rect.width);
@@ -286,22 +286,20 @@ export class Group extends RoSGNode {
                 const testLine = currentLine + word;
                 if (font.measureText(testLine).width <= width) {
                     currentLine = testLine;
-                } else {
-                    if (font.measureText(word).width > width) {
-                        // Word is too long, break it
-                        const brokenWords = this.breakLongWord(word, font, width);
-                        for (const brokenWord of brokenWords) {
-                            if (font.measureText(currentLine + brokenWord).width <= width) {
-                                currentLine += brokenWord;
-                            } else {
-                                lines.push(currentLine);
-                                currentLine = brokenWord;
-                            }
+                } else if (font.measureText(word).width > width) {
+                    // Word is too long, break it
+                    const brokenWords = this.breakLongWord(word, font, width);
+                    for (const brokenWord of brokenWords) {
+                        if (font.measureText(currentLine + brokenWord).width <= width) {
+                            currentLine += brokenWord;
+                        } else {
+                            lines.push(currentLine);
+                            currentLine = brokenWord;
                         }
-                    } else {
-                        lines.push(currentLine);
-                        currentLine = word;
                     }
+                } else {
+                    lines.push(currentLine);
+                    currentLine = word;
                 }
             }
         }

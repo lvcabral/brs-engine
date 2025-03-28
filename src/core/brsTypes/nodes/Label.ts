@@ -114,12 +114,12 @@ export class Label extends Group {
                     horizAlign,
                     vertAlign,
                     rotation,
-                    draw2D,
                     ellipsis,
                     numLines.getValue(),
                     maxLines.getValue(),
+                    lineSpacing.getValue(),
                     displayPartialLines.toBoolean(),
-                    lineSpacing.getValue()
+                    draw2D,
                 );
             } else {
                 measured = { text: "", width: 0, height: 0, ellipsized: false };
