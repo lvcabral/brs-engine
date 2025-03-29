@@ -302,6 +302,15 @@ display.addEventListener("dblclick", function (event) {
     }
 });
 
+document.onfullscreenchange = function () {
+    if (document.fullscreenElement) {
+        brs.redraw(true);
+    } else {
+        brs.redraw(false, 854, 480);
+        display.style.top = "29px";
+    }
+};
+
 display.addEventListener("mousedown", function (event) {
     if (event.detail === 2) {
         event.preventDefault();
