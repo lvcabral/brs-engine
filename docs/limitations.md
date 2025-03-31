@@ -24,7 +24,9 @@ There are several features from the **BrightScript** language and components tha
   * Check what formats (container and codec) can be used on each browser, using `roDeviceInfo.canDecodeVideo()`, to make sure your video can be played.
   * DASH streams are not yet supported.
 * The component `roUrlTransfer` is implemented with basic functionality but with the following limitations:
-  * To make a **web app** access urls from domains other than the one it is hosted, requires the server called to respond with the header `Access-Control-Allow-Origin`, [read more](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP).
+  * To make a **web app** access urls from domains other than the one it is hosted, the Cross-Origin Resource Sharing (CORS) browser policy requires the server called to respond with the header `Access-Control-Allow-Origin`, [read more](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CORS).
+    * A simple way to overcome this limitation is to use a CORS proxy like the [cors-anywhere](https://github.com/Rob--W/cors-anywhere), see [customization documentation](./customization.md) to learn how to configure `brs-engine` to use it.
+    * If you are using a Chromium based browser (Chrome, Edge, Brave, etc) you can install this [extension](https://chrome.google.com/webstore/detail/allow-cors-access-control/lhobafahddgcelffkeicbaginigeejlf) to bypass CORS.
   * The _async_ methods are actually synchronous and evaluated when `WaitMessage` or `GetMessage` are called.
   * Custom/Self-Signed SSL certificates are not supported, the engine will use default browser client certificate database.
   * As custom certificates are not supported these methods are just mocked and do nothing: `EnablePeerVerification`, `EnableHostVerification`, `SetCertificatesDepth`.

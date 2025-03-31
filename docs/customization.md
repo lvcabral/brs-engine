@@ -8,7 +8,7 @@ As described on the [engine API documentation](engine-api.md), the `initialize()
 
 ```ts
 const deviceInfo = {
-  developerId: "34c6fceca75e456f25e7e99531e2425c6c1de443", // As Roku, segregates Registry data (can't have a dot)
+  developerId: "34c6fceca75e456f25e7e99531e2425c6c1de443", // As Roku, this ID segregates Registry data (can't be empty or have a dot)
   friendlyName: "BrightScript Engine Library",
   deviceModel: "8000X", // Roku TV (Midland)
   clientId: "6c5bf3a5-b2a5-4918-824d-7691d5c85364",
@@ -25,6 +25,7 @@ const deviceInfo = {
   startTime: Date.now(),
   audioVolume: 40,
   maxFps: 60,
+  corsProxy: "https://your-cors-proxy-instance.yourdomain.com/", // (optional) Add your CORS-Anywhere URL here, make sure you have the trailing slash
 };
 ```
 
