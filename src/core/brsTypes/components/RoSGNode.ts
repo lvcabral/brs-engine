@@ -28,7 +28,7 @@ import { Stmt } from "../../parser";
 import { Interpreter } from "../../interpreter";
 import { generateArgumentMismatchError } from "../../error/ArgumentMismatch";
 import { createNodeByType, isSubtypeCheck, subtypeHierarchy } from "../../scenegraph/SGNodeFactory";
-import { Field, FieldKind, FieldModel } from "../nodes/Field";
+import { Field, FieldAlias, FieldKind, FieldModel } from "../nodes/Field";
 import { Rect, IfDraw2D } from "../interfaces/IfDraw2D";
 import { BrsDevice } from "../../device/BrsDevice";
 import { RoHttpAgent } from "./RoHttpAgent";
@@ -36,6 +36,7 @@ import { RoHttpAgent } from "./RoHttpAgent";
 export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     readonly kind = ValueKind.Object;
     protected fields = new Map<string, Field>();
+    protected aliases = new Map<string, FieldAlias>();
     protected children: RoSGNode[] = [];
     protected parent: RoSGNode | BrsInvalid = BrsInvalid.Instance;
     protected triedInitFocus: boolean = false;
@@ -221,8 +222,9 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             throw new Error("RoSGNode indexes must be strings");
         }
 
-        let mapKey = index.value.toLowerCase();
-        let fieldType = kind ?? FieldKind.fromBrsType(value);
+        const mapKey = index.value.toLowerCase();
+        const fieldType = kind ?? FieldKind.fromBrsType(value);
+        const alias = this.aliases.get(mapKey);
         let field = this.fields.get(mapKey);
 
         if (!field) {
@@ -234,6 +236,15 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
                 let error = `warning,Warning occurred while setting a field of an RoSGNode\n`;
                 error += `-- Tried to set nonexistent field "${index.value}" of a "${this.nodeSubtype}" node`;
                 BrsDevice.stderr.write(error);
+            }
+        } else if (alias) {
+            const child = this.findChildById(this, new BrsString(alias.nodeId));
+            if (child instanceof RoSGNode) {
+                child.set(new BrsString(alias.fieldName), value, alwaysNotify);
+            } else {
+                BrsDevice.stderr.write(
+                    `warning,BRIGHTSCRIPT: ERROR: roSGNode.Set: "${index.value}": Alias "${alias.nodeId}.${alias.fieldName}" not found!`
+                );
             }
         } else if (field.canAcceptValue(value)) {
             // Fields are not overwritten if they haven't the same type.
@@ -262,8 +273,9 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         }
     }
 
-    addNodeFieldAlias(fieldName: string, field: Field) {
+    addNodeFieldAlias(fieldName: string, field: Field, childNode: string, childField: string) {
         this.fields.set(fieldName.toLowerCase(), field);
+        this.aliases.set(fieldName.toLowerCase(), { nodeId: childNode, fieldName: childField });
     }
 
     // Used to setup values for the node fields without notifying observers
@@ -462,8 +474,20 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
                 return result;
             }
         }
-
         // name was not found anywhere in tree
+        return BrsInvalid.Instance;
+    }
+
+    /* searches the children map for a node with the given id */
+    findChildById(node: RoSGNode, id: BrsString): RoSGNode | BrsInvalid {
+        // visit each child
+        for (let child of node.children) {
+            let currentId = child.get(new BrsString("id"));
+            if (currentId.toString().toLowerCase() === id.value.toLowerCase()) {
+                return child;
+            }
+        }
+        // name was not found anywhere in children map
         return BrsInvalid.Instance;
     }
 

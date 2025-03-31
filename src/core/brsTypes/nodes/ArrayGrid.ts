@@ -87,7 +87,15 @@ export class ArrayGrid extends Group {
             throw new Error("RoSGNode indexes must be strings");
         }
         const fieldName = index.value.toLowerCase();
-        if (["jumptoitem", "animatetoitem"].includes(fieldName)) {
+        if (fieldName === "content") {
+            const retValue = super.set(index, value, alwaysNotify, kind);
+            let focus = -1;
+            if (value instanceof ContentNode && value.getNodeChildren().length) {
+                focus = 0;
+            }
+            this.set(new BrsString("jumpToItem"), new Int32(focus));
+            return retValue;
+        } else if (["jumptoitem", "animatetoitem"].includes(fieldName)) {
             const focusedIndex = jsValueOf(this.getFieldValue("itemFocused"));
             if (focusedIndex !== jsValueOf(value)) {
                 super.set(new BrsString("itemUnfocused"), new Int32(this.focusIndex));

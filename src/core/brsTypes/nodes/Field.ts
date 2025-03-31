@@ -122,6 +122,11 @@ export type FieldModel = {
     alwaysNotify?: boolean;
 };
 
+export type FieldAlias = {
+    nodeId: string;
+    fieldName: string;
+};
+
 export class Field {
     private readonly permanentObservers: BrsCallback[] = [];
     private readonly unscopedObservers: BrsCallback[] = [];

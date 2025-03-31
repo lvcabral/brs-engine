@@ -375,11 +375,11 @@ function addFields(interpreter: Interpreter, node: RoSGNode, typeDef: ComponentD
             if (fieldValue.alias?.includes(".")) {
                 const childName = fieldValue.alias.split(".")[0];
                 const childField = fieldValue.alias.split(".")[1];
-                const childNode = node.findNodeById(node, new BrsString(childName));
+                const childNode = node.findChildById(node, new BrsString(childName));
                 if (childNode instanceof RoSGNode) {
                     const field = childNode.getNodeFields().get(childField?.toLowerCase());
                     if (field) {
-                        node.addNodeFieldAlias(fieldName, field);
+                        node.addNodeFieldAlias(fieldName, field, childName, childField);
                     } else {
                         let msg = `error,Error creating XML component ${node.nodeSubtype}\n`;
                         msg += `-- Interface field alias failed: Node "${childName}" has no field named "${childField}"\n`;

@@ -143,7 +143,7 @@ describe("cli", () => {
         });
         expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
             "Main -----------------------------------------------",
-            "MAIN: poster node type:Node",
+            "MAIN: poster node type:roSGNode",
             "MAIN: poster node subtype:Poster",
             "MAIN: poster node width: 0",
             "MAIN: poster node height: 0",
