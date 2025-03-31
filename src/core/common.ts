@@ -46,6 +46,7 @@ export interface DeviceInfo {
     entryPoint?: boolean;
     stopOnCrash?: boolean;
     platform?: Platform;
+    corsProxy?: string;
 }
 
 // Default Device Information

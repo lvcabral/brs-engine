@@ -104,8 +104,9 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
         if (this.freshConnection) {
             this.xhr = new XMLHttpRequest();
         }
-        let method = this.reqMethod === "" ? methodParam : this.reqMethod;
-        this.xhr.open(method, this.url, false, this.user, this.password);
+        const method = this.reqMethod === "" ? methodParam : this.reqMethod;
+        const corsProxy = BrsDevice.deviceInfo.corsProxy ?? "";
+        this.xhr.open(method, corsProxy + this.url, false, this.user, this.password);
         this.xhr.responseType = typeParam;
         this.customHeaders.forEach((value: string, key: string) => {
             this.xhr.setRequestHeader(key, value);
