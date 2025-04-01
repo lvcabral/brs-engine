@@ -43,6 +43,7 @@ export class Environment {
      * @see Scope.Module
      */
     private module = new Map<string, BrsType>();
+    private locations = new Map<string, Location>();
     /**
      * Variables and anonymous functions accessible only within a function's body.
      * @see Scope.Function
@@ -68,7 +69,7 @@ export class Environment {
      * @param scope The logical region from a particular variable or function that defines where it may be accessed from
      * @param name the name of the variable to define (in the form of an `Identifier`)
      * @param value the value of the variable to define
-     * @param location the location in the source file where this variable was defined (only for Function scope)
+     * @param location the location in the source file where this variable was defined (optional)
      */
     public define(scope: Scope, name: string, value: BrsType, location?: Location): void {
         let destination: Map<string, BrsType>;
@@ -106,6 +107,10 @@ export class Environment {
             }
             case Scope.Module:
                 destination = this.module;
+                this.locations.set(lowercaseName, location!);
+                break;
+            case Scope.Global:
+                destination = this.global;
                 break;
             default:
                 destination = this.global;
@@ -113,6 +118,15 @@ export class Environment {
         }
 
         destination.set(lowercaseName, value);
+    }
+
+    /**
+     * Returns the module function location
+     * @param name module function name
+     * @returns if exists returns the location
+     */
+    public getDefinedLocation(name: string): Location | undefined {
+        return this.locations.get(name.toLowerCase());
     }
 
     /**

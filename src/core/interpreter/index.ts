@@ -430,22 +430,24 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         }
 
         if (this.environment.has(statement.name, [Scope.Module])) {
-            // TODO: Figure out how to determine where the original version was declared
-            // Maybe `Environment.define` records the location along with the value?
-            this.addError(
-                new BrsError(
-                    `Attempting to declare function '${statement.name.text}', but ` +
-                        `a property of that name already exists in this scope.`,
-                    statement.name.location
-                )
+            const defLocation = this.environment.getDefinedLocation(statement.name.text);
+            if (defLocation) {
+                this.addError(
+                    new BrsError(
+                        `Attempting to declare function '${statement.name.text}' at ${statement.location.file}, but ` +
+                            `it already exists in this scope from ${defLocation.file}`,
+                        statement.name.location
+                    )
+                );
+            }
+        } else {
+            this.environment.define(
+                Scope.Module,
+                statement.name.text,
+                toCallable(statement.func, statement.name.text),
+                statement.location
             );
         }
-
-        this.environment.define(
-            Scope.Module,
-            statement.name.text,
-            toCallable(statement.func, statement.name.text)
-        );
         return BrsInvalid.Instance;
     }
 
@@ -1981,7 +1983,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         }
         const cmd = BrsDevice.checkBreakCommand(this.debugMode);
         if (cmd === DebugCommand.BREAK) {
-            console.log("breakpoint in execute", statement.location, this.location);
             this.debugMode = true;
             if (!(statement instanceof Stmt.Block)) {
                 if (!runDebugger(this, statement.location, this.location)) {
@@ -2170,10 +2171,11 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
      */
     formatLocation(location: Location = this.location) {
         let formattedLocation: string;
+        const file = location.file.startsWith("pkg:") ? location.file : `pkg:/${location.file}`;
         if (location.start.line) {
-            formattedLocation = `pkg:/${location.file}(${location.start.line})`;
+            formattedLocation = `${file}(${location.start.line})`;
         } else {
-            formattedLocation = `pkg:/${location.file}(??)`;
+            formattedLocation = `${file}(??)`;
         }
         return formattedLocation;
     }

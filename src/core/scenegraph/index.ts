@@ -221,6 +221,7 @@ export async function getInterpreterWithSubEnvs(
             let statements = await componentScopeResolver.resolve(component);
             interpreter.inSubEnv((subInterpreter) => {
                 let componentMPointer = new RoAssociativeArray([]);
+                subInterpreter.options.entryPoint = false;
                 subInterpreter.environment.setM(componentMPointer);
                 subInterpreter.environment.setRootM(componentMPointer);
                 subInterpreter.exec(statements);
