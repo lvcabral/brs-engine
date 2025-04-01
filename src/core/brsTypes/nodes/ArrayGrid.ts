@@ -135,17 +135,22 @@ export class ArrayGrid extends Group {
         let handled = false;
         if (key === "up" || key === "down") {
             handled = press ? this.handleUpDown(key) : false;
-            this.lastPressHandled = handled ? key : "";
+        } else if (key === "left" || key === "right") {
+            handled = press ? this.handleLeftRight(key) : false;
         } else if (key === "rewind" || key === "fastforward") {
             handled = press ? this.handlePageUpDown(key) : false;
-            this.lastPressHandled = handled ? key : "";
         } else if (key === "OK") {
             handled = this.handleOK(press);
         }
+        this.lastPressHandled = handled && key !== "OK" ? key : "";
         return handled;
     }
 
     protected handleUpDown(_key: string) {
+        return false;
+    }
+
+    protected handleLeftRight(_key: string) {
         return false;
     }
 
