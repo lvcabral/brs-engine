@@ -97,7 +97,20 @@ export class ButtonGroup extends LayoutGroup {
             // Read-only field
             return BrsInvalid.Instance;
         }
-        return super.set(index, value, alwaysNotify, kind);
+        const retValue = super.set(index, value, alwaysNotify, kind);
+        if (fieldName === "buttons") {
+            this.refreshButtons();
+            this.refreshFocus();
+        }
+        return retValue;
+    }
+
+    setNodeFocus(interpreter: Interpreter, focusOn: boolean): boolean {
+        const focus = super.setNodeFocus(interpreter, focusOn);
+        if (focus) {
+            this.refreshFocus();
+        }
+        return focus;
     }
 
     handleKey(key: string, press: boolean): boolean {
@@ -141,7 +154,7 @@ export class ButtonGroup extends LayoutGroup {
             this.refreshButtons();
             this.isDirty = false;
         }
-        this.refreshFocus(interpreter);
+        this.refreshFocus();
         // TODO: update then width/height based on the # of buttons and layout direction
         this.updateBoundingRects(boundingRect, origin, angle);
         this.renderChildren(interpreter, drawTrans, angle, draw2D);
@@ -202,7 +215,7 @@ export class ButtonGroup extends LayoutGroup {
         return button;
     }
 
-    private refreshFocus(interpreter: Interpreter) {
+    private refreshFocus() {
         const focusedNode = rootObjects.focused;
         if (
             this.children.length &&

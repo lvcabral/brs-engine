@@ -392,7 +392,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
 
     /** Sets or removes the focus to/from the Node */
     setNodeFocus(interpreter: Interpreter, focusOn: boolean): boolean {
-        let focusedChildString = new BrsString("focusedchild");
+        const focusedChildString = new BrsString("focusedchild");
         if (focusOn) {
             if (!this.triedInitFocus) {
                 // Only try initial focus once
@@ -404,9 +404,12 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
                     const initialFocus = new BrsString(typeDef.initialFocus);
                     const childToFocus = this.findNodeById(this, initialFocus);
                     if (childToFocus instanceof RoSGNode) {
-                        return childToFocus.setNodeFocus(interpreter, true);
+                        childToFocus.setNodeFocus(interpreter, true);
+                        return this.isFocusable();
                     }
                 }
+            } else if (!this.isFocusable() && this.isChildrenFocused(interpreter)) {
+                return false;
             }
 
             rootObjects.focused = this;
