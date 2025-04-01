@@ -61,6 +61,7 @@ export class ArrayGrid extends Group {
         { name: "currFocusSection", type: "float", value: "0.0" },
     ];
     protected focusIndex: number = 0;
+    protected lastPressHandled: string;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = "ArrayGrid") {
         super([], name);
@@ -80,6 +81,7 @@ export class ArrayGrid extends Group {
             this.setFieldValue("sectionDividerMinWidth", new Float(117));
             this.setFieldValue("sectionDividerSpacing", new Float(10));
         }
+        this.lastPressHandled = "";
     }
 
     set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
@@ -124,4 +126,35 @@ export class ArrayGrid extends Group {
         }
         return super.set(index, value, alwaysNotify, kind);
     }
+
+    handleKey(key: string, press: boolean): boolean {
+        if (!press && this.lastPressHandled === key) {
+            this.lastPressHandled = "";
+            return true;
+        }
+        let handled = false;
+        if (key === "up" || key === "down") {
+            handled = press ? this.handleUpDown(key) : false;
+            this.lastPressHandled = handled ? key : "";
+        } else if (key === "rewind" || key === "fastforward") {
+            handled = press ? this.handlePageUpDown(key) : false;
+            this.lastPressHandled = handled ? key : "";
+        } else if (key === "OK") {
+            handled = this.handleOK(press);
+        }
+        return handled;
+    }
+
+    protected handleUpDown(_key: string) {
+        return false;
+    }
+
+    protected handlePageUpDown(_key: string) {
+        return false;
+    }
+
+    protected handleOK(_press: boolean) {
+        return false;
+    }
+
 }
