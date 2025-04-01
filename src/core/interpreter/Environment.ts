@@ -282,8 +282,10 @@ export class Environment {
         newEnvironment.hostNode = this.hostNode;
         if (includeModuleScope) {
             newEnvironment.module = this.module;
+            newEnvironment.locations = this.locations;
         } else {
             newEnvironment.module = new Map<string, BrsType>();
+            newEnvironment.locations = new Map<string, Location>();
         }
         return newEnvironment;
     }
