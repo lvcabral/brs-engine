@@ -348,6 +348,7 @@ export async function executeTask(payload: TaskPayload, customOptions?: Partial<
         ...customOptions,
     };
     stats.clear();
+    BrsDevice.taskThread = true;
     // Setup the File System
     try {
         await configureFileSystem(payload.device.assets, payload.pkgZip, payload.extZip);
@@ -456,19 +457,17 @@ function setupPackageFiles(payload: AppPayload): SourceResult {
     }
     for (let filePath of payload.paths) {
         try {
-            if (filePath.type === "pcode" && fsys.existsSync(`pkg:/${filePath.url}`)) {
+            const pkgPath = `pkg:/${filePath.url}`;
+            if (filePath.type === "pcode" && fsys.existsSync(pkgPath)) {
                 if (filePath.id === 0) {
-                    result.pcode = fsys.readFileSync(`pkg:/${filePath.url}`);
-                } else {
-                    result.iv = fsys.readFileSync(`pkg:/${filePath.url}`, "utf8");
+                    result.pcode = fsys.readFileSync(pkgPath);
+                    continue;
                 }
+                result.iv = fsys.readFileSync(pkgPath, "utf8");
             } else if (filePath.type === "source" && Array.isArray(payload.source)) {
-                result.sourceMap.set(filePath.url, payload.source[filePath.id]);
+                result.sourceMap.set(pkgPath, payload.source[filePath.id]);
             } else if (filePath.type === "source" && fsys.existsSync(`pkg:/${filePath.url}`)) {
-                result.sourceMap.set(
-                    filePath.url,
-                    fsys.readFileSync(`pkg:/${filePath.url}`, "utf8")
-                );
+                result.sourceMap.set(pkgPath, fsys.readFileSync(pkgPath, "utf8"));
             }
         } catch (err: any) {
             postMessage(`error,Error accessing file ${filePath.url} - ${err.message}`);
