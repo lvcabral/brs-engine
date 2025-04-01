@@ -227,6 +227,8 @@ export class Dialog extends Group {
             if (this.lastFocus) {
                 rootObjects.focused = this.lastFocus;
             }
+        } else if (fieldName === "buttons" && !(value instanceof RoArray)) {
+            value = new RoArray([]);
         }
         return super.set(index, value, alwaysNotify, kind);
     }

@@ -98,6 +98,8 @@ export class ButtonGroup extends LayoutGroup {
         } else if (fieldName === "buttonfocused") {
             // Read-only field
             return BrsInvalid.Instance;
+        } else if (fieldName === "buttons" && !(value instanceof RoArray)) {
+            value = new RoArray([]);
         }
         const retValue = super.set(index, value, alwaysNotify, kind);
         if (fieldName === "buttons") {
