@@ -40,7 +40,6 @@ export class LabelList extends ArrayGrid {
     protected currRow: number;
     protected listLength: number;
     protected hasNinePatch: boolean;
-    protected lastPressHandled: string;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = "LabelList") {
         super([], name);
@@ -64,7 +63,6 @@ export class LabelList extends ArrayGrid {
         const style = jsValueOf(this.getFieldValue("vertFocusAnimationStyle")) as string;
         this.wrap = style.toLowerCase() !== "floatingfocus";
         this.hasNinePatch = true;
-        this.lastPressHandled = "";
         this.currRow = this.updateCurrRow();
         this.listLength = 0;
     }
@@ -91,23 +89,6 @@ export class LabelList extends ArrayGrid {
             this.currRow = this.updateCurrRow();
         }
         return result;
-    }
-
-    handleKey(key: string, press: boolean): boolean {
-        if (!press && this.lastPressHandled === key) {
-            this.lastPressHandled = "";
-            return true;
-        }
-        let handled = false;
-        if (key === "up" || key === "down") {
-            handled = press ? this.handleUpDown(key) : false;
-        } else if (key === "rewind" || key === "fastforward") {
-            handled = press ? this.handlePageUpDown(key) : false;
-        } else if (key === "OK") {
-            handled = this.handleOK(press);
-        }
-        this.lastPressHandled = handled ? key : "";
-        return handled;
     }
 
     protected handleUpDown(key: string) {
@@ -147,7 +128,7 @@ export class LabelList extends ArrayGrid {
             return false;
         }
         this.set(new BrsString("itemSelected"), new Int32(this.focusIndex));
-        return true;
+        return false;
     }
 
     renderNode(interpreter: Interpreter, origin: number[], angle: number, draw2D?: IfDraw2D) {
