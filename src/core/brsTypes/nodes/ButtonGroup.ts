@@ -16,6 +16,7 @@ import {
     Int32,
     jsValueOf,
     Label,
+    RoArray,
     RoFont,
     rootObjects,
     RoSGNode,
@@ -77,6 +78,7 @@ export class ButtonGroup extends LayoutGroup {
         }
         this.setFieldValue("focusBitmapUri", new BrsString(Button.focusUri));
         this.setFieldValue("focusFootprintBitmapUri", new BrsString(Button.footprintUri));
+        this.setFieldValue("buttons", new RoArray([]));
         this.lastPressHandled = "";
     }
 
