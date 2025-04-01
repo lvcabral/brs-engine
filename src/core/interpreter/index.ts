@@ -103,6 +103,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     private _tryMode = false;
     private _dotLevel = 0;
     private _singleKeyEvents = true; // Default Roku behavior is `true`
+    private _printed = false; // Prevent the warning when no entry point exists
 
     location: Location = {
         file: "",
@@ -299,16 +300,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                         )
                     ),
                 ];
-            } else if (this.options.entryPoint) {
-                // Generate an exception when Entry Point is required
-                throw new RuntimeError(
-                    {
-                        errno: RuntimeErrorDetail.MissingMainFunction.errno,
-                        message:
-                            "No entry point found! You must define a function Main() or RunUserInterface()",
-                    },
-                    Interpreter.InternalLocation
-                );
+            } else if (this.options.entryPoint && !this._printed) {
+                postMessage("warning,WARNING! No entry point found! You may need to define a function Main() or RunUserInterface()");
             }
         } catch (err: any) {
             if (err instanceof Stmt.ReturnValue) {
@@ -388,6 +381,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     visitPrint(statement: Stmt.Print): BrsType {
+        this._printed = true;
         // the `tab` function is only in-scope while executing print statements
         this.environment.define(Scope.Function, "Tab", StdLib.Tab);
         let printStream = "";
