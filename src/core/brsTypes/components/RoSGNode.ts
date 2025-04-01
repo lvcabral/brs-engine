@@ -238,7 +238,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
                 BrsDevice.stderr.write(error);
             }
         } else if (alias) {
-            const child = this.findChildById(this, new BrsString(alias.nodeId));
+            const child = this.findNodeById(this, new BrsString(alias.nodeId));
             if (child instanceof RoSGNode) {
                 child.set(new BrsString(alias.fieldName), value, alwaysNotify);
             } else {
@@ -475,19 +475,6 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             }
         }
         // name was not found anywhere in tree
-        return BrsInvalid.Instance;
-    }
-
-    /* searches the children map for a node with the given id */
-    findChildById(node: RoSGNode, id: BrsString): RoSGNode | BrsInvalid {
-        // visit each child
-        for (let child of node.children) {
-            let currentId = child.get(new BrsString("id"));
-            if (currentId.toString().toLowerCase() === id.value.toLowerCase()) {
-                return child;
-            }
-        }
-        // name was not found anywhere in children map
         return BrsInvalid.Instance;
     }
 

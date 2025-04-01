@@ -375,7 +375,7 @@ function addFields(interpreter: Interpreter, node: RoSGNode, typeDef: ComponentD
             if (fieldValue.alias?.includes(".")) {
                 const childName = fieldValue.alias.split(".")[0];
                 const childField = fieldValue.alias.split(".")[1];
-                const childNode = node.findChildById(node, new BrsString(childName));
+                const childNode = node.findNodeById(node, new BrsString(childName));
                 if (childNode instanceof RoSGNode) {
                     const field = childNode.getNodeFields().get(childField?.toLowerCase());
                     if (field) {
