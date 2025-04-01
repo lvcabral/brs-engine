@@ -301,7 +301,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     ),
                 ];
             } else if (this.options.entryPoint && !this._printed) {
-                postMessage("warning,WARNING! No entry point found! You may need to define a function Main() or RunUserInterface()");
+                postMessage(
+                    "warning,WARNING! No entry point found! You may need to define a function Main() or RunUserInterface()"
+                );
             }
         } catch (err: any) {
             if (err instanceof Stmt.ReturnValue) {
