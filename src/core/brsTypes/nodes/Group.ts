@@ -350,6 +350,9 @@ export class Group extends RoSGNode {
                 // TODO: Handle 9-patch rotation and rgba
                 return rect;
             }
+            if (typeof rgba !== "number" || rgba === 0xffffffff || rgba === -1) {
+                rgba = undefined;
+            }
             const scaleX = rect.width !== 0 ? rect.width / bitmap.width : 1;
             const scaleY = rect.height !== 0 ? rect.height / bitmap.height : 1;
             rect.width = scaleX * bitmap.width;

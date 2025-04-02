@@ -47,13 +47,42 @@ export class IfDraw2D {
         y: number,
         scaleX: number,
         scaleY: number,
-        object: BrsComponent,
+        object: RoBitmap,
         rgba?: number
     ): boolean {
         const ctx = this.component.getContext();
         const didDraw = this.component.drawImage(object, x, y, scaleX, scaleY, rgba);
         ctx.globalAlpha = 1.0;
         return didDraw;
+    }
+
+    drawCroppedScaledObject(
+        object: RoBitmap,
+        sourceRect: Rect,
+        destRect: Rect,
+        rgba?: number
+    ): boolean {
+        const ctx = this.component.getContext();
+        ctx.save();
+        // Set context properties (alpha blending, smoothing)
+        setContextAlpha(ctx, rgba);
+        ctx.imageSmoothingEnabled = object.scaleMode === 1;
+
+        // Draw the cropped and scaled image using ctx.drawImage directly
+        const chunk: DrawChunk = {
+            sx: sourceRect.x,
+            sy: sourceRect.y,
+            sw: sourceRect.width,
+            sh: sourceRect.height,
+            dx: destRect.x,
+            dy: destRect.y,
+            dw: destRect.width,
+            dh: destRect.height,
+        };
+        drawChunk(ctx, object.getCanvas(), chunk);
+        ctx.restore();
+        this.component.makeDirty();
+        return true;
     }
 
     doDrawRotatedBitmap(
@@ -586,6 +615,7 @@ export interface BrsDraw2D {
     readonly y: number;
     readonly width: number;
     readonly height: number;
+    scaleMode: number;
 
     clearCanvas(rgba: number): void;
 
@@ -805,7 +835,7 @@ export function drawObjectToComponent(
     scaleX: number = 1,
     scaleY: number = 1,
     rgba?: number,
-    scaleMode: number = 0
+    scaleMode?: number
 ): boolean {
     const ctx = component.getContext();
     const alphaEnable = component.getCanvasAlpha();
@@ -820,11 +850,9 @@ export function drawObjectToComponent(
         return false;
     }
 
-    if (object instanceof RoRegion) {
-        ctx.imageSmoothingEnabled = object.getRegionScaleMode() === 1;
-    } else {
-        ctx.imageSmoothingEnabled = scaleMode === 1;
-    }
+    scaleMode = scaleMode ?? object.scaleMode;
+
+    ctx.imageSmoothingEnabled = scaleMode === 1;
 
     const destOffset = getDrawOffset(component);
 
