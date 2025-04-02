@@ -224,6 +224,10 @@ export function createNodeByType(interpreter: Interpreter, type: BrsString): RoS
     return node;
 }
 
+export function customNodeExists(interpreter: Interpreter, node: BrsString) {
+    return interpreter.environment.nodeDefMap.has(node.value.toLowerCase());
+}
+
 /** Function to initialize Nodes with its Fields, Children and Environment */
 export function initializeNode(
     interpreter: Interpreter,
