@@ -47,6 +47,7 @@ export enum SGNodeType {
     ButtonGroup = "ButtonGroup",
     Button = "Button",
     Dialog = "Dialog",
+    KeyboardDialog = "KeyboardDialog",
     Rectangle = "Rectangle",
     Label = "Label",
     ScrollingLabel = "ScrollingLabel",

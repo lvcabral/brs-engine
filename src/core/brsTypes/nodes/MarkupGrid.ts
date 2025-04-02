@@ -167,8 +167,14 @@ export class MarkupGrid extends ArrayGrid {
         }
         const displayRows = Math.min(Math.ceil(childCount / numCols), numRows);
         const itemRect = { ...rect, width: itemSize[0], height: itemSize[1] };
+        const columnWidths = jsValueOf(this.getFieldValue("columnWidths")) ?? [] as number[];
+        const columnSpacings = jsValueOf(this.getFieldValue("columnSpacings")) ?? [] as number[];
+        const rowHeights = jsValueOf(this.getFieldValue("rowHeights")) ?? [] as number[];
+        const rowSpacings = jsValueOf(this.getFieldValue("rowSpacings")) ?? [] as number[];
         renderRow: for (let r = 0; r < displayRows; r++) {
+            itemRect.height = rowHeights[r] ?? itemSize[1];
             for (let c = 0; c < numCols; c++) {
+                itemRect.width = columnWidths[c] ?? itemSize[0];
                 const index = r * numCols + c;
                 if (index >= childCount) {
                     break;
@@ -203,10 +209,10 @@ export class MarkupGrid extends ArrayGrid {
                         this.renderFocus(itemRect, nodeFocus, draw2D);
                     }
                 }
-                itemRect.x += itemSize[0] + spacing[0];
+                itemRect.x += itemRect.width + (columnSpacings[c] ?? spacing[0]);
             }
             itemRect.x = rect.x;
-            itemRect.y += itemSize[1] + spacing[1];
+            itemRect.y += itemRect.height + (rowSpacings[r] ?? spacing[1]);
         }
         rect.x = rect.x - (this.hasNinePatch ? this.margin : 0);
         rect.y = rect.y - (this.hasNinePatch ? 4 : 0);
