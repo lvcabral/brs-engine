@@ -1,8 +1,16 @@
 import { FieldKind, FieldModel } from "./Field";
-import { AAMember, BrsType, getTextureManager, jsValueOf, RoBitmap, ValueKind } from "..";
+import {
+    AAMember,
+    BrsString,
+    BrsType,
+    getTextureManager,
+    jsValueOf,
+    RoBitmap,
+    ValueKind,
+} from "..";
 import { Group } from "./Group";
 import { Interpreter } from "../../interpreter";
-import { IfDraw2D } from "../interfaces/IfDraw2D";
+import { IfDraw2D, Rect } from "../interfaces/IfDraw2D";
 import { rotateTranslation } from "../../scenegraph/SGUtil";
 
 export class Poster extends Group {
@@ -64,16 +72,52 @@ export class Poster extends Group {
         const size = this.getDimensions();
         const rect = { x: drawTrans[0], y: drawTrans[1], width: size.width, height: size.height };
         const rotation = angle + this.getRotation();
+        const displayMode = this.getFieldValue("loadDisplayMode") as BrsString;
         if (this.bitmap instanceof RoBitmap) {
+            this.bitmap.scaleMode = 1;
             const rgba = jsValueOf(this.getFieldValue("blendColor"));
-            if (typeof rgba === "number" && rgba !== 0xffffffff && rgba !== -1) {
-                this.drawImage(this.bitmap, rect, rotation, draw2D, rgba);
+            if (displayMode.value === "scaleToFit") {
+                this.drawImage(this.bitmap, this.scaleToFit(rect), rotation, draw2D, rgba);
+            } else if (displayMode.value === "scaleToZoom") {
+                draw2D?.drawCroppedScaledObject(this.bitmap, this.scaleToZoom(rect), rect, rgba);
             } else {
-                this.drawImage(this.bitmap, rect, rotation, draw2D);
+                this.drawImage(this.bitmap, rect, rotation, draw2D, rgba);
             }
         }
         this.updateBoundingRects(rect, origin, rotation);
         this.renderChildren(interpreter, drawTrans, rotation, draw2D);
         this.updateParentRects(origin, angle);
+    }
+
+    private scaleToFit(rect: Rect): Rect {
+        const aspectRatio = this.bitmap!.width / this.bitmap!.height;
+        const targetAspectRatio = rect.width / rect.height;
+
+        let drawRect: Rect = { ...rect, x: rect.x, y: rect.y };
+        if (aspectRatio < targetAspectRatio) {
+            // pillarbox
+            drawRect.width = rect.height * aspectRatio;
+            drawRect.x += (rect.width - drawRect.width) / 2;
+        } else {
+            // letterbox
+            drawRect.height = rect.width / aspectRatio;
+            drawRect.y += (rect.height - drawRect.height) / 2;
+        }
+        return drawRect;
+    }
+
+    private scaleToZoom(rect: Rect): Rect {
+        // Calculate scaling factors to fill the target area while preserving aspect ratio
+        const scaleX: number = rect.width / this.bitmap!.width;
+        const scaleY: number = rect.height / this.bitmap!.height;
+        const scale: number = Math.max(scaleX, scaleY); // Choose the larger scale factor to fill
+
+        // Calculate the source rectangle for cropping
+        const sourceWidth: number = rect.width / scale;
+        const sourceHeight: number = rect.height / scale;
+        const sourceX: number = (this.bitmap!.width - sourceWidth) / 2;
+        const sourceY: number = (this.bitmap!.height - sourceHeight) / 2;
+
+        return { x: sourceX, y: sourceY, width: sourceWidth, height: sourceHeight };
     }
 }

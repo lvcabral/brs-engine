@@ -42,6 +42,7 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     private isDirty: boolean;
     private lastMessage: number;
     private lastKey: number;
+    scaleMode: number;
 
     constructor(
         interpreter: Interpreter,
@@ -63,6 +64,7 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         }
         this.disposeCanvas = BrsDevice.deviceInfo.platform?.inIOS ?? false;
         this.lastMessage = performance.now();
+        this.scaleMode = 0;
         this.isDirty = true;
         this.width = defaultWidth;
         this.height = defaultHeight;

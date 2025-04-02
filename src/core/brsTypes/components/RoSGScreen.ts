@@ -68,6 +68,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     private lastKey: number;
     private alphaEnable: boolean;
     private lastMessage: number;
+    scaleMode: number;
     isDirty: boolean;
 
     constructor(interpreter: Interpreter) {
@@ -89,6 +90,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         this.lastKey = -1;
         this.keysBuffer = [];
         this.alphaEnable = true;
+        this.scaleMode = 1;
         this.isDirty = false;
         this.disposeCanvas = BrsDevice.deviceInfo.platform?.inIOS ?? false;
         this.lastMessage = performance.now();

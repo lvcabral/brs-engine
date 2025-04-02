@@ -43,6 +43,7 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
     private rgbaCanvas?: BrsCanvas;
     private rgbaLast: number;
     rgbaRedraw: boolean;
+    scaleMode: number;
 
     constructor(param: BrsType | ArrayBuffer | Buffer, ninePatch: boolean = false) {
         super("roBitmap");
@@ -55,6 +56,7 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
         this.height = 1;
         this.name = "";
         this.ninePatch = ninePatch;
+        this.scaleMode = 0; // Valid: 0=fast 1=smooth (maybe slow)
         let image;
         if (param instanceof ArrayBuffer || param instanceof Buffer) {
             image = param;
