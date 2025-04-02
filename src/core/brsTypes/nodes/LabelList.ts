@@ -167,7 +167,7 @@ export class LabelList extends ArrayGrid {
             if (item instanceof ContentNode) {
                 if (!hasSections && this.wrap && index < lastIndex && !focused) {
                     this.renderWrapDivider(itemRect, draw2D);
-                } else if (hasSections && dividers[index] !== "" && !focused) {
+                } else if (hasSections && this.wrap && dividers[index] !== "" && !focused) {
                     this.renderSectionDivider(dividers[index].substring(1), itemRect, draw2D);
                 }
                 this.renderItem(index, item, itemRect, nodeFocus, focused, draw2D);
@@ -289,11 +289,12 @@ export class LabelList extends ArrayGrid {
         }
         const bmp = this.getBitmap("sectionDividerBitmapUri");
         if (bmp?.isValid()) {
+            const height = bmp.ninePatch ? 2 : bmp.height;
             const rect = {
                 x: divRect.x + margin,
-                y: divRect.y + dividerHeight / 2 - 1,
+                y: divRect.y + Math.round((dividerHeight - height) / 2),
                 width: divRect.width - margin,
-                height: 2,
+                height: height,
             };
             this.drawImage(bmp, rect, 0, draw2D);
         }
@@ -304,7 +305,9 @@ export class LabelList extends ArrayGrid {
         const bmp = this.getBitmap("wrapDividerBitmapUri");
         const dividerHeight = jsValueOf(this.getFieldValue("wrapDividerHeight"));
         if (bmp?.isValid()) {
-            const rect = { ...itemRect, y: itemRect.y + dividerHeight / 2 - 1, height: 2 };
+            const height = bmp.ninePatch ? 2 : bmp.height;
+            const topOffset = Math.round((dividerHeight - height) / 2);
+            const rect = { ...itemRect, y: itemRect.y + topOffset, height: height };
             this.drawImage(bmp, rect, 0, draw2D);
         }
         itemRect.y += dividerHeight;

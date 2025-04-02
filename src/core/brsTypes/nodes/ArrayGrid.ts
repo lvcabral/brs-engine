@@ -156,5 +156,4 @@ export class ArrayGrid extends Group {
     protected handleOK(_press: boolean) {
         return false;
     }
-
 }
