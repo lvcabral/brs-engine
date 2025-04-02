@@ -345,6 +345,7 @@ export class Group extends RoSGNode {
         rgba?: number
     ) {
         if (bitmap.isValid()) {
+            bitmap.scaleMode = 1;
             if (bitmap.ninePatch) {
                 draw2D?.drawNinePatch(bitmap, rect);
                 // TODO: Handle 9-patch rotation and rgba

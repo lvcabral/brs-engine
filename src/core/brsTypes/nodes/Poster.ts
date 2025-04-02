@@ -74,11 +74,11 @@ export class Poster extends Group {
         const rotation = angle + this.getRotation();
         const displayMode = this.getFieldValue("loadDisplayMode") as BrsString;
         if (this.bitmap instanceof RoBitmap) {
-            this.bitmap.scaleMode = 1;
             const rgba = jsValueOf(this.getFieldValue("blendColor"));
             if (displayMode.value === "scaleToFit") {
                 this.drawImage(this.bitmap, this.scaleToFit(rect), rotation, draw2D, rgba);
             } else if (displayMode.value === "scaleToZoom") {
+                this.bitmap.scaleMode = 1;
                 draw2D?.drawCroppedScaledObject(this.bitmap, this.scaleToZoom(rect), rect, rgba);
             } else {
                 this.drawImage(this.bitmap, rect, rotation, draw2D, rgba);
