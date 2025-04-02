@@ -98,6 +98,23 @@ export class MarkupGrid extends ArrayGrid {
         return handled;
     }
 
+    protected handlePageUpDown(key: string) {
+        let handled = false;
+        const content = this.getFieldValue("content") as ContentNode;
+        const childCount = content.getNodeChildren()[0]?.getNodeChildren().length ?? 0;
+        const numCols = jsValueOf(this.getFieldValue("numColumns")) as number;
+        const currentRow = Math.floor(this.focusIndex / numCols);
+        const lastRow = Math.floor(childCount/numCols) - 1;
+        const offset = key === "rewind" ? -(currentRow * numCols) : (lastRow-currentRow) * numCols;
+        let nextIndex = this.focusIndex + offset;
+
+        if (nextIndex >= 0 && nextIndex < childCount) {
+            this.set(new BrsString("animateToItem"), new Int32(nextIndex));
+            handled = true;
+        }
+        return handled;
+    }
+
     protected handleOK(press: boolean) {
         if (!press) {
             return false;
