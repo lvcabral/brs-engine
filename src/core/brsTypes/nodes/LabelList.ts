@@ -38,7 +38,7 @@ export class LabelList extends ArrayGrid {
     protected readonly gap: number;
     protected wrap: boolean;
     protected currRow: number;
-    protected listLength: number;
+    protected contentLength: number;
     protected hasNinePatch: boolean;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = "LabelList") {
@@ -64,7 +64,7 @@ export class LabelList extends ArrayGrid {
         this.wrap = style.toLowerCase() !== "floatingfocus";
         this.hasNinePatch = true;
         this.currRow = this.updateCurrRow();
-        this.listLength = 0;
+        this.contentLength = 0;
     }
 
     set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
@@ -111,9 +111,7 @@ export class LabelList extends ArrayGrid {
             const offset = key === "rewind" ? -step : step;
             nextIndex = this.getIndex(offset);
         } else {
-            const content = this.getFieldValue("content") as ContentNode;
-            const childCount = content.getNodeChildren().length;
-            nextIndex = key === "rewind" ? 0 : childCount - 1;
+            nextIndex = key === "rewind" ? 0 : this.contentLength - 1;
             this.currRow = key === "rewind" ? 0 : jsValueOf(this.getFieldValue("numRows")) - 1;
         }
         if (nextIndex !== this.focusIndex) {
@@ -150,7 +148,7 @@ export class LabelList extends ArrayGrid {
         const rotation = angle + this.getRotation();
         const itemSize = jsValueOf(this.getFieldValue("itemSize")) as number[];
         const numRows = jsValueOf(this.getFieldValue("numRows")) as number;
-        const displayRows = Math.min(this.listLength, numRows);
+        const displayRows = Math.min(this.contentLength, numRows);
         let focusRow = jsValueOf(this.getFieldValue("focusRow"));
         if (!this.wrap) {
             this.currRow = Math.max(0, Math.min(this.currRow, numRows - 1));
@@ -330,17 +328,17 @@ export class LabelList extends ArrayGrid {
         if (items.length === 0 && sections.length > 0) {
             items.push(...sections);
         }
-        this.listLength = items.length;
+        this.contentLength = items.length;
         return { items, dividers };
     }
 
     protected getIndex(offset: number = 0) {
         const index = this.focusIndex + offset;
         if (this.wrap) {
-            return (index + this.listLength) % this.listLength;
+            return (index + this.contentLength) % this.contentLength;
         }
-        if (index >= this.listLength) {
-            return this.listLength - 1;
+        if (index >= this.contentLength) {
+            return this.contentLength - 1;
         } else if (index < 0) {
             return 0;
         }
