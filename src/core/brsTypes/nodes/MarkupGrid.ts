@@ -180,7 +180,6 @@ export class MarkupGrid extends ArrayGrid {
         if (itemSize[0] === 0 || itemSize[1] === 0 || numRows === 0 || numCols === 0) {
             return;
         }
-        let focusRow = jsValueOf(this.getFieldValue("focusRow"));
         const itemRect = { ...rect, width: itemSize[0], height: itemSize[1] };
         const spacing = jsValueOf(this.getFieldValue("itemSpacing"));
         const columnWidths = jsValueOf(this.getFieldValue("columnWidths"));
