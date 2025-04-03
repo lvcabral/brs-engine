@@ -56,7 +56,7 @@ export class IfDraw2D {
         return didDraw;
     }
 
-    drawCroppedScaledObject(
+    doDrawCroppedBitmap(
         object: RoBitmap,
         sourceRect: Rect,
         destRect: Rect,
@@ -102,9 +102,18 @@ export class IfDraw2D {
         ctx.save();
         const rotationCenterX = centerX !== undefined ? centerX : 0;
         const rotationCenterY = centerY !== undefined ? centerY : 0;
+        // Apply translation for centering, regardless of rotation
         ctx.translate(baseX + x + rotationCenterX, baseY + y + rotationCenterY);
-        ctx.rotate(-rotation);
-        this.component.drawImage(object, 0, 0, scaleX, scaleY, rgba);
+        // Apply rotation only if necessary
+        if (rotation !== 0) {
+            ctx.rotate(-rotation);
+        }
+        // Apply scaling
+        ctx.scale(scaleX, scaleY);
+        // Translate back to the origin after scaling and rotation
+        ctx.translate(-rotationCenterX / scaleX, -rotationCenterY / scaleY);
+        // Draw Bitmap
+        this.component.drawImage(object, 0, 0, 1, 1, rgba);
         ctx.restore();
         this.component.makeDirty();
     }

@@ -79,7 +79,7 @@ export class Poster extends Group {
                 this.drawImage(this.bitmap, this.scaleToFit(rect), rotation, draw2D, rgba);
             } else if (displayMode.value === "scaleToZoom") {
                 this.bitmap.scaleMode = 1;
-                draw2D?.drawCroppedScaledObject(this.bitmap, this.scaleToZoom(rect), rect, rgba);
+                draw2D?.doDrawCroppedBitmap(this.bitmap, this.scaleToZoom(rect), rect, rgba);
             } else {
                 this.drawImage(this.bitmap, rect, rotation, draw2D, rgba);
             }

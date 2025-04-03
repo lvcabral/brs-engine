@@ -15,6 +15,7 @@ import {
     jsValueOf,
     getTextureManager,
     RoFont,
+    jsValueOf,
 } from "..";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D, MeasuredText, Rect } from "../interfaces/IfDraw2D";
@@ -38,7 +39,6 @@ export class Group extends RoSGNode {
         { name: "renderTracking", type: "string", value: "disabled" },
     ];
 
-    protected readonly scale: number[];
     protected isDirty: boolean;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = "Group") {
@@ -47,7 +47,6 @@ export class Group extends RoSGNode {
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
 
-        this.scale = [1.0, 1.0];
         this.isDirty = true;
     }
 
@@ -90,15 +89,22 @@ export class Group extends RoSGNode {
     }
 
     protected getTranslation() {
+        const scale = jsValueOf(this.getFieldValue("scale")) as number[];
         const transField = this.fields.get("translation")?.getValue();
         const translation = [0, 0];
         if (transField instanceof RoArray && transField.elements.length === 2) {
             transField.elements.forEach((element, index) => {
                 if (element instanceof Int32 || element instanceof Float) {
-                    translation[index] = element.getValue() / this.scale[index];
+                    translation[index] = element.getValue() / scale[index];
                 }
             });
         }
+        // Adjust translation based on scale and rotation center
+        const scaleRotateCenter = this.getScaleRotateCenter();
+        const scaleDiffX = scaleRotateCenter[0] * (scale[0] - 1);
+        const scaleDiffY = scaleRotateCenter[1] * (scale[1] - 1);
+        translation[0] -= scaleDiffX;
+        translation[1] -= scaleDiffY;
         return translation;
     }
 
@@ -106,14 +112,8 @@ export class Group extends RoSGNode {
         const width = this.fields.get("width")?.getValue();
         const height = this.fields.get("height")?.getValue();
         return {
-            width:
-                width instanceof Int32 || width instanceof Float
-                    ? width.getValue() / this.scale[0]
-                    : 0,
-            height:
-                height instanceof Int32 || height instanceof Float
-                    ? height.getValue() / this.scale[1]
-                    : 0,
+            width: width instanceof Int32 || width instanceof Float ? width.getValue() : 0,
+            height: height instanceof Int32 || height instanceof Float ? height.getValue() : 0,
         };
     }
 
@@ -122,18 +122,13 @@ export class Group extends RoSGNode {
         return rotation instanceof Float ? rotation.getValue() : 0;
     }
 
-    setScale(scale: number[]) {
-        this.scale[0] = scale[0];
-        this.scale[1] = scale[1];
-    }
-
     protected getScaleRotateCenter() {
         const scaleRotateCenter = this.fields.get("scalerotatecenter")?.getValue();
         const center = [0, 0];
         if (scaleRotateCenter instanceof RoArray && scaleRotateCenter.elements.length === 2) {
             scaleRotateCenter.elements.forEach((element, index) => {
                 if (element instanceof Int32 || element instanceof Float) {
-                    center[index] = element.getValue() / this.scale[index];
+                    center[index] = element.getValue();
                 }
             });
         }
@@ -348,17 +343,20 @@ export class Group extends RoSGNode {
             bitmap.scaleMode = 1;
             if (bitmap.ninePatch) {
                 draw2D?.drawNinePatch(bitmap, rect);
-                // TODO: Handle 9-patch rotation and rgba
+                // TODO: Handle 9-patch rotation, scaling and rgba
                 return rect;
             }
             if (typeof rgba !== "number" || rgba === 0xffffffff || rgba === -1) {
                 rgba = undefined;
             }
-            const scaleX = rect.width !== 0 ? rect.width / bitmap.width : 1;
-            const scaleY = rect.height !== 0 ? rect.height / bitmap.height : 1;
+            const scale = jsValueOf(this.getFieldValue("scale")) as number[];
+            let scaleX = rect.width !== 0 ? rect.width / bitmap.width : 1;
+            let scaleY = rect.height !== 0 ? rect.height / bitmap.height : 1;
+            scaleX *= scale[0];
+            scaleY *= scale[1];
             rect.width = scaleX * bitmap.width;
             rect.height = scaleY * bitmap.height;
-            if (rotation !== 0) {
+            if (rotation !== 0 || scale[0] !== 1 || scale[1] !== 1) {
                 const center = this.getScaleRotateCenter();
                 draw2D?.doDrawRotatedBitmap(
                     rect.x,
