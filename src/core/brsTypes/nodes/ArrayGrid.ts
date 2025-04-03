@@ -10,6 +10,7 @@ import {
     Int32,
     jsValueOf,
     rootObjects,
+    RoSGNode,
     ValueKind,
 } from "..";
 
@@ -60,7 +61,10 @@ export class ArrayGrid extends Group {
         { name: "currFocusColumn", type: "float", value: "0.0" },
         { name: "currFocusSection", type: "float", value: "0.0" },
     ];
+    protected contentLength: number = 0;
     protected focusIndex: number = 0;
+    protected currRow: number = 0;
+    protected wrap: boolean;
     protected lastPressHandled: string;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = "ArrayGrid") {
@@ -81,6 +85,8 @@ export class ArrayGrid extends Group {
             this.setFieldValue("sectionDividerMinWidth", new Float(117));
             this.setFieldValue("sectionDividerSpacing", new Float(10));
         }
+        const style = jsValueOf(this.getFieldValue("vertFocusAnimationStyle")) as string;
+        this.wrap = style.toLowerCase() === "fixedfocuswrap";
         this.lastPressHandled = "";
     }
 
@@ -109,14 +115,14 @@ export class ArrayGrid extends Group {
         } else if (fieldName === "itemfocused" || fieldName === "itemunfocused") {
             // Read-only fields
             return BrsInvalid.Instance;
-        } else if (
-            fieldName === "vertfocusanimationstyle" &&
-            !["fixedfocuswrap", "floatingfocus", "fixedfocus"].includes(
-                value.toString().toLowerCase()
-            )
-        ) {
-            // Invalid vertFocusAnimationStyle
-            return BrsInvalid.Instance;
+        } else if (fieldName === "vertfocusanimationstyle") {
+            const style = value.toString().toLowerCase();
+            if (["fixedfocuswrap", "floatingfocus", "fixedfocus"].includes(style)) {
+                this.wrap = style === "fixedfocuswrap";
+            } else {
+                // Invalid vertFocusAnimationStyle
+                return BrsInvalid.Instance;
+            }
         } else if (
             fieldName === "horizfocusanimationstyle" &&
             !["fixedfocuswrap", "floatingfocus"].includes(value.toString().toLowerCase())
@@ -161,4 +167,49 @@ export class ArrayGrid extends Group {
     protected handleOK(_press: boolean) {
         return false;
     }
+
+    protected updateCurrRow() {
+        const focusRow = jsValueOf(this.getFieldValue("focusRow")) as number;
+        if (!this.wrap) {
+            const numRows = jsValueOf(this.getFieldValue("numRows")) as number;
+            const currRow = Math.max(0, Math.min(this.currRow, numRows - 1));
+            return Math.min(Math.max(currRow, focusRow), this.focusIndex);
+        }
+        return focusRow;
+    }
+
+    protected getContentItems() {
+        const content = this.getFieldValue("content") as ContentNode;
+        const sections = content.getNodeChildren();
+        const items: RoSGNode[] = [];
+        const dividers: string[] = [];
+        for (const section of sections) {
+            if (section.getFieldValue("ContentType").toString().toLowerCase() === "section") {
+                const sectItems = section.getNodeChildren();
+                const sectDivs = new Array(sectItems.length).fill("");
+                sectDivs[0] = "-" + section.getFieldValue("title").toString();
+                dividers.push(...sectDivs);
+                items.push(...sectItems);
+            }
+        }
+        if (items.length === 0 && sections.length > 0) {
+            items.push(...sections);
+        }
+        this.contentLength = items.length;
+        return { items, dividers };
+    }
+
+    protected getIndex(offset: number = 0) {
+        const index = this.focusIndex + offset;
+        if (this.wrap) {
+            return (index + this.contentLength) % this.contentLength;
+        }
+        if (index >= this.contentLength) {
+            return this.contentLength - 1;
+        } else if (index < 0) {
+            return 0;
+        }
+        return index;
+    }
+
 }

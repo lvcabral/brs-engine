@@ -145,6 +145,9 @@ export class MarkupGrid extends ArrayGrid {
         const size = this.getDimensions();
         const rect = { x: drawTrans[0], y: drawTrans[1], width: size.width, height: size.height };
         const rotation = angle + this.getRotation();
+        if (this.sections.size === 0) {
+            this.sections.set(0, []);
+        }
         this.renderGrid(interpreter, rect, rotation, draw2D);
         this.updateBoundingRects(rect, origin, rotation);
         this.renderChildren(interpreter, drawTrans, rotation, draw2D);
@@ -157,11 +160,8 @@ export class MarkupGrid extends ArrayGrid {
         rotation: number,
         draw2D?: IfDraw2D
     ) {
-        if (this.sections.size === 0) {
-            this.sections.set(0, []);
-        }
         const section = this.sections.get(0);
-        const { items, dividers } = this.getGridItems();
+        const { items } = this.getContentItems();
         if (this.contentLength === 0 || section === undefined) {
             return;
         } else if (this.focusIndex < 0) {
@@ -186,6 +186,7 @@ export class MarkupGrid extends ArrayGrid {
         const columnSpacings = jsValueOf(this.getFieldValue("columnSpacings"));
         const rowHeights = jsValueOf(this.getFieldValue("rowHeights"));
         const rowSpacings = jsValueOf(this.getFieldValue("rowSpacings"));
+        this.currRow = this.updateCurrRow();
         const displayRows = Math.min(Math.ceil(this.contentLength / numCols), numRows);
 
         for (let r = 0; r < displayRows; r++) {
@@ -272,26 +273,5 @@ export class MarkupGrid extends ArrayGrid {
             const rect = focusFootprint.ninePatch ? ninePatchRect : itemRect;
             this.drawImage(focusFootprint, rect, 0, draw2D);
         }
-    }
-
-    protected getGridItems() {
-        const content = this.getFieldValue("content") as ContentNode;
-        const sections = content.getNodeChildren();
-        const items: RoSGNode[] = [];
-        const dividers: string[] = [];
-        for (const section of sections) {
-            if (section.getFieldValue("ContentType").toString().toLowerCase() === "section") {
-                const sectItems = section.getNodeChildren();
-                const sectDivs = new Array(sectItems.length).fill("");
-                sectDivs[0] = "-" + section.getFieldValue("title").toString();
-                dividers.push(...sectDivs);
-                items.push(...sectItems);
-            }
-        }
-        if (items.length === 0 && sections.length > 0) {
-            items.push(...sections);
-        }
-        this.contentLength = items.length;
-        return { items, dividers };
     }
 }
