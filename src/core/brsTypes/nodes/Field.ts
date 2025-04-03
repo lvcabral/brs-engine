@@ -176,10 +176,8 @@ export class Field {
     }
 
     setValue(value: BrsType, notify: boolean = true) {
-        if (notify) {
-            // Once a field is set, it is no longer hidden.
-            this.hidden = false;
-        }
+        // Once a field is set, it is no longer hidden.
+        this.hidden = false;
 
         if (isBrsNumber(value) && value.kind !== getValueKindFromFieldType(this.type)) {
             if (this.type === FieldKind.Float) {

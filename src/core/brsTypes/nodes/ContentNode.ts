@@ -81,7 +81,7 @@ export class ContentNode extends RoSGNode {
         { name: "LiveBoundsPauseBehavior", type: "string", hidden: true },
         { name: "ClipStart", type: "float", hidden: true },
         { name: "ClipEnd", type: "float", hidden: true },
-        { name: "preferredaudiocodec", type: "string", hidden: true },
+        { name: "PreferredAudioCodec", type: "string", hidden: true },
         { name: "CdnConfig", type: "array", hidden: true },
         { name: "HttpCertificatesFile", type: "string", hidden: true },
         { name: "HttpCookies", type: "array", hidden: true },
@@ -109,6 +109,8 @@ export class ContentNode extends RoSGNode {
         { name: "HideIcon", type: "boolean", hidden: true },
         { name: "HDListItemIconUrl", type: "string", hidden: true },
         { name: "SDListItemIconUrl", type: "string", hidden: true },
+        { name: "HDGridPosterUrl", type: "string", hidden: true },
+        { name: "SDGridPosterUrl", type: "string", hidden: true },
         { name: "HDListItemIconSelectedUrl", type: "string", hidden: true },
         { name: "SDListItemIconSelectedUrl", type: "string", hidden: true },
     ];

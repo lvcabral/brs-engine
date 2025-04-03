@@ -558,15 +558,17 @@ export function fromSGNode(node: RoSGNode): FlexObject {
 
     result["_node_"] = `${getNodeType(node.nodeSubtype)}:${node.nodeSubtype}`;
 
-    fields.forEach((value: Field, key: string) => {
-        let fieldValue = value.getValue(false);
-        if (isUnboxable(fieldValue)) {
-            fieldValue = fieldValue.unbox();
+    fields.forEach((field: Field, name: string) => {
+        if (!field.isHidden()) {
+            let fieldValue = field.getValue(false);
+            if (isUnboxable(fieldValue)) {
+                fieldValue = fieldValue.unbox();
+            }
+            if (field.isPortObserved(node)) {
+                observed.push(name);
+            }
+            result[name] = jsValueOf(fieldValue);
         }
-        if (value.isPortObserved(node)) {
-            observed.push(key);
-        }
-        result[key] = jsValueOf(fieldValue);
     });
     if (observed.length) {
         result["_observed_"] = observed;
