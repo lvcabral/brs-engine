@@ -32,7 +32,6 @@ export class MarkupGrid extends ArrayGrid {
     protected readonly gap: number;
     protected readonly sections: Map<number, Array<Group>>;
     protected wrap: boolean;
-    protected currRow: number;
     protected hasNinePatch: boolean;
     protected contentLength: number;
 
@@ -54,7 +53,6 @@ export class MarkupGrid extends ArrayGrid {
         const style = jsValueOf(this.getFieldValue("vertFocusAnimationStyle")) as string;
         this.wrap = style.toLowerCase() !== "floatingfocus";
         this.hasNinePatch = true;
-        this.currRow = this.updateCurrRow();
         this.contentLength = 0;
     }
 
@@ -77,7 +75,7 @@ export class MarkupGrid extends ArrayGrid {
 
     private updateItemFocus(index: number, focus: boolean) {
         const items = this.sections.get(0);
-        if (items && items[index]) {
+        if (items?.[index]) {
             items[index].set(new BrsString("itemHasFocus"), BrsBoolean.from(focus));
             items[index].set(new BrsString("focusPercent"), new Int32(focus ? 1 : 0));
         }
@@ -130,10 +128,9 @@ export class MarkupGrid extends ArrayGrid {
     }
 
     protected handleOK(press: boolean) {
-        if (!press) {
-            return false;
+        if (press) {
+            this.set(new BrsString("itemSelected"), new Int32(this.focusIndex));
         }
-        this.set(new BrsString("itemSelected"), new Int32(this.focusIndex));
         return false;
     }
 
@@ -184,12 +181,6 @@ export class MarkupGrid extends ArrayGrid {
             return;
         }
         let focusRow = jsValueOf(this.getFieldValue("focusRow"));
-        if (!this.wrap) {
-            this.currRow = Math.max(0, Math.min(this.currRow, numRows - 1));
-            this.currRow = Math.min(Math.max(this.currRow, focusRow), this.focusIndex);
-        } else {
-            this.currRow = focusRow;
-        }
         const itemRect = { ...rect, width: itemSize[0], height: itemSize[1] };
         const spacing = jsValueOf(this.getFieldValue("itemSpacing"));
         const columnWidths = jsValueOf(this.getFieldValue("columnWidths"));
@@ -303,12 +294,5 @@ export class MarkupGrid extends ArrayGrid {
         }
         this.contentLength = items.length;
         return { items, dividers };
-    }
-
-    protected updateCurrRow() {
-        if (this.wrap) {
-            return jsValueOf(this.getFieldValue("focusRow"));
-        }
-        return jsValueOf(this.getFieldValue("numRows")) - 1;
     }
 }

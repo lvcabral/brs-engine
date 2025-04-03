@@ -122,10 +122,9 @@ export class LabelList extends ArrayGrid {
     }
 
     protected handleOK(press: boolean) {
-        if (!press) {
-            return false;
+        if (press) {
+            this.set(new BrsString("itemSelected"), new Int32(this.focusIndex));
         }
-        this.set(new BrsString("itemSelected"), new Int32(this.focusIndex));
         return false;
     }
 
