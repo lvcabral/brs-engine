@@ -25,6 +25,7 @@ import gameControl, { GCGamepad, EventName } from "esm-gamecontroller.js";
 // https://github.com/rokucommunity/vscode-brightscript-language/blob/master/docs/Debugging/remote-control-mode.md
 // https://www.freecodecamp.org/news/javascript-keycode-list-keypress-event-key-codes/
 // https://w3c.github.io/gamepad/#remapping
+// https://www.toptal.com/developers/keycode
 
 // Roku Remote Mapping
 const rokuKeys: Map<string, number> = new Map([
