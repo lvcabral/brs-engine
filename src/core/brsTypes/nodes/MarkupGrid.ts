@@ -25,6 +25,7 @@ export class MarkupGrid extends ArrayGrid {
     readonly defaultFields: FieldModel[] = [
         { name: "itemComponentName", type: "string", value: "" },
         { name: "drawFocusFeedbackOnTop", type: "boolean", value: "true" },
+        { name: "vertFocusAnimationStyle", type: "string", value: "fixedFocusWrap" },
     ];
     protected readonly focusUri = "common:/images/focus_grid.9.png";
     protected readonly dividerUri = "common:/images/dividerHorizontal.9.png";
@@ -51,7 +52,8 @@ export class MarkupGrid extends ArrayGrid {
         this.setFieldValue("wrapDividerBitmapUri", new BrsString(this.dividerUri));
         this.gap = this.margin / 2;
         const style = jsValueOf(this.getFieldValue("vertFocusAnimationStyle")) as string;
-        this.wrap = style.toLowerCase() !== "floatingfocus";
+        this.wrap = style.toLowerCase() === "fixedfocuswrap";
+
         this.hasNinePatch = true;
         this.contentLength = 0;
     }
@@ -84,12 +86,13 @@ export class MarkupGrid extends ArrayGrid {
     protected handleUpDown(key: string) {
         let handled = false;
         const numCols = jsValueOf(this.getFieldValue("numColumns")) as number;
-        const offset = key === "up" ? -numCols : numCols;
-        let nextIndex = this.focusIndex + offset;
+        const offset = key === "up" ? -1 : 1;
+        const nextIndex = this.wrap ? this.getIndex(offset) : this.focusIndex + offset * numCols;
 
         if (nextIndex >= 0 && nextIndex < this.contentLength) {
             this.set(new BrsString("animateToItem"), new Int32(nextIndex));
             handled = true;
+            this.currRow += this.wrap ? 0 : offset;
         }
         return handled;
     }
@@ -97,7 +100,7 @@ export class MarkupGrid extends ArrayGrid {
     protected handleLeftRight(key: string) {
         let handled = false;
         const offset = key === "left" ? -1 : 1;
-        let nextIndex = this.focusIndex + offset;
+        const nextIndex = this.focusIndex + offset;
 
         if (nextIndex >= 0 && nextIndex < this.contentLength) {
             const numCols = jsValueOf(this.getFieldValue("numColumns")) as number;
@@ -161,12 +164,13 @@ export class MarkupGrid extends ArrayGrid {
         draw2D?: IfDraw2D
     ) {
         const section = this.sections.get(0);
-        const { items } = this.getContentItems();
+        const { items, dividers } = this.getContentItems();
         if (this.contentLength === 0 || section === undefined) {
             return;
         } else if (this.focusIndex < 0) {
             this.focusIndex = 0;
         }
+        const hasSections = dividers.length > 0;
         const itemCompName = this.getFieldValue("itemComponentName") as BrsString;
         if (!customNodeExists(interpreter, itemCompName)) {
             BrsDevice.stderr.write(
@@ -187,13 +191,27 @@ export class MarkupGrid extends ArrayGrid {
         const rowHeights = jsValueOf(this.getFieldValue("rowHeights"));
         const rowSpacings = jsValueOf(this.getFieldValue("rowSpacings"));
         this.currRow = this.updateCurrRow();
+        let lastIndex = -1;
         const displayRows = Math.min(Math.ceil(this.contentLength / numCols), numRows);
 
+        const rowWidth = numCols * itemSize[0] + (numCols - 1) * spacing[0];
         for (let r = 0; r < displayRows; r++) {
-            itemRect.height = rowHeights[r] ?? itemSize[1];
+            const rowIndex = this.getIndex(r - this.currRow);
+            const focused = rowIndex === this.focusIndex;
+            itemRect.height = rowHeights[rowIndex / numCols] ?? itemSize[1];
+            if (!hasSections && this.wrap && rowIndex < lastIndex && !focused) {
+                const divRect = { ...itemRect, width: rowWidth };
+                const divHeight = this.renderWrapDivider(divRect, draw2D);
+                itemRect.y += divHeight + spacing[1];
+            } else if (hasSections && this.wrap && dividers[rowIndex] !== "" && !focused) {
+                const divRect = { ...itemRect, width: rowWidth };
+                const divText = dividers[rowIndex].substring(1);
+                const divHeight = this.renderSectionDivider(divText, divRect, draw2D);
+                itemRect.y += divHeight + spacing[1];
+            }
             for (let c = 0; c < numCols; c++) {
                 itemRect.width = columnWidths[c] ?? itemSize[0];
-                const index = r * numCols + c;
+                const index = rowIndex + c;
                 if (index >= this.contentLength) {
                     break;
                 }
@@ -208,6 +226,7 @@ export class MarkupGrid extends ArrayGrid {
                     draw2D
                 );
                 itemRect.x += itemRect.width + (columnSpacings[c] ?? spacing[0]);
+                lastIndex = index;
             }
             itemRect.x = rect.x;
             itemRect.y += itemRect.height + (rowSpacings[r] ?? spacing[1]);

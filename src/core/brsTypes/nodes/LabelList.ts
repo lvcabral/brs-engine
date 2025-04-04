@@ -25,14 +25,13 @@ export class LabelList extends ArrayGrid {
         { name: "focusedColor", type: "color", value: "0x262626ff" },
         { name: "font", type: "font" },
         { name: "focusedFont", type: "font", value: "font:MediumBoldSystemFont" },
-        { name: "sectionDividerFont", type: "font", value: "font:SmallestSystemFont" },
         { name: "numRows", type: "integer", value: "12" },
+        { name: "numColumns", type: "integer", value: "1" },
         { name: "vertFocusAnimationStyle", type: "string", value: "fixedFocusWrap" },
     ];
 
     protected readonly focusUri = "common:/images/focus_list.9.png";
     protected readonly footprintUri = "common:/images/focus_footprint.9.png";
-    protected readonly dividerUri = "common:/images/dividerHorizontal.9.png";
     protected readonly margin: number;
     protected readonly gap: number;
     protected hasNinePatch: boolean;
@@ -53,9 +52,8 @@ export class LabelList extends ArrayGrid {
         this.gap = this.margin / 2;
         this.setFieldValue("focusBitmapUri", new BrsString(this.focusUri));
         this.setFieldValue("focusFootprintBitmapUri", new BrsString(this.footprintUri));
-        this.setFieldValue("wrapDividerBitmapUri", new BrsString(this.dividerUri));
-        this.setFieldValue("sectionDividerBitmapUri", new BrsString(this.dividerUri));
-
+        const style = jsValueOf(this.getFieldValue("vertFocusAnimationStyle")) as string;
+        this.wrap = style.toLowerCase() === "fixedfocuswrap";
         this.hasNinePatch = true;
     }
 
@@ -69,16 +67,11 @@ export class LabelList extends ArrayGrid {
                 // Invalid vertFocusAnimationStyle
                 return BrsInvalid.Instance;
             }
-        } else if (fieldName === "horizfocusanimationstyle") {
-            // Invalid field for LabelList
+        } else if (["horizfocusanimationstyle", "numcolumns"].includes(fieldName)) {
+            // Invalid fields for LabelList
             return BrsInvalid.Instance;
         }
-        const result = super.set(index, value, alwaysNotify, kind);
-        // Update the current row if some fields changed
-        if (["vertfocusanimationstyle", "numrows", "focusrow"].includes(fieldName)) {
-            this.currRow = this.updateCurrRow();
-        }
-        return result;
+        return super.set(index, value, alwaysNotify, kind);
     }
 
     protected handleUpDown(key: string) {
@@ -154,9 +147,10 @@ export class LabelList extends ArrayGrid {
             const item = items[index];
             if (item instanceof ContentNode) {
                 if (!hasSections && this.wrap && index < lastIndex && !focused) {
-                    this.renderWrapDivider(itemRect, draw2D);
+                    itemRect.y += this.renderWrapDivider(itemRect, draw2D);
                 } else if (hasSections && this.wrap && dividers[index] !== "" && !focused) {
-                    this.renderSectionDivider(dividers[index].substring(1), itemRect, draw2D);
+                    const divText = dividers[index].substring(1);
+                    itemRect.y += this.renderSectionDivider(divText, itemRect, draw2D);
                 }
                 this.renderItem(index, item, itemRect, nodeFocus, focused, draw2D);
             }
@@ -259,42 +253,5 @@ export class LabelList extends ArrayGrid {
             const rect = focusFootprint.ninePatch ? ninePatchRect : itemRect;
             this.drawImage(focusFootprint, rect, 0, draw2D);
         }
-    }
-
-    protected renderSectionDivider(title: string, itemRect: Rect, draw2D?: IfDraw2D) {
-        const dividerHeight = jsValueOf(this.getFieldValue("sectionDividerHeight")) as number;
-        const dividerSpacing = jsValueOf(this.getFieldValue("sectionDividerSpacing")) as number;
-        const divRect = { ...itemRect, height: dividerHeight };
-        let margin = 0;
-        if (title.length !== 0) {
-            const font = this.getFieldValue("sectionDividerFont") as Font;
-            const color = jsValueOf(this.getFieldValue("sectionDividerTextColor"));
-            const size = this.drawText(title, font, color, divRect, "left", "center", 0, draw2D);
-            margin = size.width + dividerSpacing;
-        }
-        const bmp = this.getBitmap("sectionDividerBitmapUri");
-        if (bmp?.isValid()) {
-            const height = bmp.ninePatch ? 2 : bmp.height;
-            const rect = {
-                x: divRect.x + margin,
-                y: divRect.y + Math.round((dividerHeight - height) / 2),
-                width: divRect.width - margin,
-                height: height,
-            };
-            this.drawImage(bmp, rect, 0, draw2D);
-        }
-        itemRect.y += dividerHeight;
-    }
-
-    protected renderWrapDivider(itemRect: Rect, draw2D?: IfDraw2D) {
-        const bmp = this.getBitmap("wrapDividerBitmapUri");
-        const dividerHeight = jsValueOf(this.getFieldValue("wrapDividerHeight"));
-        if (bmp?.isValid()) {
-            const height = bmp.ninePatch ? 2 : bmp.height;
-            const topOffset = Math.round((dividerHeight - height) / 2);
-            const rect = { ...itemRect, y: itemRect.y + topOffset, height: height };
-            this.drawImage(bmp, rect, 0, draw2D);
-        }
-        itemRect.y += dividerHeight;
     }
 }
