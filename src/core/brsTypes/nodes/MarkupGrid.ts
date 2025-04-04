@@ -28,9 +28,7 @@ export class MarkupGrid extends ArrayGrid {
         { name: "vertFocusAnimationStyle", type: "string", value: "fixedFocusWrap" },
     ];
     protected readonly focusUri = "common:/images/focus_grid.9.png";
-    protected readonly dividerUri = "common:/images/dividerHorizontal.9.png";
     protected readonly margin: number;
-    protected readonly gap: number;
     protected readonly sections: Map<number, Array<Group>>;
     protected wrap: boolean;
     protected hasNinePatch: boolean;
@@ -50,7 +48,6 @@ export class MarkupGrid extends ArrayGrid {
         }
         this.setFieldValue("focusBitmapUri", new BrsString(this.focusUri));
         this.setFieldValue("wrapDividerBitmapUri", new BrsString(this.dividerUri));
-        this.gap = this.margin / 2;
         const style = jsValueOf(this.getFieldValue("vertFocusAnimationStyle")) as string;
         this.wrap = style.toLowerCase() === "fixedfocuswrap";
 
@@ -163,9 +160,8 @@ export class MarkupGrid extends ArrayGrid {
         rotation: number,
         draw2D?: IfDraw2D
     ) {
-        const section = this.sections.get(0);
         const { items, dividers } = this.getContentItems();
-        if (this.contentLength === 0 || section === undefined) {
+        if (this.contentLength === 0) {
             return;
         } else if (this.focusIndex < 0) {
             this.focusIndex = 0;
@@ -215,16 +211,7 @@ export class MarkupGrid extends ArrayGrid {
                 if (index >= this.contentLength) {
                     break;
                 }
-                const itemContent = items[index];
-                this.renderItem(
-                    interpreter,
-                    section,
-                    index,
-                    itemRect,
-                    itemContent,
-                    rotation,
-                    draw2D
-                );
+                this.renderItem(interpreter, index, itemRect, items[index], rotation, draw2D);
                 itemRect.x += itemRect.width + (columnSpacings[c] ?? spacing[0]);
                 lastIndex = index;
             }
@@ -239,14 +226,14 @@ export class MarkupGrid extends ArrayGrid {
 
     protected renderItem(
         interpreter: Interpreter,
-        section: Group[],
         index: number,
         itemRect: Rect,
         itemContent: RoSGNode,
         rotation: number,
         draw2D?: IfDraw2D
     ) {
-        if (!(itemContent instanceof ContentNode)) {
+        const section = this.sections.get(0);
+        if (!(itemContent instanceof ContentNode) || !section) {
             return;
         }
         const nodeFocus = rootObjects.focused === this;
