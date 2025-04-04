@@ -29,7 +29,7 @@ export class MarkupGrid extends ArrayGrid {
     ];
     protected readonly focusUri = "common:/images/focus_grid.9.png";
     protected readonly margin: number;
-    protected readonly sections: Map<number, Array<Group>>;
+    protected readonly sections: Map<number, Group[]>;
     protected wrap: boolean;
     protected hasNinePatch: boolean;
     protected contentLength: number;
