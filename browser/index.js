@@ -82,6 +82,7 @@ customKeys.set("Comma", "rev"); // Keep consistency with older versions
 customKeys.set("Period", "fwd"); // Keep consistency with older versions
 customKeys.set("Space", "play"); // Keep consistency with older versions
 customKeys.set("NumpadMultiply", "info"); // Keep consistency with older versions
+customKeys.set("Backslash", "instantreplay"); // Alternative on Mac keyboards
 customKeys.set("KeyA", "a"); // Keep consistency with older versions
 customKeys.set("KeyZ", "b"); // Keep consistency with older versions
 customKeys.set("PageUp", "ignore"); // do not handle on browser
