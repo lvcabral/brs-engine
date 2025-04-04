@@ -228,12 +228,12 @@ export class MarkupGrid extends ArrayGrid {
         interpreter: Interpreter,
         index: number,
         itemRect: Rect,
-        itemContent: RoSGNode,
+        content: RoSGNode,
         rotation: number,
         draw2D?: IfDraw2D
     ) {
         const section = this.sections.get(0);
-        if (!(itemContent instanceof ContentNode) || !section) {
+        if (!(content instanceof ContentNode) || !section) {
             return;
         }
         const nodeFocus = rootObjects.focused === this;
@@ -245,7 +245,7 @@ export class MarkupGrid extends ArrayGrid {
                 section[index] = itemComp;
                 itemComp.setFieldValue("width", brsValueOf(itemRect.width));
                 itemComp.setFieldValue("height", brsValueOf(itemRect.height));
-                itemComp.set(new BrsString("itemContent"), itemContent, true);
+                itemComp.set(new BrsString("itemContent"), content, true);
                 itemComp.set(new BrsString("itemHasFocus"), BrsBoolean.from(focused));
                 itemComp.set(new BrsString("focusPercent"), new Int32(focused ? 1 : 0));
             }

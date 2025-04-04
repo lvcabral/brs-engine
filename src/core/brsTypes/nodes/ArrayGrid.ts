@@ -138,9 +138,7 @@ export class ArrayGrid extends Group {
         const result = super.set(index, value, alwaysNotify, kind);
         // Update the current row if some fields changed
         if (
-            ["vertfocusanimationstyle", "numrows", "focusrow"].includes(
-                index.value.toLowerCase()
-            )
+            ["vertfocusanimationstyle", "numrows", "focusrow"].includes(index.value.toLowerCase())
         ) {
             this.currRow = this.updateCurrRow();
         }
