@@ -18,7 +18,7 @@ class SharedObject {
 
     constructor(initialSize?: number, maxSize?: number) {
         initialSize = initialSize ?? 32 * 1024; // 32KB default
-        this.maxSize = maxSize ?? 1024 * 1024; // 1MB default
+        this.maxSize = maxSize ?? 3 * 1024 * 1024; // 3MB default
         this.buffer = new SharedArrayBuffer(initialSize, { maxByteLength: this.maxSize });
         this.view = new Uint8Array(this.buffer);
         this.atomicView = new Int32Array(this.buffer, 0, 2);
@@ -61,12 +61,12 @@ class SharedObject {
                     if (status === "ok") {
                         this.store(obj);
                         console.log(
-                            "[API] Buffer released. Stored data.",
+                            "[SharedObject] Buffer released. Stored data.",
                             obj.field,
                             this.getVersion()
                         );
                     } else {
-                        console.error("[API] Error storing shared data", status);
+                        console.error("[SharedObject] Error storing shared data", status);
                     }
                     this.queue.shift();
                     this.isProcessing = false;
@@ -74,12 +74,12 @@ class SharedObject {
                 });
             } else if (result.value === "not-equal") {
                 this.store(obj);
-                console.log("[API] Buffer is free. Stored data.", obj.field, this.getVersion());
+                console.log("[SharedObject] Buffer is free. Stored data.", obj.field, this.getVersion());
                 this.queue.shift();
                 this.isProcessing = false;
                 this.processQueue();
             } else {
-                console.error("[API] Error storing shared data: timeout");
+                console.error("[SharedObject] Error storing shared data: timeout");
                 this.queue.shift();
                 this.isProcessing = false;
                 this.processQueue();
@@ -89,7 +89,7 @@ class SharedObject {
             const start = Date.now();
             const checkCondition = () => {
                 if (Atomics.load(this.atomicView, this.versionIdx) !== version) {
-                    console.log("[API] Buffer is free. Storing data.");
+                    console.log("[SharedObject] Buffer is free. Storing data.");
                     this.store(obj);
                     this.queue.shift();
                     this.isProcessing = false;
@@ -97,7 +97,7 @@ class SharedObject {
                 } else if (Date.now() - start < timeout) {
                     setTimeout(checkCondition, 10); // Check every 10ms
                 } else {
-                    console.error("[API] Error storing shared data: timeout");
+                    console.error("[SharedObject] Error storing shared data: timeout");
                     this.queue.shift();
                     this.isProcessing = false;
                     this.processQueue();
@@ -111,15 +111,14 @@ class SharedObject {
         const serialized = JSON.stringify(obj);
         const data = new TextEncoder().encode(serialized);
         const dataLength = data.length;
+        if (this.ensureCapacity(dataLength + 8)) {
+            // Store the data
+            this.view.set(data, 8);
 
-        this.ensureCapacity(dataLength + 8);
-
-        // Store the data
-        this.view.set(data, 8);
-
-        Atomics.store(this.atomicView, this.lengthIdx, dataLength);
-        Atomics.add(this.atomicView, this.versionIdx, 1); // Increment version
-        Atomics.notify(this.atomicView, this.versionIdx);
+            Atomics.store(this.atomicView, this.lengthIdx, dataLength);
+            Atomics.add(this.atomicView, this.versionIdx, 1); // Increment version
+            Atomics.notify(this.atomicView, this.versionIdx);
+        }
     }
 
     load(resetVersion: boolean = false): any | null {
@@ -127,15 +126,12 @@ class SharedObject {
         if (currentLength < 1) {
             return {};
         }
-
         const data = this.view.subarray(this.offset, this.offset + currentLength);
         const serialized = new TextDecoder().decode(new Uint8Array(data).buffer);
-
         if (resetVersion) {
             Atomics.store(this.atomicView, this.versionIdx, 0); // Reset version
             Atomics.notify(this.atomicView, this.versionIdx);
         }
-
         try {
             return JSON.parse(serialized);
         } catch (error) {
@@ -144,23 +140,25 @@ class SharedObject {
         }
     }
 
-    private ensureCapacity(size: number): void {
+    private ensureCapacity(size: number): boolean {
         if (size > this.maxSize) {
-            throw new Error("SharedObjectBuffer is full. Cannot store more data.");
+            console.error(
+                `[SharedObject] Buffer is full. Cannot store more data. ${size} > ${this.maxSize}`
+            );
+            return false;
         }
-
         if (size > this.buffer.byteLength) {
             let newSize = Math.min(this.maxSize, Math.max(size * 2, this.buffer.byteLength * 2)); // Double or required, respect max size
-
             try {
                 this.buffer.grow(newSize); // Grow the buffer IN PLACE
                 this.view = new Uint8Array(this.buffer); // Update the view
                 this.atomicView = new Int32Array(this.buffer, 0, 2); // Update atomic offset view
             } catch (e) {
-                console.error("Error growing buffer:", e);
-                throw e;
+                console.error("[SharedObject] Error growing buffer:", e);
+                return false;
             }
         }
+        return true;
     }
 }
 
