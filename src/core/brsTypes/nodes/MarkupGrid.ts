@@ -114,15 +114,14 @@ export class MarkupGrid extends ArrayGrid {
     protected handlePageUpDown(key: string) {
         let handled = false;
         const numCols = jsValueOf(this.getFieldValue("numColumns")) as number;
-        const currentRow = Math.floor(this.focusIndex / numCols);
-        const lastRow = Math.floor(this.contentLength / numCols) - 1;
-        const offset =
-            key === "rewind" ? -(currentRow * numCols) : (lastRow - currentRow) * numCols;
-        let nextIndex = this.focusIndex + offset;
+        const steps = Math.min(Math.ceil(this.contentLength / numCols) - 1, 6);
+        const offset = key === "rewind" ? -steps : steps;
+        const nextIndex = this.wrap ? this.getIndex(offset) : this.focusIndex + offset * numCols;
 
-        if (nextIndex >= 0 && nextIndex < this.contentLength) {
+        if (nextIndex >= 0 && nextIndex < this.contentLength && nextIndex !== this.focusIndex) {
             this.set(new BrsString("animateToItem"), new Int32(nextIndex));
             handled = true;
+            this.currRow += this.wrap ? 0 : offset;
         }
         return handled;
     }
