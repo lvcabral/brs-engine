@@ -6,6 +6,7 @@ import {
     LayoutGroup,
     Rectangle,
     Label,
+    ScrollingLabel,
     Font,
     Poster,
     ArrayGrid,
@@ -24,14 +25,18 @@ import {
     BrsType,
     Callable,
     getBrsValueFromFieldType,
-    BrsBoolean,
     rootObjects,
     Overhang,
     ButtonGroup,
     Button,
+    Dialog,
     LabelList,
     CheckList,
     RadioButtonList,
+    MarkupList,
+    StandardDialog,
+    StandardProgressDialog,
+    RSGPalette,
 } from "../brsTypes";
 import { TaskData } from "../common";
 
@@ -41,14 +46,19 @@ export enum SGNodeType {
     LayoutGroup = "LayoutGroup",
     ButtonGroup = "ButtonGroup",
     Button = "Button",
+    Dialog = "Dialog",
+    KeyboardDialog = "KeyboardDialog",
     Rectangle = "Rectangle",
     Label = "Label",
+    ScrollingLabel = "ScrollingLabel",
     Font = "Font",
     Poster = "Poster",
     ArrayGrid = "ArrayGrid",
     LabelList = "LabelList",
     CheckList = "CheckList",
+    RowList = "RowList",
     RadioButtonList = "RadioButtonList",
+    MarkupList = "MarkupList",
     MarkupGrid = "MarkupGrid",
     ContentNode = "ContentNode",
     Task = "Task",
@@ -56,7 +66,17 @@ export enum SGNodeType {
     Scene = "Scene",
     MiniKeyboard = "MiniKeyboard",
     TextEditBox = "TextEditBox",
+    ScrollableText = "ScrollableText",
     Overhang = "Overhang",
+    RSGPalette = "RSGPalette",
+    Video = "Video",
+    Audio = "Audio",
+    Animation = "Animation",
+    FloatFieldInterpolator = "FloatFieldInterpolator",
+    StandardDialog = "StandardDialog",
+    StandardProgressDialog = "StandardProgressDialog",
+    BusySpinner = "BusySpinner",
+    ChannelStore = "ChannelStore",
 }
 
 export function isSGNodeType(value: string): value is SGNodeType {
@@ -101,10 +121,14 @@ export class SGNodeFactory {
                 return new Button([], name);
             case SGNodeType.ButtonGroup:
                 return new ButtonGroup([], name);
+            case SGNodeType.Dialog:
+                return new Dialog([], name);
             case SGNodeType.Rectangle:
                 return new Rectangle([], name);
             case SGNodeType.Label:
                 return new Label([], name);
+            case SGNodeType.ScrollingLabel:
+                return new ScrollingLabel([], name);
             case SGNodeType.Font:
                 return new Font([], name);
             case SGNodeType.Poster:
@@ -117,6 +141,8 @@ export class SGNodeFactory {
                 return new CheckList([], name);
             case SGNodeType.RadioButtonList:
                 return new RadioButtonList([], name);
+            case SGNodeType.MarkupList:
+                return new MarkupList([], name);
             case SGNodeType.MarkupGrid:
                 return new MarkupGrid([], name);
             case SGNodeType.ContentNode:
@@ -133,7 +159,20 @@ export class SGNodeFactory {
                 return new TextEditBox([], name);
             case SGNodeType.Overhang:
                 return new Overhang([], name);
+            case SGNodeType.StandardDialog:
+                return new StandardDialog([], name);
+            case SGNodeType.StandardProgressDialog:
+                return new StandardProgressDialog([], name);
+            case SGNodeType.RSGPalette:
+                return new RSGPalette([], name);
             default:
+                if (isSGNodeType(nodeType)) {
+                    // Temporarily until all node types are implemented
+                    BrsDevice.stderr.write(
+                        `warning,The roSGNode with type "${nodeType}" is not implemented yet, created as regular "Node".`
+                    );
+                    return new RoSGNode([], name);
+                }
                 return;
         }
     }
@@ -154,7 +193,7 @@ export class SGNodeFactory {
 /** Function to create a Node by its name defined on the XML file */
 export function createNodeByType(interpreter: Interpreter, type: BrsString): RoSGNode | BrsInvalid {
     // If this is a built-in node component, then return it.
-    let node = SGNodeFactory.createNode(type.value as SGNodeType) ?? BrsInvalid.Instance;
+    let node = SGNodeFactory.createNode(type.value) ?? BrsInvalid.Instance;
     if (node instanceof BrsInvalid) {
         let typeDef = interpreter.environment.nodeDefMap.get(type.value.toLowerCase());
         if (typeDef) {
@@ -174,8 +213,19 @@ export function createNodeByType(interpreter: Interpreter, type: BrsString): RoS
     if (node instanceof Task) {
         node.id = rootObjects.tasks.length;
         rootObjects.tasks.push(node);
+    } else if (node instanceof RoSGNode && rootObjects.tasks.length === 1) {
+        const task = rootObjects.tasks[0];
+        if (task.thread && node.getNodeParent() === BrsInvalid.Instance) {
+            node.setNodeParent(task);
+        }
+    } else if (node instanceof Dialog) {
+        rootObjects.dialog = node;
     }
     return node;
+}
+
+export function customNodeExists(interpreter: Interpreter, node: BrsString) {
+    return interpreter.environment.nodeDefMap.has(node.value.toLowerCase());
 }
 
 /** Function to initialize Nodes with its Fields, Children and Environment */
@@ -197,7 +247,7 @@ export function initializeNode(
             // Add the current typedef to the subtypeHierarchy
             subtypeHierarchy.set(typeDef.name!.toLowerCase(), typeDef.extends || SGNodeType.Node);
 
-            typeDef = interpreter.environment.nodeDefMap.get(typeDef.extends?.toLowerCase());
+            typeDef = interpreter.environment.nodeDefMap.get(typeDef.extends.toLowerCase());
             if (typeDef) typeDefStack.push(typeDef);
         }
 
@@ -280,7 +330,7 @@ export function initializeTask(interpreter: Interpreter, taskData: TaskData) {
             // Add the current typedef to the subtypeHierarchy
             subtypeHierarchy.set(typeDef.name!.toLowerCase(), typeDef.extends || SGNodeType.Task);
 
-            typeDef = interpreter.environment.nodeDefMap.get(typeDef.extends?.toLowerCase());
+            typeDef = interpreter.environment.nodeDefMap.get(typeDef.extends.toLowerCase());
             if (typeDef) typeDefStack.push(typeDef);
         }
 
@@ -318,6 +368,7 @@ export function initializeTask(interpreter: Interpreter, taskData: TaskData) {
         if (node instanceof Task) {
             node.id = taskData.id;
             node.thread = true;
+            rootObjects.tasks.push(node);
         }
         let port: RoMessagePort | null = null;
         if (taskData.m) {
@@ -381,14 +432,14 @@ function addFields(interpreter: Interpreter, node: RoSGNode, typeDef: ComponentD
                     if (field) {
                         node.addNodeFieldAlias(fieldName, field, childName, childField);
                     } else {
-                        let msg = `error,Error creating XML component ${node.nodeSubtype}\n`;
+                        let msg = `warning,Error creating XML component ${node.nodeSubtype}\n`;
                         msg += `-- Interface field alias failed: Node "${childName}" has no field named "${childField}"\n`;
                         msg += `-- Error found ${typeDef.xmlPath}`;
                         BrsDevice.stderr.write(msg);
                         return;
                     }
                 } else {
-                    let msg = `error,Error creating XML component ${node.nodeSubtype}\n`;
+                    let msg = `warning,Error creating XML component ${node.nodeSubtype}\n`;
                     msg += `-- Interface field alias failed: No node named ${childName}\n`;
                     msg += `-- Error found ${typeDef.xmlPath}`;
                     BrsDevice.stderr.write(msg);
@@ -397,7 +448,7 @@ function addFields(interpreter: Interpreter, node: RoSGNode, typeDef: ComponentD
             } else {
                 const field = node.getNodeFields().get(fieldName.toLowerCase());
                 if (field) {
-                    let msg = `error,Error creating XML component ${node.nodeSubtype}\n`;
+                    let msg = `warning,Error creating XML component ${node.nodeSubtype}\n`;
                     msg += `-- Attempt to add duplicate field "${fieldName}" to RokuML component "${node.nodeSubtype}"\n`;
                     msg += `---- Extends node type "${typeDef.extends}" already has a field named ${fieldName}\n`;
                     msg += `-- Error found ${typeDef.xmlPath}`;
@@ -465,7 +516,7 @@ function addChildren(
             if (child.fields?.role) {
                 const targetField = child.fields.role;
                 if (node.getNodeFields().get(targetField)) {
-                    node.set(new BrsString(targetField), newChild);
+                    node.set(new BrsString(targetField), newChild, false);
                     if (child.children.length > 0) {
                         // we need to add the child's own children
                         addChildren(interpreter, newChild, child);

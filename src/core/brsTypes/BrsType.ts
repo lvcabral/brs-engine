@@ -194,6 +194,10 @@ export function getBrsValueFromFieldType(type: string, value?: string): BrsType 
         case "array":
             returnValue = BrsInvalid.Instance;
             if (value?.trim().startsWith("[") && value.trim().endsWith("]")) {
+                if (value === "[]" || value === "[ ]") {
+                    returnValue = new RoArray([]);
+                    break;
+                }
                 const parsedValue = value
                     .replace(/[\[\]]/g, "")
                     .split(",")

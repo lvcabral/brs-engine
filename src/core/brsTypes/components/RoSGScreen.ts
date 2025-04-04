@@ -16,6 +16,7 @@ import {
     getFontRegistry,
     getTextureManager,
     rootObjects,
+    Dialog,
 } from "..";
 import { IfGetMessagePort, IfSetMessagePort } from "../interfaces/IfMessagePort";
 import { RoSGScreenEvent } from "../events/RoSGScreenEvent";
@@ -213,6 +214,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
             if (this.isDirty) {
                 // TODO: Optimize rendering by only rendering if there are changes
                 rootObjects.rootScene.renderNode(this.interpreter, [0, 0], 0, this.draw2D);
+                rootObjects.dialog?.renderNode(this.interpreter, [0, 0], 0, this.draw2D);
                 let timeStamp = performance.now();
                 while (timeStamp - this.lastMessage < this.maxMs) {
                     timeStamp = performance.now();
@@ -261,10 +263,14 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         this.lastKey = nextKey.key;
         const key = new BrsString(rokuKeys.get(nextKey.key - nextKey.mod) ?? "");
         const press = BrsBoolean.from(nextKey.mod === 0);
-        const handled =
-            rootObjects.rootScene?.handleOnKeyEvent(this.interpreter, key, press) ?? false;
-        if (key.value === "back" && press.toBoolean() && !handled) {
-            return new RoSGScreenEvent(BrsBoolean.True);
+        if (rootObjects.dialog instanceof Dialog) {
+            rootObjects.dialog.handleKey(key.value, press.toBoolean());
+        } else {
+            const handled =
+                rootObjects.rootScene?.handleOnKeyEvent(this.interpreter, key, press) ?? false;
+            if (key.value === "back" && press.toBoolean() && !handled) {
+                return new RoSGScreenEvent(BrsBoolean.True);
+            }
         }
         this.isDirty = true;
         return BrsInvalid.Instance;
@@ -321,18 +327,27 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
             let returnValue: BrsType = BrsInvalid.Instance;
             if (sceneType.value === SGNodeType.Scene) {
                 returnValue = new Scene([], SGNodeType.Scene);
+            } else if (interpreter.environment.nodeDefMap.has(sceneType.value.toLowerCase())) {
+                returnValue = createNodeByType(interpreter, sceneType);
             } else {
-                const typeDef = interpreter.environment.nodeDefMap.get(
-                    sceneType.value.toLowerCase()
+                BrsDevice.stderr.write(
+                    `warning,BRIGHTSCRIPT: ERROR: roSGScreen.CreateScene: No such node ${
+                        sceneType.value
+                    }: ${interpreter.formatLocation()}`
                 );
-                if (typeDef && typeDef.extends === SGNodeType.Scene) {
-                    returnValue = createNodeByType(interpreter, sceneType);
-                }
+                return BrsInvalid.Instance;
             }
             if (returnValue instanceof Scene) {
                 this.sceneType = sceneType;
                 rootObjects.rootScene = returnValue;
                 rootObjects.rootScene.setDesignResolution(this.resolution);
+            } else {
+                BrsDevice.stderr.write(
+                    `warning,BRIGHTSCRIPT: ERROR: roSGScreen.CreateScene: Type mismatch converting from '${
+                        sceneType.value
+                    }' to 'Scene': ${interpreter.formatLocation()}`
+                );
+                return BrsInvalid.Instance;
             }
             return returnValue;
         },

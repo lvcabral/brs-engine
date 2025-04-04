@@ -15,6 +15,7 @@ import {
     toAssociativeArray,
     RoSGNode,
     RoMessagePort,
+    isBrsBoolean,
 } from "..";
 import { Callable } from "../Callable";
 import { Interpreter } from "../../interpreter";
@@ -188,7 +189,11 @@ export class Field {
                 value = new Int64(value.getValue());
             } else if (this.type === FieldKind.Double) {
                 value = new Double(value.getValue());
+            } else if (this.type === FieldKind.String) {
+                value = new BrsString(value.toString());
             }
+        } else if (isBrsBoolean(value) && this.type === FieldKind.String) {
+            value = new BrsString(value.toBoolean() ? "1" : "0");
         }
 
         let oldValue = this.value;
@@ -207,19 +212,15 @@ export class Field {
         const fieldIsObject = getValueKindFromFieldType(this.type) === ValueKind.Object;
         if (
             (fieldIsObject && (value === BrsInvalid.Instance || value instanceof RoInvalid)) ||
-            (isBrsNumber(this.value) && isBrsNumber(value))
+            (isBrsNumber(this.value) && isBrsNumber(value)) ||
+            (isBrsString(this.value) && isBrsString(value)) ||
+            (isBrsString(this.value) && isBrsNumber(value)) ||
+            (isBrsString(this.value) && isBrsBoolean(value))
         ) {
             return true;
         }
 
         const result = this.type === FieldKind.fromBrsType(value);
-        if (!result) {
-            postMessage(
-                `warning,Can't accept Field value: type = ${
-                    this.type
-                } other type = ${FieldKind.fromBrsType(value)}`
-            );
-        }
         return result;
     }
 

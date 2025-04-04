@@ -93,7 +93,7 @@ export class Poster extends Group {
         const aspectRatio = this.bitmap!.width / this.bitmap!.height;
         const targetAspectRatio = rect.width / rect.height;
 
-        let drawRect: Rect = { ...rect, x: rect.x, y: rect.y };
+        const drawRect: Rect = { ...rect };
         if (aspectRatio < targetAspectRatio) {
             // pillarbox
             drawRect.width = rect.height * aspectRatio;
