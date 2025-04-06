@@ -94,7 +94,7 @@ export class LabelList extends ArrayGrid {
             const offset = key === "rewind" ? -step : step;
             nextIndex = this.getIndex(offset);
         } else {
-            nextIndex = key === "rewind" ? 0 : this.contentLength - 1;
+            nextIndex = key === "rewind" ? 0 : this.content.length - 1;
             this.currRow = key === "rewind" ? 0 : jsValueOf(this.getFieldValue("numRows")) - 1;
         }
         if (nextIndex !== this.focusIndex) {
@@ -102,13 +102,6 @@ export class LabelList extends ArrayGrid {
             handled = true;
         }
         return handled;
-    }
-
-    protected handleOK(press: boolean) {
-        if (press) {
-            this.set(new BrsString("itemSelected"), new Int32(this.focusIndex));
-        }
-        return false;
     }
 
     renderNode(interpreter: Interpreter, origin: number[], angle: number, draw2D?: IfDraw2D) {
@@ -130,26 +123,25 @@ export class LabelList extends ArrayGrid {
     }
 
     protected renderList(rect: Rect, itemSize: number[], draw2D?: IfDraw2D) {
-        const { items, dividers } = this.getContentItems();
-        if (items.length === 0) {
+        if (this.content.length === 0) {
             return;
         }
-        const hasSections = dividers.length > 0;
+        const hasSections = this.metadata.length > 0;
         const nodeFocus = rootObjects.focused === this;
         this.currRow = this.updateCurrRow();
         let lastIndex = -1;
         const numRows = jsValueOf(this.getFieldValue("numRows")) as number;
-        const displayRows = Math.min(this.contentLength, numRows);
+        const displayRows = Math.min(this.content.length, numRows);
         const itemRect = { ...rect, width: itemSize[0], height: itemSize[1] };
         for (let r = 0; r < displayRows; r++) {
             const index = this.getIndex(r - this.currRow);
             const focused = index === this.focusIndex;
-            const item = items[index];
+            const item = this.content[index];
             if (item instanceof ContentNode) {
-                if (!hasSections && this.wrap && index < lastIndex && !focused) {
+                if (!hasSections && this.wrap && index < lastIndex && r > 0) {
                     itemRect.y += this.renderWrapDivider(itemRect, draw2D);
-                } else if (hasSections && this.wrap && dividers[index] !== "" && !focused) {
-                    const divText = dividers[index].substring(1);
+                } else if (hasSections && this.wrap && this.metadata[index]?.divider && r > 0) {
+                    const divText = this.metadata[index].sectionTitle;
                     itemRect.y += this.renderSectionDivider(divText, itemRect, draw2D);
                 }
                 this.renderItem(index, item, itemRect, nodeFocus, focused, draw2D);
@@ -164,7 +156,7 @@ export class LabelList extends ArrayGrid {
     }
 
     protected renderItem(
-        _: number,
+        _index: number,
         item: ContentNode,
         rect: Rect,
         nodeFocus: boolean,

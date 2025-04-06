@@ -74,7 +74,11 @@ class SharedObject {
                 });
             } else if (result.value === "not-equal") {
                 this.store(obj);
-                console.log("[SharedObject] Buffer is free. Stored data.", obj.field, this.getVersion());
+                console.log(
+                    "[SharedObject] Buffer is free. Stored data.",
+                    obj.field,
+                    this.getVersion()
+                );
                 this.queue.shift();
                 this.isProcessing = false;
                 this.processQueue();

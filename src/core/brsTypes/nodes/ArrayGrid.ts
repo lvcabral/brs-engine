@@ -2,10 +2,13 @@ import { FieldKind, FieldModel } from "./Field";
 import { AAMember } from "../components/RoAssociativeArray";
 import { Group } from "./Group";
 import {
+    BrsBoolean,
     BrsInvalid,
     BrsString,
     BrsType,
+    brsValueOf,
     ContentNode,
+    createNodeByType,
     Float,
     Font,
     Int32,
@@ -15,6 +18,15 @@ import {
     ValueKind,
 } from "..";
 import { IfDraw2D, Rect } from "../interfaces/IfDraw2D";
+import { Interpreter } from "../../interpreter";
+
+export declare namespace ArrayGrid {
+    type Metadata = {
+        index: number;
+        divider: boolean;
+        sectionTitle: string;
+    };
+}
 
 export class ArrayGrid extends Group {
     readonly defaultFields: FieldModel[] = [
@@ -64,7 +76,9 @@ export class ArrayGrid extends Group {
         { name: "currFocusSection", type: "float", value: "0.0" },
     ];
     protected readonly dividerUri = "common:/images/dividerHorizontal.9.png";
-    protected contentLength: number = 0;
+    protected readonly content: RoSGNode[] = [];
+    protected readonly metadata: ArrayGrid.Metadata[] = [];
+    protected readonly itemComps: Group[] = [];
     protected focusIndex: number = 0;
     protected currRow: number = 0;
     protected wrap: boolean = false;
@@ -102,6 +116,8 @@ export class ArrayGrid extends Group {
         const fieldName = index.value.toLowerCase();
         if (fieldName === "content") {
             const retValue = super.set(index, value, alwaysNotify, kind);
+            this.itemComps.length = 0;
+            this.refreshContent();
             let focus = -1;
             if (value instanceof ContentNode && value.getNodeChildren().length) {
                 focus = 0;
@@ -111,8 +127,15 @@ export class ArrayGrid extends Group {
         } else if (["jumptoitem", "animatetoitem"].includes(fieldName)) {
             const focusedIndex = jsValueOf(this.getFieldValue("itemFocused"));
             if (focusedIndex !== jsValueOf(value)) {
-                super.set(new BrsString("itemUnfocused"), new Int32(this.focusIndex));
-                this.focusIndex = jsValueOf(value);
+                super.set(new BrsString("itemUnfocused"), new Int32(focusedIndex));
+                const newIndex = jsValueOf(value) as number;
+                this.updateItemFocus(this.focusIndex, false);
+                if (this.metadata.length > 0) {
+                    this.focusIndex = this.metadata.findIndex((item) => item.index === newIndex);
+                } else {
+                    this.focusIndex = newIndex;
+                }
+                this.updateItemFocus(this.focusIndex, true);
                 index = new BrsString("itemFocused");
             } else {
                 return BrsInvalid.Instance;
@@ -143,6 +166,13 @@ export class ArrayGrid extends Group {
             this.currRow = this.updateCurrRow();
         }
         return result;
+    }
+
+    private updateItemFocus(index: number, focus: boolean) {
+        if (this.itemComps[index]) {
+            this.itemComps[index].set(new BrsString("itemHasFocus"), BrsBoolean.from(focus));
+            this.itemComps[index].set(new BrsString("focusPercent"), new Int32(focus ? 1 : 0));
+        }
     }
 
     handleKey(key: string, press: boolean): boolean {
@@ -176,7 +206,11 @@ export class ArrayGrid extends Group {
         return false;
     }
 
-    protected handleOK(_press: boolean) {
+    protected handleOK(press: boolean) {
+        if (press) {
+            const index = this.metadata[this.focusIndex]?.index ?? this.focusIndex;
+            this.set(new BrsString("itemSelected"), new Int32(index));
+        }
         return false;
     }
 
@@ -217,25 +251,65 @@ export class ArrayGrid extends Group {
         return dividerHeight;
     }
 
-    protected getContentItems() {
+    protected refreshContent() {
         const content = this.getFieldValue("content") as ContentNode;
+        const numCols = jsValueOf(this.getFieldValue("numColumns")) || 1;
         const sections = content.getNodeChildren();
-        const items: RoSGNode[] = [];
-        const dividers: string[] = [];
+        this.content.length = 0;
+        this.metadata.length = 0;
+        let itemIndex = 0;
         for (const section of sections) {
             if (section.getFieldValue("ContentType").toString().toLowerCase() === "section") {
-                const sectItems = section.getNodeChildren();
-                const sectDivs = new Array(sectItems.length).fill("");
-                sectDivs[0] = "-" + section.getFieldValue("title").toString();
-                dividers.push(...sectDivs);
-                items.push(...sectItems);
+                const content = section.getNodeChildren();
+                if (content.length === 0) {
+                    continue;
+                }
+                content.forEach((_item, index) => {
+                    const metadata = { index: itemIndex, divider: false, sectionTitle: "" };
+                    if (index === 0) {
+                        metadata.divider = true;
+                        metadata.sectionTitle = section.getFieldValue("title").toString();
+                    }
+                    this.metadata.push(metadata);
+                    itemIndex++;
+                });
+                this.content.push(...content);
+                // check if the items count is multiple of numCols, otherwise fill with empty nodes
+                const remainder = content.length % numCols;
+                if (remainder > 0) {
+                    const emptyContent = new ContentNode("_placeholder_");
+                    const emptyMetadata = { index: -1, divider: false, sectionTitle: "" };
+                    for (let i = 0; i < numCols - remainder; i++) {
+                        this.content.push(emptyContent);
+                        this.metadata.push(emptyMetadata);
+                    }
+                }
             }
         }
-        if (items.length === 0 && sections.length > 0) {
-            items.push(...sections);
+        if (this.content.length === 0 && sections.length > 0) {
+            this.content.push(...sections);
         }
-        this.contentLength = items.length;
-        return { items, dividers };
+    }
+
+    protected createItemComponent(
+        interpreter: Interpreter,
+        itemRect: Rect,
+        content: ContentNode,
+        focused: boolean
+    ) {
+        if (content.name === "_placeholder_") {
+            return new Group();
+        }
+        const itemCompName = this.getFieldValue("itemComponentName") as BrsString;
+        const itemComp = createNodeByType(interpreter, itemCompName);
+        if (itemComp instanceof Group) {
+            itemComp.setFieldValue("width", brsValueOf(itemRect.width));
+            itemComp.setFieldValue("height", brsValueOf(itemRect.height));
+            itemComp.set(new BrsString("itemContent"), content, true);
+            itemComp.set(new BrsString("itemHasFocus"), BrsBoolean.from(focused));
+            itemComp.set(new BrsString("focusPercent"), new Int32(focused ? 1 : 0));
+        }
+        return itemComp;
     }
 
     protected updateCurrRow() {
@@ -257,10 +331,11 @@ export class ArrayGrid extends Group {
         return focusRow;
     }
 
-    protected getIndex(offset: number = 0) {
+    protected getIndex(offset: number = 0, currIndex?: number) {
+        currIndex = currIndex ?? this.focusIndex;
         const numCols = jsValueOf(this.getFieldValue("numColumns")) || 1;
-        const focusRow = Math.floor(this.focusIndex / numCols);
-        const maxRows = Math.ceil(this.contentLength / numCols);
+        const focusRow = Math.floor(currIndex / numCols);
+        const maxRows = Math.ceil(this.content.length / numCols);
 
         let nextRow = focusRow + offset;
 
