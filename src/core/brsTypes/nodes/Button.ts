@@ -72,7 +72,7 @@ export class Button extends Group {
                 Button.iconUriFHD,
                 [this.margin, 30],
                 this.iconWidth,
-                this.iconHeight,
+                this.iconHeight
             );
             const labelTrans = [this.margin + this.iconWidth + this.gap, 30];
             this.textLabel = this.addLabel(
@@ -100,7 +100,7 @@ export class Button extends Group {
                 Button.iconUriHD,
                 [this.margin, 20],
                 this.iconWidth,
-                this.iconHeight,
+                this.iconHeight
             );
             const labelTrans = [this.margin + this.iconWidth + this.gap, 20];
             this.textLabel = this.addLabel(
