@@ -70,26 +70,42 @@ export class Overhang extends Group {
             this.width = 1920;
             this.setFieldValue("width", new Float(this.width));
             this.setFieldValue("height", new Float(172));
-            this.background = this.addPoster("", [0, 0], 172, this.width);
+            this.background = this.addPoster("", [0, 0], this.width, 172);
             this.logo = this.addPoster(this.defaultLogoFHD, [102, 63]);
-            this.leftDivider = this.addPoster(this.dividerFHD, [261, 59], 51, 12);
-            this.title = this.addLabel("titleColor", [297, 58], 50, 45, "bottom");
+            this.leftDivider = this.addPoster(this.dividerFHD, [261, 59], 12, 51);
+            this.title = this.addLabel("titleColor", [297, 58], 0, 50, 45, "bottom");
             this.optionsIcon = this.addPoster(this.optionsOff, [1421, 67], 30, 30);
-            this.optionsText = this.addLabel("optionsColor", [1460, 64], 40, 33, "center", "right");
-            this.rightDivider = this.addPoster(this.dividerFHD, [1646, 59], 51, 12);
-            this.clockText = this.addLabel("clockColor", [1682, 64], 40, 33, "center");
+            this.optionsText = this.addLabel(
+                "optionsColor",
+                [1460, 64],
+                0,
+                40,
+                33,
+                "center",
+                "right"
+            );
+            this.rightDivider = this.addPoster(this.dividerFHD, [1646, 59], 12, 51);
+            this.clockText = this.addLabel("clockColor", [1682, 64], 0, 40, 33, "center");
         } else {
             this.width = 1280;
             this.setFieldValue("width", new Float(this.width));
             this.setFieldValue("height", new Float(115));
-            this.background = this.addPoster("", [0, 0], 115, this.width);
+            this.background = this.addPoster("", [0, 0], this.width, 115);
             this.logo = this.addPoster(this.defaultLogoHD, [68, 42]);
-            this.leftDivider = this.addPoster(this.dividerHD, [174, 39], 34, 8);
-            this.title = this.addLabel("titleColor", [196, 39], 35, 30, "bottom");
+            this.leftDivider = this.addPoster(this.dividerHD, [174, 39], 8, 34);
+            this.title = this.addLabel("titleColor", [196, 39], 0, 35, 30, "bottom");
             this.optionsIcon = this.addPoster(this.optionsOff, [959, 46], 20, 20);
-            this.optionsText = this.addLabel("optionsColor", [985, 44], 27, 22, "center", "right");
-            this.rightDivider = this.addPoster(this.dividerHD, [1109, 39], 34, 8);
-            this.clockText = this.addLabel("clockColor", [1133, 44], 27, 22, "center");
+            this.optionsText = this.addLabel(
+                "optionsColor",
+                [985, 44],
+                0,
+                27,
+                22,
+                "center",
+                "right"
+            );
+            this.rightDivider = this.addPoster(this.dividerHD, [1109, 39], 8, 34);
+            this.clockText = this.addLabel("clockColor", [1133, 44], 0, 27, 22, "center");
         }
         this.optionsText.set(new BrsString("text"), new BrsString("for Options"));
         this.clockText.set(new BrsString("text"), new BrsString(this.getTime()));
@@ -114,54 +130,6 @@ export class Overhang extends Group {
                 hour12: true,
             })
             .toLowerCase();
-    }
-
-    private addPoster(defaultUri: string, translation: number[], height?: number, width?: number) {
-        const poster = new Poster();
-        if (defaultUri) {
-            poster.set(new BrsString("uri"), new BrsString(defaultUri));
-        }
-        poster.set(new BrsString("translation"), brsValueOf(translation));
-        if (height) {
-            poster.set(new BrsString("height"), new Float(height));
-        }
-        if (width) {
-            poster.set(new BrsString("width"), new Float(width));
-        }
-        this.children.push(poster);
-        poster.setNodeParent(this);
-        return poster;
-    }
-
-    private addLabel(
-        colorField: string,
-        translation: number[],
-        height: number,
-        fontSize: number,
-        vertAlign?: string,
-        horizAlign?: string
-    ) {
-        const label = new Label();
-        const labelFields = label.getNodeFields();
-        const color = this.fields.get(colorField.toLowerCase());
-        if (color) {
-            labelFields.set("color", color);
-        }
-        const labelFont = labelFields.get("font")?.getValue();
-        if (labelFont && labelFont instanceof Font) {
-            labelFont.setSize(fontSize);
-        }
-        label.set(new BrsString("height"), new Float(height));
-        label.set(new BrsString("translation"), brsValueOf(translation));
-        if (vertAlign) {
-            label.set(new BrsString("vertalign"), new BrsString(vertAlign));
-        }
-        if (horizAlign) {
-            label.set(new BrsString("horizalign"), new BrsString(horizAlign));
-        }
-        this.children.push(label);
-        label.setNodeParent(this);
-        return label;
     }
 
     private updateChildren() {

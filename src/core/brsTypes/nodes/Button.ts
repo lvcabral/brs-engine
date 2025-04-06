@@ -67,18 +67,20 @@ export class Button extends Group {
             this.setFieldValue("minWidth", new Float(375));
             this.setFieldValue("iconUri", new BrsString(Button.iconUriFHD));
             this.setFieldValue("focusedIconUri", new BrsString(Button.iconUriFHD));
-            this.background = this.addPoster("", [0, 0], 96, this.width);
+            this.background = this.addPoster("", [0, 0], this.width, 96);
             this.icon = this.addPoster(
                 Button.iconUriFHD,
                 [this.margin, 30],
+                this.iconWidth,
                 this.iconHeight,
-                this.iconWidth
             );
             const labelTrans = [this.margin + this.iconWidth + this.gap, 30];
             this.textLabel = this.addLabel(
                 "textColor",
                 labelTrans,
                 this.labelWidth,
+                undefined,
+                undefined,
                 "center",
                 "right"
             );
@@ -93,65 +95,26 @@ export class Button extends Group {
             this.setFieldValue("minWidth", new Float(250));
             this.setFieldValue("iconUri", new BrsString(Button.iconUriHD));
             this.setFieldValue("focusedIconUri", new BrsString(Button.iconUriHD));
-            this.background = this.addPoster("", [0, 0], 64, this.width);
+            this.background = this.addPoster("", [0, 0], this.width, 64);
             this.icon = this.addPoster(
                 Button.iconUriHD,
                 [this.margin, 20],
+                this.iconWidth,
                 this.iconHeight,
-                this.iconWidth
             );
             const labelTrans = [this.margin + this.iconWidth + this.gap, 20];
             this.textLabel = this.addLabel(
                 "textColor",
                 labelTrans,
                 this.labelWidth,
+                undefined,
+                undefined,
                 "center",
                 "right"
             );
         }
         this.setFieldValue("focusBitmapUri", new BrsString(Button.focusUri));
         this.setFieldValue("focusFootprintBitmapUri", new BrsString(Button.footprintUri));
-    }
-
-    private addPoster(defaultUri: string, translation: number[], height?: number, width?: number) {
-        const poster = new Poster();
-        if (defaultUri) {
-            poster.set(new BrsString("uri"), new BrsString(defaultUri));
-        }
-        poster.set(new BrsString("translation"), brsValueOf(translation));
-        if (height) {
-            poster.set(new BrsString("height"), new Float(height));
-        }
-        if (width) {
-            poster.set(new BrsString("width"), new Float(width));
-        }
-        this.children.push(poster);
-        poster.setNodeParent(this);
-        return poster;
-    }
-
-    private addLabel(
-        colorField: string,
-        translation: number[],
-        width?: number,
-        vertAlign?: string,
-        horizAlign?: string
-    ) {
-        const label = new Label();
-        this.copyField(label, "color", colorField);
-        if (width) {
-            label.set(new BrsString("width"), new Float(width));
-        }
-        label.set(new BrsString("translation"), brsValueOf(translation));
-        if (vertAlign) {
-            label.set(new BrsString("vertalign"), new BrsString(vertAlign));
-        }
-        if (horizAlign) {
-            label.set(new BrsString("horizalign"), new BrsString(horizAlign));
-        }
-        this.children.push(label);
-        label.setNodeParent(this);
-        return label;
     }
 
     private updateChildren(nodeFocus: boolean) {

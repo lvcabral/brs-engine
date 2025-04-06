@@ -13,7 +13,10 @@ import {
     BrsInvalid,
     RoBitmap,
     RoFont,
+    Label,
+    Poster,
     jsValueOf,
+    brsValueOf,
 } from "..";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D, MeasuredText, Rect } from "../interfaces/IfDraw2D";
@@ -79,6 +82,65 @@ export class Group extends RoSGNode {
     setFieldValue(fieldName: string, value: BrsType, alwaysNotify?: boolean): void {
         this.isDirty = true;
         super.setFieldValue(fieldName, value, alwaysNotify);
+    }
+
+    protected addPoster(uri: string, translation: number[], width?: number, height?: number) {
+        const poster = new Poster();
+        if (uri) {
+            poster.set(new BrsString("uri"), new BrsString(uri));
+        }
+        poster.set(new BrsString("translation"), brsValueOf(translation));
+        if (height) {
+            poster.set(new BrsString("height"), new Float(height));
+        }
+        if (width) {
+            poster.set(new BrsString("width"), new Float(width));
+        }
+        this.children.push(poster);
+        poster.setNodeParent(this);
+        return poster;
+    }
+
+    protected addLabel(
+        colorField: string,
+        translation: number[],
+        width?: number,
+        height?: number,
+        fontSize?: number,
+        vertAlign?: string,
+        horizAlign?: string
+    ) {
+        const label = new Label();
+        const labelFields = label.getNodeFields();
+        const color = this.fields.get(colorField.toLowerCase());
+        if (color) {
+            labelFields.set("color", color);
+        }
+        if (fontSize) {
+            const labelFont = labelFields.get("font")?.getValue();
+            if (labelFont && labelFont instanceof Font) {
+                labelFont.setSize(fontSize);
+            }
+        }
+        if (width) {
+            label.set(new BrsString("width"), new Float(width));
+        }
+        if (height) {
+            label.set(new BrsString("height"), new Float(height));
+        }
+        label.set(
+            new BrsString("translation"),
+            new RoArray([new Float(translation[0]), new Float(translation[1])])
+        );
+        if (vertAlign) {
+            label.set(new BrsString("vertalign"), new BrsString(vertAlign));
+        }
+        if (horizAlign) {
+            label.set(new BrsString("horizalign"), new BrsString(horizAlign));
+        }
+        this.children.push(label);
+        label.setNodeParent(this);
+        return label;
     }
 
     protected isVisible() {
