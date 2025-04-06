@@ -63,6 +63,7 @@ export class IfDraw2D {
         rgba?: number
     ): boolean {
         const ctx = this.component.getContext();
+        const image = getCanvasFromDraw2d(object, rgba);
         ctx.save();
         // Set context properties (alpha blending, smoothing)
         setContextAlpha(ctx, rgba);
@@ -79,7 +80,7 @@ export class IfDraw2D {
             dw: destRect.width,
             dh: destRect.height,
         };
-        drawChunk(ctx, object.getCanvas(), chunk);
+        drawChunk(ctx, image, chunk);
         ctx.restore();
         this.component.makeDirty();
         return true;
@@ -175,9 +176,9 @@ export class IfDraw2D {
         this.component.makeDirty();
     }
 
-    drawNinePatch(bitmap: RoBitmap, rect: Rect) {
+    drawNinePatch(bitmap: RoBitmap, rect: Rect, rgba?: number) {
         const ctx = this.component.getContext();
-        const image = bitmap.getCanvas();
+        const image = getCanvasFromDraw2d(bitmap, rgba);
         const patchSizes = bitmap.getPatchSizes();
         const x = rect.x;
         const y = rect.y;
@@ -210,6 +211,11 @@ export class IfDraw2D {
             drawChunk(ctx, image, { sx, sy, sw, sh, dx, dy, dw, dh });
         };
 
+
+        ctx.save();
+        // Set context properties (alpha blending, smoothing)
+        setContextAlpha(ctx, rgba);
+
         // Top-left corner
         drawPart(1, 1, lw - 1, th + 1, x, y, lw - 1, th + 1);
 
@@ -236,6 +242,9 @@ export class IfDraw2D {
 
         // Bottom-right corner
         drawPart(sw - rw, sh - bh, rw - 1, bh - 1, x + width - rw - 1, y + height - bh + 1, rw, bh);
+
+        ctx.restore();
+        this.component.makeDirty();
     }
 
     /** Clear the bitmap, and fill with the specified RGBA color */
