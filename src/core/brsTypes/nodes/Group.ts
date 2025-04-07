@@ -94,6 +94,11 @@ export class Group extends RoSGNode {
         };
     }
 
+    isVisible() {
+        const visible = this.fields.get("visible")?.getValue();
+        return visible instanceof BrsBoolean ? visible.toBoolean() : true;
+    }
+
     protected addPoster(uri: string, translation: number[], width?: number, height?: number) {
         const poster = new Poster();
         if (uri) {
@@ -149,11 +154,6 @@ export class Group extends RoSGNode {
         }
         this.appendChildToParent(label);
         return label;
-    }
-
-    protected isVisible() {
-        const visible = this.fields.get("visible")?.getValue();
-        return visible instanceof BrsBoolean ? visible.toBoolean() : true;
     }
 
     protected getTranslation() {

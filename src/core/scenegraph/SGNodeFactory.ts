@@ -36,7 +36,12 @@ import {
     MarkupList,
     StandardDialog,
     StandardProgressDialog,
+    StdDlgContentArea,
+    StdDlgTitleArea,
+    StdDlgProgressItem,
+    BusySpinner,
     RSGPalette,
+    BrsBoolean,
 } from "../brsTypes";
 import { TaskData } from "../common";
 
@@ -75,6 +80,9 @@ export enum SGNodeType {
     FloatFieldInterpolator = "FloatFieldInterpolator",
     StandardDialog = "StandardDialog",
     StandardProgressDialog = "StandardProgressDialog",
+    StdDlgContentArea = "StdDlgContentArea",
+    StdDlgTitleArea = "StdDlgTitleArea",
+    StdDlgProgressItem = "StdDlgProgressItem",
     BusySpinner = "BusySpinner",
     ChannelStore = "ChannelStore",
 }
@@ -163,6 +171,14 @@ export class SGNodeFactory {
                 return new StandardDialog([], name);
             case SGNodeType.StandardProgressDialog:
                 return new StandardProgressDialog([], name);
+            case SGNodeType.StdDlgContentArea:
+                return new StdDlgContentArea([], name);
+            case SGNodeType.StdDlgTitleArea:
+                return new StdDlgTitleArea([], name);
+            case SGNodeType.StdDlgProgressItem:
+                return new StdDlgProgressItem([], name);
+            case SGNodeType.BusySpinner:
+                return new BusySpinner([], name);
             case SGNodeType.RSGPalette:
                 return new RSGPalette([], name);
             default:
@@ -216,6 +232,7 @@ export function createNodeByType(interpreter: Interpreter, type: BrsString): RoS
     } else if (node instanceof Timer) {
         rootObjects.timers.push(node);
     } else if (node instanceof Dialog || node instanceof StandardDialog) {
+        rootObjects.dialog?.set(new BrsString("close"), BrsBoolean.True);
         rootObjects.dialog = node;
     }
     if (node instanceof RoSGNode && rootObjects.tasks.length === 1) {

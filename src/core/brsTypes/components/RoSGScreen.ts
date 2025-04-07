@@ -216,8 +216,6 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
                 const screenRect = { x: 0, y: 0, width: this.width, height: this.height };
                 this.draw2D.doDrawRotatedRect(screenRect, 255, 0, [0, 0], 0.5);
                 rootObjects.dialog.renderNode(this.interpreter, [0, 0], 0, this.draw2D);
-            } else {
-                rootObjects.dialog = undefined;
             }
             let timeStamp = performance.now();
             while (timeStamp - this.lastMessage < this.maxMs) {
@@ -237,16 +235,17 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
                 task.checkTask();
             }
         });
-        return updates;
+        this.isDirty = updates;
     }
 
-    private processTimers(fired: boolean = false) {
+    private processTimers() {
+        let fired = false;
         rootObjects.timers.forEach((timer) => {
             if (timer.active && timer.checkFire()) {
                 fired = true;
             }
         });
-        return fired;
+        this.isDirty = fired;
     }
 
     /** Handle control keys */
@@ -272,7 +271,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         this.lastKey = nextKey.key;
         const key = new BrsString(rokuKeys.get(nextKey.key - nextKey.mod) ?? "");
         const press = BrsBoolean.from(nextKey.mod === 0);
-        if (rootObjects.dialog instanceof Group) {
+        if (rootObjects.dialog instanceof Group && rootObjects.dialog.isVisible()) {
             rootObjects.dialog.handleKey(key.value, press.toBoolean());
         } else {
             const handled =

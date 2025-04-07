@@ -214,8 +214,7 @@ export class ButtonGroup extends LayoutGroup {
                 break;
             }
         }
-        this.children.push(button);
-        button.setNodeParent(this);
+        this.appendChildToParent(button);
         return button;
     }
 
