@@ -1,10 +1,9 @@
 import { FieldModel } from "./Field";
 import { AAMember } from "../components/RoAssociativeArray";
 import { ArrayGrid } from "./ArrayGrid";
-import { BrsString, ContentNode, customNodeExists, Group, Int32, jsValueOf, rootObjects } from "..";
+import { BrsString, ContentNode, customNodeExists, Int32, jsValueOf, rootObjects } from "..";
 import { IfDraw2D, Rect } from "../interfaces/IfDraw2D";
 import { Interpreter } from "../../interpreter";
-import { rotateTranslation } from "../../scenegraph/SGUtil";
 import { BrsDevice } from "../../device/BrsDevice";
 
 export class MarkupGrid extends ArrayGrid {
@@ -16,7 +15,6 @@ export class MarkupGrid extends ArrayGrid {
     protected readonly focusUri = "common:/images/focus_grid.9.png";
     protected readonly margin: number;
     protected wrap: boolean;
-    protected hasNinePatch: boolean;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = "MarkupGrid") {
         super([], name);
@@ -33,7 +31,6 @@ export class MarkupGrid extends ArrayGrid {
         this.setFieldValue("wrapDividerBitmapUri", new BrsString(this.dividerUri));
         const style = jsValueOf(this.getFieldValue("vertFocusAnimationStyle")) as string;
         this.wrap = style.toLowerCase() === "fixedfocuswrap";
-
         this.hasNinePatch = true;
     }
 
@@ -95,24 +92,7 @@ export class MarkupGrid extends ArrayGrid {
         return handled;
     }
 
-    renderNode(interpreter: Interpreter, origin: number[], angle: number, draw2D?: IfDraw2D) {
-        if (!this.isVisible()) {
-            return;
-        }
-        const nodeTrans = this.getTranslation();
-        const drawTrans = angle !== 0 ? rotateTranslation(nodeTrans, angle) : nodeTrans.slice();
-        drawTrans[0] += origin[0];
-        drawTrans[1] += origin[1];
-        const size = this.getDimensions();
-        const rect = { x: drawTrans[0], y: drawTrans[1], width: size.width, height: size.height };
-        const rotation = angle + this.getRotation();
-        this.renderGrid(interpreter, rect, rotation, draw2D);
-        this.updateBoundingRects(rect, origin, rotation);
-        this.renderChildren(interpreter, drawTrans, rotation, draw2D);
-        this.updateParentRects(origin, angle);
-    }
-
-    protected renderGrid(
+    protected renderContent(
         interpreter: Interpreter,
         rect: Rect,
         rotation: number,
@@ -167,7 +147,7 @@ export class MarkupGrid extends ArrayGrid {
                 if (index >= this.content.length) {
                     break;
                 }
-                this.renderItem(interpreter, index, itemRect, rotation, draw2D);
+                this.renderItemComponent(interpreter, index, itemRect, rotation, draw2D);
                 itemRect.x += itemRect.width + (columnSpacings[c] ?? spacing[0]);
                 lastIndex = index;
             }
@@ -178,55 +158,5 @@ export class MarkupGrid extends ArrayGrid {
         rect.y = rect.y - (this.hasNinePatch ? 4 : 0);
         rect.width = numCols * (itemSize[0] + (this.hasNinePatch ? this.margin * 2 : 0));
         rect.height = displayRows * (itemSize[1] + (this.hasNinePatch ? 9 : 0));
-    }
-
-    protected renderItem(
-        interpreter: Interpreter,
-        index: number,
-        itemRect: Rect,
-        rotation: number,
-        draw2D?: IfDraw2D
-    ) {
-        const content = this.content[index];
-        if (!(content instanceof ContentNode)) {
-            return;
-        }
-        const nodeFocus = rootObjects.focused === this;
-        const focused = index === this.focusIndex;
-        if (!this.itemComps[index]) {
-            const itemComp = this.createItemComponent(interpreter, itemRect, content, focused);
-            if (itemComp instanceof Group) {
-                this.itemComps[index] = itemComp;
-            }
-        }
-        const drawFocus = jsValueOf(this.getFieldValue("drawFocusFeedback"));
-        const drawFocusOnTop = jsValueOf(this.getFieldValue("drawFocusFeedbackOnTop"));
-        if (focused && drawFocus && !drawFocusOnTop) {
-            this.renderFocus(itemRect, nodeFocus, draw2D);
-        }
-        const itemOrigin = [itemRect.x, itemRect.y];
-        this.itemComps[index].renderNode(interpreter, itemOrigin, rotation, draw2D);
-        if (focused && drawFocus && drawFocusOnTop) {
-            this.renderFocus(itemRect, nodeFocus, draw2D);
-        }
-    }
-
-    protected renderFocus(itemRect: Rect, nodeFocus: boolean, draw2D?: IfDraw2D) {
-        const focusBitmap = this.getBitmap("focusBitmapUri");
-        const focusFootprint = this.getBitmap("focusFootprintBitmapUri");
-        this.hasNinePatch = (focusBitmap?.ninePatch || focusFootprint?.ninePatch) === true;
-        const ninePatchRect = {
-            x: itemRect.x - 15,
-            y: itemRect.y - 15,
-            width: itemRect.width + 31,
-            height: itemRect.height + 30,
-        };
-        if (nodeFocus && focusBitmap) {
-            const rect = focusBitmap.ninePatch ? ninePatchRect : itemRect;
-            this.drawImage(focusBitmap, rect, 0, draw2D);
-        } else if (!nodeFocus && focusFootprint) {
-            const rect = focusFootprint.ninePatch ? ninePatchRect : itemRect;
-            this.drawImage(focusFootprint, rect, 0, draw2D);
-        }
     }
 }
