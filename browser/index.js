@@ -76,6 +76,7 @@ const customDeviceInfo = {
     displayMode: "720p", // Supported modes: 480p (SD), 720p (HD) and 1080p (FHD)
     maxFps: 30, // Limited refresh rate to minimize issues with iOS/iPadOS
     appList: appList,
+    // corsProxy: "http://localhost:8080/", // For local testing using https://github.com/Rob--W/cors-anywhere
 };
 const customKeys = new Map();
 customKeys.set("Comma", "rev"); // Keep consistency with older versions
@@ -107,6 +108,7 @@ brs.subscribe("web-app", (event, data) => {
         appInfo.innerHTML = infoHtml;
         appIconsVisibility("hidden");
         loading.style.visibility = "hidden";
+        displayRedraw();
     } else if (event === "started") {
         currentApp = data;
         stats.style.visibility = "visible";
@@ -304,12 +306,7 @@ display.addEventListener("dblclick", function (event) {
 });
 
 document.onfullscreenchange = function () {
-    if (document.fullscreenElement) {
-        brs.redraw(true);
-    } else {
-        brs.redraw(false, 854, 480);
-        display.style.top = "29px";
-    }
+    displayRedraw();
 };
 
 display.addEventListener("mousedown", function (event) {
@@ -317,6 +314,16 @@ display.addEventListener("mousedown", function (event) {
         event.preventDefault();
     }
 });
+
+// Screen Redraw
+function displayRedraw() {
+    if (document.fullscreenElement) {
+        brs.redraw(true);
+    } else {
+        brs.redraw(false, 854, 480);
+        display.style.top = "29px";
+    }
+}
 
 // App icons Visibility
 function appIconsVisibility(visibility) {
