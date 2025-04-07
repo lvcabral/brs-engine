@@ -57,7 +57,7 @@ export class StandardProgressDialog extends StandardDialog {
             this.setFieldValue("translation", brsValueOf(translation));
         }
         if (message === "") {
-            this.set(new BrsString("text"), new BrsString("Please wait..."));
+            this.set(new BrsString("message"), new BrsString("Please wait..."));
         }
         super.renderNode(interpreter, origin, angle, draw2D);
     }
