@@ -16,7 +16,7 @@ import {
     getFontRegistry,
     getTextureManager,
     rootObjects,
-    Dialog,
+    Group,
 } from "..";
 import { IfGetMessagePort, IfSetMessagePort } from "../interfaces/IfMessagePort";
 import { RoSGScreenEvent } from "../events/RoSGScreenEvent";
@@ -214,7 +214,11 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
             if (this.isDirty) {
                 // TODO: Optimize rendering by only rendering if there are changes
                 rootObjects.rootScene.renderNode(this.interpreter, [0, 0], 0, this.draw2D);
-                rootObjects.dialog?.renderNode(this.interpreter, [0, 0], 0, this.draw2D);
+                if (rootObjects.dialog && rootObjects.dialog.getNodeParent() instanceof BrsInvalid) {
+                    rootObjects.dialog.renderNode(this.interpreter, [0, 0], 0, this.draw2D);
+                } else {
+                    rootObjects.dialog = undefined;
+                }
                 let timeStamp = performance.now();
                 while (timeStamp - this.lastMessage < this.maxMs) {
                     timeStamp = performance.now();
@@ -263,7 +267,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         this.lastKey = nextKey.key;
         const key = new BrsString(rokuKeys.get(nextKey.key - nextKey.mod) ?? "");
         const press = BrsBoolean.from(nextKey.mod === 0);
-        if (rootObjects.dialog instanceof Dialog) {
+        if (rootObjects.dialog instanceof Group) {
             rootObjects.dialog.handleKey(key.value, press.toBoolean());
         } else {
             const handled =
