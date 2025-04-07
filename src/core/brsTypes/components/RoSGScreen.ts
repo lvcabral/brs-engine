@@ -212,10 +212,10 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
             this.processTasks();
             // TODO: Optimize rendering by only rendering if there are changes
             rootObjects.rootScene.renderNode(this.interpreter, [0, 0], 0, this.draw2D);
-            if (rootObjects.dialog && rootObjects.dialog.getNodeParent() instanceof BrsInvalid) {
+            if (rootObjects.rootScene?.dialog?.getNodeParent() instanceof BrsInvalid) {
                 const screenRect = { x: 0, y: 0, width: this.width, height: this.height };
                 this.draw2D.doDrawRotatedRect(screenRect, 255, 0, [0, 0], 0.5);
-                rootObjects.dialog.renderNode(this.interpreter, [0, 0], 0, this.draw2D);
+                rootObjects.rootScene.dialog.renderNode(this.interpreter, [0, 0], 0, this.draw2D);
             }
             let timeStamp = performance.now();
             while (timeStamp - this.lastMessage < this.maxMs) {
@@ -271,8 +271,8 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         this.lastKey = nextKey.key;
         const key = new BrsString(rokuKeys.get(nextKey.key - nextKey.mod) ?? "");
         const press = BrsBoolean.from(nextKey.mod === 0);
-        if (rootObjects.dialog instanceof Group && rootObjects.dialog.isVisible()) {
-            rootObjects.dialog.handleKey(key.value, press.toBoolean());
+        if (rootObjects?.rootScene?.dialog?.isVisible()) {
+            rootObjects.rootScene.dialog.handleKey(key.value, press.toBoolean());
         } else {
             const handled =
                 rootObjects.rootScene?.handleOnKeyEvent(this.interpreter, key, press) ?? false;

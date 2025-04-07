@@ -63,16 +63,14 @@ export class StdDlgProgressItem extends Group {
             width: size.width,
             height: size.height,
         };
-        const palette = this.getPalette();
-        if (palette instanceof RSGPalette) {
-            const colors = palette.getFieldValue("colors");
-            if (colors instanceof RoAssociativeArray) {
-                this.spinner.setBlendColor(colors.get(new BrsString("DialogItemColor")));
-                const textColor = colors.get(new BrsString("DialogTextColor"));
-                if (textColor instanceof BrsString) {
-                    this.label.setFieldValue("color", textColor);
-                }
-            }
+        const colors = this.getPaletteColors();
+        const itemColor = colors.get(new BrsString("DialogItemColor"));
+        if (itemColor instanceof BrsString) {
+            this.spinner.setBlendColor(itemColor);
+        }
+        const textColor = colors.get(new BrsString("DialogTextColor"));
+        if (textColor instanceof BrsString) {
+            this.label.setFieldValue("color", textColor);
         }
         const spinnerSize = this.spinner.getDimensions();
         const labelSize = this.label.getMeasured();
@@ -93,14 +91,14 @@ export class StdDlgProgressItem extends Group {
         this.updateParentRects(origin, angle);
     }
 
-    private getPalette() {
+    private getPaletteColors() {
         const area = this.getNodeParent();
         if (area instanceof StdDlgContentArea) {
             const dialog = area.getNodeParent();
             if (dialog instanceof StandardDialog) {
-                return dialog.getFieldValue("palette");
+                return dialog.getPaletteColors();
             }
         }
-        return BrsInvalid.Instance;
+        return new RoAssociativeArray([]);
     }
 }

@@ -3,6 +3,7 @@ import { Group } from "./Group";
 import { AAMember, RoAssociativeArray } from "../components/RoAssociativeArray";
 import {
     BrsBoolean,
+    BrsInvalid,
     BrsString,
     BrsType,
     brsValueOf,
@@ -77,8 +78,8 @@ export class StandardDialog extends Group {
             index = new BrsString("wasClosed");
             value = BrsBoolean.True;
             this.set(new BrsString("visible"), BrsBoolean.False);
-            if (rootObjects.dialog === this) {
-                rootObjects.dialog = undefined;
+            if (rootObjects.rootScene?.dialog === this) {
+                rootObjects.rootScene.dialog = undefined;
             }
         } else if (fieldName === "width") {
             const newWidth = jsValueOf(value) as number;
@@ -106,18 +107,27 @@ export class StandardDialog extends Group {
             width: this.width,
             height: size.height,
         };
-        const palette = this.getFieldValue("palette");
-        if (palette instanceof RSGPalette) {
-            const colors = palette.getFieldValue("colors");
-            if (colors instanceof RoAssociativeArray) {
-                const backColor = colors.get(new BrsString("DialogBackgroundColor"));
-                if (backColor instanceof BrsString) {
-                    this.background.set(new BrsString("blendColor"), backColor);
-                }
-            }
+        const colors = this.getPaletteColors();
+        const backColor = colors.get(new BrsString("DialogBackgroundColor"));
+        if (backColor instanceof BrsString) {
+            this.background.set(new BrsString("blendColor"), backColor);
         }
         this.updateBoundingRects(boundingRect, origin, angle);
         this.renderChildren(interpreter, drawTrans, angle, draw2D);
         this.updateParentRects(origin, angle);
+    }
+
+    getPaletteColors() {
+        let palette = this.getFieldValue("palette");
+        if (!(palette instanceof RSGPalette) && rootObjects.rootScene) {
+            palette = rootObjects.rootScene.getFieldValue("palette");
+        }
+        if (palette instanceof RSGPalette) {
+            const colors = palette.getFieldValue("colors");
+            if (colors instanceof RoAssociativeArray) {
+                return colors;
+            }
+        }
+        return new RoAssociativeArray([]);
     }
 }
