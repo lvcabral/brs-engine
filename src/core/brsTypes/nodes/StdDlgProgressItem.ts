@@ -11,6 +11,7 @@ import {
     StdDlgContentArea,
     Float,
     RoArray,
+    BrsInvalid,
 } from "..";
 import { Interpreter } from "../..";
 import { IfDraw2D, Rect } from "../interfaces/IfDraw2D";
@@ -23,9 +24,9 @@ export class StdDlgProgressItem extends Group {
     ];
     private readonly spinnerUriFHD = "common:/images/busy_spinner_FHD.png";
     private readonly spinnerUriHD = "common:/images/busy_spinner_HD.png";
-    private spinner: BusySpinner;
-    private label: Label;
-    private gap: number;
+    private readonly spinner: BusySpinner;
+    private readonly label: Label;
+    private readonly gap: number;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = "StdDlgProgressItem") {
         super([], name);
@@ -62,49 +63,44 @@ export class StdDlgProgressItem extends Group {
             width: size.width,
             height: size.height,
         };
-        const dialog = this.getDialog();
-        if (dialog instanceof StandardDialog) {
-            const palette = dialog.getFieldValue("palette");
-            if (palette instanceof RSGPalette) {
-                const colors = palette.getFieldValue("colors");
-                if (colors instanceof RoAssociativeArray) {
-                    this.spinner.setBlendColor(colors.get(new BrsString("DialogItemColor")));
-                    const textColor = colors.get(new BrsString("DialogTextColor"));
-                    if (textColor instanceof BrsString) {
-                        this.label.setFieldValue("color", textColor);
-                    }
+        const palette = this.getPalette();
+        if (palette instanceof RSGPalette) {
+            const colors = palette.getFieldValue("colors");
+            if (colors instanceof RoAssociativeArray) {
+                this.spinner.setBlendColor(colors.get(new BrsString("DialogItemColor")));
+                const textColor = colors.get(new BrsString("DialogTextColor"));
+                if (textColor instanceof BrsString) {
+                    this.label.setFieldValue("color", textColor);
                 }
             }
         }
         const spinnerSize = this.spinner.getDimensions();
         const labelSize = this.label.getMeasured();
         if (spinnerSize.width > 0 && spinnerSize.height > 0) {
-            this.label.setFieldValue(
-                "translation",
-                new RoArray([
-                    new Float(spinnerSize.width + this.gap),
-                    new Float((spinnerSize.height - labelSize.height) / 2),
-                ])
-            );
-            this.setFieldValue("width", new Float(spinnerSize.width + labelSize.width + this.gap));
+            const labelTrans = new RoArray([
+                new Float(spinnerSize.width + this.gap),
+                new Float((spinnerSize.height - labelSize.height) / 2),
+            ]);
+            this.label.setFieldValue("translation", labelTrans);
             boundingRect.width = spinnerSize.width + labelSize.width + this.gap;
+            this.set(new BrsString("width"), new Float(boundingRect.width));
         } else if (labelSize.width > 0 && labelSize.height > 0) {
-            this.setFieldValue("width", new Float(labelSize.width));
             boundingRect.width = labelSize.width;
+            this.set(new BrsString("width"), new Float(boundingRect.width));
         }
         this.updateBoundingRects(boundingRect, origin, angle);
         this.renderChildren(interpreter, drawTrans, angle, draw2D);
         this.updateParentRects(origin, angle);
     }
 
-    private getDialog() {
+    private getPalette() {
         const area = this.getNodeParent();
         if (area instanceof StdDlgContentArea) {
             const dialog = area.getNodeParent();
             if (dialog instanceof StandardDialog) {
-                return dialog;
+                return dialog.getFieldValue("palette");
             }
         }
-        return undefined;
+        return BrsInvalid.Instance;
     }
 }
