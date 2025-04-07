@@ -2,17 +2,15 @@ import { FieldKind, FieldModel } from "./Field";
 import { AAMember } from "../components/RoAssociativeArray";
 import { Group } from "./Group";
 import { IfDraw2D, Rect } from "../interfaces/IfDraw2D";
-import { Environment, Interpreter } from "../..";
+import { Interpreter } from "../..";
 import { rotateTranslation } from "../../scenegraph/SGUtil";
 import {
     BrsBoolean,
     BrsInvalid,
     BrsString,
     BrsType,
-    brsValueOf,
     ButtonGroup,
     Float,
-    Font,
     jsValueOf,
     Label,
     Poster,
@@ -59,7 +57,6 @@ export class Dialog extends Group {
     private readonly message: Label;
     private readonly gap: number;
     private readonly vertOffset: number;
-    private readonly resolution: string;
     private readonly screenRect: Rect;
     private readonly minHeight: number;
     private readonly buttonGroup: ButtonGroup;
@@ -84,7 +81,6 @@ export class Dialog extends Group {
         this.registerInitializedFields(initializedFields);
 
         this.buttonGroup = new ButtonGroup();
-        this.resolution = rootObjects.rootScene?.ui.resolution ?? "HD";
         if (this.resolution === "FHD") {
             this.screenRect = { x: 0, y: 0, width: 1920, height: 1080 };
             this.width = 1050;
@@ -219,7 +215,6 @@ export class Dialog extends Group {
         if (this.hasButtons) {
             this.setNodeFocus(interpreter, true);
         }
-        draw2D?.doDrawRotatedRect(this.screenRect, 255, 0, [0, 0], 0.5);
         this.updateBoundingRects(boundingRect, origin, angle);
         this.renderChildren(interpreter, drawTrans, angle, draw2D);
         this.updateParentRects(origin, angle);

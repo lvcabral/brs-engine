@@ -40,7 +40,7 @@ export class Scene extends Group {
         this.setDesignResolution("HD");
     }
 
-    protected getDimensions() {
+    getDimensions() {
         return { width: this.ui.width, height: this.ui.height };
     }
 

@@ -208,27 +208,23 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         }
         // Handle Scene Events
         if (rootObjects.rootScene) {
-            if (rootObjects.rootScene.processTimers()) {
-                this.isDirty = true;
+            this.processTimers();
+            this.processTasks();
+            // TODO: Optimize rendering by only rendering if there are changes
+            rootObjects.rootScene.renderNode(this.interpreter, [0, 0], 0, this.draw2D);
+            if (rootObjects.dialog && rootObjects.dialog.getNodeParent() instanceof BrsInvalid) {
+                const screenRect = { x: 0, y: 0, width: this.width, height: this.height };
+                this.draw2D.doDrawRotatedRect(screenRect, 255, 0, [0, 0], 0.5);
+                rootObjects.dialog.renderNode(this.interpreter, [0, 0], 0, this.draw2D);
+            } else {
+                rootObjects.dialog = undefined;
             }
-            if (this.isDirty) {
-                // TODO: Optimize rendering by only rendering if there are changes
-                rootObjects.rootScene.renderNode(this.interpreter, [0, 0], 0, this.draw2D);
-                if (rootObjects.dialog && rootObjects.dialog.getNodeParent() instanceof BrsInvalid) {
-                    rootObjects.dialog.renderNode(this.interpreter, [0, 0], 0, this.draw2D);
-                } else {
-                    rootObjects.dialog = undefined;
-                }
-                let timeStamp = performance.now();
-                while (timeStamp - this.lastMessage < this.maxMs) {
-                    timeStamp = performance.now();
-                }
-                this.finishDraw();
-                this.lastMessage = timeStamp;
+            let timeStamp = performance.now();
+            while (timeStamp - this.lastMessage < this.maxMs) {
+                timeStamp = performance.now();
             }
-            if (this.processTasks()) {
-                this.isDirty = true;
-            }
+            this.finishDraw();
+            this.lastMessage = timeStamp;
         }
         return events;
     }
@@ -242,6 +238,15 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
             }
         });
         return updates;
+    }
+
+    private processTimers(fired: boolean = false) {
+        rootObjects.timers.forEach((timer) => {
+            if (timer.active && timer.checkFire()) {
+                fired = true;
+            }
+        });
+        return fired;
     }
 
     /** Handle control keys */
