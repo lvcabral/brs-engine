@@ -211,7 +211,6 @@ export class IfDraw2D {
             drawChunk(ctx, image, { sx, sy, sw, sh, dx, dy, dw, dh });
         };
 
-
         ctx.save();
         // Set context properties (alpha blending, smoothing)
         setContextAlpha(ctx, rgba);

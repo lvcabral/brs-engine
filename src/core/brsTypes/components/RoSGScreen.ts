@@ -208,12 +208,12 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         }
         // Handle Scene Events
         if (rootObjects.rootScene) {
-            this.processTimers()
-            this.processTasks()
+            this.processTimers();
+            this.processTasks();
             // TODO: Optimize rendering by only rendering if there are changes
             rootObjects.rootScene.renderNode(this.interpreter, [0, 0], 0, this.draw2D);
             if (rootObjects.dialog && rootObjects.dialog.getNodeParent() instanceof BrsInvalid) {
-                const screenRect = {x:0, y:0, width: this.width, height: this.height};
+                const screenRect = { x: 0, y: 0, width: this.width, height: this.height };
                 this.draw2D.doDrawRotatedRect(screenRect, 255, 0, [0, 0], 0.5);
                 rootObjects.dialog.renderNode(this.interpreter, [0, 0], 0, this.draw2D);
             } else {
