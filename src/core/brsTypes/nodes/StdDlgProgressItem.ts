@@ -6,12 +6,10 @@ import {
     BrsString,
     BusySpinner,
     Label,
-    RSGPalette,
     StandardDialog,
     StdDlgContentArea,
     Float,
     RoArray,
-    BrsInvalid,
 } from "..";
 import { Interpreter } from "../..";
 import { IfDraw2D, Rect } from "../interfaces/IfDraw2D";

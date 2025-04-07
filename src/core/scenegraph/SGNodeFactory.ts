@@ -41,7 +41,6 @@ import {
     StdDlgProgressItem,
     BusySpinner,
     RSGPalette,
-    BrsBoolean,
 } from "../brsTypes";
 import { TaskData } from "../common";
 

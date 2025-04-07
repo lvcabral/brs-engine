@@ -3,7 +3,6 @@ import { Group } from "./Group";
 import { AAMember, RoAssociativeArray } from "../components/RoAssociativeArray";
 import {
     BrsBoolean,
-    BrsInvalid,
     BrsString,
     BrsType,
     brsValueOf,
