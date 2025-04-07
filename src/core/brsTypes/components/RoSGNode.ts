@@ -1855,11 +1855,14 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         },
     });
 }
-// An object that holds the Node that represents the m.global, referenced by all other nodes and the root Scene.
+
+/**
+ * An object that holds the Node that represents the m.global, the root Scene,
+ * the currently focused node and the arrays of tasks and timers.
+ * */
 interface RootObjects {
     mGlobal: RoSGNode;
     rootScene?: Scene;
-    dialog?: RoSGNode;
     focused?: RoSGNode;
     tasks: Task[];
     timers: Timer[];

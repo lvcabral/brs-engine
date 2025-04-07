@@ -5,8 +5,11 @@ import { Interpreter } from "../../interpreter";
 import { IfDraw2D } from "../interfaces/IfDraw2D";
 import {
     BrsBoolean,
+    BrsInvalid,
     BrsString,
+    BrsType,
     Callable,
+    Dialog,
     getTextureManager,
     Int32,
     RoArray,
@@ -14,7 +17,9 @@ import {
     RoMessagePort,
     rootObjects,
     RoSGNode,
+    StandardDialog,
     toAssociativeArray,
+    ValueKind,
 } from "..";
 import { Scope } from "../..";
 import { BlockEnd } from "../../parser/Statement";
@@ -27,9 +32,11 @@ export class Scene extends Group {
         { name: "backExitsScene", type: FieldKind.Boolean, value: "true" },
         { name: "dialog", type: FieldKind.Node },
         { name: "currentDesignResolution", type: FieldKind.AssocArray },
+        { name: "palette", type: FieldKind.Node },
         { name: "focusable", type: FieldKind.Boolean, value: "true" },
     ];
     readonly ui = { width: 1280, height: 720, resolution: "HD" };
+    dialog?: Dialog | StandardDialog;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = "Scene") {
         super([], name);
@@ -38,6 +45,24 @@ export class Scene extends Group {
         this.registerInitializedFields(initializedFields);
 
         this.setDesignResolution("HD");
+    }
+
+    set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
+        if (index.kind !== ValueKind.String) {
+            throw new Error("RoSGNode indexes must be strings");
+        }
+        const fieldName = index.value.toLowerCase();
+        if (fieldName === "dialog") {
+            if (value instanceof Dialog || value instanceof StandardDialog) {
+                this.dialog?.set(new BrsString("close"), BrsBoolean.True);
+                this.dialog = value;
+            } else if (value instanceof BrsInvalid) {
+                this.dialog?.set(new BrsString("close"), BrsBoolean.True);
+            } else {
+                return BrsInvalid.Instance;
+            }
+        }
+        return super.set(index, value, alwaysNotify, kind);
     }
 
     getDimensions() {

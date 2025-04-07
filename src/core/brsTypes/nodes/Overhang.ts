@@ -56,7 +56,6 @@ export class Overhang extends Group {
     private readonly dividerHD: string = "common:/images/divider_vertical_HD.png";
     private readonly dividerFHD: string = "common:/images/divider_vertical_FHD.png";
     private readonly width: number;
-    private readonly resolution: string;
     private realign: boolean;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = "Overhang") {
@@ -65,7 +64,6 @@ export class Overhang extends Group {
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
 
-        this.resolution = rootObjects.rootScene?.ui.resolution ?? "HD";
         if (this.resolution === "FHD") {
             this.width = 1920;
             this.setFieldValue("width", new Float(this.width));
@@ -115,8 +113,7 @@ export class Overhang extends Group {
         });
         clock.set(new BrsString("repeat"), BrsBoolean.True);
         clock.set(new BrsString("control"), new BrsString("start"));
-        this.children.push(clock);
-        clock.setNodeParent(this);
+        this.appendChildToParent(clock);
         this.realign = false;
     }
 

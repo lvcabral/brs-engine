@@ -1,6 +1,20 @@
-import { FieldModel } from "./Field";
+import { FieldKind, FieldModel } from "./Field";
 import { Group } from "./Group";
-import { AAMember } from "../components/RoAssociativeArray";
+import { AAMember, RoAssociativeArray } from "../components/RoAssociativeArray";
+import {
+    BrsBoolean,
+    BrsString,
+    BrsType,
+    brsValueOf,
+    jsValueOf,
+    Poster,
+    rootObjects,
+    RSGPalette,
+    ValueKind,
+} from "..";
+import { IfDraw2D, Rect } from "../interfaces/IfDraw2D";
+import { Interpreter } from "../..";
+import { rotateTranslation } from "../../scenegraph/SGUtil";
 
 export class StandardDialog extends Group {
     readonly defaultFields: FieldModel[] = [
@@ -12,11 +26,107 @@ export class StandardDialog extends Group {
         { name: "close", type: "boolean", value: "false" },
         { name: "wasClosed", type: "boolean" },
     ];
+    protected readonly dialogBackgroundUri = "common:/images/standard_dialog_background.9.png";
+    protected readonly dialogDividerUri = "common:/images/dialog_divider.9.png";
+    private readonly background: Poster;
+    private readonly minHeight: number;
+    private readonly maxWidth: number;
+    private width: number;
+    private height: number;
+    private dialogTrans: number[];
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = "StandardDialog") {
         super([], name);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
+
+        if (this.resolution === "FHD") {
+            this.width = 1038;
+            this.maxWidth = 1380;
+            this.minHeight = 270;
+            this.dialogTrans = [531, 492];
+            this.background = this.addPoster(
+                this.dialogBackgroundUri,
+                [-90, -60],
+                this.width,
+                this.minHeight
+            );
+        } else {
+            this.width = 692;
+            this.maxWidth = 920;
+            this.minHeight = 180;
+            this.dialogTrans = [354, 328];
+            this.background = this.addPoster(
+                this.dialogBackgroundUri,
+                [-60, -40],
+                this.width,
+                this.minHeight
+            );
+        }
+        this.height = this.minHeight;
+        this.setFieldValue("translation", brsValueOf(this.dialogTrans));
+    }
+
+    set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
+        if (index.kind !== ValueKind.String) {
+            throw new Error("RoSGNode indexes must be strings");
+        }
+        const fieldName = index.value.toLowerCase();
+        if (fieldName === "close") {
+            index = new BrsString("wasClosed");
+            value = BrsBoolean.True;
+            this.set(new BrsString("visible"), BrsBoolean.False);
+            if (rootObjects.rootScene?.dialog === this) {
+                rootObjects.rootScene.dialog = undefined;
+            }
+        } else if (fieldName === "width") {
+            const newWidth = jsValueOf(value) as number;
+            if (newWidth > this.maxWidth) {
+                value = new BrsString(this.maxWidth.toString());
+            }
+            this.width = jsValueOf(value) as number;
+            this.background.set(new BrsString("width"), value);
+        }
+        return super.set(index, value, alwaysNotify, kind);
+    }
+
+    renderNode(interpreter: Interpreter, origin: number[], angle: number, draw2D?: IfDraw2D): void {
+        if (!this.isVisible()) {
+            return;
+        }
+        const nodeTrans = this.getTranslation();
+        const drawTrans = angle !== 0 ? rotateTranslation(nodeTrans, angle) : nodeTrans.slice();
+        drawTrans[0] += origin[0];
+        drawTrans[1] += origin[1];
+        const size = this.getDimensions();
+        const boundingRect: Rect = {
+            x: drawTrans[0],
+            y: drawTrans[1],
+            width: this.width,
+            height: size.height,
+        };
+        const colors = this.getPaletteColors();
+        const backColor = colors.get(new BrsString("DialogBackgroundColor"));
+        if (backColor instanceof BrsString) {
+            this.background.set(new BrsString("blendColor"), backColor);
+        }
+        this.updateBoundingRects(boundingRect, origin, angle);
+        this.renderChildren(interpreter, drawTrans, angle, draw2D);
+        this.updateParentRects(origin, angle);
+    }
+
+    getPaletteColors() {
+        let palette = this.getFieldValue("palette");
+        if (!(palette instanceof RSGPalette) && rootObjects.rootScene) {
+            palette = rootObjects.rootScene.getFieldValue("palette");
+        }
+        if (palette instanceof RSGPalette) {
+            const colors = palette.getFieldValue("colors");
+            if (colors instanceof RoAssociativeArray) {
+                return colors;
+            }
+        }
+        return new RoAssociativeArray([]);
     }
 }

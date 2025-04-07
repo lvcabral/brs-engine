@@ -167,8 +167,10 @@ export class Dialog extends Group {
         } else if (fieldName === "close") {
             index = new BrsString("wasClosed");
             value = BrsBoolean.True;
-            rootObjects.dialog?.set(new BrsString("visible"), BrsBoolean.False);
-            rootObjects.dialog = undefined;
+            this.set(new BrsString("visible"), BrsBoolean.False);
+            if (rootObjects.rootScene?.dialog === this) {
+                rootObjects.rootScene.dialog = undefined;
+            }
             if (this.lastFocus) {
                 rootObjects.focused = this.lastFocus;
             }
