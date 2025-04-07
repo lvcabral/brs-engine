@@ -40,6 +40,7 @@ export class StdDlgProgressItem extends Group {
             this.spinner.setPosterUri(this.spinnerUriHD);
             this.gap = 20;
         }
+        this.spinner.set(new BrsString("control"), new BrsString("start"));
         this.appendChildToParent(this.spinner);
         this.label = new Label();
         this.appendChildToParent(this.label);

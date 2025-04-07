@@ -1,7 +1,7 @@
 import { FieldKind, FieldModel } from "./Field";
 import { Group } from "./Group";
 import { AAMember } from "../components/RoAssociativeArray";
-import { BrsInvalid, BrsString, BrsType, Float, Poster, RoArray, ValueKind } from "..";
+import { BrsBoolean, BrsInvalid, BrsString, BrsType, Float, Poster, RoArray, ValueKind } from "..";
 import { Interpreter } from "../..";
 import { IfDraw2D } from "../interfaces/IfDraw2D";
 import { rotateTranslation } from "../../scenegraph/SGUtil";
@@ -11,11 +11,12 @@ export class BusySpinner extends Group {
         { name: "poster", type: "node" },
         { name: "control", type: "string", value: "none" },
         { name: "clockwise", type: "boolean", value: "true" },
-        { name: "spinInterval", type: "float", value: "2.0" },
+        { name: "spinInterval", type: "float", value: "2.0" }, // seconds
     ];
     private poster: Poster;
-    private tickTime: number = 0;
     private active: boolean = false;
+    private lastRenderTime: number = 0;
+    private currentRotation: number = 0;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = "BusySpinner") {
         super([], name);
@@ -37,8 +38,8 @@ export class BusySpinner extends Group {
         if (mapKey === "control") {
             let control = value.toString();
             if (control === "start") {
-                this.tickTime = performance.now();
                 this.active = true;
+                this.lastRenderTime = performance.now();
             } else if (control === "stop") {
                 this.active = false;
             } else {
@@ -78,7 +79,7 @@ export class BusySpinner extends Group {
         const rect = { x: drawTrans[0], y: drawTrans[1], width: size.width, height: size.height };
         const rotation = angle + this.getRotation();
         const bmp = this.poster.getBitmap("uri");
-        if (bmp) {
+        if (bmp?.isValid()) {
             this.poster.setFieldValue(
                 "scaleRotateCenter",
                 new RoArray([new Float(bmp.width / 2), new Float(bmp.height / 2)])
@@ -90,6 +91,18 @@ export class BusySpinner extends Group {
             if (size.height !== bmp.height) {
                 rect.height = bmp.height;
                 this.setFieldValue("height", new Float(bmp.height));
+            }
+            if (this.active) {
+                const now = performance.now();
+                const spinInterval = this.getFieldValue("spinInterval") as Float;
+                const clockwise = this.getFieldValue("clockwise") as BrsBoolean;
+                const direction = clockwise.toBoolean() ? -1 : 1;
+                const elapsedTime = (now - this.lastRenderTime) / 1000;
+                const rotationChange = (2 * Math.PI * elapsedTime) / spinInterval.getValue();
+                this.currentRotation += direction * rotationChange;
+                const spin = this.currentRotation + rotation;
+                this.poster.set(new BrsString("rotation"), new Float(spin));
+                this.lastRenderTime = now;
             }
         }
         this.updateBoundingRects(rect, origin, rotation);
