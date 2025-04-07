@@ -532,11 +532,11 @@ function addChildren(
             if (child.fields?.role) {
                 const targetField = child.fields.role;
                 if (node.getNodeFields().get(targetField)) {
-                    node.set(new BrsString(targetField), newChild, false);
                     if (child.children.length > 0) {
                         // we need to add the child's own children
                         addChildren(interpreter, newChild, child);
                     }
+                    node.set(new BrsString(targetField), newChild, false);
                 } else {
                     throw new Error(
                         `Role/Field ${targetField} does not exist in ${node.getId()} node`
