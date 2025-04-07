@@ -330,18 +330,6 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         return jsValueOf(this.getFieldValue("focusable")) as boolean;
     }
 
-    processTimers(fired: boolean = false) {
-        this.children.forEach((child) => {
-            if (child instanceof Timer && child.active && child.checkFire()) {
-                fired = true;
-            }
-            if (child.processTimers(fired)) {
-                fired = true;
-            }
-        });
-        return fired;
-    }
-
     renderNode(interpreter: Interpreter, origin: number[], angle: number, draw2D?: IfDraw2D) {
         this.renderChildren(interpreter, origin, angle, draw2D);
     }
@@ -541,7 +529,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         });
     }
 
-    private removeChildByReference(child: BrsType): boolean {
+    removeChildByReference(child: BrsType): boolean {
         if (child instanceof RoSGNode) {
             let spliceIndex = this.children.indexOf(child);
             if (spliceIndex >= 0) {
@@ -553,7 +541,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         return false;
     }
 
-    private appendChildToParent(child: BrsType): boolean {
+    appendChildToParent(child: BrsType): boolean {
         if (child instanceof RoSGNode) {
             if (this.children.includes(child)) {
                 return true;
@@ -1874,5 +1862,6 @@ interface RootObjects {
     dialog?: RoSGNode;
     focused?: RoSGNode;
     tasks: Task[];
+    timers: Timer[];
 }
-export const rootObjects: RootObjects = { mGlobal: new RoSGNode([]), tasks: [] };
+export const rootObjects: RootObjects = { mGlobal: new RoSGNode([]), tasks: [], timers: [] };

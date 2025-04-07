@@ -1,4 +1,4 @@
-import { RoSGNode } from "../components/RoSGNode";
+import { rootObjects, RoSGNode } from "../components/RoSGNode";
 import { FieldKind, FieldModel } from "./Field";
 import {
     Int32,
@@ -39,7 +39,7 @@ export class Group extends RoSGNode {
         { name: "enableRenderTracking", type: "boolean", value: "false" },
         { name: "renderTracking", type: "string", value: "disabled" },
     ];
-
+    protected readonly resolution: string;
     protected isDirty: boolean;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = "Group") {
@@ -48,6 +48,7 @@ export class Group extends RoSGNode {
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
 
+        this.resolution = rootObjects.rootScene?.ui.resolution ?? "HD";
         this.isDirty = true;
     }
 
@@ -84,6 +85,15 @@ export class Group extends RoSGNode {
         super.setFieldValue(fieldName, value, alwaysNotify);
     }
 
+    getDimensions() {
+        const width = this.fields.get("width")?.getValue();
+        const height = this.fields.get("height")?.getValue();
+        return {
+            width: width instanceof Int32 || width instanceof Float ? width.getValue() : 0,
+            height: height instanceof Int32 || height instanceof Float ? height.getValue() : 0,
+        };
+    }
+
     protected addPoster(uri: string, translation: number[], width?: number, height?: number) {
         const poster = new Poster();
         if (uri) {
@@ -96,8 +106,7 @@ export class Group extends RoSGNode {
         if (width) {
             poster.set(new BrsString("width"), new Float(width));
         }
-        this.children.push(poster);
-        poster.setNodeParent(this);
+        this.appendChildToParent(poster);
         return poster;
     }
 
@@ -138,8 +147,7 @@ export class Group extends RoSGNode {
         if (horizAlign) {
             label.set(new BrsString("horizalign"), new BrsString(horizAlign));
         }
-        this.children.push(label);
-        label.setNodeParent(this);
+        this.appendChildToParent(label);
         return label;
     }
 
@@ -166,15 +174,6 @@ export class Group extends RoSGNode {
         translation[0] -= scaleDiffX;
         translation[1] -= scaleDiffY;
         return translation;
-    }
-
-    protected getDimensions() {
-        const width = this.fields.get("width")?.getValue();
-        const height = this.fields.get("height")?.getValue();
-        return {
-            width: width instanceof Int32 || width instanceof Float ? width.getValue() : 0,
-            height: height instanceof Int32 || height instanceof Float ? height.getValue() : 0,
-        };
     }
 
     protected getRotation() {
@@ -401,13 +400,13 @@ export class Group extends RoSGNode {
     ) {
         if (bitmap.isValid()) {
             bitmap.scaleMode = 1;
-            if (bitmap.ninePatch) {
-                draw2D?.drawNinePatch(bitmap, rect);
-                // TODO: Handle 9-patch rotation, scaling and rgba
-                return rect;
-            }
             if (typeof rgba !== "number" || rgba === 0xffffffff || rgba === -1) {
                 rgba = undefined;
+            }
+            if (bitmap.ninePatch) {
+                draw2D?.drawNinePatch(bitmap, rect, rgba);
+                // TODO: Handle 9-patch rotation, scaling
+                return rect;
             }
             const scale = jsValueOf(this.getFieldValue("scale")) as number[];
             let scaleX = rect.width !== 0 ? rect.width / bitmap.width : 1;

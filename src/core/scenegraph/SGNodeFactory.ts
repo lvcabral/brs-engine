@@ -213,9 +213,12 @@ export function createNodeByType(interpreter: Interpreter, type: BrsString): RoS
     if (node instanceof Task) {
         node.id = rootObjects.tasks.length;
         rootObjects.tasks.push(node);
+    } else if (node instanceof Timer) {
+        rootObjects.timers.push(node);
     } else if (node instanceof Dialog || node instanceof StandardDialog) {
         rootObjects.dialog = node;
-    } else if (node instanceof RoSGNode && rootObjects.tasks.length === 1) {
+    }
+    if (node instanceof RoSGNode && rootObjects.tasks.length === 1) {
         const task = rootObjects.tasks[0];
         if (task.thread && node.getNodeParent() === BrsInvalid.Instance) {
             node.setNodeParent(task);
