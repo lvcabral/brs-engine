@@ -198,7 +198,7 @@ export class Field {
 
         let oldValue = this.value;
         this.value = value;
-        if (notify && (this.alwaysNotify || oldValue !== value)) {
+        if (notify && (this.alwaysNotify || !this.isEqual(oldValue, value))) {
             this.permanentObservers.forEach(this.executeCallbacks.bind(this));
             this.unscopedObservers.forEach(this.executeCallbacks.bind(this));
             this.scopedObservers.forEach((callbacks) =>
@@ -282,6 +282,20 @@ export class Field {
                 ?.some((callback) => callback.callable instanceof RoMessagePort) ||
             false
         );
+    }
+
+    private isEqual(oldValue: BrsType, newValue: BrsType) {
+        if (isBrsNumber(oldValue) && isBrsNumber(newValue)) {
+            return oldValue.getValue() === newValue.getValue();
+        } else if (isBrsString(oldValue) && isBrsString(newValue)) {
+            return oldValue.value === newValue.value;
+        } else if (isBrsBoolean(oldValue) && isBrsBoolean(newValue)) {
+            return oldValue.toBoolean() === newValue.toBoolean();
+        } else if (oldValue instanceof RoSGNode && newValue instanceof RoSGNode) {
+            return oldValue === newValue && !newValue.changed;
+        } else {
+            return oldValue === newValue;
+        }
     }
 
     private executeCallbacks(callback: BrsCallback) {

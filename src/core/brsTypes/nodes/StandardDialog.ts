@@ -20,11 +20,11 @@ export class StandardDialog extends Group {
     readonly defaultFields: FieldModel[] = [
         { name: "width", type: "float", value: "0.0" },
         { name: "height", type: "float", value: "0.0" },
-        { name: "buttonSelected", type: "integer", value: "0" },
-        { name: "buttonFocused", type: "integer", value: "0" },
+        { name: "buttonSelected", type: "integer", value: "0", alwaysNotify: true },
+        { name: "buttonFocused", type: "integer", value: "0", alwaysNotify: true },
         { name: "palette", type: "node" },
         { name: "close", type: "boolean", value: "false" },
-        { name: "wasClosed", type: "boolean" },
+        { name: "wasClosed", type: "boolean", value: "false", alwaysNotify: true },
     ];
     protected readonly dialogBackgroundUri = "common:/images/standard_dialog_background.9.png";
     protected readonly dialogDividerUri = "common:/images/dialog_divider.9.png";

@@ -44,6 +44,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     rectLocal: Rect = { x: 0, y: 0, width: 0, height: 0 };
     rectToParent: Rect = { x: 0, y: 0, width: 0, height: 0 };
     rectToScene: Rect = { x: 0, y: 0, width: 0, height: 0 };
+    changed: boolean = false;
 
     readonly defaultFields: FieldModel[] = [
         { name: "id", type: FieldKind.String },
@@ -232,6 +233,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             if (fieldType && alwaysNotify !== undefined) {
                 field = new Field(value, fieldType, alwaysNotify);
                 this.fields.set(mapKey, field);
+                this.changed = true;
             } else {
                 let error = `warning,Warning occurred while setting a field of an RoSGNode\n`;
                 error += `-- Tried to set nonexistent field "${index.value}" of a "${this.nodeSubtype}" node`;
@@ -241,6 +243,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             const child = this.findNodeById(this, new BrsString(alias.nodeId));
             if (child instanceof RoSGNode) {
                 child.set(new BrsString(alias.fieldName), value, alwaysNotify);
+                this.changed = true;
             } else {
                 BrsDevice.stderr.write(
                     `warning,BRIGHTSCRIPT: ERROR: roSGNode.Set: "${index.value}": Alias "${alias.nodeId}.${alias.fieldName}" not found!`
@@ -251,12 +254,12 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             // Except Numbers and Booleans that can be converted to string fields.
             field.setValue(value);
             this.fields.set(mapKey, field);
+            this.changed = true;
         } else {
             BrsDevice.stderr.write(
                 `warning,BRIGHTSCRIPT: ERROR: roSGNode.AddReplace: "${index.value}": Type mismatch!`
             );
         }
-
         return BrsInvalid.Instance;
     }
 
@@ -293,6 +296,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         }
         if (field) {
             this.fields.set(mapKey, field);
+            this.changed = true;
         }
     }
 
@@ -338,6 +342,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         this.children.forEach((node) => {
             node.renderNode(interpreter, origin, angle, draw2D);
         });
+        this.changed = false;
     }
 
     addObserver(
