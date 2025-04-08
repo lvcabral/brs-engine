@@ -468,6 +468,7 @@ describe("end to end syntax", () => {
             "counter: 2",
         ]);
     });
+
     test("goto-func-for.brs", async () => {
         await execute([resourceFile("goto-func-for.brs")], outputStreams);
         expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
@@ -484,6 +485,7 @@ describe("end to end syntax", () => {
             "finished goto test",
         ]);
     });
+
     test("goto-foreach.brs", async () => {
         await execute([resourceFile("goto-foreach.brs")], outputStreams);
         expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
@@ -498,6 +500,7 @@ describe("end to end syntax", () => {
             "finished goto test",
         ]);
     });
+
     test("goto-trycatch.brs", async () => {
         await execute([resourceFile("goto-trycatch.brs")], outputStreams);
         expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
@@ -505,6 +508,15 @@ describe("end to end syntax", () => {
             "test 1",
             "test 2",
             "test ends here",
+        ]);
+    });
+
+    test("boxed-boolean.brs", async () => {
+        await execute([resourceFile("boxed-boolean.brs")], outputStreams);
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
+            "true false",
+            "one false",
+            "one true",
         ]);
     });
 });

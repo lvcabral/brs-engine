@@ -556,11 +556,11 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             right = this.evaluate(expression.right);
         }
 
-        // Unbox Numeric components to intrinsic types
-        if (isBoxedNumber(left)) {
+        // Unbox Numeric and Boolean components to intrinsic types
+        if (isUnboxable(left)) {
             left = left.unbox();
         }
-        if (isBoxedNumber(right)) {
+        if (isUnboxable(right)) {
             right = right.unbox();
         }
 
@@ -902,6 +902,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     return BrsBoolean.False;
                 } else if (isBrsBoolean(left)) {
                     right = this.evaluate(expression.right);
+                    if (isUnboxable(right)) {
+                        right = right.unbox();
+                    }
                     if (isBrsBoolean(right) || isBrsNumber(right)) {
                         return (left as BrsBoolean).and(right);
                     }
@@ -960,6 +963,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     return BrsBoolean.True;
                 } else if (isBrsBoolean(left)) {
                     right = this.evaluate(expression.right);
+                    if (isUnboxable(right)) {
+                        right = right.unbox();
+                    }
                     if (isBrsBoolean(right) || isBrsNumber(right)) {
                         return (left as BrsBoolean).or(right);
                     } else {
@@ -979,6 +985,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     }
                 } else if (isBrsNumber(left)) {
                     right = this.evaluate(expression.right);
+                    if (isUnboxable(right)) {
+                        right = right.unbox();
+                    }
                     if (isBrsNumber(right) || isBrsBoolean(right)) {
                         return left.or(right);
                     }
@@ -1198,14 +1207,11 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                         if (
                             !this._tryMode &&
                             this.options.stopOnCrash &&
-                            !(err instanceof Stmt.BlockEnd) &&
+                            err instanceof RuntimeError &&
                             !core.terminateReasons.includes(err.message)
                         ) {
                             // Enable Micro Debugger on app crash
-                            let errNumber = RuntimeErrorDetail.Internal.errno;
-                            if (err instanceof RuntimeError) {
-                                errNumber = err.errorDetail.errno;
-                            }
+                            const errNumber = err.errorDetail.errno;
                             runDebugger(this, this.location, this.location, err.message, errNumber);
                             this.options.stopOnCrash = false;
                         }
@@ -1829,7 +1835,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
     visitUnary(expression: Expr.Unary) {
         let right = this.evaluate(expression.right);
-        if (isBoxedNumber(right)) {
+        if (isUnboxable(right)) {
             right = right.unbox();
         }
 
