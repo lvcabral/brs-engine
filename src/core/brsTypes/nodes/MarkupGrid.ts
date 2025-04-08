@@ -32,6 +32,7 @@ export class MarkupGrid extends ArrayGrid {
         const style = jsValueOf(this.getFieldValue("vertFocusAnimationStyle")) as string;
         this.wrap = style.toLowerCase() === "fixedfocuswrap";
         this.hasNinePatch = true;
+        this.focusField = "gridHasFocus";
     }
 
     protected handleUpDown(key: string) {
