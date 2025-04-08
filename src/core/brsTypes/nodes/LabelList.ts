@@ -16,7 +16,6 @@ import {
 } from "..";
 import { Interpreter } from "../..";
 import { IfDraw2D, Rect } from "../interfaces/IfDraw2D";
-import { rotateTranslation } from "../../scenegraph/SGUtil";
 
 export class LabelList extends ArrayGrid {
     readonly defaultFields: FieldModel[] = [
@@ -34,7 +33,6 @@ export class LabelList extends ArrayGrid {
     protected readonly footprintUri = "common:/images/focus_footprint.9.png";
     protected readonly margin: number;
     protected readonly gap: number;
-    protected hasNinePatch: boolean;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = "LabelList") {
         super([], name);
@@ -104,25 +102,12 @@ export class LabelList extends ArrayGrid {
         return handled;
     }
 
-    renderNode(interpreter: Interpreter, origin: number[], angle: number, draw2D?: IfDraw2D) {
-        if (!this.isVisible()) {
-            return;
-        }
-        const nodeTrans = this.getTranslation();
-        const drawTrans = angle !== 0 ? rotateTranslation(nodeTrans, angle) : nodeTrans.slice();
-        drawTrans[0] += origin[0];
-        drawTrans[1] += origin[1];
-        const size = this.getDimensions();
-        const rect = { x: drawTrans[0], y: drawTrans[1], width: size.width, height: size.height };
-        const rotation = angle + this.getRotation();
-        const itemSize = jsValueOf(this.getFieldValue("itemSize")) as number[];
-        this.renderList(rect, itemSize, draw2D);
-        this.updateBoundingRects(rect, origin, rotation);
-        this.renderChildren(interpreter, drawTrans, rotation, draw2D);
-        this.updateParentRects(origin, angle);
-    }
-
-    protected renderList(rect: Rect, itemSize: number[], draw2D?: IfDraw2D) {
+    protected renderContent(
+        _interpreter: Interpreter,
+        rect: Rect,
+        _rotation: number,
+        draw2D?: IfDraw2D
+    ) {
         if (this.content.length === 0) {
             return;
         }
@@ -132,6 +117,7 @@ export class LabelList extends ArrayGrid {
         let lastIndex = -1;
         const numRows = jsValueOf(this.getFieldValue("numRows")) as number;
         const displayRows = Math.min(this.content.length, numRows);
+        const itemSize = jsValueOf(this.getFieldValue("itemSize")) as number[];
         const itemRect = { ...rect, width: itemSize[0], height: itemSize[1] };
         for (let r = 0; r < displayRows; r++) {
             const index = this.getIndex(r - this.currRow);
