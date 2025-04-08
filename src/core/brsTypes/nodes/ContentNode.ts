@@ -107,6 +107,7 @@ export class ContentNode extends RoSGNode {
         { name: "Text", type: "string", hidden: true },
         { name: "TextAttrs", type: "assocarray", hidden: true },
         { name: "HideIcon", type: "boolean", hidden: true },
+        { name: "Color", type: "string", hidden: true },
         { name: "HDListItemIconUrl", type: "string", hidden: true },
         { name: "SDListItemIconUrl", type: "string", hidden: true },
         { name: "HDGridPosterUrl", type: "string", hidden: true },
@@ -181,7 +182,7 @@ export class ContentNode extends RoSGNode {
             args: [],
             returns: ValueKind.Int32,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_: Interpreter) => {
             return new Int32(this.getVisibleFields().length);
         },
     });
@@ -195,7 +196,7 @@ export class ContentNode extends RoSGNode {
             args: [],
             returns: ValueKind.Object,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_: Interpreter) => {
             return new RoArray(this.getElements());
         },
     });
@@ -209,7 +210,7 @@ export class ContentNode extends RoSGNode {
             args: [],
             returns: ValueKind.Object,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_: Interpreter) => {
             return new RoArray(
                 this.getElements().map((key: BrsString) => {
                     return toAssociativeArray({ key: key, value: this.get(key) });
@@ -227,7 +228,7 @@ export class ContentNode extends RoSGNode {
             args: [new StdlibArgument("fieldname", ValueKind.String)],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter, fieldname: BrsString) => {
+        impl: (_: Interpreter, fieldname: BrsString) => {
             let field = this.getNodeFields().get(fieldname.value.toLowerCase());
             if (field) {
                 field.setHidden(false);
