@@ -67,9 +67,9 @@ export class ArrayGrid extends Group {
         { name: "sectionDividerMinWidth", type: "float", value: "0.0" },
         { name: "sectionDividerLeftOffset", type: "float", value: "0.0" },
         { name: "itemClippingRect", type: "array", value: "[ 0.0, 0.0, 0.0, 0.0 ]" },
-        { name: "itemSelected", type: "integer", value: "-1" },
-        { name: "itemFocused", type: "integer", value: "-1" },
-        { name: "itemUnfocused", type: "integer", value: "-1" },
+        { name: "itemSelected", type: "integer", value: "-1", alwaysNotify: true },
+        { name: "itemFocused", type: "integer", value: "-1", alwaysNotify: true },
+        { name: "itemUnfocused", type: "integer", value: "-1", alwaysNotify: true },
         { name: "jumpToItem", type: "integer", value: "0" },
         { name: "animateToItem", type: "integer", value: "0" },
         { name: "currFocusRow", type: "float", value: "0.0" },
@@ -263,6 +263,9 @@ export class ArrayGrid extends Group {
             if (itemComp instanceof Group) {
                 this.itemComps[index] = itemComp;
             }
+        }
+        if (content.changed) {
+            this.itemComps[index].set(new BrsString("itemContent"), content, true);
         }
         this.updateItemFocus(index, focused, nodeFocus);
         const drawFocus = jsValueOf(this.getFieldValue("drawFocusFeedback"));

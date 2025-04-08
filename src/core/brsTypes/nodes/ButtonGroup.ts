@@ -37,8 +37,8 @@ export class ButtonGroup extends LayoutGroup {
         { name: "maxWidth", type: "float", value: "32767" },
         { name: "buttonHeight", type: "float", value: "0.0" },
         { name: "rightJustify", type: "boolean", value: "false" },
-        { name: "buttonSelected", type: "integer", value: "0" },
-        { name: "buttonFocused", type: "integer", value: "0" },
+        { name: "buttonSelected", type: "integer", value: "0", alwaysNotify: true },
+        { name: "buttonFocused", type: "integer", value: "0", alwaysNotify: true },
         { name: "focusButton", type: "integer", value: "0" },
         { name: "buttons", type: "array" },
     ];
