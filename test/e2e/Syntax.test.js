@@ -519,4 +519,13 @@ describe("end to end syntax", () => {
             "one true",
         ]);
     });
+
+    test("boxed-array-index.brs", async () => {
+        await execute([resourceFile("boxed-array-index.brs")], outputStreams);
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
+            "the letter is b",
+            "the number is 1",
+            "roFloat roArray roString",
+        ]);
+    });
 });

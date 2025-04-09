@@ -1,4 +1,4 @@
-import { BrsType } from "..";
+import { BrsType, isBoxedNumber } from "..";
 import { BrsValue, ValueKind, BrsBoolean, BrsInvalid } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
 import { BrsList, IfList, IfListToArray } from "../interfaces/IfList";
@@ -88,6 +88,9 @@ export class RoList extends BrsComponent implements BrsValue, BrsList {
     }
 
     get(index: BrsType) {
+        if (isBoxedNumber(index)) {
+            index = index.unbox();
+        }
         switch (index.kind) {
             case ValueKind.Float:
                 return this.getElements()[Math.trunc(index.getValue())] ?? BrsInvalid.Instance;
@@ -101,6 +104,9 @@ export class RoList extends BrsComponent implements BrsValue, BrsList {
     }
 
     set(index: BrsType, value: BrsType) {
+        if (isBoxedNumber(index)) {
+            index = index.unbox();
+        }
         if (index.kind === ValueKind.Int32 || index.kind === ValueKind.Float) {
             const idx = Math.trunc(index.getValue());
             this.addChildRef(value);

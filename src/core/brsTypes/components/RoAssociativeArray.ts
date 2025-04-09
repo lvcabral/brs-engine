@@ -1,6 +1,6 @@
 import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid } from "../BrsType";
 import { BrsComponent, BrsIterable } from "./BrsComponent";
-import { BrsType } from "..";
+import { BrsType, isUnboxable } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
@@ -88,6 +88,9 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
     }
 
     get(index: BrsType, isCaseSensitive = false) {
+        if (isUnboxable(index)) {
+            index = index.unbox();
+        }
         if (index.kind !== ValueKind.String) {
             throw new Error("Associative array indexes must be strings");
         }
@@ -111,6 +114,9 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
     }
 
     set(index: BrsType, value: BrsType, isCaseSensitive = false) {
+        if (isUnboxable(index)) {
+            index = index.unbox();
+        }
         if (index.kind !== ValueKind.String) {
             throw new Error("Associative array indexes must be strings");
         }
