@@ -17,6 +17,7 @@ import {
     isBoxable,
     isUnboxable,
     isNumberComp,
+    isAnyNumber,
     isStringComp,
     isBoxedNumber,
     PrimitiveKinds,
@@ -505,6 +506,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         let dimensionValues: number[] = [];
         statement.dimensions.forEach((expr) => {
             let val = this.evaluate(expr);
+            if (isBoxedNumber(val)) {
+                val = val.unbox();
+            }
             if (val.kind !== ValueKind.Int32 && val.kind !== ValueKind.Float) {
                 this.addError(
                     new RuntimeError(RuntimeErrorDetail.NonNumericArrayIndex, expr.location)
@@ -905,7 +909,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     if (isUnboxable(right)) {
                         right = right.unbox();
                     }
-                    if (isBrsBoolean(right) || isBrsNumber(right)) {
+                    if (right instanceof BrsBoolean || isBrsNumber(right)) {
                         return (left as BrsBoolean).and(right);
                     }
 
@@ -924,8 +928,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     );
                 } else if (isBrsNumber(left)) {
                     right = this.evaluate(expression.right);
-
-                    if (isBrsNumber(right) || isBrsBoolean(right)) {
+                    if (isUnboxable(right)) {
+                        right = right.unbox();
+                    }
+                    if (isBrsNumber(right) || right instanceof BrsBoolean) {
                         return left.and(right);
                     }
 
@@ -966,7 +972,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     if (isUnboxable(right)) {
                         right = right.unbox();
                     }
-                    if (isBrsBoolean(right) || isBrsNumber(right)) {
+                    if (right instanceof BrsBoolean || isBrsNumber(right)) {
                         return (left as BrsBoolean).or(right);
                     } else {
                         return this.addError(
@@ -988,7 +994,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     if (isUnboxable(right)) {
                         right = right.unbox();
                     }
-                    if (isBrsNumber(right) || isBrsBoolean(right)) {
+                    if (isBrsNumber(right) || right instanceof BrsBoolean) {
                         return left.or(right);
                     }
 
@@ -1432,7 +1438,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         let current: BrsType = source;
         for (let index of expression.indexes) {
             let dimIndex = this.evaluate(index);
-            if (!isBrsNumber(dimIndex)) {
+            if (!isAnyNumber(dimIndex)) {
                 this.addError(
                     new RuntimeError(RuntimeErrorDetail.NonNumericArrayIndex, index.location)
                 );
@@ -1858,7 +1864,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 // Roku just ignores the Unary plus on any value/object
                 return right;
             case Lexeme.Not:
-                if (isBrsBoolean(right) || isBrsNumber(right)) {
+                if (right instanceof BrsBoolean || isBrsNumber(right)) {
                     return right.not();
                 } else {
                     this.addError(

@@ -17,10 +17,6 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
     readonly kind = ValueKind.Object;
     private intrinsic: BrsString = new BrsString("");
 
-    public getValue(): string {
-        return this.intrinsic.value;
-    }
-
     constructor(initialValue?: BrsString) {
         super("roString");
 
@@ -57,6 +53,10 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
             ],
             ifToStr: [new IfToStr(this).toStr],
         });
+    }
+
+    getValue(): string {
+        return this.intrinsic.value;
     }
 
     lessThan(other: BrsType): BrsBoolean {

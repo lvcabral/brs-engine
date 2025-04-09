@@ -1,4 +1,4 @@
-import { BrsType, isBrsString, isBrsNumber, Int32, Float } from "..";
+import { BrsType, isBrsString, isBrsNumber, Int32, Float, isBoxedNumber } from "..";
 import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid, Comparable } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
 import { Callable, StdlibArgument } from "../Callable";
@@ -128,6 +128,9 @@ export class RoArray extends BrsComponent implements BrsValue, BrsArray {
     }
 
     get(index: BrsType) {
+        if (isBoxedNumber(index)) {
+            index = index.unbox();
+        }
         switch (index.kind) {
             case ValueKind.Float:
                 return this.getElements()[Math.trunc(index.getValue())] ?? BrsInvalid.Instance;
@@ -141,6 +144,9 @@ export class RoArray extends BrsComponent implements BrsValue, BrsArray {
     }
 
     set(index: BrsType, value: BrsType) {
+        if (isBoxedNumber(index)) {
+            index = index.unbox();
+        }
         if (index.kind === ValueKind.Int32 || index.kind === ValueKind.Float) {
             const idx = Math.trunc(index.getValue());
             this.addChildRef(value);
