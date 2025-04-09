@@ -8,8 +8,8 @@ import {
     getFontRegistry,
     Int32,
     RoFont,
-    ValueKind,
     AAMember,
+    isBrsString,
 } from "..";
 
 export type FontDef = {
@@ -55,15 +55,15 @@ export class Font extends RoSGNode {
         this.systemFont = "MediumSystemFont";
     }
     set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
-        if (index.kind !== ValueKind.String) {
+        if (!isBrsString(index)) {
             throw new Error("RoSGNode indexes must be strings");
         }
 
-        const mapKey = index.value.toLowerCase();
+        const mapKey = index.getValue().toLowerCase();
         const field = this.fields.get(mapKey);
 
-        if (field && mapKey === "uri" && value instanceof BrsString) {
-            const uri = value.value;
+        if (field && mapKey === "uri" && isBrsString(value)) {
+            const uri = value.getValue();
             getFontRegistry().registerFont(uri);
             field.setValue(value);
             this.fields.set(mapKey, field);
@@ -73,13 +73,11 @@ export class Font extends RoSGNode {
     }
 
     getUri() {
-        const uri = this.fields.get("uri")?.getValue();
-        return uri instanceof BrsString ? uri.value : "";
+        return (this.getFieldValueJS("uri") as string) ?? "";
     }
 
     getSize() {
-        const size = this.fields.get("size")?.getValue();
-        return size instanceof Int32 ? size.getValue() : this.defaultSize;
+        return (this.getFieldValueJS("size") as number) ?? this.defaultSize;
     }
 
     setSize(size: number) {

@@ -1,7 +1,7 @@
 import { FieldKind, FieldModel } from "./Field";
 import { Group } from "./Group";
 import { Font } from "./Font";
-import { AAMember, BrsBoolean, BrsString, BrsType, Float, Int32, rootObjects, ValueKind } from "..";
+import { AAMember, BrsBoolean, BrsType, Float, isBrsString, rootObjects } from "..";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D, MeasuredText, Rect } from "../interfaces/IfDraw2D";
 import { rotateTranslation } from "../../scenegraph/SGUtil";
@@ -41,7 +41,7 @@ export class Label extends Group {
     }
 
     set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
-        if (index.kind !== ValueKind.String) {
+        if (!isBrsString(index)) {
             throw new Error("RoSGNode indexes must be strings");
         }
         const resetFields = [
@@ -54,7 +54,7 @@ export class Label extends Group {
             "wrap",
             "linespacing",
         ];
-        if (resetFields.includes(index.value.toLowerCase())) {
+        if (resetFields.includes(index.getValue().toLowerCase())) {
             // Reset the flag if any relevant field changed and the label is not re-measured yet
             this.setEllipsized(false);
             this.measured = undefined;
@@ -91,33 +91,33 @@ export class Label extends Group {
 
     protected renderLabel(rect: Rect, rotation: number, draw2D?: IfDraw2D) {
         const font = this.getFieldValue("font") as Font;
-        const color = this.getFieldValue("color") as Int32;
-        const textField = this.getFieldValue("text") as BrsString;
-        const horizAlign = this.getFieldValue("horizAlign")?.toString() || "left";
-        const vertAlign = this.getFieldValue("vertAlign")?.toString() || "top";
-        const ellipsis = this.getFieldValue("ellipsisText")?.toString() || "...";
-        const wrap = this.getFieldValue("wrap") as BrsBoolean;
-        const numLines = this.getFieldValue("numLines") as Int32;
-        const maxLines = this.getFieldValue("maxLines") as Int32;
-        const displayPartialLines = this.getFieldValue("displayPartialLines") as BrsBoolean;
-        const lineSpacing = this.getFieldValue("lineSpacing") as Float;
+        const color = this.getFieldValueJS("color") as number;
+        const textField = this.getFieldValueJS("text") as string;
+        const horizAlign = this.getFieldValueJS("horizAlign") ?? "left";
+        const vertAlign = this.getFieldValueJS("vertAlign") ?? "top";
+        const ellipsis = this.getFieldValueJS("ellipsisText") ?? "...";
+        const wrap = this.getFieldValueJS("wrap") as boolean;
+        const numLines = this.getFieldValueJS("numLines") as number;
+        const maxLines = this.getFieldValueJS("maxLines") as number;
+        const displayPartialLines = this.getFieldValueJS("displayPartialLines") as boolean;
+        const lineSpacing = this.getFieldValueJS("lineSpacing") as number;
 
         let measured;
-        if (wrap.toBoolean()) {
+        if (wrap) {
             if (rect.width > 0) {
                 measured = this.drawTextWrap(
-                    textField.value,
+                    textField,
                     font,
-                    color.getValue(),
+                    color,
                     rect,
                     horizAlign,
                     vertAlign,
                     rotation,
                     ellipsis,
-                    numLines.getValue(),
-                    maxLines.getValue(),
-                    lineSpacing.getValue(),
-                    displayPartialLines.toBoolean(),
+                    numLines,
+                    maxLines,
+                    lineSpacing,
+                    displayPartialLines,
                     draw2D
                 );
             } else {
@@ -125,9 +125,9 @@ export class Label extends Group {
             }
         } else {
             measured = this.drawText(
-                textField.value,
+                textField,
                 font,
-                color.getValue(),
+                color,
                 rect,
                 horizAlign,
                 vertAlign,

@@ -7,9 +7,8 @@ import {
     BrsType,
     customNodeExists,
     Int32,
-    jsValueOf,
+    isBrsString,
     rootObjects,
-    ValueKind,
 } from "..";
 import { IfDraw2D, Rect } from "../interfaces/IfDraw2D";
 import { Interpreter } from "../../interpreter";
@@ -41,17 +40,17 @@ export class MarkupList extends ArrayGrid {
         this.setFieldValue("focusBitmapUri", new BrsString(this.focusUri));
         this.setFieldValue("focusFootprintBitmapUri", new BrsString(this.footprintUri));
         this.setFieldValue("wrapDividerBitmapUri", new BrsString(this.dividerUri));
-        const style = jsValueOf(this.getFieldValue("vertFocusAnimationStyle")) as string;
+        const style = this.getFieldValueJS("vertFocusAnimationStyle") as string;
         this.wrap = style.toLowerCase() === "fixedfocuswrap";
 
         this.hasNinePatch = true;
     }
 
     set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
-        if (index.kind !== ValueKind.String) {
+        if (!isBrsString(index)) {
             throw new Error("RoSGNode indexes must be strings");
         }
-        const fieldName = index.value.toLowerCase();
+        const fieldName = index.getValue().toLowerCase();
         if (fieldName === "vertfocusanimationstyle") {
             if (!["fixedfocuswrap", "floatingfocus"].includes(value.toString().toLowerCase())) {
                 // Invalid vertFocusAnimationStyle
@@ -107,22 +106,22 @@ export class MarkupList extends ArrayGrid {
             this.focusIndex = 0;
         }
         const hasSections = this.metadata.length > 0;
-        const itemCompName = this.getFieldValue("itemComponentName") as BrsString;
-        if (!customNodeExists(interpreter, itemCompName)) {
+        const itemCompName = this.getFieldValueJS("itemComponentName") as string;
+        if (!customNodeExists(interpreter, new BrsString(itemCompName))) {
             BrsDevice.stderr.write(
                 `warning,[sg.markuplist.create.fail] Failed to create markup item ${itemCompName}`
             );
             return;
         }
-        const itemSize = jsValueOf(this.getFieldValue("itemSize"));
-        const numRows = jsValueOf(this.getFieldValue("numRows"));
+        const itemSize = this.getFieldValueJS("itemSize") as number[];
+        const numRows = this.getFieldValueJS("numRows") as number;
         if (itemSize[0] === 0 || itemSize[1] === 0 || numRows === 0) {
             return;
         }
         const itemRect = { ...rect, width: itemSize[0], height: itemSize[1] };
-        const spacing = jsValueOf(this.getFieldValue("itemSpacing"));
-        const rowHeights = jsValueOf(this.getFieldValue("rowHeights"));
-        const rowSpacings = jsValueOf(this.getFieldValue("rowSpacings"));
+        const spacing = this.getFieldValueJS("itemSpacing") as number[];
+        const rowHeights = this.getFieldValueJS("rowHeights") as number[];
+        const rowSpacings = this.getFieldValueJS("rowSpacings") as number[];
         this.currRow = this.updateCurrRow();
         let lastIndex = -1;
         const displayRows = Math.min(Math.ceil(this.content.length), numRows);

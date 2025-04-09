@@ -11,13 +11,13 @@ import {
     BrsType,
     ButtonGroup,
     Float,
+    isBrsString,
     jsValueOf,
     Label,
     Poster,
     RoArray,
     rootObjects,
     RoSGNode,
-    ValueKind,
 } from "..";
 
 export class Dialog extends Group {
@@ -149,12 +149,12 @@ export class Dialog extends Group {
     }
 
     set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
-        if (index.kind !== ValueKind.String) {
+        if (!isBrsString(index)) {
             throw new Error("RoSGNode indexes must be strings");
         }
-        const fieldName = index.value.toLowerCase();
+        const fieldName = index.getValue().toLowerCase();
         if (fieldName === "focusbutton") {
-            const focusedIndex = jsValueOf(this.getFieldValue("buttonFocused"));
+            const focusedIndex = this.getFieldValueJS("buttonFocused");
             if (focusedIndex !== jsValueOf(value)) {
                 this.focusIndex = jsValueOf(value);
                 index = new BrsString("buttonFocused");
@@ -189,8 +189,8 @@ export class Dialog extends Group {
     }
 
     handleKey(key: string, press: boolean): boolean {
-        const optionsDialog = this.getFieldValue("optionsDialog") as BrsBoolean;
-        if (press && (key === "back" || (key === "options" && optionsDialog.toBoolean()))) {
+        const optionsDialog = this.getFieldValueJS("optionsDialog") as boolean;
+        if (press && (key === "back" || (key === "options" && optionsDialog))) {
             this.set(new BrsString("close"), BrsBoolean.True);
         } else if (this.hasButtons) {
             this.buttonGroup.handleKey(key, press);
@@ -224,17 +224,17 @@ export class Dialog extends Group {
 
     private updateChildren() {
         this.height = this.minHeight;
-        const width = this.getFieldValue("width");
-        if (width instanceof Float && width.getValue() > 0) {
-            this.background.set(new BrsString("width"), width);
-            this.width = width.getValue();
+        const width = this.getFieldValueJS("width") as number;
+        if (width) {
+            this.background.set(new BrsString("width"), new Float(width));
+            this.width = width;
         }
         this.copyField(this.background, "uri", "backgroundUri");
         this.copyField(this.title, "text", "title");
         this.copyField(this.title, "color", "titleColor");
         this.copyField(this.title, "font", "titleFont");
         const iconUri = this.copyField(this.icon, "uri", "iconUri");
-        if (iconUri instanceof BrsString && iconUri.value) {
+        if (isBrsString(iconUri) && iconUri.getValue()) {
             const measured = this.title.getMeasured();
             if (measured.width > 0) {
                 const centerX = (this.screenRect.width - measured.width) / 2;
@@ -245,16 +245,16 @@ export class Dialog extends Group {
         }
         this.copyField(this.divider, "uri", "dividerUri");
         const message = this.copyField(this.message, "text", "message");
-        if (message.toString() !== "") {
+        if (isBrsString(message) && message.getValue() !== "") {
             this.height += this.vertOffset;
         }
         this.copyField(this.message, "color", "messageColor");
         this.copyField(this.message, "font", "messageFont");
 
-        const buttons = jsValueOf(this.getFieldValue("buttons")) as string[];
+        const buttons = this.getFieldValueJS("buttons") as string[];
         if (buttons?.length) {
-            const buttonHeight = this.buttonGroup.getFieldValue("buttonHeight") as Float;
-            const buttonsHeight = buttonHeight.getValue() * buttons.length;
+            const buttonHeight = this.buttonGroup.getFieldValueJS("buttonHeight") as number;
+            const buttonsHeight = buttonHeight * buttons.length;
             this.height += this.vertOffset;
             const msgTrans = this.message.getFieldValue("translation") as RoArray;
             const buttonsTrans = [

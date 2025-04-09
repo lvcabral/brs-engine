@@ -6,11 +6,11 @@ import {
     BrsString,
     BrsType,
     brsValueOf,
+    isBrsString,
     jsValueOf,
     Poster,
     rootObjects,
     RSGPalette,
-    ValueKind,
 } from "..";
 import { IfDraw2D, Rect } from "../interfaces/IfDraw2D";
 import { Interpreter } from "../..";
@@ -69,10 +69,10 @@ export class StandardDialog extends Group {
     }
 
     set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
-        if (index.kind !== ValueKind.String) {
+        if (!isBrsString(index)) {
             throw new Error("RoSGNode indexes must be strings");
         }
-        const fieldName = index.value.toLowerCase();
+        const fieldName = index.getValue().toLowerCase();
         if (fieldName === "close") {
             index = new BrsString("wasClosed");
             value = BrsBoolean.True;
@@ -108,7 +108,7 @@ export class StandardDialog extends Group {
         };
         const colors = this.getPaletteColors();
         const backColor = colors.get(new BrsString("DialogBackgroundColor"));
-        if (backColor instanceof BrsString) {
+        if (isBrsString(backColor)) {
             this.background.set(new BrsString("blendColor"), backColor);
         }
         this.updateBoundingRects(boundingRect, origin, angle);

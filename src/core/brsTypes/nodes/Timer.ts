@@ -1,6 +1,6 @@
 import { RoSGNode } from "../components/RoSGNode";
 import { FieldKind, FieldModel } from "./Field";
-import { AAMember, BrsType, BrsBoolean, Float, ValueKind, BrsString, BrsInvalid } from "..";
+import { AAMember, BrsType, BrsString, BrsInvalid, isBrsString } from "..";
 
 export class Timer extends RoSGNode {
     readonly defaultFields: FieldModel[] = [
@@ -24,15 +24,15 @@ export class Timer extends RoSGNode {
     }
 
     set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
-        if (index.kind !== ValueKind.String) {
+        if (!isBrsString(index)) {
             throw new Error("RoSGNode indexes must be strings");
         }
 
-        const mapKey = index.value.toLowerCase();
+        const mapKey = index.getValue().toLowerCase();
         const field = this.fields.get(mapKey);
 
-        if (field && mapKey === "control" && value instanceof BrsString) {
-            let control = value.value;
+        if (field && mapKey === "control" && isBrsString(value)) {
+            let control = value.getValue().toLowerCase();
             if (control === "start") {
                 this.lastFireTime = performance.now();
                 this.active = true;
@@ -54,11 +54,11 @@ export class Timer extends RoSGNode {
 
     checkFire() {
         const now = performance.now();
-        const duration = this.getFieldValue("duration") as Float;
-        const repeat = this.getFieldValue("repeat") as BrsBoolean;
-        if (this.active && (now - this.lastFireTime) / 1000 >= duration.getValue()) {
+        const duration = this.getFieldValueJS("duration") as number;
+        const repeat = this.getFieldValueJS("repeat") as boolean;
+        if (this.active && (now - this.lastFireTime) / 1000 >= duration) {
             this.lastFireTime = now;
-            this.active = repeat.toBoolean();
+            this.active = repeat;
             this.fields.get("fire")?.setValue(BrsInvalid.Instance);
             if (this.jsCallback) {
                 this.jsCallback();

@@ -105,25 +105,25 @@ export class MarkupGrid extends ArrayGrid {
             this.focusIndex = 0;
         }
         const hasSections = this.metadata.length > 0;
-        const itemCompName = this.getFieldValue("itemComponentName") as BrsString;
-        if (!customNodeExists(interpreter, itemCompName)) {
+        const itemCompName = this.getFieldValueJS("itemComponentName") as string;
+        if (!customNodeExists(interpreter, new BrsString(itemCompName))) {
             BrsDevice.stderr.write(
                 `warning,[sg.markupgrid.create.fail] Failed to create markup item ${itemCompName}`
             );
             return;
         }
-        const itemSize = jsValueOf(this.getFieldValue("itemSize"));
-        const numRows = jsValueOf(this.getFieldValue("numRows"));
-        const numCols = jsValueOf(this.getFieldValue("numColumns"));
+        const itemSize = this.getFieldValueJS("itemSize") as number[];
+        const numRows = this.getFieldValueJS("numRows") as number;
+        const numCols = this.getFieldValueJS("numColumns") as number;
         if (itemSize[0] === 0 || itemSize[1] === 0 || numRows === 0 || numCols === 0) {
             return;
         }
         const itemRect = { ...rect, width: itemSize[0], height: itemSize[1] };
-        const spacing = jsValueOf(this.getFieldValue("itemSpacing"));
-        const columnWidths = jsValueOf(this.getFieldValue("columnWidths"));
-        const columnSpacings = jsValueOf(this.getFieldValue("columnSpacings"));
-        const rowHeights = jsValueOf(this.getFieldValue("rowHeights"));
-        const rowSpacings = jsValueOf(this.getFieldValue("rowSpacings"));
+        const spacing = this.getFieldValueJS("itemSpacing") as number[];
+        const columnWidths = this.getFieldValueJS("columnWidths") as number[];
+        const columnSpacings = this.getFieldValueJS("columnSpacings") as number[];
+        const rowHeights = this.getFieldValueJS("rowHeights") as number[];
+        const rowSpacings = this.getFieldValueJS("rowSpacings") as number[];
         this.currRow = this.updateCurrRow();
         let lastIndex = -1;
         const displayRows = Math.min(Math.ceil(this.content.length / numCols), numRows);

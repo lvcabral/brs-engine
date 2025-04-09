@@ -14,13 +14,13 @@ import {
     Float,
     Font,
     Int32,
+    isBrsString,
     jsValueOf,
     Label,
     RoArray,
     RoFont,
     rootObjects,
     RoSGNode,
-    ValueKind,
 } from "..";
 
 export class ButtonGroup extends LayoutGroup {
@@ -83,12 +83,12 @@ export class ButtonGroup extends LayoutGroup {
     }
 
     set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
-        if (index.kind !== ValueKind.String) {
+        if (!isBrsString(index)) {
             throw new Error("RoSGNode indexes must be strings");
         }
-        const fieldName = index.value.toLowerCase();
+        const fieldName = index.getValue().toLowerCase();
         if (fieldName === "focusbutton") {
-            const focusedIndex = jsValueOf(this.getFieldValue("buttonFocused"));
+            const focusedIndex = this.getFieldValueJS("buttonFocused");
             if (focusedIndex !== jsValueOf(value)) {
                 this.focusIndex = jsValueOf(value);
                 index = new BrsString("buttonFocused");
@@ -172,7 +172,7 @@ export class ButtonGroup extends LayoutGroup {
         }
         const buttonsCount = Math.max(buttons.length, this.children.length);
         const focusedFont = this.getFieldValue("focusedTextFont") as Font;
-        const buttonHeight = jsValueOf(this.getFieldValue("buttonHeight")) as number;
+        const buttonHeight = this.getFieldValueJS("buttonHeight") as number;
         this.width = this.calculateButtonWidth(buttons, focusedFont.createDrawFont());
         for (let i = 0; i < buttonsCount; i++) {
             const buttonText = buttons[i];
@@ -198,7 +198,10 @@ export class ButtonGroup extends LayoutGroup {
                 // TODO: Implement support for field layoutDirection (vert, horiz)
                 const buttonY = i * (Math.max(buttonHeight, this.iconSize[1]) - this.vertOffset);
                 const offsetY = Math.max((this.iconSize[1] - buttonHeight) / 2, 0);
-                button.setFieldValue("translation", brsValueOf([0, buttonY + offsetY]));
+                button.setFieldValue(
+                    "translation",
+                    new RoArray([new Float(0), new Float(buttonY + offsetY)])
+                );
             } else {
                 break;
             }
@@ -233,8 +236,8 @@ export class ButtonGroup extends LayoutGroup {
     }
 
     private calculateButtonWidth(buttons: string[], font: RoFont): number {
-        const minWidth = jsValueOf(this.getFieldValue("minWidth")) as number;
-        const maxWidth = jsValueOf(this.getFieldValue("maxWidth")) as number;
+        const minWidth = this.getFieldValueJS("minWidth") as number;
+        const maxWidth = this.getFieldValueJS("maxWidth") as number;
         this.iconSize = this.getIconSize(["iconUri", "focusedIconUri"]);
         const iconGap = this.iconSize[0] > 0 ? this.iconSize[0] + this.gap : 0;
         const labelMax = maxWidth - this.margin * 2 - iconGap;
@@ -248,9 +251,9 @@ export class ButtonGroup extends LayoutGroup {
     }
 
     private getIndex(offset: number = 0) {
-        const focused = jsValueOf(this.getFieldValue("buttonFocused")) as number;
+        const focused = this.getFieldValueJS("buttonFocused") as number;
         const index = focused + offset;
-        const buttons = jsValueOf(this.getFieldValue("buttons")) as string[];
+        const buttons = this.getFieldValueJS("buttons") as string[];
         if (index >= buttons.length) {
             return buttons.length - 1;
         } else if (index < 0) {

@@ -5,9 +5,7 @@ import {
     Float,
     RoArray,
     AAMember,
-    BrsBoolean,
     BrsType,
-    ValueKind,
     BrsString,
     Font,
     BrsInvalid,
@@ -16,7 +14,7 @@ import {
     Label,
     Poster,
     jsValueOf,
-    brsValueOf,
+    isBrsString,
 } from "..";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D, MeasuredText, Rect } from "../interfaces/IfDraw2D";
@@ -53,23 +51,23 @@ export class Group extends RoSGNode {
     }
 
     set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
-        if (index.kind !== ValueKind.String) {
+        if (!isBrsString(index)) {
             throw new Error("RoSGNode indexes must be strings");
         }
 
-        const mapKey = index.value.toLowerCase();
+        const mapKey = index.getValue().toLowerCase();
         const field = this.fields.get(mapKey);
 
-        if (field && field.getType() === FieldKind.Font && value instanceof BrsString) {
-            const strFont = value.value;
+        if (field?.getType() === FieldKind.Font && isBrsString(value)) {
+            const strFont = value.getValue();
             const font = new Font();
             if (strFont.startsWith("font:") && font.setSystemFont(strFont.slice(5).toLowerCase())) {
                 value = font;
             } else {
                 value = BrsInvalid.Instance;
             }
-        } else if (field && field.getType() === FieldKind.Color && value instanceof BrsString) {
-            let strColor = value.value;
+        } else if (field?.getType() === FieldKind.Color && isBrsString(value)) {
+            let strColor = value.getValue();
             if (strColor.length) {
                 value = new Int32(convertHexColor(strColor));
             } else {
@@ -86,17 +84,14 @@ export class Group extends RoSGNode {
     }
 
     getDimensions() {
-        const width = this.fields.get("width")?.getValue();
-        const height = this.fields.get("height")?.getValue();
         return {
-            width: width instanceof Int32 || width instanceof Float ? width.getValue() : 0,
-            height: height instanceof Int32 || height instanceof Float ? height.getValue() : 0,
+            width: (this.getFieldValueJS("width") as number) ?? 0,
+            height: (this.getFieldValueJS("height") as number) ?? 0,
         };
     }
 
     isVisible() {
-        const visible = this.fields.get("visible")?.getValue();
-        return visible instanceof BrsBoolean ? visible.toBoolean() : true;
+        return (this.getFieldValueJS("visible") as boolean) ?? true;
     }
 
     protected addPoster(uri: string, translation: number[], width?: number, height?: number) {
@@ -104,12 +99,15 @@ export class Group extends RoSGNode {
         if (uri) {
             poster.set(new BrsString("uri"), new BrsString(uri));
         }
-        poster.set(new BrsString("translation"), brsValueOf(translation));
-        if (height) {
-            poster.set(new BrsString("height"), new Float(height));
-        }
+        poster.set(
+            new BrsString("translation"),
+            new RoArray([new Float(translation[0]), new Float(translation[1])])
+        );
         if (width) {
             poster.set(new BrsString("width"), new Float(width));
+        }
+        if (height) {
+            poster.set(new BrsString("height"), new Float(height));
         }
         this.appendChildToParent(poster);
         return poster;
@@ -125,14 +123,11 @@ export class Group extends RoSGNode {
         horizAlign?: string
     ) {
         const label = new Label();
-        const labelFields = label.getNodeFields();
-        const color = this.fields.get(colorField.toLowerCase());
-        if (color) {
-            labelFields.set("color", color);
-        }
+        this.copyField(label, "color", colorField);
         if (fontSize) {
+            const labelFields = label.getNodeFields();
             const labelFont = labelFields.get("font")?.getValue();
-            if (labelFont && labelFont instanceof Font) {
+            if (labelFont instanceof Font) {
                 labelFont.setSize(fontSize);
             }
         }
@@ -157,17 +152,14 @@ export class Group extends RoSGNode {
     }
 
     protected getTranslation() {
-        const scale = jsValueOf(this.getFieldValue("scale")) as number[];
-        const transField = this.fields.get("translation")?.getValue();
+        const transField = this.getFieldValue("translation");
         const translation = [0, 0];
         if (transField instanceof RoArray && transField.elements.length === 2) {
-            transField.elements.forEach((element, index) => {
-                if (element instanceof Int32 || element instanceof Float) {
-                    translation[index] = element.getValue() / scale[index];
-                }
-            });
+            translation[0] = jsValueOf(transField.elements[0]) as number;
+            translation[1] = jsValueOf(transField.elements[1]) as number;
         }
         // Adjust translation based on scale and rotation center
+        const scale = this.getFieldValueJS("scale") as number[];
         const scaleRotateCenter = this.getScaleRotateCenter();
         const scaleDiffX = scaleRotateCenter[0] * (scale[0] - 1);
         const scaleDiffY = scaleRotateCenter[1] * (scale[1] - 1);
@@ -177,19 +169,16 @@ export class Group extends RoSGNode {
     }
 
     protected getRotation() {
-        const rotation = this.fields.get("rotation")?.getValue();
-        return rotation instanceof Float ? rotation.getValue() : 0;
+        const rotation = this.getFieldValueJS("rotation") as number;
+        return rotation ?? 0;
     }
 
     protected getScaleRotateCenter() {
-        const scaleRotateCenter = this.fields.get("scalerotatecenter")?.getValue();
+        const scaleRotateCenter = this.getFieldValue("scaleRotateCenter");
         const center = [0, 0];
         if (scaleRotateCenter instanceof RoArray && scaleRotateCenter.elements.length === 2) {
-            scaleRotateCenter.elements.forEach((element, index) => {
-                if (element instanceof Int32 || element instanceof Float) {
-                    center[index] = element.getValue();
-                }
-            });
+            center[0] = jsValueOf(scaleRotateCenter.elements[0]) as number;
+            center[1] = jsValueOf(scaleRotateCenter.elements[1]) as number;
         }
         return center;
     }
@@ -408,7 +397,7 @@ export class Group extends RoSGNode {
                 // TODO: Handle 9-patch rotation, scaling
                 return rect;
             }
-            const scale = jsValueOf(this.getFieldValue("scale")) as number[];
+            const scale = this.getFieldValueJS("scale") as number[];
             let scaleX = rect.width !== 0 ? rect.width / bitmap.width : 1;
             let scaleY = rect.height !== 0 ? rect.height / bitmap.height : 1;
             scaleX *= scale[0];

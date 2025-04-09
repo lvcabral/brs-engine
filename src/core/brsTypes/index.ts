@@ -132,6 +132,7 @@ export * from "./nodes/Scene";
 export * from "./nodes/MiniKeyboard";
 export * from "./nodes/TextEditBox";
 export * from "./nodes/LayoutGroup";
+export * from "./nodes/Panel";
 export * from "./nodes/Rectangle";
 export * from "./nodes/Label";
 export * from "./nodes/ScrollingLabel";
@@ -139,6 +140,7 @@ export * from "./nodes/Font";
 export * from "./nodes/Poster";
 export * from "./nodes/Dialog";
 export * from "./nodes/ArrayGrid";
+export * from "./nodes/RowList";
 export * from "./nodes/MarkupGrid";
 export * from "./nodes/MarkupList";
 export * from "./nodes/ContentNode";
@@ -479,6 +481,8 @@ function fromObject(x: any): BrsType {
             }
         }
         return BrsInvalid.Instance;
+    } else if (x["_interface_"]) {
+        return BrsInvalid.Instance;
     } else if (x["_callable_"]) {
         return new Callable(x["_callable_"], {
             signature: {
@@ -544,6 +548,9 @@ export function fromAssociativeArray(associativeArray: RoAssociativeArray): Flex
  * @return {any} The JavaScript representation of `x`.
  */
 export function jsValueOf(x: BrsType): any {
+    if (isUnboxable(x)) {
+        x = x.unbox();
+    }
     switch (x.kind) {
         case ValueKind.Invalid:
             return null;
@@ -559,6 +566,7 @@ export function jsValueOf(x: BrsType): any {
             return x.getValue();
         case ValueKind.Int64:
             return x.getValue().toNumber();
+        case ValueKind.Interface:
         case ValueKind.Object:
             if (x instanceof RoArray || x instanceof RoList) {
                 return x.elements.map(jsValueOf);
@@ -570,12 +578,12 @@ export function jsValueOf(x: BrsType): any {
                 return fromAssociativeArray(x);
             } else if (x instanceof BrsComponent) {
                 return { _component_: x.getComponentName() };
+            } else if (x instanceof BrsInterface) {
+                return { _interface_: x.getInterfaceName() };
             }
             break;
         case ValueKind.Callable:
             return { _callable_: x.name };
-        default:
-            throw new Error(`jsValueOf not implemented for: ${x} <${x.kind}>`);
     }
 }
 

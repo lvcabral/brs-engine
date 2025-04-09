@@ -8,6 +8,7 @@ import {
     brsValueOf,
     ContentNode,
     Int32,
+    isBrsString,
     jsValueOf,
     RoArray,
     rootObjects,
@@ -51,10 +52,10 @@ export class CheckList extends LabelList {
     }
 
     get(index: BrsType) {
-        if (index.kind !== ValueKind.String) {
+        if (!isBrsString(index)) {
             throw new Error("RoSGNode indexes must be strings");
         }
-        const fieldName = index.value.toLowerCase();
+        const fieldName = index.getValue().toLowerCase();
         if (fieldName === "checkedstate") {
             return this.refreshCheckedState();
         }
@@ -62,10 +63,10 @@ export class CheckList extends LabelList {
     }
 
     set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
-        if (index.kind !== ValueKind.String) {
+        if (!isBrsString(index)) {
             throw new Error("RoSGNode indexes must be strings");
         }
-        const fieldName = index.value.toLowerCase();
+        const fieldName = index.getValue().toLowerCase();
         if (fieldName === "checkedstate") {
             let states: boolean[] = [];
             let checkedState = this.getFieldValue("checkedState");
@@ -91,7 +92,7 @@ export class CheckList extends LabelList {
         if (!press) {
             return false;
         }
-        const checkOnSelect = jsValueOf(this.getFieldValue("checkOnSelect"));
+        const checkOnSelect = this.getFieldValueJS("checkOnSelect");
         const checkedState = this.getFieldValue("checkedState");
         if (checkOnSelect && checkedState instanceof RoArray) {
             const states = jsValueOf(checkedState);
@@ -110,13 +111,13 @@ export class CheckList extends LabelList {
         itemFocus: boolean,
         draw2D?: IfDraw2D
     ) {
-        const states = jsValueOf(this.getFieldValue("checkedState"));
-        const hideIcon = jsValueOf(item.getFieldValue("hideIcon"));
+        const states = this.getFieldValueJS("checkedState");
+        const hideIcon = item.getFieldValueJS("hideIcon");
         const icons = states[index]
             ? ["checkedIconUri", "focusedCheckedIconUri"]
             : ["uncheckedIconUri", "focusedUncheckedIconUri"];
         const iconSize = this.getIconSize(icons);
-        const text = jsValueOf(item.getFieldValue("title"));
+        const text = item.getFieldValueJS("title");
         const iconGap = iconSize[0] > 0 ? iconSize[0] + this.gap : 0;
         const iconIndex = itemFocus ? 1 : 0;
         const bmp = !hideIcon && iconGap > 0 ? this.getBitmap(icons[iconIndex]) : undefined;
@@ -140,7 +141,6 @@ export class CheckList extends LabelList {
         } else if (states.length > contentCount) {
             states.splice(contentCount);
         }
-        console.log("refresh states: ", states);
         const result = brsValueOf(states);
         this.setFieldValue("checkedState", result);
         return result;

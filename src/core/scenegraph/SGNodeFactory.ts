@@ -2,16 +2,19 @@ import { ComponentDefinition, ComponentNode } from ".";
 import { BrsDevice, Interpreter } from "..";
 import {
     RoSGNode,
+    ContentNode,
     Group,
     LayoutGroup,
+    Panel,
     Rectangle,
     Label,
     ScrollingLabel,
     Font,
     Poster,
     ArrayGrid,
+    RowList,
     MarkupGrid,
-    ContentNode,
+    MarkupList,
     Task,
     Timer,
     Scene,
@@ -33,7 +36,6 @@ import {
     LabelList,
     CheckList,
     RadioButtonList,
-    MarkupList,
     StandardDialog,
     StandardProgressDialog,
     StdDlgContentArea,
@@ -50,6 +52,9 @@ export enum SGNodeType {
     LayoutGroup = "LayoutGroup",
     ButtonGroup = "ButtonGroup",
     Button = "Button",
+    Panel = "Panel",
+    ListPanel = "ListPanel",
+    GridPanel = "GridPanel",
     Dialog = "Dialog",
     KeyboardDialog = "KeyboardDialog",
     Rectangle = "Rectangle",
@@ -76,6 +81,8 @@ export enum SGNodeType {
     Video = "Video",
     Audio = "Audio",
     Animation = "Animation",
+    SequentialAnimation = "SequentialAnimation",
+    ParallelAnimation = "ParallelAnimation",
     FloatFieldInterpolator = "FloatFieldInterpolator",
     StandardDialog = "StandardDialog",
     StandardProgressDialog = "StandardProgressDialog",
@@ -124,6 +131,10 @@ export class SGNodeFactory {
                 return new Group([], name);
             case SGNodeType.LayoutGroup:
                 return new LayoutGroup([], name);
+            case SGNodeType.Panel:
+            case SGNodeType.ListPanel:
+            case SGNodeType.GridPanel:
+                return new Panel([], name);
             case SGNodeType.Button:
                 return new Button([], name);
             case SGNodeType.ButtonGroup:
@@ -148,6 +159,8 @@ export class SGNodeFactory {
                 return new CheckList([], name);
             case SGNodeType.RadioButtonList:
                 return new RadioButtonList([], name);
+            case SGNodeType.RowList:
+                return new RowList([], name);
             case SGNodeType.MarkupList:
                 return new MarkupList([], name);
             case SGNodeType.MarkupGrid:

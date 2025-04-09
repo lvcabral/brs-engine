@@ -16,6 +16,9 @@ import {
     RoSGNode,
     RoMessagePort,
     isBrsBoolean,
+    isBoxable,
+    isUnboxable,
+    isAnyNumber,
 } from "..";
 import { Callable } from "../Callable";
 import { Interpreter } from "../../interpreter";
@@ -96,10 +99,12 @@ export namespace FieldKind {
     }
 
     export function fromBrsType(brsType: BrsType): FieldKind | undefined {
+        if (isUnboxable(brsType)) {
+            return fromBrsType(brsType.unbox());
+        }
         if (brsType.kind !== ValueKind.Object) {
             return fromString(ValueKind.toString(brsType.kind));
         }
-
         let componentName = brsType.getComponentName();
         switch (componentName.toLowerCase()) {
             case "roarray":
@@ -138,7 +143,9 @@ export class Field {
         private readonly type: FieldKind,
         private readonly alwaysNotify: boolean,
         private hidden: boolean = false
-    ) {}
+    ) {
+        this.value = this.constraintValue(value);
+    }
 
     toString(parent?: BrsType): string {
         return this.value.toString(parent);
@@ -180,22 +187,7 @@ export class Field {
         // Once a field is set, it is no longer hidden.
         this.hidden = false;
 
-        if (isBrsNumber(value) && value.kind !== getValueKindFromFieldType(this.type)) {
-            if (this.type === FieldKind.Float) {
-                value = new Float(value.getValue());
-            } else if (this.type === FieldKind.Int32) {
-                value = new Int32(value.getValue());
-            } else if (this.type === FieldKind.Int64) {
-                value = new Int64(value.getValue());
-            } else if (this.type === FieldKind.Double) {
-                value = new Double(value.getValue());
-            } else if (this.type === FieldKind.String) {
-                value = new BrsString(value.toString());
-            }
-        } else if (isBrsBoolean(value) && this.type === FieldKind.String) {
-            value = new BrsString(value.toBoolean() ? "1" : "0");
-        }
-
+        value = this.constraintValue(value);
         let oldValue = this.value;
         this.value = value;
         if (notify && (this.alwaysNotify || !this.isEqual(oldValue, value))) {
@@ -212,9 +204,9 @@ export class Field {
         const fieldIsObject = getValueKindFromFieldType(this.type) === ValueKind.Object;
         if (
             (fieldIsObject && (value === BrsInvalid.Instance || value instanceof RoInvalid)) ||
-            (isBrsNumber(this.value) && isBrsNumber(value)) ||
+            (isAnyNumber(this.value) && isAnyNumber(value)) ||
             (isBrsString(this.value) && isBrsString(value)) ||
-            (isBrsString(this.value) && isBrsNumber(value)) ||
+            (isBrsString(this.value) && isAnyNumber(value)) ||
             (isBrsString(this.value) && isBrsBoolean(value))
         ) {
             return true;
@@ -284,11 +276,33 @@ export class Field {
         );
     }
 
+    private constraintValue(value: BrsType) {
+        if (isBrsNumber(value) && value.kind !== getValueKindFromFieldType(this.type)) {
+            if (this.type === FieldKind.Float) {
+                value = new Float(value.getValue());
+            } else if (this.type === FieldKind.Int32) {
+                value = new Int32(value.getValue());
+            } else if (this.type === FieldKind.Int64) {
+                value = new Int64(value.getValue());
+            } else if (this.type === FieldKind.Double) {
+                value = new Double(value.getValue());
+            } else if (this.type === FieldKind.String) {
+                value = new BrsString(value.toString());
+            }
+        } else if (isBrsBoolean(value) && this.type === FieldKind.String) {
+            value = new BrsString(value.toBoolean() ? "1" : "0");
+        }
+        if (isBoxable(value)) {
+            value = value.box();
+        }
+        return value;
+    }
+
     private isEqual(oldValue: BrsType, newValue: BrsType) {
         if (isBrsNumber(oldValue) && isBrsNumber(newValue)) {
             return oldValue.getValue() === newValue.getValue();
         } else if (isBrsString(oldValue) && isBrsString(newValue)) {
-            return oldValue.value === newValue.value;
+            return oldValue.getValue() === newValue.getValue();
         } else if (isBrsBoolean(oldValue) && isBrsBoolean(newValue)) {
             return oldValue.toBoolean() === newValue.toBoolean();
         } else if (oldValue instanceof RoSGNode && newValue instanceof RoSGNode) {
@@ -308,7 +322,7 @@ export class Field {
             eventParams.infoFields.elements?.forEach((element) => {
                 if (isBrsString(element)) {
                     // TODO: Check how to handle object values (by reference or by value)
-                    fieldsMap.set(element.value, hostNode.get(element));
+                    fieldsMap.set(element.getValue(), hostNode.get(element));
                 }
             });
             infoFields = toAssociativeArray(fieldsMap);
