@@ -26,6 +26,7 @@ import { RoInt } from "./components/RoInt";
 import { RoFloat } from "./components/RoFloat";
 import { RoDouble } from "./components/RoDouble";
 import { RoLongInteger } from "./components/RoLongInteger";
+import { RoBoolean } from "./components/RoBoolean";
 import { RoURLEvent } from "./events/RoURLEvent";
 import { RoUniversalControlEvent } from "./events/RoUniversalControlEvent";
 import { RoSystemLogEvent } from "./events/RoSystemLogEvent";
@@ -149,7 +150,7 @@ export const PrimitiveKinds = new Set([
  * @param value the BrightScript value in question.
  * @returns `true` if `value` is a string, otherwise `false`.
  */
-export function isBrsString(value: BrsType): value is BrsString {
+export function isBrsString(value: BrsType): value is BrsString | RoString {
     return value?.kind === ValueKind.String || value instanceof RoString;
 }
 
@@ -158,8 +159,8 @@ export function isBrsString(value: BrsType): value is BrsString {
  * @param value the BrightScript value in question.
  * @returns `true` if `value` if a boolean, otherwise `false`.
  */
-export function isBrsBoolean(value: BrsType): value is BrsBoolean {
-    return value?.kind === ValueKind.Boolean;
+export function isBrsBoolean(value: BrsType): value is BrsBoolean | RoBoolean {
+    return value?.kind === ValueKind.Boolean || value instanceof RoBoolean;
 }
 
 /**
@@ -224,6 +225,15 @@ export type BrsNumber = Int32 | Int64 | Float | Double;
 
 /** The set of BrightScript boxed numeric types. */
 export type BoxedNumber = RoInt | RoFloat | RoDouble | RoLongInteger;
+
+/**
+ * Determines whether or not the given value can be converted to a number.
+ * @param value the BrightScript value in question.
+ * @returns `true` if `value` can be converted to a number, otherwise `false`.
+ */
+export function isAnyNumber(value: BrsType): value is BrsNumber | BoxedNumber {
+    return isBrsNumber(value) || isBoxedNumber(value);
+}
 
 /**
  * Determines whether or not the given value is a BrightScript event component.

@@ -1,4 +1,4 @@
-import { BrsType, Float, Int32, isBrsNumber } from "..";
+import { BrsType, Float, Int32, isBoxedNumber, isBrsNumber } from "..";
 import { BrsValue, ValueKind, BrsBoolean, BrsInvalid, BrsString } from "../BrsType";
 import { BrsComponent, BrsIterable } from "./BrsComponent";
 import { Callable, StdlibArgument } from "../Callable";
@@ -93,6 +93,9 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
     }
 
     get(index: BrsType) {
+        if (isBoxedNumber(index)) {
+            index = index.unbox();
+        }
         switch (index.kind) {
             case ValueKind.Float:
                 return this.getElements()[Math.trunc(index.getValue())] ?? BrsInvalid.Instance;
@@ -106,6 +109,9 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
     }
 
     set(index: BrsType, value: BrsType) {
+        if (isBoxedNumber(index)) {
+            index = index.unbox();
+        }
         if (isBrsNumber(index) && value.kind === ValueKind.Int32) {
             if (index.kind === ValueKind.Int64) {
                 index = new Int32(index.getValue());

@@ -1,4 +1,4 @@
-import { BrsType } from "..";
+import { BrsType, isBoxedNumber } from "..";
 import { BrsValue, ValueKind, BrsBoolean, BrsInvalid, BrsString } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
 import { Callable, StdlibArgument } from "../Callable";
@@ -105,6 +105,9 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsList {
     }
 
     get(index: BrsType) {
+        if (isBoxedNumber(index)) {
+            index = index.unbox();
+        }
         switch (index.kind) {
             case ValueKind.Float:
                 return this.getElements()[Math.trunc(index.getValue())] ?? BrsInvalid.Instance;
@@ -118,6 +121,9 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsList {
     }
 
     set(index: BrsType, value: BrsType) {
+        if (isBoxedNumber(index)) {
+            index = index.unbox();
+        }
         if (index.kind === ValueKind.Int32 || index.kind === ValueKind.Float) {
             this.roList.elements[Math.trunc(index.getValue())] = value;
         }

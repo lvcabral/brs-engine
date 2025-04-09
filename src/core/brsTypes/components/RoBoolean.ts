@@ -44,6 +44,14 @@ export class RoBoolean extends BrsComponent implements BrsValue, Unboxable {
         return this.intrinsic.toString();
     }
 
+    toBoolean(): boolean {
+        return this.intrinsic.toBoolean();
+    }
+
+    fromBoolean(value: boolean) {
+        this.intrinsic = BrsBoolean.from(value);
+    }
+
     // -------------- ifBoolean -------------- //
 
     private readonly getBoolean = new Callable("getBoolean", {

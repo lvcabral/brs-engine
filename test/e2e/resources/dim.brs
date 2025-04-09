@@ -1,6 +1,8 @@
 sub main()
     ' initialize foo to some base value
-    dim array[3, 4]
+    x = box(3)
+    y = box(4)
+    dim array[x, y]
 
     print array.count()
     print array[0].count()
