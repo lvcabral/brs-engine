@@ -93,9 +93,9 @@ export class Label extends Group {
         const font = this.getFieldValue("font") as Font;
         const color = this.getFieldValueJS("color") as number;
         const textField = this.getFieldValueJS("text") as string;
-        const horizAlign = this.getFieldValueJS("horizAlign") ?? "left";
-        const vertAlign = this.getFieldValueJS("vertAlign") ?? "top";
-        const ellipsis = this.getFieldValueJS("ellipsisText") ?? "...";
+        const horizAlign = this.getFieldValueJS("horizAlign") || "left";
+        const vertAlign = this.getFieldValueJS("vertAlign") || "top";
+        const ellipsis = this.getFieldValueJS("ellipsisText") || "...";
         const wrap = this.getFieldValueJS("wrap") as boolean;
         const numLines = this.getFieldValueJS("numLines") as number;
         const maxLines = this.getFieldValueJS("maxLines") as number;
