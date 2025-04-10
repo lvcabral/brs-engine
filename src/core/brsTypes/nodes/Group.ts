@@ -15,6 +15,7 @@ import {
     Poster,
     jsValueOf,
     isBrsString,
+    BrsBoolean,
 } from "..";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D, MeasuredText, Rect } from "../interfaces/IfDraw2D";
@@ -103,10 +104,10 @@ export class Group extends RoSGNode {
             new BrsString("translation"),
             new RoArray([new Float(translation[0]), new Float(translation[1])])
         );
-        if (width) {
+        if (width !== undefined) {
             poster.set(new BrsString("width"), new Float(width));
         }
-        if (height) {
+        if (height !== undefined) {
             poster.set(new BrsString("height"), new Float(height));
         }
         this.appendChildToParent(poster);
@@ -120,7 +121,8 @@ export class Group extends RoSGNode {
         height?: number,
         fontSize?: number,
         vertAlign?: string,
-        horizAlign?: string
+        horizAlign?: string,
+        wrap?: boolean
     ) {
         const label = new Label();
         this.copyField(label, "color", colorField);
@@ -131,10 +133,10 @@ export class Group extends RoSGNode {
                 labelFont.setSize(fontSize);
             }
         }
-        if (width) {
+        if (width !== undefined) {
             label.set(new BrsString("width"), new Float(width));
         }
-        if (height) {
+        if (height !== undefined) {
             label.set(new BrsString("height"), new Float(height));
         }
         label.set(
@@ -146,6 +148,9 @@ export class Group extends RoSGNode {
         }
         if (horizAlign) {
             label.set(new BrsString("horizalign"), new BrsString(horizAlign));
+        }
+        if (wrap !== undefined) {
+            label.set(new BrsString("wrap"), BrsBoolean.from(wrap));
         }
         this.appendChildToParent(label);
         return label;
