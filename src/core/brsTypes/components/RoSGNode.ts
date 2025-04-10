@@ -22,6 +22,7 @@ import {
     Task,
     jsValueOf,
     getTextureManager,
+    isBrsString,
 } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Stmt } from "../../parser";
@@ -196,7 +197,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     }
 
     get(index: BrsType) {
-        if (index.kind !== ValueKind.String) {
+        if (!isBrsString(index)) {
             throw new Error("RoSGNode indexes must be strings");
         }
 
@@ -211,19 +212,20 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         // method with the desired name separately? That last bit would work but it's pretty gross.
         // That'd allow roArrays to have methods with the methods not accessible via `arr["count"]`.
         // Same with RoAssociativeArrays I guess.
-        let field = this.fields.get(index.value.toLowerCase());
+        const field = this.fields.get(index.getValue().toLowerCase());
         if (field) {
             return field.getValue();
         }
-        return this.getMethod(index.value) || BrsInvalid.Instance;
+        return this.getMethod(index.getValue()) || BrsInvalid.Instance;
     }
 
     set(index: BrsType, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind) {
-        if (index.kind !== ValueKind.String) {
+        if (!isBrsString(index)) {
             throw new Error("RoSGNode indexes must be strings");
         }
 
-        const mapKey = index.value.toLowerCase();
+        const fieldName = index.getValue();
+        const mapKey = fieldName.toLowerCase();
         const fieldType = kind ?? FieldKind.fromBrsType(value);
         const alias = this.aliases.get(mapKey);
         let field = this.fields.get(mapKey);
@@ -236,7 +238,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
                 this.changed = true;
             } else {
                 let error = `warning,Warning occurred while setting a field of an RoSGNode\n`;
-                error += `-- Tried to set nonexistent field "${index.value}" of a "${this.nodeSubtype}" node`;
+                error += `-- Tried to set nonexistent field "${fieldName}" of a "${this.nodeSubtype}" node`;
                 BrsDevice.stderr.write(error);
             }
         } else if (alias) {
@@ -246,7 +248,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
                 this.changed = true;
             } else {
                 BrsDevice.stderr.write(
-                    `warning,BRIGHTSCRIPT: ERROR: roSGNode.Set: "${index.value}": Alias "${alias.nodeId}.${alias.fieldName}" not found!`
+                    `warning,BRIGHTSCRIPT: ERROR: roSGNode.Set: "${fieldName}": Alias "${alias.nodeId}.${alias.fieldName}" not found!`
                 );
             }
         } else if (field.canAcceptValue(value)) {
@@ -257,7 +259,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             this.changed = true;
         } else {
             BrsDevice.stderr.write(
-                `warning,BRIGHTSCRIPT: ERROR: roSGNode.AddReplace: "${index.value}": Type mismatch!`
+                `warning,BRIGHTSCRIPT: ERROR: roSGNode.AddReplace: "${fieldName}": Type mismatch!`
             );
         }
         return BrsInvalid.Instance;
@@ -305,6 +307,11 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         return field ? field.getValue() : BrsInvalid.Instance;
     }
 
+    getFieldValueJS(fieldName: string) {
+        const field = this.fields.get(fieldName.toLowerCase());
+        return field ? jsValueOf(field.getValue()) : undefined;
+    }
+
     getNodeParent() {
         return this.parent;
     }
@@ -331,7 +338,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     }
 
     isFocusable() {
-        return jsValueOf(this.getFieldValue("focusable")) as boolean;
+        return (this.getFieldValueJS("focusable") as boolean) ?? false;
     }
 
     renderNode(interpreter: Interpreter, origin: number[], angle: number, draw2D?: IfDraw2D) {
@@ -477,7 +484,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
 
     /** Load a bitmap based on one of the fields of the node */
     getBitmap(fieldName: string) {
-        const uri = jsValueOf(this.getFieldValue(fieldName)) as string;
+        const uri = this.getFieldValueJS(fieldName) as string;
         return uri?.trim() ? getTextureManager().loadTexture(uri) : undefined;
     }
 

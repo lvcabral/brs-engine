@@ -7,7 +7,6 @@ import {
     Poster,
     brsValueOf,
     rootObjects,
-    jsValueOf,
     Font,
     getTextureManager,
 } from "..";
@@ -118,27 +117,27 @@ export class Button extends Group {
     }
 
     private updateChildren(nodeFocus: boolean) {
-        const minWidth = jsValueOf(this.getFieldValue("minWidth"));
-        const maxWidth = jsValueOf(this.getFieldValue("maxWidth"));
-        const iconUri = this.getFieldValue(nodeFocus ? "focusedIconUri" : "iconUri") as BrsString;
-        this.updateIconSize(iconUri.value);
+        const minWidth = this.getFieldValueJS("minWidth") as number;
+        const maxWidth = this.getFieldValueJS("maxWidth") as number;
+        const iconUri = this.getFieldValueJS(nodeFocus ? "focusedIconUri" : "iconUri") as string;
+        this.updateIconSize(iconUri);
         const iconSpace = Math.max(this.iconWidth, this.iconSize[0]);
         const iconGap = iconSpace > 0 ? iconSpace + this.gap : 0;
         const labelMin = minWidth - this.margin * 2 - iconGap;
         const labelMax = maxWidth - this.margin * 2 - iconGap;
 
-        const text = this.getFieldValue("text") as BrsString;
+        const text = this.getFieldValueJS("text") as string;
         const font = this.getFieldValue(nodeFocus ? "focusedTextFont" : "textFont") as Font;
         const drawFont = font.createDrawFont();
-        const measured = drawFont.measureText(text.value, labelMax);
+        const measured = drawFont.measureText(text, labelMax);
         const labelCalc = Math.max(measured.width, labelMin);
         this.width = Math.max(labelCalc + this.margin * 2 + iconGap, minWidth);
         this.labelWidth = this.width - this.margin * 2 - iconGap + 1;
 
-        const height = jsValueOf(this.getFieldValue("height")) as number;
+        const height = this.getFieldValueJS("height") as number;
         const labelTrans = [this.margin + iconGap, height / 2 - measured.height / 2];
 
-        const showFootprint = jsValueOf(this.getFieldValue("showFocusFootprint"));
+        const showFootprint = this.getFieldValueJS("showFocusFootprint") as boolean;
         const footprint = showFootprint ? "focusFootprintBitmapUri" : "";
         if (nodeFocus || footprint) {
             const backgroundUri = this.getFieldValue(nodeFocus ? "focusBitmapUri" : footprint);
@@ -154,13 +153,13 @@ export class Button extends Group {
         this.textLabel.set(new BrsString("width"), new Float(this.labelWidth));
         this.textLabel.set(new BrsString("color"), color);
         this.textLabel.set(new BrsString("font"), font);
-        this.textLabel.set(new BrsString("text"), text);
+        this.textLabel.set(new BrsString("text"), new BrsString(text));
 
         const iconTrans = [this.margin, height / 2 - this.iconHeight / 2];
         this.icon.set(new BrsString("translation"), brsValueOf(iconTrans));
         this.icon.set(new BrsString("width"), new Float(this.iconWidth));
         this.icon.set(new BrsString("height"), new Float(this.iconHeight));
-        this.icon.set(new BrsString("uri"), iconUri);
+        this.icon.set(new BrsString("uri"), new BrsString(iconUri));
         this.icon.set(new BrsString("blendColor"), color);
     }
 

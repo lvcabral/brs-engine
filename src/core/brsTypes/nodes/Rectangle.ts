@@ -1,5 +1,5 @@
 import { FieldModel } from "./Field";
-import { AAMember, Float, Int32 } from "..";
+import { AAMember } from "..";
 import { Group } from "./Group";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D } from "../interfaces/IfDraw2D";
@@ -30,11 +30,11 @@ export class Rectangle extends Group {
         drawTrans[1] += origin[1];
         const size = this.getDimensions();
         const rotation = angle + this.getRotation();
-        const color = this.getFieldValue("color") as Int32;
-        const opacity = this.getFieldValue("opacity") as Float;
+        const color = this.getFieldValueJS("color") as number;
+        const opacity = this.getFieldValueJS("opacity") as number;
         const center = this.getScaleRotateCenter();
         const rect = { x: drawTrans[0], y: drawTrans[1], width: size.width, height: size.height };
-        draw2D?.doDrawRotatedRect(rect, color.getValue(), rotation, center, opacity.getValue());
+        draw2D?.doDrawRotatedRect(rect, color, rotation, center, opacity);
         this.updateBoundingRects(rect, origin, rotation);
         this.renderChildren(interpreter, drawTrans, rotation, draw2D);
         this.updateParentRects(origin, angle);

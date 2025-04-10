@@ -5,11 +5,9 @@ import {
     Float,
     Label,
     Poster,
-    Font,
     Timer,
     BrsBoolean,
     brsValueOf,
-    rootObjects,
     BrsType,
 } from "..";
 import { Group } from "./Group";
@@ -130,56 +128,51 @@ export class Overhang extends Group {
     }
 
     private updateChildren() {
-        const height = this.getFieldValue("height");
-        if (height instanceof Float && height.getValue()) {
-            this.background.set(new BrsString("height"), height);
+        this.copyField(this.background, "height");
+        const backUri = this.getFieldValueJS("backgroundUri") as string;
+        if (backUri) {
+            this.background.set(new BrsString("uri"), new BrsString(backUri));
         }
-        const backgroundUri = this.getFieldValue("backgroundUri") as BrsString;
-        if (backgroundUri?.value) {
-            this.background.set(new BrsString("uri"), backgroundUri);
+        const logoUri = this.getFieldValueJS("logoUri") as string;
+        if (logoUri) {
+            this.logo.set(new BrsString("uri"), new BrsString(logoUri));
         }
-        const logoUri = this.getFieldValue("logoUri") as BrsString;
-        if (logoUri?.value) {
-            this.logo.set(new BrsString("uri"), logoUri);
-        }
-        const title = this.getFieldValue("title") as BrsString;
-        if (title?.value) {
-            this.title.set(new BrsString("text"), title);
+        const title = this.getFieldValueJS("title") as string;
+        if (title) {
+            this.title.set(new BrsString("text"), new BrsString(title));
             this.leftDivider.set(new BrsString("visible"), BrsBoolean.True);
         } else {
             this.leftDivider.set(new BrsString("visible"), BrsBoolean.False);
         }
-        const showOptions = this.getFieldValue("showOptions") as BrsBoolean;
-        this.optionsIcon.set(new BrsString("visible"), showOptions);
-        this.optionsText.set(new BrsString("visible"), showOptions);
-        const showClock = this.getFieldValue("showClock") as BrsBoolean;
-        this.clockText.set(new BrsString("visible"), showClock);
-        if (showClock.toBoolean() && showOptions.toBoolean()) {
+        const showOptions = this.getFieldValueJS("showOptions") as boolean;
+        this.optionsIcon.set(new BrsString("visible"), BrsBoolean.from(showOptions));
+        this.optionsText.set(new BrsString("visible"), BrsBoolean.from(showOptions));
+        const showClock = this.getFieldValueJS("showClock") as boolean;
+        this.clockText.set(new BrsString("visible"), BrsBoolean.from(showClock));
+        if (showClock && showOptions) {
             this.rightDivider.set(new BrsString("visible"), BrsBoolean.True);
         } else {
             this.rightDivider.set(new BrsString("visible"), BrsBoolean.False);
         }
-        const optionsAvailable = this.getFieldValue("optionsAvailable") as BrsBoolean;
-        if (optionsAvailable?.toBoolean()) {
+        const optionsAvailable = this.getFieldValueJS("optionsAvailable") as boolean;
+        if (optionsAvailable) {
             this.optionsIcon.set(new BrsString("uri"), new BrsString(this.optionsOn));
-            const optionsColor = this.getNodeFields().get("optionscolor") as Field;
-            this.optionsText.getNodeFields().set("color", optionsColor);
+            this.copyField(this.optionsText, "color", "optionsColor");
         } else {
             this.optionsIcon.set(new BrsString("uri"), new BrsString(this.optionsOff));
-            const optionsColor = this.getNodeFields().get("optionsdimcolor") as Field;
-            this.optionsText.getNodeFields().set("color", optionsColor);
+            this.copyField(this.optionsText, "color", "optionsDimColor");
         }
-        const optionsText = this.getFieldValue("optionsText") as BrsString;
-        if (optionsText?.value) {
-            this.optionsText.set(new BrsString("text"), optionsText);
+        const optionsText = this.getFieldValueJS("optionsText") as string;
+        if (optionsText) {
+            this.optionsText.set(new BrsString("text"), new BrsString(optionsText));
         }
-        const leftDividerUri = this.getFieldValue("leftDividerUri") as BrsString;
-        if (leftDividerUri?.value) {
-            this.leftDivider.set(new BrsString("uri"), leftDividerUri);
+        const leftDividerUri = this.getFieldValueJS("leftDividerUri") as string;
+        if (leftDividerUri) {
+            this.leftDivider.set(new BrsString("uri"), new BrsString(leftDividerUri));
         }
-        const rightDividerUri = this.getFieldValue("rightDividerUri") as BrsString;
-        if (rightDividerUri?.value) {
-            this.rightDivider.set(new BrsString("uri"), rightDividerUri);
+        const rightDividerUri = this.getFieldValueJS("rightDividerUri") as string;
+        if (rightDividerUri) {
+            this.rightDivider.set(new BrsString("uri"), new BrsString(rightDividerUri));
         }
         this.isDirty = false;
     }
@@ -189,10 +182,10 @@ export class Overhang extends Group {
         const leftAlignX = isFHD ? 102 : 68;
         const logoWidth = this.logo.rectLocal.width;
         const optionsWidth = this.optionsText.rectLocal.width ?? (isFHD ? 168 : 112);
-        const showClock = this.getFieldValue("showClock") as BrsBoolean;
-        const clockTextWidth = showClock.toBoolean() ? this.clockText.rectLocal.width : 0;
+        const showClock = this.getFieldValueJS("showClock") as boolean;
+        const clockTextWidth = showClock ? this.clockText.rectLocal.width : 0;
         const clockOffset = isFHD ? 60 : 40;
-        const optionsOffset = showClock.toBoolean() ? optionsWidth + clockOffset : optionsWidth;
+        const optionsOffset = showClock ? optionsWidth + clockOffset : optionsWidth;
         const rightAlignX = this.width - leftAlignX - clockTextWidth;
         const translation = new BrsString("translation");
         if (isFHD) {

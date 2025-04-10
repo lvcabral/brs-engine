@@ -1,13 +1,5 @@
 import { FieldKind, FieldModel } from "./Field";
-import {
-    AAMember,
-    BrsString,
-    BrsType,
-    getTextureManager,
-    jsValueOf,
-    RoBitmap,
-    ValueKind,
-} from "..";
+import { AAMember, BrsType, getTextureManager, isBrsString, jsValueOf, RoBitmap } from "..";
 import { Group } from "./Group";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D, Rect } from "../interfaces/IfDraw2D";
@@ -44,10 +36,10 @@ export class Poster extends Group {
     }
 
     set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
-        if (index.kind !== ValueKind.String) {
+        if (!isBrsString(index)) {
             throw new Error("RoSGNode indexes must be strings");
         }
-        const fieldName = index.value.toLowerCase();
+        const fieldName = index.getValue().toLowerCase();
         if (fieldName === "uri") {
             const uri = jsValueOf(value);
             if (typeof uri === "string" && uri.trim() !== "" && this.uri !== uri) {
@@ -72,12 +64,12 @@ export class Poster extends Group {
         const size = this.getDimensions();
         const rect = { x: drawTrans[0], y: drawTrans[1], width: size.width, height: size.height };
         const rotation = angle + this.getRotation();
-        const displayMode = this.getFieldValue("loadDisplayMode") as BrsString;
+        const displayMode = this.getFieldValueJS("loadDisplayMode") as string;
         if (this.bitmap instanceof RoBitmap) {
-            const rgba = jsValueOf(this.getFieldValue("blendColor"));
-            if (displayMode.value === "scaleToFit") {
+            const rgba = this.getFieldValueJS("blendColor");
+            if (displayMode === "scaleToFit") {
                 this.drawImage(this.bitmap, this.scaleToFit(rect), rotation, draw2D, rgba);
-            } else if (displayMode.value === "scaleToZoom") {
+            } else if (displayMode === "scaleToZoom") {
                 this.bitmap.scaleMode = 1;
                 draw2D?.doDrawCroppedBitmap(this.bitmap, this.scaleToZoom(rect), rect, rgba);
             } else {

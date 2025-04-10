@@ -12,10 +12,10 @@ import {
     Float,
     Font,
     Int32,
+    isBrsString,
     jsValueOf,
     rootObjects,
     RoSGNode,
-    ValueKind,
 } from "..";
 import { IfDraw2D, Rect } from "../interfaces/IfDraw2D";
 import { Interpreter } from "../../interpreter";
@@ -107,7 +107,7 @@ export class ArrayGrid extends Group {
         }
         this.setFieldValue("wrapDividerBitmapUri", new BrsString(this.dividerUri));
         this.setFieldValue("sectionDividerBitmapUri", new BrsString(this.dividerUri));
-        const style = jsValueOf(this.getFieldValue("vertFocusAnimationStyle")) as string;
+        const style = this.getFieldValueJS("vertFocusAnimationStyle") as string;
         this.wrap = style.toLowerCase() === "fixedfocuswrap";
         this.lastPressHandled = "";
         this.hasNinePatch = false;
@@ -115,10 +115,10 @@ export class ArrayGrid extends Group {
     }
 
     set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
-        if (index.kind !== ValueKind.String) {
+        if (!isBrsString(index)) {
             throw new Error("RoSGNode indexes must be strings");
         }
-        const fieldName = index.value.toLowerCase();
+        const fieldName = index.getValue().toLowerCase();
         if (fieldName === "content") {
             const retValue = super.set(index, value, alwaysNotify, kind);
             this.itemComps.length = 0;
@@ -130,7 +130,7 @@ export class ArrayGrid extends Group {
             this.set(new BrsString("jumpToItem"), new Int32(focus));
             return retValue;
         } else if (["jumptoitem", "animatetoitem"].includes(fieldName)) {
-            const focusedIndex = jsValueOf(this.getFieldValue("itemFocused"));
+            const focusedIndex = this.getFieldValueJS("itemFocused");
             if (focusedIndex !== jsValueOf(value)) {
                 super.set(new BrsString("itemUnfocused"), new Int32(focusedIndex));
                 const newIndex = jsValueOf(value) as number;
@@ -165,10 +165,9 @@ export class ArrayGrid extends Group {
             return BrsInvalid.Instance;
         }
         const result = super.set(index, value, alwaysNotify, kind);
+        const rowFields = ["vertfocusanimationstyle", "numrows", "focusrow"];
         // Update the current row if some fields changed
-        if (
-            ["vertfocusanimationstyle", "numrows", "focusrow"].includes(index.value.toLowerCase())
-        ) {
+        if (rowFields.includes(index.getValue().toLowerCase())) {
             this.currRow = this.updateCurrRow();
         }
         return result;
@@ -268,8 +267,8 @@ export class ArrayGrid extends Group {
             this.itemComps[index].set(new BrsString("itemContent"), content, true);
         }
         this.updateItemFocus(index, focused, nodeFocus);
-        const drawFocus = jsValueOf(this.getFieldValue("drawFocusFeedback"));
-        const drawFocusOnTop = jsValueOf(this.getFieldValue("drawFocusFeedbackOnTop"));
+        const drawFocus = this.getFieldValueJS("drawFocusFeedback");
+        const drawFocusOnTop = this.getFieldValueJS("drawFocusFeedbackOnTop");
         if (focused && drawFocus && !drawFocusOnTop) {
             this.renderFocus(itemRect, nodeFocus, draw2D);
         }
@@ -300,13 +299,13 @@ export class ArrayGrid extends Group {
     }
 
     protected renderSectionDivider(title: string, itemRect: Rect, draw2D?: IfDraw2D) {
-        const dividerHeight = jsValueOf(this.getFieldValue("sectionDividerHeight")) as number;
-        const dividerSpacing = jsValueOf(this.getFieldValue("sectionDividerSpacing")) as number;
+        const dividerHeight = this.getFieldValueJS("sectionDividerHeight") as number;
+        const dividerSpacing = this.getFieldValueJS("sectionDividerSpacing") as number;
         const divRect = { ...itemRect, height: dividerHeight };
         let margin = 0;
         if (title.length !== 0) {
             const font = this.getFieldValue("sectionDividerFont") as Font;
-            const color = jsValueOf(this.getFieldValue("sectionDividerTextColor"));
+            const color = this.getFieldValueJS("sectionDividerTextColor");
             const size = this.drawText(title, font, color, divRect, "left", "center", 0, draw2D);
             margin = size.width + dividerSpacing;
         }
@@ -326,7 +325,7 @@ export class ArrayGrid extends Group {
 
     protected renderWrapDivider(itemRect: Rect, draw2D?: IfDraw2D) {
         const bmp = this.getBitmap("wrapDividerBitmapUri");
-        const dividerHeight = jsValueOf(this.getFieldValue("wrapDividerHeight"));
+        const dividerHeight = this.getFieldValueJS("wrapDividerHeight") as number;
         if (bmp?.isValid()) {
             const height = bmp.ninePatch ? 2 : bmp.height;
             const topOffset = Math.round((dividerHeight - height) / 2);
@@ -338,13 +337,13 @@ export class ArrayGrid extends Group {
 
     protected refreshContent() {
         const content = this.getFieldValue("content") as ContentNode;
-        const numCols = jsValueOf(this.getFieldValue("numColumns")) || 1;
+        const numCols = (this.getFieldValueJS("numColumns") as number) || 1;
         const sections = content.getNodeChildren();
         this.content.length = 0;
         this.metadata.length = 0;
         let itemIndex = 0;
         for (const section of sections) {
-            if (section.getFieldValue("ContentType").toString().toLowerCase() === "section") {
+            if (section.getFieldValueJS("ContentType")?.toLowerCase() === "section") {
                 const content = section.getNodeChildren();
                 if (content.length === 0) {
                     continue;
@@ -353,7 +352,7 @@ export class ArrayGrid extends Group {
                     const metadata = { index: itemIndex, divider: false, sectionTitle: "" };
                     if (index === 0) {
                         metadata.divider = true;
-                        metadata.sectionTitle = section.getFieldValue("title").toString();
+                        metadata.sectionTitle = section.getFieldValueJS("title") ?? "";
                     }
                     this.metadata.push(metadata);
                     itemIndex++;
@@ -380,8 +379,8 @@ export class ArrayGrid extends Group {
         if (content.name === "_placeholder_") {
             return new Group();
         }
-        const itemCompName = this.getFieldValue("itemComponentName") as BrsString;
-        const itemComp = createNodeByType(interpreter, itemCompName);
+        const itemCompName = this.getFieldValueJS("itemComponentName") ?? "";
+        const itemComp = createNodeByType(interpreter, new BrsString(itemCompName));
         if (itemComp instanceof Group) {
             itemComp.setFieldValue("width", brsValueOf(itemRect.width));
             itemComp.setFieldValue("height", brsValueOf(itemRect.height));
@@ -391,11 +390,11 @@ export class ArrayGrid extends Group {
     }
 
     protected updateCurrRow() {
-        const numCols = jsValueOf(this.getFieldValue("numColumns")) || 1;
-        const focusRow = jsValueOf(this.getFieldValue("focusRow")) as number;
+        const numCols = (this.getFieldValueJS("numColumns") as number) || 1;
+        const focusRow = this.getFieldValueJS("focusRow") as number;
         if (!this.wrap) {
             const currentFocus = Math.floor(this.focusIndex / numCols);
-            const numRows = jsValueOf(this.getFieldValue("numRows")) as number;
+            const numRows = this.getFieldValueJS("numRows") as number;
 
             if (currentFocus >= 0 && currentFocus < numRows) {
                 return currentFocus;
@@ -411,7 +410,7 @@ export class ArrayGrid extends Group {
 
     protected getIndex(offset: number = 0, currIndex?: number) {
         currIndex = currIndex ?? this.focusIndex;
-        const numCols = jsValueOf(this.getFieldValue("numColumns")) || 1;
+        const numCols = (this.getFieldValueJS("numColumns") as number) || 1;
         const focusRow = Math.floor(currIndex / numCols);
         const maxRows = Math.ceil(this.content.length / numCols);
 

@@ -12,6 +12,7 @@ import {
     Dialog,
     getTextureManager,
     Int32,
+    isBrsString,
     RoArray,
     RoBitmap,
     RoMessagePort,
@@ -19,7 +20,6 @@ import {
     RoSGNode,
     StandardDialog,
     toAssociativeArray,
-    ValueKind,
 } from "..";
 import { Scope } from "../..";
 import { BlockEnd } from "../../parser/Statement";
@@ -48,10 +48,10 @@ export class Scene extends Group {
     }
 
     set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
-        if (index.kind !== ValueKind.String) {
+        if (!isBrsString(index)) {
             throw new Error("RoSGNode indexes must be strings");
         }
-        const fieldName = index.value.toLowerCase();
+        const fieldName = index.getValue().toLowerCase();
         if (fieldName === "dialog") {
             if (value instanceof Dialog || value instanceof StandardDialog) {
                 this.dialog?.set(new BrsString("close"), BrsBoolean.True);
@@ -109,12 +109,12 @@ export class Scene extends Group {
             return;
         }
         const rotation = angle + this.getRotation();
-        const backColor = this.getFieldValue("backgroundColor") as Int32;
-        draw2D?.doClearCanvas(backColor.getValue());
-        const backURI = this.getFieldValue("backgroundUri");
-        if (draw2D && backURI instanceof BrsString && backURI.value.trim() !== "") {
+        const backColor = this.getFieldValueJS("backgroundColor") as number;
+        draw2D?.doClearCanvas(backColor);
+        const backURI = this.getFieldValueJS("backgroundUri") as string;
+        if (draw2D && backURI.trim() !== "") {
             const textureManager = getTextureManager();
-            const bitmap = textureManager.loadTexture(backURI.value);
+            const bitmap = textureManager.loadTexture(backURI);
             if (bitmap instanceof RoBitmap && bitmap.isValid()) {
                 const scaleX = this.ui.width / bitmap.width;
                 const scaleY = this.ui.height / bitmap.height;

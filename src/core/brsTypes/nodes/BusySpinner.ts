@@ -1,7 +1,7 @@
 import { FieldKind, FieldModel } from "./Field";
 import { Group } from "./Group";
 import { AAMember } from "../components/RoAssociativeArray";
-import { BrsBoolean, BrsInvalid, BrsString, BrsType, Float, Poster, RoArray, ValueKind } from "..";
+import { BrsInvalid, BrsString, BrsType, Float, isBrsString, Poster, RoArray } from "..";
 import { Interpreter } from "../..";
 import { IfDraw2D } from "../interfaces/IfDraw2D";
 import { rotateTranslation } from "../../scenegraph/SGUtil";
@@ -29,11 +29,11 @@ export class BusySpinner extends Group {
     }
 
     set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
-        if (index.kind !== ValueKind.String) {
+        if (!isBrsString(index)) {
             throw new Error("RoSGNode indexes must be strings");
         }
 
-        const mapKey = index.value.toLowerCase();
+        const mapKey = index.getValue().toLowerCase();
 
         if (mapKey === "control") {
             let control = value.toString();
@@ -94,11 +94,11 @@ export class BusySpinner extends Group {
             }
             if (this.active) {
                 const now = performance.now();
-                const spinInterval = this.getFieldValue("spinInterval") as Float;
-                const clockwise = this.getFieldValue("clockwise") as BrsBoolean;
-                const direction = clockwise.toBoolean() ? -1 : 1;
+                const spinInterval = this.getFieldValueJS("spinInterval") as number;
+                const clockwise = this.getFieldValueJS("clockwise") as boolean;
+                const direction = clockwise ? -1 : 1;
                 const elapsedTime = (now - this.lastRenderTime) / 1000;
-                const rotationChange = (2 * Math.PI * elapsedTime) / spinInterval.getValue();
+                const rotationChange = (2 * Math.PI * elapsedTime) / (spinInterval ?? 2);
                 this.currentRotation += direction * rotationChange;
                 const spin = this.currentRotation + rotation;
                 this.poster.set(new BrsString("rotation"), new Float(spin));

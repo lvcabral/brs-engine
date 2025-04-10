@@ -2,13 +2,13 @@ import { RoSGNode } from "../components/RoSGNode";
 import {
     AAMember,
     BrsType,
-    ValueKind,
     BrsString,
     BrsInvalid,
     fromAssociativeArray,
     jsValueOf,
     BrsEvent,
     brsValueOf,
+    isBrsString,
 } from "..";
 import { Field, FieldKind, FieldModel } from "./Field";
 import { isTaskUpdate, TaskData, TaskState, TaskUpdate } from "../../common";
@@ -45,16 +45,16 @@ export class Task extends RoSGNode {
         kind?: FieldKind,
         sync: boolean = true
     ) {
-        if (index.kind !== ValueKind.String) {
+        if (!isBrsString(index)) {
             throw new Error("RoSGNode indexes must be strings");
         }
         const validStates = ["init", "run", "stop", "done"];
-        const mapKey = index.value.toLowerCase();
+        const mapKey = index.getValue().toLowerCase();
         const field = this.fields.get(mapKey);
 
-        if (field && mapKey === "control" && value instanceof BrsString) {
+        if (field && mapKey === "control" && isBrsString(value)) {
             const state = this.fields.get("state") as Field;
-            let control = value.value.toLowerCase();
+            let control = value.getValue().toLowerCase();
             if (!validStates.includes(control)) {
                 control = "";
             } else if (control === "run") {
@@ -82,10 +82,10 @@ export class Task extends RoSGNode {
                 }
             }
             return BrsInvalid.Instance;
-        } else if (field && mapKey === "state" && value instanceof BrsString) {
+        } else if (field && mapKey === "state" && isBrsString(value)) {
             // Roku documentation states this is read-only but it allows change the value to valid states
             // But it does not trigger any action
-            if (validStates.includes(value.value.toLowerCase())) {
+            if (validStates.includes(value.getValue().toLowerCase())) {
                 field.setValue(value);
             }
             return BrsInvalid.Instance;
@@ -109,8 +109,8 @@ export class Task extends RoSGNode {
     }
 
     checkTask() {
-        const functionName = this.getFieldValue("functionName") as BrsString;
-        if (!functionName || functionName.value.trim() === "") {
+        const functionName = this.getFieldValueJS("functionName") as string;
+        if (!functionName || functionName.trim() === "") {
             this.set(new BrsString("control"), new BrsString("stop"));
             return;
         }
@@ -123,7 +123,7 @@ export class Task extends RoSGNode {
                 buffer: this.taskBuffer.getBuffer(),
                 m: fromAssociativeArray(this.m),
             };
-            console.log("Posting Task Data to RUN: ", this.nodeSubtype, functionName.value);
+            console.log("Posting Task Data to RUN: ", this.nodeSubtype, functionName);
             postMessage(taskData);
             this.started = true;
         }
