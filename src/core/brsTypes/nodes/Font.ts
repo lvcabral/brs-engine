@@ -59,15 +59,9 @@ export class Font extends RoSGNode {
             throw new Error("RoSGNode indexes must be strings");
         }
 
-        const mapKey = index.getValue().toLowerCase();
-        const field = this.fields.get(mapKey);
-
-        if (field && mapKey === "uri" && isBrsString(value)) {
-            const uri = value.getValue();
-            getFontRegistry().registerFont(uri);
-            field.setValue(value);
-            this.fields.set(mapKey, field);
-            return BrsInvalid.Instance;
+        const fieldName = index.getValue().toLowerCase();
+        if (fieldName === "uri" && isBrsString(value)) {
+            getFontRegistry().registerFont(value.getValue());
         }
         return super.set(index, value, alwaysNotify, kind);
     }
