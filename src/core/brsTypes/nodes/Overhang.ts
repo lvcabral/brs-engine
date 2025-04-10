@@ -129,8 +129,14 @@ export class Overhang extends Group {
 
     private updateChildren() {
         this.copyField(this.background, "height");
-        this.copyField(this.background, "uri", "backgroundUri");
-        this.copyField(this.logo, "uri", "logoUri");
+        const backUri = this.getFieldValueJS("backgroundUri") as string;
+        if (backUri) {
+            this.background.set(new BrsString("uri"), new BrsString(backUri));
+        }
+        const logoUri = this.getFieldValueJS("logoUri") as string;
+        if (logoUri) {
+            this.logo.set(new BrsString("uri"), new BrsString(logoUri));
+        }
         const title = this.getFieldValueJS("title") as string;
         if (title) {
             this.title.set(new BrsString("text"), new BrsString(title));
@@ -156,9 +162,18 @@ export class Overhang extends Group {
             this.optionsIcon.set(new BrsString("uri"), new BrsString(this.optionsOff));
             this.copyField(this.optionsText, "color", "optionsDimColor");
         }
-        this.copyField(this.optionsText, "text", "optionsText");
-        this.copyField(this.leftDivider, "uri", "leftDividerUri");
-        this.copyField(this.rightDivider, "uri", "rightDividerUri");
+        const optionsText = this.getFieldValueJS("optionsText") as string;
+        if (optionsText) {
+            this.optionsText.set(new BrsString("text"), new BrsString(optionsText));
+        }
+        const leftDividerUri = this.getFieldValueJS("leftDividerUri") as string;
+        if (leftDividerUri) {
+            this.leftDivider.set(new BrsString("uri"), new BrsString(leftDividerUri));
+        }
+        const rightDividerUri = this.getFieldValueJS("rightDividerUri") as string;
+        if (rightDividerUri) {
+            this.rightDivider.set(new BrsString("uri"), new BrsString(rightDividerUri));
+        }
         this.isDirty = false;
     }
 
