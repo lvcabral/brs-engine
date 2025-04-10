@@ -3,7 +3,6 @@ import { RoSGNodeEvent } from "../events/RoSGNodeEvent";
 import {
     BrsType,
     Font,
-    isBrsNumber,
     isBrsString,
     Int32,
     Int64,
@@ -19,6 +18,7 @@ import {
     isBoxable,
     isUnboxable,
     isAnyNumber,
+    isBoxedNumber,
 } from "..";
 import { Callable } from "../Callable";
 import { Interpreter } from "../../interpreter";
@@ -277,7 +277,10 @@ export class Field {
     }
 
     private constraintValue(value: BrsType) {
-        if (isBrsNumber(value) && value.kind !== getValueKindFromFieldType(this.type)) {
+        if (isAnyNumber(value) && value.kind !== getValueKindFromFieldType(this.type)) {
+            if (isBoxedNumber(value)) {
+                value = value.unbox();
+            }
             if (this.type === FieldKind.Float) {
                 value = new Float(value.getValue());
             } else if (this.type === FieldKind.Int32) {
@@ -299,7 +302,7 @@ export class Field {
     }
 
     private isEqual(oldValue: BrsType, newValue: BrsType) {
-        if (isBrsNumber(oldValue) && isBrsNumber(newValue)) {
+        if (isAnyNumber(oldValue) && isAnyNumber(newValue)) {
             return oldValue.getValue() === newValue.getValue();
         } else if (isBrsString(oldValue) && isBrsString(newValue)) {
             return oldValue.getValue() === newValue.getValue();
