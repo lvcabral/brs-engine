@@ -18,7 +18,7 @@ const {
     StringI,
 } = brs.stdlib;
 const { Interpreter } = brs;
-const { BrsString, BrsBoolean, Int32, Float } = brs.types;
+const { BrsString, Int32, Float } = brs.types;
 
 const interpreter = new Interpreter();
 
@@ -131,6 +131,12 @@ describe("global string functions", () => {
             expect(
                 Instr.call(interpreter, new Int32(3), new BrsString("apple"), new BrsString("p"))
             ).toEqual(new Int32(3));
+        });
+
+        it("returns the index of the first found string (2 params only)", () => {
+            expect(Instr.call(interpreter, new BrsString("apple"), new BrsString("p"))).toEqual(
+                new Int32(2)
+            );
         });
     });
 

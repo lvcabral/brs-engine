@@ -50,6 +50,7 @@ describe("end to end standard libary", () => {
             "ed",
             " 7",
             " 10",
+            " 3",
             " 3.4",
             " 9.7",
             "-3",
