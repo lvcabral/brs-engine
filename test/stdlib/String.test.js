@@ -134,9 +134,9 @@ describe("global string functions", () => {
         });
 
         it("returns the index of the first found string (2 params only)", () => {
-            expect(
-                Instr.call(interpreter, new BrsString("apple"), new BrsString("p"))
-            ).toEqual(new Int32(2));
+            expect(Instr.call(interpreter, new BrsString("apple"), new BrsString("p"))).toEqual(
+                new Int32(2)
+            );
         });
     });
 
