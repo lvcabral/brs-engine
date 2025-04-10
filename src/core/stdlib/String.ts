@@ -86,18 +86,32 @@ export const Right = new Callable("Right", {
 /**
  * Returns the index (1 based) of a string inside another string. Zero if there is no match.
  */
-export const Instr = new Callable("Instr", {
-    signature: {
-        args: [
-            new StdlibArgument("start", ValueKind.Int32),
-            new StdlibArgument("str", ValueKind.String),
-            new StdlibArgument("search", ValueKind.String),
-        ],
-        returns: ValueKind.String,
+export const Instr = new Callable(
+    "Instr",
+    {
+        signature: {
+            args: [
+                new StdlibArgument("start", ValueKind.Int32),
+                new StdlibArgument("str", ValueKind.String),
+                new StdlibArgument("search", ValueKind.String),
+            ],
+            returns: ValueKind.String,
+        },
+        impl: (_: Interpreter, start: Int32, str: BrsString, search: BrsString) =>
+            new Int32(str.value.indexOf(search.value, start.getValue() - 1) + 1),
     },
-    impl: (_: Interpreter, start: Int32, str: BrsString, search: BrsString) =>
-        new Int32(str.value.indexOf(search.value, start.getValue() - 1) + 1),
-});
+    {
+        signature: {
+            args: [
+                new StdlibArgument("str", ValueKind.String),
+                new StdlibArgument("search", ValueKind.String),
+            ],
+            returns: ValueKind.String,
+        },
+        impl: (_: Interpreter, str: BrsString, search: BrsString) =>
+            new Int32(str.value.indexOf(search.value) + 1),
+    }
+);
 
 /**
  * Return the number of characters in a string
