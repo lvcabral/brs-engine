@@ -199,7 +199,6 @@ export function getBrsValueFromFieldType(type: string, value?: string): BrsType 
                     returnValue = new RoArray([]);
                     break;
                 }
-                // Remove brackets and split by comma, then trim each element
                 const elements = arrayItems.split(",").map((el) => el.trim());
                 const parsedValue = elements.map(Number);
                 returnValue = new RoArray(parsedValue.map((v) => new Float(isNaN(v) ? 0 : v)));
