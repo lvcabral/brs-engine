@@ -193,15 +193,16 @@ export function getBrsValueFromFieldType(type: string, value?: string): BrsType 
         case "roarray":
         case "array":
             returnValue = BrsInvalid.Instance;
-            if (value?.trim().startsWith("[") && value.trim().endsWith("]")) {
-                if (value === "[]" || value === "[ ]") {
+            const trimmedValue = value?.trim();
+            if (trimmedValue?.startsWith("[") && trimmedValue.endsWith("]")) {
+                const arrayItems = trimmedValue.slice(1, -1).trim();
+                if (arrayItems === "") {
                     returnValue = new RoArray([]);
                     break;
                 }
-                const parsedValue = value
-                    .replace(/[\[\]]/g, "")
-                    .split(",")
-                    .map(Number);
+                // Remove brackets and split by comma, then trim each element
+                const elements = arrayItems.split(",").map((el) => el.trim());
+                const parsedValue = elements.map(Number);
                 returnValue = new RoArray(parsedValue.map((v) => new Float(isNaN(v) ? 0 : v)));
             }
             break;
