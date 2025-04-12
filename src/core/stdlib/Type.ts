@@ -23,9 +23,10 @@ export const Type = new Callable("type", {
                 return new BrsString(variable.getComponentName());
             case ValueKind.Interface:
                 return new BrsString(variable.name);
-            default:
+            default: {
                 const legacy = version.getValue() !== 3 && isBoxable(variable) && variable.inArray;
                 return new BrsString(ValueKind.toString(variable.kind, legacy));
+            }
         }
     },
 });
