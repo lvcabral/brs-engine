@@ -6,7 +6,6 @@ import {
     BrsString,
     StdlibArgument,
     isBoxable,
-    legacyType,
 } from "../brsTypes";
 import { Interpreter } from "../interpreter";
 
@@ -25,10 +24,8 @@ export const Type = new Callable("type", {
             case ValueKind.Interface:
                 return new BrsString(variable.name);
             default:
-                if (version.getValue() !== 3 && isBoxable(variable) && variable.inArray) {
-                    return new BrsString(legacyType(variable.kind));
-                }
-                return new BrsString(ValueKind.toString(variable.kind));
+                const legacy = version.getValue() !== 3 && isBoxable(variable) && variable.inArray;
+                return new BrsString(ValueKind.toString(variable.kind, legacy));
         }
     },
 });

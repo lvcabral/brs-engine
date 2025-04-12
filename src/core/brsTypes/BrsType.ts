@@ -28,24 +28,24 @@ export namespace ValueKind {
      * Converts a `ValueKind` enum member to a human-readable string representation.
      * @returns a textual representation of the provided value kind.
      */
-    export function toString(kind: ValueKind): string {
+    export function toString(kind: ValueKind, legacy: boolean = false): string {
         switch (kind) {
             case ValueKind.Interface:
                 return "Interface";
             case ValueKind.Invalid:
-                return "Invalid";
+                return legacy ? "roInvalid" : "Invalid";
             case ValueKind.Boolean:
-                return "Boolean";
+                return legacy ? "roBoolean" : "Boolean";
             case ValueKind.String:
-                return "String";
+                return legacy ? "roString" : "String";
             case ValueKind.Int32:
-                return "Integer";
+                return legacy ? "roInteger" : "Integer";
             case ValueKind.Int64:
                 return "LongInteger";
             case ValueKind.Float:
-                return "Float";
+                return legacy ? "roFloat" : "Float";
             case ValueKind.Double:
-                return "Double";
+                return legacy ? "roFloat" : "Double";
             case ValueKind.Callable:
                 return "Function";
             case ValueKind.Dynamic:
@@ -95,37 +95,6 @@ export namespace ValueKind {
             default:
                 return undefined;
         }
-    }
-}
-
-export function legacyType(kind: ValueKind) {
-    switch (kind) {
-        case ValueKind.Interface:
-            return "Interface";
-        case ValueKind.Invalid:
-            return "roInvalid";
-        case ValueKind.Boolean:
-            return "roBoolean";
-        case ValueKind.String:
-            return "roString";
-        case ValueKind.Int32:
-            return "roInteger";
-        case ValueKind.Int64:
-            return "LongInteger";
-        case ValueKind.Float:
-            return "roFloat";
-        case ValueKind.Double:
-            return "roFloat";
-        case ValueKind.Callable:
-            return "Function";
-        case ValueKind.Dynamic:
-            return "Dynamic";
-        case ValueKind.Void:
-            return "Void";
-        case ValueKind.Uninitialized:
-            return "<uninitialized>";
-        case ValueKind.Object:
-            return "Object";
     }
 }
 
