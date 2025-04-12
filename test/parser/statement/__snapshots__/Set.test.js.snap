@@ -32,6 +32,7 @@ exports[`parser indexed assignment bracketed assignment operator 1`] = `
           },
         },
         "value": Int32 {
+          "inArray": false,
           "kind": 4,
           "value": 0,
         },
@@ -86,6 +87,7 @@ exports[`parser indexed assignment bracketed assignment operator 1`] = `
               },
             },
             "value": Int32 {
+              "inArray": false,
               "kind": 4,
               "value": 0,
             },
@@ -123,6 +125,7 @@ exports[`parser indexed assignment bracketed assignment operator 1`] = `
           },
         },
         "value": Int32 {
+          "inArray": false,
           "kind": 4,
           "value": 3,
         },
@@ -180,6 +183,7 @@ exports[`parser indexed assignment bracketed assigns anonymous functions 1`] = `
           },
         },
         "value": Int32 {
+          "inArray": false,
           "kind": 4,
           "value": 0,
         },
@@ -289,6 +293,7 @@ exports[`parser indexed assignment bracketed assigns boolean expressions 1`] = `
           },
         },
         "value": Int32 {
+          "inArray": false,
           "kind": 4,
           "value": 0,
         },
@@ -325,6 +330,7 @@ exports[`parser indexed assignment bracketed assigns boolean expressions 1`] = `
           },
         },
         "value": BrsBoolean {
+          "inArray": false,
           "kind": 2,
           "value": true,
         },
@@ -341,6 +347,7 @@ exports[`parser indexed assignment bracketed assigns boolean expressions 1`] = `
           },
         },
         "value": BrsBoolean {
+          "inArray": false,
           "kind": 2,
           "value": false,
         },
@@ -453,6 +460,7 @@ exports[`parser indexed assignment dotted assignment operator 1`] = `
           },
         },
         "value": Int32 {
+          "inArray": false,
           "kind": 4,
           "value": 5,
         },
@@ -619,6 +627,7 @@ exports[`parser indexed assignment dotted assigns boolean expressions 1`] = `
           },
         },
         "value": BrsBoolean {
+          "inArray": false,
           "kind": 2,
           "value": true,
         },
@@ -635,6 +644,7 @@ exports[`parser indexed assignment dotted assigns boolean expressions 1`] = `
           },
         },
         "value": BrsBoolean {
+          "inArray": false,
           "kind": 2,
           "value": false,
         },

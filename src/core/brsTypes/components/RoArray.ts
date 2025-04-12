@@ -1,4 +1,4 @@
-import { BrsType, isBrsString, isBrsNumber, Int32, Float, isBoxedNumber } from "..";
+import { BrsType, isBrsString, isBrsNumber, Int32, Float, isBoxedNumber, isBoxable } from "..";
 import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid, Comparable } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
 import { Callable, StdlibArgument } from "../Callable";
@@ -237,6 +237,8 @@ export class RoArray extends BrsComponent implements BrsValue, BrsArray {
     addChildRef(value: BrsType | undefined) {
         if (value instanceof BrsComponent) {
             value.addReference();
+        } else if (value && isBoxable(value)) {
+            value.inArray = true;
         }
     }
 

@@ -98,6 +98,37 @@ export namespace ValueKind {
     }
 }
 
+export function legacyType(kind: ValueKind) {
+    switch (kind) {
+        case ValueKind.Interface:
+            return "Interface";
+        case ValueKind.Invalid:
+            return "roInvalid";
+        case ValueKind.Boolean:
+            return "roBoolean";
+        case ValueKind.String:
+            return "roString";
+        case ValueKind.Int32:
+            return "roInteger";
+        case ValueKind.Int64:
+            return "LongInteger";
+        case ValueKind.Float:
+            return "roFloat";
+        case ValueKind.Double:
+            return "roFloat";
+        case ValueKind.Callable:
+            return "Function";
+        case ValueKind.Dynamic:
+            return "Dynamic";
+        case ValueKind.Void:
+            return "Void";
+        case ValueKind.Uninitialized:
+            return "<uninitialized>";
+        case ValueKind.Object:
+            return "Object";
+    }
+}
+
 /**
  *  Converts a specified brightscript type in string into BrsType representation, with actual value
  *  Note: only supports native types so far.  Objects such as array/AA aren't handled at the moment.
@@ -197,7 +228,7 @@ export interface Comparable {
 /** Internal representation of a string in BrightScript. */
 export class BrsString implements BrsValue, Comparable, Boxable {
     readonly kind = ValueKind.String;
-    constructor(readonly value: string) {}
+    constructor(readonly value: string, public inArray: boolean = false) {}
 
     lessThan(other: BrsType): BrsBoolean {
         if (isStringComp(other)) {
@@ -244,7 +275,7 @@ export class BrsString implements BrsValue, Comparable, Boxable {
 /** Internal representation of a boolean in BrightScript. */
 export class BrsBoolean implements BrsValue, Comparable, Boxable {
     readonly kind = ValueKind.Boolean;
-    private constructor(private readonly value: boolean) {}
+    private constructor(private readonly value: boolean, public inArray: boolean = false) {}
 
     toBoolean(): boolean {
         return this.value;
@@ -324,6 +355,7 @@ export class BrsBoolean implements BrsValue, Comparable, Boxable {
 /** Internal representation of the BrightScript `invalid` value. */
 export class BrsInvalid implements BrsValue, Comparable, Boxable {
     readonly kind = ValueKind.Invalid;
+    inArray: boolean = false;
     static readonly Instance = new BrsInvalid();
 
     lessThan(other: BrsType): BrsBoolean {

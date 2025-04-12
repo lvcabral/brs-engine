@@ -83,6 +83,7 @@ exports[`parser library statements adds error for library statements NOT at top 
           "isReserved": false,
           "kind": "String",
           "literal": BrsString {
+            "inArray": false,
             "kind": 3,
             "value": "v30/bslCore.brs",
           },
@@ -149,6 +150,7 @@ exports[`parser library statements adds error for library statements inside of f
                   "isReserved": false,
                   "kind": "String",
                   "literal": BrsString {
+                    "inArray": false,
                     "kind": 3,
                     "value": "v30/bslCore.brs",
                   },
@@ -322,6 +324,7 @@ exports[`parser library statements does not prevent usage of \`library\` as obje
                 "elements": [
                   {
                     "name": BrsString {
+                      "inArray": false,
                       "kind": 3,
                       "value": "library",
                     },
@@ -338,6 +341,7 @@ exports[`parser library statements does not prevent usage of \`library\` as obje
                         },
                       },
                       "value": BrsString {
+                        "inArray": false,
                         "kind": 3,
                         "value": "Gotham City Library",
                       },
@@ -493,6 +497,7 @@ exports[`parser library statements does not prevent usage of \`library\` as vari
                   },
                 },
                 "value": BrsString {
+                  "inArray": false,
                   "kind": 3,
                   "value": "Gotham City Library",
                 },
@@ -652,6 +657,7 @@ exports[`parser library statements parses rest of file with ONLY the library key
                   },
                 },
                 "value": BrsString {
+                  "inArray": false,
                   "kind": 3,
                   "value": "Your Library",
                 },
@@ -833,6 +839,7 @@ exports[`parser library statements supports library statements at top of file 1`
           "isReserved": false,
           "kind": "String",
           "literal": BrsString {
+            "inArray": false,
             "kind": 3,
             "value": "v30/bslCore.brs",
           },
@@ -953,6 +960,7 @@ exports[`parser library statements supports multiple library statements separate
           "isReserved": false,
           "kind": "String",
           "literal": BrsString {
+            "inArray": false,
             "kind": 3,
             "value": "v30/bslCore.brs",
           },
@@ -994,6 +1002,7 @@ exports[`parser library statements supports multiple library statements separate
           "isReserved": false,
           "kind": "String",
           "literal": BrsString {
+            "inArray": false,
             "kind": 3,
             "value": "v30/bslCore.brs",
           },

@@ -48,7 +48,7 @@ describe("property getting", () => {
             interpreter.exec(ast);
 
             expect(interpreter.environment.get(identifier("result"))).toEqual(
-                new BrsString("index1")
+                new BrsString("index1", true)
             );
         });
 
@@ -109,7 +109,7 @@ describe("property getting", () => {
             interpreter.exec(ast);
 
             expect(interpreter.environment.get(identifier("result"))).toEqual(
-                new BrsString("(2,1)")
+                new BrsString("(2,1)", true)
             );
         });
     });
@@ -145,7 +145,7 @@ describe("property getting", () => {
             interpreter.exec(ast);
 
             expect(interpreter.environment.get(identifier("result"))).toEqual(
-                new BrsString("foo's value")
+                new BrsString("foo's value", true)
             );
         });
 
@@ -189,7 +189,7 @@ describe("property getting", () => {
 
             interpreter.exec(ast);
             expect(interpreter.environment.get(identifier("result"))).toEqual(
-                new BrsString("aa.foo.bar's value")
+                new BrsString("aa.foo.bar's value", true)
             );
         });
     });

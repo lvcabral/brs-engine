@@ -20,7 +20,7 @@ sub main()
     input.SetMessagePort(port)
     for t = 1 to 10
         msg = port.GetMessage()
-        print type(msg)
+        print type(msg, 3)
         if type(msg) = "roCECStatusEvent"
             print msg.getMessage()
             print msg.getIndex()

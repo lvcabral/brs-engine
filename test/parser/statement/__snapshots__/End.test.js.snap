@@ -75,6 +75,7 @@ exports[`\`end\` statement can be used as a property name on objects 1`] = `
               "elements": [
                 {
                   "name": BrsString {
+                    "inArray": false,
                     "kind": 3,
                     "value": "end",
                   },
@@ -91,6 +92,7 @@ exports[`\`end\` statement can be used as a property name on objects 1`] = `
                       },
                     },
                     "value": BrsBoolean {
+                      "inArray": false,
                       "kind": 2,
                       "value": true,
                     },

@@ -1,4 +1,13 @@
-import { BrsType, ValueKind, Callable, Int32, BrsString, StdlibArgument } from "../brsTypes";
+import {
+    BrsType,
+    ValueKind,
+    Callable,
+    Int32,
+    BrsString,
+    StdlibArgument,
+    isBoxable,
+    legacyType,
+} from "../brsTypes";
 import { Interpreter } from "../interpreter";
 
 export const Type = new Callable("type", {
@@ -9,13 +18,16 @@ export const Type = new Callable("type", {
         ],
         returns: ValueKind.String,
     },
-    impl: (interpreter: Interpreter, variable: BrsType, version: Int32) => {
+    impl: (_: Interpreter, variable: BrsType, version: Int32) => {
         switch (variable.kind) {
             case ValueKind.Object:
                 return new BrsString(variable.getComponentName());
             case ValueKind.Interface:
                 return new BrsString(variable.name);
             default:
+                if (version.getValue() !== 3 && isBoxable(variable) && variable.inArray) {
+                    return new BrsString(legacyType(variable.kind));
+                }
                 return new BrsString(ValueKind.toString(variable.kind));
         }
     },

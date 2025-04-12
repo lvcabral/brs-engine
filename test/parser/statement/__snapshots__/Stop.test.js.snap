@@ -75,6 +75,7 @@ exports[`stop statement can be used as an object property 1`] = `
               "elements": [
                 {
                   "name": BrsString {
+                    "inArray": false,
                     "kind": 3,
                     "value": "stop",
                   },
@@ -91,6 +92,7 @@ exports[`stop statement can be used as an object property 1`] = `
                       },
                     },
                     "value": BrsBoolean {
+                      "inArray": false,
                       "kind": 2,
                       "value": false,
                     },
@@ -166,6 +168,7 @@ exports[`stop statement can be used as an object property 1`] = `
                 },
               },
               "value": BrsBoolean {
+                "inArray": false,
                 "kind": 2,
                 "value": true,
               },

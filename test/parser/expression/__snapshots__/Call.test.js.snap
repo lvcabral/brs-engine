@@ -17,6 +17,7 @@ exports[`parser call expressions accepts arguments 1`] = `
             },
           },
           "value": Int32 {
+            "inArray": false,
             "kind": 4,
             "value": 1,
           },
@@ -33,6 +34,7 @@ exports[`parser call expressions accepts arguments 1`] = `
             },
           },
           "value": Int32 {
+            "inArray": false,
             "kind": 4,
             "value": 2,
           },
@@ -190,6 +192,7 @@ exports[`parser call expressions does not invalidate the next statement on a mul
                 },
               },
               "value": BrsString {
+                "inArray": false,
                 "kind": 3,
                 "value": "bob",
               },

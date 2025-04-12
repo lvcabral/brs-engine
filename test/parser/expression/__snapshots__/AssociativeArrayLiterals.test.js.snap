@@ -57,6 +57,7 @@ exports[`parser associative array literals allows a mix of quoted and unquoted k
       "elements": [
         {
           "name": BrsString {
+            "inArray": false,
             "kind": 3,
             "value": "foo",
           },
@@ -72,6 +73,7 @@ exports[`parser associative array literals allows a mix of quoted and unquoted k
               },
             },
             "value": Int32 {
+              "inArray": false,
               "kind": 4,
               "value": 1,
             },
@@ -79,6 +81,7 @@ exports[`parser associative array literals allows a mix of quoted and unquoted k
         },
         {
           "name": BrsString {
+            "inArray": false,
             "kind": 3,
             "value": "bar",
           },
@@ -94,6 +97,7 @@ exports[`parser associative array literals allows a mix of quoted and unquoted k
               },
             },
             "value": Int32 {
+              "inArray": false,
               "kind": 4,
               "value": 2,
             },
@@ -101,6 +105,7 @@ exports[`parser associative array literals allows a mix of quoted and unquoted k
         },
         {
           "name": BrsString {
+            "inArray": false,
             "kind": 3,
             "value": "requires-hyphens",
           },
@@ -116,6 +121,7 @@ exports[`parser associative array literals allows a mix of quoted and unquoted k
               },
             },
             "value": Int32 {
+              "inArray": false,
               "kind": 4,
               "value": 3,
             },
@@ -215,6 +221,7 @@ exports[`parser associative array literals allows separating properties with col
               "elements": [
                 {
                   "name": BrsString {
+                    "inArray": false,
                     "kind": 3,
                     "value": "name",
                   },
@@ -230,6 +237,7 @@ exports[`parser associative array literals allows separating properties with col
                       },
                     },
                     "value": BrsString {
+                      "inArray": false,
                       "kind": 3,
                       "value": "Bob",
                     },
@@ -237,6 +245,7 @@ exports[`parser associative array literals allows separating properties with col
                 },
                 {
                   "name": BrsString {
+                    "inArray": false,
                     "kind": 3,
                     "value": "age",
                   },
@@ -252,6 +261,7 @@ exports[`parser associative array literals allows separating properties with col
                       },
                     },
                     "value": Int32 {
+                      "inArray": false,
                       "kind": 4,
                       "value": 3,
                     },
@@ -542,6 +552,7 @@ exports[`parser associative array literals filled arrays on multiple lines with 
       "elements": [
         {
           "name": BrsString {
+            "inArray": false,
             "kind": 3,
             "value": "foo",
           },
@@ -557,6 +568,7 @@ exports[`parser associative array literals filled arrays on multiple lines with 
               },
             },
             "value": Int32 {
+              "inArray": false,
               "kind": 4,
               "value": 1,
             },
@@ -564,6 +576,7 @@ exports[`parser associative array literals filled arrays on multiple lines with 
         },
         {
           "name": BrsString {
+            "inArray": false,
             "kind": 3,
             "value": "bar",
           },
@@ -579,6 +592,7 @@ exports[`parser associative array literals filled arrays on multiple lines with 
               },
             },
             "value": Int32 {
+              "inArray": false,
               "kind": 4,
               "value": 2,
             },
@@ -586,6 +600,7 @@ exports[`parser associative array literals filled arrays on multiple lines with 
         },
         {
           "name": BrsString {
+            "inArray": false,
             "kind": 3,
             "value": "baz",
           },
@@ -601,6 +616,7 @@ exports[`parser associative array literals filled arrays on multiple lines with 
               },
             },
             "value": Int32 {
+              "inArray": false,
               "kind": 4,
               "value": 3,
             },
@@ -685,6 +701,7 @@ exports[`parser associative array literals filled arrays on multiple lines witho
       "elements": [
         {
           "name": BrsString {
+            "inArray": false,
             "kind": 3,
             "value": "foo",
           },
@@ -700,6 +717,7 @@ exports[`parser associative array literals filled arrays on multiple lines witho
               },
             },
             "value": Int32 {
+              "inArray": false,
               "kind": 4,
               "value": 1,
             },
@@ -707,6 +725,7 @@ exports[`parser associative array literals filled arrays on multiple lines witho
         },
         {
           "name": BrsString {
+            "inArray": false,
             "kind": 3,
             "value": "bar",
           },
@@ -722,6 +741,7 @@ exports[`parser associative array literals filled arrays on multiple lines witho
               },
             },
             "value": Int32 {
+              "inArray": false,
               "kind": 4,
               "value": 2,
             },
@@ -729,6 +749,7 @@ exports[`parser associative array literals filled arrays on multiple lines witho
         },
         {
           "name": BrsString {
+            "inArray": false,
             "kind": 3,
             "value": "baz",
           },
@@ -744,6 +765,7 @@ exports[`parser associative array literals filled arrays on multiple lines witho
               },
             },
             "value": Int32 {
+              "inArray": false,
               "kind": 4,
               "value": 3,
             },
@@ -828,6 +850,7 @@ exports[`parser associative array literals filled arrays on one line 1`] = `
       "elements": [
         {
           "name": BrsString {
+            "inArray": false,
             "kind": 3,
             "value": "foo",
           },
@@ -843,6 +866,7 @@ exports[`parser associative array literals filled arrays on one line 1`] = `
               },
             },
             "value": Int32 {
+              "inArray": false,
               "kind": 4,
               "value": 1,
             },
@@ -850,6 +874,7 @@ exports[`parser associative array literals filled arrays on one line 1`] = `
         },
         {
           "name": BrsString {
+            "inArray": false,
             "kind": 3,
             "value": "bar",
           },
@@ -865,6 +890,7 @@ exports[`parser associative array literals filled arrays on one line 1`] = `
               },
             },
             "value": Int32 {
+              "inArray": false,
               "kind": 4,
               "value": 2,
             },
@@ -872,6 +898,7 @@ exports[`parser associative array literals filled arrays on one line 1`] = `
         },
         {
           "name": BrsString {
+            "inArray": false,
             "kind": 3,
             "value": "baz",
           },
@@ -887,6 +914,7 @@ exports[`parser associative array literals filled arrays on one line 1`] = `
               },
             },
             "value": Int32 {
+              "inArray": false,
               "kind": 4,
               "value": 3,
             },

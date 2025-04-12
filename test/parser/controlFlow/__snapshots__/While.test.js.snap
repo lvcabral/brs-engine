@@ -117,6 +117,7 @@ exports[`parser while statements nested 1`] = `
                       },
                     },
                     "value": Int32 {
+                      "inArray": false,
                       "kind": 4,
                       "value": 1000,
                     },
@@ -249,6 +250,7 @@ exports[`parser while statements nested 1`] = `
                 },
               },
               "value": Int32 {
+                "inArray": false,
                 "kind": 4,
                 "value": 1000,
               },
@@ -381,6 +383,7 @@ exports[`parser while statements nested 1`] = `
           },
         },
         "value": Int32 {
+          "inArray": false,
           "kind": 4,
           "value": 1000,
         },
@@ -473,6 +476,7 @@ exports[`parser while statements while with exit 1`] = `
                 },
               },
               "value": BrsString {
+                "inArray": false,
                 "kind": 3,
                 "value": "looping",
               },
@@ -531,6 +535,7 @@ exports[`parser while statements while with exit 1`] = `
         },
       },
       "value": BrsBoolean {
+        "inArray": false,
         "kind": 2,
         "value": true,
       },
@@ -603,6 +608,7 @@ exports[`parser while statements while without exit 1`] = `
                 },
               },
               "value": BrsString {
+                "inArray": false,
                 "kind": 3,
                 "value": "looping",
               },
@@ -641,6 +647,7 @@ exports[`parser while statements while without exit 1`] = `
         },
       },
       "value": BrsBoolean {
+        "inArray": false,
         "kind": 2,
         "value": true,
       },

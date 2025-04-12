@@ -31,6 +31,7 @@ exports[`parser try/catch statements accepts try/catch/end try 1`] = `
                 },
               },
               "value": BrsString {
+                "inArray": false,
                 "kind": 3,
                 "value": "in catch",
               },
@@ -158,6 +159,7 @@ exports[`parser try/catch statements accepts try/catch/end try 1`] = `
                 },
               },
               "value": BrsString {
+                "inArray": false,
                 "kind": 3,
                 "value": "in try",
               },
@@ -235,6 +237,7 @@ exports[`parser try/catch statements accepts try/catch/endtry 1`] = `
                         },
                       },
                       "value": BrsString {
+                        "inArray": false,
                         "kind": 3,
                         "value": "in catch",
                       },
@@ -362,6 +365,7 @@ exports[`parser try/catch statements accepts try/catch/endtry 1`] = `
                         },
                       },
                       "value": BrsString {
+                        "inArray": false,
                         "kind": 3,
                         "value": "in try",
                       },
@@ -502,6 +506,7 @@ exports[`parser try/catch statements allows try and catch as variable names 1`] 
         },
       },
       "value": BrsString {
+        "inArray": false,
         "kind": 3,
         "value": "attempt",
       },
@@ -557,6 +562,7 @@ exports[`parser try/catch statements allows try and catch as variable names 1`] 
         },
       },
       "value": BrsString {
+        "inArray": false,
         "kind": 3,
         "value": "whoops, dropped it",
       },
@@ -596,6 +602,7 @@ exports[`parser try/catch statements allows try/catch to nest in try 1`] = `
                 },
               },
               "value": BrsString {
+                "inArray": false,
                 "kind": 3,
                 "value": "in catch",
               },
@@ -723,6 +730,7 @@ exports[`parser try/catch statements allows try/catch to nest in try 1`] = `
                 },
               },
               "value": BrsString {
+                "inArray": false,
                 "kind": 3,
                 "value": "outer try",
               },
@@ -777,6 +785,7 @@ exports[`parser try/catch statements allows try/catch to nest in try 1`] = `
                       },
                     },
                     "value": BrsString {
+                      "inArray": false,
                       "kind": 3,
                       "value": "in upper catch",
                     },

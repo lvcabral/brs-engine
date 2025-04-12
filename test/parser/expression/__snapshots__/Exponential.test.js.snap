@@ -50,6 +50,7 @@ exports[`parser exponential expressions parses exponential operators 1`] = `
           },
         },
         "value": Int32 {
+          "inArray": false,
           "kind": 4,
           "value": 2,
         },
@@ -66,6 +67,7 @@ exports[`parser exponential expressions parses exponential operators 1`] = `
           },
         },
         "value": Int32 {
+          "inArray": false,
           "kind": 4,
           "value": 3,
         },
@@ -142,6 +144,7 @@ exports[`parser exponential expressions parses repeated exponential operators as
             },
           },
           "value": Int32 {
+            "inArray": false,
             "kind": 4,
             "value": 2,
           },
@@ -158,6 +161,7 @@ exports[`parser exponential expressions parses repeated exponential operators as
             },
           },
           "value": Int32 {
+            "inArray": false,
             "kind": 4,
             "value": 3,
           },
@@ -191,6 +195,7 @@ exports[`parser exponential expressions parses repeated exponential operators as
           },
         },
         "value": Int32 {
+          "inArray": false,
           "kind": 4,
           "value": 4,
         },

@@ -50,6 +50,7 @@ exports[`parser primary expressions parses expressions in parentheses 1`] = `
           },
         },
         "value": Int32 {
+          "inArray": false,
           "kind": 4,
           "value": 1,
         },
@@ -68,6 +69,7 @@ exports[`parser primary expressions parses expressions in parentheses 1`] = `
               },
             },
             "value": Int32 {
+              "inArray": false,
               "kind": 4,
               "value": 2,
             },
@@ -84,6 +86,7 @@ exports[`parser primary expressions parses expressions in parentheses 1`] = `
               },
             },
             "value": Int32 {
+              "inArray": false,
               "kind": 4,
               "value": 3,
             },
@@ -210,6 +213,7 @@ exports[`parser primary expressions parses numeric literals 1`] = `
         },
       },
       "value": Int32 {
+        "inArray": false,
         "kind": 4,
         "value": 5,
       },
@@ -267,6 +271,7 @@ exports[`parser primary expressions parses string literals 1`] = `
         },
       },
       "value": BrsString {
+        "inArray": false,
         "kind": 3,
         "value": "hello",
       },

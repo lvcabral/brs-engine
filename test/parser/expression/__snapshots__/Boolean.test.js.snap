@@ -50,6 +50,7 @@ exports[`parser boolean expressions parses boolean ANDs 1`] = `
           },
         },
         "value": BrsBoolean {
+          "inArray": false,
           "kind": 2,
           "value": true,
         },
@@ -66,6 +67,7 @@ exports[`parser boolean expressions parses boolean ANDs 1`] = `
           },
         },
         "value": BrsBoolean {
+          "inArray": false,
           "kind": 2,
           "value": false,
         },
@@ -141,6 +143,7 @@ exports[`parser boolean expressions parses boolean ORs 1`] = `
           },
         },
         "value": BrsBoolean {
+          "inArray": false,
           "kind": 2,
           "value": true,
         },
@@ -157,6 +160,7 @@ exports[`parser boolean expressions parses boolean ORs 1`] = `
           },
         },
         "value": BrsBoolean {
+          "inArray": false,
           "kind": 2,
           "value": false,
         },
