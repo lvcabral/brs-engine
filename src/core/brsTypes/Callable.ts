@@ -139,6 +139,7 @@ export type CallableImplementation = (interpreter: Interpreter, ...args: any[]) 
 /** A `function` or `sub` (either "native" or implemented in BrightScript) that can be called in a BrightScript file. */
 export class Callable implements Brs.BrsValue, Brs.Boxable {
     readonly kind = Brs.ValueKind.Callable;
+    inArray: boolean = false;
 
     /** The name of this function within the BrightScript runtime. */
     readonly name: string | undefined;

@@ -16,6 +16,7 @@ exports[`parser print statements parses print lists with no separator 1`] = `
           },
         },
         "value": BrsString {
+          "inArray": false,
           "kind": 3,
           "value": "Foo",
         },
@@ -32,6 +33,7 @@ exports[`parser print statements parses print lists with no separator 1`] = `
           },
         },
         "value": BrsString {
+          "inArray": false,
           "kind": 3,
           "value": "bar",
         },
@@ -48,6 +50,7 @@ exports[`parser print statements parses print lists with no separator 1`] = `
           },
         },
         "value": BrsString {
+          "inArray": false,
           "kind": 3,
           "value": "baz",
         },
@@ -91,6 +94,7 @@ exports[`parser print statements parses print lists with separators 1`] = `
           },
         },
         "value": BrsString {
+          "inArray": false,
           "kind": 3,
           "value": "Foo",
         },
@@ -123,6 +127,7 @@ exports[`parser print statements parses print lists with separators 1`] = `
           },
         },
         "value": BrsString {
+          "inArray": false,
           "kind": 3,
           "value": "bar",
         },
@@ -155,6 +160,7 @@ exports[`parser print statements parses print lists with separators 1`] = `
           },
         },
         "value": BrsString {
+          "inArray": false,
           "kind": 3,
           "value": "baz",
         },
@@ -238,6 +244,7 @@ exports[`parser print statements supports empty print 1`] = `
           },
         },
         "value": BrsString {
+          "inArray": false,
           "kind": 3,
           "value": "",
         },

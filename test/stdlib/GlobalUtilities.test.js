@@ -61,7 +61,7 @@ describe("global utility functions", () => {
                 new BrsString("lookup"),
                 new BrsString("letter1")
             );
-            expect(result).toEqual(new BrsString("a"));
+            expect(result).toEqual(new BrsString("a", true));
         });
     });
 });

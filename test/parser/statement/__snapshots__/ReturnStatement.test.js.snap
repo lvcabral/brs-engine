@@ -171,6 +171,7 @@ exports[`parser return statements parses literal returns 1`] = `
             "value": Literal {
               "_location": undefined,
               "value": BrsString {
+                "inArray": false,
                 "kind": 3,
                 "value": "test",
               },

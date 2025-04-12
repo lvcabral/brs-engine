@@ -54,7 +54,7 @@ describe("property setting", () => {
             interpreter.exec(ast);
 
             expect(interpreter.environment.get(identifier("result"))).toEqual(
-                new BrsString("new index0")
+                new BrsString("new index0", true)
             );
         });
 
@@ -125,7 +125,7 @@ describe("property setting", () => {
             interpreter.exec(ast);
 
             expect(interpreter.environment.get(identifier("result"))).toEqual(
-                new BrsString("new (2,1)")
+                new BrsString("new (2,1)", true)
             );
         });
     });
@@ -173,10 +173,10 @@ describe("property setting", () => {
             interpreter.exec(ast);
 
             expect(interpreter.environment.get(identifier("fooResult"))).toEqual(
-                new BrsString("new foo")
+                new BrsString("new foo", true)
             );
             expect(interpreter.environment.get(identifier("barResult"))).toEqual(
-                new BrsString("added bar")
+                new BrsString("added bar", true)
             );
         });
 
@@ -244,10 +244,10 @@ describe("property setting", () => {
             interpreter.exec(ast);
 
             expect(interpreter.environment.get(identifier("barResult"))).toEqual(
-                new BrsString("new aa.foo.bar")
+                new BrsString("new aa.foo.bar", true)
             );
             expect(interpreter.environment.get(identifier("bazResult"))).toEqual(
-                new BrsString("added aa.foo.baz")
+                new BrsString("added aa.foo.baz", true)
             );
         });
     });

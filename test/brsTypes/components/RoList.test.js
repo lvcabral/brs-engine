@@ -63,15 +63,15 @@ describe("RoList", () => {
             list.set(new Int32(0), new BrsString("replacement for a"));
             list.set(new Int32(2), new BrsString("replacement for c"));
 
-            expect(list.get(new Int32(0))).toEqual(new BrsString("replacement for a"));
-            expect(list.get(new Int32(2))).toEqual(new BrsString("replacement for c"));
+            expect(list.get(new Int32(0))).toEqual(new BrsString("replacement for a", true));
+            expect(list.get(new Int32(2))).toEqual(new BrsString("replacement for c", true));
         });
 
         it("sets values at out-of-bounds indexes", () => {
             let list = new RoList([]);
 
             list.set(new Int32(555), new BrsString("value set at index 555"));
-            expect(list.get(new Int32(555))).toEqual(new BrsString("value set at index 555"));
+            expect(list.get(new Int32(555))).toEqual(new BrsString("value set at index 555", true));
         });
     });
 

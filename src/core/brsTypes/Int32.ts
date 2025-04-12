@@ -25,7 +25,7 @@ export class Int32 implements Numeric, Comparable, Boxable {
      * @param value the value to store in the BrightScript number, truncated to a 32-bit
      *              integer.
      */
-    constructor(value: number | Long) {
+    constructor(value: number | Long, public inArray: boolean = false) {
         const maxInt = 0x80000000;
         if (value instanceof Long) {
             // RBI ignores the 32 most significant bits when converting a 64-bit int to a 32-bit int, effectively
