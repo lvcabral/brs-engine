@@ -23,7 +23,7 @@ export class Int64 implements Numeric, Comparable, Boxable {
      * Creates a new BrightScript 64-bit integer value representing the provided `value`.
      * @param value the value to store in the BrightScript integer.
      */
-    constructor(value: number | Long) {
+    constructor(value: number | Long, public inArray: boolean = false) {
         if (value instanceof Long) {
             this.value = value;
         } else {

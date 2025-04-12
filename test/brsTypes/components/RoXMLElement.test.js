@@ -45,8 +45,8 @@ describe("RoXMLElement", () => {
             expect(getAttributes.call(interpreter).elements).not.toEqual(new Map());
             expect(getAttributes.call(interpreter).elements).toEqual(
                 new Map([
-                    ["id", new BrsString("someId")],
-                    ["attr1", new BrsString("0")],
+                    ["id", new BrsString("someId", true)],
+                    ["attr1", new BrsString("0", true)],
                 ])
             );
         });

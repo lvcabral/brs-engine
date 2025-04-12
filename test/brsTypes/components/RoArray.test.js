@@ -63,15 +63,15 @@ describe("RoArray", () => {
             arr.set(new Int32(0), new BrsString("replacement for a"));
             arr.set(new Int32(2), new BrsString("replacement for c"));
 
-            expect(arr.get(new Int32(0))).toEqual(new BrsString("replacement for a"));
-            expect(arr.get(new Int32(2))).toEqual(new BrsString("replacement for c"));
+            expect(arr.get(new Int32(0))).toEqual(new BrsString("replacement for a", true));
+            expect(arr.get(new Int32(2))).toEqual(new BrsString("replacement for c", true));
         });
 
         it("sets values at out-of-bounds indexes", () => {
             let arr = new RoArray([]);
 
             arr.set(new Int32(555), new BrsString("value set at index 555"));
-            expect(arr.get(new Int32(555))).toEqual(new BrsString("value set at index 555"));
+            expect(arr.get(new Int32(555))).toEqual(new BrsString("value set at index 555", true));
         });
     });
 

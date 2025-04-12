@@ -65,6 +65,7 @@ exports[`parser function expressions parses colon-separated function declaration
                   },
                 },
                 "value": BrsString {
+                  "inArray": false,
                   "kind": 3,
                   "value": "Lorem ipsum",
                 },
@@ -228,6 +229,7 @@ exports[`parser function expressions parses functions with default argument expr
               },
             },
             "value": Int32 {
+              "inArray": false,
               "kind": 4,
               "value": 3,
             },
@@ -287,6 +289,7 @@ exports[`parser function expressions parses functions with default argument expr
               },
             },
             "value": Int32 {
+              "inArray": false,
               "kind": 4,
               "value": 4,
             },
@@ -365,6 +368,7 @@ exports[`parser function expressions parses functions with default argument expr
                 },
               },
               "value": Int32 {
+                "inArray": false,
                 "kind": 4,
                 "value": 5,
               },
@@ -934,6 +938,7 @@ exports[`parser function expressions parses functions with typed arguments and d
               },
             },
             "value": Int32 {
+              "inArray": false,
               "kind": 4,
               "value": 3,
             },
@@ -1011,6 +1016,7 @@ exports[`parser function expressions parses functions with typed arguments and d
                 },
               },
               "value": Int32 {
+                "inArray": false,
                 "kind": 4,
                 "value": 5,
               },
@@ -1236,6 +1242,7 @@ exports[`parser function expressions parses non-empty function expressions 1`] =
                   },
                 },
                 "value": BrsString {
+                  "inArray": false,
                   "kind": 3,
                   "value": "Lorem ipsum",
                 },
@@ -1548,6 +1555,7 @@ exports[`parser sub expressions parses non-empty sub expressions 1`] = `
                   },
                 },
                 "value": BrsString {
+                  "inArray": false,
                   "kind": 3,
                   "value": "Lorem ipsum",
                 },
@@ -1711,6 +1719,7 @@ exports[`parser sub expressions parses subs with default argument expressions 1`
               },
             },
             "value": Int32 {
+              "inArray": false,
               "kind": 4,
               "value": 3,
             },
@@ -1770,6 +1779,7 @@ exports[`parser sub expressions parses subs with default argument expressions 1`
               },
             },
             "value": Int32 {
+              "inArray": false,
               "kind": 4,
               "value": 4,
             },
@@ -1848,6 +1858,7 @@ exports[`parser sub expressions parses subs with default argument expressions 1`
                 },
               },
               "value": Int32 {
+                "inArray": false,
                 "kind": 4,
                 "value": 5,
               },
@@ -2417,6 +2428,7 @@ exports[`parser sub expressions parses subs with typed arguments and default exp
               },
             },
             "value": Int32 {
+              "inArray": false,
               "kind": 4,
               "value": 3,
             },
@@ -2494,6 +2506,7 @@ exports[`parser sub expressions parses subs with typed arguments and default exp
                 },
               },
               "value": Int32 {
+                "inArray": false,
                 "kind": 4,
                 "value": 5,
               },
@@ -2628,6 +2641,7 @@ exports[`parser usage allows function expressions in assignment RHS 1`] = `
                   },
                 },
                 "value": BrsString {
+                  "inArray": false,
                   "kind": 3,
                   "value": "I'm anonymous",
                 },
@@ -2726,6 +2740,7 @@ exports[`parser usage allows sub expressions in call arguments 1`] = `
                       },
                     },
                     "value": BrsString {
+                      "inArray": false,
                       "kind": 3,
                       "value": "I'm a callback",
                     },

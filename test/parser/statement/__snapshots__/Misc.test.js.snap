@@ -142,6 +142,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 },
               },
               "value": BrsBoolean {
+                "inArray": false,
                 "kind": 2,
                 "value": true,
               },
@@ -197,6 +198,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 },
               },
               "value": BrsBoolean {
+                "inArray": false,
                 "kind": 2,
                 "value": true,
               },
@@ -252,6 +254,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 },
               },
               "value": BrsBoolean {
+                "inArray": false,
                 "kind": 2,
                 "value": true,
               },
@@ -307,6 +310,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 },
               },
               "value": BrsBoolean {
+                "inArray": false,
                 "kind": 2,
                 "value": true,
               },
@@ -362,6 +366,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 },
               },
               "value": BrsBoolean {
+                "inArray": false,
                 "kind": 2,
                 "value": true,
               },
@@ -417,6 +422,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 },
               },
               "value": BrsBoolean {
+                "inArray": false,
                 "kind": 2,
                 "value": true,
               },
@@ -472,6 +478,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 },
               },
               "value": BrsBoolean {
+                "inArray": false,
                 "kind": 2,
                 "value": true,
               },
@@ -527,6 +534,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 },
               },
               "value": BrsBoolean {
+                "inArray": false,
                 "kind": 2,
                 "value": true,
               },
@@ -582,6 +590,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 },
               },
               "value": BrsBoolean {
+                "inArray": false,
                 "kind": 2,
                 "value": true,
               },
@@ -637,6 +646,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 },
               },
               "value": BrsBoolean {
+                "inArray": false,
                 "kind": 2,
                 "value": true,
               },
@@ -692,6 +702,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 },
               },
               "value": BrsBoolean {
+                "inArray": false,
                 "kind": 2,
                 "value": true,
               },
@@ -747,6 +758,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 },
               },
               "value": BrsBoolean {
+                "inArray": false,
                 "kind": 2,
                 "value": true,
               },
@@ -802,6 +814,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 },
               },
               "value": BrsBoolean {
+                "inArray": false,
                 "kind": 2,
                 "value": true,
               },
@@ -857,6 +870,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 },
               },
               "value": BrsBoolean {
+                "inArray": false,
                 "kind": 2,
                 "value": true,
               },
@@ -912,6 +926,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 },
               },
               "value": BrsBoolean {
+                "inArray": false,
                 "kind": 2,
                 "value": true,
               },
@@ -967,6 +982,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 },
               },
               "value": BrsBoolean {
+                "inArray": false,
                 "kind": 2,
                 "value": true,
               },
@@ -1022,6 +1038,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 },
               },
               "value": BrsBoolean {
+                "inArray": false,
                 "kind": 2,
                 "value": true,
               },
@@ -1077,6 +1094,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 },
               },
               "value": BrsBoolean {
+                "inArray": false,
                 "kind": 2,
                 "value": true,
               },
@@ -1132,6 +1150,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 },
               },
               "value": BrsBoolean {
+                "inArray": false,
                 "kind": 2,
                 "value": true,
               },
@@ -1187,6 +1206,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 },
               },
               "value": BrsBoolean {
+                "inArray": false,
                 "kind": 2,
                 "value": true,
               },
@@ -1242,6 +1262,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 },
               },
               "value": BrsBoolean {
+                "inArray": false,
                 "kind": 2,
                 "value": true,
               },
@@ -1297,6 +1318,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 },
               },
               "value": BrsBoolean {
+                "inArray": false,
                 "kind": 2,
                 "value": true,
               },
@@ -1352,6 +1374,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 },
               },
               "value": BrsBoolean {
+                "inArray": false,
                 "kind": 2,
                 "value": true,
               },
@@ -1407,6 +1430,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 },
               },
               "value": BrsBoolean {
+                "inArray": false,
                 "kind": 2,
                 "value": true,
               },
@@ -1462,6 +1486,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 },
               },
               "value": BrsBoolean {
+                "inArray": false,
                 "kind": 2,
                 "value": true,
               },
@@ -1517,6 +1542,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 },
               },
               "value": BrsBoolean {
+                "inArray": false,
                 "kind": 2,
                 "value": true,
               },
@@ -1572,6 +1598,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 },
               },
               "value": BrsBoolean {
+                "inArray": false,
                 "kind": 2,
                 "value": true,
               },
@@ -1627,6 +1654,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 },
               },
               "value": BrsBoolean {
+                "inArray": false,
                 "kind": 2,
                 "value": true,
               },
@@ -1682,6 +1710,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 },
               },
               "value": BrsBoolean {
+                "inArray": false,
                 "kind": 2,
                 "value": true,
               },
@@ -1737,6 +1766,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 },
               },
               "value": BrsBoolean {
+                "inArray": false,
                 "kind": 2,
                 "value": true,
               },
@@ -1792,6 +1822,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 },
               },
               "value": BrsBoolean {
+                "inArray": false,
                 "kind": 2,
                 "value": true,
               },
@@ -1847,6 +1878,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 },
               },
               "value": BrsBoolean {
+                "inArray": false,
                 "kind": 2,
                 "value": true,
               },
@@ -1902,6 +1934,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 },
               },
               "value": BrsBoolean {
+                "inArray": false,
                 "kind": 2,
                 "value": true,
               },
@@ -1957,6 +1990,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 },
               },
               "value": BrsBoolean {
+                "inArray": false,
                 "kind": 2,
                 "value": true,
               },
@@ -2012,6 +2046,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 },
               },
               "value": BrsBoolean {
+                "inArray": false,
                 "kind": 2,
                 "value": true,
               },
@@ -2067,6 +2102,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 },
               },
               "value": BrsBoolean {
+                "inArray": false,
                 "kind": 2,
                 "value": true,
               },
@@ -2122,6 +2158,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 },
               },
               "value": BrsBoolean {
+                "inArray": false,
                 "kind": 2,
                 "value": true,
               },
@@ -2177,6 +2214,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 },
               },
               "value": BrsBoolean {
+                "inArray": false,
                 "kind": 2,
                 "value": true,
               },
@@ -2232,6 +2270,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 },
               },
               "value": BrsBoolean {
+                "inArray": false,
                 "kind": 2,
                 "value": true,
               },
@@ -2287,6 +2326,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 },
               },
               "value": BrsBoolean {
+                "inArray": false,
                 "kind": 2,
                 "value": true,
               },
@@ -2342,6 +2382,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 },
               },
               "value": BrsBoolean {
+                "inArray": false,
                 "kind": 2,
                 "value": true,
               },
@@ -2397,6 +2438,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 },
               },
               "value": BrsBoolean {
+                "inArray": false,
                 "kind": 2,
                 "value": true,
               },
@@ -2452,6 +2494,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 },
               },
               "value": BrsBoolean {
+                "inArray": false,
                 "kind": 2,
                 "value": true,
               },
@@ -2507,6 +2550,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 },
               },
               "value": BrsBoolean {
+                "inArray": false,
                 "kind": 2,
                 "value": true,
               },
@@ -2562,6 +2606,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 },
               },
               "value": BrsBoolean {
+                "inArray": false,
                 "kind": 2,
                 "value": true,
               },
@@ -2617,6 +2662,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 },
               },
               "value": BrsBoolean {
+                "inArray": false,
                 "kind": 2,
                 "value": true,
               },
@@ -2672,6 +2718,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 },
               },
               "value": BrsBoolean {
+                "inArray": false,
                 "kind": 2,
                 "value": true,
               },
@@ -2727,6 +2774,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 },
               },
               "value": BrsBoolean {
+                "inArray": false,
                 "kind": 2,
                 "value": true,
               },
@@ -2782,6 +2830,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 },
               },
               "value": BrsBoolean {
+                "inArray": false,
                 "kind": 2,
                 "value": true,
               },
@@ -2837,6 +2886,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 },
               },
               "value": BrsBoolean {
+                "inArray": false,
                 "kind": 2,
                 "value": true,
               },
@@ -2892,6 +2942,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 },
               },
               "value": BrsBoolean {
+                "inArray": false,
                 "kind": 2,
                 "value": true,
               },
@@ -2947,6 +2998,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 },
               },
               "value": BrsBoolean {
+                "inArray": false,
                 "kind": 2,
                 "value": true,
               },
@@ -3002,6 +3054,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 },
               },
               "value": BrsBoolean {
+                "inArray": false,
                 "kind": 2,
                 "value": true,
               },
@@ -3057,6 +3110,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
                 },
               },
               "value": BrsBoolean {
+                "inArray": false,
                 "kind": 2,
                 "value": true,
               },
@@ -3189,6 +3243,7 @@ exports[`parser certain reserved words are allowed as local var identifiers 1`] 
                 },
               },
               "value": BrsBoolean {
+                "inArray": false,
                 "kind": 2,
                 "value": true,
               },
@@ -3244,6 +3299,7 @@ exports[`parser certain reserved words are allowed as local var identifiers 1`] 
                 },
               },
               "value": BrsBoolean {
+                "inArray": false,
                 "kind": 2,
                 "value": true,
               },
@@ -3299,6 +3355,7 @@ exports[`parser certain reserved words are allowed as local var identifiers 1`] 
                 },
               },
               "value": BrsBoolean {
+                "inArray": false,
                 "kind": 2,
                 "value": true,
               },
@@ -3354,6 +3411,7 @@ exports[`parser certain reserved words are allowed as local var identifiers 1`] 
                 },
               },
               "value": BrsBoolean {
+                "inArray": false,
                 "kind": 2,
                 "value": true,
               },
@@ -3409,6 +3467,7 @@ exports[`parser certain reserved words are allowed as local var identifiers 1`] 
                 },
               },
               "value": BrsBoolean {
+                "inArray": false,
                 "kind": 2,
                 "value": true,
               },
@@ -3464,6 +3523,7 @@ exports[`parser certain reserved words are allowed as local var identifiers 1`] 
                 },
               },
               "value": BrsBoolean {
+                "inArray": false,
                 "kind": 2,
                 "value": true,
               },
@@ -3519,6 +3579,7 @@ exports[`parser certain reserved words are allowed as local var identifiers 1`] 
                 },
               },
               "value": BrsBoolean {
+                "inArray": false,
                 "kind": 2,
                 "value": true,
               },
@@ -3574,6 +3635,7 @@ exports[`parser certain reserved words are allowed as local var identifiers 1`] 
                 },
               },
               "value": BrsBoolean {
+                "inArray": false,
                 "kind": 2,
                 "value": true,
               },

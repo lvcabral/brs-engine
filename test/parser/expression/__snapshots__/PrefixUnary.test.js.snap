@@ -151,6 +151,7 @@ exports[`parser prefix unary expressions parses consecutive mixed unary operator
                     },
                   },
                   "value": Int32 {
+                    "inArray": false,
                     "kind": 4,
                     "value": 5,
                   },
@@ -299,6 +300,7 @@ exports[`parser prefix unary expressions parses consecutive unary '+' 1`] = `
                   },
                 },
                 "value": Int32 {
+                  "inArray": false,
                   "kind": 4,
                   "value": 5,
                 },
@@ -446,6 +448,7 @@ exports[`parser prefix unary expressions parses consecutive unary '-' 1`] = `
                   },
                 },
                 "value": Int32 {
+                  "inArray": false,
                   "kind": 4,
                   "value": 5,
                 },
@@ -593,6 +596,7 @@ exports[`parser prefix unary expressions parses consecutive unary 'not' 1`] = `
                   },
                 },
                 "value": BrsBoolean {
+                  "inArray": false,
                   "kind": 2,
                   "value": true,
                 },
@@ -672,6 +676,7 @@ exports[`parser prefix unary expressions parses unary '+' 1`] = `
           },
         },
         "value": Int32 {
+          "inArray": false,
           "kind": 4,
           "value": 5,
         },
@@ -747,6 +752,7 @@ exports[`parser prefix unary expressions parses unary '-' 1`] = `
           },
         },
         "value": Int32 {
+          "inArray": false,
           "kind": 4,
           "value": 5,
         },
@@ -822,6 +828,7 @@ exports[`parser prefix unary expressions parses unary 'not' 1`] = `
           },
         },
         "value": BrsBoolean {
+          "inArray": false,
           "kind": 2,
           "value": true,
         },

@@ -48,7 +48,7 @@ describe("creating arrays using dim", () => {
 
         interpreter.exec(statements);
         expect(interpreter.environment.get(identifier("result"))).toEqual(
-            new BrsString("new index4")
+            new BrsString("new index4", true)
         );
 
         // NOTE: Roku's dim implementation creates a resizeable, empty array for the
@@ -100,7 +100,7 @@ describe("creating arrays using dim", () => {
         interpreter.exec(statements);
         expect(interpreter.environment.has(identifier("baseArray"))).toBe(true);
         expect(interpreter.environment.get(identifier("result"))).toEqual(
-            new BrsString("new (2,1)")
+            new BrsString("new (2,1)", true)
         );
 
         // NOTE: Roku's dim implementation creates a resizeable, empty array for the

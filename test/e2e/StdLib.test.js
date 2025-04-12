@@ -208,6 +208,24 @@ describe("end to end standard libary", () => {
             " 245",
         ]);
     });
+    test("stdlib/type-legacy.brs", async () => {
+        await execute([resourceFile("stdlib", "type-legacy.brs")], outputStreams);
+
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
+            "Integer         Integer",
+            " 1",
+            "roInt           roInt",
+            " 3",
+            "roInteger       Integer",
+            " 1",
+            "roFloat         Float",
+            "roFloat         Double",
+            "LongInteger     LongInteger",
+            "roString        String",
+            "roInvalid       Invalid",
+            "roBoolean       Boolean",
+        ]);
+    });
     test("stdlib/end.brs", async () => {
         await execute([resourceFile("stdlib", "end.brs")], outputStreams);
 

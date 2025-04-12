@@ -51,6 +51,7 @@ exports[`parser multiplicative expressions parses left-associative division chai
             },
           },
           "value": Float {
+            "inArray": false,
             "kind": 6,
             "value": 7,
           },
@@ -67,6 +68,7 @@ exports[`parser multiplicative expressions parses left-associative division chai
             },
           },
           "value": Float {
+            "inArray": false,
             "kind": 6,
             "value": 5,
           },
@@ -100,6 +102,7 @@ exports[`parser multiplicative expressions parses left-associative division chai
           },
         },
         "value": Float {
+          "inArray": false,
           "kind": 6,
           "value": 3,
         },
@@ -176,6 +179,7 @@ exports[`parser multiplicative expressions parses left-associative integer-divis
             },
           },
           "value": Float {
+            "inArray": false,
             "kind": 6,
             "value": 32.5,
           },
@@ -192,6 +196,7 @@ exports[`parser multiplicative expressions parses left-associative integer-divis
             },
           },
           "value": Float {
+            "inArray": false,
             "kind": 6,
             "value": 5,
           },
@@ -225,6 +230,7 @@ exports[`parser multiplicative expressions parses left-associative integer-divis
           },
         },
         "value": Float {
+          "inArray": false,
           "kind": 6,
           "value": 3,
         },
@@ -301,6 +307,7 @@ exports[`parser multiplicative expressions parses left-associative modulo chains
             },
           },
           "value": Float {
+            "inArray": false,
             "kind": 6,
             "value": 7,
           },
@@ -317,6 +324,7 @@ exports[`parser multiplicative expressions parses left-associative modulo chains
             },
           },
           "value": Float {
+            "inArray": false,
             "kind": 6,
             "value": 5,
           },
@@ -350,6 +358,7 @@ exports[`parser multiplicative expressions parses left-associative modulo chains
           },
         },
         "value": Float {
+          "inArray": false,
           "kind": 6,
           "value": 3,
         },
@@ -426,6 +435,7 @@ exports[`parser multiplicative expressions parses left-associative multiplicatio
             },
           },
           "value": Float {
+            "inArray": false,
             "kind": 6,
             "value": 3,
           },
@@ -442,6 +452,7 @@ exports[`parser multiplicative expressions parses left-associative multiplicatio
             },
           },
           "value": Float {
+            "inArray": false,
             "kind": 6,
             "value": 5,
           },
@@ -475,6 +486,7 @@ exports[`parser multiplicative expressions parses left-associative multiplicatio
           },
         },
         "value": Float {
+          "inArray": false,
           "kind": 6,
           "value": 7,
         },

@@ -36,9 +36,9 @@ describe("global file I/O functions", () => {
             fsys.writeFileSync("tmp:/test_dir/test3.txt", "test contents 3");
 
             expect(ListDir.call(interpreter, new BrsString("tmp:///")).elements).toEqual([
-                new BrsString("test1.txt"),
-                new BrsString("test2.txt"),
-                new BrsString("test_dir"),
+                new BrsString("test1.txt", true),
+                new BrsString("test2.txt", true),
+                new BrsString("test_dir", true),
             ]);
         });
 
@@ -274,10 +274,10 @@ describe("global file I/O functions", () => {
                 );
                 expect(result).toBeInstanceOf(RoList);
                 expect(result.elements).toEqual([
-                    new BrsString("foo.brs"),
-                    new BrsString("bar.brs"),
-                    new BrsString("baz.brs"),
-                    new BrsString("car.brs"),
+                    new BrsString("foo.brs", true),
+                    new BrsString("bar.brs", true),
+                    new BrsString("baz.brs", true),
+                    new BrsString("car.brs", true),
                 ]);
             });
 
@@ -289,8 +289,8 @@ describe("global file I/O functions", () => {
                 );
                 expect(result).toBeInstanceOf(RoList);
                 expect(result.elements).toEqual([
-                    new BrsString("bar.brs"),
-                    new BrsString("baz.brs"),
+                    new BrsString("bar.brs", true),
+                    new BrsString("baz.brs", true),
                 ]);
             });
 
@@ -302,8 +302,8 @@ describe("global file I/O functions", () => {
                 );
                 expect(result).toBeInstanceOf(RoList);
                 expect(result.elements).toEqual([
-                    new BrsString("bar.brs"),
-                    new BrsString("car.brs"),
+                    new BrsString("bar.brs", true),
+                    new BrsString("car.brs", true),
                 ]);
             });
 
@@ -315,8 +315,8 @@ describe("global file I/O functions", () => {
                 );
                 expect(result).toBeInstanceOf(RoList);
                 expect(result.elements).toEqual([
-                    new BrsString("bar.brs"),
-                    new BrsString("car.brs"),
+                    new BrsString("bar.brs", true),
+                    new BrsString("car.brs", true),
                 ]);
             });
 
@@ -327,7 +327,7 @@ describe("global file I/O functions", () => {
                     new BrsString(String.raw`*\**\?**\[*`)
                 );
                 expect(result).toBeInstanceOf(RoList);
-                expect(result.elements).toEqual([new BrsString("b*a?d na[me")]);
+                expect(result.elements).toEqual([new BrsString("b*a?d na[me", true)]);
             });
         });
     });
