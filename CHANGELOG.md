@@ -1,5 +1,32 @@
 # Changelog
 
+<a name="v1.8.7"></a>
+
+## [v1.8.7 - New `InStr()` 2 params signature](https://github.com/lvcabral/brs-engine/releases/tag/v1.8.7) - 12 April 2025
+
+This release brings a few discoveries from the discussions in the [Roku Development Community slack](https://join.slack.com/t/rokudevelopers/shared_invite/zt-4vw7rg6v-NH46oY7hTktpRIBM_zGvwA), including the undocumented signature for `InStr()` function with only 2 parameters, the  `roTimespan.totalMicroseconds()` method and the `Type()` function returning "legacy" types (unless you pass version 3 parameter). Some important fixes to highlight are the support for boxed values as array indexes and having `roBoolean` to be properly comparable.
+
+### Release Changes
+
+* Implemented the signature with 2 parameters on `InStr()` by [@lvcabral](https://github.com/lvcabral) in [#534](https://github.com/lvcabral/brs-engine/pull/534)
+* Added legacy types support for `Type()` function by [@lvcabral](https://github.com/lvcabral) in [#536](https://github.com/lvcabral/brs-engine/pull/536)
+* Implemented `roTimespan.totalMicroseconds()` and changed `roTimespan` to use `performance.now()` by [@lvcabral](https://github.com/lvcabral) in [#501](https://github.com/lvcabral/brs-engine/pull/501)
+* Implemented `roHttpAgent` component by [@lvcabral](https://github.com/lvcabral) in [#499](https://github.com/lvcabral/brs-engine/pull/499)
+* Added support to use a CORS proxy with `roURLTransfer` and `Network` modules by [@lvcabral](https://github.com/lvcabral) in [#514](https://github.com/lvcabral/brs-engine/pull/514)
+* Fixed `MacOS` keyboard mapping for `Info` (asterisk) remote button by [@lvcabral](https://github.com/lvcabral) in [#511](https://github.com/lvcabral/brs-engine/pull/511)
+* Fixed `m` context when the indexed function was accessed inside an AA by [@lvcabral](https://github.com/lvcabral) in [#509](https://github.com/lvcabral/brs-engine/pull/509)
+* Added mocked libraries `RED` and `Google IMA3` by [@lvcabral](https://github.com/lvcabral) in [#508](https://github.com/lvcabral/brs-engine/pull/508)
+* Implemented support for using `methods` with literal `integer` values by [@lvcabral](https://github.com/lvcabral) in [#507](https://github.com/lvcabral/brs-engine/pull/507)
+* Properly handle `NaN` in number types, print and conversion by [@lvcabral](https://github.com/lvcabral) in [#502](https://github.com/lvcabral/brs-engine/pull/502)
+* Updated web demo app to upscale the display when in fullscreen mode by [@lvcabral](https://github.com/lvcabral) in [#513](https://github.com/lvcabral/brs-engine/pull/513)
+* Improved the scaling quality of the web demo app by [@lvcabral](https://github.com/lvcabral) in [#525](https://github.com/lvcabral/brs-engine/pull/525)
+* Prevent crash when no entry point is defined by [@lvcabral](https://github.com/lvcabral) in [#516](https://github.com/lvcabral/brs-engine/pull/516)
+* Added `backslash` key as alternative to the `replay` button on the sample app by [@lvcabral](https://github.com/lvcabral) in [#520](https://github.com/lvcabral/brs-engine/pull/520)
+* Fixed boxed `boolean` values not being comparable by [@lvcabral](https://github.com/lvcabral) in [#528](https://github.com/lvcabral/brs-engine/pull/528)
+* Fixed handling of boxed array indexes by [@lvcabral](https://github.com/lvcabral) in [#530](https://github.com/lvcabral/brs-engine/pull/530)
+
+[Full Changelog][v1.8.7]
+
 <a name="v1.8.6"></a>
 
 ## [v1.8.6 - Fixed `m` context with `IndexedGet`](https://github.com/lvcabral/brs-engine/releases/tag/v1.8.6) - 18 March 2025
@@ -958,6 +985,7 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
+[v1.8.7]: https://github.com/lvcabral/brs-engine/compare/v1.8.6...v1.8.7
 [v1.8.6]: https://github.com/lvcabral/brs-engine/compare/v1.8.5...v1.8.6
 [v1.8.5]: https://github.com/lvcabral/brs-engine/compare/v1.8.4...v1.8.5
 [v1.8.4]: https://github.com/lvcabral/brs-engine/compare/v1.8.3...v1.8.4
