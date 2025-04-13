@@ -4,11 +4,20 @@ There are several features from the **BrightScript** language and components tha
 
 ## In Scope (to be developed/fixed in future releases)
 
-* RSG (Roku SceneGraph) SDK components are currently being implemented, but still on early stages, so far we have:
+* **Roku SceneGraph** SDK components are currently being implemented, but still on early stages, so far we support:
   * Load XML component files and create SceneGraph nodes tree.
   * Basic support for `roSGNode` and `roSGScreen` components and rendering.
-  * Basic support for `Group`, `Label`, `Poster`, `Rectangle`, `Font`, `Timer` and `Task` nodes.
-  * All other nodes are either mocked or not implemented yet.
+  * The `Task` node is implemented but its behavior is limited:
+    * For now only 10 task threads are supported per application
+    * The `m` and `global` objects are a snapshot in the task thread, no changes reflected back to main thread
+    * Only one `port` instance can be used on Task `init()` to observe fields
+    * The `tmp:/` and `cachefs:/` volumes are not shared with task threads, can be used in task but are empty
+  * The following nodes are implemented (some only partially):
+    * The basic nodes: `ContentNode`, `Group`, `Scene`, `Font`, `Timer`, `Rectangle`, `Label`, `Poster` and `RSGPalette`
+    * Grids and list nodes based on `ArrayGrid`: `LabelList`, `CheckList`, `RadioButtonList`, `MarkupList` and `MarkupGrid`
+    * Dialog related nodes: `Dialog`, `StandardDialog`, `StandardProgressDialog`, `StdDlgProgressItem`, `StdDlgContentArea`, `StdDlgTitleArea`
+    * Other supported nodes: `Button`, `ButtonGroup`, `BusySpinner`, `Overhang`
+  * All other nodes are either mocked or not implemented yet, and if used will be created as a plain `Node`.
 * The following components are also not implemented yet:
   * Text to Speech components: `roAudioGuide`, `roMicrophone` and `roTextToSpeech`
   * Signing Algorithm components: `roDSA` and `roRSA`
