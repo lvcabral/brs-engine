@@ -301,7 +301,7 @@ export class Field {
         return value;
     }
 
-    private isEqual(oldValue: BrsType, newValue: BrsType) {
+    private isEqual(oldValue: BrsType, newValue: BrsType): boolean {
         if (isAnyNumber(oldValue) && isAnyNumber(newValue)) {
             return oldValue.getValue() === newValue.getValue();
         } else if (isBrsString(oldValue) && isBrsString(newValue)) {
@@ -311,7 +311,7 @@ export class Field {
         } else if (oldValue instanceof RoSGNode && newValue instanceof RoSGNode) {
             return oldValue === newValue && !newValue.changed;
         } else {
-            return oldValue === newValue;
+            return oldValue.equalTo(newValue).toBoolean();
         }
     }
 
