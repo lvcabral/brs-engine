@@ -160,11 +160,11 @@ export class ButtonGroup extends LayoutGroup {
             width: this.width,
             height: size.height,
         };
+        this.refreshFocus();
         if (this.isDirty) {
             this.refreshButtons();
             this.isDirty = false;
         }
-        this.refreshFocus();
         const rotation = angle + this.getRotation();
         opacity = opacity * this.getOpacity();
         // TODO: update then width/height based on the # of buttons and layout direction
@@ -240,6 +240,8 @@ export class ButtonGroup extends LayoutGroup {
             if (focusedNode !== focusedButton) {
                 rootObjects.focused = focusedButton;
             }
+        } else {
+            this.isDirty = true;
         }
     }
 
