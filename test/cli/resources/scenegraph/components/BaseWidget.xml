@@ -21,7 +21,7 @@
                 uri="font/as/child/uri" />
             <Poster id="poster"
                 audioGuideText="fake text"
-                bitmapWidth="10.4"
+                loadWidth="10.4"
                 uri="/fake/uri"
             />
             <LayoutGroup id="layoutGroup"

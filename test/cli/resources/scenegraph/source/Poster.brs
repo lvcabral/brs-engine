@@ -22,6 +22,6 @@ sub Main()
     posterAsChild = parent.findNode("poster")
     print "MAIN: poster as child audioGuideText:" posterAsChild.audioGuideText
     print "MAIN: poster as child uri:" posterAsChild.uri
-    print "MAIN: poster as child bitmapWidth:"; posterAsChild.bitmapWidth
+    print "MAIN: poster as child loadWidth:"; posterAsChild.loadWidth
     print m.myName
 end sub

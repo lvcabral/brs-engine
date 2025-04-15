@@ -176,7 +176,7 @@ describe("cli", () => {
             "Main -----------------------------------------------",
             "MAIN: poster as child audioGuideText:fake text",
             "MAIN: poster as child uri:/fake/uri",
-            "MAIN: poster as child bitmapWidth: 10.4",
+            "MAIN: poster as child loadWidth: 10.4",
             "Main -----------------------------------------------",
             "------ Finished 'Poster.brs' execution [EXIT_USER_NAV] ------",
             "",
