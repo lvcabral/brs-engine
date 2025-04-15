@@ -1026,19 +1026,16 @@ function drawChunk(ctx: BrsCanvasContext2D, image: BrsCanvas, chunk: DrawChunk) 
 function combineRgbaOpacity(rgba?: number, opacity?: number): number | undefined {
     if (rgba === undefined && opacity === undefined) {
         return undefined;
+    } else if (opacity === undefined || opacity < 0 || opacity >= 1) {
+        return rgba;
     }
-
     // Default to opaque white if only opacity is given and rgba is undefined
     const baseRgba = rgba ?? 0xffffffff;
     let alpha = baseRgba & 0xff;
-    // Apply opacity if it's a valid number between 0 and 1
-    if (opacity !== undefined && opacity >= 0 && opacity <= 1) {
-        alpha = Math.round(alpha * opacity);
-    }
-
+    // Apply opacity
+    alpha = Math.round(alpha * opacity);
     // Ensure alpha is within the valid 0-255 range
     alpha = Math.max(0, Math.min(255, alpha));
-
     // Reconstruct the RGBA integer with the new alpha
     return (baseRgba & 0xffffff00) | alpha;
 }
