@@ -373,7 +373,9 @@ export async function executeTask(payload: TaskPayload, customOptions?: Partial<
         return;
     }
     interpreter.setManifest(payload.manifest);
-    if (payload.device.registry?.size) {
+    if (payload.device.registryBuffer) {
+        BrsDevice.setRegistry(payload.device.registryBuffer);
+    } else if (payload.device.registry?.size) {
         BrsDevice.setRegistry(payload.device.registry);
     }
     BrsDevice.setDeviceInfo(payload.device);

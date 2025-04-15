@@ -94,7 +94,7 @@ export class BrsDevice {
      */
     static setDeviceInfo(deviceInfo: DeviceInfo) {
         Object.entries(deviceInfo).forEach(([key, value]) => {
-            if (key !== "registry" && key !== "assets") {
+            if (!key.startsWith("registry") && key !== "assets") {
                 if (key === "developerId") {
                     // Prevent developerId from having "." to avoid issues on registry persistence
                     value = value.replace(".", ":");
