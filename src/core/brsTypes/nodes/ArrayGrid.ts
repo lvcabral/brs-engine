@@ -218,7 +218,13 @@ export class ArrayGrid extends Group {
         return false;
     }
 
-    renderNode(interpreter: Interpreter, origin: number[], angle: number, draw2D?: IfDraw2D) {
+    renderNode(
+        interpreter: Interpreter,
+        origin: number[],
+        angle: number,
+        opacity: number,
+        draw2D?: IfDraw2D
+    ) {
         if (!this.isVisible()) {
             return;
         }
@@ -229,9 +235,10 @@ export class ArrayGrid extends Group {
         const size = this.getDimensions();
         const rect = { x: drawTrans[0], y: drawTrans[1], ...size };
         const rotation = angle + this.getRotation();
-        this.renderContent(interpreter, rect, rotation, draw2D);
+        opacity = opacity * this.getOpacity();
+        this.renderContent(interpreter, rect, rotation, opacity, draw2D);
         this.updateBoundingRects(rect, origin, rotation);
-        this.renderChildren(interpreter, drawTrans, rotation, draw2D);
+        this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);
         this.updateParentRects(origin, angle);
     }
 
@@ -239,6 +246,7 @@ export class ArrayGrid extends Group {
         _interpreter: Interpreter,
         _rect: Rect,
         _rotation: number,
+        _opacity: number,
         _draw2D?: IfDraw2D
     ) {
         // To be overwritten by derivate classes
@@ -249,6 +257,7 @@ export class ArrayGrid extends Group {
         index: number,
         itemRect: Rect,
         rotation: number,
+        opacity: number,
         draw2D?: IfDraw2D
     ) {
         const content = this.content[index];
@@ -265,21 +274,22 @@ export class ArrayGrid extends Group {
         }
         if (content.changed) {
             this.itemComps[index].set(new BrsString("itemContent"), content, true);
+            content.changed = false;
         }
         this.updateItemFocus(index, focused, nodeFocus);
         const drawFocus = this.getFieldValueJS("drawFocusFeedback");
         const drawFocusOnTop = this.getFieldValueJS("drawFocusFeedbackOnTop");
         if (focused && drawFocus && !drawFocusOnTop) {
-            this.renderFocus(itemRect, nodeFocus, draw2D);
+            this.renderFocus(itemRect, opacity, nodeFocus, draw2D);
         }
         const itemOrigin = [itemRect.x, itemRect.y];
-        this.itemComps[index].renderNode(interpreter, itemOrigin, rotation, draw2D);
+        this.itemComps[index].renderNode(interpreter, itemOrigin, rotation, opacity, draw2D);
         if (focused && drawFocus && drawFocusOnTop) {
-            this.renderFocus(itemRect, nodeFocus, draw2D);
+            this.renderFocus(itemRect, opacity, nodeFocus, draw2D);
         }
     }
 
-    protected renderFocus(itemRect: Rect, nodeFocus: boolean, draw2D?: IfDraw2D) {
+    protected renderFocus(itemRect: Rect, opacity: number, nodeFocus: boolean, draw2D?: IfDraw2D) {
         const focusBitmap = this.getBitmap("focusBitmapUri");
         const focusFootprint = this.getBitmap("focusFootprintBitmapUri");
         this.hasNinePatch = (focusBitmap?.ninePatch || focusFootprint?.ninePatch) === true;
@@ -291,14 +301,19 @@ export class ArrayGrid extends Group {
         };
         if (nodeFocus && focusBitmap) {
             const rect = focusBitmap.ninePatch ? ninePatchRect : itemRect;
-            this.drawImage(focusBitmap, rect, 0, draw2D);
+            this.drawImage(focusBitmap, rect, 0, opacity, draw2D);
         } else if (!nodeFocus && focusFootprint) {
             const rect = focusFootprint.ninePatch ? ninePatchRect : itemRect;
-            this.drawImage(focusFootprint, rect, 0, draw2D);
+            this.drawImage(focusFootprint, rect, 0, opacity, draw2D);
         }
     }
 
-    protected renderSectionDivider(title: string, itemRect: Rect, draw2D?: IfDraw2D) {
+    protected renderSectionDivider(
+        title: string,
+        itemRect: Rect,
+        opacity: number,
+        draw2D?: IfDraw2D
+    ) {
         const dividerHeight = this.getFieldValueJS("sectionDividerHeight") as number;
         const dividerSpacing = this.getFieldValueJS("sectionDividerSpacing") as number;
         const divRect = { ...itemRect, height: dividerHeight };
@@ -306,7 +321,17 @@ export class ArrayGrid extends Group {
         if (title.length !== 0) {
             const font = this.getFieldValue("sectionDividerFont") as Font;
             const color = this.getFieldValueJS("sectionDividerTextColor");
-            const size = this.drawText(title, font, color, divRect, "left", "center", 0, draw2D);
+            const size = this.drawText(
+                title,
+                font,
+                color,
+                opacity,
+                divRect,
+                "left",
+                "center",
+                0,
+                draw2D
+            );
             margin = size.width + dividerSpacing;
         }
         const bmp = this.getBitmap("sectionDividerBitmapUri");
@@ -318,19 +343,19 @@ export class ArrayGrid extends Group {
                 width: divRect.width - margin,
                 height: height,
             };
-            this.drawImage(bmp, rect, 0, draw2D);
+            this.drawImage(bmp, rect, 0, opacity, draw2D);
         }
         return dividerHeight;
     }
 
-    protected renderWrapDivider(itemRect: Rect, draw2D?: IfDraw2D) {
+    protected renderWrapDivider(itemRect: Rect, opacity: number, draw2D?: IfDraw2D) {
         const bmp = this.getBitmap("wrapDividerBitmapUri");
         const dividerHeight = this.getFieldValueJS("wrapDividerHeight") as number;
         if (bmp?.isValid()) {
             const height = bmp.ninePatch ? 2 : bmp.height;
             const topOffset = Math.round((dividerHeight - height) / 2);
             const rect = { ...itemRect, y: itemRect.y + topOffset, height: height };
-            this.drawImage(bmp, rect, 0, draw2D);
+            this.drawImage(bmp, rect, 0, opacity, draw2D);
         }
         return dividerHeight;
     }

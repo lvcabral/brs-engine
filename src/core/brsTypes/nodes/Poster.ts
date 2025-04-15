@@ -1,5 +1,16 @@
 import { FieldKind, FieldModel } from "./Field";
-import { AAMember, BrsType, getTextureManager, isBrsString, jsValueOf, RoBitmap } from "..";
+import {
+    AAMember,
+    BrsInvalid,
+    BrsString,
+    BrsType,
+    brsValueOf,
+    Float,
+    getTextureManager,
+    isBrsString,
+    jsValueOf,
+    RoBitmap,
+} from "..";
 import { Group } from "./Group";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D, Rect } from "../interfaces/IfDraw2D";
@@ -14,7 +25,7 @@ export class Poster extends Group {
         { name: "loadWidth", type: "float", value: "0.0" },
         { name: "loadHeight", type: "float", value: "0.0" },
         { name: "loadDisplayMode", type: "string", value: "noScale" },
-        { name: "loadStatus", type: "string", value: "noScale" },
+        { name: "loadStatus", type: "string", value: "none" },
         { name: "bitmapWidth", type: "float", value: "0.0" },
         { name: "bitmapHeight", type: "float", value: "0.0" },
         { name: "bitmapMargins", type: "assocarray" },
@@ -40,20 +51,38 @@ export class Poster extends Group {
             throw new Error("RoSGNode indexes must be strings");
         }
         const fieldName = index.getValue().toLowerCase();
+        const readonlyFields = ["loadstatus", "bitmapwidth", "bitmapheight", "bitmapmargins"];
         if (fieldName === "uri") {
             const uri = jsValueOf(value);
             if (typeof uri === "string" && uri.trim() !== "" && this.uri !== uri) {
                 this.uri = uri;
-                this.bitmap = getTextureManager().loadTexture(uri);
+                const loadStatus = this.loadUri(uri);
+                if (loadStatus !== "ready" && this.getFieldValueJS("failedBitmapUri") !== "") {
+                    this.loadUri(this.getFieldValueJS("failedBitmapUri"));
+                }
+                this.setFieldValue("loadStatus", new BrsString(loadStatus));
             } else if (typeof uri !== "string" || uri.trim() === "") {
                 this.uri = "";
                 this.bitmap = undefined;
+                this.setFieldValue("loadStatus", new BrsString("none"));
+                this.setFieldValue("bitmapWidth", new Float(0));
+                this.setFieldValue("bitmapHeight", new Float(0));
+                const margins = { left: 0, right: 0, top: 0, bottom: 0 };
+                this.setFieldValue("bitmapMargins", brsValueOf(margins));
             }
+        } else if (readonlyFields.includes(fieldName)) {
+            return BrsInvalid.Instance;
         }
         return super.set(index, value, alwaysNotify, kind);
     }
 
-    renderNode(interpreter: Interpreter, origin: number[], angle: number, draw2D?: IfDraw2D) {
+    renderNode(
+        interpreter: Interpreter,
+        origin: number[],
+        angle: number,
+        opacity: number,
+        draw2D?: IfDraw2D
+    ) {
         if (!this.isVisible()) {
             return;
         }
@@ -65,20 +94,47 @@ export class Poster extends Group {
         const rect = { x: drawTrans[0], y: drawTrans[1], width: size.width, height: size.height };
         const rotation = angle + this.getRotation();
         const displayMode = this.getFieldValueJS("loadDisplayMode") as string;
-        if (this.bitmap instanceof RoBitmap) {
-            const rgba = this.getFieldValueJS("blendColor");
-            if (displayMode === "scaleToFit") {
-                this.drawImage(this.bitmap, this.scaleToFit(rect), rotation, draw2D, rgba);
-            } else if (displayMode === "scaleToZoom") {
+        opacity = opacity * this.getOpacity();
+        if (this.bitmap instanceof RoBitmap && this.bitmap.isValid()) {
+            const loadStatus = this.getFieldValueJS("loadStatus") as string;
+            let rgba = this.getFieldValueJS("blendColor");
+            let alpha = opacity;
+            if (loadStatus === "failed") {
+                rgba = 0xffffffff;
+                alpha = opacity * this.getFieldValueJS("loadingBitmapOpacity");
+            }
+            if (displayMode.trim().toLowerCase() === "scaletofit") {
+                this.drawImage(this.bitmap, this.scaleToFit(rect), rotation, alpha, draw2D, rgba);
+            } else if (displayMode.trim().toLowerCase() === "scaletozoom") {
                 this.bitmap.scaleMode = 1;
-                draw2D?.doDrawCroppedBitmap(this.bitmap, this.scaleToZoom(rect), rect, rgba);
+                draw2D?.doDrawCroppedBitmap(this.bitmap, this.scaleToZoom(rect), rect, rgba, alpha);
             } else {
-                this.drawImage(this.bitmap, rect, rotation, draw2D, rgba);
+                this.drawImage(this.bitmap, rect, rotation, alpha, draw2D, rgba);
             }
         }
         this.updateBoundingRects(rect, origin, rotation);
-        this.renderChildren(interpreter, drawTrans, rotation, draw2D);
+        this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);
         this.updateParentRects(origin, angle);
+    }
+
+    private loadUri(uri: string): string {
+        let loadStatus = "failed";
+        this.bitmap = getTextureManager().loadTexture(uri);
+        if (this.bitmap?.isValid()) {
+            this.setFieldValue("bitmapWidth", new Float(this.bitmap.width));
+            this.setFieldValue("bitmapHeight", new Float(this.bitmap.height));
+            const margins = { left: 0, right: 0, top: 0, bottom: 0 };
+            if (this.bitmap.ninePatch) {
+                const sizes = this.bitmap.getPatchSizes();
+                margins.left = sizes.horizontal;
+                margins.right = sizes.horizontal;
+                margins.top = sizes.vertical;
+                margins.bottom = sizes.vertical;
+            }
+            this.setFieldValue("bitmapMargins", brsValueOf(margins));
+            loadStatus = "ready";
+        }
+        return loadStatus;
     }
 
     private scaleToFit(rect: Rect): Rect {

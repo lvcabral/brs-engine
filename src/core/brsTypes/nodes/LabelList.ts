@@ -106,6 +106,7 @@ export class LabelList extends ArrayGrid {
         _interpreter: Interpreter,
         rect: Rect,
         _rotation: number,
+        opacity: number,
         draw2D?: IfDraw2D
     ) {
         if (this.content.length === 0) {
@@ -125,12 +126,12 @@ export class LabelList extends ArrayGrid {
             const item = this.content[index];
             if (item instanceof ContentNode) {
                 if (!hasSections && this.wrap && index < lastIndex && r > 0) {
-                    itemRect.y += this.renderWrapDivider(itemRect, draw2D);
+                    itemRect.y += this.renderWrapDivider(itemRect, opacity, draw2D);
                 } else if (hasSections && this.wrap && this.metadata[index]?.divider && r > 0) {
                     const divText = this.metadata[index].sectionTitle;
-                    itemRect.y += this.renderSectionDivider(divText, itemRect, draw2D);
+                    itemRect.y += this.renderSectionDivider(divText, itemRect, opacity, draw2D);
                 }
-                this.renderItem(index, item, itemRect, nodeFocus, focused, draw2D);
+                this.renderItem(index, item, itemRect, opacity, nodeFocus, focused, draw2D);
             }
             itemRect.y += itemSize[1] + 1;
             lastIndex = index;
@@ -145,6 +146,7 @@ export class LabelList extends ArrayGrid {
         _index: number,
         item: ContentNode,
         rect: Rect,
+        opacity: number,
         nodeFocus: boolean,
         itemFocus: boolean,
         draw2D?: IfDraw2D
@@ -156,15 +158,16 @@ export class LabelList extends ArrayGrid {
         const iconIndex = itemFocus ? 1 : 0;
         const bmp = iconGap > 0 ? item.getBitmap(icons[iconIndex]) : undefined;
         if (!itemFocus) {
-            this.renderUnfocused(text, rect, iconGap, false, bmp, draw2D);
+            this.renderUnfocused(text, rect, opacity, iconGap, false, bmp, draw2D);
         } else {
-            this.renderFocused(text, rect, nodeFocus, iconGap, false, bmp, draw2D);
+            this.renderFocused(text, rect, opacity, nodeFocus, iconGap, false, bmp, draw2D);
         }
     }
 
     protected renderUnfocused(
         text: string,
         rect: Rect,
+        opacity: number,
         iconGap: number,
         iconColor: boolean,
         iconBmp?: RoBitmap,
@@ -175,14 +178,15 @@ export class LabelList extends ArrayGrid {
         const align = this.getFieldValueJS("textHorizAlign") as string;
         const textRect = { ...rect, x: rect.x + iconGap };
         if (iconBmp) {
-            this.renderIcon(iconBmp, rect, draw2D, iconColor ? color : undefined);
+            this.renderIcon(iconBmp, rect, opacity, draw2D, iconColor ? color : undefined);
         }
-        this.drawText(text, font, color, textRect, align, "center", 0, draw2D);
+        this.drawText(text, font, color, opacity, textRect, align, "center", 0, draw2D);
     }
 
     protected renderFocused(
         text: string,
         rect: Rect,
+        opacity: number,
         nodeFocus: boolean,
         iconGap: number,
         iconColor: boolean,
@@ -196,25 +200,31 @@ export class LabelList extends ArrayGrid {
         const drawFocus = this.getFieldValueJS("drawFocusFeedback") as boolean;
         const drawFocusOnTop = this.getFieldValueJS("drawFocusFeedbackOnTop") as boolean;
         if (drawFocus && !drawFocusOnTop) {
-            this.renderFocus(rect, nodeFocus, draw2D);
+            this.renderFocus(rect, opacity, nodeFocus, draw2D);
         }
         if (iconBmp) {
-            this.renderIcon(iconBmp, rect, draw2D, iconColor ? color : undefined);
+            this.renderIcon(iconBmp, rect, opacity, draw2D, iconColor ? color : undefined);
         }
-        this.drawText(text, font, color, textRect, align, "center", 0, draw2D);
+        this.drawText(text, font, color, opacity, textRect, align, "center", 0, draw2D);
         if (drawFocus && drawFocusOnTop) {
-            this.renderFocus(rect, nodeFocus, draw2D);
+            this.renderFocus(rect, opacity, nodeFocus, draw2D);
         }
         this.hasNinePatch = this.hasNinePatch && drawFocus;
     }
 
-    protected renderIcon(bmp: RoBitmap, rect: Rect, draw2D?: IfDraw2D, color?: number) {
+    protected renderIcon(
+        bmp: RoBitmap,
+        rect: Rect,
+        opacity: number,
+        draw2D?: IfDraw2D,
+        color?: number
+    ) {
         const iconY = rect.y + (rect.height / 2 - bmp.height / 2);
         const iconRect = { ...rect, y: iconY, width: bmp.width, height: bmp.height };
-        this.drawImage(bmp, iconRect, 0, draw2D, color);
+        this.drawImage(bmp, iconRect, 0, opacity, draw2D, color);
     }
 
-    protected renderFocus(itemRect: Rect, nodeFocus: boolean, draw2D?: IfDraw2D) {
+    protected renderFocus(itemRect: Rect, opacity: number, nodeFocus: boolean, draw2D?: IfDraw2D) {
         const focusBitmap = this.getBitmap("focusBitmapUri");
         const focusFootprint = this.getBitmap("focusFootprintBitmapUri");
         this.hasNinePatch = (focusBitmap?.ninePatch || focusFootprint?.ninePatch) === true;
@@ -226,10 +236,10 @@ export class LabelList extends ArrayGrid {
         };
         if (nodeFocus && focusBitmap) {
             const rect = focusBitmap.ninePatch ? ninePatchRect : itemRect;
-            this.drawImage(focusBitmap, rect, 0, draw2D);
+            this.drawImage(focusBitmap, rect, 0, opacity, draw2D);
         } else if (!nodeFocus && focusFootprint) {
             const rect = focusFootprint.ninePatch ? ninePatchRect : itemRect;
-            this.drawImage(focusFootprint, rect, 0, draw2D);
+            this.drawImage(focusFootprint, rect, 0, opacity, draw2D);
         }
     }
 }

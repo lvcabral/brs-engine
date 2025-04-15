@@ -341,13 +341,25 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         return (this.getFieldValueJS("focusable") as boolean) ?? false;
     }
 
-    renderNode(interpreter: Interpreter, origin: number[], angle: number, draw2D?: IfDraw2D) {
-        this.renderChildren(interpreter, origin, angle, draw2D);
+    renderNode(
+        interpreter: Interpreter,
+        origin: number[],
+        angle: number,
+        opacity: number,
+        draw2D?: IfDraw2D
+    ) {
+        this.renderChildren(interpreter, origin, angle, opacity, draw2D);
     }
 
-    renderChildren(interpreter: Interpreter, origin: number[], angle: number, draw2D?: IfDraw2D) {
+    renderChildren(
+        interpreter: Interpreter,
+        origin: number[],
+        angle: number,
+        opacity: number,
+        draw2D?: IfDraw2D
+    ) {
         this.children.forEach((node) => {
-            node.renderNode(interpreter, origin, angle, draw2D);
+            node.renderNode(interpreter, origin, angle, opacity, draw2D);
         });
         this.changed = false;
     }
@@ -1637,7 +1649,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         },
         impl: (interpreter: Interpreter) => {
             const root = this.createPath(this)[0];
-            root.renderNode(interpreter, [0, 0], 0);
+            root.renderNode(interpreter, [0, 0], 0, 1);
             return toAssociativeArray(this.rectToParent);
         },
     });
@@ -1650,7 +1662,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         },
         impl: (interpreter: Interpreter) => {
             const root = this.createPath(this)[0];
-            root.renderNode(interpreter, [0, 0], 0);
+            root.renderNode(interpreter, [0, 0], 0, 1);
             return toAssociativeArray(this.rectLocal);
         },
     });
@@ -1663,7 +1675,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         },
         impl: (interpreter: Interpreter) => {
             const root = this.createPath(this)[0];
-            root.renderNode(interpreter, [0, 0], 0);
+            root.renderNode(interpreter, [0, 0], 0, 1);
             return toAssociativeArray(this.rectToScene);
         },
     });

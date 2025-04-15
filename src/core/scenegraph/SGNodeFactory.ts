@@ -60,6 +60,7 @@ export enum SGNodeType {
     Rectangle = "Rectangle",
     Label = "Label",
     ScrollingLabel = "ScrollingLabel",
+    ScrollableText = "ScrollableText",
     Font = "Font",
     Poster = "Poster",
     ArrayGrid = "ArrayGrid",
@@ -75,7 +76,6 @@ export enum SGNodeType {
     Scene = "Scene",
     MiniKeyboard = "MiniKeyboard",
     TextEditBox = "TextEditBox",
-    ScrollableText = "ScrollableText",
     Overhang = "Overhang",
     RSGPalette = "RSGPalette",
     Video = "Video",
@@ -128,6 +128,7 @@ export class SGNodeFactory {
             case SGNodeType.Node:
                 return new RoSGNode([], name);
             case SGNodeType.Group:
+            case SGNodeType.ScrollableText:
                 return new Group([], name);
             case SGNodeType.LayoutGroup:
                 return new LayoutGroup([], name);
@@ -308,7 +309,7 @@ export function initializeNode(
 
             // Pre-render default state of the tree.
             if (node instanceof Scene) {
-                node.renderNode(interpreter, [0, 0], 0);
+                node.renderNode(interpreter, [0, 0], 0, 1);
             }
 
             interpreter.inSubEnv((subInterpreter) => {

@@ -46,7 +46,13 @@ export class StandardProgressDialog extends StandardDialog {
         this.linkField(this.progressItem, "text", "message");
     }
 
-    renderNode(interpreter: Interpreter, origin: number[], angle: number, draw2D?: IfDraw2D): void {
+    renderNode(
+        interpreter: Interpreter,
+        origin: number[],
+        angle: number,
+        opacity: number,
+        draw2D?: IfDraw2D
+    ) {
         const title = jsValueOf(this.getFieldValue("title")) as string;
         const message = jsValueOf(this.getFieldValue("message")) as string;
         if (title === "") {
@@ -59,6 +65,6 @@ export class StandardProgressDialog extends StandardDialog {
         if (message === "") {
             this.set(new BrsString("message"), new BrsString("Please wait..."));
         }
-        super.renderNode(interpreter, origin, angle, draw2D);
+        super.renderNode(interpreter, origin, angle, opacity, draw2D);
     }
 }

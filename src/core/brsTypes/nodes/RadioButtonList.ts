@@ -46,6 +46,7 @@ export class RadioButtonList extends LabelList {
         index: number,
         item: ContentNode,
         rect: Rect,
+        opacity: number,
         nodeFocus: boolean,
         itemFocus: boolean,
         draw2D?: IfDraw2D
@@ -59,9 +60,9 @@ export class RadioButtonList extends LabelList {
         const iconIndex = itemFocus ? 1 : 0;
         const bmp = showIcon ? this.getBitmap(icons[iconIndex]) : undefined;
         if (!itemFocus) {
-            this.renderUnfocused(text, rect, iconGap, true, bmp, draw2D);
+            this.renderUnfocused(text, rect, opacity, iconGap, true, bmp, draw2D);
         } else {
-            this.renderFocused(text, rect, nodeFocus, iconGap, true, bmp, draw2D);
+            this.renderFocused(text, rect, opacity, nodeFocus, iconGap, true, bmp, draw2D);
         }
     }
 }

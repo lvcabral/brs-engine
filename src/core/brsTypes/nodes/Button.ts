@@ -177,7 +177,13 @@ export class Button extends Group {
         this.iconHeight = height;
     }
 
-    renderNode(interpreter: Interpreter, origin: number[], angle: number, draw2D?: IfDraw2D) {
+    renderNode(
+        interpreter: Interpreter,
+        origin: number[],
+        angle: number,
+        opacity: number,
+        draw2D?: IfDraw2D
+    ) {
         if (!this.isVisible()) {
             return;
         }
@@ -194,12 +200,13 @@ export class Button extends Group {
             height: Math.max(size.height, this.iconSize[1]),
         };
         const rotation = angle + this.getRotation();
+        opacity = opacity * this.getOpacity();
         if (this.isDirty) {
             this.updateChildren(nodeFocus);
             this.isDirty = false;
         }
         this.updateBoundingRects(rect, origin, angle);
-        this.renderChildren(interpreter, drawTrans, rotation, draw2D);
+        this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);
         this.updateParentRects(origin, angle);
     }
 }

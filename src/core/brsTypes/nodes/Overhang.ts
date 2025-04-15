@@ -213,7 +213,13 @@ export class Overhang extends Group {
         return super.set(index, value, alwaysNotify, kind);
     }
 
-    renderNode(interpreter: Interpreter, origin: number[], angle: number, draw2D?: IfDraw2D) {
+    renderNode(
+        interpreter: Interpreter,
+        origin: number[],
+        angle: number,
+        opacity: number,
+        draw2D?: IfDraw2D
+    ) {
         if (!this.isVisible()) {
             return;
         }
@@ -222,8 +228,9 @@ export class Overhang extends Group {
         }
         const size = this.getDimensions();
         const rect = { x: origin[0], y: origin[1], width: size.width, height: size.height };
+        opacity = opacity * this.getOpacity();
         this.updateBoundingRects(rect, origin, angle);
-        this.renderChildren(interpreter, origin, angle, draw2D);
+        this.renderChildren(interpreter, origin, angle, opacity, draw2D);
         this.updateParentRects(origin, angle);
         if (this.realign) {
             this.alignChildren();

@@ -139,7 +139,13 @@ export class ButtonGroup extends LayoutGroup {
         return handled;
     }
 
-    renderNode(interpreter: Interpreter, origin: number[], angle: number, draw2D?: IfDraw2D): void {
+    renderNode(
+        interpreter: Interpreter,
+        origin: number[],
+        angle: number,
+        opacity: number,
+        draw2D?: IfDraw2D
+    ) {
         if (!this.isVisible()) {
             return;
         }
@@ -159,9 +165,11 @@ export class ButtonGroup extends LayoutGroup {
             this.isDirty = false;
         }
         this.refreshFocus();
+        const rotation = angle + this.getRotation();
+        opacity = opacity * this.getOpacity();
         // TODO: update then width/height based on the # of buttons and layout direction
-        this.updateBoundingRects(boundingRect, origin, angle);
-        this.renderChildren(interpreter, drawTrans, angle, draw2D);
+        this.updateBoundingRects(boundingRect, origin, rotation);
+        this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);
         this.updateParentRects(origin, angle);
     }
 

@@ -188,10 +188,16 @@ export class Group extends RoSGNode {
         return center;
     }
 
+    protected getOpacity() {
+        const opacity = this.getFieldValueJS("opacity") as number;
+        return opacity ?? 1;
+    }
+
     protected drawText(
         fullText: string,
         font: Font,
         color: number,
+        opacity: number,
         rect: Rect,
         horizAlign: string,
         vertAlign: string,
@@ -228,7 +234,7 @@ export class Group extends RoSGNode {
             }
         }
         if (draw2D) {
-            draw2D.doDrawRotatedText(text, textX, textY, color, drawFont, rotation);
+            draw2D.doDrawRotatedText(text, textX, textY, color, opacity, drawFont, rotation);
         }
 
         return measured;
@@ -238,6 +244,7 @@ export class Group extends RoSGNode {
         text: string,
         font: Font,
         color: number,
+        opacity: number,
         rect: Rect,
         horizAlign: string,
         vertAlign: string,
@@ -311,7 +318,7 @@ export class Group extends RoSGNode {
                 x += rect.width - lineWidth;
             }
             if (draw2D) {
-                draw2D.doDrawRotatedText(line, x, y, color, drawFont, rotation);
+                draw2D.doDrawRotatedText(line, x, y, color, opacity, drawFont, rotation);
             }
             y += lineHeight + lineSpacing;
         }
@@ -389,6 +396,7 @@ export class Group extends RoSGNode {
         bitmap: RoBitmap,
         rect: Rect,
         rotation: number,
+        opacity: number,
         draw2D?: IfDraw2D,
         rgba?: number
     ) {
@@ -397,8 +405,11 @@ export class Group extends RoSGNode {
             if (typeof rgba !== "number" || rgba === 0xffffffff || rgba === -1) {
                 rgba = undefined;
             }
+            if (opacity < 0 || opacity > 1) {
+                opacity = 1;
+            }
             if (bitmap.ninePatch) {
-                draw2D?.drawNinePatch(bitmap, rect, rgba);
+                draw2D?.drawNinePatch(bitmap, rect, rgba, opacity);
                 // TODO: Handle 9-patch rotation, scaling
                 return rect;
             }
@@ -420,10 +431,11 @@ export class Group extends RoSGNode {
                     bitmap,
                     center[0],
                     center[1],
-                    rgba
+                    rgba,
+                    opacity
                 );
             } else {
-                draw2D?.doDrawScaledObject(rect.x, rect.y, scaleX, scaleY, bitmap, rgba);
+                draw2D?.doDrawScaledObject(rect.x, rect.y, scaleX, scaleY, bitmap, rgba, opacity);
             }
         }
         return rect;
@@ -499,7 +511,13 @@ export class Group extends RoSGNode {
         return false;
     }
 
-    renderNode(interpreter: Interpreter, origin: number[], angle: number, draw2D?: IfDraw2D) {
+    renderNode(
+        interpreter: Interpreter,
+        origin: number[],
+        angle: number,
+        opacity: number,
+        draw2D?: IfDraw2D
+    ) {
         if (!this.isVisible()) {
             return;
         }
@@ -520,7 +538,8 @@ export class Group extends RoSGNode {
             width: 0,
             height: 0,
         };
-        this.renderChildren(interpreter, drawTrans, rotation, draw2D);
+        opacity = opacity * this.getOpacity();
+        this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);
         this.updateParentRects(origin, angle);
         this.isDirty = false;
     }

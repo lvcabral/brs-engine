@@ -20,7 +20,13 @@ export class Rectangle extends Group {
         this.registerInitializedFields(initializedFields);
     }
 
-    renderNode(interpreter: Interpreter, origin: number[], angle: number, draw2D?: IfDraw2D) {
+    renderNode(
+        interpreter: Interpreter,
+        origin: number[],
+        angle: number,
+        opacity: number,
+        draw2D?: IfDraw2D
+    ) {
         if (!this.isVisible()) {
             return;
         }
@@ -31,12 +37,12 @@ export class Rectangle extends Group {
         const size = this.getDimensions();
         const rotation = angle + this.getRotation();
         const color = this.getFieldValueJS("color") as number;
-        const opacity = this.getFieldValueJS("opacity") as number;
+        opacity = opacity * this.getOpacity();
         const center = this.getScaleRotateCenter();
         const rect = { x: drawTrans[0], y: drawTrans[1], width: size.width, height: size.height };
         draw2D?.doDrawRotatedRect(rect, color, rotation, center, opacity);
         this.updateBoundingRects(rect, origin, rotation);
-        this.renderChildren(interpreter, drawTrans, rotation, draw2D);
+        this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);
         this.updateParentRects(origin, angle);
     }
 }
