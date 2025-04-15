@@ -91,7 +91,13 @@ export class StandardDialog extends Group {
         return super.set(index, value, alwaysNotify, kind);
     }
 
-    renderNode(interpreter: Interpreter, origin: number[], angle: number, draw2D?: IfDraw2D): void {
+    renderNode(
+        interpreter: Interpreter,
+        origin: number[],
+        angle: number,
+        opacity: number,
+        draw2D?: IfDraw2D
+    ) {
         if (!this.isVisible()) {
             return;
         }
@@ -111,8 +117,9 @@ export class StandardDialog extends Group {
         if (isBrsString(backColor)) {
             this.background.set(new BrsString("blendColor"), backColor);
         }
+        opacity = opacity * this.getOpacity();
         this.updateBoundingRects(boundingRect, origin, angle);
-        this.renderChildren(interpreter, drawTrans, angle, draw2D);
+        this.renderChildren(interpreter, drawTrans, angle, opacity, draw2D);
         this.updateParentRects(origin, angle);
     }
 

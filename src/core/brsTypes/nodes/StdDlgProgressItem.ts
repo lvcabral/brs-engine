@@ -46,7 +46,13 @@ export class StdDlgProgressItem extends Group {
         this.linkField(this.label, "text");
     }
 
-    renderNode(interpreter: Interpreter, origin: number[], angle: number, draw2D?: IfDraw2D): void {
+    renderNode(
+        interpreter: Interpreter,
+        origin: number[],
+        angle: number,
+        opacity: number,
+        draw2D?: IfDraw2D
+    ) {
         if (!this.isVisible()) {
             return;
         }
@@ -84,8 +90,9 @@ export class StdDlgProgressItem extends Group {
             boundingRect.width = labelSize.width;
             this.set(new BrsString("width"), new Float(boundingRect.width));
         }
+        opacity = opacity * this.getOpacity();
         this.updateBoundingRects(boundingRect, origin, angle);
-        this.renderChildren(interpreter, drawTrans, angle, draw2D);
+        this.renderChildren(interpreter, drawTrans, angle, opacity, draw2D);
         this.updateParentRects(origin, angle);
     }
 

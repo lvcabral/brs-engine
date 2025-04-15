@@ -48,9 +48,11 @@ export class IfDraw2D {
         scaleX: number,
         scaleY: number,
         object: RoBitmap,
-        rgba?: number
+        rgba?: number,
+        opacity?: number
     ): boolean {
         const ctx = this.component.getContext();
+        rgba = combineRgbaOpacity(rgba, opacity);
         const didDraw = this.component.drawImage(object, x, y, scaleX, scaleY, rgba);
         ctx.globalAlpha = 1.0;
         return didDraw;
@@ -60,9 +62,11 @@ export class IfDraw2D {
         object: RoBitmap,
         sourceRect: Rect,
         destRect: Rect,
-        rgba?: number
+        rgba?: number,
+        opacity?: number
     ): boolean {
         const ctx = this.component.getContext();
+        rgba = combineRgbaOpacity(rgba, opacity);
         const image = getCanvasFromDraw2d(object, rgba);
         ctx.save();
         // Set context properties (alpha blending, smoothing)
@@ -95,11 +99,13 @@ export class IfDraw2D {
         object: RoBitmap,
         centerX?: number,
         centerY?: number,
-        rgba?: number
+        rgba?: number,
+        opacity?: number
     ) {
         const baseX = this.component.x;
         const baseY = this.component.y;
         const ctx = this.component.getContext();
+        rgba = combineRgbaOpacity(rgba, opacity);
         ctx.save();
         const rotationCenterX = centerX !== undefined ? centerX : 0;
         const rotationCenterY = centerY !== undefined ? centerY : 0;
@@ -143,14 +149,17 @@ export class IfDraw2D {
         this.component.makeDirty();
     }
 
-    doDrawText(text: string, x: number, y: number, rgba: number, font: RoFont) {
+    doDrawText(text: string, x: number, y: number, rgba: number, opacity: number, font: RoFont) {
         const baseX = this.component.x;
         const baseY = this.component.y;
         const ctx = this.component.getContext();
+        ctx.save();
+        ctx.globalAlpha = opacity;
         ctx.fillStyle = rgbaIntToHex(rgba, this.component.getCanvasAlpha());
         ctx.font = font.toFontString();
         ctx.textBaseline = "top";
         ctx.fillText(text, baseX + x, baseY + y + font.getTopAdjust());
+        ctx.restore();
         this.component.makeDirty();
     }
 
@@ -159,6 +168,7 @@ export class IfDraw2D {
         x: number,
         y: number,
         rgba: number,
+        opacity: number,
         font: RoFont,
         rotation: number
     ) {
@@ -166,6 +176,7 @@ export class IfDraw2D {
         const baseY = this.component.y;
         const ctx = this.component.getContext();
         ctx.save();
+        ctx.globalAlpha = opacity;
         ctx.translate(baseX + x, baseY + y);
         ctx.rotate(-rotation);
         ctx.fillStyle = rgbaIntToHex(rgba, this.component.getCanvasAlpha());
@@ -176,8 +187,9 @@ export class IfDraw2D {
         this.component.makeDirty();
     }
 
-    drawNinePatch(bitmap: RoBitmap, rect: Rect, rgba?: number) {
+    drawNinePatch(bitmap: RoBitmap, rect: Rect, rgba?: number, opacity?: number) {
         const ctx = this.component.getContext();
+        rgba = combineRgbaOpacity(rgba, opacity);
         const image = getCanvasFromDraw2d(bitmap, rgba);
         const patchSizes = bitmap.getPatchSizes();
         const x = rect.x;
@@ -214,6 +226,7 @@ export class IfDraw2D {
         ctx.save();
         // Set context properties (alpha blending, smoothing)
         setContextAlpha(ctx, rgba);
+        ctx.imageSmoothingEnabled = bitmap.scaleMode === 1;
 
         // Top-left corner
         drawPart(1, 1, lw - 1, th + 1, x, y, lw - 1, th + 1);
@@ -504,7 +517,7 @@ export class IfDraw2D {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, text: BrsString, x: Int32, y: Int32, rgba: Int32, font: RoFont) => {
-            this.doDrawText(text.value, x.getValue(), y.getValue(), rgba.getValue(), font);
+            this.doDrawText(text.value, x.getValue(), y.getValue(), rgba.getValue(), 1, font);
             return BrsBoolean.True;
         },
     });
@@ -1002,4 +1015,30 @@ function drawChunk(ctx: BrsCanvasContext2D, image: BrsCanvas, chunk: DrawChunk) 
         ctx.drawImage(image, sx, sy, sw, sh, dx, dy, dw, dh);
     }
     /// #endif
+}
+
+/**
+ * Helper function to combine RGBA color integer with an opacity value.
+ * @param rgba The base RGBA color integer (e.g., 0xFF0000FF for opaque red).
+ * @param opacity The opacity factor (0.0 to 1.0).
+ * @returns The combined RGBA color integer, or undefined if both inputs are undefined.
+ */
+function combineRgbaOpacity(rgba?: number, opacity?: number): number | undefined {
+    if (rgba === undefined && opacity === undefined) {
+        return undefined;
+    }
+
+    // Default to opaque white if only opacity is given and rgba is undefined
+    const baseRgba = rgba ?? 0xffffffff;
+    let alpha = baseRgba & 0xff;
+    // Apply opacity if it's a valid number between 0 and 1
+    if (opacity !== undefined && opacity >= 0 && opacity <= 1) {
+        alpha = Math.round(alpha * opacity);
+    }
+
+    // Ensure alpha is within the valid 0-255 range
+    alpha = Math.max(0, Math.min(255, alpha));
+
+    // Reconstruct the RGBA integer with the new alpha
+    return (baseRgba & 0xffffff00) | alpha;
 }

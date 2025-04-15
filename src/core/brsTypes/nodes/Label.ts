@@ -65,12 +65,18 @@ export class Label extends Group {
     getMeasured() {
         if (this.measured === undefined) {
             const size = this.getDimensions();
-            this.measured = this.renderLabel({ x: 0, y: 0, ...size }, 0);
+            this.measured = this.renderLabel({ x: 0, y: 0, ...size }, 0, 1);
         }
         return this.measured;
     }
 
-    renderNode(interpreter: Interpreter, origin: number[], angle: number, draw2D?: IfDraw2D) {
+    renderNode(
+        interpreter: Interpreter,
+        origin: number[],
+        angle: number,
+        opacity: number,
+        draw2D?: IfDraw2D
+    ) {
         if (!this.isVisible()) {
             return;
         }
@@ -81,15 +87,16 @@ export class Label extends Group {
         const size = this.getDimensions();
         const rect = { x: drawTrans[0], y: drawTrans[1], width: size.width, height: size.height };
         const rotation = angle + this.getRotation();
-        this.measured = this.renderLabel(rect, rotation, draw2D);
+        opacity = opacity * this.getOpacity();
+        this.measured = this.renderLabel(rect, rotation, opacity, draw2D);
         rect.width = Math.max(this.measured.width, size.width);
         rect.height = Math.max(this.measured.height, size.height);
         this.updateBoundingRects(rect, origin, rotation);
-        this.renderChildren(interpreter, drawTrans, rotation, draw2D);
+        this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);
         this.updateParentRects(origin, angle);
     }
 
-    protected renderLabel(rect: Rect, rotation: number, draw2D?: IfDraw2D) {
+    protected renderLabel(rect: Rect, rotation: number, opacity: number, draw2D?: IfDraw2D) {
         const font = this.getFieldValue("font") as Font;
         const color = this.getFieldValueJS("color") as number;
         const textField = this.getFieldValueJS("text") as string;
@@ -109,6 +116,7 @@ export class Label extends Group {
                     textField,
                     font,
                     color,
+                    opacity,
                     rect,
                     horizAlign,
                     vertAlign,
@@ -128,6 +136,7 @@ export class Label extends Group {
                 textField,
                 font,
                 color,
+                opacity,
                 rect,
                 horizAlign,
                 vertAlign,

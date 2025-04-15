@@ -104,12 +104,19 @@ export class Scene extends Group {
         this.fields.get("currentdesignresolution")?.setValue(toAssociativeArray(this.ui));
     }
 
-    renderNode(interpreter: Interpreter, origin: number[], angle: number, draw2D?: IfDraw2D) {
+    renderNode(
+        interpreter: Interpreter,
+        origin: number[],
+        angle: number,
+        opacity: number,
+        draw2D?: IfDraw2D
+    ) {
         if (!this.isVisible()) {
             return;
         }
         const rotation = angle + this.getRotation();
         const backColor = this.getFieldValueJS("backgroundColor") as number;
+        opacity = opacity * this.getOpacity();
         draw2D?.doClearCanvas(backColor);
         const backURI = this.getFieldValueJS("backgroundUri") as string;
         if (draw2D && backURI.trim() !== "") {
@@ -118,10 +125,10 @@ export class Scene extends Group {
             if (bitmap instanceof RoBitmap && bitmap.isValid()) {
                 const scaleX = this.ui.width / bitmap.width;
                 const scaleY = this.ui.height / bitmap.height;
-                draw2D.doDrawScaledObject(0, 0, scaleX, scaleY, bitmap);
+                draw2D.doDrawScaledObject(0, 0, scaleX, scaleY, bitmap, undefined, opacity);
             }
         }
-        this.renderChildren(interpreter, origin, rotation, draw2D);
+        this.renderChildren(interpreter, origin, rotation, opacity, draw2D);
     }
 
     /** Handle SceneGraph onKeyEvent event */

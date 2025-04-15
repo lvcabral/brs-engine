@@ -98,6 +98,7 @@ export class MarkupList extends ArrayGrid {
         interpreter: Interpreter,
         rect: Rect,
         rotation: number,
+        opacity: number,
         draw2D?: IfDraw2D
     ) {
         if (this.content.length === 0) {
@@ -132,12 +133,12 @@ export class MarkupList extends ArrayGrid {
             itemRect.height = rowHeights[rowIndex] ?? itemSize[1];
             if (!hasSections && this.wrap && rowIndex < lastIndex && r > 0) {
                 const divRect = { ...itemRect, width: rowWidth };
-                const divHeight = this.renderWrapDivider(divRect, draw2D);
+                const divHeight = this.renderWrapDivider(divRect, opacity, draw2D);
                 itemRect.y += divHeight + spacing[1];
             } else if (hasSections && this.wrap && this.metadata[rowIndex]?.divider && r > 0) {
                 const divRect = { ...itemRect, width: rowWidth };
                 const divText = this.metadata[rowIndex].sectionTitle;
-                const divHeight = this.renderSectionDivider(divText, divRect, draw2D);
+                const divHeight = this.renderSectionDivider(divText, divRect, opacity, draw2D);
                 itemRect.y += divHeight + spacing[1];
             }
             itemRect.width = itemSize[0];
@@ -145,7 +146,7 @@ export class MarkupList extends ArrayGrid {
             if (index >= this.content.length) {
                 break;
             }
-            this.renderItemComponent(interpreter, index, itemRect, rotation, draw2D);
+            this.renderItemComponent(interpreter, index, itemRect, rotation, opacity, draw2D);
             lastIndex = index;
             itemRect.x = rect.x;
             itemRect.y += itemRect.height + (rowSpacings[r] ?? spacing[1]);
