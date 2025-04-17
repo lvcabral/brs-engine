@@ -9,6 +9,7 @@ import {
     BrsEvent,
     brsValueOf,
     isBrsString,
+    rootObjects,
 } from "..";
 import { Field, FieldKind, FieldModel } from "./Field";
 import { isTaskUpdate, TaskData, TaskState, TaskUpdate } from "../../common";
@@ -104,6 +105,7 @@ export class Task extends RoSGNode {
     /** Message callback to handle observed fields with message port */
     protected getNewEvents() {
         const events: BrsEvent[] = [];
+        rootObjects.mGlobal.refresh();
         this.updateTask();
         return events;
     }

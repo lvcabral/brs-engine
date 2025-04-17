@@ -527,9 +527,10 @@ export function toNode(x: any, type: string, subtype: string): RoSGNode {
         node = SGNodeFactory.createNode(type, subtype) ?? new RoSGNode([], subtype);
     }
     for (const key in x) {
-        if (key !== "_node_" && key !== "_children_" && key !== "_observed_") {
-            node.setFieldValue(key, brsValueOf(x[key]));
+        if (key.startsWith("_") && key.endsWith("_") && key.length > 2) {
+            continue;
         }
+        node.setFieldValue(key, brsValueOf(x[key]));
     }
     if (x["_children_"]) {
         x["_children_"].forEach((child: any) => {
