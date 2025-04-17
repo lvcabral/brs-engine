@@ -1,8 +1,8 @@
-import { rootObjects, RoSGNode } from "../components/RoSGNode";
+import { RoSGNode } from "../components/RoSGNode";
 import { FieldKind, FieldModel } from "./Field";
 import {
     BrsBoolean,
-    BrsInvalid,
+    rootObjects,
     BrsString,
     BrsType,
     getFontRegistry,

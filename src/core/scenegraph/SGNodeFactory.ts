@@ -416,7 +416,12 @@ export function initializeTask(interpreter: Interpreter, taskData: TaskData) {
             }
         }
         if (taskData.m?.global) {
-            for (let [key, value] of Object.entries(taskData.m.global)) {
+            let global = taskData.m.global;
+            if (global["_buffer_"] instanceof SharedArrayBuffer) {
+                rootObjects.mGlobal.sharedObject.setBuffer(global["_buffer_"]);
+                global = rootObjects.mGlobal.sharedObject.load();
+            }
+            for (let [key, value] of Object.entries(global)) {
                 if (key.startsWith("_") && key.endsWith("_") && key.length > 2) {
                     // Ignore transfer metadata fields
                     continue;
