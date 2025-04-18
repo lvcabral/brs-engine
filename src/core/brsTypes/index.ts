@@ -627,7 +627,7 @@ export function fromSGNode(node: RoSGNode): FlexObject {
             if (isUnboxable(fieldValue)) {
                 fieldValue = fieldValue.unbox();
             }
-            if (field.isPortObserved(node)) {
+            if (node instanceof Task && field.isPortObserved(node)) {
                 observed.push(name);
             }
             result[name] = jsValueOf(fieldValue);
@@ -651,10 +651,10 @@ export function fromSGNode(node: RoSGNode): FlexObject {
  * @returns A JavaScript object with a SharedArrayBuffer.
  */
 export function fromGlobalNode(node: Global): FlexObject {
-    const result: FlexObject = {};
-    result["_node_"] = `${getNodeType(node.nodeSubtype)}:${node.nodeSubtype}`;
-    result["_buffer_"] = node.sharedObject.getBuffer();
-
+    const result: FlexObject = {
+        _node_: `${getNodeType(node.nodeSubtype)}:${node.nodeSubtype}`,
+        _buffer_: node.sharedObject.getBuffer(),
+    };
     return result;
 }
 

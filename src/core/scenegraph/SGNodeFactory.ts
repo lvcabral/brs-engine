@@ -399,6 +399,7 @@ export function initializeTask(interpreter: Interpreter, taskData: TaskData) {
             node.id = taskData.id;
             node.thread = true;
             rootObjects.tasks.push(node);
+            interpreter.environment.hostNode = node;
         }
         let port: RoMessagePort | null = null;
         if (taskData.m) {
@@ -409,40 +410,23 @@ export function initializeTask(interpreter: Interpreter, taskData: TaskData) {
                 }
                 const brsValue = brsValueOf(value);
                 if (!port && brsValue instanceof RoMessagePort) {
-                    console.log("A port object was found!");
+                    console.debug("A port object was found!");
                     port = brsValue;
                 }
                 node.m.set(new BrsString(key), brsValue);
             }
         }
         if (taskData.m?.global) {
-            let global = taskData.m.global;
-            if (global["_buffer_"] instanceof SharedArrayBuffer) {
-                rootObjects.mGlobal.sharedObject.setBuffer(global["_buffer_"]);
-                global = rootObjects.mGlobal.sharedObject.load();
-            }
-            for (let [key, value] of Object.entries(global)) {
-                if (key.startsWith("_") && key.endsWith("_") && key.length > 2) {
-                    // Ignore transfer metadata fields
-                    continue;
-                }
-                rootObjects.mGlobal.setFieldValue(key, brsValueOf(value));
+            if (taskData.m.global["_buffer_"] instanceof SharedArrayBuffer) {
+                const observed = taskData.m.global["_observed_"];
+                rootObjects.mGlobal.sharedObject.setBuffer(taskData.m.global["_buffer_"]);
+                const global = rootObjects.mGlobal.sharedObject.load();
+                restoreNode(interpreter, global, observed, rootObjects.mGlobal, port);
             }
         }
         if (taskData.m?.top) {
             const observed = taskData.m.top["_observed_"];
-            for (let [key, value] of Object.entries(taskData.m.top)) {
-                if (key.startsWith("_") && key.endsWith("_") && key.length > 2) {
-                    // Ignore transfer metadata fields
-                    continue;
-                }
-                node.setFieldValue(key, brsValueOf(value));
-                if (port && observed?.includes(key)) {
-                    console.log(`Adding observer port for ${key}`);
-                    interpreter.environment.hostNode = node;
-                    node.addObserver(interpreter, "unscoped", new BrsString(key), port);
-                }
-            }
+            restoreNode(interpreter, taskData.m.top, observed, node, port);
         }
         return node;
     } else {
@@ -450,6 +434,31 @@ export function initializeTask(interpreter: Interpreter, taskData: TaskData) {
             `warning,BRIGHTSCRIPT: ERROR: roSGNode: Failed to initialize Task with type ${type}: ${interpreter.formatLocation()}`
         );
         return BrsInvalid.Instance;
+    }
+}
+
+/** Function to restore the node fields from the serialized object */
+function restoreNode(
+    interpreter: Interpreter,
+    source: any,
+    observed: any,
+    node: RoSGNode,
+    port: RoMessagePort | null
+) {
+    for (let [key, value] of Object.entries(source)) {
+        if (key.startsWith("_") && key.endsWith("_") && key.length > 2) {
+            // Ignore transfer metadata fields
+            continue;
+        }
+        node.setFieldValue(key, brsValueOf(value));
+        if (port && observed?.includes(key)) {
+            if (node instanceof Task) {
+                console.debug(`Adding observer port for top.${key}`);
+            } else {
+                console.debug(`Adding observer port for global.${key}`);
+            }
+            node.addObserver(interpreter, "unscoped", new BrsString(key), port);
+        }
     }
 }
 

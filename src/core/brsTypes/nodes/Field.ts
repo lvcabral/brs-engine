@@ -19,6 +19,7 @@ import {
     isUnboxable,
     isAnyNumber,
     isBoxedNumber,
+    Task,
 } from "..";
 import { Callable } from "../Callable";
 import { Interpreter } from "../../interpreter";
@@ -266,9 +267,14 @@ export class Field {
         );
     }
 
-    isPortObserved(hostNode: RoSGNode) {
+    isPortObserved(hostNode: Task) {
         return (
-            this.unscopedObservers.some((callback) => callback.callable instanceof RoMessagePort) ||
+            this.unscopedObservers.some(
+                (callback) =>
+                    callback.callable instanceof RoMessagePort &&
+                    callback.hostNode instanceof Task &&
+                    callback.hostNode.id === hostNode.id
+            ) ||
             this.scopedObservers
                 .get(hostNode)
                 ?.some((callback) => callback.callable instanceof RoMessagePort) ||

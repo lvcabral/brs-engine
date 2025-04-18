@@ -613,7 +613,7 @@ function mainCallback(event: MessageEvent) {
     } else if (isAppData(event.data)) {
         notifyAll("launch", { app: event.data.id, params: event.data.params ?? new Map() });
     } else if (isTaskData(event.data)) {
-        console.log(
+        console.debug(
             "[API] Task data received from Main Thread: ",
             event.data.name,
             TaskState[event.data.state]
@@ -629,7 +629,7 @@ function mainCallback(event: MessageEvent) {
             endTask(event.data.id);
         }
     } else if (isTaskUpdate(event.data)) {
-        console.log(
+        console.debug(
             "[API] Task update received from Main thread: ",
             event.data.id,
             event.data.field
@@ -695,7 +695,7 @@ function taskCallback(event: MessageEvent) {
     } else if (typeof event.data.captionsMode === "string") {
         deviceData.captionsMode = event.data.captionsMode;
     } else if (isTaskData(event.data)) {
-        console.log(
+        console.debug(
             "[API] Task data received from Task Thread: ",
             event.data.name,
             TaskState[event.data.state]
@@ -704,7 +704,7 @@ function taskCallback(event: MessageEvent) {
             endTask(event.data.id);
         }
     } else if (isTaskUpdate(event.data)) {
-        console.log(
+        console.debug(
             "[API] Task update received from Task thread: ",
             event.data.id,
             event.data.field

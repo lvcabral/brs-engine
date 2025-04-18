@@ -14,6 +14,7 @@ import {
 import { Field, FieldKind, FieldModel } from "./Field";
 import { isTaskUpdate, TaskData, TaskState, TaskUpdate } from "../../common";
 import SharedObject from "../../SharedObject";
+import { Global } from "./Global";
 
 export class Task extends RoSGNode {
     readonly defaultFields: FieldModel[] = [
@@ -62,7 +63,7 @@ export class Task extends RoSGNode {
                 this.active = true;
             } else if (control === "stop" || control === "done") {
                 if (this.started) {
-                    console.log("Posting Task Data to STOP: ", this.nodeSubtype);
+                    console.debug("Posting Task Data to STOP: ", this.nodeSubtype);
                     const taskData: TaskData = {
                         id: this.id,
                         name: this.nodeSubtype,
@@ -125,7 +126,21 @@ export class Task extends RoSGNode {
                 buffer: this.taskBuffer.getBuffer(),
                 m: fromAssociativeArray(this.m),
             };
-            console.log("Posting Task Data to RUN: ", this.nodeSubtype, functionName);
+            // Check of observed fields in `m.global`
+            const global = this.m.elements.get("global");
+            if (global instanceof Global) {
+                const fields = global.getNodeFields();
+                const observed: string[] = [];
+                fields.forEach((field: Field, name: string) => {
+                    if (!field.isHidden() && field.isPortObserved(this)) {
+                        observed.push(name);
+                    }
+                });
+                if (observed.length && taskData.m) {
+                    taskData.m.global["_observed_"] = observed;
+                }
+            }
+            console.debug("Posting Task Data to RUN: ", this.nodeSubtype, functionName);
             postMessage(taskData);
             this.started = true;
         }
@@ -136,7 +151,7 @@ export class Task extends RoSGNode {
         if (this.taskBuffer && currentVersion === 1) {
             const taskUpdate = this.taskBuffer.load(true);
             if (isTaskUpdate(taskUpdate)) {
-                console.log(
+                console.debug(
                     `Received Update from ${this.thread ? "Main thread" : "Task Thread"}: `,
                     taskUpdate.id,
                     taskUpdate.field
