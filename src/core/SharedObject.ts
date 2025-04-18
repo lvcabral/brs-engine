@@ -125,7 +125,7 @@ class SharedObject {
         }
     }
 
-    load(resetVersion: boolean = false): any | null {
+    load(resetVersion: boolean = false) {
         const currentLength = Atomics.load(this.atomicView, 0);
         if (currentLength < 1) {
             return {};
@@ -140,7 +140,7 @@ class SharedObject {
             return JSON.parse(serialized);
         } catch (error) {
             console.error("Error parsing data:", error, serialized);
-            return null;
+            return {};
         }
     }
 

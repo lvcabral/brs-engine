@@ -1,4 +1,4 @@
-import { rootObjects, RoSGNode } from "../components/RoSGNode";
+import { RoSGNode } from "../components/RoSGNode";
 import { FieldKind, FieldModel } from "./Field";
 import {
     Int32,
@@ -16,6 +16,7 @@ import {
     jsValueOf,
     isBrsString,
     BrsBoolean,
+    rootObjects,
 } from "..";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D, MeasuredText, Rect } from "../interfaces/IfDraw2D";

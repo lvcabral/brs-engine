@@ -42,6 +42,10 @@ import { RoSGNodeEvent } from "./events/RoSGNodeEvent";
 import { RoSGScreenEvent } from "./events/RoSGScreenEvent";
 import { isUnboxable } from "./Boxing";
 import { RoSGNode } from "./components/RoSGNode";
+import { Global } from "./nodes/Global";
+import { Scene } from "./nodes/Scene";
+import { Task } from "./nodes/Task";
+import { Timer } from "./nodes/Timer";
 import { Field } from "./nodes/Field";
 import { getNodeType, SGNodeFactory } from "../scenegraph/SGNodeFactory";
 import { BrsObjects } from "./components/BrsObjects";
@@ -385,7 +389,13 @@ export const ValidDateFormats = [
  * This is to be used to behave like and convert to a BrightScript Associative Array.
  */
 export interface FlexObject {
-    [key: string]: BrsConvertible | BrsConvertible[] | FlexObject | FlexObject[] | Map<string, any>;
+    [key: string]:
+        | BrsConvertible
+        | BrsConvertible[]
+        | FlexObject
+        | FlexObject[]
+        | Map<string, any>
+        | SharedArrayBuffer;
 }
 
 /**
@@ -505,12 +515,22 @@ function fromObject(x: any): BrsType {
  * @param subtype The subtype of the node.
  * @returns A RoSGNode with the converted fields.
  */
-function toNode(x: any, type: string, subtype: string): RoSGNode {
-    const node = SGNodeFactory.createNode(type, subtype) ?? new RoSGNode([], subtype);
-    for (const key in x) {
-        if (key !== "_node_" && key !== "_children_" && key !== "_observed_") {
-            node.setFieldValue(key, brsValueOf(x[key]));
+export function toNode(x: any, type: string, subtype: string): RoSGNode {
+    let node: RoSGNode;
+    if (x["_buffer_"]) {
+        node = new Global([]);
+        if (node instanceof Global) {
+            node.sharedObject.setBuffer(x["_buffer_"]);
+            x = node.sharedObject.load();
         }
+    } else {
+        node = SGNodeFactory.createNode(type, subtype) ?? new RoSGNode([], subtype);
+    }
+    for (const key in x) {
+        if (key.startsWith("_") && key.endsWith("_") && key.length > 2) {
+            continue;
+        }
+        node.setFieldValue(key, brsValueOf(x[key]));
     }
     if (x["_children_"]) {
         x["_children_"].forEach((child: any) => {
@@ -572,6 +592,8 @@ export function jsValueOf(x: BrsType): any {
                 return x.elements.map(jsValueOf);
             } else if (x instanceof RoByteArray) {
                 return x.elements;
+            } else if (x instanceof Global) {
+                return fromGlobalNode(x);
             } else if (x instanceof RoSGNode) {
                 return fromSGNode(x);
             } else if (x instanceof RoAssociativeArray) {
@@ -605,7 +627,7 @@ export function fromSGNode(node: RoSGNode): FlexObject {
             if (isUnboxable(fieldValue)) {
                 fieldValue = fieldValue.unbox();
             }
-            if (field.isPortObserved(node)) {
+            if (node instanceof Task && field.isPortObserved(node)) {
                 observed.push(name);
             }
             result[name] = jsValueOf(fieldValue);
@@ -622,3 +644,29 @@ export function fromSGNode(node: RoSGNode): FlexObject {
 
     return result;
 }
+
+/**
+ * Converts a Global node to a JavaScript object, using the SharedObject buffer.
+ * @param node The Global node to convert.
+ * @returns A JavaScript object with a SharedArrayBuffer.
+ */
+export function fromGlobalNode(node: Global): FlexObject {
+    const result: FlexObject = {
+        _node_: `${getNodeType(node.nodeSubtype)}:${node.nodeSubtype}`,
+        _buffer_: node.sharedObject.getBuffer(),
+    };
+    return result;
+}
+
+/**
+ * An object that holds the Node that represents the m.global, the root Scene,
+ * the currently focused node and the arrays of tasks and timers.
+ * */
+interface RootObjects {
+    mGlobal: Global;
+    rootScene?: Scene;
+    focused?: RoSGNode;
+    tasks: Task[];
+    timers: Timer[];
+}
+export const rootObjects: RootObjects = { mGlobal: new Global([]), tasks: [], timers: [] };
