@@ -418,16 +418,10 @@ export function initializeTask(interpreter: Interpreter, taskData: TaskData) {
             }
         }
         if (taskData.m?.global) {
-            if (taskData.m.global["_buffer_"] instanceof SharedArrayBuffer) {
-                const observed = taskData.m.global["_observed_"];
-                rootObjects.mGlobal.sharedObject.setBuffer(taskData.m.global["_buffer_"]);
-                const global = rootObjects.mGlobal.sharedObject.load();
-                restoreNode(interpreter, global, observed, rootObjects.mGlobal, port);
-            }
+            restoreNode(interpreter, taskData.m.global, rootObjects.mGlobal, port);
         }
         if (taskData.m?.top) {
-            const observed = taskData.m.top["_observed_"];
-            restoreNode(interpreter, taskData.m.top, observed, node, port);
+            restoreNode(interpreter, taskData.m.top, node, port);
         }
         return node;
     } else {
@@ -442,10 +436,10 @@ export function initializeTask(interpreter: Interpreter, taskData: TaskData) {
 function restoreNode(
     interpreter: Interpreter,
     source: any,
-    observed: any,
     node: RoSGNode,
     port: RoMessagePort | null
 ) {
+    const observed = source["_observed_"];
     for (let [key, value] of Object.entries(source)) {
         if (key.startsWith("_") && key.endsWith("_") && key.length > 2) {
             // Ignore transfer metadata fields

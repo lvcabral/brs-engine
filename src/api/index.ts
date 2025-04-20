@@ -23,7 +23,7 @@ import {
     isAppData,
     isNDKStart,
     isTaskData,
-    isTaskUpdate,
+    isThreadUpdate,
     platform,
     registryInitialSize,
     registryMaxSize,
@@ -123,7 +123,7 @@ let httpConnectLog: boolean = false;
 // App Workers and Shared Buffers
 let brsWorker: Worker;
 const tasks: Map<number, Worker> = new Map();
-const threadSyncFromMain: Map<number, SharedObject> = new Map();
+const threadSyncToTask: Map<number, SharedObject> = new Map();
 const threadSyncToMain: Map<number, SharedObject> = new Map();
 const registryBuffer = new SharedObject(registryInitialSize, registryMaxSize);
 let sharedBuffer: ArrayBufferLike;
@@ -421,7 +421,7 @@ function resetWorker() {
         worker?.terminate();
     });
     tasks.clear();
-    threadSyncFromMain.clear();
+    threadSyncToTask.clear();
     threadSyncToMain.clear();
     resetArray();
     resetSounds(deviceData.assets);
@@ -489,10 +489,10 @@ function runTask(taskData: TaskData) {
     const taskWorker = new Worker(brsWrkLib);
     taskWorker.addEventListener("message", taskCallback);
     tasks.set(taskData.id, taskWorker);
-    if (!threadSyncFromMain.has(taskData.id)) {
-        threadSyncFromMain.set(taskData.id, new SharedObject());
+    if (!threadSyncToTask.has(taskData.id)) {
+        threadSyncToTask.set(taskData.id, new SharedObject());
     }
-    taskData.buffer = threadSyncFromMain.get(taskData.id)?.getBuffer();
+    taskData.buffer = threadSyncToTask.get(taskData.id)?.getBuffer();
     const taskPayload: TaskPayload = {
         device: currentPayload.device,
         manifest: currentPayload.manifest,
@@ -511,7 +511,7 @@ function endTask(taskId: number) {
         taskWorker.removeEventListener("message", taskCallback);
         taskWorker.terminate();
         tasks.delete(taskId);
-        threadSyncFromMain.delete(taskId);
+        threadSyncToTask.delete(taskId);
         threadSyncToMain.delete(taskId);
         console.log("[API] Task worker stopped: ", taskId);
     }
@@ -628,16 +628,29 @@ function mainCallback(event: MessageEvent) {
         } else if (event.data.state === TaskState.STOP) {
             endTask(event.data.id);
         }
-    } else if (isTaskUpdate(event.data)) {
+    } else if (isThreadUpdate(event.data)) {
         console.debug(
-            "[API] Task update received from Main thread: ",
+            "[API] Update received from Main thread: ",
             event.data.id,
+            event.data.global,
             event.data.field
         );
-        if (!threadSyncFromMain.has(event.data.id)) {
-            threadSyncFromMain.set(event.data.id, new SharedObject());
+        if (event.data.id > 0) {
+            if (!threadSyncToTask.has(event.data.id)) {
+                threadSyncToTask.set(event.data.id, new SharedObject());
+            }
+            threadSyncToTask.get(event.data.id)?.waitStore(event.data, 1);
+        } else if (event.data.global) {
+            for (let taskId = 1; taskId <= tasks.size; taskId++) {
+                const data = { ...event.data, id: taskId };
+                if (!threadSyncToTask.has(data.id)) {
+                    threadSyncToTask.set(data.id, new SharedObject());
+                }
+                threadSyncToTask.get(data.id)?.waitStore(data, 1);
+            }
+        } else {
+            console.debug("[API] Thread update from Main with invalid destiny!");
         }
-        threadSyncFromMain.get(event.data.id)?.waitStore(event.data, 1);
     } else if (isNDKStart(event.data)) {
         if (event.data.app === "roku_browser") {
             const params = event.data.params;
@@ -703,13 +716,21 @@ function taskCallback(event: MessageEvent) {
         if (event.data.state === TaskState.STOP) {
             endTask(event.data.id);
         }
-    } else if (isTaskUpdate(event.data)) {
-        console.debug(
-            "[API] Task update received from Task thread: ",
-            event.data.id,
-            event.data.field
-        );
+    } else if (isThreadUpdate(event.data)) {
+        console.debug("[API] Update received from Task thread: ", event.data.id, event.data.field);
         threadSyncToMain.get(event.data.id)?.waitStore(event.data, 1);
+        if (!event.data.global) {
+            return;
+        }
+        for (let taskId = 1; taskId <= tasks.size; taskId++) {
+            if (taskId !== event.data.id) {
+                const data = { ...event.data, id: taskId };
+                if (!threadSyncToTask.has(data.id)) {
+                    threadSyncToTask.set(data.id, new SharedObject());
+                }
+                threadSyncToTask.get(data.id)?.waitStore(data, 1);
+            }
+        }
     } else if (typeof event.data === "string") {
         handleStringMessage(event.data);
     } else {

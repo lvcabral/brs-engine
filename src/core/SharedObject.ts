@@ -66,7 +66,11 @@ class SharedObject {
                             this.getVersion()
                         );
                     } else {
-                        console.error("[SharedObject] Error storing shared data", status);
+                        console.error(
+                            "[SharedObject] Error storing shared data",
+                            status,
+                            obj.field
+                        );
                     }
                     this.queue.shift();
                     this.isProcessing = false;

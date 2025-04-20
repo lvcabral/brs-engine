@@ -208,7 +208,6 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         }
         // Handle Scene Events
         if (rootObjects.rootScene) {
-            rootObjects.mGlobal.refresh();
             this.processTimers();
             this.processTasks();
             // TODO: Optimize rendering by only rendering if there are changes

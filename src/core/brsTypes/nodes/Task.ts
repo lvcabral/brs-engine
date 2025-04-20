@@ -12,7 +12,7 @@ import {
     rootObjects,
 } from "..";
 import { Field, FieldKind, FieldModel } from "./Field";
-import { isTaskUpdate, TaskData, TaskState, TaskUpdate } from "../../common";
+import { isThreadUpdate, TaskData, TaskState, ThreadUpdate } from "../../common";
 import SharedObject from "../../SharedObject";
 import { Global } from "./Global";
 
@@ -79,8 +79,13 @@ export class Task extends RoSGNode {
                 state.setValue(new BrsString(control));
                 this.fields.set("state", state);
                 if (this.id >= 0 && this.thread && sync) {
-                    const taskUpdate: TaskUpdate = { id: this.id, field: mapKey, value: control };
-                    postMessage(taskUpdate);
+                    const update: ThreadUpdate = {
+                        id: this.id,
+                        global: false,
+                        field: mapKey,
+                        value: control,
+                    };
+                    postMessage(update);
                 }
             }
             return BrsInvalid.Instance;
@@ -92,8 +97,13 @@ export class Task extends RoSGNode {
             }
             return BrsInvalid.Instance;
         } else if (this.id >= 0 && field && sync) {
-            const taskUpdate: TaskUpdate = { id: this.id, field: mapKey, value: jsValueOf(value) };
-            postMessage(taskUpdate);
+            const update: ThreadUpdate = {
+                id: this.id,
+                global: false,
+                field: mapKey,
+                value: jsValueOf(value),
+            };
+            postMessage(update);
         }
         return super.set(index, value, alwaysNotify, kind);
     }
@@ -106,7 +116,6 @@ export class Task extends RoSGNode {
     /** Message callback to handle observed fields with message port */
     protected getNewEvents() {
         const events: BrsEvent[] = [];
-        rootObjects.mGlobal.refresh();
         this.updateTask();
         return events;
     }
@@ -147,22 +156,20 @@ export class Task extends RoSGNode {
     }
 
     updateTask() {
-        let currentVersion = this.taskBuffer?.getVersion() ?? 0;
+        let currentVersion = this.taskBuffer?.getVersion() ?? -1;
         if (this.taskBuffer && currentVersion === 1) {
-            const taskUpdate = this.taskBuffer.load(true);
-            if (isTaskUpdate(taskUpdate)) {
+            const update = this.taskBuffer.load(true);
+            if (isThreadUpdate(update)) {
                 console.debug(
                     `Received Update from ${this.thread ? "Main thread" : "Task Thread"}: `,
-                    taskUpdate.id,
-                    taskUpdate.field
+                    update.id,
+                    update.global,
+                    update.field
                 );
-                this.set(
-                    new BrsString(taskUpdate.field),
-                    brsValueOf(taskUpdate.value),
-                    false,
-                    undefined,
-                    false
-                );
+                const node = update.global ? rootObjects.mGlobal : this;
+                const field = new BrsString(update.field);
+                const value = brsValueOf(update.value);
+                node.set(field, value, false, undefined, false);
                 return true;
             }
         }
