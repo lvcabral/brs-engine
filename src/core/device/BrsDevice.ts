@@ -17,6 +17,7 @@ import {
     RemoteType,
     defaultDeviceInfo,
     DeviceInfo,
+    DefaultSounds,
 } from "../common";
 import SharedObject from "../SharedObject";
 import { FileSystem } from "./FileSystem";
@@ -161,6 +162,16 @@ export class BrsDevice {
                 keysBuffer.push({ remote: `${remoteStr}:${remoteIdx}`, key: key, mod: mod });
                 this.lastRemote = remoteIdx;
             }
+        }
+    }
+
+    /**
+     * Method to play a system navigation sound
+     * @param sound String with the sound name
+     */
+    static playSound(sound: string) {
+        if (DefaultSounds.includes(sound)) {
+            postMessage(`audio,trigger,${sound},50,0`);
         }
     }
 }
