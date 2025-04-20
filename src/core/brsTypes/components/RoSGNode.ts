@@ -252,7 +252,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         } else if (field.canAcceptValue(value)) {
             // Fields are not overwritten if they haven't the same type.
             // Except Numbers and Booleans that can be converted to string fields.
-            field.setValue(value);
+            field.setValue(value, true);
             this.fields.set(mapKey, field);
             this.changed = true;
         } else {
@@ -373,28 +373,20 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         const field = this.fields.get(fieldName.value.toLowerCase());
         if (field instanceof Field) {
             let callableOrPort: Callable | RoMessagePort | BrsInvalid = BrsInvalid.Instance;
-            if (funcOrPort instanceof BrsString) {
-                callableOrPort = interpreter.getCallableFunction(funcOrPort.value);
-            } else if (funcOrPort instanceof RoMessagePort) {
-                callableOrPort = funcOrPort;
-                funcOrPort.registerCallback(this.getComponentName(), this.getNewEvents.bind(this));
-            }
-            const subscriber = interpreter.environment.hostNode;
-            if (!subscriber) {
+            if (!interpreter.environment.hostNode) {
                 const location = interpreter.formatLocation();
                 BrsDevice.stderr.write(
                     `warning,BRIGHTSCRIPT: ERROR: roSGNode.ObserveField: "${this.nodeSubtype}.${fieldName.value}" no active host node: ${location}`
                 );
-            } else if (!(callableOrPort instanceof BrsInvalid)) {
-                field.addObserver(
-                    scope,
-                    interpreter,
-                    callableOrPort,
-                    subscriber,
-                    this,
-                    fieldName,
-                    infoFields
-                );
+            } else if (funcOrPort instanceof BrsString) {
+                callableOrPort = interpreter.getCallableFunction(funcOrPort.value);
+            } else if (funcOrPort instanceof RoMessagePort) {
+                const host = interpreter.environment.hostNode;
+                funcOrPort.registerCallback(host.nodeSubtype, host.getNewEvents.bind(host));
+                callableOrPort = funcOrPort;
+            }
+            if (!(callableOrPort instanceof BrsInvalid)) {
+                field.addObserver(scope, interpreter, callableOrPort, this, fieldName, infoFields);
                 result = BrsBoolean.True;
             }
         }

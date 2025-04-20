@@ -221,14 +221,13 @@ export class Field {
         mode: "permanent" | "unscoped" | "scoped",
         interpreter: Interpreter,
         callable: Callable | RoMessagePort,
-        subscriber: RoSGNode,
         target: RoSGNode,
         fieldName: BrsString,
         infoFields?: RoArray
     ) {
         // Once a field is accessed, it is no longer hidden.
         this.hidden = false;
-
+        const subscriber = interpreter.environment.hostNode ?? target;
         let brsCallback: BrsCallback = {
             interpreter,
             environment: interpreter.environment,

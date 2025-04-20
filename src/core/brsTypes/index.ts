@@ -516,16 +516,7 @@ function fromObject(x: any): BrsType {
  * @returns A RoSGNode with the converted fields.
  */
 export function toNode(x: any, type: string, subtype: string): RoSGNode {
-    let node: RoSGNode;
-    if (x["_buffer_"]) {
-        node = new Global([]);
-        if (node instanceof Global) {
-            node.sharedObject.setBuffer(x["_buffer_"]);
-            x = node.sharedObject.load();
-        }
-    } else {
-        node = SGNodeFactory.createNode(type, subtype) ?? new RoSGNode([], subtype);
-    }
+    const node = SGNodeFactory.createNode(type, subtype) ?? new RoSGNode([], subtype);
     for (const key in x) {
         if (key.startsWith("_") && key.endsWith("_") && key.length > 2) {
             continue;
@@ -592,8 +583,6 @@ export function jsValueOf(x: BrsType): any {
                 return x.elements.map(jsValueOf);
             } else if (x instanceof RoByteArray) {
                 return x.elements;
-            } else if (x instanceof Global) {
-                return fromGlobalNode(x);
             } else if (x instanceof RoSGNode) {
                 return fromSGNode(x);
             } else if (x instanceof RoAssociativeArray) {
@@ -642,19 +631,6 @@ export function fromSGNode(node: RoSGNode): FlexObject {
         result["_children_"] = children.map((child: RoSGNode) => fromSGNode(child));
     }
 
-    return result;
-}
-
-/**
- * Converts a Global node to a JavaScript object, using the SharedObject buffer.
- * @param node The Global node to convert.
- * @returns A JavaScript object with a SharedArrayBuffer.
- */
-export function fromGlobalNode(node: Global): FlexObject {
-    const result: FlexObject = {
-        _node_: `${getNodeType(node.nodeSubtype)}:${node.nodeSubtype}`,
-        _buffer_: node.sharedObject.getBuffer(),
-    };
     return result;
 }
 

@@ -60,13 +60,17 @@ class SharedObject {
                 result.value.then((status) => {
                     if (status === "ok") {
                         this.store(obj);
-                        console.log(
+                        console.debug(
                             "[SharedObject] Buffer released. Stored data.",
                             obj.field,
                             this.getVersion()
                         );
                     } else {
-                        console.error("[SharedObject] Error storing shared data", status);
+                        console.error(
+                            "[SharedObject] Error storing shared data",
+                            status,
+                            obj.field
+                        );
                     }
                     this.queue.shift();
                     this.isProcessing = false;
@@ -74,7 +78,7 @@ class SharedObject {
                 });
             } else if (result.value === "not-equal") {
                 this.store(obj);
-                console.log(
+                console.debug(
                     "[SharedObject] Buffer is free. Stored data.",
                     obj.field,
                     this.getVersion()
@@ -83,7 +87,7 @@ class SharedObject {
                 this.isProcessing = false;
                 this.processQueue();
             } else {
-                console.error("[SharedObject] Error storing shared data: timeout");
+                console.error("[SharedObject] Error storing shared data: timeout", obj.field);
                 this.queue.shift();
                 this.isProcessing = false;
                 this.processQueue();
@@ -93,7 +97,7 @@ class SharedObject {
             const start = Date.now();
             const checkCondition = () => {
                 if (Atomics.load(this.atomicView, this.versionIdx) !== version) {
-                    console.log("[SharedObject] Buffer is free. Storing data.");
+                    console.debug("[SharedObject] Buffer is free. Storing data.");
                     this.store(obj);
                     this.queue.shift();
                     this.isProcessing = false;
@@ -101,7 +105,7 @@ class SharedObject {
                 } else if (Date.now() - start < timeout) {
                     setTimeout(checkCondition, 10); // Check every 10ms
                 } else {
-                    console.error("[SharedObject] Error storing shared data: timeout");
+                    console.error("[SharedObject] Error storing shared data: timeout", obj.field);
                     this.queue.shift();
                     this.isProcessing = false;
                     this.processQueue();

@@ -149,6 +149,13 @@ export function isTaskPayload(value: any): value is TaskPayload {
     );
 }
 
+export enum TaskState {
+    INIT,
+    RUN,
+    STOP,
+    DONE,
+}
+
 export type TaskData = {
     id: number;
     name: string;
@@ -168,26 +175,21 @@ export function isTaskData(value: any): value is TaskData {
     );
 }
 
-export type TaskUpdate = {
+export type ThreadUpdate = {
     id: number;
+    global: boolean;
     field: string;
     value: any;
 };
 
-export function isTaskUpdate(value: any): value is TaskUpdate {
+export function isThreadUpdate(value: any): value is ThreadUpdate {
     return (
         value &&
         typeof value.id === "number" &&
+        typeof value.global === "boolean" &&
         typeof value.field === "string" &&
         value.value !== undefined
     );
-}
-
-export enum TaskState {
-    INIT,
-    RUN,
-    STOP,
-    DONE,
 }
 
 /* Package File Path Interface

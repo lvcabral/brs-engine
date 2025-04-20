@@ -348,7 +348,7 @@ export async function executeTask(payload: TaskPayload, customOptions?: Partial<
         ...customOptions,
     };
     stats.clear();
-    BrsDevice.taskThread = true;
+    BrsDevice.threadId = payload.taskData.id;
     // Setup the File System
     try {
         await configureFileSystem(payload.device.assets, payload.pkgZip, payload.extZip);
@@ -380,7 +380,7 @@ export async function executeTask(payload: TaskPayload, customOptions?: Partial<
     }
     BrsDevice.setDeviceInfo(payload.device);
     setupTranslations(interpreter);
-    console.log(
+    console.debug(
         "Calling Task in new Worker: ",
         payload.taskData.name,
         payload.taskData.m.top.functionname

@@ -39,6 +39,7 @@ import {
     RoSGNode,
     Task,
     initializeTask,
+    rootObjects,
 } from "../brsTypes";
 import { tryCoerce } from "../brsTypes/Coercion";
 import { Lexeme, GlobalFunctions } from "../lexer";
@@ -68,7 +69,7 @@ import {
     parseTextFile,
     TaskPayload,
     TaskState,
-    TaskUpdate,
+    ThreadUpdate,
 } from "../common";
 /// #if !BROWSER
 import * as v8 from "v8";
@@ -372,12 +373,13 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                         console.log("Task function called: ", taskData.name, functionName);
                         funcToCall.call(subInterpreter);
                         console.log("Task function finished: ", taskData.name, functionName);
-                        const taskUpdate: TaskUpdate = {
+                        const update: ThreadUpdate = {
                             id: taskNode.id,
+                            global: false,
                             field: "control",
                             value: "stop",
                         };
-                        postMessage(taskUpdate);
+                        postMessage(update);
                         taskData.state = TaskState.STOP;
                         postMessage(taskData);
                     } else {
@@ -2005,6 +2007,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         } else if (cmd === DebugCommand.EXIT) {
             this.options.stopOnCrash = false;
             throw new BlockEnd("debug-exit", statement.location);
+        }
+        if (BrsDevice.threadId > 0) {
+            rootObjects.tasks[0]?.updateTask();
         }
         this.location = statement.location;
         return statement.accept<BrsType>(this);
