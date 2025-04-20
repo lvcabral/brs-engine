@@ -269,6 +269,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         BrsDevice.lastKeyTime = BrsDevice.currKeyTime;
         BrsDevice.currKeyTime = performance.now();
         this.lastKey = nextKey.key;
+        this.isDirty = true;
         const key = new BrsString(rokuKeys.get(nextKey.key - nextKey.mod) ?? "");
         const press = BrsBoolean.from(nextKey.mod === 0);
         let handled = false;
@@ -278,21 +279,26 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
             handled = rootObjects.rootScene.handleOnKeyEvent(this.interpreter, key, press);
         }
         if (press.toBoolean()) {
+            this.playNavigationSound(key.value, handled);
             if (key.value === "back" && !handled) {
-                postMessage("audio,trigger,navsingle,50,0");
                 return new RoSGScreenEvent(BrsBoolean.True);
-            } else if (["OK", "options"].includes(key.value) && handled) {
-                postMessage("audio,trigger,select,50,0");
-            } else if (["rewind", "fastforward"].includes(key.value) && handled) {
-                postMessage("audio,trigger,navmulti,50,0");
-            } else if (handled) {
-                postMessage("audio,trigger,navsingle,50,0");
-            } else {
-                postMessage("audio,trigger,deadend,50,0");
             }
         }
-        this.isDirty = true;
         return BrsInvalid.Instance;
+    }
+
+    private playNavigationSound(key: string, handled: boolean) {
+        if (key === "back") {
+            postMessage("audio,trigger,navsingle,50,0");
+        } else if (["OK", "options"].includes(key) && handled) {
+            postMessage("audio,trigger,select,50,0");
+        } else if (["rewind", "fastforward"].includes(key) && handled) {
+            postMessage("audio,trigger,navmulti,50,0");
+        } else if (handled) {
+            postMessage("audio,trigger,navsingle,50,0");
+        } else {
+            postMessage("audio,trigger,deadend,50,0");
+        }
     }
 
     /** Returns a global reference object for the SceneGraph application. */
