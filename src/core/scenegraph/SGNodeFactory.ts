@@ -243,8 +243,6 @@ export function createNodeByType(interpreter: Interpreter, type: BrsString): RoS
         // thread id = 0 is the Main worker thread
         node.id = rootObjects.tasks.length + 1;
         rootObjects.tasks.push(node);
-    } else if (node instanceof Timer) {
-        rootObjects.timers.push(node);
     }
     if (node instanceof RoSGNode && rootObjects.tasks.length === 1) {
         const task = rootObjects.tasks[0];
