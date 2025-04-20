@@ -288,17 +288,17 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     }
 
     private playNavigationSound(key: string, handled: boolean) {
+        let sound = "deadend";
         if (key === "back") {
-            postMessage("audio,trigger,navsingle,50,0");
+            sound = "navsingle";
         } else if (["OK", "options"].includes(key) && handled) {
-            postMessage("audio,trigger,select,50,0");
+            sound = "select";
         } else if (["rewind", "fastforward"].includes(key) && handled) {
-            postMessage("audio,trigger,navmulti,50,0");
+            sound = "navmulti";
         } else if (handled) {
-            postMessage("audio,trigger,navsingle,50,0");
-        } else {
-            postMessage("audio,trigger,deadend,50,0");
+            sound = "navsingle";
         }
+        BrsDevice.playSound(sound);
     }
 
     /** Returns a global reference object for the SceneGraph application. */
