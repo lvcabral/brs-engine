@@ -123,8 +123,8 @@ let httpConnectLog: boolean = false;
 // App Workers and Shared Buffers
 let brsWorker: Worker;
 const tasks: Map<number, Worker> = new Map();
-const taskSyncFromMain: Map<number, SharedObject> = new Map();
-const taskSyncToMain: Map<number, SharedObject> = new Map();
+const threadSyncFromMain: Map<number, SharedObject> = new Map();
+const threadSyncToMain: Map<number, SharedObject> = new Map();
 const registryBuffer = new SharedObject(registryInitialSize, registryMaxSize);
 let sharedBuffer: ArrayBufferLike;
 let sharedArray: Int32Array;
@@ -421,8 +421,8 @@ function resetWorker() {
         worker?.terminate();
     });
     tasks.clear();
-    taskSyncFromMain.clear();
-    taskSyncToMain.clear();
+    threadSyncFromMain.clear();
+    threadSyncToMain.clear();
     resetArray();
     resetSounds(deviceData.assets);
     resetVideo();
@@ -489,10 +489,10 @@ function runTask(taskData: TaskData) {
     const taskWorker = new Worker(brsWrkLib);
     taskWorker.addEventListener("message", taskCallback);
     tasks.set(taskData.id, taskWorker);
-    if (!taskSyncFromMain.has(taskData.id)) {
-        taskSyncFromMain.set(taskData.id, new SharedObject());
+    if (!threadSyncFromMain.has(taskData.id)) {
+        threadSyncFromMain.set(taskData.id, new SharedObject());
     }
-    taskData.buffer = taskSyncFromMain.get(taskData.id)?.getBuffer();
+    taskData.buffer = threadSyncFromMain.get(taskData.id)?.getBuffer();
     const taskPayload: TaskPayload = {
         device: currentPayload.device,
         manifest: currentPayload.manifest,
@@ -511,8 +511,8 @@ function endTask(taskId: number) {
         taskWorker.removeEventListener("message", taskCallback);
         taskWorker.terminate();
         tasks.delete(taskId);
-        taskSyncFromMain.delete(taskId);
-        taskSyncToMain.delete(taskId);
+        threadSyncFromMain.delete(taskId);
+        threadSyncToMain.delete(taskId);
         console.log("[API] Task worker stopped: ", taskId);
     }
 }
@@ -622,7 +622,7 @@ function mainCallback(event: MessageEvent) {
             if (event.data.buffer instanceof SharedArrayBuffer) {
                 const taskBuffer = new SharedObject();
                 taskBuffer.setBuffer(event.data.buffer);
-                taskSyncToMain.set(event.data.id, taskBuffer);
+                threadSyncToMain.set(event.data.id, taskBuffer);
             }
             runTask(event.data);
         } else if (event.data.state === TaskState.STOP) {
@@ -634,10 +634,10 @@ function mainCallback(event: MessageEvent) {
             event.data.id,
             event.data.field
         );
-        if (!taskSyncFromMain.has(event.data.id)) {
-            taskSyncFromMain.set(event.data.id, new SharedObject());
+        if (!threadSyncFromMain.has(event.data.id)) {
+            threadSyncFromMain.set(event.data.id, new SharedObject());
         }
-        taskSyncFromMain.get(event.data.id)?.waitStore(event.data, 1);
+        threadSyncFromMain.get(event.data.id)?.waitStore(event.data, 1);
     } else if (isNDKStart(event.data)) {
         if (event.data.app === "roku_browser") {
             const params = event.data.params;
@@ -709,7 +709,7 @@ function taskCallback(event: MessageEvent) {
             event.data.id,
             event.data.field
         );
-        taskSyncToMain.get(event.data.id)?.waitStore(event.data, 1);
+        threadSyncToMain.get(event.data.id)?.waitStore(event.data, 1);
     } else if (typeof event.data === "string") {
         handleStringMessage(event.data);
     } else {

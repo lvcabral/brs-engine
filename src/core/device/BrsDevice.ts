@@ -33,7 +33,7 @@ export class BrsDevice {
 
     static sharedArray: Int32Array = new Int32Array(0);
     static displayEnabled: boolean = true;
-    static taskThread: boolean = false;
+    static threadId: number = 0;
     static lastRemote: number = 0;
     static lastKeyTime: number = Date.now();
     static currKeyTime: number = Date.now();

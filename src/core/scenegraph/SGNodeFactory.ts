@@ -240,7 +240,8 @@ export function createNodeByType(interpreter: Interpreter, type: BrsString): RoS
         }
     }
     if (node instanceof Task) {
-        node.id = rootObjects.tasks.length;
+        // thread id = 0 is the Main worker thread
+        node.id = rootObjects.tasks.length + 1;
         rootObjects.tasks.push(node);
     } else if (node instanceof Timer) {
         rootObjects.timers.push(node);
@@ -520,7 +521,6 @@ function addFields(interpreter: Interpreter, node: RoSGNode, typeDef: ComponentD
                         "permanent",
                         interpreter,
                         callableFunction,
-                        node,
                         node,
                         new BrsString(fieldName)
                     );

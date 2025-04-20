@@ -16,10 +16,20 @@ export class Global extends RoSGNode {
         this.dataVersion = this.sharedObject.getVersion();
     }
 
+    get(index: BrsType) {
+        if (!isBrsString(index)) {
+            throw new Error("RoSGNode indexes must be strings");
+        } else if (this.fields.has(index.getValue().toLowerCase())) {
+            this.refresh();
+        }
+        return super.get(index);
+    }
+
     set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
         if (!isBrsString(index)) {
             throw new Error("RoSGNode indexes must be strings");
         }
+        this.refresh();
         const fieldName = index.getValue().toLowerCase();
         const retValue = super.set(index, value, alwaysNotify, kind);
         // Refresh SharedObject with latest Node state
@@ -37,6 +47,7 @@ export class Global extends RoSGNode {
         if (this.dataVersion !== currVersion) {
             const global = this.sharedObject.load();
             const updated = global["_updated_"] as string;
+            console.debug("Global.refresh()", this.dataVersion, currVersion, updated);
             for (let [key, value] of Object.entries(global)) {
                 if (key.startsWith("_") && key.endsWith("_") && key.length > 2) {
                     // Ignore other transfer metadata fields
