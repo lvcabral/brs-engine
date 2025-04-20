@@ -16,7 +16,6 @@ import {
     getFontRegistry,
     getTextureManager,
     rootObjects,
-    Group,
 } from "..";
 import { IfGetMessagePort, IfSetMessagePort } from "../interfaces/IfMessagePort";
 import { RoSGScreenEvent } from "../events/RoSGScreenEvent";
@@ -253,7 +252,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     private handleNextKey() {
         BrsDevice.updateKeysBuffer(this.keysBuffer);
         const nextKey = this.keysBuffer.shift();
-        if (!nextKey || nextKey.key === this.lastKey) {
+        if (!nextKey || nextKey.key === this.lastKey || !rootObjects?.rootScene) {
             return BrsInvalid.Instance;
         }
         if (this.interpreter.singleKeyEvents) {
@@ -272,13 +271,24 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         this.lastKey = nextKey.key;
         const key = new BrsString(rokuKeys.get(nextKey.key - nextKey.mod) ?? "");
         const press = BrsBoolean.from(nextKey.mod === 0);
-        if (rootObjects?.rootScene?.dialog?.isVisible()) {
-            rootObjects.rootScene.dialog.handleKey(key.value, press.toBoolean());
+        let handled = false;
+        if (rootObjects.rootScene.dialog?.isVisible()) {
+            handled = rootObjects.rootScene.dialog.handleKey(key.value, press.toBoolean());
         } else {
-            const handled =
-                rootObjects.rootScene?.handleOnKeyEvent(this.interpreter, key, press) ?? false;
-            if (key.value === "back" && press.toBoolean() && !handled) {
+            handled = rootObjects.rootScene.handleOnKeyEvent(this.interpreter, key, press);
+        }
+        if (press.toBoolean()) {
+            if (key.value === "back" && !handled) {
+                postMessage("audio,trigger,navsingle,50,0");
                 return new RoSGScreenEvent(BrsBoolean.True);
+            } else if (["OK", "options"].includes(key.value) && handled) {
+                postMessage("audio,trigger,select,50,0");
+            } else if (["rewind", "fastforward"].includes(key.value) && handled) {
+                postMessage("audio,trigger,navmulti,50,0");
+            } else if (handled) {
+                postMessage("audio,trigger,navsingle,50,0");
+            } else {
+                postMessage("audio,trigger,deadend,50,0");
             }
         }
         this.isDirty = true;

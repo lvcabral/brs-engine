@@ -208,12 +208,14 @@ export class Dialog extends Group {
 
     handleKey(key: string, press: boolean): boolean {
         const optionsDialog = this.getFieldValueJS("optionsDialog") as boolean;
+        let handled = false;
         if (press && (key === "back" || (key === "options" && optionsDialog))) {
             this.set(new BrsString("close"), BrsBoolean.True);
+            handled = true;
         } else if (this.hasButtons) {
-            this.buttonGroup.handleKey(key, press);
+            handled = this.buttonGroup.handleKey(key, press);
         }
-        return true;
+        return handled;
     }
 
     renderNode(
