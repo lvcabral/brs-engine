@@ -60,7 +60,6 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     private readonly maxMs: number;
     private readonly canvas: BrsCanvas;
     private readonly context: BrsCanvasContext2D;
-    private readonly disposeCanvas: boolean;
     private readonly textureManager: RoTextureManager;
     private readonly fontRegistry: RoFontRegistry;
     private port?: RoMessagePort;
@@ -92,7 +91,6 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         this.alphaEnable = true;
         this.scaleMode = 1;
         this.isDirty = false;
-        this.disposeCanvas = BrsDevice.deviceInfo.platform?.inIOS ?? false;
         this.lastMessage = performance.now();
         const maxFps = BrsDevice.deviceInfo.maxFps;
         this.maxMs = Math.trunc((1 / maxFps) * 1000);
@@ -185,9 +183,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     }
 
     dispose() {
-        if (this.disposeCanvas) {
-            releaseCanvas(this.canvas);
-        }
+        releaseCanvas(this.canvas);
     }
 
     getDebugData() {
