@@ -14,7 +14,7 @@ export class RoFont extends BrsComponent implements BrsValue {
     private readonly bold: boolean;
     private readonly italic: boolean;
     private readonly metrics: FontMetrics;
-    private canvas: BrsCanvas;
+    private readonly canvas: BrsCanvas;
 
     // Constructor can only be used by RoFontRegistry()
     constructor(
