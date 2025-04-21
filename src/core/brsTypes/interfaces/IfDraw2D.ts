@@ -195,10 +195,10 @@ export class IfDraw2D {
      */
     pushClip(rect: Rect) {
         const ctx = this.component.getContext();
-        ctx.save(); // Save current state (transform, existing clip, styles)
+        ctx.save();
         ctx.beginPath();
-        ctx.rect(rect.x, rect.y, rect.width, rect.height); // Define the rectangular path
-        ctx.clip(); // Apply the path as the clipping region
+        ctx.rect(rect.x, rect.y, rect.width, rect.height);
+        ctx.clip();
     }
 
     /**
@@ -207,7 +207,7 @@ export class IfDraw2D {
      */
     popClip() {
         const ctx = this.component.getContext();
-        ctx.restore(); // Restore the state saved by the matching pushClip()
+        ctx.restore();
     }
 
     drawNinePatch(bitmap: RoBitmap, rect: Rect, rgba?: number, opacity?: number) {
