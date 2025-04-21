@@ -15,8 +15,8 @@ enum ScrollState {
 }
 
 // Constants for timing (in milliseconds)
-const INITIAL_PAUSE_MS = 1000; // Pause before scrolling starts
-const END_PAUSE_MS = 1000; // Pause after scrolling finishes before reset/repeat
+const INITIAL_PAUSE_MS = 2500; // Pause before scrolling starts
+const END_PAUSE_MS = 2500; // Pause after scrolling finishes before reset/repeat
 
 export class ScrollingLabel extends Label {
     readonly defaultFields: FieldModel[] = [
