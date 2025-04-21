@@ -9,6 +9,7 @@ import { RoArray } from "./RoArray";
 import { RoFont } from "./RoFont";
 import * as opentype from "opentype.js";
 import { BrsDevice } from "../../device/BrsDevice";
+import { BrsCanvas, createNewCanvas, releaseCanvas } from "../interfaces/IfDraw2D";
 
 export interface FontMetrics {
     ascent: number;
@@ -19,12 +20,17 @@ export interface FontMetrics {
     weight: string;
 }
 
+// Singleton instance of Font Registry
+let fontRegistry: RoFontRegistry;
+
 export class RoFontRegistry extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
+    readonly canvas: BrsCanvas;
     private readonly defaultFontSize = 40;
     private readonly fallbackFontFamily = "Arial, Helvetica, sans-serif";
     private readonly defaultFontFamily: string;
     private readonly fontRegistry: Map<string, FontMetrics[]>;
+    private readonly fontPaths: Map<string, string> = new Map();
 
     constructor() {
         super("roFontRegistry");
@@ -44,6 +50,7 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
         this.registerFont(`common:/Fonts/${this.defaultFontFamily}-Bold.ttf`);
         this.registerFont(`common:/Fonts/${this.defaultFontFamily}-Italic.ttf`);
         this.registerFont(`common:/Fonts/${this.defaultFontFamily}-BoldItalic.ttf`);
+        this.canvas = createNewCanvas(10, 10);
     }
 
     toString(parent?: BrsType): string {
@@ -54,11 +61,69 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
         return BrsBoolean.False;
     }
 
+    count() {
+        return this.fontRegistry.size;
+    }
+
+    dispose() {
+        releaseCanvas(this.canvas);
+    }
+
+    createFont(family: BrsString, size: Int32, bold: BrsBoolean, italic: BrsBoolean): BrsType {
+        /* Roku tries to respect style version of the font (regular, bold, italic, bold+italic),
+            but if it's not available returns the first one registered. */
+        const array = this.fontRegistry.get(family.value);
+        const weight = bold.toBoolean() ? "bold" : "normal";
+        const style = italic.toBoolean() ? "italic" : "normal";
+        if (array) {
+            let metrics;
+            array.some((element) => {
+                if (element.weight === weight && element.style === style) {
+                    metrics = element;
+                    return true;
+                }
+                return false;
+            });
+            if (!metrics) {
+                metrics = array[0];
+                return new RoFont(
+                    family,
+                    size,
+                    BrsBoolean.from(metrics.weight === "bold"),
+                    BrsBoolean.from(metrics.style === "italic"),
+                    metrics
+                );
+            }
+            return new RoFont(family, size, bold, italic, metrics);
+        }
+        if (family.value === this.defaultFontFamily) {
+            // Fallback to browser font if default fonts are not available
+            family = new BrsString(this.fallbackFontFamily);
+            let metrics: FontMetrics = {
+                ascent: 1.06884765625,
+                descent: 0.29296875,
+                maxAdvance: 1.208984375,
+                lineHeight: 1.36181640625,
+                style: bold.toBoolean() ? "bold" : "normal",
+                weight: italic.toBoolean() ? "italic" : "normal",
+            };
+            return new RoFont(family, size, bold, italic, metrics);
+        }
+        return BrsInvalid.Instance;
+    }
+
+    getFontFamily(uri: string) {
+        const family = this.fontPaths.get(uri);
+        return family ?? this.registerFont(uri);
+    }
+
     registerFont(fontPath: string) {
         try {
             const fsys = BrsDevice.fileSystem;
             if (!fsys || !validUri(fontPath)) {
-                return BrsBoolean.False;
+                return "";
+            } else if (this.fontPaths.has(fontPath)) {
+                return this.fontPaths.get(fontPath) ?? "";
             }
             const fontData = BrsDevice.fileSystem.readFileSync(fontPath);
             const fontObj = opentype.parse(fontData.buffer);
@@ -90,11 +155,14 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
             } else {
                 this.fontRegistry.set(fontFamily, [fontMetrics]);
             }
+            this.fontPaths.set(fontPath, fontFamily);
+            return fontFamily;
         } catch (err: any) {
-            BrsDevice.stderr.write(`error,Error loading font:${fontPath} - ${err.message}`);
-            return BrsBoolean.False;
+            if (BrsDevice.isDevMode) {
+                BrsDevice.stderr.write(`warning,Error loading font:${fontPath} - ${err.message}`);
+            }
+            return "";
         }
-        return BrsBoolean.True;
     }
 
     /** Register a font file (.ttf or .otf format). */
@@ -103,8 +171,8 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
             args: [new StdlibArgument("fontPath", ValueKind.String)],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter, fontPath: BrsString) => {
-            return this.registerFont(fontPath.value);
+        impl: (_: Interpreter, fontPath: BrsString) => {
+            return BrsBoolean.from(this.registerFont(fontPath.value) !== "");
         },
     });
 
@@ -141,33 +209,7 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
             bold: BrsBoolean,
             italic: BrsBoolean
         ) => {
-            /* Roku tries to respect style version of the font (regular, bold, italic, bold+italic),
-            but if it's not available returns the first one registered. */
-            const array = this.fontRegistry.get(family.value);
-            const weight = bold.toBoolean() ? "bold" : "normal";
-            const style = italic.toBoolean() ? "italic" : "normal";
-            if (array) {
-                let metrics;
-                array.some((element) => {
-                    if (element.weight === weight && element.style === style) {
-                        metrics = element;
-                        return true;
-                    }
-                    return false;
-                });
-                if (!metrics) {
-                    metrics = array[0];
-                    return new RoFont(
-                        family,
-                        size,
-                        BrsBoolean.from(metrics.weight === "bold"),
-                        BrsBoolean.from(metrics.style === "italic"),
-                        metrics
-                    );
-                }
-                return new RoFont(family, size, bold, italic, metrics);
-            }
-            return BrsInvalid.Instance;
+            return this.createFont(family, size, bold, italic);
         },
     });
 
@@ -182,34 +224,8 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter, size: Int32, bold: BrsBoolean, italic: BrsBoolean) => {
-            let family = new BrsString(this.defaultFontFamily);
-            const array = this.fontRegistry.get(family.value);
-            const weight = bold.toBoolean() ? "bold" : "normal";
-            const style = italic.toBoolean() ? "italic" : "normal";
-            if (array) {
-                let metrics;
-                array.some((element) => {
-                    if (element.weight === weight && element.style === style) {
-                        metrics = element;
-                        return true;
-                    }
-                    return false;
-                });
-                if (metrics) {
-                    return new RoFont(family, size, bold, italic, metrics);
-                }
-            }
-            // Falback to browser font if default fonts are not available
-            family = new BrsString(this.fallbackFontFamily);
-            let metrics: FontMetrics = {
-                ascent: 1.06884765625,
-                descent: 0.29296875,
-                maxAdvance: 1.208984375,
-                lineHeight: 1.36181640625,
-                style: bold.toBoolean() ? "bold" : "normal",
-                weight: italic.toBoolean() ? "italic" : "normal",
-            };
-            return new RoFont(family, size, bold, italic, metrics);
+            const family = new BrsString(this.defaultFontFamily);
+            return this.createFont(family, size, bold, italic);
         },
     });
 
@@ -223,4 +239,12 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
             return new Int32(this.defaultFontSize);
         },
     });
+}
+
+// Function to get the singleton instance of Font Registry
+export function getFontRegistry(): RoFontRegistry {
+    if (!fontRegistry) {
+        fontRegistry = new RoFontRegistry();
+    }
+    return fontRegistry;
 }
