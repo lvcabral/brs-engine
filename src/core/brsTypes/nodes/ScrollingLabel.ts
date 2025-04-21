@@ -198,7 +198,6 @@ export class ScrollingLabel extends Label {
         const font = this.getFieldValue("font") as Font;
         const drawFont = font.createDrawFont();
         const color = this.getFieldValueJS("color") as number;
-        const horizAlign = this.getFieldValueJS("horizAlign") || "left"; // Scrolling typically assumes left align visually
         const vertAlign = this.getFieldValueJS("vertAlign") || "top";
 
         let textToDraw = text;
