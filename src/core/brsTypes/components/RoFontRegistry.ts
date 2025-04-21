@@ -9,6 +9,7 @@ import { RoArray } from "./RoArray";
 import { RoFont } from "./RoFont";
 import * as opentype from "opentype.js";
 import { BrsDevice } from "../../device/BrsDevice";
+import { BrsCanvas, createNewCanvas, releaseCanvas } from "../interfaces/IfDraw2D";
 
 export interface FontMetrics {
     ascent: number;
@@ -24,6 +25,7 @@ let fontRegistry: RoFontRegistry;
 
 export class RoFontRegistry extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
+    readonly canvas: BrsCanvas;
     private readonly defaultFontSize = 40;
     private readonly fallbackFontFamily = "Arial, Helvetica, sans-serif";
     private readonly defaultFontFamily: string;
@@ -48,6 +50,7 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
         this.registerFont(`common:/Fonts/${this.defaultFontFamily}-Bold.ttf`);
         this.registerFont(`common:/Fonts/${this.defaultFontFamily}-Italic.ttf`);
         this.registerFont(`common:/Fonts/${this.defaultFontFamily}-BoldItalic.ttf`);
+        this.canvas = createNewCanvas(10, 10);
     }
 
     toString(parent?: BrsType): string {
@@ -60,6 +63,10 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
 
     count() {
         return this.fontRegistry.size;
+    }
+
+    dispose() {
+        releaseCanvas(this.canvas);
     }
 
     createFont(family: BrsString, size: Int32, bold: BrsBoolean, italic: BrsBoolean): BrsType {

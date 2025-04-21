@@ -139,9 +139,13 @@ export class IfDraw2D {
         // Default to top-left corner if centerX and centerY are not provided
         const rotationCenterX = center !== undefined ? center[0] : 0;
         const rotationCenterY = center !== undefined ? center[1] : 0;
-        ctx.translate(baseX + rect.x + rotationCenterX, baseY + rect.y + rotationCenterY);
-        ctx.rotate(-rotation); // Apply the rotation
-        ctx.translate(-rotationCenterX, -rotationCenterY); // Translate back
+        if (rotation !== 0) {
+            ctx.translate(baseX + rect.x + rotationCenterX, baseY + rect.y + rotationCenterY);
+            ctx.rotate(-rotation); // Apply the rotation
+            ctx.translate(-rotationCenterX, -rotationCenterY); // Translate back
+        } else {
+            ctx.translate(baseX + rect.x, baseY + rect.y);
+        }
         ctx.globalAlpha = opacity; // Set the opacity
         ctx.fillStyle = rgbaIntToHex(rgba, this.component.getCanvasAlpha());
         ctx.fillRect(0, 0, rect.width, rect.height); // Draw the rectangle at the origin
@@ -178,7 +182,9 @@ export class IfDraw2D {
         ctx.save();
         ctx.globalAlpha = opacity;
         ctx.translate(baseX + x, baseY + y);
-        ctx.rotate(-rotation);
+        if (rotation !== 0) {
+            ctx.rotate(-rotation);
+        }
         ctx.fillStyle = rgbaIntToHex(rgba, this.component.getCanvasAlpha());
         ctx.font = font.toFontString();
         ctx.textBaseline = "top";
@@ -964,7 +970,9 @@ export function drawRotatedObject(
     const angleInRad = (-angle * Math.PI) / 180;
     ctx.save();
     ctx.translate(x, y);
-    ctx.rotate(angleInRad);
+    if (angleInRad !== 0) {
+        ctx.rotate(angleInRad);
+    }
     const didDraw = component.drawImage(object, 0, 0, 1, 1, rgba);
     ctx.restore();
     return didDraw;
@@ -1025,6 +1033,48 @@ export function rgbaToTransparent(rgba: number): number {
 
 export function rgbaToOpaque(rgba: number): number {
     return rgba - (rgba & 0xff) + 0xff;
+}
+
+export function RectRect(rect1: Rect, rect2: Rect): boolean {
+    return (
+        rect1.x < rect2.x + rect2.width &&
+        rect1.x + rect1.width > rect2.x &&
+        rect1.y < rect2.y + rect2.height &&
+        rect1.y + rect1.height > rect2.y
+    );
+}
+
+// return true if the rectangle and circle are colliding
+// from: https://stackoverflow.com/questions/21089959/detecting-collision-of-rectangle-with-circle
+export function RectCircle(rect: Rect, circle: Circle): boolean {
+    const distX = Math.abs(circle.x - rect.x - rect.width / 2);
+    const distY = Math.abs(circle.y - rect.y - rect.height / 2);
+
+    if (distX > rect.width / 2 + circle.r) {
+        return false;
+    }
+    if (distY > rect.height / 2 + circle.r) {
+        return false;
+    }
+
+    if (distX <= rect.width / 2) {
+        return true;
+    }
+    if (distY <= rect.height / 2) {
+        return true;
+    }
+
+    const dx = distX - rect.width / 2;
+    const dy = distY - rect.height / 2;
+    return dx * dx + dy * dy <= circle.r * circle.r;
+}
+
+// ported from: https://github.com/Romans-I-XVI/monoEngine/blob/master/MonoEngine/CollisionChecking.cs
+export function CircleCircle(circle1: Circle, circle2: Circle): boolean {
+    const distanceX = circle1.x - circle2.x;
+    const distanceY = circle1.y - circle2.y;
+    const dist = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
+    return dist <= circle1.r + circle2.r;
 }
 
 function drawChunk(ctx: BrsCanvasContext2D, image: BrsCanvas, chunk: DrawChunk) {

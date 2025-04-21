@@ -4,13 +4,8 @@ import { BrsType } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
-import { FontMetrics } from "./RoFontRegistry";
-import {
-    BrsCanvasContext2D,
-    createNewCanvas,
-    MeasuredText,
-    releaseCanvas,
-} from "../interfaces/IfDraw2D";
+import { FontMetrics, getFontRegistry } from "./RoFontRegistry";
+import { BrsCanvas, BrsCanvasContext2D, MeasuredText } from "../interfaces/IfDraw2D";
 
 export class RoFont extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -19,6 +14,7 @@ export class RoFont extends BrsComponent implements BrsValue {
     private readonly bold: boolean;
     private readonly italic: boolean;
     private readonly metrics: FontMetrics;
+    private readonly canvas: BrsCanvas;
 
     // Constructor can only be used by RoFontRegistry()
     constructor(
@@ -44,6 +40,7 @@ export class RoFont extends BrsComponent implements BrsValue {
                 this.getMaxAdvance,
             ],
         });
+        this.canvas = getFontRegistry().canvas;
     }
 
     measureTextHeight() {
@@ -51,8 +48,7 @@ export class RoFont extends BrsComponent implements BrsValue {
     }
 
     measureTextWidth(text: string, maxWidth?: number, ellipsis?: string) {
-        const canvas = createNewCanvas(1280, 720);
-        const ctx = canvas.getContext("2d", { alpha: false }) as BrsCanvasContext2D;
+        const ctx = this.canvas.getContext("2d", { alpha: false }) as BrsCanvasContext2D;
         ctx.font = this.toFontString();
         ctx.textBaseline = "top";
         let measure = ctx.measureText(text);
@@ -77,7 +73,6 @@ export class RoFont extends BrsComponent implements BrsValue {
             ellipsized = true;
         }
 
-        releaseCanvas(canvas);
         return { width: Math.round(length), text: ellipsizedText, ellipsized };
     }
 
