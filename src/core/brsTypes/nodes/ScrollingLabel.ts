@@ -130,49 +130,6 @@ export class ScrollingLabel extends Label {
         this.measured = undefined; // Force remeasure/redraw
     }
 
-    // Override renderNode to ensure renderLabel is called even if node width/height are 0
-    // And to potentially trigger redraws for animation
-    renderNode(
-        interpreter: Interpreter,
-        origin: number[],
-        angle: number,
-        opacity: number,
-        draw2D?: IfDraw2D
-    ) {
-        if (!this.isVisible()) {
-            return;
-        }
-        const nodeTrans = this.getTranslation();
-        const drawTrans = angle !== 0 ? rotateTranslation(nodeTrans, angle) : nodeTrans.slice();
-        drawTrans[0] += origin[0];
-        drawTrans[1] += origin[1];
-
-        // Use maxWidth as the effective width for rendering bounds if scrolling might occur
-        const maxWidth = this.getFieldValueJS("maxWidth") as number;
-        const nodeSize = this.getDimensions(); // Get width/height fields
-        const renderWidth = maxWidth > 0 ? maxWidth : nodeSize.width; // Prefer maxWidth if set
-        // Height is determined by font, usually single line for scrolling
-        const font = this.getFieldValue("font") as Font;
-        const drawFont = font.createDrawFont();
-        const renderHeight = font ? drawFont.measureText("Mg").height : nodeSize.height;
-
-        const rect = { x: drawTrans[0], y: drawTrans[1], width: renderWidth, height: renderHeight };
-        const rotation = angle + this.getRotation();
-        const finalOpacity = opacity * this.getOpacity();
-
-        // Call our overridden renderLabel
-        this.measured = this.renderLabel(rect, rotation, finalOpacity, draw2D);
-
-        // Update bounding rects based on maxWidth and measured height
-        const finalRectWidth = Math.max(this.measured.width, renderWidth); // Use the larger of measured (up to maxWidth) or explicit width
-        const finalRectHeight = Math.max(this.measured.height, nodeSize.height); // Use measured height or explicit height
-        const finalRect = { ...rect, width: finalRectWidth, height: finalRectHeight };
-
-        this.updateBoundingRects(finalRect, origin, rotation);
-        this.renderChildren(interpreter, drawTrans, rotation, finalOpacity, draw2D);
-        this.updateParentRects(origin, angle);
-    }
-
     // Override renderLabel to implement scrolling logic
     protected renderLabel(
         rect: Rect,
@@ -180,11 +137,11 @@ export class ScrollingLabel extends Label {
         opacity: number,
         draw2D?: IfDraw2D
     ): MeasuredText {
-        // Ensure scrolling need is evaluated with a draw2D context if not done before
-        if (this.fullTextWidth === 0 && this.getFieldValueJS("text")) {
+        // Ensure scrolling need is evaluated if not done before
+        const text = this.getFieldValueJS("text") as string;
+        if (this.fullTextWidth === 0 && text) {
             this.checkForScrolling();
         }
-
         // --- Time and State Update ---
         const now = Date.now();
         const deltaTime = now - this.lastUpdateTime;
@@ -194,9 +151,11 @@ export class ScrollingLabel extends Label {
         const scrollSpeed = this.getFieldValueJS("scrollSpeed") as number; // pixels per second
         const repeatCount = this.getFieldValueJS("repeatCount") as number;
         const maxWidth = this.getFieldValueJS("maxWidth") as number;
-        const text = this.getFieldValueJS("text") as string;
         const font = this.getFieldValue("font") as Font;
         const drawFont = font.createDrawFont();
+        const textHeight = drawFont.measureText("Mg").height; // Approx height
+        rect.width = maxWidth > 0 ? maxWidth : rect.width;
+        rect.height = textHeight;
         const color = this.getFieldValueJS("color") as number;
         const vertAlign = this.getFieldValueJS("vertAlign") || "top";
 
@@ -275,7 +234,6 @@ export class ScrollingLabel extends Label {
         // --- Drawing ---
         // Use maxWidth for clipping and effective width calculation
         const clipRect: Rect = { ...rect, width: maxWidth };
-        const textHeight = drawFont.measureText("Mg").height; // Approx height
 
         // Calculate drawing position based on alignment (simplified for scrolling - primarily uses left edge)
         let drawX = rect.x + drawOffset; // Start with left edge + scroll offset
