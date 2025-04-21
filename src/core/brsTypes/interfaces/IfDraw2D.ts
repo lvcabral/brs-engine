@@ -187,6 +187,29 @@ export class IfDraw2D {
         this.component.makeDirty();
     }
 
+    /**
+     * Saves the current drawing context state and applies a rectangular clipping region.
+     * Subsequent drawing operations will be limited to this rectangle.
+     * Must be paired with a call to popClip().
+     * @param rect The clipping rectangle in the current coordinate system.
+     */
+    pushClip(rect: Rect) {
+        const ctx = this.component.getContext();
+        ctx.save(); // Save current state (transform, existing clip, styles)
+        ctx.beginPath();
+        ctx.rect(rect.x, rect.y, rect.width, rect.height); // Define the rectangular path
+        ctx.clip(); // Apply the path as the clipping region
+    }
+
+    /**
+     * Restores the drawing context state that was saved by the corresponding pushClip() call,
+     * effectively removing the last applied clipping region.
+     */
+    popClip() {
+        const ctx = this.component.getContext();
+        ctx.restore(); // Restore the state saved by the matching pushClip()
+    }
+
     drawNinePatch(bitmap: RoBitmap, rect: Rect, rgba?: number, opacity?: number) {
         const ctx = this.component.getContext();
         rgba = combineRgbaOpacity(rgba, opacity);
