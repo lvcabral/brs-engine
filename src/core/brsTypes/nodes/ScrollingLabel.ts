@@ -37,16 +37,12 @@ export class ScrollingLabel extends Label {
     private lastUpdateTime: number = 0; // Timestamp of the last update
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = "ScrollingLabel") {
-        super([], name); // Initialize Label base class
+        super([], name);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
 
-        // Ensure lastUpdateTime is initialized
         this.lastUpdateTime = Date.now();
-
-        // Initial check if scrolling is needed based on default/initialized fields
-        // Note: This might be recalculated if fields change later via 'set'
         this.checkForScrolling();
     }
 
@@ -65,9 +61,8 @@ export class ScrollingLabel extends Label {
                 "ellipsistext",
             ];
             if (scrollFields.includes(fieldName)) {
-                // Reset scrolling state if relevant fields change
                 this.resetScrollingState();
-                this.checkForScrolling(); // Re-evaluate if scrolling is needed
+                this.checkForScrolling();
             }
         }
         return changed;
@@ -94,7 +89,6 @@ export class ScrollingLabel extends Label {
 
         if (this.fullTextWidth > maxWidth) {
             this.needsScrolling = true;
-            // Calculate truncated text (simple approach: find chars that fit before ellipsis)
             let currentWidth = 0;
             let truncatedIndex = 0;
             const availableWidth = maxWidth - this.ellipsisWidth;
@@ -109,9 +103,8 @@ export class ScrollingLabel extends Label {
             }
             this.truncatedText = text.substring(0, truncatedIndex) + ellipsis;
 
-            // If state was STATIC, transition to INITIAL_PAUSE
             if (this.scrollState === ScrollState.STATIC) {
-                this.resetScrollingState(); // Resets state to INITIAL_PAUSE, counters, etc.
+                this.resetScrollingState();
             }
         } else {
             this.needsScrolling = false;
@@ -126,8 +119,8 @@ export class ScrollingLabel extends Label {
         this.scrollOffset = 0;
         this.elapsedTime = 0;
         this.currentRepeat = 0;
-        this.lastUpdateTime = Date.now(); // Reset time tracking
-        this.measured = undefined; // Force remeasure/redraw
+        this.lastUpdateTime = Date.now();
+        this.measured = undefined;
     }
 
     // Override renderLabel to implement scrolling logic
@@ -137,23 +130,21 @@ export class ScrollingLabel extends Label {
         opacity: number,
         draw2D?: IfDraw2D
     ): MeasuredText {
-        // Ensure scrolling need is evaluated if not done before
         const text = this.getFieldValueJS("text") as string;
         if (this.fullTextWidth === 0 && text) {
             this.checkForScrolling();
         }
-        // --- Time and State Update ---
         const now = Date.now();
         const deltaTime = now - this.lastUpdateTime;
         this.lastUpdateTime = now;
         this.elapsedTime += deltaTime;
 
-        const scrollSpeed = this.getFieldValueJS("scrollSpeed") as number; // pixels per second
+        const scrollSpeed = this.getFieldValueJS("scrollSpeed") as number;
         const repeatCount = this.getFieldValueJS("repeatCount") as number;
         const maxWidth = this.getFieldValueJS("maxWidth") as number;
         const font = this.getFieldValue("font") as Font;
         const drawFont = font.createDrawFont();
-        const textHeight = drawFont.measureText("Mg").height; // Approx height
+        const textHeight = drawFont.measureText("Mg").height;
         rect.width = maxWidth > 0 ? maxWidth : rect.width;
         rect.height = textHeight;
         const color = this.getFieldValueJS("color") as number;
@@ -174,7 +165,7 @@ export class ScrollingLabel extends Label {
                     isEllipsized = true;
                     if (this.elapsedTime >= INITIAL_PAUSE_MS) {
                         this.scrollState = ScrollState.SCROLLING;
-                        this.elapsedTime = 0; // Reset timer for scrolling phase
+                        this.elapsedTime = 0;
                     }
                     break;
 
@@ -190,7 +181,7 @@ export class ScrollingLabel extends Label {
 
                     if (this.elapsedTime >= scrollDuration) {
                         this.scrollState = ScrollState.END_PAUSE;
-                        this.elapsedTime = 0; // Reset timer for end pause
+                        this.elapsedTime = 0;
                         this.scrollOffset = scrollDistance; // Ensure it's exactly at the end
                         drawOffset = -this.scrollOffset;
                     }
@@ -228,44 +219,25 @@ export class ScrollingLabel extends Label {
             // Static case: Text fits or scrolling is disabled/not needed
             textToDraw = text;
             drawOffset = 0;
-            isEllipsized = false; // Text fits, no ellipsis applied by scrolling logic
+            isEllipsized = false;
         }
-
-        // --- Drawing ---
-        // Use maxWidth for clipping and effective width calculation
         const clipRect: Rect = { ...rect, width: maxWidth };
-
-        // Calculate drawing position based on alignment (simplified for scrolling - primarily uses left edge)
-        let drawX = rect.x + drawOffset; // Start with left edge + scroll offset
+        let drawX = rect.x + drawOffset;
         let drawY = rect.y;
-
-        // Adjust Y based on vertical alignment
         if (vertAlign === "center") {
             drawY += (rect.height - textHeight) / 2;
         } else if (vertAlign === "bottom") {
             drawY += rect.height - textHeight;
         }
-        // Note: Horizontal alignment is tricky with scrolling. Visually, it behaves like 'left' within the maxWidth.
-        // The initial truncated text might respect alignment briefly, but scrolling itself is a leftward movement.
-
-        // Apply clipping
         draw2D?.pushClip(clipRect);
-
-        // Draw the text
         draw2D?.doDrawRotatedText(textToDraw, drawX, drawY, color, opacity, drawFont, rotation);
-
-        // Remove clipping
         draw2D?.popClip();
-
-        // Update the isTextEllipsized field
         this.setEllipsized(isEllipsized);
-
-        // Return measured dimensions - width is capped by maxWidth
         const measuredWidth = this.needsScrolling ? maxWidth : this.fullTextWidth;
         return {
-            text: textToDraw, // Return the text actually drawn in this frame
+            text: textToDraw,
             width: measuredWidth,
-            height: textHeight, // Assuming single line for scrolling
+            height: textHeight,
             ellipsized: isEllipsized,
         };
     }
