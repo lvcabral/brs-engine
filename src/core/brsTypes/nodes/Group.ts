@@ -261,7 +261,7 @@ export class Group extends RoSGNode {
         const lines = this.breakTextIntoLines(text, drawFont, rect.width);
         let renderedLines = lines;
         let ellipsized = false;
-        let lineHeight = drawFont.measureText("M").height;
+        let lineHeight = drawFont.measureText("Mg").height;
         let totalHeight = lines.length * lineHeight;
 
         if (rect.height > 0) {
