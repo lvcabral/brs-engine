@@ -1,9 +1,7 @@
 import { FieldModel } from "./Field";
 import { Label } from "./Label";
 import { AAMember, BrsType, isBrsString, Font } from "..";
-import { Interpreter } from "../../interpreter";
 import { IfDraw2D, MeasuredText, Rect } from "../interfaces/IfDraw2D";
-import { rotateTranslation } from "../../scenegraph/SGUtil";
 
 // Enum to manage the scrolling state
 enum ScrollState {
@@ -177,7 +175,6 @@ export class ScrollingLabel extends Label {
                         (this.elapsedTime / scrollDuration) * scrollDistance
                     );
                     drawOffset = -this.scrollOffset;
-                    isEllipsized = false; // Full text is potentially visible
 
                     if (this.elapsedTime >= scrollDuration) {
                         this.scrollState = ScrollState.END_PAUSE;
@@ -190,7 +187,6 @@ export class ScrollingLabel extends Label {
                 case ScrollState.END_PAUSE:
                     textToDraw = text; // Keep drawing full text, but fully scrolled
                     drawOffset = -scrollDistance;
-                    isEllipsized = false;
                     if (this.elapsedTime >= END_PAUSE_MS) {
                         this.currentRepeat++;
                         if (repeatCount !== -1 && this.currentRepeat >= repeatCount) {
@@ -213,13 +209,10 @@ export class ScrollingLabel extends Label {
         } else if (this.scrollState === ScrollState.FINISHED) {
             // If finished, just draw the truncated text statically
             textToDraw = this.truncatedText;
-            drawOffset = 0;
             isEllipsized = true;
         } else {
             // Static case: Text fits or scrolling is disabled/not needed
             textToDraw = text;
-            drawOffset = 0;
-            isEllipsized = false;
         }
         const clipRect: Rect = { ...rect, width: maxWidth };
         let drawX = rect.x + drawOffset;
