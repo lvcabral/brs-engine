@@ -36,7 +36,6 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
     private readonly canvas: BrsCanvas;
     private readonly context: BrsCanvasContext2D;
     private readonly name: string;
-    private readonly disposeCanvas: boolean;
     private readonly valid: boolean;
     private alphaEnable: boolean;
     private rgbaCanvas?: BrsCanvas;
@@ -49,7 +48,6 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
         this.rgbaLast = 0;
         this.rgbaRedraw = true;
         this.valid = true;
-        this.disposeCanvas = BrsDevice.deviceInfo.platform?.inIOS ?? false;
         this.width = 1;
         this.height = 1;
         this.name = "";
@@ -291,11 +289,9 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
     }
 
     dispose() {
-        if (this.disposeCanvas) {
-            releaseCanvas(this.canvas);
-            if (this.rgbaCanvas) {
-                releaseCanvas(this.rgbaCanvas);
-            }
+        releaseCanvas(this.canvas);
+        if (this.rgbaCanvas) {
+            releaseCanvas(this.rgbaCanvas);
         }
     }
 

@@ -4,8 +4,8 @@ import { BrsType } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
-import { FontMetrics } from "./RoFontRegistry";
-import { BrsCanvasContext2D, createNewCanvas, releaseCanvas } from "../interfaces/IfDraw2D";
+import { FontMetrics, getFontRegistry } from "./RoFontRegistry";
+import { BrsCanvas, BrsCanvasContext2D, MeasuredText } from "../interfaces/IfDraw2D";
 
 export class RoFont extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -14,6 +14,7 @@ export class RoFont extends BrsComponent implements BrsValue {
     private readonly bold: boolean;
     private readonly italic: boolean;
     private readonly metrics: FontMetrics;
+    private readonly canvas: BrsCanvas;
 
     // Constructor can only be used by RoFontRegistry()
     constructor(
@@ -39,6 +40,50 @@ export class RoFont extends BrsComponent implements BrsValue {
                 this.getMaxAdvance,
             ],
         });
+        this.canvas = getFontRegistry().canvas;
+    }
+
+    measureTextHeight() {
+        return Math.round(this.metrics.lineHeight * this.size);
+    }
+
+    measureTextWidth(text: string, maxWidth?: number, ellipsis?: string) {
+        const ctx = this.canvas.getContext("2d", { alpha: false }) as BrsCanvasContext2D;
+        ctx.font = this.toFontString();
+        ctx.textBaseline = "top";
+        let measure = ctx.measureText(text);
+        let length = maxWidth ? Math.min(measure.width, maxWidth) : measure.width;
+        let ellipsizedText = text;
+        let ellipsized = false;
+
+        if (ellipsis && maxWidth && measure.width > maxWidth) {
+            // Ellipsize the text
+            let ellipsisWidth = ctx.measureText(ellipsis).width;
+            let truncatedText = text;
+
+            while (
+                ctx.measureText(truncatedText).width + ellipsisWidth > maxWidth &&
+                truncatedText.length > 0
+            ) {
+                truncatedText = truncatedText.slice(0, -1);
+            }
+
+            ellipsizedText = truncatedText + ellipsis;
+            length = ctx.measureText(ellipsizedText).width;
+            ellipsized = true;
+        }
+
+        return { width: Math.round(length), text: ellipsizedText, ellipsized };
+    }
+
+    measureText(text: string, maxWidth?: number, ellipsis?: string): MeasuredText {
+        let {
+            width,
+            text: ellipsizedText,
+            ellipsized,
+        } = this.measureTextWidth(text, maxWidth, ellipsis);
+        let height = this.measureTextHeight();
+        return { width, height, text: ellipsizedText, ellipsized };
     }
 
     getTopAdjust(): number {
@@ -70,7 +115,7 @@ export class RoFont extends BrsComponent implements BrsValue {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter) => {
-            return new Int32(Math.round(this.metrics.lineHeight * this.size));
+            return new Int32(this.measureTextHeight());
         },
     });
 
@@ -84,14 +129,8 @@ export class RoFont extends BrsComponent implements BrsValue {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter, text: BrsString, maxWidth: Int32) => {
-            const canvas = createNewCanvas(1280, 720);
-            const ctx = canvas.getContext("2d", { alpha: false }) as BrsCanvasContext2D;
-            ctx.font = this.toFontString();
-            ctx.textBaseline = "top";
-            let measure = ctx.measureText(text.value);
-            let length = Math.min(measure.width, maxWidth.getValue());
-            releaseCanvas(canvas);
-            return new Int32(Math.round(length));
+            let { width } = this.measureTextWidth(text.value, maxWidth.getValue());
+            return new Int32(width);
         },
     });
 

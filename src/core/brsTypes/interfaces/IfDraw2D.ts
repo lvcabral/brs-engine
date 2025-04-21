@@ -25,6 +25,7 @@ export type BrsCanvasContext2D = OffscreenCanvasRenderingContext2D | CanvasRende
 export type BrsImageData = ImageData | NodeImageData;
 export type Rect = { x: number; y: number; width: number; height: number };
 export type Circle = { x: number; y: number; r: number };
+export type MeasuredText = { text: string; width: number; height: number; ellipsized: boolean };
 
 /**
  * BrightScript Interface ifDraw2D
@@ -55,29 +56,95 @@ export class IfDraw2D {
         return didDraw;
     }
 
-    doDrawRect(x: number, y: number, width: number, height: number, rgba: number) {
+    doDrawRotatedRect(
+        rect: Rect,
+        rgba: number,
+        rotation: number,
+        center?: number[],
+        opacity: number = 1.0
+    ) {
         const baseX = this.component.x;
         const baseY = this.component.y;
         const ctx = this.component.getContext();
-        if (this.component instanceof RoScreen && !this.component.getCanvasAlpha()) {
-            ctx.clearRect(x, y, width, height);
-            ctx.fillStyle = rgbaIntToHex(rgba, true);
+        ctx.save();
+        // Default to top-left corner if centerX and centerY are not provided
+        const rotationCenterX = center !== undefined ? center[0] : 0;
+        const rotationCenterY = center !== undefined ? center[1] : 0;
+        if (rotation !== 0) {
+            ctx.translate(baseX + rect.x + rotationCenterX, baseY + rect.y + rotationCenterY);
+            ctx.rotate(-rotation); // Apply the rotation
+            ctx.translate(-rotationCenterX, -rotationCenterY); // Translate back
         } else {
-            ctx.fillStyle = rgbaIntToHex(rgba, this.component.getCanvasAlpha());
+            ctx.translate(baseX + rect.x, baseY + rect.y);
         }
-        ctx.fillRect(baseX + x, baseY + y, width, height);
+        ctx.globalAlpha = opacity; // Set the opacity
+        ctx.fillStyle = rgbaIntToHex(rgba, this.component.getCanvasAlpha());
+        ctx.fillRect(0, 0, rect.width, rect.height); // Draw the rectangle at the origin
+        ctx.restore();
         this.component.makeDirty();
     }
 
-    doDrawText(text: string, x: number, y: number, rgba: number, font: RoFont) {
+    doDrawText(text: string, x: number, y: number, rgba: number, opacity: number, font: RoFont) {
         const baseX = this.component.x;
         const baseY = this.component.y;
         const ctx = this.component.getContext();
+        ctx.save();
+        ctx.globalAlpha = opacity;
         ctx.fillStyle = rgbaIntToHex(rgba, this.component.getCanvasAlpha());
         ctx.font = font.toFontString();
         ctx.textBaseline = "top";
         ctx.fillText(text, baseX + x, baseY + y + font.getTopAdjust());
+        ctx.restore();
         this.component.makeDirty();
+    }
+
+    doDrawRotatedText(
+        text: string,
+        x: number,
+        y: number,
+        rgba: number,
+        opacity: number,
+        font: RoFont,
+        rotation: number
+    ) {
+        const baseX = this.component.x;
+        const baseY = this.component.y;
+        const ctx = this.component.getContext();
+        ctx.save();
+        ctx.globalAlpha = opacity;
+        ctx.translate(baseX + x, baseY + y);
+        if (rotation !== 0) {
+            ctx.rotate(-rotation);
+        }
+        ctx.fillStyle = rgbaIntToHex(rgba, this.component.getCanvasAlpha());
+        ctx.font = font.toFontString();
+        ctx.textBaseline = "top";
+        ctx.fillText(text, 0, font.getTopAdjust());
+        ctx.restore();
+        this.component.makeDirty();
+    }
+
+    /**
+     * Saves the current drawing context state and applies a rectangular clipping region.
+     * Subsequent drawing operations will be limited to this rectangle.
+     * Must be paired with a call to popClip().
+     * @param rect The clipping rectangle in the current coordinate system.
+     */
+    pushClip(rect: Rect) {
+        const ctx = this.component.getContext();
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(rect.x, rect.y, rect.width, rect.height);
+        ctx.clip();
+    }
+
+    /**
+     * Restores the drawing context state that was saved by the corresponding pushClip() call,
+     * effectively removing the last applied clipping region.
+     */
+    popClip() {
+        const ctx = this.component.getContext();
+        ctx.restore();
     }
 
     /** Clear the bitmap, and fill with the specified RGBA color */
@@ -773,7 +840,9 @@ export function drawRotatedObject(
     const angleInRad = (-angle * Math.PI) / 180;
     ctx.save();
     ctx.translate(x, y);
-    ctx.rotate(angleInRad);
+    if (angleInRad !== 0) {
+        ctx.rotate(angleInRad);
+    }
     const didDraw = component.drawImage(object, 0, 0, 1, 1, rgba);
     ctx.restore();
     return didDraw;
@@ -836,6 +905,50 @@ export function rgbaToOpaque(rgba: number): number {
     return rgba - (rgba & 0xff) + 0xff;
 }
 
+// Returns true if both rectangles intersect
+export function RectRect(rect1: Rect, rect2: Rect): boolean {
+    return (
+        rect1.x < rect2.x + rect2.width &&
+        rect1.x + rect1.width > rect2.x &&
+        rect1.y < rect2.y + rect2.height &&
+        rect1.y + rect1.height > rect2.y
+    );
+}
+
+// Returns true if the rectangle and circle are colliding
+// from: https://stackoverflow.com/questions/21089959/detecting-collision-of-rectangle-with-circle
+export function RectCircle(rect: Rect, circle: Circle): boolean {
+    const distX = Math.abs(circle.x - rect.x - rect.width / 2);
+    const distY = Math.abs(circle.y - rect.y - rect.height / 2);
+
+    if (distX > rect.width / 2 + circle.r) {
+        return false;
+    }
+    if (distY > rect.height / 2 + circle.r) {
+        return false;
+    }
+
+    if (distX <= rect.width / 2) {
+        return true;
+    }
+    if (distY <= rect.height / 2) {
+        return true;
+    }
+
+    const dx = distX - rect.width / 2;
+    const dy = distY - rect.height / 2;
+    return dx * dx + dy * dy <= circle.r * circle.r;
+}
+
+// Returns true if both circles intersect
+// ported from: https://github.com/Romans-I-XVI/monoEngine/blob/master/MonoEngine/CollisionChecking.cs
+export function CircleCircle(circle1: Circle, circle2: Circle): boolean {
+    const distanceX = circle1.x - circle2.x;
+    const distanceY = circle1.y - circle2.y;
+    const dist = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
+    return dist <= circle1.r + circle2.r;
+}
+
 function drawChunk(ctx: BrsCanvasContext2D, image: BrsCanvas, chunk: DrawChunk) {
     const { sx, sy, sw, sh, dx, dy, dw, dh } = chunk;
     /// #if BROWSER
@@ -847,4 +960,27 @@ function drawChunk(ctx: BrsCanvasContext2D, image: BrsCanvas, chunk: DrawChunk) 
         ctx.drawImage(image, sx, sy, sw, sh, dx, dy, dw, dh);
     }
     /// #endif
+}
+
+/**
+ * Helper function to combine RGBA color integer with an opacity value.
+ * @param rgba The base RGBA color integer (e.g., 0xFF0000FF for opaque red).
+ * @param opacity The opacity factor (0.0 to 1.0).
+ * @returns The combined RGBA color integer, or undefined if both inputs are undefined.
+ */
+function combineRgbaOpacity(rgba?: number, opacity?: number): number | undefined {
+    if (rgba === undefined && opacity === undefined) {
+        return undefined;
+    } else if (opacity === undefined || opacity < 0 || opacity >= 1) {
+        return rgba;
+    }
+    // Default to opaque white if only opacity is given and rgba is undefined
+    const baseRgba = rgba ?? 0xffffffff;
+    let alpha = baseRgba & 0xff;
+    // Apply opacity
+    alpha = Math.round(alpha * opacity);
+    // Ensure alpha is within the valid 0-255 range
+    alpha = Math.max(0, Math.min(255, alpha));
+    // Reconstruct the RGBA integer with the new alpha
+    return (baseRgba & 0xffffff00) | alpha;
 }

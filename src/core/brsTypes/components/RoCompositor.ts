@@ -11,10 +11,13 @@ import {
     BrsCanvas,
     BrsCanvasContext2D,
     Circle,
+    CircleCircle,
     createNewCanvas,
     drawObjectToComponent,
     getDimensions,
     Rect,
+    RectCircle,
+    RectRect,
     releaseCanvas,
     rgbaIntToHex,
 } from "../interfaces/IfDraw2D";
@@ -350,46 +353,4 @@ function hasCollided(
     } else {
         return RectCircle(sourceRect, target.getCircle());
     }
-}
-
-function RectRect(rect1: Rect, rect2: Rect): boolean {
-    return (
-        rect1.x < rect2.x + rect2.width &&
-        rect1.x + rect1.width > rect2.x &&
-        rect1.y < rect2.y + rect2.height &&
-        rect1.y + rect1.height > rect2.y
-    );
-}
-
-// return true if the rectangle and circle are colliding
-// from: https://stackoverflow.com/questions/21089959/detecting-collision-of-rectangle-with-circle
-function RectCircle(rect: Rect, circle: Circle): boolean {
-    const distX = Math.abs(circle.x - rect.x - rect.width / 2);
-    const distY = Math.abs(circle.y - rect.y - rect.height / 2);
-
-    if (distX > rect.width / 2 + circle.r) {
-        return false;
-    }
-    if (distY > rect.height / 2 + circle.r) {
-        return false;
-    }
-
-    if (distX <= rect.width / 2) {
-        return true;
-    }
-    if (distY <= rect.height / 2) {
-        return true;
-    }
-
-    const dx = distX - rect.width / 2;
-    const dy = distY - rect.height / 2;
-    return dx * dx + dy * dy <= circle.r * circle.r;
-}
-
-// ported from: https://github.com/Romans-I-XVI/monoEngine/blob/master/MonoEngine/CollisionChecking.cs
-function CircleCircle(circle1: Circle, circle2: Circle): boolean {
-    const distanceX = circle1.x - circle2.x;
-    const distanceY = circle1.y - circle2.y;
-    const dist = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
-    return dist <= circle1.r + circle2.r;
 }
