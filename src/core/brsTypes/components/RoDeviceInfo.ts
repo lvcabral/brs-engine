@@ -778,7 +778,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter) => {
-            return new Int32((performance.now() - BrsDevice.lastKeyTime) / 1000);
+            return new Int32((Date.now() - BrsDevice.lastKeyTime) / 1000);
         },
     });
 

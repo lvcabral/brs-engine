@@ -14,8 +14,8 @@ export class BrsDevice {
     static sharedArray: Int32Array = new Int32Array(0);
     static displayEnabled: boolean = true;
     static lastRemote: number = 0;
-    static lastKeyTime: number = performance.now();
-    static currKeyTime: number = performance.now();
+    static lastKeyTime: number = Date.now();
+    static currKeyTime: number = Date.now();
 
     /**
      * Updates the device registry with the provided data

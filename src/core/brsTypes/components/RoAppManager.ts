@@ -77,7 +77,7 @@ export class RoAppManager extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter) => {
-            BrsDevice.lastKeyTime = performance.now();
+            BrsDevice.lastKeyTime = Date.now();
             return BrsInvalid.Instance;
         },
     });
