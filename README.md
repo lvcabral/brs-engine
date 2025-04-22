@@ -19,7 +19,7 @@ This repository was originally a fork from [**brs**](https://github.com/rokucomm
 
 > [!NOTE]
 >
-> - The **SceneGraph** support is currently being developed under [a new branch](https://github.com/lvcabral/brs-engine/tree/scenegraph), we have a lot of challenges ahead, feel free to reach out and learn how [you can help]((docs/contributing.md)).
+> - The **SceneGraph** support is currently being developed under [a new branch](https://github.com/lvcabral/brs-engine/tree/scenegraph), we have a lot of challenges ahead, feel free to reach out and learn how [you can help](docs/contributing.md).
 > - Although **brs-engine** runs apps with user interface, it has no intention of emulating the full **Roku OS** or hardware devices, it is primarily aimed as a development tool for the **Roku Community**.
 > - The **simulation engine** can also to be used as a framework for running the **BrightScript** language in other platforms, like iOS, macOS, Android, Linux and Windows.
 > - Please check the [Current Limitations](docs/limitations.md) document for further details on what is missing or out of scope.
