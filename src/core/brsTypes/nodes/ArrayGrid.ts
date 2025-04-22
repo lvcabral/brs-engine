@@ -94,7 +94,7 @@ export class ArrayGrid extends Group {
         this.registerInitializedFields(initializedFields);
 
         this.setFieldValue("content", new ContentNode());
-        if (rootObjects.rootScene?.ui.resolution === "FHD") {
+        if (this.resolution === "FHD") {
             this.setFieldValue("wrapDividerHeight", new Float(36));
             this.setFieldValue("sectionDividerHeight", new Float(60));
             this.setFieldValue("sectionDividerMinWidth", new Float(126));
@@ -240,6 +240,7 @@ export class ArrayGrid extends Group {
         this.updateBoundingRects(rect, origin, rotation);
         this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);
         this.updateParentRects(origin, angle);
+        this.isDirty = false;
     }
 
     protected renderContent(
@@ -312,6 +313,7 @@ export class ArrayGrid extends Group {
         title: string,
         itemRect: Rect,
         opacity: number,
+        textLine: number,
         draw2D?: IfDraw2D
     ) {
         const dividerHeight = this.getFieldValueJS("sectionDividerHeight") as number;
@@ -330,7 +332,9 @@ export class ArrayGrid extends Group {
                 "left",
                 "center",
                 0,
-                draw2D
+                draw2D,
+                "...",
+                textLine
             );
             margin = size.width + dividerSpacing;
         }

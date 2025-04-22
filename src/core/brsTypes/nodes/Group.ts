@@ -39,8 +39,11 @@ export class Group extends RoSGNode {
         { name: "enableRenderTracking", type: "boolean", value: "false" },
         { name: "renderTracking", type: "string", value: "disabled" },
     ];
-    protected readonly resolution: string;
+    protected readonly sceneRect: Rect;
+    protected resolution: string;
     protected isDirty: boolean;
+    private cachedLines: MeasuredText[] = [];
+    private cachedHeight: number = 0;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = "Group") {
         super([], name);
@@ -49,6 +52,11 @@ export class Group extends RoSGNode {
         this.registerInitializedFields(initializedFields);
 
         this.resolution = rootObjects.rootScene?.ui.resolution ?? "HD";
+        if (this.resolution === "FHD") {
+            this.sceneRect = { x: 0, y: 0, width: 1920, height: 1080 };
+        } else {
+            this.sceneRect = { x: 0, y: 0, width: 1280, height: 720 };
+        }
         this.isDirty = true;
     }
 
@@ -204,17 +212,31 @@ export class Group extends RoSGNode {
         vertAlign: string,
         rotation: number,
         draw2D?: IfDraw2D,
-        ellipsis: string = "..."
+        ellipsis: string = "...",
+        index: number = 0
     ) {
         const drawFont = font.createDrawFont();
-        let measured = drawFont.measureText(fullText, rect.width, ellipsis);
-        let text = measured.text;
-        if (rect.width === 0) {
-            const newlineIndex = fullText.indexOf("\n");
-            if (newlineIndex !== -1) {
-                text = fullText.substring(0, newlineIndex);
+        let text: string;
+        let measured: MeasuredText;
+
+        if (this.isDirty || this.cachedLines[index] === undefined) {
+            if (rect.width === 0) {
+                const newlineIndex = fullText.indexOf("\n");
+                if (newlineIndex !== -1) {
+                    text = fullText.substring(0, newlineIndex);
+                } else {
+                    text = fullText;
+                }
                 measured = drawFont.measureText(text);
+            } else {
+                measured = drawFont.measureText(fullText, rect.width, ellipsis);
+                text = measured.text;
             }
+            this.cachedLines[index] = measured;
+            //console.debug("cached label text", fullText, this.getId());
+        } else {
+            measured = this.cachedLines[index];
+            text = measured.text;
         }
 
         let textX = rect.x;
@@ -258,10 +280,61 @@ export class Group extends RoSGNode {
         draw2D?: IfDraw2D
     ): MeasuredText {
         const drawFont = font.createDrawFont();
-        const lines = this.breakTextIntoLines(text, drawFont, rect.width);
-        let renderedLines = lines;
+        if (this.changed) {
+            this.refreshLines(
+                text,
+                drawFont,
+                rect,
+                ellipsis,
+                numLines,
+                maxLines,
+                lineSpacing,
+                displayPartialLines
+            );
+        }
+        let y = rect.y;
+        if (vertAlign === "center") {
+            y += (rect.height - this.cachedHeight) / 2;
+        } else if (vertAlign === "bottom") {
+            y += rect.height - this.cachedHeight;
+        }
         let ellipsized = false;
-        let lineHeight = drawFont.measureText("Mg").height;
+        for (let i = 0; i < this.cachedLines.length; i++) {
+            let line = this.cachedLines[i];
+            let x = rect.x;
+            if (horizAlign === "center") {
+                x += (rect.width - line.width) / 2;
+            } else if (horizAlign === "right") {
+                x += rect.width - line.width;
+            }
+            if (draw2D) {
+                draw2D.doDrawRotatedText(line.text, x, y, color, opacity, drawFont, rotation);
+            }
+            y += line.height + lineSpacing;
+            ellipsized = line.ellipsized;
+        }
+
+        return {
+            text,
+            width: rect.width,
+            height: this.cachedHeight,
+            ellipsized: ellipsized,
+        };
+    }
+
+    private refreshLines(
+        text: string,
+        drawFont: RoFont,
+        rect: Rect,
+        ellipsis: string,
+        numLines: number,
+        maxLines: number,
+        lineSpacing: number,
+        displayPartialLines: boolean
+    ) {
+        const lines = this.breakTextIntoLines(text, drawFont, rect.width);
+        const lineHeight = drawFont.measureTextHeight();
+        let renderedLines = lines;
         let totalHeight = lines.length * lineHeight;
 
         if (rect.height > 0) {
@@ -270,7 +343,9 @@ export class Group extends RoSGNode {
             );
             if (lines.length > maxRenderedLines) {
                 renderedLines = lines.slice(0, maxRenderedLines);
-                ellipsized = true;
+                const line = renderedLines[renderedLines.length - 1];
+                line.text = this.ellipsizeLine(line.text, drawFont, rect.width, ellipsis);
+                line.ellipsized = true;
             }
             if (!displayPartialLines && renderedLines.length < lines.length) {
                 totalHeight =
@@ -282,7 +357,9 @@ export class Group extends RoSGNode {
         } else if (numLines > 0) {
             if (lines.length > numLines) {
                 renderedLines = lines.slice(0, numLines);
-                ellipsized = true;
+                const line = renderedLines[renderedLines.length - 1];
+                line.text = this.ellipsizeLine(line.text, drawFont, rect.width, ellipsis);
+                line.ellipsized = true;
             }
             totalHeight = Math.min(
                 totalHeight,
@@ -291,75 +368,58 @@ export class Group extends RoSGNode {
         } else if (maxLines > 0) {
             if (lines.length > maxLines) {
                 renderedLines = lines.slice(0, maxLines);
-                ellipsized = true;
+                const line = renderedLines[renderedLines.length - 1];
+                line.text = this.ellipsizeLine(line.text, drawFont, rect.width, ellipsis);
+                line.ellipsized = true;
             }
             totalHeight = Math.min(
                 totalHeight,
                 maxLines * lineHeight + (maxLines > 1 ? (maxLines - 1) * lineSpacing : 0)
             );
         }
-
-        let y = rect.y;
-        if (vertAlign === "center") {
-            y += (rect.height - totalHeight) / 2;
-        } else if (vertAlign === "bottom") {
-            y += rect.height - totalHeight;
-        }
-
-        for (let i = 0; i < renderedLines.length; i++) {
-            let line = renderedLines[i];
-            if (ellipsized && i === renderedLines.length - 1) {
-                line = this.ellipsizeLine(line, drawFont, rect.width, ellipsis);
-            }
-            const lineWidth = drawFont.measureText(line).width;
-            let x = rect.x;
-            if (horizAlign === "center") {
-                x += (rect.width - lineWidth) / 2;
-            } else if (horizAlign === "right") {
-                x += rect.width - lineWidth;
-            }
-            if (draw2D) {
-                draw2D.doDrawRotatedText(line, x, y, color, opacity, drawFont, rotation);
-            }
-            y += lineHeight + lineSpacing;
-        }
-
-        return { text, width: rect.width, height: totalHeight, ellipsized: ellipsized };
+        this.cachedHeight = totalHeight;
+        this.cachedLines = renderedLines;
     }
 
-    protected breakTextIntoLines(text: string, font: RoFont, width: number): string[] {
-        const lines: string[] = [];
-        if (width <= 0) {
+    protected breakTextIntoLines(text: string, font: RoFont, width: number): MeasuredText[] {
+        const lines: MeasuredText[] = [];
+        if (text.length === 0 || width <= 0) {
             return lines;
         }
         const words = text.split(/(\s|-)/);
-        let currentLine = "";
+        let currentMeasure = font.measureText(text);
+        if (currentMeasure.width <= width) {
+            return [currentMeasure];
+        }
+        currentMeasure = { text: "", width: 0, height: 0, ellipsized: false };
         for (const word of words) {
             if (word === "\n") {
-                lines.push(currentLine);
-                currentLine = "";
+                lines.push(currentMeasure);
+                currentMeasure = { text: "", width: 0, height: 0, ellipsized: false };
             } else {
-                const testLine = currentLine + word;
-                if (font.measureText(testLine).width <= width) {
-                    currentLine = testLine;
+                const testLine = currentMeasure.text + word;
+                const measure = font.measureText(testLine);
+                if (measure.width <= width) {
+                    currentMeasure = measure;
                 } else if (font.measureText(word).width > width) {
                     // Word is too long, break it
                     const brokenWords = this.breakLongWord(word, font, width);
                     for (const brokenWord of brokenWords) {
-                        if (font.measureText(currentLine + brokenWord).width <= width) {
-                            currentLine += brokenWord;
+                        const brokenMeasure = font.measureText(currentMeasure.text + brokenWord);
+                        if (brokenMeasure.width <= width) {
+                            currentMeasure = brokenMeasure;
                         } else {
-                            lines.push(currentLine);
-                            currentLine = brokenWord;
+                            lines.push(currentMeasure);
+                            currentMeasure = font.measureText(brokenWord);
                         }
                     }
                 } else {
-                    lines.push(currentLine);
-                    currentLine = word;
+                    lines.push(currentMeasure);
+                    currentMeasure = font.measureText(word);
                 }
             }
         }
-        lines.push(currentLine);
+        lines.push(currentMeasure);
         return lines;
     }
 
@@ -367,7 +427,7 @@ export class Group extends RoSGNode {
         const brokenWords: string[] = [];
         let currentWord = "";
         for (const char of word) {
-            if (font.measureText(currentWord + char).width <= width) {
+            if (font.measureTextWidth(currentWord + char).width <= width) {
                 currentWord += char;
             } else {
                 brokenWords.push(currentWord);
@@ -379,12 +439,12 @@ export class Group extends RoSGNode {
     }
 
     protected ellipsizeLine(line: string, font: RoFont, width: number, ellipsis: string): string {
-        if (font.measureText(line).width <= width) {
-            return line;
+        if (font.measureTextWidth(line + ellipsis).width <= width) {
+            return line + ellipsis;
         }
         let ellipsizedLine = "";
         for (const char of line) {
-            if (font.measureText(ellipsizedLine + char + ellipsis).width <= width) {
+            if (font.measureTextWidth(ellipsizedLine + char + ellipsis).width <= width) {
                 ellipsizedLine += char;
             } else {
                 return ellipsizedLine + ellipsis;
