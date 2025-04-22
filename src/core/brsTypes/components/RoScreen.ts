@@ -234,7 +234,7 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
                 }
             }
             BrsDevice.lastKeyTime = BrsDevice.currKeyTime;
-            BrsDevice.currKeyTime = performance.now();
+            BrsDevice.currKeyTime = Date.now();
             this.lastKey = nextKey.key;
             events.push(new RoUniversalControlEvent(nextKey));
         }
