@@ -140,7 +140,13 @@ export class MarkupGrid extends ArrayGrid {
             } else if (hasSections && this.wrap && this.metadata[rowIndex]?.divider && r > 0) {
                 const divRect = { ...itemRect, width: rowWidth };
                 const divText = this.metadata[rowIndex].sectionTitle;
-                const divHeight = this.renderSectionDivider(divText, divRect, opacity, sectionIndex, draw2D);
+                const divHeight = this.renderSectionDivider(
+                    divText,
+                    divRect,
+                    opacity,
+                    sectionIndex,
+                    draw2D
+                );
                 sectionIndex++;
                 itemRect.y += divHeight + spacing[1];
             }

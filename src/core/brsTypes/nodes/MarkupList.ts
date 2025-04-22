@@ -1,14 +1,7 @@
 import { FieldKind, FieldModel } from "./Field";
 import { AAMember } from "../components/RoAssociativeArray";
 import { ArrayGrid } from "./ArrayGrid";
-import {
-    BrsInvalid,
-    BrsString,
-    BrsType,
-    customNodeExists,
-    Int32,
-    isBrsString,
-} from "..";
+import { BrsInvalid, BrsString, BrsType, customNodeExists, Int32, isBrsString } from "..";
 import { IfDraw2D, Rect, RectRect } from "../interfaces/IfDraw2D";
 import { Interpreter } from "../../interpreter";
 import { BrsDevice } from "../../device/BrsDevice";
@@ -138,7 +131,13 @@ export class MarkupList extends ArrayGrid {
             } else if (hasSections && this.wrap && this.metadata[rowIndex]?.divider && r > 0) {
                 const divRect = { ...itemRect, width: rowWidth };
                 const divText = this.metadata[rowIndex].sectionTitle;
-                const divHeight = this.renderSectionDivider(divText, divRect, opacity, sectionIndex, draw2D);
+                const divHeight = this.renderSectionDivider(
+                    divText,
+                    divRect,
+                    opacity,
+                    sectionIndex,
+                    draw2D
+                );
                 sectionIndex++;
                 itemRect.y += divHeight + spacing[1];
             }

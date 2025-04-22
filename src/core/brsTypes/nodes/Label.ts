@@ -61,7 +61,11 @@ export class Label extends Group {
             this.measured = undefined;
         }
         let setDirty = true;
-        if (!this.isDirty && fieldName === "text" && this.getFieldValueJS("text") === value.toString()) {
+        if (
+            !this.isDirty &&
+            fieldName === "text" &&
+            this.getFieldValueJS("text") === value.toString()
+        ) {
             setDirty = false;
         }
         const retValue = super.set(index, value, alwaysNotify, kind);

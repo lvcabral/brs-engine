@@ -130,7 +130,13 @@ export class LabelList extends ArrayGrid {
                     itemRect.y += this.renderWrapDivider(itemRect, opacity, draw2D);
                 } else if (hasSections && this.wrap && this.metadata[index]?.divider && r > 0) {
                     const divText = this.metadata[index].sectionTitle;
-                    itemRect.y += this.renderSectionDivider(divText, itemRect, opacity, sectionIndex, draw2D);
+                    itemRect.y += this.renderSectionDivider(
+                        divText,
+                        itemRect,
+                        opacity,
+                        sectionIndex,
+                        draw2D
+                    );
                     sectionIndex++;
                 }
                 this.renderItem(index, item, itemRect, opacity, nodeFocus, focused, draw2D);
@@ -186,7 +192,19 @@ export class LabelList extends ArrayGrid {
         if (iconBmp) {
             this.renderIcon(iconBmp, rect, opacity, draw2D, iconColor ? color : undefined);
         }
-        this.drawText(text, font, color, opacity, textRect, align, "center", 0, draw2D, "...", index);
+        this.drawText(
+            text,
+            font,
+            color,
+            opacity,
+            textRect,
+            align,
+            "center",
+            0,
+            draw2D,
+            "...",
+            index
+        );
     }
 
     protected renderFocused(
@@ -212,7 +230,19 @@ export class LabelList extends ArrayGrid {
         if (iconBmp) {
             this.renderIcon(iconBmp, rect, opacity, draw2D, iconColor ? color : undefined);
         }
-        this.drawText(text, font, color, opacity, textRect, align, "center", 0, draw2D, "...", index);
+        this.drawText(
+            text,
+            font,
+            color,
+            opacity,
+            textRect,
+            align,
+            "center",
+            0,
+            draw2D,
+            "...",
+            index
+        );
         if (drawFocus && drawFocusOnTop) {
             this.renderFocus(rect, opacity, nodeFocus, draw2D);
         }
