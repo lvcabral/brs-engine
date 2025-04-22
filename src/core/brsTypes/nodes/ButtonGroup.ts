@@ -50,6 +50,7 @@ export class ButtonGroup extends LayoutGroup {
     private lastPressHandled: string;
 
     protected focusIndex: number = 0;
+    protected wasFocused: boolean = false;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = "ButtonGroup") {
         super([], name);
@@ -239,7 +240,9 @@ export class ButtonGroup extends LayoutGroup {
             if (focusedNode !== focusedButton) {
                 rootObjects.focused = focusedButton;
             }
-        } else {
+            this.wasFocused = true;
+        } else if (this.wasFocused) {
+            this.wasFocused = false;
             this.isDirty = true;
         }
     }
