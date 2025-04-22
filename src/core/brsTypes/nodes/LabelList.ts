@@ -40,7 +40,7 @@ export class LabelList extends ArrayGrid {
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
 
-        if (rootObjects.rootScene?.ui.resolution === "FHD") {
+        if (this.resolution === "FHD") {
             this.margin = 36;
             this.setFieldValue("itemSize", brsValueOf([510, 72]));
         } else {

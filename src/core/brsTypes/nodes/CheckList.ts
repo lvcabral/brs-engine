@@ -11,7 +11,6 @@ import {
     isBrsString,
     jsValueOf,
     RoArray,
-    rootObjects,
     ValueKind,
 } from "..";
 import { IfDraw2D, Rect } from "../interfaces/IfDraw2D";
@@ -37,7 +36,7 @@ export class CheckList extends LabelList {
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
 
-        if (rootObjects.rootScene?.ui.resolution === "FHD") {
+        if (this.resolution === "FHD") {
             this.setFieldValue("checkedIconUri", new BrsString(this.checkOnFHDUri));
             this.setFieldValue("uncheckedIconUri", new BrsString(this.checkOffFHDUri));
             this.setFieldValue("focusedCheckedIconUri", new BrsString(this.checkOnFHDUri));

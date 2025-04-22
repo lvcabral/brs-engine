@@ -8,7 +8,6 @@ import {
     customNodeExists,
     Int32,
     isBrsString,
-    rootObjects,
 } from "..";
 import { IfDraw2D, Rect } from "../interfaces/IfDraw2D";
 import { Interpreter } from "../../interpreter";
@@ -32,7 +31,7 @@ export class MarkupList extends ArrayGrid {
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
 
-        if (rootObjects.rootScene?.ui.resolution === "FHD") {
+        if (this.resolution === "FHD") {
             this.margin = 36;
         } else {
             this.margin = 24;
