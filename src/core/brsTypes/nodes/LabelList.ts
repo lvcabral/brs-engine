@@ -15,7 +15,7 @@ import {
     rootObjects,
 } from "..";
 import { Interpreter } from "../..";
-import { IfDraw2D, Rect } from "../interfaces/IfDraw2D";
+import { IfDraw2D, Rect, RectRect } from "../interfaces/IfDraw2D";
 
 export class LabelList extends ArrayGrid {
     readonly defaultFields: FieldModel[] = [
@@ -40,7 +40,7 @@ export class LabelList extends ArrayGrid {
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
 
-        if (rootObjects.rootScene?.ui.resolution === "FHD") {
+        if (this.resolution === "FHD") {
             this.margin = 36;
             this.setFieldValue("itemSize", brsValueOf([510, 72]));
         } else {
@@ -120,6 +120,7 @@ export class LabelList extends ArrayGrid {
         const displayRows = Math.min(this.content.length, numRows);
         const itemSize = this.getFieldValueJS("itemSize") as number[];
         const itemRect = { ...rect, width: itemSize[0], height: itemSize[1] };
+        let sectionIndex = displayRows;
         for (let r = 0; r < displayRows; r++) {
             const index = this.getIndex(r - this.currRow);
             const focused = index === this.focusIndex;
@@ -129,12 +130,16 @@ export class LabelList extends ArrayGrid {
                     itemRect.y += this.renderWrapDivider(itemRect, opacity, draw2D);
                 } else if (hasSections && this.wrap && this.metadata[index]?.divider && r > 0) {
                     const divText = this.metadata[index].sectionTitle;
-                    itemRect.y += this.renderSectionDivider(divText, itemRect, opacity, draw2D);
+                    itemRect.y += this.renderSectionDivider(divText, itemRect, opacity, sectionIndex, draw2D);
+                    sectionIndex++;
                 }
                 this.renderItem(index, item, itemRect, opacity, nodeFocus, focused, draw2D);
             }
             itemRect.y += itemSize[1] + 1;
             lastIndex = index;
+            if (!RectRect(this.sceneRect, itemRect)) {
+                break;
+            }
         }
         rect.x = rect.x - (this.hasNinePatch ? this.margin : 0);
         rect.y = rect.y - (this.hasNinePatch ? 4 : 0);
@@ -143,7 +148,7 @@ export class LabelList extends ArrayGrid {
     }
 
     protected renderItem(
-        _index: number,
+        index: number,
         item: ContentNode,
         rect: Rect,
         opacity: number,
@@ -158,13 +163,14 @@ export class LabelList extends ArrayGrid {
         const iconIndex = itemFocus ? 1 : 0;
         const bmp = iconGap > 0 ? item.getBitmap(icons[iconIndex]) : undefined;
         if (!itemFocus) {
-            this.renderUnfocused(text, rect, opacity, iconGap, false, bmp, draw2D);
+            this.renderUnfocused(index, text, rect, opacity, iconGap, false, bmp, draw2D);
         } else {
-            this.renderFocused(text, rect, opacity, nodeFocus, iconGap, false, bmp, draw2D);
+            this.renderFocused(index, text, rect, opacity, nodeFocus, iconGap, false, bmp, draw2D);
         }
     }
 
     protected renderUnfocused(
+        index: number,
         text: string,
         rect: Rect,
         opacity: number,
@@ -180,10 +186,11 @@ export class LabelList extends ArrayGrid {
         if (iconBmp) {
             this.renderIcon(iconBmp, rect, opacity, draw2D, iconColor ? color : undefined);
         }
-        this.drawText(text, font, color, opacity, textRect, align, "center", 0, draw2D);
+        this.drawText(text, font, color, opacity, textRect, align, "center", 0, draw2D, "...", index);
     }
 
     protected renderFocused(
+        index: number,
         text: string,
         rect: Rect,
         opacity: number,
@@ -205,7 +212,7 @@ export class LabelList extends ArrayGrid {
         if (iconBmp) {
             this.renderIcon(iconBmp, rect, opacity, draw2D, iconColor ? color : undefined);
         }
-        this.drawText(text, font, color, opacity, textRect, align, "center", 0, draw2D);
+        this.drawText(text, font, color, opacity, textRect, align, "center", 0, draw2D, "...", index);
         if (drawFocus && drawFocusOnTop) {
             this.renderFocus(rect, opacity, nodeFocus, draw2D);
         }
@@ -229,9 +236,9 @@ export class LabelList extends ArrayGrid {
         const focusFootprint = this.getBitmap("focusFootprintBitmapUri");
         this.hasNinePatch = (focusBitmap?.ninePatch || focusFootprint?.ninePatch) === true;
         const ninePatchRect = {
-            x: itemRect.x - 24,
+            x: itemRect.x - this.margin,
             y: itemRect.y - 4,
-            width: itemRect.width + 48,
+            width: itemRect.width + this.margin * 2 + this.gap,
             height: itemRect.height + 9,
         };
         if (nodeFocus && focusBitmap) {

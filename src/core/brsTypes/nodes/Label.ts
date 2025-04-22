@@ -44,6 +44,7 @@ export class Label extends Group {
         if (!isBrsString(index)) {
             throw new Error("RoSGNode indexes must be strings");
         }
+        const fieldName = index.getValue().toLowerCase();
         const resetFields = [
             "text",
             "font",
@@ -54,12 +55,18 @@ export class Label extends Group {
             "wrap",
             "linespacing",
         ];
-        if (resetFields.includes(index.getValue().toLowerCase())) {
+        if (resetFields.includes(fieldName)) {
             // Reset the flag if any relevant field changed and the label is not re-measured yet
             this.setEllipsized(false);
             this.measured = undefined;
         }
-        return super.set(index, value, alwaysNotify, kind);
+        let setDirty = true;
+        if (!this.isDirty && fieldName === "text" && this.getFieldValueJS("text") === value.toString()) {
+            setDirty = false;
+        }
+        const retValue = super.set(index, value, alwaysNotify, kind);
+        this.isDirty = setDirty;
+        return retValue;
     }
 
     getMeasured() {
@@ -94,6 +101,7 @@ export class Label extends Group {
         this.updateBoundingRects(rect, origin, rotation);
         this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);
         this.updateParentRects(origin, angle);
+        this.isDirty = false;
     }
 
     protected renderLabel(rect: Rect, rotation: number, opacity: number, draw2D?: IfDraw2D) {

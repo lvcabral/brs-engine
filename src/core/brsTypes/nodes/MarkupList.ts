@@ -8,9 +8,8 @@ import {
     customNodeExists,
     Int32,
     isBrsString,
-    rootObjects,
 } from "..";
-import { IfDraw2D, Rect } from "../interfaces/IfDraw2D";
+import { IfDraw2D, Rect, RectRect } from "../interfaces/IfDraw2D";
 import { Interpreter } from "../../interpreter";
 import { BrsDevice } from "../../device/BrsDevice";
 
@@ -32,7 +31,7 @@ export class MarkupList extends ArrayGrid {
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
 
-        if (rootObjects.rootScene?.ui.resolution === "FHD") {
+        if (this.resolution === "FHD") {
             this.margin = 36;
         } else {
             this.margin = 24;
@@ -125,6 +124,7 @@ export class MarkupList extends ArrayGrid {
         const rowSpacings = this.getFieldValueJS("rowSpacings") as number[];
         this.currRow = this.updateCurrRow();
         let lastIndex = -1;
+        let sectionIndex = 0;
         const displayRows = Math.min(Math.ceil(this.content.length), numRows);
 
         const rowWidth = itemSize[0];
@@ -138,7 +138,8 @@ export class MarkupList extends ArrayGrid {
             } else if (hasSections && this.wrap && this.metadata[rowIndex]?.divider && r > 0) {
                 const divRect = { ...itemRect, width: rowWidth };
                 const divText = this.metadata[rowIndex].sectionTitle;
-                const divHeight = this.renderSectionDivider(divText, divRect, opacity, draw2D);
+                const divHeight = this.renderSectionDivider(divText, divRect, opacity, sectionIndex, draw2D);
+                sectionIndex++;
                 itemRect.y += divHeight + spacing[1];
             }
             itemRect.width = itemSize[0];
@@ -150,6 +151,9 @@ export class MarkupList extends ArrayGrid {
             lastIndex = index;
             itemRect.x = rect.x;
             itemRect.y += itemRect.height + (rowSpacings[r] ?? spacing[1]);
+            if (!RectRect(this.sceneRect, itemRect)) {
+                break;
+            }
         }
         rect.x = rect.x - (this.hasNinePatch ? this.margin : 0);
         rect.y = rect.y - (this.hasNinePatch ? 4 : 0);

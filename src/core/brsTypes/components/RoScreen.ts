@@ -30,7 +30,6 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     private readonly interpreter: Interpreter;
     private readonly doubleBuffer: boolean;
     private readonly maxMs: number;
-    private readonly disposeCanvas: boolean;
     private readonly valid: boolean;
     private readonly keysBuffer: KeyEvent[];
     private alphaEnable: boolean;
@@ -62,7 +61,6 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
             defaultWidth = 1280;
             defaultHeight = 720;
         }
-        this.disposeCanvas = BrsDevice.deviceInfo.platform?.inIOS ?? false;
         this.lastMessage = performance.now();
         this.scaleMode = 0;
         this.isDirty = true;
@@ -207,9 +205,7 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
 
     dispose() {
         this.port?.unregisterCallback(this.getComponentName());
-        if (this.disposeCanvas) {
-            this.canvas.forEach((c) => releaseCanvas(c));
-        }
+        this.canvas.forEach((c) => releaseCanvas(c));
     }
     isValid() {
         return this.valid;

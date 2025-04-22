@@ -1,7 +1,7 @@
 import { FieldModel } from "./Field";
 import { AAMember } from "../components/RoAssociativeArray";
 import { LabelList } from "./LabelList";
-import { BrsString, ContentNode, Int32, jsValueOf, rootObjects } from "..";
+import { BrsString, ContentNode, Int32, jsValueOf } from "..";
 import { IfDraw2D, Rect } from "../interfaces/IfDraw2D";
 
 export class RadioButtonList extends LabelList {
@@ -21,7 +21,7 @@ export class RadioButtonList extends LabelList {
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
 
-        if (rootObjects.rootScene?.ui.resolution === "FHD") {
+        if (this.resolution === "FHD") {
             this.setFieldValue("checkedIconUri", new BrsString(this.checkmarkFHDUri));
             this.setFieldValue("focusedCheckedIconUri", new BrsString(this.checkmarkFHDUri));
         } else {
@@ -60,9 +60,9 @@ export class RadioButtonList extends LabelList {
         const iconIndex = itemFocus ? 1 : 0;
         const bmp = showIcon ? this.getBitmap(icons[iconIndex]) : undefined;
         if (!itemFocus) {
-            this.renderUnfocused(text, rect, opacity, iconGap, true, bmp, draw2D);
+            this.renderUnfocused(index, text, rect, opacity, iconGap, true, bmp, draw2D);
         } else {
-            this.renderFocused(text, rect, opacity, nodeFocus, iconGap, true, bmp, draw2D);
+            this.renderFocused(index, text, rect, opacity, nodeFocus, iconGap, true, bmp, draw2D);
         }
     }
 }

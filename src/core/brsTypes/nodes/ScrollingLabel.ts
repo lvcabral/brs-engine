@@ -45,9 +45,9 @@ export class ScrollingLabel extends Label {
     }
 
     set(index: BrsType, value: BrsType, alwaysNotify: boolean = false) {
-        const changed = super.set(index, value, alwaysNotify); // Call base class set
+        const retValue = super.set(index, value, alwaysNotify); // Call base class set
 
-        if (changed && isBrsString(index)) {
+        if (this.isDirty && isBrsString(index)) {
             const fieldName = index.getValue().toLowerCase();
             // Fields that affect scrolling behavior
             const scrollFields = [
@@ -63,7 +63,7 @@ export class ScrollingLabel extends Label {
                 this.checkForScrolling();
             }
         }
-        return changed;
+        return retValue;
     }
 
     // Helper to check if scrolling is necessary and calculate initial values
@@ -82,8 +82,8 @@ export class ScrollingLabel extends Label {
         }
 
         // Measure full text and ellipsis
-        this.fullTextWidth = drawFont.measureText(text).width;
-        this.ellipsisWidth = drawFont.measureText(ellipsis).width;
+        this.fullTextWidth = drawFont.measureTextWidth(text).width;
+        this.ellipsisWidth = drawFont.measureTextWidth(ellipsis).width;
 
         if (this.fullTextWidth > maxWidth) {
             this.needsScrolling = true;
@@ -91,7 +91,7 @@ export class ScrollingLabel extends Label {
             let truncatedIndex = 0;
             const availableWidth = maxWidth - this.ellipsisWidth;
             for (let i = 0; i < text.length; i++) {
-                const charWidth = drawFont.measureText(text[i]).width;
+                const charWidth = drawFont.measureTextWidth(text[i]).width;
                 if (currentWidth + charWidth <= availableWidth) {
                     currentWidth += charWidth;
                     truncatedIndex = i + 1;
@@ -129,7 +129,7 @@ export class ScrollingLabel extends Label {
         draw2D?: IfDraw2D
     ): MeasuredText {
         const text = this.getFieldValueJS("text") as string;
-        if (this.fullTextWidth === 0 && text) {
+        if (this.isDirty || (this.fullTextWidth === 0 && text)) {
             this.checkForScrolling();
         }
         const now = Date.now();
@@ -142,7 +142,7 @@ export class ScrollingLabel extends Label {
         const maxWidth = this.getFieldValueJS("maxWidth") as number;
         const font = this.getFieldValue("font") as Font;
         const drawFont = font.createDrawFont();
-        const textHeight = drawFont.measureText("Mg").height;
+        const textHeight = drawFont.measureTextHeight();
         rect.width = maxWidth > 0 ? maxWidth : rect.width;
         rect.height = textHeight;
         const color = this.getFieldValueJS("color") as number;

@@ -264,8 +264,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     }
 
     getId() {
-        const maybeID = this.fields.get("id")?.getValue();
-        return maybeID instanceof BrsString ? maybeID.value : this.nodeSubtype;
+        return this.getFieldValueJS("id") ?? this.nodeSubtype;
     }
 
     addNodeField(fieldName: string, type: string, alwaysNotify: boolean) {

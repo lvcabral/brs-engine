@@ -1,8 +1,8 @@
 import { FieldModel } from "./Field";
 import { AAMember } from "../components/RoAssociativeArray";
 import { ArrayGrid } from "./ArrayGrid";
-import { BrsString, ContentNode, customNodeExists, Int32, jsValueOf, rootObjects } from "..";
-import { IfDraw2D, Rect } from "../interfaces/IfDraw2D";
+import { BrsString, ContentNode, customNodeExists, Int32, jsValueOf } from "..";
+import { IfDraw2D, Rect, RectRect } from "../interfaces/IfDraw2D";
 import { Interpreter } from "../../interpreter";
 import { BrsDevice } from "../../device/BrsDevice";
 
@@ -22,7 +22,7 @@ export class MarkupGrid extends ArrayGrid {
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
 
-        if (rootObjects.rootScene?.ui.resolution === "FHD") {
+        if (this.resolution === "FHD") {
             this.margin = 36;
         } else {
             this.margin = 24;
@@ -128,7 +128,7 @@ export class MarkupGrid extends ArrayGrid {
         this.currRow = this.updateCurrRow();
         let lastIndex = -1;
         const displayRows = Math.min(Math.ceil(this.content.length / numCols), numRows);
-
+        let sectionIndex = 0;
         const rowWidth = numCols * itemSize[0] + (numCols - 1) * spacing[0];
         for (let r = 0; r < displayRows; r++) {
             const rowIndex = this.getIndex(r - this.currRow);
@@ -140,7 +140,8 @@ export class MarkupGrid extends ArrayGrid {
             } else if (hasSections && this.wrap && this.metadata[rowIndex]?.divider && r > 0) {
                 const divRect = { ...itemRect, width: rowWidth };
                 const divText = this.metadata[rowIndex].sectionTitle;
-                const divHeight = this.renderSectionDivider(divText, divRect, opacity, draw2D);
+                const divHeight = this.renderSectionDivider(divText, divRect, opacity, sectionIndex, draw2D);
+                sectionIndex++;
                 itemRect.y += divHeight + spacing[1];
             }
             for (let c = 0; c < numCols; c++) {
@@ -152,9 +153,15 @@ export class MarkupGrid extends ArrayGrid {
                 this.renderItemComponent(interpreter, index, itemRect, rotation, opacity, draw2D);
                 itemRect.x += itemRect.width + (columnSpacings[c] ?? spacing[0]);
                 lastIndex = index;
+                if (!RectRect(this.sceneRect, itemRect)) {
+                    break;
+                }
             }
             itemRect.x = rect.x;
             itemRect.y += itemRect.height + (rowSpacings[r] ?? spacing[1]);
+            if (!RectRect(this.sceneRect, itemRect)) {
+                break;
+            }
         }
         rect.x = rect.x - (this.hasNinePatch ? this.margin : 0);
         rect.y = rect.y - (this.hasNinePatch ? 4 : 0);
