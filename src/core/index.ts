@@ -296,7 +296,8 @@ export async function executeFile(
     const interpreter = new Interpreter(options);
     // Process Payload Content
     const sourceResult = setupPayload(interpreter, payload);
-    // Run App
+    // Run the BrightScript app
+    BrsDevice.lastKeyTime = performance.now();
     let result: RunResult;
     if (sourceResult.pcode && sourceResult.iv) {
         result = await runEncrypted(interpreter, sourceResult, payload);
