@@ -486,7 +486,9 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     /** Load a bitmap based on one of the fields of the node */
     getBitmap(fieldName: string) {
         const uri = this.getFieldValueJS(fieldName) as string;
-        return uri?.trim() ? getTextureManager().loadTexture(uri) : undefined;
+        return uri?.trim()
+            ? getTextureManager().loadTexture(uri, this.httpAgent.customHeaders)
+            : undefined;
     }
 
     /** Returns the largest dimensions of the icons from the passed fields */

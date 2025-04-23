@@ -121,7 +121,7 @@ export class Scene extends Group {
         const backURI = this.getFieldValueJS("backgroundUri") as string;
         if (draw2D && backURI.trim() !== "") {
             const textureManager = getTextureManager();
-            const bitmap = textureManager.loadTexture(backURI);
+            const bitmap = textureManager.loadTexture(backURI, this.httpAgent.customHeaders);
             if (bitmap instanceof RoBitmap && bitmap.isValid()) {
                 const scaleX = this.ui.width / bitmap.width;
                 const scaleY = this.ui.height / bitmap.height;
