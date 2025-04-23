@@ -128,28 +128,7 @@ export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpA
         if (uri.startsWith("http")) {
             data = download(uri, "arraybuffer", headers ?? this.customHeaders, this.cookiesEnabled);
         } else {
-            try {
-                const fsys = BrsDevice.fileSystem;
-                let assetPath = uri;
-                if (uri.startsWith("pkg:/locale/images/") && !fsys.existsSync(uri)) {
-                    const locale = BrsDevice.deviceInfo.locale;
-                    const filePath = uri.substring("pkg:/locale/images/".length);
-                    if (fsys.existsSync(`pkg:/locale/${locale}/images/${filePath}`)) {
-                        assetPath = `pkg:/locale/${locale}/images/${filePath}`;
-                    } else if (fsys.existsSync(`pkg:/locale/default/images/${filePath}`)) {
-                        assetPath = `pkg:/locale/default/images/${filePath}`;
-                    } else if (fsys.existsSync(`pkg:/locale/en_US/images/${filePath}`)) {
-                        assetPath = `pkg:/locale/en_US/images/${filePath}`;
-                    }
-                }
-                data = fsys.readFileSync(assetPath);
-            } catch (err: any) {
-                if (BrsDevice.isDevMode) {
-                    BrsDevice.stderr.write(
-                        `warning,[roTextureManager] Error requesting texture ${uri}: ${err.message}`
-                    );
-                }
-            }
+            data = this.loadLocalFile(uri);
         }
         if (data) {
             const bitmap = new RoBitmap(data, uri.toLowerCase().endsWith(".9.png"));
@@ -159,6 +138,31 @@ export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpA
             }
         }
         return undefined;
+    }
+
+    private loadLocalFile(uri: string) {
+        try {
+            const fsys = BrsDevice.fileSystem;
+            let assetPath = uri;
+            if (uri.startsWith("pkg:/locale/images/") && !fsys.existsSync(uri)) {
+                const locale = BrsDevice.deviceInfo.locale;
+                const filePath = uri.substring("pkg:/locale/images/".length);
+                if (fsys.existsSync(`pkg:/locale/${locale}/images/${filePath}`)) {
+                    assetPath = `pkg:/locale/${locale}/images/${filePath}`;
+                } else if (fsys.existsSync(`pkg:/locale/default/images/${filePath}`)) {
+                    assetPath = `pkg:/locale/default/images/${filePath}`;
+                } else if (fsys.existsSync(`pkg:/locale/en_US/images/${filePath}`)) {
+                    assetPath = `pkg:/locale/en_US/images/${filePath}`;
+                }
+            }
+            return fsys.readFileSync(assetPath);
+        } catch (err: any) {
+            if (BrsDevice.isDevMode) {
+                BrsDevice.stderr.write(
+                    `warning,[roTextureManager] Error requesting texture ${uri}: ${err.message}`
+                );
+            }
+        }
     }
 
     /** Makes a request for an roBitmap with the attributes specified by the roTextureRequest. */
