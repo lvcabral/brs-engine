@@ -119,7 +119,7 @@ export class Poster extends Group {
 
     private loadUri(uri: string): string {
         let loadStatus = "failed";
-        this.bitmap = getTextureManager().loadTexture(uri);
+        this.bitmap = getTextureManager().loadTexture(uri, this.httpAgent.customHeaders);
         if (this.bitmap?.isValid()) {
             this.setFieldValue("bitmapWidth", new Float(this.bitmap.width));
             this.setFieldValue("bitmapHeight", new Float(this.bitmap.height));

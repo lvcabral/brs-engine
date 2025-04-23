@@ -119,14 +119,14 @@ export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpA
         return new RoTextureRequestEvent(request, bitmap);
     }
 
-    loadTexture(uri: string): RoBitmap | undefined {
+    loadTexture(uri: string, headers?: Map<string, string>): RoBitmap | undefined {
         const bitmap = this.textures.get(uri);
         if (bitmap) {
             return bitmap;
         }
         let data: ArrayBuffer | undefined;
         if (uri.startsWith("http")) {
-            data = download(uri, "arraybuffer", this.customHeaders, this.cookiesEnabled);
+            data = download(uri, "arraybuffer", headers ?? this.customHeaders, this.cookiesEnabled);
         } else {
             try {
                 const fsys = BrsDevice.fileSystem;
