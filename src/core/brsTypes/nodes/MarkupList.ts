@@ -15,7 +15,7 @@ export class MarkupList extends ArrayGrid {
     ];
     protected readonly focusUri = "common:/images/focus_list.9.png";
     protected readonly footprintUri = "common:/images/focus_footprint.9.png";
-    protected readonly margin: number;
+    protected readonly gap: number;
     protected wrap: boolean;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = "MarkupList") {
@@ -24,11 +24,7 @@ export class MarkupList extends ArrayGrid {
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
 
-        if (this.resolution === "FHD") {
-            this.margin = 36;
-        } else {
-            this.margin = 24;
-        }
+        this.gap = 0;
         this.setFieldValue("focusBitmapUri", new BrsString(this.focusUri));
         this.setFieldValue("focusFootprintBitmapUri", new BrsString(this.footprintUri));
         this.setFieldValue("wrapDividerBitmapUri", new BrsString(this.dividerUri));
@@ -154,9 +150,6 @@ export class MarkupList extends ArrayGrid {
                 break;
             }
         }
-        rect.x = rect.x - (this.hasNinePatch ? this.margin : 0);
-        rect.y = rect.y - (this.hasNinePatch ? 4 : 0);
-        rect.width = itemSize[0] + (this.hasNinePatch ? this.margin * 2 : 0);
-        rect.height = displayRows * (itemSize[1] + (this.hasNinePatch ? 9 : 0));
+        this.updateRect(rect, 1, displayRows, itemSize);
     }
 }

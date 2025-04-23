@@ -31,8 +31,6 @@ export class LabelList extends ArrayGrid {
 
     protected readonly focusUri = "common:/images/focus_list.9.png";
     protected readonly footprintUri = "common:/images/focus_footprint.9.png";
-    protected readonly margin: number;
-    protected readonly gap: number;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = "LabelList") {
         super([], name);
@@ -41,13 +39,10 @@ export class LabelList extends ArrayGrid {
         this.registerInitializedFields(initializedFields);
 
         if (this.resolution === "FHD") {
-            this.margin = 36;
             this.setFieldValue("itemSize", brsValueOf([510, 72]));
         } else {
-            this.margin = 24;
             this.setFieldValue("itemSize", brsValueOf([340, 48]));
         }
-        this.gap = this.margin / 2;
         this.setFieldValue("focusBitmapUri", new BrsString(this.focusUri));
         this.setFieldValue("focusFootprintBitmapUri", new BrsString(this.footprintUri));
         const style = jsValueOf(this.getFieldValue("vertFocusAnimationStyle")) as string;
@@ -147,10 +142,7 @@ export class LabelList extends ArrayGrid {
                 break;
             }
         }
-        rect.x = rect.x - (this.hasNinePatch ? this.margin : 0);
-        rect.y = rect.y - (this.hasNinePatch ? 4 : 0);
-        rect.width = itemSize[0] + (this.hasNinePatch ? this.margin * 2 : 0);
-        rect.height = displayRows * (itemSize[1] + (this.hasNinePatch ? 9 : 0));
+        this.updateRect(rect, 1, displayRows, itemSize);
     }
 
     protected renderItem(
@@ -259,24 +251,5 @@ export class LabelList extends ArrayGrid {
         const iconY = rect.y + (rect.height / 2 - bmp.height / 2);
         const iconRect = { ...rect, y: iconY, width: bmp.width, height: bmp.height };
         this.drawImage(bmp, iconRect, 0, opacity, draw2D, color);
-    }
-
-    protected renderFocus(itemRect: Rect, opacity: number, nodeFocus: boolean, draw2D?: IfDraw2D) {
-        const focusBitmap = this.getBitmap("focusBitmapUri");
-        const focusFootprint = this.getBitmap("focusFootprintBitmapUri");
-        this.hasNinePatch = (focusBitmap?.ninePatch || focusFootprint?.ninePatch) === true;
-        const ninePatchRect = {
-            x: itemRect.x - this.margin,
-            y: itemRect.y - 4,
-            width: itemRect.width + this.margin * 2 + this.gap,
-            height: itemRect.height + 9,
-        };
-        if (nodeFocus && focusBitmap) {
-            const rect = focusBitmap.ninePatch ? ninePatchRect : itemRect;
-            this.drawImage(focusBitmap, rect, 0, opacity, draw2D);
-        } else if (!nodeFocus && focusFootprint) {
-            const rect = focusFootprint.ninePatch ? ninePatchRect : itemRect;
-            this.drawImage(focusFootprint, rect, 0, opacity, draw2D);
-        }
     }
 }
