@@ -13,7 +13,9 @@ export class MarkupGrid extends ArrayGrid {
         { name: "vertFocusAnimationStyle", type: "string", value: "fixedFocusWrap" },
     ];
     protected readonly focusUri = "common:/images/focus_grid.9.png";
-    protected readonly margin: number;
+    protected readonly marginX: number;
+    protected readonly marginY: number;
+    protected readonly gap: number;
     protected wrap: boolean;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = "MarkupGrid") {
@@ -23,10 +25,13 @@ export class MarkupGrid extends ArrayGrid {
         this.registerInitializedFields(initializedFields);
 
         if (this.resolution === "FHD") {
-            this.margin = 36;
+            this.marginX = 15;
+            this.marginY = 15;
         } else {
-            this.margin = 24;
+            this.marginX = 10;
+            this.marginY = 10;
         }
+        this.gap = 0;
         this.setFieldValue("focusBitmapUri", new BrsString(this.focusUri));
         this.setFieldValue("wrapDividerBitmapUri", new BrsString(this.dividerUri));
         const style = jsValueOf(this.getFieldValue("vertFocusAnimationStyle")) as string;
@@ -169,9 +174,6 @@ export class MarkupGrid extends ArrayGrid {
                 break;
             }
         }
-        rect.x = rect.x - (this.hasNinePatch ? this.margin : 0);
-        rect.y = rect.y - (this.hasNinePatch ? 4 : 0);
-        rect.width = numCols * (itemSize[0] + (this.hasNinePatch ? this.margin * 2 : 0));
-        rect.height = displayRows * (itemSize[1] + (this.hasNinePatch ? 9 : 0));
+        this.updateRect(rect, numCols, displayRows, itemSize);
     }
 }

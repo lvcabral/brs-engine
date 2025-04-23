@@ -80,6 +80,9 @@ export class ArrayGrid extends Group {
     protected readonly content: RoSGNode[] = [];
     protected readonly metadata: ArrayGrid.Metadata[] = [];
     protected readonly itemComps: Group[] = [];
+    protected readonly marginX: number;
+    protected readonly marginY: number;
+    protected readonly gap: number;
     protected focusIndex: number = 0;
     protected currRow: number = 0;
     protected wrap: boolean = false;
@@ -95,16 +98,21 @@ export class ArrayGrid extends Group {
 
         this.setFieldValue("content", new ContentNode());
         if (this.resolution === "FHD") {
+            this.marginX = 36;
+            this.marginY = 6;
             this.setFieldValue("wrapDividerHeight", new Float(36));
             this.setFieldValue("sectionDividerHeight", new Float(60));
             this.setFieldValue("sectionDividerMinWidth", new Float(126));
             this.setFieldValue("sectionDividerSpacing", new Float(15));
         } else {
+            this.marginX = 24;
+            this.marginY = 4;
             this.setFieldValue("wrapDividerHeight", new Float(24));
             this.setFieldValue("sectionDividerHeight", new Float(40));
             this.setFieldValue("sectionDividerMinWidth", new Float(117));
             this.setFieldValue("sectionDividerSpacing", new Float(10));
         }
+        this.gap = this.marginX / 2;
         this.setFieldValue("wrapDividerBitmapUri", new BrsString(this.dividerUri));
         this.setFieldValue("sectionDividerBitmapUri", new BrsString(this.dividerUri));
         const style = this.getFieldValueJS("vertFocusAnimationStyle") as string;
@@ -291,22 +299,21 @@ export class ArrayGrid extends Group {
     }
 
     protected renderFocus(itemRect: Rect, opacity: number, nodeFocus: boolean, draw2D?: IfDraw2D) {
-        const focusBitmap = this.getBitmap("focusBitmapUri");
-        const focusFootprint = this.getBitmap("focusFootprintBitmapUri");
-        this.hasNinePatch = (focusBitmap?.ninePatch || focusFootprint?.ninePatch) === true;
-        const ninePatchRect = {
-            x: itemRect.x - 15,
-            y: itemRect.y - 15,
-            width: itemRect.width + 31,
-            height: itemRect.height + 30,
-        };
-        if (nodeFocus && focusBitmap) {
-            const rect = focusBitmap.ninePatch ? ninePatchRect : itemRect;
-            this.drawImage(focusBitmap, rect, 0, opacity, draw2D);
-        } else if (!nodeFocus && focusFootprint) {
-            const rect = focusFootprint.ninePatch ? ninePatchRect : itemRect;
-            this.drawImage(focusFootprint, rect, 0, opacity, draw2D);
+        const bmpUri = nodeFocus ? "focusBitmapUri" : "focusFootprintBitmapUri";
+        const bmp = this.getBitmap(bmpUri);
+        if (!bmp?.isValid()) {
+            return;
         }
+        this.hasNinePatch = bmp.ninePatch;
+        let focusRect = bmp.ninePatch
+            ? {
+                  x: itemRect.x - this.marginX,
+                  y: itemRect.y - this.marginY,
+                  width: itemRect.width + this.marginX * 2 + this.gap,
+                  height: itemRect.height + this.marginY * 2,
+              }
+            : itemRect;
+        this.drawImage(bmp, focusRect, 0, opacity, draw2D);
     }
 
     protected renderSectionDivider(
@@ -435,6 +442,13 @@ export class ArrayGrid extends Group {
             return Math.min(rowStep3, currentFocus);
         }
         return focusRow;
+    }
+
+    protected updateRect(rect: Rect, numCols: number, numRows: number, itemSize: number[]) {
+        rect.x = rect.x - (this.hasNinePatch ? this.marginX : 0);
+        rect.y = rect.y - (this.hasNinePatch ? this.marginY : 0);
+        rect.width = numCols * (itemSize[0] + (this.hasNinePatch ? this.marginX * 2 : 0));
+        rect.height = numRows * (itemSize[1] + (this.hasNinePatch ? this.marginY * 2 : 0));
     }
 
     protected getIndex(offset: number = 0, currIndex?: number) {
