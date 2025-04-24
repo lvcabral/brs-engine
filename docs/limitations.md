@@ -9,7 +9,7 @@ There are several features from the **BrightScript** language and components tha
   * Basic support for `roSGNode` and `roSGScreen` components and rendering.
   * The `Task` node is implemented but its behavior is limited:
     * For now only 10 task threads are supported per application
-    * The `m` and `global` objects are a snapshot in the task thread, no changes reflected back to main thread
+    * The `m.global` object can have children, but changes on those nodes are not shared among the threads
     * Only one `port` instance can be used on Task `init()` to observe fields
     * The `tmp:/` and `cachefs:/` volumes are not shared with task threads, can be used in task but are empty
   * The following nodes are implemented (some only partially):
@@ -45,15 +45,17 @@ There are several features from the **BrightScript** language and components tha
 * The component `roAppMemoryMonitor` will only return measured data in Node.JS and Chromium browsers. For browsers the memory heap info only accounts for the main thread, as WebWorkers do not have support for `performance.memory` API.
 * The `roInput` deep link events are supported, but the events related to Voice Commands are not.
 * The `roFileSystem` is fully functional, but the message port events are not yet implemented.
-* The `roStreamSocket` and `roDataGramSocket` components are mocked, and were only implemented to prevent crash on apps that use those.
 * The global functions `Eval()`, `GetLastRunCompileError()` and `GetLastRunRuntimeError()` are not available.
 * The string `mod` cannot be used as variable or function parameter name, because it conflicts with remainder operator `Mod` (Roku devices allows that).
+* Screensaver functionality is not yet implemented.
 * SDK 1.0 deprecated components are not supported, but will be implemented in the future as a legacy apps preservation initiative.
 
 ## Mocked Components and Libraries
 
-* RAF (Roku Ads Framework) object `Roku_Ads` is mocked with the most common methods available returning static values.
+* RAF (Roku Ads Framework) library with that exposes `Roku_Ads` is mocked with the most common methods available returning static values.
+* RED (Roku Event Dispatcher) and Google IMA3 libraries are also mocked.
 * Channel Store components (`roChannelStore` and `roChannelStoreEvent`) are mocked with support for the `fakeServer()` feature.
+* The `roStreamSocket` and `roDataGramSocket` components are mocked, and were only implemented to prevent crash on apps that use those.
 * Several components have their methods and events mocked, they return constant values to prevent crash. Those are mostly related to device behaviors that are not possible to replicate in a browser environment or simply not applicable to the engine.
 
 ## Out of Scope
