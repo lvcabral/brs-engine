@@ -114,10 +114,14 @@ export class Task extends RoSGNode {
     }
 
     /** Message callback to handle observed fields with message port */
-    protected getNewEvents() {
-        const events: BrsEvent[] = [];
-        this.updateTask();
-        return events;
+    protected getNewEvents(wait: number) {
+        if (this.taskBuffer && this.thread) {
+            const timeout = wait === 0 ? undefined : wait;
+            const result = this.taskBuffer.waitVersion(0, timeout);
+            console.debug(`The thread ${this.id} was awaken with "${result}"`);
+            this.updateTask();
+        }
+        return new Array<BrsEvent>();
     }
 
     checkTask() {

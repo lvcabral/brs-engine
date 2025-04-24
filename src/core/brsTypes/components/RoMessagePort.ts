@@ -55,14 +55,14 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
 
     wait(interpreter: Interpreter, ms: number) {
         const loop = ms === 0;
-        ms += performance.now();
+        const timeout = ms + performance.now();
 
-        while (loop || performance.now() < ms) {
-            this.updateMessageQueue();
+        while (loop || performance.now() < timeout) {
             const msg = this.getNextMessage();
-            if (msg !== BrsInvalid.Instance) {
+            if (isBrsEvent(msg)) {
                 return msg;
             }
+            this.updateMessageQueue(ms);
             const cmd = BrsDevice.checkBreakCommand(interpreter.debugMode);
             if (cmd === DebugCommand.BREAK || cmd === DebugCommand.EXIT) {
                 interpreter.debugMode = cmd === DebugCommand.BREAK;
@@ -72,10 +72,10 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
         return BrsInvalid.Instance;
     }
 
-    private updateMessageQueue() {
+    private updateMessageQueue(wait?: number) {
         if (this.callbackMap.size > 0) {
             for (const [_, callback] of this.callbackMap.entries()) {
-                const events = callback();
+                const events = callback(wait);
                 this.messageQueue.push(...events.filter(isBrsEvent));
             }
         }
@@ -85,12 +85,9 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
         if (this.messageQueue.length > 0) {
             return this.messageQueue.shift();
         } else if (this.callbackQueue.length > 0) {
-            let callback = this.callbackQueue.shift();
+            const callback = this.callbackQueue.shift();
             if (typeof callback === "function") {
-                const event = callback();
-                if (event !== BrsInvalid.Instance) {
-                    return event;
-                }
+                return callback();
             }
         }
         return BrsInvalid.Instance;
