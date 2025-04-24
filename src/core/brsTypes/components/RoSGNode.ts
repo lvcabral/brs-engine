@@ -522,10 +522,9 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     }
 
     /** Message callback to handle observed fields with message port */
-    protected getNewEvents() {
-        const events: BrsEvent[] = [];
+    protected getNewEvents(_wait: number) {
         // To be overridden by the Task class
-        return events;
+        return new Array<BrsEvent>();
     }
 
     private registerHttpAgent(agent: RoHttpAgent) {

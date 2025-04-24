@@ -46,6 +46,10 @@ class SharedObject {
         this.processQueue();
     }
 
+    waitVersion(version: number, timeout?: number) {
+        return Atomics.wait(this.atomicView, this.versionIdx, version, timeout);
+    }
+
     private processQueue(): void {
         if (this.isProcessing || this.queue.length === 0) {
             return;
