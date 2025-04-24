@@ -109,10 +109,7 @@ export class Group extends RoSGNode {
         if (uri) {
             poster.set(new BrsString("uri"), new BrsString(uri));
         }
-        poster.set(
-            new BrsString("translation"),
-            new RoArray([new Float(translation[0]), new Float(translation[1])])
-        );
+        poster.setTranslation(translation);
         if (width !== undefined) {
             poster.set(new BrsString("width"), new Float(width));
         }
@@ -148,10 +145,7 @@ export class Group extends RoSGNode {
         if (height !== undefined) {
             label.set(new BrsString("height"), new Float(height));
         }
-        label.set(
-            new BrsString("translation"),
-            new RoArray([new Float(translation[0]), new Float(translation[1])])
-        );
+        label.setTranslation(translation);
         if (vertAlign) {
             label.set(new BrsString("vertalign"), new BrsString(vertAlign));
         }
@@ -166,12 +160,7 @@ export class Group extends RoSGNode {
     }
 
     protected getTranslation() {
-        const transField = this.getFieldValue("translation");
-        const translation = [0, 0];
-        if (transField instanceof RoArray && transField.elements.length === 2) {
-            translation[0] = jsValueOf(transField.elements[0]) as number;
-            translation[1] = jsValueOf(transField.elements[1]) as number;
-        }
+        const translation = this.getFieldValueJS("translation") as number[];
         // Adjust translation based on scale and rotation center
         const scale = this.getFieldValueJS("scale") as number[];
         const scaleRotateCenter = this.getScaleRotateCenter();
@@ -180,6 +169,32 @@ export class Group extends RoSGNode {
         translation[0] -= scaleDiffX;
         translation[1] -= scaleDiffY;
         return translation;
+    }
+
+    setTranslation(translation: number[]) {
+        if (translation.length === 2) {
+            const newTrans = [new Float(translation[0]), new Float(translation[1])];
+            this.set(new BrsString("translation"), new RoArray(newTrans));
+        }
+    }
+
+    setTranslationOffset(x: number = 0, y: number = 0) {
+        const translation = this.getFieldValueJS("translation") as number[];
+        translation[0] += x;
+        translation[1] += y;
+        this.setTranslation(translation);
+    }
+
+    setTranslationX(x: number) {
+        const translation = this.getFieldValueJS("translation") as number[];
+        translation[0] = x;
+        this.setTranslation(translation);
+    }
+
+    setTranslationY(y: number) {
+        const translation = this.getFieldValueJS("translation") as number[];
+        translation[1] = y;
+        this.setTranslation(translation);
     }
 
     protected getRotation() {

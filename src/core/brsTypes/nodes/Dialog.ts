@@ -57,7 +57,6 @@ export class Dialog extends Group {
     private readonly message: Label;
     private readonly gap: number;
     private readonly vertOffset: number;
-    private readonly screenRect: Rect;
     private readonly minHeight: number;
     private readonly buttonGroup: ButtonGroup;
     private lastFocus?: RoSGNode;
@@ -82,11 +81,10 @@ export class Dialog extends Group {
 
         this.buttonGroup = new ButtonGroup();
         if (this.resolution === "FHD") {
-            this.screenRect = { x: 0, y: 0, width: 1920, height: 1080 };
             this.width = 1050;
             this.minHeight = 216;
             this.gap = 18;
-            this.vertOffset = 89;
+            this.vertOffset = 30;
             this.dialogTrans = [435, 432];
             this.iconSize = 60;
             this.iconTrans = [882, 469];
@@ -118,11 +116,10 @@ export class Dialog extends Group {
             this.buttonGroup.setFieldValue("minWidth", new Float(900));
             this.buttonGroup.setFieldValue("maxWidth", new Float(900));
         } else {
-            this.screenRect = { x: 0, y: 0, width: 1280, height: 720 };
             this.width = 700;
             this.minHeight = 144;
             this.gap = 12;
-            this.vertOffset = 59;
+            this.vertOffset = 20;
             this.dialogTrans = [290, 288];
             this.iconSize = 40;
             this.iconTrans = [588, 313];
@@ -265,37 +262,48 @@ export class Dialog extends Group {
         if (isBrsString(iconUri) && iconUri.getValue()) {
             const measured = this.title.getMeasured();
             if (measured.width > 0) {
-                const centerX = (this.screenRect.width - measured.width) / 2;
+                const centerX = (this.sceneRect.width - measured.width) / 2;
                 this.iconTrans[0] = centerX - this.iconSize - this.gap;
-                const newTrans = [new Float(this.iconTrans[0]), new Float(this.iconTrans[1])];
-                this.icon.set(new BrsString("translation"), new RoArray(newTrans));
             }
         }
         this.copyField(this.divider, "uri", "dividerUri");
         const message = this.copyField(this.message, "text", "message");
         if (isBrsString(message) && message.getValue() !== "") {
-            this.height += this.vertOffset;
+            const measured = this.message.getMeasured();
+            this.height += measured.height + this.vertOffset;
         }
         this.copyField(this.message, "color", "messageColor");
         this.copyField(this.message, "font", "messageFont");
 
         const buttons = this.getFieldValueJS("buttons") as string[];
+        const buttonHeight = this.buttonGroup.getFieldValueJS("buttonHeight") as number;
         if (buttons?.length) {
-            const buttonHeight = this.buttonGroup.getFieldValueJS("buttonHeight") as number;
-            const buttonsHeight = buttonHeight * buttons.length;
-            this.height += this.vertOffset;
-            const msgTrans = this.message.getFieldValue("translation") as RoArray;
-            const buttonsTrans = [
-                msgTrans.elements[0],
-                new Float(this.dialogTrans[1] + this.height - buttonsHeight),
-            ];
-            this.buttonGroup.setFieldValue("translation", new RoArray(buttonsTrans));
+            this.height += buttonHeight * buttons.length;
             this.hasButtons = true;
         } else {
+            this.height += this.vertOffset;
             this.hasButtons = false;
         }
 
+        // Set new Dialog height and reposition elements
+        const newY = (this.sceneRect.height - this.height) / 2;
+        const offsetY = newY - this.dialogTrans[1];
+        this.dialogTrans[1] = newY;
+        this.background.setTranslation(this.dialogTrans);
         this.background.set(new BrsString("height"), new Float(this.height));
+        this.iconTrans[1] += offsetY;
+        this.icon.setTranslation(this.iconTrans);
+        this.title.setTranslationOffset(0, offsetY);
+        this.divider.setTranslationOffset(0, offsetY);
+        this.message.setTranslationOffset(0, offsetY);
+        if (this.hasButtons) {
+            const msgTrans = this.message.getFieldValueJS("translation") as number[];
+            const buttonsTrans = [
+                msgTrans[0],
+                this.dialogTrans[1] + this.height - buttonHeight * buttons.length - this.vertOffset,
+            ];
+            this.buttonGroup.setTranslation(buttonsTrans);
+        }
         this.isDirty = false;
     }
 }

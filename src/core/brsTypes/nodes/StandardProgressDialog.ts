@@ -58,9 +58,7 @@ export class StandardProgressDialog extends StandardDialog {
         if (title === "") {
             const itemWidth = jsValueOf(this.progressItem.getFieldValue("width")) as number;
             this.set(new BrsString("width"), new Float(itemWidth + this.margin));
-            const translation = this.getTranslation();
-            translation[0] = (this.screenWidth - itemWidth) / 2;
-            this.setFieldValue("translation", brsValueOf(translation));
+            this.setTranslationX((this.screenWidth - itemWidth) / 2);
         }
         if (message === "") {
             this.set(new BrsString("message"), new BrsString("Please wait..."));

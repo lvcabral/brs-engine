@@ -79,11 +79,11 @@ export class StdDlgProgressItem extends Group {
         const spinnerSize = this.spinner.getDimensions();
         const labelSize = this.label.getMeasured();
         if (spinnerSize.width > 0 && spinnerSize.height > 0) {
-            const labelTrans = new RoArray([
-                new Float(spinnerSize.width + this.gap),
-                new Float((spinnerSize.height - labelSize.height) / 2),
-            ]);
-            this.label.setFieldValue("translation", labelTrans);
+            const labelTrans = [
+                spinnerSize.width + this.gap,
+                (spinnerSize.height - labelSize.height) / 2,
+            ];
+            this.label.setTranslation(labelTrans);
             boundingRect.width = spinnerSize.width + labelSize.width + this.gap;
             this.set(new BrsString("width"), new Float(boundingRect.width));
         } else if (labelSize.width > 0 && labelSize.height > 0) {
