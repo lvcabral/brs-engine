@@ -187,23 +187,22 @@ export class Overhang extends Group {
         const clockOffset = isFHD ? 60 : 40;
         const optionsOffset = showClock ? optionsWidth + clockOffset : optionsWidth;
         const rightAlignX = this.width - leftAlignX - clockTextWidth;
-        const translation = new BrsString("translation");
         if (isFHD) {
-            this.logo.set(translation, brsValueOf([leftAlignX, 63]));
-            this.leftDivider.set(translation, brsValueOf([leftAlignX + logoWidth + 24, 59]));
-            this.title.set(translation, brsValueOf([leftAlignX + logoWidth + 56, 58]));
-            this.optionsIcon.set(translation, brsValueOf([rightAlignX - optionsOffset - 36, 67]));
-            this.optionsText.set(translation, brsValueOf([rightAlignX - optionsOffset, 64]));
-            this.rightDivider.set(translation, brsValueOf([rightAlignX - 36, 59]));
-            this.clockText.set(translation, brsValueOf([rightAlignX, 64]));
+            this.logo.setTranslation([leftAlignX, 63]);
+            this.leftDivider.setTranslation([leftAlignX + logoWidth + 24, 59]);
+            this.title.setTranslation([leftAlignX + logoWidth + 56, 58]);
+            this.optionsIcon.setTranslation([rightAlignX - optionsOffset - 36, 67]);
+            this.optionsText.setTranslation([rightAlignX - optionsOffset, 64]);
+            this.rightDivider.setTranslation([rightAlignX - 36, 59]);
+            this.clockText.setTranslation([rightAlignX, 64]);
         } else {
-            this.logo.set(translation, brsValueOf([leftAlignX, 42]));
-            this.leftDivider.set(translation, brsValueOf([leftAlignX + logoWidth + 16, 41]));
-            this.title.set(translation, brsValueOf([leftAlignX + logoWidth + 38, 39]));
-            this.optionsIcon.set(translation, brsValueOf([rightAlignX - optionsOffset - 24, 46]));
-            this.optionsText.set(translation, brsValueOf([rightAlignX - optionsOffset, 44]));
-            this.rightDivider.set(translation, brsValueOf([rightAlignX - 24, 41]));
-            this.clockText.set(translation, brsValueOf([rightAlignX, 44]));
+            this.logo.setTranslation([leftAlignX, 42]);
+            this.leftDivider.setTranslation([leftAlignX + logoWidth + 16, 41]);
+            this.title.setTranslation([leftAlignX + logoWidth + 38, 39]);
+            this.optionsIcon.setTranslation([rightAlignX - optionsOffset - 24, 46]);
+            this.optionsText.setTranslation([rightAlignX - optionsOffset, 44]);
+            this.rightDivider.setTranslation([rightAlignX - 24, 41]);
+            this.clockText.setTranslation([rightAlignX, 44]);
         }
         this.realign = false;
     }

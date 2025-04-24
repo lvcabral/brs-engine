@@ -65,7 +65,7 @@ export class StandardDialog extends Group {
             );
         }
         this.height = this.minHeight;
-        this.setFieldValue("translation", brsValueOf(this.dialogTrans));
+        this.setTranslation(this.dialogTrans);
     }
 
     set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
