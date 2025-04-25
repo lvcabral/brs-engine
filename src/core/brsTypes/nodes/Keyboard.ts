@@ -3,7 +3,7 @@ import { Group } from "./Group";
 import { AAMember } from "../components/RoAssociativeArray";
 import { TextEditBox } from "./TextEditBox";
 
-export class MiniKeyboard extends Group {
+export class Keyboard extends Group {
     readonly defaultFields: FieldModel[] = [
         { name: "text", type: "string", value: "" },
         { name: "keyColor", type: "color", value: "0x000000FF" },
@@ -13,10 +13,9 @@ export class MiniKeyboard extends Group {
         { name: "focusBitmapUri", type: "uri", value: "" },
         { name: "textEditBox", type: "node" },
         { name: "showTextEditBox", type: "boolean", value: "true" },
-        { name: "lowerCase", type: "boolean", value: "true" },
     ];
 
-    constructor(initializedFields: AAMember[] = [], readonly name: string = "MiniKeyboard") {
+    constructor(initializedFields: AAMember[] = [], readonly name: string = "Keyboard") {
         super([], name);
 
         this.registerDefaultFields(this.defaultFields);

@@ -1,0 +1,128 @@
+import { FieldModel } from "./Field";
+import { AAMember } from "../components/RoAssociativeArray";
+import { Dialog } from "./Dialog";
+import { Keyboard, BrsBoolean, BrsString, Float, isBrsString } from "..";
+
+export class KeyboardDialog extends Dialog {
+    readonly defaultFields: FieldModel[] = [{ name: "keyboard", type: "node" }];
+
+    protected readonly minHeight: number;
+
+    constructor(initializedFields: AAMember[] = [], readonly name: string = "KeyboardDialog") {
+        super([], name);
+
+        this.registerDefaultFields(this.defaultFields);
+        this.registerInitializedFields(initializedFields);
+
+        this.setFieldValue("keyboard", new Keyboard());
+
+        let contentWidth: number;
+        let contentX: number;
+        let titleTrans: number[];
+        let dividerTrans: number[];
+        let msgTrans: number[];
+        if (this.resolution === "FHD") {
+            this.width = 1530;
+            this.minHeight = 645;
+            this.height = this.minHeight;
+            this.dialogTrans = [
+                (this.sceneRect.width - this.width) / 2,
+                (this.sceneRect.height - this.height) / 2,
+            ];
+            contentWidth = this.width - 177;
+            contentX = (this.sceneRect.width - contentWidth) / 2;
+            titleTrans = [contentX, this.dialogTrans[1] + 45];
+            dividerTrans = [contentX, this.dialogTrans[1] + 105];
+            msgTrans = [contentX, titleTrans[1] + 111];
+        } else {
+            this.width = 1020;
+            this.minHeight = 430;
+            this.height = this.minHeight;
+            this.dialogTrans = [
+                (this.sceneRect.width - this.width) / 2,
+                (this.sceneRect.height - this.height) / 2,
+            ];
+            contentWidth = this.width - 118;
+            contentX = (this.sceneRect.width - contentWidth) / 2;
+            titleTrans = [contentX, this.dialogTrans[1] + 30];
+            dividerTrans = [contentX, this.dialogTrans[1] + 70];
+            msgTrans = [contentX, titleTrans[1] + 74];
+        }
+        this.background.setFieldValue("width", new Float(this.width));
+        this.background.setFieldValue("height", new Float(this.minHeight));
+        this.background.setTranslation(this.dialogTrans);
+        this.title.setFieldValue("width", new Float(contentWidth));
+        this.divider.setFieldValue("width", new Float(contentWidth));
+        this.title.setTranslation(titleTrans);
+        this.divider.setTranslation(dividerTrans);
+        this.message.setTranslation(msgTrans);
+        this.message.setFieldValue("width", new Float(contentWidth));
+        this.buttonGroup.setFieldValue("minWidth", new Float(contentWidth));
+        this.buttonGroup.setFieldValue("maxWidth", new Float(contentWidth));
+        this.setFieldValue("width", new Float(this.width));
+        this.setFieldValue("iconUri", new BrsString(""));
+        this.icon.setFieldValue("visible", BrsBoolean.False);
+    }
+
+    protected updateChildren() {
+        this.height = this.minHeight;
+        const width = this.getFieldValueJS("width") as number;
+        if (width) {
+            this.background.set(new BrsString("width"), new Float(width));
+            this.width = width;
+        }
+        this.copyField(this.background, "uri", "backgroundUri");
+        this.copyField(this.title, "text", "title");
+        this.copyField(this.title, "color", "titleColor");
+        this.copyField(this.title, "font", "titleFont");
+        const iconUri = this.copyField(this.icon, "uri", "iconUri").toString();
+        if (iconUri) {
+            const measured = this.title.getMeasured();
+            if (measured.width > 0) {
+                const centerX = (this.sceneRect.width - measured.width) / 2;
+                this.iconTrans[0] = centerX - this.iconSize - this.gap;
+            }
+        }
+        this.copyField(this.divider, "uri", "dividerUri");
+        const message = this.copyField(this.message, "text", "message");
+        if (isBrsString(message) && message.getValue() !== "") {
+            const measured = this.message.getMeasured();
+            this.height += measured.height + this.vertOffset;
+        }
+        this.copyField(this.message, "color", "messageColor");
+        this.copyField(this.message, "font", "messageFont");
+
+        const buttons = this.getFieldValueJS("buttons") as string[];
+        const buttonHeight = this.buttonGroup.getFieldValueJS("buttonHeight") as number;
+        if (buttons?.length) {
+            this.height += buttonHeight * buttons.length;
+            this.hasButtons = true;
+        } else {
+            this.height += this.vertOffset;
+            this.hasButtons = false;
+        }
+
+        // Set new Dialog height and reposition elements
+        const newY = (this.sceneRect.height - this.height) / 2;
+        const offsetY = newY - this.dialogTrans[1];
+        this.dialogTrans[1] = newY;
+        this.background.setTranslation(this.dialogTrans);
+        this.background.set(new BrsString("height"), new Float(this.height));
+        if (iconUri) {
+            this.iconTrans[1] += offsetY;
+            this.icon.setTranslation(this.iconTrans);
+        }
+        this.title.setTranslationOffset(0, offsetY);
+        this.divider.setTranslationOffset(0, offsetY);
+        this.message.setTranslationOffset(0, offsetY);
+        if (this.hasButtons) {
+            const msgTrans = this.message.getFieldValueJS("translation") as number[];
+            const buttonsTrans = [
+                msgTrans[0],
+                this.dialogTrans[1] + this.height - buttonHeight * buttons.length - this.vertOffset,
+            ];
+            this.buttonGroup.setTranslation(buttonsTrans);
+        }
+        this.isDirty = false;
+    }
+}
