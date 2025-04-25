@@ -62,17 +62,17 @@ export class ButtonGroup extends LayoutGroup {
         if (this.resolution === "FHD") {
             this.margin = 36;
             this.gap = 18;
-            this.vertOffset = 21;
+            this.vertOffset = 18;
             this.iconSize = [36, 36];
-            this.setFieldValue("buttonHeight", new Float(96));
+            this.setFieldValue("buttonHeight", new Float(75));
             this.setFieldValue("iconUri", new BrsString(Button.iconUriFHD));
             this.setFieldValue("focusedIconUri", new BrsString(Button.iconUriFHD));
         } else {
             this.margin = 24;
             this.gap = 12;
-            this.vertOffset = 14;
+            this.vertOffset = 12;
             this.iconSize = [24, 24];
-            this.setFieldValue("buttonHeight", new Float(64));
+            this.setFieldValue("buttonHeight", new Float(50));
             this.setFieldValue("iconUri", new BrsString(Button.iconUriHD));
             this.setFieldValue("focusedIconUri", new BrsString(Button.iconUriHD));
         }
