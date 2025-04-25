@@ -201,6 +201,7 @@ export class Dialog extends Group {
             this.lastFocus = rootObjects.focused;
             rootObjects.focused = this.buttonGroup;
         }
+        this.isDirty = true;
         return true;
     }
 
@@ -231,7 +232,9 @@ export class Dialog extends Group {
             width: this.width,
             height: size.height,
         };
-        this.updateChildren();
+        if (this.isDirty) {
+            this.updateChildren();
+        }
         if (this.hasButtons) {
             this.setNodeFocus(interpreter, true);
         }
