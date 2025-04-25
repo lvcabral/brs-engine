@@ -2,7 +2,7 @@ import { FieldKind, FieldModel } from "./Field";
 import { AAMember } from "../components/RoAssociativeArray";
 import { Group } from "./Group";
 import { IfDraw2D, Rect } from "../interfaces/IfDraw2D";
-import { Interpreter } from "../..";
+import { Interpreter } from "../../interpreter";
 import { rotateTranslation } from "../../scenegraph/SGUtil";
 import {
     BrsBoolean,
@@ -177,8 +177,8 @@ export class Dialog extends Group {
             } else {
                 return BrsInvalid.Instance;
             }
-        } else if (fieldName === "buttonfocused") {
-            // Read-only field
+        } else if (["buttonfocused", "keyboard"].includes(fieldName)) {
+            // Read-only fields
             return BrsInvalid.Instance;
         } else if (fieldName === "close") {
             index = new BrsString("wasClosed");

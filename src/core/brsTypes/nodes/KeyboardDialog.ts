@@ -4,7 +4,10 @@ import { Dialog } from "./Dialog";
 import { Keyboard, BrsBoolean, BrsString, Float, isBrsString } from "..";
 
 export class KeyboardDialog extends Dialog {
-    readonly defaultFields: FieldModel[] = [{ name: "keyboard", type: "node" }];
+    readonly defaultFields: FieldModel[] = [
+        { name: "text", type: "string", value: "" },
+        { name: "keyboard", type: "node" },
+    ];
 
     protected readonly minHeight: number;
     private readonly keyboard: Keyboard;
@@ -38,7 +41,7 @@ export class KeyboardDialog extends Dialog {
             titleTrans = [contentX, this.dialogTrans[1] + 45];
             dividerTrans = [contentX, this.dialogTrans[1] + 105];
             msgTrans = [contentX, titleTrans[1] + 111];
-            keyboardTrans = [264, this.dialogTrans[1] + 282];
+            keyboardTrans = [264, this.dialogTrans[1] + 219];
         } else {
             this.width = 1020;
             this.minHeight = 430;
@@ -52,7 +55,7 @@ export class KeyboardDialog extends Dialog {
             titleTrans = [contentX, this.dialogTrans[1] + 30];
             dividerTrans = [contentX, this.dialogTrans[1] + 70];
             msgTrans = [contentX, titleTrans[1] + 74];
-            keyboardTrans = [177, this.dialogTrans[1] + 188];
+            keyboardTrans = [177, this.dialogTrans[1] + 146];
         }
         this.background.setFieldValue("width", new Float(this.width));
         this.background.setFieldValue("height", new Float(this.minHeight));
@@ -69,6 +72,7 @@ export class KeyboardDialog extends Dialog {
         this.buttonGroup.setFieldValue("maxWidth", new Float(contentWidth));
         this.setFieldValue("width", new Float(this.width));
         this.setFieldValue("iconUri", new BrsString(""));
+        this.linkField(this.keyboard, "text");
         this.icon.setFieldValue("visible", BrsBoolean.False);
     }
 
