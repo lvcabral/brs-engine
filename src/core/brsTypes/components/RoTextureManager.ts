@@ -111,7 +111,7 @@ export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpA
             data = this.loadLocalFile(uri);
         }
         if (data) {
-            const bitmap = new RoBitmap(data, uri.toLowerCase().endsWith(".9.png"));
+            const bitmap = new RoBitmap(data, uri);
             if (bitmap instanceof RoBitmap && bitmap.isValid()) {
                 this.textures.set(uri, bitmap);
                 return bitmap;
