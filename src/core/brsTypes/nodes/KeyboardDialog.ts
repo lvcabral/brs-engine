@@ -7,6 +7,7 @@ export class KeyboardDialog extends Dialog {
     readonly defaultFields: FieldModel[] = [{ name: "keyboard", type: "node" }];
 
     protected readonly minHeight: number;
+    private readonly keyboard: Keyboard;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = "KeyboardDialog") {
         super([], name);
@@ -14,13 +15,16 @@ export class KeyboardDialog extends Dialog {
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
 
-        this.setFieldValue("keyboard", new Keyboard());
+        this.keyboard = new Keyboard();
+        this.setFieldValue("keyboard", this.keyboard);
 
         let contentWidth: number;
         let contentX: number;
         let titleTrans: number[];
         let dividerTrans: number[];
         let msgTrans: number[];
+        let keyboardTrans: number[];
+
         if (this.resolution === "FHD") {
             this.width = 1530;
             this.minHeight = 645;
@@ -34,6 +38,7 @@ export class KeyboardDialog extends Dialog {
             titleTrans = [contentX, this.dialogTrans[1] + 45];
             dividerTrans = [contentX, this.dialogTrans[1] + 105];
             msgTrans = [contentX, titleTrans[1] + 111];
+            keyboardTrans = [264, this.dialogTrans[1] + 282];
         } else {
             this.width = 1020;
             this.minHeight = 430;
@@ -47,6 +52,7 @@ export class KeyboardDialog extends Dialog {
             titleTrans = [contentX, this.dialogTrans[1] + 30];
             dividerTrans = [contentX, this.dialogTrans[1] + 70];
             msgTrans = [contentX, titleTrans[1] + 74];
+            keyboardTrans = [177, this.dialogTrans[1] + 188];
         }
         this.background.setFieldValue("width", new Float(this.width));
         this.background.setFieldValue("height", new Float(this.minHeight));
@@ -57,6 +63,8 @@ export class KeyboardDialog extends Dialog {
         this.divider.setTranslation(dividerTrans);
         this.message.setTranslation(msgTrans);
         this.message.setFieldValue("width", new Float(contentWidth));
+        this.keyboard.setTranslation(keyboardTrans);
+        this.appendChildToParent(this.keyboard);
         this.buttonGroup.setFieldValue("minWidth", new Float(contentWidth));
         this.buttonGroup.setFieldValue("maxWidth", new Float(contentWidth));
         this.setFieldValue("width", new Float(this.width));
@@ -115,6 +123,7 @@ export class KeyboardDialog extends Dialog {
         this.title.setTranslationOffset(0, offsetY);
         this.divider.setTranslationOffset(0, offsetY);
         this.message.setTranslationOffset(0, offsetY);
+        this.keyboard.setTranslationOffset(0, offsetY);
         if (this.hasButtons) {
             const msgTrans = this.message.getFieldValueJS("translation") as number[];
             const buttonsTrans = [
