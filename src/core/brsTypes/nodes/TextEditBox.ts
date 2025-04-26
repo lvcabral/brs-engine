@@ -3,7 +3,7 @@ import { Group } from "./Group";
 import { AAMember } from "../components/RoAssociativeArray";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D } from "../interfaces/IfDraw2D";
-import { Float, getTextureManager, RoBitmap, Label, Font, BrsString } from "..";
+import { Float, getTextureManager, RoBitmap, Label, Font, BrsString, RoFont } from "..";
 import { BrsBoolean } from "../BrsType";
 
 export class TextEditBox extends Group {
@@ -23,8 +23,9 @@ export class TextEditBox extends Group {
         { name: "focusable", type: "boolean", value: "true" },
     ];
 
+    private background?: RoBitmap;
     private cursor?: RoBitmap;
-    private bitmap?: RoBitmap;
+    private drawFont?: RoFont;
     private textLabel: Label;
     private hintLabel: Label;
     private height: number;
@@ -35,8 +36,6 @@ export class TextEditBox extends Group {
     private readonly cursorBlinkInterval = 500; // milliseconds
 
     private readonly backUri = "common:/images/inputField.9.png";
-    private readonly cursorUriHD = "common:/images/cursor_textInput_HD.png";
-    private readonly cursorUriFHD = "common:/images/cursor_textInput_FHD.png";
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = "TextEditBox") {
         super([], name);
@@ -44,7 +43,7 @@ export class TextEditBox extends Group {
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
 
-        this.bitmap = getTextureManager().loadTexture(
+        this.background = getTextureManager().loadTexture(
             this.getFieldValueJS("backgroundUri") || this.backUri
         );
 
@@ -52,13 +51,13 @@ export class TextEditBox extends Group {
             this.height = 72;
             this.paddingX = 18;
             this.paddingY = 18; // Approximate vertical centering
-            this.cursor = getTextureManager().loadTexture(this.cursorUriFHD);
         } else {
             this.height = 48;
             this.paddingX = 12;
             this.paddingY = 12; // Approximate vertical centering
-            this.cursor = getTextureManager().loadTexture(this.cursorUriHD);
         }
+        const cursorUri = `common:/images/cursor_textInput_${this.resolution}.png`;
+        this.cursor = getTextureManager().loadTexture(cursorUri);
         this.setFieldValue("height", new Float(this.height));
         this.setFieldValue("active", BrsBoolean.True); // TODO: Control with Keyboard node focus
 
@@ -77,7 +76,7 @@ export class TextEditBox extends Group {
         this.linkField(this.hintLabel, "text", "hintText");
         this.linkField(this.hintLabel, "color", "hintTextColor");
 
-        this.lastCursorToggleTime = performance.now();
+        this.lastCursorToggleTime = Date.now();
     }
 
     private configureLabels() {
@@ -121,12 +120,13 @@ export class TextEditBox extends Group {
             const labelWidth = width > 0 ? width - this.paddingX * 2 : 0;
             this.textLabel.setFieldValue("width", new Float(labelWidth));
             this.hintLabel.setFieldValue("width", new Float(labelWidth));
+            this.drawFont = undefined;
             // Background Image
             const backgroundUri = this.getFieldValueJS("backgroundUri") as string;
-            if (backgroundUri && this.bitmap?.getImageName() !== backgroundUri) {
-                this.bitmap = getTextureManager().loadTexture(backgroundUri);
-            } else if (this.bitmap?.getImageName() !== this.backUri) {
-                this.bitmap = getTextureManager().loadTexture(this.backUri);
+            if (backgroundUri && this.background?.getImageName() !== backgroundUri) {
+                this.background = getTextureManager().loadTexture(backgroundUri);
+            } else if (this.background?.getImageName() !== this.backUri) {
+                this.background = getTextureManager().loadTexture(this.backUri);
             }
             // Determine which label to show and render children (Labels)
             const showText = text.length > 0 || isActive;
@@ -134,15 +134,18 @@ export class TextEditBox extends Group {
             this.hintLabel.setFieldValue("visible", BrsBoolean.from(!showText));
             this.isDirty = false;
         }
-
+        if (this.drawFont === undefined) {
+            const font = this.textLabel.getFieldValue("font") as Font;
+            this.drawFont = font.createDrawFont();
+        }
         const rect = { x: drawTrans[0], y: drawTrans[1], width: size.width, height: size.height };
 
-        if (this.bitmap?.isValid()) {
-            this.drawImage(this.bitmap, rect, 0, combinedOpacity, draw2D);
+        if (this.background?.isValid()) {
+            this.drawImage(this.background, rect, 0, combinedOpacity, draw2D);
         }
-        // 3. Draw Cursor if active
+        // Draw Cursor if active
         if (isActive && this.cursor?.isValid()) {
-            const now = performance.now();
+            const now = Date.now();
             if (now - this.lastCursorToggleTime > this.cursorBlinkInterval) {
                 this.cursorVisible = !this.cursorVisible;
                 this.lastCursorToggleTime = now;
@@ -150,8 +153,6 @@ export class TextEditBox extends Group {
             if (this.cursorVisible) {
                 const cursorPosition = this.getFieldValueJS("cursorPosition") as number;
                 const secureMode = this.getFieldValueJS("secureMode") as boolean;
-                const font = this.textLabel.getFieldValue("font") as Font;
-                const drawFont = font.createDrawFont();
 
                 let textToMeasure: string;
                 if (secureMode) {
@@ -160,7 +161,7 @@ export class TextEditBox extends Group {
                 } else {
                     textToMeasure = text.substring(0, Math.min(cursorPosition, text.length));
                 }
-                const measured = drawFont.measureTextWidth(textToMeasure);
+                const measured = this.drawFont.measureTextWidth(textToMeasure);
                 const cursorX = drawTrans[0] + this.paddingX + measured.width;
                 const cursorY = drawTrans[1] + (size.height - this.cursor.height) / 2;
                 const cursorRect = {
