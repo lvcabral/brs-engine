@@ -41,9 +41,9 @@ export class Group extends RoSGNode {
     ];
     protected readonly sceneRect: Rect;
     protected resolution: string;
-    protected isDirty: boolean;
     private cachedLines: MeasuredText[] = [];
     private cachedHeight: number = 0;
+    isDirty: boolean;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = "Group") {
         super([], name);

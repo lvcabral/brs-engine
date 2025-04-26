@@ -187,8 +187,9 @@ export class Dialog extends Group {
             if (rootObjects.rootScene?.dialog === this) {
                 rootObjects.rootScene.dialog = undefined;
             }
-            if (this.lastFocus) {
+            if (this.lastFocus instanceof Group) {
                 rootObjects.focused = this.lastFocus;
+                this.lastFocus.isDirty = true;
                 this.lastFocus = undefined;
             }
         } else if (fieldName === "buttons" && !(value instanceof RoArray)) {
