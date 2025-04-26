@@ -1,7 +1,7 @@
 import { FieldModel } from "./Field";
 import { AAMember } from "../components/RoAssociativeArray";
 import { Dialog } from "./Dialog";
-import { Keyboard, BrsBoolean, BrsString, Float, isBrsString } from "..";
+import { Keyboard, BrsBoolean, BrsString, Float, isBrsString, rootObjects } from "..";
 
 export class KeyboardDialog extends Dialog {
     readonly defaultFields: FieldModel[] = [
@@ -12,6 +12,7 @@ export class KeyboardDialog extends Dialog {
     protected readonly minHeight: number;
     private readonly keyboard: Keyboard;
     private keyboardY: number;
+    private focus: string;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = "KeyboardDialog") {
         super([], name);
@@ -28,7 +29,6 @@ export class KeyboardDialog extends Dialog {
         let dividerTrans: number[];
         let msgTrans: number[];
         let keyboardTrans: number[];
-
         if (this.resolution === "FHD") {
             this.width = 1530;
             this.minHeight = 645;
@@ -77,6 +77,35 @@ export class KeyboardDialog extends Dialog {
         this.setFieldValue("iconUri", new BrsString(""));
         this.linkField(this.keyboard, "text");
         this.icon.setFieldValue("visible", BrsBoolean.False);
+        this.focus = "";
+    }
+
+    handleKey(key: string, press: boolean): boolean {
+        const optionsDialog = this.getFieldValueJS("optionsDialog") as boolean;
+        let handled = false;
+        if (press && (key === "back" || (key === "options" && optionsDialog))) {
+            this.set(new BrsString("close"), BrsBoolean.True);
+            handled = true;
+        } else if (this.hasButtons && this.focus === "buttons") {
+            handled = this.buttonGroup.handleKey(key, press);
+        } else if (this.focus === "keyboard") {
+            handled = this.keyboard.handleKey(key, press);
+        }
+        if (handled) {
+            return true;
+        }
+        if (press && key === "up" && this.focus === "buttons") {
+            rootObjects.focused = this.keyboard;
+            this.focus = "keyboard";
+            this.isDirty = true;
+            handled = true;
+        } else if (press && key === "down" && this.focus === "keyboard") {
+            rootObjects.focused = this.buttonGroup;
+            this.focus = "buttons";
+            this.isDirty = true;
+            handled = true;
+        }
+        return handled;
     }
 
     protected updateChildren() {
@@ -119,6 +148,9 @@ export class KeyboardDialog extends Dialog {
         } else {
             this.height += this.vertOffset;
             this.hasButtons = false;
+        }
+        if (this.focus === "") {
+            this.focus = this.hasButtons ? "buttons" : "keyboard";
         }
 
         // Set new Dialog height and reposition elements

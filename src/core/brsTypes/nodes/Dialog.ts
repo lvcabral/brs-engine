@@ -202,8 +202,8 @@ export class Dialog extends Group {
         if (focusOn && this.hasButtons && rootObjects.focused && this.lastFocus === undefined) {
             this.lastFocus = rootObjects.focused;
             rootObjects.focused = this.buttonGroup;
+            this.isDirty = true;
         }
-        this.isDirty = true;
         return true;
     }
 
