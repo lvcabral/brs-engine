@@ -11,6 +11,7 @@ export class KeyboardDialog extends Dialog {
 
     protected readonly minHeight: number;
     private readonly keyboard: Keyboard;
+    private keyboardY: number;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = "KeyboardDialog") {
         super([], name);
@@ -41,7 +42,8 @@ export class KeyboardDialog extends Dialog {
             titleTrans = [contentX, this.dialogTrans[1] + 45];
             dividerTrans = [contentX, this.dialogTrans[1] + 105];
             msgTrans = [contentX, titleTrans[1] + 111];
-            keyboardTrans = [264, this.dialogTrans[1] + 219];
+            this.keyboardY = 219;
+            keyboardTrans = [264, this.dialogTrans[1] + this.keyboardY];
         } else {
             this.width = 1020;
             this.minHeight = 430;
@@ -55,7 +57,8 @@ export class KeyboardDialog extends Dialog {
             titleTrans = [contentX, this.dialogTrans[1] + 30];
             dividerTrans = [contentX, this.dialogTrans[1] + 70];
             msgTrans = [contentX, titleTrans[1] + 74];
-            keyboardTrans = [177, this.dialogTrans[1] + 146];
+            this.keyboardY = 146;
+            keyboardTrans = [177, this.dialogTrans[1] + this.keyboardY];
         }
         this.background.setFieldValue("width", new Float(this.width));
         this.background.setFieldValue("height", new Float(this.minHeight));
@@ -100,6 +103,10 @@ export class KeyboardDialog extends Dialog {
         if (isBrsString(message) && message.getValue() !== "") {
             const measured = this.message.getMeasured();
             this.height += measured.height + this.vertOffset;
+            this.keyboard.setTranslationY(this.dialogTrans[1] + this.keyboardY);
+        } else {
+            this.height += this.vertOffset;
+            this.keyboard.setTranslationY(this.dialogTrans[1] + this.keyboardY - this.vertOffset);
         }
         this.copyField(this.message, "color", "messageColor");
         this.copyField(this.message, "font", "messageFont");

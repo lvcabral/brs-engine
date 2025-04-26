@@ -25,12 +25,17 @@ export class Keyboard extends Group {
         { name: "showTextEditBox", type: "boolean", value: "true" },
     ];
 
-    private bitmap?: RoBitmap;
+    private bmpBack?: RoBitmap;
     private textEditBox: TextEditBox;
     private gapX: number;
     private gapY: number;
+    private iconBaseX: number;
+    private iconOffsetX: number;
+    private iconOffsetY: number;
     private readonly backUriHD = "common:/images/keyboard_full_HD.png";
     private readonly backUriFHD = "common:/images/keyboard_full_FHD.png";
+    private readonly icons = ["shift", "space", "delete", "moveCursorLeft", "moveCursorRight"];
+    private readonly bmpIcons: Map<string, RoBitmap> = new Map();
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = "Keyboard") {
         super([], name);
@@ -40,16 +45,29 @@ export class Keyboard extends Group {
 
         this.textEditBox = new TextEditBox();
         if (this.resolution === "FHD") {
-            this.bitmap = getTextureManager().loadTexture(this.backUriFHD);
+            this.bmpBack = getTextureManager().loadTexture(this.backUriFHD);
             this.textEditBox.setFieldValue("width", new Float(1371));
             this.gapX = 12;
             this.gapY = 81;
+            this.iconBaseX = 354;
+            this.iconOffsetY = 84;
+            this.iconOffsetX = 45;
         } else {
-            this.bitmap = getTextureManager().loadTexture(this.backUriHD);
+            this.bmpBack = getTextureManager().loadTexture(this.backUriHD);
             this.textEditBox.setFieldValue("width", new Float(914));
             this.gapX = 8;
             this.gapY = 54;
+            this.iconBaseX = 236;
+            this.iconOffsetY = 56;
+            this.iconOffsetX = 30;
         }
+        this.icons.forEach((icon) => {
+            const uri = `common:/images/icon_${icon}_${this.resolution}.png`;
+            const bmp = getTextureManager().loadTexture(uri);
+            if (bmp?.isValid()) {
+                this.bmpIcons.set(icon, bmp);
+            }
+        });
         this.setFieldValue("textEditBox", this.textEditBox);
         this.linkField(this.textEditBox, "text");
         this.appendChildToParent(this.textEditBox);
@@ -63,8 +81,6 @@ export class Keyboard extends Group {
         if ("texteditbox" === fieldName) {
             // Read-only field
             return BrsInvalid.Instance;
-        } else if ("text" === fieldName) {
-            console.debug("Keyboard test =", value.toString());
         }
         return super.set(index, value, alwaysNotify, kind);
     }
@@ -91,8 +107,26 @@ export class Keyboard extends Group {
             this.textEditBox.setTranslation([this.gapX, 0]);
             this.isDirty = false;
         }
-        if (this.bitmap?.isValid()) {
-            this.drawImage(this.bitmap, { ...rect, y: rect.y + this.gapY }, 0, opacity, draw2D);
+        if (this.bmpBack?.isValid()) {
+            this.drawImage(this.bmpBack, { ...rect, y: rect.y + this.gapY }, 0, opacity, draw2D);
+        }
+        for (let i = 0; i < this.icons.length; i++) {
+            const bmp = this.bmpIcons.get(this.icons[i]);
+            if (bmp?.isValid()) {
+                let offX = 0;
+                let offY = i * this.iconOffsetY;
+                if (i > 2) {
+                    offX = i == 3 ? -this.iconOffsetX : this.iconOffsetX;
+                    offY = 3 * this.iconOffsetY;
+                }
+                const iconRect = {
+                    x: this.iconBaseX + offX,
+                    y: rect.y + this.gapY + bmp.height + offY,
+                    width: bmp.width,
+                    height: bmp.height,
+                };
+                this.drawImage(bmp, iconRect, 0, opacity, draw2D);
+            }
         }
         this.updateBoundingRects(rect, origin, rotation);
         this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);
