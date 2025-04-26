@@ -189,6 +189,7 @@ export class Dialog extends Group {
             }
             if (this.lastFocus) {
                 rootObjects.focused = this.lastFocus;
+                this.lastFocus = undefined;
             }
         } else if (fieldName === "buttons" && !(value instanceof RoArray)) {
             value = new RoArray([]);
