@@ -94,6 +94,37 @@ export class TextEditBox extends Group {
         this.hintLabel.setFieldValue("vertAlign", new BrsString("center"));
     }
 
+    handleKey(key: string, press: boolean): boolean {
+        let handled = false;
+        if (!press) {
+            return handled;
+        }
+        if (key.startsWith("Lit_")) {
+            let text = this.getFieldValueJS("text") as string;
+            let position = this.getFieldValueJS("cursorPosition") as number;
+            if (position === 0) {
+                text = key.substring(4) + text;
+            } else {
+                text = text.slice(0, position) + key.substring(4) + text.slice(position);
+            }
+            position++;
+            this.set(new BrsString("text"), new BrsString(text));
+            this.set(new BrsString("cursorPosition"), new Float(position));
+            handled = true;
+        } else if (key === "replay") {
+            let text = this.getFieldValueJS("text") as string;
+            let position = this.getFieldValueJS("cursorPosition") as number;
+            if (text.length && position > 0) {
+                text = text.slice(0, position - 1) + text.slice(position);
+                position--;
+                this.set(new BrsString("text"), new BrsString(text));
+                this.set(new BrsString("cursorPosition"), new Float(position));
+                handled = true;
+            }
+        }
+        return handled;
+    }
+
     renderNode(
         interpreter: Interpreter,
         origin: number[],

@@ -1,7 +1,7 @@
 import { FieldModel } from "./Field";
 import { AAMember } from "../components/RoAssociativeArray";
 import { Dialog } from "./Dialog";
-import { Keyboard, BrsBoolean, BrsString, Float, isBrsString, rootObjects } from "..";
+import { Keyboard, BrsBoolean, BrsString, Float, isBrsString, rootObjects, Int32 } from "..";
 
 export class KeyboardDialog extends Dialog {
     readonly defaultFields: FieldModel[] = [
@@ -85,6 +85,9 @@ export class KeyboardDialog extends Dialog {
         let handled = false;
         if (press && (key === "back" || (key === "options" && optionsDialog))) {
             this.set(new BrsString("close"), BrsBoolean.True);
+            this.focus = "buttons";
+            this.keyboard.textEditBox.setFieldValue("active", BrsBoolean.False);
+            this.keyboard.textEditBox.setFieldValue("cursorPosition", new Int32(0));
             handled = true;
         } else if (this.hasButtons && this.focus === "buttons") {
             handled = this.buttonGroup.handleKey(key, press);
@@ -97,11 +100,13 @@ export class KeyboardDialog extends Dialog {
         if (press && key === "up" && this.focus === "buttons") {
             rootObjects.focused = this.keyboard;
             this.focus = "keyboard";
+            this.keyboard.textEditBox.set(new BrsString("active"), BrsBoolean.True);
             this.isDirty = true;
             handled = true;
         } else if (press && key === "down" && this.focus === "keyboard") {
             rootObjects.focused = this.buttonGroup;
             this.focus = "buttons";
+            this.keyboard.textEditBox.set(new BrsString("active"), BrsBoolean.False);
             this.isDirty = true;
             handled = true;
         }

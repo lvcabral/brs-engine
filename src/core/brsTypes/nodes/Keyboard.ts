@@ -15,12 +15,9 @@ import {
 } from "..";
 
 enum KeyboardModes {
-    ALPHA_LOW,
-    ALPHA_UP,
-    SYMBOLS_LOW,
-    SYMBOLS_UP,
-    ACCENTED_LOW,
-    ACCENTED_UP,
+    ALPHANUMERIC,
+    SYMBOLS,
+    ACCENTED,
 }
 
 export class Keyboard extends Group {
@@ -35,13 +32,13 @@ export class Keyboard extends Group {
         { name: "showTextEditBox", type: "boolean", value: "true" },
     ];
 
+    readonly textEditBox: TextEditBox;
     private keyboardMode: KeyboardModes;
     private capsLock: boolean;
-    private shiftState: boolean;
+    private shift: boolean;
     private bmpBack?: RoBitmap;
     private keyColor: number;
     private focusedKeyColor: number;
-    private textEditBox: TextEditBox;
     private gapX: number;
     private gapY: number;
     private iconBaseX: number;
@@ -54,8 +51,18 @@ export class Keyboard extends Group {
     private readonly font: Font;
     private readonly backUriHD = "common:/images/keyboard_full_HD.png";
     private readonly backUriFHD = "common:/images/keyboard_full_FHD.png";
-    private readonly icons = ["shift", "space", "delete", "moveCursorLeft", "moveCursorRight"];
-    private readonly buttons: Map<KeyboardModes, string[]> = new Map();
+    private readonly icons = [
+        "shift",
+        "space",
+        "delete",
+        "moveCursorLeft",
+        "moveCursorRight",
+        "checkboxOFF",
+        "checkboxON",
+        "radioButtonOFF",
+        "radioButtonON",
+    ];
+    private readonly buttons: Map<string, string[]> = new Map();
     private readonly bmpIcons: Map<string, RoBitmap> = new Map();
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = "Keyboard") {
@@ -66,9 +73,9 @@ export class Keyboard extends Group {
 
         this.font = new Font();
 
-        this.keyboardMode = KeyboardModes.ALPHA_LOW;
+        this.keyboardMode = KeyboardModes.ALPHANUMERIC;
         this.capsLock = false;
-        this.shiftState = false;
+        this.shift = false;
         this.setupKeyboardModes();
         // Setting up Child Nodes
         this.textEditBox = new TextEditBox();
@@ -131,11 +138,17 @@ export class Keyboard extends Group {
         if (key === "left" || key === "right") {
             // cycle  keyboardMode
             this.keyboardMode += key === "left" ? -1 : 1;
-            if (this.keyboardMode > KeyboardModes.ACCENTED_UP) {
-                this.keyboardMode = KeyboardModes.ALPHA_LOW;
-            } else if (this.keyboardMode < KeyboardModes.ALPHA_LOW) {
-                this.keyboardMode = KeyboardModes.ACCENTED_UP;
+            if (this.keyboardMode > KeyboardModes.ACCENTED) {
+                this.keyboardMode = KeyboardModes.ALPHANUMERIC;
+            } else if (this.keyboardMode < KeyboardModes.ALPHANUMERIC) {
+                this.keyboardMode = KeyboardModes.ACCENTED;
             }
+            this.isDirty = true;
+            handled = true;
+        } else if (key.startsWith("Lit_") || key === "replay") {
+            handled = this.textEditBox.handleKey(key, press);
+        } else if (key === "options") {
+            this.capsLock = !this.capsLock;
             this.isDirty = true;
             handled = true;
         }
@@ -166,7 +179,8 @@ export class Keyboard extends Group {
         if (this.bmpBack?.isValid()) {
             this.drawImage(this.bmpBack, { ...rect, y: rect.y + this.gapY }, 0, opacity, draw2D);
         }
-        for (let i = 0; i < this.icons.length; i++) {
+        // Left Icons
+        for (let i = 0; i < 5; i++) {
             const bmp = this.bmpIcons.get(this.icons[i]);
             if (bmp?.isValid()) {
                 let offX = 0;
@@ -184,8 +198,9 @@ export class Keyboard extends Group {
                 this.drawImage(bmp, iconRect, 0, opacity, draw2D);
             }
         }
-        // Middle Keys
-        const buttons = this.buttons.get(this.keyboardMode);
+        // Left Keys
+        const buttonsId = `${this.keyboardMode}${this.capsLock || this.shift ? "U" : "L"}`;
+        const buttons = this.buttons.get(buttonsId);
         for (let r = 0; r < 4; r++) {
             for (let c = 0; c < 7; c++) {
                 const index = r * 7 + c;
@@ -194,8 +209,8 @@ export class Keyboard extends Group {
                     const buttonRect = {
                         x: this.keyBaseX + c * this.keyOffsetX,
                         y: rect.y + this.keyBaseY + this.gapY + r * this.keyOffsetY,
-                        width: 92,
-                        height: 81,
+                        width: 92, // TODO: Make resolution based value
+                        height: 81, // TODO: Make resolution based value
                     };
                     this.drawText(
                         button,
@@ -220,10 +235,10 @@ export class Keyboard extends Group {
                 const button = buttons![index];
                 if (button) {
                     const buttonRect = {
-                        x: 1161 + c * this.keyOffsetX,
+                        x: 1161 + c * this.keyOffsetX, // TODO: Make relative value
                         y: rect.y + this.keyBaseY + this.gapY + r * this.keyOffsetY,
-                        width: 92,
-                        height: 81,
+                        width: 92, // TODO: Make resolution based value
+                        height: 81, // TODO: Make resolution based value
                     };
                     this.drawText(
                         button,
@@ -241,6 +256,43 @@ export class Keyboard extends Group {
                 }
             }
         }
+        // Right Icons
+        for (let r = 0; r < 4; r++) {
+            let icon: string;
+            if (r === 0) {
+                // Caps Lock
+                icon = this.capsLock ? "checkboxON" : "checkboxOFF";
+                const bmp = this.bmpIcons.get("shift");
+                if (bmp?.isValid()) {
+                    const iconRect = {
+                        x: 1486 + 9 + bmp.width, // TODO: Make relative value
+                        y: rect.y + this.gapY + bmp.height,
+                        width: bmp.width,
+                        height: bmp.height,
+                    };
+                    this.drawImage(bmp, iconRect, 0, opacity, draw2D);
+                }
+            } else if (r === 1 && this.keyboardMode === KeyboardModes.ALPHANUMERIC) {
+                icon = "radioButtonON";
+            } else if ( r === 2 && this.keyboardMode === KeyboardModes.SYMBOLS) {
+                icon = "radioButtonON";
+            } else if (r === 3 && this.keyboardMode === KeyboardModes.ACCENTED) {
+                icon = "radioButtonON";
+            } else {
+                icon = "radioButtonOFF";
+            }
+            const bmp = this.bmpIcons.get(icon);
+            if (bmp?.isValid()) {
+                let offY = r * this.iconOffsetY;
+                const iconRect = {
+                    x: 1486, // TODO: Make relative value
+                    y: rect.y + this.gapY + bmp.height + offY,
+                    width: bmp.width,
+                    height: bmp.height,
+                };
+                this.drawImage(bmp, iconRect, 0, opacity, draw2D);
+            }
+        }
         this.updateBoundingRects(rect, origin, rotation);
         this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);
         this.updateParentRects(origin, angle);
@@ -248,196 +300,11 @@ export class Keyboard extends Group {
     }
 
     private setupKeyboardModes() {
-        // Alpha Numeric Lower Case
-        this.buttons.set(KeyboardModes.ALPHA_LOW, []);
-        for (let i = 97; i <= 122; i++) {
-            this.buttons.get(KeyboardModes.ALPHA_LOW)?.push(String.fromCharCode(i));
-        }
-        this.buttons.get(KeyboardModes.ALPHA_LOW)?.push(...["-", "_"]);
-        for (let i = 49; i <= 57; i++) {
-            this.buttons.get(KeyboardModes.ALPHA_LOW)?.push(String.fromCharCode(i));
-        }
-        this.buttons.get(KeyboardModes.ALPHA_LOW)?.push(...["@", ".", "0"]);
-        // Alpha Numeric Upper Case
-        this.buttons.set(KeyboardModes.ALPHA_UP, []);
-        for (let i = 65; i <= 90; i++) {
-            this.buttons.get(KeyboardModes.ALPHA_UP)?.push(String.fromCharCode(i));
-        }
-        this.buttons.get(KeyboardModes.ALPHA_UP)?.push(...["-", "_"]);
-        for (let i = 49; i <= 57; i++) {
-            this.buttons.get(KeyboardModes.ALPHA_UP)?.push(String.fromCharCode(i));
-        }
-        this.buttons.get(KeyboardModes.ALPHA_UP)?.push(...["@", ".", "0"]);
-        // Symbols Lower Case
-        this.buttons.set(KeyboardModes.SYMBOLS_LOW, [
-            "!",
-            "?",
-            "*",
-            "#",
-            "$",
-            "%",
-            "^",
-            "&",
-            ",",
-            ":",
-            ";",
-            "`",
-            "'",
-            `"`,
-            "(",
-            ")",
-            "{",
-            "}",
-            "[",
-            "]",
-            "~",
-            "¡",
-            "¿",
-            "<",
-            ">",
-            "|",
-            "\\",
-            "/",
-            "´",
-            "ˆ",
-            "˜",
-            "¨",
-            "¯",
-            "¸",
-            "=",
-            "+",
-            "×",
-            "÷",
-            "±",
-            "‰",
-        ]);
-        // Symbols Upper Case
-        this.buttons.set(KeyboardModes.SYMBOLS_UP, [
-            "•",
-            "·",
-            "¢",
-            "£",
-            "¥",
-            "€",
-            "§",
-            "®",
-            "©",
-            "™",
-            "«",
-            "»",
-            "‹",
-            "›",
-            "†",
-            "‡",
-            "ƒ",
-            "¶",
-            "¹",
-            "²",
-            "³",
-            "º",
-            "°",
-            "ª",
-            "…",
-            "",
-            "",
-            "",
-            "¼",
-            "½",
-            "¾",
-            "“",
-            "”",
-            "„",
-            "‘",
-            "’",
-            "‚",
-            "–",
-            "—",
-        ]);
-        // Accented Lower Case
-        this.buttons.set(KeyboardModes.ACCENTED_LOW, [
-            "à",
-            "á",
-            "â",
-            "ã",
-            "ä",
-            "å",
-            "æ",
-            "è",
-            "é",
-            "ê",
-            "ë",
-            "ì",
-            "í",
-            "î",
-            "ï",
-            "ò",
-            "ó",
-            "ô",
-            "õ",
-            "ö",
-            "ø",
-            "œ",
-            "ù",
-            "ú",
-            "û",
-            "ü",
-            "ç",
-            "ñ",
-            "ý",
-            "ÿ",
-            "š",
-            "ž",
-            "ð",
-            "þ",
-            "ß",
-            "",
-            "",
-            "",
-            "",
-            "",
-        ]);
-        // Accented Upper Case
-        this.buttons.set(KeyboardModes.ACCENTED_UP, [
-            "À",
-            "Á",
-            "Â",
-            "Ã",
-            "Ä",
-            "Å",
-            "Æ",
-            "È",
-            "É",
-            "Ê",
-            "Ë",
-            "Ì",
-            "Í",
-            "Î",
-            "Ï",
-            "Ò",
-            "Ó",
-            "Ô",
-            "Õ",
-            "Ö",
-            "Ø",
-            "Œ",
-            "Ù",
-            "Ú",
-            "Û",
-            "Ü",
-            "Ç",
-            "Ñ",
-            "Ý",
-            "Ÿ",
-            "Š",
-            "Ž",
-            "Ð",
-            "Þ",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-        ]);
+        this.buttons.set("0L", "abcdefghijklmnopqrstuvwxyz-_123456789@.0".split(""));
+        this.buttons.set("0U", "ABCDEFGHIJKLMNOPQRSTUVWXYZ-_123456789@.0".split(""));
+        this.buttons.set("1L", '!?*#$%^&,:;"(){}[]~¡¿<>|\\/´ˆ˜¨¯¸=+×÷±‰'.split(""));
+        this.buttons.set("1U", "•·¢£¥€§®©™«»‹›†‡ƒ¶¹²³º°ª…¼½¾“”„‘’‚–—".split(""));
+        this.buttons.set("2L", "àáâãäåæèéêëìíîïòóôõöøœùúûüçñýÿšžðþß".split(""));
+        this.buttons.set("2U", "ÀÁÂÃÄÅÆÈÉÊËÌÍÎÏÒÓÔÕÖØŒÙÚÛÜÇÑÝŸŠŽÐÞ".split(""));
     }
 }
