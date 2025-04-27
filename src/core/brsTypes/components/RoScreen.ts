@@ -18,7 +18,6 @@ import {
     rgbaIntToHex,
 } from "../interfaces/IfDraw2D";
 import { IfSetMessagePort, IfGetMessagePort } from "../interfaces/IfMessagePort";
-import { KeyEvent } from "../../common";
 import { BrsDevice } from "../../device/BrsDevice";
 
 export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
@@ -31,7 +30,6 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     private readonly doubleBuffer: boolean;
     private readonly maxMs: number;
     private readonly valid: boolean;
-    private readonly keysBuffer: KeyEvent[];
     private alphaEnable: boolean;
     private currentBuffer: number;
     private lastBuffer: number;
@@ -40,8 +38,6 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     private port?: RoMessagePort;
     private isDirty: boolean;
     private lastMessage: number;
-    private lastKey: number;
-    private lastMod: number;
     scaleMode: number;
 
     constructor(
@@ -68,9 +64,6 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         this.width = defaultWidth;
         this.height = defaultHeight;
         this.valid = true;
-        this.lastKey = -1;
-        this.lastMod = -1;
-        this.keysBuffer = [];
         if (width instanceof Float || width instanceof Double || width instanceof Int32) {
             this.width = Math.trunc(width.getValue());
             if (this.width <= 0) {
@@ -216,24 +209,8 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     // Control Key Events
     private getNewEvents() {
         const events: BrsEvent[] = [];
-        BrsDevice.updateKeysBuffer(this.keysBuffer);
-        const nextKey = this.keysBuffer.shift();
-        if (nextKey && nextKey.key !== this.lastKey) {
-            if (this.interpreter.singleKeyEvents) {
-                if (nextKey.mod === 0) {
-                    if (this.lastMod === 0) {
-                        this.keysBuffer.unshift({ ...nextKey });
-                        nextKey.key = this.lastKey + 100;
-                        nextKey.mod = 100;
-                    }
-                } else if (nextKey.key !== this.lastKey + 100) {
-                    return events;
-                }
-            }
-            BrsDevice.lastKeyTime = BrsDevice.currKeyTime;
-            BrsDevice.currKeyTime = Date.now();
-            this.lastKey = nextKey.key;
-            this.lastMod = nextKey.mod;
+        const nextKey = BrsDevice.updateKeysBuffer(this.interpreter.singleKeyEvents);
+        if (nextKey) {
             events.push(new RoUniversalControlEvent(nextKey));
         }
         return events;
