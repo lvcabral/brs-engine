@@ -30,7 +30,6 @@ import {
     rgbaIntToHex,
 } from "../interfaces/IfDraw2D";
 import { BrsDevice } from "../../device/BrsDevice";
-import { KeyEvent } from "../../common";
 
 // Roku Remote Mapping
 const rokuKeys: Map<number, string> = new Map([
@@ -56,7 +55,6 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     readonly resolution: string;
     private readonly interpreter: Interpreter;
     private readonly draw2D: IfDraw2D;
-    private readonly keysBuffer: KeyEvent[];
     private readonly maxMs: number;
     private readonly canvas: BrsCanvas;
     private readonly context: BrsCanvasContext2D;
@@ -64,7 +62,6 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     private readonly fontRegistry: RoFontRegistry;
     private port?: RoMessagePort;
     private sceneType?: BrsString;
-    private lastKey: number;
     private alphaEnable: boolean;
     private lastMessage: number;
     scaleMode: number;
@@ -86,8 +83,6 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
                 font.family = fontSemiBold;
             }
         });
-        this.lastKey = -1;
-        this.keysBuffer = [];
         this.alphaEnable = true;
         this.scaleMode = 1;
         this.isDirty = false;
@@ -223,6 +218,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         return events;
     }
 
+    /** Update all Application Tasks */
     private processTasks() {
         let updates = false;
         rootObjects.tasks.forEach((task) => {
@@ -246,27 +242,18 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
 
     /** Handle control keys */
     private handleNextKey() {
-        BrsDevice.updateKeysBuffer(this.keysBuffer);
-        const nextKey = this.keysBuffer.shift();
-        if (!nextKey || nextKey.key === this.lastKey || !rootObjects?.rootScene) {
+        const nextKey = BrsDevice.updateKeysBuffer(this.interpreter.singleKeyEvents);
+        if (!nextKey || !rootObjects?.rootScene) {
             return BrsInvalid.Instance;
         }
-        if (this.interpreter.singleKeyEvents) {
-            if (nextKey.mod === 0) {
-                if (this.lastKey >= 0 && this.lastKey < 100) {
-                    this.keysBuffer.unshift({ ...nextKey });
-                    nextKey.key = this.lastKey + 100;
-                    nextKey.mod = 100;
-                }
-            } else if (nextKey.key !== this.lastKey + 100) {
-                return BrsInvalid.Instance;
-            }
-        }
-        BrsDevice.lastKeyTime = BrsDevice.currKeyTime;
-        BrsDevice.currKeyTime = performance.now();
-        this.lastKey = nextKey.key;
         this.isDirty = true;
-        const key = new BrsString(rokuKeys.get(nextKey.key - nextKey.mod) ?? "");
+        const keyCode = nextKey.key - nextKey.mod;
+        let key: BrsString;
+        if (keyCode < 32) {
+            key = new BrsString(rokuKeys.get(keyCode) ?? "");
+        } else {
+            key = new BrsString(`Lit_${String.fromCharCode(keyCode)}`);
+        }
         const press = BrsBoolean.from(nextKey.mod === 0);
         let handled = false;
         if (rootObjects.rootScene.dialog?.isVisible()) {
@@ -283,6 +270,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         return BrsInvalid.Instance;
     }
 
+    /** Play the navigation sound effect based on key type and handled flag */
     private playNavigationSound(key: string, handled: boolean) {
         let sound = "deadend";
         if (key === "back") {
@@ -374,7 +362,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         },
     });
 
-    /** The roSGScene object associated with the screen. */
+    /** Returns the roSGScene object associated with the screen. */
     private getScene = new Callable("getScene", {
         signature: {
             args: [],

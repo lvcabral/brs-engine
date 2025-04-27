@@ -28,6 +28,7 @@ export class BrsDevice {
     static readonly registry: Map<string, string> = new Map<string, string>();
     static readonly fileSystem: FileSystem = new FileSystem();
     static readonly isDevMode = process.env.NODE_ENV === "development";
+    static readonly keysBuffer: KeyEvent[] = [];
 
     static stdout: OutputProxy = new OutputProxy(process.stdout, false);
     static stderr: OutputProxy = new OutputProxy(process.stderr, false);
@@ -36,6 +37,8 @@ export class BrsDevice {
     static displayEnabled: boolean = true;
     static threadId: number = 0;
     static lastRemote: number = 0;
+    static lastKey: number = -1;
+    static lastMod: number = -1;
     static lastKeyTime: number = Date.now();
     static currKeyTime: number = Date.now();
 
@@ -143,26 +146,47 @@ export class BrsDevice {
     }
 
     /**
-     * Method to update the control keys buffer, used by roScreen and roSGScreen
-     * @param keysBuffer Array with the keys buffer
+     * Method to update the control keys buffer and return the next key
+     * @param singleKey Flag to indicate if should only handle a key at a time (default Roku behavior)
+     * @returns the next key in the buffer to be handled or undefined if queue is empty
      */
-    static updateKeysBuffer(keysBuffer: KeyEvent[]) {
+    static updateKeysBuffer(singleKey: boolean): KeyEvent | undefined {
         for (let i = 0; i < keyBufferSize; i++) {
             const idx = i * keyArraySpots;
             const key = Atomics.load(this.sharedArray, DataType.KEY + idx);
             if (key === -1) {
-                return;
-            } else if (keysBuffer.length === 0 || key !== keysBuffer.at(-1)?.key) {
+                break;
+            } else if (this.keysBuffer.length === 0 || key !== this.keysBuffer.at(-1)?.key) {
                 const remoteId = Atomics.load(this.sharedArray, DataType.RID + idx);
                 const remoteType = Math.trunc(remoteId / 10) * 10;
                 const remoteStr = RemoteType[remoteType] ?? RemoteType[RemoteType.SIM];
                 const remoteIdx = remoteId - remoteType;
                 const mod = Atomics.load(this.sharedArray, DataType.MOD + idx);
                 Atomics.store(this.sharedArray, DataType.KEY + idx, -1);
-                keysBuffer.push({ remote: `${remoteStr}:${remoteIdx}`, key: key, mod: mod });
+                this.keysBuffer.push({ remote: `${remoteStr}:${remoteIdx}`, key: key, mod: mod });
                 this.lastRemote = remoteIdx;
             }
         }
+        const nextKey = this.keysBuffer.shift();
+        if (!nextKey || nextKey.key === this.lastKey) {
+            return;
+        }
+        if (singleKey) {
+            if (nextKey.mod === 0) {
+                if (this.lastMod === 0) {
+                    this.keysBuffer.unshift({ ...nextKey });
+                    nextKey.key = this.lastKey + 100;
+                    nextKey.mod = 100;
+                }
+            } else if (nextKey.key !== this.lastKey + 100) {
+                return;
+            }
+        }
+        this.lastKeyTime = this.currKeyTime;
+        this.currKeyTime = Date.now();
+        this.lastKey = nextKey.key;
+        this.lastMod = nextKey.mod;
+        return nextKey;
     }
 
     /**
