@@ -26,6 +26,7 @@ sub main()
         url: "https://reqres.in/api/users",
         body: {name: "Employee", job: "SW Engineer"}
     }
+    http.AddHeader("x-api-key", "reqres-free-v1")
     body = FormatJson(api.body)
     timeout = 3000
     http.SetUrl(api.url)
