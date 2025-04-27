@@ -42,6 +42,7 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     private isDirty: boolean;
     private lastMessage: number;
     private lastKey: number;
+    private lastMod: number;
 
     constructor(
         interpreter: Interpreter,
@@ -68,6 +69,7 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         this.height = defaultHeight;
         this.valid = true;
         this.lastKey = -1;
+        this.lastMod = -1;
         this.keysBuffer = [];
         if (width instanceof Float || width instanceof Double || width instanceof Int32) {
             this.width = Math.trunc(width.getValue());
@@ -221,7 +223,7 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         if (nextKey && nextKey.key !== this.lastKey) {
             if (this.interpreter.singleKeyEvents) {
                 if (nextKey.mod === 0) {
-                    if (this.lastKey >= 0 && this.lastKey < 100) {
+                    if (this.lastMod === 0) {
                         this.keysBuffer.unshift({ ...nextKey });
                         nextKey.key = this.lastKey + 100;
                         nextKey.mod = 100;
@@ -233,6 +235,7 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
             BrsDevice.lastKeyTime = BrsDevice.currKeyTime;
             BrsDevice.currKeyTime = Date.now();
             this.lastKey = nextKey.key;
+            this.lastMod = nextKey.mod;
             events.push(new RoUniversalControlEvent(nextKey));
         }
         return events;
