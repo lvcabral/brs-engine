@@ -123,30 +123,29 @@ export function enableSendKeys(enable: boolean) {
 }
 
 export function sendKey(key: string, mod: number, type: RemoteType = RemoteType.SIM, index = 0) {
-    key = key.toLowerCase();
-    if (["home", "volumemute", "poweroff"].includes(key)) {
+    if (["home", "volumemute", "poweroff"].includes(key.toLowerCase())) {
         if (mod === 0) {
-            notifyAll(key);
+            notifyAll(key.toLowerCase());
         }
-        notifyAll("control", { key: key, mod: mod });
+        notifyAll("control", { key: key.toLowerCase(), mod: mod });
     } else if (!sendKeysEnabled) {
         return;
-    } else if (key === "break") {
+    } else if (key.toLowerCase() === "break") {
         if (!disableDebug && mod === 0) {
             Atomics.store(sharedArray, DataType.DBG, DebugCommand.BREAK);
-            notifyAll("control", { key: key, mod: mod });
+            notifyAll("control", { key: key.toLowerCase(), mod: mod });
         }
-    } else if (rokuKeys.has(key)) {
-        const code = rokuKeys.get(key);
+    } else if (rokuKeys.has(key.toLowerCase())) {
+        const code = rokuKeys.get(key.toLowerCase());
         if (typeof code !== "undefined") {
             const next = getNext();
             Atomics.store(sharedArray, DataType.RID + next, type + index);
             Atomics.store(sharedArray, DataType.MOD + next, mod);
             Atomics.store(sharedArray, DataType.KEY + next, code + mod);
-            notifyAll("control", { key: key, mod: mod });
+            notifyAll("control", { key: key.toLowerCase(), mod: mod });
         }
     } else if (key.slice(0, 4).toLowerCase() === "lit_") {
-        if (key.slice(4).length === 1 && key.charCodeAt(4) >= 32 && key.charCodeAt(4) < 255) {
+        if (key.slice(4).length === 1) {
             const next = getNext();
             Atomics.store(sharedArray, DataType.RID + next, type + index);
             Atomics.store(sharedArray, DataType.MOD + next, mod);
@@ -258,6 +257,8 @@ function handleKeyboardEvent(event: KeyboardEvent, mod: number) {
         if (mod === 0) {
             event.preventDefault();
         }
+    } else if (!["Alt", "Control", "Meta", "Shift", "Tab", "Dead"].includes(event.key)) {
+        sendKey(`lit_${event.key}`, mod, RemoteType.WD);
     }
 }
 
