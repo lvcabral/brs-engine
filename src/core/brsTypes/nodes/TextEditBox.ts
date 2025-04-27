@@ -59,7 +59,6 @@ export class TextEditBox extends Group {
         const cursorUri = `common:/images/cursor_textInput_${this.resolution}.png`;
         this.cursor = getTextureManager().loadTexture(cursorUri);
         this.setFieldValue("height", new Float(this.height));
-        this.setFieldValue("active", BrsBoolean.True); // TODO: Control with Keyboard node focus
 
         // Create Labels for text and hint
         this.textLabel = new Label();
