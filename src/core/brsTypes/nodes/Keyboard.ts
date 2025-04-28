@@ -39,13 +39,18 @@ export class Keyboard extends Group {
     private bmpBack?: RoBitmap;
     private keyColor: number;
     private focusedKeyColor: number;
-    private gapX: number;
-    private gapY: number;
-    private iconBaseX: number;
+    private textEditX: number;
+    private iconLeftX: number;
+    private iconRightX: number;
+    private iconBaseY: number;
     private iconOffsetX: number;
     private iconOffsetY: number;
-    private keyBaseX: number;
+    private iconGapX: number;
+    private keyLeftX: number;
+    private keyRightX: number;
     private keyBaseY: number;
+    private keyWidth: number;
+    private keyHeight: number;
     private keyOffsetX: number;
     private keyOffsetY: number;
     private readonly font: Font;
@@ -82,25 +87,35 @@ export class Keyboard extends Group {
         if (this.resolution === "FHD") {
             this.bmpBack = getTextureManager().loadTexture(this.backUriFHD);
             this.textEditBox.setFieldValue("width", new Float(1371));
-            this.gapX = 12;
-            this.gapY = 81;
-            this.iconBaseX = 354;
+            this.textEditX = 12;
+            this.iconLeftX = 90;
+            this.iconRightX = 1221;
+            this.iconBaseY = 81;
             this.iconOffsetX = 45;
             this.iconOffsetY = 84;
-            this.keyBaseX = 492;
-            this.keyBaseY = 15;
+            this.iconGapX = 9;
+            this.keyLeftX = 228;
+            this.keyRightX = 897;
+            this.keyBaseY = 96;
+            this.keyWidth = 93;
+            this.keyHeight = 81;
             this.keyOffsetX = 90;
             this.keyOffsetY = 84;
         } else {
             this.bmpBack = getTextureManager().loadTexture(this.backUriHD);
             this.textEditBox.setFieldValue("width", new Float(914));
-            this.gapX = 8;
-            this.gapY = 54;
-            this.iconBaseX = 236;
+            this.textEditX = 8;
+            this.iconLeftX = 60;
+            this.iconRightX = 814;
+            this.iconBaseY = 54;
             this.iconOffsetX = 30;
             this.iconOffsetY = 56;
-            this.keyBaseX = 328;
-            this.keyBaseY = 10;
+            this.iconGapX = 6;
+            this.keyLeftX = 152;
+            this.keyRightX = 598;
+            this.keyBaseY = 66;
+            this.keyWidth = 62;
+            this.keyHeight = 54;
             this.keyOffsetX = 60;
             this.keyOffsetY = 56;
         }
@@ -174,10 +189,10 @@ export class Keyboard extends Group {
         opacity = opacity * this.getOpacity();
         const rect = { x: drawTrans[0], y: drawTrans[1], width: size.width, height: size.height };
         if (this.isDirty) {
-            this.textEditBox.setTranslation([this.gapX, 0]);
+            this.textEditBox.setTranslation([this.textEditX, 0]);
         }
         if (this.bmpBack?.isValid()) {
-            this.drawImage(this.bmpBack, { ...rect, y: rect.y + this.gapY }, 0, opacity, draw2D);
+            this.drawImage(this.bmpBack, { ...rect, y: rect.y + this.iconBaseY }, 0, opacity, draw2D);
         }
         // Left Icons
         for (let i = 0; i < 5; i++) {
@@ -190,8 +205,8 @@ export class Keyboard extends Group {
                     offY = 3 * this.iconOffsetY;
                 }
                 const iconRect = {
-                    x: this.iconBaseX + offX,
-                    y: rect.y + this.gapY + bmp.height + offY,
+                    x: rect.x + this.iconLeftX + offX,
+                    y: rect.y + this.iconBaseY + bmp.height + offY,
                     width: bmp.width,
                     height: bmp.height,
                 };
@@ -199,63 +214,9 @@ export class Keyboard extends Group {
             }
         }
         // Left Keys
-        const buttonsId = `${this.keyboardMode}${this.capsLock || this.shift ? "U" : "L"}`;
-        const buttons = this.buttons.get(buttonsId);
-        for (let r = 0; r < 4; r++) {
-            for (let c = 0; c < 7; c++) {
-                const index = r * 7 + c;
-                const button = buttons![index];
-                if (button) {
-                    const buttonRect = {
-                        x: this.keyBaseX + c * this.keyOffsetX,
-                        y: rect.y + this.keyBaseY + this.gapY + r * this.keyOffsetY,
-                        width: 92, // TODO: Make resolution based value
-                        height: 81, // TODO: Make resolution based value
-                    };
-                    this.drawText(
-                        button,
-                        this.font,
-                        this.keyColor,
-                        opacity,
-                        buttonRect,
-                        "center",
-                        "center",
-                        0,
-                        draw2D,
-                        "",
-                        index
-                    );
-                }
-            }
-        }
+        this.renderKeys(7, 0, rect.x + this.keyLeftX, rect.y + this.keyBaseY, opacity, draw2D);
         // Right Keys
-        for (let r = 0; r < 4; r++) {
-            for (let c = 0; c < 3; c++) {
-                const index = 28 + r * 3 + c;
-                const button = buttons![index];
-                if (button) {
-                    const buttonRect = {
-                        x: 1161 + c * this.keyOffsetX, // TODO: Make relative value
-                        y: rect.y + this.keyBaseY + this.gapY + r * this.keyOffsetY,
-                        width: 92, // TODO: Make resolution based value
-                        height: 81, // TODO: Make resolution based value
-                    };
-                    this.drawText(
-                        button,
-                        this.font,
-                        this.keyColor,
-                        opacity,
-                        buttonRect,
-                        "center",
-                        "center",
-                        0,
-                        draw2D,
-                        "",
-                        index
-                    );
-                }
-            }
-        }
+        this.renderKeys(3, 28, rect.x + this.keyRightX, rect.y + this.keyBaseY, opacity, draw2D);
         // Right Icons
         for (let r = 0; r < 4; r++) {
             let icon: string;
@@ -265,8 +226,8 @@ export class Keyboard extends Group {
                 const bmp = this.bmpIcons.get("shift");
                 if (bmp?.isValid()) {
                     const iconRect = {
-                        x: 1486 + 9 + bmp.width, // TODO: Make relative value
-                        y: rect.y + this.gapY + bmp.height,
+                        x: rect.x + this.iconRightX + this.iconGapX + bmp.width,
+                        y: rect.y + this.iconBaseY + bmp.height,
                         width: bmp.width,
                         height: bmp.height,
                     };
@@ -274,7 +235,7 @@ export class Keyboard extends Group {
                 }
             } else if (r === 1 && this.keyboardMode === KeyboardModes.ALPHANUMERIC) {
                 icon = "radioButtonON";
-            } else if ( r === 2 && this.keyboardMode === KeyboardModes.SYMBOLS) {
+            } else if (r === 2 && this.keyboardMode === KeyboardModes.SYMBOLS) {
                 icon = "radioButtonON";
             } else if (r === 3 && this.keyboardMode === KeyboardModes.ACCENTED) {
                 icon = "radioButtonON";
@@ -285,8 +246,8 @@ export class Keyboard extends Group {
             if (bmp?.isValid()) {
                 let offY = r * this.iconOffsetY;
                 const iconRect = {
-                    x: 1486, // TODO: Make relative value
-                    y: rect.y + this.gapY + bmp.height + offY,
+                    x: rect.x + this.iconRightX,
+                    y: rect.y + this.iconBaseY + bmp.height + offY,
                     width: bmp.width,
                     height: bmp.height,
                 };
@@ -297,6 +258,45 @@ export class Keyboard extends Group {
         this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);
         this.updateParentRects(origin, angle);
         this.isDirty = false;
+    }
+
+    renderKeys(
+        cols: number,
+        start: number,
+        x: number,
+        y: number,
+        opacity: number,
+        draw2D?: IfDraw2D
+    ) {
+        const buttonsId = `${this.keyboardMode}${this.capsLock || this.shift ? "U" : "L"}`;
+        const buttons = this.buttons.get(buttonsId);
+        for (let r = 0; r < 4; r++) {
+            for (let c = 0; c < cols; c++) {
+                const index = start + r * cols + c;
+                const button = buttons![index];
+                if (button) {
+                    const buttonRect = {
+                        x: x + c * this.keyOffsetX,
+                        y: y + r * this.keyOffsetY,
+                        width: this.keyWidth,
+                        height: this.keyHeight,
+                    };
+                    this.drawText(
+                        button,
+                        this.font,
+                        this.keyColor,
+                        opacity,
+                        buttonRect,
+                        "center",
+                        "center",
+                        0,
+                        draw2D,
+                        "",
+                        index
+                    );
+                }
+            }
+        }
     }
 
     private setupKeyboardModes() {
