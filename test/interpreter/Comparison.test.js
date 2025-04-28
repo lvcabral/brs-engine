@@ -2,18 +2,8 @@ const brs = require("../../bin/brs.node");
 const { Interpreter } = brs;
 const { Lexeme } = brs.lexer;
 const { binary } = require("./InterpreterTests");
-const {
-    Int32,
-    Int64,
-    Float,
-    Double,
-    BrsString,
-    BrsBoolean,
-    RoArray,
-    BrsInvalid,
-    RoAssociativeArray,
-    RoString,
-} = brs.types;
+const { Int32, Int64, Float, Double, BrsString, BrsBoolean, RoArray, BrsInvalid, RoAssociativeArray, RoString } =
+    brs.types;
 
 let interpreter;
 
@@ -109,9 +99,7 @@ describe("interpreter comparisons", () => {
             test(name, () => {
                 let arr = new RoArray([]);
 
-                expect(() => interpreter.exec([binary(arr, operator, arr)])).toThrow(
-                    "Type Mismatch."
-                );
+                expect(() => interpreter.exec([binary(arr, operator, arr)])).toThrow("Type Mismatch.");
             });
         });
     });
@@ -139,26 +127,17 @@ describe("interpreter comparisons", () => {
                     ])
                 ).toEqual([BrsBoolean.False, BrsBoolean.False, BrsBoolean.True, BrsBoolean.True]);
 
-                [Lexeme.Less, Lexeme.LessEqual, Lexeme.Greater, Lexeme.GreaterEqual].forEach(
-                    (operator) => {
-                        expect(() => interpreter.exec([binary(value, operator, invalid)])).toThrow(
-                            "Type Mismatch."
-                        );
+                [Lexeme.Less, Lexeme.LessEqual, Lexeme.Greater, Lexeme.GreaterEqual].forEach((operator) => {
+                    expect(() => interpreter.exec([binary(value, operator, invalid)])).toThrow("Type Mismatch.");
 
-                        expect(() => interpreter.exec([binary(invalid, operator, value)])).toThrow(
-                            "Type Mismatch."
-                        );
-                    }
-                );
+                    expect(() => interpreter.exec([binary(invalid, operator, value)])).toThrow("Type Mismatch.");
+                });
             });
         });
 
         test("invalid", () =>
             expect(
-                interpreter.exec([
-                    binary(invalid, Lexeme.Equal, invalid),
-                    binary(invalid, Lexeme.LessGreater, invalid),
-                ])
+                interpreter.exec([binary(invalid, Lexeme.Equal, invalid), binary(invalid, Lexeme.LessGreater, invalid)])
             ).toEqual([BrsBoolean.True, BrsBoolean.False]));
     });
 
@@ -177,9 +156,9 @@ describe("interpreter comparisons", () => {
             let greaterEqual = binary(int32, Lexeme.GreaterEqual, str);
             let equal = binary(int32, Lexeme.Equal, str);
             let notEqual = binary(int32, Lexeme.LessGreater, str);
-            expect(() =>
-                interpreter.exec([less, lessEqual, greater, greaterEqual, equal, notEqual])
-            ).toThrow("Type Mismatch.");
+            expect(() => interpreter.exec([less, lessEqual, greater, greaterEqual, equal, notEqual])).toThrow(
+                "Type Mismatch."
+            );
         });
 
         test("roString and 64-bit int", () => {
@@ -189,9 +168,9 @@ describe("interpreter comparisons", () => {
             let greaterEqual = binary(rostr, Lexeme.GreaterEqual, int64);
             let equal = binary(rostr, Lexeme.Equal, int64);
             let notEqual = binary(rostr, Lexeme.LessGreater, int64);
-            expect(() =>
-                interpreter.exec([less, lessEqual, greater, greaterEqual, equal, notEqual])
-            ).toThrow("Type Mismatch.");
+            expect(() => interpreter.exec([less, lessEqual, greater, greaterEqual, equal, notEqual])).toThrow(
+                "Type Mismatch."
+            );
         });
     });
 });

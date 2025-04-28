@@ -76,9 +76,7 @@ describe("RoDeviceInfo", () => {
                 let port = obj.getMethod("getPort");
 
                 expect(method).toBeTruthy();
-                expect(method.call(interpreter, new BrsString("roku.com:8080"))).toEqual(
-                    BrsBoolean.True
-                );
+                expect(method.call(interpreter, new BrsString("roku.com:8080"))).toEqual(BrsBoolean.True);
                 expect(host.call(interpreter)).toEqual(new BrsString("roku.com"));
                 expect(port.call(interpreter)).toEqual(new Int32(8080));
             });
@@ -90,9 +88,7 @@ describe("RoDeviceInfo", () => {
                 let host = obj.getMethod("getHostName");
 
                 expect(method).toBeTruthy();
-                expect(method.call(interpreter, new BrsString("google.com"))).toEqual(
-                    BrsBoolean.True
-                );
+                expect(method.call(interpreter, new BrsString("google.com"))).toEqual(BrsBoolean.True);
                 expect(host.call(interpreter)).toEqual(new BrsString("google.com"));
             });
         });

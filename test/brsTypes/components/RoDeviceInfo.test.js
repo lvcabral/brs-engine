@@ -88,9 +88,7 @@ describe("RoDeviceInfo", () => {
                 let method = deviceInfo.getMethod("getFriendlyName");
 
                 expect(method).toBeTruthy();
-                expect(method.call(interpreter)).toEqual(
-                    new BrsString("BrightScript Engine Library")
-                );
+                expect(method.call(interpreter)).toEqual(new BrsString("BrightScript Engine Library"));
             });
         });
         describe("getOSVersion", () => {
@@ -122,9 +120,7 @@ describe("RoDeviceInfo", () => {
                 let method = deviceInfo.getMethod("getRIDA");
 
                 expect(method).toBeTruthy();
-                expect(method.call(interpreter)).toEqual(
-                    new BrsString("f51ac698-bc60-4409-aae3-8fc3abc025c4")
-                );
+                expect(method.call(interpreter)).toEqual(new BrsString("f51ac698-bc60-4409-aae3-8fc3abc025c4"));
             });
         });
         describe("isRIDADisabled", () => {
@@ -142,9 +138,7 @@ describe("RoDeviceInfo", () => {
                 let method = deviceInfo.getMethod("getChannelClientId");
 
                 expect(method).toBeTruthy();
-                expect(method.call(interpreter)).toEqual(
-                    new BrsString("6c5bf3a5-b2a5-4918-824d-7691d5c85364")
-                );
+                expect(method.call(interpreter)).toEqual(new BrsString("6c5bf3a5-b2a5-4918-824d-7691d5c85364"));
             });
         });
         describe("getUserCountryCode", () => {
@@ -185,9 +179,7 @@ describe("RoDeviceInfo", () => {
                 let method = deviceInfo.getMethod("hasFeature");
 
                 expect(method).toBeTruthy();
-                expect(method.call(interpreter, new BrsString("soundbar_hardware"))).toEqual(
-                    BrsBoolean.False
-                );
+                expect(method.call(interpreter, new BrsString("soundbar_hardware"))).toEqual(BrsBoolean.False);
             });
         });
         describe("hasFeature", () => {
@@ -196,9 +188,7 @@ describe("RoDeviceInfo", () => {
                 let method = deviceInfo.getMethod("hasFeature");
 
                 expect(method).toBeTruthy();
-                expect(method.call(interpreter, new BrsString("simulation_engine"))).toEqual(
-                    BrsBoolean.True
-                );
+                expect(method.call(interpreter, new BrsString("simulation_engine"))).toEqual(BrsBoolean.True);
             });
         });
         describe("getCurrentLocale", () => {
@@ -287,9 +277,7 @@ describe("RoDeviceInfo", () => {
                 let method = deviceInfo.getMethod("setCaptionsMode");
 
                 expect(method).toBeTruthy();
-                expect(method.call(interpreter, new BrsString("Instant replay"))).toEqual(
-                    BrsBoolean.True
-                );
+                expect(method.call(interpreter, new BrsString("Instant replay"))).toEqual(BrsBoolean.True);
             });
         });
         describe("setCaptionsMode", () => {
@@ -307,9 +295,7 @@ describe("RoDeviceInfo", () => {
                 let method = deviceInfo.getMethod("getCaptionsOption");
 
                 expect(method).toBeTruthy();
-                expect(method.call(interpreter, new BrsString("text/color"))).toEqual(
-                    new BrsString("Default")
-                );
+                expect(method.call(interpreter, new BrsString("text/color"))).toEqual(new BrsString("Default"));
             });
         });
         describe("getCaptionsOption", () => {
@@ -318,9 +304,7 @@ describe("RoDeviceInfo", () => {
                 let method = deviceInfo.getMethod("getCaptionsOption");
 
                 expect(method).toBeTruthy();
-                expect(method.call(interpreter, new BrsString("foobar"))).toEqual(
-                    new BrsString("")
-                );
+                expect(method.call(interpreter, new BrsString("foobar"))).toEqual(new BrsString(""));
             });
         });
         describe("getClockFormat", () => {
@@ -529,9 +513,7 @@ describe("RoDeviceInfo", () => {
             it("return fake decoded video info", () => {
                 let deviceInfo = new RoDeviceInfo(interpreter);
                 let method = deviceInfo.getMethod("canDecodeVideo");
-                let config = new RoAssociativeArray([
-                    { name: new BrsString("codec"), value: new BrsString("") },
-                ]);
+                let config = new RoAssociativeArray([{ name: new BrsString("codec"), value: new BrsString("") }]);
                 let aa = method.call(interpreter, config);
                 expect(method).toBeTruthy();
                 expect(aa.get(new BrsString("result"))).toEqual(BrsBoolean.False);

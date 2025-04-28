@@ -5,13 +5,7 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import {
-    enableSendKeys,
-    initControlModule,
-    sendInput,
-    sendKey,
-    subscribeControl,
-} from "../api/control";
+import { enableSendKeys, initControlModule, sendInput, sendKey, subscribeControl } from "../api/control";
 import { AppData, DataType, DebugCommand, DeviceInfo, getRokuOSVersion } from "../core/common";
 import { isMainThread, parentPort, workerData } from "worker_threads";
 import { Server as SSDP } from "node-ssdp";
@@ -519,11 +513,7 @@ function getMacAddress() {
     const ifaces = os.networkInterfaces();
     let mac = "";
     Object.keys(ifaces).forEach(function (ifname) {
-        if (
-            mac !== "" ||
-            ifname.toLowerCase().startsWith("vmware") ||
-            ifname.toLowerCase().startsWith("virtualbox")
-        ) {
+        if (mac !== "" || ifname.toLowerCase().startsWith("vmware") || ifname.toLowerCase().startsWith("virtualbox")) {
             return;
         }
         ifaces[ifname]?.forEach(function (iface: any) {

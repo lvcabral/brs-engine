@@ -106,11 +106,7 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
         // method with the desired name separately? That last bit would work but it's pretty gross.
         // That'd allow roArrays to have methods with the methods not accessible via `arr["count"]`.
         // Same with RoAssociativeArrays I guess.
-        return (
-            this.findElement(index.value, isCaseSensitive) ||
-            this.getMethod(index.value) ||
-            BrsInvalid.Instance
-        );
+        return this.findElement(index.value, isCaseSensitive) || this.getMethod(index.value) || BrsInvalid.Instance;
     }
 
     set(index: BrsType, value: BrsType, isCaseSensitive = false) {
@@ -258,10 +254,7 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
      */
     private readonly addReplace = new Callable("addReplace", {
         signature: {
-            args: [
-                new StdlibArgument("key", ValueKind.String),
-                new StdlibArgument("value", ValueKind.Dynamic),
-            ],
+            args: [new StdlibArgument("key", ValueKind.String), new StdlibArgument("value", ValueKind.Dynamic)],
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, key: BrsString, value: BrsType) => {

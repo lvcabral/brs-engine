@@ -501,10 +501,7 @@ function createHlsInstance() {
         if (data.fatal) {
             switch (data.type) {
                 case Hls.ErrorTypes.MEDIA_ERROR:
-                    notifyAll(
-                        "warning",
-                        "[video] fatal media error encountered, will try to recover"
-                    );
+                    notifyAll("warning", "[video] fatal media error encountered, will try to recover");
                     hls?.recoverMediaError();
                     break;
                 case Hls.ErrorTypes.NETWORK_ERROR:

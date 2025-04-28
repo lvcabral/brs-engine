@@ -12,11 +12,7 @@ describe("parser postfix unary expressions", () => {
     });
 
     it("parses postfix '++' for variables", () => {
-        let { statements, errors } = parser.parse([
-            identifier("foo"),
-            token(Lexeme.PlusPlus, "++"),
-            EOF,
-        ]);
+        let { statements, errors } = parser.parse([identifier("foo"), token(Lexeme.PlusPlus, "++"), EOF]);
 
         expect(errors).toEqual([]);
         expect(statements).toBeDefined();
@@ -65,9 +61,7 @@ describe("parser postfix unary expressions", () => {
 
         expect(errors).toHaveLength(1);
         expect(errors[0]).toMatchObject({
-            message: expect.stringMatching(
-                "Consecutive increment/decrement operators are not allowed"
-            ),
+            message: expect.stringMatching("Consecutive increment/decrement operators are not allowed"),
         });
     });
 

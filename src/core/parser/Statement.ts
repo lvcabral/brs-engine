@@ -480,11 +480,7 @@ export class While implements Statement {
 }
 
 export class DottedSet implements Statement {
-    constructor(
-        readonly obj: Expr.Expression,
-        readonly name: Identifier,
-        readonly value: Expr.Expression
-    ) {}
+    constructor(readonly obj: Expr.Expression, readonly name: Identifier, readonly value: Expr.Expression) {}
 
     accept<R>(visitor: Visitor<R>): BrsType {
         return visitor.visitDottedSet(this);
@@ -535,9 +531,7 @@ export class Library implements Statement {
         return {
             file: this.tokens.library.location.file,
             start: this.tokens.library.location.start,
-            end: this.tokens.filePath
-                ? this.tokens.filePath.location.end
-                : this.tokens.library.location.end,
+            end: this.tokens.filePath ? this.tokens.filePath.location.end : this.tokens.library.location.end,
         };
     }
 }

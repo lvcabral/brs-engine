@@ -152,9 +152,7 @@ export class Int64 implements Numeric, Comparable, Boxable {
             case ValueKind.Double:
                 return new Double(Math.pow(this.getValue().toNumber(), exponent.getValue()));
             case ValueKind.Int64:
-                return new Int64(
-                    Math.pow(this.getValue().toNumber(), exponent.getValue().toNumber())
-                );
+                return new Int64(Math.pow(this.getValue().toNumber(), exponent.getValue().toNumber()));
         }
     }
 

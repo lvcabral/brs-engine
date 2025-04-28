@@ -15,14 +15,7 @@ export class RoRegex extends BrsComponent implements BrsValue {
         this.jsRegex = new RegExp(expression.value, this.parseFlags(flags.value));
 
         this.registerMethods({
-            ifRegex: [
-                this.isMatch,
-                this.match,
-                this.replace,
-                this.replaceAll,
-                this.split,
-                this.matchAll,
-            ],
+            ifRegex: [this.isMatch, this.match, this.replace, this.replaceAll, this.split, this.matchAll],
         });
     }
 
@@ -101,10 +94,7 @@ export class RoRegex extends BrsComponent implements BrsValue {
     /** Returns a new string with first match replaced */
     private readonly replace = new Callable("replace", {
         signature: {
-            args: [
-                new StdlibArgument("str", ValueKind.String),
-                new StdlibArgument("replacement", ValueKind.String),
-            ],
+            args: [new StdlibArgument("str", ValueKind.String), new StdlibArgument("replacement", ValueKind.String)],
             returns: ValueKind.String,
         },
         impl: (_: Interpreter, str: BrsString, replacement: BrsString) => {
@@ -117,10 +107,7 @@ export class RoRegex extends BrsComponent implements BrsValue {
     /** Returns a new string with all matches replaced */
     private readonly replaceAll = new Callable("replaceall", {
         signature: {
-            args: [
-                new StdlibArgument("str", ValueKind.String),
-                new StdlibArgument("replacement", ValueKind.String),
-            ],
+            args: [new StdlibArgument("str", ValueKind.String), new StdlibArgument("replacement", ValueKind.String)],
             returns: ValueKind.String,
         },
         impl: (_: Interpreter, str: BrsString, replacement: BrsString) => {
@@ -167,11 +154,7 @@ export class RoRegex extends BrsComponent implements BrsValue {
 
             while ((matches = this.jsRegex.exec(str.value)) !== null) {
                 arr.push(
-                    new RoArray(
-                        matches
-                            .filter((match) => match !== undefined)
-                            .map((match) => new BrsString(match))
-                    )
+                    new RoArray(matches.filter((match) => match !== undefined).map((match) => new BrsString(match)))
                 );
             }
             return new RoArray(arr);

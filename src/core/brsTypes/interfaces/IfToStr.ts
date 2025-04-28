@@ -78,18 +78,12 @@ export class IfToStr {
                 return new BrsString(vsprintf(format.value, params));
             } catch (err: any) {
                 if (BrsDevice.isDevMode) {
-                    BrsDevice.stderr.write(
-                        `warning,ifToStr.toStr() Error: ${err.message} - ${format.value}`
-                    );
+                    BrsDevice.stderr.write(`warning,ifToStr.toStr() Error: ${err.message} - ${format.value}`);
                 }
                 const errorDetail = err.message?.includes("expecting number")
                     ? RuntimeErrorDetail.TypeMismatch
                     : RuntimeErrorDetail.InvalidFormatSpecifier;
-                throw new RuntimeError(
-                    errorDetail,
-                    interpreter.location,
-                    interpreter.stack.slice(0, -1)
-                );
+                throw new RuntimeError(errorDetail, interpreter.location, interpreter.stack.slice(0, -1));
             }
         },
     });

@@ -85,13 +85,7 @@ function notifyAll(eventName: string, eventData?: any) {
 }
 
 // Redraw Display Canvas
-export function redrawDisplay(
-    running?: boolean,
-    fullScreen?: boolean,
-    width?: number,
-    height?: number,
-    dpr?: number
-) {
+export function redrawDisplay(running?: boolean, fullScreen?: boolean, width?: number, height?: number, dpr?: number) {
     if (!width) {
         width = window.innerWidth;
     }

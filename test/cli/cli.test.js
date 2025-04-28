@@ -6,12 +6,9 @@ const exec = promisify(child_process.exec);
 
 describe("cli", () => {
     it("run zip file", async () => {
-        let command = [
-            "node",
-            path.join(process.cwd(), "bin", "brs.cli.js"),
-            "requires-manifest.zip",
-            "-c 0",
-        ].join(" ");
+        let command = ["node", path.join(process.cwd(), "bin", "brs.cli.js"), "requires-manifest.zip", "-c 0"].join(
+            " "
+        );
 
         let { stdout } = await exec(command, {
             cwd: path.join(__dirname, "resources"),
@@ -62,12 +59,7 @@ describe("cli", () => {
     }, 10000);
 
     it("Texture Manager Test", async () => {
-        let command = [
-            "node",
-            path.join(process.cwd(), "bin", "brs.cli.js"),
-            "roTextureManager.brs",
-            "-c 0",
-        ].join(" ");
+        let command = ["node", path.join(process.cwd(), "bin", "brs.cli.js"), "roTextureManager.brs", "-c 0"].join(" ");
 
         let { stdout } = await exec(command, {
             cwd: path.join(__dirname, "resources"),
@@ -93,12 +85,9 @@ describe("cli", () => {
     it("prints syntax errors once", async () => {
         let folder = "errors";
         let filename = "uninitialized-object.brs";
-        let command = [
-            "node",
-            path.join(process.cwd(), "bin", "brs.cli.js"),
-            path.join(folder, filename),
-            "-c 0",
-        ].join(" ");
+        let command = ["node", path.join(process.cwd(), "bin", "brs.cli.js"), path.join(folder, filename), "-c 0"].join(
+            " "
+        );
         try {
             await exec(command, {
                 cwd: path.join(__dirname, "resources"),
@@ -113,12 +102,9 @@ describe("cli", () => {
     it("prints eval errors once", async () => {
         let folder = "errors";
         let filename = "uninitialized-object.brs";
-        let command = [
-            "node",
-            path.join(process.cwd(), "bin", "brs.cli.js"),
-            path.join(folder, filename),
-            "-c 0",
-        ].join(" ");
+        let command = ["node", path.join(process.cwd(), "bin", "brs.cli.js"), path.join(folder, filename), "-c 0"].join(
+            " "
+        );
         try {
             await exec(command, {
                 cwd: path.join(__dirname, "resources"),

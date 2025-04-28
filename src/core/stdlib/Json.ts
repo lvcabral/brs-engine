@@ -87,19 +87,14 @@ function jsonOf(x: BrsType, flags: number = 0, key: string = ""): string {
 
 function logBrsErr(interpreter: Interpreter, functionName: string, err: Error): void {
     BrsDevice.stderr.write(
-        `warning,BRIGHTSCRIPT: ERROR: ${functionName}: ${
-            err.message
-        }: ${interpreter.formatLocation()}`
+        `warning,BRIGHTSCRIPT: ERROR: ${functionName}: ${err.message}: ${interpreter.formatLocation()}`
     );
 }
 
 export const FormatJson = new Callable("FormatJson", {
     signature: {
         returns: ValueKind.String,
-        args: [
-            new StdlibArgument("x", ValueKind.Dynamic),
-            new StdlibArgument("flags", ValueKind.Int32, new Int32(0)),
-        ],
+        args: [new StdlibArgument("x", ValueKind.Dynamic), new StdlibArgument("flags", ValueKind.Int32, new Int32(0))],
     },
     impl: (interpreter: Interpreter, x: BrsType, flags: Int32) => {
         try {

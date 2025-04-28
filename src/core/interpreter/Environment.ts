@@ -66,12 +66,7 @@ export class Environment {
     public define(scope: Scope, name: string, value: BrsType, location?: Location): void {
         let destination: Map<string, BrsType>;
         const lowercaseName = name.toLowerCase();
-        if (
-            lowercaseName === "global" &&
-            scope === Scope.Function &&
-            value.kind !== ValueKind.Interface &&
-            location
-        ) {
+        if (lowercaseName === "global" && scope === Scope.Function && value.kind !== ValueKind.Interface && location) {
             throw new TypeMismatch({
                 message: `Unable to cast`,
                 left: {
@@ -179,9 +174,7 @@ export class Environment {
             return new Int32(name.location.start.line);
         }
 
-        let source = [this.function, this.module, this.global].find((scope) =>
-            scope.has(lowercaseName)
-        );
+        let source = [this.function, this.module, this.global].find((scope) => scope.has(lowercaseName));
 
         if (source) {
             return source.get(lowercaseName)!;
@@ -196,10 +189,7 @@ export class Environment {
      * @param scopeFilter the set of scopes with which to limit searches for `name`
      * @returns `true` if this environment contains `name`, otherwise `false`
      */
-    public has(
-        name: Identifier,
-        scopeFilter: Scope[] = [Scope.Global, Scope.Module, Scope.Function]
-    ): boolean {
+    public has(name: Identifier, scopeFilter: Scope[] = [Scope.Global, Scope.Module, Scope.Function]): boolean {
         if (name.text.toLowerCase() === "m") {
             return true; // we always have an `m` scope of some sort!
         }

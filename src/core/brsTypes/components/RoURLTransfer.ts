@@ -128,9 +128,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
             this.failureReason = xhr.statusText;
         } catch (e: any) {
             if (BrsDevice.isDevMode) {
-                BrsDevice.stderr.write(
-                    `warning,[getToStringEvent] Error getting ${this.url}: ${e.message}`
-                );
+                BrsDevice.stderr.write(`warning,[getToStringEvent] Error getting ${this.url}: ${e.message}`);
             }
             this.failureReason = e.message;
         }
@@ -158,9 +156,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
             }
         } catch (e: any) {
             if (BrsDevice.isDevMode) {
-                BrsDevice.stderr.write(
-                    `warning,[getToFileEvent] Error getting ${this.url}: ${e.message}`
-                );
+                BrsDevice.stderr.write(`warning,[getToFileEvent] Error getting ${this.url}: ${e.message}`);
             }
             this.failureReason = e.message;
         }
@@ -195,9 +191,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
             this.failureReason = xhr.statusText;
         } catch (e: any) {
             if (BrsDevice.isDevMode) {
-                BrsDevice.stdout.write(
-                    `warning,[postFromStringEvent] Error posting to ${this.url}: ${e.message}`
-                );
+                BrsDevice.stdout.write(`warning,[postFromStringEvent] Error posting to ${this.url}: ${e.message}`);
             }
             this.failureReason = e.message;
         }
@@ -246,9 +240,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
             error = e.message;
         }
         if (error !== "" && BrsDevice.isDevMode) {
-            BrsDevice.stderr.write(
-                `warning,[postFromFileToFileEvent] Error posting to ${this.url}: ${error}`
-            );
+            BrsDevice.stderr.write(`warning,[postFromFileToFileEvent] Error posting to ${this.url}: ${error}`);
         }
         return new RoURLEvent(
             this.identity,
@@ -309,9 +301,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
             );
         } catch (e: any) {
             if (BrsDevice.isDevMode) {
-                BrsDevice.stderr.write(
-                    `warning,[requestHead] Error requesting from ${this.url}: ${e.message}`
-                );
+                BrsDevice.stderr.write(`warning,[requestHead] Error requesting from ${this.url}: ${e.message}`);
             }
             return BrsInvalid.Instance;
         }
@@ -424,9 +414,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
                 this.failureReason = "";
                 this.port.pushCallback(this.getToStringEvent.bind(this));
             } else if (BrsDevice.isDevMode) {
-                BrsDevice.stderr.write(
-                    "warning,No message port assigned to this roUrlTransfer instance!"
-                );
+                BrsDevice.stderr.write("warning,No message port assigned to this roUrlTransfer instance!");
             }
             return BrsBoolean.True;
         },
@@ -446,9 +434,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
                 this.outFile.push(filePath.value);
                 this.port.pushCallback(this.getToFileAsync.bind(this));
             } else if (BrsDevice.isDevMode) {
-                BrsDevice.stderr.write(
-                    "warning,No message port assigned to this roUrlTransfer instance!"
-                );
+                BrsDevice.stderr.write("warning,No message port assigned to this roUrlTransfer instance!");
             }
             return BrsBoolean.True;
         },
@@ -493,9 +479,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
                 this.failureReason = "";
                 this.port.pushCallback(this.requestHead.bind(this));
             } else if (BrsDevice.isDevMode) {
-                BrsDevice.stderr.write(
-                    "warning,No message port assigned to this roUrlTransfer instance!"
-                );
+                BrsDevice.stderr.write("warning,No message port assigned to this roUrlTransfer instance!");
             }
             return BrsBoolean.True;
         },
@@ -526,9 +510,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
                 this.postBody.push(request.value);
                 this.port.pushCallback(this.postFromStringAsync.bind(this));
             } else if (BrsDevice.isDevMode) {
-                BrsDevice.stderr.write(
-                    "warning,No message port assigned to this roUrlTransfer instance!"
-                );
+                BrsDevice.stderr.write("warning,No message port assigned to this roUrlTransfer instance!");
             }
             return BrsBoolean.True;
         },
@@ -570,9 +552,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
                 this.postBody.push(fsys.readFileSync(filePath.value, "utf8"));
                 this.port.pushCallback(this.postFromStringAsync.bind(this));
             } else if (BrsDevice.isDevMode) {
-                BrsDevice.stderr.write(
-                    "warning,No message port assigned to this roUrlTransfer instance!"
-                );
+                BrsDevice.stderr.write("warning,No message port assigned to this roUrlTransfer instance!");
             }
             return BrsBoolean.True;
         },
@@ -581,10 +561,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
     /** Use the HTTP POST method to send the contents of the specified file to the current URL. */
     private readonly asyncPostFromFileToFile = new Callable("asyncPostFromFileToFile", {
         signature: {
-            args: [
-                new StdlibArgument("fromFile", ValueKind.String),
-                new StdlibArgument("toFile", ValueKind.String),
-            ],
+            args: [new StdlibArgument("fromFile", ValueKind.String), new StdlibArgument("toFile", ValueKind.String)],
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, fromFile: BrsString, toFile: BrsString) => {
@@ -598,9 +575,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
                 this.outFile.push(toFile.value);
                 this.port.pushCallback(this.postFromFileToFileAsync.bind(this));
             } else {
-                BrsDevice.stderr.write(
-                    "warning,No message port assigned to this roUrlTransfer instance!"
-                );
+                BrsDevice.stderr.write("warning,No message port assigned to this roUrlTransfer instance!");
             }
             return BrsBoolean.True;
         },
@@ -621,10 +596,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
     /** Enables HTTP authentication using the specified user name and password. */
     private readonly setUserAndPassword = new Callable("setUserAndPassword", {
         signature: {
-            args: [
-                new StdlibArgument("user", ValueKind.String),
-                new StdlibArgument("password", ValueKind.String),
-            ],
+            args: [new StdlibArgument("user", ValueKind.String), new StdlibArgument("password", ValueKind.String)],
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, user: BrsString, password: BrsString) => {

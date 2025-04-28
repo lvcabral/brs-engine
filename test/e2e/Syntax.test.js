@@ -216,31 +216,19 @@ describe("end to end syntax", () => {
     test("negative-precedence.brs", async () => {
         await execute([resourceFile("negative-precedence.brs")], outputStreams);
 
-        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
-            "0000",
-            " 0",
-            "foo is not 1",
-        ]);
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual(["0000", " 0", "foo is not 1"]);
     });
 
     test("assignment.brs", async () => {
         await execute([resourceFile("assignment.brs")], outputStreams);
 
-        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
-            "new value",
-        ]);
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual(["new value"]);
     });
 
     test("assignment-operators.brs", async () => {
         await execute([resourceFile("assignment-operators.brs")], outputStreams);
 
-        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
-            " 5",
-            " 2",
-            " 6",
-            " 3",
-            " 1",
-        ]);
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([" 5", " 2", " 6", " 3", " 1"]);
     });
 
     test("optional-chaining-operators.brs", async () => {

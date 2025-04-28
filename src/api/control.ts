@@ -6,15 +6,7 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { SubscribeCallback, saveDataBuffer } from "./util";
-import {
-    DataType,
-    RemoteType,
-    DebugCommand,
-    keyBufferSize,
-    keyArraySpots,
-    platform,
-    BufferType,
-} from "../core/common";
+import { DataType, RemoteType, DebugCommand, keyBufferSize, keyArraySpots, platform, BufferType } from "../core/common";
 /// #if BROWSER
 import { deviceData } from "./package";
 import gameControl, { GCGamepad, EventName } from "esm-gamecontroller.js";
@@ -166,11 +158,7 @@ function getNext() {
     for (let i = 1; i < keyBufferSize; i++) {
         const prev = (i - 1) * keyArraySpots;
         const next = i * keyArraySpots;
-        Atomics.store(
-            sharedArray,
-            DataType.KEY + prev,
-            Atomics.load(sharedArray, DataType.KEY + next)
-        );
+        Atomics.store(sharedArray, DataType.KEY + prev, Atomics.load(sharedArray, DataType.KEY + next));
     }
     return (keyBufferSize - 1) * keyArraySpots;
 }

@@ -91,10 +91,7 @@ describe("RoDateTime", () => {
             it("returns date string with param: short-month-short-weekday", () => {
                 let asDateString = dt.getMethod("asDateString");
 
-                let result = asDateString.call(
-                    interpreter,
-                    new BrsString("short-month-short-weekday")
-                );
+                let result = asDateString.call(interpreter, new BrsString("short-month-short-weekday"));
                 expect(asDateString).toBeTruthy();
                 expect(result).toEqual(new BrsString("Thu Jan 1, 2009"));
             });
@@ -102,10 +99,7 @@ describe("RoDateTime", () => {
             it("returns date string with param: short-month-no-weekday", () => {
                 let asDateString = dt.getMethod("asDateString");
 
-                let result = asDateString.call(
-                    interpreter,
-                    new BrsString("short-month-no-weekday")
-                );
+                let result = asDateString.call(interpreter, new BrsString("short-month-no-weekday"));
                 expect(asDateString).toBeTruthy();
                 expect(result).toEqual(new BrsString("Jan 1, 2009"));
             });
@@ -179,10 +173,7 @@ describe("RoDateTime", () => {
             it("set the date/time using a string in the ISO 8601 format", () => {
                 let fromISO8601String = dt.getMethod("fromISO8601String");
                 expect(fromISO8601String).toBeTruthy();
-                let result = fromISO8601String.call(
-                    interpreter,
-                    new BrsString("2019-07-27T17:08:41")
-                );
+                let result = fromISO8601String.call(interpreter, new BrsString("2019-07-27T17:08:41"));
                 expect(new Int32(dt.markTime)).toEqual(new Int32(1564247321000));
                 expect(result).toBe(Uninitialized.Instance);
             });

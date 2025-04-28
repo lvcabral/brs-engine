@@ -35,10 +35,7 @@ export class FileSystem {
         this.cfs = new MemoryFileSystem();
     }
     private savePath(uri: string) {
-        this.paths.set(
-            uri.toLowerCase().replace(/\/+/g, "/").trim(),
-            uri.replace(/\/+/g, "/").trim()
-        );
+        this.paths.set(uri.toLowerCase().replace(/\/+/g, "/").trim(), uri.replace(/\/+/g, "/").trim());
     }
     private deletePath(uri: string) {
         return this.paths.delete(uri.toLowerCase().replace(/\/+/g, "/").trim());

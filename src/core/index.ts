@@ -221,9 +221,7 @@ export function createPayloadFromFiles(
     if (id === 0) {
         throw new Error("Invalid or inexistent file(s)!");
     }
-    const deviceData = customDeviceData
-        ? Object.assign(defaultDeviceInfo, customDeviceData)
-        : defaultDeviceInfo;
+    const deviceData = customDeviceData ? Object.assign(defaultDeviceInfo, customDeviceData) : defaultDeviceInfo;
     if (root && !manifest && fs.existsSync(path.join(root, "manifest"))) {
         const fileData = fs.readFileSync(path.join(root, "manifest"));
         if (fileData) {
@@ -231,9 +229,7 @@ export function createPayloadFromFiles(
         }
     }
     if (deviceData.assets.byteLength === 0) {
-        deviceData.assets = fs.readFileSync(
-            path.join(__dirname, "../browser/assets/common.zip")
-        )?.buffer;
+        deviceData.assets = fs.readFileSync(path.join(__dirname, "../browser/assets/common.zip"))?.buffer;
     }
     if (manifest === undefined) {
         manifest = new Map();
@@ -271,10 +267,7 @@ export function createPayloadFromFiles(
  * @returns RunResult with the end reason and (optionally) the encrypted data.
  */
 
-export async function executeFile(
-    payload: AppPayload,
-    customOptions?: Partial<ExecutionOptions>
-): Promise<RunResult> {
+export async function executeFile(payload: AppPayload, customOptions?: Partial<ExecutionOptions>): Promise<RunResult> {
     const options = {
         ...{
             entryPoint: payload.device.entryPoint ?? true,
@@ -345,10 +338,7 @@ interface SerializedPCode {
  *
  * @returns an array of parameters in AA member format.
  */
-function setupInputParams(
-    deepLinkMap: Map<string, string>,
-    splashTime: number
-): BrsTypes.RoAssociativeArray {
+function setupInputParams(deepLinkMap: Map<string, string>, splashTime: number): BrsTypes.RoAssociativeArray {
     const inputMap = new Map([
         ["instant_on_run_mode", "foreground"],
         ["lastExitOrTerminationReason", AppExitReason.UNKNOWN],
@@ -385,10 +375,7 @@ function setupPackageFiles(payload: AppPayload): SourceResult {
             } else if (filePath.type === "source" && Array.isArray(payload.source)) {
                 result.sourceMap.set(filePath.url, payload.source[filePath.id]);
             } else if (filePath.type === "source" && fsys.existsSync(`pkg:/${filePath.url}`)) {
-                result.sourceMap.set(
-                    filePath.url,
-                    fsys.readFileSync(`pkg:/${filePath.url}`, "utf8")
-                );
+                result.sourceMap.set(filePath.url, fsys.readFileSync(`pkg:/${filePath.url}`, "utf8"));
             }
         } catch (err: any) {
             postMessage(`error,Error accessing file ${filePath.url} - ${err.message}`);
@@ -465,11 +452,7 @@ export interface ParseResult {
     statements: Stmt.Statement[];
 }
 
-export function lexParseSync(
-    sourceMap: Map<string, string>,
-    manifest: Map<string, any>,
-    password = ""
-): ParseResult {
+export function lexParseSync(sourceMap: Map<string, string>, manifest: Map<string, any>, password = ""): ParseResult {
     const lexer = new Lexer();
     const parser = new Parser();
     const preprocessor = new PP.Preprocessor();
@@ -578,9 +561,7 @@ async function runEncrypted(
     try {
         if (password.length > 0 && sourceResult.pcode && sourceResult.iv) {
             const decipher = crypto.createDecipheriv(algorithm, password, sourceResult.iv);
-            const inflated = unzlibSync(
-                Buffer.concat([decipher.update(sourceResult.pcode), decipher.final()])
-            );
+            const inflated = unzlibSync(Buffer.concat([decipher.update(sourceResult.pcode), decipher.final()]));
             const spcode = decode(inflated) as SerializedPCode;
             if (spcode) {
                 decodedTokens = new Map(Object.entries(spcode.pcode));
@@ -717,11 +698,7 @@ async function executeApp(
  * @param lib Collection with the libraries source code
  * @param manifest Map with the manifest data
  */
-function parseLibraries(
-    parseResults: ParseResults,
-    lib: Map<string, string>,
-    manifest: Map<string, any>
-) {
+function parseLibraries(parseResults: ParseResults, lib: Map<string, string>, manifest: Map<string, any>) {
     const fsys = BrsDevice.fileSystem;
     // Initialize Libraries on first run
     if (!lib.has("v30/bslDefender.brs")) {
@@ -734,10 +711,7 @@ function parseLibraries(
     }
     // Check for Libraries and add to the collection
     if (parseResults.libraries.get("v30/bslDefender.brs") === true) {
-        lib.set(
-            "v30/bslDefender.brs",
-            fsys.readFileSync("common:/LibCore/v30/bslDefender.brs", "utf8")
-        );
+        lib.set("v30/bslDefender.brs", fsys.readFileSync("common:/LibCore/v30/bslDefender.brs", "utf8"));
         lib.set("v30/bslCore.brs", fsys.readFileSync("common:/LibCore/v30/bslCore.brs", "utf8"));
     } else if (parseResults.libraries.get("v30/bslCore.brs") === true) {
         lib.set("v30/bslCore.brs", fsys.readFileSync("common:/LibCore/v30/bslCore.brs", "utf8"));
@@ -748,10 +722,7 @@ function parseLibraries(
     ) {
         lib.set("Roku_Ads.brs", fsys.readFileSync("common:/roku_ads/Roku_Ads.brs", "utf8"));
     }
-    if (
-        parseResults.libraries.get("IMA3.brs") === true &&
-        manifest.get("bs_libs_required")?.includes("googleima3")
-    ) {
+    if (parseResults.libraries.get("IMA3.brs") === true && manifest.get("bs_libs_required")?.includes("googleima3")) {
         lib.set("IMA3.brs", fs.readFileSync("common:/roku_ads/IMA3.brs", "utf8"));
     }
     if (
@@ -767,10 +738,7 @@ function parseLibraries(
         parseResults.libraries.get("RokuBrowser.brs") === true &&
         manifest.get("bs_libs_required")?.includes("Roku_Browser")
     ) {
-        lib.set(
-            "RokuBrowser.brs",
-            fsys.readFileSync("common:/roku_browser/RokuBrowser.brs", "utf8")
-        );
+        lib.set("RokuBrowser.brs", fsys.readFileSync("common:/roku_browser/RokuBrowser.brs", "utf8"));
     }
 }
 

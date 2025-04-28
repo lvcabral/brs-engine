@@ -53,9 +53,7 @@ describe("property setting", () => {
 
             interpreter.exec(ast);
 
-            expect(interpreter.environment.get(identifier("result"))).toEqual(
-                new BrsString("new index0", true)
-            );
+            expect(interpreter.environment.get(identifier("result"))).toEqual(new BrsString("new index0", true));
         });
 
         test("multi-dimensional", () => {
@@ -124,9 +122,7 @@ describe("property setting", () => {
 
             interpreter.exec(ast);
 
-            expect(interpreter.environment.get(identifier("result"))).toEqual(
-                new BrsString("new (2,1)", true)
-            );
+            expect(interpreter.environment.get(identifier("result"))).toEqual(new BrsString("new (2,1)", true));
         });
     });
 
@@ -172,12 +168,8 @@ describe("property setting", () => {
 
             interpreter.exec(ast);
 
-            expect(interpreter.environment.get(identifier("fooResult"))).toEqual(
-                new BrsString("new foo", true)
-            );
-            expect(interpreter.environment.get(identifier("barResult"))).toEqual(
-                new BrsString("added bar", true)
-            );
+            expect(interpreter.environment.get(identifier("fooResult"))).toEqual(new BrsString("new foo", true));
+            expect(interpreter.environment.get(identifier("barResult"))).toEqual(new BrsString("added bar", true));
         });
 
         test("multi-dimensional", () => {
@@ -193,10 +185,7 @@ describe("property setting", () => {
                                     [
                                         {
                                             name: new BrsString("bar"),
-                                            value: new Expr.Literal(
-                                                new BrsString("original aa.foo.bar"),
-                                                fakeLocation
-                                            ),
+                                            value: new Expr.Literal(new BrsString("original aa.foo.bar"), fakeLocation),
                                         },
                                     ],
                                     LEFT_BRACE,
@@ -243,9 +232,7 @@ describe("property setting", () => {
 
             interpreter.exec(ast);
 
-            expect(interpreter.environment.get(identifier("barResult"))).toEqual(
-                new BrsString("new aa.foo.bar", true)
-            );
+            expect(interpreter.environment.get(identifier("barResult"))).toEqual(new BrsString("new aa.foo.bar", true));
             expect(interpreter.environment.get(identifier("bazResult"))).toEqual(
                 new BrsString("added aa.foo.baz", true)
             );

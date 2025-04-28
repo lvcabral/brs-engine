@@ -1,12 +1,4 @@
-import {
-    ValueKind,
-    BrsInvalid,
-    BrsBoolean,
-    BrsString,
-    Uninitialized,
-    BrsValue,
-    Comparable,
-} from "./BrsType";
+import { ValueKind, BrsInvalid, BrsBoolean, BrsString, Uninitialized, BrsValue, Comparable } from "./BrsType";
 import { RoArray } from "./components/RoArray";
 import { RoAssociativeArray } from "./components/RoAssociativeArray";
 import { RoList } from "./components/RoList";
@@ -117,20 +109,10 @@ export * from "./Coercion";
  * @returns `true` if `value` is a numeric value, otherwise `false`.
  */
 export function isBrsNumber(value: BrsType): value is BrsNumber {
-    return (
-        value instanceof Int32 ||
-        value instanceof Int64 ||
-        value instanceof Float ||
-        value instanceof Double
-    );
+    return value instanceof Int32 || value instanceof Int64 || value instanceof Float || value instanceof Double;
 }
 
-export const NumberKinds = new Set([
-    ValueKind.Int32,
-    ValueKind.Float,
-    ValueKind.Double,
-    ValueKind.Int64,
-]);
+export const NumberKinds = new Set([ValueKind.Int32, ValueKind.Float, ValueKind.Double, ValueKind.Int64]);
 
 export function isNumberKind(kind: ValueKind): boolean {
     return NumberKinds.has(kind);
@@ -277,13 +259,7 @@ export type BrsEvent =
 export type BrsPrimitive = BrsInterface | BrsInvalid | BrsBoolean | BrsString | BrsNumber;
 
 /** The set of BrightScript iterable types. */
-export type Iterable =
-    | RoArray
-    | RoAssociativeArray
-    | RoList
-    | RoByteArray
-    | RoXMLList
-    | RoXMLElement;
+export type Iterable = RoArray | RoAssociativeArray | RoList | RoByteArray | RoXMLList | RoXMLElement;
 
 // this is getting weird - we need a lesThan and greaterThan function?!
 export type AllComponents = { kind: ValueKind.Object } & BrsComponent & BrsValue;

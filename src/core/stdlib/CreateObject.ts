@@ -1,12 +1,4 @@
-import {
-    Callable,
-    ValueKind,
-    BrsInvalid,
-    BrsString,
-    BrsType,
-    BrsObjects,
-    StdlibArgument,
-} from "../brsTypes";
+import { Callable, ValueKind, BrsInvalid, BrsString, BrsType, BrsObjects, StdlibArgument } from "../brsTypes";
 import { BrsDevice } from "../device/BrsDevice";
 import { RuntimeError, RuntimeErrorDetail } from "../error/BrsError";
 import { Interpreter } from "../interpreter";

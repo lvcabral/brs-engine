@@ -174,9 +174,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         impl: (_: Interpreter) => {
             const model = this.deviceModel;
             const device = BrsDevice.deviceInfo.models?.get(model);
-            return new BrsString(
-                device ? device[0].replace(/ *\([^)]*\) */g, "") : `Roku (${model})`
-            );
+            return new BrsString(device ? device[0].replace(/ *\([^)]*\) */g, "") : `Roku (${model})`);
         },
     });
 
@@ -469,44 +467,41 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     });
 
     /** Returns An associative array with the following key/value pairs for the display properties of the screen. */
-    private readonly getSupportedGraphicsResolutions = new Callable(
-        "getSupportedGraphicsResolutions",
-        {
-            signature: {
-                args: [],
-                returns: ValueKind.Object,
-            },
-            impl: (_: Interpreter) => {
-                let result: RoAssociativeArray[] = [];
-                let display = this.displayModeName;
-                let mode = {
-                    name: "SD",
-                    height: 480,
-                    width: 720,
-                    preferred: false,
-                    ui: display === "SD",
-                };
-                result.push(toAssociativeArray(mode));
-                mode = {
-                    name: "HD",
-                    height: 720,
-                    width: 1280,
-                    preferred: false,
-                    ui: display === "HD",
-                };
-                result.push(toAssociativeArray(mode));
-                mode = {
-                    name: "FHD",
-                    height: 1080,
-                    width: 1920,
-                    preferred: true,
-                    ui: display === "FHD",
-                };
-                result.push(toAssociativeArray(mode));
-                return new RoArray(result);
-            },
-        }
-    );
+    private readonly getSupportedGraphicsResolutions = new Callable("getSupportedGraphicsResolutions", {
+        signature: {
+            args: [],
+            returns: ValueKind.Object,
+        },
+        impl: (_: Interpreter) => {
+            let result: RoAssociativeArray[] = [];
+            let display = this.displayModeName;
+            let mode = {
+                name: "SD",
+                height: 480,
+                width: 720,
+                preferred: false,
+                ui: display === "SD",
+            };
+            result.push(toAssociativeArray(mode));
+            mode = {
+                name: "HD",
+                height: 720,
+                width: 1280,
+                preferred: false,
+                ui: display === "HD",
+            };
+            result.push(toAssociativeArray(mode));
+            mode = {
+                name: "FHD",
+                height: 1080,
+                width: 1920,
+                preferred: true,
+                ui: display === "FHD",
+            };
+            result.push(toAssociativeArray(mode));
+            return new RoArray(result);
+        },
+    });
 
     /** Returns the display size of a screen as an Associative array containing the screen width and height. */
     private readonly getUIResolution = new Callable("getUIResolution", {

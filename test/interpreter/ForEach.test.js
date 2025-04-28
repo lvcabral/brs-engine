@@ -38,11 +38,7 @@ describe("interpreter for-each loops", () => {
             );
 
         const statements = [
-            new Stmt.Assignment(
-                { equals: token(Lexeme.Equals, "=") },
-                identifier("array"),
-                filledArray
-            ),
+            new Stmt.Assignment({ equals: token(Lexeme.Equals, "=") }, identifier("array"), filledArray),
             new Stmt.ForEach(
                 {
                     forEach: token(Lexeme.ForEach, "for each"),
@@ -92,11 +88,7 @@ describe("interpreter for-each loops", () => {
         const emptyBlock = new Stmt.Block([]);
 
         const statements = [
-            new Stmt.Assignment(
-                { equals: token(Lexeme.Equals, "=") },
-                identifier("array"),
-                filledArray
-            ),
+            new Stmt.Assignment({ equals: token(Lexeme.Equals, "=") }, identifier("array"), filledArray),
             new Stmt.ForEach(
                 {
                     forEach: token(Lexeme.ForEach, "for each"),
@@ -111,23 +103,15 @@ describe("interpreter for-each loops", () => {
 
         interpreter.exec(statements);
 
-        expect(interpreter.environment.get(identifier("element"))).toEqual(
-            arrayMembers[arrayMembers.length - 1]
-        );
+        expect(interpreter.environment.get(identifier("element"))).toEqual(arrayMembers[arrayMembers.length - 1]);
     });
 
     it("exits early when it encounters 'exit for'", () => {
-        const block = new Stmt.Block([
-            new Stmt.ExitFor({ exitFor: token(Lexeme.ExitFor, "exit for") }),
-        ]);
+        const block = new Stmt.Block([new Stmt.ExitFor({ exitFor: token(Lexeme.ExitFor, "exit for") })]);
         const blockSpy = jest.spyOn(block, "accept");
 
         const statements = [
-            new Stmt.Assignment(
-                { equals: token(Lexeme.Equals, "=") },
-                identifier("array"),
-                filledArray
-            ),
+            new Stmt.Assignment({ equals: token(Lexeme.Equals, "=") }, identifier("array"), filledArray),
             new Stmt.ForEach(
                 {
                     forEach: token(Lexeme.ForEach, "for each"),
@@ -153,11 +137,7 @@ describe("interpreter for-each loops", () => {
         const blockSpy = jest.spyOn(block, "accept");
 
         const statements = [
-            new Stmt.Assignment(
-                { equals: token(Lexeme.Equals, "=") },
-                identifier("array"),
-                filledArray
-            ),
+            new Stmt.Assignment({ equals: token(Lexeme.Equals, "=") }, identifier("array"), filledArray),
             new Stmt.ForEach(
                 {
                     forEach: token(Lexeme.ForEach, "for each"),

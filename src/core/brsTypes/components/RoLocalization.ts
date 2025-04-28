@@ -36,13 +36,7 @@ export class RoLocalization extends BrsComponent implements BrsValue {
             ],
             returns: ValueKind.String,
         },
-        impl: (
-            _: Interpreter,
-            count: Int32,
-            zeroString: BrsString,
-            oneString: BrsString,
-            pluralString: BrsString
-        ) => {
+        impl: (_: Interpreter, count: Int32, zeroString: BrsString, oneString: BrsString, pluralString: BrsString) => {
             let plural: string;
             switch (count.getValue()) {
                 case 0:
@@ -62,10 +56,7 @@ export class RoLocalization extends BrsComponent implements BrsValue {
     /** Returns an appropriate asset path based on the user's currently selected language. */
     private readonly getLocalizedAsset = new Callable("getLocalizedAsset", {
         signature: {
-            args: [
-                new StdlibArgument("dirName", ValueKind.String),
-                new StdlibArgument("fileName", ValueKind.String),
-            ],
+            args: [new StdlibArgument("dirName", ValueKind.String), new StdlibArgument("fileName", ValueKind.String)],
             returns: ValueKind.String,
         },
         impl: (_: Interpreter, dirName: BrsString, fileName: BrsString) => {

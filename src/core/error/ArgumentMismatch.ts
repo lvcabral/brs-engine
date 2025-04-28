@@ -37,11 +37,7 @@ function formatMismatch(functionName: string, mismatchedSignature: SignatureAndM
     return messageParts.map((line) => `    ${line}`).join("\n");
 }
 
-export function generateArgumentMismatchError(
-    callee: Callable,
-    args: BrsType[],
-    location: Location
-): BrsError {
+export function generateArgumentMismatchError(callee: Callable, args: BrsType[], location: Location): BrsError {
     let functionName = callee.getName();
     let mismatchedSignatures = callee.getAllSignatureMismatches(args);
 

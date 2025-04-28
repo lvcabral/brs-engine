@@ -33,9 +33,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsArray {
             this.maxSize = args[0].getValue();
             this.resizable = args[1].toBoolean();
         } else {
-            throw new Error(
-                `BRIGHTSCRIPT: ERROR: Runtime: "roArray": invalid number of parameters:`
-            );
+            throw new Error(`BRIGHTSCRIPT: ERROR: Runtime: "roArray": invalid number of parameters:`);
         }
         this.enumIndex = this.elements.length ? 0 : -1;
         const ifArray = new IfArray(this);
@@ -203,12 +201,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsArray {
         }
     }
 
-    private aaCompare(
-        fieldName: BrsString,
-        flags: BrsString,
-        a: RoAssociativeArray,
-        b: RoAssociativeArray
-    ) {
+    private aaCompare(fieldName: BrsString, flags: BrsString, a: RoAssociativeArray, b: RoAssociativeArray) {
         let compare = 0;
         const originalArrayCopy = [...this.elements];
         const caseInsensitive = flags.toString().indexOf("i") > -1;
@@ -261,9 +254,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsArray {
                 })
             ) {
                 if (BrsDevice.isDevMode) {
-                    BrsDevice.stderr.write(
-                        "warning,roArray.Join: Array contains non-string value(s)."
-                    );
+                    BrsDevice.stderr.write("warning,roArray.Join: Array contains non-string value(s).");
                 }
                 return new BrsString("");
             }
@@ -280,9 +271,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsArray {
         impl: (_: Interpreter, flags: BrsString) => {
             if (flags.toString().match(/([^ir])/g) != null) {
                 if (BrsDevice.isDevMode) {
-                    BrsDevice.stderr.write(
-                        "warning,roArray.Sort: Flags contains invalid option(s)."
-                    );
+                    BrsDevice.stderr.write("warning,roArray.Sort: Flags contains invalid option(s).");
                 }
             } else {
                 const caseInsensitive = flags.toString().indexOf("i") > -1;
@@ -309,9 +298,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsArray {
         impl: (_: Interpreter, fieldName: BrsString, flags: BrsString) => {
             if (flags.toString().match(/([^ir])/g) != null) {
                 if (BrsDevice.isDevMode) {
-                    BrsDevice.stderr.write(
-                        "warning,roArray.SortBy: Flags contains invalid option(s)."
-                    );
+                    BrsDevice.stderr.write("warning,roArray.SortBy: Flags contains invalid option(s).");
                 }
             } else {
                 const originalArrayCopy = [...this.elements];

@@ -539,11 +539,7 @@ describe("end to end brightscript functions", () => {
 
     test("components/roAppMemoryMonitor.brs", async () => {
         await execute([resourceFile("components", "roAppMemoryMonitor.brs")], outputStreams);
-        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
-            "true",
-            "true",
-            "true",
-        ]);
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual(["true", "true", "true"]);
     });
 
     test("components/roRemoteInfo.brs", async () => {
@@ -580,11 +576,7 @@ describe("end to end brightscript functions", () => {
             "roDeviceInfoEvent",
             "roDeviceInfoEvent.isCaptionModeChanged = true",
             "roDeviceInfoEvent.isStatusMessage = false",
-            `<Component: roAssociativeArray> =\n` +
-                "{\n" +
-                `    Mode: "Off"\n` +
-                `    Mute: false\n` +
-                `}`,
+            `<Component: roAssociativeArray> =\n` + "{\n" + `    Mode: "Off"\n` + `    Mute: false\n` + `}`,
             "<Interface: ifroDeviceInfoEvent>",
             "Invalid",
         ]);

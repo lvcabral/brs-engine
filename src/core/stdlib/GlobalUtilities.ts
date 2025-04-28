@@ -36,10 +36,7 @@ export const RunGarbageCollector = new Callable("RunGarbageCollector", {
 
 export const GetInterface = new Callable("GetInterface", {
     signature: {
-        args: [
-            new StdlibArgument("object", ValueKind.Object),
-            new StdlibArgument("ifname", ValueKind.String),
-        ],
+        args: [new StdlibArgument("object", ValueKind.Object), new StdlibArgument("ifname", ValueKind.String)],
         returns: ValueKind.Interface,
     },
     impl: (_: Interpreter, object: BrsComponent, ifname: BrsString): BrsInterface | BrsInvalid => {
@@ -51,17 +48,10 @@ export const FindMemberFunction = new Callable(
     "FindMemberFunction",
     {
         signature: {
-            args: [
-                new StdlibArgument("object", ValueKind.Object),
-                new StdlibArgument("funName", ValueKind.String),
-            ],
+            args: [new StdlibArgument("object", ValueKind.Object), new StdlibArgument("funName", ValueKind.String)],
             returns: ValueKind.Interface,
         },
-        impl: (
-            _: Interpreter,
-            object: BrsComponent,
-            funName: BrsString
-        ): BrsInterface | BrsInvalid => {
+        impl: (_: Interpreter, object: BrsComponent, funName: BrsString): BrsInterface | BrsInvalid => {
             if (object instanceof BrsComponent) {
                 for (let [_, iface] of object.interfaces) {
                     if (iface.hasMethod(funName.value)) {
@@ -74,17 +64,10 @@ export const FindMemberFunction = new Callable(
     },
     {
         signature: {
-            args: [
-                new StdlibArgument("object", ValueKind.Interface),
-                new StdlibArgument("funName", ValueKind.String),
-            ],
+            args: [new StdlibArgument("object", ValueKind.Interface), new StdlibArgument("funName", ValueKind.String)],
             returns: ValueKind.Interface,
         },
-        impl: (
-            _: Interpreter,
-            iface: BrsInterface,
-            funName: BrsString
-        ): BrsInterface | BrsInvalid => {
+        impl: (_: Interpreter, iface: BrsInterface, funName: BrsString): BrsInterface | BrsInvalid => {
             if (iface.hasMethod(funName.value)) {
                 return iface;
             }

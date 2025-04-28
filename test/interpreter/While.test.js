@@ -19,11 +19,7 @@ describe("interpreter while loops", () => {
     const decrementFoo = new Stmt.Assignment(
         { equals: token(Lexeme.Equals, "=") },
         identifier("foo"),
-        new Expr.Binary(
-            new Expr.Variable(identifier("foo")),
-            token(Lexeme.Minus, "-"),
-            new Expr.Literal(new Int32(1))
-        )
+        new Expr.Binary(new Expr.Variable(identifier("foo")), token(Lexeme.Minus, "-"), new Expr.Literal(new Int32(1)))
     );
 
     beforeEach(() => {
@@ -96,10 +92,7 @@ describe("interpreter while loops", () => {
                     token(Lexeme.Greater, ">"),
                     new Expr.Literal(new Int32(0))
                 ),
-                new Stmt.Block([
-                    decrementFoo,
-                    new Stmt.ExitWhile({ exitWhile: token(Lexeme.ExitWhile, "exit while") }),
-                ])
+                new Stmt.Block([decrementFoo, new Stmt.ExitWhile({ exitWhile: token(Lexeme.ExitWhile, "exit while") })])
             ),
         ];
 

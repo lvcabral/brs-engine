@@ -232,10 +232,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
                     if (index.getValue() > 0 || length.getValue() > 0) {
                         let start = index.getValue();
                         let end = length.getValue() < 1 ? undefined : start + length.getValue();
-                        fsys.writeFileSync(
-                            filepath.value,
-                            Buffer.from(this.elements.slice(start, end))
-                        );
+                        fsys.writeFileSync(filepath.value, Buffer.from(this.elements.slice(start, end)));
                     } else {
                         fsys.writeFileSync(filepath.value, Buffer.from(this.elements));
                     }

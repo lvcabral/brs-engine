@@ -19,11 +19,7 @@ export class RoCECStatus extends BrsComponent implements BrsValue {
         const setPortIface = new IfSetMessagePort(this, this.getNewEvents.bind(this));
         const getPortIface = new IfGetMessagePort(this);
         this.registerMethods({
-            ifCECStatus: [
-                this.isActiveSource,
-                setPortIface.setMessagePort,
-                getPortIface.getMessagePort,
-            ],
+            ifCECStatus: [this.isActiveSource, setPortIface.setMessagePort, getPortIface.getMessagePort],
         });
     }
 

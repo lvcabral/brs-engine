@@ -61,27 +61,17 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
                 this.name = param.value;
             } catch (err: any) {
                 if (BrsDevice.isDevMode) {
-                    BrsDevice.stderr.write(
-                        `error,Error loading bitmap:${param.value} - ${err.message}`
-                    );
+                    BrsDevice.stderr.write(`error,Error loading bitmap:${param.value} - ${err.message}`);
                 }
                 this.valid = false;
             }
         } else if (param instanceof RoAssociativeArray) {
             let paramWidth = param.get(new BrsString("width"));
-            if (
-                paramWidth instanceof Int32 ||
-                paramWidth instanceof Float ||
-                paramWidth instanceof Double
-            ) {
+            if (paramWidth instanceof Int32 || paramWidth instanceof Float || paramWidth instanceof Double) {
                 this.width = Math.trunc(paramWidth.getValue());
             }
             let paramHeight = param.get(new BrsString("height"));
-            if (
-                paramHeight instanceof Int32 ||
-                paramHeight instanceof Float ||
-                paramHeight instanceof Double
-            ) {
+            if (paramHeight instanceof Int32 || paramHeight instanceof Float || paramHeight instanceof Double) {
                 this.height = Math.trunc(paramHeight.getValue());
             }
             let paramName = param.get(new BrsString("name"));

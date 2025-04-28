@@ -1,18 +1,8 @@
 const brs = require("../../bin/brs.node");
 const { Interpreter } = brs;
 const { FormatJson, ParseJson } = brs.stdlib;
-const {
-    RoArray,
-    RoAssociativeArray,
-    RoDateTime,
-    BrsBoolean,
-    BrsInvalid,
-    BrsString,
-    Float,
-    Int32,
-    Int64,
-    RoInt,
-} = brs.types;
+const { RoArray, RoAssociativeArray, RoDateTime, BrsBoolean, BrsInvalid, BrsString, Float, Int32, Int64, RoInt } =
+    brs.types;
 
 const { allArgs, createMockStreams } = require("../e2e/E2ETests");
 
@@ -47,9 +37,7 @@ describe("global JSON functions", () => {
         });
 
         it("returns `null` for non-convertible types (flag 256)", () => {
-            expect(FormatJson.call(interpreter, new RoDateTime(), new Int32(256))).toEqual(
-                new BrsString("null")
-            );
+            expect(FormatJson.call(interpreter, new RoDateTime(), new Int32(256))).toEqual(new BrsString("null"));
         });
 
         it("returns the type annotation for non-convertible types (flag 512)", () => {
@@ -78,9 +66,7 @@ describe("global JSON functions", () => {
         });
 
         it("converts BRS invalid to bare null string", () => {
-            expect(FormatJson.call(interpreter, BrsInvalid.Instance)).toEqual(
-                new BrsString("null")
-            );
+            expect(FormatJson.call(interpreter, BrsInvalid.Instance)).toEqual(new BrsString("null"));
         });
 
         it("converts BRS false to bare false string", () => {
@@ -88,21 +74,15 @@ describe("global JSON functions", () => {
         });
 
         it("converts BRS string to bare (quoted) string", () => {
-            expect(FormatJson.call(interpreter, new BrsString("ok"))).toEqual(
-                new BrsString(`"ok"`)
-            );
+            expect(FormatJson.call(interpreter, new BrsString("ok"))).toEqual(new BrsString(`"ok"`));
         });
 
         it("converts BRS integer to bare integer string", () => {
-            expect(FormatJson.call(interpreter, Int32.fromString("2147483647"))).toEqual(
-                new BrsString("2147483647")
-            );
+            expect(FormatJson.call(interpreter, Int32.fromString("2147483647"))).toEqual(new BrsString("2147483647"));
         });
 
         it("converts boxed BRS types to string representations", () => {
-            expect(FormatJson.call(interpreter, new RoInt(new Int32(-1)))).toEqual(
-                new BrsString("-1")
-            );
+            expect(FormatJson.call(interpreter, new RoInt(new Int32(-1)))).toEqual(new BrsString("-1"));
         });
 
         it("converts BRS longInteger to bare longInteger string", () => {
@@ -152,9 +132,7 @@ describe("global JSON functions", () => {
             let brsAssociativeArrayStrAsc = new BrsString(
                 `{"boolean":false,"float":3.14,"integer":2147483647,"longinteger":9223372036854775807,"null":null,"string":"ok"}`
             );
-            expect(FormatJson.call(interpreter, brsAssociativeArrayDesc)).toEqual(
-                brsAssociativeArrayStrAsc
-            );
+            expect(FormatJson.call(interpreter, brsAssociativeArrayDesc)).toEqual(brsAssociativeArrayStrAsc);
         });
     });
 
@@ -178,9 +156,7 @@ describe("global JSON functions", () => {
         });
 
         it("converts bare integer string to BRS integer", () => {
-            expect(ParseJson.call(interpreter, new BrsString("2147483647"))).toEqual(
-                Int32.fromString("2147483647")
-            );
+            expect(ParseJson.call(interpreter, new BrsString("2147483647"))).toEqual(Int32.fromString("2147483647"));
         });
 
         it("converts bare longInteger string to BRS longInteger", () => {
