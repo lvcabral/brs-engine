@@ -49,11 +49,11 @@ export class TextEditBox extends Group {
 
         if (this.resolution === "FHD") {
             this.height = 72;
-            this.paddingX = 18;
+            this.paddingX = 33;
             this.paddingY = 18; // Approximate vertical centering
         } else {
             this.height = 48;
-            this.paddingX = 12;
+            this.paddingX = 22;
             this.paddingY = 12; // Approximate vertical centering
         }
         const cursorUri = `common:/images/cursor_textInput_${this.resolution}.png`;
