@@ -145,10 +145,7 @@ export class XMLHttpRequest {
      * @return boolean False if not allowed, otherwise true
      */
     private isAllowedHttpHeader(header: string) {
-        return (
-            this._disableHeaderCheck ||
-            (header && forbiddenRequestHeaders.indexOf(header.toLowerCase()) === -1)
-        );
+        return this._disableHeaderCheck || (header && forbiddenRequestHeaders.indexOf(header.toLowerCase()) === -1);
     }
 
     /**
@@ -214,9 +211,7 @@ export class XMLHttpRequest {
      */
     setRequestHeader(header: string, value: string) {
         if (this.readyState !== this.OPENED) {
-            throw new Error(
-                "INVALID_STATE_ERR: setRequestHeader can only be called when state is OPEN"
-            );
+            throw new Error("INVALID_STATE_ERR: setRequestHeader can only be called when state is OPEN");
         }
         if (!this.isAllowedHttpHeader(header)) {
             console.warn('Refused to set unsafe header "' + header + '"');
@@ -379,9 +374,7 @@ export class XMLHttpRequest {
         if (this._settings.method === "GET" || this._settings.method === "HEAD") {
             data = null;
         } else if (data) {
-            this._headers["Content-Length"] = Buffer.isBuffer(data)
-                ? data.length
-                : Buffer.byteLength(data);
+            this._headers["Content-Length"] = Buffer.isBuffer(data) ? data.length : Buffer.byteLength(data);
 
             if (!this._headers["Content-Type"]) {
                 this._headers["Content-Type"] = "text/plain;charset=UTF-8";
@@ -458,15 +451,11 @@ export class XMLHttpRequest {
                         newOptions.cert = this._opts.cert;
                         newOptions.ca = this._opts.ca;
                         newOptions.ciphers = this._opts.ciphers;
-                        newOptions.rejectUnauthorized =
-                            this._opts.rejectUnauthorized === false ? false : true;
+                        newOptions.rejectUnauthorized = this._opts.rejectUnauthorized === false ? false : true;
                     }
 
                     // Issue the new request
-                    this._request = doRequest(newOptions, responseHandler).on(
-                        "error",
-                        errorHandler
-                    );
+                    this._request = doRequest(newOptions, responseHandler).on("error", errorHandler);
                     this._request.end();
                     // @TODO Check if an XHR event needs to be fired here
                     return;
@@ -573,9 +562,7 @@ export class XMLHttpRequest {
                 syncFile +
                 "');" +
                 "});" +
-                (data
-                    ? "req.write('" + JSON.stringify(data).slice(1, -1).replace(/'/g, "\\'") + "');"
-                    : "") +
+                (data ? "req.write('" + JSON.stringify(data).slice(1, -1).replace(/'/g, "\\'") + "');" : "") +
                 "req.end();";
             // Start the other Node Process, executing this string
             const syncProc = spawn(process.argv[0], ["-e", execString]);
@@ -589,15 +576,11 @@ export class XMLHttpRequest {
             fs.unlinkSync(contentFile);
             if (/^NODE-XMLHTTPREQUEST-ERROR:/.exec(this.responseText)) {
                 // If the file returned an error, handle it
-                const errorObj = JSON.parse(
-                    this.responseText.replace(/^NODE-XMLHTTPREQUEST-ERROR:/, "")
-                );
+                const errorObj = JSON.parse(this.responseText.replace(/^NODE-XMLHTTPREQUEST-ERROR:/, ""));
                 this.handleError(errorObj, 503);
             } else {
                 // If the file returned okay, parse its data and move to the DONE state
-                const resp = JSON.parse(
-                    this.responseText.replace(/^NODE-XMLHTTPREQUEST-STATUS:[0-9]*,(.*)/, "$1")
-                );
+                const resp = JSON.parse(this.responseText.replace(/^NODE-XMLHTTPREQUEST-STATUS:[0-9]*,(.*)/, "$1"));
                 this.status = resp.data.statusCode;
                 this._response = {
                     statusCode: this.status,
@@ -701,11 +684,7 @@ export class XMLHttpRequest {
 
         this.readyState = state;
 
-        if (
-            this._settings.async ||
-            this.readyState < this.OPENED ||
-            this.readyState === this.DONE
-        ) {
+        if (this._settings.async || this.readyState < this.OPENED || this.readyState === this.DONE) {
             this.dispatchEvent("readystatechange");
         }
 

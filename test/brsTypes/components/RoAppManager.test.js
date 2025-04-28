@@ -1,15 +1,7 @@
 const brs = require("../../../bin/brs.node");
 const { Interpreter } = brs;
-const {
-    BrsBoolean,
-    BrsString,
-    RoTimespan,
-    RoAppManager,
-    RoArray,
-    RoAssociativeArray,
-    Int32,
-    compareVersions,
-} = brs.types;
+const { BrsBoolean, BrsString, RoTimespan, RoAppManager, RoArray, RoAssociativeArray, Int32, compareVersions } =
+    brs.types;
 const fakeTimer = require("@sinonjs/fake-timers");
 
 describe("RoAppManager", () => {
@@ -64,9 +56,7 @@ describe("RoAppManager", () => {
             let isAppInstalled = appManager.getMethod("isAppInstalled");
 
             expect(isAppInstalled).toBeTruthy();
-            expect(
-                isAppInstalled.call(interpreter, new BrsString("dev"), new BrsString(""))
-            ).toEqual(BrsBoolean.False);
+            expect(isAppInstalled.call(interpreter, new BrsString("dev"), new BrsString(""))).toEqual(BrsBoolean.False);
         });
     });
 
@@ -77,12 +67,7 @@ describe("RoAppManager", () => {
 
             expect(method).toBeTruthy();
             expect(
-                method.call(
-                    interpreter,
-                    new BrsString("dev"),
-                    new BrsString(""),
-                    new RoAssociativeArray([])
-                )
+                method.call(interpreter, new BrsString("dev"), new BrsString(""), new RoAssociativeArray([]))
             ).toEqual(BrsBoolean.False);
         });
     });

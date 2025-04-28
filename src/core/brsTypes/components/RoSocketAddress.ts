@@ -1,14 +1,4 @@
-import {
-    Callable,
-    ValueKind,
-    BrsString,
-    StdlibArgument,
-    BrsBoolean,
-    BrsType,
-    BrsComponent,
-    BrsValue,
-    Int32,
-} from "..";
+import { Callable, ValueKind, BrsString, StdlibArgument, BrsBoolean, BrsType, BrsComponent, BrsValue, Int32 } from "..";
 import { BrsDevice } from "../../device/BrsDevice";
 import { Interpreter } from "../../interpreter";
 import { isValidHostname, isValidIP, resolveHostToIP } from "../../interpreter/Network";

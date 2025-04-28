@@ -170,12 +170,7 @@ export class RoCompositor extends BrsComponent implements BrsValue {
                 if (layer) {
                     layer.forEach((sprite) => {
                         if (sprite.visible()) {
-                            drawObjectToComponent(
-                                this,
-                                sprite.getRegionObject(),
-                                sprite.getPosX(),
-                                sprite.getPosY()
-                            );
+                            drawObjectToComponent(this, sprite.getRegionObject(), sprite.getPosX(), sprite.getPosY());
                             this.previousSpriteDraws.push(sprite.getRect());
                         }
                     });
@@ -215,11 +210,7 @@ export class RoCompositor extends BrsComponent implements BrsValue {
             ],
             returns: ValueKind.Void,
         },
-        impl: (
-            _: Interpreter,
-            destBitmap: RoBitmap | RoScreen | RoRegion,
-            rgbaBackground: Int32
-        ) => {
+        impl: (_: Interpreter, destBitmap: RoBitmap | RoScreen | RoRegion, rgbaBackground: Int32) => {
             destBitmap.addReference();
             this.destBitmap?.removeReference();
             this.destBitmap = destBitmap;
@@ -337,13 +328,7 @@ export class RoCompositor extends BrsComponent implements BrsValue {
     });
 }
 
-function hasCollided(
-    sourceType: number,
-    sourceRect: Rect,
-    sourceCircle: Circle,
-    targetType: number,
-    target: RoSprite
-) {
+function hasCollided(sourceType: number, sourceRect: Rect, sourceCircle: Circle, targetType: number, target: RoSprite) {
     if (sourceType < 2 && targetType < 2) {
         return RectRect(sourceRect, target.getRect());
     } else if (sourceType === 2 && targetType === 2) {

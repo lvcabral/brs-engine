@@ -11,13 +11,7 @@ import {
     BrsInvalid,
 } from "..";
 import { Interpreter } from "../../interpreter";
-import {
-    BrsSocket,
-    IfSocket,
-    IfSocketAsync,
-    IfSocketOption,
-    IfSocketStatus,
-} from "../interfaces/IfSocket";
+import { BrsSocket, IfSocket, IfSocketAsync, IfSocketOption, IfSocketStatus } from "../interfaces/IfSocket";
 import { IfGetMessagePort, IfSetMessagePort } from "../interfaces/IfMessagePort";
 import * as net from "net";
 import { BrsDevice } from "../../device/BrsDevice";
@@ -56,9 +50,7 @@ export class RoDataGramSocket extends BrsComponent implements BrsValue, BrsSocke
         try {
             this.socket = new net.Socket();
         } catch (err: any) {
-            BrsDevice.stderr.write(
-                `warning,[roDataGramSocket] Sockets are not supported in this environment.`
-            );
+            BrsDevice.stderr.write(`warning,[roDataGramSocket] Sockets are not supported in this environment.`);
             this.errorCode = 3474;
         }
         this.identity = generateUniqueId();

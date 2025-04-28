@@ -49,9 +49,7 @@ export class RoInput extends BrsComponent implements BrsValue {
                 events.push(new RoInputEvent(toAssociativeArray(input)));
             } catch (e: any) {
                 if (BrsDevice.isDevMode) {
-                    BrsDevice.stdout.write(
-                        `warning,[roSystemLog] Error parsing Input buffer: ${e.message}`
-                    );
+                    BrsDevice.stdout.write(`warning,[roSystemLog] Error parsing Input buffer: ${e.message}`);
                 }
             }
         }

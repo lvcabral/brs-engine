@@ -46,13 +46,7 @@ export class RoTextureRequest extends BrsComponent implements BrsValue, BrsHttpA
         this.customHeaders = new Map<string, string>();
         const ifHttpAgent = new IfHttpAgent(this);
         this.registerMethods({
-            ifTextureRequest: [
-                this.getId,
-                this.getState,
-                this.setAsync,
-                this.setSize,
-                this.setScaleMode,
-            ],
+            ifTextureRequest: [this.getId, this.getState, this.setAsync, this.setSize, this.setScaleMode],
             ifHttpAgent: [
                 ifHttpAgent.addHeader,
                 ifHttpAgent.setHeaders,
@@ -109,10 +103,7 @@ export class RoTextureRequest extends BrsComponent implements BrsValue, BrsHttpA
     /** Sets the desired size of the roBitmap. */
     private readonly setSize = new Callable("setSize", {
         signature: {
-            args: [
-                new StdlibArgument("width", ValueKind.Int32),
-                new StdlibArgument("height", ValueKind.Int32),
-            ],
+            args: [new StdlibArgument("width", ValueKind.Int32), new StdlibArgument("height", ValueKind.Int32)],
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, width: Int32, height: Int32) => {

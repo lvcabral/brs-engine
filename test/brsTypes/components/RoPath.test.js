@@ -66,9 +66,7 @@ describe("RoPath", () => {
             });
 
             it("overwrites string value previously set", () => {
-                expect(change.call(interpreter, new BrsString("pkg:/manifest"))).toEqual(
-                    BrsBoolean.True
-                );
+                expect(change.call(interpreter, new BrsString("pkg:/manifest"))).toEqual(BrsBoolean.True);
                 expect(path.toString()).toEqual("pkg:/manifest");
             });
             it("set invalid path make it empty", () => {

@@ -81,10 +81,7 @@ export class RoHMAC extends BrsComponent implements BrsValue {
     /** Initializes new HMAC context. */
     private readonly setup = new Callable("setup", {
         signature: {
-            args: [
-                new StdlibArgument("digestType", ValueKind.String),
-                new StdlibArgument("key", ValueKind.Object),
-            ],
+            args: [new StdlibArgument("digestType", ValueKind.String), new StdlibArgument("key", ValueKind.Object)],
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter, digestType: BrsString, key: RoByteArray) => {
@@ -125,10 +122,7 @@ export class RoHMAC extends BrsComponent implements BrsValue {
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter, data: RoByteArray) => {
-            if (
-                this.hmacAlgorithm !== "" &&
-                this.setupHMAC(this.hmacAlgorithm, this.hmacKey) === 0
-            ) {
+            if (this.hmacAlgorithm !== "" && this.setupHMAC(this.hmacAlgorithm, this.hmacKey) === 0) {
                 if (this.updateData(data.getByteArray())) {
                     return new RoByteArray(this.finalResult());
                 }

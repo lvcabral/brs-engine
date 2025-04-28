@@ -1,22 +1,6 @@
 const brs = require("../../bin/brs.node");
-const {
-    UCase,
-    LCase,
-    Asc,
-    Chr,
-    Left,
-    Right,
-    Instr,
-    Len,
-    Mid,
-    Str,
-    StrI,
-    Substitute,
-    Val,
-    StrToI,
-    STRING,
-    StringI,
-} = brs.stdlib;
+const { UCase, LCase, Asc, Chr, Left, Right, Instr, Len, Mid, Str, StrI, Substitute, Val, StrToI, STRING, StringI } =
+    brs.stdlib;
 const { Interpreter } = brs;
 const { BrsString, Int32, Float } = brs.types;
 
@@ -63,80 +47,57 @@ describe("global string functions", () => {
 
     describe("Left", () => {
         it("get first n characters in a string longer than n characters", () => {
-            expect(Left.call(interpreter, new BrsString("pineapple"), new Int32(4))).toEqual(
-                new BrsString("pine")
-            );
+            expect(Left.call(interpreter, new BrsString("pineapple"), new Int32(4))).toEqual(new BrsString("pine"));
         });
 
         it("get the original string back with n larger than string length", () => {
-            expect(Left.call(interpreter, new BrsString("boy"), new Int32(5))).toEqual(
-                new BrsString("boy")
-            );
+            expect(Left.call(interpreter, new BrsString("boy"), new Int32(5))).toEqual(new BrsString("boy"));
         });
 
         it("get back empty string when character length is 0 or negative", () => {
-            expect(Left.call(interpreter, new BrsString("apple"), new Int32(0))).toEqual(
-                new BrsString("")
-            );
+            expect(Left.call(interpreter, new BrsString("apple"), new Int32(0))).toEqual(new BrsString(""));
 
-            expect(Left.call(interpreter, new BrsString("apple"), new Int32(-5))).toEqual(
-                new BrsString("")
-            );
+            expect(Left.call(interpreter, new BrsString("apple"), new Int32(-5))).toEqual(new BrsString(""));
         });
     });
 
     describe("Right", () => {
         it("returns the last (n) characters from a string", () => {
-            expect(Right.call(interpreter, new BrsString("pineapple"), new Int32(4))).toEqual(
-                new BrsString("pple")
-            );
+            expect(Right.call(interpreter, new BrsString("pineapple"), new Int32(4))).toEqual(new BrsString("pple"));
         });
 
         it("returns original string when (n) is longer than length", () => {
-            expect(Right.call(interpreter, new BrsString("boy"), new Int32(5))).toEqual(
-                new BrsString("boy")
-            );
+            expect(Right.call(interpreter, new BrsString("boy"), new Int32(5))).toEqual(new BrsString("boy"));
         });
 
         it("returns an empty string", () => {
-            expect(Right.call(interpreter, new BrsString("apple"), new Int32(0))).toEqual(
-                new BrsString("")
-            );
+            expect(Right.call(interpreter, new BrsString("apple"), new Int32(0))).toEqual(new BrsString(""));
 
-            expect(Right.call(interpreter, new BrsString("apple"), new Int32(-5))).toEqual(
-                new BrsString("")
-            );
+            expect(Right.call(interpreter, new BrsString("apple"), new Int32(-5))).toEqual(new BrsString(""));
         });
     });
 
     describe("Instr", () => {
         it("returns 0 if the string is not found", () => {
-            expect(
-                Instr.call(
-                    interpreter,
-                    new Int32(1),
-                    new BrsString("apple"),
-                    new BrsString("orange")
-                )
-            ).toEqual(new Int32(0));
+            expect(Instr.call(interpreter, new Int32(1), new BrsString("apple"), new BrsString("orange"))).toEqual(
+                new Int32(0)
+            );
         });
 
         it("returns the index of the first found string", () => {
-            expect(
-                Instr.call(interpreter, new Int32(1), new BrsString("apple"), new BrsString("a"))
-            ).toEqual(new Int32(1));
+            expect(Instr.call(interpreter, new Int32(1), new BrsString("apple"), new BrsString("a"))).toEqual(
+                new Int32(1)
+            );
         });
 
         it("returns the index of the first found after the starting index passed in", () => {
-            expect(
-                Instr.call(interpreter, new Int32(3), new BrsString("apple"), new BrsString("p"))
-            ).toEqual(new Int32(3));
+            expect(Instr.call(interpreter, new Int32(3), new BrsString("apple"), new BrsString("p"))).toEqual(
+                new Int32(3)
+            );
         });
 
         it("returns the index of the first found string (2 params only)", () => {
-            expect(Instr.call(interpreter, new BrsString("apple"), new BrsString("p"))).toEqual(
-                new Int32(2)
-            );
+            expect(Instr.call(interpreter, new BrsString("apple"), new BrsString("p"))).toEqual(new Int32(2));
         });
     });
 
@@ -152,15 +113,11 @@ describe("global string functions", () => {
 
     describe("Mid", () => {
         it("return the middle of a string", () => {
-            expect(Mid.call(interpreter, new BrsString("abc"), new Int32(2), new Int32(1))).toEqual(
-                new BrsString("b")
-            );
+            expect(Mid.call(interpreter, new BrsString("abc"), new Int32(2), new Int32(1))).toEqual(new BrsString("b"));
         });
 
         it("return the end of the string with only the position specified", () => {
-            expect(Mid.call(interpreter, new BrsString("abc"), new Int32(2))).toEqual(
-                new BrsString("bc")
-            );
+            expect(Mid.call(interpreter, new BrsString("abc"), new Int32(2))).toEqual(new BrsString("bc"));
         });
     });
 
@@ -198,65 +155,47 @@ describe("global string functions", () => {
         });
 
         it("returns a string formatted by a radix", () => {
-            expect(StrI.call(interpreter, new Int32(255), new Int32(16))).toEqual(
-                new BrsString("ff")
-            );
+            expect(StrI.call(interpreter, new Int32(255), new Int32(16))).toEqual(new BrsString("ff"));
         });
     });
 
     describe("String", () => {
         it("returns a string composed of n copies of a character.", () => {
-            expect(STRING.call(interpreter, new Int32(5), new BrsString("*"))).toEqual(
-                new BrsString("*****")
-            );
+            expect(STRING.call(interpreter, new Int32(5), new BrsString("*"))).toEqual(new BrsString("*****"));
         });
 
         it("returns a string composed of n copies of a string.", () => {
-            expect(STRING.call(interpreter, new Int32(3), new BrsString("brs"))).toEqual(
-                new BrsString("brsbrsbrs")
-            );
+            expect(STRING.call(interpreter, new Int32(3), new BrsString("brs"))).toEqual(new BrsString("brsbrsbrs"));
         });
 
         it("returns a string composed of n copies of an empty string.", () => {
-            expect(STRING.call(interpreter, new Int32(1000), new BrsString(""))).toEqual(
-                new BrsString("")
-            );
+            expect(STRING.call(interpreter, new Int32(1000), new BrsString(""))).toEqual(new BrsString(""));
         });
     });
 
     describe("StringI", () => {
         it("returns a string composed of n copies of a character from an ASCII char code.", () => {
-            expect(StringI.call(interpreter, new Int32(7), new Int32(48))).toEqual(
-                new BrsString("0000000")
-            );
+            expect(StringI.call(interpreter, new Int32(7), new Int32(48))).toEqual(new BrsString("0000000"));
         });
 
         it("returns a string composed of n copies of a character from a UNICODE char code.", () => {
-            expect(StringI.call(interpreter, new Int32(3), new Int32(936))).toEqual(
-                new BrsString("ΨΨΨ")
-            );
+            expect(StringI.call(interpreter, new Int32(3), new Int32(936))).toEqual(new BrsString("ΨΨΨ"));
         });
     });
 
     describe("Substitute", () => {
         it("returns no substitution", () => {
-            expect(
-                Substitute.call(interpreter, new BrsString("Barry"), new BrsString("Mary"))
-            ).toEqual(new BrsString("Barry"));
+            expect(Substitute.call(interpreter, new BrsString("Barry"), new BrsString("Mary"))).toEqual(
+                new BrsString("Barry")
+            );
         });
 
         it("returns a single substitution", () => {
-            expect(
-                Substitute.call(
-                    interpreter,
-                    new BrsString("{0} is her name"),
-                    new BrsString("Mary")
-                )
-            ).toEqual(new BrsString("Mary is her name"));
-
-            expect(Substitute.call(interpreter, new BrsString("{0}"), new BrsString(""))).toEqual(
-                new BrsString("")
+            expect(Substitute.call(interpreter, new BrsString("{0} is her name"), new BrsString("Mary"))).toEqual(
+                new BrsString("Mary is her name")
             );
+
+            expect(Substitute.call(interpreter, new BrsString("{0}"), new BrsString(""))).toEqual(new BrsString(""));
         });
 
         it("returns a bunch of substitutions", () => {
@@ -326,17 +265,11 @@ describe("global string functions", () => {
         it("returns an integer from a string and radix", () => {
             expect(Val.call(interpreter, new BrsString("7"), new Int32(10))).toEqual(new Int32(7));
 
-            expect(Val.call(interpreter, new BrsString("0x80"), new Int32(0))).toEqual(
-                new Int32(128)
-            );
+            expect(Val.call(interpreter, new BrsString("0x80"), new Int32(0))).toEqual(new Int32(128));
 
-            expect(Val.call(interpreter, new BrsString("FF"), new Int32(16))).toEqual(
-                new Int32(255)
-            );
+            expect(Val.call(interpreter, new BrsString("FF"), new Int32(16))).toEqual(new Int32(255));
 
-            expect(Val.call(interpreter, new BrsString("1001"), new Int32(2))).toEqual(
-                new Int32(9)
-            );
+            expect(Val.call(interpreter, new BrsString("1001"), new Int32(2))).toEqual(new Int32(9));
         });
     });
 

@@ -112,8 +112,7 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
                         err.message = `error,Error parsing Product XML: ${e.message}`;
                     }
                 } else {
-                    errMessage =
-                        "warning,Warning: Empty or invalid result when parsing Product XML.";
+                    errMessage = "warning,Warning: Empty or invalid result when parsing Product XML.";
                 }
                 if (errMessage !== "" && BrsDevice.isDevMode) {
                     BrsDevice.stderr.write(errMessage);
@@ -289,9 +288,7 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, order: BrsComponent, orderInfo: RoAssociativeArray | BrsInvalid) => {
             if (order instanceof RoList || order instanceof RoArray) {
-                this.order = order
-                    .getElements()
-                    .filter((item) => item instanceof RoAssociativeArray);
+                this.order = order.getElements().filter((item) => item instanceof RoAssociativeArray);
                 if (this.order.length > 0 && orderInfo instanceof RoAssociativeArray) {
                     this.orderInfo = orderInfo;
                 } else {
@@ -318,10 +315,7 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
     /** Applies a change in quantity to one item in the current Order (shopping cart). */
     private readonly deltaOrder = new Callable("deltaOrder", {
         signature: {
-            args: [
-                new StdlibArgument("code", ValueKind.String),
-                new StdlibArgument("qty", ValueKind.Int32),
-            ],
+            args: [new StdlibArgument("code", ValueKind.String), new StdlibArgument("qty", ValueKind.Int32)],
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter, code: BrsString, qty: Int32) => {

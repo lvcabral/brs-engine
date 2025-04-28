@@ -20,11 +20,7 @@ describe("interpreter arithmetic", () => {
     });
 
     it("concatenates strings", () => {
-        let ast = binary(
-            new brs.types.BrsString("judge "),
-            Lexeme.Plus,
-            new brs.types.BrsString("judy")
-        );
+        let ast = binary(new brs.types.BrsString("judge "), Lexeme.Plus, new brs.types.BrsString("judy"));
         let [result] = interpreter.exec([ast]);
         expect(result.toString()).toBe("judge judy");
     });
@@ -99,12 +95,8 @@ describe("interpreter arithmetic", () => {
 
     it("supports positive and negative unary prefix operators", () => {
         let ast = [
-            new Stmt.Expression(
-                new Expr.Unary(token(Lexeme.Minus), new Expr.Literal(new brs.types.Int32(4)))
-            ),
-            new Stmt.Expression(
-                new Expr.Unary(token(Lexeme.Plus), new Expr.Literal(new brs.types.Float(3.14159)))
-            ),
+            new Stmt.Expression(new Expr.Unary(token(Lexeme.Minus), new Expr.Literal(new brs.types.Int32(4)))),
+            new Stmt.Expression(new Expr.Unary(token(Lexeme.Plus), new Expr.Literal(new brs.types.Float(3.14159)))),
         ];
 
         let [minusFour, pi] = interpreter.exec(ast);
@@ -125,10 +117,7 @@ describe("interpreter arithmetic", () => {
                                 token(Lexeme.Minus),
                                 new Expr.Unary(
                                     token(Lexeme.Plus),
-                                    new Expr.Unary(
-                                        token(Lexeme.Minus),
-                                        new Expr.Literal(new brs.types.Int32(3))
-                                    )
+                                    new Expr.Unary(token(Lexeme.Minus), new Expr.Literal(new brs.types.Int32(3)))
                                 )
                             )
                         )
@@ -192,9 +181,7 @@ describe("interpreter arithmetic", () => {
     });
 
     it("bitwise NOTs integer", () => {
-        let ast = new Stmt.Expression(
-            new Expr.Unary(token(Lexeme.Not), new Expr.Literal(new brs.types.Int32(6)))
-        );
+        let ast = new Stmt.Expression(new Expr.Unary(token(Lexeme.Not), new Expr.Literal(new brs.types.Int32(6))));
 
         let [result] = interpreter.exec([ast]);
         expect(result.getValue()).toBe(-7);

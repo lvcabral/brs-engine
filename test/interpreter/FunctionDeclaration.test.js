@@ -39,22 +39,14 @@ describe("interpreter function declarations", () => {
     });
 
     it("can call functions after definition", () => {
-        let mainBody = new Stmt.Block([
-            new Stmt.Print(tokens, [new Expr.Literal(new BrsString("foo"))]),
-        ]);
+        let mainBody = new Stmt.Block([new Stmt.Print(tokens, [new Expr.Literal(new BrsString("foo"))])]);
 
         let statements = [
             new Stmt.Function(
                 identifier("foo"),
                 new Expr.Function([], ValueKind.Void, mainBody, FUNCTION, END_FUNCTION)
             ),
-            new Stmt.Expression(
-                new Expr.Call(
-                    new Expr.Variable(identifier("foo")),
-                    token(Lexeme.RightParen, ")"),
-                    []
-                )
-            ),
+            new Stmt.Expression(new Expr.Call(new Expr.Variable(identifier("foo")), token(Lexeme.RightParen, ")"), [])),
         ];
 
         interpreter.exec(statements);
@@ -85,11 +77,7 @@ describe("interpreter function declarations", () => {
             new Stmt.Assignment(
                 { equals: token(Lexeme.Equals, "=") },
                 identifier("result"),
-                new Expr.Call(
-                    new Expr.Variable(identifier("foo")),
-                    token(Lexeme.RightParen, ")"),
-                    []
-                )
+                new Expr.Call(new Expr.Variable(identifier("foo")), token(Lexeme.RightParen, ")"), [])
             ),
         ];
 
@@ -119,11 +107,7 @@ describe("interpreter function declarations", () => {
             new Stmt.Assignment(
                 { equals: token(Lexeme.Equals, "=") },
                 identifier("result"),
-                new Expr.Call(
-                    new Expr.Variable(identifier("ident")),
-                    token(Lexeme.RightParen, ")"),
-                    []
-                )
+                new Expr.Call(new Expr.Variable(identifier("ident")), token(Lexeme.RightParen, ")"), [])
             ),
         ];
 
@@ -158,11 +142,7 @@ describe("interpreter function declarations", () => {
             new Stmt.Assignment(
                 { equals: token(Lexeme.Equals, "=") },
                 identifier("result"),
-                new Expr.Call(
-                    new Expr.Variable(identifier("foo")),
-                    token(Lexeme.RightParen, ")"),
-                    []
-                )
+                new Expr.Call(new Expr.Variable(identifier("foo")), token(Lexeme.RightParen, ")"), [])
             ),
         ];
 
@@ -192,11 +172,7 @@ describe("interpreter function declarations", () => {
             new Stmt.Assignment(
                 { equals: token(Lexeme.Equals, "=") },
                 identifier("result"),
-                new Expr.Call(
-                    new Expr.Variable(identifier("ident")),
-                    token(Lexeme.RightParen, ")"),
-                    []
-                )
+                new Expr.Call(new Expr.Variable(identifier("ident")), token(Lexeme.RightParen, ")"), [])
             ),
         ];
 
@@ -237,9 +213,7 @@ describe("interpreter function declarations", () => {
     });
 
     it("automatically calls main()", () => {
-        let mainBody = new Stmt.Block([
-            new Stmt.Print(tokens, [new Expr.Literal(new BrsString("foo"))]),
-        ]);
+        let mainBody = new Stmt.Block([new Stmt.Print(tokens, [new Expr.Literal(new BrsString("foo"))])]);
 
         let statements = [
             new Stmt.Function(

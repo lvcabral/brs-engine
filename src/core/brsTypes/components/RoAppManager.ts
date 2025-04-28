@@ -105,18 +105,15 @@ export class RoAppManager extends BrsComponent implements BrsValue {
     });
 
     /** Triggers a voice request for the viewer to select a user profile if the device is paired with a hands-free Roku Voice remote control. */
-    private readonly startVoiceActionSelectionRequest = new Callable(
-        "startVoiceActionSelectionRequest",
-        {
-            signature: {
-                args: [],
-                returns: ValueKind.Void,
-            },
-            impl: (_: Interpreter) => {
-                return BrsInvalid.Instance;
-            },
-        }
-    );
+    private readonly startVoiceActionSelectionRequest = new Callable("startVoiceActionSelectionRequest", {
+        signature: {
+            args: [],
+            returns: ValueKind.Void,
+        },
+        impl: (_: Interpreter) => {
+            return BrsInvalid.Instance;
+        },
+    });
 
     /** Specifies a list of text strings, such as user profile names, that can be matched to voice requests. */
     private readonly setVoiceActionStrings = new Callable("setVoiceActionStrings", {
@@ -186,10 +183,7 @@ export class RoAppManager extends BrsComponent implements BrsValue {
     /** Returns true if an app with the specified channelID and the minimum version required is installed. */
     private readonly isAppInstalled = new Callable("isAppInstalled", {
         signature: {
-            args: [
-                new StdlibArgument("channelId", ValueKind.String),
-                new StdlibArgument("version", ValueKind.String),
-            ],
+            args: [new StdlibArgument("channelId", ValueKind.String), new StdlibArgument("version", ValueKind.String)],
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, channelId: BrsString, version: BrsString) => {
@@ -198,9 +192,7 @@ export class RoAppManager extends BrsComponent implements BrsValue {
                 const app = appList.find((app) => {
                     return app.id === channelId.value;
                 });
-                return BrsBoolean.from(
-                    app !== undefined && compareVersions(app.version, version.value) >= 0
-                );
+                return BrsBoolean.from(app !== undefined && compareVersions(app.version, version.value) >= 0);
             }
             return BrsBoolean.False;
         },
@@ -216,12 +208,7 @@ export class RoAppManager extends BrsComponent implements BrsValue {
             ],
             returns: ValueKind.Boolean,
         },
-        impl: (
-            _: Interpreter,
-            channelId: BrsString,
-            version: BrsString,
-            params: RoAssociativeArray
-        ) => {
+        impl: (_: Interpreter, channelId: BrsString, version: BrsString, params: RoAssociativeArray) => {
             const appList = BrsDevice.deviceInfo.appList;
             if (appList instanceof Array) {
                 const app = appList.find((app) => {

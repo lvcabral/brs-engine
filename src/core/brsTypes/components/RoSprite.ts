@@ -25,14 +25,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
     private compositor?: RoCompositor;
     private tickSum: number;
 
-    constructor(
-        x: Int32,
-        y: Int32,
-        region: RoRegion | RoArray,
-        z: Int32,
-        id: number,
-        compositor: RoCompositor
-    ) {
+    constructor(x: Int32, y: Int32, region: RoRegion | RoArray, z: Int32, id: number, compositor: RoCompositor) {
         super("roSprite");
         this.id = id;
         this.x = x.getValue();
@@ -278,10 +271,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
     /** Move the sprite to coordinate x,y. */
     private readonly moveTo = new Callable("moveTo", {
         signature: {
-            args: [
-                new StdlibArgument("x", ValueKind.Int32),
-                new StdlibArgument("y", ValueKind.Int32),
-            ],
+            args: [new StdlibArgument("x", ValueKind.Int32), new StdlibArgument("y", ValueKind.Int32)],
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, x: Int32, y: Int32) => {
@@ -294,10 +284,7 @@ export class RoSprite extends BrsComponent implements BrsValue {
     /** Move the sprite to coordinate x,y. */
     private readonly moveOffset = new Callable("moveOffset", {
         signature: {
-            args: [
-                new StdlibArgument("xOffset", ValueKind.Int32),
-                new StdlibArgument("yOffSet", ValueKind.Int32),
-            ],
+            args: [new StdlibArgument("xOffset", ValueKind.Int32), new StdlibArgument("yOffSet", ValueKind.Int32)],
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, xOffset: Int32, yOffset: Int32) => {
@@ -323,21 +310,11 @@ export class RoSprite extends BrsComponent implements BrsValue {
                 // TODO: Double check if Roku does apply offset to all regions
                 this.regions.getElements().forEach((element) => {
                     if (element instanceof RoRegion) {
-                        element.applyOffset(
-                            x.getValue(),
-                            y.getValue(),
-                            width.getValue(),
-                            height.getValue()
-                        );
+                        element.applyOffset(x.getValue(), y.getValue(), width.getValue(), height.getValue());
                     }
                 });
             } else if (this.region) {
-                this.region.applyOffset(
-                    x.getValue(),
-                    y.getValue(),
-                    width.getValue(),
-                    height.getValue()
-                );
+                this.region.applyOffset(x.getValue(), y.getValue(), width.getValue(), height.getValue());
             }
             return BrsInvalid.Instance;
         },

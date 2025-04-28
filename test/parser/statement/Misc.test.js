@@ -137,8 +137,6 @@ describe("parser", () => {
         `);
 
         let { statements, errors } = brs.parser.Parser.parse(tokens);
-        expect(statements[0].func.body.statements[0].value.elements[0].name.value).toEqual(
-            "has-second-layer"
-        );
+        expect(statements[0].func.body.statements[0].value.elements[0].name.value).toEqual("has-second-layer");
     });
 });

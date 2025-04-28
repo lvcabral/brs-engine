@@ -81,10 +81,7 @@ export class RoRegistrySection extends BrsComponent implements BrsValue {
     /** Replaces the value of the specified key. */
     private readonly write = new Callable("write", {
         signature: {
-            args: [
-                new StdlibArgument("key", ValueKind.String),
-                new StdlibArgument("value", ValueKind.String),
-            ],
+            args: [new StdlibArgument("key", ValueKind.String), new StdlibArgument("value", ValueKind.String)],
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, key: BrsString, value: BrsString) => {
@@ -116,9 +113,7 @@ export class RoRegistrySection extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, key: BrsString) => {
-            let deleted = BrsDevice.registry.delete(
-                this.devId + "." + this.section + "." + key.value
-            );
+            let deleted = BrsDevice.registry.delete(this.devId + "." + this.section + "." + key.value);
             return BrsBoolean.from(deleted);
         },
     });
@@ -130,9 +125,7 @@ export class RoRegistrySection extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, key: BrsString) => {
-            return BrsBoolean.from(
-                BrsDevice.registry.has(this.devId + "." + this.section + "." + key.value)
-            );
+            return BrsBoolean.from(BrsDevice.registry.has(this.devId + "." + this.section + "." + key.value));
         },
     });
 

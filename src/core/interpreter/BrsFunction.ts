@@ -38,11 +38,7 @@ export function toCallable(func: Expr.Function, name: string = "[Function]") {
             }
             if (interpreter.environment.gotoLabel !== "") {
                 interpreter.addError(
-                    new RuntimeError(
-                        RuntimeErrorDetail.MissingLineNumber,
-                        location,
-                        interpreter.stack.slice(0, -1)
-                    )
+                    new RuntimeError(RuntimeErrorDetail.MissingLineNumber, location, interpreter.stack.slice(0, -1))
                 );
             }
             return BrsInvalid.Instance;

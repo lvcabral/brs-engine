@@ -12,10 +12,6 @@ const { token, fakeLocation } = require("../parser/ParserTests");
  */
 exports.binary = function (left, operator, right) {
     return new Stmt.Expression(
-        new Expr.Binary(
-            new Expr.Literal(left, fakeLocation),
-            token(operator),
-            new Expr.Literal(right, fakeLocation)
-        )
+        new Expr.Binary(new Expr.Literal(left, fakeLocation), token(operator), new Expr.Literal(right, fakeLocation))
     );
 };

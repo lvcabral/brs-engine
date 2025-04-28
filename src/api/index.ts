@@ -75,32 +75,13 @@ const brsWrkLib = getWorkerLibPath();
 let brsWorker: Worker;
 
 // Package API
-export {
-    deviceData,
-    loadAppZip,
-    updateAppZip,
-    getSerialNumber,
-    mountExt,
-    umountExt,
-} from "./package";
+export { deviceData, loadAppZip, updateAppZip, getSerialNumber, mountExt, umountExt } from "./package";
 
 // Control API
-export {
-    setControlMode,
-    getControlMode,
-    setCustomKeys,
-    setCustomPadButtons,
-    sendInput,
-} from "./control";
+export { setControlMode, getControlMode, setCustomKeys, setCustomPadButtons, sendInput } from "./control";
 
 // Display API
-export {
-    setDisplayMode,
-    getDisplayMode,
-    setOverscanMode,
-    getOverscanMode,
-    enableStats,
-} from "./display";
+export { setDisplayMode, getDisplayMode, setOverscanMode, getOverscanMode, enableStats } from "./display";
 
 let clearDisplayOnExit: boolean = true;
 let disableDebug: boolean = false;
@@ -257,12 +238,7 @@ function notifyAll(eventName: string, eventData?: any) {
 }
 
 // Execute App Zip or Source File
-export function execute(
-    filePath: string,
-    fileData: any,
-    options: any = {},
-    deepLink?: Map<string, string>
-) {
+export function execute(filePath: string, fileData: any, options: any = {}, deepLink?: Map<string, string>) {
     setupCurrentApp(filePath);
     const fileName = filePath.split(/.*[\/|\\]/)[1] ?? filePath;
     const fileExt = filePath.split(".").pop()?.toLowerCase();
@@ -576,9 +552,7 @@ function workerCallback(event: MessageEvent) {
             const url = params.find((el) => el.startsWith("url="))?.split("=")[1] ?? "";
             notifyAll("browser", { url: url, width: winDim[0], height: winDim[1] });
         } else if (event.data.app === "SDKLauncher") {
-            const channelId = event.data.params
-                .find((el) => el.toLowerCase().startsWith("channelid="))
-                ?.split("=")[1];
+            const channelId = event.data.params.find((el) => el.toLowerCase().startsWith("channelid="))?.split("=")[1];
             const app = deviceData.appList?.find((app) => app.id === channelId);
             if (app) {
                 const params = new Map();

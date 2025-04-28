@@ -99,9 +99,7 @@ export function getBsConst(manifest: Map<string, string>): Map<string, boolean> 
             if (value.toLowerCase() === "false") {
                 return [key, false];
             }
-            throw new Error(
-                `Invalid value for bs_const key '${key}'.  Values must be either 'true' or 'false'.`
-            );
+            throw new Error(`Invalid value for bs_const key '${key}'.  Values must be either 'true' or 'false'.`);
         });
 
     return new Map(keyValuePairs);

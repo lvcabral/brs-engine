@@ -44,12 +44,7 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     private lastKey: number;
     private lastMod: number;
 
-    constructor(
-        interpreter: Interpreter,
-        doubleBuffer?: BrsBoolean,
-        width?: Int32,
-        height?: Int32
-    ) {
+    constructor(interpreter: Interpreter, doubleBuffer?: BrsBoolean, width?: Int32, height?: Int32) {
         super("roScreen");
         this.interpreter = interpreter;
 
@@ -274,9 +269,7 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
                 while (timeStamp - this.lastMessage < this.maxMs) {
                     timeStamp = performance.now();
                 }
-                postMessage(
-                    this.context[this.currentBuffer].getImageData(0, 0, this.width, this.height)
-                );
+                postMessage(this.context[this.currentBuffer].getImageData(0, 0, this.width, this.height));
                 if (this.doubleBuffer) {
                     this.lastBuffer = this.currentBuffer;
                     this.currentBuffer++;
@@ -293,16 +286,8 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     });
 }
 
-export function createScreen(
-    interpreter: Interpreter,
-    doubleBuffer?: BrsBoolean,
-    width?: Int32,
-    height?: Int32
-) {
-    if (
-        (width !== undefined && height === undefined) ||
-        (width === undefined && height !== undefined)
-    ) {
+export function createScreen(interpreter: Interpreter, doubleBuffer?: BrsBoolean, width?: Int32, height?: Int32) {
+    if ((width !== undefined && height === undefined) || (width === undefined && height !== undefined)) {
         return BrsInvalid.Instance;
     }
     const screen = new RoScreen(interpreter, doubleBuffer, width, height);

@@ -50,9 +50,7 @@ export function getExternalIp(): string {
         xhr.responseType = "text";
         xhr.send();
         if (xhr.status !== 200) {
-            throw new Error(
-                `[getExternalIp] Error getting ${url}: status ${xhr.status} - ${xhr.statusText}`
-            );
+            throw new Error(`[getExternalIp] Error getting ${url}: status ${xhr.status} - ${xhr.statusText}`);
         }
         const ip = xhr.responseText;
         return isValidIP(ip) ? ip : "";

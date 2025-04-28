@@ -48,9 +48,7 @@ describe("global runtime functions", () => {
                 { value: Uninitialized.Instance, type: "<uninitialized>" },
             ].forEach((testCase) =>
                 test(testCase.type, () => {
-                    expect(Type.call(interpreter, testCase.value, new Int32(3))).toEqual(
-                        new BrsString(testCase.type)
-                    );
+                    expect(Type.call(interpreter, testCase.value, new Int32(3))).toEqual(new BrsString(testCase.type));
                 })
             );
         });
@@ -71,9 +69,7 @@ describe("global runtime functions", () => {
                 { value: Uninitialized.Instance, type: "<uninitialized>" },
             ].forEach((testCase) =>
                 test(testCase.type, () => {
-                    expect(Type.call(interpreter, testCase.value)).toEqual(
-                        new BrsString(testCase.type)
-                    );
+                    expect(Type.call(interpreter, testCase.value)).toEqual(new BrsString(testCase.type));
                 })
             );
         });

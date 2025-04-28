@@ -51,10 +51,7 @@ export class RoRemoteInfo extends BrsComponent implements BrsValue {
     /** Checks if the current device/firmware supports the passed in feature string. */
     private readonly hasFeature = new Callable("hasFeature", {
         signature: {
-            args: [
-                new StdlibArgument("feature", ValueKind.String),
-                new StdlibArgument("remoteIndex", ValueKind.Int32),
-            ],
+            args: [new StdlibArgument("feature", ValueKind.String), new StdlibArgument("remoteIndex", ValueKind.Int32)],
             returns: ValueKind.Boolean,
         },
         impl: (interpreter: Interpreter, feature: BrsString, remoteIndex: Int32) => {

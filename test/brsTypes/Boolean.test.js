@@ -13,13 +13,9 @@ describe("Boolean", () => {
             BrsTypes.BrsInvalid.Instance,
         ];
 
-        notTrue.forEach((other) =>
-            expect(BrsTypes.BrsBoolean.True.equalTo(other)).toBe(BrsTypes.BrsBoolean.False)
-        );
+        notTrue.forEach((other) => expect(BrsTypes.BrsBoolean.True.equalTo(other)).toBe(BrsTypes.BrsBoolean.False));
 
-        expect(BrsTypes.BrsBoolean.True.equalTo(BrsTypes.BrsBoolean.True)).toBe(
-            BrsTypes.BrsBoolean.True
-        );
+        expect(BrsTypes.BrsBoolean.True.equalTo(BrsTypes.BrsBoolean.True)).toBe(BrsTypes.BrsBoolean.True);
     });
 
     test("false equals false", () => {
@@ -33,13 +29,9 @@ describe("Boolean", () => {
             BrsTypes.BrsInvalid.Instance,
         ];
 
-        notFalse.forEach((other) =>
-            expect(BrsTypes.BrsBoolean.False.equalTo(other)).toBe(BrsTypes.BrsBoolean.False)
-        );
+        notFalse.forEach((other) => expect(BrsTypes.BrsBoolean.False.equalTo(other)).toBe(BrsTypes.BrsBoolean.False));
 
-        expect(BrsTypes.BrsBoolean.False.equalTo(BrsTypes.BrsBoolean.False)).toBe(
-            BrsTypes.BrsBoolean.True
-        );
+        expect(BrsTypes.BrsBoolean.False.equalTo(BrsTypes.BrsBoolean.False)).toBe(BrsTypes.BrsBoolean.True);
     });
 
     test("true and false are less than nothing", () => {
@@ -79,33 +71,17 @@ describe("Boolean", () => {
     });
 
     test("boolean AND", () => {
-        expect(BrsTypes.BrsBoolean.False.and(BrsTypes.BrsBoolean.False)).toBe(
-            BrsTypes.BrsBoolean.False
-        );
-        expect(BrsTypes.BrsBoolean.False.and(BrsTypes.BrsBoolean.True)).toBe(
-            BrsTypes.BrsBoolean.False
-        );
-        expect(BrsTypes.BrsBoolean.True.and(BrsTypes.BrsBoolean.False)).toBe(
-            BrsTypes.BrsBoolean.False
-        );
-        expect(BrsTypes.BrsBoolean.True.and(BrsTypes.BrsBoolean.True)).toBe(
-            BrsTypes.BrsBoolean.True
-        );
+        expect(BrsTypes.BrsBoolean.False.and(BrsTypes.BrsBoolean.False)).toBe(BrsTypes.BrsBoolean.False);
+        expect(BrsTypes.BrsBoolean.False.and(BrsTypes.BrsBoolean.True)).toBe(BrsTypes.BrsBoolean.False);
+        expect(BrsTypes.BrsBoolean.True.and(BrsTypes.BrsBoolean.False)).toBe(BrsTypes.BrsBoolean.False);
+        expect(BrsTypes.BrsBoolean.True.and(BrsTypes.BrsBoolean.True)).toBe(BrsTypes.BrsBoolean.True);
     });
 
     test("boolean OR", () => {
-        expect(BrsTypes.BrsBoolean.False.or(BrsTypes.BrsBoolean.False)).toBe(
-            BrsTypes.BrsBoolean.False
-        );
-        expect(BrsTypes.BrsBoolean.False.or(BrsTypes.BrsBoolean.True)).toBe(
-            BrsTypes.BrsBoolean.True
-        );
-        expect(BrsTypes.BrsBoolean.True.or(BrsTypes.BrsBoolean.False)).toBe(
-            BrsTypes.BrsBoolean.True
-        );
-        expect(BrsTypes.BrsBoolean.True.or(BrsTypes.BrsBoolean.True)).toBe(
-            BrsTypes.BrsBoolean.True
-        );
+        expect(BrsTypes.BrsBoolean.False.or(BrsTypes.BrsBoolean.False)).toBe(BrsTypes.BrsBoolean.False);
+        expect(BrsTypes.BrsBoolean.False.or(BrsTypes.BrsBoolean.True)).toBe(BrsTypes.BrsBoolean.True);
+        expect(BrsTypes.BrsBoolean.True.or(BrsTypes.BrsBoolean.False)).toBe(BrsTypes.BrsBoolean.True);
+        expect(BrsTypes.BrsBoolean.True.or(BrsTypes.BrsBoolean.True)).toBe(BrsTypes.BrsBoolean.True);
     });
 
     test("boolean NOT", () => {

@@ -233,8 +233,7 @@ export const RuntimeErrorDetail = {
         errno: 169,
     },
     ReturnWithValue: {
-        message:
-            "Return can not have a return-value if inside a Sub or Function with Void return type.",
+        message: "Return can not have a return-value if inside a Sub or Function with Void return type.",
         errno: 170,
     },
     TypeMismatchForEachIndex: {
@@ -366,8 +365,7 @@ export const RuntimeErrorDetail = {
         errno: 235,
     },
     DotOnNonObject: {
-        message:
-            "'Dot' Operator attempted with invalid BrightScript Component or interface reference.",
+        message: "'Dot' Operator attempted with invalid BrightScript Component or interface reference.",
         errno: 236,
     },
     NonStaticInterfaceCall: {
@@ -375,8 +373,7 @@ export const RuntimeErrorDetail = {
         errno: 237,
     },
     NotWaitable: {
-        message:
-            "Tried to Wait on an BrightScript Component that does not have MessagePort interface.",
+        message: "Tried to Wait on an BrightScript Component that does not have MessagePort interface.",
         errno: 238,
     },
     NotPrintable: {
@@ -404,8 +401,7 @@ export const RuntimeErrorDetail = {
         errno: 244,
     },
     RoWrongNumberOfParams: {
-        message:
-            "BrightScript Component function call does not have the correct number of parameters.",
+        message: "BrightScript Component function call does not have the correct number of parameters.",
         errno: 245,
     },
     ObjectClassNotFound: {

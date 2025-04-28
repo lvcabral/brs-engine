@@ -31,9 +31,7 @@ describe("Callable", () => {
             LCase,
         ];
 
-        brsValues.forEach((other) =>
-            expect(UCase.greaterThan(other)).toBe(BrsTypes.BrsBoolean.False)
-        );
+        brsValues.forEach((other) => expect(UCase.greaterThan(other)).toBe(BrsTypes.BrsBoolean.False));
     });
 
     it("is only equal to other identical functions", () => {
@@ -63,9 +61,7 @@ describe("Callable", () => {
                 impl: () => {},
             });
 
-            expect(
-                hasArgs.getAllSignatureMismatches([]).map((mm) => mm.mismatches)[0]
-            ).toContainEqual({
+            expect(hasArgs.getAllSignatureMismatches([]).map((mm) => mm.mismatches)[0]).toContainEqual({
                 reason: BrsTypes.MismatchReason.TooFewArguments,
                 expected: "1",
                 received: "0",
@@ -82,9 +78,7 @@ describe("Callable", () => {
             });
 
             expect(
-                noArgs
-                    .getAllSignatureMismatches([new BrsTypes.BrsString("foo")])
-                    .map((mm) => mm.mismatches)[0]
+                noArgs.getAllSignatureMismatches([new BrsTypes.BrsString("foo")]).map((mm) => mm.mismatches)[0]
             ).toContainEqual({
                 reason: BrsTypes.MismatchReason.TooManyArguments,
                 expected: "0",
@@ -120,9 +114,7 @@ describe("Callable", () => {
             });
 
             expect(
-                hasArgs
-                    .getAllSignatureMismatches([BrsTypes.BrsBoolean.False])
-                    .map((mm) => mm.mismatches)[0]
+                hasArgs.getAllSignatureMismatches([BrsTypes.BrsBoolean.False]).map((mm) => mm.mismatches)[0]
             ).toContainEqual({
                 reason: BrsTypes.MismatchReason.ArgumentTypeMismatch,
                 expected: "String",
@@ -148,10 +140,7 @@ describe("Callable", () => {
                     signature: {
                         args: [
                             new BrsTypes.StdlibArgument("input", BrsTypes.ValueKind.Float),
-                            new BrsTypes.StdlibArgument(
-                                "something_else",
-                                BrsTypes.ValueKind.Boolean
-                            ),
+                            new BrsTypes.StdlibArgument("something_else", BrsTypes.ValueKind.Boolean),
                         ],
                         returns: BrsTypes.Float,
                     },
@@ -201,11 +190,7 @@ describe("Callable", () => {
                     ["integer", new BrsTypes.Int32(-5), new BrsTypes.Float(-5)],
                     ["float", new BrsTypes.Float(3.14159), new BrsTypes.Float(3.14159)],
                     ["double", new BrsTypes.Double(2.71828), new BrsTypes.Float(2.71828)],
-                    [
-                        "longinteger",
-                        new BrsTypes.Int64(2147483647119),
-                        new BrsTypes.Float(2147483647119),
-                    ],
+                    ["longinteger", new BrsTypes.Int64(2147483647119), new BrsTypes.Float(2147483647119)],
                 ])("from %s to float", (_type, input, output) => {
                     expect(fn.call(new Interpreter(), input)).toEqual(output);
                 });
@@ -225,11 +210,7 @@ describe("Callable", () => {
                     ["integer", new BrsTypes.Int32(-5), new BrsTypes.Double(-5)],
                     ["float", new BrsTypes.Float(3.14159), new BrsTypes.Double(3.14159)],
                     ["double", new BrsTypes.Double(2.71828), new BrsTypes.Double(2.71828)],
-                    [
-                        "longinteger",
-                        new BrsTypes.Int64(2147483647119),
-                        new BrsTypes.Double(2147483647119),
-                    ],
+                    ["longinteger", new BrsTypes.Int64(2147483647119), new BrsTypes.Double(2147483647119)],
                 ])("from %s to double", (_type, input, output) => {
                     expect(fn.call(new Interpreter(), input)).toEqual(output);
                 });
@@ -249,11 +230,7 @@ describe("Callable", () => {
                     ["integer", new BrsTypes.Int32(-5), new BrsTypes.Int64(-5)],
                     ["float", new BrsTypes.Float(3.14159), new BrsTypes.Int64(3)],
                     ["double", new BrsTypes.Double(2.71828), new BrsTypes.Int64(2)],
-                    [
-                        "longinteger",
-                        new BrsTypes.Int64(2147483647119),
-                        new BrsTypes.Int64(2147483647119),
-                    ],
+                    ["longinteger", new BrsTypes.Int64(2147483647119), new BrsTypes.Int64(2147483647119)],
                 ])("from %s to longinteger", (_type, input, output) => {
                     expect(fn.call(new Interpreter(), input)).toEqual(output);
                 });
@@ -274,10 +251,7 @@ describe("Callable", () => {
 
             expect(
                 hasArgs
-                    .getAllSignatureMismatches([
-                        BrsTypes.BrsBoolean.False,
-                        BrsTypes.BrsInvalid.Instance,
-                    ])
+                    .getAllSignatureMismatches([BrsTypes.BrsBoolean.False, BrsTypes.BrsInvalid.Instance])
                     .map((mm) => mm.mismatches)[0]
             ).toEqual([]);
         });

@@ -379,18 +379,7 @@ export enum BufferType {
 export const DefaultSounds = ["select", "navsingle", "navmulti", "deadend"];
 
 // Media Files Extensions
-export const AudioExt = new Set<string>([
-    "wav",
-    "mp2",
-    "mp3",
-    "m4a",
-    "aac",
-    "ogg",
-    "oga",
-    "ac3",
-    "wma",
-    "flac",
-]);
+export const AudioExt = new Set<string>(["wav", "mp2", "mp3", "m4a", "aac", "ogg", "oga", "ac3", "wma", "flac"]);
 
 export const VideoExt = new Set<string>(["mp4", "m4v", "mkv", "mov"]);
 
@@ -409,8 +398,7 @@ export function getPlatform(): Platform {
     let inWindows = false;
     if (typeof window !== "undefined") {
         inBrowser = true;
-        inChromium =
-            ("chrome" in window || (window.Intl && "v8BreakIterator" in Intl)) && "CSS" in window;
+        inChromium = ("chrome" in window || (window.Intl && "v8BreakIterator" in Intl)) && "CSS" in window;
     }
     if (typeof navigator !== "undefined" && typeof navigator.userAgent === "string") {
         let ua = navigator.userAgent;
@@ -479,9 +467,7 @@ export function parseManifest(contents: string) {
             let equals = line.indexOf("=");
             if (equals === -1) {
                 const pos = `${index + 1},0-${line.length}`;
-                console.warn(
-                    `manifest(${pos}): Missing "=". Manifest entries must have this format: key=value`
-                );
+                console.warn(`manifest(${pos}): Missing "=". Manifest entries must have this format: key=value`);
             }
             return [line.slice(0, equals), line.slice(equals + 1)];
         })

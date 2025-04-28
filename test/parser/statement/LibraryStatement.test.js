@@ -90,9 +90,7 @@ describe("parser library statements", () => {
         `);
         const { statements, errors } = parser.parse(tokens);
         //make sure the assignment is present in the function body
-        expect(statements[0].func.body.statements[0].value.elements[0].name.value).toEqual(
-            "library"
-        );
+        expect(statements[0].func.body.statements[0].value.elements[0].name.value).toEqual("library");
         expect({ errors, statements }).toMatchSnapshot();
     });
 

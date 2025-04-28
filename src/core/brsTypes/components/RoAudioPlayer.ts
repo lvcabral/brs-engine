@@ -1,13 +1,6 @@
 import { BrsValue, ValueKind, BrsInvalid, BrsBoolean, BrsString } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import {
-    BrsType,
-    RoMessagePort,
-    RoAssociativeArray,
-    RoArray,
-    RoAudioPlayerEvent,
-    BrsEvent,
-} from "..";
+import { BrsType, RoMessagePort, RoAssociativeArray, RoArray, RoAudioPlayerEvent, BrsEvent } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
@@ -89,12 +82,7 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
         if (flags !== this.audioFlags) {
             this.audioFlags = flags;
             if (this.audioFlags >= 0) {
-                events.push(
-                    new RoAudioPlayerEvent(
-                        this.audioFlags,
-                        Atomics.load(BrsDevice.sharedArray, DataType.IDX)
-                    )
-                );
+                events.push(new RoAudioPlayerEvent(this.audioFlags, Atomics.load(BrsDevice.sharedArray, DataType.IDX)));
             }
         }
         return events;
