@@ -120,7 +120,7 @@ export class ContentNode extends RoSGNode {
      * This creates an easy way to track whether a field is a metadata field or not.
      * The reason to keep track is because metadata fields should print out in all caps.
      */
-    private metaDataFields = new Set<string>(this.defaultFields.map((field) => field.name.toLowerCase()));
+    private readonly metaDataFields = new Set<string>(this.defaultFields.map((field) => field.name.toLowerCase()));
 
     constructor(readonly name: string = "ContentNode") {
         super([], name);

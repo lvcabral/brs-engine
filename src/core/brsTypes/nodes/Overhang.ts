@@ -1,5 +1,5 @@
 import { Field, FieldKind, FieldModel } from "./Field";
-import { AAMember, BrsString, Float, Label, Poster, Timer, BrsBoolean, brsValueOf, BrsType } from "..";
+import { AAMember, BrsString, Float, Label, Poster, Timer, BrsBoolean, BrsType } from "..";
 import { Group } from "./Group";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D } from "../interfaces/IfDraw2D";

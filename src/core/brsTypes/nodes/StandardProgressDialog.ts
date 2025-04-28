@@ -1,7 +1,7 @@
 import { FieldModel } from "./Field";
 import { StandardDialog } from "./StandardDialog";
 import { AAMember } from "../components/RoAssociativeArray";
-import { StdDlgTitleArea, StdDlgContentArea, StdDlgProgressItem, jsValueOf, BrsString, Float, brsValueOf } from "..";
+import { StdDlgTitleArea, StdDlgContentArea, StdDlgProgressItem, jsValueOf, BrsString, Float } from "..";
 import { Interpreter } from "../..";
 import { IfDraw2D } from "../interfaces/IfDraw2D";
 
