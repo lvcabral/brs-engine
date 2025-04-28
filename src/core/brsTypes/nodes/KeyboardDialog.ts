@@ -2,6 +2,7 @@ import { FieldModel } from "./Field";
 import { AAMember } from "../components/RoAssociativeArray";
 import { Dialog } from "./Dialog";
 import { Keyboard, BrsBoolean, BrsString, Float, isBrsString, rootObjects, Int32 } from "..";
+import { Interpreter } from "../../interpreter";
 
 export class KeyboardDialog extends Dialog {
     readonly defaultFields: FieldModel[] = [
@@ -72,6 +73,15 @@ export class KeyboardDialog extends Dialog {
         this.linkField(this.keyboard, "text");
         this.icon.setFieldValue("visible", BrsBoolean.False);
         this.focus = "";
+    }
+
+    setNodeFocus(_: Interpreter, focusOn: boolean): boolean {
+        if (focusOn && rootObjects.focused && this.lastFocus === undefined) {
+            this.lastFocus = rootObjects.focused;
+            rootObjects.focused = this.hasButtons ? this.buttonGroup : this.keyboard;
+            this.isDirty = true;
+        }
+        return true;
     }
 
     handleKey(key: string, press: boolean): boolean {
@@ -150,7 +160,6 @@ export class KeyboardDialog extends Dialog {
         }
         if (this.focus === "") {
             this.focus = this.hasButtons ? "buttons" : "keyboard";
-            rootObjects.focused = this.hasButtons ? this.buttonGroup : this.keyboard;
             this.keyboard.textEditBox.set(new BrsString("active"), BrsBoolean.from(!this.hasButtons));
         }
 

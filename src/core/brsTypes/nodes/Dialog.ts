@@ -224,9 +224,7 @@ export class Dialog extends Group {
         if (this.isDirty) {
             this.updateChildren();
         }
-        if (this.hasButtons) {
-            this.setNodeFocus(interpreter, true);
-        }
+        this.setNodeFocus(interpreter, true);
         const rotation = angle + this.getRotation();
         opacity = opacity * this.getOpacity();
         this.updateBoundingRects(boundingRect, origin, rotation);
