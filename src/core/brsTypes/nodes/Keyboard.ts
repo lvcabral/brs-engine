@@ -41,8 +41,9 @@ export class Keyboard extends Group {
     private focusedKeyColor: number;
     private textEditX: number;
     private iconLeftX: number;
+    private iconLeftY: number;
     private iconRightX: number;
-    private iconBaseY: number;
+    private iconRightY: number;
     private iconOffsetX: number;
     private iconOffsetY: number;
     private iconGapX: number;
@@ -62,10 +63,14 @@ export class Keyboard extends Group {
         "delete",
         "moveCursorLeft",
         "moveCursorRight",
-        "checkboxOFF",
-        "checkboxON",
-        "radioButtonOFF",
-        "radioButtonON",
+        "caps_on",
+        "caps_off",
+        "alphanum_on",
+        "alphanum_off",
+        "symbols_on",
+        "symbols_off",
+        "accent_on",
+        "accent_off",
     ];
     private readonly buttons: Map<string, string[]> = new Map();
     private readonly bmpIcons: Map<string, RoBitmap> = new Map();
@@ -89,8 +94,9 @@ export class Keyboard extends Group {
             this.textEditBox.setFieldValue("width", new Float(1371));
             this.textEditX = 12;
             this.iconLeftX = 90;
-            this.iconRightX = 1221;
-            this.iconBaseY = 81;
+            this.iconLeftY = 81;
+            this.iconRightX = 1203;
+            this.iconRightY = 99;
             this.iconOffsetX = 45;
             this.iconOffsetY = 84;
             this.iconGapX = 9;
@@ -106,8 +112,9 @@ export class Keyboard extends Group {
             this.textEditBox.setFieldValue("width", new Float(914));
             this.textEditX = 8;
             this.iconLeftX = 60;
-            this.iconRightX = 814;
-            this.iconBaseY = 54;
+            this.iconLeftY = 54;
+            this.iconRightX = 802;
+            this.iconRightY = 66;
             this.iconOffsetX = 30;
             this.iconOffsetY = 56;
             this.iconGapX = 6;
@@ -180,6 +187,7 @@ export class Keyboard extends Group {
         if (!this.isVisible()) {
             return;
         }
+        const mode = this.keyboardMode;
         const nodeTrans = this.getTranslation();
         const drawTrans = nodeTrans.slice();
         drawTrans[0] += origin[0];
@@ -192,7 +200,13 @@ export class Keyboard extends Group {
             this.textEditBox.setTranslation([this.textEditX, 0]);
         }
         if (this.bmpBack?.isValid()) {
-            this.drawImage(this.bmpBack, { ...rect, y: rect.y + this.iconBaseY }, 0, opacity, draw2D);
+            this.drawImage(
+                this.bmpBack,
+                { ...rect, y: rect.y + this.iconLeftY },
+                0,
+                opacity,
+                draw2D
+            );
         }
         // Left Icons
         for (let i = 0; i < 5; i++) {
@@ -206,7 +220,7 @@ export class Keyboard extends Group {
                 }
                 const iconRect = {
                     x: rect.x + this.iconLeftX + offX,
-                    y: rect.y + this.iconBaseY + bmp.height + offY,
+                    y: rect.y + this.iconLeftY + bmp.height + offY,
                     width: bmp.width,
                     height: bmp.height,
                 };
@@ -219,35 +233,22 @@ export class Keyboard extends Group {
         this.renderKeys(3, 28, rect.x + this.keyRightX, rect.y + this.keyBaseY, opacity, draw2D);
         // Right Icons
         for (let r = 0; r < 4; r++) {
-            let icon: string;
+            let icon = "";
             if (r === 0) {
-                // Caps Lock
-                icon = this.capsLock ? "checkboxON" : "checkboxOFF";
-                const bmp = this.bmpIcons.get("shift");
-                if (bmp?.isValid()) {
-                    const iconRect = {
-                        x: rect.x + this.iconRightX + this.iconGapX + bmp.width,
-                        y: rect.y + this.iconBaseY + bmp.height,
-                        width: bmp.width,
-                        height: bmp.height,
-                    };
-                    this.drawImage(bmp, iconRect, 0, opacity, draw2D);
-                }
-            } else if (r === 1 && this.keyboardMode === KeyboardModes.ALPHANUMERIC) {
-                icon = "radioButtonON";
-            } else if (r === 2 && this.keyboardMode === KeyboardModes.SYMBOLS) {
-                icon = "radioButtonON";
-            } else if (r === 3 && this.keyboardMode === KeyboardModes.ACCENTED) {
-                icon = "radioButtonON";
-            } else {
-                icon = "radioButtonOFF";
+                icon = this.capsLock ? "caps_on" : "caps_off";
+            } else if (r === 1) {
+                icon = mode === KeyboardModes.ALPHANUMERIC ? "alphanum_on" : "alphanum_off";
+            } else if (r === 2) {
+                icon = mode  === KeyboardModes.SYMBOLS ? "symbols_on" : "symbols_off";
+            } else if (r === 3) {
+                icon = mode === KeyboardModes.ACCENTED ? "accent_on" : "accent_off";
             }
             const bmp = this.bmpIcons.get(icon);
             if (bmp?.isValid()) {
                 let offY = r * this.iconOffsetY;
                 const iconRect = {
                     x: rect.x + this.iconRightX,
-                    y: rect.y + this.iconBaseY + bmp.height + offY,
+                    y: rect.y + this.iconRightY + offY,
                     width: bmp.width,
                     height: bmp.height,
                 };
