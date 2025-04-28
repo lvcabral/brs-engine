@@ -25,17 +25,17 @@ export class TextEditBox extends Group {
     ];
 
     private background?: RoBitmap;
-    private cursor?: RoBitmap;
     private drawFont?: RoFont;
-    private textLabel: Label;
-    private secureLabel: Label;
-    private hintLabel: Label;
-    private height: number;
-    private paddingX: number;
-    private paddingY: number;
     private cursorVisible: boolean = true;
     private lastCursorToggleTime: number = 0;
     private lastCharInputTime: number = 0;
+    private readonly cursor?: RoBitmap;
+    private readonly textLabel: Label;
+    private readonly secureLabel: Label;
+    private readonly hintLabel: Label;
+    private readonly height: number;
+    private readonly paddingX: number;
+    private readonly paddingY: number;
     private readonly cursorBlinkInterval = 500; // milliseconds
     private readonly secureDisplayTimeout = 2500; // milliseconds
     private readonly secureChar = "•";

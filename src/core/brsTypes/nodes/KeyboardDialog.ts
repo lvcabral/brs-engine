@@ -12,7 +12,7 @@ export class KeyboardDialog extends Dialog {
 
     protected readonly minHeight: number;
     private readonly keyboard: Keyboard;
-    private keyboardY: number;
+    private readonly keyboardY: number;
     private focus: string;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = "KeyboardDialog") {

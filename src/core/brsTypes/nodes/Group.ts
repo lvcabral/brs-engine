@@ -302,8 +302,7 @@ export class Group extends RoSGNode {
             y += rect.height - this.cachedHeight;
         }
         let ellipsized = false;
-        for (let i = 0; i < this.cachedLines.length; i++) {
-            let line = this.cachedLines[i];
+        for (const line of this.cachedLines) {
             let x = rect.x;
             if (horizAlign === "center") {
                 x += (rect.width - line.width) / 2;
