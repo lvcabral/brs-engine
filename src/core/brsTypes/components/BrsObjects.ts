@@ -63,10 +63,7 @@ import { RoSGScreen } from "./RoSGScreen";
 
 // Class to define a case-insensitive map of BrightScript objects.
 class BrsObjectsMap {
-    private readonly map = new Map<
-        string,
-        { originalKey: string; value: Function; params: number }
-    >();
+    private readonly map = new Map<string, { originalKey: string; value: Function; params: number }>();
 
     constructor(entries: [string, Function, number?][]) {
         entries.forEach(([key, value, params]) => this.set(key, value, params));
@@ -121,8 +118,7 @@ export const BrsObjects = new BrsObjectsMap([
     ["roAssociativeArray", (_?: Interpreter) => new RoAssociativeArray([])],
     [
         "roArray",
-        (_: Interpreter, capacity: Int32 | Float, resizable: BrsBoolean) =>
-            new RoArray(capacity, resizable),
+        (_: Interpreter, capacity: Int32 | Float, resizable: BrsBoolean) => new RoArray(capacity, resizable),
         2,
     ],
     ["roByteArray", (_?: Interpreter) => new RoByteArray()],
@@ -134,11 +130,7 @@ export const BrsObjects = new BrsObjectsMap([
     ["roDateTime", (_?: Interpreter) => new RoDateTime()],
     ["roList", (_?: Interpreter) => new RoList()],
     ["roTimespan", (_?: Interpreter) => new RoTimespan()],
-    [
-        "roRegex",
-        (_: Interpreter, expression: BrsString, flags: BrsString) => new RoRegex(expression, flags),
-        2,
-    ],
+    ["roRegex", (_: Interpreter, expression: BrsString, flags: BrsString) => new RoRegex(expression, flags), 2],
     ["roString", (_?: Interpreter) => new RoString(), -1],
     ["roBoolean", (_: Interpreter, literal: BrsBoolean) => new RoBoolean(literal), -1],
     ["roDouble", (_: Interpreter, literal: Double) => new RoDouble(literal), -1],
@@ -158,11 +150,7 @@ export const BrsObjects = new BrsObjectsMap([
     ["roLocalization", (_?: Interpreter) => new RoLocalization()],
     ["roFontRegistry", (_?: Interpreter) => getFontRegistry()],
     ["roRegistry", (_?: Interpreter) => new RoRegistry()],
-    [
-        "roRegistrySection",
-        (_: Interpreter, section: BrsString) => new RoRegistrySection(section),
-        1,
-    ],
+    ["roRegistrySection", (_: Interpreter, section: BrsString) => new RoRegistrySection(section), 1],
     ["roAppInfo", (_?: Interpreter) => new RoAppInfo()],
     ["roDeviceInfo", (_?: Interpreter) => new RoDeviceInfo()],
     ["roRemoteInfo", (_?: Interpreter) => new RoRemoteInfo()],
@@ -174,14 +162,8 @@ export const BrsObjects = new BrsObjectsMap([
     ["roCompositor", (_?: Interpreter) => new RoCompositor()],
     [
         "roRegion",
-        (
-            _: Interpreter,
-            bitmap: RoBitmap | RoScreen,
-            x: Int32,
-            y: Int32,
-            width: Int32,
-            height: Int32
-        ) => createRegion(bitmap, x, y, width, height),
+        (_: Interpreter, bitmap: RoBitmap | RoScreen, x: Int32, y: Int32, width: Int32, height: Int32) =>
+            createRegion(bitmap, x, y, width, height),
         5,
     ],
     [
@@ -199,10 +181,6 @@ export const BrsObjects = new BrsObjectsMap([
     ["roHdmiStatus", (_?: Interpreter) => new RoHdmiStatus()],
     ["roSocketAddress", (_?: Interpreter) => new RoSocketAddress()],
     ["roStreamSocket", (_?: Interpreter) => new RoStreamSocket()],
-    [
-        "roSGNode",
-        (interpreter: Interpreter, nodeType: BrsString) => createNodeByType(interpreter, nodeType),
-        1,
-    ],
+    ["roSGNode", (interpreter: Interpreter, nodeType: BrsString) => createNodeByType(interpreter, nodeType), 1],
     ["roSGScreen", (interpreter: Interpreter) => new RoSGScreen(interpreter)],
 ]);

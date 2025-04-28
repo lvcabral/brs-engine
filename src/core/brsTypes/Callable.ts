@@ -275,10 +275,7 @@ export class Callable implements Brs.BrsValue, Brs.Boxable {
         return this.signatures.map((sigAndImpl) => this.trySatisfySignature(sigAndImpl, args));
     }
 
-    private trySatisfySignature(
-        sigAndImpl: SignatureAndImplementation,
-        args: Brs.BrsType[]
-    ): SignatureSatisfaction {
+    private trySatisfySignature(sigAndImpl: SignatureAndImplementation, args: Brs.BrsType[]): SignatureSatisfaction {
         let { signature, impl } = sigAndImpl;
         let reasons: SignatureMismatch[] = [];
         let requiredArgCount = signature.args.filter((arg) => !arg.defaultValue).length;
@@ -298,24 +295,22 @@ export class Callable implements Brs.BrsValue, Brs.Boxable {
         }
 
         let coercedArgs = [...args];
-        signature.args
-            .slice(0, Math.min(signature.args.length, args.length))
-            .forEach((_value, index) => {
-                let expected = signature.args[index];
-                let received = args[index];
+        signature.args.slice(0, Math.min(signature.args.length, args.length)).forEach((_value, index) => {
+            let expected = signature.args[index];
+            let received = args[index];
 
-                let coercedValue = tryCoerce(received, expected.type.kind);
-                if (coercedValue != null) {
-                    coercedArgs[index] = coercedValue;
-                } else {
-                    reasons.push({
-                        reason: MismatchReason.ArgumentTypeMismatch,
-                        expected: Brs.ValueKind.toString(expected.type.kind),
-                        received: Brs.ValueKind.toString(received.kind),
-                        argName: expected.name.text,
-                    });
-                }
-            });
+            let coercedValue = tryCoerce(received, expected.type.kind);
+            if (coercedValue != null) {
+                coercedArgs[index] = coercedValue;
+            } else {
+                reasons.push({
+                    reason: MismatchReason.ArgumentTypeMismatch,
+                    expected: Brs.ValueKind.toString(expected.type.kind),
+                    received: Brs.ValueKind.toString(received.kind),
+                    argName: expected.name.text,
+                });
+            }
+        });
 
         return {
             signature,
@@ -344,9 +339,7 @@ export class Callable implements Brs.BrsValue, Brs.Boxable {
                             ...signature.args,
                             ...new Array(numArgs)
                                 .fill(0)
-                                .map(
-                                    (_, i) => new StdlibArgument(`arg${i}`, Brs.ValueKind.Dynamic)
-                                ),
+                                .map((_, i) => new StdlibArgument(`arg${i}`, Brs.ValueKind.Dynamic)),
                         ],
                         returns: signature.returns,
                     },

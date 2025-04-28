@@ -20,13 +20,7 @@ export class Rectangle extends Group {
         this.registerInitializedFields(initializedFields);
     }
 
-    renderNode(
-        interpreter: Interpreter,
-        origin: number[],
-        angle: number,
-        opacity: number,
-        draw2D?: IfDraw2D
-    ) {
+    renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
         if (!this.isVisible()) {
             return;
         }

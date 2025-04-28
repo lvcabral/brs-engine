@@ -63,8 +63,6 @@ describe("String", () => {
     it("concatenates with other strings", () => {
         let deliveryFor = new BrsString("Pizza delivery for: ");
         let recipient = new BrsString("I. C. Weiner");
-        expect(deliveryFor.concat(recipient)).toEqual(
-            new BrsString("Pizza delivery for: I. C. Weiner")
-        );
+        expect(deliveryFor.concat(recipient)).toEqual(new BrsString("Pizza delivery for: I. C. Weiner"));
     });
 });

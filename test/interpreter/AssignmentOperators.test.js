@@ -12,11 +12,7 @@ describe("interpreter assignment operators", () => {
     });
 
     function initializeFoo(literal) {
-        return new Stmt.Assignment(
-            { equals: token(Lexeme.Equal, "=") },
-            identifier("foo"),
-            new Expr.Literal(literal)
-        );
+        return new Stmt.Assignment({ equals: token(Lexeme.Equal, "=") }, identifier("foo"), new Expr.Literal(literal));
     }
 
     function fooAssignmentOperator(token, literal) {
@@ -42,9 +38,7 @@ describe("interpreter assignment operators", () => {
             fooAssignmentOperator(token(Lexeme.PlusEqual, "+="), new BrsString(" ipsum")),
         ]);
 
-        expect(interpreter.environment.get(identifier("foo"))).toEqual(
-            new BrsString("lorem ipsum")
-        );
+        expect(interpreter.environment.get(identifier("foo"))).toEqual(new BrsString("lorem ipsum"));
     });
 
     it("subtracts numbers", () => {

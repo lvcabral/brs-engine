@@ -82,32 +82,13 @@ import packageInfo from "../../package.json";
 const brsWrkLib = getWorkerLibPath();
 
 // Package API
-export {
-    deviceData,
-    loadAppZip,
-    updateAppZip,
-    getSerialNumber,
-    mountExt,
-    umountExt,
-} from "./package";
+export { deviceData, loadAppZip, updateAppZip, getSerialNumber, mountExt, umountExt } from "./package";
 
 // Control API
-export {
-    setControlMode,
-    getControlMode,
-    setCustomKeys,
-    setCustomPadButtons,
-    sendInput,
-} from "./control";
+export { setControlMode, getControlMode, setCustomKeys, setCustomPadButtons, sendInput } from "./control";
 
 // Display API
-export {
-    setDisplayMode,
-    getDisplayMode,
-    setOverscanMode,
-    getOverscanMode,
-    enableStats,
-} from "./display";
+export { setDisplayMode, getDisplayMode, setOverscanMode, getOverscanMode, enableStats } from "./display";
 
 let clearDisplayOnExit: boolean = true;
 let disableDebug: boolean = false;
@@ -269,12 +250,7 @@ function notifyAll(eventName: string, eventData?: any) {
 }
 
 // Execute App Zip or Source File
-export function execute(
-    filePath: string,
-    fileData: any,
-    options: any = {},
-    deepLink?: Map<string, string>
-) {
+export function execute(filePath: string, fileData: any, options: any = {}, deepLink?: Map<string, string>) {
     setupCurrentApp(filePath);
     const fileName = filePath.split(/.*[\/|\\]/)[1] ?? filePath;
     const fileExt = filePath.split(".").pop()?.toLowerCase();
@@ -613,11 +589,7 @@ function mainCallback(event: MessageEvent) {
     } else if (isAppData(event.data)) {
         notifyAll("launch", { app: event.data.id, params: event.data.params ?? new Map() });
     } else if (isTaskData(event.data)) {
-        console.debug(
-            "[API] Task data received from Main Thread: ",
-            event.data.name,
-            TaskState[event.data.state]
-        );
+        console.debug("[API] Task data received from Main Thread: ", event.data.name, TaskState[event.data.state]);
         if (event.data.state === TaskState.RUN) {
             if (event.data.buffer instanceof SharedArrayBuffer) {
                 const taskBuffer = new SharedObject();
@@ -629,12 +601,7 @@ function mainCallback(event: MessageEvent) {
             endTask(event.data.id);
         }
     } else if (isThreadUpdate(event.data)) {
-        console.debug(
-            "[API] Update received from Main thread: ",
-            event.data.id,
-            event.data.global,
-            event.data.field
-        );
+        console.debug("[API] Update received from Main thread: ", event.data.id, event.data.global, event.data.field);
         if (event.data.id > 0) {
             if (!threadSyncToTask.has(event.data.id)) {
                 threadSyncToTask.set(event.data.id, new SharedObject());
@@ -670,9 +637,7 @@ function mainCallback(event: MessageEvent) {
             const url = params.find((el) => el.startsWith("url="))?.split("=")[1] ?? "";
             notifyAll("browser", { url: url, width: winDim[0], height: winDim[1] });
         } else if (event.data.app === "SDKLauncher") {
-            const channelId = event.data.params
-                .find((el) => el.toLowerCase().startsWith("channelid="))
-                ?.split("=")[1];
+            const channelId = event.data.params.find((el) => el.toLowerCase().startsWith("channelid="))?.split("=")[1];
             const app = deviceData.appList?.find((app) => app.id === channelId);
             if (app) {
                 const params = new Map();
@@ -708,11 +673,7 @@ function taskCallback(event: MessageEvent) {
     } else if (typeof event.data.captionsMode === "string") {
         deviceData.captionsMode = event.data.captionsMode;
     } else if (isTaskData(event.data)) {
-        console.debug(
-            "[API] Task data received from Task Thread: ",
-            event.data.name,
-            TaskState[event.data.state]
-        );
+        console.debug("[API] Task data received from Task Thread: ", event.data.name, TaskState[event.data.state]);
         if (event.data.state === TaskState.STOP) {
             endTask(event.data.id);
         }

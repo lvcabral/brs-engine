@@ -14,11 +14,7 @@ describe("parser goto statements", () => {
     });
 
     it("detects labels", () => {
-        let { statements, errors } = brs.parser.Parser.parse([
-            identifier("SomeLabel"),
-            token(Lexeme.Colon, ":"),
-            EOF,
-        ]);
+        let { statements, errors } = brs.parser.Parser.parse([identifier("SomeLabel"), token(Lexeme.Colon, ":"), EOF]);
         expect(errors.length).toEqual(0);
         expect(statements).toMatchSnapshot();
     });
@@ -50,8 +46,6 @@ describe("parser goto statements", () => {
         `);
         let { statements, errors } = brs.parser.Parser.parse(tokens);
         expect(errors.length).toEqual(1);
-        expect(errors[0].message).toEqual(
-            "Syntax Error. (compile error &h2) Labels are illegal inside a TRY clause."
-        );
+        expect(errors[0].message).toEqual("Syntax Error. (compile error &h2) Labels are illegal inside a TRY clause.");
     });
 });

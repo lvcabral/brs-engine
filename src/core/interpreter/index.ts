@@ -47,13 +47,7 @@ import { isToken, Location } from "../lexer/Token";
 import { Expr, Stmt } from "../parser";
 import { BrsDevice } from "../device/BrsDevice";
 import { OutputProxy } from "../device/OutputProxy";
-import {
-    BrsError,
-    RuntimeError,
-    RuntimeErrorDetail,
-    findErrorDetail,
-    ErrorDetail,
-} from "../error/BrsError";
+import { BrsError, RuntimeError, RuntimeErrorDetail, findErrorDetail, ErrorDetail } from "../error/BrsError";
 import { TypeMismatch } from "../error/TypeMismatch";
 import { generateArgumentMismatchError } from "../error/ArgumentMismatch";
 import * as StdLib from "../stdlib";
@@ -62,15 +56,7 @@ import { Scope, Environment, NotFound } from "./Environment";
 import { toCallable } from "./BrsFunction";
 import { BlockEnd, GotoLabel } from "../parser/Statement";
 import { runDebugger } from "./MicroDebugger";
-import {
-    DataType,
-    DebugCommand,
-    numberToHex,
-    parseTextFile,
-    TaskPayload,
-    TaskState,
-    ThreadUpdate,
-} from "../common";
+import { DataType, DebugCommand, numberToHex, parseTextFile, TaskPayload, TaskState, ThreadUpdate } from "../common";
 /// #if !BROWSER
 import * as v8 from "v8";
 /// #endif
@@ -289,11 +275,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
      * @param args run parameters for main/runuserinterface functions.
      * @returns the result of the last statement executed.
      */
-    exec(
-        statements: readonly Stmt.Statement[],
-        sourceMap?: Map<string, string>,
-        ...args: BrsType[]
-    ) {
+    exec(statements: readonly Stmt.Statement[], sourceMap?: Map<string, string>, ...args: BrsType[]) {
         if (sourceMap) {
             this._sourceMap = sourceMap;
         }
@@ -383,12 +365,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                         taskData.state = TaskState.STOP;
                         postMessage(taskData);
                     } else {
-                        this.addError(
-                            new BrsError(
-                                `Cannot found the Task function '${functionName}'`,
-                                this.location
-                            )
-                        );
+                        this.addError(new BrsError(`Cannot found the Task function '${functionName}'`, this.location));
                     }
                     return BrsInvalid.Instance;
                 }, taskEnv);
@@ -485,18 +462,13 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                         break;
                     default:
                         this.addError(
-                            new BrsError(
-                                `Found unexpected print separator '${printable.text}'`,
-                                printable.location
-                            )
+                            new BrsError(`Found unexpected print separator '${printable.text}'`, printable.location)
                         );
                 }
             } else {
                 const obj = this.evaluate(printable);
                 const str =
-                    isNumberComp(obj) && this.isPositive(obj.getValue())
-                        ? " " + obj.toString()
-                        : obj.toString();
+                    isNumberComp(obj) && this.isPositive(obj.getValue()) ? " " + obj.toString() : obj.toString();
                 printStream += str;
                 BrsDevice.stdout.position(str);
             }
@@ -522,10 +494,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     visitAssignment(statement: Stmt.Assignment): BrsType {
         if (statement.name.isReserved) {
             this.addError(
-                new BrsError(
-                    `Cannot assign a value to reserved name '${statement.name.text}'`,
-                    statement.name.location
-                )
+                new BrsError(`Cannot assign a value to reserved name '${statement.name.text}'`, statement.name.location)
             );
         }
 
@@ -564,12 +533,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             }
         }
         try {
-            this.environment.define(
-                Scope.Function,
-                statement.name.text,
-                value,
-                statement.name.location
-            );
+            this.environment.define(Scope.Function, statement.name.text, value, statement.name.location);
         } catch (err: any) {
             this.addError(err);
         }
@@ -579,10 +543,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     visitDim(statement: Stmt.Dim): BrsType {
         if (statement.name.isReserved) {
             this.addError(
-                new BrsError(
-                    `Cannot assign a value to reserved name '${statement.name.text}'`,
-                    statement.name.location
-                )
+                new BrsError(`Cannot assign a value to reserved name '${statement.name.text}'`, statement.name.location)
             );
             return BrsInvalid.Instance;
         }
@@ -594,9 +555,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 val = val.unbox();
             }
             if (val.kind !== ValueKind.Int32 && val.kind !== ValueKind.Float) {
-                this.addError(
-                    new RuntimeError(RuntimeErrorDetail.NonNumericArrayIndex, expr.location)
-                );
+                this.addError(new RuntimeError(RuntimeErrorDetail.NonNumericArrayIndex, expr.location));
             }
             // dim takes max-index, so +1 to get the actual array size
             dimensionValues.push(val.getValue() + 1);
@@ -619,12 +578,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         let array = createArrayTree();
 
         try {
-            this.environment.define(
-                Scope.Function,
-                statement.name.text,
-                array,
-                statement.name.location
-            );
+            this.environment.define(Scope.Function, statement.name.text, array, statement.name.location);
         } catch (err: any) {
             this.addError(err);
         }
@@ -684,9 +638,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 ) {
                     return left.leftShift(right);
                 } else if (isBrsNumber(left) && isBrsNumber(right)) {
-                    return this.addError(
-                        new RuntimeError(RuntimeErrorDetail.BadBitShift, expression.right.location)
-                    );
+                    return this.addError(new RuntimeError(RuntimeErrorDetail.BadBitShift, expression.right.location));
                 } else {
                     return this.addError(
                         new TypeMismatch({
@@ -712,9 +664,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 ) {
                     return left.rightShift(right);
                 } else if (isBrsNumber(left) && isBrsNumber(right)) {
-                    return this.addError(
-                        new RuntimeError(RuntimeErrorDetail.BadBitShift, expression.right.location)
-                    );
+                    return this.addError(new RuntimeError(RuntimeErrorDetail.BadBitShift, expression.right.location));
                 } else {
                     return this.addError(
                         new TypeMismatch({
@@ -863,10 +813,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     );
                 }
             case Lexeme.Greater:
-                if (
-                    (isNumberComp(left) && isNumberComp(right)) ||
-                    (isStringComp(left) && isStringComp(right))
-                ) {
+                if ((isNumberComp(left) && isNumberComp(right)) || (isStringComp(left) && isStringComp(right))) {
                     return left.greaterThan(right);
                 }
 
@@ -885,10 +832,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 );
 
             case Lexeme.GreaterEqual:
-                if (
-                    (isNumberComp(left) && isNumberComp(right)) ||
-                    (isStringComp(left) && isStringComp(right))
-                ) {
+                if ((isNumberComp(left) && isNumberComp(right)) || (isStringComp(left) && isStringComp(right))) {
                     return left.greaterThan(right).or(left.equalTo(right));
                 }
 
@@ -907,10 +851,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 );
 
             case Lexeme.Less:
-                if (
-                    (isNumberComp(left) && isNumberComp(right)) ||
-                    (isStringComp(left) && isStringComp(right))
-                ) {
+                if ((isNumberComp(left) && isNumberComp(right)) || (isStringComp(left) && isStringComp(right))) {
                     return left.lessThan(right);
                 }
 
@@ -928,10 +869,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     })
                 );
             case Lexeme.LessEqual:
-                if (
-                    (isNumberComp(left) && isNumberComp(right)) ||
-                    (isStringComp(left) && isStringComp(right))
-                ) {
+                if ((isNumberComp(left) && isNumberComp(right)) || (isStringComp(left) && isStringComp(right))) {
                     return left.lessThan(right).or(left.equalTo(right));
                 }
 
@@ -1112,10 +1050,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 }
             default:
                 this.addError(
-                    new BrsError(
-                        `Received unexpected token kind '${expression.token.kind}'`,
-                        expression.token.location
-                    )
+                    new BrsError(`Received unexpected token kind '${expression.token.kind}'`, expression.token.location)
                 );
         }
     }
@@ -1131,11 +1066,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             if (!(err instanceof BrsError) || err instanceof GotoLabel) {
                 throw err;
             }
-            this.environment.define(
-                Scope.Function,
-                statement.errorBinding.name.text,
-                this.formatErrorVariable(err)
-            );
+            this.environment.define(Scope.Function, statement.errorBinding.name.text, this.formatErrorVariable(err));
             this.visitBlock(statement.catchBlock);
         }
         return BrsInvalid.Instance;
@@ -1234,10 +1165,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     visitCall(expression: Expr.Call) {
         let functionName = "[anonymous function]";
         // TODO: auto-box
-        if (
-            expression.callee instanceof Expr.Variable ||
-            expression.callee instanceof Expr.DottedGet
-        ) {
+        if (expression.callee instanceof Expr.Variable || expression.callee instanceof Expr.DottedGet) {
             functionName = expression.callee.name.text;
         }
 
@@ -1251,9 +1179,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             if (callee instanceof BrsInvalid && expression.optional) {
                 return callee;
             }
-            this.addError(
-                new RuntimeError(RuntimeErrorDetail.NotAFunction, expression.closingParen.location)
-            );
+            this.addError(new RuntimeError(RuntimeErrorDetail.NotAFunction, expression.closingParen.location));
         }
 
         functionName = callee.getName();
@@ -1274,10 +1200,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     return arg;
                 });
 
-                if (
-                    expression.callee instanceof Expr.DottedGet ||
-                    expression.callee instanceof Expr.IndexedGet
-                ) {
+                if (expression.callee instanceof Expr.DottedGet || expression.callee instanceof Expr.IndexedGet) {
                     mPointer = callee.getContext() ?? mPointer;
                 }
                 return this.inSubEnv((subInterpreter) => {
@@ -1329,15 +1252,11 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 const signatureKind = satisfiedSignature.signature.returns;
 
                 if (returnedValue && signatureKind === ValueKind.Void) {
-                    this.addError(
-                        new RuntimeError(RuntimeErrorDetail.ReturnWithValue, returnLocation)
-                    );
+                    this.addError(new RuntimeError(RuntimeErrorDetail.ReturnWithValue, returnLocation));
                 }
 
                 if (!returnedValue && signatureKind !== ValueKind.Void) {
-                    this.addError(
-                        new RuntimeError(RuntimeErrorDetail.ReturnWithoutValue, returnLocation)
-                    );
+                    this.addError(new RuntimeError(RuntimeErrorDetail.ReturnWithoutValue, returnLocation));
                 }
 
                 if (returnedValue) {
@@ -1347,11 +1266,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     }
                 }
 
-                if (
-                    returnedValue &&
-                    signatureKind !== ValueKind.Dynamic &&
-                    signatureKind !== returnedValue.kind
-                ) {
+                if (returnedValue && signatureKind !== ValueKind.Dynamic && signatureKind !== returnedValue.kind) {
                     this.addError(
                         new TypeMismatch({
                             message: `Unable to cast`,
@@ -1371,9 +1286,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 return returnedValue ?? BrsInvalid.Instance;
             }
         } else {
-            this.addError(
-                generateArgumentMismatchError(callee, args, expression.closingParen.location)
-            );
+            this.addError(generateArgumentMismatchError(callee, args, expression.closingParen.location));
         }
     }
 
@@ -1412,9 +1325,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             if (boxedSource.hasInterface(expression.name.text)) {
                 return this._dotLevel > 0
                     ? boxedSource
-                    : this.addError(
-                          new RuntimeError(RuntimeErrorDetail.BadSyntax, expression.name.location)
-                      );
+                    : this.addError(new RuntimeError(RuntimeErrorDetail.BadSyntax, expression.name.location));
             }
             let ifFilter = "";
             if (expression.obj instanceof Expr.DottedGet) {
@@ -1478,17 +1389,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             this.addError(new RuntimeError(RuntimeErrorDetail.UndimmedArray, expression.location));
         }
 
-        if (
-            source instanceof RoAssociativeArray ||
-            source instanceof RoXMLElement ||
-            source instanceof RoSGNode
-        ) {
+        if (source instanceof RoAssociativeArray || source instanceof RoXMLElement || source instanceof RoSGNode) {
             if (expression.indexes.length !== 1) {
                 this.addError(
-                    new RuntimeError(
-                        RuntimeErrorDetail.WrongNumberOfParams,
-                        expression.closingSquare.location
-                    )
+                    new RuntimeError(RuntimeErrorDetail.WrongNumberOfParams, expression.closingSquare.location)
                 );
             }
             let index = this.evaluate(expression.indexes[0]);
@@ -1516,10 +1420,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         if (source instanceof RoByteArray) {
             if (expression.indexes.length !== 1) {
                 this.addError(
-                    new RuntimeError(
-                        RuntimeErrorDetail.BadNumberOfIndexes,
-                        expression.closingSquare.location
-                    )
+                    new RuntimeError(RuntimeErrorDetail.BadNumberOfIndexes, expression.closingSquare.location)
                 );
             }
         }
@@ -1527,9 +1428,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         for (let index of expression.indexes) {
             let dimIndex = this.evaluate(index);
             if (!isAnyNumber(dimIndex)) {
-                this.addError(
-                    new RuntimeError(RuntimeErrorDetail.NonNumericArrayIndex, index.location)
-                );
+                this.addError(new RuntimeError(RuntimeErrorDetail.NonNumericArrayIndex, index.location));
             }
             if (
                 current instanceof RoArray ||
@@ -1543,9 +1442,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     this.addError(new BrsError(err.message, index.location));
                 }
             } else {
-                this.addError(
-                    new RuntimeError(RuntimeErrorDetail.BadNumberOfIndexes, expression.location)
-                );
+                this.addError(new RuntimeError(RuntimeErrorDetail.BadNumberOfIndexes, expression.location));
             }
         }
         return current;
@@ -1621,10 +1518,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             }
         } else {
             while (
-                (this.evaluate(new Expr.Variable(counterName)) as Int32 | Float)
-                    .lessThan(finalValue)
-                    .not()
-                    .toBoolean()
+                (this.evaluate(new Expr.Variable(counterName)) as Int32 | Float).lessThan(finalValue).not().toBoolean()
             ) {
                 // execute the block
                 try {
@@ -1652,9 +1546,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         let target = this.evaluate(statement.target);
         if (!isIterable(target)) {
             // Roku device does not crash if the value is not iterable, just send a console message
-            const message = `BRIGHTSCRIPT: ERROR: Runtime: FOR EACH value is ${ValueKind.toString(
-                target.kind
-            )}`;
+            const message = `BRIGHTSCRIPT: ERROR: Runtime: FOR EACH value is ${ValueKind.toString(target.kind)}`;
             const location = `${statement.item.location.file}(${statement.item.location.start.line})`;
             BrsDevice.stderr.write(`warning,${message}: ${location}`);
             return BrsInvalid.Instance;
@@ -1784,17 +1676,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             this.addError(new RuntimeError(RuntimeErrorDetail.BadLHS, statement.obj.location));
         }
 
-        if (
-            source instanceof RoAssociativeArray ||
-            source instanceof RoXMLElement ||
-            source instanceof RoSGNode
-        ) {
+        if (source instanceof RoAssociativeArray || source instanceof RoXMLElement || source instanceof RoSGNode) {
             if (statement.indexes.length !== 1) {
                 this.addError(
-                    new RuntimeError(
-                        RuntimeErrorDetail.WrongNumberOfParams,
-                        statement.closingSquare.location
-                    )
+                    new RuntimeError(RuntimeErrorDetail.WrongNumberOfParams, statement.closingSquare.location)
                 );
             }
             let index = this.evaluate(statement.indexes[0]);
@@ -1819,10 +1704,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         if (source instanceof RoByteArray) {
             if (statement.indexes.length !== 1) {
                 this.addError(
-                    new RuntimeError(
-                        RuntimeErrorDetail.BadNumberOfIndexes,
-                        statement.closingSquare.location
-                    )
+                    new RuntimeError(RuntimeErrorDetail.BadNumberOfIndexes, statement.closingSquare.location)
                 );
             }
         }
@@ -1831,12 +1713,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         for (let i = 0; i < statement.indexes.length; i++) {
             let index = this.evaluate(statement.indexes[i]);
             if (!isBrsNumber(index)) {
-                this.addError(
-                    new RuntimeError(
-                        RuntimeErrorDetail.NonNumericArrayIndex,
-                        statement.indexes[i].location
-                    )
-                );
+                this.addError(new RuntimeError(RuntimeErrorDetail.NonNumericArrayIndex, statement.indexes[i].location));
             }
 
             if (i < statement.indexes.length - 1) {
@@ -1852,9 +1729,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                         this.addError(new BrsError(err.message, statement.closingSquare.location));
                     }
                 } else {
-                    this.addError(
-                        new RuntimeError(RuntimeErrorDetail.BadNumberOfIndexes, statement.location)
-                    );
+                    this.addError(new RuntimeError(RuntimeErrorDetail.BadNumberOfIndexes, statement.location));
                 }
             } else if (
                 current instanceof RoArray ||
@@ -1868,9 +1743,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     this.addError(new BrsError(err.message, statement.closingSquare.location));
                 }
             } else {
-                this.addError(
-                    new RuntimeError(RuntimeErrorDetail.BadNumberOfIndexes, statement.location)
-                );
+                this.addError(new RuntimeError(RuntimeErrorDetail.BadNumberOfIndexes, statement.location));
             }
         }
 
@@ -2147,9 +2020,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             if (value.kind === ValueKind.Uninitialized) {
                 vars += `${varName}${ValueKind.toString(value.kind)}\r\n`;
             } else if (PrimitiveKinds.has(value.kind)) {
-                vars += `${varName}${ValueKind.toString(value.kind)} val:${this.formatValue(
-                    value
-                )}`;
+                vars += `${varName}${ValueKind.toString(value.kind)} val:${this.formatValue(value)}`;
             } else if (isIterable(value)) {
                 const count = value.getElements().length;
                 vars += `${varName}${value.getComponentName()} refcnt=${value.getReferenceCount()} count:${count}\r\n`;

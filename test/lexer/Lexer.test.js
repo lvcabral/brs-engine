@@ -15,12 +15,7 @@ describe("lexer", () => {
 
     it("retains one newline from consecutive newlines", () => {
         let { tokens } = Lexer.scan("\n\n'foo\n\n\nprint 2\n\n");
-        expect(tokens.map((t) => t.kind)).toEqual([
-            Lexeme.Print,
-            Lexeme.Integer,
-            Lexeme.Newline,
-            Lexeme.Eof,
-        ]);
+        expect(tokens.map((t) => t.kind)).toEqual([Lexeme.Print, Lexeme.Integer, Lexeme.Newline, Lexeme.Eof]);
     });
 
     it("gives the `end` keyword its own Lexeme", () => {
@@ -230,11 +225,7 @@ describe("lexer", () => {
 
         it("reads bit shift assignment operators", () => {
             let { tokens } = Lexer.scan("<<= >>=");
-            expect(tokens.map((t) => t.kind)).toEqual([
-                Lexeme.LeftShiftEqual,
-                Lexeme.RightShiftEqual,
-                Lexeme.Eof,
-            ]);
+            expect(tokens.map((t) => t.kind)).toEqual([Lexeme.LeftShiftEqual, Lexeme.RightShiftEqual, Lexeme.Eof]);
             expect(tokens.filter((t) => !!t.literal).length).toBe(0);
         });
 
@@ -268,16 +259,12 @@ describe("lexer", () => {
 
         it("produces an error for unterminated strings", () => {
             let { errors } = Lexer.scan(`"unterminated!`);
-            expect(errors.map((err) => err.message)).toEqual([
-                expect.stringMatching("Unterminated string"),
-            ]);
+            expect(errors.map((err) => err.message)).toEqual([expect.stringMatching("Unterminated string")]);
         });
 
         it("disallows multiline strings", () => {
             let { errors } = Lexer.scan(`"multi-line\n\n`);
-            expect(errors.map((err) => err.message)).toEqual([
-                expect.stringMatching("Unterminated string"),
-            ]);
+            expect(errors.map((err) => err.message)).toEqual([expect.stringMatching("Unterminated string")]);
         });
     }); // string literals
 
@@ -415,9 +402,7 @@ describe("lexer", () => {
         });
 
         it("matches multi-word keywords", () => {
-            let { tokens } = Lexer.scan(
-                "else if end if end while End Sub end Function Exit wHILe end try"
-            );
+            let { tokens } = Lexer.scan("else if end if end while End Sub end Function Exit wHILe end try");
             expect(tokens.map((w) => w.kind)).toEqual([
                 Lexeme.ElseIf,
                 Lexeme.EndIf,
@@ -433,11 +418,7 @@ describe("lexer", () => {
 
         it("accepts 'exit for' but not 'exitfor'", () => {
             let { tokens } = Lexer.scan("exit for exitfor");
-            expect(tokens.map((w) => w.kind)).toEqual([
-                Lexeme.ExitFor,
-                Lexeme.Identifier,
-                Lexeme.Eof,
-            ]);
+            expect(tokens.map((w) => w.kind)).toEqual([Lexeme.ExitFor, Lexeme.Identifier, Lexeme.Eof]);
         });
 
         it("reads try/catch/throw properly", () => {
@@ -473,37 +454,21 @@ describe("lexer", () => {
             let { tokens } = Lexer.scan("lorem$ ipsum% dolor! sit# amet&");
             let identifiers = tokens.filter((t) => t.kind !== Lexeme.Eof);
             expect(identifiers.every((t) => t.kind === Lexeme.Identifier));
-            expect(identifiers.map((t) => t.text)).toEqual([
-                "lorem$",
-                "ipsum%",
-                "dolor!",
-                "sit#",
-                "amet&",
-            ]);
+            expect(identifiers.map((t) => t.text)).toEqual(["lorem$", "ipsum%", "dolor!", "sit#", "amet&"]);
         });
 
         it("allows JS keywords as identifiers", () => {
             let { tokens } = Lexer.scan("constructor valueOf toString __proto__");
             let identifiers = tokens.filter((t) => t.kind !== Lexeme.Eof);
             expect(identifiers.every((t) => t.kind === Lexeme.Identifier)).toBe(true);
-            expect(identifiers.map((t) => t.text)).toEqual([
-                "constructor",
-                "valueOf",
-                "toString",
-                "__proto__",
-            ]);
+            expect(identifiers.map((t) => t.text)).toEqual(["constructor", "valueOf", "toString", "__proto__"]);
         });
     });
 
     describe("conditional compilation", () => {
         it("reads constant declarations", () => {
             let { tokens } = Lexer.scan("#const foo true");
-            expect(tokens.map((t) => t.kind)).toEqual([
-                Lexeme.HashConst,
-                Lexeme.Identifier,
-                Lexeme.True,
-                Lexeme.Eof,
-            ]);
+            expect(tokens.map((t) => t.kind)).toEqual([Lexeme.HashConst, Lexeme.Identifier, Lexeme.True, Lexeme.Eof]);
         });
 
         it("reads constant aliases", () => {
@@ -539,11 +504,7 @@ describe("lexer", () => {
 
         it("reads forced compilation errors with messages", () => {
             let { tokens } = Lexer.scan("#error a message goes here\n");
-            expect(tokens.map((t) => t.kind)).toEqual([
-                Lexeme.HashError,
-                Lexeme.HashErrorMessage,
-                Lexeme.Eof,
-            ]);
+            expect(tokens.map((t) => t.kind)).toEqual([Lexeme.HashError, Lexeme.HashErrorMessage, Lexeme.Eof]);
 
             expect(tokens[1].text).toBe("a message goes here");
         });
@@ -552,9 +513,7 @@ describe("lexer", () => {
     describe("location tracking", () => {
         it("tracks starting and ending lines", () => {
             let { tokens } = Lexer.scan(`sub foo()\n\n    print "bar"\nend sub`);
-            expect(tokens.map((t) => t.location.start.line)).toEqual([
-                1, 1, 1, 1, 1, 3, 3, 3, 4, 4,
-            ]);
+            expect(tokens.map((t) => t.location.start.line)).toEqual([1, 1, 1, 1, 1, 3, 3, 3, 4, 4]);
 
             expect(tokens.map((t) => t.location.end.line)).toEqual([1, 1, 1, 1, 1, 3, 3, 3, 4, 4]);
         });
@@ -578,9 +537,7 @@ describe("lexer", () => {
 
     describe("two word keywords", () => {
         it("supports various spacing between for each", () => {
-            let { tokens } = Lexer.scan(
-                "for each for  each for    each for\teach for\t each for \teach for \t each"
-            );
+            let { tokens } = Lexer.scan("for each for  each for    each for\teach for\t each for \teach for \t each");
             expect(tokens.map((t) => t.kind)).toEqual([
                 Lexeme.ForEach,
                 Lexeme.ForEach,
@@ -593,9 +550,7 @@ describe("lexer", () => {
             ]);
         });
         it("supports various spacing between else if", () => {
-            let { tokens } = Lexer.scan(
-                "else if else  if else    if else\tif else\t if else \tif else \t if"
-            );
+            let { tokens } = Lexer.scan("else if else  if else    if else\tif else\t if else \tif else \t if");
             expect(tokens.map((t) => t.kind)).toEqual([
                 Lexeme.ElseIf,
                 Lexeme.ElseIf,

@@ -194,9 +194,7 @@ export class Field {
         if (notify && (this.alwaysNotify || !this.isEqual(oldValue, value))) {
             this.permanentObservers.forEach(this.executeCallbacks.bind(this));
             this.unscopedObservers.forEach(this.executeCallbacks.bind(this));
-            this.scopedObservers.forEach((callbacks) =>
-                callbacks.map(this.executeCallbacks.bind(this))
-            );
+            this.scopedObservers.forEach((callbacks) => callbacks.map(this.executeCallbacks.bind(this)));
         }
     }
 
@@ -259,11 +257,7 @@ export class Field {
     }
 
     isObserved() {
-        return (
-            this.permanentObservers.length > 0 ||
-            this.unscopedObservers.length > 0 ||
-            this.scopedObservers.size > 0
-        );
+        return this.permanentObservers.length > 0 || this.unscopedObservers.length > 0 || this.scopedObservers.size > 0;
     }
 
     isPortObserved(hostNode: Task) {
@@ -274,9 +268,7 @@ export class Field {
                     callback.hostNode instanceof Task &&
                     callback.hostNode.id === hostNode.id
             ) ||
-            this.scopedObservers
-                .get(hostNode)
-                ?.some((callback) => callback.callable instanceof RoMessagePort) ||
+            this.scopedObservers.get(hostNode)?.some((callback) => callback.callable instanceof RoMessagePort) ||
             false
         );
     }
@@ -336,12 +328,7 @@ export class Field {
             infoFields = toAssociativeArray(fieldsMap);
         }
         // Every time a callback happens, a new event is created.
-        let event = new RoSGNodeEvent(
-            eventParams.node,
-            eventParams.fieldName,
-            this.value,
-            infoFields
-        );
+        let event = new RoSGNodeEvent(eventParams.node, eventParams.fieldName, this.value, infoFields);
 
         if (callable instanceof RoMessagePort) {
             callable.pushMessage(event);
@@ -357,11 +344,7 @@ export class Field {
                 const satisfiedSignature = callable.getFirstSatisfiedSignature([event]);
                 if (satisfiedSignature) {
                     let { signature, impl } = satisfiedSignature;
-                    subInterpreter.environment.define(
-                        Scope.Function,
-                        signature.args[0].name.text,
-                        event
-                    );
+                    subInterpreter.environment.define(Scope.Function, signature.args[0].name.text, event);
                     impl(subInterpreter, event);
                 } else {
                     // Check whether the callback has a signature without parameters.

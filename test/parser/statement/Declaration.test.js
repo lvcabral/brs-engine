@@ -72,12 +72,7 @@ describe("parser variable declarations", () => {
     });
 
     it("parses variable aliasing", () => {
-        let { statements, errors } = parser.parse([
-            identifier("baz"),
-            token(Lexeme.Equal),
-            identifier("foo"),
-            EOF,
-        ]);
+        let { statements, errors } = parser.parse([identifier("baz"), token(Lexeme.Equal), identifier("foo"), EOF]);
 
         expect(errors).toEqual([]);
         expect(statements).toBeDefined();

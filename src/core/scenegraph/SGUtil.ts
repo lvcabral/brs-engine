@@ -41,10 +41,7 @@ export function rotateRect(rect: Rect, rotation: number, center?: number[]): Rec
 export function rotateTranslation(translation: number[], rotation: number) {
     const cos = Math.cos(-rotation);
     const sin = Math.sin(-rotation);
-    return [
-        translation[0] * cos - translation[1] * sin,
-        translation[0] * sin + translation[1] * cos,
-    ];
+    return [translation[0] * cos - translation[1] * sin, translation[0] * sin + translation[1] * cos];
 }
 
 /* Function to merge two bounding rectangles */

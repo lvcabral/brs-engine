@@ -34,10 +34,7 @@ describe("interpreter increment/decrement operators", () => {
                 identifier("foo"),
                 new Expr.Literal(new Int32(4))
             ),
-            new Stmt.Increment(
-                new Expr.Variable(identifier("foo")),
-                token(Lexeme.MinusMinus, "--")
-            ),
+            new Stmt.Increment(new Expr.Variable(identifier("foo")), token(Lexeme.MinusMinus, "--")),
         ];
 
         interpreter.exec(ast);

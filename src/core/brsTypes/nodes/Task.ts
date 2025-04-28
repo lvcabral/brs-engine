@@ -40,13 +40,7 @@ export class Task extends RoSGNode {
         this.registerInitializedFields(members);
     }
 
-    set(
-        index: BrsType,
-        value: BrsType,
-        alwaysNotify: boolean = false,
-        kind?: FieldKind,
-        sync: boolean = true
-    ) {
+    set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind, sync: boolean = true) {
         if (!isBrsString(index)) {
             throw new Error("RoSGNode indexes must be strings");
         }

@@ -170,21 +170,15 @@ describe("RoString", () => {
 
             describe("without `len`", () => {
                 it("returns all characters after positive `start_point`", () => {
-                    expect(mid.call(interpreter, new Int32(12))).toEqual(
-                        new BrsString("dolor sit aMeT")
-                    );
+                    expect(mid.call(interpreter, new Int32(12))).toEqual(new BrsString("dolor sit aMeT"));
                 });
 
                 it("returns entire string for zero `start_point`", () => {
-                    expect(mid.call(interpreter, new Int32(0))).toEqual(
-                        new BrsString("Lorem ipsum dolor sit aMeT")
-                    );
+                    expect(mid.call(interpreter, new Int32(0))).toEqual(new BrsString("Lorem ipsum dolor sit aMeT"));
                 });
 
                 it("returns entire string for negative `start_point`", () => {
-                    expect(mid.call(interpreter, new Int32(-30))).toEqual(
-                        new BrsString("Lorem ipsum dolor sit aMeT")
-                    );
+                    expect(mid.call(interpreter, new Int32(-30))).toEqual(new BrsString("Lorem ipsum dolor sit aMeT"));
                 });
 
                 it("returns empty string for `start_point` greater than string length", () => {
@@ -194,27 +188,19 @@ describe("RoString", () => {
 
             describe("with `len`", () => {
                 it("returns `len` characters after positive `start_point`", () => {
-                    expect(mid.call(interpreter, new Int32(12), new Int32(7))).toEqual(
-                        new BrsString("dolor s")
-                    );
+                    expect(mid.call(interpreter, new Int32(12), new Int32(7))).toEqual(new BrsString("dolor s"));
                 });
 
                 it("returns string starting at 0 for negative `start_point` and positive `len`", () => {
-                    expect(mid.call(interpreter, new Int32(-30), new Int32(7))).toEqual(
-                        new BrsString("Lorem i")
-                    );
+                    expect(mid.call(interpreter, new Int32(-30), new Int32(7))).toEqual(new BrsString("Lorem i"));
                 });
 
                 it("returns empty string for negative `start_point` and negative `len`", () => {
-                    expect(mid.call(interpreter, new Int32(-30), new Int32(-9))).toEqual(
-                        new BrsString("")
-                    );
+                    expect(mid.call(interpreter, new Int32(-30), new Int32(-9))).toEqual(new BrsString(""));
                 });
 
                 it("returns empty string for `start_point` greater than string length", () => {
-                    expect(mid.call(interpreter, new Int32(26), new Int32(5))).toEqual(
-                        new BrsString("")
-                    );
+                    expect(mid.call(interpreter, new Int32(26), new Int32(5))).toEqual(new BrsString(""));
                 });
             });
         });
@@ -246,26 +232,18 @@ describe("RoString", () => {
 
             describe("with start_index", () => {
                 it("returns the index of the first occurrence after `start_index`", () => {
-                    expect(instr.call(interpreter, new Int32(5), new BrsString("day"))).toEqual(
-                        new Int32(12)
-                    );
+                    expect(instr.call(interpreter, new Int32(5), new BrsString("day"))).toEqual(new Int32(12));
                 });
 
                 it("returns -1 for not-found substrings", () => {
-                    expect(instr.call(interpreter, new Int32(5), new BrsString("Monday"))).toEqual(
-                        new Int32(-1)
-                    );
+                    expect(instr.call(interpreter, new Int32(5), new BrsString("Monday"))).toEqual(new Int32(-1));
                 });
 
                 it("returns start_index (when positive) for empty substrings", () => {
-                    expect(instr.call(interpreter, new Int32(111), new BrsString(""))).toEqual(
-                        new Int32(111)
-                    );
+                    expect(instr.call(interpreter, new Int32(111), new BrsString(""))).toEqual(new Int32(111));
                 });
                 it("returns 0 (when star_index is negative) for empty substrings", () => {
-                    expect(instr.call(interpreter, new Int32(-1), new BrsString(""))).toEqual(
-                        new Int32(0)
-                    );
+                    expect(instr.call(interpreter, new Int32(-1), new BrsString(""))).toEqual(new Int32(0));
                 });
             });
         });
@@ -287,11 +265,7 @@ describe("RoString", () => {
 
             it("returns the original string for empty `from`", () => {
                 expect(
-                    replace.call(
-                        interpreter,
-                        new BrsString(""),
-                        new BrsString("oh baby I hear the blues a-callin'")
-                    )
+                    replace.call(interpreter, new BrsString(""), new BrsString("oh baby I hear the blues a-callin'"))
                 ).toEqual(new BrsString("tossed salad and scrambled eggs"));
             });
 
@@ -299,11 +273,7 @@ describe("RoString", () => {
                 let s = new RoString(new BrsString("oh baby {1}"));
                 replace = s.getMethod("replace");
                 expect(
-                    replace.call(
-                        interpreter,
-                        new BrsString("{1}"),
-                        new BrsString("I hear the blues a-callin'")
-                    )
+                    replace.call(interpreter, new BrsString("{1}"), new BrsString("I hear the blues a-callin'"))
                 ).toEqual(new BrsString("oh baby I hear the blues a-callin'"));
             });
         });
@@ -495,9 +465,7 @@ describe("RoString", () => {
                 let result = split.call(interpreter, new BrsString(""));
                 expect(result).toBeInstanceOf(RoArray);
                 expect(result.elements).toEqual(
-                    ["🐶", "g", "o", "o", "d", " ", "d", "o", "g", "🐶"].map(
-                        (c) => new BrsString(c, true)
-                    )
+                    ["🐶", "g", "o", "o", "d", " ", "d", "o", "g", "🐶"].map((c) => new BrsString(c, true))
                 );
             });
 
@@ -520,25 +488,18 @@ describe("RoString", () => {
             it("splits on multi-character sequences", () => {
                 let result = split.call(interpreter, new BrsString("oo"));
                 expect(result).toBeInstanceOf(RoArray);
-                expect(result.elements).toEqual([
-                    new BrsString("🐶g", true),
-                    new BrsString("d dog🐶", true),
-                ]);
+                expect(result.elements).toEqual([new BrsString("🐶g", true), new BrsString("d dog🐶", true)]);
             });
         });
 
         describe("getEntityEncode", () => {
             it("escapes five special characters", () => {
-                let s = new RoString(
-                    new BrsString(`Let's watch <a href="example.com">Cagney & Lacey</a>!`)
-                );
+                let s = new RoString(new BrsString(`Let's watch <a href="example.com">Cagney & Lacey</a>!`));
                 let getEntityEncode = s.getMethod("getEntityEncode");
                 expect(getEntityEncode).toBeInstanceOf(Callable);
 
                 expect(getEntityEncode.call(interpreter)).toEqual(
-                    new BrsString(
-                        String.raw`Let\'s watch \<a href=\"example.com\"\>Cagney \& Lacey\</a\>!`
-                    )
+                    new BrsString(String.raw`Let\'s watch \<a href=\"example.com\"\>Cagney \& Lacey\</a\>!`)
                 );
             });
         });
@@ -549,9 +510,7 @@ describe("RoString", () => {
                 let escape = s.getMethod("escape");
                 expect(escape).toBeInstanceOf(Callable);
 
-                expect(escape.call(interpreter)).toEqual(
-                    new BrsString("%40%26%3D%2B%2F%23%21%2AABcde_-")
-                );
+                expect(escape.call(interpreter)).toEqual(new BrsString("%40%26%3D%2B%2F%23%21%2AABcde_-"));
             });
 
             it("breaks unicode characters into UTF-8 escape sequences", () => {
@@ -583,9 +542,7 @@ describe("RoString", () => {
 
         describe("encodeUri", () => {
             it("URI-encodes ASCII strings", () => {
-                let s = new RoString(
-                    new BrsString("http://example.com/my test.asp?first=jane&last=doe")
-                );
+                let s = new RoString(new BrsString("http://example.com/my test.asp?first=jane&last=doe"));
                 let encodeUri = s.getMethod("encodeUri");
                 expect(encodeUri).toBeInstanceOf(Callable);
 
@@ -599,17 +556,13 @@ describe("RoString", () => {
                 let encodeUri = s.getMethod("encodeUri");
                 expect(encodeUri).toBeInstanceOf(Callable);
 
-                expect(encodeUri.call(interpreter)).toEqual(
-                    new BrsString("http://example.com/?bullet=%E2%80%A2")
-                );
+                expect(encodeUri.call(interpreter)).toEqual(new BrsString("http://example.com/?bullet=%E2%80%A2"));
             });
         });
 
         describe("decodeUri", () => {
             it("URI-decodes ASCII strings", () => {
-                let s = new RoString(
-                    new BrsString("http://example.com/my%20test.asp?first=jane&last=doe")
-                );
+                let s = new RoString(new BrsString("http://example.com/my%20test.asp?first=jane&last=doe"));
                 let decodeUri = s.getMethod("decodeUri");
                 expect(decodeUri).toBeInstanceOf(Callable);
 
@@ -623,24 +576,18 @@ describe("RoString", () => {
                 let decodeUri = s.getMethod("decodeUri");
                 expect(decodeUri).toBeInstanceOf(Callable);
 
-                expect(decodeUri.call(interpreter)).toEqual(
-                    new BrsString("http://example.com/?bullet=•")
-                );
+                expect(decodeUri.call(interpreter)).toEqual(new BrsString("http://example.com/?bullet=•"));
             });
         });
 
         describe("encodeUriComponent", () => {
             it("encodes the string for use as a URI component", () => {
-                let s = new RoString(
-                    new BrsString("http://example.com/my test.asp?first=jane&last=doe")
-                );
+                let s = new RoString(new BrsString("http://example.com/my test.asp?first=jane&last=doe"));
                 let encodeUriComponent = s.getMethod("encodeUriComponent");
                 expect(encodeUriComponent).toBeInstanceOf(Callable);
 
                 expect(encodeUriComponent.call(interpreter)).toEqual(
-                    new BrsString(
-                        "http%3A%2F%2Fexample.com%2Fmy%20test.asp%3Ffirst%3Djane%26last%3Ddoe"
-                    )
+                    new BrsString("http%3A%2F%2Fexample.com%2Fmy%20test.asp%3Ffirst%3Djane%26last%3Ddoe")
                 );
             });
 
@@ -658,9 +605,7 @@ describe("RoString", () => {
         describe("decodeUriComponent", () => {
             it("decodes an encoded URI component to a readable string", () => {
                 let s = new RoString(
-                    new BrsString(
-                        "http%3A%2F%2Fexample.com%2Fmy%20test.asp%3Ffirst%3Djane%26last%3Ddoe"
-                    )
+                    new BrsString("http%3A%2F%2Fexample.com%2Fmy%20test.asp%3Ffirst%3Djane%26last%3Ddoe")
                 );
                 let decodeUriComponent = s.getMethod("decodeUriComponent");
                 expect(decodeUriComponent).toBeInstanceOf(Callable);
@@ -671,15 +616,11 @@ describe("RoString", () => {
             });
 
             it("decodes UTF-8 escape sequences into non-ASCII characters", () => {
-                let s = new RoString(
-                    new BrsString("http%3A%2F%2Fexample.com%2F%3Fbullet%3D%E2%80%A2")
-                );
+                let s = new RoString(new BrsString("http%3A%2F%2Fexample.com%2F%3Fbullet%3D%E2%80%A2"));
                 let decodeUriComponent = s.getMethod("decodeUriComponent");
                 expect(decodeUriComponent).toBeInstanceOf(Callable);
 
-                expect(decodeUriComponent.call(interpreter)).toEqual(
-                    new BrsString("http://example.com/?bullet=•")
-                );
+                expect(decodeUriComponent.call(interpreter)).toEqual(new BrsString("http://example.com/?bullet=•"));
             });
         });
 
@@ -692,29 +633,17 @@ describe("RoString", () => {
             it("startsWith", () => {
                 let startsWith = s.getMethod("startsWith");
                 expect(startsWith).toBeInstanceOf(Callable);
-                expect(startsWith.call(interpreter, new BrsString("Hello"))).toEqual(
-                    BrsBoolean.True
-                );
-                expect(startsWith.call(interpreter, new BrsString("World"), new Int32(7))).toEqual(
-                    BrsBoolean.True
-                );
-                expect(
-                    startsWith.call(interpreter, new BrsString("Universe"), new Int32(0))
-                ).toEqual(BrsBoolean.False);
+                expect(startsWith.call(interpreter, new BrsString("Hello"))).toEqual(BrsBoolean.True);
+                expect(startsWith.call(interpreter, new BrsString("World"), new Int32(7))).toEqual(BrsBoolean.True);
+                expect(startsWith.call(interpreter, new BrsString("Universe"), new Int32(0))).toEqual(BrsBoolean.False);
             });
 
             it("endsWith", () => {
                 let endsWith = s.getMethod("endsWith");
                 expect(endsWith).toBeInstanceOf(Callable);
-                expect(endsWith.call(interpreter, new BrsString("World!"))).toEqual(
-                    BrsBoolean.True
-                );
-                expect(endsWith.call(interpreter, new BrsString("Hello"), new Int32(5))).toEqual(
-                    BrsBoolean.True
-                );
-                expect(
-                    endsWith.call(interpreter, new BrsString("Universe!"), new Int32(0))
-                ).toEqual(BrsBoolean.False);
+                expect(endsWith.call(interpreter, new BrsString("World!"))).toEqual(BrsBoolean.True);
+                expect(endsWith.call(interpreter, new BrsString("Hello"), new Int32(5))).toEqual(BrsBoolean.True);
+                expect(endsWith.call(interpreter, new BrsString("Universe!"), new Int32(0))).toEqual(BrsBoolean.False);
             });
         });
 

@@ -1,12 +1,5 @@
 import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid } from "../BrsType";
-import {
-    BrsType,
-    FlexObject,
-    Int32,
-    RoAssociativeArray,
-    RoByteArray,
-    toAssociativeArray,
-} from "..";
+import { BrsType, FlexObject, Int32, RoAssociativeArray, RoByteArray, toAssociativeArray } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { BrsComponent } from "./BrsComponent";
 import { Interpreter } from "../../interpreter";
@@ -40,9 +33,7 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
             audio = BrsDevice.fileSystem?.readFileSync(file);
         } catch (err: any) {
             if (BrsDevice.isDevMode) {
-                BrsDevice.stderr.write(
-                    `warning,[roAudioMetadata] Error loading audio:${file} - ${err.message}`
-                );
+                BrsDevice.stderr.write(`warning,[roAudioMetadata] Error loading audio:${file} - ${err.message}`);
             }
         }
         if (audio instanceof Buffer) {
@@ -149,9 +140,7 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
                 }
             } catch (err: any) {
                 if (BrsDevice.isDevMode) {
-                    BrsDevice.stderr.write(
-                        `warning,[roAudioMetadata] Error getting audio tags:${err.message}`
-                    );
+                    BrsDevice.stderr.write(`warning,[roAudioMetadata] Error getting audio tags:${err.message}`);
                 }
             }
             return BrsInvalid.Instance;
@@ -194,9 +183,7 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
                 }
             } catch (err: any) {
                 if (BrsDevice.isDevMode) {
-                    BrsDevice.stderr.write(
-                        `warning,[roAudioMetadata] Error reading audio properties:${err.message}`
-                    );
+                    BrsDevice.stderr.write(`warning,[roAudioMetadata] Error reading audio properties:${err.message}`);
                 }
             }
             return BrsInvalid.Instance;
@@ -227,9 +214,7 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
                 }
             } catch (err: any) {
                 if (BrsDevice.isDevMode) {
-                    BrsDevice.stderr.write(
-                        `warning,[roAudioMetadata] Error getting cover art:${err.message}`
-                    );
+                    BrsDevice.stderr.write(`warning,[roAudioMetadata] Error getting cover art:${err.message}`);
                 }
             }
             return BrsInvalid.Instance;

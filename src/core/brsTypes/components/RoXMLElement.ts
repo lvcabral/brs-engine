@@ -446,10 +446,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
     /** Adds a new child element with the specified name and text from the specified body string, and returns the new element. */
     private readonly addElementWithBody = new Callable("addElementWithBody", {
         signature: {
-            args: [
-                new StdlibArgument("name", ValueKind.String),
-                new StdlibArgument("body", ValueKind.String),
-            ],
+            args: [new StdlibArgument("name", ValueKind.String), new StdlibArgument("body", ValueKind.String)],
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter, name: BrsString, body: BrsString) => {
@@ -467,10 +464,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
     /** Adds an attribute value to the element. */
     private readonly addAttribute = new Callable("addAttribute", {
         signature: {
-            args: [
-                new StdlibArgument("attr", ValueKind.String),
-                new StdlibArgument("value", ValueKind.String),
-            ],
+            args: [new StdlibArgument("attr", ValueKind.String), new StdlibArgument("value", ValueKind.String)],
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, attr: BrsString, value: BrsString) => {

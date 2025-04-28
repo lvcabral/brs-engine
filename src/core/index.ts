@@ -21,11 +21,7 @@ import {
 } from "./common";
 import { Lexeme, Lexer, Token } from "./lexer";
 import { Parser, Stmt } from "./parser";
-import {
-    ComponentDefinition,
-    getComponentDefinitionMap,
-    getInterpreterWithSubEnvs,
-} from "./scenegraph";
+import { ComponentDefinition, getComponentDefinitionMap, getInterpreterWithSubEnvs } from "./scenegraph";
 import { lexParseSync, parseDecodedTokens } from "./LexerParser";
 import * as PP from "./preprocessor";
 import * as BrsTypes from "./brsTypes";
@@ -232,9 +228,7 @@ export async function createPayloadFromFiles(
     if (id === 0) {
         throw new Error("Invalid or inexistent file(s)!");
     }
-    const deviceData = customDeviceData
-        ? Object.assign(defaultDeviceInfo, customDeviceData)
-        : defaultDeviceInfo;
+    const deviceData = customDeviceData ? Object.assign(defaultDeviceInfo, customDeviceData) : defaultDeviceInfo;
     if (root && !manifest && fs.existsSync(path.join(root, "manifest"))) {
         const fileData = fs.readFileSync(path.join(root, "manifest"));
         if (fileData) {
@@ -242,9 +236,7 @@ export async function createPayloadFromFiles(
         }
     }
     if (deviceData.assets.byteLength === 0) {
-        deviceData.assets = fs.readFileSync(
-            path.join(__dirname, "../browser/assets/common.zip")
-        )?.buffer;
+        deviceData.assets = fs.readFileSync(path.join(__dirname, "../browser/assets/common.zip"))?.buffer;
     }
     if (manifest === undefined) {
         manifest = new Map();
@@ -284,10 +276,7 @@ export async function createPayloadFromFiles(
  * @returns RunResult with the end reason and (optionally) the encrypted data.
  */
 
-export async function executeFile(
-    payload: AppPayload,
-    customOptions?: Partial<ExecutionOptions>
-): Promise<RunResult> {
+export async function executeFile(payload: AppPayload, customOptions?: Partial<ExecutionOptions>): Promise<RunResult> {
     const options = {
         ...{
             entryPoint: payload.device.entryPoint ?? true,
@@ -380,11 +369,7 @@ export async function executeTask(payload: TaskPayload, customOptions?: Partial<
     }
     BrsDevice.setDeviceInfo(payload.device);
     setupTranslations(interpreter);
-    console.debug(
-        "Calling Task in new Worker: ",
-        payload.taskData.name,
-        payload.taskData.m.top.functionname
-    );
+    console.debug("Calling Task in new Worker: ", payload.taskData.name, payload.taskData.m.top.functionname);
     interpreter.execTask(payload);
     if (BrsDevice.isDevMode) {
         postMessage(`debug,Task ${payload.taskData.name} is done.`);
@@ -428,10 +413,7 @@ interface SerializedPCode {
  *
  * @returns an array of parameters in AA member format.
  */
-function setupInputParams(
-    deepLinkMap: Map<string, string>,
-    splashTime: number
-): BrsTypes.RoAssociativeArray {
+function setupInputParams(deepLinkMap: Map<string, string>, splashTime: number): BrsTypes.RoAssociativeArray {
     const inputMap = new Map([
         ["instant_on_run_mode", "foreground"],
         ["lastExitOrTerminationReason", AppExitReason.UNKNOWN],
@@ -551,13 +533,7 @@ async function runSource(
     payload: AppPayload
 ): Promise<RunResult> {
     const password = payload.password ?? "";
-    const parseResult = lexParseSync(
-        BrsDevice.fileSystem,
-        interpreter.manifest,
-        sourceMap,
-        password,
-        stats
-    );
+    const parseResult = lexParseSync(BrsDevice.fileSystem, interpreter.manifest, sourceMap, password, stats);
     let exitReason = parseResult.exitReason;
     if (exitReason !== AppExitReason.CRASHED) {
         if (password.length > 0) {
@@ -607,9 +583,7 @@ async function runEncrypted(
     try {
         if (password.length > 0 && sourceResult.pcode && sourceResult.iv) {
             const decipher = crypto.createDecipheriv(algorithm, password, sourceResult.iv);
-            const inflated = unzlibSync(
-                Buffer.concat([decipher.update(sourceResult.pcode), decipher.final()])
-            );
+            const inflated = unzlibSync(Buffer.concat([decipher.update(sourceResult.pcode), decipher.final()]));
             const spcode = decode(inflated) as SerializedPCode;
             if (spcode) {
                 decodedTokens = new Map(Object.entries(spcode.pcode));
@@ -625,11 +599,7 @@ async function runEncrypted(
     }
     // Execute the decrypted source code
     try {
-        const allStatements = parseDecodedTokens(
-            BrsDevice.fileSystem,
-            interpreter.manifest,
-            decodedTokens
-        );
+        const allStatements = parseDecodedTokens(BrsDevice.fileSystem, interpreter.manifest, decodedTokens);
         const exitReason = await executeApp(interpreter, allStatements, payload);
         return { exitReason: exitReason };
     } catch (err: any) {

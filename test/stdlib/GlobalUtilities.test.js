@@ -9,18 +9,12 @@ describe("global utility functions", () => {
     describe("GetInterface", () => {
         it("returns invalid for unimplemented interfaces", () => {
             let assocarray = new RoAssociativeArray([]);
-            expect(GetInterface.call(interpreter, assocarray, new BrsString("ifArray"))).toBe(
-                BrsInvalid.Instance
-            );
+            expect(GetInterface.call(interpreter, assocarray, new BrsString("ifArray"))).toBe(BrsInvalid.Instance);
         });
 
         it("returns an interface for implemented interfaces", () => {
             let assocarray = new RoAssociativeArray([]);
-            let iface = GetInterface.call(
-                interpreter,
-                assocarray,
-                new BrsString("ifAssociativeArray")
-            );
+            let iface = GetInterface.call(interpreter, assocarray, new BrsString("ifAssociativeArray"));
             expect(iface).toBeInstanceOf(BrsInterface);
             expect(iface.name).toBe("ifAssociativeArray");
         });
@@ -31,11 +25,7 @@ describe("global utility functions", () => {
                 { name: new BrsString("letter1"), value: new BrsString("a") },
                 { name: new BrsString("letter2"), value: new BrsString("b") },
             ]);
-            let iface = GetInterface.call(
-                interpreter,
-                assocarray,
-                new BrsString("ifAssociativeArray")
-            );
+            let iface = GetInterface.call(interpreter, assocarray, new BrsString("ifAssociativeArray"));
             expect(iface).toBeInstanceOf(BrsInterface);
             expect(iface.name).toBe("ifAssociativeArray");
             let result = ObjFun.call(interpreter, assocarray, iface, new BrsString("Count"));
@@ -47,20 +37,10 @@ describe("global utility functions", () => {
                 { name: new BrsString("letter1"), value: new BrsString("a") },
                 { name: new BrsString("letter2"), value: new BrsString("b") },
             ]);
-            let iface = GetInterface.call(
-                interpreter,
-                assocarray,
-                new BrsString("ifAssociativeArray")
-            );
+            let iface = GetInterface.call(interpreter, assocarray, new BrsString("ifAssociativeArray"));
             expect(iface).toBeInstanceOf(BrsInterface);
             expect(iface.name).toBe("ifAssociativeArray");
-            let result = ObjFun.call(
-                interpreter,
-                assocarray,
-                iface,
-                new BrsString("lookup"),
-                new BrsString("letter1")
-            );
+            let result = ObjFun.call(interpreter, assocarray, iface, new BrsString("lookup"), new BrsString("letter1"));
             expect(result).toEqual(new BrsString("a", true));
         });
     });

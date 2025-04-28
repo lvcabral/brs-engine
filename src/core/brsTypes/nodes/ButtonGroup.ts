@@ -139,13 +139,7 @@ export class ButtonGroup extends LayoutGroup {
         return handled;
     }
 
-    renderNode(
-        interpreter: Interpreter,
-        origin: number[],
-        angle: number,
-        opacity: number,
-        draw2D?: IfDraw2D
-    ) {
+    renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
         if (!this.isVisible()) {
             return;
         }
@@ -206,10 +200,7 @@ export class ButtonGroup extends LayoutGroup {
                 // TODO: Implement support for field layoutDirection (vert, horiz)
                 const buttonY = i * (Math.max(buttonHeight, this.iconSize[1]) - this.vertOffset);
                 const offsetY = Math.max((this.iconSize[1] - buttonHeight) / 2, 0);
-                button.setFieldValue(
-                    "translation",
-                    new RoArray([new Float(0), new Float(buttonY + offsetY)])
-                );
+                button.setFieldValue("translation", new RoArray([new Float(0), new Float(buttonY + offsetY)]));
             } else {
                 break;
             }

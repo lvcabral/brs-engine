@@ -24,10 +24,7 @@ describe("preprocessor", () => {
     describe("#const", () => {
         it("removes #const declarations from output", () => {
             let { processedTokens } = new Preprocessor().filter([
-                new Chunk.Declaration(
-                    identifier("lorem"),
-                    token(Lexeme.False, "false", BrsBoolean.False)
-                ),
+                new Chunk.Declaration(identifier("lorem"), token(Lexeme.False, "false", BrsBoolean.False)),
             ]);
             expect(processedTokens).toEqual([]);
         });
@@ -36,10 +33,7 @@ describe("preprocessor", () => {
             it("allows `true`", () => {
                 expect(() =>
                     new Preprocessor().filter([
-                        new Chunk.Declaration(
-                            identifier("lorem"),
-                            token(Lexeme.True, "true", BrsBoolean.True)
-                        ),
+                        new Chunk.Declaration(identifier("lorem"), token(Lexeme.True, "true", BrsBoolean.True)),
                     ])
                 ).not.toThrow();
             });
@@ -47,10 +41,7 @@ describe("preprocessor", () => {
             it("allows `false`", () => {
                 expect(() =>
                     new Preprocessor().filter([
-                        new Chunk.Declaration(
-                            identifier("ipsum"),
-                            token(Lexeme.False, "false", BrsBoolean.False)
-                        ),
+                        new Chunk.Declaration(identifier("ipsum"), token(Lexeme.False, "false", BrsBoolean.False)),
                     ])
                 ).not.toThrow();
             });
@@ -59,14 +50,8 @@ describe("preprocessor", () => {
                 expect(() =>
                     new Preprocessor().filter([
                         // 'ipsum' must be defined before it's referenced
-                        new Chunk.Declaration(
-                            identifier("ipsum"),
-                            token(Lexeme.False, "false", BrsBoolean.False)
-                        ),
-                        new Chunk.Declaration(
-                            identifier("dolor"),
-                            token(Lexeme.True, "true", BrsBoolean.True)
-                        ),
+                        new Chunk.Declaration(identifier("ipsum"), token(Lexeme.False, "false", BrsBoolean.False)),
+                        new Chunk.Declaration(identifier("dolor"), token(Lexeme.True, "true", BrsBoolean.True)),
                     ])
                 ).not.toThrow();
             });
@@ -85,14 +70,8 @@ describe("preprocessor", () => {
             it("disallows re-declaration of values", () => {
                 expect(() =>
                     new Preprocessor().filter([
-                        new Chunk.Declaration(
-                            identifier("lorem"),
-                            token(Lexeme.False, "false", BrsBoolean.False)
-                        ),
-                        new Chunk.Declaration(
-                            identifier("lorem"),
-                            token(Lexeme.True, "true", BrsBoolean.True)
-                        ),
+                        new Chunk.Declaration(identifier("lorem"), token(Lexeme.False, "false", BrsBoolean.False)),
+                        new Chunk.Declaration(identifier("lorem"), token(Lexeme.True, "true", BrsBoolean.True)),
                     ])
                 ).toThrow("Attempting to re-declare");
             });
@@ -102,9 +81,7 @@ describe("preprocessor", () => {
     describe("#error", () => {
         it("throws error when #error directives encountered", () => {
             expect(() =>
-                new Preprocessor().filter([
-                    new Chunk.Error(token(Lexeme.HashError, "#error"), "I'm an error message!"),
-                ])
+                new Preprocessor().filter([new Chunk.Error(token(Lexeme.HashError, "#error"), "I'm an error message!")])
             ).toThrow();
         });
 
@@ -113,12 +90,7 @@ describe("preprocessor", () => {
                 new Preprocessor().filter([
                     new Chunk.If(
                         token(Lexeme.False, "false", BrsBoolean.False),
-                        [
-                            new Chunk.Error(
-                                token(Lexeme.HasError, "#error"),
-                                "I'm an error message!"
-                            ),
-                        ],
+                        [new Chunk.Error(token(Lexeme.HasError, "#error"), "I'm an error message!")],
                         [] // no else-ifs necessary
                     ),
                 ])
@@ -220,10 +192,7 @@ describe("preprocessor", () => {
 
         it("uses #const values to determine truth", () => {
             new Preprocessor().filter([
-                new Chunk.Declaration(
-                    identifier("lorem"),
-                    token(Lexeme.True, "true", BrsBoolean.True)
-                ),
+                new Chunk.Declaration(identifier("lorem"), token(Lexeme.True, "true", BrsBoolean.True)),
                 new Chunk.If(
                     identifier("lorem"),
                     [ifChunk],

@@ -12,11 +12,7 @@ describe("parser print statements", () => {
     });
 
     it("parses singular print statements", () => {
-        let { statements, errors } = parser.parse([
-            token(Lexeme.Print),
-            token(Lexeme.String, "Hello, world"),
-            EOF,
-        ]);
+        let { statements, errors } = parser.parse([token(Lexeme.Print), token(Lexeme.String, "Hello, world"), EOF]);
 
         expect(errors).toEqual([]);
         expect(statements).toBeDefined();

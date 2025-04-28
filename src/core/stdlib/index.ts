@@ -72,10 +72,7 @@ export const Sleep = new Callable("Sleep", {
 /** Waits until an event object is available or timeout milliseconds have passed. */
 export const Wait = new Callable("Wait", {
     signature: {
-        args: [
-            new StdlibArgument("timeout", ValueKind.Int32),
-            new StdlibArgument("port", ValueKind.Object),
-        ],
+        args: [new StdlibArgument("timeout", ValueKind.Int32), new StdlibArgument("port", ValueKind.Object)],
         returns: ValueKind.Dynamic,
     },
     impl: (interpreter: Interpreter, timeout: Int32, port: RoMessagePort) => {

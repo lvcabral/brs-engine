@@ -1,12 +1,4 @@
-import {
-    Callable,
-    ValueKind,
-    BrsString,
-    Int32,
-    Float,
-    StdlibArgument,
-    BrsInvalid,
-} from "../brsTypes";
+import { Callable, ValueKind, BrsString, Int32, Float, StdlibArgument, BrsInvalid } from "../brsTypes";
 import { Interpreter } from "../interpreter";
 import { BrsNumber } from "../brsTypes/BrsNumber";
 
@@ -102,14 +94,10 @@ export const Instr = new Callable(
     },
     {
         signature: {
-            args: [
-                new StdlibArgument("str", ValueKind.String),
-                new StdlibArgument("search", ValueKind.String),
-            ],
+            args: [new StdlibArgument("str", ValueKind.String), new StdlibArgument("search", ValueKind.String)],
             returns: ValueKind.String,
         },
-        impl: (_: Interpreter, str: BrsString, search: BrsString) =>
-            new Int32(str.value.indexOf(search.value) + 1),
+        impl: (_: Interpreter, str: BrsString, search: BrsString) => new Int32(str.value.indexOf(search.value) + 1),
     }
 );
 
@@ -131,10 +119,7 @@ export const Mid = new Callable(
     "Mid",
     {
         signature: {
-            args: [
-                new StdlibArgument("s", ValueKind.String),
-                new StdlibArgument("p", ValueKind.Int32),
-            ],
+            args: [new StdlibArgument("s", ValueKind.String), new StdlibArgument("p", ValueKind.Int32)],
             returns: ValueKind.String,
         },
         impl: (_: Interpreter, s: BrsString, p: Int32): BrsString => {
@@ -203,10 +188,7 @@ export const StrI = new Callable("StrI", {
 export const STRING = new Callable("String", {
     //Defined in uppercase to avoid conflict with javascript String class
     signature: {
-        args: [
-            new StdlibArgument("n", ValueKind.Int32),
-            new StdlibArgument("str", ValueKind.String),
-        ],
+        args: [new StdlibArgument("n", ValueKind.Int32), new StdlibArgument("str", ValueKind.String)],
         returns: ValueKind.String,
     },
     impl: (_: Interpreter, n: Int32, str: BrsString): BrsString => {
@@ -251,8 +233,7 @@ export const Substitute = new Callable("Substitute", {
         arg3: BrsString
     ): BrsString => {
         let completelyReplaced = [arg0, arg1, arg2, arg3].reduce(
-            (replaced, replacement, index) =>
-                replaced.replace(new RegExp(`\\{${index}\\}`, "g"), replacement.value),
+            (replaced, replacement, index) => replaced.replace(new RegExp(`\\{${index}\\}`, "g"), replacement.value),
             str.value
         );
         return new BrsString(completelyReplaced);

@@ -223,12 +223,7 @@ function runStatement(interpreter: Interpreter, exprStmt: Statement) {
  * @param lastLoc (Location) - The last location
  * @param cmd (number) - The debug command to execute
  */
-function debugHandleCommand(
-    interpreter: Interpreter,
-    currLoc: Location,
-    lastLoc: Location,
-    cmd: number
-) {
+function debugHandleCommand(interpreter: Interpreter, currLoc: Location, lastLoc: Location, cmd: number) {
     const backTrace = interpreter.stack;
     const lastLines = parseTextFile(interpreter.sourceMap.get(lastLoc.file));
     const currLines = parseTextFile(interpreter.sourceMap.get(currLoc.file));

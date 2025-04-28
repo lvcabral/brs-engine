@@ -154,7 +154,7 @@
   "prettier": {
     "trailingComma": "es5",
     "tabWidth": 4,
-    "printWidth": 100
+    "printWidth": 120
   },
   "lint-staged": {
     "*.{ts,js}": [

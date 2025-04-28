@@ -113,16 +113,12 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
         },
         {
             signature: {
-                args: [
-                    new StdlibArgument("s", ValueKind.String),
-                    new StdlibArgument("len", ValueKind.Int32),
-                ],
+                args: [new StdlibArgument("s", ValueKind.String), new StdlibArgument("len", ValueKind.Int32)],
                 returns: ValueKind.Void,
             },
             impl: (_, s: BrsString, len: Int32) => {
                 const length = len.getValue();
-                this.intrinsic =
-                    length <= 0 ? new BrsString("") : new BrsString(s.value.slice(0, length));
+                this.intrinsic = length <= 0 ? new BrsString("") : new BrsString(s.value.slice(0, length));
                 return BrsInvalid.Instance;
             },
         }
@@ -140,10 +136,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
     /** Appends the first len characters of s to the end of the string. */
     private readonly appendString = new Callable("AppendString", {
         signature: {
-            args: [
-                new StdlibArgument("s", ValueKind.String),
-                new StdlibArgument("len", ValueKind.Int32),
-            ],
+            args: [new StdlibArgument("s", ValueKind.String), new StdlibArgument("len", ValueKind.Int32)],
             returns: ValueKind.Void,
         },
         impl: (_, s: BrsString, len: Int32) => {
@@ -255,9 +248,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
                 if (substring.value === "") {
                     return new Int32(startIndex.getValue() < 0 ? 0 : startIndex.getValue());
                 }
-                return new Int32(
-                    this.intrinsic.value.indexOf(substring.value, startIndex.getValue())
-                );
+                return new Int32(this.intrinsic.value.indexOf(substring.value, startIndex.getValue()));
             },
         }
     );
@@ -268,10 +259,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
      */
     private readonly replace = new Callable("Replace", {
         signature: {
-            args: [
-                new StdlibArgument("from", ValueKind.String),
-                new StdlibArgument("to", ValueKind.String),
-            ],
+            args: [new StdlibArgument("from", ValueKind.String), new StdlibArgument("to", ValueKind.String)],
             returns: ValueKind.String,
         },
         impl: (_, from: BrsString, to: BrsString) => {
@@ -282,9 +270,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
             // From Mozilla's guide to escaping regex:
             // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions#Escaping
             let escapedFrom = from.value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-            return new BrsString(
-                this.intrinsic.value.replace(new RegExp(escapedFrom, "g"), to.value)
-            );
+            return new BrsString(this.intrinsic.value.replace(new RegExp(escapedFrom, "g"), to.value));
         },
     });
 
@@ -510,9 +496,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
             if (position instanceof BrsInvalid) {
                 return BrsBoolean.from(this.intrinsic.value.startsWith(matchString.value));
             }
-            return BrsBoolean.from(
-                this.intrinsic.value.startsWith(matchString.value, position.getValue())
-            );
+            return BrsBoolean.from(this.intrinsic.value.startsWith(matchString.value, position.getValue()));
         },
     });
 
@@ -529,9 +513,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
             if (position instanceof BrsInvalid) {
                 return BrsBoolean.from(this.intrinsic.value.endsWith(matchString.value));
             }
-            return BrsBoolean.from(
-                this.intrinsic.value.endsWith(matchString.value, position.getValue())
-            );
+            return BrsBoolean.from(this.intrinsic.value.endsWith(matchString.value, position.getValue()));
         },
     });
 
@@ -563,11 +545,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
                 const errorDetail = err.message?.includes("expecting number")
                     ? RuntimeErrorDetail.TypeMismatch
                     : RuntimeErrorDetail.InvalidFormatSpecifier;
-                throw new RuntimeError(
-                    errorDetail,
-                    interpreter.location,
-                    interpreter.stack.slice(0, -1)
-                );
+                throw new RuntimeError(errorDetail, interpreter.location, interpreter.stack.slice(0, -1));
             }
         },
     });

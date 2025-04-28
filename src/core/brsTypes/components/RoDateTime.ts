@@ -151,8 +151,7 @@ export class RoDateTime extends BrsComponent implements BrsValue {
                         timeZone: "UTC",
                     })
                     .split("/");
-                dateString =
-                    dateArray[0] + "/" + dateArray[1] + "/" + parseInt(dateArray[2]).toString();
+                dateString = dateArray[0] + "/" + dateArray[1] + "/" + parseInt(dateArray[2]).toString();
                 break;
             }
             case "short-date-dashes": {
@@ -164,8 +163,7 @@ export class RoDateTime extends BrsComponent implements BrsValue {
                         timeZone: "UTC",
                     })
                     .split("/");
-                dateString =
-                    dateArray[0] + "-" + dateArray[1] + "-" + parseInt(dateArray[2]).toString();
+                dateString = dateArray[0] + "-" + dateArray[1] + "-" + parseInt(dateArray[2]).toString();
                 break;
             }
         }
@@ -402,9 +400,7 @@ export class RoDateTime extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter) => {
             const date = new Date(this.markTime);
-            return new Int32(
-                new Date(date.getUTCFullYear(), date.getUTCMonth() + 1, 0).getUTCDate()
-            );
+            return new Int32(new Date(date.getUTCFullYear(), date.getUTCMonth() + 1, 0).getUTCDate());
         },
     });
 
@@ -481,9 +477,7 @@ export class RoDateTime extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter) => {
             const date = new Date(this.markTime);
-            return new BrsString(
-                date.toLocaleDateString("en-US", { weekday: "long", timeZone: "UTC" })
-            );
+            return new BrsString(date.toLocaleDateString("en-US", { weekday: "long", timeZone: "UTC" }));
         },
     });
 
@@ -585,17 +579,11 @@ const localeFormat = (date: Date, exp: string, locale: string | string[] = "en-U
             case "{m}":
                 return `${date.getUTCMinutes()}`;
             case "{MMMM}":
-                return new Intl.DateTimeFormat(locale, { month: "long", timeZone: "UTC" }).format(
-                    date
-                );
+                return new Intl.DateTimeFormat(locale, { month: "long", timeZone: "UTC" }).format(date);
             case "{MMM}":
-                return new Intl.DateTimeFormat(locale, { month: "short", timeZone: "UTC" }).format(
-                    date
-                );
+                return new Intl.DateTimeFormat(locale, { month: "short", timeZone: "UTC" }).format(date);
             case "{EEEE}":
-                return new Intl.DateTimeFormat(locale, { weekday: "long", timeZone: "UTC" }).format(
-                    date
-                );
+                return new Intl.DateTimeFormat(locale, { weekday: "long", timeZone: "UTC" }).format(date);
             case "{EEE}":
                 return new Intl.DateTimeFormat(locale, {
                     weekday: "short",

@@ -11,11 +11,7 @@ export class RoChannelStoreEvent extends BrsComponent implements BrsValue {
     private readonly response?: BrsType[];
     private readonly status: { code: number; message: string };
 
-    constructor(
-        id: number,
-        response: RoAssociativeArray[],
-        status: { code: number; message: string }
-    ) {
+    constructor(id: number, response: RoAssociativeArray[], status: { code: number; message: string }) {
         super("roChannelStoreEvent");
         this.id = id;
         this.response = response;

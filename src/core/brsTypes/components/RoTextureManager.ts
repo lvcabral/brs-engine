@@ -45,12 +45,7 @@ export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpA
         const setPortIface = new IfSetMessagePort(this, this.getNewEvents.bind(this));
         const getPortIface = new IfGetMessagePort(this);
         this.registerMethods({
-            ifTextureManager: [
-                this.requestTexture,
-                this.cancelRequest,
-                this.unloadBitmap,
-                this.cleanup,
-            ],
+            ifTextureManager: [this.requestTexture, this.cancelRequest, this.unloadBitmap, this.cleanup],
             ifHttpAgent: [
                 ifHttpAgent.addHeader,
                 ifHttpAgent.setHeaders,
@@ -91,31 +86,16 @@ export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpA
     private createEvent(request: RoTextureRequest) {
         let bitmap = this.loadTexture(request.uri) ?? BrsInvalid.Instance;
         if (bitmap instanceof RoBitmap && bitmap.isValid()) {
-            if (
-                request.size &&
-                (request.size.width !== bitmap.width || request.size.height !== bitmap.height)
-            ) {
+            if (request.size && (request.size.width !== bitmap.width || request.size.height !== bitmap.height)) {
                 const newDim = toAssociativeArray(request.size);
                 const newBmp = new RoBitmap(newDim);
                 const scaleX = request.size.width / bitmap.width;
                 const scaleY = request.size.height / bitmap.height;
-                const valid = drawObjectToComponent(
-                    newBmp,
-                    bitmap,
-                    0,
-                    0,
-                    scaleX,
-                    scaleY,
-                    undefined,
-                    request.scaleMode
-                );
+                const valid = drawObjectToComponent(newBmp, bitmap, 0, 0, scaleX, scaleY, undefined, request.scaleMode);
                 bitmap = valid ? newBmp : BrsInvalid.Instance;
             }
         }
-        request.state =
-            bitmap instanceof RoBitmap && bitmap.isValid()
-                ? RequestState.Ready
-                : RequestState.Failed;
+        request.state = bitmap instanceof RoBitmap && bitmap.isValid() ? RequestState.Ready : RequestState.Failed;
         return new RoTextureRequestEvent(request, bitmap);
     }
 
@@ -158,9 +138,7 @@ export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpA
             return fsys.readFileSync(assetPath);
         } catch (err: any) {
             if (BrsDevice.isDevMode) {
-                BrsDevice.stderr.write(
-                    `warning,[roTextureManager] Error requesting texture ${uri}: ${err.message}`
-                );
+                BrsDevice.stderr.write(`warning,[roTextureManager] Error requesting texture ${uri}: ${err.message}`);
             }
         }
     }

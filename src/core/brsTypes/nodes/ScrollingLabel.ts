@@ -50,14 +50,7 @@ export class ScrollingLabel extends Label {
         if (this.isDirty && isBrsString(index)) {
             const fieldName = index.getValue().toLowerCase();
             // Fields that affect scrolling behavior
-            const scrollFields = [
-                "text",
-                "font",
-                "maxwidth",
-                "scrollspeed",
-                "repeatcount",
-                "ellipsistext",
-            ];
+            const scrollFields = ["text", "font", "maxwidth", "scrollspeed", "repeatcount", "ellipsistext"];
             if (scrollFields.includes(fieldName)) {
                 this.resetScrollingState();
                 this.checkForScrolling();
@@ -122,12 +115,7 @@ export class ScrollingLabel extends Label {
     }
 
     // Override renderLabel to implement scrolling logic
-    protected renderLabel(
-        rect: Rect,
-        rotation: number,
-        opacity: number,
-        draw2D?: IfDraw2D
-    ): MeasuredText {
+    protected renderLabel(rect: Rect, rotation: number, opacity: number, draw2D?: IfDraw2D): MeasuredText {
         const text = this.getFieldValueJS("text") as string;
         if (this.isDirty || (this.fullTextWidth === 0 && text)) {
             this.checkForScrolling();
@@ -154,8 +142,7 @@ export class ScrollingLabel extends Label {
 
         if (this.needsScrolling && this.scrollState !== ScrollState.FINISHED) {
             const scrollDistance = this.fullTextWidth - maxWidth; // How much the text needs to move
-            const scrollDuration =
-                scrollDistance > 0 && scrollSpeed > 0 ? (scrollDistance / scrollSpeed) * 1000 : 0; // ms
+            const scrollDuration = scrollDistance > 0 && scrollSpeed > 0 ? (scrollDistance / scrollSpeed) * 1000 : 0; // ms
 
             switch (this.scrollState) {
                 case ScrollState.INITIAL_PAUSE:
@@ -170,10 +157,7 @@ export class ScrollingLabel extends Label {
                 case ScrollState.SCROLLING:
                     textToDraw = text; // Draw the full text
                     // Calculate current offset based on elapsed time in this state
-                    this.scrollOffset = Math.min(
-                        scrollDistance,
-                        (this.elapsedTime / scrollDuration) * scrollDistance
-                    );
+                    this.scrollOffset = Math.min(scrollDistance, (this.elapsedTime / scrollDuration) * scrollDistance);
                     drawOffset = -this.scrollOffset;
 
                     if (this.elapsedTime >= scrollDuration) {

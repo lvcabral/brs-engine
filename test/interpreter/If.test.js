@@ -15,31 +15,11 @@ describe("interpreter if statements", () => {
         assignTo = {
             foo: new Stmt.Assignment(equals, identifier("foo"), new Expr.Literal(BrsBoolean.True)),
             bar: new Stmt.Assignment(equals, identifier("bar"), new Expr.Literal(BrsBoolean.False)),
-            lorem: new Stmt.Assignment(
-                equals,
-                identifier("lorem"),
-                new Expr.Literal(new BrsString("lorem"))
-            ),
-            ipsum: new Stmt.Assignment(
-                equals,
-                identifier("ipsum"),
-                new Expr.Literal(new BrsString("ipsum"))
-            ),
-            dolor: new Stmt.Assignment(
-                equals,
-                identifier("dolor"),
-                new Expr.Literal(new BrsString("dolor"))
-            ),
-            sit: new Stmt.Assignment(
-                equals,
-                identifier("sit"),
-                new Expr.Literal(new BrsString("sit"))
-            ),
-            amet: new Stmt.Assignment(
-                equals,
-                identifier("amet"),
-                new Expr.Literal(new BrsString("amet"))
-            ),
+            lorem: new Stmt.Assignment(equals, identifier("lorem"), new Expr.Literal(new BrsString("lorem"))),
+            ipsum: new Stmt.Assignment(equals, identifier("ipsum"), new Expr.Literal(new BrsString("ipsum"))),
+            dolor: new Stmt.Assignment(equals, identifier("dolor"), new Expr.Literal(new BrsString("dolor"))),
+            sit: new Stmt.Assignment(equals, identifier("sit"), new Expr.Literal(new BrsString("sit"))),
+            amet: new Stmt.Assignment(equals, identifier("amet"), new Expr.Literal(new BrsString("amet"))),
         };
 
         interpreter = new Interpreter();
@@ -54,11 +34,7 @@ describe("interpreter if statements", () => {
                     then: identifier("then"),
                     endIf: token(Lexeme.EndIf, "end if"),
                 },
-                new Expr.Binary(
-                    new Expr.Literal(new Int32(1)),
-                    token(Lexeme.Less),
-                    new Expr.Literal(new Int32(2))
-                ),
+                new Expr.Binary(new Expr.Literal(new Int32(1)), token(Lexeme.Less), new Expr.Literal(new Int32(2))),
                 new Stmt.Block([assignTo.foo, assignTo.bar])
             ),
         ];
@@ -76,11 +52,7 @@ describe("interpreter if statements", () => {
                     then: identifier("then"),
                     endIf: token(Lexeme.EndIf, "end if"),
                 },
-                new Expr.Binary(
-                    new Expr.Literal(new Int32(2)),
-                    token(Lexeme.Less),
-                    new Expr.Literal(new Int32(1))
-                ),
+                new Expr.Binary(new Expr.Literal(new Int32(2)), token(Lexeme.Less), new Expr.Literal(new Int32(1))),
                 new Stmt.Block([assignTo.foo, assignTo.bar])
             ),
         ];
@@ -96,9 +68,7 @@ describe("interpreter if statements", () => {
         [assignTo.foo, assignTo.bar, assignTo.dolor, assignTo.sit, assignTo.amet].forEach(
             (assignment) => (assignment.accept = shouldNotExecute)
         );
-        [assignTo.lorem, assignTo.ipsum].forEach(
-            (assignment) => (assignment.accept = shouldExecute)
-        );
+        [assignTo.lorem, assignTo.ipsum].forEach((assignment) => (assignment.accept = shouldExecute));
 
         let statements = [
             new Stmt.If(
@@ -109,11 +79,7 @@ describe("interpreter if statements", () => {
                     else: token(Lexeme.Else, "else"),
                     endIf: token(Lexeme.EndIf, "end if"),
                 },
-                new Expr.Binary(
-                    new Expr.Literal(new Int32(2)),
-                    token(Lexeme.Less),
-                    new Expr.Literal(new Int32(1))
-                ),
+                new Expr.Binary(new Expr.Literal(new Int32(2)), token(Lexeme.Less), new Expr.Literal(new Int32(1))),
                 new Stmt.Block([assignTo.foo, assignTo.bar]),
                 [
                     {
@@ -138,14 +104,9 @@ describe("interpreter if statements", () => {
         let shouldExecute = jest.fn();
         let shouldNotExecute = jest.fn();
 
-        [
-            assignTo.foo,
-            assignTo.bar,
-            assignTo.lorem,
-            assignTo.ipsum,
-            assignTo.dolor,
-            assignTo.sit,
-        ].forEach((assignment) => (assignment.accept = shouldNotExecute));
+        [assignTo.foo, assignTo.bar, assignTo.lorem, assignTo.ipsum, assignTo.dolor, assignTo.sit].forEach(
+            (assignment) => (assignment.accept = shouldNotExecute)
+        );
         assignTo.amet.accept = shouldExecute;
 
         let statements = [
@@ -157,11 +118,7 @@ describe("interpreter if statements", () => {
                     else: token(Lexeme.Else, "else"),
                     endIf: token(Lexeme.EndIf, "end if"),
                 },
-                new Expr.Binary(
-                    new Expr.Literal(new Int32(2)),
-                    token(Lexeme.Less),
-                    new Expr.Literal(new Int32(1))
-                ),
+                new Expr.Binary(new Expr.Literal(new Int32(2)), token(Lexeme.Less), new Expr.Literal(new Int32(1))),
                 new Stmt.Block([assignTo.foo, assignTo.bar]),
                 [
                     {

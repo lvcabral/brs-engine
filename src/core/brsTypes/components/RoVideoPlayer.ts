@@ -366,9 +366,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
                 const y = rect.get(new BrsString("y")) as BrsNumber;
                 const w = rect.get(new BrsString("w")) as BrsNumber;
                 const h = rect.get(new BrsString("h")) as BrsNumber;
-                postMessage(
-                    `video,rect,${x.getValue()},${y.getValue()},${w.getValue()},${h.getValue()}`
-                );
+                postMessage(`video,rect,${x.getValue()},${y.getValue()},${w.getValue()},${h.getValue()}`);
                 return BrsInvalid.Instance;
             },
         },
@@ -383,9 +381,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
                 returns: ValueKind.Void,
             },
             impl: (_: Interpreter, x: BrsNumber, y: BrsNumber, w: BrsNumber, h: BrsNumber) => {
-                postMessage(
-                    `video,rect,${x.getValue()},${y.getValue()},${w.getValue()},${h.getValue()}`
-                );
+                postMessage(`video,rect,${x.getValue()},${y.getValue()},${w.getValue()},${h.getValue()}`);
                 return BrsInvalid.Instance;
             },
         }
@@ -394,10 +390,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
     /** Sets the max resolution required by your video. */
     private readonly setMaxVideoDecodeResolution = new Callable("setMaxVideoDecodeResolution", {
         signature: {
-            args: [
-                new StdlibArgument("width", ValueKind.Int32),
-                new StdlibArgument("height", ValueKind.Int32),
-            ],
+            args: [new StdlibArgument("width", ValueKind.Int32), new StdlibArgument("height", ValueKind.Int32)],
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, width: BrsNumber, height: BrsNumber) => {

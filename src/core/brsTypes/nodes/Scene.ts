@@ -104,13 +104,7 @@ export class Scene extends Group {
         this.fields.get("currentdesignresolution")?.setValue(toAssociativeArray(this.ui));
     }
 
-    renderNode(
-        interpreter: Interpreter,
-        origin: number[],
-        angle: number,
-        opacity: number,
-        draw2D?: IfDraw2D
-    ) {
+    renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
         if (!this.isVisible()) {
             return;
         }
@@ -146,12 +140,7 @@ export class Scene extends Group {
         return false;
     }
 
-    private handleKeyByNode(
-        interpreter: Interpreter,
-        hostNode: RoSGNode,
-        key: BrsString,
-        press: BrsBoolean
-    ): boolean {
+    private handleKeyByNode(interpreter: Interpreter, hostNode: RoSGNode, key: BrsString, press: BrsBoolean): boolean {
         const typeDef = interpreter.environment.nodeDefMap.get(hostNode.nodeSubtype.toLowerCase());
         if (typeDef?.environment === undefined) {
             if (hostNode instanceof Group) {

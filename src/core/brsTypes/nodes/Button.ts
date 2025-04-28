@@ -1,15 +1,5 @@
 import { FieldModel } from "./Field";
-import {
-    AAMember,
-    BrsString,
-    Float,
-    Label,
-    Poster,
-    brsValueOf,
-    rootObjects,
-    Font,
-    getTextureManager,
-} from "..";
+import { AAMember, BrsString, Float, Label, Poster, brsValueOf, rootObjects, Font, getTextureManager } from "..";
 import { Group } from "./Group";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D } from "../interfaces/IfDraw2D";
@@ -67,12 +57,7 @@ export class Button extends Group {
             this.setFieldValue("iconUri", new BrsString(Button.iconUriFHD));
             this.setFieldValue("focusedIconUri", new BrsString(Button.iconUriFHD));
             this.background = this.addPoster("", [0, 0], this.width, 96);
-            this.icon = this.addPoster(
-                Button.iconUriFHD,
-                [this.margin, 30],
-                this.iconWidth,
-                this.iconHeight
-            );
+            this.icon = this.addPoster(Button.iconUriFHD, [this.margin, 30], this.iconWidth, this.iconHeight);
             const labelTrans = [this.margin + this.iconWidth + this.gap, 30];
             this.textLabel = this.addLabel(
                 "textColor",
@@ -95,12 +80,7 @@ export class Button extends Group {
             this.setFieldValue("iconUri", new BrsString(Button.iconUriHD));
             this.setFieldValue("focusedIconUri", new BrsString(Button.iconUriHD));
             this.background = this.addPoster("", [0, 0], this.width, 64);
-            this.icon = this.addPoster(
-                Button.iconUriHD,
-                [this.margin, 20],
-                this.iconWidth,
-                this.iconHeight
-            );
+            this.icon = this.addPoster(Button.iconUriHD, [this.margin, 20], this.iconWidth, this.iconHeight);
             const labelTrans = [this.margin + this.iconWidth + this.gap, 20];
             this.textLabel = this.addLabel(
                 "textColor",
@@ -177,13 +157,7 @@ export class Button extends Group {
         this.iconHeight = height;
     }
 
-    renderNode(
-        interpreter: Interpreter,
-        origin: number[],
-        angle: number,
-        opacity: number,
-        draw2D?: IfDraw2D
-    ) {
+    renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
         if (!this.isVisible()) {
             return;
         }

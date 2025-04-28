@@ -17,13 +17,7 @@ export class RoFont extends BrsComponent implements BrsValue {
     private readonly canvas: BrsCanvas;
 
     // Constructor can only be used by RoFontRegistry()
-    constructor(
-        family: BrsString,
-        size: Int32,
-        bold: BrsBoolean,
-        italic: BrsBoolean,
-        metrics: FontMetrics
-    ) {
+    constructor(family: BrsString, size: Int32, bold: BrsBoolean, italic: BrsBoolean, metrics: FontMetrics) {
         super("roFont");
         this.family = family.value;
         this.size = size.getValue();
@@ -32,13 +26,7 @@ export class RoFont extends BrsComponent implements BrsValue {
         this.metrics = metrics;
 
         this.registerMethods({
-            ifFont: [
-                this.getOneLineHeight,
-                this.getOneLineWidth,
-                this.getAscent,
-                this.getDescent,
-                this.getMaxAdvance,
-            ],
+            ifFont: [this.getOneLineHeight, this.getOneLineWidth, this.getAscent, this.getDescent, this.getMaxAdvance],
         });
         this.canvas = getFontRegistry().canvas;
     }
@@ -61,10 +49,7 @@ export class RoFont extends BrsComponent implements BrsValue {
             let ellipsisWidth = ctx.measureText(ellipsis).width;
             let truncatedText = text;
 
-            while (
-                ctx.measureText(truncatedText).width + ellipsisWidth > maxWidth &&
-                truncatedText.length > 0
-            ) {
+            while (ctx.measureText(truncatedText).width + ellipsisWidth > maxWidth && truncatedText.length > 0) {
                 truncatedText = truncatedText.slice(0, -1);
             }
 
@@ -77,11 +62,7 @@ export class RoFont extends BrsComponent implements BrsValue {
     }
 
     measureText(text: string, maxWidth?: number, ellipsis?: string): MeasuredText {
-        let {
-            width,
-            text: ellipsizedText,
-            ellipsized,
-        } = this.measureTextWidth(text, maxWidth, ellipsis);
+        let { width, text: ellipsizedText, ellipsized } = this.measureTextWidth(text, maxWidth, ellipsis);
         let height = this.measureTextHeight();
         return { width, height, text: ellipsizedText, ellipsized };
     }
@@ -122,10 +103,7 @@ export class RoFont extends BrsComponent implements BrsValue {
     /** Returns the number of pixels from one line to the next when drawing with this font */
     private readonly getOneLineWidth = new Callable("getOneLineWidth", {
         signature: {
-            args: [
-                new StdlibArgument("text", ValueKind.String),
-                new StdlibArgument("maxWidth", ValueKind.Int32),
-            ],
+            args: [new StdlibArgument("text", ValueKind.String), new StdlibArgument("maxWidth", ValueKind.Int32)],
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter, text: BrsString, maxWidth: Int32) => {

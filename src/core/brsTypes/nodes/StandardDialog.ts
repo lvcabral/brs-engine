@@ -46,23 +46,13 @@ export class StandardDialog extends Group {
             this.maxWidth = 1380;
             this.minHeight = 270;
             this.dialogTrans = [531, 492];
-            this.background = this.addPoster(
-                this.dialogBackgroundUri,
-                [-90, -60],
-                this.width,
-                this.minHeight
-            );
+            this.background = this.addPoster(this.dialogBackgroundUri, [-90, -60], this.width, this.minHeight);
         } else {
             this.width = 692;
             this.maxWidth = 920;
             this.minHeight = 180;
             this.dialogTrans = [354, 328];
-            this.background = this.addPoster(
-                this.dialogBackgroundUri,
-                [-60, -40],
-                this.width,
-                this.minHeight
-            );
+            this.background = this.addPoster(this.dialogBackgroundUri, [-60, -40], this.width, this.minHeight);
         }
         this.height = this.minHeight;
         this.setTranslation(this.dialogTrans);
@@ -91,13 +81,7 @@ export class StandardDialog extends Group {
         return super.set(index, value, alwaysNotify, kind);
     }
 
-    renderNode(
-        interpreter: Interpreter,
-        origin: number[],
-        angle: number,
-        opacity: number,
-        draw2D?: IfDraw2D
-    ) {
+    renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
         if (!this.isVisible()) {
             return;
         }

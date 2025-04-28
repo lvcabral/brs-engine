@@ -608,9 +608,7 @@ describe("RoArray", () => {
 
                 let sortBy = src.getMethod("sortBy");
                 expect(sortBy).toBeTruthy();
-                expect(sortBy.call(interpreter, new BrsString("name"), new BrsString("i"))).toBe(
-                    BrsInvalid.Instance
-                );
+                expect(sortBy.call(interpreter, new BrsString("name"), new BrsString("i"))).toBe(BrsInvalid.Instance);
                 expect(src.elements).toEqual([i2, i1, a, b, a2, a3, a1, ar]);
             });
 
@@ -636,9 +634,7 @@ describe("RoArray", () => {
 
                 let sortBy = src.getMethod("sortBy");
                 expect(sortBy).toBeTruthy();
-                expect(sortBy.call(interpreter, new BrsString("name"), new BrsString("r"))).toBe(
-                    BrsInvalid.Instance
-                );
+                expect(sortBy.call(interpreter, new BrsString("name"), new BrsString("r"))).toBe(BrsInvalid.Instance);
                 expect(src.elements).toEqual([ar, a2, a1, a3, b, a, i1, i2]);
             });
 
@@ -664,9 +660,7 @@ describe("RoArray", () => {
 
                 let sortBy = src.getMethod("sortBy");
                 expect(sortBy).toBeTruthy();
-                expect(sortBy.call(interpreter, new BrsString("name"), new BrsString("ir"))).toBe(
-                    BrsInvalid.Instance
-                );
+                expect(sortBy.call(interpreter, new BrsString("name"), new BrsString("ir"))).toBe(BrsInvalid.Instance);
                 expect(src.elements).toEqual([ar, a1, a3, a2, b, a, i1, i2]);
             });
 
@@ -756,20 +750,7 @@ describe("RoArray", () => {
                 let arr = new RoArray([]);
                 let i2 = new Int32(2);
                 let i1 = new Int32(1);
-                let src = new RoArray([
-                    a3,
-                    a4,
-                    a5,
-                    a1,
-                    a2,
-                    strA,
-                    strB,
-                    boolTrue,
-                    arr,
-                    i2,
-                    i1,
-                    boolFalse,
-                ]);
+                let src = new RoArray([a3, a4, a5, a1, a2, strA, strB, boolTrue, arr, i2, i1, boolFalse]);
 
                 let sortBy = src.getMethod("sortBy");
                 expect(sortBy).toBeTruthy();
@@ -812,9 +793,7 @@ describe("RoArray", () => {
 
                 let sortBy = src.getMethod("sortBy");
                 expect(sortBy).toBeTruthy();
-                expect(sortBy.call(interpreter, new BrsString("ID"), new BrsString("r"))).toBe(
-                    BrsInvalid.Instance
-                );
+                expect(sortBy.call(interpreter, new BrsString("ID"), new BrsString("r"))).toBe(BrsInvalid.Instance);
                 expect(src.elements).toEqual([ar, a3, a2, a1, b, a, i1, i2]);
             });
 
@@ -892,9 +871,7 @@ describe("RoArray", () => {
 
                 let sortBy = src.getMethod("sortBy");
                 expect(sortBy).toBeTruthy();
-                expect(sortBy.call(interpreter, new BrsString("xyz"), new BrsString("r"))).toBe(
-                    BrsInvalid.Instance
-                );
+                expect(sortBy.call(interpreter, new BrsString("xyz"), new BrsString("r"))).toBe(BrsInvalid.Instance);
                 expect(src.elements).toEqual([ar, a2, a1, a3, b, a, i1, i2]);
             });
 
@@ -920,9 +897,7 @@ describe("RoArray", () => {
 
                 let sortBy = src.getMethod("sortBy");
                 expect(sortBy).toBeTruthy();
-                expect(sortBy.call(interpreter, new BrsString("id"), new BrsString("ia"))).toBe(
-                    BrsInvalid.Instance
-                );
+                expect(sortBy.call(interpreter, new BrsString("id"), new BrsString("ia"))).toBe(BrsInvalid.Instance);
                 expect(src.elements).toEqual([a1, a3, a2, a, b, ar, i2, i1]);
             });
         });

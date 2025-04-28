@@ -32,10 +32,7 @@ function runFiles(interpreter: Interpreter, filenames: BrsString[], args: BrsTyp
         const sourceMap = new Map<string, string>();
         filenames.forEach((filename) => {
             if (BrsDevice.fileSystem.existsSync(filename.value)) {
-                sourceMap.set(
-                    filename.value,
-                    BrsDevice.fileSystem.readFileSync(filename.value, "utf8")
-                );
+                sourceMap.set(filename.value, BrsDevice.fileSystem.readFileSync(filename.value, "utf8"));
             }
         });
         if (sourceMap.size !== 0) {
@@ -67,10 +64,7 @@ export const Run = new Callable(
             returns: ValueKind.Dynamic,
         },
         impl: (interpreter: Interpreter, filenameArray: BrsComponent, ...args: BrsType[]) => {
-            if (
-                filenameArray instanceof RoArray &&
-                filenameArray.getElements().every(isBrsString)
-            ) {
+            if (filenameArray instanceof RoArray && filenameArray.getElements().every(isBrsString)) {
                 return runFiles(interpreter, filenameArray.getElements() as BrsString[], args);
             }
 

@@ -18,23 +18,9 @@ import chalk from "chalk";
 import { Command } from "commander";
 import stripAnsi from "strip-ansi";
 import readline from "readline";
-import {
-    deviceData,
-    loadAppZip,
-    updateAppZip,
-    subscribePackage,
-    mountExt,
-    setupDeepLink,
-} from "../api/package";
+import { deviceData, loadAppZip, updateAppZip, subscribePackage, mountExt, setupDeepLink } from "../api/package";
 import { isNumber } from "../api/util";
-import {
-    debugPrompt,
-    dataBufferIndex,
-    dataBufferSize,
-    AppPayload,
-    AppExitReason,
-    AppData,
-} from "../core/common";
+import { debugPrompt, dataBufferIndex, dataBufferSize, AppPayload, AppExitReason, AppData } from "../core/common";
 import packageInfo from "../../package.json";
 // @ts-ignore
 import * as brs from "./brs.node.js";
@@ -67,22 +53,10 @@ program
     .option("-e, --ecp", "Enable the ECP server for control simulation.", false)
     .option("-p, --pack <password>", "The password to generate the encrypted package.", "")
     .option("-o, --out <directory>", "The directory to save the encrypted package file.", "./")
-    .option(
-        "-r, --root <directory>",
-        "The root directory from which `pkg:` paths will be resolved."
-    )
-    .option(
-        "-x, --ext-root <directory>",
-        "The root directory from which `ext1:` paths will be resolved."
-    )
-    .option(
-        "-f, --ext-file <file>",
-        "The zip file to mount as `ext1:` volume. (takes precedence over -x)"
-    )
-    .option(
-        "-k, --deep-link <params>",
-        "Parameters to be passed to the application. (format: key=value,...)"
-    )
+    .option("-r, --root <directory>", "The root directory from which `pkg:` paths will be resolved.")
+    .option("-x, --ext-root <directory>", "The root directory from which `ext1:` paths will be resolved.")
+    .option("-f, --ext-file <file>", "The zip file to mount as `ext1:` volume. (takes precedence over -x)")
+    .option("-k, --deep-link <params>", "Parameters to be passed to the application. (format: key=value,...)")
     .option("-y, --registry", "Persist the simulated device registry on disk.", false)
     .action(async (brsFiles, program) => {
         if (!checkParameters()) {
@@ -90,9 +64,7 @@ program
         }
         if (typeof deviceData === "object") {
             deviceData.customFeatures.push("ascii_rendering");
-            deviceData.assets = fs.readFileSync(
-                path.join(__dirname, "../browser/assets/common.zip")
-            )?.buffer;
+            deviceData.assets = fs.readFileSync(path.join(__dirname, "../browser/assets/common.zip"))?.buffer;
             deviceData.localIps = getLocalIps();
             try {
                 const { gateway, int } = gateway4sync();
@@ -128,11 +100,7 @@ function checkParameters() {
     if (isNumber(program.colors) && program.colors >= 0 && program.colors <= 3) {
         chalk.level = Math.trunc(program.colors) as chalk.Level;
     } else {
-        console.warn(
-            chalk.yellow(
-                `Invalid color level! Valid range is 0-3, keeping default: ${defaultLevel}.`
-            )
-        );
+        console.warn(chalk.yellow(`Invalid color level! Valid range is 0-3, keeping default: ${defaultLevel}.`));
     }
     if (program.ascii) {
         if (isNumber(program.ascii)) {
@@ -143,9 +111,7 @@ function checkParameters() {
         if (program.ascii < 32) {
             program.ascii = maxColumns;
             console.warn(
-                chalk.yellow(
-                    `Invalid # of columns! Valid values are >=32, using current width: ${program.ascii}.`
-                )
+                chalk.yellow(`Invalid # of columns! Valid values are >=32, using current width: ${program.ascii}.`)
             );
         }
     }
@@ -280,9 +246,7 @@ async function runApp(payload: AppPayload) {
                 fs.writeFileSync(filePath, buffer);
                 console.log(
                     chalk.blueBright(
-                        `Package file created as ${filePath} with ${Math.round(
-                            buffer.length / 1024
-                        )} KB.\n`
+                        `Package file created as ${filePath} with ${Math.round(buffer.length / 1024)} KB.\n`
                     )
                 );
             } catch (err: any) {
@@ -342,11 +306,7 @@ function getRegistry(): Map<string, string> {
             const parsed = JSON.parse(strRegistry.toString("utf8"));
             if (typeof parsed === "object" && parsed !== null) {
                 new Map(parsed).forEach((value, key) => {
-                    if (
-                        typeof key === "string" &&
-                        typeof value === "string" &&
-                        key.split(".")[1] !== "Transient"
-                    ) {
+                    if (typeof key === "string" && typeof value === "string" && key.split(".")[1] !== "Transient") {
                         registry.set(key, value);
                     }
                 });
@@ -367,9 +327,7 @@ function getRegistry(): Map<string, string> {
 async function repl() {
     const replInterpreter = await brs.getReplInterpreter({
         device: deviceData,
-        extZip: program.extFile
-            ? new Uint8Array(fs.readFileSync(program.extFile)).buffer
-            : undefined,
+        extZip: program.extFile ? new Uint8Array(fs.readFileSync(program.extFile)).buffer : undefined,
         root: program.root,
         ext: program.extRoot,
     });

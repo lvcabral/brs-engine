@@ -304,9 +304,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         },
         impl: (interpreter: Interpreter) => {
             if (this.sceneType && rootObjects.rootScene) {
-                const typeDef = interpreter.environment.nodeDefMap.get(
-                    this.sceneType.value.toLowerCase()
-                );
+                const typeDef = interpreter.environment.nodeDefMap.get(this.sceneType.value.toLowerCase());
                 initializeNode(interpreter, this.sceneType, typeDef, rootObjects.rootScene);
             }
             this.isDirty = true;

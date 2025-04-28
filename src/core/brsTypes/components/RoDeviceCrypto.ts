@@ -62,10 +62,7 @@ export class RoDeviceCrypto extends BrsComponent implements BrsValue {
     /** Encrypts data on a device that is unique per device, channel, or model. */
     private readonly encrypt = new Callable("encrypt", {
         signature: {
-            args: [
-                new StdlibArgument("input", ValueKind.Object),
-                new StdlibArgument("type", ValueKind.String),
-            ],
+            args: [new StdlibArgument("input", ValueKind.Object), new StdlibArgument("type", ValueKind.String)],
             returns: ValueKind.Object,
         },
         impl: (interpreter: Interpreter, input: RoByteArray, type: BrsString) => {
@@ -94,10 +91,7 @@ export class RoDeviceCrypto extends BrsComponent implements BrsValue {
     /** Decrypts data stored on a device that was previously encoded with the Encrypt() method. */
     private readonly decrypt = new Callable("decrypt", {
         signature: {
-            args: [
-                new StdlibArgument("encryptedData", ValueKind.Object),
-                new StdlibArgument("type", ValueKind.String),
-            ],
+            args: [new StdlibArgument("encryptedData", ValueKind.Object), new StdlibArgument("type", ValueKind.String)],
             returns: ValueKind.String,
         },
         impl: (interpreter: Interpreter, encryptedData: RoByteArray, type: BrsString) => {
@@ -116,9 +110,7 @@ export class RoDeviceCrypto extends BrsComponent implements BrsValue {
                 const decipher = crypto.createDecipheriv(this.algorithm, key, Buffer.from(iv));
                 const updateData = decipher.update(Buffer.from(data));
                 const finalResult = decipher.final();
-                return new RoByteArray(
-                    new Uint8Array([...updateData, ...finalResult].slice(0, -16))
-                );
+                return new RoByteArray(new Uint8Array([...updateData, ...finalResult].slice(0, -16)));
             } catch (err: any) {
                 return BrsInvalid.Instance;
             }

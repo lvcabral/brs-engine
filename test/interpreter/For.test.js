@@ -134,9 +134,7 @@ describe("interpreter for loops", () => {
     });
 
     it("can be exited", () => {
-        const body = new Stmt.Block([
-            new Stmt.ExitFor({ exitFor: token(Lexeme.ExitFor, "exit for") }),
-        ]);
+        const body = new Stmt.Block([new Stmt.ExitFor({ exitFor: token(Lexeme.ExitFor, "exit for") })]);
         const bodySpy = jest.spyOn(body, "accept");
 
         const statements = [

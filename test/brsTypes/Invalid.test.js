@@ -16,9 +16,7 @@ describe("Invalid", () => {
             expect(BrsTypes.BrsInvalid.Instance.equalTo(other)).toBe(BrsTypes.BrsBoolean.False)
         );
 
-        expect(BrsTypes.BrsInvalid.Instance.equalTo(BrsTypes.BrsInvalid.Instance)).toBe(
-            BrsTypes.BrsBoolean.True
-        );
+        expect(BrsTypes.BrsInvalid.Instance.equalTo(BrsTypes.BrsInvalid.Instance)).toBe(BrsTypes.BrsBoolean.True);
     });
 
     it("is less than nothing", () => {

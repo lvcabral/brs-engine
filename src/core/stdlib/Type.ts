@@ -1,12 +1,4 @@
-import {
-    BrsType,
-    ValueKind,
-    Callable,
-    Int32,
-    BrsString,
-    StdlibArgument,
-    isBoxable,
-} from "../brsTypes";
+import { BrsType, ValueKind, Callable, Int32, BrsString, StdlibArgument, isBoxable } from "../brsTypes";
 import { Interpreter } from "../interpreter";
 
 export const Type = new Callable("type", {

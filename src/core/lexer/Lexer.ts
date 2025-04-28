@@ -444,10 +444,7 @@ export class Lexer {
                 if (peekNext() === "\n") {
                     // BrightScript doesn't support multi-line strings
                     addError(
-                        new BrsError(
-                            "Unterminated string at end of line",
-                            locationOf(source.slice(start, current))
-                        )
+                        new BrsError("Unterminated string at end of line", locationOf(source.slice(start, current)))
                     );
                     return;
                 }
@@ -457,12 +454,7 @@ export class Lexer {
 
             if (isAtEnd()) {
                 // terminating a string with EOF is also not allowed
-                addError(
-                    new BrsError(
-                        "Unterminated string at end of file",
-                        locationOf(source.slice(start, current))
-                    )
-                );
+                addError(new BrsError("Unterminated string at end of file", locationOf(source.slice(start, current))));
                 return;
             }
 
@@ -603,10 +595,7 @@ export class Lexer {
             if (peek() === "." && isHexDigit(peekNext())) {
                 advance(); // consume the "."
                 addError(
-                    new BrsError(
-                        "Fractional hex literals are not supported",
-                        locationOf(source.slice(start, current))
-                    )
+                    new BrsError("Fractional hex literals are not supported", locationOf(source.slice(start, current)))
                 );
                 return;
             }
@@ -636,11 +625,7 @@ export class Lexer {
 
             // some identifiers can be split into two words, so check the "next" word and see what we get
             if (
-                (text === "continue" ||
-                    text === "end" ||
-                    text === "else" ||
-                    text === "exit" ||
-                    text === "for") &&
+                (text === "continue" || text === "end" || text === "else" || text === "exit" || text === "for") &&
                 (peek() === " " || peek() === "\t")
             ) {
                 let endOfFirstWord = {
@@ -680,9 +665,7 @@ export class Lexer {
             }
 
             let textLower = originalText.toLowerCase();
-            let tokenType = KeyWords.hasOwnProperty(textLower)
-                ? KeyWords[textLower]
-                : Lexeme.Identifier;
+            let tokenType = KeyWords.hasOwnProperty(textLower) ? KeyWords[textLower] : Lexeme.Identifier;
             if (tokenType === KeyWords.rem) {
                 //the rem keyword can be used as an identifier on objects,
                 //so do a quick look-behind to see if there's a preceding dot
@@ -701,8 +684,7 @@ export class Lexer {
             // if the previous token was on this line, consider this comment an "inline" comment,
             // similar to JS-like `//`.  Everything else is a "block" comment, similar to JS-like
             // `/* */` or `/** */`
-            const commentType: Comment["type"] =
-                peekPrevious()?.location.start.line === line ? "Line" : "Block";
+            const commentType: Comment["type"] = peekPrevious()?.location.start.line === line ? "Line" : "Block";
 
             let commentText = "";
             while (peek() !== "\n" && !isAtEnd()) {
