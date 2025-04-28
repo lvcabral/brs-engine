@@ -1,14 +1,4 @@
-import {
-    BrsComponent,
-    BrsNumber,
-    BrsType,
-    Double,
-    Font,
-    Int64,
-    isBrsNumber,
-    isStringComp,
-    RoArray,
-} from ".";
+import { BrsComponent, BrsNumber, BrsType, Double, Font, Int64, isBrsNumber, isStringComp, RoArray } from ".";
 import { Boxable } from "./Boxing";
 import { RoString } from "./components/RoString";
 import { Int32 } from "./Int32";
@@ -160,9 +150,7 @@ export function getBrsValueFromFieldType(type: string, value?: string): BrsType 
     switch (type.toLowerCase()) {
         case "bool":
         case "boolean":
-            returnValue = value
-                ? BrsBoolean.from(value.toLowerCase() === "true")
-                : BrsBoolean.False;
+            returnValue = value ? BrsBoolean.from(value.toLowerCase() === "true") : BrsBoolean.False;
             break;
         case "int":
         case "integer":

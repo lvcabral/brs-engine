@@ -1,14 +1,4 @@
-import {
-    BrsType,
-    BrsValue,
-    ValueKind,
-    BrsString,
-    BrsBoolean,
-    Int32,
-    Callable,
-    Comparable,
-    isNumberComp,
-} from "..";
+import { BrsType, BrsValue, ValueKind, BrsString, BrsBoolean, Int32, Callable, Comparable, isNumberComp } from "..";
 import { BrsComponent } from "../components/BrsComponent";
 import { Interpreter } from "../../interpreter";
 import { KeyEvent } from "../../common";
@@ -21,13 +11,7 @@ export class RoUniversalControlEvent extends BrsComponent implements BrsValue, C
         this.event = keyEvent;
 
         this.registerMethods({
-            ifUniversalControlEvent: [
-                this.getKey,
-                this.getRemoteID,
-                this.getID,
-                this.isPress,
-                this.getChar,
-            ],
+            ifUniversalControlEvent: [this.getKey, this.getRemoteID, this.getID, this.isPress, this.getChar],
             ifInt: [this.getInt],
         });
     }

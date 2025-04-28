@@ -40,10 +40,7 @@ export class BrsComponent {
             const methodNames = new Set(
                 methods.filter((m) => m.name?.toLowerCase()).map((m) => m.name?.toLowerCase()!)
             );
-            this.interfaces.set(
-                interfaceName.toLowerCase(),
-                new BrsInterface(interfaceName, methodNames)
-            );
+            this.interfaces.set(interfaceName.toLowerCase(), new BrsInterface(interfaceName, methodNames));
 
             this.appendMethods(methods);
         });

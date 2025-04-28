@@ -296,16 +296,7 @@ export class Group extends RoSGNode {
     ): MeasuredText {
         const drawFont = font.createDrawFont();
         if (this.changed) {
-            this.refreshLines(
-                text,
-                drawFont,
-                rect,
-                ellipsis,
-                numLines,
-                maxLines,
-                lineSpacing,
-                displayPartialLines
-            );
+            this.refreshLines(text, drawFont, rect, ellipsis, numLines, maxLines, lineSpacing, displayPartialLines);
         }
         let y = rect.y;
         if (vertAlign === "center") {
@@ -353,9 +344,7 @@ export class Group extends RoSGNode {
         let totalHeight = lines.length * lineHeight;
 
         if (rect.height > 0) {
-            const maxRenderedLines = Math.floor(
-                (rect.height + lineSpacing) / (lineHeight + lineSpacing)
-            );
+            const maxRenderedLines = Math.floor((rect.height + lineSpacing) / (lineHeight + lineSpacing));
             if (lines.length > maxRenderedLines) {
                 renderedLines = lines.slice(0, maxRenderedLines);
                 const line = renderedLines[renderedLines.length - 1];
@@ -587,13 +576,7 @@ export class Group extends RoSGNode {
         return false;
     }
 
-    renderNode(
-        interpreter: Interpreter,
-        origin: number[],
-        angle: number,
-        opacity: number,
-        draw2D?: IfDraw2D
-    ) {
+    renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
         if (!this.isVisible()) {
             return;
         }

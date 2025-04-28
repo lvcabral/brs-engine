@@ -113,10 +113,7 @@ export async function getComponentDefinitionMap(
     return processXmlTree(pSettle(parsedPromises), libraryName);
 }
 
-async function processXmlTree(
-    settledPromises: Promise<PromiseResult<ComponentDefinition>[]>,
-    libraryName?: string
-) {
+async function processXmlTree(settledPromises: Promise<PromiseResult<ComponentDefinition>[]>, libraryName?: string) {
     const nodeDefs = await settledPromises;
     const nodeDefMap = new Map<string, ComponentDefinition>();
 
@@ -215,9 +212,7 @@ export async function getInterpreterWithSubEnvs(
     await pSettle(
         Array.from(componentMap).map(async (componentKV) => {
             let [_, component] = componentKV;
-            component.environment = interpreter.environment.createSubEnvironment(
-                /* includeModuleScope */ false
-            );
+            component.environment = interpreter.environment.createSubEnvironment(/* includeModuleScope */ false);
             let statements = await componentScopeResolver.resolve(component);
             interpreter.inSubEnv((subInterpreter) => {
                 let componentMPointer = new RoAssociativeArray([]);
@@ -313,10 +308,7 @@ function parseChildren(element: XmlElement, children: ComponentNode[]): void {
     });
 }
 
-async function getScripts(
-    node: XmlDocument,
-    nodeDef: ComponentDefinition
-): Promise<ComponentScript[]> {
+async function getScripts(node: XmlDocument, nodeDef: ComponentDefinition): Promise<ComponentScript[]> {
     let scripts = node.childrenNamed("script");
     let componentScripts: ComponentScript[] = [];
 

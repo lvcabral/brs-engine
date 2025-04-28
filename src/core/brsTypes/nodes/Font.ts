@@ -1,16 +1,6 @@
 import { RoSGNode } from "../components/RoSGNode";
 import { FieldKind, FieldModel } from "./Field";
-import {
-    BrsBoolean,
-    rootObjects,
-    BrsString,
-    BrsType,
-    getFontRegistry,
-    Int32,
-    RoFont,
-    AAMember,
-    isBrsString,
-} from "..";
+import { BrsBoolean, rootObjects, BrsString, BrsType, getFontRegistry, Int32, RoFont, AAMember, isBrsString } from "..";
 
 export type FontDef = {
     family: string;

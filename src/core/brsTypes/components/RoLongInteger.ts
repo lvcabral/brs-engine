@@ -30,9 +30,7 @@ export class RoLongInteger extends BrsComponent implements BrsValue, Unboxable {
 
     equalTo(other: BrsType): BrsBoolean {
         if (other instanceof RoLongInteger) {
-            return BrsBoolean.from(
-                other.intrinsic.getValue().low === this.intrinsic.getValue().low
-            );
+            return BrsBoolean.from(other.intrinsic.getValue().low === this.intrinsic.getValue().low);
         }
 
         return BrsBoolean.False;

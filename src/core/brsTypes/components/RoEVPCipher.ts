@@ -46,14 +46,7 @@ export class RoEVPCipher extends BrsComponent implements BrsValue {
         return BrsBoolean.False;
     }
 
-    setupCipher(
-        _: Interpreter,
-        encrypt: boolean,
-        format: string,
-        key: string,
-        iv: string,
-        padding: boolean
-    ) {
+    setupCipher(_: Interpreter, encrypt: boolean, format: string, key: string, iv: string, padding: boolean) {
         try {
             this.cipherEncrypt = encrypt;
             this.cipherFormat = format;
@@ -62,17 +55,9 @@ export class RoEVPCipher extends BrsComponent implements BrsValue {
             this.cipherPadding = padding;
 
             if (encrypt) {
-                this.cipher = crypto.createCipheriv(
-                    format,
-                    Buffer.from(key, "hex"),
-                    Buffer.from(iv, "hex")
-                );
+                this.cipher = crypto.createCipheriv(format, Buffer.from(key, "hex"), Buffer.from(iv, "hex"));
             } else {
-                this.cipher = crypto.createDecipheriv(
-                    format,
-                    Buffer.from(key, "hex"),
-                    Buffer.from(iv, "hex")
-                );
+                this.cipher = crypto.createDecipheriv(format, Buffer.from(key, "hex"), Buffer.from(iv, "hex"));
             }
             if (this.cipher) {
                 this.cipher.setAutoPadding(padding);

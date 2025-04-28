@@ -115,10 +115,7 @@ export class SGNodeFactory {
         });
     }
 
-    public static createNode(
-        nodeType: SGNodeType | string,
-        nodeName?: string
-    ): RoSGNode | undefined {
+    public static createNode(nodeType: SGNodeType | string, nodeName?: string): RoSGNode | undefined {
         let name = nodeName || nodeType;
         const additionalCtor = this.additionalNodes.get(nodeType?.toLowerCase());
         if (additionalCtor) {
@@ -367,8 +364,7 @@ export function initializeTask(interpreter: Interpreter, taskData: TaskData) {
         typeDef = typeDefStack.pop();
 
         // Create the node.
-        let node =
-            SGNodeFactory.createNode(typeDef!.extends as SGNodeType, type) || new Task([], type);
+        let node = SGNodeFactory.createNode(typeDef!.extends as SGNodeType, type) || new Task([], type);
         let mPointer = new RoAssociativeArray([]);
         currentEnv?.setM(new RoAssociativeArray([]));
 
@@ -431,12 +427,7 @@ export function initializeTask(interpreter: Interpreter, taskData: TaskData) {
 }
 
 /** Function to restore the node fields from the serialized object */
-function restoreNode(
-    interpreter: Interpreter,
-    source: any,
-    node: RoSGNode,
-    port: RoMessagePort | null
-) {
+function restoreNode(interpreter: Interpreter, source: any, node: RoSGNode, port: RoMessagePort | null) {
     const observed = source["_observed_"];
     for (let [key, value] of Object.entries(source)) {
         if (key.startsWith("_") && key.endsWith("_") && key.length > 2) {
@@ -495,10 +486,7 @@ function addFields(interpreter: Interpreter, node: RoSGNode, typeDef: ComponentD
                 node.addNodeField(fieldName, fieldValue.type, fieldValue.alwaysNotify === "true");
                 // set default value if it was specified in xml
                 if (fieldValue.value) {
-                    node.setFieldValue(
-                        fieldName,
-                        getBrsValueFromFieldType(fieldValue.type, fieldValue.value)
-                    );
+                    node.setFieldValue(fieldName, getBrsValueFromFieldType(fieldValue.type, fieldValue.value));
                 }
             }
 
@@ -509,13 +497,7 @@ function addFields(interpreter: Interpreter, node: RoSGNode, typeDef: ComponentD
                 if (callableFunction instanceof Callable && field) {
                     // observers set via `onChange` can never be removed, despite RBI's documentation claiming
                     // that it is equivalent to calling the ifSGNodeField observeField() method".
-                    field.addObserver(
-                        "permanent",
-                        interpreter,
-                        callableFunction,
-                        node,
-                        new BrsString(fieldName)
-                    );
+                    field.addObserver("permanent", interpreter, callableFunction, node, new BrsString(fieldName));
                 }
             }
         }
@@ -523,11 +505,7 @@ function addFields(interpreter: Interpreter, node: RoSGNode, typeDef: ComponentD
 }
 
 /** Function to the the Children of a Node based on its definition */
-function addChildren(
-    interpreter: Interpreter,
-    node: RoSGNode,
-    typeDef: ComponentDefinition | ComponentNode
-) {
+function addChildren(interpreter: Interpreter, node: RoSGNode, typeDef: ComponentDefinition | ComponentNode) {
     const children = typeDef.children;
     const appendChild = node.getMethod("appendchild");
 
@@ -558,9 +536,7 @@ function addChildren(
                     }
                     node.set(new BrsString(targetField), newChild, false);
                 } else {
-                    throw new Error(
-                        `Role/Field ${targetField} does not exist in ${node.getId()} node`
-                    );
+                    throw new Error(`Role/Field ${targetField} does not exist in ${node.getId()} node`);
                 }
             } else if (appendChild) {
                 appendChild.call(interpreter, newChild);

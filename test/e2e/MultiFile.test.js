@@ -16,10 +16,7 @@ describe("end to end brightscript functions", () => {
     });
 
     test("multi-file/test1.brs and multi-file/test1.brs", async () => {
-        let resourceFiles = [
-            resourceFile("multi-file", "test1.brs"),
-            resourceFile("multi-file", "test2.brs"),
-        ];
+        let resourceFiles = [resourceFile("multi-file", "test1.brs"), resourceFile("multi-file", "test2.brs")];
 
         await execute(resourceFiles, outputStreams);
 

@@ -7,10 +7,7 @@ import { BrsDevice } from "../device/BrsDevice";
 /** Copies a file from src to dst, return true if successful */
 export const CopyFile = new Callable("CopyFile", {
     signature: {
-        args: [
-            new StdlibArgument("source", ValueKind.String),
-            new StdlibArgument("destination", ValueKind.String),
-        ],
+        args: [new StdlibArgument("source", ValueKind.String), new StdlibArgument("destination", ValueKind.String)],
         returns: ValueKind.Boolean,
     },
     impl: (_: Interpreter, src: BrsString, dst: BrsString) => {
@@ -24,9 +21,7 @@ export const CopyFile = new Callable("CopyFile", {
             return BrsBoolean.True;
         } catch (err: any) {
             if (BrsDevice.isDevMode) {
-                BrsDevice.stderr.write(
-                    `warning,*** ERROR: Copying '${src.value}' to '${dst.value}': ${err.message}`
-                );
+                BrsDevice.stderr.write(`warning,*** ERROR: Copying '${src.value}' to '${dst.value}': ${err.message}`);
             }
             return BrsBoolean.False;
         }
@@ -36,10 +31,7 @@ export const CopyFile = new Callable("CopyFile", {
 /** Copies a file from src to dst, return true if successful */
 export const MoveFile = new Callable("MoveFile", {
     signature: {
-        args: [
-            new StdlibArgument("source", ValueKind.String),
-            new StdlibArgument("destination", ValueKind.String),
-        ],
+        args: [new StdlibArgument("source", ValueKind.String), new StdlibArgument("destination", ValueKind.String)],
         returns: ValueKind.Boolean,
     },
     impl: (_: Interpreter, src: BrsString, dst: BrsString) => {
@@ -57,9 +49,7 @@ export const MoveFile = new Callable("MoveFile", {
             return BrsBoolean.True;
         } catch (err: any) {
             if (BrsDevice.isDevMode) {
-                BrsDevice.stderr.write(
-                    `warning,*** ERROR: Moving '${src.value}' to '${dst.value}': ${err.message}`
-                );
+                BrsDevice.stderr.write(`warning,*** ERROR: Moving '${src.value}' to '${dst.value}': ${err.message}`);
             }
             return BrsBoolean.False;
         }
@@ -82,9 +72,7 @@ export const DeleteFile = new Callable("DeleteFile", {
             return BrsBoolean.True;
         } catch (err: any) {
             if (BrsDevice.isDevMode) {
-                BrsDevice.stderr.write(
-                    `warning,*** ERROR: Deleting '${file.value}': ${err.message}`
-                );
+                BrsDevice.stderr.write(`warning,*** ERROR: Deleting '${file.value}': ${err.message}`);
             }
             return BrsBoolean.False;
         }
@@ -107,9 +95,7 @@ export const DeleteDirectory = new Callable("DeleteDirectory", {
             return BrsBoolean.True;
         } catch (err: any) {
             if (BrsDevice.isDevMode) {
-                BrsDevice.stderr.write(
-                    `warning,*** ERROR: Deleting '${dir.value}': ${err.message}`
-                );
+                BrsDevice.stderr.write(`warning,*** ERROR: Deleting '${dir.value}': ${err.message}`);
             }
             return BrsBoolean.False;
         }
@@ -132,9 +118,7 @@ export const CreateDirectory = new Callable("CreateDirectory", {
             return BrsBoolean.True;
         } catch (err: any) {
             if (BrsDevice.isDevMode) {
-                BrsDevice.stderr.write(
-                    `warning,*** ERROR: Creating '${dir.value}': ${err.message}`
-                );
+                BrsDevice.stderr.write(`warning,*** ERROR: Creating '${dir.value}': ${err.message}`);
             }
             return BrsBoolean.False;
         }
@@ -144,10 +128,7 @@ export const CreateDirectory = new Callable("CreateDirectory", {
 /** Stubbed function for formatting a drive; always returns false */
 export const FormatDrive = new Callable("FormatDrive", {
     signature: {
-        args: [
-            new StdlibArgument("drive", ValueKind.String),
-            new StdlibArgument("fs_type", ValueKind.String),
-        ],
+        args: [new StdlibArgument("drive", ValueKind.String), new StdlibArgument("fs_type", ValueKind.String)],
         returns: ValueKind.Boolean,
     },
     impl: (_: Interpreter, dir: BrsString) => {
@@ -197,9 +178,7 @@ export const ReadAsciiFile = new Callable("ReadAsciiFile", {
             return new BrsString(fsys.readFileSync(filePath.value, "utf8"));
         } catch (err: any) {
             if (BrsDevice.isDevMode) {
-                BrsDevice.stderr.write(
-                    `warning,*** ERROR: Reading '${filePath.value}': ${err.message}`
-                );
+                BrsDevice.stderr.write(`warning,*** ERROR: Reading '${filePath.value}': ${err.message}`);
             }
             BrsDevice.stderr.write(
                 `warning,BRIGHTSCRIPT: ERROR: ReadAsciiFile: file open for read failed: ${interpreter.formatLocation()}`
@@ -212,10 +191,7 @@ export const ReadAsciiFile = new Callable("ReadAsciiFile", {
 /** Writes a string to a temporary file. */
 export const WriteAsciiFile = new Callable("WriteAsciiFile", {
     signature: {
-        args: [
-            new StdlibArgument("filepath", ValueKind.String),
-            new StdlibArgument("text", ValueKind.String),
-        ],
+        args: [new StdlibArgument("filepath", ValueKind.String), new StdlibArgument("text", ValueKind.String)],
         returns: ValueKind.Boolean,
     },
     impl: (_: Interpreter, filePath: BrsString, text: BrsString) => {
@@ -228,9 +204,7 @@ export const WriteAsciiFile = new Callable("WriteAsciiFile", {
             return BrsBoolean.True;
         } catch (err: any) {
             if (BrsDevice.isDevMode) {
-                BrsDevice.stderr.write(
-                    `warning,*** ERROR: Writing '${filePath.value}': ${err.message}`
-                );
+                BrsDevice.stderr.write(`warning,*** ERROR: Writing '${filePath.value}': ${err.message}`);
             }
             return BrsBoolean.False;
         }
@@ -240,10 +214,7 @@ export const WriteAsciiFile = new Callable("WriteAsciiFile", {
 /** Searches a directory for filenames that match a certain pattern. */
 export const MatchFiles = new Callable("MatchFiles", {
     signature: {
-        args: [
-            new StdlibArgument("path", ValueKind.String),
-            new StdlibArgument("pattern_in", ValueKind.String),
-        ],
+        args: [new StdlibArgument("path", ValueKind.String), new StdlibArgument("pattern_in", ValueKind.String)],
         returns: ValueKind.Object,
     },
     impl: (_: Interpreter, pathArg: BrsString, patternIn: BrsString) => {

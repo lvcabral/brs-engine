@@ -64,17 +64,9 @@ class SharedObject {
                 result.value.then((status) => {
                     if (status === "ok") {
                         this.store(obj);
-                        console.debug(
-                            "[SharedObject] Buffer released. Stored data.",
-                            obj.field,
-                            this.getVersion()
-                        );
+                        console.debug("[SharedObject] Buffer released. Stored data.", obj.field, this.getVersion());
                     } else {
-                        console.error(
-                            "[SharedObject] Error storing shared data",
-                            status,
-                            obj.field
-                        );
+                        console.error("[SharedObject] Error storing shared data", status, obj.field);
                     }
                     this.queue.shift();
                     this.isProcessing = false;
@@ -82,11 +74,7 @@ class SharedObject {
                 });
             } else if (result.value === "not-equal") {
                 this.store(obj);
-                console.debug(
-                    "[SharedObject] Buffer is free. Stored data.",
-                    obj.field,
-                    this.getVersion()
-                );
+                console.debug("[SharedObject] Buffer is free. Stored data.", obj.field, this.getVersion());
                 this.queue.shift();
                 this.isProcessing = false;
                 this.processQueue();
@@ -154,9 +142,7 @@ class SharedObject {
 
     private ensureCapacity(size: number): boolean {
         if (size > this.maxSize) {
-            console.error(
-                `[SharedObject] Buffer is full. Cannot store more data. ${size} > ${this.maxSize}`
-            );
+            console.error(`[SharedObject] Buffer is full. Cannot store more data. ${size} > ${this.maxSize}`);
             return false;
         }
         if (size > this.buffer.byteLength) {

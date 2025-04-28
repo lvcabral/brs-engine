@@ -1,15 +1,7 @@
 import { FieldModel } from "./Field";
 import { StandardDialog } from "./StandardDialog";
 import { AAMember } from "../components/RoAssociativeArray";
-import {
-    StdDlgTitleArea,
-    StdDlgContentArea,
-    StdDlgProgressItem,
-    jsValueOf,
-    BrsString,
-    Float,
-    brsValueOf,
-} from "..";
+import { StdDlgTitleArea, StdDlgContentArea, StdDlgProgressItem, jsValueOf, BrsString, Float } from "..";
 import { Interpreter } from "../..";
 import { IfDraw2D } from "../interfaces/IfDraw2D";
 
@@ -22,10 +14,7 @@ export class StandardProgressDialog extends StandardDialog {
     private readonly margin: number;
     private readonly screenWidth: number;
 
-    constructor(
-        initializedFields: AAMember[] = [],
-        readonly name: string = "StandardProgressDialog"
-    ) {
+    constructor(initializedFields: AAMember[] = [], readonly name: string = "StandardProgressDialog") {
         super([], name);
 
         this.registerDefaultFields(this.defaultFields);
@@ -46,13 +35,7 @@ export class StandardProgressDialog extends StandardDialog {
         this.linkField(this.progressItem, "text", "message");
     }
 
-    renderNode(
-        interpreter: Interpreter,
-        origin: number[],
-        angle: number,
-        opacity: number,
-        draw2D?: IfDraw2D
-    ) {
+    renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
         const title = jsValueOf(this.getFieldValue("title")) as string;
         const message = jsValueOf(this.getFieldValue("message")) as string;
         if (title === "") {

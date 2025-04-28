@@ -116,14 +116,10 @@ describe("interpreter calls", () => {
                 { equals: token(Lexeme.Equals, "=") },
                 identifier("result"),
                 new Stmt.Expression(
-                    new Expr.Call(
-                        new Expr.Variable(identifier("GetInterface")),
-                        token(Lexeme.RightParen, ")"),
-                        [
-                            new Expr.Literal(new BrsString("primitive")), // brsString doesn't implement ifString, but roString does!
-                            new Expr.Literal(new BrsString("ifString")),
-                        ]
-                    )
+                    new Expr.Call(new Expr.Variable(identifier("GetInterface")), token(Lexeme.RightParen, ")"), [
+                        new Expr.Literal(new BrsString("primitive")), // brsString doesn't implement ifString, but roString does!
+                        new Expr.Literal(new BrsString("ifString")),
+                    ])
                 )
             ),
         ];

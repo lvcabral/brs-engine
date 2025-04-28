@@ -104,9 +104,7 @@ describe("RoAppInfo", () => {
             let getDevID = appInfo.getMethod("getDevID");
 
             expect(getDevID).toBeTruthy();
-            expect(getDevID.call(interpreter)).toEqual(
-                new BrsString("34c6fceca75e456f25e7e99531e2425c6c1de443")
-            );
+            expect(getDevID.call(interpreter)).toEqual(new BrsString("34c6fceca75e456f25e7e99531e2425c6c1de443"));
         });
     });
 
@@ -117,9 +115,7 @@ describe("RoAppInfo", () => {
             let getValue = appInfo.getMethod("getValue");
 
             expect(getValue).toBeTruthy();
-            expect(getValue.call(interpreter, new BrsString("some_field"))).toEqual(
-                new BrsString("Some text")
-            );
+            expect(getValue.call(interpreter, new BrsString("some_field"))).toEqual(new BrsString("Some text"));
         });
 
         it("returns an empty string if field isn't defined", () => {
@@ -127,9 +123,7 @@ describe("RoAppInfo", () => {
             let getValue = appInfo.getMethod("getValue");
 
             expect(getValue).toBeTruthy();
-            expect(getValue.call(interpreter, new BrsString("nonexistentfield"))).toEqual(
-                new BrsString("")
-            );
+            expect(getValue.call(interpreter, new BrsString("nonexistentfield"))).toEqual(new BrsString(""));
         });
     });
 });

@@ -88,30 +88,11 @@ export class Dialog extends Group {
             this.dialogTrans = [435, 432];
             this.iconSize = 60;
             this.iconTrans = [882, 469];
-            this.background = this.addPoster(
-                this.backUri,
-                this.dialogTrans,
-                this.width,
-                this.minHeight
-            );
-            this.icon = this.addPoster(
-                this.iconUriFHD,
-                this.iconTrans,
-                this.iconSize,
-                this.iconSize
-            );
+            this.background = this.addPoster(this.backUri, this.dialogTrans, this.width, this.minHeight);
+            this.icon = this.addPoster(this.iconUriFHD, this.iconTrans, this.iconSize, this.iconSize);
             this.title = this.addLabel("titleColor", [549, 477], 822, 46, 42, "top", "center");
             this.divider = this.addPoster(this.dividerUri, [549, 535.5], 822, 6);
-            this.message = this.addLabel(
-                "messageColor",
-                [523, 588],
-                873,
-                0,
-                34,
-                "top",
-                "left",
-                true
-            );
+            this.message = this.addLabel("messageColor", [523, 588], 873, 0, 34, "top", "left", true);
             this.setFieldValue("iconUri", new BrsString(this.iconUriFHD));
             this.buttonGroup.setFieldValue("minWidth", new Float(900));
             this.buttonGroup.setFieldValue("maxWidth", new Float(900));
@@ -123,30 +104,11 @@ export class Dialog extends Group {
             this.dialogTrans = [290, 288];
             this.iconSize = 40;
             this.iconTrans = [588, 313];
-            this.background = this.addPoster(
-                this.backUri,
-                this.dialogTrans,
-                this.width,
-                this.minHeight
-            );
-            this.icon = this.addPoster(
-                this.iconUriHD,
-                this.iconTrans,
-                this.iconSize,
-                this.iconSize
-            );
+            this.background = this.addPoster(this.backUri, this.dialogTrans, this.width, this.minHeight);
+            this.icon = this.addPoster(this.iconUriHD, this.iconTrans, this.iconSize, this.iconSize);
             this.title = this.addLabel("titleColor", [366, 318], 548, 30, 28, "top", "center");
             this.divider = this.addPoster(this.dividerUri, [366, 357], 548, 4);
-            this.message = this.addLabel(
-                "messageColor",
-                [349, 392],
-                582,
-                0,
-                24,
-                "top",
-                "left",
-                true
-            );
+            this.message = this.addLabel("messageColor", [349, 392], 582, 0, 24, "top", "left", true);
             this.setFieldValue("iconUri", new BrsString(this.iconUriHD));
             this.buttonGroup.setFieldValue("minWidth", new Float(600));
             this.buttonGroup.setFieldValue("maxWidth", new Float(600));
@@ -215,13 +177,7 @@ export class Dialog extends Group {
         return handled;
     }
 
-    renderNode(
-        interpreter: Interpreter,
-        origin: number[],
-        angle: number,
-        opacity: number,
-        draw2D?: IfDraw2D
-    ) {
+    renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
         if (!this.isVisible()) {
             return;
         }

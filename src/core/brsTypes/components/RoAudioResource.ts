@@ -35,9 +35,7 @@ export class RoAudioResource extends BrsComponent implements BrsValue {
                     }
                 }
             } catch (err: any) {
-                BrsDevice.stderr.write(
-                    `error,Error loading audio file: ${name.value} - ${err.message}`
-                );
+                BrsDevice.stderr.write(`error,Error loading audio file: ${name.value} - ${err.message}`);
                 this.valid = false;
             }
         }
@@ -87,10 +85,7 @@ export class RoAudioResource extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter) => {
             if (this.audioId) {
-                const currentWav = Atomics.load(
-                    BrsDevice.sharedArray,
-                    DataType.WAV + this.currentIndex
-                );
+                const currentWav = Atomics.load(BrsDevice.sharedArray, DataType.WAV + this.currentIndex);
                 this.playing = currentWav === this.audioId;
             }
             return BrsBoolean.from(this.playing);

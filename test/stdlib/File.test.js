@@ -52,11 +52,7 @@ describe("global file I/O functions", () => {
             fsys.writeFileSync("tmp:/test1.txt", "test contents 1");
 
             expect(
-                CopyFile.call(
-                    interpreter,
-                    new BrsString("tmp:///test1.txt"),
-                    new BrsString("tmp:///test1.1.txt")
-                ).value
+                CopyFile.call(interpreter, new BrsString("tmp:///test1.txt"), new BrsString("tmp:///test1.1.txt")).value
             ).toBeTruthy();
             expect(fsys.existsSync("tmp:/test1.txt")).toBeTruthy();
             expect(fsys.existsSync("tmp:/test1.1.txt")).toBeTruthy();
@@ -64,19 +60,12 @@ describe("global file I/O functions", () => {
 
         it("fails with a false", () => {
             expect(
-                CopyFile.call(
-                    interpreter,
-                    new BrsString("tmp:///test1.txt"),
-                    new BrsString("ack:///test1.txt")
-                ).value
+                CopyFile.call(interpreter, new BrsString("tmp:///test1.txt"), new BrsString("ack:///test1.txt")).value
             ).toBeFalsy();
 
             expect(
-                CopyFile.call(
-                    interpreter,
-                    new BrsString("tmp:///no_such_file.txt"),
-                    new BrsString("tmp:///test1.txt")
-                ).value
+                CopyFile.call(interpreter, new BrsString("tmp:///no_such_file.txt"), new BrsString("tmp:///test1.txt"))
+                    .value
             ).toBeFalsy();
         });
     });
@@ -86,11 +75,7 @@ describe("global file I/O functions", () => {
             fsys.writeFileSync("tmp:/test1.txt", "test contents 1");
 
             expect(
-                MoveFile.call(
-                    interpreter,
-                    new BrsString("tmp:///test1.txt"),
-                    new BrsString("tmp:///test5.txt")
-                ).value
+                MoveFile.call(interpreter, new BrsString("tmp:///test1.txt"), new BrsString("tmp:///test5.txt")).value
             ).toBeTruthy();
             expect(fsys.existsSync("tmp:/test1.txt")).toBeFalsy();
             expect(fsys.existsSync("tmp:/test5.txt")).toBeTruthy();
@@ -98,19 +83,12 @@ describe("global file I/O functions", () => {
 
         it("fails with a false", () => {
             expect(
-                MoveFile.call(
-                    interpreter,
-                    new BrsString("tmp:///test1.txt"),
-                    new BrsString("ack:///test1.txt")
-                ).value
+                MoveFile.call(interpreter, new BrsString("tmp:///test1.txt"), new BrsString("ack:///test1.txt")).value
             ).toBeFalsy();
 
             expect(
-                MoveFile.call(
-                    interpreter,
-                    new BrsString("tmp:///no_such_file.txt"),
-                    new BrsString("tmp:///test1.txt")
-                ).value
+                MoveFile.call(interpreter, new BrsString("tmp:///no_such_file.txt"), new BrsString("tmp:///test1.txt"))
+                    .value
             ).toBeFalsy();
         });
     });
@@ -119,16 +97,12 @@ describe("global file I/O functions", () => {
         it("deletes a file", () => {
             fsys.writeFileSync("tmp:/test1.txt", "test contents 1");
 
-            expect(
-                DeleteFile.call(interpreter, new BrsString("tmp:///test1.txt")).value
-            ).toBeTruthy();
+            expect(DeleteFile.call(interpreter, new BrsString("tmp:///test1.txt")).value).toBeTruthy();
             expect(fsys.existsSync("tmp:/test1.txt")).toBeFalsy();
         });
 
         it("fails with a false", () => {
-            expect(
-                DeleteFile.call(interpreter, new BrsString("tmp:///test1.txt")).value
-            ).toBeFalsy();
+            expect(DeleteFile.call(interpreter, new BrsString("tmp:///test1.txt")).value).toBeFalsy();
         });
     });
 
@@ -136,9 +110,7 @@ describe("global file I/O functions", () => {
         it("deletes a directory", () => {
             fsys.mkdirSync("tmp:/test_dir");
 
-            expect(
-                DeleteDirectory.call(interpreter, new BrsString("tmp:///test_dir")).value
-            ).toBeTruthy();
+            expect(DeleteDirectory.call(interpreter, new BrsString("tmp:///test_dir")).value).toBeTruthy();
             expect(fsys.existsSync("tmp:/test_dir")).toBeFalsy();
         });
 
@@ -147,23 +119,16 @@ describe("global file I/O functions", () => {
             fsys.writeFileSync("tmp://test_dir/test1.txt", "test contents 1");
 
             // can't remove a non-empty directory
-            expect(
-                DeleteDirectory.call(interpreter, new BrsString("tmp:///test_dir")).value
-            ).toBeFalsy();
+            expect(DeleteDirectory.call(interpreter, new BrsString("tmp:///test_dir")).value).toBeFalsy();
         });
     });
 
     describe("CreateDirectory", () => {
         it("creates a directory", () => {
-            expect(
-                CreateDirectory.call(interpreter, new BrsString("tmp:///test_dir")).value
-            ).toBeTruthy();
+            expect(CreateDirectory.call(interpreter, new BrsString("tmp:///test_dir")).value).toBeTruthy();
             expect(fsys.existsSync("tmp:/test_dir")).toBeTruthy();
 
-            expect(
-                CreateDirectory.call(interpreter, new BrsString("tmp:///test_dir/test_sub_dir"))
-                    .value
-            ).toBeTruthy();
+            expect(CreateDirectory.call(interpreter, new BrsString("tmp:///test_dir/test_sub_dir")).value).toBeTruthy();
             expect(fsys.existsSync("tmp:/test_dir/test_sub_dir")).toBeTruthy();
         });
 
@@ -171,17 +136,13 @@ describe("global file I/O functions", () => {
             fsys.mkdirSync("tmp:/test_dir");
 
             // can't recreate a directory
-            expect(
-                CreateDirectory.call(interpreter, new BrsString("tmp:///test_dir")).value
-            ).toBeFalsy();
+            expect(CreateDirectory.call(interpreter, new BrsString("tmp:///test_dir")).value).toBeFalsy();
         });
     });
 
     describe("FormatDrive", () => {
         it("fails", () => {
-            expect(
-                FormatDrive.call(interpreter, new BrsString("foo"), new BrsString("bar")).value
-            ).toBeFalsy();
+            expect(FormatDrive.call(interpreter, new BrsString("foo"), new BrsString("bar")).value).toBeFalsy();
         });
     });
 
@@ -189,34 +150,23 @@ describe("global file I/O functions", () => {
         it("reads an ascii file", () => {
             fsys.writeFileSync("tmp:/test.txt", "test contents");
 
-            expect(ReadAsciiFile.call(interpreter, new BrsString("tmp:///test.txt")).value).toEqual(
-                "test contents"
-            );
+            expect(ReadAsciiFile.call(interpreter, new BrsString("tmp:///test.txt")).value).toEqual("test contents");
 
-            expect(ReadAsciiFile.call(interpreter, new BrsString("tmp:/test.txt")).value).toEqual(
-                "test contents"
-            );
+            expect(ReadAsciiFile.call(interpreter, new BrsString("tmp:/test.txt")).value).toEqual("test contents");
         });
     });
 
     describe("WriteAsciiFile", () => {
         it("fails writing to bad paths", () => {
             expect(
-                WriteAsciiFile.call(
-                    interpreter,
-                    new BrsString("hello.txt"),
-                    new BrsString("test contents")
-                ).value
+                WriteAsciiFile.call(interpreter, new BrsString("hello.txt"), new BrsString("test contents")).value
             ).toBeFalsy();
         });
 
         it("writes an ascii file", () => {
             expect(
-                WriteAsciiFile.call(
-                    interpreter,
-                    new BrsString("tmp:///hello.txt"),
-                    new BrsString("test contents")
-                ).value
+                WriteAsciiFile.call(interpreter, new BrsString("tmp:///hello.txt"), new BrsString("test contents"))
+                    .value
             ).toBeTruthy();
 
             expect(fsys.readFileSync("tmp://hello.txt").toString()).toEqual("test contents");
@@ -225,21 +175,13 @@ describe("global file I/O functions", () => {
 
     describe("MatchFiles", () => {
         it("returns an empty array for unrecognized paths", () => {
-            let result = MatchFiles.call(
-                interpreter,
-                new BrsString("cat:/kitten.cute"),
-                new BrsString("*")
-            );
+            let result = MatchFiles.call(interpreter, new BrsString("cat:/kitten.cute"), new BrsString("*"));
             expect(result).toBeInstanceOf(RoList);
             expect(result.elements).toEqual([]);
         });
 
         it("returns an empty array for non-existent directories", () => {
-            let result = MatchFiles.call(
-                interpreter,
-                new BrsString("cachefs:/does-not-exist"),
-                new BrsString("*")
-            );
+            let result = MatchFiles.call(interpreter, new BrsString("cachefs:/does-not-exist"), new BrsString("*"));
             expect(result).toBeInstanceOf(RoList);
             expect(result.elements).toEqual([]);
         });
@@ -257,21 +199,13 @@ describe("global file I/O functions", () => {
             });
 
             test("empty patterns", () => {
-                let result = MatchFiles.call(
-                    interpreter,
-                    new BrsString("cachefs:/source"),
-                    new BrsString("")
-                );
+                let result = MatchFiles.call(interpreter, new BrsString("cachefs:/source"), new BrsString(""));
                 expect(result).toBeInstanceOf(RoList);
                 expect(result.elements).toEqual([]);
             });
 
             test("* matches 0 or more characters", () => {
-                let result = MatchFiles.call(
-                    interpreter,
-                    new BrsString("cachefs:/source"),
-                    new BrsString("*.brs")
-                );
+                let result = MatchFiles.call(interpreter, new BrsString("cachefs:/source"), new BrsString("*.brs"));
                 expect(result).toBeInstanceOf(RoList);
                 expect(result.elements).toEqual([
                     new BrsString("foo.brs", true),
@@ -282,16 +216,9 @@ describe("global file I/O functions", () => {
             });
 
             test("? matches a single character", () => {
-                let result = MatchFiles.call(
-                    interpreter,
-                    new BrsString("cachefs:/source"),
-                    new BrsString("ba?.brs")
-                );
+                let result = MatchFiles.call(interpreter, new BrsString("cachefs:/source"), new BrsString("ba?.brs"));
                 expect(result).toBeInstanceOf(RoList);
-                expect(result.elements).toEqual([
-                    new BrsString("bar.brs", true),
-                    new BrsString("baz.brs", true),
-                ]);
+                expect(result.elements).toEqual([new BrsString("bar.brs", true), new BrsString("baz.brs", true)]);
             });
 
             test("character classes in […]", () => {
@@ -301,10 +228,7 @@ describe("global file I/O functions", () => {
                     new BrsString("[a-c]ar.brs")
                 );
                 expect(result).toBeInstanceOf(RoList);
-                expect(result.elements).toEqual([
-                    new BrsString("bar.brs", true),
-                    new BrsString("car.brs", true),
-                ]);
+                expect(result.elements).toEqual([new BrsString("bar.brs", true), new BrsString("car.brs", true)]);
             });
 
             test("character class negation with [^…]", () => {
@@ -314,10 +238,7 @@ describe("global file I/O functions", () => {
                     new BrsString("[^d-zD-Z]ar.brs")
                 );
                 expect(result).toBeInstanceOf(RoList);
-                expect(result.elements).toEqual([
-                    new BrsString("bar.brs", true),
-                    new BrsString("car.brs", true),
-                ]);
+                expect(result.elements).toEqual([new BrsString("bar.brs", true), new BrsString("car.brs", true)]);
             });
 
             test("escaped special characters", () => {

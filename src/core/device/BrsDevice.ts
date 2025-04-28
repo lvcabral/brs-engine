@@ -74,9 +74,7 @@ export class BrsDevice {
     static refreshRegistry() {
         if (this.sharedRegistry && this.sharedRegistry.getVersion() !== this.registryVersion) {
             this.registryVersion = this.sharedRegistry.getVersion();
-            const registry: Map<string, string> = new Map(
-                Object.entries(this.sharedRegistry.load())
-            );
+            const registry: Map<string, string> = new Map(Object.entries(this.sharedRegistry.load()));
             this.registry.clear();
             registry.forEach((value: string, key: string) => {
                 this.registry.set(key, value);

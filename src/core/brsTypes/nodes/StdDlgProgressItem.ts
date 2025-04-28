@@ -46,13 +46,7 @@ export class StdDlgProgressItem extends Group {
         this.linkField(this.label, "text");
     }
 
-    renderNode(
-        interpreter: Interpreter,
-        origin: number[],
-        angle: number,
-        opacity: number,
-        draw2D?: IfDraw2D
-    ) {
+    renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
         if (!this.isVisible()) {
             return;
         }
@@ -79,10 +73,7 @@ export class StdDlgProgressItem extends Group {
         const spinnerSize = this.spinner.getDimensions();
         const labelSize = this.label.getMeasured();
         if (spinnerSize.width > 0 && spinnerSize.height > 0) {
-            const labelTrans = [
-                spinnerSize.width + this.gap,
-                (spinnerSize.height - labelSize.height) / 2,
-            ];
+            const labelTrans = [spinnerSize.width + this.gap, (spinnerSize.height - labelSize.height) / 2];
             this.label.setTranslation(labelTrans);
             boundingRect.width = spinnerSize.width + labelSize.width + this.gap;
             this.set(new BrsString("width"), new Float(boundingRect.width));

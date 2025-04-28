@@ -1,15 +1,5 @@
 import { Field, FieldKind, FieldModel } from "./Field";
-import {
-    AAMember,
-    BrsString,
-    Float,
-    Label,
-    Poster,
-    Timer,
-    BrsBoolean,
-    brsValueOf,
-    BrsType,
-} from "..";
+import { AAMember, BrsString, Float, Label, Poster, Timer, BrsBoolean, BrsType } from "..";
 import { Group } from "./Group";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D } from "../interfaces/IfDraw2D";
@@ -71,15 +61,7 @@ export class Overhang extends Group {
             this.leftDivider = this.addPoster(this.dividerFHD, [261, 59], 12, 51);
             this.title = this.addLabel("titleColor", [297, 58], 0, 50, 45, "bottom");
             this.optionsIcon = this.addPoster(this.optionsOff, [1421, 67], 30, 30);
-            this.optionsText = this.addLabel(
-                "optionsColor",
-                [1460, 64],
-                0,
-                40,
-                33,
-                "center",
-                "right"
-            );
+            this.optionsText = this.addLabel("optionsColor", [1460, 64], 0, 40, 33, "center", "right");
             this.rightDivider = this.addPoster(this.dividerFHD, [1646, 59], 12, 51);
             this.clockText = this.addLabel("clockColor", [1682, 64], 0, 40, 33, "center");
         } else {
@@ -91,15 +73,7 @@ export class Overhang extends Group {
             this.leftDivider = this.addPoster(this.dividerHD, [174, 39], 8, 34);
             this.title = this.addLabel("titleColor", [196, 39], 0, 35, 30, "bottom");
             this.optionsIcon = this.addPoster(this.optionsOff, [959, 46], 20, 20);
-            this.optionsText = this.addLabel(
-                "optionsColor",
-                [985, 44],
-                0,
-                27,
-                22,
-                "center",
-                "right"
-            );
+            this.optionsText = this.addLabel("optionsColor", [985, 44], 0, 27, 22, "center", "right");
             this.rightDivider = this.addPoster(this.dividerHD, [1109, 39], 8, 34);
             this.clockText = this.addLabel("clockColor", [1133, 44], 0, 27, 22, "center");
         }
@@ -212,13 +186,7 @@ export class Overhang extends Group {
         return super.set(index, value, alwaysNotify, kind);
     }
 
-    renderNode(
-        interpreter: Interpreter,
-        origin: number[],
-        angle: number,
-        opacity: number,
-        draw2D?: IfDraw2D
-    ) {
+    renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
         if (!this.isVisible()) {
             return;
         }

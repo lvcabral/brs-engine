@@ -31,10 +31,7 @@ export class IfHttpAgent {
      */
     readonly addHeader = new Callable("addHeader", {
         signature: {
-            args: [
-                new StdlibArgument("name", ValueKind.String),
-                new StdlibArgument("value", ValueKind.String),
-            ],
+            args: [new StdlibArgument("name", ValueKind.String), new StdlibArgument("value", ValueKind.String)],
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, name: BrsString, value: BrsString) => {
@@ -116,10 +113,7 @@ export class IfHttpAgent {
     /** Returns any cookies from the cookie cache that match the specified domain and path. */
     readonly getCookies = new Callable("getCookies", {
         signature: {
-            args: [
-                new StdlibArgument("domain", ValueKind.String),
-                new StdlibArgument("path", ValueKind.String),
-            ],
+            args: [new StdlibArgument("domain", ValueKind.String), new StdlibArgument("path", ValueKind.String)],
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter, domain: BrsString, path: BrsString) => {

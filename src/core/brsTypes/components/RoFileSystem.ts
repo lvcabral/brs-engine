@@ -54,9 +54,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
                     matchedFiles.push(new BrsString(fileName));
                     let fullPath = path.posix.join(pathName, fileName);
                     if (fsys.statSync(fullPath).isDirectory()) {
-                        matchedFiles = matchedFiles.concat(
-                            this.findOnTree(fsys, jsRegex, fullPath)
-                        );
+                        matchedFiles = matchedFiles.concat(this.findOnTree(fsys, jsRegex, fullPath));
                     }
                 }
             });
@@ -118,9 +116,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
                 }
             } catch (err: any) {
                 if (BrsDevice.isDevMode) {
-                    BrsDevice.stderr.write(
-                        `warning,roFileSystem.getDirectoryListing: ${err.message}`
-                    );
+                    BrsDevice.stderr.write(`warning,roFileSystem.getDirectoryListing: ${err.message}`);
                 }
                 return new RoList([]);
             }
@@ -180,10 +176,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
     /** Copies the file from origin path to destiny path. */
     private readonly copyFile = new Callable("copyFile", {
         signature: {
-            args: [
-                new StdlibArgument("fromPath", ValueKind.String),
-                new StdlibArgument("toPath", ValueKind.String),
-            ],
+            args: [new StdlibArgument("fromPath", ValueKind.String), new StdlibArgument("toPath", ValueKind.String)],
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, fromPath: BrsString, toPath: BrsString) => {
@@ -207,10 +200,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
     /** Renames or moves the file or directory. */
     private readonly rename = new Callable("rename", {
         signature: {
-            args: [
-                new StdlibArgument("fromPath", ValueKind.String),
-                new StdlibArgument("toPath", ValueKind.String),
-            ],
+            args: [new StdlibArgument("fromPath", ValueKind.String), new StdlibArgument("toPath", ValueKind.String)],
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, fromPath: BrsString, toPath: BrsString) => {
@@ -257,10 +247,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
     /** Returns an roList of Strings representing the directory listing of names in dirPath which match the regEx regular expression. */
     private readonly find = new Callable("find", {
         signature: {
-            args: [
-                new StdlibArgument("path", ValueKind.String),
-                new StdlibArgument("regEx", ValueKind.String),
-            ],
+            args: [new StdlibArgument("path", ValueKind.String), new StdlibArgument("regEx", ValueKind.String)],
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter, pathArg: BrsString, regEx: BrsString) => {
@@ -290,10 +277,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
     /** Returns an roList of Strings representing the recursive directory listing of names in dirPath which match the regEx regular expression. */
     private readonly findRecurse = new Callable("findRecurse", {
         signature: {
-            args: [
-                new StdlibArgument("path", ValueKind.String),
-                new StdlibArgument("regEx", ValueKind.String),
-            ],
+            args: [new StdlibArgument("path", ValueKind.String), new StdlibArgument("regEx", ValueKind.String)],
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter, pathArg: BrsString, regEx: BrsString) => {
@@ -316,10 +300,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
     /** Returns an roList of Strings representing the directory listing of names in dirPath which match the shell-like pattern. */
     private readonly match = new Callable("match", {
         signature: {
-            args: [
-                new StdlibArgument("path", ValueKind.String),
-                new StdlibArgument("pattern", ValueKind.String),
-            ],
+            args: [new StdlibArgument("path", ValueKind.String), new StdlibArgument("pattern", ValueKind.String)],
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter, pathArg: BrsString, pattern: BrsString) => {

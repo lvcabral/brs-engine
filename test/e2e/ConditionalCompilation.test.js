@@ -17,9 +17,7 @@ describe("end to end conditional compilation", () => {
             outputStreams
         );
 
-        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
-            "I'm ipsum!",
-        ]);
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual(["I'm ipsum!"]);
     });
 
     describe("(with sterr captured)", () => {

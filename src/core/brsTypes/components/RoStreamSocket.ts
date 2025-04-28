@@ -11,13 +11,7 @@ import {
     BrsInvalid,
 } from "..";
 import { Interpreter } from "../../interpreter";
-import {
-    BrsSocket,
-    IfSocket,
-    IfSocketAsync,
-    IfSocketOption,
-    IfSocketStatus,
-} from "../interfaces/IfSocket";
+import { BrsSocket, IfSocket, IfSocketAsync, IfSocketOption, IfSocketStatus } from "../interfaces/IfSocket";
 import { IfGetMessagePort, IfSetMessagePort } from "../interfaces/IfMessagePort";
 import * as net from "net";
 import { BrsDevice } from "../../device/BrsDevice";
@@ -50,9 +44,7 @@ export class RoStreamSocket extends BrsComponent implements BrsValue, BrsSocket 
             this.socket = new net.Socket();
             this.errorCode = 0;
         } catch (err: any) {
-            BrsDevice.stderr.write(
-                `warning,[roStreamSocket] Sockets are not supported in this environment.`
-            );
+            BrsDevice.stderr.write(`warning,[roStreamSocket] Sockets are not supported in this environment.`);
             this.errorCode = 3474;
         }
         this.identity = generateUniqueId();
@@ -63,13 +55,7 @@ export class RoStreamSocket extends BrsComponent implements BrsValue, BrsSocket 
         const setPortIface = new IfSetMessagePort(this);
         const getPortIface = new IfGetMessagePort(this);
         this.registerMethods({
-            ifSocketConnection: [
-                this.listen,
-                this.isListening,
-                this.connect,
-                this.accept,
-                this.isConnected,
-            ],
+            ifSocketConnection: [this.listen, this.isListening, this.connect, this.accept, this.isConnected],
             ifSocket: [
                 ifSocket.send,
                 ifSocket.sendStr,

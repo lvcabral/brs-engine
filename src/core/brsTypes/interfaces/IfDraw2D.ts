@@ -58,13 +58,7 @@ export class IfDraw2D {
         return didDraw;
     }
 
-    doDrawCroppedBitmap(
-        object: RoBitmap,
-        sourceRect: Rect,
-        destRect: Rect,
-        rgba?: number,
-        opacity?: number
-    ): boolean {
+    doDrawCroppedBitmap(object: RoBitmap, sourceRect: Rect, destRect: Rect, rgba?: number, opacity?: number): boolean {
         const ctx = this.component.getContext();
         rgba = combineRgbaOpacity(rgba, opacity);
         const image = getCanvasFromDraw2d(object, rgba);
@@ -125,13 +119,7 @@ export class IfDraw2D {
         this.component.makeDirty();
     }
 
-    doDrawRotatedRect(
-        rect: Rect,
-        rgba: number,
-        rotation: number,
-        center?: number[],
-        opacity: number = 1.0
-    ) {
+    doDrawRotatedRect(rect: Rect, rgba: number, rotation: number, center?: number[], opacity: number = 1.0) {
         const baseX = this.component.x;
         const baseY = this.component.y;
         const ctx = this.component.getContext();
@@ -311,13 +299,7 @@ export class IfDraw2D {
             ],
             returns: ValueKind.Boolean,
         },
-        impl: (
-            _: Interpreter,
-            x: Int32,
-            y: Int32,
-            object: BrsComponent,
-            rgba: Int32 | BrsInvalid
-        ) => {
+        impl: (_: Interpreter, x: Int32, y: Int32, object: BrsComponent, rgba: Int32 | BrsInvalid) => {
             const ctx = this.component.getContext();
             const didDraw = this.component.drawImage(
                 object,
@@ -344,14 +326,7 @@ export class IfDraw2D {
             ],
             returns: ValueKind.Boolean,
         },
-        impl: (
-            _: Interpreter,
-            x: Int32,
-            y: Int32,
-            theta: Float,
-            object: BrsComponent,
-            rgba: Int32 | BrsInvalid
-        ) => {
+        impl: (_: Interpreter, x: Int32, y: Int32, theta: Float, object: BrsComponent, rgba: Int32 | BrsInvalid) => {
             const didDraw = drawRotatedObject(
                 this.component,
                 object,
@@ -457,14 +432,7 @@ export class IfDraw2D {
             ],
             returns: ValueKind.Boolean,
         },
-        impl: (
-            _: Interpreter,
-            xStart: Int32,
-            yStart: Int32,
-            xEnd: Int32,
-            yEnd: Int32,
-            rgba: Int32
-        ) => {
+        impl: (_: Interpreter, xStart: Int32, yStart: Int32, xEnd: Int32, yEnd: Int32, rgba: Int32) => {
             const baseX = this.component.x;
             const baseY = this.component.y;
             const ctx = this.component.getContext();
@@ -494,12 +462,7 @@ export class IfDraw2D {
             const baseY = this.component.y;
             const ctx = this.component.getContext();
             ctx.fillStyle = rgbaIntToHex(rgba.getValue(), this.component.getCanvasAlpha());
-            ctx.fillRect(
-                baseX + x.getValue(),
-                baseY + y.getValue(),
-                size.getValue(),
-                size.getValue()
-            );
+            ctx.fillRect(baseX + x.getValue(), baseY + y.getValue(), size.getValue(), size.getValue());
             this.component.makeDirty();
             return BrsBoolean.True;
         },
@@ -656,14 +619,7 @@ export class IfDraw2D {
                 height.getValue()
             );
             return new RoByteArray(
-                new Uint8Array(
-                    UPNG.encode(
-                        [imgData.data.buffer as ArrayBuffer],
-                        imgData.width,
-                        imgData.height,
-                        0
-                    )
-                )
+                new Uint8Array(UPNG.encode([imgData.data.buffer as ArrayBuffer], imgData.width, imgData.height, 0))
             );
         },
     });
@@ -688,14 +644,7 @@ export interface BrsDraw2D {
 
     getCanvasAlpha(): boolean;
 
-    drawImage(
-        object: BrsComponent,
-        x: number,
-        y: number,
-        scaleX?: number,
-        scaleY?: number,
-        rgba?: number
-    ): boolean;
+    drawImage(object: BrsComponent, x: number, y: number, scaleX?: number, scaleY?: number, rgba?: number): boolean;
 
     makeDirty(): void;
 
@@ -1003,12 +952,7 @@ export function drawImageAtPos(image: BrsCanvas, ctx: BrsCanvasContext2D, x: num
     /// #endif
 }
 
-export function putImageAtPos(
-    imageData: BrsImageData,
-    ctx: BrsCanvasContext2D,
-    x: number,
-    y: number
-) {
+export function putImageAtPos(imageData: BrsImageData, ctx: BrsCanvasContext2D, x: number, y: number) {
     /// #if BROWSER
     if (ctx instanceof OffscreenCanvasRenderingContext2D && imageData instanceof ImageData) {
         ctx.putImageData(imageData, x, y);

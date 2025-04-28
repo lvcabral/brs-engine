@@ -41,8 +41,6 @@ describe("Runtime errors", () => {
         await execute([resourceFile("components", "errors", "illegal-index.brs")], outputStreams);
 
         let errOutput = allArgs(outputStreams.stderr.write).filter((arg) => arg !== "\n");
-        expect(
-            errOutput[0].includes("Attempt to use a non-numeric array index not allowed.")
-        ).toBeTruthy();
+        expect(errOutput[0].includes("Attempt to use a non-numeric array index not allowed.")).toBeTruthy();
     });
 });

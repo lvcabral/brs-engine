@@ -26,9 +26,7 @@ describe("RoXMLElement", () => {
 
         it("getNamedElementsCi", () => {
             let getNamedElementsCi = xmlParser.getMethod("getNamedElementsCi");
-            expect(
-                getNamedElementsCi.call(interpreter, new BrsString("any")).getElements()
-            ).toEqual([]);
+            expect(getNamedElementsCi.call(interpreter, new BrsString("any")).getElements()).toEqual([]);
 
             let children = getNamedElementsCi.call(interpreter, new BrsString("CHiLd1"));
             expect(children.getElements().length).toEqual(2);
@@ -75,9 +73,7 @@ describe("RoXMLElement", () => {
         it("getNamedElementsCi", () => {
             let getNamedElementsCi = xmlParser.getMethod("getNamedElementsCi");
             expect(getNamedElementsCi).toBeTruthy();
-            expect(
-                getNamedElementsCi.call(interpreter, new BrsString("any")).getElements()
-            ).toEqual([]);
+            expect(getNamedElementsCi.call(interpreter, new BrsString("any")).getElements()).toEqual([]);
         });
 
         it("getAttributes", () => {

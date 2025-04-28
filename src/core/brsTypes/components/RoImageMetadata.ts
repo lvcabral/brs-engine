@@ -1,13 +1,5 @@
 import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid } from "../BrsType";
-import {
-    BrsType,
-    Float,
-    Int32,
-    RoAssociativeArray,
-    RoByteArray,
-    RoDateTime,
-    toAssociativeArray,
-} from "..";
+import { BrsType, Float, Int32, RoAssociativeArray, RoByteArray, RoDateTime, toAssociativeArray } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { BrsComponent } from "./BrsComponent";
 import { Interpreter } from "../../interpreter";
@@ -24,13 +16,7 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
         super("roImageMetadata");
 
         this.registerMethods({
-            ifImageMetadata: [
-                this.setUrl,
-                this.getMetadata,
-                this.getThumbnail,
-                this.getRawExif,
-                this.getRawExifTag,
-            ],
+            ifImageMetadata: [this.setUrl, this.getMetadata, this.getThumbnail, this.getRawExif, this.getRawExifTag],
         });
     }
 
@@ -48,9 +34,7 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
             image = BrsDevice.fileSystem?.readFileSync(file);
         } catch (err: any) {
             if (BrsDevice.isDevMode) {
-                BrsDevice.stderr.write(
-                    `warning,[roImageMetadata] Error loading bitmap:${file} - ${err.message}`
-                );
+                BrsDevice.stderr.write(`warning,[roImageMetadata] Error loading bitmap:${file} - ${err.message}`);
             }
         }
         return image;
@@ -109,10 +93,7 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
                 value = tagValue.toString("ascii") === "\x03" ? "DSC" : tagValue.toString();
                 break;
             case "SceneType":
-                value =
-                    tagValue.toString("ascii") === "\x01"
-                        ? "Directly photographed"
-                        : tagValue.toString();
+                value = tagValue.toString("ascii") === "\x01" ? "Directly photographed" : tagValue.toString();
                 break;
             case "ExifVersion":
                 value = `Exif Version ${this.decodeVersion(tagValue)}`;
@@ -228,9 +209,7 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
                 }
             } catch (err: any) {
                 if (BrsDevice.isDevMode) {
-                    BrsDevice.stderr.write(
-                        `warning,[roImageMetadata] Error reading metadata:${err.message}`
-                    );
+                    BrsDevice.stderr.write(`warning,[roImageMetadata] Error reading metadata:${err.message}`);
                 }
                 fields.set("width", 0);
                 fields.set("height", 0);
@@ -266,9 +245,7 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
                 }
             } catch (err: any) {
                 if (BrsDevice.isDevMode) {
-                    BrsDevice.stderr.write(
-                        `warning,[roImageMetadata] Error getting thumbnail:${err.message}`
-                    );
+                    BrsDevice.stderr.write(`warning,[roImageMetadata] Error getting thumbnail:${err.message}`);
                 }
             }
             return BrsInvalid.Instance;
@@ -329,9 +306,7 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
                 return toAssociativeArray(rawExif);
             } catch (err: any) {
                 if (BrsDevice.isDevMode) {
-                    BrsDevice.stderr.write(
-                        `warning,[roImageMetadata] Error getting raw exif:${err.message}`
-                    );
+                    BrsDevice.stderr.write(`warning,[roImageMetadata] Error getting raw exif:${err.message}`);
                 }
                 return new RoAssociativeArray([]);
             }
@@ -373,9 +348,7 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
                 return tag ? this.getTagData(tag, tagsMap) : new RoAssociativeArray([]);
             } catch (err: any) {
                 if (BrsDevice.isDevMode) {
-                    BrsDevice.stderr.write(
-                        `warning,[roImageMetadata] Error getting raw exif tag:${err.message}`
-                    );
+                    BrsDevice.stderr.write(`warning,[roImageMetadata] Error getting raw exif tag:${err.message}`);
                 }
                 return new RoAssociativeArray([]);
             }

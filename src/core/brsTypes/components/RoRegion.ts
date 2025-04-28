@@ -160,14 +160,7 @@ export class RoRegion extends BrsComponent implements BrsValue, BrsDraw2D {
         this.bitmap.makeDirty();
     }
 
-    drawImage(
-        object: BrsComponent,
-        x: number,
-        y: number,
-        scaleX: number = 1,
-        scaleY: number = 1,
-        rgba?: number
-    ) {
+    drawImage(object: BrsComponent, x: number, y: number, scaleX: number = 1, scaleY: number = 1, rgba?: number) {
         const isDirty = drawObjectToComponent(this, object, x, y, scaleX, scaleY, rgba);
         if (isDirty) {
             this.bitmap.makeDirty();
@@ -177,13 +170,7 @@ export class RoRegion extends BrsComponent implements BrsValue, BrsDraw2D {
 
     drawImageToContext(image: BrsCanvas, x: number, y: number): boolean {
         const ctx = this.bitmap.getContext();
-        const isDirty = drawImageToContext(
-            ctx,
-            image,
-            this.alphaEnable,
-            x + this.getPosX(),
-            y + this.getPosY()
-        );
+        const isDirty = drawImageToContext(ctx, image, this.alphaEnable, x + this.getPosX(), y + this.getPosY());
         if (isDirty) {
             this.bitmap.makeDirty();
         }
@@ -582,13 +569,7 @@ export class RoRegion extends BrsComponent implements BrsValue, BrsDraw2D {
     });
 }
 
-export function createRegion(
-    bitmap: RoBitmap | RoScreen,
-    x: Int32,
-    y: Int32,
-    width: Int32,
-    height: Int32
-) {
+export function createRegion(bitmap: RoBitmap | RoScreen, x: Int32, y: Int32, width: Int32, height: Int32) {
     const reg = new RoRegion(bitmap, x, y, width, height);
     return reg.isValid() ? reg : BrsInvalid.Instance;
 }

@@ -20,11 +20,7 @@ import { FileSystem } from "./device/FileSystem";
 import { AppExitReason } from "./common";
 import { ParseResults } from "./parser/Parser";
 
-export function getLexerParserFn(
-    fs: FileSystem,
-    manifest: Map<string, string>,
-    options: Partial<ExecutionOptions>
-) {
+export function getLexerParserFn(fs: FileSystem, manifest: Map<string, string>, options: Partial<ExecutionOptions>) {
     const executionOptions = { ...defaultExecutionOptions, ...options };
     /**
      * Map file URIs or Source Content to promises. The promises resolve to an array of that script's statements.
@@ -201,11 +197,7 @@ export function lexParseSync(
  *
  * @returns the parsed statements array.
  */
-export function parseDecodedTokens(
-    fs: FileSystem,
-    manifest: Map<string, any>,
-    decodedTokens: Map<string, any>
-) {
+export function parseDecodedTokens(fs: FileSystem, manifest: Map<string, any>, decodedTokens: Map<string, any>) {
     const lexer = new Lexer();
     const parser = new Parser();
     const allStatements = new Array<Stmt.Statement>();
@@ -278,10 +270,7 @@ function parseLibraries(
     }
     // Check for Libraries and add to the collection
     if (parseResults.libraries.get("v30/bslDefender.brs") === true) {
-        lib.set(
-            "v30/bslDefender.brs",
-            fs.readFileSync("common:/LibCore/v30/bslDefender.brs", "utf8")
-        );
+        lib.set("v30/bslDefender.brs", fs.readFileSync("common:/LibCore/v30/bslDefender.brs", "utf8"));
         lib.set("v30/bslCore.brs", fs.readFileSync("common:/LibCore/v30/bslCore.brs", "utf8"));
     } else if (parseResults.libraries.get("v30/bslCore.brs") === true) {
         lib.set("v30/bslCore.brs", fs.readFileSync("common:/LibCore/v30/bslCore.brs", "utf8"));
@@ -292,10 +281,7 @@ function parseLibraries(
     ) {
         lib.set("Roku_Ads.brs", fs.readFileSync("common:/roku_ads/Roku_Ads.brs", "utf8"));
     }
-    if (
-        parseResults.libraries.get("IMA3.brs") === true &&
-        manifest.get("bs_libs_required")?.includes("googleima3")
-    ) {
+    if (parseResults.libraries.get("IMA3.brs") === true && manifest.get("bs_libs_required")?.includes("googleima3")) {
         lib.set("IMA3.brs", fs.readFileSync("common:/roku_ads/IMA3.brs", "utf8"));
     }
     if (

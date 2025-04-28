@@ -45,27 +45,14 @@ export class Label extends Group {
             throw new Error("RoSGNode indexes must be strings");
         }
         const fieldName = index.getValue().toLowerCase();
-        const resetFields = [
-            "text",
-            "font",
-            "width",
-            "height",
-            "numlines",
-            "maxlines",
-            "wrap",
-            "linespacing",
-        ];
+        const resetFields = ["text", "font", "width", "height", "numlines", "maxlines", "wrap", "linespacing"];
         if (resetFields.includes(fieldName)) {
             // Reset the flag if any relevant field changed and the label is not re-measured yet
             this.setEllipsized(false);
             this.measured = undefined;
         }
         let setDirty = true;
-        if (
-            !this.isDirty &&
-            fieldName === "text" &&
-            this.getFieldValueJS("text") === value.toString()
-        ) {
+        if (!this.isDirty && fieldName === "text" && this.getFieldValueJS("text") === value.toString()) {
             setDirty = false;
         }
         const retValue = super.set(index, value, alwaysNotify, kind);
@@ -81,13 +68,7 @@ export class Label extends Group {
         return this.measured;
     }
 
-    renderNode(
-        interpreter: Interpreter,
-        origin: number[],
-        angle: number,
-        opacity: number,
-        draw2D?: IfDraw2D
-    ) {
+    renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
         if (!this.isVisible()) {
             return;
         }

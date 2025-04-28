@@ -43,9 +43,7 @@ export class ComponentScopeResolver {
     private flatten(statementMap: Stmt.Statement[][]): Stmt.Statement[] {
         let statements = statementMap.shift() || [];
         let statementMemo = new Set(
-            statements
-                .filter((_): _ is Stmt.Function => true)
-                .map((statement) => statement.name.text.toLowerCase())
+            statements.filter((_): _ is Stmt.Function => true).map((statement) => statement.name.text.toLowerCase())
         );
         while (statementMap.length > 0) {
             let extendedFns = statementMap.shift() || [];

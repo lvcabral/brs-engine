@@ -92,11 +92,7 @@ export class Function implements Expression {
 }
 
 export class AtSignGet implements Expression {
-    constructor(
-        readonly obj: Expression,
-        readonly name: Identifier,
-        readonly optional: boolean = false
-    ) {}
+    constructor(readonly obj: Expression, readonly name: Identifier, readonly optional: boolean = false) {}
 
     accept<R>(visitor: Visitor<R>): R {
         return visitor.visitAtSignGet(this);
@@ -112,11 +108,7 @@ export class AtSignGet implements Expression {
 }
 
 export class DottedGet implements Expression {
-    constructor(
-        readonly obj: Expression,
-        readonly name: Identifier,
-        readonly optional: boolean = false
-    ) {}
+    constructor(readonly obj: Expression, readonly name: Identifier, readonly optional: boolean = false) {}
 
     accept<R>(visitor: Visitor<R>): R {
         return visitor.visitDottedGet(this);

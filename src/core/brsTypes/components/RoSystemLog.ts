@@ -9,12 +9,7 @@ import { BrsDevice } from "../../device/BrsDevice";
 
 export class RoSystemLog extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
-    private readonly validEvents = [
-        "bandwidth.minute",
-        "http.connect",
-        "http.complete",
-        "http.error",
-    ];
+    private readonly validEvents = ["bandwidth.minute", "http.connect", "http.complete", "http.error"];
     private readonly enabledEvents: string[] = [];
     private port?: RoMessagePort;
 
@@ -23,11 +18,7 @@ export class RoSystemLog extends BrsComponent implements BrsValue {
         const setPortIface = new IfSetMessagePort(this, this.getNewEvents.bind(this));
         const getPortIface = new IfGetMessagePort(this);
         this.registerMethods({
-            ifSystemLog: [
-                this.enableType,
-                setPortIface.setMessagePort,
-                getPortIface.getMessagePort,
-            ],
+            ifSystemLog: [this.enableType, setPortIface.setMessagePort, getPortIface.getMessagePort],
         });
     }
 
@@ -64,9 +55,7 @@ export class RoSystemLog extends BrsComponent implements BrsValue {
                 }
             } catch (e: any) {
                 if (BrsDevice.isDevMode) {
-                    BrsDevice.stdout.write(
-                        `warning,[roSystemLog] Error parsing System Log buffer: ${e.message}`
-                    );
+                    BrsDevice.stdout.write(`warning,[roSystemLog] Error parsing System Log buffer: ${e.message}`);
                 }
             }
         }
@@ -81,10 +70,7 @@ export class RoSystemLog extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, logType: BrsString) => {
-            if (
-                this.validEvents.includes(logType.value) &&
-                !this.enabledEvents.includes(logType.value)
-            ) {
+            if (this.validEvents.includes(logType.value) && !this.enabledEvents.includes(logType.value)) {
                 this.enabledEvents.push(logType.value);
                 postMessage(`syslog,${logType.value}`);
             }

@@ -1,7 +1,6 @@
 const brs = require("../../../bin/brs.node");
 const { Interpreter } = brs;
-const { RoAssociativeArray, RoArray, BrsBoolean, BrsString, Int32, BrsInvalid, ValueKind } =
-    brs.types;
+const { RoAssociativeArray, RoArray, BrsBoolean, BrsString, Int32, BrsInvalid, ValueKind } = brs.types;
 
 describe("RoAssociativeArray", () => {
     describe("comparisons", () => {
@@ -40,9 +39,7 @@ describe("RoAssociativeArray", () => {
 
     describe("get", () => {
         it("returns value given a key it contains", () => {
-            let aa = new RoAssociativeArray([
-                { name: new BrsString("foo"), value: new Int32(-99) },
-            ]);
+            let aa = new RoAssociativeArray([{ name: new BrsString("foo"), value: new Int32(-99) }]);
 
             expect(aa.get(new BrsString("foo"))).toEqual(new Int32(-99, true));
         });
@@ -56,9 +53,7 @@ describe("RoAssociativeArray", () => {
 
     describe("set", () => {
         it("sets values with new keys", () => {
-            let aa = new RoAssociativeArray([
-                { name: new BrsString("foo"), value: new Int32(-99) },
-            ]);
+            let aa = new RoAssociativeArray([{ name: new BrsString("foo"), value: new Int32(-99) }]);
             let ninetyNine = aa.get(new BrsString("foo"));
 
             aa.set(new BrsString("bar"), new Int32(808));
@@ -69,9 +64,7 @@ describe("RoAssociativeArray", () => {
         });
 
         it("overwrites values with existing keys", () => {
-            let aa = new RoAssociativeArray([
-                { name: new BrsString("foo"), value: new Int32(-99) },
-            ]);
+            let aa = new RoAssociativeArray([{ name: new BrsString("foo"), value: new Int32(-99) }]);
 
             aa.set(new BrsString("foo"), new BrsString("not ninetynine"));
 
@@ -88,9 +81,7 @@ describe("RoAssociativeArray", () => {
 
         describe("clear", () => {
             it("empties the associative array", () => {
-                let aa = new RoAssociativeArray([
-                    { name: new BrsString("foo"), value: new Int32(-99) },
-                ]);
+                let aa = new RoAssociativeArray([{ name: new BrsString("foo"), value: new Int32(-99) }]);
 
                 let clear = aa.getMethod("clear");
                 expect(clear).toBeTruthy();
@@ -116,28 +107,24 @@ describe("RoAssociativeArray", () => {
 
         describe("addreplace", () => {
             it("adds new elements to the associative array", () => {
-                let aa = new RoAssociativeArray([
-                    { name: new BrsString("letter1"), value: new BrsString("a") },
-                ]);
+                let aa = new RoAssociativeArray([{ name: new BrsString("letter1"), value: new BrsString("a") }]);
 
                 let addreplace = aa.getMethod("addreplace");
                 expect(addreplace).toBeTruthy();
-                expect(
-                    addreplace.call(interpreter, new BrsString("letter2"), new BrsString("b"))
-                ).toBe(BrsInvalid.Instance);
+                expect(addreplace.call(interpreter, new BrsString("letter2"), new BrsString("b"))).toBe(
+                    BrsInvalid.Instance
+                );
                 expect(aa.get(new BrsString("letter2"))).toEqual(new BrsString("b", true));
             });
 
             it("replaces the value of known elements in the associative array", () => {
-                let aa = new RoAssociativeArray([
-                    { name: new BrsString("letter1"), value: new BrsString("a") },
-                ]);
+                let aa = new RoAssociativeArray([{ name: new BrsString("letter1"), value: new BrsString("a") }]);
 
                 let addreplace = aa.getMethod("addreplace");
                 expect(addreplace).toBeTruthy();
-                expect(
-                    addreplace.call(interpreter, new BrsString("letter1"), new BrsString("c"))
-                ).toBe(BrsInvalid.Instance);
+                expect(addreplace.call(interpreter, new BrsString("letter1"), new BrsString("c"))).toBe(
+                    BrsInvalid.Instance
+                );
                 expect(aa.get(new BrsString("letter1"))).not.toEqual(new BrsString("a", true));
                 expect(aa.get(new BrsString("letter1"))).toEqual(new BrsString("c", true));
             });
@@ -185,9 +172,7 @@ describe("RoAssociativeArray", () => {
                 expect(result).toBe(BrsBoolean.False);
             });
             it("returns true even when the value of an item contains invalid in the array", () => {
-                let aa = new RoAssociativeArray([
-                    { name: new BrsString("letter1"), value: BrsInvalid.Instance },
-                ]);
+                let aa = new RoAssociativeArray([{ name: new BrsString("letter1"), value: BrsInvalid.Instance }]);
 
                 let doesexist = aa.getMethod("doesexist");
                 let result = doesexist.call(interpreter, new BrsString("letter1"));
@@ -198,9 +183,7 @@ describe("RoAssociativeArray", () => {
 
         describe("append", () => {
             it("appends a new associative array to an existing one", () => {
-                let aa1 = new RoAssociativeArray([
-                    { name: new BrsString("letter1"), value: new BrsString("a") },
-                ]);
+                let aa1 = new RoAssociativeArray([{ name: new BrsString("letter1"), value: new BrsString("a") }]);
 
                 let append = aa1.getMethod("append");
                 expect(append).toBeTruthy();
@@ -279,17 +262,11 @@ describe("RoAssociativeArray", () => {
                 let items = aa.getMethod("items");
                 expect(items).toBeTruthy();
                 let result = items.call(interpreter);
-                expect(result.elements[0].elements.get("key")).toEqual(
-                    new BrsString("cletter", true)
-                );
+                expect(result.elements[0].elements.get("key")).toEqual(new BrsString("cletter", true));
                 expect(result.elements[0].elements.get("value")).toEqual(new BrsString("c", true));
-                expect(result.elements[1].elements.get("key")).toEqual(
-                    new BrsString("letter1", true)
-                );
+                expect(result.elements[1].elements.get("key")).toEqual(new BrsString("letter1", true));
                 expect(result.elements[1].elements.get("value")).toEqual(new BrsString("a", true));
-                expect(result.elements[2].elements.get("key")).toEqual(
-                    new BrsString("letter2", true)
-                );
+                expect(result.elements[2].elements.get("key")).toEqual(new BrsString("letter2", true));
                 expect(result.elements[2].elements.get("value")).toEqual(new BrsString("b", true));
             });
 

@@ -302,20 +302,14 @@ describe("RoByteArray", () => {
             describe("getSignedLong", () => {
                 it("returns the signed long at the specified index", () => {
                     let src = new RoByteArray(
-                        new Uint8Array([
-                            0, 0, 0, 0, 127, 3, 127, 3, 0, 0, 0, 128, 255, 255, 255, 255,
-                        ])
+                        new Uint8Array([0, 0, 0, 0, 127, 3, 127, 3, 0, 0, 0, 128, 255, 255, 255, 255])
                     );
                     let getSignedLong = src.getMethod("getSignedLong");
                     expect(getSignedLong).toBeTruthy();
 
                     expect(getSignedLong.call(interpreter, new Int32(0))).toEqual(new Int32(0));
-                    expect(getSignedLong.call(interpreter, new Int32(1))).toEqual(
-                        new Int32(58655615)
-                    );
-                    expect(getSignedLong.call(interpreter, new Int32(2))).toEqual(
-                        new Int32(-2147483648)
-                    ); // 128 shifted left 24 places
+                    expect(getSignedLong.call(interpreter, new Int32(1))).toEqual(new Int32(58655615));
+                    expect(getSignedLong.call(interpreter, new Int32(2))).toEqual(new Int32(-2147483648)); // 128 shifted left 24 places
                     expect(getSignedLong.call(interpreter, new Int32(3))).toEqual(new Int32(-1)); // 255 repeated 4 times is -1 in two's complement
                 });
             });

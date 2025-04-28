@@ -133,9 +133,7 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
                 descent: Math.abs(fontObj.descender / fontObj.unitsPerEm),
                 maxAdvance: fontObj.tables.hhea.advanceWidthMax / fontObj.unitsPerEm,
                 lineHeight:
-                    (fontObj.ascender -
-                        fontObj.descender +
-                        (fontObj.tables.hhea.lineGap as number)) /
+                    (fontObj.ascender - fontObj.descender + (fontObj.tables.hhea.lineGap as number)) /
                     fontObj.unitsPerEm,
                 style: fontObj.tables.head.macStyle & (1 << 1) ? "italic" : "normal",
                 weight: fontObj.tables.head.macStyle & (1 << 0) ? "bold" : "normal",
@@ -202,13 +200,7 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
             ],
             returns: ValueKind.Object,
         },
-        impl: (
-            _: Interpreter,
-            family: BrsString,
-            size: Int32,
-            bold: BrsBoolean,
-            italic: BrsBoolean
-        ) => {
+        impl: (_: Interpreter, family: BrsString, size: Int32, bold: BrsBoolean, italic: BrsBoolean) => {
             return this.createFont(family, size, bold, italic);
         },
     });

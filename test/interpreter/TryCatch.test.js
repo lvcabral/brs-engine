@@ -10,9 +10,7 @@ const { token, identifier } = require("../parser/ParserTests");
 let interpreter, stdout;
 
 describe("interpreter try-catch blocks", () => {
-    const printError = new Stmt.Print({ print: token(Lexeme.Print, "print") }, [
-        new Expr.Variable(identifier("e")),
-    ]);
+    const printError = new Stmt.Print({ print: token(Lexeme.Print, "print") }, [new Expr.Variable(identifier("e"))]);
 
     beforeEach(() => {
         const outputStreams = createMockStreams();
