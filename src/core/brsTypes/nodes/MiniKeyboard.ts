@@ -1,7 +1,6 @@
 import { FieldModel } from "./Field";
 import { Group } from "./Group";
 import { AAMember } from "../components/RoAssociativeArray";
-import { BrsString } from "../BrsType";
 import { TextEditBox } from "./TextEditBox";
 
 export class MiniKeyboard extends Group {
@@ -23,6 +22,6 @@ export class MiniKeyboard extends Group {
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
 
-        this.set(new BrsString("textEditBox"), new TextEditBox());
+        this.setFieldValue("textEditBox", new TextEditBox());
     }
 }

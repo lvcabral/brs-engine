@@ -33,7 +33,7 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
     readonly y: number = 0;
     readonly width: number;
     readonly height: number;
-    readonly ninePatch: boolean;
+    readonly ninePatch: boolean = false;
     private readonly canvas: BrsCanvas;
     private readonly context: BrsCanvasContext2D;
     private readonly name: string;
@@ -41,10 +41,11 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
     private alphaEnable: boolean;
     private rgbaCanvas?: BrsCanvas;
     private rgbaLast: number;
+    private patchSizes?: { horizontal: number; vertical: number };
     rgbaRedraw: boolean;
     scaleMode: number;
 
-    constructor(param: BrsType | ArrayBuffer | Buffer, ninePatch: boolean = false) {
+    constructor(param: BrsType | ArrayBuffer | Buffer, name?: string) {
         super("roBitmap");
         this.alphaEnable = false;
         this.rgbaLast = 0;
@@ -52,8 +53,7 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
         this.valid = true;
         this.width = 1;
         this.height = 1;
-        this.name = "";
-        this.ninePatch = ninePatch;
+        this.name = name ?? "";
         this.scaleMode = 0; // Valid: 0=fast 1=smooth (maybe slow)
         let image;
         if (param instanceof ArrayBuffer || param instanceof Buffer) {
@@ -63,7 +63,6 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
                 image = BrsDevice.fileSystem?.readFileSync(param.value);
                 this.alphaEnable = false;
                 this.name = param.value;
-                this.ninePatch = this.name.toLowerCase().endsWith(".9.png");
             } catch (err: any) {
                 if (BrsDevice.isDevMode) {
                     BrsDevice.stderr.write(`error,Error loading bitmap:${param.value} - ${err.message}`);
@@ -188,10 +187,12 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
             ],
             ifBitmap: [this.getName],
         });
-        if (this.ninePatch) {
-            // Confirm if it is a 9-patch image
+        if (this.valid && this.name.toLowerCase().endsWith(".9.png")) {
             const sizes = this.getPatchSizes();
-            this.ninePatch = this.valid && sizes.horizontal >= 0 && sizes.vertical >= 0;
+            if (sizes.horizontal >= 0 && sizes.vertical >= 0) {
+                this.ninePatch = true;
+                this.patchSizes = sizes;
+            }
         }
     }
 
@@ -296,6 +297,9 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
     }
 
     getPatchSizes(): { horizontal: number; vertical: number } {
+        if (this.patchSizes) {
+            return this.patchSizes;
+        }
         const image = this.getCanvas();
         const ctx = this.getContext();
 
@@ -334,7 +338,6 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
                 break;
             }
         }
-
         return { horizontal: horizPatchSize, vertical: vertPatchSize };
     }
 

@@ -41,9 +41,9 @@ export class Group extends RoSGNode {
     ];
     protected readonly sceneRect: Rect;
     protected resolution: string;
-    protected isDirty: boolean;
     private cachedLines: MeasuredText[] = [];
     private cachedHeight: number = 0;
+    isDirty: boolean;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = "Group") {
         super([], name);
@@ -230,7 +230,7 @@ export class Group extends RoSGNode {
         ellipsis: string = "...",
         index: number = 0
     ) {
-        const drawFont = font.createDrawFont();
+        const drawFont = font.createDrawFont(); // TODO: Cache this font
         let text: string;
         let measured: MeasuredText;
 
@@ -271,10 +271,7 @@ export class Group extends RoSGNode {
                 textY += rect.height - measured.height;
             }
         }
-        if (draw2D) {
-            draw2D.doDrawRotatedText(text, textX, textY, color, opacity, drawFont, rotation);
-        }
-
+        draw2D?.doDrawRotatedText(text, textX, textY, color, opacity, drawFont, rotation);
         return measured;
     }
 
@@ -305,17 +302,14 @@ export class Group extends RoSGNode {
             y += rect.height - this.cachedHeight;
         }
         let ellipsized = false;
-        for (let i = 0; i < this.cachedLines.length; i++) {
-            let line = this.cachedLines[i];
+        for (const line of this.cachedLines) {
             let x = rect.x;
             if (horizAlign === "center") {
                 x += (rect.width - line.width) / 2;
             } else if (horizAlign === "right") {
                 x += rect.width - line.width;
             }
-            if (draw2D) {
-                draw2D.doDrawRotatedText(line.text, x, y, color, opacity, drawFont, rotation);
-            }
+            draw2D?.doDrawRotatedText(line.text, x, y, color, opacity, drawFont, rotation);
             y += line.height + lineSpacing;
             ellipsized = line.ellipsized;
         }

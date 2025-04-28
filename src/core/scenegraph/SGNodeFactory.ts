@@ -18,6 +18,7 @@ import {
     Task,
     Timer,
     Scene,
+    Keyboard,
     MiniKeyboard,
     TextEditBox,
     BrsInvalid,
@@ -33,6 +34,7 @@ import {
     ButtonGroup,
     Button,
     Dialog,
+    KeyboardDialog,
     LabelList,
     CheckList,
     RadioButtonList,
@@ -74,6 +76,7 @@ export enum SGNodeType {
     Task = "Task",
     Timer = "Timer",
     Scene = "Scene",
+    Keyboard = "Keyboard",
     MiniKeyboard = "MiniKeyboard",
     TextEditBox = "TextEditBox",
     Overhang = "Overhang",
@@ -137,6 +140,8 @@ export class SGNodeFactory {
                 return new Button([], name);
             case SGNodeType.ButtonGroup:
                 return new ButtonGroup([], name);
+            case SGNodeType.KeyboardDialog:
+                return new KeyboardDialog([], name);
             case SGNodeType.Dialog:
                 return new Dialog([], name);
             case SGNodeType.Rectangle:
@@ -171,6 +176,8 @@ export class SGNodeFactory {
                 return new Timer([], name);
             case SGNodeType.Scene:
                 return new Scene([], name);
+            case SGNodeType.Keyboard:
+                return new Keyboard([], name);
             case SGNodeType.MiniKeyboard:
                 return new MiniKeyboard([], name);
             case SGNodeType.TextEditBox:

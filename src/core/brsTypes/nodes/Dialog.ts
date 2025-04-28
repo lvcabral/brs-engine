@@ -2,7 +2,7 @@ import { FieldKind, FieldModel } from "./Field";
 import { AAMember } from "../components/RoAssociativeArray";
 import { Group } from "./Group";
 import { IfDraw2D, Rect } from "../interfaces/IfDraw2D";
-import { Interpreter } from "../..";
+import { Interpreter } from "../../interpreter";
 import { rotateTranslation } from "../../scenegraph/SGUtil";
 import {
     BrsBoolean,
@@ -50,21 +50,21 @@ export class Dialog extends Group {
         { name: "maxHeight", type: "float", value: "-1.0" },
     ];
 
-    private readonly background: Poster;
-    private readonly icon: Poster;
-    private readonly divider: Poster;
-    private readonly title: Label;
-    private readonly message: Label;
-    private readonly gap: number;
-    private readonly vertOffset: number;
-    private readonly minHeight: number;
-    private readonly buttonGroup: ButtonGroup;
-    private lastFocus?: RoSGNode;
-    private width: number;
-    private height: number;
-    private dialogTrans: number[];
-    private iconSize: number;
-    private iconTrans: number[];
+    protected readonly background: Poster;
+    protected readonly icon: Poster;
+    protected readonly divider: Poster;
+    protected readonly title: Label;
+    protected readonly message: Label;
+    protected readonly gap: number;
+    protected readonly vertOffset: number;
+    protected readonly minHeight: number;
+    protected readonly buttonGroup: ButtonGroup;
+    protected lastFocus?: RoSGNode;
+    protected width: number;
+    protected height: number;
+    protected dialogTrans: number[];
+    protected iconSize: number;
+    protected iconTrans: number[];
 
     protected readonly backUri = "common:/images/dialog_background.9.png";
     protected readonly iconUriHD = "common:/images/icon_dialog_info_HD.png";
@@ -79,20 +79,36 @@ export class Dialog extends Group {
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
 
+        let titleWidth: number;
+        let titleHeight: number;
+        let titleX: number;
+        let titleY: number;
+        let titleSize: number;
+        let dividerY: number;
+        let msgWidth: number;
+        let msgX: number;
+        let msgY: number;
+        let msgSize: number;
+
         this.buttonGroup = new ButtonGroup();
         if (this.resolution === "FHD") {
             this.width = 1050;
             this.minHeight = 216;
             this.gap = 18;
             this.vertOffset = 30;
-            this.dialogTrans = [435, 432];
+            this.dialogTrans = [(this.sceneRect.width - this.width) / 2, (this.sceneRect.height - this.minHeight) / 2];
             this.iconSize = 60;
-            this.iconTrans = [882, 469];
-            this.background = this.addPoster(this.backUri, this.dialogTrans, this.width, this.minHeight);
-            this.icon = this.addPoster(this.iconUriFHD, this.iconTrans, this.iconSize, this.iconSize);
-            this.title = this.addLabel("titleColor", [549, 477], 822, 46, 42, "top", "center");
-            this.divider = this.addPoster(this.dividerUri, [549, 535.5], 822, 6);
-            this.message = this.addLabel("messageColor", [523, 588], 873, 0, 34, "top", "left", true);
+            this.iconTrans = [this.dialogTrans[0] + 447, this.dialogTrans[1] + 36];
+            titleWidth = this.width - 228;
+            titleHeight = 46;
+            titleSize = 42;
+            titleX = (this.sceneRect.width - titleWidth) / 2;
+            titleY = this.dialogTrans[1] + 45;
+            dividerY = this.dialogTrans[1] + 105;
+            msgWidth = this.width - 177;
+            msgX = (this.sceneRect.width - msgWidth) / 2;
+            msgY = titleY + 111;
+            msgSize = 34;
             this.setFieldValue("iconUri", new BrsString(this.iconUriFHD));
             this.buttonGroup.setFieldValue("minWidth", new Float(900));
             this.buttonGroup.setFieldValue("maxWidth", new Float(900));
@@ -101,19 +117,29 @@ export class Dialog extends Group {
             this.minHeight = 144;
             this.gap = 12;
             this.vertOffset = 20;
-            this.dialogTrans = [290, 288];
+            this.dialogTrans = [(this.sceneRect.width - this.width) / 2, (this.sceneRect.height - this.minHeight) / 2];
             this.iconSize = 40;
-            this.iconTrans = [588, 313];
-            this.background = this.addPoster(this.backUri, this.dialogTrans, this.width, this.minHeight);
-            this.icon = this.addPoster(this.iconUriHD, this.iconTrans, this.iconSize, this.iconSize);
-            this.title = this.addLabel("titleColor", [366, 318], 548, 30, 28, "top", "center");
-            this.divider = this.addPoster(this.dividerUri, [366, 357], 548, 4);
-            this.message = this.addLabel("messageColor", [349, 392], 582, 0, 24, "top", "left", true);
+            this.iconTrans = [this.dialogTrans[0] + 298, this.dialogTrans[1] + 24];
+            titleWidth = this.width - 152;
+            titleHeight = 30;
+            titleSize = 28;
+            titleX = (this.sceneRect.width - titleWidth) / 2;
+            titleY = this.dialogTrans[1] + 30;
+            dividerY = this.dialogTrans[1] + 105;
+            msgWidth = this.width - 118;
+            msgX = (this.sceneRect.width - msgWidth) / 2;
+            msgY = titleY + 74;
+            msgSize = 24;
             this.setFieldValue("iconUri", new BrsString(this.iconUriHD));
             this.buttonGroup.setFieldValue("minWidth", new Float(600));
             this.buttonGroup.setFieldValue("maxWidth", new Float(600));
         }
         this.height = this.minHeight;
+        this.background = this.addPoster(this.backUri, this.dialogTrans, this.width, this.height);
+        this.title = this.addLabel("titleColor", [titleX, titleY], titleWidth, titleHeight, titleSize, "top", "center");
+        this.icon = this.addPoster(this.iconUriFHD, this.iconTrans, this.iconSize, this.iconSize);
+        this.divider = this.addPoster(this.dividerUri, [titleX, dividerY], titleWidth, 3);
+        this.message = this.addLabel("messageColor", [msgX, msgY], msgWidth, 0, msgSize, "top", "left", true);
         this.setFieldValue("width", new Float(this.width));
         this.setFieldValue("backgroundUri", new BrsString(this.backUri));
         this.setFieldValue("dividerUri", new BrsString(this.dividerUri));
@@ -138,8 +164,8 @@ export class Dialog extends Group {
             } else {
                 return BrsInvalid.Instance;
             }
-        } else if (fieldName === "buttonfocused") {
-            // Read-only field
+        } else if (["buttonfocused", "keyboard"].includes(fieldName)) {
+            // Read-only fields
             return BrsInvalid.Instance;
         } else if (fieldName === "close") {
             index = new BrsString("wasClosed");
@@ -148,8 +174,10 @@ export class Dialog extends Group {
             if (rootObjects.rootScene?.dialog === this) {
                 rootObjects.rootScene.dialog = undefined;
             }
-            if (this.lastFocus) {
+            if (this.lastFocus instanceof Group) {
                 rootObjects.focused = this.lastFocus;
+                this.lastFocus.isDirty = true;
+                this.lastFocus = undefined;
             }
         } else if (fieldName === "buttons" && !(value instanceof RoArray)) {
             value = new RoArray([]);
@@ -161,6 +189,7 @@ export class Dialog extends Group {
         if (focusOn && this.hasButtons && rootObjects.focused && this.lastFocus === undefined) {
             this.lastFocus = rootObjects.focused;
             rootObjects.focused = this.buttonGroup;
+            this.isDirty = true;
         }
         return true;
     }
@@ -192,10 +221,10 @@ export class Dialog extends Group {
             width: this.width,
             height: size.height,
         };
-        this.updateChildren();
-        if (this.hasButtons) {
-            this.setNodeFocus(interpreter, true);
+        if (this.isDirty) {
+            this.updateChildren();
         }
+        this.setNodeFocus(interpreter, true);
         const rotation = angle + this.getRotation();
         opacity = opacity * this.getOpacity();
         this.updateBoundingRects(boundingRect, origin, rotation);
@@ -203,7 +232,7 @@ export class Dialog extends Group {
         this.updateParentRects(origin, angle);
     }
 
-    private updateChildren() {
+    protected updateChildren() {
         this.height = this.minHeight;
         const width = this.getFieldValueJS("width") as number;
         if (width) {
@@ -214,8 +243,8 @@ export class Dialog extends Group {
         this.copyField(this.title, "text", "title");
         this.copyField(this.title, "color", "titleColor");
         this.copyField(this.title, "font", "titleFont");
-        const iconUri = this.copyField(this.icon, "uri", "iconUri");
-        if (isBrsString(iconUri) && iconUri.getValue()) {
+        const iconUri = this.copyField(this.icon, "uri", "iconUri").toString();
+        if (iconUri) {
             const measured = this.title.getMeasured();
             if (measured.width > 0) {
                 const centerX = (this.sceneRect.width - measured.width) / 2;
@@ -247,8 +276,10 @@ export class Dialog extends Group {
         this.dialogTrans[1] = newY;
         this.background.setTranslation(this.dialogTrans);
         this.background.set(new BrsString("height"), new Float(this.height));
-        this.iconTrans[1] += offsetY;
-        this.icon.setTranslation(this.iconTrans);
+        if (iconUri) {
+            this.iconTrans[1] += offsetY;
+            this.icon.setTranslation(this.iconTrans);
+        }
         this.title.setTranslationOffset(0, offsetY);
         this.divider.setTranslationOffset(0, offsetY);
         this.message.setTranslationOffset(0, offsetY);
