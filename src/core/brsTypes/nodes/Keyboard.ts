@@ -88,7 +88,6 @@ export class Keyboard extends Group {
         this.shift = false;
         this.setupKeyboardModes();
         this.textEditBox = new TextEditBox();
-        this.textEditBox.setFieldValue("maxTextLength", new Int32(75));
         if (this.resolution === "FHD") {
             this.textEditBox.setFieldValue("width", new Float(1371));
             this.textEditX = 12;
@@ -120,6 +119,8 @@ export class Keyboard extends Group {
             this.offsetX = 60;
             this.offsetY = 56;
         }
+        this.textEditBox.setTranslation([this.textEditX, 0]);
+        this.textEditBox.setFieldValue("maxTextLength", new Int32(75));
         this.bmpBack = getTextureManager().loadTexture(`common:/images/keyboard_full_${this.resolution}.png`);
         this.bmpFocus = getTextureManager().loadTexture("common:/images/focus_keyboard.9.png");
         this.icons.forEach((icon) => {
@@ -182,6 +183,8 @@ export class Keyboard extends Group {
             }
         } else if (this.keyFocus.col === 1 && this.keyFocus.row === 3 && key === "left") {
             this.keyFocus.cursor = 1;
+        } else if (this.keyFocus.col === 11 && this.keyFocus.row === 3 && key === "right") {
+            this.keyFocus.cursor = -1;
         }
         this.keyFocus.col += key === "left" ? -1 : 1;
         if (this.keyFocus.col > 11) {
@@ -252,7 +255,6 @@ export class Keyboard extends Group {
         const rect = { x: drawTrans[0], y: drawTrans[1], width: size.width, height: size.height };
 
         if (this.isDirty) {
-            this.textEditBox.setTranslation([this.textEditX, 0]);
             this.keyColor = this.getFieldValueJS("keyColor") as number;
             this.focusedKeyColor = this.getFieldValueJS("focusedKeyColor") as number;
         }
