@@ -96,17 +96,19 @@ export class Dialog extends Group {
             this.minHeight = 216;
             this.gap = 18;
             this.vertOffset = 30;
-            this.dialogTrans = [
-                (this.sceneRect.width - this.width) / 2,
-                (this.sceneRect.height - this.minHeight) / 2,
-            ];
+            this.dialogTrans = [(this.sceneRect.width - this.width) / 2, (this.sceneRect.height - this.minHeight) / 2];
             this.iconSize = 60;
-            this.iconTrans = [882, 469];
-            this.background = this.addPoster(this.backUri, this.dialogTrans, this.width, this.minHeight);
-            this.icon = this.addPoster(this.iconUriFHD, this.iconTrans, this.iconSize, this.iconSize);
-            this.title = this.addLabel("titleColor", [549, 477], 822, 46, 42, "top", "center");
-            this.divider = this.addPoster(this.dividerUri, [549, 535.5], 822, 6);
-            this.message = this.addLabel("messageColor", [523, 588], 873, 0, 34, "top", "left", true);
+            this.iconTrans = [this.dialogTrans[0] + 447, this.dialogTrans[1] + 36];
+            titleWidth = this.width - 228;
+            titleHeight = 46;
+            titleSize = 42;
+            titleX = (this.sceneRect.width - titleWidth) / 2;
+            titleY = this.dialogTrans[1] + 45;
+            dividerY = this.dialogTrans[1] + 105;
+            msgWidth = this.width - 177;
+            msgX = (this.sceneRect.width - msgWidth) / 2;
+            msgY = titleY + 111;
+            msgSize = 34;
             this.setFieldValue("iconUri", new BrsString(this.iconUriFHD));
             this.buttonGroup.setFieldValue("minWidth", new Float(900));
             this.buttonGroup.setFieldValue("maxWidth", new Float(900));
@@ -115,44 +117,29 @@ export class Dialog extends Group {
             this.minHeight = 144;
             this.gap = 12;
             this.vertOffset = 20;
-            this.dialogTrans = [
-                (this.sceneRect.width - this.width) / 2,
-                (this.sceneRect.height - this.minHeight) / 2,
-            ];
+            this.dialogTrans = [(this.sceneRect.width - this.width) / 2, (this.sceneRect.height - this.minHeight) / 2];
             this.iconSize = 40;
-            this.iconTrans = [588, 313];
-            this.background = this.addPoster(this.backUri, this.dialogTrans, this.width, this.minHeight);
-            this.icon = this.addPoster(this.iconUriHD, this.iconTrans, this.iconSize, this.iconSize);
-            this.title = this.addLabel("titleColor", [366, 318], 548, 30, 28, "top", "center");
-            this.divider = this.addPoster(this.dividerUri, [366, 357], 548, 4);
-            this.message = this.addLabel("messageColor", [349, 392], 582, 0, 24, "top", "left", true);
+            this.iconTrans = [this.dialogTrans[0] + 298, this.dialogTrans[1] + 24];
+            titleWidth = this.width - 152;
+            titleHeight = 30;
+            titleSize = 28;
+            titleX = (this.sceneRect.width - titleWidth) / 2;
+            titleY = this.dialogTrans[1] + 30;
+            dividerY = this.dialogTrans[1] + 105;
+            msgWidth = this.width - 118;
+            msgX = (this.sceneRect.width - msgWidth) / 2;
+            msgY = titleY + 74;
+            msgSize = 24;
             this.setFieldValue("iconUri", new BrsString(this.iconUriHD));
             this.buttonGroup.setFieldValue("minWidth", new Float(600));
             this.buttonGroup.setFieldValue("maxWidth", new Float(600));
         }
         this.height = this.minHeight;
         this.background = this.addPoster(this.backUri, this.dialogTrans, this.width, this.height);
-        this.title = this.addLabel(
-            "titleColor",
-            [titleX, titleY],
-            titleWidth,
-            titleHeight,
-            titleSize,
-            "top",
-            "center"
-        );
+        this.title = this.addLabel("titleColor", [titleX, titleY], titleWidth, titleHeight, titleSize, "top", "center");
         this.icon = this.addPoster(this.iconUriFHD, this.iconTrans, this.iconSize, this.iconSize);
         this.divider = this.addPoster(this.dividerUri, [titleX, dividerY], titleWidth, 3);
-        this.message = this.addLabel(
-            "messageColor",
-            [msgX, msgY],
-            msgWidth,
-            0,
-            msgSize,
-            "top",
-            "left",
-            true
-        );
+        this.message = this.addLabel("messageColor", [msgX, msgY], msgWidth, 0, msgSize, "top", "left", true);
         this.setFieldValue("width", new Float(this.width));
         this.setFieldValue("backgroundUri", new BrsString(this.backUri));
         this.setFieldValue("dividerUri", new BrsString(this.dividerUri));
