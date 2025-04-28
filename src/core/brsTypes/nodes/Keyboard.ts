@@ -11,6 +11,7 @@ import {
     getTextureManager,
     isBrsString,
     RoBitmap,
+    rootObjects,
     TextEditBox,
 } from "..";
 
@@ -73,6 +74,7 @@ export class Keyboard extends Group {
     ];
     private readonly buttons: Map<string, string[]> = new Map();
     private readonly bmpIcons: Map<string, RoBitmap> = new Map();
+    private readonly keyFocus = { row: 0, col: 0 };
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = "Keyboard") {
         super([], name);
@@ -155,14 +157,47 @@ export class Keyboard extends Group {
             return handled;
         }
         if (key === "left" || key === "right") {
-            // cycle  keyboardMode
-            this.keyboardMode += key === "left" ? -1 : 1;
-            if (this.keyboardMode > KeyboardModes.ACCENTED) {
-                this.keyboardMode = KeyboardModes.ALPHANUMERIC;
-            } else if (this.keyboardMode < KeyboardModes.ALPHANUMERIC) {
-                this.keyboardMode = KeyboardModes.ACCENTED;
+            this.keyFocus.col += key === "left" ? -1 : 1;
+            if (this.keyFocus.col > 11) {
+                this.keyFocus.col = 0;
+            } else if (this.keyFocus.col < 0) {
+                this.keyFocus.col = 11;
             }
             this.isDirty = true;
+            handled = true;
+        } else if (key === "up" && this.keyFocus.row > 0) {
+            this.keyFocus.row--;
+            this.isDirty = true;
+            handled = true;
+        } else if (key === "down" && this.keyFocus.row < 3) {
+            this.keyFocus.row++;
+            this.isDirty = true;
+            handled = true;
+        } else if (key === "OK") {
+            if (this.keyFocus.col === 0) {
+                if (this.keyFocus.row === 0) {
+                    this.shift = !this.shift;
+                } else if (this.keyFocus.row === 1) {
+                    this.textEditBox.handleKey("Lit_ ", press);
+                    this.shift = false;
+                } else if (this.keyFocus.row === 2) {
+                    this.textEditBox.handleKey("replay", press);
+                    this.shift = false;
+                } else {
+                    // TODO: Handle move cursor position
+                    this.shift = false;
+                }
+            } else if (this.keyFocus.col === 11) {
+                if (this.keyFocus.row === 0) {
+                    this.capsLock = !this.capsLock;
+                } else {
+                    this.keyboardMode = this.keyFocus.row - 1;
+                }
+                this.shift = false;
+            } else if (this.keyFocus.col > 0 && this.keyFocus.col < 11) {
+                // TODO: Handle keys
+                this.shift = false;
+            }
             handled = true;
         } else if (key.startsWith("Lit_") || key === "replay") {
             handled = this.textEditBox.handleKey(key, press);
@@ -184,6 +219,7 @@ export class Keyboard extends Group {
         if (!this.isVisible()) {
             return;
         }
+        const isFocused = rootObjects.focused === this;
         const mode = this.keyboardMode;
         const nodeTrans = this.getTranslation();
         const drawTrans = nodeTrans.slice();
@@ -195,17 +231,16 @@ export class Keyboard extends Group {
         const rect = { x: drawTrans[0], y: drawTrans[1], width: size.width, height: size.height };
         if (this.isDirty) {
             this.textEditBox.setTranslation([this.textEditX, 0]);
+            this.keyColor = this.getFieldValueJS("keyColor") as number;
+            this.focusedKeyColor = this.getFieldValueJS("focusedKeyColor") as number;
         }
-        if (this.bmpBack?.isValid()) {
-            this.drawImage(
-                this.bmpBack,
-                { ...rect, y: rect.y + this.iconLeftY },
-                0,
-                opacity,
-                draw2D
-            );
-        }
-        // Left Icons
+        this.drawImage(
+            this.bmpBack!,
+            { ...rect, y: rect.y + this.iconLeftY },
+            0,
+            opacity,
+            draw2D
+        );
         for (let i = 0; i < 5; i++) {
             const bmp = this.bmpIcons.get(this.icons[i]);
             if (bmp?.isValid()) {
@@ -221,14 +256,16 @@ export class Keyboard extends Group {
                     width: bmp.width,
                     height: bmp.height,
                 };
-                this.drawImage(bmp, iconRect, 0, opacity, draw2D);
+                let color = this.keyColor;
+                if (isFocused && this.keyFocus.col === 0 && this.keyFocus.row === i) {
+                    color = this.focusedKeyColor;
+                }
+                this.drawImage(bmp, iconRect, 0, opacity, draw2D, color);
             }
         }
-        // Left Keys
-        this.renderKeys(7, 0, rect.x + this.keyLeftX, rect.y + this.keyBaseY, opacity, draw2D);
-        // Right Keys
-        this.renderKeys(3, 28, rect.x + this.keyRightX, rect.y + this.keyBaseY, opacity, draw2D);
-        // Right Icons
+        const keysY = rect.y + this.keyBaseY;
+        this.renderKeys(7, 0, rect.x + this.keyLeftX, keysY, opacity, isFocused, draw2D);
+        this.renderKeys(3, 28, rect.x + this.keyRightX, keysY, opacity, isFocused, draw2D);
         for (let r = 0; r < 4; r++) {
             let icon = "";
             if (r === 0) {
@@ -236,12 +273,16 @@ export class Keyboard extends Group {
             } else if (r === 1) {
                 icon = mode === KeyboardModes.ALPHANUMERIC ? "alphanum_on" : "alphanum_off";
             } else if (r === 2) {
-                icon = mode  === KeyboardModes.SYMBOLS ? "symbols_on" : "symbols_off";
+                icon = mode === KeyboardModes.SYMBOLS ? "symbols_on" : "symbols_off";
             } else if (r === 3) {
                 icon = mode === KeyboardModes.ACCENTED ? "accent_on" : "accent_off";
             }
             const bmp = this.bmpIcons.get(icon);
             if (bmp?.isValid()) {
+                let color = this.keyColor;
+                if (isFocused && this.keyFocus.col === 11 && this.keyFocus.row === r) {
+                    color = this.focusedKeyColor;
+                }
                 let offY = r * this.iconOffsetY;
                 const iconRect = {
                     x: rect.x + this.iconRightX,
@@ -249,7 +290,7 @@ export class Keyboard extends Group {
                     width: bmp.width,
                     height: bmp.height,
                 };
-                this.drawImage(bmp, iconRect, 0, opacity, draw2D);
+                this.drawImage(bmp, iconRect, 0, opacity, draw2D, color);
             }
         }
         this.updateBoundingRects(rect, origin, rotation);
@@ -264,6 +305,7 @@ export class Keyboard extends Group {
         x: number,
         y: number,
         opacity: number,
+        isFocused: boolean,
         draw2D?: IfDraw2D
     ) {
         const buttonsId = `${this.keyboardMode}${this.capsLock || this.shift ? "U" : "L"}`;
@@ -273,6 +315,11 @@ export class Keyboard extends Group {
                 const index = start + r * cols + c;
                 const button = buttons![index];
                 if (button) {
+                    let color = this.keyColor;
+                    const col = cols === 7 ? c + 1 : c + 8;
+                    if (isFocused && this.keyFocus.col === col && this.keyFocus.row === r) {
+                        color = this.focusedKeyColor;
+                    }
                     const buttonRect = {
                         x: x + c * this.keyOffsetX,
                         y: y + r * this.keyOffsetY,
@@ -282,7 +329,7 @@ export class Keyboard extends Group {
                     this.drawText(
                         button,
                         this.font,
-                        this.keyColor,
+                        color,
                         opacity,
                         buttonRect,
                         "center",
