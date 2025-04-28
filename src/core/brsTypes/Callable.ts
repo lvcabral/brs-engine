@@ -321,8 +321,8 @@ export class Callable implements Brs.BrsValue, Brs.Boxable {
     }
 
     /**
-     * Creates several copies of the provided signature and implementation pair, simulating variadic types by creating a
-     * function that accepts zero args, one that accepts one arg, one that accepts two args, (…).
+     * Creates several copies of the provided signature and implementation pair, simulating variadic types by
+     * creating a function that accepts zero args, one that accepts one arg, one that accepts two args, (…).
      *
      * @param signatureAndImpl the base signature and implementation to make variadic
      *
