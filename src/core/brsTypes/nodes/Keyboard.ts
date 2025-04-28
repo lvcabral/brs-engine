@@ -9,6 +9,7 @@ import {
     Float,
     Font,
     getTextureManager,
+    Int32,
     isBrsString,
     RoBitmap,
     rootObjects,
@@ -37,9 +38,10 @@ export class Keyboard extends Group {
     private keyboardMode: KeyboardModes;
     private capsLock: boolean;
     private shift: boolean;
-    private bmpBack?: RoBitmap;
     private keyColor: number;
     private focusedKeyColor: number;
+    private readonly bmpBack?: RoBitmap;
+    private readonly bmpFocus?: RoBitmap;
     private readonly textEditX: number;
     private readonly iconLeftY: number;
     private readonly iconRightX: number;
@@ -50,11 +52,10 @@ export class Keyboard extends Group {
     private readonly keyBaseY: number;
     private readonly keyWidth: number;
     private readonly keyHeight: number;
+    private readonly keyFocusDelta: number;
     private readonly offsetX: number;
     private readonly offsetY: number;
     private readonly font: Font;
-    private readonly backUriHD = "common:/images/keyboard_full_HD.png";
-    private readonly backUriFHD = "common:/images/keyboard_full_FHD.png";
     private readonly icons = [
         "shift",
         "space",
@@ -86,10 +87,9 @@ export class Keyboard extends Group {
         this.capsLock = false;
         this.shift = false;
         this.setupKeyboardModes();
-        // Setting up Child Nodes
         this.textEditBox = new TextEditBox();
+        this.textEditBox.setFieldValue("maxTextLength", new Int32(75));
         if (this.resolution === "FHD") {
-            this.bmpBack = getTextureManager().loadTexture(this.backUriFHD);
             this.textEditBox.setFieldValue("width", new Float(1371));
             this.textEditX = 12;
             this.iconLeftY = 81;
@@ -101,10 +101,10 @@ export class Keyboard extends Group {
             this.keyBaseY = 96;
             this.keyWidth = 93;
             this.keyHeight = 81;
+            this.keyFocusDelta = 15;
             this.offsetX = 90;
             this.offsetY = 84;
         } else {
-            this.bmpBack = getTextureManager().loadTexture(this.backUriHD);
             this.textEditBox.setFieldValue("width", new Float(914));
             this.textEditX = 8;
             this.iconLeftY = 54;
@@ -116,9 +116,12 @@ export class Keyboard extends Group {
             this.keyBaseY = 66;
             this.keyWidth = 62;
             this.keyHeight = 54;
+            this.keyFocusDelta = 10;
             this.offsetX = 60;
             this.offsetY = 56;
         }
+        this.bmpBack = getTextureManager().loadTexture(`common:/images/keyboard_full_${this.resolution}.png`);
+        this.bmpFocus = getTextureManager().loadTexture("common:/images/focus_keyboard.9.png");
         this.icons.forEach((icon) => {
             const uri = `common:/images/icon_${icon}_${this.resolution}.png`;
             const bmp = getTextureManager().loadTexture(uri);
@@ -234,13 +237,7 @@ export class Keyboard extends Group {
         return handled;
     }
 
-    renderNode(
-        interpreter: Interpreter,
-        origin: number[],
-        angle: number,
-        opacity: number,
-        draw2D?: IfDraw2D
-    ) {
+    renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
         if (!this.isVisible()) {
             return;
         }
@@ -287,8 +284,7 @@ export class Keyboard extends Group {
                     keyFocused =
                         this.keyFocus.col === 0 &&
                         this.keyFocus.row === 3 &&
-                        ((i === 3 && this.keyFocus.cursor === -1) ||
-                            (i === 4 && this.keyFocus.cursor === 1));
+                        ((i === 3 && this.keyFocus.cursor === -1) || (i === 4 && this.keyFocus.cursor === 1));
                 }
                 const iconRect = {
                     x: rect.x + this.offsetX + offX,
@@ -296,7 +292,18 @@ export class Keyboard extends Group {
                     width: bmp.width,
                     height: bmp.height,
                 };
-                const color = isFocused && keyFocused ? this.focusedKeyColor : this.keyColor;
+                let color = this.keyColor;
+                if (isFocused && keyFocused) {
+                    color = this.focusedKeyColor;
+                    const width = i > 2 ? this.keyWidth : 2 * this.keyWidth;
+                    const focusRect = {
+                        x: i < 4 ? rect.x : rect.x + this.offsetX,
+                        y: rect.y + this.iconLeftY + offY,
+                        width: width + 2 * this.keyFocusDelta,
+                        height: this.keyHeight + 2 * this.keyFocusDelta,
+                    };
+                    this.drawImage(this.bmpFocus!, focusRect, 0, opacity, draw2D);
+                }
                 this.drawImage(bmp, iconRect, 0, opacity, draw2D, color);
             }
         }
@@ -318,31 +325,26 @@ export class Keyboard extends Group {
                 const index = start + r * cols + c;
                 const col = cols === 7 ? c + 1 : c + 8;
                 const key = buttons![index] ?? "";
+                const buttonRect = {
+                    x: x + c * this.offsetX,
+                    y: y + r * this.offsetY,
+                    width: this.keyWidth,
+                    height: this.keyHeight,
+                };
                 let color = this.keyColor;
                 if (isFocused && this.keyFocus.col === col && this.keyFocus.row === r) {
                     color = this.focusedKeyColor;
                     this.keyFocus.key = key;
+                    const focusRect = {
+                        x: buttonRect.x - this.keyFocusDelta,
+                        y: buttonRect.y - this.keyFocusDelta,
+                        width: buttonRect.width + 2 * this.keyFocusDelta,
+                        height: buttonRect.height + 2 * this.keyFocusDelta,
+                    };
+                    this.drawImage(this.bmpFocus!, focusRect, 0, opacity, draw2D);
                 }
                 if (key.length) {
-                    const buttonRect = {
-                        x: x + c * this.offsetX,
-                        y: y + r * this.offsetY,
-                        width: this.keyWidth,
-                        height: this.keyHeight,
-                    };
-                    this.drawText(
-                        key,
-                        this.font,
-                        color,
-                        opacity,
-                        buttonRect,
-                        "center",
-                        "center",
-                        0,
-                        draw2D,
-                        "",
-                        index
-                    );
+                    this.drawText(key, this.font, color, opacity, buttonRect, "center", "center", 0, draw2D, "", index);
                 }
             }
         }
@@ -363,10 +365,6 @@ export class Keyboard extends Group {
             }
             const bmp = this.bmpIcons.get(icon);
             if (bmp?.isValid()) {
-                let color = this.keyColor;
-                if (isFocused && this.keyFocus.col === 11 && this.keyFocus.row === r) {
-                    color = this.focusedKeyColor;
-                }
                 let offY = r * this.offsetY;
                 const iconRect = {
                     x: rect.x + this.iconRightX,
@@ -374,6 +372,17 @@ export class Keyboard extends Group {
                     width: bmp.width,
                     height: bmp.height,
                 };
+                let color = this.keyColor;
+                if (isFocused && this.keyFocus.col === 11 && this.keyFocus.row === r) {
+                    color = this.focusedKeyColor;
+                    const focusRect = {
+                        x: iconRect.x - this.keyFocusDelta,
+                        y: iconRect.y - this.keyFocusDelta,
+                        width: 2 * this.keyWidth + 2 * this.keyFocusDelta,
+                        height: this.keyHeight + 2 * this.keyFocusDelta,
+                    };
+                    this.drawImage(this.bmpFocus!, focusRect, 0, opacity, draw2D);
+                }
                 this.drawImage(bmp, iconRect, 0, opacity, draw2D, color);
             }
         }

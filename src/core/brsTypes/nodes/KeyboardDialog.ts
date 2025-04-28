@@ -33,10 +33,7 @@ export class KeyboardDialog extends Dialog {
             this.width = 1530;
             this.minHeight = 645;
             this.height = this.minHeight;
-            this.dialogTrans = [
-                (this.sceneRect.width - this.width) / 2,
-                (this.sceneRect.height - this.height) / 2,
-            ];
+            this.dialogTrans = [(this.sceneRect.width - this.width) / 2, (this.sceneRect.height - this.height) / 2];
             contentWidth = this.width - 177;
             contentX = (this.sceneRect.width - contentWidth) / 2;
             titleTrans = [contentX, this.dialogTrans[1] + 45];
@@ -48,10 +45,7 @@ export class KeyboardDialog extends Dialog {
             this.width = 1020;
             this.minHeight = 430;
             this.height = this.minHeight;
-            this.dialogTrans = [
-                (this.sceneRect.width - this.width) / 2,
-                (this.sceneRect.height - this.height) / 2,
-            ];
+            this.dialogTrans = [(this.sceneRect.width - this.width) / 2, (this.sceneRect.height - this.height) / 2];
             contentWidth = this.width - 118;
             contentX = (this.sceneRect.width - contentWidth) / 2;
             titleTrans = [contentX, this.dialogTrans[1] + 30];
@@ -85,7 +79,7 @@ export class KeyboardDialog extends Dialog {
         let handled = false;
         if (press && (key === "back" || (key === "options" && optionsDialog))) {
             this.set(new BrsString("close"), BrsBoolean.True);
-            this.focus = "buttons";
+            this.focus = "";
             this.keyboard.textEditBox.setFieldValue("active", BrsBoolean.False);
             this.keyboard.textEditBox.setFieldValue("cursorPosition", new Int32(0));
             handled = true;
@@ -156,6 +150,8 @@ export class KeyboardDialog extends Dialog {
         }
         if (this.focus === "") {
             this.focus = this.hasButtons ? "buttons" : "keyboard";
+            rootObjects.focused = this.hasButtons ? this.buttonGroup : this.keyboard;
+            this.keyboard.textEditBox.set(new BrsString("active"), BrsBoolean.from(!this.hasButtons));
         }
 
         // Set new Dialog height and reposition elements
