@@ -46,7 +46,6 @@ export class Keyboard extends Group {
     private iconRightY: number;
     private iconOffsetX: number;
     private iconOffsetY: number;
-    private iconGapX: number;
     private keyLeftX: number;
     private keyRightX: number;
     private keyBaseY: number;
@@ -99,7 +98,6 @@ export class Keyboard extends Group {
             this.iconRightY = 99;
             this.iconOffsetX = 45;
             this.iconOffsetY = 84;
-            this.iconGapX = 9;
             this.keyLeftX = 228;
             this.keyRightX = 897;
             this.keyBaseY = 96;
@@ -117,7 +115,6 @@ export class Keyboard extends Group {
             this.iconRightY = 66;
             this.iconOffsetX = 30;
             this.iconOffsetY = 56;
-            this.iconGapX = 6;
             this.keyLeftX = 152;
             this.keyRightX = 598;
             this.keyBaseY = 66;
