@@ -124,6 +124,18 @@ export class TextEditBox extends Group {
         return handled;
     }
 
+    moveCursor(delta: number) {
+        let position = this.getFieldValueJS("cursorPosition") as number;
+        const text = this.getFieldValueJS("text") as string;
+        position += delta;
+        if (position < 0) {
+            position = 0;
+        } else if (position > text.length) {
+            position = text.length;
+        }
+        this.set(new BrsString("cursorPosition"), new Float(position));
+    }
+
     renderNode(
         interpreter: Interpreter,
         origin: number[],
