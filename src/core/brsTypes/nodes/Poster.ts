@@ -60,15 +60,15 @@ export class Poster extends Group {
                 if (loadStatus !== "ready" && this.getFieldValueJS("failedBitmapUri") !== "") {
                     this.loadUri(this.getFieldValueJS("failedBitmapUri"));
                 }
-                this.setFieldValue("loadStatus", new BrsString(loadStatus));
+                super.set(new BrsString("loadStatus"), new BrsString(loadStatus));
             } else if (typeof uri !== "string" || uri.trim() === "") {
                 this.uri = "";
                 this.bitmap = undefined;
-                this.setFieldValue("loadStatus", new BrsString("none"));
-                this.setFieldValue("bitmapWidth", new Float(0));
-                this.setFieldValue("bitmapHeight", new Float(0));
+                super.set(new BrsString("loadStatus"), new BrsString("none"));
+                super.set(new BrsString("bitmapWidth"), new Float(0));
+                super.set(new BrsString("bitmapHeight"), new Float(0));
                 const margins = { left: 0, right: 0, top: 0, bottom: 0 };
-                this.setFieldValue("bitmapMargins", brsValueOf(margins));
+                super.set(new BrsString("bitmapMargins"), brsValueOf(margins));
             }
         } else if (readonlyFields.includes(fieldName)) {
             return BrsInvalid.Instance;
@@ -115,8 +115,8 @@ export class Poster extends Group {
         let loadStatus = "failed";
         this.bitmap = getTextureManager().loadTexture(uri, this.httpAgent.customHeaders);
         if (this.bitmap?.isValid()) {
-            this.setFieldValue("bitmapWidth", new Float(this.bitmap.width));
-            this.setFieldValue("bitmapHeight", new Float(this.bitmap.height));
+            super.set(new BrsString("bitmapWidth"), new Float(this.bitmap.width));
+            super.set(new BrsString("bitmapHeight"), new Float(this.bitmap.height));
             const margins = { left: 0, right: 0, top: 0, bottom: 0 };
             if (this.bitmap.ninePatch) {
                 const sizes = this.bitmap.getPatchSizes();
@@ -125,7 +125,7 @@ export class Poster extends Group {
                 margins.top = sizes.vertical;
                 margins.bottom = sizes.vertical;
             }
-            this.setFieldValue("bitmapMargins", brsValueOf(margins));
+            super.set(new BrsString("bitmapMargins"), brsValueOf(margins));
             loadStatus = "ready";
         }
         return loadStatus;
