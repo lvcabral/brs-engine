@@ -53,6 +53,8 @@ export class Keyboard extends Group {
     private readonly keyWidth: number;
     private readonly keyHeight: number;
     private readonly keyFocusDelta: number;
+    private readonly widthOver: number;
+    private readonly heightOver: number;
     private readonly offsetX: number;
     private readonly offsetY: number;
     private readonly font: Font;
@@ -103,6 +105,8 @@ export class Keyboard extends Group {
             this.keyFocusDelta = 15;
             this.offsetX = 90;
             this.offsetY = 84;
+            this.widthOver = 21;
+            this.heightOver = 90;
         } else {
             this.textEditBox.setFieldValue("width", new Float(914));
             this.textEditX = 8;
@@ -118,10 +122,15 @@ export class Keyboard extends Group {
             this.keyFocusDelta = 10;
             this.offsetX = 60;
             this.offsetY = 56;
+            this.widthOver = 12;
+            this.heightOver = 60;
         }
         this.textEditBox.setTranslation([this.textEditX, 0]);
         this.textEditBox.setFieldValue("maxTextLength", new Int32(75));
         this.bmpBack = getTextureManager().loadTexture(`common:/images/keyboard_full_${this.resolution}.png`);
+        this.setFieldValue("width", new Float(this.bmpBack!.width + this.widthOver));
+        this.setFieldValue("height", new Float(this.bmpBack!.height + this.heightOver));
+
         this.bmpFocus = getTextureManager().loadTexture("common:/images/focus_keyboard.9.png");
         this.icons.forEach((icon) => {
             const uri = `common:/images/icon_${icon}_${this.resolution}.png`;
@@ -245,6 +254,7 @@ export class Keyboard extends Group {
             return;
         }
         const isFocused = rootObjects.focused === this;
+        this.textEditBox.setActive(isFocused);
         const nodeTrans = this.getTranslation();
         const drawTrans = nodeTrans.slice();
         drawTrans[0] += origin[0];
@@ -258,8 +268,8 @@ export class Keyboard extends Group {
             this.keyColor = this.getFieldValueJS("keyColor") as number;
             this.focusedKeyColor = this.getFieldValueJS("focusedKeyColor") as number;
         }
-
-        this.drawImage(this.bmpBack!, { ...rect, y: rect.y + this.iconLeftY }, 0, opacity, draw2D);
+        const backRect = { x: rect.x, y: rect.y + this.iconLeftY, width: 0, height: 0 };
+        this.drawImage(this.bmpBack!, backRect, 0, opacity, draw2D);
         this.renderLeftIcons(rect, opacity, isFocused, draw2D);
         this.keyFocus.key = "";
         const keysY = rect.y + this.keyBaseY;
