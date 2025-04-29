@@ -136,14 +136,25 @@ export class TextEditBox extends Group {
         return handled;
     }
 
+    /** Set the active state of the node */
+    setActive(active: boolean) {
+        this.set(new BrsString("active"), BrsBoolean.from(active));
+    }
+
+    /** Move the cursor a delta or if delta is zero, reset to first position */
     moveCursor(delta: number) {
         let position = this.getFieldValueJS("cursorPosition") as number;
         const text = this.getFieldValueJS("text") as string;
-        position += delta;
-        if (position < 0) {
+
+        if (delta === 0) {
             position = 0;
-        } else if (position > text.length) {
-            position = text.length;
+        } else {
+            position += delta;
+            if (position < 0) {
+                position = 0;
+            } else if (position > text.length) {
+                position = text.length;
+            }
         }
         this.set(new BrsString("cursorPosition"), new Float(position));
         // Reset cursor blink on move
