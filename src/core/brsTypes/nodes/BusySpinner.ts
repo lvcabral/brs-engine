@@ -14,7 +14,7 @@ export class BusySpinner extends Group {
         { name: "spinInterval", type: "float", value: "2.0" }, // seconds
     ];
     private poster: Poster;
-    private active: boolean = false;
+    private active: boolean = true;
     private lastRenderTime: number = 0;
     private currentRotation: number = 0;
 
@@ -39,7 +39,7 @@ export class BusySpinner extends Group {
             let control = value.toString();
             if (control === "start") {
                 this.active = true;
-                this.lastRenderTime = performance.now();
+                this.lastRenderTime = Date.now();
             } else if (control === "stop") {
                 this.active = false;
             } else {
@@ -94,7 +94,10 @@ export class BusySpinner extends Group {
                 this.setFieldValue("height", new Float(bmp.height));
             }
             if (this.active) {
-                const now = performance.now();
+                if (this.lastRenderTime === 0) {
+                    this.lastRenderTime = Date.now();
+                }
+                const now = Date.now();
                 const spinInterval = this.getFieldValueJS("spinInterval") as number;
                 const clockwise = this.getFieldValueJS("clockwise") as boolean;
                 const direction = clockwise ? -1 : 1;

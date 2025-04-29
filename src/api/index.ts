@@ -156,7 +156,7 @@ export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any 
         sharedBuffer = new ArrayBuffer(Int32Array.BYTES_PER_ELEMENT * length);
         apiException(
             "warning",
-            `[api] Remote control simulation will not work as SharedArrayBuffer is not enabled, ` +
+            `[api] Tasks threads and remote control simulation will not work as SharedArrayBuffer is not enabled, ` +
                 `to know more visit https://developer.chrome.com/blog/enabling-shared-array-buffer/`
         );
     }
