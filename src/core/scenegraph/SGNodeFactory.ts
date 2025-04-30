@@ -17,6 +17,7 @@ import {
     MarkupList,
     Task,
     Timer,
+    Audio,
     Scene,
     Keyboard,
     MiniKeyboard,
@@ -176,6 +177,8 @@ export class SGNodeFactory {
                 return new Timer([], name);
             case SGNodeType.Scene:
                 return new Scene([], name);
+            case SGNodeType.Audio:
+                return new Audio([], name);
             case SGNodeType.Keyboard:
                 return new Keyboard([], name);
             case SGNodeType.MiniKeyboard:

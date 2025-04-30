@@ -38,6 +38,7 @@ import { Global } from "./nodes/Global";
 import { Scene } from "./nodes/Scene";
 import { Task } from "./nodes/Task";
 import { Timer } from "./nodes/Timer";
+import { Audio } from "./nodes/Audio";
 import { Field } from "./nodes/Field";
 import { getNodeType, SGNodeFactory } from "../scenegraph/SGNodeFactory";
 import { BrsObjects } from "./components/BrsObjects";
@@ -145,6 +146,7 @@ export * from "./nodes/ContentNode";
 export * from "./nodes/Overhang";
 export * from "./nodes/Task";
 export * from "./nodes/Timer";
+export * from "./nodes/Audio";
 export * from "./nodes/LabelList";
 export * from "./nodes/CheckList";
 export * from "./nodes/RadioButtonList";
@@ -614,6 +616,7 @@ interface RootObjects {
     mGlobal: Global;
     rootScene?: Scene;
     focused?: RoSGNode;
+    audio?: Audio;
     tasks: Task[];
     timers: Timer[];
 }
