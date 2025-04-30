@@ -22,6 +22,7 @@ let playNext = -1;
 let sharedArray: Int32Array;
 let maxStreams: number = 2;
 let muted: boolean;
+let notifyInterval = 500; // milliseconds
 
 let homeWav: Howl;
 
@@ -57,6 +58,8 @@ export function handleSoundEvent(eventData: string) {
         } else {
             stopSound();
         }
+    } else if (data[1] === "notify" && data.length === 3) {
+        notifyInterval = parseInt(data[2]);
     } else if (data[1] === "pause") {
         pauseSound();
     } else if (data[1] === "resume") {
@@ -153,22 +156,53 @@ export function addSoundPlaylist(newList: string[]) {
     playNext = -1;
 }
 
+let animationFrameId: number;
+let lastUpdate: number = 0;
+
 export function addSound(path: string, format: string, data: any) {
-    soundsIdx.set(path.toLowerCase(), soundsDat.length);
-    soundsDat.push(
-        new Howl({
-            src: [URL.createObjectURL(data)],
-            format: format,
-            preload: format === "wav",
-            onloaderror: function (id, message) {
-                notifyAll("warning", `[sound] Error loading wav ${path}: ${message}`);
-            },
-            onplayerror: function (id, message) {
-                notifyAll("warning", `[sound] Error playing wav ${path}: ${message}`);
-            },
-        })
-    );
+    registerSound(path, format === "wav", format, URL.createObjectURL(data));
 }
+
+function registerSound(path: string, preload: boolean, format?: string, url?: string) {
+    soundsIdx.set(path.toLowerCase(), soundsDat.length);
+    let sound = new Howl({
+        src: [url ?? path],
+        format: format,
+        preload: preload,
+        onloaderror: function (id, message) {
+            Atomics.store(sharedArray, DataType.SND, MediaEvent.FAILED);
+            notifyAll("warning", `[sound] Error loading sound ${id} ${path}: ${message}`);
+        },
+        onplayerror: function (id, message) {
+            Atomics.store(sharedArray, DataType.SND, MediaEvent.FAILED);
+            notifyAll("warning", `[sound] Error playing sound ${id} ${path}: ${message}`);
+        },
+    });
+    sound.on("play", function () {
+        const updateProgress = () => {
+            if (!sound.playing()) {
+                return;
+            }
+            if (Date.now() - lastUpdate > notifyInterval) {
+                if (!isNaN(sound.duration()) && sound.duration() !== Infinity) {
+                    Atomics.store(sharedArray, DataType.SDR, Math.trunc(sound.duration() * 1000));
+                }
+                Atomics.store(sharedArray, DataType.SPS, Math.trunc(sound.seek() * 1000));
+                lastUpdate = Date.now();
+            }
+            animationFrameId = requestAnimationFrame(updateProgress);
+        };
+
+        updateProgress();
+    });
+
+    sound.on("pause", function () {
+        cancelAnimationFrame(animationFrameId);
+    });
+    soundsDat.push(sound);
+    return sound;
+}
+
 
 export function resetSounds(assets: ArrayBufferLike) {
     if (soundsDat.length > 0) {
@@ -216,7 +250,7 @@ function playSound() {
         if (idx) {
             sound = soundsDat[idx];
         } else if (audio.startsWith("http")) {
-            sound = addWebSound(audio);
+            sound = registerSound(audio, true);
         } else {
             notifyAll("warning", `[sound] Can't find audio to play: ${audio}`);
             return;
@@ -231,7 +265,7 @@ function playSound() {
         } else {
             sound.play();
         }
-        Atomics.store(sharedArray, DataType.IDX, playIndex);
+        Atomics.store(sharedArray, DataType.SDX, playIndex);
         Atomics.store(sharedArray, DataType.SND, MediaEvent.SELECTED);
     } else {
         notifyAll("warning", `[sound] Can't find audio index: ${playIndex}`);
@@ -366,19 +400,3 @@ function stopWav(wav: string) {
     }
 }
 
-function addWebSound(url: string) {
-    // TODO: Fix the WAV index if a roAudioResource is created after this call
-    soundsIdx.set(url.toLowerCase(), soundsDat.length);
-    let sound = new Howl({
-        src: [url],
-        preload: true,
-        onloaderror: function (id, message) {
-            notifyAll("warning", `[sound] Error loading sound ${url}: ${message}`);
-        },
-        onplayerror: function (id, message) {
-            notifyAll("warning", `[sound] Error playing sound ${url}: ${message}`);
-        },
-    });
-    soundsDat.push(sound);
-    return sound;
-}

@@ -82,7 +82,7 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
         if (flags !== this.audioFlags) {
             this.audioFlags = flags;
             if (this.audioFlags >= 0) {
-                events.push(new RoAudioPlayerEvent(this.audioFlags, Atomics.load(BrsDevice.sharedArray, DataType.IDX)));
+                events.push(new RoAudioPlayerEvent(this.audioFlags, Atomics.load(BrsDevice.sharedArray, DataType.SDX)));
             }
         }
         return events;

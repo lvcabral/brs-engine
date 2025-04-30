@@ -16,7 +16,6 @@ import {
     getFontRegistry,
     getTextureManager,
     rootObjects,
-    Int32,
 } from "..";
 import { IfGetMessagePort, IfSetMessagePort } from "../interfaces/IfMessagePort";
 import { RoSGScreenEvent } from "../events/RoSGScreenEvent";
@@ -68,6 +67,9 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     private lastMessage: number;
     scaleMode: number;
     audioFlags: number;
+    contentIndex: number;
+    audioDuration: number;
+    audioPosition: number;
     isDirty: boolean;
 
     constructor(interpreter: Interpreter) {
@@ -89,6 +91,9 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         this.alphaEnable = true;
         this.scaleMode = 1;
         this.audioFlags = -1;
+        this.contentIndex = -1;
+        this.audioDuration = -1;
+        this.audioPosition = -1;
         this.isDirty = false;
         this.lastMessage = performance.now();
         const maxFps = BrsDevice.deviceInfo.maxFps;
@@ -247,17 +252,32 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     }
 
     private processAudio() {
-        if (rootObjects.audio) {
-            const flags = Atomics.load(BrsDevice.sharedArray, DataType.SND);
-            if (flags !== this.audioFlags) {
-                this.audioFlags = flags;
-                rootObjects.audio.setAudioState(flags);
-                if (flags >= 0) {
-                    const index = Atomics.load(BrsDevice.sharedArray, DataType.IDX);
-                    rootObjects.audio.set(new BrsString("contentIndex"), new Int32(index));
-                }
-                this.isDirty = true;
-            }
+        if (!rootObjects.audio) {
+            return;
+        }
+        const flags = Atomics.load(BrsDevice.sharedArray, DataType.SND);
+        if (flags !== this.audioFlags) {
+            this.audioFlags = flags;
+            rootObjects.audio.setState(flags);
+            this.isDirty = true;
+        }
+        const index = Atomics.load(BrsDevice.sharedArray, DataType.SDX);
+        if (index !== this.contentIndex) {
+            this.contentIndex = index;
+            rootObjects.audio.setContentIndex(index);
+            this.isDirty = true;
+        }
+        const duration = Atomics.load(BrsDevice.sharedArray, DataType.SDR);
+        if (duration !== this.audioDuration) {
+            this.audioDuration = duration;
+            rootObjects.audio.setDuration(duration);
+            this.isDirty = true;
+        }
+        const position = Atomics.load(BrsDevice.sharedArray, DataType.SPS);
+        if (position !== this.audioPosition) {
+            this.audioPosition = position;
+            rootObjects.audio.setPosition(position);
+            this.isDirty = true;
         }
     }
 

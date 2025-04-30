@@ -12,6 +12,7 @@ import {
     BrsString,
     Int32,
     rootObjects,
+    Double,
 } from "..";
 import { BrsDevice } from "../../device/BrsDevice";
 import { MediaEvent } from "../../common";
@@ -28,8 +29,8 @@ export class Audio extends RoSGNode {
         { name: "seek", type: "float" },
         { name: "contentIndex", type: "integer", value: "-1" },
         { name: "state", type: "string", value: "none" },
-        { name: "position", type: "integer", value: "0" },
-        { name: "duration", type: "integer", value: "0" },
+        { name: "position", type: "double", value: "0" },
+        { name: "duration", type: "double", value: "0" },
         { name: "errorCode", type: "integer", value: "0" },
         { name: "errorMsg", type: "string", value: "" },
         { name: "audioFormat", type: "string", value: "" },
@@ -85,6 +86,8 @@ export class Audio extends RoSGNode {
         } else if (fieldName === "seek" && isBrsNumber(value)) {
             const position = jsValueOf(value) as number;
             postMessage(`audio,seek,${position * 1000}`);
+        } else if (fieldName === "notificationInterval" && isBrsNumber(value)) {
+            postMessage(`audio,notify,${Math.round(jsValueOf(value) * 1000)}`);
         } else if (fieldName === "loop" && isBrsBoolean(value)) {
             postMessage(`audio,loop,${value.toBoolean()}`);
         } else if (fieldName === "content" && value instanceof ContentNode) {
@@ -116,7 +119,7 @@ export class Audio extends RoSGNode {
         return super.set(index, value, alwaysNotify, kind);
     }
 
-    setAudioState(flags: number) {
+    setState(flags: number) {
         let state = "none";
         switch (flags) {
             case MediaEvent.LOADING:
@@ -139,5 +142,18 @@ export class Audio extends RoSGNode {
                 break;
         }
         super.set(new BrsString("state"), new BrsString(state));
+    }
+
+    setContentIndex(index: number) {
+        super.set(new BrsString("contentIndex"), new Int32(index));
+    }
+
+    setDuration(duration: number) {
+        // Roku rounds the audio duration to integer even being stored in a Double
+        super.set(new BrsString("duration"), new Double(Math.round(duration / 1000)));
+    }
+
+    setPosition(position: number) {
+        super.set(new BrsString("position"), new Double(position / 1000));
     }
 }
