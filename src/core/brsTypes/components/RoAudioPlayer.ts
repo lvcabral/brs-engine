@@ -82,7 +82,7 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
         if (flags !== this.audioFlags) {
             this.audioFlags = flags;
             if (this.audioFlags >= 0) {
-                events.push(new RoAudioPlayerEvent(this.audioFlags, Atomics.load(BrsDevice.sharedArray, DataType.IDX)));
+                events.push(new RoAudioPlayerEvent(this.audioFlags, Atomics.load(BrsDevice.sharedArray, DataType.SDX)));
             }
         }
         return events;
@@ -97,13 +97,18 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, contentList: RoArray) => {
+            const corsProxy = BrsDevice.deviceInfo.corsProxy ?? "";
             const contents = new Array<string>();
             this.contentList = contentList.getElements() as RoAssociativeArray[];
-            this.contentList.forEach((value, index, array) => {
+            this.contentList.forEach((value) => {
                 value.addReference();
                 let url = value.get(new BrsString("url"));
                 if (url instanceof BrsString) {
-                    contents.push(url.value);
+                    if (url.value.startsWith("http")) {
+                        contents.push(corsProxy + url.value);
+                    } else {
+                        contents.push(url.value);
+                    }
                 }
             });
             postMessage(contents);
@@ -118,13 +123,18 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, contentItem: RoAssociativeArray) => {
+            const corsProxy = BrsDevice.deviceInfo.corsProxy ?? "";
             contentItem.addReference();
             this.contentList.push(contentItem);
             const contents = new Array<string>();
-            this.contentList.forEach((value, index, array) => {
+            this.contentList.forEach((value) => {
                 let url = value.get(new BrsString("url"));
                 if (url instanceof BrsString) {
-                    contents.push(url.value);
+                    if (url.value.startsWith("http")) {
+                        contents.push(corsProxy + url.value);
+                    } else {
+                        contents.push(url.value);
+                    }
                 }
             });
             postMessage(contents);

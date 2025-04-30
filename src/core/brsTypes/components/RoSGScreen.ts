@@ -30,6 +30,7 @@ import {
     rgbaIntToHex,
 } from "../interfaces/IfDraw2D";
 import { BrsDevice } from "../../device/BrsDevice";
+import { DataType } from "../../common";
 
 // Roku Remote Mapping
 const rokuKeys: Map<number, string> = new Map([
@@ -65,6 +66,10 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     private alphaEnable: boolean;
     private lastMessage: number;
     scaleMode: number;
+    audioFlags: number;
+    contentIndex: number;
+    audioDuration: number;
+    audioPosition: number;
     isDirty: boolean;
 
     constructor(interpreter: Interpreter) {
@@ -85,6 +90,10 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         });
         this.alphaEnable = true;
         this.scaleMode = 1;
+        this.audioFlags = -1;
+        this.contentIndex = -1;
+        this.audioDuration = -1;
+        this.audioPosition = -1;
         this.isDirty = false;
         this.lastMessage = performance.now();
         const maxFps = BrsDevice.deviceInfo.maxFps;
@@ -200,6 +209,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         if (rootObjects.rootScene) {
             this.processTimers();
             this.processTasks();
+            this.processAudio();
             // TODO: Optimize rendering by only rendering if there are changes
             rootObjects.rootScene.renderNode(this.interpreter, [0, 0], 0, 1, this.draw2D);
             if (rootObjects.rootScene?.dialog?.getNodeParent() instanceof BrsInvalid) {
@@ -209,9 +219,9 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
                 this.draw2D.doDrawRotatedRect(screenRect, 255, 0, [0, 0], 0.5);
                 dialog.renderNode(this.interpreter, [0, 0], 0, 1, this.draw2D);
             }
-            let timeStamp = performance.now();
+            let timeStamp = Date.now();
             while (timeStamp - this.lastMessage < this.maxMs) {
-                timeStamp = performance.now();
+                timeStamp = Date.now();
             }
             this.finishDraw();
             this.lastMessage = timeStamp;
@@ -239,6 +249,36 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
             }
         });
         this.isDirty = fired;
+    }
+
+    private processAudio() {
+        if (!rootObjects.audio) {
+            return;
+        }
+        const flags = Atomics.load(BrsDevice.sharedArray, DataType.SND);
+        if (flags !== this.audioFlags) {
+            this.audioFlags = flags;
+            rootObjects.audio.setState(flags);
+            this.isDirty = true;
+        }
+        const index = Atomics.load(BrsDevice.sharedArray, DataType.SDX);
+        if (index !== this.contentIndex) {
+            this.contentIndex = index;
+            rootObjects.audio.setContentIndex(index);
+            this.isDirty = true;
+        }
+        const duration = Atomics.load(BrsDevice.sharedArray, DataType.SDR);
+        if (duration !== this.audioDuration) {
+            this.audioDuration = duration;
+            rootObjects.audio.setDuration(duration);
+            this.isDirty = true;
+        }
+        const position = Atomics.load(BrsDevice.sharedArray, DataType.SPS);
+        if (position !== this.audioPosition) {
+            this.audioPosition = position;
+            rootObjects.audio.setPosition(position);
+            this.isDirty = true;
+        }
     }
 
     /** Handle control keys */

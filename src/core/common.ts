@@ -359,7 +359,9 @@ export enum DataType {
     VPS, // Video Position
     VDR, // Video Duration
     SND, // Sound State
-    IDX, // Sound Index
+    SDX, // Sound Index
+    SPS, // Sound Position
+    SDR, // Sound Duration
     WAV, // Wave Audio
     WAV1, // Reserved for second stream
     WAV2, // Reserved for third stream
@@ -375,7 +377,7 @@ export enum DataType {
 }
 
 // SharedArrayBuffer constants
-export const dataBufferIndex = 33;
+export const dataBufferIndex = 35;
 export const dataBufferSize = 1024;
 export const registryInitialSize = 32 * 1024;
 export const registryMaxSize = 64 * 1024;
