@@ -79,7 +79,7 @@ export class Audio extends RoSGNode {
             } else if (control === "stop") {
                 postMessage("audio,stop");
             } else {
-                control = "none";
+                value = new BrsString("none");
             }
         } else if (fieldName === "seek" && isBrsNumber(value)) {
             const position = jsValueOf(value) as number;
