@@ -50,7 +50,7 @@ function notifyAll(eventName: string, eventData?: any) {
 // Sound Functions
 export function handleSoundEvent(eventData: string) {
     const data = eventData.split(",");
-    if (data[1] === "play") {
+    if (data[1] === "play" || data[1] === "start") {
         playSound();
     } else if (data[1] === "stop") {
         if (data[2]) {

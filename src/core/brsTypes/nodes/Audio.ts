@@ -69,11 +69,8 @@ export class Audio extends RoSGNode {
 
         if (fieldName === "control" && isBrsString(value)) {
             const validControl = ["start", "play", "pause", "resume", "stop"];
-            let control = value.getValue().toLowerCase();
-            if (control === "start" || control === "play") {
-                postMessage("audio,play");
-                super.set(new BrsString("position"), new Int32(0));
-            } else if (validControl.includes(control)) {
+            const control = value.getValue().toLowerCase();
+            if (validControl.includes(control)) {
                 postMessage(`audio,${control}`);
             } else {
                 value = new BrsString("none");
