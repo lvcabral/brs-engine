@@ -203,7 +203,6 @@ function registerSound(path: string, preload: boolean, format?: string, url?: st
     return sound;
 }
 
-
 export function resetSounds(assets: ArrayBufferLike) {
     if (soundsDat.length > 0) {
         soundsDat.forEach((sound) => {
@@ -399,4 +398,3 @@ function stopWav(wav: string) {
         notifyAll("warning", `[sound] Can't find wav sound: ${wav}`);
     }
 }
-
