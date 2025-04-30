@@ -46,9 +46,7 @@ export class Audio extends RoSGNode {
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(members);
 
-        if (!rootObjects.audio) {
-            rootObjects.audio = this;
-        }
+        rootObjects.audio = this;
     }
 
     set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
@@ -91,28 +89,7 @@ export class Audio extends RoSGNode {
         } else if (fieldName === "loop" && isBrsBoolean(value)) {
             postMessage(`audio,loop,${value.toBoolean()}`);
         } else if (fieldName === "content" && value instanceof ContentNode) {
-            const corsProxy = BrsDevice.deviceInfo.corsProxy ?? "";
-            const content = new Array<string>();
-            const isPlaylist = this.getFieldValueJS("contentIsPlaylist") as boolean;
-            if (isPlaylist) {
-                const playList = value.getNodeChildren();
-                playList.forEach((node) => {
-                    const url = node.getFieldValueJS("url") as string;
-                    if (url?.length && url.startsWith("http")) {
-                        content.push(corsProxy + url);
-                    } else if (url?.length) {
-                        content.push(url);
-                    }
-                });
-            } else {
-                const url = value.getFieldValueJS("url") as string;
-                if (url?.length && url.startsWith("http")) {
-                    content.push(corsProxy + url);
-                } else if (url?.length) {
-                    content.push(url);
-                }
-            }
-            postMessage(content);
+            postMessage(this.formatContent(value));
         } else if (readonlyFields.includes(fieldName)) {
             return BrsInvalid.Instance;
         }
@@ -155,5 +132,30 @@ export class Audio extends RoSGNode {
 
     setPosition(position: number) {
         super.set(new BrsString("position"), new Double(position / 1000));
+    }
+
+    private formatContent(node: ContentNode) {
+        const corsProxy = BrsDevice.deviceInfo.corsProxy ?? "";
+        const content = new Array<string>();
+        const isPlaylist = this.getFieldValueJS("contentIsPlaylist") as boolean;
+        if (isPlaylist) {
+            const playList = node.getNodeChildren();
+            playList.forEach((node) => {
+                const url = node.getFieldValueJS("url") as string;
+                if (url?.length && url.startsWith("http")) {
+                    content.push(corsProxy + url);
+                } else if (url?.length) {
+                    content.push(url);
+                }
+            });
+        } else {
+            const url = node.getFieldValueJS("url") as string;
+            if (url?.length && url.startsWith("http")) {
+                content.push(corsProxy + url);
+            } else if (url?.length) {
+                content.push(url);
+            }
+        }
+        return content;
     }
 }
