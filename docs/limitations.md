@@ -15,8 +15,8 @@ There are several features from the **BrightScript** language and components tha
   * The following nodes are implemented (some only partially):
     * The basic nodes: `ContentNode`, `Group`, `Scene`, `Font`, `Timer`, `Rectangle`, `Label`, `Poster` and `RSGPalette`
     * Grids and list nodes based on `ArrayGrid`: `LabelList`, `CheckList`, `RadioButtonList`, `MarkupList` and `MarkupGrid`
-    * Dialog related nodes: `Dialog`, `StandardDialog`, `StandardProgressDialog`, `StdDlgProgressItem`, `StdDlgContentArea`, `StdDlgTitleArea`
-    * Other supported nodes: `Button`, `ButtonGroup`, `BusySpinner`, `Overhang`
+    * Dialog related nodes: `Dialog`, `KeyboardDialog`, `StandardDialog`, `StandardProgressDialog`, `StdDlgProgressItem`, `StdDlgContentArea`, `StdDlgTitleArea`
+    * Other supported nodes: `Button`, `ButtonGroup`, `BusySpinner`, `Overhang`, `Keyboard`, `TextEditBox`, `Audio`
   * All other nodes are either mocked or not implemented yet, and if used will be created as a plain `Node`.
 * The following components are also not implemented yet:
   * Text to Speech components: `roAudioGuide`, `roMicrophone` and `roTextToSpeech`
