@@ -220,15 +220,14 @@ export class IfDraw2D {
         const sh = image.height;
 
         const lw = patchSizes.horizontal; // Left Width
-        const rw = patchSizes.horizontal; // Right Width
+        const rw = patchSizes.horizontal; // Right Width (assuming symmetric)
         const th = patchSizes.vertical; // Top Height
-        const bh = patchSizes.vertical; // Bottom Height
+        const bh = patchSizes.vertical; // Bottom Height (assuming symmetric)
 
-        const cw = sw - lw - rw; // Center Width
-        const ch = sh - th - bh; // Center Height
-
-        const targetCW = width - lw - rw;
-        const targetCH = height - th - bh;
+        const cw = Math.max(0, sw - 2 - lw - rw); // Center source width (drawable area)
+        const ch = Math.max(0, sh - 2 - th - bh); // Center source height (drawable area)
+        const targetCW = Math.max(0, width - lw - rw); // Target center width
+        const targetCH = Math.max(0, height - th - bh); // Target center height
 
         const drawPart = (
             sx: number,
@@ -240,7 +239,15 @@ export class IfDraw2D {
             dw: number,
             dh: number
         ) => {
-            drawChunk(ctx, image, { sx, sy, sw, sh, dx, dy, dw, dh });
+            // Ensure destination coords/dims are integers to potentially avoid sub-pixel gaps/overlaps
+            const i_dx = Math.round(dx);
+            const i_dy = Math.round(dy);
+            const i_dw = Math.round(dw);
+            const i_dh = Math.round(dh);
+            // Only draw if source and rounded destination dimensions are positive
+            if (sw > 0 && sh > 0 && i_dw > 0 && i_dh > 0) {
+                 drawChunk(ctx, image, { sx, sy, sw, sh, dx: i_dx, dy: i_dy, dw: i_dw, dh: i_dh });
+            }
         };
 
         ctx.save();
@@ -253,31 +260,31 @@ export class IfDraw2D {
         }
 
         // Top-left corner
-        drawPart(1, 1, lw - 1, th + 1, x, y, lw - 1, th + 1);
+        drawPart(1, 1, lw, th, x, y, lw, th);
 
         // Top edge
-        drawPart(lw + 1, 1, cw - 2, th + 1, x + lw - 1, y, targetCW, th + 1);
+        drawPart(1 + lw, 1, cw, th, x + lw, y, targetCW, th);
 
         // Top-right corner
-        drawPart(sw - rw, 1, rw - 1, th + 1, x + width - rw - 1, y, rw, th + 1);
+        drawPart(sw - 1 - rw, 1, rw, th, x + width - rw, y, rw, th);
 
         // Left edge
-        drawPart(1, th + 1, lw - 1, ch - 2, x, y + th + 1, lw - 1, targetCH + 1);
+        drawPart(1, 1 + th, lw, ch, x, y + th, lw, targetCH);
 
         // Center
-        drawPart(lw + 1, th + 1, cw - 2, ch - 2, x + lw - 1, y + th + 1, targetCW, targetCH + 1);
+        drawPart(1 + lw, 1 + th, cw, ch, x + lw, y + th, targetCW, targetCH);
 
         // Right edge
-        drawPart(sw - rw, th + 1, rw - 1, ch - 2, x + width - rw - 1, y + th + 1, rw, targetCH + 1);
+        drawPart(sw - 1 - rw, 1 + th, rw, ch, x + width - rw, y + th, rw, targetCH);
 
         // Bottom-left corner
-        drawPart(1, sh - bh, lw - 1, bh - 1, x, y + height - bh + 1, lw - 1, bh);
+        drawPart(1, sh - 1 - bh, lw, bh, x, y + height - bh, lw, bh);
 
         // Bottom edge
-        drawPart(lw + 1, sh - bh, cw - 2, bh - 1, x + lw - 1, y + height - bh + 1, targetCW, bh);
+        drawPart(1 + lw, sh - 1 - bh, cw, bh, x + lw, y + height - bh, targetCW, bh);
 
         // Bottom-right corner
-        drawPart(sw - rw, sh - bh, rw - 1, bh - 1, x + width - rw - 1, y + height - bh + 1, rw, bh);
+        drawPart(sw - 1 - rw, sh - 1 - bh, rw, bh, x + width - rw, y + height - bh, rw, bh);
 
         ctx.restore();
         this.component.makeDirty();
