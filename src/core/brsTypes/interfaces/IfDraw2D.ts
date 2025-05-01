@@ -65,8 +65,11 @@ export class IfDraw2D {
         ctx.save();
         // Set context properties (alpha blending, smoothing)
         setContextAlpha(ctx, rgba);
-        ctx.imageSmoothingEnabled = object.scaleMode === 1;
-
+        const smoothing = object.scaleMode === 1;
+        ctx.imageSmoothingEnabled = smoothing;
+        if (smoothing && "imageSmoothingQuality" in ctx) {
+            ctx.imageSmoothingQuality = "high";
+        }
         // Draw the cropped and scaled image using ctx.drawImage directly
         const chunk: DrawChunk = {
             sx: sourceRect.x,
@@ -243,7 +246,11 @@ export class IfDraw2D {
         ctx.save();
         // Set context properties (alpha blending, smoothing)
         setContextAlpha(ctx, rgba);
-        ctx.imageSmoothingEnabled = bitmap.scaleMode === 1;
+        const smoothing = bitmap.scaleMode === 1;
+        ctx.imageSmoothingEnabled = smoothing;
+        if (smoothing && "imageSmoothingQuality" in ctx) {
+            ctx.imageSmoothingQuality = "high";
+        }
 
         // Top-left corner
         drawPart(1, 1, lw - 1, th + 1, x, y, lw - 1, th + 1);
@@ -858,9 +865,11 @@ export function drawObjectToComponent(
         return false;
     }
 
-    scaleMode = scaleMode ?? object.scaleMode;
-
-    ctx.imageSmoothingEnabled = scaleMode === 1;
+    const smoothing = (scaleMode ?? object.scaleMode) === 1;
+    ctx.imageSmoothingEnabled = smoothing;
+    if (smoothing && "imageSmoothingQuality" in ctx) {
+        ctx.imageSmoothingQuality = "high";
+    }
 
     const destOffset = getDrawOffset(component);
 
@@ -876,6 +885,29 @@ export function drawObjectToComponent(
         drawChunk(ctx, image, chunk);
     }
     return true;
+}
+
+export function drawBitmapOnBitmap(source: RoBitmap, destiny: RoBitmap, scaleMode?: number) {
+    const canvas = source.getCanvas();
+    const ctx = destiny.getContext();
+    ctx.save();
+    const smoothing = (scaleMode ?? destiny.scaleMode) === 1;
+    ctx.imageSmoothingEnabled = smoothing;
+    if (smoothing && "imageSmoothingQuality" in ctx) {
+        ctx.imageSmoothingQuality = "high";
+    }
+    const chunk = {
+        sx: 0,
+        sy: 0,
+        sw: source.width,
+        sh: source.height,
+        dx: 0,
+        dy: 0,
+        dw: destiny.width,
+        dh: destiny.height,
+    };
+    drawChunk(ctx, canvas, chunk);
+    ctx.restore();
 }
 
 export function drawImageToContext(
