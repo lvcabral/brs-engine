@@ -19,7 +19,7 @@ import { Interpreter } from "../../interpreter";
 import { validUri } from "../../device/FileSystem";
 import { download } from "../../interpreter/Network";
 import { RoTextureRequestEvent } from "../events/RoTextureRequestEvent";
-import { drawObjectToComponent } from "../interfaces/IfDraw2D";
+import { drawBitmapOnBitmap } from "../interfaces/IfDraw2D";
 import { BrsHttpAgent, IfHttpAgent } from "../interfaces/IfHttpAgent";
 import { IfGetMessagePort, IfSetMessagePort } from "../interfaces/IfMessagePort";
 import { BrsDevice } from "../../device/BrsDevice";
@@ -74,6 +74,11 @@ export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpA
         return this.textures.size;
     }
 
+    dispose() {
+        this.textures.clear();
+        this.port?.removeReference();
+    }
+
     private getNewEvents() {
         const events: RoTextureRequestEvent[] = [];
         for (let request of this.requests.values()) {
@@ -84,19 +89,21 @@ export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpA
     }
 
     private createEvent(request: RoTextureRequest) {
-        let bitmap = this.loadTexture(request.uri) ?? BrsInvalid.Instance;
-        if (bitmap instanceof RoBitmap && bitmap.isValid()) {
-            if (request.size && (request.size.width !== bitmap.width || request.size.height !== bitmap.height)) {
-                const newDim = toAssociativeArray(request.size);
-                const newBmp = new RoBitmap(newDim);
-                const scaleX = request.size.width / bitmap.width;
-                const scaleY = request.size.height / bitmap.height;
-                const valid = drawObjectToComponent(newBmp, bitmap, 0, 0, scaleX, scaleY, undefined, request.scaleMode);
-                bitmap = valid ? newBmp : BrsInvalid.Instance;
-            }
+        let bitmap = this.loadTexture(request.uri);
+        if (
+            bitmap?.isValid() &&
+            request.size &&
+            request.size.width > 0 &&
+            request.size.height > 0 &&
+            (request.size.width !== bitmap.width || request.size.height !== bitmap.height)
+        ) {
+            const newDim = toAssociativeArray(request.size);
+            const newBmp = new RoBitmap(newDim);
+            drawBitmapOnBitmap(bitmap, newBmp, request.scaleMode);
+            bitmap = newBmp;
         }
-        request.state = bitmap instanceof RoBitmap && bitmap.isValid() ? RequestState.Ready : RequestState.Failed;
-        return new RoTextureRequestEvent(request, bitmap);
+        request.state = bitmap?.isValid() ? RequestState.Ready : RequestState.Failed;
+        return new RoTextureRequestEvent(request, bitmap ?? BrsInvalid.Instance);
     }
 
     loadTexture(uri: string, headers?: Map<string, string>): RoBitmap | undefined {
@@ -118,6 +125,16 @@ export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpA
             }
         }
         return undefined;
+    }
+
+    resizeTexture(bitmap: RoBitmap, width: number, height: number) {
+        if (bitmap.isValid() && width > 0 && height > 0 && (width !== bitmap.width || height !== bitmap.height)) {
+            const newDim = toAssociativeArray({ width, height });
+            const newBmp = new RoBitmap(newDim);
+            drawBitmapOnBitmap(bitmap, newBmp, 1);
+            return newBmp;
+        }
+        return bitmap;
     }
 
     private loadLocalFile(uri: string) {

@@ -112,11 +112,10 @@ export class Poster extends Group {
     }
 
     private loadUri(uri: string): string {
+        const textureManager = getTextureManager();
         let loadStatus = "failed";
-        this.bitmap = getTextureManager().loadTexture(uri, this.httpAgent.customHeaders);
+        this.bitmap = textureManager.loadTexture(uri, this.httpAgent.customHeaders);
         if (this.bitmap?.isValid()) {
-            super.set(new BrsString("bitmapWidth"), new Float(this.bitmap.width));
-            super.set(new BrsString("bitmapHeight"), new Float(this.bitmap.height));
             const margins = { left: 0, right: 0, top: 0, bottom: 0 };
             if (this.bitmap.ninePatch) {
                 const sizes = this.bitmap.getPatchSizes();
@@ -124,7 +123,15 @@ export class Poster extends Group {
                 margins.right = sizes.horizontal;
                 margins.top = sizes.vertical;
                 margins.bottom = sizes.vertical;
+            } else {
+                const loadWidth = this.getFieldValueJS("loadWidth") as number;
+                const loadHeight = this.getFieldValueJS("loadHeight") as number;
+                if (loadWidth > 0 && loadHeight > 0) {
+                    this.bitmap = textureManager.resizeTexture(this.bitmap, loadWidth, loadHeight);
+                }
             }
+            super.set(new BrsString("bitmapWidth"), new Float(this.bitmap.width));
+            super.set(new BrsString("bitmapHeight"), new Float(this.bitmap.height));
             super.set(new BrsString("bitmapMargins"), brsValueOf(margins));
             loadStatus = "ready";
         }
