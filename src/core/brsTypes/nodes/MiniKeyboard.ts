@@ -4,6 +4,7 @@ import { AAMember } from "../components/RoAssociativeArray";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D } from "../interfaces/IfDraw2D";
 import {
+    BrsBoolean,
     BrsInvalid,
     BrsString,
     BrsType,
@@ -37,14 +38,15 @@ export class MiniKeyboard extends Group {
     private readonly bmpBack?: RoBitmap;
     private readonly bmpFocus?: RoBitmap;
     private readonly textEditX: number;
-    private readonly iconLeftY: number;
     private readonly iconOffsetX: number;
+    private readonly iconOffsetY: number;
     private readonly keyBaseX: number;
     private readonly keyBaseY: number;
     private readonly keyWidth: number;
     private readonly keyHeight: number;
     private readonly keyFocusDelta: number;
     private readonly widthOver: number;
+    private readonly heightOver: number;
     private readonly offsetX: number;
     private readonly offsetY: number;
     private readonly font: Font;
@@ -68,35 +70,37 @@ export class MiniKeyboard extends Group {
         if (this.resolution === "FHD") {
             this.textEditBox.setFieldValue("width", new Float(558));
             this.textEditX = 12;
-            this.iconLeftY = 81;
             this.iconOffsetX = 75;
+            this.iconOffsetY = 81;
             this.keyBaseX = 18;
-            this.keyBaseY = 105;
+            this.keyBaseY = 24;
             this.keyWidth = 93;
             this.keyHeight = 81;
             this.keyFocusDelta = 18;
             this.offsetX = 90;
             this.offsetY = 84;
-            this.widthOver = 21;
+            this.widthOver = 3;
+            this.heightOver = 78;
         } else {
             this.textEditBox.setFieldValue("width", new Float(372));
             this.textEditX = 8;
-            this.iconLeftY = 54;
             this.iconOffsetX = 50;
+            this.iconOffsetY = 54;
             this.keyBaseX = 12;
-            this.keyBaseY = 70;
+            this.keyBaseY = 16;
             this.keyWidth = 62;
             this.keyHeight = 54;
             this.keyFocusDelta = 12;
             this.offsetX = 60;
             this.offsetY = 56;
-            this.widthOver = 12;
+            this.widthOver = 2;
+            this.heightOver = 52;
         }
         this.textEditBox.setTranslation([this.textEditX, 0]);
         this.textEditBox.setFieldValue("maxTextLength", new Int32(25));
         this.bmpBack = getTextureManager().loadTexture(`common:/images/keyboard_mini_${this.resolution}.png`);
         this.setFieldValue("width", new Float(this.bmpBack!.width + this.widthOver));
-        this.setFieldValue("height", new Float(this.bmpBack!.height + this.offsetX));
+        this.setFieldValue("height", new Float(this.bmpBack!.height + this.heightOver));
 
         this.bmpFocus = getTextureManager().loadTexture("common:/images/focus_keyboard.9.png");
         this.icons.forEach((icon) => {
@@ -219,15 +223,19 @@ export class MiniKeyboard extends Group {
             this.keyColor = this.getFieldValueJS("keyColor") as number;
             this.focusedKeyColor = this.getFieldValueJS("focusedKeyColor") as number;
             this.showTextEdit = this.getFieldValueJS("showTextEditBox") as boolean;
+            this.textEditBox.setFieldValue("visible", BrsBoolean.from(this.showTextEdit));
+            this.setFieldValue("height", new Float(rect.height));
             this.lowerCase = this.getFieldValueJS("lowerCase") as boolean;
         }
-        const backRect = { x: rect.x, y: rect.y + this.iconLeftY, width: 0, height: 0 };
+        rect.height = this.showTextEdit ? this.bmpBack!.height + this.heightOver : this.bmpBack!.height;
+        const topY = rect.y + (this.showTextEdit ? this.iconOffsetY : 0);
+        const backRect = { x: rect.x, y: topY, width: 0, height: 0 };
         this.drawImage(this.bmpBack!, backRect, 0, opacity, draw2D);
         this.keyFocus.key = "";
-        this.renderKeys(rect.x + this.keyBaseX, rect.y + this.keyBaseY, opacity, isFocused, draw2D);
+        this.renderKeys(rect.x + this.keyBaseX, topY + this.keyBaseY, opacity, isFocused, draw2D);
         this.renderBottomIcons(
             rect.x + this.keyBaseX,
-            rect.y + this.keyBaseY + this.offsetY * 5,
+            topY + this.keyBaseY + this.offsetY * 6,
             opacity,
             isFocused,
             draw2D
@@ -290,7 +298,7 @@ export class MiniKeyboard extends Group {
                     const width = 2 * this.keyWidth;
                     const focusRect = {
                         x: x + offX - this.keyFocusDelta,
-                        y: y + this.offsetY - this.keyFocusDelta,
+                        y: y - this.keyFocusDelta,
                         width: width + 2 * this.keyFocusDelta,
                         height: this.keyHeight + 2 * this.keyFocusDelta,
                     };
