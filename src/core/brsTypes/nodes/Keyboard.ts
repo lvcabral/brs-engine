@@ -291,34 +291,33 @@ export class Keyboard extends Group {
     private renderLeftIcons(rect: Rect, opacity: number, isFocused: boolean, draw2D?: IfDraw2D) {
         for (let i = 0; i < 5; i++) {
             const bmp = this.bmpIcons.get(this.icons[i]);
-            if (bmp?.isValid()) {
-                let keyFocused = this.keyFocus.col === 0 && this.keyFocus.row === i;
-                let offX = 0;
-                let offY = i * this.offsetY;
-                if (i > 2) {
-                    offX = i === 3 ? -this.iconOffsetX : this.iconOffsetX;
-                    offY = 3 * this.offsetY;
-                    keyFocused =
-                        this.keyFocus.col === 0 &&
-                        this.keyFocus.row === 3 &&
-                        ((i === 3 && this.keyFocus.cursor === -1) || (i === 4 && this.keyFocus.cursor === 1));
-                }
-                offX += this.offsetX;
-                let color = this.keyColor;
-                if (isFocused && keyFocused) {
-                    color = this.focusedKeyColor;
-                    const topY = rect.y + (this.showTextEdit ? this.iconOffsetY : 0);
-                    const width = i < 3 ? 2 * this.keyWidth : this.keyWidth;
-                    const focusRect = {
-                        x: i < 4 ? rect.x : rect.x + this.offsetX,
-                        y: topY + offY,
-                        width: width + 2 * this.keyFocusDelta,
-                        height: this.keyHeight + 2 * this.keyFocusDelta,
-                    };
-                    this.drawImage(this.bmpFocus!, focusRect, 0, opacity, draw2D);
-                }
-                this.renderIcon(rect, bmp, offX, offY + bmp.height, color, opacity, draw2D);
+            if (!bmp?.isValid()) {
+                continue;
             }
+            let keyFocused = this.keyFocus.col === 0 && this.keyFocus.row === i;
+            let offX = this.offsetX;
+            if (i > 2) {
+                keyFocused =
+                    this.keyFocus.col === 0 &&
+                    this.keyFocus.row === 3 &&
+                    ((i === 3 && this.keyFocus.cursor === -1) || (i === 4 && this.keyFocus.cursor === 1));
+                offX += i === 3 ? -this.iconOffsetX : this.iconOffsetX;
+            }
+            const offY = i <= 3 ? i * this.offsetY : 3 * this.offsetY;
+            let color = this.keyColor;
+            if (isFocused && keyFocused) {
+                color = this.focusedKeyColor;
+                const topY = rect.y + (this.showTextEdit ? this.iconOffsetY : 0);
+                const width = i < 3 ? 2 * this.keyWidth : this.keyWidth;
+                const focusRect = {
+                    x: i < 4 ? rect.x : rect.x + this.offsetX,
+                    y: topY + offY,
+                    width: width + 2 * this.keyFocusDelta,
+                    height: this.keyHeight + 2 * this.keyFocusDelta,
+                };
+                this.drawImage(this.bmpFocus!, focusRect, 0, opacity, draw2D);
+            }
+            this.renderIcon(rect, bmp, offX, offY + bmp.height, color, opacity, draw2D);
         }
     }
 
@@ -367,22 +366,23 @@ export class Keyboard extends Group {
         for (let r = 0; r < 4; r++) {
             const icon = this.getRightIcon(r);
             const bmp = this.bmpIcons.get(icon);
-            if (bmp?.isValid()) {
-                let offY = this.keyBaseY + r * this.offsetY;
-                const topY = rect.y + (this.showTextEdit ? this.iconOffsetY : 0);
-                let color = this.keyColor;
-                if (isFocused && this.keyFocus.col === 11 && this.keyFocus.row === r) {
-                    color = this.focusedKeyColor;
-                    const focusRect = {
-                        x: rect.x + this.iconRightX - this.keyFocusDelta,
-                        y: topY + offY - this.keyFocusDelta,
-                        width: 2 * this.keyWidth + 2 * this.keyFocusDelta,
-                        height: this.keyHeight + 2 * this.keyFocusDelta,
-                    };
-                    this.drawImage(this.bmpFocus!, focusRect, 0, opacity, draw2D);
-                }
-                this.renderIcon(rect, bmp, this.iconRightX, offY, color, opacity, draw2D);
+            if (!bmp?.isValid()) {
+                continue;
             }
+            let offY = this.keyBaseY + r * this.offsetY;
+            const topY = rect.y + (this.showTextEdit ? this.iconOffsetY : 0);
+            let color = this.keyColor;
+            if (isFocused && this.keyFocus.col === 11 && this.keyFocus.row === r) {
+                color = this.focusedKeyColor;
+                const focusRect = {
+                    x: rect.x + this.iconRightX - this.keyFocusDelta,
+                    y: topY + offY - this.keyFocusDelta,
+                    width: 2 * this.keyWidth + 2 * this.keyFocusDelta,
+                    height: this.keyHeight + 2 * this.keyFocusDelta,
+                };
+                this.drawImage(this.bmpFocus!, focusRect, 0, opacity, draw2D);
+            }
+            this.renderIcon(rect, bmp, this.iconRightX, offY, color, opacity, draw2D);
         }
     }
 
