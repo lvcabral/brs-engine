@@ -246,6 +246,7 @@ export class Keyboard extends Group {
             }
             this.shift = false;
         }
+        this.isDirty = handled;
         return handled;
     }
 
@@ -302,17 +303,12 @@ export class Keyboard extends Group {
                         this.keyFocus.row === 3 &&
                         ((i === 3 && this.keyFocus.cursor === -1) || (i === 4 && this.keyFocus.cursor === 1));
                 }
-                const topY = rect.y + (this.showTextEdit ? this.iconOffsetY : 0);
-                const iconRect = {
-                    x: rect.x + this.offsetX + offX,
-                    y: topY + bmp.height + offY,
-                    width: bmp.width,
-                    height: bmp.height,
-                };
+                offX += this.offsetX;
                 let color = this.keyColor;
                 if (isFocused && keyFocused) {
                     color = this.focusedKeyColor;
-                    const width = i > 2 ? this.keyWidth : 2 * this.keyWidth;
+                    const topY = rect.y + (this.showTextEdit ? this.iconOffsetY : 0);
+                    const width = i < 3 ? 2 * this.keyWidth : this.keyWidth;
                     const focusRect = {
                         x: i < 4 ? rect.x : rect.x + this.offsetX,
                         y: topY + offY,
@@ -321,7 +317,7 @@ export class Keyboard extends Group {
                     };
                     this.drawImage(this.bmpFocus!, focusRect, 0, opacity, draw2D);
                 }
-                this.drawImage(bmp, iconRect, 0, opacity, draw2D, color);
+                this.renderIcon(rect, bmp, offX, offY + bmp.height, color, opacity, draw2D);
             }
         }
     }
@@ -368,42 +364,60 @@ export class Keyboard extends Group {
     }
 
     private renderRightIcons(rect: Rect, opacity: number, isFocused: boolean, draw2D?: IfDraw2D) {
-        const mode = this.keyboardMode;
         for (let r = 0; r < 4; r++) {
-            let icon = "";
-            if (r === 0) {
-                icon = this.capsLock ? "caps_on" : "caps_off";
-            } else if (r === 1) {
-                icon = mode === KeyboardModes.ALPHANUMERIC ? "alphanum_on" : "alphanum_off";
-            } else if (r === 2) {
-                icon = mode === KeyboardModes.SYMBOLS ? "symbols_on" : "symbols_off";
-            } else if (r === 3) {
-                icon = mode === KeyboardModes.ACCENTED ? "accent_on" : "accent_off";
-            }
+            const icon = this.getRightIcon(r);
             const bmp = this.bmpIcons.get(icon);
             if (bmp?.isValid()) {
-                let offY = r * this.offsetY;
-                const topY = rect.y + this.keyBaseY + (this.showTextEdit ? this.iconOffsetY : 0);
-                const iconRect = {
-                    x: rect.x + this.iconRightX,
-                    y: topY + offY,
-                    width: bmp.width,
-                    height: bmp.height,
-                };
+                let offY = this.keyBaseY + r * this.offsetY;
+                const topY = rect.y + (this.showTextEdit ? this.iconOffsetY : 0);
                 let color = this.keyColor;
                 if (isFocused && this.keyFocus.col === 11 && this.keyFocus.row === r) {
                     color = this.focusedKeyColor;
                     const focusRect = {
-                        x: iconRect.x - this.keyFocusDelta,
-                        y: iconRect.y - this.keyFocusDelta,
+                        x: rect.x + this.iconRightX - this.keyFocusDelta,
+                        y: topY + offY - this.keyFocusDelta,
                         width: 2 * this.keyWidth + 2 * this.keyFocusDelta,
                         height: this.keyHeight + 2 * this.keyFocusDelta,
                     };
                     this.drawImage(this.bmpFocus!, focusRect, 0, opacity, draw2D);
                 }
-                this.drawImage(bmp, iconRect, 0, opacity, draw2D, color);
+                this.renderIcon(rect, bmp, this.iconRightX, offY, color, opacity, draw2D);
             }
         }
+    }
+
+    private renderIcon(
+        rect: Rect,
+        bmp: RoBitmap,
+        offX: number,
+        offY: number,
+        color: number,
+        opacity: number,
+        draw2D?: IfDraw2D
+    ) {
+        const topY = rect.y + (this.showTextEdit ? this.iconOffsetY : 0);
+        const iconRect = {
+            x: rect.x + offX,
+            y: topY + offY,
+            width: bmp.width,
+            height: bmp.height,
+        };
+        this.drawImage(bmp, iconRect, 0, opacity, draw2D, color);
+    }
+
+    private getRightIcon(row: number) {
+        let icon = "";
+        const mode = this.keyboardMode;
+        if (row === 0) {
+            icon = this.capsLock ? "caps_on" : "caps_off";
+        } else if (row === 1) {
+            icon = mode === KeyboardModes.ALPHANUMERIC ? "alphanum_on" : "alphanum_off";
+        } else if (row === 2) {
+            icon = mode === KeyboardModes.SYMBOLS ? "symbols_on" : "symbols_off";
+        } else if (row === 3) {
+            icon = mode === KeyboardModes.ACCENTED ? "accent_on" : "accent_off";
+        }
+        return icon;
     }
 
     private setupKeyboardModes() {
