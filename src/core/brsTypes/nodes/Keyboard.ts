@@ -294,10 +294,10 @@ export class Keyboard extends Group {
             if (!bmp?.isValid()) {
                 continue;
             }
-            let keyFocused = this.keyFocus.col === 0 && this.keyFocus.row === i;
+            let keyFocused = isFocused && this.keyFocus.col === 0 && this.keyFocus.row === i;
             let offX = this.offsetX;
             if (i > 2) {
-                keyFocused =
+                keyFocused = isFocused &&
                     this.keyFocus.col === 0 &&
                     this.keyFocus.row === 3 &&
                     ((i === 3 && this.keyFocus.cursor === -1) || (i === 4 && this.keyFocus.cursor === 1));
@@ -305,17 +305,9 @@ export class Keyboard extends Group {
             }
             const offY = i <= 3 ? i * this.offsetY : 3 * this.offsetY;
             let color = this.keyColor;
-            if (isFocused && keyFocused) {
+            if (keyFocused) {
                 color = this.focusedKeyColor;
-                const topY = rect.y + (this.showTextEdit ? this.iconOffsetY : 0);
-                const width = i < 3 ? 2 * this.keyWidth : this.keyWidth;
-                const focusRect = {
-                    x: i < 4 ? rect.x : rect.x + this.offsetX,
-                    y: topY + offY,
-                    width: width + 2 * this.keyFocusDelta,
-                    height: this.keyHeight + 2 * this.keyFocusDelta,
-                };
-                this.drawImage(this.bmpFocus!, focusRect, 0, opacity, draw2D);
+                this.renderFocus(rect, i, offY, opacity, draw2D);
             }
             this.renderIcon(rect, bmp, offX, offY + bmp.height, color, opacity, draw2D);
         }
@@ -384,6 +376,18 @@ export class Keyboard extends Group {
             }
             this.renderIcon(rect, bmp, this.iconRightX, offY, color, opacity, draw2D);
         }
+    }
+
+    private renderFocus(rect: Rect, row: number, offY: number, opacity: number, draw2D?: IfDraw2D) {
+        const topY = rect.y + (this.showTextEdit ? this.iconOffsetY : 0);
+        const width = row < 3 ? 2 * this.keyWidth : this.keyWidth;
+        const focusRect = {
+            x: row < 4 ? rect.x : rect.x + this.offsetX,
+            y: topY + offY,
+            width: width + 2 * this.keyFocusDelta,
+            height: this.keyHeight + 2 * this.keyFocusDelta,
+        };
+        this.drawImage(this.bmpFocus!, focusRect, 0, opacity, draw2D);
     }
 
     private renderIcon(
