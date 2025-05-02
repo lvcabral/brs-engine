@@ -243,7 +243,7 @@ export class MiniKeyboard extends Group {
         for (let r = 0; r < 6; r++) {
             for (let c = 0; c < 6; c++) {
                 const index = r * 6 + c;
-                let key = this.buttons![index] ?? "";
+                let key = this.buttons[index] ?? "";
                 if (!this.lowerCase) {
                     key = key.toUpperCase();
                 }

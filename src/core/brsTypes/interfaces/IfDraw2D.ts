@@ -246,7 +246,7 @@ export class IfDraw2D {
             const i_dh = Math.round(dh);
             // Only draw if source and rounded destination dimensions are positive
             if (sw > 0 && sh > 0 && i_dw > 0 && i_dh > 0) {
-                 drawChunk(ctx, image, { sx, sy, sw, sh, dx: i_dx, dy: i_dy, dw: i_dw, dh: i_dh });
+                drawChunk(ctx, image, { sx, sy, sw, sh, dx: i_dx, dy: i_dy, dw: i_dw, dh: i_dh });
             }
         };
 
