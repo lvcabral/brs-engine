@@ -4,6 +4,7 @@ import { AAMember } from "../components/RoAssociativeArray";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D, Rect } from "../interfaces/IfDraw2D";
 import {
+    BrsBoolean,
     BrsInvalid,
     BrsType,
     Float,
@@ -35,6 +36,7 @@ export class Keyboard extends Group {
     ];
 
     readonly textEditBox: TextEditBox;
+    private showTextEdit: boolean;
     private keyboardMode: KeyboardModes;
     private capsLock: boolean;
     private shift: boolean;
@@ -43,9 +45,8 @@ export class Keyboard extends Group {
     private readonly bmpBack?: RoBitmap;
     private readonly bmpFocus?: RoBitmap;
     private readonly textEditX: number;
-    private readonly iconLeftY: number;
+    private readonly iconOffsetY: number;
     private readonly iconRightX: number;
-    private readonly iconRightY: number;
     private readonly iconOffsetX: number;
     private readonly keyLeftX: number;
     private readonly keyRightX: number;
@@ -54,6 +55,7 @@ export class Keyboard extends Group {
     private readonly keyHeight: number;
     private readonly keyFocusDelta: number;
     private readonly widthOver: number;
+    private readonly heightOver: number;
     private readonly offsetX: number;
     private readonly offsetY: number;
     private readonly font: Font;
@@ -89,44 +91,45 @@ export class Keyboard extends Group {
         this.shift = false;
         this.setupKeyboardModes();
         this.textEditBox = new TextEditBox();
+        this.showTextEdit = true;
         if (this.resolution === "FHD") {
             this.textEditBox.setFieldValue("width", new Float(1371));
             this.textEditX = 12;
-            this.iconLeftY = 81;
             this.iconRightX = 1203;
-            this.iconRightY = 99;
             this.iconOffsetX = 45;
+            this.iconOffsetY = 81;
             this.keyLeftX = 228;
             this.keyRightX = 897;
-            this.keyBaseY = 96;
+            this.keyBaseY = 18;
             this.keyWidth = 93;
             this.keyHeight = 81;
             this.keyFocusDelta = 15;
             this.offsetX = 90;
             this.offsetY = 84;
             this.widthOver = 21;
+            this.heightOver = 90;
         } else {
             this.textEditBox.setFieldValue("width", new Float(914));
             this.textEditX = 8;
-            this.iconLeftY = 54;
             this.iconRightX = 802;
-            this.iconRightY = 66;
             this.iconOffsetX = 30;
+            this.iconOffsetY = 54;
             this.keyLeftX = 152;
             this.keyRightX = 598;
-            this.keyBaseY = 66;
+            this.keyBaseY = 12;
             this.keyWidth = 62;
             this.keyHeight = 54;
             this.keyFocusDelta = 10;
             this.offsetX = 60;
             this.offsetY = 56;
             this.widthOver = 12;
+            this.heightOver = 60;
         }
         this.textEditBox.setTranslation([this.textEditX, 0]);
         this.textEditBox.setFieldValue("maxTextLength", new Int32(75));
         this.bmpBack = getTextureManager().loadTexture(`common:/images/keyboard_full_${this.resolution}.png`);
         this.setFieldValue("width", new Float(this.bmpBack!.width + this.widthOver));
-        this.setFieldValue("height", new Float(this.bmpBack!.height + this.offsetX));
+        this.setFieldValue("height", new Float(this.bmpBack!.height + this.heightOver));
 
         this.bmpFocus = getTextureManager().loadTexture("common:/images/focus_keyboard.9.png");
         this.icons.forEach((icon) => {
@@ -264,14 +267,18 @@ export class Keyboard extends Group {
         if (this.isDirty) {
             this.keyColor = this.getFieldValueJS("keyColor") as number;
             this.focusedKeyColor = this.getFieldValueJS("focusedKeyColor") as number;
+            this.showTextEdit = this.getFieldValueJS("showTextEditBox") as boolean;
+            this.textEditBox.setFieldValue("visible", BrsBoolean.from(this.showTextEdit));
+            this.setFieldValue("height", new Float(rect.height));
         }
-        const backRect = { x: rect.x, y: rect.y + this.iconLeftY, width: 0, height: 0 };
+        rect.height = this.showTextEdit ? this.bmpBack!.height + this.heightOver : this.bmpBack!.height;
+        const topY = rect.y + (this.showTextEdit ? this.iconOffsetY : 0);
+        const backRect = { x: rect.x, y: topY, width: 0, height: 0 };
         this.drawImage(this.bmpBack!, backRect, 0, opacity, draw2D);
         this.renderLeftIcons(rect, opacity, isFocused, draw2D);
         this.keyFocus.key = "";
-        const keysY = rect.y + this.keyBaseY;
-        this.renderKeys(7, 0, rect.x + this.keyLeftX, keysY, opacity, isFocused, draw2D);
-        this.renderKeys(3, 28, rect.x + this.keyRightX, keysY, opacity, isFocused, draw2D);
+        this.renderKeys(7, 0, rect.x + this.keyLeftX, topY + this.keyBaseY, opacity, isFocused, draw2D);
+        this.renderKeys(3, 28, rect.x + this.keyRightX, topY + this.keyBaseY, opacity, isFocused, draw2D);
         this.renderRightIcons(rect, opacity, isFocused, draw2D);
 
         this.updateBoundingRects(rect, origin, rotation);
@@ -295,9 +302,10 @@ export class Keyboard extends Group {
                         this.keyFocus.row === 3 &&
                         ((i === 3 && this.keyFocus.cursor === -1) || (i === 4 && this.keyFocus.cursor === 1));
                 }
+                const topY = rect.y + (this.showTextEdit ? this.iconOffsetY : 0);
                 const iconRect = {
                     x: rect.x + this.offsetX + offX,
-                    y: rect.y + this.iconLeftY + bmp.height + offY,
+                    y: topY + bmp.height + offY,
                     width: bmp.width,
                     height: bmp.height,
                 };
@@ -307,7 +315,7 @@ export class Keyboard extends Group {
                     const width = i > 2 ? this.keyWidth : 2 * this.keyWidth;
                     const focusRect = {
                         x: i < 4 ? rect.x : rect.x + this.offsetX,
-                        y: rect.y + this.iconLeftY + offY,
+                        y: topY + offY,
                         width: width + 2 * this.keyFocusDelta,
                         height: this.keyHeight + 2 * this.keyFocusDelta,
                     };
@@ -375,9 +383,10 @@ export class Keyboard extends Group {
             const bmp = this.bmpIcons.get(icon);
             if (bmp?.isValid()) {
                 let offY = r * this.offsetY;
+                const topY = rect.y + this.keyBaseY + (this.showTextEdit ? this.iconOffsetY : 0);
                 const iconRect = {
                     x: rect.x + this.iconRightX,
-                    y: rect.y + this.iconRightY + offY,
+                    y: topY + offY,
                     width: bmp.width,
                     height: bmp.height,
                 };
