@@ -54,7 +54,6 @@ export class Keyboard extends Group {
     private readonly keyHeight: number;
     private readonly keyFocusDelta: number;
     private readonly widthOver: number;
-    private readonly heightOver: number;
     private readonly offsetX: number;
     private readonly offsetY: number;
     private readonly font: Font;
@@ -106,7 +105,6 @@ export class Keyboard extends Group {
             this.offsetX = 90;
             this.offsetY = 84;
             this.widthOver = 21;
-            this.heightOver = 90;
         } else {
             this.textEditBox.setFieldValue("width", new Float(914));
             this.textEditX = 8;
@@ -123,13 +121,12 @@ export class Keyboard extends Group {
             this.offsetX = 60;
             this.offsetY = 56;
             this.widthOver = 12;
-            this.heightOver = 60;
         }
         this.textEditBox.setTranslation([this.textEditX, 0]);
         this.textEditBox.setFieldValue("maxTextLength", new Int32(75));
         this.bmpBack = getTextureManager().loadTexture(`common:/images/keyboard_full_${this.resolution}.png`);
         this.setFieldValue("width", new Float(this.bmpBack!.width + this.widthOver));
-        this.setFieldValue("height", new Float(this.bmpBack!.height + this.heightOver));
+        this.setFieldValue("height", new Float(this.bmpBack!.height + this.offsetX));
 
         this.bmpFocus = getTextureManager().loadTexture("common:/images/focus_keyboard.9.png");
         this.icons.forEach((icon) => {
