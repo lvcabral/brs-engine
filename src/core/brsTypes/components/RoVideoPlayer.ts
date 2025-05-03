@@ -104,13 +104,13 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
             const item = { url: "", streamFormat: "", audioTrack: -1 };
             let url = aa.get(new BrsString("url"));
             if (url instanceof BrsString) {
-                item.url = BrsDevice.getCORSProxy() + url.value;
+                item.url = this.getFullUrl(url.value);
             } else {
                 const stream = aa.get(new BrsString("stream"));
                 if (stream instanceof RoAssociativeArray) {
                     url = stream.get(new BrsString("url"));
                     if (url instanceof BrsString) {
-                        item.url = BrsDevice.getCORSProxy() + url.value;
+                        item.url = this.getFullUrl(url.value);
                     }
                 }
             }
@@ -170,6 +170,13 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
             }
         }
         return events;
+    }
+
+    private getFullUrl(url: string) {
+        if (url.startsWith("http")) {
+            return BrsDevice.getCORSProxy() + url;
+        }
+        return url;
     }
 
     // ifVideoPlayer ---------------------------------------------------------------------------------
