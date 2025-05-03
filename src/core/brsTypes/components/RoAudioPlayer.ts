@@ -97,7 +97,6 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, contentList: RoArray) => {
-            const corsProxy = BrsDevice.deviceInfo.corsProxy ?? "";
             const contents = new Array<string>();
             this.contentList = contentList.getElements() as RoAssociativeArray[];
             this.contentList.forEach((value) => {
@@ -105,7 +104,7 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
                 let url = value.get(new BrsString("url"));
                 if (url instanceof BrsString) {
                     if (url.value.startsWith("http")) {
-                        contents.push(corsProxy + url.value);
+                        contents.push(BrsDevice.getCORSProxy() + url.value);
                     } else {
                         contents.push(url.value);
                     }
@@ -123,7 +122,6 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, contentItem: RoAssociativeArray) => {
-            const corsProxy = BrsDevice.deviceInfo.corsProxy ?? "";
             contentItem.addReference();
             this.contentList.push(contentItem);
             const contents = new Array<string>();
@@ -131,7 +129,7 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
                 let url = value.get(new BrsString("url"));
                 if (url instanceof BrsString) {
                     if (url.value.startsWith("http")) {
-                        contents.push(corsProxy + url.value);
+                        contents.push(BrsDevice.getCORSProxy() + url.value);
                     } else {
                         contents.push(url.value);
                     }

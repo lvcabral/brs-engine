@@ -168,13 +168,13 @@ export const BrsObjects = new BrsObjectsMap([
     ],
     [
         "roScreen",
-        (interpreter: Interpreter, dblbuffer?: BrsBoolean, width?: Int32, height?: Int32) =>
-            createScreen(interpreter, dblbuffer, width, height),
+        (_?: Interpreter, dblbuffer?: BrsBoolean, width?: Int32, height?: Int32) =>
+            createScreen(dblbuffer, width, height),
         -2,
     ],
     ["roXMLElement", (_?: Interpreter) => new RoXMLElement()],
     ["roURLTransfer", (_?: Interpreter) => new RoURLTransfer()],
-    ["roHttpAgent", (_: Interpreter) => new RoHttpAgent()],
+    ["roHttpAgent", (_?: Interpreter) => new RoHttpAgent()],
     ["roInvalid", (_?: Interpreter) => new RoInvalid(), -1],
     ["roNDK", (_?: Interpreter) => new RoNDK()],
     ["roCECStatus", (_?: Interpreter) => new RoCECStatus()],

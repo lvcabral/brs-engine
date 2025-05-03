@@ -36,6 +36,8 @@ export class BrsDevice {
     static sharedArray: Int32Array = new Int32Array(0);
     static displayEnabled: boolean = true;
     static threadId: number = 0;
+    static singleKeyEvents: boolean = true; // Default Roku behavior is `true`
+    static useCORSProxy: boolean = false;
     static lastRemote: number = 0;
     static lastKey: number = -1;
     static lastMod: number = -1;
@@ -107,6 +109,17 @@ export class BrsDevice {
     }
 
     /**
+     * Returns the configured CORS proxy
+     * @returns the URL or empty string
+     */
+    static getCORSProxy() {
+        if (this.useCORSProxy) {
+            return this.deviceInfo.corsProxy ?? "";
+        }
+        return "";
+    }
+
+    /**
      * Method to check if the Break Command is set in the sharedArray
      * @returns the last debug command
      */
@@ -145,10 +158,9 @@ export class BrsDevice {
 
     /**
      * Method to update the control keys buffer and return the next key
-     * @param singleKey Flag to indicate if should only handle a key at a time (default Roku behavior)
      * @returns the next key in the buffer to be handled or undefined if queue is empty
      */
-    static updateKeysBuffer(singleKey: boolean): KeyEvent | undefined {
+    static updateKeysBuffer(): KeyEvent | undefined {
         for (let i = 0; i < keyBufferSize; i++) {
             const idx = i * keyArraySpots;
             const key = Atomics.load(this.sharedArray, DataType.KEY + idx);
@@ -169,7 +181,7 @@ export class BrsDevice {
         if (!nextKey || nextKey.key === this.lastKey) {
             return;
         }
-        if (singleKey) {
+        if (this.singleKeyEvents) {
             if (nextKey.mod === 0) {
                 if (this.lastMod === 0) {
                     this.keysBuffer.unshift({ ...nextKey });

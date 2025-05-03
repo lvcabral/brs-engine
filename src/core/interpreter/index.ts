@@ -101,7 +101,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     private _runParams: RoAssociativeArray | undefined;
     private _tryMode = false;
     private _dotLevel = 0;
-    private _singleKeyEvents = true; // Default Roku behavior is `true`
     private _printed = false; // Prevent the warning when no entry point exists
 
     location: Location = {
@@ -146,10 +145,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         return this._startTime;
     }
 
-    get singleKeyEvents() {
-        return this._singleKeyEvents;
-    }
-
     get creationTime() {
         return this._creationTime;
     }
@@ -169,11 +164,17 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
      * @param manifest Map with manifest content.
      */
     public setManifest(manifest: Map<string, string>) {
+        // Reset custom manifest flags to default
+        BrsDevice.singleKeyEvents = true;
+        BrsDevice.useCORSProxy = false;
+        // Load manifest entries
         manifest.forEach((value: string, key: string) => {
             this.manifest.set(key, value);
-            // Custom Manifest Entries
+            // Custom manifest entries
             if (key.toLowerCase() === "multi_key_events") {
-                this._singleKeyEvents = value.trim() !== "1";
+                BrsDevice.singleKeyEvents = value.trim() !== "1";
+            } else if (key.toLowerCase() === "cors_proxy") {
+                BrsDevice.useCORSProxy = value.trim() === "1";
             }
         });
     }

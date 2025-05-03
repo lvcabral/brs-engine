@@ -113,7 +113,7 @@ export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpA
         }
         let data: ArrayBuffer | undefined;
         if (uri.startsWith("http")) {
-            data = download(uri, "arraybuffer", headers ?? this.customHeaders, this.cookiesEnabled);
+            data = download(BrsDevice.getCORSProxy() + uri, "arraybuffer", headers ?? this.customHeaders, this.cookiesEnabled);
         } else {
             data = this.loadLocalFile(uri);
         }

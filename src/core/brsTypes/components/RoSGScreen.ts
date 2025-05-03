@@ -283,7 +283,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
 
     /** Handle control keys */
     private handleNextKey() {
-        const nextKey = BrsDevice.updateKeysBuffer(this.interpreter.singleKeyEvents);
+        const nextKey = BrsDevice.updateKeysBuffer();
         if (!nextKey || !rootObjects?.rootScene) {
             return BrsInvalid.Instance;
         }

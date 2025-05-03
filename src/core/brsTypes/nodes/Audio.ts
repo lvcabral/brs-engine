@@ -129,7 +129,7 @@ export class Audio extends RoSGNode {
     }
 
     private formatContent(node: ContentNode) {
-        const corsProxy = BrsDevice.deviceInfo.corsProxy ?? "";
+        const corsProxy = BrsDevice.getCORSProxy();
         const content = new Array<string>();
         const isPlaylist = this.getFieldValueJS("contentIsPlaylist") as boolean;
         if (isPlaylist) {
