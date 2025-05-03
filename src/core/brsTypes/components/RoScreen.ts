@@ -27,7 +27,6 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     readonly y: number = 0;
     readonly width: number;
     readonly height: number;
-    private readonly interpreter: Interpreter;
     private readonly doubleBuffer: boolean;
     private readonly maxMs: number;
     private readonly disposeCanvas: boolean;
@@ -44,9 +43,8 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     private lastKey: number;
     private lastMod: number;
 
-    constructor(interpreter: Interpreter, doubleBuffer?: BrsBoolean, width?: Int32, height?: Int32) {
+    constructor(doubleBuffer?: BrsBoolean, width?: Int32, height?: Int32) {
         super("roScreen");
-        this.interpreter = interpreter;
 
         let defaultWidth = 854;
         let defaultHeight = 480;
@@ -216,7 +214,7 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         this.updateKeysBuffer();
         const nextKey = this.keysBuffer.shift();
         if (nextKey && nextKey.key !== this.lastKey) {
-            if (this.interpreter.singleKeyEvents) {
+            if (BrsDevice.singleKeyEvents) {
                 if (nextKey.mod === 0) {
                     if (this.lastMod === 0) {
                         this.keysBuffer.unshift({ ...nextKey });
@@ -286,10 +284,10 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     });
 }
 
-export function createScreen(interpreter: Interpreter, doubleBuffer?: BrsBoolean, width?: Int32, height?: Int32) {
+export function createScreen(doubleBuffer?: BrsBoolean, width?: Int32, height?: Int32) {
     if ((width !== undefined && height === undefined) || (width === undefined && height !== undefined)) {
         return BrsInvalid.Instance;
     }
-    const screen = new RoScreen(interpreter, doubleBuffer, width, height);
+    const screen = new RoScreen(doubleBuffer, width, height);
     return screen.isValid() ? screen : BrsInvalid.Instance;
 }

@@ -32,14 +32,12 @@ export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpA
     readonly requests: Map<number, RoTextureRequest>;
     readonly textures: Map<string, ArrayBuffer>;
     readonly customHeaders: Map<string, string>;
-    private readonly corsProxy: string;
     private port?: RoMessagePort;
     cookiesEnabled: boolean;
 
-    constructor(interpreter: Interpreter) {
+    constructor() {
         super("roTextureManager");
         this.cookiesEnabled = false;
-        this.corsProxy = interpreter.useCorsProxy ? BrsDevice.getCORSProxy() : "";
         this.requests = new Map<number, RoTextureRequest>();
         this.textures = new Map<string, ArrayBuffer>();
         this.customHeaders = new Map<string, string>();
@@ -104,7 +102,8 @@ export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpA
             return cached;
         }
         if (request.uri.startsWith("http")) {
-            const data = download(this.corsProxy + request.uri, "arraybuffer", this.customHeaders, this.cookiesEnabled);
+            const corsProxy = BrsDevice.getCORSProxy();
+            const data = download(corsProxy + request.uri, "arraybuffer", this.customHeaders, this.cookiesEnabled);
             if (data) {
                 this.textures.set(request.uri, data);
                 return data;
@@ -184,9 +183,9 @@ export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpA
 }
 
 // Function to get the singleton instance of RoTextureManager
-export function getTextureManager(interpreter: Interpreter): RoTextureManager {
+export function getTextureManager(): RoTextureManager {
     if (!textureManager) {
-        textureManager = new RoTextureManager(interpreter);
+        textureManager = new RoTextureManager();
     }
     return textureManager;
 }
