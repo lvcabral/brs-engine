@@ -52,6 +52,14 @@ export class BrsDevice {
     }
 
     /**
+     * Returns the configured CORS proxy
+     * @returns the URL or empty string
+     */
+    static getCORSProxy() {
+        return this.deviceInfo.corsProxy ?? "";
+    }
+
+    /**
      * Method to check if the Break Command is set in the sharedArray
      * @returns the last debug command
      */

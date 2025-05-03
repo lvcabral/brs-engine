@@ -1,4 +1,3 @@
-import { BrsDevice } from "../device/BrsDevice";
 /// #if !BROWSER
 import { XMLHttpRequest } from "../polyfill/XMLHttpRequest";
 /// #endif
@@ -16,8 +15,7 @@ export function download(
 ): any {
     try {
         const xhr = new XMLHttpRequest();
-        const corsProxy = BrsDevice.deviceInfo.corsProxy ?? "";
-        xhr.open("GET", corsProxy + url, false); // Note: synchronous
+        xhr.open("GET", url, false); // Note: synchronous
         xhr.responseType = type;
         customHeaders?.forEach((value: string, key: string) => {
             xhr.setRequestHeader(key, value);

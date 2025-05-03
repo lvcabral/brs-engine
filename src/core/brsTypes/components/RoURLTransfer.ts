@@ -18,6 +18,7 @@ import { XMLHttpRequest } from "../../polyfill/XMLHttpRequest";
 export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgent {
     readonly kind = ValueKind.Object;
     readonly customHeaders: Map<string, string>;
+    private readonly corsProxy: string;
     private identity: number;
     private url: string;
     private host: string;
@@ -33,13 +34,14 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
     private password?: string;
     cookiesEnabled: boolean;
 
-    constructor() {
+    constructor(interpreter: Interpreter) {
         super("roUrlTransfer");
         this.identity = Math.trunc(Math.random() * 10 * 8);
         this.url = "";
         this.host = "";
         this.reqMethod = "";
         this.failureReason = "";
+        this.corsProxy = interpreter.useCorsProxy ? BrsDevice.getCORSProxy() : "";
         this.xhr = new XMLHttpRequest();
         this.freshConnection = false;
         this.cookiesEnabled = false;
@@ -105,8 +107,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
             this.xhr = new XMLHttpRequest();
         }
         const method = this.reqMethod === "" ? methodParam : this.reqMethod;
-        const corsProxy = BrsDevice.deviceInfo.corsProxy ?? "";
-        this.xhr.open(method, corsProxy + this.url, false, this.user, this.password);
+        this.xhr.open(method, this.corsProxy + this.url, false, this.user, this.password);
         this.xhr.responseType = typeParam;
         this.customHeaders.forEach((value: string, key: string) => {
             this.xhr.setRequestHeader(key, value);
