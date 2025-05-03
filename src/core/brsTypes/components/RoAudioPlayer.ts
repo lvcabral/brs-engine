@@ -99,11 +99,11 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
         impl: (_: Interpreter, contentList: RoArray) => {
             const contents = new Array<string>();
             this.contentList = contentList.getElements() as RoAssociativeArray[];
-            this.contentList.forEach((value, index, array) => {
+            this.contentList.forEach((value) => {
                 value.addReference();
                 let url = value.get(new BrsString("url"));
                 if (url instanceof BrsString) {
-                    contents.push(url.value);
+                    contents.push(BrsDevice.getCORSProxy() + url.value);
                 }
             });
             postMessage(contents);
@@ -121,10 +121,10 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
             contentItem.addReference();
             this.contentList.push(contentItem);
             const contents = new Array<string>();
-            this.contentList.forEach((value, index, array) => {
+            this.contentList.forEach((value) => {
                 let url = value.get(new BrsString("url"));
                 if (url instanceof BrsString) {
-                    contents.push(url.value);
+                    contents.push(BrsDevice.getCORSProxy() + url.value);
                 }
             });
             postMessage(contents);
