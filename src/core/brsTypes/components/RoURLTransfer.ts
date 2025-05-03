@@ -18,11 +18,11 @@ import { XMLHttpRequest } from "../../polyfill/XMLHttpRequest";
 export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgent {
     readonly kind = ValueKind.Object;
     readonly customHeaders: Map<string, string>;
+    private readonly corsProxy: string;
     private identity: number;
     private url: string;
     private host: string;
     private reqMethod: string;
-    private corsProxy: string;
     private failureReason: string;
     private xhr: XMLHttpRequest;
     private freshConnection: boolean;

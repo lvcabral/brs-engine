@@ -32,8 +32,8 @@ export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpA
     readonly requests: Map<number, RoTextureRequest>;
     readonly textures: Map<string, ArrayBuffer>;
     readonly customHeaders: Map<string, string>;
+    private readonly corsProxy: string;
     private port?: RoMessagePort;
-    private corsProxy: string;
     cookiesEnabled: boolean;
 
     constructor(interpreter: Interpreter) {
