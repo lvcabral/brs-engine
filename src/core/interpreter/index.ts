@@ -98,6 +98,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     private _tryMode = false;
     private _dotLevel = 0;
     private _singleKeyEvents = true; // Default Roku behavior is `true`
+    private _useCorsProxy = false;
     private _printed = false; // Prevent the warning when no entry point exists
 
     location: Location = {
@@ -146,6 +147,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         return this._singleKeyEvents;
     }
 
+    get useCorsProxy() {
+        return this._useCorsProxy;
+    }
+
     get creationTime() {
         return this._creationTime;
     }
@@ -162,6 +167,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             // Custom Manifest Entries
             if (key.toLowerCase() === "multi_key_events") {
                 this._singleKeyEvents = value.trim() !== "1";
+            } else if (key.toLowerCase() === "cors_proxy") {
+                this._useCorsProxy = value.trim() === "1";
             }
         });
     }

@@ -21,13 +21,19 @@ const deviceInfo = {
   displayMode: "720p", // Supported modes: 480p (SD), 720p (HD) and 1080p (FHD)
   maxSimulStreams: 2, // Max number of audio resource streams (1, 2 or 3)
   customFeatures: [], // String array with custom features (see below)
-  localIps: ["eth1,127.0.0.1"], // In a Browser isn't possible to get a real IP, populate it on NodeJS or Electron.
+  localIps: ["eth1,127.0.0.1"], // In a Browser isn't possible to get a real IP, populate it on NodeJS or Electron
   startTime: Date.now(),
   audioVolume: 40,
   maxFps: 60,
-  corsProxy: "https://your-cors-proxy-instance.yourdomain.com/", // (optional) Add your CORS-Anywhere URL here, make sure you have the trailing slash
+  corsProxy: "https://your-cors-proxy-instance.yourdomain.com/", // (optional) Add your CORS-Anywhere URL here
 };
 ```
+
+### CORS Proxy Configuration
+
+* Make sure it has the trailing slash
+* See `App Manifest` below to enable CORS proxy for your app
+* CORS-Anywhere repository: https://github.com/Rob--W/cors-anywhere
 
 ## Simulated Device Features
 
@@ -68,11 +74,12 @@ For example, if you want to define that your application is running on a device 
 
 ## App Manifest
 
-There is also a way BrightScript apps can change the behavior of the simulation engine, by using special `manifest` entries. Currently the only option is:
+There is also a way BrightScript apps can change the behavior of the simulation engine, by using special `manifest` entries. The valid options are:
 
-- `multi_key_events=1`: If this flag is defined, will inform the simulator to handle multiple key events in parallel, instead of the default Roku behavior, that is handling one key at a time.
+* `multi_key_events=1`: If this flag is defined, will inform the simulator to handle multiple key events in parallel, instead of the default Roku behavior, that is handling one key at a time.
+* `cors_proxy=1`: If this flag is defined, the engine will prepend to the network requests, the `corsProxy` URL configured in the `DeviceInfo` object.
 
-**Note:** this special `manifest` entry is ignored by Roku Devices.
+**Note:** these special `manifest` entries are ignored by Roku Devices.
 
 ## Control Mapping
 
