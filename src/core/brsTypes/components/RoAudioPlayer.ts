@@ -74,6 +74,21 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
         this.port?.removeReference();
     }
 
+    private getContent() {
+        const content = new Array<string>();
+        this.contentList.forEach((value) => {
+            let url = value.get(new BrsString("url"));
+            if (url instanceof BrsString) {
+                if (url.value.startsWith("http")) {
+                    content.push(BrsDevice.getCORSProxy() + url.value);
+                } else {
+                    content.push(url.value);
+                }
+            }
+        });
+        return content;
+    }
+
     // Audio Player Event ----------------------------------------------------------------------------
 
     private getNewEvents() {
@@ -97,20 +112,8 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, contentList: RoArray) => {
-            const contents = new Array<string>();
             this.contentList = contentList.getElements() as RoAssociativeArray[];
-            this.contentList.forEach((value) => {
-                value.addReference();
-                let url = value.get(new BrsString("url"));
-                if (url instanceof BrsString) {
-                    if (url.value.startsWith("http")) {
-                        contents.push(BrsDevice.getCORSProxy() + url.value);
-                    } else {
-                        contents.push(url.value);
-                    }
-                }
-            });
-            postMessage(contents);
+            postMessage(this.getContent());
             return BrsInvalid.Instance;
         },
     });
@@ -124,18 +127,7 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
         impl: (_: Interpreter, contentItem: RoAssociativeArray) => {
             contentItem.addReference();
             this.contentList.push(contentItem);
-            const contents = new Array<string>();
-            this.contentList.forEach((value) => {
-                let url = value.get(new BrsString("url"));
-                if (url instanceof BrsString) {
-                    if (url.value.startsWith("http")) {
-                        contents.push(BrsDevice.getCORSProxy() + url.value);
-                    } else {
-                        contents.push(url.value);
-                    }
-                }
-            });
-            postMessage(contents);
+            postMessage(this.getContent());
             return BrsInvalid.Instance;
         },
     });
