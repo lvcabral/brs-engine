@@ -51,10 +51,6 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     readonly kind = ValueKind.Object;
     readonly x: number = 0;
     readonly y: number = 0;
-    readonly width: number;
-    readonly height: number;
-    readonly resolution: string;
-    private readonly interpreter: Interpreter;
     private readonly draw2D: IfDraw2D;
     private readonly maxMs: number;
     private readonly canvas: BrsCanvas;
@@ -65,6 +61,9 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     private sceneType?: BrsString;
     private alphaEnable: boolean;
     private lastMessage: number;
+    width: number;
+    height: number;
+    resolution: string;
     scaleMode: number;
     audioFlags: number;
     contentIndex: number;
@@ -72,9 +71,8 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     audioPosition: number;
     isDirty: boolean;
 
-    constructor(interpreter: Interpreter) {
+    constructor() {
         super("roSGScreen");
-        this.interpreter = interpreter;
         this.draw2D = new IfDraw2D(this);
         this.textureManager = getTextureManager();
         this.fontRegistry = getFontRegistry();
@@ -101,15 +99,6 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         this.width = 1280;
         this.height = 720;
         this.resolution = "HD";
-        const res = interpreter.manifest.get("ui_resolutions") ?? "HD";
-        if (res.length && res !== "HD") {
-            const resArray = res.split(",");
-            if (resArray[0].toUpperCase() === "FHD") {
-                this.resolution = "FHD";
-                this.width = 1920;
-                this.height = 1080;
-            }
-        }
         this.canvas = createNewCanvas(this.width, this.height);
         this.context = this.canvas.getContext("2d") as BrsCanvasContext2D;
 
@@ -198,10 +187,10 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     }
 
     /** Message callback to handle control keys and Scene rendering */
-    private getNewEvents() {
+    private getNewEvents(interpreter: Interpreter) {
         const events: BrsEvent[] = [];
         // Handle control keys
-        const event = this.handleNextKey();
+        const event = this.handleNextKey(interpreter);
         if (event instanceof BrsComponent) {
             events.push(event);
         }
@@ -211,13 +200,13 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
             this.processTasks();
             this.processAudio();
             // TODO: Optimize rendering by only rendering if there are changes
-            rootObjects.rootScene.renderNode(this.interpreter, [0, 0], 0, 1, this.draw2D);
+            rootObjects.rootScene.renderNode(interpreter, [0, 0], 0, 1, this.draw2D);
             if (rootObjects.rootScene?.dialog?.getNodeParent() instanceof BrsInvalid) {
                 const dialog = rootObjects.rootScene.dialog;
                 dialog.setFieldValue("visible", BrsBoolean.True);
                 const screenRect = { x: 0, y: 0, width: this.width, height: this.height };
                 this.draw2D.doDrawRotatedRect(screenRect, 255, 0, [0, 0], 0.5);
-                dialog.renderNode(this.interpreter, [0, 0], 0, 1, this.draw2D);
+                dialog.renderNode(interpreter, [0, 0], 0, 1, this.draw2D);
             }
             let timeStamp = Date.now();
             while (timeStamp - this.lastMessage < this.maxMs) {
@@ -282,7 +271,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     }
 
     /** Handle control keys */
-    private handleNextKey() {
+    private handleNextKey(interpreter: Interpreter) {
         const nextKey = BrsDevice.updateKeysBuffer();
         if (!nextKey || !rootObjects?.rootScene) {
             return BrsInvalid.Instance;
@@ -300,7 +289,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         if (rootObjects.rootScene.dialog?.isVisible()) {
             handled = rootObjects.rootScene.dialog.handleKey(key.value, press.toBoolean());
         } else {
-            handled = rootObjects.rootScene.handleOnKeyEvent(this.interpreter, key, press);
+            handled = rootObjects.rootScene.handleOnKeyEvent(interpreter, key, press);
         }
         if (press.toBoolean()) {
             this.playNavigationSound(key.value, handled);
@@ -345,7 +334,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         },
         impl: (interpreter: Interpreter) => {
             if (this.sceneType && rootObjects.rootScene) {
-                const typeDef = interpreter.environment.nodeDefMap.get(this.sceneType.value.toLowerCase());
+                const typeDef = rootObjects.nodeDefMap.get(this.sceneType.value.toLowerCase());
                 initializeNode(interpreter, this.sceneType, typeDef, rootObjects.rootScene);
             }
             this.isDirty = true;
@@ -372,10 +361,21 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
             returns: ValueKind.Object,
         },
         impl: (interpreter: Interpreter, sceneType: BrsString) => {
+            const res = interpreter.manifest.get("ui_resolutions") ?? "HD";
+            if (res.length && res !== "HD") {
+                const resArray = res.split(",");
+                if (resArray[0].toUpperCase() === "FHD") {
+                    this.resolution = "FHD";
+                    this.width = 1920;
+                    this.height = 1080;
+                    this.canvas.width = this.width;
+                    this.canvas.height = this.height;
+                }
+            }
             let returnValue: BrsType = BrsInvalid.Instance;
             if (sceneType.value === SGNodeType.Scene) {
                 returnValue = new Scene([], SGNodeType.Scene);
-            } else if (interpreter.environment.nodeDefMap.has(sceneType.value.toLowerCase())) {
+            } else if (rootObjects.nodeDefMap.has(sceneType.value.toLowerCase())) {
                 returnValue = createNodeByType(interpreter, sceneType);
             } else {
                 BrsDevice.stderr.write(

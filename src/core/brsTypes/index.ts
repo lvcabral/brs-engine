@@ -40,6 +40,7 @@ import { Task } from "./nodes/Task";
 import { Timer } from "./nodes/Timer";
 import { Audio } from "./nodes/Audio";
 import { Field } from "./nodes/Field";
+import { ComponentDefinition } from "../scenegraph";
 import { getNodeType, SGNodeFactory } from "../scenegraph/SGNodeFactory";
 import { BrsObjects } from "./components/BrsObjects";
 
@@ -614,10 +615,11 @@ export function fromSGNode(node: RoSGNode): FlexObject {
  * */
 interface RootObjects {
     mGlobal: Global;
+    nodeDefMap: Map<string, ComponentDefinition>;
     rootScene?: Scene;
     focused?: RoSGNode;
     audio?: Audio;
     tasks: Task[];
     timers: Timer[];
 }
-export const rootObjects: RootObjects = { mGlobal: new Global([]), tasks: [], timers: [] };
+export const rootObjects: RootObjects = { mGlobal: new Global([]), nodeDefMap: new Map(), tasks: [], timers: [] };

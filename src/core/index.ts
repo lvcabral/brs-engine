@@ -307,6 +307,7 @@ export async function executeFile(payload: AppPayload, customOptions?: Partial<E
     let interpreter: Interpreter;
     if (components.size > 0) {
         interpreter = await getInterpreterWithSubEnvs(components, payload.manifest, options);
+        BrsTypes.rootObjects.nodeDefMap = components;
     } else {
         interpreter = new Interpreter(options);
     }
@@ -357,6 +358,7 @@ export async function executeTask(payload: TaskPayload, customOptions?: Partial<
     let interpreter: Interpreter;
     if (components.size > 0) {
         interpreter = await getInterpreterWithSubEnvs(components, payload.manifest, options);
+        BrsTypes.rootObjects.nodeDefMap = components;
     } else {
         postMessage(`warning,No SceneGraph components found!`);
         return;
@@ -546,8 +548,8 @@ async function runSource(
             return { exitReason: AppExitReason.PACKAGED, cipherText: cipherText, iv: iv };
         }
         // Update Source Map with the SceneGraph components (if exists)
-        if (interpreter.environment.nodeDefMap?.size) {
-            const components = interpreter.environment.nodeDefMap;
+        if (BrsTypes.rootObjects.nodeDefMap?.size) {
+            const components = BrsTypes.rootObjects.nodeDefMap;
             Array.from(components.values()).forEach((component: ComponentDefinition) => {
                 component.scripts.forEach((script) => {
                     const sourcePath = script.uri ?? script.xmlPath;

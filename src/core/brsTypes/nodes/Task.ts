@@ -15,6 +15,7 @@ import { Field, FieldKind, FieldModel } from "./Field";
 import { isThreadUpdate, TaskData, TaskState, ThreadUpdate } from "../../common";
 import SharedObject from "../../SharedObject";
 import { Global } from "./Global";
+import { Interpreter } from "../../interpreter";
 
 export class Task extends RoSGNode {
     readonly defaultFields: FieldModel[] = [
@@ -108,7 +109,7 @@ export class Task extends RoSGNode {
     }
 
     /** Message callback to handle observed fields with message port */
-    protected getNewEvents(wait: number) {
+    protected getNewEvents(_: Interpreter, wait: number) {
         if (this.taskBuffer && this.thread) {
             const timeout = wait === 0 ? undefined : wait;
             const result = this.taskBuffer.waitVersion(0, timeout);

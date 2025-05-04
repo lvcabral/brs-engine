@@ -141,7 +141,7 @@ export class Scene extends Group {
     }
 
     private handleKeyByNode(interpreter: Interpreter, hostNode: RoSGNode, key: BrsString, press: BrsBoolean): boolean {
-        const typeDef = interpreter.environment.nodeDefMap.get(hostNode.nodeSubtype.toLowerCase());
+        const typeDef = rootObjects.nodeDefMap.get(hostNode.nodeSubtype.toLowerCase());
         if (typeDef?.environment === undefined) {
             if (hostNode instanceof Group) {
                 return hostNode.handleKey(key.value, press.toBoolean());

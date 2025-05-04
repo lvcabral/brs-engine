@@ -231,7 +231,7 @@ export function createNodeByType(interpreter: Interpreter, type: BrsString): RoS
     // If this is a built-in node component, then return it.
     let node = SGNodeFactory.createNode(type.value) ?? BrsInvalid.Instance;
     if (node instanceof BrsInvalid) {
-        let typeDef = interpreter.environment.nodeDefMap.get(type.value.toLowerCase());
+        let typeDef = rootObjects.nodeDefMap.get(type.value.toLowerCase());
         if (typeDef) {
             if (typeDef.extends === SGNodeType.Scene) {
                 node = new Scene([], type.value);
@@ -260,8 +260,8 @@ export function createNodeByType(interpreter: Interpreter, type: BrsString): RoS
     return node;
 }
 
-export function customNodeExists(interpreter: Interpreter, node: BrsString) {
-    return interpreter.environment.nodeDefMap.has(node.value.toLowerCase());
+export function customNodeExists(node: BrsString) {
+    return rootObjects.nodeDefMap.has(node.value.toLowerCase());
 }
 
 /** Function to initialize Nodes with its Fields, Children and Environment */
@@ -283,7 +283,7 @@ export function initializeNode(
             // Add the current typedef to the subtypeHierarchy
             subtypeHierarchy.set(typeDef.name!.toLowerCase(), typeDef.extends || SGNodeType.Node);
 
-            typeDef = interpreter.environment.nodeDefMap.get(typeDef.extends.toLowerCase());
+            typeDef = rootObjects.nodeDefMap.get(typeDef.extends.toLowerCase());
             if (typeDef) typeDefStack.push(typeDef);
         }
 
@@ -353,7 +353,7 @@ export function initializeNode(
 /** Function to Initialize a Task on its own Worker thread */
 export function initializeTask(interpreter: Interpreter, taskData: TaskData) {
     const type = taskData.name;
-    let typeDef = interpreter.environment.nodeDefMap.get(type.toLowerCase());
+    let typeDef = rootObjects.nodeDefMap.get(type.toLowerCase());
     if (typeDef) {
         //use typeDef object to tack on all the bells & whistles of a custom node
         let typeDefStack: ComponentDefinition[] = [];
@@ -366,7 +366,7 @@ export function initializeTask(interpreter: Interpreter, taskData: TaskData) {
             // Add the current typedef to the subtypeHierarchy
             subtypeHierarchy.set(typeDef.name!.toLowerCase(), typeDef.extends || SGNodeType.Task);
 
-            typeDef = interpreter.environment.nodeDefMap.get(typeDef.extends.toLowerCase());
+            typeDef = rootObjects.nodeDefMap.get(typeDef.extends.toLowerCase());
             if (typeDef) typeDefStack.push(typeDef);
         }
 

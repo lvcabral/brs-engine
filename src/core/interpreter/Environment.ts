@@ -53,9 +53,6 @@ export class Environment {
     private mPointer: RoAssociativeArray;
     private rootM: RoAssociativeArray;
 
-    /** Map holding component definitions of all parsed xml component files */
-    public nodeDefMap = new Map<string, ComponentDefinition>();
-
     /** The node in which field-change observers are registered. */
     public hostNode: RoSGNode | undefined;
 
@@ -268,7 +265,6 @@ export class Environment {
     public createSubEnvironment(includeModuleScope: boolean = true): Environment {
         let newEnvironment = new Environment(this.mPointer, this.rootM);
         newEnvironment.global = this.global;
-        newEnvironment.nodeDefMap = this.nodeDefMap;
         newEnvironment.hostNode = this.hostNode;
         if (includeModuleScope) {
             newEnvironment.module = this.module;
