@@ -11,7 +11,6 @@ import {
     Callable,
     Dialog,
     getTextureManager,
-    Int32,
     isBrsString,
     RoArray,
     RoBitmap,
