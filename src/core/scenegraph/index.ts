@@ -206,8 +206,6 @@ export async function getInterpreterWithSubEnvs(
     const lexerParserFn = getLexerParserFn(fs, manifest, options);
     let entryPoint = options.entryPoint ?? false;
 
-    interpreter.environment.nodeDefMap = componentMap;
-
     let componentScopeResolver = new ComponentScopeResolver(componentMap, lexerParserFn);
     await pSettle(
         Array.from(componentMap).map(async (componentKV) => {

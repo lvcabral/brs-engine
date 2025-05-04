@@ -62,7 +62,7 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
             if (isBrsEvent(msg)) {
                 return msg;
             }
-            this.updateMessageQueue(ms);
+            this.updateMessageQueue(interpreter, ms);
             const cmd = BrsDevice.checkBreakCommand(interpreter.debugMode);
             if (cmd === DebugCommand.BREAK || cmd === DebugCommand.EXIT) {
                 interpreter.debugMode = cmd === DebugCommand.BREAK;
@@ -72,10 +72,10 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
         return BrsInvalid.Instance;
     }
 
-    private updateMessageQueue(wait?: number) {
+    private updateMessageQueue(interpreter?: Interpreter, wait?: number) {
         if (this.callbackMap.size > 0) {
             for (const [_, callback] of this.callbackMap.entries()) {
-                const events = callback(wait);
+                const events = callback(interpreter, wait);
                 this.messageQueue.push(...events.filter(isBrsEvent));
             }
         }

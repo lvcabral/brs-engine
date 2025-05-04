@@ -382,7 +382,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             if (!this.triedInitFocus) {
                 // Only try initial focus once
                 this.triedInitFocus = true;
-                const typeDef = interpreter.environment.nodeDefMap.get(this.nodeSubtype.toLowerCase());
+                const typeDef = rootObjects.nodeDefMap.get(this.nodeSubtype.toLowerCase());
                 if (typeDef?.initialFocus) {
                     const initialFocus = new BrsString(typeDef.initialFocus);
                     const childToFocus = this.findNodeById(this, initialFocus);
@@ -501,7 +501,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     }
 
     /** Message callback to handle observed fields with message port */
-    protected getNewEvents(_wait: number) {
+    protected getNewEvents(_interpreter: Interpreter, _wait: number) {
         // To be overridden by the Task class
         return new Array<BrsEvent>();
     }
@@ -669,7 +669,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             },
             impl: (interpreter: Interpreter, functionName: BrsString, ...functionArgs: BrsType[]) => {
                 // We need to search the callee's environment for this function rather than the caller's.
-                let componentDef = interpreter.environment.nodeDefMap.get(this.nodeSubtype.toLowerCase());
+                let componentDef = rootObjects.nodeDefMap.get(this.nodeSubtype.toLowerCase());
 
                 // Only allow public functions (defined in the interface) to be called.
                 if (componentDef && functionName.value in componentDef.functions) {
