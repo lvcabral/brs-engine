@@ -361,13 +361,20 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
             returns: ValueKind.Object,
         },
         impl: (interpreter: Interpreter, sceneType: BrsString) => {
-            const res = interpreter.manifest.get("ui_resolutions") ?? "HD";
+            const manifest = interpreter.manifest;
+            const res = manifest.get("ui_resolutions") ?? "HD";
             if (res.length && res !== "HD") {
                 const resArray = res.split(",");
                 if (resArray[0].toUpperCase() === "FHD") {
                     this.resolution = "FHD";
                     this.width = 1920;
                     this.height = 1080;
+                    this.canvas.width = this.width;
+                    this.canvas.height = this.height;
+                } else if (resArray[0].toUpperCase() === "SD") {
+                    this.resolution = "SD";
+                    this.width = 720;
+                    this.height = 480;
                     this.canvas.width = this.width;
                     this.canvas.height = this.height;
                 }
@@ -387,8 +394,9 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
             }
             if (returnValue instanceof Scene) {
                 this.sceneType = sceneType;
+                const autoSub = manifest.get("uri_resolution_autosub") ?? "";
                 rootObjects.rootScene = returnValue;
-                rootObjects.rootScene.setDesignResolution(this.resolution);
+                rootObjects.rootScene.setDesignResolution(this.resolution, autoSub);
             } else {
                 BrsDevice.stderr.write(
                     `warning,BRIGHTSCRIPT: ERROR: roSGScreen.CreateScene: Type mismatch converting from '${

@@ -472,7 +472,13 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
 
     /** Loads a bitmap from the given URI */
     loadBitmap(uri: string) {
-        return uri?.trim() ? getTextureManager().loadTexture(uri, this.httpAgent.customHeaders) : undefined;
+        if (!uri.trim()) {
+            return undefined;
+        }
+        if (rootObjects.rootScene?.subSearch && rootObjects.rootScene?.subReplace) {
+            uri = uri.replace(rootObjects.rootScene.subSearch, rootObjects.rootScene.subReplace);
+        }
+        return getTextureManager().loadTexture(uri, this.httpAgent.customHeaders);
     }
 
     /** Returns the largest dimensions of the icons from the passed fields */
