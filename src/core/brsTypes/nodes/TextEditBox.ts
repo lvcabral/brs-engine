@@ -172,7 +172,6 @@ export class TextEditBox extends Group {
         const size = this.getDimensions();
         const rotation = angle + this.getRotation();
         const combinedOpacity = opacity * this.getOpacity();
-        const isActive = this.getFieldValueJS("active") as boolean;
         const text = this.getFieldValueJS("text") as string;
         const secureMode = this.getFieldValueJS("secureMode") as boolean;
         const now = Date.now(); // Get current time for checks
@@ -228,6 +227,25 @@ export class TextEditBox extends Group {
         this.secureLabel.setFieldValue("visible", BrsBoolean.from(!showHint && secureMode));
 
         // Draw Cursor if active
+        this.renderCursor(drawTrans[0], drawTrans[1], size.height, now, text, secureMode, secureText, draw2D);
+
+        this.updateBoundingRects(rect, origin, rotation);
+        this.renderChildren(interpreter, drawTrans, rotation, combinedOpacity, draw2D);
+        this.updateParentRects(origin, angle);
+        this.isDirty = false;
+    }
+
+    private renderCursor(
+        x: number,
+        y: number,
+        height: number,
+        now: number,
+        text: string,
+        secureMode: boolean,
+        secureText: string,
+        draw2D?: IfDraw2D
+    ) {
+        const isActive = this.getFieldValueJS("active") as boolean;
         if (isActive && this.cursor?.isValid()) {
             if (now - this.lastCursorToggleTime > this.cursorBlinkInterval) {
                 this.cursorVisible = !this.cursorVisible;
@@ -244,10 +262,10 @@ export class TextEditBox extends Group {
                     textToMeasure = text.substring(0, Math.min(cursorPosition, text.length));
                 }
 
-                const measured = this.drawFont.measureTextWidth(textToMeasure);
-                const cursorX = drawTrans[0] + this.paddingX + measured.width;
+                const measured = this.drawFont!.measureTextWidth(textToMeasure);
+                const cursorX = x + this.paddingX + measured.width;
                 // Center cursor vertically based on its own height relative to the box height
-                const cursorY = drawTrans[1] + (size.height - this.cursor.height) / 2;
+                const cursorY = y + (height - this.cursor.height) / 2;
                 const cursorRect = {
                     x: cursorX,
                     y: cursorY,
@@ -259,9 +277,5 @@ export class TextEditBox extends Group {
                 this.drawImage(this.cursor, cursorRect, 0, 1.0, draw2D);
             }
         }
-        this.updateBoundingRects(rect, origin, rotation);
-        this.renderChildren(interpreter, drawTrans, rotation, combinedOpacity, draw2D);
-        this.updateParentRects(origin, angle);
-        this.isDirty = false;
     }
 }
