@@ -366,11 +366,14 @@ export class ArrayGrid extends Group {
     }
 
     protected refreshContent() {
-        const content = this.getFieldValue("content") as ContentNode;
         const numCols = (this.getFieldValueJS("numColumns") as number) || 1;
-        const sections = content.getNodeChildren();
         this.content.length = 0;
         this.metadata.length = 0;
+        const content = this.getFieldValue("content");
+        if (!(content instanceof ContentNode)) {
+            return;
+        }
+        const sections = content.getNodeChildren();
         let itemIndex = 0;
         for (const section of sections) {
             if (section.getFieldValueJS("ContentType")?.toLowerCase() === "section") {

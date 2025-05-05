@@ -134,15 +134,17 @@ export class CheckList extends LabelList {
         if (checkedState instanceof RoArray) {
             states = jsValueOf(checkedState);
         }
-        const content = this.getFieldValue("content") as ContentNode;
-        const contentCount = content.getNodeChildren().length;
-        if (states.length < contentCount) {
-            states.length = contentCount;
-        } else if (states.length > contentCount) {
-            states.splice(contentCount);
+        const content = this.getFieldValue("content");
+        if (content instanceof ContentNode) {
+            const contentCount = content.getNodeChildren().length;
+            if (states.length < contentCount) {
+                states.length = contentCount;
+            } else if (states.length > contentCount) {
+                states.splice(contentCount);
+            }
         }
         const result = brsValueOf(states);
         this.setFieldValue("checkedState", result);
         return result;
-    }
+}
 }
