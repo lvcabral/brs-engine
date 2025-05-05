@@ -366,43 +366,51 @@ export class ArrayGrid extends Group {
     }
 
     protected refreshContent() {
-        const content = this.getFieldValue("content") as ContentNode;
         const numCols = (this.getFieldValueJS("numColumns") as number) || 1;
-        const sections = content.getNodeChildren();
         this.content.length = 0;
         this.metadata.length = 0;
+        const content = this.getFieldValue("content");
+        if (!(content instanceof ContentNode)) {
+            return;
+        }
+        const sections = content.getNodeChildren();
         let itemIndex = 0;
         for (const section of sections) {
             if (section.getFieldValueJS("ContentType")?.toLowerCase() === "section") {
-                const content = section.getNodeChildren();
-                if (content.length === 0) {
-                    continue;
-                }
-                content.forEach((_item, index) => {
-                    const metadata = { index: itemIndex, divider: false, sectionTitle: "" };
-                    if (index === 0) {
-                        metadata.divider = true;
-                        metadata.sectionTitle = section.getFieldValueJS("title") ?? "";
-                    }
-                    this.metadata.push(metadata);
-                    itemIndex++;
-                });
-                this.content.push(...content);
-                // check if the items count is multiple of numCols, otherwise fill with empty nodes
-                const remainder = content.length % numCols;
-                if (remainder > 0) {
-                    const emptyContent = new ContentNode("_placeholder_");
-                    const emptyMetadata = { index: -1, divider: false, sectionTitle: "" };
-                    for (let i = 0; i < numCols - remainder; i++) {
-                        this.content.push(emptyContent);
-                        this.metadata.push(emptyMetadata);
-                    }
-                }
+                itemIndex = this.processSection(section, itemIndex, numCols);
             }
         }
         if (this.content.length === 0 && sections.length > 0) {
             this.content.push(...sections);
         }
+    }
+
+    private processSection(section: RoSGNode, itemIndex: number, numCols: number) {
+        const content = section.getNodeChildren();
+        if (content.length === 0) {
+            return itemIndex;
+        }
+        content.forEach((_item, index) => {
+            const metadata = { index: itemIndex, divider: false, sectionTitle: "" };
+            if (index === 0) {
+                metadata.divider = true;
+                metadata.sectionTitle = section.getFieldValueJS("title") ?? "";
+            }
+            this.metadata.push(metadata);
+            itemIndex++;
+        });
+        this.content.push(...content);
+        // check if the items count is multiple of numCols, otherwise fill with empty nodes
+        const remainder = content.length % numCols;
+        if (remainder > 0) {
+            const emptyContent = new ContentNode("_placeholder_");
+            const emptyMetadata = { index: -1, divider: false, sectionTitle: "" };
+            for (let i = 0; i < numCols - remainder; i++) {
+                this.content.push(emptyContent);
+                this.metadata.push(emptyMetadata);
+            }
+        }
+        return itemIndex;
     }
 
     protected createItemComponent(interpreter: Interpreter, itemRect: Rect, content: ContentNode) {

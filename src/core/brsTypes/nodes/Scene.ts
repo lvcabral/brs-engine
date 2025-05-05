@@ -194,6 +194,10 @@ export class Scene extends Group {
             }
             return BrsBoolean.False;
         }, nodeEnv);
-        return handled instanceof BrsBoolean && handled.toBoolean();
+        const keyHandled = handled instanceof BrsBoolean && handled.toBoolean();
+        if (!keyHandled && hostNode instanceof Group) {
+            return hostNode.handleKey(key.value, press.toBoolean());
+        }
+        return keyHandled;
     }
 }
