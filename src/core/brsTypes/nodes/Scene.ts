@@ -110,12 +110,10 @@ export class Scene extends Group {
         const rotation = angle + this.getRotation();
         const backColor = this.getFieldValueJS("backgroundColor") as number;
         opacity = opacity * this.getOpacity();
-        draw2D?.doClearCanvas(backColor);
-        const backURI = this.getFieldValueJS("backgroundUri") as string;
-        if (draw2D && backURI.trim() !== "") {
-            const textureManager = getTextureManager();
-            const bitmap = textureManager.loadTexture(backURI, this.httpAgent.customHeaders);
-            if (bitmap instanceof RoBitmap && bitmap.isValid()) {
+        if (draw2D) {
+            draw2D.doClearCanvas(backColor);
+            const bitmap = this.getBitmap("backgroundUri");
+            if (bitmap?.isValid()) {
                 const scaleX = this.ui.width / bitmap.width;
                 const scaleY = this.ui.height / bitmap.height;
                 draw2D.doDrawScaledObject(0, 0, scaleX, scaleY, bitmap, undefined, opacity);

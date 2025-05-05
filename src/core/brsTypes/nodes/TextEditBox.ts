@@ -3,7 +3,7 @@ import { Group } from "./Group";
 import { AAMember } from "../components/RoAssociativeArray";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D } from "../interfaces/IfDraw2D";
-import { Float, getTextureManager, RoBitmap, Label, Font, BrsString, RoFont, Int32 } from "..";
+import { Float, RoBitmap, Label, Font, BrsString, RoFont, Int32 } from "..";
 import { BrsBoolean } from "../BrsType";
 import { convertHexColor } from "../../scenegraph/SGUtil";
 
@@ -48,8 +48,6 @@ export class TextEditBox extends Group {
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
 
-        this.background = getTextureManager().loadTexture(this.getFieldValueJS("backgroundUri") || this.backUri);
-
         if (this.resolution === "FHD") {
             this.height = 72;
             this.paddingX = 33;
@@ -59,8 +57,9 @@ export class TextEditBox extends Group {
             this.paddingX = 22;
             this.paddingY = 12; // Approximate vertical centering
         }
+        this.background = this.loadBitmap(this.backUri);
         const cursorUri = `common:/images/cursor_textInput_${this.resolution}.png`;
-        this.cursor = getTextureManager().loadTexture(cursorUri);
+        this.cursor = this.loadBitmap(cursorUri);
         this.setFieldValue("height", new Float(this.height));
 
         // Create Labels for text and hint
@@ -188,15 +187,11 @@ export class TextEditBox extends Group {
             this.secureLabel.setFieldValue("width", labelWidthFloat);
             this.hintLabel.setFieldValue("width", labelWidthFloat);
             this.copyField(this.secureLabel, "color", "textColor");
-
             // Background Image
             const backgroundUri = this.getFieldValueJS("backgroundUri") as string;
-            const currentBackUri = backgroundUri || this.backUri;
-            if (this.background?.getImageName() !== currentBackUri) {
-                this.background = getTextureManager().loadTexture(currentBackUri);
+            if (backgroundUri && this.background?.getImageName() !== backgroundUri) {
+                this.background = this.getBitmap("backgroundUri");
             }
-
-            this.isDirty = false; // Reset dirty flag after updates
         }
 
         if (this.drawFont === undefined) {
@@ -267,5 +262,6 @@ export class TextEditBox extends Group {
         this.updateBoundingRects(rect, origin, rotation);
         this.renderChildren(interpreter, drawTrans, rotation, combinedOpacity, draw2D);
         this.updateParentRects(origin, angle);
+        this.isDirty = false;
     }
 }

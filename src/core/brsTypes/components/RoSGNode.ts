@@ -464,9 +464,14 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         return BrsInvalid.Instance;
     }
 
-    /** Load a bitmap based on one of the fields of the node */
+    /** Returns a bitmap based on one of the fields of the node */
     getBitmap(fieldName: string) {
         const uri = this.getFieldValueJS(fieldName) as string;
+        return this.loadBitmap(uri);
+    }
+
+    /** Loads a bitmap from the given URI */
+    loadBitmap(uri: string) {
         return uri?.trim() ? getTextureManager().loadTexture(uri, this.httpAgent.customHeaders) : undefined;
     }
 

@@ -147,7 +147,7 @@ export class Button extends Group {
         let width = 0;
         let height = 0;
         if (uri) {
-            const bmp = getTextureManager().loadTexture(uri, this.httpAgent.customHeaders);
+            const bmp = this.loadBitmap(uri);
             if (bmp) {
                 width = bmp.width;
                 height = bmp.height;
