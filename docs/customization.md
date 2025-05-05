@@ -23,7 +23,7 @@ const deviceInfo = {
   customFeatures: [], // String array with custom features (see below)
   localIps: ["eth1,127.0.0.1"], // In a Browser isn't possible to get a real IP, populate it on NodeJS or Electron
   startTime: Date.now(),
-  audioVolume: 40,
+  audioVolume: 50, // Defines the default volume level for system sounds - valid: (0-100)
   maxFps: 60,
   corsProxy: "https://your-cors-proxy-instance.yourdomain.com/", // (optional) Add your CORS-Anywhere URL here
 };

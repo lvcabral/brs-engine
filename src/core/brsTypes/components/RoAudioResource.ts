@@ -69,10 +69,14 @@ export class RoAudioResource extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, volume: Int32, index: Int32) => {
-            // TODO: Check behavior when index > maxSimulStreams
-            postMessage(`audio,trigger,${this.audioName},${volume.toString()},${index.toString()}`);
-            this.currentIndex = index.getValue();
-            this.playing = true;
+            const stream = index.getValue();
+            if (stream >= 0 && stream < this.maxStreams) {
+                const sysIndex = DefaultSounds.findIndex((wav) => wav === this.audioName.toLowerCase());
+                const playVolume = sysIndex > -1 ? BrsDevice.deviceInfo.audioVolume : volume.getValue();
+                postMessage(`audio,trigger,${this.audioName},${playVolume},${stream}`);
+                this.currentIndex = stream;
+                this.playing = true;
+            }
             return BrsInvalid.Instance;
         },
     });

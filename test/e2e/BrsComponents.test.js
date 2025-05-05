@@ -501,7 +501,7 @@ describe("end to end brightscript functions", () => {
             "Stereo",
             " 0",
             "true",
-            " 40",
+            " 50",
             "false",
             "false",
             "false",
