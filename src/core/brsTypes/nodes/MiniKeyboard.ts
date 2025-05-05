@@ -10,7 +10,6 @@ import {
     BrsType,
     Float,
     Font,
-    getTextureManager,
     Int32,
     isBrsString,
     RoBitmap,
@@ -35,8 +34,8 @@ export class MiniKeyboard extends Group {
     private lowerCase: boolean;
     private keyColor: number;
     private focusedKeyColor: number;
-    private readonly bmpBack?: RoBitmap;
-    private readonly bmpFocus?: RoBitmap;
+    private bmpBack?: RoBitmap;
+    private bmpFocus?: RoBitmap;
     private readonly textEditX: number;
     private readonly iconOffsetX: number;
     private readonly iconOffsetY: number;
@@ -98,14 +97,14 @@ export class MiniKeyboard extends Group {
         }
         this.textEditBox.setTranslation([this.textEditX, 0]);
         this.textEditBox.setFieldValue("maxTextLength", new Int32(25));
-        this.bmpBack = getTextureManager().loadTexture(`common:/images/keyboard_mini_${this.resolution}.png`);
+        this.bmpBack = this.loadBitmap(`common:/images/keyboard_mini_${this.resolution}.png`);
         this.setFieldValue("width", new Float(this.bmpBack!.width + this.widthOver));
         this.setFieldValue("height", new Float(this.bmpBack!.height + this.heightOver));
 
-        this.bmpFocus = getTextureManager().loadTexture("common:/images/focus_keyboard.9.png");
+        this.bmpFocus = this.loadBitmap("common:/images/focus_keyboard.9.png");
         this.icons.forEach((icon) => {
             const uri = `common:/images/icon_${icon}_${this.resolution}.png`;
-            const bmp = getTextureManager().loadTexture(uri);
+            const bmp = this.loadBitmap(uri);
             if (bmp?.isValid()) {
                 this.bmpIcons.set(icon, bmp);
             }
@@ -226,6 +225,16 @@ export class MiniKeyboard extends Group {
             this.textEditBox.setFieldValue("visible", BrsBoolean.from(this.showTextEdit));
             this.setFieldValue("height", new Float(rect.height));
             this.lowerCase = this.getFieldValueJS("lowerCase") as boolean;
+            // Background Image
+            const backgroundUri = this.getFieldValueJS("keyboardBitmapUri") as string;
+            if (backgroundUri && this.bmpBack?.getImageName() !== backgroundUri) {
+                this.bmpBack = this.getBitmap("keyboardBitmapUri");
+            }
+            // Focus Image
+            const focusUri = this.getFieldValueJS("focusBitmapUri") as string;
+            if (focusUri && this.bmpFocus?.getImageName() !== focusUri) {
+                this.bmpFocus = this.getBitmap("focusBitmapUri");
+            }
         }
         rect.height = this.showTextEdit ? this.bmpBack!.height + this.heightOver : this.bmpBack!.height;
         const topY = rect.y + (this.showTextEdit ? this.iconOffsetY : 0);

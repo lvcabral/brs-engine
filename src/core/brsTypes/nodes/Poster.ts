@@ -57,8 +57,8 @@ export class Poster extends Group {
             if (typeof uri === "string" && uri.trim() !== "" && this.uri !== uri) {
                 this.uri = uri;
                 const loadStatus = this.loadUri(uri);
-                if (loadStatus !== "ready" && this.getFieldValueJS("failedBitmapUri") !== "") {
-                    this.loadUri(this.getFieldValueJS("failedBitmapUri"));
+                if (loadStatus !== "ready") {
+                    this.loadUri("failedBitmapUri");
                 }
                 super.set(new BrsString("loadStatus"), new BrsString(loadStatus));
             } else if (typeof uri !== "string" || uri.trim() === "") {
@@ -112,9 +112,8 @@ export class Poster extends Group {
     }
 
     private loadUri(uri: string): string {
-        const textureManager = getTextureManager();
         let loadStatus = "failed";
-        this.bitmap = textureManager.loadTexture(uri, this.httpAgent.customHeaders);
+        this.bitmap = this.loadBitmap(uri);
         if (this.bitmap?.isValid()) {
             const margins = { left: 0, right: 0, top: 0, bottom: 0 };
             if (this.bitmap.ninePatch) {
@@ -127,7 +126,7 @@ export class Poster extends Group {
                 const loadWidth = this.getFieldValueJS("loadWidth") as number;
                 const loadHeight = this.getFieldValueJS("loadHeight") as number;
                 if (loadWidth > 0 && loadHeight > 0) {
-                    this.bitmap = textureManager.resizeTexture(this.bitmap, loadWidth, loadHeight);
+                    this.bitmap = getTextureManager().resizeTexture(this.bitmap, loadWidth, loadHeight);
                 }
             }
             super.set(new BrsString("bitmapWidth"), new Float(this.bitmap.width));
