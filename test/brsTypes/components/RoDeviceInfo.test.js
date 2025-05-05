@@ -575,7 +575,7 @@ describe("RoDeviceInfo", () => {
                 let method = deviceInfo.getMethod("getSoundEffectsVolume");
 
                 expect(method).toBeTruthy();
-                expect(method.call(interpreter)).toEqual(new Int32(40));
+                expect(method.call(interpreter)).toEqual(new Int32(50));
             });
         });
         describe("isAudioGuideEnabled", () => {
