@@ -2,7 +2,7 @@ import { FieldModel } from "./Field";
 import { Group } from "./Group";
 import { AAMember } from "../components/RoAssociativeArray";
 import { Interpreter } from "../../interpreter";
-import { IfDraw2D } from "../interfaces/IfDraw2D";
+import { IfDraw2D, Rect } from "../interfaces/IfDraw2D";
 import { Float, RoBitmap, Label, Font, BrsString, RoFont, Int32 } from "..";
 import { BrsBoolean } from "../BrsType";
 import { convertHexColor } from "../../scenegraph/SGUtil";
@@ -193,10 +193,6 @@ export class TextEditBox extends Group {
             }
         }
 
-        if (this.drawFont === undefined) {
-            const font = this.textLabel.getFieldValue("font") as Font;
-            this.drawFont = font.createDrawFont();
-        }
         const rect = { x: drawTrans[0], y: drawTrans[1], width: size.width, height: size.height };
 
         // Draw Background
@@ -206,8 +202,23 @@ export class TextEditBox extends Group {
 
         // Determine which label to show and configure secure text
         const showHint = text.length === 0;
-        let secureText = "";
+        const secureText = this.getSecureText(text, now, secureMode, showHint);
 
+        // Set label visibility AFTER calculating secure text
+        this.textLabel.setFieldValue("visible", BrsBoolean.from(!showHint && !secureMode));
+        this.hintLabel.setFieldValue("visible", BrsBoolean.from(showHint));
+        this.secureLabel.setFieldValue("visible", BrsBoolean.from(!showHint && secureMode));
+
+        this.renderCursor(rect, now, text, secureMode, secureText, draw2D);
+
+        this.updateBoundingRects(rect, origin, rotation);
+        this.renderChildren(interpreter, drawTrans, rotation, combinedOpacity, draw2D);
+        this.updateParentRects(origin, angle);
+        this.isDirty = false;
+    }
+
+    private getSecureText(text: string, now: number, secureMode: boolean, showHint: boolean): string {
+        let secureText = "";
         if (secureMode && !showHint) {
             if (now - this.lastCharInputTime < this.secureDisplayTimeout && text.length > 0) {
                 // Show last character if within timeout
@@ -220,25 +231,11 @@ export class TextEditBox extends Group {
             }
             this.secureLabel.setFieldValue("text", new BrsString(secureText));
         }
-
-        // Set label visibility AFTER calculating secure text
-        this.textLabel.setFieldValue("visible", BrsBoolean.from(!showHint && !secureMode));
-        this.hintLabel.setFieldValue("visible", BrsBoolean.from(showHint));
-        this.secureLabel.setFieldValue("visible", BrsBoolean.from(!showHint && secureMode));
-
-        // Draw Cursor if active
-        this.renderCursor(drawTrans[0], drawTrans[1], size.height, now, text, secureMode, secureText, draw2D);
-
-        this.updateBoundingRects(rect, origin, rotation);
-        this.renderChildren(interpreter, drawTrans, rotation, combinedOpacity, draw2D);
-        this.updateParentRects(origin, angle);
-        this.isDirty = false;
+        return secureText;
     }
 
     private renderCursor(
-        x: number,
-        y: number,
-        height: number,
+        rect: Rect,
         now: number,
         text: string,
         secureMode: boolean,
@@ -246,36 +243,40 @@ export class TextEditBox extends Group {
         draw2D?: IfDraw2D
     ) {
         const isActive = this.getFieldValueJS("active") as boolean;
-        if (isActive && this.cursor?.isValid()) {
-            if (now - this.lastCursorToggleTime > this.cursorBlinkInterval) {
-                this.cursorVisible = !this.cursorVisible;
-                this.lastCursorToggleTime = now;
+        if (!isActive || !this.cursor?.isValid()) {
+            return;
+        }
+        if (now - this.lastCursorToggleTime > this.cursorBlinkInterval) {
+            this.cursorVisible = !this.cursorVisible;
+            this.lastCursorToggleTime = now;
+        }
+        if (this.cursorVisible) {
+            const cursorPosition = this.getFieldValueJS("cursorPosition") as number;
+            let textToMeasure: string;
+
+            if (secureMode) {
+                // Use the potentially mixed secure/real text for measurement
+                textToMeasure = secureText.substring(0, Math.min(cursorPosition, secureText.length));
+            } else {
+                textToMeasure = text.substring(0, Math.min(cursorPosition, text.length));
             }
-            if (this.cursorVisible) {
-                const cursorPosition = this.getFieldValueJS("cursorPosition") as number;
-                let textToMeasure: string;
-
-                if (secureMode) {
-                    // Use the potentially mixed secure/real text for measurement
-                    textToMeasure = secureText.substring(0, Math.min(cursorPosition, secureText.length));
-                } else {
-                    textToMeasure = text.substring(0, Math.min(cursorPosition, text.length));
-                }
-
-                const measured = this.drawFont!.measureTextWidth(textToMeasure);
-                const cursorX = x + this.paddingX + measured.width;
-                // Center cursor vertically based on its own height relative to the box height
-                const cursorY = y + (height - this.cursor.height) / 2;
-                const cursorRect = {
-                    x: cursorX,
-                    y: cursorY,
-                    width: this.cursor.width,
-                    height: this.cursor.height,
-                };
-
-                // Draw cursor with full opacity regardless of combinedOpacity for visibility
-                this.drawImage(this.cursor, cursorRect, 0, 1.0, draw2D);
+            if (this.drawFont === undefined) {
+                const font = this.textLabel.getFieldValue("font") as Font;
+                this.drawFont = font.createDrawFont();
             }
+            // Measure the text to determine cursor position
+            const measured = this.drawFont.measureTextWidth(textToMeasure);
+            const cursorX = rect.x + this.paddingX + measured.width;
+            // Center cursor vertically based on its own height relative to the box height
+            const cursorY = rect.y + (rect.height - this.cursor.height) / 2;
+            const cursorRect = {
+                x: cursorX,
+                y: cursorY,
+                width: this.cursor.width,
+                height: this.cursor.height,
+            };
+            // Draw cursor
+            this.drawImage(this.cursor, cursorRect, 0, 1.0, draw2D);
         }
     }
 }
