@@ -1,5 +1,5 @@
 import { FieldModel } from "./Field";
-import { AAMember, BrsString, Float, Label, Poster, rootObjects, Font, getTextureManager } from "..";
+import { AAMember, BrsString, Float, Label, Poster, rootObjects, Font } from "..";
 import { Group } from "./Group";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D } from "../interfaces/IfDraw2D";
