@@ -306,7 +306,8 @@ export class Keyboard extends Group {
             let keyFocused = isFocused && this.keyFocus.col === 0 && this.keyFocus.row === i;
             let offX = this.offsetX;
             if (i > 2) {
-                keyFocused = isFocused &&
+                keyFocused =
+                    isFocused &&
                     this.keyFocus.col === 0 &&
                     this.keyFocus.row === 3 &&
                     ((i === 3 && this.keyFocus.cursor === -1) || (i === 4 && this.keyFocus.cursor === 1));
