@@ -80,7 +80,7 @@ export const defaultDeviceInfo: DeviceInfo = {
     },
     localIps: ["eth1,127.0.0.1"], // In a Browser is not possible to get a real IP, populate it on NodeJS or Electron.
     startTime: Date.now(),
-    audioVolume: 40,
+    audioVolume: 50, // Defines the default volume level for system sounds - valid: (0-100)
     registry: new Map(),
     maxFps: 60,
     platform: platform,
