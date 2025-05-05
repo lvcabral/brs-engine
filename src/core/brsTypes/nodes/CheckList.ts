@@ -146,5 +146,5 @@ export class CheckList extends LabelList {
         const result = brsValueOf(states);
         this.setFieldValue("checkedState", result);
         return result;
-}
+    }
 }
