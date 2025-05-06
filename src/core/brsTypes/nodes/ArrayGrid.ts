@@ -83,6 +83,7 @@ export class ArrayGrid extends Group {
     protected readonly marginX: number;
     protected readonly marginY: number;
     protected readonly gap: number;
+    protected readonly lineHeight: number;
     protected focusIndex: number = 0;
     protected currRow: number = 0;
     protected wrap: boolean = false;
@@ -100,6 +101,7 @@ export class ArrayGrid extends Group {
         if (this.resolution === "FHD") {
             this.marginX = 36;
             this.marginY = 6;
+            this.lineHeight = 4.5;
             this.setFieldValue("wrapDividerHeight", new Float(36));
             this.setFieldValue("sectionDividerHeight", new Float(60));
             this.setFieldValue("sectionDividerMinWidth", new Float(126));
@@ -107,6 +109,7 @@ export class ArrayGrid extends Group {
         } else {
             this.marginX = 24;
             this.marginY = 4;
+            this.lineHeight = 3;
             this.setFieldValue("wrapDividerHeight", new Float(24));
             this.setFieldValue("sectionDividerHeight", new Float(40));
             this.setFieldValue("sectionDividerMinWidth", new Float(117));
@@ -341,7 +344,7 @@ export class ArrayGrid extends Group {
         }
         const bmp = this.getBitmap("sectionDividerBitmapUri");
         if (bmp?.isValid()) {
-            const height = bmp.ninePatch ? 2 : bmp.height;
+            const height = bmp.ninePatch ? this.lineHeight : bmp.height;
             const rect = {
                 x: divRect.x + margin,
                 y: divRect.y + Math.round((dividerHeight - height) / 2),
@@ -357,7 +360,7 @@ export class ArrayGrid extends Group {
         const bmp = this.getBitmap("wrapDividerBitmapUri");
         const dividerHeight = this.getFieldValueJS("wrapDividerHeight") as number;
         if (bmp?.isValid()) {
-            const height = bmp.ninePatch ? 2 : bmp.height;
+            const height = bmp.ninePatch ? this.lineHeight : bmp.height;
             const topOffset = Math.round((dividerHeight - height) / 2);
             const rect = { ...itemRect, y: itemRect.y + topOffset, height: height };
             this.drawImage(bmp, rect, 0, opacity, draw2D);
