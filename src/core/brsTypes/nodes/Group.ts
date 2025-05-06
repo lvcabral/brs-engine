@@ -248,7 +248,6 @@ export class Group extends RoSGNode {
                 text = measured.text;
             }
             this.cachedLines[index] = measured;
-            //console.debug("cached label text", fullText, this.getId());
         } else {
             measured = this.cachedLines[index];
             text = measured.text;

@@ -115,7 +115,7 @@ export class LabelList extends ArrayGrid {
         const displayRows = Math.min(this.content.length, numRows);
         const itemSize = this.getFieldValueJS("itemSize") as number[];
         const itemRect = { ...rect, width: itemSize[0], height: itemSize[1] };
-        let sectionIndex = displayRows;
+        let sectionIndex = displayRows + 1;
         for (let r = 0; r < displayRows; r++) {
             const index = this.getIndex(r - this.currRow);
             const focused = index === this.focusIndex;
