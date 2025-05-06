@@ -16,6 +16,8 @@ sub main()
 
     print "[post_try] a =" a
 	subFunc(a + 1)
+
+	print "[return in try] = "; returnInTry()
 end sub
 
 function subFunc(a)
@@ -40,3 +42,12 @@ sub thirdLevel()
 	print "[thirdLevel]"
 	throw {message: "subFunc custom error message!", number: 6502, customField: false}
 end sub
+
+function returnInTry()
+    try
+        return "success"
+    catch e
+        return "fail"
+    end try
+    return "fail"
+end function

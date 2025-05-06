@@ -434,12 +434,13 @@ describe("end to end syntax", () => {
             "[in_catch] message = subFunc custom error message!",
             "[in_catch] customField = true",
             "[backtrace] = 8",
-            "[backtrace] = 25",
-            "[backtrace] = 41",
+            "[backtrace] = 27",
+            "[backtrace] = 43",
             "[post_try] a = 10",
             "[subFunc] a = 11",
             "Error # = 24",
             `Error message = Type Mismatch. Operator "*" can't be applied to "Integer" and "String".`,
+            "[return in try] = success",
         ]);
     });
 

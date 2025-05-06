@@ -54,7 +54,6 @@ import * as StdLib from "../stdlib";
 import Long from "long";
 import { Scope, Environment, NotFound } from "./Environment";
 import { toCallable } from "./BrsFunction";
-import { BlockEnd, GotoLabel } from "../parser/Statement";
 import { runDebugger } from "./MicroDebugger";
 import { DataType, DebugCommand, numberToHex, parseTextFile, TaskPayload, TaskState, ThreadUpdate } from "../common";
 /// #if !BROWSER
@@ -1064,7 +1063,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             this._tryMode = tryMode;
         } catch (err: any) {
             this._tryMode = tryMode;
-            if (!(err instanceof BrsError) || err instanceof GotoLabel) {
+            if (!(err instanceof BrsError) || err instanceof Stmt.GotoLabel || err instanceof Stmt.ReturnValue) {
                 throw err;
             }
             this.environment.define(Scope.Function, statement.errorBinding.name.text, this.formatErrorVariable(err));
@@ -1875,12 +1874,12 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             if (!(statement instanceof Stmt.Block)) {
                 if (!runDebugger(this, statement.location, this.location)) {
                     this.options.stopOnCrash = false;
-                    throw new BlockEnd("debug-exit", statement.location);
+                    throw new Stmt.BlockEnd("debug-exit", statement.location);
                 }
             }
         } else if (cmd === DebugCommand.EXIT) {
             this.options.stopOnCrash = false;
-            throw new BlockEnd("debug-exit", statement.location);
+            throw new Stmt.BlockEnd("debug-exit", statement.location);
         }
         if (BrsDevice.threadId > 0) {
             rootObjects.tasks[0]?.updateTask();
