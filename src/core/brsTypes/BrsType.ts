@@ -194,6 +194,7 @@ export function getBrsValueFromFieldType(type: string, value?: string): BrsType 
         case "roarray":
         case "array":
         case "vector2d":
+        case "rect2d":
         case "floatarray":
         case "intarray":
         case "timearray":

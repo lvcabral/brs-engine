@@ -33,7 +33,7 @@ export class Group extends RoSGNode {
         { name: "childRenderOrder", type: "string", value: "renderLast" },
         { name: "inheritParentTransform", type: "boolean", value: "true" },
         { name: "inheritParentOpacity", type: "boolean", value: "true" },
-        { name: "clippingRect", type: "array", value: "[0.0,0.0,0.0,0.0]" },
+        { name: "clippingRect", type: "rect2d", value: "[0.0,0.0,0.0,0.0]" },
         { name: "renderPass", type: "integer", value: "0" },
         { name: "muteAudioGuide", type: "boolean", value: "false" },
         { name: "enableRenderTracking", type: "boolean", value: "false" },

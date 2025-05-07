@@ -59,7 +59,7 @@ export class Dialog extends Group {
     protected readonly vertOffset: number;
     protected readonly minHeight: number;
     protected readonly buttonGroup: ButtonGroup;
-    protected readonly lineHeight: number
+    protected readonly lineHeight: number;
     protected lastFocus?: RoSGNode;
     protected width: number;
     protected height: number;

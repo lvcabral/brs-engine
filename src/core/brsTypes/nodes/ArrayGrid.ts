@@ -66,7 +66,7 @@ export class ArrayGrid extends Group {
         { name: "sectionDividerHeight", type: "float", value: "40" },
         { name: "sectionDividerMinWidth", type: "float", value: "0.0" },
         { name: "sectionDividerLeftOffset", type: "float", value: "0.0" },
-        { name: "itemClippingRect", type: "array", value: "[ 0.0, 0.0, 0.0, 0.0 ]" },
+        { name: "itemClippingRect", type: "rect2d", value: "[0.0,0.0,0.0,0.0]" },
         { name: "itemSelected", type: "integer", value: "-1", alwaysNotify: true },
         { name: "itemFocused", type: "integer", value: "-1", alwaysNotify: true },
         { name: "itemUnfocused", type: "integer", value: "-1", alwaysNotify: true },

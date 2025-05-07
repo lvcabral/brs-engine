@@ -20,6 +20,9 @@ import {
     isAnyNumber,
     isBoxedNumber,
     Task,
+    jsValueOf,
+    fromAssociativeArray,
+    FlexObject,
 } from "..";
 import { Callable } from "../Callable";
 import { Interpreter } from "../../interpreter";
@@ -55,6 +58,7 @@ export enum FieldKind {
     Object = "object",
     Color = "color",
     Time = "time",
+    Rect2D = "rect2d",
 }
 
 export namespace FieldKind {
@@ -69,6 +73,8 @@ export namespace FieldKind {
             case "timearray":
             case "vector2d":
                 return FieldKind.Array;
+            case "rect2d":
+                return FieldKind.Rect2D;
             case "roassociativearray":
             case "assocarray":
                 return FieldKind.AssocArray;
@@ -216,8 +222,18 @@ export class Field {
             (isBrsString(this.value) && isBrsBoolean(value))
         ) {
             return true;
+        } else if (this.type === FieldKind.Rect2D && value instanceof RoArray) {
+            return value.elements.length === 4 && value.elements.every((element) => isAnyNumber(element));
+        } else if (this.type === FieldKind.Rect2D && value instanceof RoAssociativeArray) {
+            const valueObj = fromAssociativeArray(value);
+            return (
+                valueObj &&
+                typeof valueObj.x === "number" &&
+                typeof valueObj.y === "number" &&
+                typeof valueObj.width === "number" &&
+                typeof valueObj.height === "number"
+            );
         }
-
         const result = this.type === FieldKind.fromBrsType(value);
         return result;
     }
@@ -298,6 +314,24 @@ export class Field {
             }
         } else if (isBrsBoolean(value) && this.type === FieldKind.String) {
             value = new BrsString(value.toBoolean() ? "1" : "0");
+        } else if (this.type === FieldKind.Rect2D && value instanceof RoArray) {
+            const rectArray = jsValueOf(value);
+            const rectObject: FlexObject = { x: 0, y: 0, width: 0, height: 0 };
+            if (rectArray?.length === 4) {
+                rectObject.x = rectArray[0];
+                rectObject.y = rectArray[1];
+                rectObject.width = rectArray[2];
+                rectObject.height = rectArray[3];
+            }
+            value = toAssociativeArray(rectObject);
+        } else if (this.type === FieldKind.Rect2D && value instanceof RoAssociativeArray) {
+            const rectValue = fromAssociativeArray(value);
+            const rectObject: FlexObject = { x: 0, y: 0, width: 0, height: 0 };
+            rectObject.x = rectValue?.x ?? 0;
+            rectObject.y = rectValue?.y ?? 0;
+            rectObject.width = rectValue?.width ?? 0;
+            rectObject.height = rectValue?.height ?? 0;
+            value = toAssociativeArray(rectObject);
         }
         if (isBoxable(value)) {
             value = value.box();
