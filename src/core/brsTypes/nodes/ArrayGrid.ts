@@ -32,8 +32,8 @@ export declare namespace ArrayGrid {
 export class ArrayGrid extends Group {
     readonly defaultFields: FieldModel[] = [
         { name: "content", type: "node" },
-        { name: "itemSize", type: "array", value: "[0,0]" },
-        { name: "itemSpacing", type: "array", value: "[0,0]" },
+        { name: "itemSize", type: "vector2d", value: "[0,0]" },
+        { name: "itemSpacing", type: "vector2d", value: "[0,0]" },
         { name: "numRows", type: "integer", value: "0" },
         { name: "numColumns", type: "integer", value: "0" },
         { name: "focusable", type: "boolean", value: "true" },
@@ -54,9 +54,9 @@ export class ArrayGrid extends Group {
         { name: "wrapDividerHeight", type: "float", value: "36" },
         { name: "fixedLayout", type: "boolean", value: "false" },
         { name: "numRenderPasses", type: "integer", value: "1" },
-        { name: "rowHeights", type: "array", value: "[]" },
-        { name: "columnWidths", type: "array", value: "[]" },
-        { name: "rowSpacings", type: "array", value: "[]" },
+        { name: "rowHeights", type: "floatarray", value: "[]" },
+        { name: "columnWidths", type: "floatarray", value: "[]" },
+        { name: "rowSpacings", type: "floatarray", value: "[]" },
         { name: "columnSpacings", type: "array", value: "[]" },
         { name: "sectionDividerBitmapUri", type: "string", value: "" },
         { name: "sectionDividerFont", type: "font", value: "font:SmallestSystemFont" },

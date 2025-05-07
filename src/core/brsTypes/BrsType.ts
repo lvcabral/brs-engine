@@ -109,6 +109,7 @@ export function getValueKindFromFieldType(type: string) {
         case "bool":
         case "boolean":
             return ValueKind.Boolean;
+        case "color":
         case "int":
         case "integer":
             return ValueKind.Int32;
@@ -116,6 +117,7 @@ export function getValueKindFromFieldType(type: string) {
             return ValueKind.Int64;
         case "float":
             return ValueKind.Float;
+        case "time":
         case "double":
             return ValueKind.Double;
         case "uri":
@@ -130,6 +132,17 @@ export function getValueKindFromFieldType(type: string) {
         case "array":
         case "roassociativearray":
         case "assocarray":
+        case "rect2d":
+        case "vector2d":
+        case "floatarray":
+        case "intarray":
+        case "boolarray":
+        case "stringarray":
+        case "vector2darray":
+        case "rect2darray":
+        case "colorarray":
+        case "timearray":
+        case "nodearray":
             return ValueKind.Object;
         default:
             return ValueKind.Invalid;
@@ -137,7 +150,7 @@ export function getValueKindFromFieldType(type: string) {
 }
 
 /**
- *  Converts a specified brightscript type in string into BrsType representation, with actual value
+ *  Converts a specified BrightScript type in string into BrsType representation, with actual value
  *  Note: only supports native types so far.  Objects such as array/AA aren't handled at the moment.
  *  @param {string} type data type of field
  *  @param {string} value optional value specified as string
@@ -146,7 +159,6 @@ export function getValueKindFromFieldType(type: string) {
 export function getBrsValueFromFieldType(type: string, value?: string): BrsType {
     let returnValue: BrsType;
 
-    // TODO: Handle `color` as a special type that can be string or int defined on default fields
     switch (type.toLowerCase()) {
         case "bool":
         case "boolean":
@@ -162,6 +174,7 @@ export function getBrsValueFromFieldType(type: string, value?: string): BrsType 
         case "float":
             returnValue = value ? new Float(Number.parseFloat(value)) : new Float(0);
             break;
+        case "time":
         case "double":
             returnValue = value ? new Double(Number.parseFloat(value)) : new Double(0);
             break;
@@ -180,6 +193,10 @@ export function getBrsValueFromFieldType(type: string, value?: string): BrsType 
             break;
         case "roarray":
         case "array":
+        case "vector2d":
+        case "floatarray":
+        case "intarray":
+        case "timearray":
             returnValue = BrsInvalid.Instance;
             if (value?.trim().startsWith("[") && value?.trim().endsWith("]")) {
                 const arrayItems = value.trim().slice(1, -1).trim();

@@ -26,10 +26,10 @@ export class Group extends RoSGNode {
     readonly defaultFields: FieldModel[] = [
         { name: "visible", type: "boolean", value: "true" },
         { name: "opacity", type: "float", value: "1.0" },
-        { name: "translation", type: "array", value: "[0.0,0.0]" },
+        { name: "translation", type: "vector2d", value: "[0.0,0.0]" },
         { name: "rotation", type: "float", value: "0.0" },
-        { name: "scale", type: "array", value: "[1.0,1.0]" },
-        { name: "scaleRotateCenter", type: "array", value: "[0.0,0.0]" },
+        { name: "scale", type: "vector2d", value: "[1.0,1.0]" },
+        { name: "scaleRotateCenter", type: "vector2d", value: "[0.0,0.0]" },
         { name: "childRenderOrder", type: "string", value: "renderLast" },
         { name: "inheritParentTransform", type: "boolean", value: "true" },
         { name: "inheritParentOpacity", type: "boolean", value: "true" },

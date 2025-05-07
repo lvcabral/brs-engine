@@ -54,6 +54,7 @@ export enum FieldKind {
     Function = "function",
     Object = "object",
     Color = "color",
+    Time = "time",
 }
 
 export namespace FieldKind {
@@ -63,6 +64,10 @@ export namespace FieldKind {
                 return FieldKind.Interface;
             case "array":
             case "roarray":
+            case "floatarray":
+            case "intarray":
+            case "timearray":
+            case "vector2d":
                 return FieldKind.Array;
             case "roassociativearray":
             case "assocarray":
@@ -94,6 +99,8 @@ export namespace FieldKind {
                 return FieldKind.Object;
             case "color":
                 return FieldKind.Color;
+            case "time":
+                return FieldKind.Time;
             default:
                 return undefined;
         }
