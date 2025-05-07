@@ -174,7 +174,7 @@ export class LabelList extends ArrayGrid {
         const font = this.getFieldValue("font") as Font;
         const color = this.getFieldValueJS("color") as number;
         const align = this.getFieldValueJS("textHorizAlign") as string;
-        const textRect = { ...rect, x: rect.x + iconGap };
+        const textRect = { ...rect, x: rect.x + iconGap, width: rect.width - (iconGap ? this.gap : 0) };
         if (iconBmp) {
             this.renderIcon(iconBmp, rect, opacity, draw2D, iconColor ? color : undefined);
         }
@@ -195,7 +195,7 @@ export class LabelList extends ArrayGrid {
         const font = this.getFieldValue(nodeFocus ? "focusedFont" : "font") as Font;
         const color = this.getFieldValueJS(nodeFocus ? "focusedColor" : "color") as number;
         const align = this.getFieldValueJS("textHorizAlign") as string;
-        const textRect = { ...rect, x: rect.x + iconGap };
+        const textRect = { ...rect, x: rect.x + iconGap, width: rect.width - (iconGap ? this.gap : 0) };
         const drawFocus = this.getFieldValueJS("drawFocusFeedback") as boolean;
         const drawFocusOnTop = this.getFieldValueJS("drawFocusFeedbackOnTop") as boolean;
         if (drawFocus && !drawFocusOnTop) {
