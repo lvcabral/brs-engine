@@ -59,6 +59,7 @@ export class Dialog extends Group {
     protected readonly vertOffset: number;
     protected readonly minHeight: number;
     protected readonly buttonGroup: ButtonGroup;
+    protected readonly lineHeight: number;
     protected lastFocus?: RoSGNode;
     protected width: number;
     protected height: number;
@@ -96,6 +97,7 @@ export class Dialog extends Group {
             this.minHeight = 216;
             this.gap = 18;
             this.vertOffset = 30;
+            this.lineHeight = 4.5;
             this.dialogTrans = [(this.sceneRect.width - this.width) / 2, (this.sceneRect.height - this.minHeight) / 2];
             this.iconSize = 60;
             this.iconTrans = [this.dialogTrans[0] + 447, this.dialogTrans[1] + 36];
@@ -117,6 +119,7 @@ export class Dialog extends Group {
             this.minHeight = 144;
             this.gap = 12;
             this.vertOffset = 20;
+            this.lineHeight = 3;
             this.dialogTrans = [(this.sceneRect.width - this.width) / 2, (this.sceneRect.height - this.minHeight) / 2];
             this.iconSize = 40;
             this.iconTrans = [this.dialogTrans[0] + 298, this.dialogTrans[1] + 24];
@@ -138,7 +141,7 @@ export class Dialog extends Group {
         this.background = this.addPoster(this.backUri, this.dialogTrans, this.width, this.height);
         this.title = this.addLabel("titleColor", [titleX, titleY], titleWidth, titleHeight, titleSize, "top", "center");
         this.icon = this.addPoster(this.iconUriFHD, this.iconTrans, this.iconSize, this.iconSize);
-        this.divider = this.addPoster(this.dividerUri, [titleX, dividerY], titleWidth, 3);
+        this.divider = this.addPoster(this.dividerUri, [titleX, dividerY], titleWidth, this.lineHeight);
         this.message = this.addLabel("messageColor", [msgX, msgY], msgWidth, 0, msgSize, "top", "left", true);
         this.setFieldValue("width", new Float(this.width));
         this.setFieldValue("backgroundUri", new BrsString(this.backUri));

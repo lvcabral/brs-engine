@@ -6,7 +6,7 @@ export class Timer extends RoSGNode {
     readonly defaultFields: FieldModel[] = [
         { name: "control", type: "string" },
         { name: "repeat", type: "boolean", value: "false" },
-        { name: "duration", type: "float", value: "1.0" },
+        { name: "duration", type: "time", value: "1.0" },
         { name: "fire", type: "object", alwaysNotify: true },
     ];
 

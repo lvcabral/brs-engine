@@ -20,6 +20,9 @@ import {
     isAnyNumber,
     isBoxedNumber,
     Task,
+    jsValueOf,
+    fromAssociativeArray,
+    FlexObject,
 } from "..";
 import { Callable } from "../Callable";
 import { Interpreter } from "../../interpreter";
@@ -54,6 +57,8 @@ export enum FieldKind {
     Function = "function",
     Object = "object",
     Color = "color",
+    Time = "time",
+    Rect2D = "rect2d",
 }
 
 export namespace FieldKind {
@@ -63,7 +68,13 @@ export namespace FieldKind {
                 return FieldKind.Interface;
             case "array":
             case "roarray":
+            case "floatarray":
+            case "intarray":
+            case "timearray":
+            case "vector2d":
                 return FieldKind.Array;
+            case "rect2d":
+                return FieldKind.Rect2D;
             case "roassociativearray":
             case "assocarray":
                 return FieldKind.AssocArray;
@@ -94,6 +105,8 @@ export namespace FieldKind {
                 return FieldKind.Object;
             case "color":
                 return FieldKind.Color;
+            case "time":
+                return FieldKind.Time;
             default:
                 return undefined;
         }
@@ -145,7 +158,7 @@ export class Field {
         private readonly alwaysNotify: boolean,
         private hidden: boolean = false
     ) {
-        this.value = this.constraintValue(value);
+        this.value = this.convertValue(value);
     }
 
     toString(parent?: BrsType): string {
@@ -188,7 +201,7 @@ export class Field {
         // Once a field is set, it is no longer hidden.
         this.hidden = false;
 
-        value = this.constraintValue(value);
+        value = this.convertValue(value);
         let oldValue = this.value;
         this.value = value;
         if (notify && (this.alwaysNotify || !this.isEqual(oldValue, value))) {
@@ -209,8 +222,18 @@ export class Field {
             (isBrsString(this.value) && isBrsBoolean(value))
         ) {
             return true;
+        } else if (this.type === FieldKind.Rect2D && value instanceof RoArray) {
+            return value.elements.length === 4 && value.elements.every((element) => isAnyNumber(element));
+        } else if (this.type === FieldKind.Rect2D && value instanceof RoAssociativeArray) {
+            const valueObj = fromAssociativeArray(value);
+            return (
+                valueObj &&
+                typeof valueObj.x === "number" &&
+                typeof valueObj.y === "number" &&
+                typeof valueObj.width === "number" &&
+                typeof valueObj.height === "number"
+            );
         }
-
         const result = this.type === FieldKind.fromBrsType(value);
         return result;
     }
@@ -273,7 +296,7 @@ export class Field {
         );
     }
 
-    private constraintValue(value: BrsType) {
+    private convertValue(value: BrsType) {
         if (isAnyNumber(value) && value.kind !== getValueKindFromFieldType(this.type)) {
             if (isBoxedNumber(value)) {
                 value = value.unbox();
@@ -291,11 +314,44 @@ export class Field {
             }
         } else if (isBrsBoolean(value) && this.type === FieldKind.String) {
             value = new BrsString(value.toBoolean() ? "1" : "0");
+        } else if (this.type === FieldKind.Rect2D) {
+            value = this.convertRect2D(value);
         }
         if (isBoxable(value)) {
             value = value.box();
         }
         return value;
+    }
+
+    private convertRect2D(value: BrsType): RoAssociativeArray {
+        const rectObject: FlexObject = { x: 0, y: 0, width: 0, height: 0 };
+        if (value instanceof RoArray) {
+            const rectArray = jsValueOf(value);
+            if (
+                Array.isArray(rectArray) &&
+                rectArray.length === 4 &&
+                rectArray.every((item: any) => typeof item === "number")
+            ) {
+                rectObject.x = rectArray[0];
+                rectObject.y = rectArray[1];
+                rectObject.width = rectArray[2];
+                rectObject.height = rectArray[3];
+            }
+        } else if (value instanceof RoAssociativeArray) {
+            const rectValue = fromAssociativeArray(value);
+            if (
+                typeof rectValue.x === "number" &&
+                typeof rectValue.y === "number" &&
+                typeof rectValue.width === "number" &&
+                typeof rectValue.height === "number"
+            ) {
+                rectObject.x = rectValue.x;
+                rectObject.y = rectValue.y;
+                rectObject.width = rectValue.width;
+                rectObject.height = rectValue.height;
+            }
+        }
+        return toAssociativeArray(rectObject);
     }
 
     private isEqual(oldValue: BrsType, newValue: BrsType): boolean {
