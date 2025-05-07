@@ -306,7 +306,7 @@ export class ArrayGrid extends Group {
             ? {
                   x: itemRect.x - this.marginX,
                   y: itemRect.y - this.marginY,
-                  width: itemRect.width + this.marginX * 2 + this.gap,
+                  width: itemRect.width + this.marginX * 2,
                   height: itemRect.height + this.marginY * 2,
               }
             : itemRect;

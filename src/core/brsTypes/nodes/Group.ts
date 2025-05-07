@@ -51,10 +51,12 @@ export class Group extends RoSGNode {
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
 
-        this.resolution = rootObjects.rootScene?.ui.resolution ?? "HD";
-        if (this.resolution === "FHD") {
-            this.sceneRect = { x: 0, y: 0, width: 1920, height: 1080 };
+        const sceneUI = rootObjects.rootScene?.ui;
+        if (sceneUI) {
+            this.resolution = sceneUI.resolution;
+            this.sceneRect = { x: 0, y: 0, width: sceneUI.width, height: sceneUI.height };
         } else {
+            this.resolution = "HD";
             this.sceneRect = { x: 0, y: 0, width: 1280, height: 720 };
         }
         this.isDirty = true;
