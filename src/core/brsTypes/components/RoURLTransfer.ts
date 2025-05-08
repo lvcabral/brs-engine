@@ -18,7 +18,8 @@ import { XMLHttpRequest } from "../../polyfill/XMLHttpRequest";
 export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgent {
     readonly kind = ValueKind.Object;
     readonly customHeaders: Map<string, string>;
-    private identity: number;
+    private readonly identity: number;
+    private readonly inFile: string[];
     private url: string;
     private host: string;
     private reqMethod: string;
@@ -26,7 +27,6 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
     private xhr: XMLHttpRequest;
     private freshConnection: boolean;
     private port?: RoMessagePort;
-    private inFile: string[];
     private outFile: string[];
     private postBody: string[];
     private user?: string;
