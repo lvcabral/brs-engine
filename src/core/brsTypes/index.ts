@@ -30,6 +30,7 @@ import { RoChannelStoreEvent } from "./events/RoChannelStoreEvent";
 import { RoDeviceInfoEvent } from "./events/RoDeviceInfoEvent";
 import { RoCECStatusEvent } from "./events/RoCECStatusEvent";
 import { RoHdmiStatusEvent } from "./events/RoHdmiStatusEvent";
+import { isUnboxable } from "./Boxing";
 
 export * from "./BrsType";
 export * from "./Int32";
@@ -316,18 +317,19 @@ export type BrsConvertible = boolean | number | string | BrsType | null | undefi
 /**
  * Converts a JavaScript object or Map to a RoAssociativeArray, converting each property or entry to the corresponding BrightScript type.
  * @param input The JavaScript object or Map to convert.
+ * @param {boolean} cs Whether to return an AA as case sensitive.
  * @returns A RoAssociativeArray with the converted properties or entries.
  */
-export function toAssociativeArray(input: Map<string, any> | FlexObject): RoAssociativeArray {
-    const associativeArray = new RoAssociativeArray([]);
+export function toAssociativeArray(input: Map<string, any> | FlexObject, cs?: boolean): RoAssociativeArray {
+    const associativeArray = new RoAssociativeArray([], cs);
     if (input instanceof Map) {
         input.forEach((value, key) => {
-            associativeArray.set(new BrsString(key), brsValueOf(value), true);
+            associativeArray.set(new BrsString(key), brsValueOf(value, cs), true);
         });
     } else if (typeof input === "object" && input !== null) {
         for (const key in input) {
             if (input.hasOwnProperty(key)) {
-                associativeArray.set(new BrsString(key), brsValueOf(input[key]), true);
+                associativeArray.set(new BrsString(key), brsValueOf(input[key], cs), true);
             }
         }
     } else {
@@ -340,10 +342,11 @@ export function toAssociativeArray(input: Map<string, any> | FlexObject): RoAsso
  * Converts a value to its representation as a BrsType. If no such
  * representation is possible, throws an Error.
  * @param {any} x Some value.
+ * @param {boolean} cs Whether to return an AA as case sensitive.
  * @return {BrsType} The BrsType representation of `x`.
  * @throws {Error} If `x` cannot be represented as a BrsType.
  */
-export function brsValueOf(x: any): BrsType {
+export function brsValueOf(x: any, cs?: boolean): BrsType {
     if (x === null || x === undefined) {
         return BrsInvalid.Instance;
     }
@@ -362,13 +365,92 @@ export function brsValueOf(x: any): BrsType {
             }
             return x >= -3.4e38 && x <= 3.4e38 ? new Float(x) : new Double(x);
         case "object":
-            if (isBrsType(x)) {
-                return x;
-            } else if (Array.isArray(x)) {
-                return new RoArray(x.map(brsValueOf));
-            }
-            return toAssociativeArray(x);
+            return fromObject(x, cs);
+        case "undefined":
+            return Uninitialized.Instance;
         default:
             throw new Error(`brsValueOf not implemented for: ${x} <${t}>`);
     }
 }
+
+/**
+ * Converts a JavaScript object to a BrsType.
+ * @param x The JavaScript object to convert.
+ * @param {boolean} cs Whether to return an AA as case sensitive.
+ * @returns A BrsType with the converted object or Invalid if the object is not transferable.
+ */
+function fromObject(x: any, cs?: boolean): BrsType {
+    if (isBrsType(x)) {
+        return x;
+    } else if (x === null) {
+        return BrsInvalid.Instance;
+    } else if (x instanceof Uint8Array) {
+        return new RoByteArray(x);
+    } else if (Array.isArray(x)) {
+        return new RoArray(
+            x.map(function (el: any) {
+                return brsValueOf(el, cs);
+            })
+        );
+    }
+    return toAssociativeArray(x, cs);
+}
+
+/**
+ * Converts a RoAssociativeArray to a JavaScript object, converting each property to the corresponding JavaScript type.
+ * @param associativeArray The RoAssociativeArray to convert.
+ * @returns A JavaScript object with the converted properties.
+ */
+export function fromAssociativeArray(associativeArray: RoAssociativeArray): FlexObject {
+    const result: FlexObject = {};
+
+    associativeArray.elements.forEach((value: BrsType, key: string) => {
+        if (isUnboxable(value)) {
+            result[key] = jsValueOf(value.unbox());
+        } else {
+            result[key] = jsValueOf(value);
+        }
+    });
+
+    return result;
+}
+
+/**
+ * Converts a BrsType value to its representation as a JavaScript type.
+ * @param {BrsType} x Some BrsType value.
+ * @return {any} The JavaScript representation of `x`.
+ */
+export function jsValueOf(x: BrsType): any {
+    if (isUnboxable(x)) {
+        x = x.unbox();
+    }
+    switch (x.kind) {
+        case ValueKind.Invalid:
+            return null;
+        case ValueKind.Uninitialized:
+            return undefined;
+        case ValueKind.Boolean:
+            return x.toBoolean();
+        case ValueKind.String:
+            return x.value;
+        case ValueKind.Int32:
+        case ValueKind.Float:
+        case ValueKind.Double:
+            return x.getValue();
+        case ValueKind.Int64:
+            return x.getValue().toNumber();
+        case ValueKind.Interface:
+        case ValueKind.Object:
+            if (x instanceof RoArray || x instanceof RoList) {
+                return x.elements.map(jsValueOf);
+            } else if (x instanceof RoByteArray) {
+                return x.elements;
+            } else if (x instanceof RoAssociativeArray) {
+                return fromAssociativeArray(x);
+            }
+            break;
+        default:
+            throw new Error(`jsValueOf not implemented for: ${x} <${x.kind}>`);
+    }
+}
+
