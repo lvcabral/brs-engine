@@ -24,10 +24,11 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
      * Main benefit of it is fast, case-insensitive access.
      */
     keyMap = new Map<string, Set<string>>();
-    private modeCaseSensitive: boolean = false;
+    private modeCaseSensitive: boolean;
 
-    constructor(elements: AAMember[]) {
+    constructor(elements: AAMember[], cs: boolean = false) {
         super("roAssociativeArray");
+        this.modeCaseSensitive = cs;
         elements.forEach((member) => {
             this.addChildRef(member.value);
             this.set(member.name, member.value, true);

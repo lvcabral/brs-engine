@@ -112,15 +112,18 @@ export const FormatJson = new Callable("FormatJson", {
 export const ParseJson = new Callable("ParseJson", {
     signature: {
         returns: ValueKind.Dynamic,
-        args: [new StdlibArgument("jsonString", ValueKind.String)],
+        args: [
+            new StdlibArgument("jsonString", ValueKind.String),
+            new StdlibArgument("flags", ValueKind.String, new BrsString("")),
+        ],
     },
-    impl: (interpreter: Interpreter, jsonString: BrsString) => {
+    impl: (interpreter: Interpreter, jsonString: BrsString, flags: BrsString) => {
         try {
             let s: string = jsonString.toString().trim();
             if (s === "") {
                 throw new Error("Data is empty");
             }
-            return brsValueOf(JSON.parse(s));
+            return brsValueOf(JSON.parse(s), !flags.value.includes("i"));
         } catch (err: any) {
             logBrsErr(interpreter, "ParseJSON", err);
             return BrsInvalid.Instance;

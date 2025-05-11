@@ -381,18 +381,19 @@ export type BrsConvertible = boolean | number | string | BrsType | null | undefi
 /**
  * Converts a JavaScript object or Map to a RoAssociativeArray, converting each property or entry to the corresponding BrightScript type.
  * @param input The JavaScript object or Map to convert.
+ * @param {boolean} cs Whether to return an AA as case sensitive.
  * @returns A RoAssociativeArray with the converted properties or entries.
  */
-export function toAssociativeArray(input: Map<string, any> | FlexObject): RoAssociativeArray {
-    const associativeArray = new RoAssociativeArray([]);
+export function toAssociativeArray(input: Map<string, any> | FlexObject, cs?: boolean): RoAssociativeArray {
+    const associativeArray = new RoAssociativeArray([], cs);
     if (input instanceof Map) {
         input.forEach((value, key) => {
-            associativeArray.set(new BrsString(key), brsValueOf(value), true);
+            associativeArray.set(new BrsString(key), brsValueOf(value, cs), true);
         });
     } else if (typeof input === "object" && input !== null) {
         for (const key in input) {
             if (input.hasOwnProperty(key)) {
-                associativeArray.set(new BrsString(key), brsValueOf(input[key]), true);
+                associativeArray.set(new BrsString(key), brsValueOf(input[key], cs), true);
             }
         }
     } else {
@@ -405,10 +406,11 @@ export function toAssociativeArray(input: Map<string, any> | FlexObject): RoAsso
  * Converts a value to its representation as a BrsType. If no such
  * representation is possible, throws an Error.
  * @param {any} x Some value.
+ * @param {boolean} cs Whether to return an AA as case sensitive.
  * @return {BrsType} The BrsType representation of `x`.
  * @throws {Error} If `x` cannot be represented as a BrsType.
  */
-export function brsValueOf(x: any): BrsType {
+export function brsValueOf(x: any, cs?: boolean): BrsType {
     if (x === null || x === undefined) {
         return BrsInvalid.Instance;
     }
@@ -427,7 +429,7 @@ export function brsValueOf(x: any): BrsType {
             }
             return x >= -3.4e38 && x <= 3.4e38 ? new Float(x) : new Double(x);
         case "object":
-            return fromObject(x);
+            return fromObject(x, cs);
         case "undefined":
             return Uninitialized.Instance;
         default:
@@ -438,9 +440,10 @@ export function brsValueOf(x: any): BrsType {
 /**
  * Converts a JavaScript object to a BrsType.
  * @param x The JavaScript object to convert.
+ * @param {boolean} cs Whether to return an AA as case sensitive.
  * @returns A BrsType with the converted object or Invalid if the object is not transferable.
  */
-function fromObject(x: any): BrsType {
+function fromObject(x: any, cs?: boolean): BrsType {
     if (isBrsType(x)) {
         return x;
     } else if (x === null) {
@@ -448,7 +451,11 @@ function fromObject(x: any): BrsType {
     } else if (x instanceof Uint8Array) {
         return new RoByteArray(x);
     } else if (Array.isArray(x)) {
-        return new RoArray(x.map(brsValueOf));
+        return new RoArray(
+            x.map(function (el: any) {
+                return brsValueOf(el, cs);
+            })
+        );
     } else if (x["_node_"]) {
         const node = x["_node_"].split(":");
         if (node.length === 2) {
@@ -480,7 +487,7 @@ function fromObject(x: any): BrsType {
             },
         });
     }
-    return toAssociativeArray(x);
+    return toAssociativeArray(x, cs);
 }
 
 /**
