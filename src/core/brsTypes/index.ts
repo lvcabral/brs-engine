@@ -453,4 +453,3 @@ export function jsValueOf(x: BrsType): any {
             throw new Error(`jsValueOf not implemented for: ${x} <${x.kind}>`);
     }
 }
-
