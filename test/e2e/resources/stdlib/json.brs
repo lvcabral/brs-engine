@@ -26,4 +26,10 @@ sub main()
     print formatJson(a)
     print formatJson(a, 257)
     print formatJson(a, 513)
+    ' Test case sensitivity
+    print ParseJSON("123")
+	print ParseJSON("""ABC""")
+	json = "{""x"": 123, ""X"": 456}"
+    print ParseJSON(json, "i")
+	print ParseJSON("{""root"": " + json + "}").root
 end sub
