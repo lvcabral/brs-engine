@@ -137,6 +137,8 @@ describe("end to end standard libary", () => {
             "",
             `{"ar":[1,2,3],"di":null,"nx":123,"sa":"abc"}`,
             `{"ar":[1,2,3],"di":"<roDeviceInfo>","nx":123,"sa":"abc"}`,
+            `"\\u20AC"`,
+            `"€"`,
             " 123",
             "ABC",
             ["<Component: roAssociativeArray> =", "{", "    X: 456", "}"].join("\n"),
