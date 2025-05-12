@@ -58,7 +58,10 @@ export const Left = new Callable("Left", {
         args: [new StdlibArgument("s", ValueKind.String), new StdlibArgument("n", ValueKind.Int32)],
         returns: ValueKind.String,
     },
-    impl: (_: Interpreter, s: BrsString, n: Int32) => new BrsString(s.value.slice(0, n.getValue())),
+    impl: (_: Interpreter, s: BrsString, n: Int32) => {
+        if (n.getValue() <= 0) return new BrsString("");
+        return new BrsString(s.value.slice(0, n.getValue()));
+    },
 });
 
 /**
@@ -137,8 +140,10 @@ export const Mid = new Callable(
             returns: ValueKind.String,
         },
         impl: (_: Interpreter, s: BrsString, p: Int32, n: Int32): BrsString => {
-            let start = p.getValue() - 1;
-            return new BrsString(s.value.substring(start, start + n.getValue()));
+            const start = p.getValue() - 1;
+            const length = n.getValue();
+            if (length <= 0) return new BrsString("");
+            return new BrsString(s.value.substring(start, start + length));
         },
     }
 );
@@ -233,7 +238,10 @@ export const Substitute = new Callable("Substitute", {
         arg3: BrsString
     ): BrsString => {
         let completelyReplaced = [arg0, arg1, arg2, arg3].reduce(
-            (replaced, replacement, index) => replaced.replace(new RegExp(`\\{${index}\\}`, "g"), replacement.value),
+            (replaced, replacement, index) => {
+                const regex = new RegExp(`\\{${index}\\}|\\^${index}`, "g");
+                return replaced.replace(regex, replacement.value);
+            },
             str.value
         );
         return new BrsString(completelyReplaced);
