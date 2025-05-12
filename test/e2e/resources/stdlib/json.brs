@@ -17,6 +17,7 @@ sub main()
         float: pi,
         boolean: false
     }))
+    ' Test parseJson with invalid input
     a = {
         nx: 123
         sa: "abc"
@@ -24,12 +25,16 @@ sub main()
         ar: [1, 2, 3]
     }
     print formatJson(a)
-    print formatJson(a, 257)
-    print formatJson(a, 513)
-    ' Test case sensitivity
-    print ParseJSON("123")
-	print ParseJSON("""ABC""")
+    print formatJson(a, &h0100)
+    print formatJson(a, &h0200)
+    ' Test UNICODE conversion on FormatJson
+	euroStr = Chr(&h20AC)
+	? FormatJSON(euroStr)
+	? FormatJSON(euroStr, &h0001)
+    ' Test case sensitivity on ParseJSON
+    print parseJSON("123")
+	print parseJSON("""ABC""")
 	json = "{""x"": 123, ""X"": 456}"
-    print ParseJSON(json, "i")
-	print ParseJSON("{""root"": " + json + "}").root
+    print parseJSON(json, "i")
+	print parseJSON("{""root"": " + json + "}").root
 end sub

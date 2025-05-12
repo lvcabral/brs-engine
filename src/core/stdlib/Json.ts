@@ -31,7 +31,7 @@ function jsonOf(x: BrsType, flags: number = 0, key: string = ""): string {
         case ValueKind.Invalid:
             return "null";
         case ValueKind.String:
-            return `"${x.toString()}"`;
+            return jsonString(x.toString(), (flags & 1) === 0);
         case ValueKind.Boolean:
         case ValueKind.Double:
         case ValueKind.Float:
@@ -83,6 +83,15 @@ function jsonOf(x: BrsType, flags: number = 0, key: string = ""): string {
         errMessage = `${key}: ${errMessage}`;
     }
     throw new Error(errMessage);
+}
+
+function jsonString(x: string, escape: boolean): string {
+    if (escape) {
+        return `"${x.replace(/[\u007F-\uFFFF]/g, (char) => {
+            return `\\u${char.charCodeAt(0).toString(16).padStart(4, "0").toUpperCase()}`;
+        })}"`;
+    }
+    return `"${x}"`;
 }
 
 function logBrsErr(interpreter: Interpreter, functionName: string, err: Error): void {
