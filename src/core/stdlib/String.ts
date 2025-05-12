@@ -33,7 +33,7 @@ export const Asc = new Callable("Asc", {
         if (str.value.length === 0) {
             return new Int32(0); // Return 0 for empty strings
         }
-        return new Int32(str.value.codePointAt(0) || 0); // Use codePointAt for full Unicode support
+        return new Int32(str.value.codePointAt(0) ?? 0); // Use codePointAt for full Unicode support
     },
 });
 
