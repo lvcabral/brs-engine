@@ -28,13 +28,13 @@ sub main()
     print formatJson(a, &h0100)
     print formatJson(a, &h0200)
     ' Test UNICODE conversion on FormatJson
-	euroStr = Chr(&h20AC)
-	? FormatJSON(euroStr)
-	? FormatJSON(euroStr, &h0001)
+    euroStr = Chr(&h20AC)
+    ? FormatJSON(euroStr)
+    ? FormatJSON(euroStr, &h0001)
     ' Test case sensitivity on ParseJSON
     print parseJSON("123")
-	print parseJSON("""ABC""")
-	json = "{""x"": 123, ""X"": 456}"
+    print parseJSON("""ABC""")
+    json = "{""x"": 123, ""X"": 456}"
     print parseJSON(json, "i")
-	print parseJSON("{""root"": " + json + "}").root
+    print parseJSON("{""root"": " + json + "}").root
 end sub
