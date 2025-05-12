@@ -44,6 +44,8 @@ describe("end to end standard libary", () => {
             "mixed case",
             " 12359",
             "ぇ",
+            " 128516",
+            "😄",
             "Mixed",
             "Case",
             "",
