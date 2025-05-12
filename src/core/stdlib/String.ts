@@ -27,9 +27,14 @@ export const LCase = new Callable("LCase", {
 export const Asc = new Callable("Asc", {
     signature: {
         args: [new StdlibArgument("letter", ValueKind.String)],
-        returns: ValueKind.String,
+        returns: ValueKind.Int32,
     },
-    impl: (_: Interpreter, str: BrsString) => new Int32(str.value.charCodeAt(0) || 0),
+    impl: (_: Interpreter, str: BrsString) => {
+        if (str.value.length === 0) {
+            return new Int32(0); // Return 0 for empty strings
+        }
+        return new Int32(str.value.codePointAt(0) ?? 0); // Use codePointAt for full Unicode support
+    },
 });
 
 /**
@@ -45,8 +50,8 @@ export const Chr = new Callable("Chr", {
     },
     impl: (_: Interpreter, ch: Int32) => {
         const num = ch.getValue();
-        if (num <= 0) return new BrsString("");
-        else return new BrsString(String.fromCharCode(num));
+        const chr = num <= 0 || num > 0x10ffff ? "" : String.fromCodePoint(num);
+        return new BrsString(chr);
     },
 });
 
