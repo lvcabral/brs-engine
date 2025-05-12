@@ -237,13 +237,10 @@ export const Substitute = new Callable("Substitute", {
         arg2: BrsString,
         arg3: BrsString
     ): BrsString => {
-        let completelyReplaced = [arg0, arg1, arg2, arg3].reduce(
-            (replaced, replacement, index) => {
-                const regex = new RegExp(`\\{${index}\\}|\\^${index}`, "g");
-                return replaced.replace(regex, replacement.value);
-            },
-            str.value
-        );
+        let completelyReplaced = [arg0, arg1, arg2, arg3].reduce((replaced, replacement, index) => {
+            const regex = new RegExp(`\\{${index}\\}|\\^${index}`, "g");
+            return replaced.replace(regex, replacement.value);
+        }, str.value);
         return new BrsString(completelyReplaced);
     },
 });
