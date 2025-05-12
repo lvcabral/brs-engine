@@ -33,7 +33,7 @@ const deviceInfo = {
 
 * Make sure it has the trailing slash
 * See `App Manifest` below to enable CORS proxy for your app
-* CORS-Anywhere repository: https://github.com/Rob--W/cors-anywhere
+* CORS-Anywhere repository: <https://github.com/Rob--W/cors-anywhere>
 
 ## Simulated Device Features
 

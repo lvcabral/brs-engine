@@ -1,5 +1,31 @@
 # Changelog
 
+<a name="v1.8.8"></a>
+
+## [v1.8.8 - Support `flags` on `ParseJSON()` and `FormatJSON()`](https://github.com/lvcabral/brs-engine/releases/tag/v1.8.8) - 11 May 2025
+
+This release added the support for the `flags` parameter on the `ParseJSON()` to make the AA returned to be case insensitive, and `FormatJSON` flag now allows you to disable the escape of non-ASCII characters. There are also, fixes for `Left()` and `Mid()` that were not handling negative values properly and `Substitute()` that now supports the `^0` notation. The `chr()` and `asc()` functions were also updated to support extended Unicode. A new custom manifest flag was added: `cors_proxy` as the proxy is now only enabled it is added to the app's manifest. The `roAudioPlayer` and `roVideoPlayer` components were updated to support the CORS proxy.
+
+### Release Changes
+
+* Refactored usage of `canvas` and `fonts` to improve performance by [@lvcabral](https://github.com/lvcabral) in [#547](https://github.com/lvcabral/brs-engine/pull/547)
+* Updated `lastKeyTime` and `currKeyTime` to consistently use `Date.now()` by [@lvcabral](https://github.com/lvcabral) in [#548](https://github.com/lvcabral/brs-engine/pull/548)
+* Added support for literal keys on the Browser by [@lvcabral](https://github.com/lvcabral) in [#557](https://github.com/lvcabral/brs-engine/pull/557)
+* Increased the `prettier` max line length from 100 to 120 by [@lvcabral](https://github.com/lvcabral) in [#559](https://github.com/lvcabral/brs-engine/pull/559)
+* Bump http-proxy-middleware from 2.0.7 to 2.0.9 by @dependabot in [#561](https://github.com/lvcabral/brs-engine/pull/561)
+* Optimized images by [@lvcabral](https://github.com/lvcabral) in [#566](https://github.com/lvcabral/brs-engine/pull/566)
+* Added new custom `manifest` flag: `cors_proxy` by [@lvcabral](https://github.com/lvcabral) in [#571](https://github.com/lvcabral/brs-engine/pull/571)
+* Moved `useCORSProxy` and `singleKeyEvents` from `Interpreter` to `BrsDevice` by [@lvcabral](https://github.com/lvcabral) in [#572](https://github.com/lvcabral/brs-engine/pull/572)
+* Added support for CORS proxy to `roAudioPlayer` and `roVideoPlayer` by [@lvcabral](https://github.com/lvcabral) in [#573](https://github.com/lvcabral/brs-engine/pull/573)
+* Prevent use CORS proxy on local URLs by [@lvcabral](https://github.com/lvcabral) in [#574](https://github.com/lvcabral/brs-engine/pull/574)
+* Added support for default sound effect volume level by [@lvcabral](https://github.com/lvcabral) in [#579](https://github.com/lvcabral/brs-engine/pull/579)
+* Implemented `flags` parameter on `ParseJSON()` global function by [@lvcabral](https://github.com/lvcabral) in [#585](https://github.com/lvcabral/brs-engine/pull/585)
+* Implemented `FormatJSON` flag to disable escape of non-ASCII characters by [@lvcabral](https://github.com/lvcabral) in [#586](https://github.com/lvcabral/brs-engine/pull/586)
+* Fixed `Left()` `Mid()` and `Substitute()` global functions by [@lvcabral](https://github.com/lvcabral) in [#587](https://github.com/lvcabral/brs-engine/pull/587)
+* Support extended Unicode in `chr()` and `asc()` by [@lvcabral](https://github.com/lvcabral) in [#588](https://github.com/lvcabral/brs-engine/pull/588)
+
+[Full Changelog][v1.8.8]
+
 <a name="v1.8.7"></a>
 
 ## [v1.8.7 - New `InStr()` 2 params signature](https://github.com/lvcabral/brs-engine/releases/tag/v1.8.7) - 12 April 2025
@@ -985,6 +1011,7 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
+[v1.8.8]: https://github.com/lvcabral/brs-engine/compare/v1.8.7...v1.8.8
 [v1.8.7]: https://github.com/lvcabral/brs-engine/compare/v1.8.6...v1.8.7
 [v1.8.6]: https://github.com/lvcabral/brs-engine/compare/v1.8.5...v1.8.6
 [v1.8.5]: https://github.com/lvcabral/brs-engine/compare/v1.8.4...v1.8.5
