@@ -7,6 +7,8 @@ sub main()
 
     print Asc("ぇ")
     print Chr(12359) ' UTF-16 decimal for "ぇ"
+    print Asc("😄")
+    print chr(128516)
 
     print Left(mixedCase, 5)
     print Right(mixedCase, 4) ' "Case"
