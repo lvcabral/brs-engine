@@ -13,17 +13,17 @@ There are several features from the **BrightScript** language and components tha
     * Only one `port` instance can be used on Task `init()` to observe fields
     * The `tmp:/` and `cachefs:/` volumes are not shared with task threads, can be used in task but are empty
   * The following nodes are implemented (some only partially):
-    * The basic nodes: `ContentNode`, `Group`, `Scene`, `Font`, `Timer`, `Rectangle`, `Label`, `Poster` and `RSGPalette`
+    * The basic nodes: `ContentNode`, `Group`, `Scene`, `Font`, `Timer`, `Rectangle`, `Label`, `ScrollingLabel`, `Poster` and `RSGPalette`
     * Grids and list nodes based on `ArrayGrid`: `LabelList`, `CheckList`, `RadioButtonList`, `MarkupList` and `MarkupGrid`
-    * Dialog related nodes: `Dialog`, `KeyboardDialog`, `StandardDialog`, `StandardProgressDialog`, `StdDlgProgressItem`, `StdDlgContentArea`, `StdDlgTitleArea`
-    * Other supported nodes: `Button`, `ButtonGroup`, `BusySpinner`, `Overhang`, `Keyboard`, `TextEditBox`, `Audio`
+    * Dialog related nodes: `Dialog`, `KeyboardDialog`, `StandardDialog`, `StandardProgressDialog`, `StdDlgProgressItem`, `StdDlgContentArea` and `StdDlgTitleArea`
+    * Other supported nodes: `Button`, `ButtonGroup`, `BusySpinner`, `Overhang`, `Keyboard`, `MiniKeyboard`, `TextEditBox` and `Audio`
   * All other nodes are either mocked or not implemented yet, and if used will be created as a plain `Node`.
 * The following components are also not implemented yet:
   * Text to Speech components: `roAudioGuide`, `roMicrophone` and `roTextToSpeech`
   * Signing Algorithm components: `roDSA` and `roRSA`
-* Audio playback via `roAudioResources` and `roAudioPlayer` is implemented, but with some limitations:
-  * Only one instance of `roAudioPlayer` is supported, if more are created those will share the content playlist.
-  * If the `roAudioPlayer` instance is destroyed the audio keeps playing, make sure to call `.stop()` before discarding the object.
+* Audio playback is implemented via `roAudioResources`, `roAudioPlayer` and `Audio` node, but with some limitations:
+  * Only one instance of `roAudioPlayer` or `Audio` node should be used, if more are created those will share the content playlist.
+  * If the `roAudioPlayer` or `Audio` node instance is destroyed the audio keeps playing, make sure to stop the playback before discarding the object.
   * No `Timed Metadata` support.
 * The component `roAudioMetadata` only supports MP3 (for now).
 * The component `roImageMetadata` only supports JPEG images (for now).
