@@ -497,6 +497,8 @@ describe("end to end brightscript functions", () => {
             "invalid",
             " 3",
             "opengl",
+            "true",
+            "false",
             "false",
             "Stereo",
             " 0",

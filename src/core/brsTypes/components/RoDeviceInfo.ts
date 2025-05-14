@@ -82,6 +82,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
                 this.getSupportedGraphicsResolutions,
                 this.getUIResolution,
                 this.getGraphicsPlatform,
+                this.getGraphicsFeatures, // since OS 14.0
                 this.getSoundEffectsVolume,
                 this.getClientTrackingId,
                 this.getChannelClientId,
@@ -516,6 +517,21 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
                 name: this.displayModeName,
             };
             return toAssociativeArray(uiRes);
+        },
+    });
+
+    /** Checks the graphics features supported by the device. */
+    private readonly getGraphicsFeatures = new Callable("getGraphicsFeatures", {
+        signature: {
+            args: [],
+            returns: ValueKind.Object,
+        },
+        impl: (_: Interpreter) => {
+            const graphicsFeatures = {
+                full_rotation: true,
+                astc_supported: false,
+            };
+            return toAssociativeArray(graphicsFeatures);
         },
     });
 
