@@ -58,6 +58,8 @@ sub main()
     print decodeVideo.codec
     print deviceInfo.getUIResolution().count()
     print deviceInfo.getGraphicsPlatform()
+    print deviceInfo.getGraphicsFeatures().full_rotation
+    print deviceInfo.getGraphicsFeatures().astc_supported
     print deviceInfo.enableCodecCapChangedEvent(true)
     print deviceInfo.getAudioOutputChannel()
     print deviceInfo.getAudioDecodeInfo().count()
