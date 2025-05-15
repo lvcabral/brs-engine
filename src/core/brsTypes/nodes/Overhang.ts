@@ -1,25 +1,38 @@
 import { Field, FieldKind, FieldModel } from "./Field";
-import { AAMember, BrsString, Float, Label, Poster, Timer, BrsBoolean, BrsType } from "..";
+import {
+    AAMember,
+    BrsString,
+    Float,
+    Label,
+    Poster,
+    Timer,
+    BrsBoolean,
+    BrsType,
+    Rectangle,
+    isBrsNumber,
+    jsValueOf,
+} from "..";
 import { Group } from "./Group";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D } from "../interfaces/IfDraw2D";
+import { BrsDevice } from "../..";
 
 export class Overhang extends Group {
     readonly defaultFields: FieldModel[] = [
-        { name: "color", type: "color", value: "0x232323ff" },
+        { name: "color", type: "color", value: "0x00000000" },
         { name: "backgroundUri", type: "uri" },
         { name: "logoUri", type: "uri" },
         { name: "logoBaselineOffset", type: "float", value: "0.0" },
         { name: "title", type: "string" },
-        { name: "titleColor", type: "color", value: "0xddddddff" },
+        { name: "titleColor", type: "color", value: "0xfefefeff" },
         { name: "showClock", type: "boolean", value: "true" },
-        { name: "clockColor", type: "color", value: "0xddddddff" },
+        { name: "clockColor", type: "color", value: "0xfefefeff" },
         { name: "clockText", type: "string" },
         { name: "showOptions", type: "boolean", value: "false" },
-        { name: "optionsColor", type: "color", value: "0xddddddff" },
-        { name: "optionsDimColor", type: "color", value: "0xdddddd44" },
-        { name: "optionsIconColor", type: "color", value: "0xFFFFFFFF" },
-        { name: "optionsIconDimColor", type: "color", value: "0xFFFFFF44" },
+        { name: "optionsColor", type: "color", value: "0xfefefeff" },
+        { name: "optionsDimColor", type: "color", value: "0xfefefe99" },
+        { name: "optionsIconColor", type: "color" },
+        { name: "optionsIconDimColor", type: "color" },
         { name: "optionsAvailable", type: "boolean", value: "false" },
         { name: "optionsText", type: "string" },
         { name: "optionsMaxWidth", type: "float", value: "0.0" },
@@ -29,7 +42,8 @@ export class Overhang extends Group {
         { name: "rightDividerVertOffset", type: "float", value: "0.0" },
         { name: "height", type: "float", value: "115" },
     ];
-    private readonly background: Poster;
+    private readonly backRect: Rectangle;
+    private readonly backPoster: Poster;
     private readonly optionsIcon: Poster;
     private readonly optionsText: Label;
     private readonly logo: Poster;
@@ -37,6 +51,9 @@ export class Overhang extends Group {
     private readonly rightDivider: Poster;
     private readonly title: Label;
     private readonly clockText: Label;
+    private readonly locale: string;
+    private readonly timeZone: string;
+    private readonly clockFormat: string;
     private readonly defaultLogoHD: string = "common:/images/logo_roku_HD.png";
     private readonly defaultLogoFHD: string = "common:/images/logo_roku_FHD.png";
     private readonly optionsOn: string = "common:/images/icon_options.png";
@@ -44,6 +61,7 @@ export class Overhang extends Group {
     private readonly dividerHD: string = "common:/images/divider_vertical_HD.png";
     private readonly dividerFHD: string = "common:/images/divider_vertical_FHD.png";
     private readonly width: number;
+    private height: number;
     private realign: boolean;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = "Overhang") {
@@ -54,9 +72,11 @@ export class Overhang extends Group {
 
         if (this.resolution === "FHD") {
             this.width = 1920;
+            this.height = 172;
             this.setFieldValue("width", new Float(this.width));
-            this.setFieldValue("height", new Float(172));
-            this.background = this.addPoster("", [0, 0], this.width, 172);
+            this.setFieldValue("height", new Float(this.height));
+            this.backRect = this.addRectangle("color", [0, 0], this.width, this.height);
+            this.backPoster = this.addPoster("", [0, 0], this.width, this.height);
             this.logo = this.addPoster(this.defaultLogoFHD, [102, 63]);
             this.leftDivider = this.addPoster(this.dividerFHD, [261, 59], 12, 51);
             this.title = this.addLabel("titleColor", [297, 58], 0, 50, 45, "bottom");
@@ -66,9 +86,11 @@ export class Overhang extends Group {
             this.clockText = this.addLabel("clockColor", [1682, 64], 0, 40, 33, "center");
         } else {
             this.width = 1280;
+            this.height = 115;
             this.setFieldValue("width", new Float(this.width));
-            this.setFieldValue("height", new Float(115));
-            this.background = this.addPoster("", [0, 0], this.width, 115);
+            this.setFieldValue("height", new Float(this.height));
+            this.backRect = this.addRectangle("color", [0, 0], this.width, this.height);
+            this.backPoster = this.addPoster("", [0, 0], this.width, this.height);
             this.logo = this.addPoster(this.defaultLogoHD, [68, 42]);
             this.leftDivider = this.addPoster(this.dividerHD, [174, 39], 8, 34);
             this.title = this.addLabel("titleColor", [196, 39], 0, 35, 30, "bottom");
@@ -77,7 +99,10 @@ export class Overhang extends Group {
             this.rightDivider = this.addPoster(this.dividerHD, [1109, 39], 8, 34);
             this.clockText = this.addLabel("clockColor", [1133, 44], 0, 27, 22, "center");
         }
-        this.optionsText.set(new BrsString("text"), new BrsString("for Options"));
+        this.optionsText.set(new BrsString("text"), new BrsString(BrsDevice.getTerm("for Options")));
+        this.locale = BrsDevice.deviceInfo.locale.replace("_", "-");
+        this.clockFormat = BrsDevice.deviceInfo.clockFormat;
+        this.timeZone = BrsDevice.deviceInfo.timeZone;
         this.clockText.set(new BrsString("text"), new BrsString(this.getTime()));
         const clock = new Timer();
         clock.setCallback(() => {
@@ -90,22 +115,32 @@ export class Overhang extends Group {
     }
 
     private getTime() {
-        // TODO: Format time based on locale
         const now = new Date();
-        return now
-            .toLocaleTimeString("en-US", {
+        if (this.clockFormat === "12h") {
+            return new Intl.DateTimeFormat(this.locale, {
                 hour: "numeric",
                 minute: "numeric",
                 hour12: true,
+                timeZone: this.timeZone,
             })
-            .toLowerCase();
+                .format(now)
+                .toLowerCase();
+        }
+        return new Intl.DateTimeFormat(this.locale, {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
+            timeZone: this.timeZone,
+        }).format(now);
     }
 
     private updateChildren() {
-        this.copyField(this.background, "height");
+        this.copyField(this.backRect, "color");
+        this.copyField(this.backRect, "height");
+        this.copyField(this.backPoster, "height");
         const backUri = this.getFieldValueJS("backgroundUri") as string;
         if (backUri) {
-            this.background.set(new BrsString("uri"), new BrsString(backUri));
+            this.backPoster.set(new BrsString("uri"), new BrsString(backUri));
         }
         const logoUri = this.getFieldValueJS("logoUri") as string;
         if (logoUri) {
@@ -114,27 +149,31 @@ export class Overhang extends Group {
         const title = this.getFieldValueJS("title") as string;
         if (title) {
             this.title.set(new BrsString("text"), new BrsString(title));
+            this.copyField(this.title, "color", "titleColor");
             this.leftDivider.set(new BrsString("visible"), BrsBoolean.True);
         } else {
             this.leftDivider.set(new BrsString("visible"), BrsBoolean.False);
         }
         const showOptions = this.getFieldValueJS("showOptions") as boolean;
-        this.optionsIcon.set(new BrsString("visible"), BrsBoolean.from(showOptions));
-        this.optionsText.set(new BrsString("visible"), BrsBoolean.from(showOptions));
+        const optionsAvailable = this.getFieldValueJS("optionsAvailable") as boolean;
+        // Roku changed the behavior of `optionsAvailable` to hide the options icon and text if false
+        const optionsVisible = showOptions && optionsAvailable;
+        this.optionsIcon.set(new BrsString("visible"), BrsBoolean.from(optionsVisible));
+        this.optionsText.set(new BrsString("visible"), BrsBoolean.from(optionsVisible));
         const showClock = this.getFieldValueJS("showClock") as boolean;
         this.clockText.set(new BrsString("visible"), BrsBoolean.from(showClock));
-        if (showClock && showOptions) {
-            this.rightDivider.set(new BrsString("visible"), BrsBoolean.True);
-        } else {
-            this.rightDivider.set(new BrsString("visible"), BrsBoolean.False);
-        }
-        const optionsAvailable = this.getFieldValueJS("optionsAvailable") as boolean;
         if (optionsAvailable) {
             this.optionsIcon.set(new BrsString("uri"), new BrsString(this.optionsOn));
+            this.copyField(this.optionsIcon, "blendColor", "optionsIconColor");
             this.copyField(this.optionsText, "color", "optionsColor");
         } else {
             this.optionsIcon.set(new BrsString("uri"), new BrsString(this.optionsOff));
             this.copyField(this.optionsText, "color", "optionsDimColor");
+        }
+        if (showClock && optionsVisible) {
+            this.rightDivider.set(new BrsString("visible"), BrsBoolean.True);
+        } else {
+            this.rightDivider.set(new BrsString("visible"), BrsBoolean.False);
         }
         const optionsText = this.getFieldValueJS("optionsText") as string;
         if (optionsText) {
@@ -183,6 +222,10 @@ export class Overhang extends Group {
 
     set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
         this.realign = true;
+        const fieldName = index instanceof BrsString ? index.value : "";
+        if (fieldName === "height" && isBrsNumber(value)) {
+            this.height = jsValueOf(value) as number;
+        }
         return super.set(index, value, alwaysNotify, kind);
     }
 
