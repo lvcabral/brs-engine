@@ -17,6 +17,7 @@ import {
     isBrsString,
     BrsBoolean,
     rootObjects,
+    Rectangle,
 } from "..";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D, MeasuredText, Rect } from "../interfaces/IfDraw2D";
@@ -159,6 +160,20 @@ export class Group extends RoSGNode {
         }
         this.appendChildToParent(label);
         return label;
+    }
+
+    protected addRectangle(colorField: string, translation: number[], width?: number, height?: number) {
+        const rectangle = new Rectangle();
+        this.copyField(rectangle, "color", colorField);
+        if (width !== undefined) {
+            rectangle.set(new BrsString("width"), new Float(width));
+        }
+        if (height !== undefined) {
+            rectangle.set(new BrsString("height"), new Float(height));
+        }
+        rectangle.setTranslation(translation);
+        this.appendChildToParent(rectangle);
+        return rectangle;
     }
 
     protected getTranslation() {

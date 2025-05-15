@@ -29,6 +29,7 @@ export class BrsDevice {
     static readonly fileSystem: FileSystem = new FileSystem();
     static readonly isDevMode = process.env.NODE_ENV === "development";
     static readonly keysBuffer: KeyEvent[] = [];
+    static readonly terms: Map<string, string> = new Map<string, string>();
 
     static stdout: OutputProxy = new OutputProxy(process.stdout, false);
     static stderr: OutputProxy = new OutputProxy(process.stderr, false);
@@ -106,6 +107,21 @@ export class BrsDevice {
                 this.deviceInfo[key] = value;
             }
         });
+        const termsFile = `common:/locale/${this.deviceInfo.locale}/terms.json`;
+        if (this.fileSystem.existsSync(termsFile)) {
+            const termsJson = this.fileSystem.readFileSync(termsFile, "utf8");
+            if (termsJson) {
+                Object.entries(JSON.parse(termsJson)).forEach(([key, value]) => {
+                    if (typeof value === "string") {
+                        this.terms.set(key, value);
+                    }
+                });
+            }
+        }
+    }
+
+    static getTerm(term: string): string {
+        return this.terms.get(term) ?? term;
     }
 
     /**
