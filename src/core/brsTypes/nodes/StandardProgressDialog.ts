@@ -2,7 +2,7 @@ import { FieldModel } from "./Field";
 import { StandardDialog } from "./StandardDialog";
 import { AAMember } from "../components/RoAssociativeArray";
 import { StdDlgTitleArea, StdDlgContentArea, StdDlgProgressItem, jsValueOf, BrsString, Float } from "..";
-import { Interpreter } from "../..";
+import { BrsDevice, Interpreter } from "../..";
 import { IfDraw2D } from "../interfaces/IfDraw2D";
 
 export class StandardProgressDialog extends StandardDialog {
@@ -44,7 +44,7 @@ export class StandardProgressDialog extends StandardDialog {
             this.setTranslationX((this.screenWidth - itemWidth) / 2);
         }
         if (message === "") {
-            this.set(new BrsString("message"), new BrsString("Please wait..."));
+            this.set(new BrsString("message"), new BrsString(BrsDevice.getTerm("Please wait...")));
         }
         super.renderNode(interpreter, origin, angle, opacity, draw2D);
     }
