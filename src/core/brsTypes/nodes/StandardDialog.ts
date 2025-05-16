@@ -5,12 +5,12 @@ import {
     BrsBoolean,
     BrsString,
     BrsType,
-    brsValueOf,
     isBrsString,
     jsValueOf,
     Poster,
     rootObjects,
     RSGPalette,
+    toAssociativeArray,
 } from "..";
 import { IfDraw2D, Rect } from "../interfaces/IfDraw2D";
 import { Interpreter } from "../..";
@@ -118,6 +118,10 @@ export class StandardDialog extends Group {
                 return colors;
             }
         }
-        return new RoAssociativeArray([]);
+        // Fallback to default colors
+        const defaultColors = {
+            DialogBackgroundColor: "0x6C6278FF",
+        };
+        return toAssociativeArray(defaultColors);
     }
 }
