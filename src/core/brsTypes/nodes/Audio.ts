@@ -82,6 +82,8 @@ export class Audio extends RoSGNode {
             postMessage(`audio,notify,${Math.round(jsValueOf(value) * 1000)}`);
         } else if (fieldName === "loop" && isBrsBoolean(value)) {
             postMessage(`audio,loop,${value.toBoolean()}`);
+        } else if (fieldName === "mute" && isBrsBoolean(value)) {
+            postMessage(`video,mute,${value.toBoolean()}`);
         } else if (fieldName === "content" && value instanceof ContentNode) {
             postMessage(this.formatContent(value));
         } else if (readonlyFields.includes(fieldName)) {
