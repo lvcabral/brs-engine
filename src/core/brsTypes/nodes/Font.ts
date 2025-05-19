@@ -18,15 +18,25 @@ export class Font extends RoSGNode {
      * Valid System Fonts
      */
     static readonly SystemFonts: Map<string, FontDef> = new Map([
-        ["smallestsystemfont", { family: "Regular", fhd: 27, hd: 18 }],
-        ["smallestboldsystemfont", { family: "SemiBold", fhd: 27, hd: 18 }],
-        ["smallsystemfont", { family: "Regular", fhd: 33, hd: 22 }],
-        ["smallboldsystemfont", { family: "SemiBold", fhd: 33, hd: 22 }],
-        ["mediumsystemfont", { family: "Regular", fhd: 36, hd: 24 }],
-        ["mediumboldsystemfont", { family: "SemiBold", fhd: 36, hd: 24 }],
-        ["largesystemfont", { family: "Regular", fhd: 45, hd: 30 }],
-        ["largeboldsystemfont", { family: "SemiBold", fhd: 45, hd: 30 }],
+        ["BadgeSystemFont".toLowerCase(), { family: "SemiBold", fhd: 21, hd: 14 }],
+        ["TinySystemFont".toLowerCase(), { family: "Regular", fhd: 24, hd: 16 }],
+        ["TinyBoldSystemFont".toLowerCase(), { family: "SemiBold", fhd: 24, hd: 16 }],
+        ["SmallestSystemFont".toLowerCase(), { family: "Regular", fhd: 27, hd: 18 }],
+        ["SmallestBoldSystemFont".toLowerCase(), { family: "SemiBold", fhd: 27, hd: 18 }],
+        ["SmallerSystemFont".toLowerCase(), { family: "Regular", fhd: 30, hd: 20 }],
+        ["SmallerBoldSystemFont".toLowerCase(), { family: "SemiBold", fhd: 30, hd: 20 }],
+        ["SmallSystemFont".toLowerCase(), { family: "Regular", fhd: 33, hd: 22 }],
+        ["SmallBoldSystemFont".toLowerCase(), { family: "SemiBold", fhd: 33, hd: 22 }],
+        ["MediumSystemFont".toLowerCase(), { family: "Regular", fhd: 36, hd: 24 }],
+        ["MediumBoldSystemFont".toLowerCase(), { family: "SemiBold", fhd: 36, hd: 24 }],
+        ["LargeSystemFont".toLowerCase(), { family: "Regular", fhd: 45, hd: 30 }],
+        ["LargeBoldSystemFont".toLowerCase(), { family: "SemiBold", fhd: 54, hd: 36 }],
+        ["ExtraLargeSystemFont".toLowerCase(), { family: "Regular", fhd: 54, hd: 36 }],
+        ["ExtraLargeBoldSystemFont".toLowerCase(), { family: "SemiBold", fhd: 45, hd: 30 }],
+        ["LargestSystemFont".toLowerCase(), { family: "Regular", fhd: 90, hd: 60 }],
     ]);
+
+    static readonly DrawFontCache: Map<string, RoFont> = new Map();
 
     private readonly defaultSize: number;
     private readonly resolution: string;
@@ -41,9 +51,10 @@ export class Font extends RoSGNode {
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(members);
 
-        this.fields.get("size")?.setValue(new Int32(this.defaultSize), false);
+        this.setFieldValue("size", new Int32(this.defaultSize));
         this.systemFont = "MediumSystemFont";
     }
+
     set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
         if (!isBrsString(index)) {
             throw new Error("RoSGNode indexes must be strings");
@@ -65,7 +76,7 @@ export class Font extends RoSGNode {
     }
 
     setSize(size: number) {
-        this.fields.get("size")?.setValue(new Int32(size));
+        this.setFieldValue("size", new Int32(size));
     }
 
     getSystemFontFamily(font: string) {
@@ -89,11 +100,17 @@ export class Font extends RoSGNode {
         if (uri !== "") {
             fontFamily = fontRegistry.getFontFamily(uri) ?? fontFamily;
         }
-        return fontRegistry.createFont(
-            new BrsString(fontFamily),
-            new Int32(this.getSize()),
-            BrsBoolean.False,
-            BrsBoolean.False
-        ) as RoFont;
+        const fontId = `${fontFamily}-${this.getSize()}`;
+        let drawFont = Font.DrawFontCache.get(fontId);
+        if (!drawFont) {
+            drawFont = fontRegistry.createFont(
+                new BrsString(fontFamily),
+                new Int32(this.getSize()),
+                BrsBoolean.False,
+                BrsBoolean.False
+            ) as RoFont;
+            Font.DrawFontCache.set(fontId, drawFont);
+        }
+        return drawFont;
     }
 }
