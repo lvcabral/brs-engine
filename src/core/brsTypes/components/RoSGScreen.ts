@@ -66,9 +66,13 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     resolution: string;
     scaleMode: number;
     audioFlags: number;
-    contentIndex: number;
+    audioIndex: number;
     audioDuration: number;
     audioPosition: number;
+    videoFlags: number;
+    videoIndex: number;
+    videoDuration: number;
+    videoPosition: number;
     isDirty: boolean;
 
     constructor() {
@@ -85,9 +89,13 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         this.alphaEnable = true;
         this.scaleMode = 1;
         this.audioFlags = -1;
-        this.contentIndex = -1;
+        this.audioIndex = -1;
         this.audioDuration = -1;
         this.audioPosition = -1;
+        this.videoFlags = -1;
+        this.videoIndex = -1;
+        this.videoDuration = -1;
+        this.videoPosition = -1;
         this.isDirty = false;
         this.lastMessage = performance.now();
         const maxFps = BrsDevice.deviceInfo.maxFps;
@@ -195,6 +203,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
             this.processTimers();
             this.processTasks();
             this.processAudio();
+            this.processVideo();
             // TODO: Optimize rendering by only rendering if there are changes
             rootObjects.rootScene.renderNode(interpreter, [0, 0], 0, 1, this.draw2D);
             if (rootObjects.rootScene?.dialog?.getNodeParent() instanceof BrsInvalid) {
@@ -247,8 +256,8 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
             this.isDirty = true;
         }
         const index = Atomics.load(BrsDevice.sharedArray, DataType.SDX);
-        if (index !== this.contentIndex) {
-            this.contentIndex = index;
+        if (index !== this.audioIndex) {
+            this.audioIndex = index;
             rootObjects.audio.setContentIndex(index);
             this.isDirty = true;
         }
@@ -262,6 +271,37 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         if (position !== this.audioPosition) {
             this.audioPosition = position;
             rootObjects.audio.setPosition(position);
+            this.isDirty = true;
+        }
+    }
+
+    private processVideo() {
+        if (!rootObjects.video) {
+            return;
+        }
+        const flags = Atomics.load(BrsDevice.sharedArray, DataType.VDO);
+        if (flags !== this.videoFlags) {
+            this.videoFlags = flags;
+            rootObjects.video.setState(flags);
+            console.debug(`Video State: ${rootObjects.video.getFieldValueJS("state")}`);
+            this.isDirty = true;
+        }
+        const index = Atomics.load(BrsDevice.sharedArray, DataType.VDX);
+        if (index !== this.videoIndex) {
+            this.videoIndex = index;
+            rootObjects.video.setContentIndex(index);
+            this.isDirty = true;
+        }
+        const duration = Atomics.load(BrsDevice.sharedArray, DataType.VDR);
+        if (duration !== this.videoDuration) {
+            this.videoDuration = duration;
+            rootObjects.video.setDuration(duration);
+            this.isDirty = true;
+        }
+        const position = Atomics.load(BrsDevice.sharedArray, DataType.VPS);
+        if (position !== this.videoPosition) {
+            this.videoPosition = position;
+            rootObjects.video.setPosition(position);
             this.isDirty = true;
         }
     }
