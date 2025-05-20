@@ -13,11 +13,15 @@ import {
     Int32,
     rootObjects,
     Double,
+    Poster,
+    Label,
+    Float,
+    BrsBoolean,
 } from "..";
 import { MediaEvent } from "../../common";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D } from "../interfaces/IfDraw2D";
-import { rotateTranslation } from "../../scenegraph/SGUtil";
+import { convertHexColor, rotateTranslation } from "../../scenegraph/SGUtil";
 import { BrsDevice } from "../../device/BrsDevice";
 
 export class Video extends Group {
@@ -104,6 +108,10 @@ export class Video extends Group {
         { name: "disableScreenSaver", type: "boolean", value: "false" },
         { name: "contentBlocked", type: "boolean", value: "false" },
     ];
+    private readonly trickPlayBar: Poster;
+    private readonly trickPlayProgress: Poster;
+    private readonly trickPlayPos: Label;
+    private readonly trickPlayRem: Label;
     private lastPressHandled: string;
 
     constructor(members: AAMember[] = [], readonly name: string = "Video") {
@@ -111,6 +119,38 @@ export class Video extends Group {
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(members);
+
+        if (this.resolution === "FHD") {
+            this.trickPlayBar = this.addPoster("common:/images/durationBar.9.png", [102, 948], 1716, 18);
+            this.trickPlayProgress = this.addPoster("common:/images/durationBar.9.png", [102, 948], 1, 18);
+            this.trickPlayPos = this.addLabel("playbackActionButtonUnfocusedTextColor", [102, 984], 0, 36);
+            this.trickPlayRem = this.addLabel(
+                "playbackActionButtonUnfocusedTextColor",
+                [1645, 984],
+                174,
+                36,
+                36,
+                "top",
+                "right"
+            );
+        } else {
+            this.trickPlayBar = this.addPoster("common:/images/durationBar.9.png", [68, 632], 1144, 12);
+            this.trickPlayProgress = this.addPoster("common:/images/durationBar.9.png", [68, 632], 1, 12);
+            this.trickPlayPos = this.addLabel("playbackActionButtonUnfocusedTextColor", [68, 656], 0, 24);
+            this.trickPlayRem = this.addLabel(
+                "playbackActionButtonUnfocusedTextColor",
+                [1096, 656],
+                116,
+                24,
+                24,
+                "top",
+                "right"
+            );
+        }
+        this.trickPlayBar.setFieldValue("opacity", new Float(0.3));
+        this.trickPlayProgress.setFieldValue("visible", BrsBoolean.False);
+        this.trickPlayProgress.setFieldValue("blendColor", new Int32(convertHexColor("0x6F1AB1FF")));
+        postMessage(`video,notify,500`);
 
         rootObjects.video = this;
         this.lastPressHandled = "";
@@ -140,7 +180,7 @@ export class Video extends Group {
         ];
 
         if (fieldName === "control" && isBrsString(value)) {
-            const validControl = ["start", "play", "pause", "resume", "stop"];
+            const validControl = ["play", "pause", "resume", "stop", "replay", "skipcontent"];
             const control = value.getValue().toLowerCase();
             if (validControl.includes(control)) {
                 postMessage(`video,${control}`);
@@ -150,7 +190,7 @@ export class Video extends Group {
         } else if (fieldName === "seek" && isBrsNumber(value)) {
             const position = jsValueOf(value) as number;
             postMessage(`video,seek,${position * 1000}`);
-        } else if (fieldName === "notificationInterval" && isBrsNumber(value)) {
+        } else if (fieldName === "notificationinterval" && isBrsNumber(value)) {
             postMessage(`video,notify,${Math.round(jsValueOf(value) * 1000)}`);
         } else if (fieldName === "loop" && isBrsBoolean(value)) {
             postMessage(`video,loop,${value.toBoolean()}`);
@@ -179,11 +219,14 @@ export class Video extends Group {
             case MediaEvent.PAUSED:
                 state = "paused";
                 break;
+            case MediaEvent.PARTIAL:
+                state = "stopped";
+                break;
             case MediaEvent.FULL:
                 state = "finished";
                 break;
             case MediaEvent.FAILED:
-                state = "failed";
+                state = "error";
                 break;
         }
         super.set(new BrsString("state"), new BrsString(state));
@@ -194,12 +237,26 @@ export class Video extends Group {
     }
 
     setDuration(duration: number) {
-        // Roku rounds the audio duration to integer even being stored in a Double
-        super.set(new BrsString("duration"), new Double(Math.round(duration / 1000)));
+        super.set(new BrsString("duration"), new Double(duration));
     }
 
     setPosition(position: number) {
-        super.set(new BrsString("position"), new Double(position / 1000));
+        const duration = this.getFieldValueJS("duration") ?? 0;
+        if (this.trickPlayPos && position >= 0 && duration > 0) {
+            const remaining = duration - position;
+            const posStr = `${Math.floor(position / 60)}:${Math.floor(position % 60)
+                .toString()
+                .padStart(2, "0")}`;
+            const remStr = `${Math.floor(remaining / 60)}:${Math.floor(remaining % 60)
+                .toString()
+                .padStart(2, "0")}`;
+            this.trickPlayPos.setFieldValue("text", new BrsString(posStr));
+            this.trickPlayRem.setFieldValue("text", new BrsString(remStr));
+            const width = this.trickPlayBar.getFieldValueJS("width") as number;
+            this.trickPlayProgress.setFieldValue("visible", BrsBoolean.True);
+            this.trickPlayProgress.setFieldValue("width", new Int32((position / duration) * width));
+        }
+        super.set(new BrsString("position"), new Double(position));
     }
 
     handleKey(key: string, press: boolean): boolean {
