@@ -23,6 +23,7 @@ import { Interpreter } from "../../interpreter";
 import { IfDraw2D } from "../interfaces/IfDraw2D";
 import { convertHexColor, rotateTranslation } from "../../scenegraph/SGUtil";
 import { BrsDevice } from "../../device/BrsDevice";
+import { TrickPlayBar } from "./TrickPlayBar";
 
 export class Video extends Group {
     readonly defaultFields: FieldModel[] = [
@@ -108,14 +109,8 @@ export class Video extends Group {
         { name: "disableScreenSaver", type: "boolean", value: "false" },
         { name: "contentBlocked", type: "boolean", value: "false" },
     ];
-    private readonly barX: number;
-    private readonly barH: number;
     private readonly pausedIcon: Poster;
-    private readonly trickPlayBar: Poster;
-    private readonly trickPlayPrg: Poster;
-    private readonly trickPlayTic: Poster;
-    private readonly trickPlayPos: Label;
-    private readonly trickPlayRem: Label;
+    private readonly trickPlayBar: TrickPlayBar;
     private lastPressHandled: string;
 
     constructor(members: AAMember[] = [], readonly name: string = "Video") {
@@ -124,46 +119,17 @@ export class Video extends Group {
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(members);
 
+        this.trickPlayBar = new TrickPlayBar();
         if (this.resolution === "FHD") {
-            this.barX = 102;
-            this.barH = 18;
-            this.trickPlayBar = this.addPoster("common:/images/trickplaybar.9.png", [this.barX, 948], 1716, this.barH);
-            this.trickPlayPrg = this.addPoster("common:/images/trickplaybar.9.png", [this.barX, 948], 1, this.barH);
-            this.trickPlayTic = this.addPoster("common:/images/trickplayticker.png", [this.barX, 948], 18, this.barH);
             this.pausedIcon = this.addPoster("common:/images/FHD/video_pause.png", [902, 483]);
-            this.trickPlayPos = this.addLabel("playbackActionButtonUnfocusedTextColor", [this.barX, 984], 0, 36);
-            this.trickPlayRem = this.addLabel(
-                "playbackActionButtonUnfocusedTextColor",
-                [1645, 984],
-                174,
-                36,
-                36,
-                "top",
-                "right"
-            );
+            this.trickPlayBar.setTranslation([102, 948]);
         } else {
-            this.barX = 68;
-            this.barH = 12;
-            this.trickPlayBar = this.addPoster("common:/images/trickplaybar.9.png", [this.barX, 632], 1144, this.barH);
-            this.trickPlayPrg = this.addPoster("common:/images/trickplaybar.9.png", [this.barX, 632], 1, this.barH);
-            this.trickPlayTic = this.addPoster("common:/images/trickplayticker.png", [this.barX, 632], 12, this.barH);
             this.pausedIcon = this.addPoster("common:/images/HD/video_pause.png", [602, 322]);
-            this.trickPlayPos = this.addLabel("playbackActionButtonUnfocusedTextColor", [this.barX, 656], 0, 24);
-            this.trickPlayRem = this.addLabel(
-                "playbackActionButtonUnfocusedTextColor",
-                [1096, 656],
-                116,
-                24,
-                24,
-                "top",
-                "right"
-            );
+            this.trickPlayBar.setTranslation([68, 632]);
         }
         this.pausedIcon.setFieldValue("visible", BrsBoolean.False);
-        this.trickPlayBar.setFieldValue("opacity", new Float(0.3));
-        this.trickPlayPrg.setFieldValue("visible", BrsBoolean.False);
-        this.trickPlayPrg.setFieldValue("blendColor", new Int32(convertHexColor("0x6F1AB1FF")));
-        this.trickPlayTic.setFieldValue("visible", BrsBoolean.False);
+        this.trickPlayBar.setFieldValue("visible", BrsBoolean.False);
+        this.appendChildToParent(this.trickPlayBar);
         postMessage(`video,notify,500`);
 
         rootObjects.video = this;
@@ -230,10 +196,12 @@ export class Video extends Group {
             case MediaEvent.RESUMED:
                 state = "playing";
                 this.pausedIcon.setFieldValue("visible", BrsBoolean.False);
+                //this.trickPlayBar.setFieldValue("visible", BrsBoolean.False);
                 break;
             case MediaEvent.PAUSED:
                 state = "paused";
                 this.pausedIcon.setFieldValue("visible", BrsBoolean.True);
+                this.trickPlayBar.setFieldValue("visible", BrsBoolean.True);
                 break;
             case MediaEvent.PARTIAL:
                 state = "stopped";
@@ -258,24 +226,8 @@ export class Video extends Group {
 
     setPosition(position: number) {
         const duration = this.getFieldValueJS("duration") ?? 0;
-        if (this.trickPlayPos && position >= 0 && duration > 0) {
-            const remaining = duration - position;
-            const posStr = `${Math.floor(position / 60)}:${Math.floor(position % 60)
-                .toString()
-                .padStart(2, "0")}`;
-            const remStr = `${Math.floor(remaining / 60)}:${Math.floor(remaining % 60)
-                .toString()
-                .padStart(2, "0")}`;
-            this.trickPlayPos.setFieldValue("text", new BrsString(posStr));
-            this.trickPlayRem.setFieldValue("text", new BrsString(remStr));
-            const width = this.trickPlayBar.getFieldValueJS("width") as number;
-            const progress = (position / duration) * width;
-            if (progress > this.barH) {
-                this.trickPlayPrg.setFieldValue("visible", BrsBoolean.True);
-                this.trickPlayPrg.setFieldValue("width", new Int32(progress));
-                this.trickPlayTic.setFieldValue("visible", BrsBoolean.True);
-                this.trickPlayTic.setTranslationX(this.barX - this.barH + progress);
-            }
+        if (position >= 0 && duration > 0) {
+            this.trickPlayBar.setPosition(position, duration);
         }
         super.set(new BrsString("position"), new Double(position));
     }
