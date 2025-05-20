@@ -108,8 +108,10 @@ export class Video extends Group {
         { name: "disableScreenSaver", type: "boolean", value: "false" },
         { name: "contentBlocked", type: "boolean", value: "false" },
     ];
+    private readonly barX: number;
     private readonly trickPlayBar: Poster;
     private readonly trickPlayProgress: Poster;
+    private readonly trickPlayCursor: Poster;
     private readonly trickPlayPos: Label;
     private readonly trickPlayRem: Label;
     private lastPressHandled: string;
@@ -121,9 +123,11 @@ export class Video extends Group {
         this.registerInitializedFields(members);
 
         if (this.resolution === "FHD") {
-            this.trickPlayBar = this.addPoster("common:/images/durationBar.9.png", [102, 948], 1716, 18);
-            this.trickPlayProgress = this.addPoster("common:/images/durationBar.9.png", [102, 948], 1, 18);
-            this.trickPlayPos = this.addLabel("playbackActionButtonUnfocusedTextColor", [102, 984], 0, 36);
+            this.barX = 102;
+            this.trickPlayBar = this.addPoster("common:/images/durationBar.9.png", [this.barX, 948], 1716, 18);
+            this.trickPlayProgress = this.addPoster("common:/images/durationBar.9.png", [this.barX, 948], 1, 18);
+            this.trickPlayCursor = this.addPoster("common:/images/durationBar.9.png", [this.barX, 948], 18, 18);
+            this.trickPlayPos = this.addLabel("playbackActionButtonUnfocusedTextColor", [this.barX, 984], 0, 36);
             this.trickPlayRem = this.addLabel(
                 "playbackActionButtonUnfocusedTextColor",
                 [1645, 984],
@@ -134,9 +138,11 @@ export class Video extends Group {
                 "right"
             );
         } else {
-            this.trickPlayBar = this.addPoster("common:/images/durationBar.9.png", [68, 632], 1144, 12);
-            this.trickPlayProgress = this.addPoster("common:/images/durationBar.9.png", [68, 632], 1, 12);
-            this.trickPlayPos = this.addLabel("playbackActionButtonUnfocusedTextColor", [68, 656], 0, 24);
+            this.barX = 68;
+            this.trickPlayBar = this.addPoster("common:/images/durationBar.9.png", [this.barX, 632], 1144, 12);
+            this.trickPlayProgress = this.addPoster("common:/images/durationBar.9.png", [this.barX, 632], 1, 12);
+            this.trickPlayCursor = this.addPoster("common:/images/durationBar.9.png", [this.barX, 632], 12, 12);
+            this.trickPlayPos = this.addLabel("playbackActionButtonUnfocusedTextColor", [this.barX, 656], 0, 24);
             this.trickPlayRem = this.addLabel(
                 "playbackActionButtonUnfocusedTextColor",
                 [1096, 656],
@@ -150,6 +156,7 @@ export class Video extends Group {
         this.trickPlayBar.setFieldValue("opacity", new Float(0.3));
         this.trickPlayProgress.setFieldValue("visible", BrsBoolean.False);
         this.trickPlayProgress.setFieldValue("blendColor", new Int32(convertHexColor("0x6F1AB1FF")));
+        this.trickPlayCursor.setFieldValue("visible", BrsBoolean.False);
         postMessage(`video,notify,500`);
 
         rootObjects.video = this;
@@ -255,6 +262,8 @@ export class Video extends Group {
             const width = this.trickPlayBar.getFieldValueJS("width") as number;
             this.trickPlayProgress.setFieldValue("visible", BrsBoolean.True);
             this.trickPlayProgress.setFieldValue("width", new Int32((position / duration) * width));
+            this.trickPlayCursor.setFieldValue("visible", BrsBoolean.True);
+            this.trickPlayCursor.setTranslationX(this.barX + ((position / duration) * width));
         }
         super.set(new BrsString("position"), new Double(position));
     }
