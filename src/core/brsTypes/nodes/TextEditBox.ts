@@ -58,7 +58,7 @@ export class TextEditBox extends Group {
             this.paddingY = 12; // Approximate vertical centering
         }
         this.background = this.loadBitmap(this.backUri);
-        const cursorUri = `common:/images/cursor_textInput_${this.resolution}.png`;
+        const cursorUri = `common:/images/${this.resolution}/cursor_textInput.png`;
         this.cursor = this.loadBitmap(cursorUri);
         this.setFieldValue("height", new Float(this.height));
 
