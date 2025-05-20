@@ -263,7 +263,7 @@ export class Video extends Group {
             this.trickPlayProgress.setFieldValue("visible", BrsBoolean.True);
             this.trickPlayProgress.setFieldValue("width", new Int32((position / duration) * width));
             this.trickPlayCursor.setFieldValue("visible", BrsBoolean.True);
-            this.trickPlayCursor.setTranslationX(this.barX + ((position / duration) * width));
+            this.trickPlayCursor.setTranslationX(this.barX + (position / duration) * width);
         }
         super.set(new BrsString("position"), new Double(position));
     }
