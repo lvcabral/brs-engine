@@ -20,8 +20,6 @@ export class StdDlgProgressItem extends Group {
         { name: "text", type: "string", value: "" },
         { name: "scrollable", type: "boolean", value: "false" },
     ];
-    private readonly spinnerUriFHD = "common:/images/busy_spinner_FHD.png";
-    private readonly spinnerUriHD = "common:/images/busy_spinner_HD.png";
     private readonly spinner: BusySpinner;
     private readonly label: Label;
     private readonly gap: number;
@@ -32,13 +30,8 @@ export class StdDlgProgressItem extends Group {
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
         this.spinner = new BusySpinner();
-        if (this.resolution === "FHD") {
-            this.spinner.setPosterUri(this.spinnerUriFHD);
-            this.gap = 30;
-        } else {
-            this.spinner.setPosterUri(this.spinnerUriHD);
-            this.gap = 20;
-        }
+        this.gap = this.resolution === "FHD" ? 30 : 20;
+        this.spinner.setPosterUri(`common:/images/spinner_${this.resolution}.png`);
         this.spinner.set(new BrsString("control"), new BrsString("start"));
         this.appendChildToParent(this.spinner);
         this.label = new Label();
