@@ -1,4 +1,4 @@
-import { Field, FieldKind, FieldModel } from "./Field";
+import { FieldKind, FieldModel } from "./Field";
 import {
     AAMember,
     BrsString,
@@ -54,12 +54,8 @@ export class Overhang extends Group {
     private readonly locale: string;
     private readonly timeZone: string;
     private readonly clockFormat: string;
-    private readonly defaultLogoHD: string = "common:/images/logo_roku_HD.png";
-    private readonly defaultLogoFHD: string = "common:/images/logo_roku_FHD.png";
     private readonly optionsOn: string = "common:/images/icon_options.png";
     private readonly optionsOff: string = "common:/images/icon_options_off.png";
-    private readonly dividerHD: string = "common:/images/divider_vertical_HD.png";
-    private readonly dividerFHD: string = "common:/images/divider_vertical_FHD.png";
     private readonly width: number;
     private height: number;
     private realign: boolean;
@@ -70,6 +66,9 @@ export class Overhang extends Group {
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
 
+        const defaultLogo: string = `common:/images/${this.resolution}/logo_roku.png`;
+        const divider: string = `common:/images/${this.resolution}/divider_vertical.png`;
+
         if (this.resolution === "FHD") {
             this.width = 1920;
             this.height = 172;
@@ -77,12 +76,12 @@ export class Overhang extends Group {
             this.setFieldValue("height", new Float(this.height));
             this.backRect = this.addRectangle("color", [0, 0], this.width, this.height);
             this.backPoster = this.addPoster("", [0, 0], this.width, this.height);
-            this.logo = this.addPoster(this.defaultLogoFHD, [102, 63]);
-            this.leftDivider = this.addPoster(this.dividerFHD, [261, 59], 12, 51);
+            this.logo = this.addPoster(defaultLogo, [102, 63]);
+            this.leftDivider = this.addPoster(divider, [261, 59], 12, 51);
             this.title = this.addLabel("titleColor", [297, 58], 0, 50, 45, "bottom");
             this.optionsIcon = this.addPoster(this.optionsOff, [1421, 67], 30, 30);
             this.optionsText = this.addLabel("optionsColor", [1460, 64], 0, 40, 33, "center", "right");
-            this.rightDivider = this.addPoster(this.dividerFHD, [1646, 59], 12, 51);
+            this.rightDivider = this.addPoster(divider, [1646, 59], 12, 51);
             this.clockText = this.addLabel("clockColor", [1682, 64], 0, 40, 33, "center");
         } else {
             this.width = 1280;
@@ -91,12 +90,12 @@ export class Overhang extends Group {
             this.setFieldValue("height", new Float(this.height));
             this.backRect = this.addRectangle("color", [0, 0], this.width, this.height);
             this.backPoster = this.addPoster("", [0, 0], this.width, this.height);
-            this.logo = this.addPoster(this.defaultLogoHD, [68, 42]);
-            this.leftDivider = this.addPoster(this.dividerHD, [174, 39], 8, 34);
+            this.logo = this.addPoster(defaultLogo, [68, 42]);
+            this.leftDivider = this.addPoster(divider, [174, 39], 8, 34);
             this.title = this.addLabel("titleColor", [196, 39], 0, 35, 30, "bottom");
             this.optionsIcon = this.addPoster(this.optionsOff, [959, 46], 20, 20);
             this.optionsText = this.addLabel("optionsColor", [985, 44], 0, 27, 22, "center", "right");
-            this.rightDivider = this.addPoster(this.dividerHD, [1109, 39], 8, 34);
+            this.rightDivider = this.addPoster(divider, [1109, 39], 8, 34);
             this.clockText = this.addLabel("clockColor", [1133, 44], 0, 27, 22, "center");
         }
         this.optionsText.set(new BrsString("text"), new BrsString(BrsDevice.getTerm("for Options")));

@@ -110,6 +110,7 @@ export class Video extends Group {
     ];
     private readonly barX: number;
     private readonly barH: number;
+    private readonly pausedIcon: Poster;
     private readonly trickPlayBar: Poster;
     private readonly trickPlayPrg: Poster;
     private readonly trickPlayTic: Poster;
@@ -129,6 +130,7 @@ export class Video extends Group {
             this.trickPlayBar = this.addPoster("common:/images/trickplaybar.9.png", [this.barX, 948], 1716, this.barH);
             this.trickPlayPrg = this.addPoster("common:/images/trickplaybar.9.png", [this.barX, 948], 1, this.barH);
             this.trickPlayTic = this.addPoster("common:/images/trickplayticker.png", [this.barX, 948], 18, this.barH);
+            this.pausedIcon = this.addPoster("common:/images/FHD/video_pause.png", [902, 483]);
             this.trickPlayPos = this.addLabel("playbackActionButtonUnfocusedTextColor", [this.barX, 984], 0, 36);
             this.trickPlayRem = this.addLabel(
                 "playbackActionButtonUnfocusedTextColor",
@@ -145,6 +147,7 @@ export class Video extends Group {
             this.trickPlayBar = this.addPoster("common:/images/trickplaybar.9.png", [this.barX, 632], 1144, this.barH);
             this.trickPlayPrg = this.addPoster("common:/images/trickplaybar.9.png", [this.barX, 632], 1, this.barH);
             this.trickPlayTic = this.addPoster("common:/images/trickplayticker.png", [this.barX, 632], 12, this.barH);
+            this.pausedIcon = this.addPoster("common:/images/HD/video_pause.png", [602, 322]);
             this.trickPlayPos = this.addLabel("playbackActionButtonUnfocusedTextColor", [this.barX, 656], 0, 24);
             this.trickPlayRem = this.addLabel(
                 "playbackActionButtonUnfocusedTextColor",
@@ -156,6 +159,7 @@ export class Video extends Group {
                 "right"
             );
         }
+        this.pausedIcon.setFieldValue("visible", BrsBoolean.False);
         this.trickPlayBar.setFieldValue("opacity", new Float(0.3));
         this.trickPlayPrg.setFieldValue("visible", BrsBoolean.False);
         this.trickPlayPrg.setFieldValue("blendColor", new Int32(convertHexColor("0x6F1AB1FF")));
@@ -225,9 +229,11 @@ export class Video extends Group {
             case MediaEvent.SELECTED:
             case MediaEvent.RESUMED:
                 state = "playing";
+                this.pausedIcon.setFieldValue("visible", BrsBoolean.False);
                 break;
             case MediaEvent.PAUSED:
                 state = "paused";
+                this.pausedIcon.setFieldValue("visible", BrsBoolean.True);
                 break;
             case MediaEvent.PARTIAL:
                 state = "stopped";

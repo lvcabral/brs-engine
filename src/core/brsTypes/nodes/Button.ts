@@ -25,8 +25,8 @@ export class Button extends Group {
     ];
     static readonly focusUri = "common:/images/focus_list.9.png";
     static readonly footprintUri = "common:/images/focus_footprint.9.png";
-    static readonly iconUriHD = "common:/images/icon_generic_HD.png";
-    static readonly iconUriFHD = "common:/images/icon_generic_FHD.png";
+    static readonly iconUriHD = "common:/images/HD/icon_generic.png";
+    static readonly iconUriFHD = "common:/images/FHD/icon_generic.png";
 
     private readonly background: Poster;
     private readonly textLabel: Label;

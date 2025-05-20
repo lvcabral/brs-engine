@@ -12,22 +12,15 @@ export class RadioButtonList extends LabelList {
         { name: "focusedCheckedIconUri", type: "uri", value: "" },
     ];
 
-    private readonly checkmarkHDUri = "common:/images/icon_checkmark_HD.png";
-    private readonly checkmarkFHDUri = "common:/images/icon_checkmark_FHD.png";
-
     constructor(initializedFields: AAMember[] = [], readonly name: string = "RadioButtonList") {
         super([], name);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
 
-        if (this.resolution === "FHD") {
-            this.setFieldValue("checkedIconUri", new BrsString(this.checkmarkFHDUri));
-            this.setFieldValue("focusedCheckedIconUri", new BrsString(this.checkmarkFHDUri));
-        } else {
-            this.setFieldValue("checkedIconUri", new BrsString(this.checkmarkHDUri));
-            this.setFieldValue("focusedCheckedIconUri", new BrsString(this.checkmarkHDUri));
-        }
+        const checkmarkUri = `common:/images/${this.resolution}/icon_checkmark.png`;
+        this.setFieldValue("checkedIconUri", new BrsString(checkmarkUri));
+        this.setFieldValue("focusedCheckedIconUri", new BrsString(checkmarkUri));
     }
 
     protected handleOK(press: boolean) {
