@@ -14,14 +14,14 @@ import {
     rootObjects,
     Double,
     Poster,
-    Label,
-    Float,
     BrsBoolean,
+    BusySpinner,
+    Float,
 } from "..";
 import { MediaEvent } from "../../common";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D } from "../interfaces/IfDraw2D";
-import { convertHexColor, rotateTranslation } from "../../scenegraph/SGUtil";
+import { rotateTranslation } from "../../scenegraph/SGUtil";
 import { BrsDevice } from "../../device/BrsDevice";
 import { TrickPlayBar } from "./TrickPlayBar";
 
@@ -109,6 +109,7 @@ export class Video extends Group {
         { name: "disableScreenSaver", type: "boolean", value: "false" },
         { name: "contentBlocked", type: "boolean", value: "false" },
     ];
+    private readonly spinner: BusySpinner;
     private readonly pausedIcon: Poster;
     private readonly trickPlayBar: TrickPlayBar;
     private lastPressHandled: string;
@@ -120,15 +121,23 @@ export class Video extends Group {
         this.registerInitializedFields(members);
 
         this.trickPlayBar = new TrickPlayBar();
+        this.spinner = new BusySpinner();
+        this.spinner.setPosterUri(`common:/images/${this.resolution}/spinner.png`);
+        this.spinner.setFieldValue("spinInterval", new Float(1.0));
+        this.spinner.set(new BrsString("control"), new BrsString("start"));
+        this.appendChildToParent(this.spinner);
         if (this.resolution === "FHD") {
+            this.spinner.setTranslation([900, 480]);
             this.pausedIcon = this.addPoster("common:/images/FHD/video_pause.png", [902, 483]);
             this.trickPlayBar.setTranslation([102, 948]);
         } else {
+            this.spinner.setTranslation([600, 320]);
             this.pausedIcon = this.addPoster("common:/images/HD/video_pause.png", [602, 322]);
             this.trickPlayBar.setTranslation([68, 632]);
         }
         this.pausedIcon.setFieldValue("visible", BrsBoolean.False);
         this.trickPlayBar.setFieldValue("visible", BrsBoolean.False);
+        this.setFieldValue("trickPlayBar", this.trickPlayBar);
         this.appendChildToParent(this.trickPlayBar);
         postMessage(`video,notify,500`);
 
@@ -189,17 +198,22 @@ export class Video extends Group {
         switch (flags) {
             case MediaEvent.LOADING:
                 state = "buffering";
+                this.spinner.setFieldValue("visible", BrsBoolean.True);
+                this.pausedIcon.setFieldValue("visible", BrsBoolean.False);
+                this.trickPlayBar.setFieldValue("visible", BrsBoolean.False);
                 break;
             case MediaEvent.START_PLAY:
             case MediaEvent.START_STREAM:
             case MediaEvent.SELECTED:
             case MediaEvent.RESUMED:
                 state = "playing";
+                this.spinner.setFieldValue("visible", BrsBoolean.False);
                 this.pausedIcon.setFieldValue("visible", BrsBoolean.False);
-                //this.trickPlayBar.setFieldValue("visible", BrsBoolean.False);
+                this.trickPlayBar.setFieldValue("visible", BrsBoolean.False);
                 break;
             case MediaEvent.PAUSED:
                 state = "paused";
+                this.spinner.setFieldValue("visible", BrsBoolean.False);
                 this.pausedIcon.setFieldValue("visible", BrsBoolean.True);
                 this.trickPlayBar.setFieldValue("visible", BrsBoolean.True);
                 break;
@@ -207,6 +221,9 @@ export class Video extends Group {
                 state = "stopped";
                 break;
             case MediaEvent.FULL:
+                this.spinner.setFieldValue("visible", BrsBoolean.False);
+                this.pausedIcon.setFieldValue("visible", BrsBoolean.False);
+                this.trickPlayBar.setFieldValue("visible", BrsBoolean.False);
                 state = "finished";
                 break;
             case MediaEvent.FAILED:
