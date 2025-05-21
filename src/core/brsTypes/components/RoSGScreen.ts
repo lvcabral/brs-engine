@@ -30,7 +30,7 @@ import {
     rgbaIntToHex,
 } from "../interfaces/IfDraw2D";
 import { BrsDevice } from "../../device/BrsDevice";
-import { DataType } from "../../common";
+import { DataType, MediaEvent } from "../../common";
 
 // Roku Remote Mapping
 const rokuKeys: Map<number, string> = new Map([
@@ -71,6 +71,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     audioPosition: number;
     videoFlags: number;
     videoIndex: number;
+    videoProgress: number;
     videoDuration: number;
     videoPosition: number;
     isDirty: boolean;
@@ -94,6 +95,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         this.audioPosition = -1;
         this.videoFlags = -1;
         this.videoIndex = -1;
+        this.videoProgress = -1;
         this.videoDuration = -1;
         this.videoPosition = -1;
         this.isDirty = false;
@@ -278,6 +280,12 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     private processVideo() {
         if (!rootObjects.video) {
             return;
+        }
+        const progress = Atomics.load(BrsDevice.sharedArray, DataType.VLP);
+        if (this.videoProgress !== progress && progress >= 0 && progress <= 1000) {
+            this.videoProgress = progress;
+            rootObjects.video.setState(MediaEvent.LOADING);
+            console.debug(`Video Progress: ${progress}`);
         }
         const flags = Atomics.load(BrsDevice.sharedArray, DataType.VDO);
         if (flags !== this.videoFlags) {
