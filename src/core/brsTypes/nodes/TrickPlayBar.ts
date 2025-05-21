@@ -1,5 +1,5 @@
-import { FieldModel } from "./Field";
-import { AAMember, BrsString, Float, Label, Poster, BrsBoolean, Int32 } from "..";
+import { FieldKind, FieldModel } from "./Field";
+import { AAMember, BrsString, Float, Label, Poster, BrsBoolean, Int32, BrsType, isBrsString } from "..";
 import { Group } from "./Group";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D } from "../interfaces/IfDraw2D";
@@ -18,11 +18,11 @@ export class TrickPlayBar extends Group {
     ];
     private readonly barW: number;
     private readonly barH: number;
-    private readonly trickPlayBar: Poster;
-    private readonly trickPlayPrg: Poster;
-    private readonly trickPlayTic: Poster;
-    private readonly trickPlayPos: Label;
-    private readonly trickPlayRem: Label;
+    private readonly backBack: Poster;
+    private readonly barProgress: Poster;
+    private readonly barTicker: Poster;
+    private readonly position: Label;
+    private readonly remaining: Label;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = "TrickPlayBar") {
         super([], name);
@@ -33,24 +33,42 @@ export class TrickPlayBar extends Group {
         if (this.resolution === "FHD") {
             this.barH = 18;
             this.barW = 1716;
-            this.trickPlayRem = this.addLabel("textColor", [1543, 36], 174, 36, 36, "top", "right");
+            this.remaining = this.addLabel("textColor", [1543, 36], 174, 36, 36, "top", "right");
         } else {
             this.barH = 12;
             this.barW = 1144;
-            this.trickPlayRem = this.addLabel("textColor", [1028, 24], 116, 24, 24, "top", "right");
+            this.remaining = this.addLabel("textColor", [1028, 24], 116, 24, 24, "top", "right");
         }
-        this.trickPlayBar = this.addPoster(`common:/images/${this.resolution}/trickplaybar.9.png`, [0, 0], this.barW, this.barH);
-        this.trickPlayPrg = this.addPoster(`common:/images/${this.resolution}/trickplaybar.9.png`, [0, 0], 1, this.barH);
-        this.trickPlayTic = this.addPoster(`common:/images/${this.resolution}/trickplayticker.png`, [0, 0], this.barH, this.barH);
-        this.trickPlayPos = this.addLabel("textColor", [0, this.barH * 2], 0, this.barH * 2);
-        this.trickPlayBar.setFieldValue("opacity", new Float(0.3));
-        this.trickPlayPrg.setFieldValue("visible", BrsBoolean.False);
-        this.trickPlayPrg.setFieldValue("blendColor", new Int32(convertHexColor("0x6F1AB1FF")));
-        this.trickPlayTic.setFieldValue("visible", BrsBoolean.False);
+        const barBmpUri = `common:/images/${this.resolution}/trickplaybar.9.png`;
+        this.backBack = this.addPoster(barBmpUri, [0, 0], this.barW, this.barH);
+        this.barProgress = this.addPoster(barBmpUri, [0, 0], 1, this.barH);
+        this.barTicker = this.addPoster(`common:/images/${this.resolution}/trickplayticker.png`, [0, 0]);
+        this.position = this.addLabel("textColor", [0, this.barH * 2], 0, this.barH * 2);
+        this.backBack.setFieldValue("opacity", new Float(0.3));
+        this.barProgress.setFieldValue("visible", BrsBoolean.False);
+        this.barProgress.setFieldValue("blendColor", new Int32(convertHexColor("0x6F1AB1FF")));
+        this.barTicker.setFieldValue("visible", BrsBoolean.False);
+        this.linkField(this.backBack, "blendColor", "trackBlendColor");
+        this.linkField(this.backBack, "uri", "trackImageUri");
+        this.linkField(this.barProgress, "blendColor", "filledBarBlendColor");
+        this.linkField(this.barProgress, "uri", "filledBarImageUri");
+        this.linkField(this.barTicker, "blendColor", "currentTimeMarkerBlendColor");
+    }
+
+    set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
+        if (!isBrsString(index)) {
+            throw new Error("RoSGNode indexes must be strings");
+        }
+        const fieldName = index.getValue().toLowerCase();
+        if (fieldName === "textcolor") {
+            this.position.set(new BrsString("color"), value);
+            this.remaining.set(new BrsString("color"), value);
+        }
+        return super.set(index, value, alwaysNotify, kind);
     }
 
     setPosition(position: number, duration: number) {
-        if (this.trickPlayPos && position >= 0 && duration > 0) {
+        if (this.position && position >= 0 && duration > 0) {
             const remaining = duration - position;
             const posStr = `${Math.floor(position / 60)}:${Math.floor(position % 60)
                 .toString()
@@ -58,19 +76,17 @@ export class TrickPlayBar extends Group {
             const remStr = `${Math.floor(remaining / 60)}:${Math.floor(remaining % 60)
                 .toString()
                 .padStart(2, "0")}`;
-            this.trickPlayPos.setFieldValue("text", new BrsString(posStr));
-            this.trickPlayRem.setFieldValue("text", new BrsString(remStr));
-            const width = this.trickPlayBar.getFieldValueJS("width") as number;
+            this.position.setFieldValue("text", new BrsString(posStr));
+            this.remaining.setFieldValue("text", new BrsString(remStr));
+            const width = this.backBack.getFieldValueJS("width") as number;
             const progress = (position / duration) * width;
-            if (progress >= this.barH) {
-                this.trickPlayPrg.setFieldValue("visible", BrsBoolean.True);
-                this.trickPlayPrg.setFieldValue("width", new Int32(progress));
-                this.trickPlayTic.setFieldValue("visible", BrsBoolean.True);
-                this.trickPlayTic.setTranslationX(progress - this.barH);
-            } else {
-                this.trickPlayPrg.setFieldValue("visible", BrsBoolean.False);
-                this.trickPlayTic.setFieldValue("visible", BrsBoolean.False);
-            }
+            this.barProgress.setFieldValue("visible", BrsBoolean.from(progress > this.barH));
+            this.barProgress.setFieldValue("width", new Int32(progress));
+            this.barTicker.setFieldValue("visible", BrsBoolean.True);
+            this.barTicker.setTranslationX(Math.max(progress - this.barH, 0));
+        } else {
+            this.barProgress.setFieldValue("visible", BrsBoolean.False);
+            this.barTicker.setFieldValue("visible", BrsBoolean.False);
         }
     }
 
