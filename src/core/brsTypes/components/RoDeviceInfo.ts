@@ -84,9 +84,12 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
                 this.getGraphicsPlatform,
                 this.getGraphicsFeatures, // since OS 14.0
                 this.getSoundEffectsVolume,
-                this.getClientTrackingId,
+                this.getDeviceUniqueId, // deprecated
+                this.getClientTrackingId, // deprecated
                 this.getChannelClientId,
+                this.getAdvertisingId, // deprecated
                 this.getRIDA,
+                this.IsAdIdTrackingDisabled, // deprecated
                 this.isRIDADisabled,
                 this.isStoreDemoMode,
                 this.getCountryCode,
@@ -97,14 +100,15 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
                 this.getClockFormat,
                 this.timeSinceLastKeypress,
                 this.hasFeature,
-                this.getDrmInfo,
+                this.getDrmInfo, // deprecated
                 this.getDrmInfoEx,
                 this.getCaptionsMode,
                 this.setCaptionsMode,
                 this.getCaptionsOption,
                 this.canDecodeAudio,
                 this.getAudioOutputChannel,
-                this.getAudioDecodeInfo,
+                this.getAudioDecodeInfo, // deprecated
+                this.getVideoDecodeInfo, // deprecated
                 this.canDecodeVideo,
                 this.isAudioGuideEnabled,
                 this.isAutoPlayEnabled, // since OS 13.0
@@ -125,6 +129,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
                 this.enableAppFocusEvent,
                 this.enableScreensaverExitedEvent,
                 this.enableValidClockEvent,
+                this.isClockValid, // internal for Roku, added for completeness
                 this.getCreationTime, // undocumented
                 setPortIface.setMessagePort,
                 getPortIface.getMessagePort,
@@ -225,7 +230,10 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             returns: ValueKind.String,
         },
         impl: (_: Interpreter) => {
-            return new BrsString(this.firmware);
+            BrsDevice.stderr.write(
+                `warning,BRIGHTSCRIPT: WARNING: roDeviceInfo.GetVersion: This function is deprecated`
+            );
+            return new BrsString("999.99E99999A");
         },
     });
 
@@ -260,12 +268,29 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     });
 
     /** Returns a unique identifier of the unit running the script. Deprecated use GetChannelClientId() */
+    private readonly getDeviceUniqueId = new Callable("getDeviceUniqueId", {
+        signature: {
+            args: [],
+            returns: ValueKind.String,
+        },
+        impl: (_: Interpreter) => {
+            BrsDevice.stderr.write(
+                `warning,BRIGHTSCRIPT: WARNING: roDeviceInfo.GetDeviceUniqueId: This function is deprecated`
+            );
+            return new BrsString("000000000000");
+        },
+    });
+
+    /** Returns a unique identifier of the unit running the script. Deprecated use GetChannelClientId() */
     private readonly getClientTrackingId = new Callable("getClientTrackingId", {
         signature: {
             args: [],
             returns: ValueKind.String,
         },
         impl: (_: Interpreter) => {
+            BrsDevice.stderr.write(
+                `warning,BRIGHTSCRIPT: WARNING: roDeviceInfo.GetClientTrackingId: This function is deprecated`
+            );
             return new BrsString(BrsDevice.deviceInfo.clientId);
         },
     });
@@ -282,6 +307,20 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     });
 
     /** Returns a unique identifier for Advertisement tracking. */
+    private readonly getAdvertisingId = new Callable("getAdvertisingId", {
+        signature: {
+            args: [],
+            returns: ValueKind.String,
+        },
+        impl: (_: Interpreter) => {
+            BrsDevice.stderr.write(
+                `warning,BRIGHTSCRIPT: WARNING: roDeviceInfo.GetAdvertisingId: This function is deprecated`
+            );
+            return new BrsString(BrsDevice.deviceInfo.RIDA);
+        },
+    });
+
+    /** Returns a unique identifier for Advertisement tracking. */
     private readonly getRIDA = new Callable("getRIDA", {
         signature: {
             args: [],
@@ -289,6 +328,20 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter) => {
             return new BrsString(BrsDevice.deviceInfo.RIDA);
+        },
+    });
+
+    /** Returns true if the user has disabled Ad Id tracking by selecting "Limit ad tracking" from the Roku Settings menu. */
+    private readonly IsAdIdTrackingDisabled = new Callable("IsAdIdTrackingDisabled", {
+        signature: {
+            args: [],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter) => {
+            BrsDevice.stderr.write(
+                `warning,BRIGHTSCRIPT: WARNING: roDeviceInfo.IsAdIdTrackingDisabled: This function is deprecated`
+            );
+            return BrsBoolean.True;
         },
     });
 
@@ -578,7 +631,10 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter) => {
-            return new RoAssociativeArray([]);
+            BrsDevice.stderr.write(
+                `warning,BRIGHTSCRIPT: WARNING: roDeviceInfo.GetDrmInfo: This function is deprecated`
+            );
+            return toAssociativeArray({ PlayReady: " " });
         },
     });
 
@@ -690,7 +746,29 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter) => {
             // This method is deprecated in Roku
-            return new RoAssociativeArray([]);
+            return toAssociativeArray({
+                AAC: "2:0:0:0:",
+                ALAC: "6:0:0:0:",
+                FLAC: "6:0:0:0:",
+                LPCM: "2:0:0:1:",
+                MPEG: "2:0:0:0:",
+                OPUS: "6:0:0:0:",
+                VORBIS: "6:0:0:0:",
+                WMA: "6:0:0:0:",
+                WMAPRO: "8:0:0:0:",
+            });
+        },
+    });
+
+    /** Lists each video decoder supported by the device.*/
+    private readonly getVideoDecodeInfo = new Callable("getVideoDecodeInfo", {
+        signature: {
+            args: [],
+            returns: ValueKind.Object,
+        },
+        impl: (_: Interpreter) => {
+            // This method is deprecated in Roku
+            return toAssociativeArray({ H264: "", MPEG2: "", MPEG4: "" });
         },
     });
 
@@ -1020,6 +1098,17 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         impl: (_: Interpreter, enable: BrsBoolean) => {
             // Mocked until roDeviceInfoEvent is implemented
             return BrsBoolean.False;
+        },
+    });
+
+    /** Checks if the device's system clock is valid. */
+    private readonly isClockValid = new Callable("isClockValid", {
+        signature: {
+            args: [],
+            returns: ValueKind.Dynamic,
+        },
+        impl: (_: Interpreter) => {
+            return BrsBoolean.True;
         },
     });
 
