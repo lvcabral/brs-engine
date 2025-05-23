@@ -51,9 +51,6 @@ export class Overhang extends Group {
     private readonly rightDivider: Poster;
     private readonly title: Label;
     private readonly clockText: Label;
-    private readonly locale: string;
-    private readonly timeZone: string;
-    private readonly clockFormat: string;
     private readonly optionsOn: string = "common:/images/icon_options.png";
     private readonly optionsOff: string = "common:/images/icon_options_off.png";
     private readonly width: number;
@@ -99,38 +96,15 @@ export class Overhang extends Group {
             this.clockText = this.addLabel("clockColor", [1133, 44], 0, 27, 22, "center");
         }
         this.optionsText.set(new BrsString("text"), new BrsString(BrsDevice.getTerm("for Options")));
-        this.locale = BrsDevice.deviceInfo.locale.replace("_", "-");
-        this.clockFormat = BrsDevice.deviceInfo.clockFormat;
-        this.timeZone = BrsDevice.deviceInfo.timeZone;
-        this.clockText.set(new BrsString("text"), new BrsString(this.getTime()));
+        this.clockText.set(new BrsString("text"), new BrsString(BrsDevice.getTime()));
         const clock = new Timer();
         clock.setCallback(() => {
-            this.clockText.set(new BrsString("text"), new BrsString(this.getTime()));
+            this.clockText.set(new BrsString("text"), new BrsString(BrsDevice.getTime()));
         });
         clock.set(new BrsString("repeat"), BrsBoolean.True);
         clock.set(new BrsString("control"), new BrsString("start"));
         this.appendChildToParent(clock);
         this.realign = false;
-    }
-
-    private getTime() {
-        const now = new Date();
-        if (this.clockFormat === "12h") {
-            return new Intl.DateTimeFormat(this.locale, {
-                hour: "numeric",
-                minute: "numeric",
-                hour12: true,
-                timeZone: this.timeZone,
-            })
-                .format(now)
-                .toLowerCase();
-        }
-        return new Intl.DateTimeFormat(this.locale, {
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: false,
-            timeZone: this.timeZone,
-        }).format(now);
     }
 
     private updateChildren() {

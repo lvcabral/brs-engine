@@ -17,6 +17,9 @@ import {
     BrsBoolean,
     BusySpinner,
     Float,
+    Label,
+    Timer,
+    ScrollingLabel,
 } from "..";
 import { MediaEvent } from "../../common";
 import { Interpreter } from "../../interpreter";
@@ -109,10 +112,15 @@ export class Video extends Group {
         { name: "disableScreenSaver", type: "boolean", value: "false" },
         { name: "contentBlocked", type: "boolean", value: "false" },
     ];
+    private readonly titleText: ScrollingLabel;
+    private readonly contentTitles: string[];
+    private readonly clockText: Label;
     private readonly spinner: BusySpinner;
     private readonly pausedIcon: Poster;
     private readonly trickPlayBar: TrickPlayBar;
     private lastPressHandled: string;
+    private enableUI: boolean;
+    private enableTrickPlay: boolean;
 
     constructor(members: AAMember[] = [], readonly name: string = "Video") {
         super([], name);
@@ -120,6 +128,8 @@ export class Video extends Group {
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(members);
 
+        this.enableUI = true;
+        this.enableTrickPlay = true;
         this.trickPlayBar = new TrickPlayBar();
         this.spinner = new BusySpinner();
         this.spinner.setPosterUri(`common:/images/${this.resolution}/spinner.png`);
@@ -127,14 +137,29 @@ export class Video extends Group {
         this.spinner.set(new BrsString("control"), new BrsString("start"));
         this.appendChildToParent(this.spinner);
         if (this.resolution === "FHD") {
+            this.titleText = this.addScrollingLabel("textColor", [102, 60], 1020, 0, "LargeSystemFont");
+            this.clockText = this.addLabel("textColor", [1644, 60], 174, 36, 36, "top", "right");
             this.spinner.setTranslation([900, 480]);
             this.pausedIcon = this.addPoster("common:/images/FHD/video_pause.png", [902, 483]);
             this.trickPlayBar.setTranslation([102, 948]);
         } else {
+            this.titleText = this.addScrollingLabel("textColor", [68, 40], 680, 0, "LargeSystemFont");
+            this.clockText = this.addLabel("textColor", [1096, 40], 116, 24, 24, "top", "right");
             this.spinner.setTranslation([600, 320]);
             this.pausedIcon = this.addPoster("common:/images/HD/video_pause.png", [602, 322]);
             this.trickPlayBar.setTranslation([68, 632]);
         }
+        this.titleText.setFieldValue("visible", BrsBoolean.False);
+        this.contentTitles = [];
+        this.clockText.setFieldValue("visible", BrsBoolean.False);
+        this.clockText.setFieldValue("text", new BrsString(BrsDevice.getTime()));
+        const clock = new Timer();
+        clock.setCallback(() => {
+            this.clockText.set(new BrsString("text"), new BrsString(BrsDevice.getTime()));
+        });
+        clock.set(new BrsString("repeat"), BrsBoolean.True);
+        clock.set(new BrsString("control"), new BrsString("start"));
+        this.appendChildToParent(clock);
         this.pausedIcon.setFieldValue("visible", BrsBoolean.False);
         this.trickPlayBar.setFieldValue("visible", BrsBoolean.False);
         this.setFieldValue("trickPlayBar", this.trickPlayBar);
@@ -189,6 +214,14 @@ export class Video extends Group {
             postMessage({ videoPlaylist: this.formatContent(value) });
         } else if (readonlyFields.includes(fieldName)) {
             return BrsInvalid.Instance;
+        } else if (fieldName === "enableui" && isBrsBoolean(value)) {
+            this.enableUI = value.toBoolean();
+            if (!this.enableUI) {
+                this.spinner.setFieldValue("visible", BrsBoolean.False);
+                this.showUI(false);
+            }
+        } else if (fieldName === "enabletrickplay" && isBrsBoolean(value)) {
+            this.enableTrickPlay = value.toBoolean();
         }
         return super.set(index, value, alwaysNotify, kind);
     }
@@ -198,9 +231,8 @@ export class Video extends Group {
         switch (flags) {
             case MediaEvent.LOADING:
                 state = "buffering";
-                this.spinner.setFieldValue("visible", BrsBoolean.True);
-                this.pausedIcon.setFieldValue("visible", BrsBoolean.False);
-                this.trickPlayBar.setFieldValue("visible", BrsBoolean.False);
+                this.spinner.setFieldValue("visible", BrsBoolean.from(this.enableUI));
+                this.showUI(false);
                 break;
             case MediaEvent.START_PLAY:
             case MediaEvent.START_STREAM:
@@ -208,22 +240,19 @@ export class Video extends Group {
             case MediaEvent.RESUMED:
                 state = "playing";
                 this.spinner.setFieldValue("visible", BrsBoolean.False);
-                this.pausedIcon.setFieldValue("visible", BrsBoolean.False);
-                this.trickPlayBar.setFieldValue("visible", BrsBoolean.False);
+                this.showUI(false);
                 break;
             case MediaEvent.PAUSED:
                 state = "paused";
                 this.spinner.setFieldValue("visible", BrsBoolean.False);
-                this.pausedIcon.setFieldValue("visible", BrsBoolean.True);
-                this.trickPlayBar.setFieldValue("visible", BrsBoolean.True);
+                this.showUI(this.enableUI);
                 break;
             case MediaEvent.PARTIAL:
                 state = "stopped";
                 break;
             case MediaEvent.FULL:
                 this.spinner.setFieldValue("visible", BrsBoolean.False);
-                this.pausedIcon.setFieldValue("visible", BrsBoolean.False);
-                this.trickPlayBar.setFieldValue("visible", BrsBoolean.False);
+                this.showUI(false);
                 state = "finished";
                 break;
             case MediaEvent.FAILED:
@@ -234,6 +263,9 @@ export class Video extends Group {
     }
 
     setContentIndex(index: number) {
+        if (index > -1 && index < this.contentTitles.length) {
+            this.titleText.set(new BrsString("text"), new BrsString(this.contentTitles[index]));
+        }
         super.set(new BrsString("contentIndex"), new Int32(index));
     }
 
@@ -249,13 +281,20 @@ export class Video extends Group {
         super.set(new BrsString("position"), new Double(position));
     }
 
+    showUI(enabled: boolean) {
+        this.titleText.setFieldValue("visible", BrsBoolean.from(enabled));
+        this.clockText.setFieldValue("visible", BrsBoolean.from(enabled));
+        this.pausedIcon.setFieldValue("visible", BrsBoolean.from(enabled));
+        this.trickPlayBar.setFieldValue("visible", BrsBoolean.from(enabled));
+    }
+
     handleKey(key: string, press: boolean): boolean {
         if (!press && this.lastPressHandled === key) {
             this.lastPressHandled = "";
             return true;
         }
         let handled = false;
-        if (key === "play") {
+        if (key === "play" && this.enableTrickPlay) {
             const state = this.getFieldValueJS("state") as string;
             if (state === "paused") {
                 postMessage("video,resume");
@@ -264,8 +303,8 @@ export class Video extends Group {
                 postMessage("video,pause");
                 handled = true;
             }
-        } else if (key === "OK") {
-            // Show Video Metadata
+        } else if (key === "OK" && this.enableTrickPlay) {
+            // Show Video Metadata and Clock
         }
         this.lastPressHandled = handled ? key : "";
         return handled;
@@ -301,6 +340,7 @@ export class Video extends Group {
     private formatContent(node: ContentNode) {
         const corsProxy = BrsDevice.getCORSProxy();
         const content: Object[] = [];
+        this.contentTitles.length = 0;
         const isPlaylist = this.getFieldValueJS("contentIsPlaylist") as boolean;
         if (isPlaylist) {
             const playList = node.getNodeChildren();
@@ -311,6 +351,7 @@ export class Video extends Group {
                     if (url.startsWith("http")) {
                         item.url = corsProxy + url;
                     }
+                    this.contentTitles.push(node.getFieldValueJS("title") ?? "");
                     content.push(item);
                 }
             });
@@ -321,9 +362,11 @@ export class Video extends Group {
                 if (url.startsWith("http")) {
                     item.url = corsProxy + url;
                 }
+                this.contentTitles.push(node.getFieldValueJS("title") ?? "");
                 content.push(item);
             }
         }
+        this.titleText.set(new BrsString("text"), new BrsString(""));
         return content;
     }
 }
