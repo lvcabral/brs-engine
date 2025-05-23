@@ -77,6 +77,82 @@ describe("RoString", () => {
             interpreter = new Interpreter();
         });
 
+        describe("arg", () => {
+            let s, argMethod;
+
+            beforeEach(() => {
+                s = new RoString(new BrsString("Hello %1, you have %2 new messages and %3 notifications!"));
+                argMethod = s.getMethod("arg");
+                expect(argMethod).toBeInstanceOf(Callable);
+            });
+
+            it("replaces all %n placeholders with corresponding arguments", () => {
+                const result = argMethod.call(
+                    interpreter,
+                    new BrsString("Alice"),
+                    new BrsString("5"),
+                    new BrsString("2")
+                );
+                expect(result).toEqual(new BrsString("Hello Alice, you have 5 new messages and 2 notifications!"));
+            });
+
+            it("leaves unmatched placeholders unchanged if not enough arguments", () => {
+                const result = argMethod.call(interpreter, new BrsString("Bob"));
+                expect(result).toEqual(new BrsString("Hello Bob, you have %2 new messages and %3 notifications!"));
+            });
+
+            it("handles repeated placeholders", () => {
+                let s2 = new RoString(new BrsString("%1-%1-%2-%2"));
+                let argMethod2 = s2.getMethod("arg");
+                const result = argMethod2.call(interpreter, new BrsString("A"), new BrsString("B"));
+                expect(result).toEqual(new BrsString("A-A-B-B"));
+            });
+
+            it("handles placeholders out of order", () => {
+                let s3 = new RoString(new BrsString("%3 %1 %2"));
+                let argMethod3 = s3.getMethod("arg");
+                const result = argMethod3.call(interpreter, new BrsString("X"), new BrsString("Y"), new BrsString("Z"));
+                expect(result).toEqual(new BrsString("Z X Y"));
+            });
+
+            it("replace placeholders above %6", () => {
+                let s4 = new RoString(new BrsString("%7 %1 %6"));
+                let argMethod4 = s4.getMethod("arg");
+                const result = argMethod4.call(
+                    interpreter,
+                    new BrsString("A"),
+                    new BrsString("B"),
+                    new BrsString("C"),
+                    new BrsString("D"),
+                    new BrsString("E"),
+                    new BrsString("F")
+                );
+                expect(result).toEqual(new BrsString("C A B"));
+            });
+
+            it("does not replace placeholder %0", () => {
+                let s4 = new RoString(new BrsString("%0 %1 %2"));
+                let argMethod4 = s4.getMethod("arg");
+                const result = argMethod4.call(
+                    interpreter,
+                    new BrsString("A"),
+                    new BrsString("B"),
+                    new BrsString("C"),
+                    new BrsString("D"),
+                    new BrsString("E"),
+                    new BrsString("F")
+                );
+                expect(result).toEqual(new BrsString("%0 A B"));
+            });
+
+            it("does not replace if no placeholders", () => {
+                let s5 = new RoString(new BrsString("No placeholders here"));
+                let argMethod5 = s5.getMethod("arg");
+                const result = argMethod5.call(interpreter, new BrsString("A"));
+                expect(result).toEqual(new BrsString("No placeholders here"));
+            });
+        });
+
         describe("appendString", () => {
             let s, appendString;
 

@@ -18,13 +18,13 @@ describe("function argument type checking", () => {
     it("errors when too few args are passed", async () => {
         await execute([resourceFile("type-checking", "too-few-args.brs")], outputStreams);
         const output = allArgs(outputStreams.stderr.write);
-        expect(output[0]).toMatch(/UCase requires at least 1 arguments, but received 0\./);
+        expect(output[0]).toMatch(/UCase requires at least 1 argument\(s\), but received 0\./);
     });
 
     it("errors when too many args are passed", async () => {
         await execute([resourceFile("type-checking", "too-many-args.brs")], outputStreams);
         const output = allArgs(outputStreams.stderr.write);
-        expect(output[0] ?? "").toMatch(/RebootSystem accepts at most 0 arguments, but received 1\./);
+        expect(output[0] ?? "").toMatch(/RebootSystem accepts at most 0 argument\(s\), but received 1\./);
     });
 
     it("errors when mismatched types are provided as arguments", async () => {
