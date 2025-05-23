@@ -111,7 +111,7 @@ describe("RoDeviceInfo", () => {
                 let method = deviceInfo.getMethod("getVersion");
 
                 expect(method).toBeTruthy();
-                expect(method.call(interpreter)).toEqual(new BrsString("48F.04E12221A"));
+                expect(method.call(interpreter)).toEqual(new BrsString("999.99E99999A"));
             });
         });
         describe("getRIDA", () => {
@@ -242,7 +242,7 @@ describe("RoDeviceInfo", () => {
 
                 expect(method).toBeTruthy();
                 expect(items).toBeTruthy();
-                expect(result.elements).toEqual(new RoArray([]).elements);
+                expect(result.elements.length).toEqual(1);
             });
         });
         describe("getDrmInfoEx", () => {

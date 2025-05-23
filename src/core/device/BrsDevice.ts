@@ -38,7 +38,7 @@ export class BrsDevice {
     static displayEnabled: boolean = true;
     static threadId: number = 0;
     static singleKeyEvents: boolean = true; // Default Roku behavior is `true`
-    static useCORSProxy: boolean = false;
+    static useCORSProxy: boolean = true; // If CORS proxy is configured, use it by default
     static lastRemote: number = 0;
     static lastKey: number = -1;
     static lastMod: number = -1;
@@ -103,6 +103,13 @@ export class BrsDevice {
                 if (key === "developerId") {
                     // Prevent developerId from having "." to avoid issues on registry persistence
                     value = value.replace(".", ":");
+                } else if (key === "corsProxy") {
+                    // make sure the CORS proxy is valid URL and ends with "/"
+                    if (value.length > 0 && !value.startsWith("http")) {
+                        value = "";
+                    } else if (value.length > 0 && !value.endsWith("/")) {
+                        value += "/";
+                    }
                 }
                 this.deviceInfo[key] = value;
             }
@@ -129,10 +136,8 @@ export class BrsDevice {
      * @returns the URL or empty string
      */
     static getCORSProxy() {
-        if (this.useCORSProxy) {
-            return this.deviceInfo.corsProxy ?? "";
-        }
-        return "";
+        const corsProxy = this.deviceInfo.corsProxy ?? "";
+        return this.useCORSProxy ? corsProxy : "";
     }
 
     /**

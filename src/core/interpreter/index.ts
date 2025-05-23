@@ -165,7 +165,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     public setManifest(manifest: Map<string, string>) {
         // Reset custom manifest flags to default
         BrsDevice.singleKeyEvents = true;
-        BrsDevice.useCORSProxy = false;
+        BrsDevice.useCORSProxy = true;
         // Load manifest entries
         manifest.forEach((value: string, key: string) => {
             this.manifest.set(key, value);
@@ -173,7 +173,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             if (key.toLowerCase() === "multi_key_events") {
                 BrsDevice.singleKeyEvents = value.trim() !== "1";
             } else if (key.toLowerCase() === "cors_proxy") {
-                BrsDevice.useCORSProxy = value.trim() === "1";
+                BrsDevice.useCORSProxy = value.trim() !== "0";
             }
         });
     }
