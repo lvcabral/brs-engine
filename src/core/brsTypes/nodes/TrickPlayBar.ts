@@ -3,7 +3,6 @@ import { AAMember, BrsString, Float, Label, Poster, BrsBoolean, Int32, BrsType, 
 import { Group } from "./Group";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D } from "../interfaces/IfDraw2D";
-import { convertHexColor } from "../../scenegraph/SGUtil";
 
 export class TrickPlayBar extends Group {
     readonly defaultFields: FieldModel[] = [
@@ -33,7 +32,7 @@ export class TrickPlayBar extends Group {
         if (this.resolution === "FHD") {
             this.barH = 18;
             this.barW = 1716;
-            this.remaining = this.addLabel("textColor", [1543, 36], 174, 36, 36, "top", "right");
+            this.remaining = this.addLabel("textColor", [1542, 36], 174, 36, 36, "top", "right");
         } else {
             this.barH = 12;
             this.barW = 1144;
@@ -46,7 +45,7 @@ export class TrickPlayBar extends Group {
         this.position = this.addLabel("textColor", [0, this.barH * 2], 0, this.barH * 2);
         this.backBack.setFieldValue("opacity", new Float(0.3));
         this.barProgress.setFieldValue("visible", BrsBoolean.False);
-        this.barProgress.setFieldValue("blendColor", new Int32(convertHexColor("0x6F1AB1FF")));
+        this.barProgress.setFieldValue("blendColor", new Int32(1730004479)); // From inspection in Roku debugger
         this.barTicker.setFieldValue("visible", BrsBoolean.False);
         this.linkField(this.backBack, "blendColor", "trackBlendColor");
         this.linkField(this.backBack, "uri", "trackImageUri");

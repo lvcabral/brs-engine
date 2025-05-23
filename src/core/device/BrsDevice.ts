@@ -45,6 +45,11 @@ export class BrsDevice {
     static lastKeyTime: number = Date.now();
     static currKeyTime: number = Date.now();
 
+    /** Clock Support properties */
+    private static timeZone: string = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    private static clockFormat: string = "12h";
+    private static locale: string = "en-US";
+
     /** Array Buffer to Share the Registry across threads */
     private static registryVersion: number = 0;
     private static sharedRegistry?: SharedObject;
@@ -114,6 +119,10 @@ export class BrsDevice {
                 this.deviceInfo[key] = value;
             }
         });
+        this.clockFormat = BrsDevice.deviceInfo.clockFormat;
+        this.timeZone = BrsDevice.deviceInfo.timeZone;
+        this.locale = BrsDevice.deviceInfo.locale.replace("_", "-");
+
         const termsFile = `common:/locale/${this.deviceInfo.locale}/terms.json`;
         if (this.fileSystem.existsSync(termsFile)) {
             const termsJson = this.fileSystem.readFileSync(termsFile, "utf8");
@@ -228,5 +237,25 @@ export class BrsDevice {
         if (DefaultSounds.includes(sound)) {
             postMessage(`audio,trigger,${sound},${this.deviceInfo.audioVolume},0`);
         }
+    }
+
+    static getTime() {
+        const now = new Date();
+        if (this.clockFormat === "12h") {
+            return new Intl.DateTimeFormat(this.locale, {
+                hour: "numeric",
+                minute: "numeric",
+                hour12: true,
+                timeZone: this.timeZone,
+            })
+                .format(now)
+                .toLowerCase();
+        }
+        return new Intl.DateTimeFormat(this.locale, {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
+            timeZone: this.timeZone,
+        }).format(now);
     }
 }
