@@ -4,7 +4,7 @@ import { RoList } from "./RoList";
 import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid, Comparable } from "../BrsType";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
-import { BrsType, isBrsNumber, isStringComp } from "..";
+import { BrsType, isBrsNumber, isBrsString, isStringComp } from "..";
 import { Unboxable } from "../Boxing";
 import { Int32 } from "../Int32";
 import { Float } from "../Float";
@@ -27,6 +27,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
         this.registerMethods({
             ifString: [this.setString, this.getString],
             ifStringOps: [
+                this.arg,
                 this.appendString,
                 this.len,
                 this.left,
@@ -133,6 +134,40 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
     });
 
     // ---------- ifStringOps ----------
+
+    /** Replaces %n placeholders (for example, %1, %2, etc.) with arg1, arg2, and so on. */
+    private readonly arg = new Callable("Arg", {
+        signature: {
+            args: [
+                new StdlibArgument("arg1", ValueKind.String),
+                new StdlibArgument("arg2", ValueKind.String, BrsInvalid.Instance),
+                new StdlibArgument("arg3", ValueKind.String, BrsInvalid.Instance),
+                new StdlibArgument("arg4", ValueKind.String, BrsInvalid.Instance),
+                new StdlibArgument("arg5", ValueKind.String, BrsInvalid.Instance),
+                new StdlibArgument("arg6", ValueKind.String, BrsInvalid.Instance),
+            ],
+            returns: ValueKind.String,
+        },
+        impl: (_: Interpreter, ...args: BrsString[]) => {
+            let str = this.intrinsic.value;
+            let arg = 0;
+            const tokens = Array.from(new Set(str.match(/%([1-9])/g))).sort();
+            if (tokens) {
+                for (let token of tokens) {
+                    if (!isBrsString(args[arg])) {
+                        break;
+                    }
+                    str = str.replaceAll(token, args[arg].value);
+                    arg++;
+                }
+            }
+            if (arg < args.length && args[arg] instanceof BrsString) {
+                BrsDevice.stderr.write(`warning,BRIGHTSCRIPT: WARNING: roString.Arg: unused parameters.`);
+            }
+            return new BrsString(str);
+        },
+    });
+
     /** Appends the first len characters of s to the end of the string. */
     private readonly appendString = new Callable("AppendString", {
         signature: {

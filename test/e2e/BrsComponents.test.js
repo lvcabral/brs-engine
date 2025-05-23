@@ -339,7 +339,9 @@ describe("end to end brightscript functions", () => {
             "true", // startsWith no position
             "true", // startsWith with position
             "true", // endsWith no position
-            "true", // endsWith with position
+            "true", // endsWith with position,
+            "%0 %9 %8 %7 %6 %5 d c b a",
+            "%0 a b c d e f %7 %8 %9",
         ]);
     });
 
