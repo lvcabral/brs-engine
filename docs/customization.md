@@ -31,7 +31,6 @@ const deviceInfo = {
 
 ### CORS Proxy Configuration
 
-* Make sure it has the trailing slash
 * See `App Manifest` below to enable CORS proxy for your app
 * CORS-Anywhere repository: <https://github.com/Rob--W/cors-anywhere>
 
@@ -77,7 +76,7 @@ For example, if you want to define that your application is running on a device 
 There is also a way BrightScript apps can change the behavior of the simulation engine, by using special `manifest` entries. The valid options are:
 
 * `multi_key_events=1`: If this flag is defined, will inform the simulator to handle multiple key events in parallel, instead of the default Roku behavior, that is handling one key at a time.
-* `cors_proxy=1`: If this flag is defined, the engine will prepend to the network requests, the `corsProxy` URL configured in the `DeviceInfo` object.
+* `cors_proxy=0`: If this flag is defined with `zero`, the engine will disable the `corsProxy` URL for the app, if configured in the `DeviceInfo` object.
 
 **Note:** these special `manifest` entries are ignored by Roku Devices.
 
