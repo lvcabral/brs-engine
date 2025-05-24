@@ -1,7 +1,7 @@
 /*---------------------------------------------------------------------------------------------
  *  BrightScript Engine (https://github.com/lvcabral/brs-engine)
  *
- *  Copyright (c) 2019-2024 Marcelo Lv Cabral. All Rights Reserved.
+ *  Copyright (c) 2019-2025 Marcelo Lv Cabral. All Rights Reserved.
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
@@ -59,7 +59,7 @@ export function initDisplayModule(mode: string, perfStats = false) {
         if (event === "rect") {
             videoRect = data;
             return;
-        } else if (event === "bandwidth") {
+        } else if (["bandwidth", "http.connect", "warning", "error"].includes(event)) {
             return;
         }
         videoState = event;
@@ -236,7 +236,7 @@ function drawVideoFrame() {
             }
         }
         drawBufferImage();
-        window.requestAnimationFrame(drawVideoFrame);
+        lastFrameReq = window.requestAnimationFrame(drawVideoFrame);
     } else {
         frameLoop = false;
     }
@@ -267,8 +267,11 @@ export function showDisplay() {
 }
 
 // Clear Display and Buffer
-export function clearDisplay() {
-    window.cancelAnimationFrame(lastFrameReq);
+export function clearDisplay(cancelFrame?: boolean) {
+    if (cancelFrame) {
+        window.cancelAnimationFrame(lastFrameReq);
+        frameLoop = false;
+    }
     if (ctx && platform.inSafari) {
         ctx.fillStyle = "black";
         ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
