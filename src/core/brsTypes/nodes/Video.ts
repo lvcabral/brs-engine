@@ -212,6 +212,11 @@ export class Video extends Group {
             postMessage(`video,mute,${value.toBoolean()}`);
         } else if (fieldName === "content" && value instanceof ContentNode) {
             postMessage({ videoPlaylist: this.formatContent(value) });
+            if (this.contentTitles.length > 0) {
+                this.setContentIndex(0);
+            } else {
+                this.titleText.setFieldValue("text", new BrsString(""));
+            }
         } else if (readonlyFields.includes(fieldName)) {
             return BrsInvalid.Instance;
         } else if (fieldName === "enableui" && isBrsBoolean(value)) {
@@ -226,18 +231,19 @@ export class Video extends Group {
         return super.set(index, value, alwaysNotify, kind);
     }
 
-    setState(flags: number) {
+    setState(eventType: number) {
         let state = "none";
-        switch (flags) {
+        switch (eventType) {
             case MediaEvent.LOADING:
                 state = "buffering";
-                this.spinner.setFieldValue("visible", BrsBoolean.from(this.enableUI));
                 this.showUI(false);
+                this.titleText.setFieldValue("visible", BrsBoolean.from(this.enableUI));
+                this.clockText.setFieldValue("visible", BrsBoolean.from(this.enableUI));
+                this.spinner.setFieldValue("visible", BrsBoolean.from(this.enableUI));
                 break;
-            case MediaEvent.START_PLAY:
             case MediaEvent.START_STREAM:
-            case MediaEvent.SELECTED:
             case MediaEvent.RESUMED:
+                console.debug("Video.setState: start", eventType);
                 state = "playing";
                 this.spinner.setFieldValue("visible", BrsBoolean.False);
                 this.showUI(false);
@@ -250,6 +256,7 @@ export class Video extends Group {
             case MediaEvent.PARTIAL:
                 state = "stopped";
                 break;
+            case MediaEvent.FINISHED:
             case MediaEvent.FULL:
                 this.spinner.setFieldValue("visible", BrsBoolean.False);
                 this.showUI(false);
@@ -264,6 +271,7 @@ export class Video extends Group {
 
     setContentIndex(index: number) {
         if (index > -1 && index < this.contentTitles.length) {
+            console.debug(`Video.setContentIndex: ${index}`, this.contentTitles[index]);
             this.titleText.set(new BrsString("text"), new BrsString(this.contentTitles[index]));
         }
         super.set(new BrsString("contentIndex"), new Int32(index));
@@ -366,7 +374,6 @@ export class Video extends Group {
                 content.push(item);
             }
         }
-        this.titleText.set(new BrsString("text"), new BrsString(""));
         return content;
     }
 }

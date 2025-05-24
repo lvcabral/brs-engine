@@ -69,7 +69,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     audioIndex: number;
     audioDuration: number;
     audioPosition: number;
-    videoFlags: number;
+    videoEvent: number;
     videoIndex: number;
     videoProgress: number;
     videoDuration: number;
@@ -93,7 +93,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         this.audioIndex = -1;
         this.audioDuration = -1;
         this.audioPosition = -1;
-        this.videoFlags = -1;
+        this.videoEvent = -1;
         this.videoIndex = -1;
         this.videoProgress = -1;
         this.videoDuration = -1;
@@ -287,22 +287,22 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
             rootObjects.video.setState(MediaEvent.LOADING);
             console.debug(`Video Progress: ${progress}`);
         }
-        const flags = Atomics.load(BrsDevice.sharedArray, DataType.VDO);
-        if (flags !== this.videoFlags) {
-            this.videoFlags = flags;
-            if (flags >= 0) {
-                rootObjects.video.setState(flags);
+        const eventType = Atomics.load(BrsDevice.sharedArray, DataType.VDO);
+        if (eventType !== this.videoEvent) {
+            this.videoEvent = eventType;
+            if (eventType >= 0) {
+                rootObjects.video.setState(eventType);
                 console.debug(`Video State: ${rootObjects.video.getFieldValueJS("state")}`);
                 Atomics.store(BrsDevice.sharedArray, DataType.VDO, -1);
                 this.isDirty = true;
             }
         }
-        const index = Atomics.load(BrsDevice.sharedArray, DataType.VDX);
-        if (index !== this.videoIndex) {
-            this.videoIndex = index;
-            if (index >= 0) {
-                rootObjects.video.setContentIndex(index);
-                Atomics.store(BrsDevice.sharedArray, DataType.VDX, -1);
+        const selected = Atomics.load(BrsDevice.sharedArray, DataType.VSE);
+        if (selected !== this.videoIndex) {
+            this.videoIndex = selected;
+            if (selected >= 0) {
+                rootObjects.video.setContentIndex(selected);
+                Atomics.store(BrsDevice.sharedArray, DataType.VSE, -1);
                 this.isDirty = true;
             }
         }
