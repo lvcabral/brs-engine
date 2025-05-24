@@ -314,7 +314,7 @@ export function terminate(reason: AppExitReason = AppExitReason.UNKNOWN) {
         deviceDebug(`print,------ Finished '${currentApp.title}' execution [${reason}] ------\r\n`);
     }
     if (clearDisplayOnExit) {
-        clearDisplay();
+        clearDisplay(true);
     }
     resetWorker();
     resetCurrentApp();
@@ -407,7 +407,7 @@ function loadSourceCode(fileName: string, fileData: any) {
             paths.length = 0;
             source.push(this.result);
             paths.push({ url: `source/${fileName}`, id: 0, type: "source" });
-            clearDisplay();
+            clearDisplay(true);
             runApp(createPayload(Date.now()));
         } else {
             apiException("error", `[api] Invalid data type in ${fileName}: ${typeof this.result}`);

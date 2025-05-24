@@ -166,7 +166,7 @@ function processManifest(content: string): number {
 
 function showSplashOrIcon(splash?: string, iconFile?: Uint8Array) {
     if (typeof createImageBitmap !== "undefined") {
-        clearDisplay();
+        clearDisplay(true);
         if (splash?.slice(0, 5) === "pkg:/") {
             const splashFile = currentZip[splash.slice(5)];
             if (splashFile) {
