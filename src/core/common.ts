@@ -285,14 +285,14 @@ export type ConnectionInfo = {
 export enum DataType {
     DBG, // Debug Command
     BUF, // Buffer flag
-    VDO, // Video State
-    VDX, // Video Index
+    VDO, // Video Event
+    VDX, // Video Event Index
     VSE, // Video Selected
     VLP, // Video Load Progress
     VPS, // Video Position
     VDR, // Video Duration
-    SND, // Sound State
-    IDX, // Sound Index
+    SND, // Sound Event
+    SDX, // Sound Event Index
     WAV, // Wave Audio
     WAV1, // Reserved for second stream
     WAV2, // Reserved for third stream
@@ -360,11 +360,22 @@ export enum MediaEvent {
     PARTIAL,
     PAUSED,
     RESUMED,
+    FINISHED,
     FAILED,
     LOADING,
     START_STREAM,
     START_PLAY,
     POSITION,
+}
+
+export enum MediaError {
+    Network = 0,
+    Http = -1,
+    TimeOut = -2,
+    Unknown = -3,
+    EmptyList = -4,
+    Unsupported = -5,
+    DRM = -6,
 }
 
 // Buffer Data Types enumerator
