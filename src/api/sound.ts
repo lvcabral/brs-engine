@@ -272,6 +272,8 @@ function playSound() {
 }
 
 function nextSound() {
+    Atomics.store(sharedArray, DataType.SDX, playIndex);
+    Atomics.store(sharedArray, DataType.SND, MediaEvent.FINISHED);
     if (playNext >= 0 && playNext < playList.length) {
         playIndex = playNext;
     } else {

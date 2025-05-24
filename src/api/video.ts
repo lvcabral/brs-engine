@@ -1,12 +1,12 @@
 /*---------------------------------------------------------------------------------------------
  *  BrightScript Engine (https://github.com/lvcabral/brs-engine)
  *
- *  Copyright (c) 2019-2024 Marcelo Lv Cabral. All Rights Reserved.
+ *  Copyright (c) 2019-2025 Marcelo Lv Cabral. All Rights Reserved.
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { SubscribeCallback, saveDataBuffer } from "./util";
-import { BufferType, DataType, MediaEvent, platform } from "../core/common";
+import { BufferType, DataType, MediaEvent, MediaError, platform } from "../core/common";
 import Hls from "hls.js";
 
 // Video Objects
@@ -62,7 +62,9 @@ export function initVideoModule(array: Int32Array, mute: boolean = false) {
         });
         player.addEventListener("error", (e: Event) => {
             canPlay = false;
-            notifyAll("error", `Error ${player.error?.code}; details: ${player.error?.message}`);
+            Atomics.store(sharedArray, DataType.VDX, MediaError.Unknown);
+            Atomics.store(sharedArray, DataType.VDO, MediaEvent.FAILED);
+            notifyAll("warning", `Error ${player.error?.code}; details: ${player.error?.message}`);
         });
         player.addEventListener("ended", nextVideo);
         player.addEventListener("loadstart", startProgress);
@@ -147,6 +149,8 @@ export function handleVideoEvent(eventData: string) {
         if (newIndex && !isNaN(parseInt(newIndex))) {
             setNextVideo(parseInt(newIndex));
         } else {
+            Atomics.store(sharedArray, DataType.VDX, MediaError.EmptyList);
+            Atomics.store(sharedArray, DataType.VDO, MediaEvent.FAILED);
             notifyAll("warning", `[video] Invalid next index: ${eventData}`);
         }
     } else if (data[1] === "seek") {
@@ -331,9 +335,11 @@ function loadVideo(buffer = false) {
             player.load();
         }
     } else if (player) {
+        Atomics.store(sharedArray, DataType.VDX, MediaError.EmptyList);
+        Atomics.store(sharedArray, DataType.VDO, MediaEvent.FAILED);
         notifyAll("warning", `[video] Can't find video index: ${playIndex}`);
     } else {
-        notifyAll("warning", `[video] Can't find a video player!`);
+        notifyAll("error", `[video] Can't find a video player!`);
     }
 }
 
@@ -348,6 +354,8 @@ function loadHls(videoSrc: string): boolean {
         player.setAttribute("type", "application/vnd.apple.mpegurl");
         native = true;
     } else {
+        Atomics.store(sharedArray, DataType.VDX, MediaError.Unsupported);
+        Atomics.store(sharedArray, DataType.VDO, MediaEvent.FAILED);
         notifyAll("warning", "[video] HLS is not supported");
     }
     return native;
@@ -389,6 +397,8 @@ function playVideo() {
 }
 
 function nextVideo() {
+    Atomics.store(sharedArray, DataType.VDX, playIndex);
+    Atomics.store(sharedArray, DataType.VDO, MediaEvent.FINISHED);
     if (playNext < 0) {
         playNext = playIndex + 1;
     }
@@ -506,10 +516,14 @@ function createHlsInstance() {
                     break;
                 case Hls.ErrorTypes.NETWORK_ERROR:
                     // All retries and media options have been exhausted.
-                    notifyAll("error", `[video] fatal network error encountered ${data.details}`);
+                    notifyAll("warning", `[video] fatal network error encountered ${data.details}`);
+                    Atomics.store(sharedArray, DataType.VDX, MediaError.Network);
+                    Atomics.store(sharedArray, DataType.VDO, MediaEvent.FAILED);
                     break;
                 default:
                     // cannot recover
+                    Atomics.store(sharedArray, DataType.VDX, MediaError.Unknown);
+                    Atomics.store(sharedArray, DataType.VDO, MediaEvent.FAILED);
                     destroyHls();
                     break;
             }

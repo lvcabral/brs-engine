@@ -135,11 +135,11 @@ describe("interpreter calls", () => {
             new Expr.Call(
                 new Expr.Variable(identifier("UCase")),
                 token(Lexeme.RightParen, ")"),
-                [] // no arugments
+                [] // no arguments
             )
         );
 
-        expect(() => interpreter.exec([call])).toThrow(/UCase.*arguments/);
+        expect(() => interpreter.exec([call])).toThrow(/UCase.*argument/);
     });
 
     it("errors when too many arguments are provided", () => {
@@ -150,7 +150,7 @@ describe("interpreter calls", () => {
             ])
         );
 
-        expect(() => interpreter.exec([call])).toThrow(/UCase.*arguments/);
+        expect(() => interpreter.exec([call])).toThrow(/UCase.*argument/);
     });
 
     it("errors when argument types are incorrect", () => {

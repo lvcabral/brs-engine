@@ -1,5 +1,5 @@
 import { ValueKind, SignatureAndMismatches, MismatchReason, Callable, BrsType } from "../brsTypes";
-import { BrsError } from "../error/BrsError";
+import { BrsError, ErrorDetail, RuntimeError, RuntimeErrorDetail } from "../error/BrsError";
 import { Location } from "../lexer";
 
 function formatMismatch(functionName: string, mismatchedSignature: SignatureAndMismatches) {
@@ -8,12 +8,14 @@ function formatMismatch(functionName: string, mismatchedSignature: SignatureAndM
 
     let messageParts = [];
 
+    let requiredCount = 0;
     let args = sig.args
         .map((a) => {
             let requiredArg = `${a.name.text} as ${ValueKind.toString(a.type.kind)}`;
             if (a.defaultValue) {
                 return `[${requiredArg}]`;
             } else {
+                requiredCount++;
                 return requiredArg;
             }
         })
@@ -24,9 +26,9 @@ function formatMismatch(functionName: string, mismatchedSignature: SignatureAndM
             .map((mm) => {
                 switch (mm.reason) {
                     case MismatchReason.TooFewArguments:
-                        return `* ${functionName} requires at least ${mm.expected} arguments, but received ${mm.received}.`;
+                        return `* ${functionName} requires at least ${requiredCount} argument(s), but received ${mm.received}.`;
                     case MismatchReason.TooManyArguments:
-                        return `* ${functionName} accepts at most ${mm.expected} arguments, but received ${mm.received}.`;
+                        return `* ${functionName} accepts at most ${mm.expected} argument(s), but received ${mm.received}.`;
                     case MismatchReason.ArgumentTypeMismatch:
                         return `* Argument '${mm.argName}' must be of type ${mm.expected}, but received ${mm.received}.`;
                 }
@@ -50,6 +52,9 @@ export function generateArgumentMismatchError(callee: Callable, args: BrsType[],
         header = `Provided arguments don't match any of ${functionName}'s signatures.`;
         messages = mismatchedSignatures.map(formatMismatch.bind(null, functionName));
     }
-
-    return new BrsError([header, ...messages].join("\n"), location);
+    const errDetail: ErrorDetail = {
+        message: `${RuntimeErrorDetail.TypeMismatch.message}: ${[header, ...messages].join("\n")}`,
+        errno: RuntimeErrorDetail.TypeMismatch.errno,
+    };
+    return new RuntimeError(errDetail, location);
 }

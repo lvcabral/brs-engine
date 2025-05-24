@@ -127,7 +127,7 @@ export class RoAudioPlayerEvent extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
-            return BrsBoolean.from(this.flags === MediaEvent.FULL);
+            return BrsBoolean.from(this.flags === MediaEvent.FINISHED);
         },
     });
 

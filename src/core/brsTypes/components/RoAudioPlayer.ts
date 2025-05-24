@@ -14,13 +14,13 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
     readonly customHeaders: Map<string, string>;
     private port?: RoMessagePort;
     private contentList: RoAssociativeArray[];
-    private audioFlags: number;
+    private eventType: number;
     cookiesEnabled: boolean;
 
     constructor() {
         super("roAudioPlayer");
         this.contentList = new Array();
-        this.audioFlags = -1;
+        this.eventType = -1;
         this.cookiesEnabled = false;
         this.customHeaders = new Map<string, string>();
         postMessage(new Array<string>());
@@ -93,11 +93,11 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
 
     private getNewEvents() {
         const events: BrsEvent[] = [];
-        const flags = Atomics.load(BrsDevice.sharedArray, DataType.SND);
-        if (flags !== this.audioFlags) {
-            this.audioFlags = flags;
-            if (this.audioFlags >= 0) {
-                events.push(new RoAudioPlayerEvent(this.audioFlags, Atomics.load(BrsDevice.sharedArray, DataType.SDX)));
+        const eventType = Atomics.load(BrsDevice.sharedArray, DataType.SND);
+        if (eventType !== this.eventType) {
+            this.eventType = eventType;
+            if (this.eventType >= 0) {
+                events.push(new RoAudioPlayerEvent(this.eventType, Atomics.load(BrsDevice.sharedArray, DataType.SDX)));
             }
         }
         return events;

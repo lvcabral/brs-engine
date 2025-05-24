@@ -24,10 +24,11 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
     private port?: RoMessagePort;
     private contentList: RoAssociativeArray[];
     private notificationPeriod: number;
-    private videoFlags: number;
-    private videoIndex: number;
-    private videoPosition: number;
-    private videoProgress: number;
+    private eventType: number;
+    private eventIndex: number;
+    private position: number;
+    private progress: number;
+    private selected: number;
     private audioTracks: any[];
     cookiesEnabled: boolean;
 
@@ -35,10 +36,11 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
         super("roVideoPlayer");
         this.contentList = new Array();
         this.notificationPeriod = 0;
-        this.videoFlags = -1;
-        this.videoIndex = -1;
-        this.videoPosition = 0;
-        this.videoProgress = -1;
+        this.eventType = -1;
+        this.eventIndex = -1;
+        this.position = 0;
+        this.progress = -1;
+        this.selected = 0;
         this.audioTracks = [];
         this.cookiesEnabled = false;
         this.customHeaders = new Map<string, string>();
@@ -131,6 +133,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
         const events: BrsEvent[] = [];
         const selected = Atomics.load(BrsDevice.sharedArray, DataType.VSE);
         if (selected >= 0) {
+            this.selected = selected;
             events.push(new RoVideoPlayerEvent(MediaEvent.SELECTED, selected));
             Atomics.store(BrsDevice.sharedArray, DataType.VSE, -1);
         }
@@ -143,20 +146,20 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
                 this.audioTracks = [];
             }
         }
-        const flags = Atomics.load(BrsDevice.sharedArray, DataType.VDO);
-        const index = Atomics.load(BrsDevice.sharedArray, DataType.VDX);
-        if (flags !== this.videoFlags || index !== this.videoIndex) {
-            this.videoFlags = flags;
-            this.videoIndex = index;
-            if (this.videoFlags >= 0) {
-                events.push(new RoVideoPlayerEvent(this.videoFlags, this.videoIndex));
+        const eventType = Atomics.load(BrsDevice.sharedArray, DataType.VDO);
+        const eventIndex = Atomics.load(BrsDevice.sharedArray, DataType.VDX);
+        if (eventType !== this.eventType || eventIndex !== this.eventIndex) {
+            this.eventType = eventType;
+            this.eventIndex = eventIndex;
+            if (this.eventType >= 0) {
+                events.push(new RoVideoPlayerEvent(this.eventType, this.eventIndex, this.selected));
                 Atomics.store(BrsDevice.sharedArray, DataType.VDO, -1);
                 Atomics.store(BrsDevice.sharedArray, DataType.VDX, -1);
             }
         }
         const progress = Atomics.load(BrsDevice.sharedArray, DataType.VLP);
-        if (this.videoProgress !== progress && progress >= 0 && progress <= 1000) {
-            this.videoProgress = progress;
+        if (this.progress !== progress && progress >= 0 && progress <= 1000) {
+            this.progress = progress;
             events.push(new RoVideoPlayerEvent(MediaEvent.LOADING, progress));
             if (progress === 1000) {
                 events.push(new RoVideoPlayerEvent(MediaEvent.START_PLAY, 0));
@@ -164,9 +167,9 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
         }
         if (this.notificationPeriod >= 1) {
             const position = Atomics.load(BrsDevice.sharedArray, DataType.VPS);
-            if (Math.abs(this.videoPosition - position) >= this.notificationPeriod) {
-                this.videoPosition = position;
-                events.push(new RoVideoPlayerEvent(MediaEvent.POSITION, position));
+            if (position >= 0 && Math.abs(this.position - position) >= this.notificationPeriod) {
+                this.position = position;
+                events.push(new RoVideoPlayerEvent(MediaEvent.POSITION, position, this.selected));
             }
         }
         return events;
@@ -188,7 +191,8 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, contentList: RoArray) => {
-            this.videoPosition = 0;
+            this.selected = 0;
+            this.position = 0;
             this.contentList = contentList.getElements() as RoAssociativeArray[];
             postMessage({ videoPlaylist: this.getContent() });
             return BrsInvalid.Instance;
@@ -215,7 +219,8 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter) => {
-            this.videoPosition = 0;
+            this.position = 0;
+            this.selected = 0;
             this.contentList = new Array();
             postMessage({ videoPlaylist: new Array<string>() });
             return BrsInvalid.Instance;
@@ -229,7 +234,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
-            this.videoPosition = 0;
+            this.position = 0;
             this.contentList = new Array();
             postMessage("video,load");
             return BrsBoolean.True;
@@ -243,7 +248,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
-            this.videoPosition = 0;
+            this.position = 0;
             postMessage("video,play");
             return BrsBoolean.True;
         },
@@ -256,7 +261,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
-            this.videoPosition = 0;
+            this.position = 0;
             postMessage("video,stop");
             return BrsBoolean.True;
         },
@@ -329,7 +334,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, offsetMs: Int32) => {
-            this.videoPosition = 0;
+            this.position = 0;
             postMessage(`video,seek,${offsetMs.toString()}`);
             return BrsInvalid.Instance;
         },
