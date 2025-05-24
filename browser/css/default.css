@@ -35,7 +35,7 @@ body {
 #player {
     opacity: 0;
     z-index: 30;
-    display: none;
+    position: fixed;
 }
 
 #stats {

@@ -250,7 +250,6 @@ export function resetVideo() {
     if (player.src.startsWith("blob:")) {
         revokeVideoURL(player.src);
     }
-    destroyHls();
     playList = new Array();
     packageVideos = new Map();
     playIndex = 0;
@@ -432,8 +431,12 @@ function nextVideo() {
 function stopVideo() {
     if (player && playerState !== "stop") {
         player.pause();
-        player.removeAttribute("src"); // empty source
-        player.load();
+        if (hls) {
+            destroyHls();
+        } else {
+            player.removeAttribute("src"); // empty source
+            player.load();
+        }
         notifyAll("stop");
         Atomics.store(sharedArray, DataType.VDX, playIndex);
         Atomics.store(sharedArray, DataType.VDO, MediaEvent.PARTIAL);
@@ -505,6 +508,7 @@ function revokeVideoURL(url: string) {
 }
 
 function createHlsInstance() {
+    hls?.detachMedia();
     hls?.destroy();
     hls = new Hls();
     hls.on(Hls.Events.ERROR, function (event, data) {
@@ -551,6 +555,7 @@ function createHlsInstance() {
 }
 
 function destroyHls() {
+    hls?.detachMedia();
     hls?.destroy();
     hls = undefined;
 }
