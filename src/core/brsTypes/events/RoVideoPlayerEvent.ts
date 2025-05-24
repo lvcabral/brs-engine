@@ -11,11 +11,13 @@ export class RoVideoPlayerEvent extends BrsComponent implements BrsValue {
     private readonly flags: number;
     private readonly index: number;
     private readonly message: string;
+    private readonly selected: number;
 
-    constructor(flags: number, index: number) {
+    constructor(flags: number, index: number, selected?: number) {
         super("roVideoPlayerEvent");
         this.flags = flags;
         this.index = index;
+        this.selected = selected ?? 0;
         switch (this.flags) {
             case MediaEvent.LOADING:
                 this.message = "startup progress";
@@ -90,7 +92,9 @@ export class RoVideoPlayerEvent extends BrsComponent implements BrsValue {
                 };
                 return toAssociativeArray(info);
             } else if (this.flags === MediaEvent.POSITION) {
-                return toAssociativeArray({ ClipIdx: 0, ClipPos: this.index * 1000 });
+                return toAssociativeArray({ ClipIdx: this.selected, ClipPos: this.index * 1000 });
+            } else if (this.flags === MediaEvent.FAILED) {
+                return toAssociativeArray({ ClipIdx: this.selected, ignored: true });
             }
             return BrsInvalid.Instance;
         },
@@ -118,7 +122,7 @@ export class RoVideoPlayerEvent extends BrsComponent implements BrsValue {
         },
     });
 
-    /** Returns true if video is loaded and will start to play. */
+    /** Checks whether video playback has completed at the end of the content list. */
     private readonly isFullResult = new Callable("isFullResult", {
         signature: {
             args: [],
@@ -129,14 +133,14 @@ export class RoVideoPlayerEvent extends BrsComponent implements BrsValue {
         },
     });
 
-    /** Returns true if video playback completed at end of content. */
+    /** Checks whether the player has finished playing an item in the content list. */
     private readonly isRequestSucceeded = new Callable("isRequestSucceeded", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
-            return BrsBoolean.from(this.flags === MediaEvent.FULL);
+            return BrsBoolean.from(this.flags === MediaEvent.FINISHED);
         },
     });
 

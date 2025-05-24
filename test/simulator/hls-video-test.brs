@@ -20,11 +20,17 @@ sub main()
         Stream: {url: "https://storage.googleapis.com/shaka-demo-assets/angel-one-hls/hls.m3u8"}
         StreamFormat: "hls"
     },{
+        Stream: {url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"}
+        StreamFormat: "mp4"
+    },{
         Stream: {url: "https://5b44cf20b0388.streamlock.net:8443/vod/smil:hls-maudios-prod.smil/playlist.m3u8"}
         StreamFormat: "hls"
     },{
-        Stream: {url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"}
+        Stream: {url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4"}
         StreamFormat: "mp4"
+    },{
+        Stream: {url: "http://devimages.apple.com/iphone/samples/bipbop/bipbopall.m3u8"}
+        StreamFormat: "hls"
 	}])
     player.Play()
     position = 0
@@ -49,6 +55,10 @@ sub main()
             else if type(msg) = "roVideoPlayerEvent" and msg.isStreamStarted()
                 tracks = player.getAudioTracks()
                 print tracks.count(); " audio tracks available.", tracks[currAudioTrack]
+            else if type(msg) = "roVideoPlayerEvent" and msg.isRequestSucceeded()
+                print "isRequestSucceeded", msg.getIndex()
+            else if type(msg) = "roVideoPlayerEvent" and msg.isListItemSelected()
+                print "isListItemSelected", msg.getIndex()
             else if type(msg) = "roSystemLogEvent"
                 logEvent = msg.getInfo()
                 if logEvent.logType = "bandwidth.minute"

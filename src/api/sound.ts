@@ -231,7 +231,7 @@ function playSound() {
         } else {
             sound.play();
         }
-        Atomics.store(sharedArray, DataType.IDX, playIndex);
+        Atomics.store(sharedArray, DataType.SDX, playIndex);
         Atomics.store(sharedArray, DataType.SND, MediaEvent.SELECTED);
     } else {
         notifyAll("warning", `[sound] Can't find audio index: ${playIndex}`);
@@ -239,6 +239,8 @@ function playSound() {
 }
 
 function nextSound() {
+    Atomics.store(sharedArray, DataType.SDX, playIndex);
+    Atomics.store(sharedArray, DataType.SND, MediaEvent.FINISHED);
     if (playNext >= 0 && playNext < playList.length) {
         playIndex = playNext;
     } else {
