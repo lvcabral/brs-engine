@@ -25,7 +25,7 @@ let statsCanvas: Stats;
 let showStats = false;
 let videoState = "stop";
 let videoRect = { x: 0, y: 0, w: 0, h: 0 };
-let frameLoop = false;
+let videoLoop = false;
 
 // Initialize Display Module
 let displayMode = "720p";
@@ -63,8 +63,8 @@ export function initDisplayModule(mode: string, perfStats = false) {
             return;
         }
         videoState = event;
-        if (videoState === "play" && !frameLoop) {
-            frameLoop = true;
+        if (videoState === "play" && !videoLoop) {
+            videoLoop = true;
             lastFrameReq = window.requestAnimationFrame(drawVideoFrame);
         }
     });
@@ -170,8 +170,10 @@ export function updateBuffer(buffer: ImageData) {
         createImageBitmap(buffer).then((bitmap) => {
             lastImage = bitmap;
         });
-        clearDisplay();
-        lastFrameReq = window.requestAnimationFrame(drawBufferImage);
+        if (!videoLoop) {
+            clearDisplay();
+            lastFrameReq = window.requestAnimationFrame(drawBufferImage);
+        }
     }
 }
 
@@ -210,7 +212,7 @@ function drawBufferImage() {
 // Draw Video Player frame to the Display Canvas
 function drawVideoFrame() {
     if (bufferCtx && player instanceof HTMLVideoElement && ["play", "pause"].includes(videoState)) {
-        frameLoop = true;
+        videoLoop = true;
         let left = videoRect.x;
         let top = videoRect.y;
         let width = videoRect.w || bufferCanvas.width;
@@ -238,7 +240,7 @@ function drawVideoFrame() {
         drawBufferImage();
         lastFrameReq = window.requestAnimationFrame(drawVideoFrame);
     } else {
-        frameLoop = false;
+        videoLoop = false;
     }
 }
 
@@ -270,7 +272,7 @@ export function showDisplay() {
 export function clearDisplay(cancelFrame?: boolean) {
     if (cancelFrame) {
         window.cancelAnimationFrame(lastFrameReq);
-        frameLoop = false;
+        videoLoop = false;
     }
     if (ctx && platform.inSafari) {
         ctx.fillStyle = "black";
