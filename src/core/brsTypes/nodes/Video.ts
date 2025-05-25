@@ -121,6 +121,9 @@ export class Video extends Group {
     private lastPressHandled: string;
     private enableUI: boolean;
     private enableTrickPlay: boolean;
+    private showHeader: number;
+    private showPaused: number;
+    private showTrickPlay: number;
 
     constructor(members: AAMember[] = [], readonly name: string = "Video") {
         super([], name);
@@ -134,6 +137,7 @@ export class Video extends Group {
         this.spinner = new BusySpinner();
         this.spinner.setPosterUri(`common:/images/${this.resolution}/spinner.png`);
         this.spinner.setFieldValue("spinInterval", new Float(1.0));
+        this.spinner.setFieldValue("visible", BrsBoolean.False);
         this.spinner.set(new BrsString("control"), new BrsString("start"));
         this.appendChildToParent(this.spinner);
         if (this.resolution === "FHD") {
@@ -149,9 +153,7 @@ export class Video extends Group {
             this.pausedIcon = this.addPoster("common:/images/HD/video_pause.png", [602, 322]);
             this.trickPlayBar.setTranslation([68, 632]);
         }
-        this.titleText.setFieldValue("visible", BrsBoolean.False);
         this.contentTitles = [];
-        this.clockText.setFieldValue("visible", BrsBoolean.False);
         this.clockText.setFieldValue("text", new BrsString(BrsDevice.getTime()));
         const clock = new Timer();
         clock.setCallback(() => {
@@ -160,10 +162,12 @@ export class Video extends Group {
         clock.set(new BrsString("repeat"), BrsBoolean.True);
         clock.set(new BrsString("control"), new BrsString("start"));
         this.appendChildToParent(clock);
-        this.pausedIcon.setFieldValue("visible", BrsBoolean.False);
-        this.trickPlayBar.setFieldValue("visible", BrsBoolean.False);
         this.setFieldValue("trickPlayBar", this.trickPlayBar);
         this.appendChildToParent(this.trickPlayBar);
+        this.showHeader = 0;
+        this.showPaused = 0;
+        this.showTrickPlay = 0;
+        this.showUI(false);
         postMessage(`video,notify,500`);
 
         rootObjects.video = this;
@@ -232,18 +236,17 @@ export class Video extends Group {
     }
 
     setState(eventType: number) {
+        const now = Date.now();
         let state = "none";
         switch (eventType) {
             case MediaEvent.LOADING:
                 state = "buffering";
                 this.showUI(false);
-                this.titleText.setFieldValue("visible", BrsBoolean.from(this.enableUI));
-                this.clockText.setFieldValue("visible", BrsBoolean.from(this.enableUI));
+                this.showHeader = now + 5000;
                 this.spinner.setFieldValue("visible", BrsBoolean.from(this.enableUI));
                 break;
             case MediaEvent.START_STREAM:
             case MediaEvent.RESUMED:
-                console.debug("Video.setState: start", eventType);
                 state = "playing";
                 this.spinner.setFieldValue("visible", BrsBoolean.False);
                 this.showUI(false);
@@ -251,7 +254,9 @@ export class Video extends Group {
             case MediaEvent.PAUSED:
                 state = "paused";
                 this.spinner.setFieldValue("visible", BrsBoolean.False);
-                this.showUI(this.enableUI);
+                this.showHeader = now + 5000;
+                this.showTrickPlay = now + 5000;
+                this.showPaused = now + 2000;
                 break;
             case MediaEvent.PARTIAL:
                 state = "stopped";
@@ -289,11 +294,17 @@ export class Video extends Group {
         super.set(new BrsString("position"), new Double(position));
     }
 
-    showUI(enabled: boolean) {
-        this.titleText.setFieldValue("visible", BrsBoolean.from(enabled));
-        this.clockText.setFieldValue("visible", BrsBoolean.from(enabled));
-        this.pausedIcon.setFieldValue("visible", BrsBoolean.from(enabled));
-        this.trickPlayBar.setFieldValue("visible", BrsBoolean.from(enabled));
+    showUI(show: boolean) {
+        if (!show) {
+            this.showHeader = 0;
+            this.showPaused = 0;
+            this.showTrickPlay = 0;
+        }
+        const now = Date.now();
+        this.titleText.setFieldValue("visible", BrsBoolean.from(this.showHeader > now));
+        this.clockText.setFieldValue("visible", BrsBoolean.from(this.showHeader > now));
+        this.pausedIcon.setFieldValue("visible", BrsBoolean.from(this.showPaused > now));
+        this.trickPlayBar.setFieldValue("visible", BrsBoolean.from(this.showTrickPlay > now));
     }
 
     handleKey(key: string, press: boolean): boolean {
@@ -312,7 +323,10 @@ export class Video extends Group {
                 handled = true;
             }
         } else if (key === "OK" && this.enableTrickPlay) {
-            // Show Video Metadata and Clock
+            const now = Date.now();
+            if (this.showHeader < now) {
+                this.showHeader = now + 5000;
+            }
         }
         this.lastPressHandled = handled ? key : "";
         return handled;
@@ -340,6 +354,7 @@ export class Video extends Group {
             this.isDirty = false;
         }
         draw2D?.doDrawClearedRect(rect);
+        this.showUI(this.enableUI);
         this.updateBoundingRects(rect, origin, rotation);
         this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);
         this.updateParentRects(origin, angle);
