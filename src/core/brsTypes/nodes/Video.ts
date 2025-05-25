@@ -123,6 +123,7 @@ export class Video extends Group {
     private showHeader: number;
     private showPaused: number;
     private showTrickPlay: number;
+    private statusChanged: boolean;
 
     constructor(members: AAMember[] = [], readonly name: string = "Video") {
         super([], name);
@@ -166,6 +167,7 @@ export class Video extends Group {
         this.showHeader = 0;
         this.showPaused = 0;
         this.showTrickPlay = 0;
+        this.statusChanged = false;
         this.showUI(false);
         postMessage(`video,notify,500`);
 
@@ -206,6 +208,7 @@ export class Video extends Group {
             }
         } else if (fieldName === "enableui" && isBrsBoolean(value)) {
             this.enableUI = value.toBoolean();
+            this.statusChanged = this.enableUI;
             if (!this.enableUI) {
                 this.spinner.setFieldValue("visible", BrsBoolean.False);
                 this.showUI(false);
@@ -252,6 +255,7 @@ export class Video extends Group {
                 state = "error";
                 break;
         }
+        this.statusChanged = true;
         super.set(new BrsString("state"), new BrsString(state));
     }
 
@@ -335,7 +339,9 @@ export class Video extends Group {
             this.isDirty = false;
         }
         draw2D?.doDrawClearedRect(rect);
-        this.showUI(this.enableUI);
+        if (this.statusChanged) {
+            this.showUI(this.enableUI);
+        }
         this.updateBoundingRects(rect, origin, rotation);
         this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);
         this.updateParentRects(origin, angle);
