@@ -368,7 +368,7 @@ export enum MediaEvent {
     POSITION,
 }
 
-export enum MediaError {
+export enum MediaErrorCode {
     Network = 0,
     Http = -1,
     TimeOut = -2,
