@@ -4,6 +4,7 @@ import { Group } from "./Group";
 import {
     BrsBoolean,
     BrsInvalid,
+    BrsNumber,
     BrsString,
     BrsType,
     brsValueOf,
@@ -131,27 +132,18 @@ export class ArrayGrid extends Group {
             throw new Error("RoSGNode indexes must be strings");
         }
         const fieldName = index.getValue().toLowerCase();
-        if (fieldName === "content") {
-            const retValue = super.set(index, value, alwaysNotify, kind);
+        if (fieldName === "content" && value instanceof ContentNode) {
+            super.set(index, value, alwaysNotify, kind);
             this.itemComps.length = 0;
             this.refreshContent();
             let focus = -1;
-            if (value instanceof ContentNode && value.getNodeChildren().length) {
+            if (value.getNodeChildren().length) {
                 focus = 0;
             }
             this.set(new BrsString("jumpToItem"), new Int32(focus));
-            return retValue;
+            return BrsInvalid.Instance;
         } else if (["jumptoitem", "animatetoitem"].includes(fieldName) && isBrsNumber(value)) {
-            const newFocus = this.findContentIndex(jsValueOf(value));
-            if (newFocus > -1) {
-                const focusedIndex = this.getFieldValueJS("itemFocused") as number;
-                const nodeFocus = rootObjects.focused === this;
-                this.updateItemFocus(this.focusIndex, false, nodeFocus);
-                this.focusIndex = newFocus;
-                this.updateItemFocus(this.focusIndex, true, nodeFocus);
-                super.set(new BrsString("itemUnfocused"), new Int32(focusedIndex));
-                super.set(new BrsString("itemFocused"), value);
-            }
+            this.setFocusedItem(value);
         } else if (fieldName === "vertfocusanimationstyle") {
             const style = value.toString().toLowerCase();
             if (["fixedfocuswrap", "floatingfocus", "fixedfocus"].includes(style)) {
@@ -167,13 +159,27 @@ export class ArrayGrid extends Group {
             // Invalid horizFocusAnimationStyle
             return BrsInvalid.Instance;
         }
-        const result = super.set(index, value, alwaysNotify, kind);
+        super.set(index, value, alwaysNotify, kind);
         const rowFields = ["vertfocusanimationstyle", "numrows", "focusrow"];
         // Update the current row if some fields changed
         if (rowFields.includes(index.getValue().toLowerCase())) {
             this.currRow = this.updateCurrRow();
         }
-        return result;
+        return BrsInvalid.Instance;
+    }
+
+    private setFocusedItem(value: BrsNumber) {
+        const newFocus = this.findContentIndex(jsValueOf(value));
+        if (newFocus === -1) {
+            return;
+        }
+        const focusedIndex = this.getFieldValueJS("itemFocused") as number;
+        const nodeFocus = rootObjects.focused === this;
+        this.updateItemFocus(this.focusIndex, false, nodeFocus);
+        this.focusIndex = newFocus;
+        this.updateItemFocus(this.focusIndex, true, nodeFocus);
+        super.set(new BrsString("itemUnfocused"), new Int32(focusedIndex));
+        super.set(new BrsString("itemFocused"), value);
     }
 
     private findContentIndex(index: number) {
