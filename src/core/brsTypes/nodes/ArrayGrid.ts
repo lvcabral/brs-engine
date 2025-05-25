@@ -12,6 +12,7 @@ import {
     Float,
     Font,
     Int32,
+    isBrsNumber,
     isBrsString,
     jsValueOf,
     rootObjects,
@@ -140,19 +141,16 @@ export class ArrayGrid extends Group {
             }
             this.set(new BrsString("jumpToItem"), new Int32(focus));
             return retValue;
-        } else if (["jumptoitem", "animatetoitem"].includes(fieldName)) {
-            const focusedIndex = this.getFieldValueJS("itemFocused") as number;
-            const newIndex = jsValueOf(value) as number;
-            if (focusedIndex !== newIndex) {
-                const newFocus = this.findContentIndex(newIndex);
-                if (newFocus > -1) {
-                    const nodeFocus = rootObjects.focused === this;
-                    this.updateItemFocus(this.focusIndex, false, nodeFocus);
-                    this.focusIndex = newFocus;
-                    this.updateItemFocus(this.focusIndex, true, nodeFocus);
-                    super.set(new BrsString("itemUnfocused"), new Int32(focusedIndex));
-                    super.set(new BrsString("itemFocused"), value);
-                }
+        } else if (["jumptoitem", "animatetoitem"].includes(fieldName) && isBrsNumber(value)) {
+            const newFocus = this.findContentIndex(jsValueOf(value));
+            if (newFocus > -1) {
+                const focusedIndex = this.getFieldValueJS("itemFocused") as number;
+                const nodeFocus = rootObjects.focused === this;
+                this.updateItemFocus(this.focusIndex, false, nodeFocus);
+                this.focusIndex = newFocus;
+                this.updateItemFocus(this.focusIndex, true, nodeFocus);
+                super.set(new BrsString("itemUnfocused"), new Int32(focusedIndex));
+                super.set(new BrsString("itemFocused"), value);
             }
         } else if (fieldName === "vertfocusanimationstyle") {
             const style = value.toString().toLowerCase();
