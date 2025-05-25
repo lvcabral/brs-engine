@@ -160,16 +160,12 @@ export class Dialog extends Group {
         }
         const fieldName = index.getValue().toLowerCase();
         if (fieldName === "focusbutton") {
-            const focusedIndex = this.getFieldValueJS("buttonFocused");
-            if (focusedIndex !== jsValueOf(value)) {
-                this.focusIndex = jsValueOf(value);
-                index = new BrsString("buttonFocused");
-            } else {
-                return BrsInvalid.Instance;
+            const buttons = this.getFieldValueJS("buttons");
+            const newIndex = jsValueOf(value);
+            if (typeof newIndex === "number" && newIndex >= 0 && newIndex < buttons.length) {
+                this.focusIndex = newIndex;
+                super.set(new BrsString("buttonFocused"), value);
             }
-        } else if (["buttonfocused", "keyboard"].includes(fieldName)) {
-            // Read-only fields
-            return BrsInvalid.Instance;
         } else if (fieldName === "close") {
             index = new BrsString("wasClosed");
             value = BrsBoolean.True;
@@ -182,8 +178,9 @@ export class Dialog extends Group {
                 this.lastFocus.isDirty = true;
                 this.lastFocus = undefined;
             }
-        } else if (fieldName === "buttons" && !(value instanceof RoArray)) {
-            value = new RoArray([]);
+        } else if (fieldName === "buttons") {
+            this.buttonGroup.set(index, value);
+            return BrsInvalid.Instance;
         }
         return super.set(index, value, alwaysNotify, kind);
     }

@@ -38,7 +38,7 @@ export class ButtonGroup extends LayoutGroup {
         { name: "rightJustify", type: "boolean", value: "false" },
         { name: "buttonSelected", type: "integer", value: "0", alwaysNotify: true },
         { name: "buttonFocused", type: "integer", value: "0", alwaysNotify: true },
-        { name: "focusButton", type: "integer", value: "0" },
+        { name: "focusButton", type: "integer", value: "0", alwaysNotify: true },
         { name: "buttons", type: "array" },
     ];
 
@@ -88,25 +88,21 @@ export class ButtonGroup extends LayoutGroup {
         }
         const fieldName = index.getValue().toLowerCase();
         if (fieldName === "focusbutton") {
-            const focusedIndex = this.getFieldValueJS("buttonFocused");
-            if (focusedIndex !== jsValueOf(value)) {
-                this.focusIndex = jsValueOf(value);
-                index = new BrsString("buttonFocused");
-            } else {
-                return BrsInvalid.Instance;
+            const buttons = this.getFieldValueJS("buttons");
+            const newIndex = jsValueOf(value);
+            if (typeof newIndex === "number" && newIndex >= 0 && newIndex < buttons.length) {
+                this.focusIndex = newIndex;
+                super.set(new BrsString("buttonFocused"), value);
             }
-        } else if (fieldName === "buttonfocused") {
-            // Read-only field
-            return BrsInvalid.Instance;
         } else if (fieldName === "buttons" && !(value instanceof RoArray)) {
             value = new RoArray([]);
         }
-        const retValue = super.set(index, value, alwaysNotify, kind);
+        super.set(index, value, alwaysNotify, kind);
         if (fieldName === "buttons") {
             this.refreshButtons();
             this.refreshFocus();
         }
-        return retValue;
+        return BrsInvalid.Instance;
     }
 
     setNodeFocus(interpreter: Interpreter, focusOn: boolean): boolean {

@@ -51,7 +51,6 @@ export class Poster extends Group {
             throw new Error("RoSGNode indexes must be strings");
         }
         const fieldName = index.getValue().toLowerCase();
-        const readonlyFields = ["loadstatus", "bitmapwidth", "bitmapheight", "bitmapmargins"];
         if (fieldName === "uri") {
             const uri = jsValueOf(value);
             if (typeof uri === "string" && uri.trim() !== "" && this.uri !== uri) {
@@ -70,8 +69,6 @@ export class Poster extends Group {
                 const margins = { left: 0, right: 0, top: 0, bottom: 0 };
                 super.set(new BrsString("bitmapMargins"), brsValueOf(margins));
             }
-        } else if (readonlyFields.includes(fieldName)) {
-            return BrsInvalid.Instance;
         }
         return super.set(index, value, alwaysNotify, kind);
     }

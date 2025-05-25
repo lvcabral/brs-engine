@@ -37,14 +37,14 @@ export class ArrayGrid extends Group {
         { name: "numRows", type: "integer", value: "0" },
         { name: "numColumns", type: "integer", value: "0" },
         { name: "focusable", type: "boolean", value: "true" },
-        { name: "focusRow", type: "integer", value: "0" },
-        { name: "focusColumn", type: "integer", value: "0" },
+        { name: "focusRow", type: "integer", value: "0", alwaysNotify: true },
+        { name: "focusColumn", type: "integer", value: "0", alwaysNotify: true },
         { name: "horizFocusAnimationStyle", type: "string", value: "floatingFocus" },
         { name: "vertFocusAnimationStyle", type: "string", value: "floatingFocus" },
         { name: "drawFocusFeedbackOnTop", type: "boolean", value: "false" },
         { name: "drawFocusFeedback", type: "boolean", value: "true" },
         { name: "fadeFocusFeedbackWhenAutoScrolling", type: "boolean", value: "false" },
-        { name: "currFocusFeedbackOpacity", type: "float", value: "read-only" },
+        { name: "currFocusFeedbackOpacity", type: "float", value: "0" },
         { name: "focusBitmapUri", type: "string", value: "" },
         { name: "focusFootprintBitmapUri", type: "string", value: "" },
         { name: "focusBitmapBlendColor", type: "color", value: "0xFFFFFFFF" },
@@ -141,25 +141,19 @@ export class ArrayGrid extends Group {
             this.set(new BrsString("jumpToItem"), new Int32(focus));
             return retValue;
         } else if (["jumptoitem", "animatetoitem"].includes(fieldName)) {
-            const focusedIndex = this.getFieldValueJS("itemFocused");
-            if (focusedIndex !== jsValueOf(value)) {
-                super.set(new BrsString("itemUnfocused"), new Int32(focusedIndex));
-                const newIndex = jsValueOf(value) as number;
-                const nodeFocus = rootObjects.focused === this;
-                this.updateItemFocus(this.focusIndex, false, nodeFocus);
-                if (this.metadata.length > 0) {
-                    this.focusIndex = this.metadata.findIndex((item) => item.index === newIndex);
-                } else {
-                    this.focusIndex = newIndex;
+            const focusedIndex = this.getFieldValueJS("itemFocused") as number;
+            const newIndex = jsValueOf(value) as number;
+            if (focusedIndex !== newIndex) {
+                const newFocus = this.findContentIndex(newIndex);
+                if (newFocus > -1) {
+                    const nodeFocus = rootObjects.focused === this;
+                    this.updateItemFocus(this.focusIndex, false, nodeFocus);
+                    this.focusIndex = newFocus;
+                    this.updateItemFocus(this.focusIndex, true, nodeFocus);
+                    super.set(new BrsString("itemUnfocused"), new Int32(focusedIndex));
+                    super.set(new BrsString("itemFocused"), value);
                 }
-                this.updateItemFocus(this.focusIndex, true, nodeFocus);
-                index = new BrsString("itemFocused");
-            } else {
-                return BrsInvalid.Instance;
             }
-        } else if (fieldName === "itemfocused" || fieldName === "itemunfocused") {
-            // Read-only fields
-            return BrsInvalid.Instance;
         } else if (fieldName === "vertfocusanimationstyle") {
             const style = value.toString().toLowerCase();
             if (["fixedfocuswrap", "floatingfocus", "fixedfocus"].includes(style)) {
@@ -182,6 +176,15 @@ export class ArrayGrid extends Group {
             this.currRow = this.updateCurrRow();
         }
         return result;
+    }
+
+    private findContentIndex(index: number) {
+        if (index < 0 || index >= this.content.length) {
+            return -1;
+        } else if (this.metadata.length > 0) {
+            return this.metadata.findIndex((item) => item.index === index);
+        }
+        return index;
     }
 
     private updateItemFocus(index: number, focus: boolean, nodeFocus: boolean) {
