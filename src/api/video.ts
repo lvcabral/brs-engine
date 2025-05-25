@@ -6,7 +6,7 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { SubscribeCallback, saveDataBuffer } from "./util";
-import { BufferType, DataType, MediaEvent, MediaError, platform } from "../core/common";
+import { BufferType, DataType, MediaEvent, MediaErrorCode, platform } from "../core/common";
 import Hls from "hls.js";
 
 // Video Objects
@@ -62,9 +62,13 @@ export function initVideoModule(array: Int32Array, mute: boolean = false) {
         });
         player.addEventListener("error", (e: Event) => {
             canPlay = false;
-            Atomics.store(sharedArray, DataType.VDX, MediaError.Unknown);
+            let errorCode = MediaErrorCode.Http;
+            if (player.error?.code === MediaError.MEDIA_ERR_DECODE) {
+                errorCode = MediaErrorCode.Unsupported;
+            }
+            Atomics.store(sharedArray, DataType.VDX, errorCode);
             Atomics.store(sharedArray, DataType.VDO, MediaEvent.FAILED);
-            notifyAll("warning", `Error ${player.error?.code}; details: ${player.error?.message}`);
+            notifyAll("warning", `[video] Player Media Error ${player.error?.code}; ${player.error?.message}`);
         });
         player.addEventListener("ended", nextVideo);
         player.addEventListener("loadstart", startProgress);
@@ -149,7 +153,7 @@ export function handleVideoEvent(eventData: string) {
         if (newIndex && !isNaN(parseInt(newIndex))) {
             setNextVideo(parseInt(newIndex));
         } else {
-            Atomics.store(sharedArray, DataType.VDX, MediaError.EmptyList);
+            Atomics.store(sharedArray, DataType.VDX, MediaErrorCode.EmptyList);
             Atomics.store(sharedArray, DataType.VDO, MediaEvent.FAILED);
             notifyAll("warning", `[video] Invalid next index: ${eventData}`);
         }
@@ -165,6 +169,8 @@ export function handleVideoEvent(eventData: string) {
         if (index > 0) {
             setAudioTrack(index - 1);
         }
+    } else if (data[1] === "error") {
+        stopVideo(true);
     }
 }
 
@@ -307,6 +313,7 @@ function setAudioTrack(index: number) {
 }
 
 function clearVideoTracking() {
+    Atomics.store(sharedArray, DataType.VLP, -1);
     loadProgress = 0;
     currentFrame = 0;
     audioTracks = new Array();
@@ -334,7 +341,7 @@ function loadVideo(buffer = false) {
             player.load();
         }
     } else if (player) {
-        Atomics.store(sharedArray, DataType.VDX, MediaError.EmptyList);
+        Atomics.store(sharedArray, DataType.VDX, MediaErrorCode.EmptyList);
         Atomics.store(sharedArray, DataType.VDO, MediaEvent.FAILED);
         notifyAll("warning", `[video] Can't find video index: ${playIndex}`);
     } else {
@@ -353,7 +360,7 @@ function loadHls(videoSrc: string): boolean {
         player.setAttribute("type", "application/vnd.apple.mpegurl");
         native = true;
     } else {
-        Atomics.store(sharedArray, DataType.VDX, MediaError.Unsupported);
+        Atomics.store(sharedArray, DataType.VDX, MediaErrorCode.Unsupported);
         Atomics.store(sharedArray, DataType.VDO, MediaEvent.FAILED);
         notifyAll("warning", "[video] HLS is not supported");
     }
@@ -428,8 +435,8 @@ function nextVideo() {
     loadVideo();
 }
 
-function stopVideo() {
-    if (player && playerState !== "stop") {
+function stopVideo(error?: boolean) {
+    if (player && (playerState !== "stop" || error)) {
         player.pause();
         if (hls) {
             destroyHls();
@@ -439,7 +446,7 @@ function stopVideo() {
         }
         notifyAll("stop");
         Atomics.store(sharedArray, DataType.VDX, playIndex);
-        Atomics.store(sharedArray, DataType.VDO, MediaEvent.PARTIAL);
+        Atomics.store(sharedArray, DataType.VDO, error ? MediaEvent.FINISHED : MediaEvent.PARTIAL);
         clearVideoTracking();
         startPosition = 0;
         canPlay = false;
@@ -515,20 +522,19 @@ function createHlsInstance() {
         if (data.fatal) {
             switch (data.type) {
                 case Hls.ErrorTypes.MEDIA_ERROR:
-                    notifyAll("warning", "[video] fatal media error encountered, will try to recover");
                     hls?.recoverMediaError();
                     break;
                 case Hls.ErrorTypes.NETWORK_ERROR:
                     // All retries and media options have been exhausted.
-                    notifyAll("warning", `[video] fatal network error encountered ${data.details}`);
-                    Atomics.store(sharedArray, DataType.VDX, MediaError.Network);
+                    Atomics.store(sharedArray, DataType.VDX, MediaErrorCode.Http);
                     Atomics.store(sharedArray, DataType.VDO, MediaEvent.FAILED);
+                    notifyAll("warning", `[video] fatal network error encountered: ${data.details}`);
                     break;
                 default:
                     // cannot recover
-                    Atomics.store(sharedArray, DataType.VDX, MediaError.Unknown);
+                    Atomics.store(sharedArray, DataType.VDX, MediaErrorCode.Unknown);
                     Atomics.store(sharedArray, DataType.VDO, MediaEvent.FAILED);
-                    destroyHls();
+                    notifyAll("warning", "[video] fatal media error encountered, cannot recover");
                     break;
             }
         }
