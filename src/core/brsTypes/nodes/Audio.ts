@@ -55,17 +55,6 @@ export class Audio extends RoSGNode {
         }
 
         const fieldName = index.getValue().toLowerCase();
-        const readonlyFields = [
-            "bufferingstatus",
-            "contentindex",
-            "state",
-            "position",
-            "duration",
-            "errorCode",
-            "errormsg",
-            "audioformat",
-            "timetostartstreaming",
-        ];
 
         if (fieldName === "control" && isBrsString(value)) {
             const validControl = ["start", "play", "pause", "resume", "stop"];
@@ -86,8 +75,6 @@ export class Audio extends RoSGNode {
             postMessage(`video,mute,${value.toBoolean()}`);
         } else if (fieldName === "content" && value instanceof ContentNode) {
             postMessage(this.formatContent(value));
-        } else if (readonlyFields.includes(fieldName)) {
-            return BrsInvalid.Instance;
         }
         return super.set(index, value, alwaysNotify, kind);
     }

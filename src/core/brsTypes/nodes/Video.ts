@@ -180,22 +180,6 @@ export class Video extends Group {
         }
 
         const fieldName = index.getValue().toLowerCase();
-        const readonlyFields = [
-            "bufferingstatus",
-            "contentindex",
-            "state",
-            "position",
-            "duration",
-            "errorCode",
-            "errormsg",
-            "vicdeoformat",
-            "timetostartstreaming",
-            "currentsubtitletrack",
-            "availablesubtitletracks",
-            "currentaudiotrack",
-            "availableaudiotracks",
-            "audioformat",
-        ];
 
         if (fieldName === "control" && isBrsString(value)) {
             const validControl = ["play", "pause", "resume", "stop", "replay", "skipcontent"];
@@ -221,8 +205,6 @@ export class Video extends Group {
             } else {
                 this.titleText.setFieldValue("text", new BrsString(""));
             }
-        } else if (readonlyFields.includes(fieldName)) {
-            return BrsInvalid.Instance;
         } else if (fieldName === "enableui" && isBrsBoolean(value)) {
             this.enableUI = value.toBoolean();
             if (!this.enableUI) {
