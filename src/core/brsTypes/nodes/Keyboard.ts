@@ -145,18 +145,6 @@ export class Keyboard extends Group {
         this.appendChildToParent(this.textEditBox);
     }
 
-    set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
-        if (!isBrsString(index)) {
-            throw new Error("RoSGNode indexes must be strings");
-        }
-        const fieldName = index.getValue().toLowerCase();
-        if ("texteditbox" === fieldName) {
-            // Read-only field
-            return BrsInvalid.Instance;
-        }
-        return super.set(index, value, alwaysNotify, kind);
-    }
-
     handleKey(key: string, press: boolean): boolean {
         let handled = false;
         if (!press) {
