@@ -352,9 +352,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     subInterpreter.environment.setM(mPointer);
                     subInterpreter.environment.setRootM(mPointer);
                     if (funcToCall instanceof Callable) {
-                        console.log("Task function called: ", taskData.name, functionName);
+                        console.debug("[Worker] Task function called: ", taskData.name, functionName);
                         funcToCall.call(subInterpreter);
-                        console.log("Task function finished: ", taskData.name, functionName);
+                        console.debug("[Worker] Task function finished: ", taskData.name, functionName);
                         const update: ThreadUpdate = {
                             id: taskNode.id,
                             global: false,

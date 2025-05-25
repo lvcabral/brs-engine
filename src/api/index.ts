@@ -476,7 +476,7 @@ function runTask(taskData: TaskData) {
         pkgZip: currentPayload.pkgZip,
         extZip: currentPayload.extZip,
     };
-    console.log("[API] Calling Task worker: ", taskData.id, taskData.name);
+    console.debug("[API] Calling Task worker: ", taskData.id, taskData.name);
     taskWorker.postMessage(sharedBuffer);
     taskWorker.postMessage(taskPayload);
 }
@@ -489,7 +489,7 @@ function endTask(taskId: number) {
         tasks.delete(taskId);
         threadSyncToTask.delete(taskId);
         threadSyncToMain.delete(taskId);
-        console.log("[API] Task worker stopped: ", taskId);
+        console.debug("[API] Task worker stopped: ", taskId);
     }
 }
 // Load Device Assets

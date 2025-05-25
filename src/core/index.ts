@@ -60,7 +60,7 @@ if (typeof onmessage !== "undefined") {
         if (isAppPayload(event.data)) {
             executeFile(event.data);
         } else if (isTaskPayload(event.data)) {
-            console.log("Task payload received: ", event.data.taskData.name);
+            console.debug("[Worker] Task payload received: ", event.data.taskData.name);
             executeTask(event.data);
         } else if (typeof event.data === "string" && event.data === "getVersion") {
             postMessage(`version,${packageInfo.version}`);
