@@ -72,8 +72,8 @@ export class ArrayGrid extends Group {
         { name: "itemSelected", type: "integer", value: "-1", alwaysNotify: true },
         { name: "itemFocused", type: "integer", value: "-1", alwaysNotify: true },
         { name: "itemUnfocused", type: "integer", value: "-1", alwaysNotify: true },
-        { name: "jumpToItem", type: "integer", value: "0", alwaysNotify: true },
-        { name: "animateToItem", type: "integer", value: "0", alwaysNotify: true },
+        { name: "jumpToItem", type: "integer", value: "-1", alwaysNotify: true },
+        { name: "animateToItem", type: "integer", value: "-1", alwaysNotify: true },
         { name: "currFocusRow", type: "float", value: "0.0" },
         { name: "currFocusColumn", type: "float", value: "0.0" },
         { name: "currFocusSection", type: "float", value: "0.0" },
@@ -136,11 +136,9 @@ export class ArrayGrid extends Group {
             super.set(index, value, alwaysNotify, kind);
             this.itemComps.length = 0;
             this.refreshContent();
-            let focus = -1;
             if (value.getNodeChildren().length) {
-                focus = 0;
+                this.setFocusedItem(new Int32(0));
             }
-            this.set(new BrsString("jumpToItem"), new Int32(focus));
             return BrsInvalid.Instance;
         } else if (["jumptoitem", "animatetoitem"].includes(fieldName) && isBrsNumber(value)) {
             this.setFocusedItem(value);
