@@ -13,7 +13,7 @@ import {
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
-import { BufferType, DataType, MediaEvent } from "../../common";
+import { BufferType, DataType, isAudioTrack, MediaEvent } from "../../common";
 import { BrsHttpAgent, IfHttpAgent } from "../interfaces/IfHttpAgent";
 import { IfSetMessagePort, IfGetMessagePort } from "../interfaces/IfMessagePort";
 import { BrsDevice } from "../../device/BrsDevice";
@@ -432,12 +432,12 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
         impl: (_: Interpreter) => {
             const result: BrsType[] = [];
             if (this.audioTracks.length) {
-                this.audioTracks.forEach((track, index) => {
-                    if (track instanceof Array && track.length === 3) {
+                this.audioTracks.forEach((track) => {
+                    if (isAudioTrack(track)) {
                         const item = {
-                            Track: track[0].toString(),
-                            Language: track[1],
-                            Name: track[2],
+                            Track: track.id.toString(),
+                            Language: track.lang,
+                            Name: track.name,
                         };
                         result.push(toAssociativeArray(item));
                     }

@@ -6,7 +6,7 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { SubscribeCallback, saveDataBuffer } from "./util";
-import { BufferType, DataType, MediaEvent, MediaErrorCode, platform } from "../core/common";
+import { BufferType, DataType, MediaEvent, MediaErrorCode, platform, AudioTrack } from "../core/common";
 import Hls from "hls.js";
 
 // Video Objects
@@ -291,14 +291,21 @@ function setDuration(e: Event) {
 }
 
 function loadAudioTracks() {
-    audioTracks = new Array();
+    audioTracks = [];
     if (hls) {
         hls.audioTracks.forEach((track, index) => {
-            audioTracks.push([index + 1, track.lang, track.name]);
+            const audioTrack: AudioTrack = {
+                id: index + 1,
+                name: track.name,
+                lang: track.lang ?? "",
+                codec: track.audioCodec ?? "",
+            };
+            audioTracks.push(audioTrack);
         });
         if (playList[playIndex]?.audioTrack === -1) {
             playList[playIndex].audioTrack = hls.audioTrack;
         }
+        Atomics.store(sharedArray, DataType.VAT, hls.audioTrack + 1);
     }
     saveDataBuffer(sharedArray, JSON.stringify(audioTracks), BufferType.AUDIO_TRACKS);
 }
@@ -308,6 +315,7 @@ function setAudioTrack(index: number) {
         if (hls && hls.audioTrack !== index) {
             hls.audioTrack = index;
             playList[playIndex].audioTrack = index;
+            Atomics.store(sharedArray, DataType.VAT, hls.audioTrack + 1);
         }
     }
 }

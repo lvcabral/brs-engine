@@ -358,6 +358,7 @@ export enum DataType {
     VLP, // Video Load Progress
     VPS, // Video Position
     VDR, // Video Duration
+    VAT, // Video Audio Track
     SND, // Sound Event
     SDX, // Sound Event Index
     SPS, // Sound Position
@@ -377,7 +378,7 @@ export enum DataType {
 }
 
 // SharedArrayBuffer constants
-export const dataBufferIndex = 35;
+export const dataBufferIndex = 36;
 export const dataBufferSize = 1024;
 export const registryInitialSize = 32 * 1024;
 export const registryMaxSize = 64 * 1024;
@@ -446,6 +447,7 @@ export enum MediaEvent {
     POSITION,
 }
 
+// Media playback error codes enumerator
 export enum MediaErrorCode {
     Network = 0,
     Http = -1,
@@ -454,6 +456,24 @@ export enum MediaErrorCode {
     EmptyList = -4,
     Unsupported = -5,
     DRM = -6,
+}
+
+// Audio Track Interface
+export interface AudioTrack {
+    id: number;
+    name: string;
+    lang: string;
+    codec: string;
+}
+
+export function isAudioTrack(value: any): value is AudioTrack {
+    return (
+        value &&
+        typeof value.id === "number" &&
+        typeof value.name === "string" &&
+        typeof value.lang === "string" &&
+        typeof value.codec === "string"
+    );
 }
 
 // Buffer Data Types enumerator
