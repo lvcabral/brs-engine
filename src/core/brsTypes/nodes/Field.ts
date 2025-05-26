@@ -1,4 +1,4 @@
-import { ValueKind, BrsString, BrsInvalid, getValueKindFromFieldType } from "../BrsType";
+import { ValueKind, BrsString, BrsInvalid, getValueKindFromFieldType, BrsBoolean } from "../BrsType";
 import { RoSGNodeEvent } from "../events/RoSGNodeEvent";
 import {
     BrsType,
@@ -23,6 +23,7 @@ import {
     jsValueOf,
     fromAssociativeArray,
     FlexObject,
+    BrsNumber,
 } from "..";
 import { Callable } from "../Callable";
 import { Interpreter } from "../../interpreter";
@@ -219,7 +220,8 @@ export class Field {
             (isAnyNumber(this.value) && isAnyNumber(value)) ||
             (isBrsString(this.value) && isBrsString(value)) ||
             (isBrsString(this.value) && isAnyNumber(value)) ||
-            (isBrsString(this.value) && isBrsBoolean(value))
+            (isBrsString(this.value) && isBrsBoolean(value)) ||
+            (isBrsBoolean(this.value) && isBrsString(value))
         ) {
             return true;
         } else if (this.type === FieldKind.Rect2D && value instanceof RoArray) {
@@ -301,19 +303,11 @@ export class Field {
             if (isBoxedNumber(value)) {
                 value = value.unbox();
             }
-            if (this.type === FieldKind.Float) {
-                value = new Float(value.getValue());
-            } else if (this.type === FieldKind.Int32) {
-                value = new Int32(value.getValue());
-            } else if (this.type === FieldKind.Int64) {
-                value = new Int64(value.getValue());
-            } else if (this.type === FieldKind.Double) {
-                value = new Double(value.getValue());
-            } else if (this.type === FieldKind.String) {
-                value = new BrsString(value.toString());
-            }
+            value = this.convertNumber(value);
         } else if (isBrsBoolean(value) && this.type === FieldKind.String) {
             value = new BrsString(value.toBoolean() ? "1" : "0");
+        } else if (isBrsString(value) && this.type === FieldKind.Boolean) {
+            value = BrsBoolean.from(value.getValue().toLowerCase() === "true");
         } else if (this.type === FieldKind.Rect2D) {
             value = this.convertRect2D(value);
         }
@@ -321,6 +315,22 @@ export class Field {
             value = value.box();
         }
         return value;
+    }
+
+    private convertNumber(value: BrsNumber): BrsType {
+        let newValue: BrsType = value;
+        if (this.type === FieldKind.Float) {
+            newValue = new Float(value.getValue());
+        } else if (this.type === FieldKind.Int32) {
+            newValue = new Int32(value.getValue());
+        } else if (this.type === FieldKind.Int64) {
+            newValue = new Int64(value.getValue());
+        } else if (this.type === FieldKind.Double) {
+            newValue = new Double(value.getValue());
+        } else if (this.type === FieldKind.String) {
+            newValue = new BrsString(value.toString());
+        }
+        return newValue;
     }
 
     private convertRect2D(value: BrsType): RoAssociativeArray {
