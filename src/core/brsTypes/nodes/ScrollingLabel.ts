@@ -45,13 +45,14 @@ export class ScrollingLabel extends Label {
     }
 
     set(index: BrsType, value: BrsType, alwaysNotify: boolean = false) {
+        const wasVisible = this.getFieldValueJS("visible") as boolean;
         const retValue = super.set(index, value, alwaysNotify); // Call base class set
 
         if (this.isDirty && isBrsString(index)) {
             const fieldName = index.getValue().toLowerCase();
             // Fields that affect scrolling behavior
             const scrollFields = ["text", "font", "maxwidth", "scrollspeed", "repeatcount", "ellipsistext"];
-            if (scrollFields.includes(fieldName)) {
+            if (scrollFields.includes(fieldName) || wasVisible !== this.getFieldValueJS("visible")) {
                 this.resetScrollingState();
                 this.checkForScrolling();
             }
