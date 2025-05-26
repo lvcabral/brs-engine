@@ -19,8 +19,11 @@ import {
     Label,
     Timer,
     ScrollingLabel,
+    BrsInvalid,
+    toAssociativeArray,
+    RoAssociativeArray,
 } from "..";
-import { MediaEvent } from "../../common";
+import { MediaErrorCode, MediaEvent } from "../../common";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D } from "../interfaces/IfDraw2D";
 import { rotateTranslation } from "../../scenegraph/SGUtil";
@@ -37,7 +40,7 @@ export class Video extends Group {
         { name: "nextContentIndex", type: "integer", value: "-1" },
         { name: "control", type: "string", value: "none" },
         { name: "asyncStopSemantics", type: "boolean", value: "false" },
-        { name: "state", type: "string", value: "none", alwaysNotify: true },
+        { name: "state", type: "string", value: "none" },
         { name: "errorCode", type: "integer", value: "0" },
         { name: "errorMsg", type: "string", value: "" },
         { name: "errorStr", type: "string", value: "" },
@@ -183,7 +186,7 @@ export class Video extends Group {
         const fieldName = index.getValue().toLowerCase();
 
         if (fieldName === "control" && isBrsString(value)) {
-            const validControl = ["play", "pause", "resume", "stop", "replay", "skipcontent"];
+            const validControl = ["play", "pause", "resume", "stop", "replay", "prebuffer", "skipcontent"];
             const control = value.getValue().toLowerCase();
             if (validControl.includes(control)) {
                 postMessage(`video,${control}`);
@@ -219,16 +222,17 @@ export class Video extends Group {
         return super.set(index, value, alwaysNotify, kind);
     }
 
-    setState(eventType: number) {
+    setState(eventType: number, eventIndex: number) {
         const now = Date.now();
+        this.statusChanged = true;
         let state = "none";
         switch (eventType) {
             case MediaEvent.LOADING:
-                state = "buffering";
                 this.showUI(false);
                 this.showHeader = now + 5000;
                 this.spinner.setFieldValue("visible", BrsBoolean.from(this.enableUI));
-                break;
+                this.setBufferingStatus(eventIndex);
+                return;
             case MediaEvent.START_STREAM:
             case MediaEvent.RESUMED:
                 state = "playing";
@@ -252,10 +256,15 @@ export class Video extends Group {
                 state = "finished";
                 break;
             case MediaEvent.FAILED:
+                this.setErrorFields(eventIndex);
                 state = "error";
+                postMessage(`video,error`);
                 break;
+            default:
         }
-        this.statusChanged = true;
+        if (this.getFieldValue("bufferingStatus") instanceof RoAssociativeArray) {
+            this.set(new BrsString("bufferingStatus"), BrsInvalid.Instance);
+        }
         super.set(new BrsString("state"), new BrsString(state));
     }
 
@@ -277,6 +286,64 @@ export class Video extends Group {
             this.trickPlayBar.setPosition(position, duration);
         }
         super.set(new BrsString("position"), new Double(position));
+    }
+
+    setBufferingStatus(percent: number) {
+        super.set(new BrsString("state"), new BrsString("buffering"));
+        const status = {
+            percentage: percent,
+            isUnderrun: false,
+            prebufferDone: percent > 33,
+            actualStart: 0,
+        };
+        this.set(new BrsString("bufferingStatus"), toAssociativeArray(status));
+    }
+
+    setErrorFields(errorCode: number) {
+        let errorMsg = "";
+        let errorInfo = {
+            clipId: this.getFieldValueJS("contentIndex"),
+            ignored: false,
+            source: "buffer:reader",
+            category: "",
+            errCode: errorCode,
+            dbgmsg: "",
+            drmerrcode: 0,
+        }
+        switch (errorCode) {
+            case MediaErrorCode.Http:
+                errorMsg = "Network or HTTP error";
+                errorInfo.category = "http";
+                break;
+            case MediaErrorCode.TimeOut:
+                errorMsg = "Connection timed out";
+                errorInfo.category = "http";
+                break;
+            case MediaErrorCode.Unknown:
+                errorMsg = "Unknown/unspecified or generic error";
+                errorInfo.category = "mediaplayer";
+                break;
+            case MediaErrorCode.EmptyList:
+                errorMsg = "Empty list; no streams were specified to play";
+                errorInfo.category = "mediaplayer";
+                break;
+            case MediaErrorCode.Unsupported:
+                errorMsg = "Media error; the media format is unknown or unsupported";
+                errorInfo.category = "mediaerror";
+                break;
+            case MediaErrorCode.DRM:
+                errorMsg = "DRM error";
+                errorInfo.category = "drm";
+                break;
+        }
+        if (errorCode < 0 && errorMsg.length) {
+            errorInfo.dbgmsg = errorMsg;
+            const errorStr = `category:${errorInfo.category}:error:${errorCode}:ignored:0:source:buffer:reader:message:${errorMsg}`;
+            super.set(new BrsString("errorCode"), new Int32(errorCode));
+            super.set(new BrsString("errorMsg"), new BrsString(errorMsg));
+            super.set(new BrsString("errorStr"), new BrsString(errorStr));
+            super.set(new BrsString("errorInfo"), toAssociativeArray(errorInfo));
+        }
     }
 
     showUI(show: boolean) {
