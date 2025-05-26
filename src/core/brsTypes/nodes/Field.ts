@@ -23,6 +23,7 @@ import {
     jsValueOf,
     fromAssociativeArray,
     FlexObject,
+    BrsNumber,
 } from "..";
 import { Callable } from "../Callable";
 import { Interpreter } from "../../interpreter";
@@ -302,17 +303,7 @@ export class Field {
             if (isBoxedNumber(value)) {
                 value = value.unbox();
             }
-            if (this.type === FieldKind.Float) {
-                value = new Float(value.getValue());
-            } else if (this.type === FieldKind.Int32) {
-                value = new Int32(value.getValue());
-            } else if (this.type === FieldKind.Int64) {
-                value = new Int64(value.getValue());
-            } else if (this.type === FieldKind.Double) {
-                value = new Double(value.getValue());
-            } else if (this.type === FieldKind.String) {
-                value = new BrsString(value.toString());
-            }
+            value = this.convertNumber(value);
         } else if (isBrsBoolean(value) && this.type === FieldKind.String) {
             value = new BrsString(value.toBoolean() ? "1" : "0");
         } else if (isBrsString(value) && this.type === FieldKind.Boolean) {
@@ -324,6 +315,22 @@ export class Field {
             value = value.box();
         }
         return value;
+    }
+
+    private convertNumber(value: BrsNumber): BrsType {
+        let newValue: BrsType = value;
+        if (this.type === FieldKind.Float) {
+            newValue = new Float(value.getValue());
+        } else if (this.type === FieldKind.Int32) {
+            newValue = new Int32(value.getValue());
+        } else if (this.type === FieldKind.Int64) {
+            newValue = new Int64(value.getValue());
+        } else if (this.type === FieldKind.Double) {
+            newValue = new Double(value.getValue());
+        } else if (this.type === FieldKind.String) {
+            newValue = new BrsString(value.toString());
+        }
+        return newValue;
     }
 
     private convertRect2D(value: BrsType): RoAssociativeArray {
