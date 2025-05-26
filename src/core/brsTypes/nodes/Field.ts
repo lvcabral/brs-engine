@@ -1,4 +1,4 @@
-import { ValueKind, BrsString, BrsInvalid, getValueKindFromFieldType } from "../BrsType";
+import { ValueKind, BrsString, BrsInvalid, getValueKindFromFieldType, BrsBoolean } from "../BrsType";
 import { RoSGNodeEvent } from "../events/RoSGNodeEvent";
 import {
     BrsType,
@@ -219,7 +219,8 @@ export class Field {
             (isAnyNumber(this.value) && isAnyNumber(value)) ||
             (isBrsString(this.value) && isBrsString(value)) ||
             (isBrsString(this.value) && isAnyNumber(value)) ||
-            (isBrsString(this.value) && isBrsBoolean(value))
+            (isBrsString(this.value) && isBrsBoolean(value)) ||
+            (isBrsBoolean(this.value) && isBrsString(value))
         ) {
             return true;
         } else if (this.type === FieldKind.Rect2D && value instanceof RoArray) {
@@ -314,6 +315,8 @@ export class Field {
             }
         } else if (isBrsBoolean(value) && this.type === FieldKind.String) {
             value = new BrsString(value.toBoolean() ? "1" : "0");
+        } else if (isBrsString(value) && this.type === FieldKind.Boolean) {
+            value = BrsBoolean.from(value.getValue().toLowerCase() === "true");
         } else if (this.type === FieldKind.Rect2D) {
             value = this.convertRect2D(value);
         }
