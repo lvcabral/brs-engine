@@ -30,7 +30,7 @@ import {
     rgbaIntToHex,
 } from "../interfaces/IfDraw2D";
 import { BrsDevice } from "../../device/BrsDevice";
-import { DataType, MediaEvent } from "../../common";
+import { AudioTrack, BufferType, DataType, MediaEvent } from "../../common";
 
 // Roku Remote Mapping
 const rokuKeys: Map<number, string> = new Map([
@@ -317,6 +317,26 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         if (position !== this.videoPosition) {
             this.videoPosition = position;
             rootObjects.video.setPosition(position);
+            this.isDirty = true;
+        }
+
+        const audioTrack = Atomics.load(BrsDevice.sharedArray, DataType.VAT);
+        if (audioTrack > -1) {
+            rootObjects.video.set(new BrsString("currentAudioTrack"), new BrsString(audioTrack.toString()));
+            Atomics.store(BrsDevice.sharedArray, DataType.VAT, -1);
+            this.isDirty = true;
+        }
+
+        const bufferFlag = Atomics.load(BrsDevice.sharedArray, DataType.BUF);
+        if (bufferFlag === BufferType.AUDIO_TRACKS) {
+            const strTracks = BrsDevice.readDataBuffer();
+            let tracks: AudioTrack[] = [];
+            try {
+                tracks = JSON.parse(strTracks);
+            } catch (e) {
+                tracks = [];
+            }
+            rootObjects.video.setAudioTracks(tracks);
             this.isDirty = true;
         }
     }

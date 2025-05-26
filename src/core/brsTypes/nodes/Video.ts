@@ -22,8 +22,9 @@ import {
     BrsInvalid,
     toAssociativeArray,
     RoAssociativeArray,
+    RoArray,
 } from "..";
-import { MediaErrorCode, MediaEvent } from "../../common";
+import { AudioTrack, isAudioTrack, MediaErrorCode, MediaEvent } from "../../common";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D } from "../interfaces/IfDraw2D";
 import { rotateTranslation } from "../../scenegraph/SGUtil";
@@ -202,6 +203,8 @@ export class Video extends Group {
             postMessage(`video,loop,${value.toBoolean()}`);
         } else if (fieldName === "mute" && isBrsBoolean(value)) {
             postMessage(`video,mute,${value.toBoolean()}`);
+        } else if (fieldName === "audiotrack" && isBrsString(value)) {
+            postMessage(`video,audio,${value.getValue()}`);
         } else if (fieldName === "content" && value instanceof ContentNode) {
             postMessage({ videoPlaylist: this.formatContent(value) });
             if (this.contentTitles.length > 0) {
@@ -209,6 +212,8 @@ export class Video extends Group {
             } else {
                 this.titleText.setFieldValue("text", new BrsString(""));
             }
+            this.setFieldValue("currentAudioTrack", new BrsString(""));
+            this.setFieldValue("availableAudioTracks", new RoArray([]));
         } else if (fieldName === "enableui" && isBrsBoolean(value)) {
             this.enableUI = value.toBoolean();
             this.statusChanged = this.enableUI;
@@ -288,6 +293,26 @@ export class Video extends Group {
         super.set(new BrsString("position"), new Double(position));
     }
 
+    setAudioTracks(tracks: AudioTrack[]) {
+        const result: BrsType[] = [];
+        if (tracks.length) {
+            tracks.forEach((track) => {
+                if (isAudioTrack(track)) {
+                    const item = {
+                        Track: track.id.toString(),
+                        Language: track.lang,
+                        Name: track.name,
+                        Format: track.codec,
+                        HasAccessibilityDescription: false,
+                        HasAccessibilityEAI: false,
+                    };
+                    result.push(toAssociativeArray(item));
+                }
+            });
+        }
+        this.set(new BrsString("availableAudioTracks"), new RoArray(result));
+    }
+
     setBufferingStatus(percent: number) {
         super.set(new BrsString("state"), new BrsString("buffering"));
         const status = {
@@ -309,7 +334,7 @@ export class Video extends Group {
             errCode: errorCode,
             dbgmsg: "",
             drmerrcode: 0,
-        }
+        };
         switch (errorCode) {
             case MediaErrorCode.Http:
                 errorMsg = "Network or HTTP error";
