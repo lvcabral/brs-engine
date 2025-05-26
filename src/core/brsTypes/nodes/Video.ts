@@ -121,6 +121,7 @@ export class Video extends Group {
     private readonly spinner: BusySpinner;
     private readonly pausedIcon: Poster;
     private readonly trickPlayBar: TrickPlayBar;
+    private readonly backgroundOverlay: Poster;
     private lastPressHandled: string;
     private enableUI: boolean;
     private enableTrickPlay: boolean;
@@ -137,6 +138,10 @@ export class Video extends Group {
 
         this.enableUI = true;
         this.enableTrickPlay = true;
+        const overlayUri = "common:/images/player_darken_bottom.png";
+        this.backgroundOverlay = this.addPoster(overlayUri, [0, 0], this.sceneRect.width, this.sceneRect.height);
+        this.backgroundOverlay.setFieldValue("visible", BrsBoolean.False);
+        this.linkField(this.backgroundOverlay, "uri", "trickPlayBackgroundOverlay");
         this.trickPlayBar = new TrickPlayBar();
         this.spinner = new BusySpinner();
         this.spinner.setPosterUri(`common:/images/${this.resolution}/spinner.png`);
@@ -378,7 +383,8 @@ export class Video extends Group {
             this.showTrickPlay = 0;
         }
         const now = Date.now();
-        this.titleText.setFieldValue("visible", BrsBoolean.from(this.showHeader > now));
+        this.backgroundOverlay.setFieldValue("visible", BrsBoolean.from(this.showHeader > now));
+        this.titleText.set(new BrsString("visible"), BrsBoolean.from(this.showHeader > now));
         this.clockText.setFieldValue("visible", BrsBoolean.from(this.showHeader > now));
         this.pausedIcon.setFieldValue("visible", BrsBoolean.from(this.showPaused > now));
         this.trickPlayBar.setFieldValue("visible", BrsBoolean.from(this.showTrickPlay > now));
