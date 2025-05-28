@@ -36,6 +36,7 @@ export class BrsDevice {
 
     static sharedArray: Int32Array = new Int32Array(0);
     static displayEnabled: boolean = true;
+    static captionsMode: string = "Off";
     static threadId: number = 0;
     static singleKeyEvents: boolean = true; // Default Roku behavior is `true`
     static useCORSProxy: boolean = true; // If CORS proxy is configured, use it by default
@@ -122,6 +123,7 @@ export class BrsDevice {
         this.clockFormat = BrsDevice.deviceInfo.clockFormat;
         this.timeZone = BrsDevice.deviceInfo.timeZone;
         this.locale = BrsDevice.deviceInfo.locale.replace("_", "-");
+        this.captionsMode = BrsDevice.deviceInfo.captionMode;
 
         const termsFile = `common:/locale/${this.deviceInfo.locale}/terms.json`;
         if (this.fileSystem.existsSync(termsFile)) {

@@ -24,7 +24,7 @@ import {
     RoAssociativeArray,
     RoArray,
 } from "..";
-import { AudioTrack, isAudioTrack, MediaErrorCode, MediaEvent } from "../../common";
+import { AudioTrack, isAudioTrack, MediaErrorCode, MediaEvent, parseCaptionMode } from "../../common";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D } from "../interfaces/IfDraw2D";
 import { rotateTranslation } from "../../scenegraph/SGUtil";
@@ -184,6 +184,19 @@ export class Video extends Group {
         this.lastPressHandled = "";
     }
 
+    get(index: BrsType) {
+        if (!isBrsString(index)) {
+            throw new Error("RoSGNode indexes must be strings");
+        }
+        const fieldName = index.getValue().toLowerCase();
+
+        if (fieldName === "globalCaptionMode".toLowerCase()) {
+            return new BrsString(BrsDevice.captionsMode);
+        }
+
+        return super.get(index);
+    }
+
     set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
         if (!isBrsString(index)) {
             throw new Error("RoSGNode indexes must be strings");
@@ -228,6 +241,12 @@ export class Video extends Group {
             }
         } else if (fieldName === "enabletrickplay" && isBrsBoolean(value)) {
             this.enableTrickPlay = value.toBoolean();
+        } else if (fieldName === "globalcaptionmode" && isBrsString(value)) {
+            const mode = parseCaptionMode(value.getValue());
+            if (mode) {
+                BrsDevice.captionsMode = mode;
+                postMessage({ captionsMode: mode });
+            }
         }
         return super.set(index, value, alwaysNotify, kind);
     }

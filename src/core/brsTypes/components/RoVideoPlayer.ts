@@ -172,6 +172,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
                 events.push(new RoVideoPlayerEvent(MediaEvent.POSITION, position, this.selected));
             }
         }
+        // TODO: Check if the captions mode changed and generate and event
         return events;
     }
 

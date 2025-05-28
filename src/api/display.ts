@@ -5,7 +5,7 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { player, subscribeVideo } from "./video";
+import { isVideoMuted, player, subscribeVideo, videoFormats } from "./video";
 import { SubscribeCallback } from "./util";
 import { DeviceInfo, platform, parseCaptionMode, DisplayMode, DisplayModes } from "../core/common";
 import Stats from "stats.js";
@@ -27,6 +27,13 @@ let showStats = false;
 let videoState = "stop";
 let videoRect = { x: 0, y: 0, w: 0, h: 0 };
 let videoLoop = false;
+
+// Device Data Object
+let deviceData: DeviceInfo;
+export function setDeviceData(data: DeviceInfo) {
+    deviceData = data;
+    deviceData.videoFormats = videoFormats();
+}
 
 // Initialize Display Module
 let displayState = true;
@@ -236,11 +243,41 @@ function drawVideoFrame() {
             if (lastImage) {
                 bufferCtx.drawImage(lastImage, 0, 0);
             }
+            if (deviceData.captionsMode === "On" || (deviceData.captionsMode === "When mute" && isVideoMuted())) {
+                drawSubtitles(bufferCtx);
+            }
         }
         drawBufferImage();
         lastFrameReq = window.requestAnimationFrame(drawVideoFrame);
     } else {
         videoLoop = false;
+    }
+}
+
+function drawSubtitles(ctx: CanvasRenderingContext2D) {
+    // Draw active subtitles
+    for (let i = 0; i < player.textTracks.length; i++) {
+        const track = player.textTracks[i];
+        if (track.mode !== "showing" || !track.activeCues?.length) {
+            continue;
+        }
+        for (let j = 0; j < track.activeCues.length; j++) {
+            const cue = track.activeCues[j];
+            // Safely access cue.text if it exists (VTTCue/WebKitTextTrackCue)
+            const cueText = (cue as any)?.text ?? "";
+            if (cueText) {
+                ctx.font = "24px sans-serif";
+                ctx.fillStyle = "white";
+                ctx.strokeStyle = "black";
+                ctx.lineWidth = 2;
+                ctx.textAlign = "center";
+                ctx.textBaseline = "bottom";
+                const x = ctx.canvas.width / 2;
+                const y = ctx.canvas.height - 40;
+                ctx.strokeText(cueText, x, y);
+                ctx.fillText(cueText, x, y);
+            }
+        }
     }
 }
 
