@@ -184,6 +184,19 @@ export class Video extends Group {
         this.lastPressHandled = "";
     }
 
+    get(index: BrsType) {
+        if (!isBrsString(index)) {
+            throw new Error("RoSGNode indexes must be strings");
+        }
+        const fieldName = index.getValue().toLowerCase();
+
+        if (fieldName === "globalCaptionMode".toLowerCase()) {
+            return new BrsString(BrsDevice.captionsMode);
+        }
+
+        return super.get(index);
+    }
+
     set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
         if (!isBrsString(index)) {
             throw new Error("RoSGNode indexes must be strings");
@@ -228,6 +241,12 @@ export class Video extends Group {
             }
         } else if (fieldName === "enabletrickplay" && isBrsBoolean(value)) {
             this.enableTrickPlay = value.toBoolean();
+        } else if (fieldName === "globalcaptionmode" && isBrsString(value)) {
+            const mode = value.getValue().toLowerCase();
+            if (BrsDevice.captionsModes.includes(mode)) {
+                BrsDevice.captionsMode = mode;
+                postMessage({ captionsMode: mode });
+            }
         }
         return super.set(index, value, alwaysNotify, kind);
     }

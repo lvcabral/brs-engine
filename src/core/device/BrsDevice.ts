@@ -30,12 +30,14 @@ export class BrsDevice {
     static readonly isDevMode = process.env.NODE_ENV === "development";
     static readonly keysBuffer: KeyEvent[] = [];
     static readonly terms: Map<string, string> = new Map<string, string>();
+    static readonly captionsModes: string[] = ["Off", "On", "Instant replay", "When mute"];
 
     static stdout: OutputProxy = new OutputProxy(process.stdout, false);
     static stderr: OutputProxy = new OutputProxy(process.stderr, false);
 
     static sharedArray: Int32Array = new Int32Array(0);
     static displayEnabled: boolean = true;
+    static captionsMode: string = "Off";
     static threadId: number = 0;
     static singleKeyEvents: boolean = true; // Default Roku behavior is `true`
     static useCORSProxy: boolean = true; // If CORS proxy is configured, use it by default
@@ -122,6 +124,7 @@ export class BrsDevice {
         this.clockFormat = BrsDevice.deviceInfo.clockFormat;
         this.timeZone = BrsDevice.deviceInfo.timeZone;
         this.locale = BrsDevice.deviceInfo.locale.replace("_", "-");
+        this.captionsMode = BrsDevice.deviceInfo.captionsMode;
 
         const termsFile = `common:/locale/${this.deviceInfo.locale}/terms.json`;
         if (this.fileSystem.existsSync(termsFile)) {
