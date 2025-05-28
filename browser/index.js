@@ -72,11 +72,13 @@ appInfo.innerHTML = "<br/>";
 // Custom device configuration (see /api/index.ts for all fields)
 const customDeviceInfo = {
     developerId: "UniqueDeveloperId", // As in Roku devices, segregates Registry data
-    locale: "en_US", // Used if app supports localization
+    locale: "en_US", // Localize app strings and some SceneGraph Nodes
     displayMode: "720p", // Supported modes: 480p (SD), 720p (HD) and 1080p (FHD)
     maxFps: 30, // Limited refresh rate to minimize issues with iOS/iPadOS
     appList: appList,
-    // corsProxy: "http://localhost:8080/", // For local testing using https://github.com/Rob--W/cors-anywhere
+    corsProxy: "http://tron.local:8080/",
+    // Uncomment line above for local testing
+    // Or add the URL of an instance of https://github.com/Rob--W/cors-anywhere
 };
 const customKeys = new Map();
 customKeys.set("NumpadMultiply", "info"); // Keep consistency with older versions

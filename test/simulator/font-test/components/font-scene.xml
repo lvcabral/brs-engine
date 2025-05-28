@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="FontScene" extends="Scene">
+	<children>
+      <Label text="BadgeSystemFont" font="font:BadgeSystemFont" />
+      <Label text="TinySystemFont" font="font:TinySystemFont" />
+      <Label text="TinyBoldSystemFont" font="font:TinyBoldSystemFont" />
+      <Label text="SmallestSystemFont" font="font:SmallestSystemFont" />
+      <Label text="SmallestBoldSystemFont" font="font:SmallestBoldSystemFont" />
+      <Label text="SmallerSystemFont" font="font:SmallerSystemFont" />
+      <Label text="SmallerBoldSystemFont" font="font:SmallerBoldSystemFont" />
+      <Label text="MediumSystemFont" font="font:MediumSystemFont" />
+      <Label text="MediumBoldSystemFont" font="font:MediumBoldSystemFont" />
+      <Label text="LargeSystemFont" font="font:LargeSystemFont"  />
+      <Label text="LargeBoldSystemFont" font="font:LargeBoldSystemFont" />
+      <Label text="ExtraLargeSystemFont" font="font:ExtraLargeSystemFont" />
+      <Label text="ExtraLargeBoldSystemFont" font="font:ExtraLargeBoldSystemFont" />
+      <Label text="LargestSystemFont" font="font:LargestSystemFont" />
+    </children>
+  <script type="text/brightscript" uri="font-scene.brs" />
+</component>
+

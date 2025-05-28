@@ -29,8 +29,6 @@ export interface DeviceInfo {
     clockFormat: string;
     displayMode: "480p" | "720p" | "1080p";
     captionsMode: "Off" | "On" | "Instant replay" | "When mute";
-    defaultFont: string;
-    sgFont: string;
     assets: ArrayBufferLike;
     maxSimulStreams: 1 | 2 | 3;
     remoteControls: RemoteControl[];
@@ -66,8 +64,6 @@ export const defaultDeviceInfo: DeviceInfo = {
     clockFormat: "12h",
     displayMode: "720p",
     captionsMode: "Off",
-    defaultFont: "Asap",
-    sgFont: "Metropolis",
     assets: new ArrayBuffer(0),
     maxSimulStreams: 2,
     remoteControls: [],

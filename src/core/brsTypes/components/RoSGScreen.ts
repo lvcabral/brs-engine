@@ -76,15 +76,11 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         this.draw2D = new IfDraw2D(this);
         this.textureManager = getTextureManager();
         this.fontRegistry = getFontRegistry();
-        const sgFont = BrsDevice.deviceInfo.sgFont;
-        const fontRegular = this.fontRegistry.registerFont(`common:/Fonts/${sgFont}-Regular.ttf`);
-        const fontSemiBold = this.fontRegistry.registerFont(`common:/Fonts/${sgFont}-SemiBold.ttf`);
+        const systemFont = "Metropolis";
+        const fontRegular = this.fontRegistry.registerFont(`common:/Fonts/${systemFont}-Regular.ttf`, true);
+        const fontBold = this.fontRegistry.registerFont(`common:/Fonts/${systemFont}-SemiBold.ttf`, true);
         Font.SystemFonts.forEach((font) => {
-            if (font.family === "Regular") {
-                font.family = fontRegular;
-            } else if (font.family === "SemiBold") {
-                font.family = fontSemiBold;
-            }
+            font.family = font.bold ? fontBold : fontRegular;
         });
         this.alphaEnable = true;
         this.scaleMode = 1;
