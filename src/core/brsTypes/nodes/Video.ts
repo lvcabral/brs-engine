@@ -138,7 +138,7 @@ export class Video extends Group {
 
         this.enableUI = true;
         this.enableTrickPlay = true;
-        const overlayUri = "common:/images/player_darken_bottom.png";
+        const overlayUri = "common:/images/video_trickplay_overlay.png";
         this.backgroundOverlay = this.addPoster(overlayUri, [0, 0], this.sceneRect.width, this.sceneRect.height);
         this.backgroundOverlay.setFieldValue("visible", BrsBoolean.False);
         this.linkField(this.backgroundOverlay, "uri", "trickPlayBackgroundOverlay");
