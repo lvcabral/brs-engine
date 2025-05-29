@@ -142,7 +142,6 @@ export const captionsOptions: Map<string, string[]> = new Map([
     ["track_analog", ["default"]],
     ["muted", ["unmuted", "muted"]],
 ]);
-console.debug("[common] Caption Options:", Array.from(captionsOptions.keys()));
 
 /* Execution Payload Interfaces
  *
