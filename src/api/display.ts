@@ -256,10 +256,11 @@ function drawVideoFrame() {
 }
 
 // Draw Subtitles on the Display Canvas
-// Captions window size: 1536x162 or 1536x84
-// Captions window position: 192 and 108 from the bottom
+// Captions window width in fhd: 1536
+// Captions window left position in fhd: 192 (10% of 1920)
 function drawSubtitles(ctx: CanvasRenderingContext2D) {
     // Draw active subtitles
+    const fhd = ctx.canvas.height === 1080 ? 1 : 0;
     for (let i = 0; i < player.textTracks.length; i++) {
         const track = player.textTracks[i];
         if (track.mode !== "showing" || !track.activeCues?.length) {
@@ -275,7 +276,7 @@ function drawSubtitles(ctx: CanvasRenderingContext2D) {
                 const textColor = captionsStyle.get("text/color") ?? "default";
                 const textOpacity = captionsStyle.get("text/opacity") ?? "default";
                 const textSize = captionsStyle.get("text/size") || "default";
-                const fontSize = captionTextSizes.get(textSize) ?? 30;
+                const fontSize = captionTextSizes.get(textSize)![fhd];
                 ctx.font = `${fontSize}px sans-serif`;
                 ctx.fillStyle = captionColors.get(textColor) ?? "white";
                 ctx.strokeStyle = "black";
@@ -286,9 +287,9 @@ function drawSubtitles(ctx: CanvasRenderingContext2D) {
                 // Split cueText into lines by line breaks
                 const lines = cueText.split(/\r?\n/);
                 const lineHeight = fontSize * 1.2;
-                let y = ctx.canvas.height - 40;
+                let y = ctx.canvas.height * 0.9;
                 for (let k = lines.length - 1; k >= 0; k--) {
-                    // Draw semi-transparent black box behind the text
+                    // Draw background box behind the text
                     const metrics = ctx.measureText(lines[k]);
                     const padding = fontSize * 0.4;
                     const boxWidth = metrics.width + padding * 2;
