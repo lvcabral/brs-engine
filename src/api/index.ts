@@ -72,6 +72,7 @@ import {
     handleVideoEvent,
     initVideoModule,
     isVideoMuted,
+    loadCaptionsFonts,
     muteVideo,
     resetVideo,
     subscribeVideo,
@@ -514,6 +515,7 @@ function updateDeviceAssets() {
                 return response.blob().then(function (zipBlob) {
                     zipBlob.arrayBuffer().then(function (zipData) {
                         deviceData.assets = zipData;
+                        loadCaptionsFonts(zipData);
                     });
                 });
             } else {
@@ -521,7 +523,7 @@ function updateDeviceAssets() {
             }
         })
         .catch((err) => {
-            console.error(`Error attempting to load common.zip: ${err.message} (${err.name})`);
+            apiException("error", `[api] Error loading common.zip: ${err.message}`);
         });
 }
 
