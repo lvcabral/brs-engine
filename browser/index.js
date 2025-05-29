@@ -74,9 +74,10 @@ const customDeviceInfo = {
     developerId: "UniqueDeveloperId", // As in Roku devices, segregates Registry data
     locale: "en_US", // Localize app strings and some SceneGraph Nodes
     displayMode: "720p", // Supported modes: 480p (SD), 720p (HD) and 1080p (FHD)
+    captionsMode: "On", // Enable captions by default for testing
     maxFps: 30, // Limited refresh rate to minimize issues with iOS/iPadOS
     appList: appList,
-    corsProxy: "http://tron.local:8080/",
+    // corsProxy: "http://localhost:8080/",
     // Uncomment line above for local testing
     // Or add the URL of an instance of https://github.com/Rob--W/cors-anywhere
 };
