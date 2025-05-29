@@ -189,6 +189,7 @@ export class Video extends Group {
         postMessage("video,mute,false");
         postMessage(`video,notify,500`);
         postMessage({ captionMode: BrsDevice.captionsMode });
+        postMessage({ captionStyle: new Map<string, string>() });
 
         // Set itself as the root video object
         rootObjects.video = this;
