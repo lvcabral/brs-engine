@@ -150,6 +150,7 @@ export const captionColors: Map<string, string> = new Map([
 
 export const captionOpacities: Map<string, number> = new Map([
     ["default", 1.0],
+    ["off", 0.0],
     ["25%", 0.25],
     ["50%", 0.5],
     ["75%", 0.75],

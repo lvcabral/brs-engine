@@ -7,7 +7,7 @@
  *--------------------------------------------------------------------------------------------*/
 import { player, subscribeVideo } from "./video";
 import { SubscribeCallback } from "./util";
-import { DeviceInfo, platform, parseCaptionMode, DisplayMode, DisplayModes, captionsOptions, captionTextSizes, captionColors } from "../core/common";
+import { DeviceInfo, platform, parseCaptionMode, DisplayMode, DisplayModes, captionsOptions, captionTextSizes, captionColors, captionOpacities } from "../core/common";
 import Stats from "stats.js";
 
 // Simulation Display
@@ -256,6 +256,8 @@ function drawVideoFrame() {
 }
 
 // Draw Subtitles on the Display Canvas
+// Captions window size: 1536x162 or 1536x84
+// Captions window position: 192 and 108 from the bottom
 function drawSubtitles(ctx: CanvasRenderingContext2D) {
     // Draw active subtitles
     for (let i = 0; i < player.textTracks.length; i++) {
@@ -268,18 +270,42 @@ function drawSubtitles(ctx: CanvasRenderingContext2D) {
             // Safely access cue.text if it exists (VTTCue/WebKitTextTrackCue)
             const cueText = (cue as any)?.text ?? "";
             if (cueText) {
-                const textColor = captionsStyle.get("text/color") || "default";
+                const backgroundColor = captionsStyle.get("background/color") ?? "black";
+                const backgroundOpacity = captionsStyle.get("background/opacity") ?? "default";
+                const textColor = captionsStyle.get("text/color") ?? "default";
+                const textOpacity = captionsStyle.get("text/opacity") ?? "default";
                 const textSize = captionsStyle.get("text/size") || "default";
-                ctx.font = `${captionTextSizes.get(textSize)!}px sans-serif`;
-                ctx.fillStyle = captionColors.get(textColor)!;
+                const fontSize = captionTextSizes.get(textSize) ?? 30;
+                ctx.font = `${fontSize}px sans-serif`;
+                ctx.fillStyle = captionColors.get(textColor) ?? "white";
                 ctx.strokeStyle = "black";
                 ctx.lineWidth = 2;
                 ctx.textAlign = "center";
                 ctx.textBaseline = "bottom";
                 const x = ctx.canvas.width / 2;
-                const y = ctx.canvas.height - 40;
-                ctx.strokeText(cueText, x, y);
-                ctx.fillText(cueText, x, y);
+                // Split cueText into lines by line breaks
+                const lines = cueText.split(/\r?\n/);
+                const lineHeight = fontSize * 1.2;
+                let y = ctx.canvas.height - 40;
+                for (let k = lines.length - 1; k >= 0; k--) {
+                    // Draw semi-transparent black box behind the text
+                    const metrics = ctx.measureText(lines[k]);
+                    const padding = fontSize * 0.4;
+                    const boxWidth = metrics.width + padding * 2;
+                    const boxHeight = lineHeight;
+                    ctx.save();
+                    ctx.globalAlpha = captionOpacities.get(backgroundOpacity) ?? 1.0;
+                    ctx.fillStyle = captionColors.get(backgroundColor) ?? "black";
+                    ctx.fillRect(x - boxWidth / 2, y - boxHeight, boxWidth, boxHeight);
+                    ctx.restore();
+                    // Draw the text
+                    ctx.save();
+                    ctx.globalAlpha = captionOpacities.get(textOpacity) ?? 1.0;
+                    ctx.strokeText(lines[k], x, y);
+                    ctx.fillText(lines[k], x, y);
+                    ctx.restore();
+                    y -= lineHeight;
+                }
             }
         }
     }
