@@ -125,6 +125,66 @@ export const defaultDeviceInfo: DeviceInfo = {
     maxFps: 60,
 };
 
+// Valid Closed Captions Options
+export const captionTextSizes: Map<string, number> = new Map([
+    ["default", 30],
+    ["extra small", 21],
+    ["small", 22],
+    ["medium", 30],
+    ["large", 39],
+    ["extra large", 43],
+]);
+
+export const captionColors: Map<string, string> = new Map([
+    ["default", "#B0B0B0"],
+    ["bright white", "#FFFFFF"],
+    ["white", "#B0B0B0"],
+    ["black", "#000000"],
+    ["red", "#CA0000"],
+    ["green", "#00BB00"],
+    ["blue", "#0304D0"],
+    ["yellow", "#B2B400"],
+    ["magenta", "#C500C5"],
+    ["cyan", "#00BBB9"],
+]);
+
+export const captionOpacities: Map<string, number> = new Map([
+    ["default", 1.0],
+    ["25%", 0.25],
+    ["50%", 0.5],
+    ["75%", 0.75],
+    ["100%", 1.0],
+]);
+
+export const captionsOptions: Map<string, string[]> = new Map([
+    ["mode", ["Off", "On", "Instant replay", "When mute"]],
+    [
+        "text/font",
+        [
+            "default",
+            "serif fixed width",
+            "serif proportional",
+            "sans serif fixed width",
+            "casual",
+            "cursive",
+            "small caps",
+        ],
+    ],
+    ["text/effect", ["default", "none", "raised", "depressed", "uniform", "drop shadow (left)", "drop shadow (right)"]],
+    ["text/size", Array.from(captionTextSizes.keys())],
+    ["text/color", Array.from(captionColors.keys())],
+    ["text/opacity", Array.from(captionOpacities.keys())],
+    ["background/color", Array.from(captionColors.keys())],
+    ["background/opacity", Array.from(captionOpacities.keys())],
+    ["window/color", Array.from(captionColors.keys())],
+    ["window/opacity", Array.from(captionOpacities.keys())],
+    ["track", ["default"]],
+    ["track_composite", ["default"]],
+    ["track_analog", ["default"]],
+    ["muted", ["unmuted", "muted"]],
+]);
+console.debug("[common] Caption Options:", Array.from(captionsOptions.keys()));
+
 /* Execution Payload Interfaces
  *
  * These interfaces are used to provide information to the interpreter about the
@@ -648,4 +708,16 @@ export function getRokuOSVersion(firmware: string) {
         osVersion.set("plid", firmware.slice(0, 2));
     }
     return osVersion;
+}
+
+// Roku beacon date format
+export function getNow(): string {
+    let d = new Date();
+    let mo = new Intl.DateTimeFormat("en-GB", { month: "2-digit", timeZone: "UTC" }).format(d);
+    let da = new Intl.DateTimeFormat("en-GB", { day: "2-digit", timeZone: "UTC" }).format(d);
+    let hr = new Intl.DateTimeFormat("en-GB", { hour: "2-digit", timeZone: "UTC" }).format(d);
+    let mn = new Intl.DateTimeFormat("en-GB", { minute: "2-digit", timeZone: "UTC" }).format(d);
+    let se = new Intl.DateTimeFormat("en-GB", { second: "2-digit", timeZone: "UTC" }).format(d);
+    let ms = d.getMilliseconds();
+    return `${mo}-${da} ${hr}:${mn}:${se}.${ms}`;
 }

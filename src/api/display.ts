@@ -5,9 +5,9 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { isVideoMuted, player, subscribeVideo, videoFormats } from "./video";
+import { player, subscribeVideo } from "./video";
 import { SubscribeCallback } from "./util";
-import { DeviceInfo, platform, parseCaptionMode, DisplayMode, DisplayModes } from "../core/common";
+import { DeviceInfo, platform, parseCaptionMode, DisplayMode, DisplayModes, captionsOptions, captionTextSizes, captionColors } from "../core/common";
 import Stats from "stats.js";
 
 // Simulation Display
@@ -28,17 +28,18 @@ let videoState = "stop";
 let videoRect = { x: 0, y: 0, w: 0, h: 0 };
 let videoLoop = false;
 
-// Device Data Object
-let deviceData: DeviceInfo;
-export function setDeviceData(data: DeviceInfo) {
-    deviceData = data;
-    deviceData.videoFormats = videoFormats();
-}
-
 // Initialize Display Module
 let displayState = true;
 let overscanMode = "disabled";
 let aspectRatio = 16 / 9;
+let captionsState = false;
+let captionsStyle = new Map<string, string>();
+captionsOptions.forEach((option, key) => {
+    if (key.includes("/")) {
+        captionsStyle.set(key, option[0]);
+    }
+});
+
 export function initDisplayModule(deviceInfo: DeviceInfo, perfStats = false) {
     // Initialize Display Canvas
     display = document.getElementById("display") as HTMLCanvasElement;
@@ -243,7 +244,7 @@ function drawVideoFrame() {
             if (lastImage) {
                 bufferCtx.drawImage(lastImage, 0, 0);
             }
-            if (deviceData.captionsMode === "On" || (deviceData.captionsMode === "When mute" && isVideoMuted())) {
+            if (captionsState) {
                 drawSubtitles(bufferCtx);
             }
         }
@@ -254,6 +255,7 @@ function drawVideoFrame() {
     }
 }
 
+// Draw Subtitles on the Display Canvas
 function drawSubtitles(ctx: CanvasRenderingContext2D) {
     // Draw active subtitles
     for (let i = 0; i < player.textTracks.length; i++) {
@@ -266,8 +268,10 @@ function drawSubtitles(ctx: CanvasRenderingContext2D) {
             // Safely access cue.text if it exists (VTTCue/WebKitTextTrackCue)
             const cueText = (cue as any)?.text ?? "";
             if (cueText) {
-                ctx.font = "24px sans-serif";
-                ctx.fillStyle = "white";
+                const textColor = captionsStyle.get("text/color") || "default";
+                const textSize = captionsStyle.get("text/size") || "default";
+                ctx.font = `${captionTextSizes.get(textSize)!}px sans-serif`;
+                ctx.fillStyle = captionColors.get(textColor)!;
                 ctx.strokeStyle = "black";
                 ctx.lineWidth = 2;
                 ctx.textAlign = "center";
@@ -359,6 +363,13 @@ export function setCaptionMode(mode: string) {
 
 export function getCaptionMode() {
     return deviceData.captionMode;
+}
+
+// Set Closed Captions Style
+export function setCaptionStyle(style: Map<string, string>) {
+    style.forEach((value, key) => {
+        captionsStyle.set(key.toLowerCase(), value.toLowerCase());
+    });
 }
 
 // Set the Performance Statistics state

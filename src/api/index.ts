@@ -5,7 +5,7 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { SubscribeCallback, getNow, getWorkerLibPath, saveDataBuffer } from "./util";
+import { SubscribeCallback, getWorkerLibPath, saveDataBuffer } from "./util";
 import {
     AppExitReason,
     AppPayload,
@@ -27,6 +27,7 @@ import {
     platform,
     registryInitialSize,
     registryMaxSize,
+    getNow,
 } from "../core/common";
 import {
     source,
@@ -51,6 +52,7 @@ import {
     statsUpdate,
     setDisplayState,
     setCaptionMode,
+    setCaptionStyle,
 } from "./display";
 import {
     initSoundModule,
@@ -595,6 +597,8 @@ function mainCallback(event: MessageEvent) {
         setDisplayState(event.data.displayEnabled);
     } else if (typeof event.data.captionsMode === "string") {
         setCaptionMode(event.data.captionsMode);
+    } else if (event.data.captionStyle instanceof Map) {
+        setCaptionStyle(event.data.captionStyle);
     } else if (isAppData(event.data)) {
         notifyAll("launch", { app: event.data.id, params: event.data.params ?? new Map() });
     } else if (isTaskData(event.data)) {

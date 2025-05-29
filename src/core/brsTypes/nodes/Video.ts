@@ -23,8 +23,10 @@ import {
     toAssociativeArray,
     RoAssociativeArray,
     RoArray,
+    fromAssociativeArray,
+    FlexObject,
 } from "..";
-import { AudioTrack, isAudioTrack, MediaErrorCode, MediaEvent, parseCaptionMode } from "../../common";
+import { captionsOptions, getNow, MediaErrorCode, MediaEvent, parseCaptionMode } from "../../common";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D } from "../interfaces/IfDraw2D";
 import { rotateTranslation } from "../../scenegraph/SGUtil";
@@ -179,6 +181,7 @@ export class Video extends Group {
         this.statusChanged = false;
         this.showUI(false);
         postMessage(`video,notify,500`);
+        postMessage({ captionMode: BrsDevice.captionsMode });
 
         rootObjects.video = this;
         this.lastPressHandled = "";
@@ -210,7 +213,8 @@ export class Video extends Group {
             if (validControl.includes(control)) {
                 postMessage(`video,${control}`);
             } else {
-                value = new BrsString("none");
+                BrsDevice.stderr.write(`warning,${getNow()} [sg.video.cntrl.bad] control field set to invalid value`);
+                return BrsInvalid.Instance;
             }
         } else if (fieldName === "seek" && isBrsNumber(value)) {
             const position = jsValueOf(value) as number;
@@ -246,7 +250,14 @@ export class Video extends Group {
             if (mode) {
                 BrsDevice.captionsMode = mode;
                 postMessage({ captionsMode: mode });
+            } else {
+                BrsDevice.stderr.write(
+                    `warning,${getNow()} [sg.video.mode.set.bad] globalCaptionMode set to bad value '${mode}'`
+                );
+                return BrsInvalid.Instance;
             }
+        } else if (fieldName === "captionstyle" && value instanceof RoAssociativeArray) {
+            this.setCaptionStyle(fromAssociativeArray(value));
         }
         return super.set(index, value, alwaysNotify, kind);
     }
@@ -335,6 +346,32 @@ export class Video extends Group {
             });
         }
         this.set(new BrsString("availableAudioTracks"), new RoArray(result));
+    }
+
+    setCaptionStyle(styles: FlexObject) {
+        const validStyles = new Map<string, string>();
+        for (const key in styles) {
+            const id = key.toLowerCase();
+            if (id.includes("/") && captionsOptions.has(id)) {
+                const value = styles[key];
+                if (typeof value === "string" && captionsOptions.get(id)?.includes(value.toLowerCase())) {
+                    validStyles.set(key, value);
+                } else {
+                    BrsDevice.stderr.write(
+                        `warning,${getNow()} [sg.video.cap.val.err] caption style '${value}' is not a valid '${key}'. Using default.`
+                    );
+                }
+            } else {
+                BrsDevice.stderr.write(`warning,${getNow()} [sg.video.cap.attr.err] caption style '${key}' is invalid`);
+            }
+        }
+        if (validStyles.size > 0) {
+            postMessage({ captionStyle: validStyles });
+        } else {
+            BrsDevice.stderr.write(
+                `warning,${getNow()} [sg.video.cap.empty] caption style is empty or invalid. Using default.`
+            );
+        }
     }
 
     setBufferingStatus(percent: number) {

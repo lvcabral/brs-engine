@@ -6,7 +6,7 @@ import { Interpreter } from "../../interpreter";
 import { RoDeviceInfoEvent } from "../events/RoDeviceInfoEvent";
 import { RoAssociativeArray } from "./RoAssociativeArray";
 import { RoArray } from "./RoArray";
-import { CaptionModes, ConnectionInfo, getRokuOSVersion, parseCaptionMode, platform } from "../../common";
+import { captionsOptions, ConnectionInfo, getRokuOSVersion, parseCaptionMode, platform } from "../../common";
 import { IfSetMessagePort, IfGetMessagePort } from "../interfaces/IfMessagePort";
 import { getExternalIp } from "../../interpreter/Network";
 import { v4 as uuidv4 } from "uuid";
@@ -15,22 +15,6 @@ import { BrsDevice } from "../../device/BrsDevice";
 
 export class RoDeviceInfo extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
-    readonly captionsOptions: string[] = [
-        "mode",
-        "text/font",
-        "text/effect",
-        "text/size",
-        "text/color",
-        "text/opacity",
-        "background/color",
-        "background/opacity",
-        "window/color",
-        "window/opacity",
-        "track",
-        "track_composite",
-        "track_analog",
-        "muted",
-    ];
     private readonly deviceModel: string;
     private readonly modelType: string;
     private readonly firmware: string;
@@ -685,7 +669,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, option: BrsString) => {
             const opt = option.value.toLowerCase();
-            if (!this.captionsOptions.includes(opt)) {
+            if (!captionsOptions.has(opt)) {
                 return new BrsString("");
             }
             if (opt === "mode") {
