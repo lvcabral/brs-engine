@@ -179,12 +179,19 @@ export class Video extends Group {
         this.showPaused = 0;
         this.showTrickPlay = 0;
         this.statusChanged = false;
+        this.lastPressHandled = "";
         this.showUI(false);
+
+        // Reset Video state on Rendering Thread
+        postMessage(new Array<string>());
+        postMessage("video,loop,false");
+        postMessage("video,next,-1");
+        postMessage("video,mute,false");
         postMessage(`video,notify,500`);
         postMessage({ captionMode: BrsDevice.captionsMode });
 
+        // Set itself as the root video object
         rootObjects.video = this;
-        this.lastPressHandled = "";
     }
 
     get(index: BrsType) {
