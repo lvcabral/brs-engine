@@ -355,12 +355,7 @@ export class Group extends RoSGNode {
 
         if (rect.height > 0) {
             const maxRenderedLines = Math.floor((rect.height + lineSpacing) / (lineHeight + lineSpacing));
-            if (lines.length > maxRenderedLines) {
-                renderedLines = lines.slice(0, maxRenderedLines);
-                const line = renderedLines[renderedLines.length - 1];
-                line.text = this.ellipsizeLine(line.text, drawFont, rect.width, ellipsis);
-                line.ellipsized = true;
-            }
+            renderedLines = this.checkEllipsis(lines, maxRenderedLines, drawFont, rect.width, ellipsis);
             if (!displayPartialLines && renderedLines.length < lines.length) {
                 totalHeight =
                     renderedLines.length * lineHeight +
@@ -368,31 +363,26 @@ export class Group extends RoSGNode {
             } else {
                 totalHeight = Math.min(totalHeight, rect.height);
             }
-        } else if (numLines > 0) {
-            if (lines.length > numLines) {
-                renderedLines = lines.slice(0, numLines);
-                const line = renderedLines[renderedLines.length - 1];
-                line.text = this.ellipsizeLine(line.text, drawFont, rect.width, ellipsis);
-                line.ellipsized = true;
-            }
-            totalHeight = Math.min(
-                totalHeight,
-                numLines * lineHeight + (numLines > 1 ? (numLines - 1) * lineSpacing : 0)
-            );
-        } else if (maxLines > 0) {
-            if (lines.length > maxLines) {
-                renderedLines = lines.slice(0, maxLines);
-                const line = renderedLines[renderedLines.length - 1];
-                line.text = this.ellipsizeLine(line.text, drawFont, rect.width, ellipsis);
-                line.ellipsized = true;
-            }
-            totalHeight = Math.min(
-                totalHeight,
-                maxLines * lineHeight + (maxLines > 1 ? (maxLines - 1) * lineSpacing : 0)
-            );
+        } else if (numLines > 0 || maxLines > 0) {
+            const limit = numLines > 0 ? numLines : maxLines;
+            renderedLines = this.checkEllipsis(lines, limit, drawFont, rect.width, ellipsis);
+            totalHeight = Math.min(totalHeight, limit * lineHeight + (limit > 1 ? (limit - 1) * lineSpacing : 0));
         }
         this.cachedHeight = totalHeight;
         this.cachedLines = renderedLines;
+    }
+
+    private checkEllipsis(lines: MeasuredText[], maxLines: number, drawFont: RoFont, width: number, ellipsis: string) {
+        if (lines.length > maxLines) {
+            const renderedLines = lines.slice(0, maxLines);
+            if (renderedLines.length > 0) {
+                const line = renderedLines[renderedLines.length - 1];
+                line.text = this.ellipsizeLine(line.text, drawFont, width, ellipsis);
+                line.ellipsized = true;
+                return renderedLines;
+            }
+        }
+        return lines;
     }
 
     protected breakTextIntoLines(text: string, font: RoFont, width: number): MeasuredText[] {
