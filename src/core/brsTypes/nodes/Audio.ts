@@ -45,6 +45,11 @@ export class Audio extends RoSGNode {
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(members);
 
+        postMessage(new Array<string>());
+        postMessage("audio,loop,false");
+        postMessage("audio,next,-1");
+        postMessage("audio,mute,false");
+
         rootObjects.audio = this;
     }
 
@@ -71,7 +76,7 @@ export class Audio extends RoSGNode {
         } else if (fieldName === "loop" && isBrsBoolean(value)) {
             postMessage(`audio,loop,${value.toBoolean()}`);
         } else if (fieldName === "mute" && isBrsBoolean(value)) {
-            postMessage(`video,mute,${value.toBoolean()}`);
+            postMessage(`audio,mute,${value.toBoolean()}`);
         } else if (fieldName === "content" && value instanceof ContentNode) {
             postMessage(this.formatContent(value));
         }
