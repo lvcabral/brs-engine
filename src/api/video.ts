@@ -14,6 +14,7 @@ export let player: HTMLVideoElement;
 let hls: Hls | undefined;
 let packageVideos = new Map();
 let audioTracks = new Array();
+let textTracks = new Array();
 let currentFrame = 0;
 let playerState: string = "stop";
 let videosState = false;
@@ -292,6 +293,7 @@ function setDuration(e: Event) {
 
 function loadAudioTracks() {
     audioTracks = [];
+    textTracks = [];
     if (hls) {
         hls.audioTracks.forEach((track, index) => {
             const audioTrack: AudioTrack = {

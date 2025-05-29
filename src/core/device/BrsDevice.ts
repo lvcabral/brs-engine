@@ -30,7 +30,6 @@ export class BrsDevice {
     static readonly isDevMode = process.env.NODE_ENV === "development";
     static readonly keysBuffer: KeyEvent[] = [];
     static readonly terms: Map<string, string> = new Map<string, string>();
-    static readonly captionsModes: string[] = ["Off", "On", "Instant replay", "When mute"];
 
     static stdout: OutputProxy = new OutputProxy(process.stdout, false);
     static stderr: OutputProxy = new OutputProxy(process.stderr, false);

@@ -5,11 +5,11 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { drawSplashScreen, clearDisplay, drawIconAsSplash, setDeviceData } from "./display";
+import { drawSplashScreen, clearDisplay, drawIconAsSplash } from "./display";
 import { bufferToBase64, parseCSV, SubscribeCallback } from "./util";
 import { unzipSync, zipSync, strFromU8, strToU8, Zippable, Unzipped } from "fflate";
 import { addSound, audioCodecs } from "./sound";
-import { addVideo } from "./video";
+import { addVideo, videoFormats } from "./video";
 import {
     defaultDeviceInfo,
     AudioExt,
@@ -29,9 +29,9 @@ import packageInfo from "../../package.json";
 export const deviceData: DeviceInfo = Object.assign(defaultDeviceInfo, {
     models: parseCSV(models),
     audioCodecs: audioCodecs(),
+    videoFormats: videoFormats(),
 });
 deviceData.serialNumber = getSerialNumber();
-setDeviceData(deviceData);
 
 // App Data
 const inputParams: Map<string, string> = new Map();

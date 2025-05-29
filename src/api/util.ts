@@ -11,18 +11,6 @@ import packageInfo from "../../package.json";
 // Module callback function definition
 export type SubscribeCallback = (event: string, data?: any) => void;
 
-// Roku beacon date format
-export function getNow(): string {
-    let d = new Date();
-    let mo = new Intl.DateTimeFormat("en-GB", { month: "2-digit", timeZone: "UTC" }).format(d);
-    let da = new Intl.DateTimeFormat("en-GB", { day: "2-digit", timeZone: "UTC" }).format(d);
-    let hr = new Intl.DateTimeFormat("en-GB", { hour: "2-digit", timeZone: "UTC" }).format(d);
-    let mn = new Intl.DateTimeFormat("en-GB", { minute: "2-digit", timeZone: "UTC" }).format(d);
-    let se = new Intl.DateTimeFormat("en-GB", { second: "2-digit", timeZone: "UTC" }).format(d);
-    let ms = d.getMilliseconds();
-    return `${mo}-${da} ${hr}:${mn}:${se}.${ms}`;
-}
-
 // Libraries Path
 export function getApiPath(): string {
     if (typeof document !== "undefined") {
