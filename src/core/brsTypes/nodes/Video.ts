@@ -26,7 +26,7 @@ import {
     fromAssociativeArray,
     FlexObject,
 } from "..";
-import { captionsOptions, getNow, MediaErrorCode, MediaEvent, parseCaptionMode } from "../../common";
+import { captionsOptions, getNow, isMediaTrack, MediaErrorCode, MediaEvent, MediaTrack, parseCaptionMode } from "../../common";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D } from "../interfaces/IfDraw2D";
 import { rotateTranslation } from "../../scenegraph/SGUtil";
@@ -189,6 +189,7 @@ export class Video extends Group {
         postMessage("video,mute,false");
         postMessage(`video,notify,500`);
         postMessage({ captionMode: BrsDevice.captionsMode });
+        postMessage({ captionStyle: new Map<string, string>() });
 
         // Set itself as the root video object
         rootObjects.video = this;
@@ -331,15 +332,15 @@ export class Video extends Group {
         const duration = this.getFieldValueJS("duration") ?? 0;
         if (position >= 0 && duration > 0) {
             this.trickPlayBar.setPosition(position, duration);
-        }
+        }   
         super.set(new BrsString("position"), new Double(position));
     }
 
-    setAudioTracks(tracks: AudioTrack[]) {
+    setAudioTracks(tracks: MediaTrack[]) {
         const result: BrsType[] = [];
         if (tracks.length) {
             tracks.forEach((track) => {
-                if (isAudioTrack(track)) {
+                if (isMediaTrack(track)) {
                     const item = {
                         Track: track.id.toString(),
                         Language: track.lang,

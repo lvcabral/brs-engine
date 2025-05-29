@@ -7,7 +7,7 @@
  *--------------------------------------------------------------------------------------------*/
 import { player, subscribeVideo } from "./video";
 import { SubscribeCallback } from "./util";
-import { DeviceInfo, platform, parseCaptionMode, DisplayMode, DisplayModes, captionsOptions, captionTextSizes, captionColors, captionOpacities } from "../core/common";
+import { DeviceInfo, platform, parseCaptionMode, DisplayMode, DisplayModes, captionsOptions, captionSizes, captionColors, captionOpacities, captionFonts } from "../core/common";
 import Stats from "stats.js";
 
 // Simulation Display
@@ -34,11 +34,7 @@ let overscanMode = "disabled";
 let aspectRatio = 16 / 9;
 let captionsState = false;
 let captionsStyle = new Map<string, string>();
-captionsOptions.forEach((option, key) => {
-    if (key.includes("/")) {
-        captionsStyle.set(key, option[0]);
-    }
-});
+setCaptionStyle();
 
 export function initDisplayModule(deviceInfo: DeviceInfo, perfStats = false) {
     // Initialize Display Canvas
@@ -273,11 +269,13 @@ function drawSubtitles(ctx: CanvasRenderingContext2D) {
             if (cueText) {
                 const backgroundColor = captionsStyle.get("background/color") ?? "black";
                 const backgroundOpacity = captionsStyle.get("background/opacity") ?? "default";
+                const textFont = captionsStyle.get("text/font") ?? "default";
+                const fontFamily = captionFonts.get(textFont) ?? "cc-serif";
                 const textColor = captionsStyle.get("text/color") ?? "default";
                 const textOpacity = captionsStyle.get("text/opacity") ?? "default";
                 const textSize = captionsStyle.get("text/size") || "default";
-                const fontSize = captionTextSizes.get(textSize)![fhd];
-                ctx.font = `${fontSize}px sans-serif`;
+                const fontSize = captionSizes.get(textSize)![fhd];
+                ctx.font = `${fontSize}px ${fontFamily}, Helvetica, Arial, sans-serif`;
                 ctx.fillStyle = captionColors.get(textColor) ?? "white";
                 ctx.strokeStyle = "black";
                 ctx.lineWidth = 2;
@@ -393,8 +391,15 @@ export function getCaptionMode() {
 }
 
 // Set Closed Captions Style
-export function setCaptionStyle(style: Map<string, string>) {
-    style.forEach((value, key) => {
+export function setCaptionStyle(style?: Map<string, string>) {
+    // Reset the captions style defaults
+    captionsOptions.forEach((option, key) => {
+        if (key.includes("/")) {
+            captionsStyle.set(key, option[0]);
+        }
+    });
+    // Set the captions style from the provided style map or use defaults
+    style?.forEach((value, key) => {
         captionsStyle.set(key.toLowerCase(), value.toLowerCase());
     });
 }

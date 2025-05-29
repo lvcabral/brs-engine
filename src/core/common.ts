@@ -126,7 +126,18 @@ export const defaultDeviceInfo: DeviceInfo = {
 };
 
 // Valid Closed Captions Options
-export const captionTextSizes: Map<string, number[]> = new Map([
+export const captionFonts: Map<string, string> = new Map([
+    ["default", "cc-serif"],
+    ["serif fixed width", "cc-serif-fixed"],
+    ["serif proportional", "cc-serif"],
+    ["sans serif fixed width", "cc-sans-serif-fixed"],
+    ["sans serif proportional", "cc-sans-serif"],
+    ["casual", "cc-casual"],
+    ["cursive", "cc-cursive"],
+    ["small caps", "cc-small-caps"],
+]);
+
+export const captionSizes: Map<string, number[]> = new Map([
     ["default", [30, 45]],
     ["extra small", [21, 31]],
     ["small", [22, 33]],
@@ -159,20 +170,9 @@ export const captionOpacities: Map<string, number> = new Map([
 
 export const captionsOptions: Map<string, string[]> = new Map([
     ["mode", ["Off", "On", "Instant replay", "When mute"]],
-    [
-        "text/font",
-        [
-            "default",
-            "serif fixed width",
-            "serif proportional",
-            "sans serif fixed width",
-            "casual",
-            "cursive",
-            "small caps",
-        ],
-    ],
+    ["text/font", Array.from(captionFonts.keys())],
     ["text/effect", ["default", "none", "raised", "depressed", "uniform", "drop shadow (left)", "drop shadow (right)"]],
-    ["text/size", Array.from(captionTextSizes.keys())],
+    ["text/size", Array.from(captionSizes.keys())],
     ["text/color", Array.from(captionColors.keys())],
     ["text/opacity", Array.from(captionOpacities.keys())],
     ["background/color", Array.from(captionColors.keys())],
