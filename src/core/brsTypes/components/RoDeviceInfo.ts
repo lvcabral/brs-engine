@@ -6,7 +6,7 @@ import { Interpreter } from "../../interpreter";
 import { RoDeviceInfoEvent } from "../events/RoDeviceInfoEvent";
 import { RoAssociativeArray } from "./RoAssociativeArray";
 import { RoArray } from "./RoArray";
-import { ConnectionInfo, getRokuOSVersion, isPlatform } from "../../common";
+import { ConnectionInfo, getRokuOSVersion, platform } from "../../common";
 import { IfSetMessagePort, IfGetMessagePort } from "../interfaces/IfMessagePort";
 import { getExternalIp } from "../../interpreter/Network";
 import { v4 as uuidv4 } from "uuid";
@@ -612,12 +612,9 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             if (custom instanceof Array && custom.length > 0) {
                 features.push(...custom);
             }
-            const platform = BrsDevice.deviceInfo.platform;
-            if (isPlatform(platform)) {
-                for (const [key, value] of Object.entries(platform)) {
-                    if (value) {
-                        features.push(`platform_${key.slice(2).toLowerCase()}`);
-                    }
+            for (const [key, value] of Object.entries(platform)) {
+                if (value) {
+                    features.push(`platform_${key.slice(2).toLowerCase()}`);
                 }
             }
             return BrsBoolean.from(features.includes(feature.value.toLowerCase()));

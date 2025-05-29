@@ -44,7 +44,6 @@ export interface DeviceInfo {
     appList?: AppData[];
     entryPoint?: boolean;
     stopOnCrash?: boolean;
-    platform?: Platform;
     corsProxy?: string;
 }
 
@@ -80,7 +79,6 @@ export const defaultDeviceInfo: DeviceInfo = {
     startTime: Date.now(),
     audioVolume: 50, // Defines the default volume level for system sounds - valid: (0-100)
     maxFps: 60,
-    platform: platform,
 };
 
 /* Execution Payload Interfaces
@@ -308,24 +306,6 @@ export type Platform = {
     inLinux: boolean;
     inChromeOS: boolean;
 };
-
-// Function to check if a value is a Platform object
-export function isPlatform(value: any): value is Platform {
-    return (
-        value &&
-        typeof value.inBrowser === "boolean" &&
-        typeof value.inChromium === "boolean" &&
-        typeof value.inFirefox === "boolean" &&
-        typeof value.inSafari === "boolean" &&
-        typeof value.inElectron === "boolean" &&
-        typeof value.inAndroid === "boolean" &&
-        typeof value.inIOS === "boolean" &&
-        typeof value.inMacOS === "boolean" &&
-        typeof value.inWindows === "boolean" &&
-        typeof value.inLinux === "boolean" &&
-        typeof value.inChromeOS === "boolean"
-    );
-}
 
 /* Connection Information Interface
  *
