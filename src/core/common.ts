@@ -138,12 +138,12 @@ export const captionFonts: Map<string, string> = new Map([
 ]);
 
 export const captionSizes: Map<string, number[]> = new Map([
-    ["default", [30, 45]],
-    ["extra small", [21, 31]],
-    ["small", [22, 33]],
-    ["medium", [30, 45]],
-    ["large", [39, 58]],
-    ["extra large", [43, 64]],
+    ["default", [29, 43.5]],
+    ["extra small", [20, 30]],
+    ["small", [21.5, 32]],
+    ["medium", [29, 43.5]],
+    ["large", [37.5, 56]],
+    ["extra large", [40.5, 61]],
 ]);
 
 export const captionColors: Map<string, string> = new Map([
