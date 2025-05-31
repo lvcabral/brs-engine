@@ -379,8 +379,8 @@ export class Group extends RoSGNode {
                 const line = renderedLines[renderedLines.length - 1];
                 line.text = this.ellipsizeLine(line.text, drawFont, width, ellipsis);
                 line.ellipsized = true;
-                return renderedLines;
             }
+            return renderedLines;
         }
         return lines;
     }
