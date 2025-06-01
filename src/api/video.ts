@@ -33,8 +33,10 @@ let uiMuted = false;
 let previousBuffered = 0;
 let previousTime = Date.now();
 let deviceLocale = "";
+let captionLocale = "";
 let audioLocale = "";
 const audioTracks: MediaTrack[] = [];
+const textTracks: MediaTrack[] = [];
 
 // Initialize Video Module
 if (typeof document !== "undefined") {
@@ -171,6 +173,8 @@ export function handleVideoEvent(eventData: string) {
         }
     } else if (data[1] === "audio") {
         setAudioTrack(audioTracks.findIndex((t) => t.id === data[2]));
+    } else if (data[1] === "subtitle") {
+        setSubtitleTrack(textTracks.findIndex((t) => t.id === data[2]));
     } else if (data[1] === "error") {
         stopVideo(true);
     }
@@ -304,9 +308,11 @@ export async function loadCaptionsFonts(assets: ArrayBufferLike) {
 function startProgress(e: Event) {
     if (e.type === "loadeddata") {
         const currAudioTrack = loadAudioTracks();
-        const tracks = { audio: audioTracks };
+        const currSubtitleTrack = loadSubtitleTracks();
+        const tracks = { audio: audioTracks, text: textTracks };
         saveDataBuffer(sharedArray, JSON.stringify(tracks), BufferType.MEDIA_TRACKS);
         Atomics.store(sharedArray, DataType.VAT, currAudioTrack);
+        Atomics.store(sharedArray, DataType.VTT, currSubtitleTrack);
     } else if (e.type === "loadedmetadata") {
         if (startPosition > 0) {
             player.currentTime = startPosition;
@@ -370,6 +376,48 @@ function loadAudioTracks() {
     return activeTrack;
 }
 
+function loadSubtitleTracks() {
+    textTracks.length = 0;
+    if (!hls?.subtitleTracks?.length) {
+        return -1;
+    }
+    let preferredTrackId = -1;
+    let deviceTrackId = -1;
+    let englishTrackId = -1;
+    hls.subtitleTracks.forEach((track, index) => {
+        const textTrack: MediaTrack = {
+            id: `webvtt/${index + 1}`,
+            name: track.name,
+            lang: track.lang ?? "",
+        };
+        textTracks.push(textTrack);
+        // Format the language code
+        const lang = formatLocale(textTrack.lang);
+        // Save the track ids for preferred locale, device locale and english
+        if (preferredTrackId === -1 && lang === captionLocale) {
+            preferredTrackId = track.id;
+        } else if (deviceTrackId === -1 && lang === deviceLocale) {
+            deviceTrackId = track.id;
+        } else if (englishTrackId === -1 && lang === "en") {
+            englishTrackId = track.id;
+        }
+    });
+    let activeTrack = 0;
+    if (textTracks.length > 0) {
+        // Set the active track prioritizing preferred locale, device locale and english
+        if (preferredTrackId > -1) {
+            activeTrack = preferredTrackId;
+        } else if (deviceTrackId > -1) {
+            activeTrack = deviceTrackId;
+        } else if (englishTrackId > -1) {
+            activeTrack = englishTrackId;
+        }
+        hls.subtitleTrack = activeTrack;
+        playList[playIndex].subtitleTrack = activeTrack;
+    }
+    return activeTrack;
+}
+
 function setAudioTrack(index: number) {
     if (hls && audioTracks.length && index > -1 && index < audioTracks.length) {
         hls.audioTrack = index;
@@ -378,11 +426,26 @@ function setAudioTrack(index: number) {
     }
 }
 
+function setSubtitleTrack(index: number) {
+    if (hls && textTracks.length && index > -1 && index < textTracks.length) {
+        hls.subtitleTrack = index;
+        playList[playIndex].subtitleTrack = index;
+        Atomics.store(sharedArray, DataType.VTT, hls.subtitleTrack);
+    }
+}
+
 function clearVideoTracking() {
     Atomics.store(sharedArray, DataType.VLP, -1);
     loadProgress = 0;
     currentFrame = 0;
     audioTracks.length = 0;
+    textTracks.length = 0;
+    if (player.textTracks?.length) {
+        // Disable all text tracks
+        for (let i = 0; i < player.textTracks.length; i++) {
+            player.textTracks[i].mode = "disabled";
+        }
+    }
 }
 
 function loadVideo(buffer = false) {

@@ -30,7 +30,7 @@ import {
     rgbaIntToHex,
 } from "../interfaces/IfDraw2D";
 import { BrsDevice } from "../../device/BrsDevice";
-import { AudioTrack, BufferType, DataType, MediaEvent } from "../../common";
+import { MediaTrack, BufferType, DataType, MediaEvent } from "../../common";
 
 // Roku Remote Mapping
 const rokuKeys: Map<number, string> = new Map([
@@ -320,23 +320,35 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
             this.isDirty = true;
         }
 
+        const bufferFlag = Atomics.load(BrsDevice.sharedArray, DataType.BUF);
+        if (bufferFlag === BufferType.MEDIA_TRACKS) {
+            const strTracks = BrsDevice.readDataBuffer();
+            let audioTracks: MediaTrack[] = [];
+            let textTracks: MediaTrack[] = [];
+            try {
+                const tracks = JSON.parse(strTracks);
+                audioTracks = tracks.audio ?? [];
+                textTracks = tracks.text ?? [];
+            } catch (e) {
+                audioTracks = [];
+                textTracks = [];
+            }
+            rootObjects.video.setAudioTracks(audioTracks);
+            rootObjects.video.setSubtitleTracks(textTracks);
+            this.isDirty = true;
+        }
+
         const audioTrack = Atomics.load(BrsDevice.sharedArray, DataType.VAT);
         if (audioTrack > -1) {
-            rootObjects.video.set(new BrsString("currentAudioTrack"), new BrsString(audioTrack.toString()));
+            rootObjects.video.setCurrentAudioTrack(audioTrack);
             Atomics.store(BrsDevice.sharedArray, DataType.VAT, -1);
             this.isDirty = true;
         }
 
-        const bufferFlag = Atomics.load(BrsDevice.sharedArray, DataType.BUF);
-        if (bufferFlag === BufferType.AUDIO_TRACKS) {
-            const strTracks = BrsDevice.readDataBuffer();
-            let tracks: AudioTrack[] = [];
-            try {
-                tracks = JSON.parse(strTracks);
-            } catch (e) {
-                tracks = [];
-            }
-            rootObjects.video.setAudioTracks(tracks);
+        const subtitleTrack = Atomics.load(BrsDevice.sharedArray, DataType.VTT);
+        if (subtitleTrack > -1) {
+            rootObjects.video.setCurrentSubtitleTrack(subtitleTrack);
+            Atomics.store(BrsDevice.sharedArray, DataType.VTT, -1);
             this.isDirty = true;
         }
     }

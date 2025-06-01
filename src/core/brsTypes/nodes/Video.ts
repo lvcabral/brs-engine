@@ -26,7 +26,7 @@ import {
     fromAssociativeArray,
     FlexObject,
 } from "..";
-import { captionsOptions, getNow, isMediaTrack, MediaErrorCode, MediaEvent, MediaTrack, parseCaptionMode } from "../../common";
+import { captionsOptions, getNow, MediaErrorCode, MediaEvent, MediaTrack, parseCaptionMode } from "../../common";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D } from "../interfaces/IfDraw2D";
 import { rotateTranslation } from "../../scenegraph/SGUtil";
@@ -119,6 +119,8 @@ export class Video extends Group {
     ];
     private readonly titleText: ScrollingLabel;
     private readonly contentTitles: string[];
+    private readonly audioTracks: MediaTrack[] = [];
+    private readonly subtitleTracks: MediaTrack[] = [];
     private readonly clockText: Label;
     private readonly spinner: BusySpinner;
     private readonly pausedIcon: Poster;
@@ -235,6 +237,8 @@ export class Video extends Group {
             postMessage(`video,mute,${value.toBoolean()}`);
         } else if (fieldName === "audiotrack" && isBrsString(value)) {
             postMessage(`video,audio,${value.getValue()}`);
+        } else if (fieldName === "subtitletrack" && isBrsString(value)) {
+            postMessage(`video,subtitle,${value.getValue()}`);
         } else if (fieldName === "content" && value instanceof ContentNode) {
             postMessage({ videoPlaylist: this.formatContent(value) });
             if (this.contentTitles.length > 0) {
@@ -244,6 +248,8 @@ export class Video extends Group {
             }
             this.setFieldValue("currentAudioTrack", new BrsString(""));
             this.setFieldValue("availableAudioTracks", new RoArray([]));
+            this.setFieldValue("currentSubtitleTrack", new BrsString(""));
+            this.setFieldValue("availableSubtitleTracks", new RoArray([]));
         } else if (fieldName === "enableui" && isBrsBoolean(value)) {
             this.enableUI = value.toBoolean();
             this.statusChanged = this.enableUI;
@@ -336,24 +342,58 @@ export class Video extends Group {
         super.set(new BrsString("position"), new Double(position));
     }
 
+    setCurrentAudioTrack(trackIdx: number) {
+        if (trackIdx >= 0 && trackIdx < this.audioTracks.length) {
+            const track = this.audioTracks[trackIdx];
+            this.set(new BrsString("currentAudioTrack"), new BrsString(track.id));
+        }
+    }
+
     setAudioTracks(tracks: MediaTrack[]) {
         const result: BrsType[] = [];
+        this.audioTracks.length = 0;
         if (tracks.length) {
             tracks.forEach((track) => {
-                if (isMediaTrack(track)) {
-                    const item = {
-                        Track: track.id.toString(),
-                        Language: track.lang,
-                        Name: track.name,
-                        Format: track.codec,
-                        HasAccessibilityDescription: false,
-                        HasAccessibilityEAI: false,
-                    };
-                    result.push(toAssociativeArray(item));
-                }
+                this.audioTracks.push(track);
+                const item = {
+                    Track: track.id,
+                    Language: track.lang,
+                    Name: track.name,
+                    Format: track.codec,
+                    HasAccessibilityDescription: false,
+                    HasAccessibilityEAI: false,
+                };
+                result.push(toAssociativeArray(item));
             });
         }
         this.set(new BrsString("availableAudioTracks"), new RoArray(result));
+    }
+
+    setCurrentSubtitleTrack(trackIdx: number) {
+        if (trackIdx >= 0 && trackIdx < this.subtitleTracks.length) {
+            const track = this.subtitleTracks[trackIdx];
+            this.set(new BrsString("currentSubtitleTrack"), new BrsString(track.id));
+        }
+    }
+
+    setSubtitleTracks(tracks: MediaTrack[]) {
+        const result: BrsType[] = [];
+        this.subtitleTracks.length = 0;
+        if (tracks.length) {
+            tracks.forEach((track) => {
+                this.subtitleTracks.push(track);
+                const item = {
+                    Track: track.id,
+                    Language: track.lang,
+                    Name: track.name,
+                    HasAccessibilityDescription: false,
+                    HasAccessibilityCaption: false,
+                    HasAccessibilitySign: false,
+                };
+                result.push(toAssociativeArray(item));
+            });
+        }
+        this.set(new BrsString("availableSubtitleTracks"), new RoArray(result));
     }
 
     setCaptionStyle(styles: FlexObject) {
