@@ -59,7 +59,7 @@ export const defaultDeviceInfo: DeviceInfo = {
     countryCode: "US", // App Store Country
     timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     locale: "en_US", // Used if app supports localization
-    captionLanguage: "eng",
+    captionLanguage: "en",
     clockFormat: "12h",
     displayMode: "720p",
     captionsMode: "Off",
@@ -270,6 +270,7 @@ export enum DataType {
     VPS, // Video Position
     VDR, // Video Duration
     VAT, // Video Audio Track
+    VTT, // Video Text Track
     SND, // Sound Event
     SDX, // Sound Event Index
     WAV, // Wave Audio
@@ -358,28 +359,28 @@ export enum MediaErrorCode {
     DRM = -6,
 }
 
-// Audio Track Interface
-export interface AudioTrack {
-    id: number;
+// Media Track Interface
+export interface MediaTrack {
+    id: string;
     name: string;
     lang: string;
-    codec: string;
+    codec?: string;
 }
 
-export function isAudioTrack(value: any): value is AudioTrack {
+export function isMediaTrack(value: any): value is MediaTrack {
     return (
         value &&
-        typeof value.id === "number" &&
+        typeof value.id === "string" &&
         typeof value.name === "string" &&
         typeof value.lang === "string" &&
-        typeof value.codec === "string"
+        (typeof value.codec === "string" || value.codec === undefined)
     );
 }
 
 // Buffer Data Types enumerator
 export enum BufferType {
     DEBUG_EXPR,
-    AUDIO_TRACKS,
+    MEDIA_TRACKS,
     SYS_LOG,
     INPUT,
 }

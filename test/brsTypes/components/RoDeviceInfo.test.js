@@ -219,7 +219,7 @@ describe("RoDeviceInfo", () => {
                 let method = deviceInfo.getMethod("getPreferredCaptionLanguage");
 
                 expect(method).toBeTruthy();
-                expect(method.call(interpreter)).toEqual(new BrsString("eng"));
+                expect(method.call(interpreter)).toEqual(new BrsString("en"));
             });
         });
         describe("timeSinceLastKeyPress", () => {
