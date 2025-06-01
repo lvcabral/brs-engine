@@ -13,7 +13,7 @@ import {
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
-import { BufferType, DataType, isAudioTrack, MediaEvent } from "../../common";
+import { BufferType, DataType, isMediaTrack, MediaEvent } from "../../common";
 import { BrsHttpAgent, IfHttpAgent } from "../interfaces/IfHttpAgent";
 import { IfSetMessagePort, IfGetMessagePort } from "../interfaces/IfMessagePort";
 import { BrsDevice } from "../../device/BrsDevice";
@@ -138,10 +138,10 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
             Atomics.store(BrsDevice.sharedArray, DataType.VSE, -1);
         }
         const bufferFlag = Atomics.load(BrsDevice.sharedArray, DataType.BUF);
-        if (bufferFlag === BufferType.AUDIO_TRACKS) {
+        if (bufferFlag === BufferType.MEDIA_TRACKS) {
             const strTracks = BrsDevice.readDataBuffer();
             try {
-                this.audioTracks = JSON.parse(strTracks);
+                this.audioTracks = JSON.parse(strTracks)?.audio ?? [];
             } catch (e) {
                 this.audioTracks = [];
             }
@@ -433,9 +433,9 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
             const result: BrsType[] = [];
             if (this.audioTracks.length) {
                 this.audioTracks.forEach((track) => {
-                    if (isAudioTrack(track)) {
+                    if (isMediaTrack(track)) {
                         const item = {
-                            Track: track.id.toString(),
+                            Track: track.id,
                             Language: track.lang,
                             Name: track.name,
                         };

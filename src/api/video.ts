@@ -6,14 +6,13 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { SubscribeCallback, saveDataBuffer } from "./util";
-import { BufferType, DataType, MediaEvent, MediaErrorCode, platform, AudioTrack } from "../core/common";
+import { BufferType, DataType, MediaEvent, MediaErrorCode, platform, MediaTrack } from "../core/common";
 import Hls from "hls.js";
 
 // Video Objects
 export let player: HTMLVideoElement;
 let hls: Hls | undefined;
 let packageVideos = new Map();
-let audioTracks = new Array();
 let currentFrame = 0;
 let playerState: string = "stop";
 let videosState = false;
@@ -32,6 +31,7 @@ let videoMuted = false;
 let uiMuted = false;
 let previousBuffered = 0;
 let previousTime = Date.now();
+const audioTracks: MediaTrack[] = [];
 
 // Initialize Video Module
 if (typeof document !== "undefined") {
@@ -165,10 +165,7 @@ export function handleVideoEvent(eventData: string) {
             notifyAll("warning", `[video] Invalid seek position: ${eventData}`);
         }
     } else if (data[1] === "audio") {
-        const index = parseInt(data[2]);
-        if (index > 0) {
-            setAudioTrack(index - 1);
-        }
+        setAudioTrack(audioTracks.findIndex((t) => t.id === data[2]));
     } else if (data[1] === "error") {
         stopVideo(true);
     }
@@ -269,7 +266,10 @@ export function resetVideo() {
 // Video Module Private Functions
 function startProgress(e: Event) {
     if (e.type === "loadeddata") {
-        loadAudioTracks();
+        const currAudioTrack = loadAudioTracks();
+        const tracks = { audio: audioTracks };
+        saveDataBuffer(sharedArray, JSON.stringify(tracks), BufferType.MEDIA_TRACKS);
+        Atomics.store(sharedArray, DataType.VAT, currAudioTrack);
     } else if (e.type === "loadedmetadata") {
         if (startPosition > 0) {
             player.currentTime = startPosition;
@@ -291,32 +291,31 @@ function setDuration(e: Event) {
 }
 
 function loadAudioTracks() {
-    audioTracks = [];
-    if (hls) {
-        hls.audioTracks.forEach((track, index) => {
-            const audioTrack: AudioTrack = {
-                id: index + 1,
-                name: track.name,
-                lang: track.lang ?? "",
-                codec: track.audioCodec ?? "",
-            };
-            audioTracks.push(audioTrack);
-        });
-        if (playList[playIndex]?.audioTrack === -1) {
-            playList[playIndex].audioTrack = hls.audioTrack;
-        }
-        Atomics.store(sharedArray, DataType.VAT, hls.audioTrack + 1);
+    audioTracks.length = 0;
+    if (!hls) {
+        return -1;
     }
-    saveDataBuffer(sharedArray, JSON.stringify(audioTracks), BufferType.AUDIO_TRACKS);
+    hls.audioTracks.forEach((track, index) => {
+        const audioTrack: MediaTrack = {
+            id: `${index + 1}`,
+            name: track.name,
+            lang: track.lang ?? "",
+            codec: track.audioCodec,
+        };
+        audioTracks.push(audioTrack);
+    });
+    if (playList[playIndex]?.audioTrack === -1) {
+        playList[playIndex].audioTrack = hls.audioTrack;
+    }
+
+    return hls.audioTrack;
 }
 
 function setAudioTrack(index: number) {
-    if (index > -1 && index < audioTracks.length) {
-        if (hls && hls.audioTrack !== index) {
-            hls.audioTrack = index;
-            playList[playIndex].audioTrack = index;
-            Atomics.store(sharedArray, DataType.VAT, hls.audioTrack + 1);
-        }
+    if (hls && audioTracks.length && index > -1 && index < audioTracks.length) {
+        hls.audioTrack = index;
+        playList[playIndex].audioTrack = index;
+        Atomics.store(sharedArray, DataType.VAT, hls.audioTrack);
     }
 }
 
@@ -324,7 +323,7 @@ function clearVideoTracking() {
     Atomics.store(sharedArray, DataType.VLP, -1);
     loadProgress = 0;
     currentFrame = 0;
-    audioTracks = new Array();
+    audioTracks.length = 0;
 }
 
 function loadVideo(buffer = false) {

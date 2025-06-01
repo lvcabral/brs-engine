@@ -469,7 +469,7 @@ describe("end to end brightscript functions", () => {
             "en_US",
             "US",
             "US",
-            "eng",
+            "en",
             " 0",
             " 1",
             " 0",
