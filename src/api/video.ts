@@ -5,8 +5,8 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { SubscribeCallback, saveDataBuffer } from "./util";
-import { BufferType, DataType, MediaEvent, MediaErrorCode, platform, MediaTrack } from "../core/common";
+import { SubscribeCallback, formatLocale, saveDataBuffer } from "./util";
+import { BufferType, DataType, MediaEvent, MediaErrorCode, platform, MediaTrack, DeviceInfo } from "../core/common";
 import Hls from "hls.js";
 
 // Video Objects
@@ -31,13 +31,15 @@ let videoMuted = false;
 let uiMuted = false;
 let previousBuffered = 0;
 let previousTime = Date.now();
+let deviceLocale = "";
+let audioLocale = "";
 const audioTracks: MediaTrack[] = [];
 
 // Initialize Video Module
 if (typeof document !== "undefined") {
     player = document.getElementById("player") as HTMLVideoElement;
 }
-export function initVideoModule(array: Int32Array, mute: boolean = false) {
+export function initVideoModule(array: Int32Array, mute: boolean = false, deviceData: DeviceInfo) {
     if (player) {
         player.addEventListener("canplay", (e: Event) => {
             loadProgress = 1000;
@@ -80,6 +82,8 @@ export function initVideoModule(array: Int32Array, mute: boolean = false) {
         player.defaultMuted = true;
         uiMuted = mute;
     }
+    deviceLocale = deviceData.locale.toLowerCase().slice(0, 2);
+    audioLocale = deviceData.audioLanguage.toLowerCase().slice(0, 2);
     sharedArray = array;
     resetVideo();
 }
@@ -295,6 +299,9 @@ function loadAudioTracks() {
     if (!hls) {
         return -1;
     }
+    let preferredTrackId = -1;
+    let deviceTrackId = -1;
+    let englishTrackId = -1;
     hls.audioTracks.forEach((track, index) => {
         const audioTrack: MediaTrack = {
             id: `${index + 1}`,
@@ -303,12 +310,31 @@ function loadAudioTracks() {
             codec: track.audioCodec,
         };
         audioTracks.push(audioTrack);
+        // Format the language code
+        const lang = formatLocale(audioTrack.lang);
+        // Save the track ids for preferred locale, device locale and english
+        if (preferredTrackId === -1 && lang === audioLocale) {
+            preferredTrackId = track.id;
+        } else if (deviceTrackId === -1 && lang === deviceLocale) {
+            deviceTrackId = track.id;
+        } else if (englishTrackId === -1 && lang === "en") {
+            englishTrackId = track.id;
+        }
     });
-    if (playList[playIndex]?.audioTrack === -1) {
-        playList[playIndex].audioTrack = hls.audioTrack;
+    let activeTrack = 0;
+    if (audioTracks.length > 0) {
+        // Set the active track prioritizing preferred locale, device locale and english
+        if (preferredTrackId > -1) {
+            activeTrack = preferredTrackId;
+        } else if (deviceTrackId > -1) {
+            activeTrack = deviceTrackId;
+        } else if (englishTrackId > -1) {
+            activeTrack = englishTrackId;
+        }
+        hls.audioTrack = activeTrack;
+        playList[playIndex].audioTrack = activeTrack;
     }
-
-    return hls.audioTrack;
+    return activeTrack;
 }
 
 function setAudioTrack(index: number) {
