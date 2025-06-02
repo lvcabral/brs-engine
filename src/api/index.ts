@@ -153,7 +153,7 @@ export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any 
     // Initialize Display and Control modules
     initDisplayModule(deviceData.displayMode, showStats);
     initControlModule(sharedArray, options);
-    initVideoModule(sharedArray, false);
+    initVideoModule(sharedArray, deviceData, false);
     // Subscribe Events
     subscribeDisplay("api", (event: string, data: any) => {
         if (event === "mode") {
