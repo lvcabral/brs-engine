@@ -25,7 +25,25 @@ export interface DeviceInfo {
     countryCode: string;
     timeZone: string;
     locale: "en_US" | "de_DE" | "es_MX" | "fr_CA" | "pt_BR";
-    captionLanguage: string;
+    captionLanguage:
+        | "en"
+        | "sp"
+        | "fr"
+        | "es"
+        | "pt"
+        | "it"
+        | "de"
+        | "ru"
+        | "tr"
+        | "pl"
+        | "uk"
+        | "rm"
+        | "nl"
+        | "hr"
+        | "hu"
+        | "el"
+        | "cs"
+        | "sv";
     clockFormat: string;
     displayMode: "480p" | "720p" | "1080p";
     captionsMode: "Off" | "On" | "Instant replay" | "When mute";
@@ -37,6 +55,25 @@ export interface DeviceInfo {
     localIps: string[];
     startTime: number;
     audioVolume: number;
+    audioLanguage:
+        | "en"
+        | "sp"
+        | "fr"
+        | "es"
+        | "pt"
+        | "it"
+        | "de"
+        | "ru"
+        | "tr"
+        | "pl"
+        | "uk"
+        | "rm"
+        | "nl"
+        | "hr"
+        | "hu"
+        | "el"
+        | "cs"
+        | "sv";
     maxFps: number;
     registryBuffer?: SharedArrayBuffer;
     audioCodecs?: string[];
@@ -78,6 +115,7 @@ export const defaultDeviceInfo: DeviceInfo = {
     localIps: ["eth1,127.0.0.1"], // In a Browser is not possible to get a real IP, populate it on NodeJS or Electron.
     startTime: Date.now(),
     audioVolume: 50, // Defines the default volume level for system sounds - valid: (0-100)
+    audioLanguage: "en",
     maxFps: 60,
 };
 
