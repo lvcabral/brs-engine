@@ -86,6 +86,7 @@ export function initVideoModule(array: Int32Array, deviceData: DeviceInfo, mute:
         uiMuted = mute;
     }
     deviceLocale = deviceData.locale.toLowerCase().slice(0, 2);
+    captionLocale = deviceData.captionLanguage.toLowerCase().slice(0, 2);
     audioLocale = deviceData.audioLanguage.toLowerCase().slice(0, 2);
     sharedArray = array;
     resetVideo();
@@ -625,7 +626,7 @@ function seekVideo(position: number) {
         }
         player.currentTime = position;
         if (playerState === "pause") {
-            resumeVideo();
+            resumeVideo(false);
         }
     } else {
         startPosition = position;

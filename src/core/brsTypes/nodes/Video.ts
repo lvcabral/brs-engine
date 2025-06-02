@@ -132,7 +132,9 @@ export class Video extends Group {
     private showHeader: number;
     private showPaused: number;
     private showTrickPlay: number;
+    private trickPlayPos: number;
     private statusChanged: boolean;
+    private seeking: boolean;
 
     constructor(members: AAMember[] = [], readonly name: string = "Video") {
         super([], name);
@@ -180,6 +182,8 @@ export class Video extends Group {
         this.showHeader = 0;
         this.showPaused = 0;
         this.showTrickPlay = 0;
+        this.trickPlayPos = -1;
+        this.seeking = false;
         this.statusChanged = false;
         this.lastPressHandled = "";
         this.showUI(false);
@@ -338,7 +342,12 @@ export class Video extends Group {
         const duration = this.getFieldValueJS("duration") ?? 0;
         if (position >= 0 && duration > 0) {
             this.trickPlayBar.setPosition(position, duration);
-        }   
+            if (this.seeking) {
+                this.spinner.setFieldValue("visible", BrsBoolean.False);
+                this.setState(MediaEvent.RESUMED, 0);
+                this.seeking = false;
+            }
+        }
         super.set(new BrsString("position"), new Double(position));
     }
 
@@ -503,7 +512,15 @@ export class Video extends Group {
         if (key === "play" && this.enableTrickPlay) {
             const state = this.getFieldValueJS("state") as string;
             if (state === "paused") {
-                postMessage("video,resume");
+                if (this.trickPlayPos >= 0) {
+                    postMessage(`video,seek,${this.trickPlayPos * 1000}`);
+                    this.trickPlayPos = -1;
+                    this.spinner.setFieldValue("visible", BrsBoolean.from(this.enableUI));
+                    this.seeking = true;
+                    this.showUI(false);
+                } else {
+                    postMessage("video,resume");
+                }
                 handled = true;
             } else if (state === "playing") {
                 postMessage("video,pause");
@@ -513,6 +530,34 @@ export class Video extends Group {
             const now = Date.now();
             if (this.showHeader < now) {
                 this.showHeader = now + 5000;
+                handled = true;
+            }
+            if (this.trickPlayPos >= 0) {
+                postMessage(`video,seek,${this.trickPlayPos * 1000}`);
+                this.trickPlayPos = -1;
+                this.spinner.setFieldValue("visible", BrsBoolean.from(this.enableUI));
+                this.showUI(false);
+                this.seeking = true;
+                handled = true;
+            }
+        } else if (key === "left" || key === "right" && this.enableTrickPlay) {
+            const state = this.getFieldValueJS("state") as string;
+            const duration = this.getFieldValueJS("duration") as number;
+            if (duration > 0) {
+                if (this.trickPlayPos < 0) {
+                    this.trickPlayPos = this.getFieldValueJS("position") as number;
+                }
+                if (state !== "paused") {
+                    postMessage("video,pause");
+                }
+                const now = Date.now();
+                const step = Math.min(10, Math.max(1, Math.trunc(duration / 30)));
+                this.showHeader = now + 30000;
+                this.showTrickPlay = now + 30000;
+                const newPos = key === "left" ? this.trickPlayPos - step : this.trickPlayPos + step;
+                this.trickPlayPos = Math.max(0, Math.min(newPos, duration));
+                this.trickPlayBar.setPosition(this.trickPlayPos, duration);
+                handled = true;
             }
         }
         this.lastPressHandled = handled ? key : "";
