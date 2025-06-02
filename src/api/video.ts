@@ -39,7 +39,7 @@ const audioTracks: MediaTrack[] = [];
 if (typeof document !== "undefined") {
     player = document.getElementById("player") as HTMLVideoElement;
 }
-export function initVideoModule(array: Int32Array, mute: boolean = false, deviceData: DeviceInfo) {
+export function initVideoModule(array: Int32Array, deviceData: DeviceInfo, mute: boolean = false) {
     if (player) {
         player.addEventListener("canplay", (e: Event) => {
             loadProgress = 1000;
