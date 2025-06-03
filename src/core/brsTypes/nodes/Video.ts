@@ -133,6 +133,9 @@ export class Video extends Group {
     private showPaused: number;
     private showTrickPlay: number;
     private trickPlayPos: number;
+    private seekMode: "off" | "skip" | "rw" | "ff" | "replay";
+    private seekLevel: number;
+    private seekTimeout: number;
     private statusChanged: boolean;
     private seeking: boolean;
 
@@ -182,6 +185,9 @@ export class Video extends Group {
         this.showHeader = 0;
         this.showPaused = 0;
         this.showTrickPlay = 0;
+        this.seekMode = "off";
+        this.seekLevel = 0;
+        this.seekTimeout = 0;
         this.trickPlayPos = -1;
         this.seeking = false;
         this.statusChanged = false;
@@ -250,6 +256,7 @@ export class Video extends Group {
             } else {
                 this.titleText.setFieldValue("text", new BrsString(""));
             }
+            this.resetSeeking();
             this.setFieldValue("currentAudioTrack", new BrsString(""));
             this.setFieldValue("availableAudioTracks", new RoArray([]));
             this.setFieldValue("currentSubtitleTrack", new BrsString(""));
@@ -287,6 +294,7 @@ export class Video extends Group {
         switch (eventType) {
             case MediaEvent.LOADING:
                 this.showUI(false);
+                this.resetSeeking();
                 this.showHeader = now + 5000;
                 this.spinner.setFieldValue("visible", BrsBoolean.from(this.enableUI));
                 this.setBufferingStatus(eventIndex);
@@ -294,15 +302,18 @@ export class Video extends Group {
             case MediaEvent.START_STREAM:
             case MediaEvent.RESUMED:
                 state = "playing";
+                this.resetSeeking();
                 this.spinner.setFieldValue("visible", BrsBoolean.False);
                 this.showUI(false);
                 break;
             case MediaEvent.PAUSED:
                 state = "paused";
                 this.spinner.setFieldValue("visible", BrsBoolean.False);
-                this.showHeader = now + 5000;
-                this.showTrickPlay = now + 5000;
-                this.showPaused = now + 2000;
+                if (this.trickPlayPos === -1) {
+                    this.showHeader = now + 5000;
+                    this.showTrickPlay = now + 5000;
+                    this.showPaused = now + 2000;
+                }
                 break;
             case MediaEvent.PARTIAL:
                 state = "stopped";
@@ -540,28 +551,88 @@ export class Video extends Group {
                 this.seeking = true;
                 handled = true;
             }
-        } else if (key === "left" || key === "right" && this.enableTrickPlay) {
-            const state = this.getFieldValueJS("state") as string;
-            const duration = this.getFieldValueJS("duration") as number;
-            if (duration > 0) {
-                if (this.trickPlayPos < 0) {
-                    this.trickPlayPos = this.getFieldValueJS("position") as number;
-                }
-                if (state !== "paused") {
-                    postMessage("video,pause");
-                }
-                const now = Date.now();
-                const step = Math.min(10, Math.max(1, Math.trunc(duration / 30)));
-                this.showHeader = now + 30000;
-                this.showTrickPlay = now + 30000;
-                const newPos = key === "left" ? this.trickPlayPos - step : this.trickPlayPos + step;
-                this.trickPlayPos = Math.max(0, Math.min(newPos, duration));
-                this.trickPlayBar.setPosition(this.trickPlayPos, duration);
-                handled = true;
-            }
+        } else if ((key === "left" || key === "right") && this.enableTrickPlay) {
+            handled = this.handleLeftRight(key);
+        } else if ((key === "rewind" || key === "fastforward") && this.enableTrickPlay) {
+            handled = this.handleRewFastForward(key);
         }
         this.lastPressHandled = handled ? key : "";
         return handled;
+    }
+
+    private handleLeftRight(key: string) {
+        const duration = this.getFieldValueJS("duration") as number;
+        if (duration <= 0) {
+            return false;
+        }
+        const state = this.getFieldValueJS("state") as string;
+        if (state !== "paused") {
+            postMessage("video,pause");
+        }
+        if (this.trickPlayPos < 0) {
+            this.seekMode = "skip";
+            this.seekLevel = 1;
+            this.seekTimeout = 0;
+            this.trickPlayPos = this.getFieldValueJS("position") as number;
+        } else if (this.seekMode !== "skip") {
+            this.seekMode = "skip";
+            this.seekLevel = 1;
+            this.seekTimeout = 0;
+            this.trickPlayBar.setStateIcon("", 0);
+            return true;
+        }
+        this.updateSeekStep(key === "right", duration);
+        this.trickPlayBar.setStateIcon(`skip-${key}`, 500);
+        return true;
+    }
+
+    private handleRewFastForward(key: string) {
+        const duration = this.getFieldValueJS("duration") as number;
+        if (duration <= 0) {
+            return false;
+        }
+        const state = this.getFieldValueJS("state") as string;
+        if (state !== "paused") {
+            postMessage("video,pause");
+        }
+        const mode = key === "rewind" ? "rw" : "ff";
+        if (this.trickPlayPos < 0) {
+            console.debug(`Video.handleRewFastForward: ${mode} - start`);
+            this.seekMode = mode;
+            this.seekLevel = 1;
+            this.trickPlayPos = this.getFieldValueJS("position") as number;
+        } else if (this.seekMode === "skip") {
+            console.debug(`Video.handleRewFastForward: ${mode} - from skip`);
+            this.seekMode = mode;
+            this.seekLevel = 1;
+        } else if (this.seekMode !== mode) {
+            console.debug(`Video.handleRewFastForward: ${mode} - different mode`);
+            this.seekMode = "skip";
+            this.seekLevel = 1;
+            this.seekTimeout = 0;
+            this.trickPlayBar.setStateIcon("", 0);
+            return true;
+        } else {
+            console.debug(`Video.handleRewFastForward: ${mode} - same mode`);
+            this.seekLevel = Math.min(3, this.seekLevel + 1);
+        }
+        this.updateSeekStep(mode === "ff", duration, Math.trunc(1000 / this.seekLevel));
+        this.trickPlayBar.setStateIcon(`${this.seekMode}-x${this.seekLevel}`);
+        return true;
+    }
+
+    private updateSeekStep(forward: boolean, duration: number, timeout = 0) {
+        const now = Date.now();
+        const baseStep = Math.min(10, Math.max(1, Math.trunc(duration / 30)));
+        const step = baseStep * Math.max(1, this.seekLevel * 3 - 3);
+        this.showHeader = now + 30000;
+        this.showTrickPlay = now + 30000;
+        const newPos = forward ? this.trickPlayPos + step : this.trickPlayPos - step;
+        this.trickPlayPos = Math.max(0, Math.min(newPos, duration));
+        this.trickPlayBar.setPosition(this.trickPlayPos, duration);
+        if (timeout > 0) {
+            this.seekTimeout = now + timeout;
+        }
     }
 
     renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
@@ -587,11 +658,24 @@ export class Video extends Group {
         }
         draw2D?.doDrawClearedRect(rect);
         if (this.statusChanged) {
+            if (this.seekTimeout > 0 && this.seekTimeout < Date.now() && ["rw", "ff"].includes(this.seekMode)) {
+                const duration = this.getFieldValueJS("duration") as number;
+                this.updateSeekStep(this.seekMode === "ff", duration, Math.trunc(1000 / this.seekLevel));
+            }
             this.showUI(this.enableUI);
         }
         this.updateBoundingRects(rect, origin, rotation);
         this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);
         this.updateParentRects(origin, angle);
+    }
+
+    private resetSeeking() {
+        this.seekMode = "off";
+        this.trickPlayPos = -1;
+        this.seeking = false;
+        this.seekLevel = 0;
+        this.seekTimeout = 0;
+        this.trickPlayBar.setStateIcon("", 0);
     }
 
     private formatContent(node: ContentNode) {

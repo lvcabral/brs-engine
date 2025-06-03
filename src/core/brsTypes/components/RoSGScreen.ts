@@ -293,7 +293,9 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
             this.videoEvent = eventType;
             if (eventType >= 0) {
                 rootObjects.video.setState(eventType, eventIndex);
-                console.debug(`Video State: ${rootObjects.video.getFieldValueJS("state")}  (${eventType}/${eventIndex})`);
+                console.debug(
+                    `Video State: ${rootObjects.video.getFieldValueJS("state")}  (${eventType}/${eventIndex})`
+                );
                 Atomics.store(BrsDevice.sharedArray, DataType.VDO, -1);
                 this.isDirty = true;
             }
