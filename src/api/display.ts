@@ -240,7 +240,7 @@ function drawVideoFrame() {
             if (lastImage) {
                 bufferCtx.drawImage(lastImage, 0, 0);
             }
-            if (captionsState) {
+            if (captionsState && videoState === "play") {
                 drawSubtitles(bufferCtx);
             }
         }
