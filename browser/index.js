@@ -80,8 +80,6 @@ const customDeviceInfo = {
 };
 const customKeys = new Map();
 customKeys.set("NumpadMultiply", "info"); // Keep consistency with older versions
-customKeys.set("PageUp", "ignore"); // do not handle on browser
-customKeys.set("PageDown", "ignore"); // do not handle on browser
 customKeys.set("ShiftLeft", "playonly"); // Support for Prince of Persia
 customKeys.set("Shift+ArrowRight", "right"); // Support for Prince of Persia
 customKeys.set("Shift+ArrowLeft", "left"); // Support for Prince of Persia
