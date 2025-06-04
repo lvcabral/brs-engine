@@ -7,12 +7,13 @@
  *--------------------------------------------------------------------------------------------*/
 import { player, subscribeVideo } from "./video";
 import { SubscribeCallback } from "./util";
-import { platform } from "../core/common";
+import { DeviceInfo, platform } from "../core/common";
 import Stats from "stats.js";
 
 // Simulation Display
 const screenSize = { width: 1280, height: 720 };
 let display: HTMLCanvasElement;
+let deviceData: DeviceInfo;
 let ctx: CanvasRenderingContext2D | null;
 let bufferCanvas: OffscreenCanvas;
 let bufferCtx: CanvasRenderingContext2D | null;
@@ -28,11 +29,10 @@ let videoRect = { x: 0, y: 0, w: 0, h: 0 };
 let videoLoop = false;
 
 // Initialize Display Module
-let displayMode = "720p";
 let displayState = true;
 let overscanMode = "disabled";
 let aspectRatio = 16 / 9;
-export function initDisplayModule(mode: string, perfStats = false) {
+export function initDisplayModule(deviceInfo: DeviceInfo, perfStats = false) {
     // Initialize Display Canvas
     display = document.getElementById("display") as HTMLCanvasElement;
     ctx = display.getContext("2d", { alpha: false });
@@ -51,8 +51,8 @@ export function initDisplayModule(mode: string, perfStats = false) {
         );
     }
     // Display Dimensions and Aspect Ratio
-    displayMode = mode;
-    aspectRatio = displayMode === "480p" ? 4 / 3 : 16 / 9;
+    deviceData = deviceInfo;
+    aspectRatio = deviceData.displayMode === "480p" ? 4 / 3 : 16 / 9;
     screenSize.height = display.height;
     screenSize.width = Math.trunc(screenSize.height * aspectRatio);
     subscribeVideo("display", (event: string, data: any) => {
@@ -283,8 +283,8 @@ export function clearDisplay(cancelFrame?: boolean) {
 }
 
 // Set/Get Current Display Mode
-export function setDisplayMode(mode: string) {
-    displayMode = mode;
+export function setDisplayMode(mode: "480p" | "720p" | "1080p") {
+    deviceData.displayMode = mode;
     aspectRatio = mode === "480p" ? 4 / 3 : 16 / 9;
     notifyAll("mode", mode);
 }
@@ -294,7 +294,7 @@ export function setDisplayState(enabled: boolean) {
 }
 
 export function getDisplayMode() {
-    return displayMode;
+    return deviceData.displayMode;
 }
 
 // Set/Get Overscan Mode
@@ -348,10 +348,10 @@ export function enableStats(show: boolean): boolean {
 function getDisplayModeDims() {
     let w = 1280;
     let h = 720;
-    if (displayMode === "480p") {
+    if (deviceData.displayMode === "480p") {
         w = 720;
         h = 540;
-    } else if (displayMode === "1080p") {
+    } else if (deviceData.displayMode === "1080p") {
         w = 1920;
         h = 1080;
     }
