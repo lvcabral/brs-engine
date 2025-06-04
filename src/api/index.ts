@@ -163,7 +163,7 @@ export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any 
     sharedArray = new Int32Array(sharedBuffer);
     resetArray();
     // Initialize Display and Control modules
-    initDisplayModule(deviceData.displayMode, showStats);
+    initDisplayModule(deviceData, showStats);
     initControlModule(sharedArray, options);
     initVideoModule(sharedArray, deviceData, false);
     // Subscribe Events

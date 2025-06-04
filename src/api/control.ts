@@ -242,9 +242,7 @@ function handleKeyboardEvent(event: KeyboardEvent, mod: number) {
     const key = keysMap.get(keyCode);
     if (key && key.toLowerCase() !== "ignore") {
         sendKey(key, mod, RemoteType.WD);
-        if (mod === 0) {
-            event.preventDefault();
-        }
+        event.preventDefault();
     } else if (!["Alt", "Control", "Meta", "Shift", "Tab", "Dead"].includes(event.key)) {
         sendKey(`lit_${event.key}`, mod, RemoteType.WD);
     }
