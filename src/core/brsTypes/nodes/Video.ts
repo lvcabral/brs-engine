@@ -133,7 +133,7 @@ export class Video extends Group {
     private showPaused: number;
     private showTrickPlay: number;
     private trickPlayPos: number;
-    private seekMode: "off" | "skip" | "rw" | "ff" | "replay";
+    private seekMode: "off" | "skip" | "rw" | "ff";
     private seekLevel: number;
     private seekTimeout: number;
     private statusChanged: boolean;
@@ -550,6 +550,19 @@ export class Video extends Group {
                 this.showUI(false);
                 this.seeking = true;
                 handled = true;
+            }
+        } else if (key === "replay" && this.enableTrickPlay) {
+            const state = this.getFieldValueJS("state") as string;
+            if (state === "playing") {
+                const position = this.getFieldValueJS("position") as number;
+                if (position > 0) {
+                    const now = Date.now();
+                    postMessage(`video,seek,${Math.max(0, position - 20) * 1000}`);
+                    this.showHeader = now + 1000;
+                    this.showTrickPlay = now + 1000;
+                    this.trickPlayBar.setStateIcon("replay", 500);
+                    handled = true;
+                }
             }
         } else if ((key === "left" || key === "right") && this.enableTrickPlay) {
             handled = this.handleLeftRight(key);
