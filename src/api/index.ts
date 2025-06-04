@@ -181,7 +181,6 @@ export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any 
     // Subscribe Events
     subscribeDisplay("api", (event: string, data: any) => {
         if (event === "mode") {
-            deviceData.displayMode = data;
             if (currentApp.running) {
                 terminate(AppExitReason.SETTINGS);
             }
