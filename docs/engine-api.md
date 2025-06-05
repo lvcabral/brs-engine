@@ -18,6 +18,8 @@ Check the [documentation](./integrating.md) to learn how to start using it. The 
 |getDisplayMode()|Returns the current display mode. ||
 |setOverscanMode(`mode`)|Configures the overscan mode. |<ul><li>`mode` (string): supported modes are `"disabled"`, `"guidelines"` or `"overscan"`.</li>|
 |getOverscanMode()|Returns the current overscan mode.||
+|setCaptionMode(`mode`)|Configures the closed caption mode. |<ul><li>`mode` (string): supported modes are `"Off"`, `"On"`, `"Instant replay"` or `"When mute"`.</li>|
+|getCaptionMode()|Returns the current closed caption mode.||
 |enableStats(`state`)|Enables or disables the performance stats overlay |<ul><li>`state` (boolean): if `true` performance statistics will be shown over the display, on the top left.</li>|
 |setAudioMute(`mute`)|Mutes or un-mutes the audio during app execution|<ul><li>`mute` (boolean): if `true` the executing app audio and video will be muted.</li>|
 |getAudioMute()|Returns `true` if the audio is muted ||

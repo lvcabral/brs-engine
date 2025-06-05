@@ -50,6 +50,7 @@ import {
     clearDisplay,
     statsUpdate,
     setDisplayState,
+    setCaptionMode,
 } from "./display";
 import {
     initSoundModule,
@@ -88,7 +89,15 @@ export { deviceData, loadAppZip, updateAppZip, getSerialNumber, mountExt, umount
 export { setControlMode, getControlMode, setCustomKeys, setCustomPadButtons, sendInput } from "./control";
 
 // Display API
-export { setDisplayMode, getDisplayMode, setOverscanMode, getOverscanMode, enableStats } from "./display";
+export {
+    setDisplayMode,
+    getDisplayMode,
+    setOverscanMode,
+    getOverscanMode,
+    setCaptionMode,
+    getCaptionMode,
+    enableStats,
+} from "./display";
 
 let clearDisplayOnExit: boolean = true;
 let disableDebug: boolean = false;
@@ -585,7 +594,7 @@ function mainCallback(event: MessageEvent) {
     } else if (typeof event.data.displayEnabled === "boolean") {
         setDisplayState(event.data.displayEnabled);
     } else if (typeof event.data.captionsMode === "string") {
-        deviceData.captionsMode = event.data.captionsMode;
+        setCaptionMode(event.data.captionsMode);
     } else if (isAppData(event.data)) {
         notifyAll("launch", { app: event.data.id, params: event.data.params ?? new Map() });
     } else if (isTaskData(event.data)) {
