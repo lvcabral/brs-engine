@@ -694,7 +694,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             } else if (opt === "muted") {
                 return new BrsString("Unmuted");
             }
-            return new BrsString("Default");
+            return new BrsString(BrsDevice.deviceInfo.captionStyle.get(opt) ?? "Default");
         },
     });
 

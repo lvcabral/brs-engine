@@ -24,30 +24,13 @@ export interface DeviceInfo {
     RIDA: string;
     countryCode: string;
     timeZone: string;
-    locale: "en_US" | "de_DE" | "es_MX" | "fr_CA" | "pt_BR";
-    captionLanguage:
-        | "en"
-        | "sp"
-        | "fr"
-        | "es"
-        | "pt"
-        | "it"
-        | "de"
-        | "ru"
-        | "tr"
-        | "pl"
-        | "uk"
-        | "rm"
-        | "nl"
-        | "hr"
-        | "hu"
-        | "el"
-        | "cs"
-        | "sv";
+    locale: SupportedLocale;
     clockFormat: string;
-    displayMode: "480p" | "720p" | "1080p";
-    captionsMode: "Off" | "On" | "Instant replay" | "When mute";
-    assets: ArrayBuffer;
+    displayMode: DisplayMode;
+    captionMode: CaptionMode;
+    captionStyle: Map<string, string>;
+    captionLanguage: SupportedLanguage;
+    assets: ArrayBufferLike;
     maxSimulStreams: 1 | 2 | 3;
     remoteControls: RemoteControl[];
     customFeatures: string[];
@@ -55,25 +38,7 @@ export interface DeviceInfo {
     localIps: string[];
     startTime: number;
     audioVolume: number;
-    audioLanguage:
-        | "en"
-        | "sp"
-        | "fr"
-        | "es"
-        | "pt"
-        | "it"
-        | "de"
-        | "ru"
-        | "tr"
-        | "pl"
-        | "uk"
-        | "rm"
-        | "nl"
-        | "hr"
-        | "hu"
-        | "el"
-        | "cs"
-        | "sv";
+    audioLanguage: SupportedLanguage;
     maxFps: number;
     registry?: Map<string, string>;
     audioCodecs?: string[];
@@ -82,6 +47,47 @@ export interface DeviceInfo {
     entryPoint?: boolean;
     stopOnCrash?: boolean;
     corsProxy?: string;
+}
+
+export type SupportedLocale =
+    | "en_US" // English (United States)
+    | "en_GB" // English (United Kingdom)
+    | "en_CA" // English (Canada)
+    | "en_AU" // English (Australia)
+    | "fr_CA" // French (Canada)
+    | "de_DE" // German (Germany)
+    | "es_ES" // Spanish (International)
+    | "es_MX" // Spanish (Mexico)
+    | "de_DE" // German (Germany)
+    | "it_IT" // Italian (Italy)
+    | "pt_BR"; // Portuguese (Brazil)
+
+export type SupportedLanguage =
+    | "en" // English
+    | "es" // Spanish
+    | "fr" // French
+    | "de" // German
+    | "it" // Italian
+    | "pt" // Portuguese
+    | "ru" // Russian
+    | "tr" // Turkish
+    | "pl" // Polish
+    | "uk" // Ukrainian
+    | "rm" // Romansh
+    | "nl" // Dutch
+    | "hr" // Croatian
+    | "hu" // Hungarian
+    | "el" // Greek
+    | "cs" // Czech
+    | "sv"; // Swedish
+
+export const DisplayModes = ["480p", "720p", "1080p"] as const;
+export type DisplayMode = typeof DisplayModes[number];
+export const CaptionModes = ["Off", "On", "Instant replay", "When mute"] as const;
+export type CaptionMode = typeof CaptionModes[number];
+export function parseCaptionMode(mode: string): CaptionMode | undefined {
+    const normalized = mode.trim().toLowerCase();
+    return CaptionModes.find(mode => mode.toLowerCase() === normalized);
 }
 
 // Default Device Information
@@ -96,10 +102,11 @@ export const defaultDeviceInfo: DeviceInfo = {
     countryCode: "US", // App Store Country
     timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     locale: "en_US", // Used if app supports localization
-    captionLanguage: "en",
     clockFormat: "12h",
     displayMode: "720p",
-    captionsMode: "Off",
+    captionMode: "Off",
+    captionStyle: new Map(),
+    captionLanguage: "en",
     assets: new ArrayBuffer(0),
     maxSimulStreams: 2,
     remoteControls: [],
