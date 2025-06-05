@@ -26,7 +26,7 @@ import {
     fromAssociativeArray,
     FlexObject,
 } from "..";
-import { captionsOptions, getNow, MediaErrorCode, MediaEvent, MediaTrack, parseCaptionMode } from "../../common";
+import { captionOptions, getNow, MediaErrorCode, MediaEvent, MediaTrack, parseCaptionMode } from "../../common";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D } from "../interfaces/IfDraw2D";
 import { rotateTranslation } from "../../scenegraph/SGUtil";
@@ -200,7 +200,7 @@ export class Video extends Group {
         postMessage("video,next,-1");
         postMessage("video,mute,false");
         postMessage(`video,notify,500`);
-        postMessage({ captionMode: BrsDevice.captionsMode });
+        postMessage({ captionMode: BrsDevice.deviceInfo.captionMode });
         postMessage({ captionStyle: new Map<string, string>() });
 
         // Set itself as the root video object
@@ -214,7 +214,7 @@ export class Video extends Group {
         const fieldName = index.getValue().toLowerCase();
 
         if (fieldName === "globalCaptionMode".toLowerCase()) {
-            return new BrsString(BrsDevice.captionsMode);
+            return new BrsString(BrsDevice.deviceInfo.captionMode);
         }
 
         return super.get(index);
@@ -273,8 +273,8 @@ export class Video extends Group {
         } else if (fieldName === "globalcaptionmode" && isBrsString(value)) {
             const mode = parseCaptionMode(value.getValue());
             if (mode) {
-                BrsDevice.captionsMode = mode;
-                postMessage({ captionsMode: mode });
+                BrsDevice.deviceInfo.captionMode = mode;
+                postMessage({ captionMode: mode });
             } else {
                 BrsDevice.stderr.write(
                     `warning,${getNow()} [sg.video.mode.set.bad] globalCaptionMode set to bad value '${mode}'`
@@ -420,9 +420,9 @@ export class Video extends Group {
         const validStyles = new Map<string, string>();
         for (const key in styles) {
             const id = key.toLowerCase();
-            if (id.includes("/") && captionsOptions.has(id)) {
+            if (id.includes("/") && captionOptions.has(id)) {
                 const value = styles[key];
-                if (typeof value === "string" && captionsOptions.get(id)?.includes(value.toLowerCase())) {
+                if (typeof value === "string" && captionOptions.get(id)?.includes(value.toLowerCase())) {
                     validStyles.set(key, value);
                 } else {
                     BrsDevice.stderr.write(

@@ -596,8 +596,8 @@ function mainCallback(event: MessageEvent) {
         addVideo(event.data.videoPath, new Blob([event.data.videoData], { type: "video/mp4" }));
     } else if (typeof event.data.displayEnabled === "boolean") {
         setDisplayState(event.data.displayEnabled);
-    } else if (typeof event.data.captionsMode === "string") {
-        setCaptionMode(event.data.captionsMode);
+    } else if (typeof event.data.captionMode === "string") {
+        setCaptionMode(event.data.captionMode);
     } else if (event.data.captionStyle instanceof Map) {
         setCaptionStyle(event.data.captionStyle);
     } else if (isAppData(event.data)) {
@@ -684,8 +684,8 @@ function taskCallback(event: MessageEvent) {
         notifyAll("registry", event.data);
     } else if (typeof event.data.displayEnabled === "boolean") {
         setDisplayState(event.data.displayEnabled);
-    } else if (typeof event.data.captionsMode === "string") {
-        deviceData.captionsMode = event.data.captionsMode;
+    } else if (typeof event.data.captionMode === "string") {
+        setCaptionMode(event.data.captionMode);
     } else if (isTaskData(event.data)) {
         console.debug("[API] Task data received from Task Thread: ", event.data.name, TaskState[event.data.state]);
         if (event.data.state === TaskState.STOP) {

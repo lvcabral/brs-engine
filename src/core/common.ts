@@ -168,7 +168,7 @@ export const captionOpacities: Map<string, number> = new Map([
     ["100%", 1.0],
 ]);
 
-export const captionsOptions: Map<string, string[]> = new Map([
+export const captionOptions: Map<string, string[]> = new Map([
     ["mode", ["Off", "On", "Instant replay", "When mute"]],
     ["text/font", Array.from(captionFonts.keys())],
     ["text/effect", ["default", "none", "raised", "depressed", "uniform", "drop shadow (left)", "drop shadow (right)"]],

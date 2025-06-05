@@ -6,7 +6,7 @@ import { Interpreter } from "../../interpreter";
 import { RoDeviceInfoEvent } from "../events/RoDeviceInfoEvent";
 import { RoAssociativeArray } from "./RoAssociativeArray";
 import { RoArray } from "./RoArray";
-import { captionsOptions, ConnectionInfo, getRokuOSVersion, parseCaptionMode, platform } from "../../common";
+import { captionOptions, ConnectionInfo, getRokuOSVersion, parseCaptionMode, platform } from "../../common";
 import { IfSetMessagePort, IfGetMessagePort } from "../interfaces/IfMessagePort";
 import { getExternalIp } from "../../interpreter/Network";
 import { v4 as uuidv4 } from "uuid";
@@ -135,7 +135,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     private getNewEvents() {
         const events: BrsEvent[] = [];
         if (!this.captionsMessageSent) {
-            events.push(new RoDeviceInfoEvent({ Mode: BrsDevice.captionsMode, Mute: false }));
+            events.push(new RoDeviceInfoEvent({ Mode: BrsDevice.deviceInfo.captionMode, Mute: false }));
             this.captionsMessageSent = true;
             // TODO: Generate a new event when the captions mode changes
         }
@@ -635,7 +635,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             returns: ValueKind.String,
         },
         impl: (_: Interpreter) => {
-            return new BrsString(BrsDevice.captionsMode);
+            return new BrsString(BrsDevice.deviceInfo.captionMode);
         },
     });
 
@@ -652,9 +652,9 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
                     // Only scenario when the return is false
                     return BrsBoolean.False;
                 }
-                BrsDevice.captionsMode = newMode;
+                BrsDevice.deviceInfo.captionMode = newMode;
                 this.port?.pushMessage(new RoDeviceInfoEvent({ Mode: newMode, Mute: false }));
-                postMessage({ captionsMode: newMode });
+                postMessage({ captionMode: newMode });
             }
             // Roku always returns true, even when get an invalid mode
             return BrsBoolean.True;
@@ -669,11 +669,11 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, option: BrsString) => {
             const opt = option.value.toLowerCase();
-            if (!captionsOptions.has(opt)) {
+            if (!captionOptions.has(opt)) {
                 return new BrsString("");
             }
             if (opt === "mode") {
-                return new BrsString(BrsDevice.captionsMode);
+                return new BrsString(BrsDevice.deviceInfo.captionMode);
             } else if (opt === "muted") {
                 return new BrsString("Unmuted");
             }

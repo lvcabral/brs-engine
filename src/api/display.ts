@@ -5,9 +5,9 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { player, subscribeVideo } from "./video";
+import { isVideoMuted, player, subscribeVideo } from "./video";
 import { SubscribeCallback } from "./util";
-import { DeviceInfo, platform, parseCaptionMode, DisplayMode, DisplayModes, captionsOptions, captionSizes, captionColors, captionOpacities, captionFonts } from "../core/common";
+import { DeviceInfo, platform, parseCaptionMode, DisplayMode, DisplayModes, captionOptions, captionSizes, captionColors, captionOpacities, captionFonts } from "../core/common";
 import Stats from "stats.js";
 
 // Simulation Display
@@ -384,6 +384,7 @@ export function setCaptionMode(mode: string) {
         return;
     }
     deviceData.captionMode = newMode;
+    captionsState = newMode === "On" || (newMode === "When mute" && isVideoMuted());
 }
 
 export function getCaptionMode() {
@@ -393,7 +394,7 @@ export function getCaptionMode() {
 // Set Closed Captions Style
 export function setCaptionStyle(style?: Map<string, string>) {
     // Reset the captions style defaults
-    captionsOptions.forEach((option, key) => {
+    captionOptions.forEach((option, key) => {
         if (key.includes("/")) {
             captionsStyle.set(key, option[0]);
         }
