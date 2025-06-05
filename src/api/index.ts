@@ -43,6 +43,7 @@ import {
     clearDisplay,
     statsUpdate,
     setDisplayState,
+    setCaptionMode,
 } from "./display";
 import {
     initSoundModule,
@@ -81,7 +82,15 @@ export { deviceData, loadAppZip, updateAppZip, getSerialNumber, mountExt, umount
 export { setControlMode, getControlMode, setCustomKeys, setCustomPadButtons, sendInput } from "./control";
 
 // Display API
-export { setDisplayMode, getDisplayMode, setOverscanMode, getOverscanMode, enableStats } from "./display";
+export {
+    setDisplayMode,
+    getDisplayMode,
+    setOverscanMode,
+    getOverscanMode,
+    setCaptionMode,
+    getCaptionMode,
+    enableStats,
+} from "./display";
 
 let clearDisplayOnExit: boolean = true;
 let disableDebug: boolean = false;
@@ -530,7 +539,7 @@ function workerCallback(event: MessageEvent) {
     } else if (typeof event.data.displayEnabled === "boolean") {
         setDisplayState(event.data.displayEnabled);
     } else if (typeof event.data.captionsMode === "string") {
-        deviceData.captionsMode = event.data.captionsMode;
+        setCaptionMode(event.data.captionsMode);
     } else if (isAppData(event.data)) {
         notifyAll("launch", { app: event.data.id, params: event.data.params ?? new Map() });
     } else if (isNDKStart(event.data)) {
@@ -568,36 +577,43 @@ function workerCallback(event: MessageEvent) {
     } else if (typeof event.data !== "string") {
         // All messages beyond this point must be csv string
         apiException("warning", `[api] Invalid worker message: ${event.data}`);
-    } else if (event.data.startsWith("audio,")) {
-        handleSoundEvent(event.data);
-    } else if (event.data.startsWith("video,")) {
-        handleVideoEvent(event.data);
-    } else if (event.data.startsWith("print,")) {
-        deviceDebug(event.data);
-    } else if (event.data.startsWith("warning,")) {
-        deviceDebug(`${event.data}\r\n`);
-    } else if (event.data.startsWith("error,")) {
-        deviceDebug(`${event.data}\r\n`);
-    } else if (event.data.startsWith("debug,")) {
-        const level = event.data.slice(6);
+    } else {
+        handleStringMessage(event.data);
+    }
+}
+
+// Handles string messages from the Interpreter
+function handleStringMessage(message: string) {
+    if (message.startsWith("audio,")) {
+        handleSoundEvent(message);
+    } else if (message.startsWith("video,")) {
+        handleVideoEvent(message);
+    } else if (message.startsWith("print,")) {
+        deviceDebug(message);
+    } else if (message.startsWith("warning,")) {
+        deviceDebug(`${message}\r\n`);
+    } else if (message.startsWith("error,")) {
+        deviceDebug(`${message}\r\n`);
+    } else if (message.startsWith("debug,")) {
+        const level = message.slice(6);
         const enable = level === "continue";
         enableSendKeys(enable);
         statsUpdate(enable);
         switchSoundState(enable);
         switchVideoState(enable);
         notifyAll("debug", { level: level });
-    } else if (event.data.startsWith("start,")) {
+    } else if (message.startsWith("start,")) {
         const title = currentApp.title;
         const beaconMsg = "[scrpt.ctx.run.enter] UI: Entering";
-        const subName = event.data.split(",")[1];
+        const subName = message.split(",")[1];
         deviceDebug(`print,------ Running dev '${title}' ${subName} ------\r\n`);
         deviceDebug(`beacon,${getNow()} ${beaconMsg} '${title}', id '${currentApp.id}'\r\n`);
         statsUpdate(true);
         notifyAll("started", currentApp);
-    } else if (event.data.startsWith("end,")) {
-        terminate(getExitReason(event.data.slice(4)));
-    } else if (event.data.startsWith("syslog,")) {
-        const type = event.data.slice(7);
+    } else if (message.startsWith("end,")) {
+        terminate(getExitReason(message.slice(4)));
+    } else if (message.startsWith("syslog,")) {
+        const type = message.slice(7);
         if (type === "bandwidth.minute") {
             bandwidthMinute = true;
             if (latestBandwidth === 0) {
@@ -609,10 +625,10 @@ function workerCallback(event: MessageEvent) {
         } else if (type === "http.connect") {
             httpConnectLog = true;
         }
-    } else if (event.data === "reset") {
+    } else if (message === "reset") {
         notifyAll("reset");
-    } else if (event.data.startsWith("version,")) {
-        notifyAll("version", event.data.slice(8));
+    } else if (message.startsWith("version,")) {
+        notifyAll("version", message.slice(8));
     }
 }
 

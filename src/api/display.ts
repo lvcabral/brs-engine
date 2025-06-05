@@ -7,7 +7,7 @@
  *--------------------------------------------------------------------------------------------*/
 import { player, subscribeVideo } from "./video";
 import { SubscribeCallback } from "./util";
-import { DeviceInfo, platform } from "../core/common";
+import { DeviceInfo, platform, parseCaptionMode, DisplayMode, DisplayModes } from "../core/common";
 import Stats from "stats.js";
 
 // Simulation Display
@@ -283,18 +283,22 @@ export function clearDisplay(cancelFrame?: boolean) {
 }
 
 // Set/Get Current Display Mode
-export function setDisplayMode(mode: "480p" | "720p" | "1080p") {
+export function setDisplayMode(mode: DisplayMode) {
+    if (!DisplayModes.includes(mode)) {
+        notifyAll("warning", `[display] Invalid Display Mode: ${mode}`);
+        return;
+    }
     deviceData.displayMode = mode;
     aspectRatio = mode === "480p" ? 4 / 3 : 16 / 9;
     notifyAll("mode", mode);
 }
 
-export function setDisplayState(enabled: boolean) {
-    displayState = enabled;
-}
-
 export function getDisplayMode() {
     return deviceData.displayMode;
+}
+
+export function setDisplayState(enabled: boolean) {
+    displayState = enabled;
 }
 
 // Set/Get Overscan Mode
@@ -304,6 +308,20 @@ export function setOverscanMode(mode: string) {
 
 export function getOverscanMode() {
     return overscanMode;
+}
+
+// Set/Get Closed Caption Mode
+export function setCaptionMode(mode: string) {
+    const newMode = parseCaptionMode(mode);
+    if (!newMode) {
+        notifyAll("warning", `[display] Invalid Closed Caption mode: ${mode}`);
+        return;
+    }
+    deviceData.captionMode = newMode;
+}
+
+export function getCaptionMode() {
+    return deviceData.captionMode;
 }
 
 // Set the Performance Statistics state
