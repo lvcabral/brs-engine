@@ -7,7 +7,18 @@
  *--------------------------------------------------------------------------------------------*/
 import { isVideoMuted, player, subscribeVideo } from "./video";
 import { SubscribeCallback } from "./util";
-import { DeviceInfo, platform, parseCaptionMode, DisplayMode, DisplayModes, captionOptions, captionSizes, captionColors, captionOpacities, captionFonts } from "../core/common";
+import {
+    DeviceInfo,
+    platform,
+    parseCaptionMode,
+    DisplayMode,
+    DisplayModes,
+    captionOptions,
+    captionSizes,
+    captionColors,
+    captionOpacities,
+    captionFonts,
+} from "../core/common";
 import Stats from "stats.js";
 
 // Simulation Display
