@@ -6,7 +6,7 @@ import { Interpreter } from "../../interpreter";
 import { RoDeviceInfoEvent } from "../events/RoDeviceInfoEvent";
 import { RoAssociativeArray } from "./RoAssociativeArray";
 import { RoArray } from "./RoArray";
-import { ConnectionInfo, getRokuOSVersion, platform } from "../../common";
+import { CaptionModes, ConnectionInfo, getRokuOSVersion, platform } from "../../common";
 import { IfSetMessagePort, IfGetMessagePort } from "../interfaces/IfMessagePort";
 import { getExternalIp } from "../../interpreter/Network";
 import { v4 as uuidv4 } from "uuid";
@@ -15,7 +15,6 @@ import { BrsDevice } from "../../device/BrsDevice";
 
 export class RoDeviceInfo extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
-    readonly captionsModes: string[] = ["Off", "On", "Instant replay", "When mute"];
     readonly captionsOptions: string[] = [
         "mode",
         "text/font",
@@ -61,7 +60,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             this.displayResolution = { h: 1080, w: 1920 };
             this.displayModeName = "FHD";
         }
-        this.captionsMode = BrsDevice.deviceInfo.captionsMode;
+        this.captionsMode = BrsDevice.deviceInfo.captionMode;
         const setPortIface = new IfSetMessagePort(this, this.getNewEvents.bind(this));
         const getPortIface = new IfGetMessagePort(this);
         this.registerMethods({
@@ -664,7 +663,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, mode: BrsString) => {
-            if (this.captionsModes.includes(mode.value)) {
+            if (CaptionModes.includes(mode.value as any)) {
                 if (mode.value === "When mute" && this.modelType !== "TV") {
                     // Only scenario when the return is false
                     return BrsBoolean.False;

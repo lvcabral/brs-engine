@@ -538,8 +538,8 @@ function workerCallback(event: MessageEvent) {
         addVideo(event.data.videoPath, new Blob([event.data.videoData], { type: "video/mp4" }));
     } else if (typeof event.data.displayEnabled === "boolean") {
         setDisplayState(event.data.displayEnabled);
-    } else if (typeof event.data.captionMode === "string") {
-        setCaptionMode(event.data.captionMode);
+    } else if (typeof event.data.captionsMode === "string") {
+        setCaptionMode(event.data.captionsMode);
     } else if (isAppData(event.data)) {
         notifyAll("launch", { app: event.data.id, params: event.data.params ?? new Map() });
     } else if (isNDKStart(event.data)) {
