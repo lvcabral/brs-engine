@@ -5,7 +5,7 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { isVideoMuted, player, subscribeVideo } from "./video";
+import { player, subscribeVideo } from "./video";
 import { SubscribeCallback } from "./util";
 import { DeviceInfo, platform, parseCaptionMode, DisplayMode, DisplayModes } from "../core/common";
 import Stats from "stats.js";

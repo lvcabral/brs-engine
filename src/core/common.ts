@@ -55,7 +55,6 @@ export type SupportedLocale =
     | "en_CA" // English (Canada)
     | "en_AU" // English (Australia)
     | "fr_CA" // French (Canada)
-    | "de_DE" // German (Germany)
     | "es_ES" // Spanish (International)
     | "es_MX" // Spanish (Mexico)
     | "de_DE" // German (Germany)
