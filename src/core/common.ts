@@ -82,12 +82,12 @@ export type SupportedLanguage =
     | "sv"; // Swedish
 
 export const DisplayModes = ["480p", "720p", "1080p"] as const;
-export type DisplayMode = typeof DisplayModes[number];
+export type DisplayMode = (typeof DisplayModes)[number];
 export const CaptionModes = ["Off", "On", "Instant replay", "When mute"] as const;
-export type CaptionMode = typeof CaptionModes[number];
+export type CaptionMode = (typeof CaptionModes)[number];
 export function parseCaptionMode(mode: string): CaptionMode | undefined {
     const normalized = mode.trim().toLowerCase();
-    return CaptionModes.find(mode => mode.toLowerCase() === normalized);
+    return CaptionModes.find((mode) => mode.toLowerCase() === normalized);
 }
 
 // Default Device Information
