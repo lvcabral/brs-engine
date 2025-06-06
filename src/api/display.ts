@@ -226,40 +226,40 @@ function drawBufferImage() {
 
 // Draw Video Player frame to the Display Canvas
 function drawVideoFrame() {
-    if (bufferCtx && player instanceof HTMLVideoElement && ["play", "pause"].includes(videoState)) {
-        videoLoop = true;
-        let left = videoRect.x;
-        let top = videoRect.y;
-        let width = videoRect.w || bufferCanvas.width;
-        let height = videoRect.h || bufferCanvas.height;
-        if (player.videoHeight > 0) {
-            const videoAR = player.videoWidth / player.videoHeight;
-            if (Math.trunc(width / videoAR) > height) {
-                let nw = Math.trunc(height * videoAR);
-                left += (width - nw) / 2;
-                width = nw;
-            } else {
-                let nh = Math.trunc(width / videoAR);
-                top += (height - nh) / 2;
-                height = nh;
-            }
-        }
-        bufferCtx.fillStyle = "black";
-        bufferCtx.fillRect(0, 0, bufferCanvas.width, bufferCanvas.height);
-        if (displayState) {
-            bufferCtx.drawImage(player as any, left, top, width, height);
-            if (lastImage) {
-                bufferCtx.drawImage(lastImage, 0, 0);
-            }
-            if (captionsState && videoState === "play") {
-                drawSubtitles(bufferCtx);
-            }
-        }
-        drawBufferImage();
-        lastFrameReq = window.requestAnimationFrame(drawVideoFrame);
-    } else {
+    if (!(bufferCtx && player instanceof HTMLVideoElement && ["play", "pause"].includes(videoState))) {
         videoLoop = false;
+        return;
     }
+    videoLoop = true;
+    let left = videoRect.x;
+    let top = videoRect.y;
+    let width = videoRect.w || bufferCanvas.width;
+    let height = videoRect.h || bufferCanvas.height;
+    if (player.videoHeight > 0) {
+        const videoAR = player.videoWidth / player.videoHeight;
+        if (Math.trunc(width / videoAR) > height) {
+            let nw = Math.trunc(height * videoAR);
+            left += (width - nw) / 2;
+            width = nw;
+        } else {
+            let nh = Math.trunc(width / videoAR);
+            top += (height - nh) / 2;
+            height = nh;
+        }
+    }
+    bufferCtx.fillStyle = "black";
+    bufferCtx.fillRect(0, 0, bufferCanvas.width, bufferCanvas.height);
+    if (displayState) {
+        bufferCtx.drawImage(player as any, left, top, width, height);
+        if (lastImage) {
+            bufferCtx.drawImage(lastImage, 0, 0);
+        }
+        if (captionsState && videoState === "play") {
+            drawSubtitles(bufferCtx);
+        }
+    }
+    drawBufferImage();
+    lastFrameReq = window.requestAnimationFrame(drawVideoFrame);
 }
 
 // Draw Subtitles on the Display Canvas
@@ -275,7 +275,7 @@ function drawSubtitles(ctx: CanvasRenderingContext2D) {
     const fontFamily = captionFonts.get(textFont) ?? "cc-serif";
     const textColor = captionColors.get(captionsStyle.get("text/color") ?? "default");
     const textOpacity = captionOpacities.get(captionsStyle.get("text/opacity") ?? "default") ?? 1.0;
-    const textSize = captionsStyle.get("text/size") || "default";
+    const textSize = captionsStyle.get("text/size") ?? "default";
     const textEffect = captionsStyle.get("text/effect") ?? "default";
     const fontSize = captionSizes.get(textSize)![fhd];
     ctx.font = `${fontSize}px ${fontFamily}, sans-serif`;
