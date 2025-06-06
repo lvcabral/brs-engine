@@ -435,7 +435,14 @@ function playVideo() {
     }
 }
 
+// Flag to prevent double event call
+let ending = false;
+
 function nextVideo() {
+    if (ending) {
+        return;
+    }
+    ending = true;
     Atomics.store(sharedArray, DataType.VDX, playIndex);
     Atomics.store(sharedArray, DataType.VDO, MediaEvent.FINISHED);
     if (playNext < 0) {
@@ -448,6 +455,7 @@ function nextVideo() {
         if (playList.length === 1) {
             player.currentTime = startPosition;
             resumeVideo(false);
+            ending = false;
             return;
         }
     } else {
@@ -459,6 +467,7 @@ function nextVideo() {
         startPosition = 0;
         clearVideoTracking();
         notifyAll("stop");
+        ending = false;
         return;
     }
     playNext = -1;
@@ -466,6 +475,7 @@ function nextVideo() {
     canPlay = false;
     Atomics.store(sharedArray, DataType.VSE, playIndex);
     loadVideo();
+    ending = false;
 }
 
 function stopVideo(error?: boolean) {
@@ -591,6 +601,8 @@ function createHlsInstance() {
             currentFrame = data.frag.sn;
         }
     });
+
+    hls.on(Hls.Events.MEDIA_ENDED, nextVideo);
 }
 
 function destroyHls() {
