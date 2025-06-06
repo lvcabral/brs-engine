@@ -18,6 +18,7 @@ import {
     defaultDeviceInfo,
     DeviceInfo,
     DefaultSounds,
+    captionOptions,
 } from "../common";
 import SharedObject from "../SharedObject";
 import { FileSystem } from "./FileSystem";
@@ -44,6 +45,11 @@ export class BrsDevice {
     static lastMod: number = -1;
     static lastKeyTime: number = Date.now();
     static currKeyTime: number = Date.now();
+
+    /** Clock Support properties */
+    private static timeZone: string = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    private static clockFormat: string = "12h";
+    private static locale: string = "en-US";
 
     /** Array Buffer to Share the Registry across threads */
     private static registryVersion: number = 0;
@@ -114,6 +120,10 @@ export class BrsDevice {
                 this.deviceInfo[key] = value;
             }
         });
+        this.clockFormat = BrsDevice.deviceInfo.clockFormat;
+        this.timeZone = BrsDevice.deviceInfo.timeZone;
+        this.locale = BrsDevice.deviceInfo.locale.replace("_", "-");
+
         const termsFile = `common:/locale/${this.deviceInfo.locale}/terms.json`;
         if (this.fileSystem.existsSync(termsFile)) {
             const termsJson = this.fileSystem.readFileSync(termsFile, "utf8");
@@ -127,6 +137,25 @@ export class BrsDevice {
         }
     }
 
+    /**
+     * Returns the filtered valid Closed Caption styles defined in DeviceInfo
+     * @returns a map with valid caption styles
+     */
+    static getCaptionStyle() {
+        const validStyles = new Map<string, string>();
+        BrsDevice.deviceInfo.captionStyle.forEach((value: string, key: string) => {
+            if (key.includes("/") && captionOptions.has(key.toLowerCase()) && value.toLowerCase() !== "default") {
+                validStyles.set(key.toLowerCase(), value.toLowerCase());
+            }
+        });
+        return validStyles;
+    }
+
+    /**
+     * Return the translated terms based on current locale id
+     * @param term the term to be translated
+     * @returns the translated term
+     */
     static getTerm(term: string): string {
         return this.terms.get(term) ?? term;
     }
@@ -228,5 +257,25 @@ export class BrsDevice {
         if (DefaultSounds.includes(sound)) {
             postMessage(`audio,trigger,${sound},${this.deviceInfo.audioVolume},0`);
         }
+    }
+
+    static getTime() {
+        const now = new Date();
+        if (this.clockFormat === "12h") {
+            return new Intl.DateTimeFormat(this.locale, {
+                hour: "numeric",
+                minute: "numeric",
+                hour12: true,
+                timeZone: this.timeZone,
+            })
+                .format(now)
+                .toLowerCase();
+        }
+        return new Intl.DateTimeFormat(this.locale, {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
+            timeZone: this.timeZone,
+        }).format(now);
     }
 }

@@ -26,6 +26,7 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
         postMessage(new Array<string>());
         postMessage("audio,loop,false");
         postMessage("audio,next,-1");
+        postMessage("audio,mute,false");
         const ifHttpAgent = new IfHttpAgent(this);
         const setPortIface = new IfSetMessagePort(this, this.getNewEvents.bind(this));
         const getPortIface = new IfGetMessagePort(this);

@@ -30,7 +30,7 @@ import {
     rgbaIntToHex,
 } from "../interfaces/IfDraw2D";
 import { BrsDevice } from "../../device/BrsDevice";
-import { DataType } from "../../common";
+import { MediaTrack, BufferType, DataType, MediaEvent } from "../../common";
 
 // Roku Remote Mapping
 const rokuKeys: Map<number, string> = new Map([
@@ -66,9 +66,14 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     resolution: string;
     scaleMode: number;
     audioFlags: number;
-    contentIndex: number;
+    audioIndex: number;
     audioDuration: number;
     audioPosition: number;
+    videoEvent: number;
+    videoIndex: number;
+    videoProgress: number;
+    videoDuration: number;
+    videoPosition: number;
     isDirty: boolean;
 
     constructor() {
@@ -85,9 +90,14 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         this.alphaEnable = true;
         this.scaleMode = 1;
         this.audioFlags = -1;
-        this.contentIndex = -1;
+        this.audioIndex = -1;
         this.audioDuration = -1;
         this.audioPosition = -1;
+        this.videoEvent = -1;
+        this.videoIndex = -1;
+        this.videoProgress = -1;
+        this.videoDuration = -1;
+        this.videoPosition = -1;
         this.isDirty = false;
         this.lastMessage = performance.now();
         const maxFps = BrsDevice.deviceInfo.maxFps;
@@ -195,6 +205,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
             this.processTimers();
             this.processTasks();
             this.processAudio();
+            this.processVideo();
             // TODO: Optimize rendering by only rendering if there are changes
             rootObjects.rootScene.renderNode(interpreter, [0, 0], 0, 1, this.draw2D);
             if (rootObjects.rootScene?.dialog?.getNodeParent() instanceof BrsInvalid) {
@@ -247,8 +258,8 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
             this.isDirty = true;
         }
         const index = Atomics.load(BrsDevice.sharedArray, DataType.SDX);
-        if (index !== this.contentIndex) {
-            this.contentIndex = index;
+        if (index !== this.audioIndex) {
+            this.audioIndex = index;
             rootObjects.audio.setContentIndex(index);
             this.isDirty = true;
         }
@@ -262,6 +273,84 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         if (position !== this.audioPosition) {
             this.audioPosition = position;
             rootObjects.audio.setPosition(position);
+            this.isDirty = true;
+        }
+    }
+
+    private processVideo() {
+        if (!rootObjects.video) {
+            return;
+        }
+        const progress = Atomics.load(BrsDevice.sharedArray, DataType.VLP);
+        if (this.videoProgress !== progress && progress >= 0 && progress <= 1000) {
+            rootObjects.video.setState(MediaEvent.LOADING, Math.trunc(progress / 10));
+            console.debug(`Video Progress: ${progress}`);
+        }
+        this.videoProgress = progress;
+        const eventType = Atomics.load(BrsDevice.sharedArray, DataType.VDO);
+        const eventIndex = Atomics.load(BrsDevice.sharedArray, DataType.VDX);
+        if (eventType !== this.videoEvent) {
+            this.videoEvent = eventType;
+            if (eventType >= 0) {
+                rootObjects.video.setState(eventType, eventIndex);
+                console.debug(
+                    `Video State: ${rootObjects.video.getFieldValueJS("state")}  (${eventType}/${eventIndex})`
+                );
+                Atomics.store(BrsDevice.sharedArray, DataType.VDO, -1);
+                this.isDirty = true;
+            }
+        }
+        const selected = Atomics.load(BrsDevice.sharedArray, DataType.VSE);
+        if (selected !== this.videoIndex) {
+            this.videoIndex = selected;
+            if (selected >= 0) {
+                rootObjects.video.setContentIndex(selected);
+                Atomics.store(BrsDevice.sharedArray, DataType.VSE, -1);
+                this.isDirty = true;
+            }
+        }
+        const duration = Atomics.load(BrsDevice.sharedArray, DataType.VDR);
+        if (duration !== this.videoDuration) {
+            this.videoDuration = duration;
+            rootObjects.video.setDuration(duration);
+            this.isDirty = true;
+        }
+        const position = Atomics.load(BrsDevice.sharedArray, DataType.VPS);
+        if (position !== this.videoPosition) {
+            this.videoPosition = position;
+            rootObjects.video.setPosition(position);
+            this.isDirty = true;
+        }
+
+        const bufferFlag = Atomics.load(BrsDevice.sharedArray, DataType.BUF);
+        if (bufferFlag === BufferType.MEDIA_TRACKS) {
+            const strTracks = BrsDevice.readDataBuffer();
+            let audioTracks: MediaTrack[] = [];
+            let textTracks: MediaTrack[] = [];
+            try {
+                const tracks = JSON.parse(strTracks);
+                audioTracks = tracks.audio ?? [];
+                textTracks = tracks.text ?? [];
+            } catch (e) {
+                audioTracks = [];
+                textTracks = [];
+            }
+            rootObjects.video.setAudioTracks(audioTracks);
+            rootObjects.video.setSubtitleTracks(textTracks);
+            this.isDirty = true;
+        }
+
+        const audioTrack = Atomics.load(BrsDevice.sharedArray, DataType.VAT);
+        if (audioTrack > -1) {
+            rootObjects.video.setCurrentAudioTrack(audioTrack);
+            Atomics.store(BrsDevice.sharedArray, DataType.VAT, -1);
+            this.isDirty = true;
+        }
+
+        const subtitleTrack = Atomics.load(BrsDevice.sharedArray, DataType.VTT);
+        if (subtitleTrack > -1) {
+            rootObjects.video.setCurrentSubtitleTrack(subtitleTrack);
+            Atomics.store(BrsDevice.sharedArray, DataType.VTT, -1);
             this.isDirty = true;
         }
     }

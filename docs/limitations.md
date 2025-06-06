@@ -27,10 +27,11 @@ There are several features from the **BrightScript** language and components tha
   * No `Timed Metadata` support.
 * The component `roAudioMetadata` only supports MP3 (for now).
 * The component `roImageMetadata` only supports JPEG images (for now).
-* Video playback via `roVideoPlayer` is implemented, but with some limitations:
-  * If the `roVideoPlayer` instance is destroyed the video keeps playing, make sure to call `.stop()` before discarding the object.
-  * The following methods are not supported, implemented as mock: `setCGMS`, `setMaxVideoDecodeResolution`, `setTimedMetadataForKeys`, `getCaptionRenderer`
+* Video playback is implemented via `roVideoPlayer` and `Video` node, but with some limitations:
+  * If the instance of `roVideoPlayer` or `Video` is destroyed the video keeps playing, make sure to `stop` before discarding the object.
+  * The following `roVideoPlayer` methods are not supported, implemented as mock: `setCGMS`, `setMaxVideoDecodeResolution`, `setTimedMetadataForKeys`, `getCaptionRenderer`
   * Check what formats (container and codec) can be used on each browser, using `roDeviceInfo.canDecodeVideo()`, to make sure your video can be played.
+  * Subtitles are only supported for HLS streams and only in `Video` node, the `roVideoPlayer` does not support subtitles for now.
   * DASH streams are not yet supported.
 * The component `roUrlTransfer` is implemented with basic functionality but with the following limitations:
   * To make a **web app** access urls from domains other than the one it is hosted, the Cross-Origin Resource Sharing (CORS) browser policy requires the server called to respond with the header `Access-Control-Allow-Origin`, [read more](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CORS).

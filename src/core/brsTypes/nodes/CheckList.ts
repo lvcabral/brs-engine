@@ -25,28 +25,18 @@ export class CheckList extends LabelList {
         { name: "focusedUncheckedIconUri", type: "uri", value: "" },
     ];
 
-    private readonly checkOnHDUri = "common:/images/icon_checkboxON_HD.png";
-    private readonly checkOffHDUri = "common:/images/icon_checkboxOFF_HD.png";
-    private readonly checkOnFHDUri = "common:/images/icon_checkboxON_FHD.png";
-    private readonly checkOffFHDUri = "common:/images/icon_checkboxOFF_FHD.png";
-
     constructor(initializedFields: AAMember[] = [], readonly name: string = "CheckList") {
         super([], name);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
+        const checkOnUri = `common:/images/${this.resolution}/icon_checkboxON.png`;
+        const checkOffUri = `common:/images/${this.resolution}/icon_checkboxOFF.png`;
 
-        if (this.resolution === "FHD") {
-            this.setFieldValue("checkedIconUri", new BrsString(this.checkOnFHDUri));
-            this.setFieldValue("uncheckedIconUri", new BrsString(this.checkOffFHDUri));
-            this.setFieldValue("focusedCheckedIconUri", new BrsString(this.checkOnFHDUri));
-            this.setFieldValue("focusedUncheckedIconUri", new BrsString(this.checkOffFHDUri));
-        } else {
-            this.setFieldValue("checkedIconUri", new BrsString(this.checkOnHDUri));
-            this.setFieldValue("uncheckedIconUri", new BrsString(this.checkOffHDUri));
-            this.setFieldValue("focusedCheckedIconUri", new BrsString(this.checkOnHDUri));
-            this.setFieldValue("focusedUncheckedIconUri", new BrsString(this.checkOffHDUri));
-        }
+        this.setFieldValue("checkedIconUri", new BrsString(checkOnUri));
+        this.setFieldValue("uncheckedIconUri", new BrsString(checkOffUri));
+        this.setFieldValue("focusedCheckedIconUri", new BrsString(checkOnUri));
+        this.setFieldValue("focusedUncheckedIconUri", new BrsString(checkOffUri));
         this.setFieldValue("checkedState", new RoArray([]));
     }
 

@@ -3,7 +3,6 @@ import { FieldKind, FieldModel } from "./Field";
 import {
     AAMember,
     BrsType,
-    BrsInvalid,
     isBrsString,
     isBrsNumber,
     jsValueOf,
@@ -24,13 +23,13 @@ export class Audio extends RoSGNode {
         { name: "nextContentIndex", type: "integer", value: "-1" },
         { name: "loop", type: "boolean", value: "false" },
         { name: "bufferingStatus", type: "assocarray" },
-        { name: "control", type: "string", value: "none" },
+        { name: "control", type: "string", value: "none", alwaysNotify: true },
         { name: "notificationInterval", type: "time", value: "0.5" },
         { name: "seek", type: "time" },
-        { name: "contentIndex", type: "integer", value: "-1" },
-        { name: "state", type: "string", value: "none" },
-        { name: "position", type: "time", value: "0" },
-        { name: "duration", type: "time", value: "0" },
+        { name: "contentIndex", type: "integer", value: "-1", alwaysNotify: true },
+        { name: "state", type: "string", value: "none", alwaysNotify: true },
+        { name: "position", type: "time", value: "0", alwaysNotify: true },
+        { name: "duration", type: "time", value: "0", alwaysNotify: true },
         { name: "errorCode", type: "integer", value: "0" },
         { name: "errorMsg", type: "string", value: "" },
         { name: "audioFormat", type: "string", value: "" },
@@ -46,6 +45,11 @@ export class Audio extends RoSGNode {
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(members);
 
+        postMessage(new Array<string>());
+        postMessage("audio,loop,false");
+        postMessage("audio,next,-1");
+        postMessage("audio,mute,false");
+
         rootObjects.audio = this;
     }
 
@@ -55,17 +59,6 @@ export class Audio extends RoSGNode {
         }
 
         const fieldName = index.getValue().toLowerCase();
-        const readonlyFields = [
-            "bufferingstatus",
-            "contentindex",
-            "state",
-            "position",
-            "duration",
-            "errorCode",
-            "errormsg",
-            "audioformat",
-            "timetostartstreaming",
-        ];
 
         if (fieldName === "control" && isBrsString(value)) {
             const validControl = ["start", "play", "pause", "resume", "stop"];
@@ -82,10 +75,10 @@ export class Audio extends RoSGNode {
             postMessage(`audio,notify,${Math.round(jsValueOf(value) * 1000)}`);
         } else if (fieldName === "loop" && isBrsBoolean(value)) {
             postMessage(`audio,loop,${value.toBoolean()}`);
+        } else if (fieldName === "mute" && isBrsBoolean(value)) {
+            postMessage(`audio,mute,${value.toBoolean()}`);
         } else if (fieldName === "content" && value instanceof ContentNode) {
             postMessage(this.formatContent(value));
-        } else if (readonlyFields.includes(fieldName)) {
-            return BrsInvalid.Instance;
         }
         return super.set(index, value, alwaysNotify, kind);
     }

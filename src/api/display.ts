@@ -5,9 +5,20 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { player, subscribeVideo } from "./video";
+import { isVideoMuted, player, subscribeVideo } from "./video";
 import { SubscribeCallback } from "./util";
-import { DeviceInfo, platform, parseCaptionMode, DisplayMode, DisplayModes } from "../core/common";
+import {
+    DeviceInfo,
+    platform,
+    parseCaptionMode,
+    DisplayMode,
+    DisplayModes,
+    captionOptions,
+    captionSizes,
+    captionColors,
+    captionOpacities,
+    captionFonts,
+} from "../core/common";
 import Stats from "stats.js";
 
 // Simulation Display
@@ -32,6 +43,20 @@ let videoLoop = false;
 let displayState = true;
 let overscanMode = "disabled";
 let aspectRatio = 16 / 9;
+let captionsState = false;
+let trickPlayBar = false;
+let captionsStyle = new Map<string, string>();
+interface CachedSubtitleMeasurement {
+    metricsWidth: number;
+    calculatedBoxWidth: number; // Stores (metrics.width + padding * 2)
+}
+
+const subtitleMeasurementCache = new Map<string, CachedSubtitleMeasurement>();
+let lastCachedFontSize: number | undefined;
+let lastCachedFontFamily: string | undefined;
+
+setCaptionStyle();
+
 export function initDisplayModule(deviceInfo: DeviceInfo, perfStats = false) {
     // Initialize Display Canvas
     display = document.getElementById("display") as HTMLCanvasElement;
@@ -58,6 +83,9 @@ export function initDisplayModule(deviceInfo: DeviceInfo, perfStats = false) {
     subscribeVideo("display", (event: string, data: any) => {
         if (event === "rect") {
             videoRect = data;
+            return;
+        } else if (event === "load") {
+            resetSubtitleCache();
             return;
         } else if (["bandwidth", "http.connect", "warning", "error"].includes(event)) {
             return;
@@ -211,37 +239,172 @@ function drawBufferImage() {
 
 // Draw Video Player frame to the Display Canvas
 function drawVideoFrame() {
-    if (bufferCtx && player instanceof HTMLVideoElement && ["play", "pause"].includes(videoState)) {
-        videoLoop = true;
-        let left = videoRect.x;
-        let top = videoRect.y;
-        let width = videoRect.w || bufferCanvas.width;
-        let height = videoRect.h || bufferCanvas.height;
-        if (player.videoHeight > 0) {
-            const videoAR = player.videoWidth / player.videoHeight;
-            if (Math.trunc(width / videoAR) > height) {
-                let nw = Math.trunc(height * videoAR);
-                left += (width - nw) / 2;
-                width = nw;
-            } else {
-                let nh = Math.trunc(width / videoAR);
-                top += (height - nh) / 2;
-                height = nh;
-            }
-        }
-        bufferCtx.fillStyle = "black";
-        bufferCtx.fillRect(0, 0, bufferCanvas.width, bufferCanvas.height);
-        if (displayState) {
-            bufferCtx.drawImage(player as any, left, top, width, height);
-            if (lastImage) {
-                bufferCtx.drawImage(lastImage, 0, 0);
-            }
-        }
-        drawBufferImage();
-        lastFrameReq = window.requestAnimationFrame(drawVideoFrame);
-    } else {
+    if (!(bufferCtx && player instanceof HTMLVideoElement && ["play", "pause"].includes(videoState))) {
         videoLoop = false;
+        return;
     }
+    videoLoop = true;
+    let left = videoRect.x;
+    let top = videoRect.y;
+    let width = videoRect.w || bufferCanvas.width;
+    let height = videoRect.h || bufferCanvas.height;
+    if (player.videoHeight > 0) {
+        const videoAR = player.videoWidth / player.videoHeight;
+        if (Math.trunc(width / videoAR) > height) {
+            let nw = Math.trunc(height * videoAR);
+            left += (width - nw) / 2;
+            width = nw;
+        } else {
+            let nh = Math.trunc(width / videoAR);
+            top += (height - nh) / 2;
+            height = nh;
+        }
+    }
+    bufferCtx.fillStyle = "black";
+    bufferCtx.fillRect(0, 0, bufferCanvas.width, bufferCanvas.height);
+    if (displayState) {
+        bufferCtx.drawImage(player as any, left, top, width, height);
+        if (lastImage) {
+            bufferCtx.drawImage(lastImage, 0, 0);
+        }
+        if (captionsState && !trickPlayBar) {
+            drawSubtitles(bufferCtx);
+        }
+    }
+    drawBufferImage();
+    lastFrameReq = window.requestAnimationFrame(drawVideoFrame);
+}
+
+// Draw Subtitles on the Display Canvas
+// TODO: Draw captions window - width in fhd 1536 with left position 192 (10% of screen width)
+function drawSubtitles(ctx: CanvasRenderingContext2D) {
+    // Draw active subtitles
+    const fhd = ctx.canvas.height === 1080 ? 1 : 0;
+    const backgroundColor = captionsStyle.get("background/color") ?? "black";
+    const backColor = captionColors.get(backgroundColor === "default" ? "black" : backgroundColor);
+    const backgroundOpacity = captionsStyle.get("background/opacity") ?? "default";
+    const backOpacity = captionOpacities.get(backgroundOpacity) ?? 1.0;
+    const textFont = captionsStyle.get("text/font") ?? "default";
+    const fontFamily = captionFonts.get(textFont) ?? "cc-serif";
+    const textColor = captionColors.get(captionsStyle.get("text/color") ?? "default");
+    const textOpacity = captionOpacities.get(captionsStyle.get("text/opacity") ?? "default") ?? 1.0;
+    const textSize = captionsStyle.get("text/size") ?? "default";
+    const textEffect = captionsStyle.get("text/effect") ?? "default";
+    const fontSize = captionSizes.get(textSize)![fhd];
+    ctx.font = `${fontSize}px ${fontFamily}, sans-serif`;
+
+    if (lastCachedFontSize !== fontSize || lastCachedFontFamily !== fontFamily) {
+        resetSubtitleCache(fontSize, fontFamily);
+    }
+
+    ctx.fillStyle = textColor!;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    const baseX = ctx.canvas.width / 2;
+    const lineHeight = fontSize * 1.2;
+    let y = ctx.canvas.height * 0.9 - lineHeight / 2;
+
+    for (let i = 0; i < player.textTracks.length; i++) {
+        const track = player.textTracks[i];
+        if (track.mode !== "showing" || !track.activeCues?.length) {
+            continue;
+        }
+        for (let j = 0; j < track.activeCues.length; j++) {
+            const cue = track.activeCues[j];
+            // Safely access cue.text if it exists (VTTCue/WebKitTextTrackCue)
+            const cueText = (cue as any)?.text ?? "";
+            if (!cueText) {
+                continue;
+            }
+            // Split cueText into lines by line breaks
+            const lines = cueText.split(/\r?\n/);
+            let currentLineY = y;
+
+            for (let k = lines.length - 1; k >= 0; k--) {
+                const currentLineText = lines[k];
+                const cacheKey = `${currentLineText}:${fontSize}:${fontFamily}`;
+                let lineMetricsWidth: number;
+                let lineCalculatedBoxWidth: number;
+                const padding = fontSize * 0.4;
+
+                const cachedMeasurement = subtitleMeasurementCache.get(cacheKey);
+                if (cachedMeasurement) {
+                    lineMetricsWidth = cachedMeasurement.metricsWidth;
+                    lineCalculatedBoxWidth = cachedMeasurement.calculatedBoxWidth;
+                } else {
+                    console.debug("[display] caching subtitle measurement", cacheKey);
+                    const metrics = ctx.measureText(currentLineText);
+                    lineMetricsWidth = metrics.width;
+                    lineCalculatedBoxWidth = lineMetricsWidth + padding * 2;
+                    subtitleMeasurementCache.set(cacheKey, {
+                        metricsWidth: lineMetricsWidth,
+                        calculatedBoxWidth: lineCalculatedBoxWidth,
+                    });
+                }
+
+                // Draw background box behind the text
+                const boxWidth = lineCalculatedBoxWidth;
+                const boxHeight = lineHeight;
+
+                // Calculate rounded coordinates and dimensions for the background box
+                const boxLeft = Math.round(baseX - boxWidth / 2);
+                const boxRight = Math.round(baseX + boxWidth / 2);
+                const finalBoxWidth = boxRight - boxLeft;
+
+                const lineBoxBottomY = Math.round(currentLineY + boxHeight / 2);
+                const lineBoxTopY = Math.round(currentLineY - boxHeight / 2);
+                const finalBoxHeight = lineBoxBottomY - lineBoxTopY;
+
+                ctx.save();
+                ctx.globalAlpha = backOpacity;
+                ctx.fillStyle = backColor!;
+                ctx.fillRect(boxLeft, lineBoxTopY, finalBoxWidth, finalBoxHeight);
+                ctx.restore();
+
+                const textDrawX = Math.round(baseX);
+                const textDrawY = Math.round(currentLineY);
+                drawText(ctx, currentLineText, textDrawX, textDrawY, textOpacity, textEffect);
+                currentLineY -= lineHeight;
+            }
+        }
+    }
+}
+
+function drawText(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, opacity: number, effect: string) {
+    ctx.save();
+    ctx.globalAlpha = opacity;
+    // Apply text effect for stroke/shadow
+    if (effect === "raised") {
+        ctx.strokeStyle = "gray";
+        ctx.lineWidth = 1;
+        ctx.strokeText(text, x - 1, y - 1);
+    } else if (effect === "depressed") {
+        ctx.strokeStyle = "gray";
+        ctx.lineWidth = 1;
+        ctx.strokeText(text, x + 1, y + 1);
+    } else if (effect === "uniform") {
+        ctx.strokeStyle = "black";
+        ctx.lineWidth = 4;
+        ctx.strokeText(text, x, y);
+    } else if (effect === "drop shadow (left)") {
+        ctx.strokeStyle = "black";
+        ctx.lineWidth = 2;
+        ctx.strokeText(text, x - 2, y + 2);
+    } else if (effect === "drop shadow (right)") {
+        ctx.strokeStyle = "black";
+        ctx.lineWidth = 2;
+        ctx.strokeText(text, x + 2, y + 2);
+    }
+    // Draw the subtitle text
+    ctx.fillText(text, x, y);
+    ctx.restore();
+}
+
+// Reset Subtitle Cache
+function resetSubtitleCache(fontSize?: number, fontFamily?: string) {
+    subtitleMeasurementCache.clear();
+    lastCachedFontSize = fontSize;
+    lastCachedFontFamily = fontFamily;
 }
 
 // Update Performance Statistics
@@ -318,10 +481,30 @@ export function setCaptionMode(mode: string) {
         return;
     }
     deviceData.captionMode = newMode;
+    captionsState = newMode === "On" || (newMode === "When mute" && isVideoMuted());
 }
 
 export function getCaptionMode() {
     return deviceData.captionMode;
+}
+
+export function setTrickPlayBar(enabled: boolean) {
+    trickPlayBar = enabled;
+}
+
+// Set Closed Captions Style
+export function setCaptionStyle(style?: Map<string, string>) {
+    // Set the captions style from the provided style map or use defaults
+    captionOptions.forEach((option, key) => {
+        if (!key.includes("/")) {
+            return;
+        }
+        if (style?.has(key)) {
+            captionsStyle.set(key, style.get(key)!);
+            return;
+        }
+        captionsStyle.set(key, option[0]);
+    });
 }
 
 // Set the Performance Statistics state
@@ -331,16 +514,16 @@ export function enableStats(show: boolean): boolean {
     } else if (show) {
         statsDiv = document.getElementById("stats") as HTMLDivElement;
         if (statsDiv instanceof HTMLDivElement && display instanceof HTMLCanvasElement) {
-            const dispTop = display.style.top;
-            const dispLeft = display.style.left;
+            const top = display.style.top;
+            const left = display.style.left;
             statsCanvas = new Stats();
-            statsCanvas.dom.style.cssText = `position:absolute;top:${dispTop}px;left:${dispLeft}px;`;
+            statsCanvas.dom.style.cssText = `position:absolute;top:${top}px;left:${left}px;`;
             const statPanels = statsCanvas.dom.children.length;
             const newDom = statsCanvas.dom.cloneNode() as HTMLDivElement;
             for (let index = 0; index < statPanels; index++) {
                 const panel = statsCanvas.dom.children[0] as HTMLCanvasElement;
                 const panLeft = index * panel.width;
-                panel.style.cssText = `position:absolute;top:${dispTop}px;left:${panLeft}px;`;
+                panel.style.cssText = `position:absolute;top:${top}px;left:${panLeft}px;`;
                 newDom.appendChild(panel);
             }
             statsCanvas.dom = newDom;

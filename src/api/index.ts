@@ -5,7 +5,7 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { SubscribeCallback, getNow, getWorkerLibPath, saveDataBuffer } from "./util";
+import { SubscribeCallback, getWorkerLibPath, saveDataBuffer } from "./util";
 import {
     AppExitReason,
     AppPayload,
@@ -27,6 +27,7 @@ import {
     platform,
     registryInitialSize,
     registryMaxSize,
+    getNow,
 } from "../core/common";
 import {
     source,
@@ -51,6 +52,8 @@ import {
     statsUpdate,
     setDisplayState,
     setCaptionMode,
+    setCaptionStyle,
+    setTrickPlayBar,
 } from "./display";
 import {
     initSoundModule,
@@ -70,6 +73,7 @@ import {
     handleVideoEvent,
     initVideoModule,
     isVideoMuted,
+    loadCaptionsFonts,
     muteVideo,
     resetVideo,
     subscribeVideo,
@@ -178,7 +182,6 @@ export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any 
     // Subscribe Events
     subscribeDisplay("api", (event: string, data: any) => {
         if (event === "mode") {
-            deviceData.displayMode = data;
             if (currentApp.running) {
                 terminate(AppExitReason.SETTINGS);
             }
@@ -512,6 +515,7 @@ function updateDeviceAssets() {
                 return response.blob().then(function (zipBlob) {
                     zipBlob.arrayBuffer().then(function (zipData) {
                         deviceData.assets = zipData;
+                        loadCaptionsFonts(zipData);
                     });
                 });
             } else {
@@ -519,7 +523,7 @@ function updateDeviceAssets() {
             }
         })
         .catch((err) => {
-            console.error(`Error attempting to load common.zip: ${err.message} (${err.name})`);
+            apiException("error", `[api] Error loading common.zip: ${err.message}`);
         });
 }
 
@@ -593,8 +597,12 @@ function mainCallback(event: MessageEvent) {
         addVideo(event.data.videoPath, new Blob([event.data.videoData], { type: "video/mp4" }));
     } else if (typeof event.data.displayEnabled === "boolean") {
         setDisplayState(event.data.displayEnabled);
-    } else if (typeof event.data.captionsMode === "string") {
-        setCaptionMode(event.data.captionsMode);
+    } else if (typeof event.data.captionMode === "string") {
+        setCaptionMode(event.data.captionMode);
+    } else if (event.data.captionStyle instanceof Map) {
+        setCaptionStyle(event.data.captionStyle);
+    } else if (typeof event.data.trickPlayBarVisible === "boolean") {
+        setTrickPlayBar(event.data.trickPlayBarVisible);
     } else if (isAppData(event.data)) {
         notifyAll("launch", { app: event.data.id, params: event.data.params ?? new Map() });
     } else if (isTaskData(event.data)) {
@@ -679,8 +687,8 @@ function taskCallback(event: MessageEvent) {
         notifyAll("registry", event.data);
     } else if (typeof event.data.displayEnabled === "boolean") {
         setDisplayState(event.data.displayEnabled);
-    } else if (typeof event.data.captionsMode === "string") {
-        deviceData.captionsMode = event.data.captionsMode;
+    } else if (typeof event.data.captionMode === "string") {
+        setCaptionMode(event.data.captionMode);
     } else if (isTaskData(event.data)) {
         console.debug("[API] Task data received from Task Thread: ", event.data.name, TaskState[event.data.state]);
         if (event.data.state === TaskState.STOP) {

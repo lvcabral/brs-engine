@@ -97,13 +97,13 @@ export class MiniKeyboard extends Group {
         }
         this.textEditBox.setTranslation([this.textEditX, 0]);
         this.textEditBox.setFieldValue("maxTextLength", new Int32(25));
-        this.bmpBack = this.loadBitmap(`common:/images/keyboard_mini_${this.resolution}.png`);
+        this.bmpBack = this.loadBitmap(`common:/images/${this.resolution}/keyboard_mini.png`);
         this.setFieldValue("width", new Float(this.bmpBack!.width + this.widthOver));
         this.setFieldValue("height", new Float(this.bmpBack!.height + this.heightOver));
 
         this.bmpFocus = this.loadBitmap("common:/images/focus_keyboard.9.png");
         this.icons.forEach((icon) => {
-            const uri = `common:/images/icon_${icon}_${this.resolution}.png`;
+            const uri = `common:/images/${this.resolution}/icon_${icon}.png`;
             const bmp = this.loadBitmap(uri);
             if (bmp?.isValid()) {
                 this.bmpIcons.set(icon, bmp);

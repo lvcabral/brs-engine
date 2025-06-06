@@ -18,6 +18,7 @@ import {
     BrsBoolean,
     rootObjects,
     Rectangle,
+    ScrollingLabel,
 } from "..";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D, MeasuredText, Rect } from "../interfaces/IfDraw2D";
@@ -157,6 +158,48 @@ export class Group extends RoSGNode {
         }
         if (wrap !== undefined) {
             label.set(new BrsString("wrap"), BrsBoolean.from(wrap));
+        }
+        this.appendChildToParent(label);
+        return label;
+    }
+
+    protected addScrollingLabel(
+        colorField: string,
+        translation: number[],
+        maxWidth?: number,
+        height?: number,
+        systemFont?: string,
+        vertAlign?: string,
+        horizAlign?: string,
+        speed?: number,
+        repeat?: number
+    ) {
+        const label = new ScrollingLabel();
+        this.copyField(label, "color", colorField);
+        if (systemFont) {
+            const font = label.getFieldValue("font") as Font;
+            if (font instanceof Font) {
+                font.setSystemFont(systemFont);
+            }
+        }
+        if (maxWidth !== undefined) {
+            label.set(new BrsString("maxWidth"), new Float(maxWidth));
+        }
+        if (height !== undefined) {
+            label.set(new BrsString("height"), new Float(height));
+        }
+        label.setTranslation(translation);
+        if (vertAlign) {
+            label.set(new BrsString("vertalign"), new BrsString(vertAlign));
+        }
+        if (horizAlign) {
+            label.set(new BrsString("horizalign"), new BrsString(horizAlign));
+        }
+        if (speed !== undefined) {
+            label.set(new BrsString("scrollSpeed"), new Int32(speed));
+        }
+        if (repeat !== undefined) {
+            label.set(new BrsString("repeatCount"), new Int32(repeat));
         }
         this.appendChildToParent(label);
         return label;

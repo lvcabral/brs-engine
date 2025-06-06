@@ -6,7 +6,7 @@ import { Interpreter } from "../../interpreter";
 import { RoDeviceInfoEvent } from "../events/RoDeviceInfoEvent";
 import { RoAssociativeArray } from "./RoAssociativeArray";
 import { RoArray } from "./RoArray";
-import { CaptionModes, ConnectionInfo, getRokuOSVersion, platform } from "../../common";
+import { captionOptions, ConnectionInfo, getRokuOSVersion, parseCaptionMode, platform } from "../../common";
 import { IfSetMessagePort, IfGetMessagePort } from "../interfaces/IfMessagePort";
 import { getExternalIp } from "../../interpreter/Network";
 import { v4 as uuidv4 } from "uuid";
@@ -15,22 +15,6 @@ import { BrsDevice } from "../../device/BrsDevice";
 
 export class RoDeviceInfo extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
-    readonly captionsOptions: string[] = [
-        "mode",
-        "text/font",
-        "text/effect",
-        "text/size",
-        "text/color",
-        "text/opacity",
-        "background/color",
-        "background/opacity",
-        "window/color",
-        "window/opacity",
-        "track",
-        "track_composite",
-        "track_analog",
-        "muted",
-    ];
     private readonly deviceModel: string;
     private readonly modelType: string;
     private readonly firmware: string;
@@ -39,7 +23,6 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     private readonly displayResolution: { h: number; w: number };
     private readonly displayAspectRatio: string;
     private captionsMessageSent: boolean = false;
-    private captionsMode: string;
     private port?: RoMessagePort;
 
     constructor() {
@@ -60,7 +43,6 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             this.displayResolution = { h: 1080, w: 1920 };
             this.displayModeName = "FHD";
         }
-        this.captionsMode = BrsDevice.deviceInfo.captionMode;
         const setPortIface = new IfSetMessagePort(this, this.getNewEvents.bind(this));
         const getPortIface = new IfGetMessagePort(this);
         this.registerMethods({
@@ -153,8 +135,9 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
     private getNewEvents() {
         const events: BrsEvent[] = [];
         if (!this.captionsMessageSent) {
-            events.push(new RoDeviceInfoEvent({ Mode: this.captionsMode, Mute: false }));
+            events.push(new RoDeviceInfoEvent({ Mode: BrsDevice.deviceInfo.captionMode, Mute: false }));
             this.captionsMessageSent = true;
+            // TODO: Generate a new event when the captions mode changes
         }
         return events;
     }
@@ -652,7 +635,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             returns: ValueKind.String,
         },
         impl: (_: Interpreter) => {
-            return new BrsString(this.captionsMode);
+            return new BrsString(BrsDevice.deviceInfo.captionMode);
         },
     });
 
@@ -663,14 +646,15 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, mode: BrsString) => {
-            if (CaptionModes.includes(mode.value as any)) {
+            const newMode = parseCaptionMode(mode.value);
+            if (newMode) {
                 if (mode.value === "When mute" && this.modelType !== "TV") {
                     // Only scenario when the return is false
                     return BrsBoolean.False;
                 }
-                this.captionsMode = mode.value;
-                this.port?.pushMessage(new RoDeviceInfoEvent({ Mode: mode.value, Mute: false }));
-                postMessage({ captionsMode: this.captionsMode });
+                BrsDevice.deviceInfo.captionMode = newMode;
+                this.port?.pushMessage(new RoDeviceInfoEvent({ Mode: newMode, Mute: false }));
+                postMessage({ captionMode: newMode });
             }
             // Roku always returns true, even when get an invalid mode
             return BrsBoolean.True;
@@ -685,13 +669,12 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, option: BrsString) => {
             const opt = option.value.toLowerCase();
-            if (!this.captionsOptions.includes(opt)) {
-                return new BrsString("");
-            }
             if (opt === "mode") {
-                return new BrsString(this.captionsMode);
+                return new BrsString(BrsDevice.deviceInfo.captionMode);
             } else if (opt === "muted") {
                 return new BrsString("Unmuted");
+            } else if (!captionOptions.has(opt)) {
+                return new BrsString("");
             }
             return new BrsString(BrsDevice.deviceInfo.captionStyle.get(opt) ?? "Default");
         },

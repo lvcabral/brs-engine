@@ -144,6 +144,15 @@ export class IfDraw2D {
         this.component.makeDirty();
     }
 
+    doDrawClearedRect(rect: Rect) {
+        const baseX = this.component.x + rect.x;
+        const baseY = this.component.y + rect.y;
+        const ctx = this.component.getContext();
+        ctx.save();
+        ctx.clearRect(baseX, baseY, rect.width, rect.height);
+        ctx.restore();
+    }
+
     doDrawText(text: string, x: number, y: number, rgba: number, opacity: number, font: RoFont) {
         const baseX = this.component.x;
         const baseY = this.component.y;

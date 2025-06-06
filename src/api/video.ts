@@ -7,6 +7,7 @@
  *--------------------------------------------------------------------------------------------*/
 import { SubscribeCallback, formatLocale, saveDataBuffer } from "./util";
 import { BufferType, DataType, MediaEvent, MediaErrorCode, platform, MediaTrack, DeviceInfo } from "../core/common";
+import { strFromU8, unzipSync } from "fflate";
 import Hls from "hls.js";
 
 // Video Objects
@@ -32,8 +33,10 @@ let uiMuted = false;
 let previousBuffered = 0;
 let previousTime = Date.now();
 let deviceLocale = "";
+let captionLocale = "";
 let audioLocale = "";
 const audioTracks: MediaTrack[] = [];
+const textTracks: MediaTrack[] = [];
 
 // Initialize Video Module
 if (typeof document !== "undefined") {
@@ -83,6 +86,7 @@ export function initVideoModule(array: Int32Array, deviceData: DeviceInfo, mute:
         uiMuted = mute;
     }
     deviceLocale = deviceData.locale.toLowerCase().slice(0, 2);
+    captionLocale = deviceData.captionLanguage.toLowerCase().slice(0, 2);
     audioLocale = deviceData.audioLanguage.toLowerCase().slice(0, 2);
     sharedArray = array;
     resetVideo();
@@ -170,6 +174,8 @@ export function handleVideoEvent(eventData: string) {
         }
     } else if (data[1] === "audio") {
         setAudioTrack(audioTracks.findIndex((t) => t.id === data[2]));
+    } else if (data[1] === "subtitle") {
+        setSubtitleTrack(textTracks.findIndex((t) => t.id === data[2]));
     } else if (data[1] === "error") {
         stopVideo(true);
     }
@@ -267,13 +273,47 @@ export function resetVideo() {
     videosState = false;
 }
 
+export async function loadCaptionsFonts(assets: ArrayBufferLike) {
+    if (!assets.byteLength) {
+        notifyAll("warning", "[video] Common FS not available, captions fonts will not be loaded.");
+        return;
+    }
+    try {
+        const commonZip = unzipSync(new Uint8Array(assets));
+        const jsonFonts = commonZip["fonts/closed-caption.json"];
+        if (!(jsonFonts instanceof Uint8Array)) {
+            notifyAll("warning", "[video] No 'fonts/closed-caption.json' found in Common FS.");
+            return;
+        }
+        const ccFonts = JSON.parse(strFromU8(jsonFonts));
+        const fonts = ccFonts.fonts!;
+        for (const fontName in fonts) {
+            const fontData = commonZip[`fonts/${fonts[fontName]}`];
+            if (fontData instanceof Uint8Array) {
+                const fontBlob = new Blob([fontData], { type: "font/ttf" });
+                const fontUrl = URL.createObjectURL(fontBlob);
+                const fontFace = new FontFace(fontName, `url(${fontUrl})`);
+                await fontFace.load();
+                document.fonts.add(fontFace);
+                console.debug(`[API] Font ${fontName} loaded successfully.`);
+            } else {
+                notifyAll("warning", `[video] Invalid font data for ${fontName}`);
+            }
+        }
+    } catch (e: any) {
+        notifyAll("error", `[video] Error loading caption fonts from Common FS: ${e.message}`);
+    }
+}
+
 // Video Module Private Functions
 function startProgress(e: Event) {
     if (e.type === "loadeddata") {
         const currAudioTrack = loadAudioTracks();
-        const tracks = { audio: audioTracks };
+        const currSubtitleTrack = loadSubtitleTracks();
+        const tracks = { audio: audioTracks, text: textTracks };
         saveDataBuffer(sharedArray, JSON.stringify(tracks), BufferType.MEDIA_TRACKS);
         Atomics.store(sharedArray, DataType.VAT, currAudioTrack);
+        Atomics.store(sharedArray, DataType.VTT, currSubtitleTrack);
     } else if (e.type === "loadedmetadata") {
         if (startPosition > 0) {
             player.currentTime = startPosition;
@@ -337,6 +377,48 @@ function loadAudioTracks() {
     return activeTrack;
 }
 
+function loadSubtitleTracks() {
+    textTracks.length = 0;
+    if (!hls?.subtitleTracks?.length) {
+        return -1;
+    }
+    let preferredTrackId = -1;
+    let deviceTrackId = -1;
+    let englishTrackId = -1;
+    hls.subtitleTracks.forEach((track, index) => {
+        const textTrack: MediaTrack = {
+            id: `webvtt/${index + 1}`,
+            name: track.name,
+            lang: track.lang ?? "",
+        };
+        textTracks.push(textTrack);
+        // Format the language code
+        const lang = formatLocale(textTrack.lang);
+        // Save the track ids for preferred locale, device locale and english
+        if (preferredTrackId === -1 && lang === captionLocale) {
+            preferredTrackId = index;
+        } else if (deviceTrackId === -1 && lang === deviceLocale) {
+            deviceTrackId = index;
+        } else if (englishTrackId === -1 && lang === "en") {
+            englishTrackId = index;
+        }
+    });
+    let activeTrack = 0;
+    if (textTracks.length > 0) {
+        // Set the active track prioritizing preferred locale, device locale and english
+        if (preferredTrackId > -1) {
+            activeTrack = preferredTrackId;
+        } else if (deviceTrackId > -1) {
+            activeTrack = deviceTrackId;
+        } else if (englishTrackId > -1) {
+            activeTrack = englishTrackId;
+        }
+        hls.subtitleTrack = activeTrack;
+        playList[playIndex].subtitleTrack = activeTrack;
+    }
+    return activeTrack;
+}
+
 function setAudioTrack(index: number) {
     if (hls && audioTracks.length && index > -1 && index < audioTracks.length) {
         hls.audioTrack = index;
@@ -345,17 +427,33 @@ function setAudioTrack(index: number) {
     }
 }
 
+function setSubtitleTrack(index: number) {
+    if (hls && textTracks.length && index > -1 && index < textTracks.length) {
+        hls.subtitleTrack = index;
+        playList[playIndex].subtitleTrack = index;
+        Atomics.store(sharedArray, DataType.VTT, hls.subtitleTrack);
+    }
+}
+
 function clearVideoTracking() {
     Atomics.store(sharedArray, DataType.VLP, -1);
     loadProgress = 0;
     currentFrame = 0;
     audioTracks.length = 0;
+    textTracks.length = 0;
+    if (player.textTracks?.length) {
+        // Disable all text tracks
+        for (let i = 0; i < player.textTracks.length; i++) {
+            player.textTracks[i].mode = "disabled";
+        }
+    }
 }
 
 function loadVideo(buffer = false) {
     canPlay = false;
     const video = playList[playIndex];
     if (video && player) {
+        notifyAll("load");
         let videoSrc = getVideoUrl(video);
         clearVideoTracking();
         bufferOnly = buffer;
@@ -529,7 +627,7 @@ function seekVideo(position: number) {
         }
         player.currentTime = position;
         if (playerState === "pause") {
-            resumeVideo();
+            resumeVideo(false);
         }
     } else {
         startPosition = position;
