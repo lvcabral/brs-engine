@@ -263,11 +263,28 @@ function drawVideoFrame() {
 }
 
 // Draw Subtitles on the Display Canvas
-// Captions window width in fhd: 1536
-// Captions window left position in fhd: 192 (10% of 1920)
+// TODO: Draw captions window - width in fhd 1536 with left position 192 (10% of screen width)
 function drawSubtitles(ctx: CanvasRenderingContext2D) {
     // Draw active subtitles
     const fhd = ctx.canvas.height === 1080 ? 1 : 0;
+    const backgroundColor = captionsStyle.get("background/color") ?? "black";
+    const backColor = captionColors.get(backgroundColor === "default" ? "black" : backgroundColor);
+    const backgroundOpacity = captionsStyle.get("background/opacity") ?? "default";
+    const backOpacity = captionOpacities.get(backgroundOpacity) ?? 1.0;
+    const textFont = captionsStyle.get("text/font") ?? "default";
+    const fontFamily = captionFonts.get(textFont) ?? "cc-serif";
+    const textColor = captionColors.get(captionsStyle.get("text/color") ?? "default");
+    const textOpacity = captionOpacities.get(captionsStyle.get("text/opacity") ?? "default") ?? 1.0;
+    const textSize = captionsStyle.get("text/size") || "default";
+    const textEffect = captionsStyle.get("text/effect") ?? "default";
+    const fontSize = captionSizes.get(textSize)![fhd];
+    ctx.font = `${fontSize}px ${fontFamily}, sans-serif`;
+    ctx.fillStyle = textColor!;
+    ctx.strokeStyle = "black";
+    ctx.lineWidth = 2;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "bottom";
+    const baseX = ctx.canvas.width / 2;
     for (let i = 0; i < player.textTracks.length; i++) {
         const track = player.textTracks[i];
         if (track.mode !== "showing" || !track.activeCues?.length) {
@@ -277,49 +294,70 @@ function drawSubtitles(ctx: CanvasRenderingContext2D) {
             const cue = track.activeCues[j];
             // Safely access cue.text if it exists (VTTCue/WebKitTextTrackCue)
             const cueText = (cue as any)?.text ?? "";
-            if (cueText) {
-                const backgroundColor = captionsStyle.get("background/color") ?? "black";
-                const backColor = backgroundColor === "default" ? "black" : backgroundColor;
-                const backgroundOpacity = captionsStyle.get("background/opacity") ?? "default";
-                const textFont = captionsStyle.get("text/font") ?? "default";
-                const fontFamily = captionFonts.get(textFont) ?? "cc-serif";
-                const textColor = captionsStyle.get("text/color") ?? "default";
-                const textOpacity = captionsStyle.get("text/opacity") ?? "default";
-                const textSize = captionsStyle.get("text/size") || "default";
-                const fontSize = captionSizes.get(textSize)![fhd];
-                ctx.font = `${fontSize}px ${fontFamily}, sans-serif`;
-                ctx.fillStyle = captionColors.get(textColor) ?? "white";
-                ctx.strokeStyle = "black";
-                ctx.lineWidth = 2;
-                ctx.textAlign = "center";
-                ctx.textBaseline = "bottom";
-                const x = ctx.canvas.width / 2;
-                // Split cueText into lines by line breaks
-                const lines = cueText.split(/\r?\n/);
-                const lineHeight = fontSize * 1.2;
-                let y = ctx.canvas.height * 0.9;
-                for (let k = lines.length - 1; k >= 0; k--) {
-                    // Draw background box behind the text
-                    const metrics = ctx.measureText(lines[k]);
-                    const padding = fontSize * 0.4;
-                    const boxWidth = metrics.width + padding * 2;
-                    const boxHeight = lineHeight;
-                    ctx.save();
-                    ctx.globalAlpha = captionOpacities.get(backgroundOpacity) ?? 1.0;
-                    ctx.fillStyle = backColor;
-                    ctx.fillRect(x - boxWidth / 2, y - boxHeight, boxWidth, boxHeight);
-                    ctx.restore();
-                    // Draw the text
-                    ctx.save();
-                    ctx.globalAlpha = captionOpacities.get(textOpacity) ?? 1.0;
-                    ctx.strokeText(lines[k], x, y);
-                    ctx.fillText(lines[k], x, y);
-                    ctx.restore();
-                    y -= lineHeight;
-                }
+            if (!cueText) {
+                continue;
+            }
+            // Split cueText into lines by line breaks
+            const lines = cueText.split(/\r?\n/);
+            const lineHeight = fontSize * 1.2;
+            let y = ctx.canvas.height * 0.9;
+
+            for (let k = lines.length - 1; k >= 0; k--) {
+                const currentLineText = lines[k];
+                // Draw background box behind the text
+                const metrics = ctx.measureText(currentLineText);
+                const padding = fontSize * 0.4;
+                const boxWidth = metrics.width + padding * 2;
+                const boxHeight = lineHeight;
+
+                // Calculate rounded coordinates and dimensions for the background box
+                const boxLeft = Math.round(baseX - boxWidth / 2);
+                const boxRight = Math.round(baseX + boxWidth / 2);
+                const finalBoxWidth = boxRight - boxLeft;
+
+                const lineBoxBottomY = Math.round(y);
+                const lineBoxTopY = Math.round(y - boxHeight);
+                const finalBoxHeight = lineBoxBottomY - lineBoxTopY;
+
+                ctx.save();
+                ctx.globalAlpha = backOpacity;
+                ctx.fillStyle = backColor!;
+                ctx.fillRect(boxLeft, lineBoxTopY, finalBoxWidth, finalBoxHeight);
+                ctx.restore();
+
+                // Calculate rounded coordinates for the text
+                const textDrawX = Math.round(baseX);
+                const textDrawY = Math.round(y);
+                drawText(ctx, currentLineText, textDrawX, textDrawY, textOpacity, textEffect);
+                y -= lineHeight;
             }
         }
     }
+}
+
+function drawText(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, opacity: number, effect: string) {
+    ctx.save();
+    ctx.globalAlpha = opacity;
+    // Apply text effect for stroke/shadow
+    if (effect === "raised") {
+        ctx.strokeStyle = "gray";
+        ctx.lineWidth = 1;
+        ctx.strokeText(text, x - 1, y - 1);
+    } else if (effect === "depressed") {
+        ctx.strokeStyle = "gray";
+        ctx.lineWidth = 1;
+        ctx.strokeText(text, x + 1, y + 1);
+    } else if (effect === "uniform") {
+        ctx.lineWidth = 4;
+        ctx.strokeText(text, x, y);
+    } else if (effect === "drop shadow (left)") {
+        ctx.strokeText(text, x - 2, y + 2);
+    } else if (effect === "drop shadow (right)") {
+        ctx.strokeText(text, x + 2, y + 2);
+    }
+    // Draw the subtitle text
+    ctx.fillText(text, x, y);
+    ctx.restore();
 }
 
 // Update Performance Statistics
