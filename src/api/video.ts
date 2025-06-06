@@ -453,6 +453,7 @@ function loadVideo(buffer = false) {
     canPlay = false;
     const video = playList[playIndex];
     if (video && player) {
+        notifyAll("load");
         let videoSrc = getVideoUrl(video);
         clearVideoTracking();
         bufferOnly = buffer;

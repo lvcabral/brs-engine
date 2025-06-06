@@ -46,6 +46,15 @@ let aspectRatio = 16 / 9;
 let captionsState = false;
 let trickPlayBar = false;
 let captionsStyle = new Map<string, string>();
+interface CachedSubtitleMeasurement {
+    metricsWidth: number;
+    calculatedBoxWidth: number; // Stores (metrics.width + padding * 2)
+}
+
+const subtitleMeasurementCache = new Map<string, CachedSubtitleMeasurement>();
+let lastCachedFontSize: number | undefined;
+let lastCachedFontFamily: string | undefined;
+
 setCaptionStyle();
 
 export function initDisplayModule(deviceInfo: DeviceInfo, perfStats = false) {
@@ -74,6 +83,9 @@ export function initDisplayModule(deviceInfo: DeviceInfo, perfStats = false) {
     subscribeVideo("display", (event: string, data: any) => {
         if (event === "rect") {
             videoRect = data;
+            return;
+        } else if (event === "load") {
+            resetSubtitleCache();
             return;
         } else if (["bandwidth", "http.connect", "warning", "error"].includes(event)) {
             return;
@@ -280,6 +292,11 @@ function drawSubtitles(ctx: CanvasRenderingContext2D) {
     const textEffect = captionsStyle.get("text/effect") ?? "default";
     const fontSize = captionSizes.get(textSize)![fhd];
     ctx.font = `${fontSize}px ${fontFamily}, sans-serif`;
+
+    if (lastCachedFontSize !== fontSize || lastCachedFontFamily !== fontFamily) {
+        resetSubtitleCache(fontSize, fontFamily);
+    }
+
     ctx.fillStyle = textColor!;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
@@ -305,10 +322,28 @@ function drawSubtitles(ctx: CanvasRenderingContext2D) {
 
             for (let k = lines.length - 1; k >= 0; k--) {
                 const currentLineText = lines[k];
-                // Draw background box behind the text
-                const metrics = ctx.measureText(currentLineText);
+                const cacheKey = `${currentLineText}:${fontSize}:${fontFamily}`;
+                let lineMetricsWidth: number;
+                let lineCalculatedBoxWidth: number;
                 const padding = fontSize * 0.4;
-                const boxWidth = metrics.width + padding * 2;
+
+                const cachedMeasurement = subtitleMeasurementCache.get(cacheKey);
+                if (cachedMeasurement) {
+                    lineMetricsWidth = cachedMeasurement.metricsWidth;
+                    lineCalculatedBoxWidth = cachedMeasurement.calculatedBoxWidth;
+                } else {
+                    console.debug("[display] caching subtitle measurement", cacheKey);
+                    const metrics = ctx.measureText(currentLineText);
+                    lineMetricsWidth = metrics.width;
+                    lineCalculatedBoxWidth = lineMetricsWidth + padding * 2;
+                    subtitleMeasurementCache.set(cacheKey, {
+                        metricsWidth: lineMetricsWidth,
+                        calculatedBoxWidth: lineCalculatedBoxWidth,
+                    });
+                }
+
+                // Draw background box behind the text
+                const boxWidth = lineCalculatedBoxWidth;
                 const boxHeight = lineHeight;
 
                 // Calculate rounded coordinates and dimensions for the background box
@@ -363,6 +398,13 @@ function drawText(ctx: CanvasRenderingContext2D, text: string, x: number, y: num
     // Draw the subtitle text
     ctx.fillText(text, x, y);
     ctx.restore();
+}
+
+// Reset Subtitle Cache
+function resetSubtitleCache(fontSize?: number, fontFamily?: string) {
+    subtitleMeasurementCache.clear();
+    lastCachedFontSize = fontSize;
+    lastCachedFontFamily = fontFamily;
 }
 
 // Update Performance Statistics
