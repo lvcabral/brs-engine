@@ -201,7 +201,7 @@ export class Video extends Group {
         postMessage("video,mute,false");
         postMessage(`video,notify,500`);
         postMessage({ captionMode: BrsDevice.deviceInfo.captionMode });
-        postMessage({ captionStyle: new Map<string, string>() });
+        postMessage({ captionStyle: BrsDevice.getCaptionStyle() });
 
         // Set itself as the root video object
         rootObjects.video = this;
@@ -417,13 +417,13 @@ export class Video extends Group {
     }
 
     setCaptionStyle(styles: FlexObject) {
-        const validStyles = new Map<string, string>();
+        const validStyles = BrsDevice.getCaptionStyle();
         for (const key in styles) {
             const id = key.toLowerCase();
-            if (id.includes("/") && captionOptions.has(id)) {
+            if (id.includes("/") && captionOptions.has(id) && !validStyles.has(id)) {
                 const value = styles[key];
                 if (typeof value === "string" && captionOptions.get(id)?.includes(value.toLowerCase())) {
-                    validStyles.set(key, value);
+                    validStyles.set(id, value.toLowerCase());
                 } else {
                     BrsDevice.stderr.write(
                         `warning,${getNow()} [sg.video.cap.val.err] caption style '${value}' is not a valid '${key}'. Using default.`

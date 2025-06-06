@@ -669,13 +669,12 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, option: BrsString) => {
             const opt = option.value.toLowerCase();
-            if (!captionOptions.has(opt)) {
-                return new BrsString("");
-            }
             if (opt === "mode") {
                 return new BrsString(BrsDevice.deviceInfo.captionMode);
             } else if (opt === "muted") {
                 return new BrsString("Unmuted");
+            } else if (!captionOptions.has(opt)) {
+                return new BrsString("");
             }
             return new BrsString(BrsDevice.deviceInfo.captionStyle.get(opt) ?? "Default");
         },

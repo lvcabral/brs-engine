@@ -18,6 +18,7 @@ import {
     defaultDeviceInfo,
     DeviceInfo,
     DefaultSounds,
+    captionOptions,
 } from "../common";
 import SharedObject from "../SharedObject";
 import { FileSystem } from "./FileSystem";
@@ -136,6 +137,25 @@ export class BrsDevice {
         }
     }
 
+    /**
+     * Returns the filtered valid Closed Caption styles defined in DeviceInfo
+     * @returns a map with valid caption styles
+     */
+    static getCaptionStyle() {
+        const validStyles = new Map<string, string>();
+        BrsDevice.deviceInfo.captionStyle.forEach((value: string, key: string) => {
+            if (key.includes("/") && captionOptions.has(key.toLowerCase()) && value.toLowerCase() !== "default") {
+                validStyles.set(key.toLowerCase(), value.toLowerCase());
+            }
+        });
+        return validStyles;
+    }
+
+    /**
+     * Return the translated terms based on current locale id
+     * @param term the term to be translated
+     * @returns the translated term
+     */
     static getTerm(term: string): string {
         return this.terms.get(term) ?? term;
     }
