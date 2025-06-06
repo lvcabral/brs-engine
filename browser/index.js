@@ -74,13 +74,20 @@ const customDeviceInfo = {
     developerId: "UniqueDeveloperId", // As in Roku devices, segregates Registry data
     locale: "en_US", // Localize app strings and some SceneGraph Nodes
     displayMode: "720p", // Supported modes: 480p (SD), 720p (HD) and 1080p (FHD)
-    captionsMode: "On", // Enable captions by default for testing
+    captionMode: "On", // Enable captions by default for testing
+    captionStyle: new Map(),
+    captionLanguage: "en", // Preferred closed caption language
+    audioLanguage: "en", // Preferred audio track language
     maxFps: 30, // Limited refresh rate to minimize issues with iOS/iPadOS
     appList: appList,
     // corsProxy: "http://localhost:8080/",
     // Uncomment line above for local testing
     // Or add the URL of an instance of https://github.com/Rob--W/cors-anywhere
 };
+// Caption customization example, once configured in DeviceInfo cannot be dynamically changed in SceneGraph code:
+customDeviceInfo.captionStyle.set("Text/Effect", "uniform");
+customDeviceInfo.captionStyle.set("Background/Opacity", "50%");
+
 const customKeys = new Map();
 customKeys.set("NumpadMultiply", "info"); // Keep consistency with older versions
 customKeys.set("ShiftLeft", "playonly"); // Support for Prince of Persia
