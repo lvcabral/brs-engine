@@ -77,6 +77,10 @@ export class TrickPlayBar extends Group {
         if (fieldName === "textcolor") {
             this.position.set(new BrsString("color"), value);
             this.remaining.set(new BrsString("color"), value);
+        } else if (fieldName === "visible" && value instanceof BrsBoolean) {
+            if (this.getFieldValueJS("visible") !== value.toBoolean()) {
+                postMessage({ trickPlayBarVisible: value.toBoolean() });
+            }
         }
         return super.set(index, value, alwaysNotify, kind);
     }

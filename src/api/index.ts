@@ -53,6 +53,7 @@ import {
     setDisplayState,
     setCaptionMode,
     setCaptionStyle,
+    setTrickPlayBar,
 } from "./display";
 import {
     initSoundModule,
@@ -600,6 +601,8 @@ function mainCallback(event: MessageEvent) {
         setCaptionMode(event.data.captionMode);
     } else if (event.data.captionStyle instanceof Map) {
         setCaptionStyle(event.data.captionStyle);
+    } else if (typeof event.data.trickPlayBarVisible === "boolean") {
+        setTrickPlayBar(event.data.trickPlayBarVisible);
     } else if (isAppData(event.data)) {
         notifyAll("launch", { app: event.data.id, params: event.data.params ?? new Map() });
     } else if (isTaskData(event.data)) {

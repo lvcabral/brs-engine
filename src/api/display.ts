@@ -44,6 +44,7 @@ let displayState = true;
 let overscanMode = "disabled";
 let aspectRatio = 16 / 9;
 let captionsState = false;
+let trickPlayBar = false;
 let captionsStyle = new Map<string, string>();
 setCaptionStyle();
 
@@ -254,7 +255,7 @@ function drawVideoFrame() {
         if (lastImage) {
             bufferCtx.drawImage(lastImage, 0, 0);
         }
-        if (captionsState && videoState === "play") {
+        if (captionsState && !trickPlayBar) {
             drawSubtitles(bufferCtx);
         }
     }
@@ -443,6 +444,10 @@ export function setCaptionMode(mode: string) {
 
 export function getCaptionMode() {
     return deviceData.captionMode;
+}
+
+export function setTrickPlayBar(enabled: boolean) {
+    trickPlayBar = enabled;
 }
 
 // Set Closed Captions Style

@@ -152,6 +152,7 @@ export class Video extends Group {
         this.backgroundOverlay.setFieldValue("visible", BrsBoolean.False);
         this.linkField(this.backgroundOverlay, "uri", "trickPlayBackgroundOverlay");
         this.trickPlayBar = new TrickPlayBar();
+        this.trickPlayBar.set(new BrsString("visible"), BrsBoolean.False);
         this.spinner = new BusySpinner();
         this.spinner.setPosterUri(`common:/images/${this.resolution}/spinner.png`);
         this.spinner.setFieldValue("spinInterval", new Float(1.0));
@@ -511,7 +512,7 @@ export class Video extends Group {
         this.titleText.set(new BrsString("visible"), BrsBoolean.from(this.showHeader > now));
         this.clockText.setFieldValue("visible", BrsBoolean.from(this.showHeader > now));
         this.pausedIcon.setFieldValue("visible", BrsBoolean.from(this.showPaused > now));
-        this.trickPlayBar.setFieldValue("visible", BrsBoolean.from(this.showTrickPlay > now));
+        this.trickPlayBar.set(new BrsString("visible"), BrsBoolean.from(this.showTrickPlay > now));
     }
 
     handleKey(key: string, press: boolean): boolean {
