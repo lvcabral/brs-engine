@@ -396,11 +396,11 @@ function loadSubtitleTracks() {
         const lang = formatLocale(textTrack.lang);
         // Save the track ids for preferred locale, device locale and english
         if (preferredTrackId === -1 && lang === captionLocale) {
-            preferredTrackId = track.id;
+            preferredTrackId = index;
         } else if (deviceTrackId === -1 && lang === deviceLocale) {
-            deviceTrackId = track.id;
+            deviceTrackId = index;
         } else if (englishTrackId === -1 && lang === "en") {
-            englishTrackId = track.id;
+            englishTrackId = index;
         }
     });
     let activeTrack = 0;
