@@ -236,11 +236,7 @@ export function createNodeByType(interpreter: Interpreter, type: BrsString): RoS
     if (node instanceof BrsInvalid) {
         let typeDef = rootObjects.nodeDefMap.get(type.value.toLowerCase());
         if (typeDef) {
-            if (typeDef.extends === SGNodeType.Scene) {
-                node = new Scene([], type.value);
-            } else {
-                node = initializeNode(interpreter, type, typeDef);
-            }
+            node = initializeNode(interpreter, type, typeDef);
         } else {
             BrsDevice.stderr.write(
                 `warning,BRIGHTSCRIPT: ERROR: roSGNode: Failed to create roSGNode with type ${
@@ -263,6 +259,22 @@ export function createNodeByType(interpreter: Interpreter, type: BrsString): RoS
     return node;
 }
 
+/** Function to create a Scene by its name defined on the XML file */
+export function createSceneByType(interpreter: Interpreter, type: BrsString): RoSGNode | BrsInvalid {
+    let typeDef = rootObjects.nodeDefMap.get(type.value.toLowerCase());
+    updateTypeDefHierarchy(typeDef);
+    if (typeDef && isSubtypeCheck(type.value, SGNodeType.Scene)) {
+        return new Scene([], type.value);
+    } else {
+        BrsDevice.stderr.write(
+            `warning,BRIGHTSCRIPT: ERROR: roSGNode: Failed to create a Scene with type ${
+                type.value
+            }: ${interpreter.formatLocation()}`
+        );
+    }
+    return BrsInvalid.Instance;
+}
+
 export function customNodeExists(node: BrsString) {
     return rootObjects.nodeDefMap.has(node.value.toLowerCase());
 }
@@ -276,19 +288,8 @@ export function initializeNode(
 ) {
     if (typeDef) {
         //use typeDef object to tack on all the bells & whistles of a custom node
-        let typeDefStack: ComponentDefinition[] = [];
+        let typeDefStack = updateTypeDefHierarchy(typeDef);
         let currentEnv = typeDef.environment?.createSubEnvironment();
-
-        // Adding all component extensions to the stack to call init methods
-        // in the correct order.
-        typeDefStack.push(typeDef);
-        while (typeDef) {
-            // Add the current typedef to the subtypeHierarchy
-            subtypeHierarchy.set(typeDef.name!.toLowerCase(), typeDef.extends || SGNodeType.Node);
-
-            typeDef = rootObjects.nodeDefMap.get(typeDef.extends.toLowerCase());
-            if (typeDef) typeDefStack.push(typeDef);
-        }
 
         // Start from the "basemost" component of the tree.
         typeDef = typeDefStack.pop();
@@ -359,19 +360,8 @@ export function initializeTask(interpreter: Interpreter, taskData: TaskData) {
     let typeDef = rootObjects.nodeDefMap.get(type.toLowerCase());
     if (typeDef) {
         //use typeDef object to tack on all the bells & whistles of a custom node
-        let typeDefStack: ComponentDefinition[] = [];
+        let typeDefStack = updateTypeDefHierarchy(typeDef);
         let currentEnv = typeDef.environment?.createSubEnvironment();
-
-        // Adding all component extensions to the stack to call init methods
-        // in the correct order.
-        typeDefStack.push(typeDef);
-        while (typeDef) {
-            // Add the current typedef to the subtypeHierarchy
-            subtypeHierarchy.set(typeDef.name!.toLowerCase(), typeDef.extends || SGNodeType.Task);
-
-            typeDef = rootObjects.nodeDefMap.get(typeDef.extends.toLowerCase());
-            if (typeDef) typeDefStack.push(typeDef);
-        }
 
         // Start from the "basemost" component of the tree.
         typeDef = typeDefStack.pop();
@@ -437,6 +427,26 @@ export function initializeTask(interpreter: Interpreter, taskData: TaskData) {
         );
         return BrsInvalid.Instance;
     }
+}
+
+/** Function to update the app components hierarchy map and return the stack for the passed TypeDef */
+function updateTypeDefHierarchy(typeDef: ComponentDefinition | undefined) {
+    let typeDefStack: ComponentDefinition[] = [];
+    if (!typeDef) {
+        return typeDefStack;
+    }
+    //use typeDef object to tack on all the bells & whistles of a custom node
+    // Adding all component extensions to the stack to call init methods
+    // in the correct order.
+    typeDefStack.push(typeDef);
+    while (typeDef) {
+        // Add the current typedef to the subtypeHierarchy
+        subtypeHierarchy.set(typeDef.name!.toLowerCase(), typeDef.extends || SGNodeType.Node);
+
+        typeDef = rootObjects.nodeDefMap.get(typeDef.extends.toLowerCase());
+        if (typeDef) typeDefStack.push(typeDef);
+    }
+    return typeDefStack;
 }
 
 /** Function to restore the node fields from the serialized object */

@@ -6,7 +6,7 @@ import {
     BrsEvent,
     SGNodeType,
     BrsType,
-    createNodeByType,
+    createSceneByType,
     RoFontRegistry,
     RoMessagePort,
     Scene,
@@ -468,7 +468,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
             if (sceneType.value === SGNodeType.Scene) {
                 returnValue = new Scene([], SGNodeType.Scene);
             } else if (rootObjects.nodeDefMap.has(sceneType.value.toLowerCase())) {
-                returnValue = createNodeByType(interpreter, sceneType);
+                returnValue = createSceneByType(interpreter, sceneType);
             } else {
                 BrsDevice.stderr.write(
                     `warning,BRIGHTSCRIPT: ERROR: roSGScreen.CreateScene: No such node ${
