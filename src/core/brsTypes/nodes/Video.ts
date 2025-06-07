@@ -160,14 +160,14 @@ export class Video extends Group {
         this.spinner.set(new BrsString("control"), new BrsString("start"));
         this.appendChildToParent(this.spinner);
         if (this.resolution === "FHD") {
-            this.titleText = this.addScrollingLabel("textColor", [102, 60], 1020, 0, "LargeSystemFont");
-            this.clockText = this.addLabel("textColor", [1644, 60], 174, 36, 36, "top", "right");
+            this.titleText = this.addScrollingLabel("", [102, 60], 1020, 0, "LargeSystemFont");
+            this.clockText = this.addLabel("", [1644, 60], 174, 36, 36, "top", "right");
             this.spinner.setTranslation([900, 480]);
             this.pausedIcon = this.addPoster("common:/images/FHD/video_pause.png", [902, 483]);
             this.trickPlayBar.setTranslation([102, 948]);
         } else {
-            this.titleText = this.addScrollingLabel("textColor", [68, 40], 680, 0, "LargeSystemFont");
-            this.clockText = this.addLabel("textColor", [1096, 40], 116, 24, 24, "top", "right");
+            this.titleText = this.addScrollingLabel("", [68, 40], 680, 0, "LargeSystemFont");
+            this.clockText = this.addLabel("", [1096, 40], 116, 24, 24, "top", "right");
             this.spinner.setTranslation([600, 320]);
             this.pausedIcon = this.addPoster("common:/images/HD/video_pause.png", [602, 322]);
             this.trickPlayBar.setTranslation([68, 632]);

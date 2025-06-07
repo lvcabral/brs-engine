@@ -135,7 +135,9 @@ export class Group extends RoSGNode {
         wrap?: boolean
     ) {
         const label = new Label();
-        this.copyField(label, "color", colorField);
+        if (colorField) {
+            this.copyField(label, "color", colorField);
+        }
         if (fontSize) {
             const labelFields = label.getNodeFields();
             const labelFont = labelFields.get("font")?.getValue();
@@ -175,7 +177,9 @@ export class Group extends RoSGNode {
         repeat?: number
     ) {
         const label = new ScrollingLabel();
-        this.copyField(label, "color", colorField);
+        if (colorField) {
+            this.copyField(label, "color", colorField);
+        }
         if (systemFont) {
             const font = label.getFieldValue("font") as Font;
             if (font instanceof Font) {
