@@ -95,6 +95,7 @@ export class Overhang extends Group {
             this.rightDivider = this.addPoster(divider, [1109, 39], 8, 34);
             this.clockText = this.addLabel("clockColor", [1133, 44], 0, 27, 22, "center");
         }
+        this.backRect.setFieldValue("visible", BrsBoolean.False);
         this.optionsText.set(new BrsString("text"), new BrsString(BrsDevice.getTerm("for Options")));
         this.clockText.set(new BrsString("text"), new BrsString(BrsDevice.getTime()));
         const clock = new Timer();
@@ -108,17 +109,22 @@ export class Overhang extends Group {
     }
 
     private updateChildren() {
-        this.copyField(this.backRect, "color");
-        this.copyField(this.backRect, "height");
         this.copyField(this.backPoster, "height");
         const backUri = this.getFieldValueJS("backgroundUri") as string;
         if (backUri) {
             this.backPoster.set(new BrsString("uri"), new BrsString(backUri));
         }
+        const color = this.getFieldValueJS("color") as number;
         const logoUri = this.getFieldValueJS("logoUri") as string;
         if (logoUri) {
             this.logo.set(new BrsString("uri"), new BrsString(logoUri));
+        } else if (color) {
+            this.copyField(this.backRect, "color");
+            this.backRect.setFieldValue("visible", BrsBoolean.True);
+        } else {
+            this.backRect.setFieldValue("visible", BrsBoolean.False);
         }
+        this.copyField(this.backRect, "height");
         const title = this.getFieldValueJS("title") as string;
         if (title) {
             this.title.set(new BrsString("text"), new BrsString(title));
