@@ -165,7 +165,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             }
         });
         // Reset sound effects
-        BrsDevice.sfx = DefaultSounds.slice();
+        BrsDevice.sfx.length = 0;
+        BrsDevice.sfx.push(...DefaultSounds.slice());
     }
 
     /**

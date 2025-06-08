@@ -63,26 +63,24 @@ export function handleAudioEvent(eventData: string) {
         pauseAudio();
     } else if (data[1] === "resume") {
         resumeAudio();
-    } else if (data[1] === "loop") {
-        if (data[2]) {
-            setLoop(data[2] === "true");
-        } else {
-            notifyAll("warning", `[sound] Missing loop parameter`);
-        }
-    } else if (data[1] === "next") {
-        const newIndex = data[2];
-        if (newIndex && !isNaN(parseInt(newIndex))) {
-            setNext(parseInt(newIndex));
-        } else {
+    } else if (data[1] === "loop" && data.length >= 3) {
+        setLoop(data[2] === "true");
+    } else if (data[1] === "next" && data.length >= 3) {
+        const newIndex = parseInt(data[2]);
+        if (isNaN(newIndex)) {
             notifyAll("warning", `[sound] Invalid next index: ${eventData}`);
+            return;
         }
-    } else if (data[1] === "seek") {
-        const position = data[2];
-        if (position && !isNaN(parseInt(position))) {
-            seekAudio(parseInt(position));
-        } else {
+        setNext(newIndex);
+    } else if (data[1] === "seek" && data.length >= 3) {
+        const position = parseInt(data[2]);
+        if (isNaN(position)) {
             notifyAll("warning", `[sound] Invalid seek position: ${eventData}`);
+            return;
         }
+        seekAudio(position);
+    } else {
+        notifyAll("warning", `[sound] Unknown or invalid audio event: ${eventData}`);
     }
 }
 

@@ -7,6 +7,7 @@ export class BrsDevice {
     static readonly registry: Map<string, string> = new Map<string, string>();
     static readonly fileSystem: FileSystem = new FileSystem();
     static readonly isDevMode = process.env.NODE_ENV === "development";
+    static readonly sfx: string[] = DefaultSounds.slice();
 
     static stdout: OutputProxy = new OutputProxy(process.stdout, false);
     static stderr: OutputProxy = new OutputProxy(process.stderr, false);
@@ -15,7 +16,6 @@ export class BrsDevice {
     static displayEnabled: boolean = true;
     static singleKeyEvents: boolean = true; // Default Roku behavior is `true`
     static useCORSProxy: boolean = true; // If CORS proxy is configured, use it by default
-    static sfx: string[] = DefaultSounds.slice(); // Default sounds
     static lastRemote: number = 0;
     static lastKeyTime: number = Date.now();
     static currKeyTime: number = Date.now();
