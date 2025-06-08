@@ -10,25 +10,30 @@ import { DataType, DefaultSounds, MediaEvent } from "../core/common";
 import { Howl, Howler } from "howler";
 import { unzipSync } from "fflate";
 
+// Sound Effects Type
+type SFX = {
+    id: number;
+    sound: Howl;
+};
+
 // Sound Objects
 const soundsIdx: Map<string, number> = new Map();
 const soundsDat: Howl[] = new Array();
 const soundState: number[] = new Array();
 const playList: string[] = new Array();
-const wavStreams: Howl[] = new Array();
+const sfxMap: Map<string, SFX> = new Map();
+const sfxStreams: Howl[] = new Array();
+const maxStreams: number = 4; // `RSG` supports 4 and `roAudioResource` only 2
 let playIndex = 0;
 let playLoop = false;
 let playNext = -1;
 let sharedArray: Int32Array;
-let maxStreams: number = 2;
 let muted: boolean;
-
-let homeWav: Howl;
+let homeSfx: Howl;
 
 // Initialize Sound Module
-export function initSoundModule(array: Int32Array, streams: number, mute: boolean = false) {
+export function initSoundModule(array: Int32Array, mute: boolean = false) {
     sharedArray = array;
-    maxStreams = Math.min(streams, 3) || 2;
     muteSound(mute);
 }
 
@@ -46,47 +51,74 @@ function notifyAll(eventName: string, eventData?: any) {
     });
 }
 
-// Sound Functions
-export function handleSoundEvent(eventData: string) {
+// Audio/SFX Functions
+
+export function handleAudioEvent(eventData: string) {
     const data = eventData.split(",");
-    if (data[1] === "play") {
-        playSound();
+    if (data[1] === "play" || data[1] === "start") {
+        playAudio();
     } else if (data[1] === "stop") {
-        if (data[2]) {
-            stopWav(data[2]);
-        } else {
-            stopSound();
-        }
+        stopAudio();
     } else if (data[1] === "pause") {
-        pauseSound();
+        pauseAudio();
     } else if (data[1] === "resume") {
-        resumeSound();
-    } else if (data[1] === "loop") {
-        if (data[2]) {
-            setLoop(data[2] === "true");
-        } else {
-            notifyAll("warning", `[sound] Missing loop parameter`);
-        }
-    } else if (data[1] === "next") {
-        const newIndex = data[2];
-        if (newIndex && !isNaN(parseInt(newIndex))) {
-            setNext(parseInt(newIndex));
-        } else {
+        resumeAudio();
+    } else if (data[1] === "loop" && data.length >= 3) {
+        setLoop(data[2] === "true");
+    } else if (data[1] === "next" && data.length >= 3) {
+        const newIndex = parseInt(data[2]);
+        if (isNaN(newIndex)) {
             notifyAll("warning", `[sound] Invalid next index: ${eventData}`);
+            return;
         }
-    } else if (data[1] === "seek") {
-        const position = data[2];
-        if (position && !isNaN(parseInt(position))) {
-            seekSound(parseInt(position));
-        } else {
+        setNext(newIndex);
+    } else if (data[1] === "seek" && data.length >= 3) {
+        const position = parseInt(data[2]);
+        if (isNaN(position)) {
             notifyAll("warning", `[sound] Invalid seek position: ${eventData}`);
+            return;
         }
-    } else if (data[1] === "trigger") {
-        if (data.length >= 5) {
-            triggerWav(data[2], parseInt(data[3]), parseInt(data[4]));
-        } else {
-            notifyAll("warning", `[sound] Missing Trigger parameters: ${eventData}`);
+        seekAudio(position);
+    } else {
+        notifyAll("warning", `[sound] Unknown or invalid audio event: ${eventData}`);
+    }
+}
+
+export function handleSfxEvent(eventData: string) {
+    const data = eventData.split(",");
+    if (data[1] === "new" && data.length >= 4) {
+        const wav = data[2];
+        const id = parseInt(data[3]);
+        if (sfxMap.has(wav.toLowerCase())) {
+            notifyAll("warning", `[sound] SFX already exists: ${wav}`);
+            return;
+        } else if (isNaN(id) || id < 0) {
+            notifyAll("warning", `[sound] Invalid SFX index: ${id} for ${wav}`);
+            return;
         }
+        const idx = soundsIdx.get(wav.toLowerCase());
+        if (idx !== undefined && idx >= 0 && idx < soundsDat.length) {
+            const sound = soundsDat[idx];
+            sfxMap.set(wav.toLowerCase(), { id: id, sound: sound });
+            return;
+        }
+        const sound = new Howl({
+            src: [wav],
+            format: "wav",
+            onloaderror: function (id, message) {
+                notifyAll("warning", `[sound] Error loading SFX ${wav}: ${message}`);
+            },
+            onplayerror: function (id, message) {
+                notifyAll("warning", `[sound] Error playing SFX ${wav}: ${message}`);
+            },
+        });
+        sfxMap.set(wav.toLowerCase(), { id: id, sound: sound });
+    } else if (data[1] === "trigger" && data.length >= 5) {
+        triggerSfx(data[2], parseInt(data[3]), parseInt(data[4]));
+    } else if (data[1] === "stop" && data.length >= 3) {
+        stopSfx(data[2]);
+    } else {
+        notifyAll("warning", `[sound] Unknown or invalid SFX event: ${eventData}`);
     }
 }
 
@@ -143,9 +175,9 @@ export function audioCodecs() {
     });
 }
 
-export function addSoundPlaylist(newList: string[]) {
+export function addAudioPlaylist(newList: string[]) {
     if (playList.length > 0) {
-        stopSound();
+        stopAudio();
     }
     playList.length = 0;
     playList.push(...newList);
@@ -154,20 +186,19 @@ export function addSoundPlaylist(newList: string[]) {
 }
 
 export function addSound(path: string, format: string, data: any) {
+    const sound = new Howl({
+        src: [URL.createObjectURL(data)],
+        format: format,
+        preload: format === "wav",
+        onloaderror: function (id, message) {
+            notifyAll("warning", `[sound] Error loading sound ${path}: ${message}`);
+        },
+        onplayerror: function (id, message) {
+            notifyAll("warning", `[sound] Error playing sound ${path}: ${message}`);
+        },
+    });
     soundsIdx.set(path.toLowerCase(), soundsDat.length);
-    soundsDat.push(
-        new Howl({
-            src: [URL.createObjectURL(data)],
-            format: format,
-            preload: format === "wav",
-            onloaderror: function (id, message) {
-                notifyAll("warning", `[sound] Error loading wav ${path}: ${message}`);
-            },
-            onplayerror: function (id, message) {
-                notifyAll("warning", `[sound] Error playing wav ${path}: ${message}`);
-            },
-        })
-    );
+    soundsDat.push(sound);
 }
 
 export function resetSounds(assets: ArrayBuffer) {
@@ -176,39 +207,48 @@ export function resetSounds(assets: ArrayBuffer) {
             sound.unload();
         });
     }
-    wavStreams.length = maxStreams;
+    sfxStreams.length = 0;
     soundsIdx.clear();
     soundsDat.length = 0;
+    playList.length = 0;
+    playIndex = 0;
+    playLoop = false;
+    playNext = -1;
+    if (sfxMap.size > 0) {
+        sfxMap.forEach((sound) => {
+            sound.sound?.unload();
+        });
+        sfxMap.clear();
+    }
     try {
         const commonFs = unzipSync(new Uint8Array(assets));
         DefaultSounds.forEach((sound, index) => {
-            soundsIdx.set(sound.toLowerCase(), index);
             const audioData = new Blob([commonFs[`audio/${sound}.wav`]]);
-            soundsDat.push(new Howl({ src: [URL.createObjectURL(audioData)], format: "wav" }));
+            const sfx: SFX = {
+                id: index,
+                sound: new Howl({ src: [URL.createObjectURL(audioData)], format: "wav", preload: true }),
+            };
+            sfxMap.set(sound, sfx);
         });
-        if (homeWav === undefined) {
+        if (homeSfx === undefined) {
             const audioData = new Blob([commonFs["audio/select.wav"]]);
-            homeWav = new Howl({ src: [URL.createObjectURL(audioData)], format: "wav" });
-            homeWav.on("play", function () {
+            homeSfx = new Howl({ src: [URL.createObjectURL(audioData)], format: "wav", preload: true });
+            homeSfx.on("play", function () {
                 notifyAll("home");
             });
         }
     } catch (e: any) {
         notifyAll("error", `[sound] Error unzipping audio files: ${e.message}`);
     }
-    playList.length = 0;
-    playIndex = 0;
-    playLoop = false;
-    playNext = -1;
 }
 
 export function playHomeSound() {
-    if (homeWav) {
-        homeWav.play();
+    if (homeSfx) {
+        homeSfx.play();
     }
 }
 
-function playSound() {
+function playAudio() {
     const audio = playList[playIndex];
     if (audio) {
         let sound: Howl;
@@ -222,7 +262,7 @@ function playSound() {
             return;
         }
         sound.seek(0);
-        sound.once("end", nextSound);
+        sound.once("end", nextAudio);
         if (sound.state() === "unloaded") {
             sound.once("load", function () {
                 sound.play();
@@ -238,7 +278,7 @@ function playSound() {
     }
 }
 
-function nextSound() {
+function nextAudio() {
     Atomics.store(sharedArray, DataType.SDX, playIndex);
     Atomics.store(sharedArray, DataType.SND, MediaEvent.FINISHED);
     if (playNext >= 0 && playNext < playList.length) {
@@ -248,17 +288,17 @@ function nextSound() {
     }
     playNext = -1;
     if (playIndex < playList.length) {
-        playSound();
+        playAudio();
     } else if (playLoop) {
         playIndex = 0;
-        playSound();
+        playAudio();
     } else {
         playIndex = 0;
         Atomics.store(sharedArray, DataType.SND, MediaEvent.FULL);
     }
 }
 
-function stopSound() {
+function stopAudio() {
     const audio = playList[playIndex];
     if (audio && soundsIdx.has(audio.toLowerCase())) {
         let idx = soundsIdx.get(audio.toLowerCase());
@@ -275,7 +315,7 @@ function stopSound() {
     }
 }
 
-function pauseSound(notify = true) {
+function pauseAudio(notify = true) {
     const audio = playList[playIndex];
     if (audio && soundsIdx.has(audio.toLowerCase())) {
         let idx = soundsIdx.get(audio.toLowerCase());
@@ -290,7 +330,7 @@ function pauseSound(notify = true) {
     }
 }
 
-function resumeSound(notify = true) {
+function resumeAudio(notify = true) {
     const audio = playList[playIndex];
     if (audio && soundsIdx.has(audio.toLowerCase())) {
         let idx = soundsIdx.get(audio.toLowerCase());
@@ -305,7 +345,7 @@ function resumeSound(notify = true) {
     }
 }
 
-function seekSound(position: number) {
+function seekAudio(position: number) {
     const audio = playList[playIndex];
     if (audio && soundsIdx.has(audio.toLowerCase())) {
         let idx = soundsIdx.get(audio.toLowerCase());
@@ -329,47 +369,44 @@ function setNext(index: number) {
     }
 }
 
-// WAV Sound Functions
-function triggerWav(wav: string, volume: number, index: number) {
-    const soundId = soundsIdx.get(wav.toLowerCase());
-    if (soundId !== undefined) {
-        const sound = soundsDat[soundId];
+// Sound Effects (WAV) Functions
+function triggerSfx(wav: string, volume: number, index: number) {
+    const sfx = sfxMap.get(wav.toLowerCase());
+    if (sfx?.sound instanceof Howl) {
         if (volume && !isNaN(volume)) {
-            sound.volume(volume / 100);
+            sfx.sound.volume(volume / 100);
         }
         if (index >= 0 && index < maxStreams) {
-            if (wavStreams[index]?.playing()) {
-                wavStreams[index].stop();
+            if (sfxStreams[index]?.playing()) {
+                sfxStreams[index].stop();
             }
-            wavStreams[index] = sound;
-            sound.once("end", function () {
+            sfxStreams[index] = sfx.sound;
+            sfx.sound.once("end", function () {
                 Atomics.store(sharedArray, DataType.WAV + index, -1);
             });
-            sound.play();
-            Atomics.store(sharedArray, DataType.WAV + index, soundId);
+            sfx.sound.play();
+            Atomics.store(sharedArray, DataType.WAV + index, sfx.id);
         }
     }
 }
 
-function stopWav(wav: string) {
-    const soundId = soundsIdx.get(wav.toLowerCase());
-    if (soundId) {
-        const sound = soundsDat[soundId];
+function stopSfx(wav: string) {
+    const sfx = sfxMap.get(wav.toLowerCase());
+    if (sfx) {
         for (let index = 0; index < maxStreams; index++) {
             const wavId = Atomics.load(sharedArray, DataType.WAV + index);
-            if (wavId === soundId) {
+            if (wavId === sfx.id) {
                 Atomics.store(sharedArray, DataType.WAV + index, -1);
                 break;
             }
         }
-        sound.stop();
+        sfx.sound.stop();
     } else {
         notifyAll("warning", `[sound] Can't find wav sound: ${wav}`);
     }
 }
 
 function addWebSound(url: string) {
-    // TODO: Fix the WAV index if a roAudioResource is created after this call
     soundsIdx.set(url.toLowerCase(), soundsDat.length);
     let sound = new Howl({
         src: [url],

@@ -1,4 +1,4 @@
-import { dataBufferIndex, DataType, DebugCommand, defaultDeviceInfo, DeviceInfo } from "../common";
+import { dataBufferIndex, DataType, DebugCommand, defaultDeviceInfo, DefaultSounds, DeviceInfo } from "../common";
 import { FileSystem } from "./FileSystem";
 import { OutputProxy } from "./OutputProxy";
 
@@ -7,6 +7,7 @@ export class BrsDevice {
     static readonly registry: Map<string, string> = new Map<string, string>();
     static readonly fileSystem: FileSystem = new FileSystem();
     static readonly isDevMode = process.env.NODE_ENV === "development";
+    static readonly sfx: string[] = DefaultSounds.slice();
 
     static stdout: OutputProxy = new OutputProxy(process.stdout, false);
     static stderr: OutputProxy = new OutputProxy(process.stderr, false);
