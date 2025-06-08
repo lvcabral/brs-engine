@@ -31,7 +31,7 @@ export interface DeviceInfo {
     captionStyle: Map<string, string>;
     captionLanguage: SupportedLanguage;
     assets: ArrayBufferLike;
-    maxSimulStreams: 1 | 2 | 3;
+    maxSimulStreams: 1 | 2;
     remoteControls: RemoteControl[];
     customFeatures: string[];
     connectionInfo: ConnectionInfo;
@@ -447,6 +447,7 @@ export enum DataType {
     WAV, // Wave Audio
     WAV1, // Reserved for second stream
     WAV2, // Reserved for third stream
+    WAV3, // Reserved for fourth stream
     MUHS, // Memory Used Heap Size
     MHSL, // Memory Heap Size Limit
     MBWD, // Measured Bandwidth
@@ -458,15 +459,17 @@ export enum DataType {
     MOD, // Key State (down/up)
 }
 
-// SharedArrayBuffer constants
-export const dataBufferIndex = 36;
-export const dataBufferSize = 1024;
+// Registry constants
 export const registryInitialSize = 32 * 1024;
 export const registryMaxSize = 64 * 1024;
 
 // Key Buffer Constants
-export const keyBufferSize = 5; // Max is 5, if needs more space increase `dataBufferIndex`
+export const keyBufferSize = 5;
 export const keyArraySpots = 3;
+
+// Index where the data buffer starts and the size of the data buffer
+export const dataBufferIndex = DataType.HDMI + keyBufferSize * keyArraySpots;
+export const dataBufferSize = 1024;
 
 // Remote control type
 export enum RemoteType {

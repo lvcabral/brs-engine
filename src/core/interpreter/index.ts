@@ -55,7 +55,16 @@ import Long from "long";
 import { Scope, Environment, NotFound } from "./Environment";
 import { toCallable } from "./BrsFunction";
 import { runDebugger } from "./MicroDebugger";
-import { DataType, DebugCommand, numberToHex, parseTextFile, TaskPayload, TaskState, ThreadUpdate } from "../common";
+import {
+    DataType,
+    DebugCommand,
+    DefaultSounds,
+    numberToHex,
+    parseTextFile,
+    TaskPayload,
+    TaskState,
+    ThreadUpdate,
+} from "../common";
 /// #if !BROWSER
 import * as v8 from "v8";
 /// #endif
@@ -176,6 +185,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 BrsDevice.useCORSProxy = value.trim() !== "0";
             }
         });
+        // Reset sound effects
+        BrsDevice.sfx.length = 0;
+        BrsDevice.sfx.push(...DefaultSounds.slice());
     }
 
     /**

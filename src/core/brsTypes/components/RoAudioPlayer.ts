@@ -23,7 +23,7 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
         this.eventType = -1;
         this.cookiesEnabled = false;
         this.customHeaders = new Map<string, string>();
-        postMessage(new Array<string>());
+        postMessage({ audioPlaylist: new Array<string>() });
         postMessage("audio,loop,false");
         postMessage("audio,next,-1");
         postMessage("audio,mute,false");
@@ -114,7 +114,7 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
         },
         impl: (_: Interpreter, contentList: RoArray) => {
             this.contentList = contentList.getElements() as RoAssociativeArray[];
-            postMessage(this.getContent());
+            postMessage({ audioPlaylist: this.getContent() });
             return BrsInvalid.Instance;
         },
     });
@@ -128,7 +128,7 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
         impl: (_: Interpreter, contentItem: RoAssociativeArray) => {
             contentItem.addReference();
             this.contentList.push(contentItem);
-            postMessage(this.getContent());
+            postMessage({ audioPlaylist: this.getContent() });
             return BrsInvalid.Instance;
         },
     });
@@ -141,7 +141,7 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
         },
         impl: (_: Interpreter) => {
             this.contentList = new Array();
-            postMessage(new Array<string>());
+            postMessage({ audioPlaylist: new Array<string>() });
             return BrsInvalid.Instance;
         },
     });

@@ -20,19 +20,16 @@ export class RoAudioResource extends BrsComponent implements BrsValue {
         super("roAudioResource");
         this.maxStreams = BrsDevice.deviceInfo.maxSimulStreams;
         this.valid = true;
-        const sysIndex = DefaultSounds.findIndex((wav) => wav === name.value.toLowerCase());
-        if (sysIndex > -1) {
-            this.audioId = sysIndex;
+        const sfxIndex = BrsDevice.sfx.findIndex((wav) => wav === name.value.toLowerCase());
+        if (sfxIndex > -1) {
+            this.audioId = sfxIndex;
         } else {
-            // TODO: Check if this audioId is still valid
             try {
-                const fsys = BrsDevice.fileSystem;
-                this.valid = fsys !== undefined;
-                if (fsys) {
-                    const id = parseInt(fsys.readFileSync(name.value, "utf8"));
-                    if (id && id >= 0) {
-                        this.audioId = id + DefaultSounds.length;
-                    }
+                this.valid = BrsDevice.fileSystem.existsSync(name.value);
+                if (this.valid) {
+                    this.audioId = BrsDevice.sfx.length;
+                    postMessage(`sfx,new,${name.value},${this.audioId}`);
+                    BrsDevice.sfx.push(name.value.toLowerCase());
                 }
             } catch (err: any) {
                 BrsDevice.stderr.write(`error,Error loading audio file: ${name.value} - ${err.message}`);
@@ -73,7 +70,7 @@ export class RoAudioResource extends BrsComponent implements BrsValue {
             if (stream >= 0 && stream < this.maxStreams) {
                 const sysIndex = DefaultSounds.findIndex((wav) => wav === this.audioName.toLowerCase());
                 const playVolume = sysIndex > -1 ? BrsDevice.deviceInfo.audioVolume : volume.getValue();
-                postMessage(`audio,trigger,${this.audioName},${playVolume},${stream}`);
+                postMessage(`sfx,trigger,${this.audioName},${playVolume},${stream}`);
                 this.currentIndex = stream;
                 this.playing = true;
             }
@@ -88,11 +85,12 @@ export class RoAudioResource extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
-            if (this.audioId) {
+            if (this.audioId !== undefined) {
                 const currentWav = Atomics.load(BrsDevice.sharedArray, DataType.WAV + this.currentIndex);
                 this.playing = currentWav === this.audioId;
+                return BrsBoolean.from(this.playing);
             }
-            return BrsBoolean.from(this.playing);
+            return BrsBoolean.False;
         },
     });
 
@@ -103,7 +101,7 @@ export class RoAudioResource extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter) => {
-            postMessage(`audio,stop,${this.audioName}`);
+            postMessage(`sfx,stop,${this.audioName}`);
             this.playing = false;
             return BrsInvalid.Instance;
         },
