@@ -1,20 +1,8 @@
 import { RoSGNode } from "../components/RoSGNode";
 import { FieldKind, FieldModel } from "./Field";
-import {
-    AAMember,
-    BrsType,
-    isBrsString,
-    isBrsNumber,
-    jsValueOf,
-    ContentNode,
-    isBrsBoolean,
-    BrsString,
-    Int32,
-    rootObjects,
-    Double,
-} from "..";
+import { AAMember, BrsType, isBrsString, BrsString } from "..";
 import { BrsDevice } from "../../device/BrsDevice";
-import { MediaEvent } from "../../common";
+import { DataType, MediaEvent } from "../../common";
 
 export class SoundEffect extends RoSGNode {
     readonly defaultFields: FieldModel[] = [
@@ -24,19 +12,17 @@ export class SoundEffect extends RoSGNode {
         { name: "loadStatus", type: "string", value: "none", alwaysNotify: true },
         { name: "volume", type: "integer", value: "50" },
     ];
+    private uri: string;
+    private state: string;
+    private audioId?: number;
 
     constructor(members: AAMember[] = [], readonly name: string = "SoundEffect") {
         super([], name);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(members);
-
-        postMessage(new Array<string>());
-        postMessage("audio,loop,false");
-        postMessage("audio,next,-1");
-        postMessage("audio,mute,false");
-
-        // rootObjects.audio = this;
+        this.uri = "";
+        this.state = "none";
     }
 
     set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
@@ -49,87 +35,78 @@ export class SoundEffect extends RoSGNode {
         if (fieldName === "control" && isBrsString(value)) {
             const validControl = ["play", "stop"];
             const control = value.getValue().toLowerCase();
-            const uri = this.getFieldValueJS("uri") as string;
-            if (validControl.includes(control) && uri?.length) {
-                postMessage(`audio,${control}`);
-            } else {
+            if (!validControl.includes(control) || this.audioId === undefined) {
                 value = new BrsString("none");
+                return super.set(index, value, alwaysNotify, kind);
             }
-        } else if (fieldName === "seek" && isBrsNumber(value)) {
-            const position = jsValueOf(value) as number;
-            postMessage(`audio,seek,${position * 1000}`);
-        } else if (fieldName === "notificationInterval" && isBrsNumber(value)) {
-            postMessage(`audio,notify,${Math.round(jsValueOf(value) * 1000)}`);
-        } else if (fieldName === "loop" && isBrsBoolean(value)) {
-            postMessage(`audio,loop,${value.toBoolean()}`);
-        } else if (fieldName === "mute" && isBrsBoolean(value)) {
-            postMessage(`audio,mute,${value.toBoolean()}`);
-        } else if (fieldName === "content" && value instanceof ContentNode) {
-            postMessage(this.formatContent(value));
+            if (control === "play") {
+                const volume = this.getFieldValueJS("volume") as number;
+                const stream = BrsDevice.getSfxStream(this.audioId);
+                if (stream === -1) {
+                    if (BrsDevice.isDevMode) {
+                        BrsDevice.stderr.write(`warning,No available sound effect streams for ${this.uri}`);
+                    }
+                    this.state = "toomanysounds";
+                } else {
+                    console.debug(`SoundEffect.play: ${this.uri} on stream ${stream}`);
+                    postMessage(`sfx,trigger,${this.uri},${volume},${stream}`);
+                    this.state = "playing";
+                }
+                super.set(new BrsString("state"), new BrsString(this.state));
+            } else if (control === "stop") {
+                postMessage(`sfx,stop,${this.uri}`);
+                this.setState(MediaEvent.PARTIAL);
+            }
+        } else if (fieldName === "uri" && isBrsString(value)) {
+            if (this.state === "playing") {
+                postMessage(`sfx,stop,${this.uri}`);
+                this.setState(MediaEvent.PARTIAL);
+            }
+            const uri = value.getValue().toLowerCase();
+            const sfxIndex = BrsDevice.sfx.findIndex((wav) => wav === uri);
+            if (sfxIndex > -1) {
+                this.uri = uri;
+                this.audioId = sfxIndex;
+            } else if ((uri.startsWith("pkg:") && BrsDevice.fileSystem.existsSync(uri)) || uri.startsWith("http")) {
+                this.uri = uri;
+                this.audioId = BrsDevice.sfx.length;
+                postMessage(`sfx,new,${uri},${this.audioId}`);
+                BrsDevice.sfx.push(uri);
+            } else {
+                if (BrsDevice.isDevMode) {
+                    BrsDevice.stderr.write(`warning,Invalid sound effect URI: ${uri}`);
+                }
+                this.uri = "";
+                this.audioId = undefined;
+                this.setState(MediaEvent.FAILED);
+            }
         }
         return super.set(index, value, alwaysNotify, kind);
     }
 
     setState(flags: number) {
-        let state = "none";
+        //TODO: Create the event to change the state
+        this.state = "none";
         switch (flags) {
             case MediaEvent.LOADING:
-                state = "buffering";
+                this.state = "buffering";
                 break;
             case MediaEvent.START_PLAY:
             case MediaEvent.START_STREAM:
             case MediaEvent.SELECTED:
             case MediaEvent.RESUMED:
-                state = "playing";
+                this.state = "playing";
                 break;
-            case MediaEvent.PAUSED:
-                state = "paused";
+            case MediaEvent.PARTIAL:
+                this.state = "stopped";
                 break;
             case MediaEvent.FULL:
-                state = "finished";
+                this.state = "finished";
                 break;
             case MediaEvent.FAILED:
-                state = "failed";
+                this.state = "notready";
                 break;
         }
-        super.set(new BrsString("state"), new BrsString(state));
-    }
-
-    setContentIndex(index: number) {
-        super.set(new BrsString("contentIndex"), new Int32(index));
-    }
-
-    setDuration(duration: number) {
-        // Roku rounds the audio duration to integer even being stored in a Double
-        super.set(new BrsString("duration"), new Double(Math.round(duration / 1000)));
-    }
-
-    setPosition(position: number) {
-        super.set(new BrsString("position"), new Double(position / 1000));
-    }
-
-    private formatContent(node: ContentNode) {
-        const corsProxy = BrsDevice.getCORSProxy();
-        const content = new Array<string>();
-        const isPlaylist = this.getFieldValueJS("contentIsPlaylist") as boolean;
-        if (isPlaylist) {
-            const playList = node.getNodeChildren();
-            playList.forEach((node) => {
-                const url = node.getFieldValueJS("url") as string;
-                if (url?.length && url.startsWith("http")) {
-                    content.push(corsProxy + url);
-                } else if (url?.length) {
-                    content.push(url);
-                }
-            });
-        } else {
-            const url = node.getFieldValueJS("url") as string;
-            if (url?.length && url.startsWith("http")) {
-                content.push(corsProxy + url);
-            } else if (url?.length) {
-                content.push(url);
-            }
-        }
-        return content;
+        super.set(new BrsString("state"), new BrsString(this.state));
     }
 }
