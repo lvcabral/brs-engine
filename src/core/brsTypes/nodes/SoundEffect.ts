@@ -1,0 +1,135 @@
+import { RoSGNode } from "../components/RoSGNode";
+import { FieldKind, FieldModel } from "./Field";
+import {
+    AAMember,
+    BrsType,
+    isBrsString,
+    isBrsNumber,
+    jsValueOf,
+    ContentNode,
+    isBrsBoolean,
+    BrsString,
+    Int32,
+    rootObjects,
+    Double,
+} from "..";
+import { BrsDevice } from "../../device/BrsDevice";
+import { MediaEvent } from "../../common";
+
+export class SoundEffect extends RoSGNode {
+    readonly defaultFields: FieldModel[] = [
+        { name: "uri", type: "uri" },
+        { name: "control", type: "string", value: "none", alwaysNotify: true },
+        { name: "state", type: "string", value: "none", alwaysNotify: true },
+        { name: "loadStatus", type: "string", value: "none", alwaysNotify: true },
+        { name: "volume", type: "integer", value: "50" },
+    ];
+
+    constructor(members: AAMember[] = [], readonly name: string = "SoundEffect") {
+        super([], name);
+
+        this.registerDefaultFields(this.defaultFields);
+        this.registerInitializedFields(members);
+
+        postMessage(new Array<string>());
+        postMessage("audio,loop,false");
+        postMessage("audio,next,-1");
+        postMessage("audio,mute,false");
+
+        // rootObjects.audio = this;
+    }
+
+    set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
+        if (!isBrsString(index)) {
+            throw new Error("RoSGNode indexes must be strings");
+        }
+
+        const fieldName = index.getValue().toLowerCase();
+
+        if (fieldName === "control" && isBrsString(value)) {
+            const validControl = ["play", "stop"];
+            const control = value.getValue().toLowerCase();
+            const uri = this.getFieldValueJS("uri") as string;
+            if (validControl.includes(control) && uri?.length) {
+                postMessage(`audio,${control}`);
+            } else {
+                value = new BrsString("none");
+            }
+        } else if (fieldName === "seek" && isBrsNumber(value)) {
+            const position = jsValueOf(value) as number;
+            postMessage(`audio,seek,${position * 1000}`);
+        } else if (fieldName === "notificationInterval" && isBrsNumber(value)) {
+            postMessage(`audio,notify,${Math.round(jsValueOf(value) * 1000)}`);
+        } else if (fieldName === "loop" && isBrsBoolean(value)) {
+            postMessage(`audio,loop,${value.toBoolean()}`);
+        } else if (fieldName === "mute" && isBrsBoolean(value)) {
+            postMessage(`audio,mute,${value.toBoolean()}`);
+        } else if (fieldName === "content" && value instanceof ContentNode) {
+            postMessage(this.formatContent(value));
+        }
+        return super.set(index, value, alwaysNotify, kind);
+    }
+
+    setState(flags: number) {
+        let state = "none";
+        switch (flags) {
+            case MediaEvent.LOADING:
+                state = "buffering";
+                break;
+            case MediaEvent.START_PLAY:
+            case MediaEvent.START_STREAM:
+            case MediaEvent.SELECTED:
+            case MediaEvent.RESUMED:
+                state = "playing";
+                break;
+            case MediaEvent.PAUSED:
+                state = "paused";
+                break;
+            case MediaEvent.FULL:
+                state = "finished";
+                break;
+            case MediaEvent.FAILED:
+                state = "failed";
+                break;
+        }
+        super.set(new BrsString("state"), new BrsString(state));
+    }
+
+    setContentIndex(index: number) {
+        super.set(new BrsString("contentIndex"), new Int32(index));
+    }
+
+    setDuration(duration: number) {
+        // Roku rounds the audio duration to integer even being stored in a Double
+        super.set(new BrsString("duration"), new Double(Math.round(duration / 1000)));
+    }
+
+    setPosition(position: number) {
+        super.set(new BrsString("position"), new Double(position / 1000));
+    }
+
+    private formatContent(node: ContentNode) {
+        const corsProxy = BrsDevice.getCORSProxy();
+        const content = new Array<string>();
+        const isPlaylist = this.getFieldValueJS("contentIsPlaylist") as boolean;
+        if (isPlaylist) {
+            const playList = node.getNodeChildren();
+            playList.forEach((node) => {
+                const url = node.getFieldValueJS("url") as string;
+                if (url?.length && url.startsWith("http")) {
+                    content.push(corsProxy + url);
+                } else if (url?.length) {
+                    content.push(url);
+                }
+            });
+        } else {
+            const url = node.getFieldValueJS("url") as string;
+            if (url?.length && url.startsWith("http")) {
+                content.push(corsProxy + url);
+            } else if (url?.length) {
+                content.push(url);
+            }
+        }
+        return content;
+    }
+}
