@@ -24,6 +24,7 @@ import {
     fromAssociativeArray,
     FlexObject,
     BrsNumber,
+    BrsComponent,
 } from "..";
 import { Callable } from "../Callable";
 import { Interpreter } from "../../interpreter";
@@ -40,6 +41,7 @@ interface BrsCallback {
         node: RoSGNode;
         infoFields?: RoArray;
     };
+    running?: boolean;
 }
 
 /** Set of value types that a field could be. */
@@ -371,14 +373,18 @@ export class Field {
             return oldValue.getValue() === newValue.getValue();
         } else if (isBrsBoolean(oldValue) && isBrsBoolean(newValue)) {
             return oldValue.toBoolean() === newValue.toBoolean();
-        } else if (oldValue instanceof RoSGNode && newValue instanceof RoSGNode) {
-            return oldValue === newValue && !newValue.changed;
+        } else if (oldValue instanceof BrsComponent && newValue instanceof BrsComponent) {
+            return oldValue === newValue;
         } else {
             return oldValue.equalTo(newValue).toBoolean();
         }
     }
 
     private executeCallbacks(callback: BrsCallback) {
+        if (callback.running) {
+            return;
+        }
+        callback.running = true;
         const { interpreter, callable, hostNode, environment, eventParams } = callback;
 
         // Get info fields current value, if exists.
@@ -398,6 +404,7 @@ export class Field {
 
         if (callable instanceof RoMessagePort) {
             callable.pushMessage(event);
+            callback.running = false;
             return;
         }
 
@@ -419,9 +426,11 @@ export class Field {
                 }
             } catch (err) {
                 if (!(err instanceof BlockEnd)) {
+                    callback.running = false;
                     throw err;
                 }
             }
+            callback.running = false;
             return BrsInvalid.Instance;
         }, environment);
     }

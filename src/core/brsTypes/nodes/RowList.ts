@@ -10,8 +10,8 @@ export class RowList extends ArrayGrid {
         { name: "numColumns", type: "integer", value: "1" },
         { name: "rowItemSize", type: "array", value: "[]" },
         { name: "rowItemSpacing", type: "array", value: "[]" },
-        { name: "rowItemSelected", type: "array", value: "[]", alwaysNotify: true },
-        { name: "rowItemFocused", type: "array", value: "[]", alwaysNotify: true },
+        { name: "rowItemSelected", type: "array", value: "[]" },
+        { name: "rowItemFocused", type: "array", value: "[]" },
         { name: "jumpToRowItem", type: "array", value: "[]" },
         { name: "vertFocusAnimationStyle", type: "string", value: "fixedFocusWrap" },
     ];
