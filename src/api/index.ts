@@ -49,12 +49,13 @@ import {
     initSoundModule,
     addSound,
     resetSounds,
-    addSoundPlaylist,
+    addAudioPlaylist,
     muteSound,
     isSoundMuted,
     subscribeSound,
     switchSoundState,
-    handleSoundEvent,
+    handleAudioEvent,
+    handleSfxEvent,
     playHomeSound,
 } from "./sound";
 import {
@@ -275,7 +276,7 @@ export function execute(filePath: string, fileData: any, options: any = {}, deep
     if (debugToConsole) {
         console.info(`Loading ${filePath}...`);
     }
-    initSoundModule(sharedArray, deviceData.maxSimulStreams, options.muteSound);
+    initSoundModule(sharedArray, options.muteSound);
     muteVideo(options.muteSound);
 
     if (fileExt === "zip" || fileExt === "bpk") {
@@ -526,15 +527,13 @@ function workerCallback(event: MessageEvent) {
             });
         }
         notifyAll("registry", event.data);
-    } else if (event.data instanceof Array) {
-        addSoundPlaylist(event.data);
-    } else if (event.data.audioPath && platform.inBrowser) {
+    } else if (platform.inBrowser && event.data.audioPlaylist instanceof Array) {
+        addAudioPlaylist(event.data.audioPlaylist);
+    } else if (platform.inBrowser && event.data.audioPath) {
         addSound(event.data.audioPath, event.data.audioFormat, new Blob([event.data.audioData]));
-    } else if (event.data.videoPlaylist && platform.inBrowser) {
-        if (event.data.videoPlaylist instanceof Array) {
-            addVideoPlaylist(event.data.videoPlaylist);
-        }
-    } else if (event.data.videoPath && platform.inBrowser) {
+    } else if (platform.inBrowser && event.data.videoPlaylist instanceof Array) {
+        addVideoPlaylist(event.data.videoPlaylist);
+    } else if (platform.inBrowser && event.data.videoPath) {
         addVideo(event.data.videoPath, new Blob([event.data.videoData], { type: "video/mp4" }));
     } else if (typeof event.data.displayEnabled === "boolean") {
         setDisplayState(event.data.displayEnabled);
@@ -576,7 +575,7 @@ function workerCallback(event: MessageEvent) {
         }
     } else if (typeof event.data !== "string") {
         // All messages beyond this point must be csv string
-        apiException("warning", `[api] Invalid worker message: ${event.data}`);
+        apiException("warning", `[api] Invalid worker message: ${JSON.stringify(event.data)}`);
     } else {
         handleStringMessage(event.data);
     }
@@ -585,7 +584,9 @@ function workerCallback(event: MessageEvent) {
 // Handles string messages from the Interpreter
 function handleStringMessage(message: string) {
     if (message.startsWith("audio,")) {
-        handleSoundEvent(message);
+        handleAudioEvent(message);
+    } else if (message.startsWith("sfx,")) {
+        handleSfxEvent(message);
     } else if (message.startsWith("video,")) {
         handleVideoEvent(message);
     } else if (message.startsWith("print,")) {

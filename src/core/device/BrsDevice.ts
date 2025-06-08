@@ -1,4 +1,4 @@
-import { dataBufferIndex, DataType, DebugCommand, defaultDeviceInfo, DeviceInfo } from "../common";
+import { dataBufferIndex, DataType, DebugCommand, defaultDeviceInfo, DefaultSounds, DeviceInfo } from "../common";
 import { FileSystem } from "./FileSystem";
 import { OutputProxy } from "./OutputProxy";
 
@@ -15,6 +15,7 @@ export class BrsDevice {
     static displayEnabled: boolean = true;
     static singleKeyEvents: boolean = true; // Default Roku behavior is `true`
     static useCORSProxy: boolean = true; // If CORS proxy is configured, use it by default
+    static sfx: string[] = DefaultSounds.slice(); // Default sounds
     static lastRemote: number = 0;
     static lastKeyTime: number = Date.now();
     static currKeyTime: number = Date.now();

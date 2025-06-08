@@ -19,7 +19,7 @@ const deviceInfo = {
   captionLanguage: "eng",
   clockFormat: "12h",
   displayMode: "720p", // Supported modes: 480p (SD), 720p (HD) and 1080p (FHD)
-  maxSimulStreams: 2, // Max number of audio resource streams (1, 2 or 3)
+  maxSimulStreams: 2, // Max number of `roAudioResource` streams (1 or 2)
   customFeatures: [], // String array with custom features (see below)
   localIps: ["eth1,127.0.0.1"], // In a Browser isn't possible to get a real IP, populate it on NodeJS or Electron
   startTime: Date.now(),
