@@ -1,7 +1,7 @@
 import { RoSGNode } from "../components/RoSGNode";
-import { Field, FieldModel } from "./Field";
+import { Field, FieldKind, FieldModel } from "./Field";
 import { BrsType, toAssociativeArray } from "..";
-import { ValueKind, BrsString, BrsBoolean } from "../BrsType";
+import { ValueKind, BrsString, BrsBoolean, BrsInvalid } from "../BrsType";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 import { Callable, StdlibArgument } from "../Callable";
@@ -121,6 +121,7 @@ export class ContentNode extends RoSGNode {
      * The reason to keep track is because metadata fields should print out in all caps.
      */
     private readonly metaDataFields = new Set<string>(this.defaultFields.map((field) => field.name.toLowerCase()));
+    private readonly parentFields = new Set<Field>();
 
     constructor(readonly name: string = "ContentNode") {
         super([], name);
@@ -132,6 +133,25 @@ export class ContentNode extends RoSGNode {
     private getVisibleFields() {
         let fields = this.getNodeFields();
         return Array.from(fields).filter(([key, value]) => !value.isHidden());
+    }
+
+    /** @override */
+    set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
+        this.notified = false;
+        super.set(index, value, alwaysNotify, kind);
+        // Propagate changes notification to parent fields
+        if (this.parentFields.size && this.notified) {
+            this.parentFields.forEach((field) => field.notifyObservers());
+        }
+        return BrsInvalid.Instance;
+    }
+
+    addParentField(parentField: Field) {
+        this.parentFields.add(parentField);
+    }
+
+    removeParentField(parentField: Field) {
+        this.parentFields.delete(parentField);
     }
 
     /** @override */
