@@ -196,11 +196,11 @@ export class Video extends Group {
         this.showUI(false);
 
         // Reset Video state on Rendering Thread
-        postMessage(new Array<string>());
         postMessage("video,loop,false");
         postMessage("video,next,-1");
         postMessage("video,mute,false");
         postMessage(`video,notify,500`);
+        postMessage({ videoPlaylist: new Array<string>() });
         postMessage({ captionMode: BrsDevice.deviceInfo.captionMode });
         postMessage({ captionStyle: BrsDevice.getCaptionStyle() });
 

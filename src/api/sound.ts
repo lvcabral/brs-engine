@@ -27,7 +27,8 @@ let playIndex = 0;
 let playLoop = false;
 let playNext = -1;
 let sharedArray: Int32Array;
-let muted: boolean;
+let soundMuted = false;
+let uiMuted = false;
 let homeSfx: Howl;
 let notifyInterval = 500; // milliseconds
 
@@ -80,6 +81,9 @@ export function handleAudioEvent(eventData: string) {
             return;
         }
         seekAudio(position);
+    } else if (data[1] === "mute" && data.length >= 3) {
+        soundMuted = data[2] === "true";
+        Howler.mute(uiMuted || soundMuted);
     } else {
         notifyAll("warning", `[sound] Unknown or invalid audio event: ${eventData}`);
     }
@@ -124,12 +128,12 @@ export function handleSfxEvent(eventData: string) {
 }
 
 export function muteSound(mute: boolean = false) {
-    muted = mute;
-    Howler.mute(mute);
+    uiMuted = mute;
+    Howler.mute(uiMuted || soundMuted);
 }
 
 export function isSoundMuted() {
-    return muted;
+    return uiMuted;
 }
 
 export function soundPlaying() {

@@ -44,7 +44,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
         this.audioTracks = [];
         this.cookiesEnabled = false;
         this.customHeaders = new Map<string, string>();
-        postMessage(new Array<string>());
+        postMessage({ videoPlaylist: new Array<string>() });
         postMessage("video,loop,false");
         postMessage("video,next,-1");
         postMessage("video,mute,false");
