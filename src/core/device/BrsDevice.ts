@@ -19,6 +19,7 @@ import {
     DeviceInfo,
     DefaultSounds,
     captionOptions,
+    MaxSoundStreams,
 } from "../common";
 import SharedObject from "../SharedObject";
 import { FileSystem } from "./FileSystem";
@@ -256,8 +257,28 @@ export class BrsDevice {
      */
     static playSound(sound: string) {
         if (DefaultSounds.includes(sound)) {
-            postMessage(`sfx,trigger,${sound},${this.deviceInfo.audioVolume},0`);
+            const id = this.sfx.findIndex((wav) => wav === sound);
+            const stream = this.getSfxStream(id);
+            if (stream >= 0) {
+                postMessage(`sfx,trigger,${sound},${this.deviceInfo.audioVolume},${stream}`);
+            }
         }
+    }
+
+    /**
+     * Method to get the next available sound effect stream
+     * @param id the sound effect id
+     * @returns the index of the stream or -1 if not available
+     */
+    static getSfxStream(id: number): number {
+        for (let i = 0; i < MaxSoundStreams; i++) {
+            const sfxId = Atomics.load(this.sharedArray, DataType.WAV + i);
+            if (sfxId === id || sfxId === -1) {
+                Atomics.store(this.sharedArray, DataType.WAV + i, id);
+                return i;
+            }
+        }
+        return -1;
     }
 
     static getTime() {

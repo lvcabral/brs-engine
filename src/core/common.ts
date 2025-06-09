@@ -529,6 +529,7 @@ export enum MediaEvent {
     START_STREAM,
     START_PLAY,
     POSITION,
+    TOO_MANY,
 }
 
 // Media playback error codes enumerator

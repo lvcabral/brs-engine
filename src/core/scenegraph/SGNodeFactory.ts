@@ -47,6 +47,7 @@ import {
     StdDlgProgressItem,
     BusySpinner,
     RSGPalette,
+    SoundEffect,
 } from "../brsTypes";
 import { TaskData } from "../common";
 
@@ -85,6 +86,7 @@ export enum SGNodeType {
     RSGPalette = "RSGPalette",
     Video = "Video",
     Audio = "Audio",
+    SoundEffect = "SoundEffect",
     Animation = "Animation",
     SequentialAnimation = "SequentialAnimation",
     ParallelAnimation = "ParallelAnimation",
@@ -180,6 +182,8 @@ export class SGNodeFactory {
                 return new Scene([], name);
             case SGNodeType.Audio:
                 return new Audio([], name);
+            case SGNodeType.SoundEffect:
+                return new SoundEffect([], name);
             case SGNodeType.Video:
                 return new Video([], name);
             case SGNodeType.Keyboard:

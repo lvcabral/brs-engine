@@ -70,6 +70,7 @@ export class RoAudioResource extends BrsComponent implements BrsValue {
             if (stream >= 0 && stream < this.maxStreams) {
                 const sysIndex = DefaultSounds.findIndex((wav) => wav === this.audioName.toLowerCase());
                 const playVolume = sysIndex > -1 ? BrsDevice.deviceInfo.audioVolume : volume.getValue();
+                Atomics.store(BrsDevice.sharedArray, DataType.WAV + stream, this.audioId ?? -1);
                 postMessage(`sfx,trigger,${this.audioName},${playVolume},${stream}`);
                 this.currentIndex = stream;
                 this.playing = true;
