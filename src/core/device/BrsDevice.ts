@@ -256,7 +256,7 @@ export class BrsDevice {
      */
     static playSound(sound: string) {
         if (DefaultSounds.includes(sound)) {
-            postMessage(`audio,trigger,${sound},${this.deviceInfo.audioVolume},0`);
+            postMessage(`sfx,trigger,${sound},${this.deviceInfo.audioVolume},0`);
         }
     }
 
