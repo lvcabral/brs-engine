@@ -231,6 +231,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             if (fieldType && alwaysNotify !== undefined) {
                 field = new Field(value, fieldType, alwaysNotify);
                 this.fields.set(mapKey, field);
+                this.notified = true;
                 this.changed = true;
             } else {
                 let error = `warning,Warning occurred while setting a field of an RoSGNode\n`;
