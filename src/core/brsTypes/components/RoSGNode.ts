@@ -44,6 +44,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     rectToParent: Rect = { x: 0, y: 0, width: 0, height: 0 };
     rectToScene: Rect = { x: 0, y: 0, width: 0, height: 0 };
     changed: boolean = false;
+    notified: boolean = false;
 
     readonly defaultFields: FieldModel[] = [
         { name: "id", type: FieldKind.String },
@@ -249,7 +250,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         } else if (field.canAcceptValue(value)) {
             // Fields are not overwritten if they haven't the same type.
             // Except Numbers and Booleans that can be converted to string fields.
-            field.setValue(value, true);
+            this.notified = field.setValue(value, true);
             this.fields.set(mapKey, field);
             this.changed = true;
         } else {

@@ -24,7 +24,7 @@ import {
     fromAssociativeArray,
     FlexObject,
     BrsNumber,
-    BrsComponent,
+    ContentNode,
 } from "..";
 import { Callable } from "../Callable";
 import { Interpreter } from "../../interpreter";
@@ -204,14 +204,28 @@ export class Field {
         // Once a field is set, it is no longer hidden.
         this.hidden = false;
 
+        const oldValue = this.value;
+        // Update parent field on content nodes
+        if (oldValue instanceof ContentNode) {
+            oldValue.removeParentField(this);
+        }
+        if (value instanceof ContentNode) {
+            value.addParentField(this);
+        }
+        // Update field value and notify changes
         value = this.convertValue(value);
-        let oldValue = this.value;
         this.value = value;
         if (notify && (this.alwaysNotify || !this.isEqual(oldValue, value))) {
-            this.permanentObservers.forEach(this.executeCallbacks.bind(this));
-            this.unscopedObservers.forEach(this.executeCallbacks.bind(this));
-            this.scopedObservers.forEach((callbacks) => callbacks.map(this.executeCallbacks.bind(this)));
+            this.notifyObservers();
+            return true;
         }
+        return false;
+    }
+
+    notifyObservers() {
+        this.permanentObservers.forEach(this.executeCallbacks.bind(this));
+        this.unscopedObservers.forEach(this.executeCallbacks.bind(this));
+        this.scopedObservers.forEach((callbacks) => callbacks.map(this.executeCallbacks.bind(this)));
     }
 
     canAcceptValue(value: BrsType) {
@@ -384,7 +398,6 @@ export class Field {
         if (callback.running) {
             return;
         }
-        callback.running = true;
         const { interpreter, callable, hostNode, environment, eventParams } = callback;
 
         // Get info fields current value, if exists.
@@ -404,11 +417,11 @@ export class Field {
 
         if (callable instanceof RoMessagePort) {
             callable.pushMessage(event);
-            callback.running = false;
             return;
         }
 
         interpreter.inSubEnv((subInterpreter) => {
+            callback.running = true;
             subInterpreter.environment.hostNode = hostNode;
             subInterpreter.environment.setRootM(hostNode.m);
 
