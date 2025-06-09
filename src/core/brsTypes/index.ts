@@ -631,7 +631,14 @@ interface RootObjects {
     focused?: RoSGNode;
     audio?: Audio;
     video?: Video;
+    sfx: (SoundEffect | undefined)[];
     tasks: Task[];
     timers: Timer[];
 }
-export const rootObjects: RootObjects = { mGlobal: new Global([]), nodeDefMap: new Map(), tasks: [], timers: [] };
+export const rootObjects: RootObjects = {
+    mGlobal: new Global([]),
+    nodeDefMap: new Map(),
+    sfx: [],
+    tasks: [],
+    timers: [],
+};

@@ -19,6 +19,7 @@ import {
     DeviceInfo,
     DefaultSounds,
     captionOptions,
+    MaxSoundStreams,
 } from "../common";
 import SharedObject from "../SharedObject";
 import { FileSystem } from "./FileSystem";
@@ -270,7 +271,7 @@ export class BrsDevice {
      * @returns the index of the stream or -1 if not available
      */
     static getSfxStream(id: number): number {
-        for (let i = 0; i < 4; i++) {
+        for (let i = 0; i < MaxSoundStreams; i++) {
             const sfxId = Atomics.load(this.sharedArray, DataType.WAV + i);
             if (sfxId === id || sfxId === -1) {
                 Atomics.store(this.sharedArray, DataType.WAV + i, id);

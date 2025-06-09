@@ -1,8 +1,8 @@
 import { RoSGNode } from "../components/RoSGNode";
 import { FieldKind, FieldModel } from "./Field";
-import { AAMember, BrsType, isBrsString, BrsString } from "..";
+import { AAMember, BrsType, isBrsString, BrsString, isBrsNumber, BrsInvalid, rootObjects } from "..";
 import { BrsDevice } from "../../device/BrsDevice";
-import { DataType, MediaEvent } from "../../common";
+import { MediaEvent } from "../../common";
 
 export class SoundEffect extends RoSGNode {
     readonly defaultFields: FieldModel[] = [
@@ -14,7 +14,8 @@ export class SoundEffect extends RoSGNode {
     ];
     private uri: string;
     private state: string;
-    private audioId?: number;
+    private stream: number;
+    private audioId: number;
 
     constructor(members: AAMember[] = [], readonly name: string = "SoundEffect") {
         super([], name);
@@ -23,6 +24,8 @@ export class SoundEffect extends RoSGNode {
         this.registerInitializedFields(members);
         this.uri = "";
         this.state = "none";
+        this.stream = -1;
+        this.audioId = -1;
     }
 
     set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
@@ -35,78 +38,100 @@ export class SoundEffect extends RoSGNode {
         if (fieldName === "control" && isBrsString(value)) {
             const validControl = ["play", "stop"];
             const control = value.getValue().toLowerCase();
-            if (!validControl.includes(control) || this.audioId === undefined) {
+            if (!validControl.includes(control) || this.audioId < 0) {
                 value = new BrsString("none");
                 return super.set(index, value, alwaysNotify, kind);
             }
             if (control === "play") {
                 const volume = this.getFieldValueJS("volume") as number;
-                const stream = BrsDevice.getSfxStream(this.audioId);
-                if (stream === -1) {
+                this.stream = BrsDevice.getSfxStream(this.audioId);
+                if (this.stream === -1) {
                     if (BrsDevice.isDevMode) {
                         BrsDevice.stderr.write(`warning,No available sound effect streams for ${this.uri}`);
                     }
-                    this.state = "toomanysounds";
+                    this.setState(MediaEvent.TOO_MANY);
                 } else {
-                    console.debug(`SoundEffect.play: ${this.uri} on stream ${stream}`);
-                    postMessage(`sfx,trigger,${this.uri},${volume},${stream}`);
-                    this.state = "playing";
+                    rootObjects.sfx[this.stream] = this;
+                    postMessage(`sfx,trigger,${this.uri},${volume},${this.stream}`);
+                    this.setState(MediaEvent.START_PLAY);
                 }
-                super.set(new BrsString("state"), new BrsString(this.state));
             } else if (control === "stop") {
-                postMessage(`sfx,stop,${this.uri}`);
-                this.setState(MediaEvent.PARTIAL);
+                this.stop();
             }
         } else if (fieldName === "uri" && isBrsString(value)) {
             if (this.state === "playing") {
-                postMessage(`sfx,stop,${this.uri}`);
-                this.setState(MediaEvent.PARTIAL);
+                this.stop();
             }
             const uri = value.getValue().toLowerCase();
-            const sfxIndex = BrsDevice.sfx.findIndex((wav) => wav === uri);
-            if (sfxIndex > -1) {
+            if ((uri.startsWith("pkg:") && BrsDevice.fileSystem.existsSync(uri)) || uri.startsWith("http")) {
                 this.uri = uri;
-                this.audioId = sfxIndex;
-            } else if ((uri.startsWith("pkg:") && BrsDevice.fileSystem.existsSync(uri)) || uri.startsWith("http")) {
-                this.uri = uri;
-                this.audioId = BrsDevice.sfx.length;
-                postMessage(`sfx,new,${uri},${this.audioId}`);
-                BrsDevice.sfx.push(uri);
+                const sfxIndex = BrsDevice.sfx.findIndex((wav) => wav === uri);
+                if (sfxIndex > -1) {
+                    this.audioId = sfxIndex;
+                } else {
+                    this.audioId = BrsDevice.sfx.length;
+                    postMessage(`sfx,new,${uri},${this.audioId}`);
+                    BrsDevice.sfx.push(uri);
+                }
+                super.set(new BrsString("loadStatus"), new BrsString("ready"));
             } else {
                 if (BrsDevice.isDevMode) {
                     BrsDevice.stderr.write(`warning,Invalid sound effect URI: ${uri}`);
                 }
                 this.uri = "";
-                this.audioId = undefined;
+                this.audioId = -1;
+                super.set(new BrsString("loadStatus"), new BrsString("failed"));
                 this.setState(MediaEvent.FAILED);
+            }
+        } else if (fieldName === "volume" && isBrsNumber(value)) {
+            const volume = value.getValue() as number;
+            if (volume < 0 || volume > 100) {
+                if (BrsDevice.isDevMode) {
+                    BrsDevice.stderr.write(`warning,Volume must be between 0 and 100, received: ${volume}`);
+                }
+                return BrsInvalid.Instance;
             }
         }
         return super.set(index, value, alwaysNotify, kind);
     }
 
+    getAudioId() {
+        return this.audioId;
+    }
+
+    getState() {
+        return this.state;
+    }
+
     setState(flags: number) {
-        //TODO: Create the event to change the state
         this.state = "none";
         switch (flags) {
-            case MediaEvent.LOADING:
-                this.state = "buffering";
-                break;
             case MediaEvent.START_PLAY:
-            case MediaEvent.START_STREAM:
-            case MediaEvent.SELECTED:
-            case MediaEvent.RESUMED:
                 this.state = "playing";
                 break;
             case MediaEvent.PARTIAL:
                 this.state = "stopped";
+                this.stream = -1;
                 break;
-            case MediaEvent.FULL:
+            case MediaEvent.FINISHED:
                 this.state = "finished";
+                this.stream = -1;
                 break;
             case MediaEvent.FAILED:
                 this.state = "notready";
                 break;
+            case MediaEvent.TOO_MANY:
+                this.state = "toomanysounds";
+                break;
         }
         super.set(new BrsString("state"), new BrsString(this.state));
+    }
+
+    private stop() {
+        postMessage(`sfx,stop,${this.uri}`);
+        if (rootObjects.sfx[this.stream] === this) {
+            rootObjects.sfx[this.stream] = undefined;
+        }
+        this.setState(MediaEvent.PARTIAL);
     }
 }

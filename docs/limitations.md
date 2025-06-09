@@ -16,13 +16,13 @@ There are several features from the **BrightScript** language and components tha
     * The basic nodes: `ContentNode`, `Group`, `Scene`, `Font`, `Timer`, `Rectangle`, `Label`, `ScrollingLabel`, `Poster` and `RSGPalette`
     * Grids and list nodes based on `ArrayGrid`: `LabelList`, `CheckList`, `RadioButtonList`, `MarkupList` and `MarkupGrid`
     * Dialog related nodes: `Dialog`, `KeyboardDialog`, `StandardDialog`, `StandardProgressDialog`, `StdDlgProgressItem`, `StdDlgContentArea` and `StdDlgTitleArea`
-    * Media related nodes: `Audio` and `Video`
+    * Media related nodes: `Audio`, `SoundEffect` and `Video`
     * Other supported nodes: `Button`, `ButtonGroup`, `BusySpinner`, `Overhang`, `Keyboard`, `MiniKeyboard` and `TextEditBox`
   * All other nodes are either mocked or not implemented yet, and if used will be created as a plain `Node`.
 * The following components are also not implemented yet:
   * Text to Speech components: `roAudioGuide`, `roMicrophone` and `roTextToSpeech`
   * Signing Algorithm components: `roDSA` and `roRSA`
-* Audio playback is implemented via `roAudioResources`, `roAudioPlayer` and `Audio` node, but with some limitations:
+* Audio playback is implemented via `roAudioResources`, `SoundEffect`, `roAudioPlayer` and `Audio` node, but with some limitations:
   * Only one instance of `roAudioPlayer` or `Audio` node should be used, if more are created those will share the content playlist.
   * If the `roAudioPlayer` or `Audio` node instance is destroyed the audio keeps playing, make sure to stop the playback before discarding the object.
   * No `Timed Metadata` support.

@@ -205,6 +205,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
             this.processTimers();
             this.processTasks();
             this.processAudio();
+            this.processSFX();
             this.processVideo();
             // TODO: Optimize rendering by only rendering if there are changes
             rootObjects.rootScene.renderNode(interpreter, [0, 0], 0, 1, this.draw2D);
@@ -274,6 +275,24 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
             this.audioPosition = position;
             rootObjects.audio.setPosition(position);
             this.isDirty = true;
+        }
+    }
+
+    private processSFX() {
+        for (let i = 0; i < rootObjects.sfx.length; i++) {
+            const sfx = rootObjects.sfx[i];
+            if (!sfx) {
+                continue;
+            }
+            const sfxId = Atomics.load(BrsDevice.sharedArray, DataType.WAV + i);
+            if (sfxId >= 0 && sfxId === sfx.getAudioId() && sfx.getState() !== "playing") {
+                sfx.setState(MediaEvent.START_PLAY);
+                this.isDirty = true;
+            } else if (sfx.getState() !== "stopped") {
+                sfx.setState(MediaEvent.FINISHED);
+                rootObjects.sfx[i] = undefined;
+                this.isDirty = true;
+            }
         }
     }
 
