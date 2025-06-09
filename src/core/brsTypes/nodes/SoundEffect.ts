@@ -1,6 +1,6 @@
 import { RoSGNode } from "../components/RoSGNode";
 import { FieldKind, FieldModel } from "./Field";
-import { AAMember, BrsType, isBrsString, BrsString, isBrsNumber, BrsInvalid, rootObjects } from "..";
+import { AAMember, BrsType, isBrsString, BrsString, isBrsNumber, BrsInvalid, rootObjects, jsValueOf } from "..";
 import { BrsDevice } from "../../device/BrsDevice";
 import { MediaEvent } from "../../common";
 
@@ -51,14 +51,8 @@ export class SoundEffect extends RoSGNode {
             }
             const uri = value.getValue().toLowerCase();
             this.setUri(uri);
-        } else if (fieldName === "volume" && isBrsNumber(value)) {
-            const volume = value.getValue() as number;
-            if (volume < 0 || volume > 100) {
-                if (BrsDevice.isDevMode) {
-                    BrsDevice.stderr.write(`warning,Volume must be between 0 and 100, received: ${volume}`);
-                }
-                return BrsInvalid.Instance;
-            }
+        } else if (fieldName === "volume" && isBrsNumber(value) && (jsValueOf(value) < 0 || jsValueOf(value) > 100)) {
+            return BrsInvalid.Instance;
         }
         return super.set(index, value, alwaysNotify, kind);
     }
