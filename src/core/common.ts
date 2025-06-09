@@ -433,6 +433,9 @@ export enum BufferType {
 // Default Roku Sounds
 export const DefaultSounds = ["select", "navsingle", "navmulti", "deadend"];
 
+// Maximum number of simultaneous sound streams
+export const MaxSoundStreams = 4;
+
 // Media Files Extensions
 export const AudioExt = new Set<string>(["wav", "mp2", "mp3", "m4a", "aac", "ogg", "oga", "ac3", "wma", "flac"]);
 
