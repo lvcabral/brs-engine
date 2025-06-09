@@ -373,8 +373,8 @@ export class Field {
             return oldValue.getValue() === newValue.getValue();
         } else if (isBrsBoolean(oldValue) && isBrsBoolean(newValue)) {
             return oldValue.toBoolean() === newValue.toBoolean();
-        } else if (oldValue instanceof BrsComponent && newValue instanceof BrsComponent) {
-            return oldValue === newValue;
+        } else if (oldValue instanceof RoSGNode && newValue instanceof RoSGNode) {
+            return oldValue === newValue && !newValue.changed;
         } else {
             return oldValue.equalTo(newValue).toBoolean();
         }
