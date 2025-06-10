@@ -17,7 +17,7 @@ There are several features from the **BrightScript** language and components tha
     * Grids and list nodes based on `ArrayGrid`: `LabelList`, `CheckList`, `RadioButtonList`, `MarkupList` and `MarkupGrid`
     * Dialog related nodes: `Dialog`, `KeyboardDialog`, `StandardDialog`, `StandardProgressDialog`, `StdDlgProgressItem`, `StdDlgContentArea` and `StdDlgTitleArea`
     * Media related nodes: `Audio`, `SoundEffect` and `Video`
-    * Other supported nodes: `Button`, `ButtonGroup`, `BusySpinner`, `Overhang`, `Keyboard`, `MiniKeyboard` and `TextEditBox`
+    * Other supported nodes: `Button`, `ButtonGroup`, `BusySpinner`, `Overhang`, `Keyboard`, `MiniKeyboard`, `TextEditBox` and `ChannelStore`
   * All other nodes are either mocked or not implemented yet, and if used will be created as a plain `Node`.
 * The following components are also not implemented yet:
   * Text to Speech components: `roAudioGuide`, `roMicrophone` and `roTextToSpeech`
@@ -57,7 +57,7 @@ There are several features from the **BrightScript** language and components tha
 
 * RAF (Roku Ads Framework) library with that exposes `Roku_Ads` is mocked with the most common methods available returning static values.
 * RED (Roku Event Dispatcher) and Google IMA3 libraries are also mocked.
-* Channel Store components (`roChannelStore` and `roChannelStoreEvent`) are mocked with support for the `fakeServer()` feature.
+* Channel Store components (`ChannelStore`, `roChannelStore` and `roChannelStoreEvent`) are mocked with support for the `fakeServer()` feature.
 * The `roStreamSocket` and `roDataGramSocket` components are mocked, and were only implemented to prevent crash on apps that use those.
 * Several components have their methods and events mocked, they return constant values to prevent crash. Those are mostly related to device behaviors that are not possible to replicate in a browser environment or simply not applicable to the engine.
 
