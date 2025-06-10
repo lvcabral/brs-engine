@@ -70,62 +70,44 @@ export class ChannelStore extends RoSGNode {
                     this.channelStore.setDeltaOrder(delta.getValue(), jsValueOf(qty));
                 }
             }
-        } else if (fieldName === "command" && isBrsString(value) && value.getValue() !== "") {
-            const result = new ContentNode();
-            const fakeServer = this.getFieldValueJS("fakeServer") as boolean;
-            const command = value.getValue().toLowerCase();
-            switch (command) {
-                case "getuserdata":
-                    if (fakeServer) {
-                        result.setFieldValue("email", new BrsString("johm.doe@email.com"));
-                        result.setFieldValue("firstName", new BrsString("John"));
-                        result.setFieldValue("lastName", new BrsString("Doe"));
-                        result.setFieldValue("gender", new BrsString("Male"));
-                        result.setFieldValue("birth", new BrsString("1970-01"));
-                        result.setFieldValue("phone", BrsInvalid.Instance);
-                    }
-                    super.set(new BrsString("userData"), result);
-                    break;
-                case "getuserregiondata":
-                    if (fakeServer) {
-                        result.setFieldValue("state", new BrsString("CA"));
-                        result.setFieldValue("zip", new BrsString("90210"));
-                        result.setFieldValue("country", new BrsString("USA"));
-                    }
-                    super.set(new BrsString("userRegionData"), result);
-                    break;
-                case "getcatalog":
-                case "getstorecatalog":
-                    this.setStoreData("GetCatalog", command === "getcatalog" ? "catalog" : "storeCatalog");
-                    break;
-                case "getpurchases":
-                case "getallpurchases":
-                    this.setStoreData("GetPurchases", "purchases");
-                    break;
-                case "doorder":
-                    const status = { code: -3, message: "Invalid Order" };
-                    const order = this.channelStore.placeOrder(status);
-                    result.setFieldValue("status", new Int32(status.code));
-                    result.setFieldValue("message", new BrsString(status.message));
-                    order.forEach((item) => {
-                        result.appendChildToParent(toContentNode(item));
-                    });
-                    super.set(new BrsString("orderStatus"), result);
-                    break;
-                case "getdeviceattestationtoken":
-                    result.setFieldValue("status", new Int32(1));
-                    result.setFieldValue("nonce", this.getFieldValue("nonce"));
-                    result.setFieldValue("token", this.channelStore.getAttestationToken());
-                    super.set(new BrsString("deviceAttestationToken"), result);
-                    break;
-                default:
-                    BrsDevice.stderr.write(`warning,[ChannelStore] Invalid or unhandled 'command': ${command}`);
-                    break;
-            }
         } else if (fieldName === "fakeServer".toLowerCase() && isBrsBoolean(value)) {
             this.channelStore.setFakeServer(value.toBoolean());
         }
-        return super.set(index, value, alwaysNotify, kind);
+        super.set(index, value, alwaysNotify, kind);
+        if (fieldName === "command" && isBrsString(value) && value.getValue() !== "") {
+            this.handleCommand(value.getValue().toLowerCase());
+        }
+        return BrsInvalid.Instance;
+    }
+
+    private handleCommand(command: string) {
+        switch (command) {
+            case "getuserdata":
+            case "getuserregiondata":
+                this.setUserData(command, command === "getuserdata" ? "userData" : "userRegionData");
+                break;
+            case "getcatalog":
+            case "getstorecatalog":
+                this.setStoreData("GetCatalog", command === "getcatalog" ? "catalog" : "storeCatalog");
+                break;
+            case "getpurchases":
+            case "getallpurchases":
+                this.setStoreData("GetPurchases", "purchases");
+                break;
+            case "doorder":
+                this.doOrder();
+                break;
+            case "getdeviceattestationtoken":
+                const result = new ContentNode();
+                result.setFieldValue("status", new Int32(1));
+                result.setFieldValue("nonce", this.getFieldValue("nonce"));
+                result.setFieldValue("token", this.channelStore.getAttestationToken());
+                super.set(new BrsString("deviceAttestationToken"), result);
+                break;
+            default:
+                BrsDevice.stderr.write(`warning,[ChannelStore] Invalid or unhandled 'command': ${command}`);
+                break;
+        }
     }
 
     private setStoreData(command: string, field: string) {
@@ -138,5 +120,39 @@ export class ChannelStore extends RoSGNode {
             result.appendChildToParent(toContentNode(item));
         });
         super.set(new BrsString(field), result);
+    }
+
+    private setUserData(command: string, field: string) {
+        const result = new ContentNode();
+        const fakeServer = this.getFieldValueJS("fakeServer") as boolean;
+        if (!fakeServer) {
+            super.set(new BrsString(field), BrsInvalid.Instance);
+            return;
+        }
+        if (command === "getuserdata") {
+            result.setFieldValue("email", new BrsString("johm.doe@email.com"));
+            result.setFieldValue("firstName", new BrsString("John"));
+            result.setFieldValue("lastName", new BrsString("Doe"));
+            result.setFieldValue("gender", new BrsString("Male"));
+            result.setFieldValue("birth", new BrsString("1970-01"));
+            result.setFieldValue("phone", BrsInvalid.Instance);
+        } else if (fakeServer && command === "getuserregiondata") {
+            result.setFieldValue("state", new BrsString("CA"));
+            result.setFieldValue("zip", new BrsString("90210"));
+            result.setFieldValue("country", new BrsString("USA"));
+        }
+        super.set(new BrsString(field), result);
+    }
+
+    private doOrder() {
+        const result = new ContentNode();
+        const status = { code: -3, message: "Invalid Order" };
+        const order = this.channelStore.placeOrder(status);
+        result.setFieldValue("status", new Int32(status.code));
+        result.setFieldValue("message", new BrsString(status.message));
+        order.forEach((item) => {
+            result.appendChildToParent(toContentNode(item));
+        });
+        super.set(new BrsString("orderStatus"), result);
     }
 }
