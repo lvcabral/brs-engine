@@ -91,7 +91,7 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
     placeOrder(status: { code: number; message: string }) {
         let order: RoAssociativeArray[] = [];
         status.code = 1;
-        status.message = "Order Received";
+        status.message = "Order Succeeded";
         const catalog = this.getFakeProductData("GetCatalog");
         for (let item of this.order) {
             if (!this.isValidProductOrder(catalog, item)) {

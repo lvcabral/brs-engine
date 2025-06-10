@@ -281,6 +281,10 @@ export class BrsDevice {
         return -1;
     }
 
+    /**
+     * Method to get the current time in the Roku beacon format
+     * @returns a string with the current date/time
+     */
     static getTime() {
         const now = new Date();
         if (this.clockFormat === "12h") {

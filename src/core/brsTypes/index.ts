@@ -45,6 +45,7 @@ import { Field } from "./nodes/Field";
 import { ComponentDefinition } from "../scenegraph";
 import { getNodeType, SGNodeFactory } from "../scenegraph/SGNodeFactory";
 import { BrsObjects } from "./components/BrsObjects";
+import { ContentNode } from "./nodes/ContentNode";
 
 export * from "./BrsType";
 export * from "./Int32";
@@ -164,6 +165,7 @@ export * from "./nodes/StdDlgTitleArea";
 export * from "./nodes/StdDlgProgressItem";
 export * from "./nodes/BusySpinner";
 export * from "./nodes/RSGPalette";
+export * from "./nodes/ChannelStore";
 export * from "./Boxing";
 export * from "./Callable";
 export * from "./Coercion";
@@ -534,6 +536,36 @@ export function fromAssociativeArray(associativeArray: RoAssociativeArray): Flex
         } else {
             result[key] = jsValueOf(value);
         }
+    });
+
+    return result;
+}
+
+/**
+ * Converts a roAssociativeArray to a ContentNode component
+ * @param associativeArray The RoAssociativeArray to convert.
+ * @returns A ContentNode object with the converted fields.
+ */
+export function toContentNode(associativeArray: RoAssociativeArray): ContentNode {
+    const result: ContentNode = new ContentNode();
+
+    associativeArray.elements.forEach((value: BrsType, key: string) => {
+        result.setFieldValue(key, value);
+    });
+
+    return result;
+}
+
+/**
+ * Converts a ContentNode component into a roAssociativeArray
+ * @param contentNode The content node to be converted
+ * @returns An associative array with the converted data
+ */
+export function fromContentNode(contentNode: ContentNode): RoAssociativeArray {
+    const result: RoAssociativeArray = new RoAssociativeArray([], true);
+
+    contentNode.getNodeFields().forEach((value: Field, key: string) => {
+        result.set(new BrsString(key), value.getValue(false));
     });
 
     return result;
