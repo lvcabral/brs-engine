@@ -14,7 +14,7 @@ import { BrsDevice } from "../../device/BrsDevice";
 export class RoChannelStore extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
     private readonly id: number;
-    private order: RoAssociativeArray[];
+    private readonly order: RoAssociativeArray[];
     private orderInfo: RoAssociativeArray | BrsInvalid;
     private credData: string;
     private fakeServerEnabled: boolean;
@@ -54,6 +54,76 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
                 getPortIface.getMessagePort,
             ],
         });
+    }
+
+    setFakeServer(enable: boolean) {
+        this.fakeServerEnabled = enable;
+    }
+
+    setNewOrder(order: RoAssociativeArray[]) {
+        this.order.length = 0;
+        if (order.length > 0) this.order.push(...order);
+    }
+
+    setDeltaOrder(codeValue: string, qtyValue: number) {
+        for (let item of this.order) {
+            const code = item.get(new BrsString("code"));
+            const qty = item.get(new BrsString("qty"));
+            if (code instanceof BrsString && code.value === codeValue && qty instanceof Int32) {
+                item.set(new BrsString("qty"), new Int32(qty.getValue() + qtyValue));
+                return;
+            }
+        }
+        // Add new item to order if not already in the cart
+        this.order.push(toAssociativeArray({ code: codeValue, qty: qtyValue }));
+    }
+
+    getProductData(type: string, status: { code: number; message: string }) {
+        let catalog: RoAssociativeArray[] = [];
+        if (this.fakeServerEnabled) {
+            catalog = this.getFakeProductData(type);
+            status.code = 1;
+            status.message = "Items Received";
+        }
+        return catalog;
+    }
+
+    placeOrder(status: { code: number; message: string }) {
+        let order: RoAssociativeArray[] = [];
+        status.code = 1;
+        status.message = "Order Received";
+        const catalog = this.getFakeProductData("GetCatalog");
+        for (let item of this.order) {
+            if (!this.isValidProductOrder(catalog, item)) {
+                status.code = -3;
+                status.message = "Invalid Product Order";
+                break;
+            }
+        }
+        if (status.code === 1) {
+            const orderData = this.getFakeOrderData("PlaceOrder");
+            const checkId = this.getFakeOrderData("CheckOrder").id;
+            if (orderData.id !== checkId) {
+                status.code = -3;
+                status.message = "Order Mismatch";
+            }
+            if (orderData.order instanceof Array) {
+                order = orderData.order.filter((item) => item instanceof RoAssociativeArray);
+            }
+        }
+        return order;
+    }
+
+    getAttestationToken() {
+        // Sample JWT token from Roku documentation
+        const sampleJwt = `eyJ4NXUiOiJodHRwczovL2V4YW1wbGUucm9rdS5jb20vc2FtcGxlY2VydCIsInR5cCI6IkpXVCIsImFsZyI6IlJTMjU2In0.\
+eyJuYmYiOjE2NTYzNzQyNzQsIngtcm9rdS1hdHRlc3RhdGlvbi1kYXRhIjp7Im5vbmNlIjoiNUUwNjkyRTBBMzg5RjRGNiIsImNoYW5uZWxJZCI6Im\
+RldiIsImRldmVsb3BlcklkIjoiY2FhNzNmYmI1ZTc1YTQ2YTRiNjExNGRlNTFhNWFkYTdkNjE2ZTJlZCIsInRpbWVzdGFtcE1zIjoxNjU2Mzc3ODcz\
+OTkwfSwiaXNzIjoidXJuOnJva3U6Y2xvdWQtc2VydmljZXM6ZGV2aWNlLWF0dGVzdGF0aW9uIiwiZXhwIjoxNjU2NDY0Mjc0fQ.nywDvSUys27oeaQ\
+Z3yXwNBfOnXbO-TUDuekOPZYjSssfZhNhWwRXvPLbJKHcNMR5Z0vFOQLVDFeqEVGauIMxMEke5UFLuCRxhr3ayBJJPt_BPfrEFbAvYjFEGdKkxJqYU\
+huFE38R8lU2k7dhO0iFxDw1Qq7W4w8_7CjmDy4YFf7IfyhV7Vf2kGiOx5C94Niw5N2td3s21F3z77Rq_bofQ51DOKIwo_cDVuvPQnDyxG-CNEydZKC\
+ZZwGPYCKEHMPrIOOXJ-S9ZjArgaEpBUpMXWJibFxnkpVUVzbC22GEaqz_SjOJXFMQU7TaCKkDeCYVKylgKwCvbvHRDlgogf7kq`;
+        return new BrsString(sampleJwt);
     }
 
     toString(parent?: BrsType): string {
@@ -205,12 +275,8 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter) => {
             if (this.port) {
-                let catalog: RoAssociativeArray[] = [];
-                let status = { code: -4, message: "Empty List" };
-                if (this.fakeServerEnabled) {
-                    catalog = this.getFakeProductData("GetCatalog");
-                    status = { code: 1, message: "Items Received" };
-                }
+                const status = { code: -4, message: "Empty List" };
+                const catalog = this.getProductData("GetCatalog", status);
                 this.port.pushMessage(new RoChannelStoreEvent(this.id, catalog, status));
             }
             return BrsInvalid.Instance;
@@ -225,12 +291,8 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter) => {
             if (this.port) {
-                let catalog: RoAssociativeArray[] = [];
-                let status = { code: -4, message: "Empty List" };
-                if (this.fakeServerEnabled) {
-                    catalog = this.getFakeProductData("GetCatalog");
-                    status = { code: 1, message: "Items Received" };
-                }
+                const status = { code: -4, message: "Empty List" };
+                const catalog = this.getProductData("GetCatalog", status);
                 this.port.pushMessage(new RoChannelStoreEvent(this.id, catalog, status));
             }
             return BrsInvalid.Instance;
@@ -245,12 +307,8 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter) => {
             if (this.port) {
-                let purchases: RoAssociativeArray[] = [];
-                let status = { code: -4, message: "Empty List" };
-                if (this.fakeServerEnabled) {
-                    purchases = this.getFakeProductData("GetPurchases");
-                    status = { code: 1, message: "Items Received" };
-                }
+                const status = { code: -4, message: "Empty List" };
+                const purchases = this.getProductData("GetPurchases", status);
                 this.port.pushMessage(new RoChannelStoreEvent(this.id, purchases, status));
             }
             return BrsInvalid.Instance;
@@ -265,12 +323,8 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter) => {
             if (this.port) {
-                let purchases: RoAssociativeArray[] = [];
-                let status = { code: -4, message: "Empty List" };
-                if (this.fakeServerEnabled) {
-                    purchases = this.getFakeProductData("GetPurchases");
-                    status = { code: 1, message: "Items Received" };
-                }
+                const status = { code: -4, message: "Empty List" };
+                const purchases = this.getProductData("GetPurchases", status);
                 this.port.pushMessage(new RoChannelStoreEvent(this.id, purchases, status));
             }
             return BrsInvalid.Instance;
@@ -288,7 +342,7 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, order: BrsComponent, orderInfo: RoAssociativeArray | BrsInvalid) => {
             if (order instanceof RoList || order instanceof RoArray) {
-                this.order = order.getElements().filter((item) => item instanceof RoAssociativeArray);
+                this.setNewOrder(order.getElements().filter((item) => item instanceof RoAssociativeArray));
                 if (this.order.length > 0 && orderInfo instanceof RoAssociativeArray) {
                     this.orderInfo = orderInfo;
                 } else {
@@ -306,7 +360,7 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter) => {
-            this.order = [];
+            this.order.length = 0;
             this.orderInfo = BrsInvalid.Instance;
             return BrsInvalid.Instance;
         },
@@ -319,21 +373,7 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter, code: BrsString, qty: Int32) => {
-            const codeValue = code.value;
-            const qtyValue = qty.getValue();
-            let found = false;
-            for (let item of this.order) {
-                const code = item.get(new BrsString("code"));
-                const qty = item.get(new BrsString("qty"));
-                if (code instanceof BrsString && code.value === codeValue && qty instanceof Int32) {
-                    item.set(new BrsString("qty"), new Int32(qty.getValue() + qtyValue));
-                    found = true;
-                    break;
-                }
-            }
-            if (!found) {
-                this.order.push(toAssociativeArray({ code: codeValue, qty: qtyValue }));
-            }
+            this.setDeltaOrder(code.value, qty.getValue());
             return new Int32(this.order.length);
         },
     });
@@ -360,31 +400,11 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
                 return BrsBoolean.False;
             }
             const status = { code: -3, message: "Invalid Order" };
-            let order: RoAssociativeArray[] = [];
             if (!this.fakeServerEnabled || this.order.length === 0) {
-                this.port.pushMessage(new RoChannelStoreEvent(this.id, order, status));
+                this.port.pushMessage(new RoChannelStoreEvent(this.id, [], status));
                 return BrsBoolean.False;
             }
-            status.code = 1;
-            status.message = "Order Received";
-            const catalog = this.getFakeProductData("GetCatalog");
-            for (let item of this.order) {
-                if (!this.isValidProductOrder(catalog, item)) {
-                    status.code = -3;
-                    break;
-                }
-            }
-            if (status.code === 1) {
-                const orderData = this.getFakeOrderData("PlaceOrder");
-                const checkId = this.getFakeOrderData("CheckOrder").id;
-                if (orderData.id !== checkId) {
-                    status.code = -3;
-                    status.message = "Order Mismatch";
-                }
-                if (orderData.order instanceof Array) {
-                    order = orderData.order.filter((item) => item instanceof RoAssociativeArray);
-                }
-            }
+            const order = this.placeOrder(status);
             this.port.pushMessage(new RoChannelStoreEvent(this.id, order, status));
             return BrsBoolean.from(status.code === 1);
         },
@@ -453,7 +473,7 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.Object,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_: Interpreter) => {
             let json = "";
             let status = 400;
             if (this.credData !== "") {
@@ -478,15 +498,7 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
             returns: ValueKind.String,
         },
         impl: (_: Interpreter, nonce: BrsString) => {
-            // Sample JWT token from Roku documentation
-            const sampleJwt = `eyJ4NXUiOiJodHRwczovL2V4YW1wbGUucm9rdS5jb20vc2FtcGxlY2VydCIsInR5cCI6IkpXVCIsImFsZyI6IlJTMjU2In0.\
-eyJuYmYiOjE2NTYzNzQyNzQsIngtcm9rdS1hdHRlc3RhdGlvbi1kYXRhIjp7Im5vbmNlIjoiNUUwNjkyRTBBMzg5RjRGNiIsImNoYW5uZWxJZCI6Im\
-RldiIsImRldmVsb3BlcklkIjoiY2FhNzNmYmI1ZTc1YTQ2YTRiNjExNGRlNTFhNWFkYTdkNjE2ZTJlZCIsInRpbWVzdGFtcE1zIjoxNjU2Mzc3ODcz\
-OTkwfSwiaXNzIjoidXJuOnJva3U6Y2xvdWQtc2VydmljZXM6ZGV2aWNlLWF0dGVzdGF0aW9uIiwiZXhwIjoxNjU2NDY0Mjc0fQ.nywDvSUys27oeaQ\
-Z3yXwNBfOnXbO-TUDuekOPZYjSssfZhNhWwRXvPLbJKHcNMR5Z0vFOQLVDFeqEVGauIMxMEke5UFLuCRxhr3ayBJJPt_BPfrEFbAvYjFEGdKkxJqYU\
-huFE38R8lU2k7dhO0iFxDw1Qq7W4w8_7CjmDy4YFf7IfyhV7Vf2kGiOx5C94Niw5N2td3s21F3z77Rq_bofQ51DOKIwo_cDVuvPQnDyxG-CNEydZKC\
-ZZwGPYCKEHMPrIOOXJ-S9ZjArgaEpBUpMXWJibFxnkpVUVzbC22GEaqz_SjOJXFMQU7TaCKkDeCYVKylgKwCvbvHRDlgogf7kq`;
-            return new BrsString(sampleJwt);
+            return this.getAttestationToken();
         },
     });
 
