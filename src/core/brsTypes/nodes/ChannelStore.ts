@@ -97,13 +97,14 @@ export class ChannelStore extends RoSGNode {
             case "doorder":
                 this.doOrder();
                 break;
-            case "getdeviceattestationtoken":
+            case "getdeviceattestationtoken": {
                 const result = new ContentNode();
                 result.setFieldValue("status", new Int32(1));
                 result.setFieldValue("nonce", this.getFieldValue("nonce"));
                 result.setFieldValue("token", this.channelStore.getAttestationToken());
                 super.set(new BrsString("deviceAttestationToken"), result);
                 break;
+            }
             default:
                 BrsDevice.stderr.write(`warning,[ChannelStore] Invalid or unhandled 'command': ${command}`);
                 break;
