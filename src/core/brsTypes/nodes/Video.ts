@@ -404,9 +404,9 @@ export class Video extends Group {
             tracks.forEach((track) => {
                 this.subtitleTracks.push(track);
                 const item = {
-                    Track: track.id,
+                    TrackName: track.id,
                     Language: track.lang,
-                    Name: track.name,
+                    Description: track.name,
                     HasAccessibilityDescription: false,
                     HasAccessibilityCaption: false,
                     HasAccessibilitySign: false,
