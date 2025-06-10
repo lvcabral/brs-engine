@@ -1,5 +1,35 @@
 # Changelog
 
+<a name="v1.8.9"></a>
+
+## [v1.8.9 - Improvements on `Audio`, `Video` and `Fonts`](https://github.com/lvcabral/brs-engine/releases/tag/v1.8.9) - 10 June 2025
+
+This release introduces a few missing methods in `roDeviceInfo` and a new method to `ifStringOps`, also several enhancements on Video and Audio handling. The default font was replaced by `DejaVuSansCondensed` that is used in Roku devices for `Draw2D` text rendering.
+
+### Release Changes
+
+* Implemented new `getGraphicsFeatures()` in `roDeviceInfo` by [@lvcabral](https://github.com/lvcabral) in [#589](https://github.com/lvcabral/brs-engine/pull/589)
+* Use CORS proxy (if configured) by default by [@lvcabral](https://github.com/lvcabral) in [#594](https://github.com/lvcabral/brs-engine/pull/594)
+* Added missing `roDeviceInfo` deprecated methods and updated behavior by [@lvcabral](https://github.com/lvcabral) in [#595](https://github.com/lvcabral/brs-engine/pull/595)
+* Implemented `ifStringOps.Arg()` new method by [@lvcabral](https://github.com/lvcabral) in [#596](https://github.com/lvcabral/brs-engine/pull/596)
+* Improved event handling for `roAudioPlayer` and `roVideoPlayer` by [@lvcabral](https://github.com/lvcabral) in [#597](https://github.com/lvcabral/brs-engine/pull/597)
+* Upgraded `hls.js` and fixed video playback race conditions by [@lvcabral](https://github.com/lvcabral) in [#598](https://github.com/lvcabral/brs-engine/pull/598)
+* Prevent duplicate `requestAnimationFrame()` call when `video` is playing by [@lvcabral](https://github.com/lvcabral) in [#599](https://github.com/lvcabral/brs-engine/pull/599)
+* Improved `video` playback error handling by [@lvcabral](https://github.com/lvcabral) in [#602](https://github.com/lvcabral/brs-engine/pull/602)
+* Replaced `Asap` font by `DejaVuSansCondensed` and improved font family handling by [@lvcabral](https://github.com/lvcabral) in [#605](https://github.com/lvcabral/brs-engine/pull/605)
+* Removed redundant `platform` reference by [@lvcabral](https://github.com/lvcabral) in [#607](https://github.com/lvcabral/brs-engine/pull/607)
+* Refactored `video` media tracks handling by [@lvcabral](https://github.com/lvcabral) in [#609](https://github.com/lvcabral/brs-engine/pull/609)
+* Added support for preferred Audio locale by [@lvcabral](https://github.com/lvcabral) in [#610](https://github.com/lvcabral/brs-engine/pull/610)
+* Made `preventDefault()` to also be called on `keyUp` event by [@lvcabral](https://github.com/lvcabral) in [#611](https://github.com/lvcabral/brs-engine/pull/611)
+* Refactored API `display` module to receive `displayData` object by [@lvcabral](https://github.com/lvcabral) in [#612](https://github.com/lvcabral/brs-engine/pull/612)
+* Added new API methods `getCaptionMode` and `setCaptionMode` by [@lvcabral](https://github.com/lvcabral) in [#613](https://github.com/lvcabral/brs-engine/pull/613)
+* Added support for HLS.js event `MEDIA_ENDED` by [@lvcabral](https://github.com/lvcabral) in [#615](https://github.com/lvcabral/brs-engine/pull/615)
+* Bump webpack-dev-server from 4.15.2 to 5.2.1 by @dependabot in [#614](https://github.com/lvcabral/brs-engine/pull/614)
+* Improved handling of Sound Effect (WAV) files by [@lvcabral](https://github.com/lvcabral) in [#620](https://github.com/lvcabral/brs-engine/pull/620)
+* Refactored `roChannelStore` to be reused in `SceneGraph` by [@lvcabral](https://github.com/lvcabral) in [#624](https://github.com/lvcabral/brs-engine/pull/624)
+
+[Full Changelog][v1.8.9]
+
 <a name="v1.8.8"></a>
 
 ## [v1.8.8 - Support `flags` on `ParseJSON()` and `FormatJSON()`](https://github.com/lvcabral/brs-engine/releases/tag/v1.8.8) - 11 May 2025
@@ -1011,6 +1041,7 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
+[v1.8.9]: https://github.com/lvcabral/brs-engine/compare/v1.8.8...v1.8.9
 [v1.8.8]: https://github.com/lvcabral/brs-engine/compare/v1.8.7...v1.8.8
 [v1.8.7]: https://github.com/lvcabral/brs-engine/compare/v1.8.6...v1.8.7
 [v1.8.6]: https://github.com/lvcabral/brs-engine/compare/v1.8.5...v1.8.6
