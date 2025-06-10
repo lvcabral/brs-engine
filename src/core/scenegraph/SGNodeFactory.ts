@@ -48,6 +48,7 @@ import {
     BusySpinner,
     RSGPalette,
     SoundEffect,
+    ChannelStore,
 } from "../brsTypes";
 import { TaskData } from "../common";
 
@@ -208,6 +209,8 @@ export class SGNodeFactory {
                 return new BusySpinner([], name);
             case SGNodeType.RSGPalette:
                 return new RSGPalette([], name);
+            case SGNodeType.ChannelStore:
+                return new ChannelStore([], name);
             default:
                 if (isSGNodeType(nodeType)) {
                     // Temporarily until all node types are implemented

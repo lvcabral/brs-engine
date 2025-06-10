@@ -40,7 +40,7 @@ describe("cli", () => {
             "a2c91cd4-5f69-4ae5-98f9-12c63b69d408 NW1 Nifty Widget Number 2",
             "--  Succeeded Order ---",
             "Order:true",
-            "Status  - Order Received (code:  1)",
+            "Status  - Order Succeeded (code:  1)",
             "Source Identity Check: true",
             "TS1  1 $1.99",
             "SKUTAX  1 $0.00",
