@@ -443,8 +443,8 @@ function clearVideoTracking() {
     textTracks.length = 0;
     if (player.textTracks?.length) {
         // Disable all text tracks
-        for (let i = 0; i < player.textTracks.length; i++) {
-            player.textTracks[i].mode = "disabled";
+        for (const track of player.textTracks) {
+            track.mode = "disabled";
         }
     }
 }

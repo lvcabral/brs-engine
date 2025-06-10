@@ -304,13 +304,11 @@ function drawSubtitles(ctx: CanvasRenderingContext2D) {
     const lineHeight = fontSize * 1.2;
     let y = ctx.canvas.height * 0.9 - lineHeight / 2;
 
-    for (let i = 0; i < player.textTracks.length; i++) {
-        const track = player.textTracks[i];
+    for (const track of player.textTracks) {
         if (track.mode !== "showing" || !track.activeCues?.length) {
             continue;
         }
-        for (let j = 0; j < track.activeCues.length; j++) {
-            const cue = track.activeCues[j];
+        for (const cue of track.activeCues) {
             // Safely access cue.text if it exists (VTTCue/WebKitTextTrackCue)
             const cueText = (cue as any)?.text ?? "";
             if (!cueText) {
