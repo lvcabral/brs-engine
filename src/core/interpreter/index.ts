@@ -423,7 +423,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
         if (this.environment.has(statement.name, [Scope.Module])) {
             const defLocation = this.environment.getDefinedLocation(statement.name.text);
-            if (defLocation) {
+            if (defLocation && !Location.equalTo(defLocation, statement.location)) {
                 this.addError(
                     new BrsError(
                         `Attempting to declare function '${statement.name.text}' at ${statement.location.file}, but ` +
