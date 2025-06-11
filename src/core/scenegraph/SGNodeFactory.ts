@@ -102,7 +102,8 @@ export enum SGNodeType {
 }
 
 export function isSGNodeType(value: string): value is SGNodeType {
-    return Object.values(SGNodeType).includes(value as SGNodeType);
+    const lowerValue = value.toLowerCase();
+    return Object.values(SGNodeType).some(enumVal => enumVal.toLowerCase() === lowerValue);
 }
 
 export class SGNodeFactory {
@@ -129,87 +130,87 @@ export class SGNodeFactory {
         if (additionalCtor) {
             return additionalCtor(name);
         }
-        switch (nodeType) {
-            case SGNodeType.Node:
+        switch (nodeType.toLowerCase()) {
+            case SGNodeType.Node.toLowerCase():
                 return new RoSGNode([], name);
-            case SGNodeType.Group:
-            case SGNodeType.ScrollableText:
+            case SGNodeType.Group.toLowerCase():
+            case SGNodeType.ScrollableText.toLowerCase():
                 return new Group([], name);
-            case SGNodeType.LayoutGroup:
+            case SGNodeType.LayoutGroup.toLowerCase():
                 return new LayoutGroup([], name);
-            case SGNodeType.Panel:
-            case SGNodeType.ListPanel:
-            case SGNodeType.GridPanel:
+            case SGNodeType.Panel.toLowerCase():
+            case SGNodeType.ListPanel.toLowerCase():
+            case SGNodeType.GridPanel.toLowerCase():
                 return new Panel([], name);
-            case SGNodeType.Button:
+            case SGNodeType.Button.toLowerCase():
                 return new Button([], name);
-            case SGNodeType.ButtonGroup:
+            case SGNodeType.ButtonGroup.toLowerCase():
                 return new ButtonGroup([], name);
-            case SGNodeType.KeyboardDialog:
+            case SGNodeType.KeyboardDialog.toLowerCase():
                 return new KeyboardDialog([], name);
-            case SGNodeType.Dialog:
+            case SGNodeType.Dialog.toLowerCase():
                 return new Dialog([], name);
-            case SGNodeType.Rectangle:
+            case SGNodeType.Rectangle.toLowerCase():
                 return new Rectangle([], name);
-            case SGNodeType.Label:
+            case SGNodeType.Label.toLowerCase():
                 return new Label([], name);
-            case SGNodeType.ScrollingLabel:
+            case SGNodeType.ScrollingLabel.toLowerCase():
                 return new ScrollingLabel([], name);
-            case SGNodeType.Font:
+            case SGNodeType.Font.toLowerCase():
                 return new Font([], name);
-            case SGNodeType.Poster:
+            case SGNodeType.Poster.toLowerCase():
                 return new Poster([], name);
-            case SGNodeType.ArrayGrid:
+            case SGNodeType.ArrayGrid.toLowerCase():
                 return new ArrayGrid([], name);
-            case SGNodeType.LabelList:
+            case SGNodeType.LabelList.toLowerCase():
                 return new LabelList([], name);
-            case SGNodeType.CheckList:
+            case SGNodeType.CheckList.toLowerCase():
                 return new CheckList([], name);
-            case SGNodeType.RadioButtonList:
+            case SGNodeType.RadioButtonList.toLowerCase():
                 return new RadioButtonList([], name);
-            case SGNodeType.RowList:
+            case SGNodeType.RowList.toLowerCase():
                 return new RowList([], name);
-            case SGNodeType.MarkupList:
+            case SGNodeType.MarkupList.toLowerCase():
                 return new MarkupList([], name);
-            case SGNodeType.MarkupGrid:
+            case SGNodeType.MarkupGrid.toLowerCase():
                 return new MarkupGrid([], name);
-            case SGNodeType.ContentNode:
+            case SGNodeType.ContentNode.toLowerCase():
                 return new ContentNode(name);
-            case SGNodeType.Task:
+            case SGNodeType.Task.toLowerCase():
                 return new Task([], name);
-            case SGNodeType.Timer:
+            case SGNodeType.Timer.toLowerCase():
                 return new Timer([], name);
-            case SGNodeType.Scene:
+            case SGNodeType.Scene.toLowerCase():
                 return new Scene([], name);
-            case SGNodeType.Audio:
+            case SGNodeType.Audio.toLowerCase():
                 return new Audio([], name);
-            case SGNodeType.SoundEffect:
+            case SGNodeType.SoundEffect.toLowerCase():
                 return new SoundEffect([], name);
-            case SGNodeType.Video:
+            case SGNodeType.Video.toLowerCase():
                 return new Video([], name);
-            case SGNodeType.Keyboard:
+            case SGNodeType.Keyboard.toLowerCase():
                 return new Keyboard([], name);
-            case SGNodeType.MiniKeyboard:
+            case SGNodeType.MiniKeyboard.toLowerCase():
                 return new MiniKeyboard([], name);
-            case SGNodeType.TextEditBox:
+            case SGNodeType.TextEditBox.toLowerCase():
                 return new TextEditBox([], name);
-            case SGNodeType.Overhang:
+            case SGNodeType.Overhang.toLowerCase():
                 return new Overhang([], name);
-            case SGNodeType.StandardDialog:
+            case SGNodeType.StandardDialog.toLowerCase():
                 return new StandardDialog([], name);
-            case SGNodeType.StandardProgressDialog:
+            case SGNodeType.StandardProgressDialog.toLowerCase():
                 return new StandardProgressDialog([], name);
-            case SGNodeType.StdDlgContentArea:
+            case SGNodeType.StdDlgContentArea.toLowerCase():
                 return new StdDlgContentArea([], name);
-            case SGNodeType.StdDlgTitleArea:
+            case SGNodeType.StdDlgTitleArea.toLowerCase():
                 return new StdDlgTitleArea([], name);
-            case SGNodeType.StdDlgProgressItem:
+            case SGNodeType.StdDlgProgressItem.toLowerCase():
                 return new StdDlgProgressItem([], name);
-            case SGNodeType.BusySpinner:
+            case SGNodeType.BusySpinner.toLowerCase():
                 return new BusySpinner([], name);
-            case SGNodeType.RSGPalette:
+            case SGNodeType.RSGPalette.toLowerCase():
                 return new RSGPalette([], name);
-            case SGNodeType.ChannelStore:
+            case SGNodeType.ChannelStore.toLowerCase():
                 return new ChannelStore([], name);
             default:
                 if (isSGNodeType(nodeType)) {
@@ -232,7 +233,7 @@ export class SGNodeFactory {
      * @returns {boolean} true if that type is resolvable/constructable, false otherwise
      */
     public static canResolveNodeType(nodeType: SGNodeType | string): boolean {
-        return this.additionalNodes.has(nodeType?.toLowerCase()) || nodeType in SGNodeType;
+        return this.additionalNodes.has(nodeType?.toLowerCase()) || isSGNodeType(nodeType);
     }
 }
 
