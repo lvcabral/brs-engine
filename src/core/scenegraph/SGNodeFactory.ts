@@ -103,7 +103,7 @@ export enum SGNodeType {
 
 export function isSGNodeType(value: string): value is SGNodeType {
     const lowerValue = value.toLowerCase();
-    return Object.values(SGNodeType).some(enumVal => enumVal.toLowerCase() === lowerValue);
+    return Object.values(SGNodeType).some((enumVal) => enumVal.toLowerCase() === lowerValue);
 }
 
 export class SGNodeFactory {
