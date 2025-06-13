@@ -294,7 +294,7 @@ export class Group extends RoSGNode {
         ellipsis: string = "...",
         index: number = 0
     ) {
-        const drawFont = font.createDrawFont(); // TODO: Cache this font
+        const drawFont = font.createDrawFont();
         let text: string;
         let measured: MeasuredText;
 

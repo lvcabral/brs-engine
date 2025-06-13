@@ -1,4 +1,15 @@
-import { BrsComponent, BrsNumber, BrsType, Double, Font, Int64, isBrsNumber, isStringComp, RoArray } from ".";
+import {
+    BrsComponent,
+    BrsNumber,
+    BrsType,
+    brsValueOf,
+    Double,
+    Font,
+    Int64,
+    isBrsNumber,
+    isStringComp,
+    RoArray,
+} from ".";
 import { Boxable } from "./Boxing";
 import { RoString } from "./components/RoString";
 import { Int32 } from "./Int32";
@@ -195,20 +206,11 @@ export function getBrsValueFromFieldType(type: string, value?: string): BrsType 
         case "array":
         case "vector2d":
         case "rect2d":
+        case "boolarray":
         case "floatarray":
         case "intarray":
         case "timearray":
-            returnValue = BrsInvalid.Instance;
-            if (value?.trim().startsWith("[") && value?.trim().endsWith("]")) {
-                const arrayItems = value.trim().slice(1, -1).trim();
-                if (arrayItems === "") {
-                    returnValue = new RoArray([]);
-                    break;
-                }
-                const elements = arrayItems.split(",").map((el) => el.trim());
-                const parsedValue = elements.map(Number);
-                returnValue = new RoArray(parsedValue.map((v) => new Float(isNaN(v) ? 0 : v)));
-            }
+            returnValue = parseArray(value ?? "");
             break;
         case "roassociativearray":
         case "assocarray":
@@ -482,5 +484,26 @@ export class Uninitialized implements BrsValue, Comparable {
 
     toString(parent?: BrsType) {
         return "<UNINITIALIZED>";
+    }
+}
+
+function parseArray(value: string): RoArray | BrsInvalid {
+    if (!value?.trim().startsWith("[") || !value?.trim().endsWith("]")) {
+        return BrsInvalid.Instance;
+    }
+    try {
+        // Use JSON.parse to handle nested arrays
+        const parsed = JSON.parse(value);
+        if (!Array.isArray(parsed)) {
+            return BrsInvalid.Instance;
+        }
+        return new RoArray(
+            parsed.map((v) => {
+                return brsValueOf(v);
+            })
+        );
+    } catch {
+        // If JSON parsing fails, return invalid
+        return BrsInvalid.Instance;
     }
 }

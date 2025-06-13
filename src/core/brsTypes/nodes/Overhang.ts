@@ -15,7 +15,7 @@ import {
 import { Group } from "./Group";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D } from "../interfaces/IfDraw2D";
-import { BrsDevice } from "../..";
+import { BrsDevice } from "../../device/BrsDevice";
 
 export class Overhang extends Group {
     readonly defaultFields: FieldModel[] = [
