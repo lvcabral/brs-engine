@@ -11,12 +11,13 @@ export class MarkupGrid extends ArrayGrid {
         { name: "itemComponentName", type: "string", value: "" },
         { name: "drawFocusFeedbackOnTop", type: "boolean", value: "true" },
         { name: "vertFocusAnimationStyle", type: "string", value: "fixedFocusWrap" },
+        { name: "numRows", type: "integer", value: "12" },
+        { name: "numColumns", type: "integer", value: "1" },
     ];
     protected readonly focusUri = "common:/images/focus_grid.9.png";
     protected readonly marginX: number;
     protected readonly marginY: number;
     protected readonly gap: number;
-    protected wrap: boolean;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = "MarkupGrid") {
         super([], name);
@@ -34,8 +35,10 @@ export class MarkupGrid extends ArrayGrid {
         this.gap = 0;
         this.setFieldValue("focusBitmapUri", new BrsString(this.focusUri));
         this.setFieldValue("wrapDividerBitmapUri", new BrsString(this.dividerUri));
-        const style = jsValueOf(this.getFieldValue("vertFocusAnimationStyle")) as string;
+        const style = this.getFieldValueJS("vertFocusAnimationStyle") as string;
         this.wrap = style.toLowerCase() === "fixedfocuswrap";
+        this.numRows = this.getFieldValueJS("numRows") as number;
+        this.numCols = this.getFieldValueJS("numColumns") as number;
         this.hasNinePatch = true;
         this.focusField = "gridHasFocus";
     }
@@ -43,7 +46,7 @@ export class MarkupGrid extends ArrayGrid {
     protected handleUpDown(key: string) {
         let handled = false;
         let offset: number;
-        const numCols = jsValueOf(this.getFieldValue("numColumns")) as number;
+        const numCols = this.numCols;
         if (key === "up") {
             offset = -1;
         } else if (key === "down") {
@@ -117,9 +120,7 @@ export class MarkupGrid extends ArrayGrid {
             return;
         }
         const itemSize = this.getFieldValueJS("itemSize") as number[];
-        const numRows = this.getFieldValueJS("numRows") as number;
-        const numCols = this.getFieldValueJS("numColumns") as number;
-        if (itemSize[0] === 0 || itemSize[1] === 0 || numRows === 0 || numCols === 0) {
+        if (!itemSize?.[0] || !itemSize?.[1] || !this.numRows || !this.numCols) {
             return;
         }
         const itemRect = { ...rect, width: itemSize[0], height: itemSize[1] };
@@ -130,12 +131,12 @@ export class MarkupGrid extends ArrayGrid {
         const rowSpacings = this.getFieldValueJS("rowSpacings") as number[];
         this.currRow = this.updateCurrRow();
         let lastIndex = -1;
-        const displayRows = Math.min(Math.ceil(this.content.length / numCols), numRows);
+        const displayRows = Math.min(Math.ceil(this.content.length / this.numCols), this.numRows);
         let sectionIndex = 0;
-        const rowWidth = numCols * itemSize[0] + (numCols - 1) * spacing[0];
+        const rowWidth = this.numCols * itemSize[0] + (this.numCols - 1) * spacing[0];
         for (let r = 0; r < displayRows; r++) {
             const rowIndex = this.getIndex(r - this.currRow);
-            itemRect.height = rowHeights[rowIndex / numCols] ?? itemSize[1];
+            itemRect.height = rowHeights[rowIndex / this.numCols] ?? itemSize[1];
             if (!hasSections && this.wrap && rowIndex < lastIndex && r > 0) {
                 const divRect = { ...itemRect, width: rowWidth };
                 const divHeight = this.renderWrapDivider(divRect, opacity, draw2D);
@@ -147,7 +148,7 @@ export class MarkupGrid extends ArrayGrid {
                 sectionIndex++;
                 itemRect.y += divHeight + spacing[1];
             }
-            for (let c = 0; c < numCols; c++) {
+            for (let c = 0; c < this.numCols; c++) {
                 itemRect.width = columnWidths[c] ?? itemSize[0];
                 const index = rowIndex + c;
                 if (index >= this.content.length) {
@@ -166,6 +167,6 @@ export class MarkupGrid extends ArrayGrid {
                 break;
             }
         }
-        this.updateRect(rect, numCols, displayRows, itemSize);
+        this.updateRect(rect, displayRows, itemSize);
     }
 }

@@ -30,7 +30,8 @@ export class MarkupList extends ArrayGrid {
         this.setFieldValue("wrapDividerBitmapUri", new BrsString(this.dividerUri));
         const style = this.getFieldValueJS("vertFocusAnimationStyle") as string;
         this.wrap = style.toLowerCase() === "fixedfocuswrap";
-
+        this.numRows = this.getFieldValueJS("numRows") as number;
+        this.numCols = this.getFieldValueJS("numColumns") as number;
         this.hasNinePatch = true;
     }
 
@@ -45,7 +46,7 @@ export class MarkupList extends ArrayGrid {
                 return BrsInvalid.Instance;
             }
         } else if (["horizfocusanimationstyle", "numcolumns"].includes(fieldName)) {
-            // Invalid fields for LabelList
+            // Invalid fields for MarkupList
             return BrsInvalid.Instance;
         }
         return super.set(index, value, alwaysNotify, kind);
@@ -101,8 +102,7 @@ export class MarkupList extends ArrayGrid {
             return;
         }
         const itemSize = this.getFieldValueJS("itemSize") as number[];
-        const numRows = this.getFieldValueJS("numRows") as number;
-        if (itemSize[0] === 0 || itemSize[1] === 0 || numRows === 0) {
+        if (itemSize[0] === 0 || itemSize[1] === 0 || this.numRows === 0) {
             return;
         }
         const itemRect = { ...rect, width: itemSize[0], height: itemSize[1] };
@@ -112,7 +112,7 @@ export class MarkupList extends ArrayGrid {
         this.currRow = this.updateCurrRow();
         let lastIndex = -1;
         let sectionIndex = 0;
-        const displayRows = Math.min(Math.ceil(this.content.length), numRows);
+        const displayRows = Math.min(Math.ceil(this.content.length), this.numRows);
 
         const rowWidth = itemSize[0];
         for (let r = 0; r < displayRows; r++) {
@@ -142,6 +142,6 @@ export class MarkupList extends ArrayGrid {
                 break;
             }
         }
-        this.updateRect(rect, 1, displayRows, itemSize);
+        this.updateRect(rect, displayRows, itemSize);
     }
 }
