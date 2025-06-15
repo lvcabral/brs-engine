@@ -45,8 +45,10 @@ export class LabelList extends ArrayGrid {
         }
         this.setFieldValue("focusBitmapUri", new BrsString(this.focusUri));
         this.setFieldValue("focusFootprintBitmapUri", new BrsString(this.footprintUri));
-        const style = jsValueOf(this.getFieldValue("vertFocusAnimationStyle")) as string;
+        const style = this.getFieldValueJS("vertFocusAnimationStyle") as string;
         this.wrap = style.toLowerCase() === "fixedfocuswrap";
+        this.numRows = this.getFieldValueJS("numRows") as number;
+        this.numCols = this.getFieldValueJS("numColumns") as number;
         this.hasNinePatch = true;
     }
 
@@ -83,12 +85,12 @@ export class LabelList extends ArrayGrid {
         let handled = false;
         let nextIndex: number;
         if (this.wrap) {
-            const step = Math.max(1, this.getFieldValueJS("numRows") - 2);
+            const step = Math.max(1, this.numRows - 2);
             const offset = key === "rewind" ? -step : step;
             nextIndex = this.getIndex(offset);
         } else {
             nextIndex = key === "rewind" ? 0 : this.content.length - 1;
-            this.currRow = key === "rewind" ? 0 : this.getFieldValueJS("numRows") - 1;
+            this.currRow = key === "rewind" ? 0 : this.numRows - 1;
         }
         if (nextIndex !== this.focusIndex) {
             this.set(new BrsString("animateToItem"), new Int32(nextIndex));
@@ -111,8 +113,7 @@ export class LabelList extends ArrayGrid {
         const nodeFocus = rootObjects.focused === this;
         this.currRow = this.updateCurrRow();
         let lastIndex = -1;
-        const numRows = this.getFieldValueJS("numRows") as number;
-        const displayRows = Math.min(this.content.length, numRows);
+        const displayRows = Math.min(this.content.length, this.numRows);
         const itemSize = this.getFieldValueJS("itemSize") as number[];
         const itemRect = { ...rect, width: itemSize[0], height: itemSize[1] };
         let sectionIndex = displayRows + 1;
@@ -136,7 +137,7 @@ export class LabelList extends ArrayGrid {
                 break;
             }
         }
-        this.updateRect(rect, 1, displayRows, itemSize);
+        this.updateRect(rect, displayRows, itemSize);
     }
 
     protected renderItem(

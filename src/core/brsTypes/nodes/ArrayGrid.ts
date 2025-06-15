@@ -87,6 +87,8 @@ export class ArrayGrid extends Group {
     protected readonly gap: number;
     protected readonly lineHeight: number;
     protected focusIndex: number = 0;
+    protected numRows: number = 0;
+    protected numCols: number = 0;
     protected currRow: number = 0;
     protected wrap: boolean = false;
     protected lastPressHandled: string;
@@ -143,7 +145,11 @@ export class ArrayGrid extends Group {
             return BrsInvalid.Instance;
         } else if (["jumptoitem", "animatetoitem"].includes(fieldName) && isBrsNumber(value)) {
             this.setFocusedItem(value);
-        } else if (fieldName === "vertfocusanimationstyle") {
+        } else if (fieldName === "numrows" && isBrsNumber(value)) {
+            this.numRows = jsValueOf(value) as number;
+        } else if (fieldName === "numcolumns" && isBrsNumber(value)) {
+            this.numCols = jsValueOf(value) as number;
+        } else if (fieldName === "vertfocusanimationstyle" && isBrsString(value)) {
             const style = value.toString().toLowerCase();
             if (["fixedfocuswrap", "floatingfocus", "fixedfocus"].includes(style)) {
                 this.wrap = style === "fixedfocuswrap";
@@ -153,6 +159,7 @@ export class ArrayGrid extends Group {
             }
         } else if (
             fieldName === "horizfocusanimationstyle" &&
+            isBrsString(value) &&
             !["fixedfocuswrap", "floatingfocus"].includes(value.toString().toLowerCase())
         ) {
             // Invalid horizFocusAnimationStyle
@@ -161,13 +168,13 @@ export class ArrayGrid extends Group {
         super.set(index, value, alwaysNotify, kind);
         const rowFields = ["vertfocusanimationstyle", "numrows", "focusrow"];
         // Update the current row if some fields changed
-        if (rowFields.includes(index.getValue().toLowerCase())) {
+        if (rowFields.includes(fieldName)) {
             this.currRow = this.updateCurrRow();
         }
         return BrsInvalid.Instance;
     }
 
-    private setFocusedItem(value: BrsNumber) {
+    protected setFocusedItem(value: BrsNumber) {
         const newFocus = this.findContentIndex(jsValueOf(value));
         if (newFocus === -1) {
             return;
@@ -175,13 +182,13 @@ export class ArrayGrid extends Group {
         const focusedIndex = this.getFieldValueJS("itemFocused") as number;
         const nodeFocus = rootObjects.focused === this;
         this.updateItemFocus(this.focusIndex, false, nodeFocus);
+        super.set(new BrsString("itemUnfocused"), new Int32(focusedIndex));
         this.focusIndex = newFocus;
         this.updateItemFocus(this.focusIndex, true, nodeFocus);
-        super.set(new BrsString("itemUnfocused"), new Int32(focusedIndex));
         super.set(new BrsString("itemFocused"), value);
     }
 
-    private findContentIndex(index: number) {
+    protected findContentIndex(index: number) {
         if (index < 0 || index >= this.content.length) {
             return -1;
         } else if (this.metadata.length > 0) {
@@ -190,10 +197,12 @@ export class ArrayGrid extends Group {
         return index;
     }
 
-    private updateItemFocus(index: number, focus: boolean, nodeFocus: boolean) {
-        this.itemComps[index]?.set(new BrsString("itemHasFocus"), BrsBoolean.from(focus));
-        this.itemComps[index]?.set(new BrsString(this.focusField), BrsBoolean.from(nodeFocus));
-        this.itemComps[index]?.set(new BrsString("focusPercent"), new Float(focus ? 1 : 0));
+    protected updateItemFocus(index: number, focus: boolean, nodeFocus: boolean) {
+        const itemComp = this.itemComps[index];
+        if (!itemComp) return;
+        itemComp.set(new BrsString("itemHasFocus"), BrsBoolean.from(focus));
+        itemComp.set(new BrsString(this.focusField), BrsBoolean.from(nodeFocus));
+        itemComp.set(new BrsString("focusPercent"), new Float(focus ? 1 : 0));
     }
 
     handleKey(key: string, press: boolean): boolean {
@@ -375,7 +384,6 @@ export class ArrayGrid extends Group {
     }
 
     protected refreshContent() {
-        const numCols = (this.getFieldValueJS("numColumns") as number) || 1;
         this.content.length = 0;
         this.metadata.length = 0;
         const content = this.getFieldValue("content");
@@ -386,7 +394,7 @@ export class ArrayGrid extends Group {
         let itemIndex = 0;
         for (const section of sections) {
             if (section.getFieldValueJS("ContentType")?.toLowerCase() === "section") {
-                itemIndex = this.processSection(section, itemIndex, numCols);
+                itemIndex = this.processSection(section, itemIndex);
             }
         }
         if (this.content.length === 0 && sections.length > 0) {
@@ -394,8 +402,9 @@ export class ArrayGrid extends Group {
         }
     }
 
-    private processSection(section: RoSGNode, itemIndex: number, numCols: number) {
+    protected processSection(section: RoSGNode, itemIndex: number) {
         const content = section.getNodeChildren();
+        const numCols = this.numCols || 1;
         if (content.length === 0) {
             return itemIndex;
         }
@@ -437,7 +446,7 @@ export class ArrayGrid extends Group {
     }
 
     protected updateCurrRow() {
-        const numCols = (this.getFieldValueJS("numColumns") as number) || 1;
+        const numCols = this.numCols || 1;
         const focusRow = this.getFieldValueJS("focusRow") as number;
         if (!this.wrap) {
             const currentFocus = Math.floor(this.focusIndex / numCols);
@@ -455,7 +464,8 @@ export class ArrayGrid extends Group {
         return focusRow;
     }
 
-    protected updateRect(rect: Rect, numCols: number, numRows: number, itemSize: number[]) {
+    protected updateRect(rect: Rect, numRows: number, itemSize: number[]) {
+        const numCols = this.numCols || 1;
         rect.x = rect.x - (this.hasNinePatch ? this.marginX : 0);
         rect.y = rect.y - (this.hasNinePatch ? this.marginY : 0);
         rect.width = numCols * (itemSize[0] + (this.hasNinePatch ? this.marginX * 2 : 0));
@@ -464,7 +474,7 @@ export class ArrayGrid extends Group {
 
     protected getIndex(offset: number = 0, currIndex?: number) {
         currIndex = currIndex ?? this.focusIndex;
-        const numCols = (this.getFieldValueJS("numColumns") as number) || 1;
+        const numCols = this.numCols || 1;
         const focusRow = Math.floor(currIndex / numCols);
         const maxRows = Math.ceil(this.content.length / numCols);
 
