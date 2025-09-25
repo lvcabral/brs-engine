@@ -8,7 +8,7 @@
 import { enableSendKeys, initControlModule, sendInput, sendKey, subscribeControl } from "../api/control";
 import { AppData, DataType, DebugCommand, DeviceInfo, getRokuOSVersion } from "../core/common";
 import { isMainThread, parentPort, workerData } from "worker_threads";
-import { Server as SSDP } from "node-ssdp";
+import { Server as SSDP } from "@lvcabral/node-ssdp";
 import xmlbuilder from "xmlbuilder";
 import os from "node:os";
 import fs from "node:fs";
