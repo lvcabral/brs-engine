@@ -334,7 +334,7 @@ export class XMLHttpRequest {
                     } else {
                         this.status = 200;
                         this.responseText = data.toString("utf8");
-                        this.response = data as Buffer<ArrayBuffer>;;
+                        this.response = data as Buffer<ArrayBuffer>;
                         this.setState(this.DONE);
                     }
                 });
