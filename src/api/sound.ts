@@ -259,7 +259,7 @@ export function resetSounds(assets: ArrayBufferLike) {
     try {
         const commonFs = unzipSync(new Uint8Array(assets));
         DefaultSounds.forEach((sound, index) => {
-            const audioData = new Blob([commonFs[`audio/${sound}.wav`]]);
+            const audioData = new Blob([commonFs[`audio/${sound}.wav`] as BlobPart]);
             const sfx: SFX = {
                 id: index,
                 sound: new Howl({ src: [URL.createObjectURL(audioData)], format: "wav", preload: true }),
@@ -267,7 +267,7 @@ export function resetSounds(assets: ArrayBufferLike) {
             sfxMap.set(sound, sfx);
         });
         if (homeSfx === undefined) {
-            const audioData = new Blob([commonFs["audio/select.wav"]]);
+            const audioData = new Blob([commonFs["audio/select.wav"] as BlobPart]);
             homeSfx = new Howl({ src: [URL.createObjectURL(audioData)], format: "wav", preload: true });
             homeSfx.on("play", function () {
                 notifyAll("home");

@@ -116,9 +116,9 @@ function processFile(relativePath: string, fileData: Uint8Array) {
     } else if (lcasePath === "source/var") {
         paths.push({ id: 1, url: relativePath, type: "pcode" });
     } else if (platform.inBrowser && AudioExt.has(ext)) {
-        addSound(`pkg:/${relativePath}`, ext, new Blob([fileData]));
+        addSound(`pkg:/${relativePath}`, ext, new Blob([fileData as BlobPart]));
     } else if (platform.inBrowser && VideoExt.has(ext)) {
-        addVideo(`pkg:/${relativePath}`, new Blob([fileData], { type: "video/mp4" }));
+        addVideo(`pkg:/${relativePath}`, new Blob([fileData as BlobPart], { type: "video/mp4" }));
     }
 }
 
@@ -170,10 +170,10 @@ function showSplashOrIcon(splash?: string, iconFile?: Uint8Array) {
         if (splash?.slice(0, 5) === "pkg:/") {
             const splashFile = currentZip[splash.slice(5)];
             if (splashFile) {
-                createImageBitmap(new Blob([splashFile])).then(drawSplashScreen);
+                createImageBitmap(new Blob([splashFile as BlobPart])).then(drawSplashScreen);
             }
         } else if (iconFile) {
-            createImageBitmap(new Blob([iconFile])).then(drawIconAsSplash);
+            createImageBitmap(new Blob([iconFile as BlobPart])).then(drawIconAsSplash);
         }
     }
 }
