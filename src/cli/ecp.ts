@@ -15,7 +15,7 @@ import fs from "node:fs";
 import path from "node:path";
 import url from "node:url";
 import restana from "restana";
-import WebSocket, { RawData } from "ws";
+import WebSocket, { WebSocketServer, RawData } from "ws";
 import packageInfo from "../../package.json";
 
 const DEBUG = false;
@@ -120,7 +120,7 @@ function enableECP() {
                     });
                 });
             // Create ECP-2 WebSocket Server
-            const wss = new WebSocket.Server({ noServer: true });
+            const wss = new WebSocketServer({ noServer: true });
             wss.on("connection", function connection(ws) {
                 const auth = `{"notify":"authenticate","param-challenge":"jONQirQ3WxSQWdI9Zn0enA==","timestamp":"${process
                     .uptime()
