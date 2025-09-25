@@ -206,7 +206,7 @@ function registerSound(path: string, preload: boolean, format?: string, url?: st
     return sound;
 }
 
-export function resetSounds(assets: ArrayBuffer) {
+export function resetSounds(assets: ArrayBufferLike) {
     if (soundsDat.length > 0) {
         soundsDat.forEach((sound) => {
             sound.unload();
@@ -228,7 +228,7 @@ export function resetSounds(assets: ArrayBuffer) {
     try {
         const commonFs = unzipSync(new Uint8Array(assets));
         DefaultSounds.forEach((sound, index) => {
-            const audioData = new Blob([commonFs[`audio/${sound}.wav`]]);
+            const audioData = new Blob([commonFs[`audio/${sound}.wav`] as BlobPart]);
             const sfx: SFX = {
                 id: index,
                 sound: new Howl({ src: [URL.createObjectURL(audioData)], format: "wav", preload: true }),
@@ -236,7 +236,7 @@ export function resetSounds(assets: ArrayBuffer) {
             sfxMap.set(sound, sfx);
         });
         if (homeSfx === undefined) {
-            const audioData = new Blob([commonFs["audio/select.wav"]]);
+            const audioData = new Blob([commonFs["audio/select.wav"] as BlobPart]);
             homeSfx = new Howl({ src: [URL.createObjectURL(audioData)], format: "wav", preload: true });
             homeSfx.on("play", function () {
                 notifyAll("home");

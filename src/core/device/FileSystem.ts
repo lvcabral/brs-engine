@@ -189,9 +189,9 @@ export function writeUri(uri: string): boolean {
  * @param extZip ArrayBuffer with the external storage zip file.
  */
 export async function configureFileSystem(
-    commonZip: ArrayBuffer,
-    pkgZip?: ArrayBuffer,
-    extZip?: ArrayBuffer
+    commonZip: ArrayBufferLike,
+    pkgZip?: ArrayBufferLike,
+    extZip?: ArrayBufferLike
 ): Promise<void> {
     const fsConfig = { mounts: {} };
     if (zenFS.fs?.existsSync("common:/")) {

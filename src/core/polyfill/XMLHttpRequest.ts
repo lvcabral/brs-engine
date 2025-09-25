@@ -334,13 +334,13 @@ export class XMLHttpRequest {
                     } else {
                         this.status = 200;
                         this.responseText = data.toString("utf8");
-                        this.response = data;
+                        this.response = data as Buffer<ArrayBuffer>;;
                         this.setState(this.DONE);
                     }
                 });
             } else {
                 try {
-                    this.response = fs.readFileSync(decodeURI(url.pathname));
+                    this.response = fs.readFileSync(decodeURI(url.pathname)) as Buffer<ArrayBuffer>;
                     this.responseText = this.response.toString("utf8");
                     this.status = 200;
                     this.setState(this.DONE);

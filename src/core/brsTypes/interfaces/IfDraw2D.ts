@@ -492,7 +492,7 @@ export class IfDraw2D {
                 height.getValue()
             );
             return new RoByteArray(
-                new Uint8Array(UPNG.encode([imgData.data.buffer], imgData.width, imgData.height, 0))
+                new Uint8Array(UPNG.encode([imgData.data.buffer as ArrayBuffer], imgData.width, imgData.height, 0))
             );
         },
     });
