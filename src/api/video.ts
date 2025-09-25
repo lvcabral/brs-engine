@@ -373,7 +373,7 @@ function loadAudioTracks() {
         hls.audioTrack = activeTrack;
         playList[playIndex].audioTrack = activeTrack;
         if (activeTrack > -1 && playerState !== "play") {
-            player.currentTime = 0;
+            player.currentTime = 1; // Force HLS to load audio track
             player.play();
         }
     }
