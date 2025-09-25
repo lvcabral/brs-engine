@@ -13,6 +13,7 @@ import Hls from "hls.js";
 // Video Objects
 export let player: HTMLVideoElement;
 let hls: Hls | undefined;
+let deviceData: DeviceInfo;
 let packageVideos = new Map();
 let currentFrame = 0;
 let playerState: string = "stop";
@@ -32,9 +33,6 @@ let videoMuted = false;
 let uiMuted = false;
 let previousBuffered = 0;
 let previousTime = Date.now();
-let deviceLocale = "";
-let captionLocale = "";
-let audioLocale = "";
 const audioTracks: MediaTrack[] = [];
 const textTracks: MediaTrack[] = [];
 
@@ -42,7 +40,7 @@ const textTracks: MediaTrack[] = [];
 if (typeof document !== "undefined") {
     player = document.getElementById("player") as HTMLVideoElement;
 }
-export function initVideoModule(array: Int32Array, deviceData: DeviceInfo, mute: boolean = false) {
+export function initVideoModule(array: Int32Array, deviceInfo: DeviceInfo, mute: boolean = false) {
     if (player) {
         player.addEventListener("canplay", (e: Event) => {
             loadProgress = 1000;
@@ -85,9 +83,7 @@ export function initVideoModule(array: Int32Array, deviceData: DeviceInfo, mute:
         player.defaultMuted = true;
         uiMuted = mute;
     }
-    deviceLocale = deviceData.locale.toLowerCase().slice(0, 2);
-    captionLocale = deviceData.captionLanguage.toLowerCase().slice(0, 2);
-    audioLocale = deviceData.audioLanguage.toLowerCase().slice(0, 2);
+    deviceData = deviceInfo;
     sharedArray = array;
     resetVideo();
 }
@@ -290,7 +286,7 @@ export async function loadCaptionsFonts(assets: ArrayBufferLike) {
         for (const fontName in fonts) {
             const fontData = commonZip[`fonts/${fonts[fontName]}`];
             if (fontData instanceof Uint8Array) {
-                const fontBlob = new Blob([fontData], { type: "font/ttf" });
+                const fontBlob = new Blob([fontData as Uint8Array<ArrayBuffer>], { type: "font/ttf" });
                 const fontUrl = URL.createObjectURL(fontBlob);
                 const fontFace = new FontFace(fontName, `url(${fontUrl})`);
                 await fontFace.load();
@@ -353,6 +349,9 @@ function loadAudioTracks() {
         // Format the language code
         const lang = formatLocale(audioTrack.lang);
         // Save the track ids for preferred locale, device locale and english
+        let deviceLocale = deviceData.locale.toLowerCase().slice(0, 2);
+        let audioLocale = deviceData.audioLanguage.toLowerCase().slice(0, 2);
+
         if (preferredTrackId === -1 && lang === audioLocale) {
             preferredTrackId = track.id;
         } else if (deviceTrackId === -1 && lang === deviceLocale) {
@@ -373,6 +372,10 @@ function loadAudioTracks() {
         }
         hls.audioTrack = activeTrack;
         playList[playIndex].audioTrack = activeTrack;
+        if (activeTrack > -1 && playerState !== "play") {
+            player.currentTime = 0;
+            player.play();
+        }
     }
     return activeTrack;
 }
@@ -395,6 +398,8 @@ function loadSubtitleTracks() {
         // Format the language code
         const lang = formatLocale(textTrack.lang);
         // Save the track ids for preferred locale, device locale and english
+        let deviceLocale = deviceData.locale.toLowerCase().slice(0, 2);
+        let captionLocale = deviceData.captionLanguage.toLowerCase().slice(0, 2);
         if (preferredTrackId === -1 && lang === captionLocale) {
             preferredTrackId = index;
         } else if (deviceTrackId === -1 && lang === deviceLocale) {
