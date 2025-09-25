@@ -58,7 +58,7 @@
   "dependencies": {
     "@lvcabral/libwebp": "^0.1.0",
     "@lvcabral/memory-fs": "^0.5.1",
-    "@lvcabral/node-ssdp": "^4.0.3",
+    "@lvcabral/node-ssdp": "^4.0.4",
     "@lvcabral/sprintf": "^1.2.2",
     "@lvcabral/upng": "^2.3.0",
     "@lvcabral/zip": "lvcabral/zip",
