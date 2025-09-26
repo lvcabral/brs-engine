@@ -66,7 +66,7 @@ export class Font extends RoSGNode {
     }
 
     setSystemFont(font: string) {
-        const systemFont = this.fontRegistry.SystemFonts.get(font.toLowerCase());
+        const systemFont = this.fontRegistry.getSystemFont(font);
         if (systemFont) {
             this.systemFont = font;
             this.setSize(this.resolution === "HD" ? systemFont.hd : systemFont.fhd);
@@ -76,7 +76,7 @@ export class Font extends RoSGNode {
     }
 
     createDrawFont() {
-        let fontFamily = this.fontRegistry.SystemFonts.get(this.systemFont.toLowerCase())?.family ?? "";
+        let fontFamily = this.fontRegistry.getSystemFont(this.systemFont)?.family ?? "";
         const uri = this.getUri();
         if (uri !== "") {
             fontFamily = this.fontRegistry.getFontFamily(uri) ?? fontFamily;
