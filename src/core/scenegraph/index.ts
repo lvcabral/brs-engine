@@ -67,14 +67,17 @@ export class ComponentDefinition {
     async parse(): Promise<ComponentDefinition> {
         try {
             if (fs === undefined) {
+                console.error(`FileSystem not set`);
                 return Promise.reject("FileSystem not set");
             }
             this.contents = fs.readFileSync(this.xmlPath, "utf-8");
             this.xmlNode = new XmlDocument(this.contents ?? "");
             this.name = this.xmlNode.attr.name;
+            console.warn(`Parsed component XML definition: ${this.name}`);
 
             return Promise.resolve(this);
         } catch (err) {
+            console.error(`Error parsing component XML definition: ${this.xmlPath}`, err);
             // TODO: provide better parse error reporting
             //   cases:
             //     * file read error
@@ -130,7 +133,6 @@ async function processXmlTree(settledPromises: Promise<PromiseResult<ComponentDe
                 name = `${libraryName.toLowerCase()}:${name}`;
             }
             if (name) {
-                console.warn(`Component XML definition found: ${name}`);
                 nodeDefMap.set(name, item.value!);
             }
         }
