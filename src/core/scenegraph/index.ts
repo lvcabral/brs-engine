@@ -72,11 +72,9 @@ export class ComponentDefinition {
             this.contents = fs.readFileSync(this.xmlPath, "utf-8");
             this.xmlNode = new XmlDocument(this.contents ?? "");
             this.name = this.xmlNode.attr.name;
-            console.warn(`Parsed component XML definition: ${this.name}`);
 
             return Promise.resolve(this);
         } catch (err) {
-            console.error(`Error parsing component XML definition: ${this.xmlPath}`, err);
             // TODO: provide better parse error reporting
             //   cases:
             //     * file read error
@@ -110,7 +108,6 @@ export async function getComponentDefinitionMap(
     });
 
     const defs = xmlFiles.map((file) => new ComponentDefinition(file));
-    console.warn(`Component XML definitions found: ${defs.length}`);
     const parsedPromises = defs.map(async (def) => def.parse());
     return processXmlTree(pSettle(parsedPromises), libraryName);
 }

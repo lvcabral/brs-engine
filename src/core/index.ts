@@ -303,9 +303,6 @@ export async function executeFile(payload: AppPayload, customOptions?: Partial<E
     }
     // Look for SceneGraph components
     const components = await getComponentDefinitionMap(BrsDevice.fileSystem, []);
-    if (options.root) {
-        console.warn(`SceneGraph components found: ${components.size}`);
-    }
     // Create the interpreter
     let interpreter: Interpreter;
     if (components.size > 0) {
