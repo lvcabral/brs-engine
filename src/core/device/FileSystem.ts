@@ -84,7 +84,7 @@ export class FileSystem {
             uri = this.root + "/" + uri.trim().slice(4);
         } else if (this.ext && uri.trim().toLowerCase().startsWith("ext1:")) {
             uri = this.ext + "/" + uri.trim().slice(5);
-        } else {
+        } else if (!this.root) {
             uri = uri.toLowerCase();
         }
         return uri.replace("tmp:", "").replace("cachefs:", "").replace(/\/+/g, "/").trim();

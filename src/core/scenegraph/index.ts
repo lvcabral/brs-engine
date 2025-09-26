@@ -103,13 +103,12 @@ export async function getComponentDefinitionMap(
     ["components", ...additionalDirs].forEach((dir) => {
         const dirPath = path.join("pkg:/", dir);
         if (fs?.existsSync(dirPath)) {
-            xmlFiles.push(...fileSystem.findSync(dirPath, "xml"));
+            xmlFiles.push(...fs.findSync(dirPath, "xml"));
         }
     });
 
     const defs = xmlFiles.map((file) => new ComponentDefinition(file));
     const parsedPromises = defs.map(async (def) => def.parse());
-
     return processXmlTree(pSettle(parsedPromises), libraryName);
 }
 
