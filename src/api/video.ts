@@ -7,7 +7,6 @@
  *--------------------------------------------------------------------------------------------*/
 import { SubscribeCallback, formatLocale, saveDataBuffer } from "./util";
 import { BufferType, DataType, MediaEvent, MediaErrorCode, platform, MediaTrack, DeviceInfo } from "../core/common";
-import { strFromU8, unzipSync } from "fflate";
 import Hls from "hls.js";
 
 // Video Objects
@@ -267,38 +266,6 @@ export function resetVideo() {
     startPosition = 0;
     playerState = "stop";
     videosState = false;
-}
-
-export async function loadCaptionsFonts(assets: ArrayBufferLike) {
-    if (!assets.byteLength) {
-        notifyAll("warning", "[video] Common FS not available, captions fonts will not be loaded.");
-        return;
-    }
-    try {
-        const commonZip = unzipSync(new Uint8Array(assets));
-        const jsonFonts = commonZip["fonts/closed-caption.json"];
-        if (!(jsonFonts instanceof Uint8Array)) {
-            notifyAll("warning", "[video] No 'fonts/closed-caption.json' found in Common FS.");
-            return;
-        }
-        const ccFonts = JSON.parse(strFromU8(jsonFonts));
-        const fonts = ccFonts.fonts!;
-        for (const fontName in fonts) {
-            const fontData = commonZip[`fonts/${fonts[fontName]}`];
-            if (fontData instanceof Uint8Array) {
-                const fontBlob = new Blob([fontData as Uint8Array<ArrayBuffer>], { type: "font/ttf" });
-                const fontUrl = URL.createObjectURL(fontBlob);
-                const fontFace = new FontFace(fontName, `url(${fontUrl})`);
-                await fontFace.load();
-                document.fonts.add(fontFace);
-                console.debug(`[API] Font ${fontName} loaded successfully.`);
-            } else {
-                notifyAll("warning", `[video] Invalid font data for ${fontName}`);
-            }
-        }
-    } catch (e: any) {
-        notifyAll("error", `[video] Error loading caption fonts from Common FS: ${e.message}`);
-    }
 }
 
 // Video Module Private Functions

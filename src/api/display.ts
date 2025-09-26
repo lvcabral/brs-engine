@@ -19,6 +19,7 @@ import {
     captionOpacities,
     captionFonts,
 } from "../core/common";
+import { strFromU8, unzipSync } from "fflate";
 import Stats from "stats.js";
 
 // Simulation Display
@@ -396,6 +397,40 @@ function drawText(ctx: CanvasRenderingContext2D, text: string, x: number, y: num
     // Draw the subtitle text
     ctx.fillText(text, x, y);
     ctx.restore();
+}
+
+// Load Closed Captions Fonts from Common FS
+export async function loadCaptionsFonts(assets: ArrayBufferLike) {
+    if (!assets.byteLength) {
+        notifyAll("warning", "[video] Common FS not available, captions fonts will not be loaded.");
+        return;
+    }
+    try {
+        const fontsFile = "fonts/system-fonts.json";
+        const commonZip = unzipSync(new Uint8Array(assets));
+        const jsonFonts = commonZip[fontsFile];
+        if (!(jsonFonts instanceof Uint8Array)) {
+            notifyAll("warning", `[video] No '${fontsFile}' found in Common FS.`);
+            return;
+        }
+        const ccFonts = JSON.parse(strFromU8(jsonFonts));
+        const fonts = ccFonts.closedCaptions!;
+        for (const fontName in fonts) {
+            const fontData = commonZip[`fonts/${fonts[fontName]}`];
+            if (fontData instanceof Uint8Array) {
+                const fontBlob = new Blob([fontData as Uint8Array<ArrayBuffer>], { type: "font/ttf" });
+                const fontUrl = URL.createObjectURL(fontBlob);
+                const fontFace = new FontFace(fontName, `url(${fontUrl})`);
+                await fontFace.load();
+                document.fonts.add(fontFace);
+                console.debug(`[video] Closed Caption font ${fontName} loaded successfully.`);
+            } else {
+                notifyAll("warning", `[video] Invalid font data for ${fontName}`);
+            }
+        }
+    } catch (e: any) {
+        notifyAll("error", `[video] Error loading caption fonts from Common FS: ${e.message}`);
+    }
 }
 
 // Reset Subtitle Cache
