@@ -67,7 +67,6 @@ export class ComponentDefinition {
     async parse(): Promise<ComponentDefinition> {
         try {
             if (fs === undefined) {
-                console.error(`FileSystem not set`);
                 return Promise.reject("FileSystem not set");
             }
             this.contents = fs.readFileSync(this.xmlPath, "utf-8");
