@@ -104,9 +104,6 @@ export async function getComponentDefinitionMap(
         const dirPath = path.join("pkg:/", dir);
         if (fs?.existsSync(dirPath)) {
             xmlFiles.push(...fs.findSync(dirPath, "xml"));
-            console.warn(`Component directory found: ${dirPath} with ${xmlFiles.length} XML files.`, xmlFiles);
-        } else {
-            console.warn(`Component directory not found: ${dirPath}`);
         }
     });
 
@@ -133,6 +130,7 @@ async function processXmlTree(settledPromises: Promise<PromiseResult<ComponentDe
                 name = `${libraryName.toLowerCase()}:${name}`;
             }
             if (name) {
+                console.warn(`Component XML definition found: ${name}`);
                 nodeDefMap.set(name, item.value!);
             }
         }
