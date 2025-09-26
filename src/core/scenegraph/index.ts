@@ -104,15 +104,15 @@ export async function getComponentDefinitionMap(
         const dirPath = path.join("pkg:/", dir);
         if (fs?.existsSync(dirPath)) {
             xmlFiles.push(...fs.findSync(dirPath, "xml"));
-            console.warn(`Component directory found: ${dirPath} with ${xmlFiles.length} XML files.`);
+            console.warn(`Component directory found: ${dirPath} with ${xmlFiles.length} XML files.`, xmlFiles);
         } else {
             console.warn(`Component directory not found: ${dirPath}`);
         }
     });
 
     const defs = xmlFiles.map((file) => new ComponentDefinition(file));
+    console.warn(`Component XML definitions found: ${defs.length}`);
     const parsedPromises = defs.map(async (def) => def.parse());
-
     return processXmlTree(pSettle(parsedPromises), libraryName);
 }
 
