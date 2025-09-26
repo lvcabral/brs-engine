@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <component name="BaseWidget">
-    <script type="text/brightscript" uri="/BaseWidget.brs" />
+    <script type="text/brightscript" uri="BaseWidget.brs" />
     <interface>
         <field id="baseStringField" type="string" />
         <field id="baseIntField" type="integer" value="30" />
