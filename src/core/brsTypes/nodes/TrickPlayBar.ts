@@ -88,12 +88,15 @@ export class TrickPlayBar extends Group {
     setPosition(position: number, duration: number) {
         if (this.position && position >= 0 && duration > 0) {
             const remaining = duration - position;
-            const posStr = `${Math.floor(position / 60)}:${Math.floor(position % 60)
-                .toString()
-                .padStart(2, "0")}`;
-            const remStr = `${Math.floor(remaining / 60)}:${Math.floor(remaining % 60)
-                .toString()
-                .padStart(2, "0")}`;
+            const formatTime = (seconds: number): string => {
+                const hours = Math.floor(seconds / 3600);
+                const minutes = Math.floor((seconds % 3600) / 60);
+                const secs = Math.floor(seconds % 60);
+                const timeStr = `${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+                return hours > 0 ? `${hours}:${timeStr}` : timeStr;
+            };
+            const posStr = formatTime(position);
+            const remStr = formatTime(remaining);
             this.position.setFieldValue("text", new BrsString(posStr));
             this.remaining.setFieldValue("text", new BrsString(remStr));
             const width = this.backBack.getFieldValueJS("width") as number;
