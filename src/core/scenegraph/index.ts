@@ -103,7 +103,10 @@ export async function getComponentDefinitionMap(
     ["components", ...additionalDirs].forEach((dir) => {
         const dirPath = path.join("pkg:/", dir);
         if (fs?.existsSync(dirPath)) {
-            xmlFiles.push(...fileSystem.findSync(dirPath, "xml"));
+            xmlFiles.push(...fs.findSync(dirPath, "xml"));
+            console.warn(`Component directory found: ${dirPath} with ${xmlFiles.length} XML files.`);
+        } else {
+            console.warn(`Component directory not found: ${dirPath}`);
         }
     });
 
