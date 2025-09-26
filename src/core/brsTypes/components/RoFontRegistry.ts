@@ -20,6 +20,13 @@ export interface FontMetrics {
     weight: string;
 }
 
+export type FontDef = {
+    family: string;
+    bold: boolean;
+    fhd: number;
+    hd: number;
+};
+
 // Singleton instance of Font Registry
 let fontRegistry: RoFontRegistry;
 
@@ -31,6 +38,28 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
     private readonly defaultFontFamilies: { regular: string; bold: string; italic: string; boldItalic: string };
     private readonly fontRegistry: Map<string, FontMetrics[]>;
     private readonly fontPaths: Map<string, string> = new Map();
+
+    /**
+     * Valid System Fonts
+     */
+    readonly SystemFonts: Map<string, FontDef> = new Map([
+        ["BadgeSystemFont".toLowerCase(), { family: "", bold: true, fhd: 21, hd: 14 }],
+        ["TinySystemFont".toLowerCase(), { family: "", bold: false, fhd: 24, hd: 16 }],
+        ["TinyBoldSystemFont".toLowerCase(), { family: "", bold: true, fhd: 24, hd: 16 }],
+        ["SmallestSystemFont".toLowerCase(), { family: "", bold: false, fhd: 27, hd: 18 }],
+        ["SmallestBoldSystemFont".toLowerCase(), { family: "", bold: true, fhd: 27, hd: 18 }],
+        ["SmallerSystemFont".toLowerCase(), { family: "", bold: false, fhd: 30, hd: 20 }],
+        ["SmallerBoldSystemFont".toLowerCase(), { family: "", bold: true, fhd: 30, hd: 20 }],
+        ["SmallSystemFont".toLowerCase(), { family: "", bold: false, fhd: 33, hd: 22 }],
+        ["SmallBoldSystemFont".toLowerCase(), { family: "", bold: true, fhd: 33, hd: 22 }],
+        ["MediumSystemFont".toLowerCase(), { family: "", bold: false, fhd: 36, hd: 24 }],
+        ["MediumBoldSystemFont".toLowerCase(), { family: "", bold: true, fhd: 36, hd: 24 }],
+        ["LargeSystemFont".toLowerCase(), { family: "", bold: false, fhd: 45, hd: 30 }],
+        ["LargeBoldSystemFont".toLowerCase(), { family: "", bold: true, fhd: 45, hd: 30 }],
+        ["ExtraLargeSystemFont".toLowerCase(), { family: "", bold: false, fhd: 54, hd: 36 }],
+        ["ExtraLargeBoldSystemFont".toLowerCase(), { family: "", bold: true, fhd: 54, hd: 36 }],
+        ["LargestSystemFont".toLowerCase(), { family: "", bold: false, fhd: 90, hd: 60 }],
+    ]);
 
     constructor() {
         super("roFontRegistry");
@@ -52,6 +81,12 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
             italic: this.registerFont(`common:/Fonts/${defaultFont}-Oblique.ttf`, true),
             boldItalic: this.registerFont(`common:/Fonts/${defaultFont}-BoldOblique.ttf`, true),
         };
+        const systemFont = "Metropolis";
+        const fontRegular = this.registerFont(`common:/Fonts/${systemFont}-Regular.ttf`, true);
+        const fontBold = this.registerFont(`common:/Fonts/${systemFont}-SemiBold.ttf`, true);
+        this.SystemFonts.forEach((font) => {
+            font.family = font.bold ? fontBold : fontRegular;
+        });
         this.canvas = createNewCanvas(10, 10);
     }
 

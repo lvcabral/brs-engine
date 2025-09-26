@@ -1,13 +1,18 @@
 import { RoSGNode } from "../components/RoSGNode";
 import { FieldKind, FieldModel } from "./Field";
-import { BrsBoolean, rootObjects, BrsString, BrsType, getFontRegistry, Int32, RoFont, AAMember, isBrsString } from "..";
+import {
+    BrsBoolean,
+    rootObjects,
+    BrsString,
+    BrsType,
+    getFontRegistry,
+    Int32,
+    RoFont,
+    AAMember,
+    isBrsString,
+    RoFontRegistry,
+} from "..";
 
-export type FontDef = {
-    family: string;
-    bold: boolean;
-    fhd: number;
-    hd: number;
-};
 export class Font extends RoSGNode {
     readonly defaultFields: FieldModel[] = [
         { name: "uri", type: "uri" },
@@ -15,33 +20,12 @@ export class Font extends RoSGNode {
         { name: "fallbackGlyph", type: "string" },
     ];
 
-    /**
-     * Valid System Fonts
-     */
-    static readonly SystemFonts: Map<string, FontDef> = new Map([
-        ["BadgeSystemFont".toLowerCase(), { family: "", bold: true, fhd: 21, hd: 14 }],
-        ["TinySystemFont".toLowerCase(), { family: "", bold: false, fhd: 24, hd: 16 }],
-        ["TinyBoldSystemFont".toLowerCase(), { family: "", bold: true, fhd: 24, hd: 16 }],
-        ["SmallestSystemFont".toLowerCase(), { family: "", bold: false, fhd: 27, hd: 18 }],
-        ["SmallestBoldSystemFont".toLowerCase(), { family: "", bold: true, fhd: 27, hd: 18 }],
-        ["SmallerSystemFont".toLowerCase(), { family: "", bold: false, fhd: 30, hd: 20 }],
-        ["SmallerBoldSystemFont".toLowerCase(), { family: "", bold: true, fhd: 30, hd: 20 }],
-        ["SmallSystemFont".toLowerCase(), { family: "", bold: false, fhd: 33, hd: 22 }],
-        ["SmallBoldSystemFont".toLowerCase(), { family: "", bold: true, fhd: 33, hd: 22 }],
-        ["MediumSystemFont".toLowerCase(), { family: "", bold: false, fhd: 36, hd: 24 }],
-        ["MediumBoldSystemFont".toLowerCase(), { family: "", bold: true, fhd: 36, hd: 24 }],
-        ["LargeSystemFont".toLowerCase(), { family: "", bold: false, fhd: 45, hd: 30 }],
-        ["LargeBoldSystemFont".toLowerCase(), { family: "", bold: true, fhd: 45, hd: 30 }],
-        ["ExtraLargeSystemFont".toLowerCase(), { family: "", bold: false, fhd: 54, hd: 36 }],
-        ["ExtraLargeBoldSystemFont".toLowerCase(), { family: "", bold: true, fhd: 54, hd: 36 }],
-        ["LargestSystemFont".toLowerCase(), { family: "", bold: false, fhd: 90, hd: 60 }],
-    ]);
-
     static readonly DrawFontCache: Map<string, RoFont> = new Map();
 
     private readonly defaultSize: number;
     private readonly resolution: string;
     private systemFont: string;
+    private fontRegistry: RoFontRegistry;
 
     constructor(members: AAMember[] = [], readonly name: string = "Font") {
         super([], name);
@@ -54,6 +38,7 @@ export class Font extends RoSGNode {
 
         this.setFieldValue("size", new Int32(this.defaultSize));
         this.systemFont = "MediumSystemFont";
+        this.fontRegistry = getFontRegistry();
     }
 
     set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
@@ -80,12 +65,8 @@ export class Font extends RoSGNode {
         this.setFieldValue("size", new Int32(size));
     }
 
-    getSystemFontFamily(font: string) {
-        return Font.SystemFonts.get(font.toLowerCase())?.family ?? "";
-    }
-
     setSystemFont(font: string) {
-        const systemFont = Font.SystemFonts.get(font.toLowerCase());
+        const systemFont = this.fontRegistry.SystemFonts.get(font.toLowerCase());
         if (systemFont) {
             this.systemFont = font;
             this.setSize(this.resolution === "HD" ? systemFont.hd : systemFont.fhd);
@@ -95,16 +76,15 @@ export class Font extends RoSGNode {
     }
 
     createDrawFont() {
-        let fontFamily = this.getSystemFontFamily(this.systemFont);
-        const fontRegistry = getFontRegistry();
+        let fontFamily = this.fontRegistry.SystemFonts.get(this.systemFont.toLowerCase())?.family ?? "";
         const uri = this.getUri();
         if (uri !== "") {
-            fontFamily = fontRegistry.getFontFamily(uri) ?? fontFamily;
+            fontFamily = this.fontRegistry.getFontFamily(uri) ?? fontFamily;
         }
         const fontId = `${fontFamily}-${this.getSize()}`;
         let drawFont = Font.DrawFontCache.get(fontId);
         if (!drawFont) {
-            drawFont = fontRegistry.createFont(
+            drawFont = this.fontRegistry.createFont(
                 new BrsString(fontFamily),
                 new Int32(this.getSize()),
                 BrsBoolean.False,
