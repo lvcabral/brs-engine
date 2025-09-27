@@ -24,8 +24,8 @@ export class Font extends RoSGNode {
 
     private readonly defaultSize: number;
     private readonly resolution: string;
+    private readonly fontRegistry: RoFontRegistry;
     private systemFont: string;
-    private fontRegistry: RoFontRegistry;
 
     constructor(members: AAMember[] = [], readonly name: string = "Font") {
         super([], name);
