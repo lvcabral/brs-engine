@@ -402,7 +402,7 @@ function drawText(ctx: CanvasRenderingContext2D, text: string, x: number, y: num
 // Load Closed Captions Fonts from Common FS
 export async function loadCaptionsFonts(assets: ArrayBufferLike) {
     if (!assets.byteLength) {
-        notifyAll("warning", "[video] Common FS not available, captions fonts will not be loaded.");
+        notifyAll("warning", "[display] Common FS not available, captions fonts will not be loaded.");
         return;
     }
     try {
@@ -410,7 +410,7 @@ export async function loadCaptionsFonts(assets: ArrayBufferLike) {
         const commonZip = unzipSync(new Uint8Array(assets));
         const jsonFonts = commonZip[fontsFile];
         if (!(jsonFonts instanceof Uint8Array)) {
-            notifyAll("warning", `[video] No '${fontsFile}' found in Common FS.`);
+            notifyAll("warning", `[display] No '${fontsFile}' found in Common FS.`);
             return;
         }
         const ccFonts = JSON.parse(strFromU8(jsonFonts));
@@ -423,13 +423,13 @@ export async function loadCaptionsFonts(assets: ArrayBufferLike) {
                 const fontFace = new FontFace(fontName, `url(${fontUrl})`);
                 await fontFace.load();
                 document.fonts.add(fontFace);
-                console.debug(`[video] Closed Caption font ${fontName} loaded successfully.`);
+                console.debug(`[display] Closed Caption font ${fontName} loaded successfully.`);
             } else {
-                notifyAll("warning", `[video] Invalid font data for ${fontName}`);
+                notifyAll("warning", `[display] Invalid font data for ${fontName}`);
             }
         }
     } catch (e: any) {
-        notifyAll("error", `[video] Error loading caption fonts from Common FS: ${e.message}`);
+        notifyAll("error", `[display] Error loading caption fonts from Common FS: ${e.message}`);
     }
 }
 
