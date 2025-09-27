@@ -12,7 +12,6 @@ import {
     Scene,
     initializeNode,
     RoTextureManager,
-    Font,
     getFontRegistry,
     getTextureManager,
     rootObjects,
@@ -81,12 +80,6 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         this.draw2D = new IfDraw2D(this);
         this.textureManager = getTextureManager();
         this.fontRegistry = getFontRegistry();
-        const systemFont = "Metropolis";
-        const fontRegular = this.fontRegistry.registerFont(`common:/Fonts/${systemFont}-Regular.ttf`, true);
-        const fontBold = this.fontRegistry.registerFont(`common:/Fonts/${systemFont}-SemiBold.ttf`, true);
-        Font.SystemFonts.forEach((font) => {
-            font.family = font.bold ? fontBold : fontRegular;
-        });
         this.alphaEnable = true;
         this.scaleMode = 1;
         this.audioFlags = -1;

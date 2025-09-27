@@ -20,6 +20,31 @@ export interface FontMetrics {
     weight: string;
 }
 
+export type FontDef = {
+    family: string;
+    fhd: number;
+    hd: number;
+};
+
+interface FontsConfig {
+    default: {
+        regular: string;
+        bold: string;
+        italic: string;
+        boldItalic: string;
+    };
+    sceneGraph: {
+        regular: string;
+        bold: string;
+    };
+    systemFonts: {
+        name: string;
+        bold: boolean;
+        fhd: number;
+        hd: number;
+    }[];
+}
+
 // Singleton instance of Font Registry
 let fontRegistry: RoFontRegistry;
 
@@ -30,7 +55,8 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
     private readonly fallbackFontFamily = "Arial, Helvetica, sans-serif";
     private readonly defaultFontFamilies: { regular: string; bold: string; italic: string; boldItalic: string };
     private readonly fontRegistry: Map<string, FontMetrics[]>;
-    private readonly fontPaths: Map<string, string> = new Map();
+    private readonly fontPaths: Map<string, string>;
+    private readonly systemFonts: Map<string, FontDef>;
 
     constructor() {
         super("roFontRegistry");
@@ -44,14 +70,36 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
                 // this.get, ---> Deprecated as only needed to roImageCanvas
             ],
         });
-        const defaultFont = "DejaVuSansCondensed";
+
+        // Initialize font registry maps
         this.fontRegistry = new Map();
+        this.fontPaths = new Map();
+        this.systemFonts = new Map();
+
+        // Load fonts from common file system
+        const fsys = BrsDevice.fileSystem;
+        const fontsJson = fsys.readFileSync("common:/fonts/system-fonts.json", "utf-8");
+        const fonts: FontsConfig = JSON.parse(fontsJson);
+
+        // Draw2D default fonts
         this.defaultFontFamilies = {
-            regular: this.registerFont(`common:/Fonts/${defaultFont}.ttf`, true),
-            bold: this.registerFont(`common:/Fonts/${defaultFont}-Bold.ttf`, true),
-            italic: this.registerFont(`common:/Fonts/${defaultFont}-Oblique.ttf`, true),
-            boldItalic: this.registerFont(`common:/Fonts/${defaultFont}-BoldOblique.ttf`, true),
+            regular: this.registerFont(`common:/Fonts/${fonts.default.regular}`, true),
+            bold: this.registerFont(`common:/Fonts/${fonts.default.bold}`, true),
+            italic: this.registerFont(`common:/Fonts/${fonts.default.italic}`, true),
+            boldItalic: this.registerFont(`common:/Fonts/${fonts.default.boldItalic}`, true),
         };
+
+        // SceneGraph default fonts
+        const fontRegular = this.registerFont(`common:/Fonts/${fonts.sceneGraph.regular}`, true);
+        const fontBold = this.registerFont(`common:/Fonts/${fonts.sceneGraph.bold}`, true);
+        for (const font of fonts.systemFonts) {
+            this.systemFonts.set(font.name.toLowerCase(), {
+                family: font.bold ? fontBold : fontRegular,
+                fhd: font.fhd,
+                hd: font.hd,
+            });
+        }
+        // Create a canvas for measuring text
         this.canvas = createNewCanvas(10, 10);
     }
 
@@ -129,6 +177,10 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
     getFontFamily(uri: string) {
         const family = this.fontPaths.get(uri);
         return family ?? this.registerFont(uri, true);
+    }
+
+    getSystemFont(systemFont: string) {
+        return this.systemFonts.get(systemFont.toLowerCase());
     }
 
     registerFont(fontPath: string, fullFamily: boolean = false): string {

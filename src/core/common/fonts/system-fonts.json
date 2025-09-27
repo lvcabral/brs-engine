@@ -1,0 +1,39 @@
+{
+    "default": {
+        "regular": "DejaVuSansCondensed.ttf",
+        "bold": "DejaVuSansCondensed-Bold.ttf",
+        "italic": "DejaVuSansCondensed-Oblique.ttf",
+        "boldItalic": "DejaVuSansCondensed-BoldOblique.ttf"
+    },
+    "sceneGraph": {
+        "regular": "Metropolis-Regular.ttf",
+        "bold": "Metropolis-SemiBold.ttf"
+    },
+    "systemFonts": [
+        { "name": "BadgeSystemFont", "bold": true, "fhd": 21, "hd": 14 },
+        { "name": "TinySystemFont", "bold": false, "fhd": 24, "hd": 16 },
+        { "name": "TinyBoldSystemFont", "bold": true, "fhd": 24, "hd": 16 },
+        { "name": "SmallestSystemFont", "bold": false, "fhd": 27, "hd": 18 },
+        { "name": "SmallestBoldSystemFont", "bold": true, "fhd": 27, "hd": 18 },
+        { "name": "SmallerSystemFont", "bold": false, "fhd": 30, "hd": 20 },
+        { "name": "SmallerBoldSystemFont", "bold": true, "fhd": 30, "hd": 20 },
+        { "name": "SmallSystemFont", "bold": false, "fhd": 33, "hd": 22 },
+        { "name": "SmallBoldSystemFont", "bold": true, "fhd": 33, "hd": 22 },
+        { "name": "MediumSystemFont", "bold": false, "fhd": 36, "hd": 24 },
+        { "name": "MediumBoldSystemFont", "bold": true, "fhd": 36, "hd": 24 },
+        { "name": "LargeSystemFont", "bold": false, "fhd": 45, "hd": 30 },
+        { "name": "LargeBoldSystemFont", "bold": true, "fhd": 45, "hd": 30 },
+        { "name": "ExtraLargeSystemFont", "bold": false, "fhd": 54, "hd": 36 },
+        { "name": "ExtraLargeBoldSystemFont", "bold": true, "fhd": 54, "hd": 36 },
+        { "name": "LargestSystemFont", "bold": false, "fhd": 90, "hd": 60 }
+    ],
+    "closedCaptions": {
+        "cc-serif-fixed": "Colon Mono W01 Regular.ttf",
+        "cc-serif": "Colon W01 Regular.ttf",
+        "cc-sans-serif-fixed": "RobotoMono-Regular.ttf",
+        "cc-sans-serif": "Roboto-Regular.ttf",
+        "cc-casual": "KomikaText-Regular.ttf",
+        "cc-cursive": "SF_Cartoonist_Hand.ttf",
+        "cc-small-caps": "Florsn18.ttf"
+    }
+}

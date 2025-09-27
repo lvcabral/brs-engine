@@ -1,7 +1,6 @@
 import { FieldKind, FieldModel } from "./Field";
 import {
     AAMember,
-    BrsInvalid,
     BrsString,
     BrsType,
     brsValueOf,
