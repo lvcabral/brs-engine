@@ -49,6 +49,8 @@ Check the [documentation](./integrating.md) to learn how to start using it. The 
 | closed     | Triggered when the engine terminated the execution of the source code | string: the exit reason based on [Roku documentation](https://developer.roku.com/docs/developer-program/getting-started/architecture/dev-environment.md#lastexitorterminationreason-parameter) |
 | reset      | Triggered when the `RebootSystem()` function is executed from the engine | null: Nothing is returned as data |
 | control    | Triggered when a control key is sent to the engine | object: `{key: string, mod: number}`. The property `key` contains an [ECP key code](https://developer.roku.com/docs/developer-program/dev-tools/external-control-api.md#keypress-key-values) and `mod` contains `0` for key down or `100` for key up |
+| captionMode| Triggered when the closed caption mode is changed | string: The new caption mode, options are "Off", "On", "Instant replay", "When mute" |
+| captionStyle| Triggered when the closed caption styles/options are changed | Map<string, string>: The new caption styles map, see options in [Roku Documentation](hhttps://developer.roku.com/docs/references/brightscript/interfaces/ifdeviceinfo.md#getcaptionsoptionoption-as-string-as-string) |
 | redraw     | Triggered when the display canvas is redrawn/resized | boolean: If `true` the display canvas is in **full screen** mode |
 | resolution | Triggered when the emulated screen resolution changes (controlled via BrightScript) | object: `{width: integer, height: integer}` |
 | launch     | Triggered when the methods `roAppManager.launchApp()` or `roNDK.start()` (with `SDKLauncher` app) are called from BrightScript | object: `{app: string, params: Map}`. |

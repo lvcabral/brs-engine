@@ -44,9 +44,7 @@ let videoLoop = false;
 let displayState = true;
 let overscanMode = "disabled";
 let aspectRatio = 16 / 9;
-let captionsState = false;
 let trickPlayBar = false;
-let captionsStyle = new Map<string, string>();
 interface CachedSubtitleMeasurement {
     metricsWidth: number;
     calculatedBoxWidth: number; // Stores (metrics.width + padding * 2)
@@ -268,7 +266,7 @@ function drawVideoFrame() {
         if (lastImage) {
             bufferCtx.drawImage(lastImage, 0, 0);
         }
-        if (captionsState && !trickPlayBar) {
+        if (getCaptionState() && !trickPlayBar) {
             drawSubtitles(bufferCtx);
         }
     }
@@ -279,6 +277,10 @@ function drawVideoFrame() {
 // Draw Subtitles on the Display Canvas
 // TODO: Draw captions window - width in fhd 1536 with left position 192 (10% of screen width)
 function drawSubtitles(ctx: CanvasRenderingContext2D) {
+    if (!deviceData.captionStyle) {
+        deviceData.captionStyle = new Map<string, string>();
+    }
+    const captionsStyle = deviceData.captionStyle;
     // Draw active subtitles
     const fhd = ctx.canvas.height === 1080 ? 1 : 0;
     const backgroundColor = captionsStyle.get("background/color") ?? "black";
@@ -507,18 +509,26 @@ export function getOverscanMode() {
 }
 
 // Set/Get Closed Caption Mode
-export function setCaptionMode(mode: string) {
+export function setCaptionMode(mode: string): boolean {
     const newMode = parseCaptionMode(mode);
     if (!newMode) {
         notifyAll("warning", `[display] Invalid Closed Caption mode: ${mode}`);
-        return;
+        return false;
+    } else if (newMode === deviceData.captionMode) {
+        // No change
+        return false;
     }
     deviceData.captionMode = newMode;
-    captionsState = newMode === "On" || (newMode === "When mute" && isVideoMuted());
+    return true;
 }
 
 export function getCaptionMode() {
     return deviceData.captionMode;
+}
+
+function getCaptionState(): boolean {
+    const mode = deviceData.captionMode;
+    return mode === "On" || (mode === "When mute" && isVideoMuted());
 }
 
 export function setTrickPlayBar(enabled: boolean) {
@@ -526,18 +536,28 @@ export function setTrickPlayBar(enabled: boolean) {
 }
 
 // Set Closed Captions Style
-export function setCaptionStyle(style?: Map<string, string>) {
+export function setCaptionStyle(style?: Map<string, string>): boolean {
+    let changed = false;
+    if (!deviceData.captionStyle) {
+        deviceData.captionStyle = new Map<string, string>();
+        changed = true;
+    }
+    const captionsStyle = deviceData.captionStyle;
     // Set the captions style from the provided style map or use defaults
     captionOptions.forEach((option, key) => {
         if (!key.includes("/")) {
             return;
         }
         if (style?.has(key)) {
-            captionsStyle.set(key, style.get(key)!);
+            if (captionsStyle.get(key) !== style.get(key)) {
+                captionsStyle.set(key, style.get(key)!);
+                changed = true;
+            }
             return;
         }
         captionsStyle.set(key, option[0]);
     });
+    return changed;
 }
 
 // Set the Performance Statistics state
