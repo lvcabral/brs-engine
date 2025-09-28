@@ -131,6 +131,7 @@ export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any 
         const invalidKeys = [
             "firmware",
             "registry",
+            "registryBuffer",
             "models",
             "remoteControls",
             "audioCodecs",
