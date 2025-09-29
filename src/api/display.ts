@@ -54,8 +54,6 @@ const subtitleMeasurementCache = new Map<string, CachedSubtitleMeasurement>();
 let lastCachedFontSize: number | undefined;
 let lastCachedFontFamily: string | undefined;
 
-setCaptionStyle();
-
 export function initDisplayModule(deviceInfo: DeviceInfo, perfStats = false) {
     // Initialize Display Canvas
     display = document.getElementById("display") as HTMLCanvasElement;
@@ -95,6 +93,7 @@ export function initDisplayModule(deviceInfo: DeviceInfo, perfStats = false) {
             lastFrameReq = window.requestAnimationFrame(drawVideoFrame);
         }
     });
+    setCaptionStyle(deviceInfo.captionStyle);
 }
 
 // Observers Handling
