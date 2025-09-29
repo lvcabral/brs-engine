@@ -18,6 +18,7 @@ import {
     captionColors,
     captionOpacities,
     captionFonts,
+    CaptionStyleOption,
 } from "../core/common";
 import { strFromU8, unzipSync } from "fflate";
 import Stats from "stats.js";
@@ -277,21 +278,21 @@ function drawVideoFrame() {
 // TODO: Draw captions window - width in fhd 1536 with left position 192 (10% of screen width)
 function drawSubtitles(ctx: CanvasRenderingContext2D) {
     if (!deviceData.captionStyle) {
-        deviceData.captionStyle = new Map<string, string>();
+        deviceData.captionStyle = [];
     }
     const captionsStyle = deviceData.captionStyle;
     // Draw active subtitles
     const fhd = ctx.canvas.height === 1080 ? 1 : 0;
-    const backgroundColor = captionsStyle.get("background/color") ?? "black";
+    const backgroundColor = getCaptionStyleOption("background/color", "black");
     const backColor = captionColors.get(backgroundColor === "default" ? "black" : backgroundColor);
-    const backgroundOpacity = captionsStyle.get("background/opacity") ?? "default";
+    const backgroundOpacity = getCaptionStyleOption("background/opacity");
     const backOpacity = captionOpacities.get(backgroundOpacity) ?? 1.0;
-    const textFont = captionsStyle.get("text/font") ?? "default";
+    const textFont = getCaptionStyleOption("text/font");
     const fontFamily = captionFonts.get(textFont) ?? "cc-serif";
-    const textColor = captionColors.get(captionsStyle.get("text/color") ?? "default");
-    const textOpacity = captionOpacities.get(captionsStyle.get("text/opacity") ?? "default") ?? 1.0;
-    const textSize = captionsStyle.get("text/size") ?? "default";
-    const textEffect = captionsStyle.get("text/effect") ?? "default";
+    const textColor = captionColors.get(getCaptionStyleOption("text/color"));
+    const textOpacity = captionOpacities.get(getCaptionStyleOption("text/opacity")) ?? 1.0;
+    const textSize = getCaptionStyleOption("text/size");
+    const textEffect = getCaptionStyleOption("text/effect");
     const fontSize = captionSizes.get(textSize)![fhd];
     ctx.font = `${fontSize}px ${fontFamily}, sans-serif`;
 
@@ -534,27 +535,61 @@ export function setTrickPlayBar(enabled: boolean) {
     trickPlayBar = enabled;
 }
 
-// Set Closed Captions Style
-export function setCaptionStyle(style?: Map<string, string>): boolean {
+// Get/Set Closed Captions Style Options
+function getCaptionStyleOption(id: string, defaultValue: string = "default"): string {
+    if (!deviceData.captionStyle) {
+        return defaultValue;
+    }
+    const caption = deviceData.captionStyle.find((caption) => caption.id.toLowerCase() === id.toLowerCase());
+    return caption?.style?.toLowerCase() ?? defaultValue;
+}
+
+function setCaptionStyleOption(id: string, style: string): boolean {
+    if (!deviceData.captionStyle) {
+        deviceData.captionStyle = [];
+    }
+    const captionStyle = deviceData.captionStyle;
+    const index = captionStyle.findIndex((caption) => caption.id.toLowerCase() === id.toLowerCase());
+    if (index >= 0) {
+        captionStyle[index].id = id.toLowerCase();
+        if (captionStyle[index].style === style) {
+            console.debug(`[display] caption style option unchanged: ${id} = ${style}`);
+            return false;
+        }
+        captionStyle[index].style = style;
+        console.debug(`[display] caption style option changed: ${id} = ${style}`);
+        return true;
+    } else {
+        captionStyle.push({ id: id.toLowerCase(), style: style.toLowerCase() });
+        console.debug(`[display] caption style option added: ${id} = ${style}`);
+        return true;
+    }
+}
+
+export function setCaptionStyle(style?: CaptionStyleOption[]): boolean {
     let changed = false;
     if (!deviceData.captionStyle) {
-        deviceData.captionStyle = new Map<string, string>();
+        deviceData.captionStyle = [];
         changed = true;
     }
-    const captionsStyle = deviceData.captionStyle;
+    if (style instanceof Array && style.length > 0) {
+        style.forEach((value) => {
+            console.debug(`[display] configuring caption style ${value.id} = ${value.style}`);
+        });
+    }
+    const captionStyle = deviceData.captionStyle;
     // Set the captions style from the provided style map or use defaults
     captionOptions.forEach((option, key) => {
         if (!key.includes("/")) {
             return;
         }
-        if (style?.has(key)) {
-            if (captionsStyle.get(key) !== style.get(key)) {
-                captionsStyle.set(key, style.get(key)!);
-                changed = true;
-            }
+        const entry = style?.find((entry) => entry.id.toLowerCase() === key);
+        if (entry instanceof Object) {
+            changed = setCaptionStyleOption(key, entry.style);
             return;
         }
-        captionsStyle.set(key, option[0]);
+        console.debug(`[display] setting default caption style ${key} = ${option[0]}`);
+        captionStyle.push({ id: key, style: option[0] });
     });
     return changed;
 }

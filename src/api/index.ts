@@ -602,7 +602,7 @@ function mainCallback(event: MessageEvent) {
         if (setCaptionMode(event.data.captionMode)) {
             notifyAll("captionMode", event.data.captionMode);
         }
-    } else if (event.data.captionStyle instanceof Map) {
+    } else if (event.data.captionStyle instanceof Array) {
         if (setCaptionStyle(event.data.captionStyle)) {
             notifyAll("captionStyle", deviceData.captionStyle);
         }
@@ -696,7 +696,7 @@ function taskCallback(event: MessageEvent) {
         if (setCaptionMode(event.data.captionMode)) {
             notifyAll("captionMode", event.data.captionMode);
         }
-    } else if (event.data.captionStyle instanceof Map) {
+    } else if (event.data.captionStyle instanceof Array) {
         if (setCaptionStyle(event.data.captionStyle)) {
             notifyAll("captionStyle", deviceData.captionStyle);
         }

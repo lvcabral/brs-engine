@@ -421,20 +421,21 @@ export class Video extends Group {
         const validStyles = BrsDevice.getCaptionStyle();
         for (const key in styles) {
             const id = key.toLowerCase();
-            if (id.includes("/") && captionOptions.has(id) && !validStyles.has(id)) {
+            const styleOption = validStyles.find((s) => s.id.toLowerCase() === id);
+            if (id.includes("/") && captionOptions.has(id) && !styleOption) {
                 const value = styles[key];
                 if (typeof value === "string" && captionOptions.get(id)?.includes(value.toLowerCase())) {
-                    validStyles.set(id, value.toLowerCase());
+                    validStyles.push({ id, style: value.toLowerCase() });
                 } else {
                     BrsDevice.stderr.write(
                         `warning,${getNow()} [sg.video.cap.val.err] caption style '${value}' is not a valid '${key}'. Using default.`
                     );
                 }
-            } else {
+            } else if (!id.includes("/") || !captionOptions.has(id)) {
                 BrsDevice.stderr.write(`warning,${getNow()} [sg.video.cap.attr.err] caption style '${key}' is invalid`);
             }
         }
-        if (validStyles.size > 0) {
+        if (validStyles.length > 0) {
             postMessage({ captionStyle: validStyles });
         } else {
             BrsDevice.stderr.write(

@@ -28,7 +28,7 @@ export interface DeviceInfo {
     clockFormat: string;
     displayMode: DisplayMode;
     captionMode: CaptionMode;
-    captionStyle: Map<string, string>;
+    captionStyle: CaptionStyleOption[];
     captionLanguage: SupportedLanguage;
     assets: ArrayBufferLike;
     maxSimulStreams: 1 | 2;
@@ -104,7 +104,7 @@ export const defaultDeviceInfo: DeviceInfo = {
     clockFormat: "12h",
     displayMode: "720p",
     captionMode: "Off",
-    captionStyle: new Map(),
+    captionStyle: [],
     captionLanguage: "en",
     assets: new ArrayBuffer(0),
     maxSimulStreams: 2,
@@ -184,6 +184,12 @@ export const captionOptions: Map<string, string[]> = new Map([
     ["track_analog", ["default"]],
     ["muted", ["unmuted", "muted"]],
 ]);
+
+// Caption Style Option Interface
+export type CaptionStyleOption = {
+    id: string;
+    style: string;
+};
 
 /* Execution Payload Interfaces
  *

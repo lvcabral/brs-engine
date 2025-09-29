@@ -80,15 +80,16 @@ program
             }
             deviceData.appList = new Array<AppData>();
             // Set default caption styles if not set
-            if (!(deviceData.captionStyle instanceof Map)) {
-                deviceData.captionStyle = new Map<string, string>();
+            if (!(deviceData.captionStyle instanceof Array)) {
+                deviceData.captionStyle = [];
             }
-            const captionsStyle = deviceData.captionStyle;
             captionOptions.forEach((option, key) => {
                 if (!key.includes("/")) {
                     return;
                 }
-                captionsStyle.set(key, option[0]);
+                if (!deviceData.captionStyle.find(caption => caption.id.toLowerCase() === key)) {
+                    deviceData.captionStyle.push({ id: key, style: option[0] });
+                }
             });
         }
         subscribePackage("cli", packageCallback);

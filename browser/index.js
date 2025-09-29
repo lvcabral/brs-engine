@@ -75,7 +75,7 @@ const customDeviceInfo = {
     locale: "en_US", // Localize app strings and some SceneGraph Nodes
     displayMode: "720p", // Supported modes: 480p (SD), 720p (HD) and 1080p (FHD)
     captionMode: "On", // Enable captions by default for testing
-    captionStyle: new Map(),
+    captionStyle: [],
     captionLanguage: "en", // Preferred closed caption language
     audioLanguage: "en", // Preferred audio track language
     maxFps: 30, // Limited refresh rate to minimize issues with iOS/iPadOS
@@ -85,8 +85,8 @@ const customDeviceInfo = {
     // Or add the URL of an instance of https://github.com/Rob--W/cors-anywhere
 };
 // Caption customization example, once configured in DeviceInfo cannot be dynamically changed in SceneGraph code:
-customDeviceInfo.captionStyle.set("Text/Effect", "uniform");
-customDeviceInfo.captionStyle.set("Background/Opacity", "50%");
+customDeviceInfo.captionStyle.push({ id: "Text/Effect", style: "uniform" });
+customDeviceInfo.captionStyle.push({ id: "Background/Opacity", style: "50%" });
 
 const customKeys = new Map();
 customKeys.set("NumpadMultiply", "info"); // Keep consistency with older versions

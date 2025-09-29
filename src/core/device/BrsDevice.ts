@@ -20,6 +20,7 @@ import {
     DefaultSounds,
     captionOptions,
     MaxSoundStreams,
+    CaptionStyleOption,
 } from "../common";
 import SharedObject from "../SharedObject";
 import { FileSystem } from "./FileSystem";
@@ -144,10 +145,14 @@ export class BrsDevice {
      * @returns a map with valid caption styles
      */
     static getCaptionStyle() {
-        const validStyles = new Map<string, string>();
-        BrsDevice.deviceInfo.captionStyle.forEach((value: string, key: string) => {
-            if (key.includes("/") && captionOptions.has(key.toLowerCase()) && value.toLowerCase() !== "default") {
-                validStyles.set(key.toLowerCase(), value.toLowerCase());
+        const validStyles: CaptionStyleOption[] = [];
+        BrsDevice.deviceInfo.captionStyle.forEach((option: CaptionStyleOption) => {
+            if (
+                option.id.includes("/") &&
+                captionOptions.has(option.id.toLowerCase()) &&
+                option.style.toLowerCase() !== "default"
+            ) {
+                validStyles.push({ id: option.id.toLowerCase(), style: option.style.toLowerCase() });
             }
         });
         return validStyles;

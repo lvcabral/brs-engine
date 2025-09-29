@@ -20,6 +20,7 @@ Check the [documentation](./integrating.md) to learn how to start using it. The 
 |getOverscanMode()|Returns the current overscan mode.||
 |setCaptionMode(`mode`)|Configures the closed caption mode. |<ul><li>`mode` (string): supported modes are `"Off"`, `"On"`, `"Instant replay"` or `"When mute"`.</li>|
 |getCaptionMode()|Returns the current closed caption mode.||
+|setCaptionStyle(`style`) |Configures the closed caption style options. |<ul><li>`style` (object[]): The caption styles array with each option as `{id: string, style: string}`, see options in [Roku Documentation](https://developer.roku.com/docs/references/brightscript/interfaces/ifdeviceinfo.md#getcaptionsoptionoption-as-string-as-string).</li></ul>|
 |enableStats(`state`)|Enables or disables the performance stats overlay |<ul><li>`state` (boolean): if `true` performance statistics will be shown over the display, on the top left.</li>|
 |setAudioMute(`mute`)|Mutes or un-mutes the audio during app execution|<ul><li>`mute` (boolean): if `true` the executing app audio and video will be muted.</li>|
 |getAudioMute()|Returns `true` if the audio is muted ||
@@ -50,7 +51,7 @@ Check the [documentation](./integrating.md) to learn how to start using it. The 
 | reset      | Triggered when the `RebootSystem()` function is executed from the engine | null: Nothing is returned as data |
 | control    | Triggered when a control key is sent to the engine | object: `{key: string, mod: number}`. The property `key` contains an [ECP key code](https://developer.roku.com/docs/developer-program/dev-tools/external-control-api.md#keypress-key-values) and `mod` contains `0` for key down or `100` for key up |
 | captionMode| Triggered when the closed caption mode is changed | string: The new caption mode, options are "Off", "On", "Instant replay", "When mute" |
-| captionStyle| Triggered when the closed caption styles/options are changed | Map<string, string>: The new caption styles map, see options in [Roku Documentation](hhttps://developer.roku.com/docs/references/brightscript/interfaces/ifdeviceinfo.md#getcaptionsoptionoption-as-string-as-string) |
+| captionStyle| Triggered when the closed caption styles/options are changed | object[]: The new caption styles array with each option as `{id: string, style: string}`, see options in [Roku Documentation](https://developer.roku.com/docs/references/brightscript/interfaces/ifdeviceinfo.md#getcaptionsoptionoption-as-string-as-string) |
 | redraw     | Triggered when the display canvas is redrawn/resized | boolean: If `true` the display canvas is in **full screen** mode |
 | resolution | Triggered when the emulated screen resolution changes (controlled via BrightScript) | object: `{width: integer, height: integer}` |
 | launch     | Triggered when the methods `roAppManager.launchApp()` or `roNDK.start()` (with `SDKLauncher` app) are called from BrightScript | object: `{app: string, params: Map}`. |
