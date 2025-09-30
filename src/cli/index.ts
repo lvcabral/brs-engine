@@ -20,15 +20,7 @@ import stripAnsi from "strip-ansi";
 import readline from "readline";
 import { deviceData, loadAppZip, updateAppZip, subscribePackage, mountExt, setupDeepLink } from "../api/package";
 import { isNumber } from "../api/util";
-import {
-    debugPrompt,
-    dataBufferIndex,
-    dataBufferSize,
-    AppPayload,
-    AppExitReason,
-    AppData,
-    captionOptions,
-} from "../core/common";
+import { debugPrompt, dataBufferIndex, dataBufferSize, AppPayload, AppExitReason, AppData } from "../core/common";
 import packageInfo from "../../package.json";
 // @ts-ignore
 import * as brs from "./brs.node.js";

@@ -553,7 +553,7 @@ export function setCaptionStyle(style?: CaptionStyleOption[]) {
 
 export function setAppCaptionStyle(style?: CaptionStyleOption[]) {
     appCaptionStyle.length = 0;
-    for (const [key, option] of captionOptions) {
+    for (const [key] of captionOptions) {
         if (!key.includes("/")) {
             continue;
         }
