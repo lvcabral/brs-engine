@@ -545,7 +545,7 @@ export function setCaptionStyle(style?: CaptionStyleOption[]) {
         const entry = style?.find((entry) => entry.id.toLowerCase() === key);
         if (entry instanceof Object) {
             setCaptionStyleOption(captionStyle, key, entry.style);
-            return;
+            continue;
         }
         captionStyle.push({ id: key, style: option[0] });
     }
