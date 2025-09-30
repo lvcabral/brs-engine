@@ -53,7 +53,7 @@ import {
     loadCaptionsFonts,
     setDisplayState,
     setCaptionMode,
-    setCaptionStyle,
+    setAppCaptionStyle,
     setTrickPlayBar,
 } from "./display";
 import {
@@ -101,6 +101,7 @@ export {
     getOverscanMode,
     setCaptionMode,
     getCaptionMode,
+    setCaptionStyle,
     enableStats,
 } from "./display";
 
@@ -130,6 +131,7 @@ export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any 
         const invalidKeys = [
             "firmware",
             "registry",
+            "registryBuffer",
             "models",
             "remoteControls",
             "audioCodecs",
@@ -597,9 +599,11 @@ function mainCallback(event: MessageEvent) {
     } else if (typeof event.data.displayEnabled === "boolean") {
         setDisplayState(event.data.displayEnabled);
     } else if (typeof event.data.captionMode === "string") {
-        setCaptionMode(event.data.captionMode);
-    } else if (event.data.captionStyle instanceof Map) {
-        setCaptionStyle(event.data.captionStyle);
+        if (setCaptionMode(event.data.captionMode)) {
+            notifyAll("captionMode", event.data.captionMode);
+        }
+    } else if (event.data.captionStyle instanceof Array) {
+        setAppCaptionStyle(event.data.captionStyle);
     } else if (typeof event.data.trickPlayBarVisible === "boolean") {
         setTrickPlayBar(event.data.trickPlayBarVisible);
     } else if (isAppData(event.data)) {
@@ -687,7 +691,11 @@ function taskCallback(event: MessageEvent) {
     } else if (typeof event.data.displayEnabled === "boolean") {
         setDisplayState(event.data.displayEnabled);
     } else if (typeof event.data.captionMode === "string") {
-        setCaptionMode(event.data.captionMode);
+        if (setCaptionMode(event.data.captionMode)) {
+            notifyAll("captionMode", event.data.captionMode);
+        }
+    } else if (event.data.captionStyle instanceof Array) {
+        setAppCaptionStyle(event.data.captionStyle);
     } else if (isTaskData(event.data)) {
         console.debug("[API] Task data received from Task Thread: ", event.data.name, TaskState[event.data.state]);
         if (event.data.state === TaskState.STOP) {

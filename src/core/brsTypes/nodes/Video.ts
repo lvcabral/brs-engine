@@ -26,7 +26,15 @@ import {
     fromAssociativeArray,
     FlexObject,
 } from "..";
-import { captionOptions, getNow, MediaErrorCode, MediaEvent, MediaTrack, parseCaptionMode } from "../../common";
+import {
+    captionOptions,
+    CaptionStyleOption,
+    getNow,
+    MediaErrorCode,
+    MediaEvent,
+    MediaTrack,
+    parseCaptionMode,
+} from "../../common";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D } from "../interfaces/IfDraw2D";
 import { rotateTranslation } from "../../scenegraph/SGUtil";
@@ -202,7 +210,7 @@ export class Video extends Group {
         postMessage(`video,notify,500`);
         postMessage({ videoPlaylist: new Array<string>() });
         postMessage({ captionMode: BrsDevice.deviceInfo.captionMode });
-        postMessage({ captionStyle: BrsDevice.getCaptionStyle() });
+        postMessage({ captionStyle: new Array<CaptionStyleOption>() });
 
         // Set itself as the root video object
         rootObjects.video = this;
@@ -418,13 +426,13 @@ export class Video extends Group {
     }
 
     setCaptionStyle(styles: FlexObject) {
-        const validStyles = BrsDevice.getCaptionStyle();
+        const validStyles: CaptionStyleOption[] = [];
         for (const key in styles) {
             const id = key.toLowerCase();
-            if (id.includes("/") && captionOptions.has(id) && !validStyles.has(id)) {
+            if (id.includes("/") && captionOptions.has(id)) {
                 const value = styles[key];
                 if (typeof value === "string" && captionOptions.get(id)?.includes(value.toLowerCase())) {
-                    validStyles.set(id, value.toLowerCase());
+                    validStyles.push({ id, style: value.toLowerCase() });
                 } else {
                     BrsDevice.stderr.write(
                         `warning,${getNow()} [sg.video.cap.val.err] caption style '${value}' is not a valid '${key}'. Using default.`
@@ -434,7 +442,7 @@ export class Video extends Group {
                 BrsDevice.stderr.write(`warning,${getNow()} [sg.video.cap.attr.err] caption style '${key}' is invalid`);
             }
         }
-        if (validStyles.size > 0) {
+        if (validStyles.length > 0) {
             postMessage({ captionStyle: validStyles });
         } else {
             BrsDevice.stderr.write(

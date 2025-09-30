@@ -676,7 +676,8 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             } else if (!captionOptions.has(opt)) {
                 return new BrsString("");
             }
-            return new BrsString(BrsDevice.deviceInfo.captionStyle.get(opt) ?? "Default");
+            const styleOption = BrsDevice.deviceInfo.captionStyle.find((s) => s.id === opt);
+            return new BrsString(styleOption?.style ?? "Default");
         },
     });
 

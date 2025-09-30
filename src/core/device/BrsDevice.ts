@@ -18,7 +18,6 @@ import {
     defaultDeviceInfo,
     DeviceInfo,
     DefaultSounds,
-    captionOptions,
     MaxSoundStreams,
 } from "../common";
 import SharedObject from "../SharedObject";
@@ -137,20 +136,6 @@ export class BrsDevice {
                 });
             }
         }
-    }
-
-    /**
-     * Returns the filtered valid Closed Caption styles defined in DeviceInfo
-     * @returns a map with valid caption styles
-     */
-    static getCaptionStyle() {
-        const validStyles = new Map<string, string>();
-        BrsDevice.deviceInfo.captionStyle.forEach((value: string, key: string) => {
-            if (key.includes("/") && captionOptions.has(key.toLowerCase()) && value.toLowerCase() !== "default") {
-                validStyles.set(key.toLowerCase(), value.toLowerCase());
-            }
-        });
-        return validStyles;
     }
 
     /**
