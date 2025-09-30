@@ -141,24 +141,6 @@ export class BrsDevice {
     }
 
     /**
-     * Returns the filtered valid Closed Caption styles defined in DeviceInfo
-     * @returns a map with valid caption styles
-     */
-    static getCaptionStyle() {
-        const validStyles: CaptionStyleOption[] = [];
-        BrsDevice.deviceInfo.captionStyle.forEach((option: CaptionStyleOption) => {
-            if (
-                option.id.includes("/") &&
-                captionOptions.has(option.id.toLowerCase()) &&
-                option.style.toLowerCase() !== "default"
-            ) {
-                validStyles.push({ id: option.id.toLowerCase(), style: option.style.toLowerCase() });
-            }
-        });
-        return validStyles;
-    }
-
-    /**
      * Return the translated terms based on current locale id
      * @param term the term to be translated
      * @returns the translated term

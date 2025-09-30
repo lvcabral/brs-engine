@@ -25,6 +25,7 @@ import Stats from "stats.js";
 
 // Simulation Display
 const screenSize = { width: 1280, height: 720 };
+const appCaptionStyle: CaptionStyleOption[] = [];
 let display: HTMLCanvasElement;
 let deviceData: DeviceInfo;
 let ctx: CanvasRenderingContext2D | null;
@@ -536,19 +537,42 @@ export function setTrickPlayBar(enabled: boolean) {
 }
 
 // Get/Set Closed Captions Style Options
-function getCaptionStyleOption(id: string, defaultValue: string = "default"): string {
-    if (!deviceData.captionStyle) {
-        return defaultValue;
-    }
-    const caption = deviceData.captionStyle.find((caption) => caption.id.toLowerCase() === id.toLowerCase());
-    return caption?.style?.toLowerCase() ?? defaultValue;
+export function setCaptionStyle(style?: CaptionStyleOption[]) {
+    const captionStyle = deviceData.captionStyle;
+    captionOptions.forEach((option, key) => {
+        if (!key.includes("/")) {
+            return;
+        }
+        const entry = style?.find((entry) => entry.id.toLowerCase() === key);
+        if (entry instanceof Object) {
+            setCaptionStyleOption(captionStyle, key, entry.style);
+            return;
+        }
+        captionStyle.push({ id: key, style: option[0] });
+    });
 }
 
-function setCaptionStyleOption(id: string, style: string): boolean {
-    if (!deviceData.captionStyle) {
-        deviceData.captionStyle = [];
-    }
-    const captionStyle = deviceData.captionStyle;
+export function setAppCaptionStyle(style?: CaptionStyleOption[]) {
+    appCaptionStyle.length = 0;
+    captionOptions.forEach((option, key) => {
+        if (!key.includes("/")) {
+            return;
+        }
+        const entry = style?.find((entry) => entry.id.toLowerCase() === key);
+        if (entry instanceof Object) {
+            setCaptionStyleOption(appCaptionStyle, key, entry.style);
+        }
+    });
+}
+
+function getCaptionStyleOption(id: string, defaultStyle: string = "default"): string {
+    const deviceOption = deviceData.captionStyle.find((option) => option.id.toLowerCase() === id.toLowerCase());
+    const deviceStyle = deviceOption?.style?.toLowerCase() ?? defaultStyle;
+    const appOption = appCaptionStyle.find((option) => option.id.toLowerCase() === id.toLowerCase());
+    return deviceStyle !== "default" ? deviceStyle : appOption?.style?.toLowerCase() ?? defaultStyle;
+}
+
+function setCaptionStyleOption(captionStyle: CaptionStyleOption[], id: string, style: string): boolean {
     const index = captionStyle.findIndex((caption) => caption.id.toLowerCase() === id.toLowerCase());
     if (index >= 0) {
         captionStyle[index].id = id.toLowerCase();
@@ -564,34 +588,6 @@ function setCaptionStyleOption(id: string, style: string): boolean {
         console.debug(`[display] caption style option added: ${id} = ${style}`);
         return true;
     }
-}
-
-export function setCaptionStyle(style?: CaptionStyleOption[]): boolean {
-    let changed = false;
-    if (!deviceData.captionStyle) {
-        deviceData.captionStyle = [];
-        changed = true;
-    }
-    if (style instanceof Array && style.length > 0) {
-        style.forEach((value) => {
-            console.debug(`[display] configuring caption style ${value.id} = ${value.style}`);
-        });
-    }
-    const captionStyle = deviceData.captionStyle;
-    // Set the captions style from the provided style map or use defaults
-    captionOptions.forEach((option, key) => {
-        if (!key.includes("/")) {
-            return;
-        }
-        const entry = style?.find((entry) => entry.id.toLowerCase() === key);
-        if (entry instanceof Object) {
-            changed = setCaptionStyleOption(key, entry.style);
-            return;
-        }
-        console.debug(`[display] setting default caption style ${key} = ${option[0]}`);
-        captionStyle.push({ id: key, style: option[0] });
-    });
-    return changed;
 }
 
 // Set the Performance Statistics state

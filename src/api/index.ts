@@ -53,7 +53,7 @@ import {
     loadCaptionsFonts,
     setDisplayState,
     setCaptionMode,
-    setCaptionStyle,
+    setAppCaptionStyle,
     setTrickPlayBar,
 } from "./display";
 import {
@@ -603,9 +603,7 @@ function mainCallback(event: MessageEvent) {
             notifyAll("captionMode", event.data.captionMode);
         }
     } else if (event.data.captionStyle instanceof Array) {
-        if (setCaptionStyle(event.data.captionStyle)) {
-            notifyAll("captionStyle", deviceData.captionStyle);
-        }
+        setAppCaptionStyle(event.data.captionStyle);
     } else if (typeof event.data.trickPlayBarVisible === "boolean") {
         setTrickPlayBar(event.data.trickPlayBarVisible);
     } else if (isAppData(event.data)) {
@@ -697,9 +695,7 @@ function taskCallback(event: MessageEvent) {
             notifyAll("captionMode", event.data.captionMode);
         }
     } else if (event.data.captionStyle instanceof Array) {
-        if (setCaptionStyle(event.data.captionStyle)) {
-            notifyAll("captionStyle", deviceData.captionStyle);
-        }
+        setAppCaptionStyle(event.data.captionStyle);
     } else if (isTaskData(event.data)) {
         console.debug("[API] Task data received from Task Thread: ", event.data.name, TaskState[event.data.state]);
         if (event.data.state === TaskState.STOP) {
