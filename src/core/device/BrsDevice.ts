@@ -18,9 +18,7 @@ import {
     defaultDeviceInfo,
     DeviceInfo,
     DefaultSounds,
-    captionOptions,
     MaxSoundStreams,
-    CaptionStyleOption,
 } from "../common";
 import SharedObject from "../SharedObject";
 import { FileSystem } from "./FileSystem";

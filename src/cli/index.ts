@@ -91,14 +91,14 @@ program
             if (!(deviceData.captionStyle instanceof Array)) {
                 deviceData.captionStyle = [];
             }
-            captionOptions.forEach((option, key) => {
+            for (const [key, option] of captionOptions) {
                 if (!key.includes("/")) {
-                    return;
+                    continue;
                 }
                 if (!deviceData.captionStyle.find((caption) => caption.id.toLowerCase() === key)) {
                     deviceData.captionStyle.push({ id: key, style: option[0] });
                 }
-            });
+            }
         }
         subscribePackage("cli", packageCallback);
         brs.registerCallback(messageCallback, sharedBuffer);

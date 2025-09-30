@@ -538,9 +538,9 @@ export function setTrickPlayBar(enabled: boolean) {
 // Get/Set Closed Captions Style Options
 export function setCaptionStyle(style?: CaptionStyleOption[]) {
     const captionStyle = deviceData.captionStyle;
-    captionOptions.forEach((option, key) => {
+    for (const [key, option] of captionOptions) {
         if (!key.includes("/")) {
-            return;
+            continue;
         }
         const entry = style?.find((entry) => entry.id.toLowerCase() === key);
         if (entry instanceof Object) {
@@ -548,20 +548,20 @@ export function setCaptionStyle(style?: CaptionStyleOption[]) {
             return;
         }
         captionStyle.push({ id: key, style: option[0] });
-    });
+    }
 }
 
 export function setAppCaptionStyle(style?: CaptionStyleOption[]) {
     appCaptionStyle.length = 0;
-    captionOptions.forEach((option, key) => {
+    for (const [key, option] of captionOptions) {
         if (!key.includes("/")) {
-            return;
+            continue;
         }
         const entry = style?.find((entry) => entry.id.toLowerCase() === key);
         if (entry instanceof Object) {
             setCaptionStyleOption(appCaptionStyle, key, entry.style);
         }
-    });
+    }
 }
 
 function getCaptionStyleOption(id: string, defaultStyle: string = "default"): string {
