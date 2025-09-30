@@ -281,7 +281,6 @@ function drawSubtitles(ctx: CanvasRenderingContext2D) {
     if (!deviceData.captionStyle) {
         deviceData.captionStyle = [];
     }
-    const captionsStyle = deviceData.captionStyle;
     // Draw active subtitles
     const fhd = ctx.canvas.height === 1080 ? 1 : 0;
     const backgroundColor = getCaptionStyleOption("background/color", "black");
