@@ -140,11 +140,11 @@ export class ArrayGrid extends Group {
             this.refreshContent();
             const focusedIndex = this.getFieldValueJS("itemFocused") as number;
             if (value.getNodeChildren().length && focusedIndex < 0) {
-                this.setFocusedItem(new Int32(0));
+                this.setFocusedItem(0);
             }
             return BrsInvalid.Instance;
         } else if (["jumptoitem", "animatetoitem"].includes(fieldName) && isBrsNumber(value)) {
-            this.setFocusedItem(value);
+            this.setFocusedItem(jsValueOf(value));
         } else if (fieldName === "numrows" && isBrsNumber(value)) {
             this.numRows = jsValueOf(value) as number;
         } else if (fieldName === "numcolumns" && isBrsNumber(value)) {
@@ -174,8 +174,8 @@ export class ArrayGrid extends Group {
         return BrsInvalid.Instance;
     }
 
-    protected setFocusedItem(value: BrsNumber) {
-        const newFocus = this.findContentIndex(jsValueOf(value));
+    protected setFocusedItem(index: number) {
+        const newFocus = this.findContentIndex(index);
         if (newFocus === -1) {
             return;
         }
@@ -185,7 +185,7 @@ export class ArrayGrid extends Group {
         super.set(new BrsString("itemUnfocused"), new Int32(focusedIndex));
         this.focusIndex = newFocus;
         this.updateItemFocus(this.focusIndex, true, nodeFocus);
-        super.set(new BrsString("itemFocused"), value);
+        super.set(new BrsString("itemFocused"), new Int32(index));
     }
 
     protected findContentIndex(index: number) {
