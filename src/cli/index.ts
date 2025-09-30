@@ -87,18 +87,6 @@ program
                 deviceData.registry = getRegistry();
             }
             deviceData.appList = new Array<AppData>();
-            // Set default caption styles if not set
-            if (!(deviceData.captionStyle instanceof Array)) {
-                deviceData.captionStyle = [];
-            }
-            for (const [key, option] of captionOptions) {
-                if (!key.includes("/")) {
-                    continue;
-                }
-                if (!deviceData.captionStyle.find((caption) => caption.id.toLowerCase() === key)) {
-                    deviceData.captionStyle.push({ id: key, style: option[0] });
-                }
-            }
         }
         subscribePackage("cli", packageCallback);
         brs.registerCallback(messageCallback, sharedBuffer);
