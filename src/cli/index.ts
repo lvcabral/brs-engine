@@ -20,7 +20,15 @@ import stripAnsi from "strip-ansi";
 import readline from "readline";
 import { deviceData, loadAppZip, updateAppZip, subscribePackage, mountExt, setupDeepLink } from "../api/package";
 import { isNumber } from "../api/util";
-import { debugPrompt, dataBufferIndex, dataBufferSize, AppPayload, AppExitReason, AppData, captionOptions } from "../core/common";
+import {
+    debugPrompt,
+    dataBufferIndex,
+    dataBufferSize,
+    AppPayload,
+    AppExitReason,
+    AppData,
+    captionOptions,
+} from "../core/common";
 import packageInfo from "../../package.json";
 // @ts-ignore
 import * as brs from "./brs.node.js";
@@ -87,7 +95,7 @@ program
                 if (!key.includes("/")) {
                     return;
                 }
-                if (!deviceData.captionStyle.find(caption => caption.id.toLowerCase() === key)) {
+                if (!deviceData.captionStyle.find((caption) => caption.id.toLowerCase() === key)) {
                     deviceData.captionStyle.push({ id: key, style: option[0] });
                 }
             });
@@ -540,4 +548,3 @@ function printAsciiScreen(columns: number, image: Canvas) {
         process.stdout.write(`\u001B[?25h`); // show cursor
     }
 }
-
