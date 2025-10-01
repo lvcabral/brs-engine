@@ -1142,33 +1142,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     });
                     try {
                         let returnValue = callee.call(this, ...args);
-                        if (
-                            signature.returns !== ValueKind.Void &&
-                            signature.returns !== ValueKind.Dynamic &&
-                            returnValue.kind === ValueKind.Invalid
-                        ) {
-                            // When a function has a typed return, but no return statement is hit, Roku returns zero by default
-                            const coercedValue = tryCoerce(new Int32(0), signature.returns);
-                            if (coercedValue) {
-                                returnValue = coercedValue;
-                            } else {
-                                // When the typed return is not numeric, Roku raises a type mismatch error
-                                this.addError(
-                                    new TypeMismatch({
-                                        message: `Unable to cast`,
-                                        left: {
-                                            type: signature.returns,
-                                            location: this.location,
-                                        },
-                                        right: {
-                                            type: ValueKind.Int32,
-                                            location: this.location,
-                                        },
-                                        cast: true,
-                                    })
-                                );
-                            }
-                        }
                         this._stack.pop();
                         return returnValue;
                     } catch (err: any) {
