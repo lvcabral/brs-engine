@@ -3,17 +3,16 @@
 An interpreter for the BrightScript language that runs Roku apps on browser platforms and Node.js.
 
 ![GitHub](https://img.shields.io/github/license/lvcabral/brs-engine)
-[![NPM Version](https://badge.fury.io/js/brs-engine.svg?style=flat)](https://npmjs.org/package/brs-engine)
+[![NPM Version](https://img.shields.io/badge/Version-2.0.0.alpha.10-blue.svg)](https://www.npmjs.com/package/brs-engine/v/2.0.0-alpha.10)
 [![Build](https://github.com/lvcabral/brs-engine/actions/workflows/build.yml/badge.svg)](https://github.com/lvcabral/brs-engine/actions/workflows/build.yml)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=lvcabral_brs-emu&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=lvcabral_brs-emu)
-[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=lvcabral_brs-emu&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=lvcabral_brs-emu)
 [![Slack](https://img.shields.io/badge/Slack-RokuCommunity-4A154B?logo=slack)](https://join.slack.com/t/rokudevelopers/shared_invite/zt-4vw7rg6v-NH46oY7hTktpRIBM_zGvwA)
 
 ## The Project
 
 The **BrightScript Simulation Engine** implements an interpreter for the **BrightScript** language, that can be embedded in Web, Electron and Node.js applications, allowing [Roku apps](https://developer.roku.com/overview) to be executed in several different non-Roku platforms.
 
-Initially the focus was on the **Draw 2D API** components (`roScreen`, `roCompositor`, `roRegion`, etc.) along with the core elements of the **BrightScript** language, allowing a full Roku app execution over an **HTML5 Canvas**, but it was extended to include simulation of the **Roku** file system, registry, remote control and the Micro Debugger.
+Initially the focus was on the **Draw 2D API** components (`roScreen`, `roCompositor`, `roRegion`, etc.) along with the core elements of the **BrightScript** language, allowing a full Roku app execution over an **HTML5 Canvas**, but currently, it was extended to include the SceneGraph SDK and the simulation of the **Roku** file system, registry, remote control and the Micro Debugger.
 
 This repository was originally a fork from [**brs**](https://github.com/rokucommunity/brs), a **BrightScript** _command line interpreter_.
 
