@@ -53,7 +53,7 @@ import { toCallable } from "./BrsFunction";
 import { runDebugger } from "./MicroDebugger";
 import { DataType, DebugCommand, DefaultSounds, numberToHex, parseTextFile } from "../common";
 /// #if !BROWSER
-import * as v8 from "v8";
+import * as v8 from "node:v8";
 /// #endif
 
 /** The set of options used to configure an interpreter's execution. */
@@ -437,8 +437,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             "#": ValueKind.Double,
             "&": ValueKind.Int64,
         };
-        let requiredType = typeDesignators[name.charAt(name.length - 1)];
-
+        const requiredType = typeDesignators[name.at(-1) ?? ""];
         if (requiredType) {
             const coercedValue = tryCoerce(value, requiredType);
             if (coercedValue) {
