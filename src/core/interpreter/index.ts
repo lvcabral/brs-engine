@@ -53,7 +53,7 @@ import { toCallable } from "./BrsFunction";
 import { runDebugger } from "./MicroDebugger";
 import { DataType, DebugCommand, DefaultSounds, numberToHex, parseTextFile } from "../common";
 /// #if !BROWSER
-import * as v8 from "v8";
+import * as v8 from "node:v8";
 /// #endif
 
 /** The set of options used to configure an interpreter's execution. */
@@ -155,7 +155,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         BrsDevice.singleKeyEvents = true;
         BrsDevice.useCORSProxy = true;
         // Load manifest entries
-        manifest.forEach((value: string, key: string) => {
+        for (const [key, value] of manifest.entries()) {
             this.manifest.set(key, value);
             // Custom manifest entries
             if (key.toLowerCase() === "multi_key_events") {
@@ -163,7 +163,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             } else if (key.toLowerCase() === "cors_proxy") {
                 BrsDevice.useCORSProxy = value.trim() !== "0";
             }
-        });
+        }
         // Reset sound effects
         BrsDevice.sfx.length = 0;
         BrsDevice.sfx.push(...DefaultSounds.slice());
@@ -401,8 +401,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 BrsDevice.stdout.position(str);
             }
         });
-        let lastExpression = statement.expressions[statement.expressions.length - 1];
-        if (!isToken(lastExpression) || lastExpression.kind !== Lexeme.Semicolon) {
+        const lastExpression = statement.expressions.at(-1);
+        if (!lastExpression || !isToken(lastExpression) || lastExpression.kind !== Lexeme.Semicolon) {
             printStream += "\r\n";
         }
 
@@ -437,11 +437,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             "#": ValueKind.Double,
             "&": ValueKind.Int64,
         };
-        let requiredType = typeDesignators[name.charAt(name.length - 1)];
-
+        const requiredType = typeDesignators[name.at(-1) ?? ""];
         if (requiredType) {
-            let coercedValue = tryCoerce(value, requiredType);
-            if (coercedValue != null) {
+            const coercedValue = tryCoerce(value, requiredType);
+            if (coercedValue) {
                 value = coercedValue;
             } else {
                 this.addError(
@@ -477,7 +476,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         }
 
         let dimensionValues: number[] = [];
-        statement.dimensions.forEach((expr) => {
+        for (const expr of statement.dimensions) {
             let val = this.evaluate(expr);
             if (isBoxedNumber(val)) {
                 val = val.unbox();
@@ -487,7 +486,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             }
             // dim takes max-index, so +1 to get the actual array size
             dimensionValues.push(val.getValue() + 1);
-        });
+        }
 
         let createArrayTree = (dimIndex: number = 0): RoArray => {
             let children: RoArray[] = [];
@@ -1066,7 +1065,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     visitBlock(block: Stmt.Block): BrsType {
-        block.statements.forEach((statement) => this.execute(statement));
+        for (const statement of block.statements) {
+            this.execute(statement);
+        }
         return BrsInvalid.Instance;
     }
 
@@ -1140,7 +1141,34 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                         signature: signature,
                     });
                     try {
-                        const returnValue = callee.call(this, ...args);
+                        let returnValue = callee.call(this, ...args);
+                        if (
+                            signature.returns !== ValueKind.Void &&
+                            signature.returns !== ValueKind.Dynamic &&
+                            returnValue.kind === ValueKind.Invalid
+                        ) {
+                            // When a function has a typed return, but no return statement is hit, Roku returns zero by default
+                            const coercedValue = tryCoerce(new Int32(0), signature.returns);
+                            if (coercedValue) {
+                                returnValue = coercedValue;
+                            } else {
+                                // When the typed return is not numeric, Roku raises a type mismatch error
+                                this.addError(
+                                    new TypeMismatch({
+                                        message: `Unable to cast`,
+                                        left: {
+                                            type: signature.returns,
+                                            location: this.location,
+                                        },
+                                        right: {
+                                            type: ValueKind.Int32,
+                                            location: this.location,
+                                        },
+                                        cast: true,
+                                    })
+                                );
+                            }
+                        }
                         this._stack.pop();
                         return returnValue;
                     } catch (err: any) {
@@ -1188,8 +1216,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 }
 
                 if (returnedValue) {
-                    let coercedValue = tryCoerce(returnedValue, signatureKind);
-                    if (coercedValue != null) {
+                    const coercedValue = tryCoerce(returnedValue, signatureKind);
+                    if (coercedValue) {
                         return coercedValue;
                     }
                 }
@@ -1915,10 +1943,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             const func = backTrace[index];
             const kind = ValueKind.toString(func.signature.returns);
             let args = "";
-            func.signature.args.forEach((arg) => {
-                args += args !== "" ? "," : "";
+            for (const arg of func.signature.args) {
+                args += args === "" ? "" : ",";
                 args += `${arg.name.text} As ${ValueKind.toString(arg.type.kind)}`;
-            });
+            }
             const funcSig = `${func.functionName}(${args}) As ${kind}`;
             if (asString) {
                 debugMsg += `#${index}  Function ${funcSig}\r\n`;
@@ -1940,7 +1968,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     formatVariables(scope: Scope = Scope.Function): string {
         let vars = scope === Scope.Function ? `${"global".padEnd(16)} Interface:ifGlobal\r\n` : "";
         let fnc = this.environment.getList(scope);
-        fnc.forEach((value, key) => {
+        for (const [key, value] of fnc) {
             const varName = key.padEnd(17);
             if (value.kind === ValueKind.Uninitialized) {
                 vars += `${varName}${ValueKind.toString(value.kind)}\r\n`;
@@ -1961,7 +1989,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             } else {
                 vars += `${varName}${value.toString().substring(0, 94)}\r\n`;
             }
-        });
+        }
         return vars;
     }
 
@@ -2001,15 +2029,15 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         let varCount = this.environment.getList(Scope.Function).size + 2;
         debugMsg += `  Variables:      ${varCount}\r\n`;
         let lineCount = 0;
-        this.sourceMap.forEach((lines) => {
+        for (const lines of this.sourceMap.values()) {
             lineCount += parseTextFile(lines).length;
-        });
+        }
         debugMsg += "Module Constant Table Sizes:\r\n";
         debugMsg += `  Source Lns:     ${lineCount}\r\n`;
-        core.stats.forEach((count, lexeme) => {
+        for (const [lexeme, count] of core.stats.entries()) {
             const name = Lexeme[lexeme] + ":";
             debugMsg += `  ${name.padEnd(15)} ${count}\r\n`;
-        });
+        }
         return debugMsg;
     }
 
@@ -2018,9 +2046,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
      * @returns the current app version
      */
     getChannelVersion(): string {
-        let majorVersion = parseInt(this.manifest.get("major_version")) || 0;
-        let minorVersion = parseInt(this.manifest.get("minor_version")) || 0;
-        let buildVersion = parseInt(this.manifest.get("build_version")) || 0;
+        let majorVersion = Number.parseInt(this.manifest.get("major_version")) || 0;
+        let minorVersion = Number.parseInt(this.manifest.get("minor_version")) || 0;
+        let buildVersion = Number.parseInt(this.manifest.get("build_version")) || 0;
         return `${majorVersion}.${minorVersion}.${buildVersion}`;
     }
 
