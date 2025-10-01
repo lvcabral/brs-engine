@@ -155,7 +155,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         BrsDevice.singleKeyEvents = true;
         BrsDevice.useCORSProxy = true;
         // Load manifest entries
-        manifest.forEach((value: string, key: string) => {
+        for (const [key, value] of manifest.entries()) {
             this.manifest.set(key, value);
             // Custom manifest entries
             if (key.toLowerCase() === "multi_key_events") {
@@ -163,7 +163,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             } else if (key.toLowerCase() === "cors_proxy") {
                 BrsDevice.useCORSProxy = value.trim() !== "0";
             }
-        });
+        }
         // Reset sound effects
         BrsDevice.sfx.length = 0;
         BrsDevice.sfx.push(...DefaultSounds.slice());
@@ -476,7 +476,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         }
 
         let dimensionValues: number[] = [];
-        statement.dimensions.forEach((expr) => {
+        for (const expr of statement.dimensions) {
             let val = this.evaluate(expr);
             if (isBoxedNumber(val)) {
                 val = val.unbox();
@@ -486,7 +486,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             }
             // dim takes max-index, so +1 to get the actual array size
             dimensionValues.push(val.getValue() + 1);
-        });
+        }
 
         let createArrayTree = (dimIndex: number = 0): RoArray => {
             let children: RoArray[] = [];
@@ -1065,7 +1065,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     visitBlock(block: Stmt.Block): BrsType {
-        block.statements.forEach((statement) => this.execute(statement));
+        for (const statement of block.statements) {
+            this.execute(statement);
+        }
         return BrsInvalid.Instance;
     }
 
@@ -1941,10 +1943,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             const func = backTrace[index];
             const kind = ValueKind.toString(func.signature.returns);
             let args = "";
-            func.signature.args.forEach((arg) => {
+            for (const arg of func.signature.args) {
                 args += args === "" ? "" : ",";
                 args += `${arg.name.text} As ${ValueKind.toString(arg.type.kind)}`;
-            });
+            }
             const funcSig = `${func.functionName}(${args}) As ${kind}`;
             if (asString) {
                 debugMsg += `#${index}  Function ${funcSig}\r\n`;
@@ -1966,7 +1968,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     formatVariables(scope: Scope = Scope.Function): string {
         let vars = scope === Scope.Function ? `${"global".padEnd(16)} Interface:ifGlobal\r\n` : "";
         let fnc = this.environment.getList(scope);
-        fnc.forEach((value, key) => {
+        for (const [key, value] of fnc) {
             const varName = key.padEnd(17);
             if (value.kind === ValueKind.Uninitialized) {
                 vars += `${varName}${ValueKind.toString(value.kind)}\r\n`;
@@ -1987,7 +1989,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             } else {
                 vars += `${varName}${value.toString().substring(0, 94)}\r\n`;
             }
-        });
+        }
         return vars;
     }
 
@@ -2027,15 +2029,15 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         let varCount = this.environment.getList(Scope.Function).size + 2;
         debugMsg += `  Variables:      ${varCount}\r\n`;
         let lineCount = 0;
-        this.sourceMap.forEach((lines) => {
+        for (const lines of this.sourceMap.values()) {
             lineCount += parseTextFile(lines).length;
-        });
+        }
         debugMsg += "Module Constant Table Sizes:\r\n";
         debugMsg += `  Source Lns:     ${lineCount}\r\n`;
-        core.stats.forEach((count, lexeme) => {
+        for (const [lexeme, count] of core.stats.entries()) {
             const name = Lexeme[lexeme] + ":";
             debugMsg += `  ${name.padEnd(15)} ${count}\r\n`;
-        });
+        }
         return debugMsg;
     }
 
