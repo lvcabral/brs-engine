@@ -129,6 +129,18 @@ describe("end to end functions", () => {
         ]);
     });
 
+    test("function/typed-return.brs", async () => {
+        await execute([resourceFile("function", "typed-return.brs")], outputStreams);
+
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
+            "false Boolean",
+            "<Component: roInvalid> roInvalid",
+            " 0 roInt",
+            " 0 Double",
+            'Type Mismatch. Unable to cast "Integer" to "String".',
+        ]);
+    });
+
     test("function/casing.brs", async () => {
         await execute([resourceFile("function", "casing.brs")], outputStreams);
 
