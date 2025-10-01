@@ -37,6 +37,7 @@
     "build:libs": "webpack --config ./config/webpack.config.js --env development",
     "build:cli": "webpack --config ./config/webpack.cli.config.js --env development",
     "build:zip": "webpack --config ./config/webpack.zip.config.js",
+    "web": "webpack --config ./config/webpack.config.js --env development && webpack serve --open --config ./config/webpack.config.js",
     "release": "webpack --config ./config/webpack.config.js --env production && webpack --config ./config/webpack.cli.config.js --env production && webpack --config ./config/webpack.zip.config.js",
     "start": "webpack serve --open --config ./config/webpack.config.js",
     "stats": "webpack-bundle-analyzer ./browser/lib/stats.json",
