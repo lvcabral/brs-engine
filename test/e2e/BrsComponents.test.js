@@ -592,9 +592,9 @@ describe("end to end brightscript functions", () => {
             "BrightScript Simulation Engine - Run Roku apps on Browsers and Node.js",
             "Repository: https://github.com/lvcabral/brs-engine",
             "Website:    https://lvcabral.com/brs/",
-            "The status was:  201",
+            "The status was:  200",
             "The target IP was: Valid",
-            "The response was: Employee is SW Engineer",
+            "The response was: Apple iPhone 11, 64GB",
         ]);
     });
 
