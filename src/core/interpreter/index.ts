@@ -401,8 +401,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 BrsDevice.stdout.position(str);
             }
         });
-        let lastExpression = statement.expressions[statement.expressions.length - 1];
-        if (!isToken(lastExpression) || lastExpression.kind !== Lexeme.Semicolon) {
+        const lastExpression = statement.expressions.at(-1);
+        if (!lastExpression || (!isToken(lastExpression) || lastExpression.kind !== Lexeme.Semicolon)) {
             printStream += "\r\n";
         }
 
