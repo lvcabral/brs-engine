@@ -402,7 +402,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             }
         });
         const lastExpression = statement.expressions.at(-1);
-        if (!lastExpression || (!isToken(lastExpression) || lastExpression.kind !== Lexeme.Semicolon)) {
+        if (!lastExpression || !isToken(lastExpression) || lastExpression.kind !== Lexeme.Semicolon) {
             printStream += "\r\n";
         }
 
