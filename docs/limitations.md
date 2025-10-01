@@ -13,11 +13,12 @@ The **BrightScript Engine** implements the BrightScript language specification u
     * Only one `port` instance can be used on Task `init()` to observe fields
     * The `tmp:/` and `cachefs:/` volumes are not shared with task threads, can be used in task but are empty
   * The following nodes are implemented (some only partially):
-    * The basic nodes: `ContentNode`, `Group`, `Scene`, `Font`, `Timer`, `Rectangle`, `Label`, `ScrollingLabel`, `Poster` and `RSGPalette`
-    * Grids and list nodes based on `ArrayGrid`: `LabelList`, `CheckList`, `RadioButtonList`, `MarkupList` and `MarkupGrid`
+    * The basic nodes: `ContentNode`, `Group`, `Scene`, `Global`, `Font`, `Timer`, `Rectangle`, `Label`, `ScrollingLabel`, `Poster` and `RSGPalette`
+    * Grids and list nodes based on `ArrayGrid`: `LabelList`, `CheckList`, `RadioButtonList`, `MarkupList`, `MarkupGrid` and `RowList`
     * Dialog related nodes: `Dialog`, `KeyboardDialog`, `StandardDialog`, `StandardProgressDialog`, `StdDlgProgressItem`, `StdDlgContentArea` and `StdDlgTitleArea`
-    * Media related nodes: `Audio`, `SoundEffect` and `Video`
+    * Media related nodes: `Audio`, `SoundEffect`, `Video` and `TrickPlayBar`
     * Other supported nodes: `Button`, `ButtonGroup`, `BusySpinner`, `Overhang`, `Keyboard`, `MiniKeyboard`, `TextEditBox` and `ChannelStore`
+  * The support for animations is not yet implemented, including the focus change animation on grid and list nodes.
   * All other nodes are either mocked or not implemented yet, and if used will be created as a plain `Node`.
   * The component `roRenderThreadQueue` introduced in Roku OS 15 is still not implemented.
 * The following components are also not implemented yet:
