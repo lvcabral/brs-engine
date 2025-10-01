@@ -22,15 +22,9 @@ sub main()
     ' Test Async POST
     port = CreateObject("roMessagePort")
     http.SetMessagePort(port)
-    api = {
-        url: "https://reqres.in/api/users",
-        body: {name: "Employee", job: "SW Engineer"}
-    }
-    http.AddHeader("x-api-key", "reqres-free-v1")
-    body = FormatJson(api.body)
     timeout = 3000
-    http.SetUrl(api.url)
-    if http.AsyncPostFromString(body)
+    http.SetUrl("https://api.restful-api.dev/objects/4")
+    if http.AsyncGetToString()
         msg = wait(timeout, port)
         if type(msg) = "roUrlEvent"
             print "The status was: "; msg.GetResponseCode()
@@ -38,7 +32,7 @@ sub main()
             status = msg.GetResponseCode()
             if  status >= 200 and status < 300
                 response = ParseJson(msg.GetString())
-                print "The response was: "; response.name; " is "; response.job
+                print "The response was: "; response.name
             else
                 print "The failure reason was: "; msg.GetFailureReason()
             end if
