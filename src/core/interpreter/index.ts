@@ -440,8 +440,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         let requiredType = typeDesignators[name.charAt(name.length - 1)];
 
         if (requiredType) {
-            let coercedValue = tryCoerce(value, requiredType);
-            if (coercedValue != null) {
+            const coercedValue = tryCoerce(value, requiredType);
+            if (coercedValue) {
                 value = coercedValue;
             } else {
                 this.addError(
@@ -1215,8 +1215,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 }
 
                 if (returnedValue) {
-                    let coercedValue = tryCoerce(returnedValue, signatureKind);
-                    if (coercedValue != null) {
+                    const coercedValue = tryCoerce(returnedValue, signatureKind);
+                    if (coercedValue) {
                         return coercedValue;
                     }
                 }
@@ -1943,7 +1943,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             const kind = ValueKind.toString(func.signature.returns);
             let args = "";
             func.signature.args.forEach((arg) => {
-                args += args !== "" ? "," : "";
+                args += args === "" ? "" : ",";
                 args += `${arg.name.text} As ${ValueKind.toString(arg.type.kind)}`;
             });
             const funcSig = `${func.functionName}(${args}) As ${kind}`;
@@ -2045,9 +2045,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
      * @returns the current app version
      */
     getChannelVersion(): string {
-        let majorVersion = parseInt(this.manifest.get("major_version")) || 0;
-        let minorVersion = parseInt(this.manifest.get("minor_version")) || 0;
-        let buildVersion = parseInt(this.manifest.get("build_version")) || 0;
+        let majorVersion = Number.parseInt(this.manifest.get("major_version")) || 0;
+        let minorVersion = Number.parseInt(this.manifest.get("minor_version")) || 0;
+        let buildVersion = Number.parseInt(this.manifest.get("build_version")) || 0;
         return `${majorVersion}.${minorVersion}.${buildVersion}`;
     }
 
