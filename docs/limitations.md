@@ -18,6 +18,7 @@ There are several features from the **BrightScript** language and components tha
     * Dialog related nodes: `Dialog`, `KeyboardDialog`, `StandardDialog`, `StandardProgressDialog`, `StdDlgProgressItem`, `StdDlgContentArea` and `StdDlgTitleArea`
     * Media related nodes: `Audio`, `SoundEffect`, `Video` and `TrickPlayBar`
     * Other supported nodes: `Button`, `ButtonGroup`, `BusySpinner`, `Overhang`, `Keyboard`, `MiniKeyboard`, `TextEditBox` and `ChannelStore`
+  * Some of the nodes listed above may not have full functionality yet, please open a [GitHub issue](https://github.com/lvcabral/brs-engine/issues) if you find any problem or missing feature.
   * The support for animations is not yet implemented, including the focus change animation on grid and list nodes.
   * All other nodes are either mocked or not implemented yet, and if used will be created as a plain `Node`.
 * The following components are also not implemented yet:
