@@ -45,10 +45,8 @@ export function toCallable(func: Expr.Function, name: string = "[Function]") {
             if (func.returns !== ValueKind.Void && func.returns !== ValueKind.Dynamic) {
                 // When a function has a typed return, but no return statement is hit, Roku returns zero by default
                 const coercedValue = tryCoerce(new Int32(0), func.returns);
-                if (coercedValue) {
-                    return coercedValue;
-                } else {
-                    // When the typed return is not numeric, Roku raises a type mismatch error
+                if (!coercedValue) {
+                    // When the typed return is not numeric or boolean, Roku raises a type mismatch error
                     interpreter.addError(
                         new TypeMismatch({
                             message: `Unable to cast`,
@@ -64,6 +62,7 @@ export function toCallable(func: Expr.Function, name: string = "[Function]") {
                         })
                     );
                 }
+                return coercedValue;
             }
             return BrsInvalid.Instance;
         },
