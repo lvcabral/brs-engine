@@ -181,6 +181,8 @@ describe("end to end standard libary", () => {
             "<Interface: ifFloat>",
             "<Interface: ifAssociativeArray>",
             "<Interface: ifToStr>",
+            "<Interface: ifBoolean>",
+            "invalid",
             "<Interface: ifAssociativeArray>",
             "<Interface: ifStringOps>",
             "<Interface: ifStringOps>",
