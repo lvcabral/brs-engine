@@ -1,8 +1,9 @@
-import { Callable, BrsType, BrsInvalid } from "../brsTypes";
+import { Callable, BrsType, BrsInvalid, ValueKind, tryCoerce, Int32 } from "../brsTypes";
 import * as Expr from "../parser/Expression";
 import { Interpreter } from ".";
 import { Stmt } from "../parser";
 import { RuntimeError, RuntimeErrorDetail } from "../error/BrsError";
+import { TypeMismatch } from "../error/TypeMismatch";
 
 /**
  * Converts a Function expression to a BrightScript callable representation so
@@ -40,6 +41,28 @@ export function toCallable(func: Expr.Function, name: string = "[Function]") {
                 interpreter.addError(
                     new RuntimeError(RuntimeErrorDetail.MissingLineNumber, location, interpreter.stack.slice(0, -1))
                 );
+            }
+            if (func.returns !== ValueKind.Void && func.returns !== ValueKind.Dynamic) {
+                // When a function has a typed return, but no return statement is hit, Roku returns zero by default
+                const coercedValue = tryCoerce(new Int32(0), func.returns);
+                if (!coercedValue) {
+                    // When the typed return is not numeric or boolean, Roku raises a type mismatch error
+                    interpreter.addError(
+                        new TypeMismatch({
+                            message: `Unable to cast`,
+                            left: {
+                                type: func.returns,
+                                location: func.location,
+                            },
+                            right: {
+                                type: ValueKind.Int32,
+                                location: func.location,
+                            },
+                            cast: true,
+                        })
+                    );
+                }
+                return coercedValue;
             }
             return BrsInvalid.Instance;
         },
