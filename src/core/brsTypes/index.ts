@@ -453,3 +453,53 @@ export function jsValueOf(x: BrsType): any {
             throw new Error(`jsValueOf not implemented for: ${x} <${x.kind}>`);
     }
 }
+
+/**
+ * Checks if a string represents a number and returns its precision.
+ * The precision is equivalent to the Number.toPrecision() parameter (total significant digits).
+ * @param {string} str - The string to check
+ * @returns {number | null} - The precision (significant digits count) or null if not a valid number
+ */
+export function getFloatingPointPrecision(str: string): number | null {
+    // Remove leading/trailing whitespace
+    const trimmed = str.trim();
+
+    // Early return for empty string
+    if (!trimmed) {
+        return null;
+    }
+    // Check if it's a valid number format (including scientific notation)
+    // More efficient regex that captures the parts we need
+    const numberRegex = /^([+-]?)(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?$/;
+    const numberMatch = numberRegex.exec(trimmed);
+    if (!numberMatch) {
+        return null;
+    }
+    const [, _sign, mantissa, exponent] = numberMatch;
+    // Parse the number to ensure it's valid (but we already validated format)
+    const num = Number.parseFloat(trimmed);
+    if (!Number.isFinite(num)) {
+        return null;
+    }
+    // Quick check for integer without decimal point or scientific notation
+    if (!mantissa.includes(".") && !exponent) {
+        return 0; // Integer numbers return precision 0
+    }
+    // For scientific notation, we only need to count digits in the mantissa
+    // No need to convert to decimal form
+    let workingStr = mantissa;
+    // Count significant digits more efficiently
+    let significantDigits = 0;
+    let foundFirstNonZero = false;
+    for (const char of workingStr) {
+        if (char === ".") {
+            continue; // Skip decimal point
+        }
+
+        if (char !== "0" || foundFirstNonZero) {
+            significantDigits++;
+            foundFirstNonZero = true;
+        }
+    }
+    return significantDigits;
+}

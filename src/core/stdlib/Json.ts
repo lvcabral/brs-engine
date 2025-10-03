@@ -13,6 +13,10 @@ import {
     StdlibArgument,
     isUnboxable,
     brsValueOf,
+    Double,
+    Int64,
+    Float,
+    getFloatingPointPrecision,
 } from "../brsTypes";
 import { BrsDevice } from "../device/BrsDevice";
 
@@ -126,13 +130,34 @@ export const ParseJson = new Callable("ParseJson", {
             new StdlibArgument("flags", ValueKind.String, new BrsString("")),
         ],
     },
-    impl: (interpreter: Interpreter, jsonString: BrsString, flags: BrsString) => {
+    impl: (interpreter: Interpreter, jsonParam: BrsString, flagsParam: BrsString) => {
         try {
-            let s: string = jsonString.toString().trim();
-            if (s === "") {
+            const json: string = jsonParam.value.trim();
+            if (json === "") {
                 throw new Error("Data is empty");
             }
-            return brsValueOf(JSON.parse(s), !flags.value.includes("i"));
+            const flags: string = flagsParam.value;
+            if (flags.length > 0 && !["i", "d", "id", "di"].includes(flags)) {
+                logBrsErr(interpreter, "ParseJSON", new Error(`Invalid options in '${flags}'`));
+            }
+            const data = JSON.parse(json, (_key: string, val: any, context: any) => {
+                if (typeof val !== "number") {
+                    return val;
+                }
+                const maxLong = 0x8000000000000000n;
+                const precision = getFloatingPointPrecision(context.source) ?? 0;
+                if (Number.isInteger(val) && !Number.isSafeInteger(val)) {
+                    return BigInt(context.source) >= -maxLong && BigInt(context.source) < maxLong
+                        ? Int64.fromString(context.source)
+                        : Float.fromString(context.source);
+                } else if (typeof val === "number" && precision > 0) {
+                    return precision > 6 && flags.includes("d")
+                        ? Double.fromString(context.source)
+                        : Float.fromString(context.source);
+                }
+                return val;
+            });
+            return brsValueOf(data, !flags.includes("i"));
         } catch (err: any) {
             logBrsErr(interpreter, "ParseJSON", err);
             return BrsInvalid.Instance;
