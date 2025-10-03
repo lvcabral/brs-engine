@@ -468,38 +468,29 @@ export function getFloatingPointPrecision(str: string): number | null {
     if (!trimmed) {
         return null;
     }
-
     // Check if it's a valid number format (including scientific notation)
     // More efficient regex that captures the parts we need
     const numberMatch = trimmed.match(/^([+-]?)(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?$/);
     if (!numberMatch) {
         return null;
     }
-
     const [, sign, mantissa, exponent] = numberMatch;
-
     // Parse the number to ensure it's valid (but we already validated format)
     const num = parseFloat(trimmed);
     if (!isFinite(num)) {
         return null;
     }
-
     // Quick check for integer without decimal point or scientific notation
     if (!mantissa.includes(".") && !exponent) {
         return 0; // Integer numbers return precision 0
     }
-
     // For scientific notation, we only need to count digits in the mantissa
     // No need to convert to decimal form
     let workingStr = mantissa;
-
     // Count significant digits more efficiently
     let significantDigits = 0;
     let foundFirstNonZero = false;
-
-    for (let i = 0; i < workingStr.length; i++) {
-        const char = workingStr[i];
-
+    for (const char of workingStr) {
         if (char === ".") {
             continue; // Skip decimal point
         }
@@ -509,6 +500,5 @@ export function getFloatingPointPrecision(str: string): number | null {
             foundFirstNonZero = true;
         }
     }
-
     return significantDigits;
 }
