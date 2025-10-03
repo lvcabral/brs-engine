@@ -470,14 +470,15 @@ export function getFloatingPointPrecision(str: string): number | null {
     }
     // Check if it's a valid number format (including scientific notation)
     // More efficient regex that captures the parts we need
-    const numberMatch = trimmed.match(/^([+-]?)(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?$/);
+    const numberRegex = /^([+-]?)(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?$/;
+    const numberMatch = numberRegex.exec(trimmed);
     if (!numberMatch) {
         return null;
     }
-    const [, sign, mantissa, exponent] = numberMatch;
+    const [, _sign, mantissa, exponent] = numberMatch;
     // Parse the number to ensure it's valid (but we already validated format)
-    const num = parseFloat(trimmed);
-    if (!isFinite(num)) {
+    const num = Number.parseFloat(trimmed);
+    if (!Number.isFinite(num)) {
         return null;
     }
     // Quick check for integer without decimal point or scientific notation
