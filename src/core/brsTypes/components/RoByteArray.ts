@@ -1,4 +1,4 @@
-import { BrsType, Float, Int32, isBoxedNumber, isBrsNumber } from "..";
+import { BrsType, Float, Int32, isBoxedNumber, isBrsNumber, RoInvalid } from "..";
 import { BrsValue, ValueKind, BrsBoolean, BrsInvalid, BrsString } from "../BrsType";
 import { BrsComponent, BrsIterable } from "./BrsComponent";
 import { Callable, StdlibArgument } from "../Callable";
@@ -93,8 +93,8 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
     }
 
     deepCopy(): BrsType {
-        const copiedElements = new Uint8Array(this.elements);
-        return new RoByteArray(copiedElements);
+        // Roku implementation still does not support deep copying of roByteArray
+        return new RoInvalid();
     }
 
     get(index: BrsType) {

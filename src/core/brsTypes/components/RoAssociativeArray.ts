@@ -92,7 +92,11 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
         const copiedElements: AAMember[] = [];
         for (const [key, value] of this.elements) {
             if (isIterable(value)) {
-                copiedElements.push({ name: new BrsString(key), value: value.deepCopy() });
+                // Currently Roku only supports deep copying of roArray and roAssociativeArray
+                // Other iterables (like roList and roByteArray) will return invalid and be skipped
+                if (value instanceof RoArray || value instanceof RoAssociativeArray) {
+                    copiedElements.push({ name: new BrsString(key), value: value.deepCopy() });
+                }
             } else if (isBoxable(value) || isUnboxable(value)) {
                 copiedElements.push({ name: new BrsString(key), value: value });
             }

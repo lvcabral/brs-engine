@@ -1,6 +1,6 @@
 import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid } from "../BrsType";
 import { BrsComponent, BrsIterable } from "./BrsComponent";
-import { BrsType } from "..";
+import { BrsType, RoInvalid } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { RoAssociativeArray } from "./RoAssociativeArray";
@@ -55,7 +55,8 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
     }
 
     deepCopy(): BrsType {
-        return new RoXMLElement(this.parsedXML);
+        // Roku implementation still does not support deep copying of roList
+        return new RoInvalid();
     }
 
     get(index: BrsType) {

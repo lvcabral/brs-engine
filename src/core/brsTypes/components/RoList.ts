@@ -1,4 +1,4 @@
-import { BrsType, isBoxable, isBoxedNumber, isIterable, isUnboxable } from "..";
+import { BrsType, isBoxable, isBoxedNumber, RoInvalid } from "..";
 import { BrsValue, ValueKind, BrsBoolean, BrsInvalid } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
 import { BrsList, IfList, IfListToArray } from "../interfaces/IfList";
@@ -88,15 +88,8 @@ export class RoList extends BrsComponent implements BrsValue, BrsList {
     }
 
     deepCopy(): BrsType {
-        const copiedElements: BrsType[] = [];
-        for (const el of this.elements) {
-            if (isIterable(el)) {
-                copiedElements.push(el.deepCopy());
-            } else if (isBoxable(el) || isUnboxable(el)) {
-                copiedElements.push(el);
-            }
-        }
-        return new RoList(copiedElements);
+        // Roku implementation still does not support deep copying of roList
+        return new RoInvalid();
     }
 
     get(index: BrsType) {
