@@ -163,13 +163,13 @@ function convertNumber(val: number, flags: string, context: any): BrsType | numb
     const precision = getFloatingPointPrecision(context.source) ?? 0;
 
     if (Number.isInteger(val) && !Number.isSafeInteger(val)) {
-        if (!/[.eE]/.test(context.source)) {
+        if (/[.eE]/.test(context.source)) {
+            return Double.fromString(context.source);
+        } else {
             const bigIntVal = BigInt(context.source);
             return bigIntVal >= -maxLong && bigIntVal < maxLong
                 ? Int64.fromString(context.source)
                 : Float.fromString(context.source);
-        } else {
-            return Double.fromString(context.source);
         }
     } else if (typeof val === "number" && precision > 0) {
         return precision > 6 && flags.includes("d")
