@@ -506,14 +506,14 @@ export class Lexer {
                 advance();
                 addToken(Lexeme.Double, Double.fromString(asString));
                 return;
-            } else if (numberOfDigits >= 10 && designator !== "&") {
+            } else if (numberOfDigits >= 10 && designator !== "&" && designator !== "e" && designator !== "d") {
                 // numeric literals over 10 digits with no type designator are implicitly Doubles
                 addToken(Lexeme.Double, Double.fromString(asString));
                 return;
-            } else if (designator === "d") {
-                // literals that use "D" as the exponent are also automatic Doubles
+            } else if (designator === "d" || (designator === "e" && numberOfDigits >= 10)) {
+                // literals that use "d" as the exponent are also automatic Doubles
 
-                // consume the "D"
+                // consume the "d" or "e"
                 advance();
 
                 // exponents are optionally signed
@@ -526,8 +526,13 @@ export class Lexer {
                     advance();
                 }
 
-                // replace the exponential marker with a JavaScript-friendly "e"
-                asString = source.slice(start, current).replace(/[dD]/, "e");
+                // Check for trailing "#" designator after exponent
+                if (peek() === "#") {
+                    advance();
+                }
+
+                // replace the `d` exponential marker with a JavaScript-friendly "e"
+                asString = source.slice(start, current).replace(/[dD]/, "e").replace(/#$/, "");
                 addToken(Lexeme.Double, Double.fromString(asString));
                 return;
             }
@@ -554,7 +559,20 @@ export class Lexer {
                     advance();
                 }
 
-                asString = source.slice(start, current);
+                // Check for trailing designators after exponent
+                let trailingDesignator = peek().toLowerCase();
+                if (trailingDesignator === "#") {
+                    // If there's a "#" after the exponent, it becomes a Double
+                    advance();
+                    asString = source.slice(start, current).replace(/#$/, "");
+                    addToken(Lexeme.Double, Double.fromString(asString));
+                    return;
+                } else if (trailingDesignator === "!") {
+                    // If there's a "!" after the exponent, keep it as Float
+                    advance();
+                }
+
+                asString = source.slice(start, current).replace(/!$/, "");
                 addToken(Lexeme.Float, Float.fromString(asString));
                 return;
             } else if (containsDecimal) {
