@@ -10,7 +10,7 @@ global.Intl.DateTimeFormat = jest.fn().mockImplementation(() => {
 });
 const brs = require("../../../bin/brs.node");
 const { Interpreter, netlib } = brs;
-const { RoDeviceInfo, RoAssociativeArray, RoArray, BrsBoolean, BrsString, Int32 } = brs.types;
+const { RoDeviceInfo, RoAssociativeArray, RoArray, BrsBoolean, BrsString, Int32, Int64 } = brs.types;
 
 describe("RoDeviceInfo", () => {
     const OLD_ENV = process.env;
@@ -314,6 +314,16 @@ describe("RoDeviceInfo", () => {
 
                 expect(method).toBeTruthy();
                 expect(method.call(interpreter)).toEqual(new BrsString("12h"));
+            });
+        });
+        describe("getUptimeMillisecondsAsLong", () => {
+            it("should return fake uptime in milliseconds", () => {
+                let deviceInfo = new RoDeviceInfo(interpreter);
+                let method = deviceInfo.getMethod("getUptimeMillisecondsAsLong");
+                let uptime = method.call(interpreter);
+                console.warn(uptime.toString());
+                expect(method).toBeTruthy();
+                expect(uptime).toEqual(new Int64(0));
             });
         });
         describe("enableAppFocusEvent", () => {

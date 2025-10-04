@@ -169,6 +169,15 @@ describe("RoDateTime", () => {
             });
         });
 
+        describe("asMillisecondsLong", () => {
+            it("returns the date/time as the number of milliseconds from the Unix epoch as Long Integer", () => {
+                let asMilliseconds = dt.getMethod("asMillisecondsLong");
+                let result = asMilliseconds.call(interpreter);
+                expect(asMilliseconds).toBeTruthy();
+                expect(result).toEqual(new Int64(1230768000123));
+            });
+        });
+
         describe("fromISO8601String", () => {
             it("set the date/time using a string in the ISO 8601 format", () => {
                 let fromISO8601String = dt.getMethod("fromISO8601String");
