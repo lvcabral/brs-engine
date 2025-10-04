@@ -395,6 +395,8 @@ function genDeviceInfoXml(encrypt: boolean) {
     xml.ele("support-suspend", {}, false);
     xml.ele("support-find-remote", {}, false);
     xml.ele("support-audio-guide", {}, false);
+    xml.ele("supports-audio-volume-control", {}, false);
+    xml.ele("support-power-control", {}, false);
     xml.ele("support-rva", {}, true);
     xml.ele("developer-enabled", {}, true);
     xml.ele("keyed-developer-id", {}, device.developerId);
