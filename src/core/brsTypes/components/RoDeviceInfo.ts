@@ -112,6 +112,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
                 this.canDecodeVideo,
                 this.isAudioGuideEnabled,
                 this.isAutoPlayEnabled, // since OS 13.0
+                this.IsAutoAdjustRefreshRateEnabled, // since OS 15.0
                 this.getRandomUUID,
                 this.getConnectionInfo,
                 this.getConnectionType,
@@ -860,6 +861,17 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
 
     /** Returns a flag indicating whether autoplay is enabled on a device. */
     private readonly isAutoPlayEnabled = new Callable("isAutoPlayEnabled", {
+        signature: {
+            args: [],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter) => {
+            return BrsBoolean.False;
+        },
+    });
+
+    /** Returns whether the Auto Adjust Display Refresh Rate setting is enabled on a device */
+    private readonly IsAutoAdjustRefreshRateEnabled = new Callable("isAutoAdjustRefreshRateEnabled", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
