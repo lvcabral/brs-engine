@@ -433,7 +433,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
     });
 
-        /** Returns system settings for time format. */
+    /** Returns system settings for time format. */
     private readonly getUptimeMillisecondsAsLong = new Callable("getUptimeMillisecondsAsLong", {
         signature: {
             args: [],
@@ -444,7 +444,6 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             return new Int64((Date.now() - startTime) / 1000);
         },
     });
-
 
     /** Returns the text corresponding to the button selection in the Player Info Settings/Display Type page. */
     private readonly getDisplayType = new Callable("getDisplayType", {

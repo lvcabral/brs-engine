@@ -344,7 +344,6 @@ export class RoDateTime extends BrsComponent implements BrsValue {
         },
     });
 
-
     /** Set the date/time value using the number of seconds from the Unix epoch */
     private readonly fromSeconds = new Callable("fromSeconds", {
         signature: {

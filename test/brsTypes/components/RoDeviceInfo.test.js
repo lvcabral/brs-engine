@@ -320,7 +320,7 @@ describe("RoDeviceInfo", () => {
             it("should return fake uptime in milliseconds", () => {
                 let deviceInfo = new RoDeviceInfo(interpreter);
                 let method = deviceInfo.getMethod("getUptimeMillisecondsAsLong");
-                let uptime = method.call(interpreter)
+                let uptime = method.call(interpreter);
                 console.warn(uptime.toString());
                 expect(method).toBeTruthy();
                 expect(uptime).toEqual(new Int64(0));
