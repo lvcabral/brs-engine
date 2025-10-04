@@ -15,9 +15,9 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsList {
     readonly resizable: boolean = true;
     maxSize = 0;
 
-    constructor() {
+    constructor(elements?: BrsType[]) {
         super("roXMLList");
-        this.roList = new RoList();
+        this.roList = new RoList(elements);
         const ifList = new IfList(this);
         const ifListToArray = new IfListToArray(this);
         const ifArray = new IfArray(this);
@@ -102,6 +102,11 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsList {
             }
         }
         return BrsInvalid.Instance;
+    }
+
+    deepCopy(): BrsType {
+        const copiedList = this.roList.deepCopy() as RoList;
+        return new RoXMLList(copiedList.elements);
     }
 
     get(index: BrsType) {

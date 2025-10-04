@@ -1,4 +1,4 @@
-import { BrsType, isBrsString, isBrsNumber, Int32, Float, isBoxedNumber, isBoxable } from "..";
+import { BrsType, isBrsString, isBrsNumber, Int32, Float, isBoxedNumber, isBoxable, isIterable, isUnboxable } from "..";
 import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid, Comparable } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
 import { Callable, StdlibArgument } from "../Callable";
@@ -123,6 +123,18 @@ export class RoArray extends BrsComponent implements BrsValue, BrsArray {
 
     tail() {
         return this.elements.length - 1;
+    }
+
+    deepCopy() {
+        const copiedElements: BrsType[] = [];
+        for (const el of this.elements) {
+            if (isIterable(el)) {
+                copiedElements.push(el.deepCopy());
+            } else if (isBoxable(el) || isUnboxable(el)) {
+                copiedElements.push(el);
+            }
+        }
+        return new RoArray(copiedElements);
     }
 
     get(index: BrsType) {

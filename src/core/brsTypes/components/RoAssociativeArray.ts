@@ -1,6 +1,6 @@
 import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid } from "../BrsType";
 import { BrsComponent, BrsIterable } from "./BrsComponent";
-import { BrsType, isBoxable, isUnboxable } from "..";
+import { BrsType, isBoxable, isIterable, isUnboxable } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
@@ -86,6 +86,18 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
         return Array.from(this.elements.values())
             .sort()
             .map((value: BrsType) => value);
+    }
+
+    deepCopy(): RoAssociativeArray {
+        const copiedElements: AAMember[] = [];
+        for (const [key, value] of this.elements) {
+            if (isIterable(value)) {
+                copiedElements.push({ name: new BrsString(key), value: value.deepCopy() });
+            } else if (isBoxable(value) || isUnboxable(value)) {
+                copiedElements.push({ name: new BrsString(key), value: value });
+            }
+        }
+        return new RoAssociativeArray(copiedElements, this.modeCaseSensitive);
     }
 
     get(index: BrsType, isCaseSensitive = false) {

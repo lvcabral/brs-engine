@@ -12,9 +12,9 @@ import { BrsDevice } from "../../device/BrsDevice";
 export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable {
     readonly kind = ValueKind.Object;
     private parsedXML: any;
-    constructor() {
+    constructor(parsedXML?: any) {
         super("roXMLElement");
-        this.parsedXML = { _root_: {} };
+        this.parsedXML = parsedXML || { _root_: {} };
         this.registerMethods({
             ifXMLElement: [
                 this.parse,
@@ -52,6 +52,10 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
 
     getElements() {
         return this.childElements().getElements();
+    }
+
+    deepCopy(): BrsType {
+        return new RoXMLElement(this.parsedXML);
     }
 
     get(index: BrsType) {

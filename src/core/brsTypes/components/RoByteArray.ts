@@ -92,6 +92,11 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
         return this.elements;
     }
 
+    deepCopy(): BrsType {
+        const copiedElements = new Uint8Array(this.elements);
+        return new RoByteArray(copiedElements);
+    }
+
     get(index: BrsType) {
         if (isBoxedNumber(index)) {
             index = index.unbox();
