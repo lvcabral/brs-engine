@@ -17,6 +17,7 @@ import {
     Int64,
     Float,
     getFloatingPointPrecision,
+    RoInvalid,
 } from "../brsTypes";
 import { BrsDevice } from "../device/BrsDevice";
 
@@ -143,19 +144,11 @@ export const ParseJson = new Callable("ParseJson", {
             const data = JSON.parse(json, (_key: string, val: any, context: any) => {
                 if (typeof val !== "number") {
                     return val;
+                } else if (typeof val === "number" && !Number.isFinite(val)) {
+                    logBrsErr(interpreter, "ParseJSON", new Error(`Invalid number: ${val}`));
+                    return new RoInvalid();
                 }
-                const maxLong = 0x8000000000000000n;
-                const precision = getFloatingPointPrecision(context.source) ?? 0;
-                if (Number.isInteger(val) && !Number.isSafeInteger(val)) {
-                    return BigInt(context.source) >= -maxLong && BigInt(context.source) < maxLong
-                        ? Int64.fromString(context.source)
-                        : Float.fromString(context.source);
-                } else if (typeof val === "number" && precision > 0) {
-                    return precision > 6 && flags.includes("d")
-                        ? Double.fromString(context.source)
-                        : Float.fromString(context.source);
-                }
-                return val;
+                return convertNumber(val, flags, context);
             });
             return brsValueOf(data, !flags.includes("i"));
         } catch (err: any) {
@@ -164,3 +157,24 @@ export const ParseJson = new Callable("ParseJson", {
         }
     },
 });
+
+function convertNumber(val: number, flags: string, context: any): BrsType | number {
+    const maxLong = 0x8000000000000000n;
+    const precision = getFloatingPointPrecision(context.source) ?? 0;
+
+    if (Number.isInteger(val) && !Number.isSafeInteger(val)) {
+        if (!/[.eE]/.test(context.source)) {
+            const bigIntVal = BigInt(context.source);
+            return bigIntVal >= -maxLong && bigIntVal < maxLong
+                ? Int64.fromString(context.source)
+                : Float.fromString(context.source);
+        } else {
+            return Double.fromString(context.source);
+        }
+    } else if (typeof val === "number" && precision > 0) {
+        return precision > 6 && flags.includes("d")
+            ? Double.fromString(context.source)
+            : Float.fromString(context.source);
+    }
+    return val;
+}

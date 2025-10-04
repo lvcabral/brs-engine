@@ -68,6 +68,12 @@ sub main()
     print j, type(j, 3)
 	k = parseJSON("{""num"": 1111.1234567}", "d")?.num
 	print k, type(k, 3)
+    l = parseJSON("{""num"": 1e308}")?.num
+    print l, type(l, 3)
+    n = parseJSON("{""num"": 2e308}")?.num
+    print n, type(n, 3)
+    o = parseJSON("{""num"": 2e3}")?.num
+    print o, type(o, 3)
     ' Test ParseJSON with invalid input
     print parseJSON("tru")
 	print parseJSON("")
