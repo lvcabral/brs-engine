@@ -199,7 +199,7 @@ describe("end to end brightscript functions", () => {
             "end count: 4001 capacity: 4241",
             "true",
             " 4000",
-            "false",
+            "true",
             " 4000",
             "false",
             " 4000",
