@@ -1,10 +1,10 @@
 # BrightScript Engine Current Limitations
 
-There are several features from the **BrightScript** language and components that are still not supported, or just partially supported, some are planned to be implemented, others will stay as mock objects (for compatibility), and some are considered out of scope of this project. Below is the current list of those limitations:
+The **BrightScript Engine** implements the BrightScript language specification up to Roku OS 15.0. However, some features and components remain unsupported or only partially implemented. These limitations fall into three categories: features planned for future development, components that will remain as mock objects for compatibility purposes, and functionality considered outside the project's scope. The following sections detail each category and its current status.
 
 ## In Scope (to be developed/fixed in future releases)
 
-* **Roku SceneGraph** SDK components are currently being implemented, but still on early stages, so far we support:
+* **Roku SceneGraph** SDK components are currently being implemented in this branch and released as [pre-release alpha](https://github.com/lvcabral/brs-engine/releases), so far we support:
   * Load XML component files and create SceneGraph nodes tree.
   * Basic support for `roSGNode` and `roSGScreen` components and rendering.
   * The `Task` node is implemented but its behavior is limited:
