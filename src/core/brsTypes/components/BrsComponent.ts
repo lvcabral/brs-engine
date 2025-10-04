@@ -134,4 +134,10 @@ export interface BrsIterable {
      * Update the iteration index to the next element in the iteration sequence.
      */
     updateNext(): void;
+
+    /**
+     * Creates a deep copy of this object.
+     * @returns a deep copy of this object.
+     */
+    deepCopy(): BrsType;
 }

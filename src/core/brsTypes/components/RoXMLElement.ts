@@ -1,6 +1,6 @@
 import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid } from "../BrsType";
 import { BrsComponent, BrsIterable } from "./BrsComponent";
-import { BrsType } from "..";
+import { BrsType, RoInvalid } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { RoAssociativeArray } from "./RoAssociativeArray";
@@ -12,9 +12,9 @@ import { BrsDevice } from "../../device/BrsDevice";
 export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable {
     readonly kind = ValueKind.Object;
     private parsedXML: any;
-    constructor() {
+    constructor(parsedXML?: any) {
         super("roXMLElement");
-        this.parsedXML = { _root_: {} };
+        this.parsedXML = parsedXML || { _root_: {} };
         this.registerMethods({
             ifXMLElement: [
                 this.parse,
@@ -52,6 +52,11 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
 
     getElements() {
         return this.childElements().getElements();
+    }
+
+    deepCopy(): BrsType {
+        // Roku implementation still does not support deep copying of roXMLElement
+        return new RoInvalid();
     }
 
     get(index: BrsType) {

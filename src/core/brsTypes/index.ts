@@ -92,6 +92,7 @@ export * from "./components/RoChannelStore";
 export * from "./components/RoSocketAddress";
 export * from "./components/RoTextureRequest";
 export * from "./components/RoTextureManager";
+export * from "./components/RoUtils";
 export * from "./events/RoURLEvent";
 export * from "./events/RoInputEvent";
 export * from "./events/RoAudioPlayerEvent";

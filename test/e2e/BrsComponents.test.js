@@ -733,4 +733,21 @@ describe("end to end brightscript functions", () => {
             "socket address - isAddressValid()--> false",
         ]);
     });
+    test("components/roUtils.brs", async () => {
+        await execute([resourceFile("components", "roUtils.brs")], outputStreams);
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
+            "true",
+            "false",
+            "true",
+            "IsSameObject    false",
+            "new_aa.a         1",
+            "new_aa.b.b1      42",
+            "new_aa.c        invalid",
+            "new_aa.d[0]      1",
+            "new_aa.d[1]      2",
+            "new_aa.d[2].x   y",
+            "new_aa.list.count               invalid",
+            "new_aa.byteArray.toAsciiString  invalid",
+        ]);
+    });
 });
