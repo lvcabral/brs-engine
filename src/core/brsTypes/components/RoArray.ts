@@ -57,7 +57,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsArray {
             ifArrayJoin: [this.join],
             ifArraySort: [this.sort, this.sortBy, this.reverse],
             ifArraySlice: [this.slice],
-            ifArraySizeInfo: [this.capacity, this.isResizable],
+            ifArraySizeInfo: [this.capacity, this.isResizable, this.reserve, this.shrinkToFit],
             ifEnum: [ifEnum.isEmpty, ifEnum.isNext, ifEnum.next, ifEnum.reset],
         });
     }
@@ -371,6 +371,35 @@ export class RoArray extends BrsComponent implements BrsValue, BrsArray {
         },
         impl: (_: Interpreter) => {
             return BrsBoolean.from(this.resizable);
+        },
+    });
+
+    /** Sends a request to allocate or increase storage capacity of the array to hold at least the specified number of items. */
+    private readonly reserve = new Callable("reserve", {
+        signature: {
+            args: [new StdlibArgument("minSize", ValueKind.Int32)],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter, minSize: Int32) => {
+            if (this.resizable && minSize.getValue() > this.maxSize) {
+                this.maxSize = minSize.getValue();
+            }
+            return BrsBoolean.from(this.resizable || minSize.getValue() <= this.maxSize);
+        },
+    });
+
+    /** Request to free or decrease storage to the minimum needed to store the current number of items. */
+    private readonly shrinkToFit = new Callable("shrinkToFit", {
+        signature: {
+            args: [],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter) => {
+            if (this.resizable) {
+                this.maxSize = this.elements.length;
+            }
+            // Currently Roku always returns true
+            return BrsBoolean.from(true);
         },
     });
 }
