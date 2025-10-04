@@ -615,5 +615,14 @@ describe("RoDeviceInfo", () => {
                 expect(method.call(interpreter)).toEqual(BrsBoolean.False);
             });
         });
+        describe("IsAutoAdjustRefreshRateEnabled", () => {
+            it("should return false as auto adjust refresh rate is not supported", () => {
+                let deviceInfo = new RoDeviceInfo(interpreter);
+                let method = deviceInfo.getMethod("IsAutoAdjustRefreshRateEnabled");
+
+                expect(method).toBeTruthy();
+                expect(method.call(interpreter)).toEqual(BrsBoolean.False);
+            });
+        });
     });
 });
