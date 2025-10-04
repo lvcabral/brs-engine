@@ -1,6 +1,6 @@
 import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsType, RoMessagePort, Int32, FlexObject, toAssociativeArray, BrsEvent } from "..";
+import { BrsType, RoMessagePort, Int32, FlexObject, toAssociativeArray, BrsEvent, Int64 } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { RoDeviceInfoEvent } from "../events/RoDeviceInfoEvent";
@@ -97,6 +97,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
                 this.getTimeZone,
                 this.getCurrentLocale,
                 this.getClockFormat,
+                this.getUptimeMillisecondsAsLong, // since OS 15.1
                 this.timeSinceLastKeypress,
                 this.hasFeature,
                 this.getDrmInfo, // deprecated
@@ -431,6 +432,19 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             return new BrsString(BrsDevice.deviceInfo.clockFormat);
         },
     });
+
+        /** Returns system settings for time format. */
+    private readonly getUptimeMillisecondsAsLong = new Callable("getUptimeMillisecondsAsLong", {
+        signature: {
+            args: [],
+            returns: ValueKind.Int64,
+        },
+        impl: (_: Interpreter) => {
+            const startTime = BrsDevice.deviceInfo.startTime;
+            return new Int64((Date.now() - startTime) / 1000);
+        },
+    });
+
 
     /** Returns the text corresponding to the button selection in the Player Info Settings/Display Type page. */
     private readonly getDisplayType = new Callable("getDisplayType", {

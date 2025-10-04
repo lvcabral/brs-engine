@@ -53,4 +53,5 @@ sub Main()
     print date.toISOString()
     print date.asSeconds()
     print date.asSecondsLong()
+    print date.asMillisecondsLong()
 end sub

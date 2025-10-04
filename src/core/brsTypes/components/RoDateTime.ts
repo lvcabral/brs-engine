@@ -25,10 +25,11 @@ export class RoDateTime extends BrsComponent implements BrsValue {
                 this.asDateStringLoc, // Since OS 12.0
                 this.asTimeStringLoc, // Since OS 12.0
                 this.asSeconds,
-                this.asSecondsLong, // undocumented
+                this.asSecondsLong,
+                this.asMillisecondsLong, // Since OS 15.0
                 this.fromISO8601String,
                 this.fromSeconds,
-                this.fromSecondsLong, // undocumented
+                this.fromSecondsLong,
                 this.getDayOfMonth,
                 this.getDayOfWeek,
                 this.getHours,
@@ -331,6 +332,18 @@ export class RoDateTime extends BrsComponent implements BrsValue {
             return new Int64(this.markTime / 1000);
         },
     });
+
+    /** Returns the date/time as the number of milliseconds from the Unix epoch (00:00:00 1/1/1970 GMT) as Long Integer */
+    private readonly asMillisecondsLong = new Callable("asMillisecondsLong", {
+        signature: {
+            args: [],
+            returns: ValueKind.Int64,
+        },
+        impl: (_: Interpreter) => {
+            return new Int64(this.markTime);
+        },
+    });
+
 
     /** Set the date/time value using the number of seconds from the Unix epoch */
     private readonly fromSeconds = new Callable("fromSeconds", {
