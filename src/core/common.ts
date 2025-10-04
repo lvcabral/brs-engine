@@ -95,7 +95,7 @@ export const defaultDeviceInfo: DeviceInfo = {
     developerId: "34c6fceca75e456f25e7e99531e2425c6c1de443", // As in Roku devices, segregates Registry data (can't have a dot)
     friendlyName: "BrightScript Engine Library",
     deviceModel: "8000X", // Roku TV (Midland)
-    firmwareVersion: "48F.04E12221A", // v14.0
+    firmwareVersion: "48G.04E05531A", // v15.0
     clientId: "6c5bf3a5-b2a5-4918-824d-7691d5c85364",
     RIDA: "f51ac698-bc60-4409-aae3-8fc3abc025c4", // Unique identifier for advertisement tracking
     countryCode: "US", // App Store Country
@@ -571,7 +571,7 @@ export function getRokuOSVersion(firmware: string) {
         const versions = "0123456789ACDEFGHJKLMNPRSTUVWXY";
         osVersion.set("major", versions.indexOf(firmware.charAt(2)).toString());
         osVersion.set("minor", firmware.slice(4, 5));
-        osVersion.set("revision", firmware.slice(7, 8));
+        osVersion.set("revision", firmware.slice(5, 6));
         osVersion.set("build", firmware.slice(8, 12));
         osVersion.set("plid", firmware.slice(0, 2));
     }
