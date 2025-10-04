@@ -287,10 +287,22 @@ describe("lexer", () => {
             expect(d.literal).toEqual(new Double(5));
         });
 
+        it("forces literals >= 10 digits with exponent into doubles", () => {
+            let d = Lexer.scan("1.7976931348623158e+308").tokens[0];
+            expect(d.kind).toBe(Lexeme.Double);
+            expect(d.literal).toEqual(new Double(1.7976931348623158e308));
+        });
+
         it("forces literals with 'D' in exponent into doubles", () => {
             let d = Lexer.scan("2.5d3").tokens[0];
             expect(d.kind).toBe(Lexeme.Double);
             expect(d.literal).toEqual(new Double(2500));
+        });
+
+        it("allows forced double literals with exponent", () => {
+            let f = Lexer.scan("1.123e2#").tokens[0];
+            expect(f.kind).toBe(Lexeme.Double);
+            expect(f.literal).toEqual(new Double(1.123e2));
         });
 
         it("allows digits before `.` to be elided", () => {
