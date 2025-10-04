@@ -105,7 +105,7 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsList {
     }
 
     deepCopy(): BrsType {
-        // Roku implementation still does not support deep copying of roList
+        // Roku implementation still does not support deep copying of roXMLList
         return new RoInvalid();
     }
 
