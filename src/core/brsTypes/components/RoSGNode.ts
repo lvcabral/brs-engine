@@ -22,6 +22,7 @@ import {
     isBrsString,
     rootObjects,
     RoInvalid,
+    isUnboxable,
 } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Stmt } from "../../parser";
@@ -263,6 +264,8 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             const value = field.getValue();
             if (value instanceof RoAssociativeArray || value instanceof RoArray) {
                 return value.deepCopy();
+            } else if (isUnboxable(value)) {
+                return value.copy();
             }
             return value;
         }
