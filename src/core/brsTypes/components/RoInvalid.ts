@@ -25,6 +25,10 @@ export class RoInvalid extends BrsComponent implements BrsValue, Unboxable {
         return this.intrinsic;
     }
 
+    copy() {
+        return new RoInvalid();
+    }
+
     equalTo(other: BrsType): BrsBoolean {
         if (other instanceof BrsInvalid) {
             return BrsBoolean.True;

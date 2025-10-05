@@ -28,6 +28,10 @@ export class RoDouble extends BrsComponent implements BrsValue, Unboxable {
         return this.intrinsic;
     }
 
+    copy() {
+        return new RoDouble(this.intrinsic);
+    }
+
     equalTo(other: BrsType): BrsBoolean {
         if (other instanceof RoDouble) {
             return BrsBoolean.from(other.intrinsic.getValue() === this.intrinsic.getValue());

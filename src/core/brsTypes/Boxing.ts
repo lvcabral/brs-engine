@@ -7,6 +7,7 @@ export interface Boxable {
 
 export interface Unboxable {
     unbox(): BrsType;
+    copy(): BrsType;
 }
 
 export function isBoxable(value: BrsType): value is BrsType & Boxable {
@@ -14,5 +15,5 @@ export function isBoxable(value: BrsType): value is BrsType & Boxable {
 }
 
 export function isUnboxable(value: BrsType): value is BrsType & Unboxable {
-    return "unbox" in value;
+    return "unbox" in value && "copy" in value;
 }
