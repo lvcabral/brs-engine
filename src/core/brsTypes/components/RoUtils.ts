@@ -28,9 +28,9 @@ export class RoUtils extends BrsComponent implements BrsValue {
             args: [new StdlibArgument("data", ValueKind.Object)],
             returns: ValueKind.Object,
         },
-        impl: (_: Interpreter, data: BrsType) => {
+        impl: (interpreter: Interpreter, data: BrsType) => {
             if (isIterable(data)) {
-                return data.deepCopy();
+                return data.deepCopy(interpreter);
             }
             return new RoInvalid();
         },

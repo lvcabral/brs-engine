@@ -1,4 +1,4 @@
-import { bscs } from "../..";
+import { bscs, Interpreter } from "../..";
 import { BrsType } from "..";
 import { BrsBoolean, BrsInvalid } from "../BrsType";
 import { Callable } from "../Callable";
@@ -143,5 +143,5 @@ export interface BrsIterable {
      * Creates a deep copy of this object.
      * @returns a deep copy of this object.
      */
-    deepCopy(): BrsType;
+    deepCopy(interpreter?: Interpreter): BrsType;
 }

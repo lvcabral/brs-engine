@@ -21,6 +21,7 @@ import {
     getTextureManager,
     isBrsString,
     rootObjects,
+    RoInvalid,
 } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Stmt } from "../../parser";
@@ -192,6 +193,55 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         return this.children;
     }
 
+    cloneNode(interpreter: Interpreter, isDeepCopy: boolean): BrsType {
+        const clonedNode = createNodeByType(interpreter, new BrsString(this.nodeSubtype));
+        if (!(clonedNode instanceof RoSGNode)) {
+            return BrsInvalid.Instance;
+        }
+        // Clone fields
+        for (const [key, field] of this.fields) {
+            const clonedField = new Field(
+                field.getValue(false),
+                field.getType(),
+                field.isAlwaysNotify(),
+                field.isHidden()
+            );
+            clonedNode.fields.set(key, clonedField);
+        }
+        // Clone children if deep copy
+        if (isDeepCopy) {
+            for (const child of this.children) {
+                const clonedChild = child.cloneNode(interpreter, isDeepCopy);
+                if (clonedChild instanceof RoSGNode) {
+                    clonedNode.children.push(clonedChild);
+                    clonedChild.setNodeParent(clonedNode);
+                }
+            }
+        }
+        return clonedNode;
+    }
+
+    deepCopy(interpreter?: Interpreter): BrsType {
+        if (!interpreter) {
+            return new RoInvalid();
+        }
+        const copiedNode = createNodeByType(interpreter, new BrsString(this.nodeSubtype));
+        if (!(copiedNode instanceof RoSGNode)) {
+            return new RoInvalid();
+        }
+        for (const [key, field] of this.fields) {
+            copiedNode.fields.set(key, field);
+        }
+        for (const child of this.children) {
+            const clonedChild = child.deepCopy(interpreter);
+            if (clonedChild instanceof RoSGNode) {
+                copiedNode.children.push(clonedChild);
+                clonedChild.setNodeParent(copiedNode);
+            }
+        }
+        return copiedNode;
+    }
+
     get(index: BrsType) {
         if (!isBrsString(index)) {
             throw new Error("RoSGNode indexes must be strings");
@@ -210,7 +260,11 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         // Same with RoAssociativeArrays I guess.
         const field = this.fields.get(index.getValue().toLowerCase());
         if (field) {
-            return field.getValue();
+            const value = field.getValue();
+            if (value instanceof RoAssociativeArray || value instanceof RoArray) {
+                return value.deepCopy();
+            }
+            return value;
         }
         return this.getMethod(index.getValue()) || BrsInvalid.Instance;
     }
@@ -1725,31 +1779,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Object,
         },
         impl: (interpreter: Interpreter, isDeepCopy: BrsBoolean) => {
-            const clonedNode = createNodeByType(interpreter, new BrsString(this.nodeSubtype));
-            if (!(clonedNode instanceof RoSGNode)) {
-                return BrsInvalid.Instance;
-            }
-            // Clone fields
-            this.fields.forEach((field, key) => {
-                const clonedField = new Field(
-                    field.getValue(false),
-                    field.getType(),
-                    field.isAlwaysNotify(),
-                    field.isHidden()
-                );
-                clonedNode.fields.set(key, clonedField);
-            });
-            // Clone children if deep copy
-            if (isDeepCopy.toBoolean()) {
-                this.children.forEach((child) => {
-                    const clonedChild = child.clone.call(interpreter, isDeepCopy);
-                    if (clonedChild instanceof RoSGNode) {
-                        clonedNode.children.push(clonedChild);
-                        clonedChild.setNodeParent(clonedNode);
-                    }
-                });
-            }
-            return clonedNode;
+            return this.cloneNode(interpreter, isDeepCopy.toBoolean());
         },
     });
 
