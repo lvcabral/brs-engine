@@ -748,6 +748,10 @@ describe("end to end brightscript functions", () => {
             "new_aa.d[2].x   y",
             "new_aa.list.count               invalid",
             "new_aa.byteArray.toAsciiString  invalid",
+            "arr[0]:  1      roInt",
+            "arrCopy[0]:  10 roInt",
+            "arr[2]:  30     roInt",
+            "arrCopy[2]:  3  roInt",
         ]);
     });
 });
