@@ -5,6 +5,7 @@ import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { RoAssociativeArray } from "./RoAssociativeArray";
 import { RoFunction } from "./RoFunction";
+import { RoSGNode } from "./RoSGNode";
 import { BrsArray, IfArray, IfArrayGet, IfArraySet } from "../interfaces/IfArray";
 import { IfEnum } from "../interfaces/IfEnum";
 import { BrsDevice } from "../../device/BrsDevice";
@@ -126,14 +127,14 @@ export class RoArray extends BrsComponent implements BrsValue, BrsArray {
         return this.elements.length - 1;
     }
 
-    deepCopy() {
+    deepCopy(interpreter?: Interpreter): BrsType {
         const copiedElements: BrsType[] = [];
         for (const value of this.elements) {
             if (isIterable(value)) {
-                // Currently Roku only supports deep copying of roArray and roAssociativeArray
+                // Currently Roku only supports deep copying of roArray, roAssociativeArray and roSGNode
                 // Other iterables (like roList and roByteArray) will return invalid and be skipped
-                if (value instanceof RoArray || value instanceof RoAssociativeArray) {
-                    copiedElements.push(value.deepCopy());
+                if (value instanceof RoArray || value instanceof RoAssociativeArray || value instanceof RoSGNode) {
+                    copiedElements.push(value.deepCopy(interpreter));
                 }
             } else if (isBoxable(value) && !(value instanceof Callable)) {
                 copiedElements.push(value);
