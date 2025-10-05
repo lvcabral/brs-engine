@@ -28,6 +28,10 @@ export class RoFloat extends BrsComponent implements BrsValue, Unboxable {
         return this.intrinsic;
     }
 
+    copy() {
+        return new RoFloat(this.intrinsic);
+    }
+
     equalTo(other: BrsType): BrsBoolean {
         if (other instanceof RoFloat) {
             return BrsBoolean.from(other.intrinsic.getValue() === this.intrinsic.getValue());

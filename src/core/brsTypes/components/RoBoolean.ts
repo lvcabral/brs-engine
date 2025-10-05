@@ -30,6 +30,10 @@ export class RoBoolean extends BrsComponent implements BrsValue, Unboxable {
         return this.intrinsic;
     }
 
+    copy() {
+        return new RoBoolean(this.intrinsic);
+    }
+
     equalTo(other: BrsType): BrsBoolean {
         if (other instanceof RoBoolean) {
             return BrsBoolean.from(other.getValue() === this.getValue());

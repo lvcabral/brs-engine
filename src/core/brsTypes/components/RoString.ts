@@ -92,6 +92,10 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
         return this.intrinsic;
     }
 
+    copy() {
+        return new RoString(this.intrinsic);
+    }
+
     toString(parent?: BrsType): string {
         return this.intrinsic.toString(parent);
     }
