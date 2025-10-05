@@ -28,6 +28,10 @@ export class RoFunction extends BrsComponent implements BrsValue, Unboxable {
         return this.intrinsic;
     }
 
+    copy() {
+        return new RoFunction(this.intrinsic);
+    }
+
     equalTo(other: BrsType): BrsBoolean {
         return BrsBoolean.False;
     }

@@ -4,6 +4,7 @@ import { BrsComponent } from "./BrsComponent";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { RoAssociativeArray } from "./RoAssociativeArray";
+import { RoFunction } from "./RoFunction";
 import { BrsArray, IfArray, IfArrayGet, IfArraySet } from "../interfaces/IfArray";
 import { IfEnum } from "../interfaces/IfEnum";
 import { BrsDevice } from "../../device/BrsDevice";
@@ -134,8 +135,10 @@ export class RoArray extends BrsComponent implements BrsValue, BrsArray {
                 if (value instanceof RoArray || value instanceof RoAssociativeArray) {
                     copiedElements.push(value.deepCopy());
                 }
-            } else if (isBoxable(value) || isUnboxable(value)) {
+            } else if (isBoxable(value) && !(value instanceof Callable)) {
                 copiedElements.push(value);
+            } else if (isUnboxable(value) && !(value instanceof RoFunction)) {
+                copiedElements.push(value.copy());
             }
         }
         return new RoArray(copiedElements);
