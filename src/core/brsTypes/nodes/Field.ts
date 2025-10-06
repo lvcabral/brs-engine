@@ -407,7 +407,8 @@ export class Field {
             eventParams.infoFields.elements?.forEach((element) => {
                 if (isBrsString(element)) {
                     // TODO: Check how to handle object values (by reference or by value)
-                    fieldsMap.set(element.getValue(), hostNode.get(element));
+                    const key = element.getValue();
+                    fieldsMap.set(key, hostNode.getFieldValue(key));
                 }
             });
             infoFields = toAssociativeArray(fieldsMap);

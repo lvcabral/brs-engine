@@ -224,7 +224,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
 
     deepCopy(interpreter?: Interpreter): BrsType {
         if (!interpreter) {
-            return new RoInvalid();
+            return this;
         }
         const copiedNode = createNodeByType(interpreter, new BrsString(this.nodeSubtype));
         if (!(copiedNode instanceof RoSGNode)) {
@@ -510,7 +510,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     /* searches the node tree for a node with the given id */
     findNodeById(node: RoSGNode, id: BrsString): RoSGNode | BrsInvalid {
         // test current node in tree
-        let currentId = node.get(new BrsString("id"));
+        let currentId = node.getFieldValue("id");
         if (currentId.toString().toLowerCase() === id.value.toLowerCase()) {
             return node;
         }
@@ -864,7 +864,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, str: BrsString) => {
-            return this.get(str) !== BrsInvalid.Instance ? BrsBoolean.True : BrsBoolean.False;
+            return BrsBoolean.from(this.fields.has(str.value.toLowerCase()));
         },
     });
 
