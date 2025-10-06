@@ -394,9 +394,9 @@ export type BrsConvertible = boolean | number | string | BrsType | null | undefi
 export function toAssociativeArray(input: Map<string, any> | FlexObject, cs?: boolean): RoAssociativeArray {
     const associativeArray = new RoAssociativeArray([], cs);
     if (input instanceof Map) {
-        input.forEach((value, key) => {
+        for (const [key, value] of input) {
             associativeArray.set(new BrsString(key), brsValueOf(value, cs), true);
-        });
+        }
     } else if (typeof input === "object" && input !== null) {
         for (const key in input) {
             if (input.hasOwnProperty(key)) {

@@ -67,7 +67,7 @@ export class RoSGNodeEvent extends BrsComponent implements BrsValue {
             returns: ValueKind.Dynamic,
         },
         impl: (_: Interpreter) => {
-            return this.node.get(new BrsString("id"));
+            return this.node.getFieldValue("id");
         },
     });
 
