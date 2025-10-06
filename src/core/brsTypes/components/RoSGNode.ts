@@ -23,6 +23,8 @@ import {
     rootObjects,
     RoInvalid,
     isUnboxable,
+    RoFunction,
+    isBoxable,
 } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Stmt } from "../../parser";
@@ -97,6 +99,11 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
                 this.setFields,
                 this.update,
                 this.signalBeacon,
+                this.moveIntoField, // Since OS 15
+                this.moveFromField, // Since OS 15
+                this.setRef, // Since OS 15
+                this.canGetRef, // Since OS 15
+                this.getRef, // Since OS 15
             ],
             ifSGNodeChildren: [
                 this.appendChild,
@@ -400,9 +407,9 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     }
 
     renderChildren(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
-        this.children.forEach((node) => {
+        for (const node of this.children) {
             node.renderNode(interpreter, origin, angle, opacity, draw2D);
-        });
+        }
         this.changed = false;
     }
 
@@ -496,9 +503,9 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             rootObjects.focused = undefined;
             // Get the focus chain, with root-most ancestor first.
             let currFocusChain = this.createPath(currFocusedNode);
-            currFocusChain.forEach((node) => {
+            for (const node of currFocusChain) {
                 node.set(focusedChildString, BrsInvalid.Instance, false);
-            });
+            }
         } else {
             // If the node doesn't have focus already, and it's not gaining focus,
             // we don't need to notify any ancestors.
@@ -703,7 +710,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
 
     /* Takes a list of models and creates fields with default values, and adds them to this.fields. */
     protected registerDefaultFields(fields: FieldModel[]) {
-        fields.forEach((field) => {
+        for (const field of fields) {
             const value = getBrsValueFromFieldType(field.type, field.value);
             const fieldType = FieldKind.fromString(field.type);
             if (fieldType) {
@@ -712,7 +719,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
                     new Field(value, fieldType, !!field.alwaysNotify, field.hidden)
                 );
             }
-        });
+        }
     }
 
     /**
@@ -722,12 +729,12 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
      * then Roku logs an error, because Node does not have a property called "thisisnotanodefield".
      */
     protected registerInitializedFields(fields: AAMember[]) {
-        fields.forEach((field) => {
+        for (const field of fields) {
             let fieldType = FieldKind.fromBrsType(field.value);
             if (fieldType) {
                 this.fields.set(field.name.value.toLowerCase(), new Field(field.value, fieldType, false));
             }
-        });
+        }
     }
 
     /**
@@ -876,18 +883,18 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         },
         impl: (_: Interpreter, obj: BrsType) => {
             if (obj instanceof RoAssociativeArray) {
-                obj.elements.forEach((value, key) => {
+                for (const [key, value] of obj.elements) {
                     let fieldType = FieldKind.fromBrsType(value);
 
                     // if the field doesn't have a valid value, RBI doesn't add it.
                     if (fieldType) {
                         this.fields.set(key, new Field(value, fieldType, false));
                     }
-                });
+                }
             } else if (obj instanceof RoSGNode) {
-                obj.getNodeFields().forEach((value, key) => {
+                for (const [key, value] of obj.getNodeFields()) {
                     this.fields.set(key, value);
-                });
+                }
             }
 
             return BrsInvalid.Instance;
@@ -962,14 +969,139 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
                 return BrsBoolean.False;
             }
 
-            fields.getValue().forEach((value, key) => {
+            for (const [key, value] of fields.getValue()) {
                 let fieldName = new BrsString(key);
                 if (!this.fields.has(key)) {
                     this.set(fieldName, value, false);
                 }
-            });
+            }
 
             return BrsBoolean.True;
+        },
+    });
+
+    /** Moves an object into an roSGNode field, which must be an associative array. */
+    private readonly moveIntoField = new Callable("moveIntoField", {
+        signature: {
+            args: [new StdlibArgument("fieldName", ValueKind.String), new StdlibArgument("data", ValueKind.Object)],
+            returns: ValueKind.Int32,
+        },
+        impl: (interpreter: Interpreter, fieldName: BrsString, data: RoAssociativeArray) => {
+            if (!(data instanceof RoAssociativeArray)) {
+                BrsDevice.stderr.write(
+                    `warning,BRIGHTSCRIPT: ERROR: roSGNode.moveIntoField: Move must be AA: ${location}`
+                );
+                return new Int32(-1);
+            }
+            const field = this.fields.get(fieldName.value.toLowerCase());
+            if (!field) {
+                BrsDevice.stderr.write(
+                    `warning,BRIGHTSCRIPT: ERROR: roSGNode.moveIntoField: Could not find field '"${fieldName.value}"': ${location}`
+                );
+                return new Int32(-1);
+            } else if (field.getType() !== FieldKind.AssocArray) {
+                BrsDevice.stderr.write(
+                    `warning,BRIGHTSCRIPT: ERROR: roSGNode.moveIntoField: Field has wrong field type: ${location}`
+                );
+                return new Int32(-1);
+            }
+            const moved: AAMember[] = [];
+            for (const [key, value] of data.elements) {
+                if (value instanceof RoArray || value instanceof RoAssociativeArray || value instanceof RoSGNode) {
+                    moved.push({ name: new BrsString(key), value: value.deepCopy(interpreter) });
+                } else if (isBoxable(value) && !(value instanceof Callable)) {
+                    moved.push({ name: new BrsString(key), value: value });
+                } else if (isUnboxable(value) && !(value instanceof RoFunction)) {
+                    moved.push({ name: new BrsString(key), value: value.copy() });
+                }
+            }
+            const refs = data.clearElements();
+            field.setValue(new RoAssociativeArray(moved), true);
+            return new Int32(refs);
+        },
+    });
+
+    /** Moves an object out of an roSGNode field (an associative array). */
+    private readonly moveFromField = new Callable("moveFromField", {
+        signature: {
+            args: [new StdlibArgument("fieldName", ValueKind.String)],
+            returns: ValueKind.Object,
+        },
+        impl: (_: Interpreter, fieldName: BrsString) => {
+            const field = this.fields.get(fieldName.value.toLowerCase());
+            if (!field) {
+                BrsDevice.stderr.write(
+                    `warning,BRIGHTSCRIPT: ERROR: roSGNode.moveFromField: Could not find field '"${fieldName.value}"': ${location}`
+                );
+                return BrsInvalid.Instance;
+            } else if (field.getType() !== FieldKind.AssocArray) {
+                BrsDevice.stderr.write(
+                    `warning,BRIGHTSCRIPT: ERROR: roSGNode.moveFromField: cannot moveFromField on non-assocarray fields: ${location}`
+                );
+                return BrsInvalid.Instance;
+            }
+            const value = field.getValue();
+            field.setValue(BrsInvalid.Instance, true);
+            return value;
+        },
+    });
+
+    /** Assigns an associative array to the field of a roSGNode via reference. */
+    private readonly setRef = new Callable("setRef", {
+        signature: {
+            args: [new StdlibArgument("fieldName", ValueKind.String), new StdlibArgument("data", ValueKind.Object)],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter, fieldName: BrsString, data: RoAssociativeArray) => {
+            if (BrsDevice.threadId !== 0 || !(data instanceof RoAssociativeArray)) {
+                return BrsBoolean.False;
+            }
+            const field = this.fields.get(fieldName.value.toLowerCase());
+            if (!field) {
+                BrsDevice.stderr.write(
+                    `warning,BRIGHTSCRIPT: ERROR: roSGNode.setRef: Could not find field '"${fieldName.value}"': ${location}`
+                );
+                return BrsInvalid.Instance;
+            } else if (field.getType() === FieldKind.AssocArray) {
+                field.setValue(data, false, true);
+                return BrsBoolean.True;
+            }
+            return BrsBoolean.False;
+        },
+    });
+
+    /** Indicates whether the GetRef() function will succeed in the current context. */
+    private readonly canGetRef = new Callable("canGetRef", {
+        signature: {
+            args: [new StdlibArgument("fieldName", ValueKind.String)],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter, fieldName: BrsString) => {
+            const field = this.fields.get(fieldName.value.toLowerCase());
+            return BrsBoolean.from(!!field && field.getType() === FieldKind.AssocArray && field.isValueRef());
+        },
+    });
+
+    /** Returns a reference to the value of an roSGNode field, which must be an associative array and be set by SetRef() */
+    private readonly getRef = new Callable("getRef", {
+        signature: {
+            args: [new StdlibArgument("fieldName", ValueKind.String)],
+            returns: ValueKind.Dynamic,
+        },
+        impl: (_: Interpreter, fieldName: BrsString) => {
+            const field = this.fields.get(fieldName.value.toLowerCase());
+            if (!field) {
+                BrsDevice.stderr.write(
+                    `warning,BRIGHTSCRIPT: ERROR: roSGNode.getRef: Could not find field '"${fieldName.value}"': ${location}`
+                );
+                return BrsInvalid.Instance;
+            } else if (field.getType() === FieldKind.AssocArray && field.isValueRef()) {
+                const value = field.getValue();
+                if (value instanceof RoAssociativeArray) {
+                    return value;
+                }
+            }
+            return BrsInvalid.Instance;
         },
     });
 
@@ -993,16 +1125,16 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         impl: (_: Interpreter) => {
             let packagedFields: AAMember[] = [];
 
-            this.fields.forEach((field, name) => {
+            for (const [name, field] of this.fields) {
                 if (field.isHidden()) {
-                    return;
+                    continue;
                 }
 
                 packagedFields.push({
                     name: new BrsString(name),
                     value: field.getValue(),
                 });
-            });
+            }
 
             return new RoAssociativeArray(packagedFields);
         },
@@ -1015,7 +1147,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, fieldName: BrsString) => {
-            return this.fields.has(fieldName.value.toLowerCase()) ? BrsBoolean.True : BrsBoolean.False;
+            return BrsBoolean.from(this.fields.has(fieldName.value.toLowerCase()));
         },
     });
 
@@ -1205,12 +1337,12 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
                 return BrsBoolean.False;
             }
 
-            fields.getValue().forEach((value, key) => {
-                let fieldName = new BrsString(key.toLowerCase());
+            for (const [key, value] of fields.getValue()) {
+                const fieldName = new BrsString(key.toLowerCase());
                 if (this.fields.has(key.toLowerCase())) {
                     this.set(fieldName, value, false);
                 }
-            });
+            }
 
             return BrsBoolean.True;
         },
@@ -1231,12 +1363,12 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
                 return Uninitialized.Instance;
             }
 
-            aa.getValue().forEach((value, key) => {
-                let fieldName = new BrsString(key);
+            for (const [key, value] of aa.getValue()) {
+                const fieldName = new BrsString(key);
                 if (this.fields.has(key.toLowerCase()) || createFields.toBoolean()) {
                     this.set(fieldName, value, false);
                 }
-            });
+            }
 
             return Uninitialized.Instance;
         },
@@ -1379,11 +1511,11 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         },
         impl: (_: Interpreter, child_nodes: BrsType) => {
             if (child_nodes instanceof RoArray) {
-                let childNodesElements = child_nodes.getElements();
+                const childNodesElements = child_nodes.getElements();
                 if (childNodesElements.length !== 0) {
-                    childNodesElements.forEach((childNode) => {
+                    for (const childNode of childNodesElements) {
                         this.removeChildByReference(childNode);
-                    });
+                    }
                     return BrsBoolean.True;
                 }
             }
@@ -1405,10 +1537,10 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             let indexValue = index.getValue();
 
             if (numChildrenValue > 0) {
-                let removedChildren = this.children.splice(indexValue, numChildrenValue);
-                removedChildren.forEach((node) => {
+                const removedChildren = this.children.splice(indexValue, numChildrenValue);
+                for (const node of removedChildren) {
                     node.removeParent();
-                });
+                }
                 return BrsBoolean.True;
             }
             return BrsBoolean.False;
@@ -1445,15 +1577,15 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         },
         impl: (_: Interpreter, child_nodes: BrsType) => {
             if (child_nodes instanceof RoArray) {
-                let childNodesElements = child_nodes.getElements();
+                const childNodesElements = child_nodes.getElements();
                 if (childNodesElements.length !== 0) {
-                    childNodesElements.forEach((childNode) => {
+                    for (const childNode of childNodesElements) {
                         if (childNode instanceof RoSGNode) {
                             // Remove if it exists to re-append
                             this.removeChildByReference(childNode);
                             this.appendChildToParent(childNode);
                         }
-                    });
+                    }
                     return BrsBoolean.True;
                 }
             }
@@ -1498,14 +1630,14 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         impl: (_: Interpreter, child_nodes: BrsType, index: Int32) => {
             if (child_nodes instanceof RoArray) {
                 let indexValue = index.getValue();
-                let childNodesElements = child_nodes.getElements();
+                const childNodesElements = child_nodes.getElements();
                 if (childNodesElements.length !== 0) {
-                    childNodesElements.forEach((childNode) => {
+                    for (const childNode of childNodesElements) {
                         if (!this.replaceChildAtIndex(childNode, new Int32(indexValue))) {
                             this.removeChildByReference(childNode);
                         }
                         indexValue += 1;
-                    });
+                    }
                     return BrsBoolean.True;
                 }
             }
@@ -1525,12 +1657,12 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         impl: (_: Interpreter, child_nodes: BrsType, index: Int32) => {
             if (child_nodes instanceof RoArray) {
                 let indexValue = index.getValue();
-                let childNodesElements = child_nodes.getElements();
+                const childNodesElements = child_nodes.getElements();
                 if (childNodesElements.length !== 0) {
-                    childNodesElements.forEach((childNode) => {
+                    for (const childNode of childNodesElements) {
                         this.insertChildAtIndex(childNode, new Int32(indexValue));
                         indexValue += 1;
-                    });
+                    }
                     return BrsBoolean.True;
                 }
             }

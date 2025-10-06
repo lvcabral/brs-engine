@@ -190,9 +190,9 @@ export class RoList extends BrsComponent implements BrsValue, BrsList {
     }
 
     clear() {
-        this.elements.forEach((element) => {
+        for (const element of this.elements) {
             this.removeChildRef(element);
-        });
+        }
         this.elements.length = 0;
         this.listIndex = -1;
         this.enumIndex = -1;
@@ -223,9 +223,9 @@ export class RoList extends BrsComponent implements BrsValue, BrsList {
     }
 
     dispose() {
-        this.elements.forEach((element) => {
+        for (const element of this.elements) {
             this.removeChildRef(element);
-        });
+        }
     }
 
     addChildRef(value: BrsType | undefined) {

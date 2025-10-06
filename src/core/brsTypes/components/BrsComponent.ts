@@ -86,6 +86,7 @@ export class BrsComponent {
             }
             this.dispose();
         }
+        return this.references;
     }
 
     dispose() {

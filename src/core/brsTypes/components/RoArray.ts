@@ -116,9 +116,9 @@ export class RoArray extends BrsComponent implements BrsValue, BrsArray {
     }
 
     clear() {
-        this.elements.forEach((element) => {
+        for (const element of this.elements) {
             this.removeChildRef(element);
-        });
+        }
         this.elements.length = 0;
         this.enumIndex = -1;
     }
@@ -242,9 +242,9 @@ export class RoArray extends BrsComponent implements BrsValue, BrsArray {
     }
 
     dispose() {
-        this.elements.forEach((element) => {
+        for (const element of this.elements) {
             this.removeChildRef(element);
-        });
+        }
     }
 
     addChildRef(value: BrsType | undefined) {

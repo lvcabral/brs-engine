@@ -19,6 +19,7 @@ The **BrightScript Engine** implements the BrightScript language specification u
     * Media related nodes: `Audio`, `SoundEffect` and `Video`
     * Other supported nodes: `Button`, `ButtonGroup`, `BusySpinner`, `Overhang`, `Keyboard`, `MiniKeyboard`, `TextEditBox` and `ChannelStore`
   * All other nodes are either mocked or not implemented yet, and if used will be created as a plain `Node`.
+  * The component `roRenderThreadQueue` introduced in Roku OS 15 is still not implemented.
 * The following components are also not implemented yet:
   * Text to Speech components: `roAudioGuide`, `roMicrophone` and `roTextToSpeech`
   * Signing Algorithm components: `roDSA` and `roRSA`

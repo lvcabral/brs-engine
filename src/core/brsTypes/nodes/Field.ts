@@ -159,7 +159,8 @@ export class Field {
         private value: BrsType,
         private readonly type: FieldKind,
         private readonly alwaysNotify: boolean,
-        private hidden: boolean = false
+        private hidden: boolean = false,
+        private valueRef: boolean = false
     ) {
         this.value = this.convertValue(value);
     }
@@ -179,12 +180,16 @@ export class Field {
         return this.hidden;
     }
 
+    setHidden(isHidden: boolean) {
+        this.hidden = isHidden;
+    }
+
     isAlwaysNotify() {
         return this.alwaysNotify;
     }
 
-    setHidden(isHidden: boolean) {
-        this.hidden = isHidden;
+    isValueRef() {
+        return this.valueRef;
     }
 
     getType(): FieldKind {
@@ -200,20 +205,25 @@ export class Field {
         return this.value;
     }
 
-    setValue(value: BrsType, notify: boolean = true) {
+    setValue(value: BrsType, notify: boolean = true, byRef: boolean = false) {
         // Once a field is set, it is no longer hidden.
         this.hidden = false;
 
+        // Set whether this field has a value by reference.
+        this.valueRef = byRef;
+
         const oldValue = this.value;
-        // Update parent field on content nodes
-        if (oldValue instanceof ContentNode) {
-            oldValue.removeParentField(this);
-        }
-        if (value instanceof ContentNode) {
-            value.addParentField(this);
+        if (!byRef) {
+            // Update parent field on content nodes
+            if (oldValue instanceof ContentNode) {
+                oldValue.removeParentField(this);
+            }
+            if (value instanceof ContentNode) {
+                value.addParentField(this);
+            }
+            value = this.convertValue(value);
         }
         // Update field value and notify changes
-        value = this.convertValue(value);
         this.value = value;
         if (notify && (this.alwaysNotify || !this.isEqual(oldValue, value))) {
             this.notifyObservers();
