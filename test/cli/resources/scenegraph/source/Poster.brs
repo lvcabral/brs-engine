@@ -52,4 +52,24 @@ sub Main()
     print "MAIN: clone.boxedInt: "; clone.boxedInt.getInt()
     print "MAIN: isSameObject(node.aa, copy.aa): "; utils.isSameObject(node.aa, copy.aa)
     print "MAIN: isSameObject(node.aa, clone.aa): "; utils.isSameObject(node.aa, clone.aa)
+
+    ' Test moveIntoField and moveFromField
+    sub_array = [1, 2, 3]
+    aa = {foo: "hello", bar: sub_array, arr: [4, 5, 6]}
+    ' At this point, there is an external reference into aa
+    print node.moveIntoField("aa", aa)
+    sub_array[0] = 10
+    print aa ' Prints an empty AA
+    print sub_array ' Prints [1,2,3] - this was preserved
+    print node.aa
+    print node.aa.bar
+    print node.aa.arr
+
+    n = CreateObject("roSGNode", "ContentNode")
+    n.AddField("aa_field", "assocarray", true)
+    n.AddField("array_field", "array", true)
+    n.aa_field = {key: "value"}' or use moveIntoField()
+    my_aa = n.MoveFromField("aa_field")
+    print my_aa ' prints {key: "value"}
+    print n.aa_field ' invalid
 end sub
