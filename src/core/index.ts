@@ -229,7 +229,7 @@ export function createPayloadFromFiles(
         }
     }
     if (deviceData.assets.byteLength === 0) {
-        deviceData.assets = fs.readFileSync(path.join(__dirname, "../browser/assets/common.zip"))?.buffer;
+        deviceData.assets = fs.readFileSync(path.join(__dirname, "../assets/common.zip"))?.buffer;
     }
     if (manifest === undefined) {
         manifest = new Map();

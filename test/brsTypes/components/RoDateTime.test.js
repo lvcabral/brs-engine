@@ -1,4 +1,4 @@
-const brs = require("../../../bin/brs.node");
+const brs = require("../../../packages/node/bin/brs.node");
 const { Interpreter } = brs;
 const { RoDateTime, Int32, Int64, BrsString, BrsInvalid, Uninitialized } = brs.types;
 const fakeTimer = require("@sinonjs/fake-timers");

@@ -1,4 +1,4 @@
-const brs = require("../../bin/brs.node");
+const brs = require("../../packages/node/bin/brs.node");
 const { Expr, Stmt } = brs.parser;
 const { Lexeme } = brs.lexer;
 const { BrsString, Int32, Float } = brs.types;

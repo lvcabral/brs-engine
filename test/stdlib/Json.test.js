@@ -1,4 +1,4 @@
-const brs = require("../../bin/brs.node");
+const brs = require("../../packages/node/bin/brs.node");
 const { Interpreter } = brs;
 const { FormatJson, ParseJson } = brs.stdlib;
 const { RoArray, RoAssociativeArray, RoDateTime, BrsBoolean, BrsInvalid, BrsString, Float, Int32, Int64, RoInt } =
