@@ -7,17 +7,15 @@ module.exports = (env) => {
         entry: {},
         mode: "production",
         output: {
-            path: path.resolve(__dirname, `../out/common_zip/`),
+            path: path.resolve(__dirname, `../../../out/common_zip/`),
             publicPath: "/",
         },
         plugins: [
             new CopyPlugin({
-                patterns: [
-                    { from: "src/core/common/**", to: "./" },
-                ],
+                patterns: [{ from: "../../src/core/common/**", to: "./" }],
             }),
             new ZipPlugin({
-                path: "../../browser/assets/",
+                path: "../../packages/node/assets",
                 filename: `common.zip`,
                 extension: "zip",
                 zipOptions: {
@@ -25,7 +23,7 @@ module.exports = (env) => {
                 },
                 exclude: [/\.csv$/],
                 pathMapper: function (assetPath) {
-                    return assetPath.replace("src/core/common/", "");
+                    return assetPath.replace("../../src/core/common/", "");
                 },
             }),
         ],

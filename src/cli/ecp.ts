@@ -16,7 +16,7 @@ import path from "node:path";
 import url from "node:url";
 import restana from "restana";
 import WebSocket, { WebSocketServer, RawData } from "ws";
-import packageInfo from "../../package.json";
+import packageInfo from "../../packages/node/package.json";
 
 const DEBUG = false;
 const ECPPORT = 8060;

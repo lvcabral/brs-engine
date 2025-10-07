@@ -222,12 +222,7 @@ function loadZip(appId, params) {
                         if (!params) {
                             params = new Map([["source", "homescreen"]]);
                         }
-                        brs.execute(
-                            app.path,
-                            zipData,
-                            { entryPoint: true, debugOnCrash: false },
-                            params,
-                        );
+                        brs.execute(app.path, zipData, { entryPoint: true, debugOnCrash: false }, params);
                         display.focus();
                     });
                 });
@@ -283,15 +278,11 @@ display.addEventListener("dblclick", function (event) {
     if (currentApp.running) {
         if (document.fullscreenElement) {
             document.exitFullscreen().catch((err) => {
-                console.error(
-                    `Error attempting to exit fullscreen mode: ${err.message} (${err.name})`
-                );
+                console.error(`Error attempting to exit fullscreen mode: ${err.message} (${err.name})`);
             });
         } else {
             display.requestFullscreen().catch((err) => {
-                console.error(
-                    `Error attempting to start fullscreen mode: ${err.message} (${err.name})`
-                );
+                console.error(`Error attempting to start fullscreen mode: ${err.message} (${err.name})`);
             });
         }
     }
@@ -437,10 +428,7 @@ function replaceRelativePaths(html, fs, basePath) {
             if (p1.startsWith("http://") || p1.startsWith("https://")) {
                 // Add crossorigin attribute to non-local images if it doesn't already exist
                 if (!match[0].includes("crossorigin=")) {
-                    html = html.replace(
-                        match[0],
-                        match[0].replace("<img", "<img crossorigin='anonymous'")
-                    );
+                    html = html.replace(match[0], match[0].replace("<img", "<img crossorigin='anonymous'"));
                 }
                 resolve();
                 return;

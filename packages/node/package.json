@@ -1,0 +1,148 @@
+{
+  "name": "brs-node",
+  "version": "1.9.0",
+  "title": "BrightScript Simulation Engine",
+  "description": "BrightScript Simulation Engine - Run Roku apps on Node.js or Terminal (CLI)",
+  "author": "Marcelo Lv Cabral <marcelo@lvcabral.com> (https://lvcabral.com/)",
+  "license": "MIT",
+  "copyright": "© 2019-2025, Marcelo Lv Cabral",
+  "homepage": "https://lvcabral.com/brs/",
+  "contributors": [
+    "Sean Barag <sean@barag.org>",
+    "Mark Pearce"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lvcabral/brs-engine"
+  },
+  "bugs": {
+    "url": "https://github.com/lvcabral/brs-engine/issues"
+  },
+  "keywords": [
+    "brightscript",
+    "roku",
+    "emulator",
+    "simulator",
+    "interpreter",
+    "worker"
+  ],
+  "main": "bin/brs.node.js",
+  "typings": "types/src/core/index.d.ts",
+  "bin": {
+    "brs-cli": "bin/brs.cli.js"
+  },
+  "files": [
+    "bin/",
+    "types/src/core/"
+  ],
+  "scripts": {
+    "build": "webpack --config ./config/webpack.config.js --env development && webpack --config ./config/webpack.zip.config.js",
+    "build:zip": "webpack --config ./config/webpack.zip.config.js",
+    "release": "webpack --config ./config/webpack.config.js --env production && webpack --config ./config/webpack.zip.config.js",
+    "clean": "rimraf ./bin ./types ./assets",
+    "prepublishOnly": "npm-run-all --serial clean lint prettier release"
+  },
+  "dependencies": {
+    "@lvcabral/libwebp": "^0.1.0",
+    "@lvcabral/memory-fs": "^0.5.1",
+    "@lvcabral/node-ssdp": "^4.0.4",
+    "@lvcabral/sprintf": "^1.2.2",
+    "@lvcabral/upng": "^2.3.0",
+    "@lvcabral/zip": "lvcabral/zip",
+    "@msgpack/msgpack": "^2.8.0",
+    "@zenfs/core": "1.6.16",
+    "canvas": "^3.2.0",
+    "chalk": "^4.1.2",
+    "commander": "^2.12.2",
+    "crc": "^3.8.0",
+    "crypto-browserify": "^3.12.0",
+    "dayjs": "^1.11.10",
+    "decode-bmp": "^0.1.0",
+    "default-gateway": "^7.2.2",
+    "env-paths": "^3.0.0",
+    "execa": "^9.5.2",
+    "exif-parser": "^0.1.12",
+    "fflate": "^0.8.2",
+    "file-type": "^12.4.2",
+    "gifuct-js": "^2.1.2",
+    "hls.js": "^1.6.2",
+    "howler": "^2.2.3",
+    "jpeg-js": "^0.4.4",
+    "long": "^3.2.0",
+    "mp3-parser": "^0.3.0",
+    "nanomatch": "^1.2.13",
+    "opentype.js": "^1.3.4",
+    "path-browserify": "^1.0.1",
+    "path-parse": "^1.0.6",
+    "readable-stream": "^4.3.0",
+    "readline-sync": "^1.4.10",
+    "restana": "^5.0.0",
+    "stats.js": "^0.17.0",
+    "stream-browserify": "^3.0.0",
+    "strip-ansi": "^7.1.0",
+    "url-parse": "^1.5.10",
+    "uuid": "^9.0.1",
+    "ws": "^8.17.1",
+    "xml2js": "^0.6.2",
+    "xmlbuilder": "^13.0.2"
+  },
+  "devDependencies": {
+    "@sinonjs/fake-timers": "^14.0.0",
+    "@types/crc": "^3.4.0",
+    "@types/default-gateway": "^7.2.2",
+    "@types/howler": "^2.2.7",
+    "@types/long": "^3.0.32",
+    "@types/memory-fs": "^0.3.2",
+    "@types/node": "^22.13.2",
+    "@types/node-ssdp": "^4.0.4",
+    "@types/opentype.js": "^0.7.2",
+    "@types/path-parse": "^1.0.19",
+    "@types/readline-sync": "^1.4.8",
+    "@types/sprintf-js": "^1.1.2",
+    "@types/stats.js": "^0.17.0",
+    "@types/upng-js": "^2.1.1",
+    "@types/url-parse": "^1.4.8",
+    "@types/uuid": "^9.0.7",
+    "@types/xml2js": "^0.4.8",
+    "@types/xmlbuilder": "^11.0.1",
+    "@typescript-eslint/eslint-plugin": "^8.17.0",
+    "@typescript-eslint/parser": "^8.17.0",
+    "buffer": "^6.0.3",
+    "copy-webpack-plugin": "^12.0.2",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-import": "^2.29.1",
+    "eslint-plugin-jsdoc": "^48.2.3",
+    "ifdef-loader": "^2.3.2",
+    "javascript-obfuscator": "^4.0.2",
+    "jest": "^29.4.3",
+    "lint-staged": "^12.5.0",
+    "npm-run-all": "^4.1.5",
+    "prettier": "2",
+    "process": "^0.11.10",
+    "rimraf": "^2.6.2",
+    "ts-loader": "^9.5.1",
+    "typescript": "^5.7.3",
+    "webpack": "^5.97.1",
+    "webpack-bundle-analyzer": "^4.10.1",
+    "webpack-cli": "^5.0.1",
+    "webpack-dev-server": "^5.2.1",
+    "webpack-shebang-plugin": "^1.1.8",
+    "webpack-stats-plugin": "^1.1.3",
+    "zip-webpack-plugin": "^4.0.3"
+  },
+  "jest": {
+    "testEnvironment": "node"
+  },
+  "prettier": {
+    "trailingComma": "es5",
+    "tabWidth": 4,
+    "printWidth": 120
+  },
+  "lint-staged": {
+    "*.{ts,js}": [
+      "prettier --write",
+      "git add"
+    ]
+  }
+}

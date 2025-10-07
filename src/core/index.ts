@@ -28,7 +28,6 @@ import * as crypto from "crypto";
 import * as fs from "fs";
 import { encode, decode } from "@msgpack/msgpack";
 import { zlibSync, unzlibSync } from "fflate";
-import packageInfo from "../../package.json";
 import { BrsDevice } from "./device/BrsDevice";
 import { configureFileSystem } from "./device/FileSystem";
 import { BrsError, RuntimeError, RuntimeErrorDetail } from "./error/BrsError";
@@ -50,6 +49,7 @@ export const terminateReasons = ["debug-exit", "end-statement"];
 const algorithm = "aes-256-ctr";
 
 /// #if BROWSER
+import packageInfo from "../../packages/browser/package.json";
 if (typeof onmessage !== "undefined") {
     // Worker event that is triggered by postMessage() calls from the API library
     onmessage = function (event: MessageEvent) {

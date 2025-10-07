@@ -6,7 +6,7 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { BufferType, dataBufferIndex, dataBufferSize, DataType } from "../core/common";
-import packageInfo from "../../package.json";
+import packageInfo from "../../packages/browser/package.json";
 
 // Module callback function definition
 export type SubscribeCallback = (event: string, data?: any) => void;
