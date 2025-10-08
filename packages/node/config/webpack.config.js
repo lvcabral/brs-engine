@@ -1,6 +1,8 @@
 const webpack = require("webpack");
 const path = require("node:path");
 const ShebangPlugin = require("webpack-shebang-plugin");
+const CopyPlugin = require("copy-webpack-plugin");
+const ZipPlugin = require("zip-webpack-plugin");
 
 module.exports = (env) => {
     let mode, sourceMap;
@@ -151,6 +153,31 @@ module.exports = (env) => {
                 filename: libName + ".ecp.js",
                 path: path.resolve(__dirname, cliPath),
             },
+        },
+        {
+            entry: {},
+            mode: "production",
+            output: {
+                path: path.resolve(__dirname, `../../../out/common_zip/`),
+                publicPath: "/",
+            },
+            plugins: [
+                new CopyPlugin({
+                    patterns: [{ from: "../../src/core/common/**", to: "./" }],
+                }),
+                new ZipPlugin({
+                    path: "../../packages/node/assets",
+                    filename: `common.zip`,
+                    extension: "zip",
+                    zipOptions: {
+                        forceZip64Format: false,
+                    },
+                    exclude: [/\.csv$/],
+                    pathMapper: function (assetPath) {
+                        return assetPath.replace("../../src/core/common/", "");
+                    },
+                }),
+            ],
         },
     ];
 };

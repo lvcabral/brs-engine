@@ -36,17 +36,12 @@
     "types/src/api/"
   ],
   "scripts": {
-    "build": "webpack --config config/webpack.config.js --env development --env development && webpack --config config/webpack.zip.config.js",
-    "build:zip": "webpack --config config/webpack.zip.config.js",
-    "web": "webpack --config config/webpack.config.js --env development && webpack serve --open --config config/webpack.config.js",
-    "release": "webpack --config config/webpack.config.js --env production && webpack --config config/webpack.zip.config.js",
+    "build": "webpack --config config/webpack.config.js --env development --env development",
+    "release": "webpack --config config/webpack.config.js --env production",
     "start": "webpack serve --open --config config/webpack.config.js",
     "stats": "webpack-bundle-analyzer ./lib/stats.json",
     "stats:api": "webpack-bundle-analyzer ./lib/stats-api.json",
-    "clean": "rimraf ./lib ./types ./assets",
-    "prettier:write": "prettier --write \"{app,src,test}/**/*.{js,ts}\"",
-    "prettier": "prettier --check \"{app,src,test}/**/*.{js,ts}\"",
-    "prepublishOnly": "npm-run-all --serial clean lint prettier release"
+    "clean": "rimraf ./lib ./types ./assets"
   },
   "dependencies": {
     "@lvcabral/libwebp": "^0.1.0",

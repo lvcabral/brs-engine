@@ -36,11 +36,9 @@
     "types/src/core/"
   ],
   "scripts": {
-    "build": "webpack --config ./config/webpack.config.js --env development && webpack --config ./config/webpack.zip.config.js",
-    "build:zip": "webpack --config ./config/webpack.zip.config.js",
-    "release": "webpack --config ./config/webpack.config.js --env production && webpack --config ./config/webpack.zip.config.js",
-    "clean": "rimraf ./bin ./types ./assets",
-    "prepublishOnly": "npm-run-all --serial clean lint prettier release"
+    "build": "webpack --config ./config/webpack.config.js --env development",
+    "release": "webpack --config ./config/webpack.config.js --env production",
+    "clean": "rimraf ./bin ./types ./assets"
   },
   "dependencies": {
     "@lvcabral/libwebp": "^0.1.0",
