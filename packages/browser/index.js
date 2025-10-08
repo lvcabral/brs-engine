@@ -1,7 +1,7 @@
 /*---------------------------------------------------------------------------------------------
  *  BrightScript Engine (https://github.com/lvcabral/brs-engine)
  *
- *  Copyright (c) 2019-2024 Marcelo Lv Cabral. All Rights Reserved.
+ *  Copyright (c) 2019-2025 Marcelo Lv Cabral. All Rights Reserved.
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
@@ -166,30 +166,29 @@ passwordDialog.addEventListener("close", (e) => {
  * @param {string} password - Password to decrypt the `bpk` file
  */
 function runFile(file, password = "") {
-    const reader = new FileReader();
     const fileExt = file?.name.split(".").pop()?.toLowerCase() ?? "";
     if (fileExt === "zip" || fileExt === "bpk" || fileExt === "brs") {
-        reader.onload = function (evt) {
-            // file is loaded
-            if (password !== null) {
-                currentZip = evt.target.result;
-                brs.execute(
-                    file.name,
-                    currentZip,
-                    {
-                        clearDisplayOnExit: true,
-                        muteSound: false,
-                        password: password,
-                        debugOnCrash: true,
-                    },
-                    new Map([["source", "auto-run-dev"]])
-                );
-            }
-        };
-        reader.onerror = function (evt) {
-            console.error(`Error opening ${file.name}:${reader.error}`);
-        };
-        reader.readAsArrayBuffer(file);
+        file.arrayBuffer()
+            .then((data) => {
+                // file is loaded
+                if (password !== null) {
+                    currentZip = data;
+                    brs.execute(
+                        file.name,
+                        currentZip,
+                        {
+                            clearDisplayOnExit: true,
+                            muteSound: false,
+                            password: password,
+                            debugOnCrash: true,
+                        },
+                        new Map([["source", "auto-run-dev"]])
+                    );
+                }
+            })
+            .catch((err) => {
+                console.error(`Error opening ${file.name}:${err}`);
+            });
     }
 }
 
