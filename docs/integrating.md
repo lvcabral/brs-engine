@@ -6,21 +6,15 @@ The **brs-engine** project is published as a `node` package, so you can use `npm
 $ npm install brs-engine
 ```
 
-or `yarn` if that's your preference:
-
-```console
-$ yarn add brs-engine
-```
-
 ## Sample Application
 
-This repository provides a sample web application for testing the engine, located under the `browser/` folder, you can download the full example from the [release page](https://github.com/lvcabral/brs-engine/releases) with the libraries already integrated, or you can try the simpler example listed below.
+This repository provides a sample web application for testing the engine, located under the `packages/browser/` folder, you can download the full example from the [release page](https://github.com/lvcabral/brs-engine/releases) with the libraries already integrated, or you can try the simpler example listed below.
 
 To learn more about the _methods_ and _events_ exposed by the library visit the [API documentation](./engine-api.md).
 
 **Important Notes:**
 
-Your web application cannot be executed as pure HTML page, because some functionalities used by the engine have security restrictions on the browser platform, so you will need a web server to run it. For that you can use `Apache`, `IIS` or any other simpler web server, but please make sure that your web application is hosted with [COOP and COEP custom headers](https://developer.chrome.com/blog/enabling-shared-array-buffer/) to allow isolation and enable the browser to support **ShareArrayBuffer**. More information visit: <https://developer.chrome.com/blog/enabling-shared-array-buffer/>.
+Your web application cannot be executed as pure HTML page, because some functionalities used by the engine have security restrictions on the browser platform, so you will need a web server to run it. For that you can use `Apache`, `IIS` or any other simpler web server, but please make sure that your web application is hosted with [COOP and COEP custom headers](https://developer.chrome.com/blog/enabling-shared-array-buffer/) to allow isolation and enable the browser to support **ShareArrayBuffer**. More information visit: [Chrome - Enabling ShareArrayBuffer](https://developer.chrome.com/blog/enabling-shared-array-buffer/)
 
 ### Using Webpack DevServer
 
@@ -29,34 +23,10 @@ The repository provides a script to run the Webpack DevServer, with COOP and COE
 ```console
 $ npm run start
 ```
-or
 
-```console
-$ yarn start
-```
+The command above, will open a new tab in the default browser, directly on the address: `http://localhost:6502/`. It may take a few seconds to the web page to show up, as the script will load the app and the API library first.
 
-By default the server will use the port `6502`, if you prefer another port just change it inside the file `webpack.config.js`. The command above, will open a new tab in the default browser, directly on the address: `http://localhost:6502/`. It may take a few seconds to the web page to show up, as the script will build the API library first.
-
-## Notes for BrightScript Developers
-
-You can see the debug messages from `print` statements in your code using the _browser or desktop application console_, just make sure you open the _Developer Tools (Ctrl+Shift+i)_ before loading your app `.zip` package or `.brs` file. Exceptions from the engine library will be shown there too.
-
-If you added a break point (`stop`) in your code, you can also debug using the _browser console_, just send the commands using `debug` method like this: `brs.debug("help")`, but for a better debugging experience, is recommended to use the **desktop application** integrated with:
-
-- [VSCode BrightScript Extension](https://marketplace.visualstudio.com/items?itemName=RokuCommunity.brightscript)
-- Telnet connected on port 8085.
-
-The Roku `registry` data is stored on the browser **Local Storage** and you can inspect it also using the Developer Tools (Application tab).
-
-If your code does show an error in some scenario not listed on the [limitations documentation](./limitations.md), feel free to [open an issue](https://github.com/lvcabral/brs-engine/issues).
-
-## Games and Demos
-
-You can try the engine by running one of the demonstration apps included in the repository, those are pre-configured as _clickable icons_ on `browser/index.html` and `browser/index.js`. In addition to those, you can load your own code, either as a single **.brs** file or an app **.zip/.bpk package**. Below there is a list of tested games that are publicly available with source code, download the `.zip` files and have fun!
-
-- [Prince of Persia for Roku](https://github.com/lvcabral/Prince-of-Persia-Roku) port by Marcelo Lv Cabral - Download [zip file](https://github.com/lvcabral/Prince-of-Persia-Roku/releases/download/v0.18.3778/Prince-of-Persia-Roku-018.zip)
-- [Lode Runner for Roku](https://github.com/lvcabral/Lode-Runner-Roku) remake by Marcelo Lv Cabral - Download [zip file](https://github.com/lvcabral/Lode-Runner-Roku/releases/download/v0.18.707/Lode-Runner-Roku-018.zip)
-- [Retaliate](https://github.com/lvcabral/retaliate-roku) game by Romans I XVI - Download [zip file](https://github.com/lvcabral/retaliate-roku/releases/download/v1.7.0-emu/retaliate-brs-emu.zip)
+By default the server will use the port `6502`, if you prefer another port just change it inside the webpack configuration file at `packages/browser/config/webpack.config.js`.
 
 ## Simple Web Example
 
@@ -119,3 +89,25 @@ end sub
 </body>
 </html>
 ```
+
+## How to Debug your BrightScript Code
+
+You can see the debug messages from `print` statements in your code using the _browser or desktop application console_, just make sure you open the _Developer Tools (Ctrl+Shift+i)_ before loading your app `.zip` package or `.brs` file. Exceptions from the engine library will be shown there too.
+
+If you added a break point (`stop`) in your code, you can also debug using the _browser console_, just send the commands using `debug` method like this: `brs.debug("help")`, but for a better debugging experience, is recommended to use the [desktop application](https://github.com/lvcabral/brs-desktop) integrated with either:
+
+- [VSCode BrightScript Extension](https://marketplace.visualstudio.com/items?itemName=RokuCommunity.brightscript) - Add `"enableDebugProtocol": false` to your `launch.json` configuration.
+- Any Telnet client connected on port 8085.
+
+The Roku `registry` data is stored on the browser **Local Storage** and you can inspect it also using the Developer Tools (Application tab).
+
+If your code does show an error in some scenario not listed on the [limitations documentation](./limitations.md), feel free to [open an issue](https://github.com/lvcabral/brs-engine/issues).
+
+## Games and Demos
+
+You can try the engine by running one of the demonstration apps included in the repository, those are pre-configured as _clickable icons_ on `package/browser/index.html` and `package/browser/index.js`. In addition to those, you can load your own code, either as a single **.brs** file or an app **.zip/.bpk package**. Below there is a list of tested games that are publicly available with source code, download the `.zip` files and have fun!
+
+- [Prince of Persia for Roku](https://github.com/lvcabral/Prince-of-Persia-Roku) port by Marcelo Lv Cabral - Download [zip file](https://github.com/lvcabral/Prince-of-Persia-Roku/releases/download/v0.18.3778/Prince-of-Persia-Roku-018.zip)
+- [Lode Runner for Roku](https://github.com/lvcabral/Lode-Runner-Roku) remake by Marcelo Lv Cabral - Download [zip file](https://github.com/lvcabral/Lode-Runner-Roku/releases/download/v0.18.707/Lode-Runner-Roku-018.zip)
+- [Retaliate](https://github.com/lvcabral/retaliate-roku) game by Romans I XVI - Download [zip file](https://github.com/lvcabral/retaliate-roku/releases/download/v1.7.0-emu/retaliate-brs-emu.zip)
+

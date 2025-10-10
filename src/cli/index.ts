@@ -21,7 +21,7 @@ import readline from "readline";
 import { deviceData, loadAppZip, updateAppZip, subscribePackage, mountExt, setupDeepLink } from "../api/package";
 import { isNumber } from "../api/util";
 import { debugPrompt, dataBufferIndex, dataBufferSize, AppPayload, AppExitReason, AppData } from "../core/common";
-import packageInfo from "../../package.json";
+import packageInfo from "../../packages/node/package.json";
 // @ts-ignore
 import * as brs from "./brs.node.js";
 
@@ -64,7 +64,7 @@ program
         }
         if (typeof deviceData === "object") {
             deviceData.customFeatures.push("ascii_rendering");
-            deviceData.assets = fs.readFileSync(path.join(__dirname, "../browser/assets/common.zip"))?.buffer;
+            deviceData.assets = fs.readFileSync(path.join(__dirname, "../assets/common.zip"))?.buffer;
             deviceData.localIps = getLocalIps();
             try {
                 const { gateway, int } = gateway4sync();

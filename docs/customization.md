@@ -22,10 +22,9 @@ const deviceInfo = {
   maxSimulStreams: 2, // Max number of `roAudioResource` streams (1 or 2)
   customFeatures: [], // String array with custom features (see below)
   localIps: ["eth1,127.0.0.1"], // In a Browser isn't possible to get a real IP, populate it on NodeJS or Electron
-  startTime: Date.now(),
   audioVolume: 50, // Defines the default volume level for system sounds - valid: (0-100)
   audioLanguage: "en", // Preferred audio track language
-  maxFps: 60,
+  maxFps: 60, // Maximum frames per second for rendering
   corsProxy: "https://your-cors-proxy-instance.yourdomain.com/", // (optional) Add your CORS-Anywhere URL here
 };
 ```

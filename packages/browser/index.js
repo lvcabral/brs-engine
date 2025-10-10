@@ -50,12 +50,12 @@ const appList = [
         icon: "images/icons/custom-video-player.png",
     },
 ];
-appIcons.forEach((icon, index) => {
+for (const [index, icon] of appIcons.entries()) {
     icon.src = appList[index].icon;
     icon.title = appList[index].title;
     icon.alt = appList[index].title;
     icon.onclick = () => loadZip(appList[index].id);
-});
+}
 
 // App Configuration
 // Pause the engine when the browser window loses focus
@@ -175,30 +175,29 @@ passwordDialog.addEventListener("close", (e) => {
  * @param {string} password - Password to decrypt the `bpk` file
  */
 function runFile(file, password = "") {
-    const reader = new FileReader();
     const fileExt = file?.name.split(".").pop()?.toLowerCase() ?? "";
     if (fileExt === "zip" || fileExt === "bpk" || fileExt === "brs") {
-        reader.onload = function (evt) {
-            // file is loaded
-            if (password !== null) {
-                currentZip = evt.target.result;
-                brs.execute(
-                    file.name,
-                    currentZip,
-                    {
-                        clearDisplayOnExit: true,
-                        muteSound: false,
-                        password: password,
-                        debugOnCrash: true,
-                    },
-                    new Map([["source", "auto-run-dev"]])
-                );
-            }
-        };
-        reader.onerror = function (evt) {
-            console.error(`Error opening ${file.name}:${reader.error}`);
-        };
-        reader.readAsArrayBuffer(file);
+        file.arrayBuffer()
+            .then((data) => {
+                // file is loaded
+                if (password !== null) {
+                    currentZip = data;
+                    brs.execute(
+                        file.name,
+                        currentZip,
+                        {
+                            clearDisplayOnExit: true,
+                            muteSound: false,
+                            password: password,
+                            debugOnCrash: true,
+                        },
+                        new Map([["source", "auto-run-dev"]])
+                    );
+                }
+            })
+            .catch((err) => {
+                console.error(`Error opening ${file.name}:${err}`);
+            });
     }
 }
 
@@ -237,7 +236,7 @@ function loadZip(appId, params) {
                 });
             } else {
                 loading.style.visibility = "hidden";
-                return Promise.reject(new Error(response.statusText));
+                throw new Error(response.statusText);
             }
         })
         .catch((err) => {
@@ -255,7 +254,7 @@ function mountZip(zip) {
                     });
                 });
             } else {
-                return Promise.reject(new Error(response.statusText));
+                throw new Error(response.statusText);
             }
         })
         .catch((err) => {
@@ -319,9 +318,9 @@ function displayRedraw() {
 
 // App icons Visibility
 function appIconsVisibility(visibility) {
-    appIcons.forEach((icon) => {
+    for (const icon of appIcons) {
         icon.style.visibility = visibility;
-    });
+    }
 }
 
 function parseVersionString(str) {
@@ -330,9 +329,9 @@ function parseVersionString(str) {
     }
     const vArray = str.split(".");
     return {
-        major: parseInt(vArray[0]) || 0,
-        minor: parseInt(vArray[1]) || 0,
-        patch: parseInt(vArray[2]) || 0,
+        major: Number.parseInt(vArray[0]) || 0,
+        minor: Number.parseInt(vArray[1]) || 0,
+        patch: Number.parseInt(vArray[2]) || 0,
     };
 }
 

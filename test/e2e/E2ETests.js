@@ -1,6 +1,6 @@
 const path = require("path");
 const stream = require("stream");
-const brs = require("../../bin/brs.node");
+const brs = require("../../packages/node/bin/brs.node");
 const { createPayloadFromFiles, executeFile } = brs;
 
 brs.registerCallback(() => {}); // register a callback to avoid display errors

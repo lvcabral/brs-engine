@@ -1,4 +1,4 @@
-const brs = require("../../bin/brs.node");
+const brs = require("../../packages/node/bin/brs.node");
 const { BrsString, BrsInvalid, Int32, RoArray, RoAssociativeArray } = brs.types;
 const { Run } = brs.stdlib;
 const { Interpreter } = brs;

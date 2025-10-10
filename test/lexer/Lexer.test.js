@@ -1,4 +1,4 @@
-const { lexer, types } = require("../../bin/brs.node");
+const { lexer, types } = require("../../packages/node/bin/brs.node");
 const { Lexer, Lexeme } = lexer;
 const { BrsString, Int32, Int64, Float, Double } = types;
 

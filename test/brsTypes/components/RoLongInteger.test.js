@@ -1,4 +1,4 @@
-const brs = require("../../../bin/brs.node");
+const brs = require("../../../packages/node/bin/brs.node");
 const { Interpreter } = brs;
 const { RoLongInteger, Int64, BrsBoolean, BrsString, Callable } = brs.types;
 

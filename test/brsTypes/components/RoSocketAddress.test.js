@@ -1,4 +1,4 @@
-const brs = require("../../../bin/brs.node");
+const brs = require("../../../packages/node/bin/brs.node");
 const { Interpreter } = brs;
 const { RoSocketAddress, BrsBoolean, BrsString, Int32 } = brs.types;
 

@@ -1,70 +1,62 @@
 # Building from Source
 
-The brs-engine project follows pretty standard `node` development patterns, with the caveat that it uses `yarn` for dependency management.
+The brs-engine project follows pretty standard `Node.js` development patterns, being built with Webpack and TypeScript in a monorepo structure with two packages: `packages/browser` and `packages/node`.
 
 ## Prerequisites
 
-As it builds (and runs the CLI) in `node` (v21 or newer), so you'll need to [install that first](https://nodejs.org).
-
-Once that's ready, install [yarn](https://yarnpkg.com).  Installing it with `npm` is probably the simplest:
-
-```console
-$ npm install -g yarn
-```
+As it builds (and runs the CLI) in `Node.js` (v22 or newer), so you'll need to [install that first](https://nodejs.org/en/download).
 
 ## Setup
 
 1. Clone this repo:
 
    ```console
-   $ git clone https://github.com/lvcabral/brs-engine.git
+   $ git clone https://github.com/lvcabral/brs-engine
    ```
 
 2. Install dependencies:
 
     ```console
-    $ yarn install     # or just `yarn`
+    $ npm install
     ```
 
 ## The build-test-clean dance
 
 ### Build
 
-This project is written in TypeScript, so it needs to be compiled before it can be executed. `yarn build` compiles files in `src/` into JavaScript and TypeScript declarations, and puts them in `lib/`, `bin/` and `types/`.
+This project is written in TypeScript, so it needs to be compiled before it can be executed. `npm run build` compiles both packages, using the source code in `src/`, into JavaScript and TypeScript declarations, and puts them in `lib/`, `bin/` and `types/`.
 
 ```console
-$ yarn build
+$ npm run build
 
-$ ls browser/lib/
+$ ls packages/browser/lib/
 brs.api.js
 brs.worker.js
 
-$ ls bin/
+$ ls packages/node/bin/
 brs.cli.js
+brs.ecp.js
+brs.node.js
 
-$ ls types/
+$ ls packages/browser/types/
 index.d.ts (and friends)
 ```
 
 ### Release
 
-To release a smaller version of the libraries Webpack can create a *minified* version by running `yarn release`.
+To release a smaller version of the libraries Webpack can create a *minified* version by running `npm run release`.
 
 ### Running the Example Web Application
 
-To build and start the web application on your default browser just execute `yarn start`.
+To build and start the web application on your default browser just execute `npm run build:web`.
 
 ### Testing
 
 Tests are written in plain-old JavaScript with [Facebook's Jest](http://facebook.github.io/jest/), and can be run with the `test` target:
 
 ```console
-$ yarn test
-
-# tests start running
+$ npm run test
 ```
-
-Note that only test files ending in `.test.js` will be executed by `yarn test`.
 
 If you need to update the snapshots use the command: `npx jest --updateSnapshot`
 
@@ -73,14 +65,17 @@ If you need to update the snapshots use the command: `npx jest --updateSnapshot`
 Compiled output in `lib/`, `bin/` and `types/` can be removed with the `clean` target:
 
 ```console
-$ yarn clean
+$ npm run clean
 
-$ ls lib/
+$ ls packages/browser/lib/
 ls: cannot access 'lib': No such file or directory
 
-$ ls bin/
+$ ls packages/browser/types/
+ls: cannot access 'types': No such file or directory
+
+$ ls packages/node/bin/
 ls: cannot access 'bin': No such file or directory
 
-$ ls types/
+$ ls packages/node/types/
 ls: cannot access 'types': No such file or directory
 ```

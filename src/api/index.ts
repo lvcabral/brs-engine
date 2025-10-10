@@ -82,7 +82,7 @@ import {
 } from "./video";
 import { subscribeControl, initControlModule, enableSendKeys, sendKey } from "./control";
 import SharedObject from "../core/SharedObject";
-import packageInfo from "../../package.json";
+import packageInfo from "../../packages/browser/package.json";
 
 // Interpreter Library
 const brsWrkLib = getWorkerLibPath();

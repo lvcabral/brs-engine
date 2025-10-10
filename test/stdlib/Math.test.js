@@ -1,4 +1,4 @@
-const brs = require("../../bin/brs.node");
+const brs = require("../../packages/node/bin/brs.node");
 const { Abs, Cdbl, Cint, Csng, Fix, Int, Atn, Cos, Sin, Tan, Exp, Log, Sqr, Rnd } = brs.stdlib;
 const { Interpreter } = brs;
 const { Int32, Float, ValueKind } = brs.types;

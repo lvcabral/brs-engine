@@ -1,14 +1,27 @@
 # Run as Command Line Interface
 
-Once you have built the CLI library you can link it to your path with the following command:
+You have two options to install the CLI application:
 
-```console
-$ npm link
-```
+1. **Global Installation**: This will make the `brs-cli` command available system-wide.
+
+   ```console
+   $ npm install -g brs-node
+   ```
+
+2. **Build NodeJS Package**: Clone the repo, build the NodeJS package and link it to your system:
+
+    ```console
+    $ git clone https://github.com/lvcabral/brs-engine.git
+    $ cd brs-engine
+    $ npm install
+    $ npm run build:cli
+    $ cd packages/node
+    $ npm link
+    ```
 
 ## Usage
 
-This repo provides the `brs-cli` executable, which operates as a REPL, running source files or creating encrypted app packages.
+Once installed, you can execute the `brs-cli` command, which operates as a REPL, runs source files or creates encrypted app packages.
 For a list of options run:
 
 ```console
@@ -40,7 +53,7 @@ An interactive BrightScript REPL (Read-Execute-Print Loop) is available by runni
 ```console
 $ brs-cli
 
-BrightScript Simulation Engine CLI [v1.0.0]
+BrightScript Simulation Engine CLI [v1.9.1]
 
 type `help` to see the list of valid REPL commands.
 
@@ -93,9 +106,9 @@ $ brs-cli ../tests/test-sandbox.zip
 * Use the flags `--ext-file` or `-ext-root` to mount a file/path as the `ext1:` volume in the engine file system.
 * To send parameters (deep linking) to the app, use the flag `--deep-link` followed by the parameters in the format: key=value,...
 
-### Showing Screen as ASCII Art on the Terminal
+### Showing Screen as ASCII Rendering on the Terminal
 
-If you pass the `--ascii <columns>` option, the CLI will run the application and show a representation of the screen bitmap as ASCII Art on the terminal screen.
+If you pass the `--ascii <columns>` option, the CLI will run the application and show a representation of the screen bitmap as ASCII rendering on the terminal screen.
 
 ```console
 $ brs-cli ../apps/collisions.zip --ascii 170
@@ -121,7 +134,7 @@ If no password is provided the app will be executed and no encryption happens, b
 ```console
 $ brs-cli ../tests/test-sandbox.zip --pack b4bf93d0d5e547ca8edcc0f39c6bcc16 --out ./release
 
-BrightScript Simulation Engine CLI [v1.0.0]
+BrightScript Simulation Engine CLI [v1.9.1]
 
 Packaging ../tests/test-sandbox.zip...
 

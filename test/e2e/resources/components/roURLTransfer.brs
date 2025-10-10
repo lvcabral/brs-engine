@@ -1,6 +1,6 @@
 sub main()
     ' TEST Sync GET
-    url = "https://raw.githubusercontent.com/lvcabral/brs-engine/refs/heads/master/package.json"
+    url = "https://raw.githubusercontent.com/lvcabral/brs-engine/refs/heads/master/packages/browser/package.json"
     file="tmp:/tmp.json"
     http = CreateObject("roUrlTransfer")
     http.SetCertificatesFile("common:/certs/ca-bundle.crt")
@@ -15,7 +15,12 @@ sub main()
         print "File not cached! http return code: "; ret
         tmpFile = ""
     end if
-    json = ParseJson(ReadAsciiFile(file))
+    jsonText = ReadAsciiFile(file)
+    if jsonText = ""
+        print "Empty JSON file"
+        return
+    end if
+    json = ParseJson(jsonText)
     print json.description
     print "Repository: "; json.repository.url
     print "Website:    "; json.homepage
