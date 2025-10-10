@@ -83,7 +83,7 @@ module.exports = (env) => {
                         test: /\.tsx?$/,
                         loader: "ts-loader",
                         options: {
-                            configFile: path.resolve(__dirname, "./tsconfig.json"),
+                            configFile: path.resolve(__dirname, "./tsconfig.cli.json"),
                         },
                         exclude: /node_modules/,
                     },
@@ -129,7 +129,7 @@ module.exports = (env) => {
                         test: /\.tsx?$/,
                         loader: "ts-loader",
                         options: {
-                            configFile: path.resolve(__dirname, "./tsconfig.json"),
+                            configFile: path.resolve(__dirname, "./tsconfig.cli.json"),
                         },
                         exclude: /node_modules/,
                     },
