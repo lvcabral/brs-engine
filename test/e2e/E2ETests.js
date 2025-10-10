@@ -1,7 +1,8 @@
 const path = require("path");
 const stream = require("stream");
+const fs = require("fs");
 const brs = require("../../packages/node/bin/brs.node");
-const { createPayloadFromFiles, executeFile } = brs;
+const { createPayloadFromFiles, createPayloadFromFileMap, executeFile } = brs;
 
 brs.registerCallback(() => {}); // register a callback to avoid display errors
 
@@ -50,6 +51,37 @@ exports.execute = async function (filenames, options, deepLink) {
         payload.deepLink = deepLink;
     }
     await executeFile(payload, options);
+};
+
+/** Creates a file map from file paths for use with createPayloadFromFileMap. */
+exports.createFileMapFromPaths = function (filenames) {
+    const fileMap = new Map();
+
+    for (const filename of filenames) {
+        if (fs.existsSync(filename)) {
+            const content = fs.readFileSync(filename);
+            const blob = new Blob([content], { type: "text/plain" });
+            fileMap.set(path.basename(filename), blob);
+        }
+    }
+
+    return fileMap;
+};
+
+/** Executes BrightScript files from a file map, capturing their output in the provided streams. */
+exports.executeFromFileMap = async function (fileMap, options, deepLink) {
+    brs.BrsDevice.fileSystem.resetMemoryFS();
+    const payload = await createPayloadFromFileMap(fileMap, deviceData);
+    if (deepLink) {
+        payload.deepLink = deepLink;
+    }
+    await executeFile(payload, options);
+};
+
+/** Executes the specified BrightScript files using createPayloadFromFileMap, capturing their output in the provided streams. */
+exports.executeWithFileMap = async function (filenames, options, deepLink) {
+    const fileMap = exports.createFileMapFromPaths(filenames);
+    await exports.executeFromFileMap(fileMap, options, deepLink);
 };
 
 function audioCodecs() {
