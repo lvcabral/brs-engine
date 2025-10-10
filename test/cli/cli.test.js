@@ -107,7 +107,7 @@ describe("cli", () => {
     it("SceneGraph App Test", async () => {
         let command = [
             "node",
-            path.join(process.cwd(), "bin", "brs.cli.js"),
+            brsCliPath,
             "-r scenegraph",
             "source/Poster.brs",
             "-c 0",
