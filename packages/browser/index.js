@@ -1,7 +1,7 @@
 /*---------------------------------------------------------------------------------------------
  *  BrightScript Engine (https://github.com/lvcabral/brs-engine)
  *
- *  Copyright (c) 2019-2024 Marcelo Lv Cabral. All Rights Reserved.
+ *  Copyright (c) 2019-2025 Marcelo Lv Cabral. All Rights Reserved.
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
@@ -50,12 +50,12 @@ const appList = [
         icon: "images/icons/custom-video-player.png",
     },
 ];
-appIcons.forEach((icon, index) => {
+for (const [index, icon] of appIcons.entries()) {
     icon.src = appList[index].icon;
     icon.title = appList[index].title;
     icon.alt = appList[index].title;
     icon.onclick = () => loadZip(appList[index].id);
-});
+}
 
 // App Configuration
 // Pause the engine when the browser window loses focus
@@ -166,30 +166,29 @@ passwordDialog.addEventListener("close", (e) => {
  * @param {string} password - Password to decrypt the `bpk` file
  */
 function runFile(file, password = "") {
-    const reader = new FileReader();
     const fileExt = file?.name.split(".").pop()?.toLowerCase() ?? "";
     if (fileExt === "zip" || fileExt === "bpk" || fileExt === "brs") {
-        reader.onload = function (evt) {
-            // file is loaded
-            if (password !== null) {
-                currentZip = evt.target.result;
-                brs.execute(
-                    file.name,
-                    currentZip,
-                    {
-                        clearDisplayOnExit: true,
-                        muteSound: false,
-                        password: password,
-                        debugOnCrash: true,
-                    },
-                    new Map([["source", "auto-run-dev"]])
-                );
-            }
-        };
-        reader.onerror = function (evt) {
-            console.error(`Error opening ${file.name}:${reader.error}`);
-        };
-        reader.readAsArrayBuffer(file);
+        file.arrayBuffer()
+            .then((data) => {
+                // file is loaded
+                if (password !== null) {
+                    currentZip = data;
+                    brs.execute(
+                        file.name,
+                        currentZip,
+                        {
+                            clearDisplayOnExit: true,
+                            muteSound: false,
+                            password: password,
+                            debugOnCrash: true,
+                        },
+                        new Map([["source", "auto-run-dev"]])
+                    );
+                }
+            })
+            .catch((err) => {
+                console.error(`Error opening ${file.name}:${err}`);
+            });
     }
 }
 
@@ -222,18 +221,13 @@ function loadZip(appId, params) {
                         if (!params) {
                             params = new Map([["source", "homescreen"]]);
                         }
-                        brs.execute(
-                            app.path,
-                            zipData,
-                            { entryPoint: true, debugOnCrash: false },
-                            params,
-                        );
+                        brs.execute(app.path, zipData, { entryPoint: true, debugOnCrash: false }, params);
                         display.focus();
                     });
                 });
             } else {
                 loading.style.visibility = "hidden";
-                return Promise.reject(new Error(response.statusText));
+                throw new Error(response.statusText);
             }
         })
         .catch((err) => {
@@ -251,7 +245,7 @@ function mountZip(zip) {
                     });
                 });
             } else {
-                return Promise.reject(new Error(response.statusText));
+                throw new Error(response.statusText);
             }
         })
         .catch((err) => {
@@ -283,15 +277,11 @@ display.addEventListener("dblclick", function (event) {
     if (currentApp.running) {
         if (document.fullscreenElement) {
             document.exitFullscreen().catch((err) => {
-                console.error(
-                    `Error attempting to exit fullscreen mode: ${err.message} (${err.name})`
-                );
+                console.error(`Error attempting to exit fullscreen mode: ${err.message} (${err.name})`);
             });
         } else {
             display.requestFullscreen().catch((err) => {
-                console.error(
-                    `Error attempting to start fullscreen mode: ${err.message} (${err.name})`
-                );
+                console.error(`Error attempting to start fullscreen mode: ${err.message} (${err.name})`);
             });
         }
     }
@@ -319,9 +309,9 @@ function displayRedraw() {
 
 // App icons Visibility
 function appIconsVisibility(visibility) {
-    appIcons.forEach((icon) => {
+    for (const icon of appIcons) {
         icon.style.visibility = visibility;
-    });
+    }
 }
 
 function parseVersionString(str) {
@@ -330,9 +320,9 @@ function parseVersionString(str) {
     }
     const vArray = str.split(".");
     return {
-        major: parseInt(vArray[0]) || 0,
-        minor: parseInt(vArray[1]) || 0,
-        patch: parseInt(vArray[2]) || 0,
+        major: Number.parseInt(vArray[0]) || 0,
+        minor: Number.parseInt(vArray[1]) || 0,
+        patch: Number.parseInt(vArray[2]) || 0,
     };
 }
 
@@ -437,10 +427,7 @@ function replaceRelativePaths(html, fs, basePath) {
             if (p1.startsWith("http://") || p1.startsWith("https://")) {
                 // Add crossorigin attribute to non-local images if it doesn't already exist
                 if (!match[0].includes("crossorigin=")) {
-                    html = html.replace(
-                        match[0],
-                        match[0].replace("<img", "<img crossorigin='anonymous'")
-                    );
+                    html = html.replace(match[0], match[0].replace("<img", "<img crossorigin='anonymous'"));
                 }
                 resolve();
                 return;

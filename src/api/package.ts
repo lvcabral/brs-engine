@@ -23,7 +23,7 @@ import {
     platform,
 } from "../core/common";
 import models from "../core/common/models.csv";
-import packageInfo from "../../package.json";
+import packageInfo from "../../packages/browser/package.json";
 
 // Device Data Object
 export const deviceData: DeviceInfo = Object.assign(defaultDeviceInfo, {

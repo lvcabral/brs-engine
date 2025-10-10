@@ -1,5 +1,8 @@
-types
-browser/lib
-bin
+packages/browser/lib
+packages/browser/types
+packages/browser/assets
+packages/node/bin
+packages/node/types
+packages/node/assets
 package.json
 **/*.js.snap

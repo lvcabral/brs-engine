@@ -70,7 +70,7 @@ import {
     switchVideoState,
 } from "./video";
 import { subscribeControl, initControlModule, enableSendKeys, sendKey } from "./control";
-import packageInfo from "../../package.json";
+import packageInfo from "../../packages/browser/package.json";
 
 // Interpreter Library
 const brsWrkLib = getWorkerLibPath();

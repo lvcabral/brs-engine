@@ -1,12 +1,12 @@
 const { execute, createMockStreams, resourceFile, allArgs } = require("./E2ETests");
 
-describe("end to end standard libary", () => {
+describe("end to end standard library", () => {
     let outputStreams;
 
     beforeAll(() => {
         outputStreams = createMockStreams();
         outputStreams.root = ".";
-        outputStreams.ext = "./browser/images";
+        outputStreams.ext = "./packages/browser/images";
     });
 
     afterEach(() => {

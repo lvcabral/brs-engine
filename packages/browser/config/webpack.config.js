@@ -1,11 +1,13 @@
 const webpack = require("webpack");
-const path = require("path");
+const path = require("node:path");
 const { StatsWriterPlugin } = require("webpack-stats-plugin");
+const CopyPlugin = require("copy-webpack-plugin");
+const ZipPlugin = require("zip-webpack-plugin");
 
 module.exports = (env) => {
     let mode, sourceMap;
     let libName = "brs";
-    let distPath = "../browser/lib";
+    let distPath = "../lib";
     if (env.production) {
         mode = "production";
         sourceMap = false;
@@ -20,7 +22,8 @@ module.exports = (env) => {
     };
     return [
         {
-            entry: "./src/core/index.ts",
+            name: "worker",
+            entry: "../../src/core/index.ts",
             target: "webworker",
             mode: mode,
             devtool: sourceMap,
@@ -30,7 +33,7 @@ module.exports = (env) => {
                         test: /\.tsx?$/,
                         loader: "ts-loader",
                         options: {
-                            configFile: "tsconfig.json",
+                            configFile: path.resolve(__dirname, "./tsconfig.json"),
                         },
                         exclude: /node_modules/,
                     },
@@ -58,7 +61,7 @@ module.exports = (env) => {
                     timers: false,
                     vm: false,
                 },
-                modules: [path.resolve("./node_modules"), path.resolve("./src")],
+                modules: [path.resolve("../../node_modules"), path.resolve("../../src")],
                 extensions: [".tsx", ".ts", ".js"],
             },
             plugins: [
@@ -73,15 +76,15 @@ module.exports = (env) => {
                     filename: "stats.json",
                     stats: {
                         assets: true,
-                        chunkModules: true
-                    }
+                        chunkModules: true,
+                    },
                 }),
                 new webpack.DefinePlugin({
-                    "process.env.CREATION_TIME": JSON.stringify(new Date().toISOString())
-                })
+                    "process.env.CREATION_TIME": JSON.stringify(new Date().toISOString()),
+                }),
             ],
             externals: {
-                canvas: "commonjs canvas" // Important (2)
+                canvas: "commonjs canvas", // Important (2)
             },
             output: {
                 path: path.join(__dirname, distPath),
@@ -93,17 +96,18 @@ module.exports = (env) => {
             },
         },
         {
-            entry: "./src/api/index.ts",
+            name: "api",
+            entry: "../../src/api/index.ts",
             target: "web",
             mode: mode,
             devtool: sourceMap,
             devServer: {
-                static: "./browser",
+                static: "./",
                 port: 6502,
                 headers: {
                     "cross-origin-embedder-policy": "require-corp",
                     "cross-origin-opener-policy": "same-origin",
-                }
+                },
             },
             module: {
                 rules: [
@@ -111,7 +115,7 @@ module.exports = (env) => {
                         test: /\.tsx?$/,
                         loader: "ts-loader",
                         options: {
-                            configFile: "tsconfig.json",
+                            configFile: path.resolve(__dirname, "./tsconfig.json"),
                         },
                         exclude: /node_modules/,
                     },
@@ -128,7 +132,7 @@ module.exports = (env) => {
                 ],
             },
             resolve: {
-                modules: [path.resolve("./node_modules"), path.resolve("./src/api")],
+                modules: [path.resolve("../../node_modules"), path.resolve("../../src/api")],
                 extensions: [".tsx", ".ts", ".js"],
             },
             plugins: [
@@ -137,8 +141,8 @@ module.exports = (env) => {
                     filename: "stats-api.json",
                     stats: {
                         assets: true,
-                        chunkModules: true
-                    }
+                        chunkModules: true,
+                    },
                 }),
             ],
             output: {
@@ -149,6 +153,31 @@ module.exports = (env) => {
                 path: path.resolve(__dirname, distPath),
                 globalObject: "typeof self !== 'undefined' ? self : this",
             },
+        },
+        {
+            entry: {},
+            mode: "production",
+            output: {
+                path: path.resolve(__dirname, `../../../out/common_zip/`),
+                publicPath: "/",
+            },
+            plugins: [
+                new CopyPlugin({
+                    patterns: [{ from: "../../src/core/common/**", to: "./" }],
+                }),
+                new ZipPlugin({
+                    path: "../../packages/browser/assets",
+                    filename: `common.zip`,
+                    extension: "zip",
+                    zipOptions: {
+                        forceZip64Format: false,
+                    },
+                    exclude: [/\.csv$/],
+                    pathMapper: function (assetPath) {
+                        return assetPath.replace("../../src/core/common/", "");
+                    },
+                }),
+            ],
         },
     ];
 };

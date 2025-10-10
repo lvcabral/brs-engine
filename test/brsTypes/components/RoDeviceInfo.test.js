@@ -8,7 +8,7 @@ global.Intl.DateTimeFormat = jest.fn().mockImplementation(() => {
         },
     };
 });
-const brs = require("../../../bin/brs.node");
+const brs = require("../../../packages/node/bin/brs.node");
 const { Interpreter, netlib } = brs;
 const { RoDeviceInfo, RoAssociativeArray, RoArray, BrsBoolean, BrsString, Int32, Int64 } = brs.types;
 

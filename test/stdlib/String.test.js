@@ -1,4 +1,4 @@
-const brs = require("../../bin/brs.node");
+const brs = require("../../packages/node/bin/brs.node");
 const { UCase, LCase, Asc, Chr, Left, Right, Instr, Len, Mid, Str, StrI, Substitute, Val, StrToI, STRING, StringI } =
     brs.stdlib;
 const { Interpreter } = brs;

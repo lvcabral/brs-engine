@@ -1,62 +1,23 @@
 {
-  "name": "brs-engine",
-  "version": "1.8.9",
-  "title": "BrightScript Simulation Engine",
-  "description": "BrightScript Simulation Engine - Run Roku apps on Browsers and Node.js",
-  "author": "Marcelo Lv Cabral <marcelo@lvcabral.com> (https://lvcabral.com/)",
-  "license": "MIT",
-  "copyright": "© 2019-2025, Marcelo Lv Cabral",
-  "homepage": "https://lvcabral.com/brs/",
-  "contributors": [
-    "Sean Barag <sean@barag.org>",
-    "Mark Pearce"
+  "name": "brs-engine-workspace",
+  "private": true,
+  "workspaces": [
+    "packages/*"
   ],
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/lvcabral/brs-engine"
-  },
-  "bugs": {
-    "url": "https://github.com/lvcabral/brs-engine/issues"
-  },
-  "keywords": [
-    "brightscript",
-    "roku",
-    "emulator",
-    "simulator",
-    "interpreter",
-    "worker"
-  ],
-  "main": "browser/lib/brs.api.js",
-  "browser": "browser/lib/brs.api.js",
-  "typings": "types/src/api/index.d.ts",
-  "bin": {
-    "brs-cli": "./bin/brs.cli.js"
-  },
   "scripts": {
-    "build": "webpack --config ./config/webpack.config.js --env development && webpack --config ./config/webpack.cli.config.js --env development && webpack --config ./config/webpack.zip.config.js",
-    "build:libs": "webpack --config ./config/webpack.config.js --env development",
-    "build:cli": "webpack --config ./config/webpack.cli.config.js --env development",
-    "build:zip": "webpack --config ./config/webpack.zip.config.js",
-    "web": "webpack --config ./config/webpack.config.js --env development && webpack serve --open --config ./config/webpack.config.js",
-    "release": "webpack --config ./config/webpack.config.js --env production && webpack --config ./config/webpack.cli.config.js --env production && webpack --config ./config/webpack.zip.config.js",
-    "start": "webpack serve --open --config ./config/webpack.config.js",
-    "stats": "webpack-bundle-analyzer ./browser/lib/stats.json",
-    "stats:api": "webpack-bundle-analyzer ./browser/lib/stats-api.json",
-    "clean": "rimraf ./browser/lib ./bin ./types",
+    "build": "npm run build --workspaces",
+    "build:web": "npm run build -w brs-engine && npm run start -w brs-engine",
+    "build:cli": "npm run build -w brs-node",
+    "release": "npm run release --workspaces",
+    "start": "npm run start -w brs-engine",
+    "clean": "npm run clean --workspaces",
     "test": "jest",
     "lint": "eslint -c .eslintrc.js --ext .ts ./src",
-    "prettier:write": "prettier --write \"{app,src,test}/**/*.{js,ts}\"",
-    "prettier": "prettier --check \"{app,src,test}/**/*.{js,ts}\"",
+    "prettier:write": "prettier --write \"{packages,src,test}/**/*.{js,ts}\"",
+    "prettier": "prettier --check \"{packages,src,test}/**/*.{js,ts}\"",
     "prepublishOnly": "npm-run-all --serial clean lint prettier release"
   },
-  "files": [
-    "browser/assets/",
-    "browser/lib/brs.worker.js",
-    "browser/lib/*.LICENSE.txt",
-    "bin/",
-    "types/src/api/"
-  ],
-  "dependencies": {
+"dependencies": {
     "@lvcabral/libwebp": "^0.1.0",
     "@lvcabral/memory-fs": "^0.5.1",
     "@lvcabral/node-ssdp": "^4.0.4",
@@ -153,11 +114,5 @@
     "trailingComma": "es5",
     "tabWidth": 4,
     "printWidth": 120
-  },
-  "lint-staged": {
-    "*.{ts,js}": [
-      "prettier --write",
-      "git add"
-    ]
   }
 }

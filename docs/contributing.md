@@ -16,8 +16,7 @@ Since this project is still maturing, many of its initial contributions will tak
 ## Submitting Issues
 
 If you find something wrong with `brs-engine`, or something doesn't seem right, feel free to [open a new issue](https://github.com/lvcabral/brs-engine/issues/new).
-If the issue is related to how the **parser** or the **interpreter** handles the _BrightScript_ language, then you should consider [open the issue on the original `brs` project](https://github.com/rokucommunity/brs/issues/new), not in this fork, as I am keeping it synchronized, the fix will eventually be merged to `brs-engine`.
-Please try to avoid "how do I X in BrightScript" questions however &mdash; those are best suited for [StackOverflow](https://stackoverflow.com) or similar Q&A sites.
+Please try to avoid "how do I X in BrightScript" questions however &mdash; those are best suited for [Slack Community](https://join.slack.com/t/rokudevelopers/shared_invite/zt-4vw7rg6v-NH46oY7hTktpRIBM_zGvwA) or similar Q&A sites.
 
 ### Bug Reports
 
@@ -52,5 +51,5 @@ Regardless of whether you're fixing bugs or implementing new features, there's a
 There aren't to many mandatory things for pull requests, besides what you'd expect from any open-source project (e.g. "don't delete all the code", "don't delete a user's home directory at runtime").  The most important project-specific "must-haves" that we'll look for that are:
 
 1. Pull requests should be based on a pretty recent version of the `master` branch, to minimize merge conflicts.
-1. All tests should pass (Travis CI will let us know if any fail).
+1. All tests should pass (run `npm test`).
 1. End to end tests written in BrightScript should be present to exercise the bug or new feature.  These don't need to be exhaustive &mdash; just enough to ensure that the major use-cases are covered.  More in-depth testing can happen via unit test.

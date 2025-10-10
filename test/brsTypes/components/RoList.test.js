@@ -1,4 +1,4 @@
-const brs = require("../../../bin/brs.node");
+const brs = require("../../../packages/node/bin/brs.node");
 const { Interpreter } = brs;
 const { RoList, BrsBoolean, BrsString, Int32, BrsInvalid } = brs.types;
 const { createMockStreams } = require("../../e2e/E2ETests");

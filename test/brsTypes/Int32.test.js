@@ -1,4 +1,4 @@
-const brs = require("../../bin/brs.node");
+const brs = require("../../packages/node/bin/brs.node");
 const { ValueKind, Int32, Int64, Float, Double, BrsString, BrsBoolean, BrsInvalid } = brs.types;
 
 describe("Int32", () => {

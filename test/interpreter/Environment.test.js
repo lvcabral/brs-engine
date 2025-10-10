@@ -1,4 +1,4 @@
-const brs = require("../../bin/brs.node");
+const brs = require("../../packages/node/bin/brs.node");
 const { Environment, Scope } = brs;
 const { Lexeme } = brs.lexer;
 const { BrsString, RoAssociativeArray, Int32 } = brs.types;
