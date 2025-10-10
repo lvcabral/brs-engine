@@ -3,7 +3,7 @@
 An interpreter for the BrightScript language that runs Roku apps on browser platforms and Node.js.
 
 ![GitHub](https://img.shields.io/github/license/lvcabral/brs-engine)
-[![Version](https://img.shields.io/badge/version-1.9.0-blue.svg)](https://github.com/lvcabral/brs-engine/releases)
+[![Version](https://img.shields.io/badge/version-1.9.1-blue.svg)](https://github.com/lvcabral/brs-engine/releases)
 [![Build](https://github.com/lvcabral/brs-engine/actions/workflows/build.yml/badge.svg)](https://github.com/lvcabral/brs-engine/actions/workflows/build.yml)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=lvcabral_brs-emu&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=lvcabral_brs-emu)
 [![Slack](https://img.shields.io/badge/Slack-RokuCommunity-4A154B?logo=slack)](https://join.slack.com/t/rokudevelopers/shared_invite/zt-4vw7rg6v-NH46oY7hTktpRIBM_zGvwA)
@@ -14,7 +14,7 @@ The **BrightScript Simulation Engine** implements an interpreter for the **Brigh
 
 Initially the focus was on the support of **Draw 2D API** components (`roScreen`, `roCompositor`, `roRegion`, etc.) along with the core elements of the **BrightScript** language, allowing a full Roku app execution over an **HTML5 Canvas**, but the scope was extended to include simulation of the **Roku** file system, registry, remote control and the Micro Debugger.
 
-The **brs-engine** is developed in [TypeScript](https://www.typescriptlang.org/) and bundled as a collection of [Webpack](https://webpack.js.org/) JavaScript libraries. Since version 1.9.0 the repository was organized as a [monorepo](https://en.wikipedia.org/wiki/Monorepo) that contains two separate packages, each optimized for different use cases.
+The **brs-engine** is developed in [TypeScript](https://www.typescriptlang.org/) and bundled as a collection of [Webpack](https://webpack.js.org/) JavaScript libraries. Since version 1.9.1 the repository was organized as a [monorepo](https://en.wikipedia.org/wiki/Monorepo) that contains two separate packages, each optimized for different use cases.
 
 > [!NOTE]
 >
