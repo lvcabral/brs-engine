@@ -41,6 +41,7 @@
     "build": "webpack --config ./config/webpack.config.js --env development",
     "release": "webpack --config ./config/webpack.config.js --env production",
     "clean": "rimraf ./bin ./types ./assets",
+    "prepublishOnly": "npm-run-all --serial clean release",
     "prepack": "cp ../../CHANGELOG.md . && cp ../../LICENSE .",
     "postpack": "rm CHANGELOG.md LICENSE"
   },

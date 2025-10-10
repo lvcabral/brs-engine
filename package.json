@@ -15,8 +15,7 @@
     "test": "jest",
     "lint": "eslint -c .eslintrc.js --ext .ts ./src",
     "prettier:write": "prettier --write \"{packages,src,test}/**/*.{js,ts}\"",
-    "prettier": "prettier --check \"{packages,src,test}/**/*.{js,ts}\"",
-    "prepublishOnly": "npm-run-all --serial clean lint prettier release"
+    "prettier": "prettier --check \"{packages,src,test}/**/*.{js,ts}\""
   },
   "dependencies": {
     "@lvcabral/libwebp": "^0.1.0",
