@@ -2,8 +2,9 @@
 
 An interpreter for the BrightScript language that runs Roku apps on browser platforms and Node.js.
 
-![GitHub](https://img.shields.io/github/license/lvcabral/brs-engine)
-[![Version](https://img.shields.io/badge/version-1.9.1-blue.svg)](https://github.com/lvcabral/brs-engine/releases)
+[![NPM Version](https://img.shields.io/npm/v/brs-engine?logo=npm&label=brs-engine)](https://npmjs.org/package/brs-engine)
+[![NPM Version](https://img.shields.io/npm/v/brs-node?logo=npm&label=brs-node)](https://www.npmjs.com/package/brs-node)
+[![License](https://img.shields.io/github/license/lvcabral/brs-engine?logo=github)](https://github.com/lvcabral/brs-engine/blob/master/LICENSE)
 [![Build](https://github.com/lvcabral/brs-engine/actions/workflows/build.yml/badge.svg)](https://github.com/lvcabral/brs-engine/actions/workflows/build.yml)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=lvcabral_brs-emu&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=lvcabral_brs-emu)
 [![Slack](https://img.shields.io/badge/Slack-RokuCommunity-4A154B?logo=slack)](https://join.slack.com/t/rokudevelopers/shared_invite/zt-4vw7rg6v-NH46oY7hTktpRIBM_zGvwA)
@@ -25,9 +26,6 @@ The **brs-engine** is developed in [TypeScript](https://www.typescriptlang.org/)
 > - This repository was originally a fork from [**brs**](https://github.com/rokucommunity/brs), a **BrightScript** _command line interpreter_.
 
 ## 📦 Browser Platforms Package
-
-[![Package Name](https://img.shields.io/badge/package-brs--engine-blue.svg)](https://www.npmjs.com/package/brs-engine)
-[![NPM Version](https://badge.fury.io/js/brs-engine.svg?style=flat)](https://npmjs.org/package/brs-engine)
 
 <p align="center"><img alt="Simulator Web and Desktop" title="Simulator Web and Desktop" src="docs/images/screenshots.png?raw=true"/></p>
 
@@ -52,9 +50,6 @@ npm install brs-engine
 [📖 Browser Package: More details](./packages/browser/README.md) | [🚀 Live Demo](https://lvcabral.com/brs) | [🧑‍💻 Code Playground](http://brsFiddle.net) | [🖥️ Desktop App](https://github.com/lvcabral/brs-desktop)
 
 ## 📦 Node.js and CLI Package
-
-[![Package Name](https://img.shields.io/badge/package-brs--node-blue.svg)](https://www.npmjs.com/package/brs-node)
-[![NPM Version](https://badge.fury.io/js/brs-node.svg?style=flat)](https://npmjs.org/package/brs-node)
 
 <p align="left"><img alt="Simulator CLI" title="Simulator CLI" src="docs/images/brs-cli.png?raw=true" width="500"/></p>
 
