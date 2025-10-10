@@ -1,5 +1,31 @@
 # Changelog
 
+<a name="v1.9.0"></a>
+
+## [v1.9.0 - Artifacts released as two NPM Packages](https://github.com/lvcabral/brs-engine/releases/tag/v1.9.0) - 09 October 2025
+
+This release reorganizes the repository as a monorepo splitting the released artifacts into two separate NPM packages: `brs-engine` (for Web applications) and `brs-node` (for Node.js and CLI). This change aims to improve the development experience reducing the size of the imported packages, as the use cases and environments for each package are very different.
+
+Also, with this release, the BrightScript language and components are now synchronized with Roku OS 15.0.
+
+### Release Changes
+
+* Changed to Monorepo with two packages: `brs-engine` (browser) and `brs-node` (node.js and CLI) by [@lvcabral](https://github.com/lvcabral) in [#654](https://github.com/lvcabral/brs-engine/pull/654)
+* Return `0` when a function has typed return and no return statement is hit by [@lvcabral](https://github.com/lvcabral) in [#641](https://github.com/lvcabral/brs-engine/pull/641)
+* Limited typed function returns zero solution to user functions only by [@lvcabral](https://github.com/lvcabral) in [#642](https://github.com/lvcabral/brs-engine/pull/642)
+* Added new `d` flag to `parseJSON` function to support parsing to `double` by [@lvcabral](https://github.com/lvcabral) in [#643](https://github.com/lvcabral/brs-engine/pull/643)
+* Fixed edge cases of `double` handing on `ParseJson` by [@lvcabral](https://github.com/lvcabral) in [#644](https://github.com/lvcabral/brs-engine/pull/644)
+* Fixed `Lexer` parsing of `Double` literals by [@lvcabral](https://github.com/lvcabral) in [#645](https://github.com/lvcabral/brs-engine/pull/645)
+* Implemented new methods `reserve` and `shrinkToFit` to `roArray` by [@lvcabral](https://github.com/lvcabral) in [#646](https://github.com/lvcabral/brs-engine/pull/646)
+* Implemented `roDateTime.asMillisecondsLong()` and `roDeviceInfo.getUptimeMillisecondsAsLong()` by [@lvcabral](https://github.com/lvcabral) in [#647](https://github.com/lvcabral/brs-engine/pull/647)
+* Implemented `roDeviceInfo.IsAutoAdjustRefreshRateEnabled` by [@lvcabral](https://github.com/lvcabral) in [#648](https://github.com/lvcabral/brs-engine/pull/648)
+* Implemented `roUtils` component by [@lvcabral](https://github.com/lvcabral) in [#649](https://github.com/lvcabral/brs-engine/pull/649)
+* Fixed `roUtils.deepCopy` to properly copy `boxed` objects by [@lvcabral](https://github.com/lvcabral) in [#650](https://github.com/lvcabral/brs-engine/pull/650)
+* Bump pbkdf2 from 3.1.2 to 3.1.3 by @dependabot in [#630](https://github.com/lvcabral/brs-engine/pull/630)
+* Bump sha.js from 2.4.11 to 2.4.12 by @dependabot in [#632](https://github.com/lvcabral/brs-engine/pull/632)
+
+[Full Changelog][v1.9.0]
+
 <a name="v1.8.9"></a>
 
 ## [v1.8.9 - Improvements on `Audio`, `Video` and `Fonts`](https://github.com/lvcabral/brs-engine/releases/tag/v1.8.9) - 10 June 2025
@@ -1041,6 +1067,7 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
+[v1.9.0]: https://github.com/lvcabral/brs-engine/compare/v1.8.9...v1.9.0
 [v1.8.9]: https://github.com/lvcabral/brs-engine/compare/v1.8.8...v1.8.9
 [v1.8.8]: https://github.com/lvcabral/brs-engine/compare/v1.8.7...v1.8.8
 [v1.8.7]: https://github.com/lvcabral/brs-engine/compare/v1.8.6...v1.8.7
