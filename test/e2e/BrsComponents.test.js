@@ -667,7 +667,7 @@ describe("end to end brightscript functions", () => {
         await execute([resourceFile("components", "roURLTransfer.brs")], outputStreams);
         expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
             "BrightScript Simulation Engine - Run Roku apps on Browsers and Electron",
-            "Repository: https://github.com/lvcabral/brs-engine",
+            "Repository: git+https://github.com/lvcabral/brs-engine.git",
             "Website:    https://lvcabral.com/brs/",
             "The status was:  200",
             "The target IP was: Valid",

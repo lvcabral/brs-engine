@@ -1,8 +1,8 @@
 # Changelog
 
-<a name="v1.9.0"></a>
+<a name="v1.9.1"></a>
 
-## [v1.9.0 - Artifacts released as two NPM Packages](https://github.com/lvcabral/brs-engine/releases/tag/v1.9.0) - 09 October 2025
+## [v1.9.1 - Artifacts released as two NPM Packages](https://github.com/lvcabral/brs-engine/releases/tag/v1.9.1) - 09 October 2025
 
 This release reorganizes the repository as a monorepo splitting the released artifacts into two separate NPM packages: `brs-engine` (for Web applications) and `brs-node` (for Node.js and CLI). This change aims to improve the development experience reducing the size of the imported packages, as the use cases and environments for each package are very different.
 
@@ -24,7 +24,7 @@ Also, with this release, the BrightScript language and components are now synchr
 * Bump pbkdf2 from 3.1.2 to 3.1.3 by @dependabot in [#630](https://github.com/lvcabral/brs-engine/pull/630)
 * Bump sha.js from 2.4.11 to 2.4.12 by @dependabot in [#632](https://github.com/lvcabral/brs-engine/pull/632)
 
-[Full Changelog][v1.9.0]
+[Full Changelog][v1.9.1]
 
 <a name="v1.8.9"></a>
 
@@ -1067,7 +1067,7 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
-[v1.9.0]: https://github.com/lvcabral/brs-engine/compare/v1.8.9...v1.9.0
+[v1.9.1]: https://github.com/lvcabral/brs-engine/compare/v1.8.9...v1.9.1
 [v1.8.9]: https://github.com/lvcabral/brs-engine/compare/v1.8.8...v1.8.9
 [v1.8.8]: https://github.com/lvcabral/brs-engine/compare/v1.8.7...v1.8.8
 [v1.8.7]: https://github.com/lvcabral/brs-engine/compare/v1.8.6...v1.8.7

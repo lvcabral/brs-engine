@@ -14,9 +14,9 @@ The **BrightScript Simulation Engine** provides a complete a set of libraries an
 
 > 🚨 Important:
 >
-> Since v1.9.0, this package was split from the browser package, to use the **simulation engine** with web based applications check out the [brs-engine](https://www.npmjs.com/package/brs-engine) package.
+> Since v1.9.1, this package was split from the browser package, to use the **simulation engine** with web based applications check out the [brs-engine](https://www.npmjs.com/package/brs-engine) package.
 
-<p align="center"><img alt="Simulator CLI" title="Simulator CLI" src="../../docs/images/brs-cli.png?raw=true" width="500"/></p>
+<p align="center"><img alt="Simulator CLI" title="Simulator CLI" src="https://github.com/lvcabral/brs-engine/blob/master/docs/images/brs-cli.png?raw=true" width="500"/></p>
 
 ## Key Features
 
@@ -40,18 +40,18 @@ The **BrightScript Simulation Engine** provides a complete a set of libraries an
 ### 📺 Device Simulation
 
 - **Screen resolutions** - Support for various Roku display modes
-- **Input Handling** - Keyboard and gamepad simulation for remote control input, see [docs](../../docs/remote-control.md) for more details
+- **Input Handling** - Keyboard and gamepad simulation for remote control input, see [docs](https://github.com/lvcabral/brs-engine/blob/master/docs/remote-control.md) for more details
 - **File System Simulation** - Including `pkg:/`, `tmp:/`, `cachefs:/`, `common:/` and `ext1:/` volumes
 - **Registry simulation** - Roku device registry emulation saved on browser local storage
 - **Micro Debugger** - Step-through debugging capabilities, similar to the Roku experience
 - **ECP Server** - [External Control Protocol](https://developer.roku.com/docs/developer-program/dev-tools/external-control-api.md) for remote control
 - **SSDP Discovery** - Device discovery simulation
 - **Localization** - Language and region settings
-- **Customization** - You can customize device features and behaviors, see [docs](../../docs/customization.md) for more details
+- **Customization** - You can customize device features and behaviors, see [docs](https://github.com/lvcabral/brs-engine/blob/master/docs/customization.md) for more details
 
 > ⚠️ Note:
 >
-> **SceneGraph** support is currently under development in [a separate branch](https://github.com/lvcabral/brs-engine/tree/scenegraph), with pre-release **alpha** versions are available here for testing. See other limitations of the **engine** in the [Current Limitations](../../docs/limitations.md) document.
+> **SceneGraph** support is currently under development in [a separate branch](https://github.com/lvcabral/brs-engine/tree/scenegraph), with pre-release **alpha** versions are available here for testing. See other limitations of the **engine** in the [Current Limitations](https://github.com/lvcabral/brs-engine/blob/master/docs/limitations.md) document.
 
 ## Installation
 
@@ -73,7 +73,7 @@ The package libraries require Node.js v22 or higher, and are organized as follow
 
 | Library File | Description |
 | --- | --- |
-| `bin/brs.cli.js` | Executable **[CLI](docs/run-as-cli.md)** application that can be used from the terminal |
+| `bin/brs.cli.js` | Executable **[CLI](https://github.com/lvcabral/brs-engine/blob/master/docs/run-as-cli.md)** application that can be used from the terminal |
 | `bin/brs.node.js` | A NodeJS library, that exposes the language interpreter to be used by Node.js applications |
 | `bin/brs.ecp.js` | A **[NodeJS Worker](https://nodejs.org/api/worker_threads.html)** library, used by the CLI to launch the [ECP](https://developer.roku.com/docs/developer-program/dev-tools/external-control-api.md) and **SSDP** services. |
 
@@ -81,16 +81,16 @@ The package libraries require Node.js v22 or higher, and are organized as follow
 
 Learn how to use the package and its libraries by reading the documents below:
 
-- [How to use the Node.js Library](../../docs/using-node-library.md)
-- [How to run as a Command Line Interface](../../docs/run-as-cli.md)
-- [How to customize the Engine behavior](../../docs/customization.md)
-- [Remote Control Simulation](../../docs/remote-control.md)
-- [How to build from source](../../docs/build-from-source.md)
-- [How to contribute to this Project](../../docs/contributing.md)
+- [How to use the Node.js Library](https://github.com/lvcabral/brs-engine/blob/master/docs/using-node-library.md)
+- [How to run as a Command Line Interface](https://github.com/lvcabral/brs-engine/blob/master/docs/run-as-cli.md)
+- [How to customize the Engine behavior](https://github.com/lvcabral/brs-engine/blob/master/docs/customization.md)
+- [Remote Control Simulation](https://github.com/lvcabral/brs-engine/blob/master/docs/remote-control.md)
+- [How to build from source](https://github.com/lvcabral/brs-engine/blob/master/docs/build-from-source.md)
+- [How to contribute to this Project](https://github.com/lvcabral/brs-engine/blob/master/docs/contributing.md)
 
 ### Changelog
 
-- Read the [project changelog](../../CHANGELOG.md) to view the release notes.
+- Read the [project changelog](https://github.com/lvcabral/brs-engine/blob/master/CHANGELOG.md) to view the release notes.
 
 ## Developer Links
 

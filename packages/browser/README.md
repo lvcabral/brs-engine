@@ -14,9 +14,9 @@ The **BrightScript Simulation Engine** provides a complete BrightScript interpre
 This package includes a **Web Worker** library and an **Engine API** library for embedding the interpreter into web applications.
 > 🚨 Important:
 >
-> Since v1.9.0, this package no longer brings the **CLI** app and **Node.js** libraries for the **simulation engine**, for those use cases we create the new [brs-node](https://www.npmjs.com/package/brs-node) package. Check it out!
+> Since v1.9.1, this package no longer brings the **CLI** app and **Node.js** libraries for the **simulation engine**, for those use cases we create the new [brs-node](https://www.npmjs.com/package/brs-node) package. Check it out!
 
-<p align="center"><img alt="Simulator Web and Desktop" title="Simulator Web and Desktop" src="../../docs/images/screenshots.png?raw=true"/></p>
+<p align="center"><img alt="Simulator Web and Desktop" title="Simulator Web and Desktop" src="https://github.com/lvcabral/brs-engine/blob/master/docs/images/screenshots.png?raw=true"/></p>
 
 ## Key Features
 
@@ -39,16 +39,16 @@ This package includes a **Web Worker** library and an **Engine API** library for
 ### 📺 Device Simulation
 
 - **Screen resolutions** - Support for various Roku display modes
-- **Input Handling** - Keyboard and gamepad simulation for remote control input, see [docs](../../docs/remote-control.md) for more details
+- **Input Handling** - Keyboard and gamepad simulation for remote control input, see [docs](https://github.com/lvcabral/brs-engine/blob/master/docs/remote-control.md) for more details
 - **File System Simulation** - Including `pkg:/`, `tmp:/`, `cachefs:/`, `common:/` and `ext1:/` volumes
 - **Registry simulation** - Roku device registry emulation saved on browser local storage
 - **Micro Debugger** - Step-through debugging capabilities, similar to the Roku experience
 - **Localization** - Language and region settings
-- **Customization** - You can customize device features and behaviors, see [docs](../../docs/customization.md) for more details
+- **Customization** - You can customize device features and behaviors, see [docs](https://github.com/lvcabral/brs-engine/blob/master/docs/customization.md) for more details
 
 > ⚠️ Note:
 >
-> **SceneGraph** support is currently under development in [a separate branch](https://github.com/lvcabral/brs-engine/tree/scenegraph), with pre-release **alpha** versions are available here for testing. See other limitations of the **engine** in the [Current Limitations](../../docs/limitations.md) document.
+> **SceneGraph** support is currently under development in [a separate branch](https://github.com/lvcabral/brs-engine/tree/scenegraph), with pre-release **alpha** versions are available here for testing. See other limitations of the **engine** in the [Current Limitations](https://github.com/lvcabral/brs-engine/blob/master/docs/limitations.md) document.
 
 ## Installation
 
@@ -60,7 +60,7 @@ npm install brs-engine
 
 | Library File | Description |
 | --- | --- |
-| `libs/brs.api.js` | The **[Engine API](../../docs/engine-api.md)** library to be imported and used by the applications hosting the Simulator. |
+| `libs/brs.api.js` | The **[Engine API](https://github.com/lvcabral/brs-engine/blob/master/docs/engine-api.md)** library to be imported and used by the applications hosting the Simulator. |
 | `libs/brs.worker.js` | A **[Web Worker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers)** library that runs the language interpreter in a background thread on the browser platform. |
 
 ### Compatibility
@@ -79,16 +79,16 @@ The Web Worker library require features like [SharedArrayBuffer](https://develop
 
 This package repository provides a sample web application you can quickly run and test the engine, check the docs to learn more:
 
-- [How to integrate the engine to your app](../../docs/integrating.md)
-- [How to customize the Engine behavior](../../docs/customization.md)
-- [Simulation Engine API Reference](../../docs/engine-api.md)
-- [Remote Control Simulation](../../docs/remote-control.md)
-- [How to build from source](../../docs/build-from-source.md)
-- [How to contribute to this Project](../../docs/contributing.md)
+- [How to integrate the engine to your app](https://github.com/lvcabral/brs-engine/blob/master/docs/integrating.md)
+- [How to customize the Engine behavior](https://github.com/lvcabral/brs-engine/blob/master/docs/customization.md)
+- [Simulation Engine API Reference](https://github.com/lvcabral/brs-engine/blob/master/docs/engine-api.md)
+- [Remote Control Simulation](https://github.com/lvcabral/brs-engine/blob/master/docs/remote-control.md)
+- [How to build from source](https://github.com/lvcabral/brs-engine/blob/master/docs/build-from-source.md)
+- [How to contribute to this Project](https://github.com/lvcabral/brs-engine/blob/master/docs/contributing.md)
 
 ### Changelog
 
-- Read the [project changelog](../../CHANGELOG.md) to view the release notes.
+- Read the [project changelog](https://github.com/lvcabral/brs-engine/blob/master/CHANGELOG.md) to view the release notes.
 
 ### Live Web Applications
 
