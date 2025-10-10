@@ -179,6 +179,76 @@ export function executeLine(contents: string, interpreter: Interpreter) {
 }
 
 /**
+ * Create the payload to run the app with the provided file map.
+ * @param fileMap Map with file paths as keys and Blob content as values
+ * @param customDeviceData optional object with device info data
+ * @param deepLink optional map with deep link parameters
+ *
+ * @returns object with the payload to run the app.
+ */
+export async function createPayloadFromFileMap(
+    fileMap: Map<string, Blob>,
+    customDeviceData?: Partial<DeviceInfo>,
+    deepLink?: Map<string, string>
+): Promise<AppPayload> {
+    const paths: PkgFilePath[] = [];
+    const source: string[] = [];
+    let manifest: Map<string, string> | undefined;
+
+    let id = 0;
+    for (const [filePath, blob] of fileMap) {
+        const fileName = path.basename(filePath) ?? filePath;
+        const fileExt = fileName.split(".").pop();
+
+        if (fileExt?.toLowerCase() === "brs") {
+            // Convert Blob to string for BrightScript files
+            const sourceCode = new TextDecoder().decode(new Uint8Array(await blob.arrayBuffer()));
+            if (sourceCode.length > 0) {
+                source.push(sourceCode);
+                paths.push({ id: id, url: `source/${fileName}`, type: "source" });
+                id++;
+            }
+        } else if (fileName === "manifest") {
+            // Convert Blob to string for manifest files
+            const fileData = new TextDecoder().decode(new Uint8Array(await blob.arrayBuffer()));
+            if (fileData.length > 0) {
+                manifest = parseManifest(fileData);
+            }
+        }
+    }
+
+    if (id === 0) {
+        throw new Error("Invalid or inexistent BrightScript files!");
+    }
+
+    const deviceData = customDeviceData ? Object.assign(defaultDeviceInfo, customDeviceData) : defaultDeviceInfo;
+
+    if (deviceData.assets.byteLength === 0) {
+        deviceData.assets = fs.readFileSync(path.join(__dirname, "../assets/common.zip"))?.buffer;
+    }
+
+    if (manifest === undefined) {
+        manifest = new Map();
+        manifest.set("title", "BRS App");
+        manifest.set("major_version", "0");
+        manifest.set("minor_version", "0");
+        manifest.set("build_version", "0");
+        manifest.set("splash_min_time", "0");
+    }
+
+    const payload: AppPayload = {
+        device: deviceData,
+        launchTime: Date.now(),
+        manifest: manifest,
+        deepLink: deepLink ?? new Map(),
+        paths: paths,
+        source: source,
+    };
+
+    return payload;
+}
+
+/**
  * Create the payload to run the app with the provided files.
  * @param files Code files to be executed
  * @param customDeviceData optional object with device info data
