@@ -26,6 +26,7 @@ The **brs-engine** is developed in [TypeScript](https://www.typescriptlang.org/)
 
 ## 📦 Browser Platforms Package
 
+[![Package Name](https://img.shields.io/badge/package-brs--engine-blue.svg)](https://www.npmjs.com/package/brs-engine)
 [![NPM Version](https://badge.fury.io/js/brs-engine.svg?style=flat)](https://npmjs.org/package/brs-engine)
 
 <p align="center"><img alt="Simulator Web and Desktop" title="Simulator Web and Desktop" src="docs/images/screenshots.png?raw=true"/></p>
@@ -52,9 +53,10 @@ npm install brs-engine
 
 ## 📦 Node.js and CLI Package
 
+[![Package Name](https://img.shields.io/badge/package-brs--node-blue.svg)](https://www.npmjs.com/package/brs-node)
 [![NPM Version](https://badge.fury.io/js/brs-node.svg?style=flat)](https://npmjs.org/package/brs-node)
 
-<p align="center"><img alt="Simulator CLI" title="Simulator CLI" src="docs/images/brs-cli.png?raw=true" width="500"/></p>
+<p align="left"><img alt="Simulator CLI" title="Simulator CLI" src="docs/images/brs-cli.png?raw=true" width="500"/></p>
 
 ### For command-line tools, automation, and server-side execution
 
