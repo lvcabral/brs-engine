@@ -13,7 +13,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/lvcabral/brs-engine"
+    "url": "git+https://github.com/lvcabral/brs-engine.git"
   },
   "bugs": {
     "url": "https://github.com/lvcabral/brs-engine/issues"
@@ -51,7 +51,7 @@
     "@lvcabral/memory-fs": "^0.5.1",
     "@lvcabral/sprintf": "^1.2.2",
     "@lvcabral/upng": "^2.3.0",
-    "@lvcabral/zip": "lvcabral/zip",
+    "@lvcabral/zip": "github:lvcabral/zip",
     "@msgpack/msgpack": "^2.8.0",
     "@zenfs/core": "1.6.16",
     "crc": "^3.8.0",

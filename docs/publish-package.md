@@ -1,12 +1,12 @@
 # How to Publish the Packages
 
-## Publish a Pre-Release Package
-
-- Run `npm publish --tag alpha` to publish the package under the `alpha` tag
-
 ## Publish a Release Package
 
-- Run `npm publish --tag latest` to publish the package under the `latest` tag
+- Run `npm publish -w <package-name> --tag latest` to publish the package under the `latest` tag
+
+## Publish a Pre-Release Package
+
+- Run `npm publish -w <package-name> --tag alpha` to publish the package under the `alpha` tag
 
 ## To check published versions
 

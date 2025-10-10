@@ -1,5 +1,6 @@
 {
   "name": "brs-engine-workspace",
+  "version": "1.9.0",
   "private": true,
   "workspaces": [
     "packages/*"
@@ -17,13 +18,13 @@
     "prettier": "prettier --check \"{packages,src,test}/**/*.{js,ts}\"",
     "prepublishOnly": "npm-run-all --serial clean lint prettier release"
   },
-"dependencies": {
+  "dependencies": {
     "@lvcabral/libwebp": "^0.1.0",
     "@lvcabral/memory-fs": "^0.5.1",
     "@lvcabral/node-ssdp": "^4.0.4",
     "@lvcabral/sprintf": "^1.2.2",
     "@lvcabral/upng": "^2.3.0",
-    "@lvcabral/zip": "lvcabral/zip",
+    "@lvcabral/zip": "github:lvcabral/zip",
     "@msgpack/msgpack": "^2.8.0",
     "@zenfs/core": "1.6.16",
     "canvas": "^3.2.0",
