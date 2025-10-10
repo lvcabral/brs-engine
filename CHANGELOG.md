@@ -1,5 +1,19 @@
 # Changelog
 
+<a name="v1.9.2"></a>
+
+## [v1.9.2 - New method `createPayloadFromFileMap`](https://github.com/lvcabral/brs-engine/releases/tag/v1.9.2) - 10 October 2025
+
+This release includes minor improvements and bug fixes for the BrightScript Simulation Engine.
+
+### Release Changes
+
+* Implemented new method `createPayloadFromFileMap` in `brs-node` library by [@lvcabral](https://github.com/lvcabral) in [#657](https://github.com/lvcabral/brs-engine/pull/657)
+* Bump on-headers and compression by [@dependabot[bot]](https://github.com/dependabot[bot]) in [#655](https://github.com/lvcabral/brs-engine/pull/655)
+* Several minor documentation improvements by [@lvcabral](https://github.com/lvcabral)
+
+[Full Changelog][v1.9.2]
+
 <a name="v1.9.1"></a>
 
 ## [v1.9.1 - Artifacts released as two NPM Packages](https://github.com/lvcabral/brs-engine/releases/tag/v1.9.1) - 09 October 2025
@@ -1067,6 +1081,7 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
+[v1.9.2]: https://github.com/lvcabral/brs-engine/compare/v1.9.1...v1.9.2
 [v1.9.1]: https://github.com/lvcabral/brs-engine/compare/v1.8.9...v1.9.1
 [v1.8.9]: https://github.com/lvcabral/brs-engine/compare/v1.8.8...v1.8.9
 [v1.8.8]: https://github.com/lvcabral/brs-engine/compare/v1.8.7...v1.8.8
