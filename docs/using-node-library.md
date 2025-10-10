@@ -11,6 +11,7 @@ This guide explains how to use the `brs-node` library in your Node.js applicatio
     - [Basic Setup](#basic-setup)
     - [Executing BrightScript Files](#executing-brightscript-files)
       - [Complete Example](#complete-example)
+    - [Executing BrightScript from In-Memory Files](#executing-brightscript-from-in-memory-files)
     - [Using the REPL Interpreter](#using-the-repl-interpreter)
     - [Handling Callbacks](#handling-callbacks)
     - [Working with SharedArrayBuffer](#working-with-sharedarraybuffer)
@@ -25,6 +26,7 @@ This guide explains how to use the `brs-node` library in your Node.js applicatio
     - [Core Functions](#core-functions)
       - [`registerCallback(callback, sharedBuffer?)`](#registercallbackcallback-sharedbuffer)
       - [`createPayloadFromFiles(files, device, deepLink?, root?, ext?)`](#createpayloadfromfilesfiles-device-deeplink-root-ext)
+      - [`createPayloadFromFileMap(fileMap, device, deepLink?)`](#createpayloadfromfilemapfilemap-device-deeplink)
       - [`executeFile(payload, options?)`](#executefilepayload-options)
       - [`getReplInterpreter(options)`](#getreplinterpreteroptions)
       - [`executeLine(line, interpreter)`](#executelineline-interpreter)
@@ -150,6 +152,62 @@ const payload = brs.createPayloadFromFiles(
             const encryptedData = new Uint8Array(result.cipherText);
             fs.writeFileSync("app.bpk", encryptedData);
         }
+    } catch (error) {
+        console.error("Execution failed:", error);
+    }
+})();
+```
+
+### Executing BrightScript from In-Memory Files
+
+You can also create a payload from in-memory file content using `createPayloadFromFileMap`. This is useful when working with uploaded files, network resources, or dynamically generated content:
+
+```javascript
+const brs = require("brs-node");
+
+// Register callback (same as above)
+brs.registerCallback((message) => {
+    // Handle messages...
+});
+
+// Create file map with Blob content
+const fileMap = new Map();
+
+// Add BrightScript source files
+const mainBrsCode = `
+    sub Main()
+        print "Hello from in-memory BrightScript!"
+        print "Device model: "; CreateObject("roDeviceInfo").GetModel()
+    end sub
+`;
+fileMap.set("main.brs", new Blob([mainBrsCode], { type: "text/plain" }));
+
+// Add manifest file
+const manifestContent = `
+title=My In-Memory App
+major_version=1
+minor_version=0
+build_version=1
+`;
+fileMap.set("manifest", new Blob([manifestContent], { type: "text/plain" }));
+
+// Add additional library file
+const libCode = `
+    function GetAppVersion() as string
+        return "1.0.1"
+    end function
+`;
+fileMap.set("lib/utils.brs", new Blob([libCode], { type: "text/plain" }));
+
+// Execute the in-memory files
+(async () => {
+    try {
+        // Create payload from file map
+        const payload = await brs.createPayloadFromFileMap(fileMap, deviceData);
+
+        // Execute the payload
+        const result = await brs.executeFile(payload);
+        console.log(`Exit reason: ${result.exitReason}`);
     } catch (error) {
         console.error("Execution failed:", error);
     }
@@ -473,6 +531,29 @@ Creates an execution payload from BrightScript files.
 - `ext?: string` - Root directory for `ext1:/` volume
 
 **Returns:** `AppPayload`
+
+#### `createPayloadFromFileMap(fileMap, device, deepLink?)`
+
+Creates an execution payload from a map of file paths and Blob content. This is useful for executing BrightScript code from in-memory files (e.g., uploaded files, network resources).
+
+**Parameters:**
+
+- `fileMap: Map<string, Blob>` - Map with file paths as keys and Blob content as values
+- `device: DeviceInfo` - Device configuration object
+- `deepLink?: Map<string, string>` - Deep link parameters
+
+**Returns:** `Promise<AppPayload>`
+
+**Example:**
+
+```javascript
+const fileMap = new Map();
+fileMap.set("source/main.brs", new Blob([brightScriptCode], { type: "text/plain" }));
+fileMap.set("manifest", new Blob([manifestContent], { type: "text/plain" }));
+
+const payload = await brs.createPayloadFromFileMap(fileMap, deviceData);
+const result = await brs.executeFile(payload);
+```
 
 #### `executeFile(payload, options?)`
 

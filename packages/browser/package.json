@@ -37,7 +37,7 @@
     "CHANGELOG.md"
   ],
   "scripts": {
-    "build": "webpack --config config/webpack.config.js --env development --env development",
+    "build": "webpack --config config/webpack.config.js --env development",
     "release": "webpack --config config/webpack.config.js --env production",
     "start": "webpack serve --open --config config/webpack.config.js",
     "stats": "webpack-bundle-analyzer ./lib/stats.json",
