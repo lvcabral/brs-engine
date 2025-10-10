@@ -3,7 +3,7 @@
 An interpreter for the BrightScript language that runs as a CLI and Roku apps in Node.js.
 
 ![GitHub](https://img.shields.io/github/license/lvcabral/brs-engine)
-[![NPM Version](https://img.shields.io/badge/npm_version-1.9.1-blue.svg)](https://npmjs.org/package/brs-node)
+[![NPM Version](https://img.shields.io/badge/npm_version-2.0.0--alpha.10-blue.svg)](https://npmjs.org/package/brs-node)
 [![Build](https://github.com/lvcabral/brs-engine/actions/workflows/build.yml/badge.svg)](https://github.com/lvcabral/brs-engine/actions/workflows/build.yml)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=lvcabral_brs-emu&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=lvcabral_brs-emu)
 [![Slack](https://img.shields.io/badge/Slack-RokuCommunity-4A154B?logo=slack)](https://join.slack.com/t/rokudevelopers/shared_invite/zt-4vw7rg6v-NH46oY7hTktpRIBM_zGvwA)
@@ -59,13 +59,13 @@ The **BrightScript Simulation Engine** provides a complete a set of libraries an
 ### Global Installation (CLI)
 
 ```bash
-npm install -g brs-node
+npm install -g brs-node@alpha
 ```
 
 ### Project Installation (Library)
 
 ```bash
-npm install brs-node
+npm install brs-node@alpha
 ```
 
 ### Libraries
