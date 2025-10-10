@@ -2,8 +2,8 @@
     "extends": "../../../tsconfig.json",
     "compilerOptions": {
         "target": "ES2022",                       /* Specify ECMAScript target version: 'ES3' (default), 'ES5', 'ES2015', 'ES2016', 'ES2017', or 'ESNEXT'. */
-        "module": "ESNext",                     /* Specify module code generation: 'none', 'commonjs', 'amd', 'system', 'umd', 'es2015', or 'ESNext'. */
-        "lib": ["dom", "DOM.Iterable", "webworker", "ESNext"],    /* Specify library files to be included in the compilation:  */
+        "module": "CommonJS",                     /* Specify module code generation: 'none', 'commonjs', 'amd', 'system', 'umd', 'es2015', or 'ESNext'. */
+        "lib": ["dom", "webworker", "ESNext"],    /* Specify library files to be included in the compilation:  */
         "moduleResolution": "node",               /* Specify module resolution strategy */
         "declaration": true,                      /* Generates corresponding '.d.ts' file. */
         "declarationDir": "../types",             /* Output '.d.ts' files to the directory. */
