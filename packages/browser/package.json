@@ -43,7 +43,7 @@
     "stats": "webpack-bundle-analyzer ./lib/stats.json",
     "stats:api": "webpack-bundle-analyzer ./lib/stats-api.json",
     "clean": "rimraf ./lib ./types ./assets",
-    "prepare": "cp ../../CHANGELOG.md . && cp ../../LICENSE .",
+    "prepack": "cp ../../CHANGELOG.md . && cp ../../LICENSE .",
     "postpack": "rm CHANGELOG.md LICENSE"
   },
   "dependencies": {
