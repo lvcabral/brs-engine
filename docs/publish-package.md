@@ -2,11 +2,11 @@
 
 ## Publish a Pre-Release Package
 
-- Run `yarn publish --tag dev` to publish the package under the `dev` tag
+- Run `npm publish --tag alpha` to publish the package under the `alpha` tag
 
 ## Publish a Release Package
 
-- Run `yarn publish --tag latest` to publish the package under the `latest` tag
+- Run `npm publish --tag latest` to publish the package under the `latest` tag
 
 ## To check published versions
 

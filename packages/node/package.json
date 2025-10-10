@@ -24,7 +24,8 @@
     "emulator",
     "simulator",
     "interpreter",
-    "worker"
+    "CLI",
+    "REPL"
   ],
   "main": "bin/brs.node.js",
   "typings": "types/src/core/index.d.ts",
@@ -33,13 +34,16 @@
   },
   "files": [
     "bin/",
-    "types/src/core/"
+    "types/src/core/",
+    "CHANGELOG.md"
   ],
   "scripts": {
     "build": "webpack --config ./config/webpack.config.js --env development",
     "release": "webpack --config ./config/webpack.config.js --env production",
-    "clean": "rimraf ./bin ./types ./assets"
-  },
+    "clean": "rimraf ./bin ./types ./assets",
+    "prepare": "cp ../../CHANGELOG.md . && cp ../../LICENSE .",
+    "postpack": "rm CHANGELOG.md LICENSE"
+},
   "dependencies": {
     "@lvcabral/libwebp": "^0.1.0",
     "@lvcabral/memory-fs": "^0.5.1",

@@ -1,8 +1,8 @@
 # BrightScript Engine API
 
-The engine worker library has a programmable interface to make it easy to integrate into any web based application.
+The engine worker library (`brs-worker.js`), has a programmable interface (`brs.api.js`), built in `packages/browser/lib/`, with the goal to facilitate the integration of the engine into web based applications.
 
-Check the [documentation](./integrating.md) to learn how to start using it. The only pre-requisites are to expose, on the default `document`, a `canvas` object named `display` and a `video` object named `player`, and optionally,  if you want to show the performance statistics, you also need to expose a `div` object named `stats`.
+Check the [documentation](./integrating.md) to learn how to start using it. The only pre-requisites are to expose, on the default `document`, a `canvas` object named `display` and a `video` object named `player`, and optionally, if you want to show the performance statistics, you also need to expose a `div` object named `stats`.
 
 ## Methods
 
