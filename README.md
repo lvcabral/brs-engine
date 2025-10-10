@@ -83,8 +83,9 @@ npm install brs-node
 There are many ways you can use and/or participate in the project, read the documents below to learn more:
 
 - [How to build from source](docs/build-from-source.md)
-- [How to run as a Command Line Interface](docs/run-as-cli.md)
 - [How add the Engine to a Web Application](docs/integrating.md)
+- [How to run as a Command Line Interface](docs/run-as-cli.md)
+- [How to use the Node.js Library](docs/using-node-library.md)
 - [How to customize the Engine behavior](docs/customization.md)
 - [Remote Control Simulation](docs/remote-control.md)
 - [BrightScript Engine API reference](docs/engine-api.md)

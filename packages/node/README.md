@@ -80,6 +80,7 @@ The package libraries require Node.js v22 or higher, and are organized as follow
 
 Learn how to use the package and its libraries by reading the documents below:
 
+- [How to use the Node.js Library](../../docs/using-node-library.md)
 - [How to run as a Command Line Interface](../../docs/run-as-cli.md)
 - [How to customize the Engine behavior](../../docs/customization.md)
 - [Remote Control Simulation](../../docs/remote-control.md)
