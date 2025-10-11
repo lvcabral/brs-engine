@@ -52,7 +52,6 @@ export class RowList extends ArrayGrid {
     protected readonly rowItemComps: Group[][] = [[]];
     protected readonly rowFocus: number[];
     protected readonly rowScrollOffset: number[] = []; // Track scroll offset per row for floating focus
-    protected wrapCol: boolean;
     private readonly titleHeight: number;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = "RowList") {
@@ -73,8 +72,6 @@ export class RowList extends ArrayGrid {
         this.setFieldValue("wrapDividerBitmapUri", new BrsString(this.dividerUri));
         const vertStyle = this.getFieldValueJS("vertFocusAnimationStyle") as string;
         this.wrap = vertStyle.toLowerCase() === "fixedfocuswrap";
-        const rowStyle = this.getFieldValueJS("rowFocusAnimationStyle") as string;
-        this.wrapCol = rowStyle.toLowerCase() === "fixedfocuswrap";
         this.numRows = this.getFieldValueJS("numRows") as number;
         this.numCols = this.getFieldValueJS("numColumns") as number;
         this.rowFocus = [];
@@ -98,9 +95,7 @@ export class RowList extends ArrayGrid {
         const fieldName = index.getValue().toLowerCase();
         if (fieldName === "rowfocusanimationstyle") {
             const style = value.toString().toLowerCase();
-            if (["fixedfocuswrap", "floatingfocus", "fixedfocus"].includes(style)) {
-                this.wrapCol = style === "fixedfocuswrap";
-            } else {
+            if (!["fixedfocuswrap", "floatingfocus", "fixedfocus"].includes(style)) {
                 // Invalid rowFocusAnimationStyle
                 return BrsInvalid.Instance;
             }
@@ -442,11 +437,8 @@ export class RowList extends ArrayGrid {
                 let colIndex = startCol + c;
 
                 if (renderMode === "fixedFocusWrap" && colIndex >= numCols) {
-                    if (this.wrapCol) {
-                        colIndex = colIndex % numCols;
-                    } else {
-                        break;
-                    }
+                    // In fixedFocusWrap mode, wrap around to beginning
+                    colIndex = colIndex % numCols;
                 }
 
                 if (colIndex >= cols.length) {
