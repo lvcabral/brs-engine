@@ -330,7 +330,7 @@ export async function createPayloadFromFileMap(
 
     // Process device data and manifest
     const deviceData = processDeviceData(customDeviceData);
-    const finalManifest = manifest || createDefaultManifest();
+    manifest ??= createDefaultManifest();
 
     // Create the ZIP package
     const zipBuffer = zipSync(zipFiles);
@@ -341,7 +341,7 @@ export async function createPayloadFromFileMap(
     const payload: AppPayload = {
         device: deviceData,
         launchTime: Date.now(),
-        manifest: finalManifest,
+        manifest: manifest,
         deepLink: deepLink ?? new Map(),
         paths: paths,
         source: source,
@@ -395,7 +395,6 @@ export async function createPayloadFromFiles(
         throw new Error("Invalid or inexistent file(s)!");
     }
 
-    // Use helper function for device data processing
     const deviceData = processDeviceData(customDeviceData);
 
     if (root && !manifest && fs.existsSync(path.join(root, "manifest"))) {
@@ -405,10 +404,7 @@ export async function createPayloadFromFiles(
         }
     }
 
-    // Use helper function for default manifest creation
-    if (manifest === undefined) {
-        manifest = createDefaultManifest();
-    }
+    manifest ??= createDefaultManifest();
 
     const payload: AppPayload = {
         device: deviceData,
