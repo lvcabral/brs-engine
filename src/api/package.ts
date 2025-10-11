@@ -130,9 +130,9 @@ function processManifest(content: string): number {
     currentApp.title = manifestMap.get("title") ?? "No Title";
     currentApp.subtitle = manifestMap.get("subtitle") ?? "";
 
-    const majorVersion = parseInt(manifestMap.get("major_version") ?? "0");
-    const minorVersion = parseInt(manifestMap.get("minor_version") ?? "0");
-    const buildVersion = parseInt(manifestMap.get("build_version") ?? "0");
+    const majorVersion = Number.parseInt(manifestMap.get("major_version") ?? "0");
+    const minorVersion = Number.parseInt(manifestMap.get("minor_version") ?? "0");
+    const buildVersion = Number.parseInt(manifestMap.get("build_version") ?? "0");
     currentApp.version = `${majorVersion}.${minorVersion}.${buildVersion}`.replace("NaN", "0");
     console.log(`[package] App: ${currentApp.title} v${currentApp.version}`);
 

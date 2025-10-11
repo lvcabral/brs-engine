@@ -303,7 +303,7 @@ export function compareVersions(installedVersion: string, userVersion: string): 
     for (let i = 0; i < 3; i++) {
         const installed = Number(installedParts[i]);
         const user = !userParts[i] || userParts[i].trim() === "" ? 0 : Number(userParts[i]);
-        if (installed < user || isNaN(user)) {
+        if (installed < user || Number.isNaN(user)) {
             return -1;
         } else if (installed > user) {
             return 1;
@@ -316,8 +316,8 @@ function formatVersion(version: string): string {
     let parts = version.split(".");
     parts = parts.slice(0, 3);
     const formattedParts = parts.map((part) => {
-        const num = parseInt(part, 10);
-        return isNaN(num) ? 0 : num;
+        const num = Number.parseInt(part, 10);
+        return Number.isNaN(num) ? 0 : num;
     });
     while (formattedParts.length < 3) {
         formattedParts.push(0);

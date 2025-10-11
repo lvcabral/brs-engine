@@ -65,8 +65,8 @@ export class RoSocketAddress extends BrsComponent implements BrsValue {
     }
 
     safeParsePort(str: string): number {
-        const num = parseInt(str, 10);
-        let port = isNaN(num) ? 0 : num;
+        const num = Number.parseInt(str, 10);
+        let port = Number.isNaN(num) ? 0 : num;
         return toUint16(port);
     }
 

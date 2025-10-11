@@ -130,13 +130,13 @@ export function handleVideoEvent(eventData: string) {
         loadVideo(true);
     } else if (data[1] === "rect" && data.length === 6) {
         notifyAll("rect", {
-            x: parseInt(data[2]),
-            y: parseInt(data[3]),
-            w: parseInt(data[4]),
-            h: parseInt(data[5]),
+            x: Number.parseInt(data[2]),
+            y: Number.parseInt(data[3]),
+            w: Number.parseInt(data[4]),
+            h: Number.parseInt(data[5]),
         });
     } else if (data[1] === "notify" && data.length === 3) {
-        notifyTime = parseInt(data[2]) >= 1;
+        notifyTime = Number.parseInt(data[2]) >= 1;
     } else if (data[1] === "stop") {
         stopVideo();
     } else if (data[1] === "pause") {
@@ -154,8 +154,8 @@ export function handleVideoEvent(eventData: string) {
         }
     } else if (data[1] === "next") {
         const newIndex = data[2];
-        if (newIndex && !isNaN(parseInt(newIndex))) {
-            setNextVideo(parseInt(newIndex));
+        if (newIndex && !isNaN(Number.parseInt(newIndex))) {
+            setNextVideo(Number.parseInt(newIndex));
         } else {
             Atomics.store(sharedArray, DataType.VDX, MediaErrorCode.EmptyList);
             Atomics.store(sharedArray, DataType.VDO, MediaEvent.FAILED);
@@ -163,8 +163,8 @@ export function handleVideoEvent(eventData: string) {
         }
     } else if (data[1] === "seek") {
         const position = data[2];
-        if (position && !isNaN(parseInt(position))) {
-            seekVideo(Math.round(parseInt(position) / 1000));
+        if (position && !isNaN(Number.parseInt(position))) {
+            seekVideo(Math.round(Number.parseInt(position) / 1000));
         } else {
             notifyAll("warning", `[video] Invalid seek position: ${eventData}`);
         }

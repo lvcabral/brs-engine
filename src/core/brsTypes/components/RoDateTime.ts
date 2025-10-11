@@ -152,7 +152,7 @@ export class RoDateTime extends BrsComponent implements BrsValue {
                         timeZone: "UTC",
                     })
                     .split("/");
-                dateString = dateArray[0] + "/" + dateArray[1] + "/" + parseInt(dateArray[2]).toString();
+                dateString = dateArray[0] + "/" + dateArray[1] + "/" + Number.parseInt(dateArray[2]).toString();
                 break;
             }
             case "short-date-dashes": {
@@ -164,7 +164,7 @@ export class RoDateTime extends BrsComponent implements BrsValue {
                         timeZone: "UTC",
                     })
                     .split("/");
-                dateString = dateArray[0] + "-" + dateArray[1] + "-" + parseInt(dateArray[2]).toString();
+                dateString = dateArray[0] + "-" + dateArray[1] + "-" + Number.parseInt(dateArray[2]).toString();
                 break;
             }
         }
