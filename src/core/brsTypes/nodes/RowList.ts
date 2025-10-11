@@ -314,7 +314,8 @@ export class RowList extends ArrayGrid {
                     }
                     handled = true;
                 }
-            } else if (currentFocusedCol > 0) { // Moving left
+            } else if (currentFocusedCol > 0) {
+                // Moving left
                 // Not at the first item yet
                 if (focusScreenPosition > 0) {
                     // Focus can still move left without scrolling
@@ -550,19 +551,7 @@ export class RowList extends ArrayGrid {
         if (title.length !== 0) {
             const font = this.getFieldValue("rowLabelFont") as Font;
             const color = this.getFieldValueJS("rowLabelColor");
-            this.drawText(
-                title,
-                font,
-                color,
-                opacity,
-                divRect,
-                "left",
-                "center",
-                0,
-                draw2D,
-                "...",
-                textLine
-            );
+            this.drawText(title, font, color, opacity, divRect, "left", "center", 0, draw2D, "...", textLine);
         }
         return this.titleHeight + (rowOffset?.[textLine]?.[1] ?? 0);
     }
