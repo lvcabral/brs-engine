@@ -488,7 +488,7 @@ export function updateMemoryInfo(usedMemory?: number, totalMemory?: number) {
         Atomics.store(sharedArray, DataType.MHSL, totalMemory);
         return;
     }
-    const performance = window.performance as ChromiumPerformance;
+    const performance = globalThis.performance as ChromiumPerformance;
     if (currentApp.running && platform.inChromium && performance.memory) {
         // Only Chromium based browsers support process.memory API
         const memory = performance.memory;
@@ -499,7 +499,7 @@ export function updateMemoryInfo(usedMemory?: number, totalMemory?: number) {
 
 // Load device Registry from Local Storage
 function loadRegistry() {
-    const storage: Storage = window.localStorage;
+    const storage: Storage = globalThis.localStorage;
     const transientKeys: string[] = [];
     for (let index = 0; index < storage.length; index++) {
         const key = storage.key(index);
@@ -523,7 +523,7 @@ function workerCallback(event: MessageEvent) {
     } else if (event.data instanceof Map) {
         deviceData.registry = event.data;
         if (platform.inBrowser) {
-            const storage: Storage = window.localStorage;
+            const storage: Storage = globalThis.localStorage;
             for (const [key, value] of deviceData.registry) {
                 storage.setItem(key, value);
             }
@@ -710,7 +710,7 @@ function apiException(level: string, message: string) {
 }
 
 // HDMI/CEC Status Update
-window.onfocus = function () {
+globalThis.onfocus = function () {
     if (currentApp.running) {
         if (getModelType() !== "TV") {
             Atomics.store(sharedArray, DataType.HDMI, 1);
@@ -719,7 +719,7 @@ window.onfocus = function () {
     }
 };
 
-window.onblur = function () {
+globalThis.onblur = function () {
     if (currentApp.running) {
         if (getModelType() !== "TV") {
             Atomics.store(sharedArray, DataType.HDMI, 0);
