@@ -45,18 +45,19 @@ export class BrsDevice {
     static setDeviceInfo(deviceInfo: DeviceInfo) {
         for (let [key, value] of Object.entries(deviceInfo)) {
             if (key !== "registry" && key !== "assets") {
+                let newValue = value;
                 if (key === "developerId") {
                     // Prevent developerId from having "." to avoid issues on registry persistence
-                    value = value.replace(".", ":");
+                    newValue = newValue.replace(".", ":");
                 } else if (key === "corsProxy") {
                     // make sure the CORS proxy is valid URL and ends with "/"
-                    if (value.length > 0 && !value.startsWith("http")) {
-                        value = "";
-                    } else if (value.length > 0 && !value.endsWith("/")) {
-                        value += "/";
+                    if (newValue.length > 0 && !newValue.startsWith("http")) {
+                        newValue = "";
+                    } else if (newValue.length > 0 && !newValue.endsWith("/")) {
+                        newValue += "/";
                     }
                 }
-                this.deviceInfo[key] = value;
+                this.deviceInfo[key] = newValue;
             }
         }
     }

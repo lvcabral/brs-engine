@@ -69,7 +69,7 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
 
     dispose() {
         for (const element of this.contentList) {
-            this.removeReference();
+            element.removeReference();
         }
         this.port?.removeReference();
     }

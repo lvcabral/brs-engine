@@ -126,6 +126,9 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
     }
 
     dispose() {
+        for (const element of this.contentList) {
+            element.removeReference();
+        }
         this.port?.removeReference();
     }
 

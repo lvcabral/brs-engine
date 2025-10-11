@@ -268,7 +268,8 @@ export function createPayloadFromFiles(
     let manifest: Map<string, string> | undefined;
 
     let id = 0;
-    for (let filePath of files) {
+    for (const file of files) {
+        let filePath = file;
         if (root) {
             filePath = path.join(root, filePath);
         }

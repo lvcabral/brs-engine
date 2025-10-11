@@ -116,7 +116,7 @@ function notifyAll(eventName: string, eventData?: any) {
     if (["play", "pause", "stop"].includes(eventName)) {
         playerState = eventName;
     }
-    for (const [id, callback] of observers) {
+    for (const [_id, callback] of observers) {
         callback(eventName, eventData);
     }
 }
