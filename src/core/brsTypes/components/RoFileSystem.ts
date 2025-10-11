@@ -49,7 +49,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
         try {
             let knownFiles = fsys.readdirSync(pathName);
             let matchedFiles: BrsString[] = [];
-            knownFiles.forEach((fileName) => {
+            for (const fileName of knownFiles) {
                 if (jsRegex.test(fileName)) {
                     matchedFiles.push(new BrsString(fileName));
                     let fullPath = path.posix.join(pathName, fileName);
@@ -57,7 +57,7 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
                         matchedFiles = matchedFiles.concat(this.findOnTree(fsys, jsRegex, fullPath));
                     }
                 }
-            });
+            }
             return matchedFiles;
         } catch (err: any) {
             return [];
@@ -257,13 +257,13 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
                 if (!validUri(pathArg.value)) {
                     return new RoList([]);
                 }
-                let knownFiles = fsys.readdirSync(pathArg.value);
-                let matchedFiles: BrsString[] = [];
-                knownFiles.forEach((fileName) => {
+                const knownFiles = fsys.readdirSync(pathArg.value);
+                const matchedFiles: BrsString[] = [];
+                for (const fileName of knownFiles) {
                     if (jsRegex.test(fileName)) {
                         matchedFiles.push(new BrsString(fileName));
                     }
-                });
+                }
                 return new RoList(matchedFiles);
             } catch (err: any) {
                 if (BrsDevice.isDevMode) {

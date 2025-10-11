@@ -29,10 +29,10 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
     constructor(elements: AAMember[], cs: boolean = false) {
         super("roAssociativeArray");
         this.modeCaseSensitive = cs;
-        elements.forEach((member) => {
+        for (const member of elements) {
             this.addChildRef(member.value);
             this.set(member.name, member.value, true);
-        });
+        }
         this.enumIndex = elements.length ? 0 : -1;
         const ifEnum = new IfEnum(this);
         this.registerMethods({
@@ -188,9 +188,9 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
     }
 
     dispose() {
-        this.elements.forEach((element) => {
+        for (const element of this.elements.values()) {
             this.removeChildRef(element);
-        });
+        }
     }
 
     addChildRef(value: BrsType | undefined) {
@@ -228,9 +228,9 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter) => {
-            this.elements.forEach((element) => {
+            for (const element of this.elements.values()) {
                 this.removeChildRef(element);
-            });
+            }
             this.elements.clear();
             this.keyMap.clear();
             this.enumIndex = -1;
@@ -320,9 +320,9 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
                 return BrsInvalid.Instance;
             }
 
-            obj.elements.forEach((value, key) => {
+            for (const [key, value] of obj.elements) {
                 this.set(new BrsString(key), value, true);
-            });
+            }
             this.updateNext();
 
             return BrsInvalid.Instance;

@@ -166,11 +166,11 @@ export function executeLine(contents: string, interpreter: Interpreter) {
     }
     try {
         const results = interpreter.exec(parseResults.statements);
-        results.forEach((result) => {
+        for (const result of results) {
             if (result !== BrsTypes.BrsInvalid.Instance) {
                 postMessage(`print,${result.toString()}`);
             }
-        });
+        }
     } catch (err: any) {
         if (!(err instanceof BrsError)) {
             postMessage(`error,Interpreter execution error: ${err.message}`);
@@ -268,7 +268,7 @@ export function createPayloadFromFiles(
     let manifest: Map<string, string> | undefined;
 
     let id = 0;
-    files.forEach((filePath) => {
+    for (let filePath of files) {
         if (root) {
             filePath = path.join(root, filePath);
         }
@@ -287,7 +287,7 @@ export function createPayloadFromFiles(
                 manifest = parseManifest(fileData.toString());
             }
         }
-    });
+    }
     if (id === 0) {
         throw new Error("Invalid or inexistent file(s)!");
     }
@@ -414,9 +414,9 @@ function setupInputParams(deepLinkMap: Map<string, string>, splashTime: number):
         ["source", "auto-run-dev"],
         ["splashTime", splashTime.toString()],
     ]);
-    deepLinkMap.forEach((value, key) => {
+    for (const [key, value] of deepLinkMap) {
         inputMap.set(key, value);
-    });
+    }
     return BrsTypes.toAssociativeArray(inputMap);
 }
 
@@ -489,11 +489,11 @@ function setupTranslations(interpreter: Interpreter) {
                             trArray = parsed["xliff"]["file"]["body"]["trans-unit"];
                         }
                         if (trArray instanceof Array) {
-                            trArray.forEach((item) => {
+                            for (const item of trArray) {
                                 if (item["source"]) {
                                     interpreter.translations.set(item["source"], item[trTarget]);
                                 }
-                            });
+                            }
                         }
                     }
                 } else {
@@ -555,18 +555,18 @@ export function lexParseSync(sourceMap: Map<string, string>, manifest: Map<strin
         allStatements.push(...parseResults.statements);
     }
     if (password.length === 0) {
-        lib.forEach((value: string, key: string) => {
+        for (const [key, value] of lib) {
             if (value !== "") {
                 sourceMap.set(key, value);
                 const libScan = lexer.scan(value, key);
                 const libParse = parser.parse(libScan.tokens);
                 allStatements.push(...libParse.statements);
             }
-        });
+        }
     }
-    parser.stats.forEach((count, lexeme) => {
+    for (const [lexeme, count] of parser.stats) {
         stats.set(lexeme, count.size);
-    });
+    }
     return {
         exitReason: exitReason,
         tokens: tokens,
@@ -701,13 +701,13 @@ function parseDecodedTokens(interpreter: Interpreter, decodedTokens: Map<string,
             tokens = [];
         }
     }
-    lib.forEach((value: string, key: string) => {
+    for (const [key, value] of lib) {
         if (value !== "") {
             const libScan = lexer.scan(value, key);
             const libParse = parser.parse(libScan.tokens);
             allStatements.push(...libParse.statements);
         }
-    });
+    }
     return allStatements;
 }
 

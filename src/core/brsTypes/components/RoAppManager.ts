@@ -216,9 +216,9 @@ export class RoAppManager extends BrsComponent implements BrsValue {
                 });
                 if (isAppData(app) && compareVersions(app.version, version.value) >= 0) {
                     const paramsMap: Map<string, string> = new Map();
-                    params.elements.forEach((value, key) => {
+                    for (const [key, value] of params.elements) {
                         paramsMap.set(key.toString(), value.toString());
-                    });
+                    }
                     paramsMap.set("source", "other-channel");
                     app.params = paramsMap;
                     postMessage(app);
@@ -262,10 +262,10 @@ export class RoAppManager extends BrsComponent implements BrsValue {
             const result = new RoArray([]);
             const appList = BrsDevice.deviceInfo.appList;
             if (appList instanceof Array) {
-                appList.forEach((app) => {
+                for (const app of appList) {
                     const appObj = { id: app.id, title: app.title, version: app.version };
                     result.elements.push(toAssociativeArray(appObj));
-                });
+                }
             }
             return result;
         },

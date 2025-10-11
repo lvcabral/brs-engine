@@ -67,13 +67,13 @@ export class RoRegistrySection extends BrsComponent implements BrsValue {
         impl: (_: Interpreter, keysArray: RoArray) => {
             let keys = keysArray.getElements() as BrsString[];
             let result = new RoAssociativeArray([]);
-            keys.forEach((key) => {
+            for (const key of keys) {
                 let fullKey = `${this.devId}.${this.section}.${key.value}`;
                 let value = BrsDevice.registry.get(fullKey);
                 if (value) {
                     result.set(key, new BrsString(value));
                 }
-            });
+            }
             return result;
         },
     });
@@ -97,11 +97,10 @@ export class RoRegistrySection extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, roAA: RoAssociativeArray) => {
-            let elements = roAA.getElements();
             let devSection = `${this.devId}.${this.section}.`;
-            elements.forEach(function (value, key) {
-                BrsDevice.registry.set(`${devSection}${key}`, value.value);
-            });
+            for (const [key, value] of roAA.elements) {
+                BrsDevice.registry.set(`${devSection}${key}`, value.toString());
+            }
             return BrsBoolean.True;
         },
     });
@@ -149,12 +148,12 @@ export class RoRegistrySection extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter) => {
             let keys = new Array<BrsString>();
-            [...BrsDevice.registry.keys()].forEach((key) => {
+            for (const key of BrsDevice.registry.keys()) {
                 let regSection = this.devId + "." + this.section;
                 if (key.startsWith(regSection)) {
                     keys.push(new BrsString(key.slice(regSection.length + 1)));
                 }
-            });
+            }
             return new RoList(keys);
         },
     });

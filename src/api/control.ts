@@ -87,9 +87,9 @@ export function unsubscribeControl(observerId: string) {
     observers.delete(observerId);
 }
 function notifyAll(eventName: string, eventData?: any) {
-    observers.forEach((callback, id) => {
+    for (const [_id, callback] of observers) {
         callback(eventName, eventData);
-    });
+    }
 }
 
 // Control API
@@ -209,11 +209,11 @@ keysMap.set("F10", "volumemute");
 
 // Keyboard API
 export function setCustomKeys(newKeys: Map<string, string>) {
-    newKeys.forEach((value: string, key: string) => {
+    for (let [key, value] of newKeys) {
         key = key.replace(/Windows|Command/gi, "Meta");
         key = key.replace("Option", "Alt");
         keysMap.set(key, value);
-    });
+    }
 }
 
 // Keyboard handlers
@@ -276,30 +276,30 @@ const buttonsMap = new Map([
 
 // Game Pad API
 export function setCustomPadButtons(newButtons: Map<number, string>) {
-    newButtons.forEach((value: string, button: number) => {
+    for (const [button, value] of newButtons) {
         if (button >= 0 && button < 32 && value.length) {
             buttonsMap.set(button, value);
         }
-    });
+    }
 }
 
 // GamePad handlers
 function gamePadOnHandler(gamePad: GCGamepad) {
     deviceData.remoteControls.push({ model: 10002, features: ["bluetooth", "gamepad"] });
-    axesMap.forEach((events, index) => {
-        events.forEach((key: string) => {
+    for (const [index, events] of axesMap.entries()) {
+        for (const key of events) {
             if (gamePad.axes > index) {
                 const eventName = `${key}${index}` as EventName;
                 gamePadSubscribe(gamePad, eventName, index, key);
             }
-        });
-    });
-    buttonsMap.forEach((key, index) => {
+        }
+    }
+    for (const [index, key] of buttonsMap.entries()) {
         if (gamePad.buttons > index) {
             const eventName = `button${index}` as EventName;
             gamePadSubscribe(gamePad, eventName, index, key);
         }
-    });
+    }
 }
 function gamePadSubscribe(gamePad: GCGamepad, eventName: EventName, index: number, key: string) {
     gamePad.before(eventName, () => {

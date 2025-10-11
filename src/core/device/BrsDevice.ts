@@ -25,9 +25,9 @@ export class BrsDevice {
      * @param registry Map with registry content.
      */
     static setRegistry(registry: Map<string, string>) {
-        registry.forEach((value: string, key: string) => {
+        for (const [key, value] of registry) {
             this.registry.set(key, value);
-        });
+        }
     }
 
     /**
@@ -43,7 +43,7 @@ export class BrsDevice {
      * @param deviceInfo DeviceInfo to be set
      */
     static setDeviceInfo(deviceInfo: DeviceInfo) {
-        Object.entries(deviceInfo).forEach(([key, value]) => {
+        for (let [key, value] of Object.entries(deviceInfo)) {
             if (key !== "registry" && key !== "assets") {
                 if (key === "developerId") {
                     // Prevent developerId from having "." to avoid issues on registry persistence
@@ -58,7 +58,7 @@ export class BrsDevice {
                 }
                 this.deviceInfo[key] = value;
             }
-        });
+        }
     }
 
     /**

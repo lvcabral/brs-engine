@@ -79,9 +79,9 @@ export function unsubscribeDisplay(observerId: string) {
     observers.delete(observerId);
 }
 function notifyAll(eventName: string, eventData?: any) {
-    observers.forEach((callback, id) => {
+    for (const [_id, callback] of observers) {
         callback(eventName, eventData);
-    });
+    }
 }
 
 // Redraw Display Canvas

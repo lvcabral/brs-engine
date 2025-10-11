@@ -441,9 +441,11 @@ function genAppsXml(encrypt: boolean) {
         // Dummy app as Roku Deep Linking Tester requires at least 2 apps
         xml.ele("app", { id: "home", type: "appl", version: "1.0.0" }, "Home Screen");
     }
-    device.appList?.forEach((app: AppData) => {
-        xml.ele("app", { id: app.id, type: "appl", version: app.version }, app.title);
-    });
+    if (device.appList) {
+        for (const app of device.appList) {
+            xml.ele("app", { id: app.id, type: "appl", version: app.version }, app.title);
+        }
+    }
     const strXml = xml.end({ pretty: true });
     return encrypt ? Buffer.from(strXml).toString("base64") : strXml;
 }
@@ -474,11 +476,11 @@ function genAppRegistry(plugin: string, encrypt: boolean) {
         regXml.ele("space-available", {}, getSpaceAvailable());
         const secsXml = regXml.ele("sections");
         let curSection = "";
-        let scXml: xmlbuilder.XMLNode;
-        let itsXml: xmlbuilder.XMLNode;
-        let itXml: xmlbuilder.XMLNode;
+        let scXml: xmlbuilder.XMLNode | undefined;
+        let itsXml: xmlbuilder.XMLNode | undefined;
+        let itXml: xmlbuilder.XMLNode | undefined;
         const registry = new Map([...cliRegistry].sort());
-        registry.forEach((value, key) => {
+        for (const [key, value] of registry) {
             const sections = key.split(".");
             if (sections.length > 2 && sections[0] === device.developerId) {
                 if (sections[1] !== curSection) {
@@ -487,15 +489,17 @@ function genAppRegistry(plugin: string, encrypt: boolean) {
                     scXml.ele("name", {}, curSection);
                     itsXml = scXml.ele("items");
                 }
-                itXml = itsXml.ele("item");
-                let key = sections[2];
-                if (sections.length > 3) {
-                    key = sections.slice(2).join(".");
+                if (itsXml) {
+                    itXml = itsXml.ele("item");
+                    let key = sections[2];
+                    if (sections.length > 3) {
+                        key = sections.slice(2).join(".");
+                    }
+                    itXml.ele("key", {}, key);
+                    itXml.ele("value", {}, value);
                 }
-                itXml.ele("key", {}, key);
-                itXml.ele("value", {}, value);
             }
-        });
+        }
         xml.ele("status", {}, "OK");
     } else {
         xml.ele("status", {}, "FAILED");
@@ -514,18 +518,21 @@ function launchApp(appID: string) {
 function getMacAddress() {
     const ifaces = os.networkInterfaces();
     let mac = "";
-    Object.keys(ifaces).forEach(function (ifname) {
+    for (const ifname of Object.keys(ifaces)) {
         if (mac !== "" || ifname.toLowerCase().startsWith("vmware") || ifname.toLowerCase().startsWith("virtualbox")) {
-            return;
+            continue;
         }
-        ifaces[ifname]?.forEach(function (iface: any) {
-            if ("IPv4" !== iface.family || iface.internal !== false) {
-                // skip over internal (i.e. 127.0.0.1) and non-ipv4 addresses
-                return;
+        const ifaceList = ifaces[ifname];
+        if (ifaceList) {
+            for (const iface of ifaceList) {
+                if ("IPv4" !== (iface as any).family || (iface as any).internal !== false) {
+                    // skip over internal (i.e. 127.0.0.1) and non-ipv4 addresses
+                    continue;
+                }
+                mac = (iface as any).mac;
             }
-            mac = iface.mac;
-        });
-    });
+        }
+    }
     if (mac === "") {
         mac = "87:3e:aa:9f:77:70";
     }
@@ -552,12 +559,12 @@ function getModelName(model: string) {
 function getSpaceAvailable() {
     const devId = device.developerId;
     let space = 32 * 1024;
-    cliRegistry.forEach((value, key) => {
+    for (const [key, value] of cliRegistry) {
         if (key.split(".")[0] === devId) {
             space -= Buffer.byteLength(key.substring(devId.length + 1), "utf8");
             space -= Buffer.byteLength(value, "utf8");
         }
-    });
+    }
     return space;
 }
 

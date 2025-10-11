@@ -37,14 +37,16 @@ export class BrsComponent {
 
     protected registerMethods(interfaces: Record<string, Callable[]>) {
         this.methods = new Map<string, Callable>();
-        Object.entries(interfaces).forEach(([interfaceName, methods]) => {
+        for (const [interfaceName, methods] of Object.entries(interfaces)) {
             const methodNames = new Set(
                 methods.filter((m) => m.name?.toLowerCase()).map((m) => m.name?.toLowerCase()!)
             );
             this.interfaces.set(interfaceName.toLowerCase(), new BrsInterface(interfaceName, methodNames));
 
-            methods.forEach((m) => this.methods.set((m.name ?? "").toLowerCase(), m));
-        });
+            for (const m of methods) {
+                this.methods.set((m.name ?? "").toLowerCase(), m);
+            }
+        }
     }
 
     getMethod(index: string): Callable | undefined {

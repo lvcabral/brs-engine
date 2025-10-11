@@ -82,9 +82,9 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
 
     getElements(): Int32[] {
         const result: Int32[] = [];
-        this.elements.slice().forEach((value: number) => {
+        for (const value of this.elements.slice()) {
             result.push(new Int32(value));
-        });
+        }
         return result;
     }
 
