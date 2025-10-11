@@ -112,13 +112,13 @@ export class FileSystem {
         const files = this.getFS(uri).readdirSync(this.getPath(uri));
         if (writeUri(uri) && files.length > 0) {
             const self = this;
-            files.forEach(function (file: string, index: number) {
+            for (const [index, file] of files.entries()) {
                 const fullPath = path.posix.join(uri.toLowerCase(), file);
                 const originalPath = self.getOriginalPath(fullPath);
                 if (originalPath) {
                     files[index] = path.posix.basename(originalPath);
                 }
-            });
+            }
         }
         return files;
     }

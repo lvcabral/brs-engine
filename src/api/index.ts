@@ -122,11 +122,11 @@ export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any 
             "password",
             "platform",
         ];
-        invalidKeys.forEach((key) => {
+        for (const key of invalidKeys) {
             if (key in customDeviceInfo) {
                 delete customDeviceInfo[key];
             }
-        });
+        }
         Object.assign(deviceData, customDeviceInfo);
     }
     let initMsg = `${packageInfo.title} - v${packageInfo.version}`;
@@ -242,9 +242,9 @@ export function unsubscribe(observerId: string) {
     observers.delete(observerId);
 }
 function notifyAll(eventName: string, eventData?: any) {
-    observers.forEach((callback, id) => {
+    for (const [_id, callback] of observers) {
         callback(eventName, eventData);
-    });
+    }
 }
 
 // Execute App Zip or Source File
@@ -511,7 +511,9 @@ function loadRegistry() {
             }
         }
     }
-    transientKeys.forEach((key) => storage.removeItem(key));
+    for (const key of transientKeys) {
+        storage.removeItem(key);
+    }
 }
 
 // Receive Messages from the Interpreter (Web Worker)
@@ -522,9 +524,9 @@ function workerCallback(event: MessageEvent) {
         deviceData.registry = event.data;
         if (platform.inBrowser) {
             const storage: Storage = window.localStorage;
-            deviceData.registry.forEach(function (value: string, key: string) {
+            for (const [key, value] of deviceData.registry) {
                 storage.setItem(key, value);
-            });
+            }
         }
         notifyAll("registry", event.data);
     } else if (platform.inBrowser && event.data.audioPlaylist instanceof Array) {
@@ -564,12 +566,12 @@ function workerCallback(event: MessageEvent) {
             const app = deviceData.appList?.find((app) => app.id === channelId);
             if (app || channelId?.startsWith("http")) {
                 const params = new Map();
-                event.data.params.forEach((el) => {
+                for (const el of event.data.params) {
                     const [key, value] = el.split("=");
                     if (key && value && key.toLowerCase() !== "channelid") {
                         params.set(key, value);
                     }
-                });
+                }
                 notifyAll("launch", { app: app?.id ?? channelId, params: params });
             } else {
                 apiException("warning", `[api] NDKLauncher channel not found: ${channelId}`);

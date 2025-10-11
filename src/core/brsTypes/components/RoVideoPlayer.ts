@@ -102,7 +102,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
 
     getContent() {
         const contents: Object[] = [];
-        this.contentList.forEach((aa) => {
+        for (const aa of this.contentList) {
             const item = { url: "", streamFormat: "", audioTrack: -1 };
             let url = aa.get(new BrsString("url"));
             if (url instanceof BrsString) {
@@ -121,11 +121,14 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
                 item.streamFormat = streamFormat.value.toLowerCase();
             }
             contents.push(item);
-        });
+        }
         return contents;
     }
 
     dispose() {
+        for (const element of this.contentList) {
+            element.removeReference();
+        }
         this.port?.removeReference();
     }
 
@@ -432,7 +435,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
         impl: (_: Interpreter) => {
             const result: BrsType[] = [];
             if (this.audioTracks.length) {
-                this.audioTracks.forEach((track) => {
+                for (const track of this.audioTracks) {
                     if (isMediaTrack(track)) {
                         const item = {
                             Track: track.id,
@@ -441,7 +444,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
                         };
                         result.push(toAssociativeArray(item));
                     }
-                });
+                }
             }
             return new RoArray(result);
         },

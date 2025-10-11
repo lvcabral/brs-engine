@@ -201,7 +201,9 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     dispose() {
         this.port?.unregisterCallback(this.getComponentName());
         if (this.disposeCanvas) {
-            this.canvas.forEach((c) => releaseCanvas(c));
+            for (const c of this.canvas) {
+                releaseCanvas(c);
+            }
         }
     }
     isValid() {

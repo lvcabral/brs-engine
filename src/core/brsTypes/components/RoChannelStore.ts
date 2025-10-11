@@ -153,7 +153,7 @@ ZZwGPYCKEHMPrIOOXJ-S9ZjArgaEpBUpMXWJibFxnkpVUVzbC22GEaqz_SjOJXFMQU7TaCKkDeCYVKyl
                     errMessage = `error,Error parsing Product XML: ${err.message}`;
                 } else if (parsed?.result?.products?.product) {
                     try {
-                        parsed.result.products.product.forEach((item: any) => {
+                        for (const item of parsed.result.products.product) {
                             const obj = JSON.parse(JSON.stringify(item));
                             const prod: FlexObject = {};
                             prod.code = obj.code;
@@ -177,7 +177,7 @@ ZZwGPYCKEHMPrIOOXJ-S9ZjArgaEpBUpMXWJibFxnkpVUVzbC22GEaqz_SjOJXFMQU7TaCKkDeCYVKyl
                             if (obj.trialType) prod.trialType = obj.trialType;
                             if (obj.status) prod.status = obj.status;
                             data.push(toAssociativeArray(prod));
-                        });
+                        }
                     } catch (e: any) {
                         err.message = `error,Error parsing Product XML: ${e.message}`;
                     }
@@ -212,9 +212,9 @@ ZZwGPYCKEHMPrIOOXJ-S9ZjArgaEpBUpMXWJibFxnkpVUVzbC22GEaqz_SjOJXFMQU7TaCKkDeCYVKyl
                         data.id = order.id;
                         const orderArray = new Array<RoAssociativeArray>();
                         if (order.items.orderItem instanceof Array) {
-                            order.items.orderItem.forEach((item: any) => {
+                            for (const item of order.items.orderItem) {
                                 orderArray.push(toAssociativeArray(item));
-                            });
+                            }
                         } else {
                             orderArray.push(toAssociativeArray(order.items.orderItem));
                         }

@@ -116,9 +116,9 @@ function notifyAll(eventName: string, eventData?: any) {
     if (["play", "pause", "stop"].includes(eventName)) {
         playerState = eventName;
     }
-    observers.forEach((callback, id) => {
+    for (const [_id, callback] of observers) {
         callback(eventName, eventData);
-    });
+    }
 }
 
 // Video Module Public Functions
@@ -214,11 +214,11 @@ export function videoFormats() {
             ["mpeg1", "video/mpeg"],
             ["mpeg2", "video/mpeg2"],
         ]);
-        formats.forEach((mime: string, codec: string) => {
+        for (const [codec, mime] of formats) {
             if (player.canPlayType(mime) !== "") {
                 codecs.push(codec);
             }
-        });
+        }
         // All Browsers Support mp4, m4v and mov, only Chromium supports mkv natively
         // https://stackoverflow.com/questions/57060193/browser-support-for-mov-video
         containers.push.apply(containers, ["mp4", "m4v", "mov"]);
@@ -302,7 +302,7 @@ function loadAudioTracks() {
     let preferredTrackId = -1;
     let deviceTrackId = -1;
     let englishTrackId = -1;
-    hls.audioTracks.forEach((track, index) => {
+    for (const [index, track] of hls.audioTracks.entries()) {
         const audioTrack: MediaTrack = {
             id: `${index + 1}`,
             name: track.name,
@@ -320,7 +320,7 @@ function loadAudioTracks() {
         } else if (englishTrackId === -1 && lang === "en") {
             englishTrackId = track.id;
         }
-    });
+    }
     let activeTrack = 0;
     if (audioTracks.length > 0) {
         // Set the active track prioritizing preferred locale, device locale and english

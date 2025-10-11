@@ -45,9 +45,9 @@ export function unsubscribeSound(observerId: string) {
     observers.delete(observerId);
 }
 function notifyAll(eventName: string, eventData?: any) {
-    observers.forEach((callback, id) => {
+    for (const [_id, callback] of observers) {
         callback(eventName, eventData);
-    });
+    }
 }
 
 // Audio/SFX Functions
@@ -137,17 +137,17 @@ export function soundPlaying() {
 
 export function switchSoundState(play: boolean) {
     if (play) {
-        soundState.forEach((id) => {
+        for (const id of soundState) {
             soundsDat[id]?.play();
-        });
+        }
     } else {
         soundState.length = 0;
-        soundsDat.forEach((sound, index) => {
+        for (const [index, sound] of soundsDat.entries()) {
             if (sound.playing()) {
                 sound.pause();
                 soundState.push(index);
             }
-        });
+        }
     }
 }
 
@@ -208,9 +208,9 @@ function registerSound(path: string, preload: boolean, format?: string, url?: st
 
 export function resetSounds(assets: ArrayBufferLike) {
     if (soundsDat.length > 0) {
-        soundsDat.forEach((sound) => {
+        for (const sound of soundsDat) {
             sound.unload();
-        });
+        }
     }
     sfxStreams.length = 0;
     soundsIdx.clear();
@@ -220,21 +220,21 @@ export function resetSounds(assets: ArrayBufferLike) {
     playLoop = false;
     playNext = -1;
     if (sfxMap.size > 0) {
-        sfxMap.forEach((sound) => {
+        for (const sound of sfxMap.values()) {
             sound.sound?.unload();
-        });
+        }
         sfxMap.clear();
     }
     try {
         const commonFs = unzipSync(new Uint8Array(assets));
-        DefaultSounds.forEach((sound, index) => {
+        for (const [index, sound] of DefaultSounds.entries()) {
             const audioData = new Blob([commonFs[`audio/${sound}.wav`] as BlobPart]);
             const sfx: SFX = {
                 id: index,
                 sound: new Howl({ src: [URL.createObjectURL(audioData)], format: "wav", preload: true }),
             };
             sfxMap.set(sound, sfx);
-        });
+        }
         if (homeSfx === undefined) {
             const audioData = new Blob([commonFs["audio/select.wav"] as BlobPart]);
             homeSfx = new Howl({ src: [URL.createObjectURL(audioData)], format: "wav", preload: true });

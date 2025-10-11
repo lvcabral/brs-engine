@@ -177,10 +177,10 @@ export function parseCSV(csv: string): Map<string, string[]> {
     let result = new Map<string, string[]>();
     let lines = csv.match(/[^\r\n]+/g);
     if (lines) {
-        lines.forEach((line) => {
+        for (const line of lines) {
             let fields = line.split(",");
             result.set(fields[0], fields.slice(1));
-        });
+        }
     }
     return result;
 }

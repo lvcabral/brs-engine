@@ -26,7 +26,9 @@ export function toCallable(func: Expr.Function, name: string = "[Function]") {
             let done = false;
             while (!done) {
                 try {
-                    func.body.statements.forEach((statement) => interpreter.execute(statement));
+                    for (const statement of func.body.statements) {
+                        interpreter.execute(statement);
+                    }
                     done = true;
                 } catch (reason: any) {
                     if (reason instanceof Stmt.GotoLabel) {
