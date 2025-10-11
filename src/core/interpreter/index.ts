@@ -217,7 +217,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
                 return !!func.name;
             });
-        
+
         for (const func of filteredFunctions) {
             this._environment.define(Scope.Global, func.name ?? "", func);
             if (func.name && GlobalFunctions.has(func.name)) {
