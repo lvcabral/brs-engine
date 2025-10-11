@@ -69,15 +69,15 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
     }
 
     dispose() {
-        this.contentList.forEach((element) => {
-            this.removeReference();
-        });
+        for (const element of this.contentList) {
+            element.removeReference();
+        }
         this.port?.removeReference();
     }
 
     private getContent() {
         const content = new Array<string>();
-        this.contentList.forEach((value) => {
+        for (const value of this.contentList) {
             let url = value.get(new BrsString("url"));
             if (url instanceof BrsString) {
                 if (url.value.startsWith("http")) {
@@ -86,7 +86,7 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
                     content.push(url.value);
                 }
             }
-        });
+        }
         return content;
     }
 

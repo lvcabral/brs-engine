@@ -100,12 +100,13 @@ export async function getComponentDefinitionMap(
     fs = fileSystem;
 
     const xmlFiles: string[] = [];
-    ["components", ...additionalDirs].forEach((dir) => {
+    const directories = ["components", ...additionalDirs];
+    for (const dir of directories) {
         const dirPath = path.join("pkg:/", dir);
         if (fs?.existsSync(dirPath)) {
             xmlFiles.push(...fs.findSync(dirPath, "xml"));
         }
-    });
+    }
 
     const defs = xmlFiles.map((file) => new ComponentDefinition(file));
     const parsedPromises = defs.map(async (def) => def.parse());
@@ -138,7 +139,7 @@ async function processXmlTree(settledPromises: Promise<PromiseResult<ComponentDe
     // the component backwards from most extended component first
     let inheritanceStack: ComponentDefinition[] = [];
 
-    nodeDefMap.forEach((nodeDef) => {
+    for (const nodeDef of nodeDefMap.values()) {
         if (nodeDef && nodeDef.processed === false) {
             let xmlNode = nodeDef.xmlNode;
             inheritanceStack.push(nodeDef);
@@ -173,13 +174,9 @@ async function processXmlTree(settledPromises: Promise<PromiseResult<ComponentDe
                 }
             }
         }
-    });
-
-    for (let nodeDef of nodeDefMap.values()) {
-        let xmlNode = nodeDef.xmlNode;
-        if (xmlNode) {
-            nodeDef.children = getChildren(xmlNode);
-            nodeDef.scripts = await getScripts(xmlNode, nodeDef);
+        if (nodeDef?.xmlNode) {
+            nodeDef.children = getChildren(nodeDef.xmlNode);
+            nodeDef.scripts = await getScripts(nodeDef.xmlNode, nodeDef);
         }
     }
 

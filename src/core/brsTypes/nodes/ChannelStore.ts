@@ -117,9 +117,9 @@ export class ChannelStore extends RoSGNode {
         const catalog = this.channelStore.getProductData(command, status);
         result.setFieldValue("status", new Int32(status.code));
         result.setFieldValue("message", new BrsString(status.message));
-        catalog.forEach((item) => {
+        for (const item of catalog) {
             result.appendChildToParent(toContentNode(item));
-        });
+        }
         super.set(new BrsString(field), result);
     }
 
@@ -151,9 +151,9 @@ export class ChannelStore extends RoSGNode {
         const order = this.channelStore.placeOrder(status);
         result.setFieldValue("status", new Int32(status.code));
         result.setFieldValue("message", new BrsString(status.message));
-        order.forEach((item) => {
+        for (const item of order) {
             result.appendChildToParent(toContentNode(item));
-        });
+        }
         super.set(new BrsString("orderStatus"), result);
     }
 }

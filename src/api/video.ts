@@ -115,9 +115,9 @@ function notifyAll(eventName: string, eventData?: any) {
     if (["play", "pause", "stop"].includes(eventName)) {
         playerState = eventName;
     }
-    observers.forEach((callback, id) => {
+    for (const [_id, callback] of observers) {
         callback(eventName, eventData);
-    });
+    }
 }
 
 // Video Module Public Functions
@@ -129,13 +129,13 @@ export function handleVideoEvent(eventData: string) {
         loadVideo(true);
     } else if (data[1] === "rect" && data.length === 6) {
         notifyAll("rect", {
-            x: parseInt(data[2]),
-            y: parseInt(data[3]),
-            w: parseInt(data[4]),
-            h: parseInt(data[5]),
+            x: Number.parseInt(data[2]),
+            y: Number.parseInt(data[3]),
+            w: Number.parseInt(data[4]),
+            h: Number.parseInt(data[5]),
         });
     } else if (data[1] === "notify" && data.length === 3) {
-        notifyTime = parseInt(data[2]) >= 1;
+        notifyTime = Number.parseInt(data[2]) >= 1;
     } else if (data[1] === "stop") {
         stopVideo();
     } else if (data[1] === "pause") {
@@ -153,8 +153,8 @@ export function handleVideoEvent(eventData: string) {
         }
     } else if (data[1] === "next") {
         const newIndex = data[2];
-        if (newIndex && !isNaN(parseInt(newIndex))) {
-            setNextVideo(parseInt(newIndex));
+        if (newIndex && !Number.isNaN(Number.parseInt(newIndex))) {
+            setNextVideo(Number.parseInt(newIndex));
         } else {
             Atomics.store(sharedArray, DataType.VDX, MediaErrorCode.EmptyList);
             Atomics.store(sharedArray, DataType.VDO, MediaEvent.FAILED);
@@ -162,8 +162,8 @@ export function handleVideoEvent(eventData: string) {
         }
     } else if (data[1] === "seek") {
         const position = data[2];
-        if (position && !isNaN(parseInt(position))) {
-            seekVideo(Math.round(parseInt(position) / 1000));
+        if (position && !Number.isNaN(Number.parseInt(position))) {
+            seekVideo(Math.round(Number.parseInt(position) / 1000));
         } else {
             notifyAll("warning", `[video] Invalid seek position: ${eventData}`);
         }
@@ -215,11 +215,11 @@ export function videoFormats() {
             ["mpeg1", "video/mpeg"],
             ["mpeg2", "video/mpeg2"],
         ]);
-        formats.forEach((mime: string, codec: string) => {
+        for (const [codec, mime] of formats) {
             if (player.canPlayType(mime) !== "") {
                 codecs.push(codec);
             }
-        });
+        }
         // All Browsers Support mp4, m4v and mov, only Chromium supports mkv natively
         // https://stackoverflow.com/questions/57060193/browser-support-for-mov-video
         containers.push.apply(containers, ["mp4", "m4v", "mov"]);
@@ -288,7 +288,7 @@ function startProgress(e: Event) {
 }
 
 function setDuration(e: Event) {
-    if (!isNaN(player.duration)) {
+    if (!Number.isNaN(player.duration)) {
         videoDuration = Math.round(player.duration);
         Atomics.store(sharedArray, DataType.VDR, videoDuration);
     }
@@ -305,7 +305,7 @@ function loadAudioTracks() {
     let preferredTrackId = -1;
     let deviceTrackId = -1;
     let englishTrackId = -1;
-    hls.audioTracks.forEach((track, index) => {
+    for (const [index, track] of hls.audioTracks.entries()) {
         const audioTrack: MediaTrack = {
             id: `${index + 1}`,
             name: track.name,
@@ -326,7 +326,7 @@ function loadAudioTracks() {
         } else if (englishTrackId === -1 && lang === "en") {
             englishTrackId = track.id;
         }
-    });
+    }
     let activeTrack = 0;
     if (audioTracks.length > 0) {
         // Set the active track prioritizing preferred locale, device locale and english
@@ -355,7 +355,7 @@ function loadSubtitleTracks() {
     let preferredTrackId = -1;
     let deviceTrackId = -1;
     let englishTrackId = -1;
-    hls.subtitleTracks.forEach((track, index) => {
+    for (const [index, track] of hls.subtitleTracks.entries()) {
         const textTrack: MediaTrack = {
             id: `webvtt/${index + 1}`,
             name: track.name,
@@ -374,7 +374,7 @@ function loadSubtitleTracks() {
         } else if (englishTrackId === -1 && lang === "en") {
             englishTrackId = index;
         }
-    });
+    }
     let activeTrack = 0;
     if (textTracks.length > 0) {
         // Set the active track prioritizing preferred locale, device locale and english
@@ -660,8 +660,8 @@ function createHlsInstance() {
     });
 
     hls.on(Hls.Events.FRAG_LOADED, (event, data) => {
-        const bandwidth = hls?.bandwidthEstimate || NaN;
-        if (!isNaN(bandwidth)) {
+        const bandwidth = hls?.bandwidthEstimate || Number.NaN;
+        if (!Number.isNaN(bandwidth)) {
             notifyAll("bandwidth", Math.round(bandwidth / 1000));
         }
     });

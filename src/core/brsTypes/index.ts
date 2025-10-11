@@ -513,12 +513,12 @@ export function toNode(x: any, type: string, subtype: string): RoSGNode {
         node.setFieldValue(key, brsValueOf(x[key]));
     }
     if (x["_children_"]) {
-        x["_children_"].forEach((child: any) => {
+        for (const child of x["_children_"]) {
             if (child["_node_"]) {
                 const nodeName = x["_node_"].split(":");
                 node.getNodeChildren().push(toNode(child, nodeName[0], nodeName[1]));
             }
-        });
+        }
     }
     return node;
 }
@@ -531,13 +531,13 @@ export function toNode(x: any, type: string, subtype: string): RoSGNode {
 export function fromAssociativeArray(associativeArray: RoAssociativeArray): FlexObject {
     const result: FlexObject = {};
 
-    associativeArray.elements.forEach((value: BrsType, key: string) => {
+    for (const [key, value] of associativeArray.elements) {
         if (isUnboxable(value)) {
             result[key] = jsValueOf(value.unbox());
         } else {
             result[key] = jsValueOf(value);
         }
-    });
+    }
 
     return result;
 }
@@ -550,9 +550,9 @@ export function fromAssociativeArray(associativeArray: RoAssociativeArray): Flex
 export function toContentNode(associativeArray: RoAssociativeArray): ContentNode {
     const result: ContentNode = new ContentNode();
 
-    associativeArray.elements.forEach((value: BrsType, key: string) => {
+    for (const [key, value] of associativeArray.elements) {
         result.setFieldValue(key, value);
-    });
+    }
 
     return result;
 }
@@ -565,9 +565,9 @@ export function toContentNode(associativeArray: RoAssociativeArray): ContentNode
 export function fromContentNode(contentNode: ContentNode): RoAssociativeArray {
     const result: RoAssociativeArray = new RoAssociativeArray([], true);
 
-    contentNode.getNodeFields().forEach((value: Field, key: string) => {
+    for (const [key, value] of contentNode.getNodeFields()) {
         result.set(new BrsString(key), value.getValue(false));
-    });
+    }
 
     return result;
 }
@@ -629,7 +629,7 @@ export function fromSGNode(node: RoSGNode): FlexObject {
 
     result["_node_"] = `${getNodeType(node.nodeSubtype)}:${node.nodeSubtype}`;
 
-    fields.forEach((field: Field, name: string) => {
+    for (const [name, field] of fields) {
         if (!field.isHidden()) {
             let fieldValue = field.getValue(false);
             if (isUnboxable(fieldValue)) {
@@ -640,7 +640,7 @@ export function fromSGNode(node: RoSGNode): FlexObject {
             }
             result[name] = jsValueOf(fieldValue);
         }
-    });
+    }
     if (observed.length) {
         result["_observed_"] = observed;
     }

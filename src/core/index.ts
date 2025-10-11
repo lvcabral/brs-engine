@@ -173,11 +173,11 @@ export function executeLine(contents: string, interpreter: Interpreter) {
     }
     try {
         const results = interpreter.exec(parseResults.statements);
-        results.forEach((result) => {
+        for (const result of results) {
             if (result !== BrsTypes.BrsInvalid.Instance) {
                 postMessage(`print,${result.toString()}`);
             }
-        });
+        }
     } catch (err: any) {
         if (!(err instanceof BrsError)) {
             postMessage(`error,Interpreter execution error: ${err.message}`);
@@ -371,7 +371,8 @@ export async function createPayloadFromFiles(
     let manifest: Map<string, string> | undefined;
 
     let id = 0;
-    files.forEach((filePath) => {
+    for (const file of files) {
+        let filePath = file;
         if (root) {
             filePath = path.join(root, filePath);
         }
@@ -390,7 +391,7 @@ export async function createPayloadFromFiles(
                 manifest = parseManifest(fileData.toString());
             }
         }
-    });
+    }
     if (id === 0) {
         throw new Error("Invalid or inexistent file(s)!");
     }
@@ -582,9 +583,9 @@ function setupInputParams(deepLinkMap: Map<string, string>, splashTime: number):
         ["source", "auto-run-dev"],
         ["splashTime", splashTime.toString()],
     ]);
-    deepLinkMap.forEach((value, key) => {
+    for (const [key, value] of deepLinkMap) {
         inputMap.set(key, value);
-    });
+    }
     return BrsTypes.toAssociativeArray(inputMap);
 }
 
@@ -657,12 +658,12 @@ function setupTranslations(interpreter: Interpreter) {
                         } else {
                             trArray = parsed["xliff"]["file"]["body"]["trans-unit"];
                         }
-                        if (trArray instanceof Array) {
-                            trArray.forEach((item) => {
+                        if (Array.isArray(trArray)) {
+                            for (const item of trArray) {
                                 if (item["source"]) {
                                     interpreter.translations.set(item["source"], item[trTarget]);
                                 }
-                            });
+                            }
                         }
                     }
                 } else {
@@ -710,14 +711,14 @@ async function runSource(
         // Update Source Map with the SceneGraph components (if exists)
         if (BrsTypes.rootObjects.nodeDefMap?.size) {
             const components = BrsTypes.rootObjects.nodeDefMap;
-            Array.from(components.values()).forEach((component: ComponentDefinition) => {
-                component.scripts.forEach((script) => {
+            for (const component of components.values()) {
+                for (const script of component.scripts) {
                     const sourcePath = script.uri ?? script.xmlPath;
                     if (sourcePath && script.content?.length) {
                         sourceMap.set(sourcePath, script.content);
                     }
-                });
-            });
+                }
+            }
         }
         // Execute the BrightScript code
         exitReason = await executeApp(interpreter, parseResult.statements, payload, sourceMap);
@@ -787,8 +788,8 @@ async function executeApp(
 ) {
     let exitReason: AppExitReason = AppExitReason.FINISHED;
     try {
-        let splashMinTime = parseInt(payload.manifest.get("splash_min_time") ?? "");
-        if (isNaN(splashMinTime)) {
+        let splashMinTime = Number.parseInt(payload.manifest.get("splash_min_time") ?? "");
+        if (Number.isNaN(splashMinTime)) {
             splashMinTime = 1600; // Roku default value
         }
         let splashTime = Date.now() - payload.launchTime;

@@ -606,7 +606,7 @@ export function getPlatform(): Platform {
     if (typeof navigator !== "undefined" && typeof navigator.userAgent === "string") {
         let ua = navigator.userAgent;
         // Check Browsers
-        if (ua.indexOf("Electron") >= 0) {
+        if (ua.includes("Electron")) {
             inElectron = true;
             inChromium = true;
         } else if (/Firefox\D+(\d+)/.test(ua)) {

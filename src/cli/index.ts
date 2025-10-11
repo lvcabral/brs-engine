@@ -10,6 +10,7 @@ import os from "node:os";
 import fs from "node:fs";
 import path from "node:path";
 import dns from "node:dns";
+import readline from "node:readline";
 import { Worker } from "node:worker_threads";
 import { gateway4sync } from "default-gateway";
 import envPaths from "env-paths";
@@ -17,7 +18,6 @@ import { Canvas, ImageData, createCanvas } from "canvas";
 import chalk from "chalk";
 import { Command } from "commander";
 import stripAnsi from "strip-ansi";
-import readline from "readline";
 import { deviceData, loadAppZip, updateAppZip, subscribePackage, mountExt, setupDeepLink } from "../api/package";
 import { isNumber } from "../api/util";
 import { debugPrompt, dataBufferIndex, dataBufferSize, AppPayload, AppExitReason, AppData } from "../core/common";
@@ -172,7 +172,9 @@ async function runAppFiles(files: string[]) {
         runApp(payload);
     } catch (err: any) {
         if (err.messages?.length) {
-            err.messages.forEach((message: string) => console.error(chalk.red(message)));
+            for (const message of err.messages) {
+                console.error(chalk.red(message));
+            }
         } else {
             console.error(chalk.red(err.message));
         }
@@ -182,14 +184,17 @@ async function runAppFiles(files: string[]) {
 
 function processDeepLink() {
     const deepLinkMap: Map<string, string> = new Map();
-    program.deepLink?.split(",")?.forEach((value: string) => {
-        if (value?.includes("=")) {
-            const [key, val] = value.split("=");
-            deepLinkMap.set(key, val);
-        } else {
-            console.warn(chalk.yellow(`Invalid deep link parameter: ${value}`));
+    const deepLinkParams = program.deepLink?.split(",");
+    if (deepLinkParams) {
+        for (const value of deepLinkParams) {
+            if (value?.includes("=")) {
+                const [key, val] = value.split("=");
+                deepLinkMap.set(key, val);
+            } else {
+                console.warn(chalk.yellow(`Invalid deep link parameter: ${value}`));
+            }
         }
-    });
+    }
     return deepLinkMap;
 }
 
@@ -274,23 +279,26 @@ async function runApp(payload: AppPayload) {
 function getLocalIps() {
     const ifaces = os.networkInterfaces();
     const ips = new Array<string>();
-    Object.keys(ifaces).forEach(function (ifname) {
+    for (const ifname of Object.keys(ifaces)) {
         let alias = 0;
-        ifaces[ifname]?.forEach(function (iface) {
-            if ("IPv4" !== iface.family || iface.internal !== false) {
-                // skip over internal (i.e. 127.0.0.1) and non-ipv4 addresses
-                return;
+        const ifaceList = ifaces[ifname];
+        if (ifaceList) {
+            for (const iface of ifaceList) {
+                if ("IPv4" !== iface.family || iface.internal !== false) {
+                    // skip over internal (i.e. 127.0.0.1) and non-ipv4 addresses
+                    continue;
+                }
+                if (alias >= 1) {
+                    // this single interface has multiple ipv4 addresses
+                    ips.push(`${ifname}:${alias},${iface.address}`);
+                } else {
+                    // this interface has only one ipv4 address
+                    ips.push(`${ifname},${iface.address}`);
+                }
+                ++alias;
             }
-            if (alias >= 1) {
-                // this single interface has multiple ipv4 addresses
-                ips.push(`${ifname}:${alias},${iface.address}`);
-            } else {
-                // this interface has only one ipv4 address
-                ips.push(`${ifname},${iface.address}`);
-            }
-            ++alias;
-        });
-    });
+        }
+    }
     return ips;
 }
 
@@ -305,11 +313,11 @@ function getRegistry(): Map<string, string> {
         if (strRegistry?.length) {
             const parsed = JSON.parse(strRegistry.toString("utf8"));
             if (typeof parsed === "object" && parsed !== null) {
-                new Map(parsed).forEach((value, key) => {
+                for (const [key, value] of new Map(parsed)) {
                     if (typeof key === "string" && typeof value === "string" && key.split(".")[1] !== "Transient") {
                         registry.set(key, value);
                     }
-                });
+                }
             }
         }
     } catch (err: any) {

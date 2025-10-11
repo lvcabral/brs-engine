@@ -233,9 +233,17 @@ export class Field {
     }
 
     notifyObservers() {
-        this.permanentObservers.forEach(this.executeCallbacks.bind(this));
-        this.unscopedObservers.forEach(this.executeCallbacks.bind(this));
-        this.scopedObservers.forEach((callbacks) => callbacks.map(this.executeCallbacks.bind(this)));
+        for (const observer of this.permanentObservers) {
+            this.executeCallbacks(observer);
+        }
+        for (const observer of this.unscopedObservers) {
+            this.executeCallbacks(observer);
+        }
+        for (const [_node, callbacks] of this.scopedObservers) {
+            for (const callback of callbacks) {
+                this.executeCallbacks(callback);
+            }
+        }
     }
 
     canAcceptValue(value: BrsType) {
@@ -414,13 +422,15 @@ export class Field {
         let infoFields: RoAssociativeArray | undefined;
         if (eventParams.infoFields) {
             const fieldsMap = new Map();
-            eventParams.infoFields.elements?.forEach((element) => {
-                if (isBrsString(element)) {
-                    // TODO: Check how to handle object values (by reference or by value)
-                    const key = element.getValue();
-                    fieldsMap.set(key, hostNode.getFieldValue(key));
+            if (eventParams.infoFields.elements?.length) {
+                for (const element of eventParams.infoFields.elements) {
+                    if (isBrsString(element)) {
+                        // TODO: Check how to handle object values (by reference or by value)
+                        const key = element.getValue();
+                        fieldsMap.set(key, hostNode.getFieldValue(key));
+                    }
                 }
-            });
+            }
             infoFields = toAssociativeArray(fieldsMap);
         }
         // Every time a callback happens, a new event is created.

@@ -26,15 +26,15 @@ function runFiles(interpreter: Interpreter, filenames: BrsString[], args: BrsTyp
     try {
         // execute the new files in a brand-new interpreter, as no scope is shared with the `Run`-ed files in RBI
         const sandbox = new Interpreter(interpreter.options);
-        interpreter.manifest.forEach((value, key) => {
+        for (const [key, value] of interpreter.manifest) {
             sandbox.manifest.set(key, value);
-        });
+        }
         const sourceMap = new Map<string, string>();
-        filenames.forEach((filename) => {
+        for (const filename of filenames) {
             if (BrsDevice.fileSystem.existsSync(filename.value)) {
                 sourceMap.set(filename.value, BrsDevice.fileSystem.readFileSync(filename.value, "utf8"));
             }
-        });
+        }
         if (sourceMap.size !== 0) {
             const parseResult = brs.lexParseSync(BrsDevice.fileSystem, sandbox.manifest, sourceMap);
             const result = sandbox.exec(parseResult.statements, sourceMap, ...args);

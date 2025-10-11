@@ -17,10 +17,10 @@ export class RoList extends BrsComponent implements BrsValue, BrsList {
         super("roList");
         this.elements = [];
         if (elements) {
-            elements.forEach((element) => {
+            for (const element of elements) {
                 this.addChildRef(element);
                 this.elements.push(element);
-            });
+            }
         }
         this.listIndex = -1;
         this.enumIndex = -1;

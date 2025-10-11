@@ -270,7 +270,7 @@ export const Val = new Callable("Val", {
             }
             return new Float(retNumber);
         } else {
-            const retNumber = parseInt(s.value, brsRadix.getValue());
+            const retNumber = Number.parseInt(s.value, brsRadix.getValue());
             if (Number.isNaN(retNumber)) {
                 return new Int32(0);
             }
@@ -288,7 +288,7 @@ export const StrToI = new Callable("StrToI", {
         returns: ValueKind.Int32,
     },
     impl: (_: Interpreter, s: BrsString): BrsNumber => {
-        let integerValue = parseInt(s.value);
+        let integerValue = Number.parseInt(s.value);
 
         if (Number.isNaN(integerValue)) {
             return new Int32(0);

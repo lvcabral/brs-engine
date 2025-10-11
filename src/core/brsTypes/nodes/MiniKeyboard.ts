@@ -102,13 +102,13 @@ export class MiniKeyboard extends Group {
         this.setFieldValue("height", new Float(this.bmpBack!.height + this.heightOver));
 
         this.bmpFocus = this.loadBitmap("common:/images/focus_keyboard.9.png");
-        this.icons.forEach((icon) => {
+        for (const icon of this.icons) {
             const uri = `common:/images/${this.resolution}/icon_${icon}.png`;
             const bmp = this.loadBitmap(uri);
             if (bmp?.isValid()) {
                 this.bmpIcons.set(icon, bmp);
             }
-        });
+        }
         this.keyColor = this.getFieldValueJS("keyColor") as number;
         this.focusedKeyColor = this.getFieldValueJS("focusedKeyColor") as number;
         this.setFieldValue("textEditBox", this.textEditBox);

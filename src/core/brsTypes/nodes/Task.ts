@@ -139,11 +139,11 @@ export class Task extends RoSGNode {
             if (global instanceof Global) {
                 const fields = global.getNodeFields();
                 const observed: string[] = [];
-                fields.forEach((field: Field, name: string) => {
+                for (const [name, field] of fields) {
                     if (!field.isHidden() && field.isPortObserved(this)) {
                         observed.push(name);
                     }
-                });
+                }
                 if (observed.length && taskData.m) {
                     taskData.m.global["_observed_"] = observed;
                 }

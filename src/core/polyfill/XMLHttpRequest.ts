@@ -17,12 +17,12 @@
  * @license MIT
  */
 
-import * as fs from "fs";
-import * as Url from "url";
-import * as http from "http";
-import * as https from "https";
-import * as crypto from "crypto";
-import { spawn } from "child_process";
+import * as fs from "node:fs";
+import * as Url from "node:url";
+import * as http from "node:http";
+import * as https from "node:https";
+import * as crypto from "node:crypto";
+import { spawn } from "node:child_process";
 
 /**
  * `XMLHttpRequest` constructor.
@@ -145,7 +145,7 @@ export class XMLHttpRequest {
      * @return boolean False if not allowed, otherwise true
      */
     private isAllowedHttpHeader(header: string) {
-        return this._disableHeaderCheck || (header && forbiddenRequestHeaders.indexOf(header.toLowerCase()) === -1);
+        return this._disableHeaderCheck || (header && !forbiddenRequestHeaders.includes(header.toLowerCase()));
     }
 
     /**
@@ -155,7 +155,7 @@ export class XMLHttpRequest {
      * @return boolean False if not allowed, otherwise true
      */
     private isAllowedHttpMethod(method: string) {
-        return method && forbiddenRequestMethods.indexOf(method) === -1;
+        return method && !forbiddenRequestMethods.includes(method);
     }
 
     /**

@@ -188,7 +188,7 @@ export class RoAppManager extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, channelId: BrsString, version: BrsString) => {
             const appList = BrsDevice.deviceInfo.appList;
-            if (appList instanceof Array) {
+            if (Array.isArray(appList)) {
                 const app = appList.find((app) => {
                     return app.id === channelId.value;
                 });
@@ -210,15 +210,15 @@ export class RoAppManager extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, channelId: BrsString, version: BrsString, params: RoAssociativeArray) => {
             const appList = BrsDevice.deviceInfo.appList;
-            if (appList instanceof Array) {
+            if (Array.isArray(appList)) {
                 const app = appList.find((app) => {
                     return app.id === channelId.value;
                 });
                 if (isAppData(app) && compareVersions(app.version, version.value) >= 0) {
                     const paramsMap: Map<string, string> = new Map();
-                    params.elements.forEach((value, key) => {
+                    for (const [key, value] of params.elements) {
                         paramsMap.set(key.toString(), value.toString());
-                    });
+                    }
                     paramsMap.set("source", "other-channel");
                     app.params = paramsMap;
                     postMessage(app);
@@ -261,11 +261,11 @@ export class RoAppManager extends BrsComponent implements BrsValue {
         impl: (_: Interpreter) => {
             const result = new RoArray([]);
             const appList = BrsDevice.deviceInfo.appList;
-            if (appList instanceof Array) {
-                appList.forEach((app) => {
+            if (Array.isArray(appList)) {
+                for (const app of appList) {
                     const appObj = { id: app.id, title: app.title, version: app.version };
                     result.elements.push(toAssociativeArray(appObj));
-                });
+                }
             }
             return result;
         },
@@ -303,7 +303,7 @@ export function compareVersions(installedVersion: string, userVersion: string): 
     for (let i = 0; i < 3; i++) {
         const installed = Number(installedParts[i]);
         const user = !userParts[i] || userParts[i].trim() === "" ? 0 : Number(userParts[i]);
-        if (installed < user || isNaN(user)) {
+        if (installed < user || Number.isNaN(user)) {
             return -1;
         } else if (installed > user) {
             return 1;
@@ -316,8 +316,8 @@ function formatVersion(version: string): string {
     let parts = version.split(".");
     parts = parts.slice(0, 3);
     const formattedParts = parts.map((part) => {
-        const num = parseInt(part, 10);
-        return isNaN(num) ? 0 : num;
+        const num = Number.parseInt(part, 10);
+        return Number.isNaN(num) ? 0 : num;
     });
     while (formattedParts.length < 3) {
         formattedParts.push(0);

@@ -251,9 +251,9 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter) => {
             const families: BrsString[] = [];
-            [...this.fontRegistry.keys()].forEach((family) => {
+            for (const family of this.fontRegistry.keys()) {
                 families.push(new BrsString(family));
-            });
+            }
             return new RoArray(families);
         },
     });

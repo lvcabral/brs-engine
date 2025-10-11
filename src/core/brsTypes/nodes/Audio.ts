@@ -127,14 +127,14 @@ export class Audio extends RoSGNode {
         const isPlaylist = this.getFieldValueJS("contentIsPlaylist") as boolean;
         if (isPlaylist) {
             const playList = node.getNodeChildren();
-            playList.forEach((node) => {
+            for (const node of playList) {
                 const url = node.getFieldValueJS("url") as string;
                 if (url?.length && url.startsWith("http")) {
                     content.push(corsProxy + url);
                 } else if (url?.length) {
                     content.push(url);
                 }
-            });
+            }
         } else {
             const url = node.getFieldValueJS("url") as string;
             if (url?.length && url.startsWith("http")) {

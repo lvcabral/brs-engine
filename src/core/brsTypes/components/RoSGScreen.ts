@@ -117,7 +117,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     }
 
     clearCanvas(rgba: number): void {
-        if (isNaN(rgba)) {
+        if (Number.isNaN(rgba)) {
             rgba = 0xff;
         }
         const ctx = this.context;
@@ -222,22 +222,22 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     /** Update all Application Tasks */
     private processTasks() {
         let updates = false;
-        rootObjects.tasks.forEach((task) => {
+        for (const task of rootObjects.tasks) {
             updates = task.updateTask();
             if (task.active) {
                 task.checkTask();
             }
-        });
+        }
         this.isDirty = updates;
     }
 
     private processTimers() {
         let fired = false;
-        rootObjects.timers.forEach((timer) => {
+        for (const timer of rootObjects.timers) {
             if (timer.active && timer.checkFire()) {
                 fired = true;
             }
-        });
+        }
         this.isDirty = fired;
     }
 

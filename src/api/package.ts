@@ -49,9 +49,9 @@ export function unsubscribePackage(observerId: string) {
     observers.delete(observerId);
 }
 function notifyAll(eventName: string, eventData?: any) {
-    observers.forEach((callback, id) => {
+    for (const [_id, callback] of observers) {
         callback(eventName, eventData);
-    });
+    }
 }
 
 // Decompress Zip and execute
@@ -124,15 +124,15 @@ function processFile(relativePath: string, fileData: Uint8Array) {
 
 function processManifest(content: string): number {
     manifestMap.clear();
-    parseManifest(content).forEach((value, key) => {
+    for (const [key, value] of parseManifest(content)) {
         manifestMap.set(key, value);
-    });
+    }
     currentApp.title = manifestMap.get("title") ?? "No Title";
     currentApp.subtitle = manifestMap.get("subtitle") ?? "";
 
-    const majorVersion = parseInt(manifestMap.get("major_version") ?? "0");
-    const minorVersion = parseInt(manifestMap.get("minor_version") ?? "0");
-    const buildVersion = parseInt(manifestMap.get("build_version") ?? "0");
+    const majorVersion = Number.parseInt(manifestMap.get("major_version") ?? "0");
+    const minorVersion = Number.parseInt(manifestMap.get("minor_version") ?? "0");
+    const buildVersion = Number.parseInt(manifestMap.get("build_version") ?? "0");
     currentApp.version = `${majorVersion}.${minorVersion}.${buildVersion}`.replace("NaN", "0");
     console.debug(`[package] App: ${currentApp.title} v${currentApp.version}`);
 
@@ -183,9 +183,9 @@ export function getSerialNumber() {
     const device = deviceData.models.get(deviceData.deviceModel);
     const prefix = device ? device[4] : "X0";
     let verPlain = "";
-    packageInfo.version.split(".").forEach((element) => {
+    for (const element of packageInfo.version.split(".")) {
         verPlain += element.replace(/\D/g, "").padStart(2, "0");
-    });
+    }
     return `${prefix}0BRS${verPlain.substring(0, 6)}`;
 }
 
@@ -234,9 +234,9 @@ export function setupDeepLink(deepLink: Map<string, string>) {
      * - "external-control" when deep linking
      */
     inputParams.set("source", "auto-run-dev");
-    deepLink.forEach((value, key) => {
+    for (const [key, value] of deepLink) {
         inputParams.set(key, value);
-    });
+    }
 }
 
 // Current App object

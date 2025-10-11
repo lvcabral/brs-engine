@@ -228,7 +228,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             BrsDevice.fileSystem.setExt(this.options.ext);
         }
         const global = new Set<string>();
-        Object.keys(StdLib)
+        const filteredFunctions = Object.keys(StdLib)
             .map((name) => (StdLib as any)[name])
             .filter((func) => func instanceof Callable)
             .filter((func: Callable) => {
@@ -237,13 +237,13 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 }
 
                 return !!func.name;
-            })
-            .forEach((func: Callable) => {
-                this._environment.define(Scope.Global, func.name ?? "", func);
-                if (func.name && GlobalFunctions.has(func.name)) {
-                    global.add(func.name);
-                }
             });
+        for (const func of filteredFunctions) {
+            this._environment.define(Scope.Global, func.name ?? "", func);
+            if (func.name && GlobalFunctions.has(func.name)) {
+                global.add(func.name);
+            }
+        }
         this._environment.define(Scope.Global, "global", new BrsInterface("ifGlobal", global));
     }
 
@@ -461,7 +461,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         // the `tab` function is only in-scope while executing print statements
         this.environment.define(Scope.Function, "Tab", StdLib.Tab);
         let printStream = "";
-        statement.expressions.forEach((printable, index) => {
+        for (const [_index, printable] of statement.expressions.entries()) {
             if (isToken(printable)) {
                 switch (printable.kind) {
                     case Lexeme.Comma: {
@@ -484,7 +484,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 printStream += str;
                 BrsDevice.stdout.position(str);
             }
-        });
+        }
         const lastExpression = statement.expressions.at(-1);
         if (!lastExpression || !isToken(lastExpression) || lastExpression.kind !== Lexeme.Semicolon) {
             printStream += "\r\n";
@@ -2118,9 +2118,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
      * @param err the ParseError to emit then throw
      */
     public addError(err: BrsError): never {
-        if (!err.backTrace) {
-            err.backTrace = this._stack.slice();
-        }
+        err.backTrace ??= this._stack.slice();
         if (!this._tryMode) {
             // do not save/emit the error if we are in a try block
             this.errors.push(err);

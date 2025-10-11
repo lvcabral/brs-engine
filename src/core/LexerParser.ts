@@ -48,26 +48,28 @@ export function getLexerParserFn(fs: FileSystem, manifest: Map<string, string>, 
             } else {
                 return Promise.reject({ message: "brs: invalid script object" });
             }
-            let lexer = new Lexer();
-            let preprocessor = new PP.Preprocessor();
-            let parser = new Parser();
-            [lexer, preprocessor, parser].forEach((emitter) => emitter.onError(logError));
+            const lexer = new Lexer();
+            const preprocessor = new PP.Preprocessor();
+            const parser = new Parser();
+            for (const emitter of [lexer, preprocessor, parser]) {
+                emitter.onError(logError);
+            }
 
-            let scanResults = lexer.scan(contents, filename);
+            const scanResults = lexer.scan(contents, filename);
             if (scanResults.errors.length > 0) {
                 return Promise.reject({
                     message: "Error occurred during lexing",
                 });
             }
 
-            let preprocessResults = preprocessor.preprocess(scanResults.tokens, manifest);
+            const preprocessResults = preprocessor.preprocess(scanResults.tokens, manifest);
             if (preprocessResults.errors.length > 0) {
                 return Promise.reject({
                     message: "Error occurred during pre-processing",
                 });
             }
 
-            let parseResults = parser.parse(preprocessResults.processedTokens);
+            const parseResults = parser.parse(preprocessResults.processedTokens);
             if (parseResults.errors.length > 0) {
                 return Promise.reject({
                     message: "Error occurred parsing",
@@ -77,14 +79,14 @@ export function getLexerParserFn(fs: FileSystem, manifest: Map<string, string>, 
             return Promise.resolve(parseResults.statements);
         }
 
-        let promises: Promise<Stmt.Statement[]>[] = [];
-        for (let script of scripts) {
+        const promises: Promise<Stmt.Statement[]>[] = [];
+        for (const script of scripts) {
             if (script.uri !== undefined) {
-                let maybeStatements = memoizedStatements.get(script.uri);
+                const maybeStatements = memoizedStatements.get(script.uri);
                 if (maybeStatements) {
                     promises.push(maybeStatements);
                 } else {
-                    let statementsPromise = lexAndParseScript(script);
+                    const statementsPromise = lexAndParseScript(script);
                     if (!memoizedStatements.has(script.uri)) {
                         memoizedStatements.set(script.uri, statementsPromise);
                     }
@@ -168,19 +170,19 @@ export function lexParseSync(
         allStatements.push(...parseResults.statements);
     }
     if (password.length === 0) {
-        lib.forEach((value: string, key: string) => {
+        for (const [key, value] of lib) {
             if (value !== "") {
                 sourceMap.set(key, value);
                 const libScan = lexer.scan(value, key);
                 const libParse = parser.parse(libScan.tokens);
                 allStatements.push(...libParse.statements);
             }
-        });
+        }
     }
     if (stats) {
-        parser.stats.forEach((count, lexeme) => {
+        for (const [lexeme, count] of parser.stats) {
             stats.set(lexeme, count.size);
-        });
+        }
     }
     return {
         exitReason: exitReason,
@@ -236,13 +238,13 @@ export function parseDecodedTokens(fs: FileSystem, manifest: Map<string, any>, d
             tokens = [];
         }
     }
-    lib.forEach((value: string, key: string) => {
+    for (const [key, value] of lib) {
         if (value !== "") {
             const libScan = lexer.scan(value, key);
             const libParse = parser.parse(libScan.tokens);
             allStatements.push(...libParse.statements);
         }
-    });
+    }
     return allStatements;
 }
 

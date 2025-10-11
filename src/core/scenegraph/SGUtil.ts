@@ -63,8 +63,8 @@ export function convertHexColor(strColor: string): number {
         if (strColor.length === 6) {
             strColor = strColor + "FF";
         }
-        color = parseInt(strColor, 16);
-        color = isNaN(color) ? -1 : color | 0;
+        color = Number.parseInt(strColor, 16);
+        color = Number.isNaN(color) ? -1 : color | 0;
     }
     return color;
 }

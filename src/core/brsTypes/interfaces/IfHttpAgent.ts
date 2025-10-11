@@ -52,13 +52,13 @@ export class IfHttpAgent {
         },
         impl: (_: Interpreter, headers: RoAssociativeArray) => {
             this.component.customHeaders.clear();
-            headers.elements.forEach((value: BrsType, key: string) => {
+            for (const [key, value] of headers.elements) {
                 if (key.toLowerCase() === "x-roku-reserved-dev-id") {
                     this.component.customHeaders.set(key, BrsDevice.deviceInfo.developerId);
                 } else {
                     this.component.customHeaders.set(key, (value as BrsString).value);
                 }
-            });
+            }
             return BrsBoolean.True;
         },
     });

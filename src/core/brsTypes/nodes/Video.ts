@@ -382,7 +382,7 @@ export class Video extends Group {
         const result: BrsType[] = [];
         this.audioTracks.length = 0;
         if (tracks.length) {
-            tracks.forEach((track) => {
+            for (const track of tracks) {
                 this.audioTracks.push(track);
                 const item = {
                     Track: track.id,
@@ -393,7 +393,7 @@ export class Video extends Group {
                     HasAccessibilityEAI: false,
                 };
                 result.push(toAssociativeArray(item));
-            });
+            }
         }
         this.set(new BrsString("availableAudioTracks"), new RoArray(result));
     }
@@ -409,7 +409,7 @@ export class Video extends Group {
         const result: BrsType[] = [];
         this.subtitleTracks.length = 0;
         if (tracks.length) {
-            tracks.forEach((track) => {
+            for (const track of tracks) {
                 this.subtitleTracks.push(track);
                 const item = {
                     TrackName: track.id,
@@ -420,7 +420,7 @@ export class Video extends Group {
                     HasAccessibilitySign: false,
                 };
                 result.push(toAssociativeArray(item));
-            });
+            }
         }
         this.set(new BrsString("availableSubtitleTracks"), new RoArray(result));
     }
@@ -707,7 +707,7 @@ export class Video extends Group {
         const isPlaylist = this.getFieldValueJS("contentIsPlaylist") as boolean;
         if (isPlaylist) {
             const playList = node.getNodeChildren();
-            playList.forEach((node) => {
+            for (const node of playList) {
                 const url = node.getFieldValueJS("url") as string;
                 if (url?.length) {
                     const item = { url: url, streamFormat: node.getFieldValueJS("streamFormat"), audioTrack: -1 };
@@ -717,7 +717,7 @@ export class Video extends Group {
                     this.contentTitles.push(node.getFieldValueJS("title") ?? "");
                     content.push(item);
                 }
-            });
+            }
         } else {
             const url = node.getFieldValueJS("url") as string;
             if (url?.length) {

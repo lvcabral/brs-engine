@@ -175,7 +175,7 @@ export class Callable implements Brs.BrsValue, Brs.Boxable {
         return interpreter.inSubEnv((subInterpreter) => {
             // first, we need to evaluate all of the parameter default values
             // and define them in a new environment
-            signature.args.forEach((param, index) => {
+            for (const [index, param] of signature.args.entries()) {
                 if (param.defaultValue && mutableArgs[index] == null) {
                     mutableArgs[index] = subInterpreter.evaluate(param.defaultValue);
                 }
@@ -186,7 +186,7 @@ export class Callable implements Brs.BrsValue, Brs.Boxable {
                     mutableArgs[index],
                     interpreter.location
                 );
-            });
+            }
 
             // then return whatever the selected implementation would return
             return impl(subInterpreter, ...mutableArgs);
@@ -295,7 +295,8 @@ export class Callable implements Brs.BrsValue, Brs.Boxable {
         }
 
         let coercedArgs = [...args];
-        signature.args.slice(0, Math.min(signature.args.length, args.length)).forEach((_value, index) => {
+        const argsToCheck = signature.args.slice(0, Math.min(signature.args.length, args.length));
+        for (const [index, _value] of argsToCheck.entries()) {
             let expected = signature.args[index];
             let received = args[index];
 
@@ -310,7 +311,7 @@ export class Callable implements Brs.BrsValue, Brs.Boxable {
                     argName: expected.name.text,
                 });
             }
-        });
+        }
 
         return {
             signature,

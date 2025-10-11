@@ -70,9 +70,9 @@ export class BrsDevice {
         } else {
             registry = data;
         }
-        registry.forEach((value: string, key: string) => {
+        for (const [key, value] of registry) {
             this.registry.set(key, value);
-        });
+        }
     }
 
     /** Stores the registry to the shared buffer */
@@ -86,9 +86,9 @@ export class BrsDevice {
             this.registryVersion = this.sharedRegistry.getVersion();
             const registry: Map<string, string> = new Map(Object.entries(this.sharedRegistry.load()));
             this.registry.clear();
-            registry.forEach((value: string, key: string) => {
+            for (const [key, value] of registry) {
                 this.registry.set(key, value);
-            });
+            }
         }
     }
 
@@ -105,22 +105,23 @@ export class BrsDevice {
      * @param deviceInfo DeviceInfo to be set
      */
     static setDeviceInfo(deviceInfo: DeviceInfo) {
-        Object.entries(deviceInfo).forEach(([key, value]) => {
-            if (!key.startsWith("registry") && key !== "assets") {
+        for (let [key, value] of Object.entries(deviceInfo)) {
+            if (key !== "registry" && key !== "assets") {
+                let newValue = value;
                 if (key === "developerId") {
                     // Prevent developerId from having "." to avoid issues on registry persistence
-                    value = value.replace(".", ":");
+                    newValue = newValue.replace(".", ":");
                 } else if (key === "corsProxy") {
                     // make sure the CORS proxy is valid URL and ends with "/"
-                    if (value.length > 0 && !value.startsWith("http")) {
-                        value = "";
-                    } else if (value.length > 0 && !value.endsWith("/")) {
-                        value += "/";
+                    if (newValue.length > 0 && !newValue.startsWith("http")) {
+                        newValue = "";
+                    } else if (newValue.length > 0 && !newValue.endsWith("/")) {
+                        newValue += "/";
                     }
                 }
-                this.deviceInfo[key] = value;
+                this.deviceInfo[key] = newValue;
             }
-        });
+        }
         this.clockFormat = BrsDevice.deviceInfo.clockFormat;
         this.timeZone = BrsDevice.deviceInfo.timeZone;
         this.locale = BrsDevice.deviceInfo.locale.replace("_", "-");
@@ -129,11 +130,11 @@ export class BrsDevice {
         if (this.fileSystem.existsSync(termsFile)) {
             const termsJson = this.fileSystem.readFileSync(termsFile, "utf8");
             if (termsJson) {
-                Object.entries(JSON.parse(termsJson)).forEach(([key, value]) => {
+                for (const [key, value] of Object.entries(JSON.parse(termsJson))) {
                     if (typeof value === "string") {
                         this.terms.set(key, value);
                     }
-                });
+                }
             }
         }
     }

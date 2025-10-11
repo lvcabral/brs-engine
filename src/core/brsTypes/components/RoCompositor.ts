@@ -77,23 +77,23 @@ export class RoCompositor extends BrsComponent implements BrsValue {
     }
 
     removeSprite(id: number, animation: boolean) {
-        this.sprites.forEach(function (layer) {
+        for (const layer of this.sprites.values()) {
             layer.some((sprite, index, object) => {
                 if (sprite.getId() === id) {
-                    object.splice(index, 1).forEach((sprite) => {
+                    for (const sprite of object.splice(index, 1)) {
                         sprite.removeReference();
-                    });
+                    }
                     return true; // break
                 }
                 return false;
             });
-        });
+        }
         if (animation) {
             this.animations.some((sprite, index, object) => {
                 if (sprite.getId() === id) {
-                    object.splice(index, 1).forEach((sprite) => {
+                    for (const sprite of object.splice(index, 1)) {
                         sprite.removeReference();
-                    });
+                    }
                     return true; // break
                 }
                 return false;
@@ -165,18 +165,18 @@ export class RoCompositor extends BrsComponent implements BrsValue {
         if (this.destBitmap) {
             this.destBitmap.drawImageToContext(this.canvas, 0, 0);
             let layers = [...this.sprites.keys()].sort((a, b) => a - b);
-            layers.forEach((z) => {
+            for (const z of layers) {
                 const layer = this.sprites.get(z);
                 if (layer) {
-                    layer.forEach((sprite) => {
+                    for (const sprite of layer) {
                         if (sprite.visible()) {
                             drawObjectToComponent(this, sprite.getRegionObject(), sprite.getPosX(), sprite.getPosY());
                             this.previousSpriteDraws.push(sprite.getRect());
                         }
-                    });
+                    }
                     this.destBitmap?.drawImageToContext(this.canvas, 0, 0);
                 }
-            });
+            }
         }
     }
 
@@ -190,14 +190,14 @@ export class RoCompositor extends BrsComponent implements BrsValue {
 
     dispose() {
         this.destBitmap?.removeReference();
-        this.sprites.forEach((layer) => {
-            layer.forEach((sprite) => {
+        for (const layer of this.sprites.values()) {
+            for (const sprite of layer) {
                 sprite.removeReference();
-            });
-        });
-        this.animations.forEach((sprite) => {
+            }
+        }
+        for (const sprite of this.animations) {
             sprite.removeReference();
-        });
+        }
         releaseCanvas(this.canvas);
     }
 
@@ -296,9 +296,9 @@ export class RoCompositor extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, duration: Int32) => {
-            this.animations.forEach((sprite) => {
+            for (const sprite of this.animations) {
                 sprite.nextFrame(duration.getValue());
-            });
+            }
             return BrsInvalid.Instance;
         },
     });

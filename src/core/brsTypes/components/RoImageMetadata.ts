@@ -65,7 +65,7 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
                     tagValue = this.processBufferTag(tagType, tag.value);
                 } else if (tag.value instanceof ArrayBuffer) {
                     tagValue = this.processBufferTag(tagType, Buffer.from(tag.value));
-                } else if (tag.value instanceof Array) {
+                } else if (Array.isArray(tag.value)) {
                     if (tagType === "GPSTimeStamp") {
                         tagValue = tag.value.join(":");
                     } else if (tagType === "SubjectArea") {
@@ -276,11 +276,11 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
                 parser.enableTagNames(false);
                 parser.enableImageSize(false);
                 const result = parser.parse();
-                result.tags.forEach((tag: any) => {
+                for (const tag of result.tags) {
                     const tagsMap = tag.section === ExifSections.GPS ? exifTags.gps : exifTags.exif;
                     const tagTypeName = tagsMap.get(tag.type as number) ?? "";
                     if (tagTypeName === "") {
-                        return;
+                        continue;
                     }
                     if (tag.section === ExifSections.EXIF || tag.section === ExifSections.Interop) {
                         if (tagTypeName.startsWith("Interop")) {
@@ -295,7 +295,7 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
                     } else if (tag.section === ExifSections.Thumbnail) {
                         sectionThumbnail.set(tagTypeName, this.getTagData(tag));
                     }
-                });
+                }
                 const rawExif = {
                     exif: sectionExif,
                     gps: sectionGPS,

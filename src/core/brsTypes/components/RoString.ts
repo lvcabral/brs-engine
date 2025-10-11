@@ -567,13 +567,13 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
             // Documentation: https://developer.roku.com/docs/references/brightscript/language/format-strings.md
             let args: any[] = [];
             if (additionalArgs.length > 0) {
-                additionalArgs.forEach((element) => {
+                for (const element of additionalArgs) {
                     if (isBrsNumber(element)) {
                         args.push(element.getValue());
                     } else if (element instanceof BrsString) {
                         args.push(element.value);
                     }
-                });
+                }
             }
             try {
                 return new BrsString(sprintf(this.intrinsic.value, ...args));

@@ -154,12 +154,12 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
             let root = Object.keys(this.parsedXML)[0];
             for (let [key, value] of Object.entries(this.parsedXML[root])) {
                 if (key !== "$" && key !== "_") {
-                    if (value instanceof Array) {
-                        value.forEach((item) => {
+                    if (Array.isArray(value)) {
+                        for (const item of value) {
                             let element = new RoXMLElement();
                             element.parsedXML = { [key]: item };
                             elements.add(element);
-                        });
+                        }
                     }
                 }
             }
@@ -173,12 +173,12 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
             let root = Object.keys(this.parsedXML)[0];
             for (let [key, value] of Object.entries(this.parsedXML[root])) {
                 if (key !== "$") {
-                    if (value instanceof Array) {
-                        value.forEach((item) => {
+                    if (Array.isArray(value)) {
+                        for (const item of value) {
                             let element = new RoXMLElement();
                             element.parsedXML = { [key]: item };
                             nodes.add(element);
-                        });
+                        }
                     } else if (typeof value === "string") {
                         nodes.add(new BrsString(value));
                     }
@@ -198,12 +198,12 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
             for (let [key, value] of Object.entries(this.parsedXML[root])) {
                 let cKey = ci ? key.toLocaleLowerCase() : key;
                 if (cKey === name) {
-                    if (value instanceof Array) {
-                        value.forEach((item) => {
+                    if (Array.isArray(value)) {
+                        for (const item of value) {
                             let element = new RoXMLElement();
                             element.parsedXML = { [key]: item };
                             elements.add(element);
-                        });
+                        }
                     }
                 }
             }

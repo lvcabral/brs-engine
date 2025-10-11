@@ -92,7 +92,7 @@ export function initDisplayModule(deviceInfo: DeviceInfo, perfStats = false) {
         videoState = event;
         if (videoState === "play" && !videoLoop) {
             videoLoop = true;
-            lastFrameReq = window.requestAnimationFrame(drawVideoFrame);
+            lastFrameReq = globalThis.requestAnimationFrame(drawVideoFrame);
         }
     });
     setCaptionStyle(deviceInfo.captionStyle);
@@ -107,21 +107,21 @@ export function unsubscribeDisplay(observerId: string) {
     observers.delete(observerId);
 }
 function notifyAll(eventName: string, eventData?: any) {
-    observers.forEach((callback, id) => {
+    for (const [_id, callback] of observers) {
         callback(eventName, eventData);
-    });
+    }
 }
 
 // Redraw Display Canvas
 export function redrawDisplay(running?: boolean, fullScreen?: boolean, width?: number, height?: number, dpr?: number) {
     if (!width) {
-        width = window.innerWidth;
+        width = globalThis.innerWidth;
     }
     if (!height) {
-        height = window.innerHeight;
+        height = globalThis.innerHeight;
     }
     if (!dpr) {
-        dpr = window.devicePixelRatio;
+        dpr = globalThis.devicePixelRatio;
     }
     screenSize.width = width;
     screenSize.height = Math.trunc(screenSize.width / aspectRatio);
@@ -200,7 +200,7 @@ export function updateBuffer(buffer: ImageData) {
         });
         if (!videoLoop) {
             clearDisplay();
-            lastFrameReq = window.requestAnimationFrame(drawBufferImage);
+            lastFrameReq = globalThis.requestAnimationFrame(drawBufferImage);
         }
     }
 }
@@ -469,7 +469,7 @@ export function showDisplay() {
 // Clear Display and Buffer
 export function clearDisplay(cancelFrame?: boolean) {
     if (cancelFrame) {
-        window.cancelAnimationFrame(lastFrameReq);
+        globalThis.cancelAnimationFrame(lastFrameReq);
         videoLoop = false;
     }
     if (ctx && platform.inSafari) {

@@ -141,7 +141,9 @@ export class ContentNode extends RoSGNode {
         super.set(index, value, alwaysNotify, kind);
         // Propagate changes notification to parent fields
         if (this.parentFields.size && this.notified) {
-            this.parentFields.forEach((field) => field.notifyObservers());
+            for (const field of this.parentFields) {
+                field.notifyObservers();
+            }
         }
         return BrsInvalid.Instance;
     }

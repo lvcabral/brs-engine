@@ -67,7 +67,9 @@ class BrsObjectsMap {
     private readonly map = new Map<string, { originalKey: string; value: Function; params: number }>();
 
     constructor(entries: [string, Function, number?][]) {
-        entries.forEach(([key, value, params]) => this.set(key, value, params));
+        for (const [key, value, params] of entries) {
+            this.set(key, value, params);
+        }
     }
 
     get(key: string) {

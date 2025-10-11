@@ -119,9 +119,9 @@ export class SGNodeFactory {
      * @param types Array of pairs of [nodeTypeName, construction function], such that when a given nodeType is requested, the construction function is called and returns one of those components
      */
     public static addNodeTypes(types: [string, (name: string) => RoSGNode][]) {
-        types.forEach(([nodeType, ctor]) => {
+        for (const [nodeType, ctor] of types) {
             this.additionalNodes.set(nodeType.toLowerCase(), ctor);
-        });
+        }
     }
 
     public static createNode(nodeType: SGNodeType | string, nodeName?: string): RoSGNode | undefined {

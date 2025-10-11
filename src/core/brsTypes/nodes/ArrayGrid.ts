@@ -408,7 +408,7 @@ export class ArrayGrid extends Group {
         if (content.length === 0) {
             return itemIndex;
         }
-        content.forEach((_item, index) => {
+        for (const [index, _item] of content.entries()) {
             const metadata = { index: itemIndex, divider: false, sectionTitle: "" };
             if (index === 0) {
                 metadata.divider = true;
@@ -416,7 +416,7 @@ export class ArrayGrid extends Group {
             }
             this.metadata.push(metadata);
             itemIndex++;
-        });
+        }
         this.content.push(...content);
         // check if the items count is multiple of numCols, otherwise fill with empty nodes
         const remainder = content.length % numCols;

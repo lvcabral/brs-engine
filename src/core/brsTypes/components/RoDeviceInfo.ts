@@ -605,7 +605,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         impl: (_: Interpreter, feature: BrsString) => {
             const features = ["gaming_hardware", "usb_hardware", "simulation_engine"];
             const custom = BrsDevice.deviceInfo.customFeatures;
-            if (custom instanceof Array && custom.length > 0) {
+            if (Array.isArray(custom) && custom.length > 0) {
                 features.push(...custom);
             }
             for (const [key, value] of Object.entries(platform)) {
@@ -931,9 +931,11 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
                 });
             }
             result.ipv6 = new RoArray([]);
-            connInfo.dns?.forEach((dns: string, index: number) => {
-                result[`dns.${index}`] = dns;
-            });
+            if (connInfo.dns) {
+                for (const [index, dns] of connInfo.dns.entries()) {
+                    result[`dns.${index}`] = dns;
+                }
+            }
             result.mac = "00:00:00:00:00:00";
             result.expectedThroughput = 129;
             return toAssociativeArray(result);
@@ -1013,9 +1015,9 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter) => {
             const result: FlexObject = {};
-            BrsDevice.deviceInfo.localIps.forEach(function (iface: string) {
+            for (const iface of BrsDevice.deviceInfo.localIps) {
                 result[iface.split(",")[0]] = iface.split(",")[1];
-            });
+            }
             return toAssociativeArray(result);
         },
     });

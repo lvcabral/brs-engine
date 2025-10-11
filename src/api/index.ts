@@ -140,11 +140,11 @@ export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any 
             "password",
             "platform",
         ];
-        invalidKeys.forEach((key) => {
+        for (const key of invalidKeys) {
             if (key in customDeviceInfo) {
                 delete customDeviceInfo[key];
             }
-        });
+        }
         Object.assign(deviceData, customDeviceInfo);
     }
     let initMsg = `${packageInfo.title} - v${packageInfo.version}`;
@@ -259,9 +259,9 @@ export function unsubscribe(observerId: string) {
     observers.delete(observerId);
 }
 function notifyAll(eventName: string, eventData?: any) {
-    observers.forEach((callback, id) => {
+    for (const [_id, callback] of observers) {
         callback(eventName, eventData);
-    });
+    }
 }
 
 // Execute App Zip or Source File
@@ -407,10 +407,10 @@ export function debug(command: string): boolean {
 function resetWorker() {
     brsWorker.removeEventListener("message", mainCallback);
     brsWorker.terminate();
-    tasks.forEach((worker) => {
+    for (const [_id, worker] of tasks) {
         worker?.removeEventListener("message", taskCallback);
         worker?.terminate();
-    });
+    }
     tasks.clear();
     threadSyncToTask.clear();
     threadSyncToMain.clear();
@@ -547,7 +547,7 @@ export function updateMemoryInfo(usedMemory?: number, totalMemory?: number) {
         Atomics.store(sharedArray, DataType.MHSL, totalMemory);
         return;
     }
-    const performance = window.performance as ChromiumPerformance;
+    const performance = globalThis.performance as ChromiumPerformance;
     if (currentApp.running && platform.inChromium && performance.memory) {
         // Only Chromium based browsers support process.memory API
         const memory = performance.memory;
@@ -558,7 +558,7 @@ export function updateMemoryInfo(usedMemory?: number, totalMemory?: number) {
 
 // Load device Registry from Local Storage
 function loadRegistry() {
-    const storage: Storage = window.localStorage;
+    const storage: Storage = globalThis.localStorage;
     const transientKeys: string[] = [];
     const registry: Map<string, string> = new Map();
     for (let index = 0; index < storage.length; index++) {
@@ -571,7 +571,9 @@ function loadRegistry() {
             }
         }
     }
-    transientKeys.forEach((key) => storage.removeItem(key));
+    for (const key of transientKeys) {
+        storage.removeItem(key);
+    }
     registryBuffer.store(Object.fromEntries(registry));
     deviceData.registryBuffer = registryBuffer.getBuffer();
 }
@@ -582,17 +584,17 @@ function mainCallback(event: MessageEvent) {
         updateBuffer(event.data);
     } else if (event.data instanceof Map) {
         if (platform.inBrowser) {
-            const storage: Storage = window.localStorage;
-            event.data.forEach(function (value: string, key: string) {
+            const storage: Storage = globalThis.localStorage;
+            for (const [key, value] of event.data) {
                 storage.setItem(key, value);
-            });
+            }
         }
         notifyAll("registry", event.data);
-    } else if (platform.inBrowser && event.data.audioPlaylist instanceof Array) {
+    } else if (platform.inBrowser && Array.isArray(event.data.audioPlaylist)) {
         addAudioPlaylist(event.data.audioPlaylist);
     } else if (platform.inBrowser && event.data.audioPath) {
         addSound(event.data.audioPath, event.data.audioFormat, new Blob([event.data.audioData]));
-    } else if (platform.inBrowser && event.data.videoPlaylist instanceof Array) {
+    } else if (platform.inBrowser && Array.isArray(event.data.videoPlaylist)) {
         addVideoPlaylist(event.data.videoPlaylist);
     } else if (platform.inBrowser && event.data.videoPath) {
         addVideo(event.data.videoPath, new Blob([event.data.videoData], { type: "video/mp4" }));
@@ -602,7 +604,7 @@ function mainCallback(event: MessageEvent) {
         if (setCaptionMode(event.data.captionMode)) {
             notifyAll("captionMode", event.data.captionMode);
         }
-    } else if (event.data.captionStyle instanceof Array) {
+    } else if (Array.isArray(event.data.captionStyle)) {
         setAppCaptionStyle(event.data.captionStyle);
     } else if (typeof event.data.trickPlayBarVisible === "boolean") {
         setTrickPlayBar(event.data.trickPlayBarVisible);
@@ -650,8 +652,12 @@ function mainCallback(event: MessageEvent) {
             });
             if (windowSize) {
                 const dims = windowSize.split("=")[1]?.split("x");
-                if (dims?.length === 2 && !isNaN(parseInt(dims[0])) && !isNaN(parseInt(dims[1]))) {
-                    winDim = dims.map((el) => parseInt(el));
+                if (
+                    dims?.length === 2 &&
+                    !Number.isNaN(Number.parseInt(dims[0])) &&
+                    !Number.isNaN(Number.parseInt(dims[1]))
+                ) {
+                    winDim = dims.map((el) => Number.parseInt(el));
                 }
             }
             const url = params.find((el) => el.startsWith("url="))?.split("=")[1] ?? "";
@@ -661,12 +667,12 @@ function mainCallback(event: MessageEvent) {
             const app = deviceData.appList?.find((app) => app.id === channelId);
             if (app || channelId?.startsWith("http")) {
                 const params = new Map();
-                event.data.params.forEach((el) => {
+                for (const el of event.data.params) {
                     const [key, value] = el.split("=");
                     if (key && value && key.toLowerCase() !== "channelid") {
                         params.set(key, value);
                     }
-                });
+                }
                 notifyAll("launch", { app: app?.id ?? channelId, params: params });
             } else {
                 apiException("warning", `[api] NDKLauncher channel not found: ${channelId}`);
@@ -685,9 +691,9 @@ function taskCallback(event: MessageEvent) {
     if (event.data instanceof Map) {
         if (platform.inBrowser) {
             const storage: Storage = window.localStorage;
-            event.data.forEach(function (value: string, key: string) {
+            for (const [key, value] of event.data) {
                 storage.setItem(key, value);
-            });
+            }
         }
         notifyAll("registry", event.data);
     } else if (typeof event.data.displayEnabled === "boolean") {
@@ -696,7 +702,7 @@ function taskCallback(event: MessageEvent) {
         if (setCaptionMode(event.data.captionMode)) {
             notifyAll("captionMode", event.data.captionMode);
         }
-    } else if (event.data.captionStyle instanceof Array) {
+    } else if (Array.isArray(event.data.captionStyle)) {
         setAppCaptionStyle(event.data.captionStyle);
     } else if (isTaskData(event.data)) {
         console.debug("[API] Task data received from Task Thread: ", event.data.name, TaskState[event.data.state]);
@@ -850,7 +856,7 @@ function apiException(level: string, message: string) {
 }
 
 // HDMI/CEC Status Update
-window.onfocus = function () {
+globalThis.onfocus = function () {
     if (currentApp.running) {
         if (getModelType() !== "TV") {
             Atomics.store(sharedArray, DataType.HDMI, 1);
@@ -859,7 +865,7 @@ window.onfocus = function () {
     }
 };
 
-window.onblur = function () {
+globalThis.onblur = function () {
     if (currentApp.running) {
         if (getModelType() !== "TV") {
             Atomics.store(sharedArray, DataType.HDMI, 0);

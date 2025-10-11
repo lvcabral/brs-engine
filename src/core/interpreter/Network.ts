@@ -17,9 +17,11 @@ export function download(
         const xhr = new XMLHttpRequest();
         xhr.open("GET", url, false); // Note: synchronous
         xhr.responseType = type;
-        customHeaders?.forEach((value: string, key: string) => {
-            xhr.setRequestHeader(key, value);
-        });
+        if (customHeaders) {
+            for (const [key, value] of customHeaders) {
+                xhr.setRequestHeader(key, value);
+            }
+        }
         if (cookiesEnabled !== undefined) {
             xhr.withCredentials = cookiesEnabled;
         }
@@ -114,7 +116,7 @@ export function isValidIP(ip: string): boolean {
         parts.length === 4 &&
         parts.every((part) => {
             const num = Number(part);
-            return !isNaN(num) && num >= 0 && num <= 255;
+            return !Number.isNaN(num) && num >= 0 && num <= 255;
         })
     );
 }

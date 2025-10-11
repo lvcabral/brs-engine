@@ -689,7 +689,7 @@ function setContextAlpha(ctx: BrsCanvasContext2D, rgba?: number) {
 
 function getCanvasFromDraw2d(object: BrsDraw2D, rgba?: number): BrsCanvas {
     let cvs: BrsCanvas;
-    if (rgba !== undefined && !isNaN(rgba) && !(object instanceof RoScreen)) {
+    if (rgba !== undefined && !Number.isNaN(rgba) && !(object instanceof RoScreen)) {
         cvs = object.getRgbaCanvas(rgba);
     } else {
         cvs = object.getCanvas();

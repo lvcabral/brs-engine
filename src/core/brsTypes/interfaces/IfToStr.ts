@@ -73,7 +73,7 @@ export class IfToStr {
             if (tokens === 0) {
                 return new BrsString(format.value);
             }
-            const params = Array(tokens).fill(this.component.getValue());
+            const params = new Array(tokens).fill(this.component.getValue());
             try {
                 return new BrsString(vsprintf(format.value, params));
             } catch (err: any) {

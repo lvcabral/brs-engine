@@ -34,12 +34,12 @@ export class RoRegistry extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, section: BrsString) => {
             BrsDevice.refreshRegistry();
-            [...BrsDevice.registry.keys()].forEach((key) => {
+            for (const key of BrsDevice.registry.keys()) {
                 let regSection = `${this.devId}.${section}`;
                 if (key.startsWith(regSection)) {
                     BrsDevice.registry.delete(key);
                 }
-            });
+            }
             return BrsBoolean.True;
         },
     });
@@ -65,12 +65,12 @@ export class RoRegistry extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter) => {
             BrsDevice.refreshRegistry();
-            const sections = new Set<string>();
-            [...BrsDevice.registry.keys()].forEach((key) => {
+            let sections = new Set<string>();
+            for (const key of BrsDevice.registry.keys()) {
                 if (key.split(".")[0] === this.devId) {
                     sections.add(key.split(".")[1]);
                 }
-            });
+            }
             return new RoList(
                 [...sections].map(function (value: string) {
                     return new BrsString(value);
@@ -88,12 +88,12 @@ export class RoRegistry extends BrsComponent implements BrsValue {
         impl: (_: Interpreter) => {
             BrsDevice.refreshRegistry();
             let space = 32 * 1024;
-            BrsDevice.registry.forEach((value, key) => {
+            for (const [key, value] of BrsDevice.registry) {
                 if (key.split(".")[0] === this.devId) {
                     space -= Buffer.byteLength(key.substring(this.devId.length + 1), "utf8");
                     space -= Buffer.byteLength(value, "utf8");
                 }
-            });
+            }
             return new Int32(space);
         },
     });

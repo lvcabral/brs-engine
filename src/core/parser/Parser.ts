@@ -1633,9 +1633,9 @@ export class Parser {
                         consume("Unmatched '{' - expected '}' after associative array literal", Lexeme.RightBrace);
                         if (members.length) {
                             countIdentifier("");
-                            members.forEach((member) => {
+                            for (const member of members) {
                                 countIdentifier(member.name.value);
-                            });
+                            }
                         }
                     }
 
