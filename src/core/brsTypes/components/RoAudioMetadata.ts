@@ -84,8 +84,8 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
     }
 
     private parseIntSafe(str: string): number {
-        const result = parseInt(str, 10);
-        return isNaN(result) ? 0 : result;
+        const result = Number.parseInt(str, 10);
+        return Number.isNaN(result) ? 0 : result;
     }
 
     // ifAudioMetadata -------------------------------------------

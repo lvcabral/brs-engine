@@ -729,8 +729,8 @@ async function executeApp(
 ) {
     let exitReason: AppExitReason = AppExitReason.FINISHED;
     try {
-        let splashMinTime = parseInt(payload.manifest.get("splash_min_time") ?? "");
-        if (isNaN(splashMinTime)) {
+        let splashMinTime = Number.parseInt(payload.manifest.get("splash_min_time") ?? "");
+        if (Number.isNaN(splashMinTime)) {
             splashMinTime = 1600; // Roku default value
         }
         let splashTime = Date.now() - payload.launchTime;

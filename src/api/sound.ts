@@ -64,15 +64,15 @@ export function handleAudioEvent(eventData: string) {
     } else if (data[1] === "loop" && data.length >= 3) {
         setLoop(data[2] === "true");
     } else if (data[1] === "next" && data.length >= 3) {
-        const newIndex = parseInt(data[2]);
-        if (isNaN(newIndex)) {
+        const newIndex = Number.parseInt(data[2]);
+        if (Number.isNaN(newIndex)) {
             notifyAll("warning", `[sound] Invalid next index: ${eventData}`);
             return;
         }
         setNext(newIndex);
     } else if (data[1] === "seek" && data.length >= 3) {
-        const position = parseInt(data[2]);
-        if (isNaN(position)) {
+        const position = Number.parseInt(data[2]);
+        if (Number.isNaN(position)) {
             notifyAll("warning", `[sound] Invalid seek position: ${eventData}`);
             return;
         }
@@ -86,11 +86,11 @@ export function handleSfxEvent(eventData: string) {
     const data = eventData.split(",");
     if (data[1] === "new" && data.length >= 4) {
         const wav = data[2];
-        const id = parseInt(data[3]);
+        const id = Number.parseInt(data[3]);
         if (sfxMap.has(wav.toLowerCase())) {
             // Sound Effect already registered
             return;
-        } else if (isNaN(id) || id < 0) {
+        } else if (Number.isNaN(id) || id < 0) {
             notifyAll("warning", `[sound] Invalid SFX index: ${id} for ${wav}`);
             return;
         }
@@ -112,7 +112,7 @@ export function handleSfxEvent(eventData: string) {
         });
         sfxMap.set(wav.toLowerCase(), { id: id, sound: sound });
     } else if (data[1] === "trigger" && data.length >= 5) {
-        triggerSfx(data[2], parseInt(data[3]), parseInt(data[4]));
+        triggerSfx(data[2], Number.parseInt(data[3]), Number.parseInt(data[4]));
     } else if (data[1] === "stop" && data.length >= 3) {
         stopSfx(data[2]);
     } else {

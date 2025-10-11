@@ -555,8 +555,8 @@ function workerCallback(event: MessageEvent) {
             });
             if (windowSize) {
                 const dims = windowSize.split("=")[1]?.split("x");
-                if (dims?.length === 2 && !isNaN(parseInt(dims[0])) && !isNaN(parseInt(dims[1]))) {
-                    winDim = dims.map((el) => parseInt(el));
+                if (dims?.length === 2 && !isNaN(Number.parseInt(dims[0])) && !isNaN(Number.parseInt(dims[1]))) {
+                    winDim = dims.map((el) => Number.parseInt(el));
                 }
             }
             const url = params.find((el) => el.startsWith("url="))?.split("=")[1] ?? "";
