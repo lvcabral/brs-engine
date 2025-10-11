@@ -53,7 +53,7 @@ export class RowList extends ArrayGrid {
     protected readonly rowFocus: number[];
     protected readonly rowScrollOffset: number[] = []; // Track scroll offset per row for floating focus
     protected wrapCol: boolean;
-    private titleHeight: number;
+    private readonly titleHeight: number;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = "RowList") {
         super([], name);
@@ -182,15 +182,12 @@ export class RowList extends ArrayGrid {
                     }
                 }
                 // else: Returning to a previously visited row - preserve saved scroll offset
-            } else {
-                // Within same row, adjust scroll to keep focused item visible
-                if (colIndex < this.rowScrollOffset[rowIndex]) {
-                    // Focused item is before visible area, scroll left
-                    this.rowScrollOffset[rowIndex] = colIndex;
-                } else if (colIndex >= this.rowScrollOffset[rowIndex] + maxVisibleItems) {
-                    // Focused item is after visible area, scroll right to show it at the right edge
-                    this.rowScrollOffset[rowIndex] = colIndex - maxVisibleItems + 1;
-                }
+            } else if (colIndex < this.rowScrollOffset[rowIndex]) {
+                // Focused item is before visible area, scroll left
+                this.rowScrollOffset[rowIndex] = colIndex;
+            } else if (colIndex >= this.rowScrollOffset[rowIndex] + maxVisibleItems) {
+                // Focused item is after visible area, scroll right to show it at the right edge
+                this.rowScrollOffset[rowIndex] = colIndex - maxVisibleItems + 1;
             }
         }
 
@@ -244,9 +241,7 @@ export class RowList extends ArrayGrid {
         }
 
         // Initialize scroll offset for this row if not set
-        if (this.rowScrollOffset[currentRow] === undefined) {
-            this.rowScrollOffset[currentRow] = 0;
-        }
+        this.rowScrollOffset[currentRow] ??= 0;
 
         // Check if all items fit on screen to determine wrap behavior
         const itemSize = this.getFieldValueJS("itemSize") as number[];
@@ -309,39 +304,31 @@ export class RowList extends ArrayGrid {
                     if (focusScreenPosition < rightEdgeThreshold) {
                         // Focus can still move right without scrolling
                         this.rowFocus[currentRow] = currentFocusedCol + 1;
-                    } else {
+                    } else if (currentScrollOffset + maxVisibleItems < numCols) {
                         // Focus is at right edge, scroll the content
-                        if (currentScrollOffset + maxVisibleItems < numCols) {
-                            this.rowScrollOffset[currentRow] = currentScrollOffset + 1;
-                            this.rowFocus[currentRow] = currentFocusedCol + 1;
-                        } else {
-                            // Already showing last items, just move focus to last item
-                            this.rowFocus[currentRow] = numCols - 1;
-                        }
-                    }
-                    handled = true;
-                }
-            } else {
-                // Moving left
-                if (currentFocusedCol > 0) {
-                    // Not at the first item yet
-                    if (focusScreenPosition > 0) {
-                        // Focus can still move left without scrolling
-                        this.rowFocus[currentRow] = currentFocusedCol - 1;
+                        this.rowScrollOffset[currentRow] = currentScrollOffset + 1;
+                        this.rowFocus[currentRow] = currentFocusedCol + 1;
                     } else {
-                        // Focus is at left edge, scroll the content
-                        if (currentScrollOffset > 0) {
-                            this.rowScrollOffset[currentRow] = currentScrollOffset - 1;
-                            this.rowFocus[currentRow] = currentFocusedCol - 1;
-                        } else {
-                            // Already at start, just move focus to first item
-                            this.rowFocus[currentRow] = 0;
-                        }
+                        // Already showing last items, just move focus to last item
+                        this.rowFocus[currentRow] = numCols - 1;
                     }
                     handled = true;
                 }
+            } else if (currentFocusedCol > 0) { // Moving left
+                // Not at the first item yet
+                if (focusScreenPosition > 0) {
+                    // Focus can still move left without scrolling
+                    this.rowFocus[currentRow] = currentFocusedCol - 1;
+                } else if (currentScrollOffset > 0) {
+                    // Focus is at left edge, scroll the content
+                    this.rowScrollOffset[currentRow] = currentScrollOffset - 1;
+                    this.rowFocus[currentRow] = currentFocusedCol - 1;
+                } else {
+                    // Already at start, just move focus to first item
+                    this.rowFocus[currentRow] = 0;
+                }
+                handled = true;
             }
-
             if (handled) {
                 super.set(
                     new BrsString("rowItemFocused"),
@@ -432,8 +419,8 @@ export class RowList extends ArrayGrid {
                 this.rowScrollOffset[rowIndex] = 0;
             }
 
-            let startCol = 0;
-            let renderMode = "normal"; // normal, fixedFocusWrap, or scroll
+            let startCol: number; // First column to render
+            let renderMode: string; // normal, fixedFocusWrap, or scroll
 
             if (allItemsFitOnScreen) {
                 // All items fit: render from column 0
@@ -441,11 +428,11 @@ export class RowList extends ArrayGrid {
                 renderMode = "normal";
             } else if (rowFocusStyle === "fixedFocusWrap") {
                 // Fixed focus wrap: render items starting from focused position
-                startCol = this.rowFocus[rowIndex] || 0;
+                startCol = this.rowFocus[rowIndex] ?? 0;
                 renderMode = "fixedFocusWrap";
             } else {
                 // floatingFocus or fixedFocus: render from scroll offset
-                startCol = this.rowScrollOffset[rowIndex] || 0;
+                startCol = this.rowScrollOffset[rowIndex] ?? 0;
                 renderMode = "scroll";
             }
 
@@ -563,7 +550,7 @@ export class RowList extends ArrayGrid {
         if (title.length !== 0) {
             const font = this.getFieldValue("rowLabelFont") as Font;
             const color = this.getFieldValueJS("rowLabelColor");
-            const size = this.drawText(
+            this.drawText(
                 title,
                 font,
                 color,
