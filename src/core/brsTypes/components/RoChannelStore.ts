@@ -107,7 +107,7 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
                 status.code = -3;
                 status.message = "Order Mismatch";
             }
-            if (orderData.order instanceof Array) {
+            if (Array.isArray(orderData.order)) {
                 order = orderData.order.filter((item) => item instanceof RoAssociativeArray);
             }
         }

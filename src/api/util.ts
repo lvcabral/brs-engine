@@ -70,7 +70,7 @@ export async function bufferToBase64(buffer: Uint8Array | ArrayBuffer) {
 
 // Check if a variable is number
 export function isNumber(value?: string | number): boolean {
-    return value != null && value !== "" && !isNaN(Number(value.toString()));
+    return value != null && value !== "" && !Number.isNaN(Number(value.toString()));
 }
 
 // Map to convert a 3-letter ISO 639-2 language code to a 2-letter ISO 639-1 code.

@@ -129,7 +129,7 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
                     year: 0,
                     track: 0,
                 });
-                if (audioProps instanceof Array && audioProps.length > 0) {
+                if (Array.isArray(audioProps) && audioProps.length > 0) {
                     for (let section of audioProps) {
                         if (section?._section?.type === "ID3v2") {
                             this.updateTagsFromSection(tags, section.frames);
@@ -161,7 +161,7 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
             }
             try {
                 const audioProps = mp3Parser.readTags(this.fileData);
-                if (audioProps instanceof Array && audioProps.length > 0) {
+                if (Array.isArray(audioProps) && audioProps.length > 0) {
                     const properties: FlexObject = {};
                     for (let section of audioProps) {
                         if (section?._section?.type !== "frame") {
@@ -204,7 +204,7 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
             }
             try {
                 const audioProps = mp3Parser.readTags(this.fileData);
-                if (audioProps instanceof Array && audioProps.length > 0) {
+                if (Array.isArray(audioProps) && audioProps.length > 0) {
                     for (let section of audioProps) {
                         if (section?._section?.type === "ID3v2") {
                             const coverArt = this.getCoverArtFromSection(section.frames);

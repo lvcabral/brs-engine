@@ -7,7 +7,7 @@
  *--------------------------------------------------------------------------------------------*/
 import { enableSendKeys, initControlModule, sendInput, sendKey, subscribeControl } from "../api/control";
 import { DataType, DebugCommand, DeviceInfo, getRokuOSVersion } from "../core/common";
-import { isMainThread, parentPort, workerData } from "worker_threads";
+import { isMainThread, parentPort, workerData } from "node:worker_threads";
 import { Server as SSDP } from "@lvcabral/node-ssdp";
 import xmlbuilder from "xmlbuilder";
 import os from "node:os";
@@ -577,7 +577,7 @@ function isValidIP(ip: any): boolean {
         parts.length === 4 &&
         parts.every((part) => {
             const num = Number(part);
-            return !isNaN(num) && num >= 0 && num <= 255;
+            return !Number.isNaN(num) && num >= 0 && num <= 255;
         })
     );
 }

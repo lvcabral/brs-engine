@@ -65,7 +65,7 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
                     tagValue = this.processBufferTag(tagType, tag.value);
                 } else if (tag.value instanceof ArrayBuffer) {
                     tagValue = this.processBufferTag(tagType, Buffer.from(tag.value));
-                } else if (tag.value instanceof Array) {
+                } else if (Array.isArray(tag.value)) {
                     if (tagType === "GPSTimeStamp") {
                         tagValue = tag.value.join(":");
                     } else if (tagType === "SubjectArea") {

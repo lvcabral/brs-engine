@@ -116,7 +116,7 @@ export function isValidIP(ip: string): boolean {
         parts.length === 4 &&
         parts.every((part) => {
             const num = Number(part);
-            return !isNaN(num) && num >= 0 && num <= 255;
+            return !Number.isNaN(num) && num >= 0 && num <= 255;
         })
     );
 }

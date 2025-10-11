@@ -529,11 +529,11 @@ function workerCallback(event: MessageEvent) {
             }
         }
         notifyAll("registry", event.data);
-    } else if (platform.inBrowser && event.data.audioPlaylist instanceof Array) {
+    } else if (platform.inBrowser && Array.isArray(event.data.audioPlaylist)) {
         addAudioPlaylist(event.data.audioPlaylist);
     } else if (platform.inBrowser && event.data.audioPath) {
         addSound(event.data.audioPath, event.data.audioFormat, new Blob([event.data.audioData]));
-    } else if (platform.inBrowser && event.data.videoPlaylist instanceof Array) {
+    } else if (platform.inBrowser && Array.isArray(event.data.videoPlaylist)) {
         addVideoPlaylist(event.data.videoPlaylist);
     } else if (platform.inBrowser && event.data.videoPath) {
         addVideo(event.data.videoPath, new Blob([event.data.videoData], { type: "video/mp4" }));
@@ -555,7 +555,11 @@ function workerCallback(event: MessageEvent) {
             });
             if (windowSize) {
                 const dims = windowSize.split("=")[1]?.split("x");
-                if (dims?.length === 2 && !isNaN(Number.parseInt(dims[0])) && !isNaN(Number.parseInt(dims[1]))) {
+                if (
+                    dims?.length === 2 &&
+                    !Number.isNaN(Number.parseInt(dims[0])) &&
+                    !Number.isNaN(Number.parseInt(dims[1]))
+                ) {
                     winDim = dims.map((el) => Number.parseInt(el));
                 }
             }
