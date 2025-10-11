@@ -416,9 +416,7 @@ export class RowList extends ArrayGrid {
             const rowFocusStyle = this.getFieldValueJS("rowFocusAnimationStyle") as string;
 
             // Initialize scroll offset for this row if not set
-            if (this.rowScrollOffset[rowIndex] === undefined) {
-                this.rowScrollOffset[rowIndex] = 0;
-            }
+            this.rowScrollOffset[rowIndex] ??= 0;
 
             let startCol: number; // First column to render
             let renderMode: string; // normal, fixedFocusWrap, or scroll
@@ -511,9 +509,7 @@ export class RowList extends ArrayGrid {
 
         if (!this.rowItemComps[rowIndex]?.[colIndex]) {
             const itemComp = this.createItemComponent(interpreter, itemRect, content);
-            if (this.rowItemComps[rowIndex] === undefined) {
-                this.rowItemComps[rowIndex] = [];
-            }
+            this.rowItemComps[rowIndex] ??= [];
             if (itemComp instanceof Group) {
                 this.rowItemComps[rowIndex][colIndex] = itemComp;
             }
