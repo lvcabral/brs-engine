@@ -213,7 +213,48 @@ export class RowList extends ArrayGrid {
             }
         }
         if (nextRow >= 0 && nextRow < this.content.length) {
-            const rowItem = new RoArray([new Int32(nextRow), new Int32(this.rowFocus[nextRow] ?? 0)]);
+            const rowFocusStyle = this.getFieldValueJS("rowFocusAnimationStyle") as string;
+            let targetColIndex = this.rowFocus[nextRow] ?? 0;
+
+            // In floatingFocus mode, maintain the visible column position (screen position)
+            if (rowFocusStyle === "floatingFocus") {
+                const currentRow = this.focusIndex;
+                const currentCol = this.rowFocus[currentRow] ?? 0;
+                const currentScrollOffset = this.rowScrollOffset[currentRow] ?? 0;
+
+                // Calculate the visible position (0-based position on screen)
+                const visiblePosition = currentCol - currentScrollOffset;
+
+                // Calculate the target column in the new row based on visible position
+                const nextScrollOffset = this.rowScrollOffset[nextRow] ?? 0;
+                targetColIndex = nextScrollOffset + visiblePosition;
+
+                // Clamp to valid range for the target row
+                const nextRowCols = this.content[nextRow]?.getNodeChildren();
+                const nextRowColCount = nextRowCols?.length ?? 0;
+
+                if (nextRowColCount > 0) {
+                    // Get item size for the new row to calculate max visible items
+                    const itemSize = this.getFieldValueJS("itemSize") as number[];
+                    const spacing = this.getFieldValueJS("itemSpacing") as number[];
+                    const rowItemSize = this.getFieldValueJS("rowItemSize") as number[][];
+
+                    // Calculate display row index for the next row
+                    let displayRowIndex = nextRow - nextRow; // Will be 0 since currRow will update to nextRow
+                    const rowItemWidth = rowItemSize[displayRowIndex]?.[0] ?? itemSize[0];
+                    const maxVisibleItems = Math.ceil(
+                        (this.sceneRect.width + spacing[0]) / (rowItemWidth + spacing[0])
+                    );
+
+                    // Clamp target column to valid range
+                    targetColIndex = Math.max(nextScrollOffset, Math.min(targetColIndex, nextRowColCount - 1));
+
+                    // Also ensure it's within the visible area
+                    targetColIndex = Math.min(targetColIndex, nextScrollOffset + maxVisibleItems - 1);
+                }
+            }
+
+            const rowItem = new RoArray([new Int32(nextRow), new Int32(targetColIndex)]);
             this.set(new BrsString("jumpToRowItem"), rowItem);
             handled = true;
             this.currRow += this.wrap ? 0 : offset;
