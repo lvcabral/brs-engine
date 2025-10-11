@@ -105,13 +105,7 @@ describe("cli", () => {
     }, 10000);
 
     it("SceneGraph App Test", async () => {
-        let command = [
-            "node",
-            brsCliPath,
-            "-r scenegraph",
-            "source/Poster.brs",
-            "-c 0",
-        ].join(" ");
+        let command = ["node", brsCliPath, "-r scenegraph", "source/Poster.brs", "-c 0"].join(" ");
 
         let { stdout } = await exec(command, {
             cwd: path.join(__dirname, "resources"),

@@ -30,7 +30,7 @@ import * as xml2js from "xml2js";
 import * as crypto from "crypto";
 import * as fs from "fs";
 import { encode, decode } from "@msgpack/msgpack";
-import { zlibSync, unzlibSync } from "fflate";
+import { zlibSync, unzlibSync, zipSync } from "fflate";
 import { BrsDevice } from "./device/BrsDevice";
 import { configureFileSystem } from "./device/FileSystem";
 import { BrsError, logError, RuntimeError, RuntimeErrorDetail } from "./error/BrsError";
@@ -186,6 +186,108 @@ export function executeLine(contents: string, interpreter: Interpreter) {
 }
 
 /**
+ * Processes a BrightScript file and adds it to the appropriate collections.
+ * @param filePath Original file path
+ * @param fileContent File content as Uint8Array
+ * @param source Source code array to potentially add to
+ * @param paths Paths array to potentially add to
+ * @param zipFiles ZIP files collection
+ * @param id Current source file ID counter
+ * @returns Updated ID counter
+ */
+function processBrightScriptFile(
+    filePath: string,
+    fileContent: Uint8Array,
+    source: string[],
+    paths: PkgFilePath[],
+    zipFiles: Record<string, Uint8Array>,
+    id: number
+): number {
+    const fileName = path.basename(filePath) ?? filePath;
+    const folderPath = path.dirname(filePath);
+
+    // Determine the zip path and whether file should be added to the source array
+    let zipPath: string;
+    let addToSourceArray: boolean;
+
+    if (folderPath === "." || folderPath === "" || filePath === fileName) {
+        // No relative folder provided, put in source folder
+        zipPath = `source/${fileName}`;
+        addToSourceArray = true;
+    } else if (folderPath.startsWith("source")) {
+        // File is already in source folder (or subfolder), keep it there
+        zipPath = filePath;
+        addToSourceArray = true;
+    } else {
+        // Keep the original path structure for non-source folders
+        zipPath = filePath;
+        addToSourceArray = false;
+    }
+
+    // Add to source array only if it should be treated as source code
+    if (addToSourceArray) {
+        const sourceCode = new TextDecoder().decode(fileContent);
+        if (sourceCode.length > 0) {
+            source.push(sourceCode);
+            paths.push({ id: id, url: zipPath, type: "source" });
+            id++;
+        }
+    }
+
+    // Add to zip regardless of folder
+    zipFiles[zipPath] = fileContent;
+    return id;
+}
+
+/**
+ * Processes a manifest file and returns the parsed manifest.
+ * @param fileContent File content as Uint8Array
+ * @param zipFiles ZIP files collection
+ * @returns Parsed manifest or undefined
+ */
+function processManifestFile(
+    fileContent: Uint8Array,
+    zipFiles: Record<string, Uint8Array>
+): Map<string, string> | undefined {
+    const fileData = new TextDecoder().decode(fileContent);
+    zipFiles["manifest"] = fileContent;
+
+    if (fileData.length > 0) {
+        return parseManifest(fileData);
+    }
+    return undefined;
+}
+
+/**
+ * Creates a default manifest if none was provided.
+ * @returns Default manifest map
+ */
+function createDefaultManifest(): Map<string, string> {
+    const manifest = new Map<string, string>();
+    manifest.set("title", "BRS App");
+    manifest.set("major_version", "0");
+    manifest.set("minor_version", "0");
+    manifest.set("build_version", "0");
+    manifest.set("splash_min_time", "0");
+    return manifest;
+}
+
+/**
+ * Processes device data and ensures it has default assets.
+ * @param customDeviceData Optional custom device data
+ * @returns Complete device data
+ */
+function processDeviceData(customDeviceData?: Partial<DeviceInfo>): DeviceInfo {
+    const deviceData = customDeviceData ? Object.assign(defaultDeviceInfo, customDeviceData) : defaultDeviceInfo;
+
+    if (deviceData.assets.byteLength === 0) {
+        deviceData.assets = fs.readFileSync(path.join(__dirname, "../assets/common.zip"))?.buffer;
+    }
+
+    return deviceData;
+}
+
+/**
  * Create the payload to run the app with the provided file map.
  * @param fileMap Map with file paths as keys and Blob content as values
  * @param customDeviceData optional object with device info data
@@ -201,48 +303,41 @@ export async function createPayloadFromFileMap(
     const paths: PkgFilePath[] = [];
     const source: string[] = [];
     let manifest: Map<string, string> | undefined;
+    const zipFiles: Record<string, Uint8Array> = {};
 
     let id = 0;
+
+    // Process each file in the file map
     for (const [filePath, blob] of fileMap) {
         const fileName = path.basename(filePath) ?? filePath;
         const fileExt = fileName.split(".").pop();
+        const fileContent = new Uint8Array(await blob.arrayBuffer());
 
         if (fileExt?.toLowerCase() === "brs") {
-            // Convert Blob to string for BrightScript files
-            const sourceCode = new TextDecoder().decode(new Uint8Array(await blob.arrayBuffer()));
-            if (sourceCode.length > 0) {
-                source.push(sourceCode);
-                paths.push({ id: id, url: `source/${fileName}`, type: "source" });
-                id++;
-            }
+            id = processBrightScriptFile(filePath, fileContent, source, paths, zipFiles, id);
         } else if (fileName === "manifest") {
-            // Convert Blob to string for manifest files
-            const fileData = new TextDecoder().decode(new Uint8Array(await blob.arrayBuffer()));
-            if (fileData.length > 0) {
-                manifest = parseManifest(fileData);
-            }
+            manifest = processManifestFile(fileContent, zipFiles);
+        } else {
+            // Add other files (images, xml, etc.) to zip as-is
+            zipFiles[filePath] = fileContent;
         }
     }
 
+    // Validate that we have at least one BrightScript source file
     if (id === 0) {
         throw new Error("Invalid or inexistent BrightScript files!");
     }
 
-    const deviceData = customDeviceData ? Object.assign(defaultDeviceInfo, customDeviceData) : defaultDeviceInfo;
+    // Process device data and manifest
+    const deviceData = processDeviceData(customDeviceData);
+    manifest ??= createDefaultManifest();
 
-    if (deviceData.assets.byteLength === 0) {
-        deviceData.assets = fs.readFileSync(path.join(__dirname, "../assets/common.zip"))?.buffer;
-    }
+    // Create the ZIP package
+    const zipBuffer = zipSync(zipFiles);
+    const pkgZipBuffer = new ArrayBuffer(zipBuffer.length);
+    new Uint8Array(pkgZipBuffer).set(zipBuffer);
 
-    if (manifest === undefined) {
-        manifest = new Map();
-        manifest.set("title", "BRS App");
-        manifest.set("major_version", "0");
-        manifest.set("minor_version", "0");
-        manifest.set("build_version", "0");
-        manifest.set("splash_min_time", "0");
-    }
-
+    // Build and return the payload
     const payload: AppPayload = {
         device: deviceData,
         launchTime: Date.now(),
@@ -250,6 +345,7 @@ export async function createPayloadFromFileMap(
         deepLink: deepLink ?? new Map(),
         paths: paths,
         source: source,
+        pkgZip: pkgZipBuffer,
     };
 
     return payload;
@@ -298,24 +394,18 @@ export async function createPayloadFromFiles(
     if (id === 0) {
         throw new Error("Invalid or inexistent file(s)!");
     }
-    const deviceData = customDeviceData ? Object.assign(defaultDeviceInfo, customDeviceData) : defaultDeviceInfo;
+
+    const deviceData = processDeviceData(customDeviceData);
+
     if (root && !manifest && fs.existsSync(path.join(root, "manifest"))) {
         const fileData = fs.readFileSync(path.join(root, "manifest"));
         if (fileData) {
             manifest = parseManifest(fileData.toString());
         }
     }
-    if (deviceData.assets.byteLength === 0) {
-        deviceData.assets = fs.readFileSync(path.join(__dirname, "../assets/common.zip"))?.buffer;
-    }
-    if (manifest === undefined) {
-        manifest = new Map();
-        manifest.set("title", "BRS App");
-        manifest.set("major_version", "0");
-        manifest.set("minor_version", "0");
-        manifest.set("build_version", "0");
-        manifest.set("splash_min_time", "0");
-    }
+
+    manifest ??= createDefaultManifest();
+
     const payload: AppPayload = {
         device: deviceData,
         launchTime: Date.now(),
@@ -352,7 +442,7 @@ export async function executeFile(payload: AppPayload, customOptions?: Partial<E
             entryPoint: payload.device.entryPoint ?? true,
             stopOnCrash: payload.device.debugOnCrash ?? false,
             root: payload.root,
-            ext: payload.extZip ? undefined : payload.ext,
+            ext: payload.extZip ? undefined : payload.ext, // use ext path only if extZip is not provided
         },
         ...customOptions,
     };
