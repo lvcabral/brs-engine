@@ -30,7 +30,7 @@ import * as xml2js from "xml2js";
 import * as crypto from "crypto";
 import * as fs from "fs";
 import { encode, decode } from "@msgpack/msgpack";
-import { zlibSync, unzlibSync } from "fflate";
+import { zlibSync, unzlibSync, zipSync } from "fflate";
 import { BrsDevice } from "./device/BrsDevice";
 import { configureFileSystem } from "./device/FileSystem";
 import { BrsError, logError, RuntimeError, RuntimeErrorDetail } from "./error/BrsError";
@@ -201,26 +201,57 @@ export async function createPayloadFromFileMap(
     const paths: PkgFilePath[] = [];
     const source: string[] = [];
     let manifest: Map<string, string> | undefined;
+    const zipFiles: Record<string, Uint8Array> = {};
 
     let id = 0;
     for (const [filePath, blob] of fileMap) {
         const fileName = path.basename(filePath) ?? filePath;
         const fileExt = fileName.split(".").pop();
+        const fileContent = new Uint8Array(await blob.arrayBuffer());
 
         if (fileExt?.toLowerCase() === "brs") {
-            // Convert Blob to string for BrightScript files
-            const sourceCode = new TextDecoder().decode(new Uint8Array(await blob.arrayBuffer()));
-            if (sourceCode.length > 0) {
-                source.push(sourceCode);
-                paths.push({ id: id, url: `source/${fileName}`, type: "source" });
-                id++;
+            // Determine the zip path for the BrightScript file
+            const folderPath = path.dirname(filePath);
+            let zipPath: string;
+            let addToSourceArray = false;
+
+            if (folderPath === "." || folderPath === "" || filePath === fileName) {
+                // No relative folder provided, put in source folder
+                zipPath = `source/${fileName}`;
+                addToSourceArray = true;
+            } else if (folderPath.startsWith("source")) {
+                // File is already in source folder (or subfolder), keep it there
+                zipPath = filePath;
+                addToSourceArray = true;
+            } else {
+                // Keep the original path structure for non-source folders
+                zipPath = filePath;
+                addToSourceArray = false;
             }
+
+            // Add to source array only if it should be treated as source code
+            if (addToSourceArray) {
+                const sourceCode = new TextDecoder().decode(fileContent);
+                if (sourceCode.length > 0) {
+                    source.push(sourceCode);
+                    paths.push({ id: id, url: zipPath, type: "source" });
+                    id++;
+                }
+            }
+
+            // Add to zip regardless of folder
+            zipFiles[zipPath] = fileContent;
         } else if (fileName === "manifest") {
             // Convert Blob to string for manifest files
-            const fileData = new TextDecoder().decode(new Uint8Array(await blob.arrayBuffer()));
+            const fileData = new TextDecoder().decode(fileContent);
             if (fileData.length > 0) {
                 manifest = parseManifest(fileData);
             }
+            // Add manifest to zip
+            zipFiles["manifest"] = fileContent;
+        } else {
+            // Add other files (images, xml, etc.) to zip as-is
+            zipFiles[filePath] = fileContent;
         }
     }
 
@@ -243,6 +274,11 @@ export async function createPayloadFromFileMap(
         manifest.set("splash_min_time", "0");
     }
 
+    // Create zip file from all files
+    const zipBuffer = zipSync(zipFiles);
+    const pkgZipBuffer = new ArrayBuffer(zipBuffer.length);
+    new Uint8Array(pkgZipBuffer).set(zipBuffer);
+
     const payload: AppPayload = {
         device: deviceData,
         launchTime: Date.now(),
@@ -250,6 +286,7 @@ export async function createPayloadFromFileMap(
         deepLink: deepLink ?? new Map(),
         paths: paths,
         source: source,
+        pkgZip: pkgZipBuffer,
     };
 
     return payload;
@@ -352,7 +389,7 @@ export async function executeFile(payload: AppPayload, customOptions?: Partial<E
             entryPoint: payload.device.entryPoint ?? true,
             stopOnCrash: payload.device.debugOnCrash ?? false,
             root: payload.root,
-            ext: payload.extZip ? undefined : payload.ext,
+            ext: payload.extZip ? undefined : payload.ext, // use ext path only if extZip is not provided
         },
         ...customOptions,
     };
