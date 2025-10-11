@@ -378,7 +378,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         // the `tab` function is only in-scope while executing print statements
         this.environment.define(Scope.Function, "Tab", StdLib.Tab);
         let printStream = "";
-        for (const [index, printable] of statement.expressions.entries()) {
+        for (const [_index, printable] of statement.expressions.entries()) {
             if (isToken(printable)) {
                 switch (printable.kind) {
                     case Lexeme.Comma: {
