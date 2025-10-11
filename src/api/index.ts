@@ -659,7 +659,7 @@ function mainCallback(event: MessageEvent) {
         } else if (event.data.app === "SDKLauncher") {
             const channelId = event.data.params.find((el) => el.toLowerCase().startsWith("channelid="))?.split("=")[1];
             const app = deviceData.appList?.find((app) => app.id === channelId);
-            if (app) {
+            if (app || channelId?.startsWith("http")) {
                 const params = new Map();
                 event.data.params.forEach((el) => {
                     const [key, value] = el.split("=");
@@ -667,7 +667,9 @@ function mainCallback(event: MessageEvent) {
                         params.set(key, value);
                     }
                 });
-                notifyAll("launch", { app: app.id, params: params });
+                notifyAll("launch", { app: app?.id ?? channelId, params: params });
+            } else {
+                apiException("warning", `[api] NDKLauncher channel not found: ${channelId}`);
             }
         }
     } else if (typeof event.data !== "string") {
