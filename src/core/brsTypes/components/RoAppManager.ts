@@ -188,7 +188,7 @@ export class RoAppManager extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, channelId: BrsString, version: BrsString) => {
             const appList = BrsDevice.deviceInfo.appList;
-            if (appList instanceof Array) {
+            if (Array.isArray(appList)) {
                 const app = appList.find((app) => {
                     return app.id === channelId.value;
                 });
@@ -210,7 +210,7 @@ export class RoAppManager extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, channelId: BrsString, version: BrsString, params: RoAssociativeArray) => {
             const appList = BrsDevice.deviceInfo.appList;
-            if (appList instanceof Array) {
+            if (Array.isArray(appList)) {
                 const app = appList.find((app) => {
                     return app.id === channelId.value;
                 });
@@ -261,7 +261,7 @@ export class RoAppManager extends BrsComponent implements BrsValue {
         impl: (_: Interpreter) => {
             const result = new RoArray([]);
             const appList = BrsDevice.deviceInfo.appList;
-            if (appList instanceof Array) {
+            if (Array.isArray(appList)) {
                 for (const app of appList) {
                     const appObj = { id: app.id, title: app.title, version: app.version };
                     result.elements.push(toAssociativeArray(appObj));

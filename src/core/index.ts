@@ -489,7 +489,7 @@ function setupTranslations(interpreter: Interpreter) {
                         } else {
                             trArray = parsed["xliff"]["file"]["body"]["trans-unit"];
                         }
-                        if (trArray instanceof Array) {
+                        if (Array.isArray(trArray)) {
                             for (const item of trArray) {
                                 if (item["source"]) {
                                     interpreter.translations.set(item["source"], item[trTarget]);

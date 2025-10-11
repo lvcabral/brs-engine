@@ -622,7 +622,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         impl: (_: Interpreter, feature: BrsString) => {
             const features = ["gaming_hardware", "usb_hardware", "simulation_engine"];
             const custom = BrsDevice.deviceInfo.customFeatures;
-            if (custom instanceof Array && custom.length > 0) {
+            if (Array.isArray(custom) && custom.length > 0) {
                 features.push(...custom);
             }
             for (const [key, value] of Object.entries(platform)) {
