@@ -2031,9 +2031,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
      * @param err the ParseError to emit then throw
      */
     public addError(err: BrsError): never {
-        if (!err.backTrace) {
-            err.backTrace = this._stack.slice();
-        }
+        err.backTrace ??= this._stack.slice();
         if (!this._tryMode) {
             // do not save/emit the error if we are in a try block
             this.errors.push(err);
