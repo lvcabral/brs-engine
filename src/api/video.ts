@@ -590,7 +590,7 @@ function createHlsInstance() {
     });
 
     hls.on(Hls.Events.FRAG_LOADED, (event, data) => {
-        const bandwidth = hls?.bandwidthEstimate || NaN;
+        const bandwidth = hls?.bandwidthEstimate || Number.NaN;
         if (!Number.isNaN(bandwidth)) {
             notifyAll("bandwidth", Math.round(bandwidth / 1000));
         }

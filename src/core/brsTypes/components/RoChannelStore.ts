@@ -211,7 +211,7 @@ ZZwGPYCKEHMPrIOOXJ-S9ZjArgaEpBUpMXWJibFxnkpVUVzbC22GEaqz_SjOJXFMQU7TaCKkDeCYVKyl
                         const order = JSON.parse(JSON.stringify(parsed.result.order));
                         data.id = order.id;
                         const orderArray = new Array<RoAssociativeArray>();
-                        if (order.items.orderItem instanceof Array) {
+                        if (Array.isArray(order.items.orderItem)) {
                             for (const item of order.items.orderItem) {
                                 orderArray.push(toAssociativeArray(item));
                             }
