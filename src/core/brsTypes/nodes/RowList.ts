@@ -239,8 +239,9 @@ export class RowList extends ArrayGrid {
                     const spacing = this.getFieldValueJS("itemSpacing") as number[];
                     const rowItemSize = this.getFieldValueJS("rowItemSize") as number[][];
 
-                    // Calculate display row index for the next row
-                    let displayRowIndex = nextRow - nextRow; // Will be 0 since currRow will update to nextRow
+                    // Calculate display row index for the next row (relative to what currRow will become)
+                    // When moving down, nextRow becomes the new currRow, so it will be at display position 0
+                    const displayRowIndex = 0;
                     const rowItemWidth = rowItemSize[displayRowIndex]?.[0] ?? itemSize[0];
                     const maxVisibleItems = Math.ceil(
                         (this.sceneRect.width + spacing[0]) / (rowItemWidth + spacing[0])

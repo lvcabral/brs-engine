@@ -15,11 +15,11 @@
 
 ### Build & Test
 ```bash
-yarn build          # Build both packages (outputs to packages/*/lib and packages/*/bin)
-yarn build:web      # Build browser package and launch dev server
-yarn build:cli      # Build Node.js package only
-yarn test           # Run Jest tests
-yarn start          # Start webpack dev server for browser package
+npm run build          # Build both packages (outputs to packages/*/lib and packages/*/bin)
+npm run build:web      # Build browser package and launch dev server
+npm run build:cli      # Build Node.js package only
+npm run test           # Run Jest tests
+npm run start          # Start webpack dev server for browser package
 ```
 
 ### Key Build Details
