@@ -154,7 +154,7 @@ export function handleVideoEvent(eventData: string) {
         }
     } else if (data[1] === "next") {
         const newIndex = data[2];
-        if (newIndex && !isNaN(Number.parseInt(newIndex))) {
+        if (newIndex && !Number.isNaN(Number.parseInt(newIndex))) {
             setNextVideo(Number.parseInt(newIndex));
         } else {
             Atomics.store(sharedArray, DataType.VDX, MediaErrorCode.EmptyList);
@@ -163,7 +163,7 @@ export function handleVideoEvent(eventData: string) {
         }
     } else if (data[1] === "seek") {
         const position = data[2];
-        if (position && !isNaN(Number.parseInt(position))) {
+        if (position && !Number.isNaN(Number.parseInt(position))) {
             seekVideo(Math.round(Number.parseInt(position) / 1000));
         } else {
             notifyAll("warning", `[video] Invalid seek position: ${eventData}`);
@@ -285,7 +285,7 @@ function startProgress(e: Event) {
 }
 
 function setDuration(e: Event) {
-    if (!isNaN(player.duration)) {
+    if (!Number.isNaN(player.duration)) {
         videoDuration = Math.round(player.duration);
         Atomics.store(sharedArray, DataType.VDR, videoDuration);
     }
@@ -591,7 +591,7 @@ function createHlsInstance() {
 
     hls.on(Hls.Events.FRAG_LOADED, (event, data) => {
         const bandwidth = hls?.bandwidthEstimate || NaN;
-        if (!isNaN(bandwidth)) {
+        if (!Number.isNaN(bandwidth)) {
             notifyAll("bandwidth", Math.round(bandwidth / 1000));
         }
     });

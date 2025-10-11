@@ -370,7 +370,7 @@ function setNext(index: number) {
 function triggerSfx(wav: string, volume: number, index: number) {
     const sfx = sfxMap.get(wav.toLowerCase());
     if (sfx?.sound instanceof Howl) {
-        if (volume && !isNaN(volume)) {
+        if (volume && !Number.isNaN(volume)) {
             sfx.sound.volume(volume / 100);
         }
         if (index >= 0 && index < MaxSoundStreams) {

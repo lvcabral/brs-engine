@@ -555,7 +555,7 @@ function workerCallback(event: MessageEvent) {
             });
             if (windowSize) {
                 const dims = windowSize.split("=")[1]?.split("x");
-                if (dims?.length === 2 && !isNaN(Number.parseInt(dims[0])) && !isNaN(Number.parseInt(dims[1]))) {
+                if (dims?.length === 2 && !Number.isNaN(Number.parseInt(dims[0])) && !Number.isNaN(Number.parseInt(dims[1]))) {
                     winDim = dims.map((el) => Number.parseInt(el));
                 }
             }
