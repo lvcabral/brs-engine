@@ -159,7 +159,8 @@ export class RowList extends ArrayGrid {
             this.rowScrollOffset[rowIndex] = colIndex;
         } else if (rowFocusStyle === "floatingFocus") {
             // floatingFocus: ensure focused item is visible
-            const maxVisibleItems = Math.floor((this.sceneRect.width + spacing[0]) / (rowItemWidth + spacing[0]));
+            // Allow partial visibility - use ceil to include partially visible items
+            const maxVisibleItems = Math.ceil((this.sceneRect.width + spacing[0]) / (rowItemWidth + spacing[0]));
 
             if (isChangingRow) {
                 // When changing to a different row
@@ -242,7 +243,14 @@ export class RowList extends ArrayGrid {
         const itemSize = this.getFieldValueJS("itemSize") as number[];
         const spacing = this.getFieldValueJS("itemSpacing") as number[];
         const rowItemSize = this.getFieldValueJS("rowItemSize") as number[][];
-        const rowItemWidth = rowItemSize[currentRow]?.[0] ?? itemSize[0];
+
+        // Calculate display row index (relative to currRow, not absolute row index)
+        let displayRowIndex = currentRow - this.currRow;
+        if (this.wrap && displayRowIndex < 0) {
+            displayRowIndex += this.content.length;
+        }
+
+        const rowItemWidth = rowItemSize[displayRowIndex]?.[0] ?? itemSize[0];
         const totalRowWidth = numCols * rowItemWidth + (numCols - 1) * spacing[0];
         const allItemsFitOnScreen = totalRowWidth <= this.sceneRect.width;
         const rowFocusStyle = this.getFieldValueJS("rowFocusAnimationStyle") as string;
@@ -283,7 +291,8 @@ export class RowList extends ArrayGrid {
             }
         } else {
             // floatingFocus: Focus floats until it reaches screen edges, then scrolls
-            const maxVisibleItems = Math.floor((this.sceneRect.width + spacing[0]) / (rowItemWidth + spacing[0]));
+            // Allow partial visibility - use ceil to include partially visible items
+            const maxVisibleItems = Math.ceil((this.sceneRect.width + spacing[0]) / (rowItemWidth + spacing[0]));
             const currentFocusedCol = this.rowFocus[currentRow];
             const currentScrollOffset = this.rowScrollOffset[currentRow];
 
@@ -414,30 +423,30 @@ export class RowList extends ArrayGrid {
             this.rowScrollOffset[rowIndex] ??= 0;
 
             let startCol: number; // First column to render
-            let renderMode: string; // normal, fixedFocusWrap, or scroll
+            let renderMode: string; // allItemsFit, wrapMode, or scrollMode
 
             if (allItemsFitOnScreen) {
                 // All items fit: render from column 0
                 startCol = 0;
-                renderMode = "normal";
+                renderMode = "allItemsFit";
             } else if (rowFocusStyle === "fixedFocusWrap") {
                 // Fixed focus wrap: render items starting from focused position
                 startCol = this.rowFocus[rowIndex] ?? 0;
-                renderMode = "fixedFocusWrap";
+                renderMode = "wrapMode";
             } else {
                 // floatingFocus or fixedFocus: render from scroll offset
                 startCol = this.rowScrollOffset[rowIndex] ?? 0;
-                renderMode = "scroll";
+                renderMode = "scrollMode";
             }
 
             const maxVisibleItems = Math.ceil((this.sceneRect.width + spacing[0]) / (rowItemWidth + spacing[0]));
-            const endCol = renderMode === "fixedFocusWrap" ? numCols : Math.min(startCol + maxVisibleItems, numCols);
+            const endCol = renderMode === "wrapMode" ? numCols : Math.min(startCol + maxVisibleItems, numCols);
 
-            for (let c = 0; c < (renderMode === "fixedFocusWrap" ? numCols : endCol - startCol); c++) {
+            for (let c = 0; c < (renderMode === "wrapMode" ? numCols : endCol - startCol); c++) {
                 let colIndex = startCol + c;
 
-                if (renderMode === "fixedFocusWrap" && colIndex >= numCols) {
-                    // In fixedFocusWrap mode, wrap around to beginning
+                if (renderMode === "wrapMode" && colIndex >= numCols) {
+                    // In wrapMode, wrap around to beginning
                     colIndex = colIndex % numCols;
                 }
 
