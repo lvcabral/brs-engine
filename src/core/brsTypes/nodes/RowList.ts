@@ -51,6 +51,7 @@ export class RowList extends ArrayGrid {
     protected readonly gap: number;
     protected readonly rowItemComps: Group[][] = [[]];
     protected readonly rowFocus: number[];
+    protected readonly rowScrollOffset: number[] = []; // Track scroll offset per row for floating focus
     protected wrapCol: boolean;
     private titleHeight: number;
 
@@ -77,6 +78,7 @@ export class RowList extends ArrayGrid {
         this.numRows = this.getFieldValueJS("numRows") as number;
         this.numCols = this.getFieldValueJS("numColumns") as number;
         this.rowFocus = [];
+        this.rowScrollOffset = []; // Initialize scroll offset tracking
         this.hasNinePatch = true;
         this.focusField = "rowListHasFocus";
         const font = this.getFieldValue("rowLabelFont") as Font;
@@ -86,6 +88,7 @@ export class RowList extends ArrayGrid {
         // Initialize focus properly
         this.focusIndex = 0;
         this.rowFocus[0] = 0;
+        this.rowScrollOffset[0] = 0;
     }
 
     set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
@@ -121,36 +124,78 @@ export class RowList extends ArrayGrid {
             colIndex = this.rowFocus[rowIndex] ?? 0;
         }
         const oldRow = this.focusIndex;
-        if (oldRow !== rowIndex) {
+        const isChangingRow = oldRow !== rowIndex;
+
+        if (isChangingRow) {
             super.set(new BrsString("itemUnfocused"), new Int32(oldRow));
         }
+
         this.focusIndex = rowIndex;
         this.rowFocus[rowIndex] = colIndex;
-        super.set(new BrsString("itemFocused"), new Int32(rowIndex));
-        super.set(new BrsString("rowItemFocused"), new RoArray([new Int32(rowIndex), new Int32(colIndex)]));
-    }
 
-    protected updateRowItemFocus(rowIndex: number, colIndex: number, focus: boolean, nodeFocus: boolean) {
-        // Only update if the component exists
-        const itemComp = this.rowItemComps[rowIndex]?.[colIndex];
-        if (!itemComp) {
-            return;
+        // Get the row focus animation style to determine scrolling behavior
+        const rowFocusStyle = this.getFieldValueJS("rowFocusAnimationStyle") as string;
+
+        // Initialize scroll offset if not set - ensure it starts at 0 for first visit
+        const isFirstVisit = this.rowScrollOffset[rowIndex] === undefined || this.rowScrollOffset[rowIndex] === null;
+        if (isFirstVisit) {
+            this.rowScrollOffset[rowIndex] = 0;
         }
-        for (let r = 0; r < this.rowItemComps.length; r++) {
-            for (let c = 0; c < this.rowItemComps[r]?.length; c++) {
-                const itemComp = this.rowItemComps[r]?.[c];
-                if (!itemComp) {
-                    continue;
+
+        const itemSize = this.getFieldValueJS("itemSize") as number[];
+        const spacing = this.getFieldValueJS("itemSpacing") as number[];
+        const rowItemSize = this.getFieldValueJS("rowItemSize") as number[][];
+        const rowItemWidth = rowItemSize[rowIndex]?.[0] ?? itemSize[0];
+        const cols = this.content[rowIndex]?.getNodeChildren();
+        const numCols = cols?.length ?? 0;
+        const totalRowWidth = numCols * rowItemWidth + (numCols - 1) * spacing[0];
+        const allItemsFitOnScreen = totalRowWidth <= this.sceneRect.width;
+
+        // Adjust scroll offset based on animation style
+        if (allItemsFitOnScreen) {
+            // All items fit, no scrolling needed - always use floating focus behavior
+            this.rowScrollOffset[rowIndex] = 0;
+        } else if (rowFocusStyle === "fixedFocusWrap") {
+            // For fixedFocusWrap, no scroll offset (focus wraps around)
+            this.rowScrollOffset[rowIndex] = 0;
+        } else if (rowFocusStyle === "fixedFocus") {
+            // For fixedFocus, focus always stays at first visible position (left edge)
+            // Scroll offset equals focused column so focus appears at position 0
+            this.rowScrollOffset[rowIndex] = colIndex;
+        } else if (rowFocusStyle === "floatingFocus") {
+            // floatingFocus: ensure focused item is visible
+            const maxVisibleItems = Math.floor((this.sceneRect.width + spacing[0]) / (rowItemWidth + spacing[0]));
+
+            if (isChangingRow) {
+                // When changing to a different row
+                if (isFirstVisit) {
+                    // First time visiting this row - calculate initial scroll position
+                    if (colIndex === 0) {
+                        // Explicitly focusing first item - start from beginning
+                        this.rowScrollOffset[rowIndex] = 0;
+                    } else if (colIndex < maxVisibleItems) {
+                        // Focused item fits in the "floating" visible area - no scroll needed
+                        this.rowScrollOffset[rowIndex] = 0;
+                    } else {
+                        // Focused item is beyond floating area - scroll to show it at right edge
+                        this.rowScrollOffset[rowIndex] = Math.max(0, colIndex - maxVisibleItems + 1);
+                    }
                 }
-                const itemFocus = r === rowIndex && c === colIndex && focus;
-                itemComp.set(new BrsString("itemHasFocus"), BrsBoolean.from(itemFocus));
-                itemComp.set(new BrsString("focusPercent"), new Float(itemFocus ? 1 : 0));
-                const rowFocus = r === rowIndex && focus;
-                itemComp.set(new BrsString("rowHasFocus"), BrsBoolean.from(rowFocus));
-                itemComp.set(new BrsString("rowFocusPercent"), new Float(rowFocus ? 1 : 0));
-                itemComp.set(new BrsString(this.focusField), BrsBoolean.from(nodeFocus));
+                // else: Returning to a previously visited row - preserve saved scroll offset
+            } else {
+                // Within same row, adjust scroll to keep focused item visible
+                if (colIndex < this.rowScrollOffset[rowIndex]) {
+                    // Focused item is before visible area, scroll left
+                    this.rowScrollOffset[rowIndex] = colIndex;
+                } else if (colIndex >= this.rowScrollOffset[rowIndex] + maxVisibleItems) {
+                    // Focused item is after visible area, scroll right to show it at the right edge
+                    this.rowScrollOffset[rowIndex] = colIndex - maxVisibleItems + 1;
+                }
             }
         }
+
+        super.set(new BrsString("itemFocused"), new Int32(rowIndex));
+        super.set(new BrsString("rowItemFocused"), new RoArray([new Int32(rowIndex), new Int32(colIndex)]));
     }
 
     protected handleUpDown(key: string) {
@@ -191,26 +236,120 @@ export class RowList extends ArrayGrid {
         let handled = false;
         const offset = key === "left" ? -1 : 1;
         const currentRow = this.focusIndex;
-        let nextCol = this.rowFocus[currentRow] + offset;
-        const numCols = this.content[currentRow]?.getNodeChildren().length ?? 0;
-        if (nextCol < 0) {
-            if (this.wrapCol) {
-                nextCol = (nextCol + numCols) % numCols;
-            } else {
+        const cols = this.content[currentRow]?.getNodeChildren();
+        const numCols = cols?.length ?? 0;
+
+        if (numCols <= 1) {
+            return false; // No horizontal movement possible
+        }
+
+        // Initialize scroll offset for this row if not set
+        if (this.rowScrollOffset[currentRow] === undefined) {
+            this.rowScrollOffset[currentRow] = 0;
+        }
+
+        // Check if all items fit on screen to determine wrap behavior
+        const itemSize = this.getFieldValueJS("itemSize") as number[];
+        const spacing = this.getFieldValueJS("itemSpacing") as number[];
+        const rowItemSize = this.getFieldValueJS("rowItemSize") as number[][];
+        const rowItemWidth = rowItemSize[currentRow]?.[0] ?? itemSize[0];
+        const totalRowWidth = numCols * rowItemWidth + (numCols - 1) * spacing[0];
+        const allItemsFitOnScreen = totalRowWidth <= this.sceneRect.width;
+        const rowFocusStyle = this.getFieldValueJS("rowFocusAnimationStyle") as string;
+
+        if (allItemsFitOnScreen) {
+            // Items fit on screen: Normal column movement (no wrapping, no scrolling)
+            let nextCol = this.rowFocus[currentRow] + offset;
+            nextCol = Math.max(0, Math.min(nextCol, numCols - 1));
+
+            if (nextCol !== this.rowFocus[currentRow]) {
+                this.rowFocus[currentRow] = nextCol;
+                super.set(new BrsString("rowItemFocused"), new RoArray([new Int32(currentRow), new Int32(nextCol)]));
+                handled = true;
+            }
+        } else if (rowFocusStyle === "fixedFocusWrap") {
+            // fixedFocusWrap: Wrap around, focus stays at first visible position
+            let nextCol = this.rowFocus[currentRow] + offset;
+
+            if (nextCol < 0) {
+                nextCol = numCols - 1;
+            } else if (nextCol >= numCols) {
                 nextCol = 0;
             }
-        } else if (nextCol >= numCols) {
-            if (this.wrapCol) {
-                nextCol = nextCol % numCols;
+
+            this.rowFocus[currentRow] = nextCol;
+            super.set(new BrsString("rowItemFocused"), new RoArray([new Int32(currentRow), new Int32(nextCol)]));
+            handled = true;
+        } else if (rowFocusStyle === "fixedFocus") {
+            // fixedFocus: Focus stays at first visible position, content scrolls
+            let nextCol = this.rowFocus[currentRow] + offset;
+            nextCol = Math.max(0, Math.min(nextCol, numCols - 1));
+
+            if (nextCol !== this.rowFocus[currentRow]) {
+                this.rowFocus[currentRow] = nextCol;
+                this.rowScrollOffset[currentRow] = nextCol; // Scroll to keep focus at left edge
+                super.set(new BrsString("rowItemFocused"), new RoArray([new Int32(currentRow), new Int32(nextCol)]));
+                handled = true;
+            }
+        } else {
+            // floatingFocus: Focus floats until it reaches screen edges, then scrolls
+            const maxVisibleItems = Math.floor((this.sceneRect.width + spacing[0]) / (rowItemWidth + spacing[0]));
+            const currentFocusedCol = this.rowFocus[currentRow];
+            const currentScrollOffset = this.rowScrollOffset[currentRow];
+
+            // Calculate focus position on screen (relative to visible items)
+            const focusScreenPosition = currentFocusedCol - currentScrollOffset;
+
+            if (offset > 0) {
+                // Moving right
+                if (currentFocusedCol < numCols - 1) {
+                    // Not at the last item yet
+                    const rightEdgeThreshold = Math.max(0, maxVisibleItems - 1);
+
+                    if (focusScreenPosition < rightEdgeThreshold) {
+                        // Focus can still move right without scrolling
+                        this.rowFocus[currentRow] = currentFocusedCol + 1;
+                    } else {
+                        // Focus is at right edge, scroll the content
+                        if (currentScrollOffset + maxVisibleItems < numCols) {
+                            this.rowScrollOffset[currentRow] = currentScrollOffset + 1;
+                            this.rowFocus[currentRow] = currentFocusedCol + 1;
+                        } else {
+                            // Already showing last items, just move focus to last item
+                            this.rowFocus[currentRow] = numCols - 1;
+                        }
+                    }
+                    handled = true;
+                }
             } else {
-                nextCol = numCols - 1;
+                // Moving left
+                if (currentFocusedCol > 0) {
+                    // Not at the first item yet
+                    if (focusScreenPosition > 0) {
+                        // Focus can still move left without scrolling
+                        this.rowFocus[currentRow] = currentFocusedCol - 1;
+                    } else {
+                        // Focus is at left edge, scroll the content
+                        if (currentScrollOffset > 0) {
+                            this.rowScrollOffset[currentRow] = currentScrollOffset - 1;
+                            this.rowFocus[currentRow] = currentFocusedCol - 1;
+                        } else {
+                            // Already at start, just move focus to first item
+                            this.rowFocus[currentRow] = 0;
+                        }
+                    }
+                    handled = true;
+                }
+            }
+
+            if (handled) {
+                super.set(
+                    new BrsString("rowItemFocused"),
+                    new RoArray([new Int32(currentRow), new Int32(this.rowFocus[currentRow])])
+                );
             }
         }
-        if (nextCol >= 0 && nextCol < numCols) {
-            const rowItem = new RoArray([new Int32(currentRow), new Int32(nextCol)]);
-            this.set(new BrsString("jumpToRowItem"), rowItem);
-            handled = true;
-        }
+
         return handled;
     }
 
@@ -237,7 +376,6 @@ export class RowList extends ArrayGrid {
             return;
         }
         const spacing = this.getFieldValueJS("itemSpacing") as number[];
-        // const rowItemSpacings = this.getFieldValueJS("rowItemSpacing") ?? [[]];
         const rowItemSize = this.getFieldValueJS("rowItemSize") as number[][];
         const rowHeights = this.getFieldValueJS("rowHeights") as number[];
         const rowSpacings = this.getFieldValueJS("rowSpacings") as number[];
@@ -283,24 +421,59 @@ export class RowList extends ArrayGrid {
                 const divHeight = this.renderRowDivider(title, divRect, opacity, rowIndex, draw2D);
                 itemRect.y += divHeight;
             }
-            for (let c = 0; c < numCols; c++) {
-                let colIndex = this.rowFocus[r] + c;
-                if (colIndex >= numCols) {
+
+            // Check if all items fit on screen to determine rendering behavior
+            const totalRowWidth = numCols * rowItemWidth + (numCols - 1) * spacing[0];
+            const allItemsFitOnScreen = totalRowWidth <= this.sceneRect.width;
+            const rowFocusStyle = this.getFieldValueJS("rowFocusAnimationStyle") as string;
+
+            // Initialize scroll offset for this row if not set
+            if (this.rowScrollOffset[rowIndex] === undefined) {
+                this.rowScrollOffset[rowIndex] = 0;
+            }
+
+            let startCol = 0;
+            let renderMode = "normal"; // normal, fixedFocusWrap, or scroll
+
+            if (allItemsFitOnScreen) {
+                // All items fit: render from column 0
+                startCol = 0;
+                renderMode = "normal";
+            } else if (rowFocusStyle === "fixedFocusWrap") {
+                // Fixed focus wrap: render items starting from focused position
+                startCol = this.rowFocus[rowIndex] || 0;
+                renderMode = "fixedFocusWrap";
+            } else {
+                // floatingFocus or fixedFocus: render from scroll offset
+                startCol = this.rowScrollOffset[rowIndex] || 0;
+                renderMode = "scroll";
+            }
+
+            const maxVisibleItems = Math.ceil((this.sceneRect.width + spacing[0]) / (rowItemWidth + spacing[0]));
+            const endCol = renderMode === "fixedFocusWrap" ? numCols : Math.min(startCol + maxVisibleItems, numCols);
+
+            for (let c = 0; c < (renderMode === "fixedFocusWrap" ? numCols : endCol - startCol); c++) {
+                let colIndex = startCol + c;
+
+                if (renderMode === "fixedFocusWrap" && colIndex >= numCols) {
                     if (this.wrapCol) {
                         colIndex = colIndex % numCols;
                     } else {
                         break;
                     }
                 }
+
                 if (colIndex >= cols.length) {
                     break;
                 }
+
                 this.renderRowItemComponent(interpreter, rowIndex, colIndex, itemRect, rotation, opacity, draw2D);
-                // itemRect.x += itemRect.width + (rowItemSpacing[r][0] ?? spacing[0]);
                 itemRect.x += itemRect.width + spacing[0];
-                // if (!RectRect(this.sceneRect, itemRect)) {
-                //     break;
-                // }
+
+                // Stop if we've gone past the screen
+                if (itemRect.x > this.sceneRect.x + this.sceneRect.width) {
+                    break;
+                }
             }
             itemRect.x = rect.x;
             itemRect.y += itemRect.height + (rowSpacings[r] ?? spacing[1]);
@@ -327,8 +500,26 @@ export class RowList extends ArrayGrid {
         }
         const nodeFocus = rootObjects.focused === this;
 
-        // Fix: Use this.rowFocus[this.focusIndex] instead of this.rowFocus[rowIndex]
-        const focused = this.focusIndex === rowIndex && this.rowFocus[this.focusIndex] === colIndex;
+        // Check if all items in this row fit on screen by checking if last item fits
+        const numCols = cols.length;
+        const rowItemWidth = itemRect.width;
+        const spacing = this.getFieldValueJS("itemSpacing") as number[];
+        const lastItemX =
+            itemRect.x - colIndex * (rowItemWidth + spacing[0]) + (numCols - 1) * (rowItemWidth + spacing[0]);
+        const lastItemRightEdge = lastItemX + rowItemWidth;
+        const allItemsFitOnScreen = lastItemRightEdge <= this.sceneRect.width;
+
+        // Determine focus behavior based on animation style and screen fit
+        let focused = false;
+        const rowFocusStyle = this.getFieldValueJS("rowFocusAnimationStyle") as string;
+
+        if (rowFocusStyle === "fixedFocusWrap" && !allItemsFitOnScreen) {
+            // Items don't fit and we're using fixedFocusWrap - focus stays on first visible item
+            focused = this.focusIndex === rowIndex && colIndex === this.rowFocus[rowIndex];
+        } else {
+            // Items fit on screen OR not using fixedFocusWrap - focus floats to individual items
+            focused = this.focusIndex === rowIndex && this.rowFocus[rowIndex] === colIndex;
+        }
 
         if (!this.rowItemComps[rowIndex]?.[colIndex]) {
             const itemComp = this.createItemComponent(interpreter, itemRect, content);
@@ -403,6 +594,7 @@ export class RowList extends ArrayGrid {
                 continue;
             }
             this.rowFocus[itemIndex] = 0;
+            this.rowScrollOffset[itemIndex] = 0; // Initialize scroll offset
             itemIndex++;
             this.content.push(row);
         }
