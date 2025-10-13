@@ -148,7 +148,7 @@ module.exports = (env) => {
             externals: {
                 bufferutil: "bufferutil",
                 "utf-8-validate": "utf-8-validate",
-                "lru-cache": "commonjs lru-cache", // Let restana/0http use its own lru-cache at runtime
+                restana: "commonjs restana", // Don't bundle restana, let it resolve its own dependencies
             },
             output: {
                 filename: libName + ".ecp.js",
