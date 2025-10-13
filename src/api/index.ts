@@ -645,13 +645,13 @@ function mainCallback(event: MessageEvent) {
             const params = event.data.params;
             let winDim = deviceData.displayMode === "1080p" ? [1920, 1080] : [1280, 720];
             const windowSize = params.find((el) => {
-                if (el.toLowerCase().startsWith("windowsize")) {
+                if (el.toLowerCase().startsWith("windowsize=")) {
                     return true;
                 }
                 return false;
             });
             if (windowSize) {
-                const dims = windowSize.split("=")[1]?.split("x");
+                const dims = windowSize.replaceAll('"', "").split("=")[1]?.split("x");
                 if (
                     dims?.length === 2 &&
                     !Number.isNaN(Number.parseInt(dims[0])) &&
@@ -660,7 +660,7 @@ function mainCallback(event: MessageEvent) {
                     winDim = dims.map((el) => Number.parseInt(el));
                 }
             }
-            const url = params.find((el) => el.startsWith("url="))?.split("=")[1] ?? "";
+            const url = params.find((el) => el.startsWith("url="))?.slice(4) ?? "";
             notifyAll("browser", { url: url, width: winDim[0], height: winDim[1] });
         } else if (event.data.app === "SDKLauncher") {
             const channelId = event.data.params.find((el) => el.toLowerCase().startsWith("channelid="))?.split("=")[1];
