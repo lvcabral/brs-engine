@@ -34,6 +34,7 @@
   },
   "files": [
     "bin/",
+    "assets/",
     "types/src/core/",
     "CHANGELOG.md"
   ],
