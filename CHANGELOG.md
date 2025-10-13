@@ -1,5 +1,24 @@
 # Changelog
 
+<a name="v1.9.3"></a>
+
+## [v1.9.3 - Fixed `brs-node` package](https://github.com/lvcabral/brs-engine/releases/tag/v1.9.3) - 12 October 2025
+
+This release fixes the `brs-node` package that had two major issues, the `assets/common.zip` file was missing from the package and the `brs-ecp.js` was crashing due to a dependency issue. Other noticeable fixes were related to `roNDK.start()` allowing URL as `ChannelId` on `SDKLaunch` and `RokuBrowser.brs` library now parses arrays in options object.
+
+### Release Changes
+
+* Allow `roNDK.start()` with `SDKLauncher` to send an URL as `ChannelId` by @lvcabral in https://github.com/lvcabral/brs-engine/pull/659
+* Replaced usage of `forEach()` by `for...of` by @lvcabral in https://github.com/lvcabral/brs-engine/pull/661
+* Added `Number` prefix before `isNaN` and `parseInt` by @lvcabral in https://github.com/lvcabral/brs-engine/pull/662
+* Replaced usage of `window` by `globalThis` by @lvcabral in https://github.com/lvcabral/brs-engine/pull/663
+* Replaced `instanceof Array` by `Array.isArray()` by @lvcabral in https://github.com/lvcabral/brs-engine/pull/664
+* Improved `createPayloadFromFileMap` to support folder structure. by @lvcabral in https://github.com/lvcabral/brs-engine/pull/665
+* Optimized loading of Libraries and fixed Roku Browser app launch by @lvcabral in https://github.com/lvcabral/brs-engine/pull/667
+* Added missing `common.zip` to `brs-node` and fixed `brs-ecp.js` dependency issue by @lvcabral in https://github.com/lvcabral/brs-engine/pull/668
+
+[Full Changelog][v1.9.3]
+
 <a name="v1.9.2"></a>
 
 ## [v1.9.2 - New method `createPayloadFromFileMap`](https://github.com/lvcabral/brs-engine/releases/tag/v1.9.2) - 10 October 2025
@@ -1081,6 +1100,7 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
+[v1.9.3]: https://github.com/lvcabral/brs-engine/compare/v1.9.2...v1.9.3
 [v1.9.2]: https://github.com/lvcabral/brs-engine/compare/v1.9.1...v1.9.2
 [v1.9.1]: https://github.com/lvcabral/brs-engine/compare/v1.8.9...v1.9.1
 [v1.8.9]: https://github.com/lvcabral/brs-engine/compare/v1.8.8...v1.8.9
