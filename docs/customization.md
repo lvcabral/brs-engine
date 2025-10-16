@@ -83,3 +83,32 @@ There is also a way BrightScript apps can change the behavior of the simulation 
 ## Control Mapping
 
 It is also possible to customize the Remote Control mapping for the Keyboard and Game Pad, either by sending the custom mapping in the `Options` parameter when running `initialize()` method, or by using `setCustomKeys()` and `setCustomPadButtons()` later on. Check the details in the [engine API documentation](engine-api.md). To learn about the default mapping check the [Remote Control Simulation](./remote-control.md) page.
+
+### Multiple Key Events Support
+
+By default, the engine simulates the Roku behavior of handling one key event at a time. This means that if you press and hold a key, it will generate a `keyDown` event, and if another key is pressed while the first one is still held down, it will be generate a `keyUp` event for the first key, followed by a `keyDown` event for the second key. This prevents the app from receiving multiple key events simultaneously, and sometimes in games this is not the desired behavior. So if you want to enable multiple key events, you can do it by adding the `multi_key_events=1` entry in your app `manifest` file allowing the app to receive multiple key events at the same time.
+
+You can find an example of how to take advantage of this behavior in `packages/browser/index.js` file:
+
+```js
+const customKeys = new Map();
+customKeys.set("NumpadMultiply", "info"); // Keep consistency with older versions
+customKeys.set("ShiftLeft", "playonly"); // Support for Prince of Persia
+customKeys.set("Shift+ArrowRight", "right"); // Support for Prince of Persia
+customKeys.set("Shift+ArrowLeft", "left"); // Support for Prince of Persia
+customKeys.set("Shift+ArrowUp", "up"); // Support for Prince of Persia
+customKeys.set("Shift+ArrowDown", "down"); // Support for Prince of Persia
+
+// ...
+
+brs.initialize(customDeviceInfo, {
+    debugToConsole: true,
+    customKeys: customKeys,
+    showStats: true,
+});
+```
+
+This example shows how to map the `Shift` key in combination with the arrow keys to simulate the player **walking** in all directions in the "Prince of Persia" game.
+This way, the app can receive multiple key events when the `Shift` key is held down while pressing the arrow keys, and with the manifest entry `multi_key_events=1`, the app will receive all key events without generating `keyUp` events for the previously pressed keys, so the game can differentiate between walking and running.
+
+Notice that I used the `ShiftLeft` code to map the `playonly` key, as `playonly` is not mapped by default and could be used as an additional button in games. When `ShiftLeft` is pressed alone, the app can detect and handle it, as in case of the "Prince of Persia" game, it makes the character to `hang` from a ledge or `pick` an item. To see how this is implemented in the game check the source code in the repository: <https://github.com/lvcabral/Prince-of-Persia-Roku>.

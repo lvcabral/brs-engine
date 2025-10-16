@@ -1,5 +1,18 @@
 # Changelog
 
+<a name="v1.9.4"></a>
+
+## [v1.9.4 - Gamepad Remapping](https://github.com/lvcabral/brs-engine/releases/tag/v1.9.4) - 16 October 2025
+
+This release bring a remapping of the game pad buttons to the Roku remote control, allowing for a better experience using the game pad with Roku apps. It also documents the custom `manifest` option `multi_key_events` that allows apps to receive multiple key events at the same time.
+
+Check the [Remote Control](docs/remote-control.md) and [Customization](docs/customization.md) pages for more details.
+
+* Remapped game pad to Roku remote buttons by [@lvcabral](https://github.com/lvcabral) in [#669](https://github.com/lvcabral/brs-engine/pull/669)
+* Documented the custom `manifest` option `multi_key_events` by [@lvcabral](https://github.com/lvcabral) in [#670](https://github.com/lvcabral/brs-engine/pull/670)
+
+[Full Changelog][v1.9.4]
+
 <a name="v1.9.3"></a>
 
 ## [v1.9.3 - Fixed `brs-node` package](https://github.com/lvcabral/brs-engine/releases/tag/v1.9.3) - 12 October 2025
@@ -8,14 +21,14 @@ This release fixes the `brs-node` package that had two major issues, the `assets
 
 ### Release Changes
 
-* Allow `roNDK.start()` with `SDKLauncher` to send an URL as `ChannelId` by @lvcabral in https://github.com/lvcabral/brs-engine/pull/659
-* Replaced usage of `forEach()` by `for...of` by @lvcabral in https://github.com/lvcabral/brs-engine/pull/661
-* Added `Number` prefix before `isNaN` and `parseInt` by @lvcabral in https://github.com/lvcabral/brs-engine/pull/662
-* Replaced usage of `window` by `globalThis` by @lvcabral in https://github.com/lvcabral/brs-engine/pull/663
-* Replaced `instanceof Array` by `Array.isArray()` by @lvcabral in https://github.com/lvcabral/brs-engine/pull/664
-* Improved `createPayloadFromFileMap` to support folder structure. by @lvcabral in https://github.com/lvcabral/brs-engine/pull/665
-* Optimized loading of Libraries and fixed Roku Browser app launch by @lvcabral in https://github.com/lvcabral/brs-engine/pull/667
-* Added missing `common.zip` to `brs-node` and fixed `brs-ecp.js` dependency issue by @lvcabral in https://github.com/lvcabral/brs-engine/pull/668
+* Allow `roNDK.start()` with `SDKLauncher` to send an URL as `ChannelId` by [@lvcabral](https://github.com/lvcabral) in [#659](https://github.com/lvcabral/brs-engine/pull/659)
+* Replaced usage of `forEach()` by `for...of` by [@lvcabral](https://github.com/lvcabral) in [#661](https://github.com/lvcabral/brs-engine/pull/661)
+* Added `Number` prefix before `isNaN` and `parseInt` by [@lvcabral](https://github.com/lvcabral) in [#662](https://github.com/lvcabral/brs-engine/pull/662)
+* Replaced usage of `window` by `globalThis` by [@lvcabral](https://github.com/lvcabral) in [#663](https://github.com/lvcabral/brs-engine/pull/663)
+* Replaced `instanceof Array` by `Array.isArray()` by [@lvcabral](https://github.com/lvcabral) in [#664](https://github.com/lvcabral/brs-engine/pull/664)
+* Improved `createPayloadFromFileMap` to support folder structure. by [@lvcabral](https://github.com/lvcabral) in [#665](https://github.com/lvcabral/brs-engine/pull/665)
+* Optimized loading of Libraries and fixed Roku Browser app launch by [@lvcabral](https://github.com/lvcabral) in [#667](https://github.com/lvcabral/brs-engine/pull/667)
+* Added missing `common.zip` to `brs-node` and fixed `brs-ecp.js` dependency issue by [@lvcabral](https://github.com/lvcabral) in [#668](https://github.com/lvcabral/brs-engine/pull/668)
 
 [Full Changelog][v1.9.3]
 
@@ -1100,6 +1113,7 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
+[v1.9.4]: https://github.com/lvcabral/brs-engine/compare/v1.9.3...v1.9.4
 [v1.9.3]: https://github.com/lvcabral/brs-engine/compare/v1.9.2...v1.9.3
 [v1.9.2]: https://github.com/lvcabral/brs-engine/compare/v1.9.1...v1.9.2
 [v1.9.1]: https://github.com/lvcabral/brs-engine/compare/v1.8.9...v1.9.1
