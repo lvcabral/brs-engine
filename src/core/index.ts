@@ -634,7 +634,7 @@ async function runSource(
     payload: AppPayload
 ): Promise<RunResult> {
     const password = payload.password ?? "";
-    const parseResult = lexParseSync(BrsDevice.fileSystem, interpreter.manifest, sourceMap, password);
+    const parseResult = lexParseSync(BrsDevice.fileSystem, interpreter.manifest, sourceMap, password, stats);
     let exitReason = parseResult.exitReason;
     if (exitReason !== AppExitReason.CRASHED) {
         if (password.length > 0) {
