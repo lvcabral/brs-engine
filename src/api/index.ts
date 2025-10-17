@@ -55,6 +55,7 @@ import {
     setCaptionMode,
     setAppCaptionStyle,
     setTrickPlayBar,
+    setSupportCaptions,
 } from "./display";
 import {
     initSoundModule,
@@ -604,6 +605,8 @@ function mainCallback(event: MessageEvent) {
         if (setCaptionMode(event.data.captionMode)) {
             notifyAll("captionMode", event.data.captionMode);
         }
+    } else if (typeof event.data.supportCaptions === "boolean") {
+        setSupportCaptions(event.data.supportCaptions);
     } else if (Array.isArray(event.data.captionStyle)) {
         setAppCaptionStyle(event.data.captionStyle);
     } else if (typeof event.data.trickPlayBarVisible === "boolean") {

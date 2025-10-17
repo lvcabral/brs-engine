@@ -47,6 +47,7 @@ let displayState = true;
 let overscanMode = "disabled";
 let aspectRatio = 16 / 9;
 let trickPlayBar = false;
+let supportCaptions = false;
 interface CachedSubtitleMeasurement {
     metricsWidth: number;
     calculatedBoxWidth: number; // Stores (metrics.width + padding * 2)
@@ -528,11 +529,15 @@ export function getCaptionMode() {
 
 function getCaptionState(): boolean {
     const mode = deviceData.captionMode;
-    return mode === "On" || (mode === "When mute" && isVideoMuted());
+    return supportCaptions && (mode === "On" || (mode === "When mute" && isVideoMuted()));
 }
 
 export function setTrickPlayBar(enabled: boolean) {
     trickPlayBar = enabled;
+}
+
+export function setSupportCaptions(support: boolean) {
+    supportCaptions = support;
 }
 
 // Get/Set Closed Captions Style Options
