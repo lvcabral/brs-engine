@@ -1,5 +1,18 @@
 # Changelog
 
+<a name="v1.9.5"></a>
+
+## [v1.9.5 - New API Methods](https://github.com/lvcabral/brs-engine/releases/tag/v1.9.5) - 17 October 2025
+
+This release includes new methods in the engine API, improvements to `roAppManager`, and the `manifest` parsing now matches the behavior of Roku devices.
+
+* Added `setDebugState` and `getDebugState` to the engine API by [@lvcabral](https://github.com/lvcabral) in [#672](https://github.com/lvcabral/brs-engine/pull/672)
+* Added new optional parameter to `roAppManager.getAppList` to allow get all apps properties by [@lvcabral](https://github.com/lvcabral) in [#673](https://github.com/lvcabral/brs-engine/pull/673)
+* Fixed `parseManifest` to match Roku behavior and added deprecation warning to `roAppInfo.getSubtitle` by [@lvcabral](https://github.com/lvcabral) in [#674](https://github.com/lvcabral/brs-engine/pull/674)
+* Refactored `core` to move Lexer and Parser functions to a separate module by [@lvcabral](https://github.com/lvcabral) in [#675](https://github.com/lvcabral/brs-engine/pull/675)
+
+[Full Changelog][v1.9.5]
+
 <a name="v1.9.4"></a>
 
 ## [v1.9.4 - Gamepad Remapping](https://github.com/lvcabral/brs-engine/releases/tag/v1.9.4) - 16 October 2025
@@ -1113,6 +1126,7 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
+[v1.9.5]: https://github.com/lvcabral/brs-engine/compare/v1.9.4...v1.9.5
 [v1.9.4]: https://github.com/lvcabral/brs-engine/compare/v1.9.3...v1.9.4
 [v1.9.3]: https://github.com/lvcabral/brs-engine/compare/v1.9.2...v1.9.3
 [v1.9.2]: https://github.com/lvcabral/brs-engine/compare/v1.9.1...v1.9.2
