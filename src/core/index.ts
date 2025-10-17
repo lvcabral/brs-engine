@@ -602,20 +602,6 @@ function setupTranslations(interpreter: Interpreter) {
 }
 
 /**
- * A synchronous version of the lexer-parser flow.
- * @param sourceMap Map with the source code files content.
- * @param manifest Map with the manifest data.
- * @param password string with the encryption password (optional)
- *
- * @returns the ParseResult with the exit reason and the tokens and statements.
- */
-export interface ParseResult {
-    exitReason: AppExitReason;
-    tokens: Token[];
-    statements: Stmt.Statement[];
-}
-
-/**
  * Parse and Execute a set of BrightScript source code files.
  * @param interpreter an interpreter to use when executing the source code.
  * @param sourceMap Map with the source code files content.
