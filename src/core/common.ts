@@ -518,7 +518,7 @@ export function parseManifest(contents: string) {
         // separate keys and values
         .map((line, index) => {
             // skip empty lines and comments
-            if (line === "" || line.startsWith("#")) {
+            if (line === "" || line.startsWith("#") || line.startsWith("'")) {
                 return ["", ""];
             }
 
