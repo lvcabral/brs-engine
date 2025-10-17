@@ -430,7 +430,7 @@ export async function createPayloadFromFiles(
 /// #endif
 
 /**
- * Runs a Brightscript app with full zip folder structure.
+ * Runs a BrightScript app with full zip folder structure.
  * @param payload with the source code, manifest and all the assets of the app.
  * @param customOptions optional object with the output streams.
  *
