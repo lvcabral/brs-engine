@@ -14,7 +14,7 @@ The **BrightScript Simulation Engine** provides a complete BrightScript interpre
 This package includes a **Web Worker** library and an **Engine API** library for embedding the interpreter into web applications.
 > 🚨 Important:
 >
-> Since v1.9.1, this package no longer brings the **CLI** app and **Node.js** libraries for the **simulation engine**, for those use cases we created the new [brs-node](https://www.npmjs.com/package/brs-node) package. Check it out!
+> Since v1.9.0, this package no longer brings the **CLI** app and **Node.js** libraries for the **simulation engine**, for those use cases we created the new [brs-node](https://www.npmjs.com/package/brs-node) package. Check it out!
 
 <p align="center"><img alt="Simulator Web and Desktop" title="Simulator Web and Desktop" src="https://github.com/lvcabral/brs-engine/blob/master/docs/images/screenshots.png?raw=true"/></p>
 

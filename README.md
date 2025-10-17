@@ -15,7 +15,7 @@ The **BrightScript Simulation Engine** implements an interpreter for the **Brigh
 
 Initially the focus was on the support of **Draw 2D API** components (`roScreen`, `roCompositor`, `roRegion`, etc.) along with the core elements of the **BrightScript** language, allowing a full Roku app execution over an **HTML5 Canvas**, but the scope was extended to include simulation of the **Roku** file system, registry, remote control and the Micro Debugger.
 
-The **brs-engine** is developed in [TypeScript](https://www.typescriptlang.org/) and bundled as a collection of [Webpack](https://webpack.js.org/) JavaScript libraries. Since version 1.9.1 the repository was organized as a [monorepo](https://en.wikipedia.org/wiki/Monorepo) that contains two separate packages, each optimized for different use cases.
+The **brs-engine** is developed in [TypeScript](https://www.typescriptlang.org/) and bundled as a collection of [Webpack](https://webpack.js.org/) JavaScript libraries. Since version 1.9.0 the repository was organized as a [monorepo](https://en.wikipedia.org/wiki/Monorepo) that contains two separate packages, each optimized for different use cases.
 
 > [!NOTE]
 >

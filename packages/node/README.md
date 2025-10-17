@@ -14,7 +14,7 @@ The **BrightScript Simulation Engine** provides a complete a set of libraries an
 
 > 🚨 Important:
 >
-> Since v1.9.1, this package was split from the browser package, to use the **simulation engine** with web based applications check out the [brs-engine](https://www.npmjs.com/package/brs-engine) package.
+> Since v1.9.0, this package was split from the browser package, to use the **simulation engine** with web based applications check out the [brs-engine](https://www.npmjs.com/package/brs-engine) package.
 
 <p align="center"><img alt="Simulator CLI" title="Simulator CLI" src="https://github.com/lvcabral/brs-engine/blob/master/docs/images/brs-cli.png?raw=true" width="500"/></p>
 
