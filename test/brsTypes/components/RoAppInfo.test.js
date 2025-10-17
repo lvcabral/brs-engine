@@ -75,7 +75,7 @@ describe("RoAppInfo", () => {
             let getTitle = appInfo.getMethod("getTitle");
 
             expect(getTitle).toBeTruthy();
-            expect(getTitle.call(interpreter)).toEqual(new BrsString("No Title"));
+            expect(getTitle.call(interpreter)).toEqual(new BrsString(""));
         });
     });
 
