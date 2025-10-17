@@ -510,7 +510,7 @@ export function getPlatform(): Platform {
 
 // Function to parse the Manifest file into a Map
 export function parseManifest(contents: string) {
-    let keyValuePairs = contents
+    const keyValuePairs = contents
         // for each line
         .split("\n")
         // remove leading/trailing whitespace
@@ -522,10 +522,11 @@ export function parseManifest(contents: string) {
                 return ["", ""];
             }
 
-            let equals = line.indexOf("=");
+            const equals = line.indexOf("=");
             if (equals === -1) {
                 const pos = `${index + 1},0-${line.length}`;
-                console.warn(`manifest(${pos}): Missing "=". Manifest entries must have this format: key=value`);
+                console.warn(`manifest(${pos}): Ignoring line with missing "=". Manifest entries must have the format: key=value`);
+                return ["", ""];
             }
             return [line.slice(0, equals), line.slice(equals + 1)];
         })
