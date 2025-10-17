@@ -209,6 +209,7 @@ export class Video extends Group {
         postMessage("video,mute,false");
         postMessage(`video,notify,500`);
         postMessage({ videoPlaylist: new Array<string>() });
+        postMessage({ supportCaptions: true });
         postMessage({ captionMode: BrsDevice.deviceInfo.captionMode });
         postMessage({ captionStyle: new Array<CaptionStyleOption>() });
 
