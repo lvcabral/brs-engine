@@ -200,7 +200,7 @@ export async function getInterpreterWithSubEnvs(
     }
     const interpreter = new Interpreter(options);
     const lexerParserFn = getLexerParserFn(fs, manifest, options);
-    let entryPoint = options.entryPoint ?? false;
+    const entryPoint = options.entryPoint ?? false;
 
     let componentScopeResolver = new ComponentScopeResolver(componentMap, lexerParserFn);
     await pSettle(
@@ -232,9 +232,9 @@ function processInterface(node: XmlDocument): {
     fields: ComponentFields;
     functions: ComponentFunctions;
 } {
-    let iface = node.childNamed("interface");
-    let fields: ComponentFields = {};
-    let functions: ComponentFunctions = {};
+    const iface = node.childNamed("interface");
+    const fields: ComponentFields = {};
+    const functions: ComponentFunctions = {};
 
     if (!iface) {
         return { fields, functions };
@@ -267,13 +267,13 @@ function processInterface(node: XmlDocument): {
  * @returns The parsed children
  */
 function getChildren(node: XmlDocument): ComponentNode[] {
-    let xmlElement = node.childNamed("children");
+    const xmlElement = node.childNamed("children");
 
     if (!xmlElement) {
         return [];
     }
 
-    let children: ComponentNode[] = [];
+    const children: ComponentNode[] = [];
     parseChildren(xmlElement, children);
 
     return children;
@@ -288,7 +288,7 @@ function getChildren(node: XmlDocument): ComponentNode[] {
  */
 function parseChildren(element: XmlElement, children: ComponentNode[]): void {
     element.eachChild((child) => {
-        let childComponent: ComponentNode = {
+        const childComponent: ComponentNode = {
             name: child.name,
             fields: child.attr,
             children: [],
@@ -303,10 +303,10 @@ function parseChildren(element: XmlElement, children: ComponentNode[]): void {
 }
 
 async function getScripts(node: XmlDocument, nodeDef: ComponentDefinition): Promise<ComponentScript[]> {
-    let scripts = node.childrenNamed("script");
-    let componentScripts: ComponentScript[] = [];
+    const scripts = node.childrenNamed("script");
+    const componentScripts: ComponentScript[] = [];
 
-    for (let script of scripts) {
+    for (const script of scripts) {
         if (script.attr.uri && script.val) {
             return Promise.reject({
                 message: BrsError.format(
