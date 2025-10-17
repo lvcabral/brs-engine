@@ -513,31 +513,25 @@ export function parseManifest(contents: string) {
     const keyValuePairs = contents
         // for each line
         .split("\n")
-        // remove leading/trailing whitespace
-        .map((line) => line.trim())
+        // remove trailing carriage return
+        .map((line) => line.replaceAll("\r", ""))
         // separate keys and values
-        .map((line, index) => {
+        .map((line) => {
             // skip empty lines and comments
-            if (line === "" || line.startsWith("#") || line.startsWith("'")) {
+            if (line.trim() === "" || line.startsWith("#")) {
                 return ["", ""];
             }
-
             const equals = line.indexOf("=");
             if (equals === -1) {
-                const pos = `${index + 1},0-${line.length}`;
-                console.warn(`manifest(${pos}): Ignoring line with missing "=". Manifest entries must have the format: key=value`);
+                // no equals sign found, skip this line
                 return ["", ""];
             }
             return [line.slice(0, equals), line.slice(equals + 1)];
         })
         // keep only non-empty keys and values
         .filter(([key, value]) => key && value)
-        // remove leading/trailing whitespace from keys and values
-        .map(([key, value]) => [key.trim(), value.trim()])
-        // convert value to boolean, integer, or leave as string
-        .map(([key, value]): [string, string] => {
-            return [key, value];
-        });
+        // return as string pairs
+        .map(([key, value]): [string, string] => [key, value]);
 
     return new Map<string, string>(keyValuePairs);
 }

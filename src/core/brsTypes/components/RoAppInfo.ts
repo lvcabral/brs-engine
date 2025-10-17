@@ -83,7 +83,7 @@ export class RoAppInfo extends BrsComponent implements BrsValue {
             returns: ValueKind.String,
         },
         impl: (interpreter: Interpreter) => {
-            return new BrsString(interpreter.manifest.get("title") || "No Title");
+            return new BrsString(interpreter.manifest.get("title") || "");
         },
     });
 
@@ -94,6 +94,9 @@ export class RoAppInfo extends BrsComponent implements BrsValue {
             returns: ValueKind.String,
         },
         impl: (interpreter: Interpreter) => {
+            BrsDevice.stderr.write(
+                `warning,BRIGHTSCRIPT: WARNING: roAppInfo.GetSubtitle: This function is deprecated: ${interpreter.formatLocation()} `
+            );
             return new BrsString(interpreter.manifest.get("subtitle") || "");
         },
     });
