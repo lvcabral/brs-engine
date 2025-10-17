@@ -168,6 +168,15 @@ export function sendInput(data: object) {
     saveDataBuffer(sharedArray, JSON.stringify(data), BufferType.INPUT);
 }
 
+// Debug API
+export function setDebugState(enabled: boolean) {
+    notifyAll("debugState", enabled);
+    disableDebug = !enabled;
+}
+export function getDebugState() {
+    return !disableDebug;
+}
+
 /// #if BROWSER
 
 // Keyboard Mapping
