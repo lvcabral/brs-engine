@@ -92,7 +92,15 @@ const brsWrkLib = getWorkerLibPath();
 export { deviceData, loadAppZip, updateAppZip, getSerialNumber, mountExt, umountExt } from "./package";
 
 // Control API
-export { setControlMode, getControlMode, setCustomKeys, setCustomPadButtons, sendInput } from "./control";
+export {
+    setControlMode,
+    getControlMode,
+    setCustomKeys,
+    setCustomPadButtons,
+    sendInput,
+    setDebugState,
+    getDebugState,
+} from "./control";
 
 // Display API
 export {
@@ -212,6 +220,8 @@ export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any 
             notifyAll(event, data);
         } else if (["error", "warning"].includes(event)) {
             apiException(event, data);
+        } else if (event === "debugState") {
+            disableDebug = !data;
         }
     });
     subscribeSound("api", (event: string, data: any) => {

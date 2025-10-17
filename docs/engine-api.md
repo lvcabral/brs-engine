@@ -37,6 +37,8 @@ Check the [documentation](./integrating.md) to learn how to start using it. The 
 |umountExt()|Unmounts the external volume `ext1:` ||
 |updateMemoryInfo(`used`, `total`)|A method for the host application to inject memory usage information to the engine. |<ul><li>`used` (number): Memory used by the app (in KB)</li><li>`total` (number): Total memory available for the app (in KB)</li></ul>|
 |debug(`command`)|Sends a debug command to the Engine|<ul><li>`command` (string): the Micro Debugger can be enabled sending `break` command, and after that, any valid BrightScript expression or [debug commands](https://developer.roku.com/docs/developer-program/debugging/debugging-channels.md#brightscript-console-port-8085-commands) can be sent. You can also send `pause` to interrupt the interpreter, for instance, when the app loses focus. The command `cont` restarts the app. You can use this method on the browser console to debug your app.|
+|getDebugState()|Returns `true` if debug functionality is enabled, `false` if disabled||
+|setDebugState(`enabled`)|Enables or disables the debug functionality|<ul><li>`enabled` (boolean): if `true` enables debug commands and data to be sent/received by the engine, if `false` disables debug functionality for production to avoid code injection.</li>|
 |getVersion()|Returns the version of the API library ||
 
 ## Events
