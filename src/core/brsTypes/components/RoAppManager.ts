@@ -1,6 +1,6 @@
 import { BrsValue, ValueKind, BrsString, BrsInvalid, BrsBoolean, Uninitialized } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsType, RoArray, RoAssociativeArray, toAssociativeArray } from "..";
+import { BrsType, brsValueOf, RoArray, RoAssociativeArray, toAssociativeArray } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
@@ -255,13 +255,16 @@ export class RoAppManager extends BrsComponent implements BrsValue {
     /** Returns the list of available/installed apps. */
     private readonly getAppList = new Callable("getAppList", {
         signature: {
-            args: [],
-            returns: ValueKind.Object,
+            args: [new StdlibArgument("extended", ValueKind.Boolean, BrsBoolean.False)],
+            returns: ValueKind.Dynamic,
         },
-        impl: (_: Interpreter) => {
+        impl: (_: Interpreter, extended: BrsBoolean) => {
             const result = new RoArray([]);
             const appList = BrsDevice.deviceInfo.appList;
             if (Array.isArray(appList)) {
+                if (extended.toBoolean()) {
+                    return brsValueOf(appList);
+                }
                 for (const app of appList) {
                     const appObj = { id: app.id, title: app.title, version: app.version };
                     result.elements.push(toAssociativeArray(appObj));
