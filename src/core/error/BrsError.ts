@@ -445,3 +445,11 @@ export const RuntimeErrorDetail = {
         errno: 255,
     },
 };
+
+/**
+ * Logs a detected BRS error to the renderer process.
+ * @param err the error to log
+ */
+export function logError(err: BrsError) {
+    postMessage(`error,${err.format()}`);
+}
