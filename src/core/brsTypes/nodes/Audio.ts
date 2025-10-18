@@ -122,7 +122,6 @@ export class Audio extends RoSGNode {
     }
 
     private formatContent(node: ContentNode) {
-        const corsProxy = BrsDevice.getCORSProxy();
         const content = new Array<string>();
         const isPlaylist = this.getFieldValueJS("contentIsPlaylist") as boolean;
         if (isPlaylist) {
@@ -130,7 +129,7 @@ export class Audio extends RoSGNode {
             for (const node of playList) {
                 const url = node.getFieldValueJS("url") as string;
                 if (url?.length && url.startsWith("http")) {
-                    content.push(corsProxy + url);
+                    content.push(BrsDevice.getCORSProxy(url));
                 } else if (url?.length) {
                     content.push(url);
                 }
@@ -138,7 +137,7 @@ export class Audio extends RoSGNode {
         } else {
             const url = node.getFieldValueJS("url") as string;
             if (url?.length && url.startsWith("http")) {
-                content.push(corsProxy + url);
+                content.push(BrsDevice.getCORSProxy(url));
             } else if (url?.length) {
                 content.push(url);
             }

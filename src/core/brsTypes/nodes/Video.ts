@@ -702,7 +702,6 @@ export class Video extends Group {
     }
 
     private formatContent(node: ContentNode) {
-        const corsProxy = BrsDevice.getCORSProxy();
         const content: Object[] = [];
         this.contentTitles.length = 0;
         const isPlaylist = this.getFieldValueJS("contentIsPlaylist") as boolean;
@@ -713,7 +712,7 @@ export class Video extends Group {
                 if (url?.length) {
                     const item = { url: url, streamFormat: node.getFieldValueJS("streamFormat"), audioTrack: -1 };
                     if (url.startsWith("http")) {
-                        item.url = corsProxy + url;
+                        item.url = BrsDevice.getCORSProxy(url);
                     }
                     this.contentTitles.push(node.getFieldValueJS("title") ?? "");
                     content.push(item);
@@ -724,7 +723,7 @@ export class Video extends Group {
             if (url?.length) {
                 const item = { url: url, streamFormat: node.getFieldValueJS("streamFormat"), audioTrack: -1 };
                 if (url.startsWith("http")) {
-                    item.url = corsProxy + url;
+                    item.url = BrsDevice.getCORSProxy(url);
                 }
                 this.contentTitles.push(node.getFieldValueJS("title") ?? "");
                 content.push(item);

@@ -182,7 +182,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
 
     private getFullUrl(url: string) {
         if (url.startsWith("http")) {
-            return BrsDevice.getCORSProxy() + url;
+            return BrsDevice.getCORSProxy(url);
         }
         return url;
     }

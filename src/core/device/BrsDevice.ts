@@ -149,12 +149,14 @@ export class BrsDevice {
     }
 
     /**
-     * Returns the configured CORS proxy
+     * Returns the configured CORS proxy with the URL if applicable
+     * @param url the optional URL to be fetched
      * @returns the URL or empty string
      */
-    static getCORSProxy() {
+    static getCORSProxy(url: string = "") {
         const corsProxy = this.deviceInfo.corsProxy ?? "";
-        return this.useCORSProxy ? corsProxy : "";
+        const useProxy = this.useCORSProxy && !url.includes("//localhost") && !url.includes("//127.0.0.1");
+        return useProxy ? `${corsProxy}${url}` : url;
     }
 
     /**
