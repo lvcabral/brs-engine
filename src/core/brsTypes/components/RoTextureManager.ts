@@ -102,8 +102,8 @@ export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpA
             return cached;
         }
         if (request.uri.startsWith("http")) {
-            const corsProxy = BrsDevice.getCORSProxy();
-            const data = download(corsProxy + request.uri, "arraybuffer", this.customHeaders, this.cookiesEnabled);
+            const url = BrsDevice.getCORSProxy(request.uri);
+            const data = download(url, "arraybuffer", this.customHeaders, this.cookiesEnabled);
             if (data) {
                 this.textures.set(request.uri, data);
                 return data;

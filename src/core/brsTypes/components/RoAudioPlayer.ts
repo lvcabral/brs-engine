@@ -80,7 +80,7 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
             let url = value.get(new BrsString("url"));
             if (url instanceof BrsString) {
                 if (url.value.startsWith("http")) {
-                    content.push(BrsDevice.getCORSProxy() + url.value);
+                    content.push(BrsDevice.getCORSProxy(url.value));
                 } else {
                     content.push(url.value);
                 }
