@@ -1,5 +1,18 @@
 # Changelog
 
+All notable changes to this project will be documented in this file.
+
+<a name="v1.9.6"></a>
+
+## [v1.9.6 - Fixes in CORS Proxy and SDKLauncher](https://github.com/lvcabral/brs-engine/releases/tag/v1.9.6) - 19 October 2025
+
+This release brings a couple of fixes for the CORS proxy usage and the `NDKStart` handling of `SDKLauncher`.
+
+* Prevent using CORS proxy with `localhost` by [@lvcabral](https://github.com/lvcabral) in [#676](https://github.com/lvcabral/brs-engine/pull/676)
+* Changed `NDKStart` handling of `SDKLauncher` to return any `channelId` by [@lvcabral](https://github.com/lvcabral) in [#677](https://github.com/lvcabral/brs-engine/pull/677)
+
+[Full Changelog][v1.9.6]
+
 <a name="v1.9.5"></a>
 
 ## [v1.9.5 - New API Methods](https://github.com/lvcabral/brs-engine/releases/tag/v1.9.5) - 17 October 2025
@@ -1126,6 +1139,7 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
+[v1.9.6]: https://github.com/lvcabral/brs-engine/compare/v1.9.5...v1.9.6
 [v1.9.5]: https://github.com/lvcabral/brs-engine/compare/v1.9.4...v1.9.5
 [v1.9.4]: https://github.com/lvcabral/brs-engine/compare/v1.9.3...v1.9.4
 [v1.9.3]: https://github.com/lvcabral/brs-engine/compare/v1.9.2...v1.9.3
