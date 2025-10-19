@@ -328,6 +328,7 @@ export function getCaptionMode() {
 export function enableStats(show: boolean): boolean {
     if (statsCanvas?.dom) {
         showStats = show;
+        statsDiv.style.opacity = showStats ? "0.5" : "0";
     } else if (show) {
         statsDiv = document.getElementById("stats") as HTMLDivElement;
         if (statsDiv instanceof HTMLDivElement && display instanceof HTMLCanvasElement) {
