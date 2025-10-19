@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+<a name="v1.9.7"></a>
+
+## [v1.9.7 - Fixes API method `enableStats`](https://github.com/lvcabral/brs-engine/releases/tag/v1.9.7) - 19 October 2025
+
+This release fixes issues on the API methods `enableStats` and improves the handling of the `dev` app.
+
+* Simplified `setupCurrentApp` to give the API consumer the control of the `dev` app by @lvcabral in https://github.com/lvcabral/brs-engine/pull/678
+* Fixed `enableStats` API method that was not properly hiding the `stats` panel by @lvcabral in https://github.com/lvcabral/brs-engine/pull/679
+
+[Full Changelog][v1.9.7]
+
 <a name="v1.9.6"></a>
 
 ## [v1.9.6 - Fixes in CORS Proxy and SDKLauncher](https://github.com/lvcabral/brs-engine/releases/tag/v1.9.6) - 19 October 2025
@@ -1139,6 +1150,7 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
+[v1.9.7]: https://github.com/lvcabral/brs-engine/compare/v1.9.6...v1.9.7
 [v1.9.6]: https://github.com/lvcabral/brs-engine/compare/v1.9.5...v1.9.6
 [v1.9.5]: https://github.com/lvcabral/brs-engine/compare/v1.9.4...v1.9.5
 [v1.9.4]: https://github.com/lvcabral/brs-engine/compare/v1.9.3...v1.9.4
