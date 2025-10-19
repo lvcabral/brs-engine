@@ -323,16 +323,8 @@ function setupCurrentApp(filePath: string) {
             Object.assign(currentApp, app);
         } else {
             // Not in the list so is a side-loaded app
-            currentApp.id = "dev";
+            currentApp.id = filePath.hashCode();
             currentApp.path = filePath;
-            const dev = deviceData.appList.find((app) => app.id === "dev");
-            if (dev) {
-                dev.path = filePath;
-                currentApp.exitReason = dev.exitReason ?? AppExitReason.UNKNOWN;
-                currentApp.exitTime = dev.exitTime;
-            } else {
-                deviceData.appList.push({ ...currentApp });
-            }
         }
     } else {
         currentApp.id = filePath.hashCode();
