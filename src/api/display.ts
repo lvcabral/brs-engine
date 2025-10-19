@@ -22,7 +22,7 @@ let lastFrameReq: number = 0;
 
 // Performance Stats Variables
 let statsDiv: HTMLDivElement;
-let statsCanvas: Stats;
+let statsCanvas: Stats | null;
 let showStats = false;
 let videoState = "stop";
 let videoRect = { x: 0, y: 0, w: 0, h: 0 };
@@ -246,7 +246,7 @@ function drawVideoFrame() {
 
 // Update Performance Statistics
 export function statsUpdate(start: boolean) {
-    if (showStats) {
+    if (showStats && statsCanvas) {
         if (start) {
             statsCanvas.begin();
         } else {
@@ -261,7 +261,7 @@ export function showDisplay() {
         displayState = true;
         display.style.opacity = "1";
         display.focus();
-        if (statsDiv && statsDiv.style.visibility === "visible") {
+        if (statsDiv && statsDiv.style.opacity !== "0") {
             showStats = true;
         }
         notifyAll("resolution", getDisplayModeDims());
@@ -328,7 +328,12 @@ export function getCaptionMode() {
 export function enableStats(show: boolean): boolean {
     if (statsCanvas?.dom) {
         showStats = show;
-        statsDiv.style.opacity = showStats ? "0.5" : "0";
+        if (showStats) {
+            statsDiv.style.opacity = "0.5";
+        } else {
+            statsDiv.removeChild(statsCanvas.dom);
+            statsCanvas = null;
+        }
     } else if (show) {
         statsDiv = document.getElementById("stats") as HTMLDivElement;
         if (statsDiv instanceof HTMLDivElement && display instanceof HTMLCanvasElement) {
