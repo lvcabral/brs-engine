@@ -13,6 +13,7 @@ import {
     DataType,
     DebugCommand,
     DeviceInfo,
+    NDKStart,
     RemoteType,
     dataBufferIndex,
     dataBufferSize,
@@ -554,48 +555,56 @@ function workerCallback(event: MessageEvent) {
     } else if (isAppData(event.data)) {
         notifyAll("launch", { app: event.data.id, params: event.data.params ?? new Map() });
     } else if (isNDKStart(event.data)) {
-        if (event.data.app === "roku_browser") {
-            const params = event.data.params;
-            let winDim = deviceData.displayMode === "1080p" ? [1920, 1080] : [1280, 720];
-            const windowSize = params.find((el) => {
-                if (el.toLowerCase().startsWith("windowsize=")) {
-                    return true;
-                }
-                return false;
-            });
-            if (windowSize) {
-                const dims = windowSize.replaceAll('"', "").split("=")[1]?.split("x");
-                if (
-                    dims?.length === 2 &&
-                    !Number.isNaN(Number.parseInt(dims[0])) &&
-                    !Number.isNaN(Number.parseInt(dims[1]))
-                ) {
-                    winDim = dims.map((el) => Number.parseInt(el));
-                }
-            }
-            const url = params.find((el) => el.startsWith("url="))?.slice(4) ?? "";
-            notifyAll("browser", { url: url, width: winDim[0], height: winDim[1] });
-        } else if (event.data.app === "SDKLauncher") {
-            const channelId = event.data.params.find((el) => el.toLowerCase().startsWith("channelid="))?.split("=")[1];
-            const app = deviceData.appList?.find((app) => app.id === channelId);
-            if (app || channelId?.startsWith("http")) {
-                const params = new Map();
-                for (const el of event.data.params) {
-                    const [key, value] = el.split("=");
-                    if (key && value && key.toLowerCase() !== "channelid") {
-                        params.set(key, value);
-                    }
-                }
-                notifyAll("launch", { app: app?.id ?? channelId, params: params });
-            } else {
-                apiException("warning", `[api] NDKLauncher channel not found: ${channelId}`);
-            }
-        }
+        handleNDKStart(event.data);
     } else if (typeof event.data !== "string") {
         // All messages beyond this point must be csv string
         apiException("warning", `[api] Invalid worker message: ${JSON.stringify(event.data)}`);
     } else {
         handleStringMessage(event.data);
+    }
+}
+
+// Handles NDKStart messages from the Interpreter
+function handleNDKStart(data: NDKStart) {
+    if (data.app === "roku_browser") {
+        const params = data.params;
+        let winDim = deviceData.displayMode === "1080p" ? [1920, 1080] : [1280, 720];
+        const windowSize = params.find((el) => {
+            if (el.toLowerCase().startsWith("windowsize=")) {
+                return true;
+            }
+            return false;
+        });
+        if (windowSize) {
+            const dims = windowSize.replaceAll('"', "").split("=")[1]?.split("x");
+            if (
+                dims?.length === 2 &&
+                !Number.isNaN(Number.parseInt(dims[0])) &&
+                !Number.isNaN(Number.parseInt(dims[1]))
+            ) {
+                winDim = dims.map((el) => Number.parseInt(el));
+            }
+        }
+        const url = params.find((el) => el.startsWith("url="))?.slice(4) ?? "";
+        notifyAll("browser", { url: url, width: winDim[0], height: winDim[1] });
+    } else if (data.app === "SDKLauncher") {
+        let appId = "";
+        const params = new Map();
+        if (data.params.length > 0) {
+            for (const el of data.params) {
+                const [key, value] = el.split("=");
+                if (key && value && key.toLowerCase() === "channelid") {
+                    appId = value;
+                } else if (key && value) {
+                    params.set(key, value);
+                }
+            }
+        }
+        if (appId) {
+            notifyAll("launch", { app: appId, params: params });
+        } else {
+            apiException("warning", `[api] NDKLauncher:  SDKLauncher "channelId" parameter not found!`);
+        }
     }
 }
 
