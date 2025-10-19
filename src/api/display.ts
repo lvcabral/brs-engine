@@ -331,7 +331,7 @@ export function enableStats(show: boolean): boolean {
         if (showStats) {
             statsDiv.style.opacity = "0.5";
         } else {
-            statsDiv.removeChild(statsCanvas.dom);
+            statsCanvas.dom.remove();
             statsCanvas = null;
         }
     } else if (show) {
