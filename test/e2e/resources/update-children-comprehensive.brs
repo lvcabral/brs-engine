@@ -1,15 +1,15 @@
 sub Main()
     print "Testing update() method with children feature"
     print ""
-    
+
     ' Test 1: Basic children creation
     print "Test 1: Basic children creation from AA"
     parent1 = CreateObject("roSGNode", "ContentNode")
     data1 = {
         title: "Parent 1"
         children: [
-            { title: "Child A" }
-            { title: "Child B" }
+            {title: "Child A"}
+            {title: "Child B"}
         ]
     }
     parent1.update(data1, true)
@@ -18,7 +18,7 @@ sub Main()
     print "  Child A title: " + parent1.getChild(0).title
     print "  Child B title: " + parent1.getChild(1).title
     print ""
-    
+
     ' Test 2: Nested children (multiple levels)
     print "Test 2: Nested children (multiple levels)"
     parent2 = CreateObject("roSGNode", "ContentNode")
@@ -31,7 +31,7 @@ sub Main()
                     {
                         title: "Level 2 - Grandchild 1"
                         children: [
-                            { title: "Level 3 - Great-grandchild 1" }
+                            {title: "Level 3 - Great-grandchild 1"}
                         ]
                     }
                 ]
@@ -47,7 +47,7 @@ sub Main()
     print "  Level 2: " + level2.title
     print "  Level 3: " + level3.title
     print ""
-    
+
     ' Test 3: Mixed content with various fields
     print "Test 3: Mixed content with various fields"
     parent3 = CreateObject("roSGNode", "ContentNode")
@@ -81,7 +81,7 @@ sub Main()
     print "  Episode 1 length: " + ep1.length.toStr()
     print "  Episode 2 title: " + ep2.title
     print ""
-    
+
     ' Test 4: Empty children array
     print "Test 4: Empty children array"
     parent4 = CreateObject("roSGNode", "ContentNode")
@@ -94,7 +94,7 @@ sub Main()
     parent4.update(data4, true)
     print "  After update, child count: " + parent4.getChildCount().toStr()
     print ""
-    
+
     ' Test 5: Update replaces existing children
     print "Test 5: Update replaces existing children"
     parent5 = CreateObject("roSGNode", "ContentNode")
@@ -106,16 +106,17 @@ sub Main()
     data5 = {
         title: "Updated Parent"
         children: [
-            { title: "New Child 1" }
-            { title: "New Child 2" }
+            {title: "New Child 1"}
+            {title: "New Child 2"}
         ]
     }
     parent5.update(data5, true)
     print "  After update, child count: " + parent5.getChildCount().toStr()
-    print "  New child 1 title: " + parent5.getChild(0).title
-    print "  New child 2 title: " + parent5.getChild(1).title
+    print "  Original title: " + parent5.getChild(0).title
+    print "  New child 1 title: " + parent5.getChild(1).title
+    print "  New child 2 title: " + parent5.getChild(2).title
     print ""
-    
+
     ' Test 6: Non-array children value (should be ignored)
     print "Test 6: Non-array children value"
     parent6 = CreateObject("roSGNode", "ContentNode")
@@ -127,7 +128,7 @@ sub Main()
     print "  Parent title: " + parent6.title
     print "  Child count: " + parent6.getChildCount().toStr()
     print ""
-    
+
     ' Test 7: Regular update behavior (without children key)
     print "Test 7: Regular update behavior (without children key)"
     parent7 = CreateObject("roSGNode", "ContentNode")
@@ -142,7 +143,7 @@ sub Main()
     print "  Parent URL: " + parent7.url
     print "  Child count: " + parent7.getChildCount().toStr()
     print ""
-    
+
     ' Test 8: Non-existent fields should NOT be created when createFields=false
     print "Test 8: Non-existent fields should NOT be created (createFields=false)"
     parent8 = CreateObject("roSGNode", "ContentNode")
@@ -184,7 +185,7 @@ sub Main()
     print "  Grandchild has anotherBadField: " + grandchild_8.hasField("anotherBadField").toStr()
     print "  Grandchild description: " + grandchild_8.description
     print ""
-    
+
     ' Test 9: Non-existent fields SHOULD be created when createFields=true
     print "Test 9: Non-existent fields SHOULD be created (createFields=true)"
     parent9 = CreateObject("roSGNode", "ContentNode")
@@ -213,6 +214,6 @@ sub Main()
     end if
     print "  Child has anotherCustom: " + child1_9.hasField("anotherCustom").toStr()
     print ""
-    
+
     print "All tests completed successfully!"
 end sub

@@ -1,7 +1,7 @@
 sub Main()
     print "Testing update() with children on different node types"
     print ""
-    
+
     ' Test with Group node
     print "Test 1: Group node with children"
     group = CreateObject("roSGNode", "Group")
@@ -9,8 +9,8 @@ sub Main()
     data = {
         translation: [100, 200]
         children: [
-            { title: "Child 1", description: "First" }
-            { title: "Child 2", description: "Second" }
+            {title: "Child 1", description: "First"}
+            {title: "Child 2", description: "Second"}
         ]
     }
     group.update(data, true)
@@ -23,7 +23,7 @@ sub Main()
         print "  Child 1 description: " + child1.description
     end if
     print ""
-    
+
     ' Test with RowList node (if it exists)
     print "Test 2: Node with existing children structure"
     node = CreateObject("roSGNode", "Node")
@@ -33,13 +33,13 @@ sub Main()
     existingChild.title = "Existing"
     node.appendChild(existingChild)
     print "  Before update - Child count: " + node.getChildCount().toStr()
-    
+
     data2 = {
         id: "updatedNode"
         children: [
-            { title: "New 1" }
-            { title: "New 2" }
-            { title: "New 3" }
+            {title: "New 1"}
+            {title: "New 2"}
+            {title: "New 3"}
         ]
     }
     node.update(data2, true)
@@ -50,6 +50,6 @@ sub Main()
         print "  Child " + (i + 1).toStr() + " title: " + child.title
     end for
     print ""
-    
+
     print "Tests completed!"
 end sub
