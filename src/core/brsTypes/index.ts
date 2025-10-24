@@ -654,6 +654,15 @@ export function fromSGNode(node: RoSGNode): FlexObject {
 }
 
 /**
+ * Checks if a BrsType value is invalid.
+ * @param value The BrsType value to check.
+ * @returns True if the value is invalid, false otherwise.
+ */
+export function isInvalid(value: BrsType): boolean {
+    return value.equalTo(BrsInvalid.Instance).toBoolean();
+}
+
+/**
  * An object that holds the Node that represents the m.global, the root Scene,
  * the currently focused node and the arrays of tasks and timers.
  * */

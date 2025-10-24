@@ -1,6 +1,6 @@
 import { BrsValue, ValueKind, BrsInvalid, BrsBoolean } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsEvent, BrsType, isBrsEvent } from "..";
+import { BrsEvent, BrsType, isBrsEvent, isInvalid } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
@@ -133,7 +133,7 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
                 let callback = this.callbackQueue[0];
                 if (callback) {
                     const msg = callback();
-                    if (msg !== BrsInvalid.Instance) {
+                    if (!isInvalid(msg)) {
                         this.messageQueue.push(msg);
                         return msg;
                     }
