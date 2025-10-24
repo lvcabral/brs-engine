@@ -25,6 +25,7 @@ import {
     isUnboxable,
     RoFunction,
     isBoxable,
+    isInvalid,
 } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Stmt } from "../../parser";
@@ -578,6 +579,59 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             this.fields.set((thisField ?? fieldName).toLowerCase(), field);
         }
         return field;
+    }
+
+    /** Creates a tree of Nodes children from an array of associative arrays */
+    private updateChildrenFromArray(
+        interpreter: Interpreter,
+        node: RoSGNode,
+        childrenArray: RoArray,
+        createFields: boolean,
+        subtype: string
+    ) {
+        // Iterate over the array and create children nodes
+        const elements = childrenArray.getElements();
+        for (const element of elements) {
+            if (element instanceof RoAssociativeArray) {
+                // Create a new child node based on the subtype
+                const childSubtype = jsValueOf(element.get(new BrsString("subtype"))) ?? subtype;
+                const childNode = createNodeByType(interpreter, new BrsString(childSubtype));
+                if (childNode instanceof RoSGNode) {
+                    this.populateNodeFromAA(interpreter, childNode, element, createFields, childSubtype);
+                    node.appendChildToParent(childNode);
+                }
+            } else {
+                BrsDevice.stderr.write(
+                    `warning,Warning calling update() on ${
+                        this.nodeSubtype
+                    } object expected to be convertible to Node is ${ValueKind.toString(element.kind)}`
+                );
+            }
+        }
+    }
+
+    /** Populates a node from an associative array, recursively converting nested children arrays to nodes */
+    private populateNodeFromAA(
+        interpreter: Interpreter,
+        node: RoSGNode,
+        aa: RoAssociativeArray,
+        createFields: boolean,
+        subtype: string
+    ) {
+        for (const [key, value] of aa.getValue()) {
+            const fieldName = key.toLowerCase();
+            // If this AA has a "children" field with an array, recursively create child nodes
+            if (fieldName === "children" && value instanceof RoArray) {
+                this.updateChildrenFromArray(interpreter, node, value, createFields, subtype);
+            } else if (fieldName === "subtype") {
+                // Skip the "subtype" field, already handled
+                continue;
+            }
+            // Set all other fields, respecting the createFields parameter
+            else if (node.fields.has(fieldName) || (createFields && !isInvalid(value))) {
+                node.set(new BrsString(key), value, false);
+            }
+        }
     }
 
     /** Message callback to handle observed fields with message port */
@@ -1353,23 +1407,17 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     private readonly update = new Callable("update", {
         signature: {
             args: [
-                new StdlibArgument("aa", ValueKind.Object),
+                new StdlibArgument("content", ValueKind.Object),
                 new StdlibArgument("createFields", ValueKind.Boolean, BrsBoolean.False),
             ],
             returns: ValueKind.Uninitialized,
         },
-        impl: (_: Interpreter, aa: RoAssociativeArray, createFields: BrsBoolean) => {
-            if (!(aa instanceof RoAssociativeArray)) {
-                return Uninitialized.Instance;
+        impl: (interpreter: Interpreter, content: RoAssociativeArray | RoArray, createFields: BrsBoolean) => {
+            if (content instanceof RoAssociativeArray) {
+                this.populateNodeFromAA(interpreter, this, content, createFields.toBoolean(), this.nodeSubtype);
+            } else if (content instanceof RoArray) {
+                this.updateChildrenFromArray(interpreter, this, content, createFields.toBoolean(), this.nodeSubtype);
             }
-
-            for (const [key, value] of aa.getValue()) {
-                const fieldName = new BrsString(key);
-                if (this.fields.has(key.toLowerCase()) || createFields.toBoolean()) {
-                    this.set(fieldName, value, false);
-                }
-            }
-
             return Uninitialized.Instance;
         },
     });

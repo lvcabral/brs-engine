@@ -25,6 +25,7 @@ import {
     FlexObject,
     BrsNumber,
     ContentNode,
+    isInvalid,
 } from "..";
 import { Callable } from "../Callable";
 import { Interpreter } from "../../interpreter";
@@ -250,7 +251,7 @@ export class Field {
         // Objects are allowed to be set to invalid.
         const fieldIsObject = getValueKindFromFieldType(this.type) === ValueKind.Object;
         if (
-            (fieldIsObject && (value === BrsInvalid.Instance || value instanceof RoInvalid)) ||
+            (fieldIsObject && isInvalid(value)) ||
             (isAnyNumber(this.value) && isAnyNumber(value)) ||
             (isBrsString(this.value) && isBrsString(value)) ||
             (isBrsString(this.value) && isAnyNumber(value)) ||

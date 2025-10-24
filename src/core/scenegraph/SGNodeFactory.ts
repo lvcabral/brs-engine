@@ -49,6 +49,7 @@ import {
     RSGPalette,
     SoundEffect,
     ChannelStore,
+    isInvalid,
 } from "../brsTypes";
 import { TaskData } from "../common";
 
@@ -260,7 +261,7 @@ export function createNodeByType(interpreter: Interpreter, type: BrsString): RoS
     }
     if (node instanceof RoSGNode && rootObjects.tasks.length === 1) {
         const task = rootObjects.tasks[0];
-        if (task.thread && node.getNodeParent() === BrsInvalid.Instance) {
+        if (task.thread && isInvalid(node.getNodeParent())) {
             node.setNodeParent(task);
         }
     }
