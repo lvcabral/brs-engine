@@ -581,7 +581,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         return field;
     }
 
-    /** Creates a tree of ContentNode children from an array of associative arrays */
+    /** Creates a tree of Nodes children from an array of associative arrays */
     private updateChildrenFromArray(
         interpreter: Interpreter,
         childrenArray: RoArray,
@@ -590,16 +590,16 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     ) {
         // Remove existing children
         this.children = [];
-        // Iterate over the array and create ContentNode children
+        // Iterate over the array and create children nodes
         const elements = childrenArray.getElements();
         for (const element of elements) {
             if (element instanceof RoAssociativeArray) {
-                const fieldSubtype = jsValueOf(element.get(new BrsString("subtype"))) ?? subtype;
-                // Create a new ContentNode
-                const contentNode = createNodeByType(interpreter, new BrsString(fieldSubtype));
-                if (contentNode instanceof RoSGNode) {
-                    this.populateNodeFromAA(interpreter, contentNode, element, createFields, fieldSubtype);
-                    this.appendChildToParent(contentNode);
+                const childSubtype = jsValueOf(element.get(new BrsString("subtype"))) ?? subtype;
+                // Create a new child node based on the subtype
+                const childNode = createNodeByType(interpreter, new BrsString(childSubtype));
+                if (childNode instanceof RoSGNode) {
+                    this.populateNodeFromAA(interpreter, childNode, element, createFields, childSubtype);
+                    this.appendChildToParent(childNode);
                 }
             } else {
                 BrsDevice.stderr.write(
@@ -611,7 +611,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         }
     }
 
-    /** Populates a node from an associative array, recursively converting nested children arrays to ContentNodes */
+    /** Populates a node from an associative array, recursively converting nested children arrays to nodes */
     private populateNodeFromAA(
         interpreter: Interpreter,
         node: RoSGNode,
@@ -620,7 +620,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         subtype: string
     ) {
         for (const [key, value] of aa.getValue()) {
-            // If this AA has a "children" field with an array, recursively create child ContentNodes
+            // If this AA has a "children" field with an array, recursively create child nodes
             if (key.toLowerCase() === "children" && value instanceof RoArray) {
                 const childElements = value.getElements();
                 for (const childElement of childElements) {
