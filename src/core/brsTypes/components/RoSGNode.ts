@@ -584,6 +584,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     /** Creates a tree of Nodes children from an array of associative arrays */
     private updateChildrenFromArray(
         interpreter: Interpreter,
+        node: RoSGNode,
         childrenArray: RoArray,
         createFields: boolean,
         subtype: string
@@ -592,12 +593,12 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         const elements = childrenArray.getElements();
         for (const element of elements) {
             if (element instanceof RoAssociativeArray) {
-                const childSubtype = jsValueOf(element.get(new BrsString("subtype"))) ?? subtype;
                 // Create a new child node based on the subtype
+                const childSubtype = jsValueOf(element.get(new BrsString("subtype"))) ?? subtype;
                 const childNode = createNodeByType(interpreter, new BrsString(childSubtype));
                 if (childNode instanceof RoSGNode) {
                     this.populateNodeFromAA(interpreter, childNode, element, createFields, childSubtype);
-                    this.appendChildToParent(childNode);
+                    node.appendChildToParent(childNode);
                 }
             } else {
                 BrsDevice.stderr.write(
@@ -621,18 +622,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             const fieldName = key.toLowerCase();
             // If this AA has a "children" field with an array, recursively create child nodes
             if (fieldName === "children" && value instanceof RoArray) {
-                const childElements = value.getElements();
-                for (const childElement of childElements) {
-                    if (childElement instanceof RoAssociativeArray) {
-                        // Check if the child element has its own subtype, otherwise inherit from parent
-                        const childSubtype = jsValueOf(childElement.get(new BrsString("subtype"))) ?? subtype;
-                        const childNode = createNodeByType(interpreter, new BrsString(childSubtype));
-                        if (childNode instanceof RoSGNode) {
-                            this.populateNodeFromAA(interpreter, childNode, childElement, createFields, childSubtype);
-                            node.appendChildToParent(childNode);
-                        }
-                    }
-                }
+                this.updateChildrenFromArray(interpreter, node, value, createFields, subtype);
             } else if (fieldName === "subtype") {
                 // Skip the "subtype" field, already handled
                 continue;
@@ -1424,19 +1414,9 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         },
         impl: (interpreter: Interpreter, content: RoAssociativeArray | RoArray, createFields: BrsBoolean) => {
             if (content instanceof RoAssociativeArray) {
-                for (const [key, value] of content.getValue()) {
-                    const fieldName = key.toLowerCase();
-                    if (fieldName === "children" && value instanceof RoArray) {
-                        this.updateChildrenFromArray(interpreter, value, createFields.toBoolean(), this.nodeSubtype);
-                    } else if (fieldName === "subtype") {
-                        // Skip the "subtype" field, root cannot be changed
-                        continue;
-                    } else if (this.fields.has(fieldName) || (createFields.toBoolean() && !isInvalid(value))) {
-                        this.set(new BrsString(key), value, false);
-                    }
-                }
+                this.populateNodeFromAA(interpreter, this, content, createFields.toBoolean(), this.nodeSubtype);
             } else if (content instanceof RoArray) {
-                this.updateChildrenFromArray(interpreter, content, createFields.toBoolean(), this.nodeSubtype);
+                this.updateChildrenFromArray(interpreter, this, content, createFields.toBoolean(), this.nodeSubtype);
             }
             return Uninitialized.Instance;
         },
