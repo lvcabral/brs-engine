@@ -296,11 +296,8 @@ export class RowList extends ArrayGrid {
     }
 
     protected handleOK(press: boolean) {
-        if (press) {
+        if (press && this.focusIndex >= 0 && this.focusIndex < this.rowFocus.length) {
             const currentRow = this.focusIndex;
-            if (currentRow < 0 || currentRow >= this.content.length) {
-                return false;
-            }
             const currentCol = this.rowFocus[currentRow];
             if (currentCol >= 0) {
                 this.set(new BrsString("rowItemSelected"), brsValueOf([currentRow, currentCol]));
