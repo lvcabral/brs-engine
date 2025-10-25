@@ -59,10 +59,164 @@ export const MyFunction = new Callable("myFunction", {
 
 ### SceneGraph Node Implementation
 - **Fields are declared** in `defaultFields: FieldModel[]` array with `name`, `type`, `value`
-- **Custom rendering** overrides `draw()` method, receives `IfDraw2D` context
+- **Custom rendering** overrides `renderNode()` method, receives `IfDraw2D` context
 - **Field observers** use `observeField()` to watch changes
 - **Node lifecycle**: `init()` called on creation, `deinit()` on destruction
 - See `src/core/brsTypes/nodes/RowList.ts` as a complex example with focus handling and child rendering
+
+## SceneGraph Rendering Architecture
+
+### Node Hierarchy and Base Classes
+
+All SceneGraph nodes inherit from **RoSGNode** (`src/core/brsTypes/components/RoSGNode.ts`), which provides:
+- **Field management**: Dynamic field registration with `Field` class, aliases, observers, and notifications
+- **Child management**: Parent-child relationships via `ifSGNodeChildren` interface (appendChild, removeChild, etc.)
+- **Focus system**: Focus chain tracking via `ifSGNodeFocus` (hasFocus, setFocus, isInFocusChain)
+- **Bounding rectangles**: Three coordinate spaces tracked in every node:
+  - `rectLocal`: Node's own coordinate space (relative to itself)
+  - `rectToParent`: Transformed to parent's coordinate space
+  - `rectToScene`: Transformed to root Scene coordinate space
+- **Standard fields**: All nodes have `id`, `focusedChild`, `focusable`, `change` fields by default
+
+**Group** (`src/core/brsTypes/nodes/Group.ts`) extends RoSGNode and is the base for all **visual/renderable nodes**:
+- **Transform fields**: `translation` [x,y], `rotation` (degrees), `scale` [x,y], `scaleRotateCenter` [x,y], `opacity` (0-1), `visible` (boolean)
+- **Layout fields**: `width`, `height`, `clippingRect` for cropping child rendering
+- **Child rendering**: `renderChildren()` recursively renders child nodes with inherited transforms
+- **Drawing utilities**: Helper methods for text (drawText, drawTextWrap, breakTextIntoLines, ellipsizeLine) and images (drawImage, loadBitmap)
+- **Coordinate transforms**: `inheritParentTransform` and `inheritParentOpacity` apply parent values to children
+- **Caching**: `isDirty` flag tracks when text measurements need recalculation, `cachedLines` stores text layout
+
+### Node Type Categories
+
+1. **Container Nodes** (manage children, no direct visual output):
+   - `Group`: Basic container with transforms
+   - `LayoutGroup`: Auto-layout children in rows/columns
+   - `Scene`: Root node, sets screen resolution (SD/HD/FHD), background color/image, dialog management
+
+2. **Visual Leaf Nodes** (render content, usually have no children):
+   - `Label`: Single/multi-line text with alignment, wrapping, ellipsization
+   - `Poster`: Image display with scaling modes (noScale, scaleToFit, scaleToZoom), 9-patch support
+   - `Rectangle`: Filled rectangle with color and optional rotation
+   - `BusySpinner`: Animated loading indicator
+
+3. **Interactive Container Nodes** (visual + focus + children):
+   - `ArrayGrid`: Grid of items with focus management and scrolling (base for grids)
+   - `RowList`: Horizontal rows of items, each row is a scrollable list
+   - `MarkupList`/`MarkupGrid`: Similar to above with markup text support
+   - `LabelList`, `CheckList`, `RadioButtonList`: Specialized list types
+   - `ButtonGroup`, `Button`: Interactive button controls
+   - `Keyboard`, `MiniKeyboard`, `TextEditBox`: Input controls
+
+4. **Special Nodes**:
+   - `ContentNode`: Data-only node (no rendering), holds metadata for lists/grids
+   - `Task`: Background thread execution (runs BrightScript in separate Worker)
+   - `Timer`: Interval/timeout events
+   - `Video`, `Audio`, `SoundEffect`: Media playback
+   - `Dialog`, `KeyboardDialog`, `StandardDialog`: Modal overlays
+   - `Font`: Font resource definition
+
+### Rendering Pipeline and Flow
+
+**Initialization (SceneGraph bootstrap)**:
+1. **Component XML parsing** (`src/core/scenegraph/index.ts`):
+   - Scan `pkg:/components/` for `.xml` files
+   - Parse XML with `xmldoc` library into `ComponentDefinition` objects
+   - Build inheritance tree (components can extend other components or built-in types)
+   - Extract `<interface>` (fields/functions), `<children>` (initial child nodes), `<script>` tags
+2. **Node factory** (`src/core/scenegraph/SGNodeFactory.ts`):
+   - `createNodeByType()` instantiates nodes from string type names
+   - Built-in types registered in `SGNodeFactory.createNode()` switch statement
+   - Custom components use `ComponentDefinition` to create nodes with inherited fields
+3. **Environment setup**:
+   - Each component gets its own `Environment` (scope) for BrightScript functions
+   - `init()` function called after node creation if defined in component script
+   - Field observers registered, initial field values set
+
+**Frame Render Cycle** (triggered by display update):
+1. **Scene.renderNode()** called with:
+   - `interpreter`: Active interpreter instance
+   - `origin`: [x, y] position in screen coordinates (starts at [0, 0])
+   - `angle`: Accumulated rotation from parent chain (starts at 0)
+   - `opacity`: Accumulated opacity from parent chain (starts at 1.0)
+   - `draw2D`: `IfDraw2D` interface for canvas drawing
+2. **Scene-specific rendering**:
+   - Clears canvas with `backgroundColor`
+   - Draws `backgroundURI` image if set (scaled to screen resolution)
+   - Calls `renderChildren()` to process child nodes
+3. **Group.renderNode()** recursion (for each child):
+   - **Visibility check**: Skip if `visible` field is false
+   - **Transform application**:
+     - Get node's `translation` field
+     - If parent has `angle`, rotate translation vector: `rotateTranslation(nodeTrans, angle)`
+     - Add parent's `origin` to get screen position: `drawTrans = nodeTrans + origin`
+   - **Accumulate transforms**:
+     - `rotation = parentAngle + this.rotation`
+     - `opacity = parentOpacity * this.opacity`
+   - **Visual nodes render content**:
+     - `Label`: Calls `drawText()` or `drawTextWrap()` via `IfDraw2D`
+     - `Poster`: Calls `drawImage()` with RoBitmap, handles scaling modes
+     - `Rectangle`: Calls `doDrawRotatedRect()` with color
+     - Complex nodes (RowList, ArrayGrid): Call helper methods to render items
+   - **Bounding rect updates**:
+     - `updateBoundingRects(rect, origin, rotation)`: Updates `rectLocal`, `rectToParent`, `rectToScene`
+     - Used for hit testing, collision detection, debugging
+   - **Recurse to children**: `renderChildren(interpreter, drawTrans, rotation, opacity, draw2D)`
+   - **Parent rect propagation**: `updateParentRects(origin, angle)` updates parent's bounding rects
+
+**Key Rendering Concepts**:
+- **Coordinate space transformations**: Every node maintains three rect representations for different use cases (local calculations, parent-relative layout, screen-absolute hit testing)
+- **Transform inheritance**: Children accumulate parent transforms (translation, rotation, opacity) at render time
+- **Depth-first traversal**: Parents render before children, ensuring proper z-ordering
+- **Canvas-based drawing**: All drawing operations use HTML5 Canvas 2D context via `IfDraw2D` interface
+- **Lazy evaluation**: Bounding rects and transforms calculated during render pass, not on field changes
+
+### Drawing Interface (IfDraw2D)
+
+**IfDraw2D interface** (`src/core/brsTypes/interfaces/IfDraw2D.ts`) provides BrightScript `ifDraw2D` API:
+- **Canvas management**: `doClearCanvas()`, `getContext()`, `getCanvas()`, `getRgbaCanvas()`
+- **Basic shapes**: `doDrawLine()`, `doDrawPoint()`, `doDrawRect()`, `doDrawRotatedRect()`
+- **Text rendering**: `doDrawText()` with font, color, alignment, rotation support
+- **Image drawing**:
+  - `doDrawObject()`: Draw bitmap at position
+  - `doDrawScaledObject()`: Draw with scale factors
+  - `doDrawRotatedObject()`: Draw with rotation around center point
+  - `doDrawTransformedObject()`: Combined scale + rotation + translation
+  - `doDrawCroppedBitmap()`: Draw portion of bitmap (for sprites, tiling)
+- **Collision detection**: `collision()` helper for RectRect, RectCircle, CircleCircle
+
+**BrsDraw2D Components** (implement IfDraw2D for off-screen rendering):
+- **RoBitmap** (`src/core/brsTypes/components/RoBitmap.ts`): In-memory image with alpha channel, supports 9-patch borders
+- **RoRegion** (`src/core/brsTypes/components/RoRegion.ts`): Sub-region of bitmap for sprite sheets, tiling
+- **RoScreen** (`src/core/brsTypes/components/RoScreen.ts`): Double-buffered main screen, SwapBuffers for frame display
+- **RoCompositor** (`src/core/brsTypes/components/RoCompositor.ts`): Layer compositor with sprites, z-ordering, collision
+
+**Canvas Pooling**: `createNewCanvas()` and `releaseCanvas()` manage reusable canvas contexts to avoid GC pressure
+
+### Performance and Caching
+
+- **Text measurement caching**: Group.isDirty + cachedLines avoid re-measuring text on every frame
+- **Bitmap texture management**: `TextureManager` (global singleton) caches loaded images by URI
+- **Lazy bounding rect updates**: Only recalculated during render pass when transforms change
+- **Conditional rendering**: Nodes check `visible` field early to skip invisible subtrees
+- **Transform accumulation**: Transforms calculated incrementally down tree, not recalculated from root
+
+### Component Lifecycle
+
+1. **Creation**: `createNode()` or `createChild()` instantiates node, sets initial fields
+2. **Initialization**: `init()` BrightScript function called if defined in component
+3. **Field changes**: Observers notified, `onChange` callbacks invoked
+4. **Rendering**: `renderNode()` called every frame if visible
+5. **Focus changes**: `onKeyEvent()` called when node has focus and receives key press
+6. **Destruction**: `deinit()` called, observers removed, children destroyed recursively
+
+### Event Handling
+
+- **Key events**: `Scene.handleOnKeyEvent()` walks focus chain from focused node up to Scene
+  - Each node's `onKeyEvent()` BrightScript function called if defined
+  - If returns `true`, event consumed; if `false`, bubbles to parent
+  - Built-in nodes (like Group) have `handleKey()` method for default behavior
+- **Field observers**: `observeField()` registers callback (function name or message port) for field changes
+- **Timer events**: Timer node posts messages to message port on interval/timeout
 
 ### Conditional Compilation
 Use preprocessing directives for platform-specific code:
