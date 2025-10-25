@@ -3,6 +3,7 @@ import {
     BrsInvalid,
     BrsString,
     BrsType,
+    brsValueOf,
     ContentNode,
     customNodeExists,
     Float,
@@ -292,6 +293,17 @@ export class RowList extends ArrayGrid {
         } else {
             return this.handleFloatingFocus(currentRow, numCols, rowItemWidth, offset);
         }
+    }
+
+    protected handleOK(press: boolean) {
+        if (press && this.focusIndex >= 0 && this.focusIndex < this.rowFocus.length) {
+            const currentRow = this.focusIndex;
+            const currentCol = this.rowFocus[currentRow];
+            if (currentCol >= 0) {
+                this.set(new BrsString("rowItemSelected"), brsValueOf([currentRow, currentCol]));
+            }
+        }
+        return false;
     }
 
     private getRowItemWidth(rowIndex: number): number {
