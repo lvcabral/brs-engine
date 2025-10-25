@@ -261,24 +261,17 @@ export class Video extends Group {
         } else if (fieldName === "subtitletrack" && isBrsString(value)) {
             postMessage(`video,subtitle,${value.getValue()}`);
         } else if (fieldName === "contentisplaylist" && isBrsBoolean(value)) {
+            const currentFlag = this.getFieldValueJS("contentIsPlaylist");
+            const newFlag = value.toBoolean();
             super.set(index, value, alwaysNotify, kind);
             const content = this.getFieldValue("content");
-            if (content instanceof ContentNode) {
-                postMessage({ videoPlaylist: this.formatContent(content) });
+            if (currentFlag !== newFlag && content instanceof ContentNode) {
+                // If the contentIsPlaylist flag changed, we need to reset the content
+                this.resetContent(content);
             }
             return BrsInvalid.Instance;
         } else if (fieldName === "content" && value instanceof ContentNode) {
-            postMessage({ videoPlaylist: this.formatContent(value) });
-            if (this.contentTitles.length > 0) {
-                this.setContentIndex(0);
-            } else {
-                this.titleText.setFieldValue("text", new BrsString(""));
-            }
-            this.resetSeeking();
-            this.setFieldValue("currentAudioTrack", new BrsString(""));
-            this.setFieldValue("availableAudioTracks", new RoArray([]));
-            this.setFieldValue("currentSubtitleTrack", new BrsString(""));
-            this.setFieldValue("availableSubtitleTracks", new RoArray([]));
+            this.resetContent(value);
         } else if (fieldName === "enableui" && isBrsBoolean(value)) {
             this.enableUI = value.toBoolean();
             this.statusChanged = this.enableUI;
@@ -353,6 +346,20 @@ export class Video extends Group {
             this.set(new BrsString("bufferingStatus"), BrsInvalid.Instance);
         }
         super.set(new BrsString("state"), new BrsString(state));
+    }
+
+    private resetContent(content: ContentNode) {
+        postMessage({ videoPlaylist: this.formatContent(content) });
+        if (this.contentTitles.length > 0) {
+            this.setContentIndex(0);
+        } else {
+            this.titleText.setFieldValue("text", new BrsString(""));
+        }
+        this.resetSeeking();
+        this.setFieldValue("currentAudioTrack", new BrsString(""));
+        this.setFieldValue("availableAudioTracks", new RoArray([]));
+        this.setFieldValue("currentSubtitleTrack", new BrsString(""));
+        this.setFieldValue("availableSubtitleTracks", new RoArray([]));
     }
 
     setContentIndex(index: number) {

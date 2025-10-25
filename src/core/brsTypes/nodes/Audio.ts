@@ -77,6 +77,14 @@ export class Audio extends RoSGNode {
             postMessage(`audio,loop,${value.toBoolean()}`);
         } else if (fieldName === "mute" && isBrsBoolean(value)) {
             postMessage(`audio,mute,${value.toBoolean()}`);
+        } else if (fieldName === "contentIsPlaylist".toLowerCase() && isBrsBoolean(value)) {
+            const currentFlag = this.getFieldValueJS("contentIsPlaylist") as boolean;
+            const newFlag = value.toBoolean();
+            const content = this.getFieldValue("content");
+            if (currentFlag !== newFlag && content instanceof ContentNode) {
+                // If the contentIsPlaylist flag changed, we need to reset the content
+                postMessage({ audioPlaylist: this.formatContent(content) });
+            }
         } else if (fieldName === "content" && value instanceof ContentNode) {
             postMessage({ audioPlaylist: this.formatContent(value) });
         }
