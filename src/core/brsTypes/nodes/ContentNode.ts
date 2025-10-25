@@ -158,7 +158,6 @@ export class ContentNode extends RoSGNode {
             }
             success = true;
         } else if (child instanceof RoSGNode || child === BrsInvalid.Instance) {
-            console.debug("Attempted to add non-ContentNode as child to ContentNode");
             this.children.push(BrsInvalid.Instance);
             // Returns true even if child is invalid because a child was added
             success = true;

@@ -243,14 +243,11 @@ export class ArrayGrid extends Group {
         return false;
     }
 
-    protected getItemContent(index: number): ContentNode {
-        let content: ContentNode;
+    protected getContentItem(index: number): ContentNode {
         if (this.content[index] instanceof ContentNode) {
-            content = this.content[index];
-        } else {
-            content = new ContentNode();
+            return this.content[index];
         }
-        return content;
+        return new ContentNode();
     }
 
     protected getContentChildren(content: ContentNode): ContentNode[] {
@@ -299,7 +296,7 @@ export class ArrayGrid extends Group {
         opacity: number,
         draw2D?: IfDraw2D
     ) {
-        const content = this.getItemContent(index);
+        const content = this.getContentItem(index);
         const nodeFocus = rootObjects.focused === this;
         const focused = index === this.focusIndex;
         if (!this.itemComps[index]) {

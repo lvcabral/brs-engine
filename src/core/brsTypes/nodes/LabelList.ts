@@ -109,7 +109,7 @@ export class LabelList extends ArrayGrid {
         for (let r = 0; r < displayRows; r++) {
             const index = this.getIndex(r - this.currRow);
             const focused = index === this.focusIndex;
-            const item = this.getItemContent(index);
+            const item = this.getContentItem(index);
             if (!hasSections && this.wrap && index < lastIndex && r > 0) {
                 itemRect.y += this.renderWrapDivider(itemRect, opacity, draw2D);
             } else if (hasSections && this.wrap && this.metadata[index]?.divider && r > 0) {
