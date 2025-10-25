@@ -224,7 +224,7 @@ export class ButtonGroup extends LayoutGroup {
             (focusedNode === this || focusedNode.getNodeParent() === this)
         ) {
             const focusedButton = this.children[this.focusIndex];
-            if (focusedNode !== focusedButton) {
+            if (focusedNode !== focusedButton && focusedButton instanceof RoSGNode) {
                 rootObjects.focused = focusedButton;
             }
             this.wasFocused = true;

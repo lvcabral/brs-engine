@@ -515,8 +515,11 @@ export function toNode(x: any, type: string, subtype: string): RoSGNode {
     if (x["_children_"]) {
         for (const child of x["_children_"]) {
             if (child["_node_"]) {
-                const nodeName = x["_node_"].split(":");
-                node.getNodeChildren().push(toNode(child, nodeName[0], nodeName[1]));
+                const childInfo = x["_node_"].split(":");
+                const childNode = toNode(child, childInfo[0], childInfo[1]);
+                node.appendChildToParent(childNode);
+            } else if (child["_invalid_"] !== undefined) {
+                node.appendChildToParent(BrsInvalid.Instance);
             }
         }
     }
@@ -647,7 +650,12 @@ export function fromSGNode(node: RoSGNode): FlexObject {
 
     const children = node.getNodeChildren();
     if (children.length > 0) {
-        result["_children_"] = children.map((child: RoSGNode) => fromSGNode(child));
+        result["_children_"] = children.map((child: RoSGNode | BrsInvalid) => {
+            if (child instanceof BrsInvalid) {
+                return { "_invalid_": null };
+            }
+            return fromSGNode(child);
+        });
     }
 
     return result;

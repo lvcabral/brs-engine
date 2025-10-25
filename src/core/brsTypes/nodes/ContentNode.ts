@@ -148,6 +148,24 @@ export class ContentNode extends RoSGNode {
         return BrsInvalid.Instance;
     }
 
+    /** @override */
+    appendChildToParent(child: BrsType): boolean {
+        let success = false;
+        if (child instanceof ContentNode) {
+            if (!this.children.includes(child)) {
+                this.children.push(child);
+                child.setNodeParent(this);
+            }
+            success = true;
+        } else if (child instanceof RoSGNode || child === BrsInvalid.Instance) {
+            console.debug("Attempted to add non-ContentNode as child to ContentNode");
+            this.children.push(BrsInvalid.Instance);
+            // Returns true even if child is invalid because a child was added
+            success = true;
+        }
+        return success;
+    }
+
     addParentField(parentField: Field) {
         this.parentFields.add(parentField);
     }
@@ -243,7 +261,7 @@ export class ContentNode extends RoSGNode {
      * @override
      * Returns true if the field exists. Marks the field as not hidden.
      */
-    protected hasField = new Callable("hasfield", {
+    protected hasField = new Callable("hasField", {
         signature: {
             args: [new StdlibArgument("fieldname", ValueKind.String)],
             returns: ValueKind.Boolean,

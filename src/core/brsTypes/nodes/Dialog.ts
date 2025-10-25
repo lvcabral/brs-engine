@@ -15,7 +15,6 @@ import {
     jsValueOf,
     Label,
     Poster,
-    RoArray,
     rootObjects,
     RoSGNode,
 } from "..";
@@ -150,7 +149,7 @@ export class Dialog extends Group {
         this.linkField(this.buttonGroup, "buttonSelected");
         this.linkField(this.buttonGroup, "buttonFocused");
         this.linkField(this.buttonGroup, "focusButton");
-        this.children.push(this.buttonGroup);
+        this.appendChildToParent(this.buttonGroup);
     }
 
     set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
