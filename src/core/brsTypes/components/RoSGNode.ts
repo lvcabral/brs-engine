@@ -614,6 +614,8 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
                     this.populateNodeFromAA(interpreter, childNode, element, createFields, childSubtype);
                     node.appendChildToParent(childNode);
                 }
+            } else if (element instanceof RoSGNode) {
+                node.appendChildToParent(element);
             } else {
                 BrsDevice.stderr.write(
                     `warning,Warning calling update() on ${

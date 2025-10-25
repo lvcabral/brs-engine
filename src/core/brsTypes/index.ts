@@ -466,7 +466,7 @@ function fromObject(x: any, cs?: boolean): BrsType {
     } else if (x["_node_"]) {
         const node = x["_node_"].split(":");
         if (node.length === 2) {
-            return toNode(x, node[0], node[1]);
+            return toSGNode(x, node[0], node[1]);
         }
         return BrsInvalid.Instance;
     } else if (x["_component_"]) {
@@ -504,7 +504,7 @@ function fromObject(x: any, cs?: boolean): BrsType {
  * @param subtype The subtype of the node.
  * @returns A RoSGNode with the converted fields.
  */
-export function toNode(x: any, type: string, subtype: string): RoSGNode {
+export function toSGNode(x: any, type: string, subtype: string): RoSGNode {
     const node = SGNodeFactory.createNode(type, subtype) ?? new RoSGNode([], subtype);
     for (const key in x) {
         if (key.startsWith("_") && key.endsWith("_") && key.length > 2) {
@@ -515,8 +515,8 @@ export function toNode(x: any, type: string, subtype: string): RoSGNode {
     if (x["_children_"]) {
         for (const child of x["_children_"]) {
             if (child["_node_"]) {
-                const childInfo = x["_node_"].split(":");
-                const childNode = toNode(child, childInfo[0], childInfo[1]);
+                const childInfo = child["_node_"].split(":");
+                const childNode = toSGNode(child, childInfo[0], childInfo[1]);
                 node.appendChildToParent(childNode);
             } else if (child["_invalid_"] !== undefined) {
                 node.appendChildToParent(BrsInvalid.Instance);
