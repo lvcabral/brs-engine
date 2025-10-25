@@ -22,6 +22,24 @@ import { IfDraw2D, Rect, RectRect } from "../interfaces/IfDraw2D";
 import { ArrayGrid } from "./ArrayGrid";
 import { FieldKind, FieldModel } from "./Field";
 
+interface RowListRenderContext {
+    itemSize: number[];
+    globalSpacing: number[];
+    rowItemSize: number[][];
+    rowHeights: number[];
+    rowSpacings: number[];
+    displayRows: number;
+    rowItemWidth: number;
+    rowItemHeight: number;
+    showRowLabel: boolean;
+    itemRect: Rect;
+    interpreter: Interpreter;
+    rect: Rect;
+    rotation: number;
+    opacity: number;
+    draw2D?: IfDraw2D;
+}
+
 export class RowList extends ArrayGrid {
     readonly defaultFields: FieldModel[] = [
         { name: "itemComponentName", type: "string", value: "" },
@@ -130,7 +148,7 @@ export class RowList extends ArrayGrid {
         this.rowFocus[rowIndex] = colIndex;
 
         // Get the row focus animation style to determine scrolling behavior
-        const rowFocusStyle = this.getFieldValueJS("rowFocusAnimationStyle") as string;
+        const rowFocusStyle = (this.getFieldValueJS("rowFocusAnimationStyle") as string).toLowerCase();
 
         // Initialize scroll offset if not set - ensure it starts at 0 for first visit
         const isFirstVisit = this.rowScrollOffset[rowIndex] === undefined || this.rowScrollOffset[rowIndex] === null;
@@ -139,9 +157,9 @@ export class RowList extends ArrayGrid {
         }
 
         const itemSize = this.getFieldValueJS("itemSize") as number[];
-        const spacing = this.getFieldValueJS("itemSpacing") as number[];
+        const spacing = this.getRowItemSpacing(rowIndex); // Use the actual row's spacing
         const rowItemSize = this.getFieldValueJS("rowItemSize") as number[][];
-        const rowItemWidth = rowItemSize[rowIndex]?.[0] ?? itemSize[0];
+        const rowItemWidth = rowItemSize[0]?.[0] ?? itemSize[0]; // Focused row is at display index 0
         const cols = this.content[rowIndex]?.getNodeChildren();
         const numCols = cols?.length ?? 0;
         const totalRowWidth = numCols * rowItemWidth + (numCols - 1) * spacing[0];
@@ -151,39 +169,37 @@ export class RowList extends ArrayGrid {
         if (allItemsFitOnScreen) {
             // All items fit, no scrolling needed - always use floating focus behavior
             this.rowScrollOffset[rowIndex] = 0;
-        } else if (rowFocusStyle === "fixedFocusWrap") {
+        } else if (rowFocusStyle === "fixedfocuswrap") {
             // For fixedFocusWrap, no scroll offset (focus wraps around)
             this.rowScrollOffset[rowIndex] = 0;
-        } else if (rowFocusStyle === "fixedFocus") {
+        } else if (rowFocusStyle === "fixedfocus") {
             // For fixedFocus, focus always stays at first visible position (left edge)
             // Scroll offset equals focused column so focus appears at position 0
             this.rowScrollOffset[rowIndex] = colIndex;
-        } else if (rowFocusStyle === "floatingFocus") {
-            // floatingFocus: ensure focused item is visible
-            // Allow partial visibility - use ceil to include partially visible items
-            const maxVisibleItems = Math.ceil((this.sceneRect.width + spacing[0]) / (rowItemWidth + spacing[0]));
+        } else if (rowFocusStyle === "floatingfocus") {
+            // floatingFocus: ensure focused item is fully visible
+            // Calculate max items that fit completely on screen (use floor, not ceil)
+            const maxVisibleItems = Math.floor(this.sceneRect.width / (rowItemWidth + spacing[0]));
 
-            if (isChangingRow) {
-                // When changing to a different row
-                if (isFirstVisit) {
-                    // First time visiting this row - calculate initial scroll position
-                    if (colIndex === 0) {
-                        // Explicitly focusing first item - start from beginning
-                        this.rowScrollOffset[rowIndex] = 0;
-                    } else if (colIndex < maxVisibleItems) {
-                        // Focused item fits in the "floating" visible area - no scroll needed
-                        this.rowScrollOffset[rowIndex] = 0;
-                    } else {
-                        // Focused item is beyond floating area - scroll to show it at right edge
-                        this.rowScrollOffset[rowIndex] = Math.max(0, colIndex - maxVisibleItems + 1);
-                    }
+            if (isChangingRow && isFirstVisit) {
+                // First time visiting this row - calculate initial scroll position
+                if (colIndex === 0) {
+                    // Explicitly focusing first item - start from beginning
+                    this.rowScrollOffset[rowIndex] = 0;
+                } else if (colIndex < maxVisibleItems) {
+                    // Focused item fits in the "floating" visible area - no scroll needed
+                    this.rowScrollOffset[rowIndex] = 0;
+                } else {
+                    // Focused item is beyond floating area - scroll to show it fully at right edge
+                    this.rowScrollOffset[rowIndex] = Math.max(0, colIndex - maxVisibleItems + 1);
                 }
-                // else: Returning to a previously visited row - preserve saved scroll offset
+            } else if (isChangingRow && rowFocusStyle === "floatingfocus") {
+                // Keep scroll offset unchanged - row maintains its scroll state
             } else if (colIndex < this.rowScrollOffset[rowIndex]) {
-                // Focused item is before visible area, scroll left
+                // Focused item is before visible area, scroll left to show it fully
                 this.rowScrollOffset[rowIndex] = colIndex;
             } else if (colIndex >= this.rowScrollOffset[rowIndex] + maxVisibleItems) {
-                // Focused item is after visible area, scroll right to show it at the right edge
+                // Focused item is after visible area, scroll right to show it fully at the right edge
                 this.rowScrollOffset[rowIndex] = colIndex - maxVisibleItems + 1;
             }
         }
@@ -214,19 +230,21 @@ export class RowList extends ArrayGrid {
             }
         }
         if (nextRow >= 0 && nextRow < this.content.length) {
-            const rowFocusStyle = this.getFieldValueJS("rowFocusAnimationStyle") as string;
-            let targetColIndex = this.rowFocus[nextRow] ?? 0;
+            const rowFocusStyle = (this.getFieldValueJS("rowFocusAnimationStyle") as string).toLowerCase();
+            const currentRow = this.focusIndex;
+            const currentCol = this.rowFocus[currentRow] ?? 0;
+            const currentScrollOffset = this.rowScrollOffset[currentRow] ?? 0;
 
-            // In floatingFocus mode, maintain the visible column position (screen position)
-            if (rowFocusStyle === "floatingFocus") {
-                const currentRow = this.focusIndex;
-                const currentCol = this.rowFocus[currentRow] ?? 0;
-                const currentScrollOffset = this.rowScrollOffset[currentRow] ?? 0;
+            // Calculate the visible screen position (0-based position on screen) from current row
+            const visiblePosition = currentCol - currentScrollOffset;
 
-                // Calculate the visible position (0-based position on screen)
-                const visiblePosition = currentCol - currentScrollOffset;
+            let targetColIndex: number;
 
-                // Calculate the target column in the new row based on visible position
+            // In floatingFocus mode, move to the same visual screen position
+            if (rowFocusStyle === "floatingfocus") {
+                // Maintain the visual screen position across rows
+                // Each row keeps its scroll offset, we just calculate which column
+                // corresponds to the same visual position in the next row
                 const nextScrollOffset = this.rowScrollOffset[nextRow] ?? 0;
                 targetColIndex = nextScrollOffset + visiblePosition;
 
@@ -235,31 +253,18 @@ export class RowList extends ArrayGrid {
                 const nextRowColCount = nextRowCols?.length ?? 0;
 
                 if (nextRowColCount > 0) {
-                    // Get item size for the new row to calculate max visible items
-                    const itemSize = this.getFieldValueJS("itemSize") as number[];
-                    const spacing = this.getFieldValueJS("itemSpacing") as number[];
-                    const rowItemSize = this.getFieldValueJS("rowItemSize") as number[][];
-
-                    // Calculate display row index for the next row (relative to what currRow will become)
-                    // When moving down, nextRow becomes the new currRow, so it will be at display position 0
-                    const displayRowIndex = 0;
-                    const rowItemWidth = rowItemSize[displayRowIndex]?.[0] ?? itemSize[0];
-                    const maxVisibleItems = Math.ceil(
-                        (this.sceneRect.width + spacing[0]) / (rowItemWidth + spacing[0])
-                    );
-
-                    // Clamp target column to valid range
-                    targetColIndex = Math.max(nextScrollOffset, Math.min(targetColIndex, nextRowColCount - 1));
-
-                    // Also ensure it's within the visible area
-                    targetColIndex = Math.min(targetColIndex, nextScrollOffset + maxVisibleItems - 1);
+                    // Clamp to valid column range
+                    targetColIndex = Math.max(0, Math.min(targetColIndex, nextRowColCount - 1));
                 }
+            } else {
+                // For other modes, use the previously focused column in that row
+                targetColIndex = this.rowFocus[nextRow] ?? 0;
             }
 
             const rowItem = new RoArray([new Int32(nextRow), new Int32(targetColIndex)]);
+            this.currRow += this.wrap ? 0 : offset; // Update currRow before setFocusedItem
             this.set(new BrsString("jumpToRowItem"), rowItem);
             handled = true;
-            this.currRow += this.wrap ? 0 : offset;
         }
         return handled;
     }
@@ -282,13 +287,13 @@ export class RowList extends ArrayGrid {
 
         const rowItemWidth = this.getRowItemWidth(currentRow);
         const allItemsFitOnScreen = this.checkIfAllItemsFitOnScreen(numCols, rowItemWidth);
-        const rowFocusStyle = this.getFieldValueJS("rowFocusAnimationStyle") as string;
+        const rowFocusStyle = (this.getFieldValueJS("rowFocusAnimationStyle") as string).toLowerCase();
 
         if (allItemsFitOnScreen) {
             return this.handleAllItemsFit(currentRow, numCols, offset);
-        } else if (rowFocusStyle === "fixedFocusWrap") {
+        } else if (rowFocusStyle === "fixedfocuswrap") {
             return this.handleFixedFocusWrap(currentRow, numCols, offset);
-        } else if (rowFocusStyle === "fixedFocus") {
+        } else if (rowFocusStyle === "fixedfocus") {
             return this.handleFixedFocus(currentRow, numCols, offset);
         } else {
             return this.handleFloatingFocus(currentRow, numCols, rowItemWidth, offset);
@@ -319,8 +324,29 @@ export class RowList extends ArrayGrid {
         return rowItemSize[displayRowIndex]?.[0] ?? itemSize[0];
     }
 
+    private getRowItemSpacing(rowIndex: number): number[] {
+        const itemSpacing = this.getFieldValueJS("itemSpacing") as number[];
+        const rowItemSpacing = this.getFieldValueJS("rowItemSpacing") as number[][];
+
+        // If no per-row spacing defined, use global itemSpacing
+        if (!rowItemSpacing || rowItemSpacing.length === 0) {
+            return itemSpacing;
+        }
+
+        // If rowItemSpacing has entries, use the appropriate one
+        // If rowIndex exceeds array length, use the last defined spacing
+        const index = Math.min(rowIndex, rowItemSpacing.length - 1);
+        const perRowSpacing = rowItemSpacing[index];
+
+        if (perRowSpacing && perRowSpacing.length >= 2) {
+            return perRowSpacing;
+        }
+        return itemSpacing;
+    }
+
     private checkIfAllItemsFitOnScreen(numCols: number, rowItemWidth: number): boolean {
-        const spacing = this.getFieldValueJS("itemSpacing") as number[];
+        // Use the focused row's spacing (this.focusIndex is the absolute row index)
+        const spacing = this.getRowItemSpacing(this.focusIndex);
         const totalRowWidth = numCols * rowItemWidth + (numCols - 1) * spacing[0];
         return totalRowWidth <= this.sceneRect.width;
     }
@@ -365,8 +391,9 @@ export class RowList extends ArrayGrid {
     }
 
     private handleFloatingFocus(currentRow: number, numCols: number, rowItemWidth: number, offset: number): boolean {
-        const spacing = this.getFieldValueJS("itemSpacing") as number[];
-        const maxVisibleItems = Math.ceil((this.sceneRect.width + spacing[0]) / (rowItemWidth + spacing[0]));
+        // currentRow is the absolute focused row index
+        const spacing = this.getRowItemSpacing(currentRow);
+        const maxVisibleItems = Math.floor(this.sceneRect.width / (rowItemWidth + spacing[0]));
         const currentFocusedCol = this.rowFocus[currentRow];
         const currentScrollOffset = this.rowScrollOffset[currentRow];
         const focusScreenPosition = currentFocusedCol - currentScrollOffset;
@@ -449,94 +476,161 @@ export class RowList extends ArrayGrid {
         opacity: number,
         draw2D?: IfDraw2D
     ) {
+        if (!this.validateRenderPrerequisites()) {
+            return;
+        }
+        const context = this.initializeRenderContext(rect, interpreter, rotation, opacity, draw2D);
+        this.currRow = this.focusIndex;
+
+        for (let r = 0; r < context.displayRows; r++) {
+            const rowIndex = this.calculateActualRowIndex(r);
+            if (rowIndex === -1) {
+                break;
+            }
+            if (!this.renderSingleRow(rowIndex, r, context)) {
+                break;
+            }
+        }
+        this.updateRect(rect, context.displayRows, context.itemSize);
+    }
+
+    private validateRenderPrerequisites(): boolean {
         if (this.content.length === 0) {
             console.debug("RowList has no content to render.");
-            return;
-        } else if (this.focusIndex < 0) {
+            return false;
+        }
+
+        if (this.focusIndex < 0) {
             this.focusIndex = 0;
         }
 
         const itemCompName = this.getFieldValueJS("itemComponentName") as string;
         if (!customNodeExists(new BrsString(itemCompName))) {
             BrsDevice.stderr.write(`warning,[sg.rowlist.create.fail] Failed to create markup item ${itemCompName}`);
-            return;
+            return false;
         }
 
         const itemSize = this.getFieldValueJS("itemSize") as number[];
         if (!itemSize[0] || !itemSize[1] || !this.numRows) {
-            return;
+            return false;
         }
 
-        const spacing = this.getFieldValueJS("itemSpacing") as number[];
+        return true;
+    }
+
+    private initializeRenderContext(
+        rect: Rect,
+        interpreter: Interpreter,
+        rotation: number,
+        opacity: number,
+        draw2D?: IfDraw2D
+    ): RowListRenderContext {
+        const itemSize = this.getFieldValueJS("itemSize") as number[];
+        const globalSpacing = this.getFieldValueJS("itemSpacing") as number[];
         const rowItemSize = this.getFieldValueJS("rowItemSize") as number[][];
         const rowHeights = this.getFieldValueJS("rowHeights") as number[];
         const rowSpacings = this.getFieldValueJS("rowSpacings") as number[];
-        this.currRow = this.focusIndex;
         const displayRows = Math.min(this.content.length, this.numRows);
-        let rowItemWidth = itemSize[0];
-        let rowItemHeight = itemSize[1];
-        let showRowLabel = true;
-        const itemRect = { ...rect, width: rowItemWidth, height: rowItemHeight };
 
-        for (let r = 0; r < displayRows; r++) {
-            const rowIndex = this.calculateActualRowIndex(r);
-            if (rowIndex === -1) {
-                break;
-            }
+        return {
+            itemSize,
+            globalSpacing,
+            rowItemSize,
+            rowHeights,
+            rowSpacings,
+            displayRows,
+            rowItemWidth: itemSize[0],
+            rowItemHeight: itemSize[1],
+            showRowLabel: true,
+            itemRect: { ...rect, width: itemSize[0], height: itemSize[1] },
+            interpreter,
+            rect,
+            rotation,
+            opacity,
+            draw2D,
+        };
+    }
 
-            const row = this.content[rowIndex];
-            const cols = this.getContentChildren(row);
-            const numCols = cols.length;
-            rowItemWidth = rowItemSize[r]?.[0] ?? rowItemWidth;
-            rowItemHeight = rowItemSize[r]?.[1] ?? rowItemHeight;
-            const rowWidth = numCols * rowItemWidth + (numCols - 1) * spacing[0];
-            itemRect.width = rowItemWidth;
-            itemRect.height = rowHeights[r] ?? rowItemHeight;
+    private renderSingleRow(rowIndex: number, displayRowIndex: number, context: RowListRenderContext): boolean {
+        const row = this.content[rowIndex];
+        const cols = this.getContentChildren(row);
+        const numCols = cols.length;
 
-            if (this.wrap && rowIndex === 0 && r > 0) {
-                itemRect.y = itemRect.y - spacing[1];
-                const divRect = { ...itemRect, width: rowWidth };
-                const divHeight = this.renderWrapDivider(divRect, opacity, draw2D);
-                itemRect.y += divHeight + spacing[1];
-            }
+        // Update row dimensions
+        context.rowItemWidth = context.rowItemSize[displayRowIndex]?.[0] ?? context.rowItemWidth;
+        context.rowItemHeight = context.rowItemSize[displayRowIndex]?.[1] ?? context.rowItemHeight;
 
-            const title = row.getFieldValueJS("title") ?? "";
-            showRowLabel = this.getFieldValueJS("showRowLabel")?.[rowIndex] ?? showRowLabel;
-            if (title.length !== 0 && showRowLabel) {
-                const divRect = { ...itemRect, width: rowWidth };
-                const divHeight = this.renderRowDivider(title, divRect, opacity, rowIndex, draw2D);
-                itemRect.y += divHeight;
-            }
+        const spacing = this.getRowItemSpacing(rowIndex);
+        const rowWidth = numCols * context.rowItemWidth + (numCols - 1) * spacing[0];
 
-            const totalRowWidth = numCols * rowItemWidth + (numCols - 1) * spacing[0];
-            const allItemsFitOnScreen = totalRowWidth <= this.sceneRect.width;
-            const rowFocusStyle = this.getFieldValueJS("rowFocusAnimationStyle") as string;
+        context.itemRect.width = context.rowItemWidth;
+        context.itemRect.height = context.rowHeights[displayRowIndex] ?? context.rowItemHeight;
 
-            this.rowScrollOffset[rowIndex] ??= 0;
-
-            const { startCol, renderMode } = this.determineRenderMode(allItemsFitOnScreen, rowFocusStyle, rowIndex);
-
-            this.renderRowItems(
-                interpreter,
-                rowIndex,
-                cols,
-                itemRect,
-                rotation,
-                opacity,
-                spacing,
-                rowItemWidth,
-                startCol,
-                renderMode,
-                draw2D
-            );
-
-            itemRect.x = rect.x;
-            itemRect.y += itemRect.height + (rowSpacings[r] ?? spacing[1]);
-            if (!RectRect(this.sceneRect, itemRect)) {
-                break;
-            }
+        // Render wrap divider if needed
+        if (this.wrap && rowIndex === 0 && displayRowIndex > 0) {
+            context.itemRect.y = context.itemRect.y - spacing[1];
+            const divRect = { ...context.itemRect, width: rowWidth };
+            const divHeight = this.renderWrapDivider(divRect, context.opacity, context.draw2D);
+            context.itemRect.y += divHeight + spacing[1];
         }
-        this.updateRect(rect, displayRows, itemSize);
+
+        // Render row label if needed
+        const title = row.getFieldValueJS("title") ?? "";
+        context.showRowLabel = this.getFieldValueJS("showRowLabel")?.[rowIndex] ?? context.showRowLabel;
+        if (title.length !== 0 && context.showRowLabel) {
+            const divRect = { ...context.itemRect, width: rowWidth };
+            const divHeight = this.renderRowDivider(title, divRect, context.opacity, displayRowIndex, context.draw2D);
+            context.itemRect.y += divHeight;
+        }
+
+        // Apply horizontal offset and render items
+        const xOffset = this.getRowXOffset(displayRowIndex);
+        context.itemRect.x = context.rect.x + xOffset;
+
+        this.renderRowContent(rowIndex, cols, numCols, context.rowItemWidth, spacing, context.itemRect, context);
+
+        // Prepare for next row
+        context.itemRect.x = context.rect.x;
+        const rowSpacing = this.calculateRowSpacing(displayRowIndex, context.rowSpacings, context.globalSpacing);
+        context.itemRect.y += context.itemRect.height + rowSpacing;
+
+        return RectRect(this.sceneRect, context.itemRect);
+    }
+
+    private getRowXOffset(displayRowIndex: number): number {
+        const focusXOffset = this.getFieldValueJS("focusXOffset") as number[];
+        if (!focusXOffset || focusXOffset.length === 0) {
+            return 0;
+        }
+
+        const index = Math.min(displayRowIndex, focusXOffset.length - 1);
+        return focusXOffset[index] ?? 0;
+    }
+
+    private renderRowContent(
+        rowIndex: number,
+        cols: ContentNode[],
+        numCols: number,
+        rowItemWidth: number,
+        spacing: number[],
+        itemRect: Rect,
+        context: RowListRenderContext
+    ): void {
+        const totalRowWidth = numCols * rowItemWidth + (numCols - 1) * spacing[0];
+        const allItemsFitOnScreen = totalRowWidth <= this.sceneRect.width;
+        const rowFocusStyle = (this.getFieldValueJS("rowFocusAnimationStyle") as string).toLowerCase();
+
+        this.rowScrollOffset[rowIndex] ??= 0;
+
+        const renderMode = this.determineRenderMode(allItemsFitOnScreen, rowFocusStyle);
+
+        this.renderRowItems(rowIndex, cols, itemRect, spacing, rowItemWidth, renderMode, context);
+    }
+
+    private calculateRowSpacing(displayRowIndex: number, rowSpacings: number[], globalSpacing: number[]): number {
+        const rowSpacing = rowSpacings[displayRowIndex] ?? globalSpacing[1];
+        const defaultRowSpacing = this.resolution === "FHD" ? 60 : 40;
+        return rowSpacing !== undefined && rowSpacing !== 0 ? rowSpacing : defaultRowSpacing;
     }
 
     private calculateActualRowIndex(displayRowIndex: number): number {
@@ -548,43 +642,43 @@ export class RowList extends ArrayGrid {
             if (rowIndex < 0) {
                 rowIndex += this.content.length;
             }
-        } else if (rowIndex >= this.content.length) {
-            if (this.content.length === 0) {
-                return -1;
-            }
-            rowIndex = this.content.length - 1;
+        } else if (rowIndex >= this.content.length || rowIndex < 0) {
+            return -1;
         }
         return rowIndex;
     }
 
-    private determineRenderMode(
-        allItemsFitOnScreen: boolean,
-        rowFocusStyle: string,
-        rowIndex: number
-    ): { startCol: number; renderMode: string } {
+    private determineRenderMode(allItemsFitOnScreen: boolean, rowFocusStyle: string): string {
         if (allItemsFitOnScreen) {
-            return { startCol: 0, renderMode: "allItemsFit" };
-        } else if (rowFocusStyle === "fixedFocusWrap") {
-            return { startCol: this.rowFocus[rowIndex] ?? 0, renderMode: "wrapMode" };
+            return "allItemsFit";
+        } else if (rowFocusStyle === "fixedfocuswrap") {
+            return "wrapMode";
         } else {
-            return { startCol: this.rowScrollOffset[rowIndex] ?? 0, renderMode: "scrollMode" };
+            return "scrollMode";
         }
     }
 
     private renderRowItems(
-        interpreter: Interpreter,
         rowIndex: number,
         cols: ContentNode[],
         itemRect: Rect,
-        rotation: number,
-        opacity: number,
         spacing: number[],
         rowItemWidth: number,
-        startCol: number,
         renderMode: string,
-        draw2D?: IfDraw2D
+        context: RowListRenderContext
     ): void {
         const numCols = cols.length;
+
+        // Calculate startCol based on render mode
+        let startCol: number;
+        if (renderMode === "allItemsFit") {
+            startCol = 0;
+        } else if (renderMode === "wrapMode") {
+            startCol = this.rowFocus[rowIndex] ?? 0;
+        } else {
+            startCol = this.rowScrollOffset[rowIndex] ?? 0;
+        }
+
         const maxVisibleItems = Math.ceil((this.sceneRect.width + spacing[0]) / (rowItemWidth + spacing[0]));
         const endCol = renderMode === "wrapMode" ? numCols : Math.min(startCol + maxVisibleItems, numCols);
 
@@ -599,7 +693,16 @@ export class RowList extends ArrayGrid {
                 break;
             }
 
-            this.renderRowItemComponent(interpreter, rowIndex, colIndex, cols, itemRect, rotation, opacity, draw2D);
+            this.renderRowItemComponent(
+                context.interpreter,
+                rowIndex,
+                colIndex,
+                cols,
+                itemRect,
+                context.rotation,
+                context.opacity,
+                context.draw2D
+            );
             itemRect.x += itemRect.width + spacing[0];
 
             if (itemRect.x > this.sceneRect.x + this.sceneRect.width) {
@@ -624,7 +727,7 @@ export class RowList extends ArrayGrid {
         // Check if all items in this row fit on screen by checking if last item fits
         const numCols = cols.length;
         const rowItemWidth = itemRect.width;
-        const spacing = this.getFieldValueJS("itemSpacing") as number[];
+        const spacing = this.getRowItemSpacing(rowIndex);
         const lastItemX =
             itemRect.x - colIndex * (rowItemWidth + spacing[0]) + (numCols - 1) * (rowItemWidth + spacing[0]);
         const lastItemRightEdge = lastItemX + rowItemWidth;
@@ -632,9 +735,9 @@ export class RowList extends ArrayGrid {
 
         // Determine focus behavior based on animation style and screen fit
         let focused = false;
-        const rowFocusStyle = this.getFieldValueJS("rowFocusAnimationStyle") as string;
+        const rowFocusStyle = (this.getFieldValueJS("rowFocusAnimationStyle") as string).toLowerCase();
 
-        if (rowFocusStyle === "fixedFocusWrap" && !allItemsFitOnScreen) {
+        if (rowFocusStyle === "fixedfocuswrap" && !allItemsFitOnScreen) {
             // Items don't fit and we're using fixedFocusWrap - focus stays on first visible item
             focused = this.focusIndex === rowIndex && colIndex === this.rowFocus[rowIndex];
         } else {
@@ -676,15 +779,40 @@ export class RowList extends ArrayGrid {
         }
     }
 
-    protected renderRowDivider(title: string, itemRect: Rect, opacity: number, textLine: number, draw2D?: IfDraw2D) {
-        const rowOffset = this.getFieldValueJS("rowLabelOffset") as number[][];
-        const divRect = { ...itemRect, height: this.titleHeight };
+    protected renderRowDivider(
+        title: string,
+        itemRect: Rect,
+        opacity: number,
+        displayRowIndex: number,
+        draw2D?: IfDraw2D
+    ) {
+        const rowLabelOffset = this.getFieldValueJS("rowLabelOffset") as number[][];
+
+        // Get the offset for this display row, using last value as fallback
+        let offset = [0, 0];
+        if (rowLabelOffset?.length) {
+            if (displayRowIndex < rowLabelOffset.length) {
+                offset = rowLabelOffset[displayRowIndex];
+            } else {
+                // Use last value if array is shorter than number of rows
+                offset = rowLabelOffset.at(-1)!;
+            }
+        }
+
+        const divRect = {
+            ...itemRect,
+            x: itemRect.x + (offset[0] ?? 0),
+            height: this.titleHeight,
+        };
+
         if (title.length !== 0) {
             const font = this.getFieldValue("rowLabelFont") as Font;
             const color = this.getFieldValueJS("rowLabelColor");
-            this.drawText(title, font, color, opacity, divRect, "left", "center", 0, draw2D, "...", textLine);
+            this.drawText(title, font, color, opacity, divRect, "left", "center", 0, draw2D, "...", displayRowIndex);
         }
-        return this.titleHeight + (rowOffset?.[textLine]?.[1] ?? 0);
+
+        // Return height of title plus vertical offset (spacing between title and items)
+        return this.titleHeight + (offset[1] ?? 0);
     }
 
     protected refreshContent() {
