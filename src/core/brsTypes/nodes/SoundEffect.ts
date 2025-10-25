@@ -1,6 +1,6 @@
 import { RoSGNode } from "../components/RoSGNode";
 import { FieldKind, FieldModel } from "./Field";
-import { AAMember, BrsType, isBrsString, BrsString, isBrsNumber, BrsInvalid, rootObjects, jsValueOf } from "..";
+import { AAMember, BrsType, isBrsString, BrsString, isBrsNumber, BrsInvalid, sgRoot, jsValueOf } from "..";
 import { BrsDevice } from "../../device/BrsDevice";
 import { MediaEvent } from "../../common";
 
@@ -121,7 +121,7 @@ export class SoundEffect extends RoSGNode {
             }
             this.setState(MediaEvent.TOO_MANY);
         } else {
-            rootObjects.sfx[this.stream] = this;
+            sgRoot.sfx[this.stream] = this;
             postMessage(`sfx,trigger,${this.uri},${volume},${this.stream}`);
             this.setState(MediaEvent.START_PLAY);
         }
@@ -129,8 +129,8 @@ export class SoundEffect extends RoSGNode {
 
     private stop() {
         postMessage(`sfx,stop,${this.uri}`);
-        if (rootObjects.sfx[this.stream] === this) {
-            rootObjects.sfx[this.stream] = undefined;
+        if (sgRoot.sfx[this.stream] === this) {
+            sgRoot.sfx[this.stream] = undefined;
         }
         this.setState(MediaEvent.PARTIAL);
     }

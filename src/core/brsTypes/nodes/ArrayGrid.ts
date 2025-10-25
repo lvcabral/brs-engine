@@ -15,8 +15,7 @@ import {
     isBrsNumber,
     isBrsString,
     jsValueOf,
-    rootObjects,
-    RoSGNode,
+    sgRoot,
 } from "..";
 import { IfDraw2D, Rect } from "../interfaces/IfDraw2D";
 import { Interpreter } from "../../interpreter";
@@ -179,7 +178,7 @@ export class ArrayGrid extends Group {
             return;
         }
         const focusedIndex = this.getFieldValueJS("itemFocused") as number;
-        const nodeFocus = rootObjects.focused === this;
+        const nodeFocus = sgRoot.focused === this;
         this.updateItemFocus(this.focusIndex, false, nodeFocus);
         super.set(new BrsString("itemUnfocused"), new Int32(focusedIndex));
         this.focusIndex = newFocus;
@@ -297,7 +296,7 @@ export class ArrayGrid extends Group {
         draw2D?: IfDraw2D
     ) {
         const content = this.getContentItem(index);
-        const nodeFocus = rootObjects.focused === this;
+        const nodeFocus = sgRoot.focused === this;
         const focused = index === this.focusIndex;
         if (!this.itemComps[index]) {
             const itemComp = this.createItemComponent(interpreter, itemRect, content);

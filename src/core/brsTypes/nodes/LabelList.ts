@@ -2,7 +2,7 @@ import { FieldKind, FieldModel } from "./Field";
 import { AAMember } from "../components/RoAssociativeArray";
 import { ArrayGrid } from "./ArrayGrid";
 import { Font } from "./Font";
-import { BrsInvalid, BrsString, BrsType, brsValueOf, ContentNode, Int32, isBrsString, RoBitmap, rootObjects } from "..";
+import { BrsInvalid, BrsString, BrsType, brsValueOf, ContentNode, Int32, isBrsString, RoBitmap, sgRoot } from "..";
 import { Interpreter } from "../..";
 import { IfDraw2D, Rect, RectRect } from "../interfaces/IfDraw2D";
 
@@ -99,7 +99,7 @@ export class LabelList extends ArrayGrid {
             return;
         }
         const hasSections = this.metadata.length > 0;
-        const nodeFocus = rootObjects.focused === this;
+        const nodeFocus = sgRoot.focused === this;
         this.currRow = this.updateCurrRow();
         let lastIndex = -1;
         const displayRows = Math.min(this.content.length, this.numRows);

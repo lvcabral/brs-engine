@@ -34,24 +34,20 @@ import { RoSGNodeEvent } from "./events/RoSGNodeEvent";
 import { RoSGScreenEvent } from "./events/RoSGScreenEvent";
 import { isUnboxable } from "./Boxing";
 import { RoSGNode } from "./components/RoSGNode";
-import { Global } from "./nodes/Global";
-import { Scene } from "./nodes/Scene";
 import { Task } from "./nodes/Task";
-import { Timer } from "./nodes/Timer";
-import { Audio } from "./nodes/Audio";
-import { SoundEffect } from "./nodes/SoundEffect";
-import { Video } from "./nodes/Video";
-import { Field } from "./nodes/Field";
-import { ComponentDefinition } from "../scenegraph";
 import { getNodeType, SGNodeFactory } from "../scenegraph/SGNodeFactory";
 import { BrsObjects } from "./components/BrsObjects";
 import { ContentNode } from "./nodes/ContentNode";
 
+// BrightScript Type exports
 export * from "./BrsType";
 export * from "./Int32";
 export * from "./Int64";
 export * from "./Float";
 export * from "./Double";
+export * from "./Boxing";
+export * from "./Callable";
+export * from "./Coercion";
 export * from "./interfaces/BrsInterface";
 export * from "./components/BrsComponent";
 export * from "./components/RoArray";
@@ -116,19 +112,14 @@ export * from "./events/RoSystemLogEvent";
 export * from "./events/RoDeviceInfoEvent";
 export * from "./events/RoChannelStoreEvent";
 export * from "./events/RoUniversalControlEvent";
+
+// SceneGraph Type exports
+export * from "../scenegraph/SGNodeFactory";
+export * from "./SGRoot";
 export * from "./components/RoSGNode";
 export * from "./components/RoSGScreen";
-export * from "./events/RoURLEvent";
-export * from "./events/RoInputEvent";
-export * from "./events/RoAudioPlayerEvent";
-export * from "./events/RoVideoPlayerEvent";
-export * from "./events/RoSystemLogEvent";
-export * from "./events/RoDeviceInfoEvent";
-export * from "./events/RoChannelStoreEvent";
-export * from "./events/RoUniversalControlEvent";
 export * from "./events/RoSGNodeEvent";
 export * from "./events/RoSGScreenEvent";
-export * from "../scenegraph/SGNodeFactory";
 export * from "./nodes/Group";
 export * from "./nodes/Scene";
 export * from "./nodes/Keyboard";
@@ -167,9 +158,6 @@ export * from "./nodes/StdDlgProgressItem";
 export * from "./nodes/BusySpinner";
 export * from "./nodes/RSGPalette";
 export * from "./nodes/ChannelStore";
-export * from "./Boxing";
-export * from "./Callable";
-export * from "./Coercion";
 
 /**
  * Determines whether or not the given value is a number.
@@ -669,29 +657,6 @@ export function fromSGNode(node: RoSGNode): FlexObject {
 export function isInvalid(value: BrsType): boolean {
     return value.equalTo(BrsInvalid.Instance).toBoolean();
 }
-
-/**
- * An object that holds the Node that represents the m.global, the root Scene,
- * the currently focused node and the arrays of tasks and timers.
- * */
-interface RootObjects {
-    mGlobal: Global;
-    nodeDefMap: Map<string, ComponentDefinition>;
-    rootScene?: Scene;
-    focused?: RoSGNode;
-    audio?: Audio;
-    video?: Video;
-    sfx: (SoundEffect | undefined)[];
-    tasks: Task[];
-    timers: Timer[];
-}
-export const rootObjects: RootObjects = {
-    mGlobal: new Global([]),
-    nodeDefMap: new Map(),
-    sfx: [],
-    tasks: [],
-    timers: [],
-};
 
 /**
  * Checks if a string represents a number and returns its precision.

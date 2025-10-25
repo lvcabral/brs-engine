@@ -9,7 +9,7 @@ import {
     BrsEvent,
     brsValueOf,
     isBrsString,
-    rootObjects,
+    sgRoot,
 } from "..";
 import { Field, FieldKind, FieldModel } from "./Field";
 import { isThreadUpdate, TaskData, TaskState, ThreadUpdate } from "../../common";
@@ -165,7 +165,7 @@ export class Task extends RoSGNode {
                     update.global,
                     update.field
                 );
-                const node = update.global ? rootObjects.mGlobal : this;
+                const node = update.global ? sgRoot.mGlobal : this;
                 const field = new BrsString(update.field);
                 const value = brsValueOf(update.value);
                 node.set(field, value, false, undefined, false);

@@ -8,7 +8,7 @@ import {
     isBrsString,
     jsValueOf,
     Poster,
-    rootObjects,
+    sgRoot,
     RSGPalette,
     toAssociativeArray,
 } from "..";
@@ -67,8 +67,8 @@ export class StandardDialog extends Group {
             index = new BrsString("wasClosed");
             value = BrsBoolean.True;
             this.set(new BrsString("visible"), BrsBoolean.False);
-            if (rootObjects.rootScene?.dialog === this) {
-                rootObjects.rootScene.dialog = undefined;
+            if (sgRoot.scene?.dialog === this) {
+                sgRoot.scene.dialog = undefined;
             }
         } else if (fieldName === "width") {
             const newWidth = jsValueOf(value) as number;
@@ -109,8 +109,8 @@ export class StandardDialog extends Group {
 
     getPaletteColors() {
         let palette = this.getFieldValue("palette");
-        if (!(palette instanceof RSGPalette) && rootObjects.rootScene) {
-            palette = rootObjects.rootScene.getFieldValue("palette");
+        if (!(palette instanceof RSGPalette) && sgRoot.scene) {
+            palette = sgRoot.scene.getFieldValue("palette");
         }
         if (palette instanceof RSGPalette) {
             const colors = palette.getFieldValue("colors");

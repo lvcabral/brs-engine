@@ -1,7 +1,7 @@
 import { FieldKind, FieldModel } from "./Field";
 import { Group } from "./Group";
 import { Font } from "./Font";
-import { AAMember, BrsBoolean, BrsType, Float, isBrsString, rootObjects } from "..";
+import { AAMember, BrsBoolean, BrsType, Float, isBrsString, sgRoot } from "..";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D, MeasuredText, Rect } from "../interfaces/IfDraw2D";
 import { rotateTranslation } from "../../scenegraph/SGUtil";
@@ -33,7 +33,7 @@ export class Label extends Group {
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
-        if (rootObjects.rootScene?.ui.resolution === "FHD") {
+        if (sgRoot.scene?.ui.resolution === "FHD") {
             this.setFieldValue("lineSpacing", new Float(12));
         } else {
             this.setFieldValue("lineSpacing", new Float(8));

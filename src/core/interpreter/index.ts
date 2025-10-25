@@ -39,7 +39,7 @@ import {
     RoSGNode,
     Task,
     initializeTask,
-    rootObjects,
+    sgRoot,
 } from "../brsTypes";
 import { tryCoerce } from "../brsTypes/Coercion";
 import { Lexeme, GlobalFunctions } from "../lexer";
@@ -354,7 +354,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             if (taskData.buffer) {
                 taskNode.setTaskBuffer(taskData.buffer);
             }
-            const typeDef = rootObjects.nodeDefMap.get(taskNode.nodeSubtype.toLowerCase());
+            const typeDef = sgRoot.nodeDefMap.get(taskNode.nodeSubtype.toLowerCase());
             const taskEnv = typeDef?.environment;
             if (taskEnv) {
                 const mPointer = taskNode.m;
@@ -1895,7 +1895,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             throw new Stmt.BlockEnd("debug-exit", statement.location);
         }
         if (BrsDevice.threadId > 0) {
-            rootObjects.tasks[0]?.updateTask();
+            sgRoot.tasks[0]?.updateTask();
         }
         this.location = statement.location;
         return statement.accept<BrsType>(this);

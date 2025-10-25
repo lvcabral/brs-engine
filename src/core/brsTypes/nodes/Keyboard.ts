@@ -3,18 +3,7 @@ import { Group } from "./Group";
 import { AAMember } from "../components/RoAssociativeArray";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D, Rect } from "../interfaces/IfDraw2D";
-import {
-    BrsBoolean,
-    BrsInvalid,
-    BrsType,
-    Float,
-    Font,
-    Int32,
-    isBrsString,
-    RoBitmap,
-    rootObjects,
-    TextEditBox,
-} from "..";
+import { BrsBoolean, Float, Font, Int32, RoBitmap, sgRoot, TextEditBox } from "..";
 
 enum KeyboardModes {
     ALPHANUMERIC,
@@ -241,7 +230,7 @@ export class Keyboard extends Group {
         if (!this.isVisible()) {
             return;
         }
-        const isFocused = rootObjects.focused === this;
+        const isFocused = sgRoot.focused === this;
         this.textEditBox.setActive(isFocused);
         const nodeTrans = this.getTranslation();
         const drawTrans = nodeTrans.slice();

@@ -10,7 +10,7 @@ import {
     isBrsBoolean,
     BrsString,
     Int32,
-    rootObjects,
+    sgRoot,
     Double,
     Poster,
     BrsBoolean,
@@ -215,7 +215,7 @@ export class Video extends Group {
         postMessage({ captionStyle: new Array<CaptionStyleOption>() });
 
         // Set itself as the root video object
-        rootObjects.video = this;
+        sgRoot.setVideo(this);
     }
 
     get(index: BrsType) {

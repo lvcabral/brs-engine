@@ -20,7 +20,7 @@ import {
     jsValueOf,
     getTextureManager,
     isBrsString,
-    rootObjects,
+    sgRoot,
     RoInvalid,
     isUnboxable,
     RoFunction,
@@ -400,7 +400,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             if (!(childNode instanceof RoSGNode)) {
                 continue;
             }
-            if (rootObjects.focused === childNode || childNode.isChildrenFocused(interpreter)) {
+            if (sgRoot.focused === childNode || childNode.isChildrenFocused(interpreter)) {
                 return true;
             }
         }
@@ -463,7 +463,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             if (!this.triedInitFocus) {
                 // Only try initial focus once
                 this.triedInitFocus = true;
-                const typeDef = rootObjects.nodeDefMap.get(this.nodeSubtype.toLowerCase());
+                const typeDef = sgRoot.nodeDefMap.get(this.nodeSubtype.toLowerCase());
                 if (typeDef?.initialFocus) {
                     const initialFocus = new BrsString(typeDef.initialFocus);
                     const childToFocus = this.findNodeById(this, initialFocus);
@@ -476,16 +476,16 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
                 return false;
             }
 
-            rootObjects.focused = this;
+            sgRoot.setFocused(this);
 
             // Get the focus chain, with lowest ancestor first.
             let newFocusChain = this.createPath(this);
 
             // If there's already a focused node somewhere, we need to remove focus
             // from it and its ancestors.
-            if (rootObjects.focused instanceof RoSGNode) {
+            if (sgRoot.focused instanceof RoSGNode) {
                 // Get the focus chain, with root-most ancestor first.
-                let currFocusChain = this.createPath(rootObjects.focused);
+                let currFocusChain = this.createPath(sgRoot.focused);
 
                 // Find the lowest common ancestor (LCA) between the newly focused node
                 // and the current focused node.
@@ -509,10 +509,10 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
 
             // Finally, set the focusedChild of the newly focused node to itself (to mimic RBI behavior).
             this.set(focusedChildString, this, false);
-        } else if (rootObjects.focused === this) {
+        } else if (sgRoot.focused === this) {
             // If we're unsetting focus on ourself, we need to unset it on all ancestors as well.
-            const currFocusedNode = rootObjects.focused;
-            rootObjects.focused = undefined;
+            const currFocusedNode = sgRoot.focused;
+            sgRoot.setFocused();
             // Get the focus chain, with root-most ancestor first.
             let currFocusChain = this.createPath(currFocusedNode);
             for (const node of currFocusChain) {
@@ -559,8 +559,8 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         if (!uri.trim()) {
             return undefined;
         }
-        if (rootObjects.rootScene?.subSearch && rootObjects.rootScene?.subReplace) {
-            uri = uri.replace(rootObjects.rootScene.subSearch, rootObjects.rootScene.subReplace);
+        if (sgRoot.scene?.subSearch && sgRoot.scene?.subReplace) {
+            uri = uri.replace(sgRoot.scene.subSearch, sgRoot.scene.subReplace);
         }
         return getTextureManager().loadTexture(uri, this.httpAgent.customHeaders);
     }
@@ -822,7 +822,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             },
             impl: (interpreter: Interpreter, functionName: BrsString, ...functionArgs: BrsType[]) => {
                 // We need to search the callee's environment for this function rather than the caller's.
-                let componentDef = rootObjects.nodeDefMap.get(this.nodeSubtype.toLowerCase());
+                let componentDef = sgRoot.nodeDefMap.get(this.nodeSubtype.toLowerCase());
 
                 // Only allow public functions (defined in the interface) to be called.
                 if (componentDef && functionName.value in componentDef.functions) {
@@ -1860,7 +1860,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
-            return BrsBoolean.from(rootObjects.focused === this);
+            return BrsBoolean.from(sgRoot.focused === this);
         },
     });
 
@@ -1893,7 +1893,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         },
         impl: (interpreter: Interpreter) => {
             // loop through all children DFS and check if any children has focus
-            if (rootObjects.focused === this) {
+            if (sgRoot.focused === this) {
                 return BrsBoolean.True;
             }
 
@@ -1997,7 +1997,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter) => {
-            return rootObjects.rootScene || BrsInvalid.Instance;
+            return sgRoot.scene || BrsInvalid.Instance;
         },
     });
 

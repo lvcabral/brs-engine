@@ -10,7 +10,7 @@ import {
     isBrsBoolean,
     BrsString,
     Int32,
-    rootObjects,
+    sgRoot,
     Double,
 } from "..";
 import { BrsDevice } from "../../device/BrsDevice";
@@ -50,7 +50,7 @@ export class Audio extends RoSGNode {
         postMessage("audio,next,-1");
         postMessage("audio,mute,false");
 
-        rootObjects.audio = this;
+        sgRoot.setAudio(this);
     }
 
     set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {

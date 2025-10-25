@@ -1,5 +1,5 @@
 import { FieldModel } from "./Field";
-import { AAMember, BrsString, Float, Label, Poster, rootObjects, Font } from "..";
+import { AAMember, BrsString, Float, Label, Poster, sgRoot, Font } from "..";
 import { Group } from "./Group";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D } from "../interfaces/IfDraw2D";
@@ -161,7 +161,7 @@ export class Button extends Group {
         if (!this.isVisible()) {
             return;
         }
-        const nodeFocus = rootObjects.focused === this;
+        const nodeFocus = sgRoot.focused === this;
         const nodeTrans = this.getTranslation();
         const drawTrans = angle !== 0 ? rotateTranslation(nodeTrans, angle) : nodeTrans.slice();
         drawTrans[0] += origin[0];
