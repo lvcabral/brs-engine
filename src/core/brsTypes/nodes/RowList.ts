@@ -130,7 +130,7 @@ export class RowList extends ArrayGrid {
         this.rowFocus[rowIndex] = colIndex;
 
         // Get the row focus animation style to determine scrolling behavior
-        const rowFocusStyle = this.getFieldValueJS("rowFocusAnimationStyle") as string;
+        const rowFocusStyle = (this.getFieldValueJS("rowFocusAnimationStyle") as string).toLowerCase();
 
         // Initialize scroll offset if not set - ensure it starts at 0 for first visit
         const isFirstVisit = this.rowScrollOffset[rowIndex] === undefined || this.rowScrollOffset[rowIndex] === null;
@@ -139,9 +139,9 @@ export class RowList extends ArrayGrid {
         }
 
         const itemSize = this.getFieldValueJS("itemSize") as number[];
-        const spacing = this.getRowItemSpacing(rowIndex);
+        const spacing = this.getRowItemSpacing(rowIndex); // Use the actual row's spacing
         const rowItemSize = this.getFieldValueJS("rowItemSize") as number[][];
-        const rowItemWidth = rowItemSize[rowIndex]?.[0] ?? itemSize[0];
+        const rowItemWidth = rowItemSize[0]?.[0] ?? itemSize[0]; // Focused row is at display index 0
         const cols = this.content[rowIndex]?.getNodeChildren();
         const numCols = cols?.length ?? 0;
         const totalRowWidth = numCols * rowItemWidth + (numCols - 1) * spacing[0];
@@ -151,40 +151,45 @@ export class RowList extends ArrayGrid {
         if (allItemsFitOnScreen) {
             // All items fit, no scrolling needed - always use floating focus behavior
             this.rowScrollOffset[rowIndex] = 0;
-        } else if (rowFocusStyle === "fixedFocusWrap") {
+        } else if (rowFocusStyle === "fixedfocuswrap") {
             // For fixedFocusWrap, no scroll offset (focus wraps around)
             this.rowScrollOffset[rowIndex] = 0;
-        } else if (rowFocusStyle === "fixedFocus") {
+        } else if (rowFocusStyle === "fixedfocus") {
             // For fixedFocus, focus always stays at first visible position (left edge)
             // Scroll offset equals focused column so focus appears at position 0
             this.rowScrollOffset[rowIndex] = colIndex;
-        } else if (rowFocusStyle === "floatingFocus") {
+        } else if (rowFocusStyle === "floatingfocus") {
             // floatingFocus: ensure focused item is fully visible
             // Calculate max items that fit completely on screen (use floor, not ceil)
             const maxVisibleItems = Math.floor(this.sceneRect.width / (rowItemWidth + spacing[0]));
 
-            if (isChangingRow) {
-                // When changing to a different row
-                if (isFirstVisit) {
-                    // First time visiting this row - calculate initial scroll position
-                    if (colIndex === 0) {
-                        // Explicitly focusing first item - start from beginning
-                        this.rowScrollOffset[rowIndex] = 0;
-                    } else if (colIndex < maxVisibleItems) {
-                        // Focused item fits in the "floating" visible area - no scroll needed
-                        this.rowScrollOffset[rowIndex] = 0;
-                    } else {
-                        // Focused item is beyond floating area - scroll to show it fully at right edge
-                        this.rowScrollOffset[rowIndex] = Math.max(0, colIndex - maxVisibleItems + 1);
-                    }
+            if (isChangingRow && isFirstVisit) {
+                // First time visiting this row - calculate initial scroll position
+                if (colIndex === 0) {
+                    // Explicitly focusing first item - start from beginning
+                    this.rowScrollOffset[rowIndex] = 0;
+                } else if (colIndex < maxVisibleItems) {
+                    // Focused item fits in the "floating" visible area - no scroll needed
+                    this.rowScrollOffset[rowIndex] = 0;
+                } else {
+                    // Focused item is beyond floating area - scroll to show it fully at right edge
+                    this.rowScrollOffset[rowIndex] = Math.max(0, colIndex - maxVisibleItems + 1);
                 }
-                // else: Returning to a previously visited row - preserve saved scroll offset
-            } else if (colIndex < this.rowScrollOffset[rowIndex]) {
-                // Focused item is before visible area, scroll left to show it fully
-                this.rowScrollOffset[rowIndex] = colIndex;
-            } else if (colIndex >= this.rowScrollOffset[rowIndex] + maxVisibleItems) {
-                // Focused item is after visible area, scroll right to show it fully at the right edge
-                this.rowScrollOffset[rowIndex] = colIndex - maxVisibleItems + 1;
+            } else {
+                // Either navigating within same row OR returning to a previously visited row
+                
+                // In floating focus mode, when changing rows, preserve the scroll offset
+                // Only adjust scroll when navigating within the same row
+                if (isChangingRow && rowFocusStyle === "floatingfocus") {
+                    // Keep scroll offset unchanged - row maintains its scroll state
+                } else if (colIndex < this.rowScrollOffset[rowIndex]) {
+                    // Focused item is before visible area, scroll left to show it fully
+                    this.rowScrollOffset[rowIndex] = colIndex;
+                } else if (colIndex >= this.rowScrollOffset[rowIndex] + maxVisibleItems) {
+                    // Focused item is after visible area, scroll right to show it fully at the right edge
+                    this.rowScrollOffset[rowIndex] = colIndex - maxVisibleItems + 1;
+                }
+                // else: column is already visible, keep current scroll offset
             }
         }
 
@@ -214,19 +219,21 @@ export class RowList extends ArrayGrid {
             }
         }
         if (nextRow >= 0 && nextRow < this.content.length) {
-            const rowFocusStyle = this.getFieldValueJS("rowFocusAnimationStyle") as string;
-            let targetColIndex = this.rowFocus[nextRow] ?? 0;
+            const rowFocusStyle = (this.getFieldValueJS("rowFocusAnimationStyle") as string).toLowerCase();
+            const currentRow = this.focusIndex;
+            const currentCol = this.rowFocus[currentRow] ?? 0;
+            const currentScrollOffset = this.rowScrollOffset[currentRow] ?? 0;
 
-            // In floatingFocus mode, maintain the visible column position (screen position)
-            if (rowFocusStyle === "floatingFocus") {
-                const currentRow = this.focusIndex;
-                const currentCol = this.rowFocus[currentRow] ?? 0;
-                const currentScrollOffset = this.rowScrollOffset[currentRow] ?? 0;
+            // Calculate the visible screen position (0-based position on screen) from current row
+            const visiblePosition = currentCol - currentScrollOffset;
 
-                // Calculate the visible position (0-based position on screen)
-                const visiblePosition = currentCol - currentScrollOffset;
+            let targetColIndex: number;
 
-                // Calculate the target column in the new row based on visible position
+            // In floatingFocus mode, move to the same visual screen position
+            if (rowFocusStyle === "floatingfocus") {
+                // Maintain the visual screen position across rows
+                // Each row keeps its scroll offset, we just calculate which column
+                // corresponds to the same visual position in the next row
                 const nextScrollOffset = this.rowScrollOffset[nextRow] ?? 0;
                 targetColIndex = nextScrollOffset + visiblePosition;
 
@@ -235,29 +242,18 @@ export class RowList extends ArrayGrid {
                 const nextRowColCount = nextRowCols?.length ?? 0;
 
                 if (nextRowColCount > 0) {
-                    // Get item size for the new row to calculate max visible items
-                    const itemSize = this.getFieldValueJS("itemSize") as number[];
-                    const spacing = this.getRowItemSpacing(nextRow);
-                    const rowItemSize = this.getFieldValueJS("rowItemSize") as number[][];
-
-                    // Calculate display row index for the next row (relative to what currRow will become)
-                    // When moving down, nextRow becomes the new currRow, so it will be at display position 0
-                    const displayRowIndex = 0;
-                    const rowItemWidth = rowItemSize[displayRowIndex]?.[0] ?? itemSize[0];
-                    const maxVisibleItems = Math.floor(this.sceneRect.width / (rowItemWidth + spacing[0]));
-
-                    // Clamp target column to valid range
-                    targetColIndex = Math.max(nextScrollOffset, Math.min(targetColIndex, nextRowColCount - 1));
-
-                    // Also ensure it's within the visible area
-                    targetColIndex = Math.min(targetColIndex, nextScrollOffset + maxVisibleItems - 1);
+                    // Clamp to valid column range
+                    targetColIndex = Math.max(0, Math.min(targetColIndex, nextRowColCount - 1));
                 }
+            } else {
+                // For other modes, use the previously focused column in that row
+                targetColIndex = this.rowFocus[nextRow] ?? 0;
             }
 
             const rowItem = new RoArray([new Int32(nextRow), new Int32(targetColIndex)]);
+            this.currRow += this.wrap ? 0 : offset; // Update currRow before setFocusedItem
             this.set(new BrsString("jumpToRowItem"), rowItem);
             handled = true;
-            this.currRow += this.wrap ? 0 : offset;
         }
         return handled;
     }
@@ -279,14 +275,14 @@ export class RowList extends ArrayGrid {
         this.rowScrollOffset[currentRow] ??= 0;
 
         const rowItemWidth = this.getRowItemWidth(currentRow);
-        const allItemsFitOnScreen = this.checkIfAllItemsFitOnScreen(currentRow, numCols, rowItemWidth);
-        const rowFocusStyle = this.getFieldValueJS("rowFocusAnimationStyle") as string;
+        const allItemsFitOnScreen = this.checkIfAllItemsFitOnScreen(numCols, rowItemWidth);
+        const rowFocusStyle = (this.getFieldValueJS("rowFocusAnimationStyle") as string).toLowerCase();
 
         if (allItemsFitOnScreen) {
             return this.handleAllItemsFit(currentRow, numCols, offset);
-        } else if (rowFocusStyle === "fixedFocusWrap") {
+        } else if (rowFocusStyle === "fixedfocuswrap") {
             return this.handleFixedFocusWrap(currentRow, numCols, offset);
-        } else if (rowFocusStyle === "fixedFocus") {
+        } else if (rowFocusStyle === "fixedfocus") {
             return this.handleFixedFocus(currentRow, numCols, offset);
         } else {
             return this.handleFloatingFocus(currentRow, numCols, rowItemWidth, offset);
@@ -321,22 +317,25 @@ export class RowList extends ArrayGrid {
         const itemSpacing = this.getFieldValueJS("itemSpacing") as number[];
         const rowItemSpacing = this.getFieldValueJS("rowItemSpacing") as number[][];
 
-        // Calculate display row index (relative to currRow, not absolute row index)
-        let displayRowIndex = rowIndex - this.currRow;
-        if (this.wrap && displayRowIndex < 0) {
-            displayRowIndex += this.content.length;
+        // If no per-row spacing defined, use global itemSpacing
+        if (!rowItemSpacing || rowItemSpacing.length === 0) {
+            return itemSpacing;
         }
 
-        // Return per-row spacing if defined, otherwise fall back to global itemSpacing
-        const perRowSpacing = rowItemSpacing[displayRowIndex];
+        // If rowItemSpacing has entries, use the appropriate one
+        // If rowIndex exceeds array length, use the last defined spacing
+        const index = Math.min(rowIndex, rowItemSpacing.length - 1);
+        const perRowSpacing = rowItemSpacing[index];
+        
         if (perRowSpacing && perRowSpacing.length >= 2) {
             return perRowSpacing;
         }
         return itemSpacing;
     }
 
-    private checkIfAllItemsFitOnScreen(rowIndex: number, numCols: number, rowItemWidth: number): boolean {
-        const spacing = this.getRowItemSpacing(rowIndex);
+    private checkIfAllItemsFitOnScreen(numCols: number, rowItemWidth: number): boolean {
+        // Use the focused row's spacing (this.focusIndex is the absolute row index)
+        const spacing = this.getRowItemSpacing(this.focusIndex);
         const totalRowWidth = numCols * rowItemWidth + (numCols - 1) * spacing[0];
         return totalRowWidth <= this.sceneRect.width;
     }
@@ -381,6 +380,7 @@ export class RowList extends ArrayGrid {
     }
 
     private handleFloatingFocus(currentRow: number, numCols: number, rowItemWidth: number, offset: number): boolean {
+        // currentRow is the absolute focused row index
         const spacing = this.getRowItemSpacing(currentRow);
         const maxVisibleItems = Math.floor(this.sceneRect.width / (rowItemWidth + spacing[0]));
         const currentFocusedCol = this.rowFocus[currentRow];
@@ -506,7 +506,7 @@ export class RowList extends ArrayGrid {
             rowItemWidth = rowItemSize[r]?.[0] ?? rowItemWidth;
             rowItemHeight = rowItemSize[r]?.[1] ?? rowItemHeight;
 
-            // Get per-row spacing
+            // Get per-row spacing using absolute row index from content
             const spacing = this.getRowItemSpacing(rowIndex);
             const rowWidth = numCols * rowItemWidth + (numCols - 1) * spacing[0];
             itemRect.width = rowItemWidth;
@@ -542,7 +542,7 @@ export class RowList extends ArrayGrid {
 
             const totalRowWidth = numCols * rowItemWidth + (numCols - 1) * spacing[0];
             const allItemsFitOnScreen = totalRowWidth <= this.sceneRect.width;
-            const rowFocusStyle = this.getFieldValueJS("rowFocusAnimationStyle") as string;
+            const rowFocusStyle = (this.getFieldValueJS("rowFocusAnimationStyle") as string).toLowerCase();
 
             this.rowScrollOffset[rowIndex] ??= 0;
 
@@ -598,7 +598,7 @@ export class RowList extends ArrayGrid {
     ): { startCol: number; renderMode: string } {
         if (allItemsFitOnScreen) {
             return { startCol: 0, renderMode: "allItemsFit" };
-        } else if (rowFocusStyle === "fixedFocusWrap") {
+        } else if (rowFocusStyle === "fixedfocuswrap") {
             return { startCol: this.rowFocus[rowIndex] ?? 0, renderMode: "wrapMode" };
         } else {
             return { startCol: this.rowScrollOffset[rowIndex] ?? 0, renderMode: "scrollMode" };
@@ -666,9 +666,9 @@ export class RowList extends ArrayGrid {
 
         // Determine focus behavior based on animation style and screen fit
         let focused = false;
-        const rowFocusStyle = this.getFieldValueJS("rowFocusAnimationStyle") as string;
+        const rowFocusStyle = (this.getFieldValueJS("rowFocusAnimationStyle") as string).toLowerCase();
 
-        if (rowFocusStyle === "fixedFocusWrap" && !allItemsFitOnScreen) {
+        if (rowFocusStyle === "fixedfocuswrap" && !allItemsFitOnScreen) {
             // Items don't fit and we're using fixedFocusWrap - focus stays on first visible item
             focused = this.focusIndex === rowIndex && colIndex === this.rowFocus[rowIndex];
         } else {
