@@ -260,6 +260,13 @@ export class Video extends Group {
             postMessage(`video,audio,${value.getValue()}`);
         } else if (fieldName === "subtitletrack" && isBrsString(value)) {
             postMessage(`video,subtitle,${value.getValue()}`);
+        } else if (fieldName === "contentisplaylist" && isBrsBoolean(value)) {
+            super.set(index, value, alwaysNotify, kind);
+            const content = this.getFieldValue("content");
+            if (content instanceof ContentNode) {
+                postMessage({ videoPlaylist: this.formatContent(content) });
+            }
+            return BrsInvalid.Instance;
         } else if (fieldName === "content" && value instanceof ContentNode) {
             postMessage({ videoPlaylist: this.formatContent(value) });
             if (this.contentTitles.length > 0) {
