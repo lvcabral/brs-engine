@@ -548,11 +548,8 @@ export class RowList extends ArrayGrid {
             if (rowIndex < 0) {
                 rowIndex += this.content.length;
             }
-        } else if (rowIndex >= this.content.length) {
-            if (this.content.length === 0) {
-                return -1;
-            }
-            rowIndex = this.content.length - 1;
+        } else if (rowIndex >= this.content.length || rowIndex < 0) {
+            return -1;
         }
         return rowIndex;
     }
