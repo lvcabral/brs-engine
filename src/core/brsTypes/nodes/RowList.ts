@@ -22,6 +22,24 @@ import { IfDraw2D, Rect, RectRect } from "../interfaces/IfDraw2D";
 import { ArrayGrid } from "./ArrayGrid";
 import { FieldKind, FieldModel } from "./Field";
 
+interface RowListRenderContext {
+    itemSize: number[];
+    globalSpacing: number[];
+    rowItemSize: number[][];
+    rowHeights: number[];
+    rowSpacings: number[];
+    displayRows: number;
+    rowItemWidth: number;
+    rowItemHeight: number;
+    showRowLabel: boolean;
+    itemRect: Rect;
+    interpreter: Interpreter;
+    rect: Rect;
+    rotation: number;
+    opacity: number;
+    draw2D?: IfDraw2D;
+}
+
 export class RowList extends ArrayGrid {
     readonly defaultFields: FieldModel[] = [
         { name: "itemComponentName", type: "string", value: "" },
@@ -461,18 +479,19 @@ export class RowList extends ArrayGrid {
         if (!this.validateRenderPrerequisites()) {
             return;
         }
-        const renderContext = this.initializeRenderContext(rect);
+        const context = this.initializeRenderContext(rect, interpreter, rotation, opacity, draw2D);
         this.currRow = this.focusIndex;
-        for (let r = 0; r < renderContext.displayRows; r++) {
+
+        for (let r = 0; r < context.displayRows; r++) {
             const rowIndex = this.calculateActualRowIndex(r);
             if (rowIndex === -1) {
                 break;
             }
-            if (!this.renderSingleRow(interpreter, rowIndex, r, renderContext, rect, rotation, opacity, draw2D)) {
+            if (!this.renderSingleRow(rowIndex, r, context)) {
                 break;
             }
         }
-        this.updateRect(rect, renderContext.displayRows, renderContext.itemSize);
+        this.updateRect(rect, context.displayRows, context.itemSize);
     }
 
     private validateRenderPrerequisites(): boolean {
@@ -499,7 +518,13 @@ export class RowList extends ArrayGrid {
         return true;
     }
 
-    private initializeRenderContext(rect: Rect) {
+    private initializeRenderContext(
+        rect: Rect,
+        interpreter: Interpreter,
+        rotation: number,
+        opacity: number,
+        draw2D?: IfDraw2D
+    ): RowListRenderContext {
         const itemSize = this.getFieldValueJS("itemSize") as number[];
         const globalSpacing = this.getFieldValueJS("itemSpacing") as number[];
         const rowItemSize = this.getFieldValueJS("rowItemSize") as number[][];
@@ -518,19 +543,15 @@ export class RowList extends ArrayGrid {
             rowItemHeight: itemSize[1],
             showRowLabel: true,
             itemRect: { ...rect, width: itemSize[0], height: itemSize[1] },
+            interpreter,
+            rect,
+            rotation,
+            opacity,
+            draw2D,
         };
     }
 
-    private renderSingleRow(
-        interpreter: Interpreter,
-        rowIndex: number,
-        displayRowIndex: number,
-        context: ReturnType<typeof this.initializeRenderContext>,
-        rect: Rect,
-        rotation: number,
-        opacity: number,
-        draw2D?: IfDraw2D
-    ): boolean {
+    private renderSingleRow(rowIndex: number, displayRowIndex: number, context: RowListRenderContext): boolean {
         const row = this.content[rowIndex];
         const cols = this.getContentChildren(row);
         const numCols = cols.length;
@@ -549,7 +570,7 @@ export class RowList extends ArrayGrid {
         if (this.wrap && rowIndex === 0 && displayRowIndex > 0) {
             context.itemRect.y = context.itemRect.y - spacing[1];
             const divRect = { ...context.itemRect, width: rowWidth };
-            const divHeight = this.renderWrapDivider(divRect, opacity, draw2D);
+            const divHeight = this.renderWrapDivider(divRect, context.opacity, context.draw2D);
             context.itemRect.y += divHeight + spacing[1];
         }
 
@@ -558,29 +579,18 @@ export class RowList extends ArrayGrid {
         context.showRowLabel = this.getFieldValueJS("showRowLabel")?.[rowIndex] ?? context.showRowLabel;
         if (title.length !== 0 && context.showRowLabel) {
             const divRect = { ...context.itemRect, width: rowWidth };
-            const divHeight = this.renderRowDivider(title, divRect, opacity, displayRowIndex, draw2D);
+            const divHeight = this.renderRowDivider(title, divRect, context.opacity, displayRowIndex, context.draw2D);
             context.itemRect.y += divHeight;
         }
 
         // Apply horizontal offset and render items
         const xOffset = this.getRowXOffset(displayRowIndex);
-        context.itemRect.x = rect.x + xOffset;
+        context.itemRect.x = context.rect.x + xOffset;
 
-        this.renderRowContent(
-            interpreter,
-            rowIndex,
-            cols,
-            numCols,
-            context.rowItemWidth,
-            spacing,
-            context.itemRect,
-            rotation,
-            opacity,
-            draw2D
-        );
+        this.renderRowContent(rowIndex, cols, numCols, context.rowItemWidth, spacing, context.itemRect, context);
 
         // Prepare for next row
-        context.itemRect.x = rect.x;
+        context.itemRect.x = context.rect.x;
         const rowSpacing = this.calculateRowSpacing(displayRowIndex, context.rowSpacings, context.globalSpacing);
         context.itemRect.y += context.itemRect.height + rowSpacing;
 
@@ -598,16 +608,13 @@ export class RowList extends ArrayGrid {
     }
 
     private renderRowContent(
-        interpreter: Interpreter,
         rowIndex: number,
         cols: ContentNode[],
         numCols: number,
         rowItemWidth: number,
         spacing: number[],
         itemRect: Rect,
-        rotation: number,
-        opacity: number,
-        draw2D?: IfDraw2D
+        context: RowListRenderContext
     ): void {
         const totalRowWidth = numCols * rowItemWidth + (numCols - 1) * spacing[0];
         const allItemsFitOnScreen = totalRowWidth <= this.sceneRect.width;
@@ -615,21 +622,9 @@ export class RowList extends ArrayGrid {
 
         this.rowScrollOffset[rowIndex] ??= 0;
 
-        const { startCol, renderMode } = this.determineRenderMode(allItemsFitOnScreen, rowFocusStyle, rowIndex);
+        const renderMode = this.determineRenderMode(allItemsFitOnScreen, rowFocusStyle);
 
-        this.renderRowItems(
-            interpreter,
-            rowIndex,
-            cols,
-            itemRect,
-            rotation,
-            opacity,
-            spacing,
-            rowItemWidth,
-            startCol,
-            renderMode,
-            draw2D
-        );
+        this.renderRowItems(rowIndex, cols, itemRect, spacing, rowItemWidth, renderMode, context);
     }
 
     private calculateRowSpacing(displayRowIndex: number, rowSpacings: number[], globalSpacing: number[]): number {
@@ -653,34 +648,37 @@ export class RowList extends ArrayGrid {
         return rowIndex;
     }
 
-    private determineRenderMode(
-        allItemsFitOnScreen: boolean,
-        rowFocusStyle: string,
-        rowIndex: number
-    ): { startCol: number; renderMode: string } {
+    private determineRenderMode(allItemsFitOnScreen: boolean, rowFocusStyle: string): string {
         if (allItemsFitOnScreen) {
-            return { startCol: 0, renderMode: "allItemsFit" };
+            return "allItemsFit";
         } else if (rowFocusStyle === "fixedfocuswrap") {
-            return { startCol: this.rowFocus[rowIndex] ?? 0, renderMode: "wrapMode" };
+            return "wrapMode";
         } else {
-            return { startCol: this.rowScrollOffset[rowIndex] ?? 0, renderMode: "scrollMode" };
+            return "scrollMode";
         }
     }
 
     private renderRowItems(
-        interpreter: Interpreter,
         rowIndex: number,
         cols: ContentNode[],
         itemRect: Rect,
-        rotation: number,
-        opacity: number,
         spacing: number[],
         rowItemWidth: number,
-        startCol: number,
         renderMode: string,
-        draw2D?: IfDraw2D
+        context: RowListRenderContext
     ): void {
         const numCols = cols.length;
+
+        // Calculate startCol based on render mode
+        let startCol: number;
+        if (renderMode === "allItemsFit") {
+            startCol = 0;
+        } else if (renderMode === "wrapMode") {
+            startCol = this.rowFocus[rowIndex] ?? 0;
+        } else {
+            startCol = this.rowScrollOffset[rowIndex] ?? 0;
+        }
+
         const maxVisibleItems = Math.ceil((this.sceneRect.width + spacing[0]) / (rowItemWidth + spacing[0]));
         const endCol = renderMode === "wrapMode" ? numCols : Math.min(startCol + maxVisibleItems, numCols);
 
@@ -695,7 +693,16 @@ export class RowList extends ArrayGrid {
                 break;
             }
 
-            this.renderRowItemComponent(interpreter, rowIndex, colIndex, cols, itemRect, rotation, opacity, draw2D);
+            this.renderRowItemComponent(
+                context.interpreter,
+                rowIndex,
+                colIndex,
+                cols,
+                itemRect,
+                context.rotation,
+                context.opacity,
+                context.draw2D
+            );
             itemRect.x += itemRect.width + spacing[0];
 
             if (itemRect.x > this.sceneRect.x + this.sceneRect.width) {
