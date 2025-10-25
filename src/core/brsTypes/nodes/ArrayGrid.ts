@@ -4,7 +4,6 @@ import { Group } from "./Group";
 import {
     BrsBoolean,
     BrsInvalid,
-    BrsNumber,
     BrsString,
     BrsType,
     brsValueOf,
@@ -79,7 +78,7 @@ export class ArrayGrid extends Group {
         { name: "currFocusSection", type: "float", value: "0.0" },
     ];
     protected readonly dividerUri = "common:/images/dividerHorizontal.9.png";
-    protected readonly content: RoSGNode[] = [];
+    protected readonly content: ContentNode[] = [];
     protected readonly metadata: ArrayGrid.Metadata[] = [];
     protected readonly itemComps: Group[] = [];
     protected readonly marginX: number;
@@ -244,6 +243,25 @@ export class ArrayGrid extends Group {
         return false;
     }
 
+    protected getItemContent(index: number): ContentNode {
+        let content: ContentNode;
+        if (this.content[index] instanceof ContentNode) {
+            content = this.content[index];
+        } else {
+            content = new ContentNode();
+        }
+        return content;
+    }
+
+    protected getContentChildren(content: ContentNode): ContentNode[] {
+        return content.getNodeChildren().map((child) => {
+            if (child instanceof ContentNode) {
+                return child;
+            }
+            return new ContentNode();
+        });
+    }
+
     renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
         if (!this.isVisible()) {
             return;
@@ -281,10 +299,7 @@ export class ArrayGrid extends Group {
         opacity: number,
         draw2D?: IfDraw2D
     ) {
-        const content = this.content[index];
-        if (!(content instanceof ContentNode)) {
-            return;
-        }
+        const content = this.getItemContent(index);
         const nodeFocus = rootObjects.focused === this;
         const focused = index === this.focusIndex;
         if (!this.itemComps[index]) {
@@ -390,7 +405,7 @@ export class ArrayGrid extends Group {
         if (!(content instanceof ContentNode)) {
             return;
         }
-        const sections = content.getNodeChildren();
+        const sections = this.getContentChildren(content);
         let itemIndex = 0;
         for (const section of sections) {
             if (section.getFieldValueJS("ContentType")?.toLowerCase() === "section") {
@@ -402,8 +417,8 @@ export class ArrayGrid extends Group {
         }
     }
 
-    protected processSection(section: RoSGNode, itemIndex: number) {
-        const content = section.getNodeChildren();
+    protected processSection(section: ContentNode, itemIndex: number) {
+        const content = this.getContentChildren(section);
         const numCols = this.numCols || 1;
         if (content.length === 0) {
             return itemIndex;

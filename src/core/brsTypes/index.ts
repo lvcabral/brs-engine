@@ -652,7 +652,7 @@ export function fromSGNode(node: RoSGNode): FlexObject {
     if (children.length > 0) {
         result["_children_"] = children.map((child: RoSGNode | BrsInvalid) => {
             if (child instanceof BrsInvalid) {
-                return { "_invalid_": null };
+                return { _invalid_: null };
             }
             return fromSGNode(child);
         });

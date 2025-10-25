@@ -473,7 +473,7 @@ export class RowList extends ArrayGrid {
             }
 
             const row = this.content[rowIndex];
-            const cols = row.getNodeChildren();
+            const cols = this.getContentChildren(row);
             const numCols = cols.length;
             rowItemWidth = rowItemSize[r]?.[0] ?? rowItemWidth;
             rowItemHeight = rowItemSize[r]?.[1] ?? rowItemHeight;
@@ -508,7 +508,6 @@ export class RowList extends ArrayGrid {
                 interpreter,
                 rowIndex,
                 cols,
-                numCols,
                 itemRect,
                 rotation,
                 opacity,
@@ -563,8 +562,7 @@ export class RowList extends ArrayGrid {
     private renderRowItems(
         interpreter: Interpreter,
         rowIndex: number,
-        cols: any[],
-        numCols: number,
+        cols: ContentNode[],
         itemRect: Rect,
         rotation: number,
         opacity: number,
@@ -574,6 +572,7 @@ export class RowList extends ArrayGrid {
         renderMode: string,
         draw2D?: IfDraw2D
     ): void {
+        const numCols = cols.length;
         const maxVisibleItems = Math.ceil((this.sceneRect.width + spacing[0]) / (rowItemWidth + spacing[0]));
         const endCol = renderMode === "wrapMode" ? numCols : Math.min(startCol + maxVisibleItems, numCols);
 
@@ -588,7 +587,7 @@ export class RowList extends ArrayGrid {
                 break;
             }
 
-            this.renderRowItemComponent(interpreter, rowIndex, colIndex, itemRect, rotation, opacity, draw2D);
+            this.renderRowItemComponent(interpreter, rowIndex, colIndex, cols, itemRect, rotation, opacity, draw2D);
             itemRect.x += itemRect.width + spacing[0];
 
             if (itemRect.x > this.sceneRect.x + this.sceneRect.width) {
@@ -601,16 +600,13 @@ export class RowList extends ArrayGrid {
         interpreter: Interpreter,
         rowIndex: number,
         colIndex: number,
+        cols: ContentNode[],
         itemRect: Rect,
         rotation: number,
         opacity: number,
         draw2D?: IfDraw2D
     ) {
-        const cols = this.content[rowIndex]?.getNodeChildren();
-        const content = cols?.[colIndex];
-        if (!(content instanceof ContentNode)) {
-            return;
-        }
+        const content = cols[colIndex];
         const nodeFocus = rootObjects.focused === this;
 
         // Check if all items in this row fit on screen by checking if last item fits
@@ -685,7 +681,7 @@ export class RowList extends ArrayGrid {
         if (!(content instanceof ContentNode)) {
             return;
         }
-        const rows = content.getNodeChildren() as ContentNode[];
+        const rows = this.getContentChildren(content);
         let itemIndex = 0;
         for (const row of rows) {
             const content = row.getNodeChildren();

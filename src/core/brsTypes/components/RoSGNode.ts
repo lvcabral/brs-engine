@@ -327,7 +327,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             this.notified = field.setValue(value, true);
             this.fields.set(mapKey, field);
             this.changed = true;
-        } else {
+        } else if (!isInvalid(value)) {
             BrsDevice.stderr.write(`warning,BRIGHTSCRIPT: ERROR: roSGNode.AddReplace: "${fieldName}": Type mismatch!`);
         }
         return BrsInvalid.Instance;
@@ -1496,17 +1496,21 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             let returnedChildren: RoArray;
             if (numChildrenValue <= -1 && indexValue === 0) {
                 //short hand to return all children
-                returnedChildren = new RoArray(this.children.slice().map((child) => {
-                    return child instanceof RoSGNode ? child : child.box();
-                }));
+                returnedChildren = new RoArray(
+                    this.children.slice().map((child) => {
+                        return child instanceof RoSGNode ? child : child.box();
+                    })
+                );
             } else if (numChildrenValue <= 0 || indexValue < 0 || indexValue >= childrenSize) {
                 //these never return any children
                 returnedChildren = new RoArray([]);
             } else {
                 //only valid cases
-                returnedChildren = new RoArray(this.children.slice(indexValue, indexValue + numChildrenValue).map((child) => {
-                    return child instanceof RoSGNode ? child : child.box();
-                }));
+                returnedChildren = new RoArray(
+                    this.children.slice(indexValue, indexValue + numChildrenValue).map((child) => {
+                        return child instanceof RoSGNode ? child : child.box();
+                    })
+                );
             }
             return returnedChildren;
         },
