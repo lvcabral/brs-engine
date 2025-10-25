@@ -1,7 +1,7 @@
 import { FieldModel } from "./Field";
 import { AAMember } from "../components/RoAssociativeArray";
 import { Dialog } from "./Dialog";
-import { Keyboard, BrsBoolean, BrsString, Float, isBrsString, rootObjects, Int32 } from "..";
+import { Keyboard, BrsBoolean, BrsString, Float, isBrsString, sgRoot } from "..";
 import { Interpreter } from "../../interpreter";
 
 export class KeyboardDialog extends Dialog {
@@ -76,9 +76,9 @@ export class KeyboardDialog extends Dialog {
     }
 
     setNodeFocus(_: Interpreter, focusOn: boolean): boolean {
-        if (focusOn && rootObjects.focused && this.lastFocus === undefined) {
-            this.lastFocus = rootObjects.focused;
-            rootObjects.focused = this.hasButtons ? this.buttonGroup : this.keyboard;
+        if (focusOn && sgRoot.focused && this.lastFocus === undefined) {
+            this.lastFocus = sgRoot.focused;
+            sgRoot.setFocused(this.hasButtons ? this.buttonGroup : this.keyboard);
             this.isDirty = true;
         }
         return true;
@@ -102,12 +102,12 @@ export class KeyboardDialog extends Dialog {
             return true;
         }
         if (press && key === "up" && this.focus === "buttons") {
-            rootObjects.focused = this.keyboard;
+            sgRoot.setFocused(this.keyboard);
             this.focus = "keyboard";
             this.isDirty = true;
             handled = true;
         } else if (press && key === "down" && this.focus === "keyboard") {
-            rootObjects.focused = this.buttonGroup;
+            sgRoot.setFocused(this.buttonGroup);
             this.focus = "buttons";
             this.isDirty = true;
             handled = true;

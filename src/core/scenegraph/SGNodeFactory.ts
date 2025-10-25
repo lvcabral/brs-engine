@@ -31,7 +31,7 @@ import {
     BrsType,
     Callable,
     getBrsValueFromFieldType,
-    rootObjects,
+    sgRoot,
     Overhang,
     ButtonGroup,
     Button,
@@ -243,7 +243,7 @@ export function createNodeByType(interpreter: Interpreter, type: BrsString): RoS
     // If this is a built-in node component, then return it.
     let node = SGNodeFactory.createNode(type.value) ?? BrsInvalid.Instance;
     if (node instanceof BrsInvalid) {
-        let typeDef = rootObjects.nodeDefMap.get(type.value.toLowerCase());
+        let typeDef = sgRoot.nodeDefMap.get(type.value.toLowerCase());
         if (typeDef) {
             node = initializeNode(interpreter, type, typeDef);
         } else {
@@ -256,11 +256,11 @@ export function createNodeByType(interpreter: Interpreter, type: BrsString): RoS
     }
     if (node instanceof Task) {
         // thread id = 0 is the Main worker thread
-        node.id = rootObjects.tasks.length + 1;
-        rootObjects.tasks.push(node);
+        node.id = sgRoot.tasks.length + 1;
+        sgRoot.tasks.push(node);
     }
-    if (node instanceof RoSGNode && rootObjects.tasks.length === 1) {
-        const task = rootObjects.tasks[0];
+    if (node instanceof RoSGNode && sgRoot.tasks.length === 1) {
+        const task = sgRoot.tasks[0];
         if (task.thread && isInvalid(node.getNodeParent())) {
             node.setNodeParent(task);
         }
@@ -270,7 +270,7 @@ export function createNodeByType(interpreter: Interpreter, type: BrsString): RoS
 
 /** Function to create a Scene by its name defined on the XML file */
 export function createSceneByType(interpreter: Interpreter, type: BrsString): RoSGNode | BrsInvalid {
-    let typeDef = rootObjects.nodeDefMap.get(type.value.toLowerCase());
+    let typeDef = sgRoot.nodeDefMap.get(type.value.toLowerCase());
     updateTypeDefHierarchy(typeDef);
     if (typeDef && isSubtypeCheck(type.value, SGNodeType.Scene)) {
         return new Scene([], type.value);
@@ -285,7 +285,7 @@ export function createSceneByType(interpreter: Interpreter, type: BrsString): Ro
 }
 
 export function customNodeExists(node: BrsString) {
-    return rootObjects.nodeDefMap.has(node.value.toLowerCase());
+    return sgRoot.nodeDefMap.has(node.value.toLowerCase());
 }
 
 /** Function to initialize Nodes with its Fields, Children and Environment */
@@ -340,7 +340,7 @@ export function initializeNode(
                 subInterpreter.environment.hostNode = node;
 
                 mPointer.set(new BrsString("top"), node!);
-                mPointer.set(new BrsString("global"), rootObjects.mGlobal);
+                mPointer.set(new BrsString("global"), sgRoot.mGlobal);
                 subInterpreter.environment.setM(mPointer);
                 subInterpreter.environment.setRootM(mPointer);
                 node!.m = mPointer;
@@ -366,7 +366,7 @@ export function initializeNode(
 /** Function to Initialize a Task on its own Worker thread */
 export function initializeTask(interpreter: Interpreter, taskData: TaskData) {
     const type = taskData.name;
-    let typeDef = rootObjects.nodeDefMap.get(type.toLowerCase());
+    let typeDef = sgRoot.nodeDefMap.get(type.toLowerCase());
     if (typeDef) {
         //use typeDef object to tack on all the bells & whistles of a custom node
         let typeDefStack = updateTypeDefHierarchy(typeDef);
@@ -392,7 +392,7 @@ export function initializeTask(interpreter: Interpreter, taskData: TaskData) {
                 subInterpreter.environment.hostNode = node;
 
                 mPointer.set(new BrsString("top"), node!);
-                mPointer.set(new BrsString("global"), rootObjects.mGlobal);
+                mPointer.set(new BrsString("global"), sgRoot.mGlobal);
                 subInterpreter.environment.setM(mPointer);
                 subInterpreter.environment.setRootM(mPointer);
                 node!.m = mPointer;
@@ -405,7 +405,7 @@ export function initializeTask(interpreter: Interpreter, taskData: TaskData) {
         if (node instanceof Task) {
             node.id = taskData.id;
             node.thread = true;
-            rootObjects.tasks.push(node);
+            sgRoot.tasks.push(node);
             interpreter.environment.hostNode = node;
         }
         let port: RoMessagePort | null = null;
@@ -424,7 +424,7 @@ export function initializeTask(interpreter: Interpreter, taskData: TaskData) {
             }
         }
         if (taskData.m?.global) {
-            restoreNode(interpreter, taskData.m.global, rootObjects.mGlobal, port);
+            restoreNode(interpreter, taskData.m.global, sgRoot.mGlobal, port);
         }
         if (taskData.m?.top) {
             restoreNode(interpreter, taskData.m.top, node, port);
@@ -452,7 +452,7 @@ function updateTypeDefHierarchy(typeDef: ComponentDefinition | undefined) {
         // Add the current typedef to the subtypeHierarchy
         subtypeHierarchy.set(typeDef.name!.toLowerCase(), typeDef.extends || SGNodeType.Node);
 
-        typeDef = rootObjects.nodeDefMap.get(typeDef.extends.toLowerCase());
+        typeDef = sgRoot.nodeDefMap.get(typeDef.extends.toLowerCase());
         if (typeDef) typeDefStack.push(typeDef);
     }
     return typeDefStack;

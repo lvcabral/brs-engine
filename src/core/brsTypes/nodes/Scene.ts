@@ -13,7 +13,7 @@ import {
     isBrsString,
     RoArray,
     RoMessagePort,
-    rootObjects,
+    sgRoot,
     RoSGNode,
     StandardDialog,
     toAssociativeArray,
@@ -137,8 +137,8 @@ export class Scene extends Group {
 
     /** Handle SceneGraph onKeyEvent event */
     handleOnKeyEvent(interpreter: Interpreter, key: BrsString, press: BrsBoolean) {
-        if (rootObjects.focused instanceof RoSGNode) {
-            const path = this.createPath(rootObjects.focused, false);
+        if (sgRoot.focused instanceof RoSGNode) {
+            const path = this.createPath(sgRoot.focused, false);
             for (let node of path) {
                 if (this.handleKeyByNode(interpreter, node, key, press)) {
                     return true;
@@ -151,7 +151,7 @@ export class Scene extends Group {
     }
 
     private handleKeyByNode(interpreter: Interpreter, hostNode: RoSGNode, key: BrsString, press: BrsBoolean): boolean {
-        const typeDef = rootObjects.nodeDefMap.get(hostNode.nodeSubtype.toLowerCase());
+        const typeDef = sgRoot.nodeDefMap.get(hostNode.nodeSubtype.toLowerCase());
         if (typeDef?.environment === undefined) {
             if (hostNode instanceof Group) {
                 return hostNode.handleKey(key.value, press.toBoolean());

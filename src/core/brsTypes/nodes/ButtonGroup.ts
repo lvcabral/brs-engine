@@ -18,7 +18,7 @@ import {
     Label,
     RoArray,
     RoFont,
-    rootObjects,
+    sgRoot,
     RoSGNode,
 } from "..";
 
@@ -217,7 +217,7 @@ export class ButtonGroup extends LayoutGroup {
     }
 
     private refreshFocus() {
-        const focusedNode = rootObjects.focused;
+        const focusedNode = sgRoot.focused;
         if (
             this.children.length &&
             focusedNode instanceof RoSGNode &&
@@ -225,7 +225,7 @@ export class ButtonGroup extends LayoutGroup {
         ) {
             const focusedButton = this.children[this.focusIndex];
             if (focusedNode !== focusedButton && focusedButton instanceof RoSGNode) {
-                rootObjects.focused = focusedButton;
+                sgRoot.setFocused(focusedButton);
             }
             this.wasFocused = true;
         } else if (this.wasFocused) {

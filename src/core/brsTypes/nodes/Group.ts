@@ -16,7 +16,7 @@ import {
     jsValueOf,
     isBrsString,
     BrsBoolean,
-    rootObjects,
+    sgRoot,
     Rectangle,
     ScrollingLabel,
 } from "..";
@@ -53,7 +53,7 @@ export class Group extends RoSGNode {
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
 
-        const sceneUI = rootObjects.rootScene?.ui;
+        const sceneUI = sgRoot.scene?.ui;
         if (sceneUI) {
             this.resolution = sceneUI.resolution;
             this.sceneRect = { x: 0, y: 0, width: sceneUI.width, height: sceneUI.height };

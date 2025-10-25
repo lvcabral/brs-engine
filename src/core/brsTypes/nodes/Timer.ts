@@ -1,6 +1,6 @@
 import { RoSGNode } from "../components/RoSGNode";
 import { FieldKind, FieldModel } from "./Field";
-import { AAMember, BrsType, BrsString, BrsInvalid, isBrsString, rootObjects } from "..";
+import { AAMember, BrsType, BrsString, BrsInvalid, isBrsString, sgRoot } from "..";
 
 export class Timer extends RoSGNode {
     readonly defaultFields: FieldModel[] = [
@@ -21,7 +21,7 @@ export class Timer extends RoSGNode {
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(members);
-        rootObjects.timers.push(this);
+        sgRoot.timers.push(this);
     }
 
     set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {

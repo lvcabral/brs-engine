@@ -14,7 +14,7 @@ import {
     RoTextureManager,
     getFontRegistry,
     getTextureManager,
-    rootObjects,
+    sgRoot,
 } from "..";
 import { IfGetMessagePort, IfSetMessagePort } from "../interfaces/IfMessagePort";
 import { RoSGScreenEvent } from "../events/RoSGScreenEvent";
@@ -64,15 +64,6 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     height: number;
     resolution: string;
     scaleMode: number;
-    audioFlags: number;
-    audioIndex: number;
-    audioDuration: number;
-    audioPosition: number;
-    videoEvent: number;
-    videoIndex: number;
-    videoProgress: number;
-    videoDuration: number;
-    videoPosition: number;
     isDirty: boolean;
 
     constructor() {
@@ -82,15 +73,6 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         this.fontRegistry = getFontRegistry();
         this.alphaEnable = true;
         this.scaleMode = 1;
-        this.audioFlags = -1;
-        this.audioIndex = -1;
-        this.audioDuration = -1;
-        this.audioPosition = -1;
-        this.videoEvent = -1;
-        this.videoIndex = -1;
-        this.videoProgress = -1;
-        this.videoDuration = -1;
-        this.videoPosition = -1;
         this.isDirty = false;
         this.lastMessage = performance.now();
         const maxFps = BrsDevice.deviceInfo.maxFps;
@@ -194,16 +176,16 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
             events.push(event);
         }
         // Handle Scene Events
-        if (rootObjects.rootScene) {
-            this.processTimers();
-            this.processTasks();
-            this.processAudio();
-            this.processSFX();
-            this.processVideo();
+        if (sgRoot.scene) {
+            this.isDirty ||= sgRoot.processTimers();
+            this.isDirty ||= sgRoot.processTasks();
+            this.isDirty ||= sgRoot.processAudio();
+            this.isDirty ||= sgRoot.processSFX();
+            this.isDirty ||= sgRoot.processVideo();
             // TODO: Optimize rendering by only rendering if there are changes
-            rootObjects.rootScene.renderNode(interpreter, [0, 0], 0, 1, this.draw2D);
-            if (rootObjects.rootScene?.dialog?.getNodeParent() instanceof BrsInvalid) {
-                const dialog = rootObjects.rootScene.dialog;
+            sgRoot.scene.renderNode(interpreter, [0, 0], 0, 1, this.draw2D);
+            if (sgRoot.scene?.dialog?.getNodeParent() instanceof BrsInvalid) {
+                const dialog = sgRoot.scene.dialog;
                 dialog.setFieldValue("visible", BrsBoolean.True);
                 const screenRect = { x: 0, y: 0, width: this.width, height: this.height };
                 this.draw2D.doDrawRotatedRect(screenRect, 255, 0, [0, 0], 0.5);
@@ -219,158 +201,10 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         return events;
     }
 
-    /** Update all Application Tasks */
-    private processTasks() {
-        let updates = false;
-        for (const task of rootObjects.tasks) {
-            updates = task.updateTask();
-            if (task.active) {
-                task.checkTask();
-            }
-        }
-        this.isDirty = updates;
-    }
-
-    private processTimers() {
-        let fired = false;
-        for (const timer of rootObjects.timers) {
-            if (timer.active && timer.checkFire()) {
-                fired = true;
-            }
-        }
-        this.isDirty = fired;
-    }
-
-    private processAudio() {
-        if (!rootObjects.audio) {
-            return;
-        }
-        const flags = Atomics.load(BrsDevice.sharedArray, DataType.SND);
-        if (flags !== this.audioFlags) {
-            this.audioFlags = flags;
-            rootObjects.audio.setState(flags);
-            this.isDirty = true;
-        }
-        const index = Atomics.load(BrsDevice.sharedArray, DataType.SDX);
-        if (index !== this.audioIndex) {
-            this.audioIndex = index;
-            rootObjects.audio.setContentIndex(index);
-            this.isDirty = true;
-        }
-        const duration = Atomics.load(BrsDevice.sharedArray, DataType.SDR);
-        if (duration !== this.audioDuration) {
-            this.audioDuration = duration;
-            rootObjects.audio.setDuration(duration);
-            this.isDirty = true;
-        }
-        const position = Atomics.load(BrsDevice.sharedArray, DataType.SPS);
-        if (position !== this.audioPosition) {
-            this.audioPosition = position;
-            rootObjects.audio.setPosition(position);
-            this.isDirty = true;
-        }
-    }
-
-    private processSFX() {
-        for (let i = 0; i < rootObjects.sfx.length; i++) {
-            const sfx = rootObjects.sfx[i];
-            if (!sfx) {
-                continue;
-            }
-            const sfxId = Atomics.load(BrsDevice.sharedArray, DataType.WAV + i);
-            if (sfxId >= 0 && sfxId === sfx.getAudioId() && sfx.getState() !== "playing") {
-                sfx.setState(MediaEvent.START_PLAY);
-                this.isDirty = true;
-            } else if (sfx.getState() !== "stopped") {
-                sfx.setState(MediaEvent.FINISHED);
-                rootObjects.sfx[i] = undefined;
-                this.isDirty = true;
-            }
-        }
-    }
-
-    private processVideo() {
-        if (!rootObjects.video) {
-            return;
-        }
-        const progress = Atomics.load(BrsDevice.sharedArray, DataType.VLP);
-        if (this.videoProgress !== progress && progress >= 0 && progress <= 1000) {
-            rootObjects.video.setState(MediaEvent.LOADING, Math.trunc(progress / 10));
-            console.debug(`Video Progress: ${progress}`);
-        }
-        this.videoProgress = progress;
-        const eventType = Atomics.load(BrsDevice.sharedArray, DataType.VDO);
-        const eventIndex = Atomics.load(BrsDevice.sharedArray, DataType.VDX);
-        if (eventType !== this.videoEvent) {
-            this.videoEvent = eventType;
-            if (eventType >= 0) {
-                rootObjects.video.setState(eventType, eventIndex);
-                console.debug(
-                    `Video State: ${rootObjects.video.getFieldValueJS("state")}  (${eventType}/${eventIndex})`
-                );
-                Atomics.store(BrsDevice.sharedArray, DataType.VDO, -1);
-                this.isDirty = true;
-            }
-        }
-        const selected = Atomics.load(BrsDevice.sharedArray, DataType.VSE);
-        if (selected !== this.videoIndex) {
-            this.videoIndex = selected;
-            if (selected >= 0) {
-                rootObjects.video.setContentIndex(selected);
-                Atomics.store(BrsDevice.sharedArray, DataType.VSE, -1);
-                this.isDirty = true;
-            }
-        }
-        const duration = Atomics.load(BrsDevice.sharedArray, DataType.VDR);
-        if (duration !== this.videoDuration) {
-            this.videoDuration = duration;
-            rootObjects.video.setDuration(duration);
-            this.isDirty = true;
-        }
-        const position = Atomics.load(BrsDevice.sharedArray, DataType.VPS);
-        if (position !== this.videoPosition) {
-            this.videoPosition = position;
-            rootObjects.video.setPosition(position);
-            this.isDirty = true;
-        }
-
-        const bufferFlag = Atomics.load(BrsDevice.sharedArray, DataType.BUF);
-        if (bufferFlag === BufferType.MEDIA_TRACKS) {
-            const strTracks = BrsDevice.readDataBuffer();
-            let audioTracks: MediaTrack[] = [];
-            let textTracks: MediaTrack[] = [];
-            try {
-                const tracks = JSON.parse(strTracks);
-                audioTracks = tracks.audio ?? [];
-                textTracks = tracks.text ?? [];
-            } catch (e) {
-                audioTracks = [];
-                textTracks = [];
-            }
-            rootObjects.video.setAudioTracks(audioTracks);
-            rootObjects.video.setSubtitleTracks(textTracks);
-            this.isDirty = true;
-        }
-
-        const audioTrack = Atomics.load(BrsDevice.sharedArray, DataType.VAT);
-        if (audioTrack > -1) {
-            rootObjects.video.setCurrentAudioTrack(audioTrack);
-            Atomics.store(BrsDevice.sharedArray, DataType.VAT, -1);
-            this.isDirty = true;
-        }
-
-        const subtitleTrack = Atomics.load(BrsDevice.sharedArray, DataType.VTT);
-        if (subtitleTrack > -1) {
-            rootObjects.video.setCurrentSubtitleTrack(subtitleTrack);
-            Atomics.store(BrsDevice.sharedArray, DataType.VTT, -1);
-            this.isDirty = true;
-        }
-    }
-
     /** Handle control keys */
     private handleNextKey(interpreter: Interpreter) {
         const nextKey = BrsDevice.updateKeysBuffer();
-        if (!nextKey || !rootObjects?.rootScene) {
+        if (!nextKey || !sgRoot?.scene) {
             return BrsInvalid.Instance;
         }
         this.isDirty = true;
@@ -383,10 +217,10 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         }
         const press = BrsBoolean.from(nextKey.mod === 0);
         let handled = false;
-        if (rootObjects.rootScene.dialog?.isVisible()) {
-            handled = rootObjects.rootScene.dialog.handleKey(key.value, press.toBoolean());
+        if (sgRoot.scene.dialog?.isVisible()) {
+            handled = sgRoot.scene.dialog.handleKey(key.value, press.toBoolean());
         } else {
-            handled = rootObjects.rootScene.handleOnKeyEvent(interpreter, key, press);
+            handled = sgRoot.scene.handleOnKeyEvent(interpreter, key, press);
         }
         if (press.toBoolean()) {
             this.playNavigationSound(key.value, handled);
@@ -419,7 +253,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
             returns: ValueKind.Dynamic,
         },
         impl: (_: Interpreter) => {
-            return rootObjects.mGlobal;
+            return sgRoot.mGlobal;
         },
     });
 
@@ -430,9 +264,9 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
             returns: ValueKind.Boolean,
         },
         impl: (interpreter: Interpreter) => {
-            if (this.sceneType && rootObjects.rootScene) {
-                const typeDef = rootObjects.nodeDefMap.get(this.sceneType.value.toLowerCase());
-                initializeNode(interpreter, this.sceneType, typeDef, rootObjects.rootScene);
+            if (this.sceneType && sgRoot.scene) {
+                const typeDef = sgRoot.nodeDefMap.get(this.sceneType.value.toLowerCase());
+                initializeNode(interpreter, this.sceneType, typeDef, sgRoot.scene);
             }
             this.isDirty = true;
             return BrsBoolean.True;
@@ -479,7 +313,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
             let returnValue: BrsType = BrsInvalid.Instance;
             if (sceneType.value === SGNodeType.Scene) {
                 returnValue = new Scene([], SGNodeType.Scene);
-            } else if (rootObjects.nodeDefMap.has(sceneType.value.toLowerCase())) {
+            } else if (sgRoot.nodeDefMap.has(sceneType.value.toLowerCase())) {
                 returnValue = createSceneByType(interpreter, sceneType);
             } else {
                 BrsDevice.stderr.write(
@@ -492,8 +326,8 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
             if (returnValue instanceof Scene) {
                 this.sceneType = sceneType;
                 const autoSub = manifest.get("uri_resolution_autosub") ?? "";
-                rootObjects.rootScene = returnValue;
-                rootObjects.rootScene.setDesignResolution(this.resolution, autoSub);
+                sgRoot.setScene(returnValue);
+                sgRoot.scene?.setDesignResolution(this.resolution, autoSub);
             } else {
                 BrsDevice.stderr.write(
                     `warning,BRIGHTSCRIPT: ERROR: roSGScreen.CreateScene: Type mismatch converting from '${
@@ -513,7 +347,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter) => {
-            return rootObjects.rootScene ?? BrsInvalid.Instance;
+            return sgRoot.scene ?? BrsInvalid.Instance;
         },
     });
 }

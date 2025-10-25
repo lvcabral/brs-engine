@@ -13,7 +13,7 @@ import {
     isBrsString,
     jsValueOf,
     RoArray,
-    rootObjects,
+    sgRoot,
 } from "..";
 import { BrsDevice } from "../../device/BrsDevice";
 import { Interpreter } from "../../interpreter";
@@ -619,7 +619,7 @@ export class RowList extends ArrayGrid {
         draw2D?: IfDraw2D
     ) {
         const content = cols[colIndex];
-        const nodeFocus = rootObjects.focused === this;
+        const nodeFocus = sgRoot.focused === this;
 
         // Check if all items in this row fit on screen by checking if last item fits
         const numCols = cols.length;

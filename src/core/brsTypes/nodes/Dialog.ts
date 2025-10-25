@@ -15,7 +15,7 @@ import {
     jsValueOf,
     Label,
     Poster,
-    rootObjects,
+    sgRoot,
     RoSGNode,
 } from "..";
 
@@ -168,11 +168,11 @@ export class Dialog extends Group {
             index = new BrsString("wasClosed");
             value = BrsBoolean.True;
             this.set(new BrsString("visible"), BrsBoolean.False);
-            if (rootObjects.rootScene?.dialog === this) {
-                rootObjects.rootScene.dialog = undefined;
+            if (sgRoot.scene?.dialog === this) {
+                sgRoot.scene.dialog = undefined;
             }
             if (this.lastFocus instanceof Group) {
-                rootObjects.focused = this.lastFocus;
+                sgRoot.setFocused(this.lastFocus);
                 this.lastFocus.isDirty = true;
                 this.lastFocus = undefined;
             }
@@ -184,9 +184,9 @@ export class Dialog extends Group {
     }
 
     setNodeFocus(_: Interpreter, focusOn: boolean): boolean {
-        if (focusOn && this.hasButtons && rootObjects.focused && this.lastFocus === undefined) {
-            this.lastFocus = rootObjects.focused;
-            rootObjects.focused = this.buttonGroup;
+        if (focusOn && this.hasButtons && sgRoot.focused && this.lastFocus === undefined) {
+            this.lastFocus = sgRoot.focused;
+            sgRoot.setFocused(this.buttonGroup);
             this.isDirty = true;
         }
         return true;

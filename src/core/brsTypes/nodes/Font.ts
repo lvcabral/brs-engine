@@ -2,7 +2,7 @@ import { RoSGNode } from "../components/RoSGNode";
 import { FieldKind, FieldModel } from "./Field";
 import {
     BrsBoolean,
-    rootObjects,
+    sgRoot,
     BrsString,
     BrsType,
     getFontRegistry,
@@ -30,7 +30,7 @@ export class Font extends RoSGNode {
     constructor(members: AAMember[] = [], readonly name: string = "Font") {
         super([], name);
 
-        this.resolution = rootObjects.rootScene?.ui.resolution ?? "HD";
+        this.resolution = sgRoot.scene?.ui.resolution ?? "HD";
         this.defaultSize = this.resolution === "HD" ? 24 : 36;
 
         this.registerDefaultFields(this.defaultFields);
