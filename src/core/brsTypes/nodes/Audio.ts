@@ -125,7 +125,7 @@ export class Audio extends RoSGNode {
         const content = new Array<string>();
         const isPlaylist = this.getFieldValueJS("contentIsPlaylist") as boolean;
         if (isPlaylist) {
-            const playList = node.getNodeChildren();
+            const playList = node.getNodeChildren().filter((node) => node instanceof RoSGNode);
             for (const node of playList) {
                 const url = node.getFieldValueJS("url") as string;
                 if (url?.length && url.startsWith("http")) {

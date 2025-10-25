@@ -41,7 +41,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     readonly kind = ValueKind.Object;
     protected fields = new Map<string, Field>();
     protected aliases = new Map<string, FieldAlias>();
-    protected children: RoSGNode[] = [];
+    protected children: (RoSGNode | BrsInvalid)[] = [];
     protected parent: RoSGNode | BrsInvalid = BrsInvalid.Instance;
     protected triedInitFocus: boolean = false;
     protected httpAgent: RoHttpAgent;
@@ -89,6 +89,8 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
                 this.addFields,
                 this.getField,
                 this.getFields,
+                // this.getFieldType, // Not yet implemented
+                // this.getFieldTypes, // Not yet implemented
                 this.hasField,
                 this.observeField,
                 this.unobserveField,
@@ -96,10 +98,13 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
                 this.observeFieldScopedEx,
                 this.unobserveFieldScoped,
                 this.removeField,
+                // this.removeFields, // Not yet implemented
                 this.setField,
                 this.setFields,
                 this.update,
                 this.signalBeacon,
+                //this.queueFields, // Not yet implemented
+                //this.threadInfo, // Not yet implemented
                 this.moveIntoField, // Since OS 15
                 this.moveFromField, // Since OS 15
                 this.setRef, // Since OS 15
@@ -220,11 +225,11 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         // Clone children if deep copy
         if (isDeepCopy) {
             for (const child of this.children) {
-                const clonedChild = child.cloneNode(interpreter, isDeepCopy);
-                if (clonedChild instanceof RoSGNode) {
-                    clonedNode.children.push(clonedChild);
-                    clonedChild.setNodeParent(clonedNode);
+                let newChild: BrsType = BrsInvalid.Instance;
+                if (child instanceof RoSGNode) {
+                    newChild = child.cloneNode(interpreter, isDeepCopy);
                 }
+                clonedNode.appendChildToParent(newChild);
             }
         }
         return clonedNode;
@@ -242,11 +247,11 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             copiedNode.fields.set(key, field);
         }
         for (const child of this.children) {
-            const clonedChild = child.deepCopy(interpreter);
-            if (clonedChild instanceof RoSGNode) {
-                copiedNode.children.push(clonedChild);
-                clonedChild.setNodeParent(copiedNode);
+            let newChild: BrsType = BrsInvalid.Instance;
+            if (child instanceof RoSGNode) {
+                newChild = child.deepCopy(interpreter);
             }
+            copiedNode.appendChildToParent(newChild);
         }
         return copiedNode;
     }
@@ -322,7 +327,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             this.notified = field.setValue(value, true);
             this.fields.set(mapKey, field);
             this.changed = true;
-        } else {
+        } else if (!isInvalid(value)) {
             BrsDevice.stderr.write(`warning,BRIGHTSCRIPT: ERROR: roSGNode.AddReplace: "${fieldName}": Type mismatch!`);
         }
         return BrsInvalid.Instance;
@@ -391,7 +396,10 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         if (this.children.length === 0) {
             return false;
         }
-        for (let childNode of this.children) {
+        for (const childNode of this.children) {
+            if (!(childNode instanceof RoSGNode)) {
+                continue;
+            }
             if (rootObjects.focused === childNode || childNode.isChildrenFocused(interpreter)) {
                 return true;
             }
@@ -409,6 +417,9 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
 
     renderChildren(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
         for (const node of this.children) {
+            if (!(node instanceof RoSGNode)) {
+                continue;
+            }
             node.renderNode(interpreter, origin, angle, opacity, draw2D);
         }
         this.changed = false;
@@ -524,7 +535,10 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         }
 
         // visit each child
-        for (let child of node.children) {
+        for (const child of node.children) {
+            if (!(child instanceof RoSGNode)) {
+                continue;
+            }
             let result = this.findNodeById(child, id);
             if (result instanceof RoSGNode) {
                 return result;
@@ -692,7 +706,10 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
                 // removed above)
                 if (indexValue < this.children.length) {
                     // Remove the parent of the child at indexValue
-                    this.children[indexValue].removeParent();
+                    const oldChild = this.children[indexValue];
+                    if (oldChild instanceof RoSGNode) {
+                        oldChild.removeParent();
+                    }
                 }
                 newChild.setNodeParent(this);
                 this.children.splice(indexValue, 1, newChild);
@@ -1473,21 +1490,29 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter, num_children: Int32, index: Int32) => {
-            let numChildrenValue = num_children.getValue();
-            let indexValue = index.getValue();
-            let childrenSize = this.children.length;
+            const numChildrenValue = num_children.getValue();
+            const indexValue = index.getValue();
+            const childrenSize = this.children.length;
+            let returnedChildren: RoArray;
             if (numChildrenValue <= -1 && indexValue === 0) {
                 //short hand to return all children
-                return new RoArray(this.children.slice());
+                returnedChildren = new RoArray(
+                    this.children.slice().map((child) => {
+                        return child instanceof RoSGNode ? child : child.box();
+                    })
+                );
             } else if (numChildrenValue <= 0 || indexValue < 0 || indexValue >= childrenSize) {
                 //these never return any children
-                return new RoArray([]);
+                returnedChildren = new RoArray([]);
             } else {
                 //only valid cases
-                return new RoArray(this.children.slice(indexValue, indexValue + numChildrenValue));
+                returnedChildren = new RoArray(
+                    this.children.slice(indexValue, indexValue + numChildrenValue).map((child) => {
+                        return child instanceof RoSGNode ? child : child.box();
+                    })
+                );
             }
-
-            return new RoArray([]);
+            return returnedChildren;
         },
     });
 
@@ -1526,8 +1551,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         impl: (interpreter: Interpreter, nodeType: BrsString) => {
             let child = createNodeByType(interpreter, nodeType);
             if (child instanceof RoSGNode) {
-                this.children.push(child);
-                child.setNodeParent(this);
+                this.appendChildToParent(child);
             }
             return child;
         },
@@ -1586,7 +1610,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
 
             if (numChildrenValue > 0) {
                 const removedChildren = this.children.splice(indexValue, numChildrenValue);
-                for (const node of removedChildren) {
+                for (const node of removedChildren.filter((n) => n instanceof RoSGNode)) {
                     node.removeParent();
                 }
                 return BrsBoolean.True;
@@ -1605,13 +1629,12 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Dynamic,
         },
         impl: (_: Interpreter, index: Int32) => {
-            let indexValue = index.getValue();
-            let childrenSize = this.children.length;
-
-            if (indexValue >= 0 && indexValue < childrenSize) {
-                return this.children[indexValue];
+            const indexValue = index.getValue();
+            let child: RoSGNode | BrsInvalid = BrsInvalid.Instance;
+            if (indexValue >= 0 && indexValue < this.children.length) {
+                child = this.children[indexValue];
             }
-            return BrsInvalid.Instance;
+            return child;
         },
     });
 
@@ -1658,9 +1681,8 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             for (let i = 0; i < numChildrenValue; i++) {
                 let child = createNodeByType(interpreter, subtype);
                 if (child instanceof RoSGNode) {
-                    this.children.push(child);
+                    this.appendChildToParent(child);
                     addedChildren.push(child);
-                    child.setNodeParent(this);
                 }
             }
             return new RoArray(addedChildren);

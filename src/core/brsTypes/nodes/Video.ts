@@ -25,6 +25,7 @@ import {
     RoArray,
     fromAssociativeArray,
     FlexObject,
+    RoSGNode,
 } from "..";
 import {
     captionOptions,
@@ -706,7 +707,7 @@ export class Video extends Group {
         this.contentTitles.length = 0;
         const isPlaylist = this.getFieldValueJS("contentIsPlaylist") as boolean;
         if (isPlaylist) {
-            const playList = node.getNodeChildren();
+            const playList = node.getNodeChildren().filter((node) => node instanceof RoSGNode);
             for (const node of playList) {
                 const url = node.getFieldValueJS("url") as string;
                 if (url?.length) {

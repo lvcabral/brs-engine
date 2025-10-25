@@ -2,18 +2,7 @@ import { FieldKind, FieldModel } from "./Field";
 import { AAMember } from "../components/RoAssociativeArray";
 import { ArrayGrid } from "./ArrayGrid";
 import { Font } from "./Font";
-import {
-    BrsInvalid,
-    BrsString,
-    BrsType,
-    brsValueOf,
-    ContentNode,
-    Int32,
-    isBrsString,
-    jsValueOf,
-    RoBitmap,
-    rootObjects,
-} from "..";
+import { BrsInvalid, BrsString, BrsType, brsValueOf, ContentNode, Int32, isBrsString, RoBitmap, rootObjects } from "..";
 import { Interpreter } from "../..";
 import { IfDraw2D, Rect, RectRect } from "../interfaces/IfDraw2D";
 
@@ -120,17 +109,15 @@ export class LabelList extends ArrayGrid {
         for (let r = 0; r < displayRows; r++) {
             const index = this.getIndex(r - this.currRow);
             const focused = index === this.focusIndex;
-            const item = this.content[index];
-            if (item instanceof ContentNode) {
-                if (!hasSections && this.wrap && index < lastIndex && r > 0) {
-                    itemRect.y += this.renderWrapDivider(itemRect, opacity, draw2D);
-                } else if (hasSections && this.wrap && this.metadata[index]?.divider && r > 0) {
-                    const divText = this.metadata[index].sectionTitle;
-                    itemRect.y += this.renderSectionDivider(divText, itemRect, opacity, sectionIndex, draw2D);
-                    sectionIndex++;
-                }
-                this.renderItem(index, item, itemRect, opacity, nodeFocus, focused, draw2D);
+            const item = this.getContentItem(index);
+            if (!hasSections && this.wrap && index < lastIndex && r > 0) {
+                itemRect.y += this.renderWrapDivider(itemRect, opacity, draw2D);
+            } else if (hasSections && this.wrap && this.metadata[index]?.divider && r > 0) {
+                const divText = this.metadata[index].sectionTitle;
+                itemRect.y += this.renderSectionDivider(divText, itemRect, opacity, sectionIndex, draw2D);
+                sectionIndex++;
             }
+            this.renderItem(index, item, itemRect, opacity, nodeFocus, focused, draw2D);
             itemRect.y += itemSize[1] + 1;
             lastIndex = index;
             if (!RectRect(this.sceneRect, itemRect)) {
