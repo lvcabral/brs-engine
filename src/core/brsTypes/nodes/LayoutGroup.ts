@@ -15,6 +15,7 @@ type VerticalPrimaryAlignment = "top" | "center" | "bottom";
 interface LayoutMetrics {
     primary: number;
     cross: number;
+    crossStart: number;
 }
 
 interface NodeSize {
@@ -86,7 +87,7 @@ export class LayoutGroup extends Group {
             return;
         }
 
-    const direction = this.getLayoutDirection();
+        const direction = this.getLayoutDirection();
         const layoutChildren = this.getLayoutChildren();
         const spacings = this.getItemSpacingValues();
         const spacingSignature = this.createSpacingSignature(spacings);
@@ -124,17 +125,15 @@ export class LayoutGroup extends Group {
         addSpacingAfterChild: boolean,
         metricsMap: WeakMap<RoSGNode, LayoutMetrics>
     ) {
-        const metricsList: LayoutMetrics[] = [];
-        for (const child of children) {
-            metricsList.push(this.measureChild(child, direction, metricsMap));
-        }
-
+        const metricsList = children.map((child) => this.measureChild(child, direction, metricsMap));
         const primaryAlignment =
             direction === "horiz" ? this.getHorizontalPrimaryAlignment() : this.getVerticalPrimaryAlignment();
-        const verticalAlignment = direction === "horiz" ? this.normalizeVertAlignment(direction) : undefined;
-        const horizontalAlignment = direction === "vert" ? this.normalizeHorizAlignment(direction) : undefined;
+        const crossAlignment = direction === "horiz"
+            ? this.normalizeVertAlignment(direction)
+            : this.normalizeHorizAlignment(direction);
 
         const totalPrimary = this.calculateTotalPrimary(metricsList, spacings, addSpacingAfterChild);
+        const crossTargets = metricsList.length ? this.computeCrossTargets(metricsList) : undefined;
         let currentOffset = this.computeStartOffset(direction, totalPrimary, primaryAlignment);
 
         for (let i = 0; i < children.length; i++) {
@@ -149,13 +148,13 @@ export class LayoutGroup extends Group {
 
             if (direction === "horiz") {
                 translation[0] = currentOffset;
-                if (verticalAlignment && verticalAlignment !== "custom") {
-                    translation[1] = this.computeVerticalOffset(verticalAlignment, metrics.cross);
+                if (crossAlignment && crossAlignment !== "custom" && crossTargets) {
+                    translation[1] += this.computeCrossAdjustment(crossAlignment, metrics, crossTargets);
                 }
             } else {
                 translation[1] = currentOffset;
-                if (horizontalAlignment && horizontalAlignment !== "custom") {
-                    translation[0] = this.computeHorizontalOffset(horizontalAlignment, metrics.cross);
+                if (crossAlignment && crossAlignment !== "custom" && crossTargets) {
+                    translation[0] += this.computeCrossAdjustment(crossAlignment, metrics, crossTargets);
                 }
             }
 
@@ -171,21 +170,21 @@ export class LayoutGroup extends Group {
     private synchronizeChildMetrics(children: Group[], direction: LayoutDirection) {
         let needsRelayout = false;
         for (const child of children) {
-            const renderedSize = this.readRenderedSize(child);
+            const actualMetrics = this.measureChild(child, direction);
+            const actualSize =
+                direction === "horiz"
+                    ? { width: actualMetrics.primary, height: actualMetrics.cross }
+                    : { width: actualMetrics.cross, height: actualMetrics.primary };
             const previousSize = this.childSizes.get(child);
-            const used = this.metricsUsedThisPass?.get(child);
-            const actualMetrics: LayoutMetrics = {
-                primary: direction === "horiz" ? renderedSize.width : renderedSize.height,
-                cross: direction === "horiz" ? renderedSize.height : renderedSize.width,
-            };
+            const expected = this.metricsUsedThisPass?.get(child);
 
-            this.childSizes.set(child, renderedSize);
+            this.childSizes.set(child, actualSize);
 
-            if (previousSize && !this.sizesClose(previousSize, renderedSize)) {
+            if (previousSize && !this.sizesClose(previousSize, actualSize)) {
                 needsRelayout = true;
             }
 
-            if (used && !this.metricsClose(used, actualMetrics)) {
+            if (expected && !this.metricsClose(expected, actualMetrics)) {
                 needsRelayout = true;
             }
         }
@@ -201,71 +200,47 @@ export class LayoutGroup extends Group {
     private measureChild(
         child: Group,
         direction: LayoutDirection,
-        metricsMap: WeakMap<RoSGNode, LayoutMetrics>
+        metricsMap?: WeakMap<RoSGNode, LayoutMetrics>
     ): LayoutMetrics {
-        const size = this.extractChildSize(child);
+        const rect = this.chooseActiveRect(child);
         const metrics: LayoutMetrics = {
-            primary: direction === "horiz" ? size.width : size.height,
-            cross: direction === "horiz" ? size.height : size.width,
+            primary: direction === "horiz" ? rect.width : rect.height,
+            cross: direction === "horiz" ? rect.height : rect.width,
+            crossStart: direction === "horiz" ? rect.y : rect.x,
         };
-        metricsMap.set(child, metrics);
+
+        if (metricsMap) {
+            metricsMap.set(child, metrics);
+        }
+
         return metrics;
     }
 
-    private extractChildSize(child: Group): NodeSize {
-        let width = Math.max(0, child.rectLocal.width);
-        let height = Math.max(0, child.rectLocal.height);
-
-        if (width <= 0 || height <= 0) {
-            width = Math.max(width, child.rectToParent.width ?? 0);
-            height = Math.max(height, child.rectToParent.height ?? 0);
-        }
-
-        if (width <= 0 || height <= 0) {
-            const dims = child.getDimensions();
-            if (width <= 0 && typeof dims.width === "number" && dims.width > 0) {
-                width = dims.width;
-            }
-            if (height <= 0 && typeof dims.height === "number" && dims.height > 0) {
-                height = dims.height;
+    private chooseActiveRect(child: Group) {
+        const candidates = [child.rectToParent, child.rectToScene, child.rectLocal];
+        for (const rect of candidates) {
+            if (
+                Number.isFinite(rect.x) &&
+                Number.isFinite(rect.y) &&
+                Number.isFinite(rect.width) &&
+                Number.isFinite(rect.height) &&
+                rect.width > 0 &&
+                rect.height > 0
+            ) {
+                return rect;
             }
         }
 
-        if (width <= 0 || height <= 0) {
-            const cached = this.childSizes.get(child);
-            if (cached) {
-                if (width <= 0) {
-                    width = cached.width;
-                }
-                if (height <= 0) {
-                    height = cached.height;
-                }
-            }
-        }
+        const translation = this.getChildTranslation(child);
+        const dims = child.getDimensions();
+        const cached = this.childSizes.get(child);
 
-        return { width: width > 0 ? width : 0, height: height > 0 ? height : 0 };
-    }
-
-    private readRenderedSize(child: Group): NodeSize {
-        let width = Math.max(0, child.rectLocal.width);
-        let height = Math.max(0, child.rectLocal.height);
-
-        if (width <= 0 || height <= 0) {
-            width = Math.max(width, child.rectToParent.width ?? 0);
-            height = Math.max(height, child.rectToParent.height ?? 0);
-        }
-
-        if (width <= 0 || height <= 0) {
-            const dims = child.getDimensions();
-            if (width <= 0 && typeof dims.width === "number" && dims.width > 0) {
-                width = dims.width;
-            }
-            if (height <= 0 && typeof dims.height === "number" && dims.height > 0) {
-                height = dims.height;
-            }
-        }
-
-        return { width, height };
+        return {
+            x: translation[0],
+            y: translation[1],
+            width: typeof dims.width === "number" && dims.width > 0 ? dims.width : cached?.width ?? 0,
+            height: typeof dims.height === "number" && dims.height > 0 ? dims.height : cached?.height ?? 0,
+        };
     }
 
     private calculateTotalPrimary(metricsList: LayoutMetrics[], spacings: number[], addAfter: boolean) {
@@ -280,6 +255,40 @@ export class LayoutGroup extends Group {
             }
         }
         return total;
+    }
+
+    private computeCrossTargets(metricsList: LayoutMetrics[]) {
+        if (metricsList.length === 0) {
+            return { start: 0, center: 0, end: 0 };
+        }
+
+        let minStart = metricsList[0].crossStart;
+        let maxEnd = metricsList[0].crossStart + metricsList[0].cross;
+
+        for (let i = 1; i < metricsList.length; i++) {
+            const metrics = metricsList[i];
+            minStart = Math.min(minStart, metrics.crossStart);
+            maxEnd = Math.max(maxEnd, metrics.crossStart + metrics.cross);
+        }
+
+        const center = minStart + (maxEnd - minStart) / 2;
+        return { start: minStart, center, end: maxEnd };
+    }
+
+    private computeCrossAdjustment(
+        alignment: "top" | "center" | "bottom" | "left" | "right",
+        metrics: LayoutMetrics,
+        targets: { start: number; center: number; end: number }
+    ) {
+        switch (alignment) {
+            case "center":
+                return targets.center - (metrics.crossStart + metrics.cross / 2);
+            case "bottom":
+            case "right":
+                return targets.end - (metrics.crossStart + metrics.cross);
+            default:
+                return targets.start - metrics.crossStart;
+        }
     }
 
     private computeStartOffset(
@@ -302,28 +311,6 @@ export class LayoutGroup extends Group {
                 return -totalPrimary / 2;
             case "bottom":
                 return -totalPrimary;
-            default:
-                return 0;
-        }
-    }
-
-    private computeHorizontalOffset(alignment: Exclude<HorizontalAlignment, "custom">, width: number) {
-        switch (alignment) {
-            case "center":
-                return -width / 2;
-            case "right":
-                return -width;
-            default:
-                return 0;
-        }
-    }
-
-    private computeVerticalOffset(alignment: Exclude<VerticalAlignment, "custom">, height: number) {
-        switch (alignment) {
-            case "center":
-                return -height / 2;
-            case "bottom":
-                return -height;
             default:
                 return 0;
         }
@@ -456,7 +443,11 @@ export class LayoutGroup extends Group {
     }
 
     private metricsClose(a: LayoutMetrics, b: LayoutMetrics) {
-        return this.nearlyEqual(a.primary, b.primary) && this.nearlyEqual(a.cross, b.cross);
+        return (
+            this.nearlyEqual(a.primary, b.primary) &&
+            this.nearlyEqual(a.cross, b.cross) &&
+            this.nearlyEqual(a.crossStart, b.crossStart)
+        );
     }
 
     private sizesClose(a: NodeSize, b: NodeSize) {

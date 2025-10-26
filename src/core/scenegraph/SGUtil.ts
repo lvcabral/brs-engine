@@ -1,5 +1,14 @@
 import { Rect } from "../brsTypes/interfaces/IfDraw2D";
 
+function isFiniteRect(rect: Rect) {
+    return (
+        Number.isFinite(rect.x) &&
+        Number.isFinite(rect.y) &&
+        Number.isFinite(rect.width) &&
+        Number.isFinite(rect.height)
+    );
+}
+
 /* Function to calculate the bounding box of a rotated rectangle */
 export function rotateRect(rect: Rect, rotation: number, center?: number[]): Rect {
     // Default to top-left corner if centerX and centerY are not provided
@@ -46,6 +55,12 @@ export function rotateTranslation(translation: number[], rotation: number) {
 
 /* Function to merge two bounding rectangles */
 export function unionRect(rectChild: Rect, rectParent: Rect) {
+    if (!isFiniteRect(rectChild)) {
+        return { ...rectParent };
+    }
+    if (!isFiniteRect(rectParent)) {
+        return { ...rectChild };
+    }
     const x = Math.min(rectChild.x, rectParent.x);
     const y = Math.min(rectChild.y, rectParent.y);
     const width = Math.max(rectChild.x + rectChild.width, rectParent.x + rectParent.width) - x;

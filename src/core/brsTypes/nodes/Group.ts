@@ -632,6 +632,12 @@ export class Group extends RoSGNode {
         drawTrans[0] += origin[0];
         drawTrans[1] += origin[1];
         const rotation = angle + this.getRotation();
+        this.rectLocal = {
+            x: Number.POSITIVE_INFINITY,
+            y: Number.POSITIVE_INFINITY,
+            width: Number.POSITIVE_INFINITY,
+            height: Number.POSITIVE_INFINITY,
+        };
         this.rectToScene = {
             x: drawTrans[0],
             y: drawTrans[1],
@@ -646,7 +652,27 @@ export class Group extends RoSGNode {
         };
         opacity = opacity * this.getOpacity();
         this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);
+        this.updateContainerBounds(nodeTrans, drawTrans);
         this.updateParentRects(origin, angle);
         this.isDirty = false;
+    }
+
+    private updateContainerBounds(nodeTrans: number[], drawTrans: number[]) {
+        if (!Number.isFinite(this.rectLocal.x)) {
+            return;
+        }
+        const rectLocal = this.rectLocal;
+        this.rectToParent = {
+            x: nodeTrans[0] + rectLocal.x,
+            y: nodeTrans[1] + rectLocal.y,
+            width: rectLocal.width,
+            height: rectLocal.height,
+        };
+        this.rectToScene = {
+            x: drawTrans[0] + rectLocal.x,
+            y: drawTrans[1] + rectLocal.y,
+            width: rectLocal.width,
+            height: rectLocal.height,
+        };
     }
 }
