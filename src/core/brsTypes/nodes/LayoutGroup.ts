@@ -402,7 +402,7 @@ export class LayoutGroup extends Group {
         }
         return field.getElements().map((element) => {
             const result = jsValueOf(element);
-            return typeof result === "number" && isFinite(result) ? result : 0;
+            return typeof result === "number" && Number.isFinite(result) ? result : 0;
         });
     }
 
@@ -411,7 +411,7 @@ export class LayoutGroup extends Group {
             return 0;
         }
         const resolved = spacings[Math.min(index, spacings.length - 1)];
-        if (typeof resolved === "number" && isFinite(resolved)) {
+        if (typeof resolved === "number" && Number.isFinite(resolved)) {
             return resolved;
         }
         return 0;
@@ -422,7 +422,7 @@ export class LayoutGroup extends Group {
             return "";
         }
         const signatureValues = spacings.map((value) =>
-            typeof value === "number" && isFinite(value) ? value.toFixed(4) : "nan"
+            typeof value === "number" && Number.isFinite(value) ? value.toFixed(4) : "nan"
         );
         return `${spacings.length}:${signatureValues.join("|")}`;
     }
