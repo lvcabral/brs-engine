@@ -128,9 +128,8 @@ export class LayoutGroup extends Group {
         const metricsList = children.map((child) => this.measureChild(child, direction, metricsMap));
         const primaryAlignment =
             direction === "horiz" ? this.getHorizontalPrimaryAlignment() : this.getVerticalPrimaryAlignment();
-        const crossAlignment = direction === "horiz"
-            ? this.normalizeVertAlignment(direction)
-            : this.normalizeHorizAlignment(direction);
+        const crossAlignment =
+            direction === "horiz" ? this.normalizeVertAlignment(direction) : this.normalizeHorizAlignment(direction);
 
         const totalPrimary = this.calculateTotalPrimary(metricsList, spacings, addSpacingAfterChild);
         const crossTargets = metricsList.length ? this.computeCrossTargets(metricsList) : undefined;
