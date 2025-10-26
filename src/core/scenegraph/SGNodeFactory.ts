@@ -13,6 +13,7 @@ import {
     Poster,
     ArrayGrid,
     RowList,
+    ZoomRowList,
     MarkupGrid,
     MarkupList,
     Task,
@@ -76,6 +77,7 @@ export enum SGNodeType {
     RowList = "RowList",
     RadioButtonList = "RadioButtonList",
     MarkupList = "MarkupList",
+    ZoomRowList = "ZoomRowList",
     MarkupGrid = "MarkupGrid",
     ContentNode = "ContentNode",
     Task = "Task",
@@ -171,6 +173,8 @@ export class SGNodeFactory {
                 return new RadioButtonList([], name);
             case SGNodeType.RowList.toLowerCase():
                 return new RowList([], name);
+            case SGNodeType.ZoomRowList.toLowerCase():
+                return new ZoomRowList([], name);
             case SGNodeType.MarkupList.toLowerCase():
                 return new MarkupList([], name);
             case SGNodeType.MarkupGrid.toLowerCase():
