@@ -117,6 +117,11 @@ All SceneGraph nodes inherit from **RoSGNode** (`src/core/brsTypes/components/Ro
 
 ### Rendering Pipeline and Flow
 
+**SceneGraph Rendering Architecture Overview**:
+The SceneGraph rendering system is triggered by `roSGScreen` (the display component) and flows through a hierarchy of `renderNode()` method calls. The entry point is always `Scene.renderNode()`, which then recursively calls `renderNode()` on child nodes. This is fundamentally different from a typical DOM-based rendering system - nodes must explicitly implement `renderNode()` to participate in the rendering pipeline.
+
+**Key Principle**: Nodes that want custom rendering behavior MUST override `renderNode()`, not invent new methods like `renderContent()`. Group's base `renderNode()` only calls `renderChildren()` - it has no concept of "content rendering".
+
 **Initialization (SceneGraph bootstrap)**:
 1. **Component XML parsing** (`src/core/scenegraph/index.ts`):
    - Scan `pkg:/components/` for `.xml` files
@@ -132,31 +137,37 @@ All SceneGraph nodes inherit from **RoSGNode** (`src/core/brsTypes/components/Ro
    - `init()` function called after node creation if defined in component script
    - Field observers registered, initial field values set
 
-**Frame Render Cycle** (triggered by display update):
-1. **Scene.renderNode()** called with:
+**Frame Render Cycle** (triggered by roSGScreen display update):
+1. **roSGScreen.renderFrame()** initiates the cycle:
+   - Gets the Scene node from `sgRoot.scene`
+   - Calls `scene.renderNode(interpreter, [0, 0], 0, 1.0, draw2D)`
+   - This is the ONLY entry point to the rendering system
+
+2. **Scene.renderNode()** called with:
    - `interpreter`: Active interpreter instance
    - `origin`: [x, y] position in screen coordinates (starts at [0, 0])
    - `angle`: Accumulated rotation from parent chain (starts at 0)
    - `opacity`: Accumulated opacity from parent chain (starts at 1.0)
    - `draw2D`: `IfDraw2D` interface for canvas drawing
-2. **Scene-specific rendering**:
+
+3. **Scene-specific rendering**:
    - Clears canvas with `backgroundColor`
    - Draws `backgroundURI` image if set (scaled to screen resolution)
    - Calls `renderChildren()` to process child nodes
-3. **Group.renderNode()** recursion (for each child):
-   - **Visibility check**: Skip if `visible` field is false
-   - **Transform application**:
-     - Get node's `translation` field
+
+4. **Group.renderNode()** recursion (for each child):
+   - **Visibility check**: Skip if `visible` field is false (ALWAYS check this first in custom renderNode)
+   - **Transform calculation**:
+     - Get node's `translation` field: `nodeTrans = this.getTranslation()`
+     - Calculate draw position: `drawTrans = [nodeTrans[0] + origin[0], nodeTrans[1] + origin[1]]`
      - If parent has `angle`, rotate translation vector: `rotateTranslation(nodeTrans, angle)`
-     - Add parent's `origin` to get screen position: `drawTrans = nodeTrans + origin`
    - **Accumulate transforms**:
-     - `rotation = parentAngle + this.rotation`
-     - `opacity = parentOpacity * this.opacity`
-   - **Visual nodes render content**:
-     - `Label`: Calls `drawText()` or `drawTextWrap()` via `IfDraw2D`
-     - `Poster`: Calls `drawImage()` with RoBitmap, handles scaling modes
-     - `Rectangle`: Calls `doDrawRotatedRect()` with color
-     - Complex nodes (RowList, ArrayGrid): Call helper methods to render items
+     - `rotation = parentAngle + this.getRotation()`
+     - `opacity = parentOpacity * this.getOpacity()`
+   - **Custom node rendering** (nodes override renderNode for this):
+     - Simple visual nodes (Label, Poster, Rectangle): Call IfDraw2D methods directly
+     - Complex nodes (ArrayGrid, RowList, ZoomRowList): Implement full custom rendering logic
+     - Container nodes: Just call `renderChildren()` to delegate to children
    - **Bounding rect updates**:
      - `updateBoundingRects(rect, origin, rotation)`: Updates `rectLocal`, `rectToParent`, `rectToScene`
      - Used for hit testing, collision detection, debugging
@@ -169,6 +180,50 @@ All SceneGraph nodes inherit from **RoSGNode** (`src/core/brsTypes/components/Ro
 - **Depth-first traversal**: Parents render before children, ensuring proper z-ordering
 - **Canvas-based drawing**: All drawing operations use HTML5 Canvas 2D context via `IfDraw2D` interface
 - **Lazy evaluation**: Bounding rects and transforms calculated during render pass, not on field changes
+
+**Implementing Custom renderNode()**:
+When creating a custom node that needs to render visual content, follow this pattern (see `ArrayGrid.ts`, `RowList.ts`, `ZoomRowList.ts`):
+
+```typescript
+renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
+    // 1. ALWAYS check visibility first
+    if (!this.isVisible()) {
+        return;
+    }
+    
+    // 2. Calculate transforms
+    const nodeTrans = this.getTranslation();
+    const drawTrans = nodeTrans.slice();
+    drawTrans[0] += origin[0];
+    drawTrans[1] += origin[1];
+    const rotation = angle + this.getRotation();
+    opacity = opacity * this.getOpacity();
+    
+    // 3. Do your custom rendering here
+    // - Use draw2D methods for drawing
+    // - Access cached data (e.g., this.content)
+    // - Create/update item components
+    // - Call itemComp.renderNode() for child items
+    
+    // 4. Update bounding rectangles
+    this.rectToScene = { x: drawTrans[0], y: drawTrans[1], width: ..., height: ... };
+    this.rectToParent = { x: nodeTrans[0], y: nodeTrans[1], width: ..., height: ... };
+    
+    // 5. Render children (if any non-content children exist)
+    this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);
+    
+    // 6. Update parent rects and mark clean
+    this.updateParentRects(origin, angle);
+    this.isDirty = false;
+}
+```
+
+**Common Mistakes to Avoid**:
+- ❌ Creating methods like `renderContent()` - Group doesn't call them
+- ❌ Calling `getFieldValue()` repeatedly in render loop - cache data in `refreshContent()` or `set()`
+- ❌ Forgetting visibility check - causes rendering of invisible nodes
+- ❌ Not calling `updateParentRects()` and setting `isDirty = false` - breaks bounding box calculations
+- ❌ Not handling the case when content is empty - can cause crashes
 
 ### Drawing Interface (IfDraw2D)
 
@@ -191,6 +246,83 @@ All SceneGraph nodes inherit from **RoSGNode** (`src/core/brsTypes/components/Ro
 - **RoCompositor** (`src/core/brsTypes/components/RoCompositor.ts`): Layer compositor with sprites, z-ordering, collision
 
 **Canvas Pooling**: `createNewCanvas()` and `releaseCanvas()` manage reusable canvas contexts to avoid GC pressure
+
+### Content Handling Pattern
+
+**ArrayGrid/RowList/ZoomRowList Content Processing**:
+Nodes that display dynamic content from ContentNode trees follow this pattern:
+
+1. **Content Field in set() Method**:
+```typescript
+set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
+    const fieldName = index.getValue().toLowerCase();
+    
+    if (fieldName === "content") {
+        // First, store the field value
+        super.set(index, value, alwaysNotify, kind);
+        
+        // Clear existing item components
+        this.itemComps.length = 0; // or this.rowItemComps.length = 0
+        
+        // Process content into cache
+        this.refreshContent();
+        
+        // Set initial focus if needed
+        if (this.content.length > 0 && this.focusIndex < 0) {
+            this.focusIndex = 0;
+        }
+        
+        return BrsInvalid.Instance;
+    }
+    
+    return super.set(index, value, alwaysNotify, kind);
+}
+```
+
+2. **refreshContent() Method**:
+```typescript
+protected refreshContent() {
+    // Clear content cache
+    this.content.length = 0;
+    
+    // Get content field value
+    const contentNode = this.getFieldValue("content");
+    if (!(contentNode instanceof ContentNode)) {
+        return;
+    }
+    
+    // Extract children into flat array
+    const children = contentNode.getNodeChildren();
+    this.content = children.filter((child) => child instanceof ContentNode) as ContentNode[];
+    
+    // Initialize tracking arrays (focus, scroll, etc.)
+    for (let i = 0; i < this.content.length; i++) {
+        this.rowFocus[i] = this.rowFocus[i] ?? 0;
+        this.rowScrollOffset[i] = this.rowScrollOffset[i] ?? 0;
+    }
+}
+```
+
+3. **Use Cached Content in renderNode()**:
+```typescript
+renderNode(...) {
+    // Use cached content, NOT getFieldValue("content")
+    if (this.content.length === 0) {
+        return;
+    }
+    
+    for (let i = 0; i < this.content.length; i++) {
+        const contentItem = this.content[i]; // Already a ContentNode
+        // Render using cached data
+    }
+}
+```
+
+**Key Points**:
+- ALWAYS call `super.set()` first to store the field value
+- NEVER call `getFieldValue("content")` or `getNodeChildren()` in render methods - use cached `this.content` array
+- Process content once in `refreshContent()`, use cache everywhere else
+- This prevents infinite loops and improves performance
 
 ### Performance and Caching
 
