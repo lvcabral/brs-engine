@@ -143,12 +143,7 @@ export class ZoomRowList extends ArrayGrid {
             const focusedIndex = this.getFieldValueJS("rowFocused") as number;
             this.setFocusedRow(focusedIndex);
             return BrsInvalid.Instance;
-        } else if (fieldName === "jumptorow" && isBrsNumber(value)) {
-            const next = jsValueOf(value) as number;
-            if (Number.isFinite(next) && next >= 0) {
-                this.setFocusedRow(Math.floor(next));
-            }
-        } else if (fieldName === "animatetorow" && isBrsNumber(value)) {
+        } else if (["jumptorow", "animatetorow"].includes(fieldName) && isBrsNumber(value)) {
             const next = jsValueOf(value) as number;
             if (Number.isFinite(next) && next >= 0) {
                 this.setFocusedRow(Math.floor(next));
@@ -333,7 +328,7 @@ export class ZoomRowList extends ArrayGrid {
             }
             let rowTop = currentY;
             if (canWrap && rowIndex === 0 && displayIndex > 0) {
-                rowTop -= metrics.spacingY * .3;
+                rowTop -= metrics.spacingY * 0.3;
                 const dividerRect = {
                     x: rect.x,
                     y: rowTop,
@@ -341,7 +336,7 @@ export class ZoomRowList extends ArrayGrid {
                     height: Math.max(metrics.spacingY, 1),
                 };
                 const dividerHeight = this.renderWrapDivider(dividerRect, opacity, draw2D);
-                rowTop += dividerHeight + metrics.spacingY * .3;
+                rowTop += dividerHeight + metrics.spacingY * 0.3;
             }
 
             const rowRect = {
@@ -356,7 +351,6 @@ export class ZoomRowList extends ArrayGrid {
                 rowIndex,
                 rowRect,
                 metrics,
-                this.nodeWidth,
                 rotation,
                 opacity,
                 draw2D
@@ -434,7 +428,6 @@ export class ZoomRowList extends ArrayGrid {
         rowIndex: number,
         rect: Rect,
         metrics: RowMetrics,
-        interiorWidth: number,
         rotation: number,
         opacity: number,
         draw2D?: IfDraw2D
@@ -444,8 +437,8 @@ export class ZoomRowList extends ArrayGrid {
             return undefined;
         }
 
-        const titleHeight = this.renderRowTitle(rowIndex, rect, interiorWidth, opacity, draw2D);
-        const counterHeight = this.renderRowCounter(rowIndex, rect, metrics, interiorWidth, opacity, draw2D);
+        const titleHeight = this.renderRowTitle(rowIndex, rect, this.nodeWidth, opacity, draw2D);
+        const counterHeight = this.renderRowCounter(rowIndex, rect, metrics, this.nodeWidth, opacity, draw2D);
         const rowY = rect.y + Math.max(titleHeight, counterHeight) + metrics.itemYOffset;
 
         const itemRect: Rect = {
@@ -455,9 +448,9 @@ export class ZoomRowList extends ArrayGrid {
             height: metrics.itemHeight,
         };
 
-        const canWrapItems = this.canWrapItems(rowContent.length, metrics, interiorWidth);
+        const canWrapItems = this.canWrapItems(rowContent.length, metrics, this.nodeWidth);
         let startCol = canWrapItems ? this.rowFocus[rowIndex] ?? 0 : 0;
-        const maxVisibleItems = this.getMaxVisibleItems(metrics.itemWidth, metrics.spacingX, interiorWidth);
+        const maxVisibleItems = this.getMaxVisibleItems(metrics.itemWidth, metrics.spacingX, this.nodeWidth);
         const endCol = canWrapItems ? rowContent.length : Math.min(startCol + maxVisibleItems, rowContent.length);
 
         let firstCol = -1;
@@ -474,8 +467,7 @@ export class ZoomRowList extends ArrayGrid {
 
             this.renderRowItemComponent(
                 interpreter,
-                rowIndex,
-                colIndex,
+                [rowIndex, colIndex],
                 rowContent,
                 itemRect,
                 rotation,
@@ -487,7 +479,7 @@ export class ZoomRowList extends ArrayGrid {
             lastCol = colIndex;
 
             itemRect.x += itemRect.width + metrics.spacingX;
-            if (itemRect.x > rect.x + interiorWidth) {
+            if (itemRect.x > rect.x + this.nodeWidth) {
                 break;
             }
         }
@@ -644,14 +636,15 @@ export class ZoomRowList extends ArrayGrid {
 
     protected renderRowItemComponent(
         interpreter: Interpreter,
-        rowIndex: number,
-        colIndex: number,
+        itemVector: number[],
         cols: ContentNode[],
         itemRect: Rect,
         rotation: number,
         opacity: number,
         draw2D?: IfDraw2D
     ) {
+        const rowIndex = itemVector[0];
+        const colIndex = itemVector[1];
         const content = cols[colIndex];
         const nodeFocus = sgRoot.focused === this;
         const focused = this.focusIndex === rowIndex && this.rowFocus[rowIndex] === colIndex;
