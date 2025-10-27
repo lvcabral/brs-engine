@@ -118,14 +118,10 @@ export class ZoomRowList extends ArrayGrid {
             this.defaultItemSpacing = 14;
         }
         this.gap = this.marginX / 2;
-        const heightScale = this.sceneRect.height > 0 ? this.sceneRect.height / 720 : 1;
         this.defaultItemYOffset = 0;
-        this.defaultItemZoomYOffset = Math.max(6, Math.round(10 * heightScale));
+        this.defaultItemZoomYOffset = 0;
         this.focusField = "zoomRowListHasFocus";
-        this.numRows = this.getFieldValueJS("numRows") as number;
-        this.numCols = this.getFieldValueJS("numColumns") as number;
-        this.wrap = (this.getFieldValueJS("wrap") as boolean) ?? true;
-
+        this.wrap = true;
         this.focusIndex = 0;
         this.rowFocus[0] = 0;
         this.rowScrollOffset[0] = 0;
@@ -314,12 +310,11 @@ export class ZoomRowList extends ArrayGrid {
         }
 
         const totalRows = this.content.length;
-        const displayRows = this.getDisplayRowCount(totalRows);
-        if (displayRows === 0) {
+        if (totalRows === 0) {
             return;
         }
 
-        const canWrap = this.canWrapRows(displayRows);
+        const canWrap = this.canWrapRows(totalRows);
         const startRow = canWrap ? this.normalizeRowIndex(this.focusIndex) : this.clampRowIndex(this.focusIndex);
 
         this.currRow = startRow;
@@ -328,7 +323,7 @@ export class ZoomRowList extends ArrayGrid {
         let lastRenderedRow = -1;
         const rowItemsRendered: Int32[] = [];
 
-        for (let displayIndex = 0; displayIndex < displayRows; displayIndex++) {
+        for (let displayIndex = 0; displayIndex < totalRows; displayIndex++) {
             let rowIndex = canWrap ? this.normalizeRowIndex(startRow + displayIndex) : startRow + displayIndex;
 
             if (!canWrap && rowIndex >= totalRows) {
@@ -435,8 +430,7 @@ export class ZoomRowList extends ArrayGrid {
             this.focusIndex = this.content.length - 1;
         }
 
-        const displayRows = this.getDisplayRowCount();
-        const canWrap = this.canWrapRows(displayRows);
+        const canWrap = this.canWrapRows(this.content.length);
         this.currRow = canWrap ? this.normalizeRowIndex(this.focusIndex) : this.clampRowIndex(this.focusIndex);
     }
 
@@ -466,7 +460,7 @@ export class ZoomRowList extends ArrayGrid {
             height: metrics.itemHeight,
         };
 
-        const renderMode = this.determineRenderMode(rowIndex, rowContent.length, metrics, interiorWidth);
+        const renderMode = this.determineRenderMode(rowContent.length, metrics, interiorWidth);
         let startCol = this.getStartColumn(rowIndex, rowContent.length, renderMode);
         const maxVisibleItems = this.getMaxVisibleItems(metrics.itemWidth, metrics.spacingX, interiorWidth);
         if (renderMode === "scroll") {
@@ -520,7 +514,7 @@ export class ZoomRowList extends ArrayGrid {
         return this.getContentChildren(rowNode);
     }
 
-    private determineRenderMode(rowIndex: number, numCols: number, metrics: RowMetrics, availableWidth: number) {
+    private determineRenderMode(numCols: number, metrics: RowMetrics, availableWidth: number) {
         const maxWidth = availableWidth > 0 ? availableWidth : this.sceneRect.width;
         const totalWidth = numCols * metrics.itemWidth + (numCols - 1) * metrics.spacingX;
         if (maxWidth > 0 && totalWidth <= maxWidth) {
@@ -566,7 +560,7 @@ export class ZoomRowList extends ArrayGrid {
     ) {
         const safeMetrics = metrics ?? this.getRowMetrics(rowIndex);
         const availableWidth = this.sceneRect.width;
-        const mode = this.determineRenderMode(rowIndex, numCols, safeMetrics, availableWidth);
+        const mode = this.determineRenderMode(numCols, safeMetrics, availableWidth);
         if (mode !== "scroll") {
             this.rowScrollOffset[rowIndex] = 0;
             return;
@@ -584,17 +578,6 @@ export class ZoomRowList extends ArrayGrid {
         }
         offset = Math.max(0, Math.min(offset, maxStart));
         this.rowScrollOffset[rowIndex] = offset;
-    }
-
-    private getDisplayRowCount(totalRows: number = this.content.length): number {
-        if (totalRows === 0) {
-            return 0;
-        }
-        const configured = this.numRows || totalRows;
-        if (configured <= 0) {
-            return Math.min(totalRows, 1);
-        }
-        return Math.min(configured, totalRows);
     }
 
     private canWrapRows(displayRows: number): boolean {
