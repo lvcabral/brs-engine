@@ -98,6 +98,9 @@ export class Task extends RoSGNode {
                 field: mapKey,
                 value: jsValueOf(value),
             };
+            if (this.thread && value instanceof RoSGNode) {
+                value.changed = false;
+            }
             postMessage(update);
         }
         return super.set(index, value, alwaysNotify, kind);
@@ -155,7 +158,9 @@ export class Task extends RoSGNode {
     }
 
     updateTask() {
+        let result = false;
         let currentVersion = this.taskBuffer?.getVersion() ?? -1;
+        // Load updates from the other Thread
         if (this.taskBuffer && currentVersion === 1) {
             const update = this.taskBuffer.load(true);
             if (isThreadUpdate(update)) {
@@ -169,9 +174,27 @@ export class Task extends RoSGNode {
                 const field = new BrsString(update.field);
                 const value = brsValueOf(update.value);
                 node.set(field, value, false, undefined, false);
-                return true;
+                result = true;
             }
         }
-        return false;
+        const state = this.getFieldValueJS("state") as string;
+        if (!this.thread || state !== "run") {
+            return result;
+        }
+        // Check for changed RoSGNode fields to notify updates to the Main thread
+        for (const [name, field] of this.getNodeFields()) {
+            const value = field.getValue();
+            if (!field.isHidden() && value instanceof RoSGNode && value.changed) {
+                value.changed = false;
+                const update: ThreadUpdate = {
+                    id: this.id,
+                    global: false,
+                    field: name,
+                    value: jsValueOf(value),
+                };
+                postMessage(update);
+            }
+        }
+        return result;
     }
 }
