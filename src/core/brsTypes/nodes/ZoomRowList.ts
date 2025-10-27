@@ -140,7 +140,7 @@ export class ZoomRowList extends ArrayGrid {
             this.rowItemComps.length = 0;
             this.rowItemComps.push([]);
             this.refreshContent();
-            const focusedIndex = this.getFieldValueJS("itemFocused") as number;
+            const focusedIndex = this.getFieldValueJS("rowFocused") as number;
             this.setFocusedRow(focusedIndex);
             return BrsInvalid.Instance;
         } else if (fieldName === "jumptorow" && isBrsNumber(value)) {
@@ -192,13 +192,11 @@ export class ZoomRowList extends ArrayGrid {
         }
         const previousRow = this.focusIndex;
         if (previousRow !== rowIndex) {
-            super.set(new BrsString("itemUnfocused"), new Int32(previousRow));
             super.set(new BrsString("rowUnfocused"), new Int32(previousRow));
         }
         this.focusIndex = rowIndex;
         this.rowFocus[rowIndex] = colIndex;
         this.currRow = rowIndex;
-        super.set(new BrsString("itemFocused"), new Int32(rowIndex));
         super.set(new BrsString("rowFocused"), new Int32(rowIndex));
         super.set(new BrsString("rowItemFocused"), new RoArray([new Int32(rowIndex), new Int32(colIndex)]));
         super.set(new BrsString("currFocusRow"), new Float(rowIndex));
@@ -226,14 +224,14 @@ export class ZoomRowList extends ArrayGrid {
             next = (next + this.content.length) % this.content.length;
         }
         if (next >= 0 && next < this.content.length) {
-            this.setFieldValue("scrollingStatus", BrsBoolean.True);
+            super.set(new BrsString("scrollingStatus"), BrsBoolean.True);
             this.focusIndex = next;
             this.rowFocus[next] ??= 0;
             this.setFocusedItem(next, this.rowFocus[next]);
             super.set(new BrsString("currFocusRow"), new Float(next));
             handled = true;
         }
-        this.setFieldValue("scrollingStatus", BrsBoolean.False);
+        super.set(new BrsString("scrollingStatus"), BrsBoolean.False);
         return handled;
     }
 
@@ -260,8 +258,8 @@ export class ZoomRowList extends ArrayGrid {
         if (nextCol !== this.rowFocus[currentRow]) {
             this.rowFocus[currentRow] = nextCol;
             super.set(new BrsString("rowItemFocused"), new RoArray([new Int32(currentRow), new Int32(nextCol)]));
-            this.setFieldValue("scrollingStatus", BrsBoolean.True);
-            this.setFieldValue("scrollingStatus", BrsBoolean.False);
+            super.set(new BrsString("scrollingStatus"), BrsBoolean.True);
+            super.set(new BrsString("scrollingStatus"), BrsBoolean.False);
             return true;
         }
         return false;
@@ -271,8 +269,8 @@ export class ZoomRowList extends ArrayGrid {
         if (press && this.focusIndex >= 0 && this.focusIndex < this.rowFocus.length) {
             const currentRow = this.focusIndex;
             const currentCol = this.rowFocus[currentRow] ?? 0;
-            this.set(new BrsString("rowItemSelected"), brsValueOf([currentRow, currentCol]));
-            this.set(new BrsString("rowSelected"), new Int32(currentRow));
+            super.set(new BrsString("rowItemSelected"), brsValueOf([currentRow, currentCol]));
+            super.set(new BrsString("rowSelected"), new Int32(currentRow));
         }
         return false;
     }
