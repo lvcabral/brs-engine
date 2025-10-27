@@ -132,14 +132,13 @@ export class LayoutGroup extends Group {
             direction === "horiz" ? this.normalizeVertAlignment(direction) : this.normalizeHorizAlignment(direction);
 
         const totalPrimary = this.calculateTotalPrimary(metricsList, spacings, addSpacingAfterChild);
-        const crossTargets = metricsList.length ? this.computeCrossTargets(metricsList) : undefined;
         let currentOffset = this.computeStartOffset(direction, totalPrimary, primaryAlignment);
 
         for (let i = 0; i < children.length; i++) {
             const child = children[i];
             const metrics = metricsList[i];
             const spacing = this.getSpacingValue(spacings, i);
-            const translation = this.getChildTranslation(child);
+            const translation = [0, 0];
 
             if (!addSpacingAfterChild) {
                 currentOffset += spacing;
@@ -147,13 +146,13 @@ export class LayoutGroup extends Group {
 
             if (direction === "horiz") {
                 translation[0] = currentOffset;
-                if (crossAlignment && crossAlignment !== "custom" && crossTargets) {
-                    translation[1] += this.computeCrossAdjustment(crossAlignment, metrics, crossTargets);
+                if (crossAlignment && crossAlignment !== "custom") {
+                    translation[1] = this.computeCrossPosition(crossAlignment, metrics.cross);
                 }
             } else {
                 translation[1] = currentOffset;
-                if (crossAlignment && crossAlignment !== "custom" && crossTargets) {
-                    translation[0] += this.computeCrossAdjustment(crossAlignment, metrics, crossTargets);
+                if (crossAlignment && crossAlignment !== "custom") {
+                    translation[0] = this.computeCrossPosition(crossAlignment, metrics.cross);
                 }
             }
 
@@ -183,7 +182,12 @@ export class LayoutGroup extends Group {
                 needsRelayout = true;
             }
 
-            if (expected && !this.metricsClose(expected, actualMetrics)) {
+            // Only compare dimensions (primary/cross), not position (crossStart)
+            if (
+                expected &&
+                (!this.nearlyEqual(expected.primary, actualMetrics.primary) ||
+                    !this.nearlyEqual(expected.cross, actualMetrics.cross))
+            ) {
                 needsRelayout = true;
             }
         }
@@ -256,37 +260,19 @@ export class LayoutGroup extends Group {
         return total;
     }
 
-    private computeCrossTargets(metricsList: LayoutMetrics[]) {
-        if (metricsList.length === 0) {
-            return { start: 0, center: 0, end: 0 };
-        }
-
-        let minStart = metricsList[0].crossStart;
-        let maxEnd = metricsList[0].crossStart + metricsList[0].cross;
-
-        for (let i = 1; i < metricsList.length; i++) {
-            const metrics = metricsList[i];
-            minStart = Math.min(minStart, metrics.crossStart);
-            maxEnd = Math.max(maxEnd, metrics.crossStart + metrics.cross);
-        }
-
-        const center = minStart + (maxEnd - minStart) / 2;
-        return { start: minStart, center, end: maxEnd };
-    }
-
-    private computeCrossAdjustment(
-        alignment: "top" | "center" | "bottom" | "left" | "right",
-        metrics: LayoutMetrics,
-        targets: { start: number; center: number; end: number }
-    ) {
+    private computeCrossPosition(alignment: "top" | "center" | "bottom" | "left" | "right", crossSize: number): number {
+        // According to Roku spec, alignment sets the LayoutGroup's local coordinate origin
+        // For center: origin is at the center, so children are positioned at -size/2
+        // For left/top: origin is at the edge, so children start at 0
+        // For right/bottom: origin is at the far edge, so children end at 0
         switch (alignment) {
             case "center":
-                return targets.center - (metrics.crossStart + metrics.cross / 2);
+                return -crossSize / 2;
             case "bottom":
             case "right":
-                return targets.end - (metrics.crossStart + metrics.cross);
-            default:
-                return targets.start - metrics.crossStart;
+                return -crossSize;
+            default: // left or top
+                return 0;
         }
     }
 
