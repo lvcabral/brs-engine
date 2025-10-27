@@ -81,6 +81,7 @@ export class ZoomRowList extends ArrayGrid {
     // Margins only applies to the focus indicator
     protected readonly marginX: number;
     protected readonly marginY: number;
+    protected readonly gap: number;
     protected readonly rowItemComps: Group[][] = [[]];
     protected readonly rowFocus: number[] = [];
     protected readonly rowScrollOffset: number[] = [];
@@ -116,11 +117,10 @@ export class ZoomRowList extends ArrayGrid {
             this.defaultRowSpacing = 53;
             this.defaultItemSpacing = 14;
         }
+        this.gap = this.marginX / 2;
         const heightScale = this.sceneRect.height > 0 ? this.sceneRect.height / 720 : 1;
-        const zoomExtraGap = Math.max(6, Math.round(10 * heightScale));
         this.defaultItemYOffset = 0;
-        this.defaultItemZoomYOffset = zoomExtraGap;
-        this.hasNinePatch = true;
+        this.defaultItemZoomYOffset = Math.max(6, Math.round(10 * heightScale));
         this.focusField = "zoomRowListHasFocus";
         this.numRows = this.getFieldValueJS("numRows") as number;
         this.numCols = this.getFieldValueJS("numColumns") as number;
@@ -794,13 +794,13 @@ export class ZoomRowList extends ArrayGrid {
         }
         const drawFont = fontValue.createDrawFont();
         const textRect = {
-            x: rect.x + (offset[0] ?? 0),
-            y: rect.y + (offset[1] ?? 0),
+            x: rect.x + offset[0],
+            y: rect.y + offset[1],
             width: interiorWidth,
-            height: drawFont.measureTextHeight(),
+            height: drawFont.measureTextHeight() + this.gap,
         };
-        this.drawText(title, fontValue, color, opacity, textRect, "left", "center", 0, draw2D, "...", rowIndex);
-        return textRect.height + (offset[1] ?? 0);
+        this.drawText(title, fontValue, color, opacity, textRect, "left", "top", 0, draw2D, "", rowIndex + 1);
+        return textRect.height + offset[1];
     }
 
     private renderRowCounter(
@@ -848,12 +848,12 @@ export class ZoomRowList extends ArrayGrid {
         const counterText = `${this.rowFocus[rowIndex] + 1} of ${items}`;
         const textRect = {
             x: rect.x,
-            y: rect.y + (offset[1] ?? 0),
-            width: rowWidth,
-            height: drawFont.measureTextHeight(),
+            y: rect.y + offset[1],
+            width: offset[0] || rowWidth,
+            height: drawFont.measureTextHeight() + this.gap,
         };
-        this.drawText(counterText, fontToUse, color, opacity, textRect, "right", "center", 0, draw2D);
-        return textRect.height + (offset[1] ?? 0);
+        this.drawText(counterText, fontToUse, color, opacity, textRect, "right", "top", 0, draw2D, "", 0);
+        return textRect.height + offset[1];
     }
 
     private resolveBoolean(values: any, index: number, fallback: boolean) {
