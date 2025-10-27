@@ -346,15 +346,7 @@ export class ZoomRowList extends ArrayGrid {
                 height: metrics.rowHeight,
             };
 
-            const triple = this.renderRow(
-                interpreter,
-                rowIndex,
-                rowRect,
-                metrics,
-                rotation,
-                opacity,
-                draw2D
-            );
+            const triple = this.renderRow(interpreter, rowIndex, rowRect, metrics, rotation, opacity, draw2D);
 
             if (triple) {
                 rowItemsRendered.push(new Int32(triple[0]), new Int32(triple[1]), new Int32(triple[2]));
