@@ -136,6 +136,7 @@ export * from "./nodes/Dialog";
 export * from "./nodes/KeyboardDialog";
 export * from "./nodes/ArrayGrid";
 export * from "./nodes/RowList";
+export * from "./nodes/ZoomRowList";
 export * from "./nodes/MarkupGrid";
 export * from "./nodes/MarkupList";
 export * from "./nodes/ContentNode";
