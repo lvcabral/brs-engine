@@ -50,39 +50,11 @@ export class Task extends RoSGNode {
         const field = this.fields.get(mapKey);
 
         if (field && mapKey === "control" && isBrsString(value)) {
-            const state = this.fields.get("state") as Field;
             let control = value.getValue().toLowerCase();
             if (!validStates.includes(control)) {
                 control = "";
-            } else if (control === "run") {
-                this.active = true;
-            } else if (control === "stop" || control === "done") {
-                if (this.started) {
-                    console.debug("Posting Task Data to STOP: ", this.nodeSubtype);
-                    const taskData: TaskData = {
-                        id: this.id,
-                        name: this.nodeSubtype,
-                        state: TaskState.STOP,
-                    };
-                    postMessage(taskData);
-                    this.started = false;
-                }
-                this.active = false;
             }
-            field.setValue(new BrsString(control));
-            if (state && control !== "" && control !== "init") {
-                state.setValue(new BrsString(control));
-                this.fields.set("state", state);
-                if (this.id >= 0 && this.thread && sync) {
-                    const update: ThreadUpdate = {
-                        id: this.id,
-                        global: false,
-                        field: mapKey,
-                        value: control,
-                    };
-                    postMessage(update);
-                }
-            }
+            this.setControlField(field, control, sync);
             return BrsInvalid.Instance;
         } else if (field && mapKey === "state" && isBrsString(value)) {
             // Roku documentation states this is read-only but it allows change the value to valid states
@@ -104,6 +76,39 @@ export class Task extends RoSGNode {
             postMessage(update);
         }
         return super.set(index, value, alwaysNotify, kind);
+    }
+
+    private setControlField(field: Field, control: string, sync: boolean) {
+        const state = this.fields.get("state") as Field;
+        if (control === "run") {
+            this.active = true;
+        } else if (control === "stop" || control === "done") {
+            if (this.started) {
+                console.debug("Posting Task Data to STOP: ", this.nodeSubtype);
+                const taskData: TaskData = {
+                    id: this.id,
+                    name: this.nodeSubtype,
+                    state: TaskState.STOP,
+                };
+                postMessage(taskData);
+                this.started = false;
+            }
+            this.active = false;
+        }
+        field.setValue(new BrsString(control));
+        if (state && control !== "" && control !== "init") {
+            state.setValue(new BrsString(control));
+            this.fields.set("state", state);
+            if (this.id >= 0 && this.thread && sync) {
+                const update: ThreadUpdate = {
+                    id: this.id,
+                    global: false,
+                    field: "control",
+                    value: control,
+                };
+                postMessage(update);
+            }
+        }
     }
 
     setTaskBuffer(data: SharedArrayBuffer) {
