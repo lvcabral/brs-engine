@@ -64,11 +64,13 @@ export class Audio extends RoSGNode {
             const validControl = ["start", "play", "pause", "resume", "stop"];
             const control = value.getValue().toLowerCase();
             if (validControl.includes(control)) {
+                this.checkContentChanged();
                 postMessage(`audio,${control}`);
             } else {
                 value = new BrsString("none");
             }
         } else if (fieldName === "seek" && isBrsNumber(value)) {
+            this.checkContentChanged();
             const position = jsValueOf(value) as number;
             postMessage(`audio,seek,${position * 1000}`);
         } else if (fieldName === "notificationInterval" && isBrsNumber(value)) {
@@ -127,6 +129,14 @@ export class Audio extends RoSGNode {
 
     setPosition(position: number) {
         super.set(new BrsString("position"), new Double(position / 1000));
+    }
+
+    private checkContentChanged() {
+        const content = this.getFieldValue("content");
+        if (content instanceof ContentNode && content.changed) {
+            postMessage({ audioPlaylist: this.formatContent(content) });
+            content.changed = false;
+        }
     }
 
     private formatContent(node: ContentNode) {

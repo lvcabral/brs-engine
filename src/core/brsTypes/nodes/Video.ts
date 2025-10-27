@@ -242,12 +242,14 @@ export class Video extends Group {
             const validControl = ["play", "pause", "resume", "stop", "replay", "prebuffer", "skipcontent"];
             const control = value.getValue().toLowerCase();
             if (validControl.includes(control)) {
+                this.checkContentChanged();
                 postMessage(`video,${control}`);
             } else {
                 BrsDevice.stderr.write(`warning,${getNow()} [sg.video.cntrl.bad] control field set to invalid value`);
                 return BrsInvalid.Instance;
             }
         } else if (fieldName === "seek" && isBrsNumber(value)) {
+            this.checkContentChanged();
             const position = jsValueOf(value) as number;
             postMessage(`video,seek,${position * 1000}`);
         } else if (fieldName === "notificationinterval" && isBrsNumber(value)) {
@@ -714,6 +716,14 @@ export class Video extends Group {
         this.seekLevel = 0;
         this.seekTimeout = 0;
         this.trickPlayBar.setStateIcon("", 0);
+    }
+
+    private checkContentChanged() {
+        const content = this.getFieldValue("content");
+        if (content instanceof ContentNode && content.changed) {
+            this.resetContent(content);
+            content.changed = false;
+        }
     }
 
     private formatContent(node: ContentNode) {
