@@ -42,7 +42,6 @@ export class ZoomRowList extends ArrayGrid {
         { name: "rowHeight", type: "floatarray", value: "[]" },
         { name: "rowZoomHeight", type: "floatarray", value: "[]" },
         { name: "spacingAfterRow", type: "float", value: "0.0" },
-        { name: "rowItemSpacing", type: "array", value: "[]" },
         { name: "rowItemYOffset", type: "array", value: "[]" },
         { name: "rowItemZoomYOffset", type: "array", value: "[]" },
         { name: "rowItemHeight", type: "floatarray", value: "[]" },
@@ -52,11 +51,11 @@ export class ZoomRowList extends ArrayGrid {
         { name: "useDefaultAspectRatio", type: "boolarray", value: "[]" },
         { name: "showRowTitle", type: "boolarray", value: "[]" },
         { name: "rowTitleOffset", type: "array", value: "[]" },
-        { name: "rowTitleFont", type: "font" },
+        { name: "rowTitleFont", type: "font", value: "font:SmallestSystemFont" },
         { name: "rowTitleColor", type: "array", value: "[]" },
         { name: "showRowCounter", type: "boolarray", value: "[]" },
         { name: "rowCounterOffset", type: "array", value: "[]" },
-        { name: "rowCounterFont", type: "font" },
+        { name: "rowCounterFont", type: "font", value: "font:SmallestSystemFont" },
         { name: "rowCounterColor", type: "array", value: "[]" },
         { name: "showRowCounterForShortRows", type: "bool", value: "true" },
         { name: "rowDecorationComponentName", type: "array", value: "[]" },
@@ -79,24 +78,19 @@ export class ZoomRowList extends ArrayGrid {
     ];
 
     protected readonly focusUri = "common:/images/focus_grid.9.png";
+    // Margins only applies to the focus indicator
     protected readonly marginX: number;
     protected readonly marginY: number;
     protected readonly rowItemComps: Group[][] = [[]];
     protected readonly rowFocus: number[] = [];
     protected readonly rowScrollOffset: number[] = [];
-    private readonly defaultAspectRatio = 1.7777778;
+    private readonly defaultAspectRatio = 16 / 9;
     private readonly defaultRowHeight: number;
     private readonly defaultRowZoomHeight: number;
-    private readonly defaultItemHeight: number;
-    private readonly defaultItemZoomHeight: number;
     private readonly defaultItemSpacing: number;
     private readonly defaultRowSpacing: number;
     private readonly defaultItemYOffset: number;
     private readonly defaultItemZoomYOffset: number;
-    private readonly defaultRowTitleOffset: number[];
-    private readonly titleHeight: number;
-    private readonly counterRightInset: number;
-    private rowFocusStyle: string = "fixedfocuswrap";
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = "ZoomRowList") {
         super([], name);
@@ -108,50 +102,29 @@ export class ZoomRowList extends ArrayGrid {
         this.setFieldValue("wrapDividerBitmapUri", new BrsString(this.dividerUri));
 
         if (this.resolution === "FHD") {
-            this.marginX = 15;
-            this.marginY = 15;
+            this.marginX = 18;
+            this.marginY = 18;
+            this.defaultRowHeight = 204;
+            this.defaultRowZoomHeight = 321;
+            this.defaultRowSpacing = 80;
+            this.defaultItemSpacing = 21;
         } else {
-            this.marginX = 10;
-            this.marginY = 10;
+            this.marginX = 12;
+            this.marginY = 12;
+            this.defaultRowHeight = 214;
+            this.defaultRowZoomHeight = 136;
+            this.defaultRowSpacing = 53;
+            this.defaultItemSpacing = 14;
         }
         const heightScale = this.sceneRect.height > 0 ? this.sceneRect.height / 720 : 1;
-        const fontValue = this.getFieldValue("rowTitleFont");
-        let measuredTitleHeight = this.resolution === "FHD" ? 36 : 24;
-        if (fontValue instanceof Font) {
-            measuredTitleHeight = fontValue.createDrawFont().measureTextHeight();
-        }
-        this.titleHeight = measuredTitleHeight;
-        this.defaultRowHeight = Math.max(1, Math.round(220 * heightScale));
-        this.defaultRowZoomHeight = Math.max(this.defaultRowHeight + 1, Math.round(320 * heightScale));
-        this.defaultItemHeight = Math.max(1, Math.round(170 * heightScale));
-        this.defaultItemZoomHeight = Math.max(this.defaultItemHeight + 1, Math.round(250 * heightScale));
-        this.defaultItemSpacing = Math.max(12, Math.round(20 * heightScale));
-        this.defaultRowSpacing = Math.max(this.marginY * 2, Math.round(48 * heightScale));
-        const baseTitleGap = 0;
         const zoomExtraGap = Math.max(6, Math.round(10 * heightScale));
-        this.defaultRowTitleOffset = [this.marginX, 0];
-        this.defaultItemYOffset = baseTitleGap;
+        this.defaultItemYOffset = 0;
         this.defaultItemZoomYOffset = zoomExtraGap;
-        this.counterRightInset = Math.max(this.marginX * 2, Math.round(72 * heightScale));
-        const configuredSpacing = this.getFieldValueJS("itemSpacing") as number[];
-        if (
-            !Array.isArray(configuredSpacing) ||
-            configuredSpacing.length < 2 ||
-            (configuredSpacing[0] === 0 && configuredSpacing[1] === 0)
-        ) {
-            this.setFieldValue("itemSpacing", brsValueOf([this.defaultItemSpacing, this.defaultRowSpacing]));
-        }
         this.hasNinePatch = true;
         this.focusField = "zoomRowListHasFocus";
         this.numRows = this.getFieldValueJS("numRows") as number;
         this.numCols = this.getFieldValueJS("numColumns") as number;
-        const wrapField = this.getFieldValueJS("wrap");
-        this.wrap = typeof wrapField === "boolean" ? wrapField : true;
-        const vertStyleRaw = (this.getFieldValueJS("vertFocusAnimationStyle") as string) ?? "fixedFocus";
-        const configuredRowStyle = (this.getFieldValueJS("rowFocusAnimationStyle") as string) ?? "fixedFocus";
-        this.rowFocusStyle = this.wrap
-            ? "fixedfocuswrap"
-            : configuredRowStyle.toLowerCase() || vertStyleRaw.toLowerCase();
+        this.wrap = (this.getFieldValueJS("wrap") as boolean) ?? true;
 
         this.focusIndex = 0;
         this.rowFocus[0] = 0;
@@ -163,7 +136,15 @@ export class ZoomRowList extends ArrayGrid {
             throw new Error("RoSGNode indexes must be strings");
         }
         const fieldName = index.getValue().toLowerCase();
-        if (fieldName === "jumptorow" && isBrsNumber(value)) {
+        if (fieldName === "content") {
+            super.set(index, value, alwaysNotify, kind);
+            this.rowItemComps.length = 0;
+            this.rowItemComps.push([]);
+            this.refreshContent();
+            const focusedIndex = this.getFieldValueJS("itemFocused") as number;
+            this.setFocusedRow(focusedIndex);
+            return BrsInvalid.Instance;
+        } else if (fieldName === "jumptorow" && isBrsNumber(value)) {
             const next = jsValueOf(value) as number;
             if (Number.isFinite(next) && next >= 0) {
                 this.setFocusedRow(Math.floor(next));
@@ -178,21 +159,8 @@ export class ZoomRowList extends ArrayGrid {
             if (typeof coords[0] === "number" && typeof coords[1] === "number") {
                 this.setFocusedItem(coords[0], coords[1]);
             }
-        } else if (fieldName === "rowfocusanimationstyle" && isBrsString(value)) {
-            const style = value.toString().toLowerCase();
-            if (!["fixedfocuswrap", "floatingfocus", "fixedfocus"].includes(style)) {
-                return BrsInvalid.Instance;
-            }
-            this.rowFocusStyle = style;
-            if (style === "fixedfocuswrap") {
-                this.wrap = true;
-            }
-        } else if (fieldName === "wrap") {
-            const boolValue = Boolean(jsValueOf(value));
-            this.wrap = boolValue;
-            if (!this.wrap && this.rowFocusStyle === "fixedfocuswrap") {
-                this.rowFocusStyle = "fixedfocus";
-            }
+        } else if (fieldName === "wrap" && value instanceof BrsBoolean) {
+            this.wrap = value.toBoolean();
         }
         return super.set(index, value, alwaysNotify, kind);
     }
@@ -342,10 +310,6 @@ export class ZoomRowList extends ArrayGrid {
             return;
         }
 
-        this.rowFocusStyle = (
-            (this.getFieldValueJS("rowFocusAnimationStyle") as string) ?? this.rowFocusStyle
-        ).toLowerCase();
-
         const totalRows = this.content.length;
         const displayRows = this.getDisplayRowCount(totalRows);
         if (displayRows === 0) {
@@ -369,18 +333,8 @@ export class ZoomRowList extends ArrayGrid {
             }
             const metrics = this.getRowMetrics(rowIndex);
             const rowWidth = this.getRowWidthFallback(rect.width);
-            const rowLeft = rect.x + this.marginX;
             const screenRight = this.sceneRect.x + this.sceneRect.width;
-            let interiorWidth = rowWidth - this.marginX * 2;
-            if (interiorWidth <= 0) {
-                interiorWidth = rowWidth > 0 ? rowWidth : this.sceneRect.width;
-            }
-            if (screenRight > rowLeft) {
-                interiorWidth = Math.min(interiorWidth, screenRight - rowLeft);
-            }
-            if (interiorWidth <= 0) {
-                interiorWidth = metrics.itemWidth;
-            }
+            const interiorWidth = screenRight - rect.x;
             let rowTop = currentY;
             if (canWrap && rowIndex === 0 && displayIndex > 0) {
                 rowTop -= metrics.spacingY;
@@ -498,12 +452,12 @@ export class ZoomRowList extends ArrayGrid {
             return undefined;
         }
 
-        const titleHeight = this.renderRowTitle(rowIndex, rect, metrics, rowWidth, interiorWidth, opacity, draw2D);
-        const counterHeight = this.renderRowCounter(rowIndex, rect, metrics, rowWidth, interiorWidth, opacity, draw2D);
+        const titleHeight = this.renderRowTitle(rowIndex, rect, interiorWidth, opacity, draw2D);
+        const counterHeight = this.renderRowCounter(rowIndex, rect, metrics, interiorWidth, opacity, draw2D);
         const rowY = rect.y + Math.max(titleHeight, counterHeight) + metrics.itemYOffset;
 
         const itemRect: Rect = {
-            x: rect.x + this.marginX,
+            x: rect.x,
             y: rowY,
             width: metrics.itemWidth,
             height: metrics.itemHeight,
@@ -547,7 +501,7 @@ export class ZoomRowList extends ArrayGrid {
             lastCol = colIndex;
 
             itemRect.x += itemRect.width + metrics.spacingX;
-            if (itemRect.x > rect.x + this.marginX + interiorWidth) {
+            if (itemRect.x > rect.x + interiorWidth) {
                 break;
             }
         }
@@ -587,7 +541,7 @@ export class ZoomRowList extends ArrayGrid {
         return this.rowScrollOffset[rowIndex];
     }
 
-    private getMaxVisibleItems(itemWidth: number, spacing: number, availableWidth: number) {
+    private getMaxVisibleItems(itemWidth: number, spacing: number, availableWidth: number, ceil: boolean = true) {
         if (itemWidth <= 0) {
             return 1;
         }
@@ -595,7 +549,10 @@ export class ZoomRowList extends ArrayGrid {
         if (width <= 0) {
             return 1;
         }
-        return Math.ceil((width + spacing) / (itemWidth + spacing));
+        if (ceil) {
+            return Math.ceil((width + spacing) / (itemWidth + spacing));
+        }
+        return Math.floor((width + spacing) / (itemWidth + spacing));
     }
 
     private updateRowScrollOffset(
@@ -606,7 +563,7 @@ export class ZoomRowList extends ArrayGrid {
     ) {
         const safeMetrics = metrics ?? this.getRowMetrics(rowIndex);
         let availableWidth = this.getRowWidthFallback();
-        availableWidth = availableWidth > 0 ? availableWidth - this.marginX * 2 : this.sceneRect.width;
+        availableWidth = availableWidth > 0 ? availableWidth : this.sceneRect.width;
         if (availableWidth <= 0) {
             availableWidth = this.sceneRect.width;
         }
@@ -664,33 +621,15 @@ export class ZoomRowList extends ArrayGrid {
         return Math.max(0, Math.min(index, this.content.length - 1));
     }
 
-    private getRowItemSpacing(rowIndex: number): [number, number] {
-        const fallback: [number, number] = [this.defaultItemSpacing, this.defaultRowSpacing];
-        const rowItemSpacing = this.getFieldValueJS("rowItemSpacing") as number[][];
-        if (Array.isArray(rowItemSpacing) && rowItemSpacing.length > 0) {
-            const index = Math.min(rowIndex, rowItemSpacing.length - 1);
-            const candidate = rowItemSpacing[index];
-            if (Array.isArray(candidate) && candidate.length >= 2) {
-                const spacingX = Number(candidate[0]);
-                const spacingY = Number(candidate[1]);
-                return [spacingX > 0 ? spacingX : fallback[0], spacingY > 0 ? spacingY : fallback[1]];
-            }
-        }
-        const itemSpacing = this.getFieldValueJS("itemSpacing") as number[];
-        if (Array.isArray(itemSpacing) && itemSpacing.length >= 2) {
-            const spacingX = Number(itemSpacing[0]);
-            const spacingY = Number(itemSpacing[1]);
-            return [spacingX > 0 ? spacingX : fallback[0], spacingY > 0 ? spacingY : fallback[1]];
-        }
-        const spacingOverride = this.getFieldValueJS("spacingAfterRowItem");
-        if (Array.isArray(spacingOverride) && spacingOverride.length > 0) {
-            const index = Math.min(rowIndex, spacingOverride.length - 1);
-            const candidate = Number(spacingOverride[index]);
+    private getRowItemSpacing(rowIndex: number): number {
+        const fallback: number = this.defaultItemSpacing;
+        const spacingAfterRowItem = this.getFieldValueJS("spacingAfterRowItem");
+        if (Array.isArray(spacingAfterRowItem) && spacingAfterRowItem.length > 0) {
+            const index = Math.min(rowIndex, spacingAfterRowItem.length - 1);
+            const candidate = Number(spacingAfterRowItem[index]);
             if (Number.isFinite(candidate) && candidate > 0) {
-                return [candidate, fallback[1]];
+                return candidate;
             }
-        } else if (typeof spacingOverride === "number" && spacingOverride > 0) {
-            return [spacingOverride, fallback[1]];
         }
         return fallback;
     }
@@ -703,15 +642,11 @@ export class ZoomRowList extends ArrayGrid {
         if (typeof rectWidth === "number" && rectWidth > 0) {
             return rectWidth;
         }
-        const widthField = this.getFieldValueJS("width");
-        if (typeof widthField === "number" && widthField > 0) {
-            return widthField;
-        }
         if (this.sceneRect.width > 0) {
             return this.sceneRect.width;
         }
-        const estimated = this.defaultItemZoomHeight * this.defaultAspectRatio * 5 + this.marginX * 2;
-        return Math.max(estimated, this.defaultItemHeight * this.defaultAspectRatio * 3 + this.marginX * 2);
+        const estimated = this.defaultRowZoomHeight * this.defaultAspectRatio * 5;
+        return Math.max(estimated, this.defaultRowHeight * this.defaultAspectRatio * 3);
     }
 
     private getRowMetrics(rowIndex: number): RowMetrics {
@@ -726,12 +661,12 @@ export class ZoomRowList extends ArrayGrid {
         const baseItemHeight = this.resolveNumber(
             this.getFieldValueJS("rowItemHeight"),
             rowIndex,
-            this.defaultItemHeight
+            this.defaultRowHeight
         );
         const zoomItemHeight = this.resolveNumber(
             this.getFieldValueJS("rowItemZoomHeight"),
             rowIndex,
-            this.defaultItemZoomHeight
+            this.defaultRowZoomHeight
         );
         const itemHeight = this.lerp(baseItemHeight, zoomItemHeight, focusPercent);
         const safeItemHeight = itemHeight > 0 ? itemHeight : Math.max(baseItemHeight, 1);
@@ -740,13 +675,9 @@ export class ZoomRowList extends ArrayGrid {
             rowIndex,
             this.defaultAspectRatio
         );
-        const spacing = this.getRowItemSpacing(rowIndex);
-        const spacingX = spacing[0];
-        const rawSpacingAfterRow = this.getFieldValueJS("spacingAfterRow");
-        const spacingY =
-            typeof rawSpacingAfterRow === "number" && rawSpacingAfterRow > 0
-                ? rawSpacingAfterRow
-                : Math.max(spacing[1], this.defaultRowSpacing);
+        const spacingX = this.getRowItemSpacing(rowIndex);
+        const rawSpacingAfterRow = this.getFieldValueJS("spacingAfterRow") as number;
+        const spacingY = rawSpacingAfterRow > 0 ? rawSpacingAfterRow : this.defaultRowSpacing;
         const offsetBase = this.resolveNumber(
             this.getFieldValueJS("rowItemYOffset"),
             rowIndex,
@@ -844,15 +775,7 @@ export class ZoomRowList extends ArrayGrid {
         return Number.isFinite(lastValue) && lastValue > 0 ? lastValue : fallback;
     }
 
-    private renderRowTitle(
-        rowIndex: number,
-        rect: Rect,
-        metrics: RowMetrics,
-        rowWidth: number,
-        interiorWidth: number,
-        opacity: number,
-        draw2D?: IfDraw2D
-    ) {
+    private renderRowTitle(rowIndex: number, rect: Rect, interiorWidth: number, opacity: number, draw2D?: IfDraw2D) {
         const show = this.resolveBoolean(this.getFieldValueJS("showRowTitle"), rowIndex, true);
         if (!show) {
             return 0;
@@ -863,25 +786,17 @@ export class ZoomRowList extends ArrayGrid {
             return 0;
         }
         const rawOffsets = this.getFieldValueJS("rowTitleOffset") as number[][];
-        const offset = this.resolveVector(rawOffsets, rowIndex, this.defaultRowTitleOffset);
+        const offset = this.resolveVector(rawOffsets, rowIndex, [0, 0]);
         const color = this.resolveColor(this.getFieldValueJS("rowTitleColor"), rowIndex, 0xffffffff);
         const fontValue = this.getFieldValue("rowTitleFont");
         if (!(fontValue instanceof Font)) {
             return 0;
         }
         const drawFont = fontValue.createDrawFont();
-        const configuredRowWidth = rowWidth > 0 ? rowWidth : this.getRowWidthFallback(rowWidth);
-        let availableInterior = interiorWidth;
-        if (!Number.isFinite(availableInterior) || availableInterior <= 0) {
-            availableInterior = Math.max(configuredRowWidth - this.marginX * 2, metrics.itemWidth);
-        }
-        const baseX = rect.x + this.marginX + (offset[0] ?? 0);
-        const rightEdge = rect.x + this.marginX + availableInterior;
-        const availableWidth = Math.max(rightEdge - baseX, metrics.itemWidth);
         const textRect = {
-            x: baseX,
+            x: rect.x + (offset[0] ?? 0),
             y: rect.y + (offset[1] ?? 0),
-            width: availableWidth,
+            width: interiorWidth,
             height: drawFont.measureTextHeight(),
         };
         this.drawText(title, fontValue, color, opacity, textRect, "left", "center", 0, draw2D, "...", rowIndex);
@@ -892,7 +807,6 @@ export class ZoomRowList extends ArrayGrid {
         rowIndex: number,
         rect: Rect,
         metrics: RowMetrics,
-        rowWidth: number,
         interiorWidth: number,
         opacity: number,
         draw2D?: IfDraw2D
@@ -907,17 +821,15 @@ export class ZoomRowList extends ArrayGrid {
             return 0;
         }
         const showShortRows = (this.getFieldValueJS("showRowCounterForShortRows") as boolean) ?? true;
-        const configuredRowWidth = rowWidth > 0 ? rowWidth : this.getRowWidthFallback(rowWidth);
-        let availableInterior = interiorWidth;
-        if (!Number.isFinite(availableInterior) || availableInterior <= 0) {
-            availableInterior = Math.max(configuredRowWidth - this.marginX * 2, configuredRowWidth);
-        }
         const totalWidth = items * metrics.itemWidth + (items - 1) * metrics.spacingX;
-        if (!showShortRows && totalWidth < availableInterior) {
+        if (!showShortRows && totalWidth < interiorWidth) {
             return 0;
         }
+        const itemWidth = this.defaultRowHeight * this.defaultAspectRatio;
+        const maxVisibleItems = this.getMaxVisibleItems(itemWidth, metrics.spacingX, interiorWidth, false);
+        const rowWidth = this.getRowWidthFallback((itemWidth + metrics.spacingX) * maxVisibleItems);
         const rawOffsets = this.getFieldValueJS("rowCounterOffset") as number[][];
-        const offset = this.resolveVector(rawOffsets, rowIndex, [this.marginX, this.defaultRowTitleOffset[1]]);
+        const offset = this.resolveVector(rawOffsets, rowIndex, [0, 0]);
         const color = this.resolveColor(this.getFieldValueJS("rowCounterColor"), rowIndex, 0xffffffff);
         const counterFontValue = this.getFieldValue("rowCounterFont");
         let fontToUse: Font | undefined;
@@ -934,24 +846,12 @@ export class ZoomRowList extends ArrayGrid {
         }
         const drawFont = fontToUse.createDrawFont();
         const counterText = `${this.rowFocus[rowIndex] + 1} of ${items}`;
-        const screenRight = this.sceneRect.x + this.sceneRect.width;
-        const baseX = Math.max(rect.x + this.marginX + (offset[0] ?? 0), rect.x + this.marginX);
-        const rightEdge = screenRight - this.counterRightInset;
-        const maxWidthByScreen = Math.max(rightEdge - baseX, 0);
-        const maxWidthByInterior = Math.max(availableInterior - (offset[0] ?? 0), 0);
-        const availableWidth = Math.max(Math.min(maxWidthByScreen, maxWidthByInterior), 0);
-        if (availableWidth <= 0) {
-            return 0;
-        }
         const textRect = {
-            x: baseX,
+            x: rect.x,
             y: rect.y + (offset[1] ?? 0),
-            width: availableWidth,
+            width: rowWidth,
             height: drawFont.measureTextHeight(),
         };
-        if (textRect.width <= 0) {
-            return 0;
-        }
         this.drawText(counterText, fontToUse, color, opacity, textRect, "right", "center", 0, draw2D);
         return textRect.height + (offset[1] ?? 0);
     }
