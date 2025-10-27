@@ -109,6 +109,7 @@ export class ZoomRowList extends ArrayGrid {
             this.defaultRowZoomHeight = 321;
             this.defaultRowSpacing = 80;
             this.defaultItemSpacing = 21;
+            this.setFieldValue("wrapDividerHeight", new Float(54));
         } else {
             this.marginX = 12;
             this.marginY = 12;
@@ -116,6 +117,7 @@ export class ZoomRowList extends ArrayGrid {
             this.defaultRowZoomHeight = 136;
             this.defaultRowSpacing = 53;
             this.defaultItemSpacing = 14;
+            this.setFieldValue("wrapDividerHeight", new Float(36));
         }
         this.gap = this.marginX / 2;
         this.defaultItemYOffset = 0;
@@ -333,7 +335,7 @@ export class ZoomRowList extends ArrayGrid {
             }
             let rowTop = currentY;
             if (canWrap && rowIndex === 0 && displayIndex > 0) {
-                rowTop -= metrics.spacingY;
+                rowTop -= metrics.spacingY * .3;
                 const dividerRect = {
                     x: rect.x,
                     y: rowTop,
@@ -341,7 +343,7 @@ export class ZoomRowList extends ArrayGrid {
                     height: Math.max(metrics.spacingY, 1),
                 };
                 const dividerHeight = this.renderWrapDivider(dividerRect, opacity, draw2D);
-                rowTop += dividerHeight + metrics.spacingY;
+                rowTop += dividerHeight + metrics.spacingY * .3;
             }
 
             const rowRect = {
