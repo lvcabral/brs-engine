@@ -162,6 +162,7 @@ export class ContentNode extends RoSGNode {
             // Returns true even if child is invalid because a child was added
             success = true;
         }
+        this.changed ||= success;
         return success;
     }
 

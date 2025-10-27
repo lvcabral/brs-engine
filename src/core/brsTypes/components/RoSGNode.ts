@@ -639,6 +639,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             // If this AA has a "children" field with an array, recursively create child nodes
             if (fieldName === "children" && value instanceof RoArray) {
                 this.updateChildrenFromArray(interpreter, node, value, createFields, subtype);
+                this.changed = true;
             } else if (fieldName === "subtype") {
                 // Skip the "subtype" field, already handled
                 continue;
@@ -646,6 +647,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             // Set all other fields, respecting the createFields parameter
             else if (node.fields.has(fieldName) || (createFields && !isInvalid(value))) {
                 node.set(new BrsString(key), value, false);
+                this.changed = true;
             }
         }
     }
@@ -679,6 +681,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
                 child.removeParent();
                 this.children.splice(spliceIndex, 1);
             }
+            this.changed = true;
             return true;
         }
         return false;
@@ -691,6 +694,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             }
             this.children.push(child);
             child.setNodeParent(this);
+            this.changed = true;
             return true;
         }
         return false;
@@ -962,14 +966,15 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
                     // if the field doesn't have a valid value, RBI doesn't add it.
                     if (fieldType) {
                         this.fields.set(key, new Field(value, fieldType, false));
+                        this.changed = true;
                     }
                 }
             } else if (obj instanceof RoSGNode) {
                 for (const [key, value] of obj.getNodeFields()) {
                     this.fields.set(key, value);
+                    this.changed = true;
                 }
             }
-
             return BrsInvalid.Instance;
         },
     });
@@ -1027,6 +1032,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         },
         impl: (_: Interpreter, fieldName: BrsString, type: BrsString, alwaysNotify: BrsBoolean) => {
             this.addNodeField(fieldName.value, type.value, alwaysNotify.toBoolean());
+            this.changed = true;
             return BrsBoolean.True;
         },
     });
@@ -1046,6 +1052,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
                 let fieldName = new BrsString(key);
                 if (!this.fields.has(key)) {
                     this.set(fieldName, value, false);
+                    this.changed = true;
                 }
             }
 
@@ -1090,6 +1097,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             }
             const refs = data.clearElements();
             field.setValue(new RoAssociativeArray(moved), true);
+            this.changed = true;
             return new Int32(refs);
         },
     });
@@ -1115,6 +1123,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             }
             const value = field.getValue();
             field.setValue(BrsInvalid.Instance, true);
+            this.changed = true;
             return value;
         },
     });
@@ -1374,6 +1383,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         },
         impl: (_: Interpreter, fieldName: BrsString) => {
             this.fields.delete(fieldName.value.toLowerCase());
+            this.changed = true;
             return BrsBoolean.True; //RBI always returns true
         },
     });
@@ -1615,6 +1625,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
                 for (const node of removedChildren.filter((n) => n instanceof RoSGNode)) {
                     node.removeParent();
                 }
+                this.changed = true;
                 return BrsBoolean.True;
             }
             return BrsBoolean.False;
