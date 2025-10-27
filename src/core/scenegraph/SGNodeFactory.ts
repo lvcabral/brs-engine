@@ -58,6 +58,8 @@ export enum SGNodeType {
     Node = "Node",
     Group = "Group",
     LayoutGroup = "LayoutGroup",
+    MaskGroup = "MaskGroup",
+    TargetGroup = "TargetGroup",
     ButtonGroup = "ButtonGroup",
     Button = "Button",
     Panel = "Panel",
@@ -137,6 +139,8 @@ export class SGNodeFactory {
             case SGNodeType.Node.toLowerCase():
                 return new RoSGNode([], name);
             case SGNodeType.Group.toLowerCase():
+            case SGNodeType.MaskGroup.toLowerCase():
+            case SGNodeType.TargetGroup.toLowerCase():
             case SGNodeType.ScrollableText.toLowerCase():
                 return new Group([], name);
             case SGNodeType.LayoutGroup.toLowerCase():
