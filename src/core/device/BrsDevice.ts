@@ -139,7 +139,6 @@ export class BrsDevice {
         }
     }
 
-
     /**
      * Get the current display mode based on device info
      * @returns string with the display mode
