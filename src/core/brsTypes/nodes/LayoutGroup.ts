@@ -16,6 +16,7 @@ interface LayoutMetrics {
     primary: number;
     cross: number;
     crossStart: number;
+    primaryStart: number;
 }
 
 interface NodeSize {
@@ -132,36 +133,55 @@ export class LayoutGroup extends Group {
             direction === "horiz" ? this.normalizeVertAlignment(direction) : this.normalizeHorizAlignment(direction);
 
         const totalPrimary = this.calculateTotalPrimary(metricsList, spacings, addSpacingAfterChild);
-        const crossTargets = metricsList.length ? this.computeCrossTargets(metricsList) : undefined;
         let currentOffset = this.computeStartOffset(direction, totalPrimary, primaryAlignment);
 
-        for (let i = 0; i < children.length; i++) {
+        const childCount = children.length;
+
+        for (let i = 0; i < childCount; i++) {
             const child = children[i];
             const metrics = metricsList[i];
             const spacing = this.getSpacingValue(spacings, i);
             const translation = this.getChildTranslation(child);
+            let expectedCrossStart = metrics.crossStart;
 
             if (!addSpacingAfterChild) {
                 currentOffset += spacing;
             }
 
+            const positionOffset = currentOffset;
+
             if (direction === "horiz") {
-                translation[0] = currentOffset;
-                if (crossAlignment && crossAlignment !== "custom" && crossTargets) {
-                    translation[1] += this.computeCrossAdjustment(crossAlignment, metrics, crossTargets);
+                translation[0] += positionOffset - metrics.primaryStart;
+                if (crossAlignment && crossAlignment !== "custom") {
+                    const targetCrossStart = this.computeCrossPosition(crossAlignment, metrics.cross);
+                    const delta = targetCrossStart - metrics.crossStart;
+                    translation[1] += delta;
+                    expectedCrossStart = targetCrossStart;
                 }
             } else {
-                translation[1] = currentOffset;
-                if (crossAlignment && crossAlignment !== "custom" && crossTargets) {
-                    translation[0] += this.computeCrossAdjustment(crossAlignment, metrics, crossTargets);
+                translation[1] += positionOffset - metrics.primaryStart;
+                if (crossAlignment && crossAlignment !== "custom") {
+                    const targetCrossStart = this.computeCrossPosition(crossAlignment, metrics.cross);
+                    const delta = targetCrossStart - metrics.crossStart;
+                    translation[0] += delta;
+                    expectedCrossStart = targetCrossStart;
                 }
             }
 
             this.setChildTranslation(child, translation);
 
-            currentOffset += metrics.primary;
-            if (addSpacingAfterChild) {
+            currentOffset = positionOffset + metrics.primary;
+            if (addSpacingAfterChild && i < childCount - 1) {
                 currentOffset += spacing;
+            }
+
+            if (metricsMap) {
+                metricsMap.set(child, {
+                    primary: metrics.primary,
+                    cross: metrics.cross,
+                    crossStart: expectedCrossStart,
+                    primaryStart: positionOffset,
+                });
             }
         }
     }
@@ -206,6 +226,7 @@ export class LayoutGroup extends Group {
             primary: direction === "horiz" ? rect.width : rect.height,
             cross: direction === "horiz" ? rect.height : rect.width,
             crossStart: direction === "horiz" ? rect.y : rect.x,
+            primaryStart: direction === "horiz" ? rect.x : rect.y,
         };
 
         if (metricsMap) {
@@ -244,49 +265,33 @@ export class LayoutGroup extends Group {
 
     private calculateTotalPrimary(metricsList: LayoutMetrics[], spacings: number[], addAfter: boolean) {
         let total = 0;
-        for (let i = 0; i < metricsList.length; i++) {
+        const count = metricsList.length;
+        for (let i = 0; i < count; i++) {
+            const spacing = this.getSpacingValue(spacings, i);
             if (!addAfter) {
-                total += this.getSpacingValue(spacings, i);
+                total += spacing;
             }
             total += metricsList[i].primary;
-            if (addAfter) {
-                total += this.getSpacingValue(spacings, i);
+            if (addAfter && i < count - 1) {
+                total += spacing;
             }
         }
         return total;
     }
 
-    private computeCrossTargets(metricsList: LayoutMetrics[]) {
-        if (metricsList.length === 0) {
-            return { start: 0, center: 0, end: 0 };
-        }
-
-        let minStart = metricsList[0].crossStart;
-        let maxEnd = metricsList[0].crossStart + metricsList[0].cross;
-
-        for (let i = 1; i < metricsList.length; i++) {
-            const metrics = metricsList[i];
-            minStart = Math.min(minStart, metrics.crossStart);
-            maxEnd = Math.max(maxEnd, metrics.crossStart + metrics.cross);
-        }
-
-        const center = minStart + (maxEnd - minStart) / 2;
-        return { start: minStart, center, end: maxEnd };
-    }
-
-    private computeCrossAdjustment(
-        alignment: "top" | "center" | "bottom" | "left" | "right",
-        metrics: LayoutMetrics,
-        targets: { start: number; center: number; end: number }
-    ) {
+    private computeCrossPosition(alignment: "top" | "center" | "bottom" | "left" | "right", crossSize: number): number {
+        // According to Roku spec, alignment sets the LayoutGroup's local coordinate origin
+        // For center: origin is at the center, so children are positioned at -size/2
+        // For left/top: origin is at the edge, so children start at 0
+        // For right/bottom: origin is at the far edge, so children end at 0
         switch (alignment) {
             case "center":
-                return targets.center - (metrics.crossStart + metrics.cross / 2);
+                return -crossSize / 2;
             case "bottom":
             case "right":
-                return targets.end - (metrics.crossStart + metrics.cross);
-            default:
-                return targets.start - metrics.crossStart;
+                return -crossSize;
+            default: // left or top
+                return 0;
         }
     }
 
@@ -445,7 +450,8 @@ export class LayoutGroup extends Group {
         return (
             this.nearlyEqual(a.primary, b.primary) &&
             this.nearlyEqual(a.cross, b.cross) &&
-            this.nearlyEqual(a.crossStart, b.crossStart)
+            this.nearlyEqual(a.crossStart, b.crossStart) &&
+            this.nearlyEqual(a.primaryStart, b.primaryStart)
         );
     }
 
