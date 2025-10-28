@@ -139,6 +139,20 @@ export class BrsDevice {
         }
     }
 
+
+    /**
+     * Get the current display mode based on device info
+     * @returns string with the display mode
+     */
+    static getDisplayMode(): string {
+        if (this.deviceInfo?.displayMode?.startsWith("1080")) {
+            return "FHD";
+        } else if (this.deviceInfo?.displayMode?.startsWith("480")) {
+            return "SD";
+        }
+        return "HD";
+    }
+
     /**
      * Return the translated terms based on current locale id
      * @param term the term to be translated

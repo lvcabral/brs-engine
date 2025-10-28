@@ -11,6 +11,7 @@ import {
     Rectangle,
     isBrsNumber,
     jsValueOf,
+    sgRoot,
 } from "..";
 import { Group } from "./Group";
 import { Interpreter } from "../../interpreter";
@@ -117,7 +118,7 @@ export class Overhang extends Group {
         const color = this.getFieldValueJS("color") as number;
         const logoUri = this.getFieldValueJS("logoUri") as string;
         if (logoUri) {
-            this.logo.set(new BrsString("uri"), new BrsString(logoUri));
+            this.setLogoUri(logoUri);
         } else if (color) {
             this.copyField(this.backRect, "color");
             this.backRect.setFieldValue("visible", BrsBoolean.True);
@@ -169,9 +170,30 @@ export class Overhang extends Group {
         this.isDirty = false;
     }
 
+    private setLogoUri(uri: string) {
+        this.logo.set(new BrsString("uri"), new BrsString(uri));
+        const loadStatus = this.logo.getFieldValueJS("loadStatus") ?? "";
+        const subSearch = sgRoot.scene?.subSearch ?? "";
+        const uriHasRes = subSearch !== "" && uri.includes(subSearch);
+        if (loadStatus === "ready" && this.resolution !== BrsDevice.getDisplayMode() && !uriHasRes) {
+            const bitmapHeight = this.logo.getFieldValueJS("bitmapHeight") as number;
+            const bitmapWidth = this.logo.getFieldValueJS("bitmapWidth") as number;
+            // Roku scales the logo based on the current display mode
+            if (this.resolution === "FHD") {
+                this.logo.set(new BrsString("height"), new Float(bitmapHeight * 1.5));
+                this.logo.set(new BrsString("width"), new Float(bitmapWidth * 1.5));
+            } else {
+                this.logo.set(new BrsString("height"), new Float(bitmapHeight / 1.5));
+                this.logo.set(new BrsString("width"), new Float(bitmapWidth / 1.5));
+            }
+        }
+    }
+
     private alignChildren() {
         const isFHD = this.resolution === "FHD";
+        const isDeviceFHD = BrsDevice.getDisplayMode() === "FHD";
         const leftAlignX = isFHD ? 102 : 68;
+        const topAlignY = isFHD ? 60 : 40;
         const logoWidth = this.logo.rectLocal.width;
         const optionsWidth = this.optionsText.rectLocal.width ?? (isFHD ? 168 : 112);
         const showClock = this.getFieldValueJS("showClock") as boolean;
@@ -180,21 +202,24 @@ export class Overhang extends Group {
         const optionsOffset = showClock ? optionsWidth + clockOffset : optionsWidth;
         const rightAlignX = this.width - leftAlignX - clockTextWidth;
         if (isFHD) {
-            this.logo.setTranslation([leftAlignX, 63]);
-            this.leftDivider.setTranslation([leftAlignX + logoWidth + 24, 59]);
-            this.title.setTranslation([leftAlignX + logoWidth + 56, 58]);
-            this.optionsIcon.setTranslation([rightAlignX - optionsOffset - 36, 67]);
-            this.optionsText.setTranslation([rightAlignX - optionsOffset, 64]);
-            this.rightDivider.setTranslation([rightAlignX - 36, 59]);
-            this.clockText.setTranslation([rightAlignX, 64]);
+            this.logo.setTranslation([leftAlignX, topAlignY + 3]);
+            this.leftDivider.setTranslation([leftAlignX + logoWidth + 24, topAlignY]);
+            this.title.setTranslation([leftAlignX + logoWidth + 56, topAlignY]);
+            this.optionsIcon.setTranslation([rightAlignX - optionsOffset - 36, topAlignY + 9]);
+            this.optionsText.setTranslation([rightAlignX - optionsOffset, topAlignY + 3]);
+            this.rightDivider.setTranslation([rightAlignX - 36, topAlignY]);
+            this.clockText.setTranslation([rightAlignX, topAlignY + 3]);
         } else {
-            this.logo.setTranslation([leftAlignX, 42]);
-            this.leftDivider.setTranslation([leftAlignX + logoWidth + 16, 41]);
-            this.title.setTranslation([leftAlignX + logoWidth + 38, 39]);
-            this.optionsIcon.setTranslation([rightAlignX - optionsOffset - 24, 46]);
-            this.optionsText.setTranslation([rightAlignX - optionsOffset, 44]);
-            this.rightDivider.setTranslation([rightAlignX - 24, 41]);
-            this.clockText.setTranslation([rightAlignX, 44]);
+            this.logo.setTranslation([leftAlignX, topAlignY]);
+            this.leftDivider.setTranslation([leftAlignX + logoWidth + 16, topAlignY]);
+            this.title.setTranslation([leftAlignX + logoWidth + 38, topAlignY - 2]);
+            this.optionsIcon.setTranslation([rightAlignX - optionsOffset - 24, topAlignY + 6]);
+            this.optionsText.setTranslation([rightAlignX - optionsOffset, topAlignY + 2]);
+            this.rightDivider.setTranslation([rightAlignX - 24, topAlignY]);
+            this.clockText.setTranslation([rightAlignX, topAlignY + 2]);
+        }
+        if (isDeviceFHD !== isFHD) {
+            this.logo.setTranslation([leftAlignX, topAlignY]);
         }
         this.realign = false;
     }
