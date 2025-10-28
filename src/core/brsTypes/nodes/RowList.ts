@@ -330,7 +330,7 @@ export class RowList extends ArrayGrid {
         if (itemSpacing?.length === 2) {
             fallback = itemSpacing;
         }
-        return this.resolveVector(this.getFieldValueJS("rowItemSpacing"), rowIndex, fallback) as number[];
+        return this.resolveVector(this.getFieldValueJS("rowItemSpacing"), rowIndex, fallback);
     }
 
     private checkIfAllItemsFitOnScreen(numCols: number, rowItemWidth: number): boolean {
@@ -774,7 +774,7 @@ export class RowList extends ArrayGrid {
         displayRowIndex: number,
         draw2D?: IfDraw2D
     ) {
-        const offset = this.resolveVector(this.getFieldValueJS("rowLabelOffset"), displayRowIndex, [0, 0]) as number[];
+        const offset = this.resolveVector(this.getFieldValueJS("rowLabelOffset"), displayRowIndex, [0, 0]);
         const divRect = {
             ...itemRect,
             x: itemRect.x + (offset[0] ?? 0),
