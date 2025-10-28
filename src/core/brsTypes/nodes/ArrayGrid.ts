@@ -546,5 +546,4 @@ export class ArrayGrid extends Group {
         }
         return Number(values.at(-1)) || fallback;
     }
-
 }
