@@ -325,23 +325,12 @@ export class RowList extends ArrayGrid {
     }
 
     private getRowItemSpacing(rowIndex: number): number[] {
+        let fallback = [0, 0];
         const itemSpacing = this.getFieldValueJS("itemSpacing") as number[];
-        const rowItemSpacing = this.getFieldValueJS("rowItemSpacing") as number[][];
-
-        // If no per-row spacing defined, use global itemSpacing
-        if (!rowItemSpacing || rowItemSpacing.length === 0) {
-            return itemSpacing;
+        if (itemSpacing?.length === 2) {
+            fallback = itemSpacing;
         }
-
-        // If rowItemSpacing has entries, use the appropriate one
-        // If rowIndex exceeds array length, use the last defined spacing
-        const index = Math.min(rowIndex, rowItemSpacing.length - 1);
-        const perRowSpacing = rowItemSpacing[index];
-
-        if (perRowSpacing && perRowSpacing.length >= 2) {
-            return perRowSpacing;
-        }
-        return itemSpacing;
+        return this.resolveVector(this.getFieldValueJS("rowItemSpacing"), rowIndex, fallback) as number[];
     }
 
     private checkIfAllItemsFitOnScreen(numCols: number, rowItemWidth: number): boolean {
@@ -785,19 +774,7 @@ export class RowList extends ArrayGrid {
         displayRowIndex: number,
         draw2D?: IfDraw2D
     ) {
-        const rowLabelOffset = this.getFieldValueJS("rowLabelOffset") as number[][];
-
-        // Get the offset for this display row, using last value as fallback
-        let offset = [0, 0];
-        if (rowLabelOffset?.length) {
-            if (displayRowIndex < rowLabelOffset.length) {
-                offset = rowLabelOffset[displayRowIndex];
-            } else {
-                // Use last value if array is shorter than number of rows
-                offset = rowLabelOffset.at(-1)!;
-            }
-        }
-
+        const offset = this.resolveVector(this.getFieldValueJS("rowLabelOffset"), displayRowIndex, [0, 0]) as number[];
         const divRect = {
             ...itemRect,
             x: itemRect.x + (offset[0] ?? 0),
