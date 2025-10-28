@@ -61,6 +61,7 @@ export class ZoomRowList extends ArrayGrid {
         { name: "rowDecorationComponentName", type: "array", value: "[]" },
         { name: "rowFocusAnimationStyle", type: "string", value: "fixedFocusWrap" },
         { name: "wrap", type: "boolean", value: "true" },
+        { name: "drawFocusFeedbackOnTop", type: "boolean", value: "true" },
         { name: "rowSelected", type: "integer", value: "-1", alwaysNotify: true },
         { name: "rowFocused", type: "integer", value: "-1", alwaysNotify: true },
         { name: "rowUnfocused", type: "integer", value: "-1", alwaysNotify: true },
@@ -122,6 +123,7 @@ export class ZoomRowList extends ArrayGrid {
         this.gap = this.marginX / 2;
         this.defaultItemYOffset = 0;
         this.defaultItemZoomYOffset = 0;
+        this.hasNinePatch = true;
         this.focusField = "zoomRowListHasFocus";
         this.wrap = true;
         this.focusIndex = 0;

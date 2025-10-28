@@ -80,11 +80,11 @@ export class RowList extends ArrayGrid {
         this.registerInitializedFields(initializedFields);
 
         if (this.resolution === "FHD") {
-            this.marginX = 15;
-            this.marginY = 15;
+            this.marginX = 33;
+            this.marginY = 33;
         } else {
-            this.marginX = 10;
-            this.marginY = 10;
+            this.marginX = 22;
+            this.marginY = 22;
         }
         this.gap = 0;
         this.setFieldValue("focusBitmapUri", new BrsString(this.focusUri));
