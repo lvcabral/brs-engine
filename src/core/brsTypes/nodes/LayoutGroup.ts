@@ -16,6 +16,7 @@ interface LayoutMetrics {
     primary: number;
     cross: number;
     crossStart: number;
+    primaryStart: number;
 }
 
 interface NodeSize {
@@ -134,33 +135,53 @@ export class LayoutGroup extends Group {
         const totalPrimary = this.calculateTotalPrimary(metricsList, spacings, addSpacingAfterChild);
         let currentOffset = this.computeStartOffset(direction, totalPrimary, primaryAlignment);
 
-        for (let i = 0; i < children.length; i++) {
+        const childCount = children.length;
+
+        for (let i = 0; i < childCount; i++) {
             const child = children[i];
             const metrics = metricsList[i];
             const spacing = this.getSpacingValue(spacings, i);
-            const translation = [0, 0];
+            const translation = this.getChildTranslation(child);
+            let expectedCrossStart = metrics.crossStart;
 
             if (!addSpacingAfterChild) {
                 currentOffset += spacing;
             }
 
+            const positionOffset = currentOffset;
+
             if (direction === "horiz") {
-                translation[0] = currentOffset;
+                translation[0] += positionOffset - metrics.primaryStart;
                 if (crossAlignment && crossAlignment !== "custom") {
-                    translation[1] = this.computeCrossPosition(crossAlignment, metrics.cross);
+                    const targetCrossStart = this.computeCrossPosition(crossAlignment, metrics.cross);
+                    const delta = targetCrossStart - metrics.crossStart;
+                    translation[1] += delta;
+                    expectedCrossStart = targetCrossStart;
                 }
             } else {
-                translation[1] = currentOffset;
+                translation[1] += positionOffset - metrics.primaryStart;
                 if (crossAlignment && crossAlignment !== "custom") {
-                    translation[0] = this.computeCrossPosition(crossAlignment, metrics.cross);
+                    const targetCrossStart = this.computeCrossPosition(crossAlignment, metrics.cross);
+                    const delta = targetCrossStart - metrics.crossStart;
+                    translation[0] += delta;
+                    expectedCrossStart = targetCrossStart;
                 }
             }
 
             this.setChildTranslation(child, translation);
 
-            currentOffset += metrics.primary;
-            if (addSpacingAfterChild) {
+            currentOffset = positionOffset + metrics.primary;
+            if (addSpacingAfterChild && i < childCount - 1) {
                 currentOffset += spacing;
+            }
+
+            if (metricsMap) {
+                metricsMap.set(child, {
+                    primary: metrics.primary,
+                    cross: metrics.cross,
+                    crossStart: expectedCrossStart,
+                    primaryStart: positionOffset,
+                });
             }
         }
     }
@@ -182,12 +203,7 @@ export class LayoutGroup extends Group {
                 needsRelayout = true;
             }
 
-            // Only compare dimensions (primary/cross), not position (crossStart)
-            if (
-                expected &&
-                (!this.nearlyEqual(expected.primary, actualMetrics.primary) ||
-                    !this.nearlyEqual(expected.cross, actualMetrics.cross))
-            ) {
+            if (expected && !this.metricsClose(expected, actualMetrics)) {
                 needsRelayout = true;
             }
         }
@@ -210,6 +226,7 @@ export class LayoutGroup extends Group {
             primary: direction === "horiz" ? rect.width : rect.height,
             cross: direction === "horiz" ? rect.height : rect.width,
             crossStart: direction === "horiz" ? rect.y : rect.x,
+            primaryStart: direction === "horiz" ? rect.x : rect.y,
         };
 
         if (metricsMap) {
@@ -248,13 +265,15 @@ export class LayoutGroup extends Group {
 
     private calculateTotalPrimary(metricsList: LayoutMetrics[], spacings: number[], addAfter: boolean) {
         let total = 0;
-        for (let i = 0; i < metricsList.length; i++) {
+        const count = metricsList.length;
+        for (let i = 0; i < count; i++) {
+            const spacing = this.getSpacingValue(spacings, i);
             if (!addAfter) {
-                total += this.getSpacingValue(spacings, i);
+                total += spacing;
             }
             total += metricsList[i].primary;
-            if (addAfter) {
-                total += this.getSpacingValue(spacings, i);
+            if (addAfter && i < count - 1) {
+                total += spacing;
             }
         }
         return total;
@@ -431,7 +450,8 @@ export class LayoutGroup extends Group {
         return (
             this.nearlyEqual(a.primary, b.primary) &&
             this.nearlyEqual(a.cross, b.cross) &&
-            this.nearlyEqual(a.crossStart, b.crossStart)
+            this.nearlyEqual(a.crossStart, b.crossStart) &&
+            this.nearlyEqual(a.primaryStart, b.primaryStart)
         );
     }
 
