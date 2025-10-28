@@ -166,7 +166,7 @@ export class RowList extends ArrayGrid {
         const allItemsFitOnScreen = totalRowWidth <= this.sceneRect.width;
 
         // Adjust scroll offset based on animation style
-        if (allItemsFitOnScreen) {
+        if (allItemsFitOnScreen && rowFocusStyle !== "fixedfocus") {
             // All items fit, no scrolling needed - always use floating focus behavior
             this.rowScrollOffset[rowIndex] = 0;
         } else if (rowFocusStyle === "fixedfocuswrap") {
@@ -193,7 +193,7 @@ export class RowList extends ArrayGrid {
                     // Focused item is beyond floating area - scroll to show it fully at right edge
                     this.rowScrollOffset[rowIndex] = Math.max(0, colIndex - maxVisibleItems + 1);
                 }
-            } else if (isChangingRow && rowFocusStyle === "floatingfocus") {
+            } else if (isChangingRow) {
                 // Keep scroll offset unchanged - row maintains its scroll state
             } else if (colIndex < this.rowScrollOffset[rowIndex]) {
                 // Focused item is before visible area, scroll left to show it fully
@@ -289,7 +289,7 @@ export class RowList extends ArrayGrid {
         const allItemsFitOnScreen = this.checkIfAllItemsFitOnScreen(numCols, rowItemWidth);
         const rowFocusStyle = (this.getFieldValueJS("rowFocusAnimationStyle") as string).toLowerCase();
 
-        if (allItemsFitOnScreen) {
+        if (allItemsFitOnScreen && rowFocusStyle !== "fixedfocus") {
             return this.handleAllItemsFit(currentRow, numCols, offset);
         } else if (rowFocusStyle === "fixedfocuswrap") {
             return this.handleFixedFocusWrap(currentRow, numCols, offset);
@@ -648,7 +648,7 @@ export class RowList extends ArrayGrid {
     }
 
     private determineRenderMode(allItemsFitOnScreen: boolean, rowFocusStyle: string): string {
-        if (allItemsFitOnScreen) {
+        if (allItemsFitOnScreen && rowFocusStyle !== "fixedfocus") {
             return "allItemsFit";
         } else if (rowFocusStyle === "fixedfocuswrap") {
             return "wrapMode";
