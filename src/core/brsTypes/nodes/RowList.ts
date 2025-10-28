@@ -166,7 +166,7 @@ export class RowList extends ArrayGrid {
         const allItemsFitOnScreen = totalRowWidth <= this.sceneRect.width;
 
         // Adjust scroll offset based on animation style
-        if (allItemsFitOnScreen) {
+        if (allItemsFitOnScreen && rowFocusStyle !== "fixedfocus") {
             // All items fit, no scrolling needed - always use floating focus behavior
             this.rowScrollOffset[rowIndex] = 0;
         } else if (rowFocusStyle === "fixedfocuswrap") {
@@ -193,7 +193,7 @@ export class RowList extends ArrayGrid {
                     // Focused item is beyond floating area - scroll to show it fully at right edge
                     this.rowScrollOffset[rowIndex] = Math.max(0, colIndex - maxVisibleItems + 1);
                 }
-            } else if (isChangingRow && rowFocusStyle === "floatingfocus") {
+            } else if (isChangingRow) {
                 // Keep scroll offset unchanged - row maintains its scroll state
             } else if (colIndex < this.rowScrollOffset[rowIndex]) {
                 // Focused item is before visible area, scroll left to show it fully
@@ -289,7 +289,7 @@ export class RowList extends ArrayGrid {
         const allItemsFitOnScreen = this.checkIfAllItemsFitOnScreen(numCols, rowItemWidth);
         const rowFocusStyle = (this.getFieldValueJS("rowFocusAnimationStyle") as string).toLowerCase();
 
-        if (allItemsFitOnScreen) {
+        if (allItemsFitOnScreen && rowFocusStyle !== "fixedfocus") {
             return this.handleAllItemsFit(currentRow, numCols, offset);
         } else if (rowFocusStyle === "fixedfocuswrap") {
             return this.handleFixedFocusWrap(currentRow, numCols, offset);
@@ -325,23 +325,12 @@ export class RowList extends ArrayGrid {
     }
 
     private getRowItemSpacing(rowIndex: number): number[] {
+        let fallback = [0, 0];
         const itemSpacing = this.getFieldValueJS("itemSpacing") as number[];
-        const rowItemSpacing = this.getFieldValueJS("rowItemSpacing") as number[][];
-
-        // If no per-row spacing defined, use global itemSpacing
-        if (!rowItemSpacing || rowItemSpacing.length === 0) {
-            return itemSpacing;
+        if (itemSpacing?.length === 2) {
+            fallback = itemSpacing;
         }
-
-        // If rowItemSpacing has entries, use the appropriate one
-        // If rowIndex exceeds array length, use the last defined spacing
-        const index = Math.min(rowIndex, rowItemSpacing.length - 1);
-        const perRowSpacing = rowItemSpacing[index];
-
-        if (perRowSpacing && perRowSpacing.length >= 2) {
-            return perRowSpacing;
-        }
-        return itemSpacing;
+        return this.resolveVector(this.getFieldValueJS("rowItemSpacing"), rowIndex, fallback);
     }
 
     private checkIfAllItemsFitOnScreen(numCols: number, rowItemWidth: number): boolean {
@@ -496,7 +485,6 @@ export class RowList extends ArrayGrid {
 
     private validateRenderPrerequisites(): boolean {
         if (this.content.length === 0) {
-            console.debug("RowList has no content to render.");
             return false;
         }
 
@@ -649,7 +637,7 @@ export class RowList extends ArrayGrid {
     }
 
     private determineRenderMode(allItemsFitOnScreen: boolean, rowFocusStyle: string): string {
-        if (allItemsFitOnScreen) {
+        if (allItemsFitOnScreen && rowFocusStyle !== "fixedfocus") {
             return "allItemsFit";
         } else if (rowFocusStyle === "fixedfocuswrap") {
             return "wrapMode";
@@ -786,19 +774,7 @@ export class RowList extends ArrayGrid {
         displayRowIndex: number,
         draw2D?: IfDraw2D
     ) {
-        const rowLabelOffset = this.getFieldValueJS("rowLabelOffset") as number[][];
-
-        // Get the offset for this display row, using last value as fallback
-        let offset = [0, 0];
-        if (rowLabelOffset?.length) {
-            if (displayRowIndex < rowLabelOffset.length) {
-                offset = rowLabelOffset[displayRowIndex];
-            } else {
-                // Use last value if array is shorter than number of rows
-                offset = rowLabelOffset.at(-1)!;
-            }
-        }
-
+        const offset = this.resolveVector(this.getFieldValueJS("rowLabelOffset"), displayRowIndex, [0, 0]);
         const divRect = {
             ...itemRect,
             x: itemRect.x + (offset[0] ?? 0),

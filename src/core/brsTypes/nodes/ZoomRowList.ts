@@ -756,52 +756,6 @@ export class ZoomRowList extends ArrayGrid {
         return textRect.height + offset[1];
     }
 
-    private resolveBoolean(values: any, index: number, fallback: boolean) {
-        if (!Array.isArray(values) || values.length === 0) {
-            return fallback;
-        }
-        if (index < values.length) {
-            return Boolean(values[index]);
-        }
-        return Boolean(values.at(-1));
-    }
-
-    private resolveVector(values: any, index: number, fallback: number[]) {
-        if (!Array.isArray(values) || values.length === 0) {
-            return fallback;
-        }
-        if (values.length === 2 && typeof values[0] === "number" && typeof values[1] === "number") {
-            return [Number(values[0]) || 0, Number(values[1]) || 0];
-        }
-        const select = index < values.length ? values[index] : values.at(-1);
-        if (Array.isArray(select) && select.length >= 2) {
-            return [Number(select[0]) || 0, Number(select[1]) || 0];
-        }
-        return fallback;
-    }
-
-    private resolveNumber(values: any, index: number, fallback: number) {
-        if (!Array.isArray(values) || values.length === 0) {
-            return fallback;
-        }
-        if (index < values.length) {
-            const value = Number(values[index]);
-            return Number.isFinite(value) && value > 0 ? value : fallback;
-        }
-        const lastValue = Number(values.at(-1));
-        return Number.isFinite(lastValue) && lastValue > 0 ? lastValue : fallback;
-    }
-
-    private resolveColor(values: any, index: number, fallback: number) {
-        if (!Array.isArray(values) || values.length === 0) {
-            return fallback;
-        }
-        if (index < values.length) {
-            return Number(values[index]) || fallback;
-        }
-        return Number(values.at(-1)) || fallback;
-    }
-
     private lerp(a: number, b: number, t: number) {
         if (!Number.isFinite(a) && Number.isFinite(b)) {
             return b;
