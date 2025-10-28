@@ -496,7 +496,6 @@ export class RowList extends ArrayGrid {
 
     private validateRenderPrerequisites(): boolean {
         if (this.content.length === 0) {
-            console.debug("RowList has no content to render.");
             return false;
         }
 
