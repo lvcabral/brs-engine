@@ -315,6 +315,12 @@ export class Field {
         this.scopedObservers.delete(hostNode);
     }
 
+    clearObservers() {
+        this.permanentObservers.length = 0;
+        this.unscopedObservers.length = 0;
+        this.scopedObservers.clear();
+    }
+
     isObserved() {
         return this.permanentObservers.length > 0 || this.unscopedObservers.length > 0 || this.scopedObservers.size > 0;
     }

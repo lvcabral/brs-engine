@@ -98,7 +98,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
                 this.observeFieldScopedEx,
                 this.unobserveFieldScoped,
                 this.removeField,
-                // this.removeFields, // Not yet implemented
+                this.removeFields,
                 this.setField,
                 this.setFields,
                 this.update,
@@ -595,6 +595,21 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         return field;
     }
 
+    /** Removes a field from this Node */
+    private removeFieldEntry(fieldName: string): boolean {
+        const fieldKey = fieldName.toLowerCase();
+        const field = this.fields.get(fieldKey);
+        if (!field) {
+            return false;
+        }
+        field.clearObservers();
+        const removedField = this.fields.delete(fieldKey);
+        const removedAlias = this.aliases.delete(fieldKey);
+        const removed = removedField || removedAlias;
+        this.changed ||= removed;
+        return removed;
+    }
+
     /** Creates a tree of Nodes children from an array of associative arrays */
     private updateChildrenFromArray(
         interpreter: Interpreter,
@@ -911,7 +926,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, str: BrsString) => {
-            this.fields.delete(str.value.toLowerCase());
+            this.removeFieldEntry(str.getValue());
             return BrsBoolean.True; //RBI always returns true
         },
     });
@@ -1418,9 +1433,33 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, fieldName: BrsString) => {
-            this.fields.delete(fieldName.value.toLowerCase());
-            this.changed = true;
+            this.removeFieldEntry(fieldName.getValue());
             return BrsBoolean.True; //RBI always returns true
+        },
+    });
+
+    /** Removes one or more fields from the node */
+    private readonly removeFields = new Callable("removeFields", {
+        signature: {
+            args: [new StdlibArgument("fieldNames", ValueKind.Object)],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter, fieldNames: RoArray) => {
+            if (!(fieldNames instanceof RoArray)) {
+                return BrsBoolean.False;
+            }
+            const elements = fieldNames.getElements();
+            if (elements.length === 0) {
+                return BrsBoolean.False;
+            }
+            let removedAny = false;
+            for (const fieldName of elements) {
+                if (!isBrsString(fieldName)) {
+                    continue;
+                }
+                removedAny ||= this.removeFieldEntry(fieldName.getValue());
+            }
+            return BrsBoolean.from(removedAny);
         },
     });
 
