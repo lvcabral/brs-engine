@@ -89,8 +89,8 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
                 this.addFields,
                 this.getField,
                 this.getFields,
-                // this.getFieldType, // Not yet implemented
-                // this.getFieldTypes, // Not yet implemented
+                this.getFieldType,
+                this.getFieldTypes,
                 this.hasField,
                 this.observeField,
                 this.unobserveField,
@@ -1219,6 +1219,42 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             }
 
             return new RoAssociativeArray(packagedFields);
+        },
+    });
+
+    /** Returns the type of a specific field of the subject node. */
+    private readonly getFieldType = new Callable("getFieldType", {
+        signature: {
+            args: [new StdlibArgument("fieldName", ValueKind.String)],
+            returns: ValueKind.String,
+        },
+        impl: (_: Interpreter, fieldName: BrsString) => {
+            const field = this.fields.get(fieldName.value.toLowerCase());
+            return field ? new BrsString(field.getType()) : new BrsString("<NoSuchField>");
+        },
+    });
+
+    /** Returns the names and types of all the fields in the node. */
+    private readonly getFieldTypes = new Callable("getFieldTypes", {
+        signature: {
+            args: [],
+            returns: ValueKind.Object,
+        },
+        impl: (_: Interpreter) => {
+            let packagedTypes: AAMember[] = [];
+
+            for (const [name, field] of this.fields) {
+                if (field.isHidden()) {
+                    continue;
+                }
+
+                packagedTypes.push({
+                    name: new BrsString(name),
+                    value: new BrsString(field.getType()),
+                });
+            }
+
+            return new RoAssociativeArray(packagedTypes);
         },
     });
 

@@ -9,7 +9,6 @@ import {
     Float,
     Double,
     RoArray,
-    RoInvalid,
     RoAssociativeArray,
     toAssociativeArray,
     RoSGNode,
