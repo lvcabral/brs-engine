@@ -26,6 +26,7 @@ import {
     RoFunction,
     isBoxable,
     isInvalid,
+    FlexObject,
 } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Stmt } from "../../parser";
@@ -103,8 +104,8 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
                 this.setFields,
                 this.update,
                 this.signalBeacon,
-                //this.queueFields, // Not yet implemented
-                //this.threadInfo, // Not yet implemented
+                this.threadInfo,
+                this.queueFields,
                 this.moveIntoField, // Since OS 15
                 this.moveFromField, // Since OS 15
                 this.setRef, // Since OS 15
@@ -1072,6 +1073,51 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             }
 
             return BrsBoolean.True;
+        },
+    });
+
+    /** Returns an object containing thread information for debugging purposes. */
+    private readonly threadInfo = new Callable("threadInfo", {
+        signature: {
+            args: [],
+            returns: ValueKind.Object,
+        },
+        impl: (_: Interpreter) => {
+            const renderThread: FlexObject = { id: "0", type: "Render" };
+            let currentThread: FlexObject = { id: BrsDevice.threadId.toString() };
+            if (BrsDevice.threadId === 0) {
+                const sceneName = sgRoot.scene?.nodeSubtype || "";
+                renderThread.name = sceneName;
+                currentThread = { ...renderThread };
+            } else if (sgRoot.tasks[0]) {
+                currentThread.name = sgRoot.tasks[0].name || "";
+                currentThread.type = "Task";
+            }
+            const owningThread: FlexObject = { ...currentThread };
+            const threadData: FlexObject = {
+                currentThread: currentThread,
+                node: {
+                    address: "",
+                    id: this.getId(),
+                    type: this.nodeSubtype,
+                    owningThread: owningThread,
+                    willRendezvousFromCurrentThread: BrsDevice.threadId > 0 ? "Yes" : "No",
+                },
+                renderThread: renderThread,
+            };
+            return toAssociativeArray(threadData);
+        },
+    });
+
+    /** Makes subsequent operations on the node fields to queue on the node itself rather than on the Scene node render thread. */
+    private readonly queueFields = new Callable("queueFields", {
+        signature: {
+            args: [new StdlibArgument("queueNode", ValueKind.Boolean)],
+            returns: ValueKind.Void,
+        },
+        impl: (_: Interpreter, _queueNode: BrsBoolean) => {
+            // Not implemented yet. Mocking to prevent crash on usage.
+            return Uninitialized.Instance;
         },
     });
 
