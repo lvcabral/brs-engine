@@ -55,7 +55,13 @@ export class LabelList extends ArrayGrid {
             // Invalid fields for LabelList
             return BrsInvalid.Instance;
         }
-        return super.set(index, value, alwaysNotify, kind);
+        const result = super.set(index, value, alwaysNotify, kind);
+        if (fieldName === "content" || fieldName === "vertfocusanimationstyle") {
+            this.topRow = 0;
+        } else if (fieldName === "numrows") {
+            this.clampTopRow();
+        }
+        return result;
     }
 
     protected handleUpDown(key: string) {
@@ -100,7 +106,7 @@ export class LabelList extends ArrayGrid {
         }
         const hasSections = this.metadata.length > 0;
         const nodeFocus = sgRoot.focused === this;
-        this.currRow = this.updateCurrRow();
+        this.currRow = this.updateListCurrRow();
         let lastIndex = -1;
         const displayRows = Math.min(this.content.length, this.numRows);
         const itemSize = this.getFieldValueJS("itemSize") as number[];
