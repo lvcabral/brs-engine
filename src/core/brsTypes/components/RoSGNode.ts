@@ -26,6 +26,7 @@ import {
     RoFunction,
     isBoxable,
     isInvalid,
+    FlexObject,
 } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Stmt } from "../../parser";
@@ -89,8 +90,8 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
                 this.addFields,
                 this.getField,
                 this.getFields,
-                // this.getFieldType, // Not yet implemented
-                // this.getFieldTypes, // Not yet implemented
+                this.getFieldType,
+                this.getFieldTypes,
                 this.hasField,
                 this.observeField,
                 this.unobserveField,
@@ -98,13 +99,13 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
                 this.observeFieldScopedEx,
                 this.unobserveFieldScoped,
                 this.removeField,
-                // this.removeFields, // Not yet implemented
+                this.removeFields,
                 this.setField,
                 this.setFields,
                 this.update,
                 this.signalBeacon,
-                //this.queueFields, // Not yet implemented
-                //this.threadInfo, // Not yet implemented
+                this.threadInfo,
+                this.queueFields,
                 this.moveIntoField, // Since OS 15
                 this.moveFromField, // Since OS 15
                 this.setRef, // Since OS 15
@@ -595,6 +596,21 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         return field;
     }
 
+    /** Removes a field from this Node */
+    private removeFieldEntry(fieldName: string): boolean {
+        const fieldKey = fieldName.toLowerCase();
+        const field = this.fields.get(fieldKey);
+        if (!field) {
+            return false;
+        }
+        field.clearObservers();
+        const removedField = this.fields.delete(fieldKey);
+        const removedAlias = this.aliases.delete(fieldKey);
+        const removed = removedField || removedAlias;
+        this.changed ||= removed;
+        return removed;
+    }
+
     /** Creates a tree of Nodes children from an array of associative arrays */
     private updateChildrenFromArray(
         interpreter: Interpreter,
@@ -911,7 +927,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, str: BrsString) => {
-            this.fields.delete(str.value.toLowerCase());
+            this.removeFieldEntry(str.getValue());
             return BrsBoolean.True; //RBI always returns true
         },
     });
@@ -1057,6 +1073,51 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             }
 
             return BrsBoolean.True;
+        },
+    });
+
+    /** Returns an object containing thread information for debugging purposes. */
+    private readonly threadInfo = new Callable("threadInfo", {
+        signature: {
+            args: [],
+            returns: ValueKind.Object,
+        },
+        impl: (_: Interpreter) => {
+            const renderThread: FlexObject = { id: "0", type: "Render" };
+            let currentThread: FlexObject = { id: BrsDevice.threadId.toString() };
+            if (BrsDevice.threadId === 0) {
+                const sceneName = sgRoot.scene?.nodeSubtype || "";
+                renderThread.name = sceneName;
+                currentThread = { ...renderThread };
+            } else if (sgRoot.tasks[0]) {
+                currentThread.name = sgRoot.tasks[0].name || "";
+                currentThread.type = "Task";
+            }
+            const owningThread: FlexObject = { ...currentThread };
+            const threadData: FlexObject = {
+                currentThread: currentThread,
+                node: {
+                    address: "",
+                    id: this.getId(),
+                    type: this.nodeSubtype,
+                    owningThread: owningThread,
+                    willRendezvousFromCurrentThread: BrsDevice.threadId > 0 ? "Yes" : "No",
+                },
+                renderThread: renderThread,
+            };
+            return toAssociativeArray(threadData);
+        },
+    });
+
+    /** Makes subsequent operations on the node fields to queue on the node itself rather than on the Scene node render thread. */
+    private readonly queueFields = new Callable("queueFields", {
+        signature: {
+            args: [new StdlibArgument("queueNode", ValueKind.Boolean)],
+            returns: ValueKind.Void,
+        },
+        impl: (_: Interpreter, _queueNode: BrsBoolean) => {
+            // Not implemented yet. Mocking to prevent crash on usage.
+            return Uninitialized.Instance;
         },
     });
 
@@ -1222,6 +1283,42 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         },
     });
 
+    /** Returns the type of a specific field of the subject node. */
+    private readonly getFieldType = new Callable("getFieldType", {
+        signature: {
+            args: [new StdlibArgument("fieldName", ValueKind.String)],
+            returns: ValueKind.String,
+        },
+        impl: (_: Interpreter, fieldName: BrsString) => {
+            const field = this.fields.get(fieldName.value.toLowerCase());
+            return field ? new BrsString(field.getType()) : new BrsString("<NoSuchField>");
+        },
+    });
+
+    /** Returns the names and types of all the fields in the node. */
+    private readonly getFieldTypes = new Callable("getFieldTypes", {
+        signature: {
+            args: [],
+            returns: ValueKind.Object,
+        },
+        impl: (_: Interpreter) => {
+            let packagedTypes: AAMember[] = [];
+
+            for (const [name, field] of this.fields) {
+                if (field.isHidden()) {
+                    continue;
+                }
+
+                packagedTypes.push({
+                    name: new BrsString(name),
+                    value: new BrsString(field.getType()),
+                });
+            }
+
+            return new RoAssociativeArray(packagedTypes);
+        },
+    });
+
     /** Returns true if the field exists */
     protected readonly hasField = new Callable("hasField", {
         signature: {
@@ -1382,9 +1479,33 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, fieldName: BrsString) => {
-            this.fields.delete(fieldName.value.toLowerCase());
-            this.changed = true;
+            this.removeFieldEntry(fieldName.getValue());
             return BrsBoolean.True; //RBI always returns true
+        },
+    });
+
+    /** Removes one or more fields from the node */
+    private readonly removeFields = new Callable("removeFields", {
+        signature: {
+            args: [new StdlibArgument("fieldNames", ValueKind.Object)],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter, fieldNames: RoArray) => {
+            if (!(fieldNames instanceof RoArray)) {
+                return BrsBoolean.False;
+            }
+            const elements = fieldNames.getElements();
+            if (elements.length === 0) {
+                return BrsBoolean.False;
+            }
+            let removedAny = false;
+            for (const fieldName of elements) {
+                if (!isBrsString(fieldName)) {
+                    continue;
+                }
+                removedAny ||= this.removeFieldEntry(fieldName.getValue());
+            }
+            return BrsBoolean.from(removedAny);
         },
     });
 

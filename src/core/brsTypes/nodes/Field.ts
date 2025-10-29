@@ -9,7 +9,6 @@ import {
     Float,
     Double,
     RoArray,
-    RoInvalid,
     RoAssociativeArray,
     toAssociativeArray,
     RoSGNode,
@@ -314,6 +313,12 @@ export class Field {
     removeScopedObservers(hostNode: RoSGNode) {
         this.scopedObservers.get(hostNode)?.splice(0);
         this.scopedObservers.delete(hostNode);
+    }
+
+    clearObservers() {
+        this.permanentObservers.length = 0;
+        this.unscopedObservers.length = 0;
+        this.scopedObservers.clear();
     }
 
     isObserved() {
