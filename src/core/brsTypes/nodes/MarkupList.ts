@@ -49,7 +49,13 @@ export class MarkupList extends ArrayGrid {
             // Invalid fields for MarkupList
             return BrsInvalid.Instance;
         }
-        return super.set(index, value, alwaysNotify, kind);
+        const result = super.set(index, value, alwaysNotify, kind);
+        if (fieldName === "content" || fieldName === "vertfocusanimationstyle") {
+            this.topRow = 0;
+        } else if (fieldName === "numrows") {
+            this.clampTopRow();
+        }
+        return result;
     }
 
     protected handleUpDown(key: string) {
@@ -109,7 +115,7 @@ export class MarkupList extends ArrayGrid {
         const spacing = this.getFieldValueJS("itemSpacing") as number[];
         const rowHeights = this.getFieldValueJS("rowHeights") as number[];
         const rowSpacings = this.getFieldValueJS("rowSpacings") as number[];
-        this.currRow = this.updateCurrRow();
+        this.currRow = this.updateListCurrRow();
         let lastIndex = -1;
         let sectionIndex = 0;
         const displayRows = Math.min(Math.ceil(this.content.length), this.numRows);

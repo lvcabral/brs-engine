@@ -88,6 +88,7 @@ export class ArrayGrid extends Group {
     protected numRows: number = 0;
     protected numCols: number = 0;
     protected currRow: number = 0;
+    protected topRow: number = 0;
     protected wrap: boolean = false;
     protected lastPressHandled: string;
     protected hasNinePatch: boolean;
@@ -473,6 +474,61 @@ export class ArrayGrid extends Group {
             return Math.min(rowStep3, currentFocus);
         }
         return focusRow;
+    }
+
+    protected updateListCurrRow() {
+        if (this.wrap) {
+            this.topRow = 0;
+            return this.updateCurrRow();
+        }
+
+        const numCols = this.numCols || 1;
+        if (numCols <= 0) {
+            this.topRow = 0;
+            return 0;
+        }
+
+        const totalRows = Math.ceil(this.content.length / numCols);
+        if (totalRows <= 0) {
+            this.topRow = 0;
+            return 0;
+        }
+
+        const desiredRows = Number.isFinite(this.numRows) && this.numRows > 0 ? Math.floor(this.numRows) : totalRows;
+        const visibleRows = Math.max(1, Math.min(desiredRows, totalRows));
+
+        let focusRowIndex = Math.floor(this.focusIndex / numCols);
+        focusRowIndex = Math.max(0, Math.min(focusRowIndex, totalRows - 1));
+
+        if (focusRowIndex < this.topRow) {
+            this.topRow = focusRowIndex;
+        } else if (focusRowIndex > this.topRow + (visibleRows - 1)) {
+            this.topRow = focusRowIndex - (visibleRows - 1);
+        }
+
+        const maxTopRow = Math.max(0, totalRows - visibleRows);
+        this.topRow = Math.max(0, Math.min(this.topRow, maxTopRow));
+
+        return Math.max(0, focusRowIndex - this.topRow);
+    }
+
+    protected clampTopRow() {
+        const numCols = this.numCols || 1;
+        if (numCols <= 0) {
+            this.topRow = 0;
+            return;
+        }
+
+        const totalRows = Math.ceil(this.content.length / numCols);
+        if (totalRows <= 0) {
+            this.topRow = 0;
+            return;
+        }
+
+        const desiredRows = Number.isFinite(this.numRows) && this.numRows > 0 ? Math.floor(this.numRows) : totalRows;
+        const visibleRows = Math.max(1, Math.min(desiredRows, totalRows));
+        const maxTopRow = Math.max(0, totalRows - visibleRows);
+        this.topRow = Math.max(0, Math.min(this.topRow, maxTopRow));
     }
 
     protected updateRect(rect: Rect, numRows: number, itemSize: number[]) {
