@@ -12,9 +12,9 @@ The **BrightScript Engine** implements the BrightScript language specification u
     * The `m.global` object can have children, but changes on those nodes are not shared among the threads
     * Only one `port` instance can be used on Task `init()` to observe fields
     * The `tmp:/` and `cachefs:/` volumes are not shared with task threads, can be used in task but are empty
-  * The following nodes are implemented (some only partially):
-    * The basic nodes: `ContentNode`, `Group`, `Scene`, `Global`, `Font`, `Timer`, `Rectangle`, `Label`, `ScrollingLabel`, `Poster` and `RSGPalette`
-    * Grids and list nodes based on `ArrayGrid`: `LabelList`, `CheckList`, `RadioButtonList`, `MarkupList`, `MarkupGrid` and `RowList`
+  * The following nodes are already implemented:
+    * The basic nodes: `ContentNode`, `Group`, `Scene`, `Global`, `Font`, `Timer`, `Rectangle`, `Label`, `ScrollingLabel`, `Poster`, `LayoutGroup` and `RSGPalette`
+    * Grids and list nodes based on `ArrayGrid`: `LabelList`, `CheckList`, `RadioButtonList`, `MarkupList`, `MarkupGrid`, `RowList` and `ZoomRowList`
     * Dialog related nodes: `Dialog`, `KeyboardDialog`, `StandardDialog`, `StandardProgressDialog`, `StdDlgProgressItem`, `StdDlgContentArea` and `StdDlgTitleArea`
     * Media related nodes: `Audio`, `SoundEffect`, `Video` and `TrickPlayBar`
     * Other supported nodes: `Button`, `ButtonGroup`, `BusySpinner`, `Overhang`, `Keyboard`, `MiniKeyboard`, `TextEditBox` and `ChannelStore`
