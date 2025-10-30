@@ -126,7 +126,7 @@ export class Dialog extends Group {
             titleSize = 28;
             titleX = (this.sceneRect.width - titleWidth) / 2;
             titleY = this.dialogTrans[1] + 30;
-            dividerY = this.dialogTrans[1] + 105;
+            dividerY = this.dialogTrans[1] + 70;
             msgWidth = this.width - 118;
             msgX = (this.sceneRect.width - msgWidth) / 2;
             msgY = titleY + 74;
