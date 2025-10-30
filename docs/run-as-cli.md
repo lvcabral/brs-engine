@@ -53,7 +53,7 @@ An interactive BrightScript REPL (Read-Execute-Print Loop) is available by runni
 ```console
 $ brs-cli
 
-BrightScript Simulation Engine CLI [v1.9.7]
+BrightScript Simulation Engine CLI [v1.9.8]
 
 type `help` to see the list of valid REPL commands.
 
@@ -134,7 +134,7 @@ If no password is provided the app will be executed and no encryption happens, b
 ```console
 $ brs-cli ../tests/test-sandbox.zip --pack b4bf93d0d5e547ca8edcc0f39c6bcc16 --out ./release
 
-BrightScript Simulation Engine CLI [v1.9.7]
+BrightScript Simulation Engine CLI [v1.9.8]
 
 Packaging ../tests/test-sandbox.zip...
 
