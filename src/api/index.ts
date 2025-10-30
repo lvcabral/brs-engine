@@ -100,6 +100,7 @@ export {
     setCaptionMode,
     getCaptionMode,
     enableStats,
+    getScreenshot,
 } from "./display";
 
 let clearDisplayOnExit: boolean = true;

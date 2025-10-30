@@ -158,6 +158,10 @@ export function drawIconAsSplash(imgBmp: ImageBitmap) {
     drawSplashScreen(imgBmp, true);
 }
 
+export function getScreenshot(): ImageData | null {
+    return bufferCtx?.getImageData(0, 0, bufferCanvas.width, bufferCanvas.height) ?? null;
+}
+
 // Update Buffer Image
 export function updateBuffer(buffer: ImageData) {
     if (bufferCtx) {
