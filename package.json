@@ -1,6 +1,6 @@
 {
   "name": "brs-engine-workspace",
-  "version": "2.0.0-alpha.17",
+  "version": "2.0.0-alpha.18",
   "private": true,
   "title": "BrightScript Simulation Engine",
   "description": "BrightScript Simulation Engine - Run Roku apps on Browsers and Node.js",
