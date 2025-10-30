@@ -100,11 +100,11 @@ function debuggerIntro(
     errMessage?: string,
     errNumber?: number
 ) {
-    const lastLines = parseTextFile(interpreter.sourceMap.get(lastLoc.file));
+    const lastLines = parseTextFile(interpreter.sourceMap.get(lastLoc.file)) ?? [""];
     let debugMsg = "BrightScript Micro Debugger.\r\n";
     let lastLine: number = lastLoc.start.line;
     if (stepMode) {
-        const line = lastLines[lastLine - 1].trimEnd();
+        const line = lastLines[lastLine - 1]?.trimEnd() ?? "";
         BrsDevice.stdout.write(`print,${lastLine.toString().padStart(3, "0")}: ${line}\r\n`);
     } else {
         postMessage("debug,stop");
@@ -115,7 +115,7 @@ function debuggerIntro(
         let end = Math.min(lastLine + 5, lastLines.length);
         for (let index = start; index < end; index++) {
             const flag = index === lastLine ? "*" : " ";
-            const line = lastLines[index - 1].trimEnd();
+            const line = lastLines[index - 1]?.trimEnd() ?? "";
             debugMsg += `${index.toString().padStart(3, "0")}:${flag} ${line}\r\n`;
         }
         debugMsg += "Source Digest(s):\r\n";
@@ -225,8 +225,8 @@ function runStatement(interpreter: Interpreter, exprStmt: Statement) {
  */
 function debugHandleCommand(interpreter: Interpreter, currLoc: Location, lastLoc: Location, cmd: number) {
     const backTrace = interpreter.stack;
-    const lastLines = parseTextFile(interpreter.sourceMap.get(lastLoc.file));
-    const currLines = parseTextFile(interpreter.sourceMap.get(currLoc.file));
+    const lastLines = parseTextFile(interpreter.sourceMap.get(lastLoc.file)) ?? [""];
+    const currLines = parseTextFile(interpreter.sourceMap.get(currLoc.file)) ?? [""];
     let lastLine: number = lastLoc.start.line;
     let currLine: number = currLoc.start.line;
     let lineText: string = "";
@@ -239,7 +239,7 @@ function debugHandleCommand(interpreter: Interpreter, currLoc: Location, lastLoc
             debugMsg = `print,${debugHelp()}`;
             break;
         case DebugCommand.LAST:
-            lineText = lastLines[lastLine - 1].trimEnd();
+            lineText = lastLines[lastLine - 1]?.trimEnd() ?? "";
             debugMsg = `print,${lastLine.toString().padStart(3, "0")}: ${lineText}\r\n`;
             break;
         case DebugCommand.LIST: {
@@ -248,16 +248,16 @@ function debugHandleCommand(interpreter: Interpreter, currLoc: Location, lastLoc
             break;
         }
         case DebugCommand.NEXT:
-            lineText = currLines[currLine - 1].trimEnd();
+            lineText = currLines[currLine - 1]?.trimEnd() ?? "";
             debugMsg = `print,${currLine.toString().padStart(3, "0")}: ${lineText}\r\n`;
             break;
         case DebugCommand.THREAD:
-            lineText = lastLines[lastLine - 1].trim();
+            lineText = lastLines[lastLine - 1]?.trim() ?? "";
             debugMsg = "print,Thread selected: ";
             debugMsg += ` 0*   ${interpreter.formatLocation(currLoc).padEnd(40)}${lineText}\r\n`;
             break;
         case DebugCommand.THREADS:
-            lineText = lastLines[lastLine - 1].trim();
+            lineText = lastLines[lastLine - 1]?.trim() ?? "";
             debugMsg = "print,ID    Location                                Source Code\r\n";
             debugMsg += ` 0*   ${interpreter.formatLocation(currLoc).padEnd(40)}${lineText}\r\n`;
             debugMsg += "  *selected\r\n";

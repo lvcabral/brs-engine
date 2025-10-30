@@ -21,6 +21,7 @@ Check the [documentation](./integrating.md) to learn how to start using it. The 
 |setCaptionMode(`mode`)|Configures the closed caption mode. |<ul><li>`mode` (string): supported modes are `"Off"`, `"On"`, `"Instant replay"` or `"When mute"`.</li>|
 |getCaptionMode()|Returns the current closed caption mode.||
 |setCaptionStyle(`style`) |Configures the closed caption style options. |<ul><li>`style` (object[]): The caption styles array with each option as `{id: string, style: string}`, see options in [Roku Documentation](https://developer.roku.com/docs/references/brightscript/interfaces/ifdeviceinfo.md#getcaptionsoptionoption-as-string-as-string).</li></ul>|
+|getScreenshot()|Returns an `ImageData` with the latest rendered screenshot or `null` if not available.||
 |enableStats(`state`)|Enables or disables the performance stats overlay |<ul><li>`state` (boolean): if `true` performance statistics will be shown over the display, on the top left.</li>|
 |setAudioMute(`mute`)|Mutes or un-mutes the audio during app execution|<ul><li>`mute` (boolean): if `true` the executing app audio and video will be muted.</li>|
 |getAudioMute()|Returns `true` if the audio is muted ||

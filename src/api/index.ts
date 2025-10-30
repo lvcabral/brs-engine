@@ -113,6 +113,7 @@ export {
     getCaptionMode,
     setCaptionStyle,
     enableStats,
+    getScreenshot,
 } from "./display";
 
 let clearDisplayOnExit: boolean = true;

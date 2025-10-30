@@ -2,14 +2,31 @@
 
 All notable changes to this project will be documented in this file.
 
+<a name="v1.9.8"></a>
+
+## [v1.9.8 - Added new API method `getScreenshot()`](https://github.com/lvcabral/brs-engine/releases/tag/v1.9.8) - 29 October 2025
+
+This release adds a new API method `getScreenshot()` that returns the latest rendered screenshot as an `ImageData` object, allowing host applications to get a full resolution image, instead of relying on the resizable display `canvas`.
+
+## Release Changes
+
+* Added new API method `getScreenshot()` by [@lvcabral](https://github.com/lvcabral) in [#711](https://github.com/lvcabral/brs-engine/pull/711)
+* Updated API documentation to add new `getScreenshot()` method by [@lvcabral](https://github.com/lvcabral) in [#712](https://github.com/lvcabral/brs-engine/pull/712)
+* Prevent crash on Micro Debugger with `bpk` files by [@lvcabral](https://github.com/lvcabral) in [#713](https://github.com/lvcabral/brs-engine/pull/713)
+* Bump validator from 13.12.0 to 13.15.20 by @dependabot[bot] in [#706](https://github.com/lvcabral/brs-engine/pull/706)
+
+[Full Changelog][v1.9.8]
+
 <a name="v1.9.7"></a>
 
 ## [v1.9.7 - Fixes API method `enableStats`](https://github.com/lvcabral/brs-engine/releases/tag/v1.9.7) - 19 October 2025
 
 This release fixes issues on the API methods `enableStats` and improves the handling of the `dev` app.
 
-* Simplified `setupCurrentApp` to give the API consumer the control of the `dev` app by @lvcabral in https://github.com/lvcabral/brs-engine/pull/678
-* Fixed `enableStats` API method that was not properly hiding the `stats` panel by @lvcabral in https://github.com/lvcabral/brs-engine/pull/679
+### Release Changes
+
+* Simplified `setupCurrentApp` to give the API consumer the control of the `dev` app by [@lvcabral](https://github.com/lvcabral) in [#678](https://github.com/lvcabral/brs-engine/pull/678)
+* Fixed `enableStats` API method that was not properly hiding the `stats` panel by [@lvcabral](https://github.com/lvcabral) in [#679](https://github.com/lvcabral/brs-engine/pull/679)
 
 [Full Changelog][v1.9.7]
 
@@ -18,6 +35,8 @@ This release fixes issues on the API methods `enableStats` and improves the hand
 ## [v1.9.6 - Fixes in CORS Proxy and SDKLauncher](https://github.com/lvcabral/brs-engine/releases/tag/v1.9.6) - 19 October 2025
 
 This release brings a couple of fixes for the CORS proxy usage and the `NDKStart` handling of `SDKLauncher`.
+
+### Release Changes
 
 * Prevent using CORS proxy with `localhost` by [@lvcabral](https://github.com/lvcabral) in [#676](https://github.com/lvcabral/brs-engine/pull/676)
 * Changed `NDKStart` handling of `SDKLauncher` to return any `channelId` by [@lvcabral](https://github.com/lvcabral) in [#677](https://github.com/lvcabral/brs-engine/pull/677)
@@ -29,6 +48,8 @@ This release brings a couple of fixes for the CORS proxy usage and the `NDKStart
 ## [v1.9.5 - New API Methods](https://github.com/lvcabral/brs-engine/releases/tag/v1.9.5) - 17 October 2025
 
 This release includes new methods in the engine API, improvements to `roAppManager`, and the `manifest` parsing now matches the behavior of Roku devices.
+
+### Release Changes
 
 * Added `setDebugState` and `getDebugState` to the engine API by [@lvcabral](https://github.com/lvcabral) in [#672](https://github.com/lvcabral/brs-engine/pull/672)
 * Added new optional parameter to `roAppManager.getAppList` to allow get all apps properties by [@lvcabral](https://github.com/lvcabral) in [#673](https://github.com/lvcabral/brs-engine/pull/673)
@@ -44,6 +65,8 @@ This release includes new methods in the engine API, improvements to `roAppManag
 This release bring a remapping of the game pad buttons to the Roku remote control, allowing for a better experience using the game pad with Roku apps. It also documents the custom `manifest` option `multi_key_events` that allows apps to receive multiple key events at the same time.
 
 Check the [Remote Control](docs/remote-control.md) and [Customization](docs/customization.md) pages for more details.
+
+### Release Changes
 
 * Remapped game pad to Roku remote buttons by [@lvcabral](https://github.com/lvcabral) in [#669](https://github.com/lvcabral/brs-engine/pull/669)
 * Documented the custom `manifest` option `multi_key_events` by [@lvcabral](https://github.com/lvcabral) in [#670](https://github.com/lvcabral/brs-engine/pull/670)
@@ -1150,6 +1173,7 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
+[v1.9.8]: https://github.com/lvcabral/brs-engine/compare/v1.9.7...v1.9.8
 [v1.9.7]: https://github.com/lvcabral/brs-engine/compare/v1.9.6...v1.9.7
 [v1.9.6]: https://github.com/lvcabral/brs-engine/compare/v1.9.5...v1.9.6
 [v1.9.5]: https://github.com/lvcabral/brs-engine/compare/v1.9.4...v1.9.5
