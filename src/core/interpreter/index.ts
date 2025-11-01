@@ -1803,7 +1803,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         if (this.environment.gotoLabel !== "") {
             return this.searchLabel(statement);
         }
-        let result: BrsType = BrsInvalid.Instance;
         // Check for debug breakpoints
         if (!(this.lastStmt instanceof Stmt.Stop)) {
             this.checkDebugger(statement);
