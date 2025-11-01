@@ -1803,11 +1803,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         if (this.environment.gotoLabel !== "") {
             return this.searchLabel(statement);
         }
-        // Check for debug breakpoints
         if (!(this.lastStmt instanceof Stmt.Stop)) {
             this.checkDebugger(statement);
         }
-        // Run the statement
         this.location = statement.location;
         this.lastStmt = statement;
         return statement.accept<BrsType>(this);
