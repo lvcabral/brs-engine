@@ -25,9 +25,6 @@ import readline from "readline-sync";
 readline.setDefaultOptions({ prompt: debugPrompt });
 /// #endif
 
-// Debug Constants
-let stepMode = false;
-
 /**
  * Main Debugger function
  * @param interpreter (Interpreter) - The interpreter instance
@@ -66,7 +63,7 @@ export function runDebugger(
                     BrsDevice.stdout.write("print,Can't continue");
                     continue;
                 }
-                stepMode = false;
+                interpreter.stepMode = false;
                 interpreter.debugMode = false;
                 postMessage("debug,continue");
                 return true;
@@ -75,7 +72,7 @@ export function runDebugger(
                     BrsDevice.stdout.write("print,Can't continue");
                     continue;
                 }
-                stepMode = true;
+                interpreter.stepMode = true;
                 interpreter.debugMode = true;
                 return true;
             case DebugCommand.EXIT:
@@ -103,7 +100,7 @@ function debuggerIntro(
     const lastLines = parseTextFile(interpreter.sourceMap.get(lastLoc.file)) ?? [""];
     let debugMsg = "BrightScript Micro Debugger.\r\n";
     let lastLine: number = lastLoc.start.line;
-    if (stepMode) {
+    if (interpreter.stepMode) {
         const line = lastLines[lastLine - 1]?.trimEnd() ?? "";
         BrsDevice.stdout.write(`print,${lastLine.toString().padStart(3, "0")}: ${line}\r\n`);
     } else {
