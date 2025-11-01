@@ -7,6 +7,7 @@
   ],
   "scripts": {
     "build": "npm run build --workspaces",
+    "build:api": "npm run build -w brs-engine",
     "build:web": "npm run build -w brs-engine && npm run start -w brs-engine",
     "build:cli": "npm run build -w brs-node",
     "release": "npm run release --workspaces",
