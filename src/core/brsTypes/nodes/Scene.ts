@@ -17,10 +17,12 @@ import {
     RoSGNode,
     StandardDialog,
     toAssociativeArray,
+    jsValueOf,
 } from "..";
-import { Scope } from "../..";
+import { BrsDevice, Scope } from "../..";
 import { BlockEnd } from "../../parser/Statement";
 import { Stmt } from "../../parser";
+import { ThreadUpdate } from "../../common";
 
 export class Scene extends Group {
     readonly defaultFields: FieldModel[] = [
@@ -48,7 +50,7 @@ export class Scene extends Group {
         this.subReplace = "";
     }
 
-    set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
+    set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind, sync: boolean = true) {
         if (!isBrsString(index)) {
             throw new Error("RoSGNode indexes must be strings");
         }
@@ -62,6 +64,16 @@ export class Scene extends Group {
             } else {
                 return BrsInvalid.Instance;
             }
+        }
+        // Refresh SharedObject with latest Node state
+        if (sync && sgRoot.tasks.length > 0 && this.changed && this.fields.has(fieldName)) {
+            const update: ThreadUpdate = {
+                id: BrsDevice.threadId,
+                type: "scene",
+                field: fieldName,
+                value: jsValueOf(value),
+            };
+            postMessage(update);
         }
         return super.set(index, value, alwaysNotify, kind);
     }

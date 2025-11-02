@@ -10,6 +10,8 @@ import {
     brsValueOf,
     isBrsString,
     sgRoot,
+    fromSGNode,
+    Scene,
 } from "..";
 import { Field, FieldKind, FieldModel } from "./Field";
 import { isThreadUpdate, TaskData, TaskState, ThreadUpdate } from "../../common";
@@ -66,7 +68,7 @@ export class Task extends RoSGNode {
         } else if (this.id >= 0 && field && sync) {
             const update: ThreadUpdate = {
                 id: this.id,
-                global: false,
+                type: "task",
                 field: mapKey,
                 value: jsValueOf(value),
             };
@@ -102,7 +104,7 @@ export class Task extends RoSGNode {
             if (this.id >= 0 && this.thread && sync) {
                 const update: ThreadUpdate = {
                     id: this.id,
-                    global: false,
+                    type: "task",
                     field: "control",
                     value: control,
                 };
@@ -141,6 +143,7 @@ export class Task extends RoSGNode {
                 state: TaskState.RUN,
                 buffer: this.taskBuffer.getBuffer(),
                 m: fromAssociativeArray(this.m),
+                scene: sgRoot.scene ? fromSGNode(sgRoot.scene) : undefined,
             };
             // Check of observed fields in `m.global`
             const global = this.m.elements.get("global");
@@ -163,43 +166,58 @@ export class Task extends RoSGNode {
     }
 
     updateTask() {
-        let result = false;
-        let currentVersion = this.taskBuffer?.getVersion() ?? -1;
-        // Load updates from the other Thread
-        if (this.taskBuffer && currentVersion === 1) {
-            const update = this.taskBuffer.load(true);
-            if (isThreadUpdate(update)) {
-                console.debug(
-                    `Received Update from ${this.thread ? "Main thread" : "Task Thread"}: `,
-                    update.id,
-                    update.global,
-                    update.field
-                );
-                const node = update.global ? sgRoot.mGlobal : this;
-                const field = new BrsString(update.field);
-                const value = brsValueOf(update.value);
-                node.set(field, value, false, undefined, false);
-                result = true;
-            }
-        }
+        const updates = this.processUpdateFromOtherThread();
         const state = this.getFieldValueJS("state") as string;
         if (!this.thread || state !== "run") {
-            return result;
+            return updates;
         }
-        // Check for changed RoSGNode fields to notify updates to the Main thread
+        // Check for changed fields to notify updates to the Main thread
         for (const [name, field] of this.getNodeFields()) {
             const value = field.getValue();
             if (!field.isHidden() && value instanceof RoSGNode && value.changed) {
                 value.changed = false;
                 const update: ThreadUpdate = {
                     id: this.id,
-                    global: false,
+                    type: "task",
                     field: name,
                     value: jsValueOf(value),
                 };
                 postMessage(update);
             }
         }
-        return result;
+        return updates;
+    }
+
+    private processUpdateFromOtherThread() {
+        let currentVersion = this.taskBuffer?.getVersion() ?? -1;
+        if (this.taskBuffer && currentVersion === 1) {
+            const update = this.taskBuffer.load(true);
+            if (isThreadUpdate(update)) {
+                console.debug(
+                    `Received Update from ${this.thread ? "Main thread" : "Task Thread"}: `,
+                    update.id,
+                    update.type,
+                    update.field
+                );
+                const node = this.getNodeToUpdate(update.type);
+                if (node) {
+                    const field = new BrsString(update.field);
+                    const value = brsValueOf(update.value);
+                    node.set(field, value, false, undefined, false);
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private getNodeToUpdate(type: "global" | "task" | "scene"): Task | Global | Scene | undefined {
+        if (type === "global") {
+            return sgRoot.mGlobal;
+        } else if (type === "scene") {
+            return sgRoot.scene;
+        } else {
+            return this;
+        }
     }
 }

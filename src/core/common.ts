@@ -266,6 +266,7 @@ export type TaskData = {
     state: TaskState;
     buffer?: SharedArrayBuffer;
     m?: any;
+    scene?: any;
 };
 
 export function isTaskData(value: any): value is TaskData {
@@ -275,13 +276,14 @@ export function isTaskData(value: any): value is TaskData {
         typeof value.name === "string" &&
         Object.values(TaskState).includes(value.state) &&
         (value.buffer instanceof SharedArrayBuffer || value.buffer === undefined) &&
-        (typeof value.m === "object" || value.m === undefined)
+        (typeof value.m === "object" || value.m === undefined) &&
+        (typeof value.scene === "object" || value.scene === undefined)
     );
 }
 
 export type ThreadUpdate = {
     id: number;
-    global: boolean;
+    type: "global" | "task" | "scene";
     field: string;
     value: any;
 };
@@ -290,7 +292,7 @@ export function isThreadUpdate(value: any): value is ThreadUpdate {
     return (
         value &&
         typeof value.id === "number" &&
-        typeof value.global === "boolean" &&
+        typeof value.type === "string" &&
         typeof value.field === "string" &&
         value.value !== undefined
     );
