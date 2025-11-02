@@ -38,7 +38,6 @@ import { Task } from "./nodes/Task";
 import { getNodeType, SGNodeFactory } from "../scenegraph/SGNodeFactory";
 import { BrsObjects } from "./components/BrsObjects";
 import { ContentNode } from "./nodes/ContentNode";
-import { Scene } from "./nodes/Scene";
 
 // BrightScript Type exports
 export * from "./BrsType";
@@ -618,9 +617,7 @@ export function jsValueOf(x: BrsType, visitedNodes?: WeakSet<RoSGNode>): any {
  * @returns A JavaScript object with the converted fields.
  */
 export function fromSGNode(node: RoSGNode, visited?: WeakSet<RoSGNode>): FlexObject {
-    if (!visited) {
-        visited = new WeakSet<RoSGNode>();
-    }
+    visited ??= new WeakSet<RoSGNode>();
     if (visited.has(node)) {
         return {
             _circular_: `${getNodeType(node.nodeSubtype)}:${node.nodeSubtype}`,

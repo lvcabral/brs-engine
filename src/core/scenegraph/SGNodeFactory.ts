@@ -452,45 +452,49 @@ export function initializeTask(interpreter: Interpreter, taskData: TaskData) {
 
             typeDef = typeDefStack.pop();
         }
-        // Load the task data into the node
-        if (node instanceof Task) {
-            node.id = taskData.id;
-            node.thread = true;
-            sgRoot.tasks.push(node);
-            interpreter.environment.hostNode = node;
-        }
-        let port: RoMessagePort | undefined;
-        if (taskData.m) {
-            for (let [key, value] of Object.entries(taskData.m)) {
-                if (key === "global" || key === "top") {
-                    // Ignore special fields to be set later
-                    continue;
-                }
-                const brsValue = brsValueOf(value);
-                if (!port && brsValue instanceof RoMessagePort) {
-                    console.debug("[Task] A port object was found!");
-                    port = brsValue;
-                }
-                node.m.set(new BrsString(key), brsValue);
-            }
-        }
-        if (taskData.m?.global) {
-            restoreNode(interpreter, taskData.m.global, sgRoot.mGlobal, port);
-        }
-        if (taskData.m?.top) {
-            restoreNode(interpreter, taskData.m.top, node, port);
-        }
-        if (taskData.scene?.["_node_"]) {
-            const nodeType = taskData.scene["_node_"].split(":")[1] ?? "Scene";
-            sgRoot.setScene(new Scene([], nodeType));
-            restoreNode(interpreter, taskData.scene, sgRoot.scene!);
-        }
+        loadTaskData(interpreter, node, taskData);
         return node;
     } else {
         BrsDevice.stderr.write(
             `warning,BRIGHTSCRIPT: ERROR: roSGNode: Failed to initialize Task with type ${type}: ${interpreter.formatLocation()}`
         );
         return BrsInvalid.Instance;
+    }
+}
+
+/** Function to restore the Task fields and context from the serialized object */
+function loadTaskData(interpreter: Interpreter, node: RoSGNode, taskData: TaskData) {
+    if (node instanceof Task) {
+        node.id = taskData.id;
+        node.thread = true;
+        sgRoot.tasks.push(node);
+        interpreter.environment.hostNode = node;
+    }
+    let port: RoMessagePort | undefined;
+    if (taskData.m) {
+        for (let [key, value] of Object.entries(taskData.m)) {
+            if (key === "global" || key === "top") {
+                // Ignore special fields to be set later
+                continue;
+            }
+            const brsValue = brsValueOf(value);
+            if (!port && brsValue instanceof RoMessagePort) {
+                console.debug("[Task] A port object was found!");
+                port = brsValue;
+            }
+            node.m.set(new BrsString(key), brsValue);
+        }
+    }
+    if (taskData.m?.global) {
+        restoreNode(interpreter, taskData.m.global, sgRoot.mGlobal, port);
+    }
+    if (taskData.m?.top) {
+        restoreNode(interpreter, taskData.m.top, node, port);
+    }
+    if (taskData.scene?.["_node_"]) {
+        const nodeType = taskData.scene["_node_"].split(":")[1] ?? "Scene";
+        sgRoot.setScene(new Scene([], nodeType));
+        restoreNode(interpreter, taskData.scene, sgRoot.scene!);
     }
 }
 

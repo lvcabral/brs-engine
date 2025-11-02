@@ -211,7 +211,7 @@ export class Task extends RoSGNode {
         return false;
     }
 
-    private getNodeToUpdate(type: "global" | "task" | "scene"): Task | Global | Scene | undefined {
+    private getNodeToUpdate(type: "global" | "task" | "scene"): this | Global | Scene | undefined {
         if (type === "global") {
             return sgRoot.mGlobal;
         } else if (type === "scene") {
