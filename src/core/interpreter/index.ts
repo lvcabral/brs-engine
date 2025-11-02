@@ -157,7 +157,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         return this._creationTime;
     }
 
+    // Micro Debugger state properties
     public debugMode: boolean = false;
+    public stepMode: boolean = false;
+    private lastStmt: Stmt.Statement | null = null;
 
     /**
      * Adds a TracePoint to the call stack
@@ -500,6 +503,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
     visitStop(statement: Stmt.Stop): BrsType {
         this.debugMode = true;
+        this.stepMode = false;
+        this.checkDebugger(statement);
         return BrsInvalid.Instance;
     }
 
@@ -1881,6 +1886,18 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         if (this.environment.gotoLabel !== "") {
             return this.searchLabel(statement);
         }
+        if (!(this.lastStmt instanceof Stmt.Stop)) {
+            this.checkDebugger(statement);
+        }
+        if (BrsDevice.threadId > 0) {
+            sgRoot.tasks[0]?.updateTask();
+        }
+        this.location = statement.location;
+        this.lastStmt = statement;
+        return statement.accept<BrsType>(this);
+    }
+
+    private checkDebugger(statement: Stmt.Statement) {
         const cmd = BrsDevice.checkBreakCommand(this.debugMode);
         if (cmd === DebugCommand.BREAK) {
             this.debugMode = true;
@@ -1894,11 +1911,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             this.options.stopOnCrash = false;
             throw new Stmt.BlockEnd("debug-exit", statement.location);
         }
-        if (BrsDevice.threadId > 0) {
-            sgRoot.tasks[0]?.updateTask();
-        }
-        this.location = statement.location;
-        return statement.accept<BrsType>(this);
     }
 
     /**
