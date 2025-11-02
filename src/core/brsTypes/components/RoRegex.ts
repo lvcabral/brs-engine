@@ -1,9 +1,8 @@
 import { BrsBoolean, BrsString, BrsValue, ValueKind } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsType } from "..";
+import { BrsType, RoArray, RoList } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
-import { RoArray } from "./RoArray";
 
 export class RoRegex extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -123,7 +122,7 @@ export class RoRegex extends BrsComponent implements BrsValue {
         },
     });
 
-    /** Returns an array of strings split by match */
+    /** An roList of substrings of str that were separated by strings which match the pattern in the CreateObject call. */
     private readonly split = new Callable("split", {
         signature: {
             args: [new StdlibArgument("str", ValueKind.String)],
@@ -132,7 +131,7 @@ export class RoRegex extends BrsComponent implements BrsValue {
         impl: (_: Interpreter, str: BrsString) => {
             let items = this.jsRegex[Symbol.split](str.value);
             let brsItems = items.map((item) => new BrsString(item));
-            return new RoArray(brsItems);
+            return new RoList(brsItems);
         },
     });
 
