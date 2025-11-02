@@ -567,9 +567,10 @@ export function fromContentNode(contentNode: ContentNode): RoAssociativeArray {
 /**
  * Converts a BrsType value to its representation as a JavaScript type.
  * @param {BrsType} x Some BrsType value.
+ * @param {WeakSet<RoSGNode>} visitedNodes Optional set to track visited nodes for circular reference detection.
  * @return {any} The JavaScript representation of `x`.
  */
-export function jsValueOf(x: BrsType): any {
+export function jsValueOf(x: BrsType, visitedNodes?: WeakSet<RoSGNode>): any {
     if (isUnboxable(x)) {
         x = x.unbox();
     }
@@ -591,11 +592,11 @@ export function jsValueOf(x: BrsType): any {
         case ValueKind.Interface:
         case ValueKind.Object:
             if (x instanceof RoArray || x instanceof RoList) {
-                return x.elements.map(jsValueOf);
+                return x.elements.map((el) => jsValueOf(el, visitedNodes));
             } else if (x instanceof RoByteArray) {
                 return x.elements;
             } else if (x instanceof RoSGNode) {
-                return fromSGNode(x);
+                return fromSGNode(x, visitedNodes);
             } else if (x instanceof RoAssociativeArray) {
                 return fromAssociativeArray(x);
             } else if (x instanceof BrsComponent) {
@@ -612,9 +613,19 @@ export function jsValueOf(x: BrsType): any {
 /**
  * Converts a RoSGNode to a JavaScript object, converting each field to the corresponding JavaScript type.
  * @param node The RoSGNode to convert.
+ * @param visited Optional WeakSet to track visited nodes and prevent circular references.
  * @returns A JavaScript object with the converted fields.
  */
-export function fromSGNode(node: RoSGNode): FlexObject {
+export function fromSGNode(node: RoSGNode, visited?: WeakSet<RoSGNode>): FlexObject {
+    visited ??= new WeakSet<RoSGNode>();
+    if (visited.has(node)) {
+        return {
+            _circular_: `${getNodeType(node.nodeSubtype)}:${node.nodeSubtype}`,
+            _id_: node.getId(),
+        };
+    }
+    visited.add(node);
+
     const result: FlexObject = {};
     const fields = node.getNodeFields();
     const observed: string[] = [];
@@ -630,20 +641,19 @@ export function fromSGNode(node: RoSGNode): FlexObject {
             if (node instanceof Task && field.isPortObserved(node)) {
                 observed.push(name);
             }
-            result[name] = jsValueOf(fieldValue);
+            result[name] = jsValueOf(fieldValue, visited);
         }
     }
     if (observed.length) {
         result["_observed_"] = observed;
     }
-
     const children = node.getNodeChildren();
     if (children.length > 0) {
         result["_children_"] = children.map((child: RoSGNode | BrsInvalid) => {
             if (child instanceof BrsInvalid) {
                 return { _invalid_: null };
             }
-            return fromSGNode(child);
+            return fromSGNode(child, visited);
         });
     }
 

@@ -372,7 +372,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                         console.debug("[Worker] Task function finished: ", taskData.name, functionName);
                         const update: ThreadUpdate = {
                             id: taskNode.id,
-                            global: false,
+                            type: "task",
                             field: "control",
                             value: "stop",
                         };

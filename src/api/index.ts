@@ -630,13 +630,13 @@ function mainCallback(event: MessageEvent) {
             endTask(event.data.id);
         }
     } else if (isThreadUpdate(event.data)) {
-        console.debug("[API] Update received from Main thread: ", event.data.id, event.data.global, event.data.field);
+        console.debug("[API] Update received from Main thread: ", event.data.id, event.data.type, event.data.field);
         if (event.data.id > 0) {
             if (!threadSyncToTask.has(event.data.id)) {
                 threadSyncToTask.set(event.data.id, new SharedObject());
             }
             threadSyncToTask.get(event.data.id)?.waitStore(event.data, 1);
-        } else if (event.data.global) {
+        } else if (event.data.type !== "task") {
             for (let taskId = 1; taskId <= tasks.size; taskId++) {
                 const data = { ...event.data, id: taskId };
                 if (!threadSyncToTask.has(data.id)) {
@@ -645,7 +645,7 @@ function mainCallback(event: MessageEvent) {
                 threadSyncToTask.get(data.id)?.waitStore(data, 1);
             }
         } else {
-            console.debug("[API] Thread update from Main with invalid destiny!");
+            console.debug("[API] Thread update from Main with invalid data!");
         }
     } else if (isNDKStart(event.data)) {
         handleNDKStart(event.data);
@@ -683,7 +683,7 @@ function taskCallback(event: MessageEvent) {
     } else if (isThreadUpdate(event.data)) {
         console.debug("[API] Update received from Task thread: ", event.data.id, event.data.field);
         threadSyncToMain.get(event.data.id)?.waitStore(event.data, 1);
-        if (!event.data.global) {
+        if (event.data.type === "task") {
             return;
         }
         for (let taskId = 1; taskId <= tasks.size; taskId++) {
