@@ -947,7 +947,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     });
 
     /** Returns the number of items in the node */
-    protected count = new Callable("count", {
+    protected readonly count = new Callable("count", {
         signature: {
             args: [],
             returns: ValueKind.Int32,

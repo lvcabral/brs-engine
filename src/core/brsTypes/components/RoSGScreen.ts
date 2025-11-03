@@ -247,7 +247,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     }
 
     /** Returns a global reference object for the SceneGraph application. */
-    private getGlobalNode = new Callable("getGlobalNode", {
+    private readonly getGlobalNode = new Callable("getGlobalNode", {
         signature: {
             args: [],
             returns: ValueKind.Dynamic,
@@ -274,7 +274,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     });
 
     /** Removes the SceneGraph scene from the display screen. */
-    private close = new Callable("close", {
+    private readonly close = new Callable("close", {
         signature: {
             args: [],
             returns: ValueKind.Void,
@@ -286,7 +286,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     });
 
     /** Creates the SceneGraph scene object based on the specified sceneType object. */
-    private createScene = new Callable("createScene", {
+    private readonly createScene = new Callable("createScene", {
         signature: {
             args: [new StdlibArgument("sceneType", ValueKind.String)],
             returns: ValueKind.Object,
@@ -341,7 +341,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     });
 
     /** Returns the roSGScene object associated with the screen. */
-    private getScene = new Callable("getScene", {
+    private readonly getScene = new Callable("getScene", {
         signature: {
             args: [],
             returns: ValueKind.Object,
