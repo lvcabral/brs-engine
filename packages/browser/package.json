@@ -52,7 +52,7 @@
     "@lvcabral/memory-fs": "^0.5.1",
     "@lvcabral/sprintf": "^1.2.2",
     "@lvcabral/upng": "^2.3.0",
-    "@lvcabral/zip": "github:lvcabral/zip",
+    "@lvcabral/zip": "^0.5.4",
     "@msgpack/msgpack": "^2.8.0",
     "@zenfs/core": "1.6.16",
     "crc": "^3.8.0",
