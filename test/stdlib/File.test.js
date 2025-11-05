@@ -20,12 +20,12 @@ let fsys;
 brs.registerCallback(() => {}); // register a callback to avoid display errors
 
 describe("global file I/O functions", () => {
-    beforeEach(() => {
+    beforeEach(async () => {
         interpreter = new Interpreter({
             root: "hello/world",
         }); // reset the file systems
         fsys = BrsDevice.fileSystem;
-        fsys.resetMemoryFS();
+        await fsys.resetMemoryFS();
     });
 
     describe("ListDir", () => {
@@ -52,10 +52,10 @@ describe("global file I/O functions", () => {
             fsys.writeFileSync("tmp:/test1.txt", "test contents 1");
 
             expect(
-                CopyFile.call(interpreter, new BrsString("tmp:///test1.txt"), new BrsString("tmp:///test1.1.txt")).value
+                CopyFile.call(interpreter, new BrsString("tmp:///Test1.txt"), new BrsString("tmp:///test1.1.txt")).value
             ).toBeTruthy();
             expect(fsys.existsSync("tmp:/test1.txt")).toBeTruthy();
-            expect(fsys.existsSync("tmp:/test1.1.txt")).toBeTruthy();
+            expect(fsys.existsSync("tmp:/TEST1.1.txt")).toBeTruthy();
         });
 
         it("fails with a false", () => {
