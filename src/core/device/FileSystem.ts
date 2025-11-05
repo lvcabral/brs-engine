@@ -6,10 +6,10 @@ import { Zip } from "@lvcabral/zip";
 
 export class FileSystem {
     private readonly mfs: typeof zenFS.fs; // common:
+    private readonly tfs: typeof zenFS.fs; // tmp:
+    private readonly cfs: typeof zenFS.fs; // cachefs:
     private pfs: typeof zenFS.fs | typeof nodeFS; // pkg:
     private xfs: typeof zenFS.fs | typeof nodeFS; // ext1:
-    private tfs: typeof zenFS.fs; // tmp:
-    private cfs: typeof zenFS.fs; // cachefs:
     private root?: string;
     private ext?: string;
 
