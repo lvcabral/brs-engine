@@ -134,10 +134,10 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
                 }
                 requestBody = this.fs.readFileSync(bodyFilePath);
             }
-            if (requestBody !== undefined) {
-                xhr.send(requestBody);
-            } else {
+            if (requestBody === undefined) {
                 xhr.send();
+            } else {
+                xhr.send(requestBody);
             }
             status = xhr.status;
             const headerValue = xhr.getAllResponseHeaders();
