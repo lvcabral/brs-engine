@@ -4,18 +4,20 @@ import { BrsType, RoMessagePort, RoAssociativeArray, RoArray, RoAudioPlayerEvent
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
-import { DataType } from "../../common";
+import { DataType, DefaultCertificatesFile } from "../../common";
 import { BrsHttpAgent, IfHttpAgent } from "../interfaces/IfHttpAgent";
 import { IfSetMessagePort, IfGetMessagePort } from "../interfaces/IfMessagePort";
 import { BrsDevice } from "../../device/BrsDevice";
 
 export class RoAudioPlayer extends BrsComponent implements BrsValue, BrsHttpAgent {
     readonly kind = ValueKind.Object;
-    readonly customHeaders: Map<string, string>;
     private port?: RoMessagePort;
     private contentList: RoAssociativeArray[];
     private eventType: number;
+    // ifHttpAgent Interface
+    readonly customHeaders: Map<string, string>;
     cookiesEnabled: boolean;
+    certificatesFile: string;
 
     constructor() {
         super("roAudioPlayer");
@@ -23,6 +25,7 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
         this.eventType = -1;
         this.cookiesEnabled = false;
         this.customHeaders = new Map<string, string>();
+        this.certificatesFile = DefaultCertificatesFile;
         postMessage({ audioPlaylist: new Array<string>() });
         postMessage("audio,loop,false");
         postMessage("audio,next,-1");

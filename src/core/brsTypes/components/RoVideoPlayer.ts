@@ -13,14 +13,13 @@ import {
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
-import { BufferType, DataType, isMediaTrack, MediaEvent } from "../../common";
+import { BufferType, DataType, DefaultCertificatesFile, isMediaTrack, MediaEvent } from "../../common";
 import { BrsHttpAgent, IfHttpAgent } from "../interfaces/IfHttpAgent";
 import { IfSetMessagePort, IfGetMessagePort } from "../interfaces/IfMessagePort";
 import { BrsDevice } from "../../device/BrsDevice";
 
 export class RoVideoPlayer extends BrsComponent implements BrsValue, BrsHttpAgent {
     readonly kind = ValueKind.Object;
-    readonly customHeaders: Map<string, string>;
     private port?: RoMessagePort;
     private contentList: RoAssociativeArray[];
     private notificationPeriod: number;
@@ -30,7 +29,10 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
     private progress: number;
     private selected: number;
     private audioTracks: any[];
+    // ifHttpAgent Interface
+    readonly customHeaders: Map<string, string>;
     cookiesEnabled: boolean;
+    certificatesFile: string;
 
     constructor() {
         super("roVideoPlayer");
@@ -43,6 +45,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
         this.selected = 0;
         this.audioTracks = [];
         this.cookiesEnabled = false;
+        this.certificatesFile = DefaultCertificatesFile;
         this.customHeaders = new Map<string, string>();
         postMessage({ videoPlaylist: new Array<string>() });
         postMessage({ supportCaptions: false });
