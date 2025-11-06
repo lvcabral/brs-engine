@@ -88,6 +88,7 @@ export function parseCaptionMode(mode: string): CaptionMode | undefined {
     const normalized = mode.trim().toLowerCase();
     return CaptionModes.find((mode) => mode.toLowerCase() === normalized);
 }
+export const DefaultCertificatesFile = "common:/certs/ca-bundle.crt";
 
 // Default Device Information
 export const platform = getPlatform();

@@ -23,6 +23,7 @@ import { drawObjectToComponent } from "../interfaces/IfDraw2D";
 import { BrsHttpAgent, IfHttpAgent } from "../interfaces/IfHttpAgent";
 import { IfGetMessagePort, IfSetMessagePort } from "../interfaces/IfMessagePort";
 import { BrsDevice } from "../../device/BrsDevice";
+import { DefaultCertificatesFile } from "../../common";
 
 // Singleton instance of RoTextureManager
 let textureManager: RoTextureManager;
@@ -30,16 +31,19 @@ let textureManager: RoTextureManager;
 export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpAgent {
     readonly kind = ValueKind.Object;
     readonly requests: Map<number, RoTextureRequest>;
-    readonly textures: Map<string, ArrayBuffer>;
-    readonly customHeaders: Map<string, string>;
+    readonly textures: Map<string, Buffer>;
     private port?: RoMessagePort;
+    // ifHttpAgent Interface
+    readonly customHeaders: Map<string, string>;
     cookiesEnabled: boolean;
+    certificatesFile: string;
 
     constructor() {
         super("roTextureManager");
         this.cookiesEnabled = false;
+        this.certificatesFile = DefaultCertificatesFile;
         this.requests = new Map<number, RoTextureRequest>();
-        this.textures = new Map<string, ArrayBuffer>();
+        this.textures = new Map<string, Buffer>();
         this.customHeaders = new Map<string, string>();
         const ifHttpAgent = new IfHttpAgent(this);
         const setPortIface = new IfSetMessagePort(this, this.getNewEvents.bind(this));
@@ -96,7 +100,7 @@ export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpA
         return new RoTextureRequestEvent(request, bitmap);
     }
 
-    private loadTexture(request: RoTextureRequest): ArrayBuffer | undefined {
+    private loadTexture(request: RoTextureRequest): Buffer | undefined {
         const cached = this.textures.get(request.uri);
         if (cached) {
             return cached;

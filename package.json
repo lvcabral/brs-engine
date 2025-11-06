@@ -108,7 +108,11 @@
     "zip-webpack-plugin": "^4.0.3"
   },
   "jest": {
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "testPathIgnorePatterns": [
+      "node_modules/",
+      "out/"
+    ]
   },
   "prettier": {
     "trailingComma": "es5",

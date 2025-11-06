@@ -74,14 +74,14 @@ export class IfHttpAgent {
         },
     });
 
-    /** Set the certificates file used for SSL to the .pem file specified. */
+    /** Set the certificates file used for SSL to the .pem/.crt file specified. */
     readonly setCertificatesFile = new Callable("setCertificatesFile", {
         signature: {
             args: [new StdlibArgument("certificate", ValueKind.String)],
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, certificate: BrsString) => {
-            // SetCertificatesFile() parameter is ignored, default browser client certificate is be used."
+            this.component.certificatesFile = certificate.value;
             return BrsBoolean.True;
         },
     });
@@ -151,4 +151,14 @@ export class IfHttpAgent {
 export interface BrsHttpAgent {
     readonly customHeaders: Map<string, string>;
     cookiesEnabled: boolean;
+    certificatesFile: string;
+}
+
+export class HttpError extends Error {
+    status: number;
+
+    constructor(status: number, message?: string) {
+        super(message);
+        this.status = status;
+    }
 }
