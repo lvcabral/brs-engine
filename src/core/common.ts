@@ -40,6 +40,8 @@ export interface DeviceInfo {
     audioVolume: number;
     audioLanguage: SupportedLanguage;
     maxFps: number;
+    tmpVolSize: number;
+    cacheFSVolSize: number;
     registryBuffer?: SharedArrayBuffer;
     audioCodecs?: string[];
     videoFormats?: Map<string, string[]>;
@@ -124,6 +126,8 @@ export const defaultDeviceInfo: DeviceInfo = {
     audioVolume: 50, // Defines the default volume level for system sounds - valid: (0-100)
     audioLanguage: "en",
     maxFps: 60,
+    tmpVolSize: 32 * 1024 * 1024, // 32 MB
+    cacheFSVolSize: 32 * 1024 * 1024, // 32 MB
 };
 
 // Valid Closed Captions Options
@@ -266,6 +270,8 @@ export type TaskData = {
     name: string;
     state: TaskState;
     buffer?: SharedArrayBuffer;
+    tmp?: SharedArrayBuffer;
+    cacheFS?: SharedArrayBuffer;
     m?: any;
     scene?: any;
 };

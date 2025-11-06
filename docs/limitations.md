@@ -11,7 +11,6 @@ The **BrightScript Engine** implements the BrightScript language specification u
     * For now only 10 task threads are supported per application
     * The `m.global` object can have children, but changes on those nodes are not shared among the threads
     * Only one `port` instance can be used on Task `init()` to observe fields
-    * The `tmp:/` and `cachefs:/` volumes are not shared with task threads, can be used in task but are empty
   * The following nodes are already implemented:
     * The basic nodes: `ContentNode`, `Group`, `Scene`, `Global`, `Font`, `Timer`, `Rectangle`, `Label`, `ScrollingLabel`, `Poster`, `LayoutGroup` and `RSGPalette`
     * Grids and list nodes based on `ArrayGrid`: `LabelList`, `CheckList`, `RadioButtonList`, `MarkupList`, `MarkupGrid`, `RowList` and `ZoomRowList`
@@ -51,6 +50,7 @@ The **BrightScript Engine** implements the BrightScript language specification u
 * The component `roAppMemoryMonitor` will only return measured data in Node.JS and Chromium browsers. For browsers the memory heap info only accounts for the main thread, as WebWorkers do not have support for `performance.memory` API.
 * The `roInput` deep link events are supported, but the events related to Voice Commands are not.
 * The `roFileSystem` is fully functional, but the message port events are not yet implemented.
+* The complete **Roku OS** file system is available and shared among threads (main, render and tasks), with all volumes: `pkg:`, `common:/`, `tmp:`, `cachefs:` and `ext1:`. By default, the writeable volumes `tmp:` and `cachefs:` are limited to 32 MB each, see [customization documentation](./customization.md) to learn how to change those limits.
 * The global functions `Eval()`, `GetLastRunCompileError()` and `GetLastRunRuntimeError()` are not available.
 * The string `mod` cannot be used as variable or function parameter name, because it conflicts with remainder operator `Mod` (Roku devices allows that).
 * Screensaver functionality is not yet implemented.

@@ -52,9 +52,37 @@ export class BrsDevice {
     private static clockFormat: string = "12h";
     private static locale: string = "en-US";
 
+    /** Memory Volumes Shared Buffers */
+    private static tmpVolume?: SharedArrayBuffer;
+    private static cacheFS?: SharedArrayBuffer;
+
     /** Array Buffer to Share the Registry across threads */
     private static registryVersion: number = 0;
     private static sharedRegistry?: SharedObject;
+
+    /** Returns the SharedArrayBuffer used for the tmp: volume */
+    static getTmpVolume(): SharedArrayBuffer {
+        if (!this.tmpVolume) {
+            this.tmpVolume = new SharedArrayBuffer(this.deviceInfo.tmpVolSize);
+        }
+        return this.tmpVolume;
+    }
+
+    /** Returns the SharedArrayBuffer used for the cachefs: volume */
+    static getCacheFS(): SharedArrayBuffer {
+        if (!this.cacheFS) {
+            this.cacheFS = new SharedArrayBuffer(this.deviceInfo.cacheFSVolSize);
+        }
+        return this.cacheFS;
+    }
+
+    static async resetMemoryVolumes() {
+        const tmpView = new Uint8Array(this.getTmpVolume());
+        tmpView.fill(0);
+        const cacheView = new Uint8Array(this.getCacheFS());
+        cacheView.fill(0);
+        await this.fileSystem.resetMemoryFS(this.tmpVolume!, this.cacheFS!);
+    }
 
     /**
      * Updates the device registry with the provided data
@@ -106,7 +134,7 @@ export class BrsDevice {
      */
     static setDeviceInfo(deviceInfo: DeviceInfo) {
         for (let [key, value] of Object.entries(deviceInfo)) {
-            if (key !== "registry" && key !== "assets") {
+            if (!key.startsWith("registry") && key !== "assets") {
                 let newValue = value;
                 if (key === "developerId") {
                     // Prevent developerId from having "." to avoid issues on registry persistence

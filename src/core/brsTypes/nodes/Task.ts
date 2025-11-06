@@ -18,6 +18,7 @@ import { isThreadUpdate, TaskData, TaskState, ThreadUpdate } from "../../common"
 import SharedObject from "../../SharedObject";
 import { Global } from "./Global";
 import { Interpreter } from "../../interpreter";
+import { BrsDevice } from "../..";
 
 export class Task extends RoSGNode {
     readonly defaultFields: FieldModel[] = [
@@ -142,6 +143,8 @@ export class Task extends RoSGNode {
                 name: this.nodeSubtype,
                 state: TaskState.RUN,
                 buffer: this.taskBuffer.getBuffer(),
+                tmp: BrsDevice.getTmpVolume(),
+                cacheFS: BrsDevice.getCacheFS(),
                 m: fromAssociativeArray(this.m),
                 scene: sgRoot.scene ? fromSGNode(sgRoot.scene) : undefined,
             };
