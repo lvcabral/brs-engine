@@ -10,6 +10,7 @@ import {
     Int32,
     Uninitialized,
 } from "..";
+import { DefaultCertificatesFile } from "../../common";
 import { Interpreter } from "../../interpreter";
 import { BrsHttpAgent, IfHttpAgent } from "../interfaces/IfHttpAgent";
 
@@ -27,13 +28,15 @@ let nextIdentity = 1;
 export class RoTextureRequest extends BrsComponent implements BrsValue, BrsHttpAgent {
     readonly kind = ValueKind.Object;
     readonly identity: number;
-    readonly customHeaders: Map<string, string>;
     uri: string;
     async: boolean;
     state: RequestState;
     scaleMode: number;
-    cookiesEnabled: boolean;
     size?: { width: number; height: number };
+    // ifHttpAgent Interface
+    readonly customHeaders: Map<string, string>;
+    cookiesEnabled: boolean;
+    certificatesFile: string;
 
     constructor(uri: BrsString) {
         super("roTextureRequest");
@@ -43,6 +46,7 @@ export class RoTextureRequest extends BrsComponent implements BrsValue, BrsHttpA
         this.state = RequestState.Requested;
         this.scaleMode = 0;
         this.cookiesEnabled = false;
+        this.certificatesFile = DefaultCertificatesFile;
         this.customHeaders = new Map<string, string>();
         const ifHttpAgent = new IfHttpAgent(this);
         this.registerMethods({

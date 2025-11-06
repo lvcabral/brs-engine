@@ -12,7 +12,7 @@ export function download(
     type: XMLHttpRequestResponseType,
     customHeaders?: Map<string, string>,
     cookiesEnabled?: boolean
-): any {
+) {
     try {
         const xhr = new XMLHttpRequest();
         xhr.open("GET", url, false); // Note: synchronous
@@ -27,7 +27,7 @@ export function download(
         }
         xhr.send();
         if (xhr.status !== 200) {
-            postMessage(`error,HTTP Error downloading ${url}: ${xhr.statusText}`);
+            postMessage(`error,HTTP Error downloading ${url}: ${xhr.statusText} (${xhr.status})`);
             return undefined;
         }
         return xhr.response;

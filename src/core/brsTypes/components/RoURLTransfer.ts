@@ -1,4 +1,5 @@
 import { BrsDevice } from "../../device/BrsDevice";
+import { FileSystem } from "../../device/FileSystem";
 import { BrsValue, ValueKind, BrsString, BrsInvalid, BrsBoolean } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
 import { RoMessagePort } from "./RoMessagePort";
@@ -7,19 +8,31 @@ import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 import { RoURLEvent } from "../events/RoURLEvent";
-import { AudioExt, VideoExt, getRokuOSVersion } from "../../common";
+import { AudioExt, DefaultCertificatesFile, VideoExt, getRokuOSVersion } from "../../common";
 import { IfSetMessagePort, IfGetMessagePort } from "../interfaces/IfMessagePort";
-import { BrsHttpAgent, IfHttpAgent } from "../interfaces/IfHttpAgent";
+import { BrsHttpAgent, HttpError, IfHttpAgent } from "../interfaces/IfHttpAgent";
 import { getHost } from "../../interpreter/Network";
 import fileType from "file-type";
 /// #if !BROWSER
 import { XMLHttpRequest } from "../../polyfill/XMLHttpRequest";
 /// #endif
+
+interface RequestOptions {
+    method: string;
+    responseType: XMLHttpRequestResponseType;
+    scope: string;
+    body?: any;
+    bodyFilePath?: string;
+    onSuccess?: (xhr: XMLHttpRequest) => void;
+    errorMessage?: (error: any) => string;
+    logToStdout?: boolean;
+}
+
 export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgent {
     readonly kind = ValueKind.Object;
-    readonly customHeaders: Map<string, string>;
     private readonly identity: number;
     private readonly inFile: string[];
+    private readonly fs: FileSystem;
     private url: string;
     private host: string;
     private reqMethod: string;
@@ -31,11 +44,15 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
     private postBody: string[];
     private user?: string;
     private password?: string;
+    // ifHttpAgent Interface
+    readonly customHeaders: Map<string, string>;
     cookiesEnabled: boolean;
+    certificatesFile: string;
 
     constructor() {
         super("roUrlTransfer");
         this.identity = Math.trunc(Math.random() * 10 * 8);
+        this.fs = BrsDevice.fileSystem;
         this.url = "";
         this.host = "";
         this.reqMethod = "";
@@ -44,6 +61,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
         this.freshConnection = false;
         this.cookiesEnabled = false;
         this.customHeaders = new Map<string, string>();
+        this.certificatesFile = DefaultCertificatesFile;
         this.inFile = new Array<string>();
         this.outFile = new Array<string>();
         this.postBody = new Array<string>();
@@ -100,9 +118,57 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
         });
     }
 
+    private executeRequest(options: RequestOptions): RoURLEvent {
+        const { method, responseType, scope, body, bodyFilePath, onSuccess, errorMessage, logToStdout } = options;
+        let status = -1;
+        let headers = "";
+        let responseText = "";
+        let xhr: XMLHttpRequest | undefined;
+
+        try {
+            xhr = this.getConnection(method, responseType);
+            let requestBody = body;
+            if (bodyFilePath) {
+                if (!this.fs.existsSync(bodyFilePath)) {
+                    throw new HttpError(-26, `Invalid path: ${bodyFilePath}`);
+                }
+                requestBody = this.fs.readFileSync(bodyFilePath);
+            }
+            if (requestBody === undefined) {
+                xhr.send();
+            } else {
+                xhr.send(requestBody);
+            }
+            status = xhr.status;
+            const headerValue = xhr.getAllResponseHeaders();
+            headers = typeof headerValue === "string" ? headerValue : headers;
+            this.failureReason = xhr.statusText ?? "";
+            responseText = responseType === "text" ? xhr.responseText : "";
+            onSuccess?.(xhr);
+        } catch (error: any) {
+            if (error instanceof HttpError) {
+                status = error.status;
+            } else if (xhr && typeof xhr.status === "number") {
+                status = xhr.status;
+            }
+            this.failureReason = error?.message ?? "Unknown error";
+            if (BrsDevice.isDevMode) {
+                const logger = logToStdout ? BrsDevice.stdout : BrsDevice.stderr;
+                const message = errorMessage
+                    ? errorMessage(error)
+                    : `Error transferring ${this.url}: ${this.failureReason}`;
+                logger.write(`warning,[${scope}] ${message}`);
+            }
+        }
+        return new RoURLEvent(this.identity, this.host, responseText, status, this.failureReason, headers);
+    }
+
     getConnection(methodParam: string, typeParam: XMLHttpRequestResponseType) {
         if (this.freshConnection) {
             this.xhr = new XMLHttpRequest();
+        }
+        if (this.url.toLowerCase().startsWith("https:") && !this.fs.existsSync(this.certificatesFile)) {
+            throw new HttpError(-77, `error setting certificate file: ${this.certificatesFile}`);
         }
         const method = this.reqMethod === "" ? methodParam : this.reqMethod;
         this.xhr.open(method, BrsDevice.getCORSProxy(this.url), false, this.user, this.password);
@@ -115,58 +181,28 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
     }
 
     getToStringEvent(): RoURLEvent {
-        let response = "";
-        let status = -1;
-        let headers = "";
-        try {
-            const xhr = this.getConnection("GET", "text");
-            xhr.send();
-            response = xhr.responseText;
-            status = xhr.status;
-            headers = xhr.getAllResponseHeaders();
-            this.failureReason = xhr.statusText;
-        } catch (e: any) {
-            if (BrsDevice.isDevMode) {
-                BrsDevice.stderr.write(`warning,[getToStringEvent] Error getting ${this.url}: ${e.message}`);
-            }
-            this.failureReason = e.message;
-        }
-        return new RoURLEvent(
-            this.identity,
-            this.host,
-            response ?? "",
-            status ?? -1,
-            this.failureReason ?? "Unknown error",
-            headers
-        );
+        const event = this.executeRequest({
+            method: "GET",
+            responseType: "text",
+            scope: "getToStringEvent",
+            errorMessage: (error) => `Error getting ${this.url}: ${error?.message ?? error}`,
+        });
+        return event;
     }
 
     getToFileEvent(filePath: string): RoURLEvent {
-        let status = -1;
-        let headers = "";
-        try {
-            const xhr = this.getConnection("GET", "arraybuffer");
-            xhr.send();
-            status = xhr.status;
-            headers = xhr.getAllResponseHeaders();
-            this.failureReason = xhr.statusText;
-            if (xhr.status === 200) {
-                this.saveDownloadedFile(filePath, xhr.response);
-            }
-        } catch (e: any) {
-            if (BrsDevice.isDevMode) {
-                BrsDevice.stderr.write(`warning,[getToFileEvent] Error getting ${this.url}: ${e.message}`);
-            }
-            this.failureReason = e.message;
-        }
-        return new RoURLEvent(
-            this.identity,
-            this.host,
-            "",
-            status ?? -1,
-            this.failureReason ?? "Unknown error",
-            headers
-        );
+        const event = this.executeRequest({
+            method: "GET",
+            responseType: "arraybuffer",
+            scope: "getToFileEvent",
+            onSuccess: (xhr) => {
+                if (xhr.status === 200) {
+                    this.saveDownloadedFile(filePath, xhr.response);
+                }
+            },
+            errorMessage: (error) => `Error getting ${this.url}: ${error?.message ?? error}`,
+        });
+        return event;
     }
 
     getToFileAsync(): BrsType {
@@ -178,30 +214,15 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
     }
 
     postFromStringEvent(body: string): RoURLEvent {
-        let status = -1;
-        let response = "";
-        let headers = "";
-        try {
-            const xhr = this.getConnection("POST", "text");
-            xhr.send(body);
-            response = xhr.responseText;
-            status = xhr.status;
-            headers = xhr.getAllResponseHeaders();
-            this.failureReason = xhr.statusText;
-        } catch (e: any) {
-            if (BrsDevice.isDevMode) {
-                BrsDevice.stdout.write(`warning,[postFromStringEvent] Error posting to ${this.url}: ${e.message}`);
-            }
-            this.failureReason = e.message;
-        }
-        return new RoURLEvent(
-            this.identity,
-            this.host,
-            response ?? "",
-            status ?? -1,
-            this.failureReason ?? "Unknown error",
-            headers
-        );
+        const event = this.executeRequest({
+            method: "POST",
+            responseType: "text",
+            scope: "postFromStringEvent",
+            body,
+            logToStdout: true,
+            errorMessage: (error) => `Error posting to ${this.url}: ${error?.message ?? error}`,
+        });
+        return event;
     }
 
     postFromStringAsync(): BrsType {
@@ -213,42 +234,19 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
     }
 
     postFromFileToFileEvent(inputPath: string, outputPath: string): RoURLEvent {
-        let status = -1;
-        let response = "";
-        let headers = "";
-        let error = "";
-        try {
-            const xhr = this.getConnection("POST", "arraybuffer");
-            const fsys = BrsDevice.fileSystem;
-            if (fsys.existsSync(inputPath)) {
-                const body = fsys.readFileSync(inputPath);
-                xhr.send(body);
+        const event = this.executeRequest({
+            method: "POST",
+            responseType: "arraybuffer",
+            scope: "postFromFileToFileEvent",
+            bodyFilePath: inputPath,
+            onSuccess: (xhr) => {
                 if (xhr.status === 200) {
                     this.saveDownloadedFile(outputPath, xhr.response);
                 }
-                response = xhr.responseText;
-                status = xhr.status;
-                headers = xhr.getAllResponseHeaders();
-                this.failureReason = xhr.statusText;
-            } else {
-                error = `Invalid path: ${inputPath}`;
-                status = -26;
-                this.failureReason = error;
-            }
-        } catch (e: any) {
-            error = e.message;
-        }
-        if (error !== "" && BrsDevice.isDevMode) {
-            BrsDevice.stderr.write(`warning,[postFromFileToFileEvent] Error posting to ${this.url}: ${error}`);
-        }
-        return new RoURLEvent(
-            this.identity,
-            this.host,
-            response ?? "",
-            status ?? -1,
-            this.failureReason ?? "Unknown error",
-            headers
-        );
+            },
+            errorMessage: (error) => `Error posting to ${this.url}: ${error?.message ?? error}`,
+        });
+        return event;
     }
 
     postFromFileToFileAsync(): BrsType {
@@ -261,49 +259,34 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
     }
 
     saveDownloadedFile(filePath: string, data: any) {
-        const fsys = BrsDevice.fileSystem;
-        if (!fsys) {
-            return;
-        }
         const bytes = data.slice(0, fileType.minimumBytes);
         const type = fileType(bytes);
         if (type && AudioExt.has(type.ext)) {
-            fsys.writeFileSync(filePath, Buffer.from(data));
+            this.fs.writeFileSync(filePath, Buffer.from(data));
             postMessage({
                 audioPath: filePath,
                 audioFormat: type.ext,
                 audioData: data,
             });
         } else if (type && VideoExt.has(type.ext)) {
-            fsys.writeFileSync(filePath, "video");
+            this.fs.writeFileSync(filePath, "video");
             postMessage({
                 videoPath: filePath,
                 videoData: data,
             });
         } else {
-            fsys.writeFileSync(filePath, Buffer.from(data));
+            this.fs.writeFileSync(filePath, Buffer.from(data));
         }
     }
 
     requestHead(): BrsType {
-        try {
-            const xhr = this.getConnection("HEAD", "text");
-            xhr.send();
-            this.failureReason = xhr.statusText;
-            return new RoURLEvent(
-                this.identity,
-                this.host,
-                xhr.responseText,
-                xhr.status,
-                xhr.statusText,
-                xhr.getAllResponseHeaders()
-            );
-        } catch (e: any) {
-            if (BrsDevice.isDevMode) {
-                BrsDevice.stderr.write(`warning,[requestHead] Error requesting from ${this.url}: ${e.message}`);
-            }
-            return BrsInvalid.Instance;
-        }
+        const event = this.executeRequest({
+            method: "HEAD",
+            responseType: "text",
+            scope: "requestHead",
+            errorMessage: (error) => `Error requesting from ${this.url}: ${error?.message ?? error}`,
+        });
+        return event;
     }
 
     toString(parent?: BrsType): string {
@@ -523,9 +506,8 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter, filePath: BrsString) => {
-            const fsys = BrsDevice.fileSystem;
-            if (fsys.existsSync(filePath.value)) {
-                const body = fsys.readFileSync(filePath.value);
+            if (this.fs.existsSync(filePath.value)) {
+                const body = this.fs.readFileSync(filePath.value);
                 const reply = this.postFromStringEvent(body);
                 return new Int32(reply.getStatus());
             } else if (BrsDevice.isDevMode) {
@@ -542,13 +524,12 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, filePath: BrsString) => {
-            const fsys = BrsDevice.fileSystem;
-            if (!fsys.existsSync(filePath.value)) {
+            if (!this.fs.existsSync(filePath.value)) {
                 return BrsBoolean.False;
             }
             if (this.port) {
                 this.failureReason = "";
-                this.postBody.push(fsys.readFileSync(filePath.value, "utf8"));
+                this.postBody.push(this.fs.readFileSync(filePath.value, "utf8"));
                 this.port.pushCallback(this.postFromStringAsync.bind(this));
             } else if (BrsDevice.isDevMode) {
                 BrsDevice.stderr.write("warning,No message port assigned to this roUrlTransfer instance!");
@@ -564,8 +545,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, fromFile: BrsString, toFile: BrsString) => {
-            const fsys = BrsDevice.fileSystem;
-            if (!fsys.existsSync(fromFile.value)) {
+            if (!this.fs.existsSync(fromFile.value)) {
                 return BrsBoolean.False;
             }
             if (this.port) {
