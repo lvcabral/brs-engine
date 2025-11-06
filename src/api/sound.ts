@@ -258,7 +258,7 @@ function playAudio() {
     if (audio) {
         let sound: Howl;
         let idx = soundsIdx.get(audio.toLowerCase());
-        if (idx) {
+        if (idx !== undefined && idx >= 0 && idx < soundsDat.length) {
             sound = soundsDat[idx];
         } else if (audio.startsWith("http")) {
             sound = registerSound(audio, true);
