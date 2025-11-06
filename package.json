@@ -35,7 +35,7 @@
     "@lvcabral/upng": "^2.3.0",
     "@lvcabral/zip": "^1.3.6",
     "@msgpack/msgpack": "^2.8.0",
-    "@zenfs/core": "2.4.2",
+    "@zenfs/core": "^2.4.2",
     "canvas": "^3.2.0",
     "chalk": "^4.1.2",
     "commander": "^2.12.2",
@@ -121,7 +121,11 @@
     "zip-webpack-plugin": "^4.0.3"
   },
   "jest": {
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "testPathIgnorePatterns": [
+      "node_modules/",
+      "out/"
+    ]
   },
   "prettier": {
     "trailingComma": "es5",
