@@ -25,7 +25,7 @@ describe("global file I/O functions", () => {
             root: "hello/world",
         }); // reset the file systems
         fsys = BrsDevice.fileSystem;
-        await fsys.resetMemoryFS();
+        await BrsDevice.resetMemoryVolumes();
     });
 
     describe("ListDir", () => {

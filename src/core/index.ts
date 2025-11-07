@@ -21,7 +21,7 @@ import {
 } from "./common";
 import { Lexeme, Lexer, Token } from "./lexer";
 import { Parser, Stmt } from "./parser";
-import { ComponentDefinition, getComponentDefinitionMap, getInterpreterWithSubEnvs } from "./scenegraph";
+import { getComponentDefinitionMap, getInterpreterWithSubEnvs } from "./scenegraph";
 import { lexParseSync, parseDecodedTokens } from "./LexerParser";
 import * as PP from "./preprocessor";
 import * as BrsTypes from "./brsTypes";
@@ -128,8 +128,20 @@ export async function getReplInterpreter(payload: Partial<AppPayload>) {
         postMessage("error,Invalid REPL configuration: Missing assets");
         return null;
     }
+    if (payload.device) {
+        if (payload.device.registry?.size) {
+            BrsDevice.setRegistry(payload.device.registry);
+        }
+        BrsDevice.setDeviceInfo(payload.device);
+    }
     try {
-        await configureFileSystem(payload.device.assets, payload.pkgZip, payload.extZip);
+        await configureFileSystem(
+            payload.device.assets,
+            BrsDevice.getTmpVolume(),
+            BrsDevice.getCacheFS(),
+            payload.pkgZip,
+            payload.extZip
+        );
     } catch (err: any) {
         postMessage(`error,Error mounting File System: ${err.message}`);
         return null;
@@ -139,12 +151,6 @@ export async function getReplInterpreter(payload: Partial<AppPayload>) {
         ext: payload.extZip ? undefined : payload.ext,
     });
     replInterpreter.onError(logError);
-    if (payload.device) {
-        if (payload.device.registry?.size) {
-            BrsDevice.setRegistry(payload.device.registry);
-        }
-        BrsDevice.setDeviceInfo(payload.device);
-    }
     return replInterpreter;
 }
 
@@ -450,8 +456,15 @@ export async function executeFile(payload: AppPayload, customOptions?: Partial<E
     bscs.clear();
     stats.clear();
     // Setup the File System
+    BrsDevice.setDeviceInfo(payload.device);
     try {
-        await configureFileSystem(payload.device.assets, payload.pkgZip, payload.extZip);
+        await configureFileSystem(
+            payload.device.assets,
+            BrsDevice.getTmpVolume(),
+            BrsDevice.getCacheFS(),
+            payload.pkgZip,
+            payload.extZip
+        );
         if (options.root) {
             BrsDevice.fileSystem.setRoot(options.root);
         }
@@ -501,8 +514,15 @@ export async function executeTask(payload: TaskPayload, customOptions?: Partial<
     stats.clear();
     BrsDevice.threadId = payload.taskData.id;
     // Setup the File System
+    BrsDevice.setDeviceInfo(payload.device);
     try {
-        await configureFileSystem(payload.device.assets, payload.pkgZip, payload.extZip);
+        await configureFileSystem(
+            payload.device.assets,
+            payload.taskData.tmp!,
+            payload.taskData.cacheFS!,
+            payload.pkgZip,
+            payload.extZip
+        );
         if (options.root) {
             BrsDevice.fileSystem.setRoot(options.root);
         }
@@ -530,7 +550,6 @@ export async function executeTask(payload: TaskPayload, customOptions?: Partial<
     } else if (payload.device.registry?.size) {
         BrsDevice.setRegistry(payload.device.registry);
     }
-    BrsDevice.setDeviceInfo(payload.device);
     setupTranslations(interpreter);
     console.debug("Calling Task in new Worker: ", payload.taskData.name, payload.taskData.m.top.functionname);
     interpreter.execTask(payload);
@@ -560,7 +579,6 @@ function setupPayload(interpreter: Interpreter, payload: AppPayload): SourceResu
     } else if (payload.device.registry?.size) {
         BrsDevice.setRegistry(payload.device.registry);
     }
-    BrsDevice.setDeviceInfo(payload.device);
     setupTranslations(interpreter);
     return setupPackageFiles(payload);
 }
