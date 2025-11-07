@@ -290,19 +290,28 @@ export class SGNodeFactory {
 }
 
 /** Function to create a Node by its name defined on the XML file */
-export function createNodeByType(interpreter: Interpreter, type: BrsString): RoSGNode | BrsInvalid {
+export function createNodeByType(type: BrsString, interpreter?: Interpreter): RoSGNode | BrsInvalid {
     // If this is a built-in node component, then return it.
     let node = SGNodeFactory.createNode(type.value) ?? BrsInvalid.Instance;
     if (node instanceof BrsInvalid) {
         let typeDef = sgRoot.nodeDefMap.get(type.value.toLowerCase());
-        if (typeDef) {
-            node = initializeNode(interpreter, type, typeDef);
+        if (typeDef && !interpreter) {
+            let typeDefStack = updateTypeDefHierarchy(typeDef);
+            // Get the "basemost" component of the inheritance tree.
+            typeDef = typeDefStack.pop();
+            node = SGNodeFactory.createNode(typeDef!.extends as SGNodeType, type.value) ?? BrsInvalid.Instance;
+            if (node instanceof BrsInvalid) {
+                node = new RoSGNode([], type.value);
+            }
+        } else if (typeDef) {
+            node = initializeNode(interpreter!, type, typeDef);
         } else {
             BrsDevice.stderr.write(
                 `warning,BRIGHTSCRIPT: ERROR: roSGNode: Failed to create roSGNode with type ${
                     type.value
-                }: ${interpreter.formatLocation()}`
+                }: ${interpreter!.formatLocation()}`
             );
+            return BrsInvalid.Instance;
         }
     }
     if (node instanceof Task) {
@@ -602,7 +611,7 @@ function addChildren(interpreter: Interpreter, node: RoSGNode, typeDef: Componen
     const appendChild = node.getMethod("appendchild");
 
     for (let child of children) {
-        const newChild = createNodeByType(interpreter, new BrsString(child.name));
+        const newChild = createNodeByType(new BrsString(child.name), interpreter);
         if (newChild instanceof RoSGNode) {
             const setField = newChild.getMethod("setfield");
             if (setField) {

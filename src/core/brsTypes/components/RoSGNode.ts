@@ -208,8 +208,8 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         return this.children;
     }
 
-    cloneNode(interpreter: Interpreter, isDeepCopy: boolean): BrsType {
-        const clonedNode = createNodeByType(interpreter, new BrsString(this.nodeSubtype));
+    cloneNode(isDeepCopy: boolean): BrsType {
+        const clonedNode = createNodeByType(new BrsString(this.nodeSubtype));
         if (!(clonedNode instanceof RoSGNode)) {
             return BrsInvalid.Instance;
         }
@@ -228,7 +228,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             for (const child of this.children) {
                 let newChild: BrsType = BrsInvalid.Instance;
                 if (child instanceof RoSGNode) {
-                    newChild = child.cloneNode(interpreter, isDeepCopy);
+                    newChild = child.cloneNode(isDeepCopy);
                 }
                 clonedNode.appendChildToParent(newChild);
             }
@@ -236,11 +236,8 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         return clonedNode;
     }
 
-    deepCopy(interpreter?: Interpreter): BrsType {
-        if (!interpreter) {
-            return this;
-        }
-        const copiedNode = createNodeByType(interpreter, new BrsString(this.nodeSubtype));
+    deepCopy(): BrsType {
+        const copiedNode = createNodeByType(new BrsString(this.nodeSubtype));
         if (!(copiedNode instanceof RoSGNode)) {
             return new RoInvalid();
         }
@@ -250,7 +247,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         for (const child of this.children) {
             let newChild: BrsType = BrsInvalid.Instance;
             if (child instanceof RoSGNode) {
-                newChild = child.deepCopy(interpreter);
+                newChild = child.deepCopy();
             }
             copiedNode.appendChildToParent(newChild);
         }
@@ -625,7 +622,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             if (element instanceof RoAssociativeArray) {
                 // Create a new child node based on the subtype
                 const childSubtype = jsValueOf(element.get(new BrsString("subtype"))) ?? subtype;
-                const childNode = createNodeByType(interpreter, new BrsString(childSubtype));
+                const childNode = createNodeByType(new BrsString(childSubtype), interpreter);
                 if (childNode instanceof RoSGNode) {
                     this.populateNodeFromAA(interpreter, childNode, element, createFields, childSubtype);
                     node.appendChildToParent(childNode);
@@ -1127,7 +1124,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             args: [new StdlibArgument("fieldName", ValueKind.String), new StdlibArgument("data", ValueKind.Object)],
             returns: ValueKind.Int32,
         },
-        impl: (interpreter: Interpreter, fieldName: BrsString, data: RoAssociativeArray) => {
+        impl: (_: Interpreter, fieldName: BrsString, data: RoAssociativeArray) => {
             if (!(data instanceof RoAssociativeArray)) {
                 BrsDevice.stderr.write(
                     `warning,BRIGHTSCRIPT: ERROR: roSGNode.moveIntoField: Move must be AA: ${location}`
@@ -1149,7 +1146,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             const moved: AAMember[] = [];
             for (const [key, value] of data.elements) {
                 if (value instanceof RoArray || value instanceof RoAssociativeArray || value instanceof RoSGNode) {
-                    moved.push({ name: new BrsString(key), value: value.deepCopy(interpreter) });
+                    moved.push({ name: new BrsString(key), value: value.deepCopy() });
                 } else if (isBoxable(value) && !(value instanceof Callable)) {
                     moved.push({ name: new BrsString(key), value: value });
                 } else if (isUnboxable(value) && !(value instanceof RoFunction)) {
@@ -1682,7 +1679,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Object,
         },
         impl: (interpreter: Interpreter, nodeType: BrsString) => {
-            let child = createNodeByType(interpreter, nodeType);
+            let child = createNodeByType(nodeType, interpreter);
             if (child instanceof RoSGNode) {
                 this.appendChildToParent(child);
             }
@@ -1813,7 +1810,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             let numChildrenValue = num_children.getValue();
             let addedChildren: RoSGNode[] = [];
             for (let i = 0; i < numChildrenValue; i++) {
-                let child = createNodeByType(interpreter, subtype);
+                let child = createNodeByType(subtype, interpreter);
                 if (child instanceof RoSGNode) {
                     this.appendChildToParent(child);
                     addedChildren.push(child);
@@ -2117,8 +2114,8 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             args: [new StdlibArgument("isDeepCopy", ValueKind.Boolean)],
             returns: ValueKind.Object,
         },
-        impl: (interpreter: Interpreter, isDeepCopy: BrsBoolean) => {
-            return this.cloneNode(interpreter, isDeepCopy.toBoolean());
+        impl: (_: Interpreter, isDeepCopy: BrsBoolean) => {
+            return this.cloneNode(isDeepCopy.toBoolean());
         },
     });
 
