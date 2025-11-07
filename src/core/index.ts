@@ -552,9 +552,19 @@ export async function executeTask(payload: TaskPayload, customOptions?: Partial<
     }
     setupTranslations(interpreter);
     console.debug("Calling Task in new Worker: ", payload.taskData.name, payload.taskData.m.top.functionname);
-    interpreter.execTask(payload);
-    if (BrsDevice.isDevMode) {
-        postMessage(`debug,Task ${payload.taskData.name} is done.`);
+    try {
+        interpreter.execTask(payload);
+        if (BrsDevice.isDevMode) {
+            postMessage(`debug,Task ${payload.taskData.name} is done.`);
+        }
+    } catch (err: any) {
+        if (!terminateReasons.includes(err.message)) {
+            if (interpreter.options.post ?? true) {
+                postMessage(`error,${err.message}`);
+            } else {
+                interpreter.options.stderr.write(err.message);
+            }
+        }
     }
 }
 

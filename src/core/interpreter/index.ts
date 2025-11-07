@@ -353,13 +353,16 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         const taskData = payload.taskData;
         const taskNode = initializeTask(this, taskData);
         const functionName = taskData.m?.top?.functionname;
-        if (taskNode instanceof Task && functionName) {
-            if (taskData.buffer) {
-                taskNode.setTaskBuffer(taskData.buffer);
-            }
-            const typeDef = sgRoot.nodeDefMap.get(taskNode.nodeSubtype.toLowerCase());
-            const taskEnv = typeDef?.environment;
-            if (taskEnv) {
+        if (!(taskNode instanceof Task) || !functionName) {
+            return;
+        }
+        if (taskData.buffer) {
+            taskNode.setTaskBuffer(taskData.buffer);
+        }
+        const typeDef = sgRoot.nodeDefMap.get(taskNode.nodeSubtype.toLowerCase());
+        const taskEnv = typeDef?.environment;
+        if (taskEnv) {
+            try {
                 const mPointer = taskNode.m;
                 this.inSubEnv((subInterpreter) => {
                     const funcToCall = subInterpreter.getCallableFunction(functionName);
@@ -384,6 +387,15 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     }
                     return BrsInvalid.Instance;
                 }, taskEnv);
+            } catch (err: any) {
+                if (err instanceof Stmt.ReturnValue) {
+                    // ignore return value from Task, closing the Task
+                } else if (err instanceof BrsError) {
+                    const backTrace = this.formatBacktrace(err.location, true, err.backTrace);
+                    throw new Error(`${err.format()}\nBackTrace:\n${backTrace}`, { cause: err });
+                } else {
+                    throw err;
+                }
             }
         }
     }
