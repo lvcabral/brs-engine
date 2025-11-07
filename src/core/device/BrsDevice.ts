@@ -62,17 +62,13 @@ export class BrsDevice {
 
     /** Returns the SharedArrayBuffer used for the tmp: volume */
     static getTmpVolume(): SharedArrayBuffer {
-        if (!this.tmpVolume) {
-            this.tmpVolume = new SharedArrayBuffer(this.deviceInfo.tmpVolSize);
-        }
+        this.tmpVolume ??= new SharedArrayBuffer(this.deviceInfo.tmpVolSize);
         return this.tmpVolume;
     }
 
     /** Returns the SharedArrayBuffer used for the cachefs: volume */
     static getCacheFS(): SharedArrayBuffer {
-        if (!this.cacheFS) {
-            this.cacheFS = new SharedArrayBuffer(this.deviceInfo.cacheFSVolSize);
-        }
+        this.cacheFS ??= new SharedArrayBuffer(this.deviceInfo.cacheFSVolSize);
         return this.cacheFS;
     }
 
