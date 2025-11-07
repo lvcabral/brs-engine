@@ -208,7 +208,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         return this.children;
     }
 
-    cloneNode(isDeepCopy: boolean): BrsType {
+    cloneNode(isDeepCopy: boolean) {
         const clonedNode = createNodeByType(new BrsString(this.nodeSubtype));
         if (!(clonedNode instanceof RoSGNode)) {
             return BrsInvalid.Instance;
@@ -228,7 +228,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             for (const child of this.children) {
                 let newChild: BrsType = BrsInvalid.Instance;
                 if (child instanceof RoSGNode) {
-                    newChild = child.cloneNode(isDeepCopy);
+                    newChild = child.cloneNode(true);
                 }
                 clonedNode.appendChildToParent(newChild);
             }
