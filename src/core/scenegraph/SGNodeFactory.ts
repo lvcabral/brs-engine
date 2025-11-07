@@ -296,7 +296,7 @@ export function createNodeByType(type: BrsString, interpreter?: Interpreter): Ro
     if (node instanceof BrsInvalid) {
         let typeDef = sgRoot.nodeDefMap.get(type.value.toLowerCase());
         if (typeDef && !interpreter) {
-            let typeDefStack = updateTypeDefHierarchy(typeDef);
+            const typeDefStack = updateTypeDefHierarchy(typeDef);
             // Get the "basemost" component of the inheritance tree.
             typeDef = typeDefStack.pop();
             node = SGNodeFactory.createNode(typeDef!.extends as SGNodeType, type.value) ?? BrsInvalid.Instance;
@@ -309,7 +309,7 @@ export function createNodeByType(type: BrsString, interpreter?: Interpreter): Ro
             BrsDevice.stderr.write(
                 `warning,BRIGHTSCRIPT: ERROR: roSGNode: Failed to create roSGNode with type ${
                     type.value
-                }: ${interpreter!.formatLocation()}`
+                }: ${interpreter?.formatLocation() ?? ""}`
             );
             return BrsInvalid.Instance;
         }
