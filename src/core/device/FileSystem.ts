@@ -1,3 +1,4 @@
+import * as path from "path";
 import * as zenFS from "@zenfs/core";
 import * as nodeFS from "fs";
 import { Zip } from "@lvcabral/zip";
@@ -5,6 +6,7 @@ import { Zip } from "@lvcabral/zip";
 /** Proxy Object to make File System volumes case insensitive, same as Roku devices */
 
 export class FileSystem {
+    private readonly paths: Map<string, string>;
     private readonly mfs: typeof zenFS.fs; // common:
     private readonly tfs: typeof zenFS.fs; // tmp:
     private readonly cfs: typeof zenFS.fs; // cachefs:
@@ -14,6 +16,7 @@ export class FileSystem {
     private ext?: string;
 
     constructor(root?: string, ext?: string) {
+        this.paths = new Map<string, string>();
         if (root) {
             this.root = root;
             this.pfs = nodeFS;
@@ -29,6 +32,16 @@ export class FileSystem {
         this.mfs = zenFS.fs;
         this.tfs = zenFS.fs;
         this.cfs = zenFS.fs;
+    }
+
+    private savePath(uri: string) {
+        this.paths.set(uri.toLowerCase().replace(/\/+/g, "/").trim(), uri.replace(/\/+/g, "/").trim());
+    }
+    private deletePath(uri: string) {
+        return this.paths.delete(uri.toLowerCase().replace(/\/+/g, "/").trim());
+    }
+    private getOriginalPath(uri: string) {
+        return this.paths.get(uri.toLowerCase().replace(/\/+/g, "/").trim());
     }
 
     setRoot(root: string) {
@@ -109,11 +122,22 @@ export class FileSystem {
     }
 
     readdirSync(uri: string) {
-        return this.getFS(uri).readdirSync(this.getPath(uri));
+        const files = this.getFS(uri).readdirSync(this.getPath(uri));
+        if (writeUri(uri) && files.length > 0) {
+            for (const [index, file] of files.entries()) {
+                const fullPath = path.posix.join(uri.toLowerCase(), file);
+                const originalPath = this.getOriginalPath(fullPath);
+                if (originalPath) {
+                    files[index] = path.posix.basename(originalPath);
+                }
+            }
+        }
+        return files;
     }
 
     mkdirSync(uri: string) {
         this.getFS(uri).mkdirSync(this.getPath(uri));
+        this.savePath(uri);
     }
 
     rmdirSync(uri: string) {
@@ -124,10 +148,12 @@ export class FileSystem {
             }
         }
         this.getFS(uri).rmdirSync(this.getPath(uri));
+        this.deletePath(uri);
     }
 
     unlinkSync(uri: string) {
         this.getFS(uri).unlinkSync(this.getPath(uri));
+        this.deletePath(uri);
     }
 
     renameSync(oldName: string, newName: string) {
@@ -138,6 +164,7 @@ export class FileSystem {
 
     writeFileSync(uri: string, content: string | Buffer, encoding?: any) {
         this.getFS(uri).writeFileSync(this.getPath(uri), content, encoding);
+        this.savePath(uri);
     }
 
     statSync(uri: string) {
