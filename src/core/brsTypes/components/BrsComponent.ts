@@ -144,8 +144,7 @@ export interface BrsIterable {
 
     /**
      * Creates a deep copy of this object.
-     * @param interpreter The interpreter instance to use for creating the deep copy (only for RoSGNode).
      * @returns a deep copy of this object.
      */
-    deepCopy(interpreter?: Interpreter): BrsType;
+    deepCopy(): BrsType;
 }

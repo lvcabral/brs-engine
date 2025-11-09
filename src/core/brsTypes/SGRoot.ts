@@ -1,5 +1,5 @@
 import { ComponentDefinition } from "../scenegraph";
-import { BufferType, DataType, MediaEvent, MediaTrack } from "../common";
+import { BufferType, DataType, MediaEvent, MediaTrack, ThreadInfo } from "../common";
 import { RoSGNode } from "./components/RoSGNode";
 import { Global } from "./nodes/Global";
 import { Scene } from "./nodes/Scene";
@@ -17,7 +17,7 @@ import { BrsDevice } from "../device/BrsDevice";
  * */
 
 export class SGRoot {
-    readonly mGlobal: Global;
+    private _mGlobal: Global | undefined;
     private _nodeDefMap: Map<string, ComponentDefinition>;
     private _scene?: Scene;
     private _focused?: RoSGNode;
@@ -26,6 +26,12 @@ export class SGRoot {
     private readonly _timers: Timer[];
     private _audio?: Audio;
     private _video?: Video;
+    threadId: number = 0;
+
+    get mGlobal(): Global {
+        this._mGlobal ??= new Global([]);
+        return this._mGlobal;
+    }
 
     get nodeDefMap(): Map<string, ComponentDefinition> {
         return this._nodeDefMap;
@@ -69,7 +75,6 @@ export class SGRoot {
     private videoPosition: number = -1;
 
     constructor() {
-        this.mGlobal = new Global([]);
         this._nodeDefMap = new Map<string, ComponentDefinition>();
         this._sfx = [];
         this._tasks = [];
@@ -275,6 +280,26 @@ export class SGRoot {
             }
         }
         return isDirty;
+    }
+
+    getCurrentThread(): ThreadInfo {
+        const currentThread: ThreadInfo = { id: this.threadId.toString(), name: "", type: "" };
+        if (this.threadId === 0) {
+            const sceneName = this.scene?.nodeSubtype || "";
+            currentThread.name = sceneName;
+            currentThread.type = "Render";
+        } else if (this.tasks[0]) {
+            currentThread.name = this.tasks[0].name || "";
+            currentThread.type = "Task";
+        }
+        return currentThread;
+    }
+
+    getRenderThread(): ThreadInfo {
+        const renderThread: ThreadInfo = { id: "0", name: "", type: "Render" };
+        const sceneName = this.scene?.nodeSubtype || "";
+        renderThread.name = sceneName;
+        return renderThread;
     }
 }
 export const sgRoot: SGRoot = new SGRoot();

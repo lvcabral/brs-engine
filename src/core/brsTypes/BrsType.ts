@@ -4,18 +4,18 @@ import {
     BrsType,
     brsValueOf,
     Double,
+    Float,
     Font,
+    Int32,
     Int64,
     isBrsNumber,
     isStringComp,
     RoArray,
+    RoBoolean,
+    RoInvalid,
+    RoString,
 } from ".";
 import { Boxable } from "./Boxing";
-import { RoString } from "./components/RoString";
-import { Int32 } from "./Int32";
-import { Float } from "./Float";
-import { RoBoolean } from "./components/RoBoolean";
-import { RoInvalid } from "./components/RoInvalid";
 import { convertHexColor } from "../scenegraph/SGUtil";
 import Long from "long";
 

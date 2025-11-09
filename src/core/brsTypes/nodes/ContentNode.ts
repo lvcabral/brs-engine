@@ -152,13 +152,13 @@ export class ContentNode extends RoSGNode {
     appendChildToParent(child: BrsType): boolean {
         let success = false;
         if (child instanceof ContentNode) {
-            if (!this.children.includes(child)) {
-                this.children.push(child);
+            if (!this.sgNode.children.includes(child)) {
+                this.sgNode.children.push(child);
                 child.setNodeParent(this);
             }
             success = true;
         } else if (child instanceof RoSGNode || child === BrsInvalid.Instance) {
-            this.children.push(BrsInvalid.Instance);
+            this.sgNode.children.push(BrsInvalid.Instance);
             // Returns true even if child is invalid because a child was added
             success = true;
         }

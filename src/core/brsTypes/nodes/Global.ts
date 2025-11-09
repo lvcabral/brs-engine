@@ -1,7 +1,6 @@
+import { AAMember, BrsType, isBrsString, jsValueOf, sgRoot } from "..";
 import { RoSGNode } from "../components/RoSGNode";
 import { FieldKind } from "./Field";
-import { AAMember, BrsType, isBrsString, jsValueOf, sgRoot } from "..";
-import { BrsDevice } from "../../device/BrsDevice";
 import { ThreadUpdate } from "../../common";
 
 export class Global extends RoSGNode {
@@ -16,9 +15,9 @@ export class Global extends RoSGNode {
         }
         const fieldName = index.getValue().toLowerCase();
         // Refresh SharedObject with latest Node state
-        if (sync && sgRoot.tasks.length > 0 && this.changed && this.fields.has(fieldName)) {
+        if (sync && sgRoot.tasks.length > 0 && this.changed && this.sgNode.fields.has(fieldName)) {
             const update: ThreadUpdate = {
-                id: BrsDevice.threadId,
+                id: sgRoot.threadId,
                 type: "global",
                 field: fieldName,
                 value: jsValueOf(value),

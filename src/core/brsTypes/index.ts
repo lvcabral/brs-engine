@@ -378,18 +378,23 @@ export type BrsConvertible = boolean | number | string | BrsType | null | undefi
  * Converts a JavaScript object or Map to a RoAssociativeArray, converting each property or entry to the corresponding BrightScript type.
  * @param input The JavaScript object or Map to convert.
  * @param {boolean} cs Whether to return an AA as case sensitive.
+ * @param {Map<string, RoSGNode>} nodeMap Optional map to track nodes by ID for resolving circular references.
  * @returns A RoAssociativeArray with the converted properties or entries.
  */
-export function toAssociativeArray(input: Map<string, any> | FlexObject, cs?: boolean): RoAssociativeArray {
+export function toAssociativeArray(
+    input: Map<string, any> | FlexObject,
+    cs?: boolean,
+    nodeMap?: Map<string, RoSGNode>
+): RoAssociativeArray {
     const associativeArray = new RoAssociativeArray([], cs);
     if (input instanceof Map) {
         for (const [key, value] of input) {
-            associativeArray.set(new BrsString(key), brsValueOf(value, cs), true);
+            associativeArray.set(new BrsString(key), brsValueOf(value, cs, nodeMap), true);
         }
     } else if (typeof input === "object" && input !== null) {
         for (const key in input) {
             if (input.hasOwnProperty(key)) {
-                associativeArray.set(new BrsString(key), brsValueOf(input[key], cs), true);
+                associativeArray.set(new BrsString(key), brsValueOf(input[key], cs, nodeMap), true);
             }
         }
     } else {
@@ -401,65 +406,68 @@ export function toAssociativeArray(input: Map<string, any> | FlexObject, cs?: bo
 /**
  * Converts a value to its representation as a BrsType. If no such
  * representation is possible, throws an Error.
- * @param {any} x Some value.
+ * @param {any} value Some value.
  * @param {boolean} cs Whether to return an AA as case sensitive.
+ * @param {Map<string, RoSGNode>} nodeMap Optional map to track nodes by ID for resolving circular references.
  * @return {BrsType} The BrsType representation of `x`.
  * @throws {Error} If `x` cannot be represented as a BrsType.
  */
-export function brsValueOf(x: any, cs?: boolean): BrsType {
-    if (x === null || x === undefined) {
+export function brsValueOf(value: any, cs?: boolean, nodeMap?: Map<string, RoSGNode>): BrsType {
+    if (value === null || value === undefined) {
         return BrsInvalid.Instance;
     }
     const maxInt = 0x80000000;
-    const t: string = typeof x;
+    const t: string = typeof value;
     switch (t) {
         case "boolean":
-            return BrsBoolean.from(x);
+            return BrsBoolean.from(value);
         case "string":
-            return new BrsString(x);
+            return new BrsString(value);
         case "number":
-            if (Number.isInteger(x)) {
-                return x >= -maxInt && x < maxInt ? new Int32(x) : new Int64(x);
-            } else if (Number.isNaN(x)) {
-                return new Float(x);
+            if (Number.isInteger(value)) {
+                return value >= -maxInt && value < maxInt ? new Int32(value) : new Int64(value);
+            } else if (Number.isNaN(value)) {
+                return new Float(value);
             }
-            return x >= -3.4e38 && x <= 3.4e38 ? new Float(x) : new Double(x);
+            return value >= -3.4e38 && value <= 3.4e38 ? new Float(value) : new Double(value);
         case "object":
-            return fromObject(x, cs);
+            return fromObject(value, cs, nodeMap);
         case "undefined":
             return Uninitialized.Instance;
         default:
-            throw new Error(`brsValueOf not implemented for: ${x} <${t}>`);
+            throw new Error(`brsValueOf not implemented for: ${value} <${t}>`);
     }
 }
 
 /**
  * Converts a JavaScript object to a BrsType.
- * @param x The JavaScript object to convert.
+ * @param obj The JavaScript object to convert.
  * @param {boolean} cs Whether to return an AA as case sensitive.
+ * @param {Map<string, RoSGNode>} nodeMap Optional map to track nodes by ID for resolving circular references.
  * @returns A BrsType with the converted object or Invalid if the object is not transferable.
  */
-function fromObject(x: any, cs?: boolean): BrsType {
-    if (isBrsType(x)) {
-        return x;
-    } else if (x === null) {
+function fromObject(obj: any, cs?: boolean, nodeMap?: Map<string, RoSGNode>): BrsType {
+    if (isBrsType(obj)) {
+        return obj;
+    } else if (obj === null) {
         return BrsInvalid.Instance;
-    } else if (x instanceof Uint8Array) {
-        return new RoByteArray(x);
-    } else if (Array.isArray(x)) {
+    } else if (obj instanceof Uint8Array) {
+        return new RoByteArray(obj);
+    } else if (Array.isArray(obj)) {
         return new RoArray(
-            x.map(function (el: any) {
-                return brsValueOf(el, cs);
+            obj.map(function (el: any) {
+                return brsValueOf(el, cs, nodeMap);
             })
         );
-    } else if (x["_node_"]) {
-        const node = x["_node_"].split(":");
-        if (node.length === 2) {
-            return toSGNode(x, node[0], node[1]);
+    } else if (obj["_node_"] || obj["_circular_"]) {
+        // Handle both regular nodes and circular references
+        const nodeInfo = obj["_node_"] ? obj["_node_"].split(":") : obj["_circular_"].split(":");
+        if (nodeInfo.length === 2) {
+            return toSGNode(obj, nodeInfo[0], nodeInfo[1], nodeMap);
         }
         return BrsInvalid.Instance;
-    } else if (x["_component_"]) {
-        const component = x["_component_"];
+    } else if (obj["_component_"]) {
+        const component = obj["_component_"];
         const ctor = BrsObjects.get(component);
         if (ctor) {
             try {
@@ -469,10 +477,10 @@ function fromObject(x: any, cs?: boolean): BrsType {
             }
         }
         return BrsInvalid.Instance;
-    } else if (x["_interface_"]) {
+    } else if (obj["_interface_"]) {
         return BrsInvalid.Instance;
-    } else if (x["_callable_"]) {
-        return new Callable(x["_callable_"], {
+    } else if (obj["_callable_"]) {
+        return new Callable(obj["_callable_"], {
             signature: {
                 args: [new StdlibArgument("arg", ValueKind.Dynamic, BrsInvalid.Instance)],
                 variadic: true,
@@ -483,36 +491,55 @@ function fromObject(x: any, cs?: boolean): BrsType {
             },
         });
     }
-    return toAssociativeArray(x, cs);
+    return toAssociativeArray(obj, cs, nodeMap);
 }
 
 /**
  * Converts a JavaScript object to a RoSGNode, converting each field to the corresponding BrightScript type.
- * @param x The JavaScript object to convert.
+ * @param obj The JavaScript object to convert.
  * @param type The type of the node.
  * @param subtype The subtype of the node.
+ * @param nodeMap Optional map to track nodes by ID for resolving circular references.
  * @returns A RoSGNode with the converted fields.
  */
-export function toSGNode(x: any, type: string, subtype: string): RoSGNode {
-    const node = SGNodeFactory.createNode(type, subtype) ?? new RoSGNode([], subtype);
-    for (const key in x) {
+export function toSGNode(obj: any, type: string, subtype: string, nodeMap?: Map<string, RoSGNode>): RoSGNode {
+    // Initialize nodeMap on first call
+    nodeMap ??= new Map<string, RoSGNode>();
+
+    // Check if this is a circular reference
+    if (obj["_circular_"] && obj["_address_"]) {
+        const existingNode = nodeMap.get(obj["_address_"]);
+        if (existingNode) {
+            return existingNode;
+        }
+        // If we don't have the node yet, this might be a forward reference
+        // Return invalid for now (should not happen in valid serialized data)
+        return BrsInvalid.Instance as any;
+    }
+    const newNode = SGNodeFactory.createNode(type, subtype) ?? new RoSGNode([], subtype);
+    // Store the node in the map using the original address for circular reference resolution
+    // Use the address from serialized data if available, otherwise use the new node's address
+    newNode.sgNode.address = obj["_address_"] || newNode.sgNode.address;
+    nodeMap.set(newNode.sgNode.address, newNode);
+
+    for (const key in obj) {
         if (key.startsWith("_") && key.endsWith("_") && key.length > 2) {
             continue;
         }
-        node.setFieldValue(key, brsValueOf(x[key]));
+        newNode.setFieldValue(key, brsValueOf(obj[key], undefined, nodeMap));
     }
-    if (x["_children_"]) {
-        for (const child of x["_children_"]) {
-            if (child["_node_"]) {
-                const childInfo = child["_node_"].split(":");
-                const childNode = toSGNode(child, childInfo[0], childInfo[1]);
-                node.appendChildToParent(childNode);
+    if (obj["_children_"]) {
+        for (const child of obj["_children_"]) {
+            if (child["_node_"] || child["_circular_"]) {
+                const childInfo = child["_node_"] ? child["_node_"].split(":") : child["_circular_"].split(":");
+                const childNode = toSGNode(child, childInfo[0], childInfo[1], nodeMap);
+                newNode.appendChildToParent(childNode);
             } else if (child["_invalid_"] !== undefined) {
-                node.appendChildToParent(BrsInvalid.Instance);
+                newNode.appendChildToParent(BrsInvalid.Instance);
             }
         }
     }
-    return node;
+    return newNode;
 }
 
 /**
@@ -566,47 +593,47 @@ export function fromContentNode(contentNode: ContentNode): RoAssociativeArray {
 
 /**
  * Converts a BrsType value to its representation as a JavaScript type.
- * @param {BrsType} x Some BrsType value.
+ * @param {BrsType} value Some BrsType value.
  * @param {WeakSet<RoSGNode>} visitedNodes Optional set to track visited nodes for circular reference detection.
  * @return {any} The JavaScript representation of `x`.
  */
-export function jsValueOf(x: BrsType, visitedNodes?: WeakSet<RoSGNode>): any {
-    if (isUnboxable(x)) {
-        x = x.unbox();
+export function jsValueOf(value: BrsType, visitedNodes?: WeakSet<RoSGNode>): any {
+    if (isUnboxable(value)) {
+        value = value.unbox();
     }
-    switch (x.kind) {
+    switch (value.kind) {
         case ValueKind.Invalid:
             return null;
         case ValueKind.Uninitialized:
             return undefined;
         case ValueKind.Boolean:
-            return x.toBoolean();
+            return value.toBoolean();
         case ValueKind.String:
-            return x.value;
+            return value.value;
         case ValueKind.Int32:
         case ValueKind.Float:
         case ValueKind.Double:
-            return x.getValue();
+            return value.getValue();
         case ValueKind.Int64:
-            return x.getValue().toNumber();
+            return value.getValue().toNumber();
         case ValueKind.Interface:
         case ValueKind.Object:
-            if (x instanceof RoArray || x instanceof RoList) {
-                return x.elements.map((el) => jsValueOf(el, visitedNodes));
-            } else if (x instanceof RoByteArray) {
-                return x.elements;
-            } else if (x instanceof RoSGNode) {
-                return fromSGNode(x, visitedNodes);
-            } else if (x instanceof RoAssociativeArray) {
-                return fromAssociativeArray(x);
-            } else if (x instanceof BrsComponent) {
-                return { _component_: x.getComponentName() };
-            } else if (x instanceof BrsInterface) {
-                return { _interface_: x.getInterfaceName() };
+            if (value instanceof RoArray || value instanceof RoList) {
+                return value.elements.map((el) => jsValueOf(el, visitedNodes));
+            } else if (value instanceof RoByteArray) {
+                return value.elements;
+            } else if (value instanceof RoSGNode) {
+                return fromSGNode(value, visitedNodes);
+            } else if (value instanceof RoAssociativeArray) {
+                return fromAssociativeArray(value);
+            } else if (value instanceof BrsComponent) {
+                return { _component_: value.getComponentName() };
+            } else if (value instanceof BrsInterface) {
+                return { _interface_: value.getInterfaceName() };
             }
             break;
         case ValueKind.Callable:
-            return { _callable_: x.name };
+            return { _callable_: value.name };
     }
 }
 
@@ -621,7 +648,7 @@ export function fromSGNode(node: RoSGNode, visited?: WeakSet<RoSGNode>): FlexObj
     if (visited.has(node)) {
         return {
             _circular_: `${getNodeType(node.nodeSubtype)}:${node.nodeSubtype}`,
-            _id_: node.getId(),
+            _address_: node.sgNode.address,
         };
     }
     visited.add(node);
@@ -631,6 +658,7 @@ export function fromSGNode(node: RoSGNode, visited?: WeakSet<RoSGNode>): FlexObj
     const observed: string[] = [];
 
     result["_node_"] = `${getNodeType(node.nodeSubtype)}:${node.nodeSubtype}`;
+    result["_address_"] = node.sgNode.address;
 
     for (const [name, field] of fields) {
         if (!field.isHidden()) {

@@ -1,10 +1,5 @@
-import { FieldKind, FieldModel } from "./Field";
-import { AAMember } from "../components/RoAssociativeArray";
-import { LayoutGroup } from "./LayoutGroup";
-import { IfDraw2D, Rect } from "../interfaces/IfDraw2D";
-import { Interpreter } from "../..";
-import { rotateTranslation } from "../../scenegraph/SGUtil";
 import {
+    AAMember,
     BrsBoolean,
     BrsInvalid,
     BrsString,
@@ -16,11 +11,16 @@ import {
     isBrsString,
     jsValueOf,
     Label,
+    LayoutGroup,
     RoArray,
     RoFont,
-    sgRoot,
     RoSGNode,
+    sgRoot,
 } from "..";
+import { FieldKind, FieldModel } from "./Field";
+import { IfDraw2D, Rect } from "../interfaces/IfDraw2D";
+import { Interpreter } from "../..";
+import { rotateTranslation } from "../../scenegraph/SGUtil";
 
 export class ButtonGroup extends LayoutGroup {
     readonly defaultFields: FieldModel[] = [
@@ -168,14 +168,14 @@ export class ButtonGroup extends LayoutGroup {
         if (!buttons) {
             return;
         }
-        const buttonsCount = Math.max(buttons.length, this.children.length);
+        const buttonsCount = Math.max(buttons.length, this.sgNode.children.length);
         const focusedFont = this.getFieldValue("focusedTextFont") as Font;
         const buttonHeight = this.getFieldValueJS("buttonHeight") as number;
         this.width = this.calculateButtonWidth(buttons, focusedFont.createDrawFont());
         for (let i = 0; i < buttonsCount; i++) {
             const buttonText = buttons[i];
             if (buttonText) {
-                let button = this.children[i] as Button;
+                let button = this.sgNode.children[i] as Button;
                 if (!button) {
                     button = this.createButton();
                 }
@@ -201,7 +201,7 @@ export class ButtonGroup extends LayoutGroup {
                 break;
             }
         }
-        this.children.splice(buttons.length);
+        this.sgNode.children.splice(buttons.length);
     }
 
     private createButton(): Button {
@@ -219,11 +219,11 @@ export class ButtonGroup extends LayoutGroup {
     private refreshFocus() {
         const focusedNode = sgRoot.focused;
         if (
-            this.children.length &&
+            this.sgNode.children.length &&
             focusedNode instanceof RoSGNode &&
             (focusedNode === this || focusedNode.getNodeParent() === this)
         ) {
-            const focusedButton = this.children[this.focusIndex];
+            const focusedButton = this.sgNode.children[this.focusIndex];
             if (focusedNode !== focusedButton && focusedButton instanceof RoSGNode) {
                 sgRoot.setFocused(focusedButton);
             }

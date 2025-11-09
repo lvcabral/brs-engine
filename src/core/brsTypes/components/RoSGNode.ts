@@ -1,33 +1,32 @@
 import {
-    BrsValue,
-    ValueKind,
-    BrsString,
-    BrsInvalid,
-    BrsBoolean,
-    Uninitialized,
-    getBrsValueFromFieldType,
-} from "../BrsType";
-import { BrsComponent, BrsIterable } from "./BrsComponent";
-import {
     AAMember,
+    BrsBoolean,
+    BrsEvent,
+    BrsInvalid,
+    BrsString,
     BrsType,
-    RoMessagePort,
+    BrsValue,
+    FlexObject,
+    getBrsValueFromFieldType,
+    getTextureManager,
     Int32,
+    isBoxable,
+    isBrsString,
+    isInvalid,
+    isUnboxable,
+    jsValueOf,
     RoArray,
     RoAssociativeArray,
-    toAssociativeArray,
-    BrsEvent,
-    jsValueOf,
-    getTextureManager,
-    isBrsString,
-    sgRoot,
-    RoInvalid,
-    isUnboxable,
     RoFunction,
-    isBoxable,
-    isInvalid,
-    FlexObject,
+    RoHttpAgent,
+    RoInvalid,
+    RoMessagePort,
+    sgRoot,
+    toAssociativeArray,
+    Uninitialized,
+    ValueKind,
 } from "..";
+import { BrsComponent, BrsIterable } from "./BrsComponent";
 import { Callable, StdlibArgument } from "../Callable";
 import { Stmt } from "../../parser";
 import { Interpreter } from "../../interpreter";
@@ -36,14 +35,20 @@ import { createNodeByType, isSubtypeCheck, subtypeHierarchy } from "../../sceneg
 import { Field, FieldAlias, FieldKind, FieldModel } from "../nodes/Field";
 import { Rect, IfDraw2D } from "../interfaces/IfDraw2D";
 import { BrsDevice } from "../../device/BrsDevice";
-import { RoHttpAgent } from "./RoHttpAgent";
+import { genHexAddress, ThreadInfo } from "../../common";
+
+type SGNode = {
+    address: string;
+    readonly fields: Map<string, Field>;
+    readonly aliases: Map<string, FieldAlias>;
+    readonly children: (RoSGNode | BrsInvalid)[];
+    parent: RoSGNode | BrsInvalid;
+    owningThread: ThreadInfo;
+};
 
 export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     readonly kind = ValueKind.Object;
-    protected fields = new Map<string, Field>();
-    protected aliases = new Map<string, FieldAlias>();
-    protected children: (RoSGNode | BrsInvalid)[] = [];
-    protected parent: RoSGNode | BrsInvalid = BrsInvalid.Instance;
+    readonly sgNode: SGNode;
     protected triedInitFocus: boolean = false;
     protected httpAgent: RoHttpAgent;
     rectLocal: Rect = { x: 0, y: 0, width: 0, height: 0 };
@@ -63,6 +68,14 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     constructor(initializedFields: AAMember[], readonly nodeSubtype: string = "Node") {
         super("roSGNode");
         this.setExtendsType();
+        this.sgNode = {
+            address: genHexAddress(),
+            fields: new Map(),
+            aliases: new Map(),
+            children: [],
+            parent: BrsInvalid.Instance,
+            owningThread: sgRoot.getCurrentThread(),
+        };
 
         // All nodes start have some built-in fields when created.
         this.registerDefaultFields(this.defaultFields);
@@ -176,7 +189,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         return [
             `<Component: ${componentName}> =`,
             "{",
-            ...Array.from(this.fields.entries())
+            ...Array.from(this.sgNode.fields.entries())
                 .reverse()
                 .map(([key, value]) => `    ${key}: ${value.toString(this)}`),
             "}",
@@ -189,46 +202,59 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     }
 
     getElements() {
-        return Array.from(this.fields.keys())
+        return Array.from(this.sgNode.fields.keys())
             .sort()
             .map((key) => new BrsString(key));
     }
 
     getValues() {
-        return Array.from(this.fields.values())
+        return Array.from(this.sgNode.fields.values())
             .sort()
             .map((field: Field) => field.getValue());
     }
 
     getNodeFields() {
-        return this.fields;
+        return this.sgNode.fields;
     }
 
     getNodeChildren() {
-        return this.children;
+        return this.sgNode.children;
     }
 
-    cloneNode(interpreter: Interpreter, isDeepCopy: boolean): BrsType {
-        const clonedNode = createNodeByType(interpreter, new BrsString(this.nodeSubtype));
+    cloneNode(isDeepCopy: boolean, interpreter?: Interpreter, visitedNodes?: WeakMap<RoSGNode, RoSGNode>): BrsType {
+        visitedNodes ??= new WeakMap<RoSGNode, RoSGNode>();
+        if (visitedNodes.has(this)) {
+            return visitedNodes.get(this)!;
+        }
+        const clonedNode = createNodeByType(new BrsString(this.nodeSubtype));
         if (!(clonedNode instanceof RoSGNode)) {
             return BrsInvalid.Instance;
         }
+        visitedNodes.set(this, clonedNode);
         // Clone fields
-        for (const [key, field] of this.fields) {
-            const clonedField = new Field(
-                field.getValue(false),
-                field.getType(),
-                field.isAlwaysNotify(),
-                field.isHidden()
-            );
-            clonedNode.fields.set(key, clonedField);
+        for (const [key, field] of this.sgNode.fields) {
+            if (this.sgNode.aliases.has(key) && interpreter) {
+                const parentType = subtypeHierarchy.get(this.nodeSubtype) ?? "Node";
+                BrsDevice.stderr.write(
+                    `warning,BRIGHTSCRIPT: ERROR: roSGNode.Clone: No such field ${parentType}::${key}: ${
+                        interpreter?.formatLocation() ?? ""
+                    }`
+                );
+                return BrsInvalid.Instance;
+            }
+            let fieldValue = field.getValue(false);
+            if (fieldValue instanceof RoSGNode) {
+                fieldValue = fieldValue.deepCopy();
+            }
+            const clonedField = new Field(fieldValue, field.getType(), field.isAlwaysNotify(), field.isHidden());
+            clonedNode.sgNode.fields.set(key, clonedField);
         }
-        // Clone children if deep copy
+        // Clone children if deep copy param is set
         if (isDeepCopy) {
-            for (const child of this.children) {
+            for (const child of this.sgNode.children) {
                 let newChild: BrsType = BrsInvalid.Instance;
                 if (child instanceof RoSGNode) {
-                    newChild = child.cloneNode(interpreter, isDeepCopy);
+                    newChild = child.cloneNode(true, interpreter, visitedNodes);
                 }
                 clonedNode.appendChildToParent(newChild);
             }
@@ -236,21 +262,35 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         return clonedNode;
     }
 
-    deepCopy(interpreter?: Interpreter): BrsType {
-        if (!interpreter) {
-            return this;
-        }
-        const copiedNode = createNodeByType(interpreter, new BrsString(this.nodeSubtype));
+    deepCopy(visitedNodes?: WeakMap<RoSGNode, RoSGNode>): BrsType {
+        visitedNodes ??= new WeakMap<RoSGNode, RoSGNode>();
+        const copiedNode = createNodeByType(new BrsString(this.nodeSubtype));
         if (!(copiedNode instanceof RoSGNode)) {
             return new RoInvalid();
         }
-        for (const [key, field] of this.fields) {
-            copiedNode.fields.set(key, field);
+        copiedNode.sgNode.address = this.sgNode.address;
+        visitedNodes.set(this, copiedNode);
+        for (const [key, field] of this.sgNode.fields) {
+            let fieldObject = field;
+            let fieldValue = field.getValue(false);
+            if (fieldValue instanceof RoSGNode) {
+                if (visitedNodes.has(fieldValue)) {
+                    fieldValue = visitedNodes.get(fieldValue)!;
+                } else {
+                    fieldValue = fieldValue.deepCopy(visitedNodes);
+                }
+                fieldObject = new Field(fieldValue, field.getType(), field.isAlwaysNotify(), field.isHidden());
+            }
+            copiedNode.sgNode.fields.set(key, fieldObject);
         }
-        for (const child of this.children) {
+        for (const child of this.sgNode.children) {
             let newChild: BrsType = BrsInvalid.Instance;
             if (child instanceof RoSGNode) {
-                newChild = child.deepCopy(interpreter);
+                if (visitedNodes.has(child)) {
+                    newChild = visitedNodes.get(child)!;
+                } else {
+                    newChild = child.deepCopy(visitedNodes);
+                }
             }
             copiedNode.appendChildToParent(newChild);
         }
@@ -273,7 +313,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         // method with the desired name separately? That last bit would work but it's pretty gross.
         // That'd allow roArrays to have methods with the methods not accessible via `arr["count"]`.
         // Same with RoAssociativeArrays I guess.
-        const field = this.fields.get(index.getValue().toLowerCase());
+        const field = this.sgNode.fields.get(index.getValue().toLowerCase());
         if (field) {
             const value = field.getValue();
             if (value instanceof RoAssociativeArray || value instanceof RoArray) {
@@ -294,8 +334,8 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         const fieldName = index.getValue();
         const mapKey = fieldName.toLowerCase();
         const fieldType = kind ?? FieldKind.fromBrsType(value);
-        const alias = this.aliases.get(mapKey);
-        let field = this.fields.get(mapKey);
+        const alias = this.sgNode.aliases.get(mapKey);
+        let field = this.sgNode.fields.get(mapKey);
         if (field && field.getType() !== FieldKind.String && isBrsString(value)) {
             // If the field is not a string, but the value is a string, convert it.
             value = getBrsValueFromFieldType(field.getType(), value.getValue());
@@ -304,7 +344,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             // RBI does not create a new field if the value isn't valid.
             if (fieldType && alwaysNotify !== undefined) {
                 field = new Field(value, fieldType, alwaysNotify);
-                this.fields.set(mapKey, field);
+                this.sgNode.fields.set(mapKey, field);
                 this.notified = true;
                 this.changed = true;
             } else {
@@ -326,7 +366,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             // Fields are not overwritten if they haven't the same type.
             // Except Numbers and Booleans that can be converted to string fields.
             this.notified = field.setValue(value, true);
-            this.fields.set(mapKey, field);
+            this.sgNode.fields.set(mapKey, field);
             this.changed = true;
         } else if (!isInvalid(value)) {
             BrsDevice.stderr.write(`warning,BRIGHTSCRIPT: ERROR: roSGNode.AddReplace: "${fieldName}": Type mismatch!`);
@@ -342,20 +382,20 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         let defaultValue = getBrsValueFromFieldType(type);
         let fieldKind = FieldKind.fromString(type);
 
-        if (defaultValue !== Uninitialized.Instance && !this.fields.has(fieldName)) {
+        if (defaultValue !== Uninitialized.Instance && !this.sgNode.fields.has(fieldName)) {
             this.set(new BrsString(fieldName), defaultValue, alwaysNotify, fieldKind);
         }
     }
 
     addNodeFieldAlias(fieldName: string, field: Field, childNode: string, childField: string) {
-        this.fields.set(fieldName.toLowerCase(), field);
-        this.aliases.set(fieldName.toLowerCase(), { nodeId: childNode, fieldName: childField });
+        this.sgNode.fields.set(fieldName.toLowerCase(), field);
+        this.sgNode.aliases.set(fieldName.toLowerCase(), { nodeId: childNode, fieldName: childField });
     }
 
     // Used to setup values for the node fields without notifying observers
     setFieldValue(fieldName: string, value: BrsType, alwaysNotify: boolean = false) {
         const mapKey = fieldName.toLowerCase();
-        let field = this.fields.get(mapKey);
+        let field = this.sgNode.fields.get(mapKey);
         if (field) {
             field.setValue(value, false);
         } else {
@@ -365,39 +405,39 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             }
         }
         if (field) {
-            this.fields.set(mapKey, field);
+            this.sgNode.fields.set(mapKey, field);
             this.changed = true;
         }
     }
 
     getFieldValue(fieldName: string) {
-        const field = this.fields.get(fieldName.toLowerCase());
+        const field = this.sgNode.fields.get(fieldName.toLowerCase());
         return field ? field.getValue() : BrsInvalid.Instance;
     }
 
     getFieldValueJS(fieldName: string) {
-        const field = this.fields.get(fieldName.toLowerCase());
+        const field = this.sgNode.fields.get(fieldName.toLowerCase());
         return field ? jsValueOf(field.getValue()) : undefined;
     }
 
     getNodeParent() {
-        return this.parent;
+        return this.sgNode.parent;
     }
 
     setNodeParent(parent: RoSGNode) {
-        this.parent = parent;
+        this.sgNode.parent = parent;
     }
 
     removeParent() {
-        this.parent = BrsInvalid.Instance;
+        this.sgNode.parent = BrsInvalid.Instance;
     }
 
     // recursively search for any child that's focused via DFS
     isChildrenFocused(interpreter: Interpreter): boolean {
-        if (this.children.length === 0) {
+        if (this.sgNode.children.length === 0) {
             return false;
         }
-        for (const childNode of this.children) {
+        for (const childNode of this.sgNode.children) {
             if (!(childNode instanceof RoSGNode)) {
                 continue;
             }
@@ -417,7 +457,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     }
 
     renderChildren(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
-        for (const node of this.children) {
+        for (const node of this.sgNode.children) {
             if (!(node instanceof RoSGNode)) {
                 continue;
             }
@@ -434,7 +474,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         infoFields?: RoArray
     ) {
         let result = BrsBoolean.False;
-        const field = this.fields.get(fieldName.value.toLowerCase());
+        const field = this.sgNode.fields.get(fieldName.value.toLowerCase());
         if (field instanceof Field) {
             let callableOrPort: Callable | RoMessagePort | BrsInvalid = BrsInvalid.Instance;
             if (!interpreter.environment.hostNode) {
@@ -536,7 +576,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         }
 
         // visit each child
-        for (const child of node.children) {
+        for (const child of node.sgNode.children) {
             if (!(child instanceof RoSGNode)) {
                 continue;
             }
@@ -591,7 +631,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     protected linkField(node: RoSGNode, fieldName: string, thisField?: string) {
         const field = node.getNodeFields().get(fieldName.toLowerCase());
         if (field) {
-            this.fields.set((thisField ?? fieldName).toLowerCase(), field);
+            this.sgNode.fields.set((thisField ?? fieldName).toLowerCase(), field);
         }
         return field;
     }
@@ -599,13 +639,13 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     /** Removes a field from this Node */
     private removeFieldEntry(fieldName: string): boolean {
         const fieldKey = fieldName.toLowerCase();
-        const field = this.fields.get(fieldKey);
+        const field = this.sgNode.fields.get(fieldKey);
         if (!field) {
             return false;
         }
         field.clearObservers();
-        const removedField = this.fields.delete(fieldKey);
-        const removedAlias = this.aliases.delete(fieldKey);
+        const removedField = this.sgNode.fields.delete(fieldKey);
+        const removedAlias = this.sgNode.aliases.delete(fieldKey);
         const removed = removedField || removedAlias;
         this.changed ||= removed;
         return removed;
@@ -625,7 +665,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             if (element instanceof RoAssociativeArray) {
                 // Create a new child node based on the subtype
                 const childSubtype = jsValueOf(element.get(new BrsString("subtype"))) ?? subtype;
-                const childNode = createNodeByType(interpreter, new BrsString(childSubtype));
+                const childNode = createNodeByType(new BrsString(childSubtype), interpreter);
                 if (childNode instanceof RoSGNode) {
                     this.populateNodeFromAA(interpreter, childNode, element, createFields, childSubtype);
                     node.appendChildToParent(childNode);
@@ -661,7 +701,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
                 continue;
             }
             // Set all other fields, respecting the createFields parameter
-            else if (node.fields.has(fieldName) || (createFields && !isInvalid(value))) {
+            else if (node.sgNode.fields.has(fieldName) || (createFields && !isInvalid(value))) {
                 node.set(new BrsString(key), value, false);
                 this.changed = true;
             }
@@ -692,10 +732,10 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
 
     removeChildByReference(child: BrsType): boolean {
         if (child instanceof RoSGNode) {
-            let spliceIndex = this.children.indexOf(child);
+            let spliceIndex = this.sgNode.children.indexOf(child);
             if (spliceIndex >= 0) {
                 child.removeParent();
-                this.children.splice(spliceIndex, 1);
+                this.sgNode.children.splice(spliceIndex, 1);
             }
             this.changed = true;
             return true;
@@ -705,10 +745,10 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
 
     appendChildToParent(child: BrsType): boolean {
         if (child instanceof RoSGNode) {
-            if (this.children.includes(child)) {
+            if (this.sgNode.children.includes(child)) {
                 return true;
             }
-            this.children.push(child);
+            this.sgNode.children.push(child);
             child.setNodeParent(this);
             this.changed = true;
             return true;
@@ -717,24 +757,24 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     }
 
     private replaceChildAtIndex(newChild: BrsType, index: Int32): boolean {
-        let childrenSize = this.children.length;
+        let childrenSize = this.sgNode.children.length;
         let indexValue = index.getValue();
         if (newChild instanceof RoSGNode && indexValue < childrenSize) {
             // If newChild is already a child, remove it first.
             this.removeChildByReference(newChild);
             if (indexValue >= 0) {
                 // The check is done to see if indexValue is inside the
-                // new length of this.children (in case newChild was
+                // new length of this.sgNode.children (in case newChild was
                 // removed above)
-                if (indexValue < this.children.length) {
+                if (indexValue < this.sgNode.children.length) {
                     // Remove the parent of the child at indexValue
-                    const oldChild = this.children[indexValue];
+                    const oldChild = this.sgNode.children[indexValue];
                     if (oldChild instanceof RoSGNode) {
                         oldChild.removeParent();
                     }
                 }
                 newChild.setNodeParent(this);
-                this.children.splice(indexValue, 1, newChild);
+                this.sgNode.children.splice(indexValue, 1, newChild);
             }
             return true;
         }
@@ -743,12 +783,12 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
 
     private insertChildAtIndex(child: BrsType, index: Int32): boolean {
         if (child instanceof RoSGNode) {
-            let childrenSize = this.children.length;
+            let childrenSize = this.sgNode.children.length;
             let indexValue = index.getValue() < 0 ? childrenSize : index.getValue();
             // Remove node if it already exists
             this.removeChildByReference(child);
             child.setNodeParent(this);
-            this.children.splice(indexValue, 0, child);
+            this.sgNode.children.splice(indexValue, 0, child);
             return true;
         }
         return false;
@@ -764,9 +804,9 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     protected createPath(node: RoSGNode, reverse: boolean = true): RoSGNode[] {
         let path: RoSGNode[] = [node];
 
-        while (node.parent instanceof RoSGNode) {
-            path.push(node.parent);
-            node = node.parent;
+        while (node.sgNode.parent instanceof RoSGNode) {
+            path.push(node.sgNode.parent);
+            node = node.sgNode.parent;
         }
 
         return reverse ? path.reverse() : path;
@@ -801,13 +841,13 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         }
     }
 
-    /* Takes a list of models and creates fields with default values, and adds them to this.fields. */
+    /* Takes a list of models and creates fields with default values, and adds them to this.sgNode.fields. */
     protected registerDefaultFields(fields: FieldModel[]) {
         for (const field of fields) {
             const value = getBrsValueFromFieldType(field.type, field.value);
             const fieldType = FieldKind.fromString(field.type);
             if (fieldType) {
-                this.fields.set(
+                this.sgNode.fields.set(
                     field.name.toLowerCase(),
                     new Field(value, fieldType, !!field.alwaysNotify, field.hidden)
                 );
@@ -825,7 +865,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         for (const field of fields) {
             let fieldType = FieldKind.fromBrsType(field.value);
             if (fieldType) {
-                this.fields.set(field.name.value.toLowerCase(), new Field(field.value, fieldType, false));
+                this.sgNode.fields.set(field.name.value.toLowerCase(), new Field(field.value, fieldType, false));
             }
         }
     }
@@ -914,7 +954,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter) => {
-            this.fields.clear();
+            this.sgNode.fields.clear();
             return BrsInvalid.Instance;
         },
     });
@@ -953,7 +993,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter) => {
-            return new Int32(this.fields.size);
+            return new Int32(this.sgNode.fields.size);
         },
     });
 
@@ -964,7 +1004,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, str: BrsString) => {
-            return BrsBoolean.from(this.fields.has(str.value.toLowerCase()));
+            return BrsBoolean.from(this.sgNode.fields.has(str.value.toLowerCase()));
         },
     });
 
@@ -981,13 +1021,13 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
 
                     // if the field doesn't have a valid value, RBI doesn't add it.
                     if (fieldType) {
-                        this.fields.set(key, new Field(value, fieldType, false));
+                        this.sgNode.fields.set(key, new Field(value, fieldType, false));
                         this.changed = true;
                     }
                 }
             } else if (obj instanceof RoSGNode) {
                 for (const [key, value] of obj.getNodeFields()) {
-                    this.fields.set(key, value);
+                    this.sgNode.fields.set(key, value);
                     this.changed = true;
                 }
             }
@@ -1066,7 +1106,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
 
             for (const [key, value] of fields.getValue()) {
                 let fieldName = new BrsString(key);
-                if (!this.fields.has(key)) {
+                if (!this.sgNode.fields.has(key)) {
                     this.set(fieldName, value, false);
                     this.changed = true;
                 }
@@ -1083,27 +1123,17 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter) => {
-            const renderThread: FlexObject = { id: "0", type: "Render" };
-            let currentThread: FlexObject = { id: BrsDevice.threadId.toString() };
-            if (BrsDevice.threadId === 0) {
-                const sceneName = sgRoot.scene?.nodeSubtype || "";
-                renderThread.name = sceneName;
-                currentThread = { ...renderThread };
-            } else if (sgRoot.tasks[0]) {
-                currentThread.name = sgRoot.tasks[0].name || "";
-                currentThread.type = "Task";
-            }
-            const owningThread: FlexObject = { ...currentThread };
             const threadData: FlexObject = {
-                currentThread: currentThread,
+                currentThread: sgRoot.getCurrentThread(),
                 node: {
-                    address: "",
+                    address: this.sgNode.address,
                     id: this.getId(),
                     type: this.nodeSubtype,
-                    owningThread: owningThread,
-                    willRendezvousFromCurrentThread: BrsDevice.threadId > 0 ? "Yes" : "No",
+                    owningThread: this.sgNode.owningThread,
+                    willRendezvousFromCurrentThread:
+                        this.sgNode.owningThread.id === sgRoot.getCurrentThread().id ? "No" : "Yes",
                 },
-                renderThread: renderThread,
+                renderThread: sgRoot.getRenderThread(),
             };
             return toAssociativeArray(threadData);
         },
@@ -1127,14 +1157,14 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             args: [new StdlibArgument("fieldName", ValueKind.String), new StdlibArgument("data", ValueKind.Object)],
             returns: ValueKind.Int32,
         },
-        impl: (interpreter: Interpreter, fieldName: BrsString, data: RoAssociativeArray) => {
+        impl: (_: Interpreter, fieldName: BrsString, data: RoAssociativeArray) => {
             if (!(data instanceof RoAssociativeArray)) {
                 BrsDevice.stderr.write(
                     `warning,BRIGHTSCRIPT: ERROR: roSGNode.moveIntoField: Move must be AA: ${location}`
                 );
                 return new Int32(-1);
             }
-            const field = this.fields.get(fieldName.value.toLowerCase());
+            const field = this.sgNode.fields.get(fieldName.value.toLowerCase());
             if (!field) {
                 BrsDevice.stderr.write(
                     `warning,BRIGHTSCRIPT: ERROR: roSGNode.moveIntoField: Could not find field '"${fieldName.value}"': ${location}`
@@ -1149,7 +1179,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             const moved: AAMember[] = [];
             for (const [key, value] of data.elements) {
                 if (value instanceof RoArray || value instanceof RoAssociativeArray || value instanceof RoSGNode) {
-                    moved.push({ name: new BrsString(key), value: value.deepCopy(interpreter) });
+                    moved.push({ name: new BrsString(key), value: value.deepCopy() });
                 } else if (isBoxable(value) && !(value instanceof Callable)) {
                     moved.push({ name: new BrsString(key), value: value });
                 } else if (isUnboxable(value) && !(value instanceof RoFunction)) {
@@ -1170,7 +1200,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter, fieldName: BrsString) => {
-            const field = this.fields.get(fieldName.value.toLowerCase());
+            const field = this.sgNode.fields.get(fieldName.value.toLowerCase());
             if (!field) {
                 BrsDevice.stderr.write(
                     `warning,BRIGHTSCRIPT: ERROR: roSGNode.moveFromField: Could not find field '"${fieldName.value}"': ${location}`
@@ -1196,10 +1226,10 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, fieldName: BrsString, data: RoAssociativeArray) => {
-            if (BrsDevice.threadId !== 0 || !(data instanceof RoAssociativeArray)) {
+            if (sgRoot.threadId !== 0 || !(data instanceof RoAssociativeArray)) {
                 return BrsBoolean.False;
             }
-            const field = this.fields.get(fieldName.value.toLowerCase());
+            const field = this.sgNode.fields.get(fieldName.value.toLowerCase());
             if (!field) {
                 BrsDevice.stderr.write(
                     `warning,BRIGHTSCRIPT: ERROR: roSGNode.setRef: Could not find field '"${fieldName.value}"': ${location}`
@@ -1220,7 +1250,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, fieldName: BrsString) => {
-            const field = this.fields.get(fieldName.value.toLowerCase());
+            const field = this.sgNode.fields.get(fieldName.value.toLowerCase());
             return BrsBoolean.from(!!field && field.getType() === FieldKind.AssocArray && field.isValueRef());
         },
     });
@@ -1232,7 +1262,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Dynamic,
         },
         impl: (_: Interpreter, fieldName: BrsString) => {
-            const field = this.fields.get(fieldName.value.toLowerCase());
+            const field = this.sgNode.fields.get(fieldName.value.toLowerCase());
             if (!field) {
                 BrsDevice.stderr.write(
                     `warning,BRIGHTSCRIPT: ERROR: roSGNode.getRef: Could not find field '"${fieldName.value}"': ${location}`
@@ -1268,7 +1298,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         impl: (_: Interpreter) => {
             let packagedFields: AAMember[] = [];
 
-            for (const [name, field] of this.fields) {
+            for (const [name, field] of this.sgNode.fields) {
                 if (field.isHidden()) {
                     continue;
                 }
@@ -1290,7 +1320,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.String,
         },
         impl: (_: Interpreter, fieldName: BrsString) => {
-            const field = this.fields.get(fieldName.value.toLowerCase());
+            const field = this.sgNode.fields.get(fieldName.value.toLowerCase());
             return field ? new BrsString(field.getType()) : new BrsString("<NoSuchField>");
         },
     });
@@ -1304,7 +1334,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         impl: (_: Interpreter) => {
             let packagedTypes: AAMember[] = [];
 
-            for (const [name, field] of this.fields) {
+            for (const [name, field] of this.sgNode.fields) {
                 if (field.isHidden()) {
                     continue;
                 }
@@ -1326,7 +1356,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, fieldName: BrsString) => {
-            return BrsBoolean.from(this.fields.has(fieldName.value.toLowerCase()));
+            return BrsBoolean.from(this.sgNode.fields.has(fieldName.value.toLowerCase()));
         },
     });
 
@@ -1376,7 +1406,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
                 return BrsBoolean.False;
             }
 
-            let field = this.fields.get(fieldName.value.toLowerCase());
+            let field = this.sgNode.fields.get(fieldName.value.toLowerCase());
             if (field instanceof Field) {
                 field.removeUnscopedObservers();
             }
@@ -1462,7 +1492,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
                 return BrsBoolean.False;
             }
 
-            let field = this.fields.get(fieldName.value.toLowerCase());
+            let field = this.sgNode.fields.get(fieldName.value.toLowerCase());
             if (field instanceof Field) {
                 field.removeScopedObservers(interpreter.environment.hostNode);
             }
@@ -1516,7 +1546,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, fieldName: BrsString, value: BrsType) => {
-            let field = this.fields.get(fieldName.value.toLowerCase());
+            let field = this.sgNode.fields.get(fieldName.value.toLowerCase());
             if (!field) {
                 return BrsBoolean.False;
             }
@@ -1543,7 +1573,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
 
             for (const [key, value] of fields.getValue()) {
                 const fieldName = new BrsString(key.toLowerCase());
-                if (this.fields.has(key.toLowerCase())) {
+                if (this.sgNode.fields.has(key.toLowerCase())) {
                     this.set(fieldName, value, false);
                 }
             }
@@ -1598,7 +1628,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter) => {
-            return new Int32(this.children.length);
+            return new Int32(this.sgNode.children.length);
         },
     });
 
@@ -1625,12 +1655,12 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         impl: (_: Interpreter, num_children: Int32, index: Int32) => {
             const numChildrenValue = num_children.getValue();
             const indexValue = index.getValue();
-            const childrenSize = this.children.length;
+            const childrenSize = this.sgNode.children.length;
             let returnedChildren: RoArray;
             if (numChildrenValue <= -1 && indexValue === 0) {
                 //short hand to return all children
                 returnedChildren = new RoArray(
-                    this.children.slice().map((child) => {
+                    this.sgNode.children.slice().map((child) => {
                         return child instanceof RoSGNode ? child : child.box();
                     })
                 );
@@ -1640,7 +1670,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             } else {
                 //only valid cases
                 returnedChildren = new RoArray(
-                    this.children.slice(indexValue, indexValue + numChildrenValue).map((child) => {
+                    this.sgNode.children.slice(indexValue, indexValue + numChildrenValue).map((child) => {
                         return child instanceof RoSGNode ? child : child.box();
                     })
                 );
@@ -1670,7 +1700,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Dynamic,
         },
         impl: (_: Interpreter) => {
-            return this.parent;
+            return this.sgNode.parent;
         },
     });
 
@@ -1682,7 +1712,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Object,
         },
         impl: (interpreter: Interpreter, nodeType: BrsString) => {
-            let child = createNodeByType(interpreter, nodeType);
+            let child = createNodeByType(nodeType, interpreter);
             if (child instanceof RoSGNode) {
                 this.appendChildToParent(child);
             }
@@ -1742,7 +1772,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             let indexValue = index.getValue();
 
             if (numChildrenValue > 0) {
-                const removedChildren = this.children.splice(indexValue, numChildrenValue);
+                const removedChildren = this.sgNode.children.splice(indexValue, numChildrenValue);
                 for (const node of removedChildren.filter((n) => n instanceof RoSGNode)) {
                     node.removeParent();
                 }
@@ -1765,8 +1795,8 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         impl: (_: Interpreter, index: Int32) => {
             const indexValue = index.getValue();
             let child: RoSGNode | BrsInvalid = BrsInvalid.Instance;
-            if (indexValue >= 0 && indexValue < this.children.length) {
-                child = this.children[indexValue];
+            if (indexValue >= 0 && indexValue < this.sgNode.children.length) {
+                child = this.sgNode.children[indexValue];
             }
             return child;
         },
@@ -1813,7 +1843,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             let numChildrenValue = num_children.getValue();
             let addedChildren: RoSGNode[] = [];
             for (let i = 0; i < numChildrenValue; i++) {
-                let child = createNodeByType(interpreter, subtype);
+                let child = createNodeByType(subtype, interpreter);
                 if (child instanceof RoSGNode) {
                     this.appendChildToParent(child);
                     addedChildren.push(child);
@@ -1900,11 +1930,11 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         },
         impl: (_: Interpreter, index: Int32) => {
             let indexValue = index.getValue();
-            let childrenSize = this.children.length;
+            let childrenSize = this.sgNode.children.length;
 
             if (indexValue < childrenSize) {
                 if (indexValue >= 0) {
-                    this.removeChildByReference(this.children[indexValue]);
+                    this.removeChildByReference(this.sgNode.children[indexValue]);
                 }
                 return BrsBoolean.True;
             }
@@ -1936,8 +1966,8 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
                 // Until that is implemented, the parameter does nothing.
 
                 // Remove parents child reference
-                if (this.parent instanceof RoSGNode) {
-                    this.parent.removeChildByReference(this);
+                if (this.sgNode.parent instanceof RoSGNode) {
+                    this.sgNode.parent.removeChildByReference(this);
                 }
                 newParent.appendChildToParent(this);
                 return BrsBoolean.True;
@@ -2047,8 +2077,8 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
 
             // climb parent hierarchy to find node to start search at
             let root: RoSGNode = this;
-            while (root.parent && root.parent instanceof RoSGNode) {
-                root = root.parent;
+            while (root.sgNode.parent && root.sgNode.parent instanceof RoSGNode) {
+                root = root.sgNode.parent;
             }
 
             // perform search
@@ -2096,7 +2126,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, roSGNode: RoSGNode) => {
-            return BrsBoolean.from(this === roSGNode);
+            return BrsBoolean.from(this.sgNode.address === roSGNode.sgNode.address);
         },
     });
 
@@ -2118,7 +2148,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Object,
         },
         impl: (interpreter: Interpreter, isDeepCopy: BrsBoolean) => {
-            return this.cloneNode(interpreter, isDeepCopy.toBoolean());
+            return this.cloneNode(isDeepCopy.toBoolean(), interpreter);
         },
     });
 
