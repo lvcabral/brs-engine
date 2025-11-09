@@ -517,7 +517,7 @@ function updateDeviceAssets() {
     if (deviceData.assets.byteLength) {
         return;
     }
-    fetch("./assets/common.zip")
+    fetch(`./assets/common.zip?v=${packageInfo.version}`)
         .then(async function (response) {
             if (response.status === 200 || response.status === 0) {
                 return response.blob().then(function (zipBlob) {
@@ -810,7 +810,7 @@ function updateBandwidth() {
 
 // Measure Bandwidth
 async function measureBandwidth() {
-    const testFileUrl = "https://brsfiddle.net/images/bmp-example-file-download-1024x1024.bmp";
+    const testFileUrl = `https://brsfiddle.net/images/bmp-example-file-download-1024x1024.bmp?v=${Date.now()}`;
     const startTime = Date.now();
 
     try {
