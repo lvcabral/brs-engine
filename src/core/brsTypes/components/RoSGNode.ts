@@ -221,7 +221,8 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         return this.sgNode.children;
     }
 
-    cloneNode(isDeepCopy: boolean, visitedNodes: WeakMap<RoSGNode, RoSGNode> = new WeakMap()): BrsType {
+    cloneNode(isDeepCopy: boolean, interpreter?: Interpreter, visitedNodes?: WeakMap<RoSGNode, RoSGNode>): BrsType {
+        visitedNodes ??= new WeakMap<RoSGNode, RoSGNode>();
         if (visitedNodes.has(this)) {
             return visitedNodes.get(this)!;
         }
@@ -232,25 +233,28 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         visitedNodes.set(this, clonedNode);
         // Clone fields
         for (const [key, field] of this.sgNode.fields) {
+            if (this.sgNode.aliases.has(key) && interpreter) {
+                const parentType = subtypeHierarchy.get(this.nodeSubtype) ?? "Node";
+                BrsDevice.stderr.write(
+                    `warning,BRIGHTSCRIPT: ERROR: roSGNode.Clone: No such field ${parentType}::${key}: ${
+                        interpreter?.formatLocation() ?? ""
+                    }`
+                );
+                return BrsInvalid.Instance;
+            }
             let fieldValue = field.getValue(false);
             if (fieldValue instanceof RoSGNode) {
-                if (visitedNodes.has(fieldValue)) {
-                    fieldValue = visitedNodes.get(fieldValue)!;
-                } else {
-                    const clonedFieldValue = fieldValue.cloneNode(isDeepCopy, visitedNodes) as RoSGNode;
-                    visitedNodes.set(fieldValue, clonedFieldValue);
-                    fieldValue = clonedFieldValue;
-                }
+                fieldValue = fieldValue.deepCopy();
             }
             const clonedField = new Field(fieldValue, field.getType(), field.isAlwaysNotify(), field.isHidden());
             clonedNode.sgNode.fields.set(key, clonedField);
         }
-        // Clone children if deep copy
+        // Clone children if deep copy param is set
         if (isDeepCopy) {
             for (const child of this.sgNode.children) {
                 let newChild: BrsType = BrsInvalid.Instance;
                 if (child instanceof RoSGNode) {
-                    newChild = child.cloneNode(true, visitedNodes);
+                    newChild = child.cloneNode(true, interpreter, visitedNodes);
                 }
                 clonedNode.appendChildToParent(newChild);
             }
@@ -265,7 +269,13 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         }
         copiedNode.sgNode.address = this.sgNode.address;
         for (const [key, field] of this.sgNode.fields) {
-            copiedNode.sgNode.fields.set(key, field);
+            let fieldObject = field;
+            let fieldValue = field.getValue(false);
+            if (fieldValue instanceof RoSGNode) {
+                fieldValue = fieldValue.deepCopy();
+                fieldObject = new Field(fieldValue, field.getType(), field.isAlwaysNotify(), field.isHidden());
+            }
+            copiedNode.sgNode.fields.set(key, fieldObject);
         }
         for (const child of this.sgNode.children) {
             let newChild: BrsType = BrsInvalid.Instance;
@@ -2127,8 +2137,8 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             args: [new StdlibArgument("isDeepCopy", ValueKind.Boolean)],
             returns: ValueKind.Object,
         },
-        impl: (_: Interpreter, isDeepCopy: BrsBoolean) => {
-            return this.cloneNode(isDeepCopy.toBoolean());
+        impl: (interpreter: Interpreter, isDeepCopy: BrsBoolean) => {
+            return this.cloneNode(isDeepCopy.toBoolean(), interpreter);
         },
     });
 

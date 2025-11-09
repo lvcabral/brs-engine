@@ -44,6 +44,9 @@ sub main()
         boxedInt: box(5),
         nodeField: createObject("roSGNode", "ContentNode")
     })
+    ' Add child nodes
+    node.CreateChild("ContentNode")
+    node.getChild(0).CreateChild("ContentNode")
 
     utils = CreateObject("roUtils")
     copy = utils.deepCopy(node)
@@ -63,14 +66,21 @@ sub main()
     print "node.boxedInt: "; node.boxedInt.getInt()
     print "copy.boxedInt: "; copy.boxedInt.getInt()
     print "clone.boxedInt: "; clone.boxedInt.getInt()
+    print "isSameObject(node, copy): "; utils.isSameObject(node, copy)
+    print "isSameObject(node, clone): "; utils.isSameObject(node, clone)
     print "isSameObject(node.aa, copy.aa): "; utils.isSameObject(node.aa, copy.aa)
     print "isSameObject(node.aa, clone.aa): "; utils.isSameObject(node.aa, clone.aa)
     print "isSameObject(node.nodeField, copy.nodeField): "; utils.isSameObject(node.nodeField, copy.nodeField)
     print "isSameObject(node.nodeField, clone.nodeField): "; utils.isSameObject(node.nodeField, clone.nodeField)
-    print "isSameNode(node.nodeField, copy.nodeField): "; node.nodeField.isSameNode(copy.nodeField)
-    print "isSameNode(node.nodeField, clone.nodeField): "; node.nodeField.isSameNode(clone.nodeField)
+    print "isSameObject(node:Child, copy:Child): "; utils.isSameObject(node.getChild(0), copy.getChild(0))
+    print "isSameObject(node:Child, clone:Child): "; utils.isSameObject(node.getChild(0), clone.getChild(0))
     print "isSameNode(node, copy): "; node.isSameNode(copy)
     print "isSameNode(node, clone): "; node.isSameNode(clone)
+    print "isSameNode(node.nodeField, copy.nodeField): "; node.nodeField.isSameNode(copy.nodeField)
+    print "isSameNode(node.nodeField, clone.nodeField): "; node.nodeField.isSameNode(clone.nodeField)
+    print "isSameNode(node:Child, copy:Child): "; node.getChild(0).isSameNode(copy.getChild(0))
+    print "isSameNode(node:Child, clone:Child): "; node.getChild(0).isSameNode(clone.getChild(0))
+    print "isSameNode(node:Grandchild, copy:Grandchild): "; node.getChild(0).getChild(0).isSameNode(copy.getChild(0).getChild(0))
 
     ' Test moveIntoField and moveFromField
     sub_array = [1, 2, 3]

@@ -292,7 +292,7 @@ export type ThreadInfo = {
     id: number;
     type: string;
     name: string;
-}
+};
 
 export type ThreadUpdate = {
     id: number;

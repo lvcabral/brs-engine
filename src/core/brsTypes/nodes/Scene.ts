@@ -71,7 +71,11 @@ export class Scene extends Group {
             let serializedValue: any;
             if (value instanceof RoSGNode) {
                 serializedValue = fromSGNode(value.cloneNode(false) as RoSGNode);
-                console.debug("Serialized SGNode field for Task update:", fieldName, JSON.stringify(serializedValue, null, 2));
+                console.debug(
+                    "Serialized SGNode field for Task update:",
+                    fieldName,
+                    JSON.stringify(serializedValue, null, 2)
+                );
             } else {
                 serializedValue = jsValueOf(value);
             }
