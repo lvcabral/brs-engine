@@ -752,6 +752,36 @@ describe("end to end brightscript functions", () => {
             "arrCopy[0]:  10 roInt",
             "arr[2]:  30     roInt",
             "arrCopy[2]:  3  roInt",
+            "node.link: http://www.example.com/image.jpg",
+            "copy.link: http://www.example.com/image.jpg",
+            "clone.link: http://www.example.com/image.jpg",
+            "node.aa.name: changed",
+            "copy.aa.name: changed",
+            "clone.aa.name: one",
+            "node.boxedInt:  10",
+            "copy.boxedInt:  10",
+            "clone.boxedInt:  5",
+            "isSameObject(node.aa, copy.aa): false",
+            "isSameObject(node.aa, clone.aa): false",
+            "isSameObject(node.nodeField, copy.nodeField): false",
+            "isSameObject(node.nodeField, clone.nodeField): false",
+            "isSameNode(node.nodeField, copy.nodeField): true",
+            "isSameNode(node.nodeField, clone.nodeField): true",
+            "isSameNode(node, copy): true",
+            "isSameNode(node, clone): false",
+            " 1",
+            "<Component: roAssociativeArray> =\n{\n}",
+            "<Component: roArray> =\n[\n    10\n    2\n    3\n]",
+            "<Component: roAssociativeArray> =\n" +
+                "{\n" +
+                "    arr: <Component: roArray>\n" +
+                "    bar: <Component: roArray>\n" +
+                '    foo: "hello"\n' +
+                "}",
+            "<Component: roArray> =\n[\n    1\n    2\n    3\n]",
+            "<Component: roArray> =\n[\n    4\n    5\n    6\n]",
+            '<Component: roAssociativeArray> =\n{\n    key: "value"\n}',
+            "<Component: roInvalid>",
         ]);
     });
 });

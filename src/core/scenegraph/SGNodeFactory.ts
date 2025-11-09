@@ -51,6 +51,7 @@ import {
     SoundEffect,
     ChannelStore,
     isInvalid,
+    toSGNode,
 } from "../brsTypes";
 import { TaskData } from "../common";
 
@@ -307,9 +308,9 @@ export function createNodeByType(type: BrsString, interpreter?: Interpreter): Ro
             node = initializeNode(interpreter!, type, typeDef);
         } else {
             BrsDevice.stderr.write(
-                `warning,BRIGHTSCRIPT: ERROR: roSGNode: Failed to create roSGNode with type ${
-                    type.value
-                }: ${interpreter?.formatLocation() ?? ""}`
+                `warning,BRIGHTSCRIPT: ERROR: roSGNode: Failed to create roSGNode with type ${type.value}: ${
+                    interpreter?.formatLocation() ?? ""
+                }`
             );
             return BrsInvalid.Instance;
         }
@@ -501,9 +502,11 @@ function loadTaskData(interpreter: Interpreter, node: RoSGNode, taskData: TaskDa
         restoreNode(interpreter, taskData.m.top, node, port);
     }
     if (taskData.scene?.["_node_"]) {
-        const nodeType = taskData.scene["_node_"].split(":")[1] ?? "Scene";
-        sgRoot.setScene(new Scene([], nodeType));
-        restoreNode(interpreter, taskData.scene, sgRoot.scene!);
+        const nodeType = taskData.scene["_node_"].split(":");
+        const scene = toSGNode(taskData.scene, nodeType[0], nodeType[1]);
+        if (scene instanceof Scene) {
+            sgRoot.setScene(scene);
+        }
     }
 }
 

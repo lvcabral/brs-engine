@@ -30,7 +30,7 @@ export class Timer extends RoSGNode {
         }
 
         const mapKey = index.getValue().toLowerCase();
-        const field = this.fields.get(mapKey);
+        const field = this.sgNode.fields.get(mapKey);
 
         if (field && mapKey === "control" && isBrsString(value)) {
             let control = value.getValue().toLowerCase();
@@ -43,7 +43,7 @@ export class Timer extends RoSGNode {
                 control = "none";
             }
             field.setValue(new BrsString(control));
-            this.fields.set(mapKey, field);
+            this.sgNode.fields.set(mapKey, field);
             return BrsInvalid.Instance;
         }
         return super.set(index, value, alwaysNotify, kind);
@@ -60,7 +60,7 @@ export class Timer extends RoSGNode {
         if (this.active && (now - this.lastFireTime) / 1000 >= duration) {
             this.lastFireTime = now;
             this.active = repeat;
-            this.fields.get("fire")?.setValue(BrsInvalid.Instance);
+            this.sgNode.fields.get("fire")?.setValue(BrsInvalid.Instance);
             if (this.jsCallback) {
                 this.jsCallback();
             }

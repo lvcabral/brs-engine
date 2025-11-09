@@ -340,7 +340,7 @@ export class LayoutGroup extends Group {
 
     private getLayoutChildren() {
         const children: Group[] = [];
-        for (const child of this.children) {
+        for (const child of this.sgNode.children) {
             if (child instanceof Group) {
                 children.push(child);
             }

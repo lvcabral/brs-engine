@@ -18,6 +18,7 @@ import {
     StandardDialog,
     toAssociativeArray,
     jsValueOf,
+    fromSGNode,
 } from "..";
 import { BrsDevice, Scope } from "../..";
 import { BlockEnd } from "../../parser/Statement";
@@ -66,12 +67,19 @@ export class Scene extends Group {
             }
         }
         // Refresh SharedObject with latest Node state
-        if (sync && sgRoot.tasks.length > 0 && this.changed && this.fields.has(fieldName)) {
+        if (sync && sgRoot.tasks.length > 0 && this.changed && this.sgNode.fields.has(fieldName)) {
+            let serializedValue: any;
+            if (value instanceof RoSGNode) {
+                serializedValue = fromSGNode(value.cloneNode(false) as RoSGNode);
+                console.debug("Serialized SGNode field for Task update:", fieldName, JSON.stringify(serializedValue, null, 2));
+            } else {
+                serializedValue = jsValueOf(value);
+            }
             const update: ThreadUpdate = {
-                id: BrsDevice.threadId,
+                id: sgRoot.threadId,
                 type: "scene",
                 field: fieldName,
-                value: jsValueOf(value),
+                value: serializedValue,
             };
             postMessage(update);
         }

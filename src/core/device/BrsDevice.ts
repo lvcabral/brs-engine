@@ -38,7 +38,6 @@ export class BrsDevice {
 
     static sharedArray: Int32Array = new Int32Array(0);
     static displayEnabled: boolean = true;
-    static threadId: number = 0;
     static singleKeyEvents: boolean = true; // Default Roku behavior is `true`
     static useCORSProxy: boolean = true; // If CORS proxy is configured, use it by default
     static lastRemote: number = 0;

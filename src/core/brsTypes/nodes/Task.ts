@@ -50,7 +50,7 @@ export class Task extends RoSGNode {
         }
         const validStates = ["init", "run", "stop", "done"];
         const mapKey = index.getValue().toLowerCase();
-        const field = this.fields.get(mapKey);
+        const field = this.sgNode.fields.get(mapKey);
 
         if (field && mapKey === "control" && isBrsString(value)) {
             let control = value.getValue().toLowerCase();
@@ -82,7 +82,7 @@ export class Task extends RoSGNode {
     }
 
     private setControlField(field: Field, control: string, sync: boolean) {
-        const state = this.fields.get("state") as Field;
+        const state = this.sgNode.fields.get("state") as Field;
         if (control === "run") {
             this.active = true;
         } else if (control === "stop" || control === "done") {
@@ -101,7 +101,7 @@ export class Task extends RoSGNode {
         field.setValue(new BrsString(control));
         if (state && control !== "" && control !== "init") {
             state.setValue(new BrsString(control));
-            this.fields.set("state", state);
+            this.sgNode.fields.set("state", state);
             if (this.id >= 0 && this.thread && sync) {
                 const update: ThreadUpdate = {
                     id: this.id,
@@ -138,6 +138,16 @@ export class Task extends RoSGNode {
         }
         if (!this.started) {
             this.taskBuffer = new SharedObject();
+            const cloneScene = sgRoot.scene?.cloneNode(false) as Scene;
+            if (cloneScene instanceof Scene) cloneScene.sgNode.address = sgRoot.scene?.sgNode.address!;
+            const serializedScene = cloneScene instanceof Scene ? fromSGNode(cloneScene) : undefined;
+            console.debug(
+                "Serialized Scene for Task:",
+                cloneScene?.sgNode.address,
+                sgRoot.scene?.sgNode.address,
+                this.nodeSubtype,
+                JSON.stringify(serializedScene, null, 2)
+            );
             const taskData: TaskData = {
                 id: this.id,
                 name: this.nodeSubtype,
@@ -146,7 +156,7 @@ export class Task extends RoSGNode {
                 tmp: BrsDevice.getTmpVolume(),
                 cacheFS: BrsDevice.getCacheFS(),
                 m: fromAssociativeArray(this.m),
-                scene: sgRoot.scene ? fromSGNode(sgRoot.scene) : undefined,
+                scene: serializedScene,
             };
             // Check of observed fields in `m.global`
             const global = this.m.elements.get("global");

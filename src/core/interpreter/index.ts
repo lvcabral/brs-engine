@@ -1901,7 +1901,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         if (!(this.lastStmt instanceof Stmt.Stop)) {
             this.checkDebugger(statement);
         }
-        if (BrsDevice.threadId > 0) {
+        if (sgRoot.threadId > 0) {
             sgRoot.tasks[0]?.updateTask();
         }
         this.location = statement.location;

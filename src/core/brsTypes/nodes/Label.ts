@@ -143,6 +143,6 @@ export class Label extends Group {
     }
 
     protected setEllipsized(ellipsized: boolean) {
-        this.fields.get("istextellipsized")?.setValue(BrsBoolean.from(ellipsized));
+        this.sgNode.fields.get("istextellipsized")?.setValue(BrsBoolean.from(ellipsized));
     }
 }

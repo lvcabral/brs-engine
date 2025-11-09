@@ -70,7 +70,7 @@ export class Group extends RoSGNode {
         }
 
         const mapKey = index.getValue().toLowerCase();
-        const field = this.fields.get(mapKey);
+        const field = this.sgNode.fields.get(mapKey);
 
         if (field?.getType() === FieldKind.Font && isBrsString(value)) {
             const strFont = value.getValue();
@@ -596,25 +596,26 @@ export class Group extends RoSGNode {
     }
 
     protected updateParentRects(origin: number[], angle: number) {
-        if (this.parent instanceof Group) {
-            this.parent.rectLocal = unionRect(this.parent.rectLocal, this.rectToParent);
-            const parentTrans = this.parent.getTranslation();
-            let x = parentTrans[0] + this.parent.rectLocal.x;
-            let y = parentTrans[1] + this.parent.rectLocal.y;
-            let width = this.parent.rectLocal.width;
-            let height = this.parent.rectLocal.height;
+        if (this.sgNode.parent instanceof Group) {
+            const parent = this.sgNode.parent;
+            parent.rectLocal = unionRect(parent.rectLocal, this.rectToParent);
+            const parentTrans = parent.getTranslation();
+            let x = parentTrans[0] + parent.rectLocal.x;
+            let y = parentTrans[1] + parent.rectLocal.y;
+            let width = parent.rectLocal.width;
+            let height = parent.rectLocal.height;
             if (angle !== 0) {
-                const center = this.parent.getScaleRotateCenter();
+                const center = parent.getScaleRotateCenter();
                 const rect = rotateRect({ x: 0, y: 0, width, height }, angle, center);
                 x += rect.x;
                 y += rect.y;
                 width = rect.width;
                 height = rect.height;
             }
-            this.parent.rectToParent = unionRect(this.parent.rectToParent, { x, y, width, height });
+            parent.rectToParent = unionRect(parent.rectToParent, { x, y, width, height });
             x += origin[0] - parentTrans[0];
             y += origin[1] - parentTrans[1];
-            this.parent.rectToScene = unionRect(this.parent.rectToScene, { x, y, width, height });
+            parent.rectToScene = unionRect(parent.rectToScene, { x, y, width, height });
         }
     }
 

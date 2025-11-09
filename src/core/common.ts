@@ -288,6 +288,12 @@ export function isTaskData(value: any): value is TaskData {
     );
 }
 
+export type ThreadInfo = {
+    id: number;
+    type: string;
+    name: string;
+}
+
 export type ThreadUpdate = {
     id: number;
     type: "global" | "task" | "scene";
@@ -303,6 +309,15 @@ export function isThreadUpdate(value: any): value is ThreadUpdate {
         typeof value.field === "string" &&
         value.value !== undefined
     );
+}
+
+export function genHexAddress(): string {
+    const randomInt = Math.floor(Math.random() * (0xffffff + 1));
+    let hexString = randomInt.toString(16);
+    while (hexString.length < 6) {
+        hexString = "0" + hexString;
+    }
+    return hexString.toUpperCase();
 }
 
 /* Package File Path Interface
