@@ -262,17 +262,23 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         return clonedNode;
     }
 
-    deepCopy(): BrsType {
+    deepCopy(visitedNodes?: WeakMap<RoSGNode, RoSGNode>): BrsType {
+        visitedNodes ??= new WeakMap<RoSGNode, RoSGNode>();
         const copiedNode = createNodeByType(new BrsString(this.nodeSubtype));
         if (!(copiedNode instanceof RoSGNode)) {
             return new RoInvalid();
         }
         copiedNode.sgNode.address = this.sgNode.address;
+        visitedNodes.set(this, copiedNode);
         for (const [key, field] of this.sgNode.fields) {
             let fieldObject = field;
             let fieldValue = field.getValue(false);
             if (fieldValue instanceof RoSGNode) {
-                fieldValue = fieldValue.deepCopy();
+                if (visitedNodes.has(fieldValue)) {
+                    fieldValue = visitedNodes.get(fieldValue)!;
+                } else {
+                    fieldValue = fieldValue.deepCopy(visitedNodes);
+                }
                 fieldObject = new Field(fieldValue, field.getType(), field.isAlwaysNotify(), field.isHidden());
             }
             copiedNode.sgNode.fields.set(key, fieldObject);
@@ -280,7 +286,11 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         for (const child of this.sgNode.children) {
             let newChild: BrsType = BrsInvalid.Instance;
             if (child instanceof RoSGNode) {
-                newChild = child.deepCopy();
+                if (visitedNodes.has(child)) {
+                    newChild = visitedNodes.get(child)!;
+                } else {
+                    newChild = child.deepCopy(visitedNodes);
+                }
             }
             copiedNode.appendChildToParent(newChild);
         }
