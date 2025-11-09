@@ -1131,7 +1131,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
                     type: this.nodeSubtype,
                     owningThread: this.sgNode.owningThread,
                     willRendezvousFromCurrentThread:
-                        this.sgNode.owningThread.id !== sgRoot.getCurrentThread().id ? "Yes" : "No",
+                        this.sgNode.owningThread.id === sgRoot.getCurrentThread().id ? "No" : "Yes",
                 },
                 renderThread: sgRoot.getRenderThread(),
             };

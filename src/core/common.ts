@@ -289,7 +289,7 @@ export function isTaskData(value: any): value is TaskData {
 }
 
 export type ThreadInfo = {
-    id: number;
+    id: string;
     type: string;
     name: string;
 };

@@ -29,9 +29,7 @@ export class SGRoot {
     threadId: number = 0;
 
     get mGlobal(): Global {
-        if (!this._mGlobal) {
-            this._mGlobal = new Global([]);
-        }
+        this._mGlobal ??= new Global([]);
         return this._mGlobal;
     }
 
@@ -285,7 +283,7 @@ export class SGRoot {
     }
 
     getCurrentThread(): ThreadInfo {
-        const currentThread: ThreadInfo = { id: this.threadId, name: "", type: "" };
+        const currentThread: ThreadInfo = { id: this.threadId.toString(), name: "", type: "" };
         if (this.threadId === 0) {
             const sceneName = this.scene?.nodeSubtype || "";
             currentThread.name = sceneName;
@@ -298,7 +296,7 @@ export class SGRoot {
     }
 
     getRenderThread(): ThreadInfo {
-        const renderThread: ThreadInfo = { id: 0, name: "", type: "Render" };
+        const renderThread: ThreadInfo = { id: "0", name: "", type: "Render" };
         const sceneName = this.scene?.nodeSubtype || "";
         renderThread.name = sceneName;
         return renderThread;
