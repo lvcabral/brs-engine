@@ -1,10 +1,5 @@
-import { FieldKind, FieldModel } from "./Field";
-import { AAMember } from "../components/RoAssociativeArray";
-import { LayoutGroup } from "./LayoutGroup";
-import { IfDraw2D, Rect } from "../interfaces/IfDraw2D";
-import { Interpreter } from "../..";
-import { rotateTranslation } from "../../scenegraph/SGUtil";
 import {
+    AAMember,
     BrsBoolean,
     BrsInvalid,
     BrsString,
@@ -16,11 +11,16 @@ import {
     isBrsString,
     jsValueOf,
     Label,
+    LayoutGroup,
     RoArray,
     RoFont,
-    sgRoot,
     RoSGNode,
+    sgRoot,
 } from "..";
+import { FieldKind, FieldModel } from "./Field";
+import { IfDraw2D, Rect } from "../interfaces/IfDraw2D";
+import { Interpreter } from "../..";
+import { rotateTranslation } from "../../scenegraph/SGUtil";
 
 export class ButtonGroup extends LayoutGroup {
     readonly defaultFields: FieldModel[] = [

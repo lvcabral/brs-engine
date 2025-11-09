@@ -1,7 +1,5 @@
+import { AAMember, BrsBoolean, BrsType, Float, isBrsString, sgRoot, Group, Font } from "..";
 import { FieldKind, FieldModel } from "./Field";
-import { Group } from "./Group";
-import { Font } from "./Font";
-import { AAMember, BrsBoolean, BrsType, Float, isBrsString, sgRoot } from "..";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D, MeasuredText, Rect } from "../interfaces/IfDraw2D";
 import { rotateTranslation } from "../../scenegraph/SGUtil";

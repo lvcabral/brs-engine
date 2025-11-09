@@ -1,7 +1,6 @@
+import { AAMember, BrsType, isBrsString, jsValueOf, sgRoot } from "..";
 import { RoSGNode } from "../components/RoSGNode";
 import { FieldKind } from "./Field";
-import { AAMember, BrsType, isBrsString, jsValueOf, sgRoot } from "..";
-import { BrsDevice } from "../../device/BrsDevice";
 import { ThreadUpdate } from "../../common";
 
 export class Global extends RoSGNode {

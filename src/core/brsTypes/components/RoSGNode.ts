@@ -1,33 +1,32 @@
 import {
-    BrsValue,
-    ValueKind,
-    BrsString,
-    BrsInvalid,
-    BrsBoolean,
-    Uninitialized,
-    getBrsValueFromFieldType,
-} from "../BrsType";
-import { BrsComponent, BrsIterable } from "./BrsComponent";
-import {
     AAMember,
+    BrsBoolean,
+    BrsEvent,
+    BrsInvalid,
+    BrsString,
     BrsType,
-    RoMessagePort,
+    BrsValue,
+    FlexObject,
+    getBrsValueFromFieldType,
+    getTextureManager,
     Int32,
+    isBoxable,
+    isBrsString,
+    isInvalid,
+    isUnboxable,
+    jsValueOf,
     RoArray,
     RoAssociativeArray,
-    toAssociativeArray,
-    BrsEvent,
-    jsValueOf,
-    getTextureManager,
-    isBrsString,
-    sgRoot,
-    RoInvalid,
-    isUnboxable,
     RoFunction,
-    isBoxable,
-    isInvalid,
-    FlexObject,
+    RoHttpAgent,
+    RoInvalid,
+    RoMessagePort,
+    sgRoot,
+    toAssociativeArray,
+    Uninitialized,
+    ValueKind,
 } from "..";
+import { BrsComponent, BrsIterable } from "./BrsComponent";
 import { Callable, StdlibArgument } from "../Callable";
 import { Stmt } from "../../parser";
 import { Interpreter } from "../../interpreter";
@@ -36,7 +35,6 @@ import { createNodeByType, isSubtypeCheck, subtypeHierarchy } from "../../sceneg
 import { Field, FieldAlias, FieldKind, FieldModel } from "../nodes/Field";
 import { Rect, IfDraw2D } from "../interfaces/IfDraw2D";
 import { BrsDevice } from "../../device/BrsDevice";
-import { RoHttpAgent } from "./RoHttpAgent";
 import { genHexAddress, ThreadInfo } from "../../common";
 
 type SGNode = {
@@ -229,7 +227,8 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         }
         const clonedNode = createNodeByType(new BrsString(this.nodeSubtype));
         if (!(clonedNode instanceof RoSGNode)) {
-            return BrsInvalid.Instance;        }
+            return BrsInvalid.Instance;
+        }
         visitedNodes.set(this, clonedNode);
         // Clone fields
         for (const [key, field] of this.sgNode.fields) {

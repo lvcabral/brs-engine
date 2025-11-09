@@ -1,26 +1,26 @@
-import { FieldKind, FieldModel } from "./Field";
-import { Group } from "./Group";
-import { AAMember } from "../components/RoAssociativeArray";
-import { Interpreter } from "../../interpreter";
-import { IfDraw2D } from "../interfaces/IfDraw2D";
 import {
+    AAMember,
     BrsBoolean,
     BrsInvalid,
     BrsString,
     BrsType,
     Callable,
     Dialog,
+    fromSGNode,
+    Group,
     isBrsString,
+    jsValueOf,
     RoArray,
     RoMessagePort,
-    sgRoot,
     RoSGNode,
+    sgRoot,
     StandardDialog,
     toAssociativeArray,
-    jsValueOf,
-    fromSGNode,
 } from "..";
-import { BrsDevice, Scope } from "../..";
+import { FieldKind, FieldModel } from "./Field";
+import { Interpreter } from "../../interpreter";
+import { IfDraw2D } from "../interfaces/IfDraw2D";
+import { Scope } from "../..";
 import { BlockEnd } from "../../parser/Statement";
 import { Stmt } from "../../parser";
 import { ThreadUpdate } from "../../common";

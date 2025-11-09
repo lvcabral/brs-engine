@@ -1,24 +1,24 @@
-import { RoSGNode } from "../components/RoSGNode";
 import {
     AAMember,
-    BrsType,
-    BrsString,
-    BrsInvalid,
-    fromAssociativeArray,
-    jsValueOf,
     BrsEvent,
+    BrsInvalid,
+    BrsString,
+    BrsType,
     brsValueOf,
-    isBrsString,
-    sgRoot,
+    fromAssociativeArray,
     fromSGNode,
+    isBrsString,
+    jsValueOf,
+    RoSGNode,
     Scene,
+    sgRoot,
 } from "..";
 import { Field, FieldKind, FieldModel } from "./Field";
 import { isThreadUpdate, TaskData, TaskState, ThreadUpdate } from "../../common";
-import SharedObject from "../../SharedObject";
 import { Global } from "./Global";
 import { Interpreter } from "../../interpreter";
 import { BrsDevice } from "../..";
+import SharedObject from "../../SharedObject";
 
 export class Task extends RoSGNode {
     readonly defaultFields: FieldModel[] = [

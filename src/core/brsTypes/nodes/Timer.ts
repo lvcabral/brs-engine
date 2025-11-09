@@ -1,6 +1,6 @@
+import { AAMember, BrsType, BrsString, BrsInvalid, isBrsString, sgRoot } from "..";
 import { RoSGNode } from "../components/RoSGNode";
 import { FieldKind, FieldModel } from "./Field";
-import { AAMember, BrsType, BrsString, BrsInvalid, isBrsString, sgRoot } from "..";
 
 export class Timer extends RoSGNode {
     readonly defaultFields: FieldModel[] = [

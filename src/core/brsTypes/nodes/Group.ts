@@ -1,25 +1,25 @@
-import { RoSGNode } from "../components/RoSGNode";
-import { FieldKind, FieldModel } from "./Field";
 import {
-    Int32,
-    Float,
-    RoArray,
     AAMember,
-    BrsType,
-    BrsString,
-    Font,
+    BrsBoolean,
     BrsInvalid,
-    RoBitmap,
-    RoFont,
+    BrsString,
+    BrsType,
+    Float,
+    Font,
+    Int32,
+    isBrsString,
+    jsValueOf,
     Label,
     Poster,
-    jsValueOf,
-    isBrsString,
-    BrsBoolean,
-    sgRoot,
     Rectangle,
+    RoArray,
+    RoBitmap,
+    RoFont,
     ScrollingLabel,
+    sgRoot,
 } from "..";
+import { RoSGNode } from "../components/RoSGNode";
+import { FieldKind, FieldModel } from "./Field";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D, MeasuredText, Rect } from "../interfaces/IfDraw2D";
 import { convertHexColor, rotateRect, unionRect } from "../../scenegraph/SGUtil";
