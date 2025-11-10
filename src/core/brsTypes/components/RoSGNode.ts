@@ -39,6 +39,7 @@ import { genHexAddress, ThreadInfo } from "../../common";
 
 type SGNode = {
     address: string;
+    readonly subtype: string;
     readonly fields: Map<string, Field>;
     readonly aliases: Map<string, FieldAlias>;
     readonly children: (RoSGNode | BrsInvalid)[];
@@ -65,11 +66,12 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     ];
     m: RoAssociativeArray = new RoAssociativeArray([]);
 
-    constructor(initializedFields: AAMember[], readonly nodeSubtype: string = "Node") {
+    constructor(initializedFields: AAMember[], subtype: string = "Node") {
         super("roSGNode");
         this.setExtendsType();
         this.sgNode = {
             address: genHexAddress(),
+            subtype: subtype,
             fields: new Map(),
             aliases: new Map(),
             children: [],
@@ -180,7 +182,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     }
 
     toString(parent?: BrsType): string {
-        const componentName = `${this.getComponentName()}:${this.nodeSubtype}`;
+        const componentName = `${this.getComponentName()}:${this.sgNode.subtype}`;
 
         if (parent) {
             return `<Component: ${componentName}>`;
@@ -226,7 +228,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         if (visitedNodes.has(this)) {
             return visitedNodes.get(this)!;
         }
-        const clonedNode = createNodeByType(new BrsString(this.nodeSubtype));
+        const clonedNode = createNodeByType(new BrsString(this.sgNode.subtype));
         if (!(clonedNode instanceof RoSGNode)) {
             return BrsInvalid.Instance;
         }
@@ -234,7 +236,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         // Clone fields
         for (const [key, field] of this.sgNode.fields) {
             if (this.sgNode.aliases.has(key) && interpreter) {
-                const parentType = subtypeHierarchy.get(this.nodeSubtype) ?? "Node";
+                const parentType = subtypeHierarchy.get(this.sgNode.subtype) ?? "Node";
                 BrsDevice.stderr.write(
                     `warning,BRIGHTSCRIPT: ERROR: roSGNode.Clone: No such field ${parentType}::${key}: ${
                         interpreter?.formatLocation() ?? ""
@@ -264,7 +266,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
 
     deepCopy(visitedNodes?: WeakMap<RoSGNode, RoSGNode>): BrsType {
         visitedNodes ??= new WeakMap<RoSGNode, RoSGNode>();
-        const copiedNode = createNodeByType(new BrsString(this.nodeSubtype));
+        const copiedNode = createNodeByType(new BrsString(this.sgNode.subtype));
         if (!(copiedNode instanceof RoSGNode)) {
             return new RoInvalid();
         }
@@ -349,7 +351,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
                 this.changed = true;
             } else {
                 let error = `warning,Warning occurred while setting a field of an RoSGNode\n`;
-                error += `-- Tried to set nonexistent field "${fieldName}" of a "${this.nodeSubtype}" node`;
+                error += `-- Tried to set nonexistent field "${fieldName}" of a "${this.sgNode.subtype}" node`;
                 BrsDevice.stderr.write(error);
             }
         } else if (alias) {
@@ -375,7 +377,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
     }
 
     getId() {
-        return this.getFieldValueJS("id") ?? this.nodeSubtype;
+        return this.getFieldValueJS("id") ?? this.sgNode.subtype;
     }
 
     addNodeField(fieldName: string, type: string, alwaysNotify: boolean) {
@@ -480,13 +482,13 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             if (!interpreter.environment.hostNode) {
                 const location = interpreter.formatLocation();
                 BrsDevice.stderr.write(
-                    `warning,BRIGHTSCRIPT: ERROR: roSGNode.ObserveField: "${this.nodeSubtype}.${fieldName.value}" no active host node: ${location}`
+                    `warning,BRIGHTSCRIPT: ERROR: roSGNode.ObserveField: "${this.sgNode.subtype}.${fieldName.value}" no active host node: ${location}`
                 );
             } else if (funcOrPort instanceof BrsString) {
                 callableOrPort = interpreter.getCallableFunction(funcOrPort.value);
             } else if (funcOrPort instanceof RoMessagePort) {
                 const host = interpreter.environment.hostNode;
-                funcOrPort.registerCallback(host.nodeSubtype, host.getNewEvents.bind(host));
+                funcOrPort.registerCallback(host.sgNode.subtype, host.getNewEvents.bind(host));
                 callableOrPort = funcOrPort;
             }
             if (!(callableOrPort instanceof BrsInvalid)) {
@@ -504,7 +506,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             if (!this.triedInitFocus) {
                 // Only try initial focus once
                 this.triedInitFocus = true;
-                const typeDef = sgRoot.nodeDefMap.get(this.nodeSubtype.toLowerCase());
+                const typeDef = sgRoot.nodeDefMap.get(this.sgNode.subtype.toLowerCase());
                 if (typeDef?.initialFocus) {
                     const initialFocus = new BrsString(typeDef.initialFocus);
                     const childToFocus = this.findNodeById(this, initialFocus);
@@ -675,7 +677,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             } else {
                 BrsDevice.stderr.write(
                     `warning,Warning calling update() on ${
-                        this.nodeSubtype
+                        this.sgNode.subtype
                     } object expected to be convertible to Node is ${ValueKind.toString(element.kind)}`
                 );
             }
@@ -882,7 +884,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             },
             impl: (interpreter: Interpreter, functionName: BrsString, ...functionArgs: BrsType[]) => {
                 // We need to search the callee's environment for this function rather than the caller's.
-                let componentDef = sgRoot.nodeDefMap.get(this.nodeSubtype.toLowerCase());
+                let componentDef = sgRoot.nodeDefMap.get(this.sgNode.subtype.toLowerCase());
 
                 // Only allow public functions (defined in the interface) to be called.
                 if (componentDef && functionName.value in componentDef.functions) {
@@ -939,7 +941,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
                 }
 
                 BrsDevice.stderr.write(
-                    `Warning calling function in ${this.nodeSubtype}: no function interface specified for ${functionName}`
+                    `Warning calling function in ${this.sgNode.subtype}: no function interface specified for ${functionName}`
                 );
                 return BrsInvalid.Instance;
             },
@@ -1128,7 +1130,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
                 node: {
                     address: this.sgNode.address,
                     id: this.getId(),
-                    type: this.nodeSubtype,
+                    type: this.sgNode.subtype,
                     owningThread: this.sgNode.owningThread,
                     willRendezvousFromCurrentThread:
                         this.sgNode.owningThread.id === sgRoot.getCurrentThread().id ? "No" : "Yes",
@@ -1401,7 +1403,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             if (!interpreter.environment.hostNode) {
                 let location = interpreter.formatLocation();
                 BrsDevice.stderr.write(
-                    `warning,BRIGHTSCRIPT: ERROR: roSGNode.unObserveField: "${this.nodeSubtype}.${fieldName.value}" no active host node: ${location}`
+                    `warning,BRIGHTSCRIPT: ERROR: roSGNode.unObserveField: "${this.sgNode.subtype}.${fieldName.value}" no active host node: ${location}`
                 );
                 return BrsBoolean.False;
             }
@@ -1487,7 +1489,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             if (!interpreter.environment.hostNode) {
                 let location = interpreter.formatLocation();
                 BrsDevice.stderr.write(
-                    `warning,BRIGHTSCRIPT: ERROR: roSGNode.unObserveFieldScoped: "${this.nodeSubtype}.${fieldName.value}" no active host node: ${location}`
+                    `warning,BRIGHTSCRIPT: ERROR: roSGNode.unObserveFieldScoped: "${this.sgNode.subtype}.${fieldName.value}" no active host node: ${location}`
                 );
                 return BrsBoolean.False;
             }
@@ -1594,9 +1596,9 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
         },
         impl: (interpreter: Interpreter, content: RoAssociativeArray | RoArray, createFields: BrsBoolean) => {
             if (content instanceof RoAssociativeArray) {
-                this.populateNodeFromAA(interpreter, this, content, createFields.toBoolean(), this.nodeSubtype);
+                this.populateNodeFromAA(interpreter, this, content, createFields.toBoolean(), this.sgNode.subtype);
             } else if (content instanceof RoArray) {
-                this.updateChildrenFromArray(interpreter, this, content, createFields.toBoolean(), this.nodeSubtype);
+                this.updateChildrenFromArray(interpreter, this, content, createFields.toBoolean(), this.sgNode.subtype);
             }
             return Uninitialized.Instance;
         },
@@ -2097,7 +2099,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, nodeType: BrsString) => {
-            return BrsBoolean.from(isSubtypeCheck(this.nodeSubtype, nodeType.value));
+            return BrsBoolean.from(isSubtypeCheck(this.sgNode.subtype, nodeType.value));
         },
     });
 
@@ -2137,7 +2139,7 @@ export class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.String,
         },
         impl: (_: Interpreter) => {
-            return new BrsString(this.nodeSubtype);
+            return new BrsString(this.sgNode.subtype);
         },
     });
 

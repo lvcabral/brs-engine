@@ -92,7 +92,7 @@ export class MarkupGrid extends ArrayGrid {
             const currentRow = Math.floor(this.focusIndex / numCols);
             const nextRow = Math.floor(nextIndex / numCols);
             const item = this.itemComps[nextIndex];
-            if (currentRow === nextRow && item.nodeSubtype !== "Group") {
+            if (currentRow === nextRow && item.sgNode.subtype !== "Group") {
                 const itemIndex = this.metadata[nextIndex]?.index ?? nextIndex;
                 this.set(new BrsString("animateToItem"), new Int32(itemIndex));
                 handled = true;

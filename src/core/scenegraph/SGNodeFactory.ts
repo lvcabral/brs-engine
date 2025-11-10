@@ -568,14 +568,14 @@ function addFields(interpreter: Interpreter, node: RoSGNode, typeDef: ComponentD
                     if (field) {
                         node.addNodeFieldAlias(fieldName, field, childName, childField);
                     } else {
-                        let msg = `warning,Error creating XML component ${node.nodeSubtype}\n`;
+                        let msg = `warning,Error creating XML component ${node.sgNode.subtype}\n`;
                         msg += `-- Interface field alias failed: Node "${childName}" has no field named "${childField}"\n`;
                         msg += `-- Error found ${typeDef.xmlPath}`;
                         BrsDevice.stderr.write(msg);
                         return;
                     }
                 } else {
-                    let msg = `warning,Error creating XML component ${node.nodeSubtype}\n`;
+                    let msg = `warning,Error creating XML component ${node.sgNode.subtype}\n`;
                     msg += `-- Interface field alias failed: No node named ${childName}\n`;
                     msg += `-- Error found ${typeDef.xmlPath}`;
                     BrsDevice.stderr.write(msg);
@@ -584,8 +584,8 @@ function addFields(interpreter: Interpreter, node: RoSGNode, typeDef: ComponentD
             } else {
                 const field = node.getNodeFields().get(fieldName.toLowerCase());
                 if (field) {
-                    let msg = `warning,Error creating XML component ${node.nodeSubtype}\n`;
-                    msg += `-- Attempt to add duplicate field "${fieldName}" to RokuML component "${node.nodeSubtype}"\n`;
+                    let msg = `warning,Error creating XML component ${node.sgNode.subtype}\n`;
+                    msg += `-- Attempt to add duplicate field "${fieldName}" to RokuML component "${node.sgNode.subtype}"\n`;
                     msg += `---- Extends node type "${typeDef.extends}" already has a field named ${fieldName}\n`;
                     msg += `-- Error found ${typeDef.xmlPath}`;
                     BrsDevice.stderr.write(msg);

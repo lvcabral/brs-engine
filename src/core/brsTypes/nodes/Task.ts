@@ -87,10 +87,10 @@ export class Task extends RoSGNode {
             this.active = true;
         } else if (control === "stop" || control === "done") {
             if (this.started) {
-                console.debug("Posting Task Data to STOP: ", this.nodeSubtype);
+                console.debug("Posting Task Data to STOP: ", this.sgNode.subtype);
                 const taskData: TaskData = {
                     id: this.id,
-                    name: this.nodeSubtype,
+                    name: this.sgNode.subtype,
                     state: TaskState.STOP,
                 };
                 postMessage(taskData);
@@ -140,7 +140,7 @@ export class Task extends RoSGNode {
             this.taskBuffer = new SharedObject();
             const taskData: TaskData = {
                 id: this.id,
-                name: this.nodeSubtype,
+                name: this.sgNode.subtype,
                 state: TaskState.RUN,
                 buffer: this.taskBuffer.getBuffer(),
                 tmp: BrsDevice.getTmpVolume(),
@@ -162,7 +162,7 @@ export class Task extends RoSGNode {
                     taskData.m.global["_observed_"] = observed;
                 }
             }
-            console.debug("Posting Task Data to RUN: ", this.nodeSubtype, functionName);
+            console.debug("Posting Task Data to RUN: ", this.sgNode.subtype, functionName);
             postMessage(taskData);
             this.started = true;
         }

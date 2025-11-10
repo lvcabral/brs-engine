@@ -649,7 +649,7 @@ export function fromSGNode(node: RoSGNode, deep: boolean = true, visited?: WeakS
     visited ??= new WeakSet<RoSGNode>();
     if (visited.has(node)) {
         return {
-            _circular_: `${getNodeType(node.nodeSubtype)}:${node.nodeSubtype}`,
+            _circular_: `${getNodeType(node.sgNode.subtype)}:${node.sgNode.subtype}`,
             _address_: node.sgNode.address,
         };
     }
@@ -659,7 +659,7 @@ export function fromSGNode(node: RoSGNode, deep: boolean = true, visited?: WeakS
     const fields = node.getNodeFields();
     const observed: string[] = [];
 
-    result["_node_"] = `${getNodeType(node.nodeSubtype)}:${node.nodeSubtype}`;
+    result["_node_"] = `${getNodeType(node.sgNode.subtype)}:${node.sgNode.subtype}`;
     result["_address_"] = node.sgNode.address;
 
     for (const [name, field] of fields) {

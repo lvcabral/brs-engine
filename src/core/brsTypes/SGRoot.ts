@@ -285,7 +285,7 @@ export class SGRoot {
     getCurrentThread(): ThreadInfo {
         const currentThread: ThreadInfo = { id: this.threadId.toString(), name: "", type: "" };
         if (this.threadId === 0) {
-            const sceneName = this.scene?.nodeSubtype || "";
+            const sceneName = this.scene?.sgNode.subtype || "";
             currentThread.name = sceneName;
             currentThread.type = "Render";
         } else if (this.tasks[0]) {
@@ -297,7 +297,7 @@ export class SGRoot {
 
     getRenderThread(): ThreadInfo {
         const renderThread: ThreadInfo = { id: "0", name: "", type: "Render" };
-        const sceneName = this.scene?.nodeSubtype || "";
+        const sceneName = this.scene?.sgNode.subtype || "";
         renderThread.name = sceneName;
         return renderThread;
     }

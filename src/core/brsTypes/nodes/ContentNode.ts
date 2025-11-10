@@ -176,7 +176,7 @@ export class ContentNode extends RoSGNode {
 
     /** @override */
     toString(parent?: BrsType): string {
-        let componentName = "roSGNode:" + this.nodeSubtype;
+        let componentName = "roSGNode:" + this.sgNode.subtype;
 
         if (parent) {
             return `<Component: ${componentName}>`;
