@@ -548,14 +548,14 @@ export function toSGNode(obj: any, type: string, subtype: string, nodeMap?: Map<
  * @param associativeArray The RoAssociativeArray to convert.
  * @returns A JavaScript object with the converted properties.
  */
-export function fromAssociativeArray(associativeArray: RoAssociativeArray): FlexObject {
+export function fromAssociativeArray(associativeArray: RoAssociativeArray, deep: boolean = true): FlexObject {
     const result: FlexObject = {};
 
     for (const [key, value] of associativeArray.elements) {
         if (isUnboxable(value)) {
-            result[key] = jsValueOf(value.unbox());
+            result[key] = jsValueOf(value.unbox(), deep);
         } else {
-            result[key] = jsValueOf(value);
+            result[key] = jsValueOf(value, deep);
         }
     }
 
@@ -598,7 +598,7 @@ export function fromContentNode(contentNode: ContentNode): RoAssociativeArray {
  * @param {WeakSet<RoSGNode>} visitedNodes Optional set to track visited nodes for circular reference detection.
  * @return {any} The JavaScript representation of `x`.
  */
-export function jsValueOf(value: BrsType, visitedNodes?: WeakSet<RoSGNode>): any {
+export function jsValueOf(value: BrsType, deep: boolean = true, visitedNodes?: WeakSet<RoSGNode>): any {
     if (isUnboxable(value)) {
         value = value.unbox();
     }
@@ -620,13 +620,13 @@ export function jsValueOf(value: BrsType, visitedNodes?: WeakSet<RoSGNode>): any
         case ValueKind.Interface:
         case ValueKind.Object:
             if (value instanceof RoArray || value instanceof RoList) {
-                return value.elements.map((el) => jsValueOf(el, visitedNodes));
+                return value.elements.map((el) => jsValueOf(el, deep, visitedNodes));
             } else if (value instanceof RoByteArray) {
                 return value.elements;
             } else if (value instanceof RoSGNode) {
-                return fromSGNode(value, true, visitedNodes);
+                return fromSGNode(value, deep, visitedNodes);
             } else if (value instanceof RoAssociativeArray) {
-                return fromAssociativeArray(value);
+                return fromAssociativeArray(value, deep);
             } else if (value instanceof BrsComponent) {
                 return { _component_: value.getComponentName() };
             } else if (value instanceof BrsInterface) {
@@ -675,7 +675,7 @@ export function fromSGNode(node: RoSGNode, deep: boolean = true, visited?: WeakS
                 result[name] = fromSGNode(fieldValue, deep, visited);
                 continue;
             }
-            result[name] = jsValueOf(fieldValue, visited);
+            result[name] = jsValueOf(fieldValue, deep, visited);
         }
     }
     if (observed.length) {
