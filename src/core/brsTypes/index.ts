@@ -159,6 +159,7 @@ export * from "./nodes/StdDlgProgressItem";
 export * from "./nodes/BusySpinner";
 export * from "./nodes/RSGPalette";
 export * from "./nodes/ChannelStore";
+export * from "./nodes/TrickPlayBar";
 
 /**
  * Determines whether or not the given value is a number.
@@ -623,7 +624,7 @@ export function jsValueOf(value: BrsType, visitedNodes?: WeakSet<RoSGNode>): any
             } else if (value instanceof RoByteArray) {
                 return value.elements;
             } else if (value instanceof RoSGNode) {
-                return fromSGNode(value, visitedNodes);
+                return fromSGNode(value, true, visitedNodes);
             } else if (value instanceof RoAssociativeArray) {
                 return fromAssociativeArray(value);
             } else if (value instanceof BrsComponent) {
@@ -640,10 +641,11 @@ export function jsValueOf(value: BrsType, visitedNodes?: WeakSet<RoSGNode>): any
 /**
  * Converts a RoSGNode to a JavaScript object, converting each field to the corresponding JavaScript type.
  * @param node The RoSGNode to convert.
+ * @param deep Whether to recursively convert child nodes. Defaults to true.
  * @param visited Optional WeakSet to track visited nodes and prevent circular references.
  * @returns A JavaScript object with the converted fields.
  */
-export function fromSGNode(node: RoSGNode, visited?: WeakSet<RoSGNode>): FlexObject {
+export function fromSGNode(node: RoSGNode, deep: boolean = true, visited?: WeakSet<RoSGNode>): FlexObject {
     visited ??= new WeakSet<RoSGNode>();
     if (visited.has(node)) {
         return {
@@ -669,6 +671,10 @@ export function fromSGNode(node: RoSGNode, visited?: WeakSet<RoSGNode>): FlexObj
             if (node instanceof Task && field.isPortObserved(node)) {
                 observed.push(name);
             }
+            if (fieldValue instanceof RoSGNode) {
+                result[name] = fromSGNode(fieldValue, deep, visited);
+                continue;
+            }
             result[name] = jsValueOf(fieldValue, visited);
         }
     }
@@ -676,12 +682,12 @@ export function fromSGNode(node: RoSGNode, visited?: WeakSet<RoSGNode>): FlexObj
         result["_observed_"] = observed;
     }
     const children = node.getNodeChildren();
-    if (children.length > 0) {
+    if (deep && children.length > 0) {
         result["_children_"] = children.map((child: RoSGNode | BrsInvalid) => {
             if (child instanceof BrsInvalid) {
                 return { _invalid_: null };
             }
-            return fromSGNode(child, visited);
+            return fromSGNode(child, deep, visited);
         });
     }
 
