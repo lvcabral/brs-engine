@@ -700,7 +700,7 @@ function taskCallback(event: MessageEvent) {
     } else if (typeof event.data === "string") {
         handleStringMessage(event.data);
     } else {
-        apiException("warning", `[api] Invalid task message: ${event.data}`);
+        apiException("warning", `[api] Invalid task message: ${JSON.stringify(event.data, null, 2)}`);
     }
 }
 

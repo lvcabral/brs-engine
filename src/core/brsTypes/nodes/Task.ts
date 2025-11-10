@@ -138,16 +138,6 @@ export class Task extends RoSGNode {
         }
         if (!this.started) {
             this.taskBuffer = new SharedObject();
-            const cloneScene = sgRoot.scene?.cloneNode(false) as Scene;
-            if (cloneScene instanceof Scene) cloneScene.sgNode.address = sgRoot.scene?.sgNode.address!;
-            const serializedScene = cloneScene instanceof Scene ? fromSGNode(cloneScene) : undefined;
-            console.debug(
-                "Serialized Scene for Task:",
-                cloneScene?.sgNode.address,
-                sgRoot.scene?.sgNode.address,
-                this.nodeSubtype,
-                JSON.stringify(serializedScene, null, 2)
-            );
             const taskData: TaskData = {
                 id: this.id,
                 name: this.nodeSubtype,
@@ -156,7 +146,7 @@ export class Task extends RoSGNode {
                 tmp: BrsDevice.getTmpVolume(),
                 cacheFS: BrsDevice.getCacheFS(),
                 m: fromAssociativeArray(this.m),
-                scene: serializedScene,
+                scene: sgRoot.scene ? fromSGNode(sgRoot.scene, false) : undefined,
             };
             // Check of observed fields in `m.global`
             const global = this.m.elements.get("global");
@@ -193,7 +183,7 @@ export class Task extends RoSGNode {
                     id: this.id,
                     type: "task",
                     field: name,
-                    value: jsValueOf(value),
+                    value: value instanceof RoSGNode ? fromSGNode(value, false) : jsValueOf(value),
                 };
                 postMessage(update);
             }

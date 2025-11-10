@@ -66,28 +66,23 @@ export class Scene extends Group {
                 return BrsInvalid.Instance;
             }
         }
+        const result = super.set(index, value, alwaysNotify, kind);
         // Refresh SharedObject with latest Node state
         if (sync && sgRoot.tasks.length > 0 && this.changed && this.sgNode.fields.has(fieldName)) {
-            let serializedValue: any;
-            if (value instanceof RoSGNode) {
-                serializedValue = fromSGNode(value.cloneNode(false) as RoSGNode);
-                console.debug(
-                    "Serialized SGNode field for Task update:",
-                    fieldName,
-                    JSON.stringify(serializedValue, null, 2)
-                );
-            } else {
-                serializedValue = jsValueOf(value);
-            }
             const update: ThreadUpdate = {
                 id: sgRoot.threadId,
                 type: "scene",
                 field: fieldName,
-                value: serializedValue,
+                value: value instanceof RoSGNode ? fromSGNode(value, false) : jsValueOf(value),
             };
             postMessage(update);
         }
-        return super.set(index, value, alwaysNotify, kind);
+        return result;
+    }
+
+    cloneNode(_isDeepCopy: boolean, _interpreter?: Interpreter, _visitedNodes?: WeakMap<RoSGNode, RoSGNode>): BrsType {
+        // Override to prevent cloning Scene nodes
+        return BrsInvalid.Instance;
     }
 
     getDimensions() {
