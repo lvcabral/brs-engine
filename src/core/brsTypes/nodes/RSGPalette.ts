@@ -1,8 +1,8 @@
 import { FieldModel } from "./Field";
 import { AAMember } from "../components/RoAssociativeArray";
-import { RoSGNode } from "../components/RoSGNode";
+import { Node } from "./Node";
 
-export class RSGPalette extends RoSGNode {
+export class RSGPalette extends Node {
     readonly defaultFields: FieldModel[] = [{ name: "colors", type: "assocarray" }];
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = "RSGPalette") {

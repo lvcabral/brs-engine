@@ -168,14 +168,14 @@ export class ButtonGroup extends LayoutGroup {
         if (!buttons) {
             return;
         }
-        const buttonsCount = Math.max(buttons.length, this.sgNode.children.length);
+        const buttonsCount = Math.max(buttons.length, this.children.length);
         const focusedFont = this.getFieldValue("focusedTextFont") as Font;
         const buttonHeight = this.getFieldValueJS("buttonHeight") as number;
         this.width = this.calculateButtonWidth(buttons, focusedFont.createDrawFont());
         for (let i = 0; i < buttonsCount; i++) {
             const buttonText = buttons[i];
             if (buttonText) {
-                let button = this.sgNode.children[i] as Button;
+                let button = this.children[i] as Button;
                 if (!button) {
                     button = this.createButton();
                 }
@@ -201,7 +201,7 @@ export class ButtonGroup extends LayoutGroup {
                 break;
             }
         }
-        this.sgNode.children.splice(buttons.length);
+        this.children.splice(buttons.length);
     }
 
     private createButton(): Button {
@@ -219,11 +219,11 @@ export class ButtonGroup extends LayoutGroup {
     private refreshFocus() {
         const focusedNode = sgRoot.focused;
         if (
-            this.sgNode.children.length &&
+            this.children.length &&
             focusedNode instanceof RoSGNode &&
             (focusedNode === this || focusedNode.getNodeParent() === this)
         ) {
-            const focusedButton = this.sgNode.children[this.focusIndex];
+            const focusedButton = this.children[this.focusIndex];
             if (focusedNode !== focusedButton && focusedButton instanceof RoSGNode) {
                 sgRoot.setFocused(focusedButton);
             }

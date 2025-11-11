@@ -1,10 +1,9 @@
-import { RoSGNode } from "../components/RoSGNode";
 import { FieldKind, FieldModel } from "./Field";
-import { AAMember, BrsType, isBrsString, BrsString, isBrsNumber, BrsInvalid, sgRoot, jsValueOf } from "..";
+import { AAMember, BrsType, isBrsString, BrsString, isBrsNumber, BrsInvalid, Node, sgRoot, jsValueOf } from "..";
 import { BrsDevice } from "../../device/BrsDevice";
 import { MediaEvent } from "../../common";
 
-export class SoundEffect extends RoSGNode {
+export class SoundEffect extends Node {
     readonly defaultFields: FieldModel[] = [
         { name: "uri", type: "uri" },
         { name: "control", type: "string", value: "none", alwaysNotify: true },

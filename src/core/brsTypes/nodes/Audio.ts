@@ -1,22 +1,22 @@
-import { RoSGNode } from "../components/RoSGNode";
-import { FieldKind, FieldModel } from "./Field";
 import {
     AAMember,
-    BrsType,
-    isBrsString,
-    isBrsNumber,
-    jsValueOf,
-    ContentNode,
-    isBrsBoolean,
     BrsString,
-    Int32,
-    sgRoot,
+    BrsType,
+    ContentNode,
     Double,
+    Int32,
+    isBrsBoolean,
+    isBrsNumber,
+    isBrsString,
+    jsValueOf,
+    Node,
+    sgRoot,
 } from "..";
+import { FieldKind, FieldModel } from "./Field";
 import { BrsDevice } from "../../device/BrsDevice";
 import { MediaEvent } from "../../common";
 
-export class Audio extends RoSGNode {
+export class Audio extends Node {
     readonly defaultFields: FieldModel[] = [
         { name: "content", type: "node" },
         { name: "contentIsPlaylist", type: "boolean", value: "false" },
@@ -143,7 +143,7 @@ export class Audio extends RoSGNode {
         const content = new Array<string>();
         const isPlaylist = this.getFieldValueJS("contentIsPlaylist") as boolean;
         if (isPlaylist) {
-            const playList = node.getNodeChildren().filter((node) => node instanceof RoSGNode);
+            const playList = node.getNodeChildren().filter((node) => node instanceof Node);
             for (const node of playList) {
                 const url = node.getFieldValueJS("url") as string;
                 if (url?.length && url.startsWith("http")) {

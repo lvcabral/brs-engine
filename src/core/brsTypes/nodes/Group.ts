@@ -18,13 +18,13 @@ import {
     ScrollingLabel,
     sgRoot,
 } from "..";
-import { RoSGNode } from "../components/RoSGNode";
+import { Node } from "./Node";
 import { FieldKind, FieldModel } from "./Field";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D, MeasuredText, Rect } from "../interfaces/IfDraw2D";
 import { convertHexColor, rotateRect, unionRect } from "../../scenegraph/SGUtil";
 
-export class Group extends RoSGNode {
+export class Group extends Node {
     readonly defaultFields: FieldModel[] = [
         { name: "visible", type: "boolean", value: "true" },
         { name: "opacity", type: "float", value: "1.0" },
@@ -70,7 +70,7 @@ export class Group extends RoSGNode {
         }
 
         const mapKey = index.getValue().toLowerCase();
-        const field = this.sgNode.fields.get(mapKey);
+        const field = this.fields.get(mapKey);
 
         if (field?.getType() === FieldKind.Font && isBrsString(value)) {
             const strFont = value.getValue();
@@ -596,8 +596,8 @@ export class Group extends RoSGNode {
     }
 
     protected updateParentRects(origin: number[], angle: number) {
-        if (this.sgNode.parent instanceof Group) {
-            const parent = this.sgNode.parent;
+        if (this.parent instanceof Group) {
+            const parent = this.parent;
             parent.rectLocal = unionRect(parent.rectLocal, this.rectToParent);
             const parentTrans = parent.getTranslation();
             let x = parentTrans[0] + parent.rectLocal.x;

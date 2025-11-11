@@ -359,7 +359,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         if (taskData.buffer) {
             taskNode.setTaskBuffer(taskData.buffer);
         }
-        const typeDef = sgRoot.nodeDefMap.get(taskNode.sgNode.subtype.toLowerCase());
+        const typeDef = sgRoot.nodeDefMap.get(taskNode.nodeSubtype.toLowerCase());
         const taskEnv = typeDef?.environment;
         if (taskEnv) {
             try {

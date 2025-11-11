@@ -1,16 +1,16 @@
 const brs = require("../../packages/node/bin/brs.node");
-const { brsValueOf, jsValueOf, fromSGNode, toSGNode } = brs.types;
-const { RoSGNode, ContentNode, BrsString } = brs.types;
+const { brsValueOf, fromSGNode, toSGNode } = brs.types;
+const { ContentNode, BrsString, Node } = brs.types;
 
 describe("Circular Reference Handling", () => {
     describe("SceneGraph Nodes", () => {
         it("should serialize and deserialize nodes with circular references", () => {
             // Create a parent node
-            const parent = new RoSGNode([], "TestNode");
+            const parent = new Node([], "TestNode");
             parent.setFieldValue("id", new BrsString("parent"));
 
             // Create a child node
-            const child = new RoSGNode([], "TestNode");
+            const child = new Node([], "TestNode");
             child.setFieldValue("id", new BrsString("child"));
 
             // Create a circular reference by adding a field that points back to parent
@@ -24,7 +24,7 @@ describe("Circular Reference Handling", () => {
             expect(serialized._children_).toBeDefined();
             expect(serialized._children_[0].parentref).toBeDefined();
             expect(serialized._children_[0].parentref._circular_).toBeDefined();
-            expect(serialized._children_[0].parentref._address_).toBe(parent.sgNode.address);
+            expect(serialized._children_[0].parentref._address_).toBe(parent.address);
 
             // Deserialize the node
             const nodeInfo = serialized._node_.split(":");
@@ -84,7 +84,7 @@ describe("Circular Reference Handling", () => {
         });
 
         it("should handle self-referencing nodes", () => {
-            const node = new RoSGNode([], "TestNode");
+            const node = new Node([], "TestNode");
             node.setFieldValue("id", new BrsString("self"));
             node.setFieldValue("myself", node);
 
@@ -93,7 +93,7 @@ describe("Circular Reference Handling", () => {
 
             // Check for circular marker
             expect(serialized.myself._circular_).toBeDefined();
-            expect(serialized.myself._address_).toBe(node.sgNode.address);
+            expect(serialized.myself._address_).toBe(node.address);
 
             // Deserialize
             const nodeInfo = serialized._node_.split(":");
@@ -107,7 +107,7 @@ describe("Circular Reference Handling", () => {
 
     describe("brsValueOf with circular references", () => {
         it("should handle JS objects with circular node references", () => {
-            const node = new RoSGNode([], "TestNode");
+            const node = new Node([], "TestNode");
             node.setFieldValue("id", new BrsString("test"));
 
             const serialized = fromSGNode(node);
@@ -118,7 +118,7 @@ describe("Circular Reference Handling", () => {
                 children: [
                     {
                         _circular_: serialized._node_,
-                        _address_: node.sgNode.address,
+                        _address_: node.address,
                     },
                 ],
             };

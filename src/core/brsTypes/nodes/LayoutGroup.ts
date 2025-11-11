@@ -1,10 +1,10 @@
 import { FieldKind, FieldModel } from "./Field";
 import { AAMember } from "../components/RoAssociativeArray";
 import { Group } from "./Group";
+import { Node } from "./Node";
 import { BrsType, RoArray, isBrsString, jsValueOf } from "..";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D } from "../interfaces/IfDraw2D";
-import { RoSGNode } from "../components/RoSGNode";
 
 type LayoutDirection = "horiz" | "vert";
 type HorizontalAlignment = "left" | "center" | "right" | "custom";
@@ -35,8 +35,8 @@ export class LayoutGroup extends Group {
     ];
 
     private layoutDirty = true;
-    private metricsUsedThisPass?: WeakMap<RoSGNode, LayoutMetrics>;
-    private readonly childSizes = new WeakMap<RoSGNode, NodeSize>();
+    private metricsUsedThisPass?: WeakMap<Node, LayoutMetrics>;
+    private readonly childSizes = new WeakMap<Node, NodeSize>();
     private lastSpacingSignature = "";
     private lastChildCount = 0;
     private readonly epsilon = 0.25;
@@ -107,7 +107,7 @@ export class LayoutGroup extends Group {
 
         this.metricsUsedThisPass = undefined;
         if (layoutChildren.length && this.layoutDirty) {
-            this.metricsUsedThisPass = new WeakMap<RoSGNode, LayoutMetrics>();
+            this.metricsUsedThisPass = new WeakMap<Node, LayoutMetrics>();
             this.applyLayout(layoutChildren, direction, spacings, addAfter, this.metricsUsedThisPass);
             this.layoutDirty = false;
         }
@@ -124,7 +124,7 @@ export class LayoutGroup extends Group {
         direction: LayoutDirection,
         spacings: number[],
         addSpacingAfterChild: boolean,
-        metricsMap: WeakMap<RoSGNode, LayoutMetrics>
+        metricsMap: WeakMap<Node, LayoutMetrics>
     ) {
         const metricsList = children.map((child) => this.measureChild(child, direction, metricsMap));
         const primaryAlignment =
@@ -219,7 +219,7 @@ export class LayoutGroup extends Group {
     private measureChild(
         child: Group,
         direction: LayoutDirection,
-        metricsMap?: WeakMap<RoSGNode, LayoutMetrics>
+        metricsMap?: WeakMap<Node, LayoutMetrics>
     ): LayoutMetrics {
         const rect = this.chooseActiveRect(child);
         const metrics: LayoutMetrics = {
@@ -340,7 +340,7 @@ export class LayoutGroup extends Group {
 
     private getLayoutChildren() {
         const children: Group[] = [];
-        for (const child of this.sgNode.children) {
+        for (const child of this.children) {
             if (child instanceof Group) {
                 children.push(child);
             }
