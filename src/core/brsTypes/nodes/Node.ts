@@ -996,7 +996,7 @@ export class Node extends RoSGNode implements BrsValue {
     }
 
     protected compareNodes(other: Node): boolean {
-        return (this.nodeSubtype === other.nodeSubtype && this.address === other.address);
+        return this.nodeSubtype === other.nodeSubtype && this.address === other.address;
     }
 
     protected getThreadInfo() {

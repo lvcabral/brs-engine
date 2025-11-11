@@ -187,7 +187,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, BrsIter
     protected abstract createPath(node: RoSGNode, reverse?: boolean): RoSGNode[];
     protected abstract findRootNode(from?: RoSGNode): RoSGNode;
 
-    protected abstract getBoundingRect(interpreter: Interpreter, type: string): Rect
+    protected abstract getBoundingRect(interpreter: Interpreter, type: string): Rect;
     protected abstract compareNodes(other: RoSGNode): boolean;
     protected abstract getThreadInfo(): RoAssociativeArray;
 
