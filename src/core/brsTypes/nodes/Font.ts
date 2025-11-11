@@ -1,19 +1,19 @@
-import { RoSGNode } from "../components/RoSGNode";
-import { FieldKind, FieldModel } from "./Field";
 import {
+    AAMember,
     BrsBoolean,
-    sgRoot,
     BrsString,
     BrsType,
     getFontRegistry,
     Int32,
-    RoFont,
-    AAMember,
     isBrsString,
+    Node,
+    RoFont,
     RoFontRegistry,
+    sgRoot,
 } from "..";
+import { FieldKind, FieldModel } from "./Field";
 
-export class Font extends RoSGNode {
+export class Font extends Node {
     readonly defaultFields: FieldModel[] = [
         { name: "uri", type: "uri" },
         { name: "size", type: "integer", value: "24" },

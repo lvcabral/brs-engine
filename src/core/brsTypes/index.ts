@@ -33,7 +33,7 @@ import { RoHdmiStatusEvent } from "./events/RoHdmiStatusEvent";
 import { RoSGNodeEvent } from "./events/RoSGNodeEvent";
 import { RoSGScreenEvent } from "./events/RoSGScreenEvent";
 import { isUnboxable } from "./Boxing";
-import { RoSGNode } from "./components/RoSGNode";
+import { Node } from "./nodes/Node";
 import { Task } from "./nodes/Task";
 import { getNodeType, SGNodeFactory } from "../scenegraph/SGNodeFactory";
 import { BrsObjects } from "./components/BrsObjects";
@@ -120,6 +120,7 @@ export * from "./components/RoSGNode";
 export * from "./components/RoSGScreen";
 export * from "./events/RoSGNodeEvent";
 export * from "./events/RoSGScreenEvent";
+export * from "./nodes/Node";
 export * from "./nodes/Group";
 export * from "./nodes/Scene";
 export * from "./nodes/Keyboard";
@@ -379,13 +380,13 @@ export type BrsConvertible = boolean | number | string | BrsType | null | undefi
  * Converts a JavaScript object or Map to a RoAssociativeArray, converting each property or entry to the corresponding BrightScript type.
  * @param input The JavaScript object or Map to convert.
  * @param {boolean} cs Whether to return an AA as case sensitive.
- * @param {Map<string, RoSGNode>} nodeMap Optional map to track nodes by ID for resolving circular references.
+ * @param {Map<string, Node>} nodeMap Optional map to track nodes by ID for resolving circular references.
  * @returns A RoAssociativeArray with the converted properties or entries.
  */
 export function toAssociativeArray(
     input: Map<string, any> | FlexObject,
     cs?: boolean,
-    nodeMap?: Map<string, RoSGNode>
+    nodeMap?: Map<string, Node>
 ): RoAssociativeArray {
     const associativeArray = new RoAssociativeArray([], cs);
     if (input instanceof Map) {
@@ -409,11 +410,11 @@ export function toAssociativeArray(
  * representation is possible, throws an Error.
  * @param {any} value Some value.
  * @param {boolean} cs Whether to return an AA as case sensitive.
- * @param {Map<string, RoSGNode>} nodeMap Optional map to track nodes by ID for resolving circular references.
+ * @param {Map<string, Node>} nodeMap Optional map to track nodes by ID for resolving circular references.
  * @return {BrsType} The BrsType representation of `x`.
  * @throws {Error} If `x` cannot be represented as a BrsType.
  */
-export function brsValueOf(value: any, cs?: boolean, nodeMap?: Map<string, RoSGNode>): BrsType {
+export function brsValueOf(value: any, cs?: boolean, nodeMap?: Map<string, Node>): BrsType {
     if (value === null || value === undefined) {
         return BrsInvalid.Instance;
     }
@@ -444,10 +445,10 @@ export function brsValueOf(value: any, cs?: boolean, nodeMap?: Map<string, RoSGN
  * Converts a JavaScript object to a BrsType.
  * @param obj The JavaScript object to convert.
  * @param {boolean} cs Whether to return an AA as case sensitive.
- * @param {Map<string, RoSGNode>} nodeMap Optional map to track nodes by ID for resolving circular references.
+ * @param {Map<string, Node>} nodeMap Optional map to track nodes by ID for resolving circular references.
  * @returns A BrsType with the converted object or Invalid if the object is not transferable.
  */
-function fromObject(obj: any, cs?: boolean, nodeMap?: Map<string, RoSGNode>): BrsType {
+function fromObject(obj: any, cs?: boolean, nodeMap?: Map<string, Node>): BrsType {
     if (isBrsType(obj)) {
         return obj;
     } else if (obj === null) {
@@ -503,9 +504,9 @@ function fromObject(obj: any, cs?: boolean, nodeMap?: Map<string, RoSGNode>): Br
  * @param nodeMap Optional map to track nodes by ID for resolving circular references.
  * @returns A RoSGNode with the converted fields.
  */
-export function toSGNode(obj: any, type: string, subtype: string, nodeMap?: Map<string, RoSGNode>): RoSGNode {
+export function toSGNode(obj: any, type: string, subtype: string, nodeMap?: Map<string, Node>): Node {
     // Initialize nodeMap on first call
-    nodeMap ??= new Map<string, RoSGNode>();
+    nodeMap ??= new Map<string, Node>();
 
     // Check if this is a circular reference
     if (obj["_circular_"] && obj["_address_"]) {
@@ -517,11 +518,11 @@ export function toSGNode(obj: any, type: string, subtype: string, nodeMap?: Map<
         // Return invalid for now (should not happen in valid serialized data)
         return BrsInvalid.Instance as any;
     }
-    const newNode = SGNodeFactory.createNode(type, subtype) ?? new RoSGNode([], subtype);
+    const newNode = SGNodeFactory.createNode(type, subtype) ?? new Node([], subtype);
     // Store the node in the map using the original address for circular reference resolution
     // Use the address from serialized data if available, otherwise use the new node's address
-    newNode.sgNode.address = obj["_address_"] || newNode.sgNode.address;
-    nodeMap.set(newNode.sgNode.address, newNode);
+    newNode.address = obj["_address_"] || newNode.address;
+    nodeMap.set(newNode.address, newNode);
 
     for (const key in obj) {
         if (key.startsWith("_") && key.endsWith("_") && key.length > 2) {
@@ -595,10 +596,10 @@ export function fromContentNode(contentNode: ContentNode): RoAssociativeArray {
 /**
  * Converts a BrsType value to its representation as a JavaScript type.
  * @param {BrsType} value Some BrsType value.
- * @param {WeakSet<RoSGNode>} visitedNodes Optional set to track visited nodes for circular reference detection.
+ * @param {WeakSet<Node>} visitedNodes Optional set to track visited nodes for circular reference detection.
  * @return {any} The JavaScript representation of `x`.
  */
-export function jsValueOf(value: BrsType, deep: boolean = true, visitedNodes?: WeakSet<RoSGNode>): any {
+export function jsValueOf(value: BrsType, deep: boolean = true, visitedNodes?: WeakSet<Node>): any {
     if (isUnboxable(value)) {
         value = value.unbox();
     }
@@ -623,7 +624,7 @@ export function jsValueOf(value: BrsType, deep: boolean = true, visitedNodes?: W
                 return value.elements.map((el) => jsValueOf(el, deep, visitedNodes));
             } else if (value instanceof RoByteArray) {
                 return value.elements;
-            } else if (value instanceof RoSGNode) {
+            } else if (value instanceof Node) {
                 return fromSGNode(value, deep, visitedNodes);
             } else if (value instanceof RoAssociativeArray) {
                 return fromAssociativeArray(value, deep);
@@ -645,12 +646,12 @@ export function jsValueOf(value: BrsType, deep: boolean = true, visitedNodes?: W
  * @param visited Optional WeakSet to track visited nodes and prevent circular references.
  * @returns A JavaScript object with the converted fields.
  */
-export function fromSGNode(node: RoSGNode, deep: boolean = true, visited?: WeakSet<RoSGNode>): FlexObject {
-    visited ??= new WeakSet<RoSGNode>();
+export function fromSGNode(node: Node, deep: boolean = true, visited?: WeakSet<Node>): FlexObject {
+    visited ??= new WeakSet<Node>();
     if (visited.has(node)) {
         return {
             _circular_: `${getNodeType(node.nodeSubtype)}:${node.nodeSubtype}`,
-            _address_: node.sgNode.address,
+            _address_: node.address,
         };
     }
     visited.add(node);
@@ -660,7 +661,7 @@ export function fromSGNode(node: RoSGNode, deep: boolean = true, visited?: WeakS
     const observed: string[] = [];
 
     result["_node_"] = `${getNodeType(node.nodeSubtype)}:${node.nodeSubtype}`;
-    result["_address_"] = node.sgNode.address;
+    result["_address_"] = node.address;
 
     for (const [name, field] of fields) {
         if (!field.isHidden()) {
@@ -671,7 +672,7 @@ export function fromSGNode(node: RoSGNode, deep: boolean = true, visited?: WeakS
             if (node instanceof Task && field.isPortObserved(node)) {
                 observed.push(name);
             }
-            if (fieldValue instanceof RoSGNode) {
+            if (fieldValue instanceof Node) {
                 result[name] = fromSGNode(fieldValue, deep, visited);
                 continue;
             }
@@ -683,11 +684,11 @@ export function fromSGNode(node: RoSGNode, deep: boolean = true, visited?: WeakS
     }
     const children = node.getNodeChildren();
     if (deep && children.length > 0) {
-        result["_children_"] = children.map((child: RoSGNode | BrsInvalid) => {
-            if (child instanceof BrsInvalid) {
-                return { _invalid_: null };
+        result["_children_"] = children.map((child: BrsType) => {
+            if (child instanceof Node) {
+                return fromSGNode(child, deep, visited);
             }
-            return fromSGNode(child, deep, visited);
+            return { _invalid_: null };
         });
     }
 

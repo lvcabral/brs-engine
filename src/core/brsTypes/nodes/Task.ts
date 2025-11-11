@@ -9,7 +9,7 @@ import {
     fromSGNode,
     isBrsString,
     jsValueOf,
-    RoSGNode,
+    Node,
     Scene,
     sgRoot,
 } from "..";
@@ -20,7 +20,7 @@ import { Interpreter } from "../../interpreter";
 import { BrsDevice } from "../..";
 import SharedObject from "../../SharedObject";
 
-export class Task extends RoSGNode {
+export class Task extends Node {
     readonly defaultFields: FieldModel[] = [
         { name: "control", type: "string" },
         { name: "state", type: "string", value: "init" },
@@ -50,7 +50,7 @@ export class Task extends RoSGNode {
         }
         const validStates = ["init", "run", "stop", "done"];
         const mapKey = index.getValue().toLowerCase();
-        const field = this.sgNode.fields.get(mapKey);
+        const field = this.fields.get(mapKey);
 
         if (field && mapKey === "control" && isBrsString(value)) {
             let control = value.getValue().toLowerCase();
@@ -73,7 +73,7 @@ export class Task extends RoSGNode {
                 field: mapKey,
                 value: jsValueOf(value),
             };
-            if (this.thread && value instanceof RoSGNode) {
+            if (this.thread && value instanceof Node) {
                 value.changed = false;
             }
             postMessage(update);
@@ -82,7 +82,7 @@ export class Task extends RoSGNode {
     }
 
     private setControlField(field: Field, control: string, sync: boolean) {
-        const state = this.sgNode.fields.get("state") as Field;
+        const state = this.fields.get("state") as Field;
         if (control === "run") {
             this.active = true;
         } else if (control === "stop" || control === "done") {
@@ -101,7 +101,7 @@ export class Task extends RoSGNode {
         field.setValue(new BrsString(control));
         if (state && control !== "" && control !== "init") {
             state.setValue(new BrsString(control));
-            this.sgNode.fields.set("state", state);
+            this.fields.set("state", state);
             if (this.id >= 0 && this.thread && sync) {
                 const update: ThreadUpdate = {
                     id: this.id,
@@ -177,13 +177,13 @@ export class Task extends RoSGNode {
         // Check for changed fields to notify updates to the Main thread
         for (const [name, field] of this.getNodeFields()) {
             const value = field.getValue();
-            if (!field.isHidden() && value instanceof RoSGNode && value.changed) {
+            if (!field.isHidden() && value instanceof Node && value.changed) {
                 value.changed = false;
                 const update: ThreadUpdate = {
                     id: this.id,
                     type: "task",
                     field: name,
-                    value: value instanceof RoSGNode ? fromSGNode(value, false) : jsValueOf(value),
+                    value: value instanceof Node ? fromSGNode(value, false) : jsValueOf(value),
                 };
                 postMessage(update);
             }

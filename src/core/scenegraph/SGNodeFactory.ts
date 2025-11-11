@@ -25,6 +25,7 @@ import {
     MarkupGrid,
     MarkupList,
     MiniKeyboard,
+    Node,
     Overhang,
     Panel,
     Poster,
@@ -32,7 +33,6 @@ import {
     Rectangle,
     RoAssociativeArray,
     RoMessagePort,
-    RoSGNode,
     RowList,
     RSGPalette,
     Scene,
@@ -158,7 +158,7 @@ export function isSGNodeType(value: string): value is SGNodeType {
 }
 
 export class SGNodeFactory {
-    private static additionalNodes = new Map<string, (name: string) => RoSGNode>();
+    private static readonly additionalNodes = new Map<string, (name: string) => Node>();
 
     /**
      * Adds additional node/component types to the factory, so other software can extend brs if necessary.
@@ -169,13 +169,13 @@ export class SGNodeFactory {
      * @static
      * @param types Array of pairs of [nodeTypeName, construction function], such that when a given nodeType is requested, the construction function is called and returns one of those components
      */
-    public static addNodeTypes(types: [string, (name: string) => RoSGNode][]) {
+    public static addNodeTypes(types: [string, (name: string) => Node][]) {
         for (const [nodeType, ctor] of types) {
             this.additionalNodes.set(nodeType.toLowerCase(), ctor);
         }
     }
 
-    public static createNode(nodeType: SGNodeType | string, nodeName?: string): RoSGNode | undefined {
+    public static createNode(nodeType: SGNodeType | string, nodeName?: string): Node | undefined {
         let name = nodeName || nodeType;
         const additionalCtor = this.additionalNodes.get(nodeType?.toLowerCase());
         if (additionalCtor) {
@@ -183,7 +183,7 @@ export class SGNodeFactory {
         }
         switch (nodeType.toLowerCase()) {
             case SGNodeType.Node.toLowerCase():
-                return new RoSGNode([], name);
+                return new Node([], name);
             case SGNodeType.Group.toLowerCase():
             case SGNodeType.MaskGroup.toLowerCase():
             case SGNodeType.TargetGroup.toLowerCase():
@@ -275,7 +275,7 @@ export class SGNodeFactory {
                     BrsDevice.stderr.write(
                         `warning,The roSGNode with type "${nodeType}" is not implemented yet, created as regular "Node".`
                     );
-                    return new RoSGNode([], name);
+                    return new Node([], name);
                 }
                 return;
         }
@@ -295,7 +295,7 @@ export class SGNodeFactory {
 }
 
 /** Function to create a Node by its name defined on the XML file */
-export function createNodeByType(type: BrsString, interpreter?: Interpreter): RoSGNode | BrsInvalid {
+export function createNodeByType(type: BrsString, interpreter?: Interpreter): Node | BrsInvalid {
     // If this is a built-in node component, then return it.
     let node = SGNodeFactory.createNode(type.value) ?? BrsInvalid.Instance;
     if (node instanceof BrsInvalid) {
@@ -306,7 +306,7 @@ export function createNodeByType(type: BrsString, interpreter?: Interpreter): Ro
             typeDef = typeDefStack.pop();
             node = SGNodeFactory.createNode(typeDef!.extends as SGNodeType, type.value) ?? BrsInvalid.Instance;
             if (node instanceof BrsInvalid) {
-                node = new RoSGNode([], type.value);
+                node = new Node([], type.value);
             }
         } else if (typeDef) {
             node = initializeNode(interpreter!, type, typeDef);
@@ -324,7 +324,7 @@ export function createNodeByType(type: BrsString, interpreter?: Interpreter): Ro
         node.id = sgRoot.tasks.length + 1;
         sgRoot.tasks.push(node);
     }
-    if (node instanceof RoSGNode && sgRoot.tasks.length === 1) {
+    if (node instanceof Node && sgRoot.tasks.length === 1) {
         const task = sgRoot.tasks[0];
         if (task.thread && isInvalid(node.getNodeParent())) {
             node.setNodeParent(task);
@@ -334,7 +334,7 @@ export function createNodeByType(type: BrsString, interpreter?: Interpreter): Ro
 }
 
 /** Function to create a Scene by its name defined on the XML file */
-export function createSceneByType(interpreter: Interpreter, type: BrsString): RoSGNode | BrsInvalid {
+export function createSceneByType(interpreter: Interpreter, type: BrsString): Node | BrsInvalid {
     let typeDef = sgRoot.nodeDefMap.get(type.value.toLowerCase());
     updateTypeDefHierarchy(typeDef);
     if (typeDef && isSubtypeCheck(type.value, SGNodeType.Scene)) {
@@ -354,16 +354,11 @@ export function customNodeExists(node: BrsString) {
 }
 
 /** Function to initialize Nodes with its Fields, Children and Environment */
-export function initializeNode(
-    interpreter: Interpreter,
-    type: BrsString,
-    typeDef?: ComponentDefinition,
-    node?: RoSGNode
-) {
+export function initializeNode(interpreter: Interpreter, type: BrsString, typeDef?: ComponentDefinition, node?: Node) {
     if (typeDef) {
         //use typeDef object to tack on all the bells & whistles of a custom node
-        let typeDefStack = updateTypeDefHierarchy(typeDef);
-        let currentEnv = typeDef.environment?.createSubEnvironment();
+        const typeDefStack = updateTypeDefHierarchy(typeDef);
+        const currentEnv = typeDef.environment?.createSubEnvironment();
 
         // Start from the "basemost" component of the tree.
         typeDef = typeDefStack.pop();
@@ -374,10 +369,8 @@ export function initializeNode(
             node = SGNodeFactory.createNode(typeDef!.extends as SGNodeType, type.value);
         }
         // Default to Node as parent.
-        if (!node) {
-            node = new RoSGNode([], type.value);
-        }
-        let mPointer = new RoAssociativeArray([]);
+        node ??= new Node([], type.value);
+        const mPointer = new RoAssociativeArray([]);
         currentEnv?.setM(new RoAssociativeArray([]));
 
         // Add children, fields and call each init method starting from the
@@ -477,7 +470,7 @@ export function initializeTask(interpreter: Interpreter, taskData: TaskData) {
 }
 
 /** Function to restore the Task fields and context from the serialized object */
-function loadTaskData(interpreter: Interpreter, node: RoSGNode, taskData: TaskData) {
+function loadTaskData(interpreter: Interpreter, node: Node, taskData: TaskData) {
     if (node instanceof Task) {
         node.id = taskData.id;
         node.thread = true;
@@ -535,7 +528,7 @@ function updateTypeDefHierarchy(typeDef: ComponentDefinition | undefined) {
 }
 
 /** Function to restore the node fields from the serialized object */
-function restoreNode(interpreter: Interpreter, source: any, node: RoSGNode, port?: RoMessagePort) {
+function restoreNode(interpreter: Interpreter, source: any, node: Node, port?: RoMessagePort) {
     const observed = source["_observed_"];
     for (let [key, value] of Object.entries(source)) {
         if (key.startsWith("_") && key.endsWith("_") && key.length > 2) {
@@ -555,15 +548,15 @@ function restoreNode(interpreter: Interpreter, source: any, node: RoSGNode, port
 }
 
 /** Function to add Fields to a Node based on its definition */
-function addFields(interpreter: Interpreter, node: RoSGNode, typeDef: ComponentDefinition) {
+function addFields(interpreter: Interpreter, node: Node, typeDef: ComponentDefinition) {
     let fields = typeDef.fields;
     for (let [fieldName, fieldValue] of Object.entries(fields)) {
         if (fieldValue instanceof Object) {
             if (fieldValue.alias?.includes(".")) {
                 const childName = fieldValue.alias.split(".")[0];
                 const childField = fieldValue.alias.split(".")[1];
-                const childNode = node.findNodeById(node, new BrsString(childName));
-                if (childNode instanceof RoSGNode) {
+                const childNode = node.findNodeById(node, childName);
+                if (childNode instanceof Node) {
                     const field = childNode.getNodeFields().get(childField?.toLowerCase());
                     if (field) {
                         node.addNodeFieldAlias(fieldName, field, childName, childField);
@@ -613,13 +606,13 @@ function addFields(interpreter: Interpreter, node: RoSGNode, typeDef: ComponentD
 }
 
 /** Function to the the Children of a Node based on its definition */
-function addChildren(interpreter: Interpreter, node: RoSGNode, typeDef: ComponentDefinition | ComponentNode) {
+function addChildren(interpreter: Interpreter, node: Node, typeDef: ComponentDefinition | ComponentNode) {
     const children = typeDef.children;
     const appendChild = node.getMethod("appendchild");
 
     for (let child of children) {
         const newChild = createNodeByType(new BrsString(child.name), interpreter);
-        if (newChild instanceof RoSGNode) {
+        if (newChild instanceof Node) {
             const setField = newChild.getMethod("setfield");
             if (setField) {
                 const nodeFields = newChild.getNodeFields();

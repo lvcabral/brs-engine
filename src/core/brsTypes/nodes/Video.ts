@@ -2,30 +2,30 @@ import { Group } from "./Group";
 import { FieldKind, FieldModel } from "./Field";
 import {
     AAMember,
-    BrsType,
-    isBrsString,
-    isBrsNumber,
-    jsValueOf,
-    ContentNode,
-    isBrsBoolean,
-    BrsString,
-    Int32,
-    sgRoot,
-    Double,
-    Poster,
     BrsBoolean,
-    BusySpinner,
-    Float,
-    Label,
-    Timer,
-    ScrollingLabel,
     BrsInvalid,
-    toAssociativeArray,
-    RoAssociativeArray,
-    RoArray,
-    fromAssociativeArray,
+    BrsString,
+    BrsType,
+    BusySpinner,
+    ContentNode,
+    Double,
     FlexObject,
-    RoSGNode,
+    Float,
+    fromAssociativeArray,
+    Int32,
+    isBrsBoolean,
+    isBrsNumber,
+    isBrsString,
+    jsValueOf,
+    Label,
+    Node,
+    Poster,
+    RoArray,
+    RoAssociativeArray,
+    ScrollingLabel,
+    sgRoot,
+    Timer,
+    toAssociativeArray,
 } from "..";
 import {
     captionOptions,
@@ -731,7 +731,7 @@ export class Video extends Group {
         this.contentTitles.length = 0;
         const isPlaylist = this.getFieldValueJS("contentIsPlaylist") as boolean;
         if (isPlaylist) {
-            const playList = node.getNodeChildren().filter((node) => node instanceof RoSGNode);
+            const playList = node.getNodeChildren().filter((node) => node instanceof Node);
             for (const node of playList) {
                 const url = node.getFieldValueJS("url") as string;
                 if (url?.length) {

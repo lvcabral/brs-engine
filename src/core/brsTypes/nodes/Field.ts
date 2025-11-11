@@ -1,31 +1,35 @@
-import { ValueKind, BrsString, BrsInvalid, getValueKindFromFieldType, BrsBoolean } from "../BrsType";
-import { RoSGNodeEvent } from "../events/RoSGNodeEvent";
 import {
+    BrsBoolean,
+    BrsInvalid,
+    BrsNumber,
+    BrsString,
     BrsType,
+    ContentNode,
+    Double,
+    FlexObject,
+    Float,
     Font,
-    isBrsString,
+    fromAssociativeArray,
+    getValueKindFromFieldType,
     Int32,
     Int64,
-    Float,
-    Double,
+    isAnyNumber,
+    isBoxable,
+    isBoxedNumber,
+    isBrsBoolean,
+    isBrsString,
+    isInvalid,
+    isUnboxable,
+    jsValueOf,
+    Node,
     RoArray,
     RoAssociativeArray,
-    toAssociativeArray,
-    RoSGNode,
     RoMessagePort,
-    isBrsBoolean,
-    isBoxable,
-    isUnboxable,
-    isAnyNumber,
-    isBoxedNumber,
     Task,
-    jsValueOf,
-    fromAssociativeArray,
-    FlexObject,
-    BrsNumber,
-    ContentNode,
-    isInvalid,
+    toAssociativeArray,
+    ValueKind,
 } from "..";
+import { RoSGNodeEvent } from "../events/RoSGNodeEvent";
 import { Callable } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Environment, Scope } from "../../interpreter/Environment";
@@ -34,11 +38,11 @@ import { BlockEnd } from "../../parser/Statement";
 interface BrsCallback {
     interpreter: Interpreter;
     environment: Environment;
-    hostNode: RoSGNode;
+    hostNode: Node;
     callable: Callable | RoMessagePort;
     eventParams: {
         fieldName: BrsString;
-        node: RoSGNode;
+        node: Node;
         infoFields?: RoArray;
     };
     running?: boolean;
@@ -153,7 +157,7 @@ export type FieldAlias = {
 export class Field {
     private readonly permanentObservers: BrsCallback[] = [];
     private readonly unscopedObservers: BrsCallback[] = [];
-    private readonly scopedObservers: Map<RoSGNode, BrsCallback[]> = new Map();
+    private readonly scopedObservers: Map<Node, BrsCallback[]> = new Map();
 
     constructor(
         private value: BrsType,
@@ -278,13 +282,13 @@ export class Field {
         mode: "permanent" | "unscoped" | "scoped",
         interpreter: Interpreter,
         callable: Callable | RoMessagePort,
-        target: RoSGNode,
+        target: Node,
         fieldName: BrsString,
         infoFields?: RoArray
     ) {
         // Once a field is accessed, it is no longer hidden.
         this.hidden = false;
-        const subscriber = interpreter.environment.hostNode ?? target;
+        const subscriber = (interpreter.environment.hostNode ?? target) as Node;
         let brsCallback: BrsCallback = {
             interpreter,
             environment: interpreter.environment,
@@ -310,7 +314,7 @@ export class Field {
         this.unscopedObservers.splice(0);
     }
 
-    removeScopedObservers(hostNode: RoSGNode) {
+    removeScopedObservers(hostNode: Node) {
         this.scopedObservers.get(hostNode)?.splice(0);
         this.scopedObservers.delete(hostNode);
     }
@@ -411,7 +415,7 @@ export class Field {
             return oldValue.getValue() === newValue.getValue();
         } else if (isBrsBoolean(oldValue) && isBrsBoolean(newValue)) {
             return oldValue.toBoolean() === newValue.toBoolean();
-        } else if (oldValue instanceof RoSGNode && newValue instanceof RoSGNode) {
+        } else if (oldValue instanceof Node && newValue instanceof Node) {
             return oldValue === newValue && !newValue.changed;
         } else {
             return oldValue.equalTo(newValue).toBoolean();

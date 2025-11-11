@@ -1,24 +1,24 @@
-import { RoSGNode } from "../components/RoSGNode";
-import { FieldKind, FieldModel } from "./Field";
 import {
+    AAMember,
+    BrsInvalid,
     BrsString,
     BrsType,
-    Int32,
-    AAMember,
-    isBrsString,
-    RoChannelStore,
     ContentNode,
-    BrsInvalid,
-    isBrsBoolean,
-    toContentNode,
     fromContentNode,
-    RoAssociativeArray,
+    Int32,
+    isBrsBoolean,
     isBrsNumber,
+    isBrsString,
     jsValueOf,
+    Node,
+    RoAssociativeArray,
+    RoChannelStore,
+    toContentNode,
 } from "..";
+import { FieldKind, FieldModel } from "./Field";
 import { BrsDevice } from "../../device/BrsDevice";
 
-export class ChannelStore extends RoSGNode {
+export class ChannelStore extends Node {
     readonly defaultFields: FieldModel[] = [
         { name: "command", type: "string" },
         { name: "requestedUserData", type: "string", value: "all" },

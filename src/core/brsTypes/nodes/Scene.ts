@@ -10,9 +10,9 @@ import {
     Group,
     isBrsString,
     jsValueOf,
+    Node,
     RoArray,
     RoMessagePort,
-    RoSGNode,
     sgRoot,
     StandardDialog,
     toAssociativeArray,
@@ -68,19 +68,19 @@ export class Scene extends Group {
         }
         const result = super.set(index, value, alwaysNotify, kind);
         // Refresh SharedObject with latest Node state
-        if (sync && sgRoot.tasks.length > 0 && this.changed && this.sgNode.fields.has(fieldName)) {
+        if (sync && sgRoot.tasks.length > 0 && this.changed && this.fields.has(fieldName)) {
             const update: ThreadUpdate = {
                 id: sgRoot.threadId,
                 type: "scene",
                 field: fieldName,
-                value: value instanceof RoSGNode ? fromSGNode(value, false) : jsValueOf(value),
+                value: value instanceof Node ? fromSGNode(value, false) : jsValueOf(value),
             };
             postMessage(update);
         }
         return result;
     }
 
-    cloneNode(_isDeepCopy: boolean, _interpreter?: Interpreter, _visitedNodes?: WeakMap<RoSGNode, RoSGNode>): BrsType {
+    protected cloneNode(_isDeepCopy: boolean, _interpreter?: Interpreter): BrsType {
         // Override to prevent cloning Scene nodes
         return BrsInvalid.Instance;
     }
@@ -156,7 +156,7 @@ export class Scene extends Group {
 
     /** Handle SceneGraph onKeyEvent event */
     handleOnKeyEvent(interpreter: Interpreter, key: BrsString, press: BrsBoolean) {
-        if (sgRoot.focused instanceof RoSGNode) {
+        if (sgRoot.focused instanceof Node) {
             const path = this.createPath(sgRoot.focused, false);
             for (let node of path) {
                 if (this.handleKeyByNode(interpreter, node, key, press)) {
@@ -169,7 +169,7 @@ export class Scene extends Group {
         return false;
     }
 
-    private handleKeyByNode(interpreter: Interpreter, hostNode: RoSGNode, key: BrsString, press: BrsBoolean): boolean {
+    private handleKeyByNode(interpreter: Interpreter, hostNode: Node, key: BrsString, press: BrsBoolean): boolean {
         const typeDef = sgRoot.nodeDefMap.get(hostNode.nodeSubtype.toLowerCase());
         if (typeDef?.environment === undefined) {
             if (hostNode instanceof Group) {

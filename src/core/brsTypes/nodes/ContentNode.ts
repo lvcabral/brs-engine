@@ -1,4 +1,4 @@
-import { RoSGNode } from "../components/RoSGNode";
+import { Node } from "./Node";
 import { Field, FieldKind, FieldModel } from "./Field";
 import { BrsType, toAssociativeArray } from "..";
 import { ValueKind, BrsString, BrsBoolean, BrsInvalid } from "../BrsType";
@@ -7,7 +7,7 @@ import { Int32 } from "../Int32";
 import { Callable, StdlibArgument } from "../Callable";
 import { RoArray } from "../components/RoArray";
 
-export class ContentNode extends RoSGNode {
+export class ContentNode extends Node {
     readonly defaultFields: FieldModel[] = [
         { name: "ContentType", type: "string", hidden: true },
         { name: "Title", type: "string", hidden: true },
@@ -152,13 +152,13 @@ export class ContentNode extends RoSGNode {
     appendChildToParent(child: BrsType): boolean {
         let success = false;
         if (child instanceof ContentNode) {
-            if (!this.sgNode.children.includes(child)) {
-                this.sgNode.children.push(child);
+            if (!this.children.includes(child)) {
+                this.children.push(child);
                 child.setNodeParent(this);
             }
             success = true;
-        } else if (child instanceof RoSGNode || child === BrsInvalid.Instance) {
-            this.sgNode.children.push(BrsInvalid.Instance);
+        } else if (child instanceof Node || child === BrsInvalid.Instance) {
+            this.children.push(BrsInvalid.Instance);
             // Returns true even if child is invalid because a child was added
             success = true;
         }
@@ -176,7 +176,7 @@ export class ContentNode extends RoSGNode {
 
     /** @override */
     toString(parent?: BrsType): string {
-        let componentName = "roSGNode:" + this.nodeSubtype;
+        const componentName = `${this.getComponentName()}:${this.nodeSubtype}`;
 
         if (parent) {
             return `<Component: ${componentName}>`;

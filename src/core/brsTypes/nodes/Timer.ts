@@ -1,8 +1,7 @@
-import { AAMember, BrsType, BrsString, BrsInvalid, isBrsString, sgRoot } from "..";
-import { RoSGNode } from "../components/RoSGNode";
+import { AAMember, BrsType, BrsString, BrsInvalid, isBrsString, Node, sgRoot } from "..";
 import { FieldKind, FieldModel } from "./Field";
 
-export class Timer extends RoSGNode {
+export class Timer extends Node {
     readonly defaultFields: FieldModel[] = [
         { name: "control", type: "string" },
         { name: "repeat", type: "boolean", value: "false" },
@@ -30,7 +29,7 @@ export class Timer extends RoSGNode {
         }
 
         const mapKey = index.getValue().toLowerCase();
-        const field = this.sgNode.fields.get(mapKey);
+        const field = this.fields.get(mapKey);
 
         if (field && mapKey === "control" && isBrsString(value)) {
             let control = value.getValue().toLowerCase();
@@ -43,7 +42,7 @@ export class Timer extends RoSGNode {
                 control = "none";
             }
             field.setValue(new BrsString(control));
-            this.sgNode.fields.set(mapKey, field);
+            this.fields.set(mapKey, field);
             return BrsInvalid.Instance;
         }
         return super.set(index, value, alwaysNotify, kind);
@@ -60,7 +59,7 @@ export class Timer extends RoSGNode {
         if (this.active && (now - this.lastFireTime) / 1000 >= duration) {
             this.lastFireTime = now;
             this.active = repeat;
-            this.sgNode.fields.get("fire")?.setValue(BrsInvalid.Instance);
+            this.fields.get("fire")?.setValue(BrsInvalid.Instance);
             if (this.jsCallback) {
                 this.jsCallback();
             }

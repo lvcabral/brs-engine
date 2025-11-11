@@ -29,7 +29,6 @@ import {
     rgbaIntToHex,
 } from "../interfaces/IfDraw2D";
 import { BrsDevice } from "../../device/BrsDevice";
-import { MediaTrack, BufferType, DataType, MediaEvent } from "../../common";
 
 // Roku Remote Mapping
 const rokuKeys: Map<number, string> = new Map([
