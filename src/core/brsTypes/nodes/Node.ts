@@ -152,7 +152,7 @@ export class Node extends RoSGNode implements BrsValue {
 
     protected canAcceptValue(fieldName: string, value: BrsType): boolean {
         const field = this.fields.get(fieldName.toLowerCase());
-        if (field === undefined || !field.canAcceptValue(value)) {
+        if (!field?.canAcceptValue(value)) {
             return false;
         }
         return true;
@@ -893,10 +893,8 @@ export class Node extends RoSGNode implements BrsValue {
                 try {
                     // Determine whether the function should get arguments or not.
                     let satisfiedSignature = functionToCall.getFirstSatisfiedSignature(functionArgs);
-                    let args = satisfiedSignature ? functionArgs : [];
-                    if (!satisfiedSignature) {
-                        satisfiedSignature = functionToCall.getFirstSatisfiedSignature([]);
-                    }
+                    const args = satisfiedSignature ? functionArgs : [];
+                    satisfiedSignature ??= functionToCall.getFirstSatisfiedSignature([]);
                     if (satisfiedSignature) {
                         const funcLoc = functionToCall.getLocation() ?? interpreter.location;
                         interpreter.addToStack({
@@ -905,19 +903,15 @@ export class Node extends RoSGNode implements BrsValue {
                             callLocation: funcLoc,
                             signature: satisfiedSignature.signature,
                         });
-                        try {
-                            const returnValue = functionToCall.call(subInterpreter, ...args);
-                            interpreter.stack.pop();
-                            return returnValue;
-                        } catch (err) {
-                            throw err;
-                        }
+                        const returnValue = functionToCall.call(subInterpreter, ...args);
+                        interpreter.stack.pop();
+                        return returnValue;
                     } else {
                         return interpreter.addError(
                             generateArgumentMismatchError(
                                 functionToCall,
                                 functionArgs,
-                                interpreter.stack[interpreter.stack.length - 1].functionLocation
+                                interpreter.stack.at(-1)?.functionLocation!
                             )
                         );
                     }

@@ -158,7 +158,7 @@ export function isSGNodeType(value: string): value is SGNodeType {
 }
 
 export class SGNodeFactory {
-    private static additionalNodes = new Map<string, (name: string) => Node>();
+    private static readonly additionalNodes = new Map<string, (name: string) => Node>();
 
     /**
      * Adds additional node/component types to the factory, so other software can extend brs if necessary.
@@ -357,8 +357,8 @@ export function customNodeExists(node: BrsString) {
 export function initializeNode(interpreter: Interpreter, type: BrsString, typeDef?: ComponentDefinition, node?: Node) {
     if (typeDef) {
         //use typeDef object to tack on all the bells & whistles of a custom node
-        let typeDefStack = updateTypeDefHierarchy(typeDef);
-        let currentEnv = typeDef.environment?.createSubEnvironment();
+        const typeDefStack = updateTypeDefHierarchy(typeDef);
+        const currentEnv = typeDef.environment?.createSubEnvironment();
 
         // Start from the "basemost" component of the tree.
         typeDef = typeDefStack.pop();
@@ -369,10 +369,8 @@ export function initializeNode(interpreter: Interpreter, type: BrsString, typeDe
             node = SGNodeFactory.createNode(typeDef!.extends as SGNodeType, type.value);
         }
         // Default to Node as parent.
-        if (!node) {
-            node = new Node([], type.value);
-        }
-        let mPointer = new RoAssociativeArray([]);
+        node ??= new Node([], type.value);
+        const mPointer = new RoAssociativeArray([]);
         currentEnv?.setM(new RoAssociativeArray([]));
 
         // Add children, fields and call each init method starting from the
