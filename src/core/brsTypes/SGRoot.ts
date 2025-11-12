@@ -1,5 +1,5 @@
 import { ComponentDefinition } from "../scenegraph";
-import { BufferType, DataType, MediaEvent, MediaTrack, ThreadInfo } from "../common";
+import { BufferType, DataType, genHexAddress, MediaEvent, MediaTrack, ThreadInfo } from "../common";
 import { RoSGNode } from "./components/RoSGNode";
 import { Global } from "./nodes/Global";
 import { Scene } from "./nodes/Scene";
@@ -21,12 +21,13 @@ export class SGRoot {
     private _nodeDefMap: Map<string, ComponentDefinition>;
     private _scene?: Scene;
     private _focused?: RoSGNode;
-    private readonly _sfx: (SoundEffect | undefined)[];
+    private _taskId: number;
+    private readonly _threads: Map<number, ThreadInfo>;
     private readonly _tasks: Task[];
     private readonly _timers: Timer[];
+    private readonly _sfx: (SoundEffect | undefined)[];
     private _audio?: Audio;
     private _video?: Video;
-    threadId: number = 0;
 
     get mGlobal(): Global {
         this._mGlobal ??= new Global([]);
@@ -64,6 +65,10 @@ export class SGRoot {
         return this._video;
     }
 
+    get taskId(): number {
+        return this._taskId;
+    }
+
     private audioFlags: number = -1;
     private audioIndex: number = -1;
     private audioDuration: number = -1;
@@ -79,6 +84,9 @@ export class SGRoot {
         this._sfx = [];
         this._tasks = [];
         this._timers = [];
+        this._threads = new Map<number, ThreadInfo>();
+        this._taskId = 0; // Render thread by default
+        this._threads.set(this._taskId, { id: genHexAddress(), type: "Render" });
     }
 
     /** Set the map of component definitions */
@@ -94,6 +102,14 @@ export class SGRoot {
     /** Set the currently focused node */
     setFocused(node?: RoSGNode) {
         this._focused = node;
+    }
+
+    /** Set thread data and optionally make it the current */
+    setThread(taskId: number, makeCurrent: boolean = false, address?: string) {
+        this._threads.set(taskId, { id: address ?? genHexAddress(), type: taskId > 0 ? "Task" : "Render" });
+        if (makeCurrent) {
+            this._taskId = taskId;
+        }
     }
 
     /** Update all Application Tasks */
@@ -283,27 +299,26 @@ export class SGRoot {
     }
 
     inTaskThread(): boolean {
-        return this.threadId > 0;
+        return this.taskId > 0;
+    }
+
+    getThreadInfo(taskId: number): ThreadInfo {
+        const thread = this._threads.get(taskId)!;
+        if (taskId === 0 && this._taskId === 0) {
+            thread.name = this.scene?.nodeSubtype;
+        } else if (taskId > 0) {
+            const task = this.tasks.find((t) => t.id === taskId);
+            thread.name = task?.name;
+        }
+        return thread;
     }
 
     getCurrentThread(): ThreadInfo {
-        const currentThread: ThreadInfo = { id: this.threadId.toString(), name: "", type: "" };
-        if (this.threadId === 0) {
-            const sceneName = this.scene?.nodeSubtype || "";
-            currentThread.name = sceneName;
-            currentThread.type = "Render";
-        } else if (this.tasks[0]) {
-            currentThread.name = this.tasks[0].name || "";
-            currentThread.type = "Task";
-        }
-        return currentThread;
+        return this.getThreadInfo(this._taskId);
     }
 
     getRenderThread(): ThreadInfo {
-        const renderThread: ThreadInfo = { id: "0", name: "", type: "Render" };
-        const sceneName = this.scene?.nodeSubtype || "";
-        renderThread.name = sceneName;
-        return renderThread;
+        return this.getThreadInfo(0);
     }
 }
 export const sgRoot: SGRoot = new SGRoot();

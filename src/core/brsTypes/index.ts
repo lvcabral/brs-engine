@@ -522,6 +522,7 @@ export function toSGNode(obj: any, type: string, subtype: string, nodeMap?: Map<
     // Store the node in the map using the original address for circular reference resolution
     // Use the address from serialized data if available, otherwise use the new node's address
     newNode.address = obj["_address_"] || newNode.address;
+    newNode.owner = obj["_owner_"] ?? newNode.owner;
     nodeMap.set(newNode.address, newNode);
 
     for (const key in obj) {
@@ -662,6 +663,7 @@ export function fromSGNode(node: Node, deep: boolean = true, visited?: WeakSet<N
 
     result["_node_"] = `${getNodeType(node.nodeSubtype)}:${node.nodeSubtype}`;
     result["_address_"] = node.address;
+    result["_owner_"] = node.owner;
 
     for (const [name, field] of fields) {
         if (!field.isHidden()) {

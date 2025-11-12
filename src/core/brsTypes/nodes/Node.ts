@@ -33,7 +33,7 @@ import { createNodeByType, subtypeHierarchy } from "../../scenegraph/SGNodeFacto
 import { Field, FieldAlias, FieldKind, FieldModel } from "../nodes/Field";
 import { Rect, IfDraw2D } from "../interfaces/IfDraw2D";
 import { BrsDevice } from "../../device/BrsDevice";
-import { genHexAddress, ThreadInfo, ThreadUpdate } from "../../common";
+import { genHexAddress, ThreadUpdate } from "../../common";
 import { generateArgumentMismatchError } from "../../error/ArgumentMismatch";
 import { Stmt } from "../../parser";
 
@@ -46,7 +46,7 @@ export class Node extends RoSGNode implements BrsValue {
 
     protected parent: Node | BrsInvalid;
     address: string;
-    owningThread: ThreadInfo;
+    owner: number;
     changed: boolean = false;
 
     rectLocal: Rect = { x: 0, y: 0, width: 0, height: 0 };
@@ -68,7 +68,7 @@ export class Node extends RoSGNode implements BrsValue {
         this.aliases = new Map();
         this.children = [];
         this.parent = BrsInvalid.Instance;
-        this.owningThread = sgRoot.getCurrentThread();
+        this.owner = sgRoot.taskId;
 
         // All nodes start have some built-in fields when created.
         this.registerDefaultFields(this.defaultFields);
@@ -1022,15 +1022,14 @@ export class Node extends RoSGNode implements BrsValue {
     }
 
     protected getThreadInfo() {
-        const currentThread = sgRoot.getCurrentThread();
         const threadData: FlexObject = {
-            currentThread: currentThread,
+            currentThread: sgRoot.getCurrentThread(),
             node: {
                 address: this.address,
                 id: this.getId(),
                 type: this.nodeSubtype,
-                owningThread: this.owningThread,
-                willRendezvousFromCurrentThread: this.owningThread.id === currentThread.id ? "No" : "Yes",
+                owningThread: sgRoot.getThreadInfo(this.owner),
+                willRendezvousFromCurrentThread: this.owner === sgRoot.taskId ? "No" : "Yes",
             },
             renderThread: sgRoot.getRenderThread(),
         };

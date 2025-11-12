@@ -135,6 +135,7 @@ export class Task extends Node {
                 cacheFS: BrsDevice.getCacheFS(),
                 m: fromAssociativeArray(this.m),
                 scene: sgRoot.scene ? fromSGNode(sgRoot.scene, false) : undefined,
+                render: sgRoot.getRenderThread()?.id,
             };
             // Check of observed fields in `m.global`
             const global = this.m.elements.get("global");
