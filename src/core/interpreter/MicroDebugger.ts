@@ -167,10 +167,8 @@ async function debugHandleExpr(interpreter: Interpreter, expr: string) {
         BrsDevice.stderr.write(`error,${exprParse.errors[0].message}\r\n`);
         return;
     }
-    if (exprParse.statements.length > 0) {
-        for (const stmt of exprParse.statements) {
-            runStatement(interpreter, stmt);
-        }
+    for (const stmt of exprParse.statements) {
+        runStatement(interpreter, stmt);
     }
 }
 
