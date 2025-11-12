@@ -397,7 +397,6 @@ export class Node extends RoSGNode implements BrsValue {
                 this.changed = true;
             }
         }
-
     }
 
     // Used to setup values for the node fields without notifying observers
