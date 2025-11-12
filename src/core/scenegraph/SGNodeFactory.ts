@@ -613,19 +613,11 @@ function addChildren(interpreter: Interpreter, node: Node, typeDef: ComponentDef
     for (let child of children) {
         const newChild = createNodeByType(new BrsString(child.name), interpreter);
         if (newChild instanceof Node) {
-            const setField = newChild.getMethod("setfield");
-            if (setField) {
-                const nodeFields = newChild.getNodeFields();
-                for (let [key, value] of Object.entries(child.fields)) {
-                    const field = nodeFields.get(key.toLowerCase());
-                    if (field) {
-                        setField.call(
-                            interpreter,
-                            new BrsString(key),
-                            // use the field type to construct the field value
-                            getBrsValueFromFieldType(field.getType(), value)
-                        );
-                    }
+            const nodeFields = newChild.getNodeFields();
+            for (let [key, value] of Object.entries(child.fields)) {
+                const field = nodeFields.get(key.toLowerCase());
+                if (field) {
+                    newChild.set(new BrsString(key), getBrsValueFromFieldType(field.getType(), value));
                 }
             }
             if (child.fields?.role) {
