@@ -581,6 +581,7 @@ function loadRegistry() {
     }
     registryBuffer.store(Object.fromEntries(registry));
     deviceData.registryBuffer = registryBuffer.getBuffer();
+    notifyAll("registry", registry);
 }
 
 // Receive Messages from the Main Interpreter (Web Worker)
