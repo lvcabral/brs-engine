@@ -172,6 +172,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, BrsIter
     protected abstract getFieldByRef(fieldName: string): RoAssociativeArray | string;
     protected abstract updateFields(interpreter: Interpreter, content: BrsType, createFields: boolean): void;
     protected abstract appendNodeFields(fieldsToAppend: BrsType): void;
+    protected abstract setNodeFields(fieldsToAppend: BrsType, replace?: boolean): void;
     protected abstract removeFieldEntry(fieldName: string): boolean;
     protected abstract getNodeFieldsAsAA(): RoAssociativeArray;
     protected abstract getNodeFieldTypes(): RoAssociativeArray;
@@ -184,7 +185,6 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, BrsIter
     protected abstract replaceChildAtIndex(newChild: RoSGNode, index: Int32): boolean;
     protected abstract insertChildAtIndex(child: BrsType, index: Int32): boolean;
     protected abstract isChildrenFocused(): boolean;
-    protected abstract createPath(node: RoSGNode, reverse?: boolean): RoSGNode[];
     protected abstract findRootNode(from?: RoSGNode): RoSGNode;
 
     protected abstract getBoundingRect(interpreter: Interpreter, type: string): Rect;
@@ -347,7 +347,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, BrsIter
             if (!(fields instanceof RoAssociativeArray)) {
                 return BrsBoolean.False;
             }
-            this.appendNodeFields(fields);
+            this.setNodeFields(fields);
             return BrsBoolean.True;
         },
     });
@@ -726,13 +726,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, BrsIter
             if (!(fields instanceof RoAssociativeArray)) {
                 return BrsBoolean.False;
             }
-            const fieldNames = this.getElements();
-            for (const [key, value] of fields.getValue()) {
-                const fieldName = new BrsString(key.toLowerCase());
-                if (fieldNames.some((field) => field.value === fieldName.value)) {
-                    this.set(fieldName, value, false);
-                }
-            }
+            this.setNodeFields(fields, true);
             return BrsBoolean.True;
         },
     });
@@ -1104,9 +1098,6 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, BrsIter
                 // entire parent tree to get to the top, calculate the absolute transform
                 // parameters and then use that to adjust the new transform properties.
                 // Until that is implemented, the parameter does nothing.
-                if (!(newParent instanceof RoSGNode)) {
-                    return BrsBoolean.False;
-                }
                 // Remove parents child reference
                 const parent = this.getNodeParent();
                 if (parent instanceof RoSGNode) {

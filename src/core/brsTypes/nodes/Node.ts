@@ -365,7 +365,7 @@ export class Node extends RoSGNode implements BrsValue {
         let defaultValue = getBrsValueFromFieldType(type);
         let fieldKind = FieldKind.fromString(type);
 
-        if (defaultValue !== Uninitialized.Instance && !this.fields.has(fieldName)) {
+        if (defaultValue !== Uninitialized.Instance && !this.fields.has(fieldName.toLowerCase())) {
             this.set(new BrsString(fieldName), defaultValue, alwaysNotify, fieldKind);
             this.changed = true;
         }
@@ -387,6 +387,17 @@ export class Node extends RoSGNode implements BrsValue {
                 this.changed = true;
             }
         }
+    }
+
+    protected setNodeFields(fieldsToSet: RoAssociativeArray, replace: boolean = false) {
+        for (const [key, value] of fieldsToSet.elements) {
+            let fieldName = new BrsString(key);
+            if (replace || !this.fields.has(key.toLowerCase())) {
+                this.set(fieldName, value, false);
+                this.changed = true;
+            }
+        }
+
     }
 
     // Used to setup values for the node fields without notifying observers
