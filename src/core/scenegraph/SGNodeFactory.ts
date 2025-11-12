@@ -323,10 +323,11 @@ export function createNodeByType(type: BrsString, interpreter?: Interpreter): No
         // thread id = 0 is the Main worker thread
         node.id = sgRoot.tasks.length + 1;
         sgRoot.tasks.push(node);
+        sgRoot.setThread(node.id);
     }
-    if (node instanceof Node && sgRoot.tasks.length === 1) {
+    if (node instanceof Node && sgRoot.inTaskThread()) {
         const task = sgRoot.tasks[0];
-        if (task.thread && isInvalid(node.getNodeParent())) {
+        if (task && isInvalid(node.getNodeParent())) {
             node.setNodeParent(task);
         }
     }
@@ -475,6 +476,8 @@ function loadTaskData(interpreter: Interpreter, node: Node, taskData: TaskData) 
         node.id = taskData.id;
         node.thread = true;
         sgRoot.tasks.push(node);
+        sgRoot.setThread(0, false, taskData.render);
+        sgRoot.setThread(taskData.id, true);
         interpreter.environment.hostNode = node;
     }
     let port: RoMessagePort | undefined;
@@ -530,6 +533,7 @@ function updateTypeDefHierarchy(typeDef: ComponentDefinition | undefined) {
 /** Function to restore the node fields from the serialized object */
 function restoreNode(interpreter: Interpreter, source: any, node: Node, port?: RoMessagePort) {
     const observed = source["_observed_"];
+    node.owner = source["_owner_"] ?? sgRoot.taskId;
     for (let [key, value] of Object.entries(source)) {
         if (key.startsWith("_") && key.endsWith("_") && key.length > 2) {
             // Ignore transfer metadata fields

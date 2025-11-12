@@ -1,6 +1,5 @@
 import { AAMember, BrsType, fromSGNode, isBrsString, jsValueOf, Node, sgRoot } from "..";
 import { FieldKind } from "./Field";
-import { ThreadUpdate } from "../../common";
 
 export class Global extends Node {
     constructor(members: AAMember[] = [], readonly name: string = "Node") {
@@ -14,15 +13,10 @@ export class Global extends Node {
         }
         const fieldName = index.getValue().toLowerCase();
         const result = super.set(index, value, alwaysNotify, kind);
-        // Refresh SharedObject with latest Node state
+        // Notify other threads of field changes
         if (sync && sgRoot.tasks.length > 0 && this.changed && this.fields.has(fieldName)) {
-            const update: ThreadUpdate = {
-                id: sgRoot.threadId,
-                type: "global",
-                field: fieldName,
-                value: value instanceof Node ? fromSGNode(value, false) : jsValueOf(value),
-            };
-            postMessage(update);
+            this.sendThreadUpdate(sgRoot.taskId, "global", fieldName, value);
+            if (sgRoot.inTaskThread()) this.changed = false;
         }
         return result;
     }

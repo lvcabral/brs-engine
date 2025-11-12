@@ -8,13 +8,12 @@ import {
     fromAssociativeArray,
     fromSGNode,
     isBrsString,
-    jsValueOf,
     Node,
     Scene,
     sgRoot,
 } from "..";
 import { Field, FieldKind, FieldModel } from "./Field";
-import { isThreadUpdate, TaskData, TaskState, ThreadUpdate } from "../../common";
+import { isThreadUpdate, TaskData, TaskState } from "../../common";
 import { Global } from "./Global";
 import { Interpreter } from "../../interpreter";
 import { BrsDevice } from "../..";
@@ -66,19 +65,14 @@ export class Task extends Node {
                 field.setValue(value);
             }
             return BrsInvalid.Instance;
-        } else if (this.id >= 0 && field && sync) {
-            const update: ThreadUpdate = {
-                id: this.id,
-                type: "task",
-                field: mapKey,
-                value: jsValueOf(value),
-            };
-            if (this.thread && value instanceof Node) {
-                value.changed = false;
-            }
-            postMessage(update);
         }
-        return super.set(index, value, alwaysNotify, kind);
+        const result = super.set(index, value, alwaysNotify, kind);
+        // Notify Main thread of field changes
+        if (this.id >= 0 && field && sync && this.changed) {
+            this.sendThreadUpdate(this.id, "task", mapKey, value, true);
+            this.changed = false;
+        }
+        return result;
     }
 
     private setControlField(field: Field, control: string, sync: boolean) {
@@ -103,13 +97,7 @@ export class Task extends Node {
             state.setValue(new BrsString(control));
             this.fields.set("state", state);
             if (this.id >= 0 && this.thread && sync) {
-                const update: ThreadUpdate = {
-                    id: this.id,
-                    type: "task",
-                    field: "control",
-                    value: control,
-                };
-                postMessage(update);
+                this.sendThreadUpdate(this.id, "task", "control", new BrsString(control));
             }
         }
     }
@@ -147,6 +135,7 @@ export class Task extends Node {
                 cacheFS: BrsDevice.getCacheFS(),
                 m: fromAssociativeArray(this.m),
                 scene: sgRoot.scene ? fromSGNode(sgRoot.scene, false) : undefined,
+                render: sgRoot.getRenderThread()?.id,
             };
             // Check of observed fields in `m.global`
             const global = this.m.elements.get("global");
@@ -178,14 +167,7 @@ export class Task extends Node {
         for (const [name, field] of this.getNodeFields()) {
             const value = field.getValue();
             if (!field.isHidden() && value instanceof Node && value.changed) {
-                value.changed = false;
-                const update: ThreadUpdate = {
-                    id: this.id,
-                    type: "task",
-                    field: name,
-                    value: value instanceof Node ? fromSGNode(value, false) : jsValueOf(value),
-                };
-                postMessage(update);
+                this.sendThreadUpdate(this.id, "task", name, value);
             }
         }
         return updates;

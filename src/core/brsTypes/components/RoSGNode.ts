@@ -422,7 +422,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, BrsIter
             returns: ValueKind.Boolean,
         },
         impl: (interpreter: Interpreter, fieldName: BrsString, data: RoAssociativeArray) => {
-            if (sgRoot.threadId !== 0 || !(data instanceof RoAssociativeArray)) {
+            if (sgRoot.inTaskThread() || !(data instanceof RoAssociativeArray)) {
                 return BrsBoolean.False;
             }
             const result = this.setFieldByRef(fieldName.value, data);

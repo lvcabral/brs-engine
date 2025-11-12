@@ -512,7 +512,6 @@ export async function executeTask(payload: TaskPayload, customOptions?: Partial<
         ...customOptions,
     };
     stats.clear();
-    BrsTypes.sgRoot.threadId = payload.taskData.id;
     // Setup the File System
     BrsDevice.setDeviceInfo(payload.device);
     try {
