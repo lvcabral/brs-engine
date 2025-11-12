@@ -6,10 +6,8 @@ import {
     BrsType,
     Callable,
     Dialog,
-    fromSGNode,
     Group,
     isBrsString,
-    jsValueOf,
     Node,
     RoArray,
     RoMessagePort,
@@ -23,7 +21,6 @@ import { IfDraw2D } from "../interfaces/IfDraw2D";
 import { Scope } from "../..";
 import { BlockEnd } from "../../parser/Statement";
 import { Stmt } from "../../parser";
-import { ThreadUpdate } from "../../common";
 
 export class Scene extends Group {
     readonly defaultFields: FieldModel[] = [
@@ -67,15 +64,10 @@ export class Scene extends Group {
             }
         }
         const result = super.set(index, value, alwaysNotify, kind);
-        // Refresh SharedObject with latest Node state
+        // Notify other threads of field changes
         if (sync && sgRoot.tasks.length > 0 && this.changed && this.fields.has(fieldName)) {
-            const update: ThreadUpdate = {
-                id: sgRoot.threadId,
-                type: "scene",
-                field: fieldName,
-                value: value instanceof Node ? fromSGNode(value, false) : jsValueOf(value),
-            };
-            postMessage(update);
+            this.sendThreadUpdate(sgRoot.threadId, "scene", fieldName, value);
+            if (sgRoot.inTaskThread()) this.changed = false;
         }
         return result;
     }

@@ -282,6 +282,10 @@ export class SGRoot {
         return isDirty;
     }
 
+    inTaskThread(): boolean {
+        return this.threadId > 0;
+    }
+
     getCurrentThread(): ThreadInfo {
         const currentThread: ThreadInfo = { id: this.threadId.toString(), name: "", type: "" };
         if (this.threadId === 0) {

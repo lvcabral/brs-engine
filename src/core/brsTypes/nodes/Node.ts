@@ -7,6 +7,7 @@ import {
     BrsType,
     BrsValue,
     FlexObject,
+    fromSGNode,
     getBrsValueFromFieldType,
     getTextureManager,
     Int32,
@@ -32,7 +33,7 @@ import { createNodeByType, subtypeHierarchy } from "../../scenegraph/SGNodeFacto
 import { Field, FieldAlias, FieldKind, FieldModel } from "../nodes/Field";
 import { Rect, IfDraw2D } from "../interfaces/IfDraw2D";
 import { BrsDevice } from "../../device/BrsDevice";
-import { genHexAddress, ThreadInfo } from "../../common";
+import { genHexAddress, ThreadInfo, ThreadUpdate } from "../../common";
 import { generateArgumentMismatchError } from "../../error/ArgumentMismatch";
 import { Stmt } from "../../parser";
 
@@ -1001,6 +1002,23 @@ export class Node extends RoSGNode implements BrsValue {
 
     protected compareNodes(other: Node): boolean {
         return this.nodeSubtype === other.nodeSubtype && this.address === other.address;
+    }
+
+    protected sendThreadUpdate(
+        id: number,
+        type: "scene" | "global" | "task",
+        field: string,
+        value: BrsType,
+        deep: boolean = false
+    ) {
+        const update: ThreadUpdate = {
+            id: id,
+            type: type,
+            field: field,
+            value: value instanceof Node ? fromSGNode(value, deep) : jsValueOf(value),
+        };
+        if (sgRoot.inTaskThread() && value instanceof Node) value.changed = false;
+        postMessage(update);
     }
 
     protected getThreadInfo() {
