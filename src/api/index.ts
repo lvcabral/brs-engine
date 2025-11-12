@@ -518,6 +518,9 @@ function loadRegistry() {
     for (const key of transientKeys) {
         storage.removeItem(key);
     }
+    if (deviceData.registry instanceof Map) {
+        notifyAll("registry", deviceData.registry);
+    }
 }
 
 // Receive Messages from the Interpreter (Web Worker)
