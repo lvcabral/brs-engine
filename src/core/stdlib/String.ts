@@ -223,7 +223,9 @@ export const StringI = new Callable("StringI", {
         if (repeatCount <= 0) {
             return new BrsString("");
         }
-        return new BrsString(String.fromCharCode(ch.getValue()).repeat(repeatCount));
+        const num = ch.getValue();
+        const chr = num <= 0 || num > 0x10ffff ? "" : String.fromCodePoint(num);
+        return new BrsString(chr.repeat(repeatCount));
     },
 });
 
