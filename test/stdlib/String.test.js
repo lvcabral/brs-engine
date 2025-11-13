@@ -181,6 +181,10 @@ describe("global string functions", () => {
         it("returns a string composed of n copies of a character from a UNICODE char code.", () => {
             expect(StringI.call(interpreter, new Int32(3), new Int32(936))).toEqual(new BrsString("ΨΨΨ"));
         });
+
+        it("returns a string composed of n copies of a character from a Emoji char code.", () => {
+            expect(StringI.call(interpreter, new Int32(3), new Int32(129412))).toEqual(new BrsString("🦄🦄🦄"));
+        });
     });
 
     describe("Substitute", () => {

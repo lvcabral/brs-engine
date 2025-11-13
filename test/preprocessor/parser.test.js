@@ -142,5 +142,70 @@ describe("preprocessor parser", () => {
             expect(chunks).not.toBeNull();
             expect(chunks).toMatchSnapshot();
         });
+
+        test("rejects #if with extra tokens after condition", () => {
+            let { errors } = parser.parse([
+                token(Lexeme.HashIf, "#if"),
+                identifier("foo"),
+                token(Lexeme.And, "and"),
+                identifier("bar"),
+                token(Lexeme.Newline, "\n"),
+                identifier("something"),
+                token(Lexeme.LeftParen, "("),
+                token(Lexeme.RightParen, ")"),
+                token(Lexeme.Newline, "\n"),
+                token(Lexeme.HashEndIf, "#endif"),
+                token(Lexeme.Eof, "\0"),
+            ]);
+
+            expect(errors).toHaveLength(1);
+            expect(errors[0].message).toMatch(/Invalid #If\/#ElseIf expression/);
+        });
+
+        test("rejects #else if with extra tokens after condition", () => {
+            let { errors } = parser.parse([
+                token(Lexeme.HashIf, "#if"),
+                identifier("foo"),
+                token(Lexeme.Newline, "\n"),
+                identifier("something"),
+                token(Lexeme.LeftParen, "("),
+                token(Lexeme.RightParen, ")"),
+                token(Lexeme.Newline, "\n"),
+                token(Lexeme.HashElseIf, "#elseif"),
+                identifier("bar"),
+                token(Lexeme.Or, "or"),
+                identifier("baz"),
+                token(Lexeme.Newline, "\n"),
+                identifier("other"),
+                token(Lexeme.LeftParen, "("),
+                token(Lexeme.RightParen, ")"),
+                token(Lexeme.Newline, "\n"),
+                token(Lexeme.HashEndIf, "#endif"),
+                token(Lexeme.Eof, "\0"),
+            ]);
+
+            expect(errors).toHaveLength(1);
+            expect(errors[0].message).toMatch(/Invalid #If\/#ElseIf expression/);
+        });
+
+        test("rejects #if not with extra tokens after condition", () => {
+            let { errors } = parser.parse([
+                token(Lexeme.HashIf, "#if"),
+                token(Lexeme.Not, "not"),
+                identifier("foo"),
+                token(Lexeme.Equal, "="),
+                identifier("bar"),
+                token(Lexeme.Newline, "\n"),
+                identifier("something"),
+                token(Lexeme.LeftParen, "("),
+                token(Lexeme.RightParen, ")"),
+                token(Lexeme.Newline, "\n"),
+                token(Lexeme.HashEndIf, "#endif"),
+                token(Lexeme.Eof, "\0"),
+            ]);
+
+            expect(errors).toHaveLength(1);
+            expect(errors[0].message).toMatch(/Invalid #If\/#ElseIf expression/);
+        });
     });
 });

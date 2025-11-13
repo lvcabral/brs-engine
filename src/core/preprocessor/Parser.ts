@@ -104,6 +104,14 @@ export class Parser {
 
                 let isNegated = match(Lexeme.Not);
                 let ifCondition = advance();
+                if (!check(Lexeme.Newline)) {
+                    emitError(
+                        new ParseError(
+                            peek(),
+                            "Invalid #If/#ElseIf expression (True | False | <CONST-NAME>) (compile error &h93)"
+                        )
+                    );
+                }
                 match(Lexeme.Newline);
 
                 let thenChunk = nChunks();
@@ -113,6 +121,14 @@ export class Parser {
                 while (match(Lexeme.HashElseIf)) {
                     let isElseIfNegated = match(Lexeme.Not);
                     let condition = advance();
+                    if (!check(Lexeme.Newline)) {
+                        emitError(
+                            new ParseError(
+                                peek(),
+                                "Invalid #If/#ElseIf expression (True | False | <CONST-NAME>) (compile error &h93)"
+                            )
+                        );
+                    }
                     match(Lexeme.Newline);
 
                     elseIfs.push({
