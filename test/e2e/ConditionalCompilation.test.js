@@ -33,7 +33,7 @@ describe("end to end conditional compilation", () => {
             "Feature is disabled",
             "Debug mode active",
             "not false evaluates to true",
-            "not true evaluates to false"
+            "not true evaluates to false",
         ]);
     });
 
