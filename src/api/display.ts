@@ -174,7 +174,8 @@ export function drawSplashScreen(imgBmp: ImageBitmap, icon = false) {
         if (icon) {
             const x = Math.trunc((w - imgBmp.width) / 2);
             const y = Math.trunc((h - imgBmp.height) / 2);
-            bufferCtx.clearRect(0, 0, w, h);
+            bufferCtx.fillStyle = "black";
+            bufferCtx.fillRect(0, 0, w, h);
             bufferCtx.drawImage(imgBmp, x, y);
         } else {
             bufferCtx.drawImage(imgBmp, 0, 0, w, h);
