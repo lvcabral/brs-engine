@@ -49,5 +49,17 @@ describe("end to end conditional compilation", () => {
                 expect(err.message.trimEnd()).toMatch(/I'm a compile-time error!/);
             });
         });
+
+        test("conditional-compilation/invalid-expression.brs", async () => {
+            await execute(
+                [
+                    resourceFile("conditional-compilation", "manifest"),
+                    resourceFile("conditional-compilation", "invalid-expression.brs"),
+                ],
+                outputStreams
+            ).catch((err) => {
+                expect(err.message).toMatch(/Invalid #If\/#ElseIf expression/);
+            });
+        });
     });
 });
