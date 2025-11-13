@@ -202,7 +202,11 @@ export const STRING = new Callable("String", {
         returns: ValueKind.String,
     },
     impl: (_: Interpreter, n: Int32, str: BrsString): BrsString => {
-        return new BrsString(str.value.repeat(n.getValue()));
+        const repeatCount = n.getValue();
+        if (repeatCount <= 0) {
+            return new BrsString("");
+        }
+        return new BrsString(str.value.repeat(repeatCount));
     },
 });
 
@@ -215,7 +219,11 @@ export const StringI = new Callable("StringI", {
         returns: ValueKind.String,
     },
     impl: (_: Interpreter, n: Int32, ch: Int32): BrsString => {
-        return new BrsString(String.fromCharCode(ch.getValue()).repeat(n.getValue()));
+        const repeatCount = n.getValue();
+        if (repeatCount <= 0) {
+            return new BrsString("");
+        }
+        return new BrsString(String.fromCharCode(ch.getValue()).repeat(repeatCount));
     },
 });
 
