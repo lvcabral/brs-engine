@@ -124,13 +124,22 @@ export class Preprocessor implements CC.Visitor {
      * @returns an array of tokens to include in the final executed script.
      */
     visitIf(chunk: CC.If): Token[] {
-        if (this.evaluateCondition(chunk.condition)) {
+        let conditionResult = this.evaluateCondition(chunk.condition);
+        if (chunk.isNegated) {
+            conditionResult = !conditionResult;
+        }
+
+        if (conditionResult) {
             return chunk.thenChunks
                 .map((chunk) => chunk.accept(this))
                 .reduce((allTokens, chunkTokens: Token[]) => [...allTokens, ...chunkTokens], []);
         } else {
             for (const elseIf of chunk.elseIfs) {
-                if (this.evaluateCondition(elseIf.condition)) {
+                let elseIfResult = this.evaluateCondition(elseIf.condition);
+                if (elseIf.isNegated) {
+                    elseIfResult = !elseIfResult;
+                }
+                if (elseIfResult) {
                     return elseIf.thenChunks
                         .map((chunk) => chunk.accept(this))
                         .reduce((allTokens, chunkTokens: Token[]) => [...allTokens, ...chunkTokens], []);

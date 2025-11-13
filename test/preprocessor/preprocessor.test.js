@@ -90,6 +90,7 @@ describe("preprocessor", () => {
                 new Preprocessor().filter([
                     new Chunk.If(
                         token(Lexeme.False, "false", BrsBoolean.False),
+                        false, // not negated
                         [new Chunk.Error(token(Lexeme.HasError, "#error"), "I'm an error message!")],
                         [] // no else-ifs necessary
                     ),
@@ -119,10 +120,12 @@ describe("preprocessor", () => {
             new Preprocessor().filter([
                 new Chunk.If(
                     token(Lexeme.True, "true", BrsBoolean.True),
+                    false, // not negated
                     [ifChunk],
                     [
                         {
                             condition: token(Lexeme.True, "true", BrsBoolean.True),
+                            isNegated: false,
                             thenChunks: [elseIfChunk],
                         },
                     ],
@@ -139,10 +142,12 @@ describe("preprocessor", () => {
             new Preprocessor().filter([
                 new Chunk.If(
                     token(Lexeme.False, "false", BrsBoolean.False),
+                    false, // not negated
                     [ifChunk],
                     [
                         {
                             condition: token(Lexeme.True, "true", BrsBoolean.True),
+                            isNegated: false,
                             thenChunks: [elseIfChunk],
                         },
                     ],
@@ -159,10 +164,12 @@ describe("preprocessor", () => {
             new Preprocessor().filter([
                 new Chunk.If(
                     token(Lexeme.False, "false", BrsBoolean.False),
+                    false, // not negated
                     [ifChunk],
                     [
                         {
                             condition: token(Lexeme.False, "false", BrsBoolean.False),
+                            isNegated: false,
                             thenChunks: [elseIfChunk],
                         },
                     ],
@@ -179,6 +186,7 @@ describe("preprocessor", () => {
             new Preprocessor().filter([
                 new Chunk.If(
                     token(Lexeme.False, "false", BrsBoolean.False),
+                    false, // not negated
                     [ifChunk],
                     [] // no else-if chunks
                     // NOTE: no 'else" chunk!
@@ -195,9 +203,81 @@ describe("preprocessor", () => {
                 new Chunk.Declaration(identifier("lorem"), token(Lexeme.True, "true", BrsBoolean.True)),
                 new Chunk.If(
                     identifier("lorem"),
+                    false, // not negated
                     [ifChunk],
                     [] // no else-if chunks
                     // NOTE: no 'else" chunk!
+                ),
+            ]);
+
+            expect(ifChunk.accept).toHaveBeenCalledTimes(1);
+            expect(elseIfChunk.accept).not.toHaveBeenCalled();
+            expect(elseChunk.accept).not.toHaveBeenCalled();
+        });
+
+        it("negates true condition with 'not'", () => {
+            new Preprocessor().filter([
+                new Chunk.If(
+                    token(Lexeme.True, "true", BrsBoolean.True),
+                    true, // negated
+                    [ifChunk],
+                    [] // no else-if chunks
+                    // NOTE: no 'else" chunk!
+                ),
+            ]);
+
+            expect(ifChunk.accept).not.toHaveBeenCalled();
+            expect(elseIfChunk.accept).not.toHaveBeenCalled();
+            expect(elseChunk.accept).not.toHaveBeenCalled();
+        });
+
+        it("negates false condition with 'not'", () => {
+            new Preprocessor().filter([
+                new Chunk.If(
+                    token(Lexeme.False, "false", BrsBoolean.False),
+                    true, // negated
+                    [ifChunk],
+                    [] // no else-if chunks
+                    // NOTE: no 'else" chunk!
+                ),
+            ]);
+
+            expect(ifChunk.accept).toHaveBeenCalledTimes(1);
+            expect(elseIfChunk.accept).not.toHaveBeenCalled();
+            expect(elseChunk.accept).not.toHaveBeenCalled();
+        });
+
+        it("negates #const identifier with 'not'", () => {
+            new Preprocessor().filter([
+                new Chunk.Declaration(identifier("lorem"), token(Lexeme.True, "true", BrsBoolean.True)),
+                new Chunk.If(
+                    identifier("lorem"),
+                    true, // negated
+                    [ifChunk],
+                    [] // no else-if chunks
+                    // NOTE: no 'else" chunk!
+                ),
+            ]);
+
+            expect(ifChunk.accept).not.toHaveBeenCalled();
+            expect(elseIfChunk.accept).not.toHaveBeenCalled();
+            expect(elseChunk.accept).not.toHaveBeenCalled();
+        });
+
+        it("enters #else if branch with negated condition", () => {
+            new Preprocessor().filter([
+                new Chunk.If(
+                    token(Lexeme.True, "true", BrsBoolean.True),
+                    false, // not negated
+                    [ifChunk],
+                    [
+                        {
+                            condition: token(Lexeme.True, "true", BrsBoolean.True),
+                            isNegated: true, // negated
+                            thenChunks: [elseIfChunk],
+                        },
+                    ],
+                    [elseChunk]
                 ),
             ]);
 
