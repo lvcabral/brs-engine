@@ -173,11 +173,11 @@ export class Preprocessor implements CC.Visitor {
                 }
 
                 return this.addError(
-                    new BrsError(`Attempting to reference undefined #const with name '${token.text}'`, token.location)
+                    new BrsError(`Invalid #If/#ElseIf expression (<CONST-NAME> not defined) '${token.text}' (compile error &h92)`, token.location)
                 );
             default:
                 return this.addError(
-                    new BrsError("#if conditionals can only be `true`, `false`, or other #const names", token.location)
+                    new BrsError("#Invalid #If/#ElseIf expression (True | False | <CONST-NAME>) (compile error &h93)", token.location)
                 );
         }
     }
