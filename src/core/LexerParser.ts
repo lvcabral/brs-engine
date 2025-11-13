@@ -145,44 +145,49 @@ export function lexParseSync(
     let tokens: Token[] = [];
     lexer.onError(logError);
     parser.onError(logError);
+    preprocessor.onError(logError);
     let exitReason = AppExitReason.FINISHED;
-    for (let [path, code] of sourceMap) {
-        const scanResults = lexer.scan(code, path);
-        if (scanResults.errors.length > 0) {
-            exitReason = AppExitReason.CRASHED;
-            break;
+    try {
+        for (let [path, code] of sourceMap) {
+            const scanResults = lexer.scan(code, path);
+            if (scanResults.errors.length > 0) {
+                exitReason = AppExitReason.CRASHED;
+                break;
+            }
+            const preprocessorResults = preprocessor.preprocess(scanResults.tokens, manifest);
+            if (preprocessorResults.errors.length > 0) {
+                exitReason = AppExitReason.CRASHED;
+                break;
+            }
+            if (password.length > 0) {
+                tokens = tokens.concat(preprocessorResults.processedTokens);
+                continue;
+            }
+            const parseResults = parser.parse(preprocessorResults.processedTokens);
+            if (parseResults.errors.length > 0) {
+                exitReason = AppExitReason.CRASHED;
+                break;
+            }
+            parseLibraries(fs, parseResults, lib, manifest);
+            allStatements.push(...parseResults.statements);
         }
-        const preprocessorResults = preprocessor.preprocess(scanResults.tokens, manifest);
-        if (preprocessorResults.errors.length > 0) {
-            exitReason = AppExitReason.CRASHED;
-            break;
-        }
-        if (password.length > 0) {
-            tokens = tokens.concat(preprocessorResults.processedTokens);
-            continue;
-        }
-        const parseResults = parser.parse(preprocessorResults.processedTokens);
-        if (parseResults.errors.length > 0) {
-            exitReason = AppExitReason.CRASHED;
-            break;
-        }
-        parseLibraries(fs, parseResults, lib, manifest);
-        allStatements.push(...parseResults.statements);
-    }
-    if (password.length === 0) {
-        for (const [key, value] of lib) {
-            if (value !== "") {
-                sourceMap.set(key, value);
-                const libScan = lexer.scan(value, key);
-                const libParse = parser.parse(libScan.tokens);
-                allStatements.push(...libParse.statements);
+        if (password.length === 0) {
+            for (const [key, value] of lib) {
+                if (value !== "") {
+                    sourceMap.set(key, value);
+                    const libScan = lexer.scan(value, key);
+                    const libParse = parser.parse(libScan.tokens);
+                    allStatements.push(...libParse.statements);
+                }
             }
         }
-    }
-    if (stats) {
-        for (const [lexeme, count] of parser.stats) {
-            stats.set(lexeme, count.size);
+        if (stats) {
+            for (const [lexeme, count] of parser.stats) {
+                stats.set(lexeme, count.size);
+            }
         }
+    } catch (err: any) {
+        exitReason = AppExitReason.CRASHED;
     }
     return {
         exitReason: exitReason,

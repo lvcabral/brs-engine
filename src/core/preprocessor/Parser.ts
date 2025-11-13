@@ -102,6 +102,7 @@ export class Parser {
                 let startingLine = previous().location.start.line;
                 let elseChunk: CC.Chunk[] | undefined;
 
+                let isNegated = match(Lexeme.Not);
                 let ifCondition = advance();
                 match(Lexeme.Newline);
 
@@ -110,11 +111,13 @@ export class Parser {
                 let elseIfs: CC.HashElseIf[] = [];
 
                 while (match(Lexeme.HashElseIf)) {
+                    let isElseIfNegated = match(Lexeme.Not);
                     let condition = advance();
                     match(Lexeme.Newline);
 
                     elseIfs.push({
                         condition: condition,
+                        isNegated: isElseIfNegated,
                         thenChunks: nChunks(),
                     });
                 }
@@ -131,7 +134,7 @@ export class Parser {
                 );
                 match(Lexeme.Newline);
 
-                return new CC.If(ifCondition, thenChunk, elseIfs, elseChunk);
+                return new CC.If(ifCondition, isNegated, thenChunk, elseIfs, elseChunk);
             }
 
             return hashError();

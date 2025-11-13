@@ -20,6 +20,23 @@ describe("end to end conditional compilation", () => {
         expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual(["I'm ipsum!"]);
     });
 
+    test("conditional-compilation/conditionals-not.brs", async () => {
+        await execute(
+            [
+                resourceFile("conditional-compilation", "manifest"),
+                resourceFile("conditional-compilation", "conditionals-not.brs"),
+            ],
+            outputStreams
+        );
+
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
+            "Feature is disabled",
+            "Debug mode active",
+            "not false evaluates to true",
+            "not true evaluates to false",
+        ]);
+    });
+
     describe("(with sterr captured)", () => {
         test("conditional-compilation/compile-error.brs", async () => {
             await execute(
