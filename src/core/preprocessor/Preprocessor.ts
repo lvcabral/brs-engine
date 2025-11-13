@@ -173,11 +173,17 @@ export class Preprocessor implements CC.Visitor {
                 }
 
                 return this.addError(
-                    new BrsError(`Invalid #If/#ElseIf expression (<CONST-NAME> not defined) '${token.text}' (compile error &h92)`, token.location)
+                    new BrsError(
+                        `Invalid #If/#ElseIf expression (<CONST-NAME> not defined) '${token.text}' (compile error &h92)`,
+                        token.location
+                    )
                 );
             default:
                 return this.addError(
-                    new BrsError("#Invalid #If/#ElseIf expression (True | False | <CONST-NAME>) (compile error &h93)", token.location)
+                    new BrsError(
+                        "#Invalid #If/#ElseIf expression (True | False | <CONST-NAME>) (compile error &h93)",
+                        token.location
+                    )
                 );
         }
     }
