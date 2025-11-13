@@ -51,6 +51,7 @@ export class Declaration implements Chunk {
  */
 export interface HashElseIf {
     condition: Token;
+    isNegated: boolean;
     thenChunks: Chunk[];
 }
 
@@ -70,6 +71,7 @@ export interface HashElseIf {
 export class If implements Chunk {
     constructor(
         readonly condition: Token,
+        readonly isNegated: boolean,
         readonly thenChunks: Chunk[],
         readonly elseIfs: HashElseIf[],
         readonly elseChunks?: Chunk[]
