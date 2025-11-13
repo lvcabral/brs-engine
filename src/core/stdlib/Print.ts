@@ -23,10 +23,10 @@ export const Tab = new Callable("Tab", {
         // TODO: this probably won't handle text wrapping well, but I'm not
         // sure what the reference implementation does here yet
         const spacesNeeded = target - current;
-        if (spacesNeeded > 0) {
-            return new BrsString(" ".repeat(spacesNeeded));
+        if (spacesNeeded <= 0) {
+            return new BrsString("");
         }
-        return new BrsString("");
+        return new BrsString(" ".repeat(spacesNeeded));
     },
 });
 
