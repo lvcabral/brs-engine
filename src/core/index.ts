@@ -142,6 +142,7 @@ export async function getReplInterpreter(payload: Partial<AppPayload>) {
             payload.pkgZip,
             payload.extZip
         );
+        BrsDevice.loadLocaleTerms();
     } catch (err: any) {
         postMessage(`error,Error mounting File System: ${err.message}`);
         return null;
@@ -471,6 +472,7 @@ export async function executeFile(payload: AppPayload, customOptions?: Partial<E
         if (options.ext) {
             BrsDevice.fileSystem.setExt(options.ext);
         }
+        BrsDevice.loadLocaleTerms();
     } catch (err: any) {
         postMessage(`error,Error mounting File System: ${err.message}`);
         return { exitReason: AppExitReason.CRASHED };
@@ -528,6 +530,7 @@ export async function executeTask(payload: TaskPayload, customOptions?: Partial<
         if (options.ext) {
             BrsDevice.fileSystem.setExt(options.ext);
         }
+        BrsDevice.loadLocaleTerms();
     } catch (err: any) {
         postMessage(`error,Error mounting File System: ${err.message}`);
         return;

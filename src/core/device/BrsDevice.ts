@@ -148,8 +148,15 @@ export class BrsDevice {
         this.clockFormat = BrsDevice.deviceInfo.clockFormat;
         this.timeZone = BrsDevice.deviceInfo.timeZone;
         this.locale = BrsDevice.deviceInfo.locale.replace("_", "-");
+    }
 
-        const termsFile = `common:/locale/${this.deviceInfo.locale}/terms.json`;
+    /**
+     * Loads the localized terms based on the current locale id to the terms map
+     * Note: Only to be called after filesystem volumes are mounted
+     */
+    static loadLocaleTerms() {
+        const locale = this.locale.replace("-", "_");
+        const termsFile = `common:/locale/${locale}/terms.json`;
         if (this.fileSystem.existsSync(termsFile)) {
             const termsJson = this.fileSystem.readFileSync(termsFile, "utf8");
             if (termsJson) {
