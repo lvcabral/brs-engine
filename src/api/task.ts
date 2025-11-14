@@ -5,7 +5,6 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-
 import {
     AppPayload,
     isNDKStart,
@@ -156,7 +155,7 @@ export function handleThreadUpdate(threadUpdate: ThreadUpdate, fromTask: boolean
                 threadSyncToTask.get(data.id)?.waitStore(data, 1);
             }
         }
-    } else if (!fromTask) {
-        console.debug("[API] Thread update from Main with invalid data!");
+    } else {
+        console.debug("[API] Thread update with invalid data!", JSON.stringify(threadUpdate, null, 2));
     }
 }
