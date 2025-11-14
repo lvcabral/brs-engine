@@ -31,7 +31,7 @@ describe("end to end standard library", () => {
             "true",
             "false",
             '<Component: roList> =\n(\n    "test_backup.txt"\n)',
-            '<Component: roList> =\n(\n    "audio"\n    "certs"\n    "fonts"\n    "roku_ads"\n    "images"\n    "roku_analytics"\n    "roku_browser"\n    "LibCore"\n    "locale"\n)',
+            '<Component: roList> =\n(\n    "bslCore.brs"\n    "bslDefender.brs"\n)',
             "true",
             "true",
         ]);

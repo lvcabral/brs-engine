@@ -9,7 +9,7 @@ sub main()
     print DeleteDirectory("tmp:///test_dir") ' good delete
     print FormatDrive("does not matter", "will always fail") ' always fail
     print ListDir("tmp:///") 'what's left?
-    print ListDir("common:/") 'check common dir
+    print ListDir("common:/LibCore/v30") 'check common dir
 
     tmpTestFiles = MatchFiles("tmp:///", "*.txt")
     print tmpTestFiles.count() > 0
