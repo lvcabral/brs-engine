@@ -19,6 +19,9 @@ import SharedObject from "../core/SharedObject";
 import { setAppCaptionStyle, setCaptionMode, setDisplayState } from "./display";
 import { SubscribeCallback } from "./util";
 
+const MAX_TASKS = 10;
+
+// Active Tasks
 const tasks: Map<number, Worker> = new Map();
 const threadSyncToTask: Map<number, SharedObject> = new Map();
 const threadSyncToMain: Map<number, SharedObject> = new Map();
@@ -49,7 +52,7 @@ function notifyAll(eventName: string, eventData?: any) {
 function runTask(taskData: TaskData, currentPayload: AppPayload) {
     if (tasks.has(taskData.id) || !taskData.m?.top?.functionname) {
         return;
-    } else if (tasks.size === 10) {
+    } else if (tasks.size === MAX_TASKS) {
         notifyAll("warning", `[api] Maximum number of tasks reached: ${tasks.size}`);
         return;
     }
