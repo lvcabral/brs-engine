@@ -7,7 +7,11 @@ import { Int32 } from "../Int32";
 import { RoChannelStoreEvent } from "../events/RoChannelStoreEvent";
 import { RoAssociativeArray } from "./RoAssociativeArray";
 import { AppData } from "../../common";
-import { parseString, processors } from "xml2js";
+import { XmlDocument, XmlElement, XmlNode } from "xmldoc";
+
+function isElementNode(node: XmlNode): node is XmlElement {
+    return node.type === "element";
+}
 import { IfSetMessagePort, IfGetMessagePort } from "../interfaces/IfMessagePort";
 import { BrsDevice } from "../../device/BrsDevice";
 
@@ -138,23 +142,58 @@ ZZwGPYCKEHMPrIOOXJ-S9ZjArgaEpBUpMXWJibFxnkpVUVzbC22GEaqz_SjOJXFMQU7TaCKkDeCYVKyl
         this.port?.removeReference();
     }
 
+    private static parseChannelStoreXml(xmlText: string): Record<string, any> {
+        const document = new XmlDocument(xmlText);
+        return { [document.name]: RoChannelStore.elementToObject(document) };
+    }
+
+    private static elementToObject(element: XmlElement): any {
+        const childElements = (element.children ?? []).filter(isElementNode) as XmlElement[];
+        if (childElements.length === 0) {
+            return RoChannelStore.coerceValue(element.val ?? "");
+        }
+        const result: Record<string, any> = {};
+        for (const child of childElements) {
+            const value = RoChannelStore.elementToObject(child);
+            const key = child.name;
+            if (result[key] === undefined) {
+                result[key] = value;
+            } else if (Array.isArray(result[key])) {
+                result[key].push(value);
+            } else {
+                result[key] = [result[key], value];
+            }
+        }
+        return result;
+    }
+
+    private static coerceValue(text: string): string | number {
+        const trimmed = text.trim();
+        if (trimmed.length === 0) {
+            return "";
+        }
+        const asNumber = Number(trimmed);
+        if (!Number.isNaN(asNumber) && Number.isFinite(asNumber)) {
+            return asNumber;
+        }
+        return trimmed;
+    }
+
     private getFakeProductData(xml: string) {
-        const options = {
-            explicitArray: false,
-            ignoreAttrs: true,
-            valueProcessors: [processors.parseNumbers],
-        };
         const data: RoAssociativeArray[] = [];
-        if (BrsDevice.fileSystem.existsSync(`pkg:/csfake/${xml}.xml`)) {
-            const xmlData = BrsDevice.fileSystem.readFileSync(`pkg:/csfake/${xml}.xml`);
-            parseString(xmlData, options, function (err: any, parsed: any) {
-                let errMessage = "";
-                if (err) {
-                    errMessage = `error,Error parsing Product XML: ${err.message}`;
-                } else if (parsed?.result?.products?.product) {
-                    try {
-                        for (const item of parsed.result.products.product) {
-                            const obj = JSON.parse(JSON.stringify(item));
+        const fsys = BrsDevice.fileSystem;
+        if (fsys.existsSync(`pkg:/csfake/${xml}.xml`)) {
+            const fileContent = fsys.readFileSync(`pkg:/csfake/${xml}.xml`);
+            const xmlText = typeof fileContent === "string" ? fileContent : fileContent.toString();
+            let errMessage = "";
+            try {
+                const parsed = RoChannelStore.parseChannelStoreXml(xmlText);
+                const products = parsed?.result?.products?.product;
+                const productList = Array.isArray(products) ? products : products ? [products] : [];
+                if (productList.length > 0) {
+                    for (const item of productList) {
+                        if (item && typeof item === "object") {
+                            const obj = item as FlexObject;
                             const prod: FlexObject = {};
                             prod.code = obj.code;
                             prod.cost = obj.cost;
@@ -178,57 +217,55 @@ ZZwGPYCKEHMPrIOOXJ-S9ZjArgaEpBUpMXWJibFxnkpVUVzbC22GEaqz_SjOJXFMQU7TaCKkDeCYVKyl
                             if (obj.status) prod.status = obj.status;
                             data.push(toAssociativeArray(prod));
                         }
-                    } catch (e: any) {
-                        err.message = `error,Error parsing Product XML: ${e.message}`;
                     }
                 } else {
                     errMessage = "warning,Warning: Empty or invalid result when parsing Product XML.";
                 }
-                if (errMessage !== "" && BrsDevice.isDevMode) {
-                    BrsDevice.stderr.write(errMessage);
-                }
-            });
+            } catch (err: any) {
+                errMessage = `error,Error parsing Product XML: ${err?.message ?? err}`;
+            }
+            if (errMessage !== "" && BrsDevice.isDevMode) {
+                BrsDevice.stderr.write(errMessage);
+            }
         }
         return data;
     }
 
     private getFakeOrderData(xml: string) {
-        const options = {
-            explicitArray: false,
-            ignoreAttrs: true,
-            valueProcessors: [processors.parseNumbers],
-        };
         const fs = BrsDevice.fileSystem;
         const data: FlexObject = { id: xml };
         if (fs.existsSync(`pkg:/csfake/${xml}.xml`)) {
             const xmlData = fs.readFileSync(`pkg:/csfake/${xml}.xml`);
-            parseString(xmlData, options, function (err: any, parsed: any) {
-                let errMessage = "";
-                if (err) {
-                    errMessage = `error,Error parsing Order XML: ${err.message}`;
-                } else if (parsed?.result?.order) {
-                    try {
-                        const order = JSON.parse(JSON.stringify(parsed.result.order));
-                        data.id = order.id;
-                        const orderArray = new Array<RoAssociativeArray>();
-                        if (Array.isArray(order.items.orderItem)) {
-                            for (const item of order.items.orderItem) {
-                                orderArray.push(toAssociativeArray(item));
-                            }
-                        } else {
-                            orderArray.push(toAssociativeArray(order.items.orderItem));
-                        }
-                        data.order = orderArray;
-                    } catch (e: any) {
-                        errMessage = `error,Error parsing Order XML: ${e.message}`;
+            const xmlText = typeof xmlData === "string" ? xmlData : xmlData.toString();
+            let errMessage = "";
+            try {
+                const parsed = RoChannelStore.parseChannelStoreXml(xmlText);
+                const order = parsed?.result?.order as FlexObject | undefined;
+                if (order) {
+                    const orderObj: any = order;
+                    if (orderObj.id) {
+                        data.id = orderObj.id;
                     }
+                    const itemsObj: any = orderObj.items ?? {};
+                    const orderItems = itemsObj.orderItem;
+                    const orderArray: RoAssociativeArray[] = [];
+                    if (Array.isArray(orderItems)) {
+                        for (const item of orderItems) {
+                            orderArray.push(toAssociativeArray(item as FlexObject));
+                        }
+                    } else if (orderItems) {
+                        orderArray.push(toAssociativeArray(orderItems as FlexObject));
+                    }
+                    data.order = orderArray;
                 } else {
                     errMessage = "warning,Warning: Empty or invalid result when parsing Order XML.";
                 }
-                if (errMessage !== "" && BrsDevice.isDevMode) {
-                    BrsDevice.stderr.write(errMessage);
-                }
-            });
+            } catch (err: any) {
+                errMessage = `error,Error parsing Order XML: ${err?.message ?? err}`;
+            }
+            if (errMessage !== "" && BrsDevice.isDevMode) {
+                BrsDevice.stderr.write(errMessage);
+            }
         }
         return data;
     }

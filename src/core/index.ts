@@ -23,7 +23,7 @@ import { lexParseSync, parseDecodedTokens } from "./LexerParser";
 import * as PP from "./preprocessor";
 import * as BrsTypes from "./brsTypes";
 import * as path from "path";
-import * as xml2js from "xml2js";
+import { XmlDocument } from "xmldoc";
 import * as crypto from "crypto";
 import * as fs from "fs";
 import { encode, decode } from "@msgpack/msgpack";
@@ -569,31 +569,43 @@ function setupTranslations(interpreter: Interpreter) {
             trTarget = "target";
         }
         if (trType !== "") {
-            let xmlOptions: xml2js.OptionsV2 = { explicitArray: false };
-            let xmlParser = new xml2js.Parser(xmlOptions);
-            xmlParser.parseString(xmlText, function (err: Error | null, parsed: any) {
-                if (err) {
-                    postMessage(`error,Error parsing XML: ${err.message}`);
-                } else if (parsed) {
-                    if (Object.keys(parsed).length > 0) {
-                        let trArray;
-                        if (trType === "TS") {
-                            trArray = parsed["TS"]["context"]["message"];
-                        } else {
-                            trArray = parsed["xliff"]["file"]["body"]["trans-unit"];
-                        }
-                        if (Array.isArray(trArray)) {
-                            for (const item of trArray) {
-                                if (item["source"]) {
-                                    interpreter.translations.set(item["source"], item[trTarget]);
-                                }
+            if (xmlText.trim().length === 0) {
+                postMessage("error,Error parsing translation XML: Empty input");
+                return;
+            }
+            try {
+                const document = new XmlDocument(xmlText);
+                if (trType === "TS") {
+                    const contexts = document.childrenNamed("context");
+                    for (const contextNode of contexts) {
+                        const messages = contextNode.childrenNamed("message");
+                        for (const messageNode of messages) {
+                            const sourceNode = messageNode.childNamed("source");
+                            const translationNode = messageNode.childNamed(trTarget);
+                            const sourceText = sourceNode?.val ?? "";
+                            if (sourceText) {
+                                interpreter.translations.set(sourceText, translationNode?.val ?? "");
                             }
                         }
                     }
                 } else {
-                    postMessage("error,Error parsing translation XML: Empty input");
+                    const files = document.childrenNamed("file");
+                    for (const fileNode of files) {
+                        const bodyNode = fileNode.childNamed("body");
+                        const units = bodyNode?.childrenNamed("trans-unit") ?? [];
+                        for (const unit of units) {
+                            const sourceNode = unit.childNamed("source");
+                            const targetNode = unit.childNamed(trTarget);
+                            const sourceText = sourceNode?.val ?? "";
+                            if (sourceText) {
+                                interpreter.translations.set(sourceText, targetNode?.val ?? "");
+                            }
+                        }
+                    }
                 }
-            });
+            } catch (err: any) {
+                postMessage(`error,Error parsing XML: ${err?.message ?? err}`);
+            }
         }
     } catch (err: any) {
         const badPath = `pkg:/locale/${locale}/`;
