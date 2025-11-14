@@ -29,7 +29,7 @@ The **brs-engine** is developed in [TypeScript](https://www.typescriptlang.org/)
 
 <p align="center"><img alt="Simulator Web and Desktop" title="Simulator Web and Desktop" src="docs/images/screenshots.png?raw=true"/></p>
 
-### For web applications, browser extensions, and Electron apps
+### For web applications, PWAs, and Electron apps
 
 The browser package provides a complete BrightScript interpreter that runs directly in browser environments with full support for the BrightScript language up to Roku OS version 15.
 
