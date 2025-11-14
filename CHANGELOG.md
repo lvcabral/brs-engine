@@ -2,13 +2,40 @@
 
 All notable changes to this project will be documented in this file.
 
+<a name="v1.9.9"></a>
+
+## [v1.9.9 - File System improvements](https://github.com/lvcabral/brs-engine/releases/tag/v1.9.9) - 14 November 2025
+
+This release brings several improvements to the virtual file system, including better handling of writeable volumes and case sensitivity on path names. It also includes fixes for the `roRegex.split()` return type, `MicroDebugger` handling of multiple statements in a single line, support for UTF-16 in `StringI` global function and other minor enhancements.
+
+### Release Changes
+
+* Fixed: `stop` not working as the last statement by [@lvcabral](https://github.com/lvcabral) in [#719](https://github.com/lvcabral/brs-engine/pull/719)
+* Fixed return type for `roRegex.split()` to `roList` instead of `roArray` by [@lvcabral](https://github.com/lvcabral) in [#721](https://github.com/lvcabral/brs-engine/pull/721)
+* Upgraded `zenFS` dependency and removed `memory-fs` by [@lvcabral](https://github.com/lvcabral) in [#725](https://github.com/lvcabral/brs-engine/pull/725)
+* Added `common:/certs/ca-bundle.crt` file and upgraded `zenFS` by [@lvcabral](https://github.com/lvcabral) in [#727](https://github.com/lvcabral/brs-engine/pull/727)
+* Fixed issue that prevented playback of the first loaded audio by [@lvcabral](https://github.com/lvcabral) in [#728](https://github.com/lvcabral/brs-engine/pull/728)
+* Save paths in writeable volumes with original case by [@lvcabral](https://github.com/lvcabral) in [#730](https://github.com/lvcabral/brs-engine/pull/730)
+* Force ignore cache for `common.zip` when new version is available by [@lvcabral](https://github.com/lvcabral) in [#732](https://github.com/lvcabral/brs-engine/pull/732)
+* Fixed `MicroDebugger` to properly handle a line with multiple statements separated by colon `:` by [@lvcabral](https://github.com/lvcabral) in [#738](https://github.com/lvcabral/brs-engine/pull/738)
+* Generate a `registry` event when loading the registry during startup of the engine by [@lvcabral](https://github.com/lvcabral) in [#739](https://github.com/lvcabral/brs-engine/pull/739)
+* Clear the display before showing icon as splash by [@lvcabral](https://github.com/lvcabral) in [#741](https://github.com/lvcabral/brs-engine/pull/741)
+* Added support for the `not` operator in the preprocessor's `#if` clause evaluation by [@lvcabral](https://github.com/lvcabral) in [#742](https://github.com/lvcabral/brs-engine/pull/742)
+* Fixed exception handling for Parser and Preprocessor by [@lvcabral](https://github.com/lvcabral) in [#743](https://github.com/lvcabral/brs-engine/pull/743)
+* Added UTF-16 support for `StringI` and prevented crash with negative `string.repeat()` by [@lvcabral](https://github.com/lvcabral) in [#744](https://github.com/lvcabral/brs-engine/pull/744)
+* Added validation to `#if` to not allow extra text after the condition token by [@lvcabral](https://github.com/lvcabral) in [#745](https://github.com/lvcabral/brs-engine/pull/745)
+* Fixed ZIP based volumes `pkg:`, `common:` and `ext1:` to show the original case on path names by [@lvcabral](https://github.com/lvcabral) in [#747](https://github.com/lvcabral/brs-engine/pull/747)
+* Prevent debug error messages in `Network.ts` by [@lvcabral](https://github.com/lvcabral) in [#748](https://github.com/lvcabral/brs-engine/pull/748)
+
+[Full Changelog][v1.9.9]
+
 <a name="v1.9.8"></a>
 
 ## [v1.9.8 - Added new API method `getScreenshot()`](https://github.com/lvcabral/brs-engine/releases/tag/v1.9.8) - 29 October 2025
 
 This release adds a new API method `getScreenshot()` that returns the latest rendered screenshot as an `ImageData` object, allowing host applications to get a full resolution image, instead of relying on the resizable display `canvas`.
 
-## Release Changes
+### Release Changes
 
 * Added new API method `getScreenshot()` by [@lvcabral](https://github.com/lvcabral) in [#711](https://github.com/lvcabral/brs-engine/pull/711)
 * Updated API documentation to add new `getScreenshot()` method by [@lvcabral](https://github.com/lvcabral) in [#712](https://github.com/lvcabral/brs-engine/pull/712)
@@ -1173,6 +1200,7 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
+[v1.9.9]: https://github.com/lvcabral/brs-engine/compare/v1.9.8...v1.9.9
 [v1.9.8]: https://github.com/lvcabral/brs-engine/compare/v1.9.7...v1.9.8
 [v1.9.7]: https://github.com/lvcabral/brs-engine/compare/v1.9.6...v1.9.7
 [v1.9.6]: https://github.com/lvcabral/brs-engine/compare/v1.9.5...v1.9.6
