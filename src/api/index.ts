@@ -15,8 +15,6 @@ import {
     DeviceInfo,
     NDKStart,
     RemoteType,
-    TaskData,
-    TaskPayload,
     TaskState,
     dataBufferIndex,
     dataBufferSize,
@@ -83,6 +81,7 @@ import {
     switchVideoState,
 } from "./video";
 import { subscribeControl, initControlModule, enableSendKeys, sendKey } from "./control";
+import { handleTaskData, handleThreadUpdate, initTaskModule, resetTasks, subscribeTask } from "./task";
 import SharedObject from "../core/SharedObject";
 import packageInfo from "../../packages/browser/package.json";
 
@@ -129,12 +128,10 @@ let httpConnectLog: boolean = false;
 
 // App Workers and Shared Buffers
 let brsWorker: Worker;
-const tasks: Map<number, Worker> = new Map();
-const threadSyncToTask: Map<number, SharedObject> = new Map();
-const threadSyncToMain: Map<number, SharedObject> = new Map();
 const registryBuffer = new SharedObject(registryInitialSize, registryMaxSize);
 let sharedBuffer: ArrayBufferLike;
 let sharedArray: Int32Array;
+let currentPayload: AppPayload;
 
 // API Methods
 export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any = {}) {
@@ -193,6 +190,7 @@ export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any 
     initDisplayModule(deviceData, showStats);
     initControlModule(sharedArray, options);
     initVideoModule(sharedArray, deviceData, false);
+    initTaskModule(sharedBuffer, brsWrkLib);
     // Subscribe Events
     subscribeDisplay("api", (event: string, data: any) => {
         if (event === "mode") {
@@ -252,6 +250,19 @@ export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any 
         if (["error", "warning"].includes(event)) {
             apiException(event, data);
         } else {
+            notifyAll(event, data);
+        }
+    });
+    subscribeTask("api", (event: string, data: any) => {
+        if (["error", "warning"].includes(event)) {
+            apiException(event, data);
+        } else if (event === "message") {
+            handleStringMessage(data);
+        } else if (event === "ndkStart") {
+            handleNDKStart(data);
+        } else if (event === "registry") {
+            handleRegistryUpdate(data);
+        } else if (event === "captionMode") {
             notifyAll(event, data);
         }
     });
@@ -412,13 +423,7 @@ export function debug(command: string): boolean {
 function resetWorker() {
     brsWorker.removeEventListener("message", mainCallback);
     brsWorker.terminate();
-    for (const [_id, worker] of tasks) {
-        worker?.removeEventListener("message", taskCallback);
-        worker?.terminate();
-    }
-    tasks.clear();
-    threadSyncToTask.clear();
-    threadSyncToMain.clear();
+    resetTasks();
     resetArray();
     resetSounds(deviceData.assets);
     resetVideo();
@@ -455,7 +460,6 @@ function loadSourceCode(fileName: string, fileData: any) {
     reader.readAsText(new Blob([fileData], { type: "text/plain" }));
 }
 
-let currentPayload: AppPayload;
 // Execute Engine Web Worker
 function runApp(payload: AppPayload) {
     try {
@@ -475,43 +479,6 @@ function runApp(payload: AppPayload) {
     }
 }
 
-function runTask(taskData: TaskData) {
-    if (tasks.has(taskData.id) || !taskData.m?.top?.functionname) {
-        return;
-    } else if (tasks.size === 10) {
-        apiException("warning", `[api] Maximum number of tasks reached: ${tasks.size}`);
-        return;
-    }
-    const taskWorker = new Worker(brsWrkLib);
-    taskWorker.addEventListener("message", taskCallback);
-    tasks.set(taskData.id, taskWorker);
-    if (!threadSyncToTask.has(taskData.id)) {
-        threadSyncToTask.set(taskData.id, new SharedObject());
-    }
-    taskData.buffer = threadSyncToTask.get(taskData.id)?.getBuffer();
-    const taskPayload: TaskPayload = {
-        device: currentPayload.device,
-        manifest: currentPayload.manifest,
-        taskData: taskData,
-        pkgZip: currentPayload.pkgZip,
-        extZip: currentPayload.extZip,
-    };
-    console.debug("[API] Calling Task worker: ", taskData.id, taskData.name);
-    taskWorker.postMessage(sharedBuffer);
-    taskWorker.postMessage(taskPayload);
-}
-
-function endTask(taskId: number) {
-    const taskWorker = tasks.get(taskId);
-    if (taskWorker) {
-        taskWorker.removeEventListener("message", taskCallback);
-        taskWorker.terminate();
-        tasks.delete(taskId);
-        threadSyncToTask.delete(taskId);
-        threadSyncToMain.delete(taskId);
-        console.debug("[API] Task worker stopped: ", taskId);
-    }
-}
 // Load Device Assets
 function updateDeviceAssets() {
     if (deviceData.assets.byteLength) {
@@ -589,13 +556,7 @@ function mainCallback(event: MessageEvent) {
     if (event.data instanceof ImageData) {
         updateBuffer(event.data);
     } else if (event.data instanceof Map) {
-        if (platform.inBrowser) {
-            const storage: Storage = globalThis.localStorage;
-            for (const [key, value] of event.data) {
-                storage.setItem(key, value);
-            }
-        }
-        notifyAll("registry", event.data);
+        handleRegistryUpdate(event.data);
     } else if (platform.inBrowser && Array.isArray(event.data.audioPlaylist)) {
         addAudioPlaylist(event.data.audioPlaylist);
     } else if (platform.inBrowser && event.data.audioPath) {
@@ -620,34 +581,10 @@ function mainCallback(event: MessageEvent) {
         notifyAll("launch", { app: event.data.id, params: event.data.params ?? new Map() });
     } else if (isTaskData(event.data)) {
         console.debug("[API] Task data received from Main Thread: ", event.data.name, TaskState[event.data.state]);
-        if (event.data.state === TaskState.RUN) {
-            if (event.data.buffer instanceof SharedArrayBuffer) {
-                const taskBuffer = new SharedObject();
-                taskBuffer.setBuffer(event.data.buffer);
-                threadSyncToMain.set(event.data.id, taskBuffer);
-            }
-            runTask(event.data);
-        } else if (event.data.state === TaskState.STOP) {
-            endTask(event.data.id);
-        }
+        handleTaskData(event.data, currentPayload);
     } else if (isThreadUpdate(event.data)) {
         console.debug("[API] Update received from Main thread: ", event.data.id, event.data.type, event.data.field);
-        if (event.data.id > 0) {
-            if (!threadSyncToTask.has(event.data.id)) {
-                threadSyncToTask.set(event.data.id, new SharedObject());
-            }
-            threadSyncToTask.get(event.data.id)?.waitStore(event.data, 1);
-        } else if (event.data.type !== "task") {
-            for (let taskId = 1; taskId <= tasks.size; taskId++) {
-                const data = { ...event.data, id: taskId };
-                if (!threadSyncToTask.has(data.id)) {
-                    threadSyncToTask.set(data.id, new SharedObject());
-                }
-                threadSyncToTask.get(data.id)?.waitStore(data, 1);
-            }
-        } else {
-            console.debug("[API] Thread update from Main with invalid data!");
-        }
+        handleThreadUpdate(event.data);
     } else if (isNDKStart(event.data)) {
         handleNDKStart(event.data);
     } else if (typeof event.data !== "string") {
@@ -655,53 +592,6 @@ function mainCallback(event: MessageEvent) {
         apiException("warning", `[api] Invalid worker message: ${JSON.stringify(event.data)}`);
     } else {
         handleStringMessage(event.data);
-    }
-}
-
-// Receive Messages from the Task Interpreter (Web Worker)
-function taskCallback(event: MessageEvent) {
-    if (event.data instanceof Map) {
-        if (platform.inBrowser) {
-            const storage: Storage = window.localStorage;
-            for (const [key, value] of event.data) {
-                storage.setItem(key, value);
-            }
-        }
-        notifyAll("registry", event.data);
-    } else if (typeof event.data.displayEnabled === "boolean") {
-        setDisplayState(event.data.displayEnabled);
-    } else if (typeof event.data.captionMode === "string") {
-        if (setCaptionMode(event.data.captionMode)) {
-            notifyAll("captionMode", event.data.captionMode);
-        }
-    } else if (Array.isArray(event.data.captionStyle)) {
-        setAppCaptionStyle(event.data.captionStyle);
-    } else if (isTaskData(event.data)) {
-        console.debug("[API] Task data received from Task Thread: ", event.data.name, TaskState[event.data.state]);
-        if (event.data.state === TaskState.STOP) {
-            endTask(event.data.id);
-        }
-    } else if (isThreadUpdate(event.data)) {
-        console.debug("[API] Update received from Task thread: ", event.data.id, event.data.field);
-        threadSyncToMain.get(event.data.id)?.waitStore(event.data, 1);
-        if (event.data.type === "task") {
-            return;
-        }
-        for (let taskId = 1; taskId <= tasks.size; taskId++) {
-            if (taskId !== event.data.id) {
-                const data = { ...event.data, id: taskId };
-                if (!threadSyncToTask.has(data.id)) {
-                    threadSyncToTask.set(data.id, new SharedObject());
-                }
-                threadSyncToTask.get(data.id)?.waitStore(data, 1);
-            }
-        }
-    } else if (isNDKStart(event.data)) {
-        handleNDKStart(event.data);
-    } else if (typeof event.data === "string") {
-        handleStringMessage(event.data);
-    } else {
-        apiException("warning", `[api] Invalid task message: ${JSON.stringify(event.data, null, 2)}`);
     }
 }
 
@@ -747,6 +637,16 @@ function handleNDKStart(data: NDKStart) {
             apiException("warning", `[api] NDKLauncher:  SDKLauncher "channelId" parameter not found!`);
         }
     }
+}
+
+function handleRegistryUpdate(registry: Map<string, string>) {
+    if (platform.inBrowser) {
+        const storage: Storage = globalThis.localStorage;
+        for (const [key, value] of registry) {
+            storage.setItem(key, value);
+        }
+    }
+    notifyAll("registry", registry);
 }
 
 // Handles string messages from the Interpreter
