@@ -1,3 +1,4 @@
+import { BrsDevice } from "../device/BrsDevice";
 /// #if !BROWSER
 import { XMLHttpRequest } from "../polyfill/XMLHttpRequest";
 /// #endif
@@ -27,12 +28,16 @@ export function download(
         }
         xhr.send();
         if (xhr.status !== 200) {
-            postMessage(`error,HTTP Error downloading ${url}: ${xhr.statusText} (${xhr.status})`);
+            if (BrsDevice.isDevMode) {
+                postMessage(`error,HTTP Error downloading ${url}: ${xhr.statusText} (${xhr.status})`);
+            }
             return undefined;
         }
         return xhr.response;
     } catch (err: any) {
-        postMessage(`error,Error downloading ${url}: ${err.message}`);
+        if (BrsDevice.isDevMode) {
+            postMessage(`error,Error downloading ${url}: ${err.message}`);
+        }
     }
     return undefined;
 }
@@ -50,12 +55,18 @@ export function getExternalIp(): string {
         xhr.responseType = "text";
         xhr.send();
         if (xhr.status !== 200) {
-            throw new Error(`[getExternalIp] Error getting ${url}: status ${xhr.status} - ${xhr.statusText}`);
+            if (BrsDevice.isDevMode) {
+                throw new Error(`[getExternalIp] Error getting ${url}: status ${xhr.status} - ${xhr.statusText}`);
+            }
+            return "";
         }
         const ip = xhr.responseText;
         return isValidIP(ip) ? ip : "";
     } catch (err: any) {
-        throw new Error(`[getExternalIp] Error getting ${url}: ${err.message}`);
+        if (BrsDevice.isDevMode) {
+            throw new Error(`[getExternalIp] Error getting ${url}: ${err.message}`);
+        }
+        return "";
     }
 }
 
@@ -96,7 +107,7 @@ export function resolveHostToIP(host: string): string | null {
             errors.push(`[resolveHostToIP] Error resolving ${host} from ${server}: ${err.message}`);
         }
     }
-    if (errors.length > 0) {
+    if (errors.length > 0 && BrsDevice.isDevMode) {
         throw new Error(errors.join("\n"));
     }
     return null;
