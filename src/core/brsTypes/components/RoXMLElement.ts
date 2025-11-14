@@ -6,15 +6,29 @@ import { Interpreter } from "../../interpreter";
 import { RoAssociativeArray } from "./RoAssociativeArray";
 import { RoList } from "./RoList";
 import { RoXMLList } from "./RoXMLList";
-import * as xml2js from "xml2js";
+import { XmlDocument, XmlElement, XmlNode, XmlTextNode, XmlCDataNode } from "xmldoc";
+import * as sax from "sax";
 import { BrsDevice } from "../../device/BrsDevice";
+
+function isElementNode(node: XmlNode): node is XmlElement {
+    return node.type === "element";
+}
+
+function isTextNode(node: XmlNode): node is XmlTextNode {
+    return node.type === "text";
+}
+
+function isCDataNode(node: XmlNode): node is XmlCDataNode {
+    return node.type === "cdata";
+}
 
 export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable {
     readonly kind = ValueKind.Object;
-    private parsedXML: any;
-    constructor(parsedXML?: any) {
+    private xmlElement: XmlElement;
+
+    constructor(parsedXML?: XmlElement) {
         super("roXMLElement");
-        this.parsedXML = parsedXML || { _root_: {} };
+        this.xmlElement = parsedXML ?? RoXMLElement.createElement();
         this.registerMethods({
             ifXMLElement: [
                 this.parse,
@@ -40,6 +54,80 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
                 this.clear,
             ],
         });
+    }
+
+    private static createElement(name: string = "_root_"): XmlElement {
+        const document = new XmlDocument(`<${name}></${name}>`);
+        RoXMLElement.syncDerivedState(document);
+        return document;
+    }
+
+    private static syncDerivedState(element: XmlElement) {
+        const children = element.children ?? [];
+        element.firstChild = children.length > 0 ? children[0] : null;
+        element.lastChild = children.length > 0 ? children[children.length - 1] : null;
+        const textParts: string[] = [];
+        for (const child of children) {
+            if (isTextNode(child)) {
+                textParts.push(child.text);
+            } else if (isCDataNode(child)) {
+                textParts.push(child.cdata);
+            }
+        }
+        element.val = textParts.join("");
+    }
+
+    private static getTextFromElement(element: XmlElement): string {
+        if (!element.children || element.children.length === 0) {
+            return element.val ?? "";
+        }
+        const parts: string[] = [];
+        for (const child of element.children) {
+            if (isTextNode(child)) {
+                parts.push(child.text);
+            } else if (isCDataNode(child)) {
+                parts.push(child.cdata);
+            }
+        }
+        if (parts.length === 0) {
+            return element.val ?? "";
+        }
+        return parts.join("");
+    }
+
+    private static replaceTextContent(element: XmlElement, text: string) {
+        const children = element.children ?? [];
+        const filtered = children.filter((child) => !isTextNode(child) && !isCDataNode(child));
+        element.children = filtered;
+        if (text.length > 0) {
+            element.children.push(new XmlTextNode(text));
+        }
+        RoXMLElement.syncDerivedState(element);
+    }
+
+    private static appendTextContent(element: XmlElement, text: string) {
+        if (text.length === 0) {
+            return;
+        }
+        const existing = RoXMLElement.getTextFromElement(element);
+        RoXMLElement.replaceTextContent(element, existing + text);
+    }
+
+    private static validateXml(xml: string): string | undefined {
+        try {
+            const parser = sax.parser(true, { trim: false, normalize: false });
+            parser.onerror = (err: Error) => {
+                throw err;
+            };
+            parser.write(xml).close();
+            return undefined;
+        } catch (err: any) {
+            return err?.message ?? String(err);
+        }
+    }
+
+    private getElement(): XmlElement {
+        return this.xmlElement;
     }
 
     toString(parent?: BrsType): string {
@@ -94,17 +182,11 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
         if (index.kind !== ValueKind.String) {
             throw new Error("XML Element attribute must be strings");
         }
-        if (this.parsedXML && Object.keys(this.parsedXML).length > 0) {
-            let root = Object.keys(this.parsedXML)[0];
-            if (this.parsedXML[root].$) {
-                let attrs = this.parsedXML[root].$;
-                let keys = Object.keys(attrs);
-                let values = Object.values(attrs) as string[];
-                for (let k = 0; k < keys.length; k++) {
-                    if (keys[k].toLocaleLowerCase() === index.value.toLocaleLowerCase()) {
-                        return new BrsString(values[k]);
-                    }
-                }
+        const element = this.getElement();
+        const target = index.value.toLocaleLowerCase();
+        for (const [name, value] of Object.entries(element.attr ?? {})) {
+            if (name.toLocaleLowerCase() === target) {
+                return new BrsString(value);
             }
         }
         return BrsInvalid.Instance;
@@ -112,56 +194,27 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
 
     attributes() {
         let attributes = new RoAssociativeArray([]);
-        if (this.parsedXML && Object.keys(this.parsedXML).length > 0) {
-            let root = Object.keys(this.parsedXML)[0];
-            if (this.parsedXML[root].$) {
-                let attrs = this.parsedXML[root].$;
-                let keys = Object.keys(attrs);
-                let values = Object.values(attrs) as string[];
-                for (let index = 0; index < keys.length; index++) {
-                    attributes.set(new BrsString(keys[index]), new BrsString(values[index]));
-                }
-            }
+        for (const [name, value] of Object.entries(this.getElement().attr ?? {})) {
+            attributes.set(new BrsString(name), new BrsString(value));
         }
         return attributes;
     }
 
     name() {
-        let name = "";
-        if (this.parsedXML && Object.keys(this.parsedXML).length > 0) {
-            name = Object.keys(this.parsedXML)[0];
-            if (name === "_root_") {
-                name = "";
-            }
-        }
-        return new BrsString(name);
+        const elementName = this.getElement().name;
+        return new BrsString(elementName === "_root_" ? "" : elementName);
     }
 
     text() {
-        let text = "";
-        let root = Object.keys(this.parsedXML)[0];
-        if (this.parsedXML[root]._) {
-            text = this.parsedXML[root]._;
-        } else if (typeof this.parsedXML[root] === "string") {
-            text = this.parsedXML[root];
-        }
-        return new BrsString(text);
+        return new BrsString(RoXMLElement.getTextFromElement(this.getElement()));
     }
 
     childElements() {
         let elements = new RoXMLList();
-        if (this.parsedXML && Object.keys(this.parsedXML).length > 0) {
-            let root = Object.keys(this.parsedXML)[0];
-            for (let [key, value] of Object.entries(this.parsedXML[root])) {
-                if (key !== "$" && key !== "_") {
-                    if (Array.isArray(value)) {
-                        for (const item of value) {
-                            let element = new RoXMLElement();
-                            element.parsedXML = { [key]: item };
-                            elements.add(element);
-                        }
-                    }
-                }
+        const element = this.getElement();
+        for (const child of element.children ?? []) {
+            if (isElementNode(child)) {
+                elements.add(new RoXMLElement(child));
             }
         }
         return elements;
@@ -169,20 +222,14 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
 
     childNodes() {
         let nodes = new RoList();
-        if (this.parsedXML && Object.keys(this.parsedXML).length > 0) {
-            let root = Object.keys(this.parsedXML)[0];
-            for (let [key, value] of Object.entries(this.parsedXML[root])) {
-                if (key !== "$") {
-                    if (Array.isArray(value)) {
-                        for (const item of value) {
-                            let element = new RoXMLElement();
-                            element.parsedXML = { [key]: item };
-                            nodes.add(element);
-                        }
-                    } else if (typeof value === "string") {
-                        nodes.add(new BrsString(value));
-                    }
-                }
+        const element = this.getElement();
+        for (const child of element.children ?? []) {
+            if (isElementNode(child)) {
+                nodes.add(new RoXMLElement(child));
+            } else if (isTextNode(child)) {
+                nodes.add(new BrsString(child.text));
+            } else if (isCDataNode(child)) {
+                nodes.add(new BrsString(child.cdata));
             }
         }
         return nodes;
@@ -193,18 +240,12 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
         if (ci) {
             name = name.toLocaleLowerCase();
         }
-        if (this.parsedXML && Object.keys(this.parsedXML).length > 0) {
-            let root = Object.keys(this.parsedXML)[0];
-            for (let [key, value] of Object.entries(this.parsedXML[root])) {
-                let cKey = ci ? key.toLocaleLowerCase() : key;
-                if (cKey === name) {
-                    if (Array.isArray(value)) {
-                        for (const item of value) {
-                            let element = new RoXMLElement();
-                            element.parsedXML = { [key]: item };
-                            elements.add(element);
-                        }
-                    }
+        const element = this.getElement();
+        for (const child of element.children ?? []) {
+            if (isElementNode(child)) {
+                const childName = ci ? child.name.toLocaleLowerCase() : child.name;
+                if (childName === name) {
+                    elements.add(new RoXMLElement(child));
                 }
             }
         }
@@ -218,25 +259,34 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, xml: BrsString) => {
-            let result = false;
-            let xmlParser = new xml2js.Parser();
-            let parsedXML;
-            xmlParser.parseString(xml.value, function (err: any, parsed: any) {
-                let errMessage = "";
-                if (err) {
-                    errMessage = `error,Error parsing XML: ${err.message}`;
-                } else if (parsed) {
-                    parsedXML = parsed;
-                    result = true;
-                } else {
-                    errMessage = "warning,Warning: Empty input was provided to parse XML.";
+            const trimmed = xml.value.trim();
+            if (trimmed.length === 0) {
+                if (BrsDevice.isDevMode) {
+                    BrsDevice.stderr.write("warning,Warning: Empty input was provided to parse XML.");
                 }
-                if (errMessage !== "" && BrsDevice.isDevMode) {
-                    BrsDevice.stderr.write(errMessage);
+                this.xmlElement = RoXMLElement.createElement();
+                return BrsBoolean.False;
+            }
+            const validationError = RoXMLElement.validateXml(trimmed);
+            if (validationError) {
+                if (BrsDevice.isDevMode) {
+                    BrsDevice.stderr.write(`error,Error parsing XML: ${validationError}`);
                 }
-            });
-            this.parsedXML = parsedXML;
-            return BrsBoolean.from(result);
+                this.xmlElement = RoXMLElement.createElement();
+                return BrsBoolean.False;
+            }
+            try {
+                const document = new XmlDocument(xml.value);
+                RoXMLElement.syncDerivedState(document);
+                this.xmlElement = document;
+                return BrsBoolean.True;
+            } catch (err: any) {
+                if (BrsDevice.isDevMode) {
+                    BrsDevice.stderr.write(`error,Error parsing XML: ${err?.message ?? err}`);
+                }
+                this.xmlElement = RoXMLElement.createElement();
+                return BrsBoolean.False;
+            }
         },
     });
 
@@ -363,14 +413,8 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, attr: BrsString) => {
-            if (Object.keys(this.parsedXML).length > 0) {
-                const root = Object.keys(this.parsedXML)[0];
-                if (this.parsedXML[root].$) {
-                    const attrs = this.parsedXML[root].$;
-                    return BrsBoolean.from(attr.value in attrs);
-                }
-            }
-            return BrsBoolean.False;
+            const element = this.getElement();
+            return BrsBoolean.from(Boolean(element.attr && attr.value in element.attr));
         },
     });
 
@@ -381,14 +425,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, body: BrsString) => {
-            if (Object.keys(this.parsedXML).length > 0) {
-                const root = Object.keys(this.parsedXML)[0];
-                if (this.parsedXML[root]["_"]) {
-                    this.parsedXML[root]["_"] = body.value;
-                } else {
-                    Object.assign(this.parsedXML[root], { _: body.value });
-                }
-            }
+            RoXMLElement.replaceTextContent(this.getElement(), body.value);
             return BrsInvalid.Instance;
         },
     });
@@ -400,14 +437,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, text: BrsString) => {
-            if (Object.keys(this.parsedXML).length > 0) {
-                const root = Object.keys(this.parsedXML)[0];
-                if (this.parsedXML[root]["_"]) {
-                    this.parsedXML[root]["_"] += text.value;
-                } else {
-                    Object.assign(this.parsedXML[root], { _: text.value });
-                }
-            }
+            RoXMLElement.appendTextContent(this.getElement(), text.value);
             return BrsInvalid.Instance;
         },
     });
@@ -419,14 +449,11 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter) => {
-            let element = new RoXMLElement();
-            if (Object.keys(this.parsedXML).length > 0) {
-                const root = Object.keys(this.parsedXML)[0];
-                const newObj = { child: {} };
-                Object.assign(this.parsedXML[root], newObj);
-                element.parsedXML = newObj;
-            }
-            return element;
+            const parent = this.getElement();
+            const child = RoXMLElement.createElement("child");
+            parent.children.push(child);
+            RoXMLElement.syncDerivedState(parent);
+            return new RoXMLElement(child);
         },
     });
 
@@ -437,14 +464,11 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter, name: BrsString) => {
-            let element = new RoXMLElement();
-            if (Object.keys(this.parsedXML).length > 0) {
-                const root = Object.keys(this.parsedXML)[0];
-                const newObj = { [name.value]: {} };
-                Object.assign(this.parsedXML[root], newObj);
-                element.parsedXML = newObj;
-            }
-            return element;
+            const parent = this.getElement();
+            const child = RoXMLElement.createElement(name.value);
+            parent.children.push(child);
+            RoXMLElement.syncDerivedState(parent);
+            return new RoXMLElement(child);
         },
     });
 
@@ -455,14 +479,12 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter, name: BrsString, body: BrsString) => {
-            let element = new RoXMLElement();
-            if (Object.keys(this.parsedXML).length > 0) {
-                const root = Object.keys(this.parsedXML)[0];
-                const newObj = { [name.value]: { _: body.value } };
-                Object.assign(this.parsedXML[root], newObj);
-                element.parsedXML = newObj;
-            }
-            return element;
+            const parent = this.getElement();
+            const child = RoXMLElement.createElement(name.value);
+            RoXMLElement.replaceTextContent(child, body.value);
+            parent.children.push(child);
+            RoXMLElement.syncDerivedState(parent);
+            return new RoXMLElement(child);
         },
     });
 
@@ -473,14 +495,9 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, attr: BrsString, value: BrsString) => {
-            if (Object.keys(this.parsedXML).length > 0) {
-                const root = Object.keys(this.parsedXML)[0];
-                if (this.parsedXML[root]["$"]) {
-                    Object.assign(this.parsedXML[root]["$"], { [attr.value]: value.value });
-                } else {
-                    Object.assign(this.parsedXML[root], { $: { [attr.value]: value.value } });
-                }
-            }
+            const element = this.getElement();
+            element.attr = element.attr ?? {};
+            element.attr[attr.value] = value.value;
             return BrsInvalid.Instance;
         },
     });
@@ -492,12 +509,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, name: BrsString) => {
-            if (Object.keys(this.parsedXML).length > 0) {
-                const root = Object.keys(this.parsedXML)[0];
-                delete Object.assign(this.parsedXML, { [name.value]: this.parsedXML[root] })[root];
-            } else {
-                this.parsedXML = { [name.value]: {} };
-            }
+            this.xmlElement.name = name.value;
             return BrsInvalid.Instance;
         },
     });
@@ -509,12 +521,8 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
             returns: ValueKind.String,
         },
         impl: (_: Interpreter, header: BrsString) => {
-            let options = {
-                headless: true,
-                renderOpts: { pretty: false },
-            };
-            let builder = new xml2js.Builder(options);
-            return new BrsString(header.value + builder.buildObject(this.parsedXML));
+            const xml = this.xmlElement.toString({ compressed: true });
+            return new BrsString(header.value + xml);
         },
     });
 
@@ -525,16 +533,9 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
             returns: ValueKind.String,
         },
         impl: (_: Interpreter, gen_header: BrsBoolean) => {
-            let options = {
-                headless: !gen_header.toBoolean(),
-                renderOpts: { pretty: false },
-                xmldec: {
-                    version: "1.0",
-                    encoding: "UTF-8",
-                },
-            };
-            let builder = new xml2js.Builder(options);
-            return new BrsString(builder.buildObject(this.parsedXML));
+            const xml = this.xmlElement.toString({ compressed: true });
+            const header = gen_header.toBoolean() ? '<?xml version="1.0" encoding="UTF-8"?>' : "";
+            return new BrsString(header + xml);
         },
     });
 
@@ -545,7 +546,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter) => {
-            this.parsedXML = { root: {} };
+            this.xmlElement = RoXMLElement.createElement();
             return BrsInvalid.Instance;
         },
     });
