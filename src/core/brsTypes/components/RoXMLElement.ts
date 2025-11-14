@@ -535,7 +535,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
         },
         impl: (_: Interpreter, gen_header: BrsBoolean) => {
             const xml = this.xmlElement.toString({ compressed: true });
-            const header = gen_header.toBoolean() ? "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" : "";
+            const header = gen_header.toBoolean() ? '<?xml version="1.0" encoding="UTF-8"?>' : "";
             return new BrsString(header + xml);
         },
     });
