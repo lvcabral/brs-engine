@@ -32,7 +32,7 @@ export function initTaskModule(buffer: ArrayBufferLike, libPath: string) {
 }
 
 // Observers Handling
-const observers = new Map();
+const observers: Map<string, SubscribeCallback> = new Map();
 export function subscribeTask(observerId: string, observerCallback: SubscribeCallback) {
     observers.set(observerId, observerCallback);
 }
