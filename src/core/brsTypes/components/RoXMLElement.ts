@@ -28,7 +28,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
 
     constructor(parsedXML?: XmlElement) {
         super("roXMLElement");
-        this.xmlElement = parsedXML ?? RoXMLElement.createElement("_root_");
+        this.xmlElement = parsedXML ?? RoXMLElement.createElement();
         this.registerMethods({
             ifXMLElement: [
                 this.parse,
@@ -56,9 +56,8 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
         });
     }
 
-    private static createElement(name: string): XmlElement {
-        const tagName = name || "_root_";
-        const document = new XmlDocument(`<${tagName}></${tagName}>`);
+    private static createElement(name: string = "_root_"): XmlElement {
+        const document = new XmlDocument(`<${name}></${name}>`);
         RoXMLElement.syncDerivedState(document);
         return document;
     }
@@ -265,7 +264,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
                 if (BrsDevice.isDevMode) {
                     BrsDevice.stderr.write("warning,Warning: Empty input was provided to parse XML.");
                 }
-                this.xmlElement = RoXMLElement.createElement("_root_");
+                this.xmlElement = RoXMLElement.createElement();
                 return BrsBoolean.False;
             }
             const validationError = RoXMLElement.validateXml(trimmed);
@@ -273,7 +272,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
                 if (BrsDevice.isDevMode) {
                     BrsDevice.stderr.write(`error,Error parsing XML: ${validationError}`);
                 }
-                this.xmlElement = RoXMLElement.createElement("_root_");
+                this.xmlElement = RoXMLElement.createElement();
                 return BrsBoolean.False;
             }
             try {
@@ -285,7 +284,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
                 if (BrsDevice.isDevMode) {
                     BrsDevice.stderr.write(`error,Error parsing XML: ${err?.message ?? err}`);
                 }
-                this.xmlElement = RoXMLElement.createElement("_root_");
+                this.xmlElement = RoXMLElement.createElement();
                 return BrsBoolean.False;
             }
         },
@@ -547,7 +546,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter) => {
-            this.xmlElement = RoXMLElement.createElement("root");
+            this.xmlElement = RoXMLElement.createElement();
             return BrsInvalid.Instance;
         },
     });
