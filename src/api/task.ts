@@ -146,7 +146,7 @@ export function handleThreadUpdate(threadUpdate: ThreadUpdate, fromTask: boolean
         }
         threadSyncToTask.get(threadUpdate.id)?.waitStore(threadUpdate, 1);
     } else if (threadUpdate.type !== "task") {
-        for (let taskId = 1; taskId <= tasks.size; taskId++) {
+        for (const taskId of tasks.keys()) {
             if (!fromTask || taskId !== threadUpdate.id) {
                 const data = { ...threadUpdate, id: taskId };
                 if (!threadSyncToTask.has(data.id)) {
