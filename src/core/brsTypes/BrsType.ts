@@ -508,7 +508,6 @@ function parseArray(value: string): RoArray {
             })
         );
     } catch {
-        // If JSON parsing fails, return invalid
         return new RoArray([]);
     }
 }
