@@ -207,9 +207,14 @@ export function getBrsValueFromFieldType(type: string, value?: string): BrsType 
         case "vector2d":
         case "rect2d":
         case "boolarray":
+        case "colorarray":
         case "floatarray":
         case "intarray":
+        case "stringarray":
         case "timearray":
+        case "vector2darray":
+        case "rect2darray":
+        case "nodearray":
             returnValue = parseArray(value ?? "");
             break;
         case "roassociativearray":
@@ -487,15 +492,15 @@ export class Uninitialized implements BrsValue, Comparable {
     }
 }
 
-function parseArray(value: string): RoArray | BrsInvalid {
+function parseArray(value: string): RoArray {
     if (!value?.trim().startsWith("[") || !value?.trim().endsWith("]")) {
-        return BrsInvalid.Instance;
+        return new RoArray([]);
     }
     try {
         // Use JSON.parse to handle nested arrays
         const parsed = JSON.parse(value);
         if (!Array.isArray(parsed)) {
-            return BrsInvalid.Instance;
+            return new RoArray([]);
         }
         return new RoArray(
             parsed.map((v) => {
@@ -504,6 +509,6 @@ function parseArray(value: string): RoArray | BrsInvalid {
         );
     } catch {
         // If JSON parsing fails, return invalid
-        return BrsInvalid.Instance;
+        return new RoArray([]);
     }
 }
