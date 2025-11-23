@@ -402,11 +402,11 @@ export class Field {
         } else if (this.type === FieldKind.String) {
             newValue = new BrsString(value.toString());
         } else if (this.type === FieldKind.IntArray || this.type === FieldKind.ColorArray) {
-            newValue = new RoArray([(new Int32(value.getValue()).box())]);
+            newValue = new RoArray([new Int32(value.getValue()).box()]);
         } else if (this.type === FieldKind.FloatArray) {
-            newValue = new RoArray([(new Float(value.getValue()).box())]);
+            newValue = new RoArray([new Float(value.getValue()).box()]);
         } else if (this.type === FieldKind.TimeArray) {
-            newValue = new RoArray([(new Double(value.getValue()).box())]);
+            newValue = new RoArray([new Double(value.getValue()).box()]);
         }
         return newValue;
     }
