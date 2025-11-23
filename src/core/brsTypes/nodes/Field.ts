@@ -54,17 +54,23 @@ export enum FieldKind {
     Array = "array",
     AssocArray = "assocarray",
     Int32 = "integer",
+    IntArray = "intarray",
     Int64 = "longinteger",
     Double = "double",
     Float = "float",
+    FloatArray = "floatarray",
     Font = "font",
     Node = "node",
     Boolean = "boolean",
+    BoolArray = "boolarray",
     String = "string",
+    StringArray = "stringarray",
     Function = "function",
     Object = "object",
     Color = "color",
+    ColorArray = "colorarray",
     Time = "time",
+    TimeArray = "timearray",
     Rect2D = "rect2d",
 }
 
@@ -75,11 +81,23 @@ export namespace FieldKind {
                 return FieldKind.Interface;
             case "array":
             case "roarray":
-            case "floatarray":
-            case "intarray":
-            case "timearray":
+            case "nodearray":
             case "vector2d":
+            case "vector2darray":
+            case "rect2darray":
                 return FieldKind.Array;
+            case "boolarray":
+                return FieldKind.BoolArray;
+            case "colorarray":
+                return FieldKind.ColorArray;
+            case "intarray":
+                return FieldKind.IntArray;
+            case "floatarray":
+                return FieldKind.FloatArray;
+            case "stringarray":
+                return FieldKind.StringArray;
+            case "timearray":
+                return FieldKind.TimeArray;
             case "rect2d":
                 return FieldKind.Rect2D;
             case "roassociativearray":
@@ -273,6 +291,14 @@ export class Field {
                 typeof valueObj.width === "number" &&
                 typeof valueObj.height === "number"
             );
+        } else if (
+            (this.type === FieldKind.FloatArray && isAnyNumber(value)) ||
+            (this.type === FieldKind.IntArray && isAnyNumber(value)) ||
+            (this.type === FieldKind.ColorArray && isAnyNumber(value)) ||
+            (this.type === FieldKind.TimeArray && isAnyNumber(value)) ||
+            (this.type === FieldKind.BoolArray && isBrsBoolean(value))
+        ) {
+            return true;
         }
         const result = this.type === FieldKind.fromBrsType(value);
         return result;
@@ -352,6 +378,8 @@ export class Field {
             value = new BrsString(value.toBoolean() ? "1" : "0");
         } else if (isBrsString(value) && this.type === FieldKind.Boolean) {
             value = BrsBoolean.from(value.getValue().toLowerCase() === "true");
+        } else if (isBrsBoolean(value) && this.type === FieldKind.BoolArray) {
+            value = new RoArray([value]);
         } else if (this.type === FieldKind.Rect2D) {
             value = this.convertRect2D(value);
         }
@@ -373,6 +401,12 @@ export class Field {
             newValue = new Double(value.getValue());
         } else if (this.type === FieldKind.String) {
             newValue = new BrsString(value.toString());
+        } else if (this.type === FieldKind.IntArray || this.type === FieldKind.ColorArray) {
+            newValue = new RoArray([new Int32(value.getValue()).box()]);
+        } else if (this.type === FieldKind.FloatArray) {
+            newValue = new RoArray([new Float(value.getValue()).box()]);
+        } else if (this.type === FieldKind.TimeArray) {
+            newValue = new RoArray([new Double(value.getValue()).box()]);
         }
         return newValue;
     }
