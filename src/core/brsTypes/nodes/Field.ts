@@ -292,12 +292,11 @@ export class Field {
                 typeof valueObj.height === "number"
             );
         } else if (
-            (this.type === FieldKind.FloatArray && isAnyNumber(value)) ||
-            (this.type === FieldKind.IntArray && isAnyNumber(value)) ||
-            (this.type === FieldKind.ColorArray && isAnyNumber(value)) ||
-            (this.type === FieldKind.TimeArray && isAnyNumber(value)) ||
-            (this.type === FieldKind.BoolArray && isBrsBoolean(value))
+            [FieldKind.FloatArray, FieldKind.IntArray, FieldKind.ColorArray, FieldKind.TimeArray].includes(this.type) &&
+            (isAnyNumber(value) || value instanceof RoArray)
         ) {
+            return true;
+        } else if (this.type === FieldKind.BoolArray && (isBrsBoolean(value) || value instanceof RoArray)) {
             return true;
         }
         const result = this.type === FieldKind.fromBrsType(value);
