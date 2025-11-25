@@ -164,7 +164,7 @@ export class Video extends Group {
         this.trickPlayBar.setValue("visible", BrsBoolean.False);
         this.spinner = new BusySpinner();
         this.spinner.setPosterUri(`common:/images/${this.resolution}/spinner.png`);
-        this.spinner.setValueSilent("spinInterval", new Float(1.0));
+        this.spinner.setValueSilent("spinInterval", new Float(1));
         this.spinner.setValueSilent("visible", BrsBoolean.False);
         this.spinner.setValue("control", new BrsString("start"));
         this.appendChildToParent(this.spinner);
