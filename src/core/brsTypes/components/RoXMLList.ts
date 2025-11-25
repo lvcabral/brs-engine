@@ -104,11 +104,6 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsList {
         return BrsInvalid.Instance;
     }
 
-    deepCopy(): BrsType {
-        // Roku implementation still does not support deep copying of roXMLList
-        return new RoInvalid();
-    }
-
     get(index: BrsType) {
         if (isBoxedNumber(index)) {
             index = index.unbox();

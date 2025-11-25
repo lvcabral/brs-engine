@@ -1,4 +1,4 @@
-import { BrsType, isBrsString, isBrsNumber, Int32, Float, isBoxedNumber, isBoxable, isIterable, isUnboxable } from "..";
+import { BrsType, isBrsString, isBrsNumber, Int32, Float, isBoxedNumber, isBoxable, isUnboxable } from "..";
 import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid, Comparable } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
 import { Callable, StdlibArgument } from "../Callable";
@@ -130,12 +130,8 @@ export class RoArray extends BrsComponent implements BrsValue, BrsArray {
     deepCopy(): BrsType {
         const copiedElements: BrsType[] = [];
         for (const value of this.elements) {
-            if (isIterable(value)) {
-                // Currently Roku only supports deep copying of roArray, roAssociativeArray and roSGNode
-                // Other iterables (like roList and roByteArray) will return invalid and be skipped
-                if (value instanceof RoArray || value instanceof RoAssociativeArray || value instanceof RoSGNode) {
-                    copiedElements.push(value.deepCopy());
-                }
+            if (value instanceof RoArray || value instanceof RoAssociativeArray || value instanceof RoSGNode) {
+                copiedElements.push(value.deepCopy());
             } else if (isBoxable(value) && !(value instanceof Callable)) {
                 copiedElements.push(value);
             } else if (isUnboxable(value) && !(value instanceof RoFunction)) {

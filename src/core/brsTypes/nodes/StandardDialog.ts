@@ -58,15 +58,12 @@ export class StandardDialog extends Group {
         this.setTranslation(this.dialogTrans);
     }
 
-    set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
-        if (!isBrsString(index)) {
-            throw new Error("RoSGNode indexes must be strings");
-        }
-        const fieldName = index.getValue().toLowerCase();
+    setValue(index: string, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
+        const fieldName = index.toLowerCase();
         if (fieldName === "close") {
-            index = new BrsString("wasClosed");
+            index = "wasClosed";
             value = BrsBoolean.True;
-            this.set(new BrsString("visible"), BrsBoolean.False);
+            this.setValue("visible", BrsBoolean.False);
             if (sgRoot.scene?.dialog === this) {
                 sgRoot.scene.dialog = undefined;
             }
@@ -76,9 +73,9 @@ export class StandardDialog extends Group {
                 value = new BrsString(this.maxWidth.toString());
             }
             this.width = jsValueOf(value) as number;
-            this.background.set(new BrsString("width"), value);
+            this.background.setValue("width", value);
         }
-        return super.set(index, value, alwaysNotify, kind);
+        super.setValue(index, value, alwaysNotify, kind);
     }
 
     renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
@@ -99,7 +96,7 @@ export class StandardDialog extends Group {
         const colors = this.getPaletteColors();
         const backColor = colors.get(new BrsString("DialogBackgroundColor"));
         if (isBrsString(backColor)) {
-            this.background.set(new BrsString("blendColor"), backColor);
+            this.background.setValue("blendColor", backColor);
         }
         opacity = opacity * this.getOpacity();
         this.updateBoundingRects(boundingRect, origin, angle);
@@ -108,12 +105,12 @@ export class StandardDialog extends Group {
     }
 
     getPaletteColors() {
-        let palette = this.getFieldValue("palette");
+        let palette = this.getValue("palette");
         if (!(palette instanceof RSGPalette) && sgRoot.scene) {
-            palette = sgRoot.scene.getFieldValue("palette");
+            palette = sgRoot.scene.getValue("palette");
         }
         if (palette instanceof RSGPalette) {
-            const colors = palette.getFieldValue("colors");
+            const colors = palette.getValue("colors");
             if (colors instanceof RoAssociativeArray) {
                 return colors;
             }

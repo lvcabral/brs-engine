@@ -19,19 +19,19 @@ export class RadioButtonList extends LabelList {
         this.registerInitializedFields(initializedFields);
 
         const checkmarkUri = `common:/images/${this.resolution}/icon_checkmark.png`;
-        this.setFieldValue("checkedIconUri", new BrsString(checkmarkUri));
-        this.setFieldValue("focusedCheckedIconUri", new BrsString(checkmarkUri));
+        this.setValueSilent("checkedIconUri", new BrsString(checkmarkUri));
+        this.setValueSilent("focusedCheckedIconUri", new BrsString(checkmarkUri));
     }
 
     protected handleOK(press: boolean) {
         if (!press) {
             return false;
         }
-        const checkOnSelect = jsValueOf(this.getFieldValue("checkOnSelect"));
+        const checkOnSelect = jsValueOf(this.getValue("checkOnSelect"));
         if (checkOnSelect) {
-            this.set(new BrsString("checkedItem"), new Int32(this.focusIndex));
+            this.setValue("checkedItem", new Int32(this.focusIndex));
         }
-        this.set(new BrsString("itemSelected"), new Int32(this.focusIndex));
+        this.setValue("itemSelected", new Int32(this.focusIndex));
         return true;
     }
 
@@ -44,8 +44,8 @@ export class RadioButtonList extends LabelList {
         itemFocus: boolean,
         draw2D?: IfDraw2D
     ) {
-        const text = jsValueOf(item.getFieldValue("title"));
-        const checked = jsValueOf(this.getFieldValue("checkedItem"));
+        const text = jsValueOf(item.getValue("title"));
+        const checked = jsValueOf(this.getValue("checkedItem"));
         const icons = ["checkedIconUri", "focusedCheckedIconUri"];
         const iconSize = this.getIconSize(icons);
         const iconGap = iconSize[0] > 0 ? iconSize[0] + this.gap : 0;

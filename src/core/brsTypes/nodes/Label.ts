@@ -32,17 +32,14 @@ export class Label extends Group {
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
         if (sgRoot.scene?.ui.resolution === "FHD") {
-            this.setFieldValue("lineSpacing", new Float(12));
+            this.setValueSilent("lineSpacing", new Float(12));
         } else {
-            this.setFieldValue("lineSpacing", new Float(8));
+            this.setValueSilent("lineSpacing", new Float(8));
         }
     }
 
-    set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
-        if (!isBrsString(index)) {
-            throw new Error("RoSGNode indexes must be strings");
-        }
-        const fieldName = index.getValue().toLowerCase();
+    setValue(index: string, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
+        const fieldName = index.toLowerCase();
         const resetFields = ["text", "font", "width", "height", "numlines", "maxlines", "wrap", "linespacing"];
         if (resetFields.includes(fieldName)) {
             // Reset the flag if any relevant field changed and the label is not re-measured yet
@@ -50,12 +47,11 @@ export class Label extends Group {
             this.measured = undefined;
         }
         let setDirty = true;
-        if (!this.isDirty && fieldName === "text" && this.getFieldValueJS("text") === value.toString()) {
+        if (!this.isDirty && fieldName === "text" && this.getValueJS("text") === value.toString()) {
             setDirty = false;
         }
-        const retValue = super.set(index, value, alwaysNotify, kind);
+        super.setValue(index, value, alwaysNotify, kind);
         this.isDirty = setDirty;
-        return retValue;
     }
 
     getMeasured() {
@@ -88,17 +84,17 @@ export class Label extends Group {
     }
 
     protected renderLabel(rect: Rect, rotation: number, opacity: number, draw2D?: IfDraw2D) {
-        const font = this.getFieldValue("font") as Font;
-        const color = this.getFieldValueJS("color") as number;
-        const textField = this.getFieldValueJS("text") as string;
-        const horizAlign = this.getFieldValueJS("horizAlign") || "left";
-        const vertAlign = this.getFieldValueJS("vertAlign") || "top";
-        const ellipsis = this.getFieldValueJS("ellipsisText") || "...";
-        const wrap = this.getFieldValueJS("wrap") as boolean;
-        const numLines = this.getFieldValueJS("numLines") as number;
-        const maxLines = this.getFieldValueJS("maxLines") as number;
-        const displayPartialLines = this.getFieldValueJS("displayPartialLines") as boolean;
-        const lineSpacing = this.getFieldValueJS("lineSpacing") as number;
+        const font = this.getValue("font") as Font;
+        const color = this.getValueJS("color") as number;
+        const textField = this.getValueJS("text") as string;
+        const horizAlign = this.getValueJS("horizAlign") || "left";
+        const vertAlign = this.getValueJS("vertAlign") || "top";
+        const ellipsis = this.getValueJS("ellipsisText") || "...";
+        const wrap = this.getValueJS("wrap") as boolean;
+        const numLines = this.getValueJS("numLines") as number;
+        const maxLines = this.getValueJS("maxLines") as number;
+        const displayPartialLines = this.getValueJS("displayPartialLines") as boolean;
+        const lineSpacing = this.getValueJS("lineSpacing") as number;
 
         let measured;
         if (wrap) {

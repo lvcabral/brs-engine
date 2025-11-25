@@ -55,7 +55,7 @@ export class MiniKeyboard extends Group {
         this.textEditBox = new TextEditBox();
         this.showTextEdit = true;
         if (this.resolution === "FHD") {
-            this.textEditBox.setFieldValue("width", new Float(558));
+            this.textEditBox.setValueSilent("width", new Float(558));
             this.textEditX = 12;
             this.iconOffsetX = 75;
             this.iconOffsetY = 81;
@@ -69,7 +69,7 @@ export class MiniKeyboard extends Group {
             this.widthOver = 3;
             this.heightOver = 78;
         } else {
-            this.textEditBox.setFieldValue("width", new Float(372));
+            this.textEditBox.setValueSilent("width", new Float(372));
             this.textEditX = 8;
             this.iconOffsetX = 50;
             this.iconOffsetY = 54;
@@ -84,10 +84,10 @@ export class MiniKeyboard extends Group {
             this.heightOver = 52;
         }
         this.textEditBox.setTranslation([this.textEditX, 0]);
-        this.textEditBox.setFieldValue("maxTextLength", new Int32(25));
+        this.textEditBox.setValueSilent("maxTextLength", new Int32(25));
         this.bmpBack = this.loadBitmap(`common:/images/${this.resolution}/keyboard_mini.png`);
-        this.setFieldValue("width", new Float(this.bmpBack!.width + this.widthOver));
-        this.setFieldValue("height", new Float(this.bmpBack!.height + this.heightOver));
+        this.setValueSilent("width", new Float(this.bmpBack!.width + this.widthOver));
+        this.setValueSilent("height", new Float(this.bmpBack!.height + this.heightOver));
 
         this.bmpFocus = this.loadBitmap("common:/images/focus_keyboard.9.png");
         for (const icon of this.icons) {
@@ -97,9 +97,9 @@ export class MiniKeyboard extends Group {
                 this.bmpIcons.set(icon, bmp);
             }
         }
-        this.keyColor = this.getFieldValueJS("keyColor") as number;
-        this.focusedKeyColor = this.getFieldValueJS("focusedKeyColor") as number;
-        this.setFieldValue("textEditBox", this.textEditBox);
+        this.keyColor = this.getValueJS("keyColor") as number;
+        this.focusedKeyColor = this.getValueJS("focusedKeyColor") as number;
+        this.setValueSilent("textEditBox", this.textEditBox);
         this.linkField(this.textEditBox, "text");
         this.appendChildToParent(this.textEditBox);
     }
@@ -157,7 +157,7 @@ export class MiniKeyboard extends Group {
 
     private handleOK() {
         let handled = false;
-        let text = this.getFieldValueJS("text") as string;
+        let text = this.getValueJS("text") as string;
         if (this.keyFocus.row === 6) {
             if (this.keyFocus.col < 2) {
                 text = "";
@@ -166,11 +166,11 @@ export class MiniKeyboard extends Group {
             } else {
                 text = text.slice(0, -1);
             }
-            this.set(new BrsString("text"), new BrsString(text));
+            this.setValue("text", new BrsString(text));
             handled = true;
         } else if (this.keyFocus.key.length) {
             text += this.keyFocus.key;
-            this.set(new BrsString("text"), new BrsString(text));
+            this.setValue("text", new BrsString(text));
             handled = true;
         }
         if (handled && this.showTextEdit) {
@@ -195,19 +195,19 @@ export class MiniKeyboard extends Group {
         const rect = { x: drawTrans[0], y: drawTrans[1], width: size.width, height: size.height };
 
         if (this.isDirty) {
-            this.keyColor = this.getFieldValueJS("keyColor") as number;
-            this.focusedKeyColor = this.getFieldValueJS("focusedKeyColor") as number;
-            this.showTextEdit = this.getFieldValueJS("showTextEditBox") as boolean;
-            this.textEditBox.setFieldValue("visible", BrsBoolean.from(this.showTextEdit));
-            this.setFieldValue("height", new Float(rect.height));
-            this.lowerCase = this.getFieldValueJS("lowerCase") as boolean;
+            this.keyColor = this.getValueJS("keyColor") as number;
+            this.focusedKeyColor = this.getValueJS("focusedKeyColor") as number;
+            this.showTextEdit = this.getValueJS("showTextEditBox") as boolean;
+            this.textEditBox.setValueSilent("visible", BrsBoolean.from(this.showTextEdit));
+            this.setValueSilent("height", new Float(rect.height));
+            this.lowerCase = this.getValueJS("lowerCase") as boolean;
             // Background Image
-            const backgroundUri = this.getFieldValueJS("keyboardBitmapUri") as string;
+            const backgroundUri = this.getValueJS("keyboardBitmapUri") as string;
             if (backgroundUri && this.bmpBack?.getImageName() !== backgroundUri) {
                 this.bmpBack = this.getBitmap("keyboardBitmapUri");
             }
             // Focus Image
-            const focusUri = this.getFieldValueJS("focusBitmapUri") as string;
+            const focusUri = this.getValueJS("focusBitmapUri") as string;
             if (focusUri && this.bmpFocus?.getImageName() !== focusUri) {
                 this.bmpFocus = this.getBitmap("focusBitmapUri");
             }

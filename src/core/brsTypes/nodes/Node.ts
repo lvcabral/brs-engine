@@ -76,7 +76,7 @@ export class Node extends RoSGNode implements BrsValue {
         // After registering default fields, then register fields instantiated with initial values.
         this.registerInitializedFields(initializedFields);
 
-        this.setFieldValue("change", toAssociativeArray({ Index1: 0, Index2: 0, Operation: "none" }));
+        this.setValueSilent("change", toAssociativeArray({ Index1: 0, Index2: 0, Operation: "none" }));
     }
 
     toString(parent?: BrsType): string {
@@ -94,19 +94,6 @@ export class Node extends RoSGNode implements BrsValue {
                 .map(([key, value]) => `    ${key}: ${value.toString(this)}`),
             "}",
         ].join("\n");
-    }
-
-    hasNext(): BrsBoolean {
-        throw new Error("Method not implemented.");
-    }
-    getNext(): BrsType {
-        throw new Error("Method not implemented.");
-    }
-    resetNext(): void {
-        throw new Error("Method not implemented.");
-    }
-    updateNext(): void {
-        throw new Error("Method not implemented.");
     }
 
     getElements() {
@@ -195,12 +182,18 @@ export class Node extends RoSGNode implements BrsValue {
         return this.getMethod(index.getValue()) || BrsInvalid.Instance;
     }
 
-    set(index: BrsType, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind) {
-        if (!isBrsString(index)) {
-            throw new Error("Node indexes must be strings");
-        }
-        const fieldName = index.getValue();
-        const mapKey = fieldName.toLowerCase();
+    getValue(fieldName: string) {
+        const field = this.fields.get(fieldName.toLowerCase());
+        return field ? field.getValue() : BrsInvalid.Instance;
+    }
+
+    getValueJS(fieldName: string) {
+        const field = this.fields.get(fieldName.toLowerCase());
+        return field ? jsValueOf(field.getValue()) : undefined;
+    }
+
+    setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind) {
+        const mapKey = index.toLowerCase();
         const fieldType = kind ?? FieldKind.fromBrsType(value);
         const alias = this.aliases.get(mapKey);
         let field = this.fields.get(mapKey);
@@ -208,6 +201,7 @@ export class Node extends RoSGNode implements BrsValue {
             // If the field is not a string, but the value is a string, convert it.
             value = getBrsValueFromFieldType(field.getType(), value.getValue());
         }
+        let errorMsg = "";
         if (!field) {
             // RBI does not create a new field if the value isn't valid.
             if (fieldType && alwaysNotify !== undefined) {
@@ -216,19 +210,15 @@ export class Node extends RoSGNode implements BrsValue {
                 this.notified = true;
                 this.changed = true;
             } else {
-                let error = `warning,Warning occurred while setting a field of an RoSGNode\n`;
-                error += `-- Tried to set nonexistent field "${fieldName}" of a "${this.nodeSubtype}" node`;
-                BrsDevice.stderr.write(error);
+                errorMsg = `BRIGHTSCRIPT: ERROR: roSGNode.Set: Tried to set nonexistent field "${index}" of a "${this.nodeSubtype}" node:`;
             }
         } else if (alias) {
             const child = this.findNodeById(this, alias.nodeId);
             if (child instanceof Node) {
-                child.set(new BrsString(alias.fieldName), value, alwaysNotify);
+                child.setValue(alias.fieldName, value, alwaysNotify);
                 this.changed = true;
             } else {
-                BrsDevice.stderr.write(
-                    `warning,BRIGHTSCRIPT: ERROR: roSGNode.Set: "${fieldName}": Alias "${alias.nodeId}.${alias.fieldName}" not found!`
-                );
+                errorMsg = `BRIGHTSCRIPT: ERROR: roSGNode.Set: "${index}": Alias "${alias.nodeId}.${alias.fieldName}" not found!`;
             }
         } else if (field.canAcceptValue(value)) {
             // Fields are not overwritten if they haven't the same type.
@@ -237,13 +227,33 @@ export class Node extends RoSGNode implements BrsValue {
             this.fields.set(mapKey, field);
             this.changed = true;
         } else if (!isInvalid(value)) {
-            BrsDevice.stderr.write(`warning,BRIGHTSCRIPT: ERROR: roSGNode.AddReplace: "${fieldName}": Type mismatch!`);
+            errorMsg = `BRIGHTSCRIPT: ERROR: roSGNode.AddReplace: "${index}": Type mismatch!`;
         }
-        return BrsInvalid.Instance;
+        if (errorMsg.length > 0) {
+            BrsDevice.stderr.write(`warning,${errorMsg} ${this.location}`);
+        }
+    }
+
+    // Used to setup values for the node fields without validation or notifying observers
+    setValueSilent(fieldName: string, value: BrsType) {
+        const mapKey = fieldName.toLowerCase();
+        let field = this.fields.get(mapKey);
+        if (field) {
+            field.setValue(value, false);
+        } else {
+            const fieldType = FieldKind.fromBrsType(value);
+            if (fieldType) {
+                field = new Field(value, fieldType, false);
+            }
+        }
+        if (field) {
+            this.fields.set(mapKey, field);
+            this.changed = true;
+        }
     }
 
     getId() {
-        return this.getFieldValueJS("id") ?? this.nodeSubtype;
+        return this.getValueJS("id") ?? this.nodeSubtype;
     }
 
     protected cloneNode(
@@ -367,7 +377,7 @@ export class Node extends RoSGNode implements BrsValue {
         let fieldKind = FieldKind.fromString(type);
 
         if (defaultValue !== Uninitialized.Instance && !this.fields.has(fieldName.toLowerCase())) {
-            this.set(new BrsString(fieldName), defaultValue, alwaysNotify, fieldKind);
+            this.setValue(fieldName, defaultValue, alwaysNotify, fieldKind);
             this.changed = true;
         }
     }
@@ -380,7 +390,7 @@ export class Node extends RoSGNode implements BrsValue {
     protected appendNodeFields(fieldsToAppend: BrsType) {
         if (fieldsToAppend instanceof RoAssociativeArray) {
             for (const [key, value] of fieldsToAppend.elements) {
-                this.setFieldValue(key, value);
+                this.setValueSilent(key, value);
             }
         } else if (fieldsToAppend instanceof Node) {
             for (const [key, value] of fieldsToAppend.getNodeFields()) {
@@ -392,29 +402,10 @@ export class Node extends RoSGNode implements BrsValue {
 
     protected setNodeFields(fieldsToSet: RoAssociativeArray, replace: boolean = false) {
         for (const [key, value] of fieldsToSet.elements) {
-            let fieldName = new BrsString(key);
             if (replace || !this.fields.has(key.toLowerCase())) {
-                this.set(fieldName, value, false);
+                this.setValue(key, value, false);
                 this.changed = true;
             }
-        }
-    }
-
-    // Used to setup values for the node fields without notifying observers
-    setFieldValue(fieldName: string, value: BrsType, alwaysNotify: boolean = false) {
-        const mapKey = fieldName.toLowerCase();
-        let field = this.fields.get(mapKey);
-        if (field) {
-            field.setValue(value, false);
-        } else {
-            const fieldType = FieldKind.fromBrsType(value);
-            if (fieldType) {
-                field = new Field(value, fieldType, alwaysNotify);
-            }
-        }
-        if (field) {
-            this.fields.set(mapKey, field);
-            this.changed = true;
         }
     }
 
@@ -455,16 +446,6 @@ export class Node extends RoSGNode implements BrsValue {
         return "";
     }
 
-    getFieldValue(fieldName: string) {
-        const field = this.fields.get(fieldName.toLowerCase());
-        return field ? field.getValue() : BrsInvalid.Instance;
-    }
-
-    getFieldValueJS(fieldName: string) {
-        const field = this.fields.get(fieldName.toLowerCase());
-        return field ? jsValueOf(field.getValue()) : undefined;
-    }
-
     getNodeParent() {
         return this.parent;
     }
@@ -494,7 +475,7 @@ export class Node extends RoSGNode implements BrsValue {
     }
 
     isFocusable() {
-        return (this.getFieldValueJS("focusable") as boolean) ?? false;
+        return (this.getValueJS("focusable") as boolean) ?? false;
     }
 
     renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
@@ -568,7 +549,7 @@ export class Node extends RoSGNode implements BrsValue {
 
     /** Sets or removes the focus to/from the Node */
     protected setNodeFocus(interpreter: Interpreter, focusOn: boolean): boolean {
-        const focusedChildString = new BrsString("focusedchild");
+        const focusedChild = "focusedchild";
         if (focusOn) {
             if (!this.triedInitFocus) {
                 // Only try initial focus once
@@ -606,18 +587,18 @@ export class Node extends RoSGNode implements BrsValue {
 
                 // Unset all of the not-common ancestors of the current focused node.
                 for (let i = lcaIndex; i < currFocusChain.length; i++) {
-                    currFocusChain[i].set(focusedChildString, BrsInvalid.Instance, false);
+                    currFocusChain[i].setValue(focusedChild, BrsInvalid.Instance, false);
                 }
             }
 
             // Set the focusedChild for each ancestor to the next node in the chain,
             // which is the current node's child.
             for (let i = 0; i < newFocusChain.length - 1; i++) {
-                newFocusChain[i].set(focusedChildString, newFocusChain[i + 1], false);
+                newFocusChain[i].setValue(focusedChild, newFocusChain[i + 1], false);
             }
 
             // Finally, set the focusedChild of the newly focused node to itself (to mimic RBI behavior).
-            this.set(focusedChildString, this, false);
+            this.setValue(focusedChild, this, false);
         } else if (sgRoot.focused === this) {
             // If we're unsetting focus on ourself, we need to unset it on all ancestors as well.
             const currFocusedNode = sgRoot.focused;
@@ -625,12 +606,12 @@ export class Node extends RoSGNode implements BrsValue {
             // Get the focus chain, with root-most ancestor first.
             let currFocusChain = this.createPath(currFocusedNode as Node);
             for (const node of currFocusChain) {
-                node.set(focusedChildString, BrsInvalid.Instance, false);
+                node.setValue(focusedChild, BrsInvalid.Instance, false);
             }
         } else {
             // If the node doesn't have focus already, and it's not gaining focus,
             // we don't need to notify any ancestors.
-            this.set(focusedChildString, BrsInvalid.Instance, false);
+            this.setValue(focusedChild, BrsInvalid.Instance, false);
         }
         return this.isFocusable();
     }
@@ -638,7 +619,7 @@ export class Node extends RoSGNode implements BrsValue {
     /* searches the node tree for a node with the given id */
     findNodeById(node: Node, id: string): Node | BrsInvalid {
         // test current node in tree
-        let currentId = node.getFieldValue("id");
+        let currentId = node.getValue("id");
         if (currentId.toString().toLowerCase() === id.toLowerCase()) {
             return node;
         }
@@ -659,7 +640,7 @@ export class Node extends RoSGNode implements BrsValue {
 
     /** Returns a bitmap based on one of the fields of the node */
     getBitmap(fieldName: string) {
-        const uri = this.getFieldValueJS(fieldName) as string;
+        const uri = this.getValueJS(fieldName) as string;
         return this.loadBitmap(uri);
     }
 
@@ -690,8 +671,8 @@ export class Node extends RoSGNode implements BrsValue {
 
     /** Copies a field value from this Node to a Child node field */
     protected copyField(node: Node, fieldName: string, thisField?: string) {
-        const value = this.getFieldValue(thisField ?? fieldName);
-        node.set(new BrsString(fieldName), value);
+        const value = this.getValue(thisField ?? fieldName);
+        node.setValue(fieldName, value);
         return value;
     }
 
@@ -741,10 +722,11 @@ export class Node extends RoSGNode implements BrsValue {
             } else if (element instanceof RoSGNode) {
                 node.appendChildToParent(element);
             } else {
+                const location = interpreter.formatLocation();
                 BrsDevice.stderr.write(
                     `warning,Warning calling update() on ${
                         this.nodeSubtype
-                    } object expected to be convertible to Node is ${ValueKind.toString(element.kind)}`
+                    } object expected to be convertible to Node is ${ValueKind.toString(element.kind)}: ${location}`
                 );
             }
         }
@@ -770,7 +752,7 @@ export class Node extends RoSGNode implements BrsValue {
             }
             // Set all other fields, respecting the createFields parameter
             else if (node.fields.has(fieldName) || (createFields && !isInvalid(value))) {
-                node.set(new BrsString(key), value, false);
+                node.setValue(key, value, false);
                 this.changed = true;
             }
         }

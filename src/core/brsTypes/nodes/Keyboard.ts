@@ -81,7 +81,7 @@ export class Keyboard extends Group {
         this.textEditBox = new TextEditBox();
         this.showTextEdit = true;
         if (this.resolution === "FHD") {
-            this.textEditBox.setFieldValue("width", new Float(1371));
+            this.textEditBox.setValueSilent("width", new Float(1371));
             this.textEditX = 12;
             this.iconRightX = 1203;
             this.iconOffsetX = 45;
@@ -97,7 +97,7 @@ export class Keyboard extends Group {
             this.widthOver = 21;
             this.heightOver = 90;
         } else {
-            this.textEditBox.setFieldValue("width", new Float(914));
+            this.textEditBox.setValueSilent("width", new Float(914));
             this.textEditX = 8;
             this.iconRightX = 802;
             this.iconOffsetX = 30;
@@ -114,10 +114,10 @@ export class Keyboard extends Group {
             this.heightOver = 60;
         }
         this.textEditBox.setTranslation([this.textEditX, 0]);
-        this.textEditBox.setFieldValue("maxTextLength", new Int32(75));
+        this.textEditBox.setValueSilent("maxTextLength", new Int32(75));
         this.bmpBack = this.loadBitmap(`common:/images/${this.resolution}/keyboard_full.png`);
-        this.setFieldValue("width", new Float(this.bmpBack!.width + this.widthOver));
-        this.setFieldValue("height", new Float(this.bmpBack!.height + this.heightOver));
+        this.setValueSilent("width", new Float(this.bmpBack!.width + this.widthOver));
+        this.setValueSilent("height", new Float(this.bmpBack!.height + this.heightOver));
 
         this.bmpFocus = this.loadBitmap("common:/images/focus_keyboard.9.png");
         for (const icon of this.icons) {
@@ -127,9 +127,9 @@ export class Keyboard extends Group {
                 this.bmpIcons.set(icon, bmp);
             }
         }
-        this.keyColor = this.getFieldValueJS("keyColor") as number;
-        this.focusedKeyColor = this.getFieldValueJS("focusedKeyColor") as number;
-        this.setFieldValue("textEditBox", this.textEditBox);
+        this.keyColor = this.getValueJS("keyColor") as number;
+        this.focusedKeyColor = this.getValueJS("focusedKeyColor") as number;
+        this.setValueSilent("textEditBox", this.textEditBox);
         this.linkField(this.textEditBox, "text");
         this.appendChildToParent(this.textEditBox);
     }
@@ -242,18 +242,18 @@ export class Keyboard extends Group {
         const rect = { x: drawTrans[0], y: drawTrans[1], width: size.width, height: size.height };
 
         if (this.isDirty) {
-            this.keyColor = this.getFieldValueJS("keyColor") as number;
-            this.focusedKeyColor = this.getFieldValueJS("focusedKeyColor") as number;
-            this.showTextEdit = this.getFieldValueJS("showTextEditBox") as boolean;
-            this.textEditBox.setFieldValue("visible", BrsBoolean.from(this.showTextEdit));
-            this.setFieldValue("height", new Float(rect.height));
+            this.keyColor = this.getValueJS("keyColor") as number;
+            this.focusedKeyColor = this.getValueJS("focusedKeyColor") as number;
+            this.showTextEdit = this.getValueJS("showTextEditBox") as boolean;
+            this.textEditBox.setValueSilent("visible", BrsBoolean.from(this.showTextEdit));
+            this.setValueSilent("height", new Float(rect.height));
             // Background Image
-            const backgroundUri = this.getFieldValueJS("keyboardBitmapUri") as string;
+            const backgroundUri = this.getValueJS("keyboardBitmapUri") as string;
             if (backgroundUri && this.bmpBack?.getImageName() !== backgroundUri) {
                 this.bmpBack = this.getBitmap("keyboardBitmapUri");
             }
             // Focus Image
-            const focusUri = this.getFieldValueJS("focusBitmapUri") as string;
+            const focusUri = this.getValueJS("focusBitmapUri") as string;
             if (focusUri && this.bmpFocus?.getImageName() !== focusUri) {
                 this.bmpFocus = this.getBitmap("focusBitmapUri");
             }

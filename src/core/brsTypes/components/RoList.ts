@@ -87,11 +87,6 @@ export class RoList extends BrsComponent implements BrsValue, BrsList {
         return this.elements.slice();
     }
 
-    deepCopy(): BrsType {
-        // Roku implementation still does not support deep copying of roList
-        return new RoInvalid();
-    }
-
     get(index: BrsType) {
         if (isBoxedNumber(index)) {
             index = index.unbox();

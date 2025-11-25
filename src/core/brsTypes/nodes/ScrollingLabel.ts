@@ -44,29 +44,28 @@ export class ScrollingLabel extends Label {
         this.checkForScrolling();
     }
 
-    set(index: BrsType, value: BrsType, alwaysNotify: boolean = false) {
-        const wasVisible = this.getFieldValueJS("visible") as boolean;
-        const retValue = super.set(index, value, alwaysNotify); // Call base class set
+    setValue(index: string, value: BrsType, alwaysNotify: boolean = false) {
+        const wasVisible = this.getValueJS("visible") as boolean;
+        super.setValue(index, value, alwaysNotify); // Call base class set
 
-        if (this.isDirty && isBrsString(index)) {
-            const fieldName = index.getValue().toLowerCase();
+        if (this.isDirty) {
+            const fieldName = index.toLowerCase();
             // Fields that affect scrolling behavior
             const scrollFields = ["text", "font", "maxwidth", "scrollspeed", "repeatcount", "ellipsistext"];
-            if (scrollFields.includes(fieldName) || wasVisible !== this.getFieldValueJS("visible")) {
+            if (scrollFields.includes(fieldName) || wasVisible !== this.getValueJS("visible")) {
                 this.resetScrollingState();
                 this.checkForScrolling();
             }
         }
-        return retValue;
     }
 
     // Helper to check if scrolling is necessary and calculate initial values
     private checkForScrolling() {
-        const text = this.getFieldValueJS("text") as string;
-        const font = this.getFieldValue("font") as Font;
+        const text = this.getValueJS("text") as string;
+        const font = this.getValue("font") as Font;
         const drawFont = font.createDrawFont();
-        const maxWidth = this.getFieldValueJS("maxWidth") as number;
-        const ellipsis = this.getFieldValueJS("ellipsisText") || "...";
+        const maxWidth = this.getValueJS("maxWidth") as number;
+        const ellipsis = this.getValueJS("ellipsisText") || "...";
 
         if (!text || !font || maxWidth <= 0) {
             // Cannot determine scrolling need without necessary info or drawing context
@@ -117,7 +116,7 @@ export class ScrollingLabel extends Label {
 
     // Override renderLabel to implement scrolling logic
     protected renderLabel(rect: Rect, rotation: number, opacity: number, draw2D?: IfDraw2D): MeasuredText {
-        const text = this.getFieldValueJS("text") as string;
+        const text = this.getValueJS("text") as string;
         if (this.isDirty || (this.fullTextWidth === 0 && text)) {
             this.checkForScrolling();
         }
@@ -126,16 +125,16 @@ export class ScrollingLabel extends Label {
         this.lastUpdateTime = now;
         this.elapsedTime += deltaTime;
 
-        const scrollSpeed = this.getFieldValueJS("scrollSpeed") as number;
-        const repeatCount = this.getFieldValueJS("repeatCount") as number;
-        const maxWidth = this.getFieldValueJS("maxWidth") as number;
-        const font = this.getFieldValue("font") as Font;
+        const scrollSpeed = this.getValueJS("scrollSpeed") as number;
+        const repeatCount = this.getValueJS("repeatCount") as number;
+        const maxWidth = this.getValueJS("maxWidth") as number;
+        const font = this.getValue("font") as Font;
         const drawFont = font.createDrawFont();
         const textHeight = drawFont.measureTextHeight();
         rect.width = maxWidth > 0 ? maxWidth : rect.width;
         rect.height = textHeight;
-        const color = this.getFieldValueJS("color") as number;
-        const vertAlign = this.getFieldValueJS("vertAlign") || "top";
+        const color = this.getValueJS("color") as number;
+        const vertAlign = this.getValueJS("vertAlign") || "top";
 
         let textToDraw = text;
         let drawOffset = 0;

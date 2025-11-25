@@ -52,10 +52,10 @@ export class Button extends Group {
             this.iconWidth = 36;
             this.iconHeight = 36;
             this.labelWidth = this.width - this.margin * 2 - this.iconWidth - this.gap;
-            this.setFieldValue("height", new Float(96));
-            this.setFieldValue("minWidth", new Float(375));
-            this.setFieldValue("iconUri", new BrsString(Button.iconUriFHD));
-            this.setFieldValue("focusedIconUri", new BrsString(Button.iconUriFHD));
+            this.setValueSilent("height", new Float(96));
+            this.setValueSilent("minWidth", new Float(375));
+            this.setValueSilent("iconUri", new BrsString(Button.iconUriFHD));
+            this.setValueSilent("focusedIconUri", new BrsString(Button.iconUriFHD));
             this.background = this.addPoster("", [0, 0], this.width, 96);
             this.icon = this.addPoster(Button.iconUriFHD, [this.margin, 30], this.iconWidth, this.iconHeight);
             const labelTrans = [this.margin + this.iconWidth + this.gap, 30];
@@ -75,10 +75,10 @@ export class Button extends Group {
             this.iconWidth = 24;
             this.iconHeight = 24;
             this.labelWidth = this.width - this.margin * 2 - this.iconWidth - this.gap;
-            this.setFieldValue("height", new Float(64));
-            this.setFieldValue("minWidth", new Float(250));
-            this.setFieldValue("iconUri", new BrsString(Button.iconUriHD));
-            this.setFieldValue("focusedIconUri", new BrsString(Button.iconUriHD));
+            this.setValueSilent("height", new Float(64));
+            this.setValueSilent("minWidth", new Float(250));
+            this.setValueSilent("iconUri", new BrsString(Button.iconUriHD));
+            this.setValueSilent("focusedIconUri", new BrsString(Button.iconUriHD));
             this.background = this.addPoster("", [0, 0], this.width, 64);
             this.icon = this.addPoster(Button.iconUriHD, [this.margin, 20], this.iconWidth, this.iconHeight);
             const labelTrans = [this.margin + this.iconWidth + this.gap, 20];
@@ -92,55 +92,55 @@ export class Button extends Group {
                 "right"
             );
         }
-        this.setFieldValue("focusBitmapUri", new BrsString(Button.focusUri));
-        this.setFieldValue("focusFootprintBitmapUri", new BrsString(Button.footprintUri));
+        this.setValueSilent("focusBitmapUri", new BrsString(Button.focusUri));
+        this.setValueSilent("focusFootprintBitmapUri", new BrsString(Button.footprintUri));
     }
 
     private updateChildren(nodeFocus: boolean) {
-        const minWidth = this.getFieldValueJS("minWidth") as number;
-        const maxWidth = this.getFieldValueJS("maxWidth") as number;
-        const iconUri = this.getFieldValueJS(nodeFocus ? "focusedIconUri" : "iconUri") as string;
+        const minWidth = this.getValueJS("minWidth") as number;
+        const maxWidth = this.getValueJS("maxWidth") as number;
+        const iconUri = this.getValueJS(nodeFocus ? "focusedIconUri" : "iconUri") as string;
         this.updateIconSize(iconUri);
         const iconSpace = Math.max(this.iconWidth, this.iconSize[0]);
         const iconGap = iconSpace > 0 ? iconSpace + this.gap : 0;
         const labelMin = minWidth - this.margin * 2 - iconGap;
         const labelMax = maxWidth - this.margin * 2 - iconGap;
 
-        const text = this.getFieldValueJS("text") as string;
-        const font = this.getFieldValue(nodeFocus ? "focusedTextFont" : "textFont") as Font;
+        const text = this.getValueJS("text") as string;
+        const font = this.getValue(nodeFocus ? "focusedTextFont" : "textFont") as Font;
         const drawFont = font.createDrawFont();
         const measured = drawFont.measureText(text, labelMax);
         const labelCalc = Math.max(measured.width, labelMin);
         this.width = Math.max(labelCalc + this.margin * 2 + iconGap, minWidth);
         this.labelWidth = this.width - this.margin * 2 - iconGap + 1;
 
-        const height = this.getFieldValueJS("height") as number;
+        const height = this.getValueJS("height") as number;
         const labelTrans = [this.margin + iconGap, height / 2 - measured.height / 2];
 
-        const showFootprint = this.getFieldValueJS("showFocusFootprint") as boolean;
+        const showFootprint = this.getValueJS("showFocusFootprint") as boolean;
         const footprint = showFootprint ? "focusFootprintBitmapUri" : "";
         if (nodeFocus || footprint) {
-            const backgroundUri = this.getFieldValue(nodeFocus ? "focusBitmapUri" : footprint);
-            this.background.set(new BrsString("uri"), backgroundUri);
+            const backgroundUri = this.getValue(nodeFocus ? "focusBitmapUri" : footprint);
+            this.background.setValue("uri", backgroundUri);
         } else {
-            this.background.set(new BrsString("uri"), new BrsString(""));
+            this.background.setValue("uri", new BrsString(""));
         }
-        this.background.set(new BrsString("width"), new Float(this.width));
-        this.background.set(new BrsString("height"), new Float(height));
+        this.background.setValue("width", new Float(this.width));
+        this.background.setValue("height", new Float(height));
 
-        const color = this.getFieldValue(nodeFocus ? "focusedTextColor" : "textColor");
+        const color = this.getValue(nodeFocus ? "focusedTextColor" : "textColor");
         this.textLabel.setTranslation(labelTrans);
-        this.textLabel.set(new BrsString("width"), new Float(this.labelWidth));
-        this.textLabel.set(new BrsString("color"), color);
-        this.textLabel.set(new BrsString("font"), font);
-        this.textLabel.set(new BrsString("text"), new BrsString(text));
+        this.textLabel.setValue("width", new Float(this.labelWidth));
+        this.textLabel.setValue("color", color);
+        this.textLabel.setValue("font", font);
+        this.textLabel.setValue("text", new BrsString(text));
 
         const iconTrans = [this.margin, height / 2 - this.iconHeight / 2];
         this.icon.setTranslation(iconTrans);
-        this.icon.set(new BrsString("width"), new Float(this.iconWidth));
-        this.icon.set(new BrsString("height"), new Float(this.iconHeight));
-        this.icon.set(new BrsString("uri"), new BrsString(iconUri));
-        this.icon.set(new BrsString("blendColor"), color);
+        this.icon.setValue("width", new Float(this.iconWidth));
+        this.icon.setValue("height", new Float(this.iconHeight));
+        this.icon.setValue("uri", new BrsString(iconUri));
+        this.icon.setValue("blendColor", color);
     }
 
     private updateIconSize(uri: string) {

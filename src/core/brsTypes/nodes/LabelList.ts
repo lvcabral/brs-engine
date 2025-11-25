@@ -28,40 +28,36 @@ export class LabelList extends ArrayGrid {
         this.registerInitializedFields(initializedFields);
 
         if (this.resolution === "FHD") {
-            this.setFieldValue("itemSize", brsValueOf([510, 72]));
+            this.setValueSilent("itemSize", brsValueOf([510, 72]));
         } else {
-            this.setFieldValue("itemSize", brsValueOf([340, 48]));
+            this.setValueSilent("itemSize", brsValueOf([340, 48]));
         }
-        this.setFieldValue("focusBitmapUri", new BrsString(this.focusUri));
-        this.setFieldValue("focusFootprintBitmapUri", new BrsString(this.footprintUri));
-        const style = this.getFieldValueJS("vertFocusAnimationStyle") as string;
+        this.setValueSilent("focusBitmapUri", new BrsString(this.focusUri));
+        this.setValueSilent("focusFootprintBitmapUri", new BrsString(this.footprintUri));
+        const style = this.getValueJS("vertFocusAnimationStyle") as string;
         this.wrap = style.toLowerCase() === "fixedfocuswrap";
-        this.numRows = this.getFieldValueJS("numRows") as number;
-        this.numCols = this.getFieldValueJS("numColumns") as number;
+        this.numRows = this.getValueJS("numRows") as number;
+        this.numCols = this.getValueJS("numColumns") as number;
         this.hasNinePatch = true;
     }
 
-    set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
-        if (!isBrsString(index)) {
-            throw new Error("RoSGNode indexes must be strings");
-        }
-        const fieldName = index.getValue().toLowerCase();
+    setValue(index: string, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
+        const fieldName = index.toLowerCase();
         if (fieldName === "vertfocusanimationstyle") {
             if (!["fixedfocuswrap", "floatingfocus"].includes(value.toString().toLowerCase())) {
                 // Invalid vertFocusAnimationStyle
-                return BrsInvalid.Instance;
+                return;
             }
         } else if (["horizfocusanimationstyle", "numcolumns"].includes(fieldName)) {
             // Invalid fields for LabelList
-            return BrsInvalid.Instance;
+            return;
         }
-        const result = super.set(index, value, alwaysNotify, kind);
+        super.setValue(index, value, alwaysNotify, kind);
         if (fieldName === "content" || fieldName === "vertfocusanimationstyle") {
             this.topRow = 0;
         } else if (fieldName === "numrows") {
             this.clampTopRow();
         }
-        return result;
     }
 
     protected handleUpDown(key: string) {
@@ -69,7 +65,7 @@ export class LabelList extends ArrayGrid {
         const offset = key === "up" ? -1 : 1;
         const nextIndex = this.getIndex(offset);
         if (nextIndex !== this.focusIndex) {
-            this.set(new BrsString("animateToItem"), new Int32(nextIndex));
+            this.setValue("animateToItem", new Int32(nextIndex));
             handled = true;
             this.currRow += this.wrap ? 0 : offset;
         }
@@ -88,7 +84,7 @@ export class LabelList extends ArrayGrid {
             this.currRow = key === "rewind" ? 0 : this.numRows - 1;
         }
         if (nextIndex !== this.focusIndex) {
-            this.set(new BrsString("animateToItem"), new Int32(nextIndex));
+            this.setValue("animateToItem", new Int32(nextIndex));
             handled = true;
         }
         return handled;
@@ -109,7 +105,7 @@ export class LabelList extends ArrayGrid {
         this.currRow = this.updateListCurrRow();
         let lastIndex = -1;
         const displayRows = Math.min(this.content.length, this.numRows);
-        const itemSize = this.getFieldValueJS("itemSize") as number[];
+        const itemSize = this.getValueJS("itemSize") as number[];
         const itemRect = { ...rect, width: itemSize[0], height: itemSize[1] };
         let sectionIndex = displayRows + 1;
         for (let r = 0; r < displayRows; r++) {
@@ -144,7 +140,7 @@ export class LabelList extends ArrayGrid {
     ) {
         const icons = ["HDListItemIconUrl", "HDListItemIconSelectedUrl"];
         const iconSize = item.getIconSize(icons);
-        const text = item.getFieldValueJS("title");
+        const text = item.getValueJS("title");
         const iconGap = iconSize[0] > 0 ? iconSize[0] + this.gap : 0;
         const iconIndex = itemFocus ? 1 : 0;
         const bmp = iconGap > 0 ? item.getBitmap(icons[iconIndex]) : undefined;
@@ -165,9 +161,9 @@ export class LabelList extends ArrayGrid {
         iconBmp?: RoBitmap,
         draw2D?: IfDraw2D
     ) {
-        const font = this.getFieldValue("font") as Font;
-        const color = this.getFieldValueJS("color") as number;
-        const align = this.getFieldValueJS("textHorizAlign") as string;
+        const font = this.getValue("font") as Font;
+        const color = this.getValueJS("color") as number;
+        const align = this.getValueJS("textHorizAlign") as string;
         const textRect = { ...rect, x: rect.x + iconGap, width: rect.width - (iconGap ? this.gap : 0) };
         if (iconBmp) {
             this.renderIcon(iconBmp, rect, opacity, draw2D, iconColor ? color : undefined);
@@ -186,12 +182,12 @@ export class LabelList extends ArrayGrid {
         iconBmp?: RoBitmap,
         draw2D?: IfDraw2D
     ) {
-        const font = this.getFieldValue(nodeFocus ? "focusedFont" : "font") as Font;
-        const color = this.getFieldValueJS(nodeFocus ? "focusedColor" : "color") as number;
-        const align = this.getFieldValueJS("textHorizAlign") as string;
+        const font = this.getValue(nodeFocus ? "focusedFont" : "font") as Font;
+        const color = this.getValueJS(nodeFocus ? "focusedColor" : "color") as number;
+        const align = this.getValueJS("textHorizAlign") as string;
         const textRect = { ...rect, x: rect.x + iconGap, width: rect.width - (iconGap ? this.gap : 0) };
-        const drawFocus = this.getFieldValueJS("drawFocusFeedback") as boolean;
-        const drawFocusOnTop = this.getFieldValueJS("drawFocusFeedbackOnTop") as boolean;
+        const drawFocus = this.getValueJS("drawFocusFeedback") as boolean;
+        const drawFocusOnTop = this.getValueJS("drawFocusFeedbackOnTop") as boolean;
         if (drawFocus && !drawFocusOnTop) {
             this.renderFocus(rect, opacity, nodeFocus, draw2D);
         }

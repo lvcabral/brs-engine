@@ -64,12 +64,8 @@ export class Group extends Node {
         this.isDirty = true;
     }
 
-    set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
-        if (!isBrsString(index)) {
-            throw new Error("RoSGNode indexes must be strings");
-        }
-
-        const mapKey = index.getValue().toLowerCase();
+    setValue(index: string, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
+        const mapKey = index.toLowerCase();
         const field = this.fields.get(mapKey);
 
         if (field?.getType() === FieldKind.Font && isBrsString(value)) {
@@ -85,40 +81,40 @@ export class Group extends Node {
             if (strColor.length) {
                 value = new Int32(convertHexColor(strColor));
             } else {
-                return BrsInvalid.Instance;
+                return;
             }
         }
         this.isDirty = true;
-        return super.set(index, value, alwaysNotify, kind);
+        super.setValue(index, value, alwaysNotify, kind);
     }
 
-    setFieldValue(fieldName: string, value: BrsType, alwaysNotify?: boolean): void {
+    setValueSilent(fieldName: string, value: BrsType): void {
         this.isDirty = true;
-        super.setFieldValue(fieldName, value, alwaysNotify);
+        super.setValueSilent(fieldName, value);
     }
 
     getDimensions() {
         return {
-            width: (this.getFieldValueJS("width") as number) ?? 0,
-            height: (this.getFieldValueJS("height") as number) ?? 0,
+            width: (this.getValueJS("width") as number) ?? 0,
+            height: (this.getValueJS("height") as number) ?? 0,
         };
     }
 
     isVisible() {
-        return (this.getFieldValueJS("visible") as boolean) ?? true;
+        return (this.getValueJS("visible") as boolean) ?? true;
     }
 
     protected addPoster(uri: string, translation: number[], width?: number, height?: number) {
         const poster = new Poster();
         if (uri) {
-            poster.set(new BrsString("uri"), new BrsString(uri));
+            poster.setValue("uri", new BrsString(uri));
         }
         poster.setTranslation(translation);
         if (width !== undefined) {
-            poster.set(new BrsString("width"), new Float(width));
+            poster.setValueSilent("width", new Float(width));
         }
         if (height !== undefined) {
-            poster.set(new BrsString("height"), new Float(height));
+            poster.setValueSilent("height", new Float(height));
         }
         this.appendChildToParent(poster);
         return poster;
@@ -146,20 +142,20 @@ export class Group extends Node {
             }
         }
         if (width !== undefined) {
-            label.set(new BrsString("width"), new Float(width));
+            label.setValueSilent("width", new Float(width));
         }
         if (height !== undefined) {
-            label.set(new BrsString("height"), new Float(height));
+            label.setValueSilent("height", new Float(height));
         }
         label.setTranslation(translation);
         if (vertAlign) {
-            label.set(new BrsString("vertalign"), new BrsString(vertAlign));
+            label.setValueSilent("vertalign", new BrsString(vertAlign));
         }
         if (horizAlign) {
-            label.set(new BrsString("horizalign"), new BrsString(horizAlign));
+            label.setValueSilent("horizalign", new BrsString(horizAlign));
         }
         if (wrap !== undefined) {
-            label.set(new BrsString("wrap"), BrsBoolean.from(wrap));
+            label.setValueSilent("wrap", BrsBoolean.from(wrap));
         }
         this.appendChildToParent(label);
         return label;
@@ -181,29 +177,29 @@ export class Group extends Node {
             this.copyField(label, "color", colorField);
         }
         if (systemFont) {
-            const font = label.getFieldValue("font") as Font;
+            const font = label.getValue("font") as Font;
             if (font instanceof Font) {
                 font.setSystemFont(systemFont);
             }
         }
         if (maxWidth !== undefined) {
-            label.set(new BrsString("maxWidth"), new Float(maxWidth));
+            label.setValueSilent("maxWidth", new Float(maxWidth));
         }
         if (height !== undefined) {
-            label.set(new BrsString("height"), new Float(height));
+            label.setValueSilent("height", new Float(height));
         }
         label.setTranslation(translation);
         if (vertAlign) {
-            label.set(new BrsString("vertalign"), new BrsString(vertAlign));
+            label.setValueSilent("vertalign", new BrsString(vertAlign));
         }
         if (horizAlign) {
-            label.set(new BrsString("horizalign"), new BrsString(horizAlign));
+            label.setValueSilent("horizalign", new BrsString(horizAlign));
         }
         if (speed !== undefined) {
-            label.set(new BrsString("scrollSpeed"), new Int32(speed));
+            label.setValueSilent("scrollSpeed", new Int32(speed));
         }
         if (repeat !== undefined) {
-            label.set(new BrsString("repeatCount"), new Int32(repeat));
+            label.setValueSilent("repeatCount", new Int32(repeat));
         }
         this.appendChildToParent(label);
         return label;
@@ -213,10 +209,10 @@ export class Group extends Node {
         const rectangle = new Rectangle();
         this.copyField(rectangle, "color", colorField);
         if (width !== undefined) {
-            rectangle.set(new BrsString("width"), new Float(width));
+            rectangle.setValueSilent("width", new Float(width));
         }
         if (height !== undefined) {
-            rectangle.set(new BrsString("height"), new Float(height));
+            rectangle.setValueSilent("height", new Float(height));
         }
         rectangle.setTranslation(translation);
         this.appendChildToParent(rectangle);
@@ -224,9 +220,9 @@ export class Group extends Node {
     }
 
     protected getTranslation() {
-        const translation = this.getFieldValueJS("translation") as number[];
+        const translation = this.getValueJS("translation") as number[];
         // Adjust translation based on scale and rotation center
-        const scale = this.getFieldValueJS("scale") as number[];
+        const scale = this.getValueJS("scale") as number[];
         const scaleRotateCenter = this.getScaleRotateCenter();
         const scaleDiffX = scaleRotateCenter[0] * (scale[0] - 1);
         const scaleDiffY = scaleRotateCenter[1] * (scale[1] - 1);
@@ -238,36 +234,36 @@ export class Group extends Node {
     setTranslation(translation: number[]) {
         if (translation.length === 2) {
             const newTrans = [new Float(translation[0]), new Float(translation[1])];
-            this.set(new BrsString("translation"), new RoArray(newTrans));
+            this.setValue("translation", new RoArray(newTrans));
         }
     }
 
     setTranslationOffset(x: number = 0, y: number = 0) {
-        const translation = this.getFieldValueJS("translation") as number[];
+        const translation = this.getValueJS("translation") as number[];
         translation[0] += x;
         translation[1] += y;
         this.setTranslation(translation);
     }
 
     setTranslationX(x: number) {
-        const translation = this.getFieldValueJS("translation") as number[];
+        const translation = this.getValueJS("translation") as number[];
         translation[0] = x;
         this.setTranslation(translation);
     }
 
     setTranslationY(y: number) {
-        const translation = this.getFieldValueJS("translation") as number[];
+        const translation = this.getValueJS("translation") as number[];
         translation[1] = y;
         this.setTranslation(translation);
     }
 
     protected getRotation() {
-        const rotation = this.getFieldValueJS("rotation") as number;
+        const rotation = this.getValueJS("rotation") as number;
         return rotation ?? 0;
     }
 
     protected getScaleRotateCenter() {
-        const scaleRotateCenter = this.getFieldValue("scaleRotateCenter");
+        const scaleRotateCenter = this.getValue("scaleRotateCenter");
         const center = [0, 0];
         if (scaleRotateCenter instanceof RoArray && scaleRotateCenter.elements.length === 2) {
             center[0] = jsValueOf(scaleRotateCenter.elements[0]) as number;
@@ -277,7 +273,7 @@ export class Group extends Node {
     }
 
     protected getOpacity() {
-        const opacity = this.getFieldValueJS("opacity") as number;
+        const opacity = this.getValueJS("opacity") as number;
         return opacity ?? 1;
     }
 
@@ -525,7 +521,7 @@ export class Group extends Node {
                 // TODO: Handle 9-patch rotation, scaling
                 return rect;
             }
-            const scale = this.getFieldValueJS("scale") as number[];
+            const scale = this.getValueJS("scale") as number[];
             let scaleX = rect.width !== 0 ? rect.width / bitmap.width : 1;
             let scaleY = rect.height !== 0 ? rect.height / bitmap.height : 1;
             scaleX *= scale[0];

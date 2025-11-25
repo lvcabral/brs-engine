@@ -539,7 +539,7 @@ function restoreNode(interpreter: Interpreter, source: any, node: Node, port?: R
             // Ignore transfer metadata fields
             continue;
         }
-        node.setFieldValue(key, brsValueOf(value));
+        node.setValueSilent(key, brsValueOf(value));
         if (port && observed?.includes(key)) {
             if (node instanceof Task) {
                 console.debug(`[Task] Adding observer port for top.${key}`);
@@ -591,7 +591,7 @@ function addFields(interpreter: Interpreter, node: Node, typeDef: ComponentDefin
                 node.addNodeField(fieldName, fieldValue.type, fieldValue.alwaysNotify === "true");
                 // set default value if it was specified in xml
                 if (fieldValue.value) {
-                    node.setFieldValue(fieldName, getBrsValueFromFieldType(fieldValue.type, fieldValue.value));
+                    node.setValueSilent(fieldName, getBrsValueFromFieldType(fieldValue.type, fieldValue.value));
                 }
             }
 
@@ -621,7 +621,7 @@ function addChildren(interpreter: Interpreter, node: Node, typeDef: ComponentDef
             for (let [key, value] of Object.entries(child.fields)) {
                 const field = nodeFields.get(key.toLowerCase());
                 if (field) {
-                    newChild.set(new BrsString(key), getBrsValueFromFieldType(field.getType(), value));
+                    newChild.setValue(key, getBrsValueFromFieldType(field.getType(), value));
                 }
             }
             if (child.fields?.role) {
@@ -631,7 +631,7 @@ function addChildren(interpreter: Interpreter, node: Node, typeDef: ComponentDef
                         // we need to add the child's own children
                         addChildren(interpreter, newChild, child);
                     }
-                    node.set(new BrsString(targetField), newChild, false);
+                    node.setValue(targetField, newChild, false);
                 } else {
                     throw new Error(`Role/Field ${targetField} does not exist in ${node.getId()} node`);
                 }

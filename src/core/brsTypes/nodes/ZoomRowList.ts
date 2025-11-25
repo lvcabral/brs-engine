@@ -100,8 +100,8 @@ export class ZoomRowList extends ArrayGrid {
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
 
-        this.setFieldValue("focusBitmapUri", new BrsString(this.focusUri));
-        this.setFieldValue("wrapDividerBitmapUri", new BrsString(this.dividerUri));
+        this.setValueSilent("focusBitmapUri", new BrsString(this.focusUri));
+        this.setValueSilent("wrapDividerBitmapUri", new BrsString(this.dividerUri));
 
         if (this.resolution === "FHD") {
             this.marginX = 18;
@@ -110,7 +110,7 @@ export class ZoomRowList extends ArrayGrid {
             this.defaultRowZoomHeight = 321;
             this.defaultRowSpacing = 80;
             this.defaultItemSpacing = 21;
-            this.setFieldValue("wrapDividerHeight", new Float(54));
+            this.setValueSilent("wrapDividerHeight", new Float(54));
         } else {
             this.marginX = 12;
             this.marginY = 12;
@@ -118,7 +118,7 @@ export class ZoomRowList extends ArrayGrid {
             this.defaultRowZoomHeight = 136;
             this.defaultRowSpacing = 53;
             this.defaultItemSpacing = 14;
-            this.setFieldValue("wrapDividerHeight", new Float(36));
+            this.setValueSilent("wrapDividerHeight", new Float(36));
         }
         this.gap = this.marginX / 2;
         this.defaultItemYOffset = 0;
@@ -132,19 +132,16 @@ export class ZoomRowList extends ArrayGrid {
         this.rowWidth = 0;
     }
 
-    set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
-        if (!isBrsString(index)) {
-            throw new Error("RoSGNode indexes must be strings");
-        }
-        const fieldName = index.getValue().toLowerCase();
+    setValue(index: string, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
+        const fieldName = index.toLowerCase();
         if (fieldName === "content") {
-            super.set(index, value, alwaysNotify, kind);
+            super.setValue(index, value, alwaysNotify, kind);
             this.rowItemComps.length = 0;
             this.rowItemComps.push([]);
             this.refreshContent();
-            const focusedIndex = this.getFieldValueJS("rowFocused") as number;
+            const focusedIndex = this.getValueJS("rowFocused") as number;
             this.setFocusedRow(focusedIndex);
-            return BrsInvalid.Instance;
+            return;
         } else if (["jumptorow", "animatetorow"].includes(fieldName) && isBrsNumber(value)) {
             const next = jsValueOf(value) as number;
             if (Number.isFinite(next) && next >= 0) {
@@ -160,7 +157,7 @@ export class ZoomRowList extends ArrayGrid {
         } else if (fieldName === "rowwidth" && isBrsNumber(value)) {
             this.rowWidth = jsValueOf(value) as number;
         }
-        return super.set(index, value, alwaysNotify, kind);
+        super.setValue(index, value, alwaysNotify, kind);
     }
 
     protected setFocusedRow(rowIndex: number) {
@@ -189,14 +186,14 @@ export class ZoomRowList extends ArrayGrid {
         }
         const previousRow = this.focusIndex;
         if (previousRow !== rowIndex) {
-            super.set(new BrsString("rowUnfocused"), new Int32(previousRow));
+            super.setValue("rowUnfocused", new Int32(previousRow));
         }
         this.focusIndex = rowIndex;
         this.rowFocus[rowIndex] = colIndex;
         this.currRow = rowIndex;
-        super.set(new BrsString("rowFocused"), new Int32(rowIndex));
-        super.set(new BrsString("rowItemFocused"), new RoArray([new Int32(rowIndex), new Int32(colIndex)]));
-        super.set(new BrsString("currFocusRow"), new Float(rowIndex));
+        super.setValue("rowFocused", new Int32(rowIndex));
+        super.setValue("rowItemFocused", new RoArray([new Int32(rowIndex), new Int32(colIndex)]));
+        super.setValue("currFocusRow", new Float(rowIndex));
     }
 
     protected handleUpDown(key: string) {
@@ -221,14 +218,14 @@ export class ZoomRowList extends ArrayGrid {
             next = (next + this.content.length) % this.content.length;
         }
         if (next >= 0 && next < this.content.length) {
-            super.set(new BrsString("scrollingStatus"), BrsBoolean.True);
+            super.setValue("scrollingStatus", BrsBoolean.True);
             this.focusIndex = next;
             this.rowFocus[next] ??= 0;
             this.setFocusedItem(next, this.rowFocus[next]);
-            super.set(new BrsString("currFocusRow"), new Float(next));
+            super.setValue("currFocusRow", new Float(next));
             handled = true;
         }
-        super.set(new BrsString("scrollingStatus"), BrsBoolean.False);
+        super.setValue("scrollingStatus", BrsBoolean.False);
         return handled;
     }
 
@@ -254,9 +251,9 @@ export class ZoomRowList extends ArrayGrid {
         }
         if (nextCol !== this.rowFocus[currentRow]) {
             this.rowFocus[currentRow] = nextCol;
-            super.set(new BrsString("rowItemFocused"), new RoArray([new Int32(currentRow), new Int32(nextCol)]));
-            super.set(new BrsString("scrollingStatus"), BrsBoolean.True);
-            super.set(new BrsString("scrollingStatus"), BrsBoolean.False);
+            super.setValue("rowItemFocused", new RoArray([new Int32(currentRow), new Int32(nextCol)]));
+            super.setValue("scrollingStatus", BrsBoolean.True);
+            super.setValue("scrollingStatus", BrsBoolean.False);
             return true;
         }
         return false;
@@ -266,8 +263,8 @@ export class ZoomRowList extends ArrayGrid {
         if (press && this.focusIndex >= 0 && this.focusIndex < this.rowFocus.length) {
             const currentRow = this.focusIndex;
             const currentCol = this.rowFocus[currentRow] ?? 0;
-            super.set(new BrsString("rowItemSelected"), brsValueOf([currentRow, currentCol]));
-            super.set(new BrsString("rowSelected"), new Int32(currentRow));
+            super.setValue("rowItemSelected", brsValueOf([currentRow, currentCol]));
+            super.setValue("rowSelected", new Int32(currentRow));
         }
         return false;
     }
@@ -365,10 +362,10 @@ export class ZoomRowList extends ArrayGrid {
 
         if (firstRenderedRow !== -1) {
             const rowsRendered = new RoArray([new Int32(firstRenderedRow), new Int32(lastRenderedRow)]);
-            this.setFieldValue("rowsRendered", rowsRendered);
+            this.setValueSilent("rowsRendered", rowsRendered);
         }
         if (rowItemsRendered.length) {
-            this.setFieldValue("rowItemsRendered", new RoArray(rowItemsRendered));
+            this.setValueSilent("rowItemsRendered", new RoArray(rowItemsRendered));
         }
     }
 
@@ -379,7 +376,7 @@ export class ZoomRowList extends ArrayGrid {
         if (this.focusIndex < 0) {
             this.focusIndex = 0;
         }
-        const itemCompName = this.getFieldValueJS("itemComponentName") as string;
+        const itemCompName = this.getValueJS("itemComponentName") as string;
         if (!customNodeExists(new BrsString(itemCompName))) {
             BrsDevice.stderr.write(`warning,[sg.zoomrowlist.create.fail] Failed to create item ${itemCompName}`);
             return false;
@@ -389,7 +386,7 @@ export class ZoomRowList extends ArrayGrid {
 
     protected refreshContent() {
         this.content.length = 0;
-        const content = this.getFieldValue("content");
+        const content = this.getValue("content");
         if (!(content instanceof ContentNode)) {
             return;
         }
@@ -537,7 +534,7 @@ export class ZoomRowList extends ArrayGrid {
 
     private getRowItemSpacing(rowIndex: number): number {
         const fallback: number = this.defaultItemSpacing;
-        const spacingAfterRowItem = this.getFieldValueJS("spacingAfterRowItem");
+        const spacingAfterRowItem = this.getValueJS("spacingAfterRowItem");
         if (Array.isArray(spacingAfterRowItem) && spacingAfterRowItem.length > 0) {
             const index = Math.min(rowIndex, spacingAfterRowItem.length - 1);
             const candidate = Number(spacingAfterRowItem[index]);
@@ -549,13 +546,13 @@ export class ZoomRowList extends ArrayGrid {
     }
 
     private refreshRowWidth(interiorWidth: number) {
-        const configured = this.getFieldValueJS("rowWidth");
+        const configured = this.getValueJS("rowWidth");
         if (typeof configured === "number" && configured > 0) {
             this.rowWidth = configured;
             return configured;
         }
-        const itemHeight = this.resolveNumber(this.getFieldValueJS("rowItemHeight"), 0, this.defaultRowHeight);
-        const aspectRatio = this.resolveNumber(this.getFieldValueJS("rowItemAspectRatio"), 0, this.defaultAspectRatio);
+        const itemHeight = this.resolveNumber(this.getValueJS("rowItemHeight"), 0, this.defaultRowHeight);
+        const aspectRatio = this.resolveNumber(this.getValueJS("rowItemAspectRatio"), 0, this.defaultAspectRatio);
         const itemWidth = itemHeight * aspectRatio;
         const spacingX = this.getRowItemSpacing(0);
         const maxVisibleItems = this.getMaxVisibleItems(itemWidth, spacingX, interiorWidth, false);
@@ -565,50 +562,38 @@ export class ZoomRowList extends ArrayGrid {
 
     private getRowMetrics(rowIndex: number): RowMetrics {
         const focusPercent = this.focusIndex === rowIndex ? 1 : 0;
-        const baseRowHeight = this.resolveNumber(this.getFieldValueJS("rowHeight"), rowIndex, this.defaultRowHeight);
-        const zoomRowHeight = this.resolveNumber(
-            this.getFieldValueJS("rowZoomHeight"),
-            rowIndex,
-            this.defaultRowZoomHeight
-        );
+        const baseRowHeight = this.resolveNumber(this.getValueJS("rowHeight"), rowIndex, this.defaultRowHeight);
+        const zoomRowHeight = this.resolveNumber(this.getValueJS("rowZoomHeight"), rowIndex, this.defaultRowZoomHeight);
         const rowHeight = this.lerp(baseRowHeight, zoomRowHeight, focusPercent);
-        const baseItemHeight = this.resolveNumber(
-            this.getFieldValueJS("rowItemHeight"),
-            rowIndex,
-            this.defaultRowHeight
-        );
+        const baseItemHeight = this.resolveNumber(this.getValueJS("rowItemHeight"), rowIndex, this.defaultRowHeight);
         const zoomItemHeight = this.resolveNumber(
-            this.getFieldValueJS("rowItemZoomHeight"),
+            this.getValueJS("rowItemZoomHeight"),
             rowIndex,
             this.defaultRowZoomHeight
         );
         const itemHeight = this.lerp(baseItemHeight, zoomItemHeight, focusPercent);
         const safeItemHeight = itemHeight > 0 ? itemHeight : Math.max(baseItemHeight, 1);
         const aspectRatio = this.resolveNumber(
-            this.getFieldValueJS("rowItemAspectRatio"),
+            this.getValueJS("rowItemAspectRatio"),
             rowIndex,
             this.defaultAspectRatio
         );
         const spacingX = this.getRowItemSpacing(rowIndex);
-        const rawSpacingAfterRow = this.getFieldValueJS("spacingAfterRow") as number;
+        const rawSpacingAfterRow = this.getValueJS("spacingAfterRow") as number;
         const spacingY = rawSpacingAfterRow > 0 ? rawSpacingAfterRow : this.defaultRowSpacing;
-        const offsetBase = this.resolveNumber(
-            this.getFieldValueJS("rowItemYOffset"),
-            rowIndex,
-            this.defaultItemYOffset
-        );
+        const offsetBase = this.resolveNumber(this.getValueJS("rowItemYOffset"), rowIndex, this.defaultItemYOffset);
         const offsetZoom = this.resolveNumber(
-            this.getFieldValueJS("rowItemZoomYOffset"),
+            this.getValueJS("rowItemZoomYOffset"),
             rowIndex,
             this.defaultItemZoomYOffset
         );
         const itemYOffset = this.lerp(offsetBase, offsetZoom, focusPercent);
         let effectiveAspect = aspectRatio > 0 ? aspectRatio : this.defaultAspectRatio;
-        const useDefaultAspect = this.resolveBoolean(this.getFieldValueJS("useDefaultAspectRatio"), rowIndex, true);
+        const useDefaultAspect = this.resolveBoolean(this.getValueJS("useDefaultAspectRatio"), rowIndex, true);
         if (!useDefaultAspect) {
             const rowChildren = this.getRowContent(rowIndex);
             if (rowChildren.length) {
-                const firstAspect = rowChildren[0].getFieldValueJS("aspectRatio");
+                const firstAspect = rowChildren[0].getValueJS("aspectRatio");
                 if (typeof firstAspect === "number" && firstAspect > 0) {
                     effectiveAspect = firstAspect;
                 }
@@ -651,23 +636,23 @@ export class ZoomRowList extends ArrayGrid {
             }
         }
         if (content.changed) {
-            this.rowItemComps[rowIndex][colIndex].set(new BrsString("itemContent"), content, true);
+            this.rowItemComps[rowIndex][colIndex].setValue("itemContent", content, true);
             content.changed = false;
         }
 
         const itemComp = this.rowItemComps[rowIndex][colIndex];
         if (itemComp) {
-            itemComp.set(new BrsString("itemHasFocus"), BrsBoolean.from(focused));
-            itemComp.set(new BrsString("focusPercent"), new Float(focused ? 1 : 0));
-            itemComp.set(new BrsString("rowHasFocus"), BrsBoolean.from(this.focusIndex === rowIndex));
-            itemComp.set(new BrsString("rowFocusPercent"), new Float(this.focusIndex === rowIndex ? 1 : 0));
-            itemComp.set(new BrsString(this.focusField), BrsBoolean.from(nodeFocus));
-            itemComp.setFieldValue("width", brsValueOf(itemRect.width));
-            itemComp.setFieldValue("height", brsValueOf(itemRect.height));
+            itemComp.setValue("itemHasFocus", BrsBoolean.from(focused));
+            itemComp.setValue("focusPercent", new Float(focused ? 1 : 0));
+            itemComp.setValue("rowHasFocus", BrsBoolean.from(this.focusIndex === rowIndex));
+            itemComp.setValue("rowFocusPercent", new Float(this.focusIndex === rowIndex ? 1 : 0));
+            itemComp.setValue(this.focusField, BrsBoolean.from(nodeFocus));
+            itemComp.setValueSilent("width", brsValueOf(itemRect.width));
+            itemComp.setValueSilent("height", brsValueOf(itemRect.height));
         }
 
-        const drawFocus = this.getFieldValueJS("drawFocusFeedback");
-        const drawFocusOnTop = this.getFieldValueJS("drawFocusFeedbackOnTop");
+        const drawFocus = this.getValueJS("drawFocusFeedback");
+        const drawFocusOnTop = this.getValueJS("drawFocusFeedbackOnTop");
         if (focused && drawFocus && !drawFocusOnTop) {
             this.renderFocus(itemRect, opacity, nodeFocus, draw2D);
         }
@@ -679,19 +664,19 @@ export class ZoomRowList extends ArrayGrid {
     }
 
     private renderRowTitle(rowIndex: number, rect: Rect, interiorWidth: number, opacity: number, draw2D?: IfDraw2D) {
-        const show = this.resolveBoolean(this.getFieldValueJS("showRowTitle"), rowIndex, true);
+        const show = this.resolveBoolean(this.getValueJS("showRowTitle"), rowIndex, true);
         if (!show) {
             return 0;
         }
         const row = this.content[rowIndex];
-        const title = row.getFieldValueJS("title") ?? "";
+        const title = row.getValueJS("title") ?? "";
         if (!title) {
             return 0;
         }
-        const rawOffsets = this.getFieldValueJS("rowTitleOffset") as number[][];
+        const rawOffsets = this.getValueJS("rowTitleOffset") as number[][];
         const offset = this.resolveVector(rawOffsets, rowIndex, [0, 0]);
-        const color = this.resolveColor(this.getFieldValueJS("rowTitleColor"), rowIndex, 0xffffffff);
-        const fontValue = this.getFieldValue("rowTitleFont");
+        const color = this.resolveColor(this.getValueJS("rowTitleColor"), rowIndex, 0xffffffff);
+        const fontValue = this.getValue("rowTitleFont");
         if (!(fontValue instanceof Font)) {
             return 0;
         }
@@ -714,7 +699,7 @@ export class ZoomRowList extends ArrayGrid {
         opacity: number,
         draw2D?: IfDraw2D
     ) {
-        const show = this.resolveBoolean(this.getFieldValueJS("showRowCounter"), rowIndex, false);
+        const show = this.resolveBoolean(this.getValueJS("showRowCounter"), rowIndex, false);
         const row = this.content[rowIndex];
         const items = row.getNodeChildren().length;
         if (!show && rowIndex !== this.focusIndex) {
@@ -723,20 +708,20 @@ export class ZoomRowList extends ArrayGrid {
         if (items === 0) {
             return 0;
         }
-        const showShortRows = (this.getFieldValueJS("showRowCounterForShortRows") as boolean) ?? true;
+        const showShortRows = (this.getValueJS("showRowCounterForShortRows") as boolean) ?? true;
         const totalWidth = items * metrics.itemWidth + (items - 1) * metrics.spacingX;
         if (!showShortRows && totalWidth < interiorWidth) {
             return 0;
         }
-        const rawOffsets = this.getFieldValueJS("rowCounterOffset");
+        const rawOffsets = this.getValueJS("rowCounterOffset");
         const offset = this.resolveVector(rawOffsets, rowIndex, [0, 0]);
-        const color = this.resolveColor(this.getFieldValueJS("rowCounterColor"), rowIndex, 0xffffffff);
-        const counterFontValue = this.getFieldValue("rowCounterFont");
+        const color = this.resolveColor(this.getValueJS("rowCounterColor"), rowIndex, 0xffffffff);
+        const counterFontValue = this.getValue("rowCounterFont");
         let fontToUse: Font | undefined;
         if (counterFontValue instanceof Font) {
             fontToUse = counterFontValue;
         } else {
-            const titleFont = this.getFieldValue("rowTitleFont");
+            const titleFont = this.getValue("rowTitleFont");
             if (titleFont instanceof Font) {
                 fontToUse = titleFont;
             }

@@ -53,13 +53,8 @@ export class Audio extends Node {
         sgRoot.setAudio(this);
     }
 
-    set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
-        if (!isBrsString(index)) {
-            throw new Error("RoSGNode indexes must be strings");
-        }
-
-        const fieldName = index.getValue().toLowerCase();
-
+    setValue(index: string, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
+        const fieldName = index.toLowerCase();
         if (fieldName === "control" && isBrsString(value)) {
             const validControl = ["start", "play", "pause", "resume", "stop"];
             const control = value.getValue().toLowerCase();
@@ -80,9 +75,9 @@ export class Audio extends Node {
         } else if (fieldName === "mute" && isBrsBoolean(value)) {
             postMessage(`audio,mute,${value.toBoolean()}`);
         } else if (fieldName === "contentIsPlaylist".toLowerCase() && isBrsBoolean(value)) {
-            const currentFlag = this.getFieldValueJS("contentIsPlaylist") as boolean;
+            const currentFlag = this.getValueJS("contentIsPlaylist") as boolean;
             const newFlag = value.toBoolean();
-            const content = this.getFieldValue("content");
+            const content = this.getValue("content");
             if (currentFlag !== newFlag && content instanceof ContentNode) {
                 // If the contentIsPlaylist flag changed, we need to reset the content
                 postMessage({ audioPlaylist: this.formatContent(content) });
@@ -90,7 +85,7 @@ export class Audio extends Node {
         } else if (fieldName === "content" && value instanceof ContentNode) {
             postMessage({ audioPlaylist: this.formatContent(value) });
         }
-        return super.set(index, value, alwaysNotify, kind);
+        super.setValue(index, value, alwaysNotify, kind);
     }
 
     setState(flags: number) {
@@ -115,24 +110,24 @@ export class Audio extends Node {
                 state = "failed";
                 break;
         }
-        super.set(new BrsString("state"), new BrsString(state));
+        super.setValue("state", new BrsString(state));
     }
 
     setContentIndex(index: number) {
-        super.set(new BrsString("contentIndex"), new Int32(index));
+        super.setValue("contentIndex", new Int32(index));
     }
 
     setDuration(duration: number) {
         // Roku rounds the audio duration to integer even being stored in a Double
-        super.set(new BrsString("duration"), new Double(Math.round(duration / 1000)));
+        super.setValue("duration", new Double(Math.round(duration / 1000)));
     }
 
     setPosition(position: number) {
-        super.set(new BrsString("position"), new Double(position / 1000));
+        super.setValue("position", new Double(position / 1000));
     }
 
     private checkContentChanged() {
-        const content = this.getFieldValue("content");
+        const content = this.getValue("content");
         if (content instanceof ContentNode && content.changed) {
             postMessage({ audioPlaylist: this.formatContent(content) });
             content.changed = false;
@@ -141,11 +136,11 @@ export class Audio extends Node {
 
     private formatContent(node: ContentNode) {
         const content = new Array<string>();
-        const isPlaylist = this.getFieldValueJS("contentIsPlaylist") as boolean;
+        const isPlaylist = this.getValueJS("contentIsPlaylist") as boolean;
         if (isPlaylist) {
             const playList = node.getNodeChildren().filter((node) => node instanceof Node);
             for (const node of playList) {
-                const url = node.getFieldValueJS("url") as string;
+                const url = node.getValueJS("url") as string;
                 if (url?.length && url.startsWith("http")) {
                     content.push(BrsDevice.getCORSProxy(url));
                 } else if (url?.length) {
@@ -153,7 +148,7 @@ export class Audio extends Node {
                 }
             }
         } else {
-            const url = node.getFieldValueJS("url") as string;
+            const url = node.getValueJS("url") as string;
             if (url?.length && url.startsWith("http")) {
                 content.push(BrsDevice.getCORSProxy(url));
             } else if (url?.length) {

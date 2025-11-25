@@ -23,12 +23,8 @@ export class Timer extends Node {
         sgRoot.timers.push(this);
     }
 
-    set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
-        if (!isBrsString(index)) {
-            throw new Error("RoSGNode indexes must be strings");
-        }
-
-        const mapKey = index.getValue().toLowerCase();
+    setValue(index: string, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
+        const mapKey = index.toLowerCase();
         const field = this.fields.get(mapKey);
 
         if (field && mapKey === "control" && isBrsString(value)) {
@@ -43,9 +39,9 @@ export class Timer extends Node {
             }
             field.setValue(new BrsString(control));
             this.fields.set(mapKey, field);
-            return BrsInvalid.Instance;
+            return;
         }
-        return super.set(index, value, alwaysNotify, kind);
+        super.setValue(index, value, alwaysNotify, kind);
     }
 
     setCallback(callback: Function) {
@@ -54,8 +50,8 @@ export class Timer extends Node {
 
     checkFire() {
         const now = performance.now();
-        const duration = this.getFieldValueJS("duration") as number;
-        const repeat = this.getFieldValueJS("repeat") as boolean;
+        const duration = this.getValueJS("duration") as number;
+        const repeat = this.getValueJS("repeat") as boolean;
         if (this.active && (now - this.lastFireTime) / 1000 >= duration) {
             this.lastFireTime = now;
             this.active = repeat;

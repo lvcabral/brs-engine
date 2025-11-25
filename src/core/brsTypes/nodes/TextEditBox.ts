@@ -60,7 +60,7 @@ export class TextEditBox extends Group {
         this.background = this.loadBitmap(this.backUri);
         const cursorUri = `common:/images/${this.resolution}/cursor_textInput.png`;
         this.cursor = this.loadBitmap(cursorUri);
-        this.setFieldValue("height", new Float(this.height));
+        this.setValueSilent("height", new Float(this.height));
 
         // Create Labels for text and hint
         this.textLabel = new Label();
@@ -79,19 +79,19 @@ export class TextEditBox extends Group {
         this.linkField(this.textLabel, "text");
         this.linkField(this.textLabel, "color", "textColor");
         this.linkField(this.hintLabel, "text", "hintText");
-        this.hintLabel.setFieldValue("color", new Int32(convertHexColor("0xAAAAAAFF")));
+        this.hintLabel.setValueSilent("color", new Int32(convertHexColor("0xAAAAAAFF")));
         this.linkField(this.hintLabel, "color", "hintTextColor");
 
         this.lastCursorToggleTime = Date.now();
     }
 
     private configureLabel(label: Label) {
-        const width = this.getFieldValueJS("width") as number;
+        const width = this.getValueJS("width") as number;
         const labelWidth = width > 0 ? width - this.paddingX * 2 : 0;
         label.setTranslation([this.paddingX, this.paddingY]);
-        label.setFieldValue("width", new Float(labelWidth));
-        label.setFieldValue("height", new Float(this.height - this.paddingY * 2));
-        label.setFieldValue("vertAlign", new BrsString("center"));
+        label.setValueSilent("width", new Float(labelWidth));
+        label.setValueSilent("height", new Float(this.height - this.paddingY * 2));
+        label.setValueSilent("vertAlign", new BrsString("center"));
     }
 
     handleKey(key: string, press: boolean): boolean {
@@ -99,9 +99,9 @@ export class TextEditBox extends Group {
         if (!press) {
             return handled;
         }
-        const maxLen = this.getFieldValueJS("maxTextLength") as number;
-        let text = this.getFieldValueJS("text") as string;
-        let position = this.getFieldValueJS("cursorPosition") as number;
+        const maxLen = this.getValueJS("maxTextLength") as number;
+        let text = this.getValueJS("text") as string;
+        let position = this.getValueJS("cursorPosition") as number;
 
         if (key.startsWith("Lit_")) {
             const charToAdd = key.substring(4);
@@ -112,8 +112,8 @@ export class TextEditBox extends Group {
                     text = text.slice(0, position) + charToAdd + text.slice(position);
                 }
                 position++;
-                this.set(new BrsString("text"), new BrsString(text));
-                this.set(new BrsString("cursorPosition"), new Float(position));
+                this.setValue("text", new BrsString(text));
+                this.setValue("cursorPosition", new Float(position));
                 this.lastCharInputTime = Date.now();
                 handled = true;
             }
@@ -121,8 +121,8 @@ export class TextEditBox extends Group {
             if (text.length && position > 0) {
                 text = text.slice(0, position - 1) + text.slice(position);
                 position--;
-                this.set(new BrsString("text"), new BrsString(text));
-                this.set(new BrsString("cursorPosition"), new Float(position));
+                this.setValue("text", new BrsString(text));
+                this.setValue("cursorPosition", new Float(position));
                 this.lastCharInputTime = 0;
                 handled = true;
             }
@@ -137,13 +137,13 @@ export class TextEditBox extends Group {
 
     /** Set the active state of the node */
     setActive(active: boolean) {
-        this.set(new BrsString("active"), BrsBoolean.from(active));
+        this.setValue("active", BrsBoolean.from(active));
     }
 
     /** Move the cursor a delta or if delta is zero, reset to first position */
     moveCursor(delta: number) {
-        let position = this.getFieldValueJS("cursorPosition") as number;
-        const text = this.getFieldValueJS("text") as string;
+        let position = this.getValueJS("cursorPosition") as number;
+        const text = this.getValueJS("text") as string;
 
         if (delta === 0) {
             position = 0;
@@ -155,7 +155,7 @@ export class TextEditBox extends Group {
                 position = text.length;
             }
         }
-        this.set(new BrsString("cursorPosition"), new Float(position));
+        this.setValue("cursorPosition", new Float(position));
         // Reset cursor blink on move
         this.cursorVisible = true;
         this.lastCursorToggleTime = Date.now();
@@ -172,22 +172,22 @@ export class TextEditBox extends Group {
         const size = this.getDimensions();
         const rotation = angle + this.getRotation();
         const combinedOpacity = opacity * this.getOpacity();
-        const text = this.getFieldValueJS("text") as string;
-        const secureMode = this.getFieldValueJS("secureMode") as boolean;
+        const text = this.getValueJS("text") as string;
+        const secureMode = this.getValueJS("secureMode") as boolean;
         const now = Date.now(); // Get current time for checks
 
         // Ensure labels have correct width if TextEditBox width changes
         // And update background if URI changes
         if (this.isDirty) {
-            const width = this.getFieldValueJS("width") as number;
+            const width = this.getValueJS("width") as number;
             const labelWidth = width > 0 ? width - this.paddingX * 2 : 0;
             const labelWidthFloat = new Float(labelWidth);
-            this.textLabel.setFieldValue("width", labelWidthFloat);
-            this.secureLabel.setFieldValue("width", labelWidthFloat);
-            this.hintLabel.setFieldValue("width", labelWidthFloat);
+            this.textLabel.setValueSilent("width", labelWidthFloat);
+            this.secureLabel.setValueSilent("width", labelWidthFloat);
+            this.hintLabel.setValueSilent("width", labelWidthFloat);
             this.copyField(this.secureLabel, "color", "textColor");
             // Background Image
-            const backgroundUri = this.getFieldValueJS("backgroundUri") as string;
+            const backgroundUri = this.getValueJS("backgroundUri") as string;
             if (backgroundUri && this.background?.getImageName() !== backgroundUri) {
                 this.background = this.getBitmap("backgroundUri");
             }
@@ -205,9 +205,9 @@ export class TextEditBox extends Group {
         const secureText = this.getSecureText(text, now, secureMode, showHint);
 
         // Set label visibility AFTER calculating secure text
-        this.textLabel.setFieldValue("visible", BrsBoolean.from(!showHint && !secureMode));
-        this.hintLabel.setFieldValue("visible", BrsBoolean.from(showHint));
-        this.secureLabel.setFieldValue("visible", BrsBoolean.from(!showHint && secureMode));
+        this.textLabel.setValueSilent("visible", BrsBoolean.from(!showHint && !secureMode));
+        this.hintLabel.setValueSilent("visible", BrsBoolean.from(showHint));
+        this.secureLabel.setValueSilent("visible", BrsBoolean.from(!showHint && secureMode));
 
         this.renderCursor(rect, now, text, secureMode, secureText, draw2D);
 
@@ -229,7 +229,7 @@ export class TextEditBox extends Group {
                 // Timeout expired or no recent input, show all secure chars
                 secureText = this.secureChar.repeat(text.length);
             }
-            this.secureLabel.setFieldValue("text", new BrsString(secureText));
+            this.secureLabel.setValueSilent("text", new BrsString(secureText));
         }
         return secureText;
     }
@@ -242,7 +242,7 @@ export class TextEditBox extends Group {
         secureText: string,
         draw2D?: IfDraw2D
     ) {
-        const isActive = this.getFieldValueJS("active") as boolean;
+        const isActive = this.getValueJS("active") as boolean;
         if (!isActive || !this.cursor?.isValid()) {
             return;
         }
@@ -251,7 +251,7 @@ export class TextEditBox extends Group {
             this.lastCursorToggleTime = now;
         }
         if (this.cursorVisible) {
-            const cursorPosition = this.getFieldValueJS("cursorPosition") as number;
+            const cursorPosition = this.getValueJS("cursorPosition") as number;
             let textToMeasure: string;
 
             if (secureMode) {
@@ -261,7 +261,7 @@ export class TextEditBox extends Group {
                 textToMeasure = text.substring(0, Math.min(cursorPosition, text.length));
             }
             if (this.drawFont === undefined) {
-                const font = this.textLabel.getFieldValue("font") as Font;
+                const font = this.textLabel.getValue("font") as Font;
                 this.drawFont = font.createDrawFont();
             }
             // Measure the text to determine cursor position

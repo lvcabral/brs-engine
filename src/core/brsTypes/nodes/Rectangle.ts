@@ -30,7 +30,7 @@ export class Rectangle extends Group {
         drawTrans[1] += origin[1];
         const size = this.getDimensions();
         const rotation = angle + this.getRotation();
-        const color = this.getFieldValueJS("color") as number;
+        const color = this.getValueJS("color") as number;
         opacity = opacity * this.getOpacity();
         const center = this.getScaleRotateCenter();
         const rect = { x: drawTrans[0], y: drawTrans[1], width: size.width, height: size.height };

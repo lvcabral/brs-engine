@@ -48,28 +48,24 @@ export class Scene extends Group {
         this.subReplace = "";
     }
 
-    set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind, sync: boolean = true) {
-        if (!isBrsString(index)) {
-            throw new Error("RoSGNode indexes must be strings");
-        }
-        const fieldName = index.getValue().toLowerCase();
+    setValue(index: string, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind, sync: boolean = true) {
+        const fieldName = index.toLowerCase();
         if (fieldName === "dialog") {
             if (value instanceof Dialog || value instanceof StandardDialog) {
-                this.dialog?.set(new BrsString("close"), BrsBoolean.True);
+                this.dialog?.setValue("close", BrsBoolean.True);
                 this.dialog = value;
             } else if (value instanceof BrsInvalid) {
-                this.dialog?.set(new BrsString("close"), BrsBoolean.True);
+                this.dialog?.setValue("close", BrsBoolean.True);
             } else {
-                return BrsInvalid.Instance;
+                return;
             }
         }
-        const result = super.set(index, value, alwaysNotify, kind);
+        super.setValue(index, value, alwaysNotify, kind);
         // Notify other threads of field changes
         if (sync && sgRoot.tasks.length > 0 && this.changed && this.fields.has(fieldName)) {
             this.sendThreadUpdate(sgRoot.taskId, "scene", fieldName, value);
             if (sgRoot.inTaskThread()) this.changed = false;
         }
-        return result;
     }
 
     protected cloneNode(_isDeepCopy: boolean, _interpreter?: Interpreter): BrsType {
@@ -113,7 +109,7 @@ export class Scene extends Group {
         this.rectLocal = { x: 0, y: 0, width: this.ui.width, height: this.ui.height };
         this.rectToParent = { x: 0, y: 0, width: this.ui.width, height: this.ui.height };
         this.rectToScene = { x: 0, y: 0, width: this.ui.width, height: this.ui.height };
-        this.setFieldValue("currentDesignResolution", toAssociativeArray(this.ui));
+        this.setValueSilent("currentDesignResolution", toAssociativeArray(this.ui));
         if (autoSub.split(",").length === 4) {
             const subs = autoSub.split(",");
             this.subSearch = subs[0];
@@ -132,7 +128,7 @@ export class Scene extends Group {
             return;
         }
         const rotation = angle + this.getRotation();
-        const backColor = this.getFieldValueJS("backgroundColor") as number;
+        const backColor = this.getValueJS("backgroundColor") as number;
         opacity = opacity * this.getOpacity();
         if (draw2D) {
             draw2D.doClearCanvas(backColor);

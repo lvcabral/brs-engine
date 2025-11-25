@@ -33,11 +33,11 @@ export class CheckList extends LabelList {
         const checkOnUri = `common:/images/${this.resolution}/icon_checkboxON.png`;
         const checkOffUri = `common:/images/${this.resolution}/icon_checkboxOFF.png`;
 
-        this.setFieldValue("checkedIconUri", new BrsString(checkOnUri));
-        this.setFieldValue("uncheckedIconUri", new BrsString(checkOffUri));
-        this.setFieldValue("focusedCheckedIconUri", new BrsString(checkOnUri));
-        this.setFieldValue("focusedUncheckedIconUri", new BrsString(checkOffUri));
-        this.setFieldValue("checkedState", new RoArray([]));
+        this.setValueSilent("checkedIconUri", new BrsString(checkOnUri));
+        this.setValueSilent("uncheckedIconUri", new BrsString(checkOffUri));
+        this.setValueSilent("focusedCheckedIconUri", new BrsString(checkOnUri));
+        this.setValueSilent("focusedUncheckedIconUri", new BrsString(checkOffUri));
+        this.setValueSilent("checkedState", new RoArray([]));
     }
 
     get(index: BrsType) {
@@ -51,14 +51,11 @@ export class CheckList extends LabelList {
         return super.get(index);
     }
 
-    set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
-        if (!isBrsString(index)) {
-            throw new Error("RoSGNode indexes must be strings");
-        }
-        const fieldName = index.getValue().toLowerCase();
+    setValue(index: string, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
+        const fieldName = index.toLowerCase();
         if (fieldName === "checkedstate") {
             let states: boolean[] = [];
-            let checkedState = this.getFieldValue("checkedState");
+            let checkedState = this.getValue("checkedState");
             if (checkedState instanceof RoArray) {
                 states = jsValueOf(checkedState);
             }
@@ -71,24 +68,24 @@ export class CheckList extends LabelList {
                 }
                 value = brsValueOf(states);
             } else {
-                return BrsInvalid.Instance;
+                return;
             }
         }
-        return super.set(index, value, alwaysNotify, kind);
+        super.setValue(index, value, alwaysNotify, kind);
     }
 
     protected handleOK(press: boolean) {
         if (!press) {
             return false;
         }
-        const checkOnSelect = this.getFieldValueJS("checkOnSelect");
-        const checkedState = this.getFieldValue("checkedState");
+        const checkOnSelect = this.getValueJS("checkOnSelect");
+        const checkedState = this.getValue("checkedState");
         if (checkOnSelect && checkedState instanceof RoArray) {
             const states = jsValueOf(checkedState);
             states[this.focusIndex] = !states[this.focusIndex];
-            this.set(new BrsString("checkedState"), brsValueOf(states));
+            this.setValue("checkedState", brsValueOf(states));
         }
-        this.set(new BrsString("itemSelected"), new Int32(this.focusIndex));
+        this.setValue("itemSelected", new Int32(this.focusIndex));
         return true;
     }
 
@@ -101,13 +98,13 @@ export class CheckList extends LabelList {
         itemFocus: boolean,
         draw2D?: IfDraw2D
     ) {
-        const states = this.getFieldValueJS("checkedState");
-        const hideIcon = item.getFieldValueJS("hideIcon");
+        const states = this.getValueJS("checkedState");
+        const hideIcon = item.getValueJS("hideIcon");
         const icons = states[index]
             ? ["checkedIconUri", "focusedCheckedIconUri"]
             : ["uncheckedIconUri", "focusedUncheckedIconUri"];
         const iconSize = this.getIconSize(icons);
-        const text = item.getFieldValueJS("title");
+        const text = item.getValueJS("title");
         const iconGap = iconSize[0] > 0 ? iconSize[0] + this.gap : 0;
         const iconIndex = itemFocus ? 1 : 0;
         const bmp = !hideIcon && iconGap > 0 ? this.getBitmap(icons[iconIndex]) : undefined;
@@ -120,11 +117,11 @@ export class CheckList extends LabelList {
 
     private refreshCheckedState() {
         let states: boolean[] = [];
-        let checkedState = this.getFieldValue("checkedState");
+        let checkedState = this.getValue("checkedState");
         if (checkedState instanceof RoArray) {
             states = jsValueOf(checkedState);
         }
-        const content = this.getFieldValue("content");
+        const content = this.getValue("content");
         if (content instanceof ContentNode) {
             const contentCount = content.getNodeChildren().length;
             if (states.length < contentCount) {
@@ -134,7 +131,7 @@ export class CheckList extends LabelList {
             }
         }
         const result = brsValueOf(states);
-        this.setFieldValue("checkedState", result);
+        this.setValueSilent("checkedState", result);
         return result;
     }
 }

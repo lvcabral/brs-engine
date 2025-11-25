@@ -142,11 +142,6 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
         return this.childElements().getElements();
     }
 
-    deepCopy(): BrsType {
-        // Roku implementation still does not support deep copying of roXMLElement
-        return new RoInvalid();
-    }
-
     get(index: BrsType) {
         if (index.kind !== ValueKind.String) {
             throw new Error("XML Element indexes must be strings");

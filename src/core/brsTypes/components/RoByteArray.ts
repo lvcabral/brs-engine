@@ -92,11 +92,6 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
         return this.elements;
     }
 
-    deepCopy(): BrsType {
-        // Roku implementation still does not support deep copying of roByteArray
-        return new RoInvalid();
-    }
-
     get(index: BrsType) {
         if (isBoxedNumber(index)) {
             index = index.unbox();

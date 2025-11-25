@@ -16,17 +16,19 @@ import {
     Uninitialized,
     ValueKind,
 } from "..";
-import { BrsComponent, BrsIterable } from "./BrsComponent";
+import { BrsComponent } from "./BrsComponent";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { createNodeByType, isSubtypeCheck, subtypeHierarchy } from "../../scenegraph/SGNodeFactory";
 import { BrsDevice } from "../../device/BrsDevice";
 import { Rect } from "../interfaces/IfDraw2D";
+import { FieldKind } from "../nodes/Field";
 
-export abstract class RoSGNode extends BrsComponent implements BrsValue, BrsIterable {
+export abstract class RoSGNode extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
     protected httpAgent: RoHttpAgent;
     m: RoAssociativeArray = new RoAssociativeArray([]);
+    location: string = "";
 
     constructor(_: AAMember[], readonly nodeSubtype: string = "Node") {
         super("roSGNode");
@@ -129,29 +131,35 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, BrsIter
         });
     }
 
-    equalTo(other: BrsType) {
+    // BrsValue interface methods
+    equalTo(_: BrsType) {
         // SceneGraph nodes are never equal to anything
         return BrsBoolean.False;
     }
     abstract toString(parent?: BrsType): string;
-    abstract hasNext(): BrsBoolean;
-    abstract getNext(): BrsType;
-    abstract resetNext(): void;
-    abstract updateNext(): void;
-    abstract deepCopy(): BrsType;
 
     abstract get(index: BrsType): BrsType;
-    abstract set(index: BrsType, value: BrsType, alwaysNotify?: boolean): BrsInvalid;
+    set(index: BrsType, value: BrsType, _isCaseSensitive?: boolean): BrsInvalid {
+        if (!isBrsString(index)) {
+            throw new Error("RoSGNode indexes must be strings");
+        }
+        // delegates to setValue
+        this.setValue(index.getValue(), value);
+        return BrsInvalid.Instance;
+    }
+    abstract deepCopy(): BrsType;
 
+    // Abstract methods to be implemented by subclasses
     abstract getElements(): BrsString[];
+    abstract getValue(fieldName: string): BrsType;
     abstract getValues(): BrsType[];
+    abstract setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind): void;
+    abstract setValueSilent(fieldName: string, value: BrsType, alwaysNotify?: boolean): void;
+    abstract addNodeField(fieldName: string, type: string, alwaysNotify: boolean): void;
+
     abstract getNodeChildren(): BrsType[];
     abstract getNodeParent(): RoSGNode | BrsInvalid;
     abstract findNodeById(node: RoSGNode, id: string): RoSGNode | BrsInvalid;
-
-    abstract getFieldValue(fieldName: string): BrsType;
-    abstract setFieldValue(fieldName: string, value: BrsType, alwaysNotify?: boolean): void;
-    abstract addNodeField(fieldName: string, type: string, alwaysNotify: boolean): void;
     abstract appendChildToParent(child: BrsType): boolean;
     abstract addObserver(
         interpreter: Interpreter,
@@ -241,8 +249,9 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, BrsIter
             args: [new StdlibArgument("key", ValueKind.String), new StdlibArgument("value", ValueKind.Dynamic)],
             returns: ValueKind.Void,
         },
-        impl: (_: Interpreter, key: BrsString, value: BrsType) => {
-            this.set(key, value);
+        impl: (interpreter: Interpreter, key: BrsString, value: BrsType) => {
+            this.location = interpreter.formatLocation();
+            this.setValue(key.value, value);
             return BrsInvalid.Instance;
         },
     });
@@ -331,7 +340,8 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, BrsIter
             ],
             returns: ValueKind.Boolean,
         },
-        impl: (_: Interpreter, fieldName: BrsString, type: BrsString, alwaysNotify: BrsBoolean) => {
+        impl: (interpreter: Interpreter, fieldName: BrsString, type: BrsString, alwaysNotify: BrsBoolean) => {
+            this.location = interpreter.formatLocation();
             this.addNodeField(fieldName.value, type.value, alwaysNotify.toBoolean());
             return BrsBoolean.True;
         },
@@ -343,10 +353,11 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, BrsIter
             args: [new StdlibArgument("fields", ValueKind.Object)],
             returns: ValueKind.Boolean,
         },
-        impl: (_: Interpreter, fields: RoAssociativeArray) => {
+        impl: (interpreter: Interpreter, fields: RoAssociativeArray) => {
             if (!(fields instanceof RoAssociativeArray)) {
                 return BrsBoolean.False;
             }
+            this.location = interpreter.formatLocation();
             this.setNodeFields(fields);
             return BrsBoolean.True;
         },
@@ -700,18 +711,19 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, BrsIter
             returns: ValueKind.Boolean,
         },
         impl: (interpreter: Interpreter, fieldName: BrsString, value: BrsType) => {
+            this.location = interpreter.formatLocation();
             if (!this.getElements().some((key) => key.value === fieldName.value.toLowerCase())) {
-                const location = interpreter.formatLocation();
                 BrsDevice.stderr.write(
-                    `warning,BRIGHTSCRIPT: ERROR: roSGNode.setField: Tried to set nonexistent field "${fieldName.value}": ${location}`
+                    `warning,BRIGHTSCRIPT: ERROR: roSGNode.setField: Tried to set nonexistent field "${fieldName.value}": ${this.location}`
                 );
                 return BrsBoolean.False;
             } else if (!this.canAcceptValue(fieldName.value, value)) {
-                const location = interpreter.formatLocation();
-                BrsDevice.stderr.write(`warning,BRIGHTSCRIPT: ERROR: roSGNode.setField: Type mismatch: ${location}`);
+                BrsDevice.stderr.write(
+                    `warning,BRIGHTSCRIPT: ERROR: roSGNode.setField: Type mismatch: ${this.location}`
+                );
                 return BrsBoolean.False;
             }
-            this.set(fieldName, value);
+            this.setValue(fieldName.value, value);
             return BrsBoolean.True;
         },
     });
@@ -722,10 +734,11 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, BrsIter
             args: [new StdlibArgument("fields", ValueKind.Object)],
             returns: ValueKind.Boolean,
         },
-        impl: (_: Interpreter, fields: RoAssociativeArray) => {
+        impl: (interpreter: Interpreter, fields: RoAssociativeArray) => {
             if (!(fields instanceof RoAssociativeArray)) {
                 return BrsBoolean.False;
             }
+            this.location = interpreter.formatLocation();
             this.setNodeFields(fields, true);
             return BrsBoolean.True;
         },
@@ -742,6 +755,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, BrsIter
             returns: ValueKind.Uninitialized,
         },
         impl: (interpreter: Interpreter, content: RoAssociativeArray | RoArray, createFields: BrsBoolean) => {
+            this.location = interpreter.formatLocation();
             this.updateFields(interpreter, content, createFields.toBoolean());
             return Uninitialized.Instance;
         },
@@ -1168,6 +1182,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, BrsIter
             returns: ValueKind.Boolean,
         },
         impl: (interpreter: Interpreter, on: BrsBoolean) => {
+            this.location = interpreter.formatLocation();
             return BrsBoolean.from(this.setNodeFocus(interpreter, on.toBoolean()));
         },
     });
@@ -1280,7 +1295,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, BrsIter
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter) => {
-            return sgRoot.scene || BrsInvalid.Instance;
+            return sgRoot.scene ?? BrsInvalid.Instance;
         },
     });
 

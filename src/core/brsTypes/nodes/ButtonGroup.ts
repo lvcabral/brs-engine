@@ -64,45 +64,41 @@ export class ButtonGroup extends LayoutGroup {
             this.gap = 18;
             this.vertOffset = 18;
             this.iconSize = [36, 36];
-            this.setFieldValue("buttonHeight", new Float(75));
-            this.setFieldValue("iconUri", new BrsString(Button.iconUriFHD));
-            this.setFieldValue("focusedIconUri", new BrsString(Button.iconUriFHD));
+            this.setValueSilent("buttonHeight", new Float(75));
+            this.setValueSilent("iconUri", new BrsString(Button.iconUriFHD));
+            this.setValueSilent("focusedIconUri", new BrsString(Button.iconUriFHD));
         } else {
             this.margin = 24;
             this.gap = 12;
             this.vertOffset = 12;
             this.iconSize = [24, 24];
-            this.setFieldValue("buttonHeight", new Float(50));
-            this.setFieldValue("iconUri", new BrsString(Button.iconUriHD));
-            this.setFieldValue("focusedIconUri", new BrsString(Button.iconUriHD));
+            this.setValueSilent("buttonHeight", new Float(50));
+            this.setValueSilent("iconUri", new BrsString(Button.iconUriHD));
+            this.setValueSilent("focusedIconUri", new BrsString(Button.iconUriHD));
         }
-        this.setFieldValue("focusBitmapUri", new BrsString(Button.focusUri));
-        this.setFieldValue("focusFootprintBitmapUri", new BrsString(Button.footprintUri));
-        this.setFieldValue("buttons", new RoArray([]));
+        this.setValueSilent("focusBitmapUri", new BrsString(Button.focusUri));
+        this.setValueSilent("focusFootprintBitmapUri", new BrsString(Button.footprintUri));
+        this.setValueSilent("buttons", new RoArray([]));
         this.lastPressHandled = "";
     }
 
-    set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
-        if (!isBrsString(index)) {
-            throw new Error("RoSGNode indexes must be strings");
-        }
-        const fieldName = index.getValue().toLowerCase();
+    setValue(index: string, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
+        const fieldName = index.toLowerCase();
         if (fieldName === "focusbutton") {
-            const buttons = this.getFieldValueJS("buttons");
+            const buttons = this.getValueJS("buttons");
             const newIndex = jsValueOf(value);
             if (typeof newIndex === "number" && newIndex >= 0 && newIndex < buttons.length) {
                 this.focusIndex = newIndex;
-                super.set(new BrsString("buttonFocused"), value);
+                super.setValue("buttonFocused", value);
             }
         } else if (fieldName === "buttons" && !(value instanceof RoArray)) {
             value = new RoArray([]);
         }
-        super.set(index, value, alwaysNotify, kind);
+        super.setValue(index, value, alwaysNotify, kind);
         if (fieldName === "buttons") {
             this.refreshButtons();
             this.refreshFocus();
         }
-        return BrsInvalid.Instance;
     }
 
     setNodeFocus(interpreter: Interpreter, focusOn: boolean): boolean {
@@ -122,12 +118,12 @@ export class ButtonGroup extends LayoutGroup {
         if (key === "up" || key === "down") {
             const nextIndex = this.getIndex(key === "up" ? -1 : 1);
             if (press && nextIndex !== this.focusIndex) {
-                this.set(new BrsString("focusButton"), new Int32(nextIndex));
+                this.setValue("focusButton", new Int32(nextIndex));
                 handled = true;
             }
         } else if (key === "OK") {
             if (press) {
-                this.set(new BrsString("buttonSelected"), new Int32(this.focusIndex));
+                this.setValue("buttonSelected", new Int32(this.focusIndex));
                 handled = true;
             }
         }
@@ -164,13 +160,13 @@ export class ButtonGroup extends LayoutGroup {
     }
 
     private refreshButtons() {
-        const buttons = jsValueOf(this.getFieldValue("buttons")) as string[];
+        const buttons = jsValueOf(this.getValue("buttons")) as string[];
         if (!buttons) {
             return;
         }
         const buttonsCount = Math.max(buttons.length, this.children.length);
-        const focusedFont = this.getFieldValue("focusedTextFont") as Font;
-        const buttonHeight = this.getFieldValueJS("buttonHeight") as number;
+        const focusedFont = this.getValue("focusedTextFont") as Font;
+        const buttonHeight = this.getValueJS("buttonHeight") as number;
         this.width = this.calculateButtonWidth(buttons, focusedFont.createDrawFont());
         for (let i = 0; i < buttonsCount; i++) {
             const buttonText = buttons[i];
@@ -180,7 +176,7 @@ export class ButtonGroup extends LayoutGroup {
                     button = this.createButton();
                 }
                 button.iconSize = this.iconSize;
-                button.setFieldValue("text", new BrsString(buttonText));
+                button.setValueSilent("text", new BrsString(buttonText));
                 this.copyField(button, "textColor");
                 this.copyField(button, "focusedTextColor");
                 this.copyField(button, "textFont");
@@ -190,13 +186,13 @@ export class ButtonGroup extends LayoutGroup {
                 this.copyField(button, "iconUri");
                 this.copyField(button, "focusedIconUri");
                 this.copyField(button, "height", "buttonHeight");
-                button.setFieldValue("minWidth", new Float(this.width));
+                button.setValueSilent("minWidth", new Float(this.width));
                 this.copyField(button, "maxWidth");
-                button.setFieldValue("showFocusFootprint", BrsBoolean.from(this.focusIndex === i));
+                button.setValueSilent("showFocusFootprint", BrsBoolean.from(this.focusIndex === i));
                 // TODO: Implement support for field layoutDirection (vert, horiz)
                 const buttonY = i * (Math.max(buttonHeight, this.iconSize[1]) - this.vertOffset);
                 const offsetY = Math.max((this.iconSize[1] - buttonHeight) / 2, 0);
-                button.setFieldValue("translation", new RoArray([new Float(0), new Float(buttonY + offsetY)]));
+                button.setValueSilent("translation", new RoArray([new Float(0), new Float(buttonY + offsetY)]));
             } else {
                 break;
             }
@@ -208,7 +204,7 @@ export class ButtonGroup extends LayoutGroup {
         const button = new Button();
         for (let child of button.getNodeChildren()) {
             if (child instanceof Label) {
-                child.setFieldValue("horizAlign", new BrsString("left"));
+                child.setValueSilent("horizAlign", new BrsString("left"));
                 break;
             }
         }
@@ -235,8 +231,8 @@ export class ButtonGroup extends LayoutGroup {
     }
 
     private calculateButtonWidth(buttons: string[], font: RoFont): number {
-        const minWidth = this.getFieldValueJS("minWidth") as number;
-        const maxWidth = this.getFieldValueJS("maxWidth") as number;
+        const minWidth = this.getValueJS("minWidth") as number;
+        const maxWidth = this.getValueJS("maxWidth") as number;
         this.iconSize = this.getIconSize(["iconUri", "focusedIconUri"]);
         const iconGap = this.iconSize[0] > 0 ? this.iconSize[0] + this.gap : 0;
         const labelMax = maxWidth - this.margin * 2 - iconGap;
@@ -250,9 +246,9 @@ export class ButtonGroup extends LayoutGroup {
     }
 
     private getIndex(offset: number = 0) {
-        const focused = this.getFieldValueJS("buttonFocused") as number;
+        const focused = this.getValueJS("buttonFocused") as number;
         const index = focused + offset;
-        const buttons = this.getFieldValueJS("buttons") as string[];
+        const buttons = this.getValueJS("buttons") as string[];
         if (index >= buttons.length) {
             return buttons.length - 1;
         } else if (index < 0) {

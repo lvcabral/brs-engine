@@ -33,12 +33,12 @@ export class MarkupGrid extends ArrayGrid {
             this.marginY = 10;
         }
         this.gap = 0;
-        this.setFieldValue("focusBitmapUri", new BrsString(this.focusUri));
-        this.setFieldValue("wrapDividerBitmapUri", new BrsString(this.dividerUri));
-        const style = this.getFieldValueJS("vertFocusAnimationStyle") as string;
+        this.setValueSilent("focusBitmapUri", new BrsString(this.focusUri));
+        this.setValueSilent("wrapDividerBitmapUri", new BrsString(this.dividerUri));
+        const style = this.getValueJS("vertFocusAnimationStyle") as string;
         this.wrap = style.toLowerCase() === "fixedfocuswrap";
-        this.numRows = this.getFieldValueJS("numRows") as number;
-        this.numCols = this.getFieldValueJS("numColumns") as number;
+        this.numRows = this.getValueJS("numRows") as number;
+        this.numCols = this.getValueJS("numColumns") as number;
         this.hasNinePatch = true;
         this.focusField = "gridHasFocus";
     }
@@ -72,7 +72,7 @@ export class MarkupGrid extends ArrayGrid {
         }
         if (nextIndex >= 0 && nextIndex < this.content.length) {
             const itemIndex = this.metadata[nextIndex]?.index ?? nextIndex;
-            this.set(new BrsString("animateToItem"), new Int32(itemIndex));
+            this.setValue("animateToItem", new Int32(itemIndex));
             handled = true;
             this.currRow += this.wrap ? 0 : offset;
         }
@@ -88,13 +88,13 @@ export class MarkupGrid extends ArrayGrid {
         const offset = key === "left" ? -1 : 1;
         const nextIndex = this.focusIndex + offset;
         if (nextIndex >= 0 && nextIndex < this.content.length && this.itemComps?.[nextIndex]) {
-            const numCols = jsValueOf(this.getFieldValue("numColumns")) as number;
+            const numCols = jsValueOf(this.getValue("numColumns")) as number;
             const currentRow = Math.floor(this.focusIndex / numCols);
             const nextRow = Math.floor(nextIndex / numCols);
             const item = this.itemComps[nextIndex];
             if (currentRow === nextRow && item.nodeSubtype !== "Group") {
                 const itemIndex = this.metadata[nextIndex]?.index ?? nextIndex;
-                this.set(new BrsString("animateToItem"), new Int32(itemIndex));
+                this.setValue("animateToItem", new Int32(itemIndex));
                 handled = true;
             }
         }
@@ -114,21 +114,21 @@ export class MarkupGrid extends ArrayGrid {
             this.focusIndex = 0;
         }
         const hasSections = this.metadata.length > 0;
-        const itemCompName = this.getFieldValueJS("itemComponentName") as string;
+        const itemCompName = this.getValueJS("itemComponentName") as string;
         if (!customNodeExists(new BrsString(itemCompName))) {
             BrsDevice.stderr.write(`warning,[sg.markupgrid.create.fail] Failed to create markup item ${itemCompName}`);
             return;
         }
-        const itemSize = this.getFieldValueJS("itemSize") as number[];
+        const itemSize = this.getValueJS("itemSize") as number[];
         if (!itemSize?.[0] || !itemSize?.[1] || !this.numRows || !this.numCols) {
             return;
         }
         const itemRect = { ...rect, width: itemSize[0], height: itemSize[1] };
-        const spacing = this.getFieldValueJS("itemSpacing") as number[];
-        const columnWidths = this.getFieldValueJS("columnWidths") as number[];
-        const columnSpacings = this.getFieldValueJS("columnSpacings") as number[];
-        const rowHeights = this.getFieldValueJS("rowHeights") as number[];
-        const rowSpacings = this.getFieldValueJS("rowSpacings") as number[];
+        const spacing = this.getValueJS("itemSpacing") as number[];
+        const columnWidths = this.getValueJS("columnWidths") as number[];
+        const columnSpacings = this.getValueJS("columnSpacings") as number[];
+        const rowHeights = this.getValueJS("rowHeights") as number[];
+        const rowSpacings = this.getValueJS("rowSpacings") as number[];
         this.currRow = this.updateCurrRow();
         let lastIndex = -1;
         const displayRows = Math.min(Math.ceil(this.content.length / this.numCols), this.numRows);
