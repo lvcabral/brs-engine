@@ -301,7 +301,7 @@ export class Callable implements Brs.BrsValue, Brs.Boxable {
             let received = args[index];
 
             let coercedValue = tryCoerce(received, expected.type.kind);
-            if (coercedValue != null) {
+            if (coercedValue !== undefined) {
                 coercedArgs[index] = coercedValue;
             } else {
                 reasons.push({

@@ -12,11 +12,6 @@ export function tryCoerce(value: BrsType, target: ValueKind): BrsType | undefine
         return value;
     }
 
-    if (value.kind === ValueKind.Uninitialized) {
-        // allow uninitialized values to pass through unmodified, for handling by runtime code
-        return value;
-    }
-
     if (target === ValueKind.Object) {
         if (isBoxable(value)) {
             // boxable types should be promoted to their boxed equivalents whenever possible,

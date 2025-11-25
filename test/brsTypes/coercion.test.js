@@ -55,8 +55,8 @@ describe("type coercion", () => {
             expect(tryCoerce(input, target)).toBe(input);
         });
 
-        it("returns uninitialized for any target type", () => {
-            expect(tryCoerce(Uninitialized.Instance, ValueKind.String)).toBe(Uninitialized.Instance);
+        it("returns uninitialized for dynamic type", () => {
+            expect(tryCoerce(Uninitialized.Instance, ValueKind.Dynamic)).toBe(Uninitialized.Instance);
         });
 
         describe("boxing", () => {
