@@ -563,17 +563,9 @@ export class ZoomRowList extends ArrayGrid {
     private getRowMetrics(rowIndex: number): RowMetrics {
         const focusPercent = this.focusIndex === rowIndex ? 1 : 0;
         const baseRowHeight = this.resolveNumber(this.getValueJS("rowHeight"), rowIndex, this.defaultRowHeight);
-        const zoomRowHeight = this.resolveNumber(
-            this.getValueJS("rowZoomHeight"),
-            rowIndex,
-            this.defaultRowZoomHeight
-        );
+        const zoomRowHeight = this.resolveNumber(this.getValueJS("rowZoomHeight"), rowIndex, this.defaultRowZoomHeight);
         const rowHeight = this.lerp(baseRowHeight, zoomRowHeight, focusPercent);
-        const baseItemHeight = this.resolveNumber(
-            this.getValueJS("rowItemHeight"),
-            rowIndex,
-            this.defaultRowHeight
-        );
+        const baseItemHeight = this.resolveNumber(this.getValueJS("rowItemHeight"), rowIndex, this.defaultRowHeight);
         const zoomItemHeight = this.resolveNumber(
             this.getValueJS("rowItemZoomHeight"),
             rowIndex,
@@ -589,11 +581,7 @@ export class ZoomRowList extends ArrayGrid {
         const spacingX = this.getRowItemSpacing(rowIndex);
         const rawSpacingAfterRow = this.getValueJS("spacingAfterRow") as number;
         const spacingY = rawSpacingAfterRow > 0 ? rawSpacingAfterRow : this.defaultRowSpacing;
-        const offsetBase = this.resolveNumber(
-            this.getValueJS("rowItemYOffset"),
-            rowIndex,
-            this.defaultItemYOffset
-        );
+        const offsetBase = this.resolveNumber(this.getValueJS("rowItemYOffset"), rowIndex, this.defaultItemYOffset);
         const offsetZoom = this.resolveNumber(
             this.getValueJS("rowItemZoomYOffset"),
             rowIndex,
