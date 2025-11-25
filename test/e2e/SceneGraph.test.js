@@ -17,7 +17,7 @@ describe("SceneGraph node tests", () => {
     });
 
     test("update-children-test.brs", async () => {
-        await execute([resourceFile("update-children-test.brs")], outputStreams);
+        await execute([resourceFile("scenegraph", "update-children-test.brs")], outputStreams);
 
         expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
             "Parent title: Updated Parent",
@@ -34,7 +34,7 @@ describe("SceneGraph node tests", () => {
     });
 
     test("update-children-comprehensive.brs", async () => {
-        await execute([resourceFile("update-children-comprehensive.brs")], outputStreams);
+        await execute([resourceFile("scenegraph", "update-children-comprehensive.brs")], outputStreams);
 
         expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
             "Testing update() method with children feature",
@@ -107,7 +107,7 @@ describe("SceneGraph node tests", () => {
     });
 
     test("update-children-nodetypes.brs", async () => {
-        await execute([resourceFile("update-children-nodetypes.brs")], outputStreams);
+        await execute([resourceFile("scenegraph", "update-children-nodetypes.brs")], outputStreams);
 
         expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
             "Testing update() with children on different node types",
@@ -133,7 +133,7 @@ describe("SceneGraph node tests", () => {
     });
 
     test("update-children-subtype.brs", async () => {
-        await execute([resourceFile("update-children-subtype.brs")], outputStreams);
+        await execute([resourceFile("scenegraph", "update-children-subtype.brs")], outputStreams);
 
         expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
             "Testing update() method with children subtype feature",
@@ -204,6 +204,40 @@ describe("SceneGraph node tests", () => {
             "  Child 2 has fakeField: false",
             "",
             "All subtype tests completed successfully!",
+        ]);
+    });
+    test("update-fields.brs", async () => {
+        await execute([resourceFile("scenegraph", "update-fields.brs")], outputStreams);
+
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
+            "true",
+            "true",
+            "true",
+            "false",
+            "true",
+            "true",
+            "true",
+            "<UNINITIALIZED>",
+            `<Component: roSGNode:Node> =
+{
+    id: "TestNode"
+    focusable: false
+    focusedchild: <Component: roInvalid>
+    change: <Component: roAssociativeArray>
+    abc: "abc"
+    four: 4
+    one: 1
+    two: 2
+    xyz: "xyz"
+}`,
+            "TestNode",
+            " 1",
+            "invalid",
+            "<UNINITIALIZED>",
+            "true",
+            "TestNode",
+            "<UNINITIALIZED>",
+            "final",
         ]);
     });
 });

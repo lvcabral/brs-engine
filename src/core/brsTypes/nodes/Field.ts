@@ -163,8 +163,9 @@ export type FieldModel = {
     name: string;
     type: string;
     value?: string;
-    hidden?: boolean;
     alwaysNotify?: boolean;
+    system?: boolean;
+    hidden?: boolean;
 };
 
 export type FieldAlias = {
@@ -181,6 +182,7 @@ export class Field {
         private value: BrsType,
         private readonly type: FieldKind,
         private readonly alwaysNotify: boolean,
+        private readonly system: boolean = false,
         private hidden: boolean = false,
         private valueRef: boolean = false
     ) {
@@ -204,6 +206,10 @@ export class Field {
 
     setHidden(isHidden: boolean) {
         this.hidden = isHidden;
+    }
+
+    isSystem() {
+        return this.system;
     }
 
     isAlwaysNotify() {

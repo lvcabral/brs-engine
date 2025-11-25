@@ -54,10 +54,10 @@ export class Node extends RoSGNode implements BrsValue {
     rectToScene: Rect = { x: 0, y: 0, width: 0, height: 0 };
 
     readonly defaultFields: FieldModel[] = [
-        { name: "id", type: FieldKind.String },
-        { name: "focusedChild", type: FieldKind.Node, alwaysNotify: true },
-        { name: "focusable", type: FieldKind.Boolean },
-        { name: "change", type: FieldKind.AssocArray },
+        { name: "id", type: FieldKind.String, system: true },
+        { name: "focusable", type: FieldKind.Boolean, system: true },
+        { name: "focusedChild", type: FieldKind.Node, system: true, alwaysNotify: true },
+        { name: "change", type: FieldKind.AssocArray, system: true },
     ];
 
     constructor(initializedFields: AAMember[] = [], readonly nodeSubtype: string = "Node") {
@@ -81,17 +81,26 @@ export class Node extends RoSGNode implements BrsValue {
 
     toString(parent?: BrsType): string {
         const componentName = `${this.getComponentName()}:${this.nodeSubtype}`;
-
         if (parent) {
             return `<Component: ${componentName}>`;
         }
-
+        const systemFields: [string, Field][] = [];
+        const otherFields: [string, Field][] = [];
+        for (const [key, field] of this.fields.entries()) {
+            if (field.isHidden()) {
+                continue;
+            } else if (field.isSystem()) {
+                systemFields.push([key, field]);
+                continue;
+            }
+            otherFields.push([key, field]);
+        }
+        otherFields.sort((a, b) => a[0].localeCompare(b[0]));
+        const allFields = [...systemFields, ...otherFields];
         return [
             `<Component: ${componentName}> =`,
             "{",
-            ...Array.from(this.fields.entries())
-                .reverse()
-                .map(([key, value]) => `    ${key}: ${value.toString(this)}`),
+            ...allFields.map(([key, value]) => `    ${key}: ${value.toString(this)}`),
             "}",
         ].join("\n");
     }
@@ -147,7 +156,11 @@ export class Node extends RoSGNode implements BrsValue {
     }
 
     protected clearNodeFields() {
-        this.fields.clear();
+        for (const [name, field] of this.fields) {
+            if (!field.isSystem()) {
+                this.removeFieldEntry(name);
+            }
+        }
     }
 
     getNodeChildren(): BrsType[] {
@@ -285,7 +298,13 @@ export class Node extends RoSGNode implements BrsValue {
             if (fieldValue instanceof RoSGNode) {
                 fieldValue = fieldValue.deepCopy();
             }
-            const clonedField = new Field(fieldValue, field.getType(), field.isAlwaysNotify(), field.isHidden());
+            const clonedField = new Field(
+                fieldValue,
+                field.getType(),
+                field.isAlwaysNotify(),
+                field.isSystem(),
+                field.isHidden()
+            );
             clonedNode.fields.set(key, clonedField);
         }
         // Clone children if deep copy param is set
@@ -318,7 +337,13 @@ export class Node extends RoSGNode implements BrsValue {
                 } else {
                     fieldValue = fieldValue.deepCopy(visitedNodes);
                 }
-                fieldObject = new Field(fieldValue, field.getType(), field.isAlwaysNotify(), field.isHidden());
+                fieldObject = new Field(
+                    fieldValue,
+                    field.getType(),
+                    field.isAlwaysNotify(),
+                    field.isSystem(),
+                    field.isHidden()
+                );
             }
             copiedNode.fields.set(key, fieldObject);
         }
@@ -400,9 +425,12 @@ export class Node extends RoSGNode implements BrsValue {
         }
     }
 
-    protected setNodeFields(fieldsToSet: RoAssociativeArray, replace: boolean = false) {
+    protected setNodeFields(fieldsToSet: RoAssociativeArray, addFields: boolean) {
         for (const [key, value] of fieldsToSet.elements) {
-            if (replace || !this.fields.has(key.toLowerCase())) {
+            if (
+                (addFields && !this.fields.has(key.toLowerCase())) ||
+                (!addFields && this.fields.has(key.toLowerCase()))
+            ) {
                 this.setValue(key, value, false);
                 this.changed = true;
             }
@@ -689,7 +717,7 @@ export class Node extends RoSGNode implements BrsValue {
     protected removeFieldEntry(fieldName: string): boolean {
         const fieldKey = fieldName.toLowerCase();
         const field = this.fields.get(fieldKey);
-        if (!field) {
+        if (!field || field.isSystem()) {
             return false;
         }
         field.clearObservers();
@@ -961,7 +989,7 @@ export class Node extends RoSGNode implements BrsValue {
             if (fieldType) {
                 this.fields.set(
                     field.name.toLowerCase(),
-                    new Field(value, fieldType, !!field.alwaysNotify, field.hidden)
+                    new Field(value, fieldType, !!field.alwaysNotify, field.system, field.hidden)
                 );
             }
         }

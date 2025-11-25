@@ -15,7 +15,6 @@ export class Keyboard extends Group {
     readonly defaultFields: FieldModel[] = [
         { name: "text", type: "string", value: "" },
         { name: "keyColor", type: "color", value: "0xFFFFFFFF" },
-        { name: "focusable", type: "boolean", value: "true" },
         { name: "focusedKeyColor", type: "color", value: "0x000000FF" },
         { name: "keyboardBitmapUri", type: "uri", value: "" },
         { name: "focusBitmapUri", type: "uri", value: "" },
@@ -116,6 +115,7 @@ export class Keyboard extends Group {
         this.textEditBox.setTranslation([this.textEditX, 0]);
         this.textEditBox.setValueSilent("maxTextLength", new Int32(75));
         this.bmpBack = this.loadBitmap(`common:/images/${this.resolution}/keyboard_full.png`);
+        this.setValueSilent("focusable", BrsBoolean.True);
         this.setValueSilent("width", new Float(this.bmpBack!.width + this.widthOver));
         this.setValueSilent("height", new Float(this.bmpBack!.height + this.heightOver));
 

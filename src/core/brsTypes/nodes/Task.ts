@@ -1,7 +1,6 @@
 import {
     AAMember,
     BrsEvent,
-    BrsInvalid,
     BrsString,
     BrsType,
     brsValueOf,

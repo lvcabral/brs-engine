@@ -1,5 +1,5 @@
+import { AAMember, BrsBoolean } from "..";
 import { FieldModel } from "./Field";
-import { AAMember } from "../components/RoAssociativeArray";
 import { Group } from "./Group";
 
 export class Panel extends Group {
@@ -16,7 +16,6 @@ export class Panel extends Group {
         { name: "goBackCount", type: "integer", value: "1" },
         { name: "selectButtonMovesPanelForward", type: "boolean", value: "true" },
         { name: "isOffscreenLeft", type: "boolean", value: "false" },
-        { name: "focusable", type: "boolean", value: "true" },
     ];
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = "Panel") {
@@ -24,5 +23,6 @@ export class Panel extends Group {
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
+        this.setValueSilent("focusable", BrsBoolean.True);
     }
 }

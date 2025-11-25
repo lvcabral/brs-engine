@@ -7,7 +7,6 @@ import {
     Callable,
     Dialog,
     Group,
-    isBrsString,
     Node,
     RoArray,
     RoMessagePort,
@@ -30,7 +29,6 @@ export class Scene extends Group {
         { name: "dialog", type: FieldKind.Node },
         { name: "currentDesignResolution", type: FieldKind.AssocArray },
         { name: "palette", type: FieldKind.Node },
-        { name: "focusable", type: FieldKind.Boolean, value: "true" },
     ];
     readonly ui = { width: 1280, height: 720, resolution: "HD" };
     dialog?: Dialog | StandardDialog;
@@ -43,6 +41,7 @@ export class Scene extends Group {
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
 
+        this.setValueSilent("focusable", BrsBoolean.True);
         this.setDesignResolution("HD", "");
         this.subSearch = "";
         this.subReplace = "";

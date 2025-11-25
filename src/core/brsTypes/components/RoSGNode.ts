@@ -224,12 +224,11 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter) => {
             this.clearNodeFields();
-            return BrsInvalid.Instance;
+            return Uninitialized.Instance;
         },
     });
 
     /** Removes a given item from the node */
-    // ToDo: Built-in fields shouldn't be removed
     private readonly delete = new Callable("delete", {
         signature: {
             args: [new StdlibArgument("str", ValueKind.String)],
@@ -252,7 +251,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue {
         impl: (interpreter: Interpreter, key: BrsString, value: BrsType) => {
             this.location = interpreter.formatLocation();
             this.setValue(key.value, value);
-            return BrsInvalid.Instance;
+            return Uninitialized.Instance;
         },
     });
 
@@ -286,7 +285,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, obj: BrsType) => {
             this.appendNodeFields(obj);
-            return BrsInvalid.Instance;
+            return Uninitialized.Instance;
         },
     });
 
@@ -358,7 +357,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue {
                 return BrsBoolean.False;
             }
             this.location = interpreter.formatLocation();
-            this.setNodeFields(fields);
+            this.setNodeFields(fields, true);
             return BrsBoolean.True;
         },
     });
@@ -667,7 +666,6 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue {
     });
 
     /** Removes the given field from the node */
-    /** TODO: node built-in fields shouldn't be removable (i.e. id, change, focusable,) */
     private readonly removeField = new Callable("removeField", {
         signature: {
             args: [new StdlibArgument("fieldName", ValueKind.String)],
@@ -704,7 +702,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue {
         },
     });
 
-    /** Updates the value of an existing field only if the types match. */
+    /** Updates the value of an existing field only if the field exists and types match. */
     private readonly setField = new Callable("setField", {
         signature: {
             args: [new StdlibArgument("fieldName", ValueKind.String), new StdlibArgument("value", ValueKind.Dynamic)],
@@ -721,25 +719,26 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue {
                 BrsDevice.stderr.write(
                     `warning,BRIGHTSCRIPT: ERROR: roSGNode.setField: Type mismatch: ${this.location}`
                 );
-                return BrsBoolean.False;
+                // Roku always returns true if the field exists
+                return BrsBoolean.True;
             }
             this.setValue(fieldName.value, value);
             return BrsBoolean.True;
         },
     });
 
-    /** Updates the value of multiple existing field only if the types match. */
+    /** Updates the value of multiple existing field only if the field exists and types match. */
     private readonly setFields = new Callable("setFields", {
         signature: {
             args: [new StdlibArgument("fields", ValueKind.Object)],
             returns: ValueKind.Boolean,
         },
-        impl: (interpreter: Interpreter, fields: RoAssociativeArray) => {
+        impl: (interpreter: Interpreter, fields: BrsComponent) => {
             if (!(fields instanceof RoAssociativeArray)) {
                 return BrsBoolean.False;
             }
             this.location = interpreter.formatLocation();
-            this.setNodeFields(fields, true);
+            this.setNodeFields(fields, false);
             return BrsBoolean.True;
         },
     });

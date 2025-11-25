@@ -1,5 +1,5 @@
 import { FieldModel } from "./Field";
-import { AAMember, BrsString, Float, Label, Poster, sgRoot, Font } from "..";
+import { AAMember, BrsString, Float, Label, Poster, sgRoot, Font, BrsBoolean } from "..";
 import { Group } from "./Group";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D } from "../interfaces/IfDraw2D";
@@ -21,7 +21,6 @@ export class Button extends Group {
         { name: "height", type: "float", value: "64" },
         { name: "showFocusFootprint", type: "boolean", value: "false" },
         { name: "buttonSelected", type: "boolean", value: "false", alwaysNotify: true },
-        { name: "focusable", type: "boolean", value: "true" },
     ];
     static readonly focusUri = "common:/images/focus_list.9.png";
     static readonly footprintUri = "common:/images/focus_footprint.9.png";
@@ -92,6 +91,7 @@ export class Button extends Group {
                 "right"
             );
         }
+        this.setValueSilent("focusable", BrsBoolean.True);
         this.setValueSilent("focusBitmapUri", new BrsString(Button.focusUri));
         this.setValueSilent("focusFootprintBitmapUri", new BrsString(Button.footprintUri));
     }
