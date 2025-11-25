@@ -298,7 +298,13 @@ export class Node extends RoSGNode implements BrsValue {
             if (fieldValue instanceof RoSGNode) {
                 fieldValue = fieldValue.deepCopy();
             }
-            const clonedField = new Field(fieldValue, field.getType(), field.isAlwaysNotify(), field.isHidden());
+            const clonedField = new Field(
+                fieldValue,
+                field.getType(),
+                field.isAlwaysNotify(),
+                field.isSystem(),
+                field.isHidden()
+            );
             clonedNode.fields.set(key, clonedField);
         }
         // Clone children if deep copy param is set
@@ -331,7 +337,13 @@ export class Node extends RoSGNode implements BrsValue {
                 } else {
                     fieldValue = fieldValue.deepCopy(visitedNodes);
                 }
-                fieldObject = new Field(fieldValue, field.getType(), field.isAlwaysNotify(), field.isHidden());
+                fieldObject = new Field(
+                    fieldValue,
+                    field.getType(),
+                    field.isAlwaysNotify(),
+                    field.isSystem(),
+                    field.isHidden()
+                );
             }
             copiedNode.fields.set(key, fieldObject);
         }
