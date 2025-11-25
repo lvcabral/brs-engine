@@ -29,9 +29,9 @@ export class RadioButtonList extends LabelList {
         }
         const checkOnSelect = jsValueOf(this.getFieldValue("checkOnSelect"));
         if (checkOnSelect) {
-            this.set(new BrsString("checkedItem"), new Int32(this.focusIndex));
+            this.setValue("checkedItem", new Int32(this.focusIndex));
         }
-        this.set(new BrsString("itemSelected"), new Int32(this.focusIndex));
+        this.setValue("itemSelected", new Int32(this.focusIndex));
         return true;
     }
 

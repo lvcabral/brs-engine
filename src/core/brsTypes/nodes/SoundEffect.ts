@@ -27,17 +27,15 @@ export class SoundEffect extends Node {
         this.audioId = -1;
     }
 
-    set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
-        if (!isBrsString(index)) {
-            throw new Error("RoSGNode indexes must be strings");
-        }
-        const fieldName = index.getValue().toLowerCase();
+    setValue(index: string, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
+        const fieldName = index.toLowerCase();
         if (fieldName === "control" && isBrsString(value)) {
             const validControl = ["play", "stop"];
             const control = value.getValue().toLowerCase();
             if (!validControl.includes(control) || this.audioId < 0) {
                 value = new BrsString("none");
-                return super.set(index, value, alwaysNotify, kind);
+                super.setValue(index, value, alwaysNotify, kind);
+                return;
             }
             if (control === "play") {
                 this.play();
@@ -51,9 +49,9 @@ export class SoundEffect extends Node {
             const uri = value.getValue().toLowerCase();
             this.setUri(uri);
         } else if (fieldName === "volume" && isBrsNumber(value) && (jsValueOf(value) < 0 || jsValueOf(value) > 100)) {
-            return BrsInvalid.Instance;
+            return;
         }
-        return super.set(index, value, alwaysNotify, kind);
+        super.setValue(index, value, alwaysNotify, kind);
     }
 
     getAudioId() {
@@ -85,7 +83,7 @@ export class SoundEffect extends Node {
                 this.state = "toomanysounds";
                 break;
         }
-        super.set(new BrsString("state"), new BrsString(this.state));
+        super.setValue("state", new BrsString(this.state));
     }
 
     private setUri(uri: string) {
@@ -99,14 +97,14 @@ export class SoundEffect extends Node {
                 postMessage(`sfx,new,${uri},${this.audioId}`);
                 BrsDevice.sfx.push(uri);
             }
-            super.set(new BrsString("loadStatus"), new BrsString("ready"));
+            super.setValue("loadStatus", new BrsString("ready"));
         } else {
             if (BrsDevice.isDevMode) {
                 BrsDevice.stderr.write(`warning,Invalid sound effect URI: ${uri}`);
             }
             this.uri = "";
             this.audioId = -1;
-            super.set(new BrsString("loadStatus"), new BrsString("failed"));
+            super.setValue("loadStatus", new BrsString("failed"));
             this.setState(MediaEvent.FAILED);
         }
     }

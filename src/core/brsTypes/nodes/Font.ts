@@ -41,16 +41,12 @@ export class Font extends Node {
         this.fontRegistry = getFontRegistry();
     }
 
-    set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
-        if (!isBrsString(index)) {
-            throw new Error("RoSGNode indexes must be strings");
-        }
-
-        const fieldName = index.getValue().toLowerCase();
+    setValue(index: string, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
+        const fieldName = index.toLowerCase();
         if (fieldName === "uri" && isBrsString(value)) {
             getFontRegistry().registerFont(value.getValue(), true);
         }
-        return super.set(index, value, alwaysNotify, kind);
+        super.setValue(index, value, alwaysNotify, kind);
     }
 
     getUri() {

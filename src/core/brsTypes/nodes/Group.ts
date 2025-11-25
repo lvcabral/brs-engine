@@ -64,12 +64,8 @@ export class Group extends Node {
         this.isDirty = true;
     }
 
-    set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
-        if (!isBrsString(index)) {
-            throw new Error("RoSGNode indexes must be strings");
-        }
-
-        const mapKey = index.getValue().toLowerCase();
+    setValue(index: string, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
+        const mapKey = index.toLowerCase();
         const field = this.fields.get(mapKey);
 
         if (field?.getType() === FieldKind.Font && isBrsString(value)) {
@@ -85,11 +81,11 @@ export class Group extends Node {
             if (strColor.length) {
                 value = new Int32(convertHexColor(strColor));
             } else {
-                return BrsInvalid.Instance;
+                return;
             }
         }
         this.isDirty = true;
-        return super.set(index, value, alwaysNotify, kind);
+        super.setValue(index, value, alwaysNotify, kind);
     }
 
     setFieldValue(fieldName: string, value: BrsType, alwaysNotify?: boolean): void {
@@ -111,14 +107,14 @@ export class Group extends Node {
     protected addPoster(uri: string, translation: number[], width?: number, height?: number) {
         const poster = new Poster();
         if (uri) {
-            poster.set(new BrsString("uri"), new BrsString(uri));
+            poster.setValue("uri", new BrsString(uri));
         }
         poster.setTranslation(translation);
         if (width !== undefined) {
-            poster.set(new BrsString("width"), new Float(width));
+            poster.setFieldValue("width", new Float(width));
         }
         if (height !== undefined) {
-            poster.set(new BrsString("height"), new Float(height));
+            poster.setFieldValue("height", new Float(height));
         }
         this.appendChildToParent(poster);
         return poster;
@@ -146,20 +142,20 @@ export class Group extends Node {
             }
         }
         if (width !== undefined) {
-            label.set(new BrsString("width"), new Float(width));
+            label.setFieldValue("width", new Float(width));
         }
         if (height !== undefined) {
-            label.set(new BrsString("height"), new Float(height));
+            label.setFieldValue("height", new Float(height));
         }
         label.setTranslation(translation);
         if (vertAlign) {
-            label.set(new BrsString("vertalign"), new BrsString(vertAlign));
+            label.setFieldValue("vertalign", new BrsString(vertAlign));
         }
         if (horizAlign) {
-            label.set(new BrsString("horizalign"), new BrsString(horizAlign));
+            label.setFieldValue("horizalign", new BrsString(horizAlign));
         }
         if (wrap !== undefined) {
-            label.set(new BrsString("wrap"), BrsBoolean.from(wrap));
+            label.setFieldValue("wrap", BrsBoolean.from(wrap));
         }
         this.appendChildToParent(label);
         return label;
@@ -187,23 +183,23 @@ export class Group extends Node {
             }
         }
         if (maxWidth !== undefined) {
-            label.set(new BrsString("maxWidth"), new Float(maxWidth));
+            label.setFieldValue("maxWidth", new Float(maxWidth));
         }
         if (height !== undefined) {
-            label.set(new BrsString("height"), new Float(height));
+            label.setFieldValue("height", new Float(height));
         }
         label.setTranslation(translation);
         if (vertAlign) {
-            label.set(new BrsString("vertalign"), new BrsString(vertAlign));
+            label.setFieldValue("vertalign", new BrsString(vertAlign));
         }
         if (horizAlign) {
-            label.set(new BrsString("horizalign"), new BrsString(horizAlign));
+            label.setFieldValue("horizalign", new BrsString(horizAlign));
         }
         if (speed !== undefined) {
-            label.set(new BrsString("scrollSpeed"), new Int32(speed));
+            label.setFieldValue("scrollSpeed", new Int32(speed));
         }
         if (repeat !== undefined) {
-            label.set(new BrsString("repeatCount"), new Int32(repeat));
+            label.setFieldValue("repeatCount", new Int32(repeat));
         }
         this.appendChildToParent(label);
         return label;
@@ -213,10 +209,10 @@ export class Group extends Node {
         const rectangle = new Rectangle();
         this.copyField(rectangle, "color", colorField);
         if (width !== undefined) {
-            rectangle.set(new BrsString("width"), new Float(width));
+            rectangle.setFieldValue("width", new Float(width));
         }
         if (height !== undefined) {
-            rectangle.set(new BrsString("height"), new Float(height));
+            rectangle.setFieldValue("height", new Float(height));
         }
         rectangle.setTranslation(translation);
         this.appendChildToParent(rectangle);
@@ -238,7 +234,7 @@ export class Group extends Node {
     setTranslation(translation: number[]) {
         if (translation.length === 2) {
             const newTrans = [new Float(translation[0]), new Float(translation[1])];
-            this.set(new BrsString("translation"), new RoArray(newTrans));
+            this.setValue("translation", new RoArray(newTrans));
         }
     }
 

@@ -38,11 +38,8 @@ export class Label extends Group {
         }
     }
 
-    set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
-        if (!isBrsString(index)) {
-            throw new Error("RoSGNode indexes must be strings");
-        }
-        const fieldName = index.getValue().toLowerCase();
+    setValue(index: string, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
+        const fieldName = index.toLowerCase();
         const resetFields = ["text", "font", "width", "height", "numlines", "maxlines", "wrap", "linespacing"];
         if (resetFields.includes(fieldName)) {
             // Reset the flag if any relevant field changed and the label is not re-measured yet
@@ -53,9 +50,8 @@ export class Label extends Group {
         if (!this.isDirty && fieldName === "text" && this.getFieldValueJS("text") === value.toString()) {
             setDirty = false;
         }
-        const retValue = super.set(index, value, alwaysNotify, kind);
+        super.setValue(index, value, alwaysNotify, kind);
         this.isDirty = setDirty;
-        return retValue;
     }
 
     getMeasured() {

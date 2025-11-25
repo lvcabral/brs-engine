@@ -88,7 +88,7 @@ export class KeyboardDialog extends Dialog {
         const optionsDialog = this.getFieldValueJS("optionsDialog") as boolean;
         let handled = false;
         if (press && (key === "back" || (key === "options" && optionsDialog))) {
-            this.set(new BrsString("close"), BrsBoolean.True);
+            this.setValue("close", BrsBoolean.True);
             this.focus = "";
             this.keyboard.textEditBox.setActive(false);
             this.keyboard.textEditBox.moveCursor(0);
@@ -119,7 +119,7 @@ export class KeyboardDialog extends Dialog {
         this.height = this.minHeight;
         const width = this.getFieldValueJS("width") as number;
         if (width) {
-            this.background.set(new BrsString("width"), new Float(width));
+            this.background.setValue("width", new Float(width));
             this.width = width;
         }
         this.copyField(this.background, "uri", "backgroundUri");
@@ -165,7 +165,7 @@ export class KeyboardDialog extends Dialog {
         const offsetY = newY - this.dialogTrans[1];
         this.dialogTrans[1] = newY;
         this.background.setTranslation(this.dialogTrans);
-        this.background.set(new BrsString("height"), new Float(this.height));
+        this.background.setValue("height", new Float(this.height));
         if (iconUri) {
             this.iconTrans[1] += offsetY;
             this.icon.setTranslation(this.iconTrans);

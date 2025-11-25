@@ -121,26 +121,26 @@ export class Button extends Group {
         const footprint = showFootprint ? "focusFootprintBitmapUri" : "";
         if (nodeFocus || footprint) {
             const backgroundUri = this.getFieldValue(nodeFocus ? "focusBitmapUri" : footprint);
-            this.background.set(new BrsString("uri"), backgroundUri);
+            this.background.setValue("uri", backgroundUri);
         } else {
-            this.background.set(new BrsString("uri"), new BrsString(""));
+            this.background.setValue("uri", new BrsString(""));
         }
-        this.background.set(new BrsString("width"), new Float(this.width));
-        this.background.set(new BrsString("height"), new Float(height));
+        this.background.setValue("width", new Float(this.width));
+        this.background.setValue("height", new Float(height));
 
         const color = this.getFieldValue(nodeFocus ? "focusedTextColor" : "textColor");
         this.textLabel.setTranslation(labelTrans);
-        this.textLabel.set(new BrsString("width"), new Float(this.labelWidth));
-        this.textLabel.set(new BrsString("color"), color);
-        this.textLabel.set(new BrsString("font"), font);
-        this.textLabel.set(new BrsString("text"), new BrsString(text));
+        this.textLabel.setValue("width", new Float(this.labelWidth));
+        this.textLabel.setValue("color", color);
+        this.textLabel.setValue("font", font);
+        this.textLabel.setValue("text", new BrsString(text));
 
         const iconTrans = [this.margin, height / 2 - this.iconHeight / 2];
         this.icon.setTranslation(iconTrans);
-        this.icon.set(new BrsString("width"), new Float(this.iconWidth));
-        this.icon.set(new BrsString("height"), new Float(this.iconHeight));
-        this.icon.set(new BrsString("uri"), new BrsString(iconUri));
-        this.icon.set(new BrsString("blendColor"), color);
+        this.icon.setValue("width", new Float(this.iconWidth));
+        this.icon.setValue("height", new Float(this.iconHeight));
+        this.icon.setValue("uri", new BrsString(iconUri));
+        this.icon.setValue("blendColor", color);
     }
 
     private updateIconSize(uri: string) {

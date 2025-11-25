@@ -7,17 +7,13 @@ export class Global extends Node {
         this.registerInitializedFields(members);
     }
 
-    set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind, sync: boolean = true) {
-        if (!isBrsString(index)) {
-            throw new Error("RoSGNode indexes must be strings");
-        }
-        const fieldName = index.getValue().toLowerCase();
-        const result = super.set(index, value, alwaysNotify, kind);
+    setValue(index: string, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind, sync: boolean = true) {
+        const fieldName = index.toLowerCase();
+        super.setValue(index, value, alwaysNotify, kind);
         // Notify other threads of field changes
         if (sync && sgRoot.tasks.length > 0 && this.changed && this.fields.has(fieldName)) {
             this.sendThreadUpdate(sgRoot.taskId, "global", fieldName, value);
             if (sgRoot.inTaskThread()) this.changed = false;
         }
-        return result;
     }
 }

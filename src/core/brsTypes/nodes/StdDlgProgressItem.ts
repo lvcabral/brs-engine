@@ -9,7 +9,6 @@ import {
     StandardDialog,
     StdDlgContentArea,
     Float,
-    RoArray,
 } from "..";
 import { Interpreter } from "../..";
 import { IfDraw2D, Rect } from "../interfaces/IfDraw2D";
@@ -32,7 +31,7 @@ export class StdDlgProgressItem extends Group {
         this.spinner = new BusySpinner();
         this.gap = this.resolution === "FHD" ? 30 : 20;
         this.spinner.setPosterUri(`common:/images/${this.resolution}/spinner.png`);
-        this.spinner.set(new BrsString("control"), new BrsString("start"));
+        this.spinner.setValue("control", new BrsString("start"));
         this.appendChildToParent(this.spinner);
         this.label = new Label();
         this.appendChildToParent(this.label);
@@ -69,10 +68,10 @@ export class StdDlgProgressItem extends Group {
             const labelTrans = [spinnerSize.width + this.gap, (spinnerSize.height - labelSize.height) / 2];
             this.label.setTranslation(labelTrans);
             boundingRect.width = spinnerSize.width + labelSize.width + this.gap;
-            this.set(new BrsString("width"), new Float(boundingRect.width));
+            this.setValue("width", new Float(boundingRect.width));
         } else if (labelSize.width > 0 && labelSize.height > 0) {
             boundingRect.width = labelSize.width;
-            this.set(new BrsString("width"), new Float(boundingRect.width));
+            this.setValue("width", new Float(boundingRect.width));
         }
         opacity = opacity * this.getOpacity();
         this.updateBoundingRects(boundingRect, origin, angle);

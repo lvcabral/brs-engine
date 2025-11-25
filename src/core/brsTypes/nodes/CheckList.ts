@@ -51,11 +51,8 @@ export class CheckList extends LabelList {
         return super.get(index);
     }
 
-    set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
-        if (!isBrsString(index)) {
-            throw new Error("RoSGNode indexes must be strings");
-        }
-        const fieldName = index.getValue().toLowerCase();
+    setValue(index: string, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
+        const fieldName = index.toLowerCase();
         if (fieldName === "checkedstate") {
             let states: boolean[] = [];
             let checkedState = this.getFieldValue("checkedState");
@@ -71,10 +68,10 @@ export class CheckList extends LabelList {
                 }
                 value = brsValueOf(states);
             } else {
-                return BrsInvalid.Instance;
+                return;
             }
         }
-        return super.set(index, value, alwaysNotify, kind);
+        super.setValue(index, value, alwaysNotify, kind);
     }
 
     protected handleOK(press: boolean) {
@@ -86,9 +83,9 @@ export class CheckList extends LabelList {
         if (checkOnSelect && checkedState instanceof RoArray) {
             const states = jsValueOf(checkedState);
             states[this.focusIndex] = !states[this.focusIndex];
-            this.set(new BrsString("checkedState"), brsValueOf(states));
+            this.setValue("checkedState", brsValueOf(states));
         }
-        this.set(new BrsString("itemSelected"), new Int32(this.focusIndex));
+        this.setValue("itemSelected", new Int32(this.focusIndex));
         return true;
     }
 

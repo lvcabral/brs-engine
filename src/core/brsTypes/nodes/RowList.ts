@@ -107,16 +107,13 @@ export class RowList extends ArrayGrid {
         this.rowScrollOffset[0] = 0;
     }
 
-    set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
-        if (!isBrsString(index)) {
-            throw new Error("RoSGNode indexes must be strings");
-        }
-        const fieldName = index.getValue().toLowerCase();
+    setValue(index: string, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
+        const fieldName = index.toLowerCase();
         if (fieldName === "rowfocusanimationstyle") {
             const style = value.toString().toLowerCase();
             if (!["fixedfocuswrap", "floatingfocus", "fixedfocus"].includes(style)) {
                 // Invalid rowFocusAnimationStyle
-                return BrsInvalid.Instance;
+                return;
             }
         } else if (fieldName === "jumptorowitem" && value instanceof RoArray) {
             const rowItem = jsValueOf(value) as any[];
@@ -125,9 +122,9 @@ export class RowList extends ArrayGrid {
             }
         } else if (["horizfocusanimationstyle", "numcolumns"].includes(fieldName)) {
             // Invalid fields for RowList
-            return BrsInvalid.Instance;
+            return;
         }
-        return super.set(index, value, alwaysNotify, kind);
+        super.setValue(index, value, alwaysNotify, kind);
     }
 
     protected setFocusedItem(rowIndex: number, colIndex: number = -1) {
@@ -141,7 +138,7 @@ export class RowList extends ArrayGrid {
         const isChangingRow = oldRow !== rowIndex;
 
         if (isChangingRow) {
-            super.set(new BrsString("itemUnfocused"), new Int32(oldRow));
+            super.setValue("itemUnfocused", new Int32(oldRow));
         }
 
         this.focusIndex = rowIndex;
@@ -204,8 +201,8 @@ export class RowList extends ArrayGrid {
             }
         }
 
-        super.set(new BrsString("itemFocused"), new Int32(rowIndex));
-        super.set(new BrsString("rowItemFocused"), new RoArray([new Int32(rowIndex), new Int32(colIndex)]));
+        super.setValue("itemFocused", new Int32(rowIndex));
+        super.setValue("rowItemFocused", new RoArray([new Int32(rowIndex), new Int32(colIndex)]));
     }
 
     protected handleUpDown(key: string) {
@@ -263,7 +260,7 @@ export class RowList extends ArrayGrid {
 
             const rowItem = new RoArray([new Int32(nextRow), new Int32(targetColIndex)]);
             this.currRow += this.wrap ? 0 : offset; // Update currRow before setFocusedItem
-            this.set(new BrsString("jumpToRowItem"), rowItem);
+            this.setValue("jumpToRowItem", rowItem);
             handled = true;
         }
         return handled;
@@ -305,7 +302,7 @@ export class RowList extends ArrayGrid {
             const currentRow = this.focusIndex;
             const currentCol = this.rowFocus[currentRow];
             if (currentCol >= 0) {
-                this.set(new BrsString("rowItemSelected"), brsValueOf([currentRow, currentCol]));
+                this.setValue("rowItemSelected", brsValueOf([currentRow, currentCol]));
             }
         }
         return false;
@@ -346,7 +343,7 @@ export class RowList extends ArrayGrid {
 
         if (nextCol !== this.rowFocus[currentRow]) {
             this.rowFocus[currentRow] = nextCol;
-            super.set(new BrsString("rowItemFocused"), new RoArray([new Int32(currentRow), new Int32(nextCol)]));
+            super.setValue("rowItemFocused", new RoArray([new Int32(currentRow), new Int32(nextCol)]));
             return true;
         }
         return false;
@@ -362,7 +359,7 @@ export class RowList extends ArrayGrid {
         }
 
         this.rowFocus[currentRow] = nextCol;
-        super.set(new BrsString("rowItemFocused"), new RoArray([new Int32(currentRow), new Int32(nextCol)]));
+        super.setValue("rowItemFocused", new RoArray([new Int32(currentRow), new Int32(nextCol)]));
         return true;
     }
 
@@ -373,7 +370,7 @@ export class RowList extends ArrayGrid {
         if (nextCol !== this.rowFocus[currentRow]) {
             this.rowFocus[currentRow] = nextCol;
             this.rowScrollOffset[currentRow] = nextCol;
-            super.set(new BrsString("rowItemFocused"), new RoArray([new Int32(currentRow), new Int32(nextCol)]));
+            super.setValue("rowItemFocused", new RoArray([new Int32(currentRow), new Int32(nextCol)]));
             return true;
         }
         return false;
@@ -408,10 +405,8 @@ export class RowList extends ArrayGrid {
         }
 
         if (handled) {
-            super.set(
-                new BrsString("rowItemFocused"),
-                new RoArray([new Int32(currentRow), new Int32(this.rowFocus[currentRow])])
-            );
+            const value = new RoArray([new Int32(currentRow), new Int32(this.rowFocus[currentRow])]);
+            super.setValue("rowItemFocused", value);
         }
         return handled;
     }
@@ -741,18 +736,18 @@ export class RowList extends ArrayGrid {
             }
         }
         if (content.changed) {
-            this.rowItemComps[rowIndex][colIndex].set(new BrsString("itemContent"), content, true);
+            this.rowItemComps[rowIndex][colIndex].setValue("itemContent", content, true);
             content.changed = false;
         }
 
         // Update the component's focus state
         const itemComp = this.rowItemComps[rowIndex][colIndex];
         if (itemComp) {
-            itemComp.set(new BrsString("itemHasFocus"), BrsBoolean.from(focused));
-            itemComp.set(new BrsString("focusPercent"), new Float(focused ? 1 : 0));
-            itemComp.set(new BrsString("rowHasFocus"), BrsBoolean.from(this.focusIndex === rowIndex));
-            itemComp.set(new BrsString("rowFocusPercent"), new Float(this.focusIndex === rowIndex ? 1 : 0));
-            itemComp.set(new BrsString(this.focusField), BrsBoolean.from(nodeFocus));
+            itemComp.setValue("itemHasFocus", BrsBoolean.from(focused));
+            itemComp.setValue("focusPercent", new Float(focused ? 1 : 0));
+            itemComp.setValue("rowHasFocus", BrsBoolean.from(this.focusIndex === rowIndex));
+            itemComp.setValue("rowFocusPercent", new Float(this.focusIndex === rowIndex ? 1 : 0));
+            itemComp.setValue(this.focusField, BrsBoolean.from(nodeFocus));
         }
 
         const drawFocus = this.getFieldValueJS("drawFocusFeedback");

@@ -152,22 +152,19 @@ export class Dialog extends Group {
         this.appendChildToParent(this.buttonGroup);
     }
 
-    set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
-        if (!isBrsString(index)) {
-            throw new Error("RoSGNode indexes must be strings");
-        }
-        const fieldName = index.getValue().toLowerCase();
+    setValue(index: string, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
+        const fieldName = index.toLowerCase();
         if (fieldName === "focusbutton") {
             const buttons = this.getFieldValueJS("buttons");
             const newIndex = jsValueOf(value);
             if (typeof newIndex === "number" && newIndex >= 0 && newIndex < buttons.length) {
                 this.focusIndex = newIndex;
-                super.set(new BrsString("buttonFocused"), value);
+                super.setValue("buttonFocused", value);
             }
         } else if (fieldName === "close") {
-            index = new BrsString("wasClosed");
+            index = "wasClosed";
             value = BrsBoolean.True;
-            this.set(new BrsString("visible"), BrsBoolean.False);
+            this.setValue("visible", BrsBoolean.False);
             if (sgRoot.scene?.dialog === this) {
                 sgRoot.scene.dialog = undefined;
             }
@@ -177,10 +174,10 @@ export class Dialog extends Group {
                 this.lastFocus = undefined;
             }
         } else if (fieldName === "buttons") {
-            this.buttonGroup.set(index, value);
-            return BrsInvalid.Instance;
+            this.buttonGroup.setValue(index, value);
+            return;
         }
-        return super.set(index, value, alwaysNotify, kind);
+        super.setValue(index, value, alwaysNotify, kind);
     }
 
     setNodeFocus(_: Interpreter, focusOn: boolean): boolean {
@@ -196,7 +193,7 @@ export class Dialog extends Group {
         const optionsDialog = this.getFieldValueJS("optionsDialog") as boolean;
         let handled = false;
         if (press && (key === "back" || (key === "options" && optionsDialog))) {
-            this.set(new BrsString("close"), BrsBoolean.True);
+            this.setValue("close", BrsBoolean.True);
             handled = true;
         } else if (this.hasButtons) {
             handled = this.buttonGroup.handleKey(key, press);
@@ -234,7 +231,7 @@ export class Dialog extends Group {
         this.height = this.minHeight;
         const width = this.getFieldValueJS("width") as number;
         if (width) {
-            this.background.set(new BrsString("width"), new Float(width));
+            this.background.setValue("width", new Float(width));
             this.width = width;
         }
         this.copyField(this.background, "uri", "backgroundUri");
@@ -273,7 +270,7 @@ export class Dialog extends Group {
         const offsetY = newY - this.dialogTrans[1];
         this.dialogTrans[1] = newY;
         this.background.setTranslation(this.dialogTrans);
-        this.background.set(new BrsString("height"), new Float(this.height));
+        this.background.setValue("height", new Float(this.height));
         if (iconUri) {
             this.iconTrans[1] += offsetY;
             this.icon.setTranslation(this.iconTrans);

@@ -621,7 +621,7 @@ function addChildren(interpreter: Interpreter, node: Node, typeDef: ComponentDef
             for (let [key, value] of Object.entries(child.fields)) {
                 const field = nodeFields.get(key.toLowerCase());
                 if (field) {
-                    newChild.set(new BrsString(key), getBrsValueFromFieldType(field.getType(), value));
+                    newChild.setValue(key, getBrsValueFromFieldType(field.getType(), value));
                 }
             }
             if (child.fields?.role) {
@@ -631,7 +631,7 @@ function addChildren(interpreter: Interpreter, node: Node, typeDef: ComponentDef
                         // we need to add the child's own children
                         addChildren(interpreter, newChild, child);
                     }
-                    node.set(new BrsString(targetField), newChild, false);
+                    node.setValue(targetField, newChild, false);
                 } else {
                     throw new Error(`Role/Field ${targetField} does not exist in ${node.getId()} node`);
                 }

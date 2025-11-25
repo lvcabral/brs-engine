@@ -128,20 +128,17 @@ export class ArrayGrid extends Group {
         this.focusField = "listHasFocus";
     }
 
-    set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
-        if (!isBrsString(index)) {
-            throw new Error("RoSGNode indexes must be strings");
-        }
-        const fieldName = index.getValue().toLowerCase();
+    setValue(index: string, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
+        const fieldName = index.toLowerCase();
         if (fieldName === "content" && value instanceof ContentNode) {
-            super.set(index, value, alwaysNotify, kind);
+            super.setValue(index, value, alwaysNotify, kind);
             this.itemComps.length = 0;
             this.refreshContent();
             const focusedIndex = this.getFieldValueJS("itemFocused") as number;
             if (value.getNodeChildren().length && focusedIndex < 0) {
                 this.setFocusedItem(0);
             }
-            return BrsInvalid.Instance;
+            return;
         } else if (["jumptoitem", "animatetoitem"].includes(fieldName) && isBrsNumber(value)) {
             this.setFocusedItem(jsValueOf(value));
         } else if (fieldName === "numrows" && isBrsNumber(value)) {
@@ -154,7 +151,7 @@ export class ArrayGrid extends Group {
                 this.wrap = style === "fixedfocuswrap";
             } else {
                 // Invalid vertFocusAnimationStyle
-                return BrsInvalid.Instance;
+                return;
             }
         } else if (
             fieldName === "horizfocusanimationstyle" &&
@@ -162,15 +159,14 @@ export class ArrayGrid extends Group {
             !["fixedfocuswrap", "floatingfocus"].includes(value.toString().toLowerCase())
         ) {
             // Invalid horizFocusAnimationStyle
-            return BrsInvalid.Instance;
+            return;
         }
-        super.set(index, value, alwaysNotify, kind);
+        super.setValue(index, value, alwaysNotify, kind);
         const rowFields = ["vertfocusanimationstyle", "numrows", "focusrow"];
         // Update the current row if some fields changed
         if (rowFields.includes(fieldName)) {
             this.currRow = this.updateCurrRow();
         }
-        return BrsInvalid.Instance;
     }
 
     protected setFocusedItem(index: number) {
@@ -181,10 +177,10 @@ export class ArrayGrid extends Group {
         const focusedIndex = this.getFieldValueJS("itemFocused") as number;
         const nodeFocus = sgRoot.focused === this;
         this.updateItemFocus(this.focusIndex, false, nodeFocus);
-        super.set(new BrsString("itemUnfocused"), new Int32(focusedIndex));
+        super.setValue("itemUnfocused", new Int32(focusedIndex));
         this.focusIndex = newFocus;
         this.updateItemFocus(this.focusIndex, true, nodeFocus);
-        super.set(new BrsString("itemFocused"), new Int32(index));
+        super.setValue("itemFocused", new Int32(index));
     }
 
     protected findContentIndex(index: number) {
@@ -199,9 +195,9 @@ export class ArrayGrid extends Group {
     protected updateItemFocus(index: number, focus: boolean, nodeFocus: boolean) {
         const itemComp = this.itemComps[index];
         if (!itemComp) return;
-        itemComp.set(new BrsString("itemHasFocus"), BrsBoolean.from(focus));
-        itemComp.set(new BrsString(this.focusField), BrsBoolean.from(nodeFocus));
-        itemComp.set(new BrsString("focusPercent"), new Float(focus ? 1 : 0));
+        itemComp.setValue("itemHasFocus", BrsBoolean.from(focus));
+        itemComp.setValue(this.focusField, BrsBoolean.from(nodeFocus));
+        itemComp.setValue("focusPercent", new Float(focus ? 1 : 0));
     }
 
     handleKey(key: string, press: boolean): boolean {
@@ -238,7 +234,7 @@ export class ArrayGrid extends Group {
     protected handleOK(press: boolean) {
         if (press) {
             const index = this.metadata[this.focusIndex]?.index ?? this.focusIndex;
-            this.set(new BrsString("itemSelected"), new Int32(index));
+            this.setValue("itemSelected", new Int32(index));
         }
         return false;
     }
@@ -306,7 +302,7 @@ export class ArrayGrid extends Group {
             }
         }
         if (content.changed) {
-            this.itemComps[index].set(new BrsString("itemContent"), content, true);
+            this.itemComps[index].setValue("itemContent", content, true);
             content.changed = false;
         }
         this.updateItemFocus(index, focused, nodeFocus);
@@ -452,7 +448,7 @@ export class ArrayGrid extends Group {
         if (itemComp instanceof Group) {
             itemComp.setFieldValue("width", brsValueOf(itemRect.width));
             itemComp.setFieldValue("height", brsValueOf(itemRect.height));
-            itemComp.set(new BrsString("itemContent"), content, true);
+            itemComp.setValue("itemContent", content, true);
         }
         return itemComp;
     }

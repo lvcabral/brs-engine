@@ -132,19 +132,16 @@ export class ZoomRowList extends ArrayGrid {
         this.rowWidth = 0;
     }
 
-    set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
-        if (!isBrsString(index)) {
-            throw new Error("RoSGNode indexes must be strings");
-        }
-        const fieldName = index.getValue().toLowerCase();
+    setValue(index: string, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
+        const fieldName = index.toLowerCase();
         if (fieldName === "content") {
-            super.set(index, value, alwaysNotify, kind);
+            super.setValue(index, value, alwaysNotify, kind);
             this.rowItemComps.length = 0;
             this.rowItemComps.push([]);
             this.refreshContent();
             const focusedIndex = this.getFieldValueJS("rowFocused") as number;
             this.setFocusedRow(focusedIndex);
-            return BrsInvalid.Instance;
+            return;
         } else if (["jumptorow", "animatetorow"].includes(fieldName) && isBrsNumber(value)) {
             const next = jsValueOf(value) as number;
             if (Number.isFinite(next) && next >= 0) {
@@ -160,7 +157,7 @@ export class ZoomRowList extends ArrayGrid {
         } else if (fieldName === "rowwidth" && isBrsNumber(value)) {
             this.rowWidth = jsValueOf(value) as number;
         }
-        return super.set(index, value, alwaysNotify, kind);
+        super.setValue(index, value, alwaysNotify, kind);
     }
 
     protected setFocusedRow(rowIndex: number) {
@@ -189,14 +186,14 @@ export class ZoomRowList extends ArrayGrid {
         }
         const previousRow = this.focusIndex;
         if (previousRow !== rowIndex) {
-            super.set(new BrsString("rowUnfocused"), new Int32(previousRow));
+            super.setValue("rowUnfocused", new Int32(previousRow));
         }
         this.focusIndex = rowIndex;
         this.rowFocus[rowIndex] = colIndex;
         this.currRow = rowIndex;
-        super.set(new BrsString("rowFocused"), new Int32(rowIndex));
-        super.set(new BrsString("rowItemFocused"), new RoArray([new Int32(rowIndex), new Int32(colIndex)]));
-        super.set(new BrsString("currFocusRow"), new Float(rowIndex));
+        super.setValue("rowFocused", new Int32(rowIndex));
+        super.setValue("rowItemFocused", new RoArray([new Int32(rowIndex), new Int32(colIndex)]));
+        super.setValue("currFocusRow", new Float(rowIndex));
     }
 
     protected handleUpDown(key: string) {
@@ -221,14 +218,14 @@ export class ZoomRowList extends ArrayGrid {
             next = (next + this.content.length) % this.content.length;
         }
         if (next >= 0 && next < this.content.length) {
-            super.set(new BrsString("scrollingStatus"), BrsBoolean.True);
+            super.setValue("scrollingStatus", BrsBoolean.True);
             this.focusIndex = next;
             this.rowFocus[next] ??= 0;
             this.setFocusedItem(next, this.rowFocus[next]);
-            super.set(new BrsString("currFocusRow"), new Float(next));
+            super.setValue("currFocusRow", new Float(next));
             handled = true;
         }
-        super.set(new BrsString("scrollingStatus"), BrsBoolean.False);
+        super.setValue("scrollingStatus", BrsBoolean.False);
         return handled;
     }
 
@@ -254,9 +251,9 @@ export class ZoomRowList extends ArrayGrid {
         }
         if (nextCol !== this.rowFocus[currentRow]) {
             this.rowFocus[currentRow] = nextCol;
-            super.set(new BrsString("rowItemFocused"), new RoArray([new Int32(currentRow), new Int32(nextCol)]));
-            super.set(new BrsString("scrollingStatus"), BrsBoolean.True);
-            super.set(new BrsString("scrollingStatus"), BrsBoolean.False);
+            super.setValue("rowItemFocused", new RoArray([new Int32(currentRow), new Int32(nextCol)]));
+            super.setValue("scrollingStatus", BrsBoolean.True);
+            super.setValue("scrollingStatus", BrsBoolean.False);
             return true;
         }
         return false;
@@ -266,8 +263,8 @@ export class ZoomRowList extends ArrayGrid {
         if (press && this.focusIndex >= 0 && this.focusIndex < this.rowFocus.length) {
             const currentRow = this.focusIndex;
             const currentCol = this.rowFocus[currentRow] ?? 0;
-            super.set(new BrsString("rowItemSelected"), brsValueOf([currentRow, currentCol]));
-            super.set(new BrsString("rowSelected"), new Int32(currentRow));
+            super.setValue("rowItemSelected", brsValueOf([currentRow, currentCol]));
+            super.setValue("rowSelected", new Int32(currentRow));
         }
         return false;
     }
@@ -651,17 +648,17 @@ export class ZoomRowList extends ArrayGrid {
             }
         }
         if (content.changed) {
-            this.rowItemComps[rowIndex][colIndex].set(new BrsString("itemContent"), content, true);
+            this.rowItemComps[rowIndex][colIndex].setValue("itemContent", content, true);
             content.changed = false;
         }
 
         const itemComp = this.rowItemComps[rowIndex][colIndex];
         if (itemComp) {
-            itemComp.set(new BrsString("itemHasFocus"), BrsBoolean.from(focused));
-            itemComp.set(new BrsString("focusPercent"), new Float(focused ? 1 : 0));
-            itemComp.set(new BrsString("rowHasFocus"), BrsBoolean.from(this.focusIndex === rowIndex));
-            itemComp.set(new BrsString("rowFocusPercent"), new Float(this.focusIndex === rowIndex ? 1 : 0));
-            itemComp.set(new BrsString(this.focusField), BrsBoolean.from(nodeFocus));
+            itemComp.setValue("itemHasFocus", BrsBoolean.from(focused));
+            itemComp.setValue("focusPercent", new Float(focused ? 1 : 0));
+            itemComp.setValue("rowHasFocus", BrsBoolean.from(this.focusIndex === rowIndex));
+            itemComp.setValue("rowFocusPercent", new Float(this.focusIndex === rowIndex ? 1 : 0));
+            itemComp.setValue(this.focusField, BrsBoolean.from(nodeFocus));
             itemComp.setFieldValue("width", brsValueOf(itemRect.width));
             itemComp.setFieldValue("height", brsValueOf(itemRect.height));
         }

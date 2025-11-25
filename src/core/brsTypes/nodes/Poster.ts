@@ -45,11 +45,8 @@ export class Poster extends Group {
         this.registerInitializedFields(initializedFields);
     }
 
-    set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
-        if (!isBrsString(index)) {
-            throw new Error("RoSGNode indexes must be strings");
-        }
-        const fieldName = index.getValue().toLowerCase();
+    setValue(index: string, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
+        const fieldName = index.toLowerCase();
         if (fieldName === "uri") {
             const uri = jsValueOf(value);
             if (typeof uri === "string" && uri.trim() !== "" && this.uri !== uri) {
@@ -58,18 +55,18 @@ export class Poster extends Group {
                 if (loadStatus !== "ready") {
                     this.loadUri("failedBitmapUri");
                 }
-                super.set(new BrsString("loadStatus"), new BrsString(loadStatus));
+                super.setValue("loadStatus", new BrsString(loadStatus));
             } else if (typeof uri !== "string" || uri.trim() === "") {
                 this.uri = "";
                 this.bitmap = undefined;
-                super.set(new BrsString("loadStatus"), new BrsString("none"));
-                super.set(new BrsString("bitmapWidth"), new Float(0));
-                super.set(new BrsString("bitmapHeight"), new Float(0));
+                super.setValue("loadStatus", new BrsString("none"));
+                super.setValue("bitmapWidth", new Float(0));
+                super.setValue("bitmapHeight", new Float(0));
                 const margins = { left: 0, right: 0, top: 0, bottom: 0 };
-                super.set(new BrsString("bitmapMargins"), brsValueOf(margins));
+                super.setValue("bitmapMargins", brsValueOf(margins));
             }
         }
-        return super.set(index, value, alwaysNotify, kind);
+        super.setValue(index, value, alwaysNotify, kind);
     }
 
     renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
@@ -125,9 +122,9 @@ export class Poster extends Group {
                     this.bitmap = getTextureManager().resizeTexture(this.bitmap, loadWidth, loadHeight);
                 }
             }
-            super.set(new BrsString("bitmapWidth"), new Float(this.bitmap.width));
-            super.set(new BrsString("bitmapHeight"), new Float(this.bitmap.height));
-            super.set(new BrsString("bitmapMargins"), brsValueOf(margins));
+            super.setValue("bitmapWidth", new Float(this.bitmap.width));
+            super.setValue("bitmapHeight", new Float(this.bitmap.height));
+            super.setValue("bitmapMargins", brsValueOf(margins));
             loadStatus = "ready";
         }
         return loadStatus;

@@ -41,27 +41,23 @@ export class LabelList extends ArrayGrid {
         this.hasNinePatch = true;
     }
 
-    set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
-        if (!isBrsString(index)) {
-            throw new Error("RoSGNode indexes must be strings");
-        }
-        const fieldName = index.getValue().toLowerCase();
+    setValue(index: string, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
+        const fieldName = index.toLowerCase();
         if (fieldName === "vertfocusanimationstyle") {
             if (!["fixedfocuswrap", "floatingfocus"].includes(value.toString().toLowerCase())) {
                 // Invalid vertFocusAnimationStyle
-                return BrsInvalid.Instance;
+                return;
             }
         } else if (["horizfocusanimationstyle", "numcolumns"].includes(fieldName)) {
             // Invalid fields for LabelList
-            return BrsInvalid.Instance;
+            return;
         }
-        const result = super.set(index, value, alwaysNotify, kind);
+        super.setValue(index, value, alwaysNotify, kind);
         if (fieldName === "content" || fieldName === "vertfocusanimationstyle") {
             this.topRow = 0;
         } else if (fieldName === "numrows") {
             this.clampTopRow();
         }
-        return result;
     }
 
     protected handleUpDown(key: string) {
@@ -69,7 +65,7 @@ export class LabelList extends ArrayGrid {
         const offset = key === "up" ? -1 : 1;
         const nextIndex = this.getIndex(offset);
         if (nextIndex !== this.focusIndex) {
-            this.set(new BrsString("animateToItem"), new Int32(nextIndex));
+            this.setValue("animateToItem", new Int32(nextIndex));
             handled = true;
             this.currRow += this.wrap ? 0 : offset;
         }
@@ -88,7 +84,7 @@ export class LabelList extends ArrayGrid {
             this.currRow = key === "rewind" ? 0 : this.numRows - 1;
         }
         if (nextIndex !== this.focusIndex) {
-            this.set(new BrsString("animateToItem"), new Int32(nextIndex));
+            this.setValue("animateToItem", new Int32(nextIndex));
             handled = true;
         }
         return handled;

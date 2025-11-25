@@ -69,20 +69,17 @@ export class TrickPlayBar extends Group {
         ]);
     }
 
-    set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
-        if (!isBrsString(index)) {
-            throw new Error("RoSGNode indexes must be strings");
-        }
-        const fieldName = index.getValue().toLowerCase();
+    setValue(index: string, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
+        const fieldName = index.toLowerCase();
         if (fieldName === "textcolor") {
-            this.position.set(new BrsString("color"), value);
-            this.remaining.set(new BrsString("color"), value);
+            this.position.setValue("color", value);
+            this.remaining.setValue("color", value);
         } else if (fieldName === "visible" && value instanceof BrsBoolean) {
             if (this.getFieldValueJS("visible") !== value.toBoolean()) {
                 postMessage({ trickPlayBarVisible: value.toBoolean() });
             }
         }
-        return super.set(index, value, alwaysNotify, kind);
+        super.setValue(index, value, alwaysNotify, kind);
     }
 
     setPosition(position: number, duration: number) {

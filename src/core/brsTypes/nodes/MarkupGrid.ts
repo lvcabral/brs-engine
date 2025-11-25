@@ -72,7 +72,7 @@ export class MarkupGrid extends ArrayGrid {
         }
         if (nextIndex >= 0 && nextIndex < this.content.length) {
             const itemIndex = this.metadata[nextIndex]?.index ?? nextIndex;
-            this.set(new BrsString("animateToItem"), new Int32(itemIndex));
+            this.setValue("animateToItem", new Int32(itemIndex));
             handled = true;
             this.currRow += this.wrap ? 0 : offset;
         }
@@ -94,7 +94,7 @@ export class MarkupGrid extends ArrayGrid {
             const item = this.itemComps[nextIndex];
             if (currentRow === nextRow && item.nodeSubtype !== "Group") {
                 const itemIndex = this.metadata[nextIndex]?.index ?? nextIndex;
-                this.set(new BrsString("animateToItem"), new Int32(itemIndex));
+                this.setValue("animateToItem", new Int32(itemIndex));
                 handled = true;
             }
         }

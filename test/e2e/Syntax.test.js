@@ -347,6 +347,9 @@ describe("end to end syntax", () => {
             "dog likes cat",
             "dog likes bird",
             "false",
+            "name: Alice",
+            "age:  30",
+            "city: Wonderland",
         ]);
     });
 

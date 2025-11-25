@@ -82,27 +82,23 @@ export class ButtonGroup extends LayoutGroup {
         this.lastPressHandled = "";
     }
 
-    set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
-        if (!isBrsString(index)) {
-            throw new Error("RoSGNode indexes must be strings");
-        }
-        const fieldName = index.getValue().toLowerCase();
+    setValue(index: string, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
+        const fieldName = index.toLowerCase();
         if (fieldName === "focusbutton") {
             const buttons = this.getFieldValueJS("buttons");
             const newIndex = jsValueOf(value);
             if (typeof newIndex === "number" && newIndex >= 0 && newIndex < buttons.length) {
                 this.focusIndex = newIndex;
-                super.set(new BrsString("buttonFocused"), value);
+                super.setValue("buttonFocused", value);
             }
         } else if (fieldName === "buttons" && !(value instanceof RoArray)) {
             value = new RoArray([]);
         }
-        super.set(index, value, alwaysNotify, kind);
+        super.setValue(index, value, alwaysNotify, kind);
         if (fieldName === "buttons") {
             this.refreshButtons();
             this.refreshFocus();
         }
-        return BrsInvalid.Instance;
     }
 
     setNodeFocus(interpreter: Interpreter, focusOn: boolean): boolean {
@@ -122,12 +118,12 @@ export class ButtonGroup extends LayoutGroup {
         if (key === "up" || key === "down") {
             const nextIndex = this.getIndex(key === "up" ? -1 : 1);
             if (press && nextIndex !== this.focusIndex) {
-                this.set(new BrsString("focusButton"), new Int32(nextIndex));
+                this.setValue("focusButton", new Int32(nextIndex));
                 handled = true;
             }
         } else if (key === "OK") {
             if (press) {
-                this.set(new BrsString("buttonSelected"), new Int32(this.focusIndex));
+                this.setValue("buttonSelected", new Int32(this.focusIndex));
                 handled = true;
             }
         }

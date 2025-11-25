@@ -48,16 +48,12 @@ export class LayoutGroup extends Group {
         this.registerInitializedFields(initializedFields);
     }
 
-    set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
-        if (!isBrsString(index)) {
-            throw new Error("RoSGNode indexes must be strings");
-        }
-        const fieldName = index.getValue().toLowerCase();
-        const result = super.set(index, value, alwaysNotify, kind);
+    setValue(index: string, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
+        const fieldName = index.toLowerCase();
+        super.setValue(index, value, alwaysNotify, kind);
         if (this.isLayoutField(fieldName)) {
             this.layoutDirty = true;
         }
-        return result;
     }
 
     setFieldValue(fieldName: string, value: BrsType, alwaysNotify: boolean = false) {

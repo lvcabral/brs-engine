@@ -38,6 +38,7 @@ import { Task } from "./nodes/Task";
 import { getNodeType, SGNodeFactory } from "../scenegraph/SGNodeFactory";
 import { BrsObjects } from "./components/BrsObjects";
 import { ContentNode } from "./nodes/ContentNode";
+import { RoSGNode } from "./components/RoSGNode";
 
 // BrightScript Type exports
 export * from "./BrsType";
@@ -214,6 +215,18 @@ export function isBrsCallable(value: BrsType): value is Callable {
 }
 
 /**
+ * Determines whether or not the given value is a BrightScript collection type.
+ * @param value the BrightScript value in question.
+ * @returns `true` if `value` is a collection type, otherwise `false`.
+ */
+
+export function isCollection(
+    value: BrsType
+): value is RoArray | RoAssociativeArray | RoList | RoByteArray | RoXMLList | RoXMLElement | RoSGNode {
+    return "get" in value && "getElements" in value && "set" in value;
+}
+
+/**
  * Determines whether or not the provided value is an instance of a iterable BrightScript type.
  * @param value the BrightScript value in question.
  * @returns `true` if `value` can be iterated across, otherwise `false`.
@@ -225,7 +238,8 @@ export function isIterable(value: BrsType): value is Iterable {
         "set" in value &&
         "hasNext" in value &&
         "getNext" in value &&
-        "resetNext" in value
+        "resetNext" in value &&
+        "updateNext" in value
     );
 }
 

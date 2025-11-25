@@ -40,11 +40,11 @@ export class StandardProgressDialog extends StandardDialog {
         const message = jsValueOf(this.getFieldValue("message")) as string;
         if (title === "") {
             const itemWidth = jsValueOf(this.progressItem.getFieldValue("width")) as number;
-            this.set(new BrsString("width"), new Float(itemWidth + this.margin));
+            this.setValue("width", new Float(itemWidth + this.margin));
             this.setTranslationX((this.screenWidth - itemWidth) / 2);
         }
         if (message === "") {
-            this.set(new BrsString("message"), new BrsString(BrsDevice.getTerm("Please wait...")));
+            this.setValue("message", new BrsString(BrsDevice.getTerm("Please wait...")));
         }
         super.renderNode(interpreter, origin, angle, opacity, draw2D);
     }

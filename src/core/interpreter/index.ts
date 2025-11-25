@@ -40,6 +40,7 @@ import {
     Task,
     initializeTask,
     sgRoot,
+    isCollection,
 } from "../brsTypes";
 import { tryCoerce } from "../brsTypes/Coercion";
 import { Lexeme, GlobalFunctions } from "../lexer";
@@ -1325,7 +1326,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         if (source instanceof BrsInvalid && expression.optional) {
             return source;
         }
-        if (isIterable(source) && (source instanceof RoXMLElement || source instanceof RoXMLList)) {
+        if (source instanceof RoXMLElement || source instanceof RoXMLList) {
             try {
                 return source.getAttribute(new BrsString(expression.name.text));
             } catch (err: any) {
@@ -1380,7 +1381,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         }
         this._dotLevel = 0;
 
-        if (isIterable(source)) {
+        if (isCollection(source)) {
             try {
                 const target = source.get(new BrsString(expression.name.text));
                 if (isBrsCallable(target) && source instanceof RoAssociativeArray) {
@@ -1412,7 +1413,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
     visitIndexedGet(expression: Expr.IndexedGet): BrsType {
         let source = this.evaluate(expression.obj);
-        if (!isIterable(source)) {
+        if (!isCollection(source)) {
             if (source instanceof BrsInvalid && expression.optional) {
                 return source;
             }
@@ -1576,7 +1577,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         let target = this.evaluate(statement.target);
         if (!isIterable(target)) {
             // Roku device does not crash if the value is not iterable, just send a console message
-            const message = `BRIGHTSCRIPT: ERROR: Runtime: FOR EACH value is ${ValueKind.toString(target.kind)}`;
+            const message = `BRIGHTSCRIPT: ERROR: Runtime: FOR EACH value is not an enumerable object`;
             const location = `${statement.item.location.file}(${statement.item.location.start.line})`;
             BrsDevice.stderr.write(`warning,${message}: ${location}`);
             return BrsInvalid.Instance;
@@ -1685,11 +1686,14 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         let value = this.evaluate(statement.value);
         let source = this.evaluate(statement.obj);
 
-        if (!isIterable(source)) {
+        if (!isCollection(source)) {
             this.addError(new RuntimeError(RuntimeErrorDetail.BadLHS, statement.name.location));
         }
 
         try {
+            if (source instanceof RoSGNode) {
+                source.location = this.formatLocation(statement.name.location);
+            }
             source.set(new BrsString(statement.name.text), value);
         } catch (err: any) {
             this.addError(new BrsError(err.message, statement.name.location));
@@ -1702,7 +1706,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         let value = this.evaluate(statement.value);
         let source = this.evaluate(statement.obj);
 
-        if (!isIterable(source)) {
+        if (!isCollection(source)) {
             this.addError(new RuntimeError(RuntimeErrorDetail.BadLHS, statement.obj.location));
         }
 
@@ -1725,6 +1729,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 );
             }
             try {
+                if (source instanceof RoSGNode) {
+                    source.location = this.formatLocation(statement.closingSquare.location);
+                }
                 source.set(index, value, true);
             } catch (err: any) {
                 this.addError(new BrsError(err.message, statement.closingSquare.location));
@@ -2058,7 +2065,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 vars += `${varName}${ValueKind.toString(value.kind)}\r\n`;
             } else if (PrimitiveKinds.has(value.kind)) {
                 vars += `${varName}${ValueKind.toString(value.kind)} val:${this.formatValue(value)}`;
-            } else if (isIterable(value)) {
+            } else if (isCollection(value)) {
                 const count = value.getElements().length;
                 vars += `${varName}${value.getComponentName()} refcnt=${value.getReferenceCount()} count:${count}\r\n`;
             } else if (value instanceof BrsComponent && isUnboxable(value)) {

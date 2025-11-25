@@ -23,12 +23,8 @@ export class Timer extends Node {
         sgRoot.timers.push(this);
     }
 
-    set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
-        if (!isBrsString(index)) {
-            throw new Error("RoSGNode indexes must be strings");
-        }
-
-        const mapKey = index.getValue().toLowerCase();
+    setValue(index: string, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
+        const mapKey = index.toLowerCase();
         const field = this.fields.get(mapKey);
 
         if (field && mapKey === "control" && isBrsString(value)) {
@@ -43,9 +39,9 @@ export class Timer extends Node {
             }
             field.setValue(new BrsString(control));
             this.fields.set(mapKey, field);
-            return BrsInvalid.Instance;
+            return;
         }
-        return super.set(index, value, alwaysNotify, kind);
+        super.setValue(index, value, alwaysNotify, kind);
     }
 
     setCallback(callback: Function) {

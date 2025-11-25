@@ -43,12 +43,9 @@ export class Task extends Node {
         this.registerInitializedFields(members);
     }
 
-    set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind, sync: boolean = true) {
-        if (!isBrsString(index)) {
-            throw new Error("RoSGNode indexes must be strings");
-        }
+    setValue(index: string, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind, sync: boolean = true) {
         const validStates = ["init", "run", "stop", "done"];
-        const mapKey = index.getValue().toLowerCase();
+        const mapKey = index.toLowerCase();
         const field = this.fields.get(mapKey);
 
         if (field && mapKey === "control" && isBrsString(value)) {
@@ -57,22 +54,21 @@ export class Task extends Node {
                 control = "";
             }
             this.setControlField(field, control, sync);
-            return BrsInvalid.Instance;
+            return;
         } else if (field && mapKey === "state" && isBrsString(value)) {
             // Roku documentation states this is read-only but it allows change the value to valid states
             // But it does not trigger any action
             if (validStates.includes(value.getValue().toLowerCase())) {
                 field.setValue(value);
             }
-            return BrsInvalid.Instance;
+            return;
         }
-        const result = super.set(index, value, alwaysNotify, kind);
+        super.setValue(index, value, alwaysNotify, kind);
         // Notify Main thread of field changes
         if (this.id >= 0 && field && sync && this.changed) {
             this.sendThreadUpdate(this.id, "task", mapKey, value, true);
             this.changed = false;
         }
-        return result;
     }
 
     private setControlField(field: Field, control: string, sync: boolean) {
@@ -121,7 +117,7 @@ export class Task extends Node {
     checkTask() {
         const functionName = this.getFieldValueJS("functionName") as string;
         if (!functionName || functionName.trim() === "") {
-            this.set(new BrsString("control"), new BrsString("stop"));
+            this.setValue("control", new BrsString("stop"));
             return;
         }
         if (!this.started) {
@@ -167,7 +163,7 @@ export class Task extends Node {
         for (const [name, field] of this.getNodeFields()) {
             const value = field.getValue();
             if (!field.isHidden() && value instanceof Node && value.changed) {
-                this.sendThreadUpdate(this.id, "task", name, value);
+                this.sendThreadUpdate(this.id, "task", name, value, true);
             }
         }
         return updates;
@@ -186,9 +182,8 @@ export class Task extends Node {
                 );
                 const node = this.getNodeToUpdate(update.type);
                 if (node) {
-                    const field = new BrsString(update.field);
                     const value = brsValueOf(update.value);
-                    node.set(field, value, false, undefined, false);
+                    node.setValue(update.field, value, false, undefined, false);
                     return true;
                 }
             }

@@ -35,27 +35,23 @@ export class MarkupList extends ArrayGrid {
         this.hasNinePatch = true;
     }
 
-    set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
-        if (!isBrsString(index)) {
-            throw new Error("RoSGNode indexes must be strings");
-        }
-        const fieldName = index.getValue().toLowerCase();
+    setValue(index: string, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
+        const fieldName = index.toLowerCase();
         if (fieldName === "vertfocusanimationstyle") {
             if (!["fixedfocuswrap", "floatingfocus"].includes(value.toString().toLowerCase())) {
                 // Invalid vertFocusAnimationStyle
-                return BrsInvalid.Instance;
+                return;
             }
         } else if (["horizfocusanimationstyle", "numcolumns"].includes(fieldName)) {
             // Invalid fields for MarkupList
-            return BrsInvalid.Instance;
+            return;
         }
-        const result = super.set(index, value, alwaysNotify, kind);
+        super.setValue(index, value, alwaysNotify, kind);
         if (fieldName === "content" || fieldName === "vertfocusanimationstyle") {
             this.topRow = 0;
         } else if (fieldName === "numrows") {
             this.clampTopRow();
         }
-        return result;
     }
 
     protected handleUpDown(key: string) {
@@ -78,7 +74,7 @@ export class MarkupList extends ArrayGrid {
         }
         if (nextIndex >= 0 && nextIndex < this.content.length) {
             const itemIndex = this.metadata[nextIndex]?.index ?? nextIndex;
-            this.set(new BrsString("animateToItem"), new Int32(itemIndex));
+            this.setValue("animateToItem", new Int32(itemIndex));
             handled = true;
             this.currRow += this.wrap ? 0 : offset;
         }

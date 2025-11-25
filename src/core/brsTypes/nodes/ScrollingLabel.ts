@@ -44,12 +44,12 @@ export class ScrollingLabel extends Label {
         this.checkForScrolling();
     }
 
-    set(index: BrsType, value: BrsType, alwaysNotify: boolean = false) {
+    setValue(index: string, value: BrsType, alwaysNotify: boolean = false) {
         const wasVisible = this.getFieldValueJS("visible") as boolean;
-        const retValue = super.set(index, value, alwaysNotify); // Call base class set
+        super.setValue(index, value, alwaysNotify); // Call base class set
 
-        if (this.isDirty && isBrsString(index)) {
-            const fieldName = index.getValue().toLowerCase();
+        if (this.isDirty) {
+            const fieldName = index.toLowerCase();
             // Fields that affect scrolling behavior
             const scrollFields = ["text", "font", "maxwidth", "scrollspeed", "repeatcount", "ellipsistext"];
             if (scrollFields.includes(fieldName) || wasVisible !== this.getFieldValueJS("visible")) {
@@ -57,7 +57,6 @@ export class ScrollingLabel extends Label {
                 this.checkForScrolling();
             }
         }
-        return retValue;
     }
 
     // Helper to check if scrolling is necessary and calculate initial values

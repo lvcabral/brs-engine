@@ -166,11 +166,11 @@ export class MiniKeyboard extends Group {
             } else {
                 text = text.slice(0, -1);
             }
-            this.set(new BrsString("text"), new BrsString(text));
+            this.setValue("text", new BrsString(text));
             handled = true;
         } else if (this.keyFocus.key.length) {
             text += this.keyFocus.key;
-            this.set(new BrsString("text"), new BrsString(text));
+            this.setValue("text", new BrsString(text));
             handled = true;
         }
         if (handled && this.showTextEdit) {

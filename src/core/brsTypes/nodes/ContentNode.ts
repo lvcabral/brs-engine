@@ -136,16 +136,15 @@ export class ContentNode extends Node {
     }
 
     /** @override */
-    set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
+    setValue(index: string, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
         this.notified = false;
-        super.set(index, value, alwaysNotify, kind);
+        super.setValue(index, value, alwaysNotify, kind);
         // Propagate changes notification to parent fields
         if (this.parentFields.size && this.notified) {
             for (const field of this.parentFields) {
                 field.notifyObservers();
             }
         }
-        return BrsInvalid.Instance;
     }
 
     /** @override */

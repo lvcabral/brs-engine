@@ -48,28 +48,24 @@ export class Scene extends Group {
         this.subReplace = "";
     }
 
-    set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind, sync: boolean = true) {
-        if (!isBrsString(index)) {
-            throw new Error("RoSGNode indexes must be strings");
-        }
-        const fieldName = index.getValue().toLowerCase();
+    setValue(index: string, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind, sync: boolean = true) {
+        const fieldName = index.toLowerCase();
         if (fieldName === "dialog") {
             if (value instanceof Dialog || value instanceof StandardDialog) {
-                this.dialog?.set(new BrsString("close"), BrsBoolean.True);
+                this.dialog?.setValue("close", BrsBoolean.True);
                 this.dialog = value;
             } else if (value instanceof BrsInvalid) {
-                this.dialog?.set(new BrsString("close"), BrsBoolean.True);
+                this.dialog?.setValue("close", BrsBoolean.True);
             } else {
-                return BrsInvalid.Instance;
+                return;
             }
         }
-        const result = super.set(index, value, alwaysNotify, kind);
+        super.setValue(index, value, alwaysNotify, kind);
         // Notify other threads of field changes
         if (sync && sgRoot.tasks.length > 0 && this.changed && this.fields.has(fieldName)) {
             this.sendThreadUpdate(sgRoot.taskId, "scene", fieldName, value);
             if (sgRoot.inTaskThread()) this.changed = false;
         }
-        return result;
     }
 
     protected cloneNode(_isDeepCopy: boolean, _interpreter?: Interpreter): BrsType {

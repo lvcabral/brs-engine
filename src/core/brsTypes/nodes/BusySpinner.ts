@@ -28,12 +28,8 @@ export class BusySpinner extends Group {
         this.setFieldValue("poster", this.poster);
     }
 
-    set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
-        if (!isBrsString(index)) {
-            throw new Error("RoSGNode indexes must be strings");
-        }
-
-        const mapKey = index.getValue().toLowerCase();
+    setValue(index: string, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
+        const mapKey = index.toLowerCase();
 
         if (mapKey === "control") {
             let control = value.toString();
@@ -51,19 +47,19 @@ export class BusySpinner extends Group {
                 this.appendChildToParent(value);
                 this.poster = value;
             } else {
-                return BrsInvalid.Instance;
+                return;
             }
         }
-        return super.set(index, value, alwaysNotify, kind);
+        super.setValue(index, value, alwaysNotify, kind);
     }
 
     setPosterUri(uri: string) {
-        this.poster.set(new BrsString("uri"), new BrsString(uri));
+        this.poster.setValue("uri", new BrsString(uri));
     }
 
     setBlendColor(color: BrsType) {
         if (color instanceof BrsString) {
-            this.poster.set(new BrsString("blendColor"), color);
+            this.poster.setValue("blendColor", color);
         }
     }
 
@@ -105,7 +101,7 @@ export class BusySpinner extends Group {
                 const rotationChange = (2 * Math.PI * elapsedTime) / (spinInterval ?? 2);
                 this.currentRotation += direction * rotationChange;
                 const spin = this.currentRotation + rotation;
-                this.poster.set(new BrsString("rotation"), new Float(spin));
+                this.poster.setValue("rotation", new Float(spin));
                 this.lastRenderTime = now;
             }
         }

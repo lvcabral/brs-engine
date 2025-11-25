@@ -18,4 +18,9 @@ sub main()
         end for
     end for
     print animals.isNext()
+    ' Using Associative Array
+    person = { name: "Alice", age: 30, city: "Wonderland" }
+    for each key in person
+        ? key; ": "; person[key]
+    end for
 end sub

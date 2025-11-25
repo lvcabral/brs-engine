@@ -112,8 +112,8 @@ export class TextEditBox extends Group {
                     text = text.slice(0, position) + charToAdd + text.slice(position);
                 }
                 position++;
-                this.set(new BrsString("text"), new BrsString(text));
-                this.set(new BrsString("cursorPosition"), new Float(position));
+                this.setValue("text", new BrsString(text));
+                this.setValue("cursorPosition", new Float(position));
                 this.lastCharInputTime = Date.now();
                 handled = true;
             }
@@ -121,8 +121,8 @@ export class TextEditBox extends Group {
             if (text.length && position > 0) {
                 text = text.slice(0, position - 1) + text.slice(position);
                 position--;
-                this.set(new BrsString("text"), new BrsString(text));
-                this.set(new BrsString("cursorPosition"), new Float(position));
+                this.setValue("text", new BrsString(text));
+                this.setValue("cursorPosition", new Float(position));
                 this.lastCharInputTime = 0;
                 handled = true;
             }
@@ -137,7 +137,7 @@ export class TextEditBox extends Group {
 
     /** Set the active state of the node */
     setActive(active: boolean) {
-        this.set(new BrsString("active"), BrsBoolean.from(active));
+        this.setValue("active", BrsBoolean.from(active));
     }
 
     /** Move the cursor a delta or if delta is zero, reset to first position */
@@ -155,7 +155,7 @@ export class TextEditBox extends Group {
                 position = text.length;
             }
         }
-        this.set(new BrsString("cursorPosition"), new Float(position));
+        this.setValue("cursorPosition", new Float(position));
         // Reset cursor blink on move
         this.cursorVisible = true;
         this.lastCursorToggleTime = Date.now();
