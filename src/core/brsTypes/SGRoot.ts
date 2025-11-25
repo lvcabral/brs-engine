@@ -216,7 +216,7 @@ export class SGRoot {
             this.videoEvent = eventType;
             if (eventType >= 0) {
                 this._video.setState(eventType, eventIndex);
-                console.debug(`Video State: ${this._video.getFieldValueJS("state")}  (${eventType}/${eventIndex})`);
+                console.debug(`Video State: ${this._video.getValueJS("state")}  (${eventType}/${eventIndex})`);
                 Atomics.store(BrsDevice.sharedArray, DataType.VDO, -1);
                 isDirty = true;
             }

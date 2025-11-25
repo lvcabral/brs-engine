@@ -36,7 +36,7 @@ export class Font extends Node {
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(members);
 
-        this.setFieldValue("size", new Int32(this.defaultSize));
+        this.setValueSilent("size", new Int32(this.defaultSize));
         this.systemFont = "MediumSystemFont";
         this.fontRegistry = getFontRegistry();
     }
@@ -50,15 +50,15 @@ export class Font extends Node {
     }
 
     getUri() {
-        return (this.getFieldValueJS("uri") as string) ?? "";
+        return (this.getValueJS("uri") as string) ?? "";
     }
 
     getSize() {
-        return (this.getFieldValueJS("size") as number) ?? this.defaultSize;
+        return (this.getValueJS("size") as number) ?? this.defaultSize;
     }
 
     setSize(size: number) {
-        this.setFieldValue("size", new Int32(size));
+        this.setValueSilent("size", new Int32(size));
     }
 
     setSystemFont(font: string) {

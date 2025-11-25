@@ -7,15 +7,15 @@ describe("Circular Reference Handling", () => {
         it("should serialize and deserialize nodes with circular references", () => {
             // Create a parent node
             const parent = new Node([], "TestNode");
-            parent.setFieldValue("id", new BrsString("parent"));
+            parent.setValueSilent("id", new BrsString("parent"));
 
             // Create a child node
             const child = new Node([], "TestNode");
-            child.setFieldValue("id", new BrsString("child"));
+            child.setValueSilent("id", new BrsString("child"));
 
             // Create a circular reference by adding a field that points back to parent
             parent.appendChildToParent(child);
-            child.setFieldValue("parentRef", parent);
+            child.setValueSilent("parentRef", parent);
 
             // Serialize the parent node
             const serialized = fromSGNode(parent);
@@ -40,28 +40,28 @@ describe("Circular Reference Handling", () => {
 
             // Verify the circular reference resolves correctly
             const childNode = children[0];
-            const parentRef = childNode.getFieldValue("parentRef");
+            const parentRef = childNode.getValue("parentRef");
             expect(parentRef).toBe(deserialized);
         });
 
         it("should handle multiple nodes with circular references", () => {
             // Create three nodes with circular references
             const node1 = new ContentNode();
-            node1.setFieldValue("id", new BrsString("node1"));
-            node1.setFieldValue("title", new BrsString("Node 1"));
+            node1.setValueSilent("id", new BrsString("node1"));
+            node1.setValueSilent("title", new BrsString("Node 1"));
 
             const node2 = new ContentNode();
-            node2.setFieldValue("id", new BrsString("node2"));
-            node2.setFieldValue("title", new BrsString("Node 2"));
+            node2.setValueSilent("id", new BrsString("node2"));
+            node2.setValueSilent("title", new BrsString("Node 2"));
 
             const node3 = new ContentNode();
-            node3.setFieldValue("id", new BrsString("node3"));
-            node3.setFieldValue("title", new BrsString("Node 3"));
+            node3.setValueSilent("id", new BrsString("node3"));
+            node3.setValueSilent("title", new BrsString("Node 3"));
 
             // Create circular references
             node1.appendChildToParent(node2);
             node2.appendChildToParent(node3);
-            node3.setFieldValue("backToRoot", node1);
+            node3.setValueSilent("backToRoot", node1);
 
             // Serialize
             const serialized = fromSGNode(node1);
@@ -77,7 +77,7 @@ describe("Circular Reference Handling", () => {
             expect(deserialized).toBeDefined();
             const child2 = deserialized.getNodeChildren()[0];
             const child3 = child2.getNodeChildren()[0];
-            const backRef = child3.getFieldValue("backToRoot");
+            const backRef = child3.getValue("backToRoot");
 
             // The circular reference should point back to the root
             expect(backRef).toBe(deserialized);
@@ -85,8 +85,8 @@ describe("Circular Reference Handling", () => {
 
         it("should handle self-referencing nodes", () => {
             const node = new Node([], "TestNode");
-            node.setFieldValue("id", new BrsString("self"));
-            node.setFieldValue("myself", node);
+            node.setValueSilent("id", new BrsString("self"));
+            node.setValueSilent("myself", node);
 
             // Serialize
             const serialized = fromSGNode(node);
@@ -100,7 +100,7 @@ describe("Circular Reference Handling", () => {
             const deserialized = toSGNode(serialized, nodeInfo[0], nodeInfo[1]);
 
             // Verify self-reference
-            const myselfRef = deserialized.getFieldValue("myself");
+            const myselfRef = deserialized.getValue("myself");
             //expect(myselfRef).toBe(deserialized);
         });
     });
@@ -108,7 +108,7 @@ describe("Circular Reference Handling", () => {
     describe("brsValueOf with circular references", () => {
         it("should handle JS objects with circular node references", () => {
             const node = new Node([], "TestNode");
-            node.setFieldValue("id", new BrsString("test"));
+            node.setValueSilent("id", new BrsString("test"));
 
             const serialized = fromSGNode(node);
 

@@ -36,10 +36,10 @@ export class StandardProgressDialog extends StandardDialog {
     }
 
     renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
-        const title = jsValueOf(this.getFieldValue("title")) as string;
-        const message = jsValueOf(this.getFieldValue("message")) as string;
+        const title = jsValueOf(this.getValue("title")) as string;
+        const message = jsValueOf(this.getValue("message")) as string;
         if (title === "") {
-            const itemWidth = jsValueOf(this.progressItem.getFieldValue("width")) as number;
+            const itemWidth = jsValueOf(this.progressItem.getValue("width")) as number;
             this.setValue("width", new Float(itemWidth + this.margin));
             this.setTranslationX((this.screenWidth - itemWidth) / 2);
         }

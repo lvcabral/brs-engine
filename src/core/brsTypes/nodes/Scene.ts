@@ -109,7 +109,7 @@ export class Scene extends Group {
         this.rectLocal = { x: 0, y: 0, width: this.ui.width, height: this.ui.height };
         this.rectToParent = { x: 0, y: 0, width: this.ui.width, height: this.ui.height };
         this.rectToScene = { x: 0, y: 0, width: this.ui.width, height: this.ui.height };
-        this.setFieldValue("currentDesignResolution", toAssociativeArray(this.ui));
+        this.setValueSilent("currentDesignResolution", toAssociativeArray(this.ui));
         if (autoSub.split(",").length === 4) {
             const subs = autoSub.split(",");
             this.subSearch = subs[0];
@@ -128,7 +128,7 @@ export class Scene extends Group {
             return;
         }
         const rotation = angle + this.getRotation();
-        const backColor = this.getFieldValueJS("backgroundColor") as number;
+        const backColor = this.getValueJS("backgroundColor") as number;
         opacity = opacity * this.getOpacity();
         if (draw2D) {
             draw2D.doClearCanvas(backColor);

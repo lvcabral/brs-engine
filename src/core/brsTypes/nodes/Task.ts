@@ -115,7 +115,7 @@ export class Task extends Node {
     }
 
     checkTask() {
-        const functionName = this.getFieldValueJS("functionName") as string;
+        const functionName = this.getValueJS("functionName") as string;
         if (!functionName || functionName.trim() === "") {
             this.setValue("control", new BrsString("stop"));
             return;
@@ -155,7 +155,7 @@ export class Task extends Node {
 
     updateTask() {
         const updates = this.processUpdateFromOtherThread();
-        const state = this.getFieldValueJS("state") as string;
+        const state = this.getValueJS("state") as string;
         if (!this.thread || state !== "run") {
             return updates;
         }

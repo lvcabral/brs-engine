@@ -22,7 +22,7 @@ export class KeyboardDialog extends Dialog {
         this.registerInitializedFields(initializedFields);
 
         this.keyboard = new Keyboard();
-        this.setFieldValue("keyboard", this.keyboard);
+        this.setValueSilent("keyboard", this.keyboard);
 
         let contentWidth: number;
         let contentX: number;
@@ -55,23 +55,23 @@ export class KeyboardDialog extends Dialog {
             this.keyboardY = 146;
             keyboardTrans = [177, this.dialogTrans[1] + this.keyboardY];
         }
-        this.background.setFieldValue("width", new Float(this.width));
-        this.background.setFieldValue("height", new Float(this.minHeight));
+        this.background.setValueSilent("width", new Float(this.width));
+        this.background.setValueSilent("height", new Float(this.minHeight));
         this.background.setTranslation(this.dialogTrans);
-        this.title.setFieldValue("width", new Float(contentWidth));
-        this.divider.setFieldValue("width", new Float(contentWidth));
+        this.title.setValueSilent("width", new Float(contentWidth));
+        this.divider.setValueSilent("width", new Float(contentWidth));
         this.title.setTranslation(titleTrans);
         this.divider.setTranslation(dividerTrans);
         this.message.setTranslation(msgTrans);
-        this.message.setFieldValue("width", new Float(contentWidth));
+        this.message.setValueSilent("width", new Float(contentWidth));
         this.keyboard.setTranslation(keyboardTrans);
         this.appendChildToParent(this.keyboard);
-        this.buttonGroup.setFieldValue("minWidth", new Float(contentWidth));
-        this.buttonGroup.setFieldValue("maxWidth", new Float(contentWidth));
-        this.setFieldValue("width", new Float(this.width));
-        this.setFieldValue("iconUri", new BrsString(""));
+        this.buttonGroup.setValueSilent("minWidth", new Float(contentWidth));
+        this.buttonGroup.setValueSilent("maxWidth", new Float(contentWidth));
+        this.setValueSilent("width", new Float(this.width));
+        this.setValueSilent("iconUri", new BrsString(""));
         this.linkField(this.keyboard, "text");
-        this.icon.setFieldValue("visible", BrsBoolean.False);
+        this.icon.setValueSilent("visible", BrsBoolean.False);
         this.focus = "";
     }
 
@@ -85,7 +85,7 @@ export class KeyboardDialog extends Dialog {
     }
 
     handleKey(key: string, press: boolean): boolean {
-        const optionsDialog = this.getFieldValueJS("optionsDialog") as boolean;
+        const optionsDialog = this.getValueJS("optionsDialog") as boolean;
         let handled = false;
         if (press && (key === "back" || (key === "options" && optionsDialog))) {
             this.setValue("close", BrsBoolean.True);
@@ -117,7 +117,7 @@ export class KeyboardDialog extends Dialog {
 
     protected updateChildren() {
         this.height = this.minHeight;
-        const width = this.getFieldValueJS("width") as number;
+        const width = this.getValueJS("width") as number;
         if (width) {
             this.background.setValue("width", new Float(width));
             this.width = width;
@@ -147,8 +147,8 @@ export class KeyboardDialog extends Dialog {
         this.copyField(this.message, "color", "messageColor");
         this.copyField(this.message, "font", "messageFont");
 
-        const buttons = this.getFieldValueJS("buttons") as string[];
-        const buttonHeight = this.buttonGroup.getFieldValueJS("buttonHeight") as number;
+        const buttons = this.getValueJS("buttons") as string[];
+        const buttonHeight = this.buttonGroup.getValueJS("buttonHeight") as number;
         if (buttons?.length) {
             this.height += buttonHeight * buttons.length;
             this.hasButtons = true;
@@ -175,7 +175,7 @@ export class KeyboardDialog extends Dialog {
         this.message.setTranslationOffset(0, offsetY);
         this.keyboard.setTranslationOffset(0, offsetY);
         if (this.hasButtons) {
-            const msgTrans = this.message.getFieldValueJS("translation") as number[];
+            const msgTrans = this.message.getValueJS("translation") as number[];
             const buttonsTrans = [
                 msgTrans[0],
                 this.dialogTrans[1] + this.height - buttonHeight * buttons.length - this.vertOffset,

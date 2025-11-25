@@ -158,14 +158,14 @@ export class Video extends Group {
         this.enableTrickPlay = true;
         const overlayUri = "common:/images/video_trickplay_overlay.png";
         this.backgroundOverlay = this.addPoster(overlayUri, [0, 0], this.sceneRect.width, this.sceneRect.height);
-        this.backgroundOverlay.setFieldValue("visible", BrsBoolean.False);
+        this.backgroundOverlay.setValueSilent("visible", BrsBoolean.False);
         this.linkField(this.backgroundOverlay, "uri", "trickPlayBackgroundOverlay");
         this.trickPlayBar = new TrickPlayBar();
         this.trickPlayBar.setValue("visible", BrsBoolean.False);
         this.spinner = new BusySpinner();
         this.spinner.setPosterUri(`common:/images/${this.resolution}/spinner.png`);
-        this.spinner.setFieldValue("spinInterval", new Float(1.0));
-        this.spinner.setFieldValue("visible", BrsBoolean.False);
+        this.spinner.setValueSilent("spinInterval", new Float(1.0));
+        this.spinner.setValueSilent("visible", BrsBoolean.False);
         this.spinner.setValue("control", new BrsString("start"));
         this.appendChildToParent(this.spinner);
         if (this.resolution === "FHD") {
@@ -182,15 +182,15 @@ export class Video extends Group {
             this.trickPlayBar.setTranslation([68, 632]);
         }
         this.contentTitles = [];
-        this.clockText.setFieldValue("text", new BrsString(BrsDevice.getTime()));
+        this.clockText.setValueSilent("text", new BrsString(BrsDevice.getTime()));
         const clock = new Timer();
         clock.setCallback(() => {
             this.clockText.setValue("text", new BrsString(BrsDevice.getTime()));
         });
-        clock.setFieldValue("repeat", BrsBoolean.True);
+        clock.setValueSilent("repeat", BrsBoolean.True);
         clock.setValue("control", new BrsString("start"));
         this.appendChildToParent(clock);
-        this.setFieldValue("trickPlayBar", this.trickPlayBar);
+        this.setValueSilent("trickPlayBar", this.trickPlayBar);
         this.appendChildToParent(this.trickPlayBar);
         this.showHeader = 0;
         this.showPaused = 0;
@@ -259,10 +259,10 @@ export class Video extends Group {
         } else if (fieldName === "subtitletrack" && isBrsString(value)) {
             postMessage(`video,subtitle,${value.getValue()}`);
         } else if (fieldName === "contentisplaylist" && isBrsBoolean(value)) {
-            const currentFlag = this.getFieldValueJS("contentIsPlaylist");
+            const currentFlag = this.getValueJS("contentIsPlaylist");
             const newFlag = value.toBoolean();
             super.setValue(index, value, alwaysNotify, kind);
-            const content = this.getFieldValue("content");
+            const content = this.getValue("content");
             if (currentFlag !== newFlag && content instanceof ContentNode) {
                 // If the contentIsPlaylist flag changed, we need to reset the content
                 this.resetContent(content);
@@ -274,7 +274,7 @@ export class Video extends Group {
             this.enableUI = value.toBoolean();
             this.statusChanged = this.enableUI;
             if (!this.enableUI) {
-                this.spinner.setFieldValue("visible", BrsBoolean.False);
+                this.spinner.setValueSilent("visible", BrsBoolean.False);
                 this.showUI(false);
             }
         } else if (fieldName === "enabletrickplay" && isBrsBoolean(value)) {
@@ -305,19 +305,19 @@ export class Video extends Group {
                 this.showUI(false);
                 this.resetSeeking();
                 this.showHeader = now + 5000;
-                this.spinner.setFieldValue("visible", BrsBoolean.from(this.enableUI));
+                this.spinner.setValueSilent("visible", BrsBoolean.from(this.enableUI));
                 this.setBufferingStatus(eventIndex);
                 return;
             case MediaEvent.START_STREAM:
             case MediaEvent.RESUMED:
                 state = "playing";
                 this.resetSeeking();
-                this.spinner.setFieldValue("visible", BrsBoolean.False);
+                this.spinner.setValueSilent("visible", BrsBoolean.False);
                 this.showUI(false);
                 break;
             case MediaEvent.PAUSED:
                 state = "paused";
-                this.spinner.setFieldValue("visible", BrsBoolean.False);
+                this.spinner.setValueSilent("visible", BrsBoolean.False);
                 if (this.trickPlayPos === -1) {
                     this.showHeader = now + 5000;
                     this.showTrickPlay = now + 5000;
@@ -329,7 +329,7 @@ export class Video extends Group {
                 break;
             case MediaEvent.FINISHED:
             case MediaEvent.FULL:
-                this.spinner.setFieldValue("visible", BrsBoolean.False);
+                this.spinner.setValueSilent("visible", BrsBoolean.False);
                 this.showUI(false);
                 state = "finished";
                 break;
@@ -340,7 +340,7 @@ export class Video extends Group {
                 break;
             default:
         }
-        if (this.getFieldValue("bufferingStatus") instanceof RoAssociativeArray) {
+        if (this.getValue("bufferingStatus") instanceof RoAssociativeArray) {
             this.setValue("bufferingStatus", BrsInvalid.Instance);
         }
         super.setValue("state", new BrsString(state));
@@ -351,13 +351,13 @@ export class Video extends Group {
         if (this.contentTitles.length > 0) {
             this.setContentIndex(0);
         } else {
-            this.titleText.setFieldValue("text", new BrsString(""));
+            this.titleText.setValueSilent("text", new BrsString(""));
         }
         this.resetSeeking();
-        this.setFieldValue("currentAudioTrack", new BrsString(""));
-        this.setFieldValue("availableAudioTracks", new RoArray([]));
-        this.setFieldValue("currentSubtitleTrack", new BrsString(""));
-        this.setFieldValue("availableSubtitleTracks", new RoArray([]));
+        this.setValueSilent("currentAudioTrack", new BrsString(""));
+        this.setValueSilent("availableAudioTracks", new RoArray([]));
+        this.setValueSilent("currentSubtitleTrack", new BrsString(""));
+        this.setValueSilent("availableSubtitleTracks", new RoArray([]));
     }
 
     setContentIndex(index: number) {
@@ -373,11 +373,11 @@ export class Video extends Group {
     }
 
     setPosition(position: number) {
-        const duration = this.getFieldValueJS("duration") ?? 0;
+        const duration = this.getValueJS("duration") ?? 0;
         if (position >= 0 && duration > 0) {
             this.trickPlayBar.setPosition(position, duration);
             if (this.seeking) {
-                this.spinner.setFieldValue("visible", BrsBoolean.False);
+                this.spinner.setValueSilent("visible", BrsBoolean.False);
                 this.setState(MediaEvent.RESUMED, 0);
                 this.seeking = false;
             }
@@ -479,7 +479,7 @@ export class Video extends Group {
     setErrorFields(errorCode: number) {
         let errorMsg = "";
         let errorInfo = {
-            clipId: this.getFieldValueJS("contentIndex"),
+            clipId: this.getValueJS("contentIndex"),
             ignored: false,
             source: "buffer:reader",
             category: "",
@@ -530,10 +530,10 @@ export class Video extends Group {
             this.showTrickPlay = 0;
         }
         const now = Date.now();
-        this.backgroundOverlay.setFieldValue("visible", BrsBoolean.from(this.showHeader > now));
+        this.backgroundOverlay.setValueSilent("visible", BrsBoolean.from(this.showHeader > now));
         this.titleText.setValue("visible", BrsBoolean.from(this.showHeader > now));
-        this.clockText.setFieldValue("visible", BrsBoolean.from(this.showHeader > now));
-        this.pausedIcon.setFieldValue("visible", BrsBoolean.from(this.showPaused > now));
+        this.clockText.setValueSilent("visible", BrsBoolean.from(this.showHeader > now));
+        this.pausedIcon.setValueSilent("visible", BrsBoolean.from(this.showPaused > now));
         this.trickPlayBar.setValue("visible", BrsBoolean.from(this.showTrickPlay > now));
     }
 
@@ -544,12 +544,12 @@ export class Video extends Group {
         }
         let handled = false;
         if (key === "play" && this.enableTrickPlay) {
-            const state = this.getFieldValueJS("state") as string;
+            const state = this.getValueJS("state") as string;
             if (state === "paused") {
                 if (this.trickPlayPos >= 0) {
                     postMessage(`video,seek,${this.trickPlayPos * 1000}`);
                     this.trickPlayPos = -1;
-                    this.spinner.setFieldValue("visible", BrsBoolean.from(this.enableUI));
+                    this.spinner.setValueSilent("visible", BrsBoolean.from(this.enableUI));
                     this.seeking = true;
                     this.showUI(false);
                 } else {
@@ -569,15 +569,15 @@ export class Video extends Group {
             if (this.trickPlayPos >= 0) {
                 postMessage(`video,seek,${this.trickPlayPos * 1000}`);
                 this.trickPlayPos = -1;
-                this.spinner.setFieldValue("visible", BrsBoolean.from(this.enableUI));
+                this.spinner.setValueSilent("visible", BrsBoolean.from(this.enableUI));
                 this.showUI(false);
                 this.seeking = true;
                 handled = true;
             }
         } else if (key === "replay" && this.enableTrickPlay) {
-            const state = this.getFieldValueJS("state") as string;
+            const state = this.getValueJS("state") as string;
             if (state === "playing") {
-                const position = this.getFieldValueJS("position") as number;
+                const position = this.getValueJS("position") as number;
                 if (position > 0) {
                     const now = Date.now();
                     postMessage(`video,seek,${Math.max(0, position - 20) * 1000}`);
@@ -597,11 +597,11 @@ export class Video extends Group {
     }
 
     private handleLeftRight(key: string) {
-        const duration = this.getFieldValueJS("duration") as number;
+        const duration = this.getValueJS("duration") as number;
         if (duration <= 0) {
             return false;
         }
-        const state = this.getFieldValueJS("state") as string;
+        const state = this.getValueJS("state") as string;
         if (state !== "paused") {
             postMessage("video,pause");
         }
@@ -609,7 +609,7 @@ export class Video extends Group {
             this.seekMode = "skip";
             this.seekLevel = 1;
             this.seekTimeout = 0;
-            this.trickPlayPos = this.getFieldValueJS("position") as number;
+            this.trickPlayPos = this.getValueJS("position") as number;
         } else if (this.seekMode !== "skip") {
             this.seekMode = "skip";
             this.seekLevel = 1;
@@ -623,11 +623,11 @@ export class Video extends Group {
     }
 
     private handleRewFastForward(key: string) {
-        const duration = this.getFieldValueJS("duration") as number;
+        const duration = this.getValueJS("duration") as number;
         if (duration <= 0) {
             return false;
         }
-        const state = this.getFieldValueJS("state") as string;
+        const state = this.getValueJS("state") as string;
         if (state !== "paused") {
             postMessage("video,pause");
         }
@@ -636,7 +636,7 @@ export class Video extends Group {
             console.debug(`Video.handleRewFastForward: ${mode} - start`);
             this.seekMode = mode;
             this.seekLevel = 1;
-            this.trickPlayPos = this.getFieldValueJS("position") as number;
+            this.trickPlayPos = this.getValueJS("position") as number;
         } else if (this.seekMode === "skip") {
             console.debug(`Video.handleRewFastForward: ${mode} - from skip`);
             this.seekMode = mode;
@@ -695,7 +695,7 @@ export class Video extends Group {
         draw2D?.doDrawClearedRect(rect);
         if (this.statusChanged) {
             if (this.seekTimeout > 0 && this.seekTimeout < Date.now() && ["rw", "ff"].includes(this.seekMode)) {
-                const duration = this.getFieldValueJS("duration") as number;
+                const duration = this.getValueJS("duration") as number;
                 this.updateSeekStep(this.seekMode === "ff", duration, Math.trunc(1000 / this.seekLevel));
             }
             this.showUI(this.enableUI);
@@ -715,7 +715,7 @@ export class Video extends Group {
     }
 
     private checkContentChanged() {
-        const content = this.getFieldValue("content");
+        const content = this.getValue("content");
         if (content instanceof ContentNode && content.changed) {
             this.resetContent(content);
             content.changed = false;
@@ -725,28 +725,28 @@ export class Video extends Group {
     private formatContent(node: ContentNode) {
         const content: Object[] = [];
         this.contentTitles.length = 0;
-        const isPlaylist = this.getFieldValueJS("contentIsPlaylist") as boolean;
+        const isPlaylist = this.getValueJS("contentIsPlaylist") as boolean;
         if (isPlaylist) {
             const playList = node.getNodeChildren().filter((node) => node instanceof Node);
             for (const node of playList) {
-                const url = node.getFieldValueJS("url") as string;
+                const url = node.getValueJS("url") as string;
                 if (url?.length) {
-                    const item = { url: url, streamFormat: node.getFieldValueJS("streamFormat"), audioTrack: -1 };
+                    const item = { url: url, streamFormat: node.getValueJS("streamFormat"), audioTrack: -1 };
                     if (url.startsWith("http")) {
                         item.url = BrsDevice.getCORSProxy(url);
                     }
-                    this.contentTitles.push(node.getFieldValueJS("title") ?? "");
+                    this.contentTitles.push(node.getValueJS("title") ?? "");
                     content.push(item);
                 }
             }
         } else {
-            const url = node.getFieldValueJS("url") as string;
+            const url = node.getValueJS("url") as string;
             if (url?.length) {
-                const item = { url: url, streamFormat: node.getFieldValueJS("streamFormat"), audioTrack: -1 };
+                const item = { url: url, streamFormat: node.getValueJS("streamFormat"), audioTrack: -1 };
                 if (url.startsWith("http")) {
                     item.url = BrsDevice.getCORSProxy(url);
                 }
-                this.contentTitles.push(node.getFieldValueJS("title") ?? "");
+                this.contentTitles.push(node.getValueJS("title") ?? "");
                 content.push(item);
             }
         }

@@ -95,9 +95,9 @@ export class ChannelStore extends Node {
                 break;
             case "getdeviceattestationtoken": {
                 const result = new ContentNode();
-                result.setFieldValue("status", new Int32(1));
-                result.setFieldValue("nonce", this.getFieldValue("nonce"));
-                result.setFieldValue("token", this.channelStore.getAttestationToken());
+                result.setValueSilent("status", new Int32(1));
+                result.setValueSilent("nonce", this.getValue("nonce"));
+                result.setValueSilent("token", this.channelStore.getAttestationToken());
                 super.setValue("deviceAttestationToken", result);
                 break;
             }
@@ -111,8 +111,8 @@ export class ChannelStore extends Node {
         const result = new ContentNode();
         const status = { code: -4, message: "Empty List" };
         const catalog = this.channelStore.getProductData(command, status);
-        result.setFieldValue("status", new Int32(status.code));
-        result.setFieldValue("message", new BrsString(status.message));
+        result.setValueSilent("status", new Int32(status.code));
+        result.setValueSilent("message", new BrsString(status.message));
         for (const item of catalog) {
             result.appendChildToParent(toContentNode(item));
         }
@@ -121,22 +121,22 @@ export class ChannelStore extends Node {
 
     private setUserData(command: string, field: string) {
         const result = new ContentNode();
-        const fakeServer = this.getFieldValueJS("fakeServer") as boolean;
+        const fakeServer = this.getValueJS("fakeServer") as boolean;
         if (!fakeServer) {
             super.setValue(field, BrsInvalid.Instance);
             return;
         }
         if (command === "getuserdata") {
-            result.setFieldValue("email", new BrsString("johm.doe@email.com"));
-            result.setFieldValue("firstName", new BrsString("John"));
-            result.setFieldValue("lastName", new BrsString("Doe"));
-            result.setFieldValue("gender", new BrsString("Male"));
-            result.setFieldValue("birth", new BrsString("1970-01"));
-            result.setFieldValue("phone", BrsInvalid.Instance);
+            result.setValueSilent("email", new BrsString("johm.doe@email.com"));
+            result.setValueSilent("firstName", new BrsString("John"));
+            result.setValueSilent("lastName", new BrsString("Doe"));
+            result.setValueSilent("gender", new BrsString("Male"));
+            result.setValueSilent("birth", new BrsString("1970-01"));
+            result.setValueSilent("phone", BrsInvalid.Instance);
         } else if (fakeServer && command === "getuserregiondata") {
-            result.setFieldValue("state", new BrsString("CA"));
-            result.setFieldValue("zip", new BrsString("90210"));
-            result.setFieldValue("country", new BrsString("USA"));
+            result.setValueSilent("state", new BrsString("CA"));
+            result.setValueSilent("zip", new BrsString("90210"));
+            result.setValueSilent("country", new BrsString("USA"));
         }
         super.setValue(field, result);
     }
@@ -145,8 +145,8 @@ export class ChannelStore extends Node {
         const result = new ContentNode();
         const status = { code: -3, message: "Invalid Order" };
         const order = this.channelStore.placeOrder(status);
-        result.setFieldValue("status", new Int32(status.code));
-        result.setFieldValue("message", new BrsString(status.message));
+        result.setValueSilent("status", new Int32(status.code));
+        result.setValueSilent("message", new BrsString(status.message));
         for (const item of order) {
             result.appendChildToParent(toContentNode(item));
         }

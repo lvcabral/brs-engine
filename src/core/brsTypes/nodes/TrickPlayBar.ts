@@ -46,16 +46,16 @@ export class TrickPlayBar extends Group {
         this.barProgress = this.addPoster(barBmpUri, [0, 0], 1, this.barH);
         this.barTicker = this.addPoster(`common:/images/${this.resolution}/trickplayticker.png`, [0, 0]);
         this.position = this.addLabel("textColor", [0, this.barH * 2], 0, this.barH * 2);
-        this.backBack.setFieldValue("opacity", new Float(0.3));
-        this.barProgress.setFieldValue("visible", BrsBoolean.False);
-        this.barProgress.setFieldValue("blendColor", new Int32(1730004479)); // From inspection in Roku debugger
-        this.barTicker.setFieldValue("visible", BrsBoolean.False);
+        this.backBack.setValueSilent("opacity", new Float(0.3));
+        this.barProgress.setValueSilent("visible", BrsBoolean.False);
+        this.barProgress.setValueSilent("blendColor", new Int32(1730004479)); // From inspection in Roku debugger
+        this.barTicker.setValueSilent("visible", BrsBoolean.False);
         this.linkField(this.backBack, "blendColor", "trackBlendColor");
         this.linkField(this.backBack, "uri", "trackImageUri");
         this.linkField(this.barProgress, "blendColor", "filledBarBlendColor");
         this.linkField(this.barProgress, "uri", "filledBarImageUri");
         this.linkField(this.barTicker, "blendColor", "currentTimeMarkerBlendColor");
-        this.setFieldValue("width", new Int32(this.barW));
+        this.setValueSilent("width", new Int32(this.barW));
         this.bmpIcons = new Map<string, RoBitmap>([
             ["skip-right", this.loadBitmap(`common:/images/${this.resolution}/icon_skipAhead.png`)!],
             ["skip-left", this.loadBitmap(`common:/images/${this.resolution}/icon_skipBack.png`)!],
@@ -75,7 +75,7 @@ export class TrickPlayBar extends Group {
             this.position.setValue("color", value);
             this.remaining.setValue("color", value);
         } else if (fieldName === "visible" && value instanceof BrsBoolean) {
-            if (this.getFieldValueJS("visible") !== value.toBoolean()) {
+            if (this.getValueJS("visible") !== value.toBoolean()) {
                 postMessage({ trickPlayBarVisible: value.toBoolean() });
             }
         }
@@ -94,17 +94,17 @@ export class TrickPlayBar extends Group {
             };
             const posStr = formatTime(position);
             const remStr = formatTime(remaining);
-            this.position.setFieldValue("text", new BrsString(posStr));
-            this.remaining.setFieldValue("text", new BrsString(remStr));
-            const width = this.backBack.getFieldValueJS("width") as number;
+            this.position.setValueSilent("text", new BrsString(posStr));
+            this.remaining.setValueSilent("text", new BrsString(remStr));
+            const width = this.backBack.getValueJS("width") as number;
             const progress = (position / duration) * width;
-            this.barProgress.setFieldValue("visible", BrsBoolean.from(progress > this.barH));
-            this.barProgress.setFieldValue("width", new Int32(progress));
-            this.barTicker.setFieldValue("visible", BrsBoolean.True);
+            this.barProgress.setValueSilent("visible", BrsBoolean.from(progress > this.barH));
+            this.barProgress.setValueSilent("width", new Int32(progress));
+            this.barTicker.setValueSilent("visible", BrsBoolean.True);
             this.barTicker.setTranslationX(Math.max(progress - this.barH, 0));
         } else {
-            this.barProgress.setFieldValue("visible", BrsBoolean.False);
-            this.barTicker.setFieldValue("visible", BrsBoolean.False);
+            this.barProgress.setValueSilent("visible", BrsBoolean.False);
+            this.barTicker.setValueSilent("visible", BrsBoolean.False);
         }
     }
 

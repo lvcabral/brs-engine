@@ -75,9 +75,9 @@ export class Audio extends Node {
         } else if (fieldName === "mute" && isBrsBoolean(value)) {
             postMessage(`audio,mute,${value.toBoolean()}`);
         } else if (fieldName === "contentIsPlaylist".toLowerCase() && isBrsBoolean(value)) {
-            const currentFlag = this.getFieldValueJS("contentIsPlaylist") as boolean;
+            const currentFlag = this.getValueJS("contentIsPlaylist") as boolean;
             const newFlag = value.toBoolean();
-            const content = this.getFieldValue("content");
+            const content = this.getValue("content");
             if (currentFlag !== newFlag && content instanceof ContentNode) {
                 // If the contentIsPlaylist flag changed, we need to reset the content
                 postMessage({ audioPlaylist: this.formatContent(content) });
@@ -127,7 +127,7 @@ export class Audio extends Node {
     }
 
     private checkContentChanged() {
-        const content = this.getFieldValue("content");
+        const content = this.getValue("content");
         if (content instanceof ContentNode && content.changed) {
             postMessage({ audioPlaylist: this.formatContent(content) });
             content.changed = false;
@@ -136,11 +136,11 @@ export class Audio extends Node {
 
     private formatContent(node: ContentNode) {
         const content = new Array<string>();
-        const isPlaylist = this.getFieldValueJS("contentIsPlaylist") as boolean;
+        const isPlaylist = this.getValueJS("contentIsPlaylist") as boolean;
         if (isPlaylist) {
             const playList = node.getNodeChildren().filter((node) => node instanceof Node);
             for (const node of playList) {
-                const url = node.getFieldValueJS("url") as string;
+                const url = node.getValueJS("url") as string;
                 if (url?.length && url.startsWith("http")) {
                     content.push(BrsDevice.getCORSProxy(url));
                 } else if (url?.length) {
@@ -148,7 +148,7 @@ export class Audio extends Node {
                 }
             }
         } else {
-            const url = node.getFieldValueJS("url") as string;
+            const url = node.getValueJS("url") as string;
             if (url?.length && url.startsWith("http")) {
                 content.push(BrsDevice.getCORSProxy(url));
             } else if (url?.length) {

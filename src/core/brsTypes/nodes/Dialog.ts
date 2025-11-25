@@ -110,8 +110,8 @@ export class Dialog extends Group {
             msgX = (this.sceneRect.width - msgWidth) / 2;
             msgY = titleY + 111;
             msgSize = 34;
-            this.buttonGroup.setFieldValue("minWidth", new Float(900));
-            this.buttonGroup.setFieldValue("maxWidth", new Float(900));
+            this.buttonGroup.setValueSilent("minWidth", new Float(900));
+            this.buttonGroup.setValueSilent("maxWidth", new Float(900));
         } else {
             this.width = 700;
             this.minHeight = 144;
@@ -131,20 +131,20 @@ export class Dialog extends Group {
             msgX = (this.sceneRect.width - msgWidth) / 2;
             msgY = titleY + 74;
             msgSize = 24;
-            this.buttonGroup.setFieldValue("minWidth", new Float(600));
-            this.buttonGroup.setFieldValue("maxWidth", new Float(600));
+            this.buttonGroup.setValueSilent("minWidth", new Float(600));
+            this.buttonGroup.setValueSilent("maxWidth", new Float(600));
         }
         this.height = this.minHeight;
-        this.setFieldValue("iconUri", new BrsString(iconUri));
+        this.setValueSilent("iconUri", new BrsString(iconUri));
         this.background = this.addPoster(this.backUri, this.dialogTrans, this.width, this.height);
         this.title = this.addLabel("titleColor", [titleX, titleY], titleWidth, titleHeight, titleSize, "top", "center");
         this.icon = this.addPoster(iconUri, this.iconTrans, this.iconSize, this.iconSize);
         this.divider = this.addPoster(this.dividerUri, [titleX, dividerY], titleWidth, this.lineHeight);
         this.message = this.addLabel("messageColor", [msgX, msgY], msgWidth, 0, msgSize, "top", "left", true);
-        this.setFieldValue("width", new Float(this.width));
-        this.setFieldValue("backgroundUri", new BrsString(this.backUri));
-        this.setFieldValue("dividerUri", new BrsString(this.dividerUri));
-        this.setFieldValue("buttonGroup", this.buttonGroup);
+        this.setValueSilent("width", new Float(this.width));
+        this.setValueSilent("backgroundUri", new BrsString(this.backUri));
+        this.setValueSilent("dividerUri", new BrsString(this.dividerUri));
+        this.setValueSilent("buttonGroup", this.buttonGroup);
         this.linkField(this.buttonGroup, "buttons");
         this.linkField(this.buttonGroup, "buttonSelected");
         this.linkField(this.buttonGroup, "buttonFocused");
@@ -155,7 +155,7 @@ export class Dialog extends Group {
     setValue(index: string, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
         const fieldName = index.toLowerCase();
         if (fieldName === "focusbutton") {
-            const buttons = this.getFieldValueJS("buttons");
+            const buttons = this.getValueJS("buttons");
             const newIndex = jsValueOf(value);
             if (typeof newIndex === "number" && newIndex >= 0 && newIndex < buttons.length) {
                 this.focusIndex = newIndex;
@@ -190,7 +190,7 @@ export class Dialog extends Group {
     }
 
     handleKey(key: string, press: boolean): boolean {
-        const optionsDialog = this.getFieldValueJS("optionsDialog") as boolean;
+        const optionsDialog = this.getValueJS("optionsDialog") as boolean;
         let handled = false;
         if (press && (key === "back" || (key === "options" && optionsDialog))) {
             this.setValue("close", BrsBoolean.True);
@@ -229,7 +229,7 @@ export class Dialog extends Group {
 
     protected updateChildren() {
         this.height = this.minHeight;
-        const width = this.getFieldValueJS("width") as number;
+        const width = this.getValueJS("width") as number;
         if (width) {
             this.background.setValue("width", new Float(width));
             this.width = width;
@@ -255,8 +255,8 @@ export class Dialog extends Group {
         this.copyField(this.message, "color", "messageColor");
         this.copyField(this.message, "font", "messageFont");
 
-        const buttons = this.getFieldValueJS("buttons") as string[];
-        const buttonHeight = this.buttonGroup.getFieldValueJS("buttonHeight") as number;
+        const buttons = this.getValueJS("buttons") as string[];
+        const buttonHeight = this.buttonGroup.getValueJS("buttonHeight") as number;
         if (buttons?.length) {
             this.height += buttonHeight * buttons.length;
             this.hasButtons = true;
@@ -279,7 +279,7 @@ export class Dialog extends Group {
         this.divider.setTranslationOffset(0, offsetY);
         this.message.setTranslationOffset(0, offsetY);
         if (this.hasButtons) {
-            const msgTrans = this.message.getFieldValueJS("translation") as number[];
+            const msgTrans = this.message.getValueJS("translation") as number[];
             const buttonsTrans = [
                 msgTrans[0],
                 this.dialogTrans[1] + this.height - buttonHeight * buttons.length - this.vertOffset,

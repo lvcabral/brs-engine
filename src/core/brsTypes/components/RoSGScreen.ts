@@ -185,7 +185,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
             sgRoot.scene.renderNode(interpreter, [0, 0], 0, 1, this.draw2D);
             if (sgRoot.scene?.dialog?.getNodeParent() instanceof BrsInvalid) {
                 const dialog = sgRoot.scene.dialog;
-                dialog.setFieldValue("visible", BrsBoolean.True);
+                dialog.setValueSilent("visible", BrsBoolean.True);
                 const screenRect = { x: 0, y: 0, width: this.width, height: this.height };
                 this.draw2D.doDrawRotatedRect(screenRect, 255, 0, [0, 0], 0.5);
                 dialog.renderNode(interpreter, [0, 0], 0, 1, this.draw2D);

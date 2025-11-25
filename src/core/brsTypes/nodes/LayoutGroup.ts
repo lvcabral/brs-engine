@@ -56,8 +56,8 @@ export class LayoutGroup extends Group {
         }
     }
 
-    setFieldValue(fieldName: string, value: BrsType, alwaysNotify: boolean = false) {
-        super.setFieldValue(fieldName, value, alwaysNotify);
+    setValueSilent(fieldName: string, value: BrsType) {
+        super.setValueSilent(fieldName, value);
         if (this.isLayoutField(fieldName)) {
             this.layoutDirty = true;
         }
@@ -317,7 +317,7 @@ export class LayoutGroup extends Group {
     }
 
     private getChildTranslation(child: Group) {
-        const existing = child.getFieldValueJS("translation");
+        const existing = child.getValueJS("translation");
         if (Array.isArray(existing) && existing.length === 2) {
             return [Number(existing[0]) || 0, Number(existing[1]) || 0];
         }
@@ -325,7 +325,7 @@ export class LayoutGroup extends Group {
     }
 
     private setChildTranslation(child: Group, translation: number[]) {
-        const current = child.getFieldValueJS("translation");
+        const current = child.getValueJS("translation");
         if (Array.isArray(current) && current.length === 2) {
             if (this.nearlyEqual(current[0], translation[0]) && this.nearlyEqual(current[1], translation[1])) {
                 return;
@@ -345,7 +345,7 @@ export class LayoutGroup extends Group {
     }
 
     private getLayoutDirection(): LayoutDirection {
-        const direction = this.getFieldValueJS("layoutDirection");
+        const direction = this.getValueJS("layoutDirection");
         if (typeof direction === "string") {
             const normalized = direction.toLowerCase();
             if (normalized === "horiz" || normalized === "horizontal") {
@@ -359,7 +359,7 @@ export class LayoutGroup extends Group {
     }
 
     private normalizeHorizAlignment(direction: LayoutDirection): HorizontalAlignment {
-        const raw = this.getFieldValueJS("horizAlignment");
+        const raw = this.getValueJS("horizAlignment");
         if (typeof raw === "string") {
             const value = raw.toLowerCase() as HorizontalAlignment;
             if (value === "left" || value === "center" || value === "right" || value === "custom") {
@@ -370,7 +370,7 @@ export class LayoutGroup extends Group {
     }
 
     private normalizeVertAlignment(direction: LayoutDirection): VerticalAlignment {
-        const raw = this.getFieldValueJS("vertAlignment");
+        const raw = this.getValueJS("vertAlignment");
         if (typeof raw === "string") {
             const value = raw.toLowerCase() as VerticalAlignment;
             if (value === "top" || value === "center" || value === "bottom" || value === "custom") {
@@ -391,12 +391,12 @@ export class LayoutGroup extends Group {
     }
 
     private shouldAddSpacingAfterChild() {
-        const value = this.getFieldValueJS("addItemSpacingAfterChild");
+        const value = this.getValueJS("addItemSpacingAfterChild");
         return value !== false;
     }
 
     private getItemSpacingValues() {
-        const field = this.getFieldValue("itemSpacings");
+        const field = this.getValue("itemSpacings");
         if (!(field instanceof RoArray)) {
             return [] as number[];
         }

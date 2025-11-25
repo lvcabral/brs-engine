@@ -151,10 +151,10 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue {
 
     // Abstract methods to be implemented by subclasses
     abstract getElements(): BrsString[];
-    abstract setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind): void;
+    abstract getValue(fieldName: string): BrsType;
     abstract getValues(): BrsType[];
-    abstract setFieldValue(fieldName: string, value: BrsType, alwaysNotify?: boolean): void;
-    abstract getFieldValue(fieldName: string): BrsType;
+    abstract setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind): void;
+    abstract setValueSilent(fieldName: string, value: BrsType, alwaysNotify?: boolean): void;
     abstract addNodeField(fieldName: string, type: string, alwaysNotify: boolean): void;
 
     abstract getNodeChildren(): BrsType[];

@@ -110,7 +110,7 @@ export class SoundEffect extends Node {
     }
 
     private play() {
-        const volume = this.getFieldValueJS("volume") as number;
+        const volume = this.getValueJS("volume") as number;
         this.stream = BrsDevice.getSfxStream(this.audioId);
         if (this.stream === -1) {
             if (BrsDevice.isDevMode) {

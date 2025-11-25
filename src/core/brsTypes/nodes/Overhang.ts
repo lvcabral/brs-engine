@@ -70,8 +70,8 @@ export class Overhang extends Group {
         if (this.resolution === "FHD") {
             this.width = 1920;
             this.height = 172;
-            this.setFieldValue("width", new Float(this.width));
-            this.setFieldValue("height", new Float(this.height));
+            this.setValueSilent("width", new Float(this.width));
+            this.setValueSilent("height", new Float(this.height));
             this.backRect = this.addRectangle("color", [0, 0], this.width, this.height);
             this.backPoster = this.addPoster("", [0, 0], this.width, this.height);
             this.logo = this.addPoster(defaultLogo, [102, 63]);
@@ -84,8 +84,8 @@ export class Overhang extends Group {
         } else {
             this.width = 1280;
             this.height = 115;
-            this.setFieldValue("width", new Float(this.width));
-            this.setFieldValue("height", new Float(this.height));
+            this.setValueSilent("width", new Float(this.width));
+            this.setValueSilent("height", new Float(this.height));
             this.backRect = this.addRectangle("color", [0, 0], this.width, this.height);
             this.backPoster = this.addPoster("", [0, 0], this.width, this.height);
             this.logo = this.addPoster(defaultLogo, [68, 42]);
@@ -96,14 +96,14 @@ export class Overhang extends Group {
             this.rightDivider = this.addPoster(divider, [1109, 39], 8, 34);
             this.clockText = this.addLabel("clockColor", [1133, 44], 0, 27, 22, "center");
         }
-        this.backRect.setFieldValue("visible", BrsBoolean.False);
+        this.backRect.setValueSilent("visible", BrsBoolean.False);
         this.optionsText.setValue("text", new BrsString(BrsDevice.getTerm("for Options")));
         this.clockText.setValue("text", new BrsString(BrsDevice.getTime()));
         const clock = new Timer();
         clock.setCallback(() => {
             this.clockText.setValue("text", new BrsString(BrsDevice.getTime()));
         });
-        clock.setFieldValue("repeat", BrsBoolean.True);
+        clock.setValueSilent("repeat", BrsBoolean.True);
         clock.setValue("control", new BrsString("start"));
         this.appendChildToParent(clock);
         this.realign = false;
@@ -111,22 +111,22 @@ export class Overhang extends Group {
 
     private updateChildren() {
         this.copyField(this.backPoster, "height");
-        const backUri = this.getFieldValueJS("backgroundUri") as string;
+        const backUri = this.getValueJS("backgroundUri") as string;
         if (backUri) {
             this.backPoster.setValue("uri", new BrsString(backUri));
         }
-        const color = this.getFieldValueJS("color") as number;
-        const logoUri = this.getFieldValueJS("logoUri") as string;
+        const color = this.getValueJS("color") as number;
+        const logoUri = this.getValueJS("logoUri") as string;
         if (logoUri) {
             this.setLogoUri(logoUri);
         } else if (color) {
             this.copyField(this.backRect, "color");
-            this.backRect.setFieldValue("visible", BrsBoolean.True);
+            this.backRect.setValueSilent("visible", BrsBoolean.True);
         } else {
-            this.backRect.setFieldValue("visible", BrsBoolean.False);
+            this.backRect.setValueSilent("visible", BrsBoolean.False);
         }
         this.copyField(this.backRect, "height");
-        const title = this.getFieldValueJS("title") as string;
+        const title = this.getValueJS("title") as string;
         if (title) {
             this.title.setValue("text", new BrsString(title));
             this.copyField(this.title, "color", "titleColor");
@@ -134,13 +134,13 @@ export class Overhang extends Group {
         } else {
             this.leftDivider.setValue("visible", BrsBoolean.False);
         }
-        const showOptions = this.getFieldValueJS("showOptions") as boolean;
-        const optionsAvailable = this.getFieldValueJS("optionsAvailable") as boolean;
+        const showOptions = this.getValueJS("showOptions") as boolean;
+        const optionsAvailable = this.getValueJS("optionsAvailable") as boolean;
         // Roku changed the behavior of `optionsAvailable` to hide the options icon and text if false
         const optionsVisible = showOptions && optionsAvailable;
         this.optionsIcon.setValue("visible", BrsBoolean.from(optionsVisible));
         this.optionsText.setValue("visible", BrsBoolean.from(optionsVisible));
-        const showClock = this.getFieldValueJS("showClock") as boolean;
+        const showClock = this.getValueJS("showClock") as boolean;
         this.clockText.setValue("visible", BrsBoolean.from(showClock));
         if (optionsAvailable) {
             this.optionsIcon.setValue("uri", new BrsString(this.optionsOn));
@@ -155,15 +155,15 @@ export class Overhang extends Group {
         } else {
             this.rightDivider.setValue("visible", BrsBoolean.False);
         }
-        const optionsText = this.getFieldValueJS("optionsText") as string;
+        const optionsText = this.getValueJS("optionsText") as string;
         if (optionsText) {
             this.optionsText.setValue("text", new BrsString(optionsText));
         }
-        const leftDividerUri = this.getFieldValueJS("leftDividerUri") as string;
+        const leftDividerUri = this.getValueJS("leftDividerUri") as string;
         if (leftDividerUri) {
             this.leftDivider.setValue("uri", new BrsString(leftDividerUri));
         }
-        const rightDividerUri = this.getFieldValueJS("rightDividerUri") as string;
+        const rightDividerUri = this.getValueJS("rightDividerUri") as string;
         if (rightDividerUri) {
             this.rightDivider.setValue("uri", new BrsString(rightDividerUri));
         }
@@ -172,12 +172,12 @@ export class Overhang extends Group {
 
     private setLogoUri(uri: string) {
         this.logo.setValue("uri", new BrsString(uri));
-        const loadStatus = this.logo.getFieldValueJS("loadStatus") ?? "";
+        const loadStatus = this.logo.getValueJS("loadStatus") ?? "";
         const subSearch = sgRoot.scene?.subSearch ?? "";
         const uriHasRes = subSearch !== "" && uri.includes(subSearch);
         if (loadStatus === "ready" && this.resolution !== BrsDevice.getDisplayMode() && !uriHasRes) {
-            const bitmapHeight = this.logo.getFieldValueJS("bitmapHeight") as number;
-            const bitmapWidth = this.logo.getFieldValueJS("bitmapWidth") as number;
+            const bitmapHeight = this.logo.getValueJS("bitmapHeight") as number;
+            const bitmapWidth = this.logo.getValueJS("bitmapWidth") as number;
             // Roku scales the logo based on the current display mode
             if (this.resolution === "FHD") {
                 this.logo.setValue("height", new Float(bitmapHeight * 1.5));
@@ -196,7 +196,7 @@ export class Overhang extends Group {
         const topAlignY = isFHD ? 60 : 40;
         const logoWidth = this.logo.rectLocal.width;
         const optionsWidth = this.optionsText.rectLocal.width ?? (isFHD ? 168 : 112);
-        const showClock = this.getFieldValueJS("showClock") as boolean;
+        const showClock = this.getValueJS("showClock") as boolean;
         const clockTextWidth = showClock ? this.clockText.rectLocal.width : 0;
         const clockOffset = isFHD ? 60 : 40;
         const optionsOffset = showClock ? optionsWidth + clockOffset : optionsWidth;

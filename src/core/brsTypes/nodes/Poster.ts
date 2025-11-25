@@ -80,15 +80,15 @@ export class Poster extends Group {
         const size = this.getDimensions();
         const rect = { x: drawTrans[0], y: drawTrans[1], width: size.width, height: size.height };
         const rotation = angle + this.getRotation();
-        const displayMode = this.getFieldValueJS("loadDisplayMode") as string;
+        const displayMode = this.getValueJS("loadDisplayMode") as string;
         opacity = opacity * this.getOpacity();
         if (this.bitmap instanceof RoBitmap && this.bitmap.isValid()) {
-            const loadStatus = this.getFieldValueJS("loadStatus") as string;
-            let rgba = this.getFieldValueJS("blendColor");
+            const loadStatus = this.getValueJS("loadStatus") as string;
+            let rgba = this.getValueJS("blendColor");
             let alpha = opacity;
             if (loadStatus === "failed") {
                 rgba = 0xffffffff;
-                alpha = opacity * this.getFieldValueJS("loadingBitmapOpacity");
+                alpha = opacity * this.getValueJS("loadingBitmapOpacity");
             }
             if (displayMode.trim().toLowerCase() === "scaletofit") {
                 this.drawImage(this.bitmap, this.scaleToFit(rect), rotation, alpha, draw2D, rgba);
@@ -116,8 +116,8 @@ export class Poster extends Group {
                 margins.top = sizes.vertical;
                 margins.bottom = sizes.vertical;
             } else {
-                const loadWidth = this.getFieldValueJS("loadWidth") as number;
-                const loadHeight = this.getFieldValueJS("loadHeight") as number;
+                const loadWidth = this.getValueJS("loadWidth") as number;
+                const loadHeight = this.getValueJS("loadHeight") as number;
                 if (loadWidth > 0 && loadHeight > 0) {
                     this.bitmap = getTextureManager().resizeTexture(this.bitmap, loadWidth, loadHeight);
                 }

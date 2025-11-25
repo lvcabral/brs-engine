@@ -25,7 +25,7 @@ export class BusySpinner extends Group {
         this.registerInitializedFields(initializedFields);
 
         this.poster = this.addPoster("", [0, 0]);
-        this.setFieldValue("poster", this.poster);
+        this.setValueSilent("poster", this.poster);
     }
 
     setValue(index: string, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
@@ -77,25 +77,25 @@ export class BusySpinner extends Group {
         opacity = opacity * this.getOpacity();
         const bmp = this.poster.getBitmap("uri");
         if (bmp?.isValid()) {
-            this.poster.setFieldValue(
+            this.poster.setValueSilent(
                 "scaleRotateCenter",
                 new RoArray([new Float(bmp.width / 2), new Float(bmp.height / 2)])
             );
             if (size.width !== bmp.width) {
                 rect.width = bmp.width;
-                this.setFieldValue("width", new Float(bmp.width));
+                this.setValueSilent("width", new Float(bmp.width));
             }
             if (size.height !== bmp.height) {
                 rect.height = bmp.height;
-                this.setFieldValue("height", new Float(bmp.height));
+                this.setValueSilent("height", new Float(bmp.height));
             }
             if (this.active) {
                 if (this.lastRenderTime === 0) {
                     this.lastRenderTime = Date.now();
                 }
                 const now = Date.now();
-                const spinInterval = this.getFieldValueJS("spinInterval") as number;
-                const clockwise = this.getFieldValueJS("clockwise") as boolean;
+                const spinInterval = this.getValueJS("spinInterval") as number;
+                const clockwise = this.getValueJS("clockwise") as boolean;
                 const direction = clockwise ? -1 : 1;
                 const elapsedTime = (now - this.lastRenderTime) / 1000;
                 const rotationChange = (2 * Math.PI * elapsedTime) / (spinInterval ?? 2);

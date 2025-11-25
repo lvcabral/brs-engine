@@ -25,13 +25,13 @@ export class MarkupList extends ArrayGrid {
         this.registerInitializedFields(initializedFields);
 
         this.gap = 0;
-        this.setFieldValue("focusBitmapUri", new BrsString(this.focusUri));
-        this.setFieldValue("focusFootprintBitmapUri", new BrsString(this.footprintUri));
-        this.setFieldValue("wrapDividerBitmapUri", new BrsString(this.dividerUri));
-        const style = this.getFieldValueJS("vertFocusAnimationStyle") as string;
+        this.setValueSilent("focusBitmapUri", new BrsString(this.focusUri));
+        this.setValueSilent("focusFootprintBitmapUri", new BrsString(this.footprintUri));
+        this.setValueSilent("wrapDividerBitmapUri", new BrsString(this.dividerUri));
+        const style = this.getValueJS("vertFocusAnimationStyle") as string;
         this.wrap = style.toLowerCase() === "fixedfocuswrap";
-        this.numRows = this.getFieldValueJS("numRows") as number;
-        this.numCols = this.getFieldValueJS("numColumns") as number;
+        this.numRows = this.getValueJS("numRows") as number;
+        this.numCols = this.getValueJS("numColumns") as number;
         this.hasNinePatch = true;
     }
 
@@ -98,19 +98,19 @@ export class MarkupList extends ArrayGrid {
             this.focusIndex = 0;
         }
         const hasSections = this.metadata.length > 0;
-        const itemCompName = this.getFieldValueJS("itemComponentName") as string;
+        const itemCompName = this.getValueJS("itemComponentName") as string;
         if (!customNodeExists(new BrsString(itemCompName))) {
             BrsDevice.stderr.write(`warning,[sg.markuplist.create.fail] Failed to create markup item ${itemCompName}`);
             return;
         }
-        const itemSize = this.getFieldValueJS("itemSize") as number[];
+        const itemSize = this.getValueJS("itemSize") as number[];
         if (itemSize[0] === 0 || itemSize[1] === 0 || this.numRows === 0) {
             return;
         }
         const itemRect = { ...rect, width: itemSize[0], height: itemSize[1] };
-        const spacing = this.getFieldValueJS("itemSpacing") as number[];
-        const rowHeights = this.getFieldValueJS("rowHeights") as number[];
-        const rowSpacings = this.getFieldValueJS("rowSpacings") as number[];
+        const spacing = this.getValueJS("itemSpacing") as number[];
+        const rowHeights = this.getValueJS("rowHeights") as number[];
+        const rowSpacings = this.getValueJS("rowSpacings") as number[];
         this.currRow = this.updateListCurrRow();
         let lastIndex = -1;
         let sectionIndex = 0;

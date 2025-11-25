@@ -105,12 +105,12 @@ export class StandardDialog extends Group {
     }
 
     getPaletteColors() {
-        let palette = this.getFieldValue("palette");
+        let palette = this.getValue("palette");
         if (!(palette instanceof RSGPalette) && sgRoot.scene) {
-            palette = sgRoot.scene.getFieldValue("palette");
+            palette = sgRoot.scene.getValue("palette");
         }
         if (palette instanceof RSGPalette) {
-            const colors = palette.getFieldValue("colors");
+            const colors = palette.getValue("colors");
             if (colors instanceof RoAssociativeArray) {
                 return colors;
             }

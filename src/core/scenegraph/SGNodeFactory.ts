@@ -539,7 +539,7 @@ function restoreNode(interpreter: Interpreter, source: any, node: Node, port?: R
             // Ignore transfer metadata fields
             continue;
         }
-        node.setFieldValue(key, brsValueOf(value));
+        node.setValueSilent(key, brsValueOf(value));
         if (port && observed?.includes(key)) {
             if (node instanceof Task) {
                 console.debug(`[Task] Adding observer port for top.${key}`);
@@ -591,7 +591,7 @@ function addFields(interpreter: Interpreter, node: Node, typeDef: ComponentDefin
                 node.addNodeField(fieldName, fieldValue.type, fieldValue.alwaysNotify === "true");
                 // set default value if it was specified in xml
                 if (fieldValue.value) {
-                    node.setFieldValue(fieldName, getBrsValueFromFieldType(fieldValue.type, fieldValue.value));
+                    node.setValueSilent(fieldName, getBrsValueFromFieldType(fieldValue.type, fieldValue.value));
                 }
             }
 

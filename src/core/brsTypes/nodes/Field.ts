@@ -470,7 +470,7 @@ export class Field {
                     if (isBrsString(element)) {
                         // TODO: Check how to handle object values (by reference or by value)
                         const key = element.getValue();
-                        fieldsMap.set(key, hostNode.getFieldValue(key));
+                        fieldsMap.set(key, hostNode.getValue(key));
                     }
                 }
             }

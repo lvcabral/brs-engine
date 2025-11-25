@@ -87,17 +87,17 @@ export class RowList extends ArrayGrid {
             this.marginY = 22;
         }
         this.gap = 0;
-        this.setFieldValue("focusBitmapUri", new BrsString(this.focusUri));
-        this.setFieldValue("wrapDividerBitmapUri", new BrsString(this.dividerUri));
-        const vertStyle = this.getFieldValueJS("vertFocusAnimationStyle") as string;
+        this.setValueSilent("focusBitmapUri", new BrsString(this.focusUri));
+        this.setValueSilent("wrapDividerBitmapUri", new BrsString(this.dividerUri));
+        const vertStyle = this.getValueJS("vertFocusAnimationStyle") as string;
         this.wrap = vertStyle.toLowerCase() === "fixedfocuswrap";
-        this.numRows = this.getFieldValueJS("numRows") as number;
-        this.numCols = this.getFieldValueJS("numColumns") as number;
+        this.numRows = this.getValueJS("numRows") as number;
+        this.numCols = this.getValueJS("numColumns") as number;
         this.rowFocus = [];
         this.rowScrollOffset = []; // Initialize scroll offset tracking
         this.hasNinePatch = true;
         this.focusField = "rowListHasFocus";
-        const font = this.getFieldValue("rowLabelFont") as Font;
+        const font = this.getValue("rowLabelFont") as Font;
         const drawFont = font.createDrawFont();
         this.titleHeight = drawFont.measureTextHeight();
 
@@ -145,7 +145,7 @@ export class RowList extends ArrayGrid {
         this.rowFocus[rowIndex] = colIndex;
 
         // Get the row focus animation style to determine scrolling behavior
-        const rowFocusStyle = (this.getFieldValueJS("rowFocusAnimationStyle") as string).toLowerCase();
+        const rowFocusStyle = (this.getValueJS("rowFocusAnimationStyle") as string).toLowerCase();
 
         // Initialize scroll offset if not set - ensure it starts at 0 for first visit
         const isFirstVisit = this.rowScrollOffset[rowIndex] === undefined || this.rowScrollOffset[rowIndex] === null;
@@ -153,9 +153,9 @@ export class RowList extends ArrayGrid {
             this.rowScrollOffset[rowIndex] = 0;
         }
 
-        const itemSize = this.getFieldValueJS("itemSize") as number[];
+        const itemSize = this.getValueJS("itemSize") as number[];
         const spacing = this.getRowItemSpacing(rowIndex); // Use the actual row's spacing
-        const rowItemSize = this.getFieldValueJS("rowItemSize") as number[][];
+        const rowItemSize = this.getValueJS("rowItemSize") as number[][];
         const rowItemWidth = rowItemSize[0]?.[0] ?? itemSize[0]; // Focused row is at display index 0
         const cols = this.content[rowIndex]?.getNodeChildren();
         const numCols = cols?.length ?? 0;
@@ -227,7 +227,7 @@ export class RowList extends ArrayGrid {
             }
         }
         if (nextRow >= 0 && nextRow < this.content.length) {
-            const rowFocusStyle = (this.getFieldValueJS("rowFocusAnimationStyle") as string).toLowerCase();
+            const rowFocusStyle = (this.getValueJS("rowFocusAnimationStyle") as string).toLowerCase();
             const currentRow = this.focusIndex;
             const currentCol = this.rowFocus[currentRow] ?? 0;
             const currentScrollOffset = this.rowScrollOffset[currentRow] ?? 0;
@@ -284,7 +284,7 @@ export class RowList extends ArrayGrid {
 
         const rowItemWidth = this.getRowItemWidth(currentRow);
         const allItemsFitOnScreen = this.checkIfAllItemsFitOnScreen(numCols, rowItemWidth);
-        const rowFocusStyle = (this.getFieldValueJS("rowFocusAnimationStyle") as string).toLowerCase();
+        const rowFocusStyle = (this.getValueJS("rowFocusAnimationStyle") as string).toLowerCase();
 
         if (allItemsFitOnScreen && rowFocusStyle !== "fixedfocus") {
             return this.handleAllItemsFit(currentRow, numCols, offset);
@@ -309,8 +309,8 @@ export class RowList extends ArrayGrid {
     }
 
     private getRowItemWidth(rowIndex: number): number {
-        const itemSize = this.getFieldValueJS("itemSize") as number[];
-        const rowItemSize = this.getFieldValueJS("rowItemSize") as number[][];
+        const itemSize = this.getValueJS("itemSize") as number[];
+        const rowItemSize = this.getValueJS("rowItemSize") as number[][];
 
         // Calculate display row index (relative to currRow, not absolute row index)
         let displayRowIndex = rowIndex - this.currRow;
@@ -323,11 +323,11 @@ export class RowList extends ArrayGrid {
 
     private getRowItemSpacing(rowIndex: number): number[] {
         let fallback = [0, 0];
-        const itemSpacing = this.getFieldValueJS("itemSpacing") as number[];
+        const itemSpacing = this.getValueJS("itemSpacing") as number[];
         if (itemSpacing?.length === 2) {
             fallback = itemSpacing;
         }
-        return this.resolveVector(this.getFieldValueJS("rowItemSpacing"), rowIndex, fallback);
+        return this.resolveVector(this.getValueJS("rowItemSpacing"), rowIndex, fallback);
     }
 
     private checkIfAllItemsFitOnScreen(numCols: number, rowItemWidth: number): boolean {
@@ -487,13 +487,13 @@ export class RowList extends ArrayGrid {
             this.focusIndex = 0;
         }
 
-        const itemCompName = this.getFieldValueJS("itemComponentName") as string;
+        const itemCompName = this.getValueJS("itemComponentName") as string;
         if (!customNodeExists(new BrsString(itemCompName))) {
             BrsDevice.stderr.write(`warning,[sg.rowlist.create.fail] Failed to create markup item ${itemCompName}`);
             return false;
         }
 
-        const itemSize = this.getFieldValueJS("itemSize") as number[];
+        const itemSize = this.getValueJS("itemSize") as number[];
         if (!itemSize[0] || !itemSize[1] || !this.numRows) {
             return false;
         }
@@ -508,11 +508,11 @@ export class RowList extends ArrayGrid {
         opacity: number,
         draw2D?: IfDraw2D
     ): RowListRenderContext {
-        const itemSize = this.getFieldValueJS("itemSize") as number[];
-        const globalSpacing = this.getFieldValueJS("itemSpacing") as number[];
-        const rowItemSize = this.getFieldValueJS("rowItemSize") as number[][];
-        const rowHeights = this.getFieldValueJS("rowHeights") as number[];
-        const rowSpacings = this.getFieldValueJS("rowSpacings") as number[];
+        const itemSize = this.getValueJS("itemSize") as number[];
+        const globalSpacing = this.getValueJS("itemSpacing") as number[];
+        const rowItemSize = this.getValueJS("rowItemSize") as number[][];
+        const rowHeights = this.getValueJS("rowHeights") as number[];
+        const rowSpacings = this.getValueJS("rowSpacings") as number[];
         const displayRows = Math.min(this.content.length, this.numRows);
 
         return {
@@ -558,8 +558,8 @@ export class RowList extends ArrayGrid {
         }
 
         // Render row label if needed
-        const title = row.getFieldValueJS("title") ?? "";
-        context.showRowLabel = this.getFieldValueJS("showRowLabel")?.[rowIndex] ?? context.showRowLabel;
+        const title = row.getValueJS("title") ?? "";
+        context.showRowLabel = this.getValueJS("showRowLabel")?.[rowIndex] ?? context.showRowLabel;
         if (title.length !== 0 && context.showRowLabel) {
             const divRect = { ...context.itemRect, width: rowWidth };
             const divHeight = this.renderRowDivider(title, divRect, context.opacity, displayRowIndex, context.draw2D);
@@ -581,7 +581,7 @@ export class RowList extends ArrayGrid {
     }
 
     private getRowXOffset(displayRowIndex: number): number {
-        const focusXOffset = this.getFieldValueJS("focusXOffset") as number[];
+        const focusXOffset = this.getValueJS("focusXOffset") as number[];
         if (!focusXOffset || focusXOffset.length === 0) {
             return 0;
         }
@@ -601,7 +601,7 @@ export class RowList extends ArrayGrid {
     ): void {
         const totalRowWidth = numCols * rowItemWidth + (numCols - 1) * spacing[0];
         const allItemsFitOnScreen = totalRowWidth <= this.sceneRect.width;
-        const rowFocusStyle = (this.getFieldValueJS("rowFocusAnimationStyle") as string).toLowerCase();
+        const rowFocusStyle = (this.getValueJS("rowFocusAnimationStyle") as string).toLowerCase();
 
         this.rowScrollOffset[rowIndex] ??= 0;
 
@@ -718,7 +718,7 @@ export class RowList extends ArrayGrid {
 
         // Determine focus behavior based on animation style and screen fit
         let focused = false;
-        const rowFocusStyle = (this.getFieldValueJS("rowFocusAnimationStyle") as string).toLowerCase();
+        const rowFocusStyle = (this.getValueJS("rowFocusAnimationStyle") as string).toLowerCase();
 
         if (rowFocusStyle === "fixedfocuswrap" && !allItemsFitOnScreen) {
             // Items don't fit and we're using fixedFocusWrap - focus stays on first visible item
@@ -750,8 +750,8 @@ export class RowList extends ArrayGrid {
             itemComp.setValue(this.focusField, BrsBoolean.from(nodeFocus));
         }
 
-        const drawFocus = this.getFieldValueJS("drawFocusFeedback");
-        const drawFocusOnTop = this.getFieldValueJS("drawFocusFeedbackOnTop");
+        const drawFocus = this.getValueJS("drawFocusFeedback");
+        const drawFocusOnTop = this.getValueJS("drawFocusFeedbackOnTop");
         if (focused && drawFocus && !drawFocusOnTop) {
             this.renderFocus(itemRect, opacity, nodeFocus, draw2D);
         }
@@ -769,7 +769,7 @@ export class RowList extends ArrayGrid {
         displayRowIndex: number,
         draw2D?: IfDraw2D
     ) {
-        const offset = this.resolveVector(this.getFieldValueJS("rowLabelOffset"), displayRowIndex, [0, 0]);
+        const offset = this.resolveVector(this.getValueJS("rowLabelOffset"), displayRowIndex, [0, 0]);
         const divRect = {
             ...itemRect,
             x: itemRect.x + (offset[0] ?? 0),
@@ -777,8 +777,8 @@ export class RowList extends ArrayGrid {
         };
 
         if (title.length !== 0) {
-            const font = this.getFieldValue("rowLabelFont") as Font;
-            const color = this.getFieldValueJS("rowLabelColor");
+            const font = this.getValue("rowLabelFont") as Font;
+            const color = this.getValueJS("rowLabelColor");
             this.drawText(title, font, color, opacity, divRect, "left", "center", 0, draw2D, "...", displayRowIndex);
         }
 
@@ -788,7 +788,7 @@ export class RowList extends ArrayGrid {
 
     protected refreshContent() {
         this.content.length = 0;
-        const content = this.getFieldValue("content");
+        const content = this.getValue("content");
         if (!(content instanceof ContentNode)) {
             return;
         }

@@ -100,28 +100,28 @@ export class ArrayGrid extends Group {
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
 
-        this.setFieldValue("content", new ContentNode());
+        this.setValueSilent("content", new ContentNode());
         if (this.resolution === "FHD") {
             this.marginX = 36;
             this.marginY = 6;
             this.lineHeight = 4.5;
-            this.setFieldValue("wrapDividerHeight", new Float(36));
-            this.setFieldValue("sectionDividerHeight", new Float(60));
-            this.setFieldValue("sectionDividerMinWidth", new Float(126));
-            this.setFieldValue("sectionDividerSpacing", new Float(15));
+            this.setValueSilent("wrapDividerHeight", new Float(36));
+            this.setValueSilent("sectionDividerHeight", new Float(60));
+            this.setValueSilent("sectionDividerMinWidth", new Float(126));
+            this.setValueSilent("sectionDividerSpacing", new Float(15));
         } else {
             this.marginX = 24;
             this.marginY = 4;
             this.lineHeight = 3;
-            this.setFieldValue("wrapDividerHeight", new Float(24));
-            this.setFieldValue("sectionDividerHeight", new Float(40));
-            this.setFieldValue("sectionDividerMinWidth", new Float(117));
-            this.setFieldValue("sectionDividerSpacing", new Float(10));
+            this.setValueSilent("wrapDividerHeight", new Float(24));
+            this.setValueSilent("sectionDividerHeight", new Float(40));
+            this.setValueSilent("sectionDividerMinWidth", new Float(117));
+            this.setValueSilent("sectionDividerSpacing", new Float(10));
         }
         this.gap = this.marginX / 2;
-        this.setFieldValue("wrapDividerBitmapUri", new BrsString(this.dividerUri));
-        this.setFieldValue("sectionDividerBitmapUri", new BrsString(this.dividerUri));
-        const style = this.getFieldValueJS("vertFocusAnimationStyle") as string;
+        this.setValueSilent("wrapDividerBitmapUri", new BrsString(this.dividerUri));
+        this.setValueSilent("sectionDividerBitmapUri", new BrsString(this.dividerUri));
+        const style = this.getValueJS("vertFocusAnimationStyle") as string;
         this.wrap = style.toLowerCase() === "fixedfocuswrap";
         this.lastPressHandled = "";
         this.hasNinePatch = false;
@@ -134,7 +134,7 @@ export class ArrayGrid extends Group {
             super.setValue(index, value, alwaysNotify, kind);
             this.itemComps.length = 0;
             this.refreshContent();
-            const focusedIndex = this.getFieldValueJS("itemFocused") as number;
+            const focusedIndex = this.getValueJS("itemFocused") as number;
             if (value.getNodeChildren().length && focusedIndex < 0) {
                 this.setFocusedItem(0);
             }
@@ -174,7 +174,7 @@ export class ArrayGrid extends Group {
         if (newFocus === -1) {
             return;
         }
-        const focusedIndex = this.getFieldValueJS("itemFocused") as number;
+        const focusedIndex = this.getValueJS("itemFocused") as number;
         const nodeFocus = sgRoot.focused === this;
         this.updateItemFocus(this.focusIndex, false, nodeFocus);
         super.setValue("itemUnfocused", new Int32(focusedIndex));
@@ -306,8 +306,8 @@ export class ArrayGrid extends Group {
             content.changed = false;
         }
         this.updateItemFocus(index, focused, nodeFocus);
-        const drawFocus = this.getFieldValueJS("drawFocusFeedback");
-        const drawFocusOnTop = this.getFieldValueJS("drawFocusFeedbackOnTop");
+        const drawFocus = this.getValueJS("drawFocusFeedback");
+        const drawFocusOnTop = this.getValueJS("drawFocusFeedbackOnTop");
         if (focused && drawFocus && !drawFocusOnTop) {
             this.renderFocus(itemRect, opacity, nodeFocus, draw2D);
         }
@@ -343,13 +343,13 @@ export class ArrayGrid extends Group {
         textLine: number,
         draw2D?: IfDraw2D
     ) {
-        const dividerHeight = this.getFieldValueJS("sectionDividerHeight") as number;
-        const dividerSpacing = this.getFieldValueJS("sectionDividerSpacing") as number;
+        const dividerHeight = this.getValueJS("sectionDividerHeight") as number;
+        const dividerSpacing = this.getValueJS("sectionDividerSpacing") as number;
         const divRect = { ...itemRect, height: dividerHeight };
         let margin = 0;
         if (title.length !== 0) {
-            const font = this.getFieldValue("sectionDividerFont") as Font;
-            const color = this.getFieldValueJS("sectionDividerTextColor");
+            const font = this.getValue("sectionDividerFont") as Font;
+            const color = this.getValueJS("sectionDividerTextColor");
             const size = this.drawText(
                 title,
                 font,
@@ -381,7 +381,7 @@ export class ArrayGrid extends Group {
 
     protected renderWrapDivider(itemRect: Rect, opacity: number, draw2D?: IfDraw2D) {
         const bmp = this.getBitmap("wrapDividerBitmapUri");
-        const dividerHeight = this.getFieldValueJS("wrapDividerHeight") as number;
+        const dividerHeight = this.getValueJS("wrapDividerHeight") as number;
         if (bmp?.isValid()) {
             const height = bmp.ninePatch ? this.lineHeight : bmp.height;
             const topOffset = Math.round((dividerHeight - height) / 2);
@@ -394,14 +394,14 @@ export class ArrayGrid extends Group {
     protected refreshContent() {
         this.content.length = 0;
         this.metadata.length = 0;
-        const content = this.getFieldValue("content");
+        const content = this.getValue("content");
         if (!(content instanceof ContentNode)) {
             return;
         }
         const sections = this.getContentChildren(content);
         let itemIndex = 0;
         for (const section of sections) {
-            if (section.getFieldValueJS("ContentType")?.toLowerCase() === "section") {
+            if (section.getValueJS("ContentType")?.toLowerCase() === "section") {
                 itemIndex = this.processSection(section, itemIndex);
             }
         }
@@ -420,7 +420,7 @@ export class ArrayGrid extends Group {
             const metadata = { index: itemIndex, divider: false, sectionTitle: "" };
             if (index === 0) {
                 metadata.divider = true;
-                metadata.sectionTitle = section.getFieldValueJS("title") ?? "";
+                metadata.sectionTitle = section.getValueJS("title") ?? "";
             }
             this.metadata.push(metadata);
             itemIndex++;
@@ -443,11 +443,11 @@ export class ArrayGrid extends Group {
         if (content.name === "_placeholder_") {
             return new Group();
         }
-        const itemCompName = this.getFieldValueJS("itemComponentName") ?? "";
+        const itemCompName = this.getValueJS("itemComponentName") ?? "";
         const itemComp = createNodeByType(new BrsString(itemCompName), interpreter);
         if (itemComp instanceof Group) {
-            itemComp.setFieldValue("width", brsValueOf(itemRect.width));
-            itemComp.setFieldValue("height", brsValueOf(itemRect.height));
+            itemComp.setValueSilent("width", brsValueOf(itemRect.width));
+            itemComp.setValueSilent("height", brsValueOf(itemRect.height));
             itemComp.setValue("itemContent", content, true);
         }
         return itemComp;
@@ -455,10 +455,10 @@ export class ArrayGrid extends Group {
 
     protected updateCurrRow() {
         const numCols = this.numCols || 1;
-        const focusRow = this.getFieldValueJS("focusRow") as number;
+        const focusRow = this.getValueJS("focusRow") as number;
         if (!this.wrap) {
             const currentFocus = Math.floor(this.focusIndex / numCols);
-            const numRows = this.getFieldValueJS("numRows") as number;
+            const numRows = this.getValueJS("numRows") as number;
 
             if (currentFocus >= 0 && currentFocus < numRows) {
                 return currentFocus;

@@ -60,7 +60,7 @@ export class StdDlgProgressItem extends Group {
         }
         const textColor = colors.get(new BrsString("DialogTextColor"));
         if (textColor instanceof BrsString) {
-            this.label.setFieldValue("color", textColor);
+            this.label.setValueSilent("color", textColor);
         }
         const spinnerSize = this.spinner.getDimensions();
         const labelSize = this.label.getMeasured();

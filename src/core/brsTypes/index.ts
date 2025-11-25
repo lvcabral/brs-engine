@@ -543,7 +543,7 @@ export function toSGNode(obj: any, type: string, subtype: string, nodeMap?: Map<
         if (key.startsWith("_") && key.endsWith("_") && key.length > 2) {
             continue;
         }
-        newNode.setFieldValue(key, brsValueOf(obj[key], undefined, nodeMap));
+        newNode.setValueSilent(key, brsValueOf(obj[key], undefined, nodeMap));
     }
     if (obj["_children_"]) {
         for (const child of obj["_children_"]) {
@@ -587,7 +587,7 @@ export function toContentNode(associativeArray: RoAssociativeArray): ContentNode
     const result: ContentNode = new ContentNode();
 
     for (const [key, value] of associativeArray.elements) {
-        result.setFieldValue(key, value);
+        result.setValueSilent(key, value);
     }
 
     return result;

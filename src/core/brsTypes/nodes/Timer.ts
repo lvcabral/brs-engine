@@ -50,8 +50,8 @@ export class Timer extends Node {
 
     checkFire() {
         const now = performance.now();
-        const duration = this.getFieldValueJS("duration") as number;
-        const repeat = this.getFieldValueJS("repeat") as boolean;
+        const duration = this.getValueJS("duration") as number;
+        const repeat = this.getValueJS("repeat") as boolean;
         if (this.active && (now - this.lastFireTime) / 1000 >= duration) {
             this.lastFireTime = now;
             this.active = repeat;
