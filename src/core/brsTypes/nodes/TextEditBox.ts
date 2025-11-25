@@ -21,7 +21,6 @@ export class TextEditBox extends Group {
         { name: "width", type: "float", value: "-1.0" },
         { name: "backgroundUri", type: "string", value: "" },
         { name: "leadingEllipsis", type: "boolean", value: "false" },
-        { name: "focusable", type: "boolean", value: "true" },
     ];
 
     private background?: RoBitmap;
@@ -60,6 +59,7 @@ export class TextEditBox extends Group {
         this.background = this.loadBitmap(this.backUri);
         const cursorUri = `common:/images/${this.resolution}/cursor_textInput.png`;
         this.cursor = this.loadBitmap(cursorUri);
+        this.setValueSilent("focusable", BrsBoolean.True);
         this.setValueSilent("height", new Float(this.height));
 
         // Create Labels for text and hint

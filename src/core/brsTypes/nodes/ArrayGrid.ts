@@ -36,7 +36,6 @@ export class ArrayGrid extends Group {
         { name: "itemSpacing", type: "vector2d", value: "[0,0]" },
         { name: "numRows", type: "integer", value: "0" },
         { name: "numColumns", type: "integer", value: "0" },
-        { name: "focusable", type: "boolean", value: "true" },
         { name: "focusRow", type: "integer", value: "0", alwaysNotify: true },
         { name: "focusColumn", type: "integer", value: "0", alwaysNotify: true },
         { name: "horizFocusAnimationStyle", type: "string", value: "floatingFocus" },
@@ -119,6 +118,7 @@ export class ArrayGrid extends Group {
             this.setValueSilent("sectionDividerSpacing", new Float(10));
         }
         this.gap = this.marginX / 2;
+        this.setValueSilent("focusable", BrsBoolean.True);
         this.setValueSilent("wrapDividerBitmapUri", new BrsString(this.dividerUri));
         this.setValueSilent("sectionDividerBitmapUri", new BrsString(this.dividerUri));
         const style = this.getValueJS("vertFocusAnimationStyle") as string;

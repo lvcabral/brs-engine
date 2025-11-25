@@ -2,7 +2,7 @@ import { FieldKind, FieldModel } from "./Field";
 import { AAMember } from "../components/RoAssociativeArray";
 import { Group } from "./Group";
 import { Node } from "./Node";
-import { BrsType, RoArray, isBrsString, jsValueOf } from "..";
+import { BrsBoolean, BrsType, RoArray, isBrsString, jsValueOf } from "..";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D } from "../interfaces/IfDraw2D";
 
@@ -31,7 +31,6 @@ export class LayoutGroup extends Group {
         { name: "vertAlignment", type: "string", value: "top" },
         { name: "itemSpacings", type: "array" },
         { name: "addItemSpacingAfterChild", type: "boolean", value: "true" },
-        { name: "focusable", type: "boolean", value: "true" },
     ];
 
     private layoutDirty = true;
@@ -46,6 +45,7 @@ export class LayoutGroup extends Group {
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
+        this.setValueSilent("focusable", BrsBoolean.True);
     }
 
     setValue(index: string, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
