@@ -2,7 +2,7 @@ import { FieldKind, FieldModel } from "./Field";
 import { AAMember } from "../components/RoAssociativeArray";
 import { Group } from "./Group";
 import { Node } from "./Node";
-import { BrsBoolean, BrsType, RoArray, isBrsString, jsValueOf } from "..";
+import { BrsBoolean, BrsType, RoArray, jsValueOf } from "..";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D } from "../interfaces/IfDraw2D";
 
