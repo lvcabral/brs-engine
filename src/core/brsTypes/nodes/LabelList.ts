@@ -2,7 +2,7 @@ import { FieldKind, FieldModel } from "./Field";
 import { AAMember } from "../components/RoAssociativeArray";
 import { ArrayGrid } from "./ArrayGrid";
 import { Font } from "./Font";
-import { BrsInvalid, BrsString, BrsType, brsValueOf, ContentNode, Int32, isBrsString, RoBitmap, sgRoot } from "..";
+import { BrsString, BrsType, brsValueOf, ContentNode, Int32, RoBitmap, sgRoot } from "..";
 import { Interpreter } from "../..";
 import { IfDraw2D, Rect, RectRect } from "../interfaces/IfDraw2D";
 

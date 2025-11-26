@@ -1,7 +1,7 @@
 import { FieldKind, FieldModel } from "./Field";
 import { Group } from "./Group";
-import { AAMember, RoAssociativeArray } from "../components/RoAssociativeArray";
 import {
+    AAMember,
     BrsBoolean,
     BrsString,
     BrsType,
@@ -10,6 +10,7 @@ import {
     Poster,
     sgRoot,
     RSGPalette,
+    RoAssociativeArray,
     toAssociativeArray,
 } from "..";
 import { IfDraw2D, Rect } from "../interfaces/IfDraw2D";

@@ -1,18 +1,7 @@
 import { FieldKind, FieldModel } from "./Field";
 import { AAMember } from "../components/RoAssociativeArray";
 import { LabelList } from "./LabelList";
-import {
-    BrsInvalid,
-    BrsString,
-    BrsType,
-    brsValueOf,
-    ContentNode,
-    Int32,
-    isBrsString,
-    jsValueOf,
-    RoArray,
-    ValueKind,
-} from "..";
+import { BrsString, BrsType, brsValueOf, ContentNode, Int32, isBrsString, jsValueOf, RoArray, ValueKind } from "..";
 import { IfDraw2D, Rect } from "../interfaces/IfDraw2D";
 
 export class CheckList extends LabelList {

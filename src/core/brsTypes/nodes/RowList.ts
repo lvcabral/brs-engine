@@ -1,6 +1,5 @@
 import {
     BrsBoolean,
-    BrsInvalid,
     BrsString,
     BrsType,
     brsValueOf,
@@ -10,7 +9,6 @@ import {
     Font,
     Group,
     Int32,
-    isBrsString,
     jsValueOf,
     RoArray,
     sgRoot,

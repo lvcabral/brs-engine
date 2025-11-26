@@ -1,15 +1,5 @@
 import { FieldKind, FieldModel } from "./Field";
-import {
-    AAMember,
-    BrsString,
-    BrsType,
-    brsValueOf,
-    Float,
-    getTextureManager,
-    isBrsString,
-    jsValueOf,
-    RoBitmap,
-} from "..";
+import { AAMember, BrsString, BrsType, brsValueOf, Float, getTextureManager, jsValueOf, RoBitmap } from "..";
 import { Group } from "./Group";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D, Rect } from "../interfaces/IfDraw2D";

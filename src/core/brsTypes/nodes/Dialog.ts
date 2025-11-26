@@ -6,7 +6,6 @@ import { Interpreter } from "../../interpreter";
 import { rotateTranslation } from "../../scenegraph/SGUtil";
 import {
     BrsBoolean,
-    BrsInvalid,
     BrsString,
     BrsType,
     ButtonGroup,

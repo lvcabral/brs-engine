@@ -1,9 +1,8 @@
 import { FieldModel } from "./Field";
 import { Group } from "./Group";
-import { AAMember } from "../components/RoAssociativeArray";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D, Rect } from "../interfaces/IfDraw2D";
-import { Float, RoBitmap, Label, Font, BrsString, RoFont, Int32 } from "..";
+import { AAMember, Float, RoBitmap, Label, Font, BrsString, RoFont, Int32 } from "..";
 import { BrsBoolean } from "../BrsType";
 import { convertHexColor } from "../../scenegraph/SGUtil";
 

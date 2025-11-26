@@ -1,7 +1,7 @@
 import { FieldKind, FieldModel } from "./Field";
 import { Group } from "./Group";
 import { AAMember } from "../components/RoAssociativeArray";
-import { BrsInvalid, BrsString, BrsType, Float, isBrsString, Poster, RoArray } from "..";
+import { BrsString, BrsType, Float, Poster, RoArray } from "..";
 import { Interpreter } from "../..";
 import { IfDraw2D } from "../interfaces/IfDraw2D";
 import { rotateTranslation } from "../../scenegraph/SGUtil";

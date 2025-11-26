@@ -1,4 +1,4 @@
-import { FieldKind, FieldModel } from "./Field";
+import { FieldModel } from "./Field";
 import { Group } from "./Group";
 import { AAMember } from "../components/RoAssociativeArray";
 import { Interpreter } from "../../interpreter";

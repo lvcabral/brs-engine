@@ -1,7 +1,7 @@
 import { FieldKind, FieldModel } from "./Field";
 import { AAMember } from "../components/RoAssociativeArray";
 import { ArrayGrid } from "./ArrayGrid";
-import { BrsInvalid, BrsString, BrsType, customNodeExists, Int32, isBrsString } from "..";
+import { BrsString, BrsType, customNodeExists, Int32 } from "..";
 import { IfDraw2D, Rect, RectRect } from "../interfaces/IfDraw2D";
 import { Interpreter } from "../../interpreter";
 import { BrsDevice } from "../../device/BrsDevice";

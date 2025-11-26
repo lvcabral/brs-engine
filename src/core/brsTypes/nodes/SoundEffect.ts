@@ -1,5 +1,5 @@
 import { FieldKind, FieldModel } from "./Field";
-import { AAMember, BrsType, isBrsString, BrsString, isBrsNumber, BrsInvalid, Node, sgRoot, jsValueOf } from "..";
+import { AAMember, BrsType, isBrsString, BrsString, isBrsNumber, Node, sgRoot, jsValueOf } from "..";
 import { BrsDevice } from "../../device/BrsDevice";
 import { MediaEvent } from "../../common";
 

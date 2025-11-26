@@ -1,4 +1,4 @@
-import { AAMember, BrsBoolean, BrsType, Float, isBrsString, sgRoot, Group, Font } from "..";
+import { AAMember, BrsBoolean, BrsType, Float, sgRoot, Group, Font } from "..";
 import { FieldKind, FieldModel } from "./Field";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D, MeasuredText, Rect } from "../interfaces/IfDraw2D";

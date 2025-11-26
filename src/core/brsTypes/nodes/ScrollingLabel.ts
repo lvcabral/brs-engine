@@ -1,6 +1,6 @@
 import { FieldModel } from "./Field";
 import { Label } from "./Label";
-import { AAMember, BrsType, isBrsString, Font } from "..";
+import { AAMember, BrsType, Font } from "..";
 import { IfDraw2D, MeasuredText, Rect } from "../interfaces/IfDraw2D";
 
 // Enum to manage the scrolling state
