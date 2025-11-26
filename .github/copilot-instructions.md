@@ -5,11 +5,51 @@
 **brs-engine** is a TypeScript-based interpreter for Roku's BrightScript language that runs on browsers, Node.js, and Electron. It simulates Roku's runtime environment, including the Draw 2D API and SceneGraph framework, enabling Roku app development and testing outside of Roku hardware.
 
 **Key Architecture:**
-- **Monorepo structure** with two packages: `packages/browser` (web/Electron) and `packages/node` (CLI/server)
+- **Monorepo structure** with two packages: `packages/browser` (web/Electron) published as `brs-engine` and `packages/node` (CLI/server) published as `brs-node`
 - **Web Worker architecture**: Browser package runs interpreter in a Web Worker (`brs.worker.js`) with API library (`brs.api.js`) for host communication
 - **Lexer → Parser → Interpreter pipeline**: Code flows through `src/core/lexer` → `src/core/parser` → `src/core/interpreter`
 - **Component System**: BrightScript objects live in `src/core/brsTypes/components`, SceneGraph nodes in `src/core/brsTypes/nodes`
 - **Device Simulation**: `BrsDevice` (in `src/core/device/`) maintains simulated Roku device state (registry, file system, device info)
+- **Roku OS Version**: Currently synchronized with Roku OS 15.0 features and APIs
+
+## Recent Major Improvements (Roku OS 15.0 Sync)
+
+### RoSGNode Refactoring (PR #755, #735)
+- **Abstract base class**: `RoSGNode` is now abstract; all nodes must extend either `RoSGNode` or the concrete `Node` class
+- **Removed BrsIterable**: Simplified node interface by removing iterable behavior
+- **setValue standardization**: Replaced `Set` method with `setValue` throughout the codebase for consistency
+- **System field protection**: Added validation to prevent removal of system fields and misuse of `setFields()` for adding fields
+
+### Field System Enhancements (PR #754, #753)
+- **Field type validation**: `Field.canAcceptValue()` properly validates array values and types
+- **Typed arrays support**: Added `intarray`, `floatarray`, `boolarray`, `stringarray`, `colorarray`, and `timearray` types
+- **Type conversion**: Fields automatically convert string values to appropriate types (e.g., "true" → boolean)
+- **Array field validation**: Validates that array elements match the expected array element type
+
+### Content Handling Pattern (PR #708, #660)
+- **Standardized content caching**: All list/grid nodes now follow the `refreshContent()` pattern
+- **setValue override**: Content fields processed in `setValue()` method, triggering `refreshContent()`
+- **Performance optimization**: Content only processed once, cached for rendering (prevents repeated `getFieldValue()` calls)
+- **Example implementations**: `RowList`, `ZoomRowList`, `ArrayGrid` all use this pattern
+
+### New SceneGraph Nodes
+- **LayoutGroup** (PR #699, #714): Automatic horizontal/vertical layout with alignment and spacing
+- **ZoomRowList** (PR #700, #714): Advanced row list with zoom effects, configurable row heights, and smooth animations
+
+### File System Improvements (PR #747, #730, #729)
+- **Case preservation**: Writeable volumes (`tmp:`, `cachefs:`) now preserve original case in file paths
+- **Shared volumes**: `tmp:` and `cachefs:` are shared among threads for proper inter-thread communication
+- **Upgraded zenFS**: Latest version of `@zenfs/core` for better virtual file system handling
+
+### Type System Enhancements
+- **Uninitialized validation** (PR #756): Raises type mismatch error when passing `Uninitialized` to non-dynamic function parameters
+- **Double support** (PR #643, #644, #645): Added `d` flag to `ParseJson()` for parsing to `double` type
+- **Type coercion** (PR #642, #641): Typed functions return `0` when no return statement is hit (user functions only)
+
+### API and Library Improvements (PR #751)
+- **Task module**: Refactored API to separate task-related functionality into dedicated module
+- **LexerParser module** (PR #675): Separated lexer and parser into reusable module for better code organization
+- **Screenshot API** (PR #711, #712): New `getScreenshot()` method returns full-resolution `ImageData`
 
 ## Development Workflows
 
@@ -58,11 +98,15 @@ export const MyFunction = new Callable("myFunction", {
 ```
 
 ### SceneGraph Node Implementation
-- **Fields are declared** in `defaultFields: FieldModel[]` array with `name`, `type`, `value`
+- **RoSGNode is now abstract**: All SceneGraph nodes extend `RoSGNode` (abstract) or `Node` (concrete base class)
+- **Fields are declared** in `defaultFields: FieldModel[]` array with `name`, `type`, `value`, optional `alwaysNotify`
+- **Field system improvements**: Supports typed arrays (`intarray`, `floatarray`, `boolarray`, `stringarray`, `colorarray`, `timearray`)
+- **System fields are protected**: Cannot be removed via `removeField()` or added via `addFields()`; use `setFields()` for modifications
+- **setValue vs setValueSilent**: `setValue()` triggers observers, `setValueSilent()` does not (used during initialization)
 - **Custom rendering** overrides `renderNode()` method, receives `IfDraw2D` context
 - **Field observers** use `observeField()` to watch changes
 - **Node lifecycle**: `init()` called on creation, `deinit()` on destruction
-- See `src/core/brsTypes/nodes/RowList.ts` as a complex example with focus handling and child rendering
+- See `src/core/brsTypes/nodes/RowList.ts` and `src/core/brsTypes/nodes/ZoomRowList.ts` as complex examples with focus handling and child rendering
 
 ## SceneGraph Rendering Architecture
 
@@ -101,7 +145,9 @@ All SceneGraph nodes inherit from **RoSGNode** (`src/core/brsTypes/components/Ro
 
 3. **Interactive Container Nodes** (visual + focus + children):
    - `ArrayGrid`: Grid of items with focus management and scrolling (base for grids)
-   - `RowList`: Horizontal rows of items, each row is a scrollable list
+   - `RowList`: Horizontal rows of items, each row is a scrollable list (fully implemented with row titles, focus feedback)
+   - `ZoomRowList`: Advanced row list with zoom animations and configurable row heights (fully implemented)
+   - `LayoutGroup`: Auto-layout container with horizontal/vertical arrangement and alignment (fully implemented)
    - `MarkupList`/`MarkupGrid`: Similar to above with markup text support
    - `LabelList`, `CheckList`, `RadioButtonList`: Specialized list types
    - `ButtonGroup`, `Button`: Interactive button controls
@@ -252,14 +298,14 @@ renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: n
 **ArrayGrid/RowList/ZoomRowList Content Processing**:
 Nodes that display dynamic content from ContentNode trees follow this pattern:
 
-1. **Content Field in set() Method**:
+1. **Content Field in setValue() Method** (note: `set()` method is deprecated, use `setValue()`):
 ```typescript
-set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
-    const fieldName = index.getValue().toLowerCase();
+setValue(index: string, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
+    const fieldName = index.toLowerCase();
     
     if (fieldName === "content") {
         // First, store the field value
-        super.set(index, value, alwaysNotify, kind);
+        super.setValue(index, value, alwaysNotify, kind);
         
         // Clear existing item components
         this.itemComps.length = 0; // or this.rowItemComps.length = 0
@@ -272,10 +318,10 @@ set(index: BrsType, value: BrsType, alwaysNotify: boolean = false, kind?: FieldK
             this.focusIndex = 0;
         }
         
-        return BrsInvalid.Instance;
+        return;
     }
     
-    return super.set(index, value, alwaysNotify, kind);
+    super.setValue(index, value, alwaysNotify, kind);
 }
 ```
 
@@ -319,10 +365,11 @@ renderNode(...) {
 ```
 
 **Key Points**:
-- ALWAYS call `super.set()` first to store the field value
+- ALWAYS call `super.setValue()` first to store the field value
 - NEVER call `getFieldValue("content")` or `getNodeChildren()` in render methods - use cached `this.content` array
 - Process content once in `refreshContent()`, use cache everywhere else
 - This prevents infinite loops and improves performance
+- The `setValue()` method is the modern approach; `set()` is deprecated but maintained for compatibility
 
 ### Performance and Caching
 
@@ -402,9 +449,11 @@ Common pattern: `src/core/index.ts` uses `/// #if BROWSER` to set up Worker `onm
 
 - **No `eval()`**: BrightScript's `Eval()` not implemented (documented in `limitations.md`)
 - **Task threads limited to 10** per app (see `limitations.md`)
-- **`m.global` in Tasks**: Changes to `m.global` children not shared across Task threads yet
+- **`m.global` is shared**: Changes to `m.global` are now properly shared across Task threads
 - **Video/Audio lifecycle**: Must call `.stop()` before destroying player objects or playback continues
 - **CORS**: Web apps need CORS proxy for cross-origin `roUrlTransfer` calls (configurable in `DeviceInfo.corsProxy`)
+- **System fields protection**: Cannot remove system fields or use `setFields()` to add new fields (use `addFields()` instead)
+- **Field type validation**: Field assignment now validates types (e.g., `intarray`, `floatarray`) and converts values appropriately
 
 ## Key Files to Reference
 
@@ -414,14 +463,19 @@ Common pattern: `src/core/index.ts` uses `/// #if BROWSER` to set up Worker `onm
 - **Device state**: `src/core/device/BrsDevice.ts` - Registry, file system, device info singleton
 - **Manifest parsing**: `src/core/common.ts` - `parseManifest()` and device info types
 - **SceneGraph bootstrap**: `src/core/scenegraph/index.ts` - Component XML parsing and node tree building
+- **Lexer/Parser module**: `src/core/LexerParser.ts` - Separated lexer and parser functions for reusability
+- **Field system**: `src/core/brsTypes/nodes/Field.ts` - Field model, type validation, and conversion logic
 
 ## Project-Specific Quirks
 
 - **`mod` keyword conflict**: Cannot use `mod` as variable name (BrightScript operator vs identifier)
 - **Memory info**: `roAppMemoryMonitor` only accurate in Node.js and Chromium (uses non-standard `performance.memory`)
 - **Prettier config**: Use 4-space tabs, 120 char line width (see `package.json`)
-- **Version in alpha**: Current branch (`implement-RowList-node`) is pre-release - expect incomplete SceneGraph features
+- **Branch naming**: Current branch is `scenegraph` (active development of SceneGraph features)
 - **Platform detection**: Use `BrsDevice.deviceInfo.customFeatures` array to check host-defined capabilities (e.g., `"touch_controls"`)
+- **Virtual File System**: Uses `@zenfs/core` with case-insensitive file system; writeable volumes preserve original case
+- **Type coercion**: Functions automatically convert between Integer and Float types when needed
+- **Typed returns**: User functions with typed returns automatically return `0` if no return statement is hit
 
 ## Documentation
 
