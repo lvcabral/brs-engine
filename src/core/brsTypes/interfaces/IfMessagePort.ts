@@ -1,10 +1,10 @@
-import { BrsInvalid, ValueKind } from "../BrsType";
+import { BrsInvalid, ValueKind } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { BrsComponent } from "../components/BrsComponent";
 import { RoMessagePort } from "../components/RoMessagePort";
 
 /**
- * BrightScript Interface ffSetMessagePort
+ * BrightScript Interface ifSetMessagePort
  * https://developer.roku.com/docs/references/brightscript/interfaces/ifsetmessageport.md
  */
 export class IfSetMessagePort {

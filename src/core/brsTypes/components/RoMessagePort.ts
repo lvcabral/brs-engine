@@ -1,6 +1,6 @@
 import { BrsValue, ValueKind, BrsInvalid, BrsBoolean } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsEvent, BrsType, isBrsEvent } from "..";
+import { BrsEvent, BrsType } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
@@ -55,14 +55,14 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
 
     wait(interpreter: Interpreter, ms: number) {
         const loop = ms === 0;
-        ms += performance.now();
+        const timeout = ms + performance.now();
 
-        while (loop || performance.now() < ms) {
-            this.updateMessageQueue();
+        while (loop || performance.now() < timeout) {
             const msg = this.getNextMessage();
-            if (msg !== BrsInvalid.Instance) {
+            if (msg instanceof BrsEvent) {
                 return msg;
             }
+            this.updateMessageQueue(interpreter, ms);
             const cmd = BrsDevice.checkBreakCommand(interpreter.debugMode);
             if (cmd === DebugCommand.BREAK || cmd === DebugCommand.EXIT) {
                 interpreter.debugMode = cmd === DebugCommand.BREAK;
@@ -72,15 +72,14 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
         return BrsInvalid.Instance;
     }
 
-    private updateMessageQueue() {
+    private updateMessageQueue(interpreter?: Interpreter, wait?: number) {
         if (this.callbackMap.size > 0) {
             for (const [_, callback] of this.callbackMap.entries()) {
-                const events = callback();
-                this.messageQueue.push(...events.filter(isBrsEvent));
+                const events = callback(interpreter, wait);
+                this.messageQueue.push(...events.filter((e: BrsType) => e instanceof BrsEvent));
             }
         }
     }
-
     private getNextMessage() {
         if (this.messageQueue.length > 0) {
             return this.messageQueue.shift();

@@ -5,8 +5,8 @@ import { Callable } from "../Callable";
 import { BrsInterface } from "../interfaces/BrsInterface";
 
 export class BrsComponent {
-    private methods: Map<string, Callable> = new Map();
-    private readonly componentName: string;
+    protected readonly componentName: string;
+    private readonly methods: Map<string, Callable> = new Map();
     private filter: string = "";
     protected references: number;
     protected returnFlag: boolean;
@@ -36,7 +36,7 @@ export class BrsComponent {
     }
 
     protected registerMethods(interfaces: Record<string, Callable[]>) {
-        this.methods = new Map<string, Callable>();
+        this.methods.clear();
         for (const [interfaceName, methods] of Object.entries(interfaces)) {
             const methodNames = new Set(
                 methods.filter((m) => m.name?.toLowerCase()).map((m) => m.name?.toLowerCase()!)
@@ -91,8 +91,8 @@ export class BrsComponent {
     }
 }
 
-/** Represents a BrightScript component that has elements that can be iterated across. */
-export interface BrsIterable {
+/** Represents a BrightScript component that has elements that can be accessed via index. */
+export interface BrsCollection {
     /**
      * Returns the set of iterable elements contained in this component.
      * @returns an array of elements contained in this component.
@@ -114,7 +114,10 @@ export interface BrsIterable {
      * @param isCaseSensitive determinate whether operation of setting should be case sensitive or not.
      */
     set(index: BrsType, value: BrsType, isCaseSensitive?: boolean): BrsInvalid;
+}
 
+/** Represents a BrightScript component that has elements that can be iterated across. */
+export interface BrsIterable extends BrsCollection {
     /**
      * Determines if the iteration index is at the end of the iterable component.
      * @returns `true` if there are more elements to iterate, otherwise `false`.
@@ -136,10 +139,4 @@ export interface BrsIterable {
      * Update the iteration index to the next element in the iteration sequence.
      */
     updateNext(): void;
-
-    /**
-     * Creates a deep copy of this object.
-     * @returns a deep copy of this object.
-     */
-    deepCopy(): BrsType;
 }

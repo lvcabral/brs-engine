@@ -1,13 +1,10 @@
-import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid } from "../BrsType";
-import { BrsComponent } from "../components/BrsComponent";
-import { BrsType } from "..";
+import { ValueKind, BrsString, BrsBoolean, Int32, BrsInvalid } from "..";
+import { BrsEvent } from "./BrsEvent";
 import { Callable } from "../Callable";
 import { Interpreter } from "../../interpreter";
-import { Int32 } from "../Int32";
 import { MediaEvent } from "../../common";
 
-export class RoAudioPlayerEvent extends BrsComponent implements BrsValue {
-    readonly kind = ValueKind.Object;
+export class RoAudioPlayerEvent extends BrsEvent {
     private readonly flags: number;
     private readonly index: number;
     private readonly message: string;
@@ -44,14 +41,6 @@ export class RoAudioPlayerEvent extends BrsComponent implements BrsValue {
                 this.isTimedMetadata,
             ],
         });
-    }
-
-    toString(parent?: BrsType): string {
-        return "<Component: roAudioPlayerEvent>";
-    }
-
-    equalTo(other: BrsType) {
-        return BrsBoolean.False;
     }
 
     /** Returns an integer representing the index of the current audio stream. */

@@ -4,12 +4,12 @@ import {
     StdlibArgument,
     BrsBoolean,
     BrsType,
-    BrsComponent,
     BrsValue,
     Int32,
     RoSocketAddress,
     BrsInvalid,
 } from "..";
+import { BrsComponent } from "./BrsComponent";
 import { Interpreter } from "../../interpreter";
 import { BrsSocket, IfSocket, IfSocketAsync, IfSocketOption, IfSocketStatus } from "../interfaces/IfSocket";
 import { IfGetMessagePort, IfSetMessagePort } from "../interfaces/IfMessagePort";

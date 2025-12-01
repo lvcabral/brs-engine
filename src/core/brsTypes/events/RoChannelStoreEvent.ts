@@ -1,12 +1,9 @@
-import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid } from "../BrsType";
-import { BrsComponent } from "../components/BrsComponent";
-import { BrsType, RoArray, RoAssociativeArray } from "..";
+import { ValueKind, BrsString, BrsBoolean, BrsInvalid, BrsType, Int32, RoArray, RoAssociativeArray } from "..";
+import { BrsEvent } from "./BrsEvent";
 import { Callable } from "../Callable";
 import { Interpreter } from "../../interpreter";
-import { Int32 } from "../Int32";
 
-export class RoChannelStoreEvent extends BrsComponent implements BrsValue {
-    readonly kind = ValueKind.Object;
+export class RoChannelStoreEvent extends BrsEvent {
     private readonly id: number;
     private readonly response?: BrsType[];
     private readonly status: { code: number; message: string };
@@ -27,14 +24,6 @@ export class RoChannelStoreEvent extends BrsComponent implements BrsValue {
             ],
             ifSourceIdentity: [this.getSourceIdentity],
         });
-    }
-
-    toString(parent?: BrsType): string {
-        return "<Component: roChannelStoreEvent>";
-    }
-
-    equalTo(other: BrsType) {
-        return BrsBoolean.False;
     }
 
     /** Returns if the previous Get request has completed successfully. */

@@ -1,6 +1,6 @@
 import { BrsValue, ValueKind, BrsBoolean } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsType, isIterable, RoInvalid } from "..";
+import { BrsType, RoArray, RoAssociativeArray, RoInvalid } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 
@@ -29,7 +29,7 @@ export class RoUtils extends BrsComponent implements BrsValue {
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter, data: BrsType) => {
-            if (isIterable(data)) {
+            if (data instanceof RoArray || data instanceof RoAssociativeArray) {
                 return data.deepCopy();
             }
             return new RoInvalid();

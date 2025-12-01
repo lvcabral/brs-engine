@@ -1,13 +1,20 @@
-import { BrsValue, ValueKind, BrsString, BrsBoolean, Comparable } from "../BrsType";
-import { BrsComponent } from "../components/BrsComponent";
-import { BrsType, RoArray, RoAssociativeArray, isStringComp } from "..";
+import {
+    BrsType,
+    RoArray,
+    RoAssociativeArray,
+    isStringComp,
+    ValueKind,
+    BrsString,
+    BrsBoolean,
+    Comparable,
+    Int32,
+} from "..";
+import { BrsEvent } from "./BrsEvent";
 import { Callable } from "../Callable";
 import { Interpreter } from "../../interpreter";
-import { Int32 } from "../Int32";
 import { resolveHostToIP } from "../../interpreter/Network";
 
-export class RoURLEvent extends BrsComponent implements BrsValue, Comparable {
-    readonly kind = ValueKind.Object;
+export class RoURLEvent extends BrsEvent implements Comparable {
     private readonly id: number;
     private readonly responseCode: number;
     private readonly responseString: string;

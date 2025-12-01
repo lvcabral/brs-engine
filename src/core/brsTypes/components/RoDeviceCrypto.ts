@@ -6,11 +6,11 @@ import {
     StdlibArgument,
     BrsBoolean,
     BrsType,
-    BrsComponent,
     BrsValue,
     RoByteArray,
     BrsInvalid,
 } from "..";
+import { BrsComponent } from "./BrsComponent";
 import { Interpreter } from "../../interpreter";
 import { BrsDevice } from "../../device/BrsDevice";
 
