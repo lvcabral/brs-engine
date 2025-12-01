@@ -1,11 +1,9 @@
-import { BrsValue, ValueKind, BrsBoolean } from "../BrsType";
-import { BrsComponent } from "../components/BrsComponent";
-import { BrsType, toAssociativeArray } from "..";
+import { ValueKind, BrsBoolean, toAssociativeArray } from "..";
+import { BrsEvent } from "./BrsEvent";
 import { Callable } from "../Callable";
 import { Interpreter } from "../../interpreter";
 
-export class RoDeviceInfoEvent extends BrsComponent implements BrsValue {
-    readonly kind = ValueKind.Object;
+export class RoDeviceInfoEvent extends BrsEvent {
     private readonly data: any;
     private readonly isStatusMsg: boolean = false;
     private readonly isCaptionModeMsg: boolean = false;
@@ -21,14 +19,6 @@ export class RoDeviceInfoEvent extends BrsComponent implements BrsValue {
         this.registerMethods({
             ifroDeviceInfoEvent: [this.getInfo, this.isStatusMessage, this.isCaptionModeChanged],
         });
-    }
-
-    toString(parent?: BrsType): string {
-        return "<Component: roDeviceInfoEvent>";
-    }
-
-    equalTo(other: BrsType) {
-        return BrsBoolean.False;
     }
 
     /** Checks if the device status has changed. */

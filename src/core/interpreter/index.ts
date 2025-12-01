@@ -36,6 +36,7 @@ import {
     Signature,
     BrsInterface,
     toAssociativeArray,
+    isCollection,
 } from "../brsTypes";
 import { tryCoerce } from "../brsTypes/Coercion";
 import { Lexeme, GlobalFunctions } from "../lexer";
@@ -1960,7 +1961,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 vars += `${varName}${ValueKind.toString(value.kind)}\r\n`;
             } else if (PrimitiveKinds.has(value.kind)) {
                 vars += `${varName}${ValueKind.toString(value.kind)} val:${this.formatValue(value)}`;
-            } else if (isIterable(value)) {
+            } else if (value instanceof BrsComponent && isCollection(value)) {
                 const count = value.getElements().length;
                 vars += `${varName}${value.getComponentName()} refcnt=${value.getReferenceCount()} count:${count}\r\n`;
             } else if (value instanceof BrsComponent && isUnboxable(value)) {

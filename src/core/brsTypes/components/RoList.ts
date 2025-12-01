@@ -1,4 +1,4 @@
-import { BrsType, isBoxable, isBoxedNumber, RoInvalid } from "..";
+import { BrsType, isBoxable, isBoxedNumber } from "..";
 import { BrsValue, ValueKind, BrsBoolean, BrsInvalid } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
 import { BrsList, IfList, IfListToArray } from "../interfaces/IfList";
@@ -85,11 +85,6 @@ export class RoList extends BrsComponent implements BrsValue, BrsList {
 
     getElements() {
         return this.elements.slice();
-    }
-
-    deepCopy(): BrsType {
-        // Roku implementation still does not support deep copying of roList
-        return new RoInvalid();
     }
 
     get(index: BrsType) {

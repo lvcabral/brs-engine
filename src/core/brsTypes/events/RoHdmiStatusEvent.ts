@@ -1,11 +1,9 @@
-import { BrsValue, ValueKind, BrsBoolean, BrsString } from "../BrsType";
-import { BrsComponent } from "../components/BrsComponent";
-import { BrsType, Int32, toAssociativeArray } from "..";
+import { Int32, toAssociativeArray, ValueKind, BrsString } from "..";
+import { BrsEvent } from "./BrsEvent";
 import { Callable } from "../Callable";
 import { Interpreter } from "../../interpreter";
 
-export class RoHdmiStatusEvent extends BrsComponent implements BrsValue {
-    readonly kind = ValueKind.Object;
+export class RoHdmiStatusEvent extends BrsEvent {
     private readonly plugged: boolean;
 
     constructor(plugged: boolean) {
@@ -14,14 +12,6 @@ export class RoHdmiStatusEvent extends BrsComponent implements BrsValue {
         this.registerMethods({
             ifroHdmiStatusEvent: [this.getInfo, this.getIndex, this.getMessage],
         });
-    }
-
-    toString(parent?: BrsType): string {
-        return "<Component: roHdmiStatusEvent>";
-    }
-
-    equalTo(other: BrsType) {
-        return BrsBoolean.False;
     }
 
     /** The index value of this event is not used and is always set to 0. */

@@ -8,7 +8,7 @@ import { Int64 } from "./Int64";
 import { Float } from "./Float";
 import { Double } from "./Double";
 import { Callable } from "./Callable";
-import { BrsComponent } from "./components/BrsComponent";
+import { BrsCollection, BrsComponent, BrsIterable } from "./components/BrsComponent";
 import { RoString } from "./components/RoString";
 import { BrsInterface } from "./interfaces/BrsInterface";
 import { RoXMLList } from "./components/RoXMLList";
@@ -21,15 +21,6 @@ import { RoLongInteger } from "./components/RoLongInteger";
 import { RoBoolean } from "./components/RoBoolean";
 import { RoURLEvent } from "./events/RoURLEvent";
 import { RoUniversalControlEvent } from "./events/RoUniversalControlEvent";
-import { RoSystemLogEvent } from "./events/RoSystemLogEvent";
-import { RoInputEvent } from "./events/RoInputEvent";
-import { RoAudioPlayerEvent } from "./events/RoAudioPlayerEvent";
-import { RoVideoPlayerEvent } from "./events/RoVideoPlayerEvent";
-import { RoTextureRequestEvent } from "./events/RoTextureRequestEvent";
-import { RoChannelStoreEvent } from "./events/RoChannelStoreEvent";
-import { RoDeviceInfoEvent } from "./events/RoDeviceInfoEvent";
-import { RoCECStatusEvent } from "./events/RoCECStatusEvent";
-import { RoHdmiStatusEvent } from "./events/RoHdmiStatusEvent";
 import { isUnboxable } from "./Boxing";
 
 export * from "./BrsType";
@@ -93,6 +84,7 @@ export * from "./components/RoSocketAddress";
 export * from "./components/RoTextureRequest";
 export * from "./components/RoTextureManager";
 export * from "./components/RoUtils";
+export * from "./events/BrsEvent";
 export * from "./events/RoURLEvent";
 export * from "./events/RoInputEvent";
 export * from "./events/RoAudioPlayerEvent";
@@ -157,18 +149,29 @@ export function isBrsCallable(value: BrsType): value is Callable {
 }
 
 /**
+ * Determines whether or not the given value is a BrightScript collection type.
+ * @param value the BrightScript value in question.
+ * @returns `true` if `value` is a collection type, otherwise `false`.
+ */
+
+export function isCollection(value: BrsType): value is BrsType & BrsCollection {
+    return "get" in value && "getElements" in value && "set" in value;
+}
+
+/**
  * Determines whether or not the provided value is an instance of a iterable BrightScript type.
  * @param value the BrightScript value in question.
  * @returns `true` if `value` can be iterated across, otherwise `false`.
  */
-export function isIterable(value: BrsType): value is Iterable {
+export function isIterable(value: BrsType): value is BrsType & BrsIterable {
     return (
         "get" in value &&
         "getElements" in value &&
         "set" in value &&
         "hasNext" in value &&
         "getNext" in value &&
-        "resetNext" in value
+        "resetNext" in value &&
+        "updateNext" in value
     );
 }
 
@@ -220,54 +223,16 @@ export function isAnyNumber(value: BrsType): value is BrsNumber | BoxedNumber {
 }
 
 /**
- * Determines whether or not the given value is a BrightScript event component.
- * @param value the BrightScript value in question.
- * @returns `true` if `value` is a BrightScript event component, otherwise `false`.
- */
-export function isBrsEvent(value: BrsType): value is BrsEvent {
-    return (
-        value instanceof RoURLEvent ||
-        value instanceof RoUniversalControlEvent ||
-        value instanceof RoSystemLogEvent ||
-        value instanceof RoInputEvent ||
-        value instanceof RoAudioPlayerEvent ||
-        value instanceof RoVideoPlayerEvent ||
-        value instanceof RoTextureRequestEvent ||
-        value instanceof RoChannelStoreEvent ||
-        value instanceof RoDeviceInfoEvent ||
-        value instanceof RoCECStatusEvent ||
-        value instanceof RoHdmiStatusEvent
-    );
-}
-
-// The set of BrightScript Event components
-export type BrsEvent =
-    | RoURLEvent
-    | RoUniversalControlEvent
-    | RoSystemLogEvent
-    | RoInputEvent
-    | RoAudioPlayerEvent
-    | RoVideoPlayerEvent
-    | RoTextureRequestEvent
-    | RoChannelStoreEvent
-    | RoDeviceInfoEvent
-    | RoCECStatusEvent
-    | RoHdmiStatusEvent;
-
-/**
  * The set of all comparable BrightScript types. Only primitive (i.e. intrinsic * and unboxed)
  * BrightScript types are comparable to each other.
  */
 export type BrsPrimitive = BrsInterface | BrsInvalid | BrsBoolean | BrsString | BrsNumber;
 
-/** The set of BrightScript iterable types. */
-export type Iterable = RoArray | RoAssociativeArray | RoList | RoByteArray | RoXMLList | RoXMLElement;
-
 // this is getting weird - we need a lesThan and greaterThan function?!
 export type AllComponents = { kind: ValueKind.Object } & BrsComponent & BrsValue;
 
 /** The set of all supported types in BrightScript. */
-export type BrsType = BrsPrimitive | Iterable | Callable | AllComponents | Uninitialized;
+export type BrsType = BrsPrimitive | Callable | AllComponents | Uninitialized;
 
 // Function to check if the value is a BrightScript Type
 export function isBrsType(value: any): value is BrsType {
