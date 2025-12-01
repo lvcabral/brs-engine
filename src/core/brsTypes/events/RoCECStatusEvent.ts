@@ -1,4 +1,4 @@
-import { Int32, toAssociativeArray,ValueKind, BrsString } from "..";
+import { Int32, toAssociativeArray, ValueKind, BrsString } from "..";
 import { BrsEvent } from "./BrsEvent";
 import { Callable } from "../Callable";
 import { Interpreter } from "../../interpreter";
