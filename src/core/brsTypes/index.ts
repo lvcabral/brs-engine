@@ -11,8 +11,6 @@ import { Callable } from "./Callable";
 import { BrsCollection, BrsComponent, BrsIterable } from "./components/BrsComponent";
 import { RoString } from "./components/RoString";
 import { BrsInterface } from "./interfaces/BrsInterface";
-import { RoXMLList } from "./components/RoXMLList";
-import { RoXMLElement } from "./components/RoXMLElement";
 import { RoPath } from "./components/RoPath";
 import { RoInt } from "./components/RoInt";
 import { RoFloat } from "./components/RoFloat";

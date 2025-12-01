@@ -1,6 +1,5 @@
-import { BrsValue, ValueKind, BrsBoolean, BrsString } from "../BrsType";
+import { Int32, toAssociativeArray,ValueKind, BrsString } from "..";
 import { BrsEvent } from "./BrsEvent";
-import { BrsType, Int32, toAssociativeArray } from "..";
 import { Callable } from "../Callable";
 import { Interpreter } from "../../interpreter";
 
