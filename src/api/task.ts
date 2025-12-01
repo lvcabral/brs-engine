@@ -51,6 +51,7 @@ function notifyAll(eventName: string, eventData?: any) {
 // Task Handling
 function runTask(taskData: TaskData, currentPayload: AppPayload) {
     if (tasks.has(taskData.id) || !taskData.m?.top?.functionname) {
+        console.debug("[API] Task already running or invalid task data: ", taskData.id, taskData.name);
         return;
     } else if (tasks.size === MAX_TASKS) {
         notifyAll("warning", `[api] Maximum number of tasks reached: ${tasks.size}`);

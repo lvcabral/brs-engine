@@ -76,7 +76,7 @@ export class Task extends Node {
             this.active = true;
         } else if (control === "stop" || control === "done") {
             if (this.started) {
-                console.debug("Posting Task Data to STOP: ", this.nodeSubtype);
+                console.debug(`[Task] Posting Task #${this.id} Data to STOP: ${this.nodeSubtype}`);
                 const taskData: TaskData = {
                     id: this.id,
                     name: this.nodeSubtype,
@@ -146,7 +146,7 @@ export class Task extends Node {
                     taskData.m.global["_observed_"] = observed;
                 }
             }
-            console.debug("Posting Task Data to RUN: ", this.nodeSubtype, functionName);
+            console.debug(`[Task] Posting Task #${this.id} Data to RUN: ${this.nodeSubtype}, ${functionName}`);
             postMessage(taskData);
             this.started = true;
         }
@@ -174,7 +174,7 @@ export class Task extends Node {
             const update = this.taskBuffer.load(true);
             if (isThreadUpdate(update)) {
                 console.debug(
-                    `Received Update from ${this.thread ? "Main thread" : "Task Thread"}: `,
+                    `[Task] Received Update at ${this.id} thread from ${this.thread ? "Main thread" : "Task Thread"}: `,
                     update.id,
                     update.type,
                     update.field
