@@ -1,11 +1,9 @@
-import { BrsValue, ValueKind, BrsBoolean } from "../BrsType";
-import { BrsComponent } from "../components/BrsComponent";
-import { BrsType, Int64, RoAssociativeArray, toAssociativeArray } from "..";
+import { ValueKind, BrsBoolean, BrsType, Int64, RoAssociativeArray, toAssociativeArray } from "..";
+import { BrsEvent } from "./BrsEvent";
 import { Callable } from "../Callable";
 import { Interpreter } from "../../interpreter";
 
-export class RoInputEvent extends BrsComponent implements BrsValue {
-    readonly kind = ValueKind.Object;
+export class RoInputEvent extends BrsEvent {
     private readonly id: number;
     private readonly input?: BrsType;
 
@@ -16,14 +14,6 @@ export class RoInputEvent extends BrsComponent implements BrsValue {
         this.registerMethods({
             ifroInputEvent: [this.isInput, this.getInfo],
         });
-    }
-
-    toString(parent?: BrsType): string {
-        return "<Component: roInputEvent>";
-    }
-
-    equalTo(other: BrsType) {
-        return BrsBoolean.False;
     }
 
     /** Checks if an input event was received. */

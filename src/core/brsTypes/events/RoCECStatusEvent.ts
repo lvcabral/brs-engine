@@ -1,11 +1,9 @@
-import { BrsValue, ValueKind, BrsBoolean, BrsString } from "../BrsType";
-import { BrsComponent } from "../components/BrsComponent";
-import { BrsType, Int32, toAssociativeArray } from "..";
+import { Int32, toAssociativeArray, ValueKind, BrsString } from "..";
+import { BrsEvent } from "./BrsEvent";
 import { Callable } from "../Callable";
 import { Interpreter } from "../../interpreter";
 
-export class RoCECStatusEvent extends BrsComponent implements BrsValue {
-    readonly kind = ValueKind.Object;
+export class RoCECStatusEvent extends BrsEvent {
     private readonly active: boolean;
 
     constructor(active: boolean) {
@@ -14,14 +12,6 @@ export class RoCECStatusEvent extends BrsComponent implements BrsValue {
         this.registerMethods({
             ifroCECStatusEvent: [this.getInfo, this.getIndex, this.getMessage],
         });
-    }
-
-    toString(parent?: BrsType): string {
-        return "<Component: roCECStatusEvent>";
-    }
-
-    equalTo(other: BrsType) {
-        return BrsBoolean.False;
     }
 
     /** The index value of this event is not used and is always set to 0. */

@@ -1,12 +1,10 @@
-import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid } from "../BrsType";
-import { BrsComponent } from "../components/BrsComponent";
-import { BrsType, RoBitmap, RoTextureRequest } from "..";
+import { ValueKind, BrsString, BrsInvalid, RoBitmap, RoTextureRequest } from "..";
+import { BrsEvent } from "./BrsEvent";
 import { Callable } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 
-export class RoTextureRequestEvent extends BrsComponent implements BrsValue {
-    readonly kind = ValueKind.Object;
+export class RoTextureRequestEvent extends BrsEvent {
     private readonly id: number;
     private readonly state: number;
     private readonly uri: string;
@@ -26,14 +24,6 @@ export class RoTextureRequestEvent extends BrsComponent implements BrsValue {
 
     getValue() {
         return this.uri;
-    }
-
-    toString(parent?: BrsType): string {
-        return "<Component: roTextureRequestEvent>";
-    }
-
-    equalTo(other: BrsType): BrsBoolean {
-        return BrsBoolean.False;
     }
 
     /** Returns a unique id for the request. */

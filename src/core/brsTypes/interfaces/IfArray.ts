@@ -1,7 +1,7 @@
-import { BrsComponent, BrsIterable, BrsType, Float, Int32 } from "..";
+import { BrsBoolean, BrsInvalid, ValueKind, BrsType, Float, Int32 } from "..";
+import { BrsComponent, BrsIterable } from "../components/BrsComponent";
 import { BrsDevice } from "../../device/BrsDevice";
 import { Interpreter } from "../../interpreter";
-import { BrsBoolean, BrsInvalid, ValueKind } from "../BrsType";
 import { Callable, StdlibArgument } from "../Callable";
 
 /**

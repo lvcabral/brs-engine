@@ -1,5 +1,4 @@
 import {
-    BrsComponent,
     BrsInvalid,
     BrsString,
     Callable,
@@ -11,6 +10,7 @@ import {
     StdlibArgument,
     ValueKind,
 } from "..";
+import { BrsComponent } from "../components/BrsComponent";
 import { BrsDevice } from "../../device/BrsDevice";
 import { RuntimeError, RuntimeErrorDetail } from "../../error/BrsError";
 import { Interpreter } from "../../interpreter";

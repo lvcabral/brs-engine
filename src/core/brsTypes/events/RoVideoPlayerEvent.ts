@@ -1,13 +1,10 @@
-import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid } from "../BrsType";
-import { BrsComponent } from "../components/BrsComponent";
-import { BrsType, toAssociativeArray } from "..";
+import { ValueKind, BrsString, BrsBoolean, BrsInvalid, Int32, toAssociativeArray } from "..";
+import { BrsEvent } from "./BrsEvent";
 import { Callable } from "../Callable";
 import { Interpreter } from "../../interpreter";
-import { Int32 } from "../Int32";
 import { MediaEvent } from "../../common";
 
-export class RoVideoPlayerEvent extends BrsComponent implements BrsValue {
-    readonly kind = ValueKind.Object;
+export class RoVideoPlayerEvent extends BrsEvent {
     private readonly flags: number;
     private readonly index: number;
     private readonly message: string;
@@ -55,14 +52,6 @@ export class RoVideoPlayerEvent extends BrsComponent implements BrsValue {
                 this.isDownloadSegmentInfo,
             ],
         });
-    }
-
-    toString(parent?: BrsType): string {
-        return "<Component: roVideoPlayerEvent>";
-    }
-
-    equalTo(other: BrsType) {
-        return BrsBoolean.False;
     }
 
     /** Returns an integer representing the index of the current audio stream. */

@@ -1,10 +1,9 @@
-import { BrsType, BrsValue, ValueKind, BrsString, BrsBoolean, Int32, Callable, Comparable, isNumberComp } from "..";
-import { BrsComponent } from "../components/BrsComponent";
+import { BrsType, ValueKind, BrsString, BrsBoolean, Int32, Callable, Comparable, isNumberComp } from "..";
+import { BrsEvent } from "./BrsEvent";
 import { Interpreter } from "../../interpreter";
 import { KeyEvent } from "../../common";
 
-export class RoUniversalControlEvent extends BrsComponent implements BrsValue, Comparable {
-    readonly kind = ValueKind.Object;
+export class RoUniversalControlEvent extends BrsEvent implements Comparable {
     private readonly event: KeyEvent;
     constructor(keyEvent: KeyEvent) {
         super("roUniversalControlEvent");
@@ -16,7 +15,7 @@ export class RoUniversalControlEvent extends BrsComponent implements BrsValue, C
         });
     }
 
-    toString(parent?: BrsType): string {
+    toString(_parent?: BrsType): string {
         return this.event.key.toString();
     }
 

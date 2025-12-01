@@ -1,6 +1,6 @@
 import { BrsValue, ValueKind, BrsInvalid, BrsBoolean } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsEvent, BrsType, isBrsEvent, isInvalid } from "..";
+import { BrsEvent, BrsType, isInvalid } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
@@ -59,7 +59,7 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
 
         while (loop || performance.now() < timeout) {
             const msg = this.getNextMessage();
-            if (isBrsEvent(msg)) {
+            if (msg instanceof BrsEvent) {
                 return msg;
             }
             this.updateMessageQueue(interpreter, ms);
@@ -76,7 +76,7 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
         if (this.callbackMap.size > 0) {
             for (const [_, callback] of this.callbackMap.entries()) {
                 const events = callback(interpreter, wait);
-                this.messageQueue.push(...events.filter(isBrsEvent));
+                this.messageQueue.push(...events.filter((e: BrsType) => e instanceof BrsEvent));
             }
         }
     }

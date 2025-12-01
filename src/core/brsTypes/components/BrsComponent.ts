@@ -5,8 +5,8 @@ import { Callable } from "../Callable";
 import { BrsInterface } from "../interfaces/BrsInterface";
 
 export class BrsComponent {
+    protected readonly componentName: string;
     private readonly methods: Map<string, Callable> = new Map();
-    private readonly componentName: string;
     private filter: string = "";
     protected references: number;
     protected returnFlag: boolean;
@@ -96,8 +96,8 @@ export class BrsComponent {
     }
 }
 
-/** Represents a BrightScript component that has elements that can be iterated across. */
-export interface BrsIterable {
+/** Represents a BrightScript component that has elements that can be accessed via index. */
+export interface BrsCollection {
     /**
      * Returns the set of iterable elements contained in this component.
      * @returns an array of elements contained in this component.
@@ -119,7 +119,10 @@ export interface BrsIterable {
      * @param isCaseSensitive determinate whether operation of setting should be case sensitive or not.
      */
     set(index: BrsType, value: BrsType, isCaseSensitive?: boolean): BrsInvalid;
+}
 
+/** Represents a BrightScript component that has elements that can be iterated across. */
+export interface BrsIterable extends BrsCollection {
     /**
      * Determines if the iteration index is at the end of the iterable component.
      * @returns `true` if there are more elements to iterate, otherwise `false`.

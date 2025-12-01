@@ -1,4 +1,4 @@
-import { BrsType, isBoxable, isBoxedNumber, RoInvalid } from "..";
+import { BrsType, isBoxable, isBoxedNumber } from "..";
 import { BrsValue, ValueKind, BrsBoolean, BrsInvalid } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
 import { BrsList, IfList, IfListToArray } from "../interfaces/IfList";

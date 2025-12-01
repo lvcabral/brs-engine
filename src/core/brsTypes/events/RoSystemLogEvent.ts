@@ -1,11 +1,9 @@
-import { BrsValue, ValueKind, BrsBoolean } from "../BrsType";
-import { BrsComponent } from "../components/BrsComponent";
-import { BrsType, FlexObject, RoDateTime, toAssociativeArray } from "..";
+import { ValueKind, FlexObject, RoDateTime, toAssociativeArray } from "..";
+import { BrsEvent } from "./BrsEvent";
 import { Callable } from "../Callable";
 import { Interpreter } from "../../interpreter";
 
-export class RoSystemLogEvent extends BrsComponent implements BrsValue {
-    readonly kind = ValueKind.Object;
+export class RoSystemLogEvent extends BrsEvent {
     private readonly logType: string;
     private readonly data: any;
 
@@ -14,14 +12,6 @@ export class RoSystemLogEvent extends BrsComponent implements BrsValue {
         this.data = data;
         this.logType = logType;
         this.registerMethods({ ifroSystemLogEvent: [this.getInfo] });
-    }
-
-    toString(parent?: BrsType): string {
-        return "<Component: roSystemLogEvent>";
-    }
-
-    equalTo(other: BrsType) {
-        return BrsBoolean.False;
     }
 
     /** Returns an roAssociativeArray describing the system log event. */

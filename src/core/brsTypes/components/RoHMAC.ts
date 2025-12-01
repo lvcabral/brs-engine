@@ -6,12 +6,12 @@ import {
     StdlibArgument,
     BrsBoolean,
     BrsType,
-    BrsComponent,
     BrsValue,
     RoByteArray,
     Int32,
     BrsInvalid,
 } from "..";
+import { BrsComponent } from "./BrsComponent";
 import { Interpreter } from "../../interpreter";
 
 export class RoHMAC extends BrsComponent implements BrsValue {
