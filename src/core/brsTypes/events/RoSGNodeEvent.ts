@@ -1,13 +1,11 @@
-import { BrsComponent } from "../components/BrsComponent";
-import { ValueKind, BrsString, BrsValue, BrsBoolean } from "../BrsType";
+import { BrsEvent } from "./BrsEvent";
+import { ValueKind, BrsString, BrsValue } from "../BrsType";
 import { Callable } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { RoSGNode } from "../components/RoSGNode";
 import { BrsType, RoAssociativeArray } from "..";
 
-export class RoSGNodeEvent extends BrsComponent implements BrsValue {
-    readonly kind = ValueKind.Object;
-
+export class RoSGNodeEvent extends BrsEvent implements BrsValue {
     constructor(
         readonly node: RoSGNode,
         readonly fieldName: BrsString,
@@ -16,15 +14,6 @@ export class RoSGNodeEvent extends BrsComponent implements BrsValue {
     ) {
         super("roSGNodeEvent");
         this.appendMethods([this.getData, this.getField, this.getRoSGNode, this.getNode, this.getInfo]);
-    }
-
-    equalTo(other: BrsType) {
-        // RBI doesn't allow events to be compared.
-        return BrsBoolean.False;
-    }
-
-    toString() {
-        return "<Component: roSGNodeEvent>";
     }
 
     /** Retrieves the new field value at the time of the change. */
