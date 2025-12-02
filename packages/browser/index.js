@@ -80,7 +80,7 @@ const customDeviceInfo = {
     audioLanguage: "en", // Preferred audio track language
     maxFps: 30, // Limited refresh rate to minimize issues with iOS/iPadOS
     appList: appList,
-    corsProxy: "http://tron.local:8080/",
+    // corsProxy: "http://localhost:8080/",
     // Uncomment line above for local testing
     // Or add the URL of an instance of https://github.com/Rob--W/cors-anywhere
 };
