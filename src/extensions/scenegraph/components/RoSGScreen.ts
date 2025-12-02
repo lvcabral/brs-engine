@@ -214,7 +214,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         if (keyCode < 32) {
             key = new BrsString(rokuKeys.get(keyCode) ?? "");
         } else {
-            key = new BrsString(`Lit_${String.fromCharCode(keyCode)}`);
+            key = new BrsString(`Lit_${String.fromCodePoint(keyCode)}`);
         }
         const press = BrsBoolean.from(nextKey.mod === 0);
         let handled = false;
