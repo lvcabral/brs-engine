@@ -1112,7 +1112,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         let args = expression.args.map(this.evaluate, this);
 
         if (!isBrsCallable(callee)) {
-            if (callee instanceof BrsInvalid && expression.optional) {
+            const invalidCallee = BrsInvalid.Instance.equalTo(callee).toBoolean();
+            if (invalidCallee && expression.optional) {
                 return callee;
             }
             this.addError(new RuntimeError(RuntimeErrorDetail.NotAFunction, expression.closingParen.location));
@@ -1305,6 +1306,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             // but it's here to mimic the behavior of Roku, if they fix, we move it.
             if (invalidSource && expression.optional) {
                 return source;
+            } else if (invalidSource) {
+                console.debug(
+                    `[Interpreter] Attempting to access member '${expression.name.text}' of invalid source.`
+                );
             }
             const method = boxedSource.getMethod(expression.name.text);
             if (method) {
