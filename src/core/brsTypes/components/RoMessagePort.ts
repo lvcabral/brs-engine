@@ -61,8 +61,6 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
             const msg = this.getNextMessage();
             if (msg instanceof BrsEvent) {
                 return msg;
-            } else if (!isInvalid(msg)) {
-                console.debug(`roMessagePort.wait received non-event message: ${msg.toString()}`);
             }
             this.updateMessageQueue(interpreter, ms);
             const cmd = BrsDevice.checkBreakCommand(interpreter.debugMode);
