@@ -1,4 +1,14 @@
-import { BrsString, BrsType, Callable, Environment, Interpreter, isUnboxable, RoArray, RoMessagePort, ValueKind } from "brs-engine";
+import {
+    BrsString,
+    BrsType,
+    Callable,
+    Environment,
+    Interpreter,
+    isUnboxable,
+    RoArray,
+    RoMessagePort,
+    ValueKind,
+} from "brs-engine";
 import { Node } from "./nodes/Node";
 
 /** This interface is used to define a callback for field change notifications and events. */
