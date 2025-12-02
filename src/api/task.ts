@@ -158,7 +158,5 @@ export function handleThreadUpdate(threadUpdate: ThreadUpdate, fromTask: boolean
                 threadSyncToTask.get(data.id)?.waitStore(data, 1);
             }
         }
-    } else {
-        console.debug("[API] Thread update with invalid data!", JSON.stringify(threadUpdate, null, 2));
     }
 }
