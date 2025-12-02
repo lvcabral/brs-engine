@@ -198,7 +198,7 @@ export class Video extends Group {
 
         // Prevent initializing Video in Task Thread
         if (sgRoot.inTaskThread()) {
-            return
+            return;
         }
         // Initialize Clock Timer
         const clock = new Timer();
