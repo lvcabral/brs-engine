@@ -16,7 +16,7 @@ import { brsValueOf, fromAssociativeArray, fromSGNode } from "../factory/seriali
 import { Node } from "./Node";
 import { Scene } from "./Scene";
 import { Global } from "./Global";
-import { type Field } from "./Field";
+import type { Field } from "./Field";
 import { FieldKind, FieldModel } from "../SGTypes";
 
 export class Task extends Node {

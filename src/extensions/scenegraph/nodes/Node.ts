@@ -276,7 +276,7 @@ export class Node extends RoSGNode implements BrsValue {
         if (visitedNodes.has(this)) {
             return visitedNodes.get(this)!;
         }
-        const clonedNode = createNodeByType(new BrsString(this.nodeSubtype));
+        const clonedNode = createNodeByType(this.nodeSubtype);
         if (!(clonedNode instanceof RoSGNode)) {
             return BrsInvalid.Instance;
         }
@@ -320,7 +320,7 @@ export class Node extends RoSGNode implements BrsValue {
 
     deepCopy(visitedNodes?: WeakMap<Node, Node>): BrsType {
         visitedNodes ??= new WeakMap<Node, Node>();
-        const copiedNode = createNodeByType(new BrsString(this.nodeSubtype));
+        const copiedNode = createNodeByType(this.nodeSubtype);
         if (!(copiedNode instanceof Node)) {
             return new RoInvalid();
         }
@@ -740,7 +740,7 @@ export class Node extends RoSGNode implements BrsValue {
             if (element instanceof RoAssociativeArray) {
                 // Create a new child node based on the subtype
                 const childSubtype = jsValueOf(element.get(new BrsString("subtype"))) ?? subtype;
-                const childNode = createNodeByType(new BrsString(childSubtype), interpreter);
+                const childNode = createNodeByType(childSubtype, interpreter);
                 if (childNode instanceof RoSGNode) {
                     this.populateNodeFromAA(interpreter, childNode, element, createFields, childSubtype);
                     node.appendChildToParent(childNode);

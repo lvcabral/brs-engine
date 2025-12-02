@@ -28,7 +28,7 @@ import { Node } from "./Node";
 import { RoSGNodeEvent } from "../events/RoSGNodeEvent";
 import { getValueKindFromFieldType } from "../factory/SGNodeFactory";
 import { fromAssociativeArray, toAssociativeArray, jsValueOf } from "../factory/serialization";
-import { BrsCallback, FieldKind } from "../SGTypes";
+import { BrsCallback, FieldKind, getTaskId, isContentNode } from "../SGTypes";
 
 export class Field {
     private readonly permanentObservers: BrsCallback[] = [];
@@ -377,26 +377,3 @@ export class Field {
     }
 }
 
-// Definitions to avoid circular dependencies
-type ContentNodeLike = Node & {
-    addParentField(parentField: Field): void;
-    removeParentField(parentField: Field): void;
-};
-
-function isContentNode(value: BrsType): value is ContentNodeLike {
-    return (
-        value instanceof Node &&
-        typeof (value as ContentNodeLike).addParentField === "function" &&
-        typeof (value as ContentNodeLike).removeParentField === "function"
-    );
-}
-
-type TaskLike = Node & { id: number };
-
-function getTaskId(node: Node): number | undefined {
-    if (!(node instanceof Node) || !("id" in node)) {
-        return undefined;
-    }
-    const maybeTask = node as Partial<TaskLike>;
-    return typeof maybeTask.id === "number" ? maybeTask.id : undefined;
-}

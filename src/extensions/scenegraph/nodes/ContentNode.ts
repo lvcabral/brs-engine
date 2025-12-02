@@ -11,7 +11,7 @@ import {
     BrsInvalid,
 } from "brs-engine";
 import { Node } from "./Node";
-import { type Field } from "./Field";
+import type { Field } from "./Field";
 import { FieldKind, FieldModel } from "../SGTypes";
 import { toAssociativeArray } from "../factory/serialization";
 

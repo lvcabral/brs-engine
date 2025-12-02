@@ -487,7 +487,7 @@ export class RowList extends ArrayGrid {
         }
 
         const itemCompName = this.getValueJS("itemComponentName") as string;
-        if (!customNodeExists(new BrsString(itemCompName))) {
+        if (!customNodeExists(itemCompName)) {
             BrsDevice.stderr.write(`warning,[sg.rowlist.create.fail] Failed to create markup item ${itemCompName}`);
             return false;
         }

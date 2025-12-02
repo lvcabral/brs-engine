@@ -99,7 +99,7 @@ export class MarkupList extends ArrayGrid {
         }
         const hasSections = this.metadata.length > 0;
         const itemCompName = this.getValueJS("itemComponentName") as string;
-        if (!customNodeExists(new BrsString(itemCompName))) {
+        if (!customNodeExists(itemCompName)) {
             BrsDevice.stderr.write(`warning,[sg.markuplist.create.fail] Failed to create markup item ${itemCompName}`);
             return;
         }

@@ -443,7 +443,7 @@ export class ArrayGrid extends Group {
             return new Group();
         }
         const itemCompName = this.getValueJS("itemComponentName") ?? "";
-        const itemComp = createNodeByType(new BrsString(itemCompName), interpreter);
+        const itemComp = createNodeByType(itemCompName, interpreter);
         if (itemComp instanceof Group) {
             itemComp.setValueSilent("width", brsValueOf(itemRect.width));
             itemComp.setValueSilent("height", brsValueOf(itemRect.height));

@@ -375,7 +375,7 @@ export class ZoomRowList extends ArrayGrid {
             this.focusIndex = 0;
         }
         const itemCompName = this.getValueJS("itemComponentName") as string;
-        if (!customNodeExists(new BrsString(itemCompName))) {
+        if (!customNodeExists(itemCompName)) {
             BrsDevice.stderr.write(`warning,[sg.zoomrowlist.create.fail] Failed to create item ${itemCompName}`);
             return false;
         }

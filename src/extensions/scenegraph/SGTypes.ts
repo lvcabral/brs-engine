@@ -10,6 +10,7 @@ import {
     ValueKind,
 } from "brs-engine";
 import { Node } from "./nodes/Node";
+import type { Field } from "./nodes/Field";
 
 /** This interface is used to define a callback for field change notifications and events. */
 export interface BrsCallback {
@@ -151,4 +152,41 @@ export namespace FieldKind {
                 return undefined;
         }
     }
+}
+
+// Definitions to avoid circular dependencies
+type ContentNodeLike = Node & {
+    addParentField(parentField: Field): void;
+    removeParentField(parentField: Field): void;
+};
+
+export function isContentNode(value: BrsType): value is ContentNodeLike {
+    return (
+        value instanceof Node &&
+        typeof (value as ContentNodeLike).addParentField === "function" &&
+        typeof (value as ContentNodeLike).removeParentField === "function"
+    );
+}
+
+type FontLike = Node & {
+    setSize(fontSize: number): void;
+    setSystemFont(fontName: string): boolean;
+};
+
+export function isFont(value: BrsType): value is FontLike {
+    return (
+        value instanceof Node &&
+        typeof (value as FontLike).setSize === "function" &&
+        typeof (value as FontLike).setSystemFont === "function"
+    );
+}
+
+type TaskLike = Node & { id: number };
+
+export function getTaskId(node: Node): number | undefined {
+    if (!(node instanceof Node) || !("id" in node)) {
+        return undefined;
+    }
+    const maybeTask = node as Partial<TaskLike>;
+    return typeof maybeTask.id === "number" ? maybeTask.id : undefined;
 }

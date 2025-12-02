@@ -267,7 +267,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         impl: (interpreter: Interpreter) => {
             if (this.sceneType && sgRoot.scene) {
                 const typeDef = sgRoot.nodeDefMap.get(this.sceneType.value.toLowerCase());
-                initializeNode(interpreter, this.sceneType, typeDef, sgRoot.scene);
+                initializeNode(interpreter, this.sceneType.value, typeDef, sgRoot.scene);
             }
             this.isDirty = true;
             return BrsBoolean.True;
@@ -315,7 +315,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
             if (sceneType.value === SGNodeType.Scene) {
                 returnValue = new Scene([], SGNodeType.Scene);
             } else if (sgRoot.nodeDefMap.has(sceneType.value.toLowerCase())) {
-                returnValue = createSceneByType(interpreter, sceneType);
+                returnValue = createSceneByType(interpreter, sceneType.value);
             } else {
                 BrsDevice.stderr.write(
                     `warning,BRIGHTSCRIPT: ERROR: roSGScreen.CreateScene: No such node ${

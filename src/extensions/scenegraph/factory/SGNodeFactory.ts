@@ -307,24 +307,24 @@ export class SGNodeFactory {
 }
 
 /** Function to create a Node by its name defined on the XML file */
-export function createNodeByType(type: BrsString, interpreter?: Interpreter): Node | BrsInvalid {
+export function createNodeByType(type: string, interpreter?: Interpreter): Node | BrsInvalid {
     // If this is a built-in node component, then return it.
-    let node = SGNodeFactory.createNode(type.value) ?? BrsInvalid.Instance;
+    let node = SGNodeFactory.createNode(type) ?? BrsInvalid.Instance;
     if (node instanceof BrsInvalid) {
-        let typeDef = sgRoot.nodeDefMap.get(type.value.toLowerCase());
+        let typeDef = sgRoot.nodeDefMap.get(type.toLowerCase());
         if (typeDef && interpreter instanceof Interpreter) {
             node = initializeNode(interpreter, type, typeDef);
         } else if (typeDef) {
             const typeDefStack = updateTypeDefHierarchy(typeDef);
             // Get the "basemost" component of the inheritance tree.
             typeDef = typeDefStack.pop();
-            node = SGNodeFactory.createNode(typeDef!.extends as SGNodeType, type.value) ?? BrsInvalid.Instance;
+            node = SGNodeFactory.createNode(typeDef!.extends as SGNodeType, type) ?? BrsInvalid.Instance;
             if (node instanceof BrsInvalid) {
-                node = new Node([], type.value);
+                node = new Node([], type);
             }
         } else {
             BrsDevice.stderr.write(
-                `warning,BRIGHTSCRIPT: ERROR: roSGNode: Failed to create roSGNode with type ${type.value}: ${
+                `warning,BRIGHTSCRIPT: ERROR: roSGNode: Failed to create roSGNode with type ${type}: ${
                     interpreter?.formatLocation() ?? ""
                 }`
             );
@@ -347,27 +347,25 @@ export function createNodeByType(type: BrsString, interpreter?: Interpreter): No
 }
 
 /** Function to create a Scene by its name defined on the XML file */
-export function createSceneByType(interpreter: Interpreter, type: BrsString): Node | BrsInvalid {
-    let typeDef = sgRoot.nodeDefMap.get(type.value.toLowerCase());
+export function createSceneByType(interpreter: Interpreter, type: string): Node | BrsInvalid {
+    let typeDef = sgRoot.nodeDefMap.get(type.toLowerCase());
     updateTypeDefHierarchy(typeDef);
-    if (typeDef && isSubtypeCheck(type.value, SGNodeType.Scene)) {
-        return new Scene([], type.value);
+    if (typeDef && isSubtypeCheck(type, SGNodeType.Scene)) {
+        return new Scene([], type);
     } else {
         BrsDevice.stderr.write(
-            `warning,BRIGHTSCRIPT: ERROR: roSGNode: Failed to create a Scene with type ${
-                type.value
-            }: ${interpreter.formatLocation()}`
+            `warning,BRIGHTSCRIPT: ERROR: roSGNode: Failed to create a Scene with type ${type}: ${interpreter.formatLocation()}`
         );
     }
     return BrsInvalid.Instance;
 }
 
-export function customNodeExists(node: BrsString) {
-    return sgRoot.nodeDefMap.has(node.value.toLowerCase());
+export function customNodeExists(node: string) {
+    return sgRoot.nodeDefMap.has(node.toLowerCase());
 }
 
 /** Function to initialize Nodes with its Fields, Children and Environment */
-export function initializeNode(interpreter: Interpreter, type: BrsString, typeDef?: ComponentDefinition, node?: Node) {
+export function initializeNode(interpreter: Interpreter, type: string, typeDef?: ComponentDefinition, node?: Node) {
     if (typeDef) {
         //use typeDef object to tack on all the bells & whistles of a custom node
         const typeDefStack = updateTypeDefHierarchy(typeDef);
@@ -379,10 +377,10 @@ export function initializeNode(interpreter: Interpreter, type: BrsString, typeDe
         // If not already created, create the node.
         if (!node) {
             // If this extends a built-in node component, create it.
-            node = SGNodeFactory.createNode(typeDef!.extends as SGNodeType, type.value);
+            node = SGNodeFactory.createNode(typeDef!.extends as SGNodeType, type);
         }
         // Default to Node as parent.
-        node ??= new Node([], type.value);
+        node ??= new Node([], type);
         const mPointer = new RoAssociativeArray([]);
         currentEnv?.setM(new RoAssociativeArray([]));
 
@@ -426,9 +424,7 @@ export function initializeNode(interpreter: Interpreter, type: BrsString, typeDe
         return node;
     } else {
         BrsDevice.stderr.write(
-            `warning,BRIGHTSCRIPT: ERROR: roSGNode: Failed to initialize roSGNode with type ${
-                type.value
-            }: ${interpreter.formatLocation()}`
+            `warning,BRIGHTSCRIPT: ERROR: roSGNode: Failed to initialize roSGNode with type ${type}: ${interpreter.formatLocation()}`
         );
         return BrsInvalid.Instance;
     }
@@ -627,7 +623,7 @@ function addChildren(interpreter: Interpreter, node: Node, typeDef: ComponentDef
     const appendChild = node.getMethod("appendchild");
 
     for (let child of children) {
-        const newChild = createNodeByType(new BrsString(child.name), interpreter);
+        const newChild = createNodeByType(child.name, interpreter);
         if (newChild instanceof Node) {
             const nodeFields = newChild.getNodeFields();
             for (let [key, value] of Object.entries(child.fields)) {

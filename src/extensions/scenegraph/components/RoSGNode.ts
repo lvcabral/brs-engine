@@ -872,7 +872,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             returns: ValueKind.Object,
         },
         impl: (interpreter: Interpreter, nodeType: BrsString) => {
-            const child = createNodeByType(nodeType, interpreter);
+            const child = createNodeByType(nodeType.value, interpreter);
             if (child instanceof RoSGNode) {
                 this.appendChildToParent(child);
             }
@@ -998,7 +998,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             const numChildrenValue = num_children.getValue();
             const addedChildren: RoSGNode[] = [];
             for (let i = 0; i < numChildrenValue; i++) {
-                const child = createNodeByType(subtype, interpreter);
+                const child = createNodeByType(subtype.value, interpreter);
                 if (child instanceof RoSGNode) {
                     this.appendChildToParent(child);
                     addedChildren.push(child);

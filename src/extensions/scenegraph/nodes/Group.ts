@@ -19,7 +19,7 @@ import type { Poster } from "./Poster";
 import type { Rectangle } from "./Rectangle";
 import type { ScrollingLabel } from "./ScrollingLabel";
 import { Node } from "./Node";
-import { FieldKind, FieldModel } from "../SGTypes";
+import { FieldKind, FieldModel, isFont } from "../SGTypes";
 import { Interpreter } from "brs-engine";
 import { IfDraw2D, MeasuredText, Rect } from "brs-engine";
 import { convertHexColor, rotateRect, unionRect } from "../SGUtil";
@@ -72,7 +72,7 @@ export class Group extends Node {
 
         if (field?.getType() === FieldKind.Font && isBrsString(value)) {
             const strFont = value.getValue();
-            const font = createNodeByType(new BrsString("Font")) as Font;
+            const font = createNodeByType("Font") as Font;
             if (strFont.startsWith("font:") && font.setSystemFont(strFont.slice(5).toLowerCase())) {
                 value = font;
             } else {
@@ -107,7 +107,7 @@ export class Group extends Node {
     }
 
     protected addPoster(uri: string, translation: number[], width?: number, height?: number) {
-        const poster = createNodeByType(new BrsString("Poster")) as Poster;
+        const poster = createNodeByType("Poster") as Poster;
         if (uri) {
             poster.setValue("uri", new BrsString(uri));
         }
@@ -132,16 +132,15 @@ export class Group extends Node {
         horizAlign?: string,
         wrap?: boolean
     ) {
-        const label = createNodeByType(new BrsString("Label")) as Label;
+        const label = createNodeByType("Label") as Label;
         if (colorField) {
             this.copyField(label, "color", colorField);
         }
         if (fontSize) {
             const labelFields = label.getNodeFields();
             const labelFont = labelFields.get("font")?.getValue();
-            // Check if labelFont is a Font node (it should be)
-            if (labelFont && labelFont.kind === ValueKind.Object && "setSystemFont" in labelFont) {
-                (labelFont as unknown as Font).setSize(fontSize);
+            if (labelFont !== undefined && isFont(labelFont)) {
+                labelFont.setSize(fontSize);
             }
         }
         if (width !== undefined) {
@@ -175,7 +174,7 @@ export class Group extends Node {
         speed?: number,
         repeat?: number
     ) {
-        const label = createNodeByType(new BrsString("ScrollingLabel")) as ScrollingLabel;
+        const label = createNodeByType("ScrollingLabel") as ScrollingLabel;
         if (colorField) {
             this.copyField(label, "color", colorField);
         }
@@ -209,7 +208,7 @@ export class Group extends Node {
     }
 
     protected addRectangle(colorField: string, translation: number[], width?: number, height?: number) {
-        const rectangle = createNodeByType(new BrsString("Rectangle")) as Rectangle;
+        const rectangle = createNodeByType("Rectangle") as Rectangle;
         this.copyField(rectangle, "color", colorField);
         if (width !== undefined) {
             rectangle.setValueSilent("width", new Float(width));
