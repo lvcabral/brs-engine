@@ -129,7 +129,7 @@ export function sendKey(key: string, mod: number, type: RemoteType = RemoteType.
         }
     } else if (rokuKeys.has(key.toLowerCase())) {
         const code = rokuKeys.get(key.toLowerCase());
-        if (typeof code !== "undefined") {
+        if (code !== undefined) {
             const next = getNext();
             Atomics.store(sharedArray, DataType.RID + next, type + index);
             Atomics.store(sharedArray, DataType.MOD + next, mod);

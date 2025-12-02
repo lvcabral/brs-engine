@@ -311,7 +311,7 @@ export function execute(filePath: string, fileData: any, options: any = {}, deep
     } else if (typeof options.debugOnCrash === "boolean") {
         deviceData.debugOnCrash = options.debugOnCrash;
     }
-    if (typeof brsWorker !== "undefined") {
+    if (brsWorker !== undefined) {
         resetWorker();
     }
     if (debugToConsole) {
