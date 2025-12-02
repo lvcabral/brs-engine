@@ -54,10 +54,10 @@ export class Node extends RoSGNode implements BrsValue {
     rectToScene: Rect = { x: 0, y: 0, width: 0, height: 0 };
 
     readonly defaultFields: FieldModel[] = [
-        { name: "id", type: FieldKind.String, system: true },
-        { name: "focusable", type: FieldKind.Boolean, system: true },
-        { name: "focusedChild", type: FieldKind.Node, system: true, alwaysNotify: true },
-        { name: "change", type: FieldKind.AssocArray, system: true },
+        { name: "id", type: FieldKind.String },
+        { name: "focusable", type: FieldKind.Boolean },
+        { name: "focusedChild", type: FieldKind.Node, alwaysNotify: true },
+        { name: "change", type: FieldKind.AssocArray },
     ];
 
     constructor(initializedFields: AAMember[] = [], readonly nodeSubtype: string = "Node") {
@@ -89,7 +89,7 @@ export class Node extends RoSGNode implements BrsValue {
         for (const [key, field] of this.fields.entries()) {
             if (field.isHidden()) {
                 continue;
-            } else if (field.isSystem()) {
+            } else if (field.isSystem() && !this.aliases.has(key)) {
                 systemFields.push([key, field]);
                 continue;
             }
@@ -157,9 +157,7 @@ export class Node extends RoSGNode implements BrsValue {
 
     protected clearNodeFields() {
         for (const [name, field] of this.fields) {
-            if (!field.isSystem()) {
-                this.removeFieldEntry(name);
-            }
+            this.removeFieldEntry(name);
         }
     }
 
@@ -717,7 +715,7 @@ export class Node extends RoSGNode implements BrsValue {
     protected removeFieldEntry(fieldName: string): boolean {
         const fieldKey = fieldName.toLowerCase();
         const field = this.fields.get(fieldKey);
-        if (!field || field.isSystem()) {
+        if (!field || (field.isSystem() && !this.aliases.has(fieldKey))) {
             return false;
         }
         field.clearObservers();
@@ -989,7 +987,7 @@ export class Node extends RoSGNode implements BrsValue {
             if (fieldType) {
                 this.fields.set(
                     field.name.toLowerCase(),
-                    new Field(value, fieldType, !!field.alwaysNotify, field.system, field.hidden)
+                    new Field(value, fieldType, !!field.alwaysNotify, true, field.hidden)
                 );
             }
         }
