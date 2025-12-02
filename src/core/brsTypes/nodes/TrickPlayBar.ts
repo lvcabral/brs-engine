@@ -1,5 +1,5 @@
 import { FieldKind, FieldModel } from "./Field";
-import { AAMember, BrsString, Float, Label, Poster, BrsBoolean, Int32, BrsType, RoBitmap } from "..";
+import { AAMember, BrsString, Float, Label, Poster, BrsBoolean, Int32, BrsType, RoBitmap, sgRoot } from "..";
 import { Group } from "./Group";
 import { Interpreter } from "../../interpreter";
 import { IfDraw2D } from "../interfaces/IfDraw2D";
@@ -76,7 +76,7 @@ export class TrickPlayBar extends Group {
             this.remaining.setValue("color", value);
         } else if (fieldName === "visible" && value instanceof BrsBoolean) {
             if (this.getValueJS("visible") !== value.toBoolean()) {
-                postMessage({ trickPlayBarVisible: value.toBoolean() });
+                if (!sgRoot.inTaskThread()) postMessage({ trickPlayBarVisible: value.toBoolean() });
             }
         }
         super.setValue(index, value, alwaysNotify, kind);
@@ -121,7 +121,7 @@ export class TrickPlayBar extends Group {
     }
 
     renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
-        if (!this.isVisible()) {
+        if (!this.isVisible() || sgRoot.inTaskThread()) {
             return;
         }
         const drawTrans = this.getTranslation();

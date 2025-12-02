@@ -183,13 +183,6 @@ export class Video extends Group {
         }
         this.contentTitles = [];
         this.clockText.setValueSilent("text", new BrsString(BrsDevice.getTime()));
-        const clock = new Timer();
-        clock.setCallback(() => {
-            this.clockText.setValue("text", new BrsString(BrsDevice.getTime()));
-        });
-        clock.setValueSilent("repeat", BrsBoolean.True);
-        clock.setValue("control", new BrsString("start"));
-        this.appendChildToParent(clock);
         this.setValueSilent("trickPlayBar", this.trickPlayBar);
         this.appendChildToParent(this.trickPlayBar);
         this.showHeader = 0;
@@ -202,6 +195,21 @@ export class Video extends Group {
         this.seeking = false;
         this.statusChanged = false;
         this.lastPressHandled = "";
+
+        // Prevent initializing Video in Task Thread
+        if (sgRoot.inTaskThread()) {
+            return
+        }
+        // Initialize Clock Timer
+        const clock = new Timer();
+        clock.setCallback(() => {
+            this.clockText.setValue("text", new BrsString(BrsDevice.getTime()));
+        });
+        clock.setValueSilent("repeat", BrsBoolean.True);
+        clock.setValue("control", new BrsString("start"));
+        this.appendChildToParent(clock);
+
+        // Reset UI state
         this.showUI(false);
 
         // Reset Video state on Rendering Thread
@@ -239,7 +247,7 @@ export class Video extends Group {
             const control = value.getValue().toLowerCase();
             if (validControl.includes(control)) {
                 this.checkContentChanged();
-                postMessage(`video,${control}`);
+                if (!sgRoot.inTaskThread()) postMessage(`video,${control}`);
             } else {
                 BrsDevice.stderr.write(`warning,${getNow()} [sg.video.cntrl.bad] control field set to invalid value`);
                 return;
@@ -247,17 +255,17 @@ export class Video extends Group {
         } else if (fieldName === "seek" && isBrsNumber(value)) {
             this.checkContentChanged();
             const position = jsValueOf(value) as number;
-            postMessage(`video,seek,${position * 1000}`);
+            if (!sgRoot.inTaskThread()) postMessage(`video,seek,${position * 1000}`);
         } else if (fieldName === "notificationinterval" && isBrsNumber(value)) {
-            postMessage(`video,notify,${Math.round(jsValueOf(value) * 1000)}`);
+            if (!sgRoot.inTaskThread()) postMessage(`video,notify,${Math.round(jsValueOf(value) * 1000)}`);
         } else if (fieldName === "loop" && isBrsBoolean(value)) {
-            postMessage(`video,loop,${value.toBoolean()}`);
+            if (!sgRoot.inTaskThread()) postMessage(`video,loop,${value.toBoolean()}`);
         } else if (fieldName === "mute" && isBrsBoolean(value)) {
-            postMessage(`video,mute,${value.toBoolean()}`);
+            if (!sgRoot.inTaskThread()) postMessage(`video,mute,${value.toBoolean()}`);
         } else if (fieldName === "audiotrack" && isBrsString(value)) {
-            postMessage(`video,audio,${value.getValue()}`);
+            if (!sgRoot.inTaskThread()) postMessage(`video,audio,${value.getValue()}`);
         } else if (fieldName === "subtitletrack" && isBrsString(value)) {
-            postMessage(`video,subtitle,${value.getValue()}`);
+            if (!sgRoot.inTaskThread()) postMessage(`video,subtitle,${value.getValue()}`);
         } else if (fieldName === "contentisplaylist" && isBrsBoolean(value)) {
             const currentFlag = this.getValueJS("contentIsPlaylist");
             const newFlag = value.toBoolean();
@@ -283,7 +291,7 @@ export class Video extends Group {
             const mode = parseCaptionMode(value.getValue());
             if (mode) {
                 BrsDevice.deviceInfo.captionMode = mode;
-                postMessage({ captionMode: mode });
+                if (!sgRoot.inTaskThread()) postMessage({ captionMode: mode });
             } else {
                 BrsDevice.stderr.write(
                     `warning,${getNow()} [sg.video.mode.set.bad] globalCaptionMode set to bad value '${mode}'`
@@ -336,7 +344,7 @@ export class Video extends Group {
             case MediaEvent.FAILED:
                 this.setErrorFields(eventIndex);
                 state = "error";
-                postMessage(`video,error`);
+                if (!sgRoot.inTaskThread()) postMessage(`video,error`);
                 break;
             default:
         }
@@ -347,6 +355,7 @@ export class Video extends Group {
     }
 
     private resetContent(content: ContentNode) {
+        if (sgRoot.inTaskThread()) return;
         postMessage({ videoPlaylist: this.formatContent(content) });
         if (this.contentTitles.length > 0) {
             this.setContentIndex(0);
@@ -457,7 +466,7 @@ export class Video extends Group {
             }
         }
         if (validStyles.length > 0) {
-            postMessage({ captionStyle: validStyles });
+            if (!sgRoot.inTaskThread()) postMessage({ captionStyle: validStyles });
         } else {
             BrsDevice.stderr.write(
                 `warning,${getNow()} [sg.video.cap.empty] caption style is empty or invalid. Using default.`
@@ -524,6 +533,7 @@ export class Video extends Group {
     }
 
     showUI(show: boolean) {
+        if (sgRoot.inTaskThread()) return;
         if (!show) {
             this.showHeader = 0;
             this.showPaused = 0;
@@ -538,6 +548,7 @@ export class Video extends Group {
     }
 
     handleKey(key: string, press: boolean): boolean {
+        if (sgRoot.inTaskThread()) return false;
         if (!press && this.lastPressHandled === key) {
             this.lastPressHandled = "";
             return true;
@@ -672,7 +683,7 @@ export class Video extends Group {
     }
 
     renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
-        if (!this.isVisible()) {
+        if (!this.isVisible() || sgRoot.inTaskThread()) {
             return;
         }
         const nodeTrans = this.getTranslation();
