@@ -18,25 +18,38 @@ import {
     isAppPayload,
     TaskPayload,
     isTaskPayload,
+    ExtensionInfo,
 } from "./common";
 import { Lexeme, Lexer, Token } from "./lexer";
 import { Parser, Stmt } from "./parser";
-import { getComponentDefinitionMap, getInterpreterWithSubEnvs } from "./scenegraph";
 import { lexParseSync, parseDecodedTokens } from "./LexerParser";
-import * as PP from "./preprocessor";
-import * as BrsTypes from "./brsTypes";
-import * as path from "path";
-import { XmlDocument } from "xmldoc";
-import * as crypto from "crypto";
-import * as fs from "fs";
-import { encode, decode } from "@msgpack/msgpack";
-import { zlibSync, unzlibSync, zipSync } from "fflate";
 import { BrsDevice } from "./device/BrsDevice";
 import { configureFileSystem } from "./device/FileSystem";
 import { BrsError, logError, RuntimeError, RuntimeErrorDetail } from "./error/BrsError";
+import { BrsExtension, registerExtension, instantiateExtensions } from "./extensions";
+import * as PP from "./preprocessor";
+import * as BrsTypes from "./brsTypes";
+import * as path from "path";
+import * as crypto from "crypto";
+import * as fs from "fs";
+import { XmlDocument } from "xmldoc";
+import { encode, decode } from "@msgpack/msgpack";
+import { zlibSync, unzlibSync, zipSync } from "fflate";
 
-export * as lexer from "./lexer";
-export * as parser from "./parser";
+export * from "./brsTypes";
+export * from "./interpreter";
+export * from "./error/BrsError";
+export * from "./error/ArgumentMismatch";
+export * from "./LexerParser";
+export * from "./common";
+export * from "./device/BrsDevice";
+export * from "./brsTypes/components/RoFontRegistry";
+export * from "./device/FileSystem";
+export { default as SharedObject } from "./SharedObject";
+export type { ISGNode } from "./extensions";
+export { registerExtension, clearExtensions, instantiateExtensions, isSceneGraphNode } from "./extensions";
+export { Lexer, Lexeme, Token, ReservedWords, isToken } from "./lexer";
+export { Parser, Stmt, Expr, BlockEnd } from "./parser";
 export * as stdlib from "./stdlib";
 export * as netlib from "./interpreter/Network";
 export { BrsTypes as types };
@@ -53,14 +66,33 @@ export const terminateReasons = ["debug-exit", "end-statement"];
 const algorithm = "aes-256-ctr";
 
 /// #if BROWSER
+import * as CommonExports from "./common";
+import * as LexerParserExports from "./LexerParser";
+import * as ParserExports from "./parser";
+import * as LexerExports from "./lexer";
+import * as EnvironmentExports from "./interpreter/Environment";
+import * as InterpreterExports from "./interpreter";
+import * as BrsDeviceExports from "./device/BrsDevice";
+import * as BrsErrorExports from "./error/BrsError";
+import * as ArgumentMismatchExports from "./error/ArgumentMismatch";
+import * as ExtensionsExports from "./extensions";
+import * as RoFontRegistryExports from "./brsTypes/components/RoFontRegistry";
+import * as FileSystemExports from "./device/FileSystem";
+import * as stdlibModule from "./stdlib";
+import * as netlibModule from "./interpreter/Network";
+import { Preprocessor } from "./preprocessor/Preprocessor";
+import SharedObject from "./SharedObject";
 import packageInfo from "../../packages/browser/package.json";
+
 if (typeof onmessage !== "undefined") {
     // Worker event that is triggered by postMessage() calls from the API library
     onmessage = function (event: MessageEvent) {
         if (isAppPayload(event.data)) {
+            loadExtensions(event.data.extensions);
             executeFile(event.data);
         } else if (isTaskPayload(event.data)) {
             console.debug("[Worker] Task payload received: ", event.data.taskData.name);
+            loadExtensions(event.data.extensions);
             executeTask(event.data);
         } else if (typeof event.data === "string" && event.data === "getVersion") {
             postMessage(`version,${packageInfo.version}`);
@@ -71,6 +103,93 @@ if (typeof onmessage !== "undefined") {
             postMessage(`warning,[worker] Invalid message received: ${event.data}`);
         }
     };
+}
+
+// Dynamically load the BrightScript extensions
+const loadedExtensions = new Set<string>();
+
+function loadExtensions(extensions?: ExtensionInfo[]) {
+    if (extensions && Array.isArray(extensions)) {
+        for (const extInfo of extensions) {
+            if (loadedExtensions.has(extInfo.moduleId)) {
+                continue;
+            }
+            loadExtension(extInfo.moduleId, extInfo.modulePath);
+        }
+    }
+}
+
+function loadExtension(moduleId: string, modulePath: string) {
+    try {
+        let sceneGraphModule: any = null;
+        // In a Web Worker context, we use importScripts for synchronous loading
+        if (typeof importScripts === "function") {
+            // @ts-ignore
+            self.brsEngine = createWorkerExports();
+            // @ts-ignore
+            self.xmldoc = { XmlDocument };
+            // Load the SceneGraph module script
+            const scriptUrl = new URL(modulePath, self.location.href).href;
+            importScripts(scriptUrl);
+            // @ts-ignore
+            sceneGraphModule = self[moduleId];
+        }
+
+        if (sceneGraphModule?.BrightScriptExtension) {
+            registerExtension(() => new sceneGraphModule.BrightScriptExtension());
+            loadedExtensions.add(moduleId);
+            console.debug("[Worker] SceneGraph Extension loaded and registered successfully.");
+        } else {
+            console.warn("[Worker] The loaded library does not contain SceneGraph Extension.");
+        }
+    } catch (err: any) {
+        console.warn("[Worker] Failed to load SceneGraph extension:", err.message);
+    }
+}
+
+function createWorkerExports() {
+    const aggregated: Record<string, any> = {};
+    const namespaces: (ModuleNamespace | undefined)[] = [
+        BrsTypes,
+        CommonExports,
+        InterpreterExports,
+        BrsErrorExports,
+        ArgumentMismatchExports,
+        LexerParserExports,
+        BrsDeviceExports,
+        RoFontRegistryExports,
+        FileSystemExports,
+        ExtensionsExports,
+        LexerExports,
+        ParserExports,
+        EnvironmentExports,
+    ];
+    namespaces.forEach((ns) => mergeModuleExports(aggregated, ns));
+    aggregated.stdlib = stdlibModule;
+    aggregated.netlib = netlibModule;
+    aggregated.types = BrsTypes;
+    aggregated.preprocessor = PP;
+    aggregated.Preprocessor = Preprocessor;
+    aggregated.SharedObject = SharedObject;
+    aggregated.bscs = bscs;
+    aggregated.stats = stats;
+    aggregated.terminateReasons = terminateReasons;
+    return aggregated;
+}
+
+type ModuleNamespace = Record<string, any>;
+
+function mergeModuleExports(target: Record<string, any>, source: ModuleNamespace | undefined) {
+    if (!source) {
+        return target;
+    }
+    Object.keys(source).forEach((key) => {
+        if (key === "default" || key === "__esModule") {
+            return;
+        }
+        target[key] = source[key];
+    });
+    return target;
 }
 /// #else
 /**
@@ -152,6 +271,8 @@ export async function getReplInterpreter(payload: Partial<AppPayload>) {
         ext: payload.extZip ? undefined : payload.ext,
     });
     replInterpreter.onError(logError);
+    const extensions = instantiateExtensions();
+    attachExtensions(replInterpreter, extensions);
     return replInterpreter;
 }
 
@@ -477,15 +598,13 @@ export async function executeFile(payload: AppPayload, customOptions?: Partial<E
         postMessage(`error,Error mounting File System: ${err.message}`);
         return { exitReason: AppExitReason.CRASHED };
     }
-    // Look for SceneGraph components
-    const components = await getComponentDefinitionMap(BrsDevice.fileSystem, []);
+    const extensions = instantiateExtensions();
     // Create the interpreter
-    let interpreter: Interpreter;
-    if (components.size > 0) {
-        interpreter = await getInterpreterWithSubEnvs(components, payload.manifest, options);
-        BrsTypes.sgRoot.setNodeDefMap(components);
-    } else {
-        interpreter = new Interpreter(options);
+    const interpreter = new Interpreter(options);
+    if (extensions.length > 0) {
+        // Attach extensions
+        attachExtensions(interpreter, extensions);
+        await runBeforeExecuteHooks(interpreter, payload);
     }
     // Process Payload Content
     const sourceResult = setupPayload(interpreter, payload);
@@ -535,17 +654,13 @@ export async function executeTask(payload: TaskPayload, customOptions?: Partial<
         postMessage(`error,Error mounting File System: ${err.message}`);
         return;
     }
-    // Look for SceneGraph components
-    const components = await getComponentDefinitionMap(BrsDevice.fileSystem, []);
+    const extensions = instantiateExtensions();
     // Create the interpreter
-    let interpreter: Interpreter;
-    if (components.size > 0) {
-        interpreter = await getInterpreterWithSubEnvs(components, payload.manifest, options);
-        BrsTypes.sgRoot.setNodeDefMap(components);
-    } else {
-        postMessage(`warning,No SceneGraph components found!`);
-        return;
-    }
+    let interpreter = new Interpreter(options);
+    attachExtensions(interpreter, extensions);
+
+    await runBeforeExecuteHooks(interpreter, payload);
+
     interpreter.setManifest(payload.manifest);
     if (payload.device.registryBuffer) {
         BrsDevice.setRegistry(payload.device.registryBuffer);
@@ -555,7 +670,11 @@ export async function executeTask(payload: TaskPayload, customOptions?: Partial<
     setupTranslations(interpreter);
     console.debug("Calling Task in new Worker: ", payload.taskData.name, payload.taskData.m.top.functionname);
     try {
-        interpreter.execTask(payload);
+        interpreter.extensions.forEach((ext) => {
+            if (ext.execTask) {
+                ext.execTask(interpreter, payload);
+            }
+        });
         if (BrsDevice.isDevMode) {
             postMessage(`debug,Task ${payload.taskData.name} is done.`);
         }
@@ -566,6 +685,21 @@ export async function executeTask(payload: TaskPayload, customOptions?: Partial<
             } else {
                 interpreter.options.stderr.write(err.message);
             }
+        }
+    }
+}
+
+function attachExtensions(interpreter: Interpreter, extensions: BrsExtension[]) {
+    extensions.forEach((ext) => {
+        interpreter.extensions.set(ext.name, ext);
+        ext.onInit?.(interpreter);
+    });
+}
+
+async function runBeforeExecuteHooks(interpreter: Interpreter, payload: AppPayload | TaskPayload) {
+    for (const ext of interpreter.extensions.values()) {
+        if (ext.onBeforeExecute) {
+            await ext.onBeforeExecute(interpreter, payload);
         }
     }
 }
@@ -751,17 +885,12 @@ async function runSource(
             return { exitReason: AppExitReason.PACKAGED, cipherText: cipherText, iv: iv };
         }
         // Update Source Map with the SceneGraph components (if exists)
-        if (BrsTypes.sgRoot.nodeDefMap?.size) {
-            const components = BrsTypes.sgRoot.nodeDefMap;
-            for (const component of components.values()) {
-                for (const script of component.scripts) {
-                    const sourcePath = script.uri ?? script.xmlPath;
-                    if (sourcePath && script.content?.length) {
-                        sourceMap.set(sourcePath, script.content);
-                    }
-                }
+        interpreter.extensions.forEach((ext) => {
+            if (ext.updateSourceMap) {
+                ext.updateSourceMap(sourceMap);
             }
-        }
+        });
+
         // Execute the BrightScript code
         exitReason = await executeApp(interpreter, parseResult.statements, payload, sourceMap);
     }

@@ -1,6 +1,7 @@
 const brs = require("../../packages/node/bin/brs.node");
-const { brsValueOf, fromSGNode, toSGNode } = brs.types;
-const { ContentNode, BrsString, Node } = brs.types;
+const { BrsString } = brs.types;
+const sg = require("../../packages/node/bin/brs-sg.node");
+const { ContentNode, Node, brsValueOf, fromSGNode, toSGNode } = sg;
 
 describe("Circular Reference Handling", () => {
     describe("SceneGraph Nodes", () => {

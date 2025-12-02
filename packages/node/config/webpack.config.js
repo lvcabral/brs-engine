@@ -20,6 +20,27 @@ module.exports = (env) => {
         BROWSER: false,
         "ifdef-verbose": false,
     };
+    const scenegraphAlias = path.resolve(__dirname, "../../scenegraph", "src/index.ts");
+    const sharedResolve = {
+        modules: [path.resolve("../../node_modules"), path.resolve("../../src")],
+        extensions: [".tsx", ".ts", ".js"],
+        alias: {
+            "brs-scenegraph$": scenegraphAlias,
+        },
+    };
+    const tsLoaders = (configFile) => [
+        {
+            loader: "ts-loader",
+            options: {
+                configFile: path.resolve(__dirname, configFile),
+            },
+        },
+        {
+            loader: "ifdef-loader",
+            options: ifdef_opts,
+        },
+    ];
+
     return [
         {
             name: "core",
@@ -31,16 +52,7 @@ module.exports = (env) => {
                 rules: [
                     {
                         test: /\.tsx?$/,
-                        loader: "ts-loader",
-                        options: {
-                            configFile: path.resolve(__dirname, "./tsconfig.json"),
-                        },
-                        exclude: /node_modules/,
-                    },
-                    {
-                        test: /\.tsx?$/,
-                        loader: "ifdef-loader",
-                        options: ifdef_opts,
+                        use: tsLoaders("./tsconfig.json"),
                         exclude: /node_modules/,
                     },
                     {
@@ -49,10 +61,7 @@ module.exports = (env) => {
                     },
                 ],
             },
-            resolve: {
-                modules: [path.resolve("../../node_modules"), path.resolve("../../src")],
-                extensions: [".tsx", ".ts", ".js"],
-            },
+            resolve: sharedResolve,
             plugins: [
                 new webpack.DefinePlugin({
                     "process.env.CREATION_TIME": JSON.stringify(new Date().toISOString()),
@@ -81,16 +90,7 @@ module.exports = (env) => {
                 rules: [
                     {
                         test: /\.tsx?$/,
-                        loader: "ts-loader",
-                        options: {
-                            configFile: path.resolve(__dirname, "./tsconfig.cli.json"),
-                        },
-                        exclude: /node_modules/,
-                    },
-                    {
-                        test: /\.tsx?$/,
-                        loader: "ifdef-loader",
-                        options: ifdef_opts,
+                        use: tsLoaders("./tsconfig.cli.json"),
                         exclude: /node_modules/,
                     },
                     {
@@ -103,14 +103,24 @@ module.exports = (env) => {
                     },
                 ],
             },
-            resolve: {
-                modules: [path.resolve("../../node_modules"), path.resolve("../../src")],
-                extensions: [".tsx", ".ts", ".js"],
-            },
-            plugins: [new ShebangPlugin()],
+            resolve: sharedResolve,
+            plugins: [
+                new ShebangPlugin(),
+                new CopyPlugin({
+                    patterns: [
+                        {
+                            from: path.resolve(__dirname, "../../scenegraph/lib/brs-sg.node.js"),
+                            to: path.resolve(__dirname, "../bin/brs-sg.node.js"),
+                            noErrorOnMissing: true,
+                        },
+                    ],
+                }),
+            ],
             externals: {
                 "./brs.node.js": "commonjs ./brs.node.js",
+                "./brs-sg.node.js": "commonjs ./brs-sg.node.js",
                 canvas: "commonjs canvas",
+                "brs-engine": "commonjs ./brs.node.js",
             },
             output: {
                 filename: libName + ".cli.js",
@@ -127,22 +137,13 @@ module.exports = (env) => {
                 rules: [
                     {
                         test: /\.tsx?$/,
-                        loader: "ts-loader",
-                        options: {
-                            configFile: path.resolve(__dirname, "./tsconfig.cli.json"),
-                        },
-                        exclude: /node_modules/,
-                    },
-                    {
-                        test: /\.tsx?$/,
-                        loader: "ifdef-loader",
-                        options: ifdef_opts,
+                        use: tsLoaders("./tsconfig.cli.json"),
                         exclude: /node_modules/,
                     },
                 ],
             },
             resolve: {
-                modules: [path.resolve("../../node_modules"), path.resolve("../../src")],
+                ...sharedResolve,
                 extensions: [".tsx", ".ts", ".js", ".mjs"],
             },
             externals: {

@@ -1,17 +1,13 @@
 const brs = require("../../../packages/node/bin/brs.node");
-const { Lexeme } = brs.lexer;
-const { BrsString, Int32 } = brs.types;
-
-const { token, identifier, EOF } = require("../ParserTests");
 
 describe("block statements", () => {
     it("includes surrounding whitespace for function body", () => {
-        const { tokens } = brs.lexer.Lexer.scan(`
+        const { tokens } = brs.Lexer.scan(`
             sub Main()
                 age = 1
             end sub
         `);
-        const { statements, errors } = brs.parser.Parser.parse(tokens);
+        const { statements, errors } = brs.Parser.parse(tokens);
         expect(errors.length).toEqual(0);
 
         let blockLocation = statements[0].func.body.location;
@@ -26,7 +22,7 @@ describe("block statements", () => {
     });
 
     it("includes surrounding whitespace for if-elseif-else statements", () => {
-        const { tokens } = brs.lexer.Lexer.scan(`
+        const { tokens } = brs.Lexer.scan(`
             sub Main()
                 if true then
                     print "true"
@@ -37,7 +33,7 @@ describe("block statements", () => {
                 end if
             end sub
         `);
-        const { statements, errors } = brs.parser.Parser.parse(tokens);
+        const { statements, errors } = brs.Parser.parse(tokens);
         expect(errors.length).toEqual(0);
 
         const ifStatement = statements[0].func.body.statements[0];
@@ -67,14 +63,14 @@ describe("block statements", () => {
     });
 
     it("includes surrounding whitespace for a for-loop body", () => {
-        const { tokens } = brs.lexer.Lexer.scan(`
+        const { tokens } = brs.Lexer.scan(`
             sub Main()
                 For i = 0 To 10 Step 1
                     print i
                 End For
             end sub
         `);
-        const { statements, errors } = brs.parser.Parser.parse(tokens);
+        const { statements, errors } = brs.Parser.parse(tokens);
         expect(errors.length).toEqual(0);
 
         let loopBlock = statements[0].func.body.statements[0].body;

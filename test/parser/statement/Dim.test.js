@@ -1,11 +1,10 @@
 const brs = require("../../../packages/node/bin/brs.node");
 const { token, identifier, EOF } = require("../ParserTests");
-const { Lexeme } = brs.lexer;
-const { Expr, Stmt } = brs.parser;
+const { Lexeme } = brs;
 
 describe("parser dim statements", () => {
     it("parses one-dimension", () => {
-        let { statements, errors } = brs.parser.Parser.parse([
+        let { statements, errors } = brs.Parser.parse([
             token(Lexeme.Dim, "dim"),
             identifier("foo"),
             token(Lexeme.LeftSquare, "["),
@@ -17,7 +16,7 @@ describe("parser dim statements", () => {
     });
 
     it("errors when no dimensions provided", () => {
-        let { statements, errors } = brs.parser.Parser.parse([
+        let { statements, errors } = brs.Parser.parse([
             token(Lexeme.Dim, "dim"),
             identifier("foo"),
             token(Lexeme.LeftSquare, "["),

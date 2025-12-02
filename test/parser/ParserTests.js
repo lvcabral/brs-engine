@@ -1,5 +1,5 @@
 const brs = require("../../packages/node/bin/brs.node");
-const { Lexeme } = brs.lexer;
+const { Lexeme } = brs;
 
 /* A set of utilities to be used while writing tests for the BRS parser. */
 
@@ -33,7 +33,7 @@ exports.token = function (kind, text, literal, locationNum = -9) {
     return {
         kind: kind,
         text: text,
-        isReserved: brs.lexer.ReservedWords.has((text || "").toLowerCase()),
+        isReserved: brs.ReservedWords.has((text || "").toLowerCase()),
         literal: literal,
         location: exports.generateLocation(locationNum),
     };

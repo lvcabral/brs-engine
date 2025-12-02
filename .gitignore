@@ -7,6 +7,8 @@ packages/browser/assets/
 packages/node/bin/
 packages/node/types/
 packages/node/assets/
+packages/scenegraph/lib/
+packages/scenegraph/types/
 node_modules*/
 out/
 *.pkg

@@ -1,15 +1,15 @@
 const brs = require("../../../packages/node/bin/brs.node");
-const { Lexeme } = brs.lexer;
+const { Lexeme } = brs;
 
-const { token, identifier, EOF } = require("../ParserTests");
+const { token, EOF } = require("../ParserTests");
 
 describe("`end` statement", () => {
     beforeEach(() => {
-        parser = new brs.parser.Parser();
+        parser = new brs.Parser();
     });
 
     it("does not produce errors", () => {
-        let { tokens } = brs.lexer.Lexer.scan(`
+        let { tokens } = brs.Lexer.scan(`
                 sub Main()
                     end
                 end sub
@@ -20,13 +20,13 @@ describe("`end` statement", () => {
     });
 
     it("is valid as a statement", () => {
-        let { statements, errors } = brs.parser.Parser.parse([token(Lexeme.End, "end"), EOF]);
+        let { statements, errors } = brs.Parser.parse([token(Lexeme.End, "end"), EOF]);
         expect(errors[0]).toBeUndefined();
         expect(statements).toMatchSnapshot();
     });
 
     it("can be used as a property name on objects", () => {
-        let { tokens } = brs.lexer.Lexer.scan(`
+        let { tokens } = brs.Lexer.scan(`
                 sub Main()
                     person = {
                         end: true
@@ -40,7 +40,7 @@ describe("`end` statement", () => {
 
     it("is not allowed as a standalone variable", () => {
         //this test depends on token locations, so use the lexer to generate those locations.
-        let { tokens } = brs.lexer.Lexer.scan(`
+        let { tokens } = brs.Lexer.scan(`
                 sub Main()
                     end = true
                 end sub

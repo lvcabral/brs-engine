@@ -28,10 +28,11 @@
   ],
   "main": "lib/brs.api.js",
   "browser": "lib/brs.api.js",
-  "typings": "types/src/api/index.d.ts",
+  "typings": "types/src/index.d.ts",
   "files": [
     "assets/",
     "lib/brs.worker.js",
+    "lib/brs-sg.js",
     "lib/*.LICENSE.txt",
     "types/src/api/",
     "CHANGELOG.md"

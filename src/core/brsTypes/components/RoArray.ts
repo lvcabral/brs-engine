@@ -5,7 +5,7 @@ import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { RoAssociativeArray } from "./RoAssociativeArray";
 import { RoFunction } from "./RoFunction";
-import { RoSGNode } from "./RoSGNode";
+import { isSceneGraphNode } from "../../extensions";
 import { BrsArray, IfArray, IfArrayGet, IfArraySet } from "../interfaces/IfArray";
 import { IfEnum } from "../interfaces/IfEnum";
 import { BrsDevice } from "../../device/BrsDevice";
@@ -130,7 +130,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsArray {
     deepCopy(): BrsType {
         const copiedElements: BrsType[] = [];
         for (const value of this.elements) {
-            if (value instanceof RoArray || value instanceof RoAssociativeArray || value instanceof RoSGNode) {
+            if (value instanceof RoArray || value instanceof RoAssociativeArray || isSceneGraphNode(value)) {
                 copiedElements.push(value.deepCopy());
             } else if (isBoxable(value) && !(value instanceof Callable)) {
                 copiedElements.push(value);

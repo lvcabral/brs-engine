@@ -68,6 +68,7 @@ function runTask(taskData: TaskData, currentPayload: AppPayload) {
         device: currentPayload.device,
         manifest: currentPayload.manifest,
         taskData: taskData,
+        extensions: currentPayload.extensions,
         pkgZip: currentPayload.pkgZip,
         extZip: currentPayload.extZip,
     };

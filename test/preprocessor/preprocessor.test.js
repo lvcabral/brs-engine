@@ -1,6 +1,5 @@
 const brs = require("../../packages/node/bin/brs.node");
-const { Preprocessor } = brs;
-const { Lexeme } = brs.lexer;
+const { Preprocessor, Lexeme } = brs;
 const { Chunk } = brs.preprocessor;
 const { BrsString, BrsBoolean } = brs.types;
 

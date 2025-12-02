@@ -36,12 +36,9 @@ import {
     Signature,
     BrsInterface,
     toAssociativeArray,
-    RoSGNode,
-    Task,
-    initializeTask,
-    sgRoot,
     isCollection,
 } from "../brsTypes";
+import { BrsExtension, isSceneGraphNode } from "../extensions";
 import { tryCoerce } from "../brsTypes/Coercion";
 import { Lexeme, GlobalFunctions } from "../lexer";
 import { isToken, Location } from "../lexer/Token";
@@ -56,16 +53,7 @@ import Long from "long";
 import { Scope, Environment, NotFound } from "./Environment";
 import { toCallable } from "./BrsFunction";
 import { runDebugger } from "./MicroDebugger";
-import {
-    DataType,
-    DebugCommand,
-    DefaultSounds,
-    numberToHex,
-    parseTextFile,
-    TaskPayload,
-    TaskState,
-    ThreadUpdate,
-} from "../common";
+import { DataType, DebugCommand, DefaultSounds, numberToHex, parseTextFile } from "../common";
 /// #if !BROWSER
 import * as v8 from "node:v8";
 /// #endif
@@ -127,6 +115,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     readonly options: ExecutionOptions = defaultExecutionOptions;
     readonly manifest: Map<string, string> = new Map<string, string>();
     readonly translations: Map<string, string> = new Map<string, string>();
+    readonly extensions: Map<string, BrsExtension> = new Map<string, BrsExtension>();
 
     /** Allows consumers to observe errors as they're detected. */
     readonly events = new EventEmitter();
@@ -344,61 +333,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         }
 
         return results;
-    }
-
-    /**
-     * Function to run the Task function on a separate Worker thread.
-     * @param payload the Task payload data
-     */
-    execTask(payload: TaskPayload) {
-        const taskData = payload.taskData;
-        const taskNode = initializeTask(this, taskData);
-        const functionName = taskData.m?.top?.functionname;
-        if (!(taskNode instanceof Task) || !functionName) {
-            return;
-        }
-        if (taskData.buffer) {
-            taskNode.setTaskBuffer(taskData.buffer);
-        }
-        const typeDef = sgRoot.nodeDefMap.get(taskNode.nodeSubtype.toLowerCase());
-        const taskEnv = typeDef?.environment;
-        if (taskEnv) {
-            try {
-                const mPointer = taskNode.m;
-                this.inSubEnv((subInterpreter) => {
-                    const funcToCall = subInterpreter.getCallableFunction(functionName);
-                    subInterpreter.environment.hostNode = taskNode;
-                    subInterpreter.environment.setM(mPointer);
-                    subInterpreter.environment.setRootM(mPointer);
-                    if (funcToCall instanceof Callable) {
-                        console.debug("[Worker] Task function called: ", taskData.name, functionName);
-                        funcToCall.call(subInterpreter);
-                        console.debug("[Worker] Task function finished: ", taskData.name, functionName);
-                        const update: ThreadUpdate = {
-                            id: taskNode.id,
-                            type: "task",
-                            field: "control",
-                            value: "stop",
-                        };
-                        postMessage(update);
-                        taskData.state = TaskState.STOP;
-                        postMessage(taskData);
-                    } else {
-                        this.addError(new BrsError(`Cannot found the Task function '${functionName}'`, this.location));
-                    }
-                    return BrsInvalid.Instance;
-                }, taskEnv);
-            } catch (err: any) {
-                if (err instanceof Stmt.ReturnValue) {
-                    // ignore return value from Task, closing the Task
-                } else if (err instanceof BrsError) {
-                    const backTrace = this.formatBacktrace(err.location, true, err.backTrace);
-                    throw new Error(`${err.format()}\nBackTrace:\n${backTrace}`, { cause: err });
-                } else {
-                    throw err;
-                }
-            }
-        }
     }
 
     /**
@@ -1421,7 +1355,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             this.addError(new RuntimeError(RuntimeErrorDetail.UndimmedArray, expression.location));
         }
 
-        if (source instanceof RoAssociativeArray || source instanceof RoXMLElement || source instanceof RoSGNode) {
+        if (source instanceof RoAssociativeArray || source instanceof RoXMLElement || isSceneGraphNode(source)) {
             if (expression.indexes.length !== 1) {
                 this.addError(
                     new RuntimeError(RuntimeErrorDetail.WrongNumberOfParams, expression.closingSquare.location)
@@ -1692,7 +1626,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         }
 
         try {
-            if (source instanceof RoSGNode) {
+            if (isSceneGraphNode(source)) {
                 source.location = this.formatLocation(statement.name.location);
             }
             source.set(new BrsString(statement.name.text), value);
@@ -1711,7 +1645,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             this.addError(new RuntimeError(RuntimeErrorDetail.BadLHS, statement.obj.location));
         }
 
-        if (source instanceof RoAssociativeArray || source instanceof RoXMLElement || source instanceof RoSGNode) {
+        if (source instanceof RoAssociativeArray || source instanceof RoXMLElement || isSceneGraphNode(source)) {
             if (statement.indexes.length !== 1) {
                 this.addError(
                     new RuntimeError(RuntimeErrorDetail.WrongNumberOfParams, statement.closingSquare.location)
@@ -1730,7 +1664,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 );
             }
             try {
-                if (source instanceof RoSGNode) {
+                if (isSceneGraphNode(source)) {
                     source.location = this.formatLocation(statement.closingSquare.location);
                 }
                 source.set(index, value, true);
@@ -1909,9 +1843,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         if (!(this.lastStmt instanceof Stmt.Stop)) {
             this.checkDebugger(statement);
         }
-        if (sgRoot.inTaskThread()) {
-            sgRoot.tasks[0]?.updateTask();
-        }
+        this.extensions.forEach((ext) => ext.tick?.(this));
         this.location = statement.location;
         this.lastStmt = statement;
         return statement.accept<BrsType>(this);

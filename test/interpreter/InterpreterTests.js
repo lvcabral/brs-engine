@@ -1,5 +1,5 @@
 const brs = require("../../packages/node/bin/brs.node");
-const { Expr, Stmt } = brs.parser;
+const { Expr, Stmt } = brs;
 const { token, fakeLocation } = require("../parser/ParserTests");
 /**
  * Creates an expression AST that performs binary operation `operator` on left` and `right`.

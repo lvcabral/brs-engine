@@ -1,0 +1,37 @@
+{
+    "extends": "../../../tsconfig.json",
+    "compilerOptions": {
+        "outDir": "../types",
+        "rootDir": "../../../src/extensions/scenegraph",
+        "declaration": true,
+        "declarationMap": true,
+        "emitDeclarationOnly": true,
+        "module": "ESNext",
+        "target": "ES2022",
+        "lib": [
+            "ES2024",
+            "DOM",
+            "DOM.Iterable",
+            "WebWorker"
+        ],
+        "moduleResolution": "bundler",
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "paths": {
+            "brs-engine": [
+                "../../src/index"
+            ],
+            "brs-engine/*": [
+                "../../src/*"
+            ]
+        }
+    },
+    "include": [
+        "../../../src/extensions/scenegraph/**/*"
+    ],
+    "exclude": [
+        "node_modules",
+        "../lib",
+        "../types"
+    ]
+}

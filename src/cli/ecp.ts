@@ -5,7 +5,7 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { enableSendKeys, initControlModule, sendInput, sendKey, subscribeControl } from "../api/control";
+import { enableSendKeys, initControlModule, sendInput, sendKey, subscribeControl } from "./control";
 import { DataType, DebugCommand, DeviceInfo, getRokuOSVersion } from "../core/common";
 import { isMainThread, parentPort, workerData } from "node:worker_threads";
 import { Server as SSDP } from "@lvcabral/node-ssdp";

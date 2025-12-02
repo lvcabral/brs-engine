@@ -1,7 +1,8 @@
 import { Identifier } from "../lexer";
 import { Location } from "../lexer/Token";
-import { BrsComponent, BrsType, Int32, RoAssociativeArray, RoSGNode, ValueKind } from "../brsTypes";
+import { BrsComponent, BrsType, Int32, RoAssociativeArray, ValueKind } from "../brsTypes";
 import { TypeMismatch } from "../error/TypeMismatch";
+import type { ISGNode } from "../extensions";
 
 /** The logical region from a particular variable or function that defines where it may be accessed from. */
 export enum Scope {
@@ -53,7 +54,7 @@ export class Environment {
     private rootM: RoAssociativeArray;
 
     /** The node in which field-change observers are registered. */
-    public hostNode: RoSGNode | undefined;
+    public hostNode: ISGNode | undefined;
 
     /** Properties to support GOTO statement */
     gotoLabel: string = "";

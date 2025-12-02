@@ -1,6 +1,5 @@
 const brs = require("../../../packages/node/bin/brs.node");
-const { Lexeme } = brs.lexer;
-const { Expr, Stmt } = brs.parser;
+const { Lexeme, Expr, Stmt } = brs;
 
 const { token, identifier, EOF } = require("../ParserTests");
 
@@ -8,7 +7,7 @@ describe("parser foreach loops", () => {
     let parser;
 
     beforeEach(() => {
-        parser = new brs.parser.Parser();
+        parser = new brs.Parser();
     });
 
     it("requires a name and target", () => {

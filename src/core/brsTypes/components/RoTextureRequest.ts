@@ -5,11 +5,11 @@ import {
     StdlibArgument,
     BrsBoolean,
     BrsType,
-    BrsComponent,
     BrsValue,
     Int32,
     Uninitialized,
 } from "..";
+import { BrsComponent } from "./BrsComponent";
 import { DefaultCertificatesFile } from "../../common";
 import { Interpreter } from "../../interpreter";
 import { BrsHttpAgent, IfHttpAgent } from "../interfaces/IfHttpAgent";

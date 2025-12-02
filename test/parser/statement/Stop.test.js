@@ -1,11 +1,10 @@
 const brs = require("../../../packages/node/bin/brs.node");
-const { Lexeme } = brs.lexer;
-
-const { token, identifier, EOF } = require("../ParserTests");
+const { Lexeme } = brs;
+const { token, EOF } = require("../ParserTests");
 
 describe("stop statement", () => {
     it("cannot be used as a local variable", () => {
-        let { statements, errors } = brs.parser.Parser.parse([
+        let { statements, errors } = brs.Parser.parse([
             token(Lexeme.Stop, "stop"),
             token(Lexeme.Equal, "="),
             token(Lexeme.True, "true"),
@@ -20,13 +19,13 @@ describe("stop statement", () => {
     });
 
     it("is valid as a statement", () => {
-        let { statements, errors } = brs.parser.Parser.parse([token(Lexeme.Stop, "stop"), EOF]);
+        let { statements, errors } = brs.Parser.parse([token(Lexeme.Stop, "stop"), EOF]);
         expect(errors[0]).toBeUndefined();
         expect(statements).toMatchSnapshot();
     });
 
     it("can be used as an object property", () => {
-        let { tokens } = brs.lexer.Lexer.scan(`
+        let { tokens } = brs.Lexer.scan(`
             sub Main()
                 theObject = {
                     stop: false
@@ -34,7 +33,7 @@ describe("stop statement", () => {
                 theObject.stop = true
             end sub
         `);
-        let { statements, errors } = brs.parser.Parser.parse(tokens);
+        let { statements, errors } = brs.Parser.parse(tokens);
         expect(errors.length).toEqual(0);
         expect(statements).toMatchSnapshot();
     });

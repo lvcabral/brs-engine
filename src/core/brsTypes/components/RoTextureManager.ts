@@ -4,7 +4,6 @@ import {
     StdlibArgument,
     BrsBoolean,
     BrsType,
-    BrsComponent,
     BrsValue,
     Uninitialized,
     RoMessagePort,
@@ -15,6 +14,7 @@ import {
     BrsInvalid,
     toAssociativeArray,
 } from "..";
+import { BrsComponent } from "./BrsComponent";
 import { Interpreter } from "../../interpreter";
 import { validUri } from "../../device/FileSystem";
 import { download } from "../../interpreter/Network";

@@ -21,6 +21,7 @@ import {
     AppExitReason,
     DeviceInfo,
     platform,
+    ExtensionInfo,
 } from "../core/common";
 import models from "../core/common/models.csv";
 import packageInfo from "../../packages/browser/package.json";
@@ -37,6 +38,7 @@ deviceData.serialNumber = getSerialNumber();
 const inputParams: Map<string, string> = new Map();
 export const source: string[] = [];
 export const paths: PkgFilePath[] = [];
+export const extensions: ExtensionInfo[] = [];
 export const manifestMap: Map<string, string> = new Map();
 export const currentApp = createAppData();
 
@@ -86,6 +88,7 @@ export function loadAppZip(fileName: string, file: ArrayBuffer, callback: Functi
     srcId = 0;
     source.length = 0;
     paths.length = 0;
+    extensions.length = 0;
 
     if (deviceData.appList && deviceData.appList.length === 0) {
         deviceData.appList.push({
@@ -106,7 +109,9 @@ function processFile(relativePath: string, fileData: Uint8Array) {
     const lcasePath: string = relativePath.toLowerCase();
     const ext = lcasePath.split(".").pop() ?? "";
     if (relativePath.endsWith("/")) {
-        // ignore directory
+        if (lcasePath.startsWith("components/")) {
+            extensions.push({ moduleId: "brs-scenegraph", modulePath: "./brs-sg.js" });
+        }
     } else if (lcasePath.startsWith("source") && ext === "brs") {
         paths.push({ id: srcId, url: relativePath, type: "source" });
         source.push(strFromU8(fileData));
@@ -217,6 +222,7 @@ export function createPayload(launchTime: number): AppPayload {
         deepLink: inputParams,
         paths: paths,
         source: source,
+        extensions: extensions,
         pkgZip: pkgZip,
         extZip: extZip,
         password: currentApp.password,

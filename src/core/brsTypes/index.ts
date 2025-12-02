@@ -1,4 +1,5 @@
 import { ValueKind, BrsInvalid, BrsBoolean, BrsString, Uninitialized, BrsValue, Comparable } from "./BrsType";
+import { isUnboxable } from "./Boxing";
 import { RoArray } from "./components/RoArray";
 import { RoAssociativeArray } from "./components/RoAssociativeArray";
 import { RoList } from "./components/RoList";
@@ -7,7 +8,7 @@ import { Int32 } from "./Int32";
 import { Int64 } from "./Int64";
 import { Float } from "./Float";
 import { Double } from "./Double";
-import { Callable, StdlibArgument } from "./Callable";
+import { Callable } from "./Callable";
 import { BrsCollection, BrsComponent, BrsIterable } from "./components/BrsComponent";
 import { RoString } from "./components/RoString";
 import { BrsInterface } from "./interfaces/BrsInterface";
@@ -19,14 +20,7 @@ import { RoLongInteger } from "./components/RoLongInteger";
 import { RoBoolean } from "./components/RoBoolean";
 import { RoURLEvent } from "./events/RoURLEvent";
 import { RoUniversalControlEvent } from "./events/RoUniversalControlEvent";
-import { isUnboxable } from "./Boxing";
-import { Node } from "./nodes/Node";
-import { Task } from "./nodes/Task";
-import { getNodeType, SGNodeFactory } from "../scenegraph/SGNodeFactory";
-import { BrsObjects } from "./components/BrsObjects";
-import { ContentNode } from "./nodes/ContentNode";
-import { RoSGNode } from "./components/RoSGNode";
-
+import { ISGNode } from "../extensions";
 // BrightScript Type exports
 export * from "./BrsType";
 export * from "./Int32";
@@ -37,6 +31,14 @@ export * from "./Boxing";
 export * from "./Callable";
 export * from "./Coercion";
 export * from "./interfaces/BrsInterface";
+export * from "./interfaces/IfArray";
+export * from "./interfaces/IfDraw2D";
+export * from "./interfaces/IfEnum";
+export * from "./interfaces/IfHttpAgent";
+export * from "./interfaces/IfList";
+export * from "./interfaces/IfMessagePort";
+export * from "./interfaces/IfSocket";
+export * from "./interfaces/IfToStr";
 export * from "./components/BrsComponent";
 export * from "./components/RoArray";
 export * from "./components/RoByteArray";
@@ -101,55 +103,6 @@ export * from "./events/RoSystemLogEvent";
 export * from "./events/RoDeviceInfoEvent";
 export * from "./events/RoChannelStoreEvent";
 export * from "./events/RoUniversalControlEvent";
-
-// SceneGraph Type exports
-export * from "../scenegraph/SGNodeFactory";
-export * from "./SGRoot";
-export * from "./components/RoSGNode";
-export * from "./components/RoSGScreen";
-export * from "./events/RoSGNodeEvent";
-export * from "./events/RoSGScreenEvent";
-export * from "./nodes/Node";
-export * from "./nodes/Group";
-export * from "./nodes/Scene";
-export * from "./nodes/Keyboard";
-export * from "./nodes/MiniKeyboard";
-export * from "./nodes/TextEditBox";
-export * from "./nodes/LayoutGroup";
-export * from "./nodes/Panel";
-export * from "./nodes/Rectangle";
-export * from "./nodes/Label";
-export * from "./nodes/ScrollingLabel";
-export * from "./nodes/Font";
-export * from "./nodes/Poster";
-export * from "./nodes/Dialog";
-export * from "./nodes/KeyboardDialog";
-export * from "./nodes/ArrayGrid";
-export * from "./nodes/RowList";
-export * from "./nodes/ZoomRowList";
-export * from "./nodes/MarkupGrid";
-export * from "./nodes/MarkupList";
-export * from "./nodes/ContentNode";
-export * from "./nodes/Overhang";
-export * from "./nodes/Task";
-export * from "./nodes/Timer";
-export * from "./nodes/Audio";
-export * from "./nodes/SoundEffect";
-export * from "./nodes/Video";
-export * from "./nodes/LabelList";
-export * from "./nodes/CheckList";
-export * from "./nodes/RadioButtonList";
-export * from "./nodes/Button";
-export * from "./nodes/ButtonGroup";
-export * from "./nodes/StandardDialog";
-export * from "./nodes/StandardProgressDialog";
-export * from "./nodes/StdDlgContentArea";
-export * from "./nodes/StdDlgTitleArea";
-export * from "./nodes/StdDlgProgressItem";
-export * from "./nodes/BusySpinner";
-export * from "./nodes/RSGPalette";
-export * from "./nodes/ChannelStore";
-export * from "./nodes/TrickPlayBar";
 
 /**
  * Determines whether or not the given value is a number.
@@ -344,7 +297,7 @@ export type BrsConvertible = boolean | number | string | BrsType | null | undefi
 export function toAssociativeArray(
     input: Map<string, any> | FlexObject,
     cs?: boolean,
-    nodeMap?: Map<string, Node>
+    nodeMap?: Map<string, ISGNode>
 ): RoAssociativeArray {
     const associativeArray = new RoAssociativeArray([], cs);
     if (input instanceof Map) {
@@ -372,7 +325,7 @@ export function toAssociativeArray(
  * @return {BrsType} The BrsType representation of `x`.
  * @throws {Error} If `x` cannot be represented as a BrsType.
  */
-export function brsValueOf(value: any, cs?: boolean, nodeMap?: Map<string, Node>): BrsType {
+export function brsValueOf(value: any, cs?: boolean, nodeMap?: Map<string, ISGNode>): BrsType {
     if (value === null || value === undefined) {
         return BrsInvalid.Instance;
     }
@@ -406,7 +359,7 @@ export function brsValueOf(value: any, cs?: boolean, nodeMap?: Map<string, Node>
  * @param {Map<string, Node>} nodeMap Optional map to track nodes by ID for resolving circular references.
  * @returns A BrsType with the converted object or Invalid if the object is not transferable.
  */
-function fromObject(obj: any, cs?: boolean, nodeMap?: Map<string, Node>): BrsType {
+function fromObject(obj: any, cs?: boolean, nodeMap?: Map<string, ISGNode>): BrsType {
     if (isBrsType(obj)) {
         return obj;
     } else if (obj === null) {
@@ -419,88 +372,8 @@ function fromObject(obj: any, cs?: boolean, nodeMap?: Map<string, Node>): BrsTyp
                 return brsValueOf(el, cs, nodeMap);
             })
         );
-    } else if (obj["_node_"] || obj["_circular_"]) {
-        // Handle both regular nodes and circular references
-        const nodeInfo = obj["_node_"] ? obj["_node_"].split(":") : obj["_circular_"].split(":");
-        if (nodeInfo.length === 2) {
-            return toSGNode(obj, nodeInfo[0], nodeInfo[1], nodeMap);
-        }
-        return BrsInvalid.Instance;
-    } else if (obj["_component_"]) {
-        const component = obj["_component_"];
-        const ctor = BrsObjects.get(component);
-        if (ctor) {
-            try {
-                return ctor();
-            } catch (err) {
-                return BrsInvalid.Instance;
-            }
-        }
-        return BrsInvalid.Instance;
-    } else if (obj["_interface_"]) {
-        return BrsInvalid.Instance;
-    } else if (obj["_callable_"]) {
-        return new Callable(obj["_callable_"], {
-            signature: {
-                args: [new StdlibArgument("arg", ValueKind.Dynamic, BrsInvalid.Instance)],
-                variadic: true,
-                returns: ValueKind.Void,
-            },
-            impl: (_: any, ..._arg: BrsType[]) => {
-                return Uninitialized.Instance;
-            },
-        });
     }
     return toAssociativeArray(obj, cs, nodeMap);
-}
-
-/**
- * Converts a JavaScript object to a RoSGNode, converting each field to the corresponding BrightScript type.
- * @param obj The JavaScript object to convert.
- * @param type The type of the node.
- * @param subtype The subtype of the node.
- * @param nodeMap Optional map to track nodes by ID for resolving circular references.
- * @returns A RoSGNode with the converted fields.
- */
-export function toSGNode(obj: any, type: string, subtype: string, nodeMap?: Map<string, Node>): Node {
-    // Initialize nodeMap on first call
-    nodeMap ??= new Map<string, Node>();
-
-    // Check if this is a circular reference
-    if (obj["_circular_"] && obj["_address_"]) {
-        const existingNode = nodeMap.get(obj["_address_"]);
-        if (existingNode) {
-            return existingNode;
-        }
-        // If we don't have the node yet, this might be a forward reference
-        // Return invalid for now (should not happen in valid serialized data)
-        return BrsInvalid.Instance as any;
-    }
-    const newNode = SGNodeFactory.createNode(type, subtype) ?? new Node([], subtype);
-    // Store the node in the map using the original address for circular reference resolution
-    // Use the address from serialized data if available, otherwise use the new node's address
-    newNode.address = obj["_address_"] || newNode.address;
-    newNode.owner = obj["_owner_"] ?? newNode.owner;
-    nodeMap.set(newNode.address, newNode);
-
-    for (const key in obj) {
-        if (key.startsWith("_") && key.endsWith("_") && key.length > 2) {
-            continue;
-        }
-        newNode.setValueSilent(key, brsValueOf(obj[key], undefined, nodeMap));
-    }
-    if (obj["_children_"]) {
-        for (const child of obj["_children_"]) {
-            if (child["_node_"] || child["_circular_"]) {
-                const childInfo = child["_node_"] ? child["_node_"].split(":") : child["_circular_"].split(":");
-                const childNode = toSGNode(child, childInfo[0], childInfo[1], nodeMap);
-                newNode.appendChildToParent(childNode);
-            } else if (child["_invalid_"] !== undefined) {
-                newNode.appendChildToParent(BrsInvalid.Instance);
-            }
-        }
-    }
-    return newNode;
 }
 
 /**
@@ -508,7 +381,7 @@ export function toSGNode(obj: any, type: string, subtype: string, nodeMap?: Map<
  * @param associativeArray The RoAssociativeArray to convert.
  * @returns A JavaScript object with the converted properties.
  */
-export function fromAssociativeArray(associativeArray: RoAssociativeArray, deep: boolean = true): FlexObject {
+function fromAssociativeArray(associativeArray: RoAssociativeArray, deep: boolean = true): FlexObject {
     const result: FlexObject = {};
 
     for (const [key, value] of associativeArray.elements) {
@@ -523,42 +396,12 @@ export function fromAssociativeArray(associativeArray: RoAssociativeArray, deep:
 }
 
 /**
- * Converts a roAssociativeArray to a ContentNode component
- * @param associativeArray The RoAssociativeArray to convert.
- * @returns A ContentNode object with the converted fields.
- */
-export function toContentNode(associativeArray: RoAssociativeArray): ContentNode {
-    const result: ContentNode = new ContentNode();
-
-    for (const [key, value] of associativeArray.elements) {
-        result.setValueSilent(key, value);
-    }
-
-    return result;
-}
-
-/**
- * Converts a ContentNode component into a roAssociativeArray
- * @param contentNode The content node to be converted
- * @returns An associative array with the converted data
- */
-export function fromContentNode(contentNode: ContentNode): RoAssociativeArray {
-    const result: RoAssociativeArray = new RoAssociativeArray([], true);
-
-    for (const [key, value] of contentNode.getNodeFields()) {
-        result.set(new BrsString(key), value.getValue(false));
-    }
-
-    return result;
-}
-
-/**
  * Converts a BrsType value to its representation as a JavaScript type.
  * @param {BrsType} value Some BrsType value.
  * @param {WeakSet<Node>} visitedNodes Optional set to track visited nodes for circular reference detection.
  * @return {any} The JavaScript representation of `x`.
  */
-export function jsValueOf(value: BrsType, deep: boolean = true, visitedNodes?: WeakSet<Node>): any {
+export function jsValueOf(value: BrsType, deep: boolean = true, visitedNodes?: WeakSet<ISGNode>): any {
     if (isUnboxable(value)) {
         value = value.unbox();
     }
@@ -583,8 +426,6 @@ export function jsValueOf(value: BrsType, deep: boolean = true, visitedNodes?: W
                 return value.elements.map((el) => jsValueOf(el, deep, visitedNodes));
             } else if (value instanceof RoByteArray) {
                 return value.elements;
-            } else if (value instanceof Node) {
-                return fromSGNode(value, deep, visitedNodes);
             } else if (value instanceof RoAssociativeArray) {
                 return fromAssociativeArray(value, deep);
             } else if (value instanceof BrsComponent) {
@@ -596,63 +437,6 @@ export function jsValueOf(value: BrsType, deep: boolean = true, visitedNodes?: W
         case ValueKind.Callable:
             return { _callable_: value.name };
     }
-}
-
-/**
- * Converts a RoSGNode to a JavaScript object, converting each field to the corresponding JavaScript type.
- * @param node The RoSGNode to convert.
- * @param deep Whether to recursively convert child nodes. Defaults to true.
- * @param visited Optional WeakSet to track visited nodes and prevent circular references.
- * @returns A JavaScript object with the converted fields.
- */
-export function fromSGNode(node: Node, deep: boolean = true, visited?: WeakSet<Node>): FlexObject {
-    visited ??= new WeakSet<Node>();
-    if (visited.has(node)) {
-        return {
-            _circular_: `${getNodeType(node.nodeSubtype)}:${node.nodeSubtype}`,
-            _address_: node.address,
-        };
-    }
-    visited.add(node);
-
-    const result: FlexObject = {};
-    const fields = node.getNodeFields();
-    const observed: string[] = [];
-
-    result["_node_"] = `${getNodeType(node.nodeSubtype)}:${node.nodeSubtype}`;
-    result["_address_"] = node.address;
-    result["_owner_"] = node.owner;
-
-    for (const [name, field] of fields) {
-        if (!field.isHidden()) {
-            let fieldValue = field.getValue(false);
-            if (isUnboxable(fieldValue)) {
-                fieldValue = fieldValue.unbox();
-            }
-            if (node instanceof Task && field.isPortObserved(node)) {
-                observed.push(name);
-            }
-            if (fieldValue instanceof Node) {
-                result[name] = fromSGNode(fieldValue, deep, visited);
-                continue;
-            }
-            result[name] = jsValueOf(fieldValue, deep, visited);
-        }
-    }
-    if (observed.length) {
-        result["_observed_"] = observed;
-    }
-    const children = node.getNodeChildren();
-    if (deep && children.length > 0) {
-        result["_children_"] = children.map((child: BrsType) => {
-            if (child instanceof Node) {
-                return fromSGNode(child, deep, visited);
-            }
-            return { _invalid_: null };
-        });
-    }
-
-    return result;
 }
 
 /**

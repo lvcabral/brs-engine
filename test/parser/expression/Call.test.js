@@ -1,5 +1,5 @@
 const brs = require("../../../packages/node/bin/brs.node");
-const { Lexeme } = brs.lexer;
+const { Lexeme } = brs;
 const { Int32, BrsString } = brs.types;
 
 const { token, identifier, EOF } = require("../ParserTests");
@@ -8,7 +8,7 @@ describe("parser call expressions", () => {
     let parser;
 
     beforeEach(() => {
-        parser = new brs.parser.Parser();
+        parser = new brs.Parser();
     });
 
     it("parses named function calls", () => {
@@ -26,7 +26,7 @@ describe("parser call expressions", () => {
     });
 
     it("does not invalidate the rest of the file on incomplete statement", () => {
-        const { tokens } = brs.lexer.Lexer.scan(`
+        const { tokens } = brs.Lexer.scan(`
             sub DoThingOne()
                 DoThin
             end sub
@@ -45,7 +45,7 @@ describe("parser call expressions", () => {
     });
 
     it("does not invalidate the next statement on a multi-statement line", () => {
-        const { tokens } = brs.lexer.Lexer.scan(`
+        const { tokens } = brs.Lexer.scan(`
             sub DoThingOne()
                 'missing closing paren
                 DoThin(:name = "bob"

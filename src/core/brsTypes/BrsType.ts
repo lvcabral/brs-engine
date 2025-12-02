@@ -1,23 +1,5 @@
-import {
-    BrsComponent,
-    BrsNumber,
-    BrsType,
-    brsValueOf,
-    Double,
-    Float,
-    Font,
-    Int32,
-    Int64,
-    isBrsNumber,
-    isStringComp,
-    RoArray,
-    RoBoolean,
-    RoInvalid,
-    RoString,
-} from ".";
+import { BrsComponent, BrsNumber, BrsType, isBrsNumber, isStringComp, RoBoolean, RoInvalid, RoString } from ".";
 import { Boxable } from "./Boxing";
-import { convertHexColor } from "../scenegraph/SGUtil";
-import Long from "long";
 
 /** Set of values supported in BrightScript. */
 export enum ValueKind {
@@ -109,136 +91,6 @@ export namespace ValueKind {
                 return undefined;
         }
     }
-}
-
-/**
- * Converts the data type of a field to the appropriate value kind.
- * @param type data type of field
- */
-export function getValueKindFromFieldType(type: string) {
-    switch (type.toLowerCase()) {
-        case "bool":
-        case "boolean":
-            return ValueKind.Boolean;
-        case "color":
-        case "int":
-        case "integer":
-            return ValueKind.Int32;
-        case "longinteger":
-            return ValueKind.Int64;
-        case "float":
-            return ValueKind.Float;
-        case "time":
-        case "double":
-            return ValueKind.Double;
-        case "uri":
-        case "str":
-        case "string":
-            return ValueKind.String;
-        case "function":
-            return ValueKind.Callable;
-        case "node":
-        case "font":
-        case "roarray":
-        case "array":
-        case "roassociativearray":
-        case "assocarray":
-        case "rect2d":
-        case "vector2d":
-        case "floatarray":
-        case "intarray":
-        case "boolarray":
-        case "stringarray":
-        case "vector2darray":
-        case "rect2darray":
-        case "colorarray":
-        case "timearray":
-        case "nodearray":
-            return ValueKind.Object;
-        default:
-            return ValueKind.Invalid;
-    }
-}
-
-/**
- *  Converts a specified BrightScript type in string into BrsType representation, with actual value
- *  Note: only supports native types so far.  Objects such as array/AA aren't handled at the moment.
- *  @param {string} type data type of field
- *  @param {string} value optional value specified as string
- *  @returns {BrsType} BrsType value representation of the type
- */
-export function getBrsValueFromFieldType(type: string, value?: string): BrsType {
-    let returnValue: BrsType;
-
-    switch (type.toLowerCase()) {
-        case "bool":
-        case "boolean":
-            returnValue = value ? BrsBoolean.from(value.toLowerCase() === "true") : BrsBoolean.False;
-            break;
-        case "int":
-        case "integer":
-            returnValue = value ? new Int32(Number.parseInt(value)) : new Int32(0);
-            break;
-        case "longinteger":
-            returnValue = value ? new Int64(Long.fromString(value)) : new Int64(0);
-            break;
-        case "float":
-            returnValue = value ? new Float(Number.parseFloat(value)) : new Float(0);
-            break;
-        case "time":
-        case "double":
-            returnValue = value ? new Double(Number.parseFloat(value)) : new Double(0);
-            break;
-        case "node":
-            returnValue = new RoInvalid();
-            break;
-        case "font":
-            returnValue = new Font();
-            if (
-                returnValue instanceof Font &&
-                value?.startsWith("font:") &&
-                !returnValue.setSystemFont(value.slice(5).toLowerCase())
-            ) {
-                returnValue = BrsInvalid.Instance;
-            }
-            break;
-        case "roarray":
-        case "array":
-        case "vector2d":
-        case "rect2d":
-        case "boolarray":
-        case "colorarray":
-        case "floatarray":
-        case "intarray":
-        case "stringarray":
-        case "timearray":
-        case "vector2darray":
-        case "rect2darray":
-        case "nodearray":
-            returnValue = parseArray(value ?? "");
-            break;
-        case "roassociativearray":
-        case "assocarray":
-        case "object":
-            returnValue = BrsInvalid.Instance;
-            break;
-        case "uri":
-        case "str":
-        case "string":
-            returnValue = new BrsString(value ?? "");
-            break;
-        case "color":
-            returnValue = new Int32(-1);
-            if (value?.length) {
-                returnValue = new Int32(convertHexColor(value));
-            }
-            break;
-        default:
-            returnValue = Uninitialized.Instance;
-            break;
-    }
-
-    return returnValue;
 }
 
 /** Check if the passed value implements the Comparable interface
@@ -489,25 +341,5 @@ export class Uninitialized implements BrsValue, Comparable {
 
     toString(parent?: BrsType) {
         return "<UNINITIALIZED>";
-    }
-}
-
-function parseArray(value: string): RoArray {
-    if (!value?.trim().startsWith("[") || !value?.trim().endsWith("]")) {
-        return new RoArray([]);
-    }
-    try {
-        // Use JSON.parse to handle nested arrays
-        const parsed = JSON.parse(value);
-        if (!Array.isArray(parsed)) {
-            return new RoArray([]);
-        }
-        return new RoArray(
-            parsed.map((v) => {
-                return brsValueOf(v);
-            })
-        );
-    } catch {
-        return new RoArray([]);
     }
 }

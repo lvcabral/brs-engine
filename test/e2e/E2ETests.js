@@ -3,6 +3,7 @@ const stream = require("stream");
 const fs = require("fs");
 const brs = require("../../packages/node/bin/brs.node");
 const { createPayloadFromFiles, createPayloadFromFileMap, executeFile } = brs;
+const { BrightScriptExtension } = require("../../packages/node/bin/brs-sg.node");
 
 brs.registerCallback(() => {}); // register a callback to avoid display errors
 
@@ -49,6 +50,7 @@ exports.execute = async function (filenames, options, deepLink) {
     if (deepLink) {
         payload.deepLink = deepLink;
     }
+    brs.registerExtension(() => new BrightScriptExtension());
     await executeFile(payload, options);
 };
 

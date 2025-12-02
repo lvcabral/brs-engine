@@ -18,12 +18,14 @@ import { Canvas, ImageData, createCanvas } from "canvas";
 import chalk from "chalk";
 import { Command } from "commander";
 import stripAnsi from "strip-ansi";
-import { deviceData, loadAppZip, updateAppZip, subscribePackage, mountExt, setupDeepLink } from "../api/package";
+import { deviceData, loadAppZip, updateAppZip, subscribePackage, mountExt, setupDeepLink } from "./package";
 import { isNumber } from "../api/util";
 import { debugPrompt, dataBufferIndex, dataBufferSize, AppPayload, AppExitReason, AppData } from "../core/common";
 import packageInfo from "../../packages/node/package.json";
 // @ts-ignore
 import * as brs from "./brs.node.js";
+// @ts-ignore
+import * as sg from "./brs-sg.node.js";
 
 // Constants
 const program = new Command();
@@ -54,6 +56,7 @@ program
     .option("-p, --pack <password>", "The password to generate the encrypted package.", "")
     .option("-o, --out <directory>", "The directory to save the encrypted package file.", "./")
     .option("-r, --root <directory>", "The root directory from which `pkg:` paths will be resolved.")
+    .option("-n, --no-sg", "Disable the SceneGraph extension.")
     .option("-x, --ext-root <directory>", "The root directory from which `ext1:` paths will be resolved.")
     .option("-f, --ext-file <file>", "The zip file to mount as `ext1:` volume. (takes precedence over -x)")
     .option("-k, --deep-link <params>", "Parameters to be passed to the application. (format: key=value,...)")
@@ -79,6 +82,9 @@ program
                 deviceData.registry = getRegistry();
             }
             deviceData.appList = new Array<AppData>();
+        }
+        if (program.sg) {
+            brs.registerExtension(() => new sg.BrightScriptExtension());
         }
         subscribePackage("cli", packageCallback);
         brs.registerCallback(messageCallback, sharedBuffer);
@@ -339,6 +345,9 @@ async function repl() {
         root: program.root,
         ext: program.extRoot,
     });
+    if (!replInterpreter) {
+        return;
+    }
     const rl = readline.createInterface({
         input: process.stdin,
         output: process.stdout,

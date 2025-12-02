@@ -1,3 +1,5 @@
+const path = require("path");
+
 module.exports = {
     "env": {
         "browser": true,
@@ -116,5 +118,22 @@ module.exports = {
             "never"
         ],
         "use-isnan": "error"
-    }
+    },
+    "overrides": [
+        {
+            "files": ["src/extensions/scenegraph/**/*.{ts,tsx,js}"],
+            "rules": {
+                "import/no-extraneous-dependencies": [
+                    "error",
+                    {
+                        "devDependencies": false,
+                        "packageDir": [
+                            __dirname,
+                            path.join(__dirname, "packages/scenegraph")
+                        ]
+                    }
+                ]
+            }
+        }
+    ]
 };

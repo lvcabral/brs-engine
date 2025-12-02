@@ -196,6 +196,18 @@ export type CaptionStyleOption = {
     style: string;
 };
 
+/**
+ * Extension Information Interface
+ *
+ * This interface is used to provide information about the BrightScript extensions
+ * to be dynamically loaded by the engine.
+ *
+ */
+export type ExtensionInfo = {
+    moduleId: string;
+    modulePath: string;
+};
+
 /* Execution Payload Interfaces
  *
  * These interfaces are used to provide information to the interpreter about the
@@ -211,6 +223,7 @@ export type AppPayload = {
     deepLink: Map<string, string>;
     paths: PkgFilePath[];
     source: string[];
+    extensions?: ExtensionInfo[];
     pkgZip?: ArrayBuffer;
     extZip?: ArrayBuffer;
     password?: string;
@@ -239,6 +252,7 @@ export type TaskPayload = {
     device: DeviceInfo;
     manifest: Map<string, string>;
     taskData: TaskData;
+    extensions?: ExtensionInfo[];
     pkgZip?: ArrayBuffer;
     extZip?: ArrayBuffer;
     root?: string;

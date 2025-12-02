@@ -1,5 +1,5 @@
 const brs = require("../../../packages/node/bin/brs.node");
-const { Lexeme } = brs.lexer;
+const { Lexeme } = brs;
 const { BrsString, Int32 } = brs.types;
 
 const { token, identifier, EOF } = require("../ParserTests");
@@ -8,12 +8,12 @@ describe("parser", () => {
     let parser;
 
     beforeEach(() => {
-        parser = new brs.parser.Parser();
+        parser = new brs.Parser();
     });
 
     describe("function declarations", () => {
         it("recovers when using `end sub` instead of `end function`", () => {
-            const { tokens } = brs.lexer.Lexer.scan(`
+            const { tokens } = brs.Lexer.scan(`
                 function Main()
                     print "Hello world"
                 end sub
@@ -197,7 +197,7 @@ describe("parser", () => {
         });
 
         it("does not allow type designators at end of name", () => {
-            const { tokens } = brs.lexer.Lexer.scan(`
+            const { tokens } = brs.Lexer.scan(`
                 function StringFunc#()
                     return 1
                 end function
@@ -222,7 +222,7 @@ describe("parser", () => {
 
     describe("sub declarations", () => {
         it("recovers when using `end function` instead of `end sub`", () => {
-            const { tokens } = brs.lexer.Lexer.scan(`
+            const { tokens } = brs.Lexer.scan(`
                 sub Main()
                     print "Hello world"
                 end function
@@ -387,7 +387,7 @@ describe("parser", () => {
         });
 
         it("does not allow type designators at end of name", () => {
-            const { tokens } = brs.lexer.Lexer.scan(`
+            const { tokens } = brs.Lexer.scan(`
                 sub StringSub#()
                 end sub
 

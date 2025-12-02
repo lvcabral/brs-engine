@@ -18,8 +18,9 @@
   "scripts": {
     "build": "npm run build --workspaces",
     "build:api": "npm run build -w brs-engine",
-    "build:web": "npm run build -w brs-engine && npm run start -w brs-engine",
+    "build:web": "npm run build -w brs-engine && npm run build -w brs-scenegraph && npm run start -w brs-engine",
     "build:cli": "npm run build -w brs-node",
+    "build:sg": "npm run build -w brs-scenegraph",
     "release": "npm run release --workspaces",
     "start": "npm run start -w brs-engine",
     "clean": "npm run clean --workspaces",

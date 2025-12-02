@@ -3,14 +3,14 @@ const brs = require("../../../packages/node/bin/brs.node");
 const { deindent } = require("../ParserTests");
 
 function scan(str) {
-    return brs.lexer.Lexer.scan(str).tokens;
+    return brs.Lexer.scan(str).tokens;
 }
 
 describe("parser try/catch statements", () => {
     let parser;
 
     beforeEach(() => {
-        parser = new brs.parser.Parser();
+        parser = new brs.Parser();
     });
 
     it("requires catch to end try block", () => {
