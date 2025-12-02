@@ -125,14 +125,14 @@ function loadExtension(moduleId: string, modulePath: string) {
         // In a Web Worker context, we use importScripts for synchronous loading
         if (typeof importScripts === "function") {
             // @ts-ignore
-            self.brsEngine = createWorkerExports();
+            globalThis.brsEngine = createWorkerExports();
             // @ts-ignore
-            self.xmldoc = { XmlDocument };
+            globalThis.xmldoc = { XmlDocument };
             // Load the SceneGraph module script
-            const scriptUrl = new URL(modulePath, self.location.href).href;
+            const scriptUrl = new URL(modulePath, globalThis.location.href).href;
             importScripts(scriptUrl);
             // @ts-ignore
-            sceneGraphModule = self[moduleId];
+            sceneGraphModule = globalThis[moduleId];
         }
 
         if (sceneGraphModule?.BrightScriptExtension) {

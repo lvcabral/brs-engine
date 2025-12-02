@@ -218,7 +218,6 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
     );
 
     /** Removes all fields from the node */
-    // ToDo: Built-in fields shouldn't be removed
     private readonly clear = new Callable("clear", {
         signature: {
             args: [],
