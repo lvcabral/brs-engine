@@ -189,9 +189,10 @@ async function processXmlTree(settledPromises: Promise<PromiseResult<ComponentDe
 /**
  * Builds out all the sub-environments for the given components. Components are saved into the calling interpreter
  * instance. This function will mutate the state of the calling interpreter.
+ * @param interpreter The interpreter where components will be registered
  * @param componentMap Map of all components to be assigned to this interpreter
- * @param parseFn Function used to parse components into interpretable statements
- * @param options
+ * @param manifest The manifest map for the current running application
+ * @param options Execution options for the interpreter
  */
 export async function setupInterpreterWithSubEnvs(
     interpreter: Interpreter,

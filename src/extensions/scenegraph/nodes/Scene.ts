@@ -11,6 +11,7 @@ import {
     Scope,
     Stmt,
     IfDraw2D,
+    BlockEnd,
 } from "brs-engine";
 import { toAssociativeArray } from "../factory/serialization";
 import { sgRoot } from "../SGRoot";
@@ -191,7 +192,9 @@ export class Scene extends Group {
                     impl(subInterpreter, key, press);
                 }
             } catch (err) {
-                if (err instanceof Stmt.ReturnValue) {
+                if (!(err instanceof BlockEnd)) {
+                    throw err;
+                } else if (err instanceof Stmt.ReturnValue) {
                     return err.value ?? BrsBoolean.False;
                 }
                 throw err;
