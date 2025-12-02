@@ -1,12 +1,10 @@
 import { FieldModel } from "../SGTypes";
-import { AAMember, BrsBoolean, BrsString, Float } from "brs-engine";
+import { AAMember, Interpreter, BrsBoolean, BrsString, Float, IfDraw2D } from "brs-engine";
 import { Group } from "./Group";
-import { Interpreter } from "brs-engine";
-import { IfDraw2D } from "brs-engine";
 import { rotateTranslation } from "../SGUtil";
-import { Poster } from "./Poster";
-import { Label } from "./Label";
-import { Font } from "./Font";
+import type { Poster } from "./Poster";
+import type { Label } from "./Label";
+import type { Font } from "./Font";
 import { sgRoot } from "../SGRoot";
 
 export class Button extends Group {

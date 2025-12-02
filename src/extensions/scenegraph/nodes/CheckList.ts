@@ -97,10 +97,10 @@ export class CheckList extends LabelList {
         const iconGap = iconSize[0] > 0 ? iconSize[0] + this.gap : 0;
         const iconIndex = itemFocus ? 1 : 0;
         const bmp = !hideIcon && iconGap > 0 ? this.getBitmap(icons[iconIndex]) : undefined;
-        if (!itemFocus) {
-            this.renderUnfocused(index, text, rect, opacity, iconGap, true, bmp, draw2D);
-        } else {
+        if (itemFocus) {
             this.renderFocused(index, text, rect, opacity, nodeFocus, iconGap, true, bmp, draw2D);
+        } else {
+            this.renderUnfocused(index, text, rect, opacity, iconGap, true, bmp, draw2D);
         }
     }
 

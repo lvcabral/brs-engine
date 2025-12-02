@@ -2,6 +2,7 @@ import {
     AAMember,
     Interpreter,
     BrsDevice,
+    BrsEvent,
     BrsString,
     BrsType,
     isBrsString,
@@ -11,7 +12,6 @@ import {
     TaskState,
 } from "brs-engine";
 import { sgRoot } from "../SGRoot";
-import { BrsEvent } from "brs-engine";
 import { brsValueOf, fromAssociativeArray, fromSGNode } from "../factory/serialization";
 import { Node } from "./Node";
 import { Scene } from "./Scene";

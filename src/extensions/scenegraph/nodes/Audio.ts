@@ -1,11 +1,20 @@
-import { AAMember, BrsString, BrsType, Double, Int32, isBrsBoolean, isBrsNumber, isBrsString } from "brs-engine";
+import {
+    AAMember,
+    BrsDevice,
+    BrsString,
+    BrsType,
+    Double,
+    Int32,
+    isBrsBoolean,
+    isBrsNumber,
+    isBrsString,
+    MediaEvent,
+} from "brs-engine";
 import { sgRoot } from "../SGRoot";
 import { jsValueOf } from "../factory/serialization";
 import { ContentNode } from "./ContentNode";
 import { Node } from "./Node";
 import { FieldKind, FieldModel } from "../SGTypes";
-import { BrsDevice } from "brs-engine";
-import { MediaEvent } from "brs-engine";
 
 export class Audio extends Node {
     readonly defaultFields: FieldModel[] = [

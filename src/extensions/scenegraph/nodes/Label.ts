@@ -1,10 +1,8 @@
-import { AAMember, BrsBoolean, BrsType, Float } from "brs-engine";
+import { AAMember, Interpreter, BrsBoolean, BrsType, Float, IfDraw2D, MeasuredText, Rect } from "brs-engine";
 import { Group } from "./Group";
-import { Font } from "./Font";
+import type { Font } from "./Font";
 import { sgRoot } from "../SGRoot";
 import { FieldKind, FieldModel } from "../SGTypes";
-import { Interpreter } from "brs-engine";
-import { IfDraw2D, MeasuredText, Rect } from "brs-engine";
 import { rotateTranslation } from "../SGUtil";
 
 export class Label extends Group {

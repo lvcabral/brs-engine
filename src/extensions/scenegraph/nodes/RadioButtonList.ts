@@ -52,10 +52,10 @@ export class RadioButtonList extends LabelList {
         const showIcon = index === checked && iconGap > 0;
         const iconIndex = itemFocus ? 1 : 0;
         const bmp = showIcon ? this.getBitmap(icons[iconIndex]) : undefined;
-        if (!itemFocus) {
-            this.renderUnfocused(index, text, rect, opacity, iconGap, true, bmp, draw2D);
-        } else {
+        if (itemFocus) {
             this.renderFocused(index, text, rect, opacity, nodeFocus, iconGap, true, bmp, draw2D);
+        } else {
+            this.renderUnfocused(index, text, rect, opacity, iconGap, true, bmp, draw2D);
         }
     }
 }

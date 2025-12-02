@@ -1,10 +1,8 @@
+import { AAMember, Interpreter, BrsBoolean, BrsString, BrsType, Float, Int32, RoBitmap, IfDraw2D } from "brs-engine";
 import { FieldKind, FieldModel } from "../SGTypes";
-import { AAMember, BrsBoolean, BrsString, BrsType, Float, Int32, RoBitmap } from "brs-engine";
 import { Label } from "./Label";
 import { Poster } from "./Poster";
 import { Group } from "./Group";
-import { Interpreter } from "brs-engine";
-import { IfDraw2D } from "brs-engine";
 import { sgRoot } from "../SGRoot";
 
 export class TrickPlayBar extends Group {

@@ -83,9 +83,7 @@ export class Scene extends Group {
         funcOrPort: BrsString | RoMessagePort,
         infoFields?: RoArray
     ) {
-        if (!interpreter.environment.hostNode) {
-            interpreter.environment.hostNode = this;
-        }
+        interpreter.environment.hostNode ??= this;
         return super.addObserver(interpreter, scope, fieldName, funcOrPort, infoFields);
     }
 

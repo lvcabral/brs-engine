@@ -1,9 +1,6 @@
+import { AAMember, Interpreter, BrsDevice, BrsString, BrsType, Int32, IfDraw2D, Rect, RectRect } from "brs-engine";
 import { FieldKind, FieldModel } from "../SGTypes";
-import { AAMember, BrsString, BrsType, Int32 } from "brs-engine";
 import { ArrayGrid } from "./ArrayGrid";
-import { IfDraw2D, Rect, RectRect } from "brs-engine";
-import { Interpreter } from "brs-engine";
-import { BrsDevice } from "brs-engine";
 import { customNodeExists } from "../factory/SGNodeFactory";
 
 export class MarkupList extends ArrayGrid {

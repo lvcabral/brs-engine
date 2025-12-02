@@ -1,8 +1,7 @@
+import { AAMember, BrsType, IfDraw2D, MeasuredText, Rect } from "brs-engine";
 import { FieldModel } from "../SGTypes";
 import { Label } from "./Label";
 import { Font } from "./Font";
-import { AAMember, BrsType } from "brs-engine";
-import { IfDraw2D, MeasuredText, Rect } from "brs-engine";
 
 // Enum to manage the scrolling state
 enum ScrollState {

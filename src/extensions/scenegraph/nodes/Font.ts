@@ -1,7 +1,15 @@
-import { AAMember, BrsBoolean, BrsString, BrsType, Int32, isBrsString } from "brs-engine";
+import {
+    AAMember,
+    BrsBoolean,
+    BrsString,
+    BrsType,
+    Int32,
+    isBrsString,
+    RoFont,
+    getFontRegistry,
+    RoFontRegistry,
+} from "brs-engine";
 import { sgRoot } from "../SGRoot";
-import { RoFont } from "brs-engine";
-import { getFontRegistry, RoFontRegistry } from "brs-engine";
 import { Node } from "./Node";
 import { FieldKind, FieldModel } from "../SGTypes";
 

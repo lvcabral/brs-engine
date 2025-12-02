@@ -375,10 +375,7 @@ export function initializeNode(interpreter: Interpreter, type: string, typeDef?:
         typeDef = typeDefStack.pop();
 
         // If not already created, create the node.
-        if (!node) {
-            // If this extends a built-in node component, create it.
-            node = SGNodeFactory.createNode(typeDef!.extends as SGNodeType, type);
-        }
+        node ??= SGNodeFactory.createNode(typeDef!.extends as SGNodeType, type);
         // Default to Node as parent.
         node ??= new Node([], type);
         const mPointer = new RoAssociativeArray([]);

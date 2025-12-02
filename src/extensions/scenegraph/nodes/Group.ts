@@ -1,5 +1,6 @@
 import {
     AAMember,
+    Interpreter,
     BrsBoolean,
     BrsInvalid,
     BrsString,
@@ -11,6 +12,9 @@ import {
     RoBitmap,
     RoFont,
     ValueKind,
+    IfDraw2D,
+    MeasuredText,
+    Rect,
 } from "brs-engine";
 import { sgRoot } from "../SGRoot";
 import type { Font } from "./Font";
@@ -20,8 +24,6 @@ import type { Rectangle } from "./Rectangle";
 import type { ScrollingLabel } from "./ScrollingLabel";
 import { Node } from "./Node";
 import { FieldKind, FieldModel, isFont } from "../SGTypes";
-import { Interpreter } from "brs-engine";
-import { IfDraw2D, MeasuredText, Rect } from "brs-engine";
 import { convertHexColor, rotateRect, unionRect } from "../SGUtil";
 import { createNodeByType } from "../factory/SGNodeFactory";
 import { jsValueOf } from "../factory/serialization";
@@ -299,10 +301,10 @@ export class Group extends Node {
         if (this.isDirty || this.cachedLines[index] === undefined) {
             if (rect.width === 0) {
                 const newlineIndex = fullText.indexOf("\n");
-                if (newlineIndex !== -1) {
-                    text = fullText.substring(0, newlineIndex);
-                } else {
+                if (newlineIndex === -1) {
                     text = fullText;
+                } else {
+                    text = fullText.substring(0, newlineIndex);
                 }
                 measured = drawFont.measureText(text);
             } else {
@@ -421,7 +423,7 @@ export class Group extends Node {
         if (lines.length > maxLines) {
             const renderedLines = lines.slice(0, maxLines);
             if (renderedLines.length > 0) {
-                const line = renderedLines[renderedLines.length - 1];
+                const line = renderedLines.at(-1)!;
                 line.text = this.ellipsizeLine(line.text, drawFont, width, ellipsis);
                 line.ellipsized = true;
             }
@@ -524,8 +526,8 @@ export class Group extends Node {
                 return rect;
             }
             const scale = this.getValueJS("scale") as number[];
-            let scaleX = rect.width !== 0 ? rect.width / bitmap.width : 1;
-            let scaleY = rect.height !== 0 ? rect.height / bitmap.height : 1;
+            let scaleX = rect.width === 0 ? 1 : rect.width / bitmap.width;
+            let scaleY = rect.height === 0 ? 1 : rect.height / bitmap.height;
             scaleX *= scale[0];
             scaleY *= scale[1];
             rect.width = scaleX * bitmap.width;
@@ -554,36 +556,36 @@ export class Group extends Node {
     protected updateBoundingRects(drawRect: Rect, origin: number[], rotation: number) {
         const nodeTrans = this.getTranslation();
         this.rectLocal = { x: 0, y: 0, width: drawRect.width, height: drawRect.height };
-        if (rotation !== 0) {
-            const center = this.getScaleRotateCenter();
-            this.rectToScene = rotateRect(drawRect, rotation, center);
-            const nodeRotation = this.getRotation();
-            if (nodeRotation !== 0 && nodeRotation === rotation) {
-                this.rectToParent = {
-                    x: this.rectToScene.x - origin[0],
-                    y: this.rectToScene.y - origin[1],
-                    width: this.rectToScene.width,
-                    height: this.rectToScene.height,
-                };
-            } else if (nodeRotation !== 0 && nodeRotation !== rotation) {
-                const rect = { x: 0, y: 0, width: drawRect.width, height: drawRect.height };
-                const rotatedRect = rotateRect(rect, nodeRotation, center);
-                this.rectToParent = {
-                    x: nodeTrans[0] + rotatedRect.x,
-                    y: nodeTrans[1] + rotatedRect.y,
-                    width: rotatedRect.width,
-                    height: rotatedRect.height,
-                };
-            } else {
-                this.rectToParent = {
-                    x: nodeTrans[0],
-                    y: nodeTrans[1],
-                    width: drawRect.width,
-                    height: drawRect.height,
-                };
-            }
-        } else {
+        if (rotation === 0) {
             this.rectToScene = drawRect;
+            this.rectToParent = {
+                x: nodeTrans[0],
+                y: nodeTrans[1],
+                width: drawRect.width,
+                height: drawRect.height,
+            };
+            return;
+        }
+        const center = this.getScaleRotateCenter();
+        this.rectToScene = rotateRect(drawRect, rotation, center);
+        const nodeRotation = this.getRotation();
+        if (nodeRotation !== 0 && nodeRotation === rotation) {
+            this.rectToParent = {
+                x: this.rectToScene.x - origin[0],
+                y: this.rectToScene.y - origin[1],
+                width: this.rectToScene.width,
+                height: this.rectToScene.height,
+            };
+        } else if (nodeRotation !== 0 && nodeRotation !== rotation) {
+            const rect = { x: 0, y: 0, width: drawRect.width, height: drawRect.height };
+            const rotatedRect = rotateRect(rect, nodeRotation, center);
+            this.rectToParent = {
+                x: nodeTrans[0] + rotatedRect.x,
+                y: nodeTrans[1] + rotatedRect.y,
+                width: rotatedRect.width,
+                height: rotatedRect.height,
+            };
+        } else {
             this.rectToParent = {
                 x: nodeTrans[0],
                 y: nodeTrans[1],

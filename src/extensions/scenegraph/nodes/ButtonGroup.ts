@@ -14,7 +14,7 @@ import {
 import { sgRoot } from "../SGRoot";
 import { jsValueOf } from "../factory/serialization";
 import { Button } from "./Button";
-import { Font } from "./Font";
+import type { Font } from "./Font";
 import { Label } from "./Label";
 import { LayoutGroup } from "./LayoutGroup";
 import { RoSGNode } from "../components/RoSGNode";
@@ -135,7 +135,7 @@ export class ButtonGroup extends LayoutGroup {
             return;
         }
         const nodeTrans = this.getTranslation();
-        const drawTrans = angle !== 0 ? rotateTranslation(nodeTrans, angle) : nodeTrans.slice();
+        const drawTrans = angle === 0 ? nodeTrans.slice() : rotateTranslation(nodeTrans, angle);
         drawTrans[0] += origin[0];
         drawTrans[1] += origin[1];
         const size = this.getDimensions();

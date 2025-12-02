@@ -144,10 +144,10 @@ export class LabelList extends ArrayGrid {
         const iconGap = iconSize[0] > 0 ? iconSize[0] + this.gap : 0;
         const iconIndex = itemFocus ? 1 : 0;
         const bmp = iconGap > 0 ? item.getBitmap(icons[iconIndex]) : undefined;
-        if (!itemFocus) {
-            this.renderUnfocused(index, text, rect, opacity, iconGap, false, bmp, draw2D);
-        } else {
+        if (itemFocus) {
             this.renderFocused(index, text, rect, opacity, nodeFocus, iconGap, false, bmp, draw2D);
+        } else {
+            this.renderUnfocused(index, text, rect, opacity, iconGap, false, bmp, draw2D);
         }
     }
 

@@ -146,7 +146,7 @@ export class ComponentScopeResolver {
                     throw new Error("Error occurred parsing");
                 }
 
-                return Promise.resolve(parseResults.statements);
+                return parseResults.statements;
             }
 
             const promises: Promise<Stmt.Statement[]>[] = [];

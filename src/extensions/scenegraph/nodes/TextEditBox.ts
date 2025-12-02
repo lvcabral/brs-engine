@@ -1,7 +1,17 @@
+import {
+    AAMember,
+    Interpreter,
+    IfDraw2D,
+    Rect,
+    RoBitmap,
+    RoFont,
+    Float,
+    BrsString,
+    Int32,
+    BrsBoolean,
+} from "brs-engine";
 import { FieldModel } from "../SGTypes";
 import { Group } from "./Group";
-import { Interpreter } from "brs-engine";
-import { IfDraw2D, Rect, RoBitmap, RoFont, Float, BrsString, Int32, BrsBoolean, AAMember } from "brs-engine";
 import { convertHexColor } from "../SGUtil";
 import { Label } from "./Label";
 import { Font } from "./Font";
@@ -275,7 +285,7 @@ export class TextEditBox extends Group {
                 height: this.cursor.height,
             };
             // Draw cursor
-            this.drawImage(this.cursor, cursorRect, 0, 1.0, draw2D);
+            this.drawImage(this.cursor, cursorRect, 0, 1, draw2D);
         }
     }
 }

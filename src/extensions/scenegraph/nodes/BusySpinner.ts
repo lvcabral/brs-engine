@@ -1,8 +1,6 @@
 import { FieldKind, FieldModel } from "../SGTypes";
 import { Group } from "./Group";
-import { AAMember, BrsString, BrsType, RoArray, Float } from "brs-engine";
-import { Interpreter } from "brs-engine";
-import { IfDraw2D } from "brs-engine";
+import { AAMember, Interpreter, BrsString, BrsType, RoArray, Float, IfDraw2D } from "brs-engine";
 import { rotateTranslation } from "../SGUtil";
 import { Poster } from "./Poster";
 
@@ -68,7 +66,7 @@ export class BusySpinner extends Group {
             return;
         }
         const nodeTrans = this.getTranslation();
-        const drawTrans = angle !== 0 ? rotateTranslation(nodeTrans, angle) : nodeTrans.slice();
+        const drawTrans = angle === 0 ? nodeTrans.slice() : rotateTranslation(nodeTrans, angle);
         drawTrans[0] += origin[0];
         drawTrans[1] += origin[1];
         const size = this.getDimensions();

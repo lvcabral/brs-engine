@@ -1,8 +1,7 @@
 import { FieldModel } from "../SGTypes";
-import { AAMember, Float, BrsString, BrsBoolean, isBrsString } from "brs-engine";
+import { AAMember, Interpreter, Float, BrsString, BrsBoolean, isBrsString } from "brs-engine";
 import { Dialog } from "./Dialog";
 import { Keyboard } from "./Keyboard";
-import { Interpreter } from "brs-engine";
 import { sgRoot } from "../SGRoot";
 
 export class KeyboardDialog extends Dialog {

@@ -1,8 +1,6 @@
+import { AAMember, Interpreter, IfDraw2D } from "brs-engine";
 import { FieldModel } from "../SGTypes";
-import { AAMember } from "brs-engine";
 import { Group } from "./Group";
-import { Interpreter } from "brs-engine";
-import { IfDraw2D } from "brs-engine";
 import { rotateTranslation } from "../SGUtil";
 
 export class Rectangle extends Group {
