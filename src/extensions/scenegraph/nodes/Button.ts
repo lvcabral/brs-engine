@@ -165,7 +165,7 @@ export class Button extends Group {
         }
         const nodeFocus = sgRoot.focused === this;
         const nodeTrans = this.getTranslation();
-        const drawTrans = angle !== 0 ? rotateTranslation(nodeTrans, angle) : nodeTrans.slice();
+        const drawTrans = angle === 0 ? nodeTrans.slice() : rotateTranslation(nodeTrans, angle);
         drawTrans[0] += origin[0];
         drawTrans[1] += origin[1];
         const size = this.getDimensions();
