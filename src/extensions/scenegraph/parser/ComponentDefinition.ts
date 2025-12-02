@@ -70,19 +70,19 @@ export class ComponentDefinition {
     async parse(): Promise<ComponentDefinition> {
         try {
             if (fs === undefined) {
-                return Promise.reject("FileSystem not set");
+                throw new Error("FileSystem not set");
             }
             this.contents = fs.readFileSync(this.xmlPath, "utf-8");
             this.xmlNode = new XmlDocument(this.contents ?? "");
             this.name = this.xmlNode.attr.name;
 
-            return Promise.resolve(this);
+            return this;
         } catch (err) {
             // TODO: provide better parse error reporting
             //   cases:
             //     * file read error
             //     * XML parse error
-            return Promise.reject(this);
+            throw err;
         }
     }
 
@@ -308,12 +308,12 @@ async function getScripts(node: XmlDocument, nodeDef: ComponentDefinition): Prom
 
     for (const script of scripts) {
         if (script.attr.uri && script.val) {
-            return Promise.reject({
-                message: BrsError.format(
+            throw new Error(
+                BrsError.format(
                     `<script> element cannot contain both internal and external source`,
                     getScriptTagLocation(nodeDef, script)
-                ).trim(),
-            });
+                ).trim()
+            );
         } else if (script.attr?.uri) {
             let absoluteUri = await getScriptUri(script, nodeDef);
             componentScripts.push({
@@ -338,19 +338,19 @@ async function getScriptUri(script: XmlElement, nodeDef: ComponentDefinition): P
         if (script.attr.uri.startsWith("pkg:/")) {
             absoluteUri = script.attr.uri;
         } else {
-            let posixPath = path.dirname(nodeDef.xmlPath.replace(/[\/\\]+/g, path.posix.sep));
+            let posixPath = path.dirname(nodeDef.xmlPath.replaceAll(/[\/\\]+/g, path.posix.sep));
             if (process.platform === "win32") {
                 posixPath = posixPath.replace(/^[a-zA-Z]:/, "");
             }
             absoluteUri = path.join(posixPath, script.attr.uri);
         }
     } catch (err) {
-        return Promise.reject({
-            message: BrsError.format(
+        throw new Error(
+            BrsError.format(
                 `Invalid path '${script.attr.uri}' found in <script/> tag`,
                 getScriptTagLocation(nodeDef, script)
-            ).trim(),
-        });
+            ).trim()
+        );
     }
     return absoluteUri;
 }

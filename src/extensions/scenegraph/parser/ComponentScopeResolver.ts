@@ -33,7 +33,7 @@ export class ComponentScopeResolver {
             rejected.forEach((rejection: PromiseRejectedResult) =>
                 rejection.reason.messages.forEach((msg: string) => console.error(msg))
             );
-            return Promise.reject(`Unable to resolve scope for component ${component.name}`);
+            throw new Error(`Unable to resolve scope for component ${component.name}`);
         }
         return this.flatten(statementResults.map((res) => (res.isFulfilled ? res.value : [])));
     }
@@ -82,7 +82,7 @@ export class ComponentScopeResolver {
         while (currentComponent.extends) {
             // If this is a built-in node component, then no work is needed and we can return.
             if (SGNodeFactory.canResolveNodeType(currentComponent.extends)) {
-                return Promise.resolve();
+                return;
             }
 
             let previousComponent = currentComponent;
@@ -94,12 +94,10 @@ export class ComponentScopeResolver {
                 console.error(
                     `Warning: XML component '${previousComponent.name}' extends unknown component '${previousComponent.extends}'. Ignoring extension.`
                 );
-                return Promise.resolve();
+                return;
             }
             yield this.parserLexerFn(currentComponent.scripts);
         }
-
-        return Promise.resolve();
     }
     private getLexerParserFn(fs: FileSystem, manifest: Map<string, string>) {
         /**
@@ -112,21 +110,19 @@ export class ComponentScopeResolver {
                 let contents;
                 let filename;
                 if (script.uri !== undefined) {
-                    filename = script.uri.replace(/[\/\\]+/g, path.posix.sep);
+                    filename = script.uri.replaceAll(/[\/\\]+/g, path.posix.sep);
                     try {
                         contents = fs.readFileSync(filename, "utf-8");
                         script.content = contents;
                     } catch (err) {
                         let errno = (err as NodeJS.ErrnoException)?.errno || -4858;
-                        return Promise.reject({
-                            message: `brs: can't open file '${filename}': [Errno ${errno}]`,
-                        });
+                        throw new Error(`brs: can't open file '${filename}': [Errno ${errno}]`);
                     }
                 } else if (script.content !== undefined) {
                     contents = script.content;
                     filename = script.xmlPath || "xml";
                 } else {
-                    return Promise.reject({ message: "brs: invalid script object" });
+                    throw new Error("brs: invalid script object");
                 }
                 const lexer = new Lexer();
                 const preprocessor = new PP.Preprocessor();
@@ -137,23 +133,17 @@ export class ComponentScopeResolver {
 
                 const scanResults = lexer.scan(contents, filename);
                 if (scanResults.errors.length > 0) {
-                    return Promise.reject({
-                        message: "Error occurred during lexing",
-                    });
+                    throw new Error("Error occurred during lexing");
                 }
 
                 const preprocessResults = preprocessor.preprocess(scanResults.tokens, manifest);
                 if (preprocessResults.errors.length > 0) {
-                    return Promise.reject({
-                        message: "Error occurred during pre-processing",
-                    });
+                    throw new Error("Error occurred during pre-processing");
                 }
 
                 const parseResults = parser.parse(preprocessResults.processedTokens);
                 if (parseResults.errors.length > 0) {
-                    return Promise.reject({
-                        message: "Error occurred parsing",
-                    });
+                    throw new Error("Error occurred parsing");
                 }
 
                 return Promise.resolve(parseResults.statements);
@@ -180,11 +170,10 @@ export class ComponentScopeResolver {
 
             // don't execute anything if there were reading, lexing, or parsing errors
             if (parsedScripts.some((script) => script.isRejected)) {
-                return Promise.reject({
-                    messages: parsedScripts
-                        .filter((script) => script.isRejected)
-                        .map((rejection) => (rejection as PromiseRejectedResult).reason.message),
-                });
+                const messages = parsedScripts
+                    .filter((script) => script.isRejected)
+                    .map((rejection) => (rejection as PromiseRejectedResult).reason.message);
+                throw new Error(messages.join("\n"));
             }
 
             // combine statements from all scripts into one array
