@@ -1306,10 +1306,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             // but it's here to mimic the behavior of Roku, if they fix, we move it.
             if (invalidSource && expression.optional) {
                 return source;
-            } else if (invalidSource) {
-                console.debug(
-                    `[Interpreter] Attempting to access member '${expression.name.text}' of invalid source.`
-                );
             }
             const method = boxedSource.getMethod(expression.name.text);
             if (method) {
