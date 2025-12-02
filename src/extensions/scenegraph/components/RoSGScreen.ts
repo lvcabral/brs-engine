@@ -147,7 +147,6 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
             postMessage(this.context.getImageData(0, 0, this.width, this.height));
             this.isDirty = false;
         }
-        return;
     }
 
     equalTo(other: BrsType) {
@@ -174,8 +173,8 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         const events: BrsEvent[] = [];
         // Handle control keys
         const event = this.handleNextKey(interpreter);
-        if (event instanceof BrsComponent) {
-            events.push(event as any);
+        if (event instanceof BrsEvent) {
+            events.push(event);
         }
         // Handle Scene Events
         if (sgRoot.scene) {
@@ -227,7 +226,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         if (press.toBoolean()) {
             this.playNavigationSound(key.value, handled);
             if (key.value === "back" && !handled) {
-                return new RoSGScreenEvent(BrsBoolean.True) as any;
+                return new RoSGScreenEvent(BrsBoolean.True);
             }
         }
         return BrsInvalid.Instance;
@@ -260,7 +259,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     });
 
     /** Renders the SceneGraph scene defined by the roSGScreen object on the display screen. */
-    private show = new Callable("show", {
+    private readonly show = new Callable("show", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
@@ -282,7 +281,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter) => {
-            this.port?.pushMessage(new RoSGScreenEvent(BrsBoolean.True) as any);
+            this.port?.pushMessage(new RoSGScreenEvent(BrsBoolean.True));
             return Uninitialized.Instance;
         },
     });

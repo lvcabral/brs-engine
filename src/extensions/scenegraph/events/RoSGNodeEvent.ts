@@ -13,7 +13,7 @@ export class RoSGNodeEvent extends BrsEvent {
     }
 
     /** Retrieves the new field value at the time of the change. */
-    private getData = new Callable("getdata", {
+    private readonly getData = new Callable("getdata", {
         signature: {
             args: [],
             returns: ValueKind.Dynamic,
@@ -24,7 +24,7 @@ export class RoSGNodeEvent extends BrsEvent {
     });
 
     /** Retrieves the name of the field that changed. */
-    private getField = new Callable("getfield", {
+    private readonly getField = new Callable("getfield", {
         signature: {
             args: [],
             returns: ValueKind.Dynamic,
@@ -35,7 +35,7 @@ export class RoSGNodeEvent extends BrsEvent {
     });
 
     /** Retrieves a pointer to the node. This can be used for nodes without an ID. */
-    private getRoSGNode = new Callable("getrosgnode", {
+    private readonly getRoSGNode = new Callable("getrosgnode", {
         signature: {
             args: [],
             returns: ValueKind.Dynamic,
@@ -46,7 +46,7 @@ export class RoSGNodeEvent extends BrsEvent {
     });
 
     /** Retrieves the ID of the node that changed. */
-    private getNode = new Callable("getnode", {
+    private readonly getNode = new Callable("getnode", {
         signature: {
             args: [],
             returns: ValueKind.Dynamic,
@@ -57,7 +57,7 @@ export class RoSGNodeEvent extends BrsEvent {
     });
 
     /** Retrieves an AA that contains the values of selected "context" fields. */
-    private getInfo = new Callable("getinfo", {
+    private readonly getInfo = new Callable("getinfo", {
         signature: {
             args: [],
             returns: ValueKind.Object,

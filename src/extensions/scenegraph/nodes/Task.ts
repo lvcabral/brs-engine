@@ -44,13 +44,13 @@ export class Task extends Node {
     }
 
     setValue(index: string, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind, sync: boolean = true) {
-        const validStates = ["init", "run", "stop", "done"];
+        const validStates = new Set(["init", "run", "stop", "done"]);
         const mapKey = index.toLowerCase();
         const field = this.fields.get(mapKey);
 
         if (field && mapKey === "control" && isBrsString(value)) {
             let control = value.getValue().toLowerCase();
-            if (!validStates.includes(control)) {
+            if (!validStates.has(control)) {
                 control = "";
             }
             this.setControlField(field, control, sync);
@@ -58,7 +58,7 @@ export class Task extends Node {
         } else if (field && mapKey === "state" && isBrsString(value)) {
             // Roku documentation states this is read-only but it allows change the value to valid states
             // But it does not trigger any action
-            if (validStates.includes(value.getValue().toLowerCase())) {
+            if (validStates.has(value.getValue().toLowerCase())) {
                 field.setValue(value);
             }
             return;

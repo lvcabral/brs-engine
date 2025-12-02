@@ -80,7 +80,7 @@ export function loadAppZip(fileName: string, file: ArrayBuffer, callback: Functi
     source.length = 0;
     paths.length = 0;
 
-    if (deviceData.appList && deviceData.appList.length === 0) {
+    if (deviceData.appList?.length === 0) {
         deviceData.appList.push({
             id: "dev",
             title: currentApp.title,
@@ -129,8 +129,6 @@ function processManifest(content: string): number {
     if (deviceData.displayMode === "480p") {
         resKeys.unshift("sd");
     }
-    const splashKey = resKeys.find((key) => manifestMap.has(`splash_screen_${key}`));
-    const splash = manifestMap.get(`splash_screen_${splashKey}`);
     const iconKey = resKeys.find((key) => manifestMap.has(`mm_icon_focus_${key}`));
     const icon = manifestMap.get(`mm_icon_focus_${iconKey}`);
 

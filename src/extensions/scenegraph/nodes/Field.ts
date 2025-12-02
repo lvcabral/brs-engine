@@ -341,10 +341,10 @@ export class Field {
             infoFields = toAssociativeArray(fieldsMap);
         }
         // Every time a callback happens, a new event is created.
-        let event = new RoSGNodeEvent(eventParams.node, eventParams.fieldName, this.value, infoFields);
+        const event = new RoSGNodeEvent(eventParams.node, eventParams.fieldName, this.value, infoFields);
 
         if (callable instanceof RoMessagePort) {
-            callable.pushMessage(event as any);
+            callable.pushMessage(event);
             return;
         }
 

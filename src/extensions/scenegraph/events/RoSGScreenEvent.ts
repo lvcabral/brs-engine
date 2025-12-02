@@ -7,7 +7,7 @@ export class RoSGScreenEvent extends BrsEvent {
     }
 
     /** Checks whether the screen has been closed and is no longer displayed to the user. */
-    private isScreenClosed = new Callable("isScreenClosed", {
+    private readonly isScreenClosed = new Callable("isScreenClosed", {
         signature: {
             args: [],
             returns: ValueKind.Dynamic,

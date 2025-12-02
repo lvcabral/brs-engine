@@ -32,9 +32,8 @@ export class StandardDialog extends Group {
     private readonly background: Poster;
     private readonly minHeight: number;
     private readonly maxWidth: number;
+    private readonly dialogTrans: number[];
     private width: number;
-    private height: number;
-    private dialogTrans: number[];
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = "StandardDialog") {
         super([], name);
@@ -55,7 +54,6 @@ export class StandardDialog extends Group {
             this.dialogTrans = [354, 328];
             this.background = this.addPoster(this.dialogBackgroundUri, [-60, -40], this.width, this.minHeight);
         }
-        this.height = this.minHeight;
         this.setTranslation(this.dialogTrans);
     }
 

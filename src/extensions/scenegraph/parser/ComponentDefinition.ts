@@ -126,7 +126,7 @@ async function processXmlTree(settledPromises: Promise<PromiseResult<ComponentDe
     }
 
     // create map of just ComponentDefinition objects
-    nodeDefs.map((item) => {
+    for (const item of nodeDefs) {
         if (item.isFulfilled && !item.isRejected) {
             let name = item.value?.name?.toLowerCase();
             if (libraryName) {
@@ -136,18 +136,18 @@ async function processXmlTree(settledPromises: Promise<PromiseResult<ComponentDe
                 nodeDefMap.set(name, item.value!);
             }
         }
-    });
+    }
 
     // recursively create an inheritance stack for each component def and build up
     // the component backwards from most extended component first
     let inheritanceStack: ComponentDefinition[] = [];
 
     for (const nodeDef of nodeDefMap.values()) {
-        if (nodeDef && nodeDef.processed === false) {
+        if (nodeDef?.processed === false) {
             let xmlNode = nodeDef.xmlNode;
             inheritanceStack.push(nodeDef);
             //builds inheritance stack
-            while (xmlNode && xmlNode.attr.extends) {
+            while (xmlNode?.attr?.extends) {
                 let superNodeDef = nodeDefMap.get(xmlNode.attr.extends?.toLowerCase());
                 if (superNodeDef) {
                     inheritanceStack.push(superNodeDef);

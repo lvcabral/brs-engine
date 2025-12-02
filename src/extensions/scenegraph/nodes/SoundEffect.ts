@@ -90,7 +90,7 @@ export class SoundEffect extends Node {
     private setUri(uri: string) {
         if ((uri.startsWith("pkg:") && BrsDevice.fileSystem.existsSync(uri)) || uri.startsWith("http")) {
             this.uri = uri;
-            const sfxIndex = BrsDevice.sfx.findIndex((wav) => wav === uri);
+            const sfxIndex = BrsDevice.sfx.indexOf(uri);
             if (sfxIndex > -1) {
                 this.audioId = sfxIndex;
             } else {
