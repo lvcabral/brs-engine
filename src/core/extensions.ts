@@ -39,9 +39,9 @@ export function clearExtensions() {
  */
 export function instantiateExtensions(): BrsExtension[] {
     const extensions: BrsExtension[] = [];
-    registeredFactories.forEach((factory) => {
+    for (const factory of registeredFactories.values()) {
         extensions.push(factory());
-    });
+    }
     return extensions;
 }
 

@@ -1843,7 +1843,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         if (!(this.lastStmt instanceof Stmt.Stop)) {
             this.checkDebugger(statement);
         }
-        this.extensions.forEach((ext) => ext.tick?.(this));
+        for (const ext of this.extensions.values()) {
+            ext.tick?.(this);
+        }
         this.location = statement.location;
         this.lastStmt = statement;
         return statement.accept<BrsType>(this);

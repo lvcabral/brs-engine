@@ -164,7 +164,9 @@ function createWorkerExports() {
         ParserExports,
         EnvironmentExports,
     ];
-    namespaces.forEach((ns) => mergeModuleExports(aggregated, ns));
+    for (const ns of namespaces) {
+        mergeModuleExports(aggregated, ns);
+    }
     aggregated.stdlib = stdlibModule;
     aggregated.netlib = netlibModule;
     aggregated.types = BrsTypes;
@@ -183,12 +185,12 @@ function mergeModuleExports(target: Record<string, any>, source: ModuleNamespace
     if (!source) {
         return target;
     }
-    Object.keys(source).forEach((key) => {
+    for (const key of Object.keys(source)) {
         if (key === "default" || key === "__esModule") {
             return;
         }
         target[key] = source[key];
-    });
+    }
     return target;
 }
 /// #else
@@ -670,11 +672,11 @@ export async function executeTask(payload: TaskPayload, customOptions?: Partial<
     setupTranslations(interpreter);
     console.debug("Calling Task in new Worker: ", payload.taskData.name, payload.taskData.m.top.functionname);
     try {
-        interpreter.extensions.forEach((ext) => {
+        for (const ext of interpreter.extensions.values()) {
             if (ext.execTask) {
                 ext.execTask(interpreter, payload);
             }
-        });
+        }
         if (BrsDevice.isDevMode) {
             postMessage(`debug,Task ${payload.taskData.name} is done.`);
         }
@@ -690,10 +692,10 @@ export async function executeTask(payload: TaskPayload, customOptions?: Partial<
 }
 
 function attachExtensions(interpreter: Interpreter, extensions: BrsExtension[]) {
-    extensions.forEach((ext) => {
+    for (const ext of extensions) {
         interpreter.extensions.set(ext.name, ext);
         ext.onInit?.(interpreter);
-    });
+    }
 }
 
 async function runBeforeExecuteHooks(interpreter: Interpreter, payload: AppPayload | TaskPayload) {
@@ -885,12 +887,11 @@ async function runSource(
             return { exitReason: AppExitReason.PACKAGED, cipherText: cipherText, iv: iv };
         }
         // Update Source Map with the SceneGraph components (if exists)
-        interpreter.extensions.forEach((ext) => {
+        for (const ext of interpreter.extensions.values()) {
             if (ext.updateSourceMap) {
                 ext.updateSourceMap(sourceMap);
             }
-        });
-
+        }
         // Execute the BrightScript code
         exitReason = await executeApp(interpreter, parseResult.statements, payload, sourceMap);
     }

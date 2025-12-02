@@ -12,8 +12,8 @@ function isFiniteRect(rect: Rect) {
 /* Function to calculate the bounding box of a rotated rectangle */
 export function rotateRect(rect: Rect, rotation: number, center?: number[]): Rect {
     // Default to top-left corner if centerX and centerY are not provided
-    const rotationCenterX = center !== undefined ? center[0] : 0;
-    const rotationCenterY = center !== undefined ? center[1] : 0;
+    const rotationCenterX = center === undefined ? 0 : center[0];
+    const rotationCenterY = center === undefined ? 0 : center[1];
 
     // Calculate the bounding box of the rotated rectangle
     const cos = Math.cos(-rotation);
