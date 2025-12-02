@@ -159,14 +159,13 @@ export class Keyboard extends Group {
 
     private handleLeftRight(key: string) {
         this.isDirty = true;
-        let handled = true;
         if (this.keyFocus.col === 0 && this.keyFocus.row === 3) {
             if (key === "left" && this.keyFocus.cursor === 1) {
                 this.keyFocus.cursor = -1;
-                return handled;
+                return true;
             } else if (key === "right" && this.keyFocus.cursor === -1) {
                 this.keyFocus.cursor = 1;
-                return handled;
+                return true;
             }
         } else if (this.keyFocus.col === 1 && this.keyFocus.row === 3 && key === "left") {
             this.keyFocus.cursor = 1;
@@ -179,7 +178,7 @@ export class Keyboard extends Group {
         } else if (this.keyFocus.col < 0) {
             this.keyFocus.col = 11;
         }
-        return handled;
+        return true;
     }
 
     private handleUpDown(key: string) {
