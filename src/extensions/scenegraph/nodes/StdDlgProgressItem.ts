@@ -1,4 +1,4 @@
-import { AAMember,Interpreter, RoAssociativeArray, BrsString, Float, IfDraw2D, Rect } from "brs-engine";
+import { AAMember, Interpreter, RoAssociativeArray, BrsString, Float, IfDraw2D, Rect } from "brs-engine";
 import { FieldModel } from "../SGTypes";
 import { Group } from "./Group";
 import { BusySpinner } from "./BusySpinner";

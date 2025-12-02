@@ -259,7 +259,7 @@ export class ArrayGrid extends Group {
             return;
         }
         const nodeTrans = this.getTranslation();
-        const drawTrans = angle === 0 ?  nodeTrans.slice() : rotateTranslation(nodeTrans, angle);
+        const drawTrans = angle === 0 ? nodeTrans.slice() : rotateTranslation(nodeTrans, angle);
         drawTrans[0] += origin[0];
         drawTrans[1] += origin[1];
         const size = this.getDimensions();

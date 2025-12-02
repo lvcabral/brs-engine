@@ -1,6 +1,6 @@
 import { FieldModel } from "../SGTypes";
 import { Group } from "./Group";
-import { AAMember, Interpreter, BrsBoolean, Float, Int32, RoBitmap,  IfDraw2D, Rect } from "brs-engine";
+import { AAMember, Interpreter, BrsBoolean, Float, Int32, RoBitmap, IfDraw2D, Rect } from "brs-engine";
 import { Font } from "./Font";
 import { TextEditBox } from "./TextEditBox";
 import { sgRoot } from "../SGRoot";
