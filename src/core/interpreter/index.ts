@@ -1112,7 +1112,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         let args = expression.args.map(this.evaluate, this);
 
         if (!isBrsCallable(callee)) {
-            if (callee instanceof BrsInvalid && expression.optional) {
+            const invalidCallee = BrsInvalid.Instance.equalTo(callee).toBoolean();
+            if (invalidCallee && expression.optional) {
                 return callee;
             }
             this.addError(new RuntimeError(RuntimeErrorDetail.NotAFunction, expression.closingParen.location));
