@@ -311,7 +311,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
                     this.canvas.height = this.height;
                 }
             }
-            let returnValue: BrsType = BrsInvalid.Instance;
+            let returnValue: BrsType;
             if (sceneType.value === SGNodeType.Scene) {
                 returnValue = new Scene([], SGNodeType.Scene);
             } else if (sgRoot.nodeDefMap.has(sceneType.value.toLowerCase())) {
