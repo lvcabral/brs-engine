@@ -94,7 +94,7 @@ export class SoundEffect extends Node {
                 this.audioId = sfxIndex;
             } else {
                 this.audioId = BrsDevice.sfx.length;
-                postMessage(`sfx,new,${uri},${this.audioId}`);
+                if (!sgRoot.inTaskThread()) postMessage(`sfx,new,${uri},${this.audioId}`);
                 BrsDevice.sfx.push(uri);
             }
             super.setValue("loadStatus", new BrsString("ready"));
@@ -119,13 +119,13 @@ export class SoundEffect extends Node {
             this.setState(MediaEvent.TOO_MANY);
         } else {
             sgRoot.sfx[this.stream] = this;
-            postMessage(`sfx,trigger,${this.uri},${volume},${this.stream}`);
+            if (!sgRoot.inTaskThread()) postMessage(`sfx,trigger,${this.uri},${volume},${this.stream}`);
             this.setState(MediaEvent.START_PLAY);
         }
     }
 
     private stop() {
-        postMessage(`sfx,stop,${this.uri}`);
+        if (!sgRoot.inTaskThread()) postMessage(`sfx,stop,${this.uri}`);
         if (sgRoot.sfx[this.stream] === this) {
             sgRoot.sfx[this.stream] = undefined;
         }

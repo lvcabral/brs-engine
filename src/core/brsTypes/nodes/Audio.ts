@@ -45,11 +45,18 @@ export class Audio extends Node {
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(members);
 
+        // Prevent initialize Audio in task thread
+        if (sgRoot.inTaskThread()) {
+            return;
+        }
+
+        // Initialize with empty playlist and default settings
         postMessage({ audioPlaylist: new Array<string>() });
         postMessage("audio,loop,false");
         postMessage("audio,next,-1");
         postMessage("audio,mute,false");
 
+        // Set itself as the root audio object
         sgRoot.setAudio(this);
     }
 
@@ -60,30 +67,30 @@ export class Audio extends Node {
             const control = value.getValue().toLowerCase();
             if (validControl.includes(control)) {
                 this.checkContentChanged();
-                postMessage(`audio,${control}`);
+                if (!sgRoot.inTaskThread()) postMessage(`audio,${control}`);
             } else {
                 value = new BrsString("none");
             }
         } else if (fieldName === "seek" && isBrsNumber(value)) {
             this.checkContentChanged();
             const position = jsValueOf(value) as number;
-            postMessage(`audio,seek,${position * 1000}`);
+            if (!sgRoot.inTaskThread()) postMessage(`audio,seek,${position * 1000}`);
         } else if (fieldName === "notificationInterval" && isBrsNumber(value)) {
-            postMessage(`audio,notify,${Math.round(jsValueOf(value) * 1000)}`);
+            if (!sgRoot.inTaskThread()) postMessage(`audio,notify,${Math.round(jsValueOf(value) * 1000)}`);
         } else if (fieldName === "loop" && isBrsBoolean(value)) {
-            postMessage(`audio,loop,${value.toBoolean()}`);
+            if (!sgRoot.inTaskThread()) postMessage(`audio,loop,${value.toBoolean()}`);
         } else if (fieldName === "mute" && isBrsBoolean(value)) {
-            postMessage(`audio,mute,${value.toBoolean()}`);
+            if (!sgRoot.inTaskThread()) postMessage(`audio,mute,${value.toBoolean()}`);
         } else if (fieldName === "contentIsPlaylist".toLowerCase() && isBrsBoolean(value)) {
             const currentFlag = this.getValueJS("contentIsPlaylist") as boolean;
             const newFlag = value.toBoolean();
             const content = this.getValue("content");
             if (currentFlag !== newFlag && content instanceof ContentNode) {
                 // If the contentIsPlaylist flag changed, we need to reset the content
-                postMessage({ audioPlaylist: this.formatContent(content) });
+                if (!sgRoot.inTaskThread()) postMessage({ audioPlaylist: this.formatContent(content) });
             }
         } else if (fieldName === "content" && value instanceof ContentNode) {
-            postMessage({ audioPlaylist: this.formatContent(value) });
+            if (!sgRoot.inTaskThread()) postMessage({ audioPlaylist: this.formatContent(value) });
         }
         super.setValue(index, value, alwaysNotify, kind);
     }
@@ -129,7 +136,7 @@ export class Audio extends Node {
     private checkContentChanged() {
         const content = this.getValue("content");
         if (content instanceof ContentNode && content.changed) {
-            postMessage({ audioPlaylist: this.formatContent(content) });
+            if (!sgRoot.inTaskThread()) postMessage({ audioPlaylist: this.formatContent(content) });
             content.changed = false;
         }
     }
