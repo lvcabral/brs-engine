@@ -376,4 +376,3 @@ export class Field {
         }, environment);
     }
 }
-
