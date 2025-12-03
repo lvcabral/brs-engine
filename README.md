@@ -86,7 +86,7 @@ npm install brs-node
 
 - **[brs-scenegraph](./packages/scenegraph/README.md)** – ships the SceneGraph runtime as a standalone extension that loads automatically whenever a Roku app contains `pkg:/components/` assets.
 - **Roku SDK1 compatibility (planned)** – upcoming extension focused on legacy SDK1 channels and their APIs.
-- **BrightSign runtime (planned)** – upcoming extension to model BrightSign-specific components and hardware features.
+- **BrightSign runtime (planned)** – upcoming extension to add support for [BrightSign](https://docs.brightsign.biz/developers)-specific components and hardware features.
 
 Read more about the shared extension model in [docs/extensions.md](./docs/extensions.md).
 
