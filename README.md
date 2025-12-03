@@ -19,15 +19,13 @@ The **brs-engine** is developed in [TypeScript](https://www.typescriptlang.org/)
 
 This repository is organized as a [monorepo](https://en.wikipedia.org/wiki/Monorepo) that contains three separate packages:
 
-- **brs-engine** – the core browser/web worker package that provides the BrightScript interpreter for web apps.
-- **brs-node** – the Node.js package that provides a CLI app and the node.js interpreter library for non-browser platforms.
-- **brs-scenegraph** – the SceneGraph extension package that adds support for SceneGraph components and nodes.
-
-
+- **brs-engine** – core browser/web worker package that provides the BrightScript interpreter for web apps.
+- **brs-node** – Node.js package that provides a CLI app and the interpreter library for non-browser platforms.
+- **brs-scenegraph** – Roku SceneGraph extension package that adds support for RSG components and nodes.
 
 > [!NOTE]
 >
-> - The **SceneGraph** support is being developed as an extension package (see section below), and released as an experimental feature. We have a lot of challenges ahead, feel free to reach out and learn how [you can help](docs/contributing.md).
+> - The **SceneGraph** support is currently in development, and released as an experimental feature. We have a lot of challenges ahead, feel free to reach out and learn how [you can help](docs/contributing.md).
 > - Although **brs-engine** runs apps with user interface, it has no intention of emulating the full **Roku OS** or hardware devices, it is primarily aimed as a development tool for the **Roku Community**.
 > - The **simulation engine** can also to be used as a framework for running **BrightScript** apps and games in other platforms, like iOS, macOS, Android, Linux and Windows.
 > - Please check the [Current Limitations](docs/limitations.md) document for further details on what is still missing or out of scope.
