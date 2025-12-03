@@ -16,10 +16,6 @@ This package includes a **Web Worker** library and an **Engine API** library for
 >
 > Since v1.9.0, this package no longer brings the **CLI** app and **Node.js** libraries for the **simulation engine**, for those use cases we created the new [brs-node](https://www.npmjs.com/package/brs-node?activeTab=versions) package. Check it out!
 
-## SceneGraph Extension
-
-SceneGraph support is provided by the optional [`brs-scenegraph`](https://www.npmjs.com/package/brs-scenegraph?activeTab=versions) extension. When your Roku app bundle contains `pkg:/components/`, the packaging step automatically instructs the worker to load `lib/brs-sg.js` so `roSGScreen` apps run inside the browser. See [packages/scenegraph/README.md](../../packages/scenegraph/README.md) for deployment details.
-
 <p align="center"><img alt="Simulator Web and Desktop" title="Simulator Web and Desktop" src="https://raw.githubusercontent.com/lvcabral/brs-engine/refs/heads/scenegraph/docs/images/screenshots.png"/></p>
 
 ## Key Features
@@ -44,28 +40,33 @@ SceneGraph support is provided by the optional [`brs-scenegraph`](https://www.np
 ### 📺 Device Simulation
 
 - **Screen resolutions** - Support for various Roku display modes
-- **Input Handling** - Keyboard and gamepad simulation for remote control input, see [docs](https://github.com/lvcabral/brs-engine/tree/scenegraph/docs/remote-control.md) for more details
+- **Input Handling** - Keyboard and gamepad simulation for remote control input, see [docs](https://github.com/lvcabral/brs-engine/blob/master/docs/remote-control.md) for more details
 - **File System Simulation** - Including `pkg:/`, `tmp:/`, `cachefs:/`, `common:/` and `ext1:/` volumes
 - **Registry simulation** - Roku device registry emulation saved on browser local storage
 - **Micro Debugger** - Step-through debugging capabilities, similar to the Roku experience
 - **Localization** - Language and region settings
-- **Customization** - You can customize device features and behaviors, see [docs](https://github.com/lvcabral/brs-engine/tree/scenegraph/docs/customization.md) for more details
+- **Customization** - You can customize device features and behaviors, see [docs](https://github.com/lvcabral/brs-engine/blob/master/docs/customization.md) for more details
+
+## SceneGraph Extension
+
+SceneGraph support is provided by the optional [`brs-scenegraph`](https://www.npmjs.com/package/brs-scenegraph) extension. When your Roku app bundle contains `pkg:/components/`, the packaging step automatically instructs the worker to load `lib/brs-sg.js` so `roSGScreen` based apps run inside the browser. See [packages/scenegraph/README.md](../../packages/scenegraph/README.md) for deployment details.
+
 
 > ⚠️ Note:
 >
-> **SceneGraph** support is currently under development in this branch, with pre-release **alpha** versions available for testing. See the current state of the SceneGraph implementation and other limitations of the **engine** in the [Current Limitations](https://github.com/lvcabral/brs-engine/tree/scenegraph/docs/limitations.md) document.
+> **SceneGraph** extension is currently under development, with pre-release **alpha** versions available for testing. See the current state of the SceneGraph implementation and other limitations of the **engine** in the [Current Limitations](https://github.com/lvcabral/brs-engine/blob/master/docs/limitations.md) document.
 
 ## Installation
 
 ```bash
-npm install brs-engine@alpha
+npm install brs-engine
 ```
 
 ### Libraries
 
 | Library File | Description |
 | --- | --- |
-| `libs/brs.api.js` | The **[Engine API](https://github.com/lvcabral/brs-engine/tree/scenegraph/docs/engine-api.md)** library to be imported and used by the applications hosting the Simulator. |
+| `libs/brs.api.js` | The **[Engine API](https://github.com/lvcabral/brs-engine/blob/master/docs/engine-api.md)** library to be imported and used by the applications hosting the Simulator. |
 | `libs/brs.worker.js` | A **[Web Worker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers)** library that runs the language interpreter in a background thread on the browser platform. |
 
 ### Compatibility
@@ -84,16 +85,16 @@ The Web Worker library require features like [SharedArrayBuffer](https://develop
 
 This package repository provides a sample web application you can quickly run and test the engine, check the docs to learn more:
 
-- [How to integrate the engine to your app](https://github.com/lvcabral/brs-engine/tree/scenegraph/docs/integrating.md)
-- [How to customize the Engine behavior](https://github.com/lvcabral/brs-engine/tree/scenegraph/docs/customization.md)
-- [Simulation Engine API Reference](https://github.com/lvcabral/brs-engine/tree/scenegraph/docs/engine-api.md)
-- [Remote Control Simulation](https://github.com/lvcabral/brs-engine/tree/scenegraph/docs/remote-control.md)
-- [How to build from source](https://github.com/lvcabral/brs-engine/tree/scenegraph/docs/build-from-source.md)
-- [How to contribute to this Project](https://github.com/lvcabral/brs-engine/tree/scenegraph/docs/contributing.md)
+- [How to integrate the engine to your app](https://github.com/lvcabral/brs-engine/blob/master/docs/integrating.md)
+- [How to customize the Engine behavior](https://github.com/lvcabral/brs-engine/blob/master/docs/customization.md)
+- [Simulation Engine API Reference](https://github.com/lvcabral/brs-engine/blob/master/docs/engine-api.md)
+- [Remote Control Simulation](https://github.com/lvcabral/brs-engine/blob/master/docs/remote-control.md)
+- [How to build from source](https://github.com/lvcabral/brs-engine/blob/master/docs/build-from-source.md)
+- [How to contribute to this Project](https://github.com/lvcabral/brs-engine/blob/master/docs/contributing.md)
 
 ### Changelog
 
-- Read the [project changelog](https://github.com/lvcabral/brs-engine/tree/scenegraph/CHANGELOG.md) to view the release notes.
+- Read the [project changelog](https://github.com/lvcabral/brs-engine/blob/master/CHANGELOG.md) to view the release notes.
 
 ## Applications
 
@@ -134,4 +135,4 @@ The simulator is also available as a multi-platform **desktop application** (Win
 
 Copyright © 2019-2025 Marcelo Lv Cabral. All rights reserved.
 
-Licensed under the [MIT](https://github.com/lvcabral/brs-engine/tree/scenegraph/LICENSE) license.
+Licensed under the [MIT](https://github.com/lvcabral/brs-engine/blob/master/LICENSE) license.

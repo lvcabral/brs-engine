@@ -2,8 +2,8 @@
 
 An interpreter for the BrightScript language that runs Roku apps on browser platforms and Node.js.
 
-[![NPM Version (with dist tag)](https://img.shields.io/npm/v/brs-engine/alpha?logo=npm&label=brs-engine&color=blue)](https://npmjs.org/package/brs-engine?activeTab=versions)
-[![NPM Version (with dist tag)](https://img.shields.io/npm/v/brs-node/alpha?logo=npm&label=brs-node&color=blue)](https://www.npmjs.com/package/brs-node?activeTab=versions)
+[![NPM Version](https://img.shields.io/npm/v/brs-engine?logo=npm&label=brs-engine&color=blue)](https://npmjs.org/package/brs-engine?activeTab=versions)
+[![NPM Version](https://img.shields.io/npm/v/brs-node?logo=npm&label=brs-node&color=blue)](https://www.npmjs.com/package/brs-node?activeTab=versions)
 [![License](https://img.shields.io/github/license/lvcabral/brs-engine?logo=github)](https://github.com/lvcabral/brs-engine/blob/master/LICENSE)
 [![Build](https://github.com/lvcabral/brs-engine/actions/workflows/build.yml/badge.svg)](https://github.com/lvcabral/brs-engine/actions/workflows/build.yml)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=lvcabral_brs-emu&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=lvcabral_brs-emu)
@@ -52,7 +52,7 @@ The browser package provides a complete BrightScript interpreter that runs direc
 ### Installation
 
 ```bash
-npm install brs-engine@alpha
+npm install brs-engine
 ```
 
 [📖 Browser Package: More details](./packages/browser/README.md) | [🚀 Live Demo](https://lvcabral.com/brs) | [🧑‍💻 Code Playground](http://brsFiddle.net) | [🖥️ Desktop App](https://github.com/lvcabral/brs-desktop)
@@ -76,11 +76,12 @@ The Node.js package includes a complete CLI application, ECP and SSDP servers, a
 
 ```bash
 # for global CLI installation
-npm install -g brs-node@alpha
+npm install -g brs-node
 
 # for project installation
-npm install brs-node@alpha
+npm install brs-node
 ```
+
 [📖 Node.js Package: More details](./packages/node/README.md) | [⌨️ CLI Guide](./docs/run-as-cli.md)
 
 ## ⚙️ Extension Packages

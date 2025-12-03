@@ -1,8 +1,8 @@
 # BrightScript SceneGraph Extension
 
-SceneGraph runtime published as a standalone extension for the **BrightScript Simulation Engine**. It delivers the `roSGScreen` interpreter, component parser, node factory, tasks, and drawing pipeline as a plug-in so browser and Node.js hosts can enable Roku SceneGraph support on demand.
+This package publishes the Roku SceneGraph support as a standalone extension for the **BrightScript Simulation Engine**. It delivers the `roSGScreen` interpreter, component parser, node factory, tasks, and drawing pipeline as a plug-in so browser and Node.js hosts can enable RSG support on demand.
 
-[![NPM Version (with dist tag)](https://img.shields.io/npm/v/brs-scenegraph/alpha?logo=npm&label=brs-scenegraph&color=blue)](https://www.npmjs.com/package/brs-scenegraph?activeTab=versions)
+[![NPM Version](https://img.shields.io/npm/v/brs-scenegraph?logo=npm&label=brs-scenegraph&color=blue)](https://www.npmjs.com/package/brs-scenegraph?activeTab=versions)
 [![License](https://img.shields.io/github/license/lvcabral/brs-engine?logo=github)](https://github.com/lvcabral/brs-engine/blob/master/LICENSE)
 [![Build](https://github.com/lvcabral/brs-engine/actions/workflows/build.yml/badge.svg)](https://github.com/lvcabral/brs-engine/actions/workflows/build.yml)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=lvcabral_brs-emu&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=lvcabral_brs-emu)
@@ -17,7 +17,8 @@ SceneGraph runtime published as a standalone extension for the **BrightScript Si
 
 > ⚠️ Note:
 >
-> SceneGraph support is in active development and currently released as **alpha** builds. Follow the main repository for status updates and known limitations.
+> SceneGraph support is in active development and currently released as **alpha** builds.
+> See the current state of the SceneGraph implementation and other limitations of the **engine** in the [Current Limitations](https://github.com/lvcabral/brs-engine/blob/master/docs/limitations.md) document.
 
 ## Project packages
 
@@ -32,7 +33,7 @@ This module belongs to the [BrightScript Simulation Engine](https://github.com/l
 ## Installation
 
 ```bash
-npm install brs-scenegraph@alpha
+npm install brs-scenegraph
 ```
 
 The extension depends on `brs-engine` so the runtime contracts stay in sync. When designing your own extension consider adding `brs-engine` (or `brs-node`) as a peer dependency as well.
