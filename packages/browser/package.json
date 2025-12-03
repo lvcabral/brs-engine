@@ -32,7 +32,6 @@
   "files": [
     "assets/",
     "lib/brs.worker.js",
-    "lib/brs-sg.js",
     "lib/*.LICENSE.txt",
     "types/src/api/",
     "CHANGELOG.md"

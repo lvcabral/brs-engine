@@ -1,0 +1,17 @@
+{
+    "default": {
+        "regular": "DejaVuSansCondensed.ttf",
+        "bold": "DejaVuSansCondensed-Bold.ttf",
+        "italic": "DejaVuSansCondensed-Oblique.ttf",
+        "boldItalic": "DejaVuSansCondensed-BoldOblique.ttf"
+    },
+    "closedCaptions": {
+        "cc-serif-fixed": "Colon Mono W01 Regular.ttf",
+        "cc-serif": "Colon W01 Regular.ttf",
+        "cc-sans-serif-fixed": "RobotoMono-Regular.ttf",
+        "cc-sans-serif": "Roboto-Regular.ttf",
+        "cc-casual": "KomikaText-Regular.ttf",
+        "cc-cursive": "SF_Cartoonist_Hand.ttf",
+        "cc-small-caps": "Florsn18.ttf"
+    }
+}

@@ -14,6 +14,7 @@ This package publishes the Roku SceneGraph support as a standalone extension for
 - Parses component XML files, builds inheritance trees, and spins up sub-interpreter environments for each component script.
 - Registers `RoSGScreen`, `RoSGNode`, built-in SceneGraph nodes, events, and task helpers so Roku apps can execute unmodified.
 - Ships both browser (`lib/brs-sg.js`) and Node.js (`lib/brs-sg.node.js`) builds plus TypeScript definitions.
+- Bundles SceneGraph-specific assets (fonts, locale data, images) into `assets/common.zip`, merging the core `src/core/common` tree with the extension's overrides under `src/extensions/scenegraph/common`.
 
 > ⚠️ Note:
 >
@@ -43,8 +44,9 @@ The extension depends on `brs-engine` so the runtime contracts stay in sync. Whe
 ### Browser builds (`brs-engine`)
 
 1. Deploy `lib/brs.worker.js`, `lib/brs.api.js`, and `lib/brs-sg.js` together.
-2. When an app package contains a `pkg:/components/` folder the packaging layer automatically queues `{ moduleId: "brs-scenegraph", modulePath: "./brs-sg.js" }` for the worker.
-3. The worker loads the script via `importScripts`, creates `BrightScriptExtension`, and registers it before running the app.
+2. Replace `assets/common.zip` with the one from this package to provide SceneGraph fonts and resources.
+3. When an app package contains a `pkg:/components/` folder the packaging layer automatically queues `{ moduleId: "brs-scenegraph", modulePath: "./brs-sg.js" }` for the worker.
+4. The worker loads the script via `importScripts`, creates `BrightScriptExtension`, and registers it before running the app.
 
 No extra glue is required if the file sits next to the worker bundle, but you can preload it manually by importing the module and calling `registerExtension` yourself if desired.
 

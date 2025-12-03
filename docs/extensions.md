@@ -30,9 +30,10 @@ The SceneGraph runtime ships as a standalone extension located under `packages/s
 
 ### Browser integrations
 
-1. Ship `brs.worker.js`, `brs.api.js`, and `brs-sg.js` together (the browser package already copies all three to `packages/browser/lib`).
-2. When an app package contains a `pkg:/components/` folder the packaging layer pushes `{ moduleId: "brs-scenegraph", modulePath: "./brs-sg.js" }` into the worker payload.
-3. The worker calls `importScripts("./brs-sg.js")`, finds `BrightScriptExtension`, and calls `registerExtension` before executing the app.
+1. Ship `brs.worker.js`, `brs.api.js`, and `brs-sg.js` together under the `lib/` folder.
+2. Copy `assets/common.zip` from this package to replace the default one, providing SceneGraph fonts and resources.
+3. When an app package contains a `pkg:/components/` folder the packaging layer pushes `{ moduleId: "brs-scenegraph", modulePath: "./brs-sg.js" }` into the worker payload.
+4. The worker calls `importScripts("./brs-sg.js")`, finds `BrightScriptExtension`, and calls `registerExtension` before executing the app.
 
 No extra glue code is required as long as `brs-sg.js` is served next to the worker bundle. If you want to preload the extension even when no components are present, call `registerExtension(() => new BrightScriptExtension())` manually in your host code.
 
@@ -50,6 +51,16 @@ registerExtension(() => new BrightScriptExtension());
 
 Once registered, every interpreter you create (via `createPayloadFromFiles`, CLI runs, tests, etc.) will run SceneGraph components.
 
+### Common volume assets
+
+SceneGraph needs fonts, locale tables, and imagery that do not ship with the core interpreter. During `npm run build` or `npm run release` inside `packages/scenegraph` so this package's assets build step runs:
+
+- Copy the base assets from `src/core/common` and merge them with the extension overrides under `src/extensions/scenegraph/common` (extension files win on name collisions).
+- Zip the merged tree to `packages/scenegraph/assets/common.zip`, which mirrors Roku's `common:/` volume.
+- In the development environment it overwrites `packages/browser/assets/common.zip` so the browser package example uses the SceneGraph-aware asset bundle.
+
+Note: In production environments you must copy `assets/common.zip` from this package to replace the default `common:/` volume.
+
 ## Creating your own extension
 
 1. **Implement `BrsExtension`** – the interface lives in `src/core/extensions.ts` and exposes lifecycle hooks:
@@ -63,7 +74,7 @@ Once registered, every interpreter you create (via `createPayloadFromFiles`, CLI
 
 3. **Bundle for each runtime** – browser workers expect an ES5 bundle that can be loaded through `importScripts`, while Node.js integrations can rely on CommonJS/ESM modules. The SceneGraph package emits `lib/brs-sg.js` (browser) and `lib/brs-sg.node.js` (Node) as a reference implementation.
 
-4. **Distribute assets** – if your extension needs fonts, bitmaps, or configuration files, package them with your module and load them from `BrsDevice.fileSystem` or via the host environment.
+4. **Distribute assets** – if your extension needs fonts, bitmaps, or configuration files, package them with your module in a common volume zip (e.g. `assets/common.zip`). Document how hosts should copy the zip to replace the default `common:/` volume.
 
 5. **Document activation** – explain how hosts should copy your bundle next to `brs.worker.js` or how they should call `registerExtension`. The worker only loads modules that you add to the `extensions` array inside the payload.
 

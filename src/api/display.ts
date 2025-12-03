@@ -414,7 +414,7 @@ export async function loadCaptionsFonts(assets: ArrayBufferLike) {
         return;
     }
     try {
-        const fontsFile = "fonts/system-fonts.json";
+        const fontsFile = "fonts/default-fonts.json";
         const commonZip = unzipSync(new Uint8Array(assets));
         const jsonFonts = commonZip[fontsFile];
         if (!(jsonFonts instanceof Uint8Array)) {

@@ -1,5 +1,7 @@
 const webpack = require("webpack");
 const path = require("node:path");
+const CopyPlugin = require("copy-webpack-plugin");
+const ZipPlugin = require("zip-webpack-plugin");
 
 module.exports = (env) => {
     let mode, sourceMap;
@@ -138,6 +140,65 @@ module.exports = (env) => {
                 umdNamedDefine: true,
                 globalObject: "typeof self !== 'undefined' ? self : this",
             },
+        },
+        // Assets bundle - merges core and SceneGraph common assets into a single zip
+        {
+            entry: {},
+            mode: "production",
+            output: {
+                path: path.resolve(__dirname, "../../../out/scenegraph_common_zip/"),
+                publicPath: "/",
+            },
+            plugins: [
+                new CopyPlugin({
+                    patterns: [
+                        { from: "../../src/core/common/**", to: "./" },
+                        { from: "../../src/extensions/scenegraph/common/**", to: "./", force: true },
+                    ],
+                }),
+                new ZipPlugin({
+                    path: "../../packages/scenegraph/assets",
+                    filename: `common.zip`,
+                    extension: "zip",
+                    zipOptions: {
+                        forceZip64Format: false,
+                    },
+                    exclude: [/\.csv$/],
+                    pathMapper: function (assetPath) {
+                        if (assetPath.startsWith("../../src/core/common/")) {
+                            return assetPath.replace("../../src/core/common/", "");
+                        }
+                        if (assetPath.startsWith("../../src/extensions/scenegraph/common/")) {
+                            return assetPath.replace("../../src/extensions/scenegraph/common/", "");
+                        }
+                        return assetPath;
+                    },
+                }),
+                {
+                    apply: (compiler) => {
+                        compiler.hooks.afterEmit.tap("CopyCommonZipToPackages", () => {
+                            const fs = require("fs");
+                            const sourcePath = path.resolve(__dirname, "../assets/common.zip");
+                            if (!fs.existsSync(sourcePath)) {
+                                return;
+                            }
+
+                            const destinations = [
+                                path.resolve(__dirname, "../../browser/assets/common.zip"),
+                                path.resolve(__dirname, "../../node/assets/common.zip"),
+                            ];
+
+                            destinations.forEach((destPath) => {
+                                const destDir = path.dirname(destPath);
+                                if (!fs.existsSync(destDir)) {
+                                    fs.mkdirSync(destDir, { recursive: true });
+                                }
+                                fs.copyFileSync(sourcePath, destPath);
+                            });
+                        });
+                    },
+                },
+            ],
         },
     ];
 };

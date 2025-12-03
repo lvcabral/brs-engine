@@ -5,10 +5,15 @@
     "main": "lib/brs-sg.node.js",
     "browser": "lib/brs-sg.js",
     "types": "types/index.d.ts",
+    "files": [
+        "assets/",
+        "lib/*.LICENSE.txt",
+        "types/"
+    ],
     "scripts": {
         "build": "webpack --config ./config/webpack.config.js --env development && tsc --project ./config/tsconfig.json",
         "release": "webpack --config ./config/webpack.config.js --env production && tsc --project ./config/tsconfig.json",
-        "clean": "rimraf lib types",
+        "clean": "rimraf ./lib ./types ./assets",
         "test": "jest"
     },
     "dependencies": {
@@ -26,6 +31,8 @@
         "webpack": "^5.97.1",
         "webpack-cli": "^5.0.1",
         "ts-loader": "^9.5.1",
-        "ifdef-loader": "^2.3.2"
+        "ifdef-loader": "^2.3.2",
+        "copy-webpack-plugin": "^12.0.2",
+        "zip-webpack-plugin": "^4.0.3"
     }
 }
