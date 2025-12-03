@@ -2,6 +2,26 @@
     "name": "brs-scenegraph",
     "version": "0.0.1",
     "description": "SceneGraph addon for BrightScript Simulation Engine",
+    "author": "Marcelo Lv Cabral <marcelo@lvcabral.com> (https://lvcabral.com/)",
+    "license": "MIT",
+    "copyright": "© 2019-2025, Marcelo Lv Cabral",
+    "homepage": "https://lvcabral.com/brs/",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/lvcabral/brs-engine.git"
+    },
+    "bugs": {
+        "url": "https://github.com/lvcabral/brs-engine/issues"
+    },
+    "keywords": [
+        "brightscript",
+        "scenegraph",
+        "roku",
+        "emulator",
+        "simulator",
+        "interpreter",
+        "addon"
+    ],
     "main": "lib/brs-sg.node.js",
     "browser": "lib/brs-sg.js",
     "types": "types/index.d.ts",

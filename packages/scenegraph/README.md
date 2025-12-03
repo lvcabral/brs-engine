@@ -2,7 +2,7 @@
 
 This package publishes the Roku SceneGraph support as a standalone extension for the **BrightScript Simulation Engine**. It delivers the `roSGScreen` interpreter, component parser, node factory, tasks, and drawing pipeline as a plug-in so browser and Node.js hosts can enable RSG support on demand.
 
-[![NPM Version](https://img.shields.io/npm/v/brs-scenegraph?logo=npm&label=brs-scenegraph&color=blue)](https://www.npmjs.com/package/brs-scenegraph?activeTab=versions)
+[![NPM Version](https://img.shields.io/npm/v/brs-scenegraph?logo=npm&label=brs-scenegraph&color=blue)](https://www.npmjs.com/package/brs-scenegraph)
 [![License](https://img.shields.io/github/license/lvcabral/brs-engine?logo=github)](https://github.com/lvcabral/brs-engine/blob/master/LICENSE)
 [![Build](https://github.com/lvcabral/brs-engine/actions/workflows/build.yml/badge.svg)](https://github.com/lvcabral/brs-engine/actions/workflows/build.yml)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=lvcabral_brs-emu&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=lvcabral_brs-emu)
@@ -27,8 +27,8 @@ This module belongs to the [BrightScript Simulation Engine](https://github.com/l
 
 | Package | Description |
 | --- | --- |
-| [brs-engine](https://www.npmjs.com/package/brs-engine?activeTab=versions) | Browser/WebWorker build used by PWAs, Electron apps, and the web simulator |
-| [brs-node](https://www.npmjs.com/package/brs-node?activeTab=versions) | Node.js CLI and automation runtime |
+| [brs-engine](https://www.npmjs.com/package/brs-engine) | Browser/WebWorker build used by PWAs, Electron apps, and the web simulator |
+| [brs-node](https://www.npmjs.com/package/brs-node) | Node.js CLI and automation runtime |
 | **brs-scenegraph** (this package) | Optional SceneGraph extension consumed by the other packages |
 
 ## Installation

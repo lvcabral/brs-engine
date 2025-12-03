@@ -1,5 +1,6 @@
 const webpack = require("webpack");
 const path = require("node:path");
+const fs = require("node:fs");
 const CopyPlugin = require("copy-webpack-plugin");
 const ZipPlugin = require("zip-webpack-plugin");
 
@@ -49,7 +50,6 @@ module.exports = (env) => {
                 {
                     apply: (compiler) => {
                         compiler.hooks.afterEmit.tap("CopyToNodePackage", () => {
-                            const fs = require("fs");
                             const sourcePath = path.resolve(__dirname, distPath, "brs-sg.node.js");
                             const destPath = path.resolve(__dirname, "../../node/bin/brs-sg.node.js");
                             if (fs.existsSync(sourcePath)) {
@@ -177,7 +177,6 @@ module.exports = (env) => {
                 {
                     apply: (compiler) => {
                         compiler.hooks.afterEmit.tap("CopyCommonZipToPackages", () => {
-                            const fs = require("fs");
                             const sourcePath = path.resolve(__dirname, "../assets/common.zip");
                             if (!fs.existsSync(sourcePath)) {
                                 return;

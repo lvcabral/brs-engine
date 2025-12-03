@@ -2,7 +2,7 @@
 
 An interpreter for the BrightScript language that runs as a CLI and Roku apps in Node.js.
 
-[![NPM Version](https://img.shields.io/npm/v/brs-node?logo=npm&label=brs-node&color=blue)](https://www.npmjs.com/package/brs-node?activeTab=versions)
+[![NPM Version](https://img.shields.io/npm/v/brs-node?logo=npm&label=brs-node&color=blue)](https://npmjs.com/package/brs-node)
 [![License](https://img.shields.io/github/license/lvcabral/brs-engine?logo=github)](https://github.com/lvcabral/brs-engine/blob/master/LICENSE)
 [![Build](https://github.com/lvcabral/brs-engine/actions/workflows/build.yml/badge.svg)](https://github.com/lvcabral/brs-engine/actions/workflows/build.yml)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=lvcabral_brs-emu&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=lvcabral_brs-emu)
@@ -14,7 +14,7 @@ The **BrightScript Simulation Engine** provides a complete a set of libraries an
 
 > 🚨 Important:
 >
-> Since v1.9.0, this package was split from the browser package, to use the **simulation engine** with web based applications check out the [brs-engine](https://www.npmjs.com/package/brs-engine?activeTab=versions) package.
+> Since v1.9.0, this package was split from the browser package, to use the **simulation engine** with web based applications check out the [brs-engine](https://www.npmjs.com/package/brs-engine) package.
 
 <p align="center"><img alt="Simulator CLI" title="Simulator CLI" src="https://raw.githubusercontent.com/lvcabral/brs-engine/refs/heads/scenegraph/docs/images/brs-cli.png?raw=true" width="500"/></p>
 

@@ -2,9 +2,9 @@
 
 An interpreter for the BrightScript language that runs Roku apps on browser platforms and Node.js.
 
-[![NPM Version](https://img.shields.io/npm/v/brs-engine?logo=npm&label=brs-engine&color=blue)](https://npmjs.org/package/brs-engine?activeTab=versions)
-[![NPM Version](https://img.shields.io/npm/v/brs-node?logo=npm&label=brs-node&color=blue)](https://www.npmjs.com/package/brs-node?activeTab=versions)
-[![License](https://img.shields.io/github/license/lvcabral/brs-engine?logo=github)](https://github.com/lvcabral/brs-engine/blob/master/LICENSE)
+[![NPM Version](https://img.shields.io/npm/v/brs-engine?logo=npm&label=brs-engine&color=blue)](https://npmjs.org/package/brs-engine)
+[![NPM Version](https://img.shields.io/npm/v/brs-node?logo=npm&label=brs-node&color=blue)](https://npmjs.com/package/brs-node)
+[![NPM Version](https://img.shields.io/npm/v/brs-scenegraph?logo=npm&label=brs-scenegraph&color=blue)](https://npmjs.com/package/brs-scenegraph)
 [![Build](https://github.com/lvcabral/brs-engine/actions/workflows/build.yml/badge.svg)](https://github.com/lvcabral/brs-engine/actions/workflows/build.yml)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=lvcabral_brs-emu&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=lvcabral_brs-emu)
 [![Slack](https://img.shields.io/badge/Slack-RokuCommunity-4A154B?logo=slack)](https://join.slack.com/t/rokudevelopers/shared_invite/zt-4vw7rg6v-NH46oY7hTktpRIBM_zGvwA)
