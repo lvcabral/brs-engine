@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+<a name="v1.10.0"></a>
+
+## [v1.10.0 - BrsEvent and BrsCollection](https://github.com/lvcabral/brs-engine/releases/tag/v1.10.0) - 03 December 2025
+
+This is the final v1.x release in the main branch and brings the inclusion of the `BrsEvent` abstract class and `BrsCollection` interface, which provide a structured way to handle events and collections within the BrightScript engine. Additionally, this release includes various dependency updates and bug fixes to enhance security, stability and performance. This label will be branched for maintenance updates while work on the v2.0 major release will continue in the `main` branch.
+
+## Release Changes
+
+* Replaced dependency `xml2js` by `xmldoc` by @lvcabral in https://github.com/lvcabral/brs-engine/pull/749
+* Bump js-yaml from 3.14.1 to 3.14.2 by @dependabot[bot] in https://github.com/lvcabral/brs-engine/pull/752
+* Raise type mismatch error when passing `Uninitialized` value to non-dynamic function parameters by @lvcabral in https://github.com/lvcabral/brs-engine/pull/756
+* Added `BrsEvent` abstract class and `BrsCollection` interface by @lvcabral in https://github.com/lvcabral/brs-engine/pull/759
+* Bump node-forge from 1.3.1 to 1.3.2 by @dependabot[bot] in https://github.com/lvcabral/brs-engine/pull/758
+* Fixed optional chaining with `roInvalid` when using methods by @lvcabral in https://github.com/lvcabral/brs-engine/pull/763
+
+[Full Changelog][v1.10.0]
+
 <a name="v1.9.9"></a>
 
 ## [v1.9.9 - File System improvements](https://github.com/lvcabral/brs-engine/releases/tag/v1.9.9) - 14 November 2025
@@ -1200,6 +1217,7 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
+[v1.10.0]: https://github.com/lvcabral/brs-engine/compare/v1.9.9...v1.10.0
 [v1.9.9]: https://github.com/lvcabral/brs-engine/compare/v1.9.8...v1.9.9
 [v1.9.8]: https://github.com/lvcabral/brs-engine/compare/v1.9.7...v1.9.8
 [v1.9.7]: https://github.com/lvcabral/brs-engine/compare/v1.9.6...v1.9.7
