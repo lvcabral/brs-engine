@@ -8,13 +8,15 @@
     "files": [
         "assets/",
         "lib/*.LICENSE.txt",
-        "types/"
+        "types/",
+        "CHANGELOG.md"
     ],
     "scripts": {
         "build": "webpack --config ./config/webpack.config.js --env development && tsc --project ./config/tsconfig.json",
         "release": "webpack --config ./config/webpack.config.js --env production && tsc --project ./config/tsconfig.json",
         "clean": "rimraf ./lib ./types ./assets",
-        "test": "jest"
+        "test": "jest",
+        "prepublishOnly": "npm-run-all --serial clean release"
     },
     "dependencies": {
         "brs-engine": "^2.0.0-alpha.25",
