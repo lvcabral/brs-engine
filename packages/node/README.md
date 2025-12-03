@@ -16,6 +16,10 @@ The **BrightScript Simulation Engine** provides a complete a set of libraries an
 >
 > Since v1.9.0, this package was split from the browser package, to use the **simulation engine** with web based applications check out the [brs-engine](https://www.npmjs.com/package/brs-engine?activeTab=versions) package.
 
+## SceneGraph Extension
+
+The CLI and Node.js runtime load the [`brs-scenegraph`](https://www.npmjs.com/package/brs-scenegraph?activeTab=versions) extension by default so `roSGScreen` channels can run without additional setup. Use the `--no-sg` flag if you want to disable it for a given CLI session, or register it manually in custom Node.js code by calling `registerExtension(() => new BrightScriptExtension())`. Refer to [packages/scenegraph/README.md](../../packages/scenegraph/README.md) for more information about the extension package.
+
 <p align="center"><img alt="Simulator CLI" title="Simulator CLI" src="https://raw.githubusercontent.com/lvcabral/brs-engine/refs/heads/scenegraph/docs/images/brs-cli.png?raw=true" width="500"/></p>
 
 ## Key Features

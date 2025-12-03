@@ -1,6 +1,6 @@
 # How add the BrightScript Engine to a Web Application
 
-The **brs-engine** project is published as a `node` package, so you can use `npm`:
+The **brs-engine** library is published as an `NPM` package, so you can install it as a dependency in your project with:
 
 ```console
 $ npm install brs-engine
@@ -11,6 +11,15 @@ $ npm install brs-engine
 This repository provides a sample web application for testing the engine, located under the `packages/browser/` folder, you can download the full example from the [release page](https://github.com/lvcabral/brs-engine/releases) with the libraries already integrated, or you can try the simpler example listed below.
 
 To learn more about the _methods_ and _events_ exposed by the library visit the [API documentation](./engine-api.md).
+
+### SceneGraph extension or Draw 2D only?
+
+There are two typical integration profiles:
+
+- **Draw 2D (`roScreen`) apps and games** – If your channel only uses the classic 2D APIs (`roScreen`, `roBitmap`, `roCompositor`, etc.) you only need to deploy `lib/brs.api.js`, `lib/brs.worker.js` and `assets/common.zip`. Nothing else is required because the interpreter ships those artifacts in the core bundle.
+- **SceneGraph apps (`roSGScreen`)** – If the package contains `pkg:/components/` XML files or you otherwise rely on SceneGraph nodes, bundle the [`brs-scenegraph`](../packages/scenegraph/README.md) extension next to the worker (`lib/brs-sg.js`). The packaging step automatically asks the worker to load it whenever components are detected, so keeping the file available is all that is needed.
+
+The additional bundle is only needed when SceneGraph is in play, which keeps Draw 2D deployments lean while allowing full SceneGraph parity when required.
 
 **Important Notes:**
 

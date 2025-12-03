@@ -15,11 +15,19 @@ The **BrightScript Simulation Engine** implements an interpreter for the **Brigh
 
 Initially the focus was on the support of **Draw 2D API** components (`roScreen`, `roCompositor`, `roRegion`, etc.) along with the core elements of the **BrightScript** language, allowing a full Roku app execution over an **HTML5 Canvas**, but the scope was extended to include the SceneGraph framework, simulation of the **Roku** file system, registry, remote control and the Micro Debugger.
 
-The **brs-engine** is developed in [TypeScript](https://www.typescriptlang.org/) and bundled as a collection of [Webpack](https://webpack.js.org/) JavaScript libraries. Since version 1.9.0 the repository was organized as a [monorepo](https://en.wikipedia.org/wiki/Monorepo) that contains two separate packages, each optimized for different use cases.
+The **brs-engine** is developed in [TypeScript](https://www.typescriptlang.org/) and bundled as a collection of [Webpack](https://webpack.js.org/) JavaScript libraries. Starting with version 2.0 we also expose an **extension interface** so advanced features can be delivered as optional bundles that plug into the interpreter lifecycle.
+
+This repository is organized as a [monorepo](https://en.wikipedia.org/wiki/Monorepo) that contains three separate packages:
+
+- **brs-engine** – the core browser/web worker package that provides the BrightScript interpreter for web apps.
+- **brs-node** – the Node.js package that provides a CLI app and the node.js interpreter library for non-browser platforms.
+- **brs-scenegraph** – the SceneGraph extension package that adds support for SceneGraph components and nodes.
+
+
 
 > [!NOTE]
 >
-> - This branch has the ongoing development of **SceneGraph** support, and is being released as alpha preview. We have a lot of challenges ahead, feel free to reach out and learn how [you can help](docs/contributing.md).
+> - The **SceneGraph** support is being developed as an extension package (see section below), and released as an experimental feature. We have a lot of challenges ahead, feel free to reach out and learn how [you can help](docs/contributing.md).
 > - Although **brs-engine** runs apps with user interface, it has no intention of emulating the full **Roku OS** or hardware devices, it is primarily aimed as a development tool for the **Roku Community**.
 > - The **simulation engine** can also to be used as a framework for running **BrightScript** apps and games in other platforms, like iOS, macOS, Android, Linux and Windows.
 > - Please check the [Current Limitations](docs/limitations.md) document for further details on what is still missing or out of scope.
@@ -75,6 +83,14 @@ npm install brs-node@alpha
 ```
 [📖 Node.js Package: More details](./packages/node/README.md) | [⌨️ CLI Guide](./docs/run-as-cli.md)
 
+## ⚙️ Extension Packages
+
+- **[brs-scenegraph](./packages/scenegraph/README.md)** – ships the SceneGraph runtime as a standalone extension that loads automatically whenever a Roku app contains `pkg:/components/` assets.
+- **Roku SDK1 compatibility (planned)** – upcoming extension focused on legacy SDK1 channels and their APIs.
+- **BrightSign runtime (planned)** – upcoming extension to model BrightSign-specific components and hardware features.
+
+Read more about the shared extension model in [docs/extensions.md](./docs/extensions.md).
+
 ## 📚 Project Documentation
 
 There are many ways you can use and/or participate in the project, read the documents below to learn more:
@@ -83,6 +99,7 @@ There are many ways you can use and/or participate in the project, read the docu
 - [How add the Engine to a Web Application](docs/integrating.md)
 - [How to run as a Command Line Interface](docs/run-as-cli.md)
 - [How to use the Node.js Library](docs/using-node-library.md)
+- [How to use and build extensions](docs/extensions.md)
 - [How to customize the Engine behavior](docs/customization.md)
 - [Remote Control Simulation](docs/remote-control.md)
 - [BrightScript Engine API reference](docs/engine-api.md)
