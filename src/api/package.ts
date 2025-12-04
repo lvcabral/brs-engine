@@ -11,7 +11,7 @@ import { unzipSync, zipSync, strFromU8, strToU8, Zippable, Unzipped } from "ffla
 import { addSound, audioCodecs } from "./sound";
 import { addVideo, videoFormats } from "./video";
 import {
-    defaultDeviceInfo,
+    DefaultDeviceInfo,
     AudioExt,
     VideoExt,
     parseManifest,
@@ -20,14 +20,14 @@ import {
     AppData,
     AppExitReason,
     DeviceInfo,
-    platform,
-    ExtensionInfo,
+    SupportedExtension,
+    Platform,
 } from "../core/common";
 import models from "../core/common/models.csv";
 import packageInfo from "../../packages/browser/package.json";
 
 // Device Data Object
-export const deviceData: DeviceInfo = Object.assign(defaultDeviceInfo, {
+export const deviceData: DeviceInfo = Object.assign(DefaultDeviceInfo, {
     models: parseCSV(models),
     audioCodecs: audioCodecs(),
     videoFormats: videoFormats(),
@@ -38,7 +38,7 @@ deviceData.serialNumber = getSerialNumber();
 const inputParams: Map<string, string> = new Map();
 export const source: string[] = [];
 export const paths: PkgFilePath[] = [];
-export const extensions: ExtensionInfo[] = [];
+export const extensions: SupportedExtension[] = [];
 export const manifestMap: Map<string, string> = new Map();
 export const currentApp = createAppData();
 
@@ -109,8 +109,8 @@ function processFile(relativePath: string, fileData: Uint8Array) {
     const lcasePath: string = relativePath.toLowerCase();
     const ext = lcasePath.split(".").pop() ?? "";
     if (relativePath.endsWith("/")) {
-        if (lcasePath.startsWith("components/")) {
-            extensions.push({ moduleId: "brs-scenegraph", modulePath: "./brs-sg.js" });
+        if (lcasePath.startsWith("components/") && deviceData.extensions?.has(SupportedExtension.SceneGraph)) {
+            extensions.push(SupportedExtension.SceneGraph);
         }
     } else if (lcasePath.startsWith("source") && ext === "brs") {
         paths.push({ id: srcId, url: relativePath, type: "source" });
@@ -120,9 +120,9 @@ function processFile(relativePath: string, fileData: Uint8Array) {
         paths.push({ id: 0, url: relativePath, type: "pcode" });
     } else if (lcasePath === "source/var") {
         paths.push({ id: 1, url: relativePath, type: "pcode" });
-    } else if (platform.inBrowser && AudioExt.has(ext)) {
+    } else if (Platform.inBrowser && AudioExt.has(ext)) {
         addSound(`pkg:/${relativePath}`, ext, new Blob([fileData as BlobPart]));
-    } else if (platform.inBrowser && VideoExt.has(ext)) {
+    } else if (Platform.inBrowser && VideoExt.has(ext)) {
         addVideo(`pkg:/${relativePath}`, new Blob([fileData as BlobPart], { type: "video/mp4" }));
     }
 }
@@ -154,7 +154,7 @@ function processManifest(content: string): number {
     if (icon?.slice(0, 5) === "pkg:/") {
         iconFile = currentZip[icon.slice(5)];
         if (iconFile) {
-            if (platform.inBrowser) {
+            if (Platform.inBrowser) {
                 bufferToBase64(iconFile).then(function (iconBase64: string) {
                     notifyAll("icon", iconBase64);
                 });

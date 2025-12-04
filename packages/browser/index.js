@@ -80,10 +80,15 @@ const customDeviceInfo = {
     audioLanguage: "en", // Preferred audio track language
     maxFps: 30, // Limited refresh rate to minimize issues with iOS/iPadOS
     appList: appList,
+    extensions: new Map(),
     // corsProxy: "http://localhost:8080/",
     // Uncomment line above for local testing
     // Or add the URL of an instance of https://github.com/Rob--W/cors-anywhere
 };
+// Add SceneGraph extension
+const brsSG = brs.SupportedExtension.SceneGraph;
+customDeviceInfo.extensions.set(brsSG, "./brs-sg.js");
+
 // Caption customization example, once configured in DeviceInfo cannot be dynamically changed in SceneGraph code:
 customDeviceInfo.captionStyle.push({ id: "Text/Effect", style: "uniform" }, { id: "Background/Opacity", style: "50%" });
 

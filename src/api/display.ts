@@ -9,15 +9,15 @@ import { isVideoMuted, player, subscribeVideo } from "./video";
 import { SubscribeCallback } from "./util";
 import {
     DeviceInfo,
-    platform,
+    Platform,
     parseCaptionMode,
     DisplayMode,
     DisplayModes,
-    captionOptions,
-    captionSizes,
-    captionColors,
-    captionOpacities,
-    captionFonts,
+    CaptionOptions,
+    CaptionSizes,
+    CaptionColors,
+    CaptionOpacities,
+    CaptionFonts,
     CaptionStyleOption,
 } from "../core/common";
 import { strFromU8, unzipSync } from "fflate";
@@ -290,16 +290,16 @@ function drawSubtitles(ctx: CanvasRenderingContext2D) {
     // Draw active subtitles
     const fhd = ctx.canvas.height === 1080 ? 1 : 0;
     const backgroundColor = getCaptionStyleOption("background/color", "black");
-    const backColor = captionColors.get(backgroundColor === "default" ? "black" : backgroundColor);
+    const backColor = CaptionColors.get(backgroundColor === "default" ? "black" : backgroundColor);
     const backgroundOpacity = getCaptionStyleOption("background/opacity");
-    const backOpacity = captionOpacities.get(backgroundOpacity) ?? 1.0;
+    const backOpacity = CaptionOpacities.get(backgroundOpacity) ?? 1.0;
     const textFont = getCaptionStyleOption("text/font");
-    const fontFamily = captionFonts.get(textFont) ?? "cc-serif";
-    const textColor = captionColors.get(getCaptionStyleOption("text/color"));
-    const textOpacity = captionOpacities.get(getCaptionStyleOption("text/opacity")) ?? 1.0;
+    const fontFamily = CaptionFonts.get(textFont) ?? "cc-serif";
+    const textColor = CaptionColors.get(getCaptionStyleOption("text/color"));
+    const textOpacity = CaptionOpacities.get(getCaptionStyleOption("text/opacity")) ?? 1.0;
     const textSize = getCaptionStyleOption("text/size");
     const textEffect = getCaptionStyleOption("text/effect");
-    const fontSize = captionSizes.get(textSize)![fhd];
+    const fontSize = CaptionSizes.get(textSize)![fhd];
     ctx.font = `${fontSize}px ${fontFamily}, sans-serif`;
 
     if (lastCachedFontSize !== fontSize || lastCachedFontFamily !== fontFamily) {
@@ -478,7 +478,7 @@ export function clearDisplay(cancelFrame?: boolean) {
         globalThis.cancelAnimationFrame(lastFrameReq);
         videoLoop = false;
     }
-    if (ctx && platform.inSafari) {
+    if (ctx && Platform.inSafari) {
         ctx.fillStyle = "black";
         ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
     } else if (ctx) {
@@ -548,7 +548,7 @@ export function setSupportCaptions(support: boolean) {
 // Get/Set Closed Captions Style Options
 export function setCaptionStyle(style?: CaptionStyleOption[]) {
     const captionStyle = deviceData.captionStyle;
-    for (const [key, option] of captionOptions) {
+    for (const [key, option] of CaptionOptions) {
         if (!key.includes("/")) {
             continue;
         }
@@ -563,7 +563,7 @@ export function setCaptionStyle(style?: CaptionStyleOption[]) {
 
 export function setAppCaptionStyle(style?: CaptionStyleOption[]) {
     appCaptionStyle.length = 0;
-    for (const [key] of captionOptions) {
+    for (const [key] of CaptionOptions) {
         if (!key.includes("/")) {
             continue;
         }

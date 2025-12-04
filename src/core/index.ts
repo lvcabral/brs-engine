@@ -13,12 +13,12 @@ import {
     DeviceInfo,
     dataBufferIndex,
     dataBufferSize,
-    defaultDeviceInfo,
+    DefaultDeviceInfo,
     parseManifest,
     isAppPayload,
     TaskPayload,
     isTaskPayload,
-    ExtensionInfo,
+    SupportedExtension,
 } from "./common";
 import { Lexeme, Lexer, Token } from "./lexer";
 import { Parser, Stmt } from "./parser";
@@ -88,11 +88,11 @@ if (typeof onmessage !== "undefined") {
     // Worker event that is triggered by postMessage() calls from the API library
     onmessage = function (event: MessageEvent) {
         if (isAppPayload(event.data)) {
-            loadExtensions(event.data.extensions);
+            loadExtensions(event.data);
             executeFile(event.data);
         } else if (isTaskPayload(event.data)) {
             console.debug("[Worker] Task payload received: ", event.data.taskData.name);
-            loadExtensions(event.data.extensions);
+            loadExtensions(event.data);
             executeTask(event.data);
         } else if (typeof event.data === "string" && event.data === "getVersion") {
             postMessage(`version,${packageInfo.version}`);
@@ -106,22 +106,28 @@ if (typeof onmessage !== "undefined") {
 }
 
 // Dynamically load the BrightScript extensions
-const loadedExtensions = new Set<string>();
+const loadedExtensions = new Set<SupportedExtension>();
 
-function loadExtensions(extensions?: ExtensionInfo[]) {
-    if (extensions && Array.isArray(extensions)) {
-        for (const extInfo of extensions) {
-            if (loadedExtensions.has(extInfo.moduleId)) {
+function loadExtensions(payload: AppPayload | TaskPayload) {
+    const extensions = payload.extensions;
+    if (Array.isArray(extensions)) {
+        for (const extension of extensions) {
+            if (loadedExtensions.has(extension)) {
                 continue;
             }
-            loadExtension(extInfo.moduleId, extInfo.modulePath);
+            const extensionPath = payload.device.extensions?.get(extension) ?? "";
+            loadExtension(extension, extensionPath);
         }
     }
 }
 
-function loadExtension(moduleId: string, modulePath: string) {
+function loadExtension(moduleId: SupportedExtension, modulePath: string) {
+    if (!modulePath) {
+        console.warn(`[Worker] No module path provided for ${moduleId} extension.`);
+        return;
+    }
     try {
-        let sceneGraphModule: any = null;
+        let extensionModule: any = null;
         // In a Web Worker context, we use importScripts for synchronous loading
         if (typeof importScripts === "function") {
             // @ts-ignore
@@ -132,18 +138,18 @@ function loadExtension(moduleId: string, modulePath: string) {
             const scriptUrl = new URL(modulePath, globalThis.location.href).href;
             importScripts(scriptUrl);
             // @ts-ignore
-            sceneGraphModule = globalThis[moduleId];
+            extensionModule = globalThis[moduleId];
         }
 
-        if (sceneGraphModule?.BrightScriptExtension) {
-            registerExtension(() => new sceneGraphModule.BrightScriptExtension());
+        if (extensionModule?.BrightScriptExtension) {
+            registerExtension(() => new extensionModule.BrightScriptExtension());
             loadedExtensions.add(moduleId);
-            console.debug("[Worker] SceneGraph Extension loaded and registered successfully.");
+            console.debug(`[Worker] ${moduleId} Extension loaded and registered successfully.`);
         } else {
-            console.warn("[Worker] The loaded library does not contain SceneGraph Extension.");
+            console.warn(`[Worker] The loaded library does not contain ${moduleId} Extension.`);
         }
     } catch (err: any) {
-        console.warn("[Worker] Failed to load SceneGraph extension:", err.message);
+        console.warn(`[Worker] Failed to load ${moduleId} extension:`, err.message);
     }
 }
 
@@ -408,7 +414,7 @@ function createDefaultManifest(): Map<string, string> {
  * @returns Complete device data
  */
 function processDeviceData(customDeviceData?: Partial<DeviceInfo>): DeviceInfo {
-    const deviceData = customDeviceData ? Object.assign(defaultDeviceInfo, customDeviceData) : defaultDeviceInfo;
+    const deviceData = customDeviceData ? Object.assign(DefaultDeviceInfo, customDeviceData) : DefaultDeviceInfo;
 
     if (deviceData.assets.byteLength === 0) {
         deviceData.assets = fs.readFileSync(path.join(__dirname, "../assets/common.zip"))?.buffer;

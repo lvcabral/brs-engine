@@ -6,7 +6,7 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { SubscribeCallback, saveDataBuffer } from "./util";
-import { DataType, RemoteType, DebugCommand, keyBufferSize, keyArraySpots, platform, BufferType } from "../core/common";
+import { DataType, RemoteType, DebugCommand, keyBufferSize, keyArraySpots, Platform, BufferType } from "../core/common";
 /// #if BROWSER
 import { deviceData } from "./package";
 import gameControl, { GCGamepad, EventName } from "esm-gamecontroller.js";
@@ -193,7 +193,7 @@ keysMap.set("Shift+Escape", "home");
 keysMap.set("Control+Escape", "home");
 keysMap.set("Backspace", "instantreplay");
 keysMap.set("End", "play");
-if (platform.inIOS || platform.inMacOS) {
+if (Platform.inIOS || Platform.inMacOS) {
     keysMap.set("Meta+Backspace", "backspace");
     keysMap.set("Meta+Enter", "play");
     keysMap.set("Meta+ArrowLeft", "rev");

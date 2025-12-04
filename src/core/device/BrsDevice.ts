@@ -15,7 +15,7 @@ import {
     registryInitialSize,
     registryMaxSize,
     RemoteType,
-    defaultDeviceInfo,
+    DefaultDeviceInfo,
     DeviceInfo,
     DefaultSounds,
     MaxSoundStreams,
@@ -25,7 +25,7 @@ import { FileSystem } from "./FileSystem";
 import { OutputProxy } from "./OutputProxy";
 
 export class BrsDevice {
-    static readonly deviceInfo: DeviceInfo = defaultDeviceInfo;
+    static readonly deviceInfo: DeviceInfo = DefaultDeviceInfo;
     static readonly registry: Map<string, string> = new Map<string, string>();
     static readonly fileSystem: FileSystem = new FileSystem();
     static readonly isDevMode = process.env.NODE_ENV === "development";

@@ -23,10 +23,10 @@ import {
     isNDKStart,
     isTaskData,
     isThreadUpdate,
-    platform,
     registryInitialSize,
     registryMaxSize,
     getNow,
+    Platform,
 } from "../core/common";
 import {
     source,
@@ -114,6 +114,9 @@ export {
     enableStats,
     getScreenshot,
 } from "./display";
+
+// Common API
+export { DeviceInfo, DefaultDeviceInfo, Platform, AppExitReason, SupportedExtension } from "../core/common";
 
 let clearDisplayOnExit: boolean = true;
 let disableDebug: boolean = false;
@@ -520,7 +523,7 @@ export function updateMemoryInfo(usedMemory?: number, totalMemory?: number) {
         return;
     }
     const performance = globalThis.performance as ChromiumPerformance;
-    if (currentApp.running && platform.inChromium && performance.memory) {
+    if (currentApp.running && Platform.inChromium && performance.memory) {
         // Only Chromium based browsers support process.memory API
         const memory = performance.memory;
         Atomics.store(sharedArray, DataType.MUHS, Math.floor(memory.usedJSHeapSize / 1024));
@@ -557,13 +560,13 @@ function mainCallback(event: MessageEvent) {
         updateBuffer(event.data);
     } else if (event.data instanceof Map) {
         handleRegistryUpdate(event.data);
-    } else if (platform.inBrowser && Array.isArray(event.data.audioPlaylist)) {
+    } else if (Platform.inBrowser && Array.isArray(event.data.audioPlaylist)) {
         addAudioPlaylist(event.data.audioPlaylist);
-    } else if (platform.inBrowser && event.data.audioPath) {
+    } else if (Platform.inBrowser && event.data.audioPath) {
         addSound(event.data.audioPath, event.data.audioFormat, new Blob([event.data.audioData]));
-    } else if (platform.inBrowser && Array.isArray(event.data.videoPlaylist)) {
+    } else if (Platform.inBrowser && Array.isArray(event.data.videoPlaylist)) {
         addVideoPlaylist(event.data.videoPlaylist);
-    } else if (platform.inBrowser && event.data.videoPath) {
+    } else if (Platform.inBrowser && event.data.videoPath) {
         addVideo(event.data.videoPath, new Blob([event.data.videoData], { type: "video/mp4" }));
     } else if (typeof event.data.displayEnabled === "boolean") {
         setDisplayState(event.data.displayEnabled);
@@ -640,7 +643,7 @@ function handleNDKStart(data: NDKStart) {
 }
 
 function handleRegistryUpdate(registry: Map<string, string>) {
-    if (platform.inBrowser) {
+    if (Platform.inBrowser) {
         const storage: Storage = globalThis.localStorage;
         for (const [key, value] of registry) {
             storage.setItem(key, value);

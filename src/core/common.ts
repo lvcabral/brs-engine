@@ -49,6 +49,7 @@ export interface DeviceInfo {
     entryPoint?: boolean;
     stopOnCrash?: boolean;
     corsProxy?: string;
+    extensions?: Map<SupportedExtension, string>;
 }
 
 export type SupportedLocale =
@@ -93,8 +94,8 @@ export function parseCaptionMode(mode: string): CaptionMode | undefined {
 export const DefaultCertificatesFile = "common:/certs/ca-bundle.crt";
 
 // Default Device Information
-export const platform = getPlatform();
-export const defaultDeviceInfo: DeviceInfo = {
+export const Platform = getPlatform();
+export const DefaultDeviceInfo: DeviceInfo = {
     developerId: "34c6fceca75e456f25e7e99531e2425c6c1de443", // As in Roku devices, segregates Registry data (can't have a dot)
     friendlyName: "BrightScript Engine Library",
     deviceModel: "8000X", // Roku TV (Midland)
@@ -131,7 +132,7 @@ export const defaultDeviceInfo: DeviceInfo = {
 };
 
 // Valid Closed Captions Options
-export const captionFonts: Map<string, string> = new Map([
+export const CaptionFonts: Map<string, string> = new Map([
     ["default", "cc-serif"],
     ["serif fixed width", "cc-serif-fixed"],
     ["serif proportional", "cc-serif"],
@@ -142,7 +143,7 @@ export const captionFonts: Map<string, string> = new Map([
     ["small caps", "cc-small-caps"],
 ]);
 
-export const captionSizes: Map<string, number[]> = new Map([
+export const CaptionSizes: Map<string, number[]> = new Map([
     ["default", [29, 43.5]],
     ["extra small", [20, 30]],
     ["small", [21.5, 32]],
@@ -151,7 +152,7 @@ export const captionSizes: Map<string, number[]> = new Map([
     ["extra large", [40.5, 61]],
 ]);
 
-export const captionColors: Map<string, string> = new Map([
+export const CaptionColors: Map<string, string> = new Map([
     ["default", "#B0B0B0"],
     ["bright white", "#FFFFFF"],
     ["white", "#B0B0B0"],
@@ -164,7 +165,7 @@ export const captionColors: Map<string, string> = new Map([
     ["cyan", "#00BBB9"],
 ]);
 
-export const captionOpacities: Map<string, number> = new Map([
+export const CaptionOpacities: Map<string, number> = new Map([
     ["default", 1.0],
     ["off", 0.0],
     ["25%", 0.25],
@@ -173,17 +174,17 @@ export const captionOpacities: Map<string, number> = new Map([
     ["100%", 1.0],
 ]);
 
-export const captionOptions: Map<string, string[]> = new Map([
+export const CaptionOptions: Map<string, string[]> = new Map([
     ["mode", Array.from(CaptionModes)],
-    ["text/font", Array.from(captionFonts.keys())],
+    ["text/font", Array.from(CaptionFonts.keys())],
     ["text/effect", ["default", "none", "raised", "depressed", "uniform", "drop shadow (left)", "drop shadow (right)"]],
-    ["text/size", Array.from(captionSizes.keys())],
-    ["text/color", Array.from(captionColors.keys())],
-    ["text/opacity", Array.from(captionOpacities.keys())],
-    ["background/color", Array.from(captionColors.keys())],
-    ["background/opacity", Array.from(captionOpacities.keys())],
-    ["window/color", Array.from(captionColors.keys())],
-    ["window/opacity", Array.from(captionOpacities.keys())],
+    ["text/size", Array.from(CaptionSizes.keys())],
+    ["text/color", Array.from(CaptionColors.keys())],
+    ["text/opacity", Array.from(CaptionOpacities.keys())],
+    ["background/color", Array.from(CaptionColors.keys())],
+    ["background/opacity", Array.from(CaptionOpacities.keys())],
+    ["window/color", Array.from(CaptionColors.keys())],
+    ["window/opacity", Array.from(CaptionOpacities.keys())],
     ["track", ["default"]],
     ["track_composite", ["default"]],
     ["track_analog", ["default"]],
@@ -197,16 +198,16 @@ export type CaptionStyleOption = {
 };
 
 /**
- * Extension Information Interface
+ * Supported Extensions Enumerator
  *
- * This interface is used to provide information about the BrightScript extensions
- * to be dynamically loaded by the engine.
+ * This enumerator is used to define the supported BrightScript extensions
  *
  */
-export type ExtensionInfo = {
-    moduleId: string;
-    modulePath: string;
-};
+export enum SupportedExtension {
+    SceneGraph = "brs-scenegraph",
+    SDK1 = "brs-sdk1", // Legacy SDK1 extension - planned
+    BrightSign = "brs-brightsign", // BrightSign extension - planned
+}
 
 /* Execution Payload Interfaces
  *
@@ -223,7 +224,7 @@ export type AppPayload = {
     deepLink: Map<string, string>;
     paths: PkgFilePath[];
     source: string[];
-    extensions?: ExtensionInfo[];
+    extensions?: SupportedExtension[];
     pkgZip?: ArrayBuffer;
     extZip?: ArrayBuffer;
     password?: string;
@@ -252,7 +253,7 @@ export type TaskPayload = {
     device: DeviceInfo;
     manifest: Map<string, string>;
     taskData: TaskData;
-    extensions?: ExtensionInfo[];
+    extensions?: SupportedExtension[];
     pkgZip?: ArrayBuffer;
     extZip?: ArrayBuffer;
     root?: string;
@@ -443,7 +444,7 @@ export type RemoteControl = {
  * where the engine is running.
  *
  */
-export type Platform = {
+export type PlatformInfo = {
     inBrowser: boolean;
     inChromium: boolean;
     inFirefox: boolean;
@@ -627,7 +628,7 @@ export const AudioExt = new Set<string>(["wav", "mp2", "mp3", "m4a", "aac", "ogg
 export const VideoExt = new Set<string>(["mp4", "m4v", "mkv", "mov"]);
 
 // Check the platform where the library is running
-export function getPlatform(): Platform {
+export function getPlatform(): PlatformInfo {
     let inBrowser = false;
     let inChromium = false;
     let inFirefox = false;

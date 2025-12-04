@@ -8,20 +8,20 @@
 import { bufferToBase64, parseCSV, SubscribeCallback } from "../api/util";
 import { unzipSync, zipSync, strFromU8, strToU8, Zippable, Unzipped } from "fflate";
 import {
-    defaultDeviceInfo,
+    DefaultDeviceInfo,
     parseManifest,
     AppPayload,
     PkgFilePath,
     AppData,
     AppExitReason,
     DeviceInfo,
-    platform,
+    PlatformInfo,
 } from "../core/common";
 import models from "../core/common/models.csv";
 import packageInfo from "../../packages/node/package.json";
 
 // Device Data Object
-export const deviceData: DeviceInfo = Object.assign(defaultDeviceInfo, {
+export const deviceData: DeviceInfo = Object.assign(DefaultDeviceInfo, {
     models: parseCSV(models),
 });
 deviceData.serialNumber = getSerialNumber();
@@ -136,7 +136,7 @@ function processManifest(content: string): number {
     if (icon?.slice(0, 5) === "pkg:/") {
         iconFile = currentZip[icon.slice(5)];
         if (iconFile) {
-            if (platform.inBrowser) {
+            if (Platform.inBrowser) {
                 bufferToBase64(iconFile).then(function (iconBase64: string) {
                     notifyAll("icon", iconBase64);
                 });

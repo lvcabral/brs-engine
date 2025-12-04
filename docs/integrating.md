@@ -21,6 +21,27 @@ There are two typical integration profiles:
 
 The additional bundle is only needed when SceneGraph is in play, which keeps Draw 2D deployments lean while allowing full SceneGraph parity when required.
 
+### Configuring extensions via `DeviceInfo`
+
+Hosts now decide which extensions are available to the interpreter by setting the optional `extensions` map on the `DeviceInfo` object passed to `brs.initialize`. Each entry pairs a `SupportedExtension` enum value with the module path string the worker can load (e.g., `"./brs-sg.js"`). The packaging layer only injects an extension into the worker payload when:
+
+1. The app bundle needs it (e.g., contains `pkg:/components/`).
+2. The extension exists in the `DeviceInfo.extensions` map.
+
+This makes it explicit which add-ons your deployment supports and prevents the worker from fetching bundles that the host has not approved.
+
+```ts
+import { SupportedExtension, DeviceInfo } from "brs-engine";
+
+const deviceOverrides: Partial<DeviceInfo> = {
+    extensions: new Map([[SupportedExtension.SceneGraph, "./brs-sg.js"]]),
+};
+
+brs.initialize(deviceOverrides, { debugToConsole: true });
+```
+
+If you decide to ship additional extensions (SDK1, BrightSign, etc.) just register them in the same map with the corresponding module path.
+
 **Important Notes:**
 
 Your web application cannot be executed as pure HTML page, because some functionalities used by the engine have security restrictions on the browser platform, so you will need a web server to run it. For that you can use `Apache`, `IIS` or any other simpler web server, but please make sure that your web application is hosted with [COOP and COEP custom headers](https://developer.chrome.com/blog/enabling-shared-array-buffer/) to allow isolation and enable the browser to support **ShareArrayBuffer**. More information visit: [Chrome - Enabling ShareArrayBuffer](https://developer.chrome.com/blog/enabling-shared-array-buffer/)

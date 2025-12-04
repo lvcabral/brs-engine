@@ -18,7 +18,7 @@ import {
     isBrsString,
     RoArray,
     RoAssociativeArray,
-    captionOptions,
+    CaptionOptions,
     CaptionStyleOption,
     getNow,
     MediaErrorCode,
@@ -448,9 +448,9 @@ export class Video extends Group {
         const validStyles: CaptionStyleOption[] = [];
         for (const key in styles) {
             const id = key.toLowerCase();
-            if (id.includes("/") && captionOptions.has(id)) {
+            if (id.includes("/") && CaptionOptions.has(id)) {
                 const value = styles[key];
-                if (typeof value === "string" && captionOptions.get(id)?.includes(value.toLowerCase())) {
+                if (typeof value === "string" && CaptionOptions.get(id)?.includes(value.toLowerCase())) {
                     validStyles.push({ id, style: value.toLowerCase() });
                 } else {
                     BrsDevice.stderr.write(

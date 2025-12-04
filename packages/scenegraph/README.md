@@ -45,8 +45,20 @@ The extension depends on `brs-engine` so the runtime contracts stay in sync. Whe
 
 1. Deploy `lib/brs.worker.js`, `lib/brs.api.js`, and `lib/brs-sg.js` together.
 2. Replace `assets/common.zip` with the one from this package to provide SceneGraph fonts and resources.
-3. When an app package contains a `pkg:/components/` folder the packaging layer automatically queues `{ moduleId: "brs-scenegraph", modulePath: "./brs-sg.js" }` for the worker.
-4. The worker loads the script via `importScripts`, creates `BrightScriptExtension`, and registers it before running the app.
+3. Tell the engine that SceneGraph is available by adding it to `DeviceInfo.extensions` when you call `brs.initialize`. The map key is the `SupportedExtension` enum value and the value is the worker-relative path to the bundle:
+
+   ```ts
+   import { SupportedExtension, DeviceInfo } from "brs-engine";
+
+   const deviceOverrides: Partial<DeviceInfo> = {
+	   extensions: new Map([[SupportedExtension.SceneGraph, "./brs-sg.js"]]),
+   };
+
+   brs.initialize(deviceOverrides, { debugToConsole: true });
+   ```
+
+4. When an app package contains a `pkg:/components/` folder the packaging layer checks the map above and, if the extension is registered, injects `{ moduleId: "brs-scenegraph", modulePath: "./brs-sg.js" }` into the worker payload.
+5. The worker loads the script via `importScripts`, creates `BrightScriptExtension`, and registers it before running the app.
 
 No extra glue is required if the file sits next to the worker bundle, but you can preload it manually by importing the module and calling `registerExtension` yourself if desired.
 
@@ -78,6 +90,8 @@ npm run clean
 ```
 
 The build emits `lib/brs-sg.js` (browser) and `lib/brs-sg.node.js` (Node.js) plus `types/` declarations referenced by the package exports.
+
+During the build we also merge `src/core/common` with `src/extensions/scenegraph/common`, zip the results to `assets/common.zip`, and copy that archive into both `packages/browser/assets` and `packages/node/assets` so the main packages pick up the SceneGraph-ready `common:/` volume automatically.
 
 ## Documentation
 

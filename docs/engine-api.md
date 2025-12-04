@@ -42,6 +42,18 @@ Check the [documentation](./integrating.md) to learn how to start using it. The 
 |setDebugState(`enabled`)|Enables or disables the debug functionality|<ul><li>`enabled` (boolean): if `true` enables debug commands and data to be sent/received by the engine, if `false` disables debug functionality for production to avoid code injection.</li>|
 |getVersion()|Returns the version of the API library ||
 
+## Common API exports
+
+The browser API now re-exports a small set of shared types and constants so host applications can configure the simulated device and extension pipeline without digging into internal modules.
+
+| Export | Description | Usage Examples |
+| --- | --- | --- |
+| `DeviceInfo` | Type describing the simulated Roku device, including new `extensions?: Map<SupportedExtension, string>` for host-provided extension wiring. | Use to type-check custom device overrides passed to `initialize(customDeviceInfo)` and set each value to the worker-accessible path (e.g., `"./brs-sg.js"`).
+| `DefaultDeviceInfo` | Baseline `DeviceInfo` object used by the engine. | Clone or spread this object before applying overrides so you only touch the fields you care about.
+| `Platform` | Runtime detection helper indicating whether the interpreter runs in the browser, worker, or Node. | Gate host-specific logic (e.g., only attach audio/video handlers when `Platform.inBrowser` is `true`).
+| `AppExitReason` | Enum describing the reason the previous app exited. | Compare against `deviceData.appList` entries or populate deep-link metadata with the appropriate reason string.
+| `SupportedExtension` | Enum of known first-party extensions (`brs-scenegraph`, future SDK1/BrightSign IDs). | Reference when registering extensions in `DeviceInfo.extensions` so you avoid typos.
+
 ## Events
 
 | Event      | Description                                      | Data Type                         |
