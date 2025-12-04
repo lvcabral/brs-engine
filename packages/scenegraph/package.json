@@ -39,7 +39,7 @@
         "prepublishOnly": "npm-run-all --serial clean release"
     },
     "dependencies": {
-        "brs-engine": "^2.0.0-alpha.25",
+        "brs-engine": "^2.0.0",
         "xmldoc": "^1.3.0",
         "p-settle": "^5.1.1"
     },
