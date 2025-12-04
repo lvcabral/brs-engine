@@ -288,7 +288,7 @@ export class BrsDevice {
      */
     static playSound(sound: string) {
         if (DefaultSounds.includes(sound)) {
-            const id = this.sfx.findIndex((wav) => wav === sound);
+            const id = this.sfx.indexOf(sound);
             const stream = this.getSfxStream(id);
             if (stream >= 0) {
                 postMessage(`sfx,trigger,${sound},${this.deviceInfo.audioVolume},${stream}`);

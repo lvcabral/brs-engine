@@ -156,7 +156,7 @@ export class Node extends RoSGNode implements BrsValue {
     }
 
     protected clearNodeFields() {
-        for (const [name, field] of this.fields) {
+        for (const [name, _] of this.fields) {
             this.removeFieldEntry(name);
         }
     }

@@ -104,8 +104,8 @@ export class IfDraw2D {
         const ctx = this.component.getContext();
         rgba = combineRgbaOpacity(rgba, opacity);
         ctx.save();
-        const rotationCenterX = centerX !== undefined ? centerX : 0;
-        const rotationCenterY = centerY !== undefined ? centerY : 0;
+        const rotationCenterX = centerX ?? 0;
+        const rotationCenterY = centerY ?? 0;
         // Apply translation for centering, regardless of rotation
         ctx.translate(baseX + x + rotationCenterX, baseY + y + rotationCenterY);
         // Apply rotation only if necessary
@@ -385,7 +385,6 @@ export class IfDraw2D {
             object: BrsComponent,
             rgba: Int32 | BrsInvalid
         ) => {
-            const ctx = this.component.getContext();
             const didDraw = this.component.drawImage(
                 object,
                 x.getValue(),

@@ -156,7 +156,7 @@ export function getSerialNumber() {
     const prefix = device ? device[4] : "X0";
     let verPlain = "";
     for (const element of packageInfo.version.split(".")) {
-        verPlain += element.replace(/\D/g, "").padStart(2, "0");
+        verPlain += element.replaceAll(/\D/g, "").padStart(2, "0");
     }
     return `${prefix}0BRS${verPlain.substring(0, 6)}`;
 }

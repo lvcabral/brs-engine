@@ -166,12 +166,12 @@ export const CaptionColors: Map<string, string> = new Map([
 ]);
 
 export const CaptionOpacities: Map<string, number> = new Map([
-    ["default", 1.0],
-    ["off", 0.0],
+    ["default", 1],
+    ["off", 0],
     ["25%", 0.25],
     ["50%", 0.5],
     ["75%", 0.75],
-    ["100%", 1.0],
+    ["100%", 1],
 ]);
 
 export const CaptionOptions: Map<string, string[]> = new Map([

@@ -575,12 +575,10 @@ export async function createPayloadFromFiles(
 
 export async function executeFile(payload: AppPayload, customOptions?: Partial<ExecutionOptions>): Promise<RunResult> {
     const options = {
-        ...{
-            entryPoint: payload.device.entryPoint ?? true,
-            stopOnCrash: payload.device.debugOnCrash ?? false,
-            root: payload.root,
-            ext: payload.extZip ? undefined : payload.ext, // use ext path only if extZip is not provided
-        },
+        entryPoint: payload.device.entryPoint ?? true,
+        stopOnCrash: payload.device.debugOnCrash ?? false,
+        root: payload.root,
+        ext: payload.extZip ? undefined : payload.ext, // use ext path only if extZip is not provided
         ...customOptions,
     };
     bscs.clear();
@@ -632,12 +630,10 @@ export async function executeFile(payload: AppPayload, customOptions?: Partial<E
 
 export async function executeTask(payload: TaskPayload, customOptions?: Partial<ExecutionOptions>) {
     const options = {
-        ...{
-            entryPoint: false,
-            stopOnCrash: payload.device.debugOnCrash ?? false,
-            root: payload.root,
-            ext: payload.extZip ? undefined : payload.ext,
-        },
+        entryPoint: false,
+        stopOnCrash: payload.device.debugOnCrash ?? false,
+        root: payload.root,
+        ext: payload.extZip ? undefined : payload.ext,
         ...customOptions,
     };
     stats.clear();

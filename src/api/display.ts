@@ -278,7 +278,7 @@ function drawVideoFrame() {
         }
     }
     drawBufferImage();
-    lastFrameReq = window.requestAnimationFrame(drawVideoFrame);
+    lastFrameReq = globalThis.requestAnimationFrame(drawVideoFrame);
 }
 
 // Draw Subtitles on the Display Canvas
@@ -292,11 +292,11 @@ function drawSubtitles(ctx: CanvasRenderingContext2D) {
     const backgroundColor = getCaptionStyleOption("background/color", "black");
     const backColor = CaptionColors.get(backgroundColor === "default" ? "black" : backgroundColor);
     const backgroundOpacity = getCaptionStyleOption("background/opacity");
-    const backOpacity = CaptionOpacities.get(backgroundOpacity) ?? 1.0;
+    const backOpacity = CaptionOpacities.get(backgroundOpacity) ?? 1;
     const textFont = getCaptionStyleOption("text/font");
     const fontFamily = CaptionFonts.get(textFont) ?? "cc-serif";
     const textColor = CaptionColors.get(getCaptionStyleOption("text/color"));
-    const textOpacity = CaptionOpacities.get(getCaptionStyleOption("text/opacity")) ?? 1.0;
+    const textOpacity = CaptionOpacities.get(getCaptionStyleOption("text/opacity")) ?? 1;
     const textSize = getCaptionStyleOption("text/size");
     const textEffect = getCaptionStyleOption("text/effect");
     const fontSize = CaptionSizes.get(textSize)![fhd];
@@ -578,7 +578,7 @@ function getCaptionStyleOption(id: string, defaultStyle: string = "default"): st
     const deviceOption = deviceData.captionStyle.find((option) => option.id.toLowerCase() === id.toLowerCase());
     const deviceStyle = deviceOption?.style?.toLowerCase() ?? defaultStyle;
     const appOption = appCaptionStyle.find((option) => option.id.toLowerCase() === id.toLowerCase());
-    return deviceStyle !== "default" ? deviceStyle : appOption?.style?.toLowerCase() ?? defaultStyle;
+    return deviceStyle === "default" ? appOption?.style?.toLowerCase() ?? defaultStyle : deviceStyle;
 }
 
 function setCaptionStyleOption(captionStyle: CaptionStyleOption[], id: string, style: string): boolean {

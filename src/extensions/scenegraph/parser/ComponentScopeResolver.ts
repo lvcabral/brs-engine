@@ -112,7 +112,7 @@ export class ComponentScopeResolver {
                 let contents;
                 let filename;
                 if (script.uri !== undefined) {
-                    filename = script.uri.replaceAll(/[\/\\]+/g, path.posix.sep);
+                    filename = script.uri.replaceAll(/[/\\]+/g, path.posix.sep);
                     try {
                         contents = fs.readFileSync(filename, "utf-8");
                         script.content = contents;

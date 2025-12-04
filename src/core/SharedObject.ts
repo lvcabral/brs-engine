@@ -8,8 +8,8 @@
 class SharedObject {
     private readonly offset = 8;
     private readonly queue: { obj: any; version: number; timeout: number }[] = [];
-    private lengthIdx = 0;
-    private versionIdx = 1;
+    private readonly lengthIdx = 0;
+    private readonly versionIdx = 1;
     private buffer: SharedArrayBuffer;
     private view: Uint8Array;
     private maxSize: number;

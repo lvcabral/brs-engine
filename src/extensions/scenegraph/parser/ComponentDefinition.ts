@@ -339,7 +339,7 @@ async function getScriptUri(script: XmlElement, nodeDef: ComponentDefinition): P
         if (script.attr.uri.startsWith("pkg:/")) {
             absoluteUri = script.attr.uri;
         } else {
-            let posixPath = path.dirname(nodeDef.xmlPath.replaceAll(/[\/\\]+/g, path.posix.sep));
+            let posixPath = path.dirname(nodeDef.xmlPath.replaceAll(/[/\\]+/g, path.posix.sep));
             if (process.platform === "win32") {
                 posixPath = posixPath.replace(/^[a-zA-Z]:/, "");
             }

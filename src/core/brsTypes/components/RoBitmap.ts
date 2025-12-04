@@ -38,10 +38,10 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
     private readonly context: BrsCanvasContext2D;
     private readonly name: string;
     private readonly valid: boolean;
+    private readonly patchSizes?: { horizontal: number; vertical: number };
     private alphaEnable: boolean;
     private rgbaCanvas?: BrsCanvas;
     private rgbaLast: number;
-    private patchSizes?: { horizontal: number; vertical: number };
     rgbaRedraw: boolean;
     scaleMode: number;
 
