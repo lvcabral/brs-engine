@@ -15,7 +15,7 @@ import {
     AppData,
     AppExitReason,
     DeviceInfo,
-    PlatformInfo,
+    Platform,
 } from "../core/common";
 import models from "../core/common/models.csv";
 import packageInfo from "../../packages/node/package.json";
