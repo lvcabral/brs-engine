@@ -159,7 +159,6 @@ async function loadSceneGraphExtension() {
     } catch (err: any) {
         console.error(chalk.red(`Error loading SceneGraph extension: ${err.message}`));
     }
-
 }
 
 /**
