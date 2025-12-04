@@ -20,14 +20,22 @@ import { Command } from "commander";
 import stripAnsi from "strip-ansi";
 import { deviceData, loadAppZip, updateAppZip, subscribePackage, mountExt, setupDeepLink } from "./package";
 import { isNumber } from "../api/util";
-import { debugPrompt, dataBufferIndex, dataBufferSize, AppPayload, AppExitReason, AppData } from "../core/common";
+import {
+    debugPrompt,
+    dataBufferIndex,
+    dataBufferSize,
+    AppPayload,
+    AppExitReason,
+    AppData,
+    SupportedExtension,
+} from "../core/common";
 import packageInfo from "../../packages/node/package.json";
 // @ts-ignore
 import * as brs from "./brs.node.js";
-// @ts-ignore
-import * as sg from "./brs-sg.node.js";
 
 // Constants
+declare const __non_webpack_require__: NodeJS.Require;
+const loadModule = typeof __non_webpack_require__ === "function" ? __non_webpack_require__ : eval("require");
 const program = new Command();
 const paths = envPaths("brs", { suffix: "cli" });
 const defaultLevel = chalk.level;
@@ -84,7 +92,7 @@ program
             deviceData.appList = new Array<AppData>();
         }
         if (program.sg) {
-            brs.registerExtension(() => new sg.BrightScriptExtension());
+            await loadSceneGraphExtension();
         }
         subscribePackage("cli", packageCallback);
         brs.registerCallback(messageCallback, sharedBuffer);
@@ -137,6 +145,21 @@ function checkParameters() {
         return;
     }
     return process.exitCode !== 1;
+}
+
+/**
+ * Dynamically load the SceneGraph extension module.
+ */
+async function loadSceneGraphExtension() {
+    try {
+        const sgLib = "brs-sg.node.js";
+        const sg = await loadModule(path.join(__dirname, sgLib));
+        brs.registerExtension(() => new sg.BrightScriptExtension());
+        deviceData.extensions = new Map([[SupportedExtension.SceneGraph, sgLib]]);
+    } catch (err: any) {
+        console.error(chalk.red(`Error loading SceneGraph extension: ${err.message}`));
+    }
+
 }
 
 /**
@@ -368,7 +391,7 @@ async function repl() {
             process.stdout.write(chalk.cyanBright(`ext1:     ${extPath}\n`));
             process.stdout.write(chalk.cyanBright(`tmp:      [In Memory]\n`));
             process.stdout.write(chalk.cyanBright(`cachefs:  [In Memory]\n`));
-            process.stdout.write(chalk.cyanBright(`common:   [In Memory]\n`));
+            process.stdout.write(chalk.cyanBright(`common:   [Read Only]\n`));
         } else if (["var", "vars"].includes(line.split(" ")[0]?.toLowerCase().trim())) {
             const scopeName = line.split(" ")[1]?.toLowerCase().trim() ?? "function";
             let scope = 2; // Function scope
@@ -384,6 +407,16 @@ async function repl() {
             const variables = replInterpreter.formatVariables(scope).trimEnd();
             process.stdout.write(chalk.cyanBright(variables));
             process.stdout.write("\n");
+        } else if (["xt", "ext"].includes(line.toLowerCase().trim())) {
+            const extensions = deviceData.extensions;
+            process.stdout.write(chalk.cyanBright(`\nLoaded Extensions:\n\n`));
+            if (extensions && extensions.size > 0) {
+                for (const [ext, path] of extensions) {
+                    process.stdout.write(chalk.cyanBright(`${ext}: ${path}\n`));
+                }
+            } else {
+                process.stdout.write(chalk.cyanBright() + "No extensions loaded.\n");
+            }
         } else {
             brs.executeLine(line, replInterpreter);
         }
@@ -498,6 +531,7 @@ function printHelp() {
     helpMsg += "   print|?           Print variable value or expression\r\n";
     helpMsg += "   var|vars [scope]  Display variables and their types/values\r\n";
     helpMsg += "   vol|vols          Display file system mounted volumes\r\n";
+    helpMsg += "   xt|ext            Display loaded extensions\r\n";
     helpMsg += "   help|hint         Show this REPL command list\r\n";
     helpMsg += "   clear|cls         Clear terminal screen\r\n";
     helpMsg += "   exit|quit|q       Terminate REPL session\r\n\r\n";

@@ -109,8 +109,8 @@ module.exports = (env) => {
                 new CopyPlugin({
                     patterns: [
                         {
-                            from: path.resolve(__dirname, "../../scenegraph/lib/brs-sg.node.js"),
-                            to: path.resolve(__dirname, "../bin/brs-sg.node.js"),
+                            from: path.resolve(__dirname, "../../scenegraph/assets/common.zip"),
+                            to: path.resolve(__dirname, "../bin/common.zip"),
                             noErrorOnMissing: true,
                         },
                     ],
@@ -118,9 +118,8 @@ module.exports = (env) => {
             ],
             externals: {
                 "./brs.node.js": "commonjs ./brs.node.js",
-                "./brs-sg.node.js": "commonjs ./brs-sg.node.js",
-                canvas: "commonjs canvas",
                 "brs-engine": "commonjs ./brs.node.js",
+                canvas: "commonjs canvas",
             },
             output: {
                 filename: libName + ".cli.js",

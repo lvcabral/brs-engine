@@ -41,9 +41,9 @@
   "scripts": {
     "build": "webpack --config ./config/webpack.config.js --env development",
     "release": "webpack --config ./config/webpack.config.js --env production",
-    "build:scenegraph": "npm run release --prefix ../scenegraph",
+    "build:sg": "npm run release --prefix ../scenegraph",
     "clean": "rimraf ./bin ./types ./assets",
-    "prepublishOnly": "npm-run-all --serial clean release build:scenegraph",
+    "prepublishOnly": "npm-run-all --serial clean release build:sg",
     "prepack": "cp ../../CHANGELOG.md . && cp ../../LICENSE .",
     "postpack": "rm CHANGELOG.md LICENSE"
   },
