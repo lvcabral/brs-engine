@@ -92,6 +92,11 @@ export const DisplayModes = ["480p", "720p", "1080p"] as const;
 export type DisplayMode = (typeof DisplayModes)[number];
 export const CaptionModes = ["Off", "On", "Instant replay", "When mute"] as const;
 export type CaptionMode = (typeof CaptionModes)[number];
+/**
+ * Parses a caption mode string into a CaptionMode type.
+ * @param mode The caption mode string to parse
+ * @returns The parsed CaptionMode or undefined if invalid
+ */
 export function parseCaptionMode(mode: string): CaptionMode | undefined {
     const normalized = mode.trim().toLowerCase();
     return CaptionModes.find((mode) => mode.toLowerCase() === normalized);
@@ -241,6 +246,11 @@ export type AppPayload = {
     ext?: string;
 };
 
+/**
+ * Type guard to check if a value is an AppPayload object.
+ * @param value The value to check
+ * @returns True if the value is a valid AppPayload
+ */
 export function isAppPayload(value: any): value is AppPayload {
     return (
         value &&
@@ -269,6 +279,11 @@ export type TaskPayload = {
     ext?: string;
 };
 
+/**
+ * Type guard to check if a value is a TaskPayload object.
+ * @param value The value to check
+ * @returns True if the value is a valid TaskPayload
+ */
 export function isTaskPayload(value: any): value is TaskPayload {
     return (
         value &&
@@ -301,6 +316,11 @@ export type TaskData = {
     render?: string;
 };
 
+/**
+ * Type guard to check if a value is a TaskData object.
+ * @param value The value to check
+ * @returns True if the value is a valid TaskData
+ */
 export function isTaskData(value: any): value is TaskData {
     return (
         value &&
@@ -327,6 +347,11 @@ export type ThreadUpdate = {
     value: any;
 };
 
+/**
+ * Type guard to check if a value is a ThreadUpdate object.
+ * @param value The value to check
+ * @returns True if the value is a valid ThreadUpdate
+ */
 export function isThreadUpdate(value: any): value is ThreadUpdate {
     return (
         value &&
@@ -337,6 +362,10 @@ export function isThreadUpdate(value: any): value is ThreadUpdate {
     );
 }
 
+/**
+ * Generates a random 6-character hexadecimal address.
+ * @returns A random hex string in uppercase format (e.g., "A1B2C3")
+ */
 export function genHexAddress(): string {
     const randomInt = Math.floor(Math.random() * (0xffffff + 1));
     let hexString = randomInt.toString(16);
@@ -367,16 +396,16 @@ export type PkgFilePath = {
  * Roku documentation: https://developer.roku.com/docs/developer-program/getting-started/architecture/dev-environment.md#lastexitorterminationreason-parameter
  */
 export enum AppExitReason {
-    UNKNOWN = "EXIT_UNKNOWN",
-    CRASHED = "EXIT_BRIGHTSCRIPT_CRASH",
-    UNKFUNC = "EXIT_BRIGHTSCRIPT_UNK_FUNC",
-    FINISHED = "EXIT_USER_NAV",
-    SETTINGS = "EXIT_SETTINGS_UPDATE",
-    POWER = "EXIT_POWER_MODE",
-    PACKAGED = "EXIT_PACKAGER_DONE",
-    INVALID = "EXIT_INVALID_PCODE",
-    PASSWORD = "EXIT_MISSING_PASSWORD",
-    UNPACK = "EXIT_UNPACK_FAILED",
+    Unknown = "EXIT_UNKNOWN",
+    Crashed = "EXIT_BRIGHTSCRIPT_CRASH",
+    UnkFunction = "EXIT_BRIGHTSCRIPT_UNK_FUNC",
+    UserNav = "EXIT_USER_NAV",
+    Settings = "EXIT_SETTINGS_UPDATE",
+    PowerMode = "EXIT_POWER_MODE",
+    Packaged = "EXIT_PACKAGER_DONE",
+    Invalid = "EXIT_INVALID_PCODE",
+    NoPassword = "EXIT_MISSING_PASSWORD",
+    UnpackFail = "EXIT_UNPACK_FAILED",
 }
 
 /* App Data Interface
@@ -399,7 +428,11 @@ export type AppData = {
     running?: boolean;
 };
 
-// Function to check if a value is an AppData object
+/**
+ * Type guard to check if a value is an AppData object.
+ * @param value The value to check
+ * @returns True if the value is a valid AppData
+ */
 export function isAppData(value: any): value is AppData {
     return (
         value &&
@@ -425,7 +458,11 @@ export type NDKStart = {
     env: string[];
 };
 
-// Function to check if a value is an NDKStart object
+/**
+ * Type guard to check if a value is an NDKStart object.
+ * @param value The value to check
+ * @returns True if the value is a valid NDKStart
+ */
 export function isNDKStart(value: any): value is NDKStart {
     return (
         value &&
@@ -574,18 +611,18 @@ export enum DebugCommand {
 
 // Media events enumerator
 export enum MediaEvent {
-    SELECTED,
-    FULL,
-    PARTIAL,
-    PAUSED,
-    RESUMED,
-    FINISHED,
-    FAILED,
-    LOADING,
-    START_STREAM,
-    START_PLAY,
-    POSITION,
-    TOO_MANY,
+    Selected,
+    Full,
+    Partial,
+    Paused,
+    Resumed,
+    Finished,
+    Failed,
+    Loading,
+    StartStream,
+    StartPlay,
+    Position,
+    TooMany,
 }
 
 // Media playback error codes enumerator
@@ -607,6 +644,11 @@ export interface MediaTrack {
     codec?: string;
 }
 
+/**
+ * Type guard to check if a value is a MediaTrack object.
+ * @param value The value to check
+ * @returns True if the value is a valid MediaTrack
+ */
 export function isMediaTrack(value: any): value is MediaTrack {
     return (
         value &&
@@ -636,7 +678,11 @@ export const AudioExt = new Set<string>(["wav", "mp2", "mp3", "m4a", "aac", "ogg
 
 export const VideoExt = new Set<string>(["mp4", "m4v", "mkv", "mov"]);
 
-// Check the platform where the library is running
+/**
+ * Detects the platform where the BrightScript engine is running.
+ * Checks for browser type, OS, and runtime environment.
+ * @returns PlatformInfo object with boolean flags for each platform
+ */
 export function getPlatform(): PlatformInfo {
     let inBrowser = false;
     let inChromium = false;
@@ -703,7 +749,12 @@ export function getPlatform(): PlatformInfo {
     };
 }
 
-// Function to parse the Manifest file into a Map
+/**
+ * Parses a Roku manifest file into a Map of key-value pairs.
+ * Ignores empty lines and comments starting with #.
+ * @param contents The manifest file content as a string
+ * @returns Map containing the parsed manifest entries
+ */
 export function parseManifest(contents: string) {
     const keyValuePairs = contents
         // for each line
@@ -731,21 +782,34 @@ export function parseManifest(contents: string) {
     return new Map<string, string>(keyValuePairs);
 }
 
-// Function to return the Exit Reason from the enumerator based on a string
+/**
+ * Returns the AppExitReason enum value from a string.
+ * @param value The exit reason string to parse
+ * @returns The corresponding AppExitReason or AppExitReason.Unknown if invalid
+ */
 export function getExitReason(value: string): AppExitReason {
     if (Object.values(AppExitReason).includes(value as any)) {
         return value as AppExitReason;
     } else {
-        return AppExitReason.UNKNOWN;
+        return AppExitReason.Unknown;
     }
 }
 
-// Function to convert a number to a hexadecimal string
+/**
+ * Converts a number to an 8-character hexadecimal string.
+ * @param value The number to convert
+ * @param pad Optional padding character (defaults to "0")
+ * @returns Hexadecimal string representation padded to 8 characters
+ */
 export function numberToHex(value: number, pad: string = ""): string {
     return (value >>> 0).toString(16).padStart(8, pad);
 }
 
-// This function takes a text file content as a string and returns an array of lines
+/**
+ * Parses text file content into an array of lines.
+ * @param content Optional text file content as a string
+ * @returns Array of lines from the text file (empty array if no content)
+ */
 export function parseTextFile(content?: string): string[] {
     let lines: string[] = [];
     if (content) {
@@ -754,7 +818,11 @@ export function parseTextFile(content?: string): string[] {
     return lines;
 }
 
-// Function to convert the firmware string to a Map with Roku OS version parts
+/**
+ * Extracts Roku OS version components from a firmware string.
+ * @param firmware The firmware version string (e.g., "48G.04E05531A")
+ * @returns Map with keys: major, minor, revision, build, plid
+ */
 export function getRokuOSVersion(firmware: string) {
     const osVersion: Map<string, string> = new Map();
     if (firmware.length > 0) {
@@ -768,7 +836,10 @@ export function getRokuOSVersion(firmware: string) {
     return osVersion;
 }
 
-// Roku beacon date format
+/**
+ * Returns the current UTC timestamp in Roku beacon date format.
+ * @returns Formatted date string (MM-DD HH:MM:SS.ms)
+ */
 export function getNow(): string {
     let d = new Date();
     let mo = new Intl.DateTimeFormat("en-GB", { month: "2-digit", timeZone: "UTC" }).format(d);

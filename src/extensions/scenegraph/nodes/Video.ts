@@ -305,21 +305,21 @@ export class Video extends Group {
         this.statusChanged = true;
         let state = "none";
         switch (eventType) {
-            case MediaEvent.LOADING:
+            case MediaEvent.Loading:
                 this.showUI(false);
                 this.resetSeeking();
                 this.showHeader = now + 5000;
                 this.spinner.setValueSilent("visible", BrsBoolean.from(this.enableUI));
                 this.setBufferingStatus(eventIndex);
                 return;
-            case MediaEvent.START_STREAM:
-            case MediaEvent.RESUMED:
+            case MediaEvent.StartStream:
+            case MediaEvent.Resumed:
                 state = "playing";
                 this.resetSeeking();
                 this.spinner.setValueSilent("visible", BrsBoolean.False);
                 this.showUI(false);
                 break;
-            case MediaEvent.PAUSED:
+            case MediaEvent.Paused:
                 state = "paused";
                 this.spinner.setValueSilent("visible", BrsBoolean.False);
                 if (this.trickPlayPos === -1) {
@@ -328,16 +328,16 @@ export class Video extends Group {
                     this.showPaused = now + 2000;
                 }
                 break;
-            case MediaEvent.PARTIAL:
+            case MediaEvent.Partial:
                 state = "stopped";
                 break;
-            case MediaEvent.FINISHED:
-            case MediaEvent.FULL:
+            case MediaEvent.Finished:
+            case MediaEvent.Full:
                 this.spinner.setValueSilent("visible", BrsBoolean.False);
                 this.showUI(false);
                 state = "finished";
                 break;
-            case MediaEvent.FAILED:
+            case MediaEvent.Failed:
                 this.setErrorFields(eventIndex);
                 state = "error";
                 if (!sgRoot.inTaskThread()) postMessage(`video,error`);
@@ -383,7 +383,7 @@ export class Video extends Group {
             this.trickPlayBar.setPosition(position, duration);
             if (this.seeking) {
                 this.spinner.setValueSilent("visible", BrsBoolean.False);
-                this.setState(MediaEvent.RESUMED, 0);
+                this.setState(MediaEvent.Resumed, 0);
                 this.seeking = false;
             }
         }

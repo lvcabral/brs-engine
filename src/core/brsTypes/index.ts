@@ -115,6 +115,11 @@ export function isBrsNumber(value: BrsType): value is BrsNumber {
 
 export const NumberKinds = new Set([ValueKind.Int32, ValueKind.Float, ValueKind.Double, ValueKind.Int64]);
 
+/**
+ * Checks if a ValueKind represents a numeric type.
+ * @param kind ValueKind to check
+ * @returns True if the kind is a numeric type, false otherwise
+ */
 export function isNumberKind(kind: ValueKind): boolean {
     return NumberKinds.has(kind);
 }
@@ -241,7 +246,11 @@ export type AllComponents = { kind: ValueKind.Object } & BrsComponent & BrsValue
 /** The set of all supported types in BrightScript. */
 export type BrsType = BrsPrimitive | Callable | AllComponents | Uninitialized;
 
-// Function to check if the value is a BrightScript Type
+/**
+ * Checks if a value is a BrightScript type.
+ * @param value Value to check
+ * @returns True if the value is a BrsType, false otherwise
+ */
 export function isBrsType(value: any): value is BrsType {
     return (
         isBrsBoolean(value) ||
@@ -354,10 +363,11 @@ export function brsValueOf(value: any, cs?: boolean, nodeMap?: Map<string, ISGNo
 
 /**
  * Converts a JavaScript object to a BrsType.
- * @param obj The JavaScript object to convert.
- * @param {boolean} cs Whether to return an AA as case sensitive.
- * @param {Map<string, Node>} nodeMap Optional map to track nodes by ID for resolving circular references.
- * @returns A BrsType with the converted object or Invalid if the object is not transferable.
+ * Handles BrsTypes, null, Uint8Array, arrays, and plain objects.
+ * @param obj JavaScript object to convert
+ * @param cs Whether to return an AA as case sensitive
+ * @param nodeMap Optional map to track nodes by ID for resolving circular references
+ * @returns BrsType representation or Invalid if not transferable
  */
 function fromObject(obj: any, cs?: boolean, nodeMap?: Map<string, ISGNode>): BrsType {
     if (isBrsType(obj)) {
@@ -377,9 +387,11 @@ function fromObject(obj: any, cs?: boolean, nodeMap?: Map<string, ISGNode>): Brs
 }
 
 /**
- * Converts a RoAssociativeArray to a JavaScript object, converting each property to the corresponding JavaScript type.
- * @param associativeArray The RoAssociativeArray to convert.
- * @returns A JavaScript object with the converted properties.
+ * Converts a RoAssociativeArray to a JavaScript object.
+ * Recursively converts each property to the corresponding JavaScript type.
+ * @param associativeArray RoAssociativeArray to convert
+ * @param deep Whether to perform deep conversion (defaults to true)
+ * @returns JavaScript object with converted properties
  */
 function fromAssociativeArray(associativeArray: RoAssociativeArray, deep: boolean = true): FlexObject {
     const result: FlexObject = {};

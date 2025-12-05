@@ -66,21 +66,21 @@ export class SoundEffect extends Node {
     setState(flags: number) {
         this.state = "none";
         switch (flags) {
-            case MediaEvent.START_PLAY:
+            case MediaEvent.StartPlay:
                 this.state = "playing";
                 break;
-            case MediaEvent.PARTIAL:
+            case MediaEvent.Partial:
                 this.state = "stopped";
                 this.stream = -1;
                 break;
-            case MediaEvent.FINISHED:
+            case MediaEvent.Finished:
                 this.state = "finished";
                 this.stream = -1;
                 break;
-            case MediaEvent.FAILED:
+            case MediaEvent.Failed:
                 this.state = "notready";
                 break;
-            case MediaEvent.TOO_MANY:
+            case MediaEvent.TooMany:
                 this.state = "toomanysounds";
                 break;
         }
@@ -106,7 +106,7 @@ export class SoundEffect extends Node {
             this.uri = "";
             this.audioId = -1;
             super.setValue("loadStatus", new BrsString("failed"));
-            this.setState(MediaEvent.FAILED);
+            this.setState(MediaEvent.Failed);
         }
     }
 
@@ -117,11 +117,11 @@ export class SoundEffect extends Node {
             if (BrsDevice.isDevMode) {
                 BrsDevice.stderr.write(`warning,No available sound effect streams for ${this.uri}`);
             }
-            this.setState(MediaEvent.TOO_MANY);
+            this.setState(MediaEvent.TooMany);
         } else {
             sgRoot.sfx[this.stream] = this;
             if (!sgRoot.inTaskThread()) postMessage(`sfx,trigger,${this.uri},${volume},${this.stream}`);
-            this.setState(MediaEvent.START_PLAY);
+            this.setState(MediaEvent.StartPlay);
         }
     }
 
@@ -130,6 +130,6 @@ export class SoundEffect extends Node {
         if (sgRoot.sfx[this.stream] === this) {
             sgRoot.sfx[this.stream] = undefined;
         }
-        this.setState(MediaEvent.PARTIAL);
+        this.setState(MediaEvent.Partial);
     }
 }

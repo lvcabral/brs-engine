@@ -50,6 +50,11 @@ let sharedArray: Int32Array;
 let sendKeysEnabled = false;
 let disableDebug: boolean = false;
 
+/**
+ * Initializes the control module with shared array and options.
+ * @param array Shared Int32Array for inter-thread communication
+ * @param options Optional configuration object (supports disableDebug)
+ */
 export function initControlModule(array: Int32Array, options: any = {}) {
     sharedArray = array;
     if (typeof options.disableDebug === "boolean") {
@@ -59,31 +64,67 @@ export function initControlModule(array: Int32Array, options: any = {}) {
 
 // Observers Handling
 const observers = new Map();
+
+/**
+ * Subscribes an observer to control events.
+ * @param observerId Unique identifier for the observer
+ * @param observerCallback Callback function to be called on events
+ */
 export function subscribeControl(observerId: string, observerCallback: SubscribeCallback) {
     observers.set(observerId, observerCallback);
 }
+
+/**
+ * Unsubscribes an observer from control events.
+ * @param observerId Unique identifier for the observer to remove
+ */
 export function unsubscribeControl(observerId: string) {
     observers.delete(observerId);
 }
+
+/**
+ * Notifies all subscribed observers with an event.
+ * @param eventName Name of the event
+ * @param eventData Optional data to pass with the event
+ */
 function notifyAll(eventName: string, eventData?: any) {
     for (const [_id, callback] of observers) {
         callback(eventName, eventData);
     }
 }
 
-// Control API
+/**
+ * Sets the control input modes (keyboard, gamepads).
+ * @param newState Object with keyboard and/or gamePads boolean properties
+ */
 export function setControlMode(newState: object) {
     Object.assign(controls, newState);
 }
 
+/**
+ * Gets the current control input modes.
+ * @returns Object with keyboard and gamePads boolean properties
+ */
 export function getControlMode() {
     return { ...controls };
 }
 
+/**
+ * Enables or disables sending key events to the interpreter.
+ * @param enable True to enable key sending, false to disable
+ */
 export function enableSendKeys(enable: boolean) {
     sendKeysEnabled = enable;
 }
 
+/**
+ * Sends a key event to the interpreter.
+ * Handles special keys (home, break) and Roku remote keys.
+ * @param key Key name or code
+ * @param mod Modifier value (0 for press, 100 for release)
+ * @param type Remote type (defaults to SIM)
+ * @param index Remote index (defaults to 0)
+ */
 export function sendKey(key: string, mod: number, type: RemoteType = RemoteType.SIM, index = 0) {
     if (["home", "volumemute", "poweroff"].includes(key.toLowerCase())) {
         if (mod === 0) {
@@ -117,6 +158,11 @@ export function sendKey(key: string, mod: number, type: RemoteType = RemoteType.
     }
 }
 
+/**
+ * Gets the next available slot in the key buffer.
+ * Shifts buffer if full.
+ * @returns Index of next available buffer slot
+ */
 function getNext() {
     for (let i = 0; i < keyBufferSize; i++) {
         const next = i * keyArraySpots;
@@ -133,16 +179,27 @@ function getNext() {
     return (keyBufferSize - 1) * keyArraySpots;
 }
 
-// Input API
+/**
+ * Sends input data to the interpreter via shared buffer.
+ * @param data Input data object to serialize and send
+ */
 export function sendInput(data: object) {
     saveDataBuffer(sharedArray, JSON.stringify(data), BufferType.INPUT);
 }
 
-// Debug API
+/**
+ * Sets the debug state (enable/disable debugging).
+ * @param enabled True to enable debugging, false to disable
+ */
 export function setDebugState(enabled: boolean) {
     notifyAll("debugState", enabled);
     disableDebug = !enabled;
 }
+
+/**
+ * Gets the current debug state.
+ * @returns True if debugging is enabled, false otherwise
+ */
 export function getDebugState() {
     return !disableDebug;
 }

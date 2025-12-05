@@ -22,6 +22,7 @@ export interface BrsExtension {
 /**
  * Registers a factory that will be invoked whenever a new interpreter is created.
  * The same extension name will overwrite previous registrations.
+ * @param factory Factory function that creates BrsExtension instances
  */
 export function registerExtension(factory: BrsExtensionFactory) {
     const firstInstance = factory();
@@ -29,13 +30,17 @@ export function registerExtension(factory: BrsExtensionFactory) {
     registeredFactories.set(firstInstance.name, () => pool.pop() ?? factory());
 }
 
-/** Clear all registered extension factories. Primarily used for tests. */
+/**
+ * Clears all registered extension factories.
+ * Primarily used for tests.
+ */
 export function clearExtensions() {
     registeredFactories.clear();
 }
 
 /**
  * Instantiates the registered extensions so they can be attached to a new interpreter.
+ * @returns Array of instantiated BrsExtension objects
  */
 export function instantiateExtensions(): BrsExtension[] {
     const extensions: BrsExtension[] = [];
@@ -59,6 +64,11 @@ export interface ISGNode extends BrsComponent {
     deepCopy(): BrsType;
 }
 
+/**
+ * Type guard to check if a value is a SceneGraph node.
+ * @param value Value to check
+ * @returns True if value is an ISGNode
+ */
 export function isSceneGraphNode(value: unknown): value is ISGNode {
     return Boolean(value && typeof value === "object" && "nodeSubtype" in (value as ISGNode));
 }

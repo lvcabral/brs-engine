@@ -88,22 +88,36 @@ export class SGRoot {
         this._threads.set(this._taskId, { id: genHexAddress(), type: "Render" });
     }
 
-    /** Set the map of component definitions */
+    /**
+     * Sets the map of component definitions.
+     * @param nodeDefMap Map of component names to their definitions
+     */
     setNodeDefMap(nodeDefMap: Map<string, ComponentDefinition>) {
         this._nodeDefMap = nodeDefMap;
     }
 
-    /** Set the root Scene */
+    /**
+     * Sets the root Scene node.
+     * @param scene Scene instance to set as root
+     */
     setScene(scene: Scene) {
         this._scene = scene;
     }
 
-    /** Set the currently focused node */
+    /**
+     * Sets the currently focused node.
+     * @param node Node to set as focused, or undefined to clear focus
+     */
     setFocused(node?: RoSGNode) {
         this._focused = node;
     }
 
-    /** Set thread data and optionally make it the current */
+    /**
+     * Sets thread data and optionally makes it the current thread.
+     * @param taskId Thread ID (0 for render thread, >0 for task threads)
+     * @param makeCurrent Whether to make this the current thread (defaults to false)
+     * @param address Optional hex address for the thread (auto-generated if not provided)
+     */
     setThread(taskId: number, makeCurrent: boolean = false, address?: string) {
         this._threads.set(taskId, { id: address ?? genHexAddress(), type: taskId > 0 ? "Task" : "Render" });
         if (makeCurrent) {
@@ -111,7 +125,11 @@ export class SGRoot {
         }
     }
 
-    /** Update all Application Tasks */
+    /**
+     * Updates all application tasks.
+     * Processes task state and checks for active tasks.
+     * @returns True if any tasks were updated, false otherwise
+     */
     processTasks(): boolean {
         let updates = false;
         for (const task of this._tasks) {
@@ -123,7 +141,11 @@ export class SGRoot {
         return updates;
     }
 
-    /** Update all Application Timers */
+    /**
+     * Updates all application timers.
+     * Checks which timers should fire and triggers them.
+     * @returns True if any timers fired, false otherwise
+     */
     processTimers(): boolean {
         let fired = false;
         for (const timer of this._timers) {
@@ -134,7 +156,11 @@ export class SGRoot {
         return fired;
     }
 
-    /** Reset and prepare to track a new Audio instance */
+    /**
+     * Resets and prepares to track a new Audio instance.
+     * Clears audio state flags in shared array.
+     * @param audio Audio instance to track
+     */
     setAudio(audio: Audio) {
         this._audio = audio;
         this.audioFlags = -1;
@@ -147,7 +173,11 @@ export class SGRoot {
         Atomics.store(BrsDevice.sharedArray, DataType.SPS, -1);
     }
 
-    /** Update the Audio instance based on data from render thread */
+    /**
+     * Updates the Audio instance based on data from render thread.
+     * Reads state, index, duration, and position from shared array.
+     * @returns True if audio state changed, false otherwise
+     */
     processAudio(): boolean {
         if (!this._audio) {
             return false;
@@ -180,7 +210,11 @@ export class SGRoot {
         return isDirty;
     }
 
-    /** Reset and prepare to track a new Video instance */
+    /**
+     * Resets and prepares to track a new Video instance.
+     * Clears video state flags in shared array.
+     * @param video Video instance to track
+     */
     setVideo(video: Video) {
         this._video = video;
         this.videoEvent = -1;
@@ -197,7 +231,11 @@ export class SGRoot {
         Atomics.store(BrsDevice.sharedArray, DataType.VTT, -1);
     }
 
-    /** Update the Video instance based on data from render thread */
+    /**
+     * Updates the Video instance based on data from render thread.
+     * Reads state, index, duration, position, tracks, and other video data from shared array.
+     * @returns True if video state changed, false otherwise
+     */
     processVideo(): boolean {
         if (!this._video) {
             return false;
@@ -205,7 +243,7 @@ export class SGRoot {
         let isDirty = false;
         const progress = Atomics.load(BrsDevice.sharedArray, DataType.VLP);
         if (this.videoProgress !== progress && progress >= 0 && progress <= 1000) {
-            this._video.setState(MediaEvent.LOADING, Math.trunc(progress / 10));
+            this._video.setState(MediaEvent.Loading, Math.trunc(progress / 10));
             console.debug(`Video Progress: ${progress}`);
         }
         this.videoProgress = progress;
@@ -276,7 +314,11 @@ export class SGRoot {
         return isDirty;
     }
 
-    /** Update all SoundEffects based on data from render thread */
+    /**
+     * Updates all SoundEffects based on data from render thread.
+     * Checks sound effect states and triggers playback or cleanup.
+     * @returns True if any sound effect state changed, false otherwise
+     */
     processSFX() {
         let isDirty = false;
         for (let i = 0; i < this._sfx.length; i++) {
@@ -286,10 +328,10 @@ export class SGRoot {
             }
             const sfxId = Atomics.load(BrsDevice.sharedArray, DataType.WAV + i);
             if (sfxId >= 0 && sfxId === sfx.getAudioId() && sfx.getState() !== "playing") {
-                sfx.setState(MediaEvent.START_PLAY);
+                sfx.setState(MediaEvent.StartPlay);
                 isDirty = true;
             } else if (sfx.getState() !== "stopped") {
-                sfx.setState(MediaEvent.FINISHED);
+                sfx.setState(MediaEvent.Finished);
                 this._sfx[i] = undefined;
                 isDirty = true;
             }
@@ -297,10 +339,20 @@ export class SGRoot {
         return isDirty;
     }
 
+    /**
+     * Checks if currently executing in a task thread.
+     * @returns True if in a task thread (taskId > 0), false if in render thread
+     */
     inTaskThread(): boolean {
         return this.taskId > 0;
     }
 
+    /**
+     * Gets thread information for the specified task ID.
+     * Populates thread name from scene or task subtype.
+     * @param taskId Thread ID to get info for (0 for render thread)
+     * @returns ThreadInfo object with id, type, and name
+     */
     getThreadInfo(taskId: number): ThreadInfo {
         const thread = this._threads.get(taskId)!;
         if (taskId === 0 && this._taskId === 0) {
@@ -312,10 +364,18 @@ export class SGRoot {
         return thread;
     }
 
+    /**
+     * Gets thread information for the current thread.
+     * @returns ThreadInfo object for the current thread
+     */
     getCurrentThread(): ThreadInfo {
         return this.getThreadInfo(this._taskId);
     }
 
+    /**
+     * Gets thread information for the render thread.
+     * @returns ThreadInfo object for the render thread (thread 0)
+     */
     getRenderThread(): ThreadInfo {
         return this.getThreadInfo(0);
     }

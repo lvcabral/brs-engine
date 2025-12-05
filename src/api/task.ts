@@ -28,7 +28,11 @@ const threadSyncToMain: Map<number, SharedObject> = new Map();
 let sharedBuffer: ArrayBufferLike;
 let brsWrkLib: string;
 
-// Initialize Task Module
+/**
+ * Initializes the task module with shared buffer and worker library path.
+ * @param buffer Shared ArrayBuffer for inter-thread communication
+ * @param libPath Path to the BrightScript worker library
+ */
 export function initTaskModule(buffer: ArrayBufferLike, libPath: string) {
     sharedBuffer = buffer;
     brsWrkLib = libPath;
@@ -36,19 +40,38 @@ export function initTaskModule(buffer: ArrayBufferLike, libPath: string) {
 
 // Observers Handling
 const observers: Map<string, SubscribeCallback> = new Map();
+/**
+ * Subscribes an observer to task events.
+ * @param observerId Unique identifier for the observer
+ * @param observerCallback Callback function to receive events
+ */
 export function subscribeTask(observerId: string, observerCallback: SubscribeCallback) {
     observers.set(observerId, observerCallback);
 }
+/**
+ * Unsubscribes an observer from task events.
+ * @param observerId Unique identifier of the observer to remove
+ */
 export function unsubscribeTask(observerId: string) {
     observers.delete(observerId);
 }
+/**
+ * Notifies all subscribed observers of a task event.
+ * @param eventName Name of the event
+ * @param eventData Optional data associated with the event
+ */
 function notifyAll(eventName: string, eventData?: any) {
     for (const [_id, callback] of observers) {
         callback(eventName, eventData);
     }
 }
 
-// Task Handling
+/**
+ * Starts a new task in a Web Worker.
+ * Creates worker, sets up communication buffers, and posts task payload.
+ * @param taskData Task configuration and function name
+ * @param currentPayload Current application payload to pass to task
+ */
 function runTask(taskData: TaskData, currentPayload: AppPayload) {
     if (tasks.has(taskData.id) || !taskData.m?.top?.functionname) {
         console.debug("[API] Task already running or invalid task data: ", taskData.id, taskData.name);
@@ -77,6 +100,10 @@ function runTask(taskData: TaskData, currentPayload: AppPayload) {
     taskWorker.postMessage(taskPayload);
 }
 
+/**
+ * Terminates a running task worker and cleans up resources.
+ * @param taskId ID of the task to terminate
+ */
 function endTask(taskId: number) {
     const taskWorker = tasks.get(taskId);
     if (taskWorker) {
@@ -89,6 +116,9 @@ function endTask(taskId: number) {
     }
 }
 
+/**
+ * Resets all tasks by terminating workers and clearing state.
+ */
 export function resetTasks() {
     for (const [_id, worker] of tasks) {
         worker?.removeEventListener("message", taskCallback);
@@ -99,7 +129,11 @@ export function resetTasks() {
     threadSyncToMain.clear();
 }
 
-// Receive Messages from the Task Interpreter (Web Worker)
+/**
+ * Handles messages received from task Web Workers.
+ * Routes registry updates, display settings, and task state changes.
+ * @param event MessageEvent from the task worker
+ */
 function taskCallback(event: MessageEvent) {
     if (event.data instanceof Map) {
         notifyAll("registry", event.data);
@@ -128,6 +162,12 @@ function taskCallback(event: MessageEvent) {
     }
 }
 
+/**
+ * Handles task data events from the engine.
+ * Starts or stops tasks based on the task state.
+ * @param taskData Task data containing state and configuration
+ * @param currentPayload Current application payload with manifest and packages
+ */
 export function handleTaskData(taskData: TaskData, currentPayload: AppPayload) {
     if (taskData.state === TaskState.RUN) {
         if (taskData.buffer instanceof SharedArrayBuffer) {
@@ -141,6 +181,12 @@ export function handleTaskData(taskData: TaskData, currentPayload: AppPayload) {
     }
 }
 
+/**
+ * Handles thread update events for field synchronization.
+ * Propagates updates between main thread and task threads.
+ * @param threadUpdate Thread update data with field changes
+ * @param fromTask Whether the update is from a task thread (defaults to false)
+ */
 export function handleThreadUpdate(threadUpdate: ThreadUpdate, fromTask: boolean = false) {
     if (fromTask) {
         threadSyncToMain.get(threadUpdate.id)?.waitStore(threadUpdate, 1);

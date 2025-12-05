@@ -44,12 +44,26 @@ export const currentApp = createAppData();
 
 // Observers Handling
 const observers = new Map();
+/**
+ * Subscribes an observer to package events.
+ * @param observerId Unique identifier for the observer
+ * @param observerCallback Callback function to receive events
+ */
 export function subscribePackage(observerId: string, observerCallback: SubscribeCallback) {
     observers.set(observerId, observerCallback);
 }
+/**
+ * Unsubscribes an observer from package events.
+ * @param observerId Unique identifier of the observer to remove
+ */
 export function unsubscribePackage(observerId: string) {
     observers.delete(observerId);
 }
+/**
+ * Notifies all subscribed observers of a package event.
+ * @param eventName Name of the event
+ * @param eventData Optional data associated with the event
+ */
 function notifyAll(eventName: string, eventData?: any) {
     for (const [_id, callback] of observers) {
         callback(eventName, eventData);
@@ -62,6 +76,13 @@ let srcId: number;
 let pkgZip: ArrayBuffer | undefined;
 let extZip: ArrayBuffer | undefined;
 
+/**
+ * Loads and processes a BrightScript application zip package.
+ * Extracts manifest, source files, and assets.
+ * @param fileName Name of the zip file
+ * @param file ArrayBuffer containing the zip data
+ * @param callback Callback function to execute with the created payload
+ */
 export function loadAppZip(fileName: string, file: ArrayBuffer, callback: Function) {
     try {
         pkgZip = file;
@@ -105,6 +126,12 @@ export function loadAppZip(fileName: string, file: ArrayBuffer, callback: Functi
     callback(createPayload(launchTime));
 }
 
+/**
+ * Processes an individual file from the zip package.
+ * Handles source files, audio, video, and pcode data.
+ * @param relativePath Relative path of the file in the zip
+ * @param fileData File data as Uint8Array
+ */
 function processFile(relativePath: string, fileData: Uint8Array) {
     const lcasePath: string = relativePath.toLowerCase();
     const ext = lcasePath.split(".").pop() ?? "";
@@ -127,6 +154,12 @@ function processFile(relativePath: string, fileData: Uint8Array) {
     }
 }
 
+/**
+ * Processes the application manifest file.
+ * Extracts app metadata and displays splash screen.
+ * @param content Manifest file content as string
+ * @returns Launch time timestamp in milliseconds
+ */
 function processManifest(content: string): number {
     manifestMap.clear();
     for (const [key, value] of parseManifest(content)) {
@@ -169,6 +202,11 @@ function processManifest(content: string): number {
     return launchTime;
 }
 
+/**
+ * Displays splash screen or icon from the package.
+ * @param splash Optional path to splash screen image
+ * @param iconFile Optional icon file data
+ */
 function showSplashOrIcon(splash?: string, iconFile?: Uint8Array) {
     if (typeof createImageBitmap !== "undefined") {
         clearDisplay(true);
@@ -183,7 +221,10 @@ function showSplashOrIcon(splash?: string, iconFile?: Uint8Array) {
     }
 }
 
-// Returns Device Serial Number based on Device Model and library version
+/**
+ * Returns device serial number based on device model and library version.
+ * @returns Generated serial number string
+ */
 export function getSerialNumber() {
     const device = deviceData.models?.get(deviceData.deviceModel);
     const prefix = device ? device[4] : "X0";
@@ -194,13 +235,22 @@ export function getSerialNumber() {
     return `${prefix}0BRS${verPlain.substring(0, 6)}`;
 }
 
-// Returns the Device Model type
+/**
+ * Returns the device model type (STB, TV, etc.).
+ * @returns Device model type string
+ */
 export function getModelType(): string {
     const device = deviceData.models?.get(deviceData.deviceModel);
     return device ? device[1] : "STB";
 }
 
-// Remove the source code and replace by encrypted pcode returning new zip
+/**
+ * Removes source code and replaces with encrypted pcode.
+ * Creates a new zip package with encrypted content.
+ * @param source Encrypted source data
+ * @param iv Initialization vector for encryption
+ * @returns New zip file as Uint8Array
+ */
 export function updateAppZip(source: Uint8Array, iv: string) {
     let newZip: Zippable = {};
     for (const filePath in currentZip) {
@@ -213,7 +263,11 @@ export function updateAppZip(source: Uint8Array, iv: string) {
     return zipSync(newZip, { level: 6 });
 }
 
-// Create App Payload
+/**
+ * Creates an AppPayload for execution.
+ * @param launchTime Launch timestamp in milliseconds
+ * @returns Complete AppPayload object
+ */
 export function createPayload(launchTime: number): AppPayload {
     return {
         device: deviceData,
@@ -229,9 +283,14 @@ export function createPayload(launchTime: number): AppPayload {
     };
 }
 
+/**
+ * Sets up deep link parameters for the application.
+ * Merges with default launch parameters.
+ * @param deepLink Map of deep link key-value pairs
+ */
 export function setupDeepLink(deepLink: Map<string, string>) {
     inputParams.clear();
-    inputParams.set("lastExitOrTerminationReason", currentApp.exitReason ?? AppExitReason.UNKNOWN);
+    inputParams.set("lastExitOrTerminationReason", currentApp.exitReason ?? AppExitReason.Unknown);
     /**
      * Options for "source" parameter:
      * - "auto-run-dev" when app is side-loaded (default)
@@ -245,13 +304,19 @@ export function setupDeepLink(deepLink: Map<string, string>) {
     }
 }
 
-// Current App object
+/**
+ * Resets the current app object to default state.
+ * Clears package zip references.
+ */
 export function resetCurrentApp() {
     Object.assign(currentApp, createAppData());
     pkgZip = undefined;
 }
 
-// Create Default App Data
+/**
+ * Creates a default AppData object.
+ * @returns AppData with default values
+ */
 function createAppData(): AppData {
     return {
         id: "",
@@ -260,18 +325,24 @@ function createAppData(): AppData {
         version: "",
         path: "",
         password: "",
-        exitReason: AppExitReason.UNKNOWN,
+        exitReason: AppExitReason.Unknown,
         exitTime: undefined,
         running: false,
     };
 }
 
-// External Storage Handling
 // TODO: Support dynamic mounting and unmounting of external storage
+/**
+ * Mounts external storage from a zip package.
+ * @param zipData ArrayBuffer containing the external storage zip data
+ */
 export function mountExt(zipData: ArrayBuffer) {
     extZip = zipData;
 }
 
+/**
+ * Unmounts external storage.
+ */
 export function umountExt() {
     extZip = undefined;
 }

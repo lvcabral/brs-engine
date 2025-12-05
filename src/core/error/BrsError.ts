@@ -9,7 +9,17 @@ import { BrsType } from "../brsTypes";
 import type { TracePoint } from "../interpreter";
 import type { Location } from "../lexer";
 
+/**
+ * Base error class for all BrightScript errors.
+ * Extends JavaScript Error with location information and optional stack trace.
+ */
 export class BrsError extends Error {
+    /**
+     * Creates a BrsError with location and optional backtrace.
+     * @param message - The error message
+     * @param location - The source code location where the error occurred
+     * @param backTrace - Optional array of trace points showing the call stack
+     */
     constructor(message: string, readonly location: Location, public backTrace?: TracePoint[]) {
         super(message);
     }
@@ -51,8 +61,18 @@ export class BrsError extends Error {
     }
 }
 
-/** An error thrown when a BrightScript runtime error is encountered. */
+/**
+ * Error thrown when a BrightScript runtime error is encountered.
+ * Extends BrsError with error detail information and optional extra fields.
+ */
 export class RuntimeError extends BrsError {
+    /**
+     * Creates a RuntimeError with detailed error information.
+     * @param errorDetail - Object containing errno and message
+     * @param location - The source code location where the error occurred
+     * @param backTrace - Optional array of trace points showing the call stack
+     * @param extraFields - Optional map of additional error-specific fields
+     */
     constructor(
         readonly errorDetail: ErrorDetail,
         location: Location,
@@ -63,7 +83,10 @@ export class RuntimeError extends BrsError {
     }
 }
 
-/** Any error detail provided by the reference brightscript implementation. */
+/**
+ * Error detail information matching the reference BrightScript implementation.
+ * Contains a unique error number and human-readable message.
+ */
 export type ErrorDetail = {
     /** The unique ID of the error. */
     errno: number;
@@ -85,7 +108,11 @@ export function findErrorDetail(errno: number): ErrorDetail | null {
     return null;
 }
 
-/** Enumerator with the RBI Runtime Error codes */
+/**
+ * Comprehensive enumeration of all Roku BrightScript runtime error codes.
+ * Each entry contains an errno (error number) and descriptive message.
+ * Error codes match the reference BrightScript implementation.
+ */
 export const RuntimeErrorDetail = {
     NextWithoutFor: {
         errno: 0,

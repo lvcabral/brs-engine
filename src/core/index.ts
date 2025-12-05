@@ -623,7 +623,7 @@ export async function executeFile(payload: AppPayload, customOptions?: Partial<E
         BrsDevice.loadLocaleTerms();
     } catch (err: any) {
         postMessage(`error,Error mounting File System: ${err.message}`);
-        return { exitReason: AppExitReason.CRASHED };
+        return { exitReason: AppExitReason.Crashed };
     }
     const extensions = instantiateExtensions();
     // Create the interpreter
@@ -781,7 +781,7 @@ interface SerializedPCode {
 function setupInputParams(deepLinkMap: Map<string, string>, splashTime: number): BrsTypes.RoAssociativeArray {
     const inputMap = new Map([
         ["instant_on_run_mode", "foreground"],
-        ["lastExitOrTerminationReason", AppExitReason.UNKNOWN],
+        ["lastExitOrTerminationReason", AppExitReason.Unknown],
         ["source", "auto-run-dev"],
         ["splashTime", splashTime.toString()],
     ]);
@@ -910,7 +910,7 @@ async function runSource(
     const password = payload.password ?? "";
     const parseResult = lexParseSync(BrsDevice.fileSystem, interpreter.manifest, sourceMap, password, stats);
     let exitReason = parseResult.exitReason;
-    if (exitReason !== AppExitReason.CRASHED) {
+    if (exitReason !== AppExitReason.Crashed) {
         if (password.length > 0) {
             const tokens = parseResult.tokens;
             const iv = crypto.randomBytes(12).toString("base64");
@@ -918,7 +918,7 @@ async function runSource(
             const deflated = zlibSync(encode({ pcode: tokens }));
             const source = Buffer.from(deflated);
             const cipherText = Buffer.concat([cipher.update(source), cipher.final()]);
-            return { exitReason: AppExitReason.PACKAGED, cipherText: cipherText, iv: iv };
+            return { exitReason: AppExitReason.Packaged, cipherText: cipherText, iv: iv };
         }
         // Update Source Map with the SceneGraph components (if exists)
         for (const ext of interpreter.extensions.values()) {
@@ -955,14 +955,14 @@ async function runEncrypted(
             if (spcode) {
                 decodedTokens = new Map(Object.entries(spcode.pcode));
             } else {
-                return { exitReason: AppExitReason.INVALID };
+                return { exitReason: AppExitReason.Invalid };
             }
         } else {
-            return { exitReason: AppExitReason.PASSWORD };
+            return { exitReason: AppExitReason.NoPassword };
         }
     } catch (err: any) {
         postMessage(`error,Error unpacking the app: ${err.message}`);
-        return { exitReason: AppExitReason.UNPACK };
+        return { exitReason: AppExitReason.UnpackFail };
     }
     // Execute the decrypted source code
     try {
@@ -971,7 +971,7 @@ async function runEncrypted(
         return { exitReason: exitReason };
     } catch (err: any) {
         postMessage(`error,Error executing the app: ${err.message}`);
-        return { exitReason: AppExitReason.CRASHED };
+        return { exitReason: AppExitReason.Crashed };
     }
 }
 
@@ -989,7 +989,7 @@ async function executeApp(
     payload: AppPayload,
     sourceMap?: Map<string, string>
 ) {
-    let exitReason: AppExitReason = AppExitReason.FINISHED;
+    let exitReason: AppExitReason = AppExitReason.UserNav;
     try {
         let splashMinTime = Number.parseInt(payload.manifest.get("splash_min_time") ?? "");
         if (Number.isNaN(splashMinTime)) {
@@ -1003,21 +1003,21 @@ async function executeApp(
         const inputParams = setupInputParams(payload.deepLink, splashTime);
         interpreter.exec(statements, sourceMap, inputParams);
     } catch (err: any) {
-        exitReason = AppExitReason.FINISHED;
+        exitReason = AppExitReason.UserNav;
         if (!terminateReasons.includes(err.message)) {
             if (interpreter.options.post ?? true) {
                 postMessage(`error,${err.message}`);
             } else {
                 interpreter.options.stderr.write(err.message);
             }
-            exitReason = AppExitReason.CRASHED;
+            exitReason = AppExitReason.Crashed;
             const runtimeError = err.cause;
             if (
                 runtimeError &&
                 runtimeError instanceof RuntimeError &&
                 runtimeError.errorDetail === RuntimeErrorDetail.MemberFunctionNotFound
             ) {
-                exitReason = AppExitReason.UNKFUNC;
+                exitReason = AppExitReason.UnkFunction;
             }
         }
     }

@@ -22,6 +22,11 @@ export class FileSystem {
     private root?: string;
     private ext?: string;
 
+    /**
+     * Creates a new FileSystem instance.
+     * @param root Optional root path for pkg: volume (uses Node.js fs if provided)
+     * @param ext Optional external storage path for ext1: volume (uses Node.js fs if provided)
+     */
     constructor(root?: string, ext?: string) {
         this.paths = new Map<string, string>();
         if (root) {
@@ -41,26 +46,58 @@ export class FileSystem {
         this.cfs = zenFS.fs;
     }
 
+    /**
+     * Saves the original case-preserved path mapping.
+     * @param uri File URI to save
+     */
     private savePath(uri: string) {
         this.paths.set(uri.toLowerCase().replace(/\/+/g, "/").trim(), uri.replace(/\/+/g, "/").trim());
     }
+
+    /**
+     * Deletes a path from the case-preserved mapping.
+     * @param uri File URI to delete
+     * @returns True if path was deleted, false if not found
+     */
     private deletePath(uri: string) {
         return this.paths.delete(uri.toLowerCase().replace(/\/+/g, "/").trim());
     }
+
+    /**
+     * Gets the original case-preserved path.
+     * @param uri File URI (case-insensitive)
+     * @returns Original path with preserved case or undefined if not found
+     */
     private getOriginalPath(uri: string) {
         return this.paths.get(uri.toLowerCase().replace(/\/+/g, "/").trim());
     }
 
+    /**
+     * Sets the root path for pkg: volume.
+     * Switches to Node.js file system for pkg: access.
+     * @param root Root directory path
+     */
     setRoot(root: string) {
         this.root = root;
         this.pfs = nodeFS;
     }
 
+    /**
+     * Sets the external storage path for ext1: volume.
+     * Switches to Node.js file system for ext1: access.
+     * @param ext External storage directory path
+     */
     setExt(ext: string) {
         this.ext = ext;
         this.xfs = nodeFS;
     }
 
+    /**
+     * Resets the memory-based file systems (tmp: and cachefs:).
+     * Unmounts and remounts volumes with new buffers.
+     * @param tmpBuffer ArrayBufferLike for tmp: volume
+     * @param cacheFSBuffer ArrayBufferLike for cachefs: volume
+     */
     async resetMemoryFS(tmpBuffer: ArrayBufferLike, cacheFSBuffer: ArrayBufferLike) {
         if (zenFS.fs === undefined) {
             return;
@@ -81,6 +118,11 @@ export class FileSystem {
         zenFS.mount("cachefs:", cachefs);
     }
 
+    /**
+     * Gets the appropriate file system for a given URI.
+     * @param uri File URI with volume prefix
+     * @returns File system instance for the volume
+     */
     getFS(uri: string) {
         if (uri.trim().toLowerCase().startsWith("tmp:")) {
             return this.tfs;
@@ -94,6 +136,12 @@ export class FileSystem {
         return this.pfs;
     }
 
+    /**
+     * Converts a Roku volume URI to an actual file system path.
+     * Handles pkg: and ext1: volume path resolution.
+     * @param uri Roku volume URI
+     * @returns Resolved file system path
+     */
     getPath(uri: string) {
         if (this.root && uri.trim().toLowerCase().startsWith("pkg:")) {
             uri = this.root + "/" + uri.trim().slice(4);
@@ -105,6 +153,10 @@ export class FileSystem {
         return uri.replace(/\/+/g, "/").trim();
     }
 
+    /**
+     * Lists all available mounted volumes.
+     * @returns Array of volume names (e.g., ["pkg:", "tmp:", "cachefs:"])
+     */
     volumesSync() {
         const volumes: string[] = [];
         if (this.root || this.pfs.existsSync("pkg:/")) {
@@ -121,15 +173,32 @@ export class FileSystem {
         return volumes;
     }
 
+    /**
+     * Checks if a file or directory exists.
+     * @param uri File or directory URI
+     * @returns True if exists, false otherwise
+     */
     existsSync(uri: string) {
         return validUri(uri) && this.getFS(uri).existsSync(this.getPath(uri));
     }
 
+    /**
+     * Reads a file synchronously.
+     * @param uri File URI
+     * @param encoding Optional encoding (e.g., "utf8")
+     * @returns File contents as string or Buffer
+     */
     readFileSync(uri: string, encoding?: any) {
         const fs = this.getFS(uri);
         return (fs as any).readFileSync(this.getPath(uri), encoding);
     }
 
+    /**
+     * Reads directory contents synchronously.
+     * Preserves original case for writeable volumes.
+     * @param uri Directory URI
+     * @returns Array of file/directory names
+     */
     readdirSync(uri: string) {
         const files = this.getFS(uri).readdirSync(this.getPath(uri));
         if (writeUri(uri) && files.length > 0) {
@@ -144,11 +213,21 @@ export class FileSystem {
         return files;
     }
 
+    /**
+     * Creates a directory synchronously.
+     * Saves path mapping for case preservation.
+     * @param uri Directory URI to create
+     */
     mkdirSync(uri: string) {
         this.getFS(uri).mkdirSync(this.getPath(uri));
         this.savePath(uri);
     }
 
+    /**
+     * Removes a directory synchronously.
+     * Throws error if directory is not empty.
+     * @param uri Directory URI to remove
+     */
     rmdirSync(uri: string) {
         if (writeUri(uri)) {
             const files = this.readdirSync(uri);
@@ -160,26 +239,53 @@ export class FileSystem {
         this.deletePath(uri);
     }
 
+    /**
+     * Deletes a file synchronously.
+     * @param uri File URI to delete
+     */
     unlinkSync(uri: string) {
         this.getFS(uri).unlinkSync(this.getPath(uri));
         this.deletePath(uri);
     }
 
+    /**
+     * Renames a file by copying and deleting.
+     * @param oldName Current file URI
+     * @param newName New file URI
+     */
     renameSync(oldName: string, newName: string) {
         const content = this.readFileSync(oldName);
         this.writeFileSync(newName, content);
         this.unlinkSync(oldName);
     }
 
+    /**
+     * Writes a file synchronously.
+     * Saves path mapping for case preservation.
+     * @param uri File URI to write
+     * @param content File content (string or Buffer)
+     * @param encoding Optional encoding
+     */
     writeFileSync(uri: string, content: string | Buffer, encoding?: any) {
         this.getFS(uri).writeFileSync(this.getPath(uri), content, encoding);
         this.savePath(uri);
     }
 
+    /**
+     * Gets file or directory statistics.
+     * @param uri File or directory URI
+     * @returns Stats object with file information
+     */
     statSync(uri: string) {
         return this.getFS(uri).statSync(this.getPath(uri));
     }
 
+    /**
+     * Recursively finds all files with a given extension.
+     * @param uri Directory URI to search
+     * @param ext File extension to match (without dot)
+     * @returns Array of file paths matching the extension
+     */
     findSync(uri: string, ext: string): string[] {
         let results: string[] = [];
         const fs = this.getFS(uri);
@@ -204,23 +310,31 @@ export class FileSystem {
     }
 }
 
-/*
- * Returns the volume from a brs file uri
- *   ex. "tmp:/test/test1.txt" -> "tmp:"
+/**
+ * Extracts the volume prefix from a file URI.
+ * @param fileUri File URI with volume prefix (e.g., "tmp:/test/test1.txt")
+ * @returns Volume prefix (e.g., "tmp:")
+ * @example getVolume("tmp:/test/test1.txt") returns "tmp:"
  */
 export function getVolume(fileUri: string) {
     return fileUri.toLowerCase().substring(0, fileUri.indexOf(":") + 1);
 }
 
-/*
- * Returns true if the Uri is valid
+/**
+ * Checks if a URI is valid Roku file URI format.
+ * Valid URIs must contain ":/ " and not start with "/" or "\".
+ * @param uri URI to validate
+ * @returns True if URI is valid, false otherwise
  */
 export function validUri(uri: string): boolean {
     return uri.trim() !== "" && !uri.startsWith("/") && !uri.startsWith("\\") && uri.includes(":/");
 }
 
-/*
- * Returns true if the Uri is from one of the two writeable volumes
+/**
+ * Checks if a URI points to a writeable volume.
+ * Only tmp: and cachefs: volumes are writeable.
+ * @param uri URI to check
+ * @returns True if URI is from tmp: or cachefs: volume, false otherwise
  */
 export function writeUri(uri: string): boolean {
     uri = uri.toLowerCase();

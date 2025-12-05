@@ -35,12 +35,29 @@ export const currentApp = createAppData();
 
 // Observers Handling
 const observers = new Map();
+
+/**
+ * Subscribes an observer to package events.
+ * @param observerId Unique identifier for the observer
+ * @param observerCallback Callback function to be called on events
+ */
 export function subscribePackage(observerId: string, observerCallback: SubscribeCallback) {
     observers.set(observerId, observerCallback);
 }
+
+/**
+ * Unsubscribes an observer from package events.
+ * @param observerId Unique identifier for the observer to remove
+ */
 export function unsubscribePackage(observerId: string) {
     observers.delete(observerId);
 }
+
+/**
+ * Notifies all subscribed observers with an event.
+ * @param eventName Name of the event
+ * @param eventData Optional data to pass with the event
+ */
 function notifyAll(eventName: string, eventData?: any) {
     for (const [_id, callback] of observers) {
         callback(eventName, eventData);
@@ -53,6 +70,13 @@ let srcId: number;
 let pkgZip: ArrayBuffer | undefined;
 let extZip: ArrayBuffer | undefined;
 
+/**
+ * Loads and processes a BrightScript application zip file.
+ * Extracts manifest, processes files, and creates app payload.
+ * @param fileName Name of the zip file
+ * @param file ArrayBuffer containing the zip file data
+ * @param callback Function to call with the app payload
+ */
 export function loadAppZip(fileName: string, file: ArrayBuffer, callback: Function) {
     try {
         pkgZip = file;
@@ -95,6 +119,12 @@ export function loadAppZip(fileName: string, file: ArrayBuffer, callback: Functi
     callback(createPayload(launchTime));
 }
 
+/**
+ * Processes a file from the app zip package.
+ * Adds source files and pcode to the appropriate arrays.
+ * @param relativePath Relative path of the file in the zip
+ * @param fileData File data as Uint8Array
+ */
 function processFile(relativePath: string, fileData: Uint8Array) {
     const lcasePath: string = relativePath.toLowerCase();
     const ext = lcasePath.split(".").pop() ?? "";
@@ -111,6 +141,12 @@ function processFile(relativePath: string, fileData: Uint8Array) {
     }
 }
 
+/**
+ * Processes the app manifest file.
+ * Extracts title, version, icon, and other metadata.
+ * @param content Manifest file content as string
+ * @returns Launch timestamp
+ */
 function processManifest(content: string): number {
     manifestMap.clear();
     for (const [key, value] of parseManifest(content)) {
@@ -167,7 +203,12 @@ export function getModelType(): string {
     return device ? device[1] : "STB";
 }
 
-// Remove the source code and replace by encrypted pcode returning new zip
+/**
+ * Creates an encrypted package by replacing source code with pcode.
+ * @param source Encrypted pcode data
+ * @param iv Initialization vector for encryption
+ * @returns New zip file as Uint8Array
+ */
 export function updateAppZip(source: Uint8Array, iv: string) {
     let newZip: Zippable = {};
     for (const filePath in currentZip) {
@@ -180,7 +221,11 @@ export function updateAppZip(source: Uint8Array, iv: string) {
     return zipSync(newZip, { level: 6 });
 }
 
-// Create App Payload
+/**
+ * Creates the app payload for launching.
+ * @param launchTime Timestamp when the app was launched
+ * @returns AppPayload object with all app data
+ */
 export function createPayload(launchTime: number): AppPayload {
     return {
         device: deviceData,
@@ -195,9 +240,14 @@ export function createPayload(launchTime: number): AppPayload {
     };
 }
 
+/**
+ * Sets up deep link parameters for app launch.
+ * Includes exit reason and source parameters.
+ * @param deepLink Map of key-value pairs for deep link parameters
+ */
 export function setupDeepLink(deepLink: Map<string, string>) {
     inputParams.clear();
-    inputParams.set("lastExitOrTerminationReason", currentApp.exitReason ?? AppExitReason.UNKNOWN);
+    inputParams.set("lastExitOrTerminationReason", currentApp.exitReason ?? AppExitReason.Unknown);
     /**
      * Options for "source" parameter:
      * - "auto-run-dev" when app is side-loaded (default)
@@ -211,13 +261,19 @@ export function setupDeepLink(deepLink: Map<string, string>) {
     }
 }
 
-// Current App object
+/**
+ * Resets the current app data to default values.
+ * Clears app state and zip data.
+ */
 export function resetCurrentApp() {
     Object.assign(currentApp, createAppData());
     pkgZip = undefined;
 }
 
-// Create Default App Data
+/**
+ * Creates a default AppData object with empty values.
+ * @returns AppData object with default values
+ */
 function createAppData(): AppData {
     return {
         id: "",
@@ -226,18 +282,23 @@ function createAppData(): AppData {
         version: "",
         path: "",
         password: "",
-        exitReason: AppExitReason.UNKNOWN,
+        exitReason: AppExitReason.Unknown,
         exitTime: undefined,
         running: false,
     };
 }
 
-// External Storage Handling
-// TODO: Support dynamic mounting and unmounting of external storage
+/**
+ * Mounts an external storage zip file as ext1: volume.
+ * @param zipData ArrayBuffer containing the zip file data
+ */
 export function mountExt(zipData: ArrayBuffer) {
     extZip = zipData;
 }
 
+/**
+ * Unmounts the external storage volume.
+ */
 export function umountExt() {
     extZip = undefined;
 }

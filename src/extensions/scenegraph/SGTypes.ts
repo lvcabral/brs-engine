@@ -68,6 +68,11 @@ export enum FieldKind {
 }
 
 export namespace FieldKind {
+    /**
+     * Converts a string type name to a FieldKind enum value.
+     * @param type Type name as string (case-insensitive)
+     * @returns FieldKind enum value or undefined if not recognized
+     */
     export function fromString(type: string): FieldKind | undefined {
         switch (type.toLowerCase()) {
             case "interface":
@@ -130,6 +135,12 @@ export namespace FieldKind {
         }
     }
 
+    /**
+     * Converts a BrsType to a FieldKind enum value.
+     * Handles unboxing and component name mapping.
+     * @param brsType BrsType instance to convert
+     * @returns FieldKind enum value or undefined if not recognized
+     */
     export function fromBrsType(brsType: BrsType): FieldKind | undefined {
         if (isUnboxable(brsType)) {
             return fromBrsType(brsType.unbox());
@@ -160,6 +171,12 @@ type ContentNodeLike = Node & {
     removeParentField(parentField: Field): void;
 };
 
+/**
+ * Type guard to check if a BrsType is a ContentNode.
+ * Verifies presence of addParentField and removeParentField methods.
+ * @param value BrsType to check
+ * @returns True if value is a ContentNode, false otherwise
+ */
 export function isContentNode(value: BrsType): value is ContentNodeLike {
     return (
         value instanceof Node &&
@@ -173,6 +190,12 @@ type FontLike = Node & {
     setSystemFont(fontName: string): boolean;
 };
 
+/**
+ * Type guard to check if a BrsType is a Font node.
+ * Verifies presence of setSize and setSystemFont methods.
+ * @param value BrsType to check
+ * @returns True if value is a Font node, false otherwise
+ */
 export function isFont(value: BrsType): value is FontLike {
     return (
         value instanceof Node &&
@@ -183,6 +206,11 @@ export function isFont(value: BrsType): value is FontLike {
 
 type TaskLike = Node & { id: number };
 
+/**
+ * Gets the task ID from a Node if it is a Task.
+ * @param node Node to extract task ID from
+ * @returns Task ID number or undefined if not a Task node
+ */
 export function getTaskId(node: Node): number | undefined {
     if (!(node instanceof Node) || !("id" in node)) {
         return undefined;

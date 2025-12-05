@@ -39,6 +39,13 @@ const textTracks: MediaTrack[] = [];
 if (typeof document !== "undefined") {
     player = document.getElementById("player") as HTMLVideoElement;
 }
+/**
+ * Initializes the video module with shared array buffer and device configuration.
+ * Sets up video player event listeners and state tracking.
+ * @param array Shared Int32Array for inter-thread communication
+ * @param deviceInfo Device information including locale and language preferences
+ * @param mute Initial mute state (defaults to false)
+ */
 export function initVideoModule(array: Int32Array, deviceInfo: DeviceInfo, mute: boolean = false) {
     if (player) {
         player.addEventListener("canplay", (e: Event) => {
@@ -53,7 +60,7 @@ export function initVideoModule(array: Int32Array, deviceInfo: DeviceInfo, mute:
             if (playerState !== "pause") {
                 setAudioTrack(playList[playIndex]?.audioTrack ?? -1);
                 Atomics.store(sharedArray, DataType.VDX, currentFrame);
-                Atomics.store(sharedArray, DataType.VDO, MediaEvent.START_STREAM);
+                Atomics.store(sharedArray, DataType.VDO, MediaEvent.StartStream);
             }
             notifyAll("play");
         });
@@ -69,7 +76,7 @@ export function initVideoModule(array: Int32Array, deviceInfo: DeviceInfo, mute:
                 errorCode = MediaErrorCode.Unsupported;
             }
             Atomics.store(sharedArray, DataType.VDX, errorCode);
-            Atomics.store(sharedArray, DataType.VDO, MediaEvent.FAILED);
+            Atomics.store(sharedArray, DataType.VDO, MediaEvent.Failed);
             notifyAll("warning", `[video] Player Media Error ${player.error?.code}; ${player.error?.message}`);
         });
         player.addEventListener("ended", nextVideo);
@@ -86,6 +93,11 @@ export function initVideoModule(array: Int32Array, deviceInfo: DeviceInfo, mute:
     sharedArray = array;
     resetVideo();
 }
+/**
+ * Calculates video download bandwidth based on buffered data.
+ * Updates bandwidth estimate for non-HLS playback.
+ * @param e Progress event from video player
+ */
 function calculateBandwidth(e: Event) {
     if (hls === undefined && player && player.buffered.length > 0) {
         let totalBuffered = 0;
@@ -105,12 +117,27 @@ function calculateBandwidth(e: Event) {
 }
 // Observers Handling
 const observers = new Map();
+/**
+ * Subscribes an observer to video events.
+ * @param observerId Unique identifier for the observer
+ * @param observerCallback Callback function to receive events
+ */
 export function subscribeVideo(observerId: string, observerCallback: SubscribeCallback) {
     observers.set(observerId, observerCallback);
 }
+/**
+ * Unsubscribes an observer from video events.
+ * @param observerId Unique identifier of the observer to remove
+ */
 export function unsubscribeVideo(observerId: string) {
     observers.delete(observerId);
 }
+/**
+ * Notifies all subscribed observers of a video event.
+ * Updates playerState for play/pause/stop events.
+ * @param eventName Name of the event
+ * @param eventData Optional data associated with the event
+ */
 function notifyAll(eventName: string, eventData?: any) {
     if (["play", "pause", "stop"].includes(eventName)) {
         playerState = eventName;
@@ -120,7 +147,11 @@ function notifyAll(eventName: string, eventData?: any) {
     }
 }
 
-// Video Module Public Functions
+/**
+ * Handles video playback events from the engine.
+ * Processes commands like play, load, stop, pause, resume, mute, loop, next, seek, audio, subtitle.
+ * @param eventData Comma-separated event string with command and parameters
+ */
 export function handleVideoEvent(eventData: string) {
     const data = eventData.split(",");
     if (data[1] === "play") {
@@ -157,7 +188,7 @@ export function handleVideoEvent(eventData: string) {
             setNextVideo(Number.parseInt(newIndex));
         } else {
             Atomics.store(sharedArray, DataType.VDX, MediaErrorCode.EmptyList);
-            Atomics.store(sharedArray, DataType.VDO, MediaEvent.FAILED);
+            Atomics.store(sharedArray, DataType.VDO, MediaEvent.Failed);
             notifyAll("warning", `[video] Invalid next index: ${eventData}`);
         }
     } else if (data[1] === "seek") {
@@ -176,6 +207,10 @@ export function handleVideoEvent(eventData: string) {
     }
 }
 
+/**
+ * Mutes or unmutes video audio output.
+ * @param mute True to mute video, false to unmute (defaults to false)
+ */
 export function muteVideo(mute: boolean = false) {
     if (player) {
         uiMuted = mute;
@@ -183,10 +218,18 @@ export function muteVideo(mute: boolean = false) {
     }
 }
 
+/**
+ * Checks if video is currently muted by the UI.
+ * @returns True if UI mute is enabled
+ */
 export function isVideoMuted() {
     return uiMuted ?? false;
 }
 
+/**
+ * Switches video playback state (play/pause).
+ * @param play True to resume playback, false to pause
+ */
 export function switchVideoState(play: boolean) {
     if (play && videosState) {
         player.play();
@@ -200,6 +243,10 @@ export function switchVideoState(play: boolean) {
     }
 }
 
+/**
+ * Gets the list of supported video codecs and containers in the current browser.
+ * @returns Map with 'codecs' and 'containers' arrays of supported formats
+ */
 export function videoFormats() {
     const codecs: string[] = [];
     const containers: string[] = [];
@@ -239,10 +286,19 @@ export function videoFormats() {
     ]);
 }
 
+/**
+ * Adds a video file to the package video registry.
+ * @param path Path identifier for the video
+ * @param data Blob data for the video file
+ */
 export function addVideo(path: string, data: Blob) {
     packageVideos.set(path.toLowerCase(), data);
 }
 
+/**
+ * Sets a new video playlist, stopping any current playback.
+ * @param newList Array of video objects with url and format properties
+ */
 export function addVideoPlaylist(newList: any[]) {
     if (playList.length > 0) {
         stopVideo();
@@ -253,6 +309,9 @@ export function addVideoPlaylist(newList: any[]) {
     startPosition = 0;
 }
 
+/**
+ * Resets all video state and clears the playlist and package videos.
+ */
 export function resetVideo() {
     stopVideo();
     if (player.src.startsWith("blob:")) {
@@ -268,7 +327,11 @@ export function resetVideo() {
     videosState = false;
 }
 
-// Video Module Private Functions
+/**
+ * Handles video load progress events.
+ * Loads audio/subtitle tracks and updates shared array progress.
+ * @param e Load event (loadeddata or loadedmetadata)
+ */
 function startProgress(e: Event) {
     if (e.type === "loadeddata") {
         const currAudioTrack = loadAudioTracks();
@@ -287,6 +350,10 @@ function startProgress(e: Event) {
     Atomics.store(sharedArray, DataType.VLP, loadProgress);
 }
 
+/**
+ * Sets the video duration in the shared array when available.
+ * @param e Duration change event from video player
+ */
 function setDuration(e: Event) {
     if (!Number.isNaN(player.duration)) {
         videoDuration = Math.round(player.duration);
@@ -297,6 +364,11 @@ function setDuration(e: Event) {
     }
 }
 
+/**
+ * Loads audio tracks from HLS stream and selects preferred track.
+ * Prioritizes: audio language > device locale > English.
+ * @returns Active audio track index
+ */
 function loadAudioTracks() {
     audioTracks.length = 0;
     if (!hls) {
@@ -347,6 +419,11 @@ function loadAudioTracks() {
     return activeTrack;
 }
 
+/**
+ * Loads subtitle tracks from HLS stream and selects preferred track.
+ * Prioritizes: caption language > device locale > English.
+ * @returns Active subtitle track index
+ */
 function loadSubtitleTracks() {
     textTracks.length = 0;
     if (!hls?.subtitleTracks?.length) {
@@ -391,6 +468,10 @@ function loadSubtitleTracks() {
     return activeTrack;
 }
 
+/**
+ * Sets the active audio track for HLS playback.
+ * @param index Audio track index to activate
+ */
 function setAudioTrack(index: number) {
     if (hls && audioTracks.length && index > -1 && index < audioTracks.length) {
         hls.audioTrack = index;
@@ -399,6 +480,10 @@ function setAudioTrack(index: number) {
     }
 }
 
+/**
+ * Sets the active subtitle track for HLS playback.
+ * @param index Subtitle track index to activate
+ */
 function setSubtitleTrack(index: number) {
     if (hls && textTracks.length && index > -1 && index < textTracks.length) {
         hls.subtitleTrack = index;
@@ -407,6 +492,10 @@ function setSubtitleTrack(index: number) {
     }
 }
 
+/**
+ * Clears video tracking state (progress, tracks, captions).
+ * Resets shared array values to initial state.
+ */
 function clearVideoTracking() {
     Atomics.store(sharedArray, DataType.VLP, -1);
     loadProgress = 0;
@@ -421,6 +510,11 @@ function clearVideoTracking() {
     }
 }
 
+/**
+ * Loads a video from the playlist into the player.
+ * Handles different formats (mp4, mkv, hls) and sets up source.
+ * @param buffer Whether to only buffer without playing (defaults to false)
+ */
 function loadVideo(buffer = false) {
     canPlay = false;
     const video = playList[playIndex];
@@ -445,13 +539,18 @@ function loadVideo(buffer = false) {
         }
     } else if (player) {
         Atomics.store(sharedArray, DataType.VDX, MediaErrorCode.EmptyList);
-        Atomics.store(sharedArray, DataType.VDO, MediaEvent.FAILED);
+        Atomics.store(sharedArray, DataType.VDO, MediaEvent.Failed);
         notifyAll("warning", `[video] Can't find video index: ${playIndex}`);
     } else {
         notifyAll("error", `[video] Can't find a video player!`);
     }
 }
 
+/**
+ * Loads an HLS stream using HLS.js or native browser support.
+ * @param videoSrc URL of the HLS stream
+ * @returns True if using native HLS, false if using HLS.js
+ */
 function loadHls(videoSrc: string): boolean {
     let native = false;
     if (Hls.isSupported()) {
@@ -464,12 +563,18 @@ function loadHls(videoSrc: string): boolean {
         native = true;
     } else {
         Atomics.store(sharedArray, DataType.VDX, MediaErrorCode.Unsupported);
-        Atomics.store(sharedArray, DataType.VDO, MediaEvent.FAILED);
+        Atomics.store(sharedArray, DataType.VDO, MediaEvent.Failed);
         notifyAll("warning", "[video] HLS is not supported");
     }
     return native;
 }
 
+/**
+ * Gets the video URL from the video object.
+ * Handles http URLs, pkg:// paths, and blob URLs.
+ * @param video Video object with url property
+ * @returns Video URL string
+ */
 function getVideoUrl(video: any): string {
     if (player.src.startsWith("blob:")) {
         revokeVideoURL(player.src);
@@ -483,6 +588,10 @@ function getVideoUrl(video: any): string {
     return "";
 }
 
+/**
+ * Plays the loaded video.
+ * Loads video first if not ready, handles autoplay restrictions.
+ */
 function playVideo() {
     if (canPlay) {
         previousBuffered = 0;
@@ -508,13 +617,17 @@ function playVideo() {
 // Flag to prevent double event call
 let ending = false;
 
+/**
+ * Advances to the next video in the playlist.
+ * Handles looping, single video repeat, and end-of-playlist.
+ */
 function nextVideo() {
     if (ending) {
         return;
     }
     ending = true;
     Atomics.store(sharedArray, DataType.VDX, playIndex);
-    Atomics.store(sharedArray, DataType.VDO, MediaEvent.FINISHED);
+    Atomics.store(sharedArray, DataType.VDO, MediaEvent.Finished);
     if (playNext < 0) {
         playNext = playIndex + 1;
     }
@@ -530,7 +643,7 @@ function nextVideo() {
         }
     } else {
         Atomics.store(sharedArray, DataType.VDX, playIndex);
-        Atomics.store(sharedArray, DataType.VDO, MediaEvent.FULL);
+        Atomics.store(sharedArray, DataType.VDO, MediaEvent.Full);
         playIndex = 0;
         playNext = -1;
         canPlay = false;
@@ -548,6 +661,10 @@ function nextVideo() {
     ending = false;
 }
 
+/**
+ * Stops video playback and clears state.
+ * @param error Whether video stopped due to error (defaults to false)
+ */
 function stopVideo(error?: boolean) {
     if (player && (playerState !== "stop" || error)) {
         player.pause();
@@ -559,31 +676,44 @@ function stopVideo(error?: boolean) {
         }
         notifyAll("stop");
         Atomics.store(sharedArray, DataType.VDX, playIndex);
-        Atomics.store(sharedArray, DataType.VDO, error ? MediaEvent.FINISHED : MediaEvent.PARTIAL);
+        Atomics.store(sharedArray, DataType.VDO, error ? MediaEvent.Finished : MediaEvent.Partial);
         clearVideoTracking();
         startPosition = 0;
         canPlay = false;
     }
 }
 
+/**
+ * Pauses video playback.
+ * Updates shared array state to indicate pause.
+ */
 function pauseVideo() {
     if (player) {
         player.pause();
         notifyAll("pause");
-        Atomics.store(sharedArray, DataType.VDO, MediaEvent.PAUSED);
+        Atomics.store(sharedArray, DataType.VDO, MediaEvent.Paused);
     }
 }
 
+/**
+ * Resumes paused video playback.
+ * @param notify Whether to update shared array state (defaults to true)
+ */
 function resumeVideo(notify = true) {
     if (player?.paused) {
         player.play();
         player.muted = uiMuted || videoMuted;
         if (notify) {
-            Atomics.store(sharedArray, DataType.VDO, MediaEvent.RESUMED);
+            Atomics.store(sharedArray, DataType.VDO, MediaEvent.Resumed);
         }
     }
 }
 
+/**
+ * Seeks to a specific position in the video.
+ * Handles seek before play, during playback, and before next video.
+ * @param position Position in seconds to seek to
+ */
 function seekVideo(position: number) {
     if (!player) {
         return;
@@ -607,10 +737,18 @@ function seekVideo(position: number) {
     }
 }
 
+/**
+ * Sets whether the video playlist should loop.
+ * @param enable True to enable looping
+ */
 function setVideoLoop(enable: boolean) {
     playLoop = enable;
 }
 
+/**
+ * Sets the next video index to play after current finishes.
+ * @param index Next video index in playlist
+ */
 function setNextVideo(index: number) {
     playNext = index;
     if (playNext >= playList.length) {
@@ -619,14 +757,27 @@ function setNextVideo(index: number) {
     }
 }
 
+/**
+ * Creates an object URL for a video blob.
+ * @param blob Video blob data
+ * @returns Object URL string
+ */
 function createVideoURL(blob: Blob) {
     return URL.createObjectURL(blob);
 }
 
+/**
+ * Revokes a video object URL to free memory.
+ * @param url Object URL to revoke
+ */
 function revokeVideoURL(url: string) {
     URL.revokeObjectURL(url);
 }
 
+/**
+ * Creates and configures a new HLS.js instance with error handlers.
+ * Sets up event listeners for manifest, fragments, and errors.
+ */
 function createHlsInstance() {
     hls?.detachMedia();
     hls?.destroy();
@@ -640,13 +791,13 @@ function createHlsInstance() {
                 case Hls.ErrorTypes.NETWORK_ERROR:
                     // All retries and media options have been exhausted.
                     Atomics.store(sharedArray, DataType.VDX, MediaErrorCode.Http);
-                    Atomics.store(sharedArray, DataType.VDO, MediaEvent.FAILED);
+                    Atomics.store(sharedArray, DataType.VDO, MediaEvent.Failed);
                     notifyAll("warning", `[video] fatal network error encountered: ${data.details}`);
                     break;
                 default:
                     // cannot recover
                     Atomics.store(sharedArray, DataType.VDX, MediaErrorCode.Unknown);
-                    Atomics.store(sharedArray, DataType.VDO, MediaEvent.FAILED);
+                    Atomics.store(sharedArray, DataType.VDO, MediaEvent.Failed);
                     notifyAll("warning", "[video] fatal media error encountered, cannot recover");
                     break;
             }
@@ -675,6 +826,9 @@ function createHlsInstance() {
     hls.on(Hls.Events.MEDIA_ENDED, nextVideo);
 }
 
+/**
+ * Destroys the HLS.js instance and frees resources.
+ */
 function destroyHls() {
     hls?.detachMedia();
     hls?.destroy();

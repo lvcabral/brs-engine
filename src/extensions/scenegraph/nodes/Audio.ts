@@ -98,22 +98,22 @@ export class Audio extends Node {
     setState(flags: number) {
         let state = "none";
         switch (flags) {
-            case MediaEvent.LOADING:
+            case MediaEvent.Loading:
                 state = "buffering";
                 break;
-            case MediaEvent.START_PLAY:
-            case MediaEvent.START_STREAM:
-            case MediaEvent.SELECTED:
-            case MediaEvent.RESUMED:
+            case MediaEvent.StartPlay:
+            case MediaEvent.StartStream:
+            case MediaEvent.Selected:
+            case MediaEvent.Resumed:
                 state = "playing";
                 break;
-            case MediaEvent.PAUSED:
+            case MediaEvent.Paused:
                 state = "paused";
                 break;
-            case MediaEvent.FULL:
+            case MediaEvent.Full:
                 state = "finished";
                 break;
-            case MediaEvent.FAILED:
+            case MediaEvent.Failed:
                 state = "failed";
                 break;
         }

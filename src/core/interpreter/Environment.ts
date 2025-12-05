@@ -173,6 +173,10 @@ export class Environment {
         }
     }
 
+    /**
+     * Removes all BrsComponent references from function scope.
+     * Typically used when a function execution is complete.
+     */
     public removeReferences() {
         for (let [_, value] of this.function) {
             if (value instanceof BrsComponent) {

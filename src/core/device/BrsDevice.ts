@@ -59,18 +59,30 @@ export class BrsDevice {
     private static registryVersion: number = 0;
     private static sharedRegistry?: SharedObject;
 
-    /** Returns the SharedArrayBuffer used for the tmp: volume */
+    /**
+     * Returns the SharedArrayBuffer used for the tmp: volume.
+     * Creates the buffer if it doesn't exist.
+     * @returns SharedArrayBuffer for tmp: volume
+     */
     static getTmpVolume(): SharedArrayBuffer {
         this.tmpVolume ??= new SharedArrayBuffer(this.deviceInfo.tmpVolSize);
         return this.tmpVolume;
     }
 
-    /** Returns the SharedArrayBuffer used for the cachefs: volume */
+    /**
+     * Returns the SharedArrayBuffer used for the cachefs: volume.
+     * Creates the buffer if it doesn't exist.
+     * @returns SharedArrayBuffer for cachefs: volume
+     */
     static getCacheFS(): SharedArrayBuffer {
         this.cacheFS ??= new SharedArrayBuffer(this.deviceInfo.cacheFSVolSize);
         return this.cacheFS;
     }
 
+    /**
+     * Resets all memory volumes (tmp: and cachefs:) by clearing their buffers.
+     * Reinitializes the file system with cleared volumes.
+     */
     static async resetMemoryVolumes() {
         const tmpView = new Uint8Array(this.getTmpVolume());
         tmpView.fill(0);
@@ -80,8 +92,8 @@ export class BrsDevice {
     }
 
     /**
-     * Updates the device registry with the provided data
-     * @param data Map or Shared Array Buffer with registry content.
+     * Updates the device registry with the provided data.
+     * @param data Map or SharedArrayBuffer with registry content
      */
     static setRegistry(data: Map<string, string> | SharedArrayBuffer) {
         let registry: Map<string, string>;
@@ -98,12 +110,16 @@ export class BrsDevice {
         }
     }
 
-    /** Stores the registry to the shared buffer */
+    /**
+     * Stores the current registry to the shared buffer.
+     */
     static flushRegistry() {
         this.sharedRegistry?.store(Object.fromEntries(this.registry));
     }
 
-    /** Refreshes the registry from the shared buffer (if newer version is available) */
+    /**
+     * Refreshes the registry from the shared buffer if a newer version is available.
+     */
     static refreshRegistry() {
         if (this.sharedRegistry && this.sharedRegistry.getVersion() !== this.registryVersion) {
             this.registryVersion = this.sharedRegistry.getVersion();
@@ -116,16 +132,17 @@ export class BrsDevice {
     }
 
     /**
-     * Setup the device sharedArray
-     * @param sharedArray Int32Array to be used as sharedArray
+     * Sets up the device shared array for inter-thread communication.
+     * @param sharedArray Int32Array to be used as the shared array
      */
     static setSharedArray(sharedArray: Int32Array) {
         this.sharedArray = sharedArray;
     }
 
     /**
-     * Set the device info
-     * @param deviceInfo DeviceInfo to be set
+     * Sets the device info by merging provided values with existing configuration.
+     * Normalizes and validates device info values before assignment.
+     * @param deviceInfo DeviceInfo object with configuration to set
      */
     static setDeviceInfo(deviceInfo: DeviceInfo) {
         for (const key of Object.keys(deviceInfo) as (keyof DeviceInfo)[]) {
@@ -172,8 +189,8 @@ export class BrsDevice {
     }
 
     /**
-     * Loads the localized terms based on the current locale id to the terms map
-     * Note: Only to be called after filesystem volumes are mounted
+     * Loads the localized terms based on the current locale ID to the terms map.
+     * Note: Only to be called after filesystem volumes are mounted.
      */
     static loadLocaleTerms() {
         const locale = this.locale.replace("-", "_");
@@ -191,8 +208,8 @@ export class BrsDevice {
     }
 
     /**
-     * Get the current display mode based on device info
-     * @returns string with the display mode
+     * Gets the current display mode based on device info.
+     * @returns Display mode string ("FHD", "HD", or "SD")
      */
     static getDisplayMode(): string {
         if (this.deviceInfo?.displayMode?.startsWith("1080")) {
@@ -204,18 +221,19 @@ export class BrsDevice {
     }
 
     /**
-     * Return the translated terms based on current locale id
-     * @param term the term to be translated
-     * @returns the translated term
+     * Returns the translated term based on current locale ID.
+     * @param term Term to be translated
+     * @returns Translated term or original if not found
      */
     static getTerm(term: string): string {
         return this.terms.get(term) ?? term;
     }
 
     /**
-     * Returns the configured CORS proxy with the URL if applicable
-     * @param url the optional URL to be fetched
-     * @returns the URL or empty string
+     * Returns the configured CORS proxy with the URL if applicable.
+     * Skips proxy for localhost and 127.0.0.1.
+     * @param url Optional URL to be fetched (defaults to empty string)
+     * @returns Proxied URL or original URL
      */
     static getCORSProxy(url: string = "") {
         const corsProxy = this.deviceInfo.corsProxy ?? "";
@@ -224,8 +242,10 @@ export class BrsDevice {
     }
 
     /**
-     * Method to check if the Break Command is set in the sharedArray
-     * @returns the last debug command
+     * Checks if the Break Command is set in the shared array.
+     * Handles debug pause and continue states.
+     * @param debugMode Whether debug mode is enabled
+     * @returns Debug command code
      */
     static checkBreakCommand(debugMode: boolean): number {
         let cmd = debugMode ? DebugCommand.BREAK : -1;
@@ -245,8 +265,9 @@ export class BrsDevice {
     }
 
     /**
-     * Method to extract the data buffer from the sharedArray
-     * @returns the data buffer as a string
+     * Extracts the data buffer from the shared array.
+     * Reads characters until null terminator and clears buffer flag.
+     * @returns Data buffer content as string
      */
     static readDataBuffer(): string {
         let data = "";
@@ -261,8 +282,9 @@ export class BrsDevice {
     }
 
     /**
-     * Method to update the control keys buffer and return the next key
-     * @returns the next key in the buffer to be handled or undefined if queue is empty
+     * Updates the control keys buffer from shared array and returns the next key.
+     * Handles single key event mode and remote button press/release logic.
+     * @returns Next key event to be handled or undefined if queue is empty
      */
     static updateKeysBuffer(): KeyEvent | undefined {
         for (let i = 0; i < keyBufferSize; i++) {
@@ -304,8 +326,8 @@ export class BrsDevice {
     }
 
     /**
-     * Method to play a system navigation sound
-     * @param sound String with the sound name
+     * Plays a system navigation sound if it exists in default sounds.
+     * @param sound Sound name to play
      */
     static playSound(sound: string) {
         if (DefaultSounds.includes(sound)) {
@@ -318,9 +340,9 @@ export class BrsDevice {
     }
 
     /**
-     * Method to get the next available sound effect stream
-     * @param id the sound effect id
-     * @returns the index of the stream or -1 if not available
+     * Gets the next available sound effect stream.
+     * @param id Sound effect ID
+     * @returns Index of the stream or -1 if not available
      */
     static getSfxStream(id: number): number {
         for (let i = 0; i < MaxSoundStreams; i++) {
@@ -334,8 +356,9 @@ export class BrsDevice {
     }
 
     /**
-     * Method to get the current time in the Roku beacon format
-     * @returns a string with the current date/time
+     * Gets the current time in the Roku beacon format.
+     * Formats time based on configured clock format (12h/24h) and locale.
+     * @returns Formatted time string
      */
     static getTime() {
         const now = new Date();

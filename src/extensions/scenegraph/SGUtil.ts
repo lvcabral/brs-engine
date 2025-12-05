@@ -1,5 +1,10 @@
 import { Rect } from "brs-engine";
 
+/**
+ * Checks if all properties of a Rect are finite numbers.
+ * @param rect Rectangle to validate
+ * @returns True if all rect properties are finite, false otherwise
+ */
 function isFiniteRect(rect: Rect) {
     return (
         Number.isFinite(rect.x) &&
@@ -9,7 +14,14 @@ function isFiniteRect(rect: Rect) {
     );
 }
 
-/* Function to calculate the bounding box of a rotated rectangle */
+/**
+ * Calculates the bounding box of a rotated rectangle.
+ * Rotates the rectangle around a specified center point.
+ * @param rect Rectangle to rotate
+ * @param rotation Rotation angle in radians
+ * @param center Optional rotation center point [x, y] (defaults to top-left corner)
+ * @returns New Rect representing the bounding box of the rotated rectangle
+ */
 export function rotateRect(rect: Rect, rotation: number, center?: number[]): Rect {
     // Default to top-left corner if centerX and centerY are not provided
     const rotationCenterX = center === undefined ? 0 : center[0];
@@ -47,13 +59,25 @@ export function rotateRect(rect: Rect, rotation: number, center?: number[]): Rec
     };
 }
 
+/**
+ * Rotates a translation vector by a given angle.
+ * @param translation Translation vector [x, y]
+ * @param rotation Rotation angle in radians
+ * @returns Rotated translation vector [x, y]
+ */
 export function rotateTranslation(translation: number[], rotation: number) {
     const cos = Math.cos(-rotation);
     const sin = Math.sin(-rotation);
     return [translation[0] * cos - translation[1] * sin, translation[0] * sin + translation[1] * cos];
 }
 
-/* Function to merge two bounding rectangles */
+/**
+ * Merges two bounding rectangles into a single bounding box.
+ * Returns a copy of valid rect if the other is invalid.
+ * @param rectChild Child rectangle to merge
+ * @param rectParent Parent rectangle to merge
+ * @returns New Rect representing the union of both rectangles
+ */
 export function unionRect(rectChild: Rect, rectParent: Rect) {
     if (!isFiniteRect(rectChild)) {
         return { ...rectParent };
@@ -68,7 +92,13 @@ export function unionRect(rectChild: Rect, rectParent: Rect) {
     return { x, y, width, height };
 }
 
-/* Function to convert a hex color string to a number */
+/**
+ * Converts a hex color string to a number.
+ * Handles various formats: #RRGGBB, 0xRRGGBB, RRGGBB.
+ * Automatically adds FF alpha channel if not provided.
+ * @param strColor Hex color string to convert
+ * @returns Color as 32-bit integer (RRGGBBAA) or -1 if invalid
+ */
 export function convertHexColor(strColor: string): number {
     let color = -1;
     if (strColor.length) {

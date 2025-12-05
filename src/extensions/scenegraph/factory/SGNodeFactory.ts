@@ -164,6 +164,11 @@ export enum SGNodeType {
     InfoPane = "InfoPane",
 }
 
+/**
+ * Checks if a given string value is a valid SGNodeType.
+ * @param value String to check against SGNodeType enum values
+ * @returns True if the value matches a SGNodeType (case-insensitive), false otherwise
+ */
 export function isSGNodeType(value: string): value is SGNodeType {
     const lowerValue = value.toLowerCase();
     return Object.values(SGNodeType).some((enumVal) => enumVal.toLowerCase() === lowerValue);
@@ -187,6 +192,13 @@ export class SGNodeFactory {
         }
     }
 
+    /**
+     * Creates a SceneGraph node of the specified type.
+     * Supports built-in node types and custom nodes added via addNodeTypes.
+     * @param nodeType Type of node to create (SGNodeType enum or string)
+     * @param nodeName Optional name for the node (defaults to nodeType)
+     * @returns Created node instance or undefined if type is not recognized
+     */
     public static createNode(nodeType: SGNodeType | string, nodeName?: string): Node | undefined {
         let name = nodeName || nodeType;
         const additionalCtor = this.additionalNodes.get(nodeType?.toLowerCase());
@@ -306,7 +318,14 @@ export class SGNodeFactory {
     }
 }
 
-/** Function to create a Node by its name defined on the XML file */
+/**
+ * Creates a node by its type name as defined in XML component files.
+ * Handles both built-in node types and custom component definitions.
+ * Automatically registers Task nodes in the task list.
+ * @param type Type name of the node to create
+ * @param interpreter Optional interpreter instance for custom component initialization
+ * @returns Created node instance or BrsInvalid if creation fails
+ */
 export function createNodeByType(type: string, interpreter?: Interpreter): Node | BrsInvalid {
     // If this is a built-in node component, then return it.
     let node = SGNodeFactory.createNode(type) ?? BrsInvalid.Instance;
@@ -346,7 +365,13 @@ export function createNodeByType(type: string, interpreter?: Interpreter): Node 
     return node;
 }
 
-/** Function to create a Scene by its name defined on the XML file */
+/**
+ * Creates a Scene node by its type name as defined in XML component files.
+ * Validates that the type is a Scene subtype before creation.
+ * @param interpreter Interpreter instance for component initialization
+ * @param type Type name of the Scene to create
+ * @returns Created Scene instance or BrsInvalid if creation fails or type is not a Scene subtype
+ */
 export function createSceneByType(interpreter: Interpreter, type: string): Node | BrsInvalid {
     let typeDef = sgRoot.nodeDefMap.get(type.toLowerCase());
     updateTypeDefHierarchy(typeDef);
@@ -360,11 +385,25 @@ export function createSceneByType(interpreter: Interpreter, type: string): Node 
     return BrsInvalid.Instance;
 }
 
+/**
+ * Checks if a custom node type exists in the node definition map.
+ * @param node Node type name to check
+ * @returns True if the custom node definition exists, false otherwise
+ */
 export function customNodeExists(node: string) {
     return sgRoot.nodeDefMap.has(node.toLowerCase());
 }
 
-/** Function to initialize Nodes with its Fields, Children and Environment */
+/**
+ * Initializes a node with its fields, children, and execution environment.
+ * Walks the component inheritance hierarchy and calls init() methods in order.
+ * Sets up the node's m pointer with top and global references.
+ * @param interpreter Interpreter instance for code execution
+ * @param type Type name of the node
+ * @param typeDef Optional component definition for the node type
+ * @param node Optional pre-created node instance to initialize
+ * @returns Initialized node instance or BrsInvalid if initialization fails
+ */
 export function initializeNode(interpreter: Interpreter, type: string, typeDef?: ComponentDefinition, node?: Node) {
     if (typeDef) {
         //use typeDef object to tack on all the bells & whistles of a custom node
@@ -427,7 +466,14 @@ export function initializeNode(interpreter: Interpreter, type: string, typeDef?:
     }
 }
 
-/** Function to Initialize a Task on its own Worker thread */
+/**
+ * Initializes a Task node on its own Worker thread.
+ * Creates the task with its component hierarchy and restores serialized state.
+ * Sets up the task's execution environment and thread context.
+ * @param interpreter Interpreter instance for the task thread
+ * @param taskData Serialized task data including fields and context
+ * @returns Initialized Task node or BrsInvalid if initialization fails
+ */
 export function initializeTask(interpreter: Interpreter, taskData: TaskData) {
     const type = taskData.name;
     let typeDef = sgRoot.nodeDefMap.get(type.toLowerCase());
@@ -475,7 +521,14 @@ export function initializeTask(interpreter: Interpreter, taskData: TaskData) {
     }
 }
 
-/** Function to restore the Task fields and context from the serialized object */
+/**
+ * Restores task fields and context from serialized task data.
+ * Sets up the task's m pointer, global state, and scene reference.
+ * Restores field observers and message port connections.
+ * @param interpreter Interpreter instance for the task thread
+ * @param node Task node to restore data into
+ * @param taskData Serialized task data with field values and state
+ */
 function loadTaskData(interpreter: Interpreter, node: Node, taskData: TaskData) {
     if (node instanceof Task) {
         node.id = taskData.id;
@@ -515,7 +568,12 @@ function loadTaskData(interpreter: Interpreter, node: Node, taskData: TaskData) 
     }
 }
 
-/** Function to update the app components hierarchy map and return the stack for the passed TypeDef */
+/**
+ * Updates the component hierarchy map and builds an inheritance stack.
+ * Traverses the component's extends chain and populates subtypeHierarchy.
+ * @param typeDef Component definition to process
+ * @returns Stack of component definitions ordered from most derived to base
+ */
 function updateTypeDefHierarchy(typeDef: ComponentDefinition | undefined) {
     let typeDefStack: ComponentDefinition[] = [];
     if (!typeDef) {
@@ -535,7 +593,14 @@ function updateTypeDefHierarchy(typeDef: ComponentDefinition | undefined) {
     return typeDefStack;
 }
 
-/** Function to restore the node fields from the serialized object */
+/**
+ * Restores node fields from a serialized object.
+ * Sets field values and reattaches field observers with message ports.
+ * @param interpreter Interpreter instance for observer setup
+ * @param source Serialized source object containing field values
+ * @param node Node to restore fields into
+ * @param port Optional message port for field observers
+ */
 function restoreNode(interpreter: Interpreter, source: any, node: Node, port?: RoMessagePort) {
     const observed = source["_observed_"];
     node.owner = source["_owner_"] ?? sgRoot.taskId;
@@ -556,7 +621,14 @@ function restoreNode(interpreter: Interpreter, source: any, node: Node, port?: R
     }
 }
 
-/** Function to add Fields to a Node based on its definition */
+/**
+ * Adds fields to a node based on its component definition.
+ * Handles field aliases, default values, and onChange callbacks.
+ * Validates that aliased fields and duplicate fields are handled correctly.
+ * @param interpreter Interpreter instance for callback registration
+ * @param node Node to add fields to
+ * @param typeDef Component definition containing field specifications
+ */
 function addFields(interpreter: Interpreter, node: Node, typeDef: ComponentDefinition) {
     let fields = typeDef.fields;
     for (let [fieldName, fieldValue] of Object.entries(fields)) {
@@ -614,7 +686,14 @@ function addFields(interpreter: Interpreter, node: Node, typeDef: ComponentDefin
     }
 }
 
-/** Function to the the Children of a Node based on its definition */
+/**
+ * Adds child nodes to a parent node based on its component definition.
+ * Creates child nodes, sets their fields, and handles role-based assignment.
+ * Recursively adds children's own children from the definition tree.
+ * @param interpreter Interpreter instance for child node creation
+ * @param node Parent node to add children to
+ * @param typeDef Component definition or component node containing children specifications
+ */
 function addChildren(interpreter: Interpreter, node: Node, typeDef: ComponentDefinition | ComponentNode) {
     const children = typeDef.children;
     const appendChild = node.getMethod("appendchild");
@@ -674,6 +753,12 @@ export function isSubtypeCheck(currentNodeType: string, checkType: string): bool
     return isSubtypeCheck(nextNodeType, checkType);
 }
 
+/**
+ * Gets the base SGNodeType for a given subtype or custom component.
+ * Walks the inheritance hierarchy to find the built-in node type.
+ * @param subType Node subtype or custom component name
+ * @returns Base SGNodeType or Node if not found
+ */
 export function getNodeType(subType: string) {
     if (isSGNodeType(subType)) {
         return subType;
@@ -818,6 +903,12 @@ export function getBrsValueFromFieldType(type: string, value?: string): BrsType 
     return returnValue;
 }
 
+/**
+ * Parses a string representation of an array into a RoArray.
+ * Supports JSON format including nested arrays.
+ * @param value String representation of the array (JSON format)
+ * @returns RoArray with parsed values or empty array if parsing fails
+ */
 function parseArray(value: string): RoArray {
     if (!value?.trim().startsWith("[") || !value?.trim().endsWith("]")) {
         return new RoArray([]);

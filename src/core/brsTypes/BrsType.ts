@@ -93,9 +93,10 @@ export namespace ValueKind {
     }
 }
 
-/** Check if the passed value implements the Comparable interface
- * @param value the BrightScript value to be checked.
- * @returns `true` if `value` is comparable, otherwise `false`.
+/**
+ * Checks if the passed value implements the Comparable interface.
+ * @param value BrightScript value to be checked
+ * @returns True if value is comparable, false otherwise
  */
 export function isComparable(value: BrsType | BrsComponent): value is BrsType & Comparable {
     return "lessThan" in value && "greaterThan" in value && "getValue" in value;
@@ -152,6 +153,11 @@ export class BrsString implements BrsValue, Comparable, Boxable {
     readonly kind = ValueKind.String;
     constructor(readonly value: string, public inArray: boolean = false) {}
 
+    /**
+     * Compares if this string is less than another value.
+     * @param other Value to compare against
+     * @returns True if this string is lexicographically less than other, false otherwise
+     */
     lessThan(other: BrsType): BrsBoolean {
         if (isStringComp(other)) {
             return BrsBoolean.from(this.value < other.getValue());
@@ -159,6 +165,11 @@ export class BrsString implements BrsValue, Comparable, Boxable {
         return BrsBoolean.False;
     }
 
+    /**
+     * Compares if this string is greater than another value.
+     * @param other Value to compare against
+     * @returns True if this string is lexicographically greater than other, false otherwise
+     */
     greaterThan(other: BrsType): BrsBoolean {
         if (isStringComp(other)) {
             return BrsBoolean.from(this.value > other.getValue());
@@ -166,6 +177,11 @@ export class BrsString implements BrsValue, Comparable, Boxable {
         return BrsBoolean.False;
     }
 
+    /**
+     * Checks if this string is equal to another value.
+     * @param other Value to compare against
+     * @returns True if values are equal, false otherwise
+     */
     equalTo(other: BrsType): BrsBoolean {
         if (isStringComp(other)) {
             return BrsBoolean.from(this.value === other.getValue());
@@ -173,15 +189,30 @@ export class BrsString implements BrsValue, Comparable, Boxable {
         return BrsBoolean.False;
     }
 
+    /**
+     * Gets the underlying string value.
+     * @returns JavaScript string value
+     */
     getValue() {
         return this.value;
     }
 
+    /**
+     * Converts this string to a string representation.
+     * @param parent Optional parent context; if present, wraps value in quotes
+     * @returns String representation
+     */
     toString(parent?: BrsType) {
         if (parent) return `"${this.value}"`;
         return this.value;
     }
 
+    /**
+     * Concatenates this string with another BrsType value.
+     * Converts the other value to string if it's not a string type.
+     * @param other BrsType value to concatenate
+     * @returns New BrsString with concatenated values
+     */
     concat(other: BrsType): BrsString {
         if (isStringComp(other)) {
             return new BrsString(this.value + other.getValue());
@@ -189,6 +220,10 @@ export class BrsString implements BrsValue, Comparable, Boxable {
         return new BrsString(this.value + other.toString());
     }
 
+    /**
+     * Boxes this primitive string into a RoString component.
+     * @returns RoString boxed representation
+     */
     box() {
         return new RoString(this);
     }
@@ -199,26 +234,54 @@ export class BrsBoolean implements BrsValue, Comparable, Boxable {
     readonly kind = ValueKind.Boolean;
     private constructor(private readonly value: boolean, public inArray: boolean = false) {}
 
+    /**
+     * Converts this BrsBoolean to a JavaScript boolean.
+     * @returns JavaScript boolean value
+     */
     toBoolean(): boolean {
         return this.value;
     }
 
     static readonly False = new BrsBoolean(false);
     static readonly True = new BrsBoolean(true);
+
+    /**
+     * Creates a BrsBoolean from a JavaScript boolean value.
+     * Returns the static True or False instance.
+     * @param value JavaScript boolean value
+     * @returns BrsBoolean.True or BrsBoolean.False
+     */
     static from(value: boolean) {
         return value ? BrsBoolean.True : BrsBoolean.False;
     }
 
+    /**
+     * Compares if this boolean is less than another value.
+     * Booleans are never less than any value.
+     * @param other Value to compare against
+     * @returns Always BrsBoolean.False
+     */
     lessThan(other: BrsType): BrsBoolean {
         // booleans aren't less than anything
         return BrsBoolean.False;
     }
 
+    /**
+     * Compares if this boolean is greater than another value.
+     * Booleans are never greater than any value.
+     * @param other Value to compare against
+     * @returns Always BrsBoolean.False
+     */
     greaterThan(other: BrsType): BrsBoolean {
         // but isn't greater than anything either
         return BrsBoolean.False;
     }
 
+    /**
+     * Checks if this boolean is equal to another value.
+     * @param other Value to compare against
+     * @returns True if values are equal, false otherwise
+     */
     equalTo(other: BrsType): BrsBoolean {
         if (other.kind === ValueKind.Boolean || isBrsNumber(other)) {
             return BrsBoolean.from(this.toBoolean() === other.toBoolean());
@@ -226,14 +289,27 @@ export class BrsBoolean implements BrsValue, Comparable, Boxable {
         return BrsBoolean.False;
     }
 
+    /**
+     * Gets the underlying boolean value.
+     * @returns JavaScript boolean value
+     */
     getValue() {
         return this.value;
     }
 
+    /**
+     * Converts this boolean to a string representation.
+     * @param parent Optional parent context (unused for booleans)
+     * @returns String representation ("true" or "false")
+     */
     toString(parent?: BrsType) {
         return this.value.toString();
     }
 
+    /**
+     * Boxes this primitive boolean into a RoBoolean component.
+     * @returns RoBoolean boxed representation
+     */
     box() {
         return new RoBoolean(this);
     }
@@ -280,16 +356,33 @@ export class BrsInvalid implements BrsValue, Comparable, Boxable {
     inArray: boolean = false;
     static readonly Instance = new BrsInvalid();
 
+    /**
+     * Compares if invalid is less than another value.
+     * Invalid is never less than any value.
+     * @param other Value to compare against
+     * @returns Always BrsBoolean.False
+     */
     lessThan(other: BrsType): BrsBoolean {
         // invalid isn't less than anything
         return BrsBoolean.False;
     }
 
+    /**
+     * Compares if invalid is greater than another value.
+     * Invalid is never greater than any value.
+     * @param other Value to compare against
+     * @returns Always BrsBoolean.False
+     */
     greaterThan(other: BrsType): BrsBoolean {
         // but isn't greater than anything either
         return BrsBoolean.False;
     }
 
+    /**
+     * Checks if this invalid value is equal to another value.
+     * @param other Value to compare against
+     * @returns True if other is also invalid, false otherwise
+     */
     equalTo(other: BrsType): BrsBoolean {
         if (other.kind === ValueKind.Invalid || other instanceof RoInvalid) {
             return BrsBoolean.True;
@@ -297,14 +390,27 @@ export class BrsInvalid implements BrsValue, Comparable, Boxable {
         return BrsBoolean.False;
     }
 
+    /**
+     * Gets the invalid value instance.
+     * @returns BrsInvalid singleton instance
+     */
     getValue() {
         return BrsInvalid.Instance;
     }
 
+    /**
+     * Converts invalid to a string representation.
+     * @param parent Optional parent context (unused for invalid)
+     * @returns String "invalid"
+     */
     toString(parent?: BrsType) {
         return "invalid";
     }
 
+    /**
+     * Boxes this primitive invalid into a RoInvalid component.
+     * @returns RoInvalid boxed representation
+     */
     box() {
         return new RoInvalid();
     }
@@ -315,20 +421,42 @@ export class Uninitialized implements BrsValue, Comparable {
     readonly kind = ValueKind.Uninitialized;
     static readonly Instance = new Uninitialized();
 
+    /**
+     * Compares if uninitialized is less than another value.
+     * Uninitialized values are never less than any value.
+     * @param other Value to compare against
+     * @returns Always BrsBoolean.False
+     */
     lessThan(other: BrsType): BrsBoolean {
         // uninitialized values aren't less than anything
         return BrsBoolean.False;
     }
 
+    /**
+     * Compares if uninitialized is greater than another value.
+     * Uninitialized values are never greater than any value.
+     * @param other Value to compare against
+     * @returns Always BrsBoolean.False
+     */
     greaterThan(other: BrsType): BrsBoolean {
         // uninitialized values aren't less than anything
         return BrsBoolean.False;
     }
 
+    /**
+     * Gets the uninitialized value.
+     * @returns JavaScript undefined
+     */
     getValue() {
         return undefined;
     }
 
+    /**
+     * Checks if this uninitialized value is equal to another value.
+     * Special case: allows comparison to the string "<uninitialized>".
+     * @param other Value to compare against
+     * @returns True if other is the string "<uninitialized>" (case-insensitive), false otherwise
+     */
     equalTo(other: BrsType): BrsBoolean {
         if (other.kind === ValueKind.String) {
             // Allow variables to be compared to the string "<uninitialized>" to test if they've
@@ -339,6 +467,11 @@ export class Uninitialized implements BrsValue, Comparable {
         return BrsBoolean.False;
     }
 
+    /**
+     * Converts uninitialized to a string representation.
+     * @param parent Optional parent context (unused for uninitialized)
+     * @returns String "<UNINITIALIZED>"
+     */
     toString(parent?: BrsType) {
         return "<UNINITIALIZED>";
     }

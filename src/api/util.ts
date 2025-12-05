@@ -11,7 +11,10 @@ import packageInfo from "../../packages/browser/package.json";
 // Module callback function definition
 export type SubscribeCallback = (event: string, data?: any) => void;
 
-// Libraries Path
+/**
+ * Gets the path to the API library script.
+ * @returns Path to the API library or main entry point
+ */
 export function getApiPath(): string {
     if (typeof document !== "undefined") {
         const scripts = document.getElementsByTagName("script");
@@ -19,12 +22,22 @@ export function getApiPath(): string {
     }
     return packageInfo.main;
 }
+/**
+ * Gets the path to the worker library script.
+ * @returns Path to the worker library with version query parameter
+ */
 export function getWorkerLibPath(): string {
     let libPath = getApiPath();
     libPath = libPath.replace(".api.js", `.worker.js?v=${packageInfo.version}`);
     return libPath;
 }
 
+/**
+ * Saves string data to the shared array buffer.
+ * @param sharedArray The shared Int32Array buffer
+ * @param data String data to save
+ * @param type BufferType indicating the data type
+ */
 export function saveDataBuffer(sharedArray: Int32Array, data: string, type: BufferType) {
     // Store string on SharedArrayBuffer
     data = data.trim();
@@ -40,7 +53,11 @@ export function saveDataBuffer(sharedArray: Int32Array, data: string, type: Buff
     Atomics.store(sharedArray, DataType.BUF, type);
 }
 
-// Convert Buffer to Base 64 string
+/**
+ * Converts a buffer to a Base64 string.
+ * @param buffer Uint8Array or ArrayBuffer to convert
+ * @returns Promise resolving to Base64 string
+ */
 export async function bufferToBase64(buffer: Uint8Array | ArrayBuffer) {
     // use a FileReader to generate a base64 data URI:
     const base64url: string = await new Promise((r) => {
@@ -56,7 +73,11 @@ export async function bufferToBase64(buffer: Uint8Array | ArrayBuffer) {
     return base64url.slice(base64url.indexOf(",") + 1);
 }
 
-// Check if a variable is number
+/**
+ * Checks if a value is a valid number.
+ * @param value String or number to check
+ * @returns True if the value is a valid number
+ */
 export function isNumber(value?: string | number): boolean {
     return value != null && value !== "" && !Number.isNaN(Number(value.toString()));
 }
@@ -145,7 +166,12 @@ const localeMap: Map<string, string> = new Map([
     ["zho", "zh"], // Chinese
 ]);
 
-// Format locale string to a 2-letter ISO 639-1 code
+/**
+ * Formats a locale string to a 2-letter ISO 639-1 code.
+ * Converts 3-letter ISO 639-2 codes to 2-letter equivalents.
+ * @param locale Locale string to format (2 or 3 letters)
+ * @returns 2-letter ISO 639-1 language code
+ */
 export function formatLocale(locale: string) {
     let lang = locale?.toLowerCase() ?? "";
     if (lang.length === 3) {

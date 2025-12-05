@@ -14,10 +14,10 @@ export class RoAudioPlayerEvent extends BrsEvent {
         this.flags = flags;
         this.index = index;
         switch (this.flags) {
-            case MediaEvent.SELECTED:
+            case MediaEvent.Selected:
                 this.message = "start of play";
                 break;
-            case MediaEvent.FULL:
+            case MediaEvent.Full:
                 this.message = "end of playlist";
                 break;
             default:
@@ -94,7 +94,7 @@ export class RoAudioPlayerEvent extends BrsEvent {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
-            return BrsBoolean.from(this.flags === MediaEvent.SELECTED);
+            return BrsBoolean.from(this.flags === MediaEvent.Selected);
         },
     });
 
@@ -105,7 +105,7 @@ export class RoAudioPlayerEvent extends BrsEvent {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
-            return BrsBoolean.from(this.flags === MediaEvent.FULL);
+            return BrsBoolean.from(this.flags === MediaEvent.Full);
         },
     });
 
@@ -116,7 +116,7 @@ export class RoAudioPlayerEvent extends BrsEvent {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
-            return BrsBoolean.from(this.flags === MediaEvent.FINISHED);
+            return BrsBoolean.from(this.flags === MediaEvent.Finished);
         },
     });
 
@@ -127,7 +127,7 @@ export class RoAudioPlayerEvent extends BrsEvent {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
-            return BrsBoolean.from(this.flags === MediaEvent.FAILED);
+            return BrsBoolean.from(this.flags === MediaEvent.Failed);
         },
     });
 
@@ -138,7 +138,7 @@ export class RoAudioPlayerEvent extends BrsEvent {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
-            return BrsBoolean.from(this.flags === MediaEvent.PARTIAL);
+            return BrsBoolean.from(this.flags === MediaEvent.Partial);
         },
     });
 
@@ -149,7 +149,7 @@ export class RoAudioPlayerEvent extends BrsEvent {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
-            return BrsBoolean.from(this.flags === MediaEvent.PAUSED);
+            return BrsBoolean.from(this.flags === MediaEvent.Paused);
         },
     });
 
@@ -160,7 +160,7 @@ export class RoAudioPlayerEvent extends BrsEvent {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
-            return BrsBoolean.from(this.flags === MediaEvent.RESUMED);
+            return BrsBoolean.from(this.flags === MediaEvent.Resumed);
         },
     });
 

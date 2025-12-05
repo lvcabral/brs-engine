@@ -57,6 +57,12 @@ const subtitleMeasurementCache = new Map<string, CachedSubtitleMeasurement>();
 let lastCachedFontSize: number | undefined;
 let lastCachedFontFamily: string | undefined;
 
+/**
+ * Initializes the display module with canvas and device configuration.
+ * Sets up rendering context, aspect ratio, and video subscriptions.
+ * @param deviceInfo Device information including display mode
+ * @param perfStats Whether to enable performance statistics (defaults to false)
+ */
 export function initDisplayModule(deviceInfo: DeviceInfo, perfStats = false) {
     // Initialize Display Canvas
     display = document.getElementById("display") as HTMLCanvasElement;
@@ -101,19 +107,40 @@ export function initDisplayModule(deviceInfo: DeviceInfo, perfStats = false) {
 
 // Observers Handling
 const observers = new Map();
+/**
+ * Subscribes an observer to display events.
+ * @param observerId Unique identifier for the observer
+ * @param observerCallback Callback function to receive events
+ */
 export function subscribeDisplay(observerId: string, observerCallback: SubscribeCallback) {
     observers.set(observerId, observerCallback);
 }
+/**
+ * Unsubscribes an observer from display events.
+ * @param observerId Unique identifier of the observer to remove
+ */
 export function unsubscribeDisplay(observerId: string) {
     observers.delete(observerId);
 }
+/**
+ * Notifies all subscribed observers of a display event.
+ * @param eventName Name of the event
+ * @param eventData Optional data associated with the event
+ */
 function notifyAll(eventName: string, eventData?: any) {
     for (const [_id, callback] of observers) {
         callback(eventName, eventData);
     }
 }
 
-// Redraw Display Canvas
+/**
+ * Redraws the display canvas with specified dimensions and settings.
+ * @param running Whether the app is currently running
+ * @param fullScreen Whether to render in fullscreen mode
+ * @param width Optional canvas width
+ * @param height Optional canvas height
+ * @param dpr Optional device pixel ratio
+ */
 export function redrawDisplay(running?: boolean, fullScreen?: boolean, width?: number, height?: number, dpr?: number) {
     if (!width) {
         width = globalThis.innerWidth;
@@ -160,7 +187,11 @@ export function redrawDisplay(running?: boolean, fullScreen?: boolean, width?: n
     notifyAll("redraw", fullScreen);
 }
 
-// Draw App Splash
+/**
+ * Draws a splash screen image on the display canvas.
+ * @param imgBmp Image bitmap to display
+ * @param icon Whether this is an icon (defaults to false)
+ */
 export function drawSplashScreen(imgBmp: ImageBitmap, icon = false) {
     if (bufferCtx) {
         if (display instanceof HTMLCanvasElement) {
@@ -184,15 +215,26 @@ export function drawSplashScreen(imgBmp: ImageBitmap, icon = false) {
     }
 }
 
+/**
+ * Draws an icon as a splash screen.
+ * @param imgBmp Image bitmap to display as icon
+ */
 export function drawIconAsSplash(imgBmp: ImageBitmap) {
     drawSplashScreen(imgBmp, true);
 }
 
+/**
+ * Gets a screenshot of the current display buffer.
+ * @returns ImageData of the display or null if unavailable
+ */
 export function getScreenshot(): ImageData | null {
     return bufferCtx?.getImageData(0, 0, bufferCanvas.width, bufferCanvas.height) ?? null;
 }
 
-// Update Buffer Image
+/**
+ * Updates the display buffer with new image data.
+ * @param buffer ImageData to render on the display
+ */
 export function updateBuffer(buffer: ImageData) {
     if (bufferCtx) {
         if (bufferCanvas.width !== buffer.width || bufferCanvas.height !== buffer.height) {
@@ -211,7 +253,10 @@ export function updateBuffer(buffer: ImageData) {
     }
 }
 
-// Draw Buffer Image to the Display Canvas
+/**
+ * Draws the buffer image to the display canvas.
+ * Applies overscan settings and updates performance statistics.
+ */
 function drawBufferImage() {
     if (ctx) {
         statsUpdate(false);
@@ -243,7 +288,10 @@ function drawBufferImage() {
     }
 }
 
-// Draw Video Player frame to the Display Canvas
+/**
+ * Draws the current video player frame to the display canvas.
+ * Called recursively via requestAnimationFrame during video playback.
+ */
 function drawVideoFrame() {
     if (!(bufferCtx && player instanceof HTMLVideoElement && ["play", "pause"].includes(videoState))) {
         videoLoop = false;
@@ -281,8 +329,13 @@ function drawVideoFrame() {
     lastFrameReq = globalThis.requestAnimationFrame(drawVideoFrame);
 }
 
-// Draw Subtitles on the Display Canvas
-// TODO: Draw captions window - width in fhd 1536 with left position 192 (10% of screen width)
+// TODO: Draw captions window - width in fhd 1536px height and left position 192 (10% or screen width)
+
+/**
+ * Draws closed captions/subtitles on the display canvas.
+ * Applies caption styling and caches text measurements for performance.
+ * @param ctx Canvas 2D rendering context
+ */
 function drawSubtitles(ctx: CanvasRenderingContext2D) {
     if (!deviceData.captionStyle) {
         deviceData.captionStyle = [];
@@ -377,6 +430,15 @@ function drawSubtitles(ctx: CanvasRenderingContext2D) {
     }
 }
 
+/**
+ * Draws text with specified effects (raised, depressed, uniform, drop shadow).
+ * @param ctx Canvas 2D rendering context
+ * @param text Text string to draw
+ * @param x X coordinate
+ * @param y Y coordinate
+ * @param opacity Text opacity (0-1)
+ * @param effect Text effect style name
+ */
 function drawText(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, opacity: number, effect: string) {
     ctx.save();
     ctx.globalAlpha = opacity;
@@ -407,7 +469,10 @@ function drawText(ctx: CanvasRenderingContext2D, text: string, x: number, y: num
     ctx.restore();
 }
 
-// Load Closed Captions Fonts from Common FS
+/**
+ * Loads closed caption fonts from the Common FS assets.
+ * @param assets ArrayBuffer containing the zipped font assets
+ */
 export async function loadCaptionsFonts(assets: ArrayBufferLike) {
     if (!assets.byteLength) {
         notifyAll("warning", "[display] Common FS not available, captions fonts will not be loaded.");
@@ -441,14 +506,22 @@ export async function loadCaptionsFonts(assets: ArrayBufferLike) {
     }
 }
 
-// Reset Subtitle Cache
+/**
+ * Resets the subtitle measurement cache.
+ * Called when font size or family changes.
+ * @param fontSize Optional new font size to cache
+ * @param fontFamily Optional new font family to cache
+ */
 function resetSubtitleCache(fontSize?: number, fontFamily?: string) {
     subtitleMeasurementCache.clear();
     lastCachedFontSize = fontSize;
     lastCachedFontFamily = fontFamily;
 }
 
-// Update Performance Statistics
+/**
+ * Marks the beginning or end of the frame to measure performance statistics.
+ * @param start True to mark the beginning of the frame, false to mark the end
+ */
 export function statsUpdate(start: boolean) {
     if (showStats && statsCanvas) {
         if (start) {
@@ -459,7 +532,9 @@ export function statsUpdate(start: boolean) {
     }
 }
 
-// Show Display and set focus
+/**
+ * Shows the display canvas and sets focus to it.
+ */
 export function showDisplay() {
     if (display instanceof HTMLCanvasElement) {
         displayState = true;
@@ -472,7 +547,10 @@ export function showDisplay() {
     }
 }
 
-// Clear Display and Buffer
+/**
+ * Clears the display canvas and optionally cancels animation frames.
+ * @param cancelFrame Whether to cancel pending animation frames
+ */
 export function clearDisplay(cancelFrame?: boolean) {
     if (cancelFrame) {
         globalThis.cancelAnimationFrame(lastFrameReq);
@@ -486,7 +564,11 @@ export function clearDisplay(cancelFrame?: boolean) {
     }
 }
 
-// Set/Get Current Display Mode
+/**
+ * Sets the display mode (480p, 720p, or 1080p).
+ * Updates aspect ratio and screen size accordingly.
+ * @param mode Display mode to set
+ */
 export function setDisplayMode(mode: DisplayMode) {
     if (!DisplayModes.includes(mode)) {
         notifyAll("warning", `[display] Invalid Display Mode: ${mode}`);
@@ -497,24 +579,43 @@ export function setDisplayMode(mode: DisplayMode) {
     notifyAll("mode", mode);
 }
 
+/**
+ * Gets the current display mode.
+ * @returns Current DisplayMode
+ */
 export function getDisplayMode() {
     return deviceData.displayMode;
 }
 
+/**
+ * Sets whether the display is enabled or disabled.
+ * @param enabled True to enable display, false to disable
+ */
 export function setDisplayState(enabled: boolean) {
     displayState = enabled;
 }
 
-// Set/Get Overscan Mode
+/**
+ * Sets the overscan mode.
+ * @param mode Overscan mode string
+ */
 export function setOverscanMode(mode: string) {
     overscanMode = mode;
 }
 
+/**
+ * Gets the current overscan mode.
+ * @returns Current overscan mode string
+ */
 export function getOverscanMode() {
     return overscanMode;
 }
 
-// Set/Get Closed Caption Mode
+/**
+ * Sets the closed caption mode.
+ * @param mode Caption mode string to parse and set
+ * @returns True if mode was valid and set, false otherwise
+ */
 export function setCaptionMode(mode: string): boolean {
     const newMode = parseCaptionMode(mode);
     if (!newMode) {
@@ -528,24 +629,43 @@ export function setCaptionMode(mode: string): boolean {
     return true;
 }
 
+/**
+ * Gets the current closed caption mode.
+ * @returns Current caption mode
+ */
 export function getCaptionMode() {
     return deviceData.captionMode;
 }
 
+/**
+ * Determines if captions should be displayed based on caption mode and mute state.
+ * @returns True if captions should be shown
+ */
 function getCaptionState(): boolean {
     const mode = deviceData.captionMode;
     return supportCaptions && (mode === "On" || (mode === "When mute" && isVideoMuted()));
 }
 
+/**
+ * Sets whether the trick play bar is visible.
+ * @param enabled True to show trick play bar
+ */
 export function setTrickPlayBar(enabled: boolean) {
     trickPlayBar = enabled;
 }
 
+/**
+ * Sets whether the app supports closed captions.
+ * @param support True if captions are supported
+ */
 export function setSupportCaptions(support: boolean) {
     supportCaptions = support;
 }
 
-// Get/Set Closed Captions Style Options
+/**
+ * Sets the closed caption style options.
+ * @param style Optional array of CaptionStyleOption
+ */
 export function setCaptionStyle(style?: CaptionStyleOption[]) {
     const captionStyle = deviceData.captionStyle;
     for (const [key, option] of CaptionOptions) {
@@ -561,7 +681,11 @@ export function setCaptionStyle(style?: CaptionStyleOption[]) {
     }
 }
 
-export function setAppCaptionStyle(style?: CaptionStyleOption[]) {
+/**
+ * Sets the application-specific caption style.
+ * @param style Array of CaptionStyleOption from the app
+ */
+export function setAppCaptionStyle(style: CaptionStyleOption[]) {
     appCaptionStyle.length = 0;
     for (const [key] of CaptionOptions) {
         if (!key.includes("/")) {
@@ -574,6 +698,12 @@ export function setAppCaptionStyle(style?: CaptionStyleOption[]) {
     }
 }
 
+/**
+ * Gets a caption style option, merging device and app settings.
+ * @param id Style option identifier
+ * @param defaultStyle Default style value if not found
+ * @returns Resolved style value
+ */
 function getCaptionStyleOption(id: string, defaultStyle: string = "default"): string {
     const deviceOption = deviceData.captionStyle.find((option) => option.id.toLowerCase() === id.toLowerCase());
     const deviceStyle = deviceOption?.style?.toLowerCase() ?? defaultStyle;
@@ -581,6 +711,13 @@ function getCaptionStyleOption(id: string, defaultStyle: string = "default"): st
     return deviceStyle === "default" ? appOption?.style?.toLowerCase() ?? defaultStyle : deviceStyle;
 }
 
+/**
+ * Sets a caption style option in the provided array.
+ * @param captionStyle Array of caption style options to modify
+ * @param id Style option identifier
+ * @param style Style value to set
+ * @returns True if value was changed
+ */
 function setCaptionStyleOption(captionStyle: CaptionStyleOption[], id: string, style: string): boolean {
     const index = captionStyle.findIndex((caption) => caption.id.toLowerCase() === id.toLowerCase());
     if (index >= 0) {
@@ -599,7 +736,11 @@ function setCaptionStyleOption(captionStyle: CaptionStyleOption[], id: string, s
     }
 }
 
-// Set the Performance Statistics state
+/**
+ * Enables or disables performance statistics display.
+ * @param show True to show statistics, false to hide
+ * @returns Whether statistics are now shown
+ */
 export function enableStats(show: boolean): boolean {
     if (statsCanvas?.dom) {
         showStats = show;
@@ -644,6 +785,10 @@ export function enableStats(show: boolean): boolean {
     return showStats;
 }
 
+/**
+ * Gets the dimensions for the current display mode.
+ * @returns Object with width and height for current display mode
+ */
 function getDisplayModeDims() {
     let w = 1280;
     let h = 720;

@@ -136,7 +136,12 @@ let sharedBuffer: ArrayBufferLike;
 let sharedArray: Int32Array;
 let currentPayload: AppPayload;
 
-// API Methods
+/**
+ * Initializes the BrightScript engine with device configuration and options.
+ * Sets up display, control, video, sound, and task modules.
+ * @param customDeviceInfo Optional partial DeviceInfo to customize device configuration
+ * @param options Optional configuration object with flags for debugging, stats, etc.
+ */
 export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any = {}) {
     if (customDeviceInfo) {
         // Prevent hosting apps to override some device info keys
@@ -196,7 +201,7 @@ export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any 
     subscribeDisplay("api", (event: string, data: any) => {
         if (event === "mode") {
             if (currentApp.running) {
-                terminate(AppExitReason.SETTINGS);
+                terminate(AppExitReason.Settings);
             }
             notifyAll("display", data);
         } else if (["redraw", "resolution"].includes(event)) {
@@ -212,7 +217,7 @@ export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any 
             }
         } else if (event === "poweroff") {
             if (currentApp.running) {
-                terminate(AppExitReason.POWER);
+                terminate(AppExitReason.PowerMode);
             }
         } else if (event === "volumemute") {
             setAudioMute(!getAudioMute());
@@ -229,7 +234,7 @@ export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any 
         if (["error", "warning"].includes(event)) {
             apiException(event, data);
         } else if (event === "home") {
-            terminate(AppExitReason.FINISHED);
+            terminate(AppExitReason.UserNav);
         }
     });
     subscribeVideo("api", (event: string, data: any) => {
@@ -277,19 +282,39 @@ export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any 
 
 // Observers Handling
 const observers = new Map();
+/**
+ * Subscribes an observer to receive events from the BrightScript engine.
+ * @param observerId Unique identifier for the observer
+ * @param observerCallback Callback function to receive events
+ */
 export function subscribe(observerId: string, observerCallback: SubscribeCallback) {
     observers.set(observerId, observerCallback);
 }
+/**
+ * Unsubscribes an observer from receiving engine events.
+ * @param observerId Unique identifier of the observer to remove
+ */
 export function unsubscribe(observerId: string) {
     observers.delete(observerId);
 }
+/**
+ * Notifies all subscribed observers of an event.
+ * @param eventName Name of the event
+ * @param eventData Optional data associated with the event
+ */
 function notifyAll(eventName: string, eventData?: any) {
     for (const [_id, callback] of observers) {
         callback(eventName, eventData);
     }
 }
 
-// Execute App Zip or Source File
+/**
+ * Executes a BrightScript application from a zip package or source file.
+ * @param filePath Path to the file (used for identification)
+ * @param fileData File data (Blob or similar)
+ * @param options Optional execution options (clearDisplayOnExit, password, etc.)
+ * @param deepLink Optional deep link parameters to pass to the app
+ */
 export function execute(filePath: string, fileData: any, options: any = {}, deepLink?: Map<string, string>) {
     setupCurrentApp(filePath);
     const fileName = filePath.split(/.*[\/|\\]/)[1] ?? filePath;
@@ -328,7 +353,10 @@ export function execute(filePath: string, fileData: any, options: any = {}, deep
     }
 }
 
-// Function to find the App and setup Current App object
+/**
+ * Finds the app in the device list and sets up the current app object.
+ * @param filePath Path to the application file
+ */
 function setupCurrentApp(filePath: string) {
     if (deviceData.appList?.length) {
         const app = deviceData.appList.find((app) => app.path === filePath);
@@ -345,8 +373,12 @@ function setupCurrentApp(filePath: string) {
     }
 }
 
-// Restore engine state and terminate Worker
-export function terminate(reason: AppExitReason = AppExitReason.UNKNOWN) {
+/**
+ * Terminates the currently running BrightScript application.
+ * Cleans up resources, updates app state, and notifies observers.
+ * @param reason Reason for termination (defaults to Unknown)
+ */
+export function terminate(reason: AppExitReason = AppExitReason.Unknown) {
     if (currentApp.running) {
         currentApp.running = false;
         currentApp.exitReason = reason;
@@ -366,20 +398,36 @@ export function terminate(reason: AppExitReason = AppExitReason.UNKNOWN) {
     notifyAll("closed", reason);
 }
 
-// Returns API library version
+/**
+ * Returns the current version of the BrightScript engine API.
+ * @returns Version string
+ */
 export function getVersion() {
     return packageInfo.version;
 }
 
-// Display API
+/**
+ * Requests a redraw of the display canvas.
+ * @param fullScreen Whether to render in fullscreen mode
+ * @param width Optional canvas width
+ * @param height Optional canvas height
+ * @param dpr Optional device pixel ratio
+ */
 export function redraw(fullScreen: boolean, width?: number, height?: number, dpr?: number) {
     redrawDisplay(currentApp.running, fullScreen, width, height, dpr);
 }
 
-// Audio API
+/**
+ * Gets the current audio mute state (both sound and video).
+ * @returns True if audio is muted
+ */
 export function getAudioMute() {
     return isSoundMuted() && isVideoMuted();
 }
+/**
+ * Sets the audio mute state for both sound and video.
+ * @param mute True to mute audio, false to unmute
+ */
 export function setAudioMute(mute: boolean) {
     if (currentApp.running) {
         muteSound(mute);
@@ -387,13 +435,31 @@ export function setAudioMute(mute: boolean) {
     }
 }
 
-// Remote Control API
+/**
+ * Sends a key down event to the running application.
+ * @param key Key name (e.g., "up", "select", "back")
+ * @param remote Optional remote type (defaults to ECP)
+ * @param index Optional remote index
+ */
 export function sendKeyDown(key: string, remote?: RemoteType, index?: number) {
     sendKey(key, 0, remote ?? RemoteType.ECP, index);
 }
+/**
+ * Sends a key up event to the running application.
+ * @param key Key name (e.g., "up", "select", "back")
+ * @param remote Optional remote type (defaults to ECP)
+ * @param index Optional remote index
+ */
 export function sendKeyUp(key: string, remote?: RemoteType, index?: number) {
     sendKey(key, 100, remote ?? RemoteType.ECP, index);
 }
+/**
+ * Sends a key press (down + up) event to the running application.
+ * @param key Key name (e.g., "up", "select", "back")
+ * @param delay Delay in milliseconds between key down and up (defaults to 300ms)
+ * @param remote Optional remote type (defaults to ECP)
+ * @param index Optional remote index
+ */
 export function sendKeyPress(key: string, delay = 300, remote?: RemoteType, index?: number) {
     setTimeout(function () {
         sendKey(key, 100, remote ?? RemoteType.ECP, index);
@@ -401,7 +467,12 @@ export function sendKeyPress(key: string, delay = 300, remote?: RemoteType, inde
     sendKey(key, 0, remote ?? RemoteType.ECP, index);
 }
 
-// Telnet Debug API
+/**
+ * Sends a debug command to the running application.
+ * Supports debugger commands like "break", "pause", or expressions.
+ * @param command Debug command string
+ * @returns True if the command was handled
+ */
 export function debug(command: string): boolean {
     let handled = false;
     if (!disableDebug && currentApp.running && command?.length) {
@@ -420,7 +491,10 @@ export function debug(command: string): boolean {
     return handled;
 }
 
-// Terminate and reset BrightScript interpreter
+/**
+ * Terminates and resets the BrightScript interpreter worker.
+ * Cleans up all resources including tasks, sounds, and video.
+ */
 function resetWorker() {
     brsWorker.removeEventListener("message", mainCallback);
     brsWorker.terminate();
@@ -430,6 +504,9 @@ function resetWorker() {
     resetVideo();
 }
 
+/**
+ * Resets the shared array buffer to initial state (-1 values).
+ */
 function resetArray() {
     sharedArray.some((_, index: number) => {
         Atomics.store(sharedArray, index, -1);
@@ -437,7 +514,11 @@ function resetArray() {
     });
 }
 
-// Open source file
+/**
+ * Loads and parses a BrightScript source code file.
+ * @param fileName Name of the source file
+ * @param fileData File data as Blob or similar
+ */
 function loadSourceCode(fileName: string, fileData: any) {
     const reader = new FileReader();
     reader.onload = function (_) {
@@ -461,7 +542,10 @@ function loadSourceCode(fileName: string, fileData: any) {
     reader.readAsText(new Blob([fileData], { type: "text/plain" }));
 }
 
-// Execute Engine Web Worker
+/**
+ * Executes the BrightScript application in a Web Worker.
+ * @param payload AppPayload containing source code, manifest, and configuration
+ */
 function runApp(payload: AppPayload) {
     try {
         notifyAll("loaded", currentApp);
@@ -480,7 +564,10 @@ function runApp(payload: AppPayload) {
     }
 }
 
-// Load Device Assets
+/**
+ * Loads device assets (common.zip) if not already loaded.
+ * Fetches from assets directory and loads caption fonts.
+ */
 function updateDeviceAssets() {
     if (deviceData.assets.byteLength) {
         return;
@@ -503,7 +590,10 @@ function updateDeviceAssets() {
         });
 }
 
-// Update App in the App List from the Current App object
+/**
+ * Updates the app in the device app list with current app state.
+ * Synchronizes currentApp object with deviceData.appList.
+ */
 export function updateAppList() {
     if (deviceData.appList?.length) {
         const app = deviceData.appList.find((app) => app.id === currentApp.id);
@@ -513,7 +603,12 @@ export function updateAppList() {
     }
 }
 
-// Update Memory Usage on Shared Array
+/**
+ * Updates memory usage information in the shared array.
+ * Uses provided values or queries Chromium performance.memory API.
+ * @param usedMemory Optional used memory in KB
+ * @param totalMemory Optional total memory in KB
+ */
 export function updateMemoryInfo(usedMemory?: number, totalMemory?: number) {
     if (currentApp.running && usedMemory && totalMemory) {
         Atomics.store(sharedArray, DataType.MUHS, usedMemory);
@@ -529,7 +624,10 @@ export function updateMemoryInfo(usedMemory?: number, totalMemory?: number) {
     }
 }
 
-// Load device Registry from Local Storage
+/**
+ * Loads the device registry from browser localStorage.
+ * Filters by developerId and removes transient keys.
+ */
 function loadRegistry() {
     const storage: Storage = globalThis.localStorage;
     const transientKeys: string[] = [];
@@ -552,7 +650,11 @@ function loadRegistry() {
     notifyAll("registry", registry);
 }
 
-// Receive Messages from the Main Interpreter (Web Worker)
+/**
+ * Handles messages received from the main interpreter Web Worker.
+ * Routes different message types to appropriate handlers.
+ * @param event MessageEvent from the worker
+ */
 function mainCallback(event: MessageEvent) {
     if (event.data instanceof ImageData) {
         updateBuffer(event.data);
@@ -596,7 +698,11 @@ function mainCallback(event: MessageEvent) {
     }
 }
 
-// Handles NDKStart messages from the Interpreter
+/**
+ * Handles NDK start commands (roku_browser, SDKLauncher).
+ * Notifies observers about browser launches or app launches.
+ * @param data NDKStart object with app name and parameters
+ */
 function handleNDKStart(data: NDKStart) {
     if (data.app === "roku_browser") {
         const params = data.params;
@@ -640,6 +746,11 @@ function handleNDKStart(data: NDKStart) {
     }
 }
 
+/**
+ * Handles registry updates from the interpreter.
+ * Stores changes to localStorage and notifies observers.
+ * @param registry Map of registry key-value pairs
+ */
 function handleRegistryUpdate(registry: Map<string, string>) {
     if (Platform.inBrowser) {
         const storage: Storage = globalThis.localStorage;
@@ -650,7 +761,11 @@ function handleRegistryUpdate(registry: Map<string, string>) {
     notifyAll("registry", registry);
 }
 
-// Handles string messages from the Interpreter
+/**
+ * Handles string-based messages from the interpreter.
+ * Routes messages by prefix (audio, video, print, debug, etc.).
+ * @param message String message from the interpreter
+ */
 function handleStringMessage(message: string) {
     if (message.startsWith("audio,")) {
         handleAudioEvent(message);
@@ -702,7 +817,10 @@ function handleStringMessage(message: string) {
     }
 }
 
-// Update Bandwidth Measurement
+/**
+ * Updates bandwidth measurement in shared array every 60 seconds.
+ * Runs continuously while bandwidthMinute logging is enabled.
+ */
 function updateBandwidth() {
     if (currentApp.running && bandwidthMinute && latestBandwidth >= 0) {
         Atomics.store(sharedArray, DataType.MBWD, latestBandwidth);
@@ -710,7 +828,10 @@ function updateBandwidth() {
     bandwidthTimeout = setTimeout(updateBandwidth, 60000);
 }
 
-// Measure Bandwidth
+/**
+ * Measures network bandwidth by downloading a test file.
+ * Calculates download speed in kbps and stores result.
+ */
 async function measureBandwidth() {
     const testFileUrl = `https://brsfiddle.net/images/bmp-example-file-download-1024x1024.bmp?v=${Date.now()}`;
     const startTime = Date.now();
@@ -743,7 +864,11 @@ async function measureBandwidth() {
     }
 }
 
-// Debug Messages Handler
+/**
+ * Handles debug messages from the device/interpreter.
+ * Routes messages to console and observers based on level.
+ * @param data Debug message in format "level,content"
+ */
 function deviceDebug(data: string) {
     if (disableDebug) {
         return;
@@ -764,7 +889,12 @@ function deviceDebug(data: string) {
     }
 }
 
-// API Exceptions Handler
+/**
+ * Handles API exceptions and errors.
+ * Logs to console and notifies observers of errors.
+ * @param level Error level ("error" or "warning")
+ * @param message Error message
+ */
 function apiException(level: string, message: string) {
     if (level === "error") {
         console.error(message);

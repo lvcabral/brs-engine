@@ -141,7 +141,7 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
         const selected = Atomics.load(BrsDevice.sharedArray, DataType.VSE);
         if (selected >= 0) {
             this.selected = selected;
-            events.push(new RoVideoPlayerEvent(MediaEvent.SELECTED, selected));
+            events.push(new RoVideoPlayerEvent(MediaEvent.Selected, selected));
             Atomics.store(BrsDevice.sharedArray, DataType.VSE, -1);
         }
         const bufferFlag = Atomics.load(BrsDevice.sharedArray, DataType.BUF);
@@ -167,16 +167,16 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
         const progress = Atomics.load(BrsDevice.sharedArray, DataType.VLP);
         if (this.progress !== progress && progress >= 0 && progress <= 1000) {
             this.progress = progress;
-            events.push(new RoVideoPlayerEvent(MediaEvent.LOADING, progress));
+            events.push(new RoVideoPlayerEvent(MediaEvent.Loading, progress));
             if (progress === 1000) {
-                events.push(new RoVideoPlayerEvent(MediaEvent.START_PLAY, 0));
+                events.push(new RoVideoPlayerEvent(MediaEvent.StartPlay, 0));
             }
         }
         if (this.notificationPeriod >= 1) {
             const position = Atomics.load(BrsDevice.sharedArray, DataType.VPS);
             if (position >= 0 && Math.abs(this.position - position) >= this.notificationPeriod) {
                 this.position = position;
-                events.push(new RoVideoPlayerEvent(MediaEvent.POSITION, position, this.selected));
+                events.push(new RoVideoPlayerEvent(MediaEvent.Position, position, this.selected));
             }
         }
         // TODO: Check if the captions mode changed and generate and event
