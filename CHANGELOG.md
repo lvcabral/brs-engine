@@ -2,20 +2,39 @@
 
 All notable changes to this project will be documented in this file.
 
+<a name="v2.0.0"></a>
+
+## [v2.0.0 - Extensions and SceneGraph Support](https://github.com/lvcabral/brs-engine/releases/tag/v2.0.0) - 05 December 2025
+
+The `brs-engine` has been refactored to support an extension model, with **Roku SceneGraph** functionality moved to a separate NPM package `brs-scenegraph`. This architectural change keeps the core interpreter lean, while enabling optional extensions for **RSG** and, in the future, **SDK1** (legacy Roku apps) and **BrightSign** (digital signage platform).
+
+## Release Changes
+
+* Refactored `brs-engine` to support extensions and moved **SceneGraph** code to a separate package by [@lvcabral](https://github.com/lvcabral) in [#760](https://github.com/lvcabral/brs-engine/pull/760)
+  * Introduced an extension system with the `BrsExtension` interface and lifecycle hooks
+  * Moved SceneGraph code to the `src/extensions/scenegraph/` directory
+  * Several documentation updates to reflect the new extension model, including a new [Extensions](docs/extensions.md) document
+  * Refactored test file imports to use top-level `brs` exports
+  * Created the new `brs-scenegraph` package with independent build configuration
+
+Note: The **SceneGraph** functionality is on par with the last alpha release: [v2.0.0-alpha.26](https://github.com/lvcabral/brs-engine/releases/tag/v2.0.0-alpha.26). All future SceneGraph-related implementations will be made in the `brs-scenegraph` package and documented in its [CHANGELOG.md](https://github.com/lvcabral/brs-engine/blob/master/packages/scenegraph/CHANGELOG.md).
+
+[Full Changelog][v2.0.0]
+
 <a name="v1.10.0"></a>
 
 ## [v1.10.0 - BrsEvent and BrsCollection](https://github.com/lvcabral/brs-engine/releases/tag/v1.10.0) - 03 December 2025
 
-This is the final v1.x release in the main branch and brings the inclusion of the `BrsEvent` abstract class and `BrsCollection` interface, which provide a structured way to handle events and collections within the BrightScript engine. Additionally, this release includes various dependency updates and bug fixes to enhance security, stability and performance. This label will be branched for maintenance updates while work on the v2.0 major release will continue in the `main` branch.
+This is the final v1.x release in the `master` branch and brings the inclusion of the `BrsEvent` abstract class and `BrsCollection` interface, which provide a structured way to handle events and collections within the BrightScript engine. Additionally, this release includes various dependency updates and bug fixes to enhance security, stability and performance. This label will be branched for maintenance updates while work on the v2.0 major release will continue in the `master` branch.
 
 ## Release Changes
 
-* Replaced dependency `xml2js` by `xmldoc` by @lvcabral in https://github.com/lvcabral/brs-engine/pull/749
-* Bump js-yaml from 3.14.1 to 3.14.2 by @dependabot[bot] in https://github.com/lvcabral/brs-engine/pull/752
-* Raise type mismatch error when passing `Uninitialized` value to non-dynamic function parameters by @lvcabral in https://github.com/lvcabral/brs-engine/pull/756
-* Added `BrsEvent` abstract class and `BrsCollection` interface by @lvcabral in https://github.com/lvcabral/brs-engine/pull/759
-* Bump node-forge from 1.3.1 to 1.3.2 by @dependabot[bot] in https://github.com/lvcabral/brs-engine/pull/758
-* Fixed optional chaining with `roInvalid` when using methods by @lvcabral in https://github.com/lvcabral/brs-engine/pull/763
+* Replaced dependency `xml2js` by `xmldoc` by [@lvcabral](https://github.com/lvcabral) in [#749](https://github.com/lvcabral/brs-engine/pull/749)
+* Bump js-yaml from 3.14.1 to 3.14.2 by @dependabot[bot] in [#752](https://github.com/lvcabral/brs-engine/pull/752)
+* Raise type mismatch error when passing `Uninitialized` value to non-dynamic function parameters by [@lvcabral](https://github.com/lvcabral) in [#756](https://github.com/lvcabral/brs-engine/pull/756)
+* Added `BrsEvent` abstract class and `BrsCollection` interface by [@lvcabral](https://github.com/lvcabral) in [#759](https://github.com/lvcabral/brs-engine/pull/759)
+* Bump node-forge from 1.3.1 to 1.3.2 by @dependabot[bot] in [#758](https://github.com/lvcabral/brs-engine/pull/758)
+* Fixed optional chaining with `roInvalid` when using methods by [@lvcabral](https://github.com/lvcabral) in [#763](https://github.com/lvcabral/brs-engine/pull/763)
 
 [Full Changelog][v1.10.0]
 
@@ -1217,6 +1236,7 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
+[v2.0.0]: https://github.com/lvcabral/brs-engine/compare/v1.10.0...v2.0.0
 [v1.10.0]: https://github.com/lvcabral/brs-engine/compare/v1.9.9...v1.10.0
 [v1.9.9]: https://github.com/lvcabral/brs-engine/compare/v1.9.8...v1.9.9
 [v1.9.8]: https://github.com/lvcabral/brs-engine/compare/v1.9.7...v1.9.8
