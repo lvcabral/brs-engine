@@ -99,6 +99,10 @@ During the build we also merge `src/core/common` with `src/extensions/scenegraph
 - [Extensions guide](../../docs/extensions.md)
 - [SceneGraph source code](../../src/extensions/scenegraph/)
 
+### Changelog
+
+- Read the [package changelog](./CHANGELOG.md) to view the release notes.
+
 ## License
 
 Copyright © 2019-2025 Marcelo Lv Cabral. All rights reserved.

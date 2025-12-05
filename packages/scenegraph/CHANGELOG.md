@@ -1,12 +1,12 @@
 # Changelog
 
-All notable changes to `brs-scenegraph` will be documented in this file.
+All notable changes to `brs-scenegraph` extension will be documented in this file.
 
 <a name="v0.0.1"></a>
 
-## [v0.0.1 - Initial alpha release](https://github.com/lvcabral/brs-engine/releases/tag/brs-scenegraph-v0.0.1) - 3 December 2025
+## [v0.0.1 - Initial alpha release](https://github.com/lvcabral/brs-engine/releases/tag/brs-scenegraph-v0.0.1) - 05 December 2025
 
-This first alpha delivers the SceneGraph runtime as a standalone extension that plugs into the BrightScript Simulation Engine. It bundles both browser (`brs-sg.js`) and Node.js (`brs-sg.node.js`) builds, merges the core `common:/` assets with the SceneGraph-specific resources, and wires the lifecycle hooks (`onInit`, `onBeforeExecute`, `tick`, `execTask`) required for Roku SceneGraph apps.
+This first alpha delivers the **SceneGraph** runtime as a standalone extension that plugs into the **BrightScript Simulation Engine**. It bundles both browser (`brs-sg.js`) and Node.js (`brs-sg.node.js`) libraries, merges the core `common:/` assets with the SceneGraph-specific resources, and wires the lifecycle hooks (`onInit`, `onBeforeExecute`, `tick`, `execTask`) required for Roku SceneGraph apps.
 
 ### Release Changes
 
