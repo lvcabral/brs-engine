@@ -1,4 +1,5 @@
 import { ValueKind, BrsInvalid, BrsBoolean, BrsString, Uninitialized, BrsValue, Comparable } from "./BrsType";
+import { isUnboxable } from "./Boxing";
 import { RoArray } from "./components/RoArray";
 import { RoAssociativeArray } from "./components/RoAssociativeArray";
 import { RoList } from "./components/RoList";
@@ -19,14 +20,25 @@ import { RoLongInteger } from "./components/RoLongInteger";
 import { RoBoolean } from "./components/RoBoolean";
 import { RoURLEvent } from "./events/RoURLEvent";
 import { RoUniversalControlEvent } from "./events/RoUniversalControlEvent";
-import { isUnboxable } from "./Boxing";
-
+import { ISGNode } from "../extensions";
+// BrightScript Type exports
 export * from "./BrsType";
 export * from "./Int32";
 export * from "./Int64";
 export * from "./Float";
 export * from "./Double";
+export * from "./Boxing";
+export * from "./Callable";
+export * from "./Coercion";
 export * from "./interfaces/BrsInterface";
+export * from "./interfaces/IfArray";
+export * from "./interfaces/IfDraw2D";
+export * from "./interfaces/IfEnum";
+export * from "./interfaces/IfHttpAgent";
+export * from "./interfaces/IfList";
+export * from "./interfaces/IfMessagePort";
+export * from "./interfaces/IfSocket";
+export * from "./interfaces/IfToStr";
 export * from "./components/BrsComponent";
 export * from "./components/RoArray";
 export * from "./components/RoByteArray";
@@ -91,9 +103,6 @@ export * from "./events/RoSystemLogEvent";
 export * from "./events/RoDeviceInfoEvent";
 export * from "./events/RoChannelStoreEvent";
 export * from "./events/RoUniversalControlEvent";
-export * from "./Boxing";
-export * from "./Callable";
-export * from "./Coercion";
 
 /**
  * Determines whether or not the given value is a number.
@@ -106,6 +115,11 @@ export function isBrsNumber(value: BrsType): value is BrsNumber {
 
 export const NumberKinds = new Set([ValueKind.Int32, ValueKind.Float, ValueKind.Double, ValueKind.Int64]);
 
+/**
+ * Checks if a ValueKind represents a numeric type.
+ * @param kind ValueKind to check
+ * @returns True if the kind is a numeric type, false otherwise
+ */
 export function isNumberKind(kind: ValueKind): boolean {
     return NumberKinds.has(kind);
 }
@@ -232,7 +246,11 @@ export type AllComponents = { kind: ValueKind.Object } & BrsComponent & BrsValue
 /** The set of all supported types in BrightScript. */
 export type BrsType = BrsPrimitive | Callable | AllComponents | Uninitialized;
 
-// Function to check if the value is a BrightScript Type
+/**
+ * Checks if a value is a BrightScript type.
+ * @param value Value to check
+ * @returns True if the value is a BrsType, false otherwise
+ */
 export function isBrsType(value: any): value is BrsType {
     return (
         isBrsBoolean(value) ||
@@ -270,7 +288,7 @@ export const ValidDateFormats = [
  * This is to be used to behave like and convert to a BrightScript Associative Array.
  */
 export interface FlexObject {
-    [key: string]: BrsConvertible | BrsConvertible[] | FlexObject | FlexObject[] | Map<string, any>;
+    [key: string]: BrsConvertible | BrsConvertible[] | FlexObject | FlexObject[] | Map<string, any> | SharedArrayBuffer;
 }
 
 /**
@@ -282,18 +300,23 @@ export type BrsConvertible = boolean | number | string | BrsType | null | undefi
  * Converts a JavaScript object or Map to a RoAssociativeArray, converting each property or entry to the corresponding BrightScript type.
  * @param input The JavaScript object or Map to convert.
  * @param {boolean} cs Whether to return an AA as case sensitive.
+ * @param {Map<string, Node>} nodeMap Optional map to track nodes by ID for resolving circular references.
  * @returns A RoAssociativeArray with the converted properties or entries.
  */
-export function toAssociativeArray(input: Map<string, any> | FlexObject, cs?: boolean): RoAssociativeArray {
+export function toAssociativeArray(
+    input: Map<string, any> | FlexObject,
+    cs?: boolean,
+    nodeMap?: Map<string, ISGNode>
+): RoAssociativeArray {
     const associativeArray = new RoAssociativeArray([], cs);
     if (input instanceof Map) {
         for (const [key, value] of input) {
-            associativeArray.set(new BrsString(key), brsValueOf(value, cs), true);
+            associativeArray.set(new BrsString(key), brsValueOf(value, cs, nodeMap), true);
         }
     } else if (typeof input === "object" && input !== null) {
         for (const key in input) {
             if (input.hasOwnProperty(key)) {
-                associativeArray.set(new BrsString(key), brsValueOf(input[key], cs), true);
+                associativeArray.set(new BrsString(key), brsValueOf(input[key], cs, nodeMap), true);
             }
         }
     } else {
@@ -305,74 +328,79 @@ export function toAssociativeArray(input: Map<string, any> | FlexObject, cs?: bo
 /**
  * Converts a value to its representation as a BrsType. If no such
  * representation is possible, throws an Error.
- * @param {any} x Some value.
+ * @param {any} value Some value.
  * @param {boolean} cs Whether to return an AA as case sensitive.
+ * @param {Map<string, Node>} nodeMap Optional map to track nodes by ID for resolving circular references.
  * @return {BrsType} The BrsType representation of `x`.
  * @throws {Error} If `x` cannot be represented as a BrsType.
  */
-export function brsValueOf(x: any, cs?: boolean): BrsType {
-    if (x === null || x === undefined) {
+export function brsValueOf(value: any, cs?: boolean, nodeMap?: Map<string, ISGNode>): BrsType {
+    if (value === null || value === undefined) {
         return BrsInvalid.Instance;
     }
     const maxInt = 0x80000000;
-    const t: string = typeof x;
+    const t: string = typeof value;
     switch (t) {
         case "boolean":
-            return BrsBoolean.from(x);
+            return BrsBoolean.from(value);
         case "string":
-            return new BrsString(x);
+            return new BrsString(value);
         case "number":
-            if (Number.isInteger(x)) {
-                return x >= -maxInt && x < maxInt ? new Int32(x) : new Int64(x);
-            } else if (Number.isNaN(x)) {
-                return new Float(x);
+            if (Number.isInteger(value)) {
+                return value >= -maxInt && value < maxInt ? new Int32(value) : new Int64(value);
+            } else if (Number.isNaN(value)) {
+                return new Float(value);
             }
-            return x >= -3.4e38 && x <= 3.4e38 ? new Float(x) : new Double(x);
+            return value >= -3.4e38 && value <= 3.4e38 ? new Float(value) : new Double(value);
         case "object":
-            return fromObject(x, cs);
+            return fromObject(value, cs, nodeMap);
         case "undefined":
             return Uninitialized.Instance;
         default:
-            throw new Error(`brsValueOf not implemented for: ${x} <${t}>`);
+            throw new Error(`brsValueOf not implemented for: ${value} <${t}>`);
     }
 }
 
 /**
  * Converts a JavaScript object to a BrsType.
- * @param x The JavaScript object to convert.
- * @param {boolean} cs Whether to return an AA as case sensitive.
- * @returns A BrsType with the converted object or Invalid if the object is not transferable.
+ * Handles BrsTypes, null, Uint8Array, arrays, and plain objects.
+ * @param obj JavaScript object to convert
+ * @param cs Whether to return an AA as case sensitive
+ * @param nodeMap Optional map to track nodes by ID for resolving circular references
+ * @returns BrsType representation or Invalid if not transferable
  */
-function fromObject(x: any, cs?: boolean): BrsType {
-    if (isBrsType(x)) {
-        return x;
-    } else if (x === null) {
+function fromObject(obj: any, cs?: boolean, nodeMap?: Map<string, ISGNode>): BrsType {
+    if (isBrsType(obj)) {
+        return obj;
+    } else if (obj === null) {
         return BrsInvalid.Instance;
-    } else if (x instanceof Uint8Array) {
-        return new RoByteArray(x);
-    } else if (Array.isArray(x)) {
+    } else if (obj instanceof Uint8Array) {
+        return new RoByteArray(obj);
+    } else if (Array.isArray(obj)) {
         return new RoArray(
-            x.map(function (el: any) {
-                return brsValueOf(el, cs);
+            obj.map(function (el: any) {
+                return brsValueOf(el, cs, nodeMap);
             })
         );
     }
-    return toAssociativeArray(x, cs);
+    return toAssociativeArray(obj, cs, nodeMap);
 }
 
 /**
- * Converts a RoAssociativeArray to a JavaScript object, converting each property to the corresponding JavaScript type.
- * @param associativeArray The RoAssociativeArray to convert.
- * @returns A JavaScript object with the converted properties.
+ * Converts a RoAssociativeArray to a JavaScript object.
+ * Recursively converts each property to the corresponding JavaScript type.
+ * @param associativeArray RoAssociativeArray to convert
+ * @param deep Whether to perform deep conversion (defaults to true)
+ * @returns JavaScript object with converted properties
  */
-export function fromAssociativeArray(associativeArray: RoAssociativeArray): FlexObject {
+function fromAssociativeArray(associativeArray: RoAssociativeArray, deep: boolean = true): FlexObject {
     const result: FlexObject = {};
 
     for (const [key, value] of associativeArray.elements) {
         if (isUnboxable(value)) {
-            result[key] = jsValueOf(value.unbox());
+            result[key] = jsValueOf(value.unbox(), deep);
         } else {
-            result[key] = jsValueOf(value);
+            result[key] = jsValueOf(value, deep);
         }
     }
 
@@ -381,41 +409,55 @@ export function fromAssociativeArray(associativeArray: RoAssociativeArray): Flex
 
 /**
  * Converts a BrsType value to its representation as a JavaScript type.
- * @param {BrsType} x Some BrsType value.
+ * @param {BrsType} value Some BrsType value.
+ * @param {WeakSet<Node>} visitedNodes Optional set to track visited nodes for circular reference detection.
  * @return {any} The JavaScript representation of `x`.
  */
-export function jsValueOf(x: BrsType): any {
-    if (isUnboxable(x)) {
-        x = x.unbox();
+export function jsValueOf(value: BrsType, deep: boolean = true, visitedNodes?: WeakSet<ISGNode>): any {
+    if (isUnboxable(value)) {
+        value = value.unbox();
     }
-    switch (x.kind) {
+    switch (value.kind) {
         case ValueKind.Invalid:
             return null;
         case ValueKind.Uninitialized:
             return undefined;
         case ValueKind.Boolean:
-            return x.toBoolean();
+            return value.toBoolean();
         case ValueKind.String:
-            return x.value;
+            return value.value;
         case ValueKind.Int32:
         case ValueKind.Float:
         case ValueKind.Double:
-            return x.getValue();
+            return value.getValue();
         case ValueKind.Int64:
-            return x.getValue().toNumber();
+            return value.getValue().toNumber();
         case ValueKind.Interface:
         case ValueKind.Object:
-            if (x instanceof RoArray || x instanceof RoList) {
-                return x.elements.map(jsValueOf);
-            } else if (x instanceof RoByteArray) {
-                return x.elements;
-            } else if (x instanceof RoAssociativeArray) {
-                return fromAssociativeArray(x);
+            if (value instanceof RoArray || value instanceof RoList) {
+                return value.elements.map((el) => jsValueOf(el, deep, visitedNodes));
+            } else if (value instanceof RoByteArray) {
+                return value.elements;
+            } else if (value instanceof RoAssociativeArray) {
+                return fromAssociativeArray(value, deep);
+            } else if (value instanceof BrsComponent) {
+                return { _component_: value.getComponentName() };
+            } else if (value instanceof BrsInterface) {
+                return { _interface_: value.getInterfaceName() };
             }
             break;
-        default:
-            throw new Error(`jsValueOf not implemented for: ${x} <${x.kind}>`);
+        case ValueKind.Callable:
+            return { _callable_: value.name };
     }
+}
+
+/**
+ * Checks if a BrsType value is invalid.
+ * @param value The BrsType value to check.
+ * @returns True if the value is invalid, false otherwise.
+ */
+export function isInvalid(value: BrsType): boolean {
+    return value.equalTo(BrsInvalid.Instance).toBoolean();
 }
 
 /**

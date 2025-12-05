@@ -1,11 +1,7 @@
 import { BrsType, ValueKind, BrsString, BrsBoolean, Int32, Callable, Comparable, isNumberComp } from "..";
 import { BrsEvent } from "./BrsEvent";
 import { Interpreter } from "../../interpreter";
-export interface KeyEvent {
-    remote: string; // Remote Id (Remote Type:Remote Index)
-    key: number; // Key Code
-    mod: number; // Modifier (0 = press, 100 = release)
-}
+import { KeyEvent } from "../../common";
 
 export class RoUniversalControlEvent extends BrsEvent implements Comparable {
     private readonly event: KeyEvent;

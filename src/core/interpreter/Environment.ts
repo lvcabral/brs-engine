@@ -2,6 +2,7 @@ import { Identifier } from "../lexer";
 import { Location } from "../lexer/Token";
 import { BrsComponent, BrsType, Int32, RoAssociativeArray, ValueKind } from "../brsTypes";
 import { TypeMismatch } from "../error/TypeMismatch";
+import type { ISGNode } from "../extensions";
 
 /** The logical region from a particular variable or function that defines where it may be accessed from. */
 export enum Scope {
@@ -42,6 +43,7 @@ export class Environment {
      * @see Scope.Module
      */
     private module = new Map<string, BrsType>();
+    private locations = new Map<string, Location>();
     /**
      * Variables and anonymous functions accessible only within a function's body.
      * @see Scope.Function
@@ -50,6 +52,9 @@ export class Environment {
     /** The BrightScript `m` pointer, analogous to JavaScript's `this` pointer. */
     private mPointer: RoAssociativeArray;
     private rootM: RoAssociativeArray;
+
+    /** The node in which field-change observers are registered. */
+    public hostNode: ISGNode | undefined;
 
     /** Properties to support GOTO statement */
     gotoLabel: string = "";
@@ -61,7 +66,7 @@ export class Environment {
      * @param scope The logical region from a particular variable or function that defines where it may be accessed from
      * @param name the name of the variable to define (in the form of an `Identifier`)
      * @param value the value of the variable to define
-     * @param location the location in the source file where this variable was defined (only for Function scope)
+     * @param location the location in the source file where this variable was defined (optional)
      */
     public define(scope: Scope, name: string, value: BrsType, location?: Location): void {
         let destination: Map<string, BrsType>;
@@ -94,6 +99,10 @@ export class Environment {
             }
             case Scope.Module:
                 destination = this.module;
+                this.locations.set(lowercaseName, location!);
+                break;
+            case Scope.Global:
+                destination = this.global;
                 break;
             default:
                 destination = this.global;
@@ -104,11 +113,23 @@ export class Environment {
     }
 
     /**
+     * Returns the module function location
+     * @param name module function name
+     * @returns if exists returns the location
+     */
+    public getDefinedLocation(name: string): Location | undefined {
+        return this.locations.get(name.toLowerCase());
+    }
+
+    /**
      * Sets the value of the special `m` variable, which is analogous to JavaScript's `this`.
      * @param newMPointer the new value to be used for the `m` pointer
      */
-    public setM(newMPointer: RoAssociativeArray): void {
+    public setM(newMPointer: RoAssociativeArray, updateFunction: boolean = true): void {
         this.mPointer = newMPointer;
+        if (updateFunction) {
+            this.function.set("m", this.mPointer);
+        }
     }
 
     /**
@@ -152,6 +173,10 @@ export class Environment {
         }
     }
 
+    /**
+     * Removes all BrsComponent references from function scope.
+     * Typically used when a function execution is complete.
+     */
     public removeReferences() {
         for (let [_, value] of this.function) {
             if (value instanceof BrsComponent) {
@@ -241,11 +266,17 @@ export class Environment {
      *
      * @returns a copy of this environment but with no function-scoped values.
      */
-    public createSubEnvironment(): Environment {
+    public createSubEnvironment(includeModuleScope: boolean = true): Environment {
         let newEnvironment = new Environment(this.mPointer, this.rootM);
         newEnvironment.global = this.global;
-        newEnvironment.module = this.module;
-
+        newEnvironment.hostNode = this.hostNode;
+        if (includeModuleScope) {
+            newEnvironment.module = this.module;
+            newEnvironment.locations = this.locations;
+        } else {
+            newEnvironment.module = new Map<string, BrsType>();
+            newEnvironment.locations = new Map<string, Location>();
+        }
         return newEnvironment;
     }
 }

@@ -1,6 +1,7 @@
 import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid } from "../BrsType";
 import { BrsComponent, BrsIterable } from "./BrsComponent";
-import { BrsType, isBoxable, isIterable, isUnboxable, RoFunction } from "..";
+import { BrsType, isBoxable, isUnboxable, RoFunction } from "..";
+import { isSceneGraphNode } from "../../extensions";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
@@ -88,15 +89,24 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
             .map((value: BrsType) => value);
     }
 
+    clearElements() {
+        let refs = 0;
+        for (const element of this.elements.values()) {
+            if (this.removeChildRef(element)) {
+                refs++;
+            }
+        }
+        this.elements.clear();
+        this.keyMap.clear();
+        this.enumIndex = -1;
+        return refs;
+    }
+
     deepCopy() {
         const copiedElements: AAMember[] = [];
         for (const [key, value] of this.elements) {
-            if (isIterable(value)) {
-                // Currently Roku only supports deep copying of roArray and roAssociativeArray
-                // Other iterables (like roList and roByteArray) will return invalid and be skipped
-                if (value instanceof RoArray || value instanceof RoAssociativeArray) {
-                    copiedElements.push({ name: new BrsString(key), value: value.deepCopy() });
-                }
+            if (value instanceof RoArray || value instanceof RoAssociativeArray || isSceneGraphNode(value)) {
+                copiedElements.push({ name: new BrsString(key), value: value.deepCopy() });
             } else if (isBoxable(value) && !(value instanceof Callable)) {
                 copiedElements.push({ name: new BrsString(key), value: value });
             } else if (isUnboxable(value) && !(value instanceof RoFunction)) {
@@ -203,8 +213,10 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
 
     removeChildRef(value: BrsType | undefined) {
         if (value instanceof BrsComponent) {
-            value.removeReference();
+            const refs = value.removeReference();
+            return refs > 1;
         }
+        return false;
     }
 
     /** if AA is in insensitive mode, it means that we should do insensitive search of real key */
@@ -228,12 +240,7 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter) => {
-            for (const element of this.elements.values()) {
-                this.removeChildRef(element);
-            }
-            this.elements.clear();
-            this.keyMap.clear();
-            this.enumIndex = -1;
+            this.clearElements();
             return BrsInvalid.Instance;
         },
     });

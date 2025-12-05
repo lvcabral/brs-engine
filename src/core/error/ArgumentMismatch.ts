@@ -2,6 +2,12 @@ import { ValueKind, SignatureAndMismatches, MismatchReason, Callable, BrsType } 
 import { BrsError, ErrorDetail, RuntimeError, RuntimeErrorDetail } from "../error/BrsError";
 import { Location } from "../lexer";
 
+/**
+ * Formats a function signature mismatch into a human-readable error message.
+ * @param functionName - The name of the function that had mismatched arguments
+ * @param mismatchedSignature - Object containing the signature and array of mismatches
+ * @returns A formatted multi-line string describing the signature and mismatches
+ */
 function formatMismatch(functionName: string, mismatchedSignature: SignatureAndMismatches) {
     let sig = mismatchedSignature.signature;
     let mismatches = mismatchedSignature.mismatches;
@@ -39,6 +45,14 @@ function formatMismatch(functionName: string, mismatchedSignature: SignatureAndM
     return messageParts.map((line) => `    ${line}`).join("\n");
 }
 
+/**
+ * Generates a detailed argument mismatch error for a function call.
+ * Checks all possible signatures and formats detailed error messages for each mismatch.
+ * @param callee - The callable function that was invoked
+ * @param args - The arguments that were provided to the function
+ * @param location - The source code location where the call occurred
+ * @returns A BrsError with detailed information about the argument mismatch
+ */
 export function generateArgumentMismatchError(callee: Callable, args: BrsType[], location: Location): BrsError {
     let functionName = callee.getName();
     let mismatchedSignatures = callee.getAllSignatureMismatches(args);

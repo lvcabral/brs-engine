@@ -5,7 +5,7 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { enableSendKeys, initControlModule, sendInput, sendKey, subscribeControl } from "../api/control";
+import { enableSendKeys, initControlModule, sendInput, sendKey, subscribeControl } from "./control";
 import { DataType, DebugCommand, DeviceInfo, getRokuOSVersion } from "../core/common";
 import { isMainThread, parentPort, workerData } from "node:worker_threads";
 import { Server as SSDP } from "@lvcabral/node-ssdp";
@@ -48,6 +48,10 @@ if (!isMainThread && parentPort) {
     parentPort.on("close", disableECP);
 }
 
+/**
+ * Enables the ECP (External Control Protocol) server.
+ * Creates REST API endpoints, WebSocket server for ECP-2, and SSDP discovery service.
+ */
 function enableECP() {
     // Create ECP Server
     ecp = restana();
@@ -155,6 +159,9 @@ function enableECP() {
         });
 }
 
+/**
+ * Disables the ECP server by stopping the REST API and SSDP service.
+ */
 function disableECP() {
     if (isECPEnabled) {
         if (ecp) {
@@ -168,6 +175,12 @@ function disableECP() {
 }
 
 // ECP-2 WebSocket API
+
+/**
+ * Processes incoming ECP-2 WebSocket messages and sends appropriate responses.
+ * @param ws - The WebSocket connection
+ * @param message - The raw message data received from the client
+ */
 function processRequest(ws: WebSocket, message: RawData) {
     if (message) {
         if (DEBUG) {
@@ -203,6 +216,12 @@ function processRequest(ws: WebSocket, message: RawData) {
     }
 }
 
+/**
+ * Generates query replies for ECP-2 WebSocket requests.
+ * @param msg - The parsed message object containing the request
+ * @param statusOK - The status string to include in the reply
+ * @returns The JSON response string with requested data
+ */
 function queryReply(msg: any, statusOK: string) {
     const request = msg["request"];
     const xml = `<?xml version="1.0" encoding="UTF-8" ?>`;
@@ -235,11 +254,23 @@ function queryReply(msg: any, statusOK: string) {
 }
 
 // ECP REST API Methods
+
+/**
+ * Sends the device root XML descriptor for UPnP discovery.
+ * @param req - The HTTP request object
+ * @param res - The HTTP response object
+ */
 function sendDeviceRoot(req: any, res: any) {
     res.setHeader("content-type", "application/xml");
     res.send(genDeviceRootXml());
 }
 
+/**
+ * Handles input query requests and forwards them to the input handler.
+ * Extracts source IP address from the request and includes it in the parameters.
+ * @param req - The HTTP request object
+ * @param res - The HTTP response object
+ */
 function sendInputQuery(req: any, res: any) {
     const params = req.query ?? {};
     const sourceIp = req.socket.remoteAddress;
@@ -254,63 +285,123 @@ function sendInputQuery(req: any, res: any) {
     res?.end();
 }
 
+/**
+ * Sends the device information XML response.
+ * @param req - The HTTP request object
+ * @param res - The HTTP response object
+ */
 function sendDeviceInfo(req: any, res: any) {
     res.setHeader("content-type", "application/xml");
     res.send(genDeviceInfoXml(false));
 }
 
+/**
+ * Sends the list of installed applications as XML.
+ * @param req - The HTTP request object
+ * @param res - The HTTP response object
+ */
 function sendApps(req: any, res: any) {
     res.setHeader("content-type", "application/xml");
     res.send(genAppsXml(false));
 }
 
+/**
+ * Sends information about the currently active application as XML.
+ * @param req - The HTTP request object
+ * @param res - The HTTP response object
+ */
 function sendActiveApp(req: any, res: any) {
     res.setHeader("content-type", "application/xml");
     res.send(genActiveApp(false));
 }
 
+/**
+ * Sends the device image (PNG) for display in discovery tools.
+ * @param req - The HTTP request object
+ * @param res - The HTTP response object
+ */
 function sendDeviceImage(req: any, res: any) {
     let image = fs.readFileSync(path.join(__dirname, "images", "device-image.png"));
     res.setHeader("content-type", "image/png");
     res.send(image);
 }
 
+/**
+ * Sends the SCPD (Service Control Point Definition) XML file.
+ * @param req - The HTTP request object
+ * @param res - The HTTP response object
+ */
 function sendScpdXML(req: any, res: any) {
     let file = fs.readFileSync(path.join(__dirname, "web", "ecp_SCPD.xml"));
     res.setHeader("content-type", "application/xml");
     res.send(file);
 }
 
+/**
+ * Sends the icon for a specific application as PNG.
+ * @param req - The HTTP request object with appID parameter
+ * @param res - The HTTP response object
+ */
 function sendAppIcon(req: any, res: any) {
     res.setHeader("content-type", "image/png");
     res.send(genAppIcon(req.params.appID, false));
 }
 
+/**
+ * Sends the registry data for a specific application as XML.
+ * @param req - The HTTP request object with appID parameter
+ * @param res - The HTTP response object
+ */
 function sendRegistry(req: any, res: any) {
     res.setHeader("content-type", "application/xml");
     res.send(genAppRegistry(req.params.appID, false));
 }
 
+/**
+ * Handles launch application requests.
+ * @param req - The HTTP request object with appID parameter
+ * @param res - The HTTP response object
+ */
 function sendLaunchApp(req: any, res: any) {
     launchApp(req.params.appID);
     res?.end();
 }
 
+/**
+ * Handles exit application requests by sending an exit command.
+ * @param req - The HTTP request object
+ * @param res - The HTTP response object
+ */
 function sendExitApp(req: any, res: any) {
     Atomics.store(sharedArray, DataType.DBG, DebugCommand.EXIT);
     res?.end();
 }
 
+/**
+ * Sends a key down event for the specified key.
+ * @param req - The HTTP request object with key parameter
+ * @param res - The HTTP response object
+ */
 function sendKeyDown(req: any, res: any) {
     sendKey(req.params.key, 0);
     res?.end();
 }
 
+/**
+ * Sends a key up event for the specified key.
+ * @param req - The HTTP request object with key parameter
+ * @param res - The HTTP response object
+ */
 function sendKeyUp(req: any, res: any) {
     sendKey(req.params.key, 100);
     res?.end();
 }
 
+/**
+ * Sends a key press event (key down followed by key up after delay).
+ * @param req - The HTTP request object with key parameter
+ * @param res - The HTTP response object
+ */
 function sendKeyPress(req: any, res: any) {
     setTimeout(() => {
         sendKey(req.params.key, 100);
@@ -320,6 +411,11 @@ function sendKeyPress(req: any, res: any) {
 }
 
 // Content Generation Functions
+
+/**
+ * Generates the device root XML descriptor for UPnP discovery.
+ * @returns The XML string describing the device and its services
+ */
 function genDeviceRootXml() {
     const xml = xmlbuilder.create("root").att("xmlns", "urn:schemas-upnp-org:device-1-0");
     const spec = xml.ele("specVersion");
@@ -352,6 +448,11 @@ function genDeviceRootXml() {
     return xml.end({ pretty: true });
 }
 
+/**
+ * Generates device information XML with hardware and software details.
+ * @param encrypt - If true, returns base64-encoded XML; otherwise returns plain XML
+ * @returns The device information as XML string or base64-encoded string
+ */
 function genDeviceInfoXml(encrypt: boolean) {
     const xml = xmlbuilder.create("device-info");
     const modelName = getModelName(device.deviceModel);
@@ -417,6 +518,11 @@ function genDeviceInfoXml(encrypt: boolean) {
     return encrypt ? Buffer.from(strXml).toString("base64") : strXml;
 }
 
+/**
+ * Generates the list of available UI themes as XML.
+ * @param encrypt - If true, returns base64-encoded XML; otherwise returns plain XML
+ * @returns The themes list as XML string or base64-encoded string
+ */
 function genThemesXml(encrypt: boolean) {
     const xml = xmlbuilder.create("themes");
     xml.ele("theme", { id: "brand", selected: true }, "Roku (default)");
@@ -427,6 +533,11 @@ function genThemesXml(encrypt: boolean) {
     return encrypt ? Buffer.from(strXml).toString("base64") : strXml;
 }
 
+/**
+ * Generates the list of available screensavers as XML.
+ * @param encrypt - If true, returns base64-encoded XML; otherwise returns plain XML
+ * @returns The screensavers list as XML string or base64-encoded string
+ */
 function genScrsvXml(encrypt: boolean) {
     const xml = xmlbuilder.create("screensavers");
     xml.ele("screensaver", { default: true, id: "5533", selected: true }, "Roku Digital Clock");
@@ -435,6 +546,11 @@ function genScrsvXml(encrypt: boolean) {
     return encrypt ? Buffer.from(strXml).toString("base64") : strXml;
 }
 
+/**
+ * Generates the list of installed applications as XML.
+ * @param encrypt - If true, returns base64-encoded XML; otherwise returns plain XML
+ * @returns The applications list as XML string or base64-encoded string
+ */
 function genAppsXml(encrypt: boolean) {
     const xml = xmlbuilder.create("apps");
     if (device.appList === undefined || device.appList.length < 2) {
@@ -450,6 +566,12 @@ function genAppsXml(encrypt: boolean) {
     return encrypt ? Buffer.from(strXml).toString("base64") : strXml;
 }
 
+/**
+ * Retrieves the icon for a specific application.
+ * @param appID - The application identifier
+ * @param encrypt - If true, returns base64-encoded image; otherwise returns binary buffer
+ * @returns The icon image as Buffer or base64-encoded string
+ */
 function genAppIcon(appID: string, encrypt: boolean) {
     let iconPath = path.join(__dirname, "../browser/images/icons", "channel-icon.png");
     const app = device.appList?.find((app) => app.id === appID);
@@ -460,6 +582,11 @@ function genAppIcon(appID: string, encrypt: boolean) {
     return encrypt ? image.toString("base64") : image;
 }
 
+/**
+ * Generates XML for the currently active application.
+ * @param encrypt - If true, returns base64-encoded XML; otherwise returns plain XML
+ * @returns The active application as XML string or base64-encoded string
+ */
 function genActiveApp(encrypt: boolean) {
     const xml = xmlbuilder.create("apps");
     xml.ele("app", {}, packageInfo.name);
@@ -467,6 +594,12 @@ function genActiveApp(encrypt: boolean) {
     return encrypt ? Buffer.from(strXml).toString("base64") : strXml;
 }
 
+/**
+ * Generates the registry data for a specific application as XML.
+ * @param plugin - The application/plugin identifier (e.g., 'dev')
+ * @param encrypt - If true, returns base64-encoded XML; otherwise returns plain XML
+ * @returns The registry data as XML string or base64-encoded string
+ */
 function genAppRegistry(plugin: string, encrypt: boolean) {
     const xml = xmlbuilder.create("plugin-registry");
     if (plugin.toLowerCase() === "dev") {
@@ -511,10 +644,20 @@ function genAppRegistry(plugin: string, encrypt: boolean) {
 
 // Helper Functions
 
+/**
+ * Launches an application by ID.
+ * Note: Not currently supported on CLI.
+ * @param appID - The application identifier
+ */
 function launchApp(appID: string) {
     // Not supported on CLI
 }
 
+/**
+ * Retrieves the MAC address from network interfaces.
+ * Filters out virtual interfaces and returns the first valid hardware address.
+ * @returns The MAC address string in format "xx:xx:xx:xx:xx:xx"
+ */
 function getMacAddress() {
     const ifaces = os.networkInterfaces();
     let mac = "";
@@ -539,6 +682,12 @@ function getMacAddress() {
     return mac;
 }
 
+/**
+ * Extracts the Roku OS version from the firmware string.
+ * @param firmware - The firmware version string
+ * @param version - If true, returns full version (e.g., "12.5.0"); if false, returns build number
+ * @returns The OS version string or empty string if invalid
+ */
 function getOSVersion(firmware: string, version = true) {
     if (firmware?.length) {
         if (version) {
@@ -551,11 +700,21 @@ function getOSVersion(firmware: string, version = true) {
     return "";
 }
 
+/**
+ * Gets the friendly model name for a device model code.
+ * @param model - The device model code (e.g., "8000X")
+ * @returns The friendly model name or a default format if not found
+ */
 function getModelName(model: string) {
-    const modelName = device.models.get(model);
+    const modelName = device.models?.get(model);
     return modelName ? modelName[0].replace(/ *\([^)]*\) */g, "") : `Roku (${model})`;
 }
 
+/**
+ * Calculates the available registry space for the developer account.
+ * Starts with 32KB and subtracts space used by existing registry entries.
+ * @returns The available space in bytes
+ */
 function getSpaceAvailable() {
     const devId = device.developerId;
     let space = 32 * 1024;
@@ -568,6 +727,11 @@ function getSpaceAvailable() {
     return space;
 }
 
+/**
+ * Validates if a value is a properly formatted IPv4 address.
+ * @param ip - The value to validate
+ * @returns True if the value is a valid IPv4 address (xxx.xxx.xxx.xxx)
+ */
 function isValidIP(ip: any): boolean {
     if (typeof ip !== "string") {
         return false;

@@ -47,7 +47,7 @@ export interface Numeric extends BrsValue {
     divide(rhs: BrsNumber): Float | Double;
 
     /**
-     * Modulos the current number by `rhs`. I.e. divides the current number by `rhs` and returns
+     * Modulus the current number by `rhs`. I.e. divides the current number by `rhs` and returns
      * the *whole-number remainder* of the result.
      * @param rhs The right-hand side value to modulo the current value by.
      * @returns The current value MOD `rhs` with 64-bit integer precision if `rhs` is an Int64,

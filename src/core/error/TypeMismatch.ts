@@ -2,7 +2,10 @@ import { BrsType, ValueKind } from "../brsTypes";
 import { RuntimeError, RuntimeErrorDetail } from "../error/BrsError";
 import type { Location } from "../lexer";
 
-/** Wraps up the metadata associated with a type mismatch error. */
+/**
+ * Metadata describing a type mismatch error.
+ * Used to construct detailed error messages with type and location information.
+ */
 export interface TypeMismatchMetadata {
     /**
      * The base message to use for this error. Should be as helpful as possible, e.g.
@@ -16,6 +19,10 @@ export interface TypeMismatchMetadata {
     cast?: boolean;
 }
 
+/**
+ * Combines a BrightScript type with its source code location.
+ * Used for tracking where type mismatches occur.
+ */
 export type TypeAndLocation = {
     /** The type of a value involved in a type mismatch. */
     type: BrsType | ValueKind;
@@ -24,10 +31,16 @@ export type TypeAndLocation = {
 };
 
 /**
- * Creates a "type mismatch"-like error message, but with the appropriate types specified.
- * @return a type mismatch error that will be tracked by this module.
+ * Runtime error for type mismatches in operations or assignments.
+ * Automatically formats error messages with the involved types.
+ * Handles both binary operations (left/right) and unary operations or casts.
  */
 export class TypeMismatch extends RuntimeError {
+    /**
+     * Creates a TypeMismatch error with formatted type information.
+     * @param mismatchMetadata - Object containing message, types, locations, and cast flag
+     */
+
     constructor(mismatchMetadata: TypeMismatchMetadata) {
         const errDetail = RuntimeErrorDetail.TypeMismatch;
         let errMessage = `${errDetail.message} ${mismatchMetadata.message} `;

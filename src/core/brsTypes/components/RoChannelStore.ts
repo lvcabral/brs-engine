@@ -8,10 +8,6 @@ import { RoChannelStoreEvent } from "../events/RoChannelStoreEvent";
 import { RoAssociativeArray } from "./RoAssociativeArray";
 import { AppData } from "../../common";
 import { XmlDocument, XmlElement, XmlNode } from "xmldoc";
-
-function isElementNode(node: XmlNode): node is XmlElement {
-    return node.type === "element";
-}
 import { IfSetMessagePort, IfGetMessagePort } from "../interfaces/IfMessagePort";
 import { BrsDevice } from "../../device/BrsDevice";
 
@@ -95,7 +91,7 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
     placeOrder(status: { code: number; message: string }) {
         let order: RoAssociativeArray[] = [];
         status.code = 1;
-        status.message = "Order Received";
+        status.message = "Order Succeeded";
         const catalog = this.getFakeProductData("GetCatalog");
         for (let item of this.order) {
             if (!this.isValidProductOrder(catalog, item)) {
@@ -148,6 +144,9 @@ ZZwGPYCKEHMPrIOOXJ-S9ZjArgaEpBUpMXWJibFxnkpVUVzbC22GEaqz_SjOJXFMQU7TaCKkDeCYVKyl
     }
 
     private static elementToObject(element: XmlElement): any {
+        const isElementNode = function (node: XmlNode): node is XmlElement {
+            return node.type === "element";
+        };
         const childElements = (element.children ?? []).filter(isElementNode) as XmlElement[];
         if (childElements.length === 0) {
             return RoChannelStore.coerceValue(element.val ?? "");

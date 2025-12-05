@@ -13,27 +13,43 @@ import {
     DeviceInfo,
     dataBufferIndex,
     dataBufferSize,
-    defaultDeviceInfo,
+    DefaultDeviceInfo,
     parseManifest,
     isAppPayload,
+    TaskPayload,
+    isTaskPayload,
+    SupportedExtension,
 } from "./common";
 import { Lexeme, Lexer, Token } from "./lexer";
 import { Parser, Stmt } from "./parser";
 import { lexParseSync, parseDecodedTokens } from "./LexerParser";
-import * as PP from "./preprocessor";
-import * as BrsTypes from "./brsTypes";
-import * as path from "path";
-import { XmlDocument } from "xmldoc";
-import * as crypto from "crypto";
-import * as fs from "fs";
-import { encode, decode } from "@msgpack/msgpack";
-import { zlibSync, unzlibSync, zipSync } from "fflate";
 import { BrsDevice } from "./device/BrsDevice";
 import { configureFileSystem } from "./device/FileSystem";
 import { BrsError, logError, RuntimeError, RuntimeErrorDetail } from "./error/BrsError";
+import { BrsExtension, registerExtension, instantiateExtensions } from "./extensions";
+import * as PP from "./preprocessor";
+import * as BrsTypes from "./brsTypes";
+import * as path from "path";
+import * as crypto from "crypto";
+import * as fs from "fs";
+import { XmlDocument } from "xmldoc";
+import { encode, decode } from "@msgpack/msgpack";
+import { zlibSync, unzlibSync, zipSync } from "fflate";
 
-export * as lexer from "./lexer";
-export * as parser from "./parser";
+export * from "./brsTypes";
+export * from "./interpreter";
+export * from "./error/BrsError";
+export * from "./error/ArgumentMismatch";
+export * from "./LexerParser";
+export * from "./common";
+export * from "./device/BrsDevice";
+export * from "./brsTypes/components/RoFontRegistry";
+export * from "./device/FileSystem";
+export { default as SharedObject } from "./SharedObject";
+export type { ISGNode } from "./extensions";
+export { registerExtension, clearExtensions, instantiateExtensions, isSceneGraphNode } from "./extensions";
+export { Lexer, Lexeme, Token, ReservedWords, isToken } from "./lexer";
+export { Parser, Stmt, Expr, BlockEnd } from "./parser";
 export * as stdlib from "./stdlib";
 export * as netlib from "./interpreter/Network";
 export { BrsTypes as types };
@@ -50,12 +66,34 @@ export const terminateReasons = ["debug-exit", "end-statement"];
 const algorithm = "aes-256-ctr";
 
 /// #if BROWSER
+import * as CommonExports from "./common";
+import * as LexerParserExports from "./LexerParser";
+import * as ParserExports from "./parser";
+import * as LexerExports from "./lexer";
+import * as EnvironmentExports from "./interpreter/Environment";
+import * as InterpreterExports from "./interpreter";
+import * as BrsDeviceExports from "./device/BrsDevice";
+import * as BrsErrorExports from "./error/BrsError";
+import * as ArgumentMismatchExports from "./error/ArgumentMismatch";
+import * as ExtensionsExports from "./extensions";
+import * as RoFontRegistryExports from "./brsTypes/components/RoFontRegistry";
+import * as FileSystemExports from "./device/FileSystem";
+import * as stdlibModule from "./stdlib";
+import * as netlibModule from "./interpreter/Network";
+import { Preprocessor } from "./preprocessor/Preprocessor";
+import SharedObject from "./SharedObject";
 import packageInfo from "../../packages/browser/package.json";
+
 if (typeof onmessage !== "undefined") {
     // Worker event that is triggered by postMessage() calls from the API library
     onmessage = function (event: MessageEvent) {
         if (isAppPayload(event.data)) {
+            loadExtensions(event.data);
             executeFile(event.data);
+        } else if (isTaskPayload(event.data)) {
+            console.debug("[Worker] Task payload received: ", event.data.taskData.name);
+            loadExtensions(event.data);
+            executeTask(event.data);
         } else if (typeof event.data === "string" && event.data === "getVersion") {
             postMessage(`version,${packageInfo.version}`);
         } else if (event.data instanceof ArrayBuffer || event.data instanceof SharedArrayBuffer) {
@@ -65,6 +103,121 @@ if (typeof onmessage !== "undefined") {
             postMessage(`warning,[worker] Invalid message received: ${event.data}`);
         }
     };
+}
+
+// Keep track of loaded extensions to avoid duplicates
+const loadedExtensions = new Set<SupportedExtension>();
+
+/**
+ * Loads BrightScript extensions from the payload.
+ * @param payload App or Task payload containing extension configuration
+ */
+function loadExtensions(payload: AppPayload | TaskPayload) {
+    const extensions = payload.extensions;
+    if (Array.isArray(extensions)) {
+        for (const extension of extensions) {
+            if (loadedExtensions.has(extension)) {
+                continue;
+            }
+            const extensionPath = payload.device.extensions?.get(extension) ?? "";
+            loadExtension(extension, extensionPath);
+        }
+    }
+}
+
+/**
+ * Loads a specific BrightScript extension module.
+ * @param moduleId The extension identifier
+ * @param modulePath The URL path to the extension module
+ */
+function loadExtension(moduleId: SupportedExtension, modulePath: string) {
+    if (!modulePath) {
+        console.warn(`[Worker] No module path provided for ${moduleId} extension.`);
+        return;
+    }
+    try {
+        let extensionModule: any = null;
+        // In a Web Worker context, we use importScripts for synchronous loading
+        if (typeof importScripts === "function") {
+            // @ts-ignore
+            globalThis.brsEngine = createWorkerExports();
+            // @ts-ignore
+            globalThis.xmldoc = { XmlDocument };
+            // Load the SceneGraph module script
+            const scriptUrl = new URL(modulePath, globalThis.location.href).href;
+            importScripts(scriptUrl);
+            // @ts-ignore
+            extensionModule = globalThis[moduleId];
+        }
+
+        if (extensionModule?.BrightScriptExtension) {
+            registerExtension(() => new extensionModule.BrightScriptExtension());
+            loadedExtensions.add(moduleId);
+            console.debug(`[Worker] ${moduleId} Extension loaded and registered successfully.`);
+        } else {
+            console.warn(`[Worker] The loaded library does not contain ${moduleId} Extension.`);
+        }
+    } catch (err: any) {
+        console.warn(`[Worker] Failed to load ${moduleId} extension:`, err.message);
+    }
+}
+
+/**
+ * Aggregates all module exports into a single object for Worker context.
+ * This creates a global brsEngine object with all necessary exports.
+ * @returns Aggregated object with all engine exports
+ */
+function createWorkerExports() {
+    const aggregated: Record<string, any> = {};
+    const namespaces: (ModuleNamespace | undefined)[] = [
+        BrsTypes,
+        CommonExports,
+        InterpreterExports,
+        BrsErrorExports,
+        ArgumentMismatchExports,
+        LexerParserExports,
+        BrsDeviceExports,
+        RoFontRegistryExports,
+        FileSystemExports,
+        ExtensionsExports,
+        LexerExports,
+        ParserExports,
+        EnvironmentExports,
+    ];
+    for (const ns of namespaces) {
+        mergeModuleExports(aggregated, ns);
+    }
+    aggregated.stdlib = stdlibModule;
+    aggregated.netlib = netlibModule;
+    aggregated.types = BrsTypes;
+    aggregated.preprocessor = PP;
+    aggregated.Preprocessor = Preprocessor;
+    aggregated.SharedObject = SharedObject;
+    aggregated.bscs = bscs;
+    aggregated.stats = stats;
+    aggregated.terminateReasons = terminateReasons;
+    return aggregated;
+}
+
+type ModuleNamespace = Record<string, any>;
+
+/**
+ * Merges exports from a module namespace into a target object.
+ * @param target The target object to merge exports into
+ * @param source The source module namespace to merge from
+ * @returns The target object with merged exports
+ */
+function mergeModuleExports(target: Record<string, any>, source: ModuleNamespace | undefined) {
+    if (!source) {
+        return target;
+    }
+    for (const key of Object.keys(source)) {
+        if (key === "default" || key === "__esModule") {
+            return;
+        }
+        target[key] = source[key];
+    }
+    return target;
 }
 /// #else
 /**
@@ -114,16 +267,30 @@ export function registerCallback(messageCallback: any, sharedBuffer?: SharedArra
 }
 
 /**
- * Returns a new instance of the Interpreter for REPL
- *
+ * Returns a new instance of the Interpreter for REPL (Read-Eval-Print Loop).
+ * @param payload Partial app payload with device configuration and assets
+ * @returns Promise resolving to configured Interpreter instance or null on error
  */
 export async function getReplInterpreter(payload: Partial<AppPayload>) {
     if (!payload.device?.assets) {
         postMessage("error,Invalid REPL configuration: Missing assets");
         return null;
     }
+    if (payload.device) {
+        if (payload.device.registry?.size) {
+            BrsDevice.setRegistry(payload.device.registry);
+        }
+        BrsDevice.setDeviceInfo(payload.device);
+    }
     try {
-        await configureFileSystem(payload.device.assets, payload.pkgZip, payload.extZip);
+        await configureFileSystem(
+            payload.device.assets,
+            BrsDevice.getTmpVolume(),
+            BrsDevice.getCacheFS(),
+            payload.pkgZip,
+            payload.extZip
+        );
+        BrsDevice.loadLocaleTerms();
     } catch (err: any) {
         postMessage(`error,Error mounting File System: ${err.message}`);
         return null;
@@ -133,12 +300,8 @@ export async function getReplInterpreter(payload: Partial<AppPayload>) {
         ext: payload.extZip ? undefined : payload.ext,
     });
     replInterpreter.onError(logError);
-    if (payload.device) {
-        if (payload.device.registry?.size) {
-            BrsDevice.setRegistry(payload.device.registry);
-        }
-        BrsDevice.setDeviceInfo(payload.device);
-    }
+    const extensions = instantiateExtensions();
+    attachExtensions(replInterpreter, extensions);
     return replInterpreter;
 }
 
@@ -272,7 +435,7 @@ function createDefaultManifest(): Map<string, string> {
  * @returns Complete device data
  */
 function processDeviceData(customDeviceData?: Partial<DeviceInfo>): DeviceInfo {
-    const deviceData = customDeviceData ? Object.assign(defaultDeviceInfo, customDeviceData) : defaultDeviceInfo;
+    const deviceData = customDeviceData ? Object.assign(DefaultDeviceInfo, customDeviceData) : DefaultDeviceInfo;
 
     if (deviceData.assets.byteLength === 0) {
         deviceData.assets = fs.readFileSync(path.join(__dirname, "../assets/common.zip"))?.buffer;
@@ -349,17 +512,18 @@ export async function createPayloadFromFileMap(
  * Create the payload to run the app with the provided files.
  * @param files Code files to be executed
  * @param customDeviceData optional object with device info data
+ * @param deepLink optional map with deep link parameters
  * @param root optional root path for the interpreter
- *
- * @returns object with the payload to run the app.
+ * @param ext optional path to external storage (directory or zip file)
+ * @returns Promise resolving to AppPayload object to run the app
  */
-export function createPayloadFromFiles(
+export async function createPayloadFromFiles(
     files: string[],
     customDeviceData?: Partial<DeviceInfo>,
     deepLink?: Map<string, string>,
     root?: string,
     ext?: string
-): AppPayload {
+): Promise<AppPayload> {
     const paths: PkgFilePath[] = [];
     const source: string[] = [];
     let manifest: Map<string, string> | undefined;
@@ -430,30 +594,49 @@ export function createPayloadFromFiles(
  *
  * @returns RunResult with the end reason and (optionally) the encrypted data.
  */
-
 export async function executeFile(payload: AppPayload, customOptions?: Partial<ExecutionOptions>): Promise<RunResult> {
     const options = {
-        ...{
-            entryPoint: payload.device.entryPoint ?? true,
-            stopOnCrash: payload.device.debugOnCrash ?? false,
-            root: payload.root,
-            ext: payload.extZip ? undefined : payload.ext,
-        },
+        entryPoint: payload.device.entryPoint ?? true,
+        stopOnCrash: payload.device.debugOnCrash ?? false,
+        root: payload.root,
+        ext: payload.extZip ? undefined : payload.ext, // use ext path only if extZip is not provided
         ...customOptions,
     };
     bscs.clear();
     stats.clear();
-    BrsDevice.lastKeyTime = Date.now();
+    // Setup the File System
+    BrsDevice.setDeviceInfo(payload.device);
     try {
-        await configureFileSystem(payload.device.assets, payload.pkgZip, payload.extZip);
+        await configureFileSystem(
+            payload.device.assets,
+            BrsDevice.getTmpVolume(),
+            BrsDevice.getCacheFS(),
+            payload.pkgZip,
+            payload.extZip
+        );
+        if (options.root) {
+            BrsDevice.fileSystem.setRoot(options.root);
+        }
+        if (options.ext) {
+            BrsDevice.fileSystem.setExt(options.ext);
+        }
+        BrsDevice.loadLocaleTerms();
     } catch (err: any) {
         postMessage(`error,Error mounting File System: ${err.message}`);
-        return { exitReason: AppExitReason.CRASHED };
+        return { exitReason: AppExitReason.Crashed };
     }
+    const extensions = instantiateExtensions();
+    // Create the interpreter
     const interpreter = new Interpreter(options);
+    if (extensions.length > 0) {
+        // Attach extensions
+        attachExtensions(interpreter, extensions);
+        await runBeforeExecuteHooks(interpreter, payload);
+    }
     // Process Payload Content
     const sourceResult = setupPayload(interpreter, payload);
     // Run the BrightScript app
+    BrsDevice.lastKeyTime = Date.now();
     let result: RunResult;
     if (sourceResult.pcode && sourceResult.iv) {
         result = await runEncrypted(interpreter, sourceResult, payload);
@@ -467,13 +650,107 @@ export async function executeFile(payload: AppPayload, customOptions?: Partial<E
 }
 
 /**
+ * Executes a BrightScript Task in a separate worker context.
+ * @param payload Task payload containing task configuration and source code
+ * @param customOptions Optional execution options to override defaults
+ */
+export async function executeTask(payload: TaskPayload, customOptions?: Partial<ExecutionOptions>) {
+    const options = {
+        entryPoint: false,
+        stopOnCrash: payload.device.debugOnCrash ?? false,
+        root: payload.root,
+        ext: payload.extZip ? undefined : payload.ext,
+        ...customOptions,
+    };
+    stats.clear();
+    // Setup the File System
+    BrsDevice.setDeviceInfo(payload.device);
+    try {
+        await configureFileSystem(
+            payload.device.assets,
+            payload.taskData.tmp!,
+            payload.taskData.cacheFS!,
+            payload.pkgZip,
+            payload.extZip
+        );
+        if (options.root) {
+            BrsDevice.fileSystem.setRoot(options.root);
+        }
+        if (options.ext) {
+            BrsDevice.fileSystem.setExt(options.ext);
+        }
+        BrsDevice.loadLocaleTerms();
+    } catch (err: any) {
+        postMessage(`error,Error mounting File System: ${err.message}`);
+        return;
+    }
+    const extensions = instantiateExtensions();
+    // Create the interpreter
+    let interpreter = new Interpreter(options);
+    attachExtensions(interpreter, extensions);
+
+    await runBeforeExecuteHooks(interpreter, payload);
+
+    interpreter.setManifest(payload.manifest);
+    if (payload.device.registryBuffer) {
+        BrsDevice.setRegistry(payload.device.registryBuffer);
+    } else if (payload.device.registry?.size) {
+        BrsDevice.setRegistry(payload.device.registry);
+    }
+    setupTranslations(interpreter);
+    console.debug("Calling Task in new Worker: ", payload.taskData.name, payload.taskData.m.top.functionname);
+    try {
+        for (const ext of interpreter.extensions.values()) {
+            if (ext.execTask) {
+                ext.execTask(interpreter, payload);
+            }
+        }
+        if (BrsDevice.isDevMode) {
+            postMessage(`debug,Task ${payload.taskData.name} is done.`);
+        }
+    } catch (err: any) {
+        if (!terminateReasons.includes(err.message)) {
+            if (interpreter.options.post ?? true) {
+                postMessage(`error,${err.message}`);
+            } else {
+                interpreter.options.stderr.write(err.message);
+            }
+        }
+    }
+}
+
+/**
+ * Attaches BrightScript extensions to the interpreter and calls their initialization hooks.
+ * @param interpreter The interpreter instance to attach extensions to
+ * @param extensions Array of extension instances to attach
+ */
+function attachExtensions(interpreter: Interpreter, extensions: BrsExtension[]) {
+    for (const ext of extensions) {
+        interpreter.extensions.set(ext.name, ext);
+        ext.onInit?.(interpreter);
+    }
+}
+
+/**
+ * Runs the beforeExecute hooks for all registered extensions.
+ * @param interpreter The interpreter instance
+ * @param payload App or Task payload being executed
+ */
+async function runBeforeExecuteHooks(interpreter: Interpreter, payload: AppPayload | TaskPayload) {
+    for (const ext of interpreter.extensions.values()) {
+        if (ext.onBeforeExecute) {
+            await ext.onBeforeExecute(interpreter, payload);
+        }
+    }
+}
+
+/**
  * Setup the interpreter with the provided payload.
  * @param interpreter The interpreter instance to setup
  * @param payload with the source code, manifest and all the assets of the app.
  *
  * @returns a SourceResult object with the source map or the pcode data.
  */
-
 interface SourceResult {
     sourceMap: Map<string, string>;
     pcode?: Buffer;
@@ -482,10 +759,11 @@ interface SourceResult {
 
 function setupPayload(interpreter: Interpreter, payload: AppPayload): SourceResult {
     interpreter.setManifest(payload.manifest);
-    if (payload.device.registry?.size) {
+    if (payload.device.registryBuffer) {
+        BrsDevice.setRegistry(payload.device.registryBuffer);
+    } else if (payload.device.registry?.size) {
         BrsDevice.setRegistry(payload.device.registry);
     }
-    BrsDevice.setDeviceInfo(payload.device);
     setupTranslations(interpreter);
     return setupPackageFiles(payload);
 }
@@ -495,16 +773,15 @@ interface SerializedPCode {
 }
 
 /**
- * Process the application input parameters including deep links
- * @param deepLinkMap Map with parameters.
- * @param splashTime elapsed splash time (in milliseconds).
- *
- * @returns an array of parameters in AA member format.
+ * Process the application input parameters including deep links.
+ * @param deepLinkMap Map with deep link parameters
+ * @param splashTime Elapsed splash time in milliseconds
+ * @returns RoAssociativeArray containing input parameters
  */
 function setupInputParams(deepLinkMap: Map<string, string>, splashTime: number): BrsTypes.RoAssociativeArray {
     const inputMap = new Map([
         ["instant_on_run_mode", "foreground"],
-        ["lastExitOrTerminationReason", AppExitReason.UNKNOWN],
+        ["lastExitOrTerminationReason", AppExitReason.Unknown],
         ["source", "auto-run-dev"],
         ["splashTime", splashTime.toString()],
     ]);
@@ -515,11 +792,10 @@ function setupInputParams(deepLinkMap: Map<string, string>, splashTime: number):
 }
 
 /**
- * Updates the interpreter pkg: file system with the provided package files and
- * loads the translation data based on the configured locale.
- * @param payload with the source code, manifest and all the assets of the app.
- *
- * @returns a SourceResult object with the source map or the pcode data.
+ * Extracts package files from the payload and builds a source map.
+ * Handles both regular source files and encrypted pcode files.
+ * @param payload Payload with the source code, manifest and all the assets of the app
+ * @returns SourceResult object with the source map or the pcode data
  */
 function setupPackageFiles(payload: AppPayload): SourceResult {
     const result: SourceResult = { sourceMap: new Map<string, string>() };
@@ -529,16 +805,17 @@ function setupPackageFiles(payload: AppPayload): SourceResult {
     }
     for (let filePath of payload.paths) {
         try {
-            if (filePath.type === "pcode" && fsys.existsSync(`pkg:/${filePath.url}`)) {
+            const pkgPath = `pkg:/${filePath.url}`;
+            if (filePath.type === "pcode" && fsys.existsSync(pkgPath)) {
                 if (filePath.id === 0) {
-                    result.pcode = fsys.readFileSync(`pkg:/${filePath.url}`);
-                } else {
-                    result.iv = fsys.readFileSync(`pkg:/${filePath.url}`, "utf8");
+                    result.pcode = fsys.readFileSync(pkgPath);
+                    continue;
                 }
+                result.iv = fsys.readFileSync(pkgPath, "utf8");
             } else if (filePath.type === "source" && Array.isArray(payload.source)) {
-                result.sourceMap.set(filePath.url, payload.source[filePath.id]);
+                result.sourceMap.set(pkgPath, payload.source[filePath.id]);
             } else if (filePath.type === "source" && fsys.existsSync(`pkg:/${filePath.url}`)) {
-                result.sourceMap.set(filePath.url, fsys.readFileSync(`pkg:/${filePath.url}`, "utf8"));
+                result.sourceMap.set(pkgPath, fsys.readFileSync(pkgPath, "utf8"));
             }
         } catch (err: any) {
             postMessage(`error,Error accessing file ${filePath.url} - ${err.message}`);
@@ -551,7 +828,6 @@ function setupPackageFiles(payload: AppPayload): SourceResult {
  * Load the translations data based on the configured locale.
  * @param interpreter the Interpreter instance to update
  */
-
 function setupTranslations(interpreter: Interpreter) {
     let xmlText = "";
     let trType = "";
@@ -634,7 +910,7 @@ async function runSource(
     const password = payload.password ?? "";
     const parseResult = lexParseSync(BrsDevice.fileSystem, interpreter.manifest, sourceMap, password, stats);
     let exitReason = parseResult.exitReason;
-    if (exitReason !== AppExitReason.CRASHED) {
+    if (exitReason !== AppExitReason.Crashed) {
         if (password.length > 0) {
             const tokens = parseResult.tokens;
             const iv = crypto.randomBytes(12).toString("base64");
@@ -642,21 +918,26 @@ async function runSource(
             const deflated = zlibSync(encode({ pcode: tokens }));
             const source = Buffer.from(deflated);
             const cipherText = Buffer.concat([cipher.update(source), cipher.final()]);
-            return { exitReason: AppExitReason.PACKAGED, cipherText: cipherText, iv: iv };
+            return { exitReason: AppExitReason.Packaged, cipherText: cipherText, iv: iv };
         }
+        // Update Source Map with the SceneGraph components (if exists)
+        for (const ext of interpreter.extensions.values()) {
+            if (ext.updateSourceMap) {
+                ext.updateSourceMap(sourceMap);
+            }
+        }
+        // Execute the BrightScript code
         exitReason = await executeApp(interpreter, parseResult.statements, payload, sourceMap);
     }
     return { exitReason: exitReason };
 }
 
 /**
- * Decode and run an encrypted package of BrightScript code.
- * @param interpreter an interpreter to use when executing `contents`. Required
- *                    for `repl` to have persistent state between user inputs.
- * @param sourceResult with the pcode data and iv.
- * @param payload with the source code, manifest and all the assets of the app.
- *
- * @returns RunResult with the exit reason.
+ * Decodes and runs an encrypted package of BrightScript code.
+ * @param interpreter The interpreter instance to use when executing the code
+ * @param sourceResult Object containing the encrypted pcode data and initialization vector
+ * @param payload Payload with the source code, manifest and all the assets of the app
+ * @returns Promise resolving to RunResult with the exit reason
  */
 async function runEncrypted(
     interpreter: Interpreter,
@@ -674,14 +955,14 @@ async function runEncrypted(
             if (spcode) {
                 decodedTokens = new Map(Object.entries(spcode.pcode));
             } else {
-                return { exitReason: AppExitReason.INVALID };
+                return { exitReason: AppExitReason.Invalid };
             }
         } else {
-            return { exitReason: AppExitReason.PASSWORD };
+            return { exitReason: AppExitReason.NoPassword };
         }
     } catch (err: any) {
         postMessage(`error,Error unpacking the app: ${err.message}`);
-        return { exitReason: AppExitReason.UNPACK };
+        return { exitReason: AppExitReason.UnpackFail };
     }
     // Execute the decrypted source code
     try {
@@ -690,18 +971,17 @@ async function runEncrypted(
         return { exitReason: exitReason };
     } catch (err: any) {
         postMessage(`error,Error executing the app: ${err.message}`);
-        return { exitReason: AppExitReason.CRASHED };
+        return { exitReason: AppExitReason.Crashed };
     }
 }
 
 /**
- * Execute the BrightScript code using the provided interpreter and parsed statements.
- * @param interpreter the interpreter instance to use.
- * @param statements the parsed BrightScript code to execute.
- * @param payload with the source code, manifest and all the assets of the app.
- * @param sourceMap optional map with the source code files content.
- *
- * @returns the exit reason.
+ * Executes the BrightScript code using the provided interpreter and parsed statements.
+ * @param interpreter The interpreter instance to use
+ * @param statements The parsed BrightScript statements to execute
+ * @param payload Payload with the source code, manifest and all the assets of the app
+ * @param sourceMap Optional map with the source code files content for debugging
+ * @returns Promise resolving to the AppExitReason indicating how the app terminated
  */
 async function executeApp(
     interpreter: Interpreter,
@@ -709,7 +989,7 @@ async function executeApp(
     payload: AppPayload,
     sourceMap?: Map<string, string>
 ) {
-    let exitReason: AppExitReason = AppExitReason.FINISHED;
+    let exitReason: AppExitReason = AppExitReason.UserNav;
     try {
         let splashMinTime = Number.parseInt(payload.manifest.get("splash_min_time") ?? "");
         if (Number.isNaN(splashMinTime)) {
@@ -723,21 +1003,21 @@ async function executeApp(
         const inputParams = setupInputParams(payload.deepLink, splashTime);
         interpreter.exec(statements, sourceMap, inputParams);
     } catch (err: any) {
-        exitReason = AppExitReason.FINISHED;
+        exitReason = AppExitReason.UserNav;
         if (!terminateReasons.includes(err.message)) {
             if (interpreter.options.post ?? true) {
                 postMessage(`error,${err.message}`);
             } else {
                 interpreter.options.stderr.write(err.message);
             }
-            exitReason = AppExitReason.CRASHED;
+            exitReason = AppExitReason.Crashed;
             const runtimeError = err.cause;
             if (
                 runtimeError &&
                 runtimeError instanceof RuntimeError &&
                 runtimeError.errorDetail === RuntimeErrorDetail.MemberFunctionNotFound
             ) {
-                exitReason = AppExitReason.UNKFUNC;
+                exitReason = AppExitReason.UnkFunction;
             }
         }
     }

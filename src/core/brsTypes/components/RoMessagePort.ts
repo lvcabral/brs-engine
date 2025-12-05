@@ -1,6 +1,6 @@
 import { BrsValue, ValueKind, BrsInvalid, BrsBoolean } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsEvent, BrsType } from "..";
+import { BrsEvent, BrsType, isInvalid } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
@@ -80,16 +80,14 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
             }
         }
     }
+
     private getNextMessage() {
         if (this.messageQueue.length > 0) {
             return this.messageQueue.shift();
         } else if (this.callbackQueue.length > 0) {
-            let callback = this.callbackQueue.shift();
+            const callback = this.callbackQueue.shift();
             if (typeof callback === "function") {
-                const event = callback();
-                if (event !== BrsInvalid.Instance) {
-                    return event;
-                }
+                return callback();
             }
         }
         return BrsInvalid.Instance;
@@ -135,7 +133,7 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
                 let callback = this.callbackQueue[0];
                 if (callback) {
                     const msg = callback();
-                    if (msg !== BrsInvalid.Instance) {
+                    if (!isInvalid(msg)) {
                         this.messageQueue.push(msg);
                         return msg;
                     }

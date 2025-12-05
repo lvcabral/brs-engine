@@ -20,6 +20,19 @@ module.exports = (env) => {
         BROWSER: true,
         "ifdef-verbose": false,
     };
+    const tsLoaders = () => [
+        {
+            loader: "ts-loader",
+            options: {
+                configFile: path.resolve(__dirname, "./tsconfig.json"),
+            },
+        },
+        {
+            loader: "ifdef-loader",
+            options: ifdef_opts,
+        },
+    ];
+
     return [
         {
             name: "worker",
@@ -31,16 +44,7 @@ module.exports = (env) => {
                 rules: [
                     {
                         test: /\.tsx?$/,
-                        loader: "ts-loader",
-                        options: {
-                            configFile: path.resolve(__dirname, "./tsconfig.json"),
-                        },
-                        exclude: /node_modules/,
-                    },
-                    {
-                        test: /\.tsx?$/,
-                        loader: "ifdef-loader",
-                        options: ifdef_opts,
+                        use: tsLoaders(),
                         exclude: /node_modules/,
                     },
                     {
@@ -85,13 +89,16 @@ module.exports = (env) => {
             ],
             externals: {
                 canvas: "commonjs canvas", // Important (2)
+                "./brs-sg.js": "./brs-sg.js",
             },
             output: {
                 path: path.join(__dirname, distPath),
                 filename: libName + ".worker.js",
-                library: libName + "-worker",
-                libraryTarget: "umd",
-                umdNamedDefine: true,
+                library: {
+                    name: ["self", "brsEngine"],
+                    type: "assign",
+                    export: "default",
+                },
                 globalObject: "typeof self !== 'undefined' ? self : this",
             },
         },
@@ -113,16 +120,7 @@ module.exports = (env) => {
                 rules: [
                     {
                         test: /\.tsx?$/,
-                        loader: "ts-loader",
-                        options: {
-                            configFile: path.resolve(__dirname, "./tsconfig.json"),
-                        },
-                        exclude: /node_modules/,
-                    },
-                    {
-                        test: /\.tsx?$/,
-                        loader: "ifdef-loader",
-                        options: ifdef_opts,
+                        use: tsLoaders(),
                         exclude: /node_modules/,
                     },
                     {

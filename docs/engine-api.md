@@ -20,6 +20,7 @@ Check the [documentation](./integrating.md) to learn how to start using it. The 
 |getOverscanMode()|Returns the current overscan mode.||
 |setCaptionMode(`mode`)|Configures the closed caption mode. |<ul><li>`mode` (string): supported modes are `"Off"`, `"On"`, `"Instant replay"` or `"When mute"`.</li>|
 |getCaptionMode()|Returns the current closed caption mode.||
+|setCaptionStyle(`style`) |Configures the closed caption style options. |<ul><li>`style` (object[]): The caption styles array with each option as `{id: string, style: string}`, see options in [Roku Documentation](https://developer.roku.com/docs/references/brightscript/interfaces/ifdeviceinfo.md#getcaptionsoptionoption-as-string-as-string).</li></ul>|
 |getScreenshot()|Returns an `ImageData` with the latest rendered screenshot or `null` if not available.||
 |enableStats(`state`)|Enables or disables the performance stats overlay |<ul><li>`state` (boolean): if `true` performance statistics will be shown over the display, on the top left.</li>|
 |setAudioMute(`mute`)|Mutes or un-mutes the audio during app execution|<ul><li>`mute` (boolean): if `true` the executing app audio and video will be muted.</li>|
@@ -41,6 +42,18 @@ Check the [documentation](./integrating.md) to learn how to start using it. The 
 |setDebugState(`enabled`)|Enables or disables the debug functionality|<ul><li>`enabled` (boolean): if `true` enables debug commands and data to be sent/received by the engine, if `false` disables debug functionality for production to avoid code injection.</li>|
 |getVersion()|Returns the version of the API library ||
 
+## Common API exports
+
+The browser API now re-exports a small set of shared types and constants so host applications can configure the simulated device and extension pipeline without digging into internal modules.
+
+| Export | Description | Usage Examples |
+| --- | --- | --- |
+| `DeviceInfo` | Type describing the simulated Roku device, including new `extensions?: Map<SupportedExtension, string>` for host-provided extension wiring. | Use to type-check custom device overrides passed to `initialize(customDeviceInfo)` and set each value to the worker-accessible path (e.g., `"./brs-sg.js"`).
+| `DefaultDeviceInfo` | Baseline `DeviceInfo` object used by the engine. | Clone or spread this object before applying overrides so you only touch the fields you care about.
+| `Platform` | Runtime detection helper indicating whether the interpreter runs in the browser, worker, or Node. | Gate host-specific logic (e.g., only attach audio/video handlers when `Platform.inBrowser` is `true`).
+| `AppExitReason` | Enum describing the reason the previous app exited. | Compare against `deviceData.appList` entries or populate deep-link metadata with the appropriate reason string.
+| `SupportedExtension` | Enum of known first-party extensions (`brs-scenegraph`, future SDK1/BrightSign IDs). | Reference when registering extensions in `DeviceInfo.extensions` so you avoid typos.
+
 ## Events
 
 | Event      | Description                                      | Data Type                         |
@@ -52,6 +65,7 @@ Check the [documentation](./integrating.md) to learn how to start using it. The 
 | closed     | Triggered when the engine terminated the execution of the source code | string: the exit reason based on [Roku documentation](https://developer.roku.com/docs/developer-program/getting-started/architecture/dev-environment.md#lastexitorterminationreason-parameter) |
 | reset      | Triggered when the `RebootSystem()` function is executed from the engine | null: Nothing is returned as data |
 | control    | Triggered when a control key is sent to the engine | object: `{key: string, mod: number}`. The property `key` contains an [ECP key code](https://developer.roku.com/docs/developer-program/dev-tools/external-control-api.md#keypress-key-values) and `mod` contains `0` for key down or `100` for key up |
+| captionMode| Triggered when the closed caption mode is changed | string: The new caption mode, options are "Off", "On", "Instant replay", "When mute" |
 | redraw     | Triggered when the display canvas is redrawn/resized | boolean: If `true` the display canvas is in **full screen** mode |
 | resolution | Triggered when the emulated screen resolution changes (controlled via BrightScript) | object: `{width: integer, height: integer}` |
 | launch     | Triggered when the methods `roAppManager.launchApp()` or `roNDK.start()` (with `SDKLauncher` app) are called from BrightScript | object: `{app: string, params: Map}`. |

@@ -2,7 +2,7 @@
 
 An interpreter for the BrightScript language that runs as a CLI and Roku apps in Node.js.
 
-[![NPM Version](https://img.shields.io/npm/v/brs-node?logo=npm&label=brs-node)](https://www.npmjs.com/package/brs-node)
+[![NPM Version](https://img.shields.io/npm/v/brs-node?logo=npm&label=brs-node&color=blue)](https://npmjs.com/package/brs-node)
 [![License](https://img.shields.io/github/license/lvcabral/brs-engine?logo=github)](https://github.com/lvcabral/brs-engine/blob/master/LICENSE)
 [![Build](https://github.com/lvcabral/brs-engine/actions/workflows/build.yml/badge.svg)](https://github.com/lvcabral/brs-engine/actions/workflows/build.yml)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=lvcabral_brs-emu&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=lvcabral_brs-emu)
@@ -16,7 +16,7 @@ The **BrightScript Simulation Engine** provides a complete a set of libraries an
 >
 > Since v1.9.0, this package was split from the browser package, to use the **simulation engine** with web based applications check out the [brs-engine](https://www.npmjs.com/package/brs-engine) package.
 
-<p align="center"><img alt="Simulator CLI" title="Simulator CLI" src="https://github.com/lvcabral/brs-engine/blob/master/docs/images/brs-cli.png?raw=true" width="500"/></p>
+<p align="center"><img alt="Simulator CLI" title="Simulator CLI" src="https://raw.githubusercontent.com/lvcabral/brs-engine/refs/heads/scenegraph/docs/images/brs-cli.png?raw=true" width="500"/></p>
 
 ## Key Features
 
@@ -26,15 +26,16 @@ The **BrightScript Simulation Engine** provides a complete a set of libraries an
 - **File Execution** - Run `.brs`, `.zip`, and `.bpk` files directly
 - **Folder Execution** - Run BrightScript apps from a folder
 - **App Packaging** - Create encrypted `.bpk` packages from `.zip` files
-- **ASCII Rendering** - Run Roku apps with Draw 2D using ASCII rendering in the terminal
+- **ASCII Rendering** - Run Roku apps using ASCII rendering in the terminal
 - **Batch Processing** - Execute multiple files and automate workflows
 
 ### ⚙️ BrightScript Interpreter
 
 - Full BrightScript language interpreter, with specs aligned up to Roku OS 15.0
 - **Draw 2D API** - Full support for the BrightScript 2D drawing components
-- **Video Playback** - Via `roVideoPlayer`
-- **Audio Playback** - Via `roAudioResources` and `roAudioPlayer`
+- **SceneGraph Framework** - Experimental support for the Roku SceneGraph components (see section below)
+- **Video Playback** - Via `roVideoPlayer` and `Video` node
+- **Audio Playback** - Via `roAudioResources`, `roAudioPlayer` and `Audio` node
 - **Image Processing** - Support for PNG, JPEG, GIF, BMP and WEBP formats
 
 ### 📺 Device Simulation
@@ -49,9 +50,13 @@ The **BrightScript Simulation Engine** provides a complete a set of libraries an
 - **Localization** - Language and region settings
 - **Customization** - You can customize device features and behaviors, see [docs](https://github.com/lvcabral/brs-engine/blob/master/docs/customization.md) for more details
 
+## SceneGraph Extension
+
+The [`brs-scenegraph`](https://www.npmjs.com/package/brs-scenegraph) extension is integrated to the `brs-node` package by default. The CLI app loads it so the REPL and apps can run SceneGraph without additional setup. Use the `--no-sg` flag if you want to disable it for a given CLI session. For your Node.js apps register it manually by calling `registerExtension(() => new BrightScriptExtension())`. Refer to [packages/scenegraph/README.md](../../packages/scenegraph/README.md) for more information about the extension package.
+
 > ⚠️ Note:
 >
-> **SceneGraph** support is currently under development in [a separate branch](https://github.com/lvcabral/brs-engine/tree/scenegraph), with pre-release **alpha** versions are available here for testing. See other limitations of the **engine** in the [Current Limitations](https://github.com/lvcabral/brs-engine/blob/master/docs/limitations.md) document.
+> **SceneGraph** extension is currently under development, with pre-release **alpha** versions available for testing. See the current state of the SceneGraph implementation and other limitations of the **engine** in the [Current Limitations](https://github.com/lvcabral/brs-engine/blob/master/docs/limitations.md) document.
 
 ## Installation
 

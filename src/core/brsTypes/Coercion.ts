@@ -6,6 +6,13 @@ import { Int64 } from "./Int64";
 import { Float } from "./Float";
 import { Double } from "./Double";
 
+/**
+ * Attempts to coerce a BrsType value to a target ValueKind type.
+ * Handles boxing/unboxing, numeric conversions, and boolean conversions.
+ * @param value BrsType value to coerce
+ * @param target Target ValueKind to coerce to
+ * @returns Coerced value if conversion is possible, undefined if uncastable
+ */
 export function tryCoerce(value: BrsType, target: ValueKind): BrsType | undefined {
     if (value.kind === target || target === ValueKind.Dynamic) {
         // `value` is already the correct type; return it immediately

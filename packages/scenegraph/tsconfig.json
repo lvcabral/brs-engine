@@ -1,0 +1,34 @@
+{
+    "compilerOptions": {
+        "target": "es2018",
+        "module": "commonjs",
+        "lib": [
+            "es2018",
+            "dom"
+        ],
+        "declaration": true,
+        "outDir": "./lib",
+        "rootDir": "../../src/extensions/scenegraph",
+        "strict": true,
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true,
+        "baseUrl": ".",
+        "paths": {
+            "brs-engine": [
+                "../../src/index"
+            ],
+            "brs-engine/*": [
+                "../../src/*"
+            ]
+        }
+    },
+    "include": [
+        "../../src/extensions/scenegraph/**/*"
+    ],
+    "exclude": [
+        "node_modules",
+        "lib",
+        "**/*.test.ts"
+    ]
+}

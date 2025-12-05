@@ -1,5 +1,5 @@
 const brs = require("../../../packages/node/bin/brs.node");
-const { Lexeme } = brs.lexer;
+const { Lexeme } = brs;
 const { BrsBoolean, BrsString, Int32 } = brs.types;
 const { token, identifier, EOF } = require("../ParserTests");
 
@@ -7,7 +7,7 @@ describe("parser while statements", () => {
     let parser;
 
     beforeEach(() => {
-        parser = new brs.parser.Parser();
+        parser = new brs.Parser();
     });
 
     test("while without exit", () => {
@@ -49,7 +49,7 @@ describe("parser while statements", () => {
     });
 
     test("nested", () => {
-        const { tokens } = brs.lexer.Lexer.scan(
+        const { tokens } = brs.Lexer.scan(
             `
             while i < 1000
                 while j < 1000

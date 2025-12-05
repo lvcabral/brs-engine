@@ -33,16 +33,19 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
     readonly y: number = 0;
     readonly width: number;
     readonly height: number;
+    readonly ninePatch: boolean = false;
     private readonly canvas: BrsCanvas;
     private readonly context: BrsCanvasContext2D;
     private readonly name: string;
     private readonly valid: boolean;
+    private readonly patchSizes?: { horizontal: number; vertical: number };
     private alphaEnable: boolean;
     private rgbaCanvas?: BrsCanvas;
     private rgbaLast: number;
     rgbaRedraw: boolean;
+    scaleMode: number;
 
-    constructor(param: BrsType | ArrayBuffer | Buffer) {
+    constructor(param: BrsType | ArrayBuffer | Buffer, name?: string) {
         super("roBitmap");
         this.alphaEnable = false;
         this.rgbaLast = 0;
@@ -50,7 +53,8 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
         this.valid = true;
         this.width = 1;
         this.height = 1;
-        this.name = "";
+        this.name = name ?? "";
+        this.scaleMode = 0; // Valid: 0=fast 1=smooth (maybe slow)
         let image;
         if (param instanceof ArrayBuffer || param instanceof Buffer) {
             image = param;
@@ -183,6 +187,13 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
             ],
             ifBitmap: [this.getName],
         });
+        if (this.valid && this.name.toLowerCase().endsWith(".9.png")) {
+            const sizes = this.getPatchSizes();
+            if (sizes.horizontal >= 0 && sizes.vertical >= 0) {
+                this.ninePatch = true;
+                this.patchSizes = sizes;
+            }
+        }
     }
 
     clearCanvas(rgba: number) {
@@ -283,6 +294,51 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
         if (this.rgbaCanvas) {
             releaseCanvas(this.rgbaCanvas);
         }
+    }
+
+    getPatchSizes(): { horizontal: number; vertical: number } {
+        if (this.patchSizes) {
+            return this.patchSizes;
+        }
+        const image = this.getCanvas();
+        const ctx = this.getContext();
+
+        const imageData = ctx.getImageData(0, 0, image.width, image.height);
+        const data = imageData.data;
+
+        let horizPatchSize = -1;
+        let vertPatchSize = -1;
+
+        // Check the top row for the first black pixel (horizontal patch size)
+        for (let i = 0; i < image.width; i++) {
+            const index = (i + 0 * image.width) * 4;
+            const r = data[index];
+            const g = data[index + 1];
+            const b = data[index + 2];
+            const a = data[index + 3];
+
+            // Assuming black pixel (0, 0, 0, 255)
+            if (r === 0 && g === 0 && b === 0 && a === 255) {
+                horizPatchSize = i;
+                break;
+            }
+        }
+
+        // Check the left column for the first black pixel (vertical patch size)
+        for (let i = 0; i < image.height; i++) {
+            const index = (0 + i * image.width) * 4;
+            const r = data[index];
+            const g = data[index + 1];
+            const b = data[index + 2];
+            const a = data[index + 3];
+
+            // Assuming black pixel (0, 0, 0, 255)
+            if (r === 0 && g === 0 && b === 0 && a === 255) {
+                vertPatchSize = i;
+                break;
+            }
+        }
+        return { horizontal: horizPatchSize, vertical: vertPatchSize };
     }
 
     // ifBitmap  -----------------------------------------------------------------------------------

@@ -3,6 +3,7 @@ const stream = require("stream");
 const fs = require("fs");
 const brs = require("../../packages/node/bin/brs.node");
 const { createPayloadFromFiles, createPayloadFromFileMap, executeFile } = brs;
+const { BrightScriptExtension } = require("../../packages/node/bin/brs-sg.node");
 
 brs.registerCallback(() => {}); // register a callback to avoid display errors
 
@@ -45,10 +46,11 @@ exports.createMockStreams = function () {
 
 /** Executes the specified BrightScript files, capturing their output in the provided streams. */
 exports.execute = async function (filenames, options, deepLink) {
-    const payload = createPayloadFromFiles(filenames, deviceData);
+    const payload = await createPayloadFromFiles(filenames, deviceData);
     if (deepLink) {
         payload.deepLink = deepLink;
     }
+    brs.registerExtension(() => new BrightScriptExtension());
     await executeFile(payload, options);
 };
 

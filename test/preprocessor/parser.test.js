@@ -1,9 +1,8 @@
 const brs = require("../../packages/node/bin/brs.node");
 const preprocessor = brs.preprocessor;
-const { Lexeme } = brs.lexer;
+const { Lexeme } = brs;
 const { BrsBoolean } = brs.types;
-
-const { token, identifier, EOF } = require("../parser/ParserTests");
+const { token, identifier } = require("../parser/ParserTests");
 
 describe("preprocessor parser", () => {
     let parser;

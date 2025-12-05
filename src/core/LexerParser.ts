@@ -48,17 +48,17 @@ export function lexParseSync(
     lexer.onError(logError);
     parser.onError(logError);
     preprocessor.onError(logError);
-    let exitReason = AppExitReason.FINISHED;
+    let exitReason = AppExitReason.UserNav;
     try {
         for (let [path, code] of sourceMap) {
             const scanResults = lexer.scan(code, path);
             if (scanResults.errors.length > 0) {
-                exitReason = AppExitReason.CRASHED;
+                exitReason = AppExitReason.Crashed;
                 break;
             }
             const preprocessorResults = preprocessor.preprocess(scanResults.tokens, manifest);
             if (preprocessorResults.errors.length > 0) {
-                exitReason = AppExitReason.CRASHED;
+                exitReason = AppExitReason.Crashed;
                 break;
             }
             if (password.length > 0) {
@@ -67,7 +67,7 @@ export function lexParseSync(
             }
             const parseResults = parser.parse(preprocessorResults.processedTokens);
             if (parseResults.errors.length > 0) {
-                exitReason = AppExitReason.CRASHED;
+                exitReason = AppExitReason.Crashed;
                 break;
             }
             parseLibraries(fs, parseResults, lib, manifest);
@@ -89,7 +89,7 @@ export function lexParseSync(
             }
         }
     } catch (err: any) {
-        exitReason = AppExitReason.CRASHED;
+        exitReason = AppExitReason.Crashed;
     }
     return {
         exitReason: exitReason,

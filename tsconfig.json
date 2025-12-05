@@ -3,7 +3,7 @@
         /* Basic Options */
         "target": "ES2022"                        /* Specify ECMAScript target version: 'ES3' (default), 'ES5', 'ES2015', 'ES2016', 'ES2017', or 'ESNEXT'. */,
         "module": "ESNext"                        /* Specify module code generation: 'none', 'commonjs', 'amd', 'system', 'umd', 'es2015', or 'ESNext'. */,
-        "lib": ["dom", "webworker", "ES2022"],    /* Specify library files to be included in the compilation:  */
+        "lib": ["dom", "DOM.Iterable", "webworker", "ESNext"],    /* Specify library files to be included in the compilation:  */
         "moduleResolution": "bundler",            /* Specify module resolution strategy */
         // "allowJs": true,                       /* Allow javascript files to be compiled. */
         // "checkJs": true,                       /* Report errors in .js files. */
@@ -32,8 +32,11 @@
         "noFallthroughCasesInSwitch": true        /* Report errors for fallthrough cases in switch statement. */,
 
         /* Module Resolution Options */
-        // "baseUrl": "./",                       /* Base directory to resolve non-absolute module names. */
-        // "paths": {},                           /* A series of entries which re-map imports to lookup locations relative to the 'baseUrl'. */
+        "baseUrl": "./",                       /* Base directory to resolve non-absolute module names. */
+        "paths": {                              /* Re-map workspace package imports to local sources. */
+            "brs-engine": ["src/index.ts"],
+            "brs-scenegraph": ["src/extensions/scenegraph/index.ts"]
+        },
         // "rootDirs": [],                        /* List of root folders whose combined content represents the structure of the project at runtime. */
         // "typeRoots": [],                       /* List of folders to include type definitions from. */
         // "types": [],                           /* Type declaration files to be included in compilation. */

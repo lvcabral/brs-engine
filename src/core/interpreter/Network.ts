@@ -46,7 +46,6 @@ export function download(
  * Function to get the external IP address
  * @returns ip address or empty string
  */
-
 export function getExternalIp(): string {
     const url = "https://api.ipify.org";
     try {

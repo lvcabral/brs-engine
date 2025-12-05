@@ -6,29 +6,32 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-/* Device Simulation Information Interface
+/* Device Information Interface
  *
  * This interface is used to simulate a Roku device environment in the engine.
- * It feeds the interpreter with several device features like registry, fonts,
+ * It feeds the interpreter with several device features like registry, extensions,
  * audio codecs, video formats, and other device information provided by `roDeviceInfo`.
  *
  * Roku documentation: https://developer.roku.com/docs/references/brightscript/interfaces/ifdeviceinfo.md
  */
 export interface DeviceInfo {
-    [key: string]: any;
     developerId: string;
     friendlyName: string;
     deviceModel: string;
     firmwareVersion: string;
+    serialNumber: string;
     clientId: string;
     RIDA: string;
     countryCode: string;
     timeZone: string;
+    timeZoneIANA: string;
+    timeZoneAuto: boolean;
+    timeZoneOffset: number;
     locale: SupportedLocale;
     clockFormat: string;
     displayMode: DisplayMode;
     captionMode: CaptionMode;
-    captionStyle: Map<string, string>;
+    captionStyle: CaptionStyleOption[];
     captionLanguage: SupportedLanguage;
     assets: ArrayBufferLike;
     maxSimulStreams: 1 | 2;
@@ -40,13 +43,18 @@ export interface DeviceInfo {
     audioVolume: number;
     audioLanguage: SupportedLanguage;
     maxFps: number;
+    tmpVolSize: number;
+    cacheFSVolSize: number;
     registry?: Map<string, string>;
+    registryBuffer?: SharedArrayBuffer;
+    models?: Map<string, string[]>;
     audioCodecs?: string[];
     videoFormats?: Map<string, string[]>;
     appList?: AppData[];
     entryPoint?: boolean;
-    stopOnCrash?: boolean;
+    debugOnCrash?: boolean;
     corsProxy?: string;
+    extensions?: Map<SupportedExtension, string>;
 }
 
 export type SupportedLocale =
@@ -84,6 +92,11 @@ export const DisplayModes = ["480p", "720p", "1080p"] as const;
 export type DisplayMode = (typeof DisplayModes)[number];
 export const CaptionModes = ["Off", "On", "Instant replay", "When mute"] as const;
 export type CaptionMode = (typeof CaptionModes)[number];
+/**
+ * Parses a caption mode string into a CaptionMode type.
+ * @param mode The caption mode string to parse
+ * @returns The parsed CaptionMode or undefined if invalid
+ */
 export function parseCaptionMode(mode: string): CaptionMode | undefined {
     const normalized = mode.trim().toLowerCase();
     return CaptionModes.find((mode) => mode.toLowerCase() === normalized);
@@ -91,21 +104,25 @@ export function parseCaptionMode(mode: string): CaptionMode | undefined {
 export const DefaultCertificatesFile = "common:/certs/ca-bundle.crt";
 
 // Default Device Information
-export const platform = getPlatform();
-export const defaultDeviceInfo: DeviceInfo = {
+export const Platform = getPlatform();
+export const DefaultDeviceInfo: DeviceInfo = {
     developerId: "34c6fceca75e456f25e7e99531e2425c6c1de443", // As in Roku devices, segregates Registry data (can't have a dot)
     friendlyName: "BrightScript Engine Library",
     deviceModel: "8000X", // Roku TV (Midland)
     firmwareVersion: "48G.04E05531A", // v15.0
+    serialNumber: "", // Will be set dynamically
     clientId: "6c5bf3a5-b2a5-4918-824d-7691d5c85364",
     RIDA: "f51ac698-bc60-4409-aae3-8fc3abc025c4", // Unique identifier for advertisement tracking
     countryCode: "US", // App Store Country
     timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    timeZoneIANA: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    timeZoneAuto: true,
+    timeZoneOffset: new Date().getTimezoneOffset(),
     locale: "en_US", // Used if app supports localization
     clockFormat: "12h",
     displayMode: "720p",
     captionMode: "Off",
-    captionStyle: new Map(),
+    captionStyle: [],
     captionLanguage: "en",
     assets: new ArrayBuffer(0),
     maxSimulStreams: 2,
@@ -123,14 +140,93 @@ export const defaultDeviceInfo: DeviceInfo = {
     startTime: Date.now(),
     audioVolume: 50, // Defines the default volume level for system sounds - valid: (0-100)
     audioLanguage: "en",
-    registry: new Map(),
     maxFps: 60,
+    tmpVolSize: 32 * 1024 * 1024, // 32 MB
+    cacheFSVolSize: 32 * 1024 * 1024, // 32 MB
 };
 
-/* Execution Payload Interface
+// Valid Closed Captions Options
+export const CaptionFonts: Map<string, string> = new Map([
+    ["default", "cc-serif"],
+    ["serif fixed width", "cc-serif-fixed"],
+    ["serif proportional", "cc-serif"],
+    ["sans serif fixed width", "cc-sans-serif-fixed"],
+    ["sans serif proportional", "cc-sans-serif"],
+    ["casual", "cc-casual"],
+    ["cursive", "cc-cursive"],
+    ["small caps", "cc-small-caps"],
+]);
+
+export const CaptionSizes: Map<string, number[]> = new Map([
+    ["default", [29, 43.5]],
+    ["extra small", [20, 30]],
+    ["small", [21.5, 32]],
+    ["medium", [29, 43.5]],
+    ["large", [37.5, 56]],
+    ["extra large", [40.5, 61]],
+]);
+
+export const CaptionColors: Map<string, string> = new Map([
+    ["default", "#B0B0B0"],
+    ["bright white", "#FFFFFF"],
+    ["white", "#B0B0B0"],
+    ["black", "#000000"],
+    ["red", "#CA0000"],
+    ["green", "#00BB00"],
+    ["blue", "#0304D0"],
+    ["yellow", "#B2B400"],
+    ["magenta", "#C500C5"],
+    ["cyan", "#00BBB9"],
+]);
+
+export const CaptionOpacities: Map<string, number> = new Map([
+    ["default", 1],
+    ["off", 0],
+    ["25%", 0.25],
+    ["50%", 0.5],
+    ["75%", 0.75],
+    ["100%", 1],
+]);
+
+export const CaptionOptions: Map<string, string[]> = new Map([
+    ["mode", Array.from(CaptionModes)],
+    ["text/font", Array.from(CaptionFonts.keys())],
+    ["text/effect", ["default", "none", "raised", "depressed", "uniform", "drop shadow (left)", "drop shadow (right)"]],
+    ["text/size", Array.from(CaptionSizes.keys())],
+    ["text/color", Array.from(CaptionColors.keys())],
+    ["text/opacity", Array.from(CaptionOpacities.keys())],
+    ["background/color", Array.from(CaptionColors.keys())],
+    ["background/opacity", Array.from(CaptionOpacities.keys())],
+    ["window/color", Array.from(CaptionColors.keys())],
+    ["window/opacity", Array.from(CaptionOpacities.keys())],
+    ["track", ["default"]],
+    ["track_composite", ["default"]],
+    ["track_analog", ["default"]],
+    ["muted", ["unmuted", "muted"]],
+]);
+
+// Caption Style Option Interface
+export type CaptionStyleOption = {
+    id: string;
+    style: string;
+};
+
+/**
+ * Supported Extensions Enumerator
  *
- * This interface is used to provide information to the interpreter about the
- * device and app that will be executed. It contains the DeviceInfo object,
+ * This enumerator is used to define the supported BrightScript extensions
+ *
+ */
+export enum SupportedExtension {
+    SceneGraph = "brs-scenegraph",
+    SDK1 = "brs-sdk1", // Legacy SDK1 extension - planned
+    BrightSign = "brs-brightsign", // BrightSign extension - planned
+}
+
+/* Execution Payload Interfaces
+ *
+ * These interfaces are used to provide information to the interpreter about the
+ * device, app/task that will be executed. It may contain the DeviceInfo object,
  * the app manifest, source code, deep link, encryption password, paths,
  * some execution flags and file system paths.
  *
@@ -142,6 +238,7 @@ export type AppPayload = {
     deepLink: Map<string, string>;
     paths: PkgFilePath[];
     source: string[];
+    extensions?: SupportedExtension[];
     pkgZip?: ArrayBuffer;
     extZip?: ArrayBuffer;
     password?: string;
@@ -149,6 +246,11 @@ export type AppPayload = {
     ext?: string;
 };
 
+/**
+ * Type guard to check if a value is an AppPayload object.
+ * @param value The value to check
+ * @returns True if the value is a valid AppPayload
+ */
 export function isAppPayload(value: any): value is AppPayload {
     return (
         value &&
@@ -164,6 +266,113 @@ export function isAppPayload(value: any): value is AppPayload {
         (typeof value.root === "string" || value.root === undefined) &&
         (typeof value.ext === "string" || value.ext === undefined)
     );
+}
+
+export type TaskPayload = {
+    device: DeviceInfo;
+    manifest: Map<string, string>;
+    taskData: TaskData;
+    extensions?: SupportedExtension[];
+    pkgZip?: ArrayBuffer;
+    extZip?: ArrayBuffer;
+    root?: string;
+    ext?: string;
+};
+
+/**
+ * Type guard to check if a value is a TaskPayload object.
+ * @param value The value to check
+ * @returns True if the value is a valid TaskPayload
+ */
+export function isTaskPayload(value: any): value is TaskPayload {
+    return (
+        value &&
+        typeof value.device === "object" &&
+        value.manifest instanceof Map &&
+        isTaskData(value.taskData) &&
+        (value.pkgZip instanceof ArrayBuffer || value.pkgZip === undefined) &&
+        (value.extZip instanceof ArrayBuffer || value.extZip === undefined) &&
+        (typeof value.root === "string" || value.root === undefined) &&
+        (typeof value.ext === "string" || value.ext === undefined)
+    );
+}
+
+export enum TaskState {
+    INIT,
+    RUN,
+    STOP,
+    DONE,
+}
+
+export type TaskData = {
+    id: number;
+    name: string;
+    state: TaskState;
+    buffer?: SharedArrayBuffer;
+    tmp?: SharedArrayBuffer;
+    cacheFS?: SharedArrayBuffer;
+    m?: any;
+    scene?: any;
+    render?: string;
+};
+
+/**
+ * Type guard to check if a value is a TaskData object.
+ * @param value The value to check
+ * @returns True if the value is a valid TaskData
+ */
+export function isTaskData(value: any): value is TaskData {
+    return (
+        value &&
+        typeof value.id === "number" &&
+        typeof value.name === "string" &&
+        Object.values(TaskState).includes(value.state) &&
+        (value.buffer instanceof SharedArrayBuffer || value.buffer === undefined) &&
+        (typeof value.m === "object" || value.m === undefined) &&
+        (typeof value.scene === "object" || value.scene === undefined) &&
+        (typeof value.render === "string" || value.render === undefined)
+    );
+}
+
+export type ThreadInfo = {
+    id: string;
+    type: "Main" | "Render" | "Task";
+    name?: string;
+};
+
+export type ThreadUpdate = {
+    id: number;
+    type: "global" | "task" | "scene";
+    field: string;
+    value: any;
+};
+
+/**
+ * Type guard to check if a value is a ThreadUpdate object.
+ * @param value The value to check
+ * @returns True if the value is a valid ThreadUpdate
+ */
+export function isThreadUpdate(value: any): value is ThreadUpdate {
+    return (
+        value &&
+        typeof value.id === "number" &&
+        typeof value.type === "string" &&
+        typeof value.field === "string" &&
+        value.value !== undefined
+    );
+}
+
+/**
+ * Generates a random 6-character hexadecimal address.
+ * @returns A random hex string in uppercase format (e.g., "A1B2C3")
+ */
+export function genHexAddress(): string {
+    const randomInt = Math.floor(Math.random() * (0xffffff + 1));
+    let hexString = randomInt.toString(16);
+    while (hexString.length < 6) {
+        hexString = "0" + hexString;
+    }
+    return hexString.toUpperCase();
 }
 
 /* Package File Path Interface
@@ -187,16 +396,16 @@ export type PkgFilePath = {
  * Roku documentation: https://developer.roku.com/docs/developer-program/getting-started/architecture/dev-environment.md#lastexitorterminationreason-parameter
  */
 export enum AppExitReason {
-    UNKNOWN = "EXIT_UNKNOWN",
-    CRASHED = "EXIT_BRIGHTSCRIPT_CRASH",
-    UNKFUNC = "EXIT_BRIGHTSCRIPT_UNK_FUNC",
-    FINISHED = "EXIT_USER_NAV",
-    SETTINGS = "EXIT_SETTINGS_UPDATE",
-    POWER = "EXIT_POWER_MODE",
-    PACKAGED = "EXIT_PACKAGER_DONE",
-    INVALID = "EXIT_INVALID_PCODE",
-    PASSWORD = "EXIT_MISSING_PASSWORD",
-    UNPACK = "EXIT_UNPACK_FAILED",
+    Unknown = "EXIT_UNKNOWN",
+    Crashed = "EXIT_BRIGHTSCRIPT_CRASH",
+    UnkFunction = "EXIT_BRIGHTSCRIPT_UNK_FUNC",
+    UserNav = "EXIT_USER_NAV",
+    Settings = "EXIT_SETTINGS_UPDATE",
+    PowerMode = "EXIT_POWER_MODE",
+    Packaged = "EXIT_PACKAGER_DONE",
+    Invalid = "EXIT_INVALID_PCODE",
+    NoPassword = "EXIT_MISSING_PASSWORD",
+    UnpackFail = "EXIT_UNPACK_FAILED",
 }
 
 /* App Data Interface
@@ -219,7 +428,11 @@ export type AppData = {
     running?: boolean;
 };
 
-// Function to check if a value is an AppData object
+/**
+ * Type guard to check if a value is an AppData object.
+ * @param value The value to check
+ * @returns True if the value is a valid AppData
+ */
 export function isAppData(value: any): value is AppData {
     return (
         value &&
@@ -245,7 +458,11 @@ export type NDKStart = {
     env: string[];
 };
 
-// Function to check if a value is an NDKStart object
+/**
+ * Type guard to check if a value is an NDKStart object.
+ * @param value The value to check
+ * @returns True if the value is a valid NDKStart
+ */
 export function isNDKStart(value: any): value is NDKStart {
     return (
         value &&
@@ -273,7 +490,7 @@ export type RemoteControl = {
  * where the engine is running.
  *
  */
-export type Platform = {
+export type PlatformInfo = {
     inBrowser: boolean;
     inChromium: boolean;
     inFirefox: boolean;
@@ -318,6 +535,8 @@ export enum DataType {
     VTT, // Video Text Track
     SND, // Sound Event
     SDX, // Sound Event Index
+    SPS, // Sound Position
+    SDR, // Sound Duration
     WAV, // Wave Audio
     WAV1, // Reserved for second stream
     WAV2, // Reserved for third stream
@@ -332,6 +551,10 @@ export enum DataType {
     KEY, // Key Code
     MOD, // Key State (down/up)
 }
+
+// Registry constants
+export const registryInitialSize = 32 * 1024;
+export const registryMaxSize = 64 * 1024;
 
 // Key Buffer Constants
 export const keyBufferSize = 5;
@@ -354,6 +577,13 @@ export enum RemoteType {
 // CEC - Consumer Electronics Control
 // MHL - Mobile High-Definition Link
 // FP - Front Panel (for on-device controls)
+
+// Key Event Interface
+export interface KeyEvent {
+    remote: string; // Remote Id (Remote Type:Remote Index)
+    key: number; // Key Code
+    mod: number; // Modifier (0 = press, 100 = release)
+}
 
 // Debug prompt
 export const debugPrompt = "Brightscript Debugger> ";
@@ -381,17 +611,18 @@ export enum DebugCommand {
 
 // Media events enumerator
 export enum MediaEvent {
-    SELECTED,
-    FULL,
-    PARTIAL,
-    PAUSED,
-    RESUMED,
-    FINISHED,
-    FAILED,
-    LOADING,
-    START_STREAM,
-    START_PLAY,
-    POSITION,
+    Selected,
+    Full,
+    Partial,
+    Paused,
+    Resumed,
+    Finished,
+    Failed,
+    Loading,
+    StartStream,
+    StartPlay,
+    Position,
+    TooMany,
 }
 
 // Media playback error codes enumerator
@@ -413,6 +644,11 @@ export interface MediaTrack {
     codec?: string;
 }
 
+/**
+ * Type guard to check if a value is a MediaTrack object.
+ * @param value The value to check
+ * @returns True if the value is a valid MediaTrack
+ */
 export function isMediaTrack(value: any): value is MediaTrack {
     return (
         value &&
@@ -442,8 +678,12 @@ export const AudioExt = new Set<string>(["wav", "mp2", "mp3", "m4a", "aac", "ogg
 
 export const VideoExt = new Set<string>(["mp4", "m4v", "mkv", "mov"]);
 
-// Check the platform where the library is running
-export function getPlatform(): Platform {
+/**
+ * Detects the platform where the BrightScript engine is running.
+ * Checks for browser type, OS, and runtime environment.
+ * @returns PlatformInfo object with boolean flags for each platform
+ */
+export function getPlatform(): PlatformInfo {
     let inBrowser = false;
     let inChromium = false;
     let inFirefox = false;
@@ -509,7 +749,12 @@ export function getPlatform(): Platform {
     };
 }
 
-// Function to parse the Manifest file into a Map
+/**
+ * Parses a Roku manifest file into a Map of key-value pairs.
+ * Ignores empty lines and comments starting with #.
+ * @param contents The manifest file content as a string
+ * @returns Map containing the parsed manifest entries
+ */
 export function parseManifest(contents: string) {
     const keyValuePairs = contents
         // for each line
@@ -537,21 +782,34 @@ export function parseManifest(contents: string) {
     return new Map<string, string>(keyValuePairs);
 }
 
-// Function to return the Exit Reason from the enumerator based on a string
+/**
+ * Returns the AppExitReason enum value from a string.
+ * @param value The exit reason string to parse
+ * @returns The corresponding AppExitReason or AppExitReason.Unknown if invalid
+ */
 export function getExitReason(value: string): AppExitReason {
     if (Object.values(AppExitReason).includes(value as any)) {
         return value as AppExitReason;
     } else {
-        return AppExitReason.UNKNOWN;
+        return AppExitReason.Unknown;
     }
 }
 
-// Function to convert a number to a hexadecimal string
+/**
+ * Converts a number to an 8-character hexadecimal string.
+ * @param value The number to convert
+ * @param pad Optional padding character (defaults to "0")
+ * @returns Hexadecimal string representation padded to 8 characters
+ */
 export function numberToHex(value: number, pad: string = ""): string {
     return (value >>> 0).toString(16).padStart(8, pad);
 }
 
-// This function takes a text file content as a string and returns an array of lines
+/**
+ * Parses text file content into an array of lines.
+ * @param content Optional text file content as a string
+ * @returns Array of lines from the text file (empty array if no content)
+ */
 export function parseTextFile(content?: string): string[] {
     let lines: string[] = [];
     if (content) {
@@ -560,7 +818,11 @@ export function parseTextFile(content?: string): string[] {
     return lines;
 }
 
-// Function to convert the firmware string to a Map with Roku OS version parts
+/**
+ * Extracts Roku OS version components from a firmware string.
+ * @param firmware The firmware version string (e.g., "48G.04E05531A")
+ * @returns Map with keys: major, minor, revision, build, plid
+ */
 export function getRokuOSVersion(firmware: string) {
     const osVersion: Map<string, string> = new Map();
     if (firmware.length > 0) {
@@ -572,4 +834,19 @@ export function getRokuOSVersion(firmware: string) {
         osVersion.set("plid", firmware.slice(0, 2));
     }
     return osVersion;
+}
+
+/**
+ * Returns the current UTC timestamp in Roku beacon date format.
+ * @returns Formatted date string (MM-DD HH:MM:SS.ms)
+ */
+export function getNow(): string {
+    let d = new Date();
+    let mo = new Intl.DateTimeFormat("en-GB", { month: "2-digit", timeZone: "UTC" }).format(d);
+    let da = new Intl.DateTimeFormat("en-GB", { day: "2-digit", timeZone: "UTC" }).format(d);
+    let hr = new Intl.DateTimeFormat("en-GB", { hour: "2-digit", timeZone: "UTC" }).format(d);
+    let mn = new Intl.DateTimeFormat("en-GB", { minute: "2-digit", timeZone: "UTC" }).format(d);
+    let se = new Intl.DateTimeFormat("en-GB", { second: "2-digit", timeZone: "UTC" }).format(d);
+    let ms = d.getMilliseconds();
+    return `${mo}-${da} ${hr}:${mn}:${se}.${ms}`;
 }

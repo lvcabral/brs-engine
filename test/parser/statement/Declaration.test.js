@@ -1,5 +1,5 @@
 const brs = require("../../../packages/node/bin/brs.node");
-const { Lexeme } = brs.lexer;
+const { Lexeme } = brs;
 const { Int32, BrsInvalid } = brs.types;
 
 const { token, identifier, EOF } = require("../ParserTests");
@@ -8,7 +8,7 @@ describe("parser variable declarations", () => {
     let parser;
 
     beforeEach(() => {
-        parser = new brs.parser.Parser();
+        parser = new brs.Parser();
     });
 
     it("allows newlines before assignments", () => {

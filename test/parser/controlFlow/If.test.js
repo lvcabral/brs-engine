@@ -1,5 +1,5 @@
 const brs = require("../../../packages/node/bin/brs.node");
-const { Lexeme } = brs.lexer;
+const { Lexeme } = brs;
 const { BrsBoolean, Int32 } = brs.types;
 
 const { token, identifier, EOF } = require("../ParserTests");
@@ -8,11 +8,11 @@ describe("parser if statements", () => {
     let parser;
 
     beforeEach(() => {
-        parser = new brs.parser.Parser();
+        parser = new brs.Parser();
     });
 
     it("single-line if next to else or endif", () => {
-        let { tokens } = brs.lexer.Lexer.scan(`
+        let { tokens } = brs.Lexer.scan(`
             if type(component.TextAttrs.font) = "roString"
                 font = m.fonts.Lookup(component.TextAttrs.font)
                 if font = invalid then font = m.fonts.medium
@@ -30,7 +30,7 @@ describe("parser if statements", () => {
     });
 
     it("single-line if inside multi-line if", () => {
-        let { tokens } = brs.lexer.Lexer.scan(`
+        let { tokens } = brs.Lexer.scan(`
             if true
                 if true then t = 1
             else
@@ -45,7 +45,7 @@ describe("parser if statements", () => {
     });
 
     it("dotted set in else block", () => {
-        let { tokens } = brs.lexer.Lexer.scan(`
+        let { tokens } = brs.Lexer.scan(`
             if true then m.top.visible = true else m.top.visible = false
         `);
         let { statements, errors } = parser.parse(tokens);
@@ -167,7 +167,7 @@ describe("parser if statements", () => {
         });
 
         it("allows multiple statements in 'then' block (#481)", () => {
-            let { tokens } = brs.lexer.Lexer.scan(`
+            let { tokens } = brs.Lexer.scan(`
                 if false then nop(): print "#481 still repro's": return
                 print "#481 fixed"
             `);
@@ -184,7 +184,7 @@ describe("parser if statements", () => {
     describe("block if", () => {
         it("parses if only", () => {
             //because the parser depends on line numbers for certain if statements, this needs to be location-aware
-            let { tokens } = brs.lexer.Lexer.scan(`
+            let { tokens } = brs.Lexer.scan(`
                 if 1 < 2 THEN
                     foo = true
                     bar = true
@@ -200,7 +200,7 @@ describe("parser if statements", () => {
 
         it("parses if-else", () => {
             //this test requires token locations, so use the lexer
-            let { tokens } = brs.lexer.Lexer.scan(`
+            let { tokens } = brs.Lexer.scan(`
                 if 1 < 2 then
                     foo = true
                 else
@@ -218,7 +218,7 @@ describe("parser if statements", () => {
 
         it("parses if-elseif-else", () => {
             //this test requires token locations, so use the lexer
-            let { tokens } = brs.lexer.Lexer.scan(`
+            let { tokens } = brs.Lexer.scan(`
                 if 1 < 2 then
                     foo = true
                 else if 1 > 2 then
@@ -238,7 +238,7 @@ describe("parser if statements", () => {
 
         it("allows 'then' to be skipped", () => {
             //this test requires token locations, so use the lexer
-            let { tokens } = brs.lexer.Lexer.scan(`
+            let { tokens } = brs.Lexer.scan(`
                 if 1 < 2
                     foo = true
                 else if 1 > 2
@@ -258,7 +258,7 @@ describe("parser if statements", () => {
 
         it("sets endif token properly", () => {
             //this test requires token locations, so use the lexer
-            let { tokens } = brs.lexer.Lexer.scan(`
+            let { tokens } = brs.Lexer.scan(`
                 sub a()
                     if true then
                         print false
@@ -280,7 +280,7 @@ describe("parser if statements", () => {
     });
 
     it("supports trailing colons after conditional statements", () => {
-        let { tokens } = brs.lexer.Lexer.scan(`
+        let { tokens } = brs.Lexer.scan(`
             sub main()
                 if 1 > 0:
                     print "positive!"
@@ -291,105 +291,105 @@ describe("parser if statements", () => {
                 end if
             end sub
         `);
-        let { statements, errors } = brs.parser.Parser.parse(tokens);
+        let { statements, errors } = brs.Parser.parse(tokens);
         expect(errors.length).toEqual(0);
         expect(statements).toMatchSnapshot();
     });
 
     it("supports trailing colons for one-line if statements", () => {
-        let { tokens } = brs.lexer.Lexer.scan(`
+        let { tokens } = brs.Lexer.scan(`
             if 1 < 2: return true: end if
         `);
-        let { statements, errors } = brs.parser.Parser.parse(tokens);
+        let { statements, errors } = brs.Parser.parse(tokens);
         expect(errors).toHaveLength(0);
         expect(statements).toMatchSnapshot();
     });
 
     it("catches one-line if statement missing first colon", () => {
         //missing colon after 2
-        let { tokens } = brs.lexer.Lexer.scan(`
+        let { tokens } = brs.Lexer.scan(`
             if 1 < 2 return true : end if
         `);
-        let { statements, errors } = brs.parser.Parser.parse(tokens);
+        let { statements, errors } = brs.Parser.parse(tokens);
         expect(errors.length).toBeGreaterThan(0);
         expect(statements).toMatchSnapshot();
     });
 
     it("catches one-line if statement missing second colon", () => {
         //missing colon after `2`
-        let { tokens } = brs.lexer.Lexer.scan(`
+        let { tokens } = brs.Lexer.scan(`
             if 1 < 2 : return true end if
         `);
-        let { statements, errors } = brs.parser.Parser.parse(tokens);
+        let { statements, errors } = brs.Parser.parse(tokens);
         expect(errors.length).toBeGreaterThan(0);
         expect(statements).toMatchSnapshot();
     });
 
     it("catches one-line if statement with else missing colons", () => {
         //missing colon after `2`
-        let { tokens } = brs.lexer.Lexer.scan(`
+        let { tokens } = brs.Lexer.scan(`
             if 1 < 2 : return true: else return false end if
         `);
-        let { statements, errors } = brs.parser.Parser.parse(tokens);
+        let { statements, errors } = brs.Parser.parse(tokens);
         expect(errors.length).toBeGreaterThan(0);
         expect(statements).toMatchSnapshot();
     });
 
     it("catches one-line if statement with colon and missing end if", () => {
         //missing colon after `2`
-        let { tokens } = brs.lexer.Lexer.scan(`
+        let { tokens } = brs.Lexer.scan(`
             if 1 < 2: return true
         `);
-        let { statements, errors } = brs.parser.Parser.parse(tokens);
+        let { statements, errors } = brs.Parser.parse(tokens);
         expect(errors.length).toBeGreaterThan(0);
         expect(statements).toMatchSnapshot();
     });
 
     it("catches one-line if statement with colon and missing end if", () => {
         //missing 'end if'
-        let { tokens } = brs.lexer.Lexer.scan(`
+        let { tokens } = brs.Lexer.scan(`
             function missingendif()
                 if true : return true
             end function
         `);
-        let { statements, errors } = brs.parser.Parser.parse(tokens);
+        let { statements, errors } = brs.Parser.parse(tokens);
         expect(errors.length).toEqual(1);
         expect(statements).toMatchSnapshot();
     });
 
     it("supports if statement with condition and action on one line, but end if on separate line", () => {
-        let { tokens } = brs.lexer.Lexer.scan(`
+        let { tokens } = brs.Lexer.scan(`
             if 1 < 2: return true
             end if
         `);
-        let { statements, errors } = brs.parser.Parser.parse(tokens);
+        let { statements, errors } = brs.Parser.parse(tokens);
         expect(errors.length).toEqual(0);
         expect(statements).toMatchSnapshot();
     });
 
     it("supports colon after return in single-line if statement", () => {
-        let { tokens } = brs.lexer.Lexer.scan(`
+        let { tokens } = brs.Lexer.scan(`
             if false : print "true" : end if
         `);
-        let { statements, errors } = brs.parser.Parser.parse(tokens);
+        let { statements, errors } = brs.Parser.parse(tokens);
         expect(errors.length).toEqual(0);
         expect(statements).toMatchSnapshot();
     });
 
     it("supports if elseif endif single line", () => {
-        let { tokens } = brs.lexer.Lexer.scan(`
+        let { tokens } = brs.Lexer.scan(`
             if true: print "8 worked": else if true: print "not run": else: print "not run": end if
         `);
-        let { statements, errors } = brs.parser.Parser.parse(tokens);
+        let { statements, errors } = brs.Parser.parse(tokens);
         expect(errors.length).toEqual(0);
         expect(statements).toMatchSnapshot();
     });
 
     it("supports one-line functions inside of one-line if statement", () => {
-        let { tokens } = brs.lexer.Lexer.scan(`
+        let { tokens } = brs.Lexer.scan(`
             if true then : test = sub() : print "yes" : end sub : end if
         `);
-        let { statements, errors } = brs.parser.Parser.parse(tokens);
+        let { statements, errors } = brs.Parser.parse(tokens);
         expect(errors.length).toEqual(0);
         expect(statements).toMatchSnapshot();
     });

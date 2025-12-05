@@ -1,5 +1,5 @@
 const brs = require("../../../packages/node/bin/brs.node");
-const { Lexeme } = brs.lexer;
+const { Lexeme } = brs;
 const { BrsString } = brs.types;
 
 const { token, EOF } = require("../ParserTests");
@@ -8,7 +8,7 @@ describe("parser print statements", () => {
     let parser;
 
     beforeEach(() => {
-        parser = new brs.parser.Parser();
+        parser = new brs.Parser();
     });
 
     it("parses singular print statements", () => {

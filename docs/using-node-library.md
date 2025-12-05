@@ -12,6 +12,7 @@ This guide explains how to use the `brs-node` library in your Node.js applicatio
     - [Executing BrightScript Files](#executing-brightscript-files)
       - [Complete Example](#complete-example)
     - [Executing BrightScript from In-Memory Files](#executing-brightscript-from-in-memory-files)
+      - [SceneGraph App Example](#scenegraph-app-example)
     - [Using the REPL Interpreter](#using-the-repl-interpreter)
     - [Handling Callbacks](#handling-callbacks)
     - [Working with SharedArrayBuffer](#working-with-sharedarraybuffer)
@@ -211,6 +212,87 @@ fileMap.set("lib/utils.brs", new Blob([libCode], { type: "text/plain" }));
     } catch (error) {
         console.error("Execution failed:", error);
     }
+})();
+```
+
+#### SceneGraph App Example
+
+For SceneGraph applications, organize files in the proper folder structure:
+
+```javascript
+const fileMap = new Map();
+
+// Manifest for SceneGraph app
+const manifest = `
+title=My SceneGraph App
+major_version=1
+minor_version=0
+ui_resolutions=hd
+splash_min_time=0
+`;
+fileMap.set("manifest", new Blob([manifest], { type: "text/plain" }));
+
+// Main application source (executed)
+const mainCode = `
+sub Main()
+    print "SceneGraph app starting..."
+
+    screen = CreateObject("roSGScreen")
+    m.port = CreateObject("roMessagePort")
+    screen.setMessagePort(m.port)
+
+    scene = screen.CreateScene("MainScene")
+    screen.show()
+
+    print "Scene created and displayed"
+
+    ' Event loop
+    while true
+        msg = wait(1000, m.port)
+        if msg <> invalid
+            if msg.isScreenClosed()
+                exit while
+            end if
+        else
+            exit while ' Timeout for demo
+        end if
+    end while
+end sub
+`;
+fileMap.set("source/main.brs", new Blob([mainCode], { type: "text/plain" }));
+
+// Scene component XML (packaged, not executed)
+const sceneXml = `<?xml version="1.0" encoding="utf-8" ?>
+<component name="MainScene" extends="Scene">
+    <children>
+        <Label id="titleLabel"
+               text="Hello SceneGraph!"
+               translation="[960, 540]"
+               horizAlign="center"
+               font="font:LargeSystemFont" />
+    </children>
+    <script type="text/brightscript" uri="MainScene.brs" />
+</component>`;
+fileMap.set("components/MainScene.xml", new Blob([sceneXml], { type: "text/xml" }));
+
+// Scene component script (packaged, not executed)
+const sceneBrs = `
+function init()
+    print "MainScene component initialized"
+    m.titleLabel = m.top.findNode("titleLabel")
+
+    if m.titleLabel <> invalid
+        m.titleLabel.text = "Hello from Component!"
+    end if
+end function
+`;
+fileMap.set("components/MainScene.brs", new Blob([sceneBrs], { type: "text/plain" }));
+
+// Execute SceneGraph app
+(async () => {
+    const payload = await brs.createPayloadFromFileMap(fileMap, deviceData);
+    const result = await brs.executeFile(payload);
+    // payload.pkgZip contains the complete app package
 })();
 ```
 
@@ -534,7 +616,7 @@ Creates an execution payload from BrightScript files.
 
 #### `createPayloadFromFileMap(fileMap, device, deepLink?)`
 
-Creates an execution payload from a map of file paths and Blob content. This is useful for executing BrightScript code from in-memory files (e.g., uploaded files, network resources).
+Creates an execution payload from a map of file paths and Blob content. This function automatically creates a ZIP package (in memory) containing all files and properly handles SceneGraph app structures.
 
 **Parameters:**
 
@@ -542,17 +624,51 @@ Creates an execution payload from a map of file paths and Blob content. This is 
 - `device: DeviceInfo` - Device configuration object
 - `deepLink?: Map<string, string>` - Deep link parameters
 
-**Returns:** `Promise<AppPayload>`
+**Returns:** `Promise<AppPayload>` - Payload with `pkgZip` containing all files
 
-**Example:**
+**File Handling Rules:**
+
+- **Files without folder**: Placed in `source/` folder and executed as main source code
+- **Files in `source/` folder**: Executed as main source code (including subfolders)
+- **Files in other folders** (e.g., `components/`, `images/`): Packaged in ZIP but not executed as source
+
+**SceneGraph Support:**
+
+- Component XML and BrightScript files in `components/` folder are packaged for SceneGraph runtime
+- Only `source/` folder BrightScript files are executed as main application code
+- Maintains proper separation between main source and component files
+
+**Examples:**
+
+Basic usage:
 
 ```javascript
 const fileMap = new Map();
-fileMap.set("source/main.brs", new Blob([brightScriptCode], { type: "text/plain" }));
+fileMap.set("main.brs", new Blob([brightScriptCode], { type: "text/plain" }));
 fileMap.set("manifest", new Blob([manifestContent], { type: "text/plain" }));
 
 const payload = await brs.createPayloadFromFileMap(fileMap, deviceData);
 const result = await brs.executeFile(payload);
+```
+
+SceneGraph app structure:
+
+```javascript
+const fileMap = new Map();
+
+// Main application (executed)
+fileMap.set("source/main.brs", new Blob([mainAppCode], { type: "text/plain" }));
+
+// SceneGraph components (packaged, not executed directly)
+fileMap.set("components/MyScene.xml", new Blob([sceneXmlCode], { type: "text/xml" }));
+fileMap.set("components/MyScene.brs", new Blob([sceneBrsCode], { type: "text/plain" }));
+
+// Assets (packaged as-is)
+fileMap.set("images/icon.png", new Blob([iconData], { type: "image/png" }));
+fileMap.set("manifest", new Blob([manifestContent], { type: "text/plain" }));
+
+const payload = await brs.createPayloadFromFileMap(fileMap, deviceData);
+// payload.pkgZip contains the complete app package
 ```
 
 #### `executeFile(payload, options?)`

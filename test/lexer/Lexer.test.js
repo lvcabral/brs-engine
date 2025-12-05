@@ -1,5 +1,4 @@
-const { lexer, types } = require("../../packages/node/bin/brs.node");
-const { Lexer, Lexeme } = lexer;
+const { Lexer, Lexeme, isToken, types } = require("../../packages/node/bin/brs.node");
 const { BrsString, Int32, Int64, Float, Double } = types;
 
 describe("lexer", () => {
@@ -612,8 +611,8 @@ describe("lexer", () => {
                 file: "SomeFile.brs",
             };
 
-            expect(lexer.isToken({ kind: Lexeme.And, text: "and", location: location })).toBe(true);
-            expect(lexer.isToken({ text: "and", location: location })).toBe(false);
+            expect(isToken({ kind: Lexeme.And, text: "and", location: location })).toBe(true);
+            expect(isToken({ text: "and", location: location })).toBe(false);
         });
     });
 }); // lexer

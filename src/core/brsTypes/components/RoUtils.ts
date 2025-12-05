@@ -3,6 +3,7 @@ import { BrsComponent } from "./BrsComponent";
 import { BrsType, RoArray, RoAssociativeArray, RoInvalid } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
+import { isSceneGraphNode } from "../../extensions";
 
 export class RoUtils extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -29,7 +30,7 @@ export class RoUtils extends BrsComponent implements BrsValue {
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter, data: BrsType) => {
-            if (data instanceof RoArray || data instanceof RoAssociativeArray) {
+            if (data instanceof RoArray || data instanceof RoAssociativeArray || isSceneGraphNode(data)) {
                 return data.deepCopy();
             }
             return new RoInvalid();

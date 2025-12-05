@@ -1,6 +1,6 @@
 {
   "name": "brs-engine",
-  "version": "1.10.0",
+  "version": "2.0.0",
   "title": "BrightScript Simulation Engine",
   "description": "BrightScript Simulation Engine - Run Roku apps on Browsers and Electron",
   "author": "Marcelo Lv Cabral <marcelo@lvcabral.com> (https://lvcabral.com/)",
@@ -28,7 +28,7 @@
   ],
   "main": "lib/brs.api.js",
   "browser": "lib/brs.api.js",
-  "typings": "types/src/api/index.d.ts",
+  "typings": "types/src/index.d.ts",
   "files": [
     "assets/",
     "lib/brs.worker.js",
@@ -70,6 +70,7 @@
     "mp3-parser": "^0.3.0",
     "nanomatch": "^1.2.13",
     "opentype.js": "^1.3.4",
+    "p-settle": "^5.1.1",
     "path-browserify": "^1.0.1",
     "path-parse": "^1.0.6",
     "readable-stream": "^4.3.0",

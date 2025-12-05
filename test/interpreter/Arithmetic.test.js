@@ -1,10 +1,7 @@
 const brs = require("../../packages/node/bin/brs.node");
-const { Expr, Stmt } = brs.parser;
-
 const { token } = require("../parser/ParserTests");
 const { binary } = require("./InterpreterTests");
-const { Lexeme } = brs.lexer;
-const { Interpreter } = brs;
+const { Interpreter, Lexeme, Expr, Stmt } = brs;
 
 let interpreter;
 

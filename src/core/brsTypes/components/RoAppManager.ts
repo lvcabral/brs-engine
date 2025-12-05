@@ -132,10 +132,10 @@ export class RoAppManager extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.Object,
         },
-        impl: (interpreter: Interpreter) => {
+        impl: (_: Interpreter) => {
             const app = BrsDevice.deviceInfo.appList?.find((app: AppData) => app.running);
             const exitInfo = {
-                exit_code: app?.exitReason ?? AppExitReason.UNKNOWN,
+                exit_code: app?.exitReason ?? AppExitReason.Unknown,
                 media_player_state: "stopped",
                 mem_limit: null,
                 timestamp: app?.exitTime ? new Date(app.exitTime).toISOString() : null,

@@ -36,16 +36,20 @@ export class BrsComponent {
     }
 
     protected registerMethods(interfaces: Record<string, Callable[]>) {
-        this.methods.clear();
         for (const [interfaceName, methods] of Object.entries(interfaces)) {
             const methodNames = new Set(
                 methods.filter((m) => m.name?.toLowerCase()).map((m) => m.name?.toLowerCase()!)
             );
             this.interfaces.set(interfaceName.toLowerCase(), new BrsInterface(interfaceName, methodNames));
 
-            for (const m of methods) {
-                this.methods.set((m.name ?? "").toLowerCase(), m);
-            }
+            this.appendMethods(methods);
+        }
+    }
+
+    /** Given a list of methods, appends all of them to the component. */
+    appendMethods(methods: Callable[]) {
+        for (const m of methods) {
+            this.methods.set((m.name || "").toLowerCase(), m);
         }
     }
 
@@ -84,6 +88,7 @@ export class BrsComponent {
             }
             this.dispose();
         }
+        return this.references;
     }
 
     dispose() {

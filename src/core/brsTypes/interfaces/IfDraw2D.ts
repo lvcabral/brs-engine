@@ -47,13 +47,79 @@ export class IfDraw2D {
         y: number,
         scaleX: number,
         scaleY: number,
-        object: BrsComponent,
-        rgba?: number
+        object: RoBitmap,
+        rgba?: number,
+        opacity?: number
     ): boolean {
         const ctx = this.component.getContext();
+        rgba = combineRgbaOpacity(rgba, opacity);
         const didDraw = this.component.drawImage(object, x, y, scaleX, scaleY, rgba);
         ctx.globalAlpha = 1.0;
         return didDraw;
+    }
+
+    doDrawCroppedBitmap(object: RoBitmap, sourceRect: Rect, destRect: Rect, rgba?: number, opacity?: number): boolean {
+        const ctx = this.component.getContext();
+        rgba = combineRgbaOpacity(rgba, opacity);
+        const image = getCanvasFromDraw2d(object, rgba);
+        ctx.save();
+        // Set context properties (alpha blending, smoothing)
+        setContextAlpha(ctx, rgba);
+        const smoothing = object.scaleMode === 1;
+        ctx.imageSmoothingEnabled = smoothing;
+        if (smoothing && "imageSmoothingQuality" in ctx) {
+            ctx.imageSmoothingQuality = "high";
+        }
+        // Draw the cropped and scaled image using ctx.drawImage directly
+        const chunk: DrawChunk = {
+            sx: sourceRect.x,
+            sy: sourceRect.y,
+            sw: sourceRect.width,
+            sh: sourceRect.height,
+            dx: destRect.x,
+            dy: destRect.y,
+            dw: destRect.width,
+            dh: destRect.height,
+        };
+        drawChunk(ctx, image, chunk);
+        ctx.restore();
+        this.component.makeDirty();
+        return true;
+    }
+
+    doDrawRotatedBitmap(
+        x: number,
+        y: number,
+        scaleX: number,
+        scaleY: number,
+        rotation: number,
+        object: RoBitmap,
+        centerX?: number,
+        centerY?: number,
+        rgba?: number,
+        opacity?: number
+    ) {
+        const baseX = this.component.x;
+        const baseY = this.component.y;
+        const ctx = this.component.getContext();
+        rgba = combineRgbaOpacity(rgba, opacity);
+        ctx.save();
+        const rotationCenterX = centerX ?? 0;
+        const rotationCenterY = centerY ?? 0;
+        // Apply translation for centering, regardless of rotation
+        ctx.translate(baseX + x + rotationCenterX, baseY + y + rotationCenterY);
+        // Apply rotation only if necessary
+        if (rotation !== 0) {
+            ctx.rotate(-rotation);
+        }
+        // Apply scaling
+        ctx.scale(scaleX, scaleY);
+        // Translate back to the origin after scaling and rotation
+        ctx.translate(-rotationCenterX / scaleX, -rotationCenterY / scaleY);
+        // Draw Bitmap
+        this.component.drawImage(object, 0, 0, 1, 1, rgba);
+        ctx.restore();
+        this.component.makeDirty();
     }
 
     doDrawRotatedRect(rect: Rect, rgba: number, rotation: number, center?: number[], opacity: number = 1.0) {
@@ -76,6 +142,15 @@ export class IfDraw2D {
         ctx.fillRect(0, 0, rect.width, rect.height); // Draw the rectangle at the origin
         ctx.restore();
         this.component.makeDirty();
+    }
+
+    doDrawClearedRect(rect: Rect) {
+        const baseX = this.component.x + rect.x;
+        const baseY = this.component.y + rect.y;
+        const ctx = this.component.getContext();
+        ctx.save();
+        ctx.clearRect(baseX, baseY, rect.width, rect.height);
+        ctx.restore();
     }
 
     doDrawText(text: string, x: number, y: number, rgba: number, opacity: number, font: RoFont) {
@@ -141,6 +216,89 @@ export class IfDraw2D {
         ctx.restore();
     }
 
+    drawNinePatch(bitmap: RoBitmap, rect: Rect, rgba?: number, opacity?: number) {
+        const ctx = this.component.getContext();
+        rgba = combineRgbaOpacity(rgba, opacity);
+        const image = getCanvasFromDraw2d(bitmap, rgba);
+        const patchSizes = bitmap.getPatchSizes();
+        const x = rect.x;
+        const y = rect.y;
+        const width = rect.width;
+        const height = rect.height;
+        const sw = image.width;
+        const sh = image.height;
+
+        const lw = patchSizes.horizontal; // Left Width
+        const rw = patchSizes.horizontal; // Right Width (assuming symmetric)
+        const th = patchSizes.vertical; // Top Height
+        const bh = patchSizes.vertical; // Bottom Height (assuming symmetric)
+
+        const cw = Math.max(0, sw - 2 - lw - rw); // Center source width (drawable area)
+        const ch = Math.max(0, sh - 2 - th - bh); // Center source height (drawable area)
+        const targetCW = Math.max(0, width - lw - rw); // Target center width
+        const targetCH = Math.max(0, height - th - bh); // Target center height
+
+        const drawPart = (
+            sx: number,
+            sy: number,
+            sw: number,
+            sh: number,
+            dx: number,
+            dy: number,
+            dw: number,
+            dh: number
+        ) => {
+            // Ensure destination coords/dims are integers to potentially avoid sub-pixel gaps/overlaps
+            const i_dx = Math.round(dx);
+            const i_dy = Math.round(dy);
+            const i_dw = Math.round(dw);
+            const i_dh = Math.round(dh);
+            // Only draw if source and rounded destination dimensions are positive
+            if (sw > 0 && sh > 0 && i_dw > 0 && i_dh > 0) {
+                drawChunk(ctx, image, { sx, sy, sw, sh, dx: i_dx, dy: i_dy, dw: i_dw, dh: i_dh });
+            }
+        };
+
+        ctx.save();
+        // Set context properties (alpha blending, smoothing)
+        setContextAlpha(ctx, rgba);
+        const smoothing = bitmap.scaleMode === 1;
+        ctx.imageSmoothingEnabled = smoothing;
+        if (smoothing && "imageSmoothingQuality" in ctx) {
+            ctx.imageSmoothingQuality = "high";
+        }
+
+        // Top-left corner
+        drawPart(1, 1, lw, th, x, y, lw, th);
+
+        // Top edge
+        drawPart(1 + lw, 1, cw, th, x + lw, y, targetCW, th);
+
+        // Top-right corner
+        drawPart(sw - 1 - rw, 1, rw, th, x + width - rw, y, rw, th);
+
+        // Left edge
+        drawPart(1, 1 + th, lw, ch, x, y + th, lw, targetCH);
+
+        // Center
+        drawPart(1 + lw, 1 + th, cw, ch, x + lw, y + th, targetCW, targetCH);
+
+        // Right edge
+        drawPart(sw - 1 - rw, 1 + th, rw, ch, x + width - rw, y + th, rw, targetCH);
+
+        // Bottom-left corner
+        drawPart(1, sh - 1 - bh, lw, bh, x, y + height - bh, lw, bh);
+
+        // Bottom edge
+        drawPart(1 + lw, sh - 1 - bh, cw, bh, x + lw, y + height - bh, targetCW, bh);
+
+        // Bottom-right corner
+        drawPart(sw - 1 - rw, sh - 1 - bh, rw, bh, x + width - rw, y + height - bh, rw, bh);
+
+        ctx.restore();
+        this.component.makeDirty();
+    }
+
     /** Clear the bitmap, and fill with the specified RGBA color */
     readonly clear = new Callable("clear", {
         signature: {
@@ -148,7 +306,7 @@ export class IfDraw2D {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, rgba: Int32) => {
-            this.component.clearCanvas(rgba.getValue());
+            this.doClearCanvas(rgba.getValue());
             return BrsInvalid.Instance;
         },
     });
@@ -227,7 +385,6 @@ export class IfDraw2D {
             object: BrsComponent,
             rgba: Int32 | BrsInvalid
         ) => {
-            const ctx = this.component.getContext();
             const didDraw = this.component.drawImage(
                 object,
                 x.getValue(),
@@ -236,7 +393,6 @@ export class IfDraw2D {
                 scaleY.getValue(),
                 rgba instanceof Int32 ? rgba.getValue() : undefined
             );
-            ctx.globalAlpha = 1.0;
             return BrsBoolean.from(didDraw);
         },
     });
@@ -347,16 +503,16 @@ export class IfDraw2D {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, x: Int32, y: Int32, width: Int32, height: Int32, rgba: Int32) => {
-            const baseX = this.component.x;
-            const baseY = this.component.y;
+            const baseX = this.component.x + x.getValue();
+            const baseY = this.component.y + y.getValue();
             const ctx = this.component.getContext();
             if (this.component instanceof RoScreen && !this.component.getCanvasAlpha()) {
-                ctx.clearRect(x.getValue(), y.getValue(), width.getValue(), height.getValue());
+                ctx.clearRect(baseX, baseY, width.getValue(), height.getValue());
                 ctx.fillStyle = rgbaIntToHex(rgba.getValue(), true);
             } else {
                 ctx.fillStyle = rgbaIntToHex(rgba.getValue(), this.component.getCanvasAlpha());
             }
-            ctx.fillRect(baseX + x.getValue(), baseY + y.getValue(), width.getValue(), height.getValue());
+            ctx.fillRect(baseX, baseY, width.getValue(), height.getValue());
             this.component.makeDirty();
             return BrsBoolean.True;
         },
@@ -375,14 +531,7 @@ export class IfDraw2D {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, text: BrsString, x: Int32, y: Int32, rgba: Int32, font: RoFont) => {
-            const baseX = this.component.x;
-            const baseY = this.component.y;
-            const ctx = this.component.getContext();
-            ctx.fillStyle = rgbaIntToHex(rgba.getValue(), this.component.getCanvasAlpha());
-            ctx.font = font.toFontString();
-            ctx.textBaseline = "top";
-            ctx.fillText(text.value, baseX + x.getValue(), baseY + y.getValue() + font.getTopAdjust());
-            this.component.makeDirty();
+            this.doDrawText(text.value, x.getValue(), y.getValue(), rgba.getValue(), 1, font);
             return BrsBoolean.True;
         },
     });
@@ -503,6 +652,7 @@ export interface BrsDraw2D {
     readonly y: number;
     readonly width: number;
     readonly height: number;
+    scaleMode: number;
 
     clearCanvas(rgba: number): void;
 
@@ -715,7 +865,7 @@ export function drawObjectToComponent(
     scaleX: number = 1,
     scaleY: number = 1,
     rgba?: number,
-    scaleMode: number = 0
+    scaleMode?: number
 ): boolean {
     const ctx = component.getContext();
     const alphaEnable = component.getCanvasAlpha();
@@ -730,10 +880,10 @@ export function drawObjectToComponent(
         return false;
     }
 
-    if (object instanceof RoRegion) {
-        ctx.imageSmoothingEnabled = object.getRegionScaleMode() === 1;
-    } else {
-        ctx.imageSmoothingEnabled = scaleMode === 1;
+    const smoothing = (scaleMode ?? object.scaleMode) === 1;
+    ctx.imageSmoothingEnabled = smoothing;
+    if (smoothing && "imageSmoothingQuality" in ctx) {
+        ctx.imageSmoothingQuality = "high";
     }
 
     const destOffset = getDrawOffset(component);
@@ -750,6 +900,29 @@ export function drawObjectToComponent(
         drawChunk(ctx, image, chunk);
     }
     return true;
+}
+
+export function drawBitmapOnBitmap(source: RoBitmap, destiny: RoBitmap, scaleMode?: number) {
+    const canvas = source.getCanvas();
+    const ctx = destiny.getContext();
+    ctx.save();
+    const smoothing = (scaleMode ?? destiny.scaleMode) === 1;
+    ctx.imageSmoothingEnabled = smoothing;
+    if (smoothing && "imageSmoothingQuality" in ctx) {
+        ctx.imageSmoothingQuality = "high";
+    }
+    const chunk = {
+        sx: 0,
+        sy: 0,
+        sw: source.width,
+        sh: source.height,
+        dx: 0,
+        dy: 0,
+        dw: destiny.width,
+        dh: destiny.height,
+    };
+    drawChunk(ctx, canvas, chunk);
+    ctx.restore();
 }
 
 export function drawImageToContext(
@@ -853,7 +1026,6 @@ export function rgbaToOpaque(rgba: number): number {
     return rgba - (rgba & 0xff) + 0xff;
 }
 
-// Returns true if both rectangles intersect
 export function RectRect(rect1: Rect, rect2: Rect): boolean {
     return (
         rect1.x < rect2.x + rect2.width &&
@@ -863,7 +1035,7 @@ export function RectRect(rect1: Rect, rect2: Rect): boolean {
     );
 }
 
-// Returns true if the rectangle and circle are colliding
+// return true if the rectangle and circle are colliding
 // from: https://stackoverflow.com/questions/21089959/detecting-collision-of-rectangle-with-circle
 export function RectCircle(rect: Rect, circle: Circle): boolean {
     const distX = Math.abs(circle.x - rect.x - rect.width / 2);
@@ -888,7 +1060,6 @@ export function RectCircle(rect: Rect, circle: Circle): boolean {
     return dx * dx + dy * dy <= circle.r * circle.r;
 }
 
-// Returns true if both circles intersect
 // ported from: https://github.com/Romans-I-XVI/monoEngine/blob/master/MonoEngine/CollisionChecking.cs
 export function CircleCircle(circle1: Circle, circle2: Circle): boolean {
     const distanceX = circle1.x - circle2.x;

@@ -1,5 +1,5 @@
 const brs = require("../../../packages/node/bin/brs.node");
-const { Lexeme } = brs.lexer;
+const { Lexeme } = brs;
 const { BrsString, Int32 } = brs.types;
 
 const { token, identifier, EOF } = require("../ParserTests");
@@ -8,7 +8,7 @@ describe("parser associative array literals", () => {
     let parser;
 
     beforeEach(() => {
-        parser = new brs.parser.Parser();
+        parser = new brs.Parser();
     });
 
     describe("empty associative arrays", () => {

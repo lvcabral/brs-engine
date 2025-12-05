@@ -18,14 +18,24 @@ import { Canvas, ImageData, createCanvas } from "canvas";
 import chalk from "chalk";
 import { Command } from "commander";
 import stripAnsi from "strip-ansi";
-import { deviceData, loadAppZip, updateAppZip, subscribePackage, mountExt, setupDeepLink } from "../api/package";
+import { deviceData, loadAppZip, updateAppZip, subscribePackage, mountExt, setupDeepLink } from "./package";
 import { isNumber } from "../api/util";
-import { debugPrompt, dataBufferIndex, dataBufferSize, AppPayload, AppExitReason, AppData } from "../core/common";
+import {
+    debugPrompt,
+    dataBufferIndex,
+    dataBufferSize,
+    AppPayload,
+    AppExitReason,
+    AppData,
+    SupportedExtension,
+} from "../core/common";
 import packageInfo from "../../packages/node/package.json";
 // @ts-ignore
 import * as brs from "./brs.node.js";
 
 // Constants
+declare const __non_webpack_require__: NodeJS.Require;
+const loadModule = typeof __non_webpack_require__ === "function" ? __non_webpack_require__ : eval("require");
 const program = new Command();
 const paths = envPaths("brs", { suffix: "cli" });
 const defaultLevel = chalk.level;
@@ -54,6 +64,7 @@ program
     .option("-p, --pack <password>", "The password to generate the encrypted package.", "")
     .option("-o, --out <directory>", "The directory to save the encrypted package file.", "./")
     .option("-r, --root <directory>", "The root directory from which `pkg:` paths will be resolved.")
+    .option("-n, --no-sg", "Disable the SceneGraph extension.")
     .option("-x, --ext-root <directory>", "The root directory from which `ext1:` paths will be resolved.")
     .option("-f, --ext-file <file>", "The zip file to mount as `ext1:` volume. (takes precedence over -x)")
     .option("-k, --deep-link <params>", "Parameters to be passed to the application. (format: key=value,...)")
@@ -74,16 +85,19 @@ program
                 console.error(chalk.red(`Unable to get the Network Gateway: ${err.message}`));
             }
             deviceData.connectionInfo.dns = dns.getServers();
-            deviceData.stopOnCrash = program.debug ?? false;
+            deviceData.debugOnCrash = program.debug ?? false;
             if (program.registry) {
                 deviceData.registry = getRegistry();
             }
             deviceData.appList = new Array<AppData>();
         }
+        if (program.sg) {
+            await loadSceneGraphExtension();
+        }
         subscribePackage("cli", packageCallback);
         brs.registerCallback(messageCallback, sharedBuffer);
         if (brsFiles.length > 0) {
-            runAppFiles(brsFiles);
+            await runAppFiles(brsFiles);
         } else {
             displayTitle();
             repl();
@@ -93,8 +107,9 @@ program
     .parse(process.argv);
 
 /**
- * Check the CLI parameters and set the default values.
- *  @returns true if the parameters are valid, false otherwise.
+ * Validates and normalizes CLI parameters.
+ * Sets default values for color level, ASCII mode, and validates file paths.
+ * @returns True if all parameters are valid, false otherwise
  */
 function checkParameters() {
     if (isNumber(program.colors) && program.colors >= 0 && program.colors <= 3) {
@@ -134,10 +149,25 @@ function checkParameters() {
 }
 
 /**
- * Run the BrightScript files or the App package file.
- * @param files the list of files to run.
+ * Dynamically load the SceneGraph extension module.
  */
-function runAppFiles(files: string[]) {
+async function loadSceneGraphExtension() {
+    try {
+        const sgLib = "brs-sg.node.js";
+        const sg = await loadModule(path.join(__dirname, sgLib));
+        brs.registerExtension(() => new sg.BrightScriptExtension());
+        deviceData.extensions = new Map([[SupportedExtension.SceneGraph, sgLib]]);
+    } catch (err: any) {
+        console.error(chalk.red(`Error loading SceneGraph extension: ${err.message}`));
+    }
+}
+
+/**
+ * Executes BrightScript files or application packages (.zip/.bpk).
+ * Handles package creation if password is provided, otherwise runs the app.
+ * @param files - Array of file paths to execute (first file is used)
+ */
+async function runAppFiles(files: string[]) {
     try {
         const filePath = files[0];
         const fileName = filePath.split(/.*[/|\\]/)[1] ?? filePath;
@@ -162,7 +192,7 @@ function runAppFiles(files: string[]) {
         }
         // Run BrightScript files
         deviceData.appList?.push({ id: "dev", title: fileName, version: "1.0.0" });
-        const payload = brs.createPayloadFromFiles(
+        const payload = await brs.createPayloadFromFiles(
             files,
             deviceData,
             processDeepLink(),
@@ -182,6 +212,11 @@ function runAppFiles(files: string[]) {
     }
 }
 
+/**
+ * Parses deep link parameters from command line arguments.
+ * Expects format: key=value,key2=value2
+ * @returns Map containing the deep link key-value pairs
+ */
 function processDeepLink() {
     const deepLinkMap: Map<string, string> = new Map();
     const deepLinkParams = program.deepLink?.split(",");
@@ -199,8 +234,8 @@ function processDeepLink() {
 }
 
 /**
- * Display the CLI application title on the console
- *
+ * Displays the CLI application title and version on the console.
+ * Shows dev indicator in debug builds.
  */
 function displayTitle() {
     const appTitle = `${packageInfo.title} CLI`;
@@ -213,9 +248,9 @@ function displayTitle() {
 }
 
 /**
- * Execute the app payload or generate an encrypted app package
- * if a password is passed with parameter --pack.
- *
+ * Executes the application payload or generates an encrypted package.
+ * Initializes ECP worker if enabled, then runs the app or creates .bpk file.
+ * @param payload - The application payload containing code, device info, and options
  */
 async function runApp(payload: AppPayload) {
     payload.password = program.pack;
@@ -243,7 +278,7 @@ async function runApp(payload: AppPayload) {
         if (program.ecp) {
             brsWorker?.terminate();
         }
-        if (pkg.exitReason === AppExitReason.PACKAGED) {
+        if (pkg.exitReason === AppExitReason.Packaged) {
             // Generate the Encrypted App Package
             const filePath = path.join(program.out, appFileName.replace(/.zip/gi, ".bpk"));
             try {
@@ -260,7 +295,7 @@ async function runApp(payload: AppPayload) {
             }
         } else {
             const msg = `------ Finished '${appFileName}' execution [${pkg.exitReason}] ------\n`;
-            if (pkg.exitReason === AppExitReason.FINISHED) {
+            if (pkg.exitReason === AppExitReason.UserNav) {
                 console.log(chalk.blueBright(msg));
             } else {
                 process.exitCode = 1;
@@ -273,8 +308,10 @@ async function runApp(payload: AppPayload) {
     }
 }
 
-/** Get the computer local Ips
- * @returns an Array of IPs
+/**
+ * Retrieves all local IPv4 addresses from network interfaces.
+ * Excludes internal (127.0.0.1) addresses and handles multiple IPs per interface.
+ * @returns Array of strings in format "interface,ip" or "interface:alias,ip"
  */
 function getLocalIps() {
     const ifaces = os.networkInterfaces();
@@ -303,8 +340,9 @@ function getLocalIps() {
 }
 
 /**
- * Get the Registry data from disk
- * @returns the Map containing the persisted registry content
+ * Loads persisted registry data from disk.
+ * Filters out transient entries (keys with .Transient section).
+ * @returns Map containing the persisted registry key-value pairs
  */
 function getRegistry(): Map<string, string> {
     let registry = new Map<string, string>();
@@ -327,10 +365,8 @@ function getRegistry(): Map<string, string> {
 }
 
 /**
- * Launches an interactive read-execute-print loop, which reads input from
- * `stdin` and executes it.
- *
- * **NOTE:** Currently limited to single-line inputs :(
+ * Launches an interactive read-execute-print loop (REPL).
+ * Reads input from stdin and executes BrightScript expressions.
  */
 async function repl() {
     const replInterpreter = await brs.getReplInterpreter({
@@ -339,6 +375,9 @@ async function repl() {
         root: program.root,
         ext: program.extRoot,
     });
+    if (!replInterpreter) {
+        return;
+    }
     const rl = readline.createInterface({
         input: process.stdin,
         output: process.stdout,
@@ -359,7 +398,7 @@ async function repl() {
             process.stdout.write(chalk.cyanBright(`ext1:     ${extPath}\n`));
             process.stdout.write(chalk.cyanBright(`tmp:      [In Memory]\n`));
             process.stdout.write(chalk.cyanBright(`cachefs:  [In Memory]\n`));
-            process.stdout.write(chalk.cyanBright(`common:   [In Memory]\n`));
+            process.stdout.write(chalk.cyanBright(`common:   [Read Only]\n`));
         } else if (["var", "vars"].includes(line.split(" ")[0]?.toLowerCase().trim())) {
             const scopeName = line.split(" ")[1]?.toLowerCase().trim() ?? "function";
             let scope = 2; // Function scope
@@ -375,6 +414,16 @@ async function repl() {
             const variables = replInterpreter.formatVariables(scope).trimEnd();
             process.stdout.write(chalk.cyanBright(variables));
             process.stdout.write("\n");
+        } else if (["xt", "ext"].includes(line.toLowerCase().trim())) {
+            const extensions = deviceData.extensions;
+            process.stdout.write(chalk.cyanBright(`\nLoaded Extensions:\n\n`));
+            if (extensions && extensions.size > 0) {
+                for (const [ext, path] of extensions) {
+                    process.stdout.write(chalk.cyanBright(`${ext}: ${path}\n`));
+                }
+            } else {
+                process.stdout.write(chalk.cyanBright() + "No extensions loaded.\n");
+            }
         } else {
             brs.executeLine(line, replInterpreter);
         }
@@ -385,8 +434,10 @@ async function repl() {
 }
 
 /**
- * Callback function to receive the messages from the packager.
- *
+ * Callback function for receiving messages from the packager.
+ * Handles error and warning events by displaying them with appropriate colors.
+ * @param event - The event type (error, warning, etc.)
+ * @param data - The message data to display
  */
 function packageCallback(event: string, data: any) {
     if (["error", "warning"].includes(event)) {
@@ -399,8 +450,10 @@ function packageCallback(event: string, data: any) {
 }
 
 /**
- * Callback function to receive the messages from the Interpreter.
- *
+ * Callback function for receiving messages from the interpreter.
+ * Handles string messages, ImageData for ASCII rendering, and registry Map for persistence.
+ * @param message - The message from interpreter (string, ImageData, or Map)
+ * @param _ - Unused parameter
  */
 function messageCallback(message: any, _?: any) {
     if (typeof message === "string") {
@@ -432,8 +485,9 @@ function messageCallback(message: any, _?: any) {
 }
 
 /**
- * Handles String Callback messages
- * @param message the message to parse and display
+ * Parses and displays string messages from the interpreter.
+ * Message format: "type,content" where type is print, warning, error, end, etc.
+ * @param message - The message string to parse and display
  */
 function handleStringMessage(message: string) {
     const mType = message.split(",")[0];
@@ -447,7 +501,7 @@ function handleStringMessage(message: string) {
     } else if (mType === "error") {
         console.error(chalk.red(msg.trimEnd()));
         process.exitCode = 1;
-    } else if (mType === "end" && msg.trimEnd() !== AppExitReason.FINISHED) {
+    } else if (mType === "end" && msg.trimEnd() !== AppExitReason.UserNav) {
         process.exitCode = 1;
     } else if (!["start", "debug", "reset", "video", "audio", "syslog", "end"].includes(mType)) {
         console.info(chalk.blueBright(message.trimEnd()));
@@ -455,8 +509,10 @@ function handleStringMessage(message: string) {
 }
 
 /**
- * Colorizes the console messages.
- *
+ * Applies color formatting to console messages using chalk.
+ * Highlights keywords, numbers, emails, URLs, and quoted strings with different colors.
+ * @param log - The log message to colorize
+ * @returns The colorized string with ANSI color codes
  */
 function colorize(log: string) {
     return log
@@ -489,6 +545,7 @@ function printHelp() {
     helpMsg += "   print|?           Print variable value or expression\r\n";
     helpMsg += "   var|vars [scope]  Display variables and their types/values\r\n";
     helpMsg += "   vol|vols          Display file system mounted volumes\r\n";
+    helpMsg += "   xt|ext            Display loaded extensions\r\n";
     helpMsg += "   help|hint         Show this REPL command list\r\n";
     helpMsg += "   clear|cls         Clear terminal screen\r\n";
     helpMsg += "   exit|quit|q       Terminate REPL session\r\n\r\n";
@@ -497,10 +554,11 @@ function printHelp() {
 }
 
 /**
- * Prints the ASCII screen on the console.
- * @param columns the number of columns to print the ASCII screen.
- * @param image the Canvas object with the screen image.
- * Code adapted from: https://github.com/victorqribeiro/imgToAscii
+ * Converts and prints an image as ASCII art on the console.
+ * Uses grayscale values to map pixels to ASCII characters.
+ * @param columns - The number of columns for ASCII output
+ * @param image - The Canvas object containing the screen image
+ * @remarks Code adapted from: https://github.com/victorqribeiro/imgToAscii
  */
 function printAsciiScreen(columns: number, image: Canvas) {
     const alphabet = ["@", "%", "#", "*", "+", "=", "-", ":", ".", " "];

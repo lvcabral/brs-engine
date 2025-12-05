@@ -1,0 +1,11 @@
+export * from "./core";
+export * from "./core/brsTypes";
+export * from "./core/interpreter";
+export * from "./core/error/BrsError";
+export * from "./core/error/ArgumentMismatch";
+export * from "./core/common";
+export * from "./core/device/BrsDevice";
+export * from "./core/brsTypes/components/RoFontRegistry";
+export * from "./core/device/FileSystem";
+export * from "./core/extensions";
+export { default as SharedObject } from "./core/SharedObject";

@@ -20,17 +20,27 @@ export interface FontMetrics {
     weight: string;
 }
 
+interface FontsConfig {
+    default: {
+        regular: string;
+        bold: string;
+        italic: string;
+        boldItalic: string;
+    };
+}
+
 // Singleton instance of Font Registry
 let fontRegistry: RoFontRegistry;
 
 export class RoFontRegistry extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
     readonly canvas: BrsCanvas;
+    readonly fontsConfig: FontsConfig;
     private readonly defaultFontSize = 40;
     private readonly fallbackFontFamily = "Arial, Helvetica, sans-serif";
     private readonly defaultFontFamilies: { regular: string; bold: string; italic: string; boldItalic: string };
     private readonly fontRegistry: Map<string, FontMetrics[]>;
-    private readonly fontPaths: Map<string, string> = new Map();
+    private readonly fontPaths: Map<string, string>;
 
     constructor() {
         super("roFontRegistry");
@@ -44,14 +54,25 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
                 // this.get, ---> Deprecated as only needed to roImageCanvas
             ],
         });
-        const defaultFont = "DejaVuSansCondensed";
+
+        // Initialize font registry maps
         this.fontRegistry = new Map();
+        this.fontPaths = new Map();
+
+        // Load fonts from common file system
+        const fsys = BrsDevice.fileSystem;
+        const fontsJson = fsys.readFileSync("common:/fonts/default-fonts.json", "utf-8");
+        this.fontsConfig = JSON.parse(fontsJson);
+
+        // Draw2D default fonts
         this.defaultFontFamilies = {
-            regular: this.registerFont(`common:/Fonts/${defaultFont}.ttf`, true),
-            bold: this.registerFont(`common:/Fonts/${defaultFont}-Bold.ttf`, true),
-            italic: this.registerFont(`common:/Fonts/${defaultFont}-Oblique.ttf`, true),
-            boldItalic: this.registerFont(`common:/Fonts/${defaultFont}-BoldOblique.ttf`, true),
+            regular: this.registerFont(`common:/Fonts/${this.fontsConfig.default.regular}`, true),
+            bold: this.registerFont(`common:/Fonts/${this.fontsConfig.default.bold}`, true),
+            italic: this.registerFont(`common:/Fonts/${this.fontsConfig.default.italic}`, true),
+            boldItalic: this.registerFont(`common:/Fonts/${this.fontsConfig.default.boldItalic}`, true),
         };
+
+        // Create a canvas for measuring text
         this.canvas = createNewCanvas(10, 10);
     }
 

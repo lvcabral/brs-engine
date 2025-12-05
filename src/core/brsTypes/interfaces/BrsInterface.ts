@@ -13,6 +13,10 @@ export class BrsInterface implements BrsValue {
         this.methodNames = new Set(Array.from(methods).map((method) => method.toLowerCase()));
     }
 
+    getInterfaceName(): string {
+        return this.name;
+    }
+
     hasMethod(method: string): boolean {
         return this.methodNames.has(method.toLowerCase());
     }

@@ -2,7 +2,7 @@
 
 An interpreter for the BrightScript language that runs Roku apps in browser-based platforms.
 
-[![NPM Version](https://img.shields.io/npm/v/brs-engine?logo=npm&label=brs-engine)](https://npmjs.org/package/brs-engine)
+[![NPM Version (with dist tag)](https://img.shields.io/npm/v/brs-engine/alpha?logo=npm&label=brs-engine&color=blue)](https://npmjs.org/package/brs-engine)
 [![License](https://img.shields.io/github/license/lvcabral/brs-engine?logo=github)](https://github.com/lvcabral/brs-engine/blob/master/LICENSE)
 [![Build](https://github.com/lvcabral/brs-engine/actions/workflows/build.yml/badge.svg)](https://github.com/lvcabral/brs-engine/actions/workflows/build.yml)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=lvcabral_brs-emu&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=lvcabral_brs-emu)
@@ -16,7 +16,7 @@ This package includes a **Web Worker** library and an **Engine API** library for
 >
 > Since v1.9.0, this package no longer brings the **CLI** app and **Node.js** libraries for the **simulation engine**, for those use cases we created the new [brs-node](https://www.npmjs.com/package/brs-node) package. Check it out!
 
-<p align="center"><img alt="Simulator Web and Desktop" title="Simulator Web and Desktop" src="https://github.com/lvcabral/brs-engine/blob/master/docs/images/screenshots.png?raw=true"/></p>
+<p align="center"><img alt="Simulator Web and Desktop" title="Simulator Web and Desktop" src="https://raw.githubusercontent.com/lvcabral/brs-engine/refs/heads/scenegraph/docs/images/screenshots.png"/></p>
 
 ## Key Features
 
@@ -32,8 +32,9 @@ This package includes a **Web Worker** library and an **Engine API** library for
 
 - Full BrightScript language interpreter, with specs aligned up to Roku OS 15.0
 - **Draw 2D API** - Full support for the BrightScript 2D drawing components
-- **Video Playback** - Via `roVideoPlayer`
-- **Audio Playback** - Via `roAudioResources` and `roAudioPlayer`
+- **SceneGraph Framework** - Experimental support for the BrightScript SceneGraph components
+- **Video Playback** - Via `roVideoPlayer` and `Video` node
+- **Audio Playback** - Via `roAudioResources`, `roAudioPlayer` and `Audio` node
 - **Image Processing** - Support for PNG, JPEG, GIF, BMP and WEBP formats
 
 ### 📺 Device Simulation
@@ -46,9 +47,14 @@ This package includes a **Web Worker** library and an **Engine API** library for
 - **Localization** - Language and region settings
 - **Customization** - You can customize device features and behaviors, see [docs](https://github.com/lvcabral/brs-engine/blob/master/docs/customization.md) for more details
 
+## SceneGraph Extension
+
+SceneGraph support is provided by the optional [`brs-scenegraph`](https://www.npmjs.com/package/brs-scenegraph) extension. When your Roku app bundle contains `pkg:/components/`, the packaging step automatically instructs the worker to load `lib/brs-sg.js` so `roSGScreen` based apps run inside the browser. See [packages/scenegraph/README.md](../../packages/scenegraph/README.md) for deployment details.
+
+
 > ⚠️ Note:
 >
-> **SceneGraph** support is currently under development in [a separate branch](https://github.com/lvcabral/brs-engine/tree/scenegraph), with pre-release **alpha** versions are available here for testing. See other limitations of the **engine** in the [Current Limitations](https://github.com/lvcabral/brs-engine/blob/master/docs/limitations.md) document.
+> **SceneGraph** extension is currently under development, with pre-release **alpha** versions available for testing. See the current state of the SceneGraph implementation and other limitations of the **engine** in the [Current Limitations](https://github.com/lvcabral/brs-engine/blob/master/docs/limitations.md) document.
 
 ## Installation
 
@@ -98,7 +104,7 @@ These are the applications already using `brs-engine` to run apps and help devel
 
 Try the engine in action with these web applications:
 
-- **BrightScript TV** - A demo web application to run full Roku games and apps: https://lvcabral.com/brs
+- **BrightScript TV** - A demo web application to run full Roku games and apps: <https://lvcabral.com/brs>
 - **brsFiddle** - BrightScript playground to test and share code with your friends: <http://brsFiddle.net>
   - Hello World - [Shared Link](https://brsfiddle.net?code=XQAAAAL1AQAAAAAAAABJKoLnIqZU8B3-6dP2NsOmYLl2BuS_zvKqVwuCb900INmQka2JaG6109nguctrC4j5eeejusZdPZeqN7ODPGAHtZa3CitoUr0Lzf0CNfBMe_fKYxZVbBd3SFCx2pochQ8vXiLaMlX28Cc1xvIyR03lxJtEM3BO0wVuiOYr28HsPq0Yh-7QOe8y1A-TeWsDOMOEQO0YDxB86jAP7EXurCri8pscM-e70RBruCRmIlFupFBKRsE2GneP6qIr0cz0r69DJ9xuBnscqSBt8CvQFz5haqlrzi9T-BRs4qM1qQid4peKgfvF6s9QEy9nHMwtR_YJMI-5PBvHmU0E4knAAMoNG-Sy1UydLH0sb8RiwTn9IajExgUnwz89MTn5AWfJx2KPUY5QPhpAyFDZnR1H_-j54Fw)
   - Bouncing Square - [Shared Link](https://brsfiddle.net?code=XQAAAAJLCgAAAAAAAABJKobnoc8U-fMC7Yn0OmySA8M8XeYQjA-xlBhDmgkQqkyZorrnH8Z2n9OanRbQbS6T-zM3qPN3QH8Fzgr6UPhr5Cbo3rvloawPAr6qehd0XS8TPatky3-TLgFN_hIhDiNkxNg8livrXExKPdBlI1StdF_-qAzOZT6wC1xPKIJj2Sq8hKcRoNJYYH0Bc7y3vXJ1DTvcu9rAqps0k11Aj4tW_J_zSAHhhHD-zHJJTz1lYapWSGrBQHbhn5SMHQViWFzHfVMyo1Pxz8LUAjiUUHgtkOGpX14MRpCMTM85PbPhb8-KbGtaD4y6zaZgy7Q4zS8vtTxZ9QGHO1gsyGNWb01plO7Lk61lg9c6jOrKT4lJtn7mQme28XpLj5TQrGUbXGdw5lKu7TamErtcuypOxuBSMXVi9i_Ti874POAyL47IK7O5ZaBhBO1p5L2A6iQr6j1qzdmfd8N_9ZumCfxhd9XPg69t8sihYQVvI2vORW5vW_vxKQaDPlkjPyTdQtA903T2ZDiyKVXPpfElWsIntZqXdfg9aY0iXeyCV89LXf69WTkge8D4_dOPH8-ia5myHAXNyxi54k9qKwnkgpCDXTpTRdWB8AO_HuDn6AG5mddseP0uuDjZjbcYpwJRBBC5KJ4ocj8rH_bi5ZLCzRa9ryVdyrHwrDOpdwPRiUWsT7Cr9VEUuSPRctUp1amgHbIJKhLTTohiq3TvRAlItkP98bQhC5M_yTMnIyVjZsLrQWb5Q9MAa2VdwByE-pf4b3OF-SeGw5j-K7TOebCGz0yRNnF6zMHgUMPVYhRi9zNU5Mw_avQ0dCXMxtv9oU2_uKzkB0RCOMM6qJGSnTa4a6B0w8D_LbgLUNdbjVlAZCLpOPBl2DhR4VsV0R2zWlA5jqamY7wSeZb-CSsOdRJv30dXmt3bOKc__nYH8rYRcMlAZb4sT4aesdDh5Yx5bsWEGBjWV2Ojp34muGPJbVlkbhWOw0p0aip4dJ-jL9HfaO8zG_blhNCMsANapZ0VonnO1JaDR7cxeQeUDDpcskFPIu2DlIhLzQnGVFRRXUvU8UK97RQ0np_NQ8SUjcAoiMUNlA0HKjK3d06BKaALQwDwPGpCa1I2CksgPBrCt9f1H7csg_qmE-Bx79R0rehOLmorl_iiROXh0riaYyQlXnGwRR8K9lZJ-NU5iq6zaol5GjfdB5JRhWmzqVWFlOw9cvgI9KcWoCD5j5R1zINYsJVeMdQwLYc-LdEBfziGqS6HAyB-2fZoN_8u9gPwdI-kaKx8SCMHyiPOIhX1xk6DlY85qrLxL0LQJKf--0bS)

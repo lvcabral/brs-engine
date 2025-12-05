@@ -33,7 +33,7 @@ describe("cli", () => {
             "a2c91cd4-5f69-4ae5-98f9-12c63b69d408 NW1 Nifty Widget Number 2",
             "--  Succeeded Order ---",
             "Order:true",
-            "Status  - Order Received (code:  1)",
+            "Status  - Order Succeeded (code:  1)",
             "Source Identity Check: true",
             "TS1  1 $1.99",
             "SKUTAX  1 $0.00",
@@ -103,5 +103,54 @@ describe("cli", () => {
             expect(errors.length).toEqual(2);
         }
     }, 10000);
+
+    it("SceneGraph App Test", async () => {
+        let command = ["node", brsCliPath, "-r scenegraph", "source/Poster.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "Main -----------------------------------------------",
+            "MAIN: poster node type:roSGNode",
+            "MAIN: poster node subtype:Poster",
+            "MAIN: poster node width: 0",
+            "MAIN: poster node height: 0",
+            "Main -----------------------------------------------",
+            "INIT: BaseWidget",
+            "EVENT: BaseWidget onUriChange in",
+            "EVENT: =====",
+            "EVENT:  3",
+            "INIT: http://www.example.com/image.jpg",
+            "INIT:  100",
+            "INIT:  200",
+            "INIT: http://www.example.com/base.jpg",
+            "INIT: <Component: roAssociativeArray> =",
+            "{",
+            "    global: <Component: roSGNode:Node>",
+            '    something: "in"',
+            "    top: <Component: roSGNode:NormalWidget>",
+            "}",
+            "MAIN:  200 100",
+            "EVENT: BaseWidget onNormalStringFieldChange     <Component: roAssociativeArray> =",
+            "{",
+            "    global: <Component: roSGNode:Node>",
+            '    something: "in"',
+            "    top: <Component: roSGNode:NormalWidget>",
+            "}",
+            "EVENT: Hello World!",
+            "EVENT: BaseWidget onUriChange in",
+            "EVENT: =====",
+            "EVENT:  3",
+            "Main -----------------------------------------------",
+            "MAIN: poster as child audioGuideText:fake text",
+            "MAIN: poster as child uri:/fake/uri",
+            "MAIN: poster as child loadWidth: 10.4",
+            "------ Finished 'Poster.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 10000);
+
     it.todo("add tests for the remaining CLI options");
 });

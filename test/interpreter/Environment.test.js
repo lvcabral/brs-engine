@@ -1,6 +1,5 @@
 const brs = require("../../packages/node/bin/brs.node");
-const { Environment, Scope } = brs;
-const { Lexeme } = brs.lexer;
+const { Environment, Scope, Lexeme } = brs;
 const { BrsString, RoAssociativeArray, Int32 } = brs.types;
 
 describe("Environment", () => {

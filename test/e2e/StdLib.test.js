@@ -31,6 +31,7 @@ describe("end to end standard library", () => {
             "true",
             "false",
             '<Component: roList> =\n(\n    "test_backup.txt"\n)',
+            '<Component: roList> =\n(\n    "bslCore.brs"\n    "bslDefender.brs"\n)',
             "true",
             "true",
         ]);

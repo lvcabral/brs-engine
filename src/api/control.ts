@@ -6,7 +6,7 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { SubscribeCallback, saveDataBuffer } from "./util";
-import { DataType, RemoteType, DebugCommand, keyBufferSize, keyArraySpots, platform, BufferType } from "../core/common";
+import { DataType, RemoteType, DebugCommand, keyBufferSize, keyArraySpots, Platform, BufferType } from "../core/common";
 /// #if BROWSER
 import { deviceData } from "./package";
 import gameControl, { GCGamepad, EventName } from "esm-gamecontroller.js";
@@ -54,6 +54,12 @@ let sharedArray: Int32Array;
 let sendKeysEnabled = false;
 let disableDebug: boolean = false;
 
+/**
+ * Initializes the control module with shared array and options.
+ * Sets up keyboard and gamepad controls.
+ * @param array Shared Int32Array for control state
+ * @param options Optional configuration for controls
+ */
 export function initControlModule(array: Int32Array, options: any = {}) {
     sharedArray = array;
     if (typeof options.disableDebug === "boolean") {
@@ -80,23 +86,44 @@ export function initControlModule(array: Int32Array, options: any = {}) {
 
 // Observers Handling
 const observers = new Map();
+/**
+ * Subscribes an observer to control events.
+ * @param observerId Unique identifier for the observer
+ * @param observerCallback Callback function to receive events
+ */
 export function subscribeControl(observerId: string, observerCallback: SubscribeCallback) {
     observers.set(observerId, observerCallback);
 }
+/**
+ * Unsubscribes an observer from control events.
+ * @param observerId Unique identifier of the observer to remove
+ */
 export function unsubscribeControl(observerId: string) {
     observers.delete(observerId);
 }
+/**
+ * Notifies all subscribed observers of a control event.
+ * @param eventName Name of the event
+ * @param eventData Optional data associated with the event
+ */
 function notifyAll(eventName: string, eventData?: any) {
     for (const [_id, callback] of observers) {
         callback(eventName, eventData);
     }
 }
 
-// Control API
+/**
+ * Sets the control mode configuration.
+ * @param newState Object with control state properties (keyboard, gamePads)
+ */
 export function setControlMode(newState: object) {
     Object.assign(controls, newState);
 }
 
+/**
+ * Gets the current control mode configuration.
+ * @returns Object with keyboard and gamePads boolean flags
+ */
 export function getControlMode() {
     return { ...controls };
 }
@@ -114,6 +141,13 @@ export function enableSendKeys(enable: boolean) {
     sendKeysEnabled = enable;
 }
 
+/**
+ * Sends a key event to the shared array buffer.
+ * @param key Key name to send
+ * @param mod Key modifier (0 = down, 100 = up)
+ * @param type Remote type (defaults to SIM)
+ * @param index Remote index (defaults to 0)
+ */
 export function sendKey(key: string, mod: number, type: RemoteType = RemoteType.SIM, index = 0) {
     if (["home", "volumemute", "poweroff"].includes(key.toLowerCase())) {
         if (mod === 0) {
@@ -129,7 +163,7 @@ export function sendKey(key: string, mod: number, type: RemoteType = RemoteType.
         }
     } else if (rokuKeys.has(key.toLowerCase())) {
         const code = rokuKeys.get(key.toLowerCase());
-        if (typeof code !== "undefined") {
+        if (code !== undefined) {
             const next = getNext();
             Atomics.store(sharedArray, DataType.RID + next, type + index);
             Atomics.store(sharedArray, DataType.MOD + next, mod);
@@ -141,12 +175,17 @@ export function sendKey(key: string, mod: number, type: RemoteType = RemoteType.
             const next = getNext();
             Atomics.store(sharedArray, DataType.RID + next, type + index);
             Atomics.store(sharedArray, DataType.MOD + next, mod);
-            Atomics.store(sharedArray, DataType.KEY + next, key.charCodeAt(4) + mod);
+            Atomics.store(sharedArray, DataType.KEY + next, key.codePointAt(4)! + mod);
             notifyAll("control", { key: key, mod: mod });
         }
     }
 }
 
+/**
+ * Gets the next available slot in the key buffer.
+ * Shifts buffer entries if full to make room.
+ * @returns Index of next available key buffer slot
+ */
 function getNext() {
     for (let i = 0; i < keyBufferSize; i++) {
         const next = i * keyArraySpots;
@@ -193,7 +232,7 @@ keysMap.set("Shift+Escape", "home");
 keysMap.set("Control+Escape", "home");
 keysMap.set("Backspace", "instantreplay");
 keysMap.set("End", "play");
-if (platform.inIOS || platform.inMacOS) {
+if (Platform.inIOS || Platform.inMacOS) {
     keysMap.set("Meta+Backspace", "backspace");
     keysMap.set("Meta+Enter", "play");
     keysMap.set("Meta+ArrowLeft", "rev");
@@ -224,15 +263,29 @@ export function setCustomKeys(newKeys: Map<string, string>) {
     }
 }
 
-// Keyboard handlers
+/**
+ * Handles keyboard key down events.
+ * Ignores repeated key events.
+ * @param event Keyboard event
+ */
 function keyDownHandler(event: KeyboardEvent) {
     if (!event.repeat) {
         handleKeyboardEvent(event, 0);
     }
 }
+/**
+ * Handles keyboard key up events.
+ * @param event Keyboard event
+ */
 function keyUpHandler(event: KeyboardEvent) {
     handleKeyboardEvent(event, 100);
 }
+/**
+ * Processes keyboard events and sends appropriate key codes.
+ * Handles modifier keys and maps to Roku remote keys.
+ * @param event Keyboard event
+ * @param mod Key modifier (0 = down, 100 = up)
+ */
 function handleKeyboardEvent(event: KeyboardEvent, mod: number) {
     if (!controls.keyboard) {
         return;
@@ -291,7 +344,11 @@ export function setCustomPadButtons(newButtons: Map<number, string>) {
     }
 }
 
-// GamePad handlers
+/**
+ * Handles gamepad connection events.
+ * Registers device and subscribes to button/axis events.
+ * @param gamePad Connected gamepad object
+ */
 function gamePadOnHandler(gamePad: GCGamepad) {
     deviceData.remoteControls.push({ model: 10002, features: ["bluetooth", "gamepad"] });
     for (const [index, events] of axesMap.entries()) {
@@ -309,6 +366,14 @@ function gamePadOnHandler(gamePad: GCGamepad) {
         }
     }
 }
+/**
+ * Subscribes to gamepad button or axis events.
+ * Sets up before/after handlers to send key press/release events.
+ * @param gamePad Gamepad object
+ * @param eventName Event name to subscribe to
+ * @param index Button or axis index
+ * @param key Roku key name to map to
+ */
 function gamePadSubscribe(gamePad: GCGamepad, eventName: EventName, index: number, key: string) {
     gamePad.before(eventName, () => {
         if (eventName.startsWith("button")) {
@@ -327,6 +392,10 @@ function gamePadSubscribe(gamePad: GCGamepad, eventName: EventName, index: numbe
         }
     });
 }
+/**
+ * Handles gamepad disconnection events.
+ * @param id Gamepad ID that was disconnected
+ */
 function gamePadOffHandler(id: number) {
     console.info(`GamePad ${id} disconnected!`);
 }

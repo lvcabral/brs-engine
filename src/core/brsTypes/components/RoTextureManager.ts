@@ -4,7 +4,6 @@ import {
     StdlibArgument,
     BrsBoolean,
     BrsType,
-    BrsComponent,
     BrsValue,
     Uninitialized,
     RoMessagePort,
@@ -15,11 +14,12 @@ import {
     BrsInvalid,
     toAssociativeArray,
 } from "..";
+import { BrsComponent } from "./BrsComponent";
 import { Interpreter } from "../../interpreter";
 import { validUri } from "../../device/FileSystem";
 import { download } from "../../interpreter/Network";
 import { RoTextureRequestEvent } from "../events/RoTextureRequestEvent";
-import { drawObjectToComponent } from "../interfaces/IfDraw2D";
+import { drawBitmapOnBitmap } from "../interfaces/IfDraw2D";
 import { BrsHttpAgent, IfHttpAgent } from "../interfaces/IfHttpAgent";
 import { IfGetMessagePort, IfSetMessagePort } from "../interfaces/IfMessagePort";
 import { BrsDevice } from "../../device/BrsDevice";
@@ -30,8 +30,8 @@ let textureManager: RoTextureManager;
 
 export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpAgent {
     readonly kind = ValueKind.Object;
+    private readonly textures: Map<string, RoBitmap>;
     readonly requests: Map<number, RoTextureRequest>;
-    readonly textures: Map<string, Buffer>;
     private port?: RoMessagePort;
     // ifHttpAgent Interface
     readonly customHeaders: Map<string, string>;
@@ -43,7 +43,7 @@ export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpA
         this.cookiesEnabled = false;
         this.certificatesFile = DefaultCertificatesFile;
         this.requests = new Map<number, RoTextureRequest>();
-        this.textures = new Map<string, Buffer>();
+        this.textures = new Map<string, RoBitmap>();
         this.customHeaders = new Map<string, string>();
         const ifHttpAgent = new IfHttpAgent(this);
         const setPortIface = new IfSetMessagePort(this, this.getNewEvents.bind(this));
@@ -74,6 +74,15 @@ export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpA
         return BrsBoolean.False;
     }
 
+    count() {
+        return this.textures.size;
+    }
+
+    dispose() {
+        this.textures.clear();
+        this.port?.removeReference();
+    }
+
     private getNewEvents() {
         const events: RoTextureRequestEvent[] = [];
         for (let request of this.requests.values()) {
@@ -84,46 +93,80 @@ export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpA
     }
 
     private createEvent(request: RoTextureRequest) {
-        const texture = this.loadTexture(request);
-        let bitmap = texture ? new RoBitmap(texture) : BrsInvalid.Instance;
-        if (bitmap instanceof RoBitmap && bitmap.isValid()) {
-            if (request.size && (request.size.width !== bitmap.width || request.size.height !== bitmap.height)) {
-                const newDim = toAssociativeArray(request.size);
-                const newBmp = new RoBitmap(newDim);
-                const scaleX = request.size.width / bitmap.width;
-                const scaleY = request.size.height / bitmap.height;
-                const valid = drawObjectToComponent(newBmp, bitmap, 0, 0, scaleX, scaleY, undefined, request.scaleMode);
-                bitmap = valid ? newBmp : BrsInvalid.Instance;
-            }
+        let bitmap = this.loadTexture(request.uri);
+        if (
+            bitmap?.isValid() &&
+            request.size &&
+            request.size.width > 0 &&
+            request.size.height > 0 &&
+            (request.size.width !== bitmap.width || request.size.height !== bitmap.height)
+        ) {
+            const newDim = toAssociativeArray(request.size);
+            const newBmp = new RoBitmap(newDim);
+            drawBitmapOnBitmap(bitmap, newBmp, request.scaleMode);
+            bitmap = newBmp;
         }
-        request.state = bitmap instanceof RoBitmap && bitmap.isValid() ? RequestState.Ready : RequestState.Failed;
-        return new RoTextureRequestEvent(request, bitmap);
+        request.state = bitmap?.isValid() ? RequestState.Ready : RequestState.Failed;
+        return new RoTextureRequestEvent(request, bitmap ?? BrsInvalid.Instance);
     }
 
-    private loadTexture(request: RoTextureRequest): Buffer | undefined {
-        const cached = this.textures.get(request.uri);
-        if (cached) {
-            return cached;
+    loadTexture(uri: string, headers?: Map<string, string>): RoBitmap | undefined {
+        const bitmap = this.textures.get(uri);
+        if (bitmap) {
+            return bitmap;
         }
-        if (request.uri.startsWith("http")) {
-            const url = BrsDevice.getCORSProxy(request.uri);
-            const data = download(url, "arraybuffer", this.customHeaders, this.cookiesEnabled);
-            if (data) {
-                this.textures.set(request.uri, data);
-                return data;
-            }
+        let data: Buffer | undefined;
+        if (uri.startsWith("http")) {
+            data = download(
+                BrsDevice.getCORSProxy(uri),
+                "arraybuffer",
+                headers ?? this.customHeaders,
+                this.cookiesEnabled
+            );
         } else {
-            try {
-                return BrsDevice.fileSystem.readFileSync(request.uri);
-            } catch (err: any) {
-                if (BrsDevice.isDevMode) {
-                    BrsDevice.stderr.write(
-                        `warning,[roTextureManager] Error requesting texture ${request.uri}: ${err.message}`
-                    );
-                }
+            data = this.loadLocalFile(uri);
+        }
+        if (data) {
+            const bitmap = new RoBitmap(data, uri);
+            if (bitmap instanceof RoBitmap && bitmap.isValid()) {
+                this.textures.set(uri, bitmap);
+                return bitmap;
             }
         }
         return undefined;
+    }
+
+    resizeTexture(bitmap: RoBitmap, width: number, height: number) {
+        if (bitmap.isValid() && width > 0 && height > 0 && (width !== bitmap.width || height !== bitmap.height)) {
+            const newDim = toAssociativeArray({ width, height });
+            const newBmp = new RoBitmap(newDim);
+            drawBitmapOnBitmap(bitmap, newBmp, 1);
+            return newBmp;
+        }
+        return bitmap;
+    }
+
+    private loadLocalFile(uri: string) {
+        try {
+            const fsys = BrsDevice.fileSystem;
+            let assetPath = uri;
+            if (uri.startsWith("pkg:/locale/images/") && !fsys.existsSync(uri)) {
+                const locale = BrsDevice.deviceInfo.locale;
+                const filePath = uri.substring("pkg:/locale/images/".length);
+                if (fsys.existsSync(`pkg:/locale/${locale}/images/${filePath}`)) {
+                    assetPath = `pkg:/locale/${locale}/images/${filePath}`;
+                } else if (fsys.existsSync(`pkg:/locale/default/images/${filePath}`)) {
+                    assetPath = `pkg:/locale/default/images/${filePath}`;
+                } else if (fsys.existsSync(`pkg:/locale/en_US/images/${filePath}`)) {
+                    assetPath = `pkg:/locale/en_US/images/${filePath}`;
+                }
+            }
+            return fsys.readFileSync(assetPath);
+        } catch (err: any) {
+            if (BrsDevice.isDevMode) {
+                BrsDevice.stderr.write(`warning,[roTextureManager] Error requesting texture ${uri}: ${err.message}`);
+            }
+        }
     }
 
     /** Makes a request for an roBitmap with the attributes specified by the roTextureRequest. */

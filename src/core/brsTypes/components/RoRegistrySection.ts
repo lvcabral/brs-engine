@@ -50,6 +50,7 @@ export class RoRegistrySection extends BrsComponent implements BrsValue {
             returns: ValueKind.String,
         },
         impl: (_: Interpreter, key: BrsString) => {
+            BrsDevice.refreshRegistry();
             let value = BrsDevice.registry.get(`${this.devId}.${this.section}.${key.value}`);
             if (!value) {
                 value = "";
@@ -65,6 +66,7 @@ export class RoRegistrySection extends BrsComponent implements BrsValue {
             returns: ValueKind.Dynamic,
         },
         impl: (_: Interpreter, keysArray: RoArray) => {
+            BrsDevice.refreshRegistry();
             let keys = keysArray.getElements() as BrsString[];
             let result = new RoAssociativeArray([]);
             for (const key of keys) {
@@ -85,6 +87,7 @@ export class RoRegistrySection extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, key: BrsString, value: BrsString) => {
+            BrsDevice.refreshRegistry();
             BrsDevice.registry.set(this.devId + "." + this.section + "." + key.value, value.value);
             return BrsBoolean.True;
         },
@@ -97,7 +100,8 @@ export class RoRegistrySection extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, roAA: RoAssociativeArray) => {
-            let devSection = `${this.devId}.${this.section}.`;
+            BrsDevice.refreshRegistry();
+            const devSection = `${this.devId}.${this.section}.`;
             for (const [key, value] of roAA.elements) {
                 BrsDevice.registry.set(`${devSection}${key}`, value.toString());
             }
@@ -112,8 +116,8 @@ export class RoRegistrySection extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, key: BrsString) => {
-            let deleted = BrsDevice.registry.delete(this.devId + "." + this.section + "." + key.value);
-            return BrsBoolean.from(deleted);
+            BrsDevice.refreshRegistry();
+            return BrsBoolean.from(BrsDevice.registry.delete(this.devId + "." + this.section + "." + key.value));
         },
     });
 
@@ -124,6 +128,7 @@ export class RoRegistrySection extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, key: BrsString) => {
+            BrsDevice.refreshRegistry();
             return BrsBoolean.from(BrsDevice.registry.has(this.devId + "." + this.section + "." + key.value));
         },
     });
@@ -135,6 +140,7 @@ export class RoRegistrySection extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
+            BrsDevice.flushRegistry();
             postMessage(BrsDevice.registry);
             return BrsBoolean.True;
         },
@@ -147,9 +153,10 @@ export class RoRegistrySection extends BrsComponent implements BrsValue {
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter) => {
-            let keys = new Array<BrsString>();
+            BrsDevice.refreshRegistry();
+            const keys = new Array<BrsString>();
             for (const key of BrsDevice.registry.keys()) {
-                let regSection = this.devId + "." + this.section;
+                const regSection = this.devId + "." + this.section;
                 if (key.startsWith(regSection)) {
                     keys.push(new BrsString(key.slice(regSection.length + 1)));
                 }

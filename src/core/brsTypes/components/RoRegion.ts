@@ -27,7 +27,6 @@ export class RoRegion extends BrsComponent implements BrsValue, BrsDraw2D {
     private collisionType: number;
     private translationX: number;
     private translationY: number;
-    private scaleMode: number;
     private time: number;
     private wrap: boolean;
     private collisionCircle: Circle;
@@ -36,6 +35,7 @@ export class RoRegion extends BrsComponent implements BrsValue, BrsDraw2D {
     y: number;
     width: number;
     height: number;
+    scaleMode: number;
 
     constructor(bitmap: RoBitmap | RoScreen, x: Int32, y: Int32, width: Int32, height: Int32) {
         super("roRegion");
@@ -243,10 +243,6 @@ export class RoRegion extends BrsComponent implements BrsValue, BrsDraw2D {
 
     getImageData(): BrsImageData {
         return this.bitmap.getContext().getImageData(this.x, this.y, this.width, this.height);
-    }
-
-    getRegionScaleMode(): number {
-        return this.scaleMode;
     }
 
     getWrapValue(): boolean {

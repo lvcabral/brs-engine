@@ -1,6 +1,5 @@
 const brs = require("../../../packages/node/bin/brs.node");
-const { Lexeme } = brs.lexer;
-const { Int32, BrsBoolean } = brs.types;
+const { Lexeme } = brs;
 
 const { token, identifier, EOF } = require("../ParserTests");
 
@@ -8,7 +7,7 @@ describe("parser postfix unary expressions", () => {
     let parser;
 
     beforeEach(() => {
-        parser = new brs.parser.Parser();
+        parser = new brs.Parser();
     });
 
     it("parses postfix '++' for variables", () => {

@@ -1,6 +1,6 @@
 import { BrsValue, ValueKind, BrsInvalid, BrsBoolean } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsEvent, BrsType, Double, KeyEvent, RoUniversalControlEvent } from "..";
+import { BrsEvent, BrsType, Double, RoUniversalControlEvent } from "..";
 import { Callable } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
@@ -17,7 +17,6 @@ import {
     releaseCanvas,
     rgbaIntToHex,
 } from "../interfaces/IfDraw2D";
-import { DataType, keyArraySpots, keyBufferSize, RemoteType } from "../../common";
 import { IfSetMessagePort, IfGetMessagePort } from "../interfaces/IfMessagePort";
 import { BrsDevice } from "../../device/BrsDevice";
 
@@ -29,9 +28,7 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     readonly height: number;
     private readonly doubleBuffer: boolean;
     private readonly maxMs: number;
-    private readonly disposeCanvas: boolean;
     private readonly valid: boolean;
-    private readonly keysBuffer: KeyEvent[];
     private alphaEnable: boolean;
     private currentBuffer: number;
     private lastBuffer: number;
@@ -40,8 +37,7 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     private port?: RoMessagePort;
     private isDirty: boolean;
     private lastMessage: number;
-    private lastKey: number;
-    private lastMod: number;
+    scaleMode: number;
 
     constructor(doubleBuffer?: BrsBoolean, width?: Int32, height?: Int32) {
         super("roScreen");
@@ -55,15 +51,12 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
             defaultWidth = 1280;
             defaultHeight = 720;
         }
-        this.disposeCanvas = BrsDevice.deviceInfo.platform?.inIOS ?? false;
         this.lastMessage = performance.now();
+        this.scaleMode = 0;
         this.isDirty = true;
         this.width = defaultWidth;
         this.height = defaultHeight;
         this.valid = true;
-        this.lastKey = -1;
-        this.lastMod = -1;
-        this.keysBuffer = [];
         if (width instanceof Float || width instanceof Double || width instanceof Int32) {
             this.width = Math.trunc(width.getValue());
             if (this.width <= 0) {
@@ -200,10 +193,8 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
 
     dispose() {
         this.port?.unregisterCallback(this.getComponentName());
-        if (this.disposeCanvas) {
-            for (const c of this.canvas) {
-                releaseCanvas(c);
-            }
+        for (const c of this.canvas) {
+            releaseCanvas(c);
         }
     }
     isValid() {
@@ -213,46 +204,11 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     // Control Key Events
     private getNewEvents() {
         const events: BrsEvent[] = [];
-        this.updateKeysBuffer();
-        const nextKey = this.keysBuffer.shift();
-        if (nextKey && nextKey.key !== this.lastKey) {
-            if (BrsDevice.singleKeyEvents) {
-                if (nextKey.mod === 0) {
-                    if (this.lastMod === 0) {
-                        this.keysBuffer.unshift({ ...nextKey });
-                        nextKey.key = this.lastKey + 100;
-                        nextKey.mod = 100;
-                    }
-                } else if (nextKey.key !== this.lastKey + 100) {
-                    return events;
-                }
-            }
-            BrsDevice.lastKeyTime = BrsDevice.currKeyTime;
-            BrsDevice.currKeyTime = Date.now();
-            this.lastKey = nextKey.key;
-            this.lastMod = nextKey.mod;
+        const nextKey = BrsDevice.updateKeysBuffer();
+        if (nextKey) {
             events.push(new RoUniversalControlEvent(nextKey));
         }
         return events;
-    }
-
-    private updateKeysBuffer() {
-        for (let i = 0; i < keyBufferSize; i++) {
-            const idx = i * keyArraySpots;
-            const key = Atomics.load(BrsDevice.sharedArray, DataType.KEY + idx);
-            if (key === -1) {
-                return;
-            } else if (this.keysBuffer.length === 0 || key !== this.keysBuffer.at(-1)?.key) {
-                const remoteId = Atomics.load(BrsDevice.sharedArray, DataType.RID + idx);
-                const remoteType = Math.trunc(remoteId / 10) * 10;
-                const remoteStr = RemoteType[remoteType] ?? RemoteType[RemoteType.SIM];
-                const remoteIdx = remoteId - remoteType;
-                const mod = Atomics.load(BrsDevice.sharedArray, DataType.MOD + idx);
-                Atomics.store(BrsDevice.sharedArray, DataType.KEY + idx, -1);
-                this.keysBuffer.push({ remote: `${remoteStr}:${remoteIdx}`, key: key, mod: mod });
-                BrsDevice.lastRemote = remoteIdx;
-            }
-        }
     }
 
     // ifScreen ------------------------------------------------------------------------------------

@@ -16,14 +16,17 @@ const deviceInfo = {
   countryCode: "US", // App Store Country
   timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
   locale: "en_US", // Valid locales: en_US, es_MX, pt_BR, fr_CA, de_DE
-  captionLanguage: "en", // Default closed caption language
+  captionLanguage: "en", // Preferred caption language
   clockFormat: "12h",
   displayMode: "720p", // Supported modes: 480p (SD), 720p (HD) and 1080p (FHD)
   maxSimulStreams: 2, // Max number of `roAudioResource` streams (1 or 2)
   customFeatures: [], // String array with custom features (see below)
   localIps: ["eth1,127.0.0.1"], // In a Browser isn't possible to get a real IP, populate it on NodeJS or Electron
   audioVolume: 50, // Defines the default volume level for system sounds - valid: (0-100)
+  audioLanguage: "en", // Preferred audio track language
   maxFps: 60, // Maximum frames per second for rendering
+  tmpVolSize: 32 * 1024 * 1024, // Allocated size for `tmp:/` volume (32 MB)
+  cacheFSVolSize: 32 * 1024 * 1024, // Allocated size for `cachefs:/` volume (32 MB)
   corsProxy: "https://your-cors-proxy-instance.yourdomain.com/", // (optional) Add your CORS-Anywhere URL here
 };
 ```
