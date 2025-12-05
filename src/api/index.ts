@@ -139,17 +139,14 @@ let currentPayload: AppPayload;
 // API Methods
 export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any = {}) {
     if (customDeviceInfo) {
-        const invalidKeys = [
-            "firmware",
+        const invalidKeys: (keyof DeviceInfo)[] = [
+            "firmwareVersion",
             "registry",
             "registryBuffer",
             "models",
             "remoteControls",
             "audioCodecs",
             "videoFormats",
-            "fonts",
-            "password",
-            "platform",
         ];
         for (const key of invalidKeys) {
             if (key in customDeviceInfo) {

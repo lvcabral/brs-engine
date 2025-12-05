@@ -552,7 +552,7 @@ function getOSVersion(firmware: string, version = true) {
 }
 
 function getModelName(model: string) {
-    const modelName = device.models.get(model);
+    const modelName = device.models?.get(model);
     return modelName ? modelName[0].replace(/ *\([^)]*\) */g, "") : `Roku (${model})`;
 }
 

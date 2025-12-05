@@ -85,7 +85,7 @@ program
                 console.error(chalk.red(`Unable to get the Network Gateway: ${err.message}`));
             }
             deviceData.connectionInfo.dns = dns.getServers();
-            deviceData.stopOnCrash = program.debug ?? false;
+            deviceData.debugOnCrash = program.debug ?? false;
             if (program.registry) {
                 deviceData.registry = getRegistry();
             }

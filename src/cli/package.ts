@@ -152,7 +152,7 @@ function processManifest(content: string): number {
 
 // Returns Device Serial Number based on Device Model and library version
 export function getSerialNumber() {
-    const device = deviceData.models.get(deviceData.deviceModel);
+    const device = deviceData.models?.get(deviceData.deviceModel);
     const prefix = device ? device[4] : "X0";
     let verPlain = "";
     for (const element of packageInfo.version.split(".")) {
@@ -163,7 +163,7 @@ export function getSerialNumber() {
 
 // Returns the Device Model type
 export function getModelType(): string {
-    const device = deviceData.models.get(deviceData.deviceModel);
+    const device = deviceData.models?.get(deviceData.deviceModel);
     return device ? device[1] : "STB";
 }
 

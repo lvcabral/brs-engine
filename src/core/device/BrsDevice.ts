@@ -128,26 +128,36 @@ export class BrsDevice {
      * @param deviceInfo DeviceInfo to be set
      */
     static setDeviceInfo(deviceInfo: DeviceInfo) {
-        for (let [key, value] of Object.entries(deviceInfo)) {
-            if (!key.startsWith("registry") && key !== "assets") {
-                let newValue = value;
-                if (key === "developerId") {
-                    // Prevent developerId from having "." to avoid issues on registry persistence
-                    newValue = newValue.replace(".", ":");
-                } else if (key === "corsProxy") {
-                    // make sure the CORS proxy is valid URL and ends with "/"
-                    if (newValue.length > 0 && !newValue.startsWith("http")) {
-                        newValue = "";
-                    } else if (newValue.length > 0 && !newValue.endsWith("/")) {
-                        newValue += "/";
-                    }
-                }
-                this.deviceInfo[key] = newValue;
+        for (const key of Object.keys(deviceInfo) as (keyof DeviceInfo)[]) {
+            if (key.startsWith("registry") || key === "assets") {
+                continue;
             }
+            const newValue = this.normalizeDeviceInfoValue(key, deviceInfo[key]);
+            this.assignDeviceInfoValue(key, newValue);
         }
         this.clockFormat = BrsDevice.deviceInfo.clockFormat;
         this.timeZone = BrsDevice.deviceInfo.timeZone;
         this.locale = BrsDevice.deviceInfo.locale.replace("_", "-");
+    }
+
+    private static assignDeviceInfoValue<K extends keyof DeviceInfo>(key: K, value: DeviceInfo[K]) {
+        this.deviceInfo[key] = value;
+    }
+
+    private static normalizeDeviceInfoValue<K extends keyof DeviceInfo>(key: K, value: DeviceInfo[K]): DeviceInfo[K] {
+        if (key === "developerId" && typeof value === "string") {
+            // Prevent developerId from having "." to avoid issues on registry persistence
+            return value.replace(".", ":") as DeviceInfo[K];
+        }
+        if (key === "corsProxy") {
+            // make sure the CORS proxy is valid URL and ends with "/"
+            const corsValue = typeof value === "string" ? value : "";
+            if (corsValue.length === 0 || !corsValue.startsWith("http")) {
+                return "" as DeviceInfo[K];
+            }
+            return (corsValue.endsWith("/") ? corsValue : `${corsValue}/`) as DeviceInfo[K];
+        }
+        return value;
     }
 
     /**

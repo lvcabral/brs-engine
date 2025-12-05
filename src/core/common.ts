@@ -15,15 +15,18 @@
  * Roku documentation: https://developer.roku.com/docs/references/brightscript/interfaces/ifdeviceinfo.md
  */
 export interface DeviceInfo {
-    [key: string]: any;
     developerId: string;
     friendlyName: string;
     deviceModel: string;
     firmwareVersion: string;
+    serialNumber: string;
     clientId: string;
     RIDA: string;
     countryCode: string;
     timeZone: string;
+    timeZoneIANA: string;
+    timeZoneAuto: boolean;
+    timeZoneOffset: number;
     locale: SupportedLocale;
     clockFormat: string;
     displayMode: DisplayMode;
@@ -42,12 +45,14 @@ export interface DeviceInfo {
     maxFps: number;
     tmpVolSize: number;
     cacheFSVolSize: number;
+    registry?: Map<string, string>;
     registryBuffer?: SharedArrayBuffer;
+    models?: Map<string, string[]>;
     audioCodecs?: string[];
     videoFormats?: Map<string, string[]>;
     appList?: AppData[];
     entryPoint?: boolean;
-    stopOnCrash?: boolean;
+    debugOnCrash?: boolean;
     corsProxy?: string;
     extensions?: Map<SupportedExtension, string>;
 }
@@ -100,10 +105,14 @@ export const DefaultDeviceInfo: DeviceInfo = {
     friendlyName: "BrightScript Engine Library",
     deviceModel: "8000X", // Roku TV (Midland)
     firmwareVersion: "48G.04E05531A", // v15.0
+    serialNumber: "", // Will be set dynamically
     clientId: "6c5bf3a5-b2a5-4918-824d-7691d5c85364",
     RIDA: "f51ac698-bc60-4409-aae3-8fc3abc025c4", // Unique identifier for advertisement tracking
     countryCode: "US", // App Store Country
     timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    timeZoneIANA: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    timeZoneAuto: true,
+    timeZoneOffset: new Date().getTimezoneOffset(),
     locale: "en_US", // Used if app supports localization
     clockFormat: "12h",
     displayMode: "720p",
