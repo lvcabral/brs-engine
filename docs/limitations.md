@@ -4,7 +4,7 @@ The **BrightScript Engine** implements the BrightScript language specification u
 
 ## In Scope (to be developed/fixed in future releases)
 
-* **Roku SceneGraph** SDK components are currently being implemented in this branch and released as [pre-release alpha](https://github.com/lvcabral/brs-engine/releases), so far we support:
+* **Roku SceneGraph** SDK components are currently being implemented as an [extension](./extensions.md) published separately as the NPM package [brs-scenegraph](https://www.npmjs.com/package/brs-scenegraph), so far it supports:
   * Load XML component files and create SceneGraph nodes tree.
   * Basic support for `roSGNode` and `roSGScreen` components and rendering.
   * The `Task` node is implemented but its behavior is limited:

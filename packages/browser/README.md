@@ -2,7 +2,7 @@
 
 An interpreter for the BrightScript language that runs Roku apps in browser-based platforms.
 
-[![NPM Version (with dist tag)](https://img.shields.io/npm/v/brs-engine/alpha?logo=npm&label=brs-engine&color=blue)](https://npmjs.org/package/brs-engine)
+[![NPM Version](https://img.shields.io/npm/v/brs-engine?logo=npm&label=brs-engine&color=blue)](https://npmjs.org/package/brs-engine)
 [![License](https://img.shields.io/github/license/lvcabral/brs-engine?logo=github)](https://github.com/lvcabral/brs-engine/blob/master/LICENSE)
 [![Build](https://github.com/lvcabral/brs-engine/actions/workflows/build.yml/badge.svg)](https://github.com/lvcabral/brs-engine/actions/workflows/build.yml)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=lvcabral_brs-emu&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=lvcabral_brs-emu)
