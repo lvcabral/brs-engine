@@ -140,10 +140,21 @@ export class BrsDevice {
         this.locale = BrsDevice.deviceInfo.locale.replace("_", "-");
     }
 
+    /**
+     * Assigns the device info value to the static deviceInfo object
+     * @param key Key of the DeviceInfo
+     * @param value Value to be assigned
+     */
     private static assignDeviceInfoValue<K extends keyof DeviceInfo>(key: K, value: DeviceInfo[K]) {
         this.deviceInfo[key] = value;
     }
 
+    /**
+     * Normalizes certain device info values before assignment
+     * @param key Key of the DeviceInfo
+     * @param value Value to be normalized
+     * @returns Normalized value
+     */
     private static normalizeDeviceInfoValue<K extends keyof DeviceInfo>(key: K, value: DeviceInfo[K]): DeviceInfo[K] {
         if (key === "developerId" && typeof value === "string") {
             // Prevent developerId from having "." to avoid issues on registry persistence

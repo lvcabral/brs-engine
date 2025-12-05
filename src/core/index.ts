@@ -105,9 +105,13 @@ if (typeof onmessage !== "undefined") {
     };
 }
 
-// Dynamically load the BrightScript extensions
+// Keep track of loaded extensions to avoid duplicates
 const loadedExtensions = new Set<SupportedExtension>();
 
+/**
+ * Loads BrightScript extensions from the payload.
+ * @param payload App or Task payload containing extension configuration
+ */
 function loadExtensions(payload: AppPayload | TaskPayload) {
     const extensions = payload.extensions;
     if (Array.isArray(extensions)) {
@@ -121,6 +125,11 @@ function loadExtensions(payload: AppPayload | TaskPayload) {
     }
 }
 
+/**
+ * Loads a specific BrightScript extension module.
+ * @param moduleId The extension identifier
+ * @param modulePath The URL path to the extension module
+ */
 function loadExtension(moduleId: SupportedExtension, modulePath: string) {
     if (!modulePath) {
         console.warn(`[Worker] No module path provided for ${moduleId} extension.`);
@@ -153,6 +162,11 @@ function loadExtension(moduleId: SupportedExtension, modulePath: string) {
     }
 }
 
+/**
+ * Aggregates all module exports into a single object for Worker context.
+ * This creates a global brsEngine object with all necessary exports.
+ * @returns Aggregated object with all engine exports
+ */
 function createWorkerExports() {
     const aggregated: Record<string, any> = {};
     const namespaces: (ModuleNamespace | undefined)[] = [
@@ -187,6 +201,12 @@ function createWorkerExports() {
 
 type ModuleNamespace = Record<string, any>;
 
+/**
+ * Merges exports from a module namespace into a target object.
+ * @param target The target object to merge exports into
+ * @param source The source module namespace to merge from
+ * @returns The target object with merged exports
+ */
 function mergeModuleExports(target: Record<string, any>, source: ModuleNamespace | undefined) {
     if (!source) {
         return target;
@@ -247,8 +267,9 @@ export function registerCallback(messageCallback: any, sharedBuffer?: SharedArra
 }
 
 /**
- * Returns a new instance of the Interpreter for REPL
- *
+ * Returns a new instance of the Interpreter for REPL (Read-Eval-Print Loop).
+ * @param payload Partial app payload with device configuration and assets
+ * @returns Promise resolving to configured Interpreter instance or null on error
  */
 export async function getReplInterpreter(payload: Partial<AppPayload>) {
     if (!payload.device?.assets) {
@@ -491,9 +512,10 @@ export async function createPayloadFromFileMap(
  * Create the payload to run the app with the provided files.
  * @param files Code files to be executed
  * @param customDeviceData optional object with device info data
+ * @param deepLink optional map with deep link parameters
  * @param root optional root path for the interpreter
- *
- * @returns object with the payload to run the app.
+ * @param ext optional path to external storage (directory or zip file)
+ * @returns Promise resolving to AppPayload object to run the app
  */
 export async function createPayloadFromFiles(
     files: string[],
@@ -572,7 +594,6 @@ export async function createPayloadFromFiles(
  *
  * @returns RunResult with the end reason and (optionally) the encrypted data.
  */
-
 export async function executeFile(payload: AppPayload, customOptions?: Partial<ExecutionOptions>): Promise<RunResult> {
     const options = {
         entryPoint: payload.device.entryPoint ?? true,
@@ -628,6 +649,11 @@ export async function executeFile(payload: AppPayload, customOptions?: Partial<E
     return result;
 }
 
+/**
+ * Executes a BrightScript Task in a separate worker context.
+ * @param payload Task payload containing task configuration and source code
+ * @param customOptions Optional execution options to override defaults
+ */
 export async function executeTask(payload: TaskPayload, customOptions?: Partial<ExecutionOptions>) {
     const options = {
         entryPoint: false,
@@ -693,6 +719,11 @@ export async function executeTask(payload: TaskPayload, customOptions?: Partial<
     }
 }
 
+/**
+ * Attaches BrightScript extensions to the interpreter and calls their initialization hooks.
+ * @param interpreter The interpreter instance to attach extensions to
+ * @param extensions Array of extension instances to attach
+ */
 function attachExtensions(interpreter: Interpreter, extensions: BrsExtension[]) {
     for (const ext of extensions) {
         interpreter.extensions.set(ext.name, ext);
@@ -700,6 +731,11 @@ function attachExtensions(interpreter: Interpreter, extensions: BrsExtension[]) 
     }
 }
 
+/**
+ * Runs the beforeExecute hooks for all registered extensions.
+ * @param interpreter The interpreter instance
+ * @param payload App or Task payload being executed
+ */
 async function runBeforeExecuteHooks(interpreter: Interpreter, payload: AppPayload | TaskPayload) {
     for (const ext of interpreter.extensions.values()) {
         if (ext.onBeforeExecute) {
@@ -715,7 +751,6 @@ async function runBeforeExecuteHooks(interpreter: Interpreter, payload: AppPaylo
  *
  * @returns a SourceResult object with the source map or the pcode data.
  */
-
 interface SourceResult {
     sourceMap: Map<string, string>;
     pcode?: Buffer;
@@ -738,11 +773,10 @@ interface SerializedPCode {
 }
 
 /**
- * Process the application input parameters including deep links
- * @param deepLinkMap Map with parameters.
- * @param splashTime elapsed splash time (in milliseconds).
- *
- * @returns an array of parameters in AA member format.
+ * Process the application input parameters including deep links.
+ * @param deepLinkMap Map with deep link parameters
+ * @param splashTime Elapsed splash time in milliseconds
+ * @returns RoAssociativeArray containing input parameters
  */
 function setupInputParams(deepLinkMap: Map<string, string>, splashTime: number): BrsTypes.RoAssociativeArray {
     const inputMap = new Map([
@@ -758,11 +792,10 @@ function setupInputParams(deepLinkMap: Map<string, string>, splashTime: number):
 }
 
 /**
- * Updates the interpreter pkg: file system with the provided package files and
- * loads the translation data based on the configured locale.
- * @param payload with the source code, manifest and all the assets of the app.
- *
- * @returns a SourceResult object with the source map or the pcode data.
+ * Extracts package files from the payload and builds a source map.
+ * Handles both regular source files and encrypted pcode files.
+ * @param payload Payload with the source code, manifest and all the assets of the app
+ * @returns SourceResult object with the source map or the pcode data
  */
 function setupPackageFiles(payload: AppPayload): SourceResult {
     const result: SourceResult = { sourceMap: new Map<string, string>() };
@@ -795,7 +828,6 @@ function setupPackageFiles(payload: AppPayload): SourceResult {
  * Load the translations data based on the configured locale.
  * @param interpreter the Interpreter instance to update
  */
-
 function setupTranslations(interpreter: Interpreter) {
     let xmlText = "";
     let trType = "";
@@ -901,13 +933,11 @@ async function runSource(
 }
 
 /**
- * Decode and run an encrypted package of BrightScript code.
- * @param interpreter an interpreter to use when executing `contents`. Required
- *                    for `repl` to have persistent state between user inputs.
- * @param sourceResult with the pcode data and iv.
- * @param payload with the source code, manifest and all the assets of the app.
- *
- * @returns RunResult with the exit reason.
+ * Decodes and runs an encrypted package of BrightScript code.
+ * @param interpreter The interpreter instance to use when executing the code
+ * @param sourceResult Object containing the encrypted pcode data and initialization vector
+ * @param payload Payload with the source code, manifest and all the assets of the app
+ * @returns Promise resolving to RunResult with the exit reason
  */
 async function runEncrypted(
     interpreter: Interpreter,
@@ -946,13 +976,12 @@ async function runEncrypted(
 }
 
 /**
- * Execute the BrightScript code using the provided interpreter and parsed statements.
- * @param interpreter the interpreter instance to use.
- * @param statements the parsed BrightScript code to execute.
- * @param payload with the source code, manifest and all the assets of the app.
- * @param sourceMap optional map with the source code files content.
- *
- * @returns the exit reason.
+ * Executes the BrightScript code using the provided interpreter and parsed statements.
+ * @param interpreter The interpreter instance to use
+ * @param statements The parsed BrightScript statements to execute
+ * @param payload Payload with the source code, manifest and all the assets of the app
+ * @param sourceMap Optional map with the source code files content for debugging
+ * @returns Promise resolving to the AppExitReason indicating how the app terminated
  */
 async function executeApp(
     interpreter: Interpreter,

@@ -153,16 +153,16 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     private lastStmt: Stmt.Statement | null = null;
 
     /**
-     * Adds a TracePoint to the call stack
-     * @param tracePoint the TracePoint to add to the stack
+     * Adds a TracePoint to the call stack.
+     * @param tracePoint The TracePoint to add to the stack
      */
     addToStack(tracePoint: TracePoint) {
         this._stack.push(tracePoint);
     }
 
     /**
-     * Updates the interpreter manifest with the provided data
-     * @param manifest Map with manifest content.
+     * Updates the interpreter manifest with the provided data.
+     * @param manifest Map with manifest content
      */
     public setManifest(manifest: Map<string, string>) {
         // Reset custom manifest flags to default
@@ -244,9 +244,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
      * Temporarily sets an interpreter's environment to the provided one, then
      * passes the sub-interpreter to the provided JavaScript function. Always
      * reverts the current interpreter's environment to its original value.
-     *
-     * @param func the JavaScript function to execute with the sub interpreter.
-     * @param environment (Optional) the environment to run the interpreter in.
+     * @param func The JavaScript function to execute with the sub interpreter
+     * @param environment Optional environment to run the interpreter in
+     * @returns The result of executing the function in the sub-environment
      */
     inSubEnv(func: (interpreter: Interpreter) => BrsType, environment?: Environment): BrsType {
         let originalEnvironment = this._environment;
@@ -275,10 +275,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
     /**
      * Executes the provided statements in the current environment.
-     * @param statements Array of statements to execute.
-     * @param sourceMap Source code map.
-     * @param args run parameters for main/runuserinterface functions.
-     * @returns the result of the last statement executed.
+     * @param statements Array of statements to execute
+     * @param sourceMap Optional source code map for debugging
+     * @param args Run parameters for Main() or RunUserInterface() functions
+     * @returns Array with the results of the executed statements
      */
     exec(statements: readonly Stmt.Statement[], sourceMap?: Map<string, string>, ...args: BrsType[]) {
         if (sourceMap) {
@@ -336,10 +336,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     /**
-     * Retrieve the Callable function from the environment.
-     * @param functionName the name of the function to retrieve.
-     * @param location the location from the function will be called (optional).
-     * @returns the Callable function or BrsInvalid if not found.
+     * Retrieves the Callable function from the environment.
+     * @param functionName The name of the function to retrieve
+     * @param location Optional location from where the function will be called
+     * @returns The Callable function or BrsInvalid if not found
      */
     getCallableFunction(functionName: string, location?: Location): Callable | BrsInvalid {
         let callbackVariable = new Expr.Variable({
@@ -1831,11 +1831,22 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         }
     }
 
+    /**
+     * Evaluates an expression and returns its BrsType value.
+     * @param expression The expression to evaluate
+     * @returns The BrsType result of evaluating the expression
+     */
     evaluate(this: Interpreter, expression: Expr.Expression): BrsType {
         if (expression.location.start.line !== -1) this.location = expression.location;
         return expression.accept<BrsType>(this);
     }
 
+    /**
+     * Executes a statement and returns its BrsType result.
+     * Handles goto labels, debugger checks, and extension ticks.
+     * @param statement The statement to execute
+     * @returns The BrsType result of executing the statement
+     */
     execute(this: Interpreter, statement: Stmt.Statement): BrsType {
         if (this.environment.gotoLabel !== "") {
             return this.searchLabel(statement);
@@ -1851,6 +1862,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         return statement.accept<BrsType>(this);
     }
 
+    /**
+     * Checks for debugger break commands and handles debug mode state.
+     * @param statement The statement being executed
+     */
     private checkDebugger(statement: Stmt.Statement) {
         const cmd = BrsDevice.checkBreakCommand(this.debugMode);
         if (cmd === DebugCommand.BREAK) {
@@ -1868,10 +1883,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     /**
-     * Iterates through the statements to find the label to jump to
-     * @param statement the root statement to start searching
-     *
-     * @returns Invalid if no exception is thrown
+     * Iterates through the statements to find the label to jump to.
+     * @param statement The root statement to start searching from
+     * @returns BrsInvalid if no exception is thrown
      */
     private searchLabel(this: Interpreter, statement: Stmt.Statement) {
         if (statement instanceof Stmt.Label) {
@@ -1925,10 +1939,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     // Helper methods
 
     /**
-     * Returns the Memory Heap information from the interpreter
-     *
-     * @returns an object with the heap size limit and the used heap size
-     * */
+     * Returns the memory heap information from the interpreter.
+     * @returns Object with the heap size limit and the used heap size in KB
+     */
     getMemoryHeapInfo() {
         let heapSizeLimit = 874299; // Mock value for the heap size limit
         let usedHeapSize = 26229; // Mock value for the used heap size
@@ -1955,11 +1968,11 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     /**
-     * Returns the Backtrace formatted as a string or an array
-     * @param loc the location of the error
-     * @param asString a boolean, if true returns the backtrace as a string, otherwise as an array
-     * @param bt the backtrace array
-     * @returns a string or an array with the backtrace formatted
+     * Returns the backtrace formatted as a string or an array.
+     * @param loc The location of the error
+     * @param asString If true returns the backtrace as a string, otherwise as RoArray
+     * @param bt Optional backtrace array, defaults to current stack
+     * @returns String or RoArray with the formatted backtrace
      */
     formatBacktrace(loc: Location, asString = true, bt?: TracePoint[]): RoArray | string {
         const backTrace = bt ?? this._stack;
@@ -1988,8 +2001,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     /**
-     * Method to return the selected scope of the interpreter for the REPL and Micro Debugger
-     * @returns a string representation of the variables in the selected scope
+     * Returns a formatted string of variables in the selected scope for REPL and Micro Debugger.
+     * @param scope The scope to inspect (defaults to Function scope)
+     * @returns String representation of the variables in the selected scope
      */
     formatVariables(scope: Scope = Scope.Function): string {
         let vars = scope === Scope.Function ? `${"global".padEnd(16)} Interface:ifGlobal\r\n` : "";
@@ -2019,6 +2033,11 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         return vars;
     }
 
+    /**
+     * Formats a BrsType value for display in the debugger.
+     * @param value The BrsType value to format
+     * @returns Formatted string representation of the value
+     */
     formatValue(value: BrsType) {
         let text = value.toString();
         let lf = text.length <= 94 ? "\r\n" : "...\r\n";
@@ -2033,8 +2052,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     /**
-     * Method to return a string with the current source code location
-     * @returns a string representation of the location
+     * Returns a string with the source code location in pkg: format.
+     * @param location The location to format (defaults to current location)
+     * @returns String representation of the location in format "pkg:/file(line)"
      */
     formatLocation(location: Location = this.location) {
         let formattedLocation: string;
@@ -2048,8 +2068,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     /**
-     * Method to return the statistics of the interpreter for the REPL and Micro Debugger
-     * @returns a string representation of the interpreter statistics
+     * Returns the statistics of the interpreter for the REPL and Micro Debugger.
+     * @returns String representation of the interpreter statistics
      */
     formatStats(): string {
         let debugMsg = `Sub Context Data:\r\n`;
@@ -2069,8 +2089,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     /**
-     * Method to return the current app formatted version
-     * @returns the current app version
+     * Returns the current app's formatted version from the manifest.
+     * @returns The current app version in format "major.minor.build"
      */
     getChannelVersion(): string {
         let majorVersion = Number.parseInt(this.manifest.get("major_version") ?? "0") || 0;
@@ -2080,8 +2100,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     /**
-     * Emits an error via this processor's `events` property, then throws it.
-     * @param err the ParseError to emit then throw
+     * Emits an error via this interpreter's `events` property, then throws it.
+     * @param err The BrsError to emit and throw
      */
     public addError(err: BrsError): never {
         err.backTrace ??= this._stack.slice();
@@ -2093,6 +2113,11 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         throw err;
     }
 
+    /**
+     * Formats a BrsError into an associative array for error handling in BrightScript.
+     * @param err The BrsError to format
+     * @returns RoAssociativeArray containing error details (backtrace, message, number, etc.)
+     */
     private formatErrorVariable(err: BrsError) {
         const btArray = this.formatBacktrace(err.location, false, err.backTrace) as RoArray;
         let errDetail = RuntimeErrorDetail.Internal;
@@ -2118,9 +2143,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     /**
-     * Method to evaluate if a number is positive
-     * @param value number to evaluate
-     * @returns boolean indicating if the number is positive
+     * Evaluates if a number is positive or NaN.
+     * @param value Number to evaluate (number or Long)
+     * @returns True if the number is positive or NaN, false otherwise
      */
     private isPositive(value: number | Long): boolean {
         if (value instanceof Long) {
@@ -2130,10 +2155,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     /**
-     * Method to evaluate if a number is less than compare
-     * @param value number to evaluate
-     * @param compare number to compare
-     * @returns boolean indicating if the number is less than compare
+     * Evaluates if a number is less than a comparison value.
+     * @param value Number to evaluate (number or Long)
+     * @param compare Number to compare against
+     * @returns True if value is less than compare, false otherwise
      */
     private lessThan(value: number | Long, compare: number): boolean {
         if (value instanceof Long) {

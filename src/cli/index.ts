@@ -210,6 +210,10 @@ async function runAppFiles(files: string[]) {
     }
 }
 
+/**
+ * Process the deep link parameters.
+ * @returns a Map containing the deep link key-value pairs.
+ */
 function processDeepLink() {
     const deepLinkMap: Map<string, string> = new Map();
     const deepLinkParams = program.deepLink?.split(",");

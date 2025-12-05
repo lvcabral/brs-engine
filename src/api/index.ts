@@ -139,6 +139,7 @@ let currentPayload: AppPayload;
 // API Methods
 export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any = {}) {
     if (customDeviceInfo) {
+        // Prevent hosting apps to override some device info keys
         const invalidKeys: (keyof DeviceInfo)[] = [
             "firmwareVersion",
             "registry",
