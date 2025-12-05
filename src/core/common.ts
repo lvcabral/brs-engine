@@ -6,10 +6,10 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-/* Device Simulation Information Interface
+/* Device Information Interface
  *
  * This interface is used to simulate a Roku device environment in the engine.
- * It feeds the interpreter with several device features like registry, fonts,
+ * It feeds the interpreter with several device features like registry, extensions,
  * audio codecs, video formats, and other device information provided by `roDeviceInfo`.
  *
  * Roku documentation: https://developer.roku.com/docs/references/brightscript/interfaces/ifdeviceinfo.md
