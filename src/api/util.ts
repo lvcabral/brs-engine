@@ -28,7 +28,11 @@ export function getApiPath(): string {
  */
 export function getWorkerLibPath(): string {
     let libPath = getApiPath();
-    libPath = libPath.replace(".api.js", `.worker.js?v=${packageInfo.version}`);
+    const apiIndex = libPath.indexOf(".api.js");
+    if (apiIndex !== -1) {
+        libPath = libPath.substring(0, apiIndex);
+    }
+    libPath = `${libPath}.worker.js?v=${packageInfo.version}`;
     return libPath;
 }
 
