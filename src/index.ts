@@ -1,3 +1,4 @@
+export * from "./api";
 export * from "./core";
 export * from "./core/brsTypes";
 export * from "./core/interpreter";

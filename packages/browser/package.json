@@ -33,7 +33,7 @@
     "assets/",
     "lib/brs.worker.js",
     "lib/*.LICENSE.txt",
-    "types/src/api/",
+    "types/",
     "CHANGELOG.md"
   ],
   "scripts": {
