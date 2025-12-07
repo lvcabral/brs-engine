@@ -240,7 +240,6 @@ export function isRegistryData(value: any): value is RegistryData {
     return value && typeof value === "object" && value.current instanceof Map && Array.isArray(value.removed);
 }
 
-
 /* Execution Payload Interfaces
  *
  * These interfaces are used to provide information to the interpreter about the
