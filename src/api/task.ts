@@ -8,6 +8,7 @@
 import {
     AppPayload,
     isNDKStart,
+    isRegistryData,
     isTaskData,
     isThreadUpdate,
     TaskData,
@@ -135,7 +136,7 @@ export function resetTasks() {
  * @param event MessageEvent from the task worker
  */
 function taskCallback(event: MessageEvent) {
-    if (event.data instanceof Map) {
+    if (isRegistryData(event.data)) {
         notifyAll("registry", event.data);
     } else if (typeof event.data.displayEnabled === "boolean") {
         setDisplayState(event.data.displayEnabled);
