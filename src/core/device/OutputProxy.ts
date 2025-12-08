@@ -50,7 +50,7 @@ export class OutputProxy {
             const lines = str.split("\n");
             if (lines.length > 1) {
                 // the length of the most recent line is now the current line length
-                this.currentLineLength = lines[lines.length - 1].length;
+                this.currentLineLength = lines.at(-1)!.length;
             } else {
                 // but if this wasn't a multi-line string, we're just appending to the current line
                 this.currentLineLength += str.length;

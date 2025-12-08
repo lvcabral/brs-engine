@@ -26,8 +26,8 @@ function formatMismatch(functionName: string, mismatchedSignature: SignatureAndM
             }
         })
         .join(", ");
-    messageParts.push(`function ${functionName}(${args}) as ${ValueKind.toString(sig.returns)}:`);
     messageParts.push(
+        `function ${functionName}(${args}) as ${ValueKind.toString(sig.returns)}:`,
         ...mismatches
             .map((mm) => {
                 switch (mm.reason) {

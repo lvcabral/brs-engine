@@ -717,10 +717,9 @@ export class Lexer {
                 range: [start, current],
             };
 
-            let prev = comments[comments.length - 1];
+            let prev = comments.at(-1);
             if (
-                prev != null &&
-                prev.type === "Block" &&
+                prev?.type === "Block" &&
                 curr.type === "Block" &&
                 prev.starter === curr.starter &&
                 prev.loc.end.line === curr.loc.start.line - 1

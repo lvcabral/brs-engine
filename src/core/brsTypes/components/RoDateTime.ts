@@ -45,10 +45,10 @@ export class RoDateTime extends BrsComponent implements BrsValue {
                 this.toLocalTime,
             ],
         });
-        if (!seconds) {
-            this.resetTime();
-        } else {
+        if (seconds) {
             this.markTime = seconds * 1000;
+        } else {
+            this.resetTime();
         }
     }
 
@@ -136,7 +136,7 @@ export class RoDateTime extends BrsComponent implements BrsValue {
             }
             case "short": {
                 dateString = date.toLocaleDateString(locale, {
-                    year: locale !== "en-US" ? "numeric" : "2-digit",
+                    year: locale === "en-US" ? "2-digit" : "numeric",
                     month: "numeric",
                     day: "numeric",
                     timeZone: "UTC",
@@ -560,7 +560,7 @@ function wrapTokens(input: string, tokens: string[]): string {
  */
 const localeFormat = (date: Date, exp: string, locale: string | string[] = "en-US"): string => {
     const tokenRegex = /\\?\{(yy|y|MM|M|dd|d|HH|H|hh|h|mm|m|MMMM|MMM|EEEE|EEE|a)\}/g;
-    return exp.replace(tokenRegex, (key) => {
+    return exp.replaceAll(tokenRegex, (key) => {
         if (key.startsWith("\\")) {
             return key.slice(1);
         }

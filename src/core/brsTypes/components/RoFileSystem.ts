@@ -60,6 +60,9 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
             }
             return matchedFiles;
         } catch (err: any) {
+            if (BrsDevice.isDevMode) {
+                BrsDevice.stderr.write(`warning,roFileSystem.findOnTree: ${err.message}`);
+            }
             return [];
         }
     }

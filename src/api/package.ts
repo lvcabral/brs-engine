@@ -110,7 +110,7 @@ export function loadAppZip(fileName: string, file: ArrayBuffer, callback: Functi
     source.length = 0;
     paths.length = 0;
     extensions.length = 0;
-    if (deviceData.appList && deviceData.appList.length === 0) {
+    if (deviceData?.appList?.length === 0) {
         deviceData.appList.push({
             id: "dev",
             title: currentApp.title,
@@ -236,7 +236,7 @@ export function getSerialNumber() {
     const prefix = device ? device[4] : "X0";
     let verPlain = "";
     for (const element of packageInfo.version.split(".")) {
-        verPlain += element.replace(/\D/g, "").padStart(2, "0");
+        verPlain += element.replaceAll(/\D/g, "").padStart(2, "0");
     }
     return `${prefix}0BRS${verPlain.substring(0, 6)}`;
 }

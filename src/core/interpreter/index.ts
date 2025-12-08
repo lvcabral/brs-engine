@@ -742,7 +742,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 } else {
                     return this.addError(
                         new TypeMismatch({
-                            message: `Operator "\\" can't be applied to`,
+                            message: String.raw`Operator "\" can't be applied to`,
                             left: {
                                 type: left,
                                 location: expression.left.location,

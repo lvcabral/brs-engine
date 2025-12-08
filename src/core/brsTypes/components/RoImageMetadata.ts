@@ -54,10 +54,10 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
                 tagValue = tag.value;
                 break;
             case "number":
-                if (tagEnum !== undefined) {
-                    tagValue = tagEnum[tag.value] ?? tag.value.toString();
-                } else {
+                if (tagEnum === undefined) {
                     tagValue = tag.value.toString();
+                } else {
+                    tagValue = tagEnum[tag.value] ?? tag.value.toString();
                 }
                 break;
             default:
@@ -159,7 +159,7 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
 
     private decodeVersion(buffer: Buffer) {
         let decoded = new TextDecoder("ascii").decode(buffer);
-        let version = parseFloat(`${decoded.slice(0, 2)}.${decoded.slice(2)}`);
+        let version = Number.parseFloat(`${decoded.slice(0, 2)}.${decoded.slice(2)}`);
         return Number.isInteger(version) ? version + ".0" : version.toString();
     }
 

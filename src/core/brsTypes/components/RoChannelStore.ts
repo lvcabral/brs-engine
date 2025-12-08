@@ -274,20 +274,13 @@ ZZwGPYCKEHMPrIOOXJ-S9ZjArgaEpBUpMXWJibFxnkpVUVzbC22GEaqz_SjOJXFMQU7TaCKkDeCYVKyl
         if (qty instanceof Int32 && qty.getValue() <= 0) {
             return false;
         }
-        return (
-            catalog.find((prod) => {
-                const prodCode = prod.get(new BrsString("code"));
-                const orderCode = item.get(new BrsString("code"));
-                if (
-                    prodCode instanceof BrsString &&
-                    orderCode instanceof BrsString &&
-                    prodCode.value === orderCode.value
-                ) {
-                    return true;
-                }
-                return false;
-            }) !== undefined
-        );
+        return catalog.some((prod) => {
+            const prodCode = prod.get(new BrsString("code"));
+            const orderCode = item.get(new BrsString("code"));
+            return (
+                prodCode instanceof BrsString && orderCode instanceof BrsString && prodCode.value === orderCode.value
+            );
+        });
     }
 
     // ifChannelStore ------------------------------------------------------------------------------------

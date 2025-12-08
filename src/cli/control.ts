@@ -152,7 +152,7 @@ export function sendKey(key: string, mod: number, type: RemoteType = RemoteType.
             const next = getNext();
             Atomics.store(sharedArray, DataType.RID + next, type + index);
             Atomics.store(sharedArray, DataType.MOD + next, mod);
-            Atomics.store(sharedArray, DataType.KEY + next, key.charCodeAt(4) + mod);
+            Atomics.store(sharedArray, DataType.KEY + next, key.codePointAt(4)! + mod);
             notifyAll("control", { key: key, mod: mod });
         }
     }

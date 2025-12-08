@@ -258,7 +258,7 @@ keysMap.set("F10", "volumemute");
 // Keyboard API
 export function setCustomKeys(newKeys: Map<string, string>) {
     for (let [key, value] of newKeys) {
-        let newKey = key.replace(/Windows|Command/gi, "Meta");
+        let newKey = key.replaceAll(/Windows|Command/gi, "Meta");
         keysMap.set(newKey.replace("Option", "Alt"), value);
     }
 }
