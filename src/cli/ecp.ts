@@ -22,7 +22,7 @@ const DEBUG = false;
 const ECPPORT = 8060;
 const SSDPPORT = 1900;
 const MAC = getMacAddress();
-const UDN = "138aedd0-d6ad-11eb-b8bc-" + MAC.replace(/:\s*/g, "");
+const UDN = "138aedd0-d6ad-11eb-b8bc-" + MAC.replaceAll(/:\s*/g, "");
 let ecp: restana.Service<restana.Protocol.HTTP>;
 let ssdp: any;
 let device: DeviceInfo;
@@ -707,7 +707,7 @@ function getOSVersion(firmware: string, version = true) {
  */
 function getModelName(model: string) {
     const modelName = device.models?.get(model);
-    return modelName ? modelName[0].replace(/ *\([^)]*\) */g, "") : `Roku (${model})`;
+    return modelName ? modelName[0].replaceAll(/ *\([^)]*\) */g, "") : `Roku (${model})`;
 }
 
 /**

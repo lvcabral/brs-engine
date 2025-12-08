@@ -52,7 +52,7 @@ export class RoDeviceCrypto extends BrsComponent implements BrsValue {
 
     format256BitKey(key: string): Buffer {
         if (key.length < 32) {
-            key = key.padEnd(32, String.fromCharCode(13));
+            key = key.padEnd(32, String.fromCodePoint(13));
         } else if (key.length > 32) {
             key = key.slice(0, 32);
         }

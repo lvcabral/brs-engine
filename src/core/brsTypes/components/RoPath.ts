@@ -22,7 +22,7 @@ export class RoPath extends BrsComponent implements BrsValue, Comparable {
     }
 
     setPath(pathName: string) {
-        pathName = pathName.replace(/[/\\]+/g, path.posix.sep);
+        pathName = pathName.replaceAll(/[/\\]+/g, path.posix.sep);
         let newUrl: URL;
         if (canParseURL(pathName)) {
             newUrl = new URL(pathName);

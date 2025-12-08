@@ -20,7 +20,7 @@ export class RoAudioResource extends BrsComponent implements BrsValue {
         super("roAudioResource");
         this.maxStreams = BrsDevice.deviceInfo.maxSimulStreams;
         this.valid = true;
-        const sfxIndex = BrsDevice.sfx.findIndex((wav) => wav === name.value.toLowerCase());
+        const sfxIndex = BrsDevice.sfx.indexOf(name.value.toLowerCase());
         if (sfxIndex > -1) {
             this.audioId = sfxIndex;
         } else {
@@ -68,7 +68,7 @@ export class RoAudioResource extends BrsComponent implements BrsValue {
         impl: (_: Interpreter, volume: Int32, index: Int32) => {
             const stream = index.getValue();
             if (stream >= 0 && stream < this.maxStreams) {
-                const sysIndex = DefaultSounds.findIndex((wav) => wav === this.audioName.toLowerCase());
+                const sysIndex = DefaultSounds.indexOf(this.audioName.toLowerCase());
                 const playVolume = sysIndex > -1 ? BrsDevice.deviceInfo.audioVolume : volume.getValue();
                 Atomics.store(BrsDevice.sharedArray, DataType.WAV + stream, this.audioId ?? -1);
                 postMessage(`sfx,trigger,${this.audioName},${playVolume},${stream}`);

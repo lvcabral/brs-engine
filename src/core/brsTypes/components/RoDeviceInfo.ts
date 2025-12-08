@@ -164,7 +164,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         impl: (_: Interpreter) => {
             const model = this.deviceModel;
             const device = BrsDevice.deviceInfo.models?.get(model);
-            return new BrsString(device ? device[0].replace(/ *\([^)]*\) */g, "") : `Roku (${model})`);
+            return new BrsString(device ? device[0].replaceAll(/ *\([^)]*\) */g, "") : `Roku (${model})`);
         },
     });
 

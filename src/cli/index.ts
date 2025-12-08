@@ -281,7 +281,7 @@ async function runApp(payload: AppPayload) {
         }
         if (pkg.exitReason === AppExitReason.Packaged) {
             // Generate the Encrypted App Package
-            const filePath = path.join(program.out, appFileName.replace(/.zip/gi, ".bpk"));
+            const filePath = path.join(program.out, appFileName.replaceAll(/.zip/gi, ".bpk"));
             try {
                 const buffer = updateAppZip(pkg.cipherText, pkg.iv);
                 fs.writeFileSync(filePath, buffer);

@@ -301,15 +301,15 @@ export class Callable implements Brs.BrsValue, Brs.Boxable {
             let received = args[index];
 
             let coercedValue = tryCoerce(received, expected.type.kind);
-            if (coercedValue !== undefined) {
-                coercedArgs[index] = coercedValue;
-            } else {
+            if (coercedValue === undefined) {
                 reasons.push({
                     reason: MismatchReason.ArgumentTypeMismatch,
                     expected: Brs.ValueKind.toString(expected.type.kind),
                     received: Brs.ValueKind.toString(received.kind),
                     argName: expected.name.text,
                 });
+            } else {
+                coercedArgs[index] = coercedValue;
             }
         }
 

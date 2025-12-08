@@ -54,7 +54,7 @@ export class IfDraw2D {
         const ctx = this.component.getContext();
         rgba = combineRgbaOpacity(rgba, opacity);
         const didDraw = this.component.drawImage(object, x, y, scaleX, scaleY, rgba);
-        ctx.globalAlpha = 1.0;
+        ctx.globalAlpha = 1;
         return didDraw;
     }
 
@@ -122,20 +122,20 @@ export class IfDraw2D {
         this.component.makeDirty();
     }
 
-    doDrawRotatedRect(rect: Rect, rgba: number, rotation: number, center?: number[], opacity: number = 1.0) {
+    doDrawRotatedRect(rect: Rect, rgba: number, rotation: number, center?: number[], opacity: number = 1) {
         const baseX = this.component.x;
         const baseY = this.component.y;
         const ctx = this.component.getContext();
         ctx.save();
         // Default to top-left corner if centerX and centerY are not provided
-        const rotationCenterX = center !== undefined ? center[0] : 0;
-        const rotationCenterY = center !== undefined ? center[1] : 0;
-        if (rotation !== 0) {
+        const rotationCenterX = center === undefined ? 0 : center[0];
+        const rotationCenterY = center === undefined ? 0 : center[1];
+        if (rotation === 0) {
+            ctx.translate(baseX + rect.x, baseY + rect.y);
+        } else {
             ctx.translate(baseX + rect.x + rotationCenterX, baseY + rect.y + rotationCenterY);
             ctx.rotate(-rotation); // Apply the rotation
             ctx.translate(-rotationCenterX, -rotationCenterY); // Translate back
-        } else {
-            ctx.translate(baseX + rect.x, baseY + rect.y);
         }
         ctx.globalAlpha = opacity; // Set the opacity
         ctx.fillStyle = rgbaIntToHex(rgba, this.component.getCanvasAlpha());
@@ -332,7 +332,7 @@ export class IfDraw2D {
                 1,
                 rgba instanceof Int32 ? rgba.getValue() : undefined
             );
-            ctx.globalAlpha = 1.0;
+            ctx.globalAlpha = 1;
             return BrsBoolean.from(didDraw);
         },
     });
@@ -436,7 +436,7 @@ export class IfDraw2D {
                 scaleY.getValue(),
                 rgba instanceof Int32 ? rgba.getValue() : undefined
             );
-            ctx.globalAlpha = 1.0;
+            ctx.globalAlpha = 1;
             ctx.restore();
             return BrsBoolean.from(didDraw);
         },

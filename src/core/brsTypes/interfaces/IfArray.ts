@@ -24,7 +24,7 @@ export class IfArray {
         },
         impl: (_: Interpreter) => {
             const elements = this.component.getElements();
-            return elements[elements.length - 1] || BrsInvalid.Instance;
+            return elements.at(-1) || BrsInvalid.Instance;
         },
     });
 

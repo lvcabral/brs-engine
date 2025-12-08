@@ -423,10 +423,10 @@ function stopAudio() {
     const audio = playList[playIndex];
     if (audio && soundsIdx.has(audio.toLowerCase())) {
         const idx = soundsIdx.get(audio.toLowerCase());
-        if (soundsDat[idx!]?.state() !== "loading") {
-            soundsDat[idx!]?.stop();
-        } else {
+        if (soundsDat[idx!]?.state() === "loading") {
             soundsDat[idx!]?.unload();
+        } else {
+            soundsDat[idx!]?.stop();
         }
         Atomics.store(sharedArray, DataType.SND, MediaEvent.Partial);
     } else if (audio) {

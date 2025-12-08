@@ -584,7 +584,7 @@ function updateDeviceAssets() {
                     });
                 });
             } else {
-                return Promise.reject(new Error(response.statusText));
+                throw new Error(response.statusText);
             }
         })
         .catch((err) => {
@@ -637,10 +637,10 @@ function loadRegistry() {
     for (let index = 0; index < storage.length; index++) {
         const key = storage.key(index);
         if (key?.split(".")[0] === deviceData.developerId) {
-            if (key.split(".")[1] !== "Transient") {
-                registry.set(key, storage.getItem(key) ?? "");
-            } else {
+            if (key.split(".")[1] === "Transient") {
                 transientKeys.push(key);
+            } else {
+                registry.set(key, storage.getItem(key) ?? "");
             }
         }
     }

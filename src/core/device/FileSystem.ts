@@ -51,7 +51,7 @@ export class FileSystem {
      * @param uri File URI to save
      */
     private savePath(uri: string) {
-        this.paths.set(uri.toLowerCase().replace(/\/+/g, "/").trim(), uri.replace(/\/+/g, "/").trim());
+        this.paths.set(uri.toLowerCase().replaceAll(/\/+/g, "/").trim(), uri.replaceAll(/\/+/g, "/").trim());
     }
 
     /**
@@ -60,7 +60,7 @@ export class FileSystem {
      * @returns True if path was deleted, false if not found
      */
     private deletePath(uri: string) {
-        return this.paths.delete(uri.toLowerCase().replace(/\/+/g, "/").trim());
+        return this.paths.delete(uri.toLowerCase().replaceAll(/\/+/g, "/").trim());
     }
 
     /**
@@ -69,7 +69,7 @@ export class FileSystem {
      * @returns Original path with preserved case or undefined if not found
      */
     private getOriginalPath(uri: string) {
-        return this.paths.get(uri.toLowerCase().replace(/\/+/g, "/").trim());
+        return this.paths.get(uri.toLowerCase().replaceAll(/\/+/g, "/").trim());
     }
 
     /**
@@ -150,7 +150,7 @@ export class FileSystem {
         } else if (!this.root) {
             uri = uri.toLowerCase();
         }
-        return uri.replace(/\/+/g, "/").trim();
+        return uri.replaceAll(/\/+/g, "/").trim();
     }
 
     /**
@@ -168,8 +168,7 @@ export class FileSystem {
         if (this.mfs.existsSync("common:/")) {
             volumes.push("common:");
         }
-        volumes.push("tmp:");
-        volumes.push("cachefs:");
+        volumes.push("tmp:", "cachefs:");
         return volumes;
     }
 
