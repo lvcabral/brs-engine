@@ -104,9 +104,7 @@ module.exports = (env) => {
                 ],
             },
             resolve: sharedResolve,
-            plugins: [
-                new ShebangPlugin(),
-            ],
+            plugins: [new ShebangPlugin()],
             externals: {
                 "./brs.node.js": "commonjs ./brs.node.js",
                 "brs-engine": "commonjs ./brs.node.js",
