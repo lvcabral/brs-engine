@@ -122,7 +122,7 @@ export function loadAppZip(fileName: string, file: ArrayBuffer, callback: Functi
     let hasSGComponents = false;
     for (const filePath in currentZip) {
         processFile(filePath, currentZip[filePath]);
-        if (filePath.startsWith("components/")) {
+        if (filePath.toLowerCase().startsWith("components/") && filePath.toLowerCase().endsWith(".xml")) {
             hasSGComponents = true;
         }
     }
