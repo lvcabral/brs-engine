@@ -2,13 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+<a name="v2.0.1"></a>
+
+## [v2.0.1 - Fixed API Types and Registry persistence](https://github.com/lvcabral/brs-engine/releases/tag/v2.0.1) - 08 December 2025
+
+### Release Changes
+
+* (api) Fixed `getWorkerLibPath` to avoid duplicate parameters by [@lvcabral](https://github.com/lvcabral) in [#765](https://github.com/lvcabral/brs-engine/pull/765)
+* (api) Fix: Added back API library types to the package by [@lvcabral](https://github.com/lvcabral) in [#766](https://github.com/lvcabral/brs-engine/pull/766)
+* (api) Fixed [#775](https://github.com/lvcabral/brs-engine/issues/775) Deleted registry keys not being removed from LocalStorage by [@lvcabral](https://github.com/lvcabral) in [#776](https://github.com/lvcabral/brs-engine/pull/776)
+
+[Full Changelog][v2.0.1]
+
 <a name="v2.0.0"></a>
 
 ## [v2.0.0 - Extensions and SceneGraph Support](https://github.com/lvcabral/brs-engine/releases/tag/v2.0.0) - 05 December 2025
 
 The `brs-engine` has been refactored to support an extension model, with **Roku SceneGraph** functionality moved to a separate NPM package `brs-scenegraph`. This architectural change keeps the core interpreter lean, while enabling optional extensions for **RSG** and, in the future, **SDK1** (legacy Roku apps) and **BrightSign** (digital signage platform).
 
-## Release Changes
+### Release Changes
 
 * Refactored `brs-engine` to support extensions and moved **SceneGraph** code to a separate package by [@lvcabral](https://github.com/lvcabral) in [#760](https://github.com/lvcabral/brs-engine/pull/760)
   * Introduced an extension system with the `BrsExtension` interface and lifecycle hooks
@@ -27,7 +39,7 @@ Note: The **SceneGraph** functionality is on par with the last alpha release: [v
 
 This is the final v1.x release in the `master` branch and brings the inclusion of the `BrsEvent` abstract class and `BrsCollection` interface, which provide a structured way to handle events and collections within the BrightScript engine. Additionally, this release includes various dependency updates and bug fixes to enhance security, stability and performance. This label will be branched for maintenance updates while work on the v2.0 major release will continue in the `master` branch.
 
-## Release Changes
+### Release Changes
 
 * Replaced dependency `xml2js` by `xmldoc` by [@lvcabral](https://github.com/lvcabral) in [#749](https://github.com/lvcabral/brs-engine/pull/749)
 * Bump js-yaml from 3.14.1 to 3.14.2 by @dependabot[bot] in [#752](https://github.com/lvcabral/brs-engine/pull/752)
@@ -1236,6 +1248,7 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
+[v2.0.1]: https://github.com/lvcabral/brs-engine/compare/v2.0.0...v2.0.1
 [v2.0.0]: https://github.com/lvcabral/brs-engine/compare/v1.10.0...v2.0.0
 [v1.10.0]: https://github.com/lvcabral/brs-engine/compare/v1.9.9...v1.10.0
 [v1.9.9]: https://github.com/lvcabral/brs-engine/compare/v1.9.8...v1.9.9

@@ -47,7 +47,7 @@ The **BrightScript Engine** implements the BrightScript language specification u
   * Cookies are only partially supported, if `EnableCookies` is called and `EnableFreshConnection` is set to `false`, then Cookies from previous calls will be preserved.
   * The other Cookies related methods are just mocked and do nothing: `GetCookies`, `AddCookies`, `ClearCookies`.
   * The following methods are also only mocked but do nothing: `EnableResume`, `SetHttpVersion` and `SetMinimumTransferRate`.
-* The component `roAppMemoryMonitor` will only return measured data in Node.JS and Chromium browsers. For browsers the memory heap info only accounts for the main thread, as WebWorkers do not have support for `performance.memory` API.
+* The component `roAppMemoryMonitor` will only return measured data in Node.JS and Chromium browsers. For browsers the memory heap info only accounts for the main thread, as WebWorkers do not have support for `performance.memory` API. The `roAppMemoryMonitorEvent` is not yet implemented.
 * The `roInput` deep link events are supported, but the events related to Voice Commands are not.
 * The `roFileSystem` is fully functional, but the message port events are not yet implemented.
 * The complete **Roku OS** file system is available and shared among threads (main, render and tasks), with all volumes: `pkg:`, `common:/`, `tmp:`, `cachefs:` and `ext1:`. By default, the writeable volumes `tmp:` and `cachefs:` are limited to 32 MB each, see [customization documentation](./customization.md) to learn how to change those limits.
