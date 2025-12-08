@@ -106,15 +106,6 @@ module.exports = (env) => {
             resolve: sharedResolve,
             plugins: [
                 new ShebangPlugin(),
-                new CopyPlugin({
-                    patterns: [
-                        {
-                            from: path.resolve(__dirname, "../../scenegraph/assets/common.zip"),
-                            to: path.resolve(__dirname, "../bin/common.zip"),
-                            noErrorOnMissing: true,
-                        },
-                    ],
-                }),
             ],
             externals: {
                 "./brs.node.js": "commonjs ./brs.node.js",
