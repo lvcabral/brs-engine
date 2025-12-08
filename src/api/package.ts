@@ -110,7 +110,6 @@ export function loadAppZip(fileName: string, file: ArrayBuffer, callback: Functi
     source.length = 0;
     paths.length = 0;
     extensions.length = 0;
-
     if (deviceData.appList && deviceData.appList.length === 0) {
         deviceData.appList.push({
             id: "dev",
@@ -119,10 +118,19 @@ export function loadAppZip(fileName: string, file: ArrayBuffer, callback: Functi
             path: currentApp.path,
         });
     }
-
+    // Process each file in the zip
+    let hasSGComponents = false;
     for (const filePath in currentZip) {
         processFile(filePath, currentZip[filePath]);
+        if (filePath.toLowerCase().startsWith("components/") && filePath.toLowerCase().endsWith(".xml")) {
+            hasSGComponents = true;
+        }
     }
+    // Add SceneGraph extension if components are present
+    if (hasSGComponents && deviceData.extensions?.has(SupportedExtension.SceneGraph)) {
+        extensions.push(SupportedExtension.SceneGraph);
+    }
+    // Create and return the payload
     callback(createPayload(launchTime));
 }
 
@@ -136,9 +144,7 @@ function processFile(relativePath: string, fileData: Uint8Array) {
     const lcasePath: string = relativePath.toLowerCase();
     const ext = lcasePath.split(".").pop() ?? "";
     if (relativePath.endsWith("/")) {
-        if (lcasePath.startsWith("components/") && deviceData.extensions?.has(SupportedExtension.SceneGraph)) {
-            extensions.push(SupportedExtension.SceneGraph);
-        }
+        // Skip directories
     } else if (lcasePath.startsWith("source") && ext === "brs") {
         paths.push({ id: srcId, url: relativePath, type: "source" });
         source.push(strFromU8(fileData));
