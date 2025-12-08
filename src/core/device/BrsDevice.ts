@@ -19,6 +19,7 @@ import {
     DeviceInfo,
     DefaultSounds,
     MaxSoundStreams,
+    RegistryData,
 } from "../common";
 import SharedObject from "../SharedObject";
 import { FileSystem } from "./FileSystem";
@@ -26,7 +27,7 @@ import { OutputProxy } from "./OutputProxy";
 
 export class BrsDevice {
     static readonly deviceInfo: DeviceInfo = DefaultDeviceInfo;
-    static readonly registry: Map<string, string> = new Map<string, string>();
+    static readonly registry: RegistryData = { current: new Map<string, string>(), removed: [], isDirty: false };
     static readonly fileSystem: FileSystem = new FileSystem();
     static readonly isDevMode = process.env.NODE_ENV === "development";
     static readonly keysBuffer: KeyEvent[] = [];
@@ -106,15 +107,20 @@ export class BrsDevice {
             registry = data;
         }
         for (const [key, value] of registry) {
-            this.registry.set(key, value);
+            this.registry.current.set(key, value);
         }
+        this.registry.isDirty = false;
     }
 
     /**
-     * Stores the current registry to the shared buffer.
+     * Stores the current registry to the shared buffer and notifies the main thread for persistence.
      */
     static flushRegistry() {
-        this.sharedRegistry?.store(Object.fromEntries(this.registry));
+        postMessage(this.registry);
+        this.sharedRegistry?.store(Object.fromEntries(this.registry.current));
+        // Clear removed keys after persistence
+        this.registry.removed.length = 0;
+        this.registry.isDirty = false;
     }
 
     /**
@@ -124,10 +130,11 @@ export class BrsDevice {
         if (this.sharedRegistry && this.sharedRegistry.getVersion() !== this.registryVersion) {
             this.registryVersion = this.sharedRegistry.getVersion();
             const registry: Map<string, string> = new Map(Object.entries(this.sharedRegistry.load()));
-            this.registry.clear();
+            this.registry.current.clear();
             for (const [key, value] of registry) {
-                this.registry.set(key, value);
+                this.registry.current.set(key, value);
             }
+            this.registry.isDirty = false;
         }
     }
 

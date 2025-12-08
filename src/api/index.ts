@@ -27,6 +27,8 @@ import {
     registryMaxSize,
     getNow,
     Platform,
+    RegistryData,
+    isRegistryData,
 } from "../core/common";
 import {
     source,
@@ -658,7 +660,7 @@ function loadRegistry() {
 function mainCallback(event: MessageEvent) {
     if (event.data instanceof ImageData) {
         updateBuffer(event.data);
-    } else if (event.data instanceof Map) {
+    } else if (isRegistryData(event.data)) {
         handleRegistryUpdate(event.data);
     } else if (Platform.inBrowser && Array.isArray(event.data.audioPlaylist)) {
         addAudioPlaylist(event.data.audioPlaylist);
@@ -749,16 +751,19 @@ function handleNDKStart(data: NDKStart) {
 /**
  * Handles registry updates from the interpreter.
  * Stores changes to localStorage and notifies observers.
- * @param registry Map of registry key-value pairs
+ * @param registry RegistryData object with current and removed keys
  */
-function handleRegistryUpdate(registry: Map<string, string>) {
+function handleRegistryUpdate(registry: RegistryData) {
     if (Platform.inBrowser) {
         const storage: Storage = globalThis.localStorage;
-        for (const [key, value] of registry) {
+        for (const key of registry.removed) {
+            storage.removeItem(key);
+        }
+        for (const [key, value] of registry.current) {
             storage.setItem(key, value);
         }
     }
-    notifyAll("registry", registry);
+    notifyAll("registry", registry.current);
 }
 
 /**

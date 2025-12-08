@@ -34,10 +34,11 @@ export class RoRegistry extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, section: BrsString) => {
             BrsDevice.refreshRegistry();
-            for (const key of BrsDevice.registry.keys()) {
-                let regSection = `${this.devId}.${section}`;
-                if (key.startsWith(regSection)) {
-                    BrsDevice.registry.delete(key);
+            const regSection = `${this.devId}.${section.value}`;
+            for (const key of BrsDevice.registry.current.keys()) {
+                if (key.startsWith(regSection) && BrsDevice.registry.current.delete(key)) {
+                    BrsDevice.registry.removed.push(key);
+                    BrsDevice.registry.isDirty = true;
                 }
             }
             return BrsBoolean.True;
@@ -52,7 +53,6 @@ export class RoRegistry extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter) => {
             BrsDevice.flushRegistry();
-            postMessage(BrsDevice.registry);
             return BrsBoolean.True;
         },
     });
@@ -66,7 +66,7 @@ export class RoRegistry extends BrsComponent implements BrsValue {
         impl: (_: Interpreter) => {
             BrsDevice.refreshRegistry();
             let sections = new Set<string>();
-            for (const key of BrsDevice.registry.keys()) {
+            for (const key of BrsDevice.registry.current.keys()) {
                 if (key.split(".")[0] === this.devId) {
                     sections.add(key.split(".")[1]);
                 }
@@ -88,7 +88,7 @@ export class RoRegistry extends BrsComponent implements BrsValue {
         impl: (_: Interpreter) => {
             BrsDevice.refreshRegistry();
             let space = 32 * 1024;
-            for (const [key, value] of BrsDevice.registry) {
+            for (const [key, value] of BrsDevice.registry.current) {
                 if (key.split(".")[0] === this.devId) {
                     space -= Buffer.byteLength(key.substring(this.devId.length + 1), "utf8");
                     space -= Buffer.byteLength(value, "utf8");

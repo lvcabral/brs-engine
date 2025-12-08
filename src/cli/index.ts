@@ -28,6 +28,7 @@ import {
     AppExitReason,
     AppData,
     SupportedExtension,
+    isRegistryData,
 } from "../core/common";
 import packageInfo from "../../packages/node/package.json";
 // @ts-ignore
@@ -465,18 +466,17 @@ function messageCallback(message: any, _?: any) {
         canvas.height = message.height;
         ctx.putImageData(message, 0, 0);
         printAsciiScreen(program.ascii, canvas);
-    } else if (message instanceof Map) {
+    } else if (isRegistryData(message)) {
         if (program.ecp) {
-            brsWorker?.postMessage(message);
+            brsWorker?.postMessage(message.current);
         }
         if (program.registry) {
-            const strRegistry = JSON.stringify([...message]);
+            const strRegistry = JSON.stringify([...message.current]);
             try {
                 if (!fs.existsSync(paths.data)) {
                     fs.mkdirSync(paths.data, { recursive: true });
                 }
                 fs.writeFileSync(path.resolve(paths.data, "registry.json"), strRegistry);
-                console.log(paths.data, "registry.json");
             } catch (err: any) {
                 console.error(chalk.red(err.message));
             }

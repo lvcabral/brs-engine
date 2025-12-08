@@ -643,6 +643,9 @@ export async function executeFile(payload: AppPayload, customOptions?: Partial<E
     } else {
         result = await runSource(interpreter, sourceResult.sourceMap, payload);
     }
+    if (BrsDevice.registry.isDirty) {
+        BrsDevice.flushRegistry();
+    }
     if (!result.cipherText) {
         postMessage(`end,${result.exitReason}`);
     }
@@ -704,6 +707,9 @@ export async function executeTask(payload: TaskPayload, customOptions?: Partial<
             if (ext.execTask) {
                 ext.execTask(interpreter, payload);
             }
+        }
+        if (BrsDevice.registry.isDirty) {
+            BrsDevice.flushRegistry();
         }
         if (BrsDevice.isDevMode) {
             postMessage(`debug,Task ${payload.taskData.name} is done.`);

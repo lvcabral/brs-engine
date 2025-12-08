@@ -223,6 +223,30 @@ export enum SupportedExtension {
     BrightSign = "brs-brightsign", // BrightSign extension - planned
 }
 
+/**
+ * Registry Data Interface
+ */
+export interface RegistryData {
+    readonly current: Map<string, string>;
+    readonly removed: string[];
+    isDirty: boolean;
+}
+
+/**
+ * Type guard to check if a value is a RegistryData object.
+ * @param value the value to check
+ * @returns true if the value is a RegistryData object, false otherwise
+ */
+export function isRegistryData(value: any): value is RegistryData {
+    return (
+        value &&
+        typeof value === "object" &&
+        value.current instanceof Map &&
+        Array.isArray(value.removed) &&
+        typeof value.isDirty === "boolean"
+    );
+}
+
 /* Execution Payload Interfaces
  *
  * These interfaces are used to provide information to the interpreter about the
