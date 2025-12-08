@@ -229,6 +229,7 @@ export enum SupportedExtension {
 export interface RegistryData {
     readonly current: Map<string, string>;
     readonly removed: string[];
+    isDirty: boolean;
 }
 
 /**
@@ -237,7 +238,13 @@ export interface RegistryData {
  * @returns true if the value is a RegistryData object, false otherwise
  */
 export function isRegistryData(value: any): value is RegistryData {
-    return value && typeof value === "object" && value.current instanceof Map && Array.isArray(value.removed);
+    return (
+        value &&
+        typeof value === "object" &&
+        value.current instanceof Map &&
+        Array.isArray(value.removed) &&
+        typeof value.isDirty === "boolean"
+    );
 }
 
 /* Execution Payload Interfaces

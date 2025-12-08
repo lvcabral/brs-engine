@@ -88,6 +88,7 @@ export class RoRegistrySection extends BrsComponent implements BrsValue {
             BrsDevice.refreshRegistry();
             const fullKey = `${this.devId}.${this.section}.${key.value}`;
             BrsDevice.registry.current.set(fullKey, value.value);
+            BrsDevice.registry.isDirty = true;
             return BrsBoolean.True;
         },
     });
@@ -103,6 +104,7 @@ export class RoRegistrySection extends BrsComponent implements BrsValue {
             const devSection = `${this.devId}.${this.section}.`;
             for (const [key, value] of roAA.elements) {
                 BrsDevice.registry.current.set(`${devSection}${key}`, value.toString());
+                BrsDevice.registry.isDirty = true;
             }
             return BrsBoolean.True;
         },
@@ -119,9 +121,9 @@ export class RoRegistrySection extends BrsComponent implements BrsValue {
             const fullKey = `${this.devId}.${this.section}.${key.value}`;
             if (BrsDevice.registry.current.delete(fullKey)) {
                 BrsDevice.registry.removed.push(fullKey);
-                return BrsBoolean.True;
+                BrsDevice.registry.isDirty = true;
             }
-            return BrsBoolean.False;
+            return BrsBoolean.True;
         },
     });
 

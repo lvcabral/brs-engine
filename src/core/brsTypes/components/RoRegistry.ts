@@ -38,6 +38,7 @@ export class RoRegistry extends BrsComponent implements BrsValue {
             for (const key of BrsDevice.registry.current.keys()) {
                 if (key.startsWith(regSection) && BrsDevice.registry.current.delete(key)) {
                     BrsDevice.registry.removed.push(key);
+                    BrsDevice.registry.isDirty = true;
                 }
             }
             return BrsBoolean.True;
