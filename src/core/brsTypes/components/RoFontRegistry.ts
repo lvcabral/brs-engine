@@ -7,7 +7,7 @@ import { validUri } from "../../device/FileSystem";
 import { Int32 } from "../Int32";
 import { RoArray } from "./RoArray";
 import { RoFont } from "./RoFont";
-import * as opentype from "opentype.js";
+import * as opentype from "@lvcabral/opentype.js";
 import { BrsDevice } from "../../device/BrsDevice";
 import { BrsCanvas, createNewCanvas, releaseCanvas } from "../interfaces/IfDraw2D";
 
@@ -166,6 +166,19 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
             const fontData = BrsDevice.fileSystem.readFileSync(fontPath);
             const fontObj = opentype.parse(fontData.buffer);
             // Get font metrics
+            if (
+                !fontObj?.names ||
+                !fontObj.ascender ||
+                !fontObj.descender ||
+                !fontObj.unitsPerEm ||
+                !fontObj.tables?.head ||
+                !fontObj.tables?.hhea
+            ) {
+                if (BrsDevice.isDevMode) {
+                    BrsDevice.stderr.write(`warning,Error parsing font file: ${fontPath}`);
+                }
+                return "";
+            }
             const fontMetrics = {
                 ascent: fontObj.ascender / fontObj.unitsPerEm,
                 descent: Math.abs(fontObj.descender / fontObj.unitsPerEm),
@@ -177,7 +190,13 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
                 weight: fontObj.tables.head.macStyle & (1 << 0) ? "bold" : "normal",
             };
             // Register font family
-            const fontFamily = fullFamily ? fontObj.names.fullName.en : fontObj.names.fontFamily.en;
+            const fontFamily = fullFamily ? fontObj.names.fullName?.en : fontObj.names.fontFamily?.en;
+            if (!fontFamily) {
+                if (BrsDevice.isDevMode) {
+                    BrsDevice.stderr.write(`warning,Error retrieving font family from file: ${fontPath}`);
+                }
+                return "";
+            }
             if (typeof FontFace !== "undefined") {
                 const fontFace = new FontFace(fontFamily, fontData, {
                     weight: fontMetrics.weight,
