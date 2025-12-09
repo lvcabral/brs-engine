@@ -317,7 +317,7 @@ export class Video extends Group {
                 state = "playing";
                 this.resetSeeking();
                 this.spinner.setValueSilent("visible", BrsBoolean.False);
-                this.showUI(false);
+                if (eventType === MediaEvent.Resumed) this.showUI(false);
                 break;
             case MediaEvent.Paused:
                 state = "paused";
