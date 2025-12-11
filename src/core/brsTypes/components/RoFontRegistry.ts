@@ -155,13 +155,14 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
     registerFont(fontPath: string, fullFamily: boolean = false): string {
         try {
             const fsys = BrsDevice.fileSystem;
-            if (!validUri(fontPath) || !fsys.existsSync(fontPath)) {
+            if (this.fontPaths.has(fontPath)) {
+                return this.fontPaths.get(fontPath)!;
+            } else if (!validUri(fontPath) || !fsys.existsSync(fontPath)) {
                 if (BrsDevice.isDevMode) {
                     BrsDevice.stderr.write(`warning,Font file not found: ${fontPath}`);
                 }
+                this.fontPaths.set(fontPath, "");
                 return "";
-            } else if (this.fontPaths.has(fontPath)) {
-                return this.fontPaths.get(fontPath) ?? "";
             }
             const fontData = BrsDevice.fileSystem.readFileSync(fontPath);
             const fontObj = opentype.parse(fontData.buffer);
@@ -216,6 +217,7 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
             if (BrsDevice.isDevMode) {
                 BrsDevice.stderr.write(`warning,Error loading font:${fontPath} - ${err.message}`);
             }
+            this.fontPaths.set(fontPath, "");
             return "";
         }
     }

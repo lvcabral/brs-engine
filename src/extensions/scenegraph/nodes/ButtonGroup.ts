@@ -10,6 +10,7 @@ import {
     RoFont,
     IfDraw2D,
     Rect,
+    BrsInvalid,
 } from "brs-engine";
 import { sgRoot } from "../SGRoot";
 import { jsValueOf } from "../factory/serialization";
@@ -229,7 +230,7 @@ export class ButtonGroup extends LayoutGroup {
         }
     }
 
-    private calculateButtonWidth(buttons: string[], font: RoFont): number {
+    private calculateButtonWidth(buttons: string[], font: RoFont | BrsInvalid): number {
         const minWidth = this.getValueJS("minWidth") as number;
         const maxWidth = this.getValueJS("maxWidth") as number;
         this.iconSize = this.getIconSize(["iconUri", "focusedIconUri"]);
@@ -238,7 +239,7 @@ export class ButtonGroup extends LayoutGroup {
 
         let labelWidth = minWidth - this.margin * 2 - iconGap;
         for (let button of buttons) {
-            const measured = font.measureTextWidth(button, labelMax);
+            const measured = font instanceof RoFont ? font.measureTextWidth(button, labelMax) : { width: 0, height: 0 };
             labelWidth = Math.max(measured.width, labelWidth);
         }
         return Math.min(maxWidth, labelWidth + this.margin * 2 + iconGap);

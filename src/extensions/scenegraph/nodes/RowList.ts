@@ -11,6 +11,7 @@ import {
     IfDraw2D,
     Rect,
     RectRect,
+    RoFont,
 } from "brs-engine";
 import { sgRoot } from "../SGRoot";
 import { ContentNode } from "./ContentNode";
@@ -98,7 +99,7 @@ export class RowList extends ArrayGrid {
         this.focusField = "rowListHasFocus";
         const font = this.getValue("rowLabelFont") as Font;
         const drawFont = font.createDrawFont();
-        this.titleHeight = drawFont.measureTextHeight();
+        this.titleHeight = drawFont instanceof RoFont ? drawFont.measureTextHeight() : 0;
 
         // Initialize focus properly
         this.focusIndex = 0;

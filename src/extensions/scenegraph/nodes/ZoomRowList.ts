@@ -11,6 +11,7 @@ import {
     RoArray,
     IfDraw2D,
     Rect,
+    RoFont,
 } from "brs-engine";
 import { sgRoot } from "../SGRoot";
 import { ContentNode } from "./ContentNode";
@@ -679,6 +680,9 @@ export class ZoomRowList extends ArrayGrid {
             return 0;
         }
         const drawFont = fontValue.createDrawFont();
+        if (!(drawFont instanceof RoFont)) {
+            return 0;
+        }
         const textRect = {
             x: rect.x + offset[0],
             y: rect.y + offset[1],
@@ -728,6 +732,9 @@ export class ZoomRowList extends ArrayGrid {
             return 0;
         }
         const drawFont = fontToUse.createDrawFont();
+        if (!(drawFont instanceof RoFont)) {
+            return 0;
+        }
         const counterText = `${this.rowFocus[rowIndex] + 1} of ${items}`;
         const textRect = {
             x: rect.x,

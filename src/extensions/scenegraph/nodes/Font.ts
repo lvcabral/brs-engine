@@ -9,6 +9,7 @@ import {
     RoFont,
     getFontRegistry,
     RoFontRegistry,
+    BrsInvalid,
 } from "brs-engine";
 import { sgRoot } from "../SGRoot";
 import { Node } from "./Node";
@@ -74,7 +75,8 @@ export class Font extends Node {
     }
 
     createDrawFont() {
-        let fontFamily = systemFonts.get(this.systemFont.toLowerCase())?.family ?? "";
+        const systemFamily = systemFonts.get(this.systemFont.toLowerCase())?.family ?? "";
+        let fontFamily = systemFamily;
         const uri = this.getUri();
         if (uri !== "") {
             fontFamily = this.fontRegistry.getFontFamily(uri) ?? fontFamily;
@@ -82,12 +84,20 @@ export class Font extends Node {
         const fontId = `${fontFamily}-${this.getSize()}`;
         let drawFont = Font.DrawFontCache.get(fontId);
         if (!drawFont) {
-            drawFont = this.fontRegistry.createFont(
+            const maybeFont = this.fontRegistry.createFont(
                 new BrsString(fontFamily),
                 new Int32(this.getSize()),
                 BrsBoolean.False,
                 BrsBoolean.False
-            ) as RoFont;
+            );
+            if (maybeFont instanceof RoFont) {
+                drawFont = maybeFont;
+            } else {
+                if (BrsDevice.isDevMode) {
+                    BrsDevice.stderr.write(`warning, Failed to create RoFont for family "${fontFamily}".`);
+                }
+                return BrsInvalid.Instance;
+            }
             Font.DrawFontCache.set(fontId, drawFont);
         }
         return drawFont;

@@ -295,6 +295,9 @@ export class Group extends Node {
         index: number = 0
     ) {
         const drawFont = font.createDrawFont();
+        if (!(drawFont instanceof RoFont)) {
+            return { text: fullText, width: 0, height: 0, ellipsized: false };
+        }
         let text: string;
         let measured: MeasuredText;
 
@@ -355,6 +358,9 @@ export class Group extends Node {
         draw2D?: IfDraw2D
     ): MeasuredText {
         const drawFont = font.createDrawFont();
+        if (!(drawFont instanceof RoFont)) {
+            return { text, width: rect.width, height: 0, ellipsized: false };
+        }
         if (this.changed) {
             this.refreshLines(text, drawFont, rect, ellipsis, numLines, maxLines, lineSpacing, displayPartialLines);
         }
