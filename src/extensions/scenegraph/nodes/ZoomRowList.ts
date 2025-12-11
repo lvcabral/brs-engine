@@ -268,25 +268,6 @@ export class ZoomRowList extends ArrayGrid {
         return false;
     }
 
-    renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
-        if (!this.isVisible()) {
-            return;
-        }
-        const nodeTrans = this.getTranslation();
-        const drawTrans = nodeTrans.slice();
-        drawTrans[0] += origin[0];
-        drawTrans[1] += origin[1];
-        const rotation = angle + this.getRotation();
-        opacity = opacity * this.getOpacity();
-
-        const rect = { x: drawTrans[0], y: drawTrans[1], ...this.getDimensions() };
-        this.renderContent(interpreter, rect, rotation, opacity, draw2D);
-        this.updateBoundingRects(rect, origin, rotation);
-        this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);
-        this.updateParentRects(origin, angle);
-        this.isDirty = false;
-    }
-
     protected renderContent(
         interpreter: Interpreter,
         rect: Rect,

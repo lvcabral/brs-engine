@@ -266,6 +266,11 @@ export class ArrayGrid extends Group {
         const rect = { x: drawTrans[0], y: drawTrans[1], ...size };
         const rotation = angle + this.getRotation();
         opacity = opacity * this.getOpacity();
+        const content = this.getValue("content");
+        if (content instanceof ContentNode && content.changed) {
+            this.refreshContent();
+            content.changed = false;
+        }
         this.renderContent(interpreter, rect, rotation, opacity, draw2D);
         this.updateBoundingRects(rect, origin, rotation);
         this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);
