@@ -1,5 +1,5 @@
 import { FieldModel } from "../SGTypes";
-import { AAMember, Interpreter, BrsBoolean, BrsString, Float, IfDraw2D } from "brs-engine";
+import { AAMember, Interpreter, BrsBoolean, BrsString, Float, IfDraw2D, RoFont } from "brs-engine";
 import { Group } from "./Group";
 import { rotateTranslation } from "../SGUtil";
 import type { Poster } from "./Poster";
@@ -111,7 +111,7 @@ export class Button extends Group {
         const text = this.getValueJS("text") as string;
         const font = this.getValue(nodeFocus ? "focusedTextFont" : "textFont") as Font;
         const drawFont = font.createDrawFont();
-        const measured = drawFont.measureText(text, labelMax);
+        const measured = drawFont instanceof RoFont ? drawFont.measureText(text, labelMax) : { width: 0, height: 0 };
         const labelCalc = Math.max(measured.width, labelMin);
         this.width = Math.max(labelCalc + this.margin * 2 + iconGap, minWidth);
         this.labelWidth = this.width - this.margin * 2 - iconGap + 1;

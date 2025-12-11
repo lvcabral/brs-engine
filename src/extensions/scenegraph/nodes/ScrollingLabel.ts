@@ -1,4 +1,4 @@
-import { AAMember, BrsType, IfDraw2D, MeasuredText, Rect } from "brs-engine";
+import { AAMember, BrsType, IfDraw2D, MeasuredText, Rect, RoFont } from "brs-engine";
 import { FieldModel } from "../SGTypes";
 import { Label } from "./Label";
 import { Font } from "./Font";
@@ -61,13 +61,15 @@ export class ScrollingLabel extends Label {
 
     // Helper to check if scrolling is necessary and calculate initial values
     private checkForScrolling() {
-        const text = this.getValueJS("text") as string;
         const font = this.getValue("font") as Font;
         const drawFont = font.createDrawFont();
+        if (!(drawFont instanceof RoFont)) {
+            return;
+        }
+        const text = this.getValueJS("text") as string;
         const maxWidth = this.getValueJS("maxWidth") as number;
         const ellipsis = this.getValueJS("ellipsisText") || "...";
-
-        if (!text || !font || maxWidth <= 0) {
+        if (!text || !font || maxWidth <= 0 || !(drawFont instanceof RoFont)) {
             // Cannot determine scrolling need without necessary info or drawing context
             this.needsScrolling = false;
             this.scrollState = ScrollState.STATIC;
@@ -120,6 +122,11 @@ export class ScrollingLabel extends Label {
         if (this.isDirty || (this.fullTextWidth === 0 && text)) {
             this.checkForScrolling();
         }
+        const font = this.getValue("font") as Font;
+        const drawFont = font.createDrawFont();
+        if (!(drawFont instanceof RoFont)) {
+            return { text, width: 0, height: 0, ellipsized: false };
+        }
         const now = Date.now();
         const deltaTime = now - this.lastUpdateTime;
         this.lastUpdateTime = now;
@@ -128,8 +135,6 @@ export class ScrollingLabel extends Label {
         const scrollSpeed = this.getValueJS("scrollSpeed") as number;
         const repeatCount = this.getValueJS("repeatCount") as number;
         const maxWidth = this.getValueJS("maxWidth") as number;
-        const font = this.getValue("font") as Font;
-        const drawFont = font.createDrawFont();
         const textHeight = drawFont.measureTextHeight();
         rect.width = maxWidth > 0 ? maxWidth : rect.width;
         rect.height = textHeight;

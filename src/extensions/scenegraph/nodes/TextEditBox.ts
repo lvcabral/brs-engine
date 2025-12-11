@@ -271,7 +271,12 @@ export class TextEditBox extends Group {
             }
             if (this.drawFont === undefined) {
                 const font = this.textLabel.getValue("font") as Font;
-                this.drawFont = font.createDrawFont();
+                const maybeFont = font.createDrawFont();
+                if (maybeFont instanceof RoFont) {
+                    this.drawFont = maybeFont;
+                } else {
+                    return;
+                }
             }
             // Measure the text to determine cursor position
             const measured = this.drawFont.measureTextWidth(textToMeasure);
