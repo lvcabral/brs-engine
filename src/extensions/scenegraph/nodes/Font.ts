@@ -94,7 +94,7 @@ export class Font extends Node {
                 drawFont = maybeFont;
             } else {
                 if (BrsDevice.isDevMode) {
-                    BrsDevice.stderr.write(`warning,[sg.font.drawfont.fail] Failed to create RoFont for Font node ${this.name}.`);
+                    BrsDevice.stderr.write(`warning, Failed to create RoFont for family "${fontFamily}".`);
                 }
                 return BrsInvalid.Instance;
             }
