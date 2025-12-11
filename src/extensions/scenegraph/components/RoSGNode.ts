@@ -24,7 +24,7 @@ import {
 import { sgRoot } from "../SGRoot";
 import { createNodeByType, isSubtypeCheck, subtypeHierarchy } from "../factory/SGNodeFactory";
 import { toAssociativeArray } from "../factory/serialization";
-import { FieldKind } from "../SGTypes";
+import { FieldKind, isContentNode } from "../SGTypes";
 
 export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode {
     readonly kind = ValueKind.Object;
@@ -711,7 +711,10 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
         },
         impl: (interpreter: Interpreter, fieldName: BrsString, value: BrsType) => {
             this.location = interpreter.formatLocation();
-            if (!this.getElements().some((key) => key.value === fieldName.value.toLowerCase())) {
+            if (
+                !isContentNode(this) &&
+                !this.getElements().some((key) => key.value.toLowerCase() === fieldName.value.toLowerCase())
+            ) {
                 BrsDevice.stderr.write(
                     `warning,BRIGHTSCRIPT: ERROR: roSGNode.setField: Tried to set nonexistent field "${fieldName.value}": ${this.location}`
                 );

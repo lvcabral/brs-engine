@@ -246,11 +246,14 @@ export class Node extends RoSGNode implements BrsValue {
     }
 
     // Used to setup values for the node fields without validation or notifying observers
-    setValueSilent(fieldName: string, value: BrsType) {
+    setValueSilent(fieldName: string, value: BrsType, hidden?: boolean) {
         const mapKey = fieldName.toLowerCase();
         let field = this.fields.get(mapKey);
         if (field) {
             field.setValue(value, false);
+            if (hidden !== undefined) {
+                field.setHidden(hidden);
+            }
         } else {
             const fieldType = FieldKind.fromBrsType(value);
             if (fieldType) {
@@ -425,10 +428,7 @@ export class Node extends RoSGNode implements BrsValue {
 
     protected setNodeFields(fieldsToSet: RoAssociativeArray, addFields: boolean) {
         for (const [key, value] of fieldsToSet.elements) {
-            if (
-                (addFields && !this.fields.has(key.toLowerCase())) ||
-                (!addFields && this.fields.has(key.toLowerCase()))
-            ) {
+            if (addFields || (!addFields && this.fields.has(key.toLowerCase()))) {
                 this.setValue(key, value, false);
                 this.changed = true;
             }
