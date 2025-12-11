@@ -1,5 +1,14 @@
 import type { BrsType } from ".";
-import { ValueKind, PrimitiveKinds, isNumberKind, isBrsNumber, BrsComponent, BrsBoolean } from ".";
+import {
+    ValueKind,
+    PrimitiveKinds,
+    isNumberKind,
+    isBrsNumber,
+    BrsComponent,
+    BrsBoolean,
+    isStringComp,
+    BrsString,
+} from ".";
 import { isBoxable, isUnboxable } from "./Boxing";
 import { Int32 } from "./Int32";
 import { Int64 } from "./Int64";
@@ -28,6 +37,10 @@ export function tryCoerce(value: BrsType, target: ValueKind): BrsType | undefine
             // types that are always objects should be returned unmodified
             return value;
         }
+    }
+
+    if (target === ValueKind.String && isStringComp(value)) {
+        return new BrsString(value.getValue());
     }
 
     if (PrimitiveKinds.has(target) && isUnboxable(value)) {
