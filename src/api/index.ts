@@ -29,6 +29,7 @@ import {
     Platform,
     RegistryData,
     isRegistryData,
+    isExtensionInfo,
 } from "../core/common";
 import {
     source,
@@ -662,6 +663,10 @@ function mainCallback(event: MessageEvent) {
         updateBuffer(event.data);
     } else if (isRegistryData(event.data)) {
         handleRegistryUpdate(event.data);
+    } else if (isExtensionInfo(event.data)) {
+        deviceDebug(
+            `print,Loaded Extension: ${event.data.name} (v${event.data.version}) from ${event.data.library}\r\n`
+        );
     } else if (Platform.inBrowser && Array.isArray(event.data.audioPlaylist)) {
         addAudioPlaylist(event.data.audioPlaylist);
     } else if (Platform.inBrowser && event.data.audioPath) {

@@ -10,7 +10,8 @@ const registeredFactories = new Map<string, BrsExtensionFactory>();
  * Contract for extensions that can hook into the interpreter lifecycle.
  */
 export interface BrsExtension {
-    name: string;
+    readonly name: string;
+    readonly version: string;
     onInit?(interpreter: Interpreter): void;
     onBeforeExecute?(interpreter: Interpreter, payload: AppPayload | TaskPayload): void | Promise<void>;
     updateSourceMap?(sourceMap: Map<string, string>): void;

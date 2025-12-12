@@ -29,6 +29,7 @@ import {
     AppData,
     SupportedExtension,
     isRegistryData,
+    ExtensionInfo,
 } from "../core/common";
 import packageInfo from "../../packages/node/package.json";
 // @ts-ignore
@@ -45,6 +46,7 @@ const length = dataBufferIndex + dataBufferSize;
 
 // Variables
 let appFileName = "";
+const extensions: ExtensionInfo[] = [];
 let brsWorker: Worker;
 let workerReady = false;
 let sharedBuffer = new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT * length);
@@ -156,7 +158,9 @@ async function loadSceneGraphExtension() {
     try {
         const sgLib = "brs-sg.node.js";
         const sg = await loadModule(path.join(__dirname, sgLib));
-        brs.registerExtension(() => new sg.BrightScriptExtension());
+        const extension = new sg.BrightScriptExtension();
+        brs.registerExtension(() => extension);
+        extensions.push({ name: SupportedExtension.SceneGraph, library: sgLib, version: extension.version });
         deviceData.extensions = new Map([[SupportedExtension.SceneGraph, sgLib]]);
     } catch (err: any) {
         console.error(chalk.red(`Error loading SceneGraph extension: ${err.message}`));
@@ -416,14 +420,13 @@ async function repl() {
             process.stdout.write(chalk.cyanBright(variables));
             process.stdout.write("\n");
         } else if (["xt", "ext"].includes(line.toLowerCase().trim())) {
-            const extensions = deviceData.extensions;
             process.stdout.write(chalk.cyanBright(`\nLoaded Extensions:\n\n`));
-            if (extensions && extensions.size > 0) {
-                for (const [ext, path] of extensions) {
-                    process.stdout.write(chalk.cyanBright(`${ext}: ${path}\n`));
+            if (extensions.length) {
+                for (const { name, library, version } of extensions) {
+                    process.stdout.write(chalk.cyanBright(`${name}: ${library} (v${version})\n`));
                 }
             } else {
-                process.stdout.write(chalk.cyanBright() + "No extensions loaded.\n");
+                process.stdout.write(chalk.yellowBright("No extensions loaded.\n"));
             }
         } else {
             brs.executeLine(line, replInterpreter);
