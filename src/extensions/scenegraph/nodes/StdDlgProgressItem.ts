@@ -1,5 +1,6 @@
 import { AAMember, Interpreter, RoAssociativeArray, BrsString, Float, IfDraw2D, Rect } from "brs-engine";
 import { FieldModel } from "../SGTypes";
+import { SGNodeType } from ".";
 import { Group } from "./Group";
 import { BusySpinner } from "./BusySpinner";
 import { Label } from "./Label";
@@ -16,8 +17,9 @@ export class StdDlgProgressItem extends Group {
     private readonly label: Label;
     private readonly gap: number;
 
-    constructor(initializedFields: AAMember[] = [], readonly name: string = "StdDlgProgressItem") {
+    constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.StdDlgProgressItem) {
         super([], name);
+        this.setExtendsType(name, SGNodeType.Group);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

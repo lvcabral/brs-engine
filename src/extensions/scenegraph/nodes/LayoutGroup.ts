@@ -1,5 +1,6 @@
 import { AAMember, Interpreter, BrsBoolean, BrsType, RoArray, IfDraw2D } from "brs-engine";
 import { FieldKind, FieldModel } from "../SGTypes";
+import { SGNodeType } from ".";
 import { jsValueOf } from "../factory/serialization";
 import { Group } from "./Group";
 import { Node } from "./Node";
@@ -38,8 +39,9 @@ export class LayoutGroup extends Group {
     private lastChildCount = 0;
     private readonly epsilon = 0.25;
 
-    constructor(initializedFields: AAMember[] = [], readonly name: string = "LayoutGroup") {
+    constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.LayoutGroup) {
         super([], name);
+        this.setExtendsType(name, SGNodeType.Group);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

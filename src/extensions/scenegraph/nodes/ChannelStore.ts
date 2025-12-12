@@ -15,6 +15,7 @@ import { Node } from "./Node";
 import { ContentNode } from "./ContentNode";
 import { jsValueOf, fromContentNode, toContentNode } from "../factory/serialization";
 import { FieldKind, FieldModel } from "../SGTypes";
+import { SGNodeType } from ".";
 
 export class ChannelStore extends Node {
     readonly defaultFields: FieldModel[] = [
@@ -40,9 +41,9 @@ export class ChannelStore extends Node {
 
     private readonly channelStore: RoChannelStore;
 
-    constructor(members: AAMember[] = [], readonly name: string = "ChannelStore") {
+    constructor(members: AAMember[] = [], readonly name: string = SGNodeType.ChannelStore) {
         super([], name);
-
+        this.setExtendsType(name, SGNodeType.Node);
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(members);
 

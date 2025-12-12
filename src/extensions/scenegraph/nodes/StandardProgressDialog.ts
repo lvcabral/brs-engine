@@ -1,6 +1,7 @@
 import { AAMember, Float, BrsString, BrsDevice, Interpreter, IfDraw2D } from "brs-engine";
 import { jsValueOf } from "../factory/serialization";
 import { FieldModel } from "../SGTypes";
+import { SGNodeType } from ".";
 import { StandardDialog } from "./StandardDialog";
 import { StdDlgTitleArea } from "./StdDlgTitleArea";
 import { StdDlgContentArea } from "./StdDlgContentArea";
@@ -15,8 +16,9 @@ export class StandardProgressDialog extends StandardDialog {
     private readonly margin: number;
     private readonly screenWidth: number;
 
-    constructor(initializedFields: AAMember[] = [], readonly name: string = "StandardProgressDialog") {
+    constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.StandardProgressDialog) {
         super([], name);
+        this.setExtendsType(name, SGNodeType.StandardDialog);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

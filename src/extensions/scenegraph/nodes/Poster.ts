@@ -1,4 +1,5 @@
 import { FieldKind, FieldModel } from "../SGTypes";
+import { SGNodeType } from ".";
 import {
     AAMember,
     Interpreter,
@@ -37,8 +38,9 @@ export class Poster extends Group {
     protected uri: string = "";
     protected bitmap?: RoBitmap;
 
-    constructor(initializedFields: AAMember[] = [], readonly name: string = "Poster") {
+    constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.Poster) {
         super([], name);
+        this.setExtendsType(name, SGNodeType.Group);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

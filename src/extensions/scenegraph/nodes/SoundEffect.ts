@@ -1,4 +1,5 @@
 import { FieldKind, FieldModel } from "../SGTypes";
+import { SGNodeType } from ".";
 import { AAMember, BrsDevice, BrsString, BrsType, MediaEvent, isBrsNumber, isBrsString } from "brs-engine";
 import { jsValueOf } from "../factory/serialization";
 import { Node } from "./Node";
@@ -17,9 +18,9 @@ export class SoundEffect extends Node {
     private stream: number;
     private audioId: number;
 
-    constructor(members: AAMember[] = [], readonly name: string = "SoundEffect") {
+    constructor(members: AAMember[] = [], readonly name: string = SGNodeType.SoundEffect) {
         super([], name);
-
+        this.setExtendsType(name, SGNodeType.Node);
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(members);
         this.uri = "";

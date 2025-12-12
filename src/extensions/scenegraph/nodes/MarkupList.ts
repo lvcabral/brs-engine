@@ -1,5 +1,6 @@
 import { AAMember, Interpreter, BrsDevice, BrsString, BrsType, Int32, IfDraw2D, Rect, RectRect } from "brs-engine";
 import { FieldKind, FieldModel } from "../SGTypes";
+import { SGNodeType } from ".";
 import { ArrayGrid } from "./ArrayGrid";
 import { customNodeExists } from "../factory/SGNodeFactory";
 
@@ -15,8 +16,9 @@ export class MarkupList extends ArrayGrid {
     protected readonly gap: number;
     protected wrap: boolean;
 
-    constructor(initializedFields: AAMember[] = [], readonly name: string = "MarkupList") {
+    constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.MarkupList) {
         super([], name);
+        this.setExtendsType(name, SGNodeType.ArrayGrid);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

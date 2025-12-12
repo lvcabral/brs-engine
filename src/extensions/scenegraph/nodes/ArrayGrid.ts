@@ -12,6 +12,7 @@ import {
     Rect,
 } from "brs-engine";
 import { FieldKind, FieldModel } from "../SGTypes";
+import { SGNodeType } from ".";
 import { Group } from "./Group";
 import { createNodeByType } from "../factory/SGNodeFactory";
 import { brsValueOf, jsValueOf } from "../factory/serialization";
@@ -92,8 +93,9 @@ export class ArrayGrid extends Group {
     protected hasNinePatch: boolean;
     protected focusField: string;
 
-    constructor(initializedFields: AAMember[] = [], readonly name: string = "ArrayGrid") {
+    constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.ArrayGrid) {
         super([], name);
+        this.setExtendsType(name, SGNodeType.Group);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

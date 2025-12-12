@@ -1,4 +1,5 @@
 import { FieldKind, FieldModel } from "../SGTypes";
+import { SGNodeType } from ".";
 import { Group } from "./Group";
 import { AAMember, Interpreter, BrsString, BrsType, RoArray, Float, IfDraw2D } from "brs-engine";
 import { rotateTranslation } from "../SGUtil";
@@ -16,8 +17,9 @@ export class BusySpinner extends Group {
     private lastRenderTime: number = 0;
     private currentRotation: number = 0;
 
-    constructor(initializedFields: AAMember[] = [], readonly name: string = "BusySpinner") {
+    constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.BusySpinner) {
         super([], name);
+        this.setExtendsType(name, SGNodeType.Group);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

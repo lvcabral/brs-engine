@@ -15,6 +15,7 @@ import { jsValueOf } from "../factory/serialization";
 import { ContentNode } from "./ContentNode";
 import { Node } from "./Node";
 import { FieldKind, FieldModel } from "../SGTypes";
+import { SGNodeType } from ".";
 
 export class Audio extends Node {
     readonly defaultFields: FieldModel[] = [
@@ -39,9 +40,9 @@ export class Audio extends Node {
         { name: "timeToStartStreaming", type: "time", value: "0" },
     ];
 
-    constructor(members: AAMember[] = [], readonly name: string = "Audio") {
+    constructor(members: AAMember[] = [], readonly name: string = SGNodeType.Audio) {
         super([], name);
-
+        this.setExtendsType(name, SGNodeType.Node);
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(members);
 

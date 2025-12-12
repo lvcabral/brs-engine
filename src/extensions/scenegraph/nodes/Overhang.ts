@@ -1,4 +1,5 @@
 import { FieldKind, FieldModel } from "../SGTypes";
+import { SGNodeType } from ".";
 import {
     AAMember,
     Interpreter,
@@ -58,8 +59,9 @@ export class Overhang extends Group {
     private height: number;
     private realign: boolean;
 
-    constructor(initializedFields: AAMember[] = [], readonly name: string = "Overhang") {
+    constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.Overhang) {
         super([], name);
+        this.setExtendsType(name, SGNodeType.Group);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

@@ -1,5 +1,6 @@
 import { AAMember, Interpreter, BrsBoolean, Float, Int32, BrsString, RoBitmap, IfDraw2D } from "brs-engine";
 import { FieldModel } from "../SGTypes";
+import { SGNodeType } from ".";
 import { Group } from "./Group";
 import { TextEditBox } from "./TextEditBox";
 import { Font } from "./Font";
@@ -41,9 +42,9 @@ export class MiniKeyboard extends Group {
     private readonly bmpIcons: Map<string, RoBitmap> = new Map();
     private readonly keyFocus = { row: 0, col: 0, key: "" };
 
-    constructor(initializedFields: AAMember[] = [], readonly name: string = "Keyboard") {
+    constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.MiniKeyboard) {
         super([], name);
-
+        this.setExtendsType(name, SGNodeType.Group);
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
 

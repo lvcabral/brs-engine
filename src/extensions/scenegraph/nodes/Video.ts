@@ -1,5 +1,6 @@
 import { Group } from "./Group";
 import { FieldKind, FieldModel } from "../SGTypes";
+import { SGNodeType } from ".";
 import {
     AAMember,
     Interpreter,
@@ -144,9 +145,9 @@ export class Video extends Group {
     private statusChanged: boolean;
     private seeking: boolean;
 
-    constructor(members: AAMember[] = [], readonly name: string = "Video") {
+    constructor(members: AAMember[] = [], readonly name: string = SGNodeType.Video) {
         super([], name);
-
+        this.setExtendsType(name, SGNodeType.Group);
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(members);
 

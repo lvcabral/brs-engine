@@ -1,4 +1,5 @@
 import { FieldModel } from "../SGTypes";
+import { SGNodeType } from ".";
 import { AAMember, Interpreter, BrsBoolean, BrsString, Float, IfDraw2D, RoFont } from "brs-engine";
 import { Group } from "./Group";
 import { rotateTranslation } from "../SGUtil";
@@ -40,8 +41,9 @@ export class Button extends Group {
     private labelWidth: number;
     iconSize: number[] = [0, 0];
 
-    constructor(initializedFields: AAMember[] = [], readonly name: string = "Button") {
+    constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.Button) {
         super([], name);
+        this.setExtendsType(name, SGNodeType.Group);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

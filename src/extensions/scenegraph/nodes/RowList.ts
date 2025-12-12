@@ -21,6 +21,7 @@ import { Font } from "./Font";
 import { Group } from "./Group";
 import { ArrayGrid } from "./ArrayGrid";
 import { FieldKind, FieldModel } from "../SGTypes";
+import { SGNodeType } from ".";
 
 interface RowListRenderContext {
     itemSize: number[];
@@ -73,8 +74,9 @@ export class RowList extends ArrayGrid {
     protected readonly rowScrollOffset: number[] = []; // Track scroll offset per row for floating focus
     private readonly titleHeight: number;
 
-    constructor(initializedFields: AAMember[] = [], readonly name: string = "RowList") {
+    constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.RowList) {
         super([], name);
+        this.setExtendsType(name, SGNodeType.ArrayGrid);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

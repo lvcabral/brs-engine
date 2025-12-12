@@ -14,6 +14,7 @@ import {
 import { sgRoot } from "../SGRoot";
 import { Node } from "./Node";
 import { FieldKind, FieldModel } from "../SGTypes";
+import { SGNodeType } from ".";
 
 export class Font extends Node {
     readonly defaultFields: FieldModel[] = [
@@ -29,9 +30,9 @@ export class Font extends Node {
     private readonly fontRegistry: RoFontRegistry;
     private systemFont: string;
 
-    constructor(members: AAMember[] = [], readonly name: string = "Font") {
+    constructor(members: AAMember[] = [], readonly name: string = SGNodeType.Font) {
         super([], name);
-
+        this.setExtendsType(name, SGNodeType.Node);
         this.resolution = sgRoot.scene?.ui.resolution ?? "HD";
         this.defaultSize = this.resolution === "HD" ? 24 : 36;
 

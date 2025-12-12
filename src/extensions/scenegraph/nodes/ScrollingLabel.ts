@@ -1,5 +1,6 @@
 import { AAMember, BrsType, IfDraw2D, MeasuredText, Rect, RoFont } from "brs-engine";
 import { FieldModel } from "../SGTypes";
+import { SGNodeType } from ".";
 import { Label } from "./Label";
 import { Font } from "./Font";
 
@@ -34,8 +35,9 @@ export class ScrollingLabel extends Label {
     private ellipsisWidth: number = 0;
     private lastUpdateTime: number = 0; // Timestamp of the last update
 
-    constructor(initializedFields: AAMember[] = [], readonly name: string = "ScrollingLabel") {
+    constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.ScrollingLabel) {
         super([], name);
+        this.setExtendsType(name, SGNodeType.Label);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

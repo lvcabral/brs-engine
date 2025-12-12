@@ -1,4 +1,5 @@
 import { FieldModel } from "../SGTypes";
+import { SGNodeType } from ".";
 import { AAMember, Interpreter, Float, BrsString, BrsBoolean, isBrsString } from "brs-engine";
 import { Dialog } from "./Dialog";
 import { Keyboard } from "./Keyboard";
@@ -15,8 +16,9 @@ export class KeyboardDialog extends Dialog {
     private readonly keyboardY: number;
     private focus: string;
 
-    constructor(initializedFields: AAMember[] = [], readonly name: string = "KeyboardDialog") {
+    constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.KeyboardDialog) {
         super([], name);
+        this.setExtendsType(name, SGNodeType.Dialog);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

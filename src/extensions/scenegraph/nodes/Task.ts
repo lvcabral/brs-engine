@@ -18,6 +18,7 @@ import { Scene } from "./Scene";
 import { Global } from "./Global";
 import type { Field } from "./Field";
 import { FieldKind, FieldModel } from "../SGTypes";
+import { SGNodeType } from ".";
 
 export class Task extends Node {
     readonly defaultFields: FieldModel[] = [
@@ -32,8 +33,9 @@ export class Task extends Node {
     started: boolean;
     thread: boolean;
 
-    constructor(members: AAMember[] = [], readonly name: string = "Task") {
+    constructor(members: AAMember[] = [], readonly name: string = SGNodeType.Task) {
         super([], name);
+        this.setExtendsType(name, SGNodeType.Node);
         this.id = -1; // Not initialized
         this.active = false;
         this.started = false;
