@@ -7,6 +7,7 @@ import { registerExtension, BrsExtension } from "brs-engine";
 
 class MyExtension implements BrsExtension {
     name = "MyExtension";
+    version = "1.0.0";
 
     onInit(interpreter) {
         // Set up custom CreateObject factories, global functions, etc.
@@ -76,6 +77,8 @@ Note: In production environments you must copy `assets/common.zip` from this pac
 ## Creating your own extension
 
 1. **Implement `BrsExtension`** – the interface lives in `src/core/extensions.ts` and exposes lifecycle hooks:
+   - `name` – (required) unique identifier for your extension.
+   - `version` – (required) semantic version string for your extension (e.g., "1.0.0").
    - `onInit` – called once per interpreter before any payload runs. Use it to register new `CreateObject` factories or global functions.
    - `onBeforeExecute` – called for each payload (apps and tasks) before execution. Use it to prepare resources, parse manifests, or update `BrsDevice` state.
    - `updateSourceMap` – push extra files into the debugger/source map.
