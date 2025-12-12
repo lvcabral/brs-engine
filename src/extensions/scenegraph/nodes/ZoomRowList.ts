@@ -21,6 +21,7 @@ import { Font } from "./Font";
 import { Group } from "./Group";
 import { ArrayGrid } from "./ArrayGrid";
 import { FieldKind, FieldModel } from "../SGTypes";
+import { SGNodeType } from ".";
 
 interface RowMetrics {
     rowHeight: number;
@@ -93,8 +94,9 @@ export class ZoomRowList extends ArrayGrid {
     private readonly defaultItemZoomYOffset: number;
     private nodeWidth: number;
     private rowWidth: number;
-    constructor(initializedFields: AAMember[] = [], readonly name: string = "ZoomRowList") {
+    constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.ZoomRowList) {
         super([], name);
+        this.setExtendsType(name, SGNodeType.ArrayGrid);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

@@ -2,6 +2,7 @@ import { AAMember, BrsInvalid, BrsString, BrsType, isBrsString } from "brs-engin
 import { Node } from "./Node";
 import { sgRoot } from "../SGRoot";
 import { FieldKind, FieldModel } from "../SGTypes";
+import { SGNodeType } from ".";
 
 export class Timer extends Node {
     readonly defaultFields: FieldModel[] = [
@@ -15,8 +16,9 @@ export class Timer extends Node {
     private lastFireTime: number;
     private jsCallback?: Function;
 
-    constructor(members: AAMember[] = [], readonly name: string = "Timer") {
+    constructor(members: AAMember[] = [], readonly name: string = SGNodeType.Timer) {
         super([], name);
+        this.setExtendsType(name, SGNodeType.Node);
         this.lastFireTime = 0;
         this.active = false;
 

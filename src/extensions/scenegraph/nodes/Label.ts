@@ -3,6 +3,7 @@ import { Group } from "./Group";
 import type { Font } from "./Font";
 import { sgRoot } from "../SGRoot";
 import { FieldKind, FieldModel } from "../SGTypes";
+import { SGNodeType } from ".";
 import { rotateTranslation } from "../SGUtil";
 
 export class Label extends Group {
@@ -27,8 +28,9 @@ export class Label extends Group {
     ];
     protected measured?: MeasuredText;
 
-    constructor(initializedFields: AAMember[] = [], readonly name: string = "Label") {
+    constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.Label) {
         super([], name);
+        this.setExtendsType(name, SGNodeType.Group);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

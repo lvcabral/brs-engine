@@ -1,5 +1,6 @@
 import { AAMember, BrsString, Int32, IfDraw2D, Rect } from "brs-engine";
 import { FieldModel } from "../SGTypes";
+import { SGNodeType } from ".";
 import { jsValueOf } from "../factory/serialization";
 import { LabelList } from "./LabelList";
 import { ContentNode } from "./ContentNode";
@@ -12,8 +13,9 @@ export class RadioButtonList extends LabelList {
         { name: "focusedCheckedIconUri", type: "uri", value: "" },
     ];
 
-    constructor(initializedFields: AAMember[] = [], readonly name: string = "RadioButtonList") {
+    constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.RadioButtonList) {
         super([], name);
+        this.setExtendsType(name, SGNodeType.LabelList);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

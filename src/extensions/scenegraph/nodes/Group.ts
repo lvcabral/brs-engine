@@ -24,6 +24,7 @@ import type { Rectangle } from "./Rectangle";
 import type { ScrollingLabel } from "./ScrollingLabel";
 import { Node } from "./Node";
 import { FieldKind, FieldModel, isFont } from "../SGTypes";
+import { SGNodeType } from ".";
 import { convertHexColor, rotateRect, unionRect } from "../SGUtil";
 import { createNodeByType } from "../factory/SGNodeFactory";
 import { jsValueOf } from "../factory/serialization";
@@ -51,8 +52,9 @@ export class Group extends Node {
     private cachedHeight: number = 0;
     isDirty: boolean;
 
-    constructor(initializedFields: AAMember[] = [], readonly name: string = "Group") {
+    constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.Group) {
         super([], name);
+        this.setExtendsType("Group", SGNodeType.Node);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

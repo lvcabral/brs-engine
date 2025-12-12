@@ -1,5 +1,6 @@
 import { AAMember, BrsBoolean } from "brs-engine";
 import { FieldModel } from "../SGTypes";
+import { SGNodeType } from ".";
 import { Group } from "./Group";
 
 export class Panel extends Group {
@@ -18,8 +19,9 @@ export class Panel extends Group {
         { name: "isOffscreenLeft", type: "boolean", value: "false" },
     ];
 
-    constructor(initializedFields: AAMember[] = [], readonly name: string = "Panel") {
+    constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.Panel) {
         super([], name);
+        this.setExtendsType(name, SGNodeType.Group);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

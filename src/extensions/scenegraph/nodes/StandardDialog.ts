@@ -10,6 +10,7 @@ import {
     Rect,
 } from "brs-engine";
 import { FieldKind, FieldModel } from "../SGTypes";
+import { SGNodeType } from ".";
 import { Group } from "./Group";
 import { toAssociativeArray, jsValueOf } from "../factory/serialization";
 import { sgRoot } from "../SGRoot";
@@ -35,8 +36,9 @@ export class StandardDialog extends Group {
     private readonly dialogTrans: number[];
     private width: number;
 
-    constructor(initializedFields: AAMember[] = [], readonly name: string = "StandardDialog") {
+    constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.StandardDialog) {
         super([], name);
+        this.setExtendsType(name, SGNodeType.Group);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

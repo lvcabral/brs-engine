@@ -1,5 +1,6 @@
 import { AAMember, Interpreter, IfDraw2D } from "brs-engine";
 import { FieldModel } from "../SGTypes";
+import { SGNodeType } from ".";
 import { Group } from "./Group";
 import { rotateTranslation } from "../SGUtil";
 
@@ -11,8 +12,9 @@ export class Rectangle extends Group {
         { name: "blendingEnabled", type: "boolean", value: "true" },
     ];
 
-    constructor(initializedFields: AAMember[] = [], readonly name: string = "Rectangle") {
+    constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.Rectangle) {
         super([], name);
+        this.setExtendsType(name, SGNodeType.Group);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

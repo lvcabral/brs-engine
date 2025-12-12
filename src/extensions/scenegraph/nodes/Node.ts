@@ -36,6 +36,7 @@ import { Field } from "../nodes/Field";
 import { FieldAlias, FieldKind, FieldModel } from "../SGTypes";
 import { toAssociativeArray, jsValueOf, fromSGNode } from "../factory/serialization";
 import { sgRoot } from "../SGRoot";
+import { SGNodeType } from ".";
 
 export class Node extends RoSGNode implements BrsValue {
     protected readonly fields: Map<string, Field>;
@@ -60,9 +61,8 @@ export class Node extends RoSGNode implements BrsValue {
         { name: "change", type: FieldKind.AssocArray },
     ];
 
-    constructor(initializedFields: AAMember[] = [], readonly nodeSubtype: string = "Node") {
+    constructor(initializedFields: AAMember[] = [], readonly nodeSubtype: string = SGNodeType.Node) {
         super([], nodeSubtype);
-        this.setExtendsType();
         this.address = genHexAddress();
         this.fields = new Map();
         this.aliases = new Map();
@@ -951,31 +951,10 @@ export class Node extends RoSGNode implements BrsValue {
     }
 
     /* used for isSubtype */
-    protected setExtendsType() {
-        let baseClass = this.constructor;
-        let currentNodeType: string, parentType: string;
-        while (baseClass) {
-            currentNodeType = baseClass.name.toLowerCase();
-
-            const parentClass = Object.getPrototypeOf(baseClass);
-
-            if (parentClass && parentClass !== Object && parentClass.name) {
-                baseClass = parentClass;
-                parentType = parentClass.name;
-                if (parentType === "BrsComponent") {
-                    // Only care about RoSgNode and above
-                    break;
-                }
-                if (parentType === "RoSGNode") {
-                    // RoSGNode is referenced as "Node"
-                    parentType = "Node";
-                }
-                if (!subtypeHierarchy.has(currentNodeType)) {
-                    subtypeHierarchy.set(currentNodeType, parentType);
-                }
-            } else {
-                break;
-            }
+    protected setExtendsType(nodeName: string, parentType: SGNodeType) {
+        const typeKey = nodeName.toLowerCase();
+        if (!subtypeHierarchy.has(typeKey) && typeKey !== parentType.toLowerCase()) {
+            subtypeHierarchy.set(typeKey, parentType);
         }
     }
 

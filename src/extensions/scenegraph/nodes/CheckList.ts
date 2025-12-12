@@ -1,4 +1,5 @@
 import { FieldKind, FieldModel } from "../SGTypes";
+import { SGNodeType } from ".";
 import { AAMember, BrsType, BrsString, RoArray, isBrsString, Int32, ValueKind, IfDraw2D, Rect } from "brs-engine";
 import { brsValueOf, jsValueOf } from "../factory/serialization";
 import { LabelList } from "./LabelList";
@@ -14,8 +15,9 @@ export class CheckList extends LabelList {
         { name: "focusedUncheckedIconUri", type: "uri", value: "" },
     ];
 
-    constructor(initializedFields: AAMember[] = [], readonly name: string = "CheckList") {
+    constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.CheckList) {
         super([], name);
+        this.setExtendsType(name, SGNodeType.LabelList);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

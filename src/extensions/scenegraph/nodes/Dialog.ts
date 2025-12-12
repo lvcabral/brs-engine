@@ -1,5 +1,6 @@
 import { AAMember, Interpreter, BrsBoolean, BrsString, BrsType, Float, isBrsString, IfDraw2D, Rect } from "brs-engine";
 import { FieldKind, FieldModel } from "../SGTypes";
+import { SGNodeType } from ".";
 import { Group } from "./Group";
 import { rotateTranslation } from "../SGUtil";
 import { jsValueOf } from "../factory/serialization";
@@ -61,8 +62,9 @@ export class Dialog extends Group {
     protected focusIndex: number = 0;
     protected hasButtons: boolean = false;
 
-    constructor(initializedFields: AAMember[] = [], readonly name: string = "Dialog") {
+    constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.Dialog) {
         super([], name);
+        this.setExtendsType(name, SGNodeType.Group);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

@@ -11,6 +11,7 @@ import {
     BrsBoolean,
 } from "brs-engine";
 import { FieldModel } from "../SGTypes";
+import { SGNodeType } from ".";
 import { Group } from "./Group";
 import { convertHexColor } from "../SGUtil";
 import { Label } from "./Label";
@@ -50,8 +51,9 @@ export class TextEditBox extends Group {
 
     private readonly backUri = "common:/images/inputField.9.png";
 
-    constructor(initializedFields: AAMember[] = [], readonly name: string = "TextEditBox") {
+    constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.TextEditBox) {
         super([], name);
+        this.setExtendsType(name, SGNodeType.Group);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

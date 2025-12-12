@@ -13,6 +13,7 @@ import {
 import { Node } from "./Node";
 import type { Field } from "./Field";
 import { FieldKind, FieldModel } from "../SGTypes";
+import { SGNodeType } from ".";
 import { toAssociativeArray } from "../factory/serialization";
 
 export class ContentNode extends Node {
@@ -131,8 +132,9 @@ export class ContentNode extends Node {
     private readonly metaDataFields = new Set<string>(this.defaultFields.map((field) => field.name.toLowerCase()));
     private readonly parentFields = new Set<Field>();
 
-    constructor(readonly name: string = "ContentNode") {
+    constructor(readonly name: string = SGNodeType.ContentNode) {
         super([], name);
+        this.setExtendsType(name, SGNodeType.Node);
 
         this.registerDefaultFields(this.defaultFields);
         this.appendMethods([this.count, this.keys, this.items, this.hasField]);

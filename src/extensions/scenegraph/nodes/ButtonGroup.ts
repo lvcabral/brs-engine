@@ -20,6 +20,7 @@ import { Label } from "./Label";
 import { LayoutGroup } from "./LayoutGroup";
 import { RoSGNode } from "../components/RoSGNode";
 import { FieldKind, FieldModel } from "../SGTypes";
+import { SGNodeType } from ".";
 import { rotateTranslation } from "../SGUtil";
 
 export class ButtonGroup extends LayoutGroup {
@@ -52,8 +53,9 @@ export class ButtonGroup extends LayoutGroup {
     protected focusIndex: number = 0;
     protected wasFocused: boolean = false;
 
-    constructor(initializedFields: AAMember[] = [], readonly name: string = "ButtonGroup") {
+    constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.ButtonGroup) {
         super([], name);
+        this.setExtendsType(name, SGNodeType.LayoutGroup);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

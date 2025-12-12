@@ -2,9 +2,10 @@ import { AAMember, BrsType } from "brs-engine";
 import { Node } from "./Node";
 import { sgRoot } from "../SGRoot";
 import { FieldKind } from "../SGTypes";
+import { SGNodeType } from ".";
 
 export class Global extends Node {
-    constructor(members: AAMember[] = [], readonly name: string = "Node") {
+    constructor(members: AAMember[] = [], readonly name: string = SGNodeType.Node) {
         super([], name);
         this.registerInitializedFields(members);
     }

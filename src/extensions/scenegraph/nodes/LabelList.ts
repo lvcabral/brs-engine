@@ -1,4 +1,5 @@
 import { FieldKind, FieldModel } from "../SGTypes";
+import { SGNodeType } from ".";
 import { AAMember, Interpreter, BrsString, BrsType, Int32, RoBitmap, IfDraw2D, Rect, RectRect } from "brs-engine";
 import { ArrayGrid } from "./ArrayGrid";
 import { Font } from "./Font";
@@ -21,8 +22,9 @@ export class LabelList extends ArrayGrid {
     protected readonly focusUri = "common:/images/focus_list.9.png";
     protected readonly footprintUri = "common:/images/focus_footprint.9.png";
 
-    constructor(initializedFields: AAMember[] = [], readonly name: string = "LabelList") {
+    constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.LabelList) {
         super([], name);
+        this.setExtendsType(name, SGNodeType.ArrayGrid);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

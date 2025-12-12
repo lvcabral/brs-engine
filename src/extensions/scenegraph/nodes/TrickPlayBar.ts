@@ -1,5 +1,6 @@
 import { AAMember, Interpreter, BrsBoolean, BrsString, BrsType, Float, Int32, RoBitmap, IfDraw2D } from "brs-engine";
 import { FieldKind, FieldModel } from "../SGTypes";
+import { SGNodeType } from ".";
 import { Label } from "./Label";
 import { Poster } from "./Poster";
 import { Group } from "./Group";
@@ -27,8 +28,9 @@ export class TrickPlayBar extends Group {
     private stateIcon: RoBitmap | undefined;
     private stateIconTimeout: number = -1;
 
-    constructor(initializedFields: AAMember[] = [], readonly name: string = "TrickPlayBar") {
+    constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.TrickPlayBar) {
         super([], name);
+        this.setExtendsType(name, SGNodeType.Group);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

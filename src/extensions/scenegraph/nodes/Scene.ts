@@ -20,6 +20,7 @@ import { Group } from "./Group";
 import { Node } from "./Node";
 import { StandardDialog } from "./StandardDialog";
 import { FieldKind, FieldModel } from "../SGTypes";
+import { SGNodeType } from ".";
 
 export class Scene extends Group {
     readonly defaultFields: FieldModel[] = [
@@ -35,8 +36,9 @@ export class Scene extends Group {
     subSearch: string;
     subReplace: string;
 
-    constructor(initializedFields: AAMember[] = [], readonly name: string = "Scene") {
+    constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.Scene) {
         super([], name);
+        this.setExtendsType(name, SGNodeType.Group);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
