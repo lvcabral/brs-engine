@@ -38,6 +38,7 @@ Options:
   -p, --pack <password>       The password to generate the encrypted package. (default: "")
   -o, --out <directory>       The directory to save the encrypted package file. (default: "./")
   -r, --root <directory>      The root directory from which `pkg:` paths will be resolved.
+  -n, --no-sg                 Disable the SceneGraph extension.
   -x, --ext-root <directory>  The root directory from which `ext1:` paths will be resolved.
   -f, --ext-file <file>       The zip file to mount as `ext1:` volume. (takes precedence over -x)
   -k, --deep-link <params>    Parameters to be passed to the application. (format: key=value,...)
@@ -53,7 +54,7 @@ An interactive BrightScript REPL (Read-Execute-Print Loop) is available by runni
 ```console
 $ brs-cli
 
-BrightScript Simulation Engine CLI [v2.0.1]
+BrightScript Simulation Engine CLI [v2.0.2]
 
 type `help` to see the list of valid REPL commands.
 
@@ -134,7 +135,7 @@ If no password is provided the app will be executed and no encryption happens, b
 ```console
 $ brs-cli ../tests/test-sandbox.zip --pack b4bf93d0d5e547ca8edcc0f39c6bcc16 --out ./release
 
-BrightScript Simulation Engine CLI [v2.0.1]
+BrightScript Simulation Engine CLI [v2.0.2]
 
 Packaging ../tests/test-sandbox.zip...
 

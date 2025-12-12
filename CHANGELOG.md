@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file.
 
+<a name="v2.0.2"></a>
+
+## [v2.0.2 - Various Fixes and Improvements](https://github.com/lvcabral/brs-engine/releases/tag/v2.0.2) - 12 December 2025
+
+This release brings enhancements to the SceneGraph extension, CLI and API improvements, and various bug fixes.
+
+### Release Changes
+
+* (api) Improved `SceneGraph` app detection by [@lvcabral](https://github.com/lvcabral) in [#778](https://github.com/lvcabral/brs-engine/pull/778)
+* (chore) Fixed multiple static analysis issues reported by SonarCloud by [@lvcabral](https://github.com/lvcabral) in [#779](https://github.com/lvcabral/brs-engine/pull/779)
+* (chore) Closes [#33](https://github.com/lvcabral/brs-engine/issues/33) replaced `opentype.js` by a fork with font parsing only by [@lvcabral](https://github.com/lvcabral) in [#780](https://github.com/lvcabral/brs-engine/pull/780)
+* (brs) Fixed `String` coercion to handle `isStringComp` objects by [@lvcabral](https://github.com/lvcabral) in [#782](https://github.com/lvcabral/brs-engine/pull/782)
+* (brs) Changed `BrsExtension` signature to include `version` by [@lvcabral](https://github.com/lvcabral) in [#787](https://github.com/lvcabral/brs-engine/pull/787)
+* Changes on `brs-scenegraph` package (release v0.0.2):
+  * (rsg) Fixes [#769](https://github.com/lvcabral/brs-engine/issues/769) `Video` UI header removed too soon by [@lvcabral](https://github.com/lvcabral) in [#781](https://github.com/lvcabral/brs-engine/pull/781)
+  * (rsg) Prevent crash when custom fonts are missing by [@lvcabral](https://github.com/lvcabral) in [#783](https://github.com/lvcabral/brs-engine/pull/783)
+  * (rsg) Made `ArrayGrid` based nodes to be aware of `content` changes by [@lvcabral](https://github.com/lvcabral) in [#784](https://github.com/lvcabral/brs-engine/pull/784)
+  * (rsg) Fixed `roSGNode` methods `setField` and `addFields` to properly handle `ContentNode` by [@lvcabral](https://github.com/lvcabral) in [#785](https://github.com/lvcabral/brs-engine/pull/785)
+  * (rsg) Removed usage of reflection to build `subtypeHierarchy` in `Node` by [@lvcabral](https://github.com/lvcabral) in [#786](https://github.com/lvcabral/brs-engine/pull/786)
+
+[Full Changelog][v2.0.2]
+
 <a name="v2.0.1"></a>
 
 ## [v2.0.1 - Fixed API Types and Registry persistence](https://github.com/lvcabral/brs-engine/releases/tag/v2.0.1) - 08 December 2025
@@ -1248,6 +1270,7 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
+[v2.0.2]: https://github.com/lvcabral/brs-engine/compare/v2.0.1...v2.0.2
 [v2.0.1]: https://github.com/lvcabral/brs-engine/compare/v2.0.0...v2.0.1
 [v2.0.0]: https://github.com/lvcabral/brs-engine/compare/v1.10.0...v2.0.0
 [v1.10.0]: https://github.com/lvcabral/brs-engine/compare/v1.9.9...v1.10.0
