@@ -19,6 +19,7 @@ import {
     TaskPayload,
     isTaskPayload,
     SupportedExtension,
+    ExtensionInfo,
 } from "./common";
 import { Lexeme, Lexer, Token } from "./lexer";
 import { Parser, Stmt } from "./parser";
@@ -151,9 +152,11 @@ function loadExtension(moduleId: SupportedExtension, modulePath: string) {
         }
 
         if (extensionModule?.BrightScriptExtension) {
-            registerExtension(() => new extensionModule.BrightScriptExtension());
+            const extension = new extensionModule.BrightScriptExtension();
+            registerExtension(() => extension);
             loadedExtensions.add(moduleId);
-            console.debug(`[Worker] ${moduleId} Extension loaded and registered successfully.`);
+            const extensionInfo: ExtensionInfo = { name: moduleId, library: modulePath, version: extension.version };
+            postMessage(extensionInfo);
         } else {
             console.warn(`[Worker] The loaded library does not contain ${moduleId} Extension.`);
         }

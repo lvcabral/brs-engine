@@ -25,6 +25,7 @@ import { sgRoot } from "./SGRoot";
 import { Task } from "./nodes/Task";
 import { initializeTask, createNodeByType } from "./factory/SGNodeFactory";
 import { RoSGScreen } from "./components/RoSGScreen";
+import packageInfo from "../../../packages/scenegraph/package.json";
 
 export * from "./SGRoot";
 export * from "./components/RoSGNode";
@@ -39,6 +40,7 @@ export * from "./nodes";
 
 export class BrightScriptExtension implements BrsExtension {
     name = "SceneGraph";
+    version = packageInfo.version;
 
     onInit() {
         // Register SceneGraph components with BrsObjects so they can be created with CreateObject()

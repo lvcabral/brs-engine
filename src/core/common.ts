@@ -224,6 +224,28 @@ export enum SupportedExtension {
 }
 
 /**
+ * Extension Information Type
+ */
+export type ExtensionInfo = {
+    name: string;
+    library: string;
+    version: string;
+};
+
+/** Type guard to check if a value is an ExtensionInfo object.
+ * @param value the value to check
+ * @returns true if the value is an ExtensionInfo object, false otherwise
+ */
+export function isExtensionInfo(value: any): value is ExtensionInfo {
+    return (
+        value &&
+        typeof value.name === "string" &&
+        typeof value.library === "string" &&
+        typeof value.version === "string"
+    );
+}
+
+/**
  * Registry Data Interface
  */
 export interface RegistryData {
