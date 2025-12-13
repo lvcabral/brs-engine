@@ -244,7 +244,6 @@ export class SGRoot {
         const progress = Atomics.load(BrsDevice.sharedArray, DataType.VLP);
         if (this.videoProgress !== progress && progress >= 0 && progress <= 1000) {
             this._video.setState(MediaEvent.Loading, Math.trunc(progress / 10));
-            console.debug(`Video Progress: ${progress}`);
         }
         this.videoProgress = progress;
         const eventType = Atomics.load(BrsDevice.sharedArray, DataType.VDO);
@@ -253,7 +252,6 @@ export class SGRoot {
             this.videoEvent = eventType;
             if (eventType >= 0) {
                 this._video.setState(eventType, eventIndex);
-                console.debug(`Video State: ${this._video.getValueJS("state")}  (${eventType}/${eventIndex})`);
                 Atomics.store(BrsDevice.sharedArray, DataType.VDO, -1);
                 isDirty = true;
             }

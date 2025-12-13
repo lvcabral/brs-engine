@@ -121,6 +121,11 @@ export {
 // Common API
 export { DeviceInfo, DefaultDeviceInfo, Platform, AppExitReason, SupportedExtension } from "../core/common";
 
+let inDebugLib: boolean = false;
+/// #if DEBUG
+inDebugLib = true;
+/// #endif
+
 let clearDisplayOnExit: boolean = true;
 let disableDebug: boolean = false;
 let debugToConsole: boolean = true;
@@ -164,19 +169,14 @@ export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any 
         }
         Object.assign(deviceData, customDeviceInfo);
     }
-    let initMsg = `${packageInfo.title} - v${packageInfo.version}`;
-    /// #if DEBUG
-    initMsg += " - dev";
-    /// #endif
     if (typeof options.disableDebug === "boolean") {
         disableDebug = options.disableDebug;
     }
     if (typeof options.debugToConsole === "boolean") {
         debugToConsole = options.debugToConsole;
     }
-    if (debugToConsole) {
-        console.info(initMsg);
-    }
+    const initMsg = `${packageInfo.title} - v${packageInfo.version}${inDebugLib ? " - dev" : ""}`;
+    deviceDebug(`beacon,${initMsg}`);
     if (typeof options.showStats === "boolean") {
         showStats = options.showStats;
     }
@@ -211,6 +211,8 @@ export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any 
             notifyAll(event, data);
         } else if (["error", "warning"].includes(event)) {
             apiException(event, data);
+        } else if (event === "debug") {
+            deviceDebug(`debug,${data}`);
         }
     });
     subscribeControl("api", (event: string, data: any) => {
@@ -258,6 +260,8 @@ export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any 
     subscribePackage("api", (event: string, data: any) => {
         if (["error", "warning"].includes(event)) {
             apiException(event, data);
+        } else if (event === "debug") {
+            deviceDebug(`debug,${data}`);
         } else {
             notifyAll(event, data);
         }
@@ -273,6 +277,8 @@ export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any 
             handleRegistryUpdate(data);
         } else if (event === "captionMode") {
             notifyAll(event, data);
+        } else if (event === "debug") {
+            deviceDebug(`debug,${data}`);
         }
     });
 
@@ -343,9 +349,7 @@ export function execute(filePath: string, fileData: any, options: any = {}, deep
     if (brsWorker !== undefined) {
         resetWorker();
     }
-    if (debugToConsole) {
-        console.info(`Loading ${filePath}...`);
-    }
+    deviceDebug(`beacon,Loading ${filePath}...`);
     initSoundModule(sharedArray, options.muteSound);
     muteVideo(options.muteSound);
 
@@ -665,7 +669,7 @@ function mainCallback(event: MessageEvent) {
         handleRegistryUpdate(event.data);
     } else if (isExtensionInfo(event.data)) {
         deviceDebug(
-            `print,Loaded Extension: ${event.data.name} (v${event.data.version}) from ${event.data.library}\r\n`
+            `beacon,Loaded Extension: ${event.data.name} (v${event.data.version}) from ${event.data.library}\r\n`
         );
     } else if (Platform.inBrowser && Array.isArray(event.data.audioPlaylist)) {
         addAudioPlaylist(event.data.audioPlaylist);
@@ -690,18 +694,22 @@ function mainCallback(event: MessageEvent) {
     } else if (isAppData(event.data)) {
         notifyAll("launch", { app: event.data.id, params: event.data.params ?? new Map() });
     } else if (isTaskData(event.data)) {
-        console.debug("[API] Task data received from Main Thread: ", event.data.name, TaskState[event.data.state]);
+        deviceDebug(
+            `debug,[API] Task data received from Main Thread: ${event.data.name}, ${TaskState[event.data.state]}`
+        );
         handleTaskData(event.data, currentPayload);
     } else if (isThreadUpdate(event.data)) {
-        console.debug("[API] Update received from Main thread: ", event.data.id, event.data.type, event.data.field);
+        deviceDebug(
+            `debug,[API] Update received from Main thread: ${event.data.id}, ${event.data.type}, ${event.data.field}`
+        );
         handleThreadUpdate(event.data);
     } else if (isNDKStart(event.data)) {
         handleNDKStart(event.data);
-    } else if (typeof event.data !== "string") {
+    } else if (typeof event.data === "string") {
         // All messages beyond this point must be csv string
-        apiException("warning", `[api] Invalid worker message: ${JSON.stringify(event.data)}`);
-    } else {
         handleStringMessage(event.data);
+    } else if (inDebugLib) {
+        apiException("warning", `[api] Invalid worker message: ${JSON.stringify(event.data, null, 2)}`);
     }
 }
 
@@ -789,14 +797,14 @@ function handleStringMessage(message: string) {
         deviceDebug(`${message}\r\n`);
     } else if (message.startsWith("error,")) {
         deviceDebug(`${message}\r\n`);
-    } else if (message.startsWith("debug,")) {
-        const level = message.slice(6);
-        const enable = level === "continue";
+    } else if (message.startsWith("command,")) {
+        const command = message.slice(8);
+        const enable = command === "continue";
         enableSendKeys(enable);
         statsUpdate(enable);
         switchSoundState(enable);
         switchVideoState(enable);
-        notifyAll("debug", { level: level });
+        notifyAll("debug", { level: command });
     } else if (message.startsWith("start,")) {
         const title = currentApp.title;
         const beaconMsg = "[scrpt.ctx.run.enter] UI: Entering";
@@ -885,18 +893,24 @@ function deviceDebug(data: string) {
     }
     const level = data.split(",")[0];
     const content = data.slice(level.length + 1);
-    notifyAll("debug", { level: level, content: content });
     if (debugToConsole) {
         if (level === "error") {
             console.error(content);
         } else if (level === "warning") {
             console.warn(content);
         } else if (level === "beacon") {
-            console.info(content);
-        } else {
+            console.info(`%c${content}`, "color: #4A90E2");
+        } else if (level === "debug" && inDebugLib) {
+            console.debug(`%c${content}`, "color: #888888");
+        } else if (level === "print") {
             console.log(content);
+        } else {
+            // unknown level
+            return;
         }
     }
+    // Send debug event to host application
+    notifyAll("debug", { level: level, content: content });
 }
 
 /**

@@ -452,7 +452,6 @@ function loadTaskData(interpreter: Interpreter, node: Node, taskData: TaskData) 
             }
             const brsValue = brsValueOf(value);
             if (!port && brsValue instanceof RoMessagePort) {
-                console.debug("[Task] A port object was found!");
                 port = brsValue;
             }
             node.m.set(new BrsString(key), brsValue);
@@ -518,11 +517,6 @@ function restoreNode(interpreter: Interpreter, source: any, node: Node, port?: R
         }
         node.setValueSilent(key, brsValueOf(value));
         if (port && observed?.includes(key)) {
-            if (node instanceof Task) {
-                console.debug(`[Task] Adding observer port for top.${key}`);
-            } else {
-                console.debug(`[Task] Adding observer port for global.${key}`);
-            }
             node.addObserver(interpreter, "unscoped", new BrsString(key), port);
         }
     }

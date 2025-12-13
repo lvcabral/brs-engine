@@ -75,7 +75,7 @@ function notifyAll(eventName: string, eventData?: any) {
  */
 function runTask(taskData: TaskData, currentPayload: AppPayload) {
     if (tasks.has(taskData.id) || !taskData.m?.top?.functionname) {
-        console.debug("[API] Task already running or invalid task data: ", taskData.id, taskData.name);
+        notifyAll("debug", `[API] Task already running or invalid task data: ${taskData.id}, ${taskData.name}`);
         return;
     } else if (tasks.size === MAX_TASKS) {
         notifyAll("warning", `[api] Maximum number of tasks reached: ${tasks.size}`);
@@ -96,7 +96,7 @@ function runTask(taskData: TaskData, currentPayload: AppPayload) {
         pkgZip: currentPayload.pkgZip,
         extZip: currentPayload.extZip,
     };
-    console.debug("[API] Calling Task worker: ", taskData.id, taskData.name);
+    notifyAll("debug", `[API] Calling Task worker: ${taskData.id}, ${taskData.name}`);
     taskWorker.postMessage(sharedBuffer);
     taskWorker.postMessage(taskPayload);
 }
@@ -113,7 +113,7 @@ function endTask(taskId: number) {
         tasks.delete(taskId);
         threadSyncToTask.delete(taskId);
         threadSyncToMain.delete(taskId);
-        console.debug("[API] Task worker stopped: ", taskId);
+        notifyAll("debug", `[API] Task worker stopped: ${taskId}`);
     }
 }
 
@@ -147,19 +147,24 @@ function taskCallback(event: MessageEvent) {
     } else if (Array.isArray(event.data.captionStyle)) {
         setAppCaptionStyle(event.data.captionStyle);
     } else if (isTaskData(event.data)) {
-        console.debug("[API] Task data received from Task Thread: ", event.data.name, TaskState[event.data.state]);
+        notifyAll(
+            "debug",
+            `[API] Task data received from Task Thread: ${event.data.name}, ${TaskState[event.data.state]}`
+        );
         if (event.data.state === TaskState.STOP) {
             endTask(event.data.id);
         }
     } else if (isThreadUpdate(event.data)) {
-        console.debug("[API] Update received from Task thread: ", event.data.id, event.data.field);
+        notifyAll("debug", `[API] Update received from Task thread: ${event.data.id}, ${event.data.field}`);
         handleThreadUpdate(event.data, true);
     } else if (isNDKStart(event.data)) {
         notifyAll("ndkStart", event.data);
     } else if (typeof event.data === "string") {
         notifyAll("message", event.data);
+        /// #if DEBUG
     } else {
         notifyAll("warning", `[api] Invalid task message: ${JSON.stringify(event.data, null, 2)}`);
+        /// #endif
     }
 }
 
