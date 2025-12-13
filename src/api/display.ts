@@ -392,7 +392,7 @@ function drawSubtitles(ctx: CanvasRenderingContext2D) {
                     lineMetricsWidth = cachedMeasurement.metricsWidth;
                     lineCalculatedBoxWidth = cachedMeasurement.calculatedBoxWidth;
                 } else {
-                    console.debug("[display] caching subtitle measurement", cacheKey);
+                    notifyAll("debug", `[display] caching subtitle measurement: ${cacheKey}`);
                     const metrics = ctx.measureText(currentLineText);
                     lineMetricsWidth = metrics.width;
                     lineCalculatedBoxWidth = lineMetricsWidth + padding * 2;
@@ -496,7 +496,7 @@ export async function loadCaptionsFonts(assets: ArrayBufferLike) {
                 const fontFace = new FontFace(fontName, `url(${fontUrl})`);
                 await fontFace.load();
                 document.fonts.add(fontFace);
-                console.debug(`[display] Closed Caption font ${fontName} loaded successfully.`);
+                notifyAll("debug", `[display] Closed Caption font ${fontName} loaded successfully.`);
             } else {
                 notifyAll("warning", `[display] Invalid font data for ${fontName}`);
             }
@@ -723,15 +723,15 @@ function setCaptionStyleOption(captionStyle: CaptionStyleOption[], id: string, s
     if (index >= 0) {
         captionStyle[index].id = id.toLowerCase();
         if (captionStyle[index].style === style) {
-            console.debug(`[display] caption style option unchanged: ${id} = ${style}`);
+            notifyAll("debug", `[display] caption style option unchanged: ${id} = ${style}`);
             return false;
         }
         captionStyle[index].style = style;
-        console.debug(`[display] caption style option changed: ${id} = ${style}`);
+        notifyAll("debug", `[display] caption style option changed: ${id} = ${style}`);
         return true;
     } else {
         captionStyle.push({ id: id.toLowerCase(), style: style.toLowerCase() });
-        console.debug(`[display] caption style option added: ${id} = ${style}`);
+        notifyAll("debug", `[display] caption style option added: ${id} = ${style}`);
         return true;
     }
 }

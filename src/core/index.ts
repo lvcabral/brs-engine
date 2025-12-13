@@ -92,7 +92,7 @@ if (typeof onmessage !== "undefined") {
             loadExtensions(event.data);
             executeFile(event.data);
         } else if (isTaskPayload(event.data)) {
-            console.debug("[Worker] Task payload received: ", event.data.taskData.name);
+            postMessage(`debug,[core] Task payload received: ${event.data.taskData.name}`);
             loadExtensions(event.data);
             executeTask(event.data);
         } else if (typeof event.data === "string" && event.data === "getVersion") {
@@ -101,7 +101,7 @@ if (typeof onmessage !== "undefined") {
             // Setup Control Shared Array
             BrsDevice.setSharedArray(new Int32Array(event.data));
         } else {
-            postMessage(`warning,[worker] Invalid message received: ${event.data}`);
+            postMessage(`warning,[core] Invalid message received: ${event.data}`);
         }
     };
 }
@@ -133,7 +133,7 @@ function loadExtensions(payload: AppPayload | TaskPayload) {
  */
 function loadExtension(moduleId: SupportedExtension, modulePath: string) {
     if (!modulePath) {
-        console.warn(`[Worker] No module path provided for ${moduleId} extension.`);
+        postMessage(`warning,[core] No module path provided for ${moduleId} extension.`);
         return;
     }
     try {
@@ -158,10 +158,10 @@ function loadExtension(moduleId: SupportedExtension, modulePath: string) {
             const extensionInfo: ExtensionInfo = { name: moduleId, library: modulePath, version: extension.version };
             postMessage(extensionInfo);
         } else {
-            console.warn(`[Worker] The loaded library does not contain ${moduleId} Extension.`);
+            postMessage(`warning,[core] The loaded library does not contain ${moduleId} Extension.`);
         }
     } catch (err: any) {
-        console.warn(`[Worker] Failed to load ${moduleId} extension:`, err.message);
+        postMessage(`warning,[core] Failed to load ${moduleId} extension: ${err.message}`);
     }
 }
 
@@ -704,7 +704,7 @@ export async function executeTask(payload: TaskPayload, customOptions?: Partial<
         BrsDevice.setRegistry(payload.device.registry);
     }
     setupTranslations(interpreter);
-    console.debug("Calling Task in new Worker: ", payload.taskData.name, payload.taskData.m.top.functionname);
+    postMessage(`debug,[core] Calling Task in new Worker: ${payload.taskData.name} ${payload.taskData.m.top.functionname}`);
     try {
         for (const ext of interpreter.extensions.values()) {
             if (ext.execTask) {
@@ -715,7 +715,7 @@ export async function executeTask(payload: TaskPayload, customOptions?: Partial<
             BrsDevice.flushRegistry();
         }
         if (BrsDevice.isDevMode) {
-            postMessage(`debug,Task ${payload.taskData.name} is done.`);
+            postMessage(`debug,[core] Task ${payload.taskData.name} is done.`);
         }
     } catch (err: any) {
         if (!terminateReasons.includes(err.message)) {

@@ -368,7 +368,6 @@ export class Video extends Group {
 
     setContentIndex(index: number) {
         if (index > -1 && index < this.contentTitles.length) {
-            console.debug(`Video.setContentIndex: ${index}`, this.contentTitles[index]);
             this.titleText.setValue("text", new BrsString(this.contentTitles[index]));
         }
         super.setValue("contentIndex", new Int32(index));
@@ -641,23 +640,19 @@ export class Video extends Group {
         }
         const mode = key === "rewind" ? "rw" : "ff";
         if (this.trickPlayPos < 0) {
-            console.debug(`Video.handleRewFastForward: ${mode} - start`);
             this.seekMode = mode;
             this.seekLevel = 1;
             this.trickPlayPos = this.getValueJS("position") as number;
         } else if (this.seekMode === "skip") {
-            console.debug(`Video.handleRewFastForward: ${mode} - from skip`);
             this.seekMode = mode;
             this.seekLevel = 1;
         } else if (this.seekMode !== mode) {
-            console.debug(`Video.handleRewFastForward: ${mode} - different mode`);
             this.seekMode = "skip";
             this.seekLevel = 1;
             this.seekTimeout = 0;
             this.trickPlayBar.setStateIcon("", 0);
             return true;
         } else {
-            console.debug(`Video.handleRewFastForward: ${mode} - same mode`);
             this.seekLevel = Math.min(3, this.seekLevel + 1);
         }
         this.updateSeekStep(mode === "ff", duration, Math.trunc(1000 / this.seekLevel));

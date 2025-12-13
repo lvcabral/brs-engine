@@ -261,11 +261,11 @@ export class BrsDevice {
             if (cmd === DebugCommand.BREAK) {
                 Atomics.store(this.sharedArray, DataType.DBG, -1);
             } else if (cmd === DebugCommand.PAUSE) {
-                postMessage("debug,pause");
+                postMessage("command,pause");
                 Atomics.wait(this.sharedArray, DataType.DBG, DebugCommand.PAUSE);
                 Atomics.store(this.sharedArray, DataType.DBG, -1);
                 cmd = -1;
-                postMessage("debug,continue");
+                postMessage("command,continue");
             }
         }
         return cmd;

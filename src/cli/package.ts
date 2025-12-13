@@ -159,7 +159,7 @@ function processManifest(content: string): number {
     const minorVersion = Number.parseInt(manifestMap.get("minor_version") ?? "0");
     const buildVersion = Number.parseInt(manifestMap.get("build_version") ?? "0");
     currentApp.version = `${majorVersion}.${minorVersion}.${buildVersion}`.replace("NaN", "0");
-    console.debug(`[package] App: ${currentApp.title} v${currentApp.version}`);
+    notifyAll("debug", `[package] App: ${currentApp.title} v${currentApp.version}`);
 
     const resKeys = ["hd", "fhd"];
     if (deviceData.displayMode === "480p") {

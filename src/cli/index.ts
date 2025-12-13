@@ -450,6 +450,8 @@ function packageCallback(event: string, data: any) {
         } else {
             console.warn(chalk.yellow(data));
         }
+    } else if (event === "debug") {
+        console.debug(chalk.gray(data));
     }
 }
 
@@ -504,9 +506,11 @@ function handleStringMessage(message: string) {
     } else if (mType === "error") {
         console.error(chalk.red(msg.trimEnd()));
         process.exitCode = 1;
+    } else if (mType === "debug") {
+        console.debug(chalk.gray(msg.trimEnd()));
     } else if (mType === "end" && msg.trimEnd() !== AppExitReason.UserNav) {
         process.exitCode = 1;
-    } else if (!["start", "debug", "reset", "video", "audio", "syslog", "end"].includes(mType)) {
+    } else if (!["start", "command", "reset", "video", "audio", "syslog", "end"].includes(mType)) {
         console.info(chalk.blueBright(message.trimEnd()));
     }
 }

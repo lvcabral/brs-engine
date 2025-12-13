@@ -116,9 +116,9 @@ export class BrightScriptExtension implements BrsExtension {
                     subInterpreter.environment.setM(mPointer);
                     subInterpreter.environment.setRootM(mPointer);
                     if (funcToCall instanceof Callable) {
-                        console.debug("[Worker] Task function called: ", taskData.name, functionName);
+                        postMessage(`debug,[sg] Task function called: ${taskData.name} ${functionName}`);
                         funcToCall.call(subInterpreter);
-                        console.debug("[Worker] Task function finished: ", taskData.name, functionName);
+                        postMessage(`debug,[sg] Task function finished: ${taskData.name} ${functionName}`);
                         const update: ThreadUpdate = {
                             id: taskNode.id,
                             type: "task",

@@ -79,7 +79,7 @@ export class Task extends Node {
             this.active = true;
         } else if (control === "stop" || control === "done") {
             if (this.started) {
-                console.debug(`[Task] Posting Task #${this.id} Data to STOP: ${this.nodeSubtype}`);
+                postMessage(`debug,[task] Posting Task #${this.id} Data to STOP: ${this.nodeSubtype}`);
                 const taskData: TaskData = {
                     id: this.id,
                     name: this.nodeSubtype,
@@ -110,7 +110,7 @@ export class Task extends Node {
         if (this.taskBuffer && this.thread) {
             const timeout = wait === 0 ? undefined : wait;
             const result = this.taskBuffer.waitVersion(0, timeout);
-            console.debug(`[Task] The thread ${this.id} was awaken with "${result}"`);
+            postMessage(`debug,[task] The thread ${this.id} was awaken with "${result}"`);
             this.updateTask();
         }
         return new Array<BrsEvent>();
@@ -149,7 +149,7 @@ export class Task extends Node {
                     taskData.m.global["_observed_"] = observed;
                 }
             }
-            console.debug(`[Task] Posting Task #${this.id} Data to RUN: ${this.nodeSubtype}, ${functionName}`);
+            postMessage(`debug,[task] Posting Task #${this.id} Data to RUN: ${this.nodeSubtype}, ${functionName}`);
             postMessage(taskData);
             this.started = true;
         }
@@ -176,11 +176,10 @@ export class Task extends Node {
         if (this.taskBuffer && currentVersion === 1) {
             const update = this.taskBuffer.load(true);
             if (isThreadUpdate(update)) {
-                console.debug(
-                    `[Task] Received Update at ${this.id} thread from ${this.thread ? "Main thread" : "Task Thread"}: `,
-                    update.id,
-                    update.type,
-                    update.field
+                postMessage(
+                    `debug,[task] Received Update at ${this.id} thread from ${
+                        this.thread ? "Main thread" : "Task Thread"
+                    }: ${update.id} - ${update.type} - ${update.field}`
                 );
                 const node = this.getNodeToUpdate(update.type);
                 if (node) {
