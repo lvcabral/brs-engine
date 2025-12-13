@@ -704,7 +704,9 @@ export async function executeTask(payload: TaskPayload, customOptions?: Partial<
         BrsDevice.setRegistry(payload.device.registry);
     }
     setupTranslations(interpreter);
-    postMessage(`debug,[core] Calling Task in new Worker: ${payload.taskData.name} ${payload.taskData.m.top.functionname}`);
+    postMessage(
+        `debug,[core] Calling Task in new Worker: ${payload.taskData.name} ${payload.taskData.m.top.functionname}`
+    );
     try {
         for (const ext of interpreter.extensions.values()) {
             if (ext.execTask) {

@@ -694,10 +694,14 @@ function mainCallback(event: MessageEvent) {
     } else if (isAppData(event.data)) {
         notifyAll("launch", { app: event.data.id, params: event.data.params ?? new Map() });
     } else if (isTaskData(event.data)) {
-        deviceDebug(`debug,[API] Task data received from Main Thread: ${event.data.name}, ${TaskState[event.data.state]}`);
+        deviceDebug(
+            `debug,[API] Task data received from Main Thread: ${event.data.name}, ${TaskState[event.data.state]}`
+        );
         handleTaskData(event.data, currentPayload);
     } else if (isThreadUpdate(event.data)) {
-        deviceDebug(`debug,[API] Update received from Main thread: ${event.data.id}, ${event.data.type}, ${event.data.field}`);
+        deviceDebug(
+            `debug,[API] Update received from Main thread: ${event.data.id}, ${event.data.type}, ${event.data.field}`
+        );
         handleThreadUpdate(event.data);
     } else if (isNDKStart(event.data)) {
         handleNDKStart(event.data);
