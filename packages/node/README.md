@@ -16,7 +16,7 @@ The **BrightScript Simulation Engine** provides a complete a set of libraries an
 >
 > Since v1.9.0, this package was split from the browser package, to use the **simulation engine** with web based applications check out the [brs-engine](https://www.npmjs.com/package/brs-engine) package.
 
-<p align="center"><img alt="Simulator CLI" title="Simulator CLI" src="https://raw.githubusercontent.com/lvcabral/brs-engine/refs/heads/scenegraph/docs/images/brs-cli.png?raw=true" width="500"/></p>
+<p align="center"><img alt="Simulator CLI" title="Simulator CLI" src="https://raw.githubusercontent.com/lvcabral/brs-engine/refs/heads/master/docs/images/brs-cli.png?raw=true" width="500"/></p>
 
 ## Key Features
 
@@ -52,7 +52,7 @@ The **BrightScript Simulation Engine** provides a complete a set of libraries an
 
 ## SceneGraph Extension
 
-The [`brs-scenegraph`](https://www.npmjs.com/package/brs-scenegraph) extension is integrated to the `brs-node` package by default. The CLI app loads it so the REPL and apps can run SceneGraph without additional setup. Use the `--no-sg` flag if you want to disable it for a given CLI session. For your Node.js apps register it manually by calling `registerExtension(() => new BrightScriptExtension())`. Refer to [packages/scenegraph/README.md](../../packages/scenegraph/README.md) for more information about the extension package.
+The [`brs-scenegraph`](https://www.npmjs.com/package/brs-scenegraph) extension is integrated to the `brs-node` package by default. The CLI app loads it so the REPL and apps can run SceneGraph without additional setup. Use the `--no-sg` flag if you want to disable it for a given CLI session. For your Node.js apps register it manually by calling `registerExtension(() => new BrightScriptExtension())`. Refer to [extensions guide](https://github.com/lvcabral/brs-engine/blob/master/docs/extensions.md) for more information about the extension package.
 
 > ⚠️ Note:
 >
