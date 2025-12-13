@@ -95,9 +95,9 @@ During the build we also merge `src/core/common` with `src/extensions/scenegraph
 
 ## Documentation
 
-- [Main project README](../../README.md)
-- [Extensions guide](../../docs/extensions.md)
-- [SceneGraph source code](../../src/extensions/scenegraph/)
+- [Main project README](https://github.com/lvcabral/brs-engine/blob/master/README.md)
+- [Extensions guide](https://github.com/lvcabral/brs-engine/blob/master/docs/extensions.md)
+- [SceneGraph source code](https://github.com/lvcabral/brs-engine/blob/master/src/extensions/scenegraph/)
 
 ### Changelog
 

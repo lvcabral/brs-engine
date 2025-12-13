@@ -16,7 +16,7 @@ This package includes a **Web Worker** library and an **Engine API** library for
 >
 > Since v1.9.0, this package no longer brings the **CLI** app and **Node.js** libraries for the **simulation engine**, for those use cases we created the new [brs-node](https://www.npmjs.com/package/brs-node) package. Check it out!
 
-<p align="center"><img alt="Simulator Web and Desktop" title="Simulator Web and Desktop" src="https://raw.githubusercontent.com/lvcabral/brs-engine/refs/heads/scenegraph/docs/images/screenshots.png"/></p>
+<p align="center"><img alt="Simulator Web and Desktop" title="Simulator Web and Desktop" src="https://raw.githubusercontent.com/lvcabral/brs-engine/refs/heads/master/docs/images/screenshots.png"/></p>
 
 ## Key Features
 
@@ -49,7 +49,7 @@ This package includes a **Web Worker** library and an **Engine API** library for
 
 ## SceneGraph Extension
 
-SceneGraph support is provided by the optional [`brs-scenegraph`](https://www.npmjs.com/package/brs-scenegraph) extension. When your Roku app bundle contains `pkg:/components/`, the packaging step automatically instructs the worker to load `lib/brs-sg.js` so `roSGScreen` based apps run inside the browser. See [packages/scenegraph/README.md](../../packages/scenegraph/README.md) for deployment details.
+SceneGraph support is provided by the optional [`brs-scenegraph`](https://www.npmjs.com/package/brs-scenegraph) extension. When your Roku app bundle contains `pkg:/components/`, the packaging step automatically instructs the worker to load `lib/brs-sg.js` so `roSGScreen` based apps run inside the browser. See [extensions guide](https://github.com/lvcabral/brs-engine/blob/master/docs/extensions.md) for deployment details.
 
 
 > ⚠️ Note:
