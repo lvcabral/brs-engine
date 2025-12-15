@@ -244,5 +244,3 @@ describe("updateSGNode", () => {
         expect(childB.getNodeParent()).not.toBe(updatedRoot);
     });
 });
-
-
