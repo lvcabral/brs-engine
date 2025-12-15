@@ -23,7 +23,7 @@ import {
 import { getComponentDefinitionMap, setupInterpreterWithSubEnvs } from "./parser/ComponentDefinition";
 import { sgRoot } from "./SGRoot";
 import { Task } from "./nodes/Task";
-import { initializeTask, createNodeByType } from "./factory/SGNodeFactory";
+import { initializeTask, createNodeByType } from "./factory/NodeFactory";
 import { RoSGScreen } from "./components/RoSGScreen";
 import packageInfo from "../../../packages/scenegraph/package.json";
 
@@ -32,8 +32,8 @@ export * from "./components/RoSGNode";
 export * from "./components/RoSGScreen";
 export * from "./events/RoSGNodeEvent";
 export * from "./events/RoSGScreenEvent";
-export * from "./factory/SGNodeFactory";
-export * from "./factory/serialization";
+export * from "./factory/NodeFactory";
+export * from "./factory/Serializer";
 export * from "./parser/ComponentDefinition";
 export * from "./parser/ComponentScopeResolver";
 export * from "./nodes";

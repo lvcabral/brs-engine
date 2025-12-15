@@ -26,8 +26,8 @@ import {
 } from "brs-engine";
 import { Node } from "./Node";
 import { RoSGNodeEvent } from "../events/RoSGNodeEvent";
-import { getValueKindFromFieldType } from "../factory/SGNodeFactory";
-import { fromAssociativeArray, toAssociativeArray, jsValueOf } from "../factory/serialization";
+import { getValueKindFromFieldType } from "../factory/NodeFactory";
+import { fromAssociativeArray, toAssociativeArray, jsValueOf } from "../factory/Serializer";
 import { BrsCallback, FieldKind, getTaskId, isContentNode } from "../SGTypes";
 
 export class Field {

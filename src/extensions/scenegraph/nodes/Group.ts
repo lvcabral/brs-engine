@@ -26,8 +26,8 @@ import { Node } from "./Node";
 import { FieldKind, FieldModel, isFont } from "../SGTypes";
 import { SGNodeType } from ".";
 import { convertHexColor, rotateRect, unionRect } from "../SGUtil";
-import { createNodeByType } from "../factory/SGNodeFactory";
-import { jsValueOf } from "../factory/serialization";
+import { createNodeByType } from "../factory/NodeFactory";
+import { jsValueOf } from "../factory/Serializer";
 
 export class Group extends Node {
     readonly defaultFields: FieldModel[] = [

@@ -1,6 +1,6 @@
 import { Lexer, logError, Parser, preprocessor as PP, Stmt, FileSystem } from "brs-engine";
 import { ComponentDefinition, ComponentScript } from "./ComponentDefinition";
-import { SGNodeFactory } from "../factory/SGNodeFactory";
+import { SGNodeFactory } from "../factory/NodeFactory";
 import pSettle from "p-settle";
 import * as path from "path";
 

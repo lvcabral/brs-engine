@@ -2,7 +2,7 @@ import { AAMember, Interpreter, BrsDevice, BrsString, BrsType, Int32, IfDraw2D, 
 import { FieldKind, FieldModel } from "../SGTypes";
 import { SGNodeType } from ".";
 import { ArrayGrid } from "./ArrayGrid";
-import { customNodeExists } from "../factory/SGNodeFactory";
+import { customNodeExists } from "../factory/NodeFactory";
 
 export class MarkupList extends ArrayGrid {
     readonly defaultFields: FieldModel[] = [

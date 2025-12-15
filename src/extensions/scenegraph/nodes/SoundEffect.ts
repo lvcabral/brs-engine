@@ -1,7 +1,7 @@
 import { FieldKind, FieldModel } from "../SGTypes";
 import { SGNodeType } from ".";
 import { AAMember, BrsDevice, BrsString, BrsType, MediaEvent, isBrsNumber, isBrsString } from "brs-engine";
-import { jsValueOf } from "../factory/serialization";
+import { jsValueOf } from "../factory/Serializer";
 import { Node } from "./Node";
 import { sgRoot } from "../SGRoot";
 

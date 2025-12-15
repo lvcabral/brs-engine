@@ -64,7 +64,7 @@ import {
     ZoomRowList,
 } from "../nodes";
 import { ComponentDefinition, ComponentNode } from "../parser/ComponentDefinition";
-import { brsValueOf, toSGNode } from "./serialization";
+import { brsValueOf, toSGNode } from "./Serializer";
 import { sgRoot } from "../SGRoot";
 import { convertHexColor } from "../SGUtil";
 import Long from "long";

@@ -31,10 +31,10 @@ import {
     BrsDevice,
 } from "brs-engine";
 import { RoSGNode } from "../components/RoSGNode";
-import { createNodeByType, getBrsValueFromFieldType, subtypeHierarchy } from "../factory/SGNodeFactory";
+import { createNodeByType, getBrsValueFromFieldType, subtypeHierarchy } from "../factory/NodeFactory";
 import { Field } from "../nodes/Field";
 import { FieldAlias, FieldKind, FieldModel } from "../SGTypes";
-import { toAssociativeArray, jsValueOf, fromSGNode } from "../factory/serialization";
+import { toAssociativeArray, jsValueOf, fromSGNode } from "../factory/Serializer";
 import { sgRoot } from "../SGRoot";
 import { SGNodeType } from ".";
 

@@ -13,7 +13,7 @@ import {
 } from "brs-engine";
 import { Group } from "./Group";
 import { rotateTranslation } from "../SGUtil";
-import { brsValueOf, jsValueOf } from "../factory/serialization";
+import { brsValueOf, jsValueOf } from "../factory/Serializer";
 
 export class Poster extends Group {
     readonly defaultFields: FieldModel[] = [

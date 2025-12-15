@@ -13,7 +13,7 @@ import {
 } from "brs-engine";
 import { Node } from "./Node";
 import { ContentNode } from "./ContentNode";
-import { jsValueOf, fromContentNode, toContentNode } from "../factory/serialization";
+import { jsValueOf, fromContentNode, toContentNode } from "../factory/Serializer";
 import { FieldKind, FieldModel } from "../SGTypes";
 import { SGNodeType } from ".";
 

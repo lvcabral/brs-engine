@@ -11,7 +11,7 @@ import {
     MediaEvent,
 } from "brs-engine";
 import { sgRoot } from "../SGRoot";
-import { jsValueOf } from "../factory/serialization";
+import { jsValueOf } from "../factory/Serializer";
 import { ContentNode } from "./ContentNode";
 import { Node } from "./Node";
 import { FieldKind, FieldModel } from "../SGTypes";

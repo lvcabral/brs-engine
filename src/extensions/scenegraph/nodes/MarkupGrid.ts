@@ -3,8 +3,8 @@ import { SGNodeType } from ".";
 import { AAMember, Interpreter, BrsDevice, BrsString, Int32, IfDraw2D, Rect, RectRect } from "brs-engine";
 import { ArrayGrid } from "./ArrayGrid";
 import { ContentNode } from "./ContentNode";
-import { customNodeExists } from "../factory/SGNodeFactory";
-import { jsValueOf } from "../factory/serialization";
+import { customNodeExists } from "../factory/NodeFactory";
+import { jsValueOf } from "../factory/Serializer";
 
 export class MarkupGrid extends ArrayGrid {
     readonly defaultFields: FieldModel[] = [

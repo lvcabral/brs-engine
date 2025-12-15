@@ -1,6 +1,6 @@
-const brs = require("../../packages/node/bin/brs.node");
+const brs = require("brs-node/bin/brs.node");
 const { BrsString } = brs.types;
-const sg = require("../../packages/node/bin/brs-sg.node");
+const sg = require("brs-node/bin/brs-sg.node");
 const { ContentNode, Node, brsValueOf, fromSGNode, toSGNode, updateSGNode } = sg;
 
 describe("Circular Reference Handling", () => {

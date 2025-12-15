@@ -12,7 +12,7 @@ import {
     IfDraw2D,
 } from "brs-engine";
 import { sgRoot } from "../SGRoot";
-import { jsValueOf } from "../factory/serialization";
+import { jsValueOf } from "../factory/Serializer";
 import { Label } from "./Label";
 import { Poster } from "./Poster";
 import { Timer } from "./Timer";

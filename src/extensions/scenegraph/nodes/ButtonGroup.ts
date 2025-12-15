@@ -13,7 +13,7 @@ import {
     BrsInvalid,
 } from "brs-engine";
 import { sgRoot } from "../SGRoot";
-import { jsValueOf } from "../factory/serialization";
+import { jsValueOf } from "../factory/Serializer";
 import { Button } from "./Button";
 import type { Font } from "./Font";
 import { Label } from "./Label";

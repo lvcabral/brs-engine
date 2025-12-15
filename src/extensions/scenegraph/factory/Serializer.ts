@@ -22,7 +22,7 @@ import {
     Callable,
     StdlibArgument,
 } from "brs-engine";
-import { getNodeType, SGNodeFactory } from "./SGNodeFactory";
+import { getNodeType, SGNodeFactory } from "./NodeFactory";
 import { ContentNode, Node, Task } from "../nodes";
 
 /**

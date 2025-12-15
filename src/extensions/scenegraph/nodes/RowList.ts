@@ -15,8 +15,8 @@ import {
 } from "brs-engine";
 import { sgRoot } from "../SGRoot";
 import { ContentNode } from "./ContentNode";
-import { customNodeExists } from "../factory/SGNodeFactory";
-import { brsValueOf, jsValueOf } from "../factory/serialization";
+import { customNodeExists } from "../factory/NodeFactory";
+import { brsValueOf, jsValueOf } from "../factory/Serializer";
 import { Font } from "./Font";
 import { Group } from "./Group";
 import { ArrayGrid } from "./ArrayGrid";
