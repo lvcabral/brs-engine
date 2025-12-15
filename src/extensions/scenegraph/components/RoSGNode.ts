@@ -1024,10 +1024,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
                 const childNodesElements = child_nodes.getElements();
                 if (childNodesElements.length !== 0) {
                     for (const childNode of childNodesElements) {
-                        if (
-                            childNode instanceof RoSGNode &&
-                            !this.replaceChildAtIndex(childNode, indexValue)
-                        ) {
+                        if (childNode instanceof RoSGNode && !this.replaceChildAtIndex(childNode, indexValue)) {
                             this.removeChildByReference(childNode);
                         }
                         indexValue += 1;
