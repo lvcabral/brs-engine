@@ -195,14 +195,17 @@ export function handleTaskData(taskData: TaskData, currentPayload: AppPayload) {
  */
 export function handleThreadUpdate(threadUpdate: ThreadUpdate, fromTask: boolean = false) {
     if (fromTask) {
+        // Update main thread buffer
         threadSyncToMain.get(threadUpdate.id)?.waitStore(threadUpdate, 1);
     }
     if (threadUpdate.id > 0 && !fromTask) {
+        // Update task thread buffer
         if (!threadSyncToTask.has(threadUpdate.id)) {
             threadSyncToTask.set(threadUpdate.id, new SharedObject());
         }
         threadSyncToTask.get(threadUpdate.id)?.waitStore(threadUpdate, 1);
     } else if (threadUpdate.type !== "task") {
+        // Propagate to other tasks
         for (const taskId of tasks.keys()) {
             if (!fromTask || taskId !== threadUpdate.id) {
                 const data = { ...threadUpdate, id: taskId };
