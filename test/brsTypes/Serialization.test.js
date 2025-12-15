@@ -1,7 +1,7 @@
 const brs = require("../../packages/node/bin/brs.node");
 const { BrsString } = brs.types;
 const sg = require("../../packages/node/bin/brs-sg.node");
-const { ContentNode, Node, brsValueOf, fromSGNode, toSGNode } = sg;
+const { ContentNode, Node, brsValueOf, fromSGNode, toSGNode, updateSGNode } = sg;
 
 describe("Circular Reference Handling", () => {
     describe("SceneGraph Nodes", () => {
@@ -132,3 +132,117 @@ describe("Circular Reference Handling", () => {
         });
     });
 });
+
+describe("updateSGNode", () => {
+    it("updates existing nodes and children when addresses match", () => {
+        const root = new Node([], "TestNode");
+        root.setValueSilent("id", new BrsString("root"));
+        root.setValueSilent("label", new BrsString("initial"));
+
+        const existingChild = new Node([], "TestNode");
+        existingChild.setValueSilent("id", new BrsString("child-1"));
+        existingChild.setValueSilent("title", new BrsString("before"));
+        root.appendChildToParent(existingChild);
+
+        const serialized = fromSGNode(root);
+        serialized.label = "updated";
+        serialized.count = 3;
+        serialized._children_[0].title = "child-updated";
+        serialized._children_[0].rating = 5;
+
+        const newChild = new Node([], "TestNode");
+        newChild.setValueSilent("id", new BrsString("child-2"));
+        newChild.setValueSilent("title", new BrsString("fresh"));
+        const serializedNewChild = fromSGNode(newChild);
+        serialized._children_.push(serializedNewChild);
+
+        const nodeMap = new Map();
+        nodeMap.set(root.address, root);
+        nodeMap.set(existingChild.address, existingChild);
+
+        const updatedRoot = updateSGNode(serialized, root, nodeMap);
+
+        expect(updatedRoot).toBe(root);
+        expect(updatedRoot.getValueJS("label")).toBe("updated");
+        expect(updatedRoot.getValue("count").getValue()).toBe(3);
+
+        const children = updatedRoot.getNodeChildren();
+        expect(children.length).toBe(2);
+
+        const updatedChild = children[0];
+        expect(updatedChild).toBe(existingChild);
+        expect(updatedChild.getValueJS("title")).toBe("child-updated");
+        expect(updatedChild.getValue("rating").getValue()).toBe(5);
+
+        const appendedChild = children[1];
+        expect(appendedChild.getValueJS("id")).toBe("child-2");
+    });
+
+    it("updates nested field nodes with matching addresses", () => {
+        const root = new Node([], "TestNode");
+        const fieldNode = new Node([], "TestNode");
+        fieldNode.setValueSilent("title", new BrsString("old"));
+        root.setValueSilent("content", fieldNode);
+
+        const serialized = fromSGNode(root);
+        serialized.content.title = "new";
+
+        const nodeMap = new Map();
+        nodeMap.set(root.address, root);
+        nodeMap.set(fieldNode.address, fieldNode);
+
+        const updatedRoot = updateSGNode(serialized, root, nodeMap);
+
+        expect(updatedRoot.getValue("content")).toBe(fieldNode);
+        expect(fieldNode.getValueJS("title")).toBe("new");
+    });
+
+    it("replaces field nodes when addresses differ", () => {
+        const root = new Node([], "TestNode");
+        const originalField = new Node([], "TestNode");
+        originalField.setValueSilent("id", new BrsString("original"));
+        root.setValueSilent("content", originalField);
+
+        const serialized = fromSGNode(root);
+        const replacementField = new Node([], "TestNode");
+        replacementField.setValueSilent("id", new BrsString("replacement"));
+        replacementField.setValueSilent("title", new BrsString("new"));
+        serialized.content = fromSGNode(replacementField);
+
+        const nodeMap = new Map();
+        nodeMap.set(root.address, root);
+        nodeMap.set(originalField.address, originalField);
+
+        const updatedRoot = updateSGNode(serialized, root, nodeMap);
+
+        const assignedField = updatedRoot.getValue("content");
+        expect(assignedField).not.toBe(originalField);
+        expect(assignedField.getValueJS("id")).toBe("replacement");
+        expect(assignedField.getValueJS("title")).toBe("new");
+    });
+
+    it("removes children that are missing from serialized data", () => {
+        const root = new Node([], "TestNode");
+        const childA = new Node([], "TestNode");
+        const childB = new Node([], "TestNode");
+        root.appendChildToParent(childA);
+        root.appendChildToParent(childB);
+
+        const serialized = fromSGNode(root);
+        serialized._children_ = serialized._children_.slice(0, 1);
+
+        const nodeMap = new Map();
+        nodeMap.set(root.address, root);
+        nodeMap.set(childA.address, childA);
+        nodeMap.set(childB.address, childB);
+
+        const updatedRoot = updateSGNode(serialized, root, nodeMap);
+
+        const children = updatedRoot.getNodeChildren();
+        expect(children.length).toBe(1);
+        expect(children[0]).toBe(childA);
+        expect(childB.getNodeParent()).not.toBe(updatedRoot);
+    });
+});
+
+

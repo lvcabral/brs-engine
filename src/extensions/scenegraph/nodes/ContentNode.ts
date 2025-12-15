@@ -160,18 +160,26 @@ export class ContentNode extends Node {
     /** @override */
     appendChildToParent(child: BrsType): boolean {
         let success = false;
+        let added = false;
+        let appendedIndex: number | null = null;
         if (child instanceof ContentNode) {
+            success = true;
             if (!this.children.includes(child)) {
+                appendedIndex = this.children.length;
                 this.children.push(child);
                 child.setNodeParent(this);
+                added = true;
             }
-            success = true;
         } else if (child instanceof Node || child === BrsInvalid.Instance) {
-            this.children.push(BrsInvalid.Instance);
-            // Returns true even if child is invalid because a child was added
             success = true;
+            appendedIndex = this.children.length;
+            this.children.push(BrsInvalid.Instance);
+            added = true;
         }
         this.changed ||= success;
+        if (added && appendedIndex !== null) {
+            this.recordChildChange("add", appendedIndex);
+        }
         return success;
     }
 
