@@ -222,6 +222,9 @@ export class Task extends Node {
      */
     private processUpdateFromOtherThread() {
         const currentVersion = this.taskBuffer?.getVersion() ?? -1;
+        // Only process updates when the buffer version is exactly 1,
+        // which indicates a new update is available from the other thread.
+        // (Versioning protocol: 1 = update ready, 0 = idle/no update)
         if (!this.taskBuffer || currentVersion !== 1) {
             return false;
         }
