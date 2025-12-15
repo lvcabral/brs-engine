@@ -1092,7 +1092,7 @@ export class Node extends RoSGNode implements BrsValue {
      * @param count Number of children to remove.
      * @returns True when at least one child was removed.
      */
-    protected removeChildrenAtIndex(index: number, count: number): boolean {
+    removeChildrenAtIndex(index: number, count: number): boolean {
         if (count > 0 && index >= 0 && index < this.children.length) {
             const removedChildren = this.children.splice(index, count);
             for (const node of removedChildren.filter((n): n is Node => n instanceof Node)) {
@@ -1133,35 +1133,30 @@ export class Node extends RoSGNode implements BrsValue {
      * @param index BrightScript index wrapper indicating the desired position.
      * @returns True when replacement succeeded.
      */
-    protected replaceChildAtIndex(newChild: Node, index: Int32): boolean {
-        let indexValue = index.getValue();
-        if (indexValue < 0 || indexValue >= this.children.length) {
+    replaceChildAtIndex(newChild: Node, index: number): boolean {
+        if (index < 0 || index >= this.children.length) {
             return false;
         }
-
         const existingIndex = this.children.indexOf(newChild);
         if (existingIndex >= 0) {
             this.children.splice(existingIndex, 1);
-            if (existingIndex < indexValue) {
-                indexValue -= 1;
+            if (existingIndex < index) {
+                index -= 1;
             }
         }
-
         if (this.children.length === 0) {
-            indexValue = 0;
-        } else if (indexValue >= this.children.length) {
-            indexValue = this.children.length - 1;
+            index = 0;
+        } else if (index >= this.children.length) {
+            index = this.children.length - 1;
         }
-
-        const oldChild = this.children[indexValue];
+        const oldChild = this.children[index];
         if (oldChild instanceof Node) {
             oldChild.removeParent();
         }
-
         newChild.setNodeParent(this);
-        this.children.splice(indexValue, 1, newChild);
+        this.children.splice(index, 1, newChild);
         this.changed = true;
-        this.recordChildChange("set", indexValue);
+        this.recordChildChange("set", index);
         return true;
     }
 
@@ -1171,39 +1166,35 @@ export class Node extends RoSGNode implements BrsValue {
      * @param index Target index wrapper.
      * @returns True when insertion occurred.
      */
-    protected insertChildAtIndex(child: BrsType, index: Int32): boolean {
+    insertChildAtIndex(child: BrsType, index: number): boolean {
         if (!(child instanceof Node)) {
             return false;
         }
-
         const childrenSize = this.children.length;
-        let targetIndex = index.getValue();
-        if (targetIndex < 0) {
-            targetIndex = childrenSize;
-        } else if (targetIndex > childrenSize) {
-            targetIndex = childrenSize;
+        if (index < 0) {
+            index = childrenSize;
+        } else if (index > childrenSize) {
+            index = childrenSize;
         }
-
         const existingIndex = this.children.indexOf(child);
         if (existingIndex >= 0) {
-            if (existingIndex === targetIndex) {
+            if (existingIndex === index) {
                 return true;
             }
             this.children.splice(existingIndex, 1);
             this.recordChildChange("remove", existingIndex, existingIndex);
-            if (existingIndex < targetIndex) {
-                targetIndex -= 1;
+            if (existingIndex < index) {
+                index -= 1;
             }
-            this.children.splice(targetIndex, 0, child);
+            this.children.splice(index, 0, child);
             this.changed = true;
-            this.recordChildChange("insert", targetIndex, targetIndex);
+            this.recordChildChange("insert", index, index);
             return true;
         }
-
         child.setNodeParent(this);
-        this.children.splice(targetIndex, 0, child);
+        this.children.splice(index, 0, child);
         this.changed = true;
-        this.recordChildChange("insert", targetIndex);
+        this.recordChildChange("insert", index);
         return true;
     }
 

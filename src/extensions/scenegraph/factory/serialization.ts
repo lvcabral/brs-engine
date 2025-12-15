@@ -247,9 +247,9 @@ export function toSGNode(obj: any, type: string, subtype: string, nodeMap?: Map<
     }
     if (obj["_children_"]) {
         for (const child of obj["_children_"]) {
-            if (child["_node_"] || child["_circular_"]) {
-                const childInfo = child["_node_"] ? child["_node_"].split(":") : child["_circular_"].split(":");
-                const childNode = toSGNode(child, childInfo[0], childInfo[1], nodeMap);
+            const childInfo = getSerializedNodeInfo(child);
+            if (childInfo) {
+                const childNode = toSGNode(child, childInfo.type, childInfo.subtype, nodeMap);
                 newNode.appendChildToParent(childNode);
             } else if (child["_invalid_"] !== undefined) {
                 newNode.appendChildToParent(BrsInvalid.Instance);
@@ -257,6 +257,155 @@ export function toSGNode(obj: any, type: string, subtype: string, nodeMap?: Map<
         }
     }
     return newNode;
+}
+
+/**
+ * Retrieves the serialized node type and subtype information from a serialized node object.
+ * @param value The serialized node object.
+ * @returns An object containing the type and subtype, or undefined if not found or invalid.
+ */
+function getSerializedNodeInfo(value: any): { type: string; subtype: string } | undefined {
+    if (!value || typeof value !== "object") {
+        return undefined;
+    }
+    const descriptor = value["_node_"] ?? value["_circular_"];
+    if (typeof descriptor !== "string") {
+        return undefined;
+    }
+    const parts = descriptor.split(":");
+    if (parts.length !== 2) {
+        return undefined;
+    }
+    return { type: parts[0], subtype: parts[1] };
+}
+
+/**
+ * Updates an existing RoSGNode tree in-place by matching serialized addresses.
+ * Falls back to creating a new node when it can't find a matching instance.
+ * @param obj Serialized node representation (from fromSGNode).
+ * @param targetNode Existing node instance to reconcile against.
+ * @param nodeMap Optional address map containing existing nodes to be updated.
+ * @returns The updated (or newly created) node instance.
+ */
+export function updateSGNode(obj: any, targetNode: Node, nodeMap?: Map<string, Node>): Node {
+    nodeMap ??= new Map<string, Node>();
+    // Handle circular references
+    if (obj["_circular_"] && obj["_address_"]) {
+        const existingCircular = nodeMap.get(obj["_address_"]);
+        if (existingCircular) {
+            return existingCircular;
+        }
+        // If we don't have the node yet, this might be a forward reference
+        return targetNode;
+    }
+    // Update address and owner
+    const serializedAddress: string | undefined = obj["_address_"];
+    if (serializedAddress && serializedAddress !== targetNode.address) {
+        const previousAddress = targetNode.address;
+        targetNode.address = serializedAddress;
+        nodeMap.delete(previousAddress);
+    }
+    targetNode.owner = obj["_owner_"] ?? targetNode.owner;
+    // Register/update in nodeMap
+    nodeMap.set(targetNode.address, targetNode);
+    // Update fields
+    for (const key in obj) {
+        if (key.startsWith("_") && key.endsWith("_") && key.length > 2) {
+            continue;
+        }
+        const fieldValue = obj[key];
+        const fieldInfo = getSerializedNodeInfo(fieldValue);
+        if (fieldInfo) {
+            const serializedFieldAddress: string | undefined = fieldValue["_address_"];
+            const existingFieldValue = targetNode.getValue(key);
+            let nextNode: Node;
+            if (
+                existingFieldValue instanceof Node &&
+                serializedFieldAddress &&
+                existingFieldValue.address === serializedFieldAddress
+            ) {
+                nextNode = updateSGNode(fieldValue, existingFieldValue, nodeMap);
+            } else {
+                nextNode = toSGNode(fieldValue, fieldInfo.type, fieldInfo.subtype, nodeMap);
+            }
+            targetNode.setValueSilent(key, nextNode);
+            continue;
+        }
+        targetNode.setValueSilent(key, brsValueOf(fieldValue, undefined, nodeMap));
+    }
+    // Update children
+    const serializedChildren = obj["_children_"];
+    if (Array.isArray(serializedChildren)) {
+        const childrenList = targetNode.getNodeChildren();
+        for (const child of childrenList) {
+            if (child instanceof Node) {
+                nodeMap.set(child.address, child);
+            }
+        }
+
+        for (let index = 0; index < serializedChildren.length; index++) {
+            const serializedChild = serializedChildren[index];
+            const currentChild = childrenList[index];
+
+            if (serializedChild && serializedChild["_invalid_"] !== undefined) {
+                if (currentChild instanceof Node) {
+                    targetNode.removeChildrenAtIndex(index, 1);
+                }
+                if (currentChild !== BrsInvalid.Instance) {
+                    childrenList.splice(index, 0, BrsInvalid.Instance);
+                    targetNode.changed = true;
+                }
+                continue;
+            }
+
+            const childInfo = getSerializedNodeInfo(serializedChild);
+            if (!childInfo) {
+                if (currentChild instanceof Node) {
+                    targetNode.removeChildrenAtIndex(index, 1);
+                }
+                if (currentChild !== BrsInvalid.Instance) {
+                    childrenList.splice(index, 0, BrsInvalid.Instance);
+                    targetNode.changed = true;
+                }
+                continue;
+            }
+
+            const childAddress: string | undefined = serializedChild["_address_"];
+            let childNode: Node | undefined = childAddress ? nodeMap.get(childAddress) : undefined;
+            if (childNode instanceof Node) {
+                childNode = updateSGNode(serializedChild, childNode, nodeMap);
+            } else {
+                childNode = toSGNode(serializedChild, childInfo.type, childInfo.subtype, nodeMap);
+            }
+            if (!(childNode instanceof Node)) {
+                continue;
+            }
+
+            nodeMap.set(childNode.address, childNode);
+
+            if (currentChild instanceof Node) {
+                if (currentChild !== childNode) {
+                    targetNode.replaceChildAtIndex(childNode, index);
+                }
+            } else if (currentChild === BrsInvalid.Instance) {
+                targetNode.removeChildrenAtIndex(index, 1);
+                targetNode.insertChildAtIndex(childNode, index);
+            } else {
+                targetNode.insertChildAtIndex(childNode, index);
+            }
+        }
+
+        const excess = childrenList.length - serializedChildren.length;
+        if (excess > 0) {
+            targetNode.removeChildrenAtIndex(serializedChildren.length, excess);
+        } else if (excess < 0) {
+            for (let i = 0; i < Math.abs(excess); i++) {
+                childrenList.push(BrsInvalid.Instance);
+            }
+        }
+    }
+    targetNode.changed = true;
+    return targetNode;
 }
 
 /**
