@@ -1130,7 +1130,7 @@ export class Node extends RoSGNode implements BrsValue {
     /**
      * Replaces the child at the provided index with a new node.
      * @param newChild Node to insert.
-     * @param index BrightScript index wrapper indicating the desired position.
+     * @param index index indicating the desired position.
      * @returns True when replacement succeeded.
      */
     replaceChildAtIndex(newChild: Node, index: number): boolean {
@@ -1163,7 +1163,7 @@ export class Node extends RoSGNode implements BrsValue {
     /**
      * Inserts a child node at the specified index, shifting subsequent entries.
      * @param child Node to insert.
-     * @param index Target index wrapper.
+     * @param index Target index.
      * @returns True when insertion occurred.
      */
     insertChildAtIndex(child: BrsType, index: number): boolean {
