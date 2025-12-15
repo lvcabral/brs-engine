@@ -13,7 +13,7 @@ import {
     IfDraw2D,
     BlockEnd,
 } from "brs-engine";
-import { toAssociativeArray } from "../factory/serialization";
+import { toAssociativeArray } from "../factory/Serializer";
 import { sgRoot } from "../SGRoot";
 import { Dialog } from "./Dialog";
 import { Group } from "./Group";

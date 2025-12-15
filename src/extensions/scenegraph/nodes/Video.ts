@@ -27,7 +27,7 @@ import {
     MediaTrack,
     parseCaptionMode,
 } from "brs-engine";
-import { fromAssociativeArray, toAssociativeArray, jsValueOf } from "../factory/serialization";
+import { fromAssociativeArray, toAssociativeArray, jsValueOf } from "../factory/Serializer";
 import { sgRoot } from "../SGRoot";
 import { BusySpinner } from "./BusySpinner";
 import { ContentNode } from "./ContentNode";

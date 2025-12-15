@@ -5,7 +5,7 @@ import { ArrayGrid } from "./ArrayGrid";
 import { Font } from "./Font";
 import { sgRoot } from "../SGRoot";
 import { ContentNode } from "./ContentNode";
-import { brsValueOf } from "../factory/serialization";
+import { brsValueOf } from "../factory/Serializer";
 
 export class LabelList extends ArrayGrid {
     readonly defaultFields: FieldModel[] = [

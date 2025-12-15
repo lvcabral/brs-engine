@@ -14,7 +14,7 @@ import { Node } from "./Node";
 import type { Field } from "./Field";
 import { FieldKind, FieldModel } from "../SGTypes";
 import { SGNodeType } from ".";
-import { toAssociativeArray } from "../factory/serialization";
+import { toAssociativeArray } from "../factory/Serializer";
 
 export class ContentNode extends Node {
     readonly defaultFields: FieldModel[] = [

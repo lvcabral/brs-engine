@@ -30,7 +30,7 @@ import {
 } from "brs-engine";
 import { sgRoot } from "../SGRoot";
 import { Scene, SGNodeType } from "../nodes";
-import { createSceneByType, initializeNode } from "../factory/SGNodeFactory";
+import { createSceneByType, initializeNode } from "../factory/NodeFactory";
 import { RoSGScreenEvent } from "../events/RoSGScreenEvent";
 
 // Roku Remote Mapping

@@ -22,8 +22,8 @@ import {
     Rect,
 } from "brs-engine";
 import { sgRoot } from "../SGRoot";
-import { createNodeByType, isSubtypeCheck, subtypeHierarchy } from "../factory/SGNodeFactory";
-import { toAssociativeArray } from "../factory/serialization";
+import { createNodeByType, isSubtypeCheck, subtypeHierarchy } from "../factory/NodeFactory";
+import { toAssociativeArray } from "../factory/Serializer";
 import { FieldKind, isContentNode } from "../SGTypes";
 
 export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode {

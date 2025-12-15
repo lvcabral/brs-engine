@@ -3,7 +3,7 @@ import { FieldKind, FieldModel } from "../SGTypes";
 import { SGNodeType } from ".";
 import { Group } from "./Group";
 import { rotateTranslation } from "../SGUtil";
-import { jsValueOf } from "../factory/serialization";
+import { jsValueOf } from "../factory/Serializer";
 import { sgRoot } from "../SGRoot";
 import { ButtonGroup } from "./ButtonGroup";
 import { Label } from "./Label";

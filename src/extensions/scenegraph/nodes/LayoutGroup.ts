@@ -1,7 +1,7 @@
 import { AAMember, Interpreter, BrsBoolean, BrsType, RoArray, IfDraw2D } from "brs-engine";
 import { FieldKind, FieldModel } from "../SGTypes";
 import { SGNodeType } from ".";
-import { jsValueOf } from "../factory/serialization";
+import { jsValueOf } from "../factory/Serializer";
 import { Group } from "./Group";
 import { Node } from "./Node";
 

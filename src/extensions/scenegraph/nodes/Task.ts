@@ -12,7 +12,7 @@ import {
     TaskState,
 } from "brs-engine";
 import { sgRoot } from "../SGRoot";
-import { brsValueOf, fromAssociativeArray, fromSGNode } from "../factory/serialization";
+import { brsValueOf, fromAssociativeArray, fromSGNode } from "../factory/Serializer";
 import { Node } from "./Node";
 import { Scene } from "./Scene";
 import { Global } from "./Global";

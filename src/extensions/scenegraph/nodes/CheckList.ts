@@ -1,7 +1,7 @@
 import { FieldKind, FieldModel } from "../SGTypes";
 import { SGNodeType } from ".";
 import { AAMember, BrsType, BrsString, RoArray, isBrsString, Int32, ValueKind, IfDraw2D, Rect } from "brs-engine";
-import { brsValueOf, jsValueOf } from "../factory/serialization";
+import { brsValueOf, jsValueOf } from "../factory/Serializer";
 import { LabelList } from "./LabelList";
 import { ContentNode } from "./ContentNode";
 

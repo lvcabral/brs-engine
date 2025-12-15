@@ -14,8 +14,8 @@ import {
 import { FieldKind, FieldModel } from "../SGTypes";
 import { SGNodeType } from ".";
 import { Group } from "./Group";
-import { createNodeByType } from "../factory/SGNodeFactory";
-import { brsValueOf, jsValueOf } from "../factory/serialization";
+import { createNodeByType } from "../factory/NodeFactory";
+import { brsValueOf, jsValueOf } from "../factory/Serializer";
 import { sgRoot } from "../SGRoot";
 import { ContentNode } from "./ContentNode";
 import { Font } from "./Font";

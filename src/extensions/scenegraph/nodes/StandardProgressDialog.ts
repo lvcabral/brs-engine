@@ -1,5 +1,5 @@
 import { AAMember, Float, BrsString, BrsDevice, Interpreter, IfDraw2D } from "brs-engine";
-import { jsValueOf } from "../factory/serialization";
+import { jsValueOf } from "../factory/Serializer";
 import { FieldModel } from "../SGTypes";
 import { SGNodeType } from ".";
 import { StandardDialog } from "./StandardDialog";

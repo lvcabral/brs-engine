@@ -12,7 +12,7 @@ import {
 import { FieldKind, FieldModel } from "../SGTypes";
 import { SGNodeType } from ".";
 import { Group } from "./Group";
-import { toAssociativeArray, jsValueOf } from "../factory/serialization";
+import { toAssociativeArray, jsValueOf } from "../factory/Serializer";
 import { sgRoot } from "../SGRoot";
 import { Poster } from "./Poster";
 import { RSGPalette } from "./RSGPalette";
