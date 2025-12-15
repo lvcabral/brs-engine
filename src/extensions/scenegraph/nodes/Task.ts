@@ -12,7 +12,7 @@ import {
     TaskState,
 } from "brs-engine";
 import { sgRoot } from "../SGRoot";
-import { brsValueOf, fromAssociativeArray, fromSGNode } from "../factory/Serializer";
+import { brsValueOf, fromAssociativeArray, fromSGNode, updateSGNode } from "../factory/Serializer";
 import { Node } from "./Node";
 import { Scene } from "./Scene";
 import { Global } from "./Global";
@@ -20,19 +20,34 @@ import type { Field } from "./Field";
 import { FieldKind, FieldModel } from "../SGTypes";
 import { SGNodeType } from ".";
 
+/**
+ * SceneGraph `Task` node implementation responsible for executing BrightScript in a worker thread.
+ * Manages control/state fields, SharedArrayBuffer message passing, and thread synchronization.
+ */
 export class Task extends Node {
+    /** Built-in Task fields defined by Roku (control/state/functionName). */
     readonly defaultFields: FieldModel[] = [
         { name: "control", type: "string" },
         { name: "state", type: "string", value: "init" },
         { name: "functionName", type: "string" },
     ];
+    /** Shared buffer used to communicate updates between host and task thread. */
     private taskBuffer?: SharedObject;
 
+    /** Thread identifier assigned by sgRoot once scheduled. */
     id: number;
+    /** Indicates the task is currently marked as active (control = run). */
     active: boolean;
+    /** Whether the task has started execution at least once. */
     started: boolean;
+    /** True when this instance runs on a dedicated worker thread. */
     thread: boolean;
 
+    /**
+     * Creates a Task node, registering default and initial fields.
+     * @param members AA members originating from XML component instantiation.
+     * @param name Specific component type name (defaults to `Task`).
+     */
     constructor(members: AAMember[] = [], readonly name: string = SGNodeType.Task) {
         super([], name);
         this.setExtendsType(name, SGNodeType.Node);
@@ -45,6 +60,14 @@ export class Task extends Node {
         this.registerInitializedFields(members);
     }
 
+    /**
+     * Overrides `Node.setValue` to add control/state synchronization semantics.
+     * @param index Field name being updated.
+     * @param value New BrightScript value.
+     * @param alwaysNotify Whether observers should always be notified.
+     * @param kind Optional explicit field kind.
+     * @param sync When false skips sending thread updates back to the main thread.
+     */
     setValue(index: string, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind, sync: boolean = true) {
         const validStates = new Set(["init", "run", "stop", "done"]);
         const mapKey = index.toLowerCase();
@@ -73,6 +96,12 @@ export class Task extends Node {
         }
     }
 
+    /**
+     * Handles control field updates, toggling thread state and mirroring Roku behavior.
+     * @param field Control field instance to mutate.
+     * @param control Lowercase control command (`run`, `stop`, etc.).
+     * @param sync When true sends updates to the owning thread.
+     */
     private setControlField(field: Field, control: string, sync: boolean) {
         const state = this.fields.get("state") as Field;
         if (control === "run") {
@@ -100,12 +129,21 @@ export class Task extends Node {
         }
     }
 
+    /**
+     * Initializes the shared buffer wrapper from a raw SharedArrayBuffer.
+     * @param data Buffer supplied by the scheduler for inter-thread messaging.
+     */
     setTaskBuffer(data: SharedArrayBuffer) {
         this.taskBuffer = new SharedObject();
         this.taskBuffer.setBuffer(data);
     }
 
-    /** Message callback to handle observed fields with message port */
+    /**
+     * MessagePort callback invoked when observers wait on task-owned fields.
+     * @param _ Interpreter instance (unused).
+     * @param wait Milliseconds to wait for a buffer version change.
+     * @returns Array of generated events (empty for Task nodes).
+     */
     protected getNewEvents(_: Interpreter, wait: number) {
         if (this.taskBuffer && this.thread) {
             const timeout = wait === 0 ? undefined : wait;
@@ -116,6 +154,9 @@ export class Task extends Node {
         return new Array<BrsEvent>();
     }
 
+    /**
+     * Validates readiness and posts task metadata to the scheduler when control becomes `run`.
+     */
     checkTask() {
         const functionName = this.getValueJS("functionName") as string;
         if (!functionName || functionName.trim() === "") {
@@ -155,6 +196,10 @@ export class Task extends Node {
         }
     }
 
+    /**
+     * Processes shared-buffer updates and synchronizes dirty child nodes back to the main thread.
+     * @returns True when updates were applied, otherwise false.
+     */
     updateTask() {
         const updates = this.processUpdateFromOtherThread();
         const state = this.getValueJS("state") as string;
@@ -171,27 +216,46 @@ export class Task extends Node {
         return updates;
     }
 
+    /**
+     * Applies pending updates stored in the shared buffer that originated from another thread.
+     * @returns True when at least one field update was applied; false otherwise.
+     */
     private processUpdateFromOtherThread() {
-        let currentVersion = this.taskBuffer?.getVersion() ?? -1;
-        if (this.taskBuffer && currentVersion === 1) {
-            const update = this.taskBuffer.load(true);
-            if (isThreadUpdate(update)) {
-                postMessage(
-                    `debug,[task] Received Update at ${this.id} thread from ${
-                        this.thread ? "Main thread" : "Task Thread"
-                    }: ${update.id} - ${update.type} - ${update.field}`
-                );
-                const node = this.getNodeToUpdate(update.type);
-                if (node) {
-                    const value = brsValueOf(update.value);
-                    node.setValue(update.field, value, false, undefined, false);
-                    return true;
-                }
+        const currentVersion = this.taskBuffer?.getVersion() ?? -1;
+        if (!this.taskBuffer || currentVersion !== 1) {
+            return false;
+        }
+        const update = this.taskBuffer.load(true);
+        if (isThreadUpdate(update)) {
+            postMessage(
+                `debug,[task] Received Update at ${this.id} thread from ${
+                    this.thread ? "Main thread" : "Task Thread"
+                }: ${update.id} - ${update.type} - ${update.field}`
+            );
+            const node = this.getNodeToUpdate(update.type);
+            if (!node) {
+                return false;
             }
+            // Apply update
+            const oldValue = node.getValue(update.field);
+            let value: BrsType;
+            if (oldValue instanceof Node && update.value["_node_"] && oldValue.address === update.value["_address_"]) {
+                // Update existing node to preserve references
+                value = updateSGNode(update.value, oldValue);
+            } else {
+                value = brsValueOf(update.value);
+            }
+            node.setValue(update.field, value, false, undefined, false);
+            return true;
         }
         return false;
     }
 
+    /**
+     * Resolves the node target for an incoming thread update message.
+     * @param type Domain identifier (`global`, `task`, or `scene`).
+     * @returns Target node, if available.
+     */
     private getNodeToUpdate(type: "global" | "task" | "scene"): this | Global | Scene | undefined {
         if (type === "global") {
             return sgRoot.mGlobal;
