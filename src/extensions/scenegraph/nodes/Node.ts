@@ -38,22 +38,41 @@ import { toAssociativeArray, jsValueOf, fromSGNode } from "../factory/serializat
 import { sgRoot } from "../SGRoot";
 import { SGNodeType } from ".";
 
+type ChangeOperation = "none" | "insert" | "add" | "remove" | "set" | "clear" | "move" | "setall" | "modify";
+
+/**
+ * Base implementation for a SceneGraph node used by custom Roku components.
+ * Handles BrightScript-facing field management, child lists, focus, observers, and rendering plumbing.
+ */
 export class Node extends RoSGNode implements BrsValue {
+    /** Field registry keyed by lowercase name. */
     protected readonly fields: Map<string, Field>;
+    /** Alias definitions pointing to fields on child nodes. */
     protected readonly aliases: Map<string, FieldAlias>;
+    /** Ordered list of child nodes retained as BrightScript values. */
     protected readonly children: (Node | BrsInvalid)[];
+    /** Guards initial focus hand-off so it only runs once. */
     protected triedInitFocus: boolean = false;
+    /** Tracks whether the most recent field mutation triggered observers. */
     protected notified: boolean = false;
 
+    /** Parent node reference or invalid when detached. */
     protected parent: Node | BrsInvalid;
+    /** Hex-like identifier exposed via introspection APIs. */
     address: string;
+    /** Thread identifier that owns the node instance. */
     owner: number;
+    /** Flags whether structural or field state changed since last render. */
     changed: boolean = false;
 
+    /** Node bounds in local coordinates. */
     rectLocal: Rect = { x: 0, y: 0, width: 0, height: 0 };
+    /** Node bounds relative to its parent. */
     rectToParent: Rect = { x: 0, y: 0, width: 0, height: 0 };
+    /** Node bounds in the scene coordinate space. */
     rectToScene: Rect = { x: 0, y: 0, width: 0, height: 0 };
 
+    /** Built-in fields automatically registered for every node. */
     readonly defaultFields: FieldModel[] = [
         { name: "id", type: FieldKind.String },
         { name: "focusable", type: FieldKind.Boolean },
@@ -61,6 +80,11 @@ export class Node extends RoSGNode implements BrsValue {
         { name: "change", type: FieldKind.AssocArray },
     ];
 
+    /**
+     * Creates a new node instance, registering default and initial fields.
+     * @param initializedFields Associative-array style entries coming from XML attributes.
+     * @param nodeSubtype Concrete subtype identifier used for serialization and debugging.
+     */
     constructor(initializedFields: AAMember[] = [], readonly nodeSubtype: string = SGNodeType.Node) {
         super([], nodeSubtype);
         this.address = genHexAddress();
@@ -79,6 +103,11 @@ export class Node extends RoSGNode implements BrsValue {
         this.setValueSilent("change", toAssociativeArray({ Index1: 0, Index2: 0, Operation: "none" }));
     }
 
+    /**
+     * Formats the node and its visible fields similar to Roku's inspector output.
+     * @param parent Optional parent BrightScript value to mimic RBI formatting rules.
+     * @returns String representation of the node.
+     */
     toString(parent?: BrsType): string {
         const componentName = `${this.getComponentName()}:${this.nodeSubtype}`;
         if (parent) {
@@ -105,22 +134,38 @@ export class Node extends RoSGNode implements BrsValue {
         ].join("\n");
     }
 
+    /**
+     * Returns the names of all registered fields sorted alphabetically.
+     * @returns Array of BrightScript strings.
+     */
     getElements() {
         return Array.from(this.fields.keys())
             .sort()
             .map((key) => new BrsString(key));
     }
 
+    /**
+     * Returns the current values of all registered fields sorted by field name.
+     * @returns Array of BrightScript field values.
+     */
     getValues() {
         return Array.from(this.fields.values())
             .sort()
             .map((field: Field) => field.getValue());
     }
 
+    /**
+     * Provides direct access to the internal field map. Used by serialization helpers.
+     * @returns Map keyed by lowercase field names.
+     */
     getNodeFields() {
         return this.fields;
     }
 
+    /**
+     * Converts the current field map into an associative array, omitting hidden fields.
+     * @returns BrightScript AA mirroring the node's public field values.
+     */
     protected getNodeFieldsAsAA(): RoAssociativeArray {
         const packagedFields: AAMember[] = [];
         for (const [name, field] of this.fields) {
@@ -132,6 +177,10 @@ export class Node extends RoSGNode implements BrsValue {
         return new RoAssociativeArray(packagedFields);
     }
 
+    /**
+     * Converts the node's field type metadata into an associative array.
+     * @returns BrightScript AA with field names mapped to type strings.
+     */
     protected getNodeFieldTypes(): RoAssociativeArray {
         const packagedFields: AAMember[] = [];
         for (const [name, field] of this.fields) {
@@ -143,10 +192,21 @@ export class Node extends RoSGNode implements BrsValue {
         return new RoAssociativeArray(packagedFields);
     }
 
+    /**
+     * Checks if the node currently defines a field by the provided name.
+     * @param fieldName Field name in any casing.
+     * @returns True when the field exists.
+     */
     protected hasNodeField(fieldName: string): boolean {
         return this.fields.has(fieldName.toLowerCase());
     }
 
+    /**
+     * Validates whether the specified field can accept the supplied value.
+     * @param fieldName Field to validate against.
+     * @param value BrightScript value candidate.
+     * @returns True if the value passes validation.
+     */
     protected canAcceptValue(fieldName: string, value: BrsType): boolean {
         const field = this.fields.get(fieldName.toLowerCase());
         if (!field?.canAcceptValue(value)) {
@@ -155,16 +215,29 @@ export class Node extends RoSGNode implements BrsValue {
         return true;
     }
 
+    /**
+     * Removes all removable fields from the node, clearing dynamic state.
+     */
     protected clearNodeFields() {
         for (const [name, _] of this.fields) {
             this.removeFieldEntry(name);
         }
     }
 
+    /**
+     * Returns the raw child collection used by SceneGraph for rendering.
+     * @returns Array of child BrightScript values.
+     */
     getNodeChildren(): BrsType[] {
         return this.children;
     }
 
+    /**
+     * Looks up a field or method by name, mimicking BrightScript associative-array semantics.
+     * @param index Field or method name as a BrightScript string value.
+     * @throws Error when an unsupported index type is provided.
+     * @returns Field value, method, or invalid when missing.
+     */
     get(index: BrsType): BrsType {
         if (!isBrsString(index)) {
             throw new Error("Node indexes must be strings");
@@ -193,16 +266,33 @@ export class Node extends RoSGNode implements BrsValue {
         return (this as any).getMethod(index.getValue()) || BrsInvalid.Instance;
     }
 
+    /**
+     * Retrieves a field's BrightScript value or `invalid` if the field is unknown.
+     * @param fieldName Name of the field to fetch.
+     * @returns Stored BrightScript value.
+     */
     getValue(fieldName: string) {
         const field = this.fields.get(fieldName.toLowerCase());
         return field ? field.getValue() : BrsInvalid.Instance;
     }
 
+    /**
+     * Retrieves a plain JavaScript representation of a field's value, if possible.
+     * @param fieldName Name of the field to fetch.
+     * @returns Native JS value or undefined.
+     */
     getValueJS(fieldName: string) {
         const field = this.fields.get(fieldName.toLowerCase());
         return field ? jsValueOf(field.getValue()) : undefined;
     }
 
+    /**
+     * Sets or aliases a field value, performing type validation and notification.
+     * @param index Field name to update.
+     * @param value New BrightScript value.
+     * @param alwaysNotify When provided, controls observer notification behavior for new fields.
+     * @param kind Optional explicit field kind used when creating new dynamic fields.
+     */
     setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind) {
         const mapKey = index.toLowerCase();
         const fieldType = kind ?? FieldKind.fromBrsType(value);
@@ -245,7 +335,12 @@ export class Node extends RoSGNode implements BrsValue {
         }
     }
 
-    // Used to setup values for the node fields without validation or notifying observers
+    /**
+     * Writes a field value bypassing validation and observer notification.
+     * @param fieldName Field name to mutate.
+     * @param value Value to assign.
+     * @param hidden Optional hidden flag override applied when creating the field.
+     */
     setValueSilent(fieldName: string, value: BrsType, hidden?: boolean) {
         const mapKey = fieldName.toLowerCase();
         let field = this.fields.get(mapKey);
@@ -266,10 +361,21 @@ export class Node extends RoSGNode implements BrsValue {
         }
     }
 
+    /**
+     * Returns the node's `id` field or the subtype if unset.
+     * @returns Node identifier string.
+     */
     getId() {
         return this.getValueJS("id") ?? this.nodeSubtype;
     }
 
+    /**
+     * Implements BrightScript's `clone` semantics for SceneGraph nodes.
+     * @param isDeepCopy When true child nodes are recursively duplicated.
+     * @param interpreter Interpreter context for error reporting.
+     * @param visitedNodes Graph cache preventing infinite recursion.
+     * @returns Cloned node or invalid on error.
+     */
     protected cloneNode(
         isDeepCopy: boolean,
         interpreter?: Interpreter,
@@ -321,6 +427,11 @@ export class Node extends RoSGNode implements BrsValue {
         return clonedNode;
     }
 
+    /**
+     * Creates a deep copy of this node suitable for returning into BrightScript.
+     * @param visitedNodes Graph cache preventing repeated copies of shared nodes.
+     * @returns Deep copied node or invalid on failure.
+     */
     deepCopy(visitedNodes?: WeakMap<Node, Node>): BrsType {
         visitedNodes ??= new WeakMap<Node, Node>();
         const copiedNode = createNodeByType(this.nodeSubtype);
@@ -362,6 +473,12 @@ export class Node extends RoSGNode implements BrsValue {
         return copiedNode;
     }
 
+    /**
+     * Transfers associative array contents into a field, copying complex values.
+     * @param fieldName Destination field.
+     * @param data Source associative array.
+     * @returns Result metadata mirroring Roku behavior.
+     */
     protected moveObjectIntoField(fieldName: string, data: RoAssociativeArray) {
         const field = this.fields.get(fieldName.toLowerCase());
         if (field === undefined) {
@@ -385,6 +502,11 @@ export class Node extends RoSGNode implements BrsValue {
         return { code: refs };
     }
 
+    /**
+     * Moves the contents of an associative-array field into a return value.
+     * @param fieldName Field to clear and return.
+     * @returns The moved value or an error string.
+     */
     protected moveObjectFromField(fieldName: string): BrsType | string {
         const field = this.fields.get(fieldName.toLowerCase());
         if (field === undefined) {
@@ -398,6 +520,12 @@ export class Node extends RoSGNode implements BrsValue {
         return value;
     }
 
+    /**
+     * Adds a new dynamic field if it does not already exist.
+     * @param fieldName Name of the field to create.
+     * @param type Roku field type string.
+     * @param alwaysNotify Whether observers should always fire for the field.
+     */
     addNodeField(fieldName: string, type: string, alwaysNotify: boolean) {
         let defaultValue = getBrsValueFromFieldType(type);
         let fieldKind = FieldKind.fromString(type);
@@ -408,11 +536,22 @@ export class Node extends RoSGNode implements BrsValue {
         }
     }
 
+    /**
+     * Registers a field alias pointing to a child node's field.
+     * @param fieldName Local alias name.
+     * @param field Backing field metadata.
+     * @param childNode Target child id.
+     * @param childField Name on the child node.
+     */
     addNodeFieldAlias(fieldName: string, field: Field, childNode: string, childField: string) {
         this.fields.set(fieldName.toLowerCase(), field);
         this.aliases.set(fieldName.toLowerCase(), { nodeId: childNode, fieldName: childField });
     }
 
+    /**
+     * Appends field definitions from another node or associative array.
+     * @param fieldsToAppend Field source.
+     */
     protected appendNodeFields(fieldsToAppend: BrsType) {
         if (fieldsToAppend instanceof RoAssociativeArray) {
             for (const [key, value] of fieldsToAppend.elements) {
@@ -426,6 +565,11 @@ export class Node extends RoSGNode implements BrsValue {
         }
     }
 
+    /**
+     * Sets one or more fields from an associative array.
+     * @param fieldsToSet Data source.
+     * @param addFields If true, missing fields are created.
+     */
     protected setNodeFields(fieldsToSet: RoAssociativeArray, addFields: boolean) {
         for (const [key, value] of fieldsToSet.elements) {
             if (addFields || (!addFields && this.fields.has(key.toLowerCase()))) {
@@ -435,6 +579,12 @@ export class Node extends RoSGNode implements BrsValue {
         }
     }
 
+    /**
+     * Applies associative-array or array content to this node or its children.
+     * @param interpreter Active interpreter for logging.
+     * @param content AA or array describing fields/children.
+     * @param createFields Whether to create missing fields.
+     */
     protected updateFields(interpreter: Interpreter, content: BrsType, createFields: boolean) {
         if (content instanceof RoAssociativeArray) {
             this.populateNodeFromAA(interpreter, this, content, createFields, this.nodeSubtype);
@@ -443,6 +593,12 @@ export class Node extends RoSGNode implements BrsValue {
         }
     }
 
+    /**
+     * Copies an associative array by reference into a field when allowed.
+     * @param fieldName Destination field.
+     * @param data Source AA.
+     * @returns Roku-style status code.
+     */
     protected setFieldByRef(fieldName: string, data: RoAssociativeArray): number {
         const field = this.fields.get(fieldName.toLowerCase());
         if (!field) {
@@ -454,11 +610,21 @@ export class Node extends RoSGNode implements BrsValue {
         return 0;
     }
 
+    /**
+     * Checks whether `getFieldByRef` is allowed for a field.
+     * @param fieldName Field to inspect.
+     * @returns True when the field can be returned by reference.
+     */
     protected canGetFieldByRef(fieldName: string): boolean {
         const field = this.fields.get(fieldName.toLowerCase());
         return !!field && field.getType() === FieldKind.AssocArray && field.isValueRef();
     }
 
+    /**
+     * Returns an associative array field by reference when permitted.
+     * @param fieldName Field to fetch.
+     * @returns The AA reference or an error string.
+     */
     protected getFieldByRef(fieldName: string): RoAssociativeArray | string {
         const field = this.fields.get(fieldName.toLowerCase());
         if (field === undefined) {
@@ -472,19 +638,33 @@ export class Node extends RoSGNode implements BrsValue {
         return "";
     }
 
+    /**
+     * Returns the parent node or invalid when unattached.
+     * @returns Parent node reference or BrsInvalid.
+     */
     getNodeParent() {
         return this.parent;
     }
 
+    /**
+     * Assigns a new parent reference.
+     * @param parent Node that is adopting this node.
+     */
     setNodeParent(parent: Node) {
         this.parent = parent;
     }
 
+    /**
+     * Clears the parent reference, marking the node as detached.
+     */
     removeParent() {
         this.parent = BrsInvalid.Instance;
     }
 
-    // recursively search for any child that's focused via DFS
+    /**
+     * Performs a depth-first search to determine if any descendant currently has focus.
+     * @returns True when a focused child exists.
+     */
     protected isChildrenFocused(): boolean {
         if (this.children.length === 0) {
             return false;
@@ -500,14 +680,34 @@ export class Node extends RoSGNode implements BrsValue {
         return false;
     }
 
+    /**
+     * Indicates whether the node can accept focus, based on its `focusable` field.
+     * @returns True when focusable.
+     */
     isFocusable() {
         return (this.getValueJS("focusable") as boolean) ?? false;
     }
 
+    /**
+     * Base render entry point that simply delegates to child nodes.
+     * @param interpreter Active interpreter.
+     * @param origin Parent-space translation.
+     * @param angle Accumulated rotation.
+     * @param opacity Accumulated opacity.
+     * @param draw2D Drawing interface (optional in headless flows).
+     */
     renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
         this.renderChildren(interpreter, origin, angle, opacity, draw2D);
     }
 
+    /**
+     * Iterates through child nodes, invoking their render methods in order.
+     * @param interpreter Active interpreter.
+     * @param origin Parent-space translation.
+     * @param angle Accumulated rotation.
+     * @param opacity Accumulated opacity.
+     * @param draw2D Drawing interface.
+     */
     renderChildren(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
         for (const node of this.children) {
             if (!(node instanceof Node)) {
@@ -518,6 +718,12 @@ export class Node extends RoSGNode implements BrsValue {
         this.changed = false;
     }
 
+    /**
+     * Forces a render pass and returns the requested bounding rectangle.
+     * @param interpreter Interpreter used to render the root path.
+     * @param type Rectangle type: `local`, `toScene`, or any other value for parent space.
+     * @returns Bounding rectangle in the requested coordinate space.
+     */
     getBoundingRect(interpreter: Interpreter, type: string): Rect {
         const root = this.createPath(this)[0];
         root.renderNode(interpreter, [0, 0], 0, 1);
@@ -531,6 +737,15 @@ export class Node extends RoSGNode implements BrsValue {
         }
     }
 
+    /**
+     * Registers a field observer callback or message port.
+     * @param interpreter Active interpreter owning the observer.
+     * @param scope Observer lifetime scope.
+     * @param fieldName Field to observe.
+     * @param funcOrPort Callable name or message port.
+     * @param infoFields Optional list of info fields written into the event AA.
+     * @returns BrightScript boolean indicating registration success.
+     */
     addObserver(
         interpreter: Interpreter,
         scope: "permanent" | "scoped" | "unscoped",
@@ -562,6 +777,11 @@ export class Node extends RoSGNode implements BrsValue {
         return result;
     }
 
+    /**
+     * Removes observers from a field, scoped to the provided node when applicable.
+     * @param fieldName Field whose observers should be removed.
+     * @param node Optional node used for scoped observer cleanup.
+     */
     protected removeObserver(fieldName: string, node?: Node) {
         const field = this.fields.get(fieldName.toLowerCase());
         if (field instanceof Field) {
@@ -573,7 +793,12 @@ export class Node extends RoSGNode implements BrsValue {
         }
     }
 
-    /** Sets or removes the focus to/from the Node */
+    /**
+     * Sets or removes focus for this node, updating ancestry chains to mirror Roku behavior.
+     * @param interpreter Interpreter performing the focus mutation.
+     * @param focusOn When true focus is obtained, otherwise removed.
+     * @returns Whether the node is focusable.
+     */
     protected setNodeFocus(interpreter: Interpreter, focusOn: boolean): boolean {
         const focusedChild = "focusedchild";
         if (focusOn) {
@@ -642,7 +867,12 @@ export class Node extends RoSGNode implements BrsValue {
         return this.isFocusable();
     }
 
-    /* searches the node tree for a node with the given id */
+    /**
+     * Searches the subtree rooted at the provided node for a matching `id`.
+     * @param node Root to inspect.
+     * @param id Identifier to seek (case-insensitive).
+     * @returns The matching node or BrsInvalid when not found.
+     */
     findNodeById(node: Node, id: string): Node | BrsInvalid {
         // test current node in tree
         let currentId = node.getValue("id");
@@ -664,13 +894,21 @@ export class Node extends RoSGNode implements BrsValue {
         return BrsInvalid.Instance;
     }
 
-    /** Returns a bitmap based on one of the fields of the node */
+    /**
+     * Resolves a bitmap referenced by one of this node's fields.
+     * @param fieldName Field that stores a URI.
+     * @returns Bitmap texture or undefined.
+     */
     getBitmap(fieldName: string) {
         const uri = this.getValueJS(fieldName) as string;
         return this.loadBitmap(uri);
     }
 
-    /** Loads a bitmap from the given URI */
+    /**
+     * Loads a bitmap for the provided URI, applying Scene `subSearch/subReplace` when configured.
+     * @param uri Image URI.
+     * @returns Loaded texture or undefined when the URI is blank.
+     */
     protected loadBitmap(uri: string) {
         if (!uri.trim()) {
             return undefined;
@@ -681,7 +919,11 @@ export class Node extends RoSGNode implements BrsValue {
         return getTextureManager().loadTexture(uri, this.httpAgent.customHeaders);
     }
 
-    /** Returns the largest dimensions of the icons from the passed fields */
+    /**
+     * Calculates the max width/height of bitmaps referenced by the supplied field names.
+     * @param fields List of field names that store URIs.
+     * @returns Tuple `[width, height]` of the largest bitmap.
+     */
     getIconSize(fields: string[]) {
         let width = 0;
         let height = 0;
@@ -695,14 +937,26 @@ export class Node extends RoSGNode implements BrsValue {
         return [width, height];
     }
 
-    /** Copies a field value from this Node to a Child node field */
+    /**
+     * Copies a field value from this node onto a child field.
+     * @param node Child node receiving the value.
+     * @param fieldName Destination field.
+     * @param thisField Optional source field override.
+     * @returns The copied value.
+     */
     protected copyField(node: Node, fieldName: string, thisField?: string) {
         const value = this.getValue(thisField ?? fieldName);
         node.setValue(fieldName, value);
         return value;
     }
 
-    /** Links a field from another node to this node field */
+    /**
+     * Shares a field reference from another node, creating a live link.
+     * @param node Node that owns the source field.
+     * @param fieldName Source field on the provided node.
+     * @param thisField Optional destination field name.
+     * @returns Linked field metadata or undefined.
+     */
     protected linkField(node: Node, fieldName: string, thisField?: string) {
         const field = node.fields.get(fieldName.toLowerCase());
         if (field) {
@@ -711,7 +965,11 @@ export class Node extends RoSGNode implements BrsValue {
         return field;
     }
 
-    /** Removes a field from this Node */
+    /**
+     * Attempts to remove a non-system field from this node.
+     * @param fieldName Field name to remove.
+     * @returns True when the field or alias was removed.
+     */
     protected removeFieldEntry(fieldName: string): boolean {
         const fieldKey = fieldName.toLowerCase();
         const field = this.fields.get(fieldKey);
@@ -726,7 +984,14 @@ export class Node extends RoSGNode implements BrsValue {
         return removed;
     }
 
-    /** Creates a tree of Nodes children from an array of associative arrays */
+    /**
+     * Creates child nodes from an array description.
+     * @param interpreter Interpreter for logging.
+     * @param node Parent node receiving new children.
+     * @param childrenArray Array describing children.
+     * @param createFields Whether fields should be created when missing.
+     * @param subtype Default subtype fallback.
+     */
     private updateChildrenFromArray(
         interpreter: Interpreter,
         node: Node,
@@ -758,7 +1023,14 @@ export class Node extends RoSGNode implements BrsValue {
         }
     }
 
-    /** Populates a node from an associative array, recursively converting nested children arrays to nodes */
+    /**
+     * Populates a node from an associative array, recursively converting nested children arrays.
+     * @param interpreter Interpreter for diagnostics.
+     * @param node Node to mutate.
+     * @param aa Associative array containing field data.
+     * @param createFields Whether new fields may be created.
+     * @param subtype Default subtype for nested children.
+     */
     private populateNodeFromAA(
         interpreter: Interpreter,
         node: Node,
@@ -784,94 +1056,181 @@ export class Node extends RoSGNode implements BrsValue {
         }
     }
 
-    /** Message callback to handle observed fields with message port */
+    /**
+     * Message callback invoked by RoMessagePort observers. Overridden by Task nodes.
+     * @param _interpreter Interpreter handling the callback.
+     * @param _wait Requested wait time in milliseconds.
+     * @returns Array of generated events (empty by default).
+     */
     protected getNewEvents(_interpreter: Interpreter, _wait: number) {
         // To be overridden by the Task class
         return new Array<BrsEvent>();
     }
 
+    /**
+     * Removes a child node by reference, updating focus bookkeeping.
+     * @param child Child to remove.
+     * @returns True when removal occurred.
+     */
     protected removeChildByReference(child: BrsType): boolean {
         if (child instanceof Node) {
-            let spliceIndex = this.children.indexOf(child);
+            const spliceIndex = this.children.indexOf(child);
             if (spliceIndex >= 0) {
                 child.removeParent();
                 this.children.splice(spliceIndex, 1);
-            }
-            this.changed = true;
-            return true;
-        }
-        return false;
-    }
-
-    protected removeChildrenAtIndex(index: number, count: number): boolean {
-        if (count > 0 && index >= 0 && index < this.children.length) {
-            const removedChildren = this.children.splice(index, count);
-            for (const node of removedChildren.filter((n) => n instanceof RoSGNode)) {
-                node.removeParent();
-            }
-            this.changed = true;
-            return true;
-        }
-        return false;
-    }
-
-    appendChildToParent(child: BrsType): boolean {
-        if (child instanceof Node) {
-            if (this.children.includes(child)) {
+                this.recordChildChange("remove", spliceIndex);
+                this.changed = true;
                 return true;
             }
-            this.children.push(child);
-            child.setNodeParent(this);
-            this.changed = true;
-            return true;
         }
         return false;
     }
 
-    protected replaceChildAtIndex(newChild: Node, index: Int32): boolean {
-        let childrenSize = this.children.length;
-        let indexValue = index.getValue();
-        if (indexValue < childrenSize) {
-            // If newChild is already a child, remove it first.
-            this.removeChildByReference(newChild);
-            if (indexValue >= 0) {
-                // The check is done to see if indexValue is inside the
-                // new length of this.children (in case newChild was
-                // removed above)
-                if (indexValue < this.children.length) {
-                    // Remove the parent of the child at indexValue
-                    const oldChild = this.children[indexValue];
-                    if (oldChild instanceof Node) {
-                        oldChild.removeParent();
-                    }
-                }
-                newChild.setNodeParent(this);
-                this.children.splice(indexValue, 1, newChild);
+    /**
+     * Removes a contiguous range of children starting at the provided index.
+     * @param index Start index.
+     * @param count Number of children to remove.
+     * @returns True when at least one child was removed.
+     */
+    removeChildrenAtIndex(index: number, count: number): boolean {
+        if (count > 0 && index >= 0 && index < this.children.length) {
+            const removedChildren = this.children.splice(index, count);
+            for (const node of removedChildren.filter((n): n is Node => n instanceof Node)) {
+                node.removeParent();
             }
-            return true;
-        }
-        return false;
-    }
-
-    protected insertChildAtIndex(child: BrsType, index: Int32): boolean {
-        if (child instanceof Node) {
-            let childrenSize = this.children.length;
-            let indexValue = index.getValue() < 0 ? childrenSize : index.getValue();
-            // Remove node if it already exists
-            this.removeChildByReference(child);
-            child.setNodeParent(this);
-            this.children.splice(indexValue, 0, child);
+            if (removedChildren.length > 0) {
+                this.recordChildChange("remove", index, index + removedChildren.length - 1);
+            }
+            this.changed = true;
             return true;
         }
         return false;
     }
 
     /**
+     * Appends a child node to this node's children collection.
+     * @param child Child to append.
+     * @returns True when the child was appended.
+     */
+    appendChildToParent(child: BrsType): boolean {
+        if (child instanceof Node) {
+            if (this.children.includes(child)) {
+                return true;
+            }
+            const insertionIndex = this.children.length;
+            this.children.push(child);
+            child.setNodeParent(this);
+            this.changed = true;
+            this.recordChildChange("add", insertionIndex);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Replaces the child at the provided index with a new node.
+     * @param newChild Node to insert.
+     * @param index index indicating the desired position.
+     * @returns True when replacement succeeded.
+     */
+    replaceChildAtIndex(newChild: Node, index: number): boolean {
+        if (index < 0 || index >= this.children.length) {
+            return false;
+        }
+        const existingIndex = this.children.indexOf(newChild);
+        if (existingIndex >= 0) {
+            this.children.splice(existingIndex, 1);
+            if (existingIndex < index) {
+                index -= 1;
+            }
+        }
+        if (this.children.length === 0) {
+            index = 0;
+        } else if (index >= this.children.length) {
+            index = this.children.length - 1;
+        }
+        const oldChild = this.children[index];
+        if (oldChild instanceof Node) {
+            oldChild.removeParent();
+        }
+        newChild.setNodeParent(this);
+        this.children.splice(index, 1, newChild);
+        this.changed = true;
+        this.recordChildChange("set", index);
+        return true;
+    }
+
+    /**
+     * Inserts a child node at the specified index, shifting subsequent entries.
+     * @param child Node to insert.
+     * @param index Target index.
+     * @returns True when insertion occurred.
+     */
+    insertChildAtIndex(child: BrsType, index: number): boolean {
+        if (!(child instanceof Node)) {
+            return false;
+        }
+        const childrenSize = this.children.length;
+        if (index < 0) {
+            index = childrenSize;
+        } else if (index > childrenSize) {
+            index = childrenSize;
+        }
+        const existingIndex = this.children.indexOf(child);
+        if (existingIndex >= 0) {
+            if (existingIndex === index) {
+                return true;
+            }
+            this.children.splice(existingIndex, 1);
+            this.recordChildChange("remove", existingIndex, existingIndex);
+            if (existingIndex < index) {
+                index -= 1;
+            }
+            this.children.splice(index, 0, child);
+            this.changed = true;
+            this.recordChildChange("insert", index, index);
+            return true;
+        }
+        child.setNodeParent(this);
+        this.children.splice(index, 0, child);
+        this.changed = true;
+        this.recordChildChange("insert", index);
+        return true;
+    }
+
+    /**
+     * Writes a change record into the `change` field for observer delivery.
+     * @param operation Operation identifier (add/remove/etc.).
+     * @param index1 Primary index.
+     * @param index2 Optional secondary index.
+     * @returns void
+     */
+    protected recordChildChange(operation: ChangeOperation, index1: number, index2?: number) {
+        const mapKey = "change";
+        const changeField = this.fields.get(mapKey);
+        if (!(changeField instanceof Field) || !changeField.isObserved()) {
+            return;
+        }
+
+        const startIndex = Math.max(0, Math.trunc(index1));
+        const endIndex = Math.max(0, Math.trunc(index2 ?? index1));
+
+        changeField.setValue(
+            toAssociativeArray({
+                Index1: startIndex,
+                Index2: endIndex,
+                Operation: operation,
+            }),
+            true
+        );
+    }
+
+    /**
      * Starting with a leaf node, traverses upward through the parents until it reaches
      * a node without a parent (root node).
-     * @param {Node} node The leaf node to create the tree with
-     * @param {boolean} reverse Whether to return the path in reverse order
-     * @returns Node[] The parent chain starting with root-most parent
+     * @param node Leaf node used to build the path.
+     * @param reverse When true (default) returns the path root-first.
+     * @returns Parent chain starting with the root-most ancestor.
      */
     protected createPath(node: Node, reverse: boolean = true): Node[] {
         let path: Node[] = [node];
@@ -884,6 +1243,11 @@ export class Node extends RoSGNode implements BrsValue {
         return reverse ? path.reverse() : path;
     }
 
+    /**
+     * Finds the root ancestor either from the provided node or from this node.
+     * @param from Optional starting node.
+     * @returns Root-most ancestor.
+     */
     protected findRootNode(from?: Node): Node {
         let root: Node = from ?? this;
         while (root.parent instanceof Node) {
@@ -892,6 +1256,13 @@ export class Node extends RoSGNode implements BrsValue {
         return root;
     }
 
+    /**
+     * Invokes a public BrightScript function defined on this component's script.
+     * @param interpreter Calling interpreter.
+     * @param functionName Name of the function to call.
+     * @param functionArgs Arguments provided by BrightScript.
+     * @returns Function return value or invalid when not callable.
+     */
     protected callFunction(interpreter: Interpreter, functionName: BrsString, ...functionArgs: BrsType[]): BrsType {
         // We need to search the callee's environment for this function rather than the caller's.
         let componentDef = sgRoot.nodeDefMap.get(this.nodeSubtype.toLowerCase());
@@ -950,7 +1321,11 @@ export class Node extends RoSGNode implements BrsValue {
         return BrsInvalid.Instance;
     }
 
-    /* used for isSubtype */
+    /**
+     * Records subtype hierarchy information for use with `isSubtype` checks.
+     * @param nodeName Child node type.
+     * @param parentType Parent type it extends.
+     */
     protected setExtendsType(nodeName: string, parentType: SGNodeType) {
         const typeKey = nodeName.toLowerCase();
         if (!subtypeHierarchy.has(typeKey) && typeKey !== parentType.toLowerCase()) {
@@ -958,7 +1333,10 @@ export class Node extends RoSGNode implements BrsValue {
         }
     }
 
-    /* Takes a list of models and creates fields with default values, and adds them to this.fields. */
+    /**
+     * Registers built-in fields declared by the component definition.
+     * @param fields Field definitions including defaults.
+     */
     protected registerDefaultFields(fields: FieldModel[]) {
         for (const field of fields) {
             const value = getBrsValueFromFieldType(field.type, field.value);
@@ -973,10 +1351,11 @@ export class Node extends RoSGNode implements BrsValue {
     }
 
     /**
-     * Takes a list of preset fields and creates fields from them.
+     * Registers preset fields provided during instantiation.
      * TODO: filter out any non-allowed members. For example, if we instantiate a Node like this:
      *      <Node thisisnotanodefield="fakevalue" />
      * then Roku logs an error, because Node does not have a property called "thisisnotanodefield".
+     * @param fields Associative-array style entries from XML.
      */
     protected registerInitializedFields(fields: AAMember[]) {
         for (const field of fields) {
@@ -987,10 +1366,23 @@ export class Node extends RoSGNode implements BrsValue {
         }
     }
 
+    /**
+     * Compares nodes by subtype and address for equality checks.
+     * @param other Node to compare with.
+     * @returns True when nodes are equivalent.
+     */
     protected compareNodes(other: Node): boolean {
         return this.nodeSubtype === other.nodeSubtype && this.address === other.address;
     }
 
+    /**
+     * Posts a serialized node update to the owning thread.
+     * @param id Target thread id.
+     * @param type Update domain.
+     * @param field Field name being synchronized.
+     * @param value Value to send.
+     * @param deep When true nested nodes are deeply serialized.
+     */
     protected sendThreadUpdate(
         id: number,
         type: "scene" | "global" | "task",
@@ -1008,6 +1400,10 @@ export class Node extends RoSGNode implements BrsValue {
         postMessage(update);
     }
 
+    /**
+     * Builds an associative array describing the node's threading context.
+     * @returns Associative array describing thread state.
+     */
     protected getThreadInfo() {
         const threadData: FlexObject = {
             currentThread: sgRoot.getCurrentThread(),

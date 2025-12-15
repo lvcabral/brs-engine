@@ -192,8 +192,8 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
 
     protected abstract removeChildByReference(child: BrsType): boolean;
     protected abstract removeChildrenAtIndex(index: number, count: number): boolean;
-    protected abstract replaceChildAtIndex(newChild: RoSGNode, index: Int32): boolean;
-    protected abstract insertChildAtIndex(child: BrsType, index: Int32): boolean;
+    protected abstract replaceChildAtIndex(newChild: RoSGNode, index: number): boolean;
+    protected abstract insertChildAtIndex(child: BrsType, index: number): boolean;
     protected abstract isChildrenFocused(): boolean;
     protected abstract findRootNode(from?: RoSGNode): RoSGNode;
 
@@ -896,7 +896,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             if (!(newChild instanceof RoSGNode)) {
                 return BrsBoolean.False;
             }
-            return BrsBoolean.from(this.replaceChildAtIndex(newChild, index));
+            return BrsBoolean.from(this.replaceChildAtIndex(newChild, index.getValue()));
         },
     });
 
@@ -1024,10 +1024,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
                 const childNodesElements = child_nodes.getElements();
                 if (childNodesElements.length !== 0) {
                     for (const childNode of childNodesElements) {
-                        if (
-                            childNode instanceof RoSGNode &&
-                            !this.replaceChildAtIndex(childNode, new Int32(indexValue))
-                        ) {
+                        if (childNode instanceof RoSGNode && !this.replaceChildAtIndex(childNode, indexValue)) {
                             this.removeChildByReference(childNode);
                         }
                         indexValue += 1;
@@ -1054,7 +1051,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
                 const childNodesElements = child_nodes.getElements();
                 if (childNodesElements.length !== 0) {
                     for (const childNode of childNodesElements) {
-                        this.insertChildAtIndex(childNode, new Int32(indexValue));
+                        this.insertChildAtIndex(childNode, indexValue);
                         indexValue += 1;
                     }
                     return BrsBoolean.True;
@@ -1075,7 +1072,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, child: BrsType, index: Int32) => {
-            return BrsBoolean.from(this.insertChildAtIndex(child, index));
+            return BrsBoolean.from(this.insertChildAtIndex(child, index.getValue()));
         },
     });
 
