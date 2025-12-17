@@ -22,6 +22,8 @@ import {
     DeviceInfo,
     SupportedExtension,
     Platform,
+    ExtVolInitialSize,
+    ExtVolMaxSize,
 } from "../core/common";
 import SharedObject from "../core/SharedObject";
 import models from "../core/common/models.csv";
@@ -77,7 +79,7 @@ let srcId: number;
 let pkgZip: ArrayBuffer | undefined;
 
 // External Storage Zip (max 32MB)
-const extObj: SharedObject = new SharedObject(32 * 1024, 32 * 1024 * 1024);
+const extObj: SharedObject = new SharedObject(ExtVolInitialSize, ExtVolMaxSize);
 let extZip: SharedArrayBuffer | undefined;
 
 /**
@@ -361,7 +363,7 @@ export function mountExt(zipData: ArrayBuffer) {
  */
 export function umountExt() {
     extZip = undefined;
-    extObj.storeData(new Uint8Array(32 * 1024).buffer);
+    extObj.storeData(new Uint8Array(ExtVolInitialSize).buffer);
     notifyAll("mount", 0);
     notifyAll("debug", "[package] External storage unmounted.");
 }

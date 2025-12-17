@@ -6,7 +6,7 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { SubscribeCallback, saveDataBuffer } from "./util";
-import { DataType, RemoteType, DebugCommand, keyBufferSize, keyArraySpots, Platform, BufferType } from "../core/common";
+import { DataType, RemoteType, DebugCommand, KeyBufferSize, KeyArraySpots, Platform, BufferType } from "../core/common";
 /// #if BROWSER
 import { deviceData } from "./package";
 import gameControl, { GCGamepad, EventName } from "esm-gamecontroller.js";
@@ -187,19 +187,19 @@ export function sendKey(key: string, mod: number, type: RemoteType = RemoteType.
  * @returns Index of next available key buffer slot
  */
 function getNext() {
-    for (let i = 0; i < keyBufferSize; i++) {
-        const next = i * keyArraySpots;
+    for (let i = 0; i < KeyBufferSize; i++) {
+        const next = i * KeyArraySpots;
         if (Atomics.load(sharedArray, DataType.KEY + next) < 0) {
             return next;
         }
     }
     // buffer full
-    for (let i = 1; i < keyBufferSize; i++) {
-        const prev = (i - 1) * keyArraySpots;
-        const next = i * keyArraySpots;
+    for (let i = 1; i < KeyBufferSize; i++) {
+        const prev = (i - 1) * KeyArraySpots;
+        const next = i * KeyArraySpots;
         Atomics.store(sharedArray, DataType.KEY + prev, Atomics.load(sharedArray, DataType.KEY + next));
     }
-    return (keyBufferSize - 1) * keyArraySpots;
+    return (KeyBufferSize - 1) * KeyArraySpots;
 }
 
 // Input API

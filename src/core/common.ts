@@ -598,17 +598,21 @@ export enum DataType {
     MOD, // Key State (down/up)
 }
 
+// External Volume constants
+export const ExtVolInitialSize = 32 * 1024;
+export const ExtVolMaxSize = 32 * 1024 * 1024;
+
 // Registry constants
-export const registryInitialSize = 32 * 1024;
-export const registryMaxSize = 64 * 1024;
+export const RegistryInitialSize = 32 * 1024;
+export const RegistryMaxSize = 64 * 1024;
 
 // Key Buffer Constants
-export const keyBufferSize = 5;
-export const keyArraySpots = 3;
+export const KeyBufferSize = 5;
+export const KeyArraySpots = 3;
 
 // Index where the data buffer starts and the size of the data buffer
-export const dataBufferIndex = DataType.HDMI + keyBufferSize * keyArraySpots;
-export const dataBufferSize = 1024;
+export const DataBufferIndex = DataType.HDMI + KeyBufferSize * KeyArraySpots;
+export const DataBufferSize = 1024;
 
 // Remote control type
 export enum RemoteType {
@@ -632,7 +636,7 @@ export interface KeyEvent {
 }
 
 // Debug prompt
-export const debugPrompt = "Brightscript Debugger> ";
+export const DebugPrompt = "Brightscript Debugger> ";
 
 // Debug commands enumerator
 export enum DebugCommand {

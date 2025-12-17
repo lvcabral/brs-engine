@@ -6,14 +6,14 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 import {
-    dataBufferIndex,
+    DataBufferIndex,
     DataType,
     DebugCommand,
-    keyArraySpots,
-    keyBufferSize,
+    KeyArraySpots,
+    KeyBufferSize,
     KeyEvent,
-    registryInitialSize,
-    registryMaxSize,
+    RegistryInitialSize,
+    RegistryMaxSize,
     RemoteType,
     DefaultDeviceInfo,
     DeviceInfo,
@@ -22,6 +22,8 @@ import {
     RegistryData,
     AppPayload,
     TaskPayload,
+    ExtVolInitialSize,
+    ExtVolMaxSize,
 } from "../common";
 import SharedObject from "../SharedObject";
 import { FileSystem } from "./FileSystem";
@@ -31,7 +33,7 @@ export class BrsDevice {
     static readonly deviceInfo: DeviceInfo = DefaultDeviceInfo;
     static readonly registry: RegistryData = { current: new Map<string, string>(), removed: [], isDirty: false };
     private static readonly _fileSystem: FileSystem = new FileSystem();
-    static readonly extVolume: SharedObject = new SharedObject(32 * 1024, 32 * 1024 * 1024);
+    static readonly extVolume: SharedObject = new SharedObject(ExtVolInitialSize, ExtVolMaxSize);
     static readonly isDevMode = process.env.NODE_ENV === "development";
     static readonly keysBuffer: KeyEvent[] = [];
     static readonly terms: Map<string, string> = new Map<string, string>();
@@ -195,7 +197,7 @@ export class BrsDevice {
     static setRegistry(data: Map<string, string> | SharedArrayBuffer) {
         let registry: Map<string, string>;
         if (data instanceof SharedArrayBuffer) {
-            this.sharedRegistry = new SharedObject(registryInitialSize, registryMaxSize);
+            this.sharedRegistry = new SharedObject(RegistryInitialSize, RegistryMaxSize);
             this.sharedRegistry.setBuffer(data);
             this.registryVersion = this.sharedRegistry.getVersion();
             registry = new Map(Object.entries(this.sharedRegistry.load()));
@@ -374,7 +376,7 @@ export class BrsDevice {
      */
     static readDataBuffer(): string {
         let data = "";
-        this.sharedArray.slice(dataBufferIndex).every((char) => {
+        this.sharedArray.slice(DataBufferIndex).every((char) => {
             if (char > 0) {
                 data += String.fromCharCode(char);
             }
@@ -390,8 +392,8 @@ export class BrsDevice {
      * @returns Next key event to be handled or undefined if queue is empty
      */
     static updateKeysBuffer(): KeyEvent | undefined {
-        for (let i = 0; i < keyBufferSize; i++) {
-            const idx = i * keyArraySpots;
+        for (let i = 0; i < KeyBufferSize; i++) {
+            const idx = i * KeyArraySpots;
             const key = Atomics.load(this.sharedArray, DataType.KEY + idx);
             if (key === -1) {
                 break;

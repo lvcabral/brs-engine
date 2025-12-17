@@ -21,9 +21,9 @@ import stripAnsi from "strip-ansi";
 import { deviceData, loadAppZip, updateAppZip, subscribePackage, mountExt, setupDeepLink } from "./package";
 import { isNumber } from "../api/util";
 import {
-    debugPrompt,
-    dataBufferIndex,
-    dataBufferSize,
+    DebugPrompt,
+    DataBufferIndex,
+    DataBufferSize,
     AppPayload,
     AppExitReason,
     AppData,
@@ -31,6 +31,8 @@ import {
     isRegistryData,
     ExtensionInfo,
     DataType,
+    ExtVolInitialSize,
+    ExtVolMaxSize,
 } from "../core/common";
 import SharedObject from "../core/SharedObject";
 import packageInfo from "../../packages/node/package.json";
@@ -44,7 +46,7 @@ const program = new Command();
 const paths = envPaths("brs", { suffix: "cli" });
 const defaultLevel = chalk.level;
 const maxColumns = Math.max(process.stdout.columns, 32);
-const length = dataBufferIndex + dataBufferSize;
+const length = DataBufferIndex + DataBufferSize;
 
 // Variables
 let appFileName = "";
@@ -382,7 +384,7 @@ async function repl() {
             payload.ext = program.extVol;
             extPath = program.extVol;
         } else if (program.extVol.endsWith(".zip")) {
-            const extObj = new SharedObject(32 * 1024, 32 * 1024 * 1024);
+            const extObj = new SharedObject(ExtVolInitialSize, ExtVolMaxSize);
             extObj.storeData(new Uint8Array(fs.readFileSync(program.extVol)).buffer);
             payload.extZip = extObj.getBuffer();
             extPath = program.extVol;
@@ -562,7 +564,7 @@ function messageCallback(message: any, _?: any) {
 function handleStringMessage(message: string) {
     const mType = message.split(",")[0];
     const msg = message.slice(mType.length + 1);
-    if (mType === "print" && msg.endsWith(debugPrompt)) {
+    if (mType === "print" && msg.endsWith(DebugPrompt)) {
         process.stdout.write(msg);
     } else if (mType === "print") {
         process.stdout.write(colorize(msg));

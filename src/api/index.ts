@@ -16,15 +16,15 @@ import {
     NDKStart,
     RemoteType,
     TaskState,
-    dataBufferIndex,
-    dataBufferSize,
+    DataBufferIndex,
+    DataBufferSize,
     getExitReason,
     isAppData,
     isNDKStart,
     isTaskData,
     isThreadUpdate,
-    registryInitialSize,
-    registryMaxSize,
+    RegistryInitialSize,
+    RegistryMaxSize,
     getNow,
     Platform,
     RegistryData,
@@ -139,7 +139,7 @@ let httpConnectLog: boolean = false;
 
 // App Workers and Shared Buffers
 let brsWorker: Worker;
-const registryBuffer = new SharedObject(registryInitialSize, registryMaxSize);
+const registryBuffer = new SharedObject(RegistryInitialSize, RegistryMaxSize);
 let sharedBuffer: ArrayBufferLike;
 let sharedArray: Int32Array;
 let currentPayload: AppPayload;
@@ -182,7 +182,7 @@ export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any 
     }
     loadRegistry();
     // Shared buffer (Keys, Sounds and Debug Commands)
-    const length = dataBufferIndex + dataBufferSize;
+    const length = DataBufferIndex + DataBufferSize;
     try {
         sharedBuffer = new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT * length);
     } catch (error) {
@@ -519,7 +519,7 @@ function resetWorker() {
 function resetArray() {
     sharedArray.some((_, index: number) => {
         Atomics.store(sharedArray, index, -1);
-        return index === dataBufferIndex - 1;
+        return index === DataBufferIndex - 1;
     });
 }
 

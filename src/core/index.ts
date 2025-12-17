@@ -11,8 +11,8 @@ import {
     PkgFilePath,
     AppPayload,
     DeviceInfo,
-    dataBufferIndex,
-    dataBufferSize,
+    DataBufferIndex,
+    DataBufferSize,
     DefaultDeviceInfo,
     parseManifest,
     isAppPayload,
@@ -20,6 +20,8 @@ import {
     isTaskPayload,
     SupportedExtension,
     ExtensionInfo,
+    ExtVolInitialSize,
+    ExtVolMaxSize,
 } from "./common";
 import { Lexeme, Lexer, Token } from "./lexer";
 import { Parser, Stmt } from "./parser";
@@ -235,7 +237,7 @@ declare global {
  * Default implementation of the callback, only handles console messages
  * @param message the message to front-end
  */
-const arrayLength = dataBufferIndex + dataBufferSize;
+const arrayLength = DataBufferIndex + DataBufferSize;
 const sharedBuffer = new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT * arrayLength);
 const sharedArray = new Int32Array(sharedBuffer);
 sharedArray.fill(-1);
@@ -573,7 +575,7 @@ export async function createPayloadFromFiles(
         if (fs.statSync(ext).isDirectory()) {
             payload.ext = ext;
         } else {
-            const extObj = new SharedObject(32 * 1024, 32 * 1024 * 1024);
+            const extObj = new SharedObject(ExtVolInitialSize, ExtVolMaxSize);
             extObj.storeData(new Uint8Array(fs.readFileSync(ext)).buffer);
             payload.extZip = extObj.getBuffer();
         }
