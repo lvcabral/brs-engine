@@ -11,8 +11,8 @@ import * as path from "path";
 import { BrsDevice } from "../../device/BrsDevice";
 export class RoFileSystem extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
+    private readonly brsFS: FileSystem;
     private port?: RoMessagePort;
-    private brsFS: FileSystem;
     private extMounted: boolean;
 
     constructor() {
@@ -59,16 +59,16 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
         return BrsBoolean.False;
     }
 
-    findOnTree(jsRegex: RegExp, pathName: string): BrsString[] {
+    findOnTree(regex: RegExp, pathName: string): BrsString[] {
         try {
             let knownFiles = this.brsFS.readdirSync(pathName);
             let matchedFiles: BrsString[] = [];
             for (const fileName of knownFiles) {
-                if (jsRegex.test(fileName)) {
+                if (regex.test(fileName)) {
                     matchedFiles.push(new BrsString(fileName));
                     let fullPath = path.posix.join(pathName, fileName);
                     if (this.brsFS.statSync(fullPath).isDirectory()) {
-                        matchedFiles = matchedFiles.concat(this.findOnTree(jsRegex, fullPath));
+                        matchedFiles = matchedFiles.concat(this.findOnTree(regex, fullPath));
                     }
                 }
             }

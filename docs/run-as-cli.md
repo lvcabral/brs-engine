@@ -31,19 +31,19 @@ Usage: brs-cli [options] [brsFiles...]
 BrightScript Simulation Engine CLI
 
 Options:
-  -a, --ascii <columns>              Enable ASCII screen mode with # of columns.
-  -c, --colors <level>               Define the console color level (0 to disable). (default: 3)
-  -d, --debug                        Open the micro debugger if the app crashes.
-  -e, --ecp                          Enable the ECP server for control simulation.
-  -n, --no-sg                        Disable the SceneGraph extension.
-  -p, --pack <password>              The password to generate the encrypted package. (default: "")
-  -o, --out <directory>              The directory to save the encrypted package file. (default: "./")
-  -r, --root <directory>             The root directory from which `pkg:` paths will be resolved.
-  -x, --ext-vol <directory>|<file>   The directory or zip file path from which `ext1:` will be mounted.
-  -k, --deep-link <params>           Parameters to be passed to the application. (format: key=value,...)
-  -y, --registry                     Persist the simulated device registry on disk.
-  -v, --version                      output the version number
-  -h, --help                         output usage information
+  -a, --ascii <columns>     Enable ASCII screen mode with # of columns.
+  -c, --colors <level>      Define the console color level (0 to disable). (default: 3)
+  -d, --debug               Open the micro debugger if the app crashes.
+  -e, --ecp                 Enable the ECP server for control simulation.
+  -n, --no-sg               Disable the SceneGraph extension.
+  -p, --pack <password>     The password to generate the encrypted package. (default: "")
+  -o, --out <directory>     The directory to save the encrypted package file. (default: "./")
+  -r, --root <directory>    The root directory from which `pkg:` paths will be resolved.
+  -x, --ext-vol <path>      Path to directory or zip file from which `ext1:` will be mounted.
+  -k, --deep-link <params>  Parameters to be passed to the application. (format: key=value,...)
+  -y, --registry            Persist the simulated device registry on disk.
+  -v, --version             output the version number
+  -h, --help                output usage information
 ```
 
 ### REPL

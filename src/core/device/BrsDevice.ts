@@ -158,11 +158,14 @@ export class BrsDevice {
     static async refreshExtVolume() {
         const uev = Atomics.load(this.sharedArray, DataType.EVE);
         if (!this.extVolMounted && uev === 0) {
+            // Not mounted and event is 0 (unmounted)
             return false;
         } else if (this.extVolMounted && uev === 0) {
+            // Mounted but event is 0 (unmounted)
             this.umountExtVolume();
             return true;
         }
+        // Mounted and event is 1 (mounted) - check for updates
         if (this.extVolume.getVersion() !== this.extVolVersion) {
             const zipData = this.extVolume.loadData();
             if (!zipData) return false;

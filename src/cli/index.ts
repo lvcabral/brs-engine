@@ -416,19 +416,7 @@ async function repl() {
             process.stdout.write(chalk.cyanBright(`common:   [Read Only]\n`));
         } else if (["var", "vars"].includes(line.split(" ")[0]?.toLowerCase().trim())) {
             const scopeName = line.split(" ")[1]?.toLowerCase().trim() ?? "function";
-            let scope = 2; // Function scope
-            if (scopeName === "global") {
-                scope = 0; // Global scope
-                process.stdout.write(chalk.cyanBright(`\nGlobal variables:\n\n`));
-            } else if (scopeName === "module") {
-                scope = 1; // Module scope
-                process.stdout.write(chalk.cyanBright(`\nModule variables:\n\n`));
-            } else {
-                process.stdout.write(chalk.cyanBright(`\nLocal variables:\n\n`));
-            }
-            const variables = replInterpreter.formatVariables(scope).trimEnd();
-            process.stdout.write(chalk.cyanBright(variables));
-            process.stdout.write("\n");
+            listVariables(scopeName, replInterpreter);
         } else if (["xt", "ext"].includes(line.toLowerCase().trim())) {
             process.stdout.write(chalk.cyanBright(`\nLoaded Extensions:\n\n`));
             if (extensions.length) {
@@ -462,26 +450,52 @@ async function repl() {
     rl.prompt();
 }
 
+/**
+ * Lists variables in the specified scope from the interpreter.
+ * @param scopeName The scope to list variables from: global, module, or function
+ * @param interpreter The BrightScript interpreter instance
+ */
+function listVariables(scopeName: string, interpreter: brs.Interpreter) {
+    let scope = 2; // Function scope
+    if (scopeName === "global") {
+        scope = 0; // Global scope
+        process.stdout.write(chalk.cyanBright(`\nGlobal variables:\n\n`));
+    } else if (scopeName === "module") {
+        scope = 1; // Module scope
+        process.stdout.write(chalk.cyanBright(`\nModule variables:\n\n`));
+    } else {
+        process.stdout.write(chalk.cyanBright(`\nLocal variables:\n\n`));
+    }
+    const variables = interpreter.formatVariables(scope).trimEnd();
+    process.stdout.write(chalk.cyanBright(variables));
+    process.stdout.write("\n");
+}
+
+/**
+ * Mounts the ext1: volume from a directory or zip file.
+ * @param mountPath The path to the directory or zip file to mount
+ * @returns True if the volume was mounted successfully, false otherwise
+ */
 async function mountExtVolume(mountPath: string) {
     const brsFS = brs.BrsDevice.fileSystem;
-    if (!brsFS.volumesSync().includes("ext1:")) {
-        if (!fs.existsSync(mountPath)) {
-            process.stdout.write(chalk.redBright(`\nPath to mount ext1: volume not found: ${mountPath}'\n`));
-        } else if (mountPath.toLowerCase().endsWith(".zip")) {
-            const extZip = new Uint8Array(fs.readFileSync(mountPath)).buffer;
-            if (await brs.BrsDevice.mountExtVolume(extZip)) {
-                process.stdout.write(chalk.greenBright(`\next1: volume mounted successfully from file.\n`));
-                return true;
-            } else {
-                process.stdout.write(chalk.redBright(`\nFailed to mount ext1: volume from file.\n`));
-            }
-        } else {
-            brsFS.setExt(mountPath);
-            process.stdout.write(chalk.greenBright(`\next1: volume mounted successfully from directory.\n`));
+    if (brsFS.volumesSync().includes("ext1:")) {
+        process.stdout.write(chalk.yellowBright(`\next1: volume is already mounted.\n`));
+        return false;
+    }
+    if (!fs.existsSync(mountPath)) {
+        process.stdout.write(chalk.redBright(`\nPath to mount ext1: volume not found: "${mountPath}"\n`));
+    } else if (mountPath.toLowerCase().endsWith(".zip")) {
+        const extZip = new Uint8Array(fs.readFileSync(mountPath)).buffer;
+        if (await brs.BrsDevice.mountExtVolume(extZip)) {
+            process.stdout.write(chalk.greenBright(`\next1: volume mounted successfully from file.\n`));
             return true;
+        } else {
+            process.stdout.write(chalk.redBright(`\nFailed to mount ext1: volume from file.\n`));
         }
     } else {
-        process.stdout.write(chalk.yellowBright(`\next1: volume is already mounted.\n`));
+        brsFS.setExt(mountPath);
+        process.stdout.write(chalk.greenBright(`\next1: volume mounted successfully from directory.\n`));
+        return true;
     }
     return false;
 }
