@@ -64,12 +64,11 @@ program
     .option("-c, --colors <level>", "Define the console color level (0 to disable).", defaultLevel)
     .option("-d, --debug", "Open the micro debugger if the app crashes.", false)
     .option("-e, --ecp", "Enable the ECP server for control simulation.", false)
+    .option("-n, --no-sg", "Disable the SceneGraph extension.")
     .option("-p, --pack <password>", "The password to generate the encrypted package.", "")
     .option("-o, --out <directory>", "The directory to save the encrypted package file.", "./")
     .option("-r, --root <directory>", "The root directory from which `pkg:` paths will be resolved.")
-    .option("-n, --no-sg", "Disable the SceneGraph extension.")
-    .option("-x, --ext-root <directory>", "The root directory from which `ext1:` paths will be resolved.")
-    .option("-f, --ext-file <file>", "The zip file to mount as `ext1:` volume. (takes precedence over -x)")
+    .option("-x, --ext-vol <directory>|<file>", "The directory or zip file path from which `ext1:` will be mounted.")
     .option("-k, --deep-link <params>", "Parameters to be passed to the application. (format: key=value,...)")
     .option("-y, --registry", "Persist the simulated device registry on disk.", false)
     .action(async (brsFiles, program) => {
@@ -138,13 +137,8 @@ function checkParameters() {
         process.exitCode = 1;
         return;
     }
-    if (program.extRoot && !fs.existsSync(program.extRoot)) {
-        console.error(chalk.red(`External storage path not found: ${program.extRoot}\n`));
-        process.exitCode = 1;
-        return;
-    }
-    if (program.extFile && !fs.existsSync(program.extFile)) {
-        console.error(chalk.red(`External storage file not found: ${program.extFile}\n`));
+    if (program.extVol && !fs.existsSync(program.extVol)) {
+        console.error(chalk.red(`External storage path not found: ${program.extVol}\n`));
         process.exitCode = 1;
         return;
     }
@@ -185,11 +179,11 @@ async function runAppFiles(files: string[]) {
                 console.log(chalk.blueBright(`Packaging ${filePath}...\n`));
             } else {
                 console.log(chalk.blueBright(`Executing ${filePath}...\n`));
+                if (program.extVol?.endsWith(".zip")) {
+                    mountExt(new Uint8Array(fs.readFileSync(program.extVol)).buffer);
+                }
+                setupDeepLink(processDeepLink());
             }
-            if (program.extFile) {
-                mountExt(new Uint8Array(fs.readFileSync(program.extFile)).buffer);
-            }
-            setupDeepLink(processDeepLink());
             const fileData = new Uint8Array(fs.readFileSync(filePath)).buffer;
             deviceData.entryPoint = true;
             loadAppZip(fileName, fileData, runApp);
@@ -202,7 +196,7 @@ async function runAppFiles(files: string[]) {
             deviceData,
             processDeepLink(),
             program.root,
-            program.extFile ?? program.extRoot
+            program.extVol
         );
         runApp(payload);
     } catch (err: any) {
@@ -374,12 +368,23 @@ function getRegistry(): Map<string, string> {
  * Reads input from stdin and executes BrightScript expressions.
  */
 async function repl() {
-    const replInterpreter = await brs.getReplInterpreter({
+    const brsFS = brs.BrsDevice.fileSystem;
+    const payload: Partial<AppPayload> = {
         device: deviceData,
-        extZip: program.extFile ? new Uint8Array(fs.readFileSync(program.extFile)).buffer : undefined,
         root: program.root,
-        ext: program.extRoot,
-    });
+    };
+    // Load the external storage if provided
+    let extPath = "";
+    if (program.extVol && fs.existsSync(program.extVol)) {
+        if (fs.statSync(program.extVol).isDirectory()) {
+            payload.ext = program.extVol;
+            extPath = program.extVol;
+        } else if (program.extVol.endsWith(".zip")) {
+            payload.extZip = new Uint8Array(fs.readFileSync(program.extVol)).buffer;
+            extPath = program.extVol;
+        }
+    }
+    const replInterpreter = await brs.getReplInterpreter(payload);
     if (!replInterpreter) {
         return;
     }
@@ -388,7 +393,7 @@ async function repl() {
         output: process.stdout,
     });
     rl.setPrompt(`\n${chalk.magenta("brs")}> `);
-    rl.on("line", (line) => {
+    rl.on("line", async (line) => {
         if (["exit", "quit", "q"].includes(line.toLowerCase().trim())) {
             process.exit();
         } else if (["cls", "clear"].includes(line.toLowerCase().trim())) {
@@ -396,11 +401,12 @@ async function repl() {
         } else if (["help", "hint"].includes(line.toLowerCase().trim())) {
             printHelp();
         } else if (["vol", "vols"].includes(line.toLowerCase().trim())) {
+            const vols = brs.BrsDevice.fileSystem.volumesSync();
             process.stdout.write(chalk.cyanBright(`\nMounted volumes:\n\n`));
-            const rootPath = replInterpreter.options.root ?? "not mounted";
+            const rootPath = payload.root ?? "not mounted";
             process.stdout.write(chalk.cyanBright(`pkg:      ${rootPath}\n`));
-            const extPath = program.extFile ?? replInterpreter.options.ext ?? "not mounted";
-            process.stdout.write(chalk.cyanBright(`ext1:     ${extPath}\n`));
+            const extMounted = vols.includes("ext1:");
+            process.stdout.write(chalk.cyanBright(`ext1:     ${extMounted ? extPath : "not mounted"}\n`));
             process.stdout.write(chalk.cyanBright(`tmp:      [In Memory]\n`));
             process.stdout.write(chalk.cyanBright(`cachefs:  [In Memory]\n`));
             process.stdout.write(chalk.cyanBright(`common:   [Read Only]\n`));
@@ -428,6 +434,19 @@ async function repl() {
             } else {
                 process.stdout.write(chalk.yellowBright("No extensions loaded.\n"));
             }
+        } else if (["umt", "umount"].includes(line.toLowerCase().trim())) {
+            if (brsFS.volumesSync().includes("ext1:")) {
+                brsFS.umountExt();
+                process.stdout.write(chalk.greenBright(`\next1: volume unmounted successfully.\n`));
+                extPath = "";
+            } else {
+                process.stdout.write(chalk.yellowBright(`\next1: volume is not mounted.\n`));
+            }
+        } else if (["mnt", "mount"].includes(line.toLowerCase().trim().split(" ")[0])) {
+            const mountPath = line.toLowerCase().trim().split(" ")[1] ?? "";
+            if (await mountExtVolume(mountPath)) {
+                extPath = mountPath;
+            }
         } else {
             brs.executeLine(line, replInterpreter);
         }
@@ -435,6 +454,30 @@ async function repl() {
     });
     process.stdout.write(colorize("type `help` to see the list of valid REPL commands.\n"));
     rl.prompt();
+}
+
+async function mountExtVolume(mountPath: string) {
+    const brsFS = brs.BrsDevice.fileSystem;
+    if (!brsFS.volumesSync().includes("ext1:")) {
+        if (!fs.existsSync(mountPath)) {
+            process.stdout.write(chalk.redBright(`\nPath to mount ext1: volume not found: ${mountPath}'\n`));
+        } else if (mountPath.toLowerCase().endsWith(".zip")) {
+            const extZip = new Uint8Array(fs.readFileSync(mountPath)).buffer;
+            if (await brsFS.mountExt(extZip)) {
+                process.stdout.write(chalk.greenBright(`\next1: volume mounted successfully from file.\n`));
+                return true;
+            } else {
+                process.stdout.write(chalk.redBright(`\nFailed to mount ext1: volume from file.\n`));
+            }
+        } else {
+            brsFS.setExt(mountPath);
+            process.stdout.write(chalk.greenBright(`\next1: volume mounted successfully from directory.\n`));
+            return true;
+        }
+    } else {
+        process.stdout.write(chalk.yellowBright(`\next1: volume is already mounted.\n`));
+    }
+    return false;
 }
 
 /**
@@ -552,6 +595,8 @@ function printHelp() {
     helpMsg += "   print|?           Print variable value or expression\r\n";
     helpMsg += "   var|vars [scope]  Display variables and their types/values\r\n";
     helpMsg += "   vol|vols          Display file system mounted volumes\r\n";
+    helpMsg += "   mnt|mount <path>  Mount ext1: volume from directory or zip file\r\n";
+    helpMsg += "   umt|umount        Unmount ext1: volume\r\n";
     helpMsg += "   xt|ext            Display loaded extensions\r\n";
     helpMsg += "   help|hint         Show this REPL command list\r\n";
     helpMsg += "   clear|cls         Clear terminal screen\r\n";

@@ -24,26 +24,112 @@ export class FileSystem {
 
     /**
      * Creates a new FileSystem instance.
+     */
+    constructor() {
+        this.paths = new Map<string, string>();
+        this.pfs = zenFS.fs;
+        this.xfs = zenFS.fs;
+        this.mfs = zenFS.fs;
+        this.tfs = zenFS.fs;
+        this.cfs = zenFS.fs;
+    }
+
+    /** Sets up the File System with the provided zip files and paths.
+     * @param commonZip ArrayBufferLike with the common volume zip file data.
+     * @param tmp ArrayBufferLike with the tmp volume buffer.
+     * @param cacheFS ArrayBufferLike with the cacheFS volume buffer.
+     * @param pkgZip Optional ArrayBufferLike with the package zip file data.
+     * @param extZip Optional ArrayBufferLike with the external storage zip file data.
      * @param root Optional root path for pkg: volume (uses Node.js fs if provided)
      * @param ext Optional external storage path for ext1: volume (uses Node.js fs if provided)
      */
-    constructor(root?: string, ext?: string) {
-        this.paths = new Map<string, string>();
-        if (root) {
+    async setup(
+        commonZip: ArrayBufferLike,
+        tmp: ArrayBufferLike,
+        cacheFS: ArrayBufferLike,
+        pkgZip?: ArrayBufferLike,
+        extZip?: ArrayBufferLike,
+        root?: string,
+        ext?: string
+    ): Promise<void> {
+        const fsConfig = { mounts: {}, caseFold: "lower" as const };
+        // common: volume
+        if (zenFS?.mounts.get("/common:")) {
+            zenFS.umount("common:");
+        }
+        Object.assign(fsConfig.mounts, { "common:": { backend: Zip, data: commonZip } });
+        // tmp: volume
+        if (zenFS?.mounts.get("/tmp:")) {
+            zenFS.umount("tmp:");
+        }
+        Object.assign(fsConfig.mounts, { "tmp:": { backend: zenFS.SingleBuffer, buffer: tmp } });
+        // cachefs: volume
+        if (zenFS?.mounts.get("/cachefs:")) {
+            zenFS.umount("cachefs:");
+        }
+        Object.assign(fsConfig.mounts, { "cachefs:": { backend: zenFS.SingleBuffer, buffer: cacheFS } });
+        // pkg: volume
+        if (zenFS?.mounts.get("/pkg:")) {
+            zenFS.umount("pkg:");
+        }
+        if (root && pkgZip === undefined) {
             this.root = root;
             this.pfs = nodeFS;
         } else {
             this.pfs = zenFS.fs;
+            if (pkgZip) {
+                Object.assign(fsConfig.mounts, { "pkg:": { backend: Zip, data: pkgZip } });
+            } else if (!root) {
+                Object.assign(fsConfig.mounts, { "pkg:": { backend: zenFS.InMemory } });
+            }
         }
-        if (ext) {
+        // ext1: volume
+        if (zenFS?.mounts.get("/ext1:")) {
+            zenFS.umount("ext1:");
+        }
+        if (ext && extZip === undefined) {
             this.ext = ext;
             this.xfs = nodeFS;
-        } else {
+        } else if (extZip) {
             this.xfs = zenFS.fs;
+            Object.assign(fsConfig.mounts, { "ext1:": { backend: Zip, data: extZip } });
         }
-        this.mfs = zenFS.fs;
-        this.tfs = zenFS.fs;
-        this.cfs = zenFS.fs;
+        // Apply configuration
+        return zenFS.configure(fsConfig);
+    }
+
+    /**
+     * Mounts the ext1: volume from a zip file.
+     * @param extZip ArrayBufferLike with the ext1: volume zip file data.
+     * @returns True if mounted successfully, false otherwise.
+     */
+    async mountExt(extZip: ArrayBufferLike) {
+        try {
+            if (!zenFS?.mounts.get("/ext1:")) {
+                this.xfs = zenFS.fs;
+                const extVol = await zenFS.resolveMountConfig({
+                    backend: Zip,
+                    data: extZip,
+                    caseFold: "lower" as const,
+                });
+                zenFS.mount("ext1:", extVol);
+                return true;
+            }
+        } catch (err: any) {
+            postMessage(`error,Error mounting ext1 volume: ${err.message}`);
+        }
+        return false;
+    }
+
+    /**
+     * Unmounts the ext1: volume.
+     */
+    umountExt() {
+        if (zenFS?.mounts.get("/ext1:")) {
+            zenFS.umount("ext1:");
+        }
+        this.ext = undefined;
+        this.xfs = zenFS.fs;
     }
 
     /**
@@ -159,10 +245,10 @@ export class FileSystem {
      */
     volumesSync() {
         const volumes: string[] = [];
-        if (this.root || this.pfs.existsSync("pkg:/")) {
+        if (this.root || zenFS.mounts.get("/pkg:")) {
             volumes.push("pkg:");
         }
-        if (this.ext || this.xfs.existsSync("ext1:/")) {
+        if (this.ext || zenFS.mounts.get("/ext1:")) {
             volumes.push("ext1:");
         }
         if (this.mfs.existsSync("common:/")) {
@@ -338,55 +424,4 @@ export function validUri(uri: string): boolean {
 export function writeUri(uri: string): boolean {
     uri = uri.toLowerCase();
     return validUri(uri) && (uri.startsWith("tmp:/") || uri.startsWith("cachefs:/"));
-}
-
-/**
- * Initializes the File System with the provided zip files.
- * @param commonZip ArrayBufferLike with the common volume zip file.
- * @param tmp ArrayBufferLike with the tmp volume zip file.
- * @param cacheFS ArrayBufferLike with the cacheFS volume zip file.
- * @param pkgZip ArrayBufferLike with the package zip file.
- * @param extZip ArrayBufferLike with the external storage zip file.
- */
-export async function configureFileSystem(
-    commonZip: ArrayBufferLike,
-    tmp: ArrayBufferLike,
-    cacheFS: ArrayBufferLike,
-    pkgZip?: ArrayBufferLike,
-    extZip?: ArrayBufferLike
-): Promise<void> {
-    const fsConfig = { mounts: {}, caseFold: "lower" as const };
-    // common: volume
-    if (zenFS?.mounts.get("/common:")) {
-        zenFS.umount("common:");
-    }
-    Object.assign(fsConfig.mounts, { "common:": { backend: Zip, data: commonZip } });
-    // tmp: volume
-    if (zenFS?.mounts.get("/tmp:")) {
-        zenFS.umount("tmp:");
-    }
-    Object.assign(fsConfig.mounts, { "tmp:": { backend: zenFS.SingleBuffer, buffer: tmp } });
-    // cachefs: volume
-    if (zenFS?.mounts.get("/cachefs:")) {
-        zenFS.umount("cachefs:");
-    }
-    Object.assign(fsConfig.mounts, { "cachefs:": { backend: zenFS.SingleBuffer, buffer: cacheFS } });
-    // pkg: volume
-    if (zenFS?.mounts.get("/pkg:")) {
-        zenFS.umount("pkg:");
-    }
-    if (pkgZip) {
-        Object.assign(fsConfig.mounts, { "pkg:": { backend: Zip, data: pkgZip } });
-    } else {
-        Object.assign(fsConfig.mounts, { "pkg:": { backend: zenFS.InMemory } });
-    }
-    // ext1: volume
-    if (zenFS?.mounts.get("/ext1:")) {
-        zenFS.umount("ext1:");
-    }
-    if (extZip) {
-        Object.assign(fsConfig.mounts, { "ext1:": { backend: Zip, data: extZip } });
-    }
-    // Apply configuration
-    return zenFS.configure(fsConfig);
 }
