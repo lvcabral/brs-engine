@@ -30,7 +30,9 @@ import {
     SupportedExtension,
     isRegistryData,
     ExtensionInfo,
+    DataType,
 } from "../core/common";
+import SharedObject from "../core/SharedObject";
 import packageInfo from "../../packages/node/package.json";
 // @ts-ignore
 import * as brs from "./brs.node.js";
@@ -380,7 +382,9 @@ async function repl() {
             payload.ext = program.extVol;
             extPath = program.extVol;
         } else if (program.extVol.endsWith(".zip")) {
-            payload.extZip = new Uint8Array(fs.readFileSync(program.extVol)).buffer;
+            const extObj = new SharedObject(32 * 1024, 32 * 1024 * 1024);
+            extObj.storeData(new Uint8Array(fs.readFileSync(program.extVol)).buffer);
+            payload.extZip = extObj.getBuffer();
             extPath = program.extVol;
         }
     }
@@ -436,7 +440,8 @@ async function repl() {
             }
         } else if (["umt", "umount"].includes(line.toLowerCase().trim())) {
             if (brsFS.volumesSync().includes("ext1:")) {
-                brsFS.umountExt();
+                brs.BrsDevice.umountExtVolume();
+                Atomics.store(sharedArray, DataType.EVE, 0);
                 process.stdout.write(chalk.greenBright(`\next1: volume unmounted successfully.\n`));
                 extPath = "";
             } else {
@@ -445,6 +450,7 @@ async function repl() {
         } else if (["mnt", "mount"].includes(line.toLowerCase().trim().split(" ")[0])) {
             const mountPath = line.toLowerCase().trim().split(" ")[1] ?? "";
             if (await mountExtVolume(mountPath)) {
+                Atomics.store(sharedArray, DataType.EVE, 1);
                 extPath = mountPath;
             }
         } else {
@@ -463,7 +469,7 @@ async function mountExtVolume(mountPath: string) {
             process.stdout.write(chalk.redBright(`\nPath to mount ext1: volume not found: ${mountPath}'\n`));
         } else if (mountPath.toLowerCase().endsWith(".zip")) {
             const extZip = new Uint8Array(fs.readFileSync(mountPath)).buffer;
-            if (await brsFS.mountExt(extZip)) {
+            if (await brs.BrsDevice.mountExtVolume(extZip)) {
                 process.stdout.write(chalk.greenBright(`\next1: volume mounted successfully from file.\n`));
                 return true;
             } else {
@@ -493,6 +499,8 @@ function packageCallback(event: string, data: any) {
         } else {
             console.warn(chalk.yellow(data));
         }
+    } else if (event === "mount") {
+        Atomics.store(sharedArray, DataType.EVE, data);
     } else if (event === "debug") {
         console.debug(chalk.gray(data));
     }

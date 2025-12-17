@@ -87,7 +87,7 @@ export class FileSystem {
         if (zenFS?.mounts.get("/ext1:")) {
             zenFS.umount("ext1:");
         }
-        if (ext && extZip === undefined) {
+        if (ext?.length) {
             this.ext = ext;
             this.xfs = nodeFS;
         } else if (extZip) {
@@ -105,16 +105,18 @@ export class FileSystem {
      */
     async mountExt(extZip: ArrayBufferLike) {
         try {
-            if (!zenFS?.mounts.get("/ext1:")) {
-                this.xfs = zenFS.fs;
-                const extVol = await zenFS.resolveMountConfig({
-                    backend: Zip,
-                    data: extZip,
-                    caseFold: "lower" as const,
-                });
-                zenFS.mount("ext1:", extVol);
-                return true;
+            if (zenFS?.mounts.get("/ext1:")) {
+                zenFS.umount("ext1:");
             }
+            this.ext = undefined;
+            this.xfs = zenFS.fs;
+            const extVol = await zenFS.resolveMountConfig({
+                backend: Zip,
+                data: extZip,
+                caseFold: "lower" as const,
+            });
+            zenFS.mount("ext1:", extVol);
+            return true;
         } catch (err: any) {
             postMessage(`error,Error mounting ext1 volume: ${err.message}`);
         }

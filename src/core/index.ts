@@ -27,6 +27,7 @@ import { lexParseSync, parseDecodedTokens } from "./LexerParser";
 import { BrsDevice } from "./device/BrsDevice";
 import { BrsError, logError, RuntimeError, RuntimeErrorDetail } from "./error/BrsError";
 import { BrsExtension, registerExtension, instantiateExtensions } from "./extensions";
+import SharedObject from "./SharedObject";
 import * as PP from "./preprocessor";
 import * as BrsTypes from "./brsTypes";
 import * as path from "path";
@@ -81,7 +82,6 @@ import * as FileSystemExports from "./device/FileSystem";
 import * as stdlibModule from "./stdlib";
 import * as netlibModule from "./interpreter/Network";
 import { Preprocessor } from "./preprocessor/Preprocessor";
-import SharedObject from "./SharedObject";
 import packageInfo from "../../packages/browser/package.json";
 
 if (typeof onmessage !== "undefined") {
@@ -285,18 +285,10 @@ export async function getReplInterpreter(payload: Partial<AppPayload>) {
         BrsDevice.setDeviceInfo(payload.device);
     }
     try {
-        await BrsDevice.fileSystem.setup(
-            payload.device.assets,
-            BrsDevice.getTmpVolume(),
-            BrsDevice.getCacheFS(),
-            payload.pkgZip,
-            payload.extZip,
-            payload.root,
-            payload.ext
-        );
+        await BrsDevice.setupFileSystem(payload);
         BrsDevice.loadLocaleTerms();
     } catch (err: any) {
-        postMessage(`error,Error mounting File System: ${err.message}`);
+        postMessage(`error,[repl] Error mounting File System: ${err.message}`);
         return null;
     }
     const replInterpreter = new Interpreter();
@@ -581,7 +573,9 @@ export async function createPayloadFromFiles(
         if (fs.statSync(ext).isDirectory()) {
             payload.ext = ext;
         } else {
-            payload.extZip = new Uint8Array(fs.readFileSync(ext)).buffer;
+            const extObj = new SharedObject(32 * 1024, 32 * 1024 * 1024);
+            extObj.storeData(new Uint8Array(fs.readFileSync(ext)).buffer);
+            payload.extZip = extObj.getBuffer();
         }
     }
     return payload;
@@ -606,18 +600,10 @@ export async function executeFile(payload: AppPayload, customOptions?: Partial<E
     // Setup the File System
     BrsDevice.setDeviceInfo(payload.device);
     try {
-        await BrsDevice.fileSystem.setup(
-            payload.device.assets,
-            BrsDevice.getTmpVolume(),
-            BrsDevice.getCacheFS(),
-            payload.pkgZip,
-            payload.extZip,
-            payload.root,
-            payload.ext
-        );
+        await BrsDevice.setupFileSystem(payload);
         BrsDevice.loadLocaleTerms();
     } catch (err: any) {
-        postMessage(`error,Error mounting File System: ${err.message}`);
+        postMessage(`error,[core] Error mounting File System: ${err.message}`);
         return { exitReason: AppExitReason.Crashed };
     }
     const extensions = instantiateExtensions();
@@ -662,18 +648,10 @@ export async function executeTask(payload: TaskPayload, customOptions?: Partial<
     // Setup the File System
     BrsDevice.setDeviceInfo(payload.device);
     try {
-        await BrsDevice.fileSystem.setup(
-            payload.device.assets,
-            payload.taskData.tmp!,
-            payload.taskData.cacheFS!,
-            payload.pkgZip,
-            payload.extZip,
-            payload.root,
-            payload.ext
-        );
+        await BrsDevice.setupFileSystem(payload);
         BrsDevice.loadLocaleTerms();
     } catch (err: any) {
-        postMessage(`error,Error mounting File System: ${err.message}`);
+        postMessage(`error,[task] Error mounting File System: ${err.message}`);
         return;
     }
     const extensions = instantiateExtensions();

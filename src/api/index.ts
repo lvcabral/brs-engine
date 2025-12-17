@@ -262,6 +262,8 @@ export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any 
             apiException(event, data);
         } else if (event === "debug") {
             deviceDebug(`debug,${data}`);
+        } else if (event === "mount") {
+            Atomics.store(sharedArray, DataType.EVE, data);
         } else {
             notifyAll(event, data);
         }
