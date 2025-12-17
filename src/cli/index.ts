@@ -70,7 +70,7 @@ program
     .option("-p, --pack <password>", "The password to generate the encrypted package.", "")
     .option("-o, --out <directory>", "The directory to save the encrypted package file.", "./")
     .option("-r, --root <directory>", "The root directory from which `pkg:` paths will be resolved.")
-    .option("-x, --ext-vol <directory>|<file>", "The directory or zip file path from which `ext1:` will be mounted.")
+    .option("-x, --ext-vol <path>", "Path to directory or zip file from which `ext1:` will be mounted.")
     .option("-k, --deep-link <params>", "Parameters to be passed to the application. (format: key=value,...)")
     .option("-y, --registry", "Persist the simulated device registry on disk.", false)
     .action(async (brsFiles, program) => {
