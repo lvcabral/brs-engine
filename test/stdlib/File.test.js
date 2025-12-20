@@ -20,12 +20,12 @@ let fsys;
 brs.registerCallback(() => {}); // register a callback to avoid display errors
 
 describe("global file I/O functions", () => {
-    beforeEach(async () => {
+    beforeEach(() => {
         interpreter = new Interpreter({
             root: "hello/world",
         }); // reset the file systems
         fsys = BrsDevice.fileSystem;
-        await BrsDevice.resetMemoryVolumes();
+        BrsDevice.resetMemoryVolumes();
     });
 
     describe("ListDir", () => {

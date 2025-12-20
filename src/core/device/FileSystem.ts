@@ -14,6 +14,7 @@ import { Zip } from "@lvcabral/zip";
 
 export class FileSystem {
     private readonly paths: Map<string, string>;
+    private readonly callbacks: Map<string, Function>;
     private readonly mfs: typeof zenFS.fs; // common:
     private readonly tfs: typeof zenFS.fs; // tmp:
     private readonly cfs: typeof zenFS.fs; // cachefs:
@@ -27,6 +28,7 @@ export class FileSystem {
      */
     constructor() {
         this.paths = new Map<string, string>();
+        this.callbacks = new Map<string, Function>();
         this.pfs = zenFS.fs;
         this.xfs = zenFS.fs;
         this.mfs = zenFS.fs;
@@ -107,6 +109,24 @@ export class FileSystem {
     }
 
     /**
+     * Registers a callback to be invoked on file system umount events.
+     * @param component Name of the component registering the callback
+     * @param callback Function to be called on file system umount events
+     */
+    subscribeUmount(component: string, callback: Function) {
+        this.callbacks.set(component, callback);
+    }
+
+    /**
+     * Notifies all registered callbacks of a file system umount event.
+     */
+    notifyAll(volume: string) {
+        for (const callback of this.callbacks.values()) {
+            callback(volume);
+        }
+    }
+
+    /**
      * Mounts the ext1: volume from a zip file.
      * @param extZip ArrayBufferLike with the ext1: volume zip file data.
      * @returns True if mounted successfully, false otherwise.
@@ -115,6 +135,7 @@ export class FileSystem {
         try {
             if (zenFS.mounts.has("/ext1:")) {
                 zenFS.umount("ext1:");
+                this.notifyAll("ext1:");
             }
             this._ext = undefined;
             this.xfs = zenFS.fs;
@@ -140,6 +161,7 @@ export class FileSystem {
         }
         this._ext = undefined;
         this.xfs = zenFS.fs;
+        this.notifyAll("ext1:");
     }
 
     /**
@@ -194,19 +216,21 @@ export class FileSystem {
      * @param tmpBuffer ArrayBufferLike for tmp: volume
      * @param cacheFSBuffer ArrayBufferLike for cachefs: volume
      */
-    async resetMemoryFS(tmpBuffer: ArrayBufferLike, cacheFSBuffer: ArrayBufferLike) {
+    resetMemoryFS(tmpBuffer: ArrayBufferLike, cacheFSBuffer: ArrayBufferLike) {
         if (zenFS.fs === undefined) {
             return;
         }
         zenFS.umount("tmp:");
-        const tmp = await zenFS.resolveMountConfig({
+        this.notifyAll("tmp:");
+        const tmp = zenFS.resolveMountConfigSync({
             backend: zenFS.SingleBuffer,
             buffer: tmpBuffer,
             caseFold: "lower" as const,
         });
         zenFS.mount("tmp:", tmp);
         zenFS.umount("cachefs:");
-        const cachefs = await zenFS.resolveMountConfig({
+        this.notifyAll("cachefs:");
+        const cachefs = zenFS.resolveMountConfigSync({
             backend: zenFS.SingleBuffer,
             buffer: cacheFSBuffer,
             caseFold: "lower" as const,

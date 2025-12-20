@@ -201,14 +201,13 @@ export class BrsDevice {
     /**
      * Resets all memory volumes (tmp: and cachefs:) by clearing their buffers.
      * Reinitializes the file system with cleared volumes.
-     * Requires async access, used for unit tests.
      */
-    static async resetMemoryVolumes() {
+    static resetMemoryVolumes() {
         const tmpView = new Uint8Array(this.getTmpVolume());
         tmpView.fill(0);
         const cacheView = new Uint8Array(this.getCacheFS());
         cacheView.fill(0);
-        await this.fileSystem.resetMemoryFS(this.tmpVolume!, this.cacheFS!);
+        this.fileSystem.resetMemoryFS(this.tmpVolume!, this.cacheFS!);
     }
 
     /**
