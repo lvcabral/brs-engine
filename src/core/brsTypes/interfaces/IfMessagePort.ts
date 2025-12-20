@@ -22,7 +22,6 @@ export class IfSetMessagePort {
         this.component.port?.removeReference();
         if (this.callback) {
             const component = this.component.getComponentName();
-            this.component.port?.removeReference();
             this.component.port?.unregisterCallback(component);
             port.registerCallback(component, this.callback);
         }

@@ -62,22 +62,22 @@ export class FileSystem {
     ) {
         const fsConfig = { mounts: {}, caseFold: "lower" as const };
         // common: volume
-        if (zenFS?.mounts.has("/common:")) {
+        if (zenFS.mounts.has("/common:")) {
             zenFS.umount("common:");
         }
         Object.assign(fsConfig.mounts, { "common:": { backend: Zip, data: commonZip } });
         // tmp: volume
-        if (zenFS?.mounts.has("/tmp:")) {
+        if (zenFS.mounts.has("/tmp:")) {
             zenFS.umount("tmp:");
         }
         Object.assign(fsConfig.mounts, { "tmp:": { backend: zenFS.SingleBuffer, buffer: tmp } });
         // cachefs: volume
-        if (zenFS?.mounts.has("/cachefs:")) {
+        if (zenFS.mounts.has("/cachefs:")) {
             zenFS.umount("cachefs:");
         }
         Object.assign(fsConfig.mounts, { "cachefs:": { backend: zenFS.SingleBuffer, buffer: cacheFS } });
         // pkg: volume
-        if (zenFS?.mounts.has("/pkg:")) {
+        if (zenFS.mounts.has("/pkg:")) {
             zenFS.umount("pkg:");
         }
         if (root && pkgZip === undefined) {
@@ -92,7 +92,7 @@ export class FileSystem {
             }
         }
         // ext1: volume
-        if (zenFS?.mounts.has("/ext1:")) {
+        if (zenFS.mounts.has("/ext1:")) {
             zenFS.umount("ext1:");
         }
         if (ext?.length) {
@@ -113,7 +113,7 @@ export class FileSystem {
      */
     mountExt(extZip: ArrayBufferLike) {
         try {
-            if (zenFS?.mounts.has("/ext1:")) {
+            if (zenFS.mounts.has("/ext1:")) {
                 zenFS.umount("ext1:");
             }
             this._ext = undefined;
