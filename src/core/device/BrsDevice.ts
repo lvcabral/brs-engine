@@ -32,7 +32,7 @@ import { OutputProxy } from "./OutputProxy";
 export class BrsDevice {
     static readonly deviceInfo: DeviceInfo = DefaultDeviceInfo;
     static readonly registry: RegistryData = { current: new Map<string, string>(), removed: [], isDirty: false };
-    private static readonly _fileSystem: FileSystem = new FileSystem();
+    static readonly fileSystem: FileSystem = new FileSystem();
     static readonly extVolume: SharedObject = new SharedObject(ExtVolInitialSize, ExtVolMaxSize);
     static readonly isDevMode = process.env.NODE_ENV === "development";
     static readonly keysBuffer: KeyEvent[] = [];
@@ -53,7 +53,7 @@ export class BrsDevice {
     static currKeyTime: number = Date.now();
 
     /** External Storage Volume (ext1:) properties */
-    private static extVolVersion: number = 0;
+    private static extVolVersion: number = -1;
     private static extVolMounted: boolean = false;
 
     /** Clock Support properties */
@@ -68,15 +68,6 @@ export class BrsDevice {
     /** Array Buffer to Share the Registry across threads */
     private static registryVersion: number = 0;
     private static sharedRegistry?: SharedObject;
-
-    /**
-     * Returns the singleton FileSystem instance for the device.
-     * Refreshes the external volume if it has been updated.
-     */
-    static get fileSystem(): FileSystem {
-        this.refreshExtVolume();
-        return this._fileSystem;
-    }
 
     /**
      * Returns the SharedArrayBuffer used for the tmp: volume.
@@ -102,16 +93,17 @@ export class BrsDevice {
      * Sets up the file system with provided application payload and memory volumes.
      * @param payload Partial application/task payload with device and zip information
      */
-    static async setupFileSystem(payload: Partial<AppPayload & TaskPayload>) {
+    static setupFileSystem(payload: Partial<AppPayload & TaskPayload>) {
         if (payload.device === undefined) {
             throw new Error("Device information is required to setup the file system.");
         }
         if (payload.extZip) {
+            const uev = Atomics.load(this.sharedArray, DataType.EVE);
             this.extVolume.setBuffer(payload.extZip);
             this.extVolVersion = this.extVolume.getVersion();
-            this.extVolMounted = true;
+            this.extVolMounted = uev === 1;
         }
-        await this.fileSystem.setup(
+        this.fileSystem.setup(
             payload.device.assets,
             payload.taskData?.tmp ?? this.getTmpVolume(),
             payload.taskData?.cacheFS ?? this.getCacheFS(),
@@ -127,7 +119,7 @@ export class BrsDevice {
      * @param extData ArrayBufferLike containing the external volume zip data
      * @returns True if mounted successfully, false otherwise
      */
-    static async mountExtVolume(extData: ArrayBufferLike) {
+    static mountExtVolume(extData: ArrayBufferLike) {
         if (this.extVolMounted || extData.byteLength === 0) {
             return false;
         }
@@ -135,7 +127,21 @@ export class BrsDevice {
         this.extVolVersion = this.extVolume.getVersion();
         const zipData = this.extVolume.loadData();
         if (!zipData) return false;
-        await this.fileSystem.mountExt(zipData);
+        this.fileSystem.mountExt(zipData);
+        this.extVolMounted = true;
+        return true;
+    }
+
+    /**
+     * Mounts the external storage volume (ext1:) from the provided file path.
+     * @param extPath Path to the external volume zip file
+     * @returns True if mounted successfully, false otherwise
+     */
+    static mountExtPathVolume(extPath: string) {
+        if (this.extVolMounted) {
+            return false;
+        }
+        this.fileSystem.setExt(extPath);
         this.extVolMounted = true;
         return true;
     }
@@ -148,8 +154,8 @@ export class BrsDevice {
         if (!this.extVolMounted) {
             return false;
         }
-        this.fileSystem.umountExt();
         this.extVolMounted = false;
+        this.fileSystem.umountExt();
         return true;
     }
 
@@ -157,30 +163,45 @@ export class BrsDevice {
      * Refreshes the external storage volume (ext1:) if it has been updated.
      * @returns True if the volume was refreshed or unmounted, false otherwise
      */
-    static async refreshExtVolume() {
-        const uev = Atomics.load(this.sharedArray, DataType.EVE);
-        if (!this.extVolMounted && uev === 0) {
-            // Not mounted and event is 0 (unmounted)
-            return false;
-        } else if (this.extVolMounted && uev === 0) {
-            // Mounted but event is 0 (unmounted)
-            this.umountExtVolume();
-            return true;
-        }
-        // Mounted and event is 1 (mounted) - check for updates
-        if (this.extVolume.getVersion() !== this.extVolVersion) {
-            const zipData = this.extVolume.loadData();
-            if (!zipData) return false;
-            await this.fileSystem.mountExt(zipData);
-            this.extVolVersion = this.extVolume.getVersion();
-            return true;
+    static refreshExtVolume() {
+        try {
+            const uev = Atomics.load(this.sharedArray, DataType.EVE);
+            if (uev === -1 || (!this.extVolMounted && uev === 0)) {
+                // No update event or not mounted and event is 0 (unmounted)
+                return false;
+            } else if (this.extVolMounted && uev === 0) {
+                // Mounted but event is 0 (unmounted)
+                this.umountExtVolume();
+                return true;
+            }
+            // Mounted and event is 1 (mounted) - check for updates
+            if (this.fileSystem.ext) {
+                // Mounted from path, no need to refresh
+                return false;
+            } else if (this.extVolume.getVersion() !== this.extVolVersion) {
+                this.extVolVersion = this.extVolume.getVersion();
+                const zipData = this.extVolume.loadData();
+                if (zipData !== undefined) {
+                    this.fileSystem.mountExt(zipData);
+                    this.extVolMounted = true;
+                    return true;
+                } else if (this.isDevMode) {
+                    postMessage("warning,[BrsDevice] No data found in external storage volume (ext1:) to refresh.");
+                }
+            }
+        } catch (err: any) {
+            Atomics.store(this.sharedArray, DataType.EVE, -1); // reset event on error
+            if (this.isDevMode) {
+                postMessage("error,[BrsDevice] Error refreshing external storage volume (ext1:):", err.message);
+            }
         }
         return false;
     }
 
     /**
      * Resets all memory volumes (tmp: and cachefs:) by clearing their buffers.
-     * Reinitializes the file system with cleared volumes. (used for unit tests)
+     * Reinitializes the file system with cleared volumes.
+     * Requires async access, used for unit tests.
      */
     static async resetMemoryVolumes() {
         const tmpView = new Uint8Array(this.getTmpVolume());

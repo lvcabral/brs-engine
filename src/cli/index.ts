@@ -47,6 +47,7 @@ const paths = envPaths("brs", { suffix: "cli" });
 const defaultLevel = chalk.level;
 const maxColumns = Math.max(process.stdout.columns, 32);
 const length = DataBufferIndex + DataBufferSize;
+const BrsDevice = brs.BrsDevice;
 
 // Variables
 let appFileName = "";
@@ -372,7 +373,6 @@ function getRegistry(): Map<string, string> {
  * Reads input from stdin and executes BrightScript expressions.
  */
 async function repl() {
-    const brsFS = brs.BrsDevice.fileSystem;
     const payload: Partial<AppPayload> = {
         device: deviceData,
         root: program.root,
@@ -388,9 +388,10 @@ async function repl() {
             extObj.storeData(new Uint8Array(fs.readFileSync(program.extVol)).buffer);
             payload.extZip = extObj.getBuffer();
             extPath = program.extVol;
+            Atomics.store(sharedArray, DataType.EVE, 1);
         }
     }
-    const replInterpreter = await brs.getReplInterpreter(payload);
+    const replInterpreter = brs.getReplInterpreter(payload);
     if (!replInterpreter) {
         return;
     }
@@ -407,7 +408,7 @@ async function repl() {
         } else if (["help", "hint"].includes(line.toLowerCase().trim())) {
             printHelp();
         } else if (["vol", "vols"].includes(line.toLowerCase().trim())) {
-            const vols = brs.BrsDevice.fileSystem.volumesSync();
+            const vols = BrsDevice.fileSystem.volumesSync();
             process.stdout.write(chalk.cyanBright(`\nMounted volumes:\n\n`));
             const rootPath = payload.root ?? "not mounted";
             process.stdout.write(chalk.cyanBright(`pkg:      ${rootPath}\n`));
@@ -429,8 +430,8 @@ async function repl() {
                 process.stdout.write(chalk.yellowBright("No extensions loaded.\n"));
             }
         } else if (["umt", "umount"].includes(line.toLowerCase().trim())) {
-            if (brsFS.volumesSync().includes("ext1:")) {
-                brs.BrsDevice.umountExtVolume();
+            if (BrsDevice.fileSystem.volumesSync().includes("ext1:")) {
+                BrsDevice.umountExtVolume();
                 Atomics.store(sharedArray, DataType.EVE, 0);
                 process.stdout.write(chalk.greenBright(`\next1: volume unmounted successfully.\n`));
                 extPath = "";
@@ -439,7 +440,7 @@ async function repl() {
             }
         } else if (["mnt", "mount"].includes(line.toLowerCase().trim().split(" ")[0])) {
             const mountPath = line.toLowerCase().trim().split(" ")[1] ?? "";
-            if (await mountExtVolume(mountPath)) {
+            if (mountExtVolume(mountPath)) {
                 Atomics.store(sharedArray, DataType.EVE, 1);
                 extPath = mountPath;
             }
@@ -478,9 +479,8 @@ function listVariables(scopeName: string, interpreter: brs.Interpreter) {
  * @param mountPath The path to the directory or zip file to mount
  * @returns True if the volume was mounted successfully, false otherwise
  */
-async function mountExtVolume(mountPath: string) {
-    const brsFS = brs.BrsDevice.fileSystem;
-    if (brsFS.volumesSync().includes("ext1:")) {
+function mountExtVolume(mountPath: string) {
+    if (BrsDevice.fileSystem.volumesSync().includes("ext1:")) {
         process.stdout.write(chalk.yellowBright(`\next1: volume is already mounted.\n`));
         return false;
     }
@@ -488,14 +488,14 @@ async function mountExtVolume(mountPath: string) {
         process.stdout.write(chalk.redBright(`\nPath to mount ext1: volume not found: "${mountPath}"\n`));
     } else if (mountPath.toLowerCase().endsWith(".zip")) {
         const extZip = new Uint8Array(fs.readFileSync(mountPath)).buffer;
-        if (await brs.BrsDevice.mountExtVolume(extZip)) {
+        if (BrsDevice.mountExtVolume(extZip)) {
             process.stdout.write(chalk.greenBright(`\next1: volume mounted successfully from file.\n`));
             return true;
         } else {
             process.stdout.write(chalk.redBright(`\nFailed to mount ext1: volume from file.\n`));
         }
     } else {
-        brsFS.setExt(mountPath);
+        BrsDevice.mountExtPathVolume(mountPath);
         process.stdout.write(chalk.greenBright(`\next1: volume mounted successfully from directory.\n`));
         return true;
     }

@@ -79,8 +79,9 @@ let srcId: number;
 let pkgZip: ArrayBuffer | undefined;
 
 // External Storage Zip (max 32MB)
+let extMounted = false;
 const extObj: SharedObject = new SharedObject(ExtVolInitialSize, ExtVolMaxSize);
-let extZip: SharedArrayBuffer | undefined;
+const extZip: SharedArrayBuffer = extObj.getBuffer();
 
 /**
  * Loads and processes a BrightScript application zip package.
@@ -136,6 +137,8 @@ export function loadAppZip(fileName: string, file: ArrayBuffer, callback: Functi
     if (hasSGComponents && deviceData.extensions?.has(SupportedExtension.SceneGraph)) {
         extensions.push(SupportedExtension.SceneGraph);
     }
+    // Mount external storage if present
+    notifyAll("mount", extMounted ? 1 : 0);
     // Create and return the payload
     callback(createPayload(launchTime));
 }
@@ -348,12 +351,12 @@ function createAppData(): AppData {
  * @param zipData ArrayBuffer containing the external storage zip data
  */
 export function mountExt(zipData: ArrayBuffer) {
-    if (extZip) {
+    if (extMounted) {
         notifyAll("warning", "[package] External storage already mounted. Unmount first.");
         return;
     }
     extObj.storeData(zipData);
-    extZip = extObj.getBuffer();
+    extMounted = true;
     notifyAll("mount", 1);
     notifyAll("debug", "[package] External storage mounted.");
 }
@@ -362,8 +365,7 @@ export function mountExt(zipData: ArrayBuffer) {
  * Unmounts external storage.
  */
 export function umountExt() {
-    extZip = undefined;
-    extObj.storeData(new Uint8Array(ExtVolInitialSize).buffer);
+    extMounted = false;
     notifyAll("mount", 0);
     notifyAll("debug", "[package] External storage unmounted.");
 }

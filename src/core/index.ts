@@ -275,7 +275,7 @@ export function registerCallback(messageCallback: any, sharedBuffer?: SharedArra
  * @param payload Partial app payload with device configuration and assets
  * @returns Promise resolving to configured Interpreter instance or null on error
  */
-export async function getReplInterpreter(payload: Partial<AppPayload>) {
+export function getReplInterpreter(payload: Partial<AppPayload>) {
     if (!payload.device?.assets) {
         postMessage("error,Invalid REPL configuration: Missing assets");
         return null;
@@ -287,7 +287,7 @@ export async function getReplInterpreter(payload: Partial<AppPayload>) {
         BrsDevice.setDeviceInfo(payload.device);
     }
     try {
-        await BrsDevice.setupFileSystem(payload);
+        BrsDevice.setupFileSystem(payload);
         BrsDevice.loadLocaleTerms();
     } catch (err: any) {
         postMessage(`error,[repl] Error mounting File System: ${err.message}`);
@@ -602,7 +602,7 @@ export async function executeFile(payload: AppPayload, customOptions?: Partial<E
     // Setup the File System
     BrsDevice.setDeviceInfo(payload.device);
     try {
-        await BrsDevice.setupFileSystem(payload);
+        BrsDevice.setupFileSystem(payload);
         BrsDevice.loadLocaleTerms();
     } catch (err: any) {
         postMessage(`error,[core] Error mounting File System: ${err.message}`);
@@ -650,7 +650,7 @@ export async function executeTask(payload: TaskPayload, customOptions?: Partial<
     // Setup the File System
     BrsDevice.setDeviceInfo(payload.device);
     try {
-        await BrsDevice.setupFileSystem(payload);
+        BrsDevice.setupFileSystem(payload);
         BrsDevice.loadLocaleTerms();
     } catch (err: any) {
         postMessage(`error,[task] Error mounting File System: ${err.message}`);

@@ -8,7 +8,8 @@ export class RoFileSystemEvent extends BrsEvent {
     private readonly mounted: boolean = false;
 
     constructor(data: any) {
-        super("roFileSystemEvent");
+        // Roku does not capitalize the "s" in "Filesystem"
+        super("roFilesystemEvent");
         if (typeof data === "boolean") {
             this.mounted = data;
         }
