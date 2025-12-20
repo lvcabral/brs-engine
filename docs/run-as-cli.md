@@ -31,20 +31,19 @@ Usage: brs-cli [options] [brsFiles...]
 BrightScript Simulation Engine CLI
 
 Options:
-  -a, --ascii <columns>       Enable ASCII screen mode with # of columns.
-  -c, --colors <level>        Define the console color level (0 to disable). (default: 3)
-  -d, --debug                 Open the micro debugger if the app crashes.
-  -e, --ecp                   Enable the ECP server for control simulation.
-  -p, --pack <password>       The password to generate the encrypted package. (default: "")
-  -o, --out <directory>       The directory to save the encrypted package file. (default: "./")
-  -r, --root <directory>      The root directory from which `pkg:` paths will be resolved.
-  -n, --no-sg                 Disable the SceneGraph extension.
-  -x, --ext-root <directory>  The root directory from which `ext1:` paths will be resolved.
-  -f, --ext-file <file>       The zip file to mount as `ext1:` volume. (takes precedence over -x)
-  -k, --deep-link <params>    Parameters to be passed to the application. (format: key=value,...)
-  -y, --registry              Persist the simulated device registry on disk.
-  -v, --version               output the version number
-  -h, --help                  output usage information
+  -a, --ascii <columns>     Enable ASCII screen mode with # of columns.
+  -c, --colors <level>      Define the console color level (0 to disable). (default: 3)
+  -d, --debug               Open the micro debugger if the app crashes.
+  -e, --ecp                 Enable the ECP server for control simulation.
+  -n, --no-sg               Disable the SceneGraph extension.
+  -p, --pack <password>     The password to generate the encrypted package. (default: "")
+  -o, --out <directory>     The directory to save the encrypted package file. (default: "./")
+  -r, --root <directory>    The root directory from which `pkg:` paths will be resolved.
+  -x, --ext-vol <path>      Path to directory or zip file from which `ext1:` will be mounted.
+  -k, --deep-link <params>  Parameters to be passed to the application. (format: key=value,...)
+  -y, --registry            Persist the simulated device registry on disk.
+  -v, --version             output the version number
+  -h, --help                output usage information
 ```
 
 ### REPL
@@ -69,7 +68,7 @@ Quit by pressing `^D` (Control-D) or executing `exit`.
 By default the CLI will display text in ANSI Truecolor mode (level 3 below), but you can change it for the session by running:
 
 ```console
-$ brs-cli --color 0
+$ brs-cli --colors 0
 ```
 
 | Level | Description |
@@ -87,7 +86,7 @@ The CLI can execute an arbitrary list of BrightScript files (`.brs`) as well!  S
 $ cat hello-world.brs
 ? "Dennis Ritchie said ""Hello, World!"""
 
-$ brs hello-world.brs
+$ brs-cli hello-world.brs
 Dennis Ritchie said "Hello, World!"
 ```
 
@@ -104,7 +103,7 @@ $ brs-cli ../tests/test-sandbox.zip
 * If the app has `ifDraw2D` screens, the app will run but nothing is displayed, unless you use the `--ascii` parameter (see below).
 * As the CLI will run on a single thread, if you need to control the app you will have to enable the `--ecp` option (see below).
 * Use the flag `--registry` to have the device registry data saved to the disk, and restored in following app executions.
-* Use the flags `--ext-file` or `-ext-root` to mount a file/path as the `ext1:` volume in the engine file system.
+* Use the flag `--ext-vol` to mount a directory or zip archive as the `ext1:` volume.
 * To send parameters (deep linking) to the app, use the flag `--deep-link` followed by the parameters in the format: key=value,...
 
 ### Showing Screen as ASCII Rendering on the Terminal

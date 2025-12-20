@@ -19,10 +19,10 @@ import {
     For,
     While,
 } from "../parser/Statement";
-import { DataType, DebugCommand, debugPrompt, numberToHex, parseTextFile } from "../common";
+import { DataType, DebugCommand, DebugPrompt, numberToHex, parseTextFile } from "../common";
 /// #if !BROWSER
 import readline from "readline-sync";
-readline.setDefaultOptions({ prompt: debugPrompt });
+readline.setDefaultOptions({ prompt: DebugPrompt });
 /// #endif
 
 /**
@@ -135,7 +135,7 @@ function debuggerIntro(
  */
 function nextDebugCommand(interpreter: Interpreter): string {
     let line = "";
-    BrsDevice.stdout.write(`print,\r\n${debugPrompt}`);
+    BrsDevice.stdout.write(`print,\r\n${DebugPrompt}`);
     Atomics.wait(BrsDevice.sharedArray, DataType.DBG, -1);
     const cmd = Atomics.load(BrsDevice.sharedArray, DataType.DBG);
     Atomics.store(BrsDevice.sharedArray, DataType.DBG, -1);

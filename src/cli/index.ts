@@ -21,16 +21,20 @@ import stripAnsi from "strip-ansi";
 import { deviceData, loadAppZip, updateAppZip, subscribePackage, mountExt, setupDeepLink } from "./package";
 import { isNumber } from "../api/util";
 import {
-    debugPrompt,
-    dataBufferIndex,
-    dataBufferSize,
+    DebugPrompt,
+    DataBufferIndex,
+    DataBufferSize,
     AppPayload,
     AppExitReason,
     AppData,
     SupportedExtension,
     isRegistryData,
     ExtensionInfo,
+    DataType,
+    ExtVolInitialSize,
+    ExtVolMaxSize,
 } from "../core/common";
+import SharedObject from "../core/SharedObject";
 import packageInfo from "../../packages/node/package.json";
 // @ts-ignore
 import * as brs from "./brs.node.js";
@@ -42,7 +46,8 @@ const program = new Command();
 const paths = envPaths("brs", { suffix: "cli" });
 const defaultLevel = chalk.level;
 const maxColumns = Math.max(process.stdout.columns, 32);
-const length = dataBufferIndex + dataBufferSize;
+const length = DataBufferIndex + DataBufferSize;
+const BrsDevice = brs.BrsDevice;
 
 // Variables
 let appFileName = "";
@@ -64,12 +69,11 @@ program
     .option("-c, --colors <level>", "Define the console color level (0 to disable).", defaultLevel)
     .option("-d, --debug", "Open the micro debugger if the app crashes.", false)
     .option("-e, --ecp", "Enable the ECP server for control simulation.", false)
+    .option("-n, --no-sg", "Disable the SceneGraph extension.")
     .option("-p, --pack <password>", "The password to generate the encrypted package.", "")
     .option("-o, --out <directory>", "The directory to save the encrypted package file.", "./")
     .option("-r, --root <directory>", "The root directory from which `pkg:` paths will be resolved.")
-    .option("-n, --no-sg", "Disable the SceneGraph extension.")
-    .option("-x, --ext-root <directory>", "The root directory from which `ext1:` paths will be resolved.")
-    .option("-f, --ext-file <file>", "The zip file to mount as `ext1:` volume. (takes precedence over -x)")
+    .option("-x, --ext-vol <path>", "Path to directory or zip file from which `ext1:` will be mounted.")
     .option("-k, --deep-link <params>", "Parameters to be passed to the application. (format: key=value,...)")
     .option("-y, --registry", "Persist the simulated device registry on disk.", false)
     .action(async (brsFiles, program) => {
@@ -138,13 +142,8 @@ function checkParameters() {
         process.exitCode = 1;
         return;
     }
-    if (program.extRoot && !fs.existsSync(program.extRoot)) {
-        console.error(chalk.red(`External storage path not found: ${program.extRoot}\n`));
-        process.exitCode = 1;
-        return;
-    }
-    if (program.extFile && !fs.existsSync(program.extFile)) {
-        console.error(chalk.red(`External storage file not found: ${program.extFile}\n`));
+    if (program.extVol && !fs.existsSync(program.extVol)) {
+        console.error(chalk.red(`External storage path not found: ${program.extVol}\n`));
         process.exitCode = 1;
         return;
     }
@@ -185,11 +184,11 @@ async function runAppFiles(files: string[]) {
                 console.log(chalk.blueBright(`Packaging ${filePath}...\n`));
             } else {
                 console.log(chalk.blueBright(`Executing ${filePath}...\n`));
+                if (program.extVol?.endsWith(".zip")) {
+                    mountExt(new Uint8Array(fs.readFileSync(program.extVol)).buffer);
+                }
+                setupDeepLink(processDeepLink());
             }
-            if (program.extFile) {
-                mountExt(new Uint8Array(fs.readFileSync(program.extFile)).buffer);
-            }
-            setupDeepLink(processDeepLink());
             const fileData = new Uint8Array(fs.readFileSync(filePath)).buffer;
             deviceData.entryPoint = true;
             loadAppZip(fileName, fileData, runApp);
@@ -202,7 +201,7 @@ async function runAppFiles(files: string[]) {
             deviceData,
             processDeepLink(),
             program.root,
-            program.extFile ?? program.extRoot
+            program.extVol
         );
         runApp(payload);
     } catch (err: any) {
@@ -374,12 +373,25 @@ function getRegistry(): Map<string, string> {
  * Reads input from stdin and executes BrightScript expressions.
  */
 async function repl() {
-    const replInterpreter = await brs.getReplInterpreter({
+    const payload: Partial<AppPayload> = {
         device: deviceData,
-        extZip: program.extFile ? new Uint8Array(fs.readFileSync(program.extFile)).buffer : undefined,
         root: program.root,
-        ext: program.extRoot,
-    });
+    };
+    // Load the external storage if provided
+    let extPath = "";
+    if (program.extVol && fs.existsSync(program.extVol)) {
+        if (fs.statSync(program.extVol).isDirectory()) {
+            payload.ext = program.extVol;
+            extPath = program.extVol;
+        } else if (program.extVol.endsWith(".zip")) {
+            const extObj = new SharedObject(ExtVolInitialSize, ExtVolMaxSize);
+            extObj.storeData(new Uint8Array(fs.readFileSync(program.extVol)).buffer);
+            payload.extZip = extObj.getBuffer();
+            extPath = program.extVol;
+            Atomics.store(sharedArray, DataType.EVE, 1);
+        }
+    }
+    const replInterpreter = brs.getReplInterpreter(payload);
     if (!replInterpreter) {
         return;
     }
@@ -388,7 +400,7 @@ async function repl() {
         output: process.stdout,
     });
     rl.setPrompt(`\n${chalk.magenta("brs")}> `);
-    rl.on("line", (line) => {
+    rl.on("line", async (line) => {
         if (["exit", "quit", "q"].includes(line.toLowerCase().trim())) {
             process.exit();
         } else if (["cls", "clear"].includes(line.toLowerCase().trim())) {
@@ -396,29 +408,18 @@ async function repl() {
         } else if (["help", "hint"].includes(line.toLowerCase().trim())) {
             printHelp();
         } else if (["vol", "vols"].includes(line.toLowerCase().trim())) {
+            const vols = BrsDevice.fileSystem.volumesSync();
             process.stdout.write(chalk.cyanBright(`\nMounted volumes:\n\n`));
-            const rootPath = replInterpreter.options.root ?? "not mounted";
+            const rootPath = payload.root ?? "not mounted";
             process.stdout.write(chalk.cyanBright(`pkg:      ${rootPath}\n`));
-            const extPath = program.extFile ?? replInterpreter.options.ext ?? "not mounted";
-            process.stdout.write(chalk.cyanBright(`ext1:     ${extPath}\n`));
+            const extMounted = vols.includes("ext1:");
+            process.stdout.write(chalk.cyanBright(`ext1:     ${extMounted ? extPath : "not mounted"}\n`));
             process.stdout.write(chalk.cyanBright(`tmp:      [In Memory]\n`));
             process.stdout.write(chalk.cyanBright(`cachefs:  [In Memory]\n`));
             process.stdout.write(chalk.cyanBright(`common:   [Read Only]\n`));
         } else if (["var", "vars"].includes(line.split(" ")[0]?.toLowerCase().trim())) {
             const scopeName = line.split(" ")[1]?.toLowerCase().trim() ?? "function";
-            let scope = 2; // Function scope
-            if (scopeName === "global") {
-                scope = 0; // Global scope
-                process.stdout.write(chalk.cyanBright(`\nGlobal variables:\n\n`));
-            } else if (scopeName === "module") {
-                scope = 1; // Module scope
-                process.stdout.write(chalk.cyanBright(`\nModule variables:\n\n`));
-            } else {
-                process.stdout.write(chalk.cyanBright(`\nLocal variables:\n\n`));
-            }
-            const variables = replInterpreter.formatVariables(scope).trimEnd();
-            process.stdout.write(chalk.cyanBright(variables));
-            process.stdout.write("\n");
+            listVariables(scopeName, replInterpreter);
         } else if (["xt", "ext"].includes(line.toLowerCase().trim())) {
             process.stdout.write(chalk.cyanBright(`\nLoaded Extensions:\n\n`));
             if (extensions.length) {
@@ -428,6 +429,21 @@ async function repl() {
             } else {
                 process.stdout.write(chalk.yellowBright("No extensions loaded.\n"));
             }
+        } else if (["umt", "umount"].includes(line.toLowerCase().trim())) {
+            if (BrsDevice.fileSystem.volumesSync().includes("ext1:")) {
+                BrsDevice.umountExtVolume();
+                Atomics.store(sharedArray, DataType.EVE, 0);
+                process.stdout.write(chalk.greenBright(`\next1: volume unmounted successfully.\n`));
+                extPath = "";
+            } else {
+                process.stdout.write(chalk.yellowBright(`\next1: volume is not mounted.\n`));
+            }
+        } else if (["mnt", "mount"].includes(line.toLowerCase().trim().split(" ")[0])) {
+            const mountPath = line.toLowerCase().trim().split(" ")[1] ?? "";
+            if (mountExtVolume(mountPath)) {
+                Atomics.store(sharedArray, DataType.EVE, 1);
+                extPath = mountPath;
+            }
         } else {
             brs.executeLine(line, replInterpreter);
         }
@@ -435,6 +451,55 @@ async function repl() {
     });
     process.stdout.write(colorize("type `help` to see the list of valid REPL commands.\n"));
     rl.prompt();
+}
+
+/**
+ * Lists variables in the specified scope from the interpreter.
+ * @param scopeName The scope to list variables from: global, module, or function
+ * @param interpreter The BrightScript interpreter instance
+ */
+function listVariables(scopeName: string, interpreter: brs.Interpreter) {
+    let scope = 2; // Function scope
+    if (scopeName === "global") {
+        scope = 0; // Global scope
+        process.stdout.write(chalk.cyanBright(`\nGlobal variables:\n\n`));
+    } else if (scopeName === "module") {
+        scope = 1; // Module scope
+        process.stdout.write(chalk.cyanBright(`\nModule variables:\n\n`));
+    } else {
+        process.stdout.write(chalk.cyanBright(`\nLocal variables:\n\n`));
+    }
+    const variables = interpreter.formatVariables(scope).trimEnd();
+    process.stdout.write(chalk.cyanBright(variables));
+    process.stdout.write("\n");
+}
+
+/**
+ * Mounts the ext1: volume from a directory or zip file.
+ * @param mountPath The path to the directory or zip file to mount
+ * @returns True if the volume was mounted successfully, false otherwise
+ */
+function mountExtVolume(mountPath: string) {
+    if (BrsDevice.fileSystem.volumesSync().includes("ext1:")) {
+        process.stdout.write(chalk.yellowBright(`\next1: volume is already mounted.\n`));
+        return false;
+    }
+    if (!fs.existsSync(mountPath)) {
+        process.stdout.write(chalk.redBright(`\nPath to mount ext1: volume not found: "${mountPath}"\n`));
+    } else if (mountPath.toLowerCase().endsWith(".zip")) {
+        const extZip = new Uint8Array(fs.readFileSync(mountPath)).buffer;
+        if (BrsDevice.mountExtVolume(extZip)) {
+            process.stdout.write(chalk.greenBright(`\next1: volume mounted successfully from file.\n`));
+            return true;
+        } else {
+            process.stdout.write(chalk.redBright(`\nFailed to mount ext1: volume from file.\n`));
+        }
+    } else {
+        BrsDevice.mountExtPathVolume(mountPath);
+        process.stdout.write(chalk.greenBright(`\next1: volume mounted successfully from directory.\n`));
+        return true;
+    }
+    return false;
 }
 
 /**
@@ -450,6 +515,8 @@ function packageCallback(event: string, data: any) {
         } else {
             console.warn(chalk.yellow(data));
         }
+    } else if (event === "mount") {
+        Atomics.store(sharedArray, DataType.EVE, data);
     } else if (event === "debug") {
         console.debug(chalk.gray(data));
     }
@@ -497,7 +564,7 @@ function messageCallback(message: any, _?: any) {
 function handleStringMessage(message: string) {
     const mType = message.split(",")[0];
     const msg = message.slice(mType.length + 1);
-    if (mType === "print" && msg.endsWith(debugPrompt)) {
+    if (mType === "print" && msg.endsWith(DebugPrompt)) {
         process.stdout.write(msg);
     } else if (mType === "print") {
         process.stdout.write(colorize(msg));
@@ -552,6 +619,8 @@ function printHelp() {
     helpMsg += "   print|?           Print variable value or expression\r\n";
     helpMsg += "   var|vars [scope]  Display variables and their types/values\r\n";
     helpMsg += "   vol|vols          Display file system mounted volumes\r\n";
+    helpMsg += "   mnt|mount <path>  Mount ext1: volume from directory or zip file\r\n";
+    helpMsg += "   umt|umount        Unmount ext1: volume\r\n";
     helpMsg += "   xt|ext            Display loaded extensions\r\n";
     helpMsg += "   help|hint         Show this REPL command list\r\n";
     helpMsg += "   clear|cls         Clear terminal screen\r\n";

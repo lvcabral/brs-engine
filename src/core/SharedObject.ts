@@ -5,6 +5,10 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
+/**
+ * SharedObject serializes JSON payloads or raw buffers into a resizable SharedArrayBuffer
+ * to coordinate state between the host and worker threads via Atomics.
+ */
 class SharedObject {
     private readonly offset = 8;
     private readonly queue: { obj: any; version: number; timeout: number }[] = [];
@@ -16,6 +20,10 @@ class SharedObject {
     private atomicView: Int32Array;
     private isProcessing: boolean = false;
 
+    /**
+     * @param initialSize Optional initial buffer size in bytes (defaults to 32KB).
+     * @param maxSize Optional hard cap for automatic growth (defaults to 3MB).
+     */
     constructor(initialSize?: number, maxSize?: number) {
         initialSize = initialSize ?? 32 * 1024; // 32KB default
         this.maxSize = maxSize ?? 3 * 1024 * 1024; // 3MB default
@@ -26,6 +34,10 @@ class SharedObject {
         Atomics.store(this.atomicView, this.versionIdx, 0); // Initialize version to 0
     }
 
+    /**
+     * Replaces the underlying shared buffer with an externally provided one.
+     * @param buffer New shared buffer reference.
+     */
     setBuffer(buffer: SharedArrayBuffer): void {
         this.buffer = buffer;
         this.view = new Uint8Array(this.buffer);
@@ -33,23 +45,44 @@ class SharedObject {
         this.maxSize = Math.max(this.maxSize, this.buffer.byteLength);
     }
 
+    /**
+     * @returns Current SharedArrayBuffer handle backing the object.
+     */
     getBuffer(): SharedArrayBuffer {
         return this.buffer;
     }
 
+    /**
+     * @returns Monotonic version counter used to detect new writes.
+     */
     getVersion(): number {
         return Atomics.load(this.atomicView, this.versionIdx);
     }
 
+    /**
+     * Enqueues a write request that should execute once the buffer version differs.
+     * @param obj Arbitrary payload to persist.
+     * @param version Version to wait on before writing.
+     * @param timeout Optional timeout in ms before the wait is considered failed.
+     */
     waitStore(obj: any, version: number, timeout: number = 10000): void {
         this.queue.push({ obj, version, timeout });
         this.processQueue();
     }
 
+    /**
+     * Blocks the current thread until the version changes or timeout is hit.
+     * @param version Expected version value.
+     * @param timeout Optional timeout in ms.
+     * @returns Atomics wait result string.
+     */
     waitVersion(version: number, timeout?: number) {
         return Atomics.wait(this.atomicView, this.versionIdx, version, timeout);
     }
 
+    /**
+     * Processes the wait queue sequentially, honoring Atomics.waitAsync when present.
+     */
     private processQueue(): void {
         if (this.isProcessing || this.queue.length === 0) {
             return;
@@ -107,31 +140,37 @@ class SharedObject {
         }
     }
 
+    /**
+     * Serializes an object to JSON and writes it to the shared buffer.
+     * @param obj Arbitrary JSON-serializable payload.
+     */
     store(obj: any): void {
         const serialized = JSON.stringify(obj);
         const data = new TextEncoder().encode(serialized);
-        const dataLength = data.length;
-        if (this.ensureCapacity(dataLength + 8)) {
-            // Store the data
-            this.view.set(data, 8);
-
-            Atomics.store(this.atomicView, this.lengthIdx, dataLength);
-            Atomics.add(this.atomicView, this.versionIdx, 1); // Increment version
-            Atomics.notify(this.atomicView, this.versionIdx);
-        }
+        this.writeToBuffer(data);
     }
 
+    /**
+     * Stores raw binary data directly into the shared buffer.
+     * @param buffer Binary payload to copy.
+     */
+    storeData(buffer: ArrayBufferLike): void {
+        const data = new Uint8Array(buffer);
+        this.writeToBuffer(data);
+    }
+
+    /**
+     * Reads the current buffer contents and parses the serialized JSON payload.
+     * @param resetVersion When true, resets the version counter to zero after reading.
+     * @returns Deserialized object or empty object on failure.
+     */
     load(resetVersion: boolean = false) {
-        const currentLength = Atomics.load(this.atomicView, 0);
-        if (currentLength < 1) {
+        const data = this.readFromBuffer(resetVersion);
+        if (!data) {
             return {};
         }
-        const data = this.view.subarray(this.offset, this.offset + currentLength);
-        const serialized = new TextDecoder().decode(new Uint8Array(data).buffer);
-        if (resetVersion) {
-            Atomics.store(this.atomicView, this.versionIdx, 0); // Reset version
-            Atomics.notify(this.atomicView, this.versionIdx);
-        }
+
+        const serialized = new TextDecoder().decode(data);
         try {
             return JSON.parse(serialized);
         } catch (error) {
@@ -140,6 +179,60 @@ class SharedObject {
         }
     }
 
+    /**
+     * Reads the raw binary payload without JSON parsing.
+     * @param resetVersion When true, resets the version counter to zero after reading.
+     * @returns A copy of the stored buffer slice or undefined if empty.
+     */
+    loadData(resetVersion: boolean = false): ArrayBufferLike | undefined {
+        const data = this.readFromBuffer(resetVersion);
+        if (!data) {
+            return undefined;
+        }
+
+        return data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength);
+    }
+
+    /**
+     * Copies encoded bytes into the shared view and updates version metadata.
+     * @param data Encoded payload.
+     */
+    private writeToBuffer(data: Uint8Array): void {
+        const dataLength = data.length;
+        if (!this.ensureCapacity(dataLength + this.offset)) {
+            return;
+        }
+
+        this.view.set(data, this.offset);
+        Atomics.store(this.atomicView, this.lengthIdx, dataLength);
+        Atomics.add(this.atomicView, this.versionIdx, 1);
+        Atomics.notify(this.atomicView, this.versionIdx);
+    }
+
+    /**
+     * Returns a copy of the currently stored bytes, optionally resetting the version.
+     * @param resetVersion Whether to zero the version counter after reading.
+     */
+    private readFromBuffer(resetVersion: boolean): Uint8Array | undefined {
+        const currentLength = Atomics.load(this.atomicView, this.lengthIdx);
+        if (currentLength < 1) {
+            return undefined;
+        }
+
+        const data = this.view.slice(this.offset, this.offset + currentLength);
+        if (resetVersion) {
+            Atomics.store(this.atomicView, this.versionIdx, 0);
+            Atomics.notify(this.atomicView, this.versionIdx);
+        }
+
+        return data;
+    }
+
+    /**
+     * Ensures the backing buffer can accommodate the requested payload size.
+     * @param size Total number of bytes required (payload + header offset).
+     * @returns True when the buffer is ready; false if it exceeds max size or fails to grow.
+     */
     private ensureCapacity(size: number): boolean {
         if (size > this.maxSize) {
             console.error(`[SharedObject] Buffer is full. Cannot store more data. ${size} > ${this.maxSize}`);

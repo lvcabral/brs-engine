@@ -5,6 +5,7 @@ import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { RoList } from "./RoList";
 import { BrsDevice } from "../../device/BrsDevice";
+import { RegistryInitialSize } from "../../common";
 
 export class RoRegistry extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -87,7 +88,7 @@ export class RoRegistry extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter) => {
             BrsDevice.refreshRegistry();
-            let space = 32 * 1024;
+            let space = RegistryInitialSize;
             for (const [key, value] of BrsDevice.registry.current) {
                 if (key.split(".")[0] === this.devId) {
                     space -= Buffer.byteLength(key.substring(this.devId.length + 1), "utf8");

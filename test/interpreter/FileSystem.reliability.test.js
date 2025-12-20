@@ -14,10 +14,10 @@ let fs;
 brs.registerCallback(() => {}); // register a callback to avoid display errors
 
 describe("FileSystem Reliability Tests - tmp: volume", () => {
-    beforeEach(async () => {
+    beforeEach(() => {
         interpreter = new Interpreter({});
         fs = BrsDevice.fileSystem;
-        await BrsDevice.resetMemoryVolumes();
+        BrsDevice.resetMemoryVolumes();
     });
 
     afterEach(() => {

@@ -31,6 +31,7 @@ let textureManager: RoTextureManager;
 export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpAgent {
     readonly kind = ValueKind.Object;
     private readonly textures: Map<string, RoBitmap>;
+    private readonly brsFS = BrsDevice.fileSystem;
     readonly requests: Map<number, RoTextureRequest>;
     private port?: RoMessagePort;
     // ifHttpAgent Interface
@@ -64,6 +65,7 @@ export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpA
             ifSetMessagePort: [setPortIface.setMessagePort, setPortIface.setPort],
             ifGetMessagePort: [getPortIface.getMessagePort, getPortIface.getPort],
         });
+        this.brsFS.subscribeUmount("roTextureManager", this.volumeUnmounted.bind(this));
     }
 
     toString(parent?: BrsType): string {
@@ -108,6 +110,15 @@ export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpA
         }
         request.state = bitmap?.isValid() ? RequestState.Ready : RequestState.Failed;
         return new RoTextureRequestEvent(request, bitmap ?? BrsInvalid.Instance);
+    }
+
+    private volumeUnmounted(volume: string) {
+        for (const uri of this.textures.keys()) {
+            const uriVolume = `${uri.split(":/")[0]}:`;
+            if (uriVolume === volume) {
+                this.textures.delete(uri);
+            }
+        }
     }
 
     loadTexture(uri: string, headers?: Map<string, string>): RoBitmap | undefined {

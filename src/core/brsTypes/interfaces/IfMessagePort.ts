@@ -18,16 +18,14 @@ export class IfSetMessagePort {
 
     /** Sets the roMessagePort to be used for all events from the component */
     private set(port: RoMessagePort) {
+        port.addReference();
+        this.component.port?.removeReference();
         if (this.callback) {
             const component = this.component.getComponentName();
             this.component.port?.unregisterCallback(component);
-            this.component.port = port;
-            this.component.port.registerCallback(component, this.callback);
-        } else {
-            port.addReference();
-            this.component.port?.removeReference();
-            this.component.port = port;
+            port.registerCallback(component, this.callback);
         }
+        this.component.port = port;
         return BrsInvalid.Instance;
     }
 

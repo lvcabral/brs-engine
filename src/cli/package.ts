@@ -16,7 +16,10 @@ import {
     AppExitReason,
     DeviceInfo,
     Platform,
+    ExtVolInitialSize,
+    ExtVolMaxSize,
 } from "../core/common";
+import SharedObject from "../core/SharedObject";
 import models from "../core/common/models.csv";
 import packageInfo from "../../packages/node/package.json";
 
@@ -68,7 +71,10 @@ function notifyAll(eventName: string, eventData?: any) {
 let currentZip: Unzipped;
 let srcId: number;
 let pkgZip: ArrayBuffer | undefined;
-let extZip: ArrayBuffer | undefined;
+
+// External Storage Zip (max 32MB)
+const extObj: SharedObject = new SharedObject(ExtVolInitialSize, ExtVolMaxSize);
+let extZip: SharedArrayBuffer | undefined;
 
 /**
  * Loads and processes a BrightScript application zip file.
@@ -289,16 +295,16 @@ function createAppData(): AppData {
 }
 
 /**
- * Mounts an external storage zip file as ext1: volume.
- * @param zipData ArrayBuffer containing the zip file data
+ * Mounts external storage from a zip package.
+ * @param zipData ArrayBuffer containing the external storage zip data
  */
 export function mountExt(zipData: ArrayBuffer) {
-    extZip = zipData;
-}
-
-/**
- * Unmounts the external storage volume.
- */
-export function umountExt() {
-    extZip = undefined;
+    if (extZip) {
+        notifyAll("warning", "[package] External storage already mounted. Unmount first.");
+        return;
+    }
+    extObj.storeData(zipData);
+    extZip = extObj.getBuffer();
+    notifyAll("mount", 1);
+    notifyAll("debug", "[package] External storage mounted.");
 }

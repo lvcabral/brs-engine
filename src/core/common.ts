@@ -286,7 +286,7 @@ export type AppPayload = {
     source: string[];
     extensions?: SupportedExtension[];
     pkgZip?: ArrayBuffer;
-    extZip?: ArrayBuffer;
+    extZip?: SharedArrayBuffer;
     password?: string;
     root?: string;
     ext?: string;
@@ -307,7 +307,7 @@ export function isAppPayload(value: any): value is AppPayload {
         Array.isArray(value.paths) &&
         Array.isArray(value.source) &&
         (value.pkgZip instanceof ArrayBuffer || value.pkgZip === undefined) &&
-        (value.extZip instanceof ArrayBuffer || value.extZip === undefined) &&
+        (value.extZip instanceof SharedArrayBuffer || value.extZip === undefined) &&
         (typeof value.password === "string" || value.password === undefined) &&
         (typeof value.root === "string" || value.root === undefined) &&
         (typeof value.ext === "string" || value.ext === undefined)
@@ -320,7 +320,7 @@ export type TaskPayload = {
     taskData: TaskData;
     extensions?: SupportedExtension[];
     pkgZip?: ArrayBuffer;
-    extZip?: ArrayBuffer;
+    extZip?: SharedArrayBuffer;
     root?: string;
     ext?: string;
 };
@@ -337,7 +337,7 @@ export function isTaskPayload(value: any): value is TaskPayload {
         value.manifest instanceof Map &&
         isTaskData(value.taskData) &&
         (value.pkgZip instanceof ArrayBuffer || value.pkgZip === undefined) &&
-        (value.extZip instanceof ArrayBuffer || value.extZip === undefined) &&
+        (value.extZip instanceof SharedArrayBuffer || value.extZip === undefined) &&
         (typeof value.root === "string" || value.root === undefined) &&
         (typeof value.ext === "string" || value.ext === undefined)
     );
@@ -586,7 +586,7 @@ export enum DataType {
     WAV, // Wave Audio
     WAV1, // Reserved for second stream
     WAV2, // Reserved for third stream
-    WAV3, // Reserved for fourth stream
+    EVE, // External Volume Event
     MUHS, // Memory Used Heap Size
     MHSL, // Memory Heap Size Limit
     MBWD, // Measured Bandwidth
@@ -598,17 +598,21 @@ export enum DataType {
     MOD, // Key State (down/up)
 }
 
+// External Volume constants
+export const ExtVolInitialSize = 32 * 1024;
+export const ExtVolMaxSize = 32 * 1024 * 1024;
+
 // Registry constants
-export const registryInitialSize = 32 * 1024;
-export const registryMaxSize = 64 * 1024;
+export const RegistryInitialSize = 32 * 1024;
+export const RegistryMaxSize = 64 * 1024;
 
 // Key Buffer Constants
-export const keyBufferSize = 5;
-export const keyArraySpots = 3;
+export const KeyBufferSize = 5;
+export const KeyArraySpots = 3;
 
 // Index where the data buffer starts and the size of the data buffer
-export const dataBufferIndex = DataType.HDMI + keyBufferSize * keyArraySpots;
-export const dataBufferSize = 1024;
+export const DataBufferIndex = DataType.HDMI + KeyBufferSize * KeyArraySpots;
+export const DataBufferSize = 1024;
 
 // Remote control type
 export enum RemoteType {
@@ -632,7 +636,7 @@ export interface KeyEvent {
 }
 
 // Debug prompt
-export const debugPrompt = "Brightscript Debugger> ";
+export const DebugPrompt = "Brightscript Debugger> ";
 
 // Debug commands enumerator
 export enum DebugCommand {
@@ -717,7 +721,7 @@ export enum BufferType {
 export const DefaultSounds = ["select", "navsingle", "navmulti", "deadend"];
 
 // Maximum number of simultaneous sound streams
-export const MaxSoundStreams = 4;
+export const MaxSoundStreams = 3;
 
 // Media Files Extensions
 export const AudioExt = new Set<string>(["wav", "mp2", "mp3", "m4a", "aac", "ogg", "oga", "ac3", "wma", "flac"]);

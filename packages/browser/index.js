@@ -136,7 +136,7 @@ brs.subscribe("web-app", (event, data) => {
             debugMode = data.level;
         }
     } else if (event === "version") {
-        console.info(`Interpreter Library v${data}`);
+        console.info(`%cBrightScript Interpreter Library v${data}`, "color: #4A90E2");
         mountZip("./apps/data.zip");
     }
 });

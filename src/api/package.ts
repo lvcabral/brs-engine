@@ -22,7 +22,10 @@ import {
     DeviceInfo,
     SupportedExtension,
     Platform,
+    ExtVolInitialSize,
+    ExtVolMaxSize,
 } from "../core/common";
+import SharedObject from "../core/SharedObject";
 import models from "../core/common/models.csv";
 import packageInfo from "../../packages/browser/package.json";
 
@@ -74,7 +77,11 @@ function notifyAll(eventName: string, eventData?: any) {
 let currentZip: Unzipped;
 let srcId: number;
 let pkgZip: ArrayBuffer | undefined;
-let extZip: ArrayBuffer | undefined;
+
+// External Storage Zip (max 32MB)
+let extMounted = false;
+const extObj: SharedObject = new SharedObject(ExtVolInitialSize, ExtVolMaxSize);
+const extZip: SharedArrayBuffer = extObj.getBuffer();
 
 /**
  * Loads and processes a BrightScript application zip package.
@@ -130,6 +137,8 @@ export function loadAppZip(fileName: string, file: ArrayBuffer, callback: Functi
     if (hasSGComponents && deviceData.extensions?.has(SupportedExtension.SceneGraph)) {
         extensions.push(SupportedExtension.SceneGraph);
     }
+    // Mount external storage if present
+    notifyAll("mount", extMounted ? 1 : 0);
     // Create and return the payload
     callback(createPayload(launchTime));
 }
@@ -337,18 +346,26 @@ function createAppData(): AppData {
     };
 }
 
-// TODO: Support dynamic mounting and unmounting of external storage
 /**
  * Mounts external storage from a zip package.
  * @param zipData ArrayBuffer containing the external storage zip data
  */
 export function mountExt(zipData: ArrayBuffer) {
-    extZip = zipData;
+    if (extMounted) {
+        notifyAll("warning", "[package] External storage already mounted. Unmount first.");
+        return;
+    }
+    extObj.storeData(zipData);
+    extMounted = true;
+    notifyAll("mount", 1);
+    notifyAll("debug", "[package] External storage mounted.");
 }
 
 /**
  * Unmounts external storage.
  */
 export function umountExt() {
-    extZip = undefined;
+    extMounted = false;
+    notifyAll("mount", 0);
+    notifyAll("debug", "[package] External storage unmounted.");
 }

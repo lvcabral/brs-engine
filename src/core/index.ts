@@ -11,8 +11,8 @@ import {
     PkgFilePath,
     AppPayload,
     DeviceInfo,
-    dataBufferIndex,
-    dataBufferSize,
+    DataBufferIndex,
+    DataBufferSize,
     DefaultDeviceInfo,
     parseManifest,
     isAppPayload,
@@ -20,14 +20,16 @@ import {
     isTaskPayload,
     SupportedExtension,
     ExtensionInfo,
+    ExtVolInitialSize,
+    ExtVolMaxSize,
 } from "./common";
 import { Lexeme, Lexer, Token } from "./lexer";
 import { Parser, Stmt } from "./parser";
 import { lexParseSync, parseDecodedTokens } from "./LexerParser";
 import { BrsDevice } from "./device/BrsDevice";
-import { configureFileSystem } from "./device/FileSystem";
 import { BrsError, logError, RuntimeError, RuntimeErrorDetail } from "./error/BrsError";
 import { BrsExtension, registerExtension, instantiateExtensions } from "./extensions";
+import SharedObject from "./SharedObject";
 import * as PP from "./preprocessor";
 import * as BrsTypes from "./brsTypes";
 import * as path from "path";
@@ -82,7 +84,6 @@ import * as FileSystemExports from "./device/FileSystem";
 import * as stdlibModule from "./stdlib";
 import * as netlibModule from "./interpreter/Network";
 import { Preprocessor } from "./preprocessor/Preprocessor";
-import SharedObject from "./SharedObject";
 import packageInfo from "../../packages/browser/package.json";
 
 if (typeof onmessage !== "undefined") {
@@ -236,7 +237,7 @@ declare global {
  * Default implementation of the callback, only handles console messages
  * @param message the message to front-end
  */
-const arrayLength = dataBufferIndex + dataBufferSize;
+const arrayLength = DataBufferIndex + DataBufferSize;
 const sharedBuffer = new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT * arrayLength);
 const sharedArray = new Int32Array(sharedBuffer);
 sharedArray.fill(-1);
@@ -274,7 +275,7 @@ export function registerCallback(messageCallback: any, sharedBuffer?: SharedArra
  * @param payload Partial app payload with device configuration and assets
  * @returns Promise resolving to configured Interpreter instance or null on error
  */
-export async function getReplInterpreter(payload: Partial<AppPayload>) {
+export function getReplInterpreter(payload: Partial<AppPayload>) {
     if (!payload.device?.assets) {
         postMessage("error,Invalid REPL configuration: Missing assets");
         return null;
@@ -286,22 +287,13 @@ export async function getReplInterpreter(payload: Partial<AppPayload>) {
         BrsDevice.setDeviceInfo(payload.device);
     }
     try {
-        await configureFileSystem(
-            payload.device.assets,
-            BrsDevice.getTmpVolume(),
-            BrsDevice.getCacheFS(),
-            payload.pkgZip,
-            payload.extZip
-        );
+        BrsDevice.setupFileSystem(payload);
         BrsDevice.loadLocaleTerms();
     } catch (err: any) {
-        postMessage(`error,Error mounting File System: ${err.message}`);
+        postMessage(`error,[repl] Error mounting File System: ${err.message}`);
         return null;
     }
-    const replInterpreter = new Interpreter({
-        root: payload.root,
-        ext: payload.extZip ? undefined : payload.ext,
-    });
+    const replInterpreter = new Interpreter();
     replInterpreter.onError(logError);
     const extensions = instantiateExtensions();
     attachExtensions(replInterpreter, extensions);
@@ -583,7 +575,9 @@ export async function createPayloadFromFiles(
         if (fs.statSync(ext).isDirectory()) {
             payload.ext = ext;
         } else {
-            payload.extZip = new Uint8Array(fs.readFileSync(ext)).buffer;
+            const extObj = new SharedObject(ExtVolInitialSize, ExtVolMaxSize);
+            extObj.storeData(new Uint8Array(fs.readFileSync(ext)).buffer);
+            payload.extZip = extObj.getBuffer();
         }
     }
     return payload;
@@ -601,8 +595,6 @@ export async function executeFile(payload: AppPayload, customOptions?: Partial<E
     const options = {
         entryPoint: payload.device.entryPoint ?? true,
         stopOnCrash: payload.device.debugOnCrash ?? false,
-        root: payload.root,
-        ext: payload.extZip ? undefined : payload.ext, // use ext path only if extZip is not provided
         ...customOptions,
     };
     bscs.clear();
@@ -610,22 +602,10 @@ export async function executeFile(payload: AppPayload, customOptions?: Partial<E
     // Setup the File System
     BrsDevice.setDeviceInfo(payload.device);
     try {
-        await configureFileSystem(
-            payload.device.assets,
-            BrsDevice.getTmpVolume(),
-            BrsDevice.getCacheFS(),
-            payload.pkgZip,
-            payload.extZip
-        );
-        if (options.root) {
-            BrsDevice.fileSystem.setRoot(options.root);
-        }
-        if (options.ext) {
-            BrsDevice.fileSystem.setExt(options.ext);
-        }
+        BrsDevice.setupFileSystem(payload);
         BrsDevice.loadLocaleTerms();
     } catch (err: any) {
-        postMessage(`error,Error mounting File System: ${err.message}`);
+        postMessage(`error,[core] Error mounting File System: ${err.message}`);
         return { exitReason: AppExitReason.Crashed };
     }
     const extensions = instantiateExtensions();
@@ -664,30 +644,16 @@ export async function executeTask(payload: TaskPayload, customOptions?: Partial<
     const options = {
         entryPoint: false,
         stopOnCrash: payload.device.debugOnCrash ?? false,
-        root: payload.root,
-        ext: payload.extZip ? undefined : payload.ext,
         ...customOptions,
     };
     stats.clear();
     // Setup the File System
     BrsDevice.setDeviceInfo(payload.device);
     try {
-        await configureFileSystem(
-            payload.device.assets,
-            payload.taskData.tmp!,
-            payload.taskData.cacheFS!,
-            payload.pkgZip,
-            payload.extZip
-        );
-        if (options.root) {
-            BrsDevice.fileSystem.setRoot(options.root);
-        }
-        if (options.ext) {
-            BrsDevice.fileSystem.setExt(options.ext);
-        }
+        BrsDevice.setupFileSystem(payload);
         BrsDevice.loadLocaleTerms();
     } catch (err: any) {
-        postMessage(`error,Error mounting File System: ${err.message}`);
+        postMessage(`error,[task] Error mounting File System: ${err.message}`);
         return;
     }
     const extensions = instantiateExtensions();
