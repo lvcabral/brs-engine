@@ -12,6 +12,9 @@ import * as path from "path";
 import { XmlDocument, XmlElement } from "xmldoc";
 import pSettle, { PromiseResult } from "p-settle";
 
+/**
+ * Represents the attributes of a field within a component.
+ */
 interface FieldAttributes {
     id: string;
     type: string;
@@ -21,28 +24,46 @@ interface FieldAttributes {
     alwaysNotify?: string;
 }
 
+/**
+ * A map of field IDs to their corresponding attributes.
+ */
 interface ComponentFields {
     [key: string]: FieldAttributes;
 }
 
+/**
+ * Represents the attributes of a function within a component.
+ */
 interface FunctionAttributes {
     name: string;
 }
 
+/**
+ * A map of function names to their corresponding attributes.
+ */
 interface ComponentFunctions {
     [key: string]: FunctionAttributes;
 }
 
+/**
+ * Represents the fields of a node within a component.
+ */
 interface NodeField {
     [id: string]: string;
 }
 
+/**
+ * Represents a child node within a component.
+ */
 export interface ComponentNode {
     name: string;
     fields: NodeField;
     children: ComponentNode[];
 }
 
+/**
+ * Represents a script associated with a component.
+ */
 export interface ComponentScript {
     type: string;
     uri?: string;
@@ -50,8 +71,14 @@ export interface ComponentScript {
     content?: string;
 }
 
+// Singleton file system instance for reading component XML and script files.
 let fs: FileSystem | undefined;
 
+/**
+ * Represents a component definition parsed from an XML file.
+ * Includes methods for parsing and processing component definitions.
+ *
+ **/
 export class ComponentDefinition {
     public contents?: string;
     public xmlNode?: XmlDocument;
@@ -95,6 +122,13 @@ export class ComponentDefinition {
     }
 }
 
+/**
+ * Retrieves a map of component definitions from the specified directories.
+ * @param fileSystem The file system instance to use for reading files.
+ * @param additionalDirs Additional directories to search for component XML files.
+ * @param libraryName Optional library name to prefix component names.
+ * @returns A promise that resolves to a map of component definitions.
+ */
 export async function getComponentDefinitionMap(
     fileSystem: FileSystem,
     additionalDirs: string[] = [],
@@ -116,6 +150,12 @@ export async function getComponentDefinitionMap(
     return processXmlTree(pSettle(parsedPromises), libraryName);
 }
 
+/**
+ * Processes the XML tree of component definitions and builds a map of component definitions.
+ * @param settledPromises A promise that resolves to an array of settled component definition promises.
+ * @param libraryName Optional library name to prefix component names.
+ * @returns A promise that resolves to a map of component definitions.
+ */
 async function processXmlTree(settledPromises: Promise<PromiseResult<ComponentDefinition>[]>, libraryName?: string) {
     const nodeDefs = await settledPromises;
     const nodeDefMap = new Map<string, ComponentDefinition>();
@@ -207,11 +247,11 @@ export async function setupInterpreterWithSubEnvs(
     const componentScopeResolver = new ComponentScopeResolver(componentMap, fs, manifest);
     await pSettle(
         Array.from(componentMap).map(async (componentKV) => {
-            let [_, component] = componentKV;
+            const [_, component] = componentKV;
             component.environment = interpreter.environment.createSubEnvironment(/* includeModuleScope */ false);
-            let statements = await componentScopeResolver.resolve(component);
+            const statements = await componentScopeResolver.resolve(component);
             interpreter.inSubEnv((subInterpreter) => {
-                let componentMPointer = new RoAssociativeArray([]);
+                const componentMPointer = new RoAssociativeArray([]);
                 subInterpreter.options.entryPoint = false;
                 subInterpreter.environment.setM(componentMPointer);
                 subInterpreter.environment.setRootM(componentMPointer);
@@ -303,6 +343,12 @@ function parseChildren(element: XmlElement, children: ComponentNode[]): void {
     });
 }
 
+/**
+ * Retrieves all scripts defined in the component XML node.
+ * @param node The XmlDocument node representing the component
+ * @param nodeDef The ComponentDefinition for error reporting
+ * @returns An array of ComponentScript objects
+ */
 async function getScripts(node: XmlDocument, nodeDef: ComponentDefinition): Promise<ComponentScript[]> {
     const scripts = node.childrenNamed("script");
     const componentScripts: ComponentScript[] = [];
@@ -332,6 +378,12 @@ async function getScripts(node: XmlDocument, nodeDef: ComponentDefinition): Prom
     return componentScripts;
 }
 
+/**
+ * Resolves the absolute URI for a script defined in a component.
+ * @param script The XmlElement representing the <script> tag
+ * @param nodeDef The ComponentDefinition for error reporting
+ * @returns The absolute URI as a string
+ */
 async function getScriptUri(script: XmlElement, nodeDef: ComponentDefinition): Promise<string> {
     let absoluteUri: string;
 
@@ -356,6 +408,12 @@ async function getScriptUri(script: XmlElement, nodeDef: ComponentDefinition): P
     return absoluteUri;
 }
 
+/**
+ * Retrieves the location of a <script> tag within a component XML for error reporting.
+ * @param nodeDef The ComponentDefinition containing the script
+ * @param script The XmlElement representing the <script> tag
+ * @returns An object with file, start, and end positions
+ */
 function getScriptTagLocation(nodeDef: ComponentDefinition, script: XmlElement) {
     const tag = nodeDef.contents?.substring(script.startTagPosition, script.position) ?? "";
     const tagLines = tag.split("\n");

@@ -4,6 +4,10 @@ import { SGNodeFactory } from "../factory/NodeFactory";
 import pSettle from "p-settle";
 import * as path from "path";
 
+/**
+ * Resolves the function scope for SceneGraph components based on their
+ * inheritance hierarchy.
+ */
 export class ComponentScopeResolver {
     private readonly excludedNames: string[] = ["init"];
     private readonly parserLexerFn: (scripts: ComponentScript[]) => Promise<Stmt.Statement[]>;
@@ -101,6 +105,13 @@ export class ComponentScopeResolver {
             yield this.parserLexerFn(currentComponent.scripts);
         }
     }
+
+    /**
+     * Creates a memoized lexer/parser function for component scripts.
+     * @param fs File system instance for reading files.
+     * @param manifest Manifest map for resource resolution.
+     * @returns A function that lexes and parses component scripts.
+     */
     private getLexerParserFn(fs: FileSystem, manifest: Map<string, string>) {
         /**
          * Map file URIs or Source Content to promises. The promises resolve to an array of that script's statements.

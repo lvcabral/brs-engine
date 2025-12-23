@@ -1,5 +1,6 @@
 import {
     BrsBoolean,
+    BrsComponent,
     BrsInvalid,
     BrsNumber,
     BrsString,
@@ -314,6 +315,8 @@ export class Field {
             return oldValue.toBoolean() === newValue.toBoolean();
         } else if (oldValue instanceof Node && newValue instanceof Node) {
             return oldValue === newValue && !newValue.changed;
+        } else if (oldValue instanceof BrsComponent && newValue instanceof BrsComponent) {
+            return oldValue === newValue || oldValue.equalTo(newValue).toBoolean();
         } else {
             return oldValue.equalTo(newValue).toBoolean();
         }

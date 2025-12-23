@@ -324,6 +324,9 @@ export function initializeNode(interpreter: Interpreter, type: string, typeDef?:
         node ??= new Node([], type);
         const mPointer = new RoAssociativeArray([]);
         currentEnv?.setM(new RoAssociativeArray([]));
+        if (currentEnv) {
+            currentEnv.hostNode = node;
+        }
 
         // Add children, fields and call each init method starting from the
         // "basemost" component of the tree.
@@ -394,6 +397,9 @@ export function initializeTask(interpreter: Interpreter, taskData: TaskData) {
         let node = SGNodeFactory.createNode(typeDef!.extends as SGNodeType, type) || new Task([], type);
         let mPointer = new RoAssociativeArray([]);
         currentEnv?.setM(new RoAssociativeArray([]));
+        if (currentEnv) {
+            currentEnv.hostNode = node;
+        }
 
         // Add children and fields starting from the "basemost" component of the tree.
         while (typeDef) {
