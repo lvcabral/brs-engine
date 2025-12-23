@@ -7,6 +7,7 @@
  *--------------------------------------------------------------------------------------------*/
 import {
     AppPayload,
+    isExtensionInfo,
     isNDKStart,
     isRegistryData,
     isTaskData,
@@ -138,6 +139,11 @@ export function resetTasks() {
 function taskCallback(event: MessageEvent) {
     if (isRegistryData(event.data)) {
         notifyAll("registry", event.data);
+    } else if (isExtensionInfo(event.data)) {
+        notifyAll(
+            "debug",
+            `[API] Loaded Extension: ${event.data.name} (v${event.data.version}) from ${event.data.library}\r\n`
+        );
     } else if (typeof event.data.displayEnabled === "boolean") {
         setDisplayState(event.data.displayEnabled);
     } else if (typeof event.data.captionMode === "string") {

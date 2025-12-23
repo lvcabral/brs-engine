@@ -8,7 +8,6 @@ import {
     BrsValue,
     FlexObject,
     getTextureManager,
-    Int32,
     isBoxable,
     isBrsString,
     isInvalid,
@@ -37,6 +36,7 @@ import { FieldAlias, FieldKind, FieldModel } from "../SGTypes";
 import { toAssociativeArray, jsValueOf, fromSGNode } from "../factory/Serializer";
 import { sgRoot } from "../SGRoot";
 import { SGNodeType } from ".";
+import { ComponentDefinition } from "../parser/ComponentDefinition";
 
 type ChangeOperation = "none" | "insert" | "add" | "remove" | "set" | "clear" | "move" | "setall" | "modify";
 
@@ -49,6 +49,10 @@ export class Node extends RoSGNode implements BrsValue {
     protected readonly fields: Map<string, Field>;
     /** Alias definitions pointing to fields on child nodes. */
     protected readonly aliases: Map<string, FieldAlias>;
+    /** Component definition metadata used for field and function resolution. */
+    protected readonly componentDef?: ComponentDefinition;
+    /** Set of function names defined on this component for quick lookup. */
+    protected readonly funcNames: Set<string> = new Set();
     /** Ordered list of child nodes retained as BrightScript values. */
     protected readonly children: (Node | BrsInvalid)[];
     /** Guards initial focus hand-off so it only runs once. */
@@ -101,6 +105,8 @@ export class Node extends RoSGNode implements BrsValue {
         this.registerInitializedFields(initializedFields);
 
         this.setValueSilent("change", toAssociativeArray({ Index1: 0, Index2: 0, Operation: "none" }));
+        this.componentDef = sgRoot.nodeDefMap.get(this.nodeSubtype.toLowerCase());
+        this.funcNames = new Set(Object.keys(this.componentDef?.functions ?? {}).map((name) => name.toLowerCase()));
     }
 
     /**
@@ -805,9 +811,8 @@ export class Node extends RoSGNode implements BrsValue {
             if (!this.triedInitFocus) {
                 // Only try initial focus once
                 this.triedInitFocus = true;
-                const typeDef = sgRoot.nodeDefMap.get(this.nodeSubtype.toLowerCase());
-                if (typeDef?.initialFocus) {
-                    const childToFocus = this.findNodeById(this, typeDef.initialFocus);
+                if (this.componentDef?.initialFocus) {
+                    const childToFocus = this.findNodeById(this, this.componentDef.initialFocus);
                     if (childToFocus instanceof Node) {
                         childToFocus.setNodeFocus(interpreter, true);
                         return this.isFocusable();
@@ -1265,14 +1270,12 @@ export class Node extends RoSGNode implements BrsValue {
      */
     protected callFunction(interpreter: Interpreter, functionName: BrsString, ...functionArgs: BrsType[]): BrsType {
         // We need to search the callee's environment for this function rather than the caller's.
-        let componentDef = sgRoot.nodeDefMap.get(this.nodeSubtype.toLowerCase());
-
         // Only allow public functions (defined in the interface) to be called.
-        if (componentDef && functionName.value in componentDef.functions) {
+        if (this.componentDef && this.funcNames.has(functionName.value.toLowerCase())) {
             return interpreter.inSubEnv((subInterpreter) => {
                 let functionToCall = subInterpreter.getCallableFunction(functionName.value);
                 if (!(functionToCall instanceof Callable)) {
-                    BrsDevice.stderr.write(`Ignoring attempt to call non-implemented function ${functionName}`);
+                    BrsDevice.stderr.write(`warning,Ignoring attempt to call non-implemented function ${functionName}`);
                     return BrsInvalid.Instance;
                 }
 
@@ -1312,11 +1315,11 @@ export class Node extends RoSGNode implements BrsValue {
                     }
                     return reason.value || BrsInvalid.Instance;
                 }
-            }, componentDef.environment);
+            }, this.componentDef.environment);
         }
 
         BrsDevice.stderr.write(
-            `Warning calling function in ${this.nodeSubtype}: no function interface specified for ${functionName}`
+            `warning,Warning calling function in ${this.nodeSubtype}: no function interface specified for ${functionName}`
         );
         return BrsInvalid.Instance;
     }
