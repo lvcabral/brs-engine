@@ -1268,11 +1268,12 @@ export class Node extends RoSGNode implements BrsValue {
         let componentDef = sgRoot.nodeDefMap.get(this.nodeSubtype.toLowerCase());
 
         // Only allow public functions (defined in the interface) to be called.
-        if (componentDef && functionName.value in componentDef.functions) {
+        const lowCaseFuncNames = Object.keys(componentDef?.functions ?? {}).map((name) => name.toLowerCase());
+        if (componentDef && lowCaseFuncNames.includes(functionName.value.toLowerCase())) {
             return interpreter.inSubEnv((subInterpreter) => {
                 let functionToCall = subInterpreter.getCallableFunction(functionName.value);
                 if (!(functionToCall instanceof Callable)) {
-                    BrsDevice.stderr.write(`Ignoring attempt to call non-implemented function ${functionName}`);
+                    BrsDevice.stderr.write(`warning,Ignoring attempt to call non-implemented function ${functionName}`);
                     return BrsInvalid.Instance;
                 }
 
@@ -1316,7 +1317,7 @@ export class Node extends RoSGNode implements BrsValue {
         }
 
         BrsDevice.stderr.write(
-            `Warning calling function in ${this.nodeSubtype}: no function interface specified for ${functionName}`
+            `warning,Warning calling function in ${this.nodeSubtype}: no function interface specified for ${functionName}`
         );
         return BrsInvalid.Instance;
     }

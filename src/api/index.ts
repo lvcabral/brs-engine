@@ -787,17 +787,18 @@ function handleRegistryUpdate(registry: RegistryData) {
  * @param message String message from the interpreter
  */
 function handleStringMessage(message: string) {
-    if (message.startsWith("audio,")) {
+    const event = message.split(",")[0];
+    if (event === "audio") {
         handleAudioEvent(message);
-    } else if (message.startsWith("sfx,")) {
+    } else if (event === "sfx") {
         handleSfxEvent(message);
-    } else if (message.startsWith("video,")) {
+    } else if (event === "video") {
         handleVideoEvent(message);
-    } else if (message.startsWith("print,")) {
+    } else if (event === "print") {
         deviceDebug(message);
-    } else if (["warning", "error", "debug"].includes(message.split(",")[0])) {
+    } else if (["warning", "error", "debug"].includes(event)) {
         deviceDebug(`${message}\r\n`);
-    } else if (message.startsWith("command,")) {
+    } else if (event === "command") {
         const command = message.slice(8);
         const enable = command === "continue";
         enableSendKeys(enable);
@@ -805,7 +806,7 @@ function handleStringMessage(message: string) {
         switchSoundState(enable);
         switchVideoState(enable);
         notifyAll("debug", { level: command });
-    } else if (message.startsWith("start,")) {
+    } else if (event === "start") {
         const title = currentApp.title;
         const beaconMsg = "[scrpt.ctx.run.enter] UI: Entering";
         const subName = message.split(",")[1];
@@ -813,9 +814,9 @@ function handleStringMessage(message: string) {
         deviceDebug(`beacon,${getNow()} ${beaconMsg} '${title}', id '${currentApp.id}'\r\n`);
         statsUpdate(true);
         notifyAll("started", currentApp);
-    } else if (message.startsWith("end,")) {
+    } else if (event === "end") {
         terminate(getExitReason(message.slice(4)));
-    } else if (message.startsWith("syslog,")) {
+    } else if (event === "syslog") {
         const type = message.slice(7);
         if (type === "bandwidth.minute") {
             bandwidthMinute = true;
@@ -828,9 +829,9 @@ function handleStringMessage(message: string) {
         } else if (type === "http.connect") {
             httpConnectLog = true;
         }
-    } else if (message === "reset") {
+    } else if (message.trim() === "reset") {
         notifyAll("reset");
-    } else if (message.startsWith("version,")) {
+    } else if (event === "version") {
         notifyAll("version", message.slice(8));
     }
 }
