@@ -795,9 +795,7 @@ function handleStringMessage(message: string) {
         handleVideoEvent(message);
     } else if (message.startsWith("print,")) {
         deviceDebug(message);
-    } else if (message.startsWith("warning,")) {
-        deviceDebug(`${message}\r\n`);
-    } else if (message.startsWith("error,")) {
+    } else if (["warning", "error", "debug"].includes(message.split(",")[0])) {
         deviceDebug(`${message}\r\n`);
     } else if (message.startsWith("command,")) {
         const command = message.slice(8);
