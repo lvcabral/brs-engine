@@ -230,6 +230,8 @@ export class FileSystem {
      * Sets the volume information for ext1: volume.
      * @param label Volume label
      * @param type Volume type (e.g., "path", "zip")
+     * @param totalSpace Total space in bytes (block size is 1 byte)
+     * @param uuid Volume UUID
      */
     private setExtInfo(label: string, type: string, totalSpace: number, uuid: string) {
         const ua = uuid.split("-");
