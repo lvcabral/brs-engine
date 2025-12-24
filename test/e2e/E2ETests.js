@@ -5,7 +5,8 @@ const brs = require("../../packages/node/bin/brs.node");
 const { createPayloadFromFiles, createPayloadFromFileMap, executeFile } = brs;
 const { BrightScriptExtension } = require("../../packages/node/bin/brs-sg.node");
 
-brs.registerCallback(() => {}); // register a callback to avoid display errors
+// register a callback to avoid display errors - comment out to see the errors
+brs.registerCallback(() => {});
 
 const deviceData = {
     audioCodecs: audioCodecs(),

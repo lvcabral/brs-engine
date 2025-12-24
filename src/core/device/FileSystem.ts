@@ -82,13 +82,17 @@ export class FileSystem {
     ) {
         const fsConfig = { mounts: {}, caseFold: "lower" as const };
         // Basic mounts: common:, tmp:, cachefs:, pkg:
+        if (zenFS.mounts.has("/common:")) zenFS.umount("common:");
         Object.assign(fsConfig.mounts, { "common:": { backend: Zip, data: commonZip } });
+        if (zenFS.mounts.has("/tmp:")) zenFS.umount("tmp:");
         Object.assign(fsConfig.mounts, { "tmp:": { backend: zenFS.SingleBuffer, buffer: tmp } });
+        if (zenFS.mounts.has("/cachefs:")) zenFS.umount("cachefs:");
         Object.assign(fsConfig.mounts, { "cachefs:": { backend: zenFS.SingleBuffer, buffer: cacheFS } });
         if (root && pkgZip === undefined) {
             this._root = root;
             this.pfs = nodeFS;
         } else {
+            if (zenFS.mounts.has("/pkg:")) zenFS.umount("pkg:");
             this.pfs = zenFS.fs;
             if (pkgZip) {
                 Object.assign(fsConfig.mounts, { "pkg:": { backend: Zip, data: pkgZip } });
