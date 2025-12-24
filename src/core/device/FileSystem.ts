@@ -153,8 +153,10 @@ export class FileSystem {
             });
             zenFS.mount("ext1:", extVol);
             const usage = extVol.usage();
-            const dataView = new Uint8Array(extZip);
-            const uuid = uuidv5(dataView, uuidv5.URL);
+            const maxBytesForUuid = 4096;
+            const subsetLength = Math.min(maxBytesForUuid, extZip.byteLength);
+            const uuidData = new Uint8Array(extZip, 0, subsetLength);
+            const uuid = uuidv5(uuidData, uuidv5.URL);
             this.setExtInfo("Zip Storage", "zip", usage.totalSpace, uuid);
             return true;
         } catch (err: any) {
@@ -229,13 +231,13 @@ export class FileSystem {
      * @param label Volume label
      * @param type Volume type (e.g., "path", "zip")
      */
-    private setExtInfo(label: string, type: string, space: number, uuid: string) {
+    private setExtInfo(label: string, type: string, totalSpace: number, uuid: string) {
         const ua = uuid.split("-");
         this.volumes.set("ext1:", {
-            blocks: space,
+            blocks: totalSpace,
             blocksize: 1,
             freeblocks: 0,
-            usedblocks: space,
+            usedblocks: totalSpace,
             mounttime: Date.now(),
             label: label,
             type: type,
