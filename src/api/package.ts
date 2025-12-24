@@ -369,3 +369,11 @@ export function umountExt() {
     notifyAll("mount", 0);
     notifyAll("debug", "[package] External storage unmounted.");
 }
+
+/**
+ * Checks if external storage is mounted.
+ * @returns True if external storage is mounted, false otherwise
+ */
+export function isMountedExt() {
+    return extMounted;
+}

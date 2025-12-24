@@ -109,9 +109,12 @@ export class RoFileSystem extends BrsComponent implements BrsValue {
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter, pathArg: BrsString) => {
-            let result = {};
-            if (this.brsFS.existsSync(pathArg.value)) {
-                result = { blocks: 0, blocksize: 0, freeblocks: 0, usedblocks: 0 };
+            let result: FlexObject = {};
+            if (validUri(pathArg.value)) {
+                result = { blocks: 0, blocksize: 0, freeblocks: 0, usedblocks: 0, mounttime: 0 };
+                const volume = getVolume(pathArg.value);
+                const volInfo = BrsDevice.fileSystem.getVolumeInfo(volume);
+                result = volInfo ?? result;
             }
             return toAssociativeArray(result);
         },
