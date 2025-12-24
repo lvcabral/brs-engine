@@ -43,6 +43,7 @@ import {
     subscribePackage,
     setupDeepLink,
     getModelType,
+    isMountedExt,
 } from "./package";
 import {
     subscribeDisplay,
@@ -543,6 +544,7 @@ function loadSourceCode(fileName: string, fileData: any) {
             source.push(this.result);
             paths.push({ url: `source/${fileName}`, id: 0, type: "source" });
             clearDisplay(true);
+            Atomics.store(sharedArray, DataType.EVE, isMountedExt() ? 1 : 0);
             runApp(createPayload(Date.now()));
         } else {
             apiException("error", `[api] Invalid data type in ${fileName}: ${typeof this.result}`);

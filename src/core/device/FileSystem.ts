@@ -9,12 +9,24 @@ import * as path from "path";
 import * as zenFS from "@lvcabral/zenfs";
 import * as nodeFS from "fs";
 import { Zip } from "@lvcabral/zip";
+import { v5 as uuidv5 } from "uuid";
+
+type VolumeInfo = {
+    blocks: number;
+    blocksize: number;
+    freeblocks: number;
+    usedblocks: number;
+    mounttime?: number;
+    label?: string;
+    type?: string;
+    uuid?: string;
+};
 
 /** Proxy Object to make File System volumes case insensitive, same as Roku devices */
-
 export class FileSystem {
     private readonly paths: Map<string, string>;
     private readonly callbacks: Map<string, Function>;
+    private readonly volumes: Map<string, VolumeInfo>;
     private readonly mfs: typeof zenFS.fs; // common:
     private readonly tfs: typeof zenFS.fs; // tmp:
     private readonly cfs: typeof zenFS.fs; // cachefs:
@@ -29,6 +41,12 @@ export class FileSystem {
     constructor() {
         this.paths = new Map<string, string>();
         this.callbacks = new Map<string, Function>();
+        this.volumes = new Map<string, VolumeInfo>();
+        const defaultInfo = { blocks: 0, blocksize: 0, freeblocks: 0, usedblocks: 0 };
+        this.volumes.set("pkg:", defaultInfo);
+        this.volumes.set("tmp:", defaultInfo);
+        this.volumes.set("cachefs:", defaultInfo);
+        this.volumes.set("common:", defaultInfo);
         this.pfs = zenFS.fs;
         this.xfs = zenFS.fs;
         this.mfs = zenFS.fs;
@@ -63,25 +81,10 @@ export class FileSystem {
         ext?: string
     ) {
         const fsConfig = { mounts: {}, caseFold: "lower" as const };
-        // common: volume
-        if (zenFS.mounts.has("/common:")) {
-            zenFS.umount("common:");
-        }
+        // Basic mounts: common:, tmp:, cachefs:, pkg:
         Object.assign(fsConfig.mounts, { "common:": { backend: Zip, data: commonZip } });
-        // tmp: volume
-        if (zenFS.mounts.has("/tmp:")) {
-            zenFS.umount("tmp:");
-        }
         Object.assign(fsConfig.mounts, { "tmp:": { backend: zenFS.SingleBuffer, buffer: tmp } });
-        // cachefs: volume
-        if (zenFS.mounts.has("/cachefs:")) {
-            zenFS.umount("cachefs:");
-        }
         Object.assign(fsConfig.mounts, { "cachefs:": { backend: zenFS.SingleBuffer, buffer: cacheFS } });
-        // pkg: volume
-        if (zenFS.mounts.has("/pkg:")) {
-            zenFS.umount("pkg:");
-        }
         if (root && pkgZip === undefined) {
             this._root = root;
             this.pfs = nodeFS;
@@ -93,19 +96,14 @@ export class FileSystem {
                 Object.assign(fsConfig.mounts, { "pkg:": { backend: zenFS.InMemory } });
             }
         }
-        // ext1: volume
-        if (zenFS.mounts.has("/ext1:")) {
-            zenFS.umount("ext1:");
-        }
-        if (ext?.length) {
-            this._ext = ext;
-            this.xfs = nodeFS;
-        } else if (extZip) {
-            this.xfs = zenFS.fs;
-            Object.assign(fsConfig.mounts, { "ext1:": { backend: Zip, data: extZip } });
-        }
-        // Apply configuration
+        // Apply basic configuration
         zenFS.configureSync(fsConfig);
+        // ext1: volume
+        if (ext?.length) {
+            this.setExt(ext);
+        } else if (extZip) {
+            this.mountExt(extZip);
+        }
     }
 
     /**
@@ -127,6 +125,15 @@ export class FileSystem {
     }
 
     /**
+     * Gets volume information for a given volume.
+     * @param volume Volume name (e.g., "pkg:", "tmp:", "ext1:")
+     * @returns VolumeInfo object or undefined if not found
+     */
+    getVolumeInfo(volume: string) {
+        return this.volumes.get(volume);
+    }
+
+    /**
      * Mounts the ext1: volume from a zip file.
      * @param extZip ArrayBufferLike with the ext1: volume zip file data.
      * @returns True if mounted successfully, false otherwise.
@@ -145,6 +152,10 @@ export class FileSystem {
                 caseFold: "lower" as const,
             });
             zenFS.mount("ext1:", extVol);
+            const usage = extVol.usage();
+            const dataView = new Uint8Array(extZip);
+            const uuid = uuidv5(dataView, uuidv5.URL);
+            this.setExtInfo("Zip Storage", "zip", usage.totalSpace, uuid);
             return true;
         } catch (err: any) {
             postMessage(`error,[FileSystem] Error mounting ext1 volume: ${err.message}`);
@@ -160,6 +171,7 @@ export class FileSystem {
             zenFS.umount("ext1:");
         }
         this._ext = undefined;
+        this.volumes.delete("ext1:");
         this.xfs = zenFS.fs;
         this.notifyAll("ext1:");
     }
@@ -208,6 +220,27 @@ export class FileSystem {
     setExt(ext: string) {
         this._ext = ext;
         this.xfs = nodeFS;
+        const uuid = uuidv5(ext, uuidv5.URL);
+        this.setExtInfo("Path Storage", "path", 0, uuid);
+    }
+
+    /**
+     * Sets the volume information for ext1: volume.
+     * @param label Volume label
+     * @param type Volume type (e.g., "path", "zip")
+     */
+    private setExtInfo(label: string, type: string, space: number, uuid: string) {
+        const ua = uuid.split("-");
+        this.volumes.set("ext1:", {
+            blocks: space,
+            blocksize: 1,
+            freeblocks: 0,
+            usedblocks: space,
+            mounttime: Date.now(),
+            label: label,
+            type: type,
+            uuid: ua.length > 2 ? `${ua[1]}-${ua[2]}`.toUpperCase() : undefined,
+        });
     }
 
     /**
