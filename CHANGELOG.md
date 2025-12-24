@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+<a name="v2.0.3"></a>
+
+## [v2.0.3 - Mount External Volume Dynamically](https://github.com/lvcabral/brs-engine/releases/tag/v2.0.3) - 24 December 2025
+
+This release introduces the ability to dynamically mount and unmount the `ext1:` volume, along with several bug fixes and improvements to the SceneGraph extension.
+
+## Release Changes
+
+* (brs) Closes #773 Add support to dynamically mount/unmount `ext1:` volume by [@lvcabral](https://github.com/lvcabral) in [#793](https://github.com/lvcabral/brs-engine/pull/793)
+* (brs) Changed `roFileSystem.getVolumeInfo()` to properly return `ext1:/` information by [@lvcabral](https://github.com/lvcabral) in [#797](https://github.com/lvcabral/brs-engine/pull/797)
+* (chore) Improved console logging and removed debug messages from production lib by [@lvcabral](https://github.com/lvcabral) in [#788](https://github.com/lvcabral/brs-engine/pull/788)
+* (chore) Fixed broken links on README.md files by [@lvcabral](https://github.com/lvcabral) in [#789](https://github.com/lvcabral/brs-engine/pull/789)
+* Changes on `brs-scenegraph` package (release v0.0.3):
+  * (rsg) Implemented support for `change` field in `Node` by [@lvcabral](https://github.com/lvcabral) in [#790](https://github.com/lvcabral/brs-engine/pull/790)
+  * (rsg) Changed `Task` to update existing `Node` fields to preserve references by [@lvcabral](https://github.com/lvcabral) in [#792](https://github.com/lvcabral/brs-engine/pull/792)
+  * (rsg) Fixed `Node` environment `hostNode` initialization by [@lvcabral](https://github.com/lvcabral) in [#794](https://github.com/lvcabral/brs-engine/pull/794)
+  * (rsg) Fixed `Node.callFunc()` to not be case sensitive by [@lvcabral](https://github.com/lvcabral) in [#796](https://github.com/lvcabral/brs-engine/pull/796)
+  * (chore) Renamed factory modules by [@lvcabral](https://github.com/lvcabral) in [#791](https://github.com/lvcabral/brs-engine/pull/791)
+
+[Full Changelog][v2.0.3]
+
 <a name="v2.0.2"></a>
 
 ## [v2.0.2 - Various Fixes and Improvements](https://github.com/lvcabral/brs-engine/releases/tag/v2.0.2) - 12 December 2025
@@ -1270,6 +1291,7 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
+[v2.0.3]: https://github.com/lvcabral/brs-engine/compare/v2.0.2...v2.0.3
 [v2.0.2]: https://github.com/lvcabral/brs-engine/compare/v2.0.1...v2.0.2
 [v2.0.1]: https://github.com/lvcabral/brs-engine/compare/v2.0.0...v2.0.1
 [v2.0.0]: https://github.com/lvcabral/brs-engine/compare/v1.10.0...v2.0.0
