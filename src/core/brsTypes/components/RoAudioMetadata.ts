@@ -170,7 +170,7 @@ export class RoAudioMetadata extends BrsComponent implements BrsValue {
                         const fileSize = this.fileData.byteLength;
                         const headerSize = section._section?.offset ?? 0;
                         const bitrate = section.header?.bitrate ?? 48;
-                        const length = Math.round(((fileSize - headerSize) * 8) / (bitrate * 1000));
+                        const length = bitrate > 0 ? Math.round(((fileSize - headerSize) * 8) / (bitrate * 1000)) : 0;
                         const sampleRate = audioProps[1]?.header?.samplingRate ?? 0;
                         const channels = audioProps[1]?.header?.channelModeBits === "11" ? 1 : 2;
                         properties.length = length;
