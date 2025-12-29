@@ -32,6 +32,7 @@ BrightScript Simulation Engine CLI
 
 Options:
   -a, --ascii <columns>     Enable ASCII screen mode with # of columns.
+  -u, --unicode             Render ASCII screen mode using Unicode block characters.
   -c, --colors <level>      Define the console color level (0 to disable). (default: 3)
   -d, --debug               Open the micro debugger if the app crashes.
   -e, --ecp                 Enable the ECP server for control simulation.
@@ -109,12 +110,13 @@ $ brs-cli ../tests/test-sandbox.zip
 ### Showing Screen as ASCII Rendering on the Terminal
 
 If you pass the `--ascii <columns>` option, the CLI will run the application and show a representation of the screen bitmap as ASCII rendering on the terminal screen.
+Use the optional `--unicode` flag to render the output using Unicode block characters for smoother gradients. If `--unicode` is provided without `--ascii`, it will calculate the columns based on the terminal width and height.
 
 ```console
 $ brs-cli ../apps/collisions.zip --ascii 170
 ```
 
-The `<columns>` defines the width in number of character columns, the height will follow the screen proportion.
+The `<columns>` defines the width in number of character columns, the height will follow the screen proportion, if not provided, it will try to fit the terminal size.
 
 <p align="center"><img alt="Screen Rendering as ASCII Art" title="Screen Rendering as ASCII Art" src="images/screen-as-ascii-art.gif?raw=true"/></p>
 

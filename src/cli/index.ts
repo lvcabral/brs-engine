@@ -14,11 +14,12 @@ import readline from "node:readline";
 import { Worker } from "node:worker_threads";
 import { gateway4sync } from "default-gateway";
 import envPaths from "env-paths";
-import { Canvas, ImageData, createCanvas } from "canvas";
+import { ImageData, createCanvas } from "canvas";
 import chalk from "chalk";
 import { Command } from "commander";
 import stripAnsi from "strip-ansi";
 import { deviceData, loadAppZip, updateAppZip, subscribePackage, mountExt, setupDeepLink } from "./package";
+import { deriveMaxColumns, renderAsciiFrame, renderUnicodeFrame, printFrame } from "./display";
 import { isNumber } from "../api/util";
 import {
     DebugPrompt,
@@ -45,7 +46,7 @@ const loadModule = typeof __non_webpack_require__ === "function" ? __non_webpack
 const program = new Command();
 const paths = envPaths("brs", { suffix: "cli" });
 const defaultLevel = chalk.level;
-const maxColumns = Math.max(process.stdout.columns, 32);
+const maxColumns = deriveMaxColumns();
 const length = DataBufferIndex + DataBufferSize;
 const BrsDevice = brs.BrsDevice;
 
@@ -66,6 +67,7 @@ program
     .description(`${packageInfo.title} CLI`)
     .arguments(`brs-cli [brsFiles...]`)
     .option("-a, --ascii <columns>", "Enable ASCII screen mode with # of columns.")
+    .option("-u, --unicode", "Render ASCII screen mode using Unicode block characters.", false)
     .option("-c, --colors <level>", "Define the console color level (0 to disable).", defaultLevel)
     .option("-d, --debug", "Open the micro debugger if the app crashes.", false)
     .option("-e, --ecp", "Enable the ECP server for control simulation.", false)
@@ -136,6 +138,8 @@ function checkParameters() {
                 chalk.yellow(`Invalid # of columns! Valid values are >=32, using current width: ${program.ascii}.`)
             );
         }
+    } else if (program.unicode) {
+        program.ascii = maxColumns;
     }
     if (program.root && !fs.existsSync(program.root)) {
         console.error(chalk.red(`Root path not found: ${program.root}\n`));
@@ -537,7 +541,12 @@ function messageCallback(message: any, _?: any) {
         canvas.width = message.width;
         canvas.height = message.height;
         ctx.putImageData(message, 0, 0);
-        printAsciiScreen(program.ascii, canvas);
+        const columns = typeof program.ascii === "number" && program.ascii > 0 ? program.ascii : maxColumns;
+        if (program.unicode) {
+            printFrame(renderUnicodeFrame(columns, canvas));
+        } else {
+            printFrame(renderAsciiFrame(columns, canvas));
+        }
     } else if (isRegistryData(message)) {
         if (program.ecp) {
             brsWorker?.postMessage(message.current);
@@ -627,46 +636,4 @@ function printHelp() {
     helpMsg += "   exit|quit|q       Terminate REPL session\r\n\r\n";
     helpMsg += "   Type any valid BrightScript expression for a live compile and run.\r\n";
     process.stdout.write(chalk.cyanBright(helpMsg));
-}
-
-/**
- * Converts and prints an image as ASCII art on the console.
- * Uses grayscale values to map pixels to ASCII characters.
- * @param columns - The number of columns for ASCII output
- * @param image - The Canvas object containing the screen image
- * @remarks Code adapted from: https://github.com/victorqribeiro/imgToAscii
- */
-function printAsciiScreen(columns: number, image: Canvas) {
-    const alphabet = ["@", "%", "#", "*", "+", "=", "-", ":", ".", " "];
-    const ratio = (image.width / image.height) * 1.7;
-    let string = "";
-    let stringColor = "";
-    let cols = Math.min(columns, maxColumns);
-    let lines = Math.trunc(cols / ratio);
-    const canvas = createCanvas(cols, lines);
-    const ctx = canvas.getContext("2d");
-    if (ctx) {
-        ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        let grayStep = Math.ceil(255 / alphabet.length);
-        for (let i = 0; i < imageData.data.length; i += 4) {
-            for (let j = 0; j < alphabet.length; j++) {
-                let r = imageData.data[i];
-                let g = imageData.data[i + 1];
-                let b = imageData.data[i + 2];
-                if (r * 0.2126 + g * 0.7152 + b * 0.0722 < (j + 1) * grayStep) {
-                    const char = alphabet[j];
-                    string += char;
-                    stringColor += chalk.rgb(r, g, b)(char);
-                    break;
-                }
-            }
-            if (!((i / 4 + 1) % canvas.width)) {
-                string += "\n";
-                stringColor += "\n";
-            }
-        }
-        process.stdout.write(`\x1b[H\u001B[?25l${program.colors ? stringColor : string}`);
-        process.stdout.write(`\u001B[?25h`); // show cursor
-    }
 }
