@@ -20,13 +20,7 @@ function loadRenderer() {
     const moduleExports = { exports: {} };
     const compiled = new Function("exports", "require", "module", "__filename", "__dirname", outputText);
 
-    compiled(
-        moduleExports.exports,
-        Module.createRequire(filePath),
-        moduleExports,
-        filePath,
-        path.dirname(filePath)
-    );
+    compiled(moduleExports.exports, Module.createRequire(filePath), moduleExports, filePath, path.dirname(filePath));
 
     return moduleExports.exports;
 }

@@ -54,7 +54,7 @@ export function deriveMaxColumns() {
     const boundedColumns = candidates.length > 0 ? Math.min(...candidates) : 0;
     const fallback = widthLimit || heightLimit || 0;
     const derived = boundedColumns || fallback;
-    return derived>0 ? Math.max(derived, MIN_COLUMNS) : FALLBACK_COLUMNS;
+    return derived > 0 ? Math.max(derived, MIN_COLUMNS) : FALLBACK_COLUMNS;
 }
 
 /**
