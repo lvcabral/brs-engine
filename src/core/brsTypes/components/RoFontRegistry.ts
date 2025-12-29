@@ -168,12 +168,12 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
             const fontObj = opentype.parse(fontData.buffer);
             // Get font metrics
             if (
-                typeof fontObj?.names === "undefined" ||
+                fontObj?.names === undefined ||
                 typeof fontObj.ascender !== "number" ||
                 typeof fontObj.descender !== "number" ||
                 typeof fontObj.unitsPerEm !== "number" ||
-                typeof fontObj.tables?.head === "undefined" ||
-                typeof fontObj.tables?.hhea === "undefined"
+                fontObj.tables?.head === undefined ||
+                fontObj.tables?.hhea === undefined
             ) {
                 if (BrsDevice.isDevMode) {
                     BrsDevice.stderr.write(`warning,Error parsing font file: ${fontPath}`);
