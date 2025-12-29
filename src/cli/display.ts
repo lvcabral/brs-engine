@@ -81,10 +81,6 @@ export function renderAsciiFrame(columns: number, image: Canvas): RenderFrameRes
     const canvas = createCanvas(cols, rows);
     const ctx = canvas.getContext("2d");
 
-    if (!ctx) {
-        return { plain: "", colored: "", columns: cols, rows };
-    }
-
     ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
     const { data, width, height } = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const grayStep = Math.ceil(255 / ASCII_ALPHABET.length);
@@ -145,10 +141,6 @@ export function renderUnicodeFrame(columns: number, image: Canvas): RenderFrameR
     const rows = clampRows(cols, computeDisplayRatio(image));
     const canvas = createCanvas(cols, Math.max(2, rows * 2));
     const ctx = canvas.getContext("2d");
-
-    if (!ctx) {
-        return { plain: "", colored: "", columns: cols, rows };
-    }
 
     ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
     const { data, width, height } = ctx.getImageData(0, 0, canvas.width, canvas.height);
