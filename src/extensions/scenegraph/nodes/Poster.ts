@@ -119,7 +119,10 @@ export class Poster extends Group {
     private updateRect(rect: Rect) {
         const bitmapHeight = this.bitmap?.height ?? 0;
         const bitmapWidth = this.bitmap?.width ?? 0;
-        if (this.resolution !== BrsDevice.getDisplayMode()) {
+        if (this.resolution === BrsDevice.getDisplayMode()) {
+            rect.height = rect.height <= 0 ? bitmapHeight : rect.height;
+            rect.width = rect.width <= 0 ? bitmapWidth : rect.width;
+        } else {
             // Roku scales the Poster bitmap based on the current display mode
             if (this.resolution === "FHD") {
                 rect.height = rect.height <= 0 ? bitmapHeight * 1.5 : rect.height;
@@ -128,9 +131,6 @@ export class Poster extends Group {
                 rect.height = rect.height <= 0 ? bitmapHeight / 1.5 : rect.height;
                 rect.width = rect.width <= 0 ? bitmapWidth / 1.5 : rect.width;
             }
-        } else {
-            rect.height = rect.height <= 0 ? bitmapHeight : rect.height;
-            rect.width = rect.width <= 0 ? bitmapWidth : rect.width;
         }
     }
 
