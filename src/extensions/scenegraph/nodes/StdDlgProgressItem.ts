@@ -25,7 +25,6 @@ export class StdDlgProgressItem extends Group {
         this.registerInitializedFields(initializedFields);
         this.spinner = new BusySpinner();
         this.gap = this.resolution === "FHD" ? 30 : 20;
-        this.spinner.setPosterUri(`common:/images/${this.resolution}/spinner.png`);
         this.spinner.setValue("control", new BrsString("start"));
         this.appendChildToParent(this.spinner);
         this.label = new Label();

@@ -160,7 +160,6 @@ export class Video extends Group {
         this.trickPlayBar = new TrickPlayBar();
         this.trickPlayBar.setValue("visible", BrsBoolean.False);
         this.spinner = new BusySpinner();
-        this.spinner.setPosterUri(`common:/images/${this.resolution}/spinner.png`);
         this.spinner.setValueSilent("spinInterval", new Float(1));
         this.spinner.setValueSilent("visible", BrsBoolean.False);
         this.spinner.setValue("control", new BrsString("start"));
@@ -169,13 +168,13 @@ export class Video extends Group {
             this.titleText = this.addScrollingLabel("", [102, 60], 1020, 0, "LargeSystemFont");
             this.clockText = this.addLabel("", [1644, 60], 174, 36, 36, "top", "right");
             this.spinner.setTranslation([900, 480]);
-            this.pausedIcon = this.addPoster("common:/images/FHD/video_pause.png", [902, 483]);
+            this.pausedIcon = this.addPoster("common:/images/FHD/video_pause.png", [902, 483], 117, 117);
             this.trickPlayBar.setTranslation([102, 948]);
         } else {
             this.titleText = this.addScrollingLabel("", [68, 40], 680, 0, "LargeSystemFont");
             this.clockText = this.addLabel("", [1096, 40], 116, 24, 24, "top", "right");
             this.spinner.setTranslation([600, 320]);
-            this.pausedIcon = this.addPoster("common:/images/HD/video_pause.png", [602, 322]);
+            this.pausedIcon = this.addPoster("common:/images/HD/video_pause.png", [602, 322], 78, 78);
             this.trickPlayBar.setTranslation([68, 632]);
         }
         this.contentTitles = [];

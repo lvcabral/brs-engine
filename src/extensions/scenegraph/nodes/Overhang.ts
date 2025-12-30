@@ -11,7 +11,6 @@ import {
     isBrsNumber,
     IfDraw2D,
 } from "brs-engine";
-import { sgRoot } from "../SGRoot";
 import { jsValueOf } from "../factory/Serializer";
 import { Label } from "./Label";
 import { Poster } from "./Poster";
@@ -120,7 +119,7 @@ export class Overhang extends Group {
         const color = this.getValueJS("color") as number;
         const logoUri = this.getValueJS("logoUri") as string;
         if (logoUri) {
-            this.setLogoUri(logoUri);
+            this.logo.setValue("uri", new BrsString(logoUri));
         } else if (color) {
             this.copyField(this.backRect, "color");
             this.backRect.setValueSilent("visible", BrsBoolean.True);
@@ -170,25 +169,6 @@ export class Overhang extends Group {
             this.rightDivider.setValue("uri", new BrsString(rightDividerUri));
         }
         this.isDirty = false;
-    }
-
-    private setLogoUri(uri: string) {
-        this.logo.setValue("uri", new BrsString(uri));
-        const loadStatus = this.logo.getValueJS("loadStatus") ?? "";
-        const subSearch = sgRoot.scene?.subSearch ?? "";
-        const uriHasRes = subSearch !== "" && uri.includes(subSearch);
-        if (loadStatus === "ready" && this.resolution !== BrsDevice.getDisplayMode() && !uriHasRes) {
-            const bitmapHeight = this.logo.getValueJS("bitmapHeight") as number;
-            const bitmapWidth = this.logo.getValueJS("bitmapWidth") as number;
-            // Roku scales the logo based on the current display mode
-            if (this.resolution === "FHD") {
-                this.logo.setValue("height", new Float(bitmapHeight * 1.5));
-                this.logo.setValue("width", new Float(bitmapWidth * 1.5));
-            } else {
-                this.logo.setValue("height", new Float(bitmapHeight / 1.5));
-                this.logo.setValue("width", new Float(bitmapWidth / 1.5));
-            }
-        }
     }
 
     private alignChildren() {
