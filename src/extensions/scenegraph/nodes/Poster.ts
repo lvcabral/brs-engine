@@ -10,8 +10,10 @@ import {
     getTextureManager,
     IfDraw2D,
     Rect,
+    BrsDevice,
 } from "brs-engine";
 import { Group } from "./Group";
+import { sgRoot } from "../SGRoot";
 import { rotateTranslation } from "../SGUtil";
 import { brsValueOf, jsValueOf } from "../factory/Serializer";
 
@@ -37,6 +39,7 @@ export class Poster extends Group {
     ];
     protected uri: string = "";
     protected bitmap?: RoBitmap;
+    bitmapSameRes: boolean = false;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.Poster) {
         super([], name);
@@ -53,8 +56,13 @@ export class Poster extends Group {
             if (typeof uri === "string" && uri.trim() !== "" && this.uri !== uri) {
                 this.uri = uri;
                 const loadStatus = this.loadUri(uri);
-                if (loadStatus !== "ready") {
-                    this.loadUri("failedBitmapUri");
+                const subSearch = sgRoot.scene?.subSearch ?? "";
+                if (loadStatus === "ready") {
+                    this.bitmapSameRes = subSearch !== "" && uri.includes(subSearch);
+                } else {
+                    const failedUri = this.getValueJS("failedBitmapUri") as string;
+                    this.loadUri(failedUri);
+                    this.bitmapSameRes = subSearch !== "" && failedUri.includes(subSearch);
                 }
                 super.setValue("loadStatus", new BrsString(loadStatus));
             } else if (typeof uri !== "string" || uri.trim() === "") {
@@ -79,22 +87,25 @@ export class Poster extends Group {
         drawTrans[0] += origin[0];
         drawTrans[1] += origin[1];
         const size = this.getDimensions();
+        const loadStatus = this.getValueJS("loadStatus") as string;
         const rect = { x: drawTrans[0], y: drawTrans[1], width: size.width, height: size.height };
+        if (loadStatus === "ready" && (rect.width <= 0 || rect.height <= 0)) {
+            this.updateRect(rect);
+        }
         const rotation = angle + this.getRotation();
         const displayMode = this.getValueJS("loadDisplayMode") as string;
         opacity = opacity * this.getOpacity();
         if (this.bitmap instanceof RoBitmap && this.bitmap.isValid()) {
-            const loadStatus = this.getValueJS("loadStatus") as string;
             let rgba = this.getValueJS("blendColor");
             let alpha = opacity;
             if (loadStatus === "failed") {
                 rgba = 0xffffffff;
                 alpha = opacity * this.getValueJS("loadingBitmapOpacity");
             }
+            this.bitmap.scaleMode = 1;
             if (displayMode.trim().toLowerCase() === "scaletofit") {
                 this.drawImage(this.bitmap, this.scaleToFit(rect), rotation, alpha, draw2D, rgba);
             } else if (displayMode.trim().toLowerCase() === "scaletozoom") {
-                this.bitmap.scaleMode = 1;
                 draw2D?.doDrawCroppedBitmap(this.bitmap, this.scaleToZoom(rect), rect, rgba, alpha);
             } else {
                 this.drawImage(this.bitmap, rect, rotation, alpha, draw2D, rgba);
@@ -103,6 +114,24 @@ export class Poster extends Group {
         this.updateBoundingRects(rect, origin, rotation);
         this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);
         this.updateParentRects(origin, angle);
+    }
+
+    private updateRect(rect: Rect) {
+        const bitmapHeight = this.bitmap?.height ?? 0;
+        const bitmapWidth = this.bitmap?.width ?? 0;
+        if (this.resolution !== BrsDevice.getDisplayMode() && !this.bitmapSameRes) {
+            // Roku scales the Poster bitmap based on the current display mode
+            if (this.resolution === "FHD") {
+                rect.height =  rect.height <= 0 ? bitmapHeight * 1.5 : rect.height;
+                rect.width = rect.width <= 0 ? bitmapWidth * 1.5 : rect.width;
+            } else {
+                rect.height = rect.height <= 0 ? bitmapHeight / 1.5 : rect.height;
+                rect.width = rect.width <= 0 ? bitmapWidth / 1.5 : rect.width;
+            }
+        } else if (!this.bitmapSameRes) {
+            rect.height = rect.height <= 0 ? bitmapHeight : rect.height;
+            rect.width = rect.width <= 0 ? bitmapWidth : rect.width;
+        }
     }
 
     private loadUri(uri: string): string {

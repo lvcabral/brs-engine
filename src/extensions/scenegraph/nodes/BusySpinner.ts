@@ -24,7 +24,8 @@ export class BusySpinner extends Group {
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
 
-        this.poster = this.addPoster("", [0, 0]);
+        this.poster = this.addPoster(`common:/images/${this.resolution}/spinner.png`, [0, 0]);
+        this.poster.bitmapSameRes = true;
         this.setValueSilent("poster", this.poster);
     }
 
@@ -51,10 +52,6 @@ export class BusySpinner extends Group {
             }
         }
         super.setValue(index, value, alwaysNotify, kind);
-    }
-
-    setPosterUri(uri: string) {
-        this.poster.setValue("uri", new BrsString(uri));
     }
 
     setBlendColor(color: BrsType) {
