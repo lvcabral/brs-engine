@@ -452,9 +452,10 @@ export class ArrayGrid extends Group {
         const itemCompName = this.getValueJS("itemComponentName") ?? "";
         const itemComp = createNodeByType(itemCompName, interpreter);
         if (itemComp instanceof Group) {
-            itemComp.setValueSilent("width", brsValueOf(itemRect.width));
-            itemComp.setValueSilent("height", brsValueOf(itemRect.height));
-            itemComp.setValue("itemContent", content, true);
+            itemComp.setNodeParent(this);
+            itemComp.setValue("width", brsValueOf(itemRect.width));
+            itemComp.setValue("height", brsValueOf(itemRect.height));
+            itemComp.setValue("itemContent", content);
         }
         return itemComp;
     }
