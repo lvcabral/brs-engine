@@ -97,7 +97,7 @@ export class Overhang extends Group {
             this.rightDivider = this.addPoster(divider, [1109, 39], 8, 34);
             this.clockText = this.addLabel("clockColor", [1133, 44], 0, 27, 22, "center");
         }
-        this.logo.bitmapSameRes = true;
+        this.logo.noScaling = true;
         this.backRect.setValueSilent("visible", BrsBoolean.False);
         this.optionsText.setValue("text", new BrsString(BrsDevice.getTerm("for Options")));
         this.clockText.setValue("text", new BrsString(BrsDevice.getTime()));
