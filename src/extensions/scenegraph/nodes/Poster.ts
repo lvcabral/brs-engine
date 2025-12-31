@@ -39,7 +39,7 @@ export class Poster extends Group {
     ];
     protected uri: string = "";
     protected bitmap?: RoBitmap;
-    bitmapSameRes: boolean = false;
+    noScaling: boolean = false;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.Poster) {
         super([], name);
@@ -58,11 +58,11 @@ export class Poster extends Group {
                 const loadStatus = this.loadUri(uri);
                 const subSearch = sgRoot.scene?.subSearch ?? "";
                 if (loadStatus === "ready") {
-                    this.bitmapSameRes = subSearch !== "" && uri.includes(subSearch);
+                    this.noScaling = subSearch !== "" && uri.includes(subSearch);
                 } else {
                     const failedUri = this.getValueJS("failedBitmapUri") as string;
                     this.loadUri(failedUri);
-                    this.bitmapSameRes = subSearch !== "" && failedUri.includes(subSearch);
+                    this.noScaling = subSearch !== "" && failedUri.includes(subSearch);
                 }
                 super.setValue("loadStatus", new BrsString(loadStatus));
             } else if (typeof uri !== "string" || uri.trim() === "") {
@@ -89,7 +89,7 @@ export class Poster extends Group {
         const size = this.getDimensions();
         const loadStatus = this.getValueJS("loadStatus") as string;
         const rect = { x: drawTrans[0], y: drawTrans[1], width: size.width, height: size.height };
-        if (loadStatus === "ready" && !this.bitmapSameRes && (rect.width <= 0 || rect.height <= 0)) {
+        if (loadStatus === "ready" && !this.noScaling && (rect.width <= 0 || rect.height <= 0)) {
             this.updateRect(rect);
         }
         const rotation = angle + this.getRotation();
