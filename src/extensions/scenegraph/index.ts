@@ -47,7 +47,7 @@ export class BrightScriptExtension implements BrsExtension {
         BrsObjects.set("rosgscreen", () => new RoSGScreen(), 0);
         BrsObjects.set(
             "rosgnode",
-            (interpreter: Interpreter, nodeType: BrsString) => createNodeByType(nodeType.value, interpreter),
+            (interpreter: Interpreter, nodeType: BrsString) => createNodeByType(nodeType.getValue(), interpreter),
             1
         );
     }
