@@ -244,7 +244,7 @@ export class Video extends Group {
             if (validControl.includes(control)) {
                 this.checkContentChanged();
                 if (!sgRoot.inTaskThread()) postMessage(`video,${control}`);
-            } else {
+            } else if (control !== "none") {
                 BrsDevice.stderr.write(`warning,${getNow()} [sg.video.cntrl.bad] control field set to invalid value`);
                 return;
             }
