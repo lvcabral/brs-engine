@@ -7,7 +7,6 @@ An interpreter for the BrightScript language that runs Roku apps on browser plat
 [![NPM Version](https://img.shields.io/npm/v/brs-scenegraph?logo=npm&label=brs-scenegraph&color=blue)](https://npmjs.com/package/brs-scenegraph)
 [![Slack](https://img.shields.io/badge/slack-RokuCommunity-4A154B?logo=slack)](https://join.slack.com/t/rokudevelopers/shared_invite/zt-4vw7rg6v-NH46oY7hTktpRIBM_zGvwA)
 
-
 [![License](https://img.shields.io/github/license/lvcabral/brs-engine?logo=github)](https://github.com/lvcabral/brs-engine/blob/master/LICENSE)
 [![Build](https://github.com/lvcabral/brs-engine/actions/workflows/build.yml/badge.svg)](https://github.com/lvcabral/brs-engine/actions/workflows/build.yml)
 [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=lvcabral_brs-emu&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=lvcabral_brs-emu)

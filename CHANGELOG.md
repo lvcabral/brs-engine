@@ -2,13 +2,33 @@
 
 All notable changes to this project will be documented in this file.
 
+<a name="v2.0.4"></a>
+
+## [v2.0.4 - CLI Unicode Rendering](https://github.com/lvcabral/brs-engine/releases/tag/v2.0.4) - 31 December 2025
+
+This release introduces a new Unicode rendering mode for the CLI, along with various bug fixes and improvements to both the CLI and SceneGraph extension.
+
+### Release Changes
+
+* (cli) Added new `unicode` display rendering mode by [@lvcabral](https://github.com/lvcabral) in [#799](https://github.com/lvcabral/brs-engine/pull/799)
+* (brs) Prevented division by zero on `roAudioMetadata` by [@lvcabral](https://github.com/lvcabral) in [#798](https://github.com/lvcabral/brs-engine/pull/798)
+* (brs) Fixed `roFontRegistry` to properly check parsed font metrics by [@lvcabral](https://github.com/lvcabral) in [#800](https://github.com/lvcabral/brs-engine/pull/800)
+* Changes on `brs-scenegraph` package (release v0.0.4):
+  * (rsg) Fixed `Poster` rendering to match Roku's automatic scaling by [@lvcabral](https://github.com/lvcabral) in [#801](https://github.com/lvcabral/brs-engine/pull/801)
+  * (rsg) Fixed `Overhang` default logo scaling by [@lvcabral](https://github.com/lvcabral) in [#802](https://github.com/lvcabral/brs-engine/pull/802)
+  * (rsg) Fixed item component's events on `ArrayGrid` based nodes by [@lvcabral](https://github.com/lvcabral) in [#803](https://github.com/lvcabral/brs-engine/pull/803)
+  * (rsg) Changed `Field` to allow assign `roPath` to a `String` field by [@lvcabral](https://github.com/lvcabral) in [#804](https://github.com/lvcabral/brs-engine/pull/804)
+  * (rsg) Fixed `Task` to prevent crash on updated fields with `null` by [@lvcabral](https://github.com/lvcabral) in [#805](https://github.com/lvcabral/brs-engine/pull/805)
+
+[Full Changelog][v2.0.4]
+
 <a name="v2.0.3"></a>
 
 ## [v2.0.3 - Mount External Volume Dynamically](https://github.com/lvcabral/brs-engine/releases/tag/v2.0.3) - 24 December 2025
 
 This release introduces the ability to dynamically mount and unmount the `ext1:` volume, along with several bug fixes and improvements to the SceneGraph extension.
 
-## Release Changes
+### Release Changes
 
 * (brs) Closes #773 Add support to dynamically mount/unmount `ext1:` volume by [@lvcabral](https://github.com/lvcabral) in [#793](https://github.com/lvcabral/brs-engine/pull/793)
 * (brs) Changed `roFileSystem.getVolumeInfo()` to properly return `ext1:/` information by [@lvcabral](https://github.com/lvcabral) in [#797](https://github.com/lvcabral/brs-engine/pull/797)
@@ -1291,6 +1311,7 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
+[v2.0.4]: https://github.com/lvcabral/brs-engine/compare/v2.0.3...v2.0.4
 [v2.0.3]: https://github.com/lvcabral/brs-engine/compare/v2.0.2...v2.0.3
 [v2.0.2]: https://github.com/lvcabral/brs-engine/compare/v2.0.1...v2.0.2
 [v2.0.1]: https://github.com/lvcabral/brs-engine/compare/v2.0.0...v2.0.1

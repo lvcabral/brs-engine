@@ -2,12 +2,30 @@
 
 All notable changes to `brs-scenegraph` extension will be documented in this file.
 
+<a name="v0.0.4"></a>
+
+## [v0.0.4 - Various Fixes and Improvements](https://github.com/lvcabral/brs-engine/releases/tag/brs-sg-v0.0.4) - 31 December 2025
+
+This release brings several fixes and improvements to the SceneGraph extension for the BrightScript Simulation Engine, including fixes for `Poster` rendering, `Overhang` logo scaling, and enhancements to `ArrayGrid` based nodes and `Field` handling.
+
+### Release Changes
+
+* (rsg) Fixed `Poster` rendering to match Roku's automatic scaling by [@lvcabral](https://github.com/lvcabral) in [#801](https://github.com/lvcabral/brs-engine/pull/801)
+* (rsg) Fixed `Overhang` default logo scaling by [@lvcabral](https://github.com/lvcabral) in [#802](https://github.com/lvcabral/brs-engine/pull/802)
+* (rsg) Fixed item component's events on `ArrayGrid` based nodes by [@lvcabral](https://github.com/lvcabral) in [#803](https://github.com/lvcabral/brs-engine/pull/803)
+* (rsg) Changed `Field` to allow assign `roPath` to a `String` field by [@lvcabral](https://github.com/lvcabral) in [#804](https://github.com/lvcabral/brs-engine/pull/804)
+* (rsg) Fixed `Task` to prevent crash on updated fields with `null` by [@lvcabral](https://github.com/lvcabral) in [#805](https://github.com/lvcabral/brs-engine/pull/805)
+
+[Full Changelog][v0.0.4]
+
 <a name="v0.0.3"></a>
 
 
 ## [v0.0.3 - Node and Task improvements and fixes](https://github.com/lvcabral/brs-engine/releases/tag/brs-sg-v0.0.3) - 24 December 2025
 
 This release brings several fixes and improvements to the SceneGraph extension for the BrightScript Simulation Engine, including support for the `change` field in `Node`, updates to `Task` behavior, and various bug fixes.
+
+### Release Changes
 
 * (rsg) Implemented support for `change` field in `Node` by [@lvcabral](https://github.com/lvcabral) in [#790](https://github.com/lvcabral/brs-engine/pull/790)
 * (rsg) Changed `Task` to update existing `Node` fields to preserve references by [@lvcabral](https://github.com/lvcabral) in [#792](https://github.com/lvcabral/brs-engine/pull/792)
@@ -50,5 +68,6 @@ This first alpha delivers the **SceneGraph** runtime as a standalone extension t
   * Media + utility nodes: `Audio`, `Video`, `SoundEffect`, `Task`, `Timer`, `ChannelStore`.
 * Published merged `assets/common.zip` so SceneGraph fonts, locale data, dialogs, and imagery are available through the simulated `common:/` volume in both `brs-engine` and `brs-node` packages.
 
+[v0.0.4]: https://github.com/lvcabral/brs-engine/compare/brs-sg-v0.0.3...brs-sg-v0.0.4
 [v0.0.3]: https://github.com/lvcabral/brs-engine/compare/brs-sg-v0.0.2...brs-sg-v0.0.3
 [v0.0.2]: https://github.com/lvcabral/brs-engine/compare/brs-sg-v0.0.1...brs-sg-v0.0.2

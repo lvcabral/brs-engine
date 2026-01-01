@@ -34,7 +34,7 @@ The **BrightScript Engine** implements the BrightScript language specification u
   * If the instance of `roVideoPlayer` or `Video` is destroyed the video keeps playing, make sure to `stop` before discarding the object.
   * The following `roVideoPlayer` methods are not supported, implemented as mock: `setCGMS`, `setMaxVideoDecodeResolution`, `setTimedMetadataForKeys`, `getCaptionRenderer`
   * Check what formats (container and codec) can be used on each browser, using `roDeviceInfo.canDecodeVideo()`, to make sure your video can be played.
-  * Subtitles are only supported for HLS streams and only in `Video` node, the `roVideoPlayer` does not support subtitles for now.
+  * Subtitles are only supported for HLS streams and only in `Video` node, the `roVideoPlayer` does not support subtitles until `roCaptionRenderer` is implemented.
   * BIF (Base Index Frames) thumbnails are not yet supported.
   * DASH streams are not yet supported.
 * The component `roUrlTransfer` is implemented with basic functionality but with the following limitations:

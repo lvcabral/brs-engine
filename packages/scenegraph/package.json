@@ -1,6 +1,6 @@
 {
     "name": "brs-scenegraph",
-    "version": "0.0.3",
+    "version": "0.0.4",
     "description": "SceneGraph addon for BrightScript Simulation Engine",
     "author": "Marcelo Lv Cabral <marcelo@lvcabral.com> (https://lvcabral.com/)",
     "license": "MIT",
@@ -39,7 +39,7 @@
         "prepublishOnly": "npm-run-all --serial clean release"
     },
     "dependencies": {
-        "brs-engine": "^2.0.3",
+        "brs-engine": "^2.0.4",
         "xmldoc": "^1.3.0",
         "p-settle": "^5.1.1"
     },
