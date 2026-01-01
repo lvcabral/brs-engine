@@ -242,7 +242,7 @@ export class Task extends Node {
             // Apply update
             const oldValue = node.getValue(update.field);
             let value: BrsType;
-            if (oldValue instanceof Node && update.value["_node_"] && oldValue.address === update.value["_address_"]) {
+            if (oldValue instanceof Node && update.value?._node_ && oldValue.address === update.value._address_) {
                 // Update existing node to preserve references
                 value = updateSGNode(update.value, oldValue);
             } else {
