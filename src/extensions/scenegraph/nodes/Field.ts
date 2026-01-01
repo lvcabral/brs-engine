@@ -24,6 +24,7 @@ import {
     Interpreter,
     Scope,
     BlockEnd,
+    isStringComp,
 } from "brs-engine";
 import { Node } from "./Node";
 import { RoSGNodeEvent } from "../events/RoSGNodeEvent";
@@ -144,6 +145,8 @@ export class Field {
             (isBrsBoolean(this.value) && isBrsString(value))
         ) {
             return true;
+        } else if (this.type === FieldKind.String && isStringComp(value)) {
+            return true;
         } else if (this.type === FieldKind.Rect2D && value instanceof RoArray) {
             return value.elements.length === 4 && value.elements.every((element) => isAnyNumber(element));
         } else if (this.type === FieldKind.Rect2D && value instanceof RoAssociativeArray) {
@@ -246,6 +249,8 @@ export class Field {
             value = new RoArray([value]);
         } else if (this.type === FieldKind.Rect2D) {
             value = this.convertRect2D(value);
+        } else if (this.type === FieldKind.String && isStringComp(value)) {
+            value = new BrsString(value.getValue());
         }
         if (isBoxable(value)) {
             value = value.box();
