@@ -1,17 +1,32 @@
-import { BrsBoolean, BrsString, BrsValue, ValueKind } from "../BrsType";
+import { BrsBoolean, BrsString, BrsValue, Uninitialized, ValueKind } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsType, RoArray, RoList } from "..";
+import { BrsType, isStringComp, RoArray, RoList } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
+import { RuntimeError, RuntimeErrorDetail } from "../../error/BrsError";
 
 export class RoRegex extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
+    // 'x' flag is not implemented yet.
     readonly supportedFlags = "gims";
     private jsRegex: RegExp;
 
-    constructor(expression: BrsString, flags = new BrsString("")) {
+    constructor(expression: BrsType, flags: BrsType = new BrsString("")) {
         super("roRegex");
-        this.jsRegex = new RegExp(expression.value, this.parseFlags(flags.value));
+        if (!isStringComp(expression)) {
+            throw new RuntimeError(
+                expression instanceof Uninitialized
+                    ? RuntimeErrorDetail.UninitializedVariable
+                    : RuntimeErrorDetail.TypeMismatch
+            );
+        } else if (!isStringComp(flags)) {
+            throw new RuntimeError(
+                flags instanceof Uninitialized
+                    ? RuntimeErrorDetail.UninitializedVariable
+                    : RuntimeErrorDetail.TypeMismatch
+            );
+        }
+        this.jsRegex = new RegExp(expression.getValue(), this.parseFlags(flags.getValue()));
 
         this.registerMethods({
             ifRegex: [this.isMatch, this.match, this.replace, this.replaceAll, this.split, this.matchAll],
@@ -37,18 +52,11 @@ export class RoRegex extends BrsComponent implements BrsValue {
         if (inputFlags.length === 0) {
             return parsedFlags;
         }
-
         for (const flag of inputFlags) {
-            if (flag === "x") {
-                // 'x' flag is not implemented yet, ignoring flag.
-                continue;
-            } else if (!this.supportedFlags.includes(flag)) {
-                throw new Error(`${flag} is not supported.`);
-            } else {
+            if (this.supportedFlags.includes(flag)) {
                 parsedFlags += flag;
             }
         }
-
         return parsedFlags;
     }
 

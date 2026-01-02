@@ -1,4 +1,5 @@
-import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid, Comparable } from "../BrsType";
+import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid, Comparable, Uninitialized } from "../BrsType";
+import { RuntimeError, RuntimeErrorDetail } from "../../error/BrsError";
 import { BrsComponent } from "./BrsComponent";
 import { BrsType, RoAssociativeArray, isStringComp, toAssociativeArray } from "..";
 import { Callable, StdlibArgument } from "../Callable";
@@ -12,9 +13,16 @@ export class RoPath extends BrsComponent implements BrsValue, Comparable {
     private parsedUrl: URL;
     private valid: boolean = false;
 
-    constructor(pathName: BrsString) {
+    constructor(pathName: BrsType) {
         super("roPath");
-        this.parsedUrl = this.setPath(pathName.value);
+        if (!isStringComp(pathName)) {
+            throw new RuntimeError(
+                pathName instanceof Uninitialized
+                    ? RuntimeErrorDetail.UninitializedVariable
+                    : RuntimeErrorDetail.TypeMismatch
+            );
+        }
+        this.parsedUrl = this.setPath(pathName.getValue());
         this.registerMethods({
             ifPath: [this.change, this.isValid, this.split],
             ifString: [this.setString, this.getString],

@@ -1,8 +1,9 @@
-import { BrsValue, ValueKind, BrsString, BrsInvalid, BrsBoolean } from "../BrsType";
+import { BrsValue, ValueKind, BrsString, BrsInvalid, BrsBoolean, Uninitialized } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsType } from "..";
+import { BrsType, isStringComp } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
+import { RuntimeError, RuntimeErrorDetail } from "../../error/BrsError";
 import { Int32 } from "../Int32";
 import { DataType, DefaultSounds } from "../../common";
 import { BrsDevice } from "../../device/BrsDevice";
@@ -16,27 +17,35 @@ export class RoAudioResource extends BrsComponent implements BrsValue {
     private currentIndex: number;
     private playing: boolean;
 
-    constructor(name: BrsString) {
+    constructor(name: BrsType) {
         super("roAudioResource");
+        if (!isStringComp(name)) {
+            throw new RuntimeError(
+                name instanceof Uninitialized
+                    ? RuntimeErrorDetail.UninitializedVariable
+                    : RuntimeErrorDetail.TypeMismatch
+            );
+        }
         this.maxStreams = BrsDevice.deviceInfo.maxSimulStreams;
         this.valid = true;
-        const sfxIndex = BrsDevice.sfx.indexOf(name.value.toLowerCase());
+        const sfxName = name.getValue();
+        const sfxIndex = BrsDevice.sfx.indexOf(sfxName.toLowerCase());
         if (sfxIndex > -1) {
             this.audioId = sfxIndex;
         } else {
             try {
-                this.valid = BrsDevice.fileSystem.existsSync(name.value);
+                this.valid = BrsDevice.fileSystem.existsSync(sfxName);
                 if (this.valid) {
                     this.audioId = BrsDevice.sfx.length;
-                    postMessage(`sfx,new,${name.value},${this.audioId}`);
-                    BrsDevice.sfx.push(name.value.toLowerCase());
+                    postMessage(`sfx,new,${sfxName},${this.audioId}`);
+                    BrsDevice.sfx.push(sfxName.toLowerCase());
                 }
             } catch (err: any) {
-                BrsDevice.stderr.write(`error,Error loading audio file: ${name.value} - ${err.message}`);
+                BrsDevice.stderr.write(`error,Error loading audio file: ${sfxName} - ${err.message}`);
                 this.valid = false;
             }
         }
-        this.audioName = name.value;
+        this.audioName = sfxName;
         this.currentIndex = 0;
         this.playing = false;
         this.registerMethods({
