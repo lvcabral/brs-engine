@@ -325,7 +325,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             if (err instanceof Stmt.ReturnValue) {
                 results = [err.value ?? BrsInvalid.Instance];
             } else if (err instanceof BrsError) {
-                const backTrace = this.formatBacktrace(err.location, true, err.backTrace);
+                const backTrace = this.formatBacktrace(err.location ?? this.location, true, err.backTrace);
                 throw new Error(`${err.format()}\nBackTrace:\n${backTrace}`, { cause: err });
             } else {
                 throw err;
@@ -1970,12 +1970,13 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
     /**
      * Returns the backtrace formatted as a string or an array.
-     * @param loc The location of the error
+     * @param loc Optional location of the error, defaults to current location
      * @param asString If true returns the backtrace as a string, otherwise as RoArray
      * @param bt Optional backtrace array, defaults to current stack
      * @returns String or RoArray with the formatted backtrace
      */
-    formatBacktrace(loc: Location, asString = true, bt?: TracePoint[]): RoArray | string {
+    formatBacktrace(loc?: Location, asString = true, bt?: TracePoint[]): RoArray | string {
+        loc ??= this.location;
         const backTrace = bt ?? this._stack;
         let debugMsg = "";
         const btArray: BrsType[] = [];
@@ -2120,7 +2121,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
      * @returns RoAssociativeArray containing error details (backtrace, message, number, etc.)
      */
     private formatErrorVariable(err: BrsError) {
-        const btArray = this.formatBacktrace(err.location, false, err.backTrace) as RoArray;
+        const btArray = this.formatBacktrace(err.location ?? this.location, false, err.backTrace) as RoArray;
         let errDetail = RuntimeErrorDetail.Internal;
         let errMessage = err.message;
         if (err instanceof RuntimeError) {

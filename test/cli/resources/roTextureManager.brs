@@ -17,7 +17,7 @@ sub Main()
     resized = false
 
     for i = 0 to 1
-        msg = msgport.GetMessage()
+        msg = wait(0, msgport)
         if type(msg) = "roTextureRequestEvent"
             print "msg id";msg.GetId()
             print "msg state:";msg.GetState()

@@ -40,6 +40,11 @@ export const CreateObject = new Callable("CreateObject", {
             try {
                 return ctor(interpreter, ...additionalArgs);
             } catch (err: any) {
+                if (err instanceof RuntimeError) {
+                    err.location ??= interpreter.location;
+                    err.backTrace ??= interpreter.stack.slice(0, -1);
+                    interpreter.addError(err);
+                }
                 BrsDevice.stderr.write(`error,${err.message} ${interpreter.formatLocation()}`);
             }
         }

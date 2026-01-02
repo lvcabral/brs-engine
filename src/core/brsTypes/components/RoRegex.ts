@@ -6,12 +6,13 @@ import { Interpreter } from "../../interpreter";
 
 export class RoRegex extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
+    // 'x' flag is not implemented yet.
     readonly supportedFlags = "gims";
     private jsRegex: RegExp;
 
     constructor(expression: BrsString, flags = new BrsString("")) {
         super("roRegex");
-        this.jsRegex = new RegExp(expression.value, this.parseFlags(flags.value));
+        this.jsRegex = new RegExp(expression.getValue(), this.parseFlags(flags.getValue()));
 
         this.registerMethods({
             ifRegex: [this.isMatch, this.match, this.replace, this.replaceAll, this.split, this.matchAll],
@@ -37,18 +38,11 @@ export class RoRegex extends BrsComponent implements BrsValue {
         if (inputFlags.length === 0) {
             return parsedFlags;
         }
-
         for (const flag of inputFlags) {
-            if (flag === "x") {
-                // 'x' flag is not implemented yet, ignoring flag.
-                continue;
-            } else if (!this.supportedFlags.includes(flag)) {
-                throw new Error(`${flag} is not supported.`);
-            } else {
+            if (this.supportedFlags.includes(flag)) {
                 parsedFlags += flag;
             }
         }
-
         return parsedFlags;
     }
 

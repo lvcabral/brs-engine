@@ -1,6 +1,6 @@
 import { BrsValue, ValueKind, BrsString, BrsInvalid, BrsBoolean } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsType, Double } from "..";
+import { BrsType, Double, isStringComp } from "..";
 import { Callable } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
@@ -56,16 +56,16 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
         this.name = name ?? "";
         this.scaleMode = 0; // Valid: 0=fast 1=smooth (maybe slow)
         let image;
-        if (param instanceof ArrayBuffer || param instanceof Buffer) {
+        if (param instanceof ArrayBuffer || param instanceof Buffer || param instanceof Uint8Array) {
             image = param;
-        } else if (param instanceof BrsString) {
+        } else if (isStringComp(param)) {
             try {
-                image = BrsDevice.fileSystem?.readFileSync(param.value);
+                image = BrsDevice.fileSystem?.readFileSync(param.getValue());
                 this.alphaEnable = false;
-                this.name = param.value;
+                this.name = param.getValue();
             } catch (err: any) {
                 if (BrsDevice.isDevMode) {
-                    BrsDevice.stderr.write(`error,Error loading bitmap:${param.value} - ${err.message}`);
+                    BrsDevice.stderr.write(`error,Error loading bitmap:${param.getValue()} - ${err.message}`);
                 }
                 this.valid = false;
             }

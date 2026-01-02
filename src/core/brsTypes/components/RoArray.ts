@@ -1,4 +1,16 @@
-import { BrsType, isBrsString, isBrsNumber, Int32, Float, isBoxedNumber, isBoxable, isUnboxable } from "..";
+import {
+    BrsType,
+    isBrsString,
+    isBrsNumber,
+    Int32,
+    Float,
+    isBoxedNumber,
+    isBoxable,
+    isUnboxable,
+    isBrsBoolean,
+    isAnyNumber,
+    jsValueOf,
+} from "..";
 import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid, Comparable } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
 import { Callable, StdlibArgument } from "../Callable";
@@ -27,12 +39,8 @@ export class RoArray extends BrsComponent implements BrsValue, BrsArray {
                 this.addChildRef(element);
                 this.elements.push(element);
             }
-        } else if (
-            args.length === 2 &&
-            (args[0] instanceof Int32 || args[0] instanceof Float) &&
-            (args[1] instanceof BrsBoolean || isBrsNumber(args[1]))
-        ) {
-            this.maxSize = args[0].getValue();
+        } else if (args.length === 2 && isAnyNumber(args[0]) && (isBrsBoolean(args[1]) || isAnyNumber(args[1]))) {
+            this.maxSize = jsValueOf(args[0]) as number;
             this.resizable = args[1].toBoolean();
         } else {
             throw new Error(`BRIGHTSCRIPT: ERROR: Runtime: "roArray": invalid number of parameters:`);

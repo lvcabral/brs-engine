@@ -1,8 +1,9 @@
 import { BrsValue, ValueKind, BrsString, BrsBoolean } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsType } from "..";
+import { BrsType, isStringComp } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
+import { RuntimeError, RuntimeErrorDetail } from "../../error/BrsError";
 import { RoArray } from "./RoArray";
 import { RoList } from "./RoList";
 import { RoAssociativeArray } from "./RoAssociativeArray";
@@ -15,7 +16,10 @@ export class RoRegistrySection extends BrsComponent implements BrsValue {
 
     constructor(section: BrsString) {
         super("roRegistrySection");
-        this.section = section.value;
+        if (!isStringComp(section)) {
+            throw new RuntimeError(RuntimeErrorDetail.TypeMismatch);
+        }
+        this.section = section.getValue();
         this.devId = BrsDevice.deviceInfo.developerId;
         this.registerMethods({
             ifRegistrySection: [

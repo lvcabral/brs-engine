@@ -1,8 +1,9 @@
 import { BrsValue, ValueKind, BrsInvalid, BrsBoolean } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsType, Double, Float } from "..";
+import { BrsType, Float, isAnyNumber, jsValueOf } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
+import { RuntimeError, RuntimeErrorDetail } from "../../error/BrsError";
 import { Int32 } from "../Int32";
 import { RoBitmap } from "./RoBitmap";
 import { RoScreen } from "./RoScreen";
@@ -40,32 +41,33 @@ export class RoRegion extends BrsComponent implements BrsValue, BrsDraw2D {
     constructor(bitmap: RoBitmap | RoScreen, x: Int32, y: Int32, width: Int32, height: Int32) {
         super("roRegion");
         this.valid = false;
+        if (
+            !(bitmap instanceof RoBitmap || bitmap instanceof RoScreen) ||
+            !isAnyNumber(x) ||
+            !isAnyNumber(y) ||
+            !isAnyNumber(width) ||
+            !isAnyNumber(height)
+        ) {
+            throw new RuntimeError(RuntimeErrorDetail.TypeMismatch);
+        }
         bitmap.addReference();
         this.bitmap = bitmap;
         this.collisionType = 0; // Valid: 0=All area 1=User defined rect 2=Used defined circle
         this.x = 0;
-        if (x instanceof Float || x instanceof Double || x instanceof Int32) {
-            this.x = Math.trunc(x.getValue());
-        }
+        this.x = Math.trunc(jsValueOf(x));
         this.y = 0;
-        if (y instanceof Float || y instanceof Double || y instanceof Int32) {
-            this.y = Math.trunc(y.getValue());
-        }
+        this.y = Math.trunc(jsValueOf(y));
         this.width = bitmap.width;
-        if (width instanceof Float || width instanceof Double || width instanceof Int32) {
-            this.width = Math.trunc(width.getValue());
-        }
+        this.width = Math.trunc(jsValueOf(width));
         this.height = bitmap.height;
-        if (height instanceof Float || height instanceof Double || height instanceof Int32) {
-            this.height = Math.trunc(height.getValue());
-        }
+        this.height = Math.trunc(jsValueOf(height));
         this.translationX = 0;
         this.translationY = 0;
         this.scaleMode = 0; // Valid: 0=fast 1=smooth (maybe slow)
         this.time = 0;
         this.wrap = false;
-        this.collisionCircle = { x: 0, y: 0, r: width.getValue() }; // TODO: double check Roku default
-        this.collisionRect = { x: 0, y: 0, width: width.getValue(), height: height.getValue() }; // TODO: double check Roku default
+        this.collisionCircle = { x: 0, y: 0, r: this.width };
+        this.collisionRect = { x: 0, y: 0, width: this.width, height: this.height };
         this.alphaEnable = true;
 
         if (this.x + this.width <= bitmap.width && this.y + this.height <= bitmap.height) {

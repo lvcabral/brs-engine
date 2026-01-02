@@ -8,10 +8,12 @@ import {
     BrsValue,
     Int32,
     Uninitialized,
+    isStringComp,
 } from "..";
 import { BrsComponent } from "./BrsComponent";
 import { DefaultCertificatesFile } from "../../common";
 import { Interpreter } from "../../interpreter";
+import { RuntimeError, RuntimeErrorDetail } from "../../error/BrsError";
 import { BrsHttpAgent, IfHttpAgent } from "../interfaces/IfHttpAgent";
 
 export enum RequestState {
@@ -41,7 +43,10 @@ export class RoTextureRequest extends BrsComponent implements BrsValue, BrsHttpA
     constructor(uri: BrsString) {
         super("roTextureRequest");
         this.identity = nextIdentity++;
-        this.uri = uri.value;
+        if (!isStringComp(uri)) {
+            throw new RuntimeError(RuntimeErrorDetail.TypeMismatch);
+        }
+        this.uri = uri.getValue();
         this.async = true;
         this.state = RequestState.Requested;
         this.scaleMode = 0;

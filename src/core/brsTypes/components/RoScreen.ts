@@ -1,10 +1,9 @@
 import { BrsValue, ValueKind, BrsInvalid, BrsBoolean } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsEvent, BrsType, Double, RoUniversalControlEvent } from "..";
+import { BrsEvent, BrsType, isAnyNumber, isBrsBoolean, jsValueOf, RoUniversalControlEvent } from "..";
 import { Callable } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
-import { Float } from "../Float";
 import { RoMessagePort } from "./RoMessagePort";
 import {
     BrsCanvas,
@@ -57,16 +56,16 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         this.width = defaultWidth;
         this.height = defaultHeight;
         this.valid = true;
-        if (width instanceof Float || width instanceof Double || width instanceof Int32) {
-            this.width = Math.trunc(width.getValue());
+        if (width !== undefined && isAnyNumber(width)) {
+            this.width = Math.trunc(jsValueOf(width));
             if (this.width <= 0) {
                 this.width = defaultWidth;
             }
         } else if (width !== undefined) {
             this.valid = false;
         }
-        if (height instanceof Float || height instanceof Double || height instanceof Int32) {
-            this.height = Math.trunc(height.getValue());
+        if (height !== undefined && isAnyNumber(height)) {
+            this.height = Math.trunc(jsValueOf(height));
             if (this.height <= 0) {
                 this.height = defaultHeight;
             }
@@ -74,7 +73,7 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
             this.valid = false;
         }
         this.doubleBuffer = false;
-        if (doubleBuffer instanceof BrsBoolean) {
+        if (doubleBuffer !== undefined && (isBrsBoolean(doubleBuffer) || isAnyNumber(doubleBuffer))) {
             this.doubleBuffer = doubleBuffer.toBoolean();
         } else if (doubleBuffer !== undefined) {
             this.valid = false;

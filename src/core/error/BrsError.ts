@@ -20,7 +20,7 @@ export class BrsError extends Error {
      * @param location - The source code location where the error occurred
      * @param backTrace - Optional array of trace points showing the call stack
      */
-    constructor(message: string, readonly location: Location, public backTrace?: TracePoint[]) {
+    constructor(message: string, public location?: Location, public backTrace?: TracePoint[]) {
         super(message);
     }
 
@@ -44,9 +44,11 @@ export class BrsError extends Error {
      * @param message a string describing the error
      * @param location where the error occurred
      */
-    static format(message: string, location: Location): string {
+    static format(message: string, location?: Location): string {
         let formattedLocation: string;
-
+        if (!location) {
+            return message;
+        }
         if (location.start.line === location.end.line) {
             let columns = `${location.start.column}`;
             if (location.start.column !== location.end.column) {
@@ -54,9 +56,8 @@ export class BrsError extends Error {
             }
             formattedLocation = `${location.file}(${location.start.line},${columns})`;
         } else {
-            formattedLocation = `${location.file}(${location.start.line},${location.start.column},${location.end.line},${location.end.line})`;
+            formattedLocation = `${location.file}(${location.start.line},${location.start.column},${location.end.line},${location.end.column})`;
         }
-
         return `${formattedLocation}: ${message}`;
     }
 }
@@ -75,8 +76,8 @@ export class RuntimeError extends BrsError {
      */
     constructor(
         readonly errorDetail: ErrorDetail,
-        location: Location,
-        readonly backTrace?: TracePoint[],
+        location?: Location,
+        backTrace?: TracePoint[],
         readonly extraFields?: Map<string, BrsType>
     ) {
         super(errorDetail.message, location, backTrace);
