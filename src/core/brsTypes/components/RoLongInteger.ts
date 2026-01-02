@@ -26,7 +26,7 @@ export class RoLongInteger extends BrsComponent implements BrsValue, Unboxable {
     }
 
     toBoolean(): boolean {
-        return this.intrinsic.getValue().low !== 0 || this.intrinsic.getValue().high !== 0;
+        return this.intrinsic.getValue().toNumber() !== 0;
     }
 
     unbox() {
