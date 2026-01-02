@@ -5,14 +5,11 @@ import { BrsType, isBrsNumber } from "..";
 import { Unboxable } from "../Boxing";
 import { Int64 } from "../Int64";
 import { IfToStr } from "../interfaces/IfToStr";
+import Long from "long";
 
 export class RoLongInteger extends BrsComponent implements BrsValue, Unboxable {
     readonly kind = ValueKind.Object;
     private intrinsic: Int64;
-
-    public getValue(): Long {
-        return this.intrinsic.getValue();
-    }
 
     constructor(initialValue: Int64) {
         super("roLongInteger");
@@ -22,6 +19,14 @@ export class RoLongInteger extends BrsComponent implements BrsValue, Unboxable {
             ifLongInt: [this.getLongInt, this.setLongInt],
             ifToStr: [new IfToStr(this).toStr],
         });
+    }
+
+    getValue(): Long {
+        return this.intrinsic.getValue();
+    }
+
+    toBoolean(): boolean {
+        return this.intrinsic.toBoolean();
     }
 
     unbox() {
