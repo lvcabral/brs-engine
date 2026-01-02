@@ -1,8 +1,9 @@
-import { BrsBoolean, BrsString, BrsValue, ValueKind } from "../BrsType";
+import { BrsBoolean, BrsString, BrsValue, Uninitialized, ValueKind } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsType, RoArray, RoList } from "..";
+import { BrsType, isStringComp, RoArray, RoList } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
+import { RuntimeError, RuntimeErrorDetail } from "../../error/BrsError";
 
 export class RoRegex extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -10,8 +11,21 @@ export class RoRegex extends BrsComponent implements BrsValue {
     readonly supportedFlags = "gims";
     private jsRegex: RegExp;
 
-    constructor(expression: BrsString, flags = new BrsString("")) {
+    constructor(expression: BrsType, flags: BrsType = new BrsString("")) {
         super("roRegex");
+        if (!isStringComp(expression)) {
+            throw new RuntimeError(
+                expression instanceof Uninitialized
+                    ? RuntimeErrorDetail.UninitializedVariable
+                    : RuntimeErrorDetail.TypeMismatch
+            );
+        } else if (!isStringComp(flags)) {
+            throw new RuntimeError(
+                flags instanceof Uninitialized
+                    ? RuntimeErrorDetail.UninitializedVariable
+                    : RuntimeErrorDetail.TypeMismatch
+            );
+        }
         this.jsRegex = new RegExp(expression.getValue(), this.parseFlags(flags.getValue()));
 
         this.registerMethods({

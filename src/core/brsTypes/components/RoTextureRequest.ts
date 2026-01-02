@@ -40,11 +40,15 @@ export class RoTextureRequest extends BrsComponent implements BrsValue, BrsHttpA
     cookiesEnabled: boolean;
     certificatesFile: string;
 
-    constructor(uri: BrsString) {
+    constructor(uri: BrsType) {
         super("roTextureRequest");
         this.identity = nextIdentity++;
         if (!isStringComp(uri)) {
-            throw new RuntimeError(RuntimeErrorDetail.TypeMismatch);
+            throw new RuntimeError(
+                uri instanceof Uninitialized
+                    ? RuntimeErrorDetail.UninitializedVariable
+                    : RuntimeErrorDetail.TypeMismatch
+            );
         }
         this.uri = uri.getValue();
         this.async = true;

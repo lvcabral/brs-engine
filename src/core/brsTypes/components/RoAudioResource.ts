@@ -1,4 +1,4 @@
-import { BrsValue, ValueKind, BrsString, BrsInvalid, BrsBoolean } from "../BrsType";
+import { BrsValue, ValueKind, BrsString, BrsInvalid, BrsBoolean, Uninitialized } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
 import { BrsType, isStringComp } from "..";
 import { Callable, StdlibArgument } from "../Callable";
@@ -17,10 +17,14 @@ export class RoAudioResource extends BrsComponent implements BrsValue {
     private currentIndex: number;
     private playing: boolean;
 
-    constructor(name: BrsString) {
+    constructor(name: BrsType) {
         super("roAudioResource");
         if (!isStringComp(name)) {
-            throw new RuntimeError(RuntimeErrorDetail.TypeMismatch);
+            throw new RuntimeError(
+                name instanceof Uninitialized
+                    ? RuntimeErrorDetail.UninitializedVariable
+                    : RuntimeErrorDetail.TypeMismatch
+            );
         }
         this.maxStreams = BrsDevice.deviceInfo.maxSimulStreams;
         this.valid = true;

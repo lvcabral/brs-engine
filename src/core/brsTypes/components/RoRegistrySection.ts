@@ -1,4 +1,4 @@
-import { BrsValue, ValueKind, BrsString, BrsBoolean } from "../BrsType";
+import { BrsValue, ValueKind, BrsString, BrsBoolean, Uninitialized } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
 import { BrsType, isStringComp } from "..";
 import { Callable, StdlibArgument } from "../Callable";
@@ -14,10 +14,14 @@ export class RoRegistrySection extends BrsComponent implements BrsValue {
     readonly section: string;
     readonly devId: string;
 
-    constructor(section: BrsString) {
+    constructor(section: BrsType) {
         super("roRegistrySection");
         if (!isStringComp(section)) {
-            throw new RuntimeError(RuntimeErrorDetail.TypeMismatch);
+            throw new RuntimeError(
+                section instanceof Uninitialized
+                    ? RuntimeErrorDetail.UninitializedVariable
+                    : RuntimeErrorDetail.TypeMismatch
+            );
         }
         this.section = section.getValue();
         this.devId = BrsDevice.deviceInfo.developerId;

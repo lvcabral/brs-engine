@@ -1,4 +1,4 @@
-import { BrsValue, ValueKind, BrsInvalid, BrsBoolean } from "../BrsType";
+import { BrsValue, ValueKind, BrsInvalid, BrsBoolean, Uninitialized } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
 import { BrsType, Float, isAnyNumber, jsValueOf } from "..";
 import { Callable, StdlibArgument } from "../Callable";
@@ -48,7 +48,11 @@ export class RoRegion extends BrsComponent implements BrsValue, BrsDraw2D {
             !isAnyNumber(width) ||
             !isAnyNumber(height)
         ) {
-            throw new RuntimeError(RuntimeErrorDetail.TypeMismatch);
+            const detail =
+                bitmap instanceof Uninitialized
+                    ? RuntimeErrorDetail.UninitializedVariable
+                    : RuntimeErrorDetail.TypeMismatch;
+            throw new RuntimeError(detail);
         }
         bitmap.addReference();
         this.bitmap = bitmap;
