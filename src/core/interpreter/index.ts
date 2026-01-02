@@ -1129,7 +1129,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
     visitCall(expression: Expr.Call) {
         let functionName = "[anonymous function]";
-        // TODO: auto-box
         if (expression.callee instanceof Expr.Variable || expression.callee instanceof Expr.DottedGet) {
             functionName = expression.callee.name.text;
         }
@@ -1149,6 +1148,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         }
 
         functionName = callee.getName();
+        const savedEnvironment = this._environment;
 
         let satisfiedSignature = callee.getFirstSatisfiedSignature(args);
 
@@ -1191,6 +1191,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                         ) {
                             // Enable Micro Debugger on app crash
                             const errNumber = err.errorDetail.errno;
+                            this._environment = savedEnvironment;
                             runDebugger(this, this.location, this.location, err.message, errNumber);
                             this.options.stopOnCrash = false;
                         }
