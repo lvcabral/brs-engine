@@ -24,7 +24,7 @@ export class RoFloat extends BrsComponent implements BrsValue, Unboxable {
     }
 
     toBoolean(): boolean {
-        return this.intrinsic.getValue() !== 0;
+        return this.intrinsic.toBoolean();
     }
 
     unbox() {
