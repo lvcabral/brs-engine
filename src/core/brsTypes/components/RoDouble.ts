@@ -10,10 +10,6 @@ export class RoDouble extends BrsComponent implements BrsValue, Unboxable {
     readonly kind = ValueKind.Object;
     private intrinsic: Double;
 
-    public getValue(): number {
-        return this.intrinsic.getValue();
-    }
-
     constructor(initialValue: Double) {
         super("roDouble");
 
@@ -22,6 +18,14 @@ export class RoDouble extends BrsComponent implements BrsValue, Unboxable {
             ifDouble: [this.getDouble, this.setDouble],
             ifToStr: [new IfToStr(this, "%g").toStr],
         });
+    }
+
+    getValue(): number {
+        return this.intrinsic.getValue();
+    }
+
+    toBoolean(): boolean {
+        return this.intrinsic.getValue() !== 0;
     }
 
     unbox() {

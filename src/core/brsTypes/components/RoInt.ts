@@ -9,10 +9,6 @@ export class RoInt extends BrsComponent implements BrsValue, Unboxable {
     readonly kind = ValueKind.Object;
     private intrinsic: Int32;
 
-    public getValue(): number {
-        return this.intrinsic.getValue();
-    }
-
     constructor(initialValue: Int32) {
         super("roInt");
 
@@ -25,6 +21,14 @@ export class RoInt extends BrsComponent implements BrsValue, Unboxable {
             ifIntOps: [toStr],
             ifToStr: [toStr],
         });
+    }
+
+    getValue(): number {
+        return this.intrinsic.getValue();
+    }
+
+    toBoolean(): boolean {
+        return this.intrinsic.getValue() !== 0;
     }
 
     unbox() {

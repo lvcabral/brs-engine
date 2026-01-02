@@ -10,10 +10,6 @@ export class RoFloat extends BrsComponent implements BrsValue, Unboxable {
     readonly kind = ValueKind.Object;
     private intrinsic: Float;
 
-    public getValue(): number {
-        return this.intrinsic.getValue();
-    }
-
     constructor(initialValue: Float) {
         super("roFloat");
 
@@ -22,6 +18,13 @@ export class RoFloat extends BrsComponent implements BrsValue, Unboxable {
             ifFloat: [this.getFloat, this.setFloat],
             ifToStr: [new IfToStr(this, "%g").toStr],
         });
+    }
+    getValue(): number {
+        return this.intrinsic.getValue();
+    }
+
+    toBoolean(): boolean {
+        return this.intrinsic.getValue() !== 0;
     }
 
     unbox() {
