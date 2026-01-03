@@ -760,13 +760,14 @@ export class Node extends RoSGNode implements BrsValue {
         infoFields?: RoArray
     ) {
         let result = BrsBoolean.False;
-        const field = this.fields.get(fieldName.getValue().toLowerCase());
+        const name = fieldName.getValue();
+        const field = this.fields.get(name.toLowerCase());
         if (field instanceof Field) {
             let callableOrPort: Callable | RoMessagePort | BrsInvalid = BrsInvalid.Instance;
             if (!interpreter.environment.hostNode) {
                 const location = interpreter.formatLocation();
                 BrsDevice.stderr.write(
-                    `warning,BRIGHTSCRIPT: ERROR: roSGNode.ObserveField: "${this.nodeSubtype}.${fieldName.getValue()}" no active host node: ${location}`
+                    `warning,BRIGHTSCRIPT: ERROR: roSGNode.ObserveField: "${this.nodeSubtype}.${name}" no active host node: ${location}`
                 );
             } else if (funcOrPort instanceof BrsString) {
                 callableOrPort = interpreter.getCallableFunction(funcOrPort.getValue());
@@ -1271,11 +1272,12 @@ export class Node extends RoSGNode implements BrsValue {
     protected callFunction(interpreter: Interpreter, functionName: BrsString, ...functionArgs: BrsType[]): BrsType {
         // We need to search the callee's environment for this function rather than the caller's.
         // Only allow public functions (defined in the interface) to be called.
-        if (this.componentDef && this.funcNames.has(functionName.getValue().toLowerCase())) {
+        const name = functionName.getValue();
+        if (this.componentDef && this.funcNames.has(name.toLowerCase())) {
             return interpreter.inSubEnv((subInterpreter) => {
-                let functionToCall = subInterpreter.getCallableFunction(functionName.getValue());
+                let functionToCall = subInterpreter.getCallableFunction(name);
                 if (!(functionToCall instanceof Callable)) {
-                    BrsDevice.stderr.write(`warning,Ignoring attempt to call non-implemented function ${functionName}`);
+                    BrsDevice.stderr.write(`warning,Ignoring attempt to call non-implemented function ${name}`);
                     return BrsInvalid.Instance;
                 }
 
@@ -1291,7 +1293,7 @@ export class Node extends RoSGNode implements BrsValue {
                     if (satisfiedSignature) {
                         const funcLoc = functionToCall.getLocation() ?? interpreter.location;
                         interpreter.addToStack({
-                            functionName: functionName.getValue(),
+                            functionName: name,
                             functionLocation: funcLoc,
                             callLocation: funcLoc,
                             signature: satisfiedSignature.signature,
@@ -1319,7 +1321,7 @@ export class Node extends RoSGNode implements BrsValue {
         }
 
         BrsDevice.stderr.write(
-            `warning,Warning calling function in ${this.nodeSubtype}: no function interface specified for ${functionName.getValue()}`
+            `warning,Warning calling function in ${this.nodeSubtype}: no function interface specified for ${name}`
         );
         return BrsInvalid.Instance;
     }
