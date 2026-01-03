@@ -135,8 +135,7 @@ export class ArrayGrid extends Group {
             super.setValue(index, value, alwaysNotify, kind);
             this.itemComps.length = 0;
             this.refreshContent();
-            const focusedIndex = this.getValueJS("itemFocused") as number;
-            if (value.getNodeChildren().length && focusedIndex < 0) {
+            if (this.content.length > 0) {
                 this.setFocusedItem(0);
             }
             return;
