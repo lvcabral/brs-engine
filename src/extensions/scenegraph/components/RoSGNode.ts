@@ -251,7 +251,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
         },
         impl: (interpreter: Interpreter, key: BrsString, value: BrsType) => {
             this.location = interpreter.formatLocation();
-            this.setValue(key.value, value);
+            this.setValue(key.getValue(), value);
             return Uninitialized.Instance;
         },
     });
@@ -274,7 +274,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, str: BrsString) => {
-            return BrsBoolean.from(this.getElements().some((key) => key.value === str.value.toLowerCase()));
+            return BrsBoolean.from(this.getElements().some((key) => key.getValue() === str.getValue().toLowerCase()));
         },
     });
 
@@ -342,7 +342,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
         },
         impl: (interpreter: Interpreter, fieldName: BrsString, type: BrsString, alwaysNotify: BrsBoolean) => {
             this.location = interpreter.formatLocation();
-            this.addNodeField(fieldName.value, type.value, alwaysNotify.toBoolean());
+            this.addNodeField(fieldName.getValue(), type.getValue(), alwaysNotify.toBoolean());
             return BrsBoolean.True;
         },
     });
@@ -395,7 +395,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
         impl: (interpreter: Interpreter, fieldName: BrsString, data: RoAssociativeArray) => {
             let result: { code: number; msg?: string };
             if (data instanceof RoAssociativeArray) {
-                result = this.moveObjectIntoField(fieldName.value, data);
+                result = this.moveObjectIntoField(fieldName.getValue(), data);
             } else {
                 result = { code: -1, msg: "Move data must be AA" };
             }
@@ -416,7 +416,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             returns: ValueKind.Object,
         },
         impl: (interpreter: Interpreter, fieldName: BrsString) => {
-            const result = this.moveObjectFromField(fieldName.value);
+            const result = this.moveObjectFromField(fieldName.getValue());
             if (typeof result === "string") {
                 const location = interpreter.formatLocation();
                 BrsDevice.stderr.write(`warning,BRIGHTSCRIPT: ERROR: roSGNode.moveFromField: ${result}: ${location}`);
@@ -436,11 +436,11 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             if (sgRoot.inTaskThread() || !(data instanceof RoAssociativeArray)) {
                 return BrsBoolean.False;
             }
-            const result = this.setFieldByRef(fieldName.value, data);
+            const result = this.setFieldByRef(fieldName.getValue(), data);
             if (result < 0) {
                 const location = interpreter.formatLocation();
                 BrsDevice.stderr.write(
-                    `warning,BRIGHTSCRIPT: ERROR: roSGNode.setRef: Could not find field '"${fieldName.value}"': ${location}`
+                    `warning,BRIGHTSCRIPT: ERROR: roSGNode.setRef: Could not find field '"${fieldName.getValue()}"': ${location}`
                 );
             }
             return BrsBoolean.from(result > 0);
@@ -454,7 +454,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, fieldName: BrsString) => {
-            return BrsBoolean.from(this.canGetFieldByRef(fieldName.value));
+            return BrsBoolean.from(this.canGetFieldByRef(fieldName.getValue()));
         },
     });
 
@@ -465,7 +465,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             returns: ValueKind.Dynamic,
         },
         impl: (interpreter: Interpreter, fieldName: BrsString) => {
-            const result = this.getFieldByRef(fieldName.value);
+            const result = this.getFieldByRef(fieldName.getValue());
             if (typeof result === "string" && result.length > 0) {
                 const location = interpreter.formatLocation();
                 BrsDevice.stderr.write(`warning,BRIGHTSCRIPT: ERROR: roSGNode.getRef: ${result}: ${location}`);
@@ -529,7 +529,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, fieldName: BrsString) => {
-            return BrsBoolean.from(this.hasNodeField(fieldName.value));
+            return BrsBoolean.from(this.hasNodeField(fieldName.getValue()));
         },
     });
 
@@ -571,14 +571,15 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             returns: ValueKind.Boolean,
         },
         impl: (interpreter: Interpreter, fieldName: BrsString) => {
+            const name = fieldName.getValue();
             if (!interpreter.environment.hostNode) {
                 const location = interpreter.formatLocation();
                 BrsDevice.stderr.write(
-                    `warning,BRIGHTSCRIPT: ERROR: roSGNode.unObserveField: "${this.nodeSubtype}.${fieldName.value}" no active host node: ${location}`
+                    `warning,BRIGHTSCRIPT: ERROR: roSGNode.unObserveField: "${this.nodeSubtype}.${name}" no active host node: ${location}`
                 );
                 return BrsBoolean.False;
             }
-            this.removeObserver(fieldName.value);
+            this.removeObserver(name);
             // returns true, even if the field doesn't exist
             return BrsBoolean.True;
         },
@@ -653,14 +654,15 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             returns: ValueKind.Boolean,
         },
         impl: (interpreter: Interpreter, fieldName: BrsString) => {
+            const name = fieldName.getValue();
             if (!interpreter.environment.hostNode) {
-                let location = interpreter.formatLocation();
+                const location = interpreter.formatLocation();
                 BrsDevice.stderr.write(
-                    `warning,BRIGHTSCRIPT: ERROR: roSGNode.unObserveFieldScoped: "${this.nodeSubtype}.${fieldName.value}" no active host node: ${location}`
+                    `warning,BRIGHTSCRIPT: ERROR: roSGNode.unObserveFieldScoped: "${this.nodeSubtype}.${name}" no active host node: ${location}`
                 );
                 return BrsBoolean.False;
             }
-            this.removeObserver(fieldName.value, interpreter.environment.hostNode as RoSGNode);
+            this.removeObserver(name, interpreter.environment.hostNode as RoSGNode);
             // returns true, even if the field doesn't exist
             return BrsBoolean.True;
         },
@@ -710,23 +712,24 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             returns: ValueKind.Boolean,
         },
         impl: (interpreter: Interpreter, fieldName: BrsString, value: BrsType) => {
+            const name = fieldName.getValue();
             this.location = interpreter.formatLocation();
             if (
                 !isContentNode(this) &&
-                !this.getElements().some((key) => key.value.toLowerCase() === fieldName.value.toLowerCase())
+                !this.getElements().some((key) => key.getValue().toLowerCase() === name.toLowerCase())
             ) {
                 BrsDevice.stderr.write(
-                    `warning,BRIGHTSCRIPT: ERROR: roSGNode.setField: Tried to set nonexistent field "${fieldName.value}": ${this.location}`
+                    `warning,BRIGHTSCRIPT: ERROR: roSGNode.setField: Tried to set nonexistent field "${name}": ${this.location}`
                 );
                 return BrsBoolean.False;
-            } else if (!this.canAcceptValue(fieldName.value, value)) {
+            } else if (!this.canAcceptValue(name, value)) {
                 BrsDevice.stderr.write(
                     `warning,BRIGHTSCRIPT: ERROR: roSGNode.setField: Type mismatch: ${this.location}`
                 );
                 // Roku always returns true if the field exists
                 return BrsBoolean.True;
             }
-            this.setValue(fieldName.value, value);
+            this.setValue(name, value);
             return BrsBoolean.True;
         },
     });
@@ -778,7 +781,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
                 "EPGLaunchInitiate",
                 "EPGLaunchComplete",
             ];
-            return new Int32(validBeacons.includes(beacon.value) ? 0 : 2);
+            return new Int32(validBeacons.includes(beacon.getValue()) ? 0 : 2);
         },
     });
 
@@ -874,7 +877,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             returns: ValueKind.Object,
         },
         impl: (interpreter: Interpreter, nodeType: BrsString) => {
-            const child = createNodeByType(nodeType.value, interpreter);
+            const child = createNodeByType(nodeType.getValue(), interpreter);
             if (child instanceof RoSGNode) {
                 this.appendChildToParent(child);
             }
@@ -1000,7 +1003,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             const numChildrenValue = num_children.getValue();
             const addedChildren: RoSGNode[] = [];
             for (let i = 0; i < numChildrenValue; i++) {
-                const child = createNodeByType(subtype.value, interpreter);
+                const child = createNodeByType(subtype.getValue(), interpreter);
                 if (child instanceof RoSGNode) {
                     this.appendChildToParent(child);
                     addedChildren.push(child);
@@ -1214,11 +1217,15 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             returns: ValueKind.Dynamic,
         },
         impl: (_: Interpreter, name: BrsString) => {
-            // Roku's implementation returns invalid on empty string
-            if (name.value.length === 0) return BrsInvalid.Instance;
-
-            // perform search
-            return this.findNodeById(this.findRootNode(), name.value);
+            const id = name.getValue();
+            if (id.trim() === "") return BrsInvalid.Instance;
+            // perform search to child nodes
+            let node = this.findNodeById(this, id);
+            if (node instanceof BrsInvalid) {
+                // if not found, search from root
+                node = this.findNodeById(this.findRootNode(), id);
+            }
+            return node;
         },
     });
 
@@ -1233,7 +1240,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, nodeType: BrsString) => {
-            return BrsBoolean.from(isSubtypeCheck(this.nodeSubtype, nodeType.value));
+            return BrsBoolean.from(isSubtypeCheck(this.nodeSubtype, nodeType.getValue()));
         },
     });
 
@@ -1246,7 +1253,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter, nodeType: BrsString) => {
-            const parentType = subtypeHierarchy.get(nodeType.value.toLowerCase());
+            const parentType = subtypeHierarchy.get(nodeType.getValue().toLowerCase());
             if (parentType) {
                 return new BrsString(parentType);
             }
