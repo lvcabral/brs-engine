@@ -882,7 +882,7 @@ export class Node extends RoSGNode implements BrsValue {
     findNodeById(node: Node, id: string): Node | BrsInvalid {
         // test current node in tree
         const myId = node.getValue("id");
-        if (myId?.toString()?.toLowerCase() === id.toLowerCase()) {
+        if (myId?.toString().toLowerCase() === id.toLowerCase()) {
             return node;
         }
         // visit each child
