@@ -140,8 +140,9 @@ export class ZoomRowList extends ArrayGrid {
             this.rowItemComps.length = 0;
             this.rowItemComps.push([]);
             this.refreshContent();
-            const focusedIndex = this.getValueJS("rowFocused") as number;
-            this.setFocusedRow(focusedIndex);
+            if (this.content.length > 0) {
+                this.setFocusedItem(0);
+            }
             return;
         } else if (["jumptorow", "animatetorow"].includes(fieldName) && isBrsNumber(value)) {
             const next = jsValueOf(value) as number;
