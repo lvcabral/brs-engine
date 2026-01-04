@@ -145,6 +145,32 @@ module.exports = (env) => {
             },
         },
         {
+            name: "task",
+            entry: "../../src/cli/task.worker.ts",
+            target: "node",
+            mode: mode,
+            dependencies: ["core"],
+            devtool: sourceMap,
+            module: {
+                rules: [
+                    {
+                        test: /\.tsx?$/,
+                        use: tsLoaders("./tsconfig.cli.json"),
+                        exclude: /node_modules/,
+                    },
+                ],
+            },
+            resolve: sharedResolve,
+            externals: {
+                "./brs.node.js": "commonjs ./brs.node.js",
+                canvas: "commonjs canvas",
+            },
+            output: {
+                filename: libName + ".task.js",
+                path: path.resolve(__dirname, cliPath),
+            },
+        },
+        {
             entry: {},
             mode: "production",
             output: {

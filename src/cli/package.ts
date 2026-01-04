@@ -18,6 +18,7 @@ import {
     Platform,
     ExtVolInitialSize,
     ExtVolMaxSize,
+    SupportedExtension,
 } from "../core/common";
 import SharedObject from "../core/SharedObject";
 import models from "../core/common/models.csv";
@@ -33,6 +34,7 @@ deviceData.serialNumber = getSerialNumber();
 const inputParams: Map<string, string> = new Map();
 export const source: string[] = [];
 export const paths: PkgFilePath[] = [];
+export const extensions: SupportedExtension[] = [];
 export const manifestMap: Map<string, string> = new Map();
 export const currentApp = createAppData();
 
@@ -109,6 +111,7 @@ export function loadAppZip(fileName: string, file: ArrayBuffer, callback: Functi
     srcId = 0;
     source.length = 0;
     paths.length = 0;
+    extensions.length = 0;
 
     if (deviceData.appList?.length === 0) {
         deviceData.appList.push({
@@ -119,8 +122,19 @@ export function loadAppZip(fileName: string, file: ArrayBuffer, callback: Functi
         });
     }
 
+    let hasSceneGraphComponents = false;
     for (const filePath in currentZip) {
         processFile(filePath, currentZip[filePath]);
+        if (filePath.toLowerCase().startsWith("components/") && filePath.toLowerCase().endsWith(".xml")) {
+            hasSceneGraphComponents = true;
+        }
+    }
+    if (
+        hasSceneGraphComponents &&
+        deviceData.extensions instanceof Map &&
+        deviceData.extensions.has(SupportedExtension.SceneGraph)
+    ) {
+        extensions.push(SupportedExtension.SceneGraph);
     }
     callback(createPayload(launchTime));
 }
@@ -240,6 +254,7 @@ export function createPayload(launchTime: number): AppPayload {
         deepLink: inputParams,
         paths: paths,
         source: source,
+        extensions: extensions,
         pkgZip: pkgZip,
         extZip: extZip,
         password: currentApp.password,

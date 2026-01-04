@@ -34,7 +34,15 @@ import {
     DataType,
     ExtVolInitialSize,
     ExtVolMaxSize,
+    isTaskData,
+    TaskData,
+    ThreadUpdate,
+    isThreadUpdate,
+    isNDKStart,
+    NDKStart,
+    RegistryData,
 } from "../core/common";
+import { handleTaskData, handleThreadUpdate, initTaskModule, resetTasks, subscribeTask } from "./task";
 import SharedObject from "../core/SharedObject";
 import packageInfo from "../../packages/node/package.json";
 // @ts-ignore
@@ -58,6 +66,8 @@ let workerReady = false;
 let sharedBuffer = new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT * length);
 let sharedArray = new Int32Array(sharedBuffer);
 sharedArray.fill(-1);
+initTaskModule(sharedBuffer, path.join(__dirname, "brs.task.js"));
+let currentPayload: AppPayload | undefined;
 
 /**
  * CLI program, params definition and action processing.
@@ -104,6 +114,7 @@ program
             await loadSceneGraphExtension();
         }
         subscribePackage("cli", packageCallback);
+        subscribeTask("cli", taskEventCallback);
         brs.registerCallback(messageCallback, sharedBuffer);
         if (brsFiles.length > 0) {
             await runAppFiles(brsFiles);
@@ -282,6 +293,7 @@ async function runApp(payload: AppPayload) {
         return;
     }
     try {
+        currentPayload = payload;
         const pkg = await brs.executeFile(payload);
         if (program.ecp) {
             brsWorker?.terminate();
@@ -313,6 +325,9 @@ async function runApp(payload: AppPayload) {
     } catch (err: any) {
         console.error(chalk.red(`Error executing app: ${err.message}`));
         process.exitCode = 1;
+    } finally {
+        resetTasks();
+        currentPayload = undefined;
     }
 }
 
@@ -548,21 +563,53 @@ function messageCallback(message: any, _?: any) {
             printFrame(renderAsciiFrame(columns, canvas));
         }
     } else if (isRegistryData(message)) {
-        if (program.ecp) {
-            brsWorker?.postMessage(message.current);
-        }
-        if (program.registry) {
-            const strRegistry = JSON.stringify([...message.current]);
-            try {
-                if (!fs.existsSync(paths.data)) {
-                    fs.mkdirSync(paths.data, { recursive: true });
-                }
-                fs.writeFileSync(path.resolve(paths.data, "registry.json"), strRegistry);
-            } catch (err: any) {
-                console.error(chalk.red(err.message));
+        persistRegistry(message);
+    } else if (isTaskData(message)) {
+        handleTaskData(message as TaskData, currentPayload);
+    } else if (isThreadUpdate(message)) {
+        handleThreadUpdate(message as ThreadUpdate);
+    } else if (isNDKStart(message)) {
+        handleNdkStart(message as NDKStart);
+    }
+}
+
+function persistRegistry(registry: RegistryData) {
+    if (program.ecp) {
+        brsWorker?.postMessage(registry.current);
+    }
+    if (program.registry) {
+        const strRegistry = JSON.stringify([...registry.current]);
+        try {
+            if (!fs.existsSync(paths.data)) {
+                fs.mkdirSync(paths.data, { recursive: true });
             }
+            fs.writeFileSync(path.resolve(paths.data, "registry.json"), strRegistry);
+        } catch (err: any) {
+            console.error(chalk.red(err.message));
         }
     }
+}
+
+function taskEventCallback(event: string, data: any) {
+    if (event === "message" && typeof data === "string") {
+        handleStringMessage(data);
+    } else if (event === "registry" && isRegistryData(data)) {
+        persistRegistry(data as RegistryData);
+    } else if (event === "ndkStart" && isNDKStart(data)) {
+        handleNdkStart(data as NDKStart);
+    } else if (event === "debug" && typeof data === "string") {
+        console.debug(chalk.gray(data.trimEnd()));
+    } else if (event === "warning" && typeof data === "string") {
+        console.warn(chalk.yellow(data.trimEnd()));
+    } else if (event === "error" && typeof data === "string") {
+        console.error(chalk.red(data.trimEnd()));
+        process.exitCode = 1;
+    }
+}
+
+function handleNdkStart(data: NDKStart) {
+    const params = Array.isArray(data.params) && data.params.length ? ` (${data.params.join(", ")})` : "";
+    console.info(chalk.cyanBright(`[ndk] ${data.app}${params}`));
 }
 
 /**
