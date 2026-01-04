@@ -101,9 +101,11 @@ export function unionRect(rectChild: Rect, rectParent: Rect) {
  */
 export function convertHexColor(strColor: string): number {
     let color = -1;
+    strColor = strColor.trim();
     if (strColor.length) {
         strColor = strColor.startsWith("#") ? strColor.slice(1) : strColor;
-        strColor = strColor.startsWith("0x") ? strColor.slice(2) : strColor;
+        strColor = strColor.toLowerCase().startsWith("0x") ? strColor.slice(2) : strColor;
+        strColor = strColor.toLowerCase().startsWith("&h") ? strColor.slice(2) : strColor;
         strColor = strColor.padStart(6, "0");
         if (strColor.length === 6) {
             strColor = strColor + "FF";
