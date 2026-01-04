@@ -16,9 +16,10 @@ The **BrightScript Engine** implements the BrightScript language specification u
     * Grids and list nodes based on `ArrayGrid`: `LabelList`, `CheckList`, `RadioButtonList`, `MarkupList`, `MarkupGrid`, `RowList` and `ZoomRowList`
     * Dialog related nodes: `Dialog`, `KeyboardDialog`, `StandardDialog`, `StandardProgressDialog`, `StdDlgProgressItem`, `StdDlgContentArea` and `StdDlgTitleArea`
     * Media related nodes: `Audio`, `SoundEffect`, `Video` and `TrickPlayBar`
+    * Animation related nodes: `AnimationBase`, `Animation`, `SequentialAnimation`, `ParallelAnimation`, `ColorFieldInterpolator`, `FloatFieldInterpolator` and `Vector2DFieldInterpolator`
     * Other supported nodes: `Button`, `ButtonGroup`, `BusySpinner`, `Overhang`, `Keyboard`, `MiniKeyboard`, `TextEditBox` and `ChannelStore`
   * Some of the nodes listed above may not have full functionality yet, please open a [GitHub issue](https://github.com/lvcabral/brs-engine/issues) if you find any problem or missing feature.
-  * The support for animations is not yet implemented, including the focus change animation on grid and list nodes.
+  * The support for focus change animation on grid and list nodes is not yet implemented.
   * All other nodes are either mocked or not implemented yet, and if used will be created as a plain `Node`.
   * The component `roRenderThreadQueue` introduced in Roku OS 15 is still not implemented.
 * The following components are also not implemented yet:
