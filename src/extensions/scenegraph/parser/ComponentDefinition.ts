@@ -104,11 +104,8 @@ export class ComponentDefinition {
             this.name = this.xmlNode.attr.name;
 
             return this;
-        } catch (err) {
-            // TODO: provide better parse error reporting
-            //   cases:
-            //     * file read error
-            //     * XML parse error
+        } catch (err: any) {
+            postMessage(`error,[ComponentDefinition] Error parsing component XML at ${this.xmlPath}: ${err.message}`);
             throw err;
         }
     }
@@ -415,9 +412,9 @@ async function getScriptUri(script: XmlElement, nodeDef: ComponentDefinition): P
  * @returns An object with file, start, and end positions
  */
 function getScriptTagLocation(nodeDef: ComponentDefinition, script: XmlElement) {
-    const tag = nodeDef.contents?.substring(script.startTagPosition, script.position) ?? "";
+    const tag = nodeDef.contents?.substring(script.startTagPosition ?? 0, script.position ?? 0) ?? "";
     const tagLines = tag.split("\n");
-    const leadingLines = nodeDef.contents?.substring(0, script.startTagPosition).split("\n") ?? [];
+    const leadingLines = nodeDef.contents?.substring(0, script.startTagPosition ?? 0).split("\n") ?? [];
     const start = {
         line: leadingLines.length,
         column: columnsInLastLine(leadingLines),
