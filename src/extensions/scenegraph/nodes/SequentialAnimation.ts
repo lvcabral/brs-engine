@@ -2,13 +2,24 @@ import { AAMember, BrsString } from "brs-engine";
 import { AnimationBase } from "./AnimationBase";
 import { SGNodeType } from ".";
 
+/**
+ * Implements Roku's `SequentialAnimation`, launching child animations one at a time and waiting for each
+ * to stop before advancing to the next.
+ */
 export class SequentialAnimation extends AnimationBase {
     private currentChildIndex: number = -1;
 
+    /**
+     * Registers required default fields through the base class.
+     */
     constructor(members: AAMember[] = [], name: string = SGNodeType.SequentialAnimation) {
         super(members, name);
     }
 
+    /**
+     * Intercepts `control` writes so `start` initializes the iteration cursor and `stop` cancels any active
+     * child animation.
+     */
     setValue(index: string, value: any, alwaysNotify: boolean = false) {
         super.setValue(index, value, alwaysNotify);
         if (index.toLowerCase() === "control") {
@@ -23,23 +34,26 @@ export class SequentialAnimation extends AnimationBase {
         }
     }
 
+    /**
+     * Starts the current child animation or loops/restarts the sequence once every child has completed.
+     */
     private playNext() {
         if (this.currentChildIndex >= 0 && this.currentChildIndex < this.children.length) {
             const child = this.children[this.currentChildIndex];
             if (child instanceof AnimationBase) {
                 child.setValue("control", new BrsString("start"));
             }
+        } else if (this.getValueJS("repeat") as boolean) {
+            this.currentChildIndex = 0;
+            this.playNext();
         } else {
-            // Done
-            if (this.getValueJS("repeat") as boolean) {
-                this.currentChildIndex = 0;
-                this.playNext();
-            } else {
-                this.stop();
-            }
+            this.stop();
         }
     }
 
+    /**
+     * Issues a stop command to the child at the current index if one is active.
+     */
     private stopCurrent() {
         if (this.currentChildIndex >= 0 && this.currentChildIndex < this.children.length) {
             const child = this.children[this.currentChildIndex];
@@ -49,6 +63,10 @@ export class SequentialAnimation extends AnimationBase {
         }
     }
 
+    /**
+     * Advances the sequential controller by monitoring the active child's state and starting the next
+     * animation when appropriate. Handles empty child lists gracefully.
+     */
     tick(): boolean {
         if (this._state !== "running") {
             return false;
@@ -74,12 +92,19 @@ export class SequentialAnimation extends AnimationBase {
         return true;
     }
 
+    /**
+     * Stops whatever child is running, resets the cursor, and defers to the base implementation for the
+     * standard lifecycle cleanup.
+     */
     stop() {
         this.stopCurrent();
         this.currentChildIndex = -1;
         super.stop();
     }
 
+    /**
+     * SequentialAnimation does not animate its own fields, so this remains a no-op.
+     */
     protected updateAnimation(fraction: number) {
         // No-op
     }

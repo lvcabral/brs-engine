@@ -3,6 +3,11 @@ import { Interpolator } from "./Interpolator";
 import { SGNodeType } from "../nodes";
 import { FieldModel } from "../SGTypes";
 
+/**
+ * Interpolates ARGB colors across HSV space to mimic Roku's hue-aware blending.
+ * The node reads `key` (fractions) and `keyValue` (colorarray) to emit `Int32`
+ * colors that downstream animations apply to their targets.
+ */
 export class ColorFieldInterpolator extends Interpolator {
     readonly interpolationFields: FieldModel[] = [{ name: "keyValue", type: "colorarray", value: "[]" }];
 
@@ -11,6 +16,9 @@ export class ColorFieldInterpolator extends Interpolator {
         this.registerDefaultFields(this.interpolationFields);
     }
 
+    /**
+     * Produces an ARGB color for the provided fraction by blending between adjacent HSV keyframes.
+     */
     interpolate(fraction: number): BrsType | undefined {
         const keyValues = this.getValueJS("keyValue") as number[];
         if (!Array.isArray(keyValues) || keyValues.length === 0) {
@@ -30,6 +38,10 @@ export class ColorFieldInterpolator extends Interpolator {
         return new Int32(rgba);
     }
 
+    /**
+     * Performs hue-aware interpolation between two packed ARGB colors. Hue wrapping is handled so the
+     * shortest path is taken across the color wheel.
+     */
     private interpolateColor(start: number, end: number, t: number): number {
         const startHsv = this.toHsv(start);
         const endHsv = this.toHsv(end);
@@ -52,6 +64,9 @@ export class ColorFieldInterpolator extends Interpolator {
         return this.fromHsv(hue, saturation, value, alpha);
     }
 
+    /**
+     * Converts a packed ARGB integer into its HSV + alpha representation.
+     */
     private toHsv(color: number): { h: number; s: number; v: number; a: number } {
         const r = ((color >> 24) & 0xff) / 255;
         const g = ((color >> 16) & 0xff) / 255;
@@ -80,6 +95,9 @@ export class ColorFieldInterpolator extends Interpolator {
         return { h: hue, s: saturation, v: max, a };
     }
 
+    /**
+     * Converts HSV + alpha values back into a packed ARGB integer.
+     */
     private fromHsv(h: number, s: number, v: number, alpha: number): number {
         const c = v * s;
         const x = c * (1 - Math.abs(((h / 60) % 2) - 1));

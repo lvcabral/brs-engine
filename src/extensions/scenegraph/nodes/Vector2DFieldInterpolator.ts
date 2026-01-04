@@ -4,6 +4,10 @@ import { SGNodeType } from "../nodes";
 import { FieldModel } from "../SGTypes";
 import { jsValueOf } from "../factory/Serializer";
 
+/**
+ * Interpolates 2D vectors (stored as `RoArray` pairs) so animations can move nodes along a
+ * path in SceneGraph space. Produces a new `RoArray` for each frame to avoid mutating inputs.
+ */
 export class Vector2DFieldInterpolator extends Interpolator {
     readonly interpolationFields: FieldModel[] = [{ name: "keyValue", type: "vector2darray", value: "[]" }];
 
@@ -12,6 +16,10 @@ export class Vector2DFieldInterpolator extends Interpolator {
         this.registerDefaultFields(this.interpolationFields);
     }
 
+    /**
+     * Generates an interpolated 2D point for the supplied fraction. Values are copied to new arrays so
+     * calling code can mutate the result without affecting cached key data.
+     */
     interpolate(fraction: number): BrsType | undefined {
         const keyValues = this.getValue("keyValue");
         if (!(keyValues instanceof RoArray) || keyValues.getElements().length === 0) {

@@ -3,6 +3,10 @@ import { Interpolator } from "./Interpolator";
 import { SGNodeType } from "../nodes";
 import { FieldModel } from "../SGTypes";
 
+/**
+ * Performs piecewise-linear interpolation between numeric keyframes. This mirrors Roku's
+ * `FloatFieldInterpolator`, emitting a `Float` value for each animation tick.
+ */
 export class FloatFieldInterpolator extends Interpolator {
     // Only key is inherited, adding keyValue
     readonly interpolationFields: FieldModel[] = [{ name: "keyValue", type: "floatarray", value: "[]" }];
@@ -12,6 +16,10 @@ export class FloatFieldInterpolator extends Interpolator {
         this.registerDefaultFields(this.interpolationFields);
     }
 
+    /**
+     * Calculates the interpolated float for the provided fraction, falling back to the nearest keyframe
+     * when only a single value exists.
+     */
     interpolate(fraction: number): BrsType | undefined {
         const keyValues = this.getValueJS("keyValue") as number[];
         if (!Array.isArray(keyValues) || keyValues.length === 0) {
