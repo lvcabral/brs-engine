@@ -62,6 +62,12 @@ import {
     TrickPlayBar,
     Video,
     ZoomRowList,
+    Animation,
+    ParallelAnimation,
+    SequentialAnimation,
+    FloatFieldInterpolator,
+    ColorFieldInterpolator,
+    Vector2DFieldInterpolator,
 } from "../nodes";
 import { ComponentDefinition, ComponentNode } from "../parser/ComponentDefinition";
 import { brsValueOf, toSGNode } from "./Serializer";
@@ -198,6 +204,18 @@ export class SGNodeFactory {
                 return new RSGPalette([], name);
             case SGNodeType.ChannelStore.toLowerCase():
                 return new ChannelStore([], name);
+            case SGNodeType.Animation.toLowerCase():
+                return new Animation([], name);
+            case SGNodeType.ParallelAnimation.toLowerCase():
+                return new ParallelAnimation([], name);
+            case SGNodeType.SequentialAnimation.toLowerCase():
+                return new SequentialAnimation([], name);
+            case SGNodeType.FloatFieldInterpolator.toLowerCase():
+                return new FloatFieldInterpolator([], name);
+            case SGNodeType.ColorFieldInterpolator.toLowerCase():
+                return new ColorFieldInterpolator([], name);
+            case SGNodeType.Vector2DFieldInterpolator.toLowerCase():
+                return new Vector2DFieldInterpolator([], name);
             default:
                 if (isSGNodeType(nodeType)) {
                     // Temporarily until all node types are implemented
@@ -776,7 +794,6 @@ export function getBrsValueFromFieldType(type: string, value?: string): BrsType 
         case "vector2d":
         case "rect2d":
         case "boolarray":
-        case "colorarray":
         case "floatarray":
         case "intarray":
         case "stringarray":
@@ -785,6 +802,9 @@ export function getBrsValueFromFieldType(type: string, value?: string): BrsType 
         case "rect2darray":
         case "nodearray":
             returnValue = parseArray(value ?? "");
+            break;
+        case "colorarray":
+            returnValue = parseColorArray(value ?? "");
             break;
         case "roassociativearray":
         case "assocarray":
@@ -817,12 +837,13 @@ export function getBrsValueFromFieldType(type: string, value?: string): BrsType 
  * @returns RoArray with parsed values or empty array if parsing fails
  */
 function parseArray(value: string): RoArray {
-    if (!value?.trim().startsWith("[") || !value?.trim().endsWith("]")) {
+    const trimmed = value?.trim();
+    if (!trimmed?.startsWith("[") || !trimmed.endsWith("]")) {
         return new RoArray([]);
     }
     try {
         // Use JSON.parse to handle nested arrays
-        const parsed = JSON.parse(value);
+        const parsed = JSON.parse(trimmed);
         if (!Array.isArray(parsed)) {
             return new RoArray([]);
         }
@@ -834,4 +855,31 @@ function parseArray(value: string): RoArray {
     } catch {
         return new RoArray([]);
     }
+}
+
+/**
+ * Parses a string representation of a color array into a RoArray of Int32 color values.
+ * Converts each hex color string to an integer using convertHexColor.
+ * Handles BrightScript hex formats: 0xRRGGBBAA, &hRRGGBBAA, #RRGGBBAA
+ * @param value String representation of the color array (e.g., "[ 0xFF10EBFF, 0x10101FFF ]")
+ * @returns RoArray with Int32 color values or empty array if parsing fails
+ */
+function parseColorArray(value: string): RoArray {
+    const trimmed = value?.trim();
+    if (!trimmed?.startsWith("[") || !trimmed.endsWith("]")) {
+        return new RoArray([]);
+    }
+    const content = trimmed.slice(1, -1).trim();
+    if (!content) {
+        return new RoArray([]);
+    }
+    const colorStrings = content.split(",");
+    const colors: Int32[] = [];
+
+    for (const colorStr of colorStrings) {
+        if (colorStr.trim() !== "") {
+            colors.push(new Int32(convertHexColor(colorStr)));
+        }
+    }
+    return new RoArray(colors);
 }

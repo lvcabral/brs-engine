@@ -4,6 +4,7 @@ import { RoSGNode } from "./components/RoSGNode";
 import { Global } from "./nodes/Global";
 import { Scene } from "./nodes/Scene";
 import { Timer } from "./nodes/Timer";
+import { AnimationBase } from "./nodes/AnimationBase";
 import { Audio } from "./nodes/Audio";
 import { SoundEffect } from "./nodes/SoundEffect";
 import { Video } from "./nodes/Video";
@@ -24,6 +25,7 @@ export class SGRoot {
     private readonly _threads: Map<number, ThreadInfo>;
     private readonly _tasks: Task[];
     private readonly _timers: Timer[];
+    private readonly _animations: AnimationBase[];
     private readonly _sfx: (SoundEffect | undefined)[];
     private _audio?: Audio;
     private _video?: Video;
@@ -56,6 +58,11 @@ export class SGRoot {
     get timers(): Timer[] {
         return this._timers;
     }
+
+    get animations(): AnimationBase[] {
+        return this._animations;
+    }
+
     get audio(): Audio | undefined {
         return this._audio;
     }
@@ -83,6 +90,7 @@ export class SGRoot {
         this._sfx = [];
         this._tasks = [];
         this._timers = [];
+        this._animations = [];
         this._threads = new Map<number, ThreadInfo>();
         this._taskId = 0; // Render thread by default
         this._threads.set(this._taskId, { id: genHexAddress(), type: "Render" });
@@ -154,6 +162,21 @@ export class SGRoot {
             }
         }
         return fired;
+    }
+
+    /**
+     * Updates all application animations.
+     * Checks which animations should update and triggers them.
+     * @returns True if any animation updated, false otherwise
+     */
+    processAnimations(): boolean {
+        let updated = false;
+        for (const animation of this._animations) {
+            if (animation.tick()) {
+                updated = true;
+            }
+        }
+        return updated;
     }
 
     /**

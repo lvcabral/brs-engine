@@ -179,6 +179,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         // Handle Scene Events
         if (sgRoot.scene) {
             this.isDirty ||= sgRoot.processTimers();
+            this.isDirty ||= sgRoot.processAnimations();
             this.isDirty ||= sgRoot.processTasks();
             this.isDirty ||= sgRoot.processAudio();
             this.isDirty ||= sgRoot.processSFX();

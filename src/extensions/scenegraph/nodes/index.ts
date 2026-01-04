@@ -41,6 +41,14 @@ export * from "./Timer";
 export * from "./TrickPlayBar";
 export * from "./Video";
 export * from "./ZoomRowList";
+export * from "./AnimationBase";
+export * from "./Animation";
+export * from "./ParallelAnimation";
+export * from "./SequentialAnimation";
+export * from "./Interpolator";
+export * from "./FloatFieldInterpolator";
+export * from "./ColorFieldInterpolator";
+export * from "./Vector2DFieldInterpolator";
 
 /** Enumeration of all SceneGraph node types. */
 export enum SGNodeType {
