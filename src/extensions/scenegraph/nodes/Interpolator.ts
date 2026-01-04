@@ -44,23 +44,48 @@ export abstract class Interpolator extends Node {
             return { index: 0, localT: normalized };
         }
 
-        if (normalized <= keys[0]) {
-            return { index: 0, localT: 0 };
+        const lastIndex = keys.length - 1;
+        const startKey = keys[0];
+        const endKey = keys[lastIndex];
+        const domainSpan = endKey - startKey;
+        const monotonicAscending = endKey >= startKey;
+        let keyFraction = normalized;
+
+        if (domainSpan !== 0 && Number.isFinite(domainSpan)) {
+            keyFraction = startKey + domainSpan * normalized;
         }
 
-        const lastIndex = keys.length - 1;
-        if (normalized >= keys[lastIndex]) {
-            return { index: lastIndex - 1, localT: 1 };
+        if (monotonicAscending) {
+            if (keyFraction <= startKey) {
+                return { index: 0, localT: 0 };
+            }
+            if (keyFraction >= endKey) {
+                return { index: lastIndex - 1, localT: 1 };
+            }
+        } else {
+            if (keyFraction >= startKey) {
+                return { index: 0, localT: 0 };
+            }
+            if (keyFraction <= endKey) {
+                return { index: lastIndex - 1, localT: 1 };
+            }
         }
 
         for (let i = 0; i < lastIndex; i++) {
             const start = keys[i];
             const end = keys[i + 1];
-            if (normalized >= start && normalized <= end) {
-                const span = end - start;
-                const localT = span === 0 ? 0 : (normalized - start) / span;
-                return { index: i, localT };
+            const segmentAscending = end >= start;
+            const inRange = segmentAscending
+                ? keyFraction >= start && keyFraction <= end
+                : keyFraction <= start && keyFraction >= end;
+
+            if (!inRange) {
+                continue;
             }
+
+            const span = end - start;
+            const localT = span === 0 ? 0 : (keyFraction - start) / span;
+            return { index: i, localT };
         }
 
         return { index: lastIndex - 1, localT: 1 };
