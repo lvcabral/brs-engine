@@ -36,7 +36,6 @@ export type FieldModel = {
     hidden?: boolean;
 };
 
-
 /** Represents a field entry with its display name and Field object. */
 export type FieldEntry = {
     name: string;

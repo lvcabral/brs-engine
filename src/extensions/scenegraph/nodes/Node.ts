@@ -157,7 +157,7 @@ export class Node extends RoSGNode implements BrsValue {
             }
         }
         return fieldNames
-            .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()))
+            .toSorted((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()))
             .map((name) => new BrsString(name));
     }
 
