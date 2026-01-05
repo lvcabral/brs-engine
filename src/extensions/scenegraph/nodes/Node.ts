@@ -32,7 +32,7 @@ import {
 import { RoSGNode } from "../components/RoSGNode";
 import { createNodeByType, getBrsValueFromFieldType, subtypeHierarchy } from "../factory/NodeFactory";
 import { Field } from "../nodes/Field";
-import { FieldAlias, FieldKind, FieldModel } from "../SGTypes";
+import { FieldAlias, FieldEntry, FieldKind, FieldModel } from "../SGTypes";
 import { toAssociativeArray, jsValueOf, fromSGNode } from "../factory/Serializer";
 import { sgRoot } from "../SGRoot";
 import { SGNodeType } from ".";
@@ -119,23 +119,26 @@ export class Node extends RoSGNode implements BrsValue {
         if (parent) {
             return `<Component: ${componentName}>`;
         }
-        const systemFields: [string, Field][] = [];
-        const otherFields: [string, Field][] = [];
+        const systemFields: FieldEntry[] = [];
+        const otherFields: FieldEntry[] = [];
         for (const [key, field] of this.fields.entries()) {
             if (field.isHidden()) {
                 continue;
-            } else if (field.isSystem() && !this.aliases.has(key)) {
-                systemFields.push([key, field]);
+            }
+            const alias = this.aliases.get(key);
+            const name = alias ? alias.aliasName : field.getName();
+            if (field.isSystem() && !this.aliases.has(key)) {
+                systemFields.push({ name, field });
                 continue;
             }
-            otherFields.push([key, field]);
+            otherFields.push({ name, field });
         }
-        otherFields.sort((a, b) => a[0].localeCompare(b[0]));
+        otherFields.sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
         const allFields = [...systemFields, ...otherFields];
         return [
             `<Component: ${componentName}> =`,
             "{",
-            ...allFields.map(([key, value]) => `    ${key}: ${value.toString(this)}`),
+            ...allFields.map(({ name, field }) => `    ${name}: ${field.toString(this)}`),
             "}",
         ].join("\n");
     }
@@ -145,9 +148,17 @@ export class Node extends RoSGNode implements BrsValue {
      * @returns Array of BrightScript strings.
      */
     getElements() {
-        return Array.from(this.fields.keys())
-            .sort()
-            .map((key) => new BrsString(key));
+        const fieldNames: string[] = [];
+        for (const [key, field] of this.fields.entries()) {
+            const alias = this.aliases.get(key);
+            const name = alias ? alias.aliasName : field.getName();
+            if (name) {
+                fieldNames.push(name);
+            }
+        }
+        return fieldNames
+            .toSorted((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()))
+            .map((name) => new BrsString(name));
     }
 
     /**
@@ -174,11 +185,15 @@ export class Node extends RoSGNode implements BrsValue {
      */
     protected getNodeFieldsAsAA(): RoAssociativeArray {
         const packagedFields: AAMember[] = [];
-        for (const [name, field] of this.fields) {
+        for (const [key, field] of this.fields.entries()) {
             if (field.isHidden()) {
                 continue;
             }
-            packagedFields.push({ name: new BrsString(name), value: field.getValue() });
+            const alias = this.aliases.get(key);
+            const fieldName = alias ? alias.aliasName : field.getName();
+            if (fieldName) {
+                packagedFields.push({ name: new BrsString(fieldName), value: field.getValue() });
+            }
         }
         return new RoAssociativeArray(packagedFields);
     }
@@ -189,11 +204,15 @@ export class Node extends RoSGNode implements BrsValue {
      */
     protected getNodeFieldTypes(): RoAssociativeArray {
         const packagedFields: AAMember[] = [];
-        for (const [name, field] of this.fields) {
+        for (const [key, field] of this.fields.entries()) {
             if (field.isHidden()) {
                 continue;
             }
-            packagedFields.push({ name: new BrsString(name), value: new BrsString(field.getType()) });
+            const alias = this.aliases.get(key);
+            const fieldName = alias ? alias.aliasName : field.getName();
+            if (fieldName) {
+                packagedFields.push({ name: new BrsString(fieldName), value: new BrsString(field.getType()) });
+            }
         }
         return new RoAssociativeArray(packagedFields);
     }
@@ -312,7 +331,7 @@ export class Node extends RoSGNode implements BrsValue {
         if (!field) {
             // RBI does not create a new field if the value isn't valid.
             if (fieldType && alwaysNotify !== undefined) {
-                field = new Field(value, fieldType, alwaysNotify);
+                field = new Field(index, value, fieldType, alwaysNotify);
                 this.fields.set(mapKey, field);
                 this.notified = true;
                 this.changed = true;
@@ -358,7 +377,7 @@ export class Node extends RoSGNode implements BrsValue {
         } else {
             const fieldType = FieldKind.fromBrsType(value);
             if (fieldType) {
-                field = new Field(value, fieldType, false);
+                field = new Field(fieldName, value, fieldType, false, false, hidden ?? false);
             }
         }
         if (field) {
@@ -412,6 +431,7 @@ export class Node extends RoSGNode implements BrsValue {
                 fieldValue = fieldValue.deepCopy();
             }
             const clonedField = new Field(
+                field.getName(),
                 fieldValue,
                 field.getType(),
                 field.isAlwaysNotify(),
@@ -456,6 +476,7 @@ export class Node extends RoSGNode implements BrsValue {
                     fieldValue = fieldValue.deepCopy(visitedNodes);
                 }
                 fieldObject = new Field(
+                    field.getName(),
                     fieldValue,
                     field.getType(),
                     field.isAlwaysNotify(),
@@ -551,7 +572,7 @@ export class Node extends RoSGNode implements BrsValue {
      */
     addNodeFieldAlias(fieldName: string, field: Field, childNode: string, childField: string) {
         this.fields.set(fieldName.toLowerCase(), field);
-        this.aliases.set(fieldName.toLowerCase(), { nodeId: childNode, fieldName: childField });
+        this.aliases.set(fieldName.toLowerCase(), { nodeId: childNode, fieldName: childField, aliasName: fieldName });
     }
 
     /**
@@ -777,6 +798,11 @@ export class Node extends RoSGNode implements BrsValue {
                 callableOrPort = funcOrPort;
             }
             if (!(callableOrPort instanceof BrsInvalid)) {
+                if (this.aliases.has(name.toLowerCase())) {
+                    fieldName = new BrsString(this.aliases.get(name.toLowerCase())!.fieldName);
+                } else {
+                    fieldName = new BrsString(field.getName());
+                }
                 field.addObserver(scope, interpreter, callableOrPort, this, fieldName, infoFields);
                 result = BrsBoolean.True;
             }
@@ -1349,7 +1375,7 @@ export class Node extends RoSGNode implements BrsValue {
             if (fieldType) {
                 this.fields.set(
                     field.name.toLowerCase(),
-                    new Field(value, fieldType, !!field.alwaysNotify, true, field.hidden)
+                    new Field(field.name, value, fieldType, !!field.alwaysNotify, true, field.hidden)
                 );
             }
         }
@@ -1364,9 +1390,10 @@ export class Node extends RoSGNode implements BrsValue {
      */
     protected registerInitializedFields(fields: AAMember[]) {
         for (const field of fields) {
-            let fieldType = FieldKind.fromBrsType(field.value);
+            const fieldType = FieldKind.fromBrsType(field.value);
             if (fieldType) {
-                this.fields.set(field.name.value.toLowerCase(), new Field(field.value, fieldType, false));
+                const fieldName = field.name.value;
+                this.fields.set(fieldName.toLowerCase(), new Field(fieldName, field.value, fieldType, false));
             }
         }
     }

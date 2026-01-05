@@ -222,13 +222,13 @@ describe("SceneGraph node tests", () => {
 {
     id: "TestNode"
     focusable: false
-    focusedchild: <Component: roInvalid>
+    focusedChild: <Component: roInvalid>
     change: <Component: roAssociativeArray>
-    abc: "abc"
+    ABC: "abc"
     four: 4
     one: 1
     two: 2
-    xyz: "xyz"
+    XYZ: "xyz"
 }`,
             "TestNode",
             " 1",

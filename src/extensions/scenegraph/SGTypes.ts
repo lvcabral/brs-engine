@@ -36,9 +36,17 @@ export type FieldModel = {
     hidden?: boolean;
 };
 
+/** Represents a field entry with its display name and Field object. */
+export type FieldEntry = {
+    name: string;
+    field: Field;
+};
+
+/** Represents an alias for a field on a child node. */
 export type FieldAlias = {
     nodeId: string;
     fieldName: string;
+    aliasName: string;
 };
 
 /** Set of value types that a field could be. */

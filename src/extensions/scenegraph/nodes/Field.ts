@@ -38,9 +38,10 @@ export class Field {
     private readonly scopedObservers: Map<Node, BrsCallback[]> = new Map();
 
     constructor(
+        private readonly name: string = "",
         private value: BrsType,
         private readonly type: FieldKind,
-        private readonly alwaysNotify: boolean,
+        private readonly alwaysNotify: boolean = false,
         private readonly system: boolean = false,
         private hidden: boolean = false,
         private valueRef: boolean = false
@@ -77,6 +78,10 @@ export class Field {
 
     isValueRef() {
         return this.valueRef;
+    }
+
+    getName(): string {
+        return this.name;
     }
 
     getType(): FieldKind {
