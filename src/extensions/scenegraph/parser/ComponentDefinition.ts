@@ -137,7 +137,7 @@ export async function getComponentDefinitionMap(
     const xmlFiles: string[] = [];
     const directories = ["components", ...additionalDirs];
     for (const dir of directories) {
-        const dirPath = `pkg:/${dir.replaceAll(/\\/g, "/")}`;
+        const dirPath = `pkg:/${dir.replaceAll("\\", "/")}`;
         if (fs?.existsSync(dirPath)) {
             xmlFiles.push(...fs.findSync(dirPath, "xml"));
         }

@@ -216,7 +216,7 @@ export class FileSystem {
      */
     setRoot(root: string) {
         if (Platform.inWindows) {
-            root = root.replaceAll(/\\/g, "/");
+            root = root.replaceAll("\\", "/");
         }
         this._root = root;
         this.pfs = nodeFS;
@@ -228,6 +228,9 @@ export class FileSystem {
      * @param ext External storage directory path
      */
     setExt(ext: string) {
+        if (Platform.inWindows) {
+            ext = ext.replaceAll("\\", "/");
+        }
         this._ext = ext;
         this.xfs = nodeFS;
         const uuid = uuidv5(ext, uuidv5.URL);
