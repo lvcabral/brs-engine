@@ -10,6 +10,7 @@ import * as zenFS from "@lvcabral/zenfs";
 import * as nodeFS from "fs";
 import { Zip } from "@lvcabral/zip";
 import { v5 as uuidv5 } from "uuid";
+import { Platform } from "../common";
 
 type VolumeInfo = {
     blocks: number;
@@ -214,6 +215,9 @@ export class FileSystem {
      * @param root Root directory path
      */
     setRoot(root: string) {
+        if (Platform.inWindows) {
+            root = root.replaceAll(/\\/g, "/");
+        }
         this._root = root;
         this.pfs = nodeFS;
     }

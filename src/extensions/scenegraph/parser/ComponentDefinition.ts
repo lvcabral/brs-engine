@@ -6,6 +6,7 @@ import {
     Interpreter,
     BrsInvalid,
     RoAssociativeArray,
+    Platform,
 } from "brs-engine";
 import { ComponentScopeResolver } from "./ComponentScopeResolver";
 import * as path from "path";
@@ -136,7 +137,7 @@ export async function getComponentDefinitionMap(
     const xmlFiles: string[] = [];
     const directories = ["components", ...additionalDirs];
     for (const dir of directories) {
-        const dirPath = path.join("pkg:/", dir);
+        const dirPath = `pkg:/${dir.replaceAll(/\\/g, "/")}`;
         if (fs?.existsSync(dirPath)) {
             xmlFiles.push(...fs.findSync(dirPath, "xml"));
         }
@@ -389,7 +390,7 @@ async function getScriptUri(script: XmlElement, nodeDef: ComponentDefinition): P
             absoluteUri = script.attr.uri;
         } else {
             let posixPath = path.dirname(nodeDef.xmlPath.replaceAll(/[/\\]+/g, path.posix.sep));
-            if (process.platform === "win32") {
+            if (Platform.inWindows) {
                 posixPath = posixPath.replace(/^[a-zA-Z]:/, "");
             }
             absoluteUri = path.join(posixPath, script.attr.uri);
