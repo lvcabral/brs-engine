@@ -178,12 +178,13 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         }
         // Handle Scene Events
         if (sgRoot.scene) {
-            this.isDirty ||= sgRoot.processTimers();
-            this.isDirty ||= sgRoot.processAnimations();
-            this.isDirty ||= sgRoot.processTasks();
-            this.isDirty ||= sgRoot.processAudio();
-            this.isDirty ||= sgRoot.processSFX();
-            this.isDirty ||= sgRoot.processVideo();
+            const timersFired = sgRoot.processTimers();
+            const animUpdated = sgRoot.processAnimations();
+            const tasksUpdated = sgRoot.processTasks();
+            const audioUpdated = sgRoot.processAudio();
+            const sfxUpdated = sgRoot.processSFX();
+            const videoUpdated = sgRoot.processVideo();
+            this.isDirty ||= timersFired || animUpdated || tasksUpdated || audioUpdated || sfxUpdated || videoUpdated;
             // TODO: Optimize rendering by only rendering if there are changes
             sgRoot.scene.renderNode(interpreter, [0, 0], 0, 1, this.draw2D);
             if (sgRoot.scene?.dialog?.getNodeParent() instanceof BrsInvalid) {
