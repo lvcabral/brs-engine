@@ -39,6 +39,7 @@ export type FieldModel = {
 export type FieldAlias = {
     nodeId: string;
     fieldName: string;
+    aliasName: string;
 };
 
 /** Set of value types that a field could be. */
