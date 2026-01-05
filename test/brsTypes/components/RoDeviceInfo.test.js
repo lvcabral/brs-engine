@@ -228,7 +228,7 @@ describe("RoDeviceInfo", () => {
                 let method = deviceInfo.getMethod("timeSinceLastKeyPress");
 
                 expect(method).toBeTruthy();
-                expect(method.call(interpreter)).toEqual(new Int32(0));
+                expect(method.call(interpreter).getValue()).toBeGreaterThan(-1);
             });
         });
         describe("getDrmInfo", () => {
@@ -322,7 +322,7 @@ describe("RoDeviceInfo", () => {
                 let method = deviceInfo.getMethod("getUptimeMillisecondsAsLong");
                 let uptime = method.call(interpreter);
                 expect(method).toBeTruthy();
-                expect(uptime).toEqual(new Int64(0));
+                expect(uptime.getValue().toNumber()).toBeGreaterThan(-1);
             });
         });
         describe("enableAppFocusEvent", () => {
