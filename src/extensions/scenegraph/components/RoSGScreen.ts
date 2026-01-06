@@ -178,6 +178,8 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         }
         // Handle Scene Events
         if (sgRoot.scene) {
+            this.isDirty ||= sgRoot.isDirty;
+            sgRoot.clearDirty();
             const timersFired = sgRoot.processTimers();
             const animUpdated = sgRoot.processAnimations();
             const tasksUpdated = sgRoot.processTasks();
@@ -186,9 +188,12 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
             const videoUpdated = sgRoot.processVideo();
             this.isDirty ||= timersFired || animUpdated || tasksUpdated || audioUpdated || sfxUpdated || videoUpdated;
             // Render Scene and Dialog
-            if (this.isDirty) sgRoot.scene.renderNode(interpreter, [0, 0], 0, 1, this.draw2D);
-            if (sgRoot.scene?.dialog?.getNodeParent() instanceof BrsInvalid) {
-                const dialog = sgRoot.scene.dialog;
+            const showDialog = sgRoot.scene?.dialog?.getNodeParent() instanceof BrsInvalid;
+            if (this.isDirty || showDialog) {
+                sgRoot.scene.renderNode(interpreter, [0, 0], 0, 1, this.draw2D);
+            }
+            if (showDialog) {
+                const dialog = sgRoot.scene.dialog!;
                 dialog.setValueSilent("visible", BrsBoolean.True);
                 const screenRect = { x: 0, y: 0, width: this.width, height: this.height };
                 this.draw2D.doDrawRotatedRect(screenRect, 255, 0, [0, 0], 0.5);

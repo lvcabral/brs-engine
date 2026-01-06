@@ -29,6 +29,7 @@ export class SGRoot {
     private readonly _sfx: (SoundEffect | undefined)[];
     private _audio?: Audio;
     private _video?: Video;
+    private _dirty: boolean = false;
 
     get mGlobal(): Global {
         this._mGlobal ??= new Global([]);
@@ -73,6 +74,10 @@ export class SGRoot {
 
     get taskId(): number {
         return this._taskId;
+    }
+
+    get isDirty(): boolean {
+        return this._dirty;
     }
 
     private audioFlags: number = -1;
@@ -399,6 +404,20 @@ export class SGRoot {
      */
     getRenderThread(): ThreadInfo {
         return this.getThreadInfo(0);
+    }
+
+    /**
+     * Marks the SGRoot as dirty, indicating state changes.
+     */
+    makeDirty() {
+        this._dirty = true;
+    }
+
+    /**
+     * Clears the dirty flag on the SGRoot.
+     */
+    clearDirty() {
+        this._dirty = false;
     }
 }
 export const sgRoot: SGRoot = new SGRoot();

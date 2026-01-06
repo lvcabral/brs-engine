@@ -334,7 +334,7 @@ export class Node extends RoSGNode implements BrsValue {
                 field = new Field(index, value, fieldType, alwaysNotify);
                 this.fields.set(mapKey, field);
                 this.notified = true;
-                this.changed = true;
+                this.makeDirty();
             } else {
                 errorMsg = `BRIGHTSCRIPT: ERROR: roSGNode.Set: Tried to set nonexistent field "${index}" of a "${this.nodeSubtype}" node:`;
             }
@@ -342,7 +342,7 @@ export class Node extends RoSGNode implements BrsValue {
             const child = this.findNodeById(this, alias.nodeId);
             if (child instanceof Node) {
                 child.setValue(alias.fieldName, value, alwaysNotify);
-                this.changed = true;
+                this.makeDirty();
             } else {
                 errorMsg = `BRIGHTSCRIPT: ERROR: roSGNode.Set: "${index}": Alias "${alias.nodeId}.${alias.fieldName}" not found!`;
             }
@@ -351,7 +351,7 @@ export class Node extends RoSGNode implements BrsValue {
             // Except Numbers and Booleans that can be converted to string fields.
             this.notified = field.setValue(value, true);
             this.fields.set(mapKey, field);
-            this.changed = true;
+            this.makeDirty();
         } else if (!isInvalid(value)) {
             errorMsg = `BRIGHTSCRIPT: ERROR: roSGNode.AddReplace: "${index}": Type mismatch!`;
         }
@@ -382,7 +382,7 @@ export class Node extends RoSGNode implements BrsValue {
         }
         if (field) {
             this.fields.set(mapKey, field);
-            this.changed = true;
+            this.makeDirty();
         }
     }
 
@@ -525,7 +525,7 @@ export class Node extends RoSGNode implements BrsValue {
         }
         const refs = data.clearElements();
         field.setValue(new RoAssociativeArray(moved), true);
-        this.changed = true;
+        this.makeDirty();
         return { code: refs };
     }
 
@@ -543,7 +543,7 @@ export class Node extends RoSGNode implements BrsValue {
         }
         const value = field.getValue();
         field.setValue(BrsInvalid.Instance, true);
-        this.changed = true;
+        this.makeDirty();
         return value;
     }
 
@@ -559,7 +559,7 @@ export class Node extends RoSGNode implements BrsValue {
 
         if (defaultValue !== Uninitialized.Instance && !this.fields.has(fieldName.toLowerCase())) {
             this.setValue(fieldName, defaultValue, alwaysNotify, fieldKind);
-            this.changed = true;
+            this.makeDirty();
         }
     }
 
@@ -587,7 +587,7 @@ export class Node extends RoSGNode implements BrsValue {
         } else if (fieldsToAppend instanceof Node) {
             for (const [key, value] of fieldsToAppend.getNodeFields()) {
                 this.fields.set(key, value);
-                this.changed = true;
+                this.makeDirty();
             }
         }
     }
@@ -601,7 +601,7 @@ export class Node extends RoSGNode implements BrsValue {
         for (const [key, value] of fieldsToSet.elements) {
             if (addFields || (!addFields && this.fields.has(key.toLowerCase()))) {
                 this.setValue(key, value, false);
-                this.changed = true;
+                this.makeDirty();
             }
         }
     }
@@ -1012,7 +1012,9 @@ export class Node extends RoSGNode implements BrsValue {
         const removedField = this.fields.delete(fieldKey);
         const removedAlias = this.aliases.delete(fieldKey);
         const removed = removedField || removedAlias;
-        this.changed ||= removed;
+        if (removed) {
+            this.makeDirty();
+        }
         return removed;
     }
 
@@ -1075,7 +1077,7 @@ export class Node extends RoSGNode implements BrsValue {
             // If this AA has a "children" field with an array, recursively create child nodes
             if (fieldName === "children" && value instanceof RoArray) {
                 this.updateChildrenFromArray(interpreter, node, value, createFields, subtype);
-                this.changed = true;
+                this.makeDirty();
             } else if (fieldName === "subtype") {
                 // Skip the "subtype" field, already handled
                 continue;
@@ -1083,7 +1085,7 @@ export class Node extends RoSGNode implements BrsValue {
             // Set all other fields, respecting the createFields parameter
             else if (node.fields.has(fieldName) || (createFields && !isInvalid(value))) {
                 node.setValue(key, value, false);
-                this.changed = true;
+                this.makeDirty();
             }
         }
     }
@@ -1111,7 +1113,7 @@ export class Node extends RoSGNode implements BrsValue {
                 child.removeParent();
                 this.children.splice(spliceIndex, 1);
                 this.recordChildChange("remove", spliceIndex);
-                this.changed = true;
+                this.makeDirty();
                 return true;
             }
         }
@@ -1133,7 +1135,7 @@ export class Node extends RoSGNode implements BrsValue {
             if (removedChildren.length > 0) {
                 this.recordChildChange("remove", index, index + removedChildren.length - 1);
             }
-            this.changed = true;
+            this.makeDirty();
             return true;
         }
         return false;
@@ -1152,7 +1154,7 @@ export class Node extends RoSGNode implements BrsValue {
             const insertionIndex = this.children.length;
             this.children.push(child);
             child.setNodeParent(this);
-            this.changed = true;
+            this.makeDirty();
             this.recordChildChange("add", insertionIndex);
             return true;
         }
@@ -1187,7 +1189,7 @@ export class Node extends RoSGNode implements BrsValue {
         }
         newChild.setNodeParent(this);
         this.children.splice(index, 1, newChild);
-        this.changed = true;
+        this.makeDirty();
         this.recordChildChange("set", index);
         return true;
     }
@@ -1219,13 +1221,13 @@ export class Node extends RoSGNode implements BrsValue {
                 index -= 1;
             }
             this.children.splice(index, 0, child);
-            this.changed = true;
+            this.makeDirty();
             this.recordChildChange("insert", index, index);
             return true;
         }
         child.setNodeParent(this);
         this.children.splice(index, 0, child);
-        this.changed = true;
+        this.makeDirty();
         this.recordChildChange("insert", index);
         return true;
     }
@@ -1405,6 +1407,14 @@ export class Node extends RoSGNode implements BrsValue {
      */
     protected compareNodes(other: Node): boolean {
         return this.nodeSubtype === other.nodeSubtype && this.address === other.address;
+    }
+
+    /**
+     * Marks this node as dirty and notifies the SceneGraph root.
+     */
+    private makeDirty() {
+        this.changed = true;
+        sgRoot.makeDirty();
     }
 
     /**
