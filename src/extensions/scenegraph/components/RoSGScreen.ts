@@ -185,15 +185,20 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
             const sfxUpdated = sgRoot.processSFX();
             const videoUpdated = sgRoot.processVideo();
             this.isDirty ||= timersFired || animUpdated || tasksUpdated || audioUpdated || sfxUpdated || videoUpdated;
-            // TODO: Optimize rendering by only rendering if there are changes
-            sgRoot.scene.renderNode(interpreter, [0, 0], 0, 1, this.draw2D);
-            if (sgRoot.scene?.dialog?.getNodeParent() instanceof BrsInvalid) {
-                const dialog = sgRoot.scene.dialog;
+            // Render Scene and Dialog
+            const showDialog = sgRoot.scene?.dialog?.getNodeParent() instanceof BrsInvalid;
+            if (sgRoot.isDirty || this.isDirty || showDialog) {
+                sgRoot.clearDirty();
+                sgRoot.scene.renderNode(interpreter, [0, 0], 0, 1, this.draw2D);
+            }
+            if (showDialog) {
+                const dialog = sgRoot.scene.dialog!;
                 dialog.setValueSilent("visible", BrsBoolean.True);
                 const screenRect = { x: 0, y: 0, width: this.width, height: this.height };
                 this.draw2D.doDrawRotatedRect(screenRect, 255, 0, [0, 0], 0.5);
                 dialog.renderNode(interpreter, [0, 0], 0, 1, this.draw2D);
             }
+            // Limited FPS enforcement
             let timeStamp = Date.now();
             while (timeStamp - this.lastMessage < this.maxMs) {
                 timeStamp = Date.now();
