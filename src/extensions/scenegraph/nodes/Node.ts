@@ -390,7 +390,7 @@ export class Node extends RoSGNode implements BrsValue {
      * Returns the node's `id` field or the subtype if unset.
      * @returns Node identifier string.
      */
-    getId() {
+    getId(): string {
         return this.getValueJS("id") ?? this.nodeSubtype;
     }
 
