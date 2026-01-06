@@ -105,6 +105,6 @@ During the build we also merge `src/core/common` with `src/extensions/scenegraph
 
 ## License
 
-Copyright © 2019-2025 Marcelo Lv Cabral. All rights reserved.
+Copyright © 2025-2026 Marcelo Lv Cabral. All rights reserved.
 
 Licensed under the [MIT](https://github.com/lvcabral/brs-engine/blob/master/LICENSE) license.

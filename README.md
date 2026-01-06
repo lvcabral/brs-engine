@@ -123,6 +123,6 @@ There are many ways you can use and/or participate in the project, read the docu
 
 ## 📄 License
 
-Copyright © 2019-2025 Marcelo Lv Cabral. All rights reserved.
+Copyright © 2019-2026 Marcelo Lv Cabral. All rights reserved.
 
 Licensed under the [MIT](LICENSE) license.

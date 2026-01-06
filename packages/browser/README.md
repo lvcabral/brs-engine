@@ -133,6 +133,6 @@ The simulator is also available as a multi-platform **desktop application** (Win
 
 ## License
 
-Copyright © 2019-2025 Marcelo Lv Cabral. All rights reserved.
+Copyright © 2019-2026 Marcelo Lv Cabral. All rights reserved.
 
 Licensed under the [MIT](https://github.com/lvcabral/brs-engine/blob/master/LICENSE) license.

@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file.
 
+<a name="v2.0.5"></a>
+
+## [v2.0.5 - Animation and Interpolator Nodes](https://github.com/lvcabral/brs-engine/releases/tag/v2.0.5) - 5 January 2026
+
+This release introduces the `Animation` and `Interpolator` nodes to the SceneGraph extension, along with various bug fixes and improvements to both the CLI and SceneGraph extension.
+
+### Release Changes
+
+* (brs) Fixed debugger to restore the context on `RunTimeError` by [@lvcabral](https://github.com/lvcabral) in [#807](https://github.com/lvcabral/brs-engine/pull/807)
+* (brs) Added `toBoolean` for all numeric components by [@lvcabral](https://github.com/lvcabral) in [#808](https://github.com/lvcabral/brs-engine/pull/808)
+* (brs) Fixed `CreateObject` to properly handle boxed parameters and raise `RunTimeError` by [@lvcabral](https://github.com/lvcabral) in [#809](https://github.com/lvcabral/brs-engine/pull/809)
+* Changes on `brs-scenegraph` package (release v0.0.5):
+  * (rsg) Fixed `roSGNode` creation using boxed `String` as `nodeType` by [@lvcabral](https://github.com/lvcabral) in [#806](https://github.com/lvcabral/brs-engine/pull/806)
+  * (rsg) Fixed focus when `initialFocus` is not set by [@lvcabral](https://github.com/lvcabral) in [#810](https://github.com/lvcabral/brs-engine/pull/810)
+  * (rsg) Fixed: `ArrayGrid` based nodes must reset focused item when `content` is updated by [@lvcabral](https://github.com/lvcabral) in [#811](https://github.com/lvcabral/brs-engine/pull/811)
+  * (rsg) Fixed `findNode` to prioritize search on `children` by [@lvcabral](https://github.com/lvcabral) in [#812](https://github.com/lvcabral/brs-engine/pull/812)
+  * (rsg) Implemented `Animation` and `Interpolator` nodes by [@lvcabral](https://github.com/lvcabral) in [#813](https://github.com/lvcabral/brs-engine/pull/813)
+  * (rsg) Changed `Node` to preserve field name case by [@lvcabral](https://github.com/lvcabral) in [#814](https://github.com/lvcabral/brs-engine/pull/814)
+  * (rsg) Fixed conflict on `roSGScreen` scene events handling by [@lvcabral](https://github.com/lvcabral) in [#815](https://github.com/lvcabral/brs-engine/pull/815)
+  * (cli) Fixed CLI loading SceneGraph components on Windows file system by [@lvcabral](https://github.com/lvcabral) in [#816](https://github.com/lvcabral/brs-engine/pull/816)
+  * (rsg) Optimized `roSGScreen` to only render when changes happened by [@lvcabral](https://github.com/lvcabral) in [#817](https://github.com/lvcabral/brs-engine/pull/817)
+
+[Full Changelog][v2.0.5]
+
 <a name="v2.0.4"></a>
 
 ## [v2.0.4 - CLI Unicode Rendering](https://github.com/lvcabral/brs-engine/releases/tag/v2.0.4) - 31 December 2025
@@ -1311,6 +1335,7 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
+[v2.0.5]: https://github.com/lvcabral/brs-engine/compare/v2.0.4...v2.0.5
 [v2.0.4]: https://github.com/lvcabral/brs-engine/compare/v2.0.3...v2.0.4
 [v2.0.3]: https://github.com/lvcabral/brs-engine/compare/v2.0.2...v2.0.3
 [v2.0.2]: https://github.com/lvcabral/brs-engine/compare/v2.0.1...v2.0.2

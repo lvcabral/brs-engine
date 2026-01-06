@@ -108,6 +108,6 @@ Learn how to use the package and its libraries by reading the documents below:
 
 ## License
 
-Copyright © 2019-2025 Marcelo Lv Cabral. All rights reserved.
+Copyright © 2019-2026 Marcelo Lv Cabral. All rights reserved.
 
 Licensed under the [MIT](https://github.com/lvcabral/brs-engine/blob/master/LICENSE) license.
