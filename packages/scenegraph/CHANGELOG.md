@@ -2,6 +2,26 @@
 
 All notable changes to `brs-scenegraph` extension will be documented in this file.
 
+<a name="v0.0.5"></a>
+
+## [v0.0.5 - Various Fixes and Improvements](https://github.com/lvcabral/brs-engine/releases/tag/brs-sg-v0.0.5) - 5 January 2026
+
+This release brings several fixes and improvements to the SceneGraph extension, including the implementation of `Animation` and `Interpolator` nodes, as well as various bug fixes related to node creation, focus management, and event handling.
+
+### Release Changes
+
+* (rsg) Fixed `roSGNode` creation using boxed `String` as `nodeType` by [@lvcabral](https://github.com/lvcabral) in [#806](https://github.com/lvcabral/brs-engine/pull/806)
+* (rsg) Fixed focus when `initialFocus` is not set by [@lvcabral](https://github.com/lvcabral) in [#810](https://github.com/lvcabral/brs-engine/pull/810)
+* (rsg) Fixed: `ArrayGrid` based nodes must reset focused item when `content` is updated by [@lvcabral](https://github.com/lvcabral) in [#811](https://github.com/lvcabral/brs-engine/pull/811)
+* (rsg) Fixed `findNode` to prioritize search on `children` by [@lvcabral](https://github.com/lvcabral) in [#812](https://github.com/lvcabral/brs-engine/pull/812)
+* (rsg) Implemented `Animation` and `Interpolator` nodes by [@lvcabral](https://github.com/lvcabral) in [#813](https://github.com/lvcabral/brs-engine/pull/813)
+* (rsg) Changed `Node` to preserve field name case by [@lvcabral](https://github.com/lvcabral) in [#814](https://github.com/lvcabral/brs-engine/pull/814)
+* (rsg) Fixed conflict on `roSGScreen` scene events handling by [@lvcabral](https://github.com/lvcabral) in [#815](https://github.com/lvcabral/brs-engine/pull/815)
+* (cli) Fixed CLI loading SceneGraph components on Windows file system by [@lvcabral](https://github.com/lvcabral) in [#816](https://github.com/lvcabral/brs-engine/pull/816)
+* (rsg) Optimized `roSGScreen` to only render when changes happened by [@lvcabral](https://github.com/lvcabral) in [#817](https://github.com/lvcabral/brs-engine/pull/817)
+
+[Full Changelog][v0.0.5]
+
 <a name="v0.0.4"></a>
 
 ## [v0.0.4 - Various Fixes and Improvements](https://github.com/lvcabral/brs-engine/releases/tag/brs-sg-v0.0.4) - 31 December 2025
@@ -68,6 +88,7 @@ This first alpha delivers the **SceneGraph** runtime as a standalone extension t
   * Media + utility nodes: `Audio`, `Video`, `SoundEffect`, `Task`, `Timer`, `ChannelStore`.
 * Published merged `assets/common.zip` so SceneGraph fonts, locale data, dialogs, and imagery are available through the simulated `common:/` volume in both `brs-engine` and `brs-node` packages.
 
+[v0.0.5]: https://github.com/lvcabral/brs-engine/compare/brs-sg-v0.0.4...brs-sg-v0.0.5
 [v0.0.4]: https://github.com/lvcabral/brs-engine/compare/brs-sg-v0.0.3...brs-sg-v0.0.4
 [v0.0.3]: https://github.com/lvcabral/brs-engine/compare/brs-sg-v0.0.2...brs-sg-v0.0.3
 [v0.0.2]: https://github.com/lvcabral/brs-engine/compare/brs-sg-v0.0.1...brs-sg-v0.0.2
