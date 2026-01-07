@@ -38,7 +38,19 @@ export async function getWorkerLibUrl(): Promise<string> {
     }
     if (Platform.inElectron) {
         // In Electron, load the worker script as a Blob URL to avoid CORS issues
-        const response = await fetch(`${libPath}.worker.js`);
+        const workerUrl = `${libPath}.worker.js`;
+        let response: Response;
+        try {
+            response = await fetch(workerUrl);
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : String(err);
+            throw new Error(`Failed to fetch BrightScript worker script at "${workerUrl}": ${message}`);
+        }
+        if (!response.ok) {
+            throw new Error(
+                `Failed to load BrightScript worker script at "${workerUrl}": HTTP ${response.status} ${response.statusText}`
+            );
+        }
         const blob = await response.blob();
         return URL.createObjectURL(blob);
     }
