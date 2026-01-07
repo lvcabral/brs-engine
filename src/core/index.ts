@@ -22,6 +22,7 @@ import {
     ExtensionInfo,
     ExtVolInitialSize,
     ExtVolMaxSize,
+    Platform,
 } from "./common";
 import { Lexeme, Lexer, Token } from "./lexer";
 import { Parser, Stmt } from "./parser";
@@ -146,7 +147,10 @@ function loadExtension(moduleId: SupportedExtension, modulePath: string) {
             // @ts-ignore
             globalThis.xmldoc = { XmlDocument };
             // Load the SceneGraph module script
-            const scriptUrl = new URL(modulePath, globalThis.location.href).href;
+            let scriptUrl = modulePath;
+            if (Platform.inBrowser && !Platform.inElectron) {
+                scriptUrl = new URL(modulePath, globalThis.location.href).href;
+            }
             importScripts(scriptUrl);
             // @ts-ignore
             extensionModule = globalThis[moduleId];

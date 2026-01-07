@@ -5,7 +5,7 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { SubscribeCallback, getWorkerLibPath, saveDataBuffer } from "./util";
+import { SubscribeCallback, getWorkerLibUrl, saveDataBuffer } from "./util";
 import {
     AppExitReason,
     AppPayload,
@@ -89,9 +89,6 @@ import { handleTaskData, handleThreadUpdate, initTaskModule, resetTasks, subscri
 import SharedObject from "../core/SharedObject";
 import packageInfo from "../../packages/browser/package.json";
 
-// Interpreter Library
-const brsWrkLib = getWorkerLibPath();
-
 // Package API
 export { deviceData, loadAppZip, updateAppZip, getSerialNumber, mountExt, umountExt } from "./package";
 
@@ -122,6 +119,10 @@ export {
 // Common API
 export { DeviceInfo, DefaultDeviceInfo, Platform, AppExitReason, SupportedExtension } from "../core/common";
 
+// Interpreter Worker Library Path
+let brsWrkLib: string = "./brs.worker.js";
+
+// Debug and Stats Flags
 let inDebugLib: boolean = false;
 /// #if DEBUG
 inDebugLib = true;
@@ -151,7 +152,7 @@ let currentPayload: AppPayload;
  * @param customDeviceInfo Optional partial DeviceInfo to customize device configuration
  * @param options Optional configuration object with flags for debugging, stats, etc.
  */
-export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any = {}) {
+export async function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any = {}) {
     if (customDeviceInfo) {
         // Prevent hosting apps to override some device info keys
         const invalidKeys: (keyof DeviceInfo)[] = [
@@ -196,6 +197,7 @@ export function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any 
     }
     sharedArray = new Int32Array(sharedBuffer);
     resetArray();
+    brsWrkLib = await getWorkerLibUrl();
     // Initialize Display and Control modules
     initDisplayModule(deviceData, showStats);
     initControlModule(sharedArray, options);

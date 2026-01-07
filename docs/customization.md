@@ -4,7 +4,7 @@ The engine allows several ways to customize the behavior and controls of the sim
 
 ## Device Information
 
-As described on the [engine API documentation](engine-api.md), the `initialize()` method accepts, as first parameter, an object containing custom device configurations. Below is an example of the object with all its default values, defined internally on the library. Most of these parameters are accessible by the BrightScript app via `roDeviceInfo` component. It's not necessary to send all parameters, only the ones to be changed.
+As described on the [engine API documentation](engine-api.md), the asynchronous method `initialize()` accepts, as first parameter, an object containing custom device configurations. Below is an example of the object with all its default values, defined internally on the library. Most of these parameters are accessible by the BrightScript app via `roDeviceInfo` component. It's not necessary to send all parameters, only the ones to be changed.
 
 ```ts
 const deviceInfo = {
@@ -103,7 +103,7 @@ customKeys.set("Shift+ArrowDown", "down"); // Support for Prince of Persia
 
 // ...
 
-brs.initialize(customDeviceInfo, {
+await brs.initialize(customDeviceInfo, {
     debugToConsole: true,
     customKeys: customKeys,
     showStats: true,

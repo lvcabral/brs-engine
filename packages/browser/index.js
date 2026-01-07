@@ -50,12 +50,6 @@ const appList = [
         icon: "images/icons/custom-video-player.png",
     },
 ];
-for (const [index, icon] of appIcons.entries()) {
-    icon.src = appList[index].icon;
-    icon.title = appList[index].title;
-    icon.alt = appList[index].title;
-    icon.onclick = () => loadZip(appList[index].id);
-}
 
 // App Configuration
 // Pause the engine when the browser window loses focus
@@ -85,67 +79,84 @@ const customDeviceInfo = {
     // Uncomment line above for local testing
     // Or add the URL of an instance of https://github.com/Rob--W/cors-anywhere
 };
-// Add SceneGraph extension
-const brsSG = brs.SupportedExtension.SceneGraph;
-customDeviceInfo.extensions.set(brsSG, "./brs-sg.js");
 
-// Caption customization example, once configured in DeviceInfo cannot be dynamically changed in SceneGraph code:
-customDeviceInfo.captionStyle.push({ id: "Text/Effect", style: "uniform" }, { id: "Background/Opacity", style: "50%" });
+// Initialize BrightScript Engine when page loads
+globalThis.addEventListener("load", main, false);
 
-const customKeys = new Map();
-customKeys.set("NumpadMultiply", "info"); // Keep consistency with older versions
-customKeys.set("ShiftLeft", "playonly"); // Support for Prince of Persia
-customKeys.set("Shift+ArrowRight", "right"); // Support for Prince of Persia
-customKeys.set("Shift+ArrowLeft", "left"); // Support for Prince of Persia
-customKeys.set("Shift+ArrowUp", "up"); // Support for Prince of Persia
-customKeys.set("Shift+ArrowDown", "down"); // Support for Prince of Persia
-
-// Initialize device and subscribe to events
-libVersion.innerHTML = brs.getVersion();
-brs.subscribe("web-app", (event, data) => {
-    if (event === "loaded") {
-        currentApp = data;
-        fileButton.style.visibility = "hidden";
-        let infoHtml = data.title + "<br/>";
-        infoHtml += data.subtitle + "<br/>";
-        if (data.version.trim() !== "") {
-            infoHtml += "v" + data.version;
-        }
-        appInfo.innerHTML = infoHtml;
-        appIconsVisibility("hidden");
-        loading.style.visibility = "hidden";
-        displayRedraw();
-    } else if (event === "started") {
-        currentApp = data;
-        stats.style.visibility = "visible";
-    } else if (event === "launch") {
-        if (data?.app) {
-            brs.terminate("EXIT_USER_NAV");
-            currentApp = { id: "", running: false };
-            currentZip = null;
-            loadZip(data.app, data.params);
-        }
-    } else if (event === "browser") {
-        if (data?.url) {
-            openBrowser(data.url, data.width, data.height);
-        }
-    } else if (event === "closed" || event === "error") {
-        closeApp();
-    } else if (event === "debug") {
-        if (["stop", "pause", "continue"].includes(data.level)) {
-            debugMode = data.level;
-        }
-    } else if (event === "version") {
-        console.info(`%cBrightScript Interpreter Library v${data}`, "color: #4A90E2");
-        mountZip("./apps/data.zip");
+// Main function to initialize the BrightScript engine
+async function main() {
+    // Set App icons
+    for (const [index, icon] of appIcons.entries()) {
+        icon.src = appList[index].icon;
+        icon.title = appList[index].title;
+        icon.alt = appList[index].title;
+        icon.onclick = () => loadZip(appList[index].id);
     }
-});
-brs.initialize(customDeviceInfo, {
-    debugToConsole: true,
-    customKeys: customKeys,
-    showStats: true,
-});
 
+    // Add SceneGraph extension
+    const brsSG = brs.SupportedExtension.SceneGraph;
+    customDeviceInfo.extensions.set(brsSG, "./brs-sg.js");
+
+    // Caption customization example, once configured in DeviceInfo cannot be dynamically changed in SceneGraph code:
+    customDeviceInfo.captionStyle.push(
+        { id: "Text/Effect", style: "uniform" },
+        { id: "Background/Opacity", style: "50%" }
+    );
+
+    const customKeys = new Map();
+    customKeys.set("NumpadMultiply", "info"); // Keep consistency with older versions
+    customKeys.set("ShiftLeft", "playonly"); // Support for Prince of Persia
+    customKeys.set("Shift+ArrowRight", "right"); // Support for Prince of Persia
+    customKeys.set("Shift+ArrowLeft", "left"); // Support for Prince of Persia
+    customKeys.set("Shift+ArrowUp", "up"); // Support for Prince of Persia
+    customKeys.set("Shift+ArrowDown", "down"); // Support for Prince of Persia
+
+    // Initialize device and subscribe to events
+    libVersion.innerHTML = brs.getVersion();
+    brs.subscribe("web-app", (event, data) => {
+        if (event === "loaded") {
+            currentApp = data;
+            fileButton.style.visibility = "hidden";
+            let infoHtml = data.title + "<br/>";
+            infoHtml += data.subtitle + "<br/>";
+            if (data.version.trim() !== "") {
+                infoHtml += "v" + data.version;
+            }
+            appInfo.innerHTML = infoHtml;
+            appIconsVisibility("hidden");
+            loading.style.visibility = "hidden";
+            displayRedraw();
+        } else if (event === "started") {
+            currentApp = data;
+            stats.style.visibility = "visible";
+        } else if (event === "launch") {
+            if (data?.app) {
+                brs.terminate("EXIT_USER_NAV");
+                currentApp = { id: "", running: false };
+                currentZip = null;
+                loadZip(data.app, data.params);
+            }
+        } else if (event === "browser") {
+            if (data?.url) {
+                openBrowser(data.url, data.width, data.height);
+            }
+        } else if (event === "closed" || event === "error") {
+            closeApp();
+        } else if (event === "debug") {
+            if (["stop", "pause", "continue"].includes(data.level)) {
+                debugMode = data.level;
+            }
+        } else if (event === "version") {
+            console.info(`%cBrightScript Interpreter Library v${data}`, "color: #4A90E2");
+            mountZip("./apps/data.zip");
+        }
+    });
+    await brs.initialize(customDeviceInfo, {
+        debugToConsole: true,
+        customKeys: customKeys,
+        showStats: true,
+    });
+}
 // File selector
 const fileSelector = document.getElementById("file");
 fileButton.onclick = function () {
