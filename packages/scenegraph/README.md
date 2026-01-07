@@ -48,13 +48,13 @@ The extension depends on `brs-engine` so the runtime contracts stay in sync. Whe
 3. Tell the engine that SceneGraph is available by adding it to `DeviceInfo.extensions` when you call `brs.initialize`. The map key is the `SupportedExtension` enum value and the value is the worker-relative path to the bundle:
 
    ```ts
-   import { SupportedExtension, DeviceInfo } from "brs-engine";
+   import * as brs from "brs-engine";
 
-   const deviceOverrides: Partial<DeviceInfo> = {
-	   extensions: new Map([[SupportedExtension.SceneGraph, "./brs-sg.js"]]),
+   const deviceOverrides: Partial<brs.DeviceInfo> = {
+      extensions: new Map([[brs.SupportedExtension.SceneGraph, "./brs-sg.js"]]),
    };
 
-   brs.initialize(deviceOverrides, { debugToConsole: true });
+   await brs.initialize(deviceOverrides, { debugToConsole: true });
    ```
 
 4. When an app package contains a `pkg:/components/` folder the packaging layer checks the map above and, if the extension is registered, injects `{ moduleId: "brs-scenegraph", modulePath: "./brs-sg.js" }` into the worker payload.

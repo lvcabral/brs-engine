@@ -5,7 +5,7 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { BufferType, DataBufferIndex, DataBufferSize, DataType } from "../core/common";
+import { BufferType, DataBufferIndex, DataBufferSize, DataType, Platform } from "../core/common";
 import packageInfo from "../../packages/browser/package.json";
 
 // Module callback function definition
@@ -16,24 +16,33 @@ export type SubscribeCallback = (event: string, data?: any) => void;
  * @returns Path to the API library or main entry point
  */
 export function getApiPath(): string {
-    if (typeof document !== "undefined") {
+    if (Platform.inBrowser) {
         const scripts = document.getElementsByTagName("script");
-        return scripts[scripts.length - 1].src;
+        for (const script of scripts) {
+            if (script.src.includes(".api.js")) {
+                return script.src;
+            }
+        }
     }
     return packageInfo.main;
 }
 /**
  * Gets the path to the worker library script.
- * @returns Path to the worker library with version query parameter
+ * @returns Path/URL to the worker library with version query parameter
  */
-export function getWorkerLibPath(): string {
+export async function getWorkerLibUrl(): Promise<string> {
     let libPath = getApiPath();
     const apiIndex = libPath.indexOf(".api.js");
     if (apiIndex !== -1) {
         libPath = libPath.substring(0, apiIndex);
     }
-    libPath = `${libPath}.worker.js?v=${packageInfo.version}`;
-    return libPath;
+    if (Platform.inElectron) {
+        // In Electron, load the worker script as a Blob URL to avoid CORS issues
+        const response = await fetch(`${libPath}.worker.js`);
+        const blob = await response.blob();
+        return URL.createObjectURL(blob);
+    }
+    return `${libPath}.worker.js?v=${packageInfo.version}`;
 }
 
 /**

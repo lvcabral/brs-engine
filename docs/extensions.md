@@ -36,13 +36,13 @@ The SceneGraph runtime ships as a standalone extension located under `packages/s
 3. Declare the extension in `DeviceInfo.extensions` when you call `brs.initialize`. Each entry is a `[SupportedExtension, string]` pair where the string is the worker path to the bundle:
 
    ```ts
-   import { SupportedExtension, DeviceInfo } from "brs-engine";
+   import * as brs from "brs-engine";
 
-   const overrides: Partial<DeviceInfo> = {
-       extensions: new Map([[SupportedExtension.SceneGraph, "./brs-sg.js"]]),
+   const overrides: Partial<brs.DeviceInfo> = {
+       extensions: new Map([[brs.SupportedExtension.SceneGraph, "./brs-sg.js"]]),
    };
 
-   brs.initialize(overrides);
+   await brs.initialize(overrides);
    ```
 
 4. When an app package contains a `pkg:/components/` folder the packaging layer checks the map above and, if the extension is registered, pushes `{ moduleId: "brs-scenegraph", modulePath: "./brs-sg.js" }` into the worker payload.

@@ -31,13 +31,13 @@ Hosts now decide which extensions are available to the interpreter by setting th
 This makes it explicit which add-ons your deployment supports and prevents the worker from fetching bundles that the host has not approved.
 
 ```ts
-import { SupportedExtension, DeviceInfo } from "brs-engine";
+import * as brs from "brs-engine";
 
-const deviceOverrides: Partial<DeviceInfo> = {
-    extensions: new Map([[SupportedExtension.SceneGraph, "./brs-sg.js"]]),
+const deviceOverrides: Partial<brs.DeviceInfo> = {
+    extensions: new Map([[brs.SupportedExtension.SceneGraph, "./brs-sg.js"]]),
 };
 
-brs.initialize(deviceOverrides, { debugToConsole: true });
+await brs.initialize(deviceOverrides, { debugToConsole: true });
 ```
 
 If you decide to ship additional extensions (SDK1, BrightSign, etc.) just register them in the same map with the corresponding module path.
@@ -75,7 +75,7 @@ Here's the most simple example to use the app to run BrightScript code. Make sur
     <canvas id="display" width="854px" height="480px"></canvas>
     <video id="player" style="display: none" crossorigin="anonymous"></video><br /><br />
     <label for="source-code">
-    Type some BrightScript code: (open Developer Tools console to see <b>print</b> outputs)
+        Type some BrightScript code: (open Developer Tools console to see <b>print</b> outputs)
     </label><br /><br />
     <textarea id="source-code" name="source-code" rows="15" cols="100">
 ' BrightScript Hello World
@@ -97,19 +97,22 @@ end sub
     </textarea><br />
     <input id="clickMe" type="button" value="Run Code!" onclick="executeBrs();" />
     <script type="text/javascript" src="lib/brs.api.js"></script>
-    <script type="text/javascript" >
-        // Subscribe to Events (optional)
-        brs.subscribe("myApp", (event, data) => {
-            if (event === "loaded") {
-                console.info(`Source code loaded: ${data.id}`);
-            } else if (event === "started") {
-                console.info(`Source code executing: ${data.id}`);
-            } else if (event === "closed" || event === "error") {
-                console.info(`Execution terminated! ${event}: ${data}`);
-            }
-        });
-        // Initialize Simulated Device
-        brs.initialize({}, { debugToConsole: true, disableKeys: true });
+    <script type="text/javascript">
+        globalThis.addEventListener("load", main, false);
+        async function main() {
+            // Subscribe to Events (optional)
+            brs.subscribe("myApp", (event, data) => {
+                if (event === "loaded") {
+                    console.info(`Source code loaded: ${data.id}`);
+                } else if (event === "started") {
+                    console.info(`Source code executing: ${data.id}`);
+                } else if (event === "closed" || event === "error") {
+                    console.info(`Execution terminated! ${event}: ${data}`);
+                }
+            });
+            // Initialize Simulated Device
+            await brs.initialize({}, { debugToConsole: true, disableKeys: true });
+        }
         // OnClick handler to execute the code
         function executeBrs() {
             source = document.getElementById("source-code").value;
