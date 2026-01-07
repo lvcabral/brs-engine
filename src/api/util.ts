@@ -42,14 +42,15 @@ export async function getWorkerLibUrl(): Promise<string> {
         let response: Response;
         try {
             response = await fetch(workerUrl);
-        } catch (err: unknown) {
-            const message = err instanceof Error ? err.message : String(err);
-            throw new Error(`Failed to fetch BrightScript worker script at "${workerUrl}": ${message}`);
+        } catch (err: any) {
+            console.error(`Failed to fetch BrightScript worker script at "${workerUrl}": ${err.message}`);
+            return workerUrl;
         }
         if (!response.ok) {
-            throw new Error(
+            console.error(
                 `Failed to load BrightScript worker script at "${workerUrl}": HTTP ${response.status} ${response.statusText}`
             );
+            return workerUrl;
         }
         const blob = await response.blob();
         return URL.createObjectURL(blob);
