@@ -198,7 +198,7 @@ export class Field {
             },
         };
         if (mode === "scoped") {
-            let maybeCallbacks = this.scopedObservers.get(subscriber) || [];
+            const maybeCallbacks = this.scopedObservers.get(subscriber) || [];
             this.scopedObservers.set(subscriber, [...maybeCallbacks, brsCallback]);
         } else if (mode === "unscoped") {
             this.unscopedObservers.push(brsCallback);
@@ -334,6 +334,7 @@ export class Field {
 
     private executeCallbacks(callback: BrsCallback) {
         if (callback.running) {
+            // Prevent stack overflow by not re-entering a running callback
             return;
         }
         const { interpreter, callable, hostNode, environment, eventParams } = callback;
@@ -365,23 +366,35 @@ export class Field {
             callback.running = true;
             subInterpreter.environment.hostNode = hostNode;
             subInterpreter.environment.setRootM(hostNode.m);
-
-            try {
-                // Check whether the callback is expecting an event parameter.
-                const satisfiedSignature = callable.getFirstSatisfiedSignature([event]);
-                if (satisfiedSignature) {
-                    let { signature, impl } = satisfiedSignature;
-                    subInterpreter.environment.define(Scope.Function, signature.args[0].name.text, event);
-                    impl(subInterpreter, event);
-                } else {
-                    // Check whether the callback has a signature without parameters.
-                    // Silently ignore if the callback has no signature that matches.
-                    callable.getFirstSatisfiedSignature([])?.impl(subInterpreter);
-                }
-            } catch (err) {
-                if (!(err instanceof BlockEnd)) {
-                    callback.running = false;
-                    throw err;
+            // Check whether the callback is expecting an event parameter.
+            const satisfiedSignature =
+                callable.getFirstSatisfiedSignature([event]) ?? callable.getFirstSatisfiedSignature([]);
+            if (satisfiedSignature) {
+                const { signature, impl } = satisfiedSignature;
+                const originalLocation = interpreter.location;
+                const funcLoc = callable.getLocation() ?? originalLocation;
+                interpreter.addToStack({
+                    functionName: callable.getName()!,
+                    functionLocation: funcLoc,
+                    callLocation: funcLoc,
+                    signature: satisfiedSignature.signature,
+                });
+                try {
+                    if (signature.args.length > 0) {
+                        subInterpreter.environment.define(Scope.Function, signature.args[0].name.text, event);
+                        impl(subInterpreter, event);
+                    } else {
+                        impl(subInterpreter);
+                    }
+                    interpreter.stack.pop();
+                    interpreter.location = originalLocation;
+                } catch (err) {
+                    interpreter.stack.pop();
+                    interpreter.location = originalLocation;
+                    if (!(err instanceof BlockEnd)) {
+                        callback.running = false;
+                        throw err;
+                    }
                 }
             }
             callback.running = false;

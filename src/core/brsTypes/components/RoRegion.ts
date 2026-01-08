@@ -52,7 +52,7 @@ export class RoRegion extends BrsComponent implements BrsValue, BrsDraw2D {
                 bitmap instanceof Uninitialized
                     ? RuntimeErrorDetail.UninitializedVariable
                     : RuntimeErrorDetail.TypeMismatch;
-            throw new RuntimeError(errorDetail, true);
+            throw new RuntimeError(errorDetail);
         }
         bitmap.addReference();
         this.bitmap = bitmap;

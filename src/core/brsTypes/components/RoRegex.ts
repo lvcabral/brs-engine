@@ -18,13 +18,13 @@ export class RoRegex extends BrsComponent implements BrsValue {
                 expression instanceof Uninitialized
                     ? RuntimeErrorDetail.UninitializedVariable
                     : RuntimeErrorDetail.TypeMismatch;
-            throw new RuntimeError(errorDetail, true);
+            throw new RuntimeError(errorDetail);
         } else if (!isStringComp(flags)) {
             const errorDetail =
                 flags instanceof Uninitialized
                     ? RuntimeErrorDetail.UninitializedVariable
                     : RuntimeErrorDetail.TypeMismatch;
-            throw new RuntimeError(errorDetail, true);
+            throw new RuntimeError(errorDetail);
         }
         this.jsRegex = new RegExp(expression.getValue(), this.parseFlags(flags.getValue()));
 

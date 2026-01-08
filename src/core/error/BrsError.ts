@@ -70,14 +70,12 @@ export class RuntimeError extends BrsError {
     /**
      * Creates a RuntimeError with detailed error information.
      * @param errorDetail - Object containing errno and message
-     * @param internal - Whether this is an internal error (from BrightScript component)
      * @param location - The source code location where the error occurred
      * @param backTrace - Optional array of trace points showing the call stack
      * @param extraFields - Optional map of additional error-specific fields
      */
     constructor(
         readonly errorDetail: ErrorDetail,
-        readonly internal: boolean = false,
         location?: Location,
         backTrace?: TracePoint[],
         readonly extraFields?: Map<string, BrsType>

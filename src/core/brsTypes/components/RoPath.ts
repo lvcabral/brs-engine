@@ -20,7 +20,7 @@ export class RoPath extends BrsComponent implements BrsValue, Comparable {
                 pathName instanceof Uninitialized
                     ? RuntimeErrorDetail.UninitializedVariable
                     : RuntimeErrorDetail.TypeMismatch;
-            throw new RuntimeError(errorDetail, true);
+            throw new RuntimeError(errorDetail);
         }
         this.parsedUrl = this.setPath(pathName.getValue());
         this.registerMethods({

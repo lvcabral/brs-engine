@@ -57,7 +57,6 @@ export class IfToStr {
                 } else {
                     throw new RuntimeError(
                         RuntimeErrorDetail.MemberFunctionNotFound,
-                        true,
                         interpreter.location,
                         interpreter.stack.slice(0, -1)
                     );
@@ -66,7 +65,6 @@ export class IfToStr {
             if (!(isBoxedNumber(this.component) || this.component instanceof RoString)) {
                 throw new RuntimeError(
                     RuntimeErrorDetail.MemberFunctionNotFound,
-                    true,
                     interpreter.location,
                     interpreter.stack.slice(0, -1)
                 );
@@ -85,7 +83,7 @@ export class IfToStr {
                 const errorDetail = err.message?.includes("expecting number")
                     ? RuntimeErrorDetail.TypeMismatch
                     : RuntimeErrorDetail.InvalidFormatSpecifier;
-                throw new RuntimeError(errorDetail, true, interpreter.location, interpreter.stack.slice(0, -1));
+                throw new RuntimeError(errorDetail, interpreter.location, interpreter.stack.slice(0, -1));
             }
         },
     });

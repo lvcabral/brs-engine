@@ -48,7 +48,7 @@ export class RoTextureRequest extends BrsComponent implements BrsValue, BrsHttpA
                 uri instanceof Uninitialized
                     ? RuntimeErrorDetail.UninitializedVariable
                     : RuntimeErrorDetail.TypeMismatch;
-            throw new RuntimeError(errorDetail, true);
+            throw new RuntimeError(errorDetail);
         }
         this.uri = uri.getValue();
         this.async = true;

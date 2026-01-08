@@ -32,7 +32,6 @@ export const CreateObject = new Callable("CreateObject", {
                 interpreter.addError(
                     new RuntimeError(
                         RuntimeErrorDetail.RoWrongNumberOfParams,
-                        true,
                         interpreter.location,
                         interpreter.stack.slice(0, -1)
                     )

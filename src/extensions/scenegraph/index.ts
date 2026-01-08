@@ -117,8 +117,16 @@ export class BrightScriptExtension implements BrsExtension {
                     subInterpreter.environment.setRootM(mPointer);
                     if (funcToCall instanceof Callable) {
                         postMessage(`debug,[sg] Task function called: ${taskData.name} ${functionName}`);
-                        funcToCall.call(subInterpreter);
+                        const funcLoc = funcToCall.getLocation() ?? interpreter.location;
+                        interpreter.addToStack({
+                            functionName: functionName,
+                            functionLocation: funcLoc,
+                            callLocation: funcLoc,
+                            signature: funcToCall.signatures[0]!.signature,
+                        });
+                        funcToCall.call(interpreter);
                         postMessage(`debug,[sg] Task function finished: ${taskData.name} ${functionName}`);
+                        interpreter.stack.pop();
                         const update: ThreadUpdate = {
                             id: taskNode.id,
                             type: "task",

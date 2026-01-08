@@ -584,7 +584,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
                 const errorDetail = err.message?.includes("expecting number")
                     ? RuntimeErrorDetail.TypeMismatch
                     : RuntimeErrorDetail.InvalidFormatSpecifier;
-                throw new RuntimeError(errorDetail, true, interpreter.location, interpreter.stack.slice(0, -1));
+                throw new RuntimeError(errorDetail, interpreter.location, interpreter.stack.slice(0, -1));
             }
         },
     });

@@ -379,7 +379,17 @@ export function initializeNode(interpreter: Interpreter, type: string, typeDef?:
                 subInterpreter.environment.setRootM(mPointer);
                 node!.m = mPointer;
                 if (init instanceof Callable) {
-                    init.call(subInterpreter);
+                    const originalLocation = interpreter.location;
+                    const funcLoc = init.getLocation() ?? originalLocation;
+                    interpreter.addToStack({
+                        functionName: "init",
+                        functionLocation: funcLoc,
+                        callLocation: originalLocation,
+                        signature: init.signatures[0]!.signature,
+                    });
+                    init.call(interpreter);
+                    interpreter.stack.pop();
+                    interpreter.location = originalLocation;
                 }
                 return BrsInvalid.Instance;
             }, currentEnv);

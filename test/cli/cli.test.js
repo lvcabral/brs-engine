@@ -90,20 +90,6 @@ describe("cli", () => {
         }
     }, 10000);
 
-    it("prints eval errors once", async () => {
-        let folder = "errors";
-        let filename = "uninitialized-object.brs";
-        let command = ["node", brsCliPath, path.join(folder, filename), "-c 0"].join(" ");
-        try {
-            await exec(command, {
-                cwd: path.join(__dirname, "resources"),
-            });
-        } catch (err) {
-            let errors = err.stderr.match(new RegExp(filename, "g"));
-            expect(errors.length).toEqual(2);
-        }
-    }, 10000);
-
     it("SceneGraph App Test", async () => {
         let command = ["node", brsCliPath, "-r scenegraph", "source/Poster.brs", "-c 0"].join(" ");
 

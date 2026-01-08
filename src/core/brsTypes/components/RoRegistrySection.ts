@@ -21,7 +21,7 @@ export class RoRegistrySection extends BrsComponent implements BrsValue {
                 section instanceof Uninitialized
                     ? RuntimeErrorDetail.UninitializedVariable
                     : RuntimeErrorDetail.TypeMismatch;
-            throw new RuntimeError(errorDetail, true);
+            throw new RuntimeError(errorDetail);
         }
         this.section = section.getValue();
         this.devId = BrsDevice.deviceInfo.developerId;

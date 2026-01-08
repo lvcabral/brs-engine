@@ -24,7 +24,7 @@ export class RoAudioResource extends BrsComponent implements BrsValue {
                 name instanceof Uninitialized
                     ? RuntimeErrorDetail.UninitializedVariable
                     : RuntimeErrorDetail.TypeMismatch;
-            throw new RuntimeError(errorDetail, true);
+            throw new RuntimeError(errorDetail);
         }
         this.maxStreams = BrsDevice.deviceInfo.maxSimulStreams;
         this.valid = true;
