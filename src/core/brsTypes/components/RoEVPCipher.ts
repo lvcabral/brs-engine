@@ -48,6 +48,11 @@ export class RoEVPCipher extends BrsComponent implements BrsValue {
 
     setupCipher(_: Interpreter, encrypt: boolean, format: string, key: string, iv: string, padding: boolean) {
         try {
+            if (format.startsWith("bf")) {
+                postMessage(`warning,[roEVPCipher] Blowfish cipher is deprecated in this environment, using "aes-128" instead.`);
+                format = "aes-128-cbc";
+                iv = iv + iv; // Blowfish uses 8 byte IV, AES uses 16 byte IV
+            }
             this.cipherEncrypt = encrypt;
             this.cipherFormat = format;
             this.cipherKey = key;
