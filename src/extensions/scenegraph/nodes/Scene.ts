@@ -217,7 +217,7 @@ export class Scene extends Group {
                         press,
                         interpreter.location
                     );
-                    impl(interpreter, key, press);
+                    impl(subInterpreter, key, press);
                     interpreter.stack.pop();
                     interpreter.location = originalLocation;
                 }
