@@ -24,7 +24,7 @@ import { SGNodeType } from ".";
 
 export class Scene extends Group {
     private _initState: "none" | "initializing" | "initialized" = "none";
-    private _preInitSet: Map<string, BrsType> = new Map();
+    private readonly _preInitSet: Map<string, BrsType> = new Map();
     readonly defaultFields: FieldModel[] = [
         { name: "backgroundURI", type: "uri" },
         { name: "backgroundColor", type: FieldKind.Color, value: "0x2F3140FF" },
@@ -51,6 +51,10 @@ export class Scene extends Group {
     }
 
     setInitState(state: "initializing" | "initialized") {
+        if (this._initState === "initialized") {
+            // prevent re-initialization
+            return;
+        }
         this._initState = state;
         if (state === "initialized") {
             for (const [index, value] of this._preInitSet) {
