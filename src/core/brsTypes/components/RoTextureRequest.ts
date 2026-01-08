@@ -44,11 +44,11 @@ export class RoTextureRequest extends BrsComponent implements BrsValue, BrsHttpA
         super("roTextureRequest");
         this.identity = nextIdentity++;
         if (!isStringComp(uri)) {
-            throw new RuntimeError(
+            const errorDetail =
                 uri instanceof Uninitialized
                     ? RuntimeErrorDetail.UninitializedVariable
-                    : RuntimeErrorDetail.TypeMismatch
-            );
+                    : RuntimeErrorDetail.TypeMismatch;
+            throw new RuntimeError(errorDetail, true);
         }
         this.uri = uri.getValue();
         this.async = true;

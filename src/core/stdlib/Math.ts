@@ -51,6 +51,7 @@ export const Cint = new Callable("Cint", {
         interpreter.addError(
             new RuntimeError(
                 x instanceof Uninitialized ? RuntimeErrorDetail.UninitializedVariable : RuntimeErrorDetail.TypeMismatch,
+                true,
                 interpreter.location,
                 interpreter.stack.slice(0, -1)
             )
@@ -83,6 +84,7 @@ export const Fix = new Callable("Fix", {
         interpreter.addError(
             new RuntimeError(
                 x instanceof Uninitialized ? RuntimeErrorDetail.UninitializedVariable : RuntimeErrorDetail.TypeMismatch,
+                true,
                 interpreter.location,
                 interpreter.stack.slice(0, -1)
             )
@@ -106,6 +108,7 @@ export const Int = new Callable("Int", {
         interpreter.addError(
             new RuntimeError(
                 x instanceof Uninitialized ? RuntimeErrorDetail.UninitializedVariable : RuntimeErrorDetail.TypeMismatch,
+                true,
                 interpreter.location,
                 interpreter.stack.slice(0, -1)
             )

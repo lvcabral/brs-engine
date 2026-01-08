@@ -17,11 +17,11 @@ export class RoRegistrySection extends BrsComponent implements BrsValue {
     constructor(section: BrsType) {
         super("roRegistrySection");
         if (!isStringComp(section)) {
-            throw new RuntimeError(
+            const errorDetail =
                 section instanceof Uninitialized
                     ? RuntimeErrorDetail.UninitializedVariable
-                    : RuntimeErrorDetail.TypeMismatch
-            );
+                    : RuntimeErrorDetail.TypeMismatch;
+            throw new RuntimeError(errorDetail, true);
         }
         this.section = section.getValue();
         this.devId = BrsDevice.deviceInfo.developerId;

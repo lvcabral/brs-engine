@@ -70,5 +70,5 @@ export function generateArgumentMismatchError(callee: Callable, args: BrsType[],
         message: `${RuntimeErrorDetail.TypeMismatch.message}: ${[header, ...messages].join("\n")}`,
         errno: RuntimeErrorDetail.TypeMismatch.errno,
     };
-    return new RuntimeError(errDetail, location);
+    return new RuntimeError(errDetail, false, location);
 }

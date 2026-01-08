@@ -16,11 +16,11 @@ export class RoPath extends BrsComponent implements BrsValue, Comparable {
     constructor(pathName: BrsType) {
         super("roPath");
         if (!isStringComp(pathName)) {
-            throw new RuntimeError(
+            const errorDetail =
                 pathName instanceof Uninitialized
                     ? RuntimeErrorDetail.UninitializedVariable
-                    : RuntimeErrorDetail.TypeMismatch
-            );
+                    : RuntimeErrorDetail.TypeMismatch;
+            throw new RuntimeError(errorDetail, true);
         }
         this.parsedUrl = this.setPath(pathName.getValue());
         this.registerMethods({

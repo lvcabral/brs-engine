@@ -102,6 +102,7 @@ export const ObjFun = new Callable("ObjFun", {
         interpreter.addError(
             new RuntimeError(
                 RuntimeErrorDetail.MemberFunctionNotFound,
+                true,
                 interpreter.location,
                 interpreter.stack.slice(0, -1)
             )
