@@ -352,6 +352,9 @@ export function initializeNode(interpreter: Interpreter, type: string, typeDef?:
             let init: BrsType;
 
             interpreter.inSubEnv((subInterpreter) => {
+                if (node instanceof Scene) {
+                    node.setInitState("initializing");
+                }
                 addChildren(subInterpreter, node!, typeDef!);
                 addFields(subInterpreter, node!, typeDef!);
                 return BrsInvalid.Instance;
@@ -382,6 +385,9 @@ export function initializeNode(interpreter: Interpreter, type: string, typeDef?:
             }, currentEnv);
 
             typeDef = typeDefStack.pop();
+        }
+        if (node instanceof Scene) {
+            node.setInitState("initialized");
         }
         return node;
     } else {
