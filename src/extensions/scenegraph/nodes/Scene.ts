@@ -66,7 +66,7 @@ export class Scene extends Group {
     }
 
     setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind, sync: boolean = true) {
-        if (this._initState === "none") {
+        if (this._initState === "none" && !sgRoot.inTaskThread()) {
             this._preInitSet.set(index, value);
             return;
         }
