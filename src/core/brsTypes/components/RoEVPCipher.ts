@@ -51,7 +51,14 @@ export class RoEVPCipher extends BrsComponent implements BrsValue {
             if (format.startsWith("bf")) {
                 postMessage(`warning,[roEVPCipher] Blowfish cipher is deprecated in this environment, using "aes-128" instead.`);
                 format = "aes-128-cbc";
-                iv = iv + iv; // Blowfish uses 8 byte IV, AES uses 16 byte IV
+                // Derive a 16-byte AES IV from the original Blowfish IV instead of simply doubling it.
+                // The IV is expected to be hex-encoded; when it is 8 bytes (16 hex chars),
+                // derive a 16-byte IV by hashing and truncating.
+                if (iv.length === 16) {
+                    const ivBytes = Buffer.from(iv, "hex");
+                    const derivedIvHex = crypto.createHash("sha256").update(ivBytes).digest("hex");
+                    iv = derivedIvHex.slice(0, 32); // 16 bytes for AES-128-CBC
+                }
             }
             this.cipherEncrypt = encrypt;
             this.cipherFormat = format;
