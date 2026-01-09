@@ -374,7 +374,7 @@ export class Field {
                 const originalLocation = interpreter.location;
                 const funcLoc = callable.getLocation() ?? originalLocation;
                 interpreter.addToStack({
-                    functionName: callable.getName()!,
+                    functionName: callable.getName(),
                     functionLocation: funcLoc,
                     callLocation: funcLoc,
                     signature: satisfiedSignature.signature,

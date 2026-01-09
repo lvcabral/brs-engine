@@ -385,7 +385,7 @@ export function initializeNode(interpreter: Interpreter, type: string, typeDef?:
                         functionName: "init",
                         functionLocation: funcLoc,
                         callLocation: originalLocation,
-                        signature: init.signatures[0]!.signature,
+                        signature: init.signatures[0].signature,
                     });
                     init.call(subInterpreter);
                     interpreter.stack.pop();

@@ -200,7 +200,7 @@ export class Scene extends Group {
                     let { signature, impl } = satisfiedSignature;
                     const funcLoc = onKeyEvent.getLocation() ?? interpreter.location;
                     interpreter.addToStack({
-                        functionName: onKeyEvent.getName()!,
+                        functionName: onKeyEvent.getName(),
                         functionLocation: funcLoc,
                         callLocation: interpreter.location,
                         signature: satisfiedSignature.signature,
