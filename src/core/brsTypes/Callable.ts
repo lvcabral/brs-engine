@@ -153,6 +153,9 @@ export class Callable implements Brs.BrsValue, Brs.Boxable {
     /** The location where this callable is on the source code */
     private location: Location | undefined;
 
+    /** Whether this callable was defined by the user (as opposed to being a built-in function). */
+    private userDefined: boolean = false;
+
     /**
      * Calls the function this `Callable` represents with the provided `arg`uments using the
      * provided `Interpreter` instance.
@@ -191,6 +194,20 @@ export class Callable implements Brs.BrsValue, Brs.Boxable {
             // then return whatever the selected implementation would return
             return impl(subInterpreter, ...mutableArgs);
         });
+    }
+
+    /**
+     * Marks this callable as being defined by the user (as opposed to being a built-in function).
+     */
+    setUserDefined(): void {
+        this.userDefined = true;
+    }
+
+    /**
+     * Returns whether this callable was defined by the user (as opposed to being a built-in function).
+     */
+    isUserDefined(): boolean {
+        return this.userDefined;
     }
 
     /**

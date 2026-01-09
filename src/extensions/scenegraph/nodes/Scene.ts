@@ -185,11 +185,12 @@ export class Scene extends Group {
             return false;
         }
         const nodeEnv = typeDef.environment;
+        const originalLocation = interpreter.location;
         const handled = interpreter.inSubEnv((subInterpreter) => {
             subInterpreter.environment.hostNode = hostNode;
             subInterpreter.environment.setRootM(hostNode.m);
             subInterpreter.environment.setM(hostNode.m);
-            let onKeyEvent = subInterpreter.getCallableFunction("onKeyEvent");
+            const onKeyEvent = subInterpreter.getCallableFunction("onKeyEvent");
             if (!(onKeyEvent instanceof Callable) || key.value === "") {
                 return BrsBoolean.False;
             }
@@ -197,6 +198,13 @@ export class Scene extends Group {
                 const satisfiedSignature = onKeyEvent?.getFirstSatisfiedSignature([key, press]);
                 if (satisfiedSignature) {
                     let { signature, impl } = satisfiedSignature;
+                    const funcLoc = onKeyEvent.getLocation() ?? interpreter.location;
+                    interpreter.addToStack({
+                        functionName: onKeyEvent.getName(),
+                        functionLocation: funcLoc,
+                        callLocation: interpreter.location,
+                        signature: satisfiedSignature.signature,
+                    });
                     subInterpreter.environment.define(
                         Scope.Function,
                         signature.args[0].name.text,
@@ -210,8 +218,12 @@ export class Scene extends Group {
                         interpreter.location
                     );
                     impl(subInterpreter, key, press);
+                    interpreter.stack.pop();
+                    interpreter.location = originalLocation;
                 }
             } catch (err) {
+                interpreter.stack.pop();
+                interpreter.location = originalLocation;
                 if (!(err instanceof BlockEnd)) {
                     throw err;
                 } else if (err instanceof Stmt.ReturnValue) {

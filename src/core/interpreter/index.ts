@@ -1171,18 +1171,19 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 }
                 return this.inSubEnv((subInterpreter) => {
                     subInterpreter.environment.setM(mPointer, false);
-                    this._stack.push({
-                        functionName: functionName,
-                        functionLocation: callee.getLocation() ?? this.location,
-                        callLocation: expression.callee.location,
-                        signature: signature,
-                    });
+                    if (callee.isUserDefined()) {
+                        this.addToStack({
+                            functionName: functionName,
+                            functionLocation: callee.getLocation() ?? this.location,
+                            callLocation: expression.callee.location,
+                            signature: signature,
+                        });
+                    }
                     try {
                         let returnValue = callee.call(this, ...args);
-                        this._stack.pop();
+                        if (callee.isUserDefined()) this._stack.pop();
                         return returnValue;
                     } catch (err: any) {
-                        this._stack.pop();
                         if (
                             !this._tryMode &&
                             this.options.stopOnCrash &&
@@ -1191,9 +1192,14 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                         ) {
                             // Enable Micro Debugger on app crash
                             const errNumber = err.errorDetail.errno;
-                            this._environment = savedEnvironment;
+                            if (!callee.isUserDefined()) {
+                                // Restore the context for errors from built-in components/functions
+                                this._environment = savedEnvironment;
+                            }
                             runDebugger(this, this.location, this.location, err.message, errNumber);
                             this.options.stopOnCrash = false;
+                        } else if (callee.isUserDefined()) {
+                            this._stack.pop();
                         }
                         throw err;
                     }

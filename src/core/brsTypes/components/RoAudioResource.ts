@@ -20,11 +20,11 @@ export class RoAudioResource extends BrsComponent implements BrsValue {
     constructor(name: BrsType) {
         super("roAudioResource");
         if (!isStringComp(name)) {
-            throw new RuntimeError(
+            const errorDetail =
                 name instanceof Uninitialized
                     ? RuntimeErrorDetail.UninitializedVariable
-                    : RuntimeErrorDetail.TypeMismatch
-            );
+                    : RuntimeErrorDetail.TypeMismatch;
+            throw new RuntimeError(errorDetail);
         }
         this.maxStreams = BrsDevice.deviceInfo.maxSimulStreams;
         this.valid = true;

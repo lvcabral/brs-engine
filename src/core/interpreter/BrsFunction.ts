@@ -70,5 +70,6 @@ export function toCallable(func: Expr.Function, name: string = "[Function]") {
         },
     });
     callFunc.setLocation(func.location);
+    callFunc.setUserDefined();
     return callFunc;
 }

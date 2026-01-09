@@ -1308,7 +1308,8 @@ export class Node extends RoSGNode implements BrsValue {
                     BrsDevice.stderr.write(`warning,Ignoring attempt to call non-implemented function ${name}`);
                     return BrsInvalid.Instance;
                 }
-
+                const originalLocation = interpreter.location;
+                let addedToStack = false;
                 subInterpreter.environment.setM(this.m);
                 subInterpreter.environment.setRootM(this.m);
                 subInterpreter.environment.hostNode = this;
@@ -1319,15 +1320,17 @@ export class Node extends RoSGNode implements BrsValue {
                     const args = satisfiedSignature ? functionArgs : [];
                     satisfiedSignature ??= functionToCall.getFirstSatisfiedSignature([]);
                     if (satisfiedSignature) {
-                        const funcLoc = functionToCall.getLocation() ?? interpreter.location;
+                        const funcLoc = functionToCall.getLocation() ?? originalLocation;
                         interpreter.addToStack({
                             functionName: name,
                             functionLocation: funcLoc,
                             callLocation: funcLoc,
                             signature: satisfiedSignature.signature,
                         });
+                        addedToStack = true;
                         const returnValue = functionToCall.call(subInterpreter, ...args);
                         interpreter.stack.pop();
+                        interpreter.location = originalLocation;
                         return returnValue;
                     } else {
                         return interpreter.addError(
@@ -1339,6 +1342,10 @@ export class Node extends RoSGNode implements BrsValue {
                         );
                     }
                 } catch (reason) {
+                    if (addedToStack) {
+                        interpreter.stack.pop();
+                        interpreter.location = originalLocation;
+                    }
                     if (!(reason instanceof Stmt.ReturnValue)) {
                         // re-throw interpreter errors
                         throw reason;

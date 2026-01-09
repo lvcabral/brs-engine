@@ -14,17 +14,17 @@ export class RoRegex extends BrsComponent implements BrsValue {
     constructor(expression: BrsType, flags: BrsType = new BrsString("")) {
         super("roRegex");
         if (!isStringComp(expression)) {
-            throw new RuntimeError(
+            const errorDetail =
                 expression instanceof Uninitialized
                     ? RuntimeErrorDetail.UninitializedVariable
-                    : RuntimeErrorDetail.TypeMismatch
-            );
+                    : RuntimeErrorDetail.TypeMismatch;
+            throw new RuntimeError(errorDetail);
         } else if (!isStringComp(flags)) {
-            throw new RuntimeError(
+            const errorDetail =
                 flags instanceof Uninitialized
                     ? RuntimeErrorDetail.UninitializedVariable
-                    : RuntimeErrorDetail.TypeMismatch
-            );
+                    : RuntimeErrorDetail.TypeMismatch;
+            throw new RuntimeError(errorDetail);
         }
         this.jsRegex = new RegExp(expression.getValue(), this.parseFlags(flags.getValue()));
 
