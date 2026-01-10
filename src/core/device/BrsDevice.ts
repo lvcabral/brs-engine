@@ -369,12 +369,12 @@ export class BrsDevice {
     /**
      * Checks if the Break Command is set in the shared array.
      * Handles debug pause and continue states.
-     * @param debugMode Whether debug mode is enabled
+     * @param debugSession Whether debug session is active
      * @returns Debug command code
      */
-    static checkBreakCommand(debugMode: boolean): number {
-        let cmd = debugMode ? DebugCommand.BREAK : -1;
-        if (!debugMode) {
+    static checkBreakCommand(debugSession: boolean): number {
+        let cmd = debugSession ? DebugCommand.BREAK : -1;
+        if (!debugSession) {
             cmd = Atomics.load(this.sharedArray, DataType.DBG);
             if (cmd === DebugCommand.BREAK) {
                 Atomics.store(this.sharedArray, DataType.DBG, -1);

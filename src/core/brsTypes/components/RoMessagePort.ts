@@ -2,7 +2,7 @@ import { BrsValue, ValueKind, BrsInvalid, BrsBoolean } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
 import { BrsEvent, BrsType, isInvalid } from "..";
 import { Callable, StdlibArgument } from "../Callable";
-import { Interpreter } from "../../interpreter";
+import { DebugMode, Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 import { DebugCommand } from "../../common";
 import { BrsDevice } from "../../device/BrsDevice";
@@ -58,14 +58,18 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
         const timeout = ms + performance.now();
 
         while (loop || performance.now() < timeout) {
+            if (interpreter.debugMode === DebugMode.EXIT) {
+                return BrsInvalid.Instance;
+            }
             const msg = this.getNextMessage();
             if (msg instanceof BrsEvent) {
                 return msg;
             }
             this.updateMessageQueue(interpreter, ms);
-            const cmd = BrsDevice.checkBreakCommand(interpreter.debugMode);
+            const inDebugSession = interpreter.debugMode !== DebugMode.NONE;
+            const cmd = BrsDevice.checkBreakCommand(inDebugSession);
             if (cmd === DebugCommand.BREAK || cmd === DebugCommand.EXIT) {
-                interpreter.debugMode = cmd === DebugCommand.BREAK;
+                interpreter.debugMode = cmd === DebugCommand.BREAK ? DebugMode.DEBUG : DebugMode.EXIT;
                 return BrsInvalid.Instance;
             }
         }

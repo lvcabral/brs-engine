@@ -13,6 +13,7 @@ import {
     IfDraw2D,
     BlockEnd,
     RuntimeError,
+    DebugMode,
 } from "brs-engine";
 import { toAssociativeArray } from "../factory/Serializer";
 import { sgRoot } from "../SGRoot";
@@ -226,7 +227,7 @@ export class Scene extends Group {
                 if (err instanceof RuntimeError) {
                     interpreter.checkCrashDebug(err);
                 }
-                if (!interpreter.exitMode) {
+                if (interpreter.debugMode !== DebugMode.EXIT) {
                     interpreter.popFromStack();
                     interpreter.location = originalLocation;
                 }
