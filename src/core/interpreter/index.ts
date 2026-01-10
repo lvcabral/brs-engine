@@ -150,6 +150,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     // Micro Debugger state properties
     public debugMode: boolean = false;
     public stepMode: boolean = false;
+    public exitMode: boolean = false;
     private lastStmt: Stmt.Statement | null = null;
 
     /**
@@ -157,7 +158,14 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
      * @param tracePoint The TracePoint to add to the stack
      */
     addToStack(tracePoint: TracePoint) {
-        this._stack.push(tracePoint);
+        if (!this.exitMode) this._stack.push(tracePoint);
+    }
+
+    /**
+     * Removes the top TracePoint from the call stack.
+     */
+    popFromStack() {
+        if (!this.exitMode) this._stack.pop();
     }
 
     /**
@@ -1180,26 +1188,23 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                         });
                     }
                     try {
-                        let returnValue = callee.call(this, ...args);
-                        if (callee.isUserDefined()) this._stack.pop();
+                        const returnValue = callee.call(this, ...args);
+                        if (callee.isUserDefined()) this.popFromStack();
                         return returnValue;
                     } catch (err: any) {
-                        if (
-                            !this._tryMode &&
-                            this.options.stopOnCrash &&
-                            err instanceof RuntimeError &&
-                            !core.terminateReasons.includes(err.message)
-                        ) {
-                            // Enable Micro Debugger on app crash
-                            const errNumber = err.errorDetail.errno;
+                        if (!this._tryMode && this.options.stopOnCrash && err instanceof RuntimeError) {
                             if (!callee.isUserDefined()) {
                                 // Restore the context for errors from built-in components/functions
                                 this._environment = savedEnvironment;
                             }
+                            // Enable Micro Debugger on app crash
+                            const errNumber = err.errorDetail.errno;
                             runDebugger(this, this.location, this.location, err.message, errNumber);
                             this.options.stopOnCrash = false;
+                        } else if (!this._tryMode && !this.options.stopOnCrash && !(err instanceof core.BlockEnd)) {
+                            this.exitMode = true;
                         } else if (callee.isUserDefined()) {
-                            this._stack.pop();
+                            this.popFromStack();
                         }
                         throw err;
                     }
@@ -1886,6 +1891,21 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         } else if (cmd === DebugCommand.EXIT) {
             this.options.stopOnCrash = false;
             throw new Stmt.BlockEnd("debug-exit", statement.location);
+        }
+    }
+
+    /**
+     * Checks if the interpreter should enter crash debug mode based on the error.
+     * @param err The error to check
+     */
+    public checkCrashDebug(err: any) {
+        if (!this._tryMode && this.options.stopOnCrash && err instanceof RuntimeError) {
+            // Enable Micro Debugger on app crash
+            const errNumber = err.errorDetail.errno;
+            runDebugger(this, this.location, this.location, err.message, errNumber);
+            this.options.stopOnCrash = false;
+        } else if (!this._tryMode && !this.options.stopOnCrash && !(err instanceof core.BlockEnd)) {
+            this.exitMode = true;
         }
     }
 

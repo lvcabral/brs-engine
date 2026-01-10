@@ -47,7 +47,7 @@ export function runDebugger(
     while (true) {
         let line = "";
         /// #if BROWSER
-        line = nextDebugCommand(interpreter);
+        line = nextDebugCommand();
         /// #else
         BrsDevice.stdout.write(`print,\r\n`);
         line = readline.prompt();
@@ -76,6 +76,7 @@ export function runDebugger(
                 interpreter.debugMode = true;
                 return true;
             case DebugCommand.EXIT:
+                interpreter.exitMode = true;
                 return false;
         }
         debugHandleCommand(interpreter, nextLoc, lastLoc, command.cmd);
@@ -133,7 +134,7 @@ function debuggerIntro(
  * Function to wait for the next debug command
  * @returns a string with the debug expression
  */
-function nextDebugCommand(interpreter: Interpreter): string {
+function nextDebugCommand(): string {
     let line = "";
     BrsDevice.stdout.write(`print,\r\n${DebugPrompt}`);
     Atomics.wait(BrsDevice.sharedArray, DataType.DBG, -1);
