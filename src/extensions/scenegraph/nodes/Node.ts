@@ -29,6 +29,7 @@ import {
     Interpreter,
     BrsDevice,
     RuntimeError,
+    DebugMode,
 } from "brs-engine";
 import { RoSGNode } from "../components/RoSGNode";
 import { createNodeByType, getBrsValueFromFieldType, subtypeHierarchy } from "../factory/NodeFactory";
@@ -1346,7 +1347,7 @@ export class Node extends RoSGNode implements BrsValue {
                     if (reason instanceof RuntimeError) {
                         interpreter.checkCrashDebug(reason);
                     }
-                    if (!interpreter.exitMode && addedToStack) {
+                    if (interpreter.debugMode !== DebugMode.EXIT && addedToStack) {
                         interpreter.popFromStack();
                         interpreter.location = originalLocation;
                     }

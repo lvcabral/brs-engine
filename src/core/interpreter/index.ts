@@ -89,6 +89,13 @@ export interface TracePoint {
     signature: Signature;
 }
 
+export enum DebugMode {
+    NONE,
+    DEBUG,
+    STEP,
+    EXIT,
+}
+
 export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType> {
     private readonly _stack = new Array<TracePoint>();
     private readonly _startTime = Date.now();
@@ -148,9 +155,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     // Micro Debugger state properties
-    public debugMode: boolean = false;
-    public stepMode: boolean = false;
-    public exitMode: boolean = false;
+    public debugMode: DebugMode = DebugMode.NONE;
     private lastStmt: Stmt.Statement | null = null;
 
     /**
@@ -158,14 +163,14 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
      * @param tracePoint The TracePoint to add to the stack
      */
     addToStack(tracePoint: TracePoint) {
-        if (!this.exitMode) this._stack.push(tracePoint);
+        if (this.debugMode !== DebugMode.EXIT) this._stack.push(tracePoint);
     }
 
     /**
      * Removes the top TracePoint from the call stack.
      */
     popFromStack() {
-        if (!this.exitMode) this._stack.pop();
+        if (this.debugMode !== DebugMode.EXIT) this._stack.pop();
     }
 
     /**
@@ -457,9 +462,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     visitStop(statement: Stmt.Stop): BrsType {
-        this.debugMode = true;
-        this.stepMode = false;
-        this.checkDebugger(statement);
+        if (this.debugMode !== DebugMode.EXIT) {
+            this.debugMode = DebugMode.DEBUG;
+            this.checkDebugger(statement);
+        }
         return BrsInvalid.Instance;
     }
 
@@ -1202,7 +1208,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                             runDebugger(this, this.location, this.location, err.message, errNumber);
                             this.options.stopOnCrash = false;
                         } else if (!this._tryMode && !this.options.stopOnCrash && !(err instanceof core.BlockEnd)) {
-                            this.exitMode = true;
+                            this.debugMode = DebugMode.EXIT;
                         } else if (callee.isUserDefined()) {
                             this.popFromStack();
                         }
@@ -1879,9 +1885,13 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
      * @param statement The statement being executed
      */
     private checkDebugger(statement: Stmt.Statement) {
-        const cmd = BrsDevice.checkBreakCommand(this.debugMode);
+        if (this.debugMode === DebugMode.EXIT) {
+            return;
+        }
+        const inDebugSession = this.debugMode !== DebugMode.NONE;
+        const cmd = BrsDevice.checkBreakCommand(inDebugSession);
         if (cmd === DebugCommand.BREAK) {
-            this.debugMode = true;
+            if (this.debugMode === DebugMode.NONE) this.debugMode = DebugMode.DEBUG;
             if (!(statement instanceof Stmt.Block)) {
                 if (!runDebugger(this, statement.location, this.location)) {
                     this.options.stopOnCrash = false;
@@ -1889,6 +1899,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 }
             }
         } else if (cmd === DebugCommand.EXIT) {
+            this.debugMode = DebugMode.EXIT;
             this.options.stopOnCrash = false;
             throw new Stmt.BlockEnd("debug-exit", statement.location);
         }
@@ -1905,7 +1916,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             runDebugger(this, this.location, this.location, err.message, errNumber);
             this.options.stopOnCrash = false;
         } else if (!this._tryMode && !this.options.stopOnCrash && !(err instanceof core.BlockEnd)) {
-            this.exitMode = true;
+            this.debugMode = DebugMode.EXIT;
         }
     }
 

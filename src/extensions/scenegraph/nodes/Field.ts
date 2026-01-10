@@ -26,6 +26,7 @@ import {
     BlockEnd,
     isStringComp,
     RuntimeError,
+    DebugMode,
 } from "brs-engine";
 import { Node } from "./Node";
 import { RoSGNodeEvent } from "../events/RoSGNodeEvent";
@@ -393,7 +394,7 @@ export class Field {
                     if (err instanceof RuntimeError) {
                         interpreter.checkCrashDebug(err);
                     }
-                    if (!interpreter.exitMode) {
+                    if (interpreter.debugMode !== DebugMode.EXIT) {
                         interpreter.popFromStack();
                         interpreter.location = originalLocation;
                     }

@@ -1,5 +1,5 @@
 import { bscs } from "..";
-import { Interpreter, TracePoint } from ".";
+import { DebugMode, Interpreter, TracePoint } from ".";
 import { Lexer, Location } from "../lexer";
 import { Parser } from "../parser";
 import { BrsDevice } from "../device/BrsDevice";
@@ -63,8 +63,7 @@ export function runDebugger(
                     BrsDevice.stdout.write("print,Can't continue");
                     continue;
                 }
-                interpreter.stepMode = false;
-                interpreter.debugMode = false;
+                interpreter.debugMode = DebugMode.NONE;
                 postMessage("command,continue");
                 return true;
             case DebugCommand.STEP:
@@ -72,11 +71,10 @@ export function runDebugger(
                     BrsDevice.stdout.write("print,Can't continue");
                     continue;
                 }
-                interpreter.stepMode = true;
-                interpreter.debugMode = true;
+                interpreter.debugMode = DebugMode.STEP;
                 return true;
             case DebugCommand.EXIT:
-                interpreter.exitMode = true;
+                interpreter.debugMode = DebugMode.EXIT;
                 return false;
         }
         debugHandleCommand(interpreter, nextLoc, lastLoc, command.cmd);
@@ -101,7 +99,7 @@ function debuggerIntro(
     const lastLines = parseTextFile(interpreter.sourceMap.get(lastLoc.file)) ?? [""];
     let debugMsg = "BrightScript Micro Debugger.\r\n";
     let lastLine: number = lastLoc.start.line;
-    if (interpreter.stepMode) {
+    if (interpreter.debugMode === DebugMode.STEP && !errMessage) {
         const line = lastLines[lastLine - 1]?.trimEnd() ?? "";
         BrsDevice.stdout.write(`print,${lastLine.toString().padStart(3, "0")}: ${line}\r\n`);
     } else {
@@ -154,7 +152,7 @@ function nextDebugCommand(): string {
 async function debugHandleExpr(interpreter: Interpreter, expr: string) {
     const lexer = new Lexer();
     const parser = new Parser();
-    interpreter.debugMode = false;
+    interpreter.debugMode = DebugMode.NONE;
     if (expr.trim().length === 0) {
         return;
     }
