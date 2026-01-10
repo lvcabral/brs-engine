@@ -39,9 +39,11 @@
         "prepublishOnly": "npm-run-all --serial clean release"
     },
     "dependencies": {
-        "brs-engine": "^2.0.5",
         "xmldoc": "^1.3.0",
         "p-settle": "^5.1.1"
+    },
+    "peerDependencies": {
+        "brs-engine": "^2.0.5"
     },
     "devDependencies": {
         "@types/node": "^22.13.2",

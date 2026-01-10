@@ -4,6 +4,7 @@ export * from "./core/brsTypes";
 export * from "./core/interpreter";
 export * from "./core/error/BrsError";
 export * from "./core/error/ArgumentMismatch";
+export * from "./core/error/TypeMismatch";
 export * from "./core/common";
 export * from "./core/device/BrsDevice";
 export * from "./core/brsTypes/components/RoFontRegistry";

@@ -44,6 +44,7 @@ export * from "./brsTypes";
 export * from "./interpreter";
 export * from "./error/BrsError";
 export * from "./error/ArgumentMismatch";
+export * from "./error/TypeMismatch";
 export * from "./LexerParser";
 export * from "./common";
 export * from "./device/BrsDevice";
@@ -79,6 +80,7 @@ import * as InterpreterExports from "./interpreter";
 import * as BrsDeviceExports from "./device/BrsDevice";
 import * as BrsErrorExports from "./error/BrsError";
 import * as ArgumentMismatchExports from "./error/ArgumentMismatch";
+import * as TypeMismatchExports from "./error/TypeMismatch";
 import * as ExtensionsExports from "./extensions";
 import * as RoFontRegistryExports from "./brsTypes/components/RoFontRegistry";
 import * as FileSystemExports from "./device/FileSystem";
@@ -183,6 +185,7 @@ function createWorkerExports() {
         InterpreterExports,
         BrsErrorExports,
         ArgumentMismatchExports,
+        TypeMismatchExports,
         LexerParserExports,
         BrsDeviceExports,
         RoFontRegistryExports,

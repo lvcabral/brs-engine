@@ -28,6 +28,7 @@ import {
     Callable,
     Interpreter,
     BrsDevice,
+    RuntimeError,
 } from "brs-engine";
 import { RoSGNode } from "../components/RoSGNode";
 import { createNodeByType, getBrsValueFromFieldType, subtypeHierarchy } from "../factory/NodeFactory";
@@ -1324,12 +1325,12 @@ export class Node extends RoSGNode implements BrsValue {
                         interpreter.addToStack({
                             functionName: name,
                             functionLocation: funcLoc,
-                            callLocation: funcLoc,
+                            callLocation: originalLocation,
                             signature: satisfiedSignature.signature,
                         });
                         addedToStack = true;
                         const returnValue = functionToCall.call(subInterpreter, ...args);
-                        interpreter.stack.pop();
+                        interpreter.popFromStack();
                         interpreter.location = originalLocation;
                         return returnValue;
                     } else {
@@ -1342,8 +1343,11 @@ export class Node extends RoSGNode implements BrsValue {
                         );
                     }
                 } catch (reason) {
-                    if (addedToStack) {
-                        interpreter.stack.pop();
+                    if (reason instanceof RuntimeError) {
+                        interpreter.checkCrashDebug(reason);
+                    }
+                    if (!interpreter.exitMode && addedToStack) {
+                        interpreter.popFromStack();
                         interpreter.location = originalLocation;
                     }
                     if (!(reason instanceof Stmt.ReturnValue)) {
