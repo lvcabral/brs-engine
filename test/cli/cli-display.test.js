@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const Module = require("module");
 const ts = require("typescript");
-const { createCanvas } = require("canvas");
+const { Canvas } = require("skia-canvas");
 const chalk = require("chalk");
 
 function loadRenderer() {
@@ -34,7 +34,7 @@ describe("CLI display rendering", () => {
         });
 
         it("maps dark pixels to dense characters", () => {
-            const source = createCanvas(1, 1);
+            const source = new Canvas(1, 1);
             const ctx = source.getContext("2d");
             ctx.fillStyle = "#000000";
             ctx.fillRect(0, 0, 1, 1);
@@ -44,7 +44,7 @@ describe("CLI display rendering", () => {
         });
 
         it("maps light pixels to sparse characters", () => {
-            const source = createCanvas(1, 1);
+            const source = new Canvas(1, 1);
             const ctx = source.getContext("2d");
             ctx.fillStyle = "#ffffff";
             ctx.fillRect(0, 0, 1, 1);
@@ -55,7 +55,7 @@ describe("CLI display rendering", () => {
         });
 
         it("renders a gradient with appropriate character progression", () => {
-            const source = createCanvas(10, 1);
+            const source = new Canvas(10, 1);
             const ctx = source.getContext("2d");
             const gradient = ctx.createLinearGradient(0, 0, 10, 0);
             gradient.addColorStop(0, "#000000");
@@ -77,7 +77,7 @@ describe("CLI display rendering", () => {
 
         it("applies RGB colors when chalk level is enabled", () => {
             chalk.level = 3;
-            const source = createCanvas(1, 1);
+            const source = new Canvas(1, 1);
             const ctx = source.getContext("2d");
             ctx.fillStyle = "#ff0000";
             ctx.fillRect(0, 0, 1, 1);
@@ -88,14 +88,14 @@ describe("CLI display rendering", () => {
         });
 
         it("returns consistent dimensions for multiple frames", () => {
-            const source1 = createCanvas(32, 32);
+            const source1 = new Canvas(32, 32);
             const ctx1 = source1.getContext("2d");
             ctx1.fillStyle = "#000000";
             ctx1.fillRect(0, 0, 32, 32);
 
             const result1 = renderAsciiFrame(32, source1);
 
-            const source2 = createCanvas(32, 32);
+            const source2 = new Canvas(32, 32);
             const ctx2 = source2.getContext("2d");
             ctx2.fillStyle = "#ffffff";
             ctx2.fillRect(0, 0, 32, 32);
@@ -107,7 +107,7 @@ describe("CLI display rendering", () => {
         });
 
         it("handles blank frames without flicker by maintaining dimensions", () => {
-            const source = createCanvas(1, 1);
+            const source = new Canvas(1, 1);
             const ctx = source.getContext("2d");
             ctx.fillStyle = "#000000";
             ctx.fillRect(0, 0, 1, 1);
@@ -124,7 +124,7 @@ describe("CLI display rendering", () => {
         });
 
         it("renders bright stripe over dark stripe with upper blocks", () => {
-            const source = createCanvas(8, 2);
+            const source = new Canvas(8, 2);
             const ctx = source.getContext("2d");
             ctx.fillStyle = "#ffffff";
             ctx.fillRect(0, 0, 8, 1);
@@ -138,7 +138,7 @@ describe("CLI display rendering", () => {
         });
 
         it("renders dark stripe over bright stripe with lower blocks", () => {
-            const source = createCanvas(8, 2);
+            const source = new Canvas(8, 2);
             const ctx = source.getContext("2d");
             ctx.fillStyle = "#000000";
             ctx.fillRect(0, 0, 8, 1);
@@ -152,7 +152,7 @@ describe("CLI display rendering", () => {
         });
 
         it("uses adaptive thresholds to reveal medium gray circle", () => {
-            const source = createCanvas(40, 40);
+            const source = new Canvas(40, 40);
             const ctx = source.getContext("2d");
             ctx.fillStyle = "#101010";
             ctx.fillRect(0, 0, 40, 40);
@@ -168,7 +168,7 @@ describe("CLI display rendering", () => {
         });
 
         it("preserves detail on final row for odd heights", () => {
-            const source = createCanvas(32, 9);
+            const source = new Canvas(32, 9);
             const ctx = source.getContext("2d");
             ctx.fillStyle = "#050505";
             ctx.fillRect(0, 0, 32, 8);
@@ -184,7 +184,7 @@ describe("CLI display rendering", () => {
 
         it("applies background colors when cells contain only spaces", () => {
             chalk.level = 3;
-            const source = createCanvas(4, 4);
+            const source = new Canvas(4, 4);
             const ctx = source.getContext("2d");
             ctx.fillStyle = "#6f1ab1";
             ctx.fillRect(0, 0, 4, 4);

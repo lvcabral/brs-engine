@@ -5,7 +5,7 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { Canvas, createCanvas } from "canvas";
+import { Canvas } from "skia-canvas";
 import chalk from "chalk";
 
 const ASCII_ALPHABET = ["@", "%", "#", "*", "+", "=", "-", ":", ".", " "];
@@ -78,7 +78,7 @@ export function printFrame({ plain, colored }: RenderFrameResult) {
 export function renderAsciiFrame(columns: number, image: Canvas): RenderFrameResult {
     const cols = Math.max(1, Math.min(columns, maxColumns));
     const rows = clampRows(cols, computeDisplayRatio(image));
-    const canvas = createCanvas(cols, rows);
+    const canvas = new Canvas(cols, rows);
     const ctx = canvas.getContext("2d");
 
     ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
@@ -139,7 +139,7 @@ interface PixelSample {
 export function renderUnicodeFrame(columns: number, image: Canvas): RenderFrameResult {
     const cols = Math.max(1, Math.min(columns, maxColumns));
     const rows = clampRows(cols, computeDisplayRatio(image));
-    const canvas = createCanvas(cols, Math.max(2, rows * 2));
+    const canvas = new Canvas(cols, Math.max(2, rows * 2));
     const ctx = canvas.getContext("2d");
 
     ctx.drawImage(image, 0, 0, canvas.width, canvas.height);

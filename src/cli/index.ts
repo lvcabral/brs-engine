@@ -14,7 +14,7 @@ import readline from "node:readline";
 import { Worker } from "node:worker_threads";
 import { gateway4sync } from "default-gateway";
 import envPaths from "env-paths";
-import { ImageData, createCanvas } from "canvas";
+import { Canvas, ImageData } from "skia-canvas";
 import chalk from "chalk";
 import { Command } from "commander";
 import stripAnsi from "strip-ansi";
@@ -536,7 +536,7 @@ function messageCallback(message: any, _?: any) {
     if (typeof message === "string") {
         handleStringMessage(message);
     } else if (program.ascii && message instanceof ImageData) {
-        const canvas = createCanvas(message.width, message.height);
+        const canvas = new Canvas(message.width, message.height);
         const ctx = canvas.getContext("2d");
         canvas.width = message.width;
         canvas.height = message.height;

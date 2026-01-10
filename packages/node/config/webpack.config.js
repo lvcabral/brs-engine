@@ -68,7 +68,7 @@ module.exports = (env) => {
                 }),
             ],
             externals: {
-                canvas: "commonjs canvas", // Important (2)
+                "skia-canvas": "commonjs skia-canvas", // Important (2)
             },
             output: {
                 path: path.join(__dirname, cliPath),
@@ -108,7 +108,7 @@ module.exports = (env) => {
             externals: {
                 "./brs.node.js": "commonjs ./brs.node.js",
                 "brs-engine": "commonjs ./brs.node.js",
-                canvas: "commonjs canvas",
+                "skia-canvas": "commonjs skia-canvas",
             },
             output: {
                 filename: libName + ".cli.js",

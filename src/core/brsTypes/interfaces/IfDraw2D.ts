@@ -17,7 +17,7 @@ import { Interpreter } from "../../interpreter";
 import { BrsComponent } from "../components/BrsComponent";
 import { RoCompositor } from "../components/RoCompositor";
 import { Int32 } from "../Int32";
-import { Canvas, CanvasRenderingContext2D, createCanvas, ImageData as NodeImageData } from "canvas";
+import { Canvas, CanvasRenderingContext2D, ImageData as NodeImageData } from "skia-canvas";
 import UPNG from "@lvcabral/upng";
 
 export type BrsCanvas = OffscreenCanvas | Canvas;
@@ -978,7 +978,7 @@ export function createNewCanvas(width: number, height: number) {
     /// #if BROWSER
     return new OffscreenCanvas(width, height);
     /// #else
-    return createCanvas(width, height);
+    return new Canvas(width, height);
     /// #endif
 }
 
@@ -993,8 +993,8 @@ export function drawImageAtPos(image: BrsCanvas, ctx: BrsCanvasContext2D, x: num
         ctx.drawImage(image, x, y);
     }
     /// #else
-    if (ctx instanceof CanvasRenderingContext2D && image instanceof Canvas) {
-        ctx.drawImage(image, x, y);
+    if (image instanceof Canvas) {
+        (ctx as CanvasRenderingContext2D).drawImage(image as any, x, y);
     }
     /// #endif
 }
@@ -1005,9 +1005,7 @@ export function putImageAtPos(imageData: BrsImageData, ctx: BrsCanvasContext2D, 
         ctx.putImageData(imageData, x, y);
     }
     /// #else
-    if (ctx instanceof CanvasRenderingContext2D) {
-        ctx.putImageData(imageData, x, y);
-    }
+    (ctx as CanvasRenderingContext2D).putImageData(imageData as any, x, y);
     /// #endif
 }
 
@@ -1075,8 +1073,8 @@ function drawChunk(ctx: BrsCanvasContext2D, image: BrsCanvas, chunk: DrawChunk) 
         ctx.drawImage(image, sx, sy, sw, sh, dx, dy, dw, dh);
     }
     /// #else
-    if (ctx instanceof CanvasRenderingContext2D && image instanceof Canvas) {
-        ctx.drawImage(image, sx, sy, sw, sh, dx, dy, dw, dh);
+    if (image instanceof Canvas) {
+        (ctx as CanvasRenderingContext2D).drawImage(image as any, sx, sy, sw, sh, dx, dy, dw, dh);
     }
     /// #endif
 }
