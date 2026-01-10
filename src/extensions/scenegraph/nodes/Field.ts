@@ -25,6 +25,7 @@ import {
     Scope,
     BlockEnd,
     isStringComp,
+    RuntimeError,
 } from "brs-engine";
 import { Node } from "./Node";
 import { RoSGNodeEvent } from "../events/RoSGNodeEvent";
@@ -376,7 +377,7 @@ export class Field {
                 interpreter.addToStack({
                     functionName: callable.getName(),
                     functionLocation: funcLoc,
-                    callLocation: funcLoc,
+                    callLocation: originalLocation,
                     signature: satisfiedSignature.signature,
                 });
                 try {
@@ -386,11 +387,16 @@ export class Field {
                     } else {
                         impl(subInterpreter);
                     }
-                    interpreter.stack.pop();
+                    interpreter.popFromStack();
                     interpreter.location = originalLocation;
                 } catch (err) {
-                    interpreter.stack.pop();
-                    interpreter.location = originalLocation;
+                    if (err instanceof RuntimeError) {
+                        interpreter.checkCrashDebug(err);
+                    }
+                    if (!interpreter.exitMode) {
+                        interpreter.popFromStack();
+                        interpreter.location = originalLocation;
+                    }
                     if (!(err instanceof BlockEnd)) {
                         callback.running = false;
                         throw err;

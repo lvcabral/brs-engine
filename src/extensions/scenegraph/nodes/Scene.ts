@@ -12,6 +12,7 @@ import {
     Stmt,
     IfDraw2D,
     BlockEnd,
+    RuntimeError,
 } from "brs-engine";
 import { toAssociativeArray } from "../factory/Serializer";
 import { sgRoot } from "../SGRoot";
@@ -198,32 +199,37 @@ export class Scene extends Group {
                 const satisfiedSignature = onKeyEvent?.getFirstSatisfiedSignature([key, press]);
                 if (satisfiedSignature) {
                     let { signature, impl } = satisfiedSignature;
-                    const funcLoc = onKeyEvent.getLocation() ?? interpreter.location;
+                    const funcLoc = onKeyEvent.getLocation() ?? originalLocation;
                     interpreter.addToStack({
                         functionName: onKeyEvent.getName(),
                         functionLocation: funcLoc,
-                        callLocation: interpreter.location,
+                        callLocation: originalLocation,
                         signature: satisfiedSignature.signature,
                     });
                     subInterpreter.environment.define(
                         Scope.Function,
                         signature.args[0].name.text,
                         key,
-                        interpreter.location
+                        originalLocation
                     );
                     subInterpreter.environment.define(
                         Scope.Function,
                         signature.args[1].name.text,
                         press,
-                        interpreter.location
+                        originalLocation
                     );
                     impl(subInterpreter, key, press);
-                    interpreter.stack.pop();
+                    interpreter.popFromStack();
                     interpreter.location = originalLocation;
                 }
             } catch (err) {
-                interpreter.stack.pop();
-                interpreter.location = originalLocation;
+                if (err instanceof RuntimeError) {
+                    interpreter.checkCrashDebug(err);
+                }
+                if (!interpreter.exitMode) {
+                    interpreter.popFromStack();
+                    interpreter.location = originalLocation;
+                }
                 if (!(err instanceof BlockEnd)) {
                     throw err;
                 } else if (err instanceof Stmt.ReturnValue) {

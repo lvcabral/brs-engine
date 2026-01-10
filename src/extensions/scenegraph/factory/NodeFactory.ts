@@ -388,7 +388,7 @@ export function initializeNode(interpreter: Interpreter, type: string, typeDef?:
                         signature: init.signatures[0].signature,
                     });
                     init.call(subInterpreter);
-                    interpreter.stack.pop();
+                    interpreter.popFromStack();
                     interpreter.location = originalLocation;
                 }
                 return BrsInvalid.Instance;
