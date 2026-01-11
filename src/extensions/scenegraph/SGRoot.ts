@@ -135,6 +135,7 @@ export class SGRoot {
         this._threads.set(taskId, { id: address ?? genHexAddress(), type: taskId > 0 ? "Task" : "Render" });
         if (makeCurrent) {
             this._taskId = taskId;
+            BrsDevice.threadId = taskId;
         }
     }
 

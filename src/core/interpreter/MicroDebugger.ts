@@ -1,4 +1,3 @@
-import { bscs } from "..";
 import { DebugMode, Interpreter, TracePoint } from ".";
 import { Lexer, Location } from "../lexer";
 import { Parser } from "../parser";
@@ -125,6 +124,9 @@ function debuggerIntro(
         BrsDevice.stdout.write(`print,${interpreter.formatBacktrace(nextLoc)}`);
         BrsDevice.stdout.write(`print,Local variables:\r\n`);
         BrsDevice.stdout.write(`print,${interpreter.formatVariables()}`);
+        debugMsg = "\r\nThreads: \r\n";
+        debugMsg += debugThreads(interpreter, nextLoc, lastLines, lastLine);
+        BrsDevice.stdout.write(`print,${debugMsg}\r\n`);
     }
 }
 
@@ -220,7 +222,7 @@ function runStatement(interpreter: Interpreter, exprStmt: Statement) {
  * @param cmd (number) - The debug command to execute
  */
 function debugHandleCommand(interpreter: Interpreter, currLoc: Location, lastLoc: Location, cmd: number) {
-    const backTrace = interpreter.stack;
+    const backTrace = interpreter.stackCopy;
     const lastLines = parseTextFile(interpreter.sourceMap.get(lastLoc.file)) ?? [""];
     const currLines = parseTextFile(interpreter.sourceMap.get(currLoc.file)) ?? [""];
     let lastLine: number = lastLoc.start.line;
@@ -247,23 +249,22 @@ function debugHandleCommand(interpreter: Interpreter, currLoc: Location, lastLoc
             lineText = currLines[currLine - 1]?.trimEnd() ?? "";
             debugMsg = `print,${currLine.toString().padStart(3, "0")}: ${lineText}\r\n`;
             break;
-        case DebugCommand.THREAD:
-            lineText = lastLines[lastLine - 1]?.trim() ?? "";
+        case DebugCommand.THREAD: {
+            const locText = ellipsizeLeft(interpreter.formatLocation(currLoc), 36);
+            const lineText = lastLines[lastLine - 1]?.trim() ?? "";
             debugMsg = "print,Thread selected: ";
-            debugMsg += ` 0*   ${interpreter.formatLocation(currLoc).padEnd(40)}${lineText}\r\n`;
+            debugMsg += ` ${BrsDevice.threadId}*   ${locText.padEnd(40)}${lineText}\r\n`;
             break;
+        }
         case DebugCommand.THREADS:
-            lineText = lastLines[lastLine - 1]?.trim() ?? "";
-            debugMsg = "print,ID    Location                                Source Code\r\n";
-            debugMsg += ` 0*   ${interpreter.formatLocation(currLoc).padEnd(40)}${lineText}\r\n`;
-            debugMsg += "  *selected\r\n";
+            debugMsg = `print,${debugThreads(interpreter, currLoc, lastLines, lastLine)}`;
             break;
         case DebugCommand.BSCS: {
-            const objList = Array.from(bscs.keys()).sort();
+            const objList = Array.from(BrsDevice.bscs.keys()).sort();
             let total = 0;
             debugMsg = "print,";
             for (const obj of objList) {
-                const value = bscs.get(obj);
+                const value = BrsDevice.bscs.get(obj);
                 if (value) {
                     debugMsg += `${obj}: `.padStart(27);
                     debugMsg += `count=${value}\r\n`;
@@ -319,6 +320,24 @@ function debugList(backTrace: TracePoint[], currLines: string[], flagLine: numbe
         }
     }
     return list;
+}
+
+/**
+ * Function to list all threads of execution
+ * @param interpreter (Interpreter) - The interpreter instance
+ * @param currLoc (Location) - The current location
+ * @param lastLines (string[]) - The last lines executed
+ * @param lastLine (number) - The last line executed
+ * @returns (string) - The formatted list of threads
+ */
+function debugThreads(interpreter: Interpreter, currLoc: Location, lastLines: string[], lastLine: number) {
+    let debugMsg = "";
+    const locText = ellipsizeLeft(interpreter.formatLocation(currLoc), 36);
+    const lineText = lastLines[lastLine - 1]?.trimEnd() ?? "";
+    debugMsg = "ID    Location                                Source Code\r\n";
+    debugMsg += ` ${BrsDevice.threadId}*   ${locText.padEnd(40)}${lineText}\r\n`;
+    debugMsg += "  *selected";
+    return debugMsg;
 }
 
 /**
@@ -407,4 +426,22 @@ function parseCommand(command: string): any {
         }
     }
     return result;
+}
+
+/**
+ * Ellipsizes text on the left based on a specific length
+ * @param text - The text to ellipsize
+ * @param length - The maximum length (including ellipsis)
+ * @returns The ellipsized text with "..." at the beginning if truncated
+ */
+export function ellipsizeLeft(text: string, length: number): string {
+    const ellipsis = "...";
+    if (text.length <= length) {
+        return text;
+    }
+    if (length <= ellipsis.length) {
+        return ellipsis.slice(0, length);
+    }
+    const keepLength = length - ellipsis.length;
+    return ellipsis + text.slice(-keepLength);
 }

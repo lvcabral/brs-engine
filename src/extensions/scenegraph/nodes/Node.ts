@@ -1339,7 +1339,7 @@ export class Node extends RoSGNode implements BrsValue {
                             generateArgumentMismatchError(
                                 functionToCall,
                                 functionArgs,
-                                interpreter.stack.at(-1)?.functionLocation!
+                                interpreter.stackCopy.at(-1)?.functionLocation!
                             )
                         );
                     }
@@ -1347,7 +1347,7 @@ export class Node extends RoSGNode implements BrsValue {
                     if (reason instanceof RuntimeError) {
                         interpreter.checkCrashDebug(reason);
                     }
-                    if (interpreter.debugMode !== DebugMode.EXIT && addedToStack) {
+                    if (!interpreter.inExitMode() && addedToStack) {
                         interpreter.popFromStack();
                         interpreter.location = originalLocation;
                     }

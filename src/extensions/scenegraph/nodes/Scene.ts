@@ -227,13 +227,13 @@ export class Scene extends Group {
                 if (err instanceof RuntimeError) {
                     interpreter.checkCrashDebug(err);
                 }
-                if (interpreter.debugMode !== DebugMode.EXIT) {
+                if (interpreter.debugMode === DebugMode.EXIT) {
+                    throw err;
+                } else {
                     interpreter.popFromStack();
                     interpreter.location = originalLocation;
                 }
-                if (!(err instanceof BlockEnd)) {
-                    throw err;
-                } else if (err instanceof Stmt.ReturnValue) {
+                if (err instanceof Stmt.ReturnValue) {
                     return err.value ?? BrsBoolean.False;
                 }
                 throw err;

@@ -1,4 +1,3 @@
-import * as core from "..";
 import { EventEmitter } from "events";
 import {
     BrsType,
@@ -89,6 +88,7 @@ export interface TracePoint {
     signature: Signature;
 }
 
+/** Micro Debugger states */
 export enum DebugMode {
     NONE,
     DEBUG,
@@ -96,6 +96,12 @@ export enum DebugMode {
     EXIT,
 }
 
+/** Reasons for terminating execution */
+export const TerminateReasons = ["debug-exit", "end-statement"];
+
+/**
+ * The Interpreter is responsible for executing statements and expressions
+ */
 export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType> {
     private readonly _stack = new Array<TracePoint>();
     private readonly _startTime = Date.now();
@@ -104,8 +110,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     private _sourceMap = new Map<string, string>();
     private _runParams: RoAssociativeArray | undefined;
     private _tryMode = false;
+    private _debugMode: DebugMode = DebugMode.NONE;
     private _dotLevel = 0;
     private _printed = false; // Prevent the warning when no entry point exists
+    private _lastStmt: Stmt.Statement | null = null;
 
     location: Location = {
         file: "",
@@ -128,7 +136,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     readonly events = new EventEmitter();
 
     /** The set of errors detected from executing an AST. */
-    errors: (BrsError | RuntimeError)[] = [];
+    readonly errors: (BrsError | RuntimeError)[] = [];
 
     get environment() {
         return this._environment;
@@ -142,8 +150,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         return this._runParams;
     }
 
-    get stack() {
-        return this._stack;
+    get stackCopy() {
+        return this._stack.slice();
     }
 
     get startTime() {
@@ -154,23 +162,47 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         return this._creationTime;
     }
 
-    // Micro Debugger state properties
-    public debugMode: DebugMode = DebugMode.NONE;
-    private lastStmt: Stmt.Statement | null = null;
+    get debugMode() {
+        return this._debugMode;
+    }
+
+    set debugMode(mode: DebugMode) {
+        if (this._debugMode === DebugMode.EXIT) {
+            // Once in EXIT mode cannot change to any other mode
+            return;
+        }
+        this._debugMode = mode;
+    }
+
+    /**
+     * Checks if the interpreter is in EXIT debug mode
+     * @returns boolean indicating if the interpreter is in EXIT mode
+     */
+    public inExitMode() {
+        return this._debugMode === DebugMode.EXIT;
+    }
 
     /**
      * Adds a TracePoint to the call stack.
      * @param tracePoint The TracePoint to add to the stack
      */
-    addToStack(tracePoint: TracePoint) {
-        if (this.debugMode !== DebugMode.EXIT) this._stack.push(tracePoint);
+    public addToStack(tracePoint: TracePoint) {
+        if (!this.inExitMode()) this._stack.push(tracePoint);
     }
 
     /**
      * Removes the top TracePoint from the call stack.
      */
-    popFromStack() {
-        if (this.debugMode !== DebugMode.EXIT) this._stack.pop();
+    public popFromStack() {
+        if (!this.inExitMode()) this._stack.pop();
+    }
+
+    /**
+     * Retrieves the current call stack, excluding the active function.
+     * @returns An array of TracePoints representing the call stack
+     */
+    public getBacktrace() {
+        return this._stack.slice(0, -1);
     }
 
     /**
@@ -462,7 +494,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     visitStop(statement: Stmt.Stop): BrsType {
-        if (this.debugMode !== DebugMode.EXIT) {
+        if (!this.inExitMode()) {
             this.debugMode = DebugMode.DEBUG;
             this.checkDebugger(statement);
         }
@@ -1176,7 +1208,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     if (signature.args[index]?.type.kind === ValueKind.Object && isBoxable(arg)) {
                         return arg.box();
                     }
-
                     return arg;
                 });
 
@@ -1198,18 +1229,14 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                         if (callee.isUserDefined()) this.popFromStack();
                         return returnValue;
                     } catch (err: any) {
-                        if (!this._tryMode && this.options.stopOnCrash && err instanceof RuntimeError) {
+                        if (err instanceof RuntimeError) {
                             if (!callee.isUserDefined()) {
                                 // Restore the context for errors from built-in components/functions
                                 this._environment = savedEnvironment;
                             }
-                            // Enable Micro Debugger on app crash
-                            const errNumber = err.errorDetail.errno;
-                            runDebugger(this, this.location, this.location, err.message, errNumber);
-                            this.options.stopOnCrash = false;
-                        } else if (!this._tryMode && !this.options.stopOnCrash && !(err instanceof core.BlockEnd)) {
-                            this.debugMode = DebugMode.EXIT;
-                        } else if (callee.isUserDefined()) {
+                            this.checkCrashDebug(err);
+                        }
+                        if (callee.isUserDefined()) {
                             this.popFromStack();
                         }
                         throw err;
@@ -1217,17 +1244,15 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 });
             } catch (reason: any) {
                 if (!(reason instanceof Stmt.BlockEnd)) {
-                    if (core.terminateReasons.includes(reason.message)) {
-                        throw new Error(reason.message);
-                    } else if (reason instanceof BrsError) {
+                    if (reason instanceof BrsError) {
                         throw reason;
-                    } else if (BrsDevice.isDevMode && reason.message.length > 0) {
+                    } else if (BrsDevice.isDevMode && reason.message && !TerminateReasons.includes(reason.message)) {
                         // Expose the Javascript error stack trace on `development` mode
                         console.error(reason);
                         throw new Error("");
                     }
                     throw new Error(reason.message);
-                } else if (core.terminateReasons.includes(reason.message)) {
+                } else if (TerminateReasons.includes(reason.message)) {
                     throw new Error(reason.message);
                 }
 
@@ -1869,14 +1894,14 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         if (this.environment.gotoLabel !== "") {
             return this.searchLabel(statement);
         }
-        if (!(this.lastStmt instanceof Stmt.Stop)) {
+        if (!(this._lastStmt instanceof Stmt.Stop)) {
             this.checkDebugger(statement);
         }
         for (const ext of this.extensions.values()) {
             ext.tick?.(this);
         }
         this.location = statement.location;
-        this.lastStmt = statement;
+        this._lastStmt = statement;
         return statement.accept<BrsType>(this);
     }
 
@@ -1894,13 +1919,11 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             if (this.debugMode === DebugMode.NONE) this.debugMode = DebugMode.DEBUG;
             if (!(statement instanceof Stmt.Block)) {
                 if (!runDebugger(this, statement.location, this.location)) {
-                    this.options.stopOnCrash = false;
                     throw new Stmt.BlockEnd("debug-exit", statement.location);
                 }
             }
         } else if (cmd === DebugCommand.EXIT) {
             this.debugMode = DebugMode.EXIT;
-            this.options.stopOnCrash = false;
             throw new Stmt.BlockEnd("debug-exit", statement.location);
         }
     }
@@ -1910,13 +1933,14 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
      * @param err The error to check
      */
     public checkCrashDebug(err: any) {
-        if (!this._tryMode && this.options.stopOnCrash && err instanceof RuntimeError) {
+        if (this._tryMode || this.inExitMode()) {
+            return;
+        } else if (this.options.stopOnCrash && err instanceof RuntimeError) {
             // Enable Micro Debugger on app crash
             const errNumber = err.errorDetail.errno;
             runDebugger(this, this.location, this.location, err.message, errNumber);
-            this.options.stopOnCrash = false;
-        } else if (!this._tryMode && !this.options.stopOnCrash && !(err instanceof core.BlockEnd)) {
-            this.debugMode = DebugMode.EXIT;
+        } else if (!this.options.stopOnCrash && !(err instanceof Stmt.BlockEnd)) {
+            this._debugMode = DebugMode.EXIT;
         }
     }
 
@@ -2120,7 +2144,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         }
         debugMsg += "Module Constant Table Sizes:\r\n";
         debugMsg += `  Source Lns:     ${lineCount}\r\n`;
-        for (const [lexeme, count] of core.stats.entries()) {
+        for (const [lexeme, count] of BrsDevice.stats.entries()) {
             const name = Lexeme[lexeme] + ":";
             debugMsg += `  ${name.padEnd(15)} ${count}\r\n`;
         }

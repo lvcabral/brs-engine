@@ -28,6 +28,7 @@ import {
 import SharedObject from "../SharedObject";
 import { FileSystem } from "./FileSystem";
 import { OutputProxy } from "./OutputProxy";
+import type { Lexeme } from "../lexer/Lexeme";
 
 export class BrsDevice {
     static readonly deviceInfo: DeviceInfo = DefaultDeviceInfo;
@@ -38,6 +39,8 @@ export class BrsDevice {
     static readonly keysBuffer: KeyEvent[] = [];
     static readonly terms: Map<string, string> = new Map<string, string>();
     static readonly sfx: string[] = DefaultSounds.slice();
+    static readonly bscs = new Map<string, number>();
+    static readonly stats = new Map<Lexeme, number>();
 
     static stdout: OutputProxy = new OutputProxy(process.stdout, false);
     static stderr: OutputProxy = new OutputProxy(process.stderr, false);
@@ -51,6 +54,9 @@ export class BrsDevice {
     static lastMod: number = -1;
     static lastKeyTime: number = Date.now();
     static currKeyTime: number = Date.now();
+
+    /** Current Thread ID for the environment */
+    static threadId: number = 0;
 
     /** External Storage Volume (ext1:) properties */
     private static extVolVersion: number = -1;

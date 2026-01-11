@@ -18,6 +18,8 @@ import {
     RoMessagePort,
     Uninitialized,
     ValueKind,
+    RuntimeError,
+    DebugMode,
 } from "brs-engine";
 import {
     ArrayGrid,
@@ -387,9 +389,20 @@ export function initializeNode(interpreter: Interpreter, type: string, typeDef?:
                         callLocation: originalLocation,
                         signature: init.signatures[0].signature,
                     });
-                    init.call(subInterpreter);
-                    interpreter.popFromStack();
-                    interpreter.location = originalLocation;
+                    try {
+                        init.call(subInterpreter);
+                        interpreter.popFromStack();
+                        interpreter.location = originalLocation;
+                    } catch (err) {
+                        if (err instanceof RuntimeError) {
+                            interpreter.checkCrashDebug(err);
+                        }
+                        if (!interpreter.inExitMode()) {
+                            interpreter.popFromStack();
+                            interpreter.location = originalLocation;
+                        }
+                        throw err;
+                    }
                 }
                 return BrsInvalid.Instance;
             }, currentEnv);

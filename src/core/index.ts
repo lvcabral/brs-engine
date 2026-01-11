@@ -5,7 +5,7 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { ExecutionOptions, Interpreter } from "./interpreter";
+import { ExecutionOptions, Interpreter, TerminateReasons } from "./interpreter";
 import {
     AppExitReason,
     PkgFilePath,
@@ -64,9 +64,6 @@ export { Interpreter } from "./interpreter";
 export { Environment, Scope } from "./interpreter/Environment";
 export { BrsDevice } from "./device/BrsDevice";
 export { lexParseSync } from "./LexerParser";
-export const bscs = new Map<string, number>();
-export const stats = new Map<Lexeme, number>();
-export const terminateReasons = ["debug-exit", "end-statement"];
 
 const algorithm = "aes-256-ctr";
 
@@ -204,9 +201,6 @@ function createWorkerExports() {
     aggregated.preprocessor = PP;
     aggregated.Preprocessor = Preprocessor;
     aggregated.SharedObject = SharedObject;
-    aggregated.bscs = bscs;
-    aggregated.stats = stats;
-    aggregated.terminateReasons = terminateReasons;
     return aggregated;
 }
 
@@ -604,8 +598,8 @@ export async function executeFile(payload: AppPayload, customOptions?: Partial<E
         stopOnCrash: payload.device.debugOnCrash ?? false,
         ...customOptions,
     };
-    bscs.clear();
-    stats.clear();
+    BrsDevice.bscs.clear();
+    BrsDevice.stats.clear();
     // Setup the File System
     BrsDevice.setDeviceInfo(payload.device);
     try {
@@ -653,7 +647,7 @@ export async function executeTask(payload: TaskPayload, customOptions?: Partial<
         stopOnCrash: payload.device.debugOnCrash ?? false,
         ...customOptions,
     };
-    stats.clear();
+    BrsDevice.stats.clear();
     // Setup the File System
     BrsDevice.setDeviceInfo(payload.device);
     try {
@@ -665,7 +659,7 @@ export async function executeTask(payload: TaskPayload, customOptions?: Partial<
     }
     const extensions = instantiateExtensions();
     // Create the interpreter
-    let interpreter = new Interpreter(options);
+    const interpreter = new Interpreter(options);
     attachExtensions(interpreter, extensions);
 
     await runBeforeExecuteHooks(interpreter, payload);
@@ -693,7 +687,7 @@ export async function executeTask(payload: TaskPayload, customOptions?: Partial<
             postMessage(`debug,[core] Task ${payload.taskData.name} is done.`);
         }
     } catch (err: any) {
-        if (!terminateReasons.includes(err.message)) {
+        if (!TerminateReasons.includes(err.message)) {
             if (interpreter.options.post ?? true) {
                 postMessage(`error,${err.message}`);
             } else {
@@ -892,7 +886,7 @@ async function runSource(
     payload: AppPayload
 ): Promise<RunResult> {
     const password = payload.password ?? "";
-    const parseResult = lexParseSync(BrsDevice.fileSystem, interpreter.manifest, sourceMap, password, stats);
+    const parseResult = lexParseSync(BrsDevice.fileSystem, interpreter.manifest, sourceMap, password, BrsDevice.stats);
     let exitReason = parseResult.exitReason;
     if (exitReason !== AppExitReason.Crashed) {
         if (password.length > 0) {
@@ -988,7 +982,7 @@ async function executeApp(
         interpreter.exec(statements, sourceMap, inputParams);
     } catch (err: any) {
         exitReason = AppExitReason.UserNav;
-        if (!terminateReasons.includes(err.message)) {
+        if (!TerminateReasons.includes(err.message)) {
             if (interpreter.options.post ?? true) {
                 postMessage(`error,${err.message}`);
             } else {

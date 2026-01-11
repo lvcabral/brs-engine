@@ -69,7 +69,11 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
             const inDebugSession = interpreter.debugMode !== DebugMode.NONE;
             const cmd = BrsDevice.checkBreakCommand(inDebugSession);
             if (cmd === DebugCommand.BREAK || cmd === DebugCommand.EXIT) {
-                interpreter.debugMode = cmd === DebugCommand.BREAK ? DebugMode.DEBUG : DebugMode.EXIT;
+                if (cmd === DebugCommand.EXIT) {
+                    interpreter.debugMode = DebugMode.EXIT;
+                } else if (interpreter.debugMode === DebugMode.NONE) {
+                    interpreter.debugMode = DebugMode.DEBUG;
+                }
                 return BrsInvalid.Instance;
             }
         }

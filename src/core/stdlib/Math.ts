@@ -52,7 +52,7 @@ export const Cint = new Callable("Cint", {
             new RuntimeError(
                 x instanceof Uninitialized ? RuntimeErrorDetail.UninitializedVariable : RuntimeErrorDetail.TypeMismatch,
                 interpreter.location,
-                interpreter.stack.slice(0, -1)
+                interpreter.getBacktrace()
             )
         );
     },
@@ -84,7 +84,7 @@ export const Fix = new Callable("Fix", {
             new RuntimeError(
                 x instanceof Uninitialized ? RuntimeErrorDetail.UninitializedVariable : RuntimeErrorDetail.TypeMismatch,
                 interpreter.location,
-                interpreter.stack.slice(0, -1)
+                interpreter.getBacktrace()
             )
         );
     },
@@ -107,7 +107,7 @@ export const Int = new Callable("Int", {
             new RuntimeError(
                 x instanceof Uninitialized ? RuntimeErrorDetail.UninitializedVariable : RuntimeErrorDetail.TypeMismatch,
                 interpreter.location,
-                interpreter.stack.slice(0, -1)
+                interpreter.getBacktrace()
             )
         );
     },

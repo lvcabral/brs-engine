@@ -1,8 +1,8 @@
-import { bscs } from "../..";
 import { BrsType } from "..";
 import { BrsBoolean, BrsInvalid } from "../BrsType";
 import { Callable } from "../Callable";
 import { BrsInterface } from "../interfaces/BrsInterface";
+import { BrsDevice } from "../../device/BrsDevice";
 
 export class BrsComponent {
     protected readonly componentName: string;
@@ -74,17 +74,17 @@ export class BrsComponent {
     addReference() {
         this.references++;
         if (this.references === 1) {
-            const count = bscs.get(this.componentName) ?? 0;
-            bscs.set(this.componentName, count + 1);
+            const count = BrsDevice.bscs.get(this.componentName) ?? 0;
+            BrsDevice.bscs.set(this.componentName, count + 1);
         }
     }
 
     removeReference() {
         this.references--;
         if (this.references === 0 && !this.returnFlag) {
-            const count = bscs.get(this.componentName);
+            const count = BrsDevice.bscs.get(this.componentName);
             if (count) {
-                bscs.set(this.componentName, count - 1);
+                BrsDevice.bscs.set(this.componentName, count - 1);
             }
             this.dispose();
         }

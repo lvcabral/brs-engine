@@ -394,7 +394,9 @@ export class Field {
                     if (err instanceof RuntimeError) {
                         interpreter.checkCrashDebug(err);
                     }
-                    if (interpreter.debugMode !== DebugMode.EXIT) {
+                    if (interpreter.debugMode == DebugMode.EXIT) {
+                        throw err;
+                    } else {
                         interpreter.popFromStack();
                         interpreter.location = originalLocation;
                     }
