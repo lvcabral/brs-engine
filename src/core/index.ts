@@ -24,7 +24,7 @@ import {
     ExtVolMaxSize,
     Platform,
 } from "./common";
-import { Lexeme, Lexer, Token } from "./lexer";
+import { Lexer, Token } from "./lexer";
 import { Parser, Stmt } from "./parser";
 import { lexParseSync, parseDecodedTokens } from "./LexerParser";
 import { BrsDevice } from "./device/BrsDevice";
