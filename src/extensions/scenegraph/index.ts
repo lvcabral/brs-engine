@@ -62,14 +62,14 @@ export class BrightScriptExtension implements BrsExtension {
             } else {
                 const componentsDirExists = BrsDevice.fileSystem.existsSync("pkg:/components");
                 if (componentsDirExists) {
-                    postMessage(`warning,No SceneGraph components found!`);
+                    postMessage(`warning,[sg] No SceneGraph components found!`);
                 }
             }
         } catch (err: any) {
             if (err instanceof BrsError) {
                 interpreter.addError(err);
             } else {
-                postMessage(`error,Failed to load SceneGraph components: ${err.message}`);
+                postMessage(`error,[sg] Failed to load SceneGraph components: ${err.message}`);
             }
         }
     }
@@ -91,7 +91,8 @@ export class BrightScriptExtension implements BrsExtension {
 
     tick(_: Interpreter) {
         if (sgRoot.inTaskThread()) {
-            sgRoot.tasks[0]?.updateTask();
+            const task = sgRoot.getThreadTask(sgRoot.threadId);
+            task?.updateTask();
         }
     }
 
@@ -137,7 +138,7 @@ export class BrightScriptExtension implements BrsExtension {
                         postMessage(taskData);
                     } else {
                         subInterpreter.addError(
-                            new BrsError(`Cannot found the Task function '${functionName}'`, subInterpreter.location)
+                            new BrsError(`[sg] Cannot found the Task function '${functionName}'`, interpreter.location)
                         );
                     }
                     return BrsInvalid.Instance;

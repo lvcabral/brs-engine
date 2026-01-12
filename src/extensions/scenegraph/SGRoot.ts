@@ -1,3 +1,10 @@
+/*---------------------------------------------------------------------------------------------
+ *  BrightScript Engine (https://github.com/lvcabral/brs-engine)
+ *
+ *  Copyright (c) 2019-2026 Marcelo Lv Cabral. All Rights Reserved.
+ *
+ *  Licensed under the MIT License. See LICENSE in the repository root for license information.
+ *--------------------------------------------------------------------------------------------*/
 import { BrsDevice, BufferType, DataType, genHexAddress, MediaEvent, MediaTrack, ThreadInfo } from "brs-engine";
 import { ComponentDefinition } from "./parser/ComponentDefinition";
 import { RoSGNode } from "./components/RoSGNode";
@@ -22,8 +29,7 @@ export class SGRoot {
     private _scene?: Scene;
     private _focused?: RoSGNode;
     private _threadId: number;
-    private readonly _threads: Map<number, ThreadInfo>;
-    private readonly _tasks: Task[];
+    private readonly _threads: Map<number, { task?: Task; info: ThreadInfo }>;
     private readonly _timers: Timer[];
     private readonly _animations: AnimationBase[];
     private readonly _sfx: (SoundEffect | undefined)[];
@@ -50,10 +56,6 @@ export class SGRoot {
 
     get sfx(): (SoundEffect | undefined)[] {
         return this._sfx;
-    }
-
-    get tasks(): Task[] {
-        return this._tasks;
     }
 
     get timers(): Timer[] {
@@ -93,12 +95,13 @@ export class SGRoot {
     constructor() {
         this._nodeDefMap = new Map<string, ComponentDefinition>();
         this._sfx = [];
-        this._tasks = [];
         this._timers = [];
         this._animations = [];
-        this._threads = new Map<number, ThreadInfo>();
-        this._threadId = 0; // Render thread by default
-        this._threads.set(this._threadId, { id: genHexAddress(), type: "Render" });
+        this._threads = new Map();
+        // Add Render thread by default
+        this._threadId = 0;
+        const threadInfo: ThreadInfo = { id: genHexAddress(), type: "Render" };
+        this._threads.set(this._threadId, { info: threadInfo });
     }
 
     /**
@@ -126,17 +129,46 @@ export class SGRoot {
     }
 
     /**
+     * Adds a new task thread to the SGRoot.
+     * @param task Task instance to add
+     * @param threadId Optional thread ID (auto-assigned if not provided)
+     * @param makeCurrent Whether to make this the current thread (defaults to false)
+     */
+    addTask(task: Task, threadId?: number, makeCurrent: boolean = false) {
+        task.threadId = threadId ?? this._threads.size;
+        this.setThread(task.threadId, makeCurrent, task.address, task);
+    }
+
+    /**
      * Sets thread data and optionally makes it the current thread.
-     * @param taskId Thread ID (0 for render thread, >0 for task threads)
+     * @param threadId Thread ID (0 for render thread, >0 for task threads)
      * @param makeCurrent Whether to make this the current thread (defaults to false)
      * @param address Optional hex address for the thread (auto-generated if not provided)
+     * @param task Optional Task instance associated with the thread
      */
-    setThread(taskId: number, makeCurrent: boolean = false, address?: string) {
-        this._threads.set(taskId, { id: address ?? genHexAddress(), type: taskId > 0 ? "Task" : "Render" });
+    setThread(threadId: number, makeCurrent: boolean = false, address?: string, task?: Task) {
+        const threadInfo: ThreadInfo = { id: address ?? genHexAddress(), type: threadId > 0 ? "Task" : "Render" };
+        this._threads.set(threadId, { info: threadInfo, task });
         if (makeCurrent) {
-            this._threadId = taskId;
-            BrsDevice.threadId = taskId;
+            this._threadId = threadId;
+            BrsDevice.threadId = threadId;
         }
+    }
+
+    /**
+     * Gets the count of task threads.
+     * @param runningOnly If true, counts only active and started tasks
+     * @returns The number of task threads
+     */
+    getTasksCount(runningOnly?: boolean): number {
+        let count = 0;
+        for (const thread of this._threads.values()) {
+            const task = thread.task;
+            if ((task && !runningOnly) || (task?.active && task.started)) {
+                count++;
+            }
+        }
+        return count;
     }
 
     /**
@@ -146,9 +178,10 @@ export class SGRoot {
      */
     processTasks(): boolean {
         let updates = false;
-        for (const task of this._tasks) {
-            updates = task.updateTask();
-            if (task.active) {
+        for (const thread of this._threads.values()) {
+            const task = thread.task;
+            updates = task?.updateTask() || updates;
+            if (task?.active) {
                 task.checkTaskRun();
             }
         }
@@ -368,10 +401,28 @@ export class SGRoot {
 
     /**
      * Checks if currently executing in a task thread.
-     * @returns True if in a task thread (taskId > 0), false if in render thread
+     * @returns True if in a task thread (threadId > 0), false if in render thread
      */
     inTaskThread(): boolean {
         return this._threadId > 0;
+    }
+
+    /**
+     * Gets the Task instance for the specified task ID.
+     * @param threadId Thread ID to get the Task for
+     * @returns Task instance if found, otherwise undefined
+     */
+    getThreadTask(threadId: number): Task | undefined {
+        const thread = this._threads.get(threadId);
+        return thread?.task;
+    }
+
+    /**
+     * Gets the Task instance for the current thread.
+     * @returns Task instance if in a task thread, otherwise undefined
+     */
+    getCurrentThreadTask(): Task | undefined {
+        return this.getThreadTask(this._threadId);
     }
 
     /**
@@ -383,19 +434,18 @@ export class SGRoot {
     getThreadInfo(threadId: number): ThreadInfo {
         const thread = this._threads.get(threadId)!;
         if (threadId === 0 && this._threadId === 0) {
-            thread.name = this.scene?.nodeSubtype;
+            thread.info.name = this.scene?.nodeSubtype;
         } else if (threadId > 0) {
-            const task = this.tasks.find((t) => t.threadId === threadId);
-            thread.name = task?.name;
+            thread.info.name = thread.task?.name;
         }
-        return thread;
+        return thread.info;
     }
 
     /**
      * Gets thread information for the current thread.
      * @returns ThreadInfo object for the current thread
      */
-    getCurrentThread(): ThreadInfo {
+    getCurrentThreadInfo(): ThreadInfo {
         return this.getThreadInfo(this._threadId);
     }
 
@@ -403,7 +453,7 @@ export class SGRoot {
      * Gets thread information for the render thread.
      * @returns ThreadInfo object for the render thread (thread 0)
      */
-    getRenderThread(): ThreadInfo {
+    getRenderThreadInfo(): ThreadInfo {
         return this.getThreadInfo(0);
     }
 

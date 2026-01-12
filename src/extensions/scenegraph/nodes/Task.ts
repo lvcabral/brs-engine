@@ -58,6 +58,11 @@ export class Task extends Node {
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(members);
+
+        // In main thread register this task with sgRoot. (in a task thread it is added by `loadTaskData()`)
+        if (!sgRoot.inTaskThread()) {
+            sgRoot.addTask(this);
+        }
     }
 
     /**
@@ -174,7 +179,7 @@ export class Task extends Node {
                 cacheFS: BrsDevice.getCacheFS(),
                 m: fromAssociativeArray(this.m),
                 scene: sgRoot.scene ? fromSGNode(sgRoot.scene, false) : undefined,
-                render: sgRoot.getRenderThread()?.id,
+                render: sgRoot.getRenderThreadInfo()?.id,
             };
             // Check of observed fields in `m.global`
             const global = this.m.elements.get("global");
@@ -190,7 +195,7 @@ export class Task extends Node {
                     taskData.m.global["_observed_"] = observed;
                 }
             }
-            postMessage(`debug,[task] Posting Task #${this.threadId} Data to RUN: ${this.nodeSubtype}, ${functionName}`);
+            postMessage(`debug,[task] Posting TaskData #${taskData.id} to RUN: ${taskData.name}, ${functionName}`);
             postMessage(taskData);
             this.started = true;
         }
@@ -228,6 +233,7 @@ export class Task extends Node {
         if (!this.taskBuffer || currentVersion !== 1) {
             return false;
         }
+        // Load update from buffer and reset version to 0 (idle)
         const update = this.taskBuffer.load(true);
         if (isThreadUpdate(update)) {
             postMessage(

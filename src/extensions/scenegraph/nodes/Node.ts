@@ -1460,7 +1460,7 @@ export class Node extends RoSGNode implements BrsValue {
      */
     protected getThreadInfo() {
         const threadData: FlexObject = {
-            currentThread: sgRoot.getCurrentThread(),
+            currentThread: sgRoot.getCurrentThreadInfo(),
             node: {
                 address: this.address,
                 id: this.getId(),
@@ -1468,7 +1468,7 @@ export class Node extends RoSGNode implements BrsValue {
                 owningThread: sgRoot.getThreadInfo(this.owner),
                 willRendezvousFromCurrentThread: this.owner === sgRoot.threadId ? "No" : "Yes",
             },
-            renderThread: sgRoot.getRenderThread(),
+            renderThread: sgRoot.getRenderThreadInfo(),
         };
         return toAssociativeArray(threadData);
     }
