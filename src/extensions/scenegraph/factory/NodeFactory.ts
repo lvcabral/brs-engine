@@ -277,9 +277,9 @@ export function createNodeByType(type: string, interpreter?: Interpreter): Node 
     }
     if (node instanceof Task) {
         // thread id = 0 is the Main worker thread
-        node.id = sgRoot.tasks.length + 1;
+        node.threadId = sgRoot.tasks.length + 1;
         sgRoot.tasks.push(node);
-        sgRoot.setThread(node.id);
+        sgRoot.setThread(node.threadId);
     }
     if (node instanceof Node && sgRoot.inTaskThread()) {
         const task = sgRoot.tasks[0];
@@ -489,7 +489,7 @@ export function initializeTask(interpreter: Interpreter, taskData: TaskData) {
  */
 function loadTaskData(interpreter: Interpreter, node: Node, taskData: TaskData) {
     if (node instanceof Task) {
-        node.id = taskData.id;
+        node.threadId = taskData.id;
         node.thread = true;
         sgRoot.tasks.push(node);
         sgRoot.setThread(0, false, taskData.render);
@@ -562,7 +562,7 @@ function updateTypeDefHierarchy(typeDef: ComponentDefinition | undefined) {
  */
 function restoreNode(interpreter: Interpreter, source: any, node: Node, port?: RoMessagePort) {
     const observed = source["_observed_"];
-    node.owner = source["_owner_"] ?? sgRoot.taskId;
+    node.owner = source["_owner_"] ?? sgRoot.threadId;
     for (let [key, value] of Object.entries(source)) {
         if (key.startsWith("_") && key.endsWith("_") && key.length > 2) {
             // Ignore transfer metadata fields

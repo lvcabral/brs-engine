@@ -86,7 +86,7 @@ export class Scene extends Group {
         super.setValue(index, value, alwaysNotify, kind);
         // Notify other threads of field changes
         if (sync && sgRoot.tasks.length > 0 && this.changed && this.fields.has(fieldName)) {
-            this.sendThreadUpdate(sgRoot.taskId, "scene", fieldName, value);
+            this.sendThreadUpdate(sgRoot.threadId, "scene", fieldName, value);
             if (sgRoot.inTaskThread()) this.changed = false;
         }
     }

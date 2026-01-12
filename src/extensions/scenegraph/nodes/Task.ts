@@ -35,7 +35,7 @@ export class Task extends Node {
     private taskBuffer?: SharedObject;
 
     /** Thread identifier assigned by sgRoot once scheduled. */
-    id: number;
+    threadId: number;
     /** Indicates the task is currently marked as active (control = run). */
     active: boolean;
     /** Whether the task has started execution at least once. */
@@ -51,7 +51,7 @@ export class Task extends Node {
     constructor(members: AAMember[] = [], readonly name: string = SGNodeType.Task) {
         super([], name);
         this.setExtendsType(name, SGNodeType.Node);
-        this.id = -1; // Not initialized
+        this.threadId = -1; // Not initialized
         this.active = false;
         this.started = false;
         this.thread = false;
@@ -90,8 +90,8 @@ export class Task extends Node {
         }
         super.setValue(index, value, alwaysNotify, kind);
         // Notify Main thread of field changes
-        if (this.id >= 0 && field && sync && this.changed) {
-            this.sendThreadUpdate(this.id, "task", mapKey, value, true);
+        if (this.threadId >= 0 && field && sync && this.changed) {
+            this.sendThreadUpdate(this.threadId, "task", mapKey, value, true);
             this.changed = false;
         }
     }
@@ -108,9 +108,9 @@ export class Task extends Node {
             this.active = true;
         } else if (control === "stop" || control === "done") {
             if (this.started) {
-                postMessage(`debug,[task] Posting Task #${this.id} Data to STOP: ${this.nodeSubtype}`);
+                postMessage(`debug,[task] Posting Task #${this.threadId} Data to STOP: ${this.nodeSubtype}`);
                 const taskData: TaskData = {
-                    id: this.id,
+                    id: this.threadId,
                     name: this.nodeSubtype,
                     state: TaskState.STOP,
                 };
@@ -123,8 +123,8 @@ export class Task extends Node {
         if (state && control !== "" && control !== "init") {
             state.setValue(new BrsString(control));
             this.fields.set("state", state);
-            if (this.id >= 0 && this.thread && sync) {
-                this.sendThreadUpdate(this.id, "task", "control", new BrsString(control));
+            if (this.threadId >= 0 && this.thread && sync) {
+                this.sendThreadUpdate(this.threadId, "task", "control", new BrsString(control));
             }
         }
     }
@@ -148,7 +148,7 @@ export class Task extends Node {
         if (this.taskBuffer && this.thread) {
             const timeout = wait === 0 ? undefined : wait;
             const result = this.taskBuffer.waitVersion(0, timeout);
-            postMessage(`debug,[task] The thread ${this.id} was awaken with "${result}"`);
+            postMessage(`debug,[task] The thread ${this.threadId} was awaken with "${result}"`);
             this.updateTask();
         }
         return new Array<BrsEvent>();
@@ -157,7 +157,7 @@ export class Task extends Node {
     /**
      * Validates readiness and posts task metadata to the scheduler when control becomes `run`.
      */
-    checkTask() {
+    checkTaskRun() {
         const functionName = this.getValueJS("functionName") as string;
         if (!functionName || functionName.trim() === "") {
             this.setValue("control", new BrsString("stop"));
@@ -166,7 +166,7 @@ export class Task extends Node {
         if (!this.started) {
             this.taskBuffer = new SharedObject();
             const taskData: TaskData = {
-                id: this.id,
+                id: this.threadId,
                 name: this.nodeSubtype,
                 state: TaskState.RUN,
                 buffer: this.taskBuffer.getBuffer(),
@@ -190,7 +190,7 @@ export class Task extends Node {
                     taskData.m.global["_observed_"] = observed;
                 }
             }
-            postMessage(`debug,[task] Posting Task #${this.id} Data to RUN: ${this.nodeSubtype}, ${functionName}`);
+            postMessage(`debug,[task] Posting Task #${this.threadId} Data to RUN: ${this.nodeSubtype}, ${functionName}`);
             postMessage(taskData);
             this.started = true;
         }
@@ -210,7 +210,7 @@ export class Task extends Node {
         for (const [name, field] of this.getNodeFields()) {
             const value = field.getValue();
             if (!field.isHidden() && value instanceof Node && value.changed) {
-                this.sendThreadUpdate(this.id, "task", name, value, true);
+                this.sendThreadUpdate(this.threadId, "task", name, value, true);
             }
         }
         return updates;
@@ -231,7 +231,7 @@ export class Task extends Node {
         const update = this.taskBuffer.load(true);
         if (isThreadUpdate(update)) {
             postMessage(
-                `debug,[task] Received Update at ${this.id} thread from ${
+                `debug,[task] Received Update at ${this.threadId} thread from ${
                     this.thread ? "Main thread" : "Task Thread"
                 }: ${update.id} - ${update.type} - ${update.field}`
             );

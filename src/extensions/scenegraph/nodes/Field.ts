@@ -32,7 +32,7 @@ import { Node } from "./Node";
 import { RoSGNodeEvent } from "../events/RoSGNodeEvent";
 import { getValueKindFromFieldType } from "../factory/NodeFactory";
 import { fromAssociativeArray, toAssociativeArray, jsValueOf } from "../factory/Serializer";
-import { BrsCallback, FieldKind, getTaskId, isContentNode } from "../SGTypes";
+import { BrsCallback, FieldKind, getTaskThreadId, isContentNode } from "../SGTypes";
 
 export class Field {
     private readonly permanentObservers: BrsCallback[] = [];
@@ -229,13 +229,13 @@ export class Field {
     }
 
     isPortObserved(hostNode: Node) {
-        const hostTaskId = getTaskId(hostNode);
-        if (hostTaskId === undefined) {
+        const hostThreadId = getTaskThreadId(hostNode);
+        if (hostThreadId === undefined) {
             return false;
         }
         return (
             this.unscopedObservers.some(
-                (callback) => callback.callable instanceof RoMessagePort && getTaskId(callback.hostNode) === hostTaskId
+                (callback) => callback.callable instanceof RoMessagePort && getTaskThreadId(callback.hostNode) === hostThreadId
             ) ||
             this.scopedObservers.get(hostNode)?.some((callback) => callback.callable instanceof RoMessagePort) ||
             false

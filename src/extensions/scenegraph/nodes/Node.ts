@@ -98,7 +98,7 @@ export class Node extends RoSGNode implements BrsValue {
         this.aliases = new Map();
         this.children = [];
         this.parent = BrsInvalid.Instance;
-        this.owner = sgRoot.taskId;
+        this.owner = sgRoot.threadId;
 
         // All nodes start have some built-in fields when created.
         this.registerDefaultFields(this.defaultFields);
@@ -1466,7 +1466,7 @@ export class Node extends RoSGNode implements BrsValue {
                 id: this.getId(),
                 type: this.nodeSubtype,
                 owningThread: sgRoot.getThreadInfo(this.owner),
-                willRendezvousFromCurrentThread: this.owner === sgRoot.taskId ? "No" : "Yes",
+                willRendezvousFromCurrentThread: this.owner === sgRoot.threadId ? "No" : "Yes",
             },
             renderThread: sgRoot.getRenderThread(),
         };

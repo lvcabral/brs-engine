@@ -15,7 +15,7 @@ export class Global extends Node {
         super.setValue(index, value, alwaysNotify, kind);
         // Notify other threads of field changes
         if (sync && sgRoot.tasks.length > 0 && this.changed && this.fields.has(fieldName)) {
-            this.sendThreadUpdate(sgRoot.taskId, "global", fieldName, value);
+            this.sendThreadUpdate(sgRoot.threadId, "global", fieldName, value);
             if (sgRoot.inTaskThread()) this.changed = false;
         }
     }

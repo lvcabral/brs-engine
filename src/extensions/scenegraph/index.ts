@@ -127,7 +127,7 @@ export class BrightScriptExtension implements BrsExtension {
                         funcToCall.call(subInterpreter);
                         postMessage(`debug,[sg] Task function finished: ${taskData.name} ${functionName}`);
                         const update: ThreadUpdate = {
-                            id: taskNode.id,
+                            id: taskNode.threadId,
                             type: "task",
                             field: "control",
                             value: "stop",
