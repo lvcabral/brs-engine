@@ -44,9 +44,9 @@ export class BrightScriptExtension implements BrsExtension {
 
     onInit() {
         // Register SceneGraph components with BrsObjects so they can be created with CreateObject()
-        BrsObjects.set("rosgscreen", () => new RoSGScreen(), 0);
+        BrsObjects.set("roSGScreen", () => new RoSGScreen(), 0);
         BrsObjects.set(
-            "rosgnode",
+            "roSGNode",
             (interpreter: Interpreter, nodeType: BrsString) => createNodeByType(nodeType.getValue(), interpreter),
             1
         );
@@ -146,11 +146,6 @@ export class BrightScriptExtension implements BrsExtension {
             } catch (err: any) {
                 if (err instanceof Stmt.ReturnValue) {
                     // ignore return value from Task, closing the Task
-                } else if (err instanceof BrsError) {
-                    const backTrace = interpreter.formatBacktrace(err.location, true, err.backTrace);
-                    const error = new Error(`${err.format()}\nBackTrace:\n${backTrace}`);
-                    (error as any).cause = err;
-                    throw error;
                 } else {
                     throw err;
                 }

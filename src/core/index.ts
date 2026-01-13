@@ -678,6 +678,7 @@ export async function executeTask(payload: TaskPayload, customOptions?: Partial<
         for (const ext of interpreter.extensions.values()) {
             if (ext.execTask) {
                 ext.execTask(interpreter, payload);
+                break;
             }
         }
         if (BrsDevice.registry.isDirty) {
@@ -687,13 +688,20 @@ export async function executeTask(payload: TaskPayload, customOptions?: Partial<
             postMessage(`debug,[core] Task ${payload.taskData.name} is done.`);
         }
     } catch (err: any) {
-        if (!TerminateReasons.includes(err.message)) {
-            if (interpreter.options.post ?? true) {
-                postMessage(`error,${err.message}`);
-            } else {
-                interpreter.options.stderr.write(err.message);
-            }
+        if (TerminateReasons.includes(err.message)) {
+            const reason = err.message === "debug-exit" ? AppExitReason.Stopped : AppExitReason.UserNav;
+            postMessage(`end,${reason}`);
+            return;
+        } else if (err instanceof BrsError) {
+            const backTrace = interpreter.formatBacktrace(err.location, true, err.backTrace);
+            err = new Error(`${err.format()}\nBackTrace:\n${backTrace}`);
         }
+        if (interpreter.options.post ?? true) {
+            postMessage(`error,${err.message}`);
+        } else {
+            interpreter.options.stderr.write(err.message);
+        }
+        postMessage(`end,${AppExitReason.Crashed}`);
     }
 }
 
@@ -981,14 +989,15 @@ async function executeApp(
         const inputParams = setupInputParams(payload.deepLink, splashTime);
         interpreter.exec(statements, sourceMap, inputParams);
     } catch (err: any) {
-        exitReason = AppExitReason.UserNav;
-        if (!TerminateReasons.includes(err.message)) {
+        if (TerminateReasons.includes(err.message)) {
+            exitReason = err.message === "debug-exit" ? AppExitReason.Stopped : AppExitReason.UserNav;
+        } else {
+            exitReason = AppExitReason.Crashed;
             if (interpreter.options.post ?? true) {
                 postMessage(`error,${err.message}`);
             } else {
                 interpreter.options.stderr.write(err.message);
             }
-            exitReason = AppExitReason.Crashed;
             const runtimeError = err.cause;
             if (
                 runtimeError &&

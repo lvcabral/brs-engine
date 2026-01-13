@@ -444,6 +444,7 @@ export type PkgFilePath = {
 export enum AppExitReason {
     Unknown = "EXIT_UNKNOWN",
     Crashed = "EXIT_BRIGHTSCRIPT_CRASH",
+    Stopped = "EXIT_BRIGHTSCRIPT_STOP",
     UnkFunction = "EXIT_BRIGHTSCRIPT_UNK_FUNC",
     UserNav = "EXIT_USER_NAV",
     Settings = "EXIT_SETTINGS_UPDATE",
