@@ -212,17 +212,17 @@ export function isFont(value: BrsType): value is FontLike {
     );
 }
 
-type TaskLike = Node & { id: number };
+type TaskLike = Node & { threadId: number };
 
 /**
- * Gets the task ID from a Node if it is a Task.
- * @param node Node to extract task ID from
- * @returns Task ID number or undefined if not a Task node
+ * Gets the task thread ID from a Node if it is a Task.
+ * @param node Node to extract task thread ID from
+ * @returns Task thread ID number or undefined if not a Task node
  */
-export function getTaskId(node: Node): number | undefined {
-    if (!(node instanceof Node) || !("id" in node)) {
+export function getTaskThreadId(node: Node): number | undefined {
+    if (!(node instanceof Node) || !("threadId" in node)) {
         return undefined;
     }
     const maybeTask = node as Partial<TaskLike>;
-    return typeof maybeTask.id === "number" ? maybeTask.id : undefined;
+    return typeof maybeTask.threadId === "number" ? maybeTask.threadId : undefined;
 }

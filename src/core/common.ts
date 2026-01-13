@@ -319,6 +319,7 @@ export type TaskPayload = {
     manifest: Map<string, string>;
     taskData: TaskData;
     extensions?: SupportedExtension[];
+    paths: PkgFilePath[];
     pkgZip?: ArrayBuffer;
     extZip?: SharedArrayBuffer;
     root?: string;
@@ -444,6 +445,7 @@ export type PkgFilePath = {
 export enum AppExitReason {
     Unknown = "EXIT_UNKNOWN",
     Crashed = "EXIT_BRIGHTSCRIPT_CRASH",
+    Stopped = "EXIT_BRIGHTSCRIPT_STOP",
     UnkFunction = "EXIT_BRIGHTSCRIPT_UNK_FUNC",
     UserNav = "EXIT_USER_NAV",
     Settings = "EXIT_SETTINGS_UPDATE",
@@ -570,6 +572,7 @@ export type ConnectionInfo = {
 // Shared array data types enumerator
 export enum DataType {
     DBG, // Debug Command
+    DBT, // Debug Thread Id
     BUF, // Buffer flag
     VDO, // Video Event
     VDX, // Video Event Index

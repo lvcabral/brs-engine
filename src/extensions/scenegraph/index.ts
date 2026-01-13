@@ -44,9 +44,9 @@ export class BrightScriptExtension implements BrsExtension {
 
     onInit() {
         // Register SceneGraph components with BrsObjects so they can be created with CreateObject()
-        BrsObjects.set("rosgscreen", () => new RoSGScreen(), 0);
+        BrsObjects.set("roSGScreen", () => new RoSGScreen(), 0);
         BrsObjects.set(
-            "rosgnode",
+            "roSGNode",
             (interpreter: Interpreter, nodeType: BrsString) => createNodeByType(nodeType.getValue(), interpreter),
             1
         );
@@ -62,14 +62,14 @@ export class BrightScriptExtension implements BrsExtension {
             } else {
                 const componentsDirExists = BrsDevice.fileSystem.existsSync("pkg:/components");
                 if (componentsDirExists) {
-                    postMessage(`warning,No SceneGraph components found!`);
+                    postMessage(`warning,[sg] No SceneGraph components found!`);
                 }
             }
         } catch (err: any) {
             if (err instanceof BrsError) {
                 interpreter.addError(err);
             } else {
-                postMessage(`error,Failed to load SceneGraph components: ${err.message}`);
+                postMessage(`error,[sg] Failed to load SceneGraph components: ${err.message}`);
             }
         }
     }
@@ -91,7 +91,8 @@ export class BrightScriptExtension implements BrsExtension {
 
     tick(_: Interpreter) {
         if (sgRoot.inTaskThread()) {
-            sgRoot.tasks[0]?.updateTask();
+            const task = sgRoot.getThreadTask(sgRoot.threadId);
+            task?.updateTask();
         }
     }
 
@@ -102,6 +103,7 @@ export class BrightScriptExtension implements BrsExtension {
         if (!(taskNode instanceof Task) || !functionName) {
             return;
         }
+        postMessage(`debug,[sg] Calling Task in new Worker: ${taskData.name} ${functionName}`);
         if (taskData.buffer) {
             taskNode.setTaskBuffer(taskData.buffer);
         }
@@ -127,7 +129,7 @@ export class BrightScriptExtension implements BrsExtension {
                         funcToCall.call(subInterpreter);
                         postMessage(`debug,[sg] Task function finished: ${taskData.name} ${functionName}`);
                         const update: ThreadUpdate = {
-                            id: taskNode.id,
+                            id: taskNode.threadId,
                             type: "task",
                             field: "control",
                             value: "stop",
@@ -137,7 +139,7 @@ export class BrightScriptExtension implements BrsExtension {
                         postMessage(taskData);
                     } else {
                         subInterpreter.addError(
-                            new BrsError(`Cannot found the Task function '${functionName}'`, subInterpreter.location)
+                            new BrsError(`[sg] Cannot found the Task function '${functionName}'`, interpreter.location)
                         );
                     }
                     return BrsInvalid.Instance;
@@ -145,11 +147,6 @@ export class BrightScriptExtension implements BrsExtension {
             } catch (err: any) {
                 if (err instanceof Stmt.ReturnValue) {
                     // ignore return value from Task, closing the Task
-                } else if (err instanceof BrsError) {
-                    const backTrace = interpreter.formatBacktrace(err.location, true, err.backTrace);
-                    const error = new Error(`${err.format()}\nBackTrace:\n${backTrace}`);
-                    (error as any).cause = err;
-                    throw error;
                 } else {
                     throw err;
                 }

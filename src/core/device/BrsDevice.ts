@@ -28,6 +28,7 @@ import {
 import SharedObject from "../SharedObject";
 import { FileSystem } from "./FileSystem";
 import { OutputProxy } from "./OutputProxy";
+import type { Lexeme } from "../lexer/Lexeme";
 
 export class BrsDevice {
     static readonly deviceInfo: DeviceInfo = DefaultDeviceInfo;
@@ -38,6 +39,8 @@ export class BrsDevice {
     static readonly keysBuffer: KeyEvent[] = [];
     static readonly terms: Map<string, string> = new Map<string, string>();
     static readonly sfx: string[] = DefaultSounds.slice();
+    static readonly bscs = new Map<string, number>();
+    static readonly stats = new Map<Lexeme, number>();
 
     static stdout: OutputProxy = new OutputProxy(process.stdout, false);
     static stderr: OutputProxy = new OutputProxy(process.stderr, false);
@@ -51,6 +54,9 @@ export class BrsDevice {
     static lastMod: number = -1;
     static lastKeyTime: number = Date.now();
     static currKeyTime: number = Date.now();
+
+    /** Current Thread ID for the environment */
+    static threadId: number = 0;
 
     /** External Storage Volume (ext1:) properties */
     private static extVolVersion: number = -1;
@@ -367,7 +373,7 @@ export class BrsDevice {
     }
 
     /**
-     * Checks if the Break Command is set in the shared array.
+     * Checks if the Break/Pause Command or Debug Thread is set in the shared array.
      * Handles debug pause and continue states.
      * @param debugSession Whether debug session is active
      * @returns Debug command code
@@ -384,6 +390,12 @@ export class BrsDevice {
                 Atomics.store(this.sharedArray, DataType.DBG, -1);
                 cmd = -1;
                 postMessage("command,continue");
+            }
+            const dbt = Atomics.load(this.sharedArray, DataType.DBT);
+            if (dbt >= 0 && dbt !== this.threadId) {
+                // Another thread is in debug mode, pause this one
+                Atomics.wait(this.sharedArray, DataType.DBT, dbt);
+                cmd = -1;
             }
         }
         return cmd;
@@ -404,6 +416,23 @@ export class BrsDevice {
         });
         Atomics.store(this.sharedArray, DataType.BUF, -1);
         return data;
+    }
+
+    /**
+     * Notifies the other threads that debugging has started for this thread.
+     */
+    static notifyDebugStarted() {
+        postMessage("command,stop");
+        Atomics.store(this.sharedArray, DataType.DBT, this.threadId);
+    }
+
+    /**
+     * Notifies the other threads that debugging has ended for this thread.
+     */
+    static notifyDebugEnded() {
+        postMessage("command,continue");
+        Atomics.store(this.sharedArray, DataType.DBT, -1);
+        Atomics.notify(this.sharedArray, DataType.DBT);
     }
 
     /**

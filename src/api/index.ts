@@ -178,7 +178,7 @@ export async function initialize(customDeviceInfo?: Partial<DeviceInfo>, options
         debugToConsole = options.debugToConsole;
     }
     const initMsg = `${packageInfo.title} - v${packageInfo.version}${inDebugLib ? " - dev" : ""}`;
-    deviceDebug(`beacon,${initMsg}`);
+    deviceDebug(`beacon,${initMsg}\r\n`);
     if (typeof options.showStats === "boolean") {
         showStats = options.showStats;
     }
@@ -215,7 +215,7 @@ export async function initialize(customDeviceInfo?: Partial<DeviceInfo>, options
         } else if (["error", "warning"].includes(event)) {
             apiException(event, data);
         } else if (event === "debug") {
-            deviceDebug(`debug,${data}`);
+            deviceDebug(`debug,${data}\r\n`);
         }
     });
     subscribeControl("api", (event: string, data: any) => {
@@ -264,7 +264,7 @@ export async function initialize(customDeviceInfo?: Partial<DeviceInfo>, options
         if (["error", "warning"].includes(event)) {
             apiException(event, data);
         } else if (event === "debug") {
-            deviceDebug(`debug,${data}`);
+            deviceDebug(`debug,${data}\r\n`);
         } else if (event === "mount") {
             Atomics.store(sharedArray, DataType.EVE, data);
         } else {
@@ -283,7 +283,7 @@ export async function initialize(customDeviceInfo?: Partial<DeviceInfo>, options
         } else if (event === "captionMode") {
             notifyAll(event, data);
         } else if (event === "debug") {
-            deviceDebug(`debug,${data}`);
+            deviceDebug(`debug,${data}\r\n`);
         }
     });
 
@@ -354,7 +354,7 @@ export function execute(filePath: string, fileData: any, options: any = {}, deep
     if (brsWorker !== undefined) {
         resetWorker();
     }
-    deviceDebug(`beacon,Loading ${filePath}...`);
+    deviceDebug(`beacon,Loading ${filePath}...\r\n`);
     initSoundModule(sharedArray, options.muteSound);
     muteVideo(options.muteSound);
 
@@ -701,12 +701,12 @@ function mainCallback(event: MessageEvent) {
         notifyAll("launch", { app: event.data.id, params: event.data.params ?? new Map() });
     } else if (isTaskData(event.data)) {
         deviceDebug(
-            `debug,[API] Task data received from Main Thread: ${event.data.name}, ${TaskState[event.data.state]}`
+            `debug,[api] Task data received from Main Thread: ${event.data.name}, ${TaskState[event.data.state]}\r\n`
         );
         handleTaskData(event.data, currentPayload);
     } else if (isThreadUpdate(event.data)) {
         deviceDebug(
-            `debug,[API] Update received from Main thread: ${event.data.id}, ${event.data.type}, ${event.data.field}`
+            `debug,[api] Update received from Main thread: ${event.data.id}, ${event.data.type}, ${event.data.field}\r\n`
         );
         handleThreadUpdate(event.data);
     } else if (isNDKStart(event.data)) {

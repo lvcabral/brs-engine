@@ -103,7 +103,7 @@ export const ObjFun = new Callable("ObjFun", {
             new RuntimeError(
                 RuntimeErrorDetail.MemberFunctionNotFound,
                 interpreter.location,
-                interpreter.stack.slice(0, -1)
+                interpreter.getBacktrace()
             )
         );
     },

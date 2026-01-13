@@ -33,7 +33,7 @@ export const CreateObject = new Callable("CreateObject", {
                     new RuntimeError(
                         RuntimeErrorDetail.RoWrongNumberOfParams,
                         interpreter.location,
-                        interpreter.stack.slice(0, -1)
+                        interpreter.getBacktrace()
                     )
                 );
             }
@@ -42,10 +42,11 @@ export const CreateObject = new Callable("CreateObject", {
             } catch (err: any) {
                 if (err instanceof RuntimeError) {
                     err.location ??= interpreter.location;
-                    err.backTrace ??= interpreter.stack.slice(0, -1);
+                    err.backTrace ??= interpreter.getBacktrace();
                     interpreter.addError(err);
+                } else {
+                    throw err;
                 }
-                BrsDevice.stderr.write(`error,${err.message} ${interpreter.formatLocation()}`);
             }
         }
         return BrsInvalid.Instance;

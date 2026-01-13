@@ -18,6 +18,7 @@ import {
     RoMessagePort,
     Uninitialized,
     ValueKind,
+    RuntimeError,
 } from "brs-engine";
 import {
     ArrayGrid,
@@ -273,14 +274,9 @@ export function createNodeByType(type: string, interpreter?: Interpreter): Node 
             return BrsInvalid.Instance;
         }
     }
-    if (node instanceof Task) {
-        // thread id = 0 is the Main worker thread
-        node.id = sgRoot.tasks.length + 1;
-        sgRoot.tasks.push(node);
-        sgRoot.setThread(node.id);
-    }
+    // If Node is being created in a task thread, ensure its parent is set to the current task.
     if (node instanceof Node && sgRoot.inTaskThread()) {
-        const task = sgRoot.tasks[0];
+        const task = sgRoot.getCurrentThreadTask();
         if (task && isInvalid(node.getNodeParent())) {
             node.setNodeParent(task);
         }
@@ -387,9 +383,20 @@ export function initializeNode(interpreter: Interpreter, type: string, typeDef?:
                         callLocation: originalLocation,
                         signature: init.signatures[0].signature,
                     });
-                    init.call(subInterpreter);
-                    interpreter.popFromStack();
-                    interpreter.location = originalLocation;
+                    try {
+                        init.call(subInterpreter);
+                        interpreter.popFromStack();
+                        interpreter.location = originalLocation;
+                    } catch (err) {
+                        if (err instanceof RuntimeError) {
+                            interpreter.checkCrashDebug(err);
+                        }
+                        if (!interpreter.inExitMode()) {
+                            interpreter.popFromStack();
+                            interpreter.location = originalLocation;
+                        }
+                        throw err;
+                    }
                 }
                 return BrsInvalid.Instance;
             }, currentEnv);
@@ -428,8 +435,8 @@ export function initializeTask(interpreter: Interpreter, taskData: TaskData) {
         typeDef = typeDefStack.pop();
 
         // Create the node.
-        let node = SGNodeFactory.createNode(typeDef!.extends as SGNodeType, type) || new Task([], type);
-        let mPointer = new RoAssociativeArray([]);
+        const node = SGNodeFactory.createNode(typeDef!.extends as SGNodeType, type) || new Task([], type);
+        const mPointer = new RoAssociativeArray([]);
         currentEnv?.setM(new RoAssociativeArray([]));
         if (currentEnv) {
             currentEnv.hostNode = node;
@@ -476,11 +483,10 @@ export function initializeTask(interpreter: Interpreter, taskData: TaskData) {
  */
 function loadTaskData(interpreter: Interpreter, node: Node, taskData: TaskData) {
     if (node instanceof Task) {
-        node.id = taskData.id;
-        node.thread = true;
-        sgRoot.tasks.push(node);
         sgRoot.setThread(0, false, taskData.render);
-        sgRoot.setThread(taskData.id, true);
+        node.threadId = taskData.id;
+        node.thread = true;
+        sgRoot.addTask(node, taskData.id, true);
         interpreter.environment.hostNode = node;
     }
     let port: RoMessagePort | undefined;
@@ -549,7 +555,7 @@ function updateTypeDefHierarchy(typeDef: ComponentDefinition | undefined) {
  */
 function restoreNode(interpreter: Interpreter, source: any, node: Node, port?: RoMessagePort) {
     const observed = source["_observed_"];
-    node.owner = source["_owner_"] ?? sgRoot.taskId;
+    node.owner = source["_owner_"] ?? sgRoot.threadId;
     for (let [key, value] of Object.entries(source)) {
         if (key.startsWith("_") && key.endsWith("_") && key.length > 2) {
             // Ignore transfer metadata fields

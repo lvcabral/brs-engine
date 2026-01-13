@@ -58,7 +58,7 @@ export class IfToStr {
                     throw new RuntimeError(
                         RuntimeErrorDetail.MemberFunctionNotFound,
                         interpreter.location,
-                        interpreter.stack.slice(0, -1)
+                        interpreter.getBacktrace()
                     );
                 }
             }
@@ -66,7 +66,7 @@ export class IfToStr {
                 throw new RuntimeError(
                     RuntimeErrorDetail.MemberFunctionNotFound,
                     interpreter.location,
-                    interpreter.stack.slice(0, -1)
+                    interpreter.getBacktrace()
                 );
             }
             const tokens = format.value.split("%").length - 1;
@@ -83,7 +83,7 @@ export class IfToStr {
                 const errorDetail = err.message?.includes("expecting number")
                     ? RuntimeErrorDetail.TypeMismatch
                     : RuntimeErrorDetail.InvalidFormatSpecifier;
-                throw new RuntimeError(errorDetail, interpreter.location, interpreter.stack.slice(0, -1));
+                throw new RuntimeError(errorDetail, interpreter.location, interpreter.getBacktrace());
             }
         },
     });

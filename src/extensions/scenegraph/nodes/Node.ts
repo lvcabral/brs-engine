@@ -29,7 +29,6 @@ import {
     Interpreter,
     BrsDevice,
     RuntimeError,
-    DebugMode,
 } from "brs-engine";
 import { RoSGNode } from "../components/RoSGNode";
 import { createNodeByType, getBrsValueFromFieldType, subtypeHierarchy } from "../factory/NodeFactory";
@@ -98,7 +97,7 @@ export class Node extends RoSGNode implements BrsValue {
         this.aliases = new Map();
         this.children = [];
         this.parent = BrsInvalid.Instance;
-        this.owner = sgRoot.taskId;
+        this.owner = sgRoot.threadId;
 
         // All nodes start have some built-in fields when created.
         this.registerDefaultFields(this.defaultFields);
@@ -1339,7 +1338,7 @@ export class Node extends RoSGNode implements BrsValue {
                             generateArgumentMismatchError(
                                 functionToCall,
                                 functionArgs,
-                                interpreter.stack.at(-1)?.functionLocation!
+                                interpreter.stackCopy.at(-1)?.functionLocation!
                             )
                         );
                     }
@@ -1347,7 +1346,7 @@ export class Node extends RoSGNode implements BrsValue {
                     if (reason instanceof RuntimeError) {
                         interpreter.checkCrashDebug(reason);
                     }
-                    if (interpreter.debugMode !== DebugMode.EXIT && addedToStack) {
+                    if (!interpreter.inExitMode() && addedToStack) {
                         interpreter.popFromStack();
                         interpreter.location = originalLocation;
                     }
@@ -1460,15 +1459,15 @@ export class Node extends RoSGNode implements BrsValue {
      */
     protected getThreadInfo() {
         const threadData: FlexObject = {
-            currentThread: sgRoot.getCurrentThread(),
+            currentThread: sgRoot.getCurrentThreadInfo(),
             node: {
                 address: this.address,
                 id: this.getId(),
                 type: this.nodeSubtype,
                 owningThread: sgRoot.getThreadInfo(this.owner),
-                willRendezvousFromCurrentThread: this.owner === sgRoot.taskId ? "No" : "Yes",
+                willRendezvousFromCurrentThread: this.owner === sgRoot.threadId ? "No" : "Yes",
             },
-            renderThread: sgRoot.getRenderThread(),
+            renderThread: sgRoot.getRenderThreadInfo(),
         };
         return toAssociativeArray(threadData);
     }

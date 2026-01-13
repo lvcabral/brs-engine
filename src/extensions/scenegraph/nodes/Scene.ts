@@ -11,7 +11,6 @@ import {
     Scope,
     Stmt,
     IfDraw2D,
-    BlockEnd,
     RuntimeError,
     DebugMode,
 } from "brs-engine";
@@ -85,8 +84,8 @@ export class Scene extends Group {
         }
         super.setValue(index, value, alwaysNotify, kind);
         // Notify other threads of field changes
-        if (sync && sgRoot.tasks.length > 0 && this.changed && this.fields.has(fieldName)) {
-            this.sendThreadUpdate(sgRoot.taskId, "scene", fieldName, value);
+        if (sync && sgRoot.getTasksCount() > 0 && this.changed && this.fields.has(fieldName)) {
+            this.sendThreadUpdate(sgRoot.threadId, "scene", fieldName, value);
             if (sgRoot.inTaskThread()) this.changed = false;
         }
     }
@@ -227,13 +226,12 @@ export class Scene extends Group {
                 if (err instanceof RuntimeError) {
                     interpreter.checkCrashDebug(err);
                 }
-                if (interpreter.debugMode !== DebugMode.EXIT) {
-                    interpreter.popFromStack();
-                    interpreter.location = originalLocation;
-                }
-                if (!(err instanceof BlockEnd)) {
+                if (interpreter.debugMode === DebugMode.EXIT) {
                     throw err;
-                } else if (err instanceof Stmt.ReturnValue) {
+                }
+                interpreter.popFromStack();
+                interpreter.location = originalLocation;
+                if (err instanceof Stmt.ReturnValue) {
                     return err.value ?? BrsBoolean.False;
                 }
                 throw err;
