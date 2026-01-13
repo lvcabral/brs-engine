@@ -146,6 +146,12 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         return this._sourceMap;
     }
 
+    set sourceMap(map: Map<string, string>) {
+        for (const [key, value] of map.entries()) {
+            this._sourceMap.set(key, value);
+        }
+    }
+
     get runParams() {
         return this._runParams;
     }

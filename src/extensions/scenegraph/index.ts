@@ -103,6 +103,7 @@ export class BrightScriptExtension implements BrsExtension {
         if (!(taskNode instanceof Task) || !functionName) {
             return;
         }
+        postMessage(`debug,[sg] Calling Task in new Worker: ${taskData.name} ${functionName}`);
         if (taskData.buffer) {
             taskNode.setTaskBuffer(taskData.buffer);
         }

@@ -319,6 +319,7 @@ export type TaskPayload = {
     manifest: Map<string, string>;
     taskData: TaskData;
     extensions?: SupportedExtension[];
+    paths: PkgFilePath[];
     pkgZip?: ArrayBuffer;
     extZip?: SharedArrayBuffer;
     root?: string;

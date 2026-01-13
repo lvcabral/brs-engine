@@ -598,8 +598,6 @@ export async function executeFile(payload: AppPayload, customOptions?: Partial<E
         stopOnCrash: payload.device.debugOnCrash ?? false,
         ...customOptions,
     };
-    BrsDevice.bscs.clear();
-    BrsDevice.stats.clear();
     // Setup the File System
     BrsDevice.setDeviceInfo(payload.device);
     try {
@@ -609,15 +607,8 @@ export async function executeFile(payload: AppPayload, customOptions?: Partial<E
         postMessage(`error,[core] Error mounting File System: ${err.message}`);
         return { exitReason: AppExitReason.Crashed };
     }
-    const extensions = instantiateExtensions();
-    // Create the interpreter
-    const interpreter = new Interpreter(options);
-    if (extensions.length > 0) {
-        // Attach extensions
-        attachExtensions(interpreter, extensions);
-        await runBeforeExecuteHooks(interpreter, payload);
-    }
-    // Process Payload Content
+    // Setup the interpreter
+    const interpreter = await createInterpreter(options, payload);
     const sourceResult = setupPayload(interpreter, payload);
     // Run the BrightScript app
     BrsDevice.lastKeyTime = Date.now();
@@ -647,36 +638,26 @@ export async function executeTask(payload: TaskPayload, customOptions?: Partial<
         stopOnCrash: payload.device.debugOnCrash ?? false,
         ...customOptions,
     };
-    BrsDevice.stats.clear();
     // Setup the File System
     BrsDevice.setDeviceInfo(payload.device);
     try {
         BrsDevice.setupFileSystem(payload);
         BrsDevice.loadLocaleTerms();
     } catch (err: any) {
-        postMessage(`error,[task] Error mounting File System: ${err.message}`);
+        postMessage(`error,[core] Error mounting File System on Task: ${err.message}`);
         return;
     }
-    const extensions = instantiateExtensions();
-    // Create the interpreter
-    const interpreter = new Interpreter(options);
-    attachExtensions(interpreter, extensions);
-
-    await runBeforeExecuteHooks(interpreter, payload);
-
-    interpreter.setManifest(payload.manifest);
-    if (payload.device.registryBuffer) {
-        BrsDevice.setRegistry(payload.device.registryBuffer);
-    } else if (payload.device.registry?.size) {
-        BrsDevice.setRegistry(payload.device.registry);
-    }
-    setupTranslations(interpreter);
-    postMessage(
-        `debug,[core] Calling Task in new Worker: ${payload.taskData.name} ${payload.taskData.m.top.functionname}`
-    );
+    // Setup the interpreter
+    const interpreter = await createInterpreter(options, payload);
+    const sourceResult = setupPayload(interpreter, payload);
+    // Run the BrightScript Task
     try {
         for (const ext of interpreter.extensions.values()) {
+            if (ext.updateSourceMap) {
+                ext.updateSourceMap(sourceResult.sourceMap);
+            }
             if (ext.execTask) {
+                interpreter.sourceMap = sourceResult.sourceMap;
                 ext.execTask(interpreter, payload);
                 break;
             }
@@ -703,6 +684,24 @@ export async function executeTask(payload: TaskPayload, customOptions?: Partial<
         }
         postMessage(`end,${AppExitReason.Crashed}`);
     }
+}
+
+/** Creates and configures a new Interpreter instance.
+ * @param options Partial execution options to configure the interpreter
+ * @param payload App or Task payload being executed
+ * @returns Promise resolving to configured Interpreter instance
+ */
+async function createInterpreter(options: Partial<ExecutionOptions>, payload: AppPayload | TaskPayload) {
+    BrsDevice.bscs.clear();
+    BrsDevice.stats.clear();
+    const extensions = instantiateExtensions();
+    // Create the interpreter
+    const interpreter = new Interpreter(options);
+    if (extensions.length > 0) {
+        attachExtensions(interpreter, extensions);
+        await runBeforeExecuteHooks(interpreter, payload);
+    }
+    return interpreter;
 }
 
 /**
@@ -743,7 +742,7 @@ interface SourceResult {
     iv?: string;
 }
 
-function setupPayload(interpreter: Interpreter, payload: AppPayload): SourceResult {
+function setupPayload(interpreter: Interpreter, payload: AppPayload | TaskPayload): SourceResult {
     interpreter.setManifest(payload.manifest);
     if (payload.device.registryBuffer) {
         BrsDevice.setRegistry(payload.device.registryBuffer);
@@ -783,7 +782,7 @@ function setupInputParams(deepLinkMap: Map<string, string>, splashTime: number):
  * @param payload Payload with the source code, manifest and all the assets of the app
  * @returns SourceResult object with the source map or the pcode data
  */
-function setupPackageFiles(payload: AppPayload): SourceResult {
+function setupPackageFiles(payload: AppPayload | TaskPayload): SourceResult {
     const result: SourceResult = { sourceMap: new Map<string, string>() };
     const fsys = BrsDevice.fileSystem;
     if (!fsys || !Array.isArray(payload.paths)) {
@@ -798,7 +797,7 @@ function setupPackageFiles(payload: AppPayload): SourceResult {
                     continue;
                 }
                 result.iv = fsys.readFileSync(pkgPath, "utf8");
-            } else if (filePath.type === "source" && Array.isArray(payload.source)) {
+            } else if (filePath.type === "source" && isAppPayload(payload) && Array.isArray(payload.source)) {
                 result.sourceMap.set(pkgPath, payload.source[filePath.id]);
             } else if (filePath.type === "source" && fsys.existsSync(`pkg:/${filePath.url}`)) {
                 result.sourceMap.set(pkgPath, fsys.readFileSync(pkgPath, "utf8"));
