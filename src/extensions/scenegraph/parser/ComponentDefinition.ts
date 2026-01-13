@@ -366,9 +366,11 @@ async function getScripts(node: XmlDocument, nodeDef: ComponentDefinition): Prom
                 uri: absoluteUri,
             });
         } else if (typeof script.val === "string") {
+            // pad with new lines to match original XML line numbers
+            const padLines = script.line > 0 ? "\n".repeat(script.line) : "";
             componentScripts.push({
                 type: script.attr.type,
-                content: script.val,
+                content: `${padLines}${script.val}`,
                 xmlPath: nodeDef.xmlPath,
             });
         }
