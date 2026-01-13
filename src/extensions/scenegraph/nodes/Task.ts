@@ -125,15 +125,11 @@ export class Task extends Node {
      */
     private activateTask() {
         this.active = true;
-        if (this.thread) {
-            return;
-        }
+        if (this.thread) return;
         // In main thread add this task to sgRoot. (in a task thread it's added by `loadTaskData()`)
         if (this.threadId < 0) {
-            postMessage(`debug,[task] Adding Task #${this.threadId} to sgRoot: ${this.nodeSubtype}`);
             sgRoot.addTask(this);
         } else if (sgRoot.getThreadTask(this.threadId) !== this) {
-            postMessage(`debug,[task] Re-setting Task #${this.threadId} to sgRoot: ${this.nodeSubtype}`);
             sgRoot.setThread(this.threadId, false, this.address, this);
         }
     }

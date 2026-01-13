@@ -686,7 +686,8 @@ export async function executeTask(payload: TaskPayload, customOptions?: Partial<
     }
 }
 
-/** Creates and configures a new Interpreter instance.
+/**
+ * Creates and configures a new Interpreter instance.
  * @param options Partial execution options to configure the interpreter
  * @param payload App or Task payload being executed
  * @returns Promise resolving to configured Interpreter instance

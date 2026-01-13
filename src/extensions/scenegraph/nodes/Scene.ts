@@ -228,10 +228,9 @@ export class Scene extends Group {
                 }
                 if (interpreter.debugMode === DebugMode.EXIT) {
                     throw err;
-                } else {
-                    interpreter.popFromStack();
-                    interpreter.location = originalLocation;
                 }
+                interpreter.popFromStack();
+                interpreter.location = originalLocation;
                 if (err instanceof Stmt.ReturnValue) {
                     return err.value ?? BrsBoolean.False;
                 }
