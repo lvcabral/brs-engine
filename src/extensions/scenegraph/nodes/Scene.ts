@@ -11,7 +11,6 @@ import {
     Scope,
     Stmt,
     IfDraw2D,
-    BlockEnd,
     RuntimeError,
     DebugMode,
 } from "brs-engine";

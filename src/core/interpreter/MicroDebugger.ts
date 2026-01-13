@@ -260,7 +260,7 @@ function debugHandleCommand(interpreter: Interpreter, currLoc: Location, lastLoc
             debugMsg = `print,${debugThreads(interpreter, currLoc, lastLines, lastLine)}`;
             break;
         case DebugCommand.BSCS: {
-            const objList = Array.from(BrsDevice.bscs.keys()).sort();
+            const objList = Array.from(BrsDevice.bscs.keys()).sort((a: string, b: string) => a.localeCompare(b));
             let total = 0;
             debugMsg = "print,";
             for (const obj of objList) {
