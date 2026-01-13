@@ -51,18 +51,13 @@ export class Task extends Node {
     constructor(members: AAMember[] = [], readonly name: string = SGNodeType.Task) {
         super([], name);
         this.setExtendsType(name, SGNodeType.Node);
-        this.threadId = -1; // Not initialized
+        this.threadId = -1; // Not activated yet
         this.active = false;
         this.started = false;
         this.thread = false;
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(members);
-
-        // In main thread register this task with sgRoot. (in a task thread it is added by `loadTaskData()`)
-        if (!sgRoot.inTaskThread()) {
-            sgRoot.addTask(this);
-        }
     }
 
     /**
@@ -94,7 +89,7 @@ export class Task extends Node {
             return;
         }
         super.setValue(index, value, alwaysNotify, kind);
-        // Notify Main thread of field changes
+        // Notify other threads of field changes
         if (this.threadId >= 0 && field && sync && this.changed) {
             this.sendThreadUpdate(this.threadId, "task", mapKey, value, true);
             this.changed = false;
@@ -108,30 +103,56 @@ export class Task extends Node {
      * @param sync When true sends updates to the owning thread.
      */
     private setControlField(field: Field, control: string, sync: boolean) {
-        const state = this.fields.get("state") as Field;
         if (control === "run") {
-            this.active = true;
+            this.activateTask();
         } else if (control === "stop" || control === "done") {
-            if (this.started) {
-                postMessage(`debug,[task] Posting Task #${this.threadId} Data to STOP: ${this.nodeSubtype}`);
-                const taskData: TaskData = {
-                    id: this.threadId,
-                    name: this.nodeSubtype,
-                    state: TaskState.STOP,
-                };
-                postMessage(taskData);
-                this.started = false;
-            }
-            this.active = false;
+            this.deactivateTask();
         }
         field.setValue(new BrsString(control));
-        if (state && control !== "" && control !== "init") {
+        if (control !== "" && control !== "init") {
+            const state = this.fields.get("state")!;
             state.setValue(new BrsString(control));
             this.fields.set("state", state);
+            // Notify other threads of field changes
             if (this.threadId >= 0 && this.thread && sync) {
                 this.sendThreadUpdate(this.threadId, "task", "control", new BrsString(control));
             }
         }
+    }
+
+    /**
+     * Marks the task as active and registers it with sgRoot if not already done.
+     */
+    private activateTask() {
+        this.active = true;
+        if (this.thread) {
+            return;
+        }
+        // In main thread add this task to sgRoot. (in a task thread it's added by `loadTaskData()`)
+        if (this.threadId < 0) {
+            postMessage(`debug,[task] Adding Task #${this.threadId} to sgRoot: ${this.nodeSubtype}`);
+            sgRoot.addTask(this);
+        } else if (sgRoot.getThreadTask(this.threadId) !== this) {
+            postMessage(`debug,[task] Re-setting Task #${this.threadId} to sgRoot: ${this.nodeSubtype}`);
+            sgRoot.setThread(this.threadId, false, this.address, this);
+        }
+    }
+
+    /**
+     * Marks the task as inactive and notifies the main thread to stop execution.
+     */
+    private deactivateTask() {
+        if (this.started) {
+            postMessage(`debug,[task] Posting Task #${this.threadId} Data to STOP: ${this.nodeSubtype}`);
+            const taskData: TaskData = {
+                id: this.threadId,
+                name: this.nodeSubtype,
+                state: TaskState.STOP,
+            };
+            postMessage(taskData);
+            this.started = false;
+        }
+        this.active = false;
     }
 
     /**

@@ -701,12 +701,12 @@ function mainCallback(event: MessageEvent) {
         notifyAll("launch", { app: event.data.id, params: event.data.params ?? new Map() });
     } else if (isTaskData(event.data)) {
         deviceDebug(
-            `debug,[API] Task data received from Main Thread: ${event.data.name}, ${TaskState[event.data.state]}\r\n`
+            `debug,[api] Task data received from Main Thread: ${event.data.name}, ${TaskState[event.data.state]}\r\n`
         );
         handleTaskData(event.data, currentPayload);
     } else if (isThreadUpdate(event.data)) {
         deviceDebug(
-            `debug,[API] Update received from Main thread: ${event.data.id}, ${event.data.type}, ${event.data.field}\r\n`
+            `debug,[api] Update received from Main thread: ${event.data.id}, ${event.data.type}, ${event.data.field}\r\n`
         );
         handleThreadUpdate(event.data);
     } else if (isNDKStart(event.data)) {
