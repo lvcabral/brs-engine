@@ -570,6 +570,7 @@ export type ConnectionInfo = {
 // Shared array data types enumerator
 export enum DataType {
     DBG, // Debug Command
+    DBT, // Debug Thread Id
     BUF, // Buffer flag
     VDO, // Video Event
     VDX, // Video Event Index

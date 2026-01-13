@@ -235,7 +235,8 @@ export class Field {
         }
         return (
             this.unscopedObservers.some(
-                (callback) => callback.callable instanceof RoMessagePort && getTaskThreadId(callback.hostNode) === hostThreadId
+                (callback) =>
+                    callback.callable instanceof RoMessagePort && getTaskThreadId(callback.hostNode) === hostThreadId
             ) ||
             this.scopedObservers.get(hostNode)?.some((callback) => callback.callable instanceof RoMessagePort) ||
             false

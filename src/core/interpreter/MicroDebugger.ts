@@ -63,7 +63,7 @@ export function runDebugger(
                     continue;
                 }
                 interpreter.debugMode = DebugMode.NONE;
-                postMessage("command,continue");
+                BrsDevice.notifyDebugEnded();
                 return true;
             case DebugCommand.STEP:
                 if (errMessage) {
@@ -102,7 +102,7 @@ function debuggerIntro(
         const line = lastLines[lastLine - 1]?.trimEnd() ?? "";
         BrsDevice.stdout.write(`print,${lastLine.toString().padStart(3, "0")}: ${line}\r\n`);
     } else {
-        postMessage("command,stop");
+        BrsDevice.notifyDebugStarted();
         debugMsg += "Enter any BrightScript statement, debug commands, or HELP\r\n\r\n";
 
         debugMsg += "\r\nCurrent Function:\r\n";

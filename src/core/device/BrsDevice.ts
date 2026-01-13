@@ -373,7 +373,7 @@ export class BrsDevice {
     }
 
     /**
-     * Checks if the Break Command is set in the shared array.
+     * Checks if the Break/Pause Command or Debug Thread is set in the shared array.
      * Handles debug pause and continue states.
      * @param debugSession Whether debug session is active
      * @returns Debug command code
@@ -390,6 +390,12 @@ export class BrsDevice {
                 Atomics.store(this.sharedArray, DataType.DBG, -1);
                 cmd = -1;
                 postMessage("command,continue");
+            }
+            const dbt = Atomics.load(this.sharedArray, DataType.DBT);
+            if (dbt >= 0 && dbt !== this.threadId) {
+                // Another thread is in debug mode, pause this one
+                Atomics.wait(this.sharedArray, DataType.DBT, dbt);
+                cmd = -1;
             }
         }
         return cmd;
@@ -410,6 +416,23 @@ export class BrsDevice {
         });
         Atomics.store(this.sharedArray, DataType.BUF, -1);
         return data;
+    }
+
+    /**
+     * Notifies the other threads that debugging has started for this thread.
+     */
+    static notifyDebugStarted() {
+        postMessage("command,stop");
+        Atomics.store(this.sharedArray, DataType.DBT, this.threadId);
+    }
+
+    /**
+     * Notifies the other threads that debugging has ended for this thread.
+     */
+    static notifyDebugEnded() {
+        postMessage("command,continue");
+        Atomics.store(this.sharedArray, DataType.DBT, -1);
+        Atomics.notify(this.sharedArray, DataType.DBT);
     }
 
     /**
