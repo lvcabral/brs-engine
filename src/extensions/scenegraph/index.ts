@@ -19,6 +19,7 @@ import {
     BrsInvalid,
     BrsObjects,
     BrsString,
+    RuntimeError,
 } from "brs-engine";
 import { getComponentDefinitionMap, setupInterpreterWithSubEnvs } from "./parser/ComponentDefinition";
 import { sgRoot } from "./SGRoot";
@@ -138,18 +139,21 @@ export class BrightScriptExtension implements BrsExtension {
                         taskData.state = TaskState.STOP;
                         postMessage(taskData);
                     } else {
-                        subInterpreter.addError(
-                            new BrsError(`[sg] Cannot found the Task function '${functionName}'`, interpreter.location)
-                        );
+                        postMessage(`warning,[sg] Warning: Cannot found the Task function '${functionName}'`);
                     }
                     return BrsInvalid.Instance;
                 }, taskEnv);
             } catch (err: any) {
                 if (err instanceof Stmt.ReturnValue) {
-                    // ignore return value from Task, closing the Task
-                } else {
-                    throw err;
+                    // ignore return value from Task function, closing the Task
+                    postMessage(
+                        `debug,[sg] Returned from Task function: ${taskData.name} ${functionName} ${err.value ?? ""}`
+                    );
+                    return;
+                } else if (err instanceof RuntimeError) {
+                    interpreter.checkCrashDebug(err);
                 }
+                throw err;
             }
         }
     }
