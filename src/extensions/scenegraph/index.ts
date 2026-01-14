@@ -139,7 +139,7 @@ export class BrightScriptExtension implements BrsExtension {
                         taskData.state = TaskState.STOP;
                         postMessage(taskData);
                     } else {
-                        postMessage(`warning,[sg] Warning: Cannot found the Task function '${functionName}'`);
+                        postMessage(`warning,[sg] Warning: Task function '${functionName}' not found!`);
                     }
                     return BrsInvalid.Instance;
                 }, taskEnv);
