@@ -1,15 +1,19 @@
 import { AAMember, Interpreter, BrsDevice, BrsString, BrsType, Int32, IfDraw2D, Rect, RectRect } from "brs-engine";
 import { FieldKind, FieldModel } from "../SGTypes";
 import { SGNodeType } from ".";
-import { ArrayGrid } from "./ArrayGrid";
+import { ArrayGrid, FocusStyle } from "./ArrayGrid";
 import { customNodeExists } from "../factory/NodeFactory";
+
+const ValidFocusStyles = new Set(
+    [FocusStyle.FixedFocusWrap, FocusStyle.FloatingFocus].map((style) => style.toLowerCase())
+);
 
 export class MarkupList extends ArrayGrid {
     readonly defaultFields: FieldModel[] = [
         { name: "itemComponentName", type: "string", value: "" },
         { name: "numRows", type: "integer", value: "12" },
         { name: "numColumns", type: "integer", value: "1" },
-        { name: "vertFocusAnimationStyle", type: "string", value: "fixedFocusWrap" },
+        { name: "vertFocusAnimationStyle", type: "string", value: FocusStyle.FixedFocusWrap },
     ];
     protected readonly focusUri = "common:/images/focus_list.9.png";
     protected readonly footprintUri = "common:/images/focus_footprint.9.png";
@@ -28,7 +32,7 @@ export class MarkupList extends ArrayGrid {
         this.setValueSilent("focusFootprintBitmapUri", new BrsString(this.footprintUri));
         this.setValueSilent("wrapDividerBitmapUri", new BrsString(this.dividerUri));
         const style = this.getValueJS("vertFocusAnimationStyle") as string;
-        this.wrap = style.toLowerCase() === "fixedfocuswrap";
+        this.wrap = style.toLowerCase() === FocusStyle.FixedFocusWrap.toLowerCase();
         this.numRows = this.getValueJS("numRows") as number;
         this.numCols = this.getValueJS("numColumns") as number;
         this.hasNinePatch = true;
@@ -37,7 +41,7 @@ export class MarkupList extends ArrayGrid {
     setValue(index: string, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
         const fieldName = index.toLowerCase();
         if (fieldName === "vertfocusanimationstyle") {
-            if (!["fixedfocuswrap", "floatingfocus"].includes(value.toString().toLowerCase())) {
+            if (!ValidFocusStyles.has(value.toString().toLowerCase())) {
                 // Invalid vertFocusAnimationStyle
                 return;
             }
@@ -117,7 +121,10 @@ export class MarkupList extends ArrayGrid {
 
         const rowWidth = itemSize[0];
         for (let r = 0; r < displayRows; r++) {
-            const rowIndex = this.getIndex(r - this.currRow);
+            const rowIndex = this.getRenderRowIndex(r);
+            if (rowIndex < 0) {
+                break;
+            }
             itemRect.height = rowHeights[rowIndex] ?? itemSize[1];
             if (!hasSections && this.wrap && rowIndex < lastIndex && r > 0) {
                 const divRect = { ...itemRect, width: rowWidth };

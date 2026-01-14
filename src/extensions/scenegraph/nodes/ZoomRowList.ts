@@ -19,7 +19,7 @@ import { customNodeExists } from "../factory/NodeFactory";
 import { brsValueOf, jsValueOf } from "../factory/Serializer";
 import { Font } from "./Font";
 import { Group } from "./Group";
-import { ArrayGrid } from "./ArrayGrid";
+import { ArrayGrid, FocusStyle } from "./ArrayGrid";
 import { FieldKind, FieldModel } from "../SGTypes";
 import { SGNodeType } from ".";
 
@@ -32,6 +32,10 @@ interface RowMetrics {
     itemYOffset: number;
     focusPercent: number;
 }
+
+const ValidFocusStyles = new Set(Object.values(FocusStyle).map((style) => style.toLowerCase()));
+
+const RowFocusStyleWrap = FocusStyle.FixedFocusWrap.toLowerCase();
 
 export class ZoomRowList extends ArrayGrid {
     readonly defaultFields: FieldModel[] = [
@@ -59,7 +63,7 @@ export class ZoomRowList extends ArrayGrid {
         { name: "rowCounterColor", type: "array", value: "[]" },
         { name: "showRowCounterForShortRows", type: "bool", value: "true" },
         { name: "rowDecorationComponentName", type: "array", value: "[]" },
-        { name: "rowFocusAnimationStyle", type: "string", value: "fixedFocusWrap" },
+        { name: "rowFocusAnimationStyle", type: "string", value: FocusStyle.FixedFocusWrap },
         { name: "wrap", type: "boolean", value: "true" },
         { name: "drawFocusFeedbackOnTop", type: "boolean", value: "true" },
         { name: "rowSelected", type: "integer", value: "-1", alwaysNotify: true },
@@ -126,7 +130,8 @@ export class ZoomRowList extends ArrayGrid {
         this.defaultItemZoomYOffset = 0;
         this.hasNinePatch = true;
         this.focusField = "zoomRowListHasFocus";
-        this.wrap = true;
+        const rowFocusStyle = (this.getValueJS("rowFocusAnimationStyle") as string) ?? FocusStyle.FixedFocusWrap;
+        this.wrap = rowFocusStyle.toLowerCase() === RowFocusStyleWrap;
         this.focusIndex = 0;
         this.rowFocus[0] = 0;
         this.nodeWidth = this.sceneRect.width;
@@ -154,6 +159,12 @@ export class ZoomRowList extends ArrayGrid {
             if (typeof coords[0] === "number" && typeof coords[1] === "number") {
                 this.setFocusedItem(coords[0], coords[1]);
             }
+        } else if (fieldName === "rowfocusanimationstyle" && value instanceof BrsString) {
+            const style = value.toString().toLowerCase();
+            if (!ValidFocusStyles.has(style)) {
+                return;
+            }
+            this.wrap = style === RowFocusStyleWrap;
         } else if (fieldName === "wrap" && value instanceof BrsBoolean) {
             this.wrap = value.toBoolean();
         } else if (fieldName === "rowwidth" && isBrsNumber(value)) {

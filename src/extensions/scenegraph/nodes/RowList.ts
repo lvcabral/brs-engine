@@ -19,9 +19,17 @@ import { customNodeExists } from "../factory/NodeFactory";
 import { brsValueOf, jsValueOf } from "../factory/Serializer";
 import { Font } from "./Font";
 import { Group } from "./Group";
-import { ArrayGrid } from "./ArrayGrid";
+import { ArrayGrid, FocusStyle } from "./ArrayGrid";
 import { FieldKind, FieldModel } from "../SGTypes";
 import { SGNodeType } from ".";
+
+const ValidFocusStyles = new Set(Object.values(FocusStyle).map((style) => style.toLowerCase()));
+
+const RowFocusStyle = {
+    Wrap: FocusStyle.FixedFocusWrap.toLowerCase(),
+    Floating: FocusStyle.FloatingFocus.toLowerCase(),
+    Fixed: FocusStyle.FixedFocus.toLowerCase(),
+} as const;
 
 interface RowListRenderContext {
     itemSize: number[];
@@ -62,8 +70,8 @@ export class RowList extends ArrayGrid {
         { name: "showRowCounterForShortRows", type: "bool", value: "true" },
         { name: "indefiniteRowItemCount", type: "boolarray", value: "[]" },
         { name: "variableWidthItems", type: "boolarray", value: "[]" },
-        { name: "rowFocusAnimationStyle", type: "string", value: "floatingFocus" },
-        { name: "vertFocusAnimationStyle", type: "string", value: "fixedFocus" },
+        { name: "rowFocusAnimationStyle", type: "string", value: FocusStyle.FloatingFocus },
+        { name: "vertFocusAnimationStyle", type: "string", value: FocusStyle.FixedFocus },
     ];
     protected readonly focusUri = "common:/images/focus_grid.9.png";
     protected readonly marginX: number;
@@ -92,7 +100,7 @@ export class RowList extends ArrayGrid {
         this.setValueSilent("focusBitmapUri", new BrsString(this.focusUri));
         this.setValueSilent("wrapDividerBitmapUri", new BrsString(this.dividerUri));
         const vertStyle = this.getValueJS("vertFocusAnimationStyle") as string;
-        this.wrap = vertStyle.toLowerCase() === "fixedfocuswrap";
+        this.wrap = vertStyle.toLowerCase() === RowFocusStyle.Wrap;
         this.numRows = this.getValueJS("numRows") as number;
         this.numCols = this.getValueJS("numColumns") as number;
         this.rowFocus = [];
@@ -113,7 +121,7 @@ export class RowList extends ArrayGrid {
         const fieldName = index.toLowerCase();
         if (fieldName === "rowfocusanimationstyle") {
             const style = value.toString().toLowerCase();
-            if (!["fixedfocuswrap", "floatingfocus", "fixedfocus"].includes(style)) {
+            if (!ValidFocusStyles.has(style)) {
                 // Invalid rowFocusAnimationStyle
                 return;
             }
@@ -165,17 +173,17 @@ export class RowList extends ArrayGrid {
         const allItemsFitOnScreen = totalRowWidth <= this.sceneRect.width;
 
         // Adjust scroll offset based on animation style
-        if (allItemsFitOnScreen && rowFocusStyle !== "fixedfocus") {
+        if (allItemsFitOnScreen && rowFocusStyle !== RowFocusStyle.Fixed) {
             // All items fit, no scrolling needed - always use floating focus behavior
             this.rowScrollOffset[rowIndex] = 0;
-        } else if (rowFocusStyle === "fixedfocuswrap") {
+        } else if (rowFocusStyle === RowFocusStyle.Wrap) {
             // For fixedFocusWrap, no scroll offset (focus wraps around)
             this.rowScrollOffset[rowIndex] = 0;
-        } else if (rowFocusStyle === "fixedfocus") {
+        } else if (rowFocusStyle === RowFocusStyle.Fixed) {
             // For fixedFocus, focus always stays at first visible position (left edge)
             // Scroll offset equals focused column so focus appears at position 0
             this.rowScrollOffset[rowIndex] = colIndex;
-        } else if (rowFocusStyle === "floatingfocus") {
+        } else if (rowFocusStyle === RowFocusStyle.Floating) {
             // floatingFocus: ensure focused item is fully visible
             // Calculate max items that fit completely on screen (use floor, not ceil)
             const maxVisibleItems = Math.floor(this.sceneRect.width / (rowItemWidth + spacing[0]));
@@ -240,7 +248,7 @@ export class RowList extends ArrayGrid {
             let targetColIndex: number;
 
             // In floatingFocus mode, move to the same visual screen position
-            if (rowFocusStyle === "floatingfocus") {
+            if (rowFocusStyle === RowFocusStyle.Floating) {
                 // Maintain the visual screen position across rows
                 // Each row keeps its scroll offset, we just calculate which column
                 // corresponds to the same visual position in the next row
@@ -288,11 +296,11 @@ export class RowList extends ArrayGrid {
         const allItemsFitOnScreen = this.checkIfAllItemsFitOnScreen(numCols, rowItemWidth);
         const rowFocusStyle = (this.getValueJS("rowFocusAnimationStyle") as string).toLowerCase();
 
-        if (allItemsFitOnScreen && rowFocusStyle !== "fixedfocus") {
+        if (allItemsFitOnScreen && rowFocusStyle !== RowFocusStyle.Fixed) {
             return this.handleAllItemsFit(currentRow, numCols, offset);
-        } else if (rowFocusStyle === "fixedfocuswrap") {
+        } else if (rowFocusStyle === RowFocusStyle.Wrap) {
             return this.handleFixedFocusWrap(currentRow, numCols, offset);
-        } else if (rowFocusStyle === "fixedfocus") {
+        } else if (rowFocusStyle === RowFocusStyle.Fixed) {
             return this.handleFixedFocus(currentRow, numCols, offset);
         } else {
             return this.handleFloatingFocus(currentRow, numCols, rowItemWidth, offset);
@@ -634,9 +642,9 @@ export class RowList extends ArrayGrid {
     }
 
     private determineRenderMode(allItemsFitOnScreen: boolean, rowFocusStyle: string): string {
-        if (allItemsFitOnScreen && rowFocusStyle !== "fixedfocus") {
+        if (allItemsFitOnScreen && rowFocusStyle !== RowFocusStyle.Fixed) {
             return "allItemsFit";
-        } else if (rowFocusStyle === "fixedfocuswrap") {
+        } else if (rowFocusStyle === RowFocusStyle.Wrap) {
             return "wrapMode";
         } else {
             return "scrollMode";
@@ -722,7 +730,7 @@ export class RowList extends ArrayGrid {
         let focused = false;
         const rowFocusStyle = (this.getValueJS("rowFocusAnimationStyle") as string).toLowerCase();
 
-        if (rowFocusStyle === "fixedfocuswrap" && !allItemsFitOnScreen) {
+        if (rowFocusStyle === RowFocusStyle.Wrap && !allItemsFitOnScreen) {
             // Items don't fit and we're using fixedFocusWrap - focus stays on first visible item
             focused = this.focusIndex === rowIndex && colIndex === this.rowFocus[rowIndex];
         } else {
