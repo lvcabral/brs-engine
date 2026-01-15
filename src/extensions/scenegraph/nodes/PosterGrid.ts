@@ -1,10 +1,24 @@
-import { AAMember, Interpreter, BrsString, BrsType, Float, Int32, IfDraw2D, Rect, RoBitmap, RoFont } from "brs-engine";
+import {
+    AAMember,
+    Interpreter,
+    BrsBoolean,
+    BrsString,
+    BrsType,
+    Float,
+    Int32,
+    IfDraw2D,
+    Rect,
+    RoFont,
+} from "brs-engine";
 import { FieldKind, FieldModel } from "../SGTypes";
 import { SGNodeType } from ".";
 import { ArrayGrid, FocusStyle } from "./ArrayGrid";
 import { ContentNode } from "./ContentNode";
 import { Font } from "./Font";
 import { Group } from "./Group";
+import { Poster } from "./Poster";
+import { Label } from "./Label";
+import { ScrollingLabel } from "./ScrollingLabel";
 import { rotateTranslation } from "../SGUtil";
 import { sgRoot } from "../SGRoot";
 
@@ -251,7 +265,6 @@ export class PosterGrid extends ArrayGrid {
                 const offsetY =
                     captionsExtendLayout && placement === "above" ? Math.max(0, rowCaptionHeight - captionHeight) : 0;
                 const layout = this.buildItemLayout(
-                    index,
                     columnWidths[c],
                     posterHeight,
                     captionHeight,
@@ -439,6 +452,24 @@ export class PosterGrid extends ArrayGrid {
         return this.layoutByIndex.get(index);
     }
 
+    getPosterUri(content: ContentNode) {
+        const isSd = this.resolution?.toLowerCase() === "sd";
+        const preferences = isSd
+            ? ["sdGridPosterUrl", "sdPosterUrl", "hdGridPosterUrl", "hdPosterUrl"]
+            : ["hdGridPosterUrl", "hdPosterUrl", "sdGridPosterUrl", "sdPosterUrl"];
+        for (const field of preferences) {
+            const uri = content.getValueJS(field);
+            if (typeof uri === "string" && uri.trim().length > 0) {
+                return uri;
+            }
+        }
+        const imageWell = this.getValueJS("imageWellBitmapUri");
+        if (typeof imageWell === "string" && imageWell.trim().length > 0) {
+            return imageWell;
+        }
+        return undefined;
+    }
+
     getPosterBitmap(content: ContentNode) {
         const isSd = this.resolution?.toLowerCase() === "sd";
         const preferences = isSd
@@ -461,6 +492,14 @@ export class PosterGrid extends ArrayGrid {
     getCaptionHorizAlign() {
         const align = ((this.getValueJS("captionHorizAlignment") as string) ?? "center").toLowerCase();
         return HorizAlignments.has(align) ? align : "center";
+    }
+
+    getCaptionBackgroundUri() {
+        const configured = this.getValueJS("captionBackgroundBitmapUri") as string;
+        if (typeof configured === "string" && configured.trim().length > 0) {
+            return configured;
+        }
+        return this.defaultCaptionBackgroundUri;
     }
 
     getCaptionBackground() {
@@ -668,7 +707,6 @@ export class PosterGrid extends ArrayGrid {
     }
 
     private buildItemLayout(
-        index: number,
         columnWidth: number,
         posterHeight: number,
         captionHeight: number,
@@ -768,6 +806,11 @@ export class PosterGrid extends ArrayGrid {
 class PosterGridItem extends Group {
     private content?: ContentNode;
     private layout?: PosterItemLayout;
+    private posterNode?: Poster;
+    private captionBackgroundNode?: Poster;
+    private caption1Node?: Label | ScrollingLabel;
+    private caption2Node?: Label | ScrollingLabel;
+    private needsChildRefresh = true;
 
     constructor(private readonly grid: PosterGrid, private readonly index: number) {
         super([], `${grid.name}_PosterGridItem_${index}`);
@@ -775,25 +818,29 @@ class PosterGridItem extends Group {
     }
 
     notifyVisualChange() {
+        this.needsChildRefresh = true;
         this.isDirty = true;
-        sgRoot.makeDirty();
     }
 
     setLayout(layout?: PosterItemLayout) {
         this.layout = layout;
+        this.needsChildRefresh = true;
     }
 
     setValue(index: string, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
         if (index.toLowerCase() === "itemcontent" && value instanceof ContentNode) {
             this.content = value;
+            this.needsChildRefresh = true;
         }
         super.setValue(index, value, alwaysNotify, kind);
     }
 
     renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
         if (!this.isVisible() || !this.layout || !this.content) {
+            this.clearChildNodes();
             return;
         }
+        this.syncChildNodes();
         const nodeTrans = this.getTranslation();
         const drawTrans = angle === 0 ? nodeTrans.slice() : rotateTranslation(nodeTrans, angle);
         drawTrans[0] += origin[0];
@@ -807,8 +854,6 @@ class PosterGridItem extends Group {
         };
         const rotation = angle + this.getRotation();
         const combinedOpacity = opacity * this.getOpacity();
-        this.renderPoster(rect, rotation, combinedOpacity, draw2D);
-        this.renderCaptions(rect, rotation, combinedOpacity, draw2D);
         this.updateBoundingRects(rect, origin, rotation);
         const childOrigin = [drawTrans[0], drawTrans[1] + offsetY];
         this.renderChildren(interpreter, childOrigin, rotation, combinedOpacity, draw2D);
@@ -816,153 +861,146 @@ class PosterGridItem extends Group {
         this.isDirty = false;
     }
 
-    private renderPoster(rect: Rect, rotation: number, opacity: number, draw2D?: IfDraw2D) {
-        const layout = this.layout!;
-        const posterRect = this.translateRect(layout.posterRect, rect);
-        if (posterRect.width <= 0 || posterRect.height <= 0) {
+    private syncChildNodes() {
+        if (!this.layout || !this.content) {
+            this.clearChildNodes();
             return;
         }
-        const bitmap = this.grid.getPosterBitmap(this.content!);
-        if (bitmap?.isValid()) {
-            this.drawPosterBitmap(bitmap, posterRect, rotation, opacity, draw2D);
+        if (!this.needsChildRefresh) {
             return;
         }
-        const placeholders = ["loading", "failed", "imageWell"] as const;
-        for (const kind of placeholders) {
-            const fallback = this.grid.getFallbackBitmap(kind);
-            if (fallback?.bitmap) {
-                this.drawImage(fallback.bitmap, posterRect, rotation, opacity * fallback.opacity, draw2D);
-                return;
+        this.syncPosterNode();
+        const caption1 = this.getCaptionText("shortDescriptionLine1");
+        const caption2 = this.getCaptionText("shortDescriptionLine2");
+        const hasCaptionText = caption1.length > 0 || caption2.length > 0;
+        this.syncCaptionBackground(hasCaptionText);
+        const useScrolling = Boolean(this.grid.getValueJS("enableCaptionScrolling"));
+        this.updateCaptionNode(1, this.layout.caption1Rect, caption1, this.layout.caption1Lines ?? 0, useScrolling);
+        this.updateCaptionNode(2, this.layout.caption2Rect, caption2, this.layout.caption2Lines ?? 0, useScrolling);
+        this.needsChildRefresh = false;
+    }
+
+    private syncPosterNode() {
+        if (!this.layout || !this.content) {
+            return;
+        }
+        const posterRect = this.layout.posterRect;
+        const poster = this.ensurePosterNode();
+        poster.setTranslation([posterRect.x, posterRect.y]);
+        poster.setValueSilent("width", new Float(posterRect.width));
+        poster.setValueSilent("height", new Float(posterRect.height));
+        poster.setValue("loadDisplayMode", new BrsString(this.grid.getPosterDisplayMode()));
+        poster.setValue("loadingBitmapUri", new BrsString((this.grid.getValueJS("loadingBitmapUri") as string) ?? ""));
+        poster.setValue("loadingBitmapOpacity", new Float(Number(this.grid.getValueJS("loadingBitmapOpacity")) || 1));
+        poster.setValue("failedBitmapUri", new BrsString((this.grid.getValueJS("failedBitmapUri") as string) ?? ""));
+        poster.setValue("failedBitmapOpacity", new Float(Number(this.grid.getValueJS("failedBitmapOpacity")) || 1));
+        const posterUri = this.grid.getPosterUri(this.content) ?? "";
+        poster.setValue("uri", new BrsString(posterUri));
+        const shouldShow = posterRect.width > 0 && posterRect.height > 0 && posterUri.length > 0;
+        poster.setValue("visible", BrsBoolean.from(shouldShow));
+    }
+
+    private syncCaptionBackground(hasCaptionText: boolean) {
+        const rect = this.layout?.captionBackgroundRect;
+        if (!rect || rect.width <= 0 || rect.height <= 0) {
+            if (this.captionBackgroundNode) {
+                this.captionBackgroundNode.setValue("visible", BrsBoolean.False);
             }
+            return;
         }
+        const shouldShow = hasCaptionText || this.grid.shouldShowBackgroundForEmptyCaptions();
+        const background = this.ensureCaptionBackgroundNode();
+        background.setTranslation([rect.x, rect.y]);
+        background.setValueSilent("width", new Float(rect.width));
+        background.setValueSilent("height", new Float(rect.height));
+        background.setValue("uri", new BrsString(this.grid.getCaptionBackgroundUri() ?? ""));
+        background.setValue("visible", BrsBoolean.from(shouldShow));
     }
 
-    private drawPosterBitmap(bitmap: RoBitmap, rect: Rect, rotation: number, opacity: number, draw2D?: IfDraw2D) {
-        const mode = this.grid.getPosterDisplayMode();
-        if (mode === "scaletofit") {
-            const scaled = this.scaleToFit(bitmap, rect);
-            this.drawImage(bitmap, scaled, rotation, opacity, draw2D);
-        } else if (mode === "scaletozoom") {
-            const sourceRect = this.scaleToZoom(bitmap, rect);
-            draw2D?.doDrawCroppedBitmap(bitmap, sourceRect, rect, 0xffffffff, opacity);
-        } else {
-            this.drawImage(bitmap, rect, rotation, opacity, draw2D);
-        }
-    }
-
-    private renderCaptions(rect: Rect, rotation: number, opacity: number, draw2D?: IfDraw2D) {
-        const layout = this.layout!;
-        const caption1 = (this.content?.getValueJS("shortDescriptionLine1") as string) ?? "";
-        const caption2 = (this.content?.getValueJS("shortDescriptionLine2") as string) ?? "";
-        const hasText = caption1.trim().length > 0 || caption2.trim().length > 0;
-        const backgroundRect = layout.captionBackgroundRect
-            ? this.translateRect(layout.captionBackgroundRect, rect)
-            : undefined;
-        const shouldDrawBackground = backgroundRect && (hasText || this.grid.shouldShowBackgroundForEmptyCaptions());
-        if (shouldDrawBackground) {
-            const background = this.grid.getCaptionBackground();
-            if (background?.isValid()) {
-                this.drawImage(background, backgroundRect!, rotation, opacity, draw2D);
-            }
-        }
-        const horizAlign = this.grid.getCaptionHorizAlign();
-        if (layout.caption1Lines > 0 && caption1.trim().length > 0 && layout.caption1Rect) {
-            const rect1 = this.translateRect(layout.caption1Rect, rect);
-            this.drawCaptionText(
-                caption1,
-                this.grid.getValue("caption1Font") as Font,
-                this.grid.getValueJS("caption1Color") as number,
-                rect1,
-                layout.caption1Lines,
-                horizAlign,
-                opacity,
-                rotation,
-                draw2D
-            );
-        }
-        if (layout.caption2Lines > 0 && caption2.trim().length > 0 && layout.caption2Rect) {
-            const rect2 = this.translateRect(layout.caption2Rect, rect);
-            this.drawCaptionText(
-                caption2,
-                this.grid.getValue("caption2Font") as Font,
-                this.grid.getValueJS("caption2Color") as number,
-                rect2,
-                layout.caption2Lines,
-                horizAlign,
-                opacity,
-                rotation,
-                draw2D
-            );
-        }
-    }
-
-    private drawCaptionText(
+    private updateCaptionNode(
+        slot: 1 | 2,
+        rect: Rect | undefined,
         text: string,
-        font: Font,
-        color: number,
-        rect: Rect,
-        lines: number,
-        horizAlign: string,
-        opacity: number,
-        rotation: number,
-        draw2D?: IfDraw2D
+        rawLines: number,
+        useScrolling: boolean
     ) {
-        if (lines > 1) {
-            this.drawTextWrap(
-                text,
-                font,
-                color,
-                opacity,
-                rect,
-                horizAlign,
-                "top",
-                rotation,
-                "...",
-                lines,
-                lines,
-                this.layout?.captionLineSpacing ?? 0,
-                Boolean(this.grid.getValueJS("enableCaptionScrolling")),
-                draw2D
-            );
+        const trimmed = text.trim();
+        const lines = Math.max(0, Math.floor(rawLines));
+        const shouldRender = Boolean(rect && rect.width > 0 && rect.height > 0 && trimmed.length > 0 && lines > 0);
+        let node = slot === 1 ? this.caption1Node : this.caption2Node;
+        const needsScrollingNode = useScrolling;
+        if (node && needsScrollingNode !== (node instanceof ScrollingLabel)) {
+            this.removeChildByReference(node);
+            node = undefined;
+        }
+        if (!node) {
+            node = needsScrollingNode
+                ? (this.addScrollingLabel("", [0, 0]) as ScrollingLabel)
+                : (this.addLabel("", [0, 0]) as Label);
+            if (slot === 1) {
+                this.caption1Node = node;
+            } else {
+                this.caption2Node = node;
+            }
+        }
+        node.setValue("visible", BrsBoolean.from(shouldRender));
+        if (!shouldRender || !rect) {
+            return;
+        }
+        node.setTranslation([rect.x, rect.y]);
+        node.setValueSilent("width", new Float(rect.width));
+        node.setValueSilent("height", new Float(rect.height));
+        node.setValue("text", new BrsString(trimmed));
+        const fontField = slot === 1 ? "caption1Font" : "caption2Font";
+        const colorField = slot === 1 ? "caption1Color" : "caption2Color";
+        const fontValue = this.grid.getValue(fontField);
+        if (fontValue) {
+            node.setValue("font", fontValue);
+        }
+        node.setValue("color", new Int32(Number(this.grid.getValueJS(colorField)) || 0xffffffff));
+        const horizAlign = this.grid.getCaptionHorizAlign();
+        node.setValue("horizAlign", new BrsString(horizAlign));
+        const vertAlign = lines > 1 ? "top" : "center";
+        node.setValue("vertAlign", new BrsString(vertAlign));
+        if (node instanceof ScrollingLabel) {
+            node.setValue("maxWidth", new Int32(Math.round(rect.width)));
         } else {
-            this.drawText(text, font, color, opacity, rect, horizAlign, "center", rotation, draw2D, "...");
+            node.setValue("wrap", BrsBoolean.from(lines > 1));
+            node.setValue("numLines", new Int32(lines));
+            node.setValue("maxLines", new Int32(lines));
+            node.setValue("lineSpacing", new Float(this.layout?.captionLineSpacing ?? 0));
         }
     }
 
-    private translateRect(source: Rect, origin: Rect) {
-        return {
-            x: origin.x + source.x,
-            y: origin.y + source.y,
-            width: source.width,
-            height: source.height,
-        };
-    }
-
-    private scaleToFit(bitmap: RoBitmap, rect: Rect): Rect {
-        const aspectRatio = bitmap.width / bitmap.height;
-        const targetAspectRatio = rect.width / rect.height;
-        const drawRect: Rect = { ...rect };
-        if (aspectRatio < targetAspectRatio) {
-            drawRect.width = rect.height * aspectRatio;
-            drawRect.x += (rect.width - drawRect.width) / 2;
-        } else {
-            drawRect.height = rect.width / aspectRatio;
-            drawRect.y += (rect.height - drawRect.height) / 2;
+    private ensurePosterNode(): Poster {
+        if (!this.posterNode) {
+            this.posterNode = this.addPoster("", [0, 0]);
         }
-        return drawRect;
+        return this.posterNode;
     }
 
-    private scaleToZoom(bitmap: RoBitmap, rect: Rect): Rect {
-        const scaleX = rect.width / bitmap.width;
-        const scaleY = rect.height / bitmap.height;
-        const scale = Math.max(scaleX, scaleY);
-        const sourceWidth = rect.width / scale;
-        const sourceHeight = rect.height / scale;
-        return {
-            x: (bitmap.width - sourceWidth) / 2,
-            y: (bitmap.height - sourceHeight) / 2,
-            width: sourceWidth,
-            height: sourceHeight,
-        };
+    private ensureCaptionBackgroundNode(): Poster {
+        if (!this.captionBackgroundNode) {
+            this.captionBackgroundNode = this.addPoster("", [0, 0]);
+        }
+        return this.captionBackgroundNode;
+    }
+
+    private getCaptionText(field: "shortDescriptionLine1" | "shortDescriptionLine2") {
+        const value = this.content?.getValueJS(field);
+        return typeof value === "string" ? value : "";
+    }
+
+    private clearChildNodes() {
+        for (const node of [this.posterNode, this.captionBackgroundNode, this.caption1Node, this.caption2Node]) {
+            if (node) {
+                this.removeChildByReference(node);
+            }
+        }
+        this.posterNode = undefined;
+        this.captionBackgroundNode = undefined;
+        this.caption1Node = undefined;
+        this.caption2Node = undefined;
+        this.needsChildRefresh = true;
     }
 }
