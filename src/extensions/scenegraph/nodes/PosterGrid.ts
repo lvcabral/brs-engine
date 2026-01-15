@@ -440,7 +440,7 @@ export class PosterGrid extends ArrayGrid {
         if (content.name === "_placeholder_") {
             return new Group();
         }
-        const item = new PosterGridItem(this, this.pendingIndex >= 0 ? this.pendingIndex : 0);
+        const item = new PosterGridItem(this, Math.max(this.pendingIndex, 0));
         item.setNodeParent(this);
         item.setValueSilent("width", new Float(itemRect.width));
         item.setValueSilent("height", new Float(itemRect.height));
@@ -693,15 +693,12 @@ export class PosterGrid extends ArrayGrid {
     }
 
     private measureFontHeight(font: Font) {
-        if (!font) {
-            return this.resolution === "FHD" ? 36 : 24;
-        }
+        const defaultHeight = this.resolution === "FHD" ? 36 : 24;
+        if (!font) return defaultHeight;
         const cached = this.fontHeightCache.get(font);
-        if (cached) {
-            return cached;
-        }
+        if (cached) return cached;
         const drawFont = font.createDrawFont();
-        const height = drawFont instanceof RoFont ? drawFont.measureTextHeight() : this.resolution === "FHD" ? 36 : 24;
+        const height = drawFont instanceof RoFont ? drawFont.measureTextHeight() : defaultHeight;
         this.fontHeightCache.set(font, height);
         return height;
     }
@@ -732,12 +729,13 @@ export class PosterGrid extends ArrayGrid {
             layout.captionBackgroundRect = { x: 0, y: captionStart, width: columnWidth, height: captionHeight };
             this.addCaptionRects(layout, captionStart, columnWidth, metrics, lineSpacing);
         } else {
-            const offset =
-                placement === "top"
-                    ? 0
-                    : placement === "center"
-                    ? Math.max(0, (posterHeight - metrics.totalHeight) / 2)
-                    : Math.max(0, posterHeight - metrics.totalHeight);
+            let offset = 0;
+            if (placement !== "top") {
+                offset =
+                    placement === "center"
+                        ? Math.max(0, (posterHeight - metrics.totalHeight) / 2)
+                        : Math.max(0, posterHeight - metrics.totalHeight);
+            }
             this.addCaptionRects(layout, offset, columnWidth, metrics, lineSpacing);
             if (metrics.caption1Lines > 0 || metrics.caption2Lines > 0) {
                 const endY =
@@ -934,9 +932,7 @@ class PosterGridItem extends Group {
             node = undefined;
         }
         if (!node) {
-            node = needsScrollingNode
-                ? (this.addScrollingLabel("", [0, 0]) as ScrollingLabel)
-                : (this.addLabel("", [0, 0]) as Label);
+            node = needsScrollingNode ? this.addScrollingLabel("", [0, 0]) : this.addLabel("", [0, 0]);
             if (slot === 1) {
                 this.caption1Node = node;
             } else {
@@ -973,16 +969,12 @@ class PosterGridItem extends Group {
     }
 
     private ensurePosterNode(): Poster {
-        if (!this.posterNode) {
-            this.posterNode = this.addPoster("", [0, 0]);
-        }
+        this.posterNode ??= this.addPoster("", [0, 0]);
         return this.posterNode;
     }
 
     private ensureCaptionBackgroundNode(): Poster {
-        if (!this.captionBackgroundNode) {
-            this.captionBackgroundNode = this.addPoster("", [0, 0]);
-        }
+        this.captionBackgroundNode ??= this.addPoster("", [0, 0]);
         return this.captionBackgroundNode;
     }
 
