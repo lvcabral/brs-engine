@@ -3,6 +3,7 @@ import { FieldModel } from "../SGTypes";
 import { SGNodeType } from ".";
 import { Label } from "./Label";
 import { Font } from "./Font";
+import { sgRoot } from "../SGRoot";
 
 // Enum to manage the scrolling state
 enum ScrollState {
@@ -138,7 +139,9 @@ export class ScrollingLabel extends Label {
         const repeatCount = this.getValueJS("repeatCount") as number;
         const maxWidth = this.getValueJS("maxWidth") as number;
         const textHeight = drawFont.measureTextHeight();
-        rect.width = maxWidth > 0 ? maxWidth : rect.width;
+        const horizAlign = (this.getValueJS("horizAlign") as string) || "left";
+        const constrainedWidth = maxWidth > 0 ? maxWidth : rect.width;
+        rect.width = constrainedWidth;
         rect.height = textHeight;
         const color = this.getValueJS("color") as number;
         const vertAlign = this.getValueJS("vertAlign") || "top";
@@ -148,6 +151,7 @@ export class ScrollingLabel extends Label {
         let isEllipsized = false;
 
         if (this.needsScrolling && this.scrollState !== ScrollState.FINISHED) {
+            sgRoot.makeDirty(); // Ensure continuous updates during scrolling
             const scrollDistance = this.fullTextWidth - maxWidth; // How much the text needs to move
             const scrollDuration = scrollDistance > 0 && scrollSpeed > 0 ? (scrollDistance / scrollSpeed) * 1000 : 0; // ms
 
@@ -205,13 +209,23 @@ export class ScrollingLabel extends Label {
             // Static case: Text fits or scrolling is disabled/not needed
             textToDraw = text;
         }
-        const clipRect: Rect = { ...rect, width: maxWidth };
+        const clipRect: Rect = { ...rect };
         let drawX = rect.x + drawOffset;
         let drawY = rect.y;
         if (vertAlign === "center") {
             drawY += (rect.height - textHeight) / 2;
         } else if (vertAlign === "bottom") {
             drawY += rect.height - textHeight;
+        }
+        if (drawOffset === 0 && constrainedWidth > 0) {
+            const measuredWidth = drawFont.measureTextWidth(textToDraw).width;
+            if (constrainedWidth > measuredWidth) {
+                if (horizAlign === "center") {
+                    drawX += (constrainedWidth - measuredWidth) / 2;
+                } else if (horizAlign === "right") {
+                    drawX += constrainedWidth - measuredWidth;
+                }
+            }
         }
         draw2D?.pushClip(clipRect);
         draw2D?.doDrawRotatedText(textToDraw, drawX, drawY, color, opacity, drawFont, rotation);
