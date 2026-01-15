@@ -929,7 +929,7 @@ class PosterGridItem extends Group {
         const shouldRender = Boolean(rect && rect.width > 0 && rect.height > 0 && trimmed.length > 0 && lines > 0);
         let node = slot === 1 ? this.caption1Node : this.caption2Node;
         const needsScrollingNode = useScrolling;
-        if (node && needsScrollingNode !== (node instanceof ScrollingLabel)) {
+        if (node && needsScrollingNode !== node instanceof ScrollingLabel) {
             this.removeChildByReference(node);
             node = undefined;
         }
