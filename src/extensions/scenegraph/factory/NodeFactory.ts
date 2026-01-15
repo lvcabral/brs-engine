@@ -37,6 +37,7 @@ import {
     Label,
     LabelList,
     LayoutGroup,
+    InfoPane,
     MarkupGrid,
     MarkupList,
     MiniKeyboard,
@@ -144,6 +145,8 @@ export class SGNodeFactory {
                 return new Rectangle([], name);
             case SGNodeType.Label.toLowerCase():
                 return new Label([], name);
+            case SGNodeType.InfoPane.toLowerCase():
+                return new InfoPane([], name);
             case SGNodeType.ScrollingLabel.toLowerCase():
                 return new ScrollingLabel([], name);
             case SGNodeType.Font.toLowerCase():

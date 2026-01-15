@@ -14,6 +14,7 @@ export * from "./Group";
 export * from "./Keyboard";
 export * from "./KeyboardDialog";
 export * from "./Label";
+export * from "./InfoPane";
 export * from "./LabelList";
 export * from "./LayoutGroup";
 export * from "./MarkupGrid";
@@ -99,12 +100,12 @@ export enum SGNodeType {
     Rectangle = "Rectangle",
     Poster = "Poster",
     Label = "Label",
-    LabelBase = "LabelBase", // Not yet implemented
     SimpleLabel = "SimpleLabel", // Not yet implemented
     MultiStyleLabel = "MultiStyleLabel", // Not yet implemented
     MonospaceLabel = "MonospaceLabel", // Not yet implemented
     ScrollingLabel = "ScrollingLabel",
     ScrollableText = "ScrollableText", // Not yet implemented
+    InfoPane = "InfoPane",
     Font = "Font",
     ArrayGrid = "ArrayGrid",
     PosterGrid = "PosterGrid",
@@ -145,5 +146,4 @@ export enum SGNodeType {
     BusySpinner = "BusySpinner",
     ChannelStore = "ChannelStore",
     ComponentLibrary = "ComponentLibrary", // Not yet implemented
-    InfoPane = "InfoPane", // Not yet implemented
 }
