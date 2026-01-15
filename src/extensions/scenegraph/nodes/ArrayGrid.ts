@@ -21,6 +21,17 @@ import { ContentNode } from "./ContentNode";
 import { Font } from "./Font";
 import { rotateTranslation } from "../SGUtil";
 
+export enum FocusStyle {
+    FixedFocusWrap = "fixedFocusWrap",
+    FloatingFocus = "floatingFocus",
+    FixedFocus = "fixedFocus",
+}
+
+const ValidVertStyles = new Set(Object.values(FocusStyle).map((style) => style.toLowerCase()));
+const ValidHorizStyles = new Set(
+    [FocusStyle.FixedFocusWrap, FocusStyle.FloatingFocus].map((style) => style.toLowerCase())
+);
+
 export declare namespace ArrayGrid {
     type Metadata = {
         index: number;
@@ -38,8 +49,8 @@ export class ArrayGrid extends Group {
         { name: "numColumns", type: "integer", value: "0" },
         { name: "focusRow", type: "integer", value: "0", alwaysNotify: true },
         { name: "focusColumn", type: "integer", value: "0", alwaysNotify: true },
-        { name: "horizFocusAnimationStyle", type: "string", value: "floatingFocus" },
-        { name: "vertFocusAnimationStyle", type: "string", value: "floatingFocus" },
+        { name: "horizFocusAnimationStyle", type: "string", value: FocusStyle.FloatingFocus },
+        { name: "vertFocusAnimationStyle", type: "string", value: FocusStyle.FloatingFocus },
         { name: "drawFocusFeedbackOnTop", type: "boolean", value: "false" },
         { name: "drawFocusFeedback", type: "boolean", value: "true" },
         { name: "fadeFocusFeedbackWhenAutoScrolling", type: "boolean", value: "false" },
@@ -92,6 +103,7 @@ export class ArrayGrid extends Group {
     protected lastPressHandled: string;
     protected hasNinePatch: boolean;
     protected focusField: string;
+    protected vertFocusAnimationStyleName: string;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.ArrayGrid) {
         super([], name);
@@ -122,8 +134,9 @@ export class ArrayGrid extends Group {
         this.setValueSilent("focusable", BrsBoolean.True);
         this.setValueSilent("wrapDividerBitmapUri", new BrsString(this.dividerUri));
         this.setValueSilent("sectionDividerBitmapUri", new BrsString(this.dividerUri));
-        const style = this.getValueJS("vertFocusAnimationStyle") as string;
-        this.wrap = style.toLowerCase() === "fixedfocuswrap";
+        const style = (this.getValueJS("vertFocusAnimationStyle") as string) ?? FocusStyle.FloatingFocus;
+        this.vertFocusAnimationStyleName = style.toLowerCase();
+        this.wrap = this.vertFocusAnimationStyleName === FocusStyle.FixedFocusWrap.toLowerCase();
         this.lastPressHandled = "";
         this.hasNinePatch = false;
         this.focusField = "listHasFocus";
@@ -147,8 +160,9 @@ export class ArrayGrid extends Group {
             this.numCols = jsValueOf(value) as number;
         } else if (fieldName === "vertfocusanimationstyle" && isBrsString(value)) {
             const style = value.toString().toLowerCase();
-            if (["fixedfocuswrap", "floatingfocus", "fixedfocus"].includes(style)) {
-                this.wrap = style === "fixedfocuswrap";
+            if (ValidVertStyles.has(style)) {
+                this.vertFocusAnimationStyleName = style;
+                this.wrap = style === FocusStyle.FixedFocusWrap.toLowerCase();
             } else {
                 // Invalid vertFocusAnimationStyle
                 return;
@@ -156,7 +170,7 @@ export class ArrayGrid extends Group {
         } else if (
             fieldName === "horizfocusanimationstyle" &&
             isBrsString(value) &&
-            !["fixedfocuswrap", "floatingfocus"].includes(value.toString().toLowerCase())
+            !ValidHorizStyles.has(value.toString().toLowerCase())
         ) {
             // Invalid horizFocusAnimationStyle
             return;
@@ -459,10 +473,32 @@ export class ArrayGrid extends Group {
         return itemComp;
     }
 
+    protected isFixedFocusMode() {
+        return (
+            this.vertFocusAnimationStyleName === FocusStyle.FixedFocusWrap.toLowerCase() ||
+            this.vertFocusAnimationStyleName === FocusStyle.FixedFocus.toLowerCase()
+        );
+    }
+
+    protected getRenderRowIndex(rowPosition: number) {
+        const numCols = Math.max(1, this.numCols || 1);
+        if (this.isFixedFocusMode() && !this.wrap) {
+            const focusRow = Math.floor(this.focusIndex / numCols);
+            const totalRows = Math.max(1, Math.ceil(this.content.length / numCols));
+            const desiredRow = focusRow + (rowPosition - this.currRow);
+            if (desiredRow < 0 || desiredRow >= totalRows) {
+                return -1;
+            }
+            return desiredRow * numCols;
+        }
+        return this.getIndex(rowPosition - this.currRow);
+    }
+
     protected updateCurrRow() {
         const numCols = this.numCols || 1;
         const focusRow = this.getValueJS("focusRow") as number;
-        if (!this.wrap) {
+        const fixedFocus = this.isFixedFocusMode();
+        if (!this.wrap && !fixedFocus) {
             const currentFocus = Math.floor(this.focusIndex / numCols);
             const numRows = this.getValueJS("numRows") as number;
 
@@ -479,7 +515,7 @@ export class ArrayGrid extends Group {
     }
 
     protected updateListCurrRow() {
-        if (this.wrap) {
+        if (this.wrap || this.isFixedFocusMode()) {
             this.topRow = 0;
             return this.updateCurrRow();
         }

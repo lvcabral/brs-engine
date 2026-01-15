@@ -1,7 +1,7 @@
 import { FieldModel } from "../SGTypes";
 import { SGNodeType } from ".";
 import { AAMember, Interpreter, BrsDevice, BrsString, Int32, IfDraw2D, Rect, RectRect } from "brs-engine";
-import { ArrayGrid } from "./ArrayGrid";
+import { ArrayGrid, FocusStyle } from "./ArrayGrid";
 import { ContentNode } from "./ContentNode";
 import { customNodeExists } from "../factory/NodeFactory";
 import { jsValueOf } from "../factory/Serializer";
@@ -10,7 +10,7 @@ export class MarkupGrid extends ArrayGrid {
     readonly defaultFields: FieldModel[] = [
         { name: "itemComponentName", type: "string", value: "" },
         { name: "drawFocusFeedbackOnTop", type: "boolean", value: "true" },
-        { name: "vertFocusAnimationStyle", type: "string", value: "fixedFocusWrap" },
+        { name: "vertFocusAnimationStyle", type: "string", value: FocusStyle.FixedFocusWrap },
         { name: "numRows", type: "integer", value: "12" },
         { name: "numColumns", type: "integer", value: "1" },
     ];
@@ -37,7 +37,7 @@ export class MarkupGrid extends ArrayGrid {
         this.setValueSilent("focusBitmapUri", new BrsString(this.focusUri));
         this.setValueSilent("wrapDividerBitmapUri", new BrsString(this.dividerUri));
         const style = this.getValueJS("vertFocusAnimationStyle") as string;
-        this.wrap = style.toLowerCase() === "fixedfocuswrap";
+        this.wrap = style.toLowerCase() === FocusStyle.FixedFocusWrap.toLowerCase();
         this.numRows = this.getValueJS("numRows") as number;
         this.numCols = this.getValueJS("numColumns") as number;
         this.hasNinePatch = true;
@@ -136,7 +136,10 @@ export class MarkupGrid extends ArrayGrid {
         let sectionIndex = 0;
         const rowWidth = this.numCols * itemSize[0] + (this.numCols - 1) * spacing[0];
         for (let r = 0; r < displayRows; r++) {
-            const rowIndex = this.getIndex(r - this.currRow);
+            const rowIndex = this.getRenderRowIndex(r);
+            if (rowIndex < 0) {
+                break;
+            }
             itemRect.height = rowHeights[rowIndex / this.numCols] ?? itemSize[1];
             if (!hasSections && this.wrap && rowIndex < lastIndex && r > 0) {
                 const divRect = { ...itemRect, width: rowWidth };

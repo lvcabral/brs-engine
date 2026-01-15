@@ -943,7 +943,7 @@ export class Node extends RoSGNode implements BrsValue {
      * @returns Loaded texture or undefined when the URI is blank.
      */
     protected loadBitmap(uri: string) {
-        if (!uri.trim()) {
+        if (!uri?.trim()) {
             return undefined;
         }
         if (sgRoot.scene?.subSearch && sgRoot.scene?.subReplace) {

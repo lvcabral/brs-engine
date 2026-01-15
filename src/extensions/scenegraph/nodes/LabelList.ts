@@ -1,11 +1,15 @@
 import { FieldKind, FieldModel } from "../SGTypes";
 import { SGNodeType } from ".";
 import { AAMember, Interpreter, BrsString, BrsType, Int32, RoBitmap, IfDraw2D, Rect, RectRect } from "brs-engine";
-import { ArrayGrid } from "./ArrayGrid";
+import { ArrayGrid, FocusStyle } from "./ArrayGrid";
 import { Font } from "./Font";
 import { sgRoot } from "../SGRoot";
 import { ContentNode } from "./ContentNode";
 import { brsValueOf } from "../factory/Serializer";
+
+const ValidFocusStyles = new Set(
+    [FocusStyle.FixedFocusWrap, FocusStyle.FloatingFocus].map((style) => style.toLowerCase())
+);
 
 export class LabelList extends ArrayGrid {
     readonly defaultFields: FieldModel[] = [
@@ -16,7 +20,7 @@ export class LabelList extends ArrayGrid {
         { name: "focusedFont", type: "font", value: "font:MediumBoldSystemFont" },
         { name: "numRows", type: "integer", value: "12" },
         { name: "numColumns", type: "integer", value: "1" },
-        { name: "vertFocusAnimationStyle", type: "string", value: "fixedFocusWrap" },
+        { name: "vertFocusAnimationStyle", type: "string", value: FocusStyle.FixedFocusWrap },
     ];
 
     protected readonly focusUri = "common:/images/focus_list.9.png";
@@ -37,7 +41,7 @@ export class LabelList extends ArrayGrid {
         this.setValueSilent("focusBitmapUri", new BrsString(this.focusUri));
         this.setValueSilent("focusFootprintBitmapUri", new BrsString(this.footprintUri));
         const style = this.getValueJS("vertFocusAnimationStyle") as string;
-        this.wrap = style.toLowerCase() === "fixedfocuswrap";
+        this.wrap = style.toLowerCase() === FocusStyle.FixedFocusWrap.toLowerCase();
         this.numRows = this.getValueJS("numRows") as number;
         this.numCols = this.getValueJS("numColumns") as number;
         this.hasNinePatch = true;
@@ -46,7 +50,7 @@ export class LabelList extends ArrayGrid {
     setValue(index: string, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
         const fieldName = index.toLowerCase();
         if (fieldName === "vertfocusanimationstyle") {
-            if (!["fixedfocuswrap", "floatingfocus"].includes(value.toString().toLowerCase())) {
+            if (!ValidFocusStyles.has(value.toString().toLowerCase())) {
                 // Invalid vertFocusAnimationStyle
                 return;
             }
@@ -111,7 +115,10 @@ export class LabelList extends ArrayGrid {
         const itemRect = { ...rect, width: itemSize[0], height: itemSize[1] };
         let sectionIndex = displayRows + 1;
         for (let r = 0; r < displayRows; r++) {
-            const index = this.getIndex(r - this.currRow);
+            const index = this.getRenderRowIndex(r);
+            if (index < 0) {
+                break;
+            }
             const focused = index === this.focusIndex;
             const item = this.getContentItem(index);
             if (!hasSections && this.wrap && index < lastIndex && r > 0) {

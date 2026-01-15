@@ -44,6 +44,7 @@ import {
     Overhang,
     Panel,
     Poster,
+    PosterGrid,
     RadioButtonList,
     Rectangle,
     RowList,
@@ -149,6 +150,8 @@ export class SGNodeFactory {
                 return new Font([], name);
             case SGNodeType.Poster.toLowerCase():
                 return new Poster([], name);
+            case SGNodeType.PosterGrid.toLowerCase():
+                return new PosterGrid([], name);
             case SGNodeType.ArrayGrid.toLowerCase():
                 return new ArrayGrid([], name);
             case SGNodeType.LabelList.toLowerCase():
