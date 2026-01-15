@@ -107,15 +107,74 @@ export class InfoPane extends Group {
     private updateLayout() {
         const width = this.resolveWidth();
         const contentWidth = Math.max(0, width - this.paddingX * 2);
-        const specifiedHeight = this.getNumericField("height");
+
+        const measured = this.prepareAndMeasure(contentWidth, width);
+        const bottomAlignSecondary = this.getBooleanField("infoText2BottomAlign");
+
+        let cursorY = this.paddingY;
+        let topContentHeight = 0;
+        let hasTopContent = false;
+
+        if (measured.infoHeight > 0) {
+            this.infoLabel.setTranslation([this.paddingX, cursorY]);
+            cursorY += measured.infoHeight;
+            topContentHeight = cursorY - this.paddingY;
+            hasTopContent = true;
+        }
+
+        if (measured.bulletHeight > 0) {
+            if (hasTopContent) {
+                cursorY += this.gap;
+            }
+            this.bulletLabel.setTranslation([this.paddingX, cursorY]);
+            cursorY += measured.bulletHeight;
+            topContentHeight = cursorY - this.paddingY;
+            hasTopContent = true;
+        }
+
+        let stackedContentHeight = cursorY;
+        if (measured.secondaryHeight > 0 && !bottomAlignSecondary) {
+            if (hasTopContent) {
+                cursorY += this.gap;
+            }
+            this.secondaryLabel.setTranslation([this.paddingX, cursorY]);
+            cursorY += measured.secondaryHeight;
+            stackedContentHeight = cursorY;
+        }
+
+        let requiredHeight = stackedContentHeight + this.paddingY;
+        let minBottomAlignedHeight = 0;
+        if (measured.secondaryHeight > 0 && bottomAlignSecondary) {
+            const gapBeforeSecondary = hasTopContent ? this.gap : 0;
+            minBottomAlignedHeight =
+                this.paddingY + topContentHeight + gapBeforeSecondary + measured.secondaryHeight + this.paddingY;
+            requiredHeight = Math.max(requiredHeight, minBottomAlignedHeight);
+        }
+
+        requiredHeight = Math.max(requiredHeight, this.minHeight);
+        let paneHeight = Math.max(requiredHeight, measured.specifiedHeight);
+
+        if (measured.secondaryHeight > 0 && bottomAlignSecondary) {
+            const gapBeforeSecondary = hasTopContent ? this.gap : 0;
+            const minY = this.paddingY + topContentHeight + gapBeforeSecondary;
+            let info2Y = paneHeight - this.paddingY - measured.secondaryHeight;
+            if (info2Y < minY) {
+                paneHeight = Math.max(paneHeight, minBottomAlignedHeight);
+                info2Y = Math.max(minY, paneHeight - this.paddingY - measured.secondaryHeight);
+            }
+            this.secondaryLabel.setTranslation([this.paddingX, info2Y]);
+        }
+
+        this.background.setValue("height", new Float(paneHeight));
+        this.setValueSilent("height", new Float(paneHeight));
+        this.isDirty = false;
+    }
+
+    private prepareAndMeasure(contentWidth: number, width: number) {
         const infoText = this.getTextField("infoText");
         const infoText2 = this.getTextField("infoText2");
         const bulletLines = this.getBulletLines();
-        const hasInfo = infoText.length > 0;
-        const hasBullets = bulletLines.length > 0;
-        const hasInfo2 = infoText2.length > 0;
-        const bottomAlignSecondary = this.getBooleanField("infoText2BottomAlign");
-        const formattedBullets = hasBullets ? this.formatBulletText(bulletLines) : "";
+        const bulletText = bulletLines.length > 0 ? this.formatBulletText(bulletLines) : "";
 
         this.background.setValue("uri", new BrsString(this.backgroundUri));
         this.background.setValue("width", new Float(width));
@@ -129,85 +188,28 @@ export class InfoPane extends Group {
         this.copyField(this.secondaryLabel, "color", "infoText2Color");
 
         this.infoLabel.setValue("text", new BrsString(infoText));
-        this.bulletLabel.setValue("text", new BrsString(formattedBullets));
+        this.bulletLabel.setValue("text", new BrsString(bulletText));
         this.secondaryLabel.setValue("text", new BrsString(infoText2));
 
-        this.infoLabel.setValue("visible", BrsBoolean.from(hasInfo));
-        this.bulletLabel.setValue("visible", BrsBoolean.from(hasBullets));
-        this.secondaryLabel.setValue("visible", BrsBoolean.from(hasInfo2));
+        const infoMeasured = this.infoLabel.getMeasured();
+        const bulletMeasured = this.bulletLabel.getMeasured();
+        const secondaryMeasured = this.secondaryLabel.getMeasured();
 
-        const infoMeasured = hasInfo ? this.infoLabel.getMeasured() : undefined;
-        const bulletMeasured = hasBullets ? this.bulletLabel.getMeasured() : undefined;
-        const secondaryMeasured = hasInfo2 ? this.secondaryLabel.getMeasured() : undefined;
-        const infoHeight =
-            hasInfo && infoMeasured
-                ? this.getBlockHeight(this.infoLabel, infoText, infoMeasured.height, contentWidth)
-                : 0;
-        const bulletHeight =
-            hasBullets && bulletMeasured
-                ? this.getBlockHeight(this.bulletLabel, formattedBullets, bulletMeasured.height, contentWidth)
-                : 0;
-        const secondaryHeight =
-            hasInfo2 && secondaryMeasured
-                ? this.getBlockHeight(this.secondaryLabel, infoText2, secondaryMeasured.height, contentWidth)
-                : 0;
+        const infoHeight = this.getBlockHeight(this.infoLabel, infoText, infoMeasured.height, contentWidth);
+        const bulletHeight = this.getBlockHeight(this.bulletLabel, bulletText, bulletMeasured.height, contentWidth);
+        const secondaryHeight = this.getBlockHeight(
+            this.secondaryLabel,
+            infoText2,
+            secondaryMeasured.height,
+            contentWidth
+        );
 
-        let cursorY = this.paddingY;
-        let hasTopContent = false;
+        this.infoLabel.setValue("visible", BrsBoolean.from(infoText.length > 0));
+        this.bulletLabel.setValue("visible", BrsBoolean.from(bulletText.length > 0));
+        this.secondaryLabel.setValue("visible", BrsBoolean.from(infoText2.length > 0));
+        const specifiedHeight = Math.max(0, this.getNumericField("height"));
 
-        if (hasInfo && infoHeight > 0) {
-            this.infoLabel.setTranslation([this.paddingX, cursorY]);
-            cursorY += infoHeight;
-            hasTopContent = true;
-        }
-
-        if (hasBullets && bulletHeight > 0) {
-            if (hasTopContent) {
-                cursorY += this.gap;
-            }
-            this.bulletLabel.setTranslation([this.paddingX, cursorY]);
-            cursorY += bulletHeight;
-            hasTopContent = true;
-        }
-
-        const topContentHeight = hasTopContent ? cursorY - this.paddingY : 0;
-        let stackedContentHeight = cursorY;
-
-        if (hasInfo2 && !bottomAlignSecondary && secondaryHeight > 0) {
-            if (hasTopContent) {
-                cursorY += this.gap;
-            }
-            this.secondaryLabel.setTranslation([this.paddingX, cursorY]);
-            cursorY += secondaryHeight;
-            stackedContentHeight = cursorY;
-        }
-
-        let requiredHeight = stackedContentHeight + this.paddingY;
-        let minBottomAlignedHeight = 0;
-        if (hasInfo2 && bottomAlignSecondary && secondaryHeight > 0) {
-            const gapBeforeSecondary = hasTopContent ? this.gap : 0;
-            minBottomAlignedHeight =
-                this.paddingY + topContentHeight + gapBeforeSecondary + secondaryHeight + this.paddingY;
-            requiredHeight = Math.max(requiredHeight, minBottomAlignedHeight);
-        }
-
-        requiredHeight = Math.max(requiredHeight, this.minHeight);
-        let paneHeight = Math.max(requiredHeight, specifiedHeight > 0 ? specifiedHeight : 0);
-
-        if (hasInfo2 && bottomAlignSecondary && secondaryHeight > 0) {
-            const gapBeforeSecondary = hasTopContent ? this.gap : 0;
-            const minY = this.paddingY + topContentHeight + gapBeforeSecondary;
-            let info2Y = paneHeight - this.paddingY - secondaryHeight;
-            if (info2Y < minY) {
-                paneHeight = Math.max(paneHeight, minBottomAlignedHeight);
-                info2Y = Math.max(minY, paneHeight - this.paddingY - secondaryHeight);
-            }
-            this.secondaryLabel.setTranslation([this.paddingX, info2Y]);
-        }
-
-        this.background.setValue("height", new Float(paneHeight));
-        this.setValueSilent("height", new Float(paneHeight));
-        this.isDirty = false;
+        return { infoHeight, bulletHeight, secondaryHeight, specifiedHeight };
     }
 
     private resolveWidth(): number {
@@ -265,7 +267,16 @@ export class InfoPane extends Group {
 
     private createContentLabel(colorField: string, fontSize: number, wrap: boolean, lineSpacing: number): Label {
         const width = Math.max(0, this.defaultWidth - this.paddingX * 2);
-        const label = this.addLabel(colorField, [this.paddingX, this.paddingY], width, 0, fontSize, "top", "left", wrap);
+        const label = this.addLabel(
+            colorField,
+            [this.paddingX, this.paddingY],
+            width,
+            0,
+            fontSize,
+            "top",
+            "left",
+            wrap
+        );
         label.setValueSilent("wrap", BrsBoolean.from(wrap));
         label.setValueSilent("lineSpacing", new Float(lineSpacing));
         label.setValueSilent("visible", BrsBoolean.False);
