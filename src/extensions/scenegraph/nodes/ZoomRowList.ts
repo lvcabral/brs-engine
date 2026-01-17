@@ -278,6 +278,7 @@ export class ZoomRowList extends ArrayGrid {
             const currentCol = this.rowFocus[currentRow] ?? 0;
             super.setValue("rowItemSelected", brsValueOf([currentRow, currentCol]));
             super.setValue("rowSelected", new Int32(currentRow));
+            return true;
         }
         return false;
     }
