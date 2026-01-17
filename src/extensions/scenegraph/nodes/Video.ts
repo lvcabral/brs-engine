@@ -15,7 +15,7 @@ import {
     Int32,
     IfDraw2D,
     isBrsBoolean,
-    isBrsNumber,
+    isNumberComp,
     isBrsString,
     RoArray,
     RoAssociativeArray,
@@ -248,11 +248,11 @@ export class Video extends Group {
                 BrsDevice.stderr.write(`warning,${getNow()} [sg.video.cntrl.bad] control field set to invalid value`);
                 return;
             }
-        } else if (fieldName === "seek" && isBrsNumber(value)) {
+        } else if (fieldName === "seek" && isNumberComp(value)) {
             this.checkContentChanged();
             const position = jsValueOf(value) as number;
             if (!sgRoot.inTaskThread()) postMessage(`video,seek,${position * 1000}`);
-        } else if (fieldName === "notificationinterval" && isBrsNumber(value)) {
+        } else if (fieldName === "notificationinterval" && isNumberComp(value)) {
             if (!sgRoot.inTaskThread()) postMessage(`video,notify,${Math.round(jsValueOf(value) * 1000)}`);
         } else if (fieldName === "loop" && isBrsBoolean(value)) {
             if (!sgRoot.inTaskThread()) postMessage(`video,loop,${value.toBoolean()}`);

@@ -8,7 +8,7 @@ import {
     Float,
     BrsBoolean,
     BrsType,
-    isBrsNumber,
+    isNumberComp,
     IfDraw2D,
 } from "brs-engine";
 import { jsValueOf } from "../factory/Serializer";
@@ -210,7 +210,7 @@ export class Overhang extends Group {
     setValue(index: string, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
         this.realign = true;
         const fieldName = index.toLowerCase();
-        if (fieldName === "height" && isBrsNumber(value)) {
+        if (fieldName === "height" && isNumberComp(value)) {
             this.height = jsValueOf(value) as number;
         }
         super.setValue(index, value, alwaysNotify, kind);

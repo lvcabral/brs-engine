@@ -7,7 +7,7 @@ import {
     BrsType,
     Float,
     Int32,
-    isBrsNumber,
+    isNumberComp,
     RoArray,
     IfDraw2D,
     Rect,
@@ -149,7 +149,7 @@ export class ZoomRowList extends ArrayGrid {
                 this.setFocusedItem(0);
             }
             return;
-        } else if (["jumptorow", "animatetorow"].includes(fieldName) && isBrsNumber(value)) {
+        } else if (["jumptorow", "animatetorow"].includes(fieldName) && isNumberComp(value)) {
             const next = jsValueOf(value) as number;
             if (Number.isFinite(next) && next >= 0) {
                 this.setFocusedRow(Math.floor(next));
@@ -167,7 +167,7 @@ export class ZoomRowList extends ArrayGrid {
             this.wrap = style === RowFocusStyleWrap;
         } else if (fieldName === "wrap" && value instanceof BrsBoolean) {
             this.wrap = value.toBoolean();
-        } else if (fieldName === "rowwidth" && isBrsNumber(value)) {
+        } else if (fieldName === "rowwidth" && isNumberComp(value)) {
             this.rowWidth = jsValueOf(value) as number;
         }
         super.setValue(index, value, alwaysNotify, kind);
