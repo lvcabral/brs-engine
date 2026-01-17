@@ -103,8 +103,8 @@ export class ButtonGroup extends LayoutGroup {
         }
     }
 
-    setNodeFocus(interpreter: Interpreter, focusOn: boolean): boolean {
-        const focus = super.setNodeFocus(interpreter, focusOn);
+    setNodeFocus(focusOn: boolean): boolean {
+        const focus = super.setNodeFocus(focusOn);
         if (focus) {
             this.refreshFocus();
         }

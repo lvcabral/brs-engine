@@ -833,7 +833,7 @@ export class Node extends RoSGNode implements BrsValue {
      * @param focusOn When true focus is obtained, otherwise removed.
      * @returns Whether the node is focusable.
      */
-    protected setNodeFocus(interpreter: Interpreter, focusOn: boolean): boolean {
+    setNodeFocus(focusOn: boolean): boolean {
         const focusedChild = "focusedchild";
         if (focusOn) {
             if (!this.triedInitFocus) {
@@ -842,7 +842,7 @@ export class Node extends RoSGNode implements BrsValue {
                 if (this.componentDef?.initialFocus) {
                     const childToFocus = this.findNodeById(this, this.componentDef.initialFocus);
                     if (childToFocus instanceof Node) {
-                        childToFocus.setNodeFocus(interpreter, true);
+                        childToFocus.setNodeFocus(true);
                         return this.isFocusable();
                     }
                 }

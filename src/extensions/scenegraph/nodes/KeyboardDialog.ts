@@ -1,6 +1,6 @@
 import { FieldModel } from "../SGTypes";
 import { SGNodeType } from ".";
-import { AAMember, Interpreter, Float, BrsString, BrsBoolean, isBrsString } from "brs-engine";
+import { AAMember, Float, BrsString, BrsBoolean, isBrsString } from "brs-engine";
 import { Dialog } from "./Dialog";
 import { Keyboard } from "./Keyboard";
 import { sgRoot } from "../SGRoot";
@@ -77,7 +77,7 @@ export class KeyboardDialog extends Dialog {
         this.focus = "";
     }
 
-    setNodeFocus(_: Interpreter, focusOn: boolean): boolean {
+    setNodeFocus(focusOn: boolean): boolean {
         if (focusOn && sgRoot.focused && this.lastFocus === undefined) {
             this.lastFocus = sgRoot.focused;
             sgRoot.setFocused(this.hasButtons ? this.buttonGroup : this.keyboard);

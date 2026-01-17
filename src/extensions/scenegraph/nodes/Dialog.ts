@@ -172,7 +172,7 @@ export class Dialog extends Group {
         super.setValue(index, value, alwaysNotify, kind);
     }
 
-    setNodeFocus(_: Interpreter, focusOn: boolean): boolean {
+    setNodeFocus(focusOn: boolean): boolean {
         if (focusOn && this.hasButtons && sgRoot.focused && this.lastFocus === undefined) {
             this.lastFocus = sgRoot.focused;
             sgRoot.setFocused(this.buttonGroup);
@@ -211,7 +211,7 @@ export class Dialog extends Group {
         if (this.isDirty) {
             this.updateChildren();
         }
-        this.setNodeFocus(interpreter, true);
+        this.setNodeFocus(true);
         const rotation = angle + this.getRotation();
         opacity = opacity * this.getOpacity();
         this.updateBoundingRects(boundingRect, origin, rotation);
