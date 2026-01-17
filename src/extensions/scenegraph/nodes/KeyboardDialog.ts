@@ -1,6 +1,6 @@
 import { FieldModel } from "../SGTypes";
 import { SGNodeType } from ".";
-import { AAMember, Interpreter, Float, BrsString, BrsBoolean, isBrsString } from "brs-engine";
+import { AAMember, Float, BrsString, BrsBoolean, isBrsString } from "brs-engine";
 import { Dialog } from "./Dialog";
 import { Keyboard } from "./Keyboard";
 import { sgRoot } from "../SGRoot";
