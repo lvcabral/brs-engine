@@ -1,6 +1,6 @@
 import { FieldKind, FieldModel } from "../SGTypes";
 import { SGNodeType } from ".";
-import { AAMember, BrsDevice, BrsString, BrsType, MediaEvent, isBrsNumber, isBrsString } from "brs-engine";
+import { AAMember, BrsDevice, BrsString, BrsType, MediaEvent, isNumberComp, isBrsString } from "brs-engine";
 import { jsValueOf } from "../factory/Serializer";
 import { Node } from "./Node";
 import { sgRoot } from "../SGRoot";
@@ -50,7 +50,7 @@ export class SoundEffect extends Node {
             }
             const uri = value.getValue().toLowerCase();
             this.setUri(uri);
-        } else if (fieldName === "volume" && isBrsNumber(value) && (jsValueOf(value) < 0 || jsValueOf(value) > 100)) {
+        } else if (fieldName === "volume" && isNumberComp(value) && (jsValueOf(value) < 0 || jsValueOf(value) > 100)) {
             return;
         }
         super.setValue(index, value, alwaysNotify, kind);

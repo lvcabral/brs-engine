@@ -6,7 +6,7 @@ import {
     BrsType,
     Float,
     Int32,
-    isBrsNumber,
+    isNumberComp,
     isBrsString,
     IfDraw2D,
     Rect,
@@ -152,11 +152,11 @@ export class ArrayGrid extends Group {
                 this.setFocusedItem(0);
             }
             return;
-        } else if (["jumptoitem", "animatetoitem"].includes(fieldName) && isBrsNumber(value)) {
+        } else if (["jumptoitem", "animatetoitem"].includes(fieldName) && isNumberComp(value)) {
             this.setFocusedItem(jsValueOf(value));
-        } else if (fieldName === "numrows" && isBrsNumber(value)) {
+        } else if (fieldName === "numrows" && isNumberComp(value)) {
             this.numRows = jsValueOf(value) as number;
-        } else if (fieldName === "numcolumns" && isBrsNumber(value)) {
+        } else if (fieldName === "numcolumns" && isNumberComp(value)) {
             this.numCols = jsValueOf(value) as number;
         } else if (fieldName === "vertfocusanimationstyle" && isBrsString(value)) {
             const style = value.toString().toLowerCase();

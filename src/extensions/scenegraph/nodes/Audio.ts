@@ -6,7 +6,7 @@ import {
     Double,
     Int32,
     isBrsBoolean,
-    isBrsNumber,
+    isNumberComp,
     isBrsString,
     MediaEvent,
 } from "brs-engine";
@@ -72,11 +72,11 @@ export class Audio extends Node {
             } else {
                 value = new BrsString("none");
             }
-        } else if (fieldName === "seek" && isBrsNumber(value)) {
+        } else if (fieldName === "seek" && isNumberComp(value)) {
             this.checkContentChanged();
             const position = jsValueOf(value) as number;
             if (!sgRoot.inTaskThread()) postMessage(`audio,seek,${position * 1000}`);
-        } else if (fieldName === "notificationInterval" && isBrsNumber(value)) {
+        } else if (fieldName === "notificationInterval" && isNumberComp(value)) {
             if (!sgRoot.inTaskThread()) postMessage(`audio,notify,${Math.round(jsValueOf(value) * 1000)}`);
         } else if (fieldName === "loop" && isBrsBoolean(value)) {
             if (!sgRoot.inTaskThread()) postMessage(`audio,loop,${value.toBoolean()}`);

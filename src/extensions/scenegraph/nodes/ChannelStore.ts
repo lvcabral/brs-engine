@@ -6,7 +6,7 @@ import {
     BrsType,
     Int32,
     isBrsBoolean,
-    isBrsNumber,
+    isNumberComp,
     isBrsString,
     RoAssociativeArray,
     RoChannelStore,
@@ -62,7 +62,7 @@ export class ChannelStore extends Node {
             if (value instanceof RoAssociativeArray) {
                 const delta = value.get(new BrsString("delta"));
                 const qty = value.get(new BrsString("qty"));
-                if (isBrsString(delta) && isBrsNumber(qty)) {
+                if (isBrsString(delta) && isNumberComp(qty)) {
                     this.channelStore.setDeltaOrder(delta.getValue(), jsValueOf(qty));
                 }
             }
