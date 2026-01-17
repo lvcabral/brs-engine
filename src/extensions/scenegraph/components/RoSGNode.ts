@@ -173,7 +173,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
     protected abstract removeObserver(fieldName: string, node?: RoSGNode): void;
     protected abstract cloneNode(isDeepCopy: boolean, interpreter?: Interpreter): BrsType;
     protected abstract callFunction(interpreter: Interpreter, funcName: BrsString, ...funcArgs: BrsType[]): BrsType;
-    protected abstract setNodeFocus(interpreter: Interpreter, focusOn: boolean): boolean;
+    protected abstract setNodeFocus(focusOn: boolean): boolean;
 
     protected abstract moveObjectIntoField(fieldName: string, data: RoAssociativeArray): { code: number; msg?: string };
     protected abstract moveObjectFromField(fieldName: string): BrsType | string;
@@ -1186,7 +1186,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
         },
         impl: (interpreter: Interpreter, on: BrsBoolean) => {
             this.location = interpreter.formatLocation();
-            return BrsBoolean.from(this.setNodeFocus(interpreter, on.toBoolean()));
+            return BrsBoolean.from(this.setNodeFocus(on.toBoolean()));
         },
     });
 

@@ -77,7 +77,7 @@ export class KeyboardDialog extends Dialog {
         this.focus = "";
     }
 
-    setNodeFocus(_: Interpreter, focusOn: boolean): boolean {
+    setNodeFocus(focusOn: boolean): boolean {
         if (focusOn && sgRoot.focused && this.lastFocus === undefined) {
             this.lastFocus = sgRoot.focused;
             sgRoot.setFocused(this.hasButtons ? this.buttonGroup : this.keyboard);
