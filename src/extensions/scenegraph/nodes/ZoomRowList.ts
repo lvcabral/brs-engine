@@ -293,12 +293,7 @@ export class ZoomRowList extends ArrayGrid {
         if (!this.validateRenderPrerequisites()) {
             return;
         }
-
         const totalRows = this.content.length;
-        if (totalRows === 0) {
-            return;
-        }
-
         const canWrap = this.canWrapRows(totalRows);
         const startRow = canWrap ? this.normalizeRowIndex(this.focusIndex) : this.clampRowIndex(this.focusIndex);
 

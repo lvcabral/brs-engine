@@ -183,6 +183,15 @@ export class ArrayGrid extends Group {
         }
     }
 
+    setNodeFocus(focusOn: boolean): boolean {
+        const focus = super.setNodeFocus(focusOn);
+        const focusIndex = this.getValueJS("itemFocused") as number;
+        if (focus && focusIndex >= 0) {
+            this.setFocusedItem(focusIndex);
+        }
+        return focus;
+    }
+
     protected setFocusedItem(index: number) {
         const newFocus = this.findContentIndex(index);
         if (newFocus === -1) {

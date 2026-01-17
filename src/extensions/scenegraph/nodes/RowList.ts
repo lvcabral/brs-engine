@@ -493,22 +493,18 @@ export class RowList extends ArrayGrid {
         if (this.content.length === 0) {
             return false;
         }
-
         if (this.focusIndex < 0) {
             this.focusIndex = 0;
         }
-
         const itemCompName = this.getValueJS("itemComponentName") as string;
         if (!customNodeExists(itemCompName)) {
             BrsDevice.stderr.write(`warning,[sg.rowlist.create.fail] Failed to create markup item ${itemCompName}`);
             return false;
         }
-
         const itemSize = this.getValueJS("itemSize") as number[];
         if (!itemSize[0] || !itemSize[1] || !this.numRows) {
             return false;
         }
-
         return true;
     }
 
