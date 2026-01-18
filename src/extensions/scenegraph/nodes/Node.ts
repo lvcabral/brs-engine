@@ -309,7 +309,8 @@ export class Node extends RoSGNode implements BrsValue {
      */
     getValueJS(fieldName: string) {
         const field = this.fields.get(fieldName.toLowerCase());
-        return field ? jsValueOf(field.getValue()) : undefined;
+        const value = field?.getValue();
+        return field && value ? jsValueOf(value) : undefined;
     }
 
     /**

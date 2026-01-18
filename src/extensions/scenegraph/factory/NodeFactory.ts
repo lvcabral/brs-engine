@@ -43,7 +43,11 @@ import {
     MiniKeyboard,
     Node,
     Overhang,
+    OverhangPanelSetScene,
+    PanelSet,
     Panel,
+    ListPanel,
+    GridPanel,
     Poster,
     PosterGrid,
     RadioButtonList,
@@ -129,10 +133,6 @@ export class SGNodeFactory {
                 return new Group([], name);
             case SGNodeType.LayoutGroup.toLowerCase():
                 return new LayoutGroup([], name);
-            case SGNodeType.Panel.toLowerCase():
-            case SGNodeType.ListPanel.toLowerCase():
-            case SGNodeType.GridPanel.toLowerCase():
-                return new Panel([], name);
             case SGNodeType.Button.toLowerCase():
                 return new Button([], name);
             case SGNodeType.ButtonGroup.toLowerCase():
@@ -195,6 +195,16 @@ export class SGNodeFactory {
                 return new TextEditBox([], name);
             case SGNodeType.Overhang.toLowerCase():
                 return new Overhang([], name);
+            case SGNodeType.OverhangPanelSetScene.toLowerCase():
+                return new OverhangPanelSetScene([], name);
+            case SGNodeType.PanelSet.toLowerCase():
+                return new PanelSet([], name);
+            case SGNodeType.Panel.toLowerCase():
+                return new Panel([], name);
+            case SGNodeType.GridPanel.toLowerCase():
+                return new GridPanel([], name);
+            case SGNodeType.ListPanel.toLowerCase():
+                return new ListPanel([], name);
             case SGNodeType.StandardDialog.toLowerCase():
                 return new StandardDialog([], name);
             case SGNodeType.StandardProgressDialog.toLowerCase():
@@ -302,6 +312,8 @@ export function createSceneByType(interpreter: Interpreter, type: string): Node 
     updateTypeDefHierarchy(typeDef);
     if (typeDef && isSubtypeCheck(type, SGNodeType.Scene)) {
         return new Scene([], type);
+    } else if (typeDef && isSubtypeCheck(type, SGNodeType.OverhangPanelSetScene)) {
+        return new OverhangPanelSetScene([], type);
     } else {
         BrsDevice.stderr.write(
             `warning,BRIGHTSCRIPT: ERROR: roSGNode: Failed to create a Scene with type ${type}: ${interpreter.formatLocation()}`

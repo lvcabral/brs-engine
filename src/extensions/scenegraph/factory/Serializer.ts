@@ -32,7 +32,9 @@ import { ContentNode, Node, Task } from "../nodes";
  * @return {any} The JavaScript representation of `x`.
  */
 export function jsValueOf(value: BrsType, deep: boolean = true, visitedNodes?: WeakSet<Node>): any {
-    if (isUnboxable(value)) {
+    if (value?.kind === undefined) {
+        return undefined;
+    } else if (isUnboxable(value)) {
         value = value.unbox();
     }
     switch (value.kind) {
