@@ -536,14 +536,6 @@ export class BrsDevice {
     }
 
     /**
-     * Gets the statistics for SceneGraph nodes.
-     * @returns A map of node types to their counts
-     */
-    static getNodeStats() {
-        return this.nodes;
-    }
-
-    /**
      * Adds/Increments the count for a SceneGraph node type in the statistics map.
      * @param nodeType The type of the node to add/increment
      */

@@ -276,7 +276,7 @@ function debugHandleCommand(interpreter: Interpreter, currLoc: Location, lastLoc
             break;
         }
         case DebugCommand.SGNODES: {
-            const nodeStats = BrsDevice.getNodeStats();
+            const nodeStats = BrsDevice.nodes;
             let total = 0;
             debugMsg = "print,";
             if (nodeStats.size > 0) {
