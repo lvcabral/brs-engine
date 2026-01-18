@@ -41,6 +41,7 @@ export class BrsDevice {
     static readonly sfx: string[] = DefaultSounds.slice();
     static readonly bscs = new Map<string, number>();
     static readonly stats = new Map<Lexeme, number>();
+    static readonly nodes = new Map<string, { name: string; count: number }>();
 
     static stdout: OutputProxy = new OutputProxy(process.stdout, false);
     static stderr: OutputProxy = new OutputProxy(process.stderr, false);
@@ -532,5 +533,22 @@ export class BrsDevice {
             hour12: false,
             timeZone: this.timeZone,
         }).format(now);
+    }
+
+    /**
+     * Gets the statistics for SceneGraph nodes.
+     * @returns A map of node types to their counts
+     */
+    static getNodeStats() {
+        return this.nodes;
+    }
+
+    /**
+     * Adds/Increments the count for a SceneGraph node type in the statistics map.
+     * @param nodeType The type of the node to add/increment
+     */
+    static addNodeStat(nodeType: string) {
+        const count = this.nodes.get(nodeType.toLowerCase())?.count || 0;
+        this.nodes.set(nodeType.toLowerCase(), { name: nodeType, count: count + 1 });
     }
 }

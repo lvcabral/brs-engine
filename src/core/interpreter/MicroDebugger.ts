@@ -275,6 +275,21 @@ function debugHandleCommand(interpreter: Interpreter, currLoc: Location, lastLoc
             debugMsg += `${total}\r\n`;
             break;
         }
+        case DebugCommand.SGNODES: {
+            const nodeStats = BrsDevice.getNodeStats();
+            let total = 0;
+            debugMsg = "print,";
+            if (nodeStats.size > 0) {
+                for (const { name, count } of nodeStats.values()) {
+                    debugMsg += `${name}: `.padStart(27);
+                    debugMsg += `count=${count}\r\n`;
+                    total += count;
+                }
+            }
+            debugMsg += `Total # SceneGraph nodes: `.padStart(27);
+            debugMsg += `${total}\r\n`;
+            break;
+        }
         case DebugCommand.STATS:
             debugMsg = `print,${interpreter.formatStats()}`;
             break;
@@ -360,6 +375,7 @@ function debugHelp(): string {
     debugMsg += "   list            List current function\r\n";
     // debugMsg += "   bsc             List BrightScript Component instances\r\n"
     debugMsg += "   bscs            Summarize BrightScript Component instances\r\n";
+    debugMsg += "   sgnodes         Summarize SceneGraph nodes\r\n";
     debugMsg += "   stats           Shows statistics\r\n";
     debugMsg += "   step|s|t        Step one program statement\r\n";
     debugMsg += "   thread|th       Show selected thread\r\n";
@@ -402,6 +418,7 @@ function parseCommand(command: string): any {
             ["over", DebugCommand.STEP],
             ["out", DebugCommand.STEP],
             ["step", DebugCommand.STEP],
+            ["sgnodes", DebugCommand.SGNODES],
             ["stats", DebugCommand.STATS],
             ["s", DebugCommand.STEP],
             ["t", DebugCommand.STEP],
