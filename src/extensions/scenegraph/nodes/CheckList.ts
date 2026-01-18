@@ -53,7 +53,7 @@ export class CheckList extends LabelList {
             if (value instanceof RoArray && value.elements.length) {
                 for (let i = 0; i < value.elements.length; i++) {
                     const checked = value.elements[i];
-                    if (checked.kind === ValueKind.Boolean) {
+                    if (checked?.kind === ValueKind.Boolean) {
                         states[i] = checked.getValue();
                     }
                 }
