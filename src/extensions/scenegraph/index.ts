@@ -24,7 +24,7 @@ import {
 import { getComponentDefinitionMap, setupInterpreterWithSubEnvs } from "./parser/ComponentDefinition";
 import { sgRoot } from "./SGRoot";
 import { Task } from "./nodes/Task";
-import { initializeTask, createNodeByType } from "./factory/NodeFactory";
+import { initializeTask, createNodeByType, updateTypeDefHierarchy, getNodeType } from "./factory/NodeFactory";
 import { RoSGScreen } from "./components/RoSGScreen";
 import packageInfo from "../../../packages/scenegraph/package.json";
 
@@ -60,6 +60,10 @@ export class BrightScriptExtension implements BrsExtension {
             if (components.size > 0) {
                 await setupInterpreterWithSubEnvs(interpreter, components, payload.manifest, interpreter.options);
                 sgRoot.setNodeDefMap(components);
+                for (const [componentName, componentDef] of components.entries()) {
+                    updateTypeDefHierarchy(componentDef);
+                    BrsDevice.addNodeStat(getNodeType(componentName));
+                }
             } else {
                 const componentsDirExists = BrsDevice.fileSystem.existsSync("pkg:/components");
                 if (componentsDirExists) {

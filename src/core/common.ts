@@ -653,6 +653,7 @@ export enum DebugCommand {
     LAST,
     LIST,
     NEXT,
+    SGNODES,
     STATS,
     STEP,
     THREAD,

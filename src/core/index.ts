@@ -695,6 +695,7 @@ export async function executeTask(payload: TaskPayload, customOptions?: Partial<
 async function createInterpreter(options: Partial<ExecutionOptions>, payload: AppPayload | TaskPayload) {
     BrsDevice.bscs.clear();
     BrsDevice.stats.clear();
+    BrsDevice.nodes.clear();
     const extensions = instantiateExtensions();
     // Create the interpreter
     const interpreter = new Interpreter(options);

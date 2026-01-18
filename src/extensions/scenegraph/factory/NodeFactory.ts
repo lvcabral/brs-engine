@@ -114,7 +114,10 @@ export class SGNodeFactory {
      * @returns Created node instance or undefined if type is not recognized
      */
     public static createNode(nodeType: SGNodeType | string, nodeName?: string): Node | undefined {
-        let name = nodeName || nodeType;
+        const name = nodeName || nodeType;
+        if (isSGNodeType(nodeType)) {
+            BrsDevice.addNodeStat(nodeType);
+        }
         const additionalCtor = this.additionalNodes.get(nodeType?.toLowerCase());
         if (additionalCtor) {
             return additionalCtor(name);
@@ -530,7 +533,7 @@ function loadTaskData(interpreter: Interpreter, node: Node, taskData: TaskData) 
  * @param typeDef Component definition to process
  * @returns Stack of component definitions ordered from most derived to base
  */
-function updateTypeDefHierarchy(typeDef: ComponentDefinition | undefined) {
+export function updateTypeDefHierarchy(typeDef: ComponentDefinition | undefined) {
     let typeDefStack: ComponentDefinition[] = [];
     if (!typeDef) {
         return typeDefStack;
