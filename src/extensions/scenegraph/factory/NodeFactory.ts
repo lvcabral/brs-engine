@@ -32,6 +32,7 @@ import {
     Dialog,
     Font,
     Group,
+    MaskGroup,
     Keyboard,
     KeyboardDialog,
     Label,
@@ -126,10 +127,11 @@ export class SGNodeFactory {
             case SGNodeType.Node.toLowerCase():
                 return new Node([], name);
             case SGNodeType.Group.toLowerCase():
-            case SGNodeType.MaskGroup.toLowerCase():
             case SGNodeType.TargetGroup.toLowerCase():
             case SGNodeType.ScrollableText.toLowerCase():
                 return new Group([], name);
+            case SGNodeType.MaskGroup.toLowerCase():
+                return new MaskGroup([], name);
             case SGNodeType.LayoutGroup.toLowerCase():
                 return new LayoutGroup([], name);
             case SGNodeType.Panel.toLowerCase():
@@ -393,6 +395,7 @@ export function initializeNode(interpreter: Interpreter, type: string, typeDef?:
                         signature: init.signatures[0].signature,
                     });
                     try {
+                        node!.location = interpreter.formatLocation(funcLoc);
                         init.call(subInterpreter);
                         interpreter.popFromStack();
                         interpreter.location = originalLocation;
@@ -657,6 +660,7 @@ function addChildren(interpreter: Interpreter, node: Node, typeDef: ComponentDef
     for (let child of children) {
         const newChild = createNodeByType(child.name, interpreter);
         if (newChild instanceof Node) {
+            newChild.location = interpreter.formatLocation();
             const nodeFields = newChild.getNodeFields();
             for (let [key, value] of Object.entries(child.fields)) {
                 const field = nodeFields.get(key.toLowerCase());
@@ -838,7 +842,16 @@ export function getBrsValueFromFieldType(type: string, value?: string): BrsType 
             returnValue = parseColorArray(value ?? "");
             break;
         case "roassociativearray":
-        case "assocarray":
+        case "assocarray": {
+            const valueTrimmed = value?.trim() ?? "";
+            if (valueTrimmed.startsWith("{") && valueTrimmed.endsWith("}")) {
+                const inner = valueTrimmed.slice(1, -1).trim();
+                returnValue = inner === "" ? new RoAssociativeArray([]) : BrsInvalid.Instance;
+            } else {
+                returnValue = BrsInvalid.Instance;
+            }
+            break;
+        }
         case "object":
             returnValue = BrsInvalid.Instance;
             break;

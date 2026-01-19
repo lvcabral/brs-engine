@@ -329,32 +329,36 @@ export class Node extends RoSGNode implements BrsValue {
             value = getBrsValueFromFieldType(field.getType(), value.getValue());
         }
         let errorMsg = "";
-        if (!field) {
-            // RBI does not create a new field if the value isn't valid.
-            if (fieldType && alwaysNotify !== undefined) {
-                field = new Field(index, value, fieldType, alwaysNotify);
+        try {
+            if (!field) {
+                // RBI does not create a new field if the value isn't valid.
+                if (fieldType && alwaysNotify !== undefined) {
+                    field = new Field(index, value, fieldType, alwaysNotify);
+                    this.fields.set(mapKey, field);
+                    this.notified = true;
+                    this.makeDirty();
+                } else {
+                    errorMsg = `BRIGHTSCRIPT: ERROR: roSGNode.Set: Tried to set nonexistent field "${index}" of a "${this.nodeSubtype}" node:`;
+                }
+            } else if (alias) {
+                const child = this.findNodeById(this, alias.nodeId);
+                if (child instanceof Node) {
+                    child.setValue(alias.fieldName, value, alwaysNotify);
+                    this.makeDirty();
+                } else {
+                    errorMsg = `BRIGHTSCRIPT: ERROR: roSGNode.Set: "${this.nodeSubtype}.${index}": Alias "${alias.nodeId}.${alias.fieldName}" not found!`;
+                }
+            } else if (field.canAcceptValue(value)) {
+                // Fields are not overwritten if they haven't the same type.
+                // Except Numbers and Booleans that can be converted to string fields.
+                this.notified = field.setValue(value, true);
                 this.fields.set(mapKey, field);
-                this.notified = true;
                 this.makeDirty();
-            } else {
-                errorMsg = `BRIGHTSCRIPT: ERROR: roSGNode.Set: Tried to set nonexistent field "${index}" of a "${this.nodeSubtype}" node:`;
+            } else if (!isInvalid(value)) {
+                errorMsg = `BRIGHTSCRIPT: ERROR: roSGNode.AddReplace: "${this.nodeSubtype}.${index}": Type mismatch!`;
             }
-        } else if (alias) {
-            const child = this.findNodeById(this, alias.nodeId);
-            if (child instanceof Node) {
-                child.setValue(alias.fieldName, value, alwaysNotify);
-                this.makeDirty();
-            } else {
-                errorMsg = `BRIGHTSCRIPT: ERROR: roSGNode.Set: "${index}": Alias "${alias.nodeId}.${alias.fieldName}" not found!`;
-            }
-        } else if (field.canAcceptValue(value)) {
-            // Fields are not overwritten if they haven't the same type.
-            // Except Numbers and Booleans that can be converted to string fields.
-            this.notified = field.setValue(value, true);
-            this.fields.set(mapKey, field);
-            this.makeDirty();
-        } else if (!isInvalid(value)) {
-            errorMsg = `BRIGHTSCRIPT: ERROR: roSGNode.AddReplace: "${index}": Type mismatch!`;
+        } catch (err: any) {
+            errorMsg = `BRIGHTSCRIPT: ERROR: roSGNode.Set (unhandled exception): "${this.nodeSubtype}.${index}": ${err.message}`;
         }
         if (errorMsg.length > 0) {
             BrsDevice.stderr.write(`warning,${errorMsg} ${this.location}`);
