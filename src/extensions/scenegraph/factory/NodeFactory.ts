@@ -842,15 +842,16 @@ export function getBrsValueFromFieldType(type: string, value?: string): BrsType 
             returnValue = parseColorArray(value ?? "");
             break;
         case "roassociativearray":
-        case "assocarray":
-            const assocTrimmed = value?.trim() ?? "";
-            if (assocTrimmed.startsWith("{") && assocTrimmed.endsWith("}")) {
-                const inner = assocTrimmed.slice(1, -1).trim();
+        case "assocarray": {
+            const valueTrimmed = value?.trim() ?? "";
+            if (valueTrimmed.startsWith("{") && valueTrimmed.endsWith("}")) {
+                const inner = valueTrimmed.slice(1, -1).trim();
                 returnValue = inner === "" ? new RoAssociativeArray([]) : BrsInvalid.Instance;
             } else {
                 returnValue = BrsInvalid.Instance;
             }
             break;
+        }
         case "object":
             returnValue = BrsInvalid.Instance;
             break;
