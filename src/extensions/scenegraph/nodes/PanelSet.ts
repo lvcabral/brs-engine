@@ -3,7 +3,6 @@ import { FieldKind, FieldModel } from "../SGTypes";
 import { Panel, Poster, SGNodeType } from ".";
 import { Group } from "./Group";
 import { sgRoot } from "../SGRoot";
-import { RoSGNode } from "../components/RoSGNode";
 
 const DefaultPanelGapHD = 30;
 
@@ -97,7 +96,7 @@ export class PanelSet extends Group {
             this.refreshFocus();
             return true;
         } else if ((key === "right" || key === "OK") && this.focusIndex < this.panels.length - 1) {
-            const lastPanel = this.panels.slice(-1)[0];
+            const lastPanel = this.panels.at(-1);
             if (lastPanel?.getValueJS("hasNextPanel") === true) {
                 this.focusIndex++;
                 this.refreshFocus();
