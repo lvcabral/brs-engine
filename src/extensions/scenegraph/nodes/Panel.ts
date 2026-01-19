@@ -23,7 +23,7 @@ export class Panel extends Group {
         { name: "leftPosition", type: "float", value: "105" },
         { name: "panelSize", type: "string", value: "narrow", alwaysNotify: true },
         { name: "overhangTitle", type: "string", value: "" },
-        { name: "overhangVisible", type: "boolean", value: "false" },
+        { name: "overhangVisible", type: "boolean", value: "true" },
         { name: "clockText", type: "string", value: "" },
         { name: "optionsAvailable", type: "boolean", value: "false" },
         { name: "leftOrientation", type: "boolean", value: "false" },

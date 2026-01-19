@@ -1,4 +1,4 @@
-import { AAMember, BrsBoolean, BrsType, Float, IfDraw2D, Interpreter, RoArray } from "brs-engine";
+import { AAMember, BrsBoolean, BrsType, Float, IfDraw2D, Interpreter, jsValueOf, RoArray } from "brs-engine";
 import { FieldKind, FieldModel } from "../SGTypes";
 import { Panel, Poster, SGNodeType } from ".";
 import { Group } from "./Group";
@@ -26,6 +26,8 @@ export class PanelSet extends Group {
     private readonly rightArrow: Poster;
     private focusIndex: number = 0;
     private wasFocused: boolean = false;
+    private handleSelect: boolean = true;
+    public sceneCallback?: Function;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.PanelSet) {
         super([], name);
@@ -69,6 +71,11 @@ export class PanelSet extends Group {
             if (uri.trim() !== "") {
                 this.rightArrow.setValue("uri", value);
             }
+        } else if (fieldName === "goback") {
+            if (jsValueOf(value) === true) {
+                this.goBack();
+            }
+            return;
         }
         super.setValue(index, value, alwaysNotify, kind);
     }
@@ -85,23 +92,39 @@ export class PanelSet extends Group {
         if (!press) {
             return false;
         }
-        if ((key === "left" || key === "back") && this.focusIndex > 0) {
-            this.focusIndex--;
-            if (this.panels.length > 1) {
-                const removedPanel = this.panels.pop();
-                this.removeChildByReference(removedPanel!);
-                this.setValue("numPanels", new Float(this.panels.length));
-                this.setNodeFocus(true);
-            }
+        if (key === "left" || key === "back") {
+            return this.goBack();
+        } else if (key === "right" || (key === "OK" && this.handleSelect)) {
+            return this.goForward();
+        }
+        return false;
+    }
+
+    protected goBack() {
+        if (this.focusIndex === 0) {
+            return false;
+        }
+        this.focusIndex--;
+        if (this.panels.length > 1) {
+            const removedPanel = this.panels.pop();
+            this.removeChildByReference(removedPanel!);
+            this.setValue("numPanels", new Float(this.panels.length));
+            this.setNodeFocus(true);
+        } else {
+            this.refreshFocus();
+        }
+        return true;
+    }
+
+    protected goForward() {
+        if (this.focusIndex >= this.panels.length - 1) {
+            return false;
+        }
+        const lastPanel = this.panels.at(-1);
+        if (lastPanel?.getValueJS("hasNextPanel") === true) {
+            this.focusIndex++;
             this.refreshFocus();
             return true;
-        } else if ((key === "right" || key === "OK") && this.focusIndex < this.panels.length - 1) {
-            const lastPanel = this.panels.at(-1);
-            if (lastPanel?.getValueJS("hasNextPanel") === true) {
-                this.focusIndex++;
-                this.refreshFocus();
-                return true;
-            }
         }
         return false;
     }
@@ -122,7 +145,6 @@ export class PanelSet extends Group {
         if (visiblePanels.length > 0) {
             const panel = visiblePanels[0];
             panel.setTranslationX(panel.getValueJS("leftPosition") as number);
-            showRightArrow = panel.getValueJS("hasNextPanel") as boolean;
             if (visiblePanels.length > 1) {
                 const panel2 = visiblePanels[1];
                 if (panel2.getValueJS("panelSize") === "full") {
@@ -140,7 +162,9 @@ export class PanelSet extends Group {
                 if (panel2.getValueJS("suppressLeftArrow")) {
                     showLeftArrow = false;
                 }
-                showRightArrow = panel2.getValueJS("hasNextPanel") as boolean;
+                showRightArrow = panel2.getValueJS("hasNextPanel") === true;
+            } else {
+                panel.renderNode(interpreter, origin, angle, opacity, draw2D);
             }
         }
         if (showLeftArrow) {
@@ -160,6 +184,11 @@ export class PanelSet extends Group {
             const focusedPanel = this.panels[this.focusIndex];
             if (focusedPanel && currentFocus !== focusedPanel) {
                 focusedPanel.setNodeFocus(true);
+                this.setValue("leftPanelIndex", new Float(this.focusIndex));
+                this.handleSelect = focusedPanel.getValueJS("selectButtonMovesPanelForward") === true;
+                if (this.sceneCallback) {
+                    this.sceneCallback(focusedPanel);
+                }
             }
             this.wasFocused = true;
         } else if (this.wasFocused) {

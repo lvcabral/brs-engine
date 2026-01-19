@@ -1,6 +1,6 @@
 import { AAMember, BrsType } from "brs-engine";
 import { FieldKind, FieldModel } from "../SGTypes";
-import { SGNodeType } from ".";
+import { PanelSet, Panel, SGNodeType, Overhang } from ".";
 import { Scene } from "./Scene";
 import { SGNodeFactory } from "../factory/NodeFactory";
 
@@ -16,8 +16,9 @@ export class OverhangPanelSetScene extends Scene {
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
-        const overhang = SGNodeFactory.createNode(SGNodeType.Overhang);
-        const panelSet = SGNodeFactory.createNode(SGNodeType.PanelSet);
+        const overhang = SGNodeFactory.createNode(SGNodeType.Overhang) as Overhang;
+        const panelSet = SGNodeFactory.createNode(SGNodeType.PanelSet) as PanelSet;
+        panelSet.sceneCallback = this.panelGotFocus.bind(this);
         this.setValueSilent("overhang", overhang!);
         this.setValueSilent("panelSet", panelSet!);
         this.appendChildToParent(overhang!);
@@ -30,5 +31,23 @@ export class OverhangPanelSetScene extends Scene {
             return; // Read-only fields; do not set
         }
         super.setValue(index, value, alwaysNotify, kind);
+    }
+
+    setInitState(state: "initializing" | "initialized") {
+        super.setInitState(state);
+        if (state === "initialized") {
+            const panelSet = this.getValue("panelSet") as PanelSet;
+            panelSet.setNodeFocus(true);
+        }
+    }
+
+    panelGotFocus(panel: Panel) {
+        const overhang = this.getValue("overhang") as Overhang;
+        if (overhang) {
+            overhang.setValueSilent("visible", panel.getValue("overhangVisible"));
+            overhang.setValueSilent("title", panel.getValue("overhangTitle"));
+            overhang.setValueSilent("clockText", panel.getValue("clockText"));
+            overhang.setValueSilent("optionsAvailable", panel.getValue("optionsAvailable"));
+        }
     }
 }
