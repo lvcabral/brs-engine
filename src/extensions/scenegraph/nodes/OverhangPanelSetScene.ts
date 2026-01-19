@@ -19,10 +19,10 @@ export class OverhangPanelSetScene extends Scene {
         const overhang = SGNodeFactory.createNode(SGNodeType.Overhang) as Overhang;
         const panelSet = SGNodeFactory.createNode(SGNodeType.PanelSet) as PanelSet;
         panelSet.sceneCallback = this.panelGotFocus.bind(this);
-        this.setValueSilent("overhang", overhang!);
-        this.setValueSilent("panelSet", panelSet!);
-        this.appendChildToParent(overhang!);
-        this.appendChildToParent(panelSet!);
+        this.setValueSilent("overhang", overhang);
+        this.setValueSilent("panelSet", panelSet);
+        this.appendChildToParent(overhang);
+        this.appendChildToParent(panelSet);
     }
 
     setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind) {
