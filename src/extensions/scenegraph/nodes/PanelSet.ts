@@ -1,4 +1,4 @@
-import { AAMember, BrsBoolean, BrsType, Float, IfDraw2D, Interpreter, jsValueOf, RoArray } from "brs-engine";
+import { AAMember, BrsBoolean, BrsString, BrsType, Float, IfDraw2D, Interpreter, jsValueOf, RoArray } from "brs-engine";
 import { FieldKind, FieldModel } from "../SGTypes";
 import { Panel, Poster, SGNodeType } from ".";
 import { Group } from "./Group";
@@ -24,6 +24,8 @@ export class PanelSet extends Group {
     private readonly panels: Panel[] = [];
     private readonly leftArrow: Poster;
     private readonly rightArrow: Poster;
+    private readonly leftArrowUri: string;
+    private readonly rightArrowUri: string;
     private focusIndex: number = 0;
     private wasFocused: boolean = false;
     private handleSelect: boolean = true;
@@ -36,18 +38,18 @@ export class PanelSet extends Group {
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
 
-        const leftArrowUri: string = `common:/images/${this.resolution}/panelSet_leftArrow.png`;
-        const rightArrowUri: string = `common:/images/${this.resolution}/panelSet_rightArrow.png`;
+        this.leftArrowUri = `common:/images/${this.resolution}/panelSet_leftArrow.png`;
+        this.rightArrowUri = `common:/images/${this.resolution}/panelSet_rightArrow.png`;
 
         if (this.resolution === "FHD") {
-            this.leftArrow = this.addPoster(leftArrowUri, [96, 72], 68, 68);
-            this.rightArrow = this.addPoster(rightArrowUri, [1755, 72], 68, 68);
+            this.leftArrow = this.addPoster(this.leftArrowUri, [96, 72], 68, 68);
+            this.rightArrow = this.addPoster(this.rightArrowUri, [1755, 72], 68, 68);
             this.setValueSilent("translation", new RoArray([new Float(0), new Float(115 * 1.5)]));
             this.setValueSilent("width", new Float(1920));
             this.setValueSilent("height", new Float(605 * 1.5));
         } else {
-            this.leftArrow = this.addPoster(leftArrowUri, [64, 48], 45, 45);
-            this.rightArrow = this.addPoster(rightArrowUri, [1170, 48], 45, 45);
+            this.leftArrow = this.addPoster(this.leftArrowUri, [64, 48], 45, 45);
+            this.rightArrow = this.addPoster(this.rightArrowUri, [1170, 48], 45, 45);
             this.setValueSilent("translation", new RoArray([new Float(0), new Float(115)]));
             this.setValueSilent("width", new Float(1280));
             this.setValueSilent("height", new Float(605));
@@ -62,15 +64,17 @@ export class PanelSet extends Group {
         if (["numpanels", "isgoingback", "slidingstatus"].includes(fieldName)) {
             return; // Read-only fields; do not set
         } else if (fieldName === "leftarrowbitmapuri") {
-            const uri = value.toString();
-            if (uri.trim() !== "") {
-                this.leftArrow.setValue("uri", value);
-            }
+            const uri = value.toString().trim() || this.leftArrowUri;
+            this.leftArrow.setValue("uri", new BrsString(uri));
+            this.updateArrowPositions();
         } else if (fieldName === "rightarrowbitmapuri") {
-            const uri = value.toString();
-            if (uri.trim() !== "") {
-                this.rightArrow.setValue("uri", value);
-            }
+            const uri = value.toString().trim() || this.rightArrowUri;
+            this.rightArrow.setValue("uri", new BrsString(uri));
+            this.updateArrowPositions();
+        } else if (fieldName === "arrowhorizoffset" || fieldName === "arrowvertoffset") {
+            super.setValue(index, value, alwaysNotify, kind);
+            this.updateArrowPositions();
+            return;
         } else if (fieldName === "goback") {
             if (jsValueOf(value) === true) {
                 this.goBack();
@@ -78,6 +82,29 @@ export class PanelSet extends Group {
             return;
         }
         super.setValue(index, value, alwaysNotify, kind);
+    }
+
+    private updateArrowPositions() {
+        const horizOffset = this.getValueJS("arrowHorizOffset") as number;
+        const vertOffset = this.getValueJS("arrowVertOffset") as number;
+        // Apply horizontal offset if not default value
+        if (horizOffset !== -99999) {
+            const leftY = (this.leftArrow.getValueJS("translation") as number[])[1];
+            const rightY = (this.rightArrow.getValueJS("translation") as number[])[1];
+            this.leftArrow.setValue("translation", new RoArray([new Float(horizOffset), new Float(leftY)]));
+            // Right arrow uses mirrored offset from right edge
+            this.sceneRect.width;
+            const bmpWidth = this.rightArrow.getValueJS("bitmapWidth") as number;
+            const rightArrowX = this.sceneRect.width - horizOffset - bmpWidth;
+            this.rightArrow.setValue("translation", new RoArray([new Float(rightArrowX), new Float(rightY)]));
+        }
+        // Apply vertical offset if not default value
+        if (vertOffset !== -99999) {
+            const leftX = (this.leftArrow.getValueJS("translation") as number[])[0];
+            const rightX = (this.rightArrow.getValueJS("translation") as number[])[0];
+            this.leftArrow.setValue("translation", new RoArray([new Float(leftX), new Float(vertOffset)]));
+            this.rightArrow.setValue("translation", new RoArray([new Float(rightX), new Float(vertOffset)]));
+        }
     }
 
     setNodeFocus(focusOn: boolean): boolean {
