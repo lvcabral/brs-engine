@@ -154,6 +154,8 @@ export class Field {
             return true;
         } else if (this.type === FieldKind.String && isStringComp(value)) {
             return true;
+        } else if (this.type === FieldKind.Node && value instanceof Node) {
+            return true;
         } else if (this.type === FieldKind.Rect2D && value instanceof RoArray) {
             return value.elements.length === 4 && value.elements.every((element) => isAnyNumber(element));
         } else if (this.type === FieldKind.Rect2D && value instanceof RoAssociativeArray) {

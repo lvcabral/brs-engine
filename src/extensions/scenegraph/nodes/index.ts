@@ -11,6 +11,7 @@ export * from "./Field";
 export * from "./Font";
 export * from "./Global";
 export * from "./Group";
+export * from "./MaskGroup";
 export * from "./Keyboard";
 export * from "./KeyboardDialog";
 export * from "./Label";

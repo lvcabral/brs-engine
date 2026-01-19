@@ -11,6 +11,7 @@ import {
 } from "brs-engine";
 import { Node } from "./nodes/Node";
 import type { Field } from "./nodes/Field";
+import { getNodeType } from "./factory/NodeFactory";
 
 /** This interface is used to define a callback for field change notifications and events. */
 export interface BrsCallback {
@@ -156,17 +157,20 @@ export namespace FieldKind {
         if (brsType.kind !== ValueKind.Object) {
             return fromString(ValueKind.toString(brsType.kind));
         }
-        let componentName = brsType.getComponentName();
+        const componentName = brsType.getComponentName();
         switch (componentName.toLowerCase()) {
             case "roarray":
                 return FieldKind.Array;
             case "roassociativearray":
                 return FieldKind.AssocArray;
-            case "rosgnode":
-                if (brsType instanceof Node && brsType.nodeSubtype.toLowerCase() === "font") {
+            case "rosgnode": {
+                const node = brsType as Node;
+                const nodeType = getNodeType(node.nodeSubtype);
+                if (nodeType.toLowerCase() === "font") {
                     return FieldKind.Font;
                 }
                 return FieldKind.Node;
+            }
             default:
                 return undefined;
         }
