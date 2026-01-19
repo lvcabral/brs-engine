@@ -675,7 +675,6 @@ function addChildren(interpreter: Interpreter, node: Node, typeDef: ComponentDef
                         // we need to add the child's own children
                         addChildren(interpreter, newChild, child);
                     }
-                    node.location = interpreter.formatLocation();
                     node.setValue(targetField, newChild, false);
                 } else {
                     throw new Error(`Role/Field ${targetField} does not exist in ${node.getId()} node`);
