@@ -843,7 +843,13 @@ export function getBrsValueFromFieldType(type: string, value?: string): BrsType 
             break;
         case "roassociativearray":
         case "assocarray":
-            returnValue = value?.trim() === "{}" ? new RoAssociativeArray([]) : BrsInvalid.Instance;
+            const assocTrimmed = value?.trim() ?? "";
+            if (assocTrimmed.startsWith("{") && assocTrimmed.endsWith("}")) {
+                const inner = assocTrimmed.slice(1, -1).trim();
+                returnValue = inner === "" ? new RoAssociativeArray([]) : BrsInvalid.Instance;
+            } else {
+                returnValue = BrsInvalid.Instance;
+            }
             break;
         case "object":
             returnValue = BrsInvalid.Instance;
