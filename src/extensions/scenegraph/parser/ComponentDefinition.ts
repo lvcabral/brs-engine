@@ -308,10 +308,14 @@ function processInterface(node: XmlDocument): {
                     alwaysNotify: getAttrCI(child.attr, "alwaysNotify"),
                     value: getAttrCI(child.attr, "value"),
                 };
-            } else if (!id) {
-                postMessage(`warning,[ComponentDefinition] Field definition is missing required 'id' attribute at ${node.attr.name}:${child.line}`);
-            } else  {
-                postMessage(`warning,[ComponentDefinition] Field '${id}' definition is missing required 'type' attribute at ${node.attr.name}:${child.line}`);
+            } else if (id) {
+                postMessage(
+                    `warning,[ComponentDefinition] Field '${id}' definition is missing required 'type' attribute at ${node.attr.name}:${child.line}`
+                );
+            } else {
+                postMessage(
+                    `warning,[ComponentDefinition] Field definition is missing required 'id' attribute at ${node.attr.name}:${child.line}`
+                );
             }
         } else if (child.name === "function") {
             const name = getAttrCI(child.attr, "name");
@@ -320,7 +324,9 @@ function processInterface(node: XmlDocument): {
                     name,
                 };
             } else {
-                postMessage(`warning,[ComponentDefinition] Function missing required 'name' attribute at ${node.attr.name}:${child.line}`);
+                postMessage(
+                    `warning,[ComponentDefinition] Function missing required 'name' attribute at ${node.attr.name}:${child.line}`
+                );
             }
         }
     });
