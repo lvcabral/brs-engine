@@ -102,7 +102,7 @@ export class ComponentDefinition {
             }
             this.contents = fs.readFileSync(this.xmlPath, "utf-8");
             this.xmlNode = new XmlDocument(this.contents ?? "");
-            this.name = this.xmlNode.attr.name;
+            this.name = getAttrCI(this.xmlNode.attr, "name");
 
             return this;
         } catch (err: any) {
@@ -112,11 +112,11 @@ export class ComponentDefinition {
     }
 
     public get extends(): string {
-        return this.xmlNode?.attr?.extends ?? "";
+        return getAttrCI(this.xmlNode?.attr ?? {}, "extends") ?? "";
     }
 
     public get initialFocus(): string {
-        return this.xmlNode?.attr?.initialFocus ?? "";
+        return getAttrCI(this.xmlNode?.attr ?? {}, "initialFocus") ?? "";
     }
 }
 
@@ -182,16 +182,16 @@ async function processXmlTree(settledPromises: Promise<PromiseResult<ComponentDe
 
     for (const nodeDef of nodeDefMap.values()) {
         if (nodeDef?.processed === false) {
-            let xmlNode = nodeDef.xmlNode;
             inheritanceStack.push(nodeDef);
             //builds inheritance stack
-            while (xmlNode?.attr?.extends) {
-                let superNodeDef = nodeDefMap.get(xmlNode.attr.extends?.toLowerCase());
+            let extendsAttr = getAttrCI(nodeDef.xmlNode?.attr ?? {}, "extends");
+            while (extendsAttr) {
+                const superNodeDef = nodeDefMap.get(extendsAttr.toLowerCase());
                 if (superNodeDef) {
                     inheritanceStack.push(superNodeDef);
-                    xmlNode = superNodeDef.xmlNode;
+                    extendsAttr = getAttrCI(superNodeDef.xmlNode?.attr ?? {}, "extends");
                 } else {
-                    xmlNode = undefined;
+                    break;
                 }
             }
 
@@ -262,6 +262,22 @@ export async function setupInterpreterWithSubEnvs(
 }
 
 /**
+ * Gets an attribute from an XML element in a case-insensitive manner.
+ * @param attrs The attributes object from an XmlElement
+ * @param attrName The attribute name to search for (case-insensitive)
+ * @returns The attribute value or undefined if not found
+ */
+function getAttrCI(attrs: { [key: string]: any }, attrName: string): string | undefined {
+    const lowerAttrName = attrName.toLowerCase();
+    for (const key in attrs) {
+        if (key.toLowerCase() === lowerAttrName) {
+            return attrs[key];
+        }
+    }
+    return undefined;
+}
+
+/**
  * Returns all the fields and functions found in the Xml node.
  * @param node Xml node with fields
  * @return { fields, functions }: the fields and functions parsed as
@@ -281,18 +297,37 @@ function processInterface(node: XmlDocument): {
 
     iface.eachChild((child) => {
         if (child.name === "field") {
-            fields[child.attr.id] = {
-                type: child.attr.type,
-                id: child.attr.id,
-                alias: child.attr.alias,
-                onChange: child.attr.onChange,
-                alwaysNotify: child.attr.alwaysNotify,
-                value: child.attr.value,
-            };
+            const id = getAttrCI(child.attr, "id");
+            const type = getAttrCI(child.attr, "type");
+            if (id && type) {
+                fields[id] = {
+                    id,
+                    type,
+                    alias: getAttrCI(child.attr, "alias"),
+                    onChange: getAttrCI(child.attr, "onChange"),
+                    alwaysNotify: getAttrCI(child.attr, "alwaysNotify"),
+                    value: getAttrCI(child.attr, "value"),
+                };
+            } else if (id) {
+                postMessage(
+                    `warning,[ComponentDefinition] Field '${id}' definition is missing required 'type' attribute at ${node.attr.name}:${child.line}`
+                );
+            } else {
+                postMessage(
+                    `warning,[ComponentDefinition] Field definition is missing required 'id' attribute at ${node.attr.name}:${child.line}`
+                );
+            }
         } else if (child.name === "function") {
-            functions[child.attr.name] = {
-                name: child.attr.name,
-            };
+            const name = getAttrCI(child.attr, "name");
+            if (name) {
+                functions[name] = {
+                    name,
+                };
+            } else {
+                postMessage(
+                    `warning,[ComponentDefinition] Function missing required 'name' attribute at ${node.attr.name}:${child.line}`
+                );
+            }
         }
     });
 
