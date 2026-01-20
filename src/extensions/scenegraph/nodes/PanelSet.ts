@@ -93,7 +93,6 @@ export class PanelSet extends Group {
             const rightY = (this.rightArrow.getValueJS("translation") as number[])[1];
             this.leftArrow.setValue("translation", new RoArray([new Float(horizOffset), new Float(leftY)]));
             // Right arrow uses mirrored offset from right edge
-            this.sceneRect.width;
             const bmpWidth = this.rightArrow.getValueJS("bitmapWidth") as number;
             const rightArrowX = this.sceneRect.width - horizOffset - bmpWidth;
             this.rightArrow.setValue("translation", new RoArray([new Float(rightArrowX), new Float(rightY)]));
