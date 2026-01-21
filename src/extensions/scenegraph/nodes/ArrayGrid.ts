@@ -671,7 +671,7 @@ export class ArrayGridItem extends Group {
         { name: "listHasFocus", type: "boolean", value: "false" },
     ];
     private readonly MissingImageUri: string;
-    private poster: Poster;
+    private readonly poster: Poster;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.Group) {
         super([], name);
@@ -687,8 +687,7 @@ export class ArrayGridItem extends Group {
     setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind): void {
         const fieldName = index.toLowerCase();
         if (fieldName === "itemcontent" && value instanceof ContentNode) {
-            const content = value as ContentNode;
-            this.poster.setValue("uri", new BrsString(this.getPosterUri(content)));
+            this.poster.setValue("uri", new BrsString(this.getPosterUri(value)));
         } else if (fieldName === "width" || fieldName === "height") {
             this.poster.setValue(index, value, alwaysNotify, kind);
         }

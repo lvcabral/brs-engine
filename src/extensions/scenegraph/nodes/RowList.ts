@@ -2,7 +2,6 @@ import {
     AAMember,
     Interpreter,
     BrsBoolean,
-    BrsDevice,
     BrsString,
     BrsType,
     Float,
@@ -495,7 +494,6 @@ export class RowList extends ArrayGrid {
         if (this.focusIndex < 0) {
             this.focusIndex = 0;
         }
-        const itemCompName = this.getValueJS("itemComponentName") as string;
         const itemSize = this.getValueJS("itemSize") as number[];
         if (!itemSize[0] || !itemSize[1] || !this.numRows) {
             return false;
