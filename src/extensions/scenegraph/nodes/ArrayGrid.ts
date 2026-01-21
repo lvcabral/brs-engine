@@ -12,7 +12,7 @@ import {
     Rect,
 } from "brs-engine";
 import { FieldKind, FieldModel } from "../SGTypes";
-import { SGNodeType } from ".";
+import { Poster, SGNodeType } from ".";
 import { Group } from "./Group";
 import { createNodeByType } from "../factory/NodeFactory";
 import { brsValueOf, jsValueOf } from "../factory/Serializer";
@@ -104,6 +104,7 @@ export class ArrayGrid extends Group {
     protected hasNinePatch: boolean;
     protected focusField: string;
     protected vertFocusAnimationStyleName: string;
+    public itemFocusCallback?: (index: number) => void;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.ArrayGrid) {
         super([], name);
@@ -204,6 +205,9 @@ export class ArrayGrid extends Group {
         this.focusIndex = newFocus;
         this.updateItemFocus(this.focusIndex, true, nodeFocus);
         super.setValue("itemFocused", new Int32(index));
+        if (this.itemFocusCallback) {
+            this.itemFocusCallback(index);
+        }
     }
 
     protected findContentIndex(index: number) {
@@ -472,7 +476,7 @@ export class ArrayGrid extends Group {
             return new Group();
         }
         const itemCompName = this.getValueJS("itemComponentName") ?? "";
-        const itemComp = createNodeByType(itemCompName, interpreter);
+        const itemComp = itemCompName ? createNodeByType(itemCompName, interpreter) : new ArrayGridItem();
         if (itemComp instanceof Group) {
             itemComp.setNodeParent(this);
             itemComp.setValue("width", brsValueOf(itemRect.width));
@@ -648,5 +652,56 @@ export class ArrayGrid extends Group {
             return Number(values[index]) || fallback;
         }
         return Number(values.at(-1)) || fallback;
+    }
+}
+
+export class ArrayGridItem extends Group {
+    readonly defaultFields: FieldModel[] = [
+        { name: "width", type: "float", value: "0.0" },
+        { name: "height", type: "float", value: "0.0" },
+        { name: "index", type: "int", value: "-1" },
+        { name: "rowIndex", type: "int", value: "-1" },
+        { name: "rowHasFocus", type: "boolean", value: "false" },
+        { name: "rowListHasFocus", type: "boolean", value: "false" },
+        { name: "itemContent", type: "node" },
+        { name: "itemHasFocus", type: "boolean", value: "false" },
+        { name: "focusPercent", type: "float", value: "0.0" },
+        { name: "listHasFocus", type: "boolean", value: "false" },
+    ];
+    private readonly MissingImageUri: string;
+    private readonly poster: Poster;
+
+    constructor() {
+        super([], SGNodeType.ArrayGridItem);
+        this.setExtendsType(SGNodeType.ArrayGridItem, SGNodeType.Group);
+        this.registerDefaultFields(this.defaultFields);
+
+        this.MissingImageUri = `common:/images/${this.resolution}/missingImage.9.png`;
+        this.poster = this.addPoster("", [0, 0]);
+        this.poster.setValue("failedBitmapUri", new BrsString(this.MissingImageUri));
+    }
+
+    setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind): void {
+        const fieldName = index.toLowerCase();
+        if (fieldName === "itemcontent" && value instanceof ContentNode) {
+            this.poster.setValue("uri", new BrsString(this.getPosterUri(value)));
+        } else if (fieldName === "width" || fieldName === "height") {
+            this.poster.setValue(index, value, alwaysNotify, kind);
+        }
+        super.setValue(index, value, alwaysNotify, kind);
+    }
+
+    private getPosterUri(content: ContentNode) {
+        const isFHD = this.resolution === "FHD";
+        const preferences = isFHD
+            ? ["fhdGridPosterUrl", "fhdPosterUrl", "hdGridPosterUrl", "hdPosterUrl", "sdGridPosterUrl", "sdPosterUrl"]
+            : ["hdGridPosterUrl", "hdPosterUrl", "fhdGridPosterUrl", "fhdPosterUrl", "sdGridPosterUrl", "sdPosterUrl"];
+        for (const field of preferences) {
+            const uri = content.getValueJS(field);
+            if (typeof uri === "string" && uri.trim().length > 0) {
+                return uri;
+            }
+        }
+        return "";
     }
 }
