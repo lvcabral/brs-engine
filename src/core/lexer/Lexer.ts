@@ -67,7 +67,7 @@ export class Lexer {
      */
     public scan(toScan: string, filename: string): ScanResults {
         /** Strip UTF-8 BOM if present */
-        if (toScan.charCodeAt(0) === 0xFEFF) {
+        if (toScan.codePointAt(0) === 0xFEFF) {
             toScan = toScan.substring(1);
         }
         /** The zero-indexed position at which the token under consideration begins. */
