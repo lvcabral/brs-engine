@@ -470,7 +470,6 @@ export class RowList extends ArrayGrid {
         draw2D?: IfDraw2D
     ) {
         if (!this.validateRenderPrerequisites()) {
-            postMessage("warning,[sg.rowlist.render.fail] RowList render prerequisites not met.");
             return;
         }
         const context = this.initializeRenderContext(rect, interpreter, rotation, opacity, draw2D);
