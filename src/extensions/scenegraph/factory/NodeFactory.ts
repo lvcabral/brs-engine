@@ -815,14 +815,7 @@ export function getBrsValueFromFieldType(type: string, value?: string): BrsType 
             returnValue = new RoInvalid();
             break;
         case "font":
-            returnValue = new Font();
-            if (
-                returnValue instanceof Font &&
-                value?.startsWith("font:") &&
-                !returnValue.setSystemFont(value.slice(5).toLowerCase())
-            ) {
-                returnValue = BrsInvalid.Instance;
-            }
+            returnValue = parseFont(value ?? "");
             break;
         case "roarray":
         case "array":
@@ -831,25 +824,25 @@ export function getBrsValueFromFieldType(type: string, value?: string): BrsType 
         case "boolarray":
         case "floatarray":
         case "intarray":
-        case "stringarray":
         case "timearray":
         case "vector2darray":
         case "rect2darray":
         case "nodearray":
             returnValue = parseArray(value ?? "");
             break;
+        case "stringarray":
+            if (value && !value.trim().startsWith("[") && !value.trim().endsWith("]")) {
+                returnValue = new BrsString(value);
+            } else {
+                returnValue = parseArray(value ?? "");
+            }
+            break;
         case "colorarray":
             returnValue = parseColorArray(value ?? "");
             break;
         case "roassociativearray":
         case "assocarray": {
-            const valueTrimmed = value?.trim() ?? "";
-            if (valueTrimmed.startsWith("{") && valueTrimmed.endsWith("}")) {
-                const inner = valueTrimmed.slice(1, -1).trim();
-                returnValue = inner === "" ? new RoAssociativeArray([]) : BrsInvalid.Instance;
-            } else {
-                returnValue = BrsInvalid.Instance;
-            }
+            returnValue = parseAA(value ?? "");
             break;
         }
         case "object":
@@ -871,6 +864,42 @@ export function getBrsValueFromFieldType(type: string, value?: string): BrsType 
             break;
     }
 
+    return returnValue;
+}
+
+/**
+ * Parses a string representation of a font into a Font object.
+ * Supports system fonts prefixed with "font:".
+ * @param value String representation of the font
+ * @returns Font object or BrsInvalid if parsing fails
+ */
+function parseFont(value: string): BrsType {
+    let returnValue: BrsType = new Font();
+    if (
+        returnValue instanceof Font &&
+        value?.startsWith("font:") &&
+        !returnValue.setSystemFont(value.slice(5).toLowerCase())
+    ) {
+        returnValue = BrsInvalid.Instance;
+    }
+    return returnValue;
+}
+
+/**
+ * Parses a string representation of an associative array into a RoAssociativeArray.
+ * Roku only supports empty associative arrays: "{}"
+ * @param value String representation of the associative array
+ * @returns RoAssociativeArray or BrsInvalid if parsing fails
+ */
+function parseAA(value: string): BrsType {
+    let returnValue: BrsType;
+    const valueTrimmed = value?.trim() ?? "";
+    if (valueTrimmed.startsWith("{") && valueTrimmed.endsWith("}")) {
+        const inner = valueTrimmed.slice(1, -1).trim();
+        returnValue = inner === "" ? new RoAssociativeArray([]) : BrsInvalid.Instance;
+    } else {
+        returnValue = BrsInvalid.Instance;
+    }
     return returnValue;
 }
 

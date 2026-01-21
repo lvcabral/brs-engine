@@ -154,6 +154,8 @@ export class Field {
             return true;
         } else if (this.type === FieldKind.String && isStringComp(value)) {
             return true;
+        } else if (this.type === FieldKind.StringArray && value instanceof RoArray) {
+            return value.elements.every((element) => isBrsString(element));
         } else if (this.type === FieldKind.Node && value instanceof Node) {
             return true;
         } else if (this.type === FieldKind.Rect2D && value instanceof RoArray) {
@@ -166,6 +168,21 @@ export class Field {
                 typeof valueObj.y === "number" &&
                 typeof valueObj.width === "number" &&
                 typeof valueObj.height === "number"
+            );
+        } else if (this.type === FieldKind.Vector2D && value instanceof RoArray) {
+            return value.elements.length === 2 && value.elements.every((element) => isAnyNumber(element));
+        } else if (this.type === FieldKind.Vector2D && value instanceof RoAssociativeArray) {
+            const valueObj = fromAssociativeArray(value);
+            return valueObj && typeof valueObj.x === "number" && typeof valueObj.y === "number";
+        } else if (this.type === FieldKind.Vector2DArray && value instanceof RoArray) {
+            return (
+                (value.elements.length === 2 && value.elements.every((element) => isAnyNumber(element))) ||
+                value.elements.every(
+                    (element) =>
+                        element instanceof RoArray &&
+                        element.elements.length === 2 &&
+                        element.elements.every((item) => isAnyNumber(item))
+                )
             );
         } else if (
             [FieldKind.FloatArray, FieldKind.IntArray, FieldKind.ColorArray, FieldKind.TimeArray].includes(this.type) &&
@@ -259,6 +276,10 @@ export class Field {
             value = new RoArray([value]);
         } else if (this.type === FieldKind.Rect2D) {
             value = this.convertRect2D(value);
+        } else if (this.type === FieldKind.Vector2D) {
+            value = this.convertVector2D(value);
+        } else if (this.type === FieldKind.Vector2DArray) {
+            value = this.convertVector2DArray(value);
         } else if (this.type === FieldKind.String && isStringComp(value)) {
             value = new BrsString(value.getValue());
         }
@@ -319,6 +340,39 @@ export class Field {
             }
         }
         return toAssociativeArray(rectObject);
+    }
+
+    private convertVector2D(value: BrsType): RoArray {
+        const vectorArray: number[] = [];
+        if (value instanceof RoArray) {
+            if (value.elements.length === 2 && value.elements.every((item: any) => isAnyNumber(item))) {
+                return value;
+            }
+        } else if (value instanceof RoAssociativeArray) {
+            const vecValue = fromAssociativeArray(value);
+            if (typeof vecValue.x === "number" && typeof vecValue.y === "number") {
+                vectorArray.push(vecValue.x, vecValue.y);
+            }
+        }
+        return new RoArray(vectorArray.map((num) => new Float(num).box()));
+    }
+
+    private convertVector2DArray(value: BrsType): RoArray {
+        const vector2DArray: RoArray = new RoArray([]);
+        if (value instanceof RoArray) {
+            if (value.elements.length === 2 && value.elements.every((item: any) => isAnyNumber(item))) {
+                // Single Vector2D case
+                vector2DArray.elements.push(this.convertVector2D(value));
+            } else {
+                // Array of Vector2D case
+                for (const element of value.elements) {
+                    if (element instanceof RoArray) {
+                        vector2DArray.elements.push(this.convertVector2D(element));
+                    }
+                }
+            }
+        }
+        return vector2DArray;
     }
 
     private isEqual(oldValue: BrsType, newValue: BrsType): boolean {

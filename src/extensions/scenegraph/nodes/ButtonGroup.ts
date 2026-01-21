@@ -40,7 +40,7 @@ export class ButtonGroup extends LayoutGroup {
         { name: "buttonSelected", type: "integer", value: "0", alwaysNotify: true },
         { name: "buttonFocused", type: "integer", value: "0", alwaysNotify: true },
         { name: "focusButton", type: "integer", value: "0", alwaysNotify: true },
-        { name: "buttons", type: "array" },
+        { name: "buttons", type: "stringarray", value: "[]" },
     ];
 
     private readonly margin: number;
@@ -93,11 +93,9 @@ export class ButtonGroup extends LayoutGroup {
                 this.focusIndex = newIndex;
                 super.setValue("buttonFocused", value);
             }
-        } else if (fieldName === "buttons" && !(value instanceof RoArray)) {
-            value = new RoArray([]);
         }
         super.setValue(index, value, alwaysNotify, kind);
-        if (fieldName === "buttons") {
+        if (fieldName === "buttons" && value instanceof RoArray) {
             this.refreshButtons();
             this.refreshFocus();
         }
