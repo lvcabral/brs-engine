@@ -15,7 +15,6 @@ import {
 } from "brs-engine";
 import { sgRoot } from "../SGRoot";
 import { ContentNode } from "./ContentNode";
-import { customNodeExists } from "../factory/NodeFactory";
 import { brsValueOf, jsValueOf } from "../factory/Serializer";
 import { Font } from "./Font";
 import { Group } from "./Group";
@@ -55,12 +54,12 @@ export class RowList extends ArrayGrid {
         { name: "rowTitleComponentName", type: "string", value: "" },
         { name: "numRows", type: "integer", value: "1" },
         { name: "numColumns", type: "integer", value: "1" },
-        { name: "rowItemSize", type: "array", value: "[]" },
-        { name: "rowItemSpacing", type: "array", value: "[]" },
-        { name: "rowItemSelected", type: "array", value: "[]" },
-        { name: "rowItemFocused", type: "array", value: "[]" },
-        { name: "jumpToRowItem", type: "array", value: "[]" },
-        { name: "focusXOffset", type: "array", value: "[0,0]" },
+        { name: "rowItemSize", type: "vector2darray", value: "[]" },
+        { name: "rowItemSpacing", type: "vector2darray", value: "[]" },
+        { name: "rowItemSelected", type: "intarray", value: "[]" },
+        { name: "rowItemFocused", type: "intarray", value: "[]" },
+        { name: "jumpToRowItem", type: "intarray", value: "[]" },
+        { name: "focusXOffset", type: "floatarray", value: "[0,0]" },
         { name: "rowLabelOffset", type: "array", value: "[[0,0]]" },
         { name: "rowLabelColor", type: "color", value: "0xffffffff" },
         { name: "rowLabelFont", type: "font" },
@@ -497,10 +496,6 @@ export class RowList extends ArrayGrid {
             this.focusIndex = 0;
         }
         const itemCompName = this.getValueJS("itemComponentName") as string;
-        if (!customNodeExists(itemCompName)) {
-            BrsDevice.stderr.write(`warning,[sg.rowlist.create.fail] Failed to create markup item ${itemCompName}`);
-            return false;
-        }
         const itemSize = this.getValueJS("itemSize") as number[];
         if (!itemSize[0] || !itemSize[1] || !this.numRows) {
             return false;
