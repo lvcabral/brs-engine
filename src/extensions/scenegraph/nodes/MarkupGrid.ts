@@ -18,6 +18,7 @@ export class MarkupGrid extends ArrayGrid {
     protected readonly marginX: number;
     protected readonly marginY: number;
     protected readonly gap: number;
+    private itemComponentErrorLogged = false;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.MarkupGrid) {
         super([], name);
@@ -117,7 +118,11 @@ export class MarkupGrid extends ArrayGrid {
         const hasSections = this.metadata.length > 0;
         const itemCompName = this.getValueJS("itemComponentName") as string;
         if (!customNodeExists(itemCompName)) {
-            BrsDevice.stderr.write(`warning,[sg.markupgrid.create.fail] Failed to create markup item ${itemCompName}`);
+            if (!this.itemComponentErrorLogged) {
+                const name = itemCompName.trim() || "missing 'itemComponentName'";
+                BrsDevice.stderr.write(`error,[sg.markupgrid.create.fail] Failed to create item: ${name}`);
+                this.itemComponentErrorLogged = true;
+            }
             return;
         }
         const itemSize = this.getValueJS("itemSize") as number[];

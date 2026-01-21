@@ -96,6 +96,7 @@ export class ZoomRowList extends ArrayGrid {
     private readonly defaultRowSpacing: number;
     private readonly defaultItemYOffset: number;
     private readonly defaultItemZoomYOffset: number;
+    private itemComponentErrorLogged = false;
     private nodeWidth: number;
     private rowWidth: number;
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.ZoomRowList) {
@@ -368,7 +369,11 @@ export class ZoomRowList extends ArrayGrid {
         }
         const itemCompName = this.getValueJS("itemComponentName") as string;
         if (!customNodeExists(itemCompName)) {
-            BrsDevice.stderr.write(`warning,[sg.zoomrowlist.create.fail] Failed to create item ${itemCompName}`);
+            if (!this.itemComponentErrorLogged) {
+                const name = itemCompName.trim() || "missing 'itemComponentName'";
+                BrsDevice.stderr.write(`error,[sg.zoomrowlist.create.fail] Failed to create item: ${name}`);
+                this.itemComponentErrorLogged = true;
+            }
             return false;
         }
         return true;
