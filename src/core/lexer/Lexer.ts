@@ -66,6 +66,10 @@ export class Lexer {
      * @returns an object containing an array of `errors` and an array of `tokens` to be passed to a parser.
      */
     public scan(toScan: string, filename: string): ScanResults {
+        /** Strip UTF-8 BOM if present */
+        if (toScan.codePointAt(0) === 0xfeff) {
+            toScan = toScan.substring(1);
+        }
         /** The zero-indexed position at which the token under consideration begins. */
         let start = 0;
         /** The zero-indexed position being examined for the token under consideration. */
