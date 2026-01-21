@@ -74,6 +74,8 @@ export enum FieldKind {
     Time = "time",
     TimeArray = "timearray",
     Rect2D = "rect2d",
+    Vector2D = "vector2d",
+    Vector2DArray = "vector2darray",
 }
 
 export namespace FieldKind {
@@ -89,8 +91,6 @@ export namespace FieldKind {
             case "array":
             case "roarray":
             case "nodearray":
-            case "vector2d":
-            case "vector2darray":
             case "rect2darray":
                 return FieldKind.Array;
             case "boolarray":
@@ -139,6 +139,10 @@ export namespace FieldKind {
                 return FieldKind.Color;
             case "time":
                 return FieldKind.Time;
+            case "vector2d":
+                return FieldKind.Vector2D;
+            case "vector2darray":
+                return FieldKind.Vector2DArray;
             default:
                 return undefined;
         }

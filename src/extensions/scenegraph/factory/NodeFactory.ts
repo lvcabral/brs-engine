@@ -831,12 +831,18 @@ export function getBrsValueFromFieldType(type: string, value?: string): BrsType 
         case "boolarray":
         case "floatarray":
         case "intarray":
-        case "stringarray":
         case "timearray":
         case "vector2darray":
         case "rect2darray":
         case "nodearray":
             returnValue = parseArray(value ?? "");
+            break;
+        case "stringarray":
+            if (value && !value.trim().startsWith("[") && !value.trim().endsWith("]")) {
+                returnValue = new BrsString(value);
+            } else {
+                returnValue = parseArray(value ?? "");
+            }
             break;
         case "colorarray":
             returnValue = parseColorArray(value ?? "");
