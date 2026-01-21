@@ -298,19 +298,20 @@ function processInterface(node: XmlDocument): {
     iface.eachChild((child) => {
         if (child.name === "field") {
             const id = getAttrCI(child.attr, "id");
-            const type = getAttrCI(child.attr, "type");
-            if (id && type) {
+            const type = getAttrCI(child.attr, "type") ?? "";
+            const alias = getAttrCI(child.attr, "alias");
+            if (id && (type || alias)) {
                 fields[id] = {
                     id,
                     type,
-                    alias: getAttrCI(child.attr, "alias"),
+                    alias,
                     onChange: getAttrCI(child.attr, "onChange"),
                     alwaysNotify: getAttrCI(child.attr, "alwaysNotify"),
                     value: getAttrCI(child.attr, "value"),
                 };
             } else if (id) {
                 postMessage(
-                    `warning,[ComponentDefinition] Field '${id}' definition is missing required 'type' attribute at ${node.attr.name}:${child.line}`
+                    `warning,[ComponentDefinition] Field '${id}' definition is missing required 'type' or 'alias' attribute at ${node.attr.name}:${child.line}`
                 );
             } else {
                 postMessage(
