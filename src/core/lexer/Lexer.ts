@@ -354,14 +354,13 @@ export class Lexer {
                     preProcessedConditional();
                     break;
                 default:
-                    const location = locationOf(c);
                     if (isDecimalDigit(c)) {
                         decimalNumber(false);
                     } else if (c === "&" && peek().toLowerCase() === "h") {
                         advance(); // move past 'h'
                         hexadecimalNumber();
                     } else {
-                        addError(new BrsError(`Unexpected character '${c}'`, location));
+                        addError(new BrsError(`Unexpected character '${c}'`, locationOf(c)));
                     }
                     break;
             }
