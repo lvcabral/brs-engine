@@ -345,11 +345,7 @@ export class Field {
     private convertVector2D(value: BrsType): RoArray {
         const vectorArray: number[] = [];
         if (value instanceof RoArray) {
-            if (
-                value instanceof RoArray &&
-                value.elements.length === 2 &&
-                value.elements.every((item: any) => isAnyNumber(item))
-            ) {
+            if (value.elements.length === 2 && value.elements.every((item: any) => isAnyNumber(item))) {
                 return value;
             }
         } else if (value instanceof RoAssociativeArray) {
