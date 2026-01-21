@@ -453,10 +453,10 @@ export class PosterGrid extends ArrayGrid {
     }
 
     getPosterUri(content: ContentNode) {
-        const isSd = this.resolution?.toLowerCase() === "sd";
-        const preferences = isSd
-            ? ["sdGridPosterUrl", "sdPosterUrl", "hdGridPosterUrl", "hdPosterUrl"]
-            : ["hdGridPosterUrl", "hdPosterUrl", "sdGridPosterUrl", "sdPosterUrl"];
+        const isFHD = this.resolution === "FHD";
+        const preferences = isFHD
+            ? ["fhdGridPosterUrl", "fhdPosterUrl", "hdGridPosterUrl", "hdPosterUrl", "sdGridPosterUrl", "sdPosterUrl"]
+            : ["hdGridPosterUrl", "hdPosterUrl", "fhdGridPosterUrl", "fhdPosterUrl", "sdGridPosterUrl", "sdPosterUrl"];
         for (const field of preferences) {
             const uri = content.getValueJS(field);
             if (typeof uri === "string" && uri.trim().length > 0) {
@@ -466,20 +466,6 @@ export class PosterGrid extends ArrayGrid {
         const imageWell = this.getValueJS("imageWellBitmapUri");
         if (typeof imageWell === "string" && imageWell.trim().length > 0) {
             return imageWell;
-        }
-        return undefined;
-    }
-
-    getPosterBitmap(content: ContentNode) {
-        const isSd = this.resolution?.toLowerCase() === "sd";
-        const preferences = isSd
-            ? ["sdGridPosterUrl", "sdPosterUrl", "hdGridPosterUrl", "hdPosterUrl"]
-            : ["hdGridPosterUrl", "hdPosterUrl", "sdGridPosterUrl", "sdPosterUrl"];
-        for (const field of preferences) {
-            const bmp = content.getBitmap(field);
-            if (bmp?.isValid()) {
-                return bmp;
-            }
         }
         return undefined;
     }
