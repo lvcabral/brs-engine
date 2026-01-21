@@ -104,7 +104,7 @@ export class ArrayGrid extends Group {
     protected hasNinePatch: boolean;
     protected focusField: string;
     protected vertFocusAnimationStyleName: string;
-    public itemFocusCallback?: Function;
+    public itemFocusCallback?: (index: number) => void;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.ArrayGrid) {
         super([], name);
