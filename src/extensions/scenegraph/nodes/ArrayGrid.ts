@@ -673,12 +673,11 @@ export class ArrayGridItem extends Group {
     private readonly MissingImageUri: string;
     private readonly poster: Poster;
 
-    constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.Group) {
-        super([], name);
-        this.setExtendsType(name, SGNodeType.Group);
-
+    constructor() {
+        super([], SGNodeType.ArrayGridItem);
+        this.setExtendsType(SGNodeType.ArrayGridItem, SGNodeType.Group);
         this.registerDefaultFields(this.defaultFields);
-        this.registerInitializedFields(initializedFields);
+
         this.MissingImageUri = `common:/images/${this.resolution}/missingImage.9.png`;
         this.poster = this.addPoster("", [0, 0]);
         this.poster.setValue("failedBitmapUri", new BrsString(this.MissingImageUri));

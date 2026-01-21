@@ -109,6 +109,7 @@ export enum SGNodeType {
     InfoPane = "InfoPane",
     Font = "Font",
     ArrayGrid = "ArrayGrid",
+    ArrayGridItem = "ArrayGridItem",
     PosterGrid = "PosterGrid",
     LabelList = "LabelList",
     CheckList = "CheckList",
