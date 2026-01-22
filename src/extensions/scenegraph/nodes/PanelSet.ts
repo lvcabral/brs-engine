@@ -130,6 +130,7 @@ export class PanelSet extends Group {
         if (this.focusIndex === 0) {
             return false;
         }
+        const currentPanel = this.panels[this.focusIndex];
         this.focusIndex--;
         super.setValue("isGoingBack", BrsBoolean.True);
         if (this.panels.length > 2) {
@@ -139,10 +140,9 @@ export class PanelSet extends Group {
             }
             this.removeChildByReference(removedPanel!);
             super.setValue("numPanels", new Float(this.panels.length));
-            this.setNodeFocus(true);
-        } else {
-            this.refreshFocus();
         }
+        currentPanel.setNodeFocus(false);
+        this.setNodeFocus(true);
         return true;
     }
 
@@ -154,7 +154,8 @@ export class PanelSet extends Group {
         if (currentPanel?.getValueJS("hasNextPanel") === true) {
             this.focusIndex++;
             super.setValue("isGoingBack", BrsBoolean.False);
-            this.refreshFocus();
+            currentPanel.setNodeFocus(false);
+            this.setNodeFocus(true);
             return true;
         }
         return false;
@@ -177,7 +178,8 @@ export class PanelSet extends Group {
 
     renderChildren(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
         const visiblePanels: Panel[] = this.panels.slice(-2);
-        let showLeftArrow = this.focusIndex > 1;
+        const leftPanelIndex = this.getValueJS("leftPanelIndex") as number;
+        let showLeftArrow = leftPanelIndex > 0;
         let showRightArrow = false;
         if (visiblePanels.length > 0) {
             const panel = visiblePanels[0];
@@ -196,12 +198,13 @@ export class PanelSet extends Group {
                     panel2.setTranslationX(panel2PosX);
                 }
                 panel2.renderNode(interpreter, origin, angle, opacity, draw2D);
-                if (panel2.getValueJS("suppressLeftArrow")) {
-                    showLeftArrow = false;
-                }
                 showRightArrow = panel2.getValueJS("hasNextPanel") === true;
             } else {
                 panel.renderNode(interpreter, origin, angle, opacity, draw2D);
+            }
+            const focusPanel = this.panels[this.focusIndex];
+            if (showLeftArrow && focusPanel.getValueJS("suppressLeftArrow") === true) {
+                showLeftArrow = false;
             }
         }
         if (showLeftArrow) {
