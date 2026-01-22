@@ -592,7 +592,11 @@ function getVideoUrl(video: any): string {
     if (video.url.startsWith("http")) {
         return video.url;
     } else if (video.url.startsWith("pkg:/")) {
-        return createVideoURL(packageVideos.get(video.url.toLowerCase()));
+        const videoUrl = video.url.toLowerCase().replaceAll("//", "/");
+        const pkgVideo = packageVideos.get(videoUrl);
+        if (pkgVideo instanceof Blob) {
+            return createVideoURL(pkgVideo);
+        }
     }
     notifyAll("warning", `[video] Invalid video url: ${video.url}`);
     return "";
