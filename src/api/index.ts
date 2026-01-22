@@ -163,6 +163,7 @@ export async function initialize(customDeviceInfo?: Partial<DeviceInfo>, options
             "remoteControls",
             "audioCodecs",
             "videoFormats",
+            "drmInfo",
         ];
         for (const key of invalidKeys) {
             if (key in customDeviceInfo) {
@@ -241,6 +242,8 @@ export async function initialize(customDeviceInfo?: Partial<DeviceInfo>, options
     subscribeSound("api", (event: string, data: any) => {
         if (["error", "warning"].includes(event)) {
             apiException(event, data);
+        } else if (event === "debug") {
+            deviceDebug(`debug,${data}\r\n`);
         } else if (event === "home") {
             terminate(AppExitReason.UserNav);
         }
@@ -248,6 +251,8 @@ export async function initialize(customDeviceInfo?: Partial<DeviceInfo>, options
     subscribeVideo("api", (event: string, data: any) => {
         if (["error", "warning"].includes(event)) {
             apiException(event, data);
+        } else if (event === "debug") {
+            deviceDebug(`debug,${data}\r\n`);
         } else if (event === "bandwidth") {
             latestBandwidth = data;
         } else if (event === "http.connect" && httpConnectLog) {
