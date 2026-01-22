@@ -6,7 +6,16 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { SubscribeCallback, formatLocale, saveDataBuffer } from "./util";
-import { BufferType, DataType, MediaEvent, MediaErrorCode, Platform, MediaTrack, DeviceInfo } from "../core/common";
+import {
+    BufferType,
+    DataType,
+    MediaEvent,
+    MediaErrorCode,
+    Platform,
+    MediaTrack,
+    DeviceInfo,
+    DrmInfoEntry,
+} from "../core/common";
 import Hls from "hls.js";
 
 // Video Objects
@@ -853,21 +862,7 @@ export function initDrmDetection() {
     }
 }
 
-type DrmInfoEntry = {
-    multikey: boolean;
-    securestop: boolean;
-    tee: boolean;
-    version: string;
-    securityLevel: string;
-    keySystem: string;
-    robustness: string;
-};
-
-type DrmSystemDefinition = {
-    name: "PlayReady" | "Widevine";
-    keySystems: string[];
-    version: string;
-};
+type DrmSystemDefinition = { name: "PlayReady" | "Widevine"; keySystems: string[]; version: string };
 
 const DRM_SYSTEMS: DrmSystemDefinition[] = [
     {
@@ -892,14 +887,8 @@ const DRM_AUDIO_CONTENT_TYPES = ['audio/mp4; codecs="mp4a.40.2"'];
 const DRM_SESSION_TYPES: MediaKeySessionType[] = ["temporary", "persistent-license"];
 
 const ROBUSTNESS_PRESETS = {
-    hardware: {
-        video: "HW_SECURE_ALL",
-        audio: "HW_SECURE_CRYPTO",
-    },
-    software: {
-        video: "SW_SECURE_DECODE",
-        audio: "SW_SECURE_CRYPTO",
-    },
+    hardware: { video: "HW_SECURE_ALL", audio: "HW_SECURE_CRYPTO" },
+    software: { video: "SW_SECURE_DECODE", audio: "SW_SECURE_CRYPTO" },
 } as const;
 
 const DRM_FALLBACK = new Map<string, DrmInfoEntry>([

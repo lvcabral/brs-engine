@@ -50,7 +50,7 @@ export interface DeviceInfo {
     models?: Map<string, string[]>;
     audioCodecs?: string[];
     videoFormats?: Map<string, string[]>;
-    drmInfo?: Map<string, any>;
+    drmInfo?: Map<string, DrmInfoEntry>;
     appList?: AppData[];
     entryPoint?: boolean;
     debugOnCrash?: boolean;
@@ -732,6 +732,17 @@ export const MaxSoundStreams = 3;
 export const AudioExt = new Set<string>(["wav", "mp2", "mp3", "m4a", "aac", "ogg", "oga", "ac3", "wma", "flac"]);
 
 export const VideoExt = new Set<string>(["mp4", "m4v", "mkv", "mov"]);
+
+// DRM Info Entry
+export type DrmInfoEntry = {
+    multikey: boolean;
+    securestop: boolean;
+    tee: boolean;
+    version: string;
+    securityLevel: string;
+    keySystem: string;
+    robustness: string;
+};
 
 /**
  * Detects the platform where the BrightScript engine is running.
