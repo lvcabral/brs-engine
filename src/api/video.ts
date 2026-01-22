@@ -967,7 +967,7 @@ async function detectDrmInfo(): Promise<Map<string, DrmInfoEntry>> {
     if (!Platform.inBrowser || !navigator.requestMediaKeySystemAccess) {
         notifyAll("warning", "[video] DRM detection not supported in this environment.");
         return new Map(DRM_FALLBACK);
-    } else if (typeof window !== "undefined" && !window.isSecureContext) {
+    } else if (typeof globalThis !== "undefined" && !globalThis.isSecureContext) {
         notifyAll("warning", "[video] DRM detection requires a secure context (https or electron secure).");
         return new Map(DRM_FALLBACK);
     }
