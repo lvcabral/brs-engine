@@ -944,12 +944,12 @@ const DRM_SAFARI = new Map<string, DrmInfoEntry>([
     ],
 ]);
 
-const DRM_CAPABILITY_PRESETS: Array<{ video?: string; audio?: string }> = [
+const DRM_CAPABILITY_PRESETS: { video?: string; audio?: string }[] = [
     { video: ROBUSTNESS_PRESETS.hardware.video, audio: ROBUSTNESS_PRESETS.hardware.audio },
     { video: ROBUSTNESS_PRESETS.software.video, audio: ROBUSTNESS_PRESETS.software.audio },
 ];
 
-const DRM_SESSION_VARIANTS: Array<{ sessionTypes: MediaKeySessionType[]; persistentState: MediaKeysRequirement }> = [
+const DRM_SESSION_VARIANTS: { sessionTypes: MediaKeySessionType[]; persistentState: MediaKeysRequirement }[] = [
     { sessionTypes: DRM_SESSION_TYPES, persistentState: "required" },
     { sessionTypes: DRM_SESSION_TYPES, persistentState: "optional" },
     { sessionTypes: ["temporary"], persistentState: "optional" },
