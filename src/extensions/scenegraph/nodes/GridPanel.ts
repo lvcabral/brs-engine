@@ -1,4 +1,4 @@
-import { AAMember, BrsType, Int32 } from "brs-engine";
+import { AAMember, BrsType, Float, Int32 } from "brs-engine";
 import { FieldKind, FieldModel } from "../SGTypes";
 import { ArrayGrid, Label, MarkupGrid, PosterGrid, SGNodeType } from ".";
 import { Panel, PanelSizeValue } from "./Panel";
@@ -19,6 +19,8 @@ export class GridPanel extends Panel {
     private readonly leftLabel: Label;
     private readonly rightLabel: Label;
     private readonly labelsAreaHeight: number;
+    private readonly labelOffsetX: number;
+    private readonly labelOffsetY: number;
     public nextPanelCallback?: (panel: Panel) => void;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.GridPanel) {
@@ -29,16 +31,20 @@ export class GridPanel extends Panel {
         this.registerInitializedFields(initializedFields);
 
         if (this.resolution === "FHD") {
-            this.leftLabel = this.addLabel("", [0, 0], 0, 0, 27, "top", "left");
-            this.rightLabel = this.addLabel("", [0, 0], 0, 0, 27, "top", "right");
+            this.labelOffsetX = 9;
+            this.labelOffsetY = 18;
+            this.leftLabel = this.addLabel("", [this.labelOffsetX, this.labelOffsetY], 0, 0, 27, "bottom", "left");
+            this.rightLabel = this.addLabel("", [this.labelOffsetX, this.labelOffsetY], 0, 0, 27, "bottom", "right");
             this.labelsAreaHeight = 69;
         } else {
-            this.leftLabel = this.addLabel("", [0, 0], 0, 0, 18, "top", "left");
-            this.rightLabel = this.addLabel("", [0, 0], 0, 0, 18, "top", "right");
+            this.labelOffsetX = 6;
+            this.labelOffsetY = 12;
+            this.leftLabel = this.addLabel("", [this.labelOffsetX, this.labelOffsetY], 0, 0, 18, "bottom", "left");
+            this.rightLabel = this.addLabel("", [this.labelOffsetX, this.labelOffsetY], 0, 0, 18, "bottom", "right");
             this.labelsAreaHeight = 46;
         }
-        this.setValueSilent("leftLabel", this.leftLabel);
-        this.setValueSilent("rightLabel", this.rightLabel);
+        super.setValueSilent("leftLabel", this.leftLabel);
+        super.setValueSilent("rightLabel", this.rightLabel);
     }
 
     setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind) {
@@ -55,6 +61,24 @@ export class GridPanel extends Panel {
             super.setValue("list", value, alwaysNotify, kind);
             value.itemFocusCallback = this.onItemFocusChanged.bind(this);
             return;
+        } else if (["leftlabel", "rightlabel"].includes(fieldName)) {
+            return; // Read-only fields; do not set
+        } else if (["width", "height"].includes(fieldName)) {
+            super.setValue(index, value, alwaysNotify, kind);
+            const arrayGrid = this.getValue("arrayGrid");
+            if (arrayGrid instanceof ArrayGrid) {
+                arrayGrid.setValueSilent(index, value);
+            }
+            const leftLabel = this.getValue("leftLabel");
+            if (leftLabel instanceof Label && fieldName === "width") {
+                const width = this.getValueJS("width");
+                leftLabel.setValueSilent(index, new Float(width - this.labelOffsetX * 5));
+            }
+            const rightLabel = this.getValue("rightLabel");
+            if (rightLabel instanceof Label && fieldName === "width") {
+                const width = this.getValueJS("width");
+                rightLabel.setValueSilent(index, new Float(width - this.labelOffsetX * 5));
+            }
         } else if (fieldName === "nextpanel") {
             const hasNextPanel = this.getValueJS("hasNextPanel") === true;
             if (hasNextPanel && value instanceof Panel && this.nextPanelCallback) {
@@ -70,15 +94,6 @@ export class GridPanel extends Panel {
             return arrayGrid.setNodeFocus(focusOn);
         }
         return super.setNodeFocus(focusOn);
-    }
-
-    protected setSizeAndPosition(sizeValue: PanelSizeValue) {
-        super.setSizeAndPosition(sizeValue);
-        const grid = this.getValue("arrayGrid");
-        if (grid instanceof PosterGrid || grid instanceof MarkupGrid) {
-            grid.setValueSilent("width", this.getValue("width"));
-            grid.setValueSilent("height", this.getValue("height"));
-        }
     }
 
     private onItemFocusChanged(index: number) {
