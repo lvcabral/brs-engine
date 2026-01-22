@@ -638,7 +638,22 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter) => {
-            return new RoAssociativeArray([]);
+            const drmInfo = BrsDevice.deviceInfo.drmInfo;
+            if (!drmInfo?.size) {
+                return new RoAssociativeArray([]);
+            }
+            const result: { name: BrsString; value: BrsType }[] = [];
+            for (const [drmName, info] of drmInfo) {
+                const drmProps: { name: BrsString; value: BrsType }[] = [
+                    { name: new BrsString("multikey"), value: BrsBoolean.from(info.multikey) },
+                    { name: new BrsString("securestop"), value: BrsBoolean.from(info.securestop) },
+                    { name: new BrsString("tee"), value: BrsBoolean.from(info.tee) },
+                    { name: new BrsString("version"), value: new BrsString(info.version) },
+                    { name: new BrsString("securityLevel"), value: new BrsString(info.securityLevel) },
+                ];
+                result.push({ name: new BrsString(drmName), value: new RoAssociativeArray(drmProps) });
+            }
+            return new RoAssociativeArray(result);
         },
     });
 

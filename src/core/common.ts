@@ -50,6 +50,7 @@ export interface DeviceInfo {
     models?: Map<string, string[]>;
     audioCodecs?: string[];
     videoFormats?: Map<string, string[]>;
+    drmInfo?: Map<string, any>;
     appList?: AppData[];
     entryPoint?: boolean;
     debugOnCrash?: boolean;

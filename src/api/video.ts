@@ -92,6 +92,7 @@ export function initVideoModule(array: Int32Array, deviceInfo: DeviceInfo, mute:
     deviceData = deviceInfo;
     sharedArray = array;
     resetVideo();
+    initDrmDetection();
 }
 /**
  * Calculates video download bandwidth based on buffered data.
@@ -620,6 +621,7 @@ let ending = false;
 /**
  * Advances to the next video in the playlist.
  * Handles looping, single video repeat, and end-of-playlist.
+ * Called on video 'ended' event or explicitly via setNextVideo.
  */
 function nextVideo() {
     if (ending) {
@@ -833,4 +835,226 @@ function destroyHls() {
     hls?.detachMedia();
     hls?.destroy();
     hls = undefined;
+}
+
+/**
+ * Initializes DRM detection asynchronously and updates device data.
+ * Should be called during module initialization.
+ */
+export function initDrmDetection() {
+    if (Platform.inBrowser) {
+        detectDrmInfo()
+            .then((drmInfo) => {
+                deviceData.drmInfo = drmInfo;
+            })
+            .catch((err: any) => {
+                notifyAll("error", `[video] Failed to detect DRM info: ${err.message}`);
+            });
+    }
+}
+
+type DrmInfoEntry = {
+    multikey: boolean;
+    securestop: boolean;
+    tee: boolean;
+    version: string;
+    securityLevel: string;
+    keySystem: string;
+    robustness: string;
+};
+
+type DrmSystemDefinition = {
+    name: "PlayReady" | "Widevine";
+    keySystems: string[];
+    version: string;
+};
+
+const DRM_SYSTEMS: DrmSystemDefinition[] = [
+    {
+        name: "PlayReady",
+        version: "2.5",
+        keySystems: [
+            "com.microsoft.playready",
+            "com.microsoft.playready.recommendation",
+            "com.microsoft.playready.hardware",
+        ],
+    },
+    {
+        name: "Widevine",
+        version: "widevine 16.4.0",
+        keySystems: ["com.widevine.alpha"],
+    },
+];
+
+const DRM_INIT_DATA_TYPES = ["cenc", "keyids", "webm"];
+const DRM_VIDEO_CONTENT_TYPES = ['video/mp4; codecs="avc1.42E01E"', 'video/webm; codecs="vp9"'];
+const DRM_AUDIO_CONTENT_TYPES = ['audio/mp4; codecs="mp4a.40.2"'];
+const DRM_SESSION_TYPES: MediaKeySessionType[] = ["temporary", "persistent-license"];
+
+const ROBUSTNESS_PRESETS = {
+    hardware: {
+        video: "HW_SECURE_ALL",
+        audio: "HW_SECURE_CRYPTO",
+    },
+    software: {
+        video: "SW_SECURE_DECODE",
+        audio: "SW_SECURE_CRYPTO",
+    },
+} as const;
+
+const DRM_FALLBACK = new Map<string, DrmInfoEntry>([
+    [
+        "PlayReady",
+        {
+            multikey: false,
+            securestop: false,
+            tee: false,
+            version: "playready 2.5",
+            securityLevel: "2000",
+            keySystem: "com.microsoft.playready",
+            robustness: ROBUSTNESS_PRESETS.software.video,
+        },
+    ],
+    [
+        "Widevine",
+        {
+            multikey: true,
+            securestop: true,
+            tee: false,
+            version: "widevine 16.4.0",
+            securityLevel: "2",
+            keySystem: "com.widevine.alpha",
+            robustness: ROBUSTNESS_PRESETS.software.video,
+        },
+    ],
+]);
+
+const DRM_SAFARI = new Map<string, DrmInfoEntry>([
+    [
+        "FairPlay",
+        {
+            multikey: true,
+            securestop: true,
+            tee: true,
+            version: "fairplay 4.0",
+            securityLevel: "1",
+            keySystem: "com.apple.fps.1_0",
+            robustness: ROBUSTNESS_PRESETS.hardware.video,
+        },
+    ],
+]);
+
+const DRM_CAPABILITY_PRESETS: Array<{ video?: string; audio?: string }> = [
+    { video: ROBUSTNESS_PRESETS.hardware.video, audio: ROBUSTNESS_PRESETS.hardware.audio },
+    { video: ROBUSTNESS_PRESETS.software.video, audio: ROBUSTNESS_PRESETS.software.audio },
+];
+
+const DRM_SESSION_VARIANTS: Array<{ sessionTypes: MediaKeySessionType[]; persistentState: MediaKeysRequirement }> = [
+    { sessionTypes: DRM_SESSION_TYPES, persistentState: "required" },
+    { sessionTypes: DRM_SESSION_TYPES, persistentState: "optional" },
+    { sessionTypes: ["temporary"], persistentState: "optional" },
+];
+
+/**
+ * Gets DRM system information and capabilities from the browser.
+ * Uses Encrypted Media Extensions (EME) API to detect PlayReady and Widevine support.
+ * Adds explicit robustness requirements to avoid UA warnings and surface the selected security tier.
+ * @returns Promise that resolves to a Map with DRM system info objects
+ */
+async function detectDrmInfo(): Promise<Map<string, DrmInfoEntry>> {
+    const drmInfo = new Map<string, DrmInfoEntry>();
+    const probeErrors: string[] = [];
+    if (!Platform.inBrowser || !navigator.requestMediaKeySystemAccess) {
+        notifyAll("warning", "[video] DRM detection not supported in this environment.");
+        return new Map(DRM_FALLBACK);
+    } else if (typeof window !== "undefined" && !window.isSecureContext) {
+        notifyAll("warning", "[video] DRM detection requires a secure context (https or electron secure).");
+        return new Map(DRM_FALLBACK);
+    }
+    if (Platform.inSafari) {
+        return new Map(DRM_SAFARI);
+    }
+    for (const system of DRM_SYSTEMS) {
+        for (const keySystem of system.keySystems) {
+            try {
+                const configs = buildMediaKeyConfigs(system.name, keySystem);
+                const access = await navigator.requestMediaKeySystemAccess(keySystem, configs);
+                const configUsed = access.getConfiguration();
+                const robustness = configUsed.videoCapabilities?.[0]?.robustness ?? "";
+                const hardware = robustness.startsWith("HW_") || keySystem.includes("hardware");
+                const sessionTypes = configUsed.sessionTypes ?? [];
+                const persistentState = configUsed.persistentState ?? "optional";
+                const securestop = persistentState === "required" || sessionTypes.includes("persistent-license");
+                const securityLevel = system.name === "Widevine" ? (hardware ? "1" : "3") : hardware ? "3000" : "2000";
+
+                drmInfo.set(system.name, {
+                    multikey: sessionTypes.includes("persistent-license"),
+                    securestop,
+                    tee: hardware,
+                    version: system.version,
+                    securityLevel,
+                    keySystem,
+                    robustness,
+                });
+                break;
+            } catch (error: any) {
+                probeErrors.push(error?.message ?? String(error));
+            }
+        }
+    }
+    if (drmInfo.size === 0) {
+        notifyAll(
+            "warning",
+            `[video] DRM detection fallback due to: ${
+                probeErrors.length ? "unsupported key systems" : "no drm interfaces"
+            }`
+        );
+        return new Map(DRM_FALLBACK);
+    }
+    notifyAll("debug", `[video] DRM info detected: ${JSON.stringify(Array.from(drmInfo.entries()))}`);
+    return drmInfo;
+}
+
+/**
+ * Builds MediaKeySystemConfiguration array for DRM capability testing.
+ * Creates configurations with different robustness and session type combinations.
+ * @param systemName DRM system name ("PlayReady" or "Widevine")
+ * @param keySystem Key system identifier string
+ * @returns Array of MediaKeySystemConfiguration objects to test
+ */
+function buildMediaKeyConfigs(systemName: string, keySystem: string): MediaKeySystemConfiguration[] {
+    const prefersHardware = keySystem.includes("hardware") || systemName === "Widevine";
+    const configs: MediaKeySystemConfiguration[] = [];
+    const seen = new Set<string>();
+    for (const preset of DRM_CAPABILITY_PRESETS) {
+        if (preset === DRM_CAPABILITY_PRESETS[0] && !prefersHardware) {
+            continue;
+        }
+        for (const session of DRM_SESSION_VARIANTS) {
+            const signature = `${preset.video ?? "none"}-${preset.audio ?? "none"}-${session.sessionTypes.join(",")}-${
+                session.persistentState
+            }`;
+            if (seen.has(signature)) {
+                continue;
+            }
+            seen.add(signature);
+            configs.push({
+                initDataTypes: DRM_INIT_DATA_TYPES,
+                distinctiveIdentifier: "optional",
+                persistentState: session.persistentState,
+                sessionTypes: session.sessionTypes,
+                videoCapabilities: DRM_VIDEO_CONTENT_TYPES.map((contentType) =>
+                    preset.video && preset.video.length > 0
+                        ? { contentType, robustness: preset.video }
+                        : { contentType }
+                ),
+                audioCapabilities: DRM_AUDIO_CONTENT_TYPES.map((contentType) =>
+                    preset.audio && preset.audio.length > 0
+                        ? { contentType, robustness: preset.audio }
+                        : { contentType }
+                ),
+            });
+        }
+    }
+    return configs;
 }
