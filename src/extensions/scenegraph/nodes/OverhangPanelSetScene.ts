@@ -18,7 +18,7 @@ export class OverhangPanelSetScene extends Scene {
         this.registerInitializedFields(initializedFields);
         const overhang = SGNodeFactory.createNode(SGNodeType.Overhang) as Overhang;
         const panelSet = SGNodeFactory.createNode(SGNodeType.PanelSet) as PanelSet;
-        panelSet.sceneCallback = this.panelGotFocus.bind(this);
+        panelSet.focusedPanelCallback = this.onFocusedPanel.bind(this);
         this.setValueSilent("overhang", overhang);
         this.setValueSilent("panelSet", panelSet);
         this.appendChildToParent(overhang);
@@ -41,13 +41,13 @@ export class OverhangPanelSetScene extends Scene {
         }
     }
 
-    panelGotFocus(panel: Panel) {
+    private onFocusedPanel(panel: Panel) {
         const overhang = this.getValue("overhang") as Overhang;
-        if (overhang) {
+        overhang.setValueSilent("optionsAvailable", panel.getValue("optionsAvailable"));
+        if (panel.getValueJS("leftOrientation") === true) {
             overhang.setValueSilent("visible", panel.getValue("overhangVisible"));
             overhang.setValueSilent("title", panel.getValue("overhangTitle"));
             overhang.setValueSilent("clockText", panel.getValue("clockText"));
-            overhang.setValueSilent("optionsAvailable", panel.getValue("optionsAvailable"));
         }
     }
 }

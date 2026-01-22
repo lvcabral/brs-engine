@@ -128,8 +128,8 @@ export class Overhang extends Group {
         }
         this.copyField(this.backRect, "height");
         const title = this.getValueJS("title") as string;
+        this.title.setValue("text", new BrsString(title));
         if (title) {
-            this.title.setValue("text", new BrsString(title));
             this.copyField(this.title, "color", "titleColor");
             this.leftDivider.setValue("visible", BrsBoolean.True);
         } else {
@@ -150,6 +150,7 @@ export class Overhang extends Group {
             this.clockText.setValue("text", new BrsString(clockText));
         } else if (showClock && clockState !== "start") {
             this.clock.setValue("control", new BrsString("start"));
+            this.clockText.setValue("text", new BrsString(BrsDevice.getTime()));
         } else if (!showClock && clockState === "start") {
             this.clock.setValue("control", new BrsString("stop"));
         }
