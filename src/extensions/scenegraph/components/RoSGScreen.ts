@@ -29,7 +29,7 @@ import {
     rgbaIntToHex,
 } from "brs-engine";
 import { sgRoot } from "../SGRoot";
-import { Scene, SGNodeType } from "../nodes";
+import { OverhangPanelSetScene, Scene, SGNodeType } from "../nodes";
 import { createSceneByType, initializeNode } from "../factory/NodeFactory";
 import { RoSGScreenEvent } from "../events/RoSGScreenEvent";
 
@@ -321,6 +321,8 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
             let returnValue: BrsType;
             if (sceneType.value === SGNodeType.Scene) {
                 returnValue = new Scene([], SGNodeType.Scene);
+            } else if (sceneType.value === SGNodeType.OverhangPanelSetScene) {
+                returnValue = new OverhangPanelSetScene([], SGNodeType.OverhangPanelSetScene);
             } else if (sgRoot.nodeDefMap.has(sceneType.value.toLowerCase())) {
                 returnValue = createSceneByType(interpreter, sceneType.value);
             } else {

@@ -44,23 +44,28 @@ export class Label extends Group {
     setValue(index: string, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
         const fieldName = index.toLowerCase();
         const resetFields = ["text", "font", "width", "height", "numlines", "maxlines", "wrap", "linespacing"];
-        if (resetFields.includes(fieldName)) {
-            // Reset the flag if any relevant field changed and the label is not re-measured yet
-            this.setEllipsized(false);
-            this.measured = undefined;
-        }
         let setDirty = true;
         if (!this.isDirty && fieldName === "text" && this.getValueJS("text") === value.toString()) {
             setDirty = false;
         }
         super.setValue(index, value, alwaysNotify, kind);
+        if (resetFields.includes(fieldName)) {
+            // Reset the flag if any relevant field changed and the label is not re-measured yet
+            this.setEllipsized(false);
+            this.measured = undefined;
+            this.getMeasured(); // force re-measure
+        }
         this.isDirty = setDirty;
     }
 
     getMeasured() {
         if (this.measured === undefined) {
             const size = this.getDimensions();
-            this.measured = this.renderLabel({ x: 0, y: 0, ...size }, 0, 1);
+            const rect: Rect = { x: 0, y: 0, ...size };
+            this.measured = this.renderLabel(rect, 0, 1);
+            rect.width = Math.max(this.measured.width, size.width);
+            rect.height = Math.max(this.measured.height, size.height);
+            this.rectLocal = { x: 0, y: 0, width: rect.width, height: rect.height };
         }
         return this.measured;
     }

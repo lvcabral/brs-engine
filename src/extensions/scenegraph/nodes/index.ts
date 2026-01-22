@@ -23,7 +23,11 @@ export * from "./MarkupList";
 export * from "./MiniKeyboard";
 export * from "./Node";
 export * from "./Overhang";
+export * from "./OverhangPanelSetScene";
 export * from "./Panel";
+export * from "./PanelSet";
+export * from "./ListPanel";
+export * from "./GridPanel";
 export * from "./Poster";
 export * from "./PosterGrid";
 export * from "./RSGPalette";
@@ -65,11 +69,11 @@ export enum SGNodeType {
     TargetSet = "TargetSet", // Not yet implemented
     ButtonGroup = "ButtonGroup",
     Button = "Button",
-    Panel = "Panel", // Not yet implemented
-    PanelSet = "PanelSet", // Not yet implemented
-    ListPanel = "ListPanel", // Not yet implemented
-    GridPanel = "GridPanel", // Not yet implemented
-    OverhangPanelSetScene = "OverhangPanelSetScene", // Not yet implemented
+    Panel = "Panel",
+    PanelSet = "PanelSet",
+    ListPanel = "ListPanel",
+    GridPanel = "GridPanel",
+    OverhangPanelSetScene = "OverhangPanelSetScene",
     Dialog = "Dialog",
     KeyboardDialog = "KeyboardDialog",
     PinPad = "PinPad", // Not yet implemented

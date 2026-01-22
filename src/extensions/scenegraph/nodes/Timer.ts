@@ -6,7 +6,7 @@ import { SGNodeType } from ".";
 
 export class Timer extends Node {
     readonly defaultFields: FieldModel[] = [
-        { name: "control", type: "string" },
+        { name: "control", type: "string", value: "none" },
         { name: "repeat", type: "boolean", value: "false" },
         { name: "duration", type: "time", value: "1.0" },
         { name: "fire", type: "object", alwaysNotify: true },

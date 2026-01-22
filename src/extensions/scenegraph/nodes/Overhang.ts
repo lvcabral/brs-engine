@@ -43,6 +43,7 @@ export class Overhang extends Group {
         { name: "rightDividerVertOffset", type: "float", value: "0.0" },
         { name: "height", type: "float", value: "115" },
     ];
+    private readonly clock: Timer;
     private readonly backRect: Rectangle;
     private readonly backPoster: Poster;
     private readonly optionsIcon: Poster;
@@ -56,7 +57,6 @@ export class Overhang extends Group {
     private readonly optionsOff: string = "common:/images/icon_options_off.png";
     private readonly width: number;
     private height: number;
-    private realign: boolean;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.Overhang) {
         super([], name);
@@ -101,14 +101,13 @@ export class Overhang extends Group {
         this.backRect.setValueSilent("visible", BrsBoolean.False);
         this.optionsText.setValue("text", new BrsString(BrsDevice.getTerm("for Options")));
         this.clockText.setValue("text", new BrsString(BrsDevice.getTime()));
-        const clock = new Timer();
-        clock.setCallback(() => {
+        this.clock = new Timer();
+        this.clock.setCallback(() => {
             this.clockText.setValue("text", new BrsString(BrsDevice.getTime()));
         });
-        clock.setValueSilent("repeat", BrsBoolean.True);
-        clock.setValue("control", new BrsString("start"));
-        this.appendChildToParent(clock);
-        this.realign = false;
+        this.clock.setValueSilent("repeat", BrsBoolean.True);
+        this.clock.setValue("control", new BrsString("start"));
+        this.appendChildToParent(this.clock);
     }
 
     private updateChildren() {
@@ -129,8 +128,8 @@ export class Overhang extends Group {
         }
         this.copyField(this.backRect, "height");
         const title = this.getValueJS("title") as string;
+        this.title.setValue("text", new BrsString(title));
         if (title) {
-            this.title.setValue("text", new BrsString(title));
             this.copyField(this.title, "color", "titleColor");
             this.leftDivider.setValue("visible", BrsBoolean.True);
         } else {
@@ -142,8 +141,21 @@ export class Overhang extends Group {
         const optionsVisible = showOptions && optionsAvailable;
         this.optionsIcon.setValue("visible", BrsBoolean.from(optionsVisible));
         this.optionsText.setValue("visible", BrsBoolean.from(optionsVisible));
+        // Update clock
         const showClock = this.getValueJS("showClock") as boolean;
+        const clockText = this.getValueJS("clockText") as string;
+        const clockState = this.clock.getValueJS("control") as string;
+        if (showClock && clockText) {
+            this.clock.setValue("control", new BrsString("stop"));
+            this.clockText.setValue("text", new BrsString(clockText));
+        } else if (showClock && clockState !== "start") {
+            this.clock.setValue("control", new BrsString("start"));
+            this.clockText.setValue("text", new BrsString(BrsDevice.getTime()));
+        } else if (!showClock && clockState === "start") {
+            this.clock.setValue("control", new BrsString("stop"));
+        }
         this.clockText.setValue("visible", BrsBoolean.from(showClock));
+        // Update options
         if (optionsAvailable) {
             this.optionsIcon.setValue("uri", new BrsString(this.optionsOn));
             this.copyField(this.optionsIcon, "blendColor", "optionsIconColor");
@@ -177,7 +189,7 @@ export class Overhang extends Group {
         const isDeviceFHD = BrsDevice.getDisplayMode() === "FHD";
         const leftAlignX = isFHD ? 102 : 68;
         const topAlignY = isFHD ? 60 : 40;
-        const logoWidth = this.logo.rectLocal.width;
+        const logoWidth = this.logo.getValueJS("bitmapWidth") as number;
         const optionsWidth = this.optionsText.rectLocal.width ?? (isFHD ? 168 : 112);
         const showClock = this.getValueJS("showClock") as boolean;
         const clockTextWidth = showClock ? this.clockText.rectLocal.width : 0;
@@ -204,11 +216,9 @@ export class Overhang extends Group {
         if (isDeviceFHD !== isFHD) {
             this.logo.setTranslation([leftAlignX, topAlignY]);
         }
-        this.realign = false;
     }
 
     setValue(index: string, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
-        this.realign = true;
         const fieldName = index.toLowerCase();
         if (fieldName === "height" && isNumberComp(value)) {
             this.height = jsValueOf(value) as number;
@@ -222,6 +232,7 @@ export class Overhang extends Group {
         }
         if (this.isDirty) {
             this.updateChildren();
+            this.alignChildren();
         }
         const size = this.getDimensions();
         const rect = { x: origin[0], y: origin[1], width: size.width, height: size.height };
@@ -229,8 +240,5 @@ export class Overhang extends Group {
         this.updateBoundingRects(rect, origin, angle);
         this.renderChildren(interpreter, origin, angle, opacity, draw2D);
         this.updateParentRects(origin, angle);
-        if (this.realign) {
-            this.alignChildren();
-        }
     }
 }
