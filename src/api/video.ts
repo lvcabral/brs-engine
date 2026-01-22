@@ -862,7 +862,7 @@ export function initDrmDetection() {
     }
 }
 
-type DrmSystemDefinition = { name: "PlayReady" | "Widevine"; keySystems: string[]; version: string };
+type DrmSystemDefinition = { name: "PlayReady" | "Widevine" | "FairPlay"; keySystems: string[]; version: string };
 
 const DRM_SYSTEMS: DrmSystemDefinition[] = [
     {
