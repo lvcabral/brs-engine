@@ -1,7 +1,7 @@
 import { AAMember, BrsType, Float, Int32 } from "brs-engine";
 import { FieldKind, FieldModel } from "../SGTypes";
-import { ArrayGrid, Label, MarkupGrid, PosterGrid, SGNodeType } from ".";
-import { Panel, PanelSizeValue } from "./Panel";
+import { ArrayGrid, Label, SGNodeType } from ".";
+import { Panel } from "./Panel";
 
 export class GridPanel extends Panel {
     readonly defaultFields: FieldModel[] = [
