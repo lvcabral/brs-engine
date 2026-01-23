@@ -508,12 +508,19 @@ export class RoDateTime extends BrsComponent implements BrsValue {
     /** Return an ISO 8601 representation of the date/time value */
     private readonly toISOString = new Callable("toISOString", {
         signature: {
-            args: [],
+            args: [
+                new StdlibArgument("milliseconds", ValueKind.String, BrsInvalid.Instance),
+            ],
             returns: ValueKind.String,
         },
-        impl: (_: Interpreter) => {
+        impl: (_: Interpreter, milliseconds: BrsType) => {
             const date = new Date(this.markTime);
-            return new BrsString(date.toISOString().split(".")[0] + "Z");
+            const isoString = date.toISOString();
+            if (milliseconds.toString().toLowerCase() === "milliseconds") {
+                return new BrsString(isoString);
+            }
+            // Otherwise, return without milliseconds (current behavior)
+            return new BrsString(isoString.split(".")[0] + "Z");
         },
     });
 

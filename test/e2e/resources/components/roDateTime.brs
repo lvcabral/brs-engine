@@ -22,6 +22,7 @@ sub Main()
     print "Last Day of Month: " date.getLastDayOfMonth()
     print "Milliseconds: " date.getMilliseconds()
     print "ISO String UTC: " date.toISOString()
+    print "ISO String UTC with milliseconds: " date.toISOString("milliseconds")
     print "Empty Format: " date.AsDateString("")
     print "Invalid Format: " date.AsDateString("invalid")
     print "------ New asDateStringLoc ------"

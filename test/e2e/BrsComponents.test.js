@@ -300,6 +300,7 @@ describe("end to end brightscript functions", () => {
             "Last Day of Month:  30",
             "Milliseconds:  160",
             "ISO String UTC: 2010-11-12T13:14:15Z",
+            "ISO String UTC with milliseconds: 2010-11-12T13:14:15.160Z",
             "Empty Format: Friday November 12, 2010",
             "Invalid Format: Friday November 12, 2010",
             "------ New asDateStringLoc ------",
