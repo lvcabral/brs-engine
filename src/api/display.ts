@@ -304,6 +304,7 @@ function drawVideoFrame() {
         // Clear buffer on first frame to avoid artifacts form previous apps
         bufferCtx.clearRect(0, 0, bufferCanvas.width, bufferCanvas.height);
         lastImage = null;
+        firstFrame = false;
     }
     videoLoop = true;
     let left = videoRect.x;
