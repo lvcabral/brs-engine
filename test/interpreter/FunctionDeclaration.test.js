@@ -225,8 +225,8 @@ describe("interpreter function declarations", () => {
                 )
             ),
         ];
-
-        expect(() => interpreter.exec(statements)).not.toThrow();
+        const result = interpreter.scanApp(statements);
+        expect(() => interpreter.execApp(result)).not.toThrow();
         expect(allArgs(stdout.write).join("")).toEqual("foo\r\n");
     });
 });

@@ -579,7 +579,9 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
                 return new BrsString(sprintf(this.intrinsic.value, ...args));
             } catch (err: any) {
                 if (BrsDevice.isDevMode) {
-                    BrsDevice.stderr.write(`warning,roString.format() Error: ${err.message}`);
+                    BrsDevice.stderr.write(
+                        `warning,roString.format() Error: ${err.message} at ${interpreter.formatLocation()}`
+                    );
                 }
                 const errorDetail = err.message?.includes("expecting number")
                     ? RuntimeErrorDetail.TypeMismatch

@@ -142,6 +142,8 @@ export async function getComponentDefinitionMap(
             xmlFiles.push(...fs.findSync(dirPath, "xml"));
         }
     }
+    // sort files to ensure consistent processing order
+    xmlFiles.sort((a, b) => a.localeCompare(b));
 
     const defs = xmlFiles.map((file) => new ComponentDefinition(file));
     const parsedPromises = defs.map(async (def) => def.parse());

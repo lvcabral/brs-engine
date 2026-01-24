@@ -21,8 +21,12 @@ export class NotFound extends Error {
     }
 }
 
+/** A counter to assign unique IDs to Environment instances. */
+let envCounter = 0;
+
 /** Holds a set of values in multiple scopes and provides access operations to them. */
 export class Environment {
+    public readonly id = envCounter++;
     constructor(mPointer: RoAssociativeArray, rootM?: RoAssociativeArray) {
         if (!rootM) {
             this.rootM = mPointer;

@@ -91,7 +91,7 @@ if (typeof onmessage !== "undefined") {
     onmessage = function (event: MessageEvent) {
         if (isAppPayload(event.data)) {
             loadExtensions(event.data);
-            executeFile(event.data);
+            executeFile(event.data, {}, true);
         } else if (isTaskPayload(event.data)) {
             postMessage(`debug,[core] Task payload received: ${event.data.taskData.name}`);
             loadExtensions(event.data);
@@ -589,10 +589,15 @@ export async function createPayloadFromFiles(
  * Runs a BrightScript app with full zip folder structure.
  * @param payload with the source code, manifest and all the assets of the app.
  * @param customOptions optional object with the output streams.
+ * @param useMainEnv whether to use the main environment or create a new one.
  *
  * @returns RunResult with the end reason and (optionally) the encrypted data.
  */
-export async function executeFile(payload: AppPayload, customOptions?: Partial<ExecutionOptions>): Promise<RunResult> {
+export async function executeFile(
+    payload: AppPayload,
+    customOptions?: Partial<ExecutionOptions>,
+    useMainEnv?: boolean
+): Promise<RunResult> {
     const options = {
         entryPoint: payload.device.entryPoint ?? true,
         stopOnCrash: payload.device.debugOnCrash ?? false,
@@ -608,7 +613,7 @@ export async function executeFile(payload: AppPayload, customOptions?: Partial<E
         return { exitReason: AppExitReason.Crashed };
     }
     // Setup the interpreter
-    const interpreter = await createInterpreter(options, payload);
+    const interpreter = await createInterpreter(options, useMainEnv);
     const sourceResult = setupPayload(interpreter, payload);
     // Run the BrightScript app
     BrsDevice.lastKeyTime = Date.now();
@@ -648,8 +653,9 @@ export async function executeTask(payload: TaskPayload, customOptions?: Partial<
         return;
     }
     // Setup the interpreter
-    const interpreter = await createInterpreter(options, payload);
+    const interpreter = await createInterpreter(options);
     const sourceResult = setupPayload(interpreter, payload);
+    await runBeforeExecuteHooks(interpreter, payload);
     // Run the BrightScript Task
     try {
         for (const ext of interpreter.extensions.values()) {
@@ -665,9 +671,7 @@ export async function executeTask(payload: TaskPayload, customOptions?: Partial<
         if (BrsDevice.registry.isDirty) {
             BrsDevice.flushRegistry();
         }
-        if (BrsDevice.isDevMode) {
-            postMessage(`debug,[core] Task ${payload.taskData.name} is done.`);
-        }
+        postMessage(`debug,[core] Task ${payload.taskData.name} is done.`);
     } catch (err: any) {
         if (TerminateReasons.includes(err.message)) {
             const reason = err.message === "debug-exit" ? AppExitReason.Stopped : AppExitReason.UserNav;
@@ -690,20 +694,14 @@ export async function executeTask(payload: TaskPayload, customOptions?: Partial<
  * Creates and configures a new Interpreter instance.
  * @param options Partial execution options to configure the interpreter
  * @param payload App or Task payload being executed
+ * @param useMainEnv whether to use the main environment or create a new one
  * @returns Promise resolving to configured Interpreter instance
  */
-async function createInterpreter(options: Partial<ExecutionOptions>, payload: AppPayload | TaskPayload) {
+async function createInterpreter(options: Partial<ExecutionOptions>, useMainEnv: boolean = false) {
     BrsDevice.bscs.clear();
     BrsDevice.stats.clear();
     BrsDevice.nodes.clear();
-    const extensions = instantiateExtensions();
-    // Create the interpreter
-    const interpreter = new Interpreter(options);
-    if (extensions.length > 0) {
-        attachExtensions(interpreter, extensions);
-        await runBeforeExecuteHooks(interpreter, payload);
-    }
-    return interpreter;
+    return new Interpreter(options, useMainEnv);
 }
 
 /**
@@ -724,9 +722,13 @@ function attachExtensions(interpreter: Interpreter, extensions: BrsExtension[]) 
  * @param payload App or Task payload being executed
  */
 async function runBeforeExecuteHooks(interpreter: Interpreter, payload: AppPayload | TaskPayload) {
-    for (const ext of interpreter.extensions.values()) {
-        if (ext.onBeforeExecute) {
-            await ext.onBeforeExecute(interpreter, payload);
+    const extensions = instantiateExtensions();
+    if (extensions.length > 0) {
+        attachExtensions(interpreter, extensions);
+        for (const ext of interpreter.extensions.values()) {
+            if (ext.onBeforeExecute) {
+                await ext.onBeforeExecute(interpreter, payload);
+            }
         }
     }
 }
@@ -907,12 +909,6 @@ async function runSource(
             const cipherText = Buffer.concat([cipher.update(source), cipher.final()]);
             return { exitReason: AppExitReason.Packaged, cipherText: cipherText, iv: iv };
         }
-        // Update Source Map with the SceneGraph components (if exists)
-        for (const ext of interpreter.extensions.values()) {
-            if (ext.updateSourceMap) {
-                ext.updateSourceMap(sourceMap);
-            }
-        }
         // Execute the BrightScript code
         exitReason = await executeApp(interpreter, parseResult.statements, payload, sourceMap);
     }
@@ -988,7 +984,9 @@ async function executeApp(
             splashTime = splashMinTime;
         }
         const inputParams = setupInputParams(payload.deepLink, splashTime);
-        interpreter.exec(statements, sourceMap, inputParams);
+        const app = interpreter.scanApp(statements, sourceMap);
+        await runBeforeExecuteHooks(interpreter, payload);
+        interpreter.execApp(app, inputParams);
     } catch (err: any) {
         if (TerminateReasons.includes(err.message)) {
             exitReason = err.message === "debug-exit" ? AppExitReason.Stopped : AppExitReason.UserNav;

@@ -53,6 +53,8 @@ exports.execute = async function (filenames, options, deepLink) {
     }
     brs.registerExtension(() => new BrightScriptExtension());
     await executeFile(payload, options);
+    // To Debug uncomment the following line:
+    // exports.allArgs(options.stderr.write).map((arg) => console.error(arg));
 };
 
 /** Creates a file map from file paths for use with createPayloadFromFileMap. */
@@ -77,6 +79,8 @@ exports.executeFromFileMap = async function (fileMap, options, deepLink) {
         payload.deepLink = deepLink;
     }
     await executeFile(payload, options);
+    // To Debug uncomment the following line:
+    // exports.allArgs(options.stderr.write).map((arg) => console.error(arg));
 };
 
 /** Executes the specified BrightScript files using createPayloadFromFileMap, capturing their output in the provided streams. */
