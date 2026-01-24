@@ -671,9 +671,7 @@ export async function executeTask(payload: TaskPayload, customOptions?: Partial<
         if (BrsDevice.registry.isDirty) {
             BrsDevice.flushRegistry();
         }
-        if (BrsDevice.isDevMode) {
-            postMessage(`debug,[core] Task ${payload.taskData.name} is done.`);
-        }
+        postMessage(`debug,[core] Task ${payload.taskData.name} is done.`);
     } catch (err: any) {
         if (TerminateReasons.includes(err.message)) {
             const reason = err.message === "debug-exit" ? AppExitReason.Stopped : AppExitReason.UserNav;

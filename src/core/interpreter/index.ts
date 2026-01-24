@@ -458,8 +458,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 )
             );
         }
-        // postMessage(`debug,Module function to be defined in environment #${this.environment.id}: ${statement.name.text} at ${statement.location.file}`);
-
         if (this.environment.has(statement.name, [Scope.Module])) {
             const defLocation = this.environment.getDefinedLocation(statement.name.text);
             if (defLocation && !Location.equalTo(defLocation, statement.location)) {
@@ -475,10 +473,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             const callable = toCallable(statement.func, statement.name.text);
             this.environment.define(Scope.Module, statement.name.text, callable, statement.location);
             if (this.environment.id > 0 && !MainEnvironment.has(statement.name, [Scope.Module])) {
-                // postMessage(`debug,Module function defined in environment #${this.environment.id}: ${statement.name.text} redefined in MainEnvironment`);
                 MainEnvironment.define(Scope.Module, statement.name.text, callable, statement.location);
-                // } else if (this.environment.id > 0) {
-                //     postMessage(`debug,Module function #${this.environment.id}: ${statement.name.text} already exists in MainEnvironment`);
             }
         }
         return BrsInvalid.Instance;
