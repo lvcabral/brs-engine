@@ -75,20 +75,6 @@ export class Environment {
     public define(scope: Scope, name: string, value: BrsType, location?: Location): void {
         let destination: Map<string, BrsType>;
         const lowercaseName = name.toLowerCase();
-        if (lowercaseName === "global" && scope === Scope.Function && value.kind !== ValueKind.Interface && location) {
-            throw new TypeMismatch({
-                message: `Unable to cast`,
-                left: {
-                    type: this.global.get("global")!,
-                    location: location,
-                },
-                right: {
-                    type: value,
-                    location: location,
-                },
-                cast: true,
-            });
-        }
         switch (scope) {
             case Scope.Function: {
                 destination = this.function;
