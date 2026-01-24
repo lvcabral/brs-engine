@@ -584,7 +584,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         } else if (statement.name.text.toLowerCase() === "global") {
             this.addError(
                 new TypeMismatch({
-                    message: `Reserved name 'global' cannot be used in this context. Unable to cast `,
+                    message: `Reserved name 'global' cannot be used as a variable name. Unable to cast `,
                     left: {
                         type: ValueKind.Interface,
                         location: statement.name.location,
