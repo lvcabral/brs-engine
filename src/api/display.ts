@@ -38,6 +38,7 @@ let lastFrameReq: number = 0;
 let statsDiv: HTMLDivElement;
 let statsCanvas: Stats | null;
 let showStats = false;
+let firstFrame = true;
 let videoState = "stop";
 let videoRect = { x: 0, y: 0, w: 0, h: 0 };
 let videoLoop = false;
@@ -212,6 +213,7 @@ export function drawSplashScreen(imgBmp: ImageBitmap, icon = false) {
             bufferCtx.drawImage(imgBmp, 0, 0, w, h);
         }
         drawBufferImage();
+        firstFrame = true;
     }
 }
 
@@ -250,6 +252,7 @@ export function updateBuffer(buffer: ImageData) {
             clearDisplay();
             lastFrameReq = globalThis.requestAnimationFrame(drawBufferImage);
         }
+        firstFrame = false;
     }
 }
 
@@ -297,6 +300,12 @@ function drawVideoFrame() {
         videoLoop = false;
         return;
     }
+    if (firstFrame) {
+        // Clear buffer on first frame to avoid artifacts from previous apps
+        bufferCtx.clearRect(0, 0, bufferCanvas.width, bufferCanvas.height);
+        lastImage = null;
+        firstFrame = false;
+    }
     videoLoop = true;
     let left = videoRect.x;
     let top = videoRect.y;
@@ -328,8 +337,6 @@ function drawVideoFrame() {
     drawBufferImage();
     lastFrameReq = globalThis.requestAnimationFrame(drawVideoFrame);
 }
-
-// TODO: Draw captions window - width in fhd 1536px height and left position 192 (10% or screen width)
 
 /**
  * Draws closed captions/subtitles on the display canvas.

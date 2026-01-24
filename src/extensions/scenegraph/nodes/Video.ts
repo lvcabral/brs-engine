@@ -213,7 +213,6 @@ export class Video extends Group {
         postMessage("video,next,-1");
         postMessage("video,mute,false");
         postMessage(`video,notify,500`);
-        postMessage({ videoPlaylist: new Array<string>() });
         postMessage({ supportCaptions: true });
         postMessage({ captionMode: BrsDevice.deviceInfo.captionMode });
         postMessage({ captionStyle: new Array<CaptionStyleOption>() });
@@ -363,6 +362,7 @@ export class Video extends Group {
         this.setValueSilent("availableAudioTracks", new RoArray([]));
         this.setValueSilent("currentSubtitleTrack", new BrsString(""));
         this.setValueSilent("availableSubtitleTracks", new RoArray([]));
+        content.changed = false;
     }
 
     setContentIndex(index: number) {
@@ -720,7 +720,6 @@ export class Video extends Group {
         const content = this.getValue("content");
         if (content instanceof ContentNode && content.changed) {
             this.resetContent(content);
-            content.changed = false;
         }
     }
 
