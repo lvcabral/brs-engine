@@ -301,7 +301,7 @@ function drawVideoFrame() {
         return;
     }
     if (firstFrame) {
-        // Clear buffer on first frame to avoid artifacts form previous apps
+        // Clear buffer on first frame to avoid artifacts from previous apps
         bufferCtx.clearRect(0, 0, bufferCanvas.width, bufferCanvas.height);
         lastImage = null;
         firstFrame = false;
