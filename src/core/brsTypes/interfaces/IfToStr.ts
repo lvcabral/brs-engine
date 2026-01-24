@@ -78,7 +78,11 @@ export class IfToStr {
                 return new BrsString(vsprintf(format.value, params));
             } catch (err: any) {
                 if (BrsDevice.isDevMode) {
-                    BrsDevice.stderr.write(`warning,ifToStr.toStr() Error: ${err.message} - ${format.value}`);
+                    BrsDevice.stderr.write(
+                        `warning,ifToStr.toStr() Error: ${err.message} - ${
+                            format.value
+                        } at ${interpreter.formatLocation()}`
+                    );
                 }
                 const errorDetail = err.message?.includes("expecting number")
                     ? RuntimeErrorDetail.TypeMismatch

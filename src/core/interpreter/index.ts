@@ -99,6 +99,9 @@ export enum DebugMode {
 /** Reasons for terminating execution */
 export const TerminateReasons = ["debug-exit", "end-statement"];
 
+/** The main environment that contains the scope for Main thread */
+const MainEnvironment: Environment = new Environment(new RoAssociativeArray([]));
+
 /**
  * The Interpreter is responsible for executing statements and expressions
  */
@@ -260,8 +263,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
      * Creates a new Interpreter, including any global properties and functions.
      * @param options configuration for the execution
      */
-    constructor(options?: Partial<ExecutionOptions>) {
-        this._environment = new Environment(new RoAssociativeArray([]));
+    constructor(options?: Partial<ExecutionOptions>, useMainEnv: boolean = false) {
+        this._environment = useMainEnv ? MainEnvironment : new Environment(new RoAssociativeArray([]));
         Object.assign(this.options, options);
         BrsDevice.stdout = new OutputProxy(this.options.stdout, this.options.post);
         BrsDevice.stderr = new OutputProxy(this.options.stderr, this.options.post);
@@ -334,8 +337,42 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     exec(statements: readonly Stmt.Statement[], sourceMap?: Map<string, string>, ...args: BrsType[]) {
         if (sourceMap) {
             this._sourceMap = sourceMap;
+            for (const ext of this.extensions.values()) {
+                if (ext.updateSourceMap) {
+                    ext.updateSourceMap(this._sourceMap);
+                }
+            }
         }
-        let results = statements.map((statement) => this.execute(statement));
+        return statements.map((statement) => this.execute(statement));
+    }
+
+    /**
+     * Scans the provided app statements in the current environment.
+     * @param statements Array of statements to scan
+     * @param sourceMap Optional source code map for debugging
+     * @returns Array with the results of the scanned statements
+     */
+    scanApp(statements: readonly Stmt.Statement[], sourceMap?: Map<string, string>) {
+        if (sourceMap) {
+            this._sourceMap = sourceMap;
+        }
+        return statements.map((statement) => this.execute(statement));
+    }
+
+    /**
+     * Executes the application's entry point function.
+     * @param results Array to hold the results of the execution
+     * @param args Run parameters for Main() or RunUserInterface() functions
+     * @returns Array with the results of the executed entry point
+     */
+    execApp(results: BrsType[], ...args: BrsType[]) {
+        if (this._sourceMap) {
+            for (const ext of this.extensions.values()) {
+                if (ext.updateSourceMap) {
+                    ext.updateSourceMap(this._sourceMap);
+                }
+            }
+        }
         try {
             let mainName = "RunUserInterface";
             let maybeMain = this.getCallableFunction(mainName.toLowerCase());
@@ -421,6 +458,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 )
             );
         }
+        // postMessage(`debug,Module function to be defined in environment #${this.environment.id}: ${statement.name.text} at ${statement.location.file}`);
 
         if (this.environment.has(statement.name, [Scope.Module])) {
             const defLocation = this.environment.getDefinedLocation(statement.name.text);
@@ -434,12 +472,14 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 );
             }
         } else {
-            this.environment.define(
-                Scope.Module,
-                statement.name.text,
-                toCallable(statement.func, statement.name.text),
-                statement.location
-            );
+            const callable = toCallable(statement.func, statement.name.text);
+            this.environment.define(Scope.Module, statement.name.text, callable, statement.location);
+            if (this.environment.id > 0 && !MainEnvironment.has(statement.name, [Scope.Module])) {
+                // postMessage(`debug,Module function defined in environment #${this.environment.id}: ${statement.name.text} redefined in MainEnvironment`);
+                MainEnvironment.define(Scope.Module, statement.name.text, callable, statement.location);
+                // } else if (this.environment.id > 0) {
+                //     postMessage(`debug,Module function #${this.environment.id}: ${statement.name.text} already exists in MainEnvironment`);
+            }
         }
         return BrsInvalid.Instance;
     }

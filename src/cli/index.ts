@@ -282,7 +282,7 @@ async function runApp(payload: AppPayload) {
         return;
     }
     try {
-        const pkg = await brs.executeFile(payload);
+        const pkg = await brs.executeFile(payload, true);
         if (program.ecp) {
             brsWorker?.terminate();
         }
