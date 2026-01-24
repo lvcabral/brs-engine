@@ -189,6 +189,17 @@ export class ContentNode extends Node {
         this.parentFields.delete(parentField);
     }
 
+    replaceField(fieldName: string, type: string, defaultValue?: BrsType, alwaysNotify: boolean = false) {
+        if (this.fields.has(fieldName.toLowerCase())) {
+            this.fields.delete(fieldName.toLowerCase());
+            this.addNodeField(fieldName, type, alwaysNotify);
+            // set default value if it was specified in xml
+            if (defaultValue) {
+                this.setValueSilent(fieldName, defaultValue);
+            }
+        }
+    }
+
     /** @override */
     getElements() {
         return this.getVisibleFields()

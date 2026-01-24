@@ -629,7 +629,12 @@ function addFields(interpreter: Interpreter, node: Node, typeDef: ComponentDefin
                 }
             } else {
                 const field = node.getNodeFields().get(fieldName.toLowerCase());
-                if (field) {
+                if (node instanceof ContentNode && field?.isHidden()) {
+                    const defaultValue = fieldValue.value
+                        ? getBrsValueFromFieldType(fieldValue.type, fieldValue.value)
+                        : undefined;
+                    node.replaceField(fieldName, fieldValue.type, defaultValue, fieldValue.alwaysNotify === "true");
+                } else if (field) {
                     let msg = `warning,Error creating XML component ${node.nodeSubtype}\n`;
                     msg += `-- Attempt to add duplicate field "${fieldName}" to RokuML component "${node.nodeSubtype}"\n`;
                     msg += `---- Extends node type "${typeDef.extends}" already has a field named ${fieldName}\n`;
