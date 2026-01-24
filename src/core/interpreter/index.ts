@@ -581,6 +581,21 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     })
                 );
             }
+        } else if (statement.name.text.toLowerCase() === "global") {
+            this.addError(
+                new TypeMismatch({
+                    message: `Reserved name 'global' cannot be used as a variable name. Unable to cast `,
+                    left: {
+                        type: ValueKind.Interface,
+                        location: statement.name.location,
+                    },
+                    right: {
+                        type: value,
+                        location: statement.value.location,
+                    },
+                    cast: true,
+                })
+            );
         }
         try {
             this.environment.define(Scope.Function, statement.name.text, value, statement.name.location);
@@ -1600,6 +1615,21 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             const location = `${statement.item.location.file}(${statement.item.location.start.line})`;
             BrsDevice.stderr.write(`warning,${message}: ${location}`);
             return BrsInvalid.Instance;
+        } else if (statement.item.text.toLowerCase() === "global") {
+            this.addError(
+                new TypeMismatch({
+                    message: `Reserved name 'global' cannot be used in this context. Unable to cast`,
+                    left: {
+                        type: ValueKind.Interface,
+                        location: statement.item.location,
+                    },
+                    right: {
+                        type: ValueKind.Dynamic,
+                        location: statement.item.location,
+                    },
+                    cast: true,
+                })
+            );
         }
         let continueAt = 0;
         if (this.environment.continueFor) {
