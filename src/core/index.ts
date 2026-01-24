@@ -699,10 +699,7 @@ export async function executeTask(payload: TaskPayload, customOptions?: Partial<
  * @param useMainEnv whether to use the main environment or create a new one
  * @returns Promise resolving to configured Interpreter instance
  */
-async function createInterpreter(
-    options: Partial<ExecutionOptions>,
-    useMainEnv: boolean = false
-) {
+async function createInterpreter(options: Partial<ExecutionOptions>, useMainEnv: boolean = false) {
     BrsDevice.bscs.clear();
     BrsDevice.stats.clear();
     BrsDevice.nodes.clear();
