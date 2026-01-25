@@ -39,12 +39,12 @@ export class SGRoot {
     private _scene?: Scene;
     private _focused?: RoSGNode;
     private _threadId: number;
+    private _resolution: string;
+    private readonly _autoSub: { search: string; replace: string };
     private readonly _threads: Map<number, { task?: Task; info: ThreadInfo }>;
     private readonly _timers: Timer[];
     private readonly _animations: AnimationBase[];
     private readonly _sfx: (SoundEffect | undefined)[];
-    private _resolution: string;
-    private _autoSub: { search: string; replace: string };
     private _audio?: Audio;
     private _video?: Video;
     private _dirty: boolean = false;
