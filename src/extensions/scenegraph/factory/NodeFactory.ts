@@ -310,7 +310,7 @@ export function createNodeByType(type: string, interpreter?: Interpreter): Node 
  * Creates a Scene node by its type name as defined in XML component files.
  * Validates that the type is a Scene subtype before creation.
  * @param interpreter Interpreter instance for component initialization
- * @param name Type name of the Scene to create
+ * @param type Type name of the Scene to create
  * @returns Created Scene instance or BrsInvalid if creation fails or type is not a Scene subtype
  */
 export function createSceneByType(interpreter: Interpreter, type: string): Node | BrsInvalid {
