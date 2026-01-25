@@ -952,7 +952,9 @@ export class Node extends RoSGNode implements BrsValue {
             return undefined;
         }
         if (sgRoot.autoSub.search && sgRoot.autoSub.replace) {
-            uri = uri.toLowerCase().replace(sgRoot.autoSub.search.toLowerCase(), sgRoot.autoSub.replace);
+            const escapedSearch = sgRoot.autoSub.search.replaceAll(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
+            const searchPattern = new RegExp(escapedSearch, "i");
+            uri = uri.replace(searchPattern, sgRoot.autoSub.replace);
         }
         return getTextureManager().loadTexture(uri, this.httpAgent.customHeaders);
     }
