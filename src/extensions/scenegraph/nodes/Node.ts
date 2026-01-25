@@ -951,7 +951,7 @@ export class Node extends RoSGNode implements BrsValue {
         if (!uri?.trim()) {
             return undefined;
         }
-        if (sgRoot.autoSub.search?.length && sgRoot.autoSub.replace?.length) {
+        if (sgRoot.autoSub.search && sgRoot.autoSub.replace) {
             const escapedSearch = sgRoot.autoSub.search.replaceAll(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
             const searchPattern = new RegExp(escapedSearch, "i");
             uri = uri.replace(searchPattern, sgRoot.autoSub.replace);
