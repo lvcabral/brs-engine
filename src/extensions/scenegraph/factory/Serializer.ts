@@ -22,8 +22,8 @@ import {
     Callable,
     StdlibArgument,
 } from "brs-engine";
-import { getNodeType, SGNodeFactory } from "./NodeFactory";
-import { ContentNode, Node, Task } from "../nodes";
+import { getNodeType, SGNodeFactory, createNodeByType } from "./NodeFactory";
+import { ContentNode, Node, SGNodeType, Task } from "../nodes";
 
 /**
  * Converts a BrsType value to its representation as a JavaScript type.
@@ -116,15 +116,9 @@ export function brsValueOf(value: any, cs?: boolean, nodeMap?: Map<string, Node>
  */
 export function fromAssociativeArray(associativeArray: RoAssociativeArray, deep: boolean = true): FlexObject {
     const result: FlexObject = {};
-
     for (const [key, value] of associativeArray.elements) {
-        if (isUnboxable(value)) {
-            result[key] = jsValueOf(value.unbox(), deep);
-        } else {
-            result[key] = jsValueOf(value, deep);
-        }
+        result[key] = jsValueOf(value, deep);
     }
-
     return result;
 }
 
@@ -234,7 +228,13 @@ export function toSGNode(obj: any, type: string, subtype: string, nodeMap?: Map<
         // Return invalid for now (should not happen in valid serialized data)
         return BrsInvalid.Instance as any;
     }
-    const newNode = SGNodeFactory.createNode(type, subtype) ?? new Node([], subtype);
+    let newNode: Node | BrsInvalid = BrsInvalid.Instance;
+    if (![SGNodeType.Scene, SGNodeType.OverhangPanelSetScene, SGNodeType.Task].includes(type as SGNodeType)) {
+        newNode = createNodeByType(subtype);
+    }
+    if (newNode instanceof BrsInvalid) {
+        newNode = SGNodeFactory.createNode(type, subtype) ?? new Node([], subtype);
+    }
     // Store the node in the map using the original address for circular reference resolution
     // Use the address from serialized data if available, otherwise use the new node's address
     newNode.address = obj["_address_"] || newNode.address;
@@ -266,7 +266,7 @@ export function toSGNode(obj: any, type: string, subtype: string, nodeMap?: Map<
  * @param value The serialized node object.
  * @returns An object containing the type and subtype, or undefined if not found or invalid.
  */
-function getSerializedNodeInfo(value: any): { type: string; subtype: string } | undefined {
+export function getSerializedNodeInfo(value: any): { type: string; subtype: string } | undefined {
     if (!value || typeof value !== "object") {
         return undefined;
     }
@@ -278,7 +278,7 @@ function getSerializedNodeInfo(value: any): { type: string; subtype: string } | 
     if (parts.length !== 2) {
         return undefined;
     }
-    return { type: parts[0], subtype: parts[1] };
+    return { type: parts[0].trim(), subtype: parts[1].trim() };
 }
 
 /**
