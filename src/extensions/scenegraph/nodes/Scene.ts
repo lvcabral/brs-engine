@@ -36,8 +36,6 @@ export class Scene extends Group {
     ];
     readonly ui = { width: 1280, height: 720, resolution: "HD" };
     dialog?: Dialog | StandardDialog;
-    subSearch: string;
-    subReplace: string;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.Scene) {
         super([], name);
@@ -46,9 +44,7 @@ export class Scene extends Group {
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
 
-        this.setDesignResolution("HD", "");
-        this.subSearch = "";
-        this.subReplace = "";
+        this.setResolution("HD");
     }
 
     setInitState(state: "initializing" | "initialized") {
@@ -110,7 +106,7 @@ export class Scene extends Group {
         return super.addObserver(interpreter, scope, fieldName, funcOrPort, infoFields);
     }
 
-    setDesignResolution(resolution: string, autoSub: string) {
+    setResolution(resolution: string) {
         if (!["SD", "HD", "FHD"].includes(resolution.toUpperCase())) {
             // invalid resolution
             return;
@@ -130,17 +126,6 @@ export class Scene extends Group {
         this.rectToParent = { x: 0, y: 0, width: this.ui.width, height: this.ui.height };
         this.rectToScene = { x: 0, y: 0, width: this.ui.width, height: this.ui.height };
         this.setValueSilent("currentDesignResolution", toAssociativeArray(this.ui));
-        if (autoSub.split(",").length === 4) {
-            const subs = autoSub.split(",");
-            this.subSearch = subs[0];
-            if (this.ui.resolution === "SD") {
-                this.subReplace = subs[1];
-            } else if (this.ui.resolution === "HD") {
-                this.subReplace = subs[2];
-            } else {
-                this.subReplace = subs[3];
-            }
-        }
     }
 
     renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {

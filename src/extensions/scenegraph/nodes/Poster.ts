@@ -56,13 +56,13 @@ export class Poster extends Group {
             if (typeof uri === "string" && uri.trim() !== "" && this.uri !== uri) {
                 this.uri = uri;
                 const loadStatus = this.loadUri(uri);
-                const subSearch = sgRoot.scene?.subSearch ?? "";
+                const subSearch = sgRoot.autoSub.search.toLowerCase();
                 if (loadStatus === "ready") {
-                    this.noScaling = subSearch !== "" && uri.includes(subSearch);
+                    this.noScaling = subSearch !== "" && uri.toLowerCase().includes(subSearch);
                 } else {
                     const failedUri = this.getValueJS("failedBitmapUri") as string;
                     this.loadUri(failedUri);
-                    this.noScaling = subSearch !== "" && failedUri.includes(subSearch);
+                    this.noScaling = subSearch !== "" && failedUri.toLowerCase().includes(subSearch);
                 }
                 super.setValue("loadStatus", new BrsString(loadStatus));
             } else if (typeof uri !== "string" || uri.trim() === "") {
