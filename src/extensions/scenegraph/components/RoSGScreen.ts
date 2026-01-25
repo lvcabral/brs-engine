@@ -29,7 +29,7 @@ import {
     rgbaIntToHex,
 } from "brs-engine";
 import { sgRoot } from "../SGRoot";
-import { OverhangPanelSetScene, Scene, SGNodeType } from "../nodes";
+import { Scene } from "../nodes";
 import { createSceneByType, initializeNode } from "../factory/NodeFactory";
 import { RoSGScreenEvent } from "../events/RoSGScreenEvent";
 
@@ -309,24 +309,16 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
                 this.canvas.width = this.width;
                 this.canvas.height = this.height;
             }
-            let returnValue: BrsType;
-            if (sceneType.value === SGNodeType.Scene) {
-                returnValue = new Scene([], SGNodeType.Scene);
-            } else if (sceneType.value === SGNodeType.OverhangPanelSetScene) {
-                returnValue = new OverhangPanelSetScene([], SGNodeType.OverhangPanelSetScene);
-            } else if (sgRoot.nodeDefMap.has(sceneType.value.toLowerCase())) {
-                returnValue = createSceneByType(interpreter, sceneType.value);
-            } else {
+            const scene = createSceneByType(interpreter, sceneType.value);
+            if (scene instanceof Scene) {
+                this.sceneType = sceneType;
+                sgRoot.setScene(scene);
+            } else if (scene instanceof BrsInvalid) {
                 BrsDevice.stderr.write(
                     `warning,BRIGHTSCRIPT: ERROR: roSGScreen.CreateScene: No such node ${
                         sceneType.value
                     }: ${interpreter.formatLocation()}`
                 );
-                return BrsInvalid.Instance;
-            }
-            if (returnValue instanceof Scene) {
-                this.sceneType = sceneType;
-                sgRoot.setScene(returnValue);
             } else {
                 BrsDevice.stderr.write(
                     `warning,BRIGHTSCRIPT: ERROR: roSGScreen.CreateScene: Type mismatch converting from '${
@@ -335,7 +327,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
                 );
                 return BrsInvalid.Instance;
             }
-            return returnValue;
+            return scene;
         },
     });
 

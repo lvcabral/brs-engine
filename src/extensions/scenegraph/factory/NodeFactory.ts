@@ -79,7 +79,7 @@ import {
     Vector2DFieldInterpolator,
 } from "../nodes";
 import { ComponentDefinition, ComponentNode } from "../parser/ComponentDefinition";
-import { brsValueOf, toSGNode } from "./Serializer";
+import { brsValueOf, getSerializedNodeInfo } from "./Serializer";
 import { sgRoot } from "../SGRoot";
 import { convertHexColor } from "../SGUtil";
 import Long from "long";
@@ -243,7 +243,7 @@ export class SGNodeFactory {
                 if (isSGNodeType(nodeType)) {
                     // Temporarily until all node types are implemented
                     BrsDevice.stderr.write(
-                        `warning,The roSGNode with type "${nodeType}" is not implemented yet, created as regular "Node".`
+                        `warning,Warning: The roSGNode with type "${nodeType}" is not implemented yet, created as regular "Node".`
                     );
                     return new Node([], name);
                 }
@@ -279,6 +279,8 @@ export function createNodeByType(type: string, interpreter?: Interpreter): Node 
         let typeDef = sgRoot.nodeDefMap.get(type.toLowerCase());
         if (typeDef && interpreter instanceof Interpreter) {
             node = initializeNode(interpreter, type, typeDef);
+        } else if (typeDef && sgRoot.inTaskThread() && sgRoot.interpreter) {
+            node = initializeNode(sgRoot.interpreter, type, typeDef);
         } else if (typeDef) {
             const typeDefStack = updateTypeDefHierarchy(typeDef);
             // Get the "basemost" component of the inheritance tree.
@@ -289,9 +291,7 @@ export function createNodeByType(type: string, interpreter?: Interpreter): Node 
             }
         } else {
             BrsDevice.stderr.write(
-                `warning,BRIGHTSCRIPT: ERROR: roSGNode: Failed to create roSGNode with type ${type}: ${
-                    interpreter?.formatLocation() ?? ""
-                }`
+                `warning,Warning: Failed to create roSGNode with type ${type}: ${interpreter?.formatLocation() ?? ""}`
             );
             return BrsInvalid.Instance;
         }
@@ -310,21 +310,28 @@ export function createNodeByType(type: string, interpreter?: Interpreter): Node 
  * Creates a Scene node by its type name as defined in XML component files.
  * Validates that the type is a Scene subtype before creation.
  * @param interpreter Interpreter instance for component initialization
- * @param type Type name of the Scene to create
+ * @param name Type name of the Scene to create
  * @returns Created Scene instance or BrsInvalid if creation fails or type is not a Scene subtype
  */
 export function createSceneByType(interpreter: Interpreter, type: string): Node | BrsInvalid {
-    let typeDef = sgRoot.nodeDefMap.get(type.toLowerCase());
-    updateTypeDefHierarchy(typeDef);
-    if (typeDef && isSubtypeCheck(type, SGNodeType.Scene)) {
-        return new Scene([], type);
-    } else if (typeDef && isSubtypeCheck(type, SGNodeType.OverhangPanelSetScene)) {
-        return new OverhangPanelSetScene([], type);
-    } else {
-        BrsDevice.stderr.write(
-            `warning,BRIGHTSCRIPT: ERROR: roSGNode: Failed to create a Scene with type ${type}: ${interpreter.formatLocation()}`
-        );
+    const sceneName = type.toLowerCase();
+    if (sceneName === SGNodeType.Scene.toLowerCase()) {
+        return new Scene([], SGNodeType.Scene);
+    } else if (sceneName === SGNodeType.OverhangPanelSetScene.toLowerCase()) {
+        return new OverhangPanelSetScene([], SGNodeType.OverhangPanelSetScene);
     }
+    const typeDef = sgRoot.nodeDefMap.get(sceneName);
+    if (typeDef) {
+        updateTypeDefHierarchy(typeDef);
+        if (isSubtypeCheck(sceneName, SGNodeType.Scene)) {
+            return new Scene([], type);
+        } else if (isSubtypeCheck(sceneName, SGNodeType.OverhangPanelSetScene)) {
+            return new OverhangPanelSetScene([], type);
+        }
+    }
+    BrsDevice.stderr.write(
+        `warning,Warning: roSGNode: Failed to create a Scene with type ${type}: ${interpreter.formatLocation()}`
+    );
     return BrsInvalid.Instance;
 }
 
@@ -434,7 +441,7 @@ export function initializeNode(interpreter: Interpreter, type: string, typeDef?:
         return node;
     } else {
         BrsDevice.stderr.write(
-            `warning,BRIGHTSCRIPT: ERROR: roSGNode: Failed to initialize roSGNode with type ${type}: ${interpreter.formatLocation()}`
+            `warning,Warning: Failed to initialize roSGNode with type ${type}: ${interpreter.formatLocation()}`
         );
         return BrsInvalid.Instance;
     }
@@ -492,7 +499,7 @@ export function initializeTask(interpreter: Interpreter, taskData: TaskData) {
         return node;
     } else {
         BrsDevice.stderr.write(
-            `warning,BRIGHTSCRIPT: ERROR: roSGNode: Failed to initialize Task with type ${type}: ${interpreter.formatLocation()}`
+            `warning,Warning: Failed to initialize Task with type ${type}: ${interpreter.formatLocation()}`
         );
         return BrsInvalid.Instance;
     }
@@ -535,10 +542,18 @@ function loadTaskData(interpreter: Interpreter, node: Node, taskData: TaskData) 
         restoreNode(interpreter, taskData.m.top, node, port);
     }
     if (taskData.scene?.["_node_"]) {
-        const nodeType = taskData.scene["_node_"].split(":");
-        const scene = toSGNode(taskData.scene, nodeType[0], nodeType[1]);
+        const nodeInfo = getSerializedNodeInfo(taskData.scene);
+        const sceneName = nodeInfo?.subtype || SGNodeType.Scene;
+        const scene = createSceneByType(interpreter, sceneName);
         if (scene instanceof Scene) {
             sgRoot.setScene(scene);
+            restoreNode(interpreter, taskData.scene, scene, port);
+        } else {
+            BrsDevice.stderr.write(
+                `warning,Warning: Failed to create Scene of type ${sceneName} for Task ${taskData.name} (${
+                    taskData.id
+                }): ${interpreter.formatLocation()}`
+            );
         }
     }
 }
