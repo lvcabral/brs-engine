@@ -64,7 +64,6 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     private lastMessage: number;
     width: number;
     height: number;
-    resolution: string;
     scaleMode: number;
     isDirty: boolean;
 
@@ -81,7 +80,6 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         this.maxMs = Math.trunc((1 / maxFps) * 1000);
         this.width = 1280;
         this.height = 720;
-        this.resolution = "HD";
         this.canvas = createNewCanvas(this.width, this.height);
         this.context = this.canvas.getContext("2d") as BrsCanvasContext2D;
 
@@ -300,23 +298,16 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
             returns: ValueKind.Object,
         },
         impl: (interpreter: Interpreter, sceneType: BrsString) => {
-            const manifest = interpreter.manifest;
-            const res = manifest.get("ui_resolutions") ?? "HD";
-            if (res.length && res !== "HD") {
-                const resArray = res.split(",");
-                if (resArray[0].toUpperCase() === "FHD") {
-                    this.resolution = "FHD";
-                    this.width = 1920;
-                    this.height = 1080;
-                    this.canvas.width = this.width;
-                    this.canvas.height = this.height;
-                } else if (resArray[0].toUpperCase() === "SD") {
-                    this.resolution = "SD";
-                    this.width = 720;
-                    this.height = 480;
-                    this.canvas.width = this.width;
-                    this.canvas.height = this.height;
-                }
+            if (sgRoot.resolution === "FHD") {
+                this.width = 1920;
+                this.height = 1080;
+                this.canvas.width = this.width;
+                this.canvas.height = this.height;
+            } else if (sgRoot.resolution === "SD") {
+                this.width = 720;
+                this.height = 480;
+                this.canvas.width = this.width;
+                this.canvas.height = this.height;
             }
             let returnValue: BrsType;
             if (sceneType.value === SGNodeType.Scene) {
@@ -335,9 +326,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
             }
             if (returnValue instanceof Scene) {
                 this.sceneType = sceneType;
-                const autoSub = manifest.get("uri_resolution_autosub") ?? "";
                 sgRoot.setScene(returnValue);
-                sgRoot.scene?.setDesignResolution(this.resolution, autoSub);
             } else {
                 BrsDevice.stderr.write(
                     `warning,BRIGHTSCRIPT: ERROR: roSGScreen.CreateScene: Type mismatch converting from '${

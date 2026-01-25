@@ -59,6 +59,7 @@ export class BrightScriptExtension implements BrsExtension {
             const components = await getComponentDefinitionMap(BrsDevice.fileSystem, []);
             if (components.size > 0) {
                 await setupInterpreterWithSubEnvs(interpreter, components, payload.manifest, interpreter.options);
+                sgRoot.setInterpreter(interpreter);
                 sgRoot.setNodeDefMap(components);
                 for (const [componentName, componentDef] of components.entries()) {
                     updateTypeDefHierarchy(componentDef);

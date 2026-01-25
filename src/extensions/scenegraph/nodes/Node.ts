@@ -951,8 +951,8 @@ export class Node extends RoSGNode implements BrsValue {
         if (!uri?.trim()) {
             return undefined;
         }
-        if (sgRoot.scene?.subSearch && sgRoot.scene?.subReplace) {
-            uri = uri.replace(sgRoot.scene.subSearch, sgRoot.scene.subReplace);
+        if (sgRoot.autoSub.search && sgRoot.autoSub.replace) {
+            uri = uri.toLowerCase().replace(sgRoot.autoSub.search.toLowerCase(), sgRoot.autoSub.replace);
         }
         return getTextureManager().loadTexture(uri, this.httpAgent.customHeaders);
     }

@@ -5,7 +5,16 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { BrsDevice, BufferType, DataType, genHexAddress, MediaEvent, MediaTrack, ThreadInfo } from "brs-engine";
+import {
+    BrsDevice,
+    BufferType,
+    DataType,
+    genHexAddress,
+    Interpreter,
+    MediaEvent,
+    MediaTrack,
+    ThreadInfo,
+} from "brs-engine";
 import { ComponentDefinition } from "./parser/ComponentDefinition";
 import { RoSGNode } from "./components/RoSGNode";
 import { Global } from "./nodes/Global";
@@ -24,6 +33,7 @@ import { Task } from "./nodes/Task";
  * */
 
 export class SGRoot {
+    private _interpreter: Interpreter | undefined;
     private _mGlobal: Global | undefined;
     private _nodeDefMap: Map<string, ComponentDefinition>;
     private _scene?: Scene;
@@ -33,9 +43,15 @@ export class SGRoot {
     private readonly _timers: Timer[];
     private readonly _animations: AnimationBase[];
     private readonly _sfx: (SoundEffect | undefined)[];
+    private _resolution: string;
+    private _autoSub: { search: string; replace: string };
     private _audio?: Audio;
     private _video?: Video;
     private _dirty: boolean = false;
+
+    get interpreter(): Interpreter | undefined {
+        return this._interpreter;
+    }
 
     get mGlobal(): Global {
         this._mGlobal ??= new Global([]);
@@ -78,6 +94,14 @@ export class SGRoot {
         return this._threadId;
     }
 
+    get resolution(): string {
+        return this._resolution;
+    }
+
+    get autoSub(): { search: string; replace: string } {
+        return this._autoSub;
+    }
+
     get isDirty(): boolean {
         return this._dirty;
     }
@@ -102,6 +126,40 @@ export class SGRoot {
         this._threadId = 0;
         const threadInfo: ThreadInfo = { id: genHexAddress(), type: "Render" };
         this._threads.set(this._threadId, { info: threadInfo });
+        // Default resolution and auto substitution parameters
+        this._resolution = "HD";
+        this._autoSub = { search: "", replace: "" };
+    }
+
+    /**
+     * Sets the interpreter and updates resolution and auto substitution parameters based on the manifest.
+     * @param interpreter Interpreter instance to set
+     */
+    setInterpreter(interpreter: Interpreter) {
+        this._interpreter = interpreter;
+        const resolutions = interpreter.manifest.get("ui_resolutions");
+        if (resolutions?.length) {
+            const resArray = resolutions.split(",");
+            if (resArray[0].toUpperCase() === "FHD") {
+                this._resolution = "FHD";
+            } else if (resArray[0].toUpperCase() === "HD") {
+                this._resolution = "HD";
+            } else if (resArray[0].toUpperCase() === "SD") {
+                this._resolution = "SD";
+            }
+        }
+        const autoSub = interpreter.manifest.get("uri_resolution_autosub") ?? "";
+        if (autoSub.split(",").length === 4) {
+            const subs = autoSub.split(",");
+            this._autoSub.search = subs[0];
+            if (this._resolution === "SD") {
+                this._autoSub.replace = subs[1];
+            } else if (this._resolution === "HD") {
+                this._autoSub.replace = subs[2];
+            } else {
+                this._autoSub.replace = subs[3];
+            }
+        }
     }
 
     /**
@@ -118,6 +176,7 @@ export class SGRoot {
      */
     setScene(scene: Scene) {
         this._scene = scene;
+        scene.setResolution(this._resolution);
     }
 
     /**
