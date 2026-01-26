@@ -69,10 +69,8 @@ export class Scene extends Group {
             const fieldName = index.toString().toLowerCase();
             if (this.owner !== sgRoot.threadId && this.fields.has(fieldName)) {
                 const task = sgRoot.getCurrentThreadTask();
-                if (task?.active) {
-                    if (!this.consumeFreshField(fieldName)) {
-                        task.requestFieldValue("scene", fieldName);
-                    }
+                if (task?.active && !this.consumeFreshField(fieldName)) {
+                    task.requestFieldValue("scene", fieldName);
                 }
             }
         }
