@@ -29,6 +29,10 @@ const threadSyncToTask: Map<number, SharedObject> = new Map();
 const threadSyncToMain: Map<number, SharedObject> = new Map();
 let sharedBuffer: ArrayBufferLike;
 let brsWrkLib: string;
+let inDebugLib: boolean = false;
+/// #if DEBUG
+inDebugLib = true;
+/// #endif
 
 /**
  * Initializes the task module with shared buffer and worker library path.
@@ -65,6 +69,25 @@ export function unsubscribeTask(observerId: string) {
 function notifyAll(eventName: string, eventData?: any) {
     for (const [_id, callback] of observers) {
         callback(eventName, eventData);
+    }
+}
+
+/**
+ * Handles task data events from the engine.
+ * Starts or stops tasks based on the task state.
+ * @param taskData Task data containing state and configuration
+ * @param currentPayload Current application payload with manifest and packages
+ */
+export function handleTaskData(taskData: TaskData, currentPayload: AppPayload) {
+    if (taskData.state === TaskState.RUN) {
+        if (taskData.buffer instanceof SharedArrayBuffer) {
+            const taskBuffer = new SharedObject();
+            taskBuffer.setBuffer(taskData.buffer);
+            threadSyncToMain.set(taskData.id, taskBuffer);
+        }
+        runTask(taskData, currentPayload);
+    } else if (taskData.state === TaskState.STOP) {
+        endTask(taskData.id);
     }
 }
 
@@ -168,29 +191,8 @@ function taskCallback(event: MessageEvent) {
         notifyAll("ndkStart", event.data);
     } else if (typeof event.data === "string") {
         notifyAll("message", event.data);
-        /// #if DEBUG
-    } else {
+    } else if (inDebugLib) {
         notifyAll("warning", `[api] Invalid task message: ${JSON.stringify(event.data, null, 2)}`);
-        /// #endif
-    }
-}
-
-/**
- * Handles task data events from the engine.
- * Starts or stops tasks based on the task state.
- * @param taskData Task data containing state and configuration
- * @param currentPayload Current application payload with manifest and packages
- */
-export function handleTaskData(taskData: TaskData, currentPayload: AppPayload) {
-    if (taskData.state === TaskState.RUN) {
-        if (taskData.buffer instanceof SharedArrayBuffer) {
-            const taskBuffer = new SharedObject();
-            taskBuffer.setBuffer(taskData.buffer);
-            threadSyncToMain.set(taskData.id, taskBuffer);
-        }
-        runTask(taskData, currentPayload);
-    } else if (taskData.state === TaskState.STOP) {
-        endTask(taskData.id);
     }
 }
 
@@ -206,21 +208,25 @@ export function handleThreadUpdate(threadUpdate: ThreadUpdate, fromTask: boolean
         threadSyncToMain.get(threadUpdate.id)?.waitStore(threadUpdate, 1);
     }
     if (threadUpdate.id > 0 && !fromTask) {
-        // Update task thread buffer
-        if (!threadSyncToTask.has(threadUpdate.id)) {
-            threadSyncToTask.set(threadUpdate.id, new SharedObject());
-        }
-        threadSyncToTask.get(threadUpdate.id)?.waitStore(threadUpdate, 1);
+        updateTask(threadUpdate);
     } else if (threadUpdate.type !== "task") {
         // Propagate to other tasks
         for (const taskId of tasks.keys()) {
             if (!fromTask || taskId !== threadUpdate.id) {
                 const data = { ...threadUpdate, id: taskId };
-                if (!threadSyncToTask.has(data.id)) {
-                    threadSyncToTask.set(data.id, new SharedObject());
-                }
-                threadSyncToTask.get(data.id)?.waitStore(data, 1);
+                updateTask(data);
             }
         }
     }
+}
+
+/**
+ * Updates a task's shared buffer with thread update data.
+ * @param data Thread update data with field changes
+ */
+function updateTask(data: ThreadUpdate) {
+    if (!threadSyncToTask.has(data.id)) {
+        threadSyncToTask.set(data.id, new SharedObject());
+    }
+    threadSyncToTask.get(data.id)?.waitStore(data, 1);
 }
