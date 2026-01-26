@@ -13,6 +13,8 @@ import {
     IfDraw2D,
     RuntimeError,
     DebugMode,
+    BrsDevice,
+    isBrsString,
 } from "brs-engine";
 import { toAssociativeArray } from "../factory/Serializer";
 import { sgRoot } from "../SGRoot";
@@ -62,6 +64,21 @@ export class Scene extends Group {
         }
     }
 
+    get(index: BrsType): BrsType {
+        if (sgRoot.inTaskThread() && isBrsString(index)) {
+            const fieldName = index.toString().toLowerCase();
+            if (this.owner !== sgRoot.threadId && this.fields.has(fieldName)) {
+                const task = sgRoot.getCurrentThreadTask();
+                if (task?.active) {
+                    if (!this.consumeFreshField(fieldName)) {
+                        task.requestFieldValue("scene", fieldName);
+                    }
+                }
+            }
+        }
+        return super.get(index);
+    }
+
     setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind, sync: boolean = true) {
         if (this._initState === "none" && !sgRoot.inTaskThread()) {
             this._preInitSet.set(index, value);
@@ -84,10 +101,11 @@ export class Scene extends Group {
             }
         }
         super.setValue(index, value, alwaysNotify, kind);
-        // Notify other threads of field changes
-        if (sync && sgRoot.getTasksCount() > 0 && this.changed && this.fields.has(fieldName)) {
-            this.sendThreadUpdate(sgRoot.threadId, "scene", fieldName, value);
-            if (sgRoot.inTaskThread()) this.changed = false;
+        if (sync && this.changed) {
+            this.syncRemoteObservers(fieldName, "scene");
+            if (sgRoot.inTaskThread()) {
+                this.changed = false;
+            }
         }
     }
 
