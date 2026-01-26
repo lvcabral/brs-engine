@@ -76,7 +76,7 @@ export class Task extends Node {
             const fieldName = index.toString().toLowerCase();
             if (this.fields.has(fieldName)) {
                 if (this.owner !== sgRoot.threadId && this.threadId >= 0) {
-                    if (!this.consumeFreshField(fieldName)) {
+                    if (this.active && !this.consumeFreshField(fieldName)) {
                         this.requestFieldValue("task", fieldName);
                     }
                 } else if (this.thread && this.active) {

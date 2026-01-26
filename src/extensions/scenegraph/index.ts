@@ -123,7 +123,9 @@ export class BrightScriptExtension implements BrsExtension {
                     subInterpreter.environment.setM(mPointer);
                     subInterpreter.environment.setRootM(mPointer);
                     if (funcToCall instanceof Callable) {
-                        postMessage(`debug,[sg] Task function called: ${taskData.name} ${functionName} active: ${taskNode.active}`);
+                        postMessage(
+                            `debug,[sg] Task function called: ${taskData.name} ${functionName} active: ${taskNode.active}`
+                        );
                         const funcLoc = funcToCall.getLocation() ?? interpreter.location;
                         interpreter.addToStack({
                             functionName: functionName,
@@ -133,7 +135,9 @@ export class BrightScriptExtension implements BrsExtension {
                         });
                         taskNode.started = true;
                         funcToCall.call(subInterpreter);
-                        postMessage(`debug,[sg] Task function finished: ${taskData.name} ${functionName} active: ${taskNode.active}`);
+                        postMessage(
+                            `debug,[sg] Task function finished: ${taskData.name} ${functionName} active: ${taskNode.active}`
+                        );
                         taskNode.stopTask();
                         taskData.state = TaskState.STOP;
                         postMessage(taskData);
