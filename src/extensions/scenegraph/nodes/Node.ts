@@ -46,6 +46,14 @@ type ChangeOperation = "none" | "insert" | "add" | "remove" | "set" | "clear" | 
  * Base implementation for a SceneGraph node used by custom Roku components.
  * Handles BrightScript-facing field management, child lists, focus, observers, and rendering plumbing.
  */
+type FreshFieldState = {
+    remaining: number;
+    timestamp: number;
+};
+
+const FRESH_FIELD_WINDOW_MS = 10;
+const FRESH_FIELD_BUDGET = 4;
+
 export class Node extends RoSGNode implements BrsValue {
     /** Field registry keyed by lowercase name. */
     protected readonly fields: Map<string, Field>;
@@ -61,6 +69,8 @@ export class Node extends RoSGNode implements BrsValue {
     protected triedInitFocus: boolean = false;
     /** Tracks whether the most recent field mutation triggered observers. */
     protected notified: boolean = false;
+    /** Tracks recently synchronized fields to avoid redundant rendezvous calls. */
+    protected readonly freshFields: Map<string, FreshFieldState> = new Map();
 
     /** Parent node reference or invalid when detached. */
     protected parent: Node | BrsInvalid;
@@ -1448,6 +1458,30 @@ export class Node extends RoSGNode implements BrsValue {
         sgRoot.makeDirty();
     }
 
+    public markFieldFresh(fieldName: string) {
+        const mapKey = fieldName.toLowerCase();
+        this.freshFields.set(mapKey, { remaining: FRESH_FIELD_BUDGET, timestamp: Date.now() });
+    }
+
+    protected consumeFreshField(fieldName: string): boolean {
+        const mapKey = fieldName.toLowerCase();
+        const entry = this.freshFields.get(mapKey);
+        if (!entry) {
+            return false;
+        }
+        if (Date.now() - entry.timestamp > FRESH_FIELD_WINDOW_MS) {
+            this.freshFields.delete(mapKey);
+            return false;
+        }
+        entry.remaining -= 1;
+        if (entry.remaining <= 0) {
+            this.freshFields.delete(mapKey);
+        } else {
+            this.freshFields.set(mapKey, entry);
+        }
+        return true;
+    }
+
     /**
      * Posts a serialized node update to the owning thread.
      * @param id Target thread id.
@@ -1460,17 +1494,43 @@ export class Node extends RoSGNode implements BrsValue {
         id: number,
         type: "scene" | "global" | "task",
         field: string,
-        value: BrsType,
-        deep: boolean = false
+        value?: BrsType,
+        deep: boolean = false,
+        action: ThreadUpdate["action"] = "set",
+        requestId?: number
     ) {
+        const serializedValue =
+            value instanceof Node ? fromSGNode(value, deep) : value !== undefined ? jsValueOf(value) : null;
         const update: ThreadUpdate = {
-            id: id,
-            type: type,
-            field: field,
-            value: value instanceof Node ? fromSGNode(value, deep) : jsValueOf(value),
+            id,
+            action,
+            type,
+            field,
+            value: serializedValue,
         };
-        if (sgRoot.inTaskThread() && value instanceof Node) value.changed = false;
+        if (requestId !== undefined) {
+            update.requestId = requestId;
+        }
+        if (sgRoot.inTaskThread() && value instanceof Node && action === "set") {
+            value.changed = false;
+        }
         postMessage(update);
+    }
+
+    protected syncRemoteObservers(fieldName: string, type: "scene" | "global") {
+        const field = this.fields.get(fieldName);
+        if (!field) {
+            return;
+        }
+        const remoteThreadIds = field.getRemoteObserverThreadIds(this.owner);
+        if (!remoteThreadIds.length) {
+            return;
+        }
+        const fieldValue = field.getValue(false);
+        const deep = fieldValue instanceof Node;
+        for (const threadId of remoteThreadIds) {
+            this.sendThreadUpdate(threadId, type, fieldName, fieldValue, deep, "set");
+        }
     }
 
     /**

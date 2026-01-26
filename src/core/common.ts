@@ -398,9 +398,11 @@ export type ThreadInfo = {
 
 export type ThreadUpdate = {
     id: number;
+    action: "set" | "get" | "ack";
     type: "global" | "task" | "scene";
     field: string;
     value: any;
+    requestId?: number;
 };
 
 /**

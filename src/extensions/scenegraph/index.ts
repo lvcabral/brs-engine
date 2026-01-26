@@ -15,7 +15,6 @@ import {
     Stmt,
     Callable,
     TaskState,
-    ThreadUpdate,
     BrsInvalid,
     BrsObjects,
     BrsString,
@@ -124,7 +123,7 @@ export class BrightScriptExtension implements BrsExtension {
                     subInterpreter.environment.setM(mPointer);
                     subInterpreter.environment.setRootM(mPointer);
                     if (funcToCall instanceof Callable) {
-                        postMessage(`debug,[sg] Task function called: ${taskData.name} ${functionName}`);
+                        postMessage(`debug,[sg] Task function called: ${taskData.name} ${functionName} active: ${taskNode.active}`);
                         const funcLoc = funcToCall.getLocation() ?? interpreter.location;
                         interpreter.addToStack({
                             functionName: functionName,
@@ -132,15 +131,10 @@ export class BrightScriptExtension implements BrsExtension {
                             callLocation: interpreter.location,
                             signature: funcToCall.signatures[0].signature,
                         });
+                        taskNode.started = true;
                         funcToCall.call(subInterpreter);
-                        postMessage(`debug,[sg] Task function finished: ${taskData.name} ${functionName}`);
-                        const update: ThreadUpdate = {
-                            id: taskNode.threadId,
-                            type: "task",
-                            field: "control",
-                            value: "stop",
-                        };
-                        postMessage(update);
+                        postMessage(`debug,[sg] Task function finished: ${taskData.name} ${functionName} active: ${taskNode.active}`);
+                        taskNode.stopTask();
                         taskData.state = TaskState.STOP;
                         postMessage(taskData);
                     } else {
@@ -154,6 +148,9 @@ export class BrightScriptExtension implements BrsExtension {
                     postMessage(
                         `debug,[sg] Returned from Task function: ${taskData.name} ${functionName} ${err.value ?? ""}`
                     );
+                    taskNode.stopTask();
+                    taskData.state = TaskState.STOP;
+                    postMessage(taskData);
                     return;
                 } else if (err instanceof RuntimeError) {
                     interpreter.checkCrashDebug(err);

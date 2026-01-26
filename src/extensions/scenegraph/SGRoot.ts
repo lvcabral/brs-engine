@@ -195,6 +195,7 @@ export class SGRoot {
      */
     addTask(task: Task, threadId?: number, makeCurrent: boolean = false) {
         task.threadId = threadId ?? this._threads.size;
+        task.owner = task.threadId;
         this.setThread(task.threadId, makeCurrent, task.address, task);
     }
 
@@ -239,7 +240,7 @@ export class SGRoot {
         let updates = false;
         for (const thread of this._threads.values()) {
             const task = thread.task;
-            updates = task?.updateTask() || updates;
+            updates = Boolean(task?.updateTask()) || updates;
             if (task?.active) {
                 task.checkTaskRun();
             }

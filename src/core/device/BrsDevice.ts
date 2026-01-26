@@ -535,6 +535,11 @@ export class BrsDevice {
         }).format(now);
     }
 
+    static sleep(ms: number) {
+        ms += performance.now();
+        while (performance.now() < ms) {}
+    }
+
     /**
      * Adds/Increments the count for a SceneGraph node type in the statistics map.
      * @param nodeType The type of the node to add/increment

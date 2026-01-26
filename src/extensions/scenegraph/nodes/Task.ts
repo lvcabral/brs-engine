@@ -3,6 +3,7 @@ import {
     Interpreter,
     BrsDevice,
     BrsEvent,
+    BrsInvalid,
     BrsString,
     BrsType,
     isBrsString,
@@ -10,6 +11,7 @@ import {
     isThreadUpdate,
     TaskData,
     TaskState,
+    ThreadUpdate,
 } from "brs-engine";
 import { sgRoot } from "../SGRoot";
 import { brsValueOf, fromAssociativeArray, fromSGNode, updateSGNode } from "../factory/Serializer";
@@ -42,6 +44,10 @@ export class Task extends Node {
     started: boolean;
     /** True when this instance runs on a dedicated worker thread. */
     thread: boolean;
+    /** Incrementing identifier for rendezvous acknowledgements. */
+    private syncRequestId: number = 1;
+    /** Tracks acknowledgements completed by the main thread. */
+    private readonly completedAcks: Set<number> = new Set();
 
     /**
      * Creates a Task node, registering default and initial fields.
@@ -58,6 +64,27 @@ export class Task extends Node {
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(members);
+    }
+
+    /**
+     * Overrides `Node.get` to add task update semantics when accessed from a task thread.
+     * @param index Field name being retrieved.
+     * @returns The BrightScript value of the requested field.
+     */
+    get(index: BrsType): BrsType {
+        if (isBrsString(index)) {
+            const fieldName = index.toString().toLowerCase();
+            if (this.fields.has(fieldName)) {
+                if (this.owner !== sgRoot.threadId && this.threadId >= 0) {
+                    if (!this.consumeFreshField(fieldName)) {
+                        this.requestFieldValue("task", fieldName);
+                    }
+                } else if (this.thread && this.active) {
+                    this.updateTask();
+                }
+            }
+        }
+        return super.get(index);
     }
 
     /**
@@ -91,7 +118,7 @@ export class Task extends Node {
         super.setValue(index, value, alwaysNotify, kind);
         // Notify other threads of field changes
         if (this.threadId >= 0 && field && sync && this.changed) {
-            this.sendThreadUpdate(this.threadId, "task", mapKey, value, true);
+            this.syncTaskField(field, mapKey);
             this.changed = false;
         }
     }
@@ -120,6 +147,53 @@ export class Task extends Node {
         }
     }
 
+    private syncTaskField(field: Field, fieldName: string) {
+        if (this.threadId < 0) {
+            return;
+        }
+        const currentValue = field.getValue(false);
+        const deep = currentValue instanceof Node;
+        const requestId = this.thread ? this.syncRequestId++ : undefined;
+        this.sendThreadUpdate(this.threadId, "task", fieldName, currentValue, deep, "set", requestId);
+        if (requestId !== undefined) {
+            this.waitForFieldAck(fieldName, requestId);
+        }
+    }
+
+    private respondToFieldRequest(node: Node | Global | Scene, update: ThreadUpdate) {
+        if (update.id < 0) {
+            return;
+        }
+        const value = node.getValue(update.field);
+        const deep = value instanceof Node;
+        this.sendThreadUpdate(update.id, update.type, update.field, value, deep, "set");
+    }
+
+    private waitForFieldAck(fieldName: string, requestId: number, timeoutMs: number = 10000) {
+        if (!this.taskBuffer) {
+            return false;
+        }
+        const deadline = Date.now() + timeoutMs;
+        while (true) {
+            if (this.completedAcks.delete(requestId)) {
+                return true;
+            }
+            const remaining = deadline - Date.now();
+            if (remaining <= 0) {
+                break;
+            }
+            const waitResult = this.taskBuffer.waitVersion(0, remaining);
+            if (waitResult === "timed-out") {
+                break;
+            }
+            this.processUpdateFromOtherThread();
+        }
+        postMessage(
+            `warning,[task-sync] Task #${this.threadId} rendezvous ack timeout for task.${fieldName} (req=${requestId})`
+        );
+        return false;
+    }
+
     /**
      * Marks the task as active and registers it with sgRoot if not already done.
      */
@@ -132,6 +206,9 @@ export class Task extends Node {
         } else if (sgRoot.getThreadTask(this.threadId) !== this) {
             sgRoot.setThread(this.threadId, false, this.address, this);
         }
+        if (this.threadId >= 0) {
+            this.owner = this.threadId;
+        }
     }
 
     /**
@@ -139,7 +216,6 @@ export class Task extends Node {
      */
     private deactivateTask() {
         if (this.started) {
-            postMessage(`debug,[task] Posting Task #${this.threadId} Data to STOP: ${this.nodeSubtype}`);
             const taskData: TaskData = {
                 id: this.threadId,
                 name: this.nodeSubtype,
@@ -151,6 +227,17 @@ export class Task extends Node {
         this.active = false;
     }
 
+    stopTask() {
+        const update: ThreadUpdate = {
+            id: this.threadId,
+            action: "set",
+            type: "task",
+            field: "control",
+            value: "stop",
+        };
+        postMessage(update);
+    }
+
     /**
      * Initializes the shared buffer wrapper from a raw SharedArrayBuffer.
      * @param data Buffer supplied by the scheduler for inter-thread messaging.
@@ -158,6 +245,33 @@ export class Task extends Node {
     setTaskBuffer(data: SharedArrayBuffer) {
         this.taskBuffer = new SharedObject();
         this.taskBuffer.setBuffer(data);
+        this.active = true;
+    }
+
+    requestFieldValue(type: "global" | "scene" | "task", fieldName: string, timeoutMs: number = 10000): boolean {
+        if (!this.taskBuffer || this.threadId < 0) {
+            return false;
+        }
+        this.sendThreadUpdate(this.threadId, type, fieldName, undefined, false, "get");
+        const deadline = Date.now() + timeoutMs;
+
+        while (true) {
+            const update = this.processUpdateFromOtherThread();
+            if (update && update.action === "set" && update.type === type && update.field === fieldName) {
+                return true;
+            }
+            const remaining = deadline - Date.now();
+            if (remaining <= 0) {
+                break;
+            }
+            const waitResult = this.taskBuffer.waitVersion(0, remaining);
+            if (waitResult === "timed-out") {
+                break;
+            }
+        }
+
+        postMessage(`warning,[task] Rendezvous timeout for ${type}.${fieldName} on thread ${this.threadId}`);
+        return false;
     }
 
     /**
@@ -170,7 +284,6 @@ export class Task extends Node {
         if (this.taskBuffer && this.thread) {
             const timeout = wait === 0 ? undefined : wait;
             const result = this.taskBuffer.waitVersion(0, timeout);
-            postMessage(`debug,[task] The thread ${this.threadId} was awaken with "${result}"`);
             this.updateTask();
         }
         return new Array<BrsEvent>();
@@ -205,9 +318,9 @@ export class Task extends Node {
 
     /**
      * Processes shared-buffer updates and synchronizes dirty child nodes back to the main thread.
-     * @returns True when updates were applied, otherwise false.
+     * @returns The applied thread update when present, otherwise undefined.
      */
-    updateTask() {
+    updateTask(): ThreadUpdate | undefined {
         const updates = this.processUpdateFromOtherThread();
         const state = this.getValueJS("state") as string;
         if (!this.thread || state !== "run") {
@@ -225,27 +338,32 @@ export class Task extends Node {
 
     /**
      * Applies pending updates stored in the shared buffer that originated from another thread.
-     * @returns True when at least one field update was applied; false otherwise.
+     * @returns The ThreadUpdate that was applied, if any.
      */
-    private processUpdateFromOtherThread() {
+    private processUpdateFromOtherThread(): ThreadUpdate | undefined {
         const currentVersion = this.taskBuffer?.getVersion() ?? -1;
         // Only process updates when the buffer version is exactly 1,
         // which indicates a new update is available from the other thread.
         // (Versioning protocol: 1 = update ready, 0 = idle/no update)
         if (!this.taskBuffer || currentVersion !== 1) {
-            return false;
+            return undefined;
         }
         // Load update from buffer and reset version to 0 (idle)
         const update = this.taskBuffer.load(true);
         if (isThreadUpdate(update)) {
-            postMessage(
-                `debug,[task] Received Update at ${this.threadId} thread from ${
-                    this.thread ? "Main thread" : "Task Thread"
-                }: ${update.id} - ${update.type} - ${update.field}`
-            );
+            if (update.action === "ack") {
+                if (this.thread && update.requestId !== undefined) {
+                    this.completedAcks.add(update.requestId);
+                }
+                return update;
+            }
             const node = this.getNodeToUpdate(update.type);
             if (!node) {
-                return false;
+                return undefined;
+            }
+            if (update.action === "get") {
+                this.respondToFieldRequest(node, update);
+                return undefined;
             }
             // Apply update
             const oldValue = node.getValue(update.field);
@@ -256,10 +374,24 @@ export class Task extends Node {
             } else {
                 value = brsValueOf(update.value);
             }
+            if (node instanceof Node) {
+                node.markFieldFresh(update.field);
+            }
             node.setValue(update.field, value, false, undefined, false);
-            return true;
+            if (!this.thread && update.requestId !== undefined) {
+                this.sendThreadUpdate(
+                    update.id,
+                    update.type,
+                    update.field,
+                    BrsInvalid.Instance,
+                    false,
+                    "ack",
+                    update.requestId
+                );
+            }
+            return update;
         }
-        return false;
+        return undefined;
     }
 
     /**
