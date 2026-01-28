@@ -1,4 +1,4 @@
-import { AAMember, BrsDevice, BrsType, isBrsString } from "brs-engine";
+import { AAMember, BrsType, isBrsString } from "brs-engine";
 import { Node } from "./Node";
 import { sgRoot } from "../SGRoot";
 import { FieldKind } from "../SGTypes";
