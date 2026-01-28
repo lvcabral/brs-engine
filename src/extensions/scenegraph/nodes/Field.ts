@@ -275,27 +275,6 @@ export class Field {
         );
     }
 
-    getRemoteObserverThreadIds(ownerThreadId: number): number[] {
-        const remoteThreadIds = new Set<number>();
-        const collect = (callback: BrsCallback | undefined) => {
-            if (!callback?.hostNode) {
-                return;
-            }
-            const hostOwner = getTaskThreadId(callback.hostNode) ?? callback.hostNode.owner;
-            if (typeof hostOwner === "number" && hostOwner !== ownerThreadId) {
-                remoteThreadIds.add(hostOwner);
-            }
-        };
-
-        this.permanentObservers.forEach(collect);
-        this.unscopedObservers.forEach(collect);
-        for (const callbacks of this.scopedObservers.values()) {
-            callbacks.forEach(collect);
-        }
-
-        return Array.from(remoteThreadIds);
-    }
-
     private convertValue(value: BrsType) {
         if (isAnyNumber(value) && value.kind !== getValueKindFromFieldType(this.type)) {
             if (isBoxedNumber(value)) {

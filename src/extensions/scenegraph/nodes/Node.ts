@@ -1529,15 +1529,6 @@ export class Node extends RoSGNode implements BrsValue {
             this.sendThreadUpdate(sgRoot.threadId, type, fieldName, fieldValue, deep, "set");
             return;
         }
-        const remoteThreadIds = field.getRemoteObserverThreadIds(this.owner);
-        if (!remoteThreadIds.length) {
-            return;
-        }
-        const fieldValue = field.getValue(false);
-        const deep = fieldValue instanceof Node;
-        for (const threadId of remoteThreadIds) {
-            this.sendThreadUpdate(threadId, type, fieldName, fieldValue, deep, "set");
-        }
     }
 
     /**
