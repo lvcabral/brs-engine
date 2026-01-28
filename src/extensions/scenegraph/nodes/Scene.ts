@@ -21,7 +21,7 @@ import { Dialog } from "./Dialog";
 import { Group } from "./Group";
 import { Node } from "./Node";
 import { StandardDialog } from "./StandardDialog";
-import { FieldKind, FieldModel } from "../SGTypes";
+import { FieldKind, FieldModel, ObserverScope } from "../SGTypes";
 import { SGNodeType } from ".";
 
 export class Scene extends Group {
@@ -41,6 +41,7 @@ export class Scene extends Group {
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.Scene) {
         super([], name);
         this.setExtendsType(name, SGNodeType.Group);
+        this.setThreadSyncType("scene");
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
@@ -117,7 +118,7 @@ export class Scene extends Group {
 
     addObserver(
         interpreter: Interpreter,
-        scope: "permanent" | "scoped" | "unscoped",
+        scope: ObserverScope,
         fieldName: BrsString,
         funcOrPort: BrsString | RoMessagePort,
         infoFields?: RoArray
