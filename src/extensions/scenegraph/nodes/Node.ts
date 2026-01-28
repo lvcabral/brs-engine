@@ -1492,19 +1492,17 @@ export class Node extends RoSGNode implements BrsValue {
         id: number,
         type: "scene" | "global" | "task",
         field: string,
-        value?: BrsType,
+        value: BrsType,
         deep: boolean = false,
         action: ThreadUpdate["action"] = "set",
         requestId?: number
     ) {
-        const serializedValue =
-            value instanceof Node ? fromSGNode(value, deep) : value !== undefined ? jsValueOf(value) : null;
         const update: ThreadUpdate = {
             id,
             action,
             type,
             field,
-            value: serializedValue,
+            value: value instanceof Node ? fromSGNode(value, deep) : jsValueOf(value),
         };
         if (requestId !== undefined) {
             update.requestId = requestId;
@@ -1525,7 +1523,6 @@ export class Node extends RoSGNode implements BrsValue {
             const fieldValue = field.getValue(false);
             const deep = fieldValue instanceof Node;
             this.sendThreadUpdate(sgRoot.threadId, type, fieldName, fieldValue, deep, "set");
-            return;
         }
     }
 

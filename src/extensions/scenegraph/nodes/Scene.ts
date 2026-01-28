@@ -13,7 +13,6 @@ import {
     IfDraw2D,
     RuntimeError,
     DebugMode,
-    BrsDevice,
     isBrsString,
 } from "brs-engine";
 import { toAssociativeArray } from "../factory/Serializer";

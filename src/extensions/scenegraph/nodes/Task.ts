@@ -252,7 +252,7 @@ export class Task extends Node {
         if (!this.taskBuffer || this.threadId < 0) {
             return false;
         }
-        this.sendThreadUpdate(this.threadId, type, fieldName, undefined, false, "get");
+        this.sendThreadUpdate(this.threadId, type, fieldName, BrsInvalid.Instance, false, "get");
         const deadline = Date.now() + timeoutMs;
 
         while (true) {
@@ -282,7 +282,7 @@ export class Task extends Node {
     protected getNewEvents(_: Interpreter, wait: number) {
         if (this.taskBuffer && this.thread) {
             const timeout = wait === 0 ? undefined : wait;
-            const result = this.taskBuffer.waitVersion(0, timeout);
+            this.taskBuffer.waitVersion(0, timeout);
             this.updateTask();
         }
         return new Array<BrsEvent>();
