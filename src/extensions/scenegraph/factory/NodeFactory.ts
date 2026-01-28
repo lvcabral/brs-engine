@@ -514,6 +514,24 @@ export function initializeTask(interpreter: Interpreter, taskData: TaskData) {
  * @param taskData Serialized task data with field values and state
  */
 function loadTaskData(interpreter: Interpreter, node: Node, taskData: TaskData) {
+    if (taskData.scene?.["_node_"]) {
+        const nodeInfo = getSerializedNodeInfo(taskData.scene);
+        const sceneName = nodeInfo?.subtype || SGNodeType.Scene;
+        const scene = createSceneByType(interpreter, sceneName);
+        if (scene instanceof Scene) {
+            sgRoot.setScene(scene);
+            restoreNode(interpreter, taskData.scene, scene);
+        } else {
+            BrsDevice.stderr.write(
+                `warning,Warning: Failed to create Scene of type ${sceneName} for Task ${taskData.name} (${
+                    taskData.id
+                }): ${interpreter.formatLocation()}`
+            );
+        }
+    }
+    if (taskData.m?.global) {
+        restoreNode(interpreter, taskData.m.global, sgRoot.mGlobal);
+    }
     if (node instanceof Task) {
         sgRoot.setThread(0, false, taskData.render);
         node.threadId = taskData.id;
@@ -535,26 +553,8 @@ function loadTaskData(interpreter: Interpreter, node: Node, taskData: TaskData) 
             node.m.set(new BrsString(key), brsValue);
         }
     }
-    if (taskData.m?.global) {
-        restoreNode(interpreter, taskData.m.global, sgRoot.mGlobal, port);
-    }
     if (taskData.m?.top) {
         restoreNode(interpreter, taskData.m.top, node, port);
-    }
-    if (taskData.scene?.["_node_"]) {
-        const nodeInfo = getSerializedNodeInfo(taskData.scene);
-        const sceneName = nodeInfo?.subtype || SGNodeType.Scene;
-        const scene = createSceneByType(interpreter, sceneName);
-        if (scene instanceof Scene) {
-            sgRoot.setScene(scene);
-            restoreNode(interpreter, taskData.scene, scene, port);
-        } else {
-            BrsDevice.stderr.write(
-                `warning,Warning: Failed to create Scene of type ${sceneName} for Task ${taskData.name} (${
-                    taskData.id
-                }): ${interpreter.formatLocation()}`
-            );
-        }
     }
 }
 
