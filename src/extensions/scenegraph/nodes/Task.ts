@@ -72,14 +72,14 @@ export class Task extends Node {
      * @returns The BrightScript value of the requested field.
      */
     get(index: BrsType): BrsType {
-        if (isBrsString(index)) {
+        if (this.active && isBrsString(index)) {
             const fieldName = index.toString().toLowerCase();
             if (this.fields.has(fieldName)) {
                 if (this.owner !== sgRoot.threadId && this.threadId >= 0) {
-                    if (this.active && !this.consumeFreshField(fieldName)) {
+                    if (!this.consumeFreshField(fieldName)) {
                         this.requestFieldValue("task", fieldName);
                     }
-                } else if (this.thread && this.active) {
+                } else if (this.thread) {
                     this.updateTask();
                 }
             }
@@ -257,7 +257,7 @@ export class Task extends Node {
 
         while (true) {
             const update = this.processUpdateFromOtherThread();
-            if (update && update.action === "set" && update.type === type && update.field === fieldName) {
+            if (update?.action === "set" && update.type === type && update.field === fieldName) {
                 return true;
             }
             const remaining = deadline - Date.now();
@@ -269,7 +269,6 @@ export class Task extends Node {
                 break;
             }
         }
-
         postMessage(`warning,[task] Rendezvous timeout for ${type}.${fieldName} on thread ${this.threadId}`);
         return false;
     }
@@ -318,22 +317,22 @@ export class Task extends Node {
 
     /**
      * Processes shared-buffer updates and synchronizes dirty child nodes back to the main thread.
-     * @returns The applied thread update when present, otherwise undefined.
+     * @returns True when updates were applied, otherwise false.
      */
-    updateTask(): ThreadUpdate | undefined {
+    updateTask() {
         const updates = this.processUpdateFromOtherThread();
         const state = this.getValueJS("state") as string;
         if (!this.thread || state !== "run") {
-            return updates;
+            return updates !== undefined;
         }
-        // Check for changed fields to notify updates to the Main thread
+        // Check for changed Node fields to notify updates to the Main thread
         for (const [name, field] of this.getNodeFields()) {
             const value = field.getValue();
             if (!field.isHidden() && value instanceof Node && value.changed) {
                 this.sendThreadUpdate(this.threadId, "task", name, value, true);
             }
         }
-        return updates;
+        return updates !== undefined;
     }
 
     /**
@@ -374,10 +373,9 @@ export class Task extends Node {
             } else {
                 value = brsValueOf(update.value);
             }
-            if (node instanceof Node) {
-                node.markFieldFresh(update.field);
-            }
+            node.markFieldFresh(update.field);
             node.setValue(update.field, value, false, undefined, false);
+            // Send acknowledgement back to the other thread if needed
             if (!this.thread && update.requestId !== undefined) {
                 this.sendThreadUpdate(
                     update.id,
