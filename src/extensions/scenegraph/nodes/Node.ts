@@ -1460,11 +1460,9 @@ export class Node extends RoSGNode implements BrsValue {
             this.freshFields.delete(mapKey);
             return false;
         }
-        entry.remaining -= 1;
+        entry.remaining--;
         if (entry.remaining <= 0) {
             this.freshFields.delete(mapKey);
-        } else {
-            this.freshFields.set(mapKey, entry);
         }
         return true;
     }
