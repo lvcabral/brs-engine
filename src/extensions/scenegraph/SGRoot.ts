@@ -13,7 +13,6 @@ import {
     Interpreter,
     MediaEvent,
     MediaTrack,
-    ThreadInfo,
 } from "brs-engine";
 import { ComponentDefinition } from "./parser/ComponentDefinition";
 import { RoSGNode } from "./components/RoSGNode";
@@ -25,6 +24,7 @@ import { Audio } from "./nodes/Audio";
 import { SoundEffect } from "./nodes/SoundEffect";
 import { Video } from "./nodes/Video";
 import { Task } from "./nodes/Task";
+import { ThreadInfo } from "./SGTypes";
 
 /**
  * A singleton object that holds the Node that represents the m.global, the root Scene,
@@ -195,7 +195,6 @@ export class SGRoot {
      */
     addTask(task: Task, threadId?: number, makeCurrent: boolean = false) {
         task.threadId = threadId ?? this._threads.size;
-        task.owner = task.threadId;
         this.setThread(task.threadId, makeCurrent, task.address, task);
     }
 
