@@ -7,6 +7,7 @@ import { SGNodeType } from ".";
 export class Global extends Node {
     constructor(members: AAMember[] = [], readonly name: string = SGNodeType.Node) {
         super([], name);
+        this.setThreadSyncType("global");
         this.registerInitializedFields(members);
     }
 

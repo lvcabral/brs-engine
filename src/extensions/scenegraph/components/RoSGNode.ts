@@ -24,7 +24,7 @@ import {
 import { sgRoot } from "../SGRoot";
 import { createNodeByType, getNodeType, isSubtypeCheck, subtypeHierarchy } from "../factory/NodeFactory";
 import { toAssociativeArray } from "../factory/Serializer";
-import { FieldKind, isContentNode } from "../SGTypes";
+import { FieldKind, isContentNode, ObserverScope } from "../SGTypes";
 import type { SGNodeType } from "../nodes";
 
 export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode {
@@ -169,10 +169,10 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
     abstract appendChildToParent(child: BrsType): boolean;
     abstract addObserver(
         interpreter: Interpreter,
-        scope: "permanent" | "scoped" | "unscoped",
+        scope: ObserverScope,
         fieldName: BrsString,
         funcOrPort: BrsString | RoMessagePort,
-        infoFields?: RoArray
+        infoFields?: RoArray | BrsInvalid
     ): BrsBoolean;
     protected abstract removeObserver(fieldName: string, node?: RoSGNode): void;
     protected abstract cloneNode(isDeepCopy: boolean, interpreter?: Interpreter): BrsType;

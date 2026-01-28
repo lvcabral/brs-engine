@@ -6,6 +6,7 @@ import {
     BrsInvalid,
     BrsString,
     BrsType,
+    RoArray,
     isBrsString,
     SharedObject,
     isThreadUpdate,
@@ -15,11 +16,10 @@ import {
 } from "brs-engine";
 import { sgRoot } from "../SGRoot";
 import { brsValueOf, fromAssociativeArray, fromSGNode, updateSGNode } from "../factory/Serializer";
+import { FieldKind, FieldModel, isObserverScope, ObserverScope, ObserverRequestPayload } from "../SGTypes";
 import { Node } from "./Node";
-import { Scene } from "./Scene";
 import { Global } from "./Global";
-import type { Field } from "./Field";
-import { FieldKind, FieldModel } from "../SGTypes";
+import type { Field, Scene } from "..";
 import { SGNodeType } from ".";
 
 /**
@@ -49,6 +49,60 @@ export class Task extends Node {
     /** Tracks acknowledgements completed by the main thread. */
     private readonly completedAcks: Set<number> = new Set();
 
+    private handleObserverRequest(target: Node | Global | Scene | undefined, update: ThreadUpdate) {
+        if (!target) {
+            return;
+        }
+        const payload = update.value as ObserverRequestPayload;
+        if (!payload || typeof payload.functionName !== "string") {
+            return;
+        }
+        const interpreter = sgRoot.interpreter;
+        if (!interpreter) {
+            return;
+        }
+        const scope: ObserverScope = isObserverScope(payload.scope) ? payload.scope : "unscoped";
+        const infoValue = payload.infoFields === undefined ? undefined : brsValueOf(payload.infoFields);
+        const infoFields = infoValue instanceof RoArray ? infoValue : undefined;
+        const functionName = payload.functionName;
+        const hostNode = this.resolveHostNode(update.id, payload.host) ?? target;
+        interpreter.inSubEnv((subInterpreter) => {
+            subInterpreter.environment.hostNode = hostNode;
+            subInterpreter.environment.setM(hostNode.m);
+            subInterpreter.environment.setRootM(hostNode.m);
+            target.addObserver(
+                subInterpreter,
+                scope,
+                new BrsString(update.field),
+                new BrsString(functionName),
+                infoFields
+            );
+            return BrsInvalid.Instance;
+        });
+    }
+
+    private resolveHostNode(taskId: number, hostAddress?: string): Node | undefined {
+        if (hostAddress) {
+            const taskNode = sgRoot.getThreadTask(taskId);
+            const fromTask = findNodeByAddress(taskNode, hostAddress);
+            if (fromTask) {
+                return fromTask;
+            }
+            const sceneNode = findNodeByAddress(sgRoot.scene, hostAddress);
+            if (sceneNode) {
+                return sceneNode;
+            }
+            const globalNode = findNodeByAddress(sgRoot.mGlobal, hostAddress);
+            if (globalNode) {
+                return globalNode;
+            }
+        }
+        if (taskId > 0) {
+            return sgRoot.getThreadTask(taskId);
+        }
+        return undefined;
+    }
+
     /**
      * Creates a Task node, registering default and initial fields.
      * @param members AA members originating from XML component instantiation.
@@ -57,6 +111,7 @@ export class Task extends Node {
     constructor(members: AAMember[] = [], readonly name: string = SGNodeType.Task) {
         super([], name);
         this.setExtendsType(name, SGNodeType.Node);
+        this.setThreadSyncType("task");
         this.threadId = -1; // Not activated yet
         this.active = false;
         this.started = false;
@@ -142,7 +197,7 @@ export class Task extends Node {
             this.fields.set("state", state);
             // Notify other threads of field changes
             if (this.threadId >= 0 && this.thread && sync) {
-                this.sendThreadUpdate(this.threadId, "task", "control", new BrsString(control));
+                this.sendThreadUpdate(this.threadId, "set", "task", "control", new BrsString(control));
             }
         }
     }
@@ -154,7 +209,7 @@ export class Task extends Node {
         const currentValue = field.getValue(false);
         const deep = currentValue instanceof Node;
         const requestId = this.thread ? this.syncRequestId++ : undefined;
-        this.sendThreadUpdate(this.threadId, "task", fieldName, currentValue, deep, "set", requestId);
+        this.sendThreadUpdate(this.threadId, "set", "task", fieldName, currentValue, deep, requestId);
         if (requestId !== undefined) {
             this.waitForFieldAck(fieldName, requestId);
         }
@@ -166,7 +221,7 @@ export class Task extends Node {
         }
         const value = node.getValue(update.field);
         const deep = value instanceof Node;
-        this.sendThreadUpdate(update.id, update.type, update.field, value, deep, "set");
+        this.sendThreadUpdate(update.id, "set", update.type, update.field, value, deep);
     }
 
     private waitForFieldAck(fieldName: string, requestId: number, timeoutMs: number = 10000) {
@@ -252,7 +307,7 @@ export class Task extends Node {
         if (!this.taskBuffer || this.threadId < 0) {
             return false;
         }
-        this.sendThreadUpdate(this.threadId, type, fieldName, BrsInvalid.Instance, false, "get");
+        this.sendThreadUpdate(this.threadId, "get", type, fieldName, BrsInvalid.Instance, false);
         const deadline = Date.now() + timeoutMs;
 
         while (true) {
@@ -329,7 +384,7 @@ export class Task extends Node {
         for (const [name, field] of this.getNodeFields()) {
             const value = field.getValue();
             if (!field.isHidden() && value instanceof Node && value.changed) {
-                this.sendThreadUpdate(this.threadId, "task", name, value, true);
+                this.sendThreadUpdate(this.threadId, "set", "task", name, value, true);
             }
         }
         return updates !== undefined;
@@ -360,6 +415,10 @@ export class Task extends Node {
             if (!node) {
                 return undefined;
             }
+            if (update.action === "obs") {
+                this.handleObserverRequest(node, update);
+                return update;
+            }
             if (update.action === "get") {
                 this.respondToFieldRequest(node, update);
                 return undefined;
@@ -379,11 +438,11 @@ export class Task extends Node {
             if (!this.thread && update.requestId !== undefined) {
                 this.sendThreadUpdate(
                     update.id,
+                    "ack",
                     update.type,
                     update.field,
                     BrsInvalid.Instance,
                     false,
-                    "ack",
                     update.requestId
                 );
             }
@@ -406,4 +465,22 @@ export class Task extends Node {
             return this;
         }
     }
+}
+
+function findNodeByAddress(root: Node | undefined, address: string): Node | undefined {
+    if (!root) {
+        return undefined;
+    }
+    if (root.address === address) {
+        return root;
+    }
+    for (const child of root.getNodeChildren()) {
+        if (child instanceof Node) {
+            const match = findNodeByAddress(child, address);
+            if (match) {
+                return match;
+            }
+        }
+    }
+    return undefined;
 }
