@@ -48,6 +48,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
                 this.lookup,
                 this.lookupCI,
             ],
+            ifTypedComponent: [this.getSubtype], // undocumented interface
             ifSGNodeField: [
                 this.addField,
                 this.addFields,
@@ -1275,6 +1276,17 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
 
     /* Returns the subtype of this node as specified when it was created */
     private readonly subtype = new Callable("subtype", {
+        signature: {
+            args: [],
+            returns: ValueKind.String,
+        },
+        impl: (_: Interpreter) => {
+            return new BrsString(this.nodeSubtype);
+        },
+    });
+
+    /* Returns the subtype of this node as specified when it was created */
+    private readonly getSubtype = new Callable("getSubtype", {
         signature: {
             args: [],
             returns: ValueKind.String,
