@@ -231,7 +231,7 @@ export class SGRoot {
         let updates = false;
         for (const thread of this._threads.values()) {
             const task = thread.task;
-            updates = Boolean(task?.updateTask()) || updates;
+            updates = task?.updateTask() || updates;
             if (task?.active) {
                 task.checkTaskRun();
             }
