@@ -13,12 +13,14 @@ The **BrightScript Engine** implements the BrightScript language specification u
     * Only one `port` instance can be used on Task `init()` to observe fields
   * The following nodes are already implemented:
     * The basic nodes: `ContentNode`, `Group`, `Scene`, `Global`, `Font`, `Timer`, `Rectangle`, `Label`, `ScrollingLabel`, `Poster`, `LayoutGroup` and `RSGPalette`
-    * Grids and list nodes based on `ArrayGrid`: `LabelList`, `CheckList`, `RadioButtonList`, `MarkupList`, `MarkupGrid`, `RowList` and `ZoomRowList`
+    * Grids and list nodes based on `ArrayGrid`: `PosterGrid`, `LabelList`, `CheckList`, `RadioButtonList`, `MarkupList`, `MarkupGrid`, `RowList` and `ZoomRowList`
     * Dialog related nodes: `Dialog`, `KeyboardDialog`, `StandardDialog`, `StandardProgressDialog`, `StdDlgProgressItem`, `StdDlgContentArea` and `StdDlgTitleArea`
     * Media related nodes: `Audio`, `SoundEffect`, `Video` and `TrickPlayBar`
     * Animation related nodes: `AnimationBase`, `Animation`, `SequentialAnimation`, `ParallelAnimation`, `ColorFieldInterpolator`, `FloatFieldInterpolator` and `Vector2DFieldInterpolator`
-    * Other supported nodes: `Button`, `ButtonGroup`, `BusySpinner`, `Overhang`, `Keyboard`, `MiniKeyboard`, `TextEditBox` and `ChannelStore`
+    * Panel related nodes: `OverhangPanelSetScene`, `PanelSet`, `Panel`, `GridPanel` and `ListPanel`
+    * Other supported nodes: `Button`, `ButtonGroup`, `BusySpinner`, `Overhang`, `InfoPane`, `Keyboard`, `MiniKeyboard`, `TextEditBox` and `ChannelStore`
   * Some of the nodes listed above may not have full functionality yet, please open a [GitHub issue](https://github.com/lvcabral/brs-engine/issues) if you find any problem or missing feature.
+  * The following `ifSGNodeBoundingRect` methods are not implemented yet: `localSubBoundingRect`, `subBoundingRect`, `sceneSubBoundingRect` and `ancestorSubBoundingRect`
   * The support for focus change animation on grid and list nodes is not yet implemented.
   * All other nodes are either mocked or not implemented yet, and if used will be created as a plain `Node`.
   * The component `roRenderThreadQueue` introduced in Roku OS 15 is still not implemented.

@@ -110,7 +110,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
                 this.boundingRect,
                 this.localBoundingRect,
                 this.sceneBoundingRect,
-                // TODO: Implement the remaining `ifSGNodeBoundingRect` methods
+                this.ancestorBoundingRect,
             ],
             ifSGNodeHttpAgentAccess: [this.getHttpAgent, this.setHttpAgent],
         });
@@ -196,6 +196,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
     protected abstract replaceChildAtIndex(newChild: RoSGNode, index: number): boolean;
     protected abstract insertChildAtIndex(child: BrsType, index: number): boolean;
     protected abstract isChildrenFocused(): boolean;
+    protected abstract createPath(node: RoSGNode, reverse?: boolean): RoSGNode[];
     protected abstract findRootNode(from?: RoSGNode): RoSGNode;
 
     protected abstract getBoundingRect(interpreter: Interpreter, type: string): Rect;
@@ -1158,6 +1159,27 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
         },
         impl: (interpreter: Interpreter) => {
             return toAssociativeArray(this.getBoundingRect(interpreter, "toScene"));
+        },
+    });
+
+    /* Returns the bounding rectangle in relation to an ancestor component. */
+    private readonly ancestorBoundingRect = new Callable("ancestorBoundingRect", {
+        signature: {
+            args: [new StdlibArgument("ancestor", ValueKind.Object)],
+            returns: ValueKind.Dynamic,
+        },
+        impl: (interpreter: Interpreter, ancestor: RoSGNode) => {
+            let boundingRect = this.getBoundingRect(interpreter, "toParent");
+            const path = this.createPath(this, false).slice(1);
+            for (const node of path) {
+                if (ancestor === node) {
+                    break;
+                }
+                const nodeRect = node.getBoundingRect(interpreter, "toParent");
+                boundingRect.x += nodeRect.x;
+                boundingRect.y += nodeRect.y;
+            }
+            return toAssociativeArray(boundingRect);
         },
     });
 
