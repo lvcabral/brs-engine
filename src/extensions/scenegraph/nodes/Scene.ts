@@ -41,10 +41,12 @@ export class Scene extends Group {
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.Scene) {
         super([], name);
         this.setExtendsType(name, SGNodeType.Group);
-        this.setThreadSyncType("scene");
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
+
+        this.setThreadSyncType("scene");
+        this.owner = 0; // Scene node is always owned by render thread
 
         this.setResolution("HD");
     }
@@ -114,17 +116,6 @@ export class Scene extends Group {
 
     getDimensions() {
         return { width: this.ui.width, height: this.ui.height };
-    }
-
-    addObserver(
-        interpreter: Interpreter,
-        scope: ObserverScope,
-        fieldName: BrsString,
-        funcOrPort: BrsString | RoMessagePort,
-        infoFields?: RoArray
-    ) {
-        interpreter.environment.hostNode ??= this;
-        return super.addObserver(interpreter, scope, fieldName, funcOrPort, infoFields);
     }
 
     setResolution(resolution: string) {
@@ -249,5 +240,10 @@ export class Scene extends Group {
             return hostNode.handleKey(key.value, press.toBoolean());
         }
         return keyHandled;
+    }
+
+    public setOwner(_threadId: number): void {
+        // Scene node owner cannot be changed
+        return;
     }
 }

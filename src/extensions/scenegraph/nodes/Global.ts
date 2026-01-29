@@ -7,8 +7,9 @@ import { SGNodeType } from ".";
 export class Global extends Node {
     constructor(members: AAMember[] = [], readonly name: string = SGNodeType.Node) {
         super([], name);
-        this.setThreadSyncType("global");
         this.registerInitializedFields(members);
+        this.setThreadSyncType("global");
+        this.owner = 0; // Global node is always owned by render thread
     }
 
     get(index: BrsType): BrsType {
@@ -33,5 +34,10 @@ export class Global extends Node {
                 this.changed = false;
             }
         }
+    }
+
+    public setOwner(_threadId: number): void {
+        // Global node owner cannot be changed
+        return;
     }
 }
