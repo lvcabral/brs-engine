@@ -100,6 +100,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
                 this.insertChildren,
                 this.getScene,
             ],
+            ifSGNodeFocus: [this.hasFocus, this.setFocus, this.isInFocusChain],
             ifSGNodeDict: [
                 this.findNode,
                 this.isSameNode,
