@@ -6,8 +6,6 @@ import {
     BrsString,
     BrsType,
     Callable,
-    RoArray,
-    RoMessagePort,
     Scope,
     Stmt,
     IfDraw2D,
@@ -21,7 +19,7 @@ import { Dialog } from "./Dialog";
 import { Group } from "./Group";
 import { Node } from "./Node";
 import { StandardDialog } from "./StandardDialog";
-import { FieldKind, FieldModel, ObserverScope } from "../SGTypes";
+import { FieldKind, FieldModel } from "../SGTypes";
 import { SGNodeType } from ".";
 
 export class Scene extends Group {
