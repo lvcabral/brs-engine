@@ -6,17 +6,17 @@ import {
     BrsInvalid,
     BrsString,
     BrsType,
-    RoArray,
     isBrsString,
     SharedObject,
     isThreadUpdate,
     TaskData,
     TaskState,
     ThreadUpdate,
+    SyncType,
 } from "brs-engine";
 import { sgRoot } from "../SGRoot";
 import { brsValueOf, fromAssociativeArray, fromSGNode, updateSGNode } from "../factory/Serializer";
-import { FieldKind, FieldModel, isObserverScope, ObserverScope, ObserverRequestPayload } from "../SGTypes";
+import { FieldKind, FieldModel, ObserverRequestPayload, isObserverRequestPayload } from "../SGTypes";
 import { Node } from "./Node";
 import { Global } from "./Global";
 import type { Field, Scene } from "..";
@@ -48,60 +48,6 @@ export class Task extends Node {
     private syncRequestId: number = 1;
     /** Tracks acknowledgements completed by the main thread. */
     private readonly completedAcks: Set<number> = new Set();
-
-    private handleObserverRequest(target: Node | Global | Scene | undefined, update: ThreadUpdate) {
-        if (!target) {
-            return;
-        }
-        const payload = update.value as ObserverRequestPayload;
-        if (!payload || typeof payload.functionName !== "string") {
-            return;
-        }
-        const interpreter = sgRoot.interpreter;
-        if (!interpreter) {
-            return;
-        }
-        const scope: ObserverScope = isObserverScope(payload.scope) ? payload.scope : "unscoped";
-        const infoValue = payload.infoFields === undefined ? undefined : brsValueOf(payload.infoFields);
-        const infoFields = infoValue instanceof RoArray ? infoValue : undefined;
-        const functionName = payload.functionName;
-        const hostNode = this.resolveHostNode(update.id, payload.host) ?? target;
-        interpreter.inSubEnv((subInterpreter) => {
-            subInterpreter.environment.hostNode = hostNode;
-            subInterpreter.environment.setM(hostNode.m);
-            subInterpreter.environment.setRootM(hostNode.m);
-            target.addObserver(
-                subInterpreter,
-                scope,
-                new BrsString(update.field),
-                new BrsString(functionName),
-                infoFields
-            );
-            return BrsInvalid.Instance;
-        });
-    }
-
-    private resolveHostNode(taskId: number, hostAddress?: string): Node | undefined {
-        if (hostAddress) {
-            const taskNode = sgRoot.getThreadTask(taskId);
-            const fromTask = findNodeByAddress(taskNode, hostAddress);
-            if (fromTask) {
-                return fromTask;
-            }
-            const sceneNode = findNodeByAddress(sgRoot.scene, hostAddress);
-            if (sceneNode) {
-                return sceneNode;
-            }
-            const globalNode = findNodeByAddress(sgRoot.mGlobal, hostAddress);
-            if (globalNode) {
-                return globalNode;
-            }
-        }
-        if (taskId > 0) {
-            return sgRoot.getThreadTask(taskId);
-        }
-        return undefined;
-    }
 
     /**
      * Creates a Task node, registering default and initial fields.
@@ -261,9 +207,6 @@ export class Task extends Node {
         } else if (sgRoot.getThreadTask(this.threadId) !== this) {
             sgRoot.setThread(this.threadId, false, this.address, this);
         }
-        if (this.threadId >= 0) {
-            this.owner = this.threadId;
-        }
     }
 
     /**
@@ -324,7 +267,9 @@ export class Task extends Node {
                 break;
             }
         }
-        postMessage(`warning,[task] Rendezvous timeout for ${type}.${fieldName} on thread ${this.threadId}`);
+        postMessage(
+            `warning,[task:${sgRoot.threadId}] Rendezvous timeout for ${type}.${fieldName} on thread ${this.threadId}`
+        );
         return false;
     }
 
@@ -426,7 +371,7 @@ export class Task extends Node {
             // Apply update
             const oldValue = node.getValue(update.field);
             let value: BrsType;
-            if (oldValue instanceof Node && update.value?._node_ && oldValue.address === update.value._address_) {
+            if (oldValue instanceof Node && update.value?._node_ && oldValue.getAddress() === update.value._address_) {
                 // Update existing node to preserve references
                 value = updateSGNode(update.value, oldValue);
             } else {
@@ -456,7 +401,7 @@ export class Task extends Node {
      * @param type Domain identifier (`global`, `task`, or `scene`).
      * @returns Target node, if available.
      */
-    private getNodeToUpdate(type: "global" | "task" | "scene"): this | Global | Scene | undefined {
+    private getNodeToUpdate(type: SyncType): this | Global | Scene | undefined {
         if (type === "global") {
             return sgRoot.mGlobal;
         } else if (type === "scene") {
@@ -465,22 +410,58 @@ export class Task extends Node {
             return this;
         }
     }
-}
+    /**
+     * Handles observer registration requests from task threads.
+     * @param target Target node to register the observer on.
+     * @param update Thread update data containing observer request details.
+     */
+    private handleObserverRequest(target: Node, update: ThreadUpdate) {
+        const payload = update.value as ObserverRequestPayload;
+        if (!isObserverRequestPayload(payload) || !sgRoot.interpreter) {
+            return;
+        }
+        const hostNode = this.resolveHostNode(payload.host);
+        if (!hostNode) {
+            postMessage(
+                `warning,[task:${sgRoot.threadId}] Unable to resolve host node for observer request: ${update.type}.${update.field} '${payload.functionName}'`
+            );
+            return;
+        }
+        sgRoot.interpreter.inSubEnv((subInterpreter: Interpreter) => {
+            subInterpreter.environment.hostNode = hostNode;
+            subInterpreter.environment.setM(hostNode.m);
+            subInterpreter.environment.setRootM(hostNode.m);
+            target.addObserver(
+                subInterpreter,
+                payload.scope,
+                new BrsString(update.field),
+                new BrsString(payload.functionName),
+                brsValueOf(payload.infoFields)
+            );
+            return BrsInvalid.Instance;
+        });
+    }
 
-function findNodeByAddress(root: Node | undefined, address: string): Node | undefined {
-    if (!root) {
-        return undefined;
-    }
-    if (root.address === address) {
-        return root;
-    }
-    for (const child of root.getNodeChildren()) {
-        if (child instanceof Node) {
-            const match = findNodeByAddress(child, address);
-            if (match) {
-                return match;
+    /**
+     * Resolves the host node based on the given address.
+     * @param address The address of the host node to resolve.
+     * @returns The resolved host node, or undefined if not found.
+     */
+    private resolveHostNode(address: string) {
+        if (address) {
+            const rootNodes = [this, sgRoot.scene, sgRoot.mGlobal];
+            for (const rootNode of rootNodes) {
+                postMessage(
+                    `debug,[task:${sgRoot.threadId}] Resolving host node by address: ${address} from ${
+                        rootNode?.nodeSubtype
+                    }:${rootNode?.getAddress()}`
+                );
+                const fromRoot = this.findNodeByAddress(rootNode, address);
+                if (fromRoot) {
+                    return fromRoot;
+                }
             }
         }
+        return undefined;
     }
-    return undefined;
 }

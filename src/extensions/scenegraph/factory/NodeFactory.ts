@@ -366,11 +366,10 @@ export function initializeNode(interpreter: Interpreter, type: string, typeDef?:
         // Default to Node as parent.
         node ??= new Node([], type);
         const mPointer = new RoAssociativeArray([]);
-        currentEnv?.setM(new RoAssociativeArray([]));
         if (currentEnv) {
+            currentEnv.setM(new RoAssociativeArray([]));
             currentEnv.hostNode = node;
         }
-
         // Add children, fields and call each init method starting from the
         // "basemost" component of the tree.
         while (typeDef) {
@@ -458,8 +457,8 @@ export function initializeTask(interpreter: Interpreter, taskData: TaskData) {
     let typeDef = sgRoot.nodeDefMap.get(type.toLowerCase());
     if (typeDef) {
         //use typeDef object to tack on all the bells & whistles of a custom node
-        let typeDefStack = updateTypeDefHierarchy(typeDef);
-        let currentEnv = typeDef.environment?.createSubEnvironment();
+        const typeDefStack = updateTypeDefHierarchy(typeDef);
+        const currentEnv = typeDef.environment?.createSubEnvironment();
 
         // Start from the "basemost" component of the tree.
         typeDef = typeDefStack.pop();
@@ -467,8 +466,8 @@ export function initializeTask(interpreter: Interpreter, taskData: TaskData) {
         // Create the node.
         const node = SGNodeFactory.createNode(typeDef!.extends as SGNodeType, type) || new Task([], type);
         const mPointer = new RoAssociativeArray([]);
-        currentEnv?.setM(new RoAssociativeArray([]));
         if (currentEnv) {
+            currentEnv.setM(new RoAssociativeArray([]));
             currentEnv.hostNode = node;
         }
 
@@ -593,7 +592,8 @@ export function updateTypeDefHierarchy(typeDef: ComponentDefinition | undefined)
  */
 function restoreNode(interpreter: Interpreter, source: any, node: Node, port?: RoMessagePort) {
     const observedFields = source["_observed_"];
-    node.owner = source["_owner_"] ?? sgRoot.threadId;
+    node.setOwner(source["_owner_"] ?? sgRoot.threadId);
+    node.setAddress(source["_address_"] ?? node.getAddress());
     for (let [key, value] of Object.entries(source)) {
         if (key.startsWith("_") && key.endsWith("_") && key.length > 2) {
             // Ignore transfer metadata fields

@@ -43,6 +43,8 @@ import {
     FreshFieldState,
     ObserverScope,
     FieldAliasTarget,
+    ObserverRequestPayload,
+    isTaskLike,
 } from "../SGTypes";
 import { RoSGNode } from "../components/RoSGNode";
 import { createNodeByType, getBrsValueFromFieldType, subtypeHierarchy } from "../factory/NodeFactory";
@@ -78,10 +80,10 @@ export class Node extends RoSGNode implements BrsValue {
 
     /** Parent node reference or invalid when detached. */
     protected parent: Node | BrsInvalid;
-    /** Hex-like identifier exposed via introspection APIs. */
-    address: string;
     /** Thread identifier that owns the node instance. */
-    owner: number;
+    protected owner: number;
+    /** Hex-like identifier exposed via introspection APIs. */
+    protected address: string;
     /** Flags whether structural or field state changed since last render. */
     changed: boolean = false;
     /** Thread domain used for cross-thread synchronization. */
@@ -827,12 +829,22 @@ export class Node extends RoSGNode implements BrsValue {
             const infoArray = infoFields instanceof RoArray ? infoFields : undefined;
             let observer: Callable | RoMessagePort | BrsInvalid = BrsInvalid.Instance;
             if (isBrsString(funcOrPort)) {
+                if (!(host instanceof Node)) {
+                    const location = interpreter.formatLocation();
+                    const target = `"${this.nodeSubtype}.${name}"`;
+                    BrsDevice.stderr.write(
+                        `warning,BRIGHTSCRIPT: ERROR: roSGNode.ObserveField: ${target} no active host node: ${location}`
+                    );
+                    return result;
+                }
                 if (sgRoot.inTaskThread() && this.forwardObserver(scope, host, obsFieldName, funcOrPort, infoArray)) {
                     return BrsBoolean.True;
                 }
                 observer = interpreter.getCallableFunction(funcOrPort.getValue());
             } else if (funcOrPort instanceof RoMessagePort) {
-                funcOrPort.registerCallback(host.nodeSubtype, host.getNewEvents.bind(host));
+                if (isTaskLike(host)) {
+                    funcOrPort.registerCallback(host.nodeSubtype, host.getNewEvents.bind(host));
+                }
                 observer = funcOrPort;
             }
             if (!(observer instanceof BrsInvalid)) {
@@ -863,15 +875,18 @@ export class Node extends RoSGNode implements BrsValue {
         if (!syncType || this.owner === sgRoot.threadId) {
             return false;
         }
-        const payload: AAMember[] = [
-            { name: new BrsString("scope"), value: new BrsString(scope) },
-            { name: new BrsString("functionName"), value: funcName },
-            { name: new BrsString("host"), value: new BrsString(hostNode.address) },
-        ];
-        if (infoFields) {
-            payload.push({ name: new BrsString("infoFields"), value: infoFields });
-        }
-        const observerRequest = new RoAssociativeArray(payload);
+        postMessage(
+            `debug, [node:${sgRoot.threadId}] Forwarding observer for field "${fieldName.getValue()}" to owner thread ${
+                this.owner
+            }: ${hostNode.nodeSubtype}:${hostNode.address}`
+        );
+        const payload: ObserverRequestPayload = {
+            scope: scope,
+            functionName: funcName.getValue(),
+            host: hostNode.address,
+            infoFields,
+        };
+        const observerRequest = toAssociativeArray(payload);
         this.sendThreadUpdate(sgRoot.threadId, "obs", syncType, fieldName.getValue(), observerRequest, false);
         return true;
     }
@@ -993,6 +1008,30 @@ export class Node extends RoSGNode implements BrsValue {
         }
         // name was not found anywhere in tree
         return BrsInvalid.Instance;
+    }
+
+    /**
+     * Searches the subtree rooted at the provided node for a matching address.
+     * @param root Root to inspect.
+     * @param address Address to seek.
+     * @returns The matching node or undefined when not found.
+     */
+    findNodeByAddress(root: Node | undefined, address: string): Node | undefined {
+        if (!root) {
+            return undefined;
+        }
+        if (root.address === address) {
+            return root;
+        }
+        for (const child of root.getNodeChildren()) {
+            if (child instanceof Node) {
+                const match = this.findNodeByAddress(child, address);
+                if (match) {
+                    return match;
+                }
+            }
+        }
+        return undefined;
     }
 
     /**
@@ -1497,6 +1536,37 @@ export class Node extends RoSGNode implements BrsValue {
     private makeDirty() {
         this.changed = true;
         sgRoot.makeDirty();
+    }
+
+    /**
+     * Sets the owning thread identifier for this node.
+     * @param threadId Thread identifier.
+     */
+    public setOwner(threadId: number) {
+        this.owner = threadId;
+    }
+
+    /**
+     * Gets the owning thread identifier for this node.
+     * @returns Thread identifier.
+     */
+    public getOwner() {
+        return this.owner;
+    }
+
+    /** Sets the unique address for this node.
+     * @param address Node address.
+     */
+    public setAddress(address: string) {
+        this.address = address;
+    }
+
+    /**
+     * Gets the unique address for this node.
+     * @returns Node address.
+     */
+    public getAddress() {
+        return this.address;
     }
 
     /**

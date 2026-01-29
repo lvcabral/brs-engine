@@ -5,15 +5,7 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import {
-    BrsDevice,
-    BufferType,
-    DataType,
-    genHexAddress,
-    Interpreter,
-    MediaEvent,
-    MediaTrack,
-} from "brs-engine";
+import { BrsDevice, BufferType, DataType, genHexAddress, Interpreter, MediaEvent, MediaTrack } from "brs-engine";
 import { ComponentDefinition } from "./parser/ComponentDefinition";
 import { RoSGNode } from "./components/RoSGNode";
 import { Global } from "./nodes/Global";
@@ -195,7 +187,7 @@ export class SGRoot {
      */
     addTask(task: Task, threadId?: number, makeCurrent: boolean = false) {
         task.threadId = threadId ?? this._threads.size;
-        this.setThread(task.threadId, makeCurrent, task.address, task);
+        this.setThread(task.threadId, makeCurrent, task.getAddress(), task);
     }
 
     /**

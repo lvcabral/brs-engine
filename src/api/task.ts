@@ -99,10 +99,10 @@ export function handleTaskData(taskData: TaskData, currentPayload: AppPayload) {
  */
 function runTask(taskData: TaskData, currentPayload: AppPayload) {
     if (tasks.has(taskData.id) || !taskData.m?.top?.functionname) {
-        notifyAll("debug", `[api.task] Task already running or invalid task data: ${taskData.id}, ${taskData.name}`);
+        notifyAll("debug", `[task:api] Task already running or invalid task data: ${taskData.id}, ${taskData.name}`);
         return;
     } else if (tasks.size === MAX_TASKS) {
-        notifyAll("warning", `[api.task] Maximum number of tasks reached: ${tasks.size}`);
+        notifyAll("warning", `[task:api] Maximum number of tasks reached: ${tasks.size}`);
         return;
     }
     const taskWorker = new Worker(brsWrkLib);
@@ -121,7 +121,7 @@ function runTask(taskData: TaskData, currentPayload: AppPayload) {
         pkgZip: currentPayload.pkgZip,
         extZip: currentPayload.extZip,
     };
-    notifyAll("debug", `[api.task] Calling Task worker: ${taskData.id}, ${taskData.name}`);
+    notifyAll("debug", `[task:api] Calling Task worker: ${taskData.id}, ${taskData.name}`);
     taskWorker.postMessage(sharedBuffer);
     taskWorker.postMessage(taskPayload);
 }
@@ -138,7 +138,7 @@ function endTask(taskId: number) {
         tasks.delete(taskId);
         threadSyncToTask.delete(taskId);
         threadSyncToMain.delete(taskId);
-        notifyAll("debug", `[api.task] Task worker stopped: ${taskId}`);
+        notifyAll("debug", `[task:api] Task worker stopped: ${taskId}`);
     }
 }
 
@@ -166,7 +166,7 @@ function taskCallback(event: MessageEvent) {
     } else if (isExtensionInfo(event.data)) {
         notifyAll(
             "debug",
-            `[api.task] Loaded Extension: ${event.data.name} (v${event.data.version}) from ${event.data.library}\r\n`
+            `[task:api] Loaded Extension: ${event.data.name} (v${event.data.version}) from ${event.data.library}\r\n`
         );
     } else if (typeof event.data.displayEnabled === "boolean") {
         setDisplayState(event.data.displayEnabled);
@@ -179,20 +179,23 @@ function taskCallback(event: MessageEvent) {
     } else if (isTaskData(event.data)) {
         notifyAll(
             "debug",
-            `[api.task] Task data received from Task Thread: ${event.data.name}, ${TaskState[event.data.state]}`
+            `[task:api] Task data received from Task Thread: ${event.data.name}, ${TaskState[event.data.state]}`
         );
         if (event.data.state === TaskState.STOP) {
             endTask(event.data.id);
         }
     } else if (isThreadUpdate(event.data)) {
-        notifyAll("debug", `[api.task] Update received from Task thread: ${event.data.id}, ${event.data.field}`);
+        notifyAll(
+            "debug",
+            `[task:api] Update received from Task thread: ${event.data.id}, ${event.data.action} ${event.data.type}.${event.data.field}`
+        );
         handleThreadUpdate(event.data, true);
     } else if (isNDKStart(event.data)) {
         notifyAll("ndkStart", event.data);
     } else if (typeof event.data === "string") {
         notifyAll("message", event.data);
     } else if (inDebugLib) {
-        notifyAll("warning", `[api.task] Invalid task message: ${JSON.stringify(event.data, null, 2)}`);
+        notifyAll("warning", `[task:api] Invalid task message: ${JSON.stringify(event.data, null, 2)}`);
     }
 }
 

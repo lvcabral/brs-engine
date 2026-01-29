@@ -247,11 +247,21 @@ export type ThreadInfo = {
 
 // Observer request payload type
 export type ObserverRequestPayload = {
-    scope?: ObserverScope;
-    functionName?: string;
-    host?: string;
+    scope: ObserverScope;
+    functionName: string;
+    host: string;
     infoFields?: any;
 };
+
+export function isObserverRequestPayload(obj: any): obj is ObserverRequestPayload {
+    return (
+        obj &&
+        isObserverScope(obj.scope) &&
+        typeof obj.functionName === "string" &&
+        typeof obj.host === "string" &&
+        (obj.infoFields === undefined || true)
+    );
+}
 
 // Observer scope definitions
 export type ObserverScope = "permanent" | "scoped" | "unscoped";
@@ -273,4 +283,3 @@ export type FreshFieldState = {
     remaining: number;
     timestamp: number;
 };
-
