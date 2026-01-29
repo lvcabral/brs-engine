@@ -6,13 +6,12 @@ import {
     BrsString,
     BrsType,
     Callable,
-    RoArray,
-    RoMessagePort,
     Scope,
     Stmt,
     IfDraw2D,
     RuntimeError,
     DebugMode,
+    isBrsString,
 } from "brs-engine";
 import { toAssociativeArray } from "../factory/Serializer";
 import { sgRoot } from "../SGRoot";
@@ -44,6 +43,9 @@ export class Scene extends Group {
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
 
+        this.setThreadSyncType("scene");
+        this.owner = 0; // Scene node is always owned by render thread
+
         this.setResolution("HD");
     }
 
@@ -60,6 +62,19 @@ export class Scene extends Group {
             this.setValueSilent("focusable", BrsBoolean.True);
             this._preInitSet.clear();
         }
+    }
+
+    get(index: BrsType): BrsType {
+        if (sgRoot.inTaskThread() && isBrsString(index)) {
+            const fieldName = index.toString().toLowerCase();
+            if (this.owner !== sgRoot.threadId && this.fields.has(fieldName)) {
+                const task = sgRoot.getCurrentThreadTask();
+                if (task?.active && !this.consumeFreshField(fieldName)) {
+                    task.requestFieldValue("scene", fieldName);
+                }
+            }
+        }
+        return super.get(index);
     }
 
     setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind, sync: boolean = true) {
@@ -79,10 +94,11 @@ export class Scene extends Group {
             }
         }
         super.setValue(index, value, alwaysNotify, kind);
-        // Notify other threads of field changes
-        if (sync && sgRoot.getTasksCount() > 0 && this.changed && this.fields.has(fieldName)) {
-            this.sendThreadUpdate(sgRoot.threadId, "scene", fieldName, value);
-            if (sgRoot.inTaskThread()) this.changed = false;
+        if (sync && this.changed) {
+            this.syncRemoteObservers(fieldName, "scene");
+            if (sgRoot.inTaskThread()) {
+                this.changed = false;
+            }
         }
     }
 
@@ -93,17 +109,6 @@ export class Scene extends Group {
 
     getDimensions() {
         return { width: this.ui.width, height: this.ui.height };
-    }
-
-    addObserver(
-        interpreter: Interpreter,
-        scope: "permanent" | "scoped" | "unscoped",
-        fieldName: BrsString,
-        funcOrPort: BrsString | RoMessagePort,
-        infoFields?: RoArray
-    ) {
-        interpreter.environment.hostNode ??= this;
-        return super.addObserver(interpreter, scope, fieldName, funcOrPort, infoFields);
     }
 
     setResolution(resolution: string) {
@@ -228,5 +233,10 @@ export class Scene extends Group {
             return hostNode.handleKey(key.value, press.toBoolean());
         }
         return keyHandled;
+    }
+
+    public setOwner(_threadId: number): void {
+        // Scene node owner cannot be changed
+        return;
     }
 }
