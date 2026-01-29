@@ -237,9 +237,9 @@ export function toSGNode(obj: any, type: string, subtype: string, nodeMap?: Map<
     }
     // Store the node in the map using the original address for circular reference resolution
     // Use the address from serialized data if available, otherwise use the new node's address
-    newNode.address = obj["_address_"] || newNode.address;
-    newNode.owner = obj["_owner_"] ?? newNode.owner;
-    nodeMap.set(newNode.address, newNode);
+    newNode.setAddress(obj["_address_"] || newNode.getAddress());
+    newNode.setOwner(obj["_owner_"] ?? newNode.getOwner());
+    nodeMap.set(newNode.getAddress(), newNode);
 
     for (const key in obj) {
         if (key.startsWith("_") && key.endsWith("_") && key.length > 2) {
@@ -302,14 +302,14 @@ export function updateSGNode(obj: any, targetNode: Node, nodeMap?: Map<string, N
     }
     // Update address and owner
     const serializedAddress: string | undefined = obj["_address_"];
-    if (serializedAddress && serializedAddress !== targetNode.address) {
-        const previousAddress = targetNode.address;
-        targetNode.address = serializedAddress;
+    if (serializedAddress && serializedAddress !== targetNode.getAddress()) {
+        const previousAddress = targetNode.getAddress();
+        targetNode.setAddress(serializedAddress);
         nodeMap.delete(previousAddress);
     }
-    targetNode.owner = obj["_owner_"] ?? targetNode.owner;
+    targetNode.setOwner(obj["_owner_"] ?? targetNode.getOwner());
     // Register/update in nodeMap
-    nodeMap.set(targetNode.address, targetNode);
+    nodeMap.set(targetNode.getAddress(), targetNode);
     // Update fields
     for (const key in obj) {
         if (key.startsWith("_") && key.endsWith("_") && key.length > 2) {
@@ -324,7 +324,7 @@ export function updateSGNode(obj: any, targetNode: Node, nodeMap?: Map<string, N
             if (
                 existingFieldValue instanceof Node &&
                 serializedFieldAddress &&
-                existingFieldValue.address === serializedFieldAddress
+                existingFieldValue.getAddress() === serializedFieldAddress
             ) {
                 nextNode = updateSGNode(fieldValue, existingFieldValue, nodeMap);
             } else {
@@ -341,7 +341,7 @@ export function updateSGNode(obj: any, targetNode: Node, nodeMap?: Map<string, N
         const childrenList = targetNode.getNodeChildren();
         for (const child of childrenList) {
             if (child instanceof Node) {
-                nodeMap.set(child.address, child);
+                nodeMap.set(child.getAddress(), child);
             }
         }
 
@@ -383,7 +383,7 @@ export function updateSGNode(obj: any, targetNode: Node, nodeMap?: Map<string, N
                 continue;
             }
 
-            nodeMap.set(childNode.address, childNode);
+            nodeMap.set(childNode.getAddress(), childNode);
 
             if (currentChild instanceof Node) {
                 if (currentChild !== childNode) {
@@ -422,7 +422,7 @@ export function fromSGNode(node: Node, deep: boolean = true, visited?: WeakSet<N
     if (visited.has(node)) {
         return {
             _circular_: `${getNodeType(node.nodeSubtype)}:${node.nodeSubtype}`,
-            _address_: node.address,
+            _address_: node.getAddress(),
         };
     }
     visited.add(node);
@@ -432,8 +432,8 @@ export function fromSGNode(node: Node, deep: boolean = true, visited?: WeakSet<N
     const observed: string[] = [];
 
     result["_node_"] = `${getNodeType(node.nodeSubtype)}:${node.nodeSubtype}`;
-    result["_address_"] = node.address;
-    result["_owner_"] = node.owner;
+    result["_address_"] = node.getAddress();
+    result["_owner_"] = node.getOwner();
 
     for (const [name, field] of fields) {
         if (!field.isHidden()) {
