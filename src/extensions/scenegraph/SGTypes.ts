@@ -226,7 +226,16 @@ export function isFont(value: BrsType): value is FontLike {
 }
 
 // Definition of Task-like type to avoid circular dependency
-type TaskLike = Node & { threadId: number };
+type TaskLike = Node & { threadId: number; active: boolean; started: boolean };
+
+export function isTaskLike(value: any): value is TaskLike {
+    return (
+        value instanceof Node &&
+        typeof (value as TaskLike).threadId === "number" &&
+        typeof (value as TaskLike).active === "boolean" &&
+        typeof (value as TaskLike).started === "boolean"
+    );
+}
 
 /**
  * Gets the task thread ID from a Node if it is a Task.
@@ -234,7 +243,7 @@ type TaskLike = Node & { threadId: number };
  * @returns Task thread ID number or undefined if not a Task node
  */
 export function getTaskThreadId(node: Node): number | undefined {
-    if (!(node instanceof Node) || !("threadId" in node)) {
+    if (!isTaskLike(node)) {
         return undefined;
     }
     const maybeTask = node as Partial<TaskLike>;
@@ -250,11 +259,21 @@ export type ThreadInfo = {
 
 // Observer request payload type
 export type ObserverRequestPayload = {
-    scope?: ObserverScope;
-    functionName?: string;
-    host?: string;
+    scope: ObserverScope;
+    functionName: string;
+    host: string;
     infoFields?: any;
 };
+
+export function isObserverRequestPayload(obj: any): obj is ObserverRequestPayload {
+    return (
+        obj &&
+        isObserverScope(obj.scope) &&
+        typeof obj.functionName === "string" &&
+        typeof obj.host === "string" &&
+        (obj.infoFields === undefined || true)
+    );
+}
 
 // Observer scope definitions
 export type ObserverScope = "permanent" | "scoped" | "unscoped";
@@ -276,4 +295,3 @@ export type FreshFieldState = {
     remaining: number;
     timestamp: number;
 };
-
