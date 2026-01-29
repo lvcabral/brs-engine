@@ -196,8 +196,8 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
     protected abstract replaceChildAtIndex(newChild: RoSGNode, index: number): boolean;
     protected abstract insertChildAtIndex(child: BrsType, index: number): boolean;
     protected abstract isChildrenFocused(): boolean;
-    protected abstract createPath(node: RoSGNode, reverse?: boolean): RoSGNode[];
-    protected abstract findRootNode(from?: RoSGNode): RoSGNode;
+    protected abstract createPath(start?: RoSGNode, reverse?: boolean): RoSGNode[];
+    protected abstract findRootNode(start?: RoSGNode): RoSGNode;
 
     protected abstract getBoundingRect(interpreter: Interpreter, type: string): Rect;
     protected abstract compareNodes(other: RoSGNode): boolean;
@@ -1169,17 +1169,20 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             returns: ValueKind.Dynamic,
         },
         impl: (interpreter: Interpreter, ancestor: RoSGNode) => {
-            let boundingRect = this.getBoundingRect(interpreter, "toParent");
+            const boundingRect = this.getBoundingRect(interpreter, "toParent");
+            const ancestorRect = { ...boundingRect };
+            let ancestorFound = false;
             const path = this.createPath(this, false).slice(1);
             for (const node of path) {
                 if (ancestor === node) {
+                    ancestorFound = true;
                     break;
                 }
                 const nodeRect = node.getBoundingRect(interpreter, "toParent");
-                boundingRect.x += nodeRect.x;
-                boundingRect.y += nodeRect.y;
+                ancestorRect.x += nodeRect.x;
+                ancestorRect.y += nodeRect.y;
             }
-            return toAssociativeArray(boundingRect);
+            return ancestorFound ? toAssociativeArray(ancestorRect) : toAssociativeArray(boundingRect);
         },
     });
 
