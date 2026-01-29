@@ -48,6 +48,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
                 this.lookup,
                 this.lookupCI,
             ],
+            ifTypedComponent: [this.getSubtype], // undocumented interface
             ifSGNodeField: [
                 this.addField,
                 this.addFields,
@@ -95,12 +96,10 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
                 this.insertChildren,
                 this.getScene,
             ],
-            ifSGNodeFocus: [this.hasFocus, this.setFocus, this.isInFocusChain],
             ifSGNodeDict: [
                 this.findNode,
                 this.isSameNode,
                 this.subtype,
-                this.getSubtype, // undocumented alias of subtype()
                 this.callFunc,
                 this.isSubtype,
                 this.parentSubtype,
