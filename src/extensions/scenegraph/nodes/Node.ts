@@ -764,7 +764,7 @@ export class Node extends RoSGNode implements BrsValue {
      * @returns Bounding rectangle in the requested coordinate space.
      */
     getBoundingRect(interpreter: Interpreter, type: string): Rect {
-        const root = this.createPath(this)[0];
+        const root = this.createPath()[0];
         root.renderNode(interpreter, [0, 0], 0, 1);
         switch (type) {
             case "local":
@@ -865,7 +865,7 @@ export class Node extends RoSGNode implements BrsValue {
             sgRoot.setFocused(this);
 
             // Get the focus chain, with lowest ancestor first.
-            let newFocusChain = this.createPath(this);
+            let newFocusChain = this.createPath();
 
             // If there's already a focused node somewhere, we need to remove focus
             // from it and its ancestors.
@@ -1276,11 +1276,12 @@ export class Node extends RoSGNode implements BrsValue {
     /**
      * Starting with a leaf node, traverses upward through the parents until it reaches
      * a node without a parent (root node).
-     * @param node Leaf node used to build the path.
+     * @param start Leaf node used to build the path.
      * @param reverse When true (default) returns the path root-first.
      * @returns Parent chain starting with the root-most ancestor.
      */
-    protected createPath(node: Node, reverse: boolean = true): Node[] {
+    protected createPath(start?: Node, reverse: boolean = true): Node[] {
+        let node: Node = start ?? this;
         let path: Node[] = [node];
 
         while (node.parent instanceof Node) {
@@ -1293,11 +1294,11 @@ export class Node extends RoSGNode implements BrsValue {
 
     /**
      * Finds the root ancestor either from the provided node or from this node.
-     * @param from Optional starting node.
+     * @param start Optional starting node.
      * @returns Root-most ancestor.
      */
-    protected findRootNode(from?: Node): Node {
-        let root: Node = from ?? this;
+    protected findRootNode(start?: Node): Node {
+        let root: Node = start ?? this;
         while (root.parent instanceof Node) {
             root = root.parent;
         }

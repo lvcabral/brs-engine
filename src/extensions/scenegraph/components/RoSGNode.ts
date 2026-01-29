@@ -110,7 +110,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
                 this.boundingRect,
                 this.localBoundingRect,
                 this.sceneBoundingRect,
-                // TODO: Implement the remaining `ifSGNodeBoundingRect` methods
+                this.ancestorBoundingRect,
             ],
             ifSGNodeHttpAgentAccess: [this.getHttpAgent, this.setHttpAgent],
         });
@@ -196,7 +196,8 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
     protected abstract replaceChildAtIndex(newChild: RoSGNode, index: number): boolean;
     protected abstract insertChildAtIndex(child: BrsType, index: number): boolean;
     protected abstract isChildrenFocused(): boolean;
-    protected abstract findRootNode(from?: RoSGNode): RoSGNode;
+    protected abstract createPath(start?: RoSGNode, reverse?: boolean): RoSGNode[];
+    protected abstract findRootNode(start?: RoSGNode): RoSGNode;
 
     protected abstract getBoundingRect(interpreter: Interpreter, type: string): Rect;
     protected abstract compareNodes(other: RoSGNode): boolean;
@@ -1158,6 +1159,30 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
         },
         impl: (interpreter: Interpreter) => {
             return toAssociativeArray(this.getBoundingRect(interpreter, "toScene"));
+        },
+    });
+
+    /* Returns the bounding rectangle in relation to an ancestor component. */
+    private readonly ancestorBoundingRect = new Callable("ancestorBoundingRect", {
+        signature: {
+            args: [new StdlibArgument("ancestor", ValueKind.Object)],
+            returns: ValueKind.Dynamic,
+        },
+        impl: (interpreter: Interpreter, ancestor: RoSGNode) => {
+            const boundingRect = this.getBoundingRect(interpreter, "toParent");
+            const ancestorRect = { ...boundingRect };
+            let ancestorFound = false;
+            const path = this.createPath(this, false).slice(1);
+            for (const node of path) {
+                if (ancestor === node) {
+                    ancestorFound = true;
+                    break;
+                }
+                const nodeRect = node.getBoundingRect(interpreter, "toParent");
+                ancestorRect.x += nodeRect.x;
+                ancestorRect.y += nodeRect.y;
+            }
+            return ancestorFound ? toAssociativeArray(ancestorRect) : toAssociativeArray(boundingRect);
         },
     });
 
