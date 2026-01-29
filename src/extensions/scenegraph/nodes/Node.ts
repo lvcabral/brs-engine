@@ -340,18 +340,24 @@ export class Node extends RoSGNode implements BrsValue {
                     this.makeDirty();
                 } else {
                     errorMsg = `BRIGHTSCRIPT: ERROR: roSGNode.Set: Tried to set nonexistent field "${index}" of a "${this.nodeSubtype}" node:`;
+                    BrsDevice.stderr.write(`warning,${errorMsg} ${this.location}`);
                 }
-            } else if (alias) {
+                return;
+            }
+            if (alias) {
                 const child = this.findNodeById(this, alias.nodeId);
                 if (child instanceof Node) {
-                    child.setValue(alias.fieldName, value, alwaysNotify);
-                    this.makeDirty();
-                } else {
-                    errorMsg = `BRIGHTSCRIPT: ERROR: roSGNode.Set: "${this.nodeSubtype}.${index}": Alias "${alias.nodeId}.${alias.fieldName}" not found!`;
+                    const childField = child.getNodeFields().get(alias.fieldName.toLowerCase());
+                    if (childField && field !== childField) {
+                        // Child node changed, restoring alias
+                        field = childField;
+                        this.fields.set(mapKey, field);
+                    }
+                } else if (BrsDevice.isDevMode) {
+                    errorMsg = `WARNING: roSGNode.Set: "${this.nodeSubtype}.${index}": Alias "${alias.nodeId}.${alias.fieldName}" not found!`;
                 }
-            } else if (field.canAcceptValue(value)) {
-                // Fields are not overwritten if they haven't the same type.
-                // Except Numbers and Booleans that can be converted to string fields.
+            }
+            if (field.canAcceptValue(value)) {
                 this.notified = field.setValue(value, true);
                 this.fields.set(mapKey, field);
                 this.makeDirty();
@@ -359,7 +365,7 @@ export class Node extends RoSGNode implements BrsValue {
                 errorMsg = `BRIGHTSCRIPT: ERROR: roSGNode.AddReplace: "${this.nodeSubtype}.${index}": Type mismatch!`;
             }
         } catch (err: any) {
-            errorMsg = `BRIGHTSCRIPT: ERROR: roSGNode.Set (unhandled exception): "${this.nodeSubtype}.${index}": ${err.message}`;
+            errorMsg = `WARNING: roSGNode.Set (unhandled exception): "${this.nodeSubtype}.${index}": ${err.message}`;
         }
         if (errorMsg.length > 0) {
             BrsDevice.stderr.write(`warning,${errorMsg} ${this.location}`);
