@@ -82,7 +82,6 @@ import { ComponentDefinition, ComponentNode } from "../parser/ComponentDefinitio
 import { brsValueOf, getSerializedNodeInfo } from "./Serializer";
 import { sgRoot } from "../SGRoot";
 import { convertHexColor, convertLong, convertNumber } from "../SGUtil";
-import Long from "long";
 
 /**
  * Checks if a given string value is a valid SGNodeType.
@@ -845,7 +844,7 @@ export function getBrsValueFromFieldType(type: string, value?: string, defaultVa
         }
         case "longinteger": {
             const fallback = defaultValue ?? new Int64(0);
-            const parsedValue = convertLong(value ?? " ");
+            const parsedValue = convertLong(value ?? "");
             returnValue = parsedValue ? new Int64(parsedValue) : fallback;
             break;
         }
@@ -908,7 +907,7 @@ export function getBrsValueFromFieldType(type: string, value?: string, defaultVa
             returnValue = defaultValue ?? new Int32(-1);
             if (value?.length) {
                 const colorValue = convertHexColor(value);
-                returnValue = colorValue !== -1 ? new Int32(colorValue) : returnValue;
+                returnValue = colorValue === -1 ? returnValue : new Int32(colorValue);
             }
             break;
         }

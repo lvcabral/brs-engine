@@ -99,7 +99,7 @@ export function unionRect(rectChild: Rect, rectParent: Rect) {
  * @returns Numeric value of the string
  */
 export function convertNumber(strNumber: string): number {
-    let value = NaN;
+    let value = Number.NaN;
     strNumber = strNumber.trim();
     if (strNumber.length) {
         // Check if is Hexadecimal (prefix #, 0x or &h)
@@ -131,7 +131,7 @@ export function convertLong(strNumber: string): Long | undefined {
             valueLong = Long.fromString(strNumber.slice(2), false, 16);
         } else {
             valueLong = Long.fromString(strNumber, false, 10);
-            if (valueLong.isZero() && !strNumber.trim().startsWith("0")) {
+            if (valueLong.isZero() && !strNumber.startsWith("0")) {
                 valueLong = undefined;
             }
         }
