@@ -144,7 +144,7 @@ export class ContentNode extends Node {
     }
 
     /** @override */
-    setValue(index: string, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
+    setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind) {
         this.notified = false;
         super.setValue(index, value, alwaysNotify, kind);
         // Propagate changes notification to parent fields

@@ -10,7 +10,7 @@ export class Global extends Node {
         this.registerInitializedFields(members);
     }
 
-    setValue(index: string, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind, sync: boolean = true) {
+    setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind, sync: boolean = true) {
         const fieldName = index.toLowerCase();
         super.setValue(index, value, alwaysNotify, kind);
         // Notify other threads of field changes

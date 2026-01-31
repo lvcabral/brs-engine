@@ -29,7 +29,7 @@ export class BusySpinner extends Group {
         this.setValueSilent("poster", this.poster);
     }
 
-    setValue(index: string, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
+    setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind) {
         const mapKey = index.toLowerCase();
 
         if (mapKey === "control") {

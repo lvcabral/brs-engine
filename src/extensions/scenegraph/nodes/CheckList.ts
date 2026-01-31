@@ -42,7 +42,7 @@ export class CheckList extends LabelList {
         return super.get(index);
     }
 
-    setValue(index: string, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
+    setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind) {
         const fieldName = index.toLowerCase();
         if (fieldName === "checkedstate") {
             let states: boolean[] = [];

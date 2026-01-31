@@ -47,7 +47,7 @@ export class ScrollingLabel extends Label {
         this.checkForScrolling();
     }
 
-    setValue(index: string, value: BrsType, alwaysNotify: boolean = false) {
+    setValue(index: string, value: BrsType, alwaysNotify?: boolean) {
         const wasVisible = this.getValueJS("visible") as boolean;
         super.setValue(index, value, alwaysNotify); // Call base class set
 

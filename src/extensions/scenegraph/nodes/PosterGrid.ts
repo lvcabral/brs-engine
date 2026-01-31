@@ -119,7 +119,7 @@ export class PosterGrid extends ArrayGrid {
         this.defaultCaptionBackgroundUri = `common:/images/${this.resolution}/caption_background.9.png`;
     }
 
-    setValue(index: string, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
+    setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind) {
         const fieldName = index.toLowerCase();
         if (fieldName === "vertfocusanimationstyle" && value instanceof BrsString) {
             const style = value.getValue().toLowerCase();
@@ -809,7 +809,7 @@ class PosterGridItem extends Group {
         this.needsChildRefresh = true;
     }
 
-    setValue(index: string, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
+    setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind) {
         if (index.toLowerCase() === "itemcontent" && value instanceof ContentNode) {
             this.content = value;
             this.needsChildRefresh = true;

@@ -73,7 +73,7 @@ export class TrickPlayBar extends Group {
         ]);
     }
 
-    setValue(index: string, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
+    setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind) {
         const fieldName = index.toLowerCase();
         if (fieldName === "textcolor") {
             this.position.setValue("color", value);

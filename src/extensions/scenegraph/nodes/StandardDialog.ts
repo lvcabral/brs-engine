@@ -59,7 +59,7 @@ export class StandardDialog extends Group {
         this.setTranslation(this.dialogTrans);
     }
 
-    setValue(index: string, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
+    setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind) {
         const fieldName = index.toLowerCase();
         if (fieldName === "close") {
             index = "wasClosed";

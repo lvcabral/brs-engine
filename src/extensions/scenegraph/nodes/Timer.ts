@@ -27,7 +27,7 @@ export class Timer extends Node {
         sgRoot.timers.push(this);
     }
 
-    setValue(index: string, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
+    setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind) {
         const mapKey = index.toLowerCase();
         const field = this.fields.get(mapKey);
 

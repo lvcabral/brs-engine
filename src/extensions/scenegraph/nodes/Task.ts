@@ -68,7 +68,7 @@ export class Task extends Node {
      * @param kind Optional explicit field kind.
      * @param sync When false skips sending thread updates back to the main thread.
      */
-    setValue(index: string, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind, sync: boolean = true) {
+    setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind, sync: boolean = true) {
         const validStates = new Set(["init", "run", "stop", "done"]);
         const mapKey = index.toLowerCase();
         const field = this.fields.get(mapKey);

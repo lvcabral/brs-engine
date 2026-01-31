@@ -45,7 +45,7 @@ export class Animation extends AnimationBase {
      * Handles writes to animation fields, guarding the internal `willBeSkipped` flag and recomputing skip
      * decisions whenever the optional flag toggles.
      */
-    setValue(index: string, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
+    setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind) {
         const key = index.toLowerCase();
         if (key === "willbeskipped") {
             return;

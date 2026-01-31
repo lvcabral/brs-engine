@@ -234,7 +234,7 @@ export class Video extends Group {
         return super.get(index);
     }
 
-    setValue(index: string, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
+    setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind) {
         const fieldName = index.toLowerCase();
 
         if (fieldName === "control" && isBrsString(value)) {

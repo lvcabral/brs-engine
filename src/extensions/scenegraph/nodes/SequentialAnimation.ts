@@ -20,7 +20,7 @@ export class SequentialAnimation extends AnimationBase {
      * Intercepts `control` writes so `start` initializes the iteration cursor and `stop` cancels any active
      * child animation.
      */
-    setValue(index: string, value: any, alwaysNotify: boolean = false) {
+    setValue(index: string, value: any, alwaysNotify?: boolean) {
         super.setValue(index, value, alwaysNotify);
         if (index.toLowerCase() === "control") {
             const control = value.getValue().toLowerCase();

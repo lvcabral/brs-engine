@@ -17,7 +17,7 @@ export class ParallelAnimation extends AnimationBase {
     /**
      * Watches for `control` updates and forwards `start` / `stop` commands to children immediately.
      */
-    setValue(index: string, value: any, alwaysNotify: boolean = false) {
+    setValue(index: string, value: any, alwaysNotify?: boolean) {
         super.setValue(index, value, alwaysNotify);
         if (index.toLowerCase() === "control") {
             const control = value.getValue().toLowerCase();

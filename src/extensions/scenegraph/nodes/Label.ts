@@ -41,7 +41,7 @@ export class Label extends Group {
         }
     }
 
-    setValue(index: string, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
+    setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind) {
         const fieldName = index.toLowerCase();
         const resetFields = ["text", "font", "width", "height", "numlines", "maxlines", "wrap", "linespacing"];
         let setDirty = true;
