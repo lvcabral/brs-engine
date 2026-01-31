@@ -81,7 +81,7 @@ import {
 import { ComponentDefinition, ComponentNode } from "../parser/ComponentDefinition";
 import { brsValueOf, getSerializedNodeInfo } from "./Serializer";
 import { sgRoot } from "../SGRoot";
-import { convertHexColor } from "../SGUtil";
+import { convertHexColor, convertLong, convertNumber } from "../SGUtil";
 import Long from "long";
 
 /**
@@ -839,26 +839,26 @@ export function getBrsValueFromFieldType(type: string, value?: string, defaultVa
         case "int":
         case "integer": {
             const fallback = defaultValue ?? new Int32(0);
-            const parsedValue = Number.parseInt(value ?? "");
+            const parsedValue = convertNumber(value ?? "");
             returnValue = Number.isNaN(parsedValue) ? fallback : new Int32(parsedValue);
             break;
         }
         case "longinteger": {
             const fallback = defaultValue ?? new Int64(0);
-            const parsedValue = Long.fromString(value ?? "0");
-            returnValue = Number.isNaN(parsedValue) ? fallback : new Int64(parsedValue);
+            const parsedValue = convertLong(value ?? " ");
+            returnValue = parsedValue ? new Int64(parsedValue) : fallback;
             break;
         }
         case "float": {
             const fallback = defaultValue ?? new Float(0);
-            const parsedValue = Number.parseFloat(value ?? "");
+            const parsedValue = convertNumber(value ?? "");
             returnValue = Number.isNaN(parsedValue) ? fallback : new Float(parsedValue);
             break;
         }
         case "time":
         case "double": {
             const fallback = defaultValue ?? new Double(0);
-            const parsedValue = Number.parseFloat(value ?? "");
+            const parsedValue = convertNumber(value ?? "");
             returnValue = Number.isNaN(parsedValue) ? fallback : new Double(parsedValue);
             break;
         }
