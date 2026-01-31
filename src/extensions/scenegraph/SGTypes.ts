@@ -18,7 +18,7 @@ export interface BrsCallback {
     interpreter: Interpreter;
     environment: Environment;
     hostNode: Node;
-    callable: Callable | RoMessagePort;
+    observer: Callable | RoMessagePort;
     eventParams: {
         fieldName: BrsString;
         node: Node;
@@ -185,7 +185,7 @@ export namespace FieldKind {
     }
 }
 
-// Definitions to avoid circular dependencies
+// Definition of ContentNode-like type to avoid circular dependencies
 type ContentNodeLike = Node & {
     addParentField(parentField: Field): void;
     removeParentField(parentField: Field): void;
@@ -205,6 +205,7 @@ export function isContentNode(value: BrsType): value is ContentNodeLike {
     );
 }
 
+// Definition of Font-like type to avoid circular dependency
 type FontLike = Node & {
     setSize(fontSize: number): void;
     setSystemFont(fontName: string): boolean;
@@ -224,7 +225,17 @@ export function isFont(value: BrsType): value is FontLike {
     );
 }
 
-type TaskLike = Node & { threadId: number };
+// Definition of Task-like type to avoid circular dependency
+type TaskLike = Node & { threadId: number; active: boolean; started: boolean };
+
+export function isTaskLike(value: any): value is TaskLike {
+    return (
+        value instanceof Node &&
+        typeof (value as TaskLike).threadId === "number" &&
+        typeof (value as TaskLike).active === "boolean" &&
+        typeof (value as TaskLike).started === "boolean"
+    );
+}
 
 /**
  * Gets the task thread ID from a Node if it is a Task.
@@ -232,9 +243,55 @@ type TaskLike = Node & { threadId: number };
  * @returns Task thread ID number or undefined if not a Task node
  */
 export function getTaskThreadId(node: Node): number | undefined {
-    if (!(node instanceof Node) || !("threadId" in node)) {
+    if (!isTaskLike(node)) {
         return undefined;
     }
     const maybeTask = node as Partial<TaskLike>;
     return typeof maybeTask.threadId === "number" ? maybeTask.threadId : undefined;
 }
+
+// Thread information type
+export type ThreadInfo = {
+    id: string;
+    type: "Main" | "Render" | "Task";
+    name?: string;
+};
+
+// Observer request payload type
+export type ObserverRequestPayload = {
+    scope: ObserverScope;
+    functionName: string;
+    host: string;
+    infoFields?: any;
+};
+
+export function isObserverRequestPayload(obj: any): obj is ObserverRequestPayload {
+    return (
+        obj &&
+        isObserverScope(obj.scope) &&
+        typeof obj.functionName === "string" &&
+        typeof obj.host === "string" &&
+        (obj.infoFields === undefined || true)
+    );
+}
+
+// Observer scope definitions
+export type ObserverScope = "permanent" | "scoped" | "unscoped";
+
+/**
+ * Type guard to check if a value is a valid ObserverScope.
+ * @param value The value to check.
+ * @returns True if the value is an ObserverScope, false otherwise.
+ */
+export function isObserverScope(value: any): value is ObserverScope {
+    return value === "permanent" || value === "scoped" || value === "unscoped";
+}
+
+// Fresh field constants and state type
+export const FreshFieldWindowMS = 10;
+export const FreshFieldBudget = 4;
+
+export type FreshFieldState = {
+    remaining: number;
+    timestamp: number;
+};

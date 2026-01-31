@@ -5,16 +5,7 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import {
-    BrsDevice,
-    BufferType,
-    DataType,
-    genHexAddress,
-    Interpreter,
-    MediaEvent,
-    MediaTrack,
-    ThreadInfo,
-} from "brs-engine";
+import { BrsDevice, BufferType, DataType, genHexAddress, Interpreter, MediaEvent, MediaTrack } from "brs-engine";
 import { ComponentDefinition } from "./parser/ComponentDefinition";
 import { RoSGNode } from "./components/RoSGNode";
 import { Global } from "./nodes/Global";
@@ -25,6 +16,7 @@ import { Audio } from "./nodes/Audio";
 import { SoundEffect } from "./nodes/SoundEffect";
 import { Video } from "./nodes/Video";
 import { Task } from "./nodes/Task";
+import { ThreadInfo } from "./SGTypes";
 
 /**
  * A singleton object that holds the Node that represents the m.global, the root Scene,
@@ -195,7 +187,7 @@ export class SGRoot {
      */
     addTask(task: Task, threadId?: number, makeCurrent: boolean = false) {
         task.threadId = threadId ?? this._threads.size;
-        this.setThread(task.threadId, makeCurrent, task.address, task);
+        this.setThread(task.threadId, makeCurrent, task.getAddress(), task);
     }
 
     /**

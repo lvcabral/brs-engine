@@ -199,7 +199,7 @@ export class Field {
     addObserver(
         mode: "permanent" | "unscoped" | "scoped",
         interpreter: Interpreter,
-        callable: Callable | RoMessagePort,
+        observer: Callable | RoMessagePort,
         target: Node,
         fieldName: BrsString,
         infoFields?: RoArray
@@ -211,7 +211,7 @@ export class Field {
             interpreter,
             environment: interpreter.environment,
             hostNode: subscriber,
-            callable,
+            observer: observer,
             eventParams: {
                 node: target,
                 fieldName,
@@ -255,9 +255,9 @@ export class Field {
         return (
             this.unscopedObservers.some(
                 (callback) =>
-                    callback.callable instanceof RoMessagePort && getTaskThreadId(callback.hostNode) === hostThreadId
+                    callback.observer instanceof RoMessagePort && getTaskThreadId(callback.hostNode) === hostThreadId
             ) ||
-            this.scopedObservers.get(hostNode)?.some((callback) => callback.callable instanceof RoMessagePort) ||
+            this.scopedObservers.get(hostNode)?.some((callback) => callback.observer instanceof RoMessagePort) ||
             false
         );
     }
@@ -396,7 +396,7 @@ export class Field {
             // Prevent stack overflow by not re-entering a running callback
             return;
         }
-        const { interpreter, callable, hostNode, environment, eventParams } = callback;
+        const { interpreter, observer, hostNode, environment, eventParams } = callback;
 
         // Get info fields current value, if exists.
         let infoFields: RoAssociativeArray | undefined;
@@ -407,7 +407,7 @@ export class Field {
                     if (isBrsString(element)) {
                         // TODO: Check how to handle object values (by reference or by value)
                         const key = element.getValue();
-                        fieldsMap.set(key, hostNode.getValue(key));
+                        fieldsMap.set(key, eventParams.node.getValue(key));
                     }
                 }
             }
@@ -416,8 +416,8 @@ export class Field {
         // Every time a callback happens, a new event is created.
         const event = new RoSGNodeEvent(eventParams.node, eventParams.fieldName, this.value, infoFields);
 
-        if (callable instanceof RoMessagePort) {
-            callable.pushMessage(event);
+        if (observer instanceof RoMessagePort) {
+            observer.pushMessage(event);
             return;
         }
 
@@ -427,13 +427,13 @@ export class Field {
             subInterpreter.environment.setRootM(hostNode.m);
             // Check whether the callback is expecting an event parameter.
             const satisfiedSignature =
-                callable.getFirstSatisfiedSignature([event]) ?? callable.getFirstSatisfiedSignature([]);
+                observer.getFirstSatisfiedSignature([event]) ?? observer.getFirstSatisfiedSignature([]);
             if (satisfiedSignature) {
                 const { signature, impl } = satisfiedSignature;
                 const originalLocation = interpreter.location;
-                const funcLoc = callable.getLocation() ?? originalLocation;
+                const funcLoc = observer.getLocation() ?? originalLocation;
                 interpreter.addToStack({
-                    functionName: callable.getName(),
+                    functionName: observer.getName(),
                     functionLocation: funcLoc,
                     callLocation: originalLocation,
                     signature: satisfiedSignature.signature,
