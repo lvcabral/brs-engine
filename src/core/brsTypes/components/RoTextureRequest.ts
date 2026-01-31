@@ -1,7 +1,6 @@
 import {
     Callable,
     ValueKind,
-    BrsString,
     StdlibArgument,
     BrsBoolean,
     BrsType,

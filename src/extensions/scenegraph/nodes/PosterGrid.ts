@@ -840,7 +840,9 @@ class PosterGridItem extends Group {
         const childOrigin = [drawTrans[0], drawTrans[1] + offsetY];
         this.renderChildren(interpreter, childOrigin, rotation, combinedOpacity, draw2D);
         this.updateParentRects(origin, angle);
-        this.isDirty = false;
+        if (draw2D) {
+            this.isDirty = false;
+        }
     }
 
     private syncChildNodes() {

@@ -167,7 +167,6 @@ export class InfoPane extends Group {
 
         this.background.setValue("height", new Float(paneHeight));
         this.setValueSilent("height", new Float(paneHeight));
-        this.isDirty = false;
     }
 
     private prepareAndMeasure(contentWidth: number, width: number) {

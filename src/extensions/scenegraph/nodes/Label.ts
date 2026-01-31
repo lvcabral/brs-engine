@@ -88,7 +88,9 @@ export class Label extends Group {
         this.updateBoundingRects(rect, origin, rotation);
         this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);
         this.updateParentRects(origin, angle);
-        this.isDirty = false;
+        if (draw2D) {
+            this.isDirty = false;
+        }
     }
 
     protected renderLabel(rect: Rect, rotation: number, opacity: number, draw2D?: IfDraw2D) {
@@ -127,6 +129,7 @@ export class Label extends Group {
                 measured = { text: "", width: 0, height: 0, ellipsized: false };
             }
         } else {
+            postMessage(`debug,Label ${this.getId()} is not wrapped, printing "${textField}"`);
             measured = this.drawText(
                 textField,
                 font,
