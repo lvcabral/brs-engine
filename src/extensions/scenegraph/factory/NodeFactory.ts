@@ -679,7 +679,7 @@ function addAliases(fieldName: string, fieldAlias: string, node: Node, typeDef: 
         const [childName, childField] = aliasPart.split(".");
         const childNode = node.findNodeById(node, childName);
         if (childNode instanceof Node) {
-            const field = childNode.getNodeFields().get(childField?.toLowerCase());
+            const field = childNode.getNodeFields().get(childField.toLowerCase());
             if (field) {
                 if (targets.length === 0) {
                     // Get first child field and type
@@ -687,7 +687,7 @@ function addAliases(fieldName: string, fieldAlias: string, node: Node, typeDef: 
                     fieldType = field.getType();
                 } else if (sharedField && field.getType() === fieldType) {
                     // Set siblings with the shared field
-                    childNode.getNodeFields().set(childField!.toLowerCase(), sharedField);
+                    childNode.getNodeFields().set(childField.toLowerCase(), sharedField);
                 } else {
                     // Invalid field type, stop processing aliases
                     break;
