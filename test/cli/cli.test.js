@@ -168,9 +168,6 @@ describe("cli", () => {
         });
         expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
             "=== Testing Multi-Field Alias ===",
-            "Added alias for field .syncedValue to target label1.text",
-            "Added alias for field .syncedValue to target label2.text",
-            "Added alias for field .syncedValue to target label3.text",
             "Initial state:",
             "label1.text =",
             "label2.text =",
@@ -202,8 +199,6 @@ describe("cli", () => {
         });
         expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
             "=== Testing Multi-Field Alias with Observers ===",
-            "Added alias for field .syncedValue to target label1.text",
-            "Added alias for field .syncedValue to target label2.text",
             "",
             "Setting scene.syncedValue to 'First Value'",
             "Label1 changed to: First Value",

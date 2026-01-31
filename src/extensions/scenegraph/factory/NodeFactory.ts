@@ -676,9 +676,9 @@ function addAliases(fieldName: string, fieldAlias: string, node: Node, typeDef: 
     let sharedField: Field | undefined;
     let fieldType: FieldKind | undefined;
     for (const aliasPart of aliasParts) {
-        const [childName, childField] = aliasPart.split(".");
+        const [childName, childField] = aliasPart.split(/\.(.*)/s, 2);
         const childNode = node.findNodeById(node, childName);
-        if (childNode instanceof Node) {
+        if (childNode instanceof Node && childField) {
             const field = childNode.getNodeFields().get(childField.toLowerCase());
             if (field) {
                 if (targets.length === 0) {
@@ -692,27 +692,26 @@ function addAliases(fieldName: string, fieldAlias: string, node: Node, typeDef: 
                     // Invalid field type, stop processing aliases
                     break;
                 }
-                postMessage(
-                    `debug,Added alias for field ${node.getId()}.${fieldName} to target ${childName}.${childField}`
-                );
                 targets.push({ nodeId: childName, fieldName: childField });
             } else {
                 let msg = `warning,Error creating XML component ${node.nodeSubtype}\n`;
                 msg += `-- Interface field alias failed: Node "${childName}" has no field named "${childField}"\n`;
                 msg += `-- Error found ${typeDef.xmlPath}`;
                 BrsDevice.stderr.write(msg);
-                if (!sharedField) {
-                    return false;
+                if (sharedField) {
+                    break;
                 }
+                return false;
             }
         } else {
             let msg = `warning,Error creating XML component ${node.nodeSubtype}\n`;
             msg += `-- Interface field alias failed: No node named ${childName}\n`;
             msg += `-- Error found ${typeDef.xmlPath}`;
             BrsDevice.stderr.write(msg);
-            if (!sharedField) {
-                return false;
+            if (sharedField) {
+                break;
             }
+            return false;
         }
     }
     if (targets.length > 0 && sharedField) {
