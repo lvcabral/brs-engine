@@ -33,7 +33,7 @@ import {
 import { RoSGNode } from "../components/RoSGNode";
 import { createNodeByType, getBrsValueFromFieldType, subtypeHierarchy } from "../factory/NodeFactory";
 import { Field } from "../nodes/Field";
-import { FieldAlias, FieldEntry, FieldKind, FieldModel } from "../SGTypes";
+import { FieldAlias, FieldAliasTarget, FieldEntry, FieldKind, FieldModel } from "../SGTypes";
 import { toAssociativeArray, jsValueOf, fromSGNode } from "../factory/Serializer";
 import { sgRoot } from "../SGRoot";
 import { SGNodeType } from ".";
@@ -323,7 +323,6 @@ export class Node extends RoSGNode implements BrsValue {
     setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind) {
         const mapKey = index.toLowerCase();
         const fieldType = kind ?? FieldKind.fromBrsType(value);
-        const alias = this.aliases.get(mapKey);
         let field = this.fields.get(mapKey);
         if (field && field.getType() !== FieldKind.String && isBrsString(value)) {
             // If the field is not a string, but the value is a string, convert it.
@@ -339,29 +338,25 @@ export class Node extends RoSGNode implements BrsValue {
                     this.fields.set(mapKey, field);
                     this.notified = true;
                     this.makeDirty();
-                } else {
+                } else if (BrsDevice.isDevMode) {
                     errorMsg = `BRIGHTSCRIPT: ERROR: roSGNode.Set: Tried to set nonexistent field "${index}" of a "${this.nodeSubtype}" node:`;
                     BrsDevice.stderr.write(`warning,${errorMsg} ${this.location}`);
                 }
                 return;
             }
-            if (alias) {
-                const child = this.findNodeById(this, alias.nodeId);
-                if (child instanceof Node) {
-                    const childField = child.getNodeFields().get(alias.fieldName.toLowerCase());
-                    if (childField && field !== childField) {
-                        // Child node changed, restoring alias
-                        field = childField;
-                        this.fields.set(mapKey, field);
-                    }
-                } else if (BrsDevice.isDevMode) {
-                    errorMsg = `WARNING: roSGNode.Set: "${this.nodeSubtype}.${index}": Alias "${alias.nodeId}.${alias.fieldName}" not found!`;
-                }
-            }
             if (field.canAcceptValue(value)) {
                 this.notified = field.setValue(value, true);
                 this.fields.set(mapKey, field);
                 this.makeDirty();
+                const alias = this.aliases.get(mapKey);
+                if (alias) {
+                    for (const target of alias.targets) {
+                        const child = this.findNodeById(this, target.nodeId);
+                        if (child instanceof Node) {
+                            child.makeDirty();
+                        }
+                    }
+                }
             } else if (!isInvalid(value)) {
                 errorMsg = `BRIGHTSCRIPT: ERROR: roSGNode.AddReplace: "${this.nodeSubtype}.${index}": Type mismatch!`;
             }
@@ -577,15 +572,17 @@ export class Node extends RoSGNode implements BrsValue {
     }
 
     /**
-     * Registers a field alias pointing to a child node's field.
-     * @param fieldName Local alias name.
-     * @param field Backing field metadata.
-     * @param childNode Target child id.
-     * @param childField Name on the child node.
+     * Registers a field alias pointing to one or more child node fields.
+     * @param aliasName Local alias name.
+     * @param targets Array of target fields with their node IDs and field names.
+     * @param sharedField Field instance representing the alias.
      */
-    addNodeFieldAlias(fieldName: string, field: Field, childNode: string, childField: string) {
-        this.fields.set(fieldName.toLowerCase(), field);
-        this.aliases.set(fieldName.toLowerCase(), { nodeId: childNode, fieldName: childField, aliasName: fieldName });
+    addNodeFieldAlias(aliasName: string, targets: FieldAliasTarget[], sharedField: Field) {
+        // Use the first target's field as the primary field for type checking and reading
+        if (targets.length > 0) {
+            this.fields.set(aliasName.toLowerCase(), sharedField);
+            this.aliases.set(aliasName.toLowerCase(), { aliasName, targets });
+        }
     }
 
     /**
@@ -797,26 +794,24 @@ export class Node extends RoSGNode implements BrsValue {
         const name = fieldName.getValue();
         const field = this.fields.get(name.toLowerCase());
         if (field instanceof Field) {
-            let callableOrPort: Callable | RoMessagePort | BrsInvalid = BrsInvalid.Instance;
+            const alias = this.aliases.get(name.toLowerCase());
+            const obsFieldName = new BrsString(alias?.targets[0]?.fieldName ?? field.getName());
+            const infoArray = infoFields instanceof RoArray ? infoFields : undefined;
+            let observer: Callable | RoMessagePort | BrsInvalid = BrsInvalid.Instance;
             if (!interpreter.environment.hostNode) {
                 const location = interpreter.formatLocation();
                 BrsDevice.stderr.write(
                     `warning,BRIGHTSCRIPT: ERROR: roSGNode.ObserveField: "${this.nodeSubtype}.${name}" no active host node: ${location}`
                 );
             } else if (funcOrPort instanceof BrsString) {
-                callableOrPort = interpreter.getCallableFunction(funcOrPort.getValue());
+                observer = interpreter.getCallableFunction(funcOrPort.getValue());
             } else if (funcOrPort instanceof RoMessagePort) {
                 const host = interpreter.environment.hostNode as Node;
                 funcOrPort.registerCallback(host.nodeSubtype, host.getNewEvents.bind(host));
-                callableOrPort = funcOrPort;
+                observer = funcOrPort;
             }
-            if (!(callableOrPort instanceof BrsInvalid)) {
-                if (this.aliases.has(name.toLowerCase())) {
-                    fieldName = new BrsString(this.aliases.get(name.toLowerCase())!.fieldName);
-                } else {
-                    fieldName = new BrsString(field.getName());
-                }
-                field.addObserver(scope, interpreter, callableOrPort, this, fieldName, infoFields);
+            if (!(observer instanceof BrsInvalid)) {
+                field.addObserver(scope, interpreter, observer, this, obsFieldName, infoArray);
                 result = BrsBoolean.True;
             }
         }

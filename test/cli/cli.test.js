@@ -160,5 +160,60 @@ describe("cli", () => {
         ]);
     }, 10000);
 
+    it("SceneGraph Node Alias Test", async () => {
+        let command = ["node", brsCliPath, "-r multi-alias-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "=== Testing Multi-Field Alias ===",
+            "Initial state:",
+            "label1.text =",
+            "label2.text =",
+            "label3.text =",
+            "",
+            "After setting syncedValue to 'Hello, World!':",
+            "label1.text = Hello, World!",
+            "label2.text = Hello, World!",
+            "label3.text = Hello, World!",
+            "",
+            "After updating label2 to 'Updated Value':",
+            "scene.syncedValue = Updated Value",
+            "label1.text = Updated Value",
+            "label2.text = Updated Value",
+            "label3.text = Updated Value",
+            "",
+            "=== Test Complete ===",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 10000);
+
+    it("SceneGraph Observers Test", async () => {
+        let command = ["node", brsCliPath, "-r observer-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "=== Testing Multi-Field Alias with Observers ===",
+            "",
+            "Setting scene.syncedValue to 'First Value'",
+            "Label1 changed to: First Value",
+            "Label2 changed to: First Value",
+            "",
+            "Setting label1.text to 'Second Value'",
+            "Label1 changed to: Second Value",
+            "Label2 changed to: Second Value",
+            "",
+            "=== Observer Test Complete ===",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 10000);
+
     it.todo("add tests for the remaining CLI options");
 });

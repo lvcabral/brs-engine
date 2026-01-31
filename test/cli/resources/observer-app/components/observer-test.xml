@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="ObserverTest" extends="Scene">
+  <interface>
+    <field id="syncedValue" type="string" alias="label1.text,label2.text" />
+  </interface>
+  <children>
+    <Label id="label1" translation="[0, 0]" />
+    <Label id="label2" translation="[0, 50]" />
+  </children>
+  <script type="text/brightscript">
+    <![CDATA[
+    sub init()
+      m.label1 = m.top.findNode("label1")
+      m.label2 = m.top.findNode("label2")
+
+      ' Observe changes to both labels
+      m.label1.observeField("text", "onLabel1Changed")
+      m.label2.observeField("text", "onLabel2Changed")
+    end sub
+
+    sub onLabel1Changed(event as object)
+      print "Label1 changed to: "; event.getData()
+    end sub
+
+    sub onLabel2Changed(event as object)
+      print "Label2 changed to: "; event.getData()
+    end sub
+    ]]>
+  </script>
+</component>

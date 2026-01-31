@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="MultiAliasTest" extends="Scene">
+  <interface>
+    <!-- Alias that connects to multiple child fields -->
+    <field id="syncedValue" type="string" alias="label1.text,label2.text,label3.text" />
+  </interface>
+  <children>
+    <Label id="label1" translation="[0, 0]" />
+    <Label id="label2" translation="[0, 50]" />
+    <Label id="label3" translation="[0, 100]" />
+  </children>
+</component>
