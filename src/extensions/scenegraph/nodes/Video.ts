@@ -692,9 +692,11 @@ export class Video extends Group {
         opacity = opacity * this.getOpacity();
         if (this.isDirty) {
             postMessage(`video,rect,${rect.x},${rect.y},${rect.width},${rect.height}`);
-            this.isDirty = false;
         }
-        draw2D?.doDrawClearedRect(rect);
+        if (draw2D) {
+            this.isDirty = false;
+            draw2D.doDrawClearedRect(rect);
+        }
         if (this.statusChanged) {
             if (this.seekTimeout > 0 && this.seekTimeout < Date.now() && ["rw", "ff"].includes(this.seekMode)) {
                 const duration = this.getValueJS("duration") as number;

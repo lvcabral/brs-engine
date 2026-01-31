@@ -663,7 +663,9 @@ export class Group extends Node {
         this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);
         this.updateContainerBounds(nodeTrans, drawTrans);
         this.updateParentRects(origin, angle);
-        this.isDirty = false;
+        if (draw2D) {
+            this.isDirty = false;
+        }
     }
 
     private updateContainerBounds(nodeTrans: number[], drawTrans: number[]) {

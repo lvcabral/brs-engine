@@ -181,10 +181,12 @@ export class Button extends Group {
         opacity = opacity * this.getOpacity();
         if (this.isDirty) {
             this.updateChildren(nodeFocus);
-            this.isDirty = false;
         }
         this.updateBoundingRects(rect, origin, angle);
         this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);
         this.updateParentRects(origin, angle);
+        if (draw2D) {
+            this.isDirty = false;
+        }
     }
 }

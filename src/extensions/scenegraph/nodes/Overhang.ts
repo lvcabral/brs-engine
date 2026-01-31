@@ -181,7 +181,6 @@ export class Overhang extends Group {
         if (rightDividerUri) {
             this.rightDivider.setValue("uri", new BrsString(rightDividerUri));
         }
-        this.isDirty = false;
     }
 
     private alignChildren() {
@@ -240,5 +239,8 @@ export class Overhang extends Group {
         this.updateBoundingRects(rect, origin, angle);
         this.renderChildren(interpreter, origin, angle, opacity, draw2D);
         this.updateParentRects(origin, angle);
+        if (draw2D) {
+            this.isDirty = false;
+        }
     }
 }

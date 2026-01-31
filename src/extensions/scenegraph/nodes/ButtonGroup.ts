@@ -149,7 +149,6 @@ export class ButtonGroup extends LayoutGroup {
         this.refreshFocus();
         if (this.isDirty) {
             this.refreshButtons();
-            this.isDirty = false;
         }
         const rotation = angle + this.getRotation();
         opacity = opacity * this.getOpacity();
@@ -157,6 +156,9 @@ export class ButtonGroup extends LayoutGroup {
         this.updateBoundingRects(boundingRect, origin, rotation);
         this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);
         this.updateParentRects(origin, angle);
+        if (draw2D) {
+            this.isDirty = false;
+        }
     }
 
     private refreshButtons() {

@@ -184,6 +184,5 @@ export class KeyboardDialog extends Dialog {
             ];
             this.buttonGroup.setTranslation(buttonsTrans);
         }
-        this.isDirty = false;
     }
 }

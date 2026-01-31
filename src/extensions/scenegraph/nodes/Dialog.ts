@@ -217,6 +217,9 @@ export class Dialog extends Group {
         this.updateBoundingRects(boundingRect, origin, rotation);
         this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);
         this.updateParentRects(origin, angle);
+        if (draw2D) {
+            this.isDirty = false;
+        }
     }
 
     protected updateChildren() {
@@ -278,6 +281,5 @@ export class Dialog extends Group {
             ];
             this.buttonGroup.setTranslation(buttonsTrans);
         }
-        this.isDirty = false;
     }
 }
