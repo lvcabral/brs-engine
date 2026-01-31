@@ -823,35 +823,50 @@ export function getValueKindFromFieldType(type: string) {
  *  Note: only supports native types so far.  Objects such as array/AA aren't handled at the moment.
  *  @param {string} type data type of field
  *  @param {string} value optional value specified as string
+ *  @param {BrsType} defaultValue optional default value to return if no value is provided
  *  @returns {BrsType} BrsType value representation of the type
  */
-export function getBrsValueFromFieldType(type: string, value?: string): BrsType {
+export function getBrsValueFromFieldType(type: string, value?: string, defaultValue?: BrsType): BrsType {
     let returnValue: BrsType;
 
     switch (type.toLowerCase()) {
         case "bool":
-        case "boolean":
-            returnValue = value ? BrsBoolean.from(value.toLowerCase() === "true") : BrsBoolean.False;
+        case "boolean": {
+            const fallback = defaultValue ?? BrsBoolean.False;
+            returnValue = value ? BrsBoolean.from(value.toLowerCase() === "true") : fallback;
             break;
+        }
         case "int":
-        case "integer":
-            returnValue = value ? new Int32(Number.parseInt(value)) : new Int32(0);
+        case "integer": {
+            const fallback = defaultValue ?? new Int32(0);
+            const parsedValue = Number.parseInt(value ?? "");
+            returnValue = Number.isNaN(parsedValue) ? fallback : new Int32(parsedValue);
             break;
-        case "longinteger":
-            returnValue = value ? new Int64(Long.fromString(value)) : new Int64(0);
+        }
+        case "longinteger": {
+            const fallback = defaultValue ?? new Int64(0);
+            const parsedValue = Long.fromString(value ?? "0");
+            returnValue = Number.isNaN(parsedValue) ? fallback : new Int64(parsedValue);
             break;
-        case "float":
-            returnValue = value ? new Float(Number.parseFloat(value)) : new Float(0);
+        }
+        case "float": {
+            const fallback = defaultValue ?? new Float(0);
+            const parsedValue = Number.parseFloat(value ?? "");
+            returnValue = Number.isNaN(parsedValue) ? fallback : new Float(parsedValue);
             break;
+        }
         case "time":
-        case "double":
-            returnValue = value ? new Double(Number.parseFloat(value)) : new Double(0);
+        case "double": {
+            const fallback = defaultValue ?? new Double(0);
+            const parsedValue = Number.parseFloat(value ?? "");
+            returnValue = Number.isNaN(parsedValue) ? fallback : new Double(parsedValue);
             break;
+        }
         case "node":
-            returnValue = new RoInvalid();
+            returnValue = defaultValue ?? new RoInvalid();
             break;
         case "font":
-            returnValue = parseFont(value ?? "");
+            returnValue = parseFont(value ?? "", defaultValue);
             break;
         case "roarray":
         case "array":
@@ -864,25 +879,25 @@ export function getBrsValueFromFieldType(type: string, value?: string): BrsType 
         case "vector2darray":
         case "rect2darray":
         case "nodearray":
-            returnValue = parseArray(value ?? "");
+            returnValue = parseArray(value ?? "", defaultValue);
             break;
         case "stringarray":
             if (value && !value.trim().startsWith("[") && !value.trim().endsWith("]")) {
                 returnValue = new BrsString(value);
             } else {
-                returnValue = parseArray(value ?? "");
+                returnValue = parseArray(value ?? "", defaultValue);
             }
             break;
         case "colorarray":
-            returnValue = parseColorArray(value ?? "");
+            returnValue = parseColorArray(value ?? "", defaultValue);
             break;
         case "roassociativearray":
         case "assocarray": {
-            returnValue = parseAA(value ?? "");
+            returnValue = parseAA(value ?? "", defaultValue);
             break;
         }
         case "object":
-            returnValue = BrsInvalid.Instance;
+            returnValue = defaultValue ?? BrsInvalid.Instance;
             break;
         case "uri":
         case "str":
@@ -890,13 +905,13 @@ export function getBrsValueFromFieldType(type: string, value?: string): BrsType 
             returnValue = new BrsString(value ?? "");
             break;
         case "color":
-            returnValue = new Int32(-1);
+            returnValue = defaultValue ?? new Int32(-1);
             if (value?.length) {
                 returnValue = new Int32(convertHexColor(value));
             }
             break;
         default:
-            returnValue = Uninitialized.Instance;
+            returnValue = defaultValue ?? Uninitialized.Instance;
             break;
     }
 
@@ -907,16 +922,17 @@ export function getBrsValueFromFieldType(type: string, value?: string): BrsType 
  * Parses a string representation of a font into a Font object.
  * Supports system fonts prefixed with "font:".
  * @param value String representation of the font
+ * @param defaultValue Optional default value to return if parsing fails
  * @returns Font object or BrsInvalid if parsing fails
  */
-function parseFont(value: string): BrsType {
+function parseFont(value: string, defaultValue?: BrsType): BrsType {
     let returnValue: BrsType = new Font();
     if (
         returnValue instanceof Font &&
         value?.startsWith("font:") &&
         !returnValue.setSystemFont(value.slice(5).toLowerCase())
     ) {
-        returnValue = BrsInvalid.Instance;
+        returnValue = defaultValue ?? BrsInvalid.Instance;
     }
     return returnValue;
 }
@@ -925,16 +941,18 @@ function parseFont(value: string): BrsType {
  * Parses a string representation of an associative array into a RoAssociativeArray.
  * Roku only supports empty associative arrays: "{}"
  * @param value String representation of the associative array
+ * @param defaultValue Optional default value to return if parsing fails
  * @returns RoAssociativeArray or BrsInvalid if parsing fails
  */
-function parseAA(value: string): BrsType {
+function parseAA(value: string, defaultValue?: BrsType): BrsType {
+    const fallback = defaultValue instanceof RoAssociativeArray ? defaultValue : BrsInvalid.Instance;
     let returnValue: BrsType;
     const valueTrimmed = value?.trim() ?? "";
     if (valueTrimmed.startsWith("{") && valueTrimmed.endsWith("}")) {
         const inner = valueTrimmed.slice(1, -1).trim();
-        returnValue = inner === "" ? new RoAssociativeArray([]) : BrsInvalid.Instance;
+        returnValue = inner === "" ? new RoAssociativeArray([]) : fallback;
     } else {
-        returnValue = BrsInvalid.Instance;
+        returnValue = fallback;
     }
     return returnValue;
 }
@@ -943,18 +961,20 @@ function parseAA(value: string): BrsType {
  * Parses a string representation of an array into a RoArray.
  * Supports JSON format including nested arrays.
  * @param value String representation of the array (JSON format)
+ * @param defaultValue Optional default value to return if parsing fails
  * @returns RoArray with parsed values or empty array if parsing fails
  */
-function parseArray(value: string): RoArray {
+function parseArray(value: string, defaultValue?: BrsType): RoArray {
+    const fallback = defaultValue instanceof RoArray ? defaultValue : new RoArray([]);
     const trimmed = value?.trim();
     if (!trimmed?.startsWith("[") || !trimmed.endsWith("]")) {
-        return new RoArray([]);
+        return fallback;
     }
     try {
         // Use JSON.parse to handle nested arrays
         const parsed = JSON.parse(trimmed);
         if (!Array.isArray(parsed)) {
-            return new RoArray([]);
+            return fallback;
         }
         return new RoArray(
             parsed.map((v) => {
@@ -962,7 +982,7 @@ function parseArray(value: string): RoArray {
             })
         );
     } catch {
-        return new RoArray([]);
+        return fallback;
     }
 }
 
@@ -971,16 +991,18 @@ function parseArray(value: string): RoArray {
  * Converts each hex color string to an integer using convertHexColor.
  * Handles BrightScript hex formats: 0xRRGGBBAA, &hRRGGBBAA, #RRGGBBAA
  * @param value String representation of the color array (e.g., "[ 0xFF10EBFF, 0x10101FFF ]")
+ * @param defaultValue Optional default value to return if parsing fails
  * @returns RoArray with Int32 color values or empty array if parsing fails
  */
-function parseColorArray(value: string): RoArray {
+function parseColorArray(value: string, defaultValue?: BrsType): RoArray {
+    const fallback = defaultValue instanceof RoArray ? defaultValue : new RoArray([]);
     const trimmed = value?.trim();
     if (!trimmed?.startsWith("[") || !trimmed.endsWith("]")) {
-        return new RoArray([]);
+        return fallback;
     }
     const content = trimmed.slice(1, -1).trim();
     if (!content) {
-        return new RoArray([]);
+        return fallback;
     }
     const colorStrings = content.split(",");
     const colors: Int32[] = [];
