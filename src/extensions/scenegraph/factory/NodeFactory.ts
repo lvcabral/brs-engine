@@ -904,12 +904,14 @@ export function getBrsValueFromFieldType(type: string, value?: string, defaultVa
         case "string":
             returnValue = new BrsString(value ?? "");
             break;
-        case "color":
+        case "color": {
             returnValue = defaultValue ?? new Int32(-1);
             if (value?.length) {
-                returnValue = new Int32(convertHexColor(value));
+                const colorValue = convertHexColor(value);
+                returnValue = colorValue !== -1 ? new Int32(colorValue) : returnValue;
             }
             break;
+        }
         default:
             returnValue = defaultValue ?? Uninitialized.Instance;
             break;
