@@ -817,13 +817,6 @@ export class Node extends RoSGNode implements BrsValue {
         const field = this.fields.get(name.toLowerCase());
         if (field instanceof Field) {
             const host = interpreter.environment.hostNode;
-            if (!(host instanceof Node)) {
-                const location = interpreter.formatLocation();
-                BrsDevice.stderr.write(
-                    `warning,BRIGHTSCRIPT: ERROR: roSGNode.ObserveField: "${this.nodeSubtype}.${name}" no active host node: ${location}`
-                );
-                return result;
-            }
             const alias = this.aliases.get(name.toLowerCase());
             const obsFieldName = new BrsString(alias?.targets[0]?.fieldName ?? field.getName());
             const infoArray = infoFields instanceof RoArray ? infoFields : undefined;
