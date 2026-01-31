@@ -129,7 +129,6 @@ export class Label extends Group {
                 measured = { text: "", width: 0, height: 0, ellipsized: false };
             }
         } else {
-            postMessage(`debug,Label ${this.getId()} is not wrapped, printing "${textField}"`);
             measured = this.drawText(
                 textField,
                 font,
