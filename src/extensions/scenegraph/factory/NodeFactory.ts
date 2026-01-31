@@ -78,10 +78,12 @@ import {
     ColorFieldInterpolator,
     Vector2DFieldInterpolator,
 } from "../nodes";
+import type { Field } from "../nodes/Field";
 import { ComponentDefinition, ComponentNode } from "../parser/ComponentDefinition";
 import { brsValueOf, getSerializedNodeInfo } from "./Serializer";
 import { sgRoot } from "../SGRoot";
 import { convertHexColor, convertLong, convertNumber } from "../SGUtil";
+import { FieldAliasTarget, FieldKind } from "../SGTypes";
 
 /**
  * Checks if a given string value is a valid SGNodeType.
@@ -616,65 +618,108 @@ function restoreNode(interpreter: Interpreter, source: any, node: Node, port?: R
  * @param typeDef Component definition containing field specifications
  */
 function addFields(interpreter: Interpreter, node: Node, typeDef: ComponentDefinition) {
-    let fields = typeDef.fields;
-    for (let [fieldName, fieldValue] of Object.entries(fields)) {
-        if (fieldValue instanceof Object) {
-            if (fieldValue.alias?.includes(".")) {
-                const childName = fieldValue.alias.split(".")[0];
-                const childField = fieldValue.alias.split(".")[1];
-                const childNode = node.findNodeById(node, childName);
-                if (childNode instanceof Node) {
-                    const field = childNode.getNodeFields().get(childField?.toLowerCase());
-                    if (field) {
-                        node.addNodeFieldAlias(fieldName, field, childName, childField);
-                    } else {
-                        let msg = `warning,Error creating XML component ${node.nodeSubtype}\n`;
-                        msg += `-- Interface field alias failed: Node "${childName}" has no field named "${childField}"\n`;
-                        msg += `-- Error found ${typeDef.xmlPath}`;
-                        BrsDevice.stderr.write(msg);
-                        return;
-                    }
-                } else {
-                    let msg = `warning,Error creating XML component ${node.nodeSubtype}\n`;
-                    msg += `-- Interface field alias failed: No node named ${childName}\n`;
-                    msg += `-- Error found ${typeDef.xmlPath}`;
-                    BrsDevice.stderr.write(msg);
-                    return;
-                }
-            } else {
-                const field = node.getNodeFields().get(fieldName.toLowerCase());
-                if (node instanceof ContentNode && field?.isHidden()) {
-                    const defaultValue = fieldValue.value
-                        ? getBrsValueFromFieldType(fieldValue.type, fieldValue.value)
-                        : undefined;
-                    node.replaceField(fieldName, fieldValue.type, defaultValue, fieldValue.alwaysNotify === "true");
-                } else if (field) {
-                    let msg = `warning,Error creating XML component ${node.nodeSubtype}\n`;
-                    msg += `-- Attempt to add duplicate field "${fieldName}" to RokuML component "${node.nodeSubtype}"\n`;
-                    msg += `---- Extends node type "${typeDef.extends}" already has a field named ${fieldName}\n`;
-                    msg += `-- Error found ${typeDef.xmlPath}`;
-                    BrsDevice.stderr.write(msg);
-                    return;
-                }
-                node.addNodeField(fieldName, fieldValue.type, fieldValue.alwaysNotify === "true");
-                // set default value if it was specified in xml
-                if (fieldValue.value) {
-                    node.setValueSilent(fieldName, getBrsValueFromFieldType(fieldValue.type, fieldValue.value));
-                }
+    const fields = typeDef.fields;
+    for (const [fieldName, fieldValue] of Object.entries(fields)) {
+        if (!(fieldValue instanceof Object)) {
+            continue;
+        }
+        if (fieldValue.alias?.includes(".")) {
+            if (!addAliases(fieldName, fieldValue.alias, node, typeDef)) {
+                return;
             }
-
-            // Add the onChange callback if it exists.
-            if (fieldValue.onChange) {
-                const field = node.getNodeFields().get(fieldName.toLowerCase());
-                const callableFunction = interpreter.getCallableFunction(fieldValue.onChange);
-                if (callableFunction instanceof Callable && field) {
-                    // observers set via `onChange` can never be removed, despite RBI's documentation claiming
-                    // that it is equivalent to calling the ifSGNodeField observeField() method".
-                    field.addObserver("permanent", interpreter, callableFunction, node, new BrsString(fieldName));
-                }
+        } else {
+            const field = node.getNodeFields().get(fieldName.toLowerCase());
+            if (node instanceof ContentNode && field?.isHidden()) {
+                const defaultValue = fieldValue.value
+                    ? getBrsValueFromFieldType(fieldValue.type, fieldValue.value)
+                    : undefined;
+                node.replaceField(fieldName, fieldValue.type, defaultValue, fieldValue.alwaysNotify === "true");
+            } else if (field) {
+                let msg = `warning,Error creating XML component ${node.nodeSubtype}\n`;
+                msg += `-- Attempt to add duplicate field "${fieldName}" to RokuML component "${node.nodeSubtype}"\n`;
+                msg += `---- Extends node type "${typeDef.extends}" already has a field named ${fieldName}\n`;
+                msg += `-- Error found ${typeDef.xmlPath}`;
+                BrsDevice.stderr.write(msg);
+                return;
+            }
+            node.addNodeField(fieldName, fieldValue.type, fieldValue.alwaysNotify === "true");
+            // set default value if it was specified in xml
+            if (fieldValue.value) {
+                node.setValueSilent(fieldName, getBrsValueFromFieldType(fieldValue.type, fieldValue.value));
+            }
+        }
+        // Add the onChange callback if it exists.
+        if (fieldValue.onChange) {
+            const field = node.getNodeFields().get(fieldName.toLowerCase());
+            const callableFunction = interpreter.getCallableFunction(fieldValue.onChange);
+            if (callableFunction instanceof Callable && field) {
+                // observers set via `onChange` can never be removed, despite RBI's documentation claiming
+                // that it is equivalent to calling the ifSGNodeField observeField() method".
+                field.addObserver("permanent", interpreter, callableFunction, node, new BrsString(fieldName));
             }
         }
     }
+}
+
+/**
+ * Add aliases for a field to a node based on the component definition.
+ * @param fieldName The name of the field to alias.
+ * @param fieldAlias The alias string specifying target nodes and fields.
+ * @param node The node to which aliases are added.
+ * @param typeDef The component definition containing field specifications.
+ * @returns True if aliases were successfully added, false otherwise.
+ */
+function addAliases(fieldName: string, fieldAlias: string, node: Node, typeDef: ComponentDefinition): boolean {
+    // Parse comma-separated alias list (e.g., "child1.field1,child2.field2")
+    const aliasParts = fieldAlias.split(",").map((s: string) => s.trim());
+    const targets: FieldAliasTarget[] = [];
+    let sharedField: Field | undefined;
+    let fieldType: FieldKind | undefined;
+    for (const aliasPart of aliasParts) {
+        const [childName, childField] = aliasPart.split(".");
+        const childNode = node.findNodeById(node, childName);
+        if (childNode instanceof Node) {
+            const field = childNode.getNodeFields().get(childField?.toLowerCase());
+            if (field) {
+                if (targets.length === 0) {
+                    // Get first child field and type
+                    sharedField = field;
+                    fieldType = field.getType();
+                } else if (sharedField && field.getType() === fieldType) {
+                    // Set siblings with the shared field
+                    childNode.getNodeFields().set(childField!.toLowerCase(), sharedField);
+                } else {
+                    // Invalid field type, stop processing aliases
+                    break;
+                }
+                postMessage(
+                    `debug,Added alias for field ${node.getId()}.${fieldName} to target ${childName}.${childField}`
+                );
+                targets.push({ nodeId: childName, fieldName: childField });
+            } else {
+                let msg = `warning,Error creating XML component ${node.nodeSubtype}\n`;
+                msg += `-- Interface field alias failed: Node "${childName}" has no field named "${childField}"\n`;
+                msg += `-- Error found ${typeDef.xmlPath}`;
+                BrsDevice.stderr.write(msg);
+                if (!sharedField) {
+                    return false;
+                }
+            }
+        } else {
+            let msg = `warning,Error creating XML component ${node.nodeSubtype}\n`;
+            msg += `-- Interface field alias failed: No node named ${childName}\n`;
+            msg += `-- Error found ${typeDef.xmlPath}`;
+            BrsDevice.stderr.write(msg);
+            if (!sharedField) {
+                return false;
+            }
+        }
+    }
+    if (targets.length > 0 && sharedField) {
+        node.addNodeFieldAlias(fieldName, targets, sharedField);
+        return true;
+    }
+    return false;
 }
 
 /**

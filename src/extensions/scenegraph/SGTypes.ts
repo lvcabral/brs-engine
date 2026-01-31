@@ -43,11 +43,15 @@ export type FieldEntry = {
     field: Field;
 };
 
-/** Represents an alias for a field on a child node. */
+/** Represents an alias for one or more fields on child nodes. */
 export type FieldAlias = {
+    aliasName: string;
+    targets: FieldAliasTarget[];
+};
+
+export type FieldAliasTarget = {
     nodeId: string;
     fieldName: string;
-    aliasName: string;
 };
 
 /** Set of value types that a field could be. */
