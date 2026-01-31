@@ -300,7 +300,7 @@ Nodes that display dynamic content from ContentNode trees follow this pattern:
 
 1. **Content Field in setValue() Method** (note: `set()` method is deprecated, use `setValue()`):
 ```typescript
-setValue(index: string, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
+setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind) {
     const fieldName = index.toLowerCase();
     
     if (fieldName === "content") {

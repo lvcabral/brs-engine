@@ -47,7 +47,7 @@ export class LabelList extends ArrayGrid {
         this.hasNinePatch = true;
     }
 
-    setValue(index: string, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
+    setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind) {
         const fieldName = index.toLowerCase();
         if (fieldName === "vertfocusanimationstyle") {
             if (!ValidFocusStyles.has(value.toString().toLowerCase())) {

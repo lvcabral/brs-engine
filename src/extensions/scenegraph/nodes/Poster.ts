@@ -49,7 +49,7 @@ export class Poster extends Group {
         this.registerInitializedFields(initializedFields);
     }
 
-    setValue(index: string, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
+    setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind) {
         const fieldName = index.toLowerCase();
         if (fieldName === "uri") {
             const uri = jsValueOf(value);

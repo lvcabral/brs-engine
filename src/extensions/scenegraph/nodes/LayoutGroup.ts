@@ -48,7 +48,7 @@ export class LayoutGroup extends Group {
         this.setValueSilent("focusable", BrsBoolean.True);
     }
 
-    setValue(index: string, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
+    setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind) {
         const fieldName = index.toLowerCase();
         super.setValue(index, value, alwaysNotify, kind);
         if (this.isLayoutField(fieldName)) {

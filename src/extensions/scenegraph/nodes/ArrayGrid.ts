@@ -143,7 +143,7 @@ export class ArrayGrid extends Group {
         this.focusField = "listHasFocus";
     }
 
-    setValue(index: string, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
+    setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind) {
         const fieldName = index.toLowerCase();
         if (fieldName === "content" && value instanceof ContentNode) {
             super.setValue(index, value, alwaysNotify, kind);

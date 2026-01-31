@@ -84,7 +84,7 @@ export class ButtonGroup extends LayoutGroup {
         this.lastPressHandled = "";
     }
 
-    setValue(index: string, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
+    setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind) {
         const fieldName = index.toLowerCase();
         if (fieldName === "focusbutton") {
             const buttons = this.getValueJS("buttons");

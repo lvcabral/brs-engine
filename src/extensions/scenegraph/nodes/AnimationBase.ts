@@ -39,7 +39,7 @@ export abstract class AnimationBase extends Node {
      * Intercepts writes to `control` so lifecycle changes flow through `handleControl` before updating the
      * stored value. All other fields defer to the base `Node` implementation.
      */
-    setValue(index: string, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
+    setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind) {
         const mapKey = index.toLowerCase();
         const field = this.fields.get(mapKey);
 

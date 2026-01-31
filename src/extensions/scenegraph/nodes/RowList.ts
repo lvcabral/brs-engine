@@ -115,7 +115,7 @@ export class RowList extends ArrayGrid {
         this.rowScrollOffset[0] = 0;
     }
 
-    setValue(index: string, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
+    setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind) {
         const fieldName = index.toLowerCase();
         if (fieldName === "rowfocusanimationstyle") {
             const style = value.toString().toLowerCase();

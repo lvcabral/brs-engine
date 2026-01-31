@@ -89,7 +89,7 @@ export class InfoPane extends Group {
         this.secondaryLabel = this.createContentLabel("infoText2Color", this.fontSize, true, this.lineSpacing);
     }
 
-    setValue(index: string, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
+    setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind) {
         const fieldName = index.toLowerCase();
         if (this.layoutFields.has(fieldName)) {
             this.isDirty = true;

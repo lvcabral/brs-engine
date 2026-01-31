@@ -43,7 +43,7 @@ export class Field {
         private readonly name: string = "",
         private value: BrsType,
         private readonly type: FieldKind,
-        private readonly alwaysNotify: boolean = false,
+        private readonly alwaysNotify?: boolean,
         private readonly system: boolean = false,
         private hidden: boolean = false,
         private valueRef: boolean = false

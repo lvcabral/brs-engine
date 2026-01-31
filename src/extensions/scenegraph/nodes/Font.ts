@@ -45,7 +45,7 @@ export class Font extends Node {
         initSystemFonts(this.fontRegistry);
     }
 
-    setValue(index: string, value: BrsType, alwaysNotify: boolean = false, kind?: FieldKind) {
+    setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind) {
         const fieldName = index.toLowerCase();
         if (fieldName === "uri" && isBrsString(value)) {
             this.fontRegistry.registerFont(value.getValue(), true);
