@@ -1,4 +1,5 @@
 import { Rect } from "brs-engine";
+import Long from "long";
 
 /**
  * Checks if all properties of a Rect are finite numbers.
@@ -93,8 +94,54 @@ export function unionRect(rectChild: Rect, rectParent: Rect) {
 }
 
 /**
+ * Converts a string representation of a number to a numeric value.
+ * @param strNumber String representation of the number
+ * @returns Numeric value of the string
+ */
+export function convertNumber(strNumber: string): number {
+    let value = Number.NaN;
+    strNumber = strNumber.trim();
+    if (strNumber.length) {
+        // Check if is Hexadecimal (prefix #, 0x or &h)
+        if (strNumber.startsWith("#")) {
+            value = Number.parseInt(strNumber.slice(1), 16);
+        } else if (strNumber.toLowerCase().startsWith("0x") || strNumber.toLowerCase().startsWith("&h")) {
+            value = Number.parseInt(strNumber.slice(2), 16);
+        } else if (strNumber.includes(".")) {
+            value = Number.parseFloat(strNumber);
+        } else {
+            value = Number.parseInt(strNumber);
+        }
+    }
+    return value;
+}
+
+/**
+ * Converts a string representation of a number to a Long value.
+ * @param strNumber String representation of the number
+ * @returns Long value or undefined if conversion fails
+ */
+export function convertLong(strNumber: string): Long | undefined {
+    let valueLong: Long | undefined;
+    strNumber = strNumber.trim();
+    if (strNumber.length) {
+        if (strNumber.startsWith("#")) {
+            valueLong = Long.fromString(strNumber.slice(1), false, 16);
+        } else if (strNumber.toLowerCase().startsWith("0x") || strNumber.toLowerCase().startsWith("&h")) {
+            valueLong = Long.fromString(strNumber.slice(2), false, 16);
+        } else {
+            valueLong = Long.fromString(strNumber, false, 10);
+            if (valueLong.isZero() && !strNumber.startsWith("0")) {
+                valueLong = undefined;
+            }
+        }
+    }
+    return valueLong;
+}
+
+/**
  * Converts a hex color string to a number.
- * Handles various formats: #RRGGBB, 0xRRGGBB, RRGGBB.
+ * Handles various formats: #RRGGBB, 0xRRGGBB, &hRRGGBB.
  * Automatically adds FF alpha channel if not provided.
  * @param strColor Hex color string to convert
  * @returns Color as 32-bit integer (RRGGBBAA) or -1 if invalid

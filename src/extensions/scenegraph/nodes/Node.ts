@@ -327,7 +327,8 @@ export class Node extends RoSGNode implements BrsValue {
         let field = this.fields.get(mapKey);
         if (field && field.getType() !== FieldKind.String && isBrsString(value)) {
             // If the field is not a string, but the value is a string, convert it.
-            value = getBrsValueFromFieldType(field.getType(), value.getValue());
+            // If the conversion fails, keep the original value.
+            value = getBrsValueFromFieldType(field.getType(), value.getValue(), field.getValue());
         }
         let errorMsg = "";
         try {
