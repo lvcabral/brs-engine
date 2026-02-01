@@ -342,17 +342,17 @@ export class Node extends RoSGNode implements BrsValue {
                     errorMsg = `BRIGHTSCRIPT: ERROR: roSGNode.Set: Tried to set nonexistent field "${index}" of a "${this.nodeSubtype}" node:`;
                 }
             } else if (field.canAcceptValue(value)) {
+                this.notified = field.setValue(value, true);
+                this.fields.set(mapKey, field);
                 const alias = this.aliases.get(mapKey);
                 if (alias) {
                     for (const target of alias.targets) {
                         const child = this.findNodeById(this, target.nodeId);
                         if (child instanceof Node) {
-                            child.setValue(target.fieldName, value, alwaysNotify);
+                            child.setValue(target.fieldName, value);
                         }
                     }
                 }
-                this.notified = field.setValue(value, true);
-                this.fields.set(mapKey, field);
                 this.makeDirty();
             } else if (!isInvalid(value)) {
                 errorMsg = `BRIGHTSCRIPT: ERROR: roSGNode.AddReplace: "${this.nodeSubtype}.${index}": Type mismatch!`;
