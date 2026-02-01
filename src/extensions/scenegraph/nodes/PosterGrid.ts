@@ -442,7 +442,7 @@ export class PosterGrid extends ArrayGrid {
         item.setNodeParent(this);
         item.setValueSilent("width", new Float(itemRect.width));
         item.setValueSilent("height", new Float(itemRect.height));
-        item.setValue("itemContent", content);
+        item.setValue("itemContent", content, true);
         return item;
     }
 

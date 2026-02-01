@@ -340,11 +340,8 @@ export class Node extends RoSGNode implements BrsValue {
                     this.makeDirty();
                 } else if (BrsDevice.isDevMode) {
                     errorMsg = `BRIGHTSCRIPT: ERROR: roSGNode.Set: Tried to set nonexistent field "${index}" of a "${this.nodeSubtype}" node:`;
-                    BrsDevice.stderr.write(`warning,${errorMsg} ${this.location}`);
                 }
-                return;
-            }
-            if (field.canAcceptValue(value)) {
+            } else if (field.canAcceptValue(value)) {
                 this.notified = field.setValue(value, true);
                 this.fields.set(mapKey, field);
                 this.makeDirty();
@@ -364,7 +361,7 @@ export class Node extends RoSGNode implements BrsValue {
             errorMsg = `WARNING: roSGNode.Set (unhandled exception): "${this.nodeSubtype}.${index}": ${err.message}`;
         }
         if (errorMsg.length > 0) {
-            BrsDevice.stderr.write(`warning,${errorMsg} ${this.location}`);
+            BrsDevice.stderr.write(`warning,${errorMsg} ${this.location || "(internal)"}`);
         }
     }
 
