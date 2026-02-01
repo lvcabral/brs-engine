@@ -7,7 +7,7 @@ import { ContentNode } from "./ContentNode";
 
 export class CheckList extends LabelList {
     readonly defaultFields: FieldModel[] = [
-        { name: "checkedState", type: "array" },
+        { name: "checkedState", type: "boolarray" },
         { name: "checkOnSelect", type: "boolean", value: "true" },
         { name: "checkedIconUri", type: "uri", value: "" },
         { name: "uncheckedIconUri", type: "uri", value: "" },

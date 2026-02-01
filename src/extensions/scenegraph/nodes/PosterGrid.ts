@@ -384,8 +384,8 @@ export class PosterGrid extends ArrayGrid {
         if (!itemComp) {
             return;
         }
-        itemComp.setValueSilent("width", new Float(itemRect.width));
-        itemComp.setValueSilent("height", new Float(itemRect.height));
+        itemComp.setValue("width", new Float(itemRect.width), false);
+        itemComp.setValue("height", new Float(itemRect.height), false);
         if (itemComp instanceof PosterGridItem) {
             itemComp.setLayout(layout);
         }

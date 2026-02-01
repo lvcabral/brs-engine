@@ -28,7 +28,7 @@ export class LayoutGroup extends Group {
         { name: "layoutDirection", type: "string", value: "vert" },
         { name: "horizAlignment", type: "string", value: "left" },
         { name: "vertAlignment", type: "string", value: "top" },
-        { name: "itemSpacings", type: "array" },
+        { name: "itemSpacings", type: "floatarray" },
         { name: "addItemSpacingAfterChild", type: "boolean", value: "true" },
     ];
 

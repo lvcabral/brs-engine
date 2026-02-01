@@ -67,7 +67,7 @@ export class ArrayGrid extends Group {
         { name: "rowHeights", type: "floatarray", value: "[]" },
         { name: "columnWidths", type: "floatarray", value: "[]" },
         { name: "rowSpacings", type: "floatarray", value: "[]" },
-        { name: "columnSpacings", type: "array", value: "[]" },
+        { name: "columnSpacings", type: "floatarray", value: "[]" },
         { name: "sectionDividerBitmapUri", type: "string", value: "" },
         { name: "sectionDividerFont", type: "font", value: "font:SmallestSystemFont" },
         { name: "sectionDividerTextColor", type: "color", value: "0xddddddff" },
@@ -222,9 +222,9 @@ export class ArrayGrid extends Group {
     protected updateItemFocus(index: number, focus: boolean, nodeFocus: boolean) {
         const itemComp = this.itemComps[index];
         if (!itemComp) return;
-        itemComp.setValue("itemHasFocus", BrsBoolean.from(focus));
-        itemComp.setValue(this.focusField, BrsBoolean.from(nodeFocus));
-        itemComp.setValue("focusPercent", new Float(focus ? 1 : 0));
+        itemComp.setValue("itemHasFocus", BrsBoolean.from(focus), false);
+        itemComp.setValue(this.focusField, BrsBoolean.from(nodeFocus), false);
+        itemComp.setValue("focusPercent", new Float(focus ? 1 : 0), false);
     }
 
     handleKey(key: string, press: boolean): boolean {
@@ -481,9 +481,9 @@ export class ArrayGrid extends Group {
         const itemComp = itemCompName ? createNodeByType(itemCompName, interpreter) : new ArrayGridItem();
         if (itemComp instanceof Group) {
             itemComp.setNodeParent(this);
-            itemComp.setValue("width", brsValueOf(itemRect.width));
-            itemComp.setValue("height", brsValueOf(itemRect.height));
-            itemComp.setValue("itemContent", content);
+            itemComp.setValue("width", brsValueOf(itemRect.width), false);
+            itemComp.setValue("height", brsValueOf(itemRect.height), false);
+            itemComp.setValue("itemContent", content, false);
         }
         return itemComp;
     }
