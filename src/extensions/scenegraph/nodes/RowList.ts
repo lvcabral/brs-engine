@@ -59,7 +59,7 @@ export class RowList extends ArrayGrid {
         { name: "rowItemFocused", type: "intarray", value: "[]" },
         { name: "jumpToRowItem", type: "intarray", value: "[]" },
         { name: "focusXOffset", type: "floatarray", value: "[0,0]" },
-        { name: "rowLabelOffset", type: "array", value: "[[0,0]]" },
+        { name: "rowLabelOffset", type: "vector2darray", value: "[[0,0]]" },
         { name: "rowLabelColor", type: "color", value: "0xffffffff" },
         { name: "rowLabelFont", type: "font" },
         { name: "showRowLabel", type: "boolarray", value: "[]" },
@@ -735,19 +735,18 @@ export class RowList extends ArrayGrid {
                 this.rowItemComps[rowIndex][colIndex] = itemComp;
             }
         }
-        if (content.changed) {
-            this.rowItemComps[rowIndex][colIndex].setValue("itemContent", content, true);
-            content.changed = false;
-        }
-
         // Update the component's focus state
         const itemComp = this.rowItemComps[rowIndex][colIndex];
         if (itemComp) {
-            itemComp.setValue("itemHasFocus", BrsBoolean.from(focused));
-            itemComp.setValue("focusPercent", new Float(focused ? 1 : 0));
-            itemComp.setValue("rowHasFocus", BrsBoolean.from(this.focusIndex === rowIndex));
-            itemComp.setValue("rowFocusPercent", new Float(this.focusIndex === rowIndex ? 1 : 0));
-            itemComp.setValue(this.focusField, BrsBoolean.from(nodeFocus));
+            itemComp.setValue("rowHasFocus", BrsBoolean.from(this.focusIndex === rowIndex), false);
+            itemComp.setValue(this.focusField, BrsBoolean.from(nodeFocus), false);
+            itemComp.setValue("itemHasFocus", BrsBoolean.from(focused), false);
+            if (content.changed) {
+                itemComp.setValue("itemContent", content, true);
+                content.changed = false;
+            }
+            itemComp.setValue("focusPercent", new Float(focused ? 1 : 0), false);
+            itemComp.setValue("rowFocusPercent", new Float(this.focusIndex === rowIndex ? 1 : 0), false);
         }
 
         const drawFocus = this.getValueJS("drawFocusFeedback");

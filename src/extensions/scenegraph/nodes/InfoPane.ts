@@ -25,7 +25,7 @@ export class InfoPane extends Group {
         { name: "infoText2Color", type: "color", value: "0xFFFFFFFF" },
         { name: "infoText2BottomAlign", type: "boolean", value: "false" },
         { name: "textColor", type: "color", value: "0xFFFFFFFF" },
-        { name: "bulletText", type: "array" },
+        { name: "bulletText", type: "stringarray" },
         { name: "width", type: "float", value: "0.0" },
         { name: "height", type: "float", value: "0.0" },
     ];

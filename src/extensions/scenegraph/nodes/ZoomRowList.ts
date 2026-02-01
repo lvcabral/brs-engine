@@ -54,15 +54,15 @@ export class ZoomRowList extends ArrayGrid {
         { name: "spacingAfterRowItem", type: "floatarray", value: "[]" },
         { name: "useDefaultAspectRatio", type: "boolarray", value: "[]" },
         { name: "showRowTitle", type: "boolarray", value: "[]" },
-        { name: "rowTitleOffset", type: "array", value: "[]" },
+        { name: "rowTitleOffset", type: "vector2darray", value: "[]" },
         { name: "rowTitleFont", type: "font", value: "font:SmallestSystemFont" },
         { name: "rowTitleColor", type: "colorarray", value: "[]" },
         { name: "showRowCounter", type: "boolarray", value: "[]" },
-        { name: "rowCounterOffset", type: "array", value: "[]" },
+        { name: "rowCounterOffset", type: "vector2darray", value: "[]" },
         { name: "rowCounterFont", type: "font", value: "font:SmallestSystemFont" },
         { name: "rowCounterColor", type: "colorarray", value: "[]" },
         { name: "showRowCounterForShortRows", type: "bool", value: "true" },
-        { name: "rowDecorationComponentName", type: "array", value: "[]" },
+        { name: "rowDecorationComponentName", type: "stringarray", value: "[]" },
         { name: "rowFocusAnimationStyle", type: "string", value: FocusStyle.FixedFocusWrap },
         { name: "wrap", type: "boolean", value: "true" },
         { name: "drawFocusFeedbackOnTop", type: "boolean", value: "true" },
@@ -637,13 +637,13 @@ export class ZoomRowList extends ArrayGrid {
 
         const itemComp = this.rowItemComps[rowIndex][colIndex];
         if (itemComp) {
-            itemComp.setValue("itemHasFocus", BrsBoolean.from(focused));
-            itemComp.setValue("focusPercent", new Float(focused ? 1 : 0));
-            itemComp.setValue("rowHasFocus", BrsBoolean.from(this.focusIndex === rowIndex));
-            itemComp.setValue("rowFocusPercent", new Float(this.focusIndex === rowIndex ? 1 : 0));
-            itemComp.setValue(this.focusField, BrsBoolean.from(nodeFocus));
-            itemComp.setValueSilent("width", brsValueOf(itemRect.width));
-            itemComp.setValueSilent("height", brsValueOf(itemRect.height));
+            itemComp.setValue("width", brsValueOf(itemRect.width), false);
+            itemComp.setValue("height", brsValueOf(itemRect.height), false);
+            itemComp.setValue("rowHasFocus", BrsBoolean.from(this.focusIndex === rowIndex), false);
+            itemComp.setValue(this.focusField, BrsBoolean.from(nodeFocus), false);
+            itemComp.setValue("itemHasFocus", BrsBoolean.from(focused), false);
+            itemComp.setValue("focusPercent", new Float(focused ? 1 : 0), false);
+            itemComp.setValue("rowFocusPercent", new Float(this.focusIndex === rowIndex ? 1 : 0), false);
         }
 
         const drawFocus = this.getValueJS("drawFocusFeedback");

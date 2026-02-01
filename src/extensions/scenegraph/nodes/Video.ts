@@ -77,7 +77,7 @@ export class Video extends Group {
         { name: "autoPlayAfterSeek", type: "boolean", value: "true" },
         { name: "timedMetaData", type: "assocarray" },
         { name: "timedMetaData2", type: "assocarray" },
-        { name: "timedMetaDataSelectionKeys", type: "array" },
+        { name: "timedMetaDataSelectionKeys", type: "stringarray" },
         { name: "streamInfo", type: "assocarray" },
         { name: "completedStreamInfo", type: "assocarray" },
         { name: "timeToStartStreaming", type: "time", value: "0" },

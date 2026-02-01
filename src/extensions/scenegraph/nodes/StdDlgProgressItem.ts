@@ -12,6 +12,8 @@ export class StdDlgProgressItem extends Group {
     readonly defaultFields: FieldModel[] = [
         { name: "text", type: "string", value: "" },
         { name: "scrollable", type: "boolean", value: "false" },
+        { name: "width", type: "float", value: "0.0" },
+        { name: "height", type: "float", value: "0.0" },
     ];
     private readonly spinner: BusySpinner;
     private readonly label: Label;
