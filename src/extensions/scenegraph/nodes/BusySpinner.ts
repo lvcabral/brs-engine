@@ -1,8 +1,8 @@
+import { AAMember, Interpreter, BrsString, BrsType, RoArray, Float, IfDraw2D, Rect } from "brs-engine";
 import { FieldKind, FieldModel } from "../SGTypes";
+import { rotateTranslation } from "../SGUtil";
 import { SGNodeType } from ".";
 import { Group } from "./Group";
-import { AAMember, Interpreter, BrsString, BrsType, RoArray, Float, IfDraw2D, Rect } from "brs-engine";
-import { rotateTranslation } from "../SGUtil";
 import { Poster } from "./Poster";
 
 export class BusySpinner extends Group {
@@ -36,7 +36,7 @@ export class BusySpinner extends Group {
         const mapKey = index.toLowerCase();
 
         if (mapKey === "control") {
-            let control = value.toString();
+            const control = value.toString();
             if (control === "start") {
                 this.active = true;
                 this.lastRenderTime = Date.now();
@@ -69,25 +69,19 @@ export class BusySpinner extends Group {
         return { width: this.width, height: this.height };
     }
 
-    private updateChildren(): boolean {
-        const bitmapWidth = this.poster.getValueJS("bitmapWidth") as number;
-        const bitmapHeight = this.poster.getValueJS("bitmapHeight") as number;
-        if (bitmapWidth === 0 || bitmapHeight === 0) {
-            return false;
+    private updateChildren() {
+        const width = this.poster.getValueJS("width") || this.poster.getValueJS("bitmapWidth");
+        const height = this.poster.getValueJS("height") || this.poster.getValueJS("bitmapHeight");
+        if (typeof width !== "number" || typeof height !== "number" || width <= 0 || height <= 0) {
+            return;
         }
-        if (this.width !== bitmapWidth || this.height !== bitmapHeight) {
-            this.width = bitmapWidth;
-            this.height = bitmapHeight;
-            // Set rotation center to image center for proper spinning
-            const rotationCenterX = bitmapWidth / 2;
-            const rotationCenterY = bitmapHeight / 2;
-            this.poster.setValueSilent(
-                "scaleRotateCenter",
-                new RoArray([new Float(rotationCenterX), new Float(rotationCenterY)])
-            );
-            return true;
+        if (this.width !== width || this.height !== height) {
+            this.width = width;
+            this.height = height;
+            const rotationCenterX = new Float(width / 2);
+            const rotationCenterY = new Float(height / 2);
+            this.poster.setValueSilent("scaleRotateCenter", new RoArray([rotationCenterX, rotationCenterY]));
         }
-        return false;
     }
 
     renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
