@@ -55,9 +55,7 @@ export class TrickPlayBar extends Group {
         this.barProgress.setValueSilent("blendColor", new Int32(1730004479)); // From inspection in Roku debugger
         this.barTicker.setValueSilent("visible", BrsBoolean.False);
         this.linkField(this.backBack, "blendColor", "trackBlendColor");
-        this.linkField(this.backBack, "uri", "trackImageUri");
         this.linkField(this.barProgress, "blendColor", "filledBarBlendColor");
-        this.linkField(this.barProgress, "uri", "filledBarImageUri");
         this.linkField(this.barTicker, "blendColor", "currentTimeMarkerBlendColor");
         this.setValueSilent("width", new Int32(this.barW));
         this.bmpIcons = new Map<string, RoBitmap>([
@@ -82,6 +80,10 @@ export class TrickPlayBar extends Group {
             if (this.getValueJS("visible") !== value.toBoolean()) {
                 if (!sgRoot.inTaskThread()) postMessage({ trickPlayBarVisible: value.toBoolean() });
             }
+        } else if (fieldName === "trackimageuri") {
+            this.backBack.setValue("uri", value);
+        } else if (fieldName === "filledbarimageuri") {
+            this.barProgress.setValue("uri", value);
         }
         super.setValue(index, value, alwaysNotify, kind);
     }

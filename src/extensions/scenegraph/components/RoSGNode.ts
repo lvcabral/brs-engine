@@ -199,7 +199,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
     protected abstract createPath(start?: RoSGNode, reverse?: boolean): RoSGNode[];
     protected abstract findRootNode(start?: RoSGNode): RoSGNode;
 
-    protected abstract getBoundingRect(interpreter: Interpreter, type: string): Rect;
+    protected abstract getBoundingRect(type: string, interpreter?: Interpreter): Rect;
     protected abstract compareNodes(other: RoSGNode): boolean;
     protected abstract getThreadInfo(): RoAssociativeArray;
 
@@ -1136,7 +1136,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             returns: ValueKind.Dynamic,
         },
         impl: (interpreter: Interpreter) => {
-            return toAssociativeArray(this.getBoundingRect(interpreter, "toParent"));
+            return toAssociativeArray(this.getBoundingRect("toParent", interpreter));
         },
     });
 
@@ -1147,7 +1147,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             returns: ValueKind.Dynamic,
         },
         impl: (interpreter: Interpreter) => {
-            return toAssociativeArray(this.getBoundingRect(interpreter, "local"));
+            return toAssociativeArray(this.getBoundingRect("local", interpreter));
         },
     });
 
@@ -1158,7 +1158,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             returns: ValueKind.Dynamic,
         },
         impl: (interpreter: Interpreter) => {
-            return toAssociativeArray(this.getBoundingRect(interpreter, "toScene"));
+            return toAssociativeArray(this.getBoundingRect("toScene", interpreter));
         },
     });
 
@@ -1169,7 +1169,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             returns: ValueKind.Dynamic,
         },
         impl: (interpreter: Interpreter, ancestor: RoSGNode) => {
-            const boundingRect = this.getBoundingRect(interpreter, "toParent");
+            const boundingRect = this.getBoundingRect("toParent", interpreter);
             const ancestorRect = { ...boundingRect };
             let ancestorFound = false;
             const path = this.createPath(this, false).slice(1);
@@ -1178,7 +1178,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
                     ancestorFound = true;
                     break;
                 }
-                const nodeRect = node.getBoundingRect(interpreter, "toParent");
+                const nodeRect = node.getBoundingRect("toParent", interpreter);
                 ancestorRect.x += nodeRect.x;
                 ancestorRect.y += nodeRect.y;
             }
