@@ -754,13 +754,15 @@ export class Node extends RoSGNode implements BrsValue {
 
     /**
      * Forces a render pass and returns the requested bounding rectangle.
-     * @param interpreter Interpreter used to render the root path.
      * @param type Rectangle type: `local`, `toScene`, or any other value for parent space.
+     * @param interpreter Interpreter used to render the root path.
      * @returns Bounding rectangle in the requested coordinate space.
      */
-    getBoundingRect(interpreter: Interpreter, type: string): Rect {
-        const root = this.createPath()[0];
-        root.renderNode(interpreter, [0, 0], 0, 1);
+    getBoundingRect(type: string, interpreter?: Interpreter): Rect {
+        if (interpreter) {
+            const root = this.createPath()[0];
+            root.renderNode(interpreter, [0, 0], 0, 1);
+        }
         switch (type) {
             case "local":
                 return this.rectLocal;

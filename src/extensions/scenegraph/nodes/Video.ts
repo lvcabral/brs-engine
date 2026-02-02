@@ -156,7 +156,6 @@ export class Video extends Group {
         const overlayUri = "common:/images/video_trickplay_overlay.png";
         this.backgroundOverlay = this.addPoster(overlayUri, [0, 0], this.sceneRect.width, this.sceneRect.height);
         this.backgroundOverlay.setValueSilent("visible", BrsBoolean.False);
-        this.linkField(this.backgroundOverlay, "uri", "trickPlayBackgroundOverlay");
         this.trickPlayBar = new TrickPlayBar();
         this.trickPlayBar.setValue("visible", BrsBoolean.False);
         this.spinner = new BusySpinner();
@@ -295,6 +294,8 @@ export class Video extends Group {
             }
         } else if (fieldName === "captionstyle" && value instanceof RoAssociativeArray) {
             this.setCaptionStyle(fromAssociativeArray(value));
+        } else if (fieldName === "trickplaybackgroundoverlay") {
+            this.backgroundOverlay.setValue("uri", value);
         }
         super.setValue(index, value, alwaysNotify, kind);
     }

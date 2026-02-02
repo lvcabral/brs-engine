@@ -56,13 +56,9 @@ export class Poster extends Group {
             if (typeof uri === "string" && uri.trim() !== "" && this.uri !== uri) {
                 this.uri = uri;
                 const loadStatus = this.loadUri(uri);
-                const subSearch = sgRoot.autoSub.search.toLowerCase();
-                if (loadStatus === "ready") {
-                    this.noScaling = subSearch !== "" && uri.toLowerCase().includes(subSearch);
-                } else {
+                if (loadStatus !== "ready") {
                     const failedUri = this.getValueJS("failedBitmapUri") as string;
                     this.loadUri(failedUri);
-                    this.noScaling = subSearch !== "" && failedUri.toLowerCase().includes(subSearch);
                 }
                 super.setValue("loadStatus", new BrsString(loadStatus));
             } else if (typeof uri !== "string" || uri.trim() === "") {
@@ -90,7 +86,7 @@ export class Poster extends Group {
         const loadStatus = this.getValueJS("loadStatus") as string;
         const rect = { x: drawTrans[0], y: drawTrans[1], width: size.width, height: size.height };
         if (loadStatus === "ready" && !this.noScaling && (rect.width <= 0 || rect.height <= 0)) {
-            this.updateRect(rect);
+            this.scaleToResolution(rect);
         }
         const rotation = angle + this.getRotation();
         const displayMode = this.getValueJS("loadDisplayMode") as string;
@@ -116,7 +112,7 @@ export class Poster extends Group {
         this.updateParentRects(origin, angle);
     }
 
-    private updateRect(rect: Rect) {
+    private scaleToResolution(rect: Rect) {
         const bitmapHeight = this.bitmap?.height ?? 0;
         const bitmapWidth = this.bitmap?.width ?? 0;
         // Roku scales the Poster bitmap based on the current display mode
@@ -150,8 +146,17 @@ export class Poster extends Group {
                     this.bitmap = getTextureManager().resizeTexture(this.bitmap, loadWidth, loadHeight);
                 }
             }
-            super.setValue("bitmapWidth", new Float(this.bitmap.width));
-            super.setValue("bitmapHeight", new Float(this.bitmap.height));
+            const subSearch = sgRoot.autoSub.search.toLowerCase();
+            this.noScaling = subSearch !== "" && uri.toLowerCase().includes(subSearch);
+            if (this.noScaling) {
+                super.setValue("bitmapWidth", new Float(this.bitmap.width));
+                super.setValue("bitmapHeight", new Float(this.bitmap.height));
+            } else {
+                const rect = { x: 0, y: 0, width: 0, height: 0 };
+                this.scaleToResolution(rect);
+                super.setValue("bitmapWidth", new Float(rect.width));
+                super.setValue("bitmapHeight", new Float(rect.height));
+            }
             super.setValue("bitmapMargins", brsValueOf(margins));
             loadStatus = "ready";
         }
