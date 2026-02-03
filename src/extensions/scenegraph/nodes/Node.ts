@@ -29,6 +29,7 @@ import {
     Interpreter,
     BrsDevice,
     RuntimeError,
+    BrsError,
 } from "brs-engine";
 import { RoSGNode } from "../components/RoSGNode";
 import { createNodeByType, getBrsValueFromFieldType, subtypeHierarchy } from "../factory/NodeFactory";
@@ -347,7 +348,7 @@ export class Node extends RoSGNode implements BrsValue {
                 const alias = this.aliases.get(mapKey);
                 if (alias) {
                     for (const target of alias.targets) {
-                        const child = this.findNodeById(this, target.nodeId);
+                        const child = this.findNodeById(this, target.nodeId, true);
                         if (child instanceof Node) {
                             child.setValue(target.fieldName, value);
                         }
@@ -358,7 +359,13 @@ export class Node extends RoSGNode implements BrsValue {
                 errorMsg = `BRIGHTSCRIPT: ERROR: roSGNode.AddReplace: "${this.nodeSubtype}.${index}": Type mismatch!`;
             }
         } catch (err: any) {
-            errorMsg = `WARNING: roSGNode.Set (unhandled exception): "${this.nodeSubtype}.${index}": ${err.message}`;
+            if (err.message.startsWith("WARNING:")) {
+                // Prevent recursive error messages
+                errorMsg = err.message;
+            } else {
+                errorMsg = `WARNING: roSGNode.Set (unhandled exception): "${this.nodeSubtype}.${index}": ${err.message}`;
+            }
+            throw new BrsError(errorMsg);
         }
         if (errorMsg.length > 0) {
             BrsDevice.stderr.write(`warning,${errorMsg} ${this.location || "(internal)"}`);
@@ -911,20 +918,23 @@ export class Node extends RoSGNode implements BrsValue {
      * Searches the subtree rooted at the provided node for a matching `id`.
      * @param node Root to inspect.
      * @param id Identifier to seek (case-insensitive).
+     * @param ignoreRoot Whether to ignore the root node in the search.
      * @returns The matching node or BrsInvalid when not found.
      */
-    findNodeById(node: Node, id: string): Node | BrsInvalid {
-        // test current node in tree
-        const myId = node.getValue("id");
-        if (myId?.toString().toLowerCase() === id.toLowerCase()) {
-            return node;
+    findNodeById(node: Node, id: string, ignoreRoot?: boolean): Node | BrsInvalid {
+        if (!ignoreRoot) {
+            // test current node in tree
+            const myId = node.getValue("id");
+            if (myId?.toString().toLowerCase() === id.toLowerCase()) {
+                return node;
+            }
         }
         // visit each child
         for (const child of node.children) {
             if (!(child instanceof Node)) {
                 continue;
             }
-            const result = this.findNodeById(child, id);
+            const result = this.findNodeById(child, id, false);
             if (result instanceof Node) {
                 return result;
             }
