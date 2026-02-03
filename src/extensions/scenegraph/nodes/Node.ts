@@ -359,12 +359,10 @@ export class Node extends RoSGNode implements BrsValue {
                 errorMsg = `BRIGHTSCRIPT: ERROR: roSGNode.AddReplace: "${this.nodeSubtype}.${index}": Type mismatch!`;
             }
         } catch (err: any) {
-            if (err.message.startsWith("WARNING:")) {
-                // Prevent recursive error messages
-                errorMsg = err.message;
-            } else {
-                errorMsg = `WARNING: roSGNode.Set (unhandled exception): "${this.nodeSubtype}.${index}": ${err.message}`;
+            if (err instanceof BrsError) {
+                throw err;
             }
+            errorMsg = `WARNING: roSGNode.Set (unhandled exception): "${this.nodeSubtype}.${index}": ${err.message}`;
             throw new BrsError(errorMsg);
         }
         if (errorMsg.length > 0) {
