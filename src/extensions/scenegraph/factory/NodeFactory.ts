@@ -677,7 +677,7 @@ function addAliases(fieldName: string, fieldAlias: string, node: Node, typeDef: 
     let fieldType: FieldKind | undefined;
     for (const aliasPart of aliasParts) {
         const [childName, childField] = aliasPart.split(/\.(.*)/s, 2);
-        const childNode = node.findNodeById(node, childName);
+        const childNode = node.findNodeById(node, childName, true);
         if (childNode instanceof Node && childField) {
             const field = childNode.getNodeFields().get(childField.toLowerCase());
             if (field) {
