@@ -29,7 +29,7 @@ import {
     rgbaIntToHex,
 } from "brs-engine";
 import { sgRoot } from "../SGRoot";
-import { Scene } from "../nodes";
+import { Scene, Node, Dialog } from "../nodes";
 import { createSceneByType, initializeNode } from "../factory/NodeFactory";
 import { RoSGScreenEvent } from "../events/RoSGScreenEvent";
 
@@ -184,7 +184,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
             const videoUpdated = sgRoot.processVideo();
             this.isDirty ||= timersFired || animUpdated || tasksUpdated || audioUpdated || sfxUpdated || videoUpdated;
             // Render Scene and Dialog
-            const showDialog = sgRoot.scene?.dialog?.getNodeParent() instanceof BrsInvalid;
+            const showDialog = sgRoot.scene?.dialog instanceof Node;
             if (sgRoot.isDirty || this.isDirty || showDialog) {
                 sgRoot.clearDirty();
                 sgRoot.scene.renderNode(interpreter, [0, 0], 0, 1, this.draw2D);
@@ -223,7 +223,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         }
         const press = BrsBoolean.from(nextKey.mod === 0);
         let handled = false;
-        if (sgRoot.scene.dialog?.isVisible()) {
+        if (sgRoot.scene.dialog instanceof Dialog && sgRoot.scene.dialog.isVisible()) {
             handled = sgRoot.scene.dialog.handleKey(key.value, press.toBoolean());
         } else {
             handled = sgRoot.scene.handleOnKeyEvent(interpreter, key, press);

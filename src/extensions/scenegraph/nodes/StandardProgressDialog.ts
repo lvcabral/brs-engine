@@ -36,6 +36,7 @@ export class StandardProgressDialog extends StandardDialog {
         contentArea.appendChildToParent(this.progressItem);
         this.appendChildToParent(contentArea);
         this.linkField(this.progressItem, "text", "message");
+        this.setTranslation(this.dialogTrans);
     }
 
     renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
