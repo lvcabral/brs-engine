@@ -28,7 +28,6 @@ export class StandardDialog extends Group {
         { name: "backExitsDialog", type: "boolean", value: "true" },
         { name: "homeExitsDialog", type: "boolean", value: "true" },
         { name: "focusable", type: "boolean", value: "true" },
-        { name: "focusable", type: "boolean", value: "true" },
         { name: "close", type: "boolean", value: "false" },
         { name: "wasClosed", type: "boolean", value: "false", alwaysNotify: true },
     ];
