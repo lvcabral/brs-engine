@@ -71,8 +71,13 @@ export class Scene extends Group {
         if (fieldName === "dialog") {
             if (value instanceof Dialog || value instanceof StandardDialog) {
                 this.dialog?.setValue("close", BrsBoolean.True);
+                if (value instanceof StandardDialog) {
+                    value.setDefaultTranslation();
+                    value.setNodeParent(this);
+                }
                 this.dialog = value;
             } else if (value instanceof BrsInvalid) {
+                this.dialog?.removeParent();
                 this.dialog?.setValue("close", BrsBoolean.True);
             } else {
                 return;

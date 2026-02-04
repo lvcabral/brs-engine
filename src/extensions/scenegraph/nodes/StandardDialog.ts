@@ -25,15 +25,18 @@ export class StandardDialog extends Group {
         { name: "buttonSelected", type: "integer", value: "0", alwaysNotify: true },
         { name: "buttonFocused", type: "integer", value: "0", alwaysNotify: true },
         { name: "palette", type: "node" },
+        { name: "backExitsDialog", type: "boolean", value: "true" },
+        { name: "homeExitsDialog", type: "boolean", value: "true" },
+        { name: "focusable", type: "boolean", value: "true" },
         { name: "close", type: "boolean", value: "false" },
         { name: "wasClosed", type: "boolean", value: "false", alwaysNotify: true },
     ];
     protected readonly dialogBackgroundUri = "common:/images/standard_dialog_background.9.png";
     protected readonly dialogDividerUri = "common:/images/dialog_divider.9.png";
+    protected readonly dialogTrans: number[];
     private readonly background: Poster;
     private readonly minHeight: number;
     private readonly maxWidth: number;
-    private readonly dialogTrans: number[];
     private width: number;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.StandardDialog) {
@@ -56,7 +59,6 @@ export class StandardDialog extends Group {
             this.dialogTrans = [354, 328];
             this.background = this.addPoster(this.dialogBackgroundUri, [-60, -40], this.width, this.minHeight);
         }
-        this.setTranslation(this.dialogTrans);
     }
 
     setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind) {
@@ -77,6 +79,22 @@ export class StandardDialog extends Group {
             this.background.setValue("width", value);
         }
         super.setValue(index, value, alwaysNotify, kind);
+    }
+
+    setDefaultTranslation() {
+        this.setTranslation(this.dialogTrans);
+    }
+
+    handleKey(key: string, press: boolean): boolean {
+        let handled = false;
+        if (key === "back") {
+            const backExits = this.getValueJS("backExitsDialog") as boolean;
+            if (press && backExits) {
+                this.setValue("close", BrsBoolean.True);
+            }
+            handled = true;
+        }
+        return handled;
     }
 
     renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
