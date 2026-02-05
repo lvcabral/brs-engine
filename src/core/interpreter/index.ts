@@ -37,7 +37,7 @@ import {
     toAssociativeArray,
     isCollection,
 } from "../brsTypes";
-import { BrsExtension, isSceneGraphNode } from "../extensions";
+import { BrsExtension, ISGNode, isSceneGraphNode } from "../extensions";
 import { tryCoerce } from "../brsTypes/Coercion";
 import { Lexeme, GlobalFunctions } from "../lexer";
 import { isToken, Location } from "../lexer/Token";
@@ -1230,11 +1230,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     visitCall(expression: Expr.Call) {
-        let functionName = "[anonymous function]";
-        if (expression.callee instanceof Expr.Variable || expression.callee instanceof Expr.DottedGet) {
-            functionName = expression.callee.name.text;
-        }
-
         // evaluate the function to call (it could be the result of another function call)
         const evaluated = this.evaluate(expression.callee);
         const callee = evaluated instanceof RoFunction ? evaluated.unbox() : evaluated;
@@ -1248,111 +1243,12 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             }
             this.addError(new RuntimeError(RuntimeErrorDetail.NotAFunction, expression.closingParen.location));
         }
-
-        functionName = callee.getName();
-        const savedEnvironment = this._environment;
-
-        let satisfiedSignature = callee.getFirstSatisfiedSignature(args);
-
-        if (satisfiedSignature) {
-            try {
-                let mPointer = this._environment.getRootM();
-
-                let signature = satisfiedSignature.signature;
-                args = args.map((arg, index) => {
-                    // any arguments of type "object" must be automatically boxed
-                    if (signature.args[index]?.type.kind === ValueKind.Object && isBoxable(arg)) {
-                        return arg.box();
-                    }
-                    return arg;
-                });
-
-                if (expression.callee instanceof Expr.DottedGet || expression.callee instanceof Expr.IndexedGet) {
-                    mPointer = callee.getContext() ?? mPointer;
-                }
-                return this.inSubEnv((subInterpreter) => {
-                    subInterpreter.environment.setM(mPointer, false);
-                    if (callee.isUserDefined()) {
-                        this.addToStack({
-                            functionName: functionName,
-                            functionLocation: callee.getLocation() ?? this.location,
-                            callLocation: expression.callee.location,
-                            signature: signature,
-                        });
-                    }
-                    try {
-                        const returnValue = callee.call(this, ...args);
-                        if (callee.isUserDefined()) this.popFromStack();
-                        return returnValue;
-                    } catch (err: any) {
-                        if (err instanceof RuntimeError) {
-                            if (!callee.isUserDefined()) {
-                                // Restore the context for errors from built-in components/functions
-                                this._environment = savedEnvironment;
-                            }
-                            this.checkCrashDebug(err);
-                        }
-                        if (callee.isUserDefined()) {
-                            this.popFromStack();
-                        }
-                        throw err;
-                    }
-                });
-            } catch (reason: any) {
-                if (!(reason instanceof Stmt.BlockEnd)) {
-                    if (reason instanceof BrsError) {
-                        throw reason;
-                    } else if (BrsDevice.isDevMode && reason.message && !TerminateReasons.includes(reason.message)) {
-                        // Expose the Javascript error stack trace on `development` mode
-                        console.error(reason);
-                        throw new Error("");
-                    }
-                    throw new Error(reason.message);
-                } else if (TerminateReasons.includes(reason.message)) {
-                    throw new Error(reason.message);
-                }
-
-                let returnedValue = (reason as Stmt.ReturnValue).value;
-                let returnLocation = (reason as Stmt.ReturnValue).location;
-                const signatureKind = satisfiedSignature.signature.returns;
-
-                if (returnedValue && signatureKind === ValueKind.Void) {
-                    this.addError(new RuntimeError(RuntimeErrorDetail.ReturnWithValue, returnLocation));
-                }
-
-                if (!returnedValue && signatureKind !== ValueKind.Void) {
-                    this.addError(new RuntimeError(RuntimeErrorDetail.ReturnWithoutValue, returnLocation));
-                }
-
-                if (returnedValue) {
-                    const coercedValue = tryCoerce(returnedValue, signatureKind);
-                    if (coercedValue) {
-                        return coercedValue;
-                    }
-                }
-
-                if (returnedValue && signatureKind !== ValueKind.Dynamic && signatureKind !== returnedValue.kind) {
-                    this.addError(
-                        new TypeMismatch({
-                            message: `Unable to cast`,
-                            left: {
-                                type: signatureKind,
-                                location: returnLocation,
-                            },
-                            right: {
-                                type: returnedValue,
-                                location: returnLocation,
-                            },
-                            cast: true,
-                        })
-                    );
-                }
-
-                return returnedValue ?? BrsInvalid.Instance;
-            }
-        } else {
-            this.addError(generateArgumentMismatchError(callee, args, expression.closingParen.location));
+        // determine the correct "m" pointer for this call
+        let mPointer = this._environment.getRootM();
+        if (expression.callee instanceof Expr.DottedGet || expression.callee instanceof Expr.IndexedGet) {
+            mPointer = callee.getContext() ?? mPointer;
         }
+        return this.call(callee, args, mPointer, expression.callee.location);
     }
 
     visitAtSignGet(expression: Expr.AtSignGet) {
@@ -1974,6 +1870,119 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         this.location = statement.location;
         this._lastStmt = statement;
         return statement.accept<BrsType>(this);
+    }
+
+    /**
+     * Calls a function/method with the provided arguments and context.
+     * @param callee The function to call
+     * @param args The arguments to pass to the function
+     * @param mPointer The "m" pointer context for the call
+     * @param location The source location of the call
+     * @param hostNode The host SceneGraph node for the call (optional)
+     * @returns The result of the function call
+     */
+    call(callee: Callable, args: BrsType[], mPointer: RoAssociativeArray, location: Location, hostNode?: ISGNode) {
+        const functionName = callee.getName();
+        const savedEnvironment = this._environment;
+
+        let satisfiedSignature = callee.getFirstSatisfiedSignature(args);
+
+        if (satisfiedSignature) {
+            try {
+                let signature = satisfiedSignature.signature;
+                args = args.map((arg, index) => {
+                    // any arguments of type "object" must be automatically boxed
+                    if (signature.args[index]?.type.kind === ValueKind.Object && isBoxable(arg)) {
+                        return arg.box();
+                    }
+                    return arg;
+                });
+                return this.inSubEnv((subInterpreter) => {
+                    if (hostNode) {
+                        subInterpreter.environment.hostNode = hostNode;
+                    }
+                    subInterpreter.environment.setM(mPointer, false);
+                    if (callee.isUserDefined()) {
+                        this.addToStack({
+                            functionName: functionName,
+                            functionLocation: callee.getLocation() ?? this.location,
+                            callLocation: location,
+                            signature: signature,
+                        });
+                    }
+                    try {
+                        const returnValue = callee.call(this, ...args);
+                        if (callee.isUserDefined()) this.popFromStack();
+                        return returnValue;
+                    } catch (err: any) {
+                        if (err instanceof RuntimeError) {
+                            if (!callee.isUserDefined()) {
+                                // Restore the context for errors from built-in components/functions
+                                this._environment = savedEnvironment;
+                            }
+                            this.checkCrashDebug(err);
+                        }
+                        if (callee.isUserDefined()) {
+                            this.popFromStack();
+                        }
+                        throw err;
+                    }
+                });
+            } catch (reason: any) {
+                if (!(reason instanceof Stmt.BlockEnd)) {
+                    if (reason instanceof BrsError) {
+                        throw reason;
+                    } else if (BrsDevice.isDevMode && reason.message && !TerminateReasons.includes(reason.message)) {
+                        // Expose the Javascript error stack trace on `development` mode
+                        console.error(reason);
+                        throw new Error("");
+                    }
+                    throw new Error(reason.message);
+                } else if (TerminateReasons.includes(reason.message)) {
+                    throw new Error(reason.message);
+                }
+
+                let returnedValue = (reason as Stmt.ReturnValue).value;
+                let returnLocation = (reason as Stmt.ReturnValue).location;
+                const signatureKind = satisfiedSignature.signature.returns;
+
+                if (returnedValue && signatureKind === ValueKind.Void) {
+                    this.addError(new RuntimeError(RuntimeErrorDetail.ReturnWithValue, returnLocation));
+                }
+
+                if (!returnedValue && signatureKind !== ValueKind.Void) {
+                    this.addError(new RuntimeError(RuntimeErrorDetail.ReturnWithoutValue, returnLocation));
+                }
+
+                if (returnedValue) {
+                    const coercedValue = tryCoerce(returnedValue, signatureKind);
+                    if (coercedValue) {
+                        return coercedValue;
+                    }
+                }
+
+                if (returnedValue && signatureKind !== ValueKind.Dynamic && signatureKind !== returnedValue.kind) {
+                    this.addError(
+                        new TypeMismatch({
+                            message: `Unable to cast`,
+                            left: {
+                                type: signatureKind,
+                                location: returnLocation,
+                            },
+                            right: {
+                                type: returnedValue,
+                                location: returnLocation,
+                            },
+                            cast: true,
+                        })
+                    );
+                }
+
+                return returnedValue ?? BrsInvalid.Instance;
+            }
+        } else {
+            this.addError(generateArgumentMismatchError(callee, args, location));
+        }
     }
 
     /**
