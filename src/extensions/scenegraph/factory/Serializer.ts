@@ -23,15 +23,18 @@ import {
     StdlibArgument,
 } from "brs-engine";
 import { getNodeType, SGNodeFactory, createNodeByType } from "./NodeFactory";
-import { ContentNode, Node, SGNodeType, Task } from "../nodes";
+import { ContentNode, Node, SGNodeType } from "../nodes";
+import { ObservedField } from "../SGTypes";
 
 /**
  * Converts a BrsType value to its representation as a JavaScript type.
  * @param {BrsType} value Some BrsType value.
+ * @param {boolean} deep Whether to recursively convert nested structures. Defaults to true.
+ * @param {Node} host Optional host node for observing context.
  * @param {WeakSet<Node>} visitedNodes Optional set to track visited nodes for circular reference detection.
  * @return {any} The JavaScript representation of `x`.
  */
-export function jsValueOf(value: BrsType, deep: boolean = true, visitedNodes?: WeakSet<Node>): any {
+export function jsValueOf(value: BrsType, deep: boolean = true, host?: Node, visitedNodes?: WeakSet<Node>): any {
     if (value?.kind === undefined) {
         return undefined;
     } else if (isUnboxable(value)) {
@@ -55,11 +58,11 @@ export function jsValueOf(value: BrsType, deep: boolean = true, visitedNodes?: W
         case ValueKind.Interface:
         case ValueKind.Object:
             if (value instanceof RoArray || value instanceof RoList) {
-                return value.elements.map((el) => jsValueOf(el, deep, visitedNodes));
+                return value.elements.map((el) => jsValueOf(el, deep, host, visitedNodes));
             } else if (value instanceof RoByteArray) {
                 return value.elements;
             } else if (value instanceof Node) {
-                return fromSGNode(value, deep, visitedNodes);
+                return fromSGNode(value, deep, host, visitedNodes);
             } else if (value instanceof RoAssociativeArray) {
                 return fromAssociativeArray(value, deep);
             } else if (value instanceof BrsComponent) {
@@ -111,13 +114,15 @@ export function brsValueOf(value: any, cs?: boolean, nodeMap?: Map<string, Node>
 
 /**
  * Converts a RoAssociativeArray to a JavaScript object, converting each property to the corresponding JavaScript type.
- * @param associativeArray The RoAssociativeArray to convert.
+ * @param aa The RoAssociativeArray to convert.
+ * @param deep Whether to recursively convert nested structures. Defaults to true.
+ * @param host Optional host node for observing context.
  * @returns A JavaScript object with the converted properties.
  */
-export function fromAssociativeArray(associativeArray: RoAssociativeArray, deep: boolean = true): FlexObject {
+export function fromAssociativeArray(aa: RoAssociativeArray, deep: boolean = true, host?: Node): FlexObject {
     const result: FlexObject = {};
-    for (const [key, value] of associativeArray.elements) {
-        result[key] = jsValueOf(value, deep);
+    for (const [key, value] of aa.elements) {
+        result[key] = jsValueOf(value, deep, host);
     }
     return result;
 }
@@ -414,10 +419,11 @@ export function updateSGNode(obj: any, targetNode: Node, nodeMap?: Map<string, N
  * Converts a RoSGNode to a JavaScript object, converting each field to the corresponding JavaScript type.
  * @param node The RoSGNode to convert.
  * @param deep Whether to recursively convert child nodes. Defaults to true.
+ * @param host Optional host node for observing context.
  * @param visited Optional WeakSet to track visited nodes and prevent circular references.
  * @returns A JavaScript object with the converted fields.
  */
-export function fromSGNode(node: Node, deep: boolean = true, visited?: WeakSet<Node>): FlexObject {
+export function fromSGNode(node: Node, deep: boolean = true, host?: Node, visited?: WeakSet<Node>): FlexObject {
     visited ??= new WeakSet<Node>();
     if (visited.has(node)) {
         return {
@@ -429,7 +435,7 @@ export function fromSGNode(node: Node, deep: boolean = true, visited?: WeakSet<N
 
     const result: FlexObject = {};
     const fields = node.getNodeFields();
-    const observed: string[] = [];
+    const observed: ObservedField[] = [];
 
     result["_node_"] = `${getNodeType(node.nodeSubtype)}:${node.nodeSubtype}`;
     result["_address_"] = node.address;
@@ -441,14 +447,20 @@ export function fromSGNode(node: Node, deep: boolean = true, visited?: WeakSet<N
             if (isUnboxable(fieldValue)) {
                 fieldValue = fieldValue.unbox();
             }
-            if (node instanceof Task && field.isPortObserved(node)) {
-                observed.push(name);
+            if (host && field.isPortObserved(host)) {
+                const observers = field.getObserversWithPort(host);
+                const info = observers[0]?.eventParams.infoFields;
+                if (info) {
+                    observed.push({ name, info: jsValueOf(info) });
+                } else {
+                    observed.push({ name });
+                }
             }
             if (fieldValue instanceof Node) {
-                result[name] = fromSGNode(fieldValue, deep, visited);
+                result[name] = fromSGNode(fieldValue, deep, host, visited);
                 continue;
             }
-            result[name] = jsValueOf(fieldValue, deep, visited);
+            result[name] = jsValueOf(fieldValue, deep, host, visited);
         }
     }
     if (observed.length) {
@@ -458,7 +470,7 @@ export function fromSGNode(node: Node, deep: boolean = true, visited?: WeakSet<N
     if (deep && children.length > 0) {
         result["_children_"] = children.map((child: BrsType) => {
             if (child instanceof Node) {
-                return fromSGNode(child, deep, visited);
+                return fromSGNode(child, deep, host, visited);
             }
             return { _invalid_: null };
         });

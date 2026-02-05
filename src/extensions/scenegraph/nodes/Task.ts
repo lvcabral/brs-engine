@@ -194,25 +194,10 @@ export class Task extends Node {
                 buffer: this.taskBuffer.getBuffer(),
                 tmp: BrsDevice.getTmpVolume(),
                 cacheFS: BrsDevice.getCacheFS(),
-                m: fromAssociativeArray(this.m),
-                scene: sgRoot.scene ? fromSGNode(sgRoot.scene, false) : undefined,
+                m: fromAssociativeArray(this.m, true, this),
+                scene: sgRoot.scene ? fromSGNode(sgRoot.scene, false, this) : undefined,
                 render: sgRoot.getRenderThreadInfo()?.id,
             };
-            // Check of observed fields in `m.global`
-            const global = this.m.elements.get("global");
-            if (global instanceof Global) {
-                const fields = global.getNodeFields();
-                const observed: string[] = [];
-                for (const [name, field] of fields) {
-                    if (!field.isHidden() && field.isPortObserved(this)) {
-                        observed.push(name);
-                    }
-                }
-                if (observed.length && taskData.m) {
-                    taskData.m.global["_observed_"] = observed;
-                }
-            }
-            postMessage(`debug,[task] Posting TaskData #${taskData.id} to RUN: ${taskData.name}, ${functionName}`);
             postMessage(taskData);
             this.started = true;
         }
