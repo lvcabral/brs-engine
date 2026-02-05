@@ -97,6 +97,9 @@ export class RemoteNode extends Node implements BrsValue {
             `debug, [node:${sgRoot.threadId}] Created RemoteNode of subtype "${this.nodeSubtype}" with sync type "${this.syncType}"`
         );
     }
+    // Scene properties mocked for RemoteNode
+    ui: undefined;
+    dialog: undefined;
 
     /**
      * @override
@@ -133,11 +136,13 @@ export class RemoteNode extends Node implements BrsValue {
      * @param sync When true, synchronizes the field change to remote observers.
      */
     setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind, sync: boolean = true) {
-        postMessage(`debug, [node:${sgRoot.threadId}] RemoteNode.setValue() called for field "${index}"`);
+        postMessage(
+            `debug, [node:${sgRoot.threadId}] RemoteNode.setValue() called for field "${this.nodeSubtype}.${index}"`
+        );
         const fieldName = index.toLowerCase();
         super.setValue(index, value, alwaysNotify, kind);
         if (sync && this.changed) {
-            this.syncRemoteObservers(fieldName, "global");
+            this.syncRemoteObservers(fieldName, this.syncType);
             this.changed = false;
         }
     }

@@ -43,7 +43,6 @@ export class Scene extends Group {
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
 
-        this.setThreadSyncType("scene");
         this.owner = 0; // Scene node is always owned by render thread
 
         this.setResolution("HD");

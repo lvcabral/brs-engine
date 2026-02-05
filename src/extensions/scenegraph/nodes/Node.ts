@@ -85,8 +85,6 @@ export class Node extends RoSGNode implements BrsValue {
     protected address: string;
     /** Flags whether structural or field state changed since last render. */
     changed: boolean = false;
-    /** Thread domain used for cross-thread synchronization. */
-    private threadSyncType?: SyncType;
 
     /** Node bounds in local coordinates. */
     rectLocal: Rect = { x: 0, y: 0, width: 0, height: 0 };
@@ -1583,22 +1581,12 @@ export class Node extends RoSGNode implements BrsValue {
         postMessage(update);
     }
 
-    /** Sets the synchronization domain used for remote observer routing. */
-    protected setThreadSyncType(type: SyncType) {
-        this.threadSyncType = type;
-    }
-
-    /** Gets the synchronization domain used for remote observer routing. */
-    protected getThreadSyncType() {
-        return this.threadSyncType;
-    }
-
     /**
      * Synchronizes field observers back to the main thread when applicable.
      * @param key Field to synchronize.
      * @param type Sync domain: `scene` or `global`.
      */
-    protected syncRemoteObservers(key: string, type: "scene" | "global") {
+    protected syncRemoteObservers(key: string, type: SyncType) {
         const field = this.fields.get(key.toLowerCase());
         if (!field) {
             return;
