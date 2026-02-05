@@ -23,7 +23,6 @@ import { Node } from "./Node";
 import { Global } from "./Global";
 import type { Field, Scene } from "..";
 import { SGNodeType } from ".";
-import { RemoteNode } from "./RemoteNode";
 
 /**
  * SceneGraph `Task` node implementation responsible for executing BrightScript in a worker thread.
