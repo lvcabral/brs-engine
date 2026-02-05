@@ -13,14 +13,17 @@ import {
     TaskState,
     ThreadUpdate,
     SyncType,
+    RoArray,
+    toAssociativeArray,
 } from "brs-engine";
 import { sgRoot } from "../SGRoot";
 import { brsValueOf, fromAssociativeArray, fromSGNode, updateSGNode } from "../factory/Serializer";
-import { FieldKind, FieldModel, ObserverRequestPayload, isObserverRequestPayload } from "../SGTypes";
+import { FieldKind, FieldModel, MethodCallPayload, isMethodCallPayload } from "../SGTypes";
 import { Node } from "./Node";
 import { Global } from "./Global";
 import type { Field, Scene } from "..";
 import { SGNodeType } from ".";
+import { RemoteNode } from "./RemoteNode";
 
 /**
  * SceneGraph `Task` node implementation responsible for executing BrightScript in a worker thread.
@@ -165,9 +168,12 @@ export class Task extends Node {
         if (update.id < 0) {
             return;
         }
-        const value = node.getValue(update.field);
+        const value = node.get(new BrsString(update.key));
+        postMessage(
+            `debug,[task-sync] Task #${sgRoot.threadId} responding to field request for ${update.type}.${update.key} from thread ${update.id}`
+        );
         const deep = value instanceof Node;
-        this.sendThreadUpdate(update.id, "set", update.type, update.field, value, deep);
+        this.sendThreadUpdate(update.id, "set", update.type, update.key, value, deep);
     }
 
     private waitForFieldAck(fieldName: string, requestId: number, timeoutMs: number = 10000) {
@@ -187,7 +193,7 @@ export class Task extends Node {
             if (waitResult === "timed-out") {
                 break;
             }
-            this.processUpdateFromOtherThread();
+            this.processThreadUpdate();
         }
         postMessage(
             `warning,[task-sync] Task #${this.threadId} rendezvous ack timeout for task.${fieldName} (req=${requestId})`
@@ -230,7 +236,7 @@ export class Task extends Node {
             id: this.threadId,
             action: "set",
             type: "task",
-            field: "control",
+            key: "control",
             value: "stop",
         };
         postMessage(update);
@@ -246,7 +252,7 @@ export class Task extends Node {
         this.active = true;
     }
 
-    requestFieldValue(type: "global" | "scene" | "task", fieldName: string, timeoutMs: number = 10000): boolean {
+    requestFieldValue(type: SyncType, fieldName: string, timeoutMs: number = 10000): boolean {
         if (!this.taskBuffer || this.threadId < 0) {
             return false;
         }
@@ -254,8 +260,8 @@ export class Task extends Node {
         const deadline = Date.now() + timeoutMs;
 
         while (true) {
-            const update = this.processUpdateFromOtherThread();
-            if (update?.action === "set" && update.type === type && update.field === fieldName) {
+            const update = this.processThreadUpdate();
+            if (update?.action === "set" && update.type === type && update.key === fieldName) {
                 return true;
             }
             const remaining = deadline - Date.now();
@@ -268,9 +274,42 @@ export class Task extends Node {
             }
         }
         postMessage(
-            `warning,[task:${sgRoot.threadId}] Rendezvous timeout for ${type}.${fieldName} on thread ${this.threadId}`
+            `warning,[task:${sgRoot.threadId}] Rendezvous timeout for field ${type}.${fieldName} on thread ${this.threadId}`
         );
         return false;
+    }
+
+    requestMethodCall(
+        type: SyncType,
+        methodName: string,
+        payload?: MethodCallPayload,
+        timeoutMs: number = 10000
+    ): BrsType | undefined {
+        if (!this.taskBuffer || this.threadId < 0) {
+            return undefined;
+        }
+        const value = payload ? toAssociativeArray(payload) : BrsInvalid.Instance;
+        this.sendThreadUpdate(this.threadId, "call", type, methodName, value, false);
+        const deadline = Date.now() + timeoutMs;
+
+        while (true) {
+            const update = this.processThreadUpdate();
+            if (update?.action === "resp" && update.type === type && update.key === methodName) {
+                return brsValueOf(update.value);
+            }
+            const remaining = deadline - Date.now();
+            if (remaining <= 0) {
+                break;
+            }
+            const waitResult = this.taskBuffer.waitVersion(0, remaining);
+            if (waitResult === "timed-out") {
+                break;
+            }
+        }
+        postMessage(
+            `warning,[task:${sgRoot.threadId}] Rendezvous timeout for method ${type}.${methodName}() on thread ${this.threadId}`
+        );
+        return undefined;
     }
 
     /**
@@ -320,7 +359,7 @@ export class Task extends Node {
      * @returns True when updates were applied, otherwise false.
      */
     updateTask() {
-        const updates = this.processUpdateFromOtherThread();
+        const updates = this.processThreadUpdate();
         const state = this.getValueJS("state") as string;
         if (!this.thread || state !== "run") {
             return updates !== undefined;
@@ -339,7 +378,7 @@ export class Task extends Node {
      * Applies pending updates stored in the shared buffer that originated from another thread.
      * @returns The ThreadUpdate that was applied, if any.
      */
-    private processUpdateFromOtherThread(): ThreadUpdate | undefined {
+    private processThreadUpdate(): ThreadUpdate | undefined {
         const currentVersion = this.taskBuffer?.getVersion() ?? -1;
         // Only process updates when the buffer version is exactly 1,
         // which indicates a new update is available from the other thread.
@@ -360,16 +399,20 @@ export class Task extends Node {
             if (!node) {
                 return undefined;
             }
-            if (update.action === "obs") {
-                this.handleObserverRequest(node, update);
-                return update;
-            }
             if (update.action === "get") {
                 this.respondToFieldRequest(node, update);
                 return undefined;
             }
-            // Apply update
-            const oldValue = node.getValue(update.field);
+            if (update.action === "call") {
+                this.handleMethodCallRequest(node, update);
+                return undefined;
+            }
+            if (update.action === "resp") {
+                // Method call response - simply return it for processing
+                return update;
+            }
+            // Apply Field update
+            const oldValue = node.getValue(update.key);
             let value: BrsType;
             if (oldValue instanceof Node && update.value?._node_ && oldValue.getAddress() === update.value._address_) {
                 // Update existing node to preserve references
@@ -377,15 +420,15 @@ export class Task extends Node {
             } else {
                 value = brsValueOf(update.value);
             }
-            node.markFieldFresh(update.field);
-            node.setValue(update.field, value, false, undefined, false);
+            node.markFieldFresh(update.key);
+            node.setValue(update.key, value, false, undefined, false);
             // Send acknowledgement back to the other thread if needed
             if (!this.thread && update.requestId !== undefined) {
                 this.sendThreadUpdate(
                     update.id,
                     "ack",
                     update.type,
-                    update.field,
+                    update.key,
                     BrsInvalid.Instance,
                     false,
                     update.requestId
@@ -401,7 +444,7 @@ export class Task extends Node {
      * @param type Domain identifier (`global`, `task`, or `scene`).
      * @returns Target node, if available.
      */
-    private getNodeToUpdate(type: SyncType): this | Global | Scene | undefined {
+    private getNodeToUpdate(type: SyncType): this | Global | RemoteNode | Scene | undefined {
         if (type === "global") {
             return sgRoot.mGlobal;
         } else if (type === "scene") {
@@ -410,34 +453,42 @@ export class Task extends Node {
             return this;
         }
     }
+
     /**
-     * Handles observer registration requests from task threads.
-     * @param target Target node to register the observer on.
-     * @param update Thread update data containing observer request details.
+     * Handles method call requests received via thread updates.
+     * @param target Target node on which the method is called.
+     * @param update Thread update containing method call details.
      */
-    private handleObserverRequest(target: Node, update: ThreadUpdate) {
-        const payload = update.value as ObserverRequestPayload;
-        if (!isObserverRequestPayload(payload) || !sgRoot.interpreter) {
+    private handleMethodCallRequest(target: Node, update: ThreadUpdate) {
+        const payload = update.value;
+        if (!isMethodCallPayload(payload)) {
+            postMessage(
+                `warning,[task:${sgRoot.threadId}] Invalid method call payload from Task thread: ${update.type}.${update.key}`
+            );
             return;
         }
-        const hostNode = this.resolveHostNode(payload.host);
+        const hostNode = this.resolveHostNode(update.value.host);
         if (!hostNode) {
             postMessage(
-                `warning,[task:${sgRoot.threadId}] Unable to resolve host node for observer request: ${update.type}.${update.field} '${payload.functionName}'`
+                `warning,[task:${sgRoot.threadId}] Unable to resolve host node '${payload.host}' for method call request: ${update.type}.${update.key}`
             );
+            return;
+        }
+        const method = target.getMethod(update.key);
+        if (!method || !sgRoot.interpreter) {
             return;
         }
         sgRoot.interpreter.inSubEnv((subInterpreter: Interpreter) => {
             subInterpreter.environment.hostNode = hostNode;
             subInterpreter.environment.setM(hostNode.m);
             subInterpreter.environment.setRootM(hostNode.m);
-            target.addObserver(
-                subInterpreter,
-                payload.scope,
-                new BrsString(update.field),
-                new BrsString(payload.functionName),
-                brsValueOf(payload.infoFields)
-            );
+            const value = brsValueOf(payload.args);
+            let args: BrsType[] = [];
+            if (value instanceof RoArray) {
+                args = value.getElements();
+            }
+            const result = method.call(subInterpreter, ...args);
+            this.sendThreadUpdate(update.id, "resp", update.type, update.key, result, false);
             return BrsInvalid.Instance;
         });
     }
