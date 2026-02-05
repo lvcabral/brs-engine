@@ -27,14 +27,27 @@ export class BrsComponent {
         return this.componentName;
     }
 
+    /**
+     * Determines if this component implements the specified interface.
+     * @param interfaceName the name of the interface to check.
+     * @returns true if the component implements the interface, false otherwise.
+     */
     hasInterface(interfaceName: string) {
         return this.interfaces.has(interfaceName.toLowerCase());
     }
 
+    /**
+     * Sets a filter to limit method lookups to a specific interface.
+     * @param interfaceName the name of the interface to filter by.
+     */
     setFilter(interfaceName: string) {
         this.filter = interfaceName.toLowerCase();
     }
 
+    /**
+     * Registers methods for the specified interfaces.
+     * @param interfaces a record mapping interface names to arrays of Callables.
+     */
     protected registerMethods(interfaces: Record<string, Callable[]>) {
         for (const [interfaceName, methods] of Object.entries(interfaces)) {
             const methodNames = new Set(
@@ -46,13 +59,34 @@ export class BrsComponent {
         }
     }
 
-    /** Given a list of methods, appends all of them to the component. */
+    /**
+     * Given a list of methods, appends all of them to the component.
+     * @param methods List of Callables to add
+     */
     appendMethods(methods: Callable[]) {
         for (const m of methods) {
             this.methods.set((m.name || "").toLowerCase(), m);
         }
     }
 
+    /**
+     * Given a list of methods, overrides existing methods in the component.
+     * @param methods List of Callables to override
+     */
+    overrideMethods(methods: Callable[]) {
+        for (const m of methods) {
+            if (!m.name || !this.methods.has(m.name.toLowerCase())) {
+                continue;
+            }
+            this.methods.set(m.name.toLowerCase(), m);
+        }
+    }
+
+    /**
+     * Looks up a method by name, respecting any active interface filter.
+     * @param index Method name to look up
+     * @returns Callable if found, undefined otherwise
+     */
     getMethod(index: string): Callable | undefined {
         const method = index.toLowerCase();
         if (this.filter !== "") {
@@ -62,15 +96,27 @@ export class BrsComponent {
         }
         return this.methods.get(method);
     }
+
+    /**
+     * Returns the current reference count for this component.
+     * @returns the number of active references to this component.
+     */
     getReferenceCount() {
         return this.references;
     }
 
+    /**
+     * Sets whether this component is being returned from a function.
+     * @param beingReturned true if the component is being returned, false otherwise.
+     */
     setReturn(beingReturned: boolean) {
         // prevent dispose when returning object created inside a function
         this.returnFlag = beingReturned;
     }
 
+    /**
+     * Increments the reference count for this component.
+     */
     addReference() {
         this.references++;
         if (this.references === 1) {
@@ -79,6 +125,11 @@ export class BrsComponent {
         }
     }
 
+    /**
+     * Decrements the reference count for this component.
+     * Disposes the component if the reference count reaches zero and it's not being returned.
+     * @returns the updated reference count.
+     */
     removeReference() {
         this.references--;
         if (this.references === 0 && !this.returnFlag) {
@@ -91,6 +142,9 @@ export class BrsComponent {
         return this.references;
     }
 
+    /**
+     * Disposes of this component, releasing any resources held.
+     */
     dispose() {
         // To be overridden by subclasses
     }
