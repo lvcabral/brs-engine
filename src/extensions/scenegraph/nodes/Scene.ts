@@ -63,19 +63,6 @@ export class Scene extends Group {
         }
     }
 
-    get(index: BrsType): BrsType {
-        if (sgRoot.inTaskThread() && isBrsString(index)) {
-            const fieldName = index.toString().toLowerCase();
-            if (this.owner !== sgRoot.threadId && this.fields.has(fieldName)) {
-                const task = sgRoot.getCurrentThreadTask();
-                if (task?.active && !this.consumeFreshField(fieldName)) {
-                    task.requestFieldValue("scene", fieldName);
-                }
-            }
-        }
-        return super.get(index);
-    }
-
     setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind, sync: boolean = true) {
         if (this._initState === "none" && !sgRoot.inTaskThread()) {
             this._preInitSet.set(index, value);
@@ -98,12 +85,6 @@ export class Scene extends Group {
             }
         }
         super.setValue(index, value, alwaysNotify, kind);
-        if (sync && this.changed) {
-            this.syncRemoteObservers(fieldName, "scene");
-            if (sgRoot.inTaskThread()) {
-                this.changed = false;
-            }
-        }
     }
 
     protected cloneNode(_isDeepCopy: boolean, _interpreter?: Interpreter): BrsType {
