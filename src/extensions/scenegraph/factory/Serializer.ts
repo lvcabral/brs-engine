@@ -120,7 +120,12 @@ export function brsValueOf(value: any, cs?: boolean, nodeMap?: Map<string, Node>
  * @param visitedNodes Optional set to track visited nodes for circular reference detection.
  * @returns A JavaScript object with the converted properties.
  */
-export function fromAssociativeArray(aa: RoAssociativeArray, deep: boolean = true, host?: Node, visitedNodes?: WeakSet<Node>): FlexObject {
+export function fromAssociativeArray(
+    aa: RoAssociativeArray,
+    deep: boolean = true,
+    host?: Node,
+    visitedNodes?: WeakSet<Node>
+): FlexObject {
     const result: FlexObject = {};
     for (const [key, value] of aa.elements) {
         result[key] = jsValueOf(value, deep, host, visitedNodes);
