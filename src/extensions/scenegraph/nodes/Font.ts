@@ -33,7 +33,7 @@ export class Font extends Node {
     constructor(members: AAMember[] = [], readonly name: string = SGNodeType.Font) {
         super([], name);
         this.setExtendsType(name, SGNodeType.Node);
-        this.resolution = sgRoot.scene?.ui.resolution ?? "HD";
+        this.resolution = sgRoot.scene?.ui?.resolution ?? "HD";
         this.defaultSize = this.resolution === "HD" ? 24 : 36;
 
         this.registerDefaultFields(this.defaultFields);

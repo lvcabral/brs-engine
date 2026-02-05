@@ -6,7 +6,6 @@ export class Global extends Node {
     constructor(members: AAMember[] = [], readonly name: string = SGNodeType.Node) {
         super([], name);
         this.registerInitializedFields(members);
-        this.setThreadSyncType("global");
         this.owner = 0; // Global node is always owned by render thread
     }
 

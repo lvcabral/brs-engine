@@ -11,14 +11,9 @@ import { SGNodeType } from "./nodes";
 import { RoSGNode } from "./components/RoSGNode";
 import { RemoteNode } from "./nodes/RemoteNode";
 import { Global } from "./nodes/Global";
-import { Scene } from "./nodes/Scene";
-import { Timer } from "./nodes/Timer";
-import { AnimationBase } from "./nodes/AnimationBase";
-import { Audio } from "./nodes/Audio";
 import { SoundEffect } from "./nodes/SoundEffect";
-import { Video } from "./nodes/Video";
-import { Task } from "./nodes/Task";
 import { ThreadInfo } from "./SGTypes";
+import type { AnimationBase, Audio, Dialog, Scene, StandardDialog, Task, Timer, Video } from "./nodes";
 
 /**
  * A singleton object that holds the Node that represents the m.global, the root Scene,
@@ -30,7 +25,7 @@ export class SGRoot {
     private _interpreter: Interpreter | undefined;
     private _mGlobal: Global | RemoteNode | undefined;
     private _nodeDefMap: Map<string, ComponentDefinition>;
-    private _scene?: Scene;
+    private _scene?: Scene | RemoteNode;
     private _focused?: RoSGNode;
     private _threadId: number;
     private _resolution: string;
@@ -56,7 +51,7 @@ export class SGRoot {
         return this._nodeDefMap;
     }
 
-    get scene(): Scene | undefined {
+    get scene(): Scene | RemoteNode | undefined {
         return this._scene;
     }
 
@@ -168,9 +163,21 @@ export class SGRoot {
      * Sets the root Scene node.
      * @param scene Scene instance to set as root
      */
-    setScene(scene: Scene) {
+    setScene(scene: Scene | RemoteNode) {
         this._scene = scene;
-        scene.setResolution(this._resolution);
+        if (scene?.ui) {
+            scene.setResolution(this._resolution);
+        }
+    }
+
+    /**
+     * Removes the dialog if the current one.
+     * @param dialog Dialog instance to set
+     */
+    removeDialog(dialog: Dialog | StandardDialog) {
+        if (this._scene?.dialog === dialog) {
+            this._scene.dialog = undefined;
+        }
     }
 
     /**

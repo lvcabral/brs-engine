@@ -77,6 +77,7 @@ import {
     FloatFieldInterpolator,
     ColorFieldInterpolator,
     Vector2DFieldInterpolator,
+    RemoteNode,
 } from "../nodes";
 import type { Field } from "../nodes/Field";
 import { ComponentDefinition, ComponentNode } from "../parser/ComponentDefinition";
@@ -482,19 +483,19 @@ export function initializeTask(interpreter: Interpreter, taskData: TaskData) {
         // Add children and fields starting from the "basemost" component of the tree.
         while (typeDef) {
             interpreter.inSubEnv((subInterpreter: Interpreter) => {
-                addChildren(subInterpreter, node!, typeDef!);
-                addFields(subInterpreter, node!, typeDef!);
+                addChildren(subInterpreter, node, typeDef!);
+                addFields(subInterpreter, node, typeDef!);
                 return BrsInvalid.Instance;
             }, currentEnv);
 
             interpreter.inSubEnv((subInterpreter: Interpreter) => {
                 subInterpreter.environment.hostNode = node;
 
-                mPointer.set(new BrsString("top"), node!);
+                mPointer.set(new BrsString("top"), node);
                 mPointer.set(new BrsString("global"), sgRoot.mGlobal);
                 subInterpreter.environment.setM(mPointer);
                 subInterpreter.environment.setRootM(mPointer);
-                node!.m = mPointer;
+                node.m = mPointer;
                 return BrsInvalid.Instance;
             }, currentEnv);
 
@@ -522,17 +523,9 @@ function loadTaskData(interpreter: Interpreter, node: Node, taskData: TaskData) 
     if (taskData.scene?.["_node_"]) {
         const nodeInfo = getSerializedNodeInfo(taskData.scene);
         const sceneName = nodeInfo?.subtype || SGNodeType.Scene;
-        const scene = createSceneByType(interpreter, sceneName);
-        if (scene instanceof Scene) {
-            sgRoot.setScene(scene);
-            restoreNode(interpreter, taskData.scene, scene);
-        } else {
-            BrsDevice.stderr.write(
-                `warning,Warning: Failed to create Scene of type ${sceneName} for Task ${taskData.name} (${
-                    taskData.id
-                }): ${interpreter.formatLocation()}`
-            );
-        }
+        const scene = new RemoteNode(sceneName, "scene");
+        sgRoot.setScene(scene);
+        restoreNode(interpreter, taskData.scene, scene);
     }
     let port: RoMessagePort | undefined;
     if (taskData.m) {
@@ -591,7 +584,7 @@ export function updateTypeDefHierarchy(typeDef: ComponentDefinition | undefined)
  * @param node Node to restore fields into
  * @param port Optional message port for field observers
  */
-function restoreNode(interpreter: Interpreter, source: any, node: Node, port?: RoMessagePort) {
+function restoreNode(interpreter: Interpreter, source: any, node: Node | RemoteNode, port?: RoMessagePort) {
     const observedFields = source["_observed_"];
     node.setOwner(source["_owner_"] ?? sgRoot.threadId);
     node.setAddress(source["_address_"] ?? node.getAddress());
