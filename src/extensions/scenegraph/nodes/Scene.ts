@@ -11,7 +11,6 @@ import {
     IfDraw2D,
     RuntimeError,
     DebugMode,
-    isBrsString,
 } from "brs-engine";
 import { toAssociativeArray } from "../factory/Serializer";
 import { sgRoot } from "../SGRoot";
