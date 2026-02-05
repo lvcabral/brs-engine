@@ -13,10 +13,8 @@ import {
     Int32,
     RoMessagePort,
     BrsInvalid,
-    BrsDevice,
-    toAssociativeArray,
 } from "brs-engine";
-import { FieldKind, ObserverScope } from "../SGTypes";
+import { FieldKind } from "../SGTypes";
 import { Node } from "../nodes/Node";
 import { sgRoot } from "../SGRoot";
 import { SGNodeType } from ".";
