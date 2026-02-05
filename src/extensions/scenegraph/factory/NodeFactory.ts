@@ -83,7 +83,7 @@ import { ComponentDefinition, ComponentNode } from "../parser/ComponentDefinitio
 import { brsValueOf, getSerializedNodeInfo } from "./Serializer";
 import { sgRoot } from "../SGRoot";
 import { convertHexColor, convertLong, convertNumber } from "../SGUtil";
-import { FieldAliasTarget, FieldKind } from "../SGTypes";
+import { FieldAliasTarget, FieldKind, ObservedField } from "../SGTypes";
 
 /**
  * Checks if a given string value is a valid SGNodeType.
@@ -530,9 +530,6 @@ function loadTaskData(interpreter: Interpreter, node: Node, taskData: TaskData) 
             );
         }
     }
-    if (taskData.m?.global) {
-        restoreNode(interpreter, taskData.m.global, sgRoot.mGlobal);
-    }
     if (node instanceof Task) {
         sgRoot.setThread(0, false, taskData.render);
         node.threadId = taskData.id;
@@ -553,6 +550,9 @@ function loadTaskData(interpreter: Interpreter, node: Node, taskData: TaskData) 
             }
             node.m.set(new BrsString(key), brsValue);
         }
+    }
+    if (taskData.m?.global) {
+        restoreNode(interpreter, taskData.m.global, sgRoot.mGlobal, port);
     }
     if (taskData.m?.top) {
         restoreNode(interpreter, taskData.m.top, node, port);
@@ -595,7 +595,7 @@ export function updateTypeDefHierarchy(typeDef: ComponentDefinition | undefined)
  * @param port Optional message port for field observers
  */
 function restoreNode(interpreter: Interpreter, source: any, node: Node, port?: RoMessagePort) {
-    const observed = source["_observed_"];
+    const observedFields = source["_observed_"];
     node.owner = source["_owner_"] ?? sgRoot.threadId;
     for (let [key, value] of Object.entries(source)) {
         if (key.startsWith("_") && key.endsWith("_") && key.length > 2) {
@@ -603,8 +603,12 @@ function restoreNode(interpreter: Interpreter, source: any, node: Node, port?: R
             continue;
         }
         node.setValueSilent(key, brsValueOf(value));
-        if (port && observed?.includes(key)) {
-            node.addObserver(interpreter, "unscoped", new BrsString(key), port);
+        if (port && Array.isArray(observedFields)) {
+            const observed = observedFields.find((field: ObservedField) => field.name === key);
+            if (observed) {
+                const infoFields = observed.info ? brsValueOf(observed.info) : undefined;
+                node.addObserver(interpreter, "unscoped", new BrsString(key), port, infoFields);
+            }
         }
     }
 }

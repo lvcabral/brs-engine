@@ -792,25 +792,28 @@ export class Node extends RoSGNode implements BrsValue {
         scope: "permanent" | "scoped" | "unscoped",
         fieldName: BrsString,
         funcOrPort: BrsString | RoMessagePort,
-        infoFields?: RoArray
+        infoFields?: BrsType
     ) {
         let result = BrsBoolean.False;
         const name = fieldName.getValue();
         const field = this.fields.get(name.toLowerCase());
         if (field instanceof Field) {
+            const host = interpreter.environment.hostNode;
             const alias = this.aliases.get(name.toLowerCase());
             const obsFieldName = new BrsString(alias?.targets[0]?.fieldName ?? field.getName());
             const infoArray = infoFields instanceof RoArray ? infoFields : undefined;
             let observer: Callable | RoMessagePort | BrsInvalid = BrsInvalid.Instance;
-            if (!interpreter.environment.hostNode) {
-                const location = interpreter.formatLocation();
-                BrsDevice.stderr.write(
-                    `warning,BRIGHTSCRIPT: ERROR: roSGNode.ObserveField: "${this.nodeSubtype}.${name}" no active host node: ${location}`
-                );
-            } else if (funcOrPort instanceof BrsString) {
+            if (isBrsString(funcOrPort)) {
+                if (!(host instanceof Node)) {
+                    const location = interpreter.formatLocation();
+                    const target = `"${this.nodeSubtype}.${name}"`;
+                    BrsDevice.stderr.write(
+                        `warning,BRIGHTSCRIPT: ERROR: roSGNode.ObserveField: ${target} no active host node: ${location}`
+                    );
+                    return result;
+                }
                 observer = interpreter.getCallableFunction(funcOrPort.getValue());
-            } else if (funcOrPort instanceof RoMessagePort) {
-                const host = interpreter.environment.hostNode as Node;
+            } else if (funcOrPort instanceof RoMessagePort && host instanceof Node) {
                 funcOrPort.registerCallback(host.nodeSubtype, host.getNewEvents.bind(host));
                 observer = funcOrPort;
             }

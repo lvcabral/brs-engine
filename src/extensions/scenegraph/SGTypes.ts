@@ -18,7 +18,7 @@ export interface BrsCallback {
     interpreter: Interpreter;
     environment: Environment;
     hostNode: Node;
-    callable: Callable | RoMessagePort;
+    observer: Callable | RoMessagePort;
     eventParams: {
         fieldName: BrsString;
         node: Node;
@@ -224,17 +224,17 @@ export function isFont(value: BrsType): value is FontLike {
     );
 }
 
-type TaskLike = Node & { threadId: number };
+// Definition of Task-like type to avoid circular dependency
+type TaskLike = Node & { threadId: number; active: boolean; started: boolean };
 
-/**
- * Gets the task thread ID from a Node if it is a Task.
- * @param node Node to extract task thread ID from
- * @returns Task thread ID number or undefined if not a Task node
- */
-export function getTaskThreadId(node: Node): number | undefined {
-    if (!(node instanceof Node) || !("threadId" in node)) {
-        return undefined;
-    }
-    const maybeTask = node as Partial<TaskLike>;
-    return typeof maybeTask.threadId === "number" ? maybeTask.threadId : undefined;
+export function isTaskLike(value: any): value is TaskLike {
+    return (
+        value instanceof Node &&
+        typeof (value as TaskLike).threadId === "number" &&
+        typeof (value as TaskLike).active === "boolean" &&
+        typeof (value as TaskLike).started === "boolean"
+    );
 }
+
+/** Represents an observed field with optional info fields. */
+export type ObservedField = { name: string; info?: string[] };
