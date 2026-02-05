@@ -135,7 +135,7 @@ export class ContentNode extends Node {
         this.setExtendsType(name, SGNodeType.Node);
 
         this.registerDefaultFields(this.defaultFields);
-        this.appendMethods([this.count, this.keys, this.items, this.hasField]);
+        this.overrideMethods([this.count, this.keys, this.items, this.hasField]);
     }
 
     private getVisibleFields() {

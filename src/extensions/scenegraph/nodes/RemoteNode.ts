@@ -20,8 +20,7 @@ import { sgRoot } from "../SGRoot";
 import { SGNodeType } from ".";
 
 /**
- * Base implementation for a SceneGraph node used by custom Roku components.
- * Handles BrightScript-facing field management, child lists, focus, observers, and rendering plumbing.
+ * Base implementation for a SceneGraph node that is used in task threads to perform remote field and method requests.
  */
 export class RemoteNode extends Node implements BrsValue {
     /**
@@ -32,8 +31,8 @@ export class RemoteNode extends Node implements BrsValue {
     constructor(readonly nodeSubtype: string = SGNodeType.Node, readonly syncType: SyncType) {
         super([], nodeSubtype);
         this.owner = 0; // Remote node is always owned by render thread
-        // Re-register overridden methods to ensure they are used instead of parent's
-        this.appendMethods([this.hasField, this.observeField, this.getChildCount]);
+        const methods = [this.hasField, this.observeField, this.getChildCount];
+        this.overrideMethods(methods);
         postMessage(
             `debug, [node:${sgRoot.threadId}] Created RemoteNode of subtype "${this.nodeSubtype}" with sync type "${this.syncType}"`
         );
@@ -83,9 +82,35 @@ export class RemoteNode extends Node implements BrsValue {
         }
     }
 
-    public setOwner(_threadId: number): void {
+    /**
+     * @override
+     * Remote node owner cannot be changed.
+     */
+    setOwner(_threadId: number): void {
         // Remote node owner cannot be changed
         return;
+    }
+
+    /**
+     * Helper to perform a remote method call via the current task.
+     * @param interpreter Current BrightScript interpreter.
+     * @param methodName Name of the method to call.
+     * @param args Arguments to pass to the remote method.
+     * @returns Result of the remote method call, or undefined if not available.
+     */
+    private remoteMethodCall(interpreter: Interpreter, methodName: string, args?: BrsType[]): BrsType | undefined {
+        let result: BrsType | undefined;
+        const task = sgRoot.getCurrentThreadTask();
+        if (task?.active) {
+            let host = this.address;
+            const hostNode = interpreter.environment.hostNode;
+            if (hostNode instanceof Node) {
+                host = hostNode.getAddress();
+            }
+            const payload = args ? { host, args } : { host };
+            result = task.requestMethodCall(this.syncType, methodName, payload);
+        }
+        return result;
     }
 
     /**
@@ -98,16 +123,7 @@ export class RemoteNode extends Node implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (interpreter: Interpreter, fieldName: BrsString) => {
-            let result: BrsType | undefined;
-            const task = sgRoot.getCurrentThreadTask();
-            if (task?.active) {
-                let host = this.address;
-                const hostNode = interpreter.environment.hostNode;
-                if (hostNode instanceof Node) {
-                    host = hostNode.getAddress();
-                }
-                result = task.requestMethodCall(this.syncType, "hasField", { host, args: [fieldName] });
-            }
+            const result = this.remoteMethodCall(interpreter, "hasField", [fieldName]);
             return result ?? BrsBoolean.False;
         },
     });
@@ -128,17 +144,7 @@ export class RemoteNode extends Node implements BrsValue {
                 returns: ValueKind.Boolean,
             },
             impl: (interpreter: Interpreter, fieldName: BrsString, funcName: BrsString, infoFields: RoArray) => {
-                let result: BrsType | undefined;
-                const task = sgRoot.getCurrentThreadTask();
-                if (task?.active) {
-                    let host = this.address;
-                    const hostNode = interpreter.environment.hostNode;
-                    if (hostNode instanceof Node) {
-                        host = hostNode.getAddress();
-                    }
-                    const args = [fieldName, funcName, infoFields];
-                    result = task.requestMethodCall(this.syncType, "observeField", { host, args });
-                }
+                const result = this.remoteMethodCall(interpreter, "observeField", [fieldName, funcName, infoFields]);
                 return result ?? BrsBoolean.False;
             },
         },
@@ -152,17 +158,7 @@ export class RemoteNode extends Node implements BrsValue {
                 returns: ValueKind.Boolean,
             },
             impl: (interpreter: Interpreter, fieldName: BrsString, port: RoMessagePort, infoFields: RoArray) => {
-                let result: BrsType | undefined;
-                const task = sgRoot.getCurrentThreadTask();
-                if (task?.active) {
-                    let host = this.address;
-                    const hostNode = interpreter.environment.hostNode;
-                    if (hostNode instanceof Node) {
-                        host = hostNode.getAddress();
-                    }
-                    const args = [fieldName, port, infoFields];
-                    result = task.requestMethodCall(this.syncType, "observeField", { host, args });
-                }
+                const result = this.remoteMethodCall(interpreter, "observeField", [fieldName, port, infoFields]);
                 return result ?? BrsBoolean.False;
             },
         }
@@ -179,16 +175,7 @@ export class RemoteNode extends Node implements BrsValue {
             returns: ValueKind.Int32,
         },
         impl: (interpreter: Interpreter) => {
-            let result: BrsType | undefined;
-            const task = sgRoot.getCurrentThreadTask();
-            if (task?.active) {
-                let host = this.address;
-                const hostNode = interpreter.environment.hostNode;
-                if (hostNode instanceof Node) {
-                    host = hostNode.getAddress();
-                }
-                result = task.requestMethodCall(this.syncType, "getChildCount", { host });
-            }
+            const result = this.remoteMethodCall(interpreter, "getChildCount");
             return result ?? new Int32(0);
         },
     });
