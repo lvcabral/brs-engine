@@ -471,6 +471,14 @@ export function initializeTask(interpreter: Interpreter, taskData: TaskData) {
             currentEnv.hostNode = node;
         }
 
+        if (node instanceof Task) {
+            sgRoot.setThread(0, false, taskData.render);
+            node.threadId = taskData.id;
+            node.thread = true;
+            sgRoot.addTask(node, taskData.id, true);
+            interpreter.environment.hostNode = node;
+        }
+
         // Add children and fields starting from the "basemost" component of the tree.
         while (typeDef) {
             interpreter.inSubEnv((subInterpreter: Interpreter) => {
@@ -525,13 +533,6 @@ function loadTaskData(interpreter: Interpreter, node: Node, taskData: TaskData) 
                 }): ${interpreter.formatLocation()}`
             );
         }
-    }
-    if (node instanceof Task) {
-        sgRoot.setThread(0, false, taskData.render);
-        node.threadId = taskData.id;
-        node.thread = true;
-        sgRoot.addTask(node, taskData.id, true);
-        interpreter.environment.hostNode = node;
     }
     let port: RoMessagePort | undefined;
     if (taskData.m) {
