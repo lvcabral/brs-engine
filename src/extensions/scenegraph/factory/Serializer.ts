@@ -64,7 +64,7 @@ export function jsValueOf(value: BrsType, deep: boolean = true, host?: Node, vis
             } else if (value instanceof Node) {
                 return fromSGNode(value, deep, host, visitedNodes);
             } else if (value instanceof RoAssociativeArray) {
-                return fromAssociativeArray(value, deep);
+                return fromAssociativeArray(value, deep, host, visitedNodes);
             } else if (value instanceof BrsComponent) {
                 return { _component_: value.getComponentName() };
             } else if (value instanceof BrsInterface) {
@@ -117,12 +117,13 @@ export function brsValueOf(value: any, cs?: boolean, nodeMap?: Map<string, Node>
  * @param aa The RoAssociativeArray to convert.
  * @param deep Whether to recursively convert nested structures. Defaults to true.
  * @param host Optional host node for observing context.
+ * @param visitedNodes Optional set to track visited nodes for circular reference detection.
  * @returns A JavaScript object with the converted properties.
  */
-export function fromAssociativeArray(aa: RoAssociativeArray, deep: boolean = true, host?: Node): FlexObject {
+export function fromAssociativeArray(aa: RoAssociativeArray, deep: boolean = true, host?: Node, visitedNodes?: WeakSet<Node>): FlexObject {
     const result: FlexObject = {};
     for (const [key, value] of aa.elements) {
-        result[key] = jsValueOf(value, deep, host);
+        result[key] = jsValueOf(value, deep, host, visitedNodes);
     }
     return result;
 }
