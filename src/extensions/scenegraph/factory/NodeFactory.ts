@@ -374,8 +374,6 @@ export function initializeNode(interpreter: Interpreter, type: string, typeDef?:
         // Add children, fields and call each init method starting from the
         // "basemost" component of the tree.
         while (typeDef) {
-            let init: BrsType;
-
             interpreter.inSubEnv((subInterpreter) => {
                 if (node instanceof Scene) {
                     node.setInitState("initializing");
@@ -390,9 +388,8 @@ export function initializeNode(interpreter: Interpreter, type: string, typeDef?:
                 node.renderNode(interpreter, [0, 0], 0, 1);
             }
 
-            interpreter.inSubEnv((subInterpreter: Interpreter) => {
-                init = subInterpreter.getCallableFunction("init");
-                return BrsInvalid.Instance;
+            const init = interpreter.inSubEnv((subInterpreter: Interpreter) => {
+                return subInterpreter.getCallableFunction("init");
             }, typeDef.environment);
 
             interpreter.inSubEnv((subInterpreter: Interpreter) => {

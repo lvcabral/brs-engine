@@ -335,8 +335,9 @@ export class Node extends RoSGNode implements BrsValue {
      * @param value New BrightScript value.
      * @param alwaysNotify When provided, controls observer notification behavior for new fields.
      * @param kind Optional explicit field kind used when creating new dynamic fields.
+     * @param sync Optional flag indicating whether to synchronize this field change with other threads.
      */
-    setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind) {
+    setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind, _sync?: boolean) {
         const mapKey = index.toLowerCase();
         const fieldType = kind ?? FieldKind.fromBrsType(value);
         let field = this.fields.get(mapKey);

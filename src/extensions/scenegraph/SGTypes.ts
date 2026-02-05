@@ -249,10 +249,16 @@ export type ThreadInfo = {
 export type MethodCallPayload = {
     host: string;
     args?: any[];
+    location?: any;
 };
 
 export function isMethodCallPayload(obj: any): obj is MethodCallPayload {
-    return obj && typeof obj.host === "string" && (obj.args === undefined || Array.isArray(obj.args));
+    return (
+        obj &&
+        typeof obj.host === "string" &&
+        (obj.args === undefined || Array.isArray(obj.args)) &&
+        (obj.location === undefined || typeof obj.location === "object")
+    );
 }
 
 // Observer scope definitions
