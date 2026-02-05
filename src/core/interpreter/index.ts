@@ -1248,7 +1248,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         if (expression.callee instanceof Expr.DottedGet || expression.callee instanceof Expr.IndexedGet) {
             mPointer = callee.getContext() ?? mPointer;
         }
-        return this.call(callee, args, mPointer, expression.closingParen.location);
+        return this.call(callee, args, mPointer, expression.callee.location);
     }
 
     visitAtSignGet(expression: Expr.AtSignGet) {
@@ -1878,6 +1878,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
      * @param args The arguments to pass to the function
      * @param mPointer The "m" pointer context for the call
      * @param location The source location of the call
+     * @param hostNode The host SceneGraph node for the call (optional)
      * @returns The result of the function call
      */
     call(callee: Callable, args: BrsType[], mPointer: RoAssociativeArray, location: Location, hostNode?: ISGNode) {
