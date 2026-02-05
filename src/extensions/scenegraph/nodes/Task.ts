@@ -443,7 +443,7 @@ export class Task extends Node {
      * @param type Domain identifier (`global`, `task`, or `scene`).
      * @returns Target node, if available.
      */
-    private getNodeToUpdate(type: SyncType): this | Global | RemoteNode | Scene | undefined {
+    private getNodeToUpdate(type: SyncType): Node | undefined {
         if (type === "global") {
             return sgRoot.mGlobal;
         } else if (type === "scene") {
@@ -477,19 +477,11 @@ export class Task extends Node {
         if (!method || !sgRoot.interpreter) {
             return;
         }
-        sgRoot.interpreter.inSubEnv((subInterpreter: Interpreter) => {
-            subInterpreter.environment.hostNode = hostNode;
-            subInterpreter.environment.setM(hostNode.m);
-            subInterpreter.environment.setRootM(hostNode.m);
-            const value = brsValueOf(payload.args);
-            let args: BrsType[] = [];
-            if (value instanceof RoArray) {
-                args = value.getElements();
-            }
-            const result = method.call(subInterpreter, ...args);
-            this.sendThreadUpdate(update.id, "resp", update.type, update.key, result, false);
-            return BrsInvalid.Instance;
-        });
+        const value = brsValueOf(payload.args);
+        const args: BrsType[] = value instanceof RoArray ? value.getElements() : [];
+        const location = payload.location ?? sgRoot.interpreter.location;
+        const result = sgRoot.interpreter.call(method, args, hostNode.m, location, hostNode);
+        this.sendThreadUpdate(update.id, "resp", update.type, update.key, result, false);
     }
 
     /**
@@ -506,9 +498,9 @@ export class Task extends Node {
                         rootNode?.nodeSubtype
                     }:${rootNode?.getAddress()}`
                 );
-                const fromRoot = this.findNodeByAddress(rootNode, address);
-                if (fromRoot) {
-                    return fromRoot;
+                const foundNode = this.findNodeByAddress(rootNode, address);
+                if (foundNode) {
+                    return foundNode;
                 }
             }
         }

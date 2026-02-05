@@ -16,7 +16,7 @@ import {
     RoMessagePort,
     BrsInvalid,
 } from "brs-engine";
-import { FieldKind } from "../SGTypes";
+import { FieldKind, MethodCallPayload } from "../SGTypes";
 import { Node } from "../nodes/Node";
 import { sgRoot } from "../SGRoot";
 import { SGNodeType } from ".";
@@ -172,7 +172,8 @@ export class RemoteNode extends Node implements BrsValue {
             if (hostNode instanceof Node) {
                 host = hostNode.getAddress();
             }
-            const payload = args ? { host, args } : { host };
+            const location = interpreter.location;
+            const payload: MethodCallPayload = args ? { host, args, location } : { host, location };
             result = task.requestMethodCall(this.syncType, methodName, payload);
         }
         return result;
