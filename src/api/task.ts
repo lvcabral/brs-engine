@@ -187,7 +187,7 @@ function taskCallback(event: MessageEvent) {
     } else if (isThreadUpdate(event.data)) {
         notifyAll(
             "debug",
-            `[task:api] Update received from Task thread: ${event.data.id}, ${event.data.action} ${event.data.type}.${event.data.field}`
+            `[task:api] Update received from Task thread: ${event.data.id}, ${event.data.action} ${event.data.type}.${event.data.key}`
         );
         handleThreadUpdate(event.data, true);
     } else if (isNDKStart(event.data)) {
@@ -215,7 +215,7 @@ export function handleThreadUpdate(threadUpdate: ThreadUpdate, fromTask: boolean
     } else if (threadUpdate.type !== "task") {
         // Propagate to other tasks
         for (const taskId of tasks.keys()) {
-            if (!fromTask || taskId !== threadUpdate.id) {
+            if (!fromTask || (taskId !== threadUpdate.id && !["get", "call"].includes(threadUpdate.action))) {
                 updateTask(taskId, threadUpdate);
             }
         }

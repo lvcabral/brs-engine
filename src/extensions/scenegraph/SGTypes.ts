@@ -245,22 +245,14 @@ export type ThreadInfo = {
     name?: string;
 };
 
-// Observer request payload type
-export type ObserverRequestPayload = {
-    scope: ObserverScope;
-    functionName: string;
+// Method call payload type
+export type MethodCallPayload = {
     host: string;
-    infoFields?: any;
+    args?: any[];
 };
 
-export function isObserverRequestPayload(obj: any): obj is ObserverRequestPayload {
-    return (
-        obj &&
-        isObserverScope(obj.scope) &&
-        typeof obj.functionName === "string" &&
-        typeof obj.host === "string" &&
-        (obj.infoFields === undefined || true)
-    );
+export function isMethodCallPayload(obj: any): obj is MethodCallPayload {
+    return obj && typeof obj.host === "string" && (obj.args === undefined || Array.isArray(obj.args));
 }
 
 // Observer scope definitions

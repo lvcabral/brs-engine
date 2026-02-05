@@ -7,7 +7,9 @@
  *--------------------------------------------------------------------------------------------*/
 import { BrsDevice, BufferType, DataType, genHexAddress, Interpreter, MediaEvent, MediaTrack } from "brs-engine";
 import { ComponentDefinition } from "./parser/ComponentDefinition";
+import { SGNodeType } from "./nodes";
 import { RoSGNode } from "./components/RoSGNode";
+import { RemoteNode } from "./nodes/RemoteNode";
 import { Global } from "./nodes/Global";
 import { Scene } from "./nodes/Scene";
 import { Timer } from "./nodes/Timer";
@@ -26,7 +28,7 @@ import { ThreadInfo } from "./SGTypes";
 
 export class SGRoot {
     private _interpreter: Interpreter | undefined;
-    private _mGlobal: Global | undefined;
+    private _mGlobal: Global | RemoteNode | undefined;
     private _nodeDefMap: Map<string, ComponentDefinition>;
     private _scene?: Scene;
     private _focused?: RoSGNode;
@@ -45,7 +47,7 @@ export class SGRoot {
         return this._interpreter;
     }
 
-    get mGlobal(): Global {
+    get mGlobal(): Global | RemoteNode {
         this._mGlobal ??= new Global([]);
         return this._mGlobal;
     }
@@ -203,6 +205,7 @@ export class SGRoot {
         if (makeCurrent) {
             this._threadId = threadId;
             BrsDevice.threadId = threadId;
+            this._mGlobal = this.threadId === 0 ? new Global([]) : new RemoteNode(SGNodeType.Node, "global");
         }
     }
 

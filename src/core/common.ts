@@ -390,7 +390,7 @@ export function isTaskData(value: any): value is TaskData {
     );
 }
 
-export type SyncAction = "set" | "get" | "ack" | "obs";
+export type SyncAction = "set" | "get" | "ack" | "call" | "resp";
 
 export type SyncType = "global" | "task" | "scene";
 
@@ -398,7 +398,7 @@ export type ThreadUpdate = {
     id: number;
     action: SyncAction;
     type: SyncType;
-    field: string;
+    key: string;
     value: any;
     requestId?: number;
 };
@@ -414,7 +414,7 @@ export function isThreadUpdate(value: any): value is ThreadUpdate {
         typeof value.id === "number" &&
         typeof value.action === "string" &&
         typeof value.type === "string" &&
-        typeof value.field === "string" &&
+        typeof value.key === "string" &&
         value.value !== undefined
     );
 }

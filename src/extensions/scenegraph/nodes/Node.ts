@@ -43,7 +43,6 @@ import {
     FreshFieldState,
     ObserverScope,
     FieldAliasTarget,
-    ObserverRequestPayload,
     isTaskLike,
 } from "../SGTypes";
 import { RoSGNode } from "../components/RoSGNode";
@@ -308,7 +307,7 @@ export class Node extends RoSGNode implements BrsValue {
             }
             return value;
         }
-        return (this as any).getMethod(index.getValue()) || BrsInvalid.Instance;
+        return this.getMethod(index.getValue()) || BrsInvalid.Instance;
     }
 
     /**
@@ -830,9 +829,6 @@ export class Node extends RoSGNode implements BrsValue {
                     );
                     return result;
                 }
-                if (sgRoot.inTaskThread() && this.forwardObserver(scope, host, obsFieldName, funcOrPort, infoArray)) {
-                    return BrsBoolean.True;
-                }
                 observer = interpreter.getCallableFunction(funcOrPort.getValue());
             } else if (funcOrPort instanceof RoMessagePort) {
                 if (isTaskLike(host)) {
@@ -846,42 +842,6 @@ export class Node extends RoSGNode implements BrsValue {
             }
         }
         return result;
-    }
-
-    /**
-     * Forwards observer registration to the node owner in a different thread.
-     * @param scope Observer lifetime scope.
-     * @param hostNode Node hosting the observer.
-     * @param fieldName Field to observe.
-     * @param funcName Name of the observer function.
-     * @param infoFields Optional list of info fields.
-     * @returns True when forwarding occurred and false otherwise.
-     */
-    private forwardObserver(
-        scope: ObserverScope,
-        hostNode: Node,
-        fieldName: BrsString,
-        funcName: BrsString,
-        infoFields?: RoArray
-    ) {
-        const syncType = this.getThreadSyncType();
-        if (!syncType || this.owner === sgRoot.threadId) {
-            return false;
-        }
-        postMessage(
-            `debug, [node:${sgRoot.threadId}] Forwarding observer for field "${fieldName.getValue()}" to owner thread ${
-                this.owner
-            }: ${hostNode.nodeSubtype}:${hostNode.address}`
-        );
-        const payload: ObserverRequestPayload = {
-            scope: scope,
-            functionName: funcName.getValue(),
-            host: hostNode.address,
-            infoFields,
-        };
-        const observerRequest = toAssociativeArray(payload);
-        this.sendThreadUpdate(sgRoot.threadId, "obs", syncType, fieldName.getValue(), observerRequest, false);
-        return true;
     }
 
     /**
@@ -1598,7 +1558,7 @@ export class Node extends RoSGNode implements BrsValue {
      * @param id Target thread id.
      * @param action Sync action.
      * @param type Update domain.
-     * @param field Field name being synchronized.
+     * @param key Field name being synchronized.
      * @param value Value to send.
      * @param deep When true nested nodes are deeply serialized.
      * @param requestId Optional request identifier for correlation.
@@ -1607,18 +1567,13 @@ export class Node extends RoSGNode implements BrsValue {
         id: number,
         action: SyncAction,
         type: SyncType,
-        field: string,
+        key: string,
         value: BrsType,
         deep: boolean = false,
         requestId?: number
     ) {
-        const update: ThreadUpdate = {
-            id,
-            action,
-            type,
-            field,
-            value: value instanceof Node ? fromSGNode(value, deep) : jsValueOf(value),
-        };
+        const serializedValue = value instanceof Node ? fromSGNode(value, deep) : jsValueOf(value);
+        const update: ThreadUpdate = { id, action, type, key, value: serializedValue };
         if (requestId !== undefined) {
             update.requestId = requestId;
         }
@@ -1640,11 +1595,11 @@ export class Node extends RoSGNode implements BrsValue {
 
     /**
      * Synchronizes field observers back to the main thread when applicable.
-     * @param fieldName Field to synchronize.
+     * @param key Field to synchronize.
      * @param type Sync domain: `scene` or `global`.
      */
-    protected syncRemoteObservers(fieldName: string, type: "scene" | "global") {
-        const field = this.fields.get(fieldName);
+    protected syncRemoteObservers(key: string, type: "scene" | "global") {
+        const field = this.fields.get(key.toLowerCase());
         if (!field) {
             return;
         }
@@ -1652,7 +1607,7 @@ export class Node extends RoSGNode implements BrsValue {
             // Sync all fields owned by the main thread back to the main thread
             const fieldValue = field.getValue(false);
             const deep = fieldValue instanceof Node;
-            this.sendThreadUpdate(sgRoot.threadId, "set", type, fieldName, fieldValue, deep);
+            this.sendThreadUpdate(sgRoot.threadId, "set", type, key, fieldValue, deep);
         }
     }
 
