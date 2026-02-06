@@ -55,7 +55,9 @@ export function getExternalIp(): string {
         xhr.send();
         if (xhr.status !== 200) {
             if (BrsDevice.isDevMode) {
-                BrsDevice.stderr.write(`[getExternalIp] Error getting ${url}: status ${xhr.status} - ${xhr.statusText}`);
+                BrsDevice.stderr.write(
+                    `[getExternalIp] Error getting ${url}: status ${xhr.status} - ${xhr.statusText}`
+                );
             }
             return "";
         }

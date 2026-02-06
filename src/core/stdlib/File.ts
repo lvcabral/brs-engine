@@ -183,7 +183,9 @@ export const ReadAsciiFile = new Callable("ReadAsciiFile", {
         } catch (err: any) {
             let errMessage = `warning,BRIGHTSCRIPT: ERROR: ReadAsciiFile: file open for read failed: ${interpreter.formatLocation()}`;
             if (BrsDevice.isDevMode) {
-                errMessage = `warning,*** ERROR: ReadAsciiFile: Reading '${filePath.value}': ${err.message} - ${interpreter.formatLocation()}`;
+                errMessage = `warning,*** ERROR: ReadAsciiFile: Reading '${filePath.value}': ${
+                    err.message
+                } - ${interpreter.formatLocation()}`;
             }
             BrsDevice.stderr.write(errMessage);
             return new BrsString("");
@@ -208,7 +210,9 @@ export const WriteAsciiFile = new Callable("WriteAsciiFile", {
         } catch (err: any) {
             let errMessage = `warning,BRIGHTSCRIPT: ERROR: WriteAsciiFile: file open for write failed: ${interpreter.formatLocation()}`;
             if (BrsDevice.isDevMode) {
-                errMessage = `warning,*** ERROR: Writing '${filePath.value}': ${err.message} - ${interpreter.formatLocation()}`;
+                errMessage = `warning,*** ERROR: Writing '${filePath.value}': ${
+                    err.message
+                } - ${interpreter.formatLocation()}`;
             }
             BrsDevice.stderr.write(errMessage);
             return BrsBoolean.False;
