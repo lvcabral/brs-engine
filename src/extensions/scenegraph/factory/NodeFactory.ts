@@ -19,7 +19,6 @@ import {
     Uninitialized,
     ValueKind,
     RuntimeError,
-    BrsError,
 } from "brs-engine";
 import {
     ArrayGrid,
