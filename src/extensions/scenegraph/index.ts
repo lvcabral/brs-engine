@@ -67,14 +67,14 @@ export class BrightScriptExtension implements BrsExtension {
             } else {
                 const componentsDirExists = BrsDevice.fileSystem.existsSync("pkg:/components");
                 if (componentsDirExists) {
-                    postMessage(`warning,[sg] No SceneGraph components found!`);
+                    BrsDevice.stderr.write(`warning,[sg] No SceneGraph components found!`);
                 }
             }
         } catch (err: any) {
             if (err instanceof BrsError) {
                 interpreter.addError(err);
             } else {
-                postMessage(`error,[sg] Failed to load SceneGraph components: ${err.message}`);
+                BrsDevice.stderr.write(`error,[sg] Failed to load SceneGraph components: ${err.message}`);
             }
         }
     }
@@ -108,7 +108,7 @@ export class BrightScriptExtension implements BrsExtension {
         if (!(taskNode instanceof Task) || !functionName) {
             return;
         }
-        postMessage(`debug,[sg] Calling Task in new Worker: ${taskData.name} ${functionName}`);
+        BrsDevice.stdout.write(`debug,[sg] Calling Task in new Worker: ${taskData.name} ${functionName}`);
         if (taskData.buffer) {
             taskNode.setTaskBuffer(taskData.buffer);
         }
@@ -123,7 +123,7 @@ export class BrightScriptExtension implements BrsExtension {
                     subInterpreter.environment.setM(mPointer);
                     subInterpreter.environment.setRootM(mPointer);
                     if (funcToCall instanceof Callable) {
-                        postMessage(
+                        BrsDevice.stdout.write(
                             `debug,[sg] Task function called: ${taskData.name} ${functionName} active: ${taskNode.active}`
                         );
                         const funcLoc = funcToCall.getLocation() ?? interpreter.location;
@@ -135,21 +135,21 @@ export class BrightScriptExtension implements BrsExtension {
                         });
                         taskNode.started = true;
                         funcToCall.call(subInterpreter);
-                        postMessage(
+                        BrsDevice.stdout.write(
                             `debug,[sg] Task function finished: ${taskData.name} ${functionName} active: ${taskNode.active}`
                         );
                         taskNode.stopTask();
                         taskData.state = TaskState.STOP;
                         postMessage(taskData);
                     } else {
-                        postMessage(`warning,[sg] Warning: Task function '${functionName}' not found!`);
+                        BrsDevice.stderr.write(`warning,[sg] Warning: Task function '${functionName}' not found!`);
                     }
                     return BrsInvalid.Instance;
                 }, taskEnv);
             } catch (err: any) {
                 if (err instanceof Stmt.ReturnValue) {
                     // ignore return value from Task function, closing the Task
-                    postMessage(
+                    BrsDevice.stdout.write(
                         `debug,[sg] Returned from Task function: ${taskData.name} ${functionName} ${err.value ?? ""}`
                     );
                     taskNode.stopTask();

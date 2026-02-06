@@ -29,14 +29,14 @@ export function download(
         xhr.send();
         if (xhr.status !== 200) {
             if (BrsDevice.isDevMode) {
-                postMessage(`error,HTTP Error downloading ${url}: ${xhr.statusText} (${xhr.status})`);
+                BrsDevice.stderr.write(`error,HTTP Error downloading ${url}: ${xhr.statusText} (${xhr.status})`);
             }
             return undefined;
         }
         return xhr.response;
     } catch (err: any) {
         if (BrsDevice.isDevMode) {
-            postMessage(`error,Error downloading ${url}: ${err.message}`);
+            BrsDevice.stderr.write(`error,Error downloading ${url}: ${err.message}`);
         }
     }
     return undefined;
@@ -55,7 +55,7 @@ export function getExternalIp(): string {
         xhr.send();
         if (xhr.status !== 200) {
             if (BrsDevice.isDevMode) {
-                throw new Error(`[getExternalIp] Error getting ${url}: status ${xhr.status} - ${xhr.statusText}`);
+                BrsDevice.stderr.write(`[getExternalIp] Error getting ${url}: status ${xhr.status} - ${xhr.statusText}`);
             }
             return "";
         }
@@ -63,7 +63,7 @@ export function getExternalIp(): string {
         return isValidIP(ip) ? ip : "";
     } catch (err: any) {
         if (BrsDevice.isDevMode) {
-            throw new Error(`[getExternalIp] Error getting ${url}: ${err.message}`);
+            BrsDevice.stderr.write(`[getExternalIp] Error getting ${url}: ${err.message}`);
         }
         return "";
     }

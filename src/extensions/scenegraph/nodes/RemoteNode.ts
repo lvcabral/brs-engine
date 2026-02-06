@@ -15,6 +15,7 @@ import {
     Int32,
     RoMessagePort,
     BrsInvalid,
+    BrsDevice,
 } from "brs-engine";
 import { FieldKind, MethodCallPayload } from "../SGTypes";
 import { Node } from "../nodes/Node";
@@ -93,7 +94,7 @@ export class RemoteNode extends Node implements BrsValue {
             this.clone,
         ];
         this.overrideMethods(methods);
-        postMessage(
+        BrsDevice.stdout.write(
             `debug, [node:${sgRoot.threadId}] Created RemoteNode of subtype "${this.nodeSubtype}" with sync type "${this.syncType}"`
         );
     }
@@ -136,7 +137,7 @@ export class RemoteNode extends Node implements BrsValue {
      * @param sync When true, synchronizes the field change to remote observers.
      */
     setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind, sync: boolean = true) {
-        postMessage(
+        BrsDevice.stdout.write(
             `debug, [node:${sgRoot.threadId}] RemoteNode.setValue() called for field "${this.nodeSubtype}.${index}"`
         );
         const fieldName = index.toLowerCase();

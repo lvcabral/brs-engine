@@ -167,7 +167,7 @@ export class Task extends Node {
             return;
         }
         const value = node.get(new BrsString(update.key));
-        postMessage(
+        BrsDevice.stdout.write(
             `debug,[task-sync] Task #${sgRoot.threadId} responding to field request for ${update.type}.${update.key} from thread ${update.id}`
         );
         const deep = value instanceof Node;
@@ -193,7 +193,7 @@ export class Task extends Node {
             }
             this.processThreadUpdate();
         }
-        postMessage(
+        BrsDevice.stderr.write(
             `warning,[task-sync] Task #${this.threadId} rendezvous ack timeout for task.${fieldName} (req=${requestId})`
         );
         return false;
@@ -271,7 +271,7 @@ export class Task extends Node {
                 break;
             }
         }
-        postMessage(
+        BrsDevice.stderr.write(
             `warning,[task:${sgRoot.threadId}] Rendezvous timeout for field ${type}.${fieldName} on thread ${this.threadId}`
         );
         return false;
@@ -304,7 +304,7 @@ export class Task extends Node {
                 break;
             }
         }
-        postMessage(
+        BrsDevice.stderr.write(
             `warning,[task:${sgRoot.threadId}] Rendezvous timeout for method ${type}.${methodName}() on thread ${this.threadId}`
         );
         return undefined;
@@ -460,14 +460,14 @@ export class Task extends Node {
     private handleMethodCallRequest(target: Node, update: ThreadUpdate) {
         const payload = update.value;
         if (!isMethodCallPayload(payload)) {
-            postMessage(
+            BrsDevice.stderr.write(
                 `warning,[task:${sgRoot.threadId}] Invalid method call payload from Task thread: ${update.type}.${update.key}`
             );
             return;
         }
         const hostNode = this.resolveHostNode(update.value.host);
         if (!hostNode) {
-            postMessage(
+            BrsDevice.stderr.write(
                 `warning,[task:${sgRoot.threadId}] Unable to resolve host node '${payload.host}' for method call request: ${update.type}.${update.key}`
             );
             return;
@@ -492,7 +492,7 @@ export class Task extends Node {
         if (address) {
             const rootNodes = [this, sgRoot.scene, sgRoot.mGlobal];
             for (const rootNode of rootNodes) {
-                postMessage(
+                BrsDevice.stdout.write(
                     `debug,[task:${sgRoot.threadId}] Resolving host node by address: ${address} from ${
                         rootNode?.nodeSubtype
                     }:${rootNode?.getAddress()}`
