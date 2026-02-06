@@ -745,9 +745,8 @@ function addChildren(interpreter: Interpreter, node: Node, typeDef: ComponentDef
                     }
                     node.setValue(targetField, newChild, false);
                 } else {
-                    throw new BrsError(
-                        `Role/Field ${targetField} does not exist in ${node.getId()} node`,
-                        interpreter.location
+                    BrsDevice.stderr.write(
+                        `warning,WARNING: Role/Field ${targetField} does not exist in ${node.getId()} node: ${interpreter.formatLocation()}`
                     );
                 }
             } else if (appendChild) {

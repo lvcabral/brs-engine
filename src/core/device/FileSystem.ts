@@ -144,30 +144,24 @@ export class FileSystem {
      * @returns True if mounted successfully, false otherwise.
      */
     mountExt(extZip: ArrayBufferLike) {
-        try {
-            if (zenFS.mounts.has("/ext1:")) {
-                zenFS.umount("ext1:");
-                this.notifyAll("ext1:");
-            }
-            this._ext = undefined;
-            this.xfs = zenFS.fs;
-            const extVol = zenFS.resolveMountConfigSync({
-                backend: Zip,
-                data: extZip,
-                caseFold: "lower" as const,
-            });
-            zenFS.mount("ext1:", extVol);
-            const usage = extVol.usage();
-            const maxBytesForUuid = 4096;
-            const subsetLength = Math.min(maxBytesForUuid, extZip.byteLength);
-            const uuidData = new Uint8Array(extZip, 0, subsetLength);
-            const uuid = uuidv5(uuidData, uuidv5.URL);
-            this.setExtInfo("Zip Storage", "zip", usage.totalSpace, uuid);
-            return true;
-        } catch (err: any) {
-            postMessage(`error,[FileSystem] Error mounting ext1 volume: ${err.message}`);
+        if (zenFS.mounts.has("/ext1:")) {
+            zenFS.umount("ext1:");
+            this.notifyAll("ext1:");
         }
-        return false;
+        this._ext = undefined;
+        this.xfs = zenFS.fs;
+        const extVol = zenFS.resolveMountConfigSync({
+            backend: Zip,
+            data: extZip,
+            caseFold: "lower" as const,
+        });
+        zenFS.mount("ext1:", extVol);
+        const usage = extVol.usage();
+        const maxBytesForUuid = 4096;
+        const subsetLength = Math.min(maxBytesForUuid, extZip.byteLength);
+        const uuidData = new Uint8Array(extZip, 0, subsetLength);
+        const uuid = uuidv5(uuidData, uuidv5.URL);
+        this.setExtInfo("Zip Storage", "zip", usage.totalSpace, uuid);
     }
 
     /**

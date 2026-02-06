@@ -397,7 +397,7 @@ describe("end to end brightscript functions", () => {
     test("components/roString.brs", async () => {
         await execute([resourceFile("components", "roString.brs")], outputStreams);
 
-        expect(allArgs(outputStreams.stderr.write)).toEqual([]);
+        expect(allArgs(outputStreams.stderr.write)).toEqual(["[sg] No SceneGraph components found!"]);
         expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
             "hello",
             "bar",
@@ -448,7 +448,7 @@ describe("end to end brightscript functions", () => {
     test("components/roIntrinsics.brs", async () => {
         await execute([resourceFile("components", "roIntrinsics.brs")], outputStreams);
 
-        expect(allArgs(outputStreams.stderr.write)).toEqual([]);
+        expect(allArgs(outputStreams.stderr.write)).toEqual(["[sg] No SceneGraph components found!"]);
         expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
             "Boolean object A true",
             "Boolean object B false",
@@ -472,7 +472,7 @@ describe("end to end brightscript functions", () => {
     test("components/roInvalid.brs", async () => {
         await execute([resourceFile("components", "roInvalid.brs")], outputStreams);
 
-        expect(allArgs(outputStreams.stderr.write)).toEqual([]);
+        expect(allArgs(outputStreams.stderr.write)).toEqual(["[sg] No SceneGraph components found!"]);
         expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
             "roInvalid",
             "<Component: roInvalid>",
@@ -482,7 +482,7 @@ describe("end to end brightscript functions", () => {
 
     test("components/roPath.brs", async () => {
         await execute([resourceFile("components", "roPath.brs")], outputStreams);
-        expect(allArgs(outputStreams.stderr.write)).toEqual([]);
+        expect(allArgs(outputStreams.stderr.write)).toEqual(["[sg] No SceneGraph components found!"]);
         expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
             "appMain",
             ".brs",
