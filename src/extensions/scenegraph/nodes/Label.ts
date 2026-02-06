@@ -1,7 +1,6 @@
 import { AAMember, Interpreter, BrsBoolean, BrsType, Float, IfDraw2D, MeasuredText, Rect } from "brs-engine";
 import { Group } from "./Group";
 import type { Font } from "./Font";
-import { sgRoot } from "../SGRoot";
 import { FieldKind, FieldModel } from "../SGTypes";
 import { SGNodeType } from ".";
 import { rotateTranslation } from "../SGUtil";
@@ -34,7 +33,7 @@ export class Label extends Group {
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
-        if (sgRoot.scene?.ui.resolution === "FHD") {
+        if (this.resolution === "FHD") {
             this.setValueSilent("lineSpacing", new Float(12));
         } else {
             this.setValueSilent("lineSpacing", new Float(8));

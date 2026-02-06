@@ -6,8 +6,6 @@ import {
     BrsString,
     BrsType,
     Callable,
-    RoArray,
-    RoMessagePort,
     Scope,
     Stmt,
     IfDraw2D,
@@ -43,6 +41,8 @@ export class Scene extends Group {
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
+
+        this.owner = 0; // Scene node is always owned by render thread
 
         this.setResolution("HD");
     }
@@ -84,11 +84,6 @@ export class Scene extends Group {
             }
         }
         super.setValue(index, value, alwaysNotify, kind);
-        // Notify other threads of field changes
-        if (sync && sgRoot.getTasksCount() > 0 && this.changed && this.fields.has(fieldName)) {
-            this.sendThreadUpdate(sgRoot.threadId, "scene", fieldName, value);
-            if (sgRoot.inTaskThread()) this.changed = false;
-        }
     }
 
     protected cloneNode(_isDeepCopy: boolean, _interpreter?: Interpreter): BrsType {
@@ -98,17 +93,6 @@ export class Scene extends Group {
 
     getDimensions() {
         return { width: this.ui.width, height: this.ui.height };
-    }
-
-    addObserver(
-        interpreter: Interpreter,
-        scope: "permanent" | "scoped" | "unscoped",
-        fieldName: BrsString,
-        funcOrPort: BrsString | RoMessagePort,
-        infoFields?: RoArray
-    ) {
-        interpreter.environment.hostNode ??= this;
-        return super.addObserver(interpreter, scope, fieldName, funcOrPort, infoFields);
     }
 
     setResolution(resolution: string) {
@@ -233,5 +217,10 @@ export class Scene extends Group {
             return hostNode.handleKey(key.value, press.toBoolean());
         }
         return keyHandled;
+    }
+
+    public setOwner(_threadId: number): void {
+        // Scene node owner cannot be changed
+        return;
     }
 }

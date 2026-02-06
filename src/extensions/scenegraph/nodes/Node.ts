@@ -30,11 +30,24 @@ import {
     BrsDevice,
     RuntimeError,
     BrsError,
+    SyncType,
+    SyncAction,
 } from "brs-engine";
+import {
+    FieldAlias,
+    FieldEntry,
+    FieldKind,
+    FieldModel,
+    FreshFieldBudget,
+    FreshFieldWindowMS,
+    FreshFieldState,
+    ObserverScope,
+    FieldAliasTarget,
+    isTaskLike,
+} from "../SGTypes";
 import { RoSGNode } from "../components/RoSGNode";
 import { createNodeByType, getBrsValueFromFieldType, subtypeHierarchy } from "../factory/NodeFactory";
 import { Field } from "../nodes/Field";
-import { FieldAlias, FieldAliasTarget, FieldEntry, FieldKind, FieldModel } from "../SGTypes";
 import { toAssociativeArray, jsValueOf, fromSGNode } from "../factory/Serializer";
 import { sgRoot } from "../SGRoot";
 import { SGNodeType } from ".";
@@ -61,13 +74,15 @@ export class Node extends RoSGNode implements BrsValue {
     protected triedInitFocus: boolean = false;
     /** Tracks whether the most recent field mutation triggered observers. */
     protected notified: boolean = false;
+    /** Tracks recently synchronized fields to avoid redundant rendezvous calls. */
+    protected readonly freshFields: Map<string, FreshFieldState> = new Map();
 
     /** Parent node reference or invalid when detached. */
     protected parent: Node | BrsInvalid;
-    /** Hex-like identifier exposed via introspection APIs. */
-    address: string;
     /** Thread identifier that owns the node instance. */
-    owner: number;
+    protected owner: number;
+    /** Hex-like identifier exposed via introspection APIs. */
+    protected address: string;
     /** Flags whether structural or field state changed since last render. */
     changed: boolean = false;
 
@@ -290,7 +305,7 @@ export class Node extends RoSGNode implements BrsValue {
             }
             return value;
         }
-        return (this as any).getMethod(index.getValue()) || BrsInvalid.Instance;
+        return this.getMethod(index.getValue()) || BrsInvalid.Instance;
     }
 
     /**
@@ -320,8 +335,9 @@ export class Node extends RoSGNode implements BrsValue {
      * @param value New BrightScript value.
      * @param alwaysNotify When provided, controls observer notification behavior for new fields.
      * @param kind Optional explicit field kind used when creating new dynamic fields.
+     * @param sync Optional flag indicating whether to synchronize this field change with other threads.
      */
-    setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind) {
+    setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind, _sync?: boolean) {
         const mapKey = index.toLowerCase();
         const fieldType = kind ?? FieldKind.fromBrsType(value);
         let field = this.fields.get(mapKey);
@@ -789,7 +805,7 @@ export class Node extends RoSGNode implements BrsValue {
      */
     addObserver(
         interpreter: Interpreter,
-        scope: "permanent" | "scoped" | "unscoped",
+        scope: ObserverScope,
         fieldName: BrsString,
         funcOrPort: BrsString | RoMessagePort,
         infoFields?: BrsType
@@ -813,8 +829,10 @@ export class Node extends RoSGNode implements BrsValue {
                     return result;
                 }
                 observer = interpreter.getCallableFunction(funcOrPort.getValue());
-            } else if (funcOrPort instanceof RoMessagePort && host instanceof Node) {
-                funcOrPort.registerCallback(host.nodeSubtype, host.getNewEvents.bind(host));
+            } else if (funcOrPort instanceof RoMessagePort) {
+                if (isTaskLike(host)) {
+                    funcOrPort.registerCallback(host.nodeSubtype, host.getNewEvents.bind(host));
+                }
                 observer = funcOrPort;
             }
             if (!(observer instanceof BrsInvalid)) {
@@ -942,6 +960,30 @@ export class Node extends RoSGNode implements BrsValue {
         }
         // name was not found anywhere in tree
         return BrsInvalid.Instance;
+    }
+
+    /**
+     * Searches the subtree rooted at the provided node for a matching address.
+     * @param root Root to inspect.
+     * @param address Address to seek.
+     * @returns The matching node or undefined when not found.
+     */
+    findNodeByAddress(root: Node | undefined, address: string): Node | undefined {
+        if (!root) {
+            return undefined;
+        }
+        if (root.address === address) {
+            return root;
+        }
+        for (const child of root.getNodeChildren()) {
+            if (child instanceof Node) {
+                const match = this.findNodeByAddress(child, address);
+                if (match) {
+                    return match;
+                }
+            }
+        }
+        return undefined;
     }
 
     /**
@@ -1449,28 +1491,113 @@ export class Node extends RoSGNode implements BrsValue {
     }
 
     /**
+     * Sets the owning thread identifier for this node.
+     * @param threadId Thread identifier.
+     */
+    public setOwner(threadId: number) {
+        this.owner = threadId;
+    }
+
+    /**
+     * Gets the owning thread identifier for this node.
+     * @returns Thread identifier.
+     */
+    public getOwner() {
+        return this.owner;
+    }
+
+    /** Sets the unique address for this node.
+     * @param address Node address.
+     */
+    public setAddress(address: string) {
+        this.address = address;
+    }
+
+    /**
+     * Gets the unique address for this node.
+     * @returns Node address.
+     */
+    public getAddress() {
+        return this.address;
+    }
+
+    /**
+     * Marks a field as fresh, allowing it to be synchronized without delay.
+     * @param fieldName Field to mark as fresh.
+     */
+    public markFieldFresh(fieldName: string) {
+        const mapKey = fieldName.toLowerCase();
+        this.freshFields.set(mapKey, { remaining: FreshFieldBudget, timestamp: Date.now() });
+    }
+
+    /**
+     * Consumes a fresh field allowance when applicable.
+     * @param fieldName Field to consume.
+     * @returns True when the field is still fresh.
+     */
+    protected consumeFreshField(fieldName: string): boolean {
+        const mapKey = fieldName.toLowerCase();
+        const entry = this.freshFields.get(mapKey);
+        if (!entry) {
+            return false;
+        }
+        if (Date.now() - entry.timestamp > FreshFieldWindowMS) {
+            this.freshFields.delete(mapKey);
+            return false;
+        }
+        entry.remaining--;
+        if (entry.remaining <= 0) {
+            this.freshFields.delete(mapKey);
+        }
+        return true;
+    }
+
+    /**
      * Posts a serialized node update to the owning thread.
      * @param id Target thread id.
+     * @param action Sync action.
      * @param type Update domain.
-     * @param field Field name being synchronized.
+     * @param key Field name being synchronized.
      * @param value Value to send.
      * @param deep When true nested nodes are deeply serialized.
+     * @param requestId Optional request identifier for correlation.
      */
     protected sendThreadUpdate(
         id: number,
-        type: "scene" | "global" | "task",
-        field: string,
+        action: SyncAction,
+        type: SyncType,
+        key: string,
         value: BrsType,
-        deep: boolean = false
+        deep: boolean = false,
+        requestId?: number
     ) {
-        const update: ThreadUpdate = {
-            id: id,
-            type: type,
-            field: field,
-            value: value instanceof Node ? fromSGNode(value, deep) : jsValueOf(value),
-        };
-        if (sgRoot.inTaskThread() && value instanceof Node) value.changed = false;
+        const serializedValue = value instanceof Node ? fromSGNode(value, deep) : jsValueOf(value);
+        const update: ThreadUpdate = { id, action, type, key, value: serializedValue };
+        if (requestId !== undefined) {
+            update.requestId = requestId;
+        }
+        if (sgRoot.inTaskThread() && value instanceof Node && action === "set") {
+            value.changed = false;
+        }
         postMessage(update);
+    }
+
+    /**
+     * Synchronizes field observers back to the main thread when applicable.
+     * @param key Field to synchronize.
+     * @param type Sync domain: `scene` or `global`.
+     */
+    protected syncRemoteObservers(key: string, type: SyncType) {
+        const field = this.fields.get(key.toLowerCase());
+        if (!field) {
+            return;
+        }
+        if (sgRoot.inTaskThread() && this.owner !== sgRoot.threadId) {
+            // Sync all fields owned by the main thread back to the main thread
+            const fieldValue = field.getValue(false);
+            const deep = fieldValue instanceof Node;
+            this.sendThreadUpdate(sgRoot.threadId, "set", type, key, fieldValue, deep);
+        }
     }
 
     /**

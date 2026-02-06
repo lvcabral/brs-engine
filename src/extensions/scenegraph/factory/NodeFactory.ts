@@ -19,7 +19,6 @@ import {
     Uninitialized,
     ValueKind,
     RuntimeError,
-    BrsError,
 } from "brs-engine";
 import {
     ArrayGrid,
@@ -77,6 +76,7 @@ import {
     FloatFieldInterpolator,
     ColorFieldInterpolator,
     Vector2DFieldInterpolator,
+    RemoteNode,
 } from "../nodes";
 import type { Field } from "../nodes/Field";
 import { ComponentDefinition, ComponentNode } from "../parser/ComponentDefinition";
@@ -369,16 +369,13 @@ export function initializeNode(interpreter: Interpreter, type: string, typeDef?:
         // Default to Node as parent.
         node ??= new Node([], type);
         const mPointer = new RoAssociativeArray([]);
-        currentEnv?.setM(new RoAssociativeArray([]));
         if (currentEnv) {
+            currentEnv.setM(new RoAssociativeArray([]));
             currentEnv.hostNode = node;
         }
-
         // Add children, fields and call each init method starting from the
         // "basemost" component of the tree.
         while (typeDef) {
-            let init: BrsType;
-
             interpreter.inSubEnv((subInterpreter) => {
                 if (node instanceof Scene) {
                     node.setInitState("initializing");
@@ -393,9 +390,8 @@ export function initializeNode(interpreter: Interpreter, type: string, typeDef?:
                 node.renderNode(interpreter, [0, 0], 0, 1);
             }
 
-            interpreter.inSubEnv((subInterpreter: Interpreter) => {
-                init = subInterpreter.getCallableFunction("init");
-                return BrsInvalid.Instance;
+            const init = interpreter.inSubEnv((subInterpreter: Interpreter) => {
+                return subInterpreter.getCallableFunction("init");
             }, typeDef.environment);
 
             interpreter.inSubEnv((subInterpreter: Interpreter) => {
@@ -461,8 +457,8 @@ export function initializeTask(interpreter: Interpreter, taskData: TaskData) {
     let typeDef = sgRoot.nodeDefMap.get(type.toLowerCase());
     if (typeDef) {
         //use typeDef object to tack on all the bells & whistles of a custom node
-        let typeDefStack = updateTypeDefHierarchy(typeDef);
-        let currentEnv = typeDef.environment?.createSubEnvironment();
+        const typeDefStack = updateTypeDefHierarchy(typeDef);
+        const currentEnv = typeDef.environment?.createSubEnvironment();
 
         // Start from the "basemost" component of the tree.
         typeDef = typeDefStack.pop();
@@ -470,27 +466,35 @@ export function initializeTask(interpreter: Interpreter, taskData: TaskData) {
         // Create the node.
         const node = SGNodeFactory.createNode(typeDef!.extends as SGNodeType, type) || new Task([], type);
         const mPointer = new RoAssociativeArray([]);
-        currentEnv?.setM(new RoAssociativeArray([]));
         if (currentEnv) {
+            currentEnv.setM(new RoAssociativeArray([]));
             currentEnv.hostNode = node;
+        }
+
+        if (node instanceof Task) {
+            sgRoot.setThread(0, false, taskData.render);
+            node.threadId = taskData.id;
+            node.thread = true;
+            sgRoot.addTask(node, taskData.id, true);
+            interpreter.environment.hostNode = node;
         }
 
         // Add children and fields starting from the "basemost" component of the tree.
         while (typeDef) {
             interpreter.inSubEnv((subInterpreter: Interpreter) => {
-                addChildren(subInterpreter, node!, typeDef!);
-                addFields(subInterpreter, node!, typeDef!);
+                addChildren(subInterpreter, node, typeDef!);
+                addFields(subInterpreter, node, typeDef!);
                 return BrsInvalid.Instance;
             }, currentEnv);
 
             interpreter.inSubEnv((subInterpreter: Interpreter) => {
                 subInterpreter.environment.hostNode = node;
 
-                mPointer.set(new BrsString("top"), node!);
+                mPointer.set(new BrsString("top"), node);
                 mPointer.set(new BrsString("global"), sgRoot.mGlobal);
                 subInterpreter.environment.setM(mPointer);
                 subInterpreter.environment.setRootM(mPointer);
-                node!.m = mPointer;
+                node.m = mPointer;
                 return BrsInvalid.Instance;
             }, currentEnv);
 
@@ -518,24 +522,9 @@ function loadTaskData(interpreter: Interpreter, node: Node, taskData: TaskData) 
     if (taskData.scene?.["_node_"]) {
         const nodeInfo = getSerializedNodeInfo(taskData.scene);
         const sceneName = nodeInfo?.subtype || SGNodeType.Scene;
-        const scene = createSceneByType(interpreter, sceneName);
-        if (scene instanceof Scene) {
-            sgRoot.setScene(scene);
-            restoreNode(interpreter, taskData.scene, scene);
-        } else {
-            BrsDevice.stderr.write(
-                `warning,Warning: Failed to create Scene of type ${sceneName} for Task ${taskData.name} (${
-                    taskData.id
-                }): ${interpreter.formatLocation()}`
-            );
-        }
-    }
-    if (node instanceof Task) {
-        sgRoot.setThread(0, false, taskData.render);
-        node.threadId = taskData.id;
-        node.thread = true;
-        sgRoot.addTask(node, taskData.id, true);
-        interpreter.environment.hostNode = node;
+        const scene = new RemoteNode(sceneName, "scene");
+        sgRoot.setScene(scene);
+        restoreNode(interpreter, taskData.scene, scene);
     }
     let port: RoMessagePort | undefined;
     if (taskData.m) {
@@ -594,9 +583,10 @@ export function updateTypeDefHierarchy(typeDef: ComponentDefinition | undefined)
  * @param node Node to restore fields into
  * @param port Optional message port for field observers
  */
-function restoreNode(interpreter: Interpreter, source: any, node: Node, port?: RoMessagePort) {
+function restoreNode(interpreter: Interpreter, source: any, node: Node | RemoteNode, port?: RoMessagePort) {
     const observedFields = source["_observed_"];
-    node.owner = source["_owner_"] ?? sgRoot.threadId;
+    node.setOwner(source["_owner_"] ?? sgRoot.threadId);
+    node.setAddress(source["_address_"] ?? node.getAddress());
     for (let [key, value] of Object.entries(source)) {
         if (key.startsWith("_") && key.endsWith("_") && key.length > 2) {
             // Ignore transfer metadata fields
@@ -757,9 +747,8 @@ function addChildren(interpreter: Interpreter, node: Node, typeDef: ComponentDef
                     }
                     node.setValue(targetField, newChild, false);
                 } else {
-                    throw new BrsError(
-                        `Role/Field ${targetField} does not exist in ${node.getId()} node`,
-                        interpreter.location
+                    BrsDevice.stderr.write(
+                        `warning,WARNING: Role/Field ${targetField} does not exist in ${node.getId()} node: ${interpreter.formatLocation()}`
                     );
                 }
             } else if (appendChild) {

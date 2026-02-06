@@ -43,8 +43,8 @@ export class BrsDevice {
     static readonly stats = new Map<Lexeme, number>();
     static readonly nodes = new Map<string, { name: string; count: number }>();
 
-    static stdout: OutputProxy = new OutputProxy(process.stdout, false);
-    static stderr: OutputProxy = new OutputProxy(process.stderr, false);
+    static stdout: OutputProxy = new OutputProxy(process.stdout, true);
+    static stderr: OutputProxy = new OutputProxy(process.stderr, true);
 
     static sharedArray: Int32Array = new Int32Array(0);
     static displayEnabled: boolean = true;
@@ -110,15 +110,19 @@ export class BrsDevice {
             this.extVolVersion = this.extVolume.getVersion();
             this.extVolMounted = uev === 1;
         }
-        this.fileSystem.setup(
-            payload.device.assets,
-            payload.taskData?.tmp ?? this.getTmpVolume(),
-            payload.taskData?.cacheFS ?? this.getCacheFS(),
-            payload.pkgZip,
-            this.extVolMounted ? this.extVolume.loadData() : undefined,
-            payload.root,
-            payload.ext
-        );
+        try {
+            this.fileSystem.setup(
+                payload.device.assets,
+                payload.taskData?.tmp ?? this.getTmpVolume(),
+                payload.taskData?.cacheFS ?? this.getCacheFS(),
+                payload.pkgZip,
+                this.extVolMounted ? this.extVolume.loadData() : undefined,
+                payload.root,
+                payload.ext
+            );
+        } catch (err: any) {
+            this.stderr.write(`error,[BrsDevice] Error setting up file system: ${err.message}`);
+        }
     }
 
     /**
@@ -130,13 +134,18 @@ export class BrsDevice {
         if (this.extVolMounted || extData.byteLength === 0) {
             return false;
         }
-        this.extVolume.storeData(extData);
-        this.extVolVersion = this.extVolume.getVersion();
-        const zipData = this.extVolume.loadData();
-        if (!zipData) return false;
-        this.fileSystem.mountExt(zipData);
-        this.extVolMounted = true;
-        return true;
+        try {
+            this.extVolume.storeData(extData);
+            this.extVolVersion = this.extVolume.getVersion();
+            const zipData = this.extVolume.loadData();
+            if (!zipData) return false;
+            this.fileSystem.mountExt(zipData);
+            this.extVolMounted = true;
+            return true;
+        } catch (err: any) {
+            this.stderr.write(`error,[BrsDevice] Error mounting external storage volume (ext1:): ${err.message}`);
+        }
+        return false;
     }
 
     /**
@@ -193,13 +202,15 @@ export class BrsDevice {
                     this.extVolMounted = true;
                     return true;
                 } else if (this.isDevMode) {
-                    postMessage("warning,[BrsDevice] No data found in external storage volume (ext1:) to refresh.");
+                    this.stderr.write(
+                        "warning,[BrsDevice] No data found in external storage volume (ext1:) to refresh."
+                    );
                 }
             }
         } catch (err: any) {
             Atomics.store(this.sharedArray, DataType.EVE, -1); // reset event on error
             if (this.isDevMode) {
-                postMessage("error,[BrsDevice] Error refreshing external storage volume (ext1:):", err.message);
+                this.stderr.write(`error,[BrsDevice] Error refreshing external storage volume (ext1:): ${err.message}`);
             }
         }
         return false;
@@ -533,6 +544,11 @@ export class BrsDevice {
             hour12: false,
             timeZone: this.timeZone,
         }).format(now);
+    }
+
+    static sleep(ms: number) {
+        ms += performance.now();
+        while (performance.now() < ms) {}
     }
 
     /**

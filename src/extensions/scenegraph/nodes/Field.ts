@@ -199,7 +199,7 @@ export class Field {
     addObserver(
         mode: "permanent" | "unscoped" | "scoped",
         interpreter: Interpreter,
-        callable: Callable | RoMessagePort,
+        observer: Callable | RoMessagePort,
         target: Node,
         fieldName: BrsString,
         infoFields?: RoArray
@@ -211,7 +211,7 @@ export class Field {
             interpreter,
             environment: interpreter.environment,
             hostNode: subscriber,
-            observer: callable,
+            observer,
             eventParams: {
                 node: target,
                 fieldName,

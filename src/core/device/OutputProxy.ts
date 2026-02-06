@@ -24,7 +24,7 @@ export class OutputProxy {
     write(str: string) {
         let content = str;
         const level = str.split(",")[0];
-        if (["print", "error", "warning"].includes(level)) {
+        if (["print", "error", "warning", "debug"].includes(level)) {
             content = str.slice(level.length + 1);
             if (this.post) {
                 postMessage(str);

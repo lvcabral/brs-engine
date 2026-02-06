@@ -56,6 +56,7 @@ export * from "./Interpolator";
 export * from "./FloatFieldInterpolator";
 export * from "./ColorFieldInterpolator";
 export * from "./Vector2DFieldInterpolator";
+export * from "./RemoteNode";
 
 /** Enumeration of all SceneGraph node types. */
 export enum SGNodeType {

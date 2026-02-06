@@ -67,9 +67,7 @@ export class StandardDialog extends Group {
             index = "wasClosed";
             value = BrsBoolean.True;
             this.setValue("visible", BrsBoolean.False);
-            if (sgRoot.scene?.dialog === this) {
-                sgRoot.scene.dialog = undefined;
-            }
+            sgRoot.removeDialog(this);
         } else if (fieldName === "width") {
             const newWidth = jsValueOf(value) as number;
             if (newWidth > this.maxWidth) {

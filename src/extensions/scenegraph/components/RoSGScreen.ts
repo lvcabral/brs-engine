@@ -175,7 +175,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
             events.push(event);
         }
         // Handle Scene Events
-        if (sgRoot.scene) {
+        if (sgRoot.scene instanceof Scene) {
             const timersFired = sgRoot.processTimers();
             const animUpdated = sgRoot.processAnimations();
             const tasksUpdated = sgRoot.processTasks();
@@ -210,7 +210,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     /** Handle control keys */
     private handleNextKey(interpreter: Interpreter) {
         const nextKey = BrsDevice.updateKeysBuffer();
-        if (!nextKey || !sgRoot?.scene) {
+        if (!nextKey || !(sgRoot?.scene instanceof Scene)) {
             return BrsInvalid.Instance;
         }
         this.isDirty = true;
