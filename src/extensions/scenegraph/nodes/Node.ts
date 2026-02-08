@@ -1495,7 +1495,25 @@ export class Node extends RoSGNode implements BrsValue {
      * @param threadId Thread identifier.
      */
     public setOwner(threadId: number) {
+        if (this.owner === threadId) {
+            return;
+        }
         this.owner = threadId;
+        // replace ownership on node fields
+        for (const field of this.fields.values()) {
+            if (field.getType() === FieldKind.Node) {
+                const fieldValue = field.getValue();
+                if (fieldValue instanceof Node) {
+                    fieldValue.setOwner(threadId);
+                }
+            }
+        }
+        // replace ownership on children
+        for (const child of this.children) {
+            if (child instanceof Node) {
+                child.setOwner(threadId);
+            }
+        }
     }
 
     /**

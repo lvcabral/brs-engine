@@ -192,28 +192,31 @@ export class SGRoot {
      * Adds a new task thread to the SGRoot.
      * @param task Task instance to add
      * @param threadId Optional thread ID (auto-assigned if not provided)
-     * @param makeCurrent Whether to make this the current thread (defaults to false)
      */
-    addTask(task: Task, threadId?: number, makeCurrent: boolean = false) {
+    addTask(task: Task, threadId?: number) {
         task.threadId = threadId ?? this._threads.size;
-        this.setThread(task.threadId, makeCurrent, task.getAddress(), task);
+        this.setThread(task.threadId, task.getAddress(), task);
     }
 
     /**
      * Sets thread data and optionally makes it the current thread.
      * @param threadId Thread ID (0 for render thread, >0 for task threads)
-     * @param makeCurrent Whether to make this the current thread (defaults to false)
      * @param address Optional hex address for the thread (auto-generated if not provided)
      * @param task Optional Task instance associated with the thread
      */
-    setThread(threadId: number, makeCurrent: boolean = false, address?: string, task?: Task) {
+    setThread(threadId: number, address?: string, task?: Task) {
         const threadInfo: ThreadInfo = { id: address ?? genHexAddress(), type: threadId > 0 ? "Task" : "Render" };
         this._threads.set(threadId, { info: threadInfo, task });
-        if (makeCurrent) {
-            this._threadId = threadId;
-            BrsDevice.threadId = threadId;
-            this._mGlobal = this.threadId === 0 ? new Global([]) : new RemoteNode(SGNodeType.Node, "global");
-        }
+    }
+
+    /**
+     * Sets the current thread ID and updates related properties.
+     * @param threadId The ID of the thread to set as current
+     */
+    setCurrentThread(threadId: number) {
+        this._threadId = threadId;
+        BrsDevice.threadId = threadId;
+        this._mGlobal = this.threadId === 0 ? new Global([]) : new RemoteNode(SGNodeType.Node, "global");
     }
 
     /**

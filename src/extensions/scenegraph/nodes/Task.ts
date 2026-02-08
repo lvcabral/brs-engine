@@ -209,7 +209,7 @@ export class Task extends Node {
         if (this.threadId < 0) {
             sgRoot.addTask(this);
         } else if (sgRoot.getThreadTask(this.threadId) !== this) {
-            sgRoot.setThread(this.threadId, false, this.address, this);
+            sgRoot.setThread(this.threadId, this.address, this);
         }
     }
 

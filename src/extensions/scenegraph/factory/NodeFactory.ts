@@ -450,6 +450,7 @@ export function initializeNode(interpreter: Interpreter, type: string, typeDef?:
  * @returns Initialized Task node or BrsInvalid if initialization fails
  */
 export function initializeTask(interpreter: Interpreter, taskData: TaskData) {
+    sgRoot.setCurrentThread(taskData.id);
     const type = taskData.name;
     let typeDef = sgRoot.nodeDefMap.get(type.toLowerCase());
     if (typeDef) {
@@ -459,22 +460,28 @@ export function initializeTask(interpreter: Interpreter, taskData: TaskData) {
 
         // Start from the "basemost" component of the tree.
         typeDef = typeDefStack.pop();
-
-        // Create the node.
-        const node = SGNodeFactory.createNode(typeDef!.extends as SGNodeType, type) || new Task([], type);
+        if (typeDef?.extends !== SGNodeType.Task) {
+            BrsDevice.stderr.write(
+                `error,ERROR: Task node type mismatch: expected 'Task' but got '${
+                    typeDef?.extends ?? "undefined"
+                }' in node "${type}"!`
+            );
+            return BrsInvalid.Instance;
+        }
+        // Create the Task node.
+        const node = new Task([], type);
         const mPointer = new RoAssociativeArray([]);
         if (currentEnv) {
             currentEnv.setM(new RoAssociativeArray([]));
             currentEnv.hostNode = node;
         }
 
-        if (node instanceof Task) {
-            sgRoot.setThread(0, false, taskData.render);
-            node.threadId = taskData.id;
-            node.thread = true;
-            sgRoot.addTask(node, taskData.id, true);
-            interpreter.environment.hostNode = node;
-        }
+        // Configure Threads
+        sgRoot.setThread(0, taskData.render);
+        node.threadId = taskData.id;
+        node.thread = true;
+        sgRoot.addTask(node, taskData.id);
+        interpreter.environment.hostNode = node;
 
         // Add children and fields starting from the "basemost" component of the tree.
         while (typeDef) {
