@@ -1,4 +1,4 @@
-import { Callable, ValueKind, BrsString, Int32, Float, StdlibArgument, BrsInvalid } from "../brsTypes";
+import { Callable, ValueKind, BrsString, Int32, Int64, Float, StdlibArgument, BrsInvalid } from "../brsTypes";
 import { Interpreter } from "../interpreter";
 import { BrsNumber } from "../brsTypes/BrsNumber";
 
@@ -154,19 +154,34 @@ export const Mid = new Callable(
 );
 
 /**
- * Return a string from a float/double. If it is positive, prefix it with a space.
+ * Return a string from a numeric value. If it is positive, prefix it with a space.
+ * Supports LongInteger (Int64) with full precision, avoiding Float32 truncation.
  */
-export const Str = new Callable("Str", {
-    signature: {
-        args: [new StdlibArgument("value", ValueKind.Float)],
-        returns: ValueKind.String,
+export const Str = new Callable(
+    "Str",
+    {
+        signature: {
+            args: [new StdlibArgument("value", ValueKind.Int64)],
+            returns: ValueKind.String,
+        },
+        impl: (_: Interpreter, value: Int64): BrsString => {
+            const longValue = value.getValue();
+            const prefix = !longValue.isNegative() ? " " : "";
+            return new BrsString(prefix + longValue.toString());
+        },
     },
-    impl: (_: Interpreter, value: Float): BrsString => {
-        const floatValue = value.getValue();
-        const prefix = floatValue >= 0.0 ? " " : "";
-        return new BrsString(prefix + String(floatValue));
-    },
-});
+    {
+        signature: {
+            args: [new StdlibArgument("value", ValueKind.Float)],
+            returns: ValueKind.String,
+        },
+        impl: (_: Interpreter, value: Float): BrsString => {
+            const floatValue = value.getValue();
+            const prefix = floatValue >= 0.0 ? " " : "";
+            return new BrsString(prefix + String(floatValue));
+        },
+    }
+);
 
 /**
  * Return a string from an integer. If it is positive, prefix it with a space.

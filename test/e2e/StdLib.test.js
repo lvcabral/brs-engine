@@ -58,6 +58,7 @@ describe("end to end standard library", () => {
             " 3",
             " 3.4",
             " 9.7",
+            " 2166136261",
             "-3",
             " 12.34",
             " 0",
