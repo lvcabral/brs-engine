@@ -208,13 +208,12 @@ export function handleThreadUpdate(threadUpdate: ThreadUpdate, fromTask: boolean
         threadSyncToMain.get(threadUpdate.id)?.waitStore(threadUpdate, 1);
     }
     if (threadUpdate.id > 0 && !fromTask) {
-        updateTask(threadUpdate);
+        updateTask(threadUpdate.id, threadUpdate);
     } else if (threadUpdate.type !== "task") {
         // Propagate to other tasks
         for (const taskId of tasks.keys()) {
             if (!fromTask || taskId !== threadUpdate.id) {
-                const data = { ...threadUpdate, id: taskId };
-                updateTask(data);
+                updateTask(taskId, threadUpdate);
             }
         }
     }
@@ -222,11 +221,12 @@ export function handleThreadUpdate(threadUpdate: ThreadUpdate, fromTask: boolean
 
 /**
  * Updates a task's shared buffer with thread update data.
+ * @param targetId Id of the target task thread to send the update
  * @param data Thread update data with field changes
  */
-function updateTask(data: ThreadUpdate) {
-    if (!threadSyncToTask.has(data.id)) {
-        threadSyncToTask.set(data.id, new SharedObject());
+function updateTask(targetId: number, data: ThreadUpdate) {
+    if (!threadSyncToTask.has(targetId)) {
+        threadSyncToTask.set(targetId, new SharedObject());
     }
-    threadSyncToTask.get(data.id)?.waitStore(data, 1);
+    threadSyncToTask.get(targetId)?.waitStore(data, 1);
 }
