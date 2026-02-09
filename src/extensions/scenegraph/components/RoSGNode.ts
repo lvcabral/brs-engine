@@ -22,18 +22,22 @@ import {
     Rect,
 } from "brs-engine";
 import { sgRoot } from "../SGRoot";
-import { createNodeByType, isSubtypeCheck, subtypeHierarchy } from "../factory/NodeFactory";
+import { createNodeByType, getNodeType, isSubtypeCheck, subtypeHierarchy } from "../factory/NodeFactory";
 import { toAssociativeArray } from "../factory/Serializer";
 import { FieldKind, isContentNode } from "../SGTypes";
+import type { SGNodeType } from "../nodes";
 
 export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode {
     readonly kind = ValueKind.Object;
+    readonly nodeType: SGNodeType;
     protected httpAgent: RoHttpAgent;
     m: RoAssociativeArray = new RoAssociativeArray([]);
     location: string = "";
 
     constructor(_: AAMember[], readonly nodeSubtype: string = "Node") {
         super("roSGNode");
+        this.nodeType = getNodeType(this.nodeSubtype);
+        BrsDevice.addNodeStat(this.nodeType);
 
         this.registerMethods({
             ifAssociativeArray: [

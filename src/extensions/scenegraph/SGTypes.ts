@@ -11,7 +11,6 @@ import {
 } from "brs-engine";
 import { Node } from "./nodes/Node";
 import type { Field } from "./nodes/Field";
-import { getNodeType } from "./factory/NodeFactory";
 
 /** This interface is used to define a callback for field change notifications and events. */
 export interface BrsCallback {
@@ -173,8 +172,7 @@ export namespace FieldKind {
                 return FieldKind.AssocArray;
             case "rosgnode": {
                 const node = brsType as Node;
-                const nodeType = getNodeType(node.nodeSubtype);
-                if (nodeType.toLowerCase() === "font") {
+                if (node.nodeType.toLowerCase() === "font") {
                     return FieldKind.Font;
                 }
                 return FieldKind.Node;
