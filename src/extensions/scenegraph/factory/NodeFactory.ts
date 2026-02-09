@@ -122,9 +122,6 @@ export class SGNodeFactory {
      */
     public static createNode(nodeType: SGNodeType | string, nodeName?: string): Node | undefined {
         const name = nodeName || nodeType;
-        if (isSGNodeType(nodeType)) {
-            BrsDevice.addNodeStat(nodeType);
-        }
         const additionalCtor = this.additionalNodes.get(nodeType?.toLowerCase());
         if (additionalCtor) {
             return additionalCtor(name);
