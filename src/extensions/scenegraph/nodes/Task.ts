@@ -298,6 +298,8 @@ export class Task extends Node {
             const update = this.processThreadUpdate();
             if (update?.action === "resp" && update.type === type && update.key === methodName) {
                 return brsValueOf(update.value);
+            } else if (update?.action === "nil" && update.type === type && update.key === methodName) {
+                return undefined;
             }
             const remaining = deadline - Date.now();
             if (remaining <= 0) {
@@ -516,9 +518,7 @@ export class Task extends Node {
         let responseAction = "";
         if (update.action === "set" && update.requestId !== undefined) {
             responseAction = "ack";
-        } else if (update.action === "call") {
-            responseAction = "resp";
-        } else if (update.action === "get") {
+        } else if (update.action === "call" || update.action === "get") {
             responseAction = "nil";
         }
         if (isSyncAction(responseAction)) {
