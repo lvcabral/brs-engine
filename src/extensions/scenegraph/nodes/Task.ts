@@ -161,7 +161,7 @@ export class Task extends Node {
         }
     }
 
-    private handleFieldRequest(node: Node | Global | Scene, update: ThreadUpdate) {
+    private handleGetFieldRequest(node: Node | Global | Scene, update: ThreadUpdate) {
         if (update.id < 0) {
             return;
         }
@@ -396,6 +396,9 @@ export class Task extends Node {
                 }
                 return update;
             }
+            if (update.action === "resp") {
+                return update;
+            }
             if (update.action === "nil") {
                 return update;
             }
@@ -410,42 +413,17 @@ export class Task extends Node {
                 return undefined;
             }
             if (update.action === "get") {
-                this.handleFieldRequest(node, update);
+                this.handleGetFieldRequest(node, update);
                 return undefined;
             }
             if (update.action === "call") {
                 this.handleMethodCallRequest(node, update);
                 return undefined;
             }
-            if (update.action === "resp") {
-                // Method call response - simply return it for processing
+            if (update.action === "set") {
+                this.handleSetFieldRequest(node, update);
                 return update;
             }
-            // Apply Field update
-            const oldValue = node.getValue(update.key);
-            let value: BrsType;
-            if (!this.thread && oldValue instanceof Node && oldValue.getAddress() === update.value._address_) {
-                // Update existing node to preserve references
-                value = updateSGNode(update.value, oldValue);
-            } else {
-                value = brsValueOf(update.value);
-            }
-            node.markFieldFresh(update.key);
-            node.setValue(update.key, value, false, undefined, false);
-            // Send acknowledgement back to the other thread if needed
-            if (!this.thread && update.requestId !== undefined) {
-                this.sendThreadUpdate(
-                    update.id,
-                    "ack",
-                    update.type,
-                    update.address,
-                    update.key,
-                    BrsInvalid.Instance,
-                    false,
-                    update.requestId
-                );
-            }
-            return update;
         }
         return undefined;
     }
@@ -466,6 +444,40 @@ export class Task extends Node {
             return this.resolveNode(update.address, true);
         }
         return undefined;
+    }
+
+    /**
+     * Handles field update requests received via thread updates,
+     * applying changes to the target node and sending acknowledgements if needed.
+     * @param node Target node on which the field update should be applied.
+     * @param update Thread update containing field change details and optional rendezvous requestId for acknowledgements.
+     * @returns The processed ThreadUpdate for potential further handling, or undefined if the update was fully handled here.
+     */
+    private handleSetFieldRequest(node: Node, update: ThreadUpdate) {
+        const oldValue = node.getValue(update.key);
+        let value: BrsType;
+        if (!this.thread && oldValue instanceof Node && oldValue.getAddress() === update.value._address_) {
+            // Update existing node to preserve references
+            value = updateSGNode(update.value, oldValue);
+        } else {
+            value = brsValueOf(update.value);
+        }
+        node.markFieldFresh(update.key);
+        node.setValue(update.key, value, false, undefined, false);
+        // Send acknowledgement back to the other thread if needed
+        if (!this.thread && update.requestId !== undefined) {
+            this.sendThreadUpdate(
+                update.id,
+                "ack",
+                update.type,
+                update.address,
+                update.key,
+                BrsInvalid.Instance,
+                false,
+                update.requestId
+            );
+        }
+        return update;
     }
 
     /**
