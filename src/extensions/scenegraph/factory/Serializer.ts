@@ -187,7 +187,7 @@ function fromObject(obj: any, cs?: boolean, nodeMap?: Map<string, Node>): BrsTyp
         // Handle both regular nodes and circular references
         const nodeInfo = getSerializedNodeInfo(obj);
         if (nodeInfo) {
-            return sgRoot.inTaskThread()
+            return sgRoot.inTaskThread() && nodeInfo.type !== SGNodeType.ContentNode
                 ? toRemoteNode(obj, nodeInfo.type, nodeInfo.subtype, nodeMap)
                 : toSGNode(obj, nodeInfo.type, nodeInfo.subtype, nodeMap);
         }
