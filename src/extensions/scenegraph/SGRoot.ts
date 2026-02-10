@@ -163,9 +163,7 @@ export class SGRoot {
      */
     setScene(scene: Scene) {
         this._scene = scene;
-        if (scene && "ui" in scene && scene.ui) {
-            scene.setResolution(this._resolution);
-        }
+        scene.setResolution(this._resolution);
     }
 
     /**
@@ -173,7 +171,7 @@ export class SGRoot {
      * @param dialog Dialog instance to set
      */
     removeDialog(dialog: Dialog | StandardDialog) {
-        if (this._scene && "dialog" in this._scene && this._scene.dialog === dialog) {
+        if (this._scene && this._scene.dialog === dialog) {
             this._scene.dialog = undefined;
         }
     }
