@@ -112,7 +112,7 @@ export class Node extends RoSGNode implements BrsValue {
     constructor(
         initializedFields: AAMember[] = [],
         readonly nodeSubtype: string = SGNodeType.Node,
-        nodeType?: SGNodeType,
+        nodeType?: SGNodeType
     ) {
         super([], nodeSubtype);
         this.syncType = "node";
