@@ -171,7 +171,7 @@ export class SGRoot {
      * @param dialog Dialog instance to set
      */
     removeDialog(dialog: Dialog | StandardDialog) {
-        if (this._scene && this._scene.dialog === dialog) {
+        if (this._scene?.dialog === dialog) {
             this._scene.dialog = undefined;
         }
     }
