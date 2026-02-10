@@ -45,6 +45,7 @@ export interface DeviceInfo {
     maxFps: number;
     tmpVolSize: number;
     cacheFSVolSize: number;
+    logLevel: LogLevel;
     registry?: Map<string, string>;
     registryBuffer?: SharedArrayBuffer;
     models?: Map<string, string[]>;
@@ -56,6 +57,12 @@ export interface DeviceInfo {
     debugOnCrash?: boolean;
     corsProxy?: string;
     extensions?: Map<SupportedExtension, string>;
+}
+
+export enum LogLevel {
+    Debug,
+    Warning,
+    Error,
 }
 
 export type SupportedLocale =
@@ -144,6 +151,7 @@ export const DefaultDeviceInfo: DeviceInfo = {
     maxFps: 60,
     tmpVolSize: 32 * 1024 * 1024, // 32 MB
     cacheFSVolSize: 32 * 1024 * 1024, // 32 MB
+    logLevel: LogLevel.Warning,
 };
 
 // Valid Closed Captions Options
