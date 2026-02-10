@@ -1,4 +1,4 @@
-import { Callable, ValueKind, BrsString, Int32, Int64, Float, StdlibArgument, BrsInvalid } from "../brsTypes";
+import { Callable, ValueKind, BrsString, Int32, Float, Double, StdlibArgument, BrsInvalid } from "../brsTypes";
 import { Interpreter } from "../interpreter";
 import { BrsNumber } from "../brsTypes/BrsNumber";
 
@@ -155,33 +155,20 @@ export const Mid = new Callable(
 
 /**
  * Return a string from a numeric value. If it is positive, prefix it with a space.
- * Supports LongInteger (Int64) with full precision, avoiding Float32 truncation.
+ * Uses a single Double overload so that Float, Int32, and Int64 all coerce without
+ * precision loss (JavaScript numbers are 64-bit doubles natively).
  */
-export const Str = new Callable(
-    "Str",
-    {
-        signature: {
-            args: [new StdlibArgument("value", ValueKind.Int64)],
-            returns: ValueKind.String,
-        },
-        impl: (_: Interpreter, value: Int64): BrsString => {
-            const longValue = value.getValue();
-            const prefix = !longValue.isNegative() ? " " : "";
-            return new BrsString(prefix + longValue.toString());
-        },
+export const Str = new Callable("Str", {
+    signature: {
+        args: [new StdlibArgument("value", ValueKind.Double)],
+        returns: ValueKind.String,
     },
-    {
-        signature: {
-            args: [new StdlibArgument("value", ValueKind.Float)],
-            returns: ValueKind.String,
-        },
-        impl: (_: Interpreter, value: Float): BrsString => {
-            const floatValue = value.getValue();
-            const prefix = floatValue >= 0.0 ? " " : "";
-            return new BrsString(prefix + String(floatValue));
-        },
-    }
-);
+    impl: (_: Interpreter, value: Double): BrsString => {
+        const doubleValue = value.getValue();
+        const prefix = doubleValue >= 0.0 ? " " : "";
+        return new BrsString(prefix + String(doubleValue));
+    },
+});
 
 /**
  * Return a string from an integer. If it is positive, prefix it with a space.
