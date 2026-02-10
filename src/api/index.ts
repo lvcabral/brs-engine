@@ -905,10 +905,9 @@ function deviceDebug(data: string) {
     }
     const level = data.split(",")[0];
     const content = data.slice(level.length + 1);
+    const logLevel = deviceData.logLevel;
     // Filter out debug messages based on log level
-    if (level ==="debug" && deviceData.logLevel > LogLevel.Debug) {
-        return;
-    } else if (level === "warning" && deviceData.logLevel > LogLevel.Warning) {
+    if ((level === "debug" && logLevel > LogLevel.Debug) || (level === "warning" && logLevel > LogLevel.Warning)) {
         return;
     }
     if (debugToConsole) {
