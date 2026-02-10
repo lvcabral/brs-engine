@@ -21,6 +21,7 @@ sub main()
     print Instr(mixedCase, "xed") ' 3
     print Str(3.4) ' " 3.4"
     print Str(9.7#) ' " 9.7"
+    print Str(2166136261&) ' " 2166136261" - LongInteger with full precision
     print StrI(-3) ' "-3"
     print Val("12.34") ' 12.34
     print Val("") ' 0
