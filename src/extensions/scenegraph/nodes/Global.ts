@@ -3,8 +3,8 @@ import { Node } from "./Node";
 import { SGNodeType } from ".";
 
 export class Global extends Node {
-    constructor(members: AAMember[] = [], readonly name: string = SGNodeType.Node) {
-        super([], name);
+    constructor(members: AAMember[] = []) {
+        super([], SGNodeType.Node);
         this.registerInitializedFields(members);
         this.owner = 0; // Global node is always owned by render thread
     }

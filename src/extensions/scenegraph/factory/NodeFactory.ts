@@ -19,6 +19,7 @@ import {
     Uninitialized,
     ValueKind,
     RuntimeError,
+    isSyncType,
 } from "brs-engine";
 import {
     ArrayGrid,
@@ -304,6 +305,42 @@ export function createNodeByType(type: string, interpreter?: Interpreter): Node 
     return node;
 }
 
+export function createRemoteNodeByType(type: string, subtype: string): RemoteNode | BrsInvalid {
+    const nodeType = isSGNodeType(type) ? type : SGNodeType.Node;
+    const syncType = type.toLowerCase();
+    const node = new RemoteNode(nodeType, subtype, isSyncType(syncType) ? syncType : "node");
+    if (!isSGNodeType(subtype)) {
+        let typeDef = sgRoot.nodeDefMap.get(subtype.toLowerCase());
+        //use typeDef object to tack on all the bells & whistles of a custom node
+        const typeDefStack = updateTypeDefHierarchy(typeDef);
+        // Start from the "basemost" component of the tree.
+        typeDef = typeDefStack.pop();
+        if (!typeDef) {
+            BrsDevice.stderr.write(
+                `warning,Warning: Failed to create roSGNode with type ${nodeType}:${subtype}: ${
+                    sgRoot.interpreter?.formatLocation() ?? ""
+                }`
+            );
+            return BrsInvalid.Instance;
+        }
+        const fields = typeDef.fields;
+        for (const [fieldName, fieldValue] of Object.entries(fields)) {
+            if (!(fieldValue instanceof Object)) {
+                continue;
+            }
+            node.addNodeField(fieldName, fieldValue.type, fieldValue.alwaysNotify === "true", false);
+        }
+    }
+    // If Node is being created in a task thread, ensure its parent is set to the current task.
+    if (sgRoot.inTaskThread()) {
+        const task = sgRoot.getCurrentThreadTask();
+        if (task && isInvalid(node.getNodeParent())) {
+            node.setNodeParent(task);
+        }
+    }
+    return node;
+}
+
 /**
  * Creates a Scene node by its type name as defined in XML component files.
  * Validates that the type is a Scene subtype before creation.
@@ -523,13 +560,6 @@ export function initializeTask(interpreter: Interpreter, taskData: TaskData) {
  * @param taskData Serialized task data with field values and state
  */
 function loadTaskData(interpreter: Interpreter, node: Node, taskData: TaskData) {
-    if (taskData.scene?.["_node_"]) {
-        const nodeInfo = getSerializedNodeInfo(taskData.scene);
-        const sceneName = nodeInfo?.subtype || SGNodeType.Scene;
-        const scene = new RemoteNode(sceneName, "scene");
-        sgRoot.setScene(scene);
-        restoreNode(interpreter, taskData.scene, scene);
-    }
     let port: RoMessagePort | undefined;
     if (taskData.m) {
         for (let [key, value] of Object.entries(taskData.m)) {
@@ -538,11 +568,19 @@ function loadTaskData(interpreter: Interpreter, node: Node, taskData: TaskData) 
                 continue;
             }
             const brsValue = brsValueOf(value);
+            postMessage(`debug,[thread:${sgRoot.threadId}] Restoring task m.${key} with value ${brsValue.toString()}`);
             if (!port && brsValue instanceof RoMessagePort) {
                 port = brsValue;
             }
             node.m.set(new BrsString(key), brsValue);
         }
+    }
+    if (taskData.scene?.["_node_"]) {
+        const nodeInfo = getSerializedNodeInfo(taskData.scene);
+        const sceneName = nodeInfo?.subtype || SGNodeType.Scene;
+        const scene = new RemoteNode(SGNodeType.Scene, sceneName, "scene");
+        sgRoot.setScene(scene);
+        restoreNode(interpreter, taskData.scene, scene, port);
     }
     if (taskData.m?.global) {
         restoreNode(interpreter, taskData.m.global, sgRoot.mGlobal, port);
@@ -593,10 +631,24 @@ function restoreNode(interpreter: Interpreter, source: any, node: Node | RemoteN
     node.setAddress(source["_address_"] ?? node.getAddress());
     for (let [key, value] of Object.entries(source)) {
         if (key.startsWith("_") && key.endsWith("_") && key.length > 2) {
-            // Ignore transfer metadata fields
+            // Ignore serialization metadata fields
             continue;
         }
-        node.setValueSilent(key, brsValueOf(value));
+        const brsValue = brsValueOf(value);
+        if (brsValue instanceof RemoteNode) {
+            postMessage(
+                `debug,[thread:${sgRoot.threadId}] Restoring Remote Node ${
+                    node.nodeSubtype
+                } field ${key} with value ${brsValue.toString()}`
+            );
+        } else if (brsValue instanceof Node) {
+            postMessage(
+                `debug,[thread:${sgRoot.threadId}] Restoring Node ${
+                    node.nodeSubtype
+                } field ${key} with value ${brsValue.toString()}`
+            );
+        }
+        node.setValueSilent(key, brsValue);
         if (port && Array.isArray(observedFields)) {
             const observed = observedFields.find((field: ObservedField) => field.name === key);
             if (observed) {
@@ -640,7 +692,7 @@ function addFields(interpreter: Interpreter, node: Node, typeDef: ComponentDefin
                 BrsDevice.stderr.write(msg);
                 return;
             }
-            node.addNodeField(fieldName, fieldValue.type, fieldValue.alwaysNotify === "true");
+            node.addNodeField(fieldName, fieldValue.type, fieldValue.alwaysNotify === "true", false);
             // set default value if it was specified in xml
             if (fieldValue.value) {
                 node.setValueSilent(fieldName, getBrsValueFromFieldType(fieldValue.type, fieldValue.value));

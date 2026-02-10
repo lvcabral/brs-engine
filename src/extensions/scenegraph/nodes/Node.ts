@@ -578,13 +578,14 @@ export class Node extends RoSGNode implements BrsValue {
      * @param fieldName Name of the field to create.
      * @param type Roku field type string.
      * @param alwaysNotify Whether observers should always fire for the field.
+     * @param sync Whether the field update should be synchronized with other threads.
      */
-    addNodeField(fieldName: string, type: string, alwaysNotify: boolean) {
+    addNodeField(fieldName: string, type: string, alwaysNotify: boolean, sync?: boolean) {
         let defaultValue = getBrsValueFromFieldType(type);
         let fieldKind = FieldKind.fromString(type);
 
         if (defaultValue !== Uninitialized.Instance && !this.fields.has(fieldName.toLowerCase())) {
-            this.setValue(fieldName, defaultValue, alwaysNotify, fieldKind);
+            this.setValue(fieldName, defaultValue, alwaysNotify, fieldKind, sync);
             this.makeDirty();
         }
     }
@@ -938,9 +939,10 @@ export class Node extends RoSGNode implements BrsValue {
      * @param node Root to inspect.
      * @param id Identifier to seek (case-insensitive).
      * @param ignoreRoot Whether to ignore the root node in the search.
+     * @param visited Set of previously visited nodes to prevent infinite recursion.
      * @returns The matching node or BrsInvalid when not found.
      */
-    findNodeById(node: Node, id: string, ignoreRoot?: boolean): Node | BrsInvalid {
+    findNodeById(node: Node, id: string, ignoreRoot?: boolean, visited: Set<Node> = new Set()): Node | BrsInvalid {
         if (!ignoreRoot) {
             // test current node in tree
             const myId = node.getValue("id");
@@ -948,12 +950,16 @@ export class Node extends RoSGNode implements BrsValue {
                 return node;
             }
         }
+        if (visited.has(node)) {
+            return BrsInvalid.Instance;
+        }
+        visited.add(node);
         // visit each child
         for (const child of node.children) {
             if (!(child instanceof Node)) {
                 continue;
             }
-            const result = this.findNodeById(child, id, false);
+            const result = this.findNodeById(child, id, false, visited);
             if (result instanceof Node) {
                 return result;
             }
@@ -966,18 +972,58 @@ export class Node extends RoSGNode implements BrsValue {
      * Searches the subtree rooted at the provided node for a matching address.
      * @param root Root to inspect.
      * @param address Address to seek.
+     * @param searchFields Whether to also search fields for node references.
+     * @param visited Set of previously visited nodes to prevent infinite recursion.
      * @returns The matching node or undefined when not found.
      */
-    findNodeByAddress(root: Node | undefined, address: string): Node | undefined {
+    findNodeByAddress(
+        root: Node | undefined,
+        address: string,
+        searchFields: boolean = false,
+        visited: Set<Node> = new Set()
+    ): Node | undefined {
         if (!root) {
             return undefined;
         }
+        if (visited.has(root)) {
+            return undefined;
+        }
+        visited.add(root);
         if (root.address === address) {
             return root;
         }
+        if (searchFields) {
+            for (const [_, field] of root.fields) {
+                const value = field.getValue();
+                if (value instanceof Node) {
+                    const match = this.findNodeByAddress(value, address, true, visited);
+                    if (match) {
+                        return match;
+                    }
+                } else if (value instanceof RoAssociativeArray) {
+                    for (const [__, element] of value.elements) {
+                        if (element instanceof Node) {
+                            const match = this.findNodeByAddress(element, address, true, visited);
+                            if (match) {
+                                return match;
+                            }
+                        }
+                    }
+                } else if (value instanceof RoArray) {
+                    for (const element of value.getElements()) {
+                        if (element instanceof Node) {
+                            const match = this.findNodeByAddress(element, address, true, visited);
+                            if (match) {
+                                return match;
+                            }
+                        }
+                    }
+                }
+            }
+        }
         for (const child of root.getNodeChildren()) {
             if (child instanceof Node) {
-                const match = this.findNodeByAddress(child, address);
+                const match = this.findNodeByAddress(child, address, searchFields, visited);
                 if (match) {
                     return match;
                 }
@@ -1575,6 +1621,7 @@ export class Node extends RoSGNode implements BrsValue {
      * @param id Target thread id.
      * @param action Sync action.
      * @param type Update domain.
+     * @param address Node address for the update.
      * @param key Field name being synchronized.
      * @param value Value to send.
      * @param deep When true nested nodes are deeply serialized.
@@ -1584,13 +1631,14 @@ export class Node extends RoSGNode implements BrsValue {
         id: number,
         action: SyncAction,
         type: SyncType,
+        address: string,
         key: string,
         value: BrsType,
         deep: boolean = false,
         requestId?: number
     ) {
         const serializedValue = value instanceof Node ? fromSGNode(value, deep) : jsValueOf(value);
-        const update: ThreadUpdate = { id, action, type, key, value: serializedValue };
+        const update: ThreadUpdate = { id, action, type, key, value: serializedValue, address };
         if (requestId !== undefined) {
             update.requestId = requestId;
         }
@@ -1598,24 +1646,6 @@ export class Node extends RoSGNode implements BrsValue {
             value.changed = false;
         }
         postMessage(update);
-    }
-
-    /**
-     * Synchronizes field observers back to the main thread when applicable.
-     * @param key Field to synchronize.
-     * @param type Sync domain: `scene` or `global`.
-     */
-    protected syncRemoteObservers(key: string, type: SyncType) {
-        const field = this.fields.get(key.toLowerCase());
-        if (!field) {
-            return;
-        }
-        if (sgRoot.inTaskThread() && this.owner !== sgRoot.threadId) {
-            // Sync all fields owned by the main thread back to the main thread
-            const fieldValue = field.getValue(false);
-            const deep = fieldValue instanceof Node;
-            this.sendThreadUpdate(sgRoot.threadId, "set", type, key, fieldValue, deep);
-        }
     }
 
     /**

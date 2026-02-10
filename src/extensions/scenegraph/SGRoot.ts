@@ -43,7 +43,7 @@ export class SGRoot {
     }
 
     get mGlobal(): Global | RemoteNode {
-        this._mGlobal ??= new Global([]);
+        this._mGlobal ??= new Global();
         return this._mGlobal;
     }
 
@@ -216,7 +216,7 @@ export class SGRoot {
     setCurrentThread(threadId: number) {
         this._threadId = threadId;
         BrsDevice.threadId = threadId;
-        this._mGlobal = this.threadId === 0 ? new Global([]) : new RemoteNode(SGNodeType.Node, "global");
+        this._mGlobal = this.threadId === 0 ? new Global() : new RemoteNode(SGNodeType.Node, SGNodeType.Node, "global");
     }
 
     /**

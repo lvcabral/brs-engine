@@ -31,8 +31,13 @@ export class RemoteNode extends Node implements BrsValue {
      * @param nodeSubtype Concrete subtype identifier used for serialization and debugging.
      * @param syncType Sync type used for remote field and method requests.
      */
-    constructor(readonly nodeSubtype: string = SGNodeType.Node, readonly syncType: SyncType) {
+    constructor(
+        readonly nodeType: SGNodeType,
+        readonly nodeSubtype: string,
+        readonly syncType: SyncType
+    ) {
         super([], nodeSubtype);
+        this.setExtendsType(nodeSubtype, nodeType);
         this.owner = 0; // Remote node is always owned by render thread
         const methods = [
             // ifAssociativeArray
@@ -95,7 +100,7 @@ export class RemoteNode extends Node implements BrsValue {
         ];
         this.overrideMethods(methods);
         BrsDevice.stdout.write(
-            `debug, [node:${sgRoot.threadId}] Created RemoteNode of subtype "${this.nodeSubtype}" with sync type "${this.syncType}"`
+            `debug, [node:${sgRoot.threadId}] Created RemoteNode "${this.nodeType}:${this.nodeSubtype}" with sync type "${this.syncType}"`
         );
     }
     // Scene properties mocked for RemoteNode
@@ -112,10 +117,10 @@ export class RemoteNode extends Node implements BrsValue {
     get(index: BrsType): BrsType {
         if (sgRoot.inTaskThread() && isBrsString(index)) {
             const key = index.toString().toLowerCase();
-            const task = sgRoot.getCurrentThreadTask();
             if (this.fields.has(key)) {
+                const task = sgRoot.getCurrentThreadTask();
                 if (task?.active && !this.consumeFreshField(key)) {
-                    task.requestFieldValue(this.syncType, key);
+                    task.requestFieldValue(this.syncType, this.address, key);
                 }
             } else {
                 const method = this.getMethod(key);
@@ -138,12 +143,14 @@ export class RemoteNode extends Node implements BrsValue {
      */
     setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind, sync: boolean = true) {
         BrsDevice.stdout.write(
-            `debug, [node:${sgRoot.threadId}] RemoteNode.setValue() called for field "${this.nodeSubtype}.${index}"`
+            `debug, [node:${sgRoot.threadId}] RemoteNode.setValue() called for field "${
+                this.getId() || this.nodeSubtype
+            }.${index}"`
         );
         const fieldName = index.toLowerCase();
         super.setValue(index, value, alwaysNotify, kind);
         if (sync && this.changed) {
-            this.syncRemoteObservers(fieldName, this.syncType);
+            this.syncRemoteField(fieldName);
             this.changed = false;
         }
     }
@@ -155,6 +162,23 @@ export class RemoteNode extends Node implements BrsValue {
     setOwner(_threadId: number): void {
         // Remote node owner cannot be changed
         return;
+    }
+
+    /**
+     * Synchronizes field back to the main thread when applicable.
+     * @param key Field to synchronize.
+     */
+    protected syncRemoteField(key: string) {
+        const field = this.fields.get(key.toLowerCase());
+        if (!field) {
+            return;
+        }
+        if (sgRoot.inTaskThread() && this.owner !== sgRoot.threadId) {
+            // Sync all fields owned by the main thread back to the main thread
+            const fieldValue = field.getValue(false);
+            const deep = fieldValue instanceof Node;
+            this.sendThreadUpdate(sgRoot.threadId, "set", this.syncType, this.address, key, fieldValue, deep);
+        }
     }
 
     /**
@@ -175,7 +199,7 @@ export class RemoteNode extends Node implements BrsValue {
             }
             const location = interpreter.location;
             const payload: MethodCallPayload = args ? { host, args, location } : { host, location };
-            result = task.requestMethodCall(this.syncType, methodName, payload);
+            result = task.requestMethodCall(this.syncType, this.address, methodName, payload);
         }
         return result;
     }

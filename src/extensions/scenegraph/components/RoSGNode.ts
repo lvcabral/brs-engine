@@ -162,7 +162,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
     abstract getValues(): BrsType[];
     abstract setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind, sync?: boolean): void;
     abstract setValueSilent(fieldName: string, value: BrsType, alwaysNotify?: boolean): void;
-    abstract addNodeField(fieldName: string, type: string, alwaysNotify: boolean): void;
+    abstract addNodeField(fieldName: string, type: string, alwaysNotify: boolean, sync: boolean): void;
     abstract getAddress(): string;
     abstract setAddress(address: string): void;
     abstract getOwner(): number;
@@ -352,7 +352,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
         },
         impl: (interpreter: Interpreter, fieldName: BrsString, type: BrsString, alwaysNotify: BrsBoolean) => {
             this.location = interpreter.formatLocation();
-            this.addNodeField(fieldName.getValue(), type.getValue(), alwaysNotify.toBoolean());
+            this.addNodeField(fieldName.getValue(), type.getValue(), alwaysNotify.toBoolean(), true);
             return BrsBoolean.True;
         },
     });

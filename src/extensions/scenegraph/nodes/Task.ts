@@ -79,7 +79,7 @@ export class Task extends Node {
             if (this.fields.has(fieldName)) {
                 if (this.owner !== sgRoot.threadId && this.threadId >= 0) {
                     if (!this.consumeFreshField(fieldName)) {
-                        this.requestFieldValue("task", fieldName);
+                        this.requestFieldValue("task", this.address, fieldName);
                     }
                 } else if (this.thread) {
                     this.updateTask();
@@ -144,7 +144,7 @@ export class Task extends Node {
             this.fields.set("state", state);
             // Notify other threads of field changes
             if (this.threadId >= 0 && this.thread && sync) {
-                this.sendThreadUpdate(this.threadId, "set", "task", "control", new BrsString(control));
+                this.sendThreadUpdate(this.threadId, "set", "task", this.address, "control", new BrsString(control));
             }
         }
     }
@@ -156,7 +156,7 @@ export class Task extends Node {
         const currentValue = field.getValue(false);
         const deep = currentValue instanceof Node;
         const requestId = this.thread ? this.syncRequestId++ : undefined;
-        this.sendThreadUpdate(this.threadId, "set", "task", fieldName, currentValue, deep, requestId);
+        this.sendThreadUpdate(this.threadId, "set", "task", this.address, fieldName, currentValue, deep, requestId);
         if (requestId !== undefined) {
             this.waitForFieldAck(fieldName, requestId);
         }
@@ -171,7 +171,7 @@ export class Task extends Node {
             `debug,[task-sync] Task #${sgRoot.threadId} responding to field request for ${update.type}.${update.key} from thread ${update.id}`
         );
         const deep = value instanceof Node;
-        this.sendThreadUpdate(update.id, "set", update.type, update.key, value, deep);
+        this.sendThreadUpdate(update.id, "set", update.type, node.getAddress(), update.key, value, deep);
     }
 
     private waitForFieldAck(fieldName: string, requestId: number, timeoutMs: number = 10000) {
@@ -234,6 +234,7 @@ export class Task extends Node {
             id: this.threadId,
             action: "set",
             type: "task",
+            address: this.address,
             key: "control",
             value: "stop",
         };
@@ -250,11 +251,11 @@ export class Task extends Node {
         this.active = true;
     }
 
-    requestFieldValue(type: SyncType, fieldName: string, timeoutMs: number = 10000): boolean {
+    requestFieldValue(type: SyncType, address: string, fieldName: string, timeoutMs: number = 10000): boolean {
         if (!this.taskBuffer || this.threadId < 0) {
             return false;
         }
-        this.sendThreadUpdate(this.threadId, "get", type, fieldName, BrsInvalid.Instance, false);
+        this.sendThreadUpdate(this.threadId, "get", type, address, fieldName, BrsInvalid.Instance, false);
         const deadline = Date.now() + timeoutMs;
 
         while (true) {
@@ -279,6 +280,7 @@ export class Task extends Node {
 
     requestMethodCall(
         type: SyncType,
+        address: string,
         methodName: string,
         payload?: MethodCallPayload,
         timeoutMs: number = 10000
@@ -287,7 +289,7 @@ export class Task extends Node {
             return undefined;
         }
         const value = payload ? toAssociativeArray(payload) : BrsInvalid.Instance;
-        this.sendThreadUpdate(this.threadId, "call", type, methodName, value, false);
+        this.sendThreadUpdate(this.threadId, "call", type, address, methodName, value, false);
         const deadline = Date.now() + timeoutMs;
 
         while (true) {
@@ -366,7 +368,7 @@ export class Task extends Node {
         for (const [name, field] of this.getNodeFields()) {
             const value = field.getValue();
             if (!field.isHidden() && value instanceof Node && value.changed) {
-                this.sendThreadUpdate(this.threadId, "set", "task", name, value, true);
+                this.sendThreadUpdate(this.threadId, "set", "task", this.address, name, value, true);
             }
         }
         return updates !== undefined;
@@ -393,8 +395,11 @@ export class Task extends Node {
                 }
                 return update;
             }
-            const node = this.getNodeToUpdate(update.type);
+            const node = this.getNodeToUpdate(update);
             if (!node) {
+                BrsDevice.stderr.write(
+                    `warning,[task:${sgRoot.threadId}] Node sync type: ${update.type}, from ${update.id} ${update.action} '${update.key}' - target node not found!`
+                );
                 return undefined;
             }
             if (update.action === "get") {
@@ -412,7 +417,7 @@ export class Task extends Node {
             // Apply Field update
             const oldValue = node.getValue(update.key);
             let value: BrsType;
-            if (oldValue instanceof Node && update.value?._node_ && oldValue.getAddress() === update.value._address_) {
+            if (!this.thread && oldValue instanceof Node && oldValue.getAddress() === update.value._address_) {
                 // Update existing node to preserve references
                 value = updateSGNode(update.value, oldValue);
             } else {
@@ -426,6 +431,7 @@ export class Task extends Node {
                     update.id,
                     "ack",
                     update.type,
+                    update.address,
                     update.key,
                     BrsInvalid.Instance,
                     false,
@@ -442,14 +448,17 @@ export class Task extends Node {
      * @param type Domain identifier (`global`, `task`, or `scene`).
      * @returns Target node, if available.
      */
-    private getNodeToUpdate(type: SyncType): Node | undefined {
-        if (type === "global") {
+    private getNodeToUpdate(update: ThreadUpdate): Node | undefined {
+        if (update.type === "global") {
             return sgRoot.mGlobal;
-        } else if (type === "scene") {
+        } else if (update.type === "scene") {
             return sgRoot.scene;
-        } else {
+        } else if (update.type === "task") {
             return this;
+        } else if (update.address) {
+            return this.resolveNode(update.address, true);
         }
+        return undefined;
     }
 
     /**
@@ -465,7 +474,7 @@ export class Task extends Node {
             );
             return;
         }
-        const hostNode = this.resolveHostNode(update.value.host);
+        const hostNode = this.resolveNode(payload.host);
         if (!hostNode) {
             BrsDevice.stderr.write(
                 `warning,[task:${sgRoot.threadId}] Unable to resolve host node '${payload.host}' for method call request: ${update.type}.${update.key}`
@@ -480,24 +489,24 @@ export class Task extends Node {
         const args: BrsType[] = value instanceof RoArray ? value.getElements() : [];
         const location = payload.location ?? sgRoot.interpreter.location;
         const result = sgRoot.interpreter.call(method, args, hostNode.m, location, hostNode);
-        this.sendThreadUpdate(update.id, "resp", update.type, update.key, result, false);
+        this.sendThreadUpdate(update.id, "resp", update.type, update.address, update.key, result, false);
     }
 
     /**
-     * Resolves the host node based on the given address.
-     * @param address The address of the host node to resolve.
-     * @returns The resolved host node, or undefined if not found.
+     * Resolves the node based on the given address.
+     * @param address The address of the node to resolve.
+     * @returns The resolved node, or undefined if not found.
      */
-    private resolveHostNode(address: string) {
+    private resolveNode(address: string, searchFields: boolean = false): Node | undefined {
         if (address) {
             const rootNodes = [this, sgRoot.scene, sgRoot.mGlobal];
             for (const rootNode of rootNodes) {
                 BrsDevice.stdout.write(
-                    `debug,[task:${sgRoot.threadId}] Resolving host node by address: ${address} from ${
+                    `debug,[task:${sgRoot.threadId}] Resolving node by address: ${address} from ${
                         rootNode?.nodeSubtype
                     }:${rootNode?.getAddress()}`
                 );
-                const foundNode = this.findNodeByAddress(rootNode, address);
+                const foundNode = this.findNodeByAddress(rootNode, address, searchFields);
                 if (foundNode) {
                     return foundNode;
                 }

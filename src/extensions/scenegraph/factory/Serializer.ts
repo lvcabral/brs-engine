@@ -22,9 +22,10 @@ import {
     Callable,
     StdlibArgument,
 } from "brs-engine";
-import { getNodeType, SGNodeFactory, createNodeByType } from "./NodeFactory";
-import { ContentNode, Node, SGNodeType } from "../nodes";
+import { SGNodeFactory, createNodeByType, createRemoteNodeByType, isSGNodeType } from "./NodeFactory";
+import { ContentNode, Node, RemoteNode, SGNodeType } from "../nodes";
 import { ObservedField } from "../SGTypes";
+import { sgRoot } from "../SGRoot";
 
 /**
  * Converts a BrsType value to its representation as a JavaScript type.
@@ -184,9 +185,11 @@ function fromObject(obj: any, cs?: boolean, nodeMap?: Map<string, Node>): BrsTyp
         );
     } else if (obj["_node_"] || obj["_circular_"]) {
         // Handle both regular nodes and circular references
-        const nodeInfo = obj["_node_"] ? obj["_node_"].split(":") : obj["_circular_"].split(":");
-        if (nodeInfo.length === 2) {
-            return toSGNode(obj, nodeInfo[0], nodeInfo[1], nodeMap);
+        const nodeInfo = getSerializedNodeInfo(obj);
+        if (nodeInfo) {
+            return sgRoot.inTaskThread() && !["ContentNode", "Task"].includes(nodeInfo.type)
+                ? toRemoteNode(obj, nodeInfo.type, nodeInfo.subtype, nodeMap)
+                : toSGNode(obj, nodeInfo.type, nodeInfo.subtype, nodeMap);
         }
         return BrsInvalid.Instance;
     } else if (obj["_component_"]) {
@@ -271,6 +274,41 @@ export function toSGNode(obj: any, type: string, subtype: string, nodeMap?: Map<
     }
     return newNode;
 }
+
+export function toRemoteNode(obj: any, type: string, subtype: string, nodeMap?: Map<string, Node>): Node {
+    // Initialize nodeMap on first call
+    nodeMap ??= new Map<string, Node>();
+
+    // Check if this is a circular reference
+    if (obj["_circular_"] && obj["_address_"]) {
+        const existingNode = nodeMap.get(obj["_address_"]);
+        if (existingNode) {
+            return existingNode;
+        }
+        // If we don't have the node yet, this might be a forward reference
+        // Return invalid for now (should not happen in valid serialized data)
+        return BrsInvalid.Instance as any;
+    }
+    let newNode = createRemoteNodeByType(type, subtype);
+    if (newNode instanceof BrsInvalid) {
+        const nodeType = isSGNodeType(type) ? type : SGNodeType.Node;
+        newNode = new RemoteNode(nodeType, subtype, "node");
+    }
+    // Store the node in the map using the original address for circular reference resolution
+    // Use the address from serialized data if available, otherwise use the new node's address
+    newNode.setAddress(obj["_address_"] || newNode.getAddress());
+    newNode.setOwner(obj["_owner_"] ?? newNode.getOwner());
+    nodeMap.set(newNode.getAddress(), newNode);
+
+    for (const key in obj) {
+        if (key.startsWith("_") && key.endsWith("_") && key.length > 2) {
+            continue;
+        }
+        newNode.setValueSilent(key, brsValueOf(obj[key], undefined, nodeMap));
+    }
+    return newNode;
+}
+
 
 /**
  * Retrieves the serialized node type and subtype information from a serialized node object.
@@ -433,7 +471,7 @@ export function fromSGNode(node: Node, deep: boolean = true, host?: Node, visite
     visited ??= new WeakSet<Node>();
     if (visited.has(node)) {
         return {
-            _circular_: `${getNodeType(node.nodeSubtype)}:${node.nodeSubtype}`,
+            _circular_: `${node.nodeType}:${node.nodeSubtype}`,
             _address_: node.getAddress(),
         };
     }
@@ -443,7 +481,7 @@ export function fromSGNode(node: Node, deep: boolean = true, host?: Node, visite
     const fields = node.getNodeFields();
     const observed: ObservedField[] = [];
 
-    result["_node_"] = `${getNodeType(node.nodeSubtype)}:${node.nodeSubtype}`;
+    result["_node_"] = `${node.nodeType}:${node.nodeSubtype}`;
     result["_address_"] = node.getAddress();
     result["_owner_"] = node.getOwner();
 
