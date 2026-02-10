@@ -27,6 +27,7 @@ const deviceInfo = {
   maxFps: 60, // Maximum frames per second for rendering
   tmpVolSize: 32 * 1024 * 1024, // Allocated size for `tmp:/` volume (32 MB)
   cacheFSVolSize: 32 * 1024 * 1024, // Allocated size for `cachefs:/` volume (32 MB)
+  logLevel: LogLevel.Warning, // Log level for the engine (Debug, Warning, Error)
   corsProxy: "https://your-cors-proxy-instance.yourdomain.com/", // (optional) Add your CORS-Anywhere URL here
 };
 ```

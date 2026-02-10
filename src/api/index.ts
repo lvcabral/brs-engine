@@ -30,6 +30,7 @@ import {
     RegistryData,
     isRegistryData,
     isExtensionInfo,
+    LogLevel,
 } from "../core/common";
 import {
     source,
@@ -126,6 +127,7 @@ let brsWrkLib: string = "./brs.worker.js";
 let inDebugLib: boolean = false;
 /// #if DEBUG
 inDebugLib = true;
+deviceData.logLevel = LogLevel.Debug;
 /// #endif
 
 let clearDisplayOnExit: boolean = true;
@@ -903,15 +905,20 @@ function deviceDebug(data: string) {
     }
     const level = data.split(",")[0];
     const content = data.slice(level.length + 1);
+    const logLevel = deviceData.logLevel;
+    // Filter out debug messages based on log level
+    if ((level === "debug" && logLevel > LogLevel.Debug) || (level === "warning" && logLevel > LogLevel.Warning)) {
+        return;
+    }
     if (debugToConsole) {
         if (level === "error") {
             console.error(content);
         } else if (level === "warning") {
             console.warn(content);
+        } else if (level === "debug") {
+            console.debug(`%c${content}`, "color: #888888");
         } else if (level === "beacon") {
             console.info(`%c${content}`, "color: #4A90E2");
-        } else if (level === "debug" && inDebugLib) {
-            console.debug(`%c${content}`, "color: #888888");
         } else if (level === "print") {
             console.log(content);
         } else {
@@ -933,7 +940,7 @@ function apiException(level: string, message: string) {
     if (level === "error") {
         console.error(message);
         notifyAll("error", message);
-    } else {
+    } else if (deviceData.logLevel <= LogLevel.Warning) {
         console.warn(message);
     }
 }

@@ -52,7 +52,7 @@ import Long from "long";
 import { Scope, Environment, NotFound } from "./Environment";
 import { toCallable } from "./BrsFunction";
 import { runDebugger } from "./MicroDebugger";
-import { DataType, DebugCommand, DefaultSounds, numberToHex, parseTextFile } from "../common";
+import { DataType, DebugCommand, DefaultSounds, LogLevel, numberToHex, parseTextFile } from "../common";
 /// #if !BROWSER
 import * as v8 from "node:v8";
 /// #endif
@@ -525,7 +525,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         if (!lastExpression || !isToken(lastExpression) || lastExpression.kind !== Lexeme.Semicolon) {
             printStream += "\r\n";
         }
-
+        if (BrsDevice.deviceInfo.logLevel === LogLevel.Debug) {
+            printStream = `{${BrsDevice.threadId}} ${printStream}`;
+        }
         BrsDevice.stdout.write(`print,${printStream}`);
 
         // `tab` is only in-scope when executing print statements, so remove it before we leave
