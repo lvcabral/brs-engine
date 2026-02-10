@@ -100,7 +100,7 @@ export class RemoteNode extends Node implements BrsValue {
         ];
         this.overrideMethods(methods);
         BrsDevice.stdout.write(
-            `debug, [node:${sgRoot.threadId}] Created RemoteNode "${this.nodeType}:${this.nodeSubtype}" with sync type "${this.syncType}"`
+            `debug,[node:${sgRoot.threadId}] Created RemoteNode "${this.nodeType}:${this.nodeSubtype}" with sync type "${this.syncType}"`
         );
     }
     // Scene properties mocked for RemoteNode
@@ -143,7 +143,7 @@ export class RemoteNode extends Node implements BrsValue {
      */
     setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind, sync: boolean = true) {
         BrsDevice.stdout.write(
-            `debug, [node:${sgRoot.threadId}] RemoteNode.setValue() called for field "${
+            `debug,[node:${sgRoot.threadId}] RemoteNode.setValue() called for field "${
                 this.getId() || this.nodeSubtype
             }.${index}"`
         );

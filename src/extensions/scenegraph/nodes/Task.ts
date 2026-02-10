@@ -402,8 +402,8 @@ export class Task extends Node {
             const node = this.getNodeToUpdate(update);
             if (!node) {
                 const replied = this.handleUnresolvedNode(update);
-                BrsDevice.stderr.write(
-                    `warning,[task:${sgRoot.threadId}] Node sync type: ${update.type}, from ${update.id} ${
+                BrsDevice.stdout.write(
+                    `debug,[task:${sgRoot.threadId}] Node sync type: ${update.type}, from ${update.id} ${
                         update.action
                     } '${update.key}' - target node not found! It was ${replied ? "replied" : "not replied"}`
                 );
@@ -533,11 +533,6 @@ export class Task extends Node {
         if (address) {
             const rootNodes = [this, sgRoot.scene, sgRoot.mGlobal];
             for (const rootNode of rootNodes) {
-                BrsDevice.stdout.write(
-                    `debug,[task:${sgRoot.threadId}] Resolving node by address: ${address} from ${
-                        rootNode?.nodeSubtype
-                    }:${rootNode?.getAddress()}`
-                );
                 const foundNode = this.findNodeByAddress(rootNode, address, searchFields);
                 if (foundNode) {
                     return foundNode;
