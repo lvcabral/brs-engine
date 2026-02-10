@@ -19,7 +19,6 @@ import {
     Uninitialized,
     ValueKind,
     RuntimeError,
-    isSyncType,
 } from "brs-engine";
 import {
     ArrayGrid,
@@ -314,7 +313,7 @@ export function createRemoteNodeByType(type: string, subtype: string): Node | Br
         // Start from the "basemost" component of the tree.
         typeDef = typeDefStack.pop();
         if (typeDef) {
-            node = SGNodeFactory.createNode(typeDef!.extends as SGNodeType, type) ?? BrsInvalid.Instance;
+            node = SGNodeFactory.createNode(typeDef.extends as SGNodeType, type) ?? BrsInvalid.Instance;
             if (node instanceof Node) {
                 const fields = typeDef.fields;
                 for (const [fieldName, fieldValue] of Object.entries(fields)) {
