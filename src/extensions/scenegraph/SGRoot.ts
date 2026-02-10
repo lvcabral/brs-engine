@@ -7,13 +7,11 @@
  *--------------------------------------------------------------------------------------------*/
 import { BrsDevice, BufferType, DataType, genHexAddress, Interpreter, MediaEvent, MediaTrack } from "brs-engine";
 import { ComponentDefinition } from "./parser/ComponentDefinition";
-import { SGNodeType } from "./nodes";
 import { RoSGNode } from "./components/RoSGNode";
-import { RemoteNode } from "./nodes/RemoteNode";
 import { Global } from "./nodes/Global";
 import { SoundEffect } from "./nodes/SoundEffect";
 import { ThreadInfo } from "./SGTypes";
-import type { AnimationBase, Audio, Dialog, Scene, StandardDialog, Task, Timer, Video } from "./nodes";
+import type { AnimationBase, Audio, Dialog, Node, Scene, StandardDialog, Task, Timer, Video } from "./nodes";
 
 /**
  * A singleton object that holds the Node that represents the m.global, the root Scene,
@@ -23,9 +21,9 @@ import type { AnimationBase, Audio, Dialog, Scene, StandardDialog, Task, Timer, 
 
 export class SGRoot {
     private _interpreter: Interpreter | undefined;
-    private _mGlobal: Global | RemoteNode | undefined;
+    private _mGlobal: Global | undefined;
     private _nodeDefMap: Map<string, ComponentDefinition>;
-    private _scene?: Scene | RemoteNode;
+    private _scene?: Scene;
     private _focused?: RoSGNode;
     private _threadId: number;
     private _resolution: string;
@@ -42,7 +40,7 @@ export class SGRoot {
         return this._interpreter;
     }
 
-    get mGlobal(): Global | RemoteNode {
+    get mGlobal(): Global {
         this._mGlobal ??= new Global();
         return this._mGlobal;
     }
@@ -51,7 +49,7 @@ export class SGRoot {
         return this._nodeDefMap;
     }
 
-    get scene(): Scene | RemoteNode | undefined {
+    get scene(): Scene | undefined {
         return this._scene;
     }
 
@@ -163,9 +161,9 @@ export class SGRoot {
      * Sets the root Scene node.
      * @param scene Scene instance to set as root
      */
-    setScene(scene: Scene | RemoteNode) {
+    setScene(scene: Scene) {
         this._scene = scene;
-        if (scene?.ui) {
+        if (scene && "ui" in scene && scene.ui) {
             scene.setResolution(this._resolution);
         }
     }
@@ -175,7 +173,7 @@ export class SGRoot {
      * @param dialog Dialog instance to set
      */
     removeDialog(dialog: Dialog | StandardDialog) {
-        if (this._scene?.dialog === dialog) {
+        if (this._scene && "dialog" in this._scene && this._scene.dialog === dialog) {
             this._scene.dialog = undefined;
         }
     }
@@ -216,7 +214,7 @@ export class SGRoot {
     setCurrentThread(threadId: number) {
         this._threadId = threadId;
         BrsDevice.threadId = threadId;
-        this._mGlobal = this.threadId === 0 ? new Global() : new RemoteNode(SGNodeType.Node, SGNodeType.Node, "global");
+        this._mGlobal = new Global();
     }
 
     /**

@@ -77,7 +77,6 @@ import {
     FloatFieldInterpolator,
     ColorFieldInterpolator,
     Vector2DFieldInterpolator,
-    RemoteNode,
 } from "../nodes";
 import type { Field } from "../nodes/Field";
 import { ComponentDefinition, ComponentNode } from "../parser/ComponentDefinition";
@@ -305,38 +304,36 @@ export function createNodeByType(type: string, interpreter?: Interpreter): Node 
     return node;
 }
 
-export function createRemoteNodeByType(type: string, subtype: string): RemoteNode | BrsInvalid {
+export function createRemoteNodeByType(type: string, subtype: string): Node | BrsInvalid {
     const nodeType = isSGNodeType(type) ? type : SGNodeType.Node;
-    const syncType = type.toLowerCase();
-    const node = new RemoteNode(nodeType, subtype, isSyncType(syncType) ? syncType : "node");
-    if (!isSGNodeType(subtype)) {
+    let node = SGNodeFactory.createNode(type) ?? BrsInvalid.Instance;
+    if (node instanceof BrsInvalid) {
         let typeDef = sgRoot.nodeDefMap.get(subtype.toLowerCase());
         //use typeDef object to tack on all the bells & whistles of a custom node
         const typeDefStack = updateTypeDefHierarchy(typeDef);
         // Start from the "basemost" component of the tree.
         typeDef = typeDefStack.pop();
-        if (!typeDef) {
-            BrsDevice.stderr.write(
-                `warning,Warning: Failed to create roSGNode with type ${nodeType}:${subtype}: ${
-                    sgRoot.interpreter?.formatLocation() ?? ""
-                }`
-            );
-            return BrsInvalid.Instance;
-        }
-        const fields = typeDef.fields;
-        for (const [fieldName, fieldValue] of Object.entries(fields)) {
-            if (!(fieldValue instanceof Object)) {
-                continue;
+        if (typeDef) {
+            node = SGNodeFactory.createNode(typeDef!.extends as SGNodeType, type) ?? BrsInvalid.Instance;
+            if (node instanceof Node) {
+                const fields = typeDef.fields;
+                for (const [fieldName, fieldValue] of Object.entries(fields)) {
+                    if (!(fieldValue instanceof Object)) {
+                        continue;
+                    }
+                    node.addNodeField(fieldName, fieldValue.type, fieldValue.alwaysNotify === "true", false);
+                }
             }
-            node.addNodeField(fieldName, fieldValue.type, fieldValue.alwaysNotify === "true", false);
         }
     }
-    // If Node is being created in a task thread, ensure its parent is set to the current task.
-    if (sgRoot.inTaskThread()) {
-        const task = sgRoot.getCurrentThreadTask();
-        if (task && isInvalid(node.getNodeParent())) {
-            node.setNodeParent(task);
-        }
+    if (node instanceof Node) {
+        node.setOwner(0);
+    } else {
+        BrsDevice.stderr.write(
+            `warning,Warning: Failed to create roSGNode with type ${nodeType}:${subtype}: ${
+                sgRoot.interpreter?.formatLocation() ?? ""
+            }`
+        );
     }
     return node;
 }
@@ -578,9 +575,11 @@ function loadTaskData(interpreter: Interpreter, node: Node, taskData: TaskData) 
     if (taskData.scene?.["_node_"]) {
         const nodeInfo = getSerializedNodeInfo(taskData.scene);
         const sceneName = nodeInfo?.subtype || SGNodeType.Scene;
-        const scene = new RemoteNode(SGNodeType.Scene, sceneName, "scene");
-        sgRoot.setScene(scene);
-        restoreNode(interpreter, taskData.scene, scene, port);
+        const scene = createRemoteNodeByType(SGNodeType.Scene, sceneName);
+        if (scene instanceof Scene) {
+            sgRoot.setScene(scene);
+            restoreNode(interpreter, taskData.scene, scene, port);
+        }
     }
     if (taskData.m?.global) {
         restoreNode(interpreter, taskData.m.global, sgRoot.mGlobal, port);
@@ -625,7 +624,7 @@ export function updateTypeDefHierarchy(typeDef: ComponentDefinition | undefined)
  * @param node Node to restore fields into
  * @param port Optional message port for field observers
  */
-function restoreNode(interpreter: Interpreter, source: any, node: Node | RemoteNode, port?: RoMessagePort) {
+function restoreNode(interpreter: Interpreter, source: any, node: Node, port?: RoMessagePort) {
     const observedFields = source["_observed_"];
     node.setOwner(source["_owner_"] ?? sgRoot.threadId);
     node.setAddress(source["_address_"] ?? node.getAddress());
@@ -635,13 +634,7 @@ function restoreNode(interpreter: Interpreter, source: any, node: Node | RemoteN
             continue;
         }
         const brsValue = brsValueOf(value);
-        if (brsValue instanceof RemoteNode) {
-            postMessage(
-                `debug,[thread:${sgRoot.threadId}] Restoring Remote Node ${
-                    node.nodeSubtype
-                } field ${key} with value ${brsValue.toString()}`
-            );
-        } else if (brsValue instanceof Node) {
+        if (brsValue instanceof Node) {
             postMessage(
                 `debug,[thread:${sgRoot.threadId}] Restoring Node ${
                     node.nodeSubtype

@@ -23,7 +23,7 @@ import {
     StdlibArgument,
 } from "brs-engine";
 import { SGNodeFactory, createNodeByType, createRemoteNodeByType, isSGNodeType } from "./NodeFactory";
-import { ContentNode, Node, RemoteNode, SGNodeType } from "../nodes";
+import { ContentNode, Node, SGNodeType } from "../nodes";
 import { ObservedField } from "../SGTypes";
 import { sgRoot } from "../SGRoot";
 
@@ -187,7 +187,7 @@ function fromObject(obj: any, cs?: boolean, nodeMap?: Map<string, Node>): BrsTyp
         // Handle both regular nodes and circular references
         const nodeInfo = getSerializedNodeInfo(obj);
         if (nodeInfo) {
-            return sgRoot.inTaskThread() && !["ContentNode", "Task"].includes(nodeInfo.type)
+            return sgRoot.inTaskThread()
                 ? toRemoteNode(obj, nodeInfo.type, nodeInfo.subtype, nodeMap)
                 : toSGNode(obj, nodeInfo.type, nodeInfo.subtype, nodeMap);
         }
@@ -247,7 +247,8 @@ export function toSGNode(obj: any, type: string, subtype: string, nodeMap?: Map<
         newNode = createNodeByType(subtype);
     }
     if (newNode instanceof BrsInvalid) {
-        newNode = SGNodeFactory.createNode(type, subtype) ?? new Node([], subtype);
+        const nodeType = isSGNodeType(type) ? type : SGNodeType.Node;
+        newNode = SGNodeFactory.createNode(nodeType, subtype) ?? new Node([], subtype);
     }
     // Store the node in the map using the original address for circular reference resolution
     // Use the address from serialized data if available, otherwise use the new node's address
@@ -292,7 +293,8 @@ export function toRemoteNode(obj: any, type: string, subtype: string, nodeMap?: 
     let newNode = createRemoteNodeByType(type, subtype);
     if (newNode instanceof BrsInvalid) {
         const nodeType = isSGNodeType(type) ? type : SGNodeType.Node;
-        newNode = new RemoteNode(nodeType, subtype, "node");
+        newNode = SGNodeFactory.createNode(nodeType, subtype) ?? new Node([], subtype);
+        newNode.setOwner(0);
     }
     // Store the node in the map using the original address for circular reference resolution
     // Use the address from serialized data if available, otherwise use the new node's address

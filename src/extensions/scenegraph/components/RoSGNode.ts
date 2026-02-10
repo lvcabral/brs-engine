@@ -211,6 +211,9 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
     protected abstract compareNodes(other: RoSGNode): boolean;
     protected abstract getThreadInfo(): RoAssociativeArray;
 
+    protected abstract shouldRendezvous(): boolean;
+    protected abstract rendezvousCall(interpreter: Interpreter, method: string, args?: BrsType[]): BrsType | undefined;
+
     /**
      * Calls the function specified on this node.
      */
@@ -222,6 +225,10 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
                 returns: ValueKind.Dynamic,
             },
             impl: (interpreter: Interpreter, functionName: BrsString, ...functionArgs: BrsType[]) => {
+                const remote = this.rendezvousCall(interpreter, "callFunc", [functionName, ...functionArgs]);
+                if (remote !== undefined) {
+                    return remote;
+                }
                 return this.callFunction(interpreter, functionName, ...functionArgs);
             },
         })
@@ -233,7 +240,11 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             args: [],
             returns: ValueKind.Void,
         },
-        impl: (_: Interpreter) => {
+        impl: (interpreter: Interpreter) => {
+            const remote = this.rendezvousCall(interpreter, "clear");
+            if (remote !== undefined) {
+                return remote;
+            }
             this.clearNodeFields();
             return Uninitialized.Instance;
         },
@@ -245,7 +256,11 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             args: [new StdlibArgument("str", ValueKind.String)],
             returns: ValueKind.Boolean,
         },
-        impl: (_: Interpreter, str: BrsString) => {
+        impl: (interpreter: Interpreter, str: BrsString) => {
+            const remote = this.rendezvousCall(interpreter, "delete", [str]);
+            if (remote !== undefined) {
+                return remote;
+            }
             this.removeFieldEntry(str.getValue());
             return BrsBoolean.True; //RBI always returns true
         },
@@ -260,6 +275,10 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             returns: ValueKind.Void,
         },
         impl: (interpreter: Interpreter, key: BrsString, value: BrsType) => {
+            const remote = this.rendezvousCall(interpreter, "addReplace", [key, value]);
+            if (remote !== undefined) {
+                return remote;
+            }
             this.location = interpreter.formatLocation();
             this.setValue(key.getValue(), value);
             return Uninitialized.Instance;
@@ -272,7 +291,11 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             args: [],
             returns: ValueKind.Int32,
         },
-        impl: (_: Interpreter) => {
+        impl: (interpreter: Interpreter) => {
+            const remote = this.rendezvousCall(interpreter, "count");
+            if (remote !== undefined) {
+                return remote;
+            }
             return new Int32(this.getElements().length);
         },
     });
@@ -283,7 +306,11 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             args: [new StdlibArgument("str", ValueKind.String)],
             returns: ValueKind.Boolean,
         },
-        impl: (_: Interpreter, str: BrsString) => {
+        impl: (interpreter: Interpreter, str: BrsString) => {
+            const remote = this.rendezvousCall(interpreter, "doesExist", [str]);
+            if (remote !== undefined) {
+                return remote;
+            }
             return BrsBoolean.from(this.getElements().some((key) => key.getValue() === str.getValue().toLowerCase()));
         },
     });
@@ -294,7 +321,11 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             args: [new StdlibArgument("obj", ValueKind.Object)],
             returns: ValueKind.Void,
         },
-        impl: (_: Interpreter, obj: BrsType) => {
+        impl: (interpreter: Interpreter, obj: BrsType) => {
+            const remote = this.rendezvousCall(interpreter, "append", [obj]);
+            if (remote !== undefined) {
+                return remote;
+            }
             this.appendNodeFields(obj);
             return Uninitialized.Instance;
         },
@@ -306,7 +337,11 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             args: [],
             returns: ValueKind.Object,
         },
-        impl: (_: Interpreter) => {
+        impl: (interpreter: Interpreter) => {
+            const remote = this.rendezvousCall(interpreter, "keys");
+            if (remote !== undefined) {
+                return remote;
+            }
             return new RoArray(this.getElements());
         },
     });
@@ -317,7 +352,11 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             args: [],
             returns: ValueKind.Object,
         },
-        impl: (_: Interpreter) => {
+        impl: (interpreter: Interpreter) => {
+            const remote = this.rendezvousCall(interpreter, "items");
+            if (remote !== undefined) {
+                return remote;
+            }
             return new RoArray(
                 this.getElements().map((key: BrsString) => {
                     return toAssociativeArray({ key: key, value: this.get(key) });
@@ -332,7 +371,11 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             args: [new StdlibArgument("key", ValueKind.String)],
             returns: ValueKind.Dynamic,
         },
-        impl: (_: Interpreter, key: BrsString) => {
+        impl: (interpreter: Interpreter, key: BrsString) => {
+            const remote = this.rendezvousCall(interpreter, "lookup", [key]);
+            if (remote !== undefined) {
+                return remote;
+            }
             return this.get(key);
         },
     });
@@ -351,6 +394,10 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             returns: ValueKind.Boolean,
         },
         impl: (interpreter: Interpreter, fieldName: BrsString, type: BrsString, alwaysNotify: BrsBoolean) => {
+            const remote = this.rendezvousCall(interpreter, "addField", [fieldName, type, alwaysNotify]);
+            if (remote !== undefined) {
+                return remote;
+            }
             this.location = interpreter.formatLocation();
             this.addNodeField(fieldName.getValue(), type.getValue(), alwaysNotify.toBoolean(), true);
             return BrsBoolean.True;
@@ -364,6 +411,10 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             returns: ValueKind.Boolean,
         },
         impl: (interpreter: Interpreter, fields: RoAssociativeArray) => {
+            const remote = this.rendezvousCall(interpreter, "addFields", [fields]);
+            if (remote !== undefined) {
+                return remote;
+            }
             if (!(fields instanceof RoAssociativeArray)) {
                 return BrsBoolean.False;
             }
@@ -379,7 +430,11 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             args: [],
             returns: ValueKind.Object,
         },
-        impl: (_: Interpreter) => {
+        impl: (interpreter: Interpreter) => {
+            const remote = this.rendezvousCall(interpreter, "threadInfo");
+            if (remote !== undefined) {
+                return remote;
+            }
             return this.getThreadInfo();
         },
     });
@@ -390,7 +445,11 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             args: [new StdlibArgument("queueNode", ValueKind.Boolean)],
             returns: ValueKind.Void,
         },
-        impl: (_: Interpreter, _queueNode: BrsBoolean) => {
+        impl: (interpreter: Interpreter, queueNode: BrsBoolean) => {
+            const remote = this.rendezvousCall(interpreter, "queueFields", [queueNode]);
+            if (remote !== undefined) {
+                return remote;
+            }
             // Not implemented yet. Mocking to prevent crash on usage.
             return Uninitialized.Instance;
         },
@@ -403,6 +462,10 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             returns: ValueKind.Int32,
         },
         impl: (interpreter: Interpreter, fieldName: BrsString, data: RoAssociativeArray) => {
+            const remote = this.rendezvousCall(interpreter, "moveIntoField", [fieldName, data]);
+            if (remote !== undefined) {
+                return remote;
+            }
             let result: { code: number; msg?: string };
             if (data instanceof RoAssociativeArray) {
                 result = this.moveObjectIntoField(fieldName.getValue(), data);
@@ -426,6 +489,10 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             returns: ValueKind.Object,
         },
         impl: (interpreter: Interpreter, fieldName: BrsString) => {
+            const remote = this.rendezvousCall(interpreter, "moveFromField", [fieldName]);
+            if (remote !== undefined) {
+                return remote;
+            }
             const result = this.moveObjectFromField(fieldName.getValue());
             if (typeof result === "string") {
                 const location = interpreter.formatLocation();
@@ -443,6 +510,10 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             returns: ValueKind.Boolean,
         },
         impl: (interpreter: Interpreter, fieldName: BrsString, data: RoAssociativeArray) => {
+            const remote = this.rendezvousCall(interpreter, "setRef", [fieldName, data]);
+            if (remote !== undefined) {
+                return remote;
+            }
             if (sgRoot.inTaskThread() || !(data instanceof RoAssociativeArray)) {
                 return BrsBoolean.False;
             }
@@ -463,7 +534,11 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             args: [new StdlibArgument("fieldName", ValueKind.String)],
             returns: ValueKind.Boolean,
         },
-        impl: (_: Interpreter, fieldName: BrsString) => {
+        impl: (interpreter: Interpreter, fieldName: BrsString) => {
+            const remote = this.rendezvousCall(interpreter, "canGetRef", [fieldName]);
+            if (remote !== undefined) {
+                return remote;
+            }
             return BrsBoolean.from(this.canGetFieldByRef(fieldName.getValue()));
         },
     });
@@ -475,6 +550,10 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             returns: ValueKind.Dynamic,
         },
         impl: (interpreter: Interpreter, fieldName: BrsString) => {
+            const remote = this.rendezvousCall(interpreter, "getRef", [fieldName]);
+            if (remote !== undefined) {
+                return remote;
+            }
             const result = this.getFieldByRef(fieldName.getValue());
             if (typeof result === "string" && result.length > 0) {
                 const location = interpreter.formatLocation();
@@ -492,7 +571,11 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             args: [new StdlibArgument("fieldName", ValueKind.String)],
             returns: ValueKind.Dynamic,
         },
-        impl: (_: Interpreter, fieldName: BrsString) => {
+        impl: (interpreter: Interpreter, fieldName: BrsString) => {
+            const remote = this.rendezvousCall(interpreter, "getField", [fieldName]);
+            if (remote !== undefined) {
+                return remote;
+            }
             return this.get(fieldName);
         },
     });
@@ -503,7 +586,11 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             args: [],
             returns: ValueKind.Object,
         },
-        impl: (_: Interpreter) => {
+        impl: (interpreter: Interpreter) => {
+            const remote = this.rendezvousCall(interpreter, "getFields");
+            if (remote !== undefined) {
+                return remote;
+            }
             return this.getNodeFieldsAsAA();
         },
     });
@@ -514,7 +601,11 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             args: [new StdlibArgument("fieldName", ValueKind.String)],
             returns: ValueKind.String,
         },
-        impl: (_: Interpreter, fieldName: BrsString) => {
+        impl: (interpreter: Interpreter, fieldName: BrsString) => {
+            const remote = this.rendezvousCall(interpreter, "getFieldType", [fieldName]);
+            if (remote !== undefined) {
+                return remote;
+            }
             const types = this.getNodeFieldTypes();
             const fieldType = types.get(fieldName);
             return fieldType instanceof BrsString ? fieldType : new BrsString("<NoSuchField>");
@@ -527,7 +618,11 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             args: [],
             returns: ValueKind.Object,
         },
-        impl: (_: Interpreter) => {
+        impl: (interpreter: Interpreter) => {
+            const remote = this.rendezvousCall(interpreter, "getFieldTypes");
+            if (remote !== undefined) {
+                return remote;
+            }
             return this.getNodeFieldTypes();
         },
     });
@@ -538,7 +633,11 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             args: [new StdlibArgument("fieldName", ValueKind.String)],
             returns: ValueKind.Boolean,
         },
-        impl: (_: Interpreter, fieldName: BrsString) => {
+        impl: (interpreter: Interpreter, fieldName: BrsString) => {
+            const remote = this.rendezvousCall(interpreter, "hasField", [fieldName]);
+            if (remote !== undefined) {
+                return remote;
+            }
             return BrsBoolean.from(this.hasNodeField(fieldName.getValue()));
         },
     });
@@ -556,6 +655,10 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
                 returns: ValueKind.Boolean,
             },
             impl: (interpreter: Interpreter, fieldName: BrsString, funcName: BrsString, infoFields: RoArray) => {
+                const remote = this.rendezvousCall(interpreter, "observeField", [fieldName, funcName, infoFields]);
+                if (remote !== undefined) {
+                    return remote;
+                }
                 return this.addObserver(interpreter, "unscoped", fieldName, funcName, infoFields);
             },
         },
@@ -569,6 +672,10 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
                 returns: ValueKind.Boolean,
             },
             impl: (interpreter: Interpreter, fieldName: BrsString, port: RoMessagePort, infoFields: RoArray) => {
+                const remote = this.rendezvousCall(interpreter, "observeField", [fieldName, port, infoFields]);
+                if (remote !== undefined) {
+                    return remote;
+                }
                 return this.addObserver(interpreter, "unscoped", fieldName, port, infoFields);
             },
         }
@@ -581,6 +688,10 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             returns: ValueKind.Boolean,
         },
         impl: (interpreter: Interpreter, fieldName: BrsString) => {
+            const remote = this.rendezvousCall(interpreter, "unobserveField", [fieldName]);
+            if (remote !== undefined) {
+                return remote;
+            }
             const name = fieldName.getValue();
             if (!interpreter.environment.hostNode) {
                 const location = interpreter.formatLocation();
@@ -608,6 +719,14 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
                 returns: ValueKind.Boolean,
             },
             impl: (interpreter: Interpreter, fieldName: BrsString, funcName: BrsString, infoFields: RoArray) => {
+                const remote = this.rendezvousCall(interpreter, "observeFieldScoped", [
+                    fieldName,
+                    funcName,
+                    infoFields,
+                ]);
+                if (remote !== undefined) {
+                    return remote;
+                }
                 return this.addObserver(interpreter, "scoped", fieldName, funcName, infoFields);
             },
         },
@@ -621,6 +740,10 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
                 returns: ValueKind.Boolean,
             },
             impl: (interpreter: Interpreter, fieldName: BrsString, port: RoMessagePort, infoFields: RoArray) => {
+                const remote = this.rendezvousCall(interpreter, "observeFieldScoped", [fieldName, port, infoFields]);
+                if (remote !== undefined) {
+                    return remote;
+                }
                 return this.addObserver(interpreter, "scoped", fieldName, port, infoFields);
             },
         }
@@ -639,6 +762,14 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
                 returns: ValueKind.Boolean,
             },
             impl: (interpreter: Interpreter, fieldName: BrsString, funcName: BrsString, infoFields: RoArray) => {
+                const remote = this.rendezvousCall(interpreter, "observeFieldScopedEx", [
+                    fieldName,
+                    funcName,
+                    infoFields,
+                ]);
+                if (remote !== undefined) {
+                    return remote;
+                }
                 return this.addObserver(interpreter, "scoped", fieldName, funcName, infoFields);
             },
         },
@@ -652,6 +783,10 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
                 returns: ValueKind.Boolean,
             },
             impl: (interpreter: Interpreter, fieldName: BrsString, port: RoMessagePort, infoFields: RoArray) => {
+                const remote = this.rendezvousCall(interpreter, "observeFieldScopedEx", [fieldName, port, infoFields]);
+                if (remote !== undefined) {
+                    return remote;
+                }
                 return this.addObserver(interpreter, "scoped", fieldName, port, infoFields);
             },
         }
@@ -664,6 +799,10 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             returns: ValueKind.Boolean,
         },
         impl: (interpreter: Interpreter, fieldName: BrsString) => {
+            const remote = this.rendezvousCall(interpreter, "unobserveFieldScoped", [fieldName]);
+            if (remote !== undefined) {
+                return remote;
+            }
             const name = fieldName.getValue();
             if (!interpreter.environment.hostNode) {
                 const location = interpreter.formatLocation();
@@ -684,7 +823,11 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             args: [new StdlibArgument("fieldName", ValueKind.String)],
             returns: ValueKind.Boolean,
         },
-        impl: (_: Interpreter, fieldName: BrsString) => {
+        impl: (interpreter: Interpreter, fieldName: BrsString) => {
+            const remote = this.rendezvousCall(interpreter, "removeField", [fieldName]);
+            if (remote !== undefined) {
+                return remote;
+            }
             this.removeFieldEntry(fieldName.getValue());
             return BrsBoolean.True; //RBI always returns true
         },
@@ -696,7 +839,11 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             args: [new StdlibArgument("fieldNames", ValueKind.Object)],
             returns: ValueKind.Boolean,
         },
-        impl: (_: Interpreter, fieldNames: RoArray) => {
+        impl: (interpreter: Interpreter, fieldNames: RoArray) => {
+            const remote = this.rendezvousCall(interpreter, "removeFields", [fieldNames]);
+            if (remote !== undefined) {
+                return remote;
+            }
             if (!(fieldNames instanceof RoArray)) {
                 return BrsBoolean.False;
             }
@@ -722,6 +869,10 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             returns: ValueKind.Boolean,
         },
         impl: (interpreter: Interpreter, fieldName: BrsString, value: BrsType) => {
+            const remote = this.rendezvousCall(interpreter, "setField", [fieldName, value]);
+            if (remote !== undefined) {
+                return remote;
+            }
             const name = fieldName.getValue();
             this.location = interpreter.formatLocation();
             if (
@@ -751,6 +902,10 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             returns: ValueKind.Boolean,
         },
         impl: (interpreter: Interpreter, fields: RoAssociativeArray) => {
+            const remote = this.rendezvousCall(interpreter, "setFields", [fields]);
+            if (remote !== undefined) {
+                return remote;
+            }
             if (!(fields instanceof RoAssociativeArray)) {
                 return BrsBoolean.False;
             }
@@ -771,6 +926,10 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             returns: ValueKind.Uninitialized,
         },
         impl: (interpreter: Interpreter, content: RoAssociativeArray | RoArray, createFields: BrsBoolean) => {
+            const remote = this.rendezvousCall(interpreter, "update", [content, createFields]);
+            if (remote !== undefined) {
+                return remote;
+            }
             this.location = interpreter.formatLocation();
             this.updateFields(interpreter, content, createFields.toBoolean());
             return Uninitialized.Instance;
@@ -804,7 +963,11 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             args: [],
             returns: ValueKind.Int32,
         },
-        impl: (_: Interpreter) => {
+        impl: (interpreter: Interpreter) => {
+            const remote = this.rendezvousCall(interpreter, "getChildCount");
+            if (remote !== undefined) {
+                return remote;
+            }
             return new Int32(this.getNodeChildren().length);
         },
     });
@@ -816,7 +979,11 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             args: [new StdlibArgument("child", ValueKind.Dynamic)],
             returns: ValueKind.Boolean,
         },
-        impl: (_: Interpreter, child: BrsType) => {
+        impl: (interpreter: Interpreter, child: BrsType) => {
+            const remote = this.rendezvousCall(interpreter, "appendChild", [child]);
+            if (remote !== undefined) {
+                return remote;
+            }
             return BrsBoolean.from(this.appendChildToParent(child));
         },
     });
@@ -829,7 +996,11 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             args: [new StdlibArgument("num_children", ValueKind.Int32), new StdlibArgument("index", ValueKind.Int32)],
             returns: ValueKind.Object,
         },
-        impl: (_: Interpreter, num_children: Int32, index: Int32) => {
+        impl: (interpreter: Interpreter, num_children: Int32, index: Int32) => {
+            const remote = this.rendezvousCall(interpreter, "getChildren", [num_children, index]);
+            if (remote !== undefined) {
+                return remote;
+            }
             const numChildrenValue = num_children.getValue();
             const indexValue = index.getValue();
             const children = this.getNodeChildren();
@@ -865,7 +1036,11 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             args: [new StdlibArgument("child", ValueKind.Dynamic)],
             returns: ValueKind.Boolean,
         },
-        impl: (_: Interpreter, child: BrsType) => {
+        impl: (interpreter: Interpreter, child: BrsType) => {
+            const remote = this.rendezvousCall(interpreter, "removeChild", [child]);
+            if (remote !== undefined) {
+                return remote;
+            }
             return BrsBoolean.from(this.removeChildByReference(child));
         },
     });
@@ -876,7 +1051,11 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             args: [],
             returns: ValueKind.Dynamic,
         },
-        impl: (_: Interpreter) => {
+        impl: (interpreter: Interpreter) => {
+            const remote = this.rendezvousCall(interpreter, "getParent");
+            if (remote !== undefined) {
+                return remote;
+            }
             return this.getNodeParent();
         },
     });
@@ -889,6 +1068,10 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             returns: ValueKind.Object,
         },
         impl: (interpreter: Interpreter, nodeType: BrsString) => {
+            const remote = this.rendezvousCall(interpreter, "createChild", [nodeType]);
+            if (remote !== undefined) {
+                return remote;
+            }
             const child = createNodeByType(nodeType.getValue(), interpreter);
             if (child instanceof RoSGNode) {
                 this.appendChildToParent(child);
@@ -907,7 +1090,11 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             args: [new StdlibArgument("newChild", ValueKind.Dynamic), new StdlibArgument("index", ValueKind.Int32)],
             returns: ValueKind.Boolean,
         },
-        impl: (_: Interpreter, newChild: BrsType, index: Int32) => {
+        impl: (interpreter: Interpreter, newChild: BrsType, index: Int32) => {
+            const remote = this.rendezvousCall(interpreter, "replaceChild", [newChild, index]);
+            if (remote !== undefined) {
+                return remote;
+            }
             if (!(newChild instanceof RoSGNode)) {
                 return BrsBoolean.False;
             }
@@ -924,7 +1111,11 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             args: [new StdlibArgument("child_nodes", ValueKind.Dynamic)],
             returns: ValueKind.Boolean,
         },
-        impl: (_: Interpreter, child_nodes: BrsType) => {
+        impl: (interpreter: Interpreter, child_nodes: BrsType) => {
+            const remote = this.rendezvousCall(interpreter, "removeChildren", [child_nodes]);
+            if (remote !== undefined) {
+                return remote;
+            }
             if (child_nodes instanceof RoArray) {
                 const childNodesElements = child_nodes.getElements();
                 if (childNodesElements.length !== 0) {
@@ -947,7 +1138,11 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             args: [new StdlibArgument("num_children", ValueKind.Int32), new StdlibArgument("index", ValueKind.Int32)],
             returns: ValueKind.Boolean,
         },
-        impl: (_: Interpreter, num_children: Int32, index: Int32) => {
+        impl: (interpreter: Interpreter, num_children: Int32, index: Int32) => {
+            const remote = this.rendezvousCall(interpreter, "removeChildrenIndex", [num_children, index]);
+            if (remote !== undefined) {
+                return remote;
+            }
             const count = num_children.getValue();
             const idx = index.getValue();
             return BrsBoolean.from(this.removeChildrenAtIndex(idx, count));
@@ -963,7 +1158,11 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             args: [new StdlibArgument("index", ValueKind.Int32)],
             returns: ValueKind.Dynamic,
         },
-        impl: (_: Interpreter, index: Int32) => {
+        impl: (interpreter: Interpreter, index: Int32) => {
+            const remote = this.rendezvousCall(interpreter, "getChild", [index]);
+            if (remote !== undefined) {
+                return remote;
+            }
             const indexValue = index.getValue();
             const children = this.getNodeChildren();
             let child: BrsType = BrsInvalid.Instance;
@@ -982,7 +1181,11 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             args: [new StdlibArgument("child_nodes", ValueKind.Dynamic)],
             returns: ValueKind.Boolean,
         },
-        impl: (_: Interpreter, child_nodes: BrsType) => {
+        impl: (interpreter: Interpreter, child_nodes: BrsType) => {
+            const remote = this.rendezvousCall(interpreter, "appendChildren", [child_nodes]);
+            if (remote !== undefined) {
+                return remote;
+            }
             if (child_nodes instanceof RoArray) {
                 const childNodesElements = child_nodes.getElements();
                 if (childNodesElements.length !== 0) {
@@ -1012,6 +1215,10 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             returns: ValueKind.Dynamic,
         },
         impl: (interpreter: Interpreter, num_children: Int32, subtype: BrsString) => {
+            const remote = this.rendezvousCall(interpreter, "createChildren", [num_children, subtype]);
+            if (remote !== undefined) {
+                return remote;
+            }
             const numChildrenValue = num_children.getValue();
             const addedChildren: RoSGNode[] = [];
             for (let i = 0; i < numChildrenValue; i++) {
@@ -1033,7 +1240,11 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             args: [new StdlibArgument("child_nodes", ValueKind.Dynamic), new StdlibArgument("index", ValueKind.Int32)],
             returns: ValueKind.Boolean,
         },
-        impl: (_: Interpreter, child_nodes: BrsType, index: Int32) => {
+        impl: (interpreter: Interpreter, child_nodes: BrsType, index: Int32) => {
+            const remote = this.rendezvousCall(interpreter, "replaceChildren", [child_nodes, index]);
+            if (remote !== undefined) {
+                return remote;
+            }
             if (child_nodes instanceof RoArray) {
                 let indexValue = index.getValue();
                 const childNodesElements = child_nodes.getElements();
@@ -1060,7 +1271,11 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             args: [new StdlibArgument("child_nodes", ValueKind.Dynamic), new StdlibArgument("index", ValueKind.Int32)],
             returns: ValueKind.Boolean,
         },
-        impl: (_: Interpreter, child_nodes: BrsType, index: Int32) => {
+        impl: (interpreter: Interpreter, child_nodes: BrsType, index: Int32) => {
+            const remote = this.rendezvousCall(interpreter, "insertChildren", [child_nodes, index]);
+            if (remote !== undefined) {
+                return remote;
+            }
             if (child_nodes instanceof RoArray) {
                 let indexValue = index.getValue();
                 const childNodesElements = child_nodes.getElements();
@@ -1086,7 +1301,11 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             args: [new StdlibArgument("child", ValueKind.Dynamic), new StdlibArgument("index", ValueKind.Int32)],
             returns: ValueKind.Boolean,
         },
-        impl: (_: Interpreter, child: BrsType, index: Int32) => {
+        impl: (interpreter: Interpreter, child: BrsType, index: Int32) => {
+            const remote = this.rendezvousCall(interpreter, "insertChild", [child, index]);
+            if (remote !== undefined) {
+                return remote;
+            }
             return BrsBoolean.from(this.insertChildAtIndex(child, index.getValue()));
         },
     });
@@ -1100,7 +1319,11 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             args: [new StdlibArgument("index", ValueKind.Int32)],
             returns: ValueKind.Boolean,
         },
-        impl: (_: Interpreter, index: Int32) => {
+        impl: (interpreter: Interpreter, index: Int32) => {
+            const remote = this.rendezvousCall(interpreter, "removeChildIndex", [index]);
+            if (remote !== undefined) {
+                return remote;
+            }
             return BrsBoolean.from(this.removeChildrenAtIndex(index.getValue(), 1));
         },
     });
@@ -1121,7 +1344,11 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             ],
             returns: ValueKind.Boolean,
         },
-        impl: (_: Interpreter, newParent: BrsType, adjustTransform: BrsBoolean) => {
+        impl: (interpreter: Interpreter, newParent: BrsType, adjustTransform: BrsBoolean) => {
+            const remote = this.rendezvousCall(interpreter, "reparent", [newParent, adjustTransform]);
+            if (remote !== undefined) {
+                return remote;
+            }
             if (newParent instanceof RoSGNode && newParent !== this) {
                 // TODO: adjustTransform has to be implemented probably by traversing the
                 // entire parent tree to get to the top, calculate the absolute transform
@@ -1146,6 +1373,10 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             returns: ValueKind.Dynamic,
         },
         impl: (interpreter: Interpreter) => {
+            const remote = this.rendezvousCall(interpreter, "boundingRect");
+            if (remote !== undefined) {
+                return remote;
+            }
             return toAssociativeArray(this.getBoundingRect("toParent", interpreter));
         },
     });
@@ -1157,6 +1388,10 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             returns: ValueKind.Dynamic,
         },
         impl: (interpreter: Interpreter) => {
+            const remote = this.rendezvousCall(interpreter, "localBoundingRect");
+            if (remote !== undefined) {
+                return remote;
+            }
             return toAssociativeArray(this.getBoundingRect("local", interpreter));
         },
     });
@@ -1168,6 +1403,10 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             returns: ValueKind.Dynamic,
         },
         impl: (interpreter: Interpreter) => {
+            const remote = this.rendezvousCall(interpreter, "sceneBoundingRect");
+            if (remote !== undefined) {
+                return remote;
+            }
             return toAssociativeArray(this.getBoundingRect("toScene", interpreter));
         },
     });
@@ -1179,6 +1418,10 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             returns: ValueKind.Dynamic,
         },
         impl: (interpreter: Interpreter, ancestor: RoSGNode) => {
+            const remote = this.rendezvousCall(interpreter, "ancestorBoundingRect", [ancestor]);
+            if (remote !== undefined) {
+                return remote;
+            }
             const boundingRect = this.getBoundingRect("toParent", interpreter);
             const ancestorRect = { ...boundingRect };
             let ancestorFound = false;
@@ -1202,7 +1445,11 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             args: [],
             returns: ValueKind.Boolean,
         },
-        impl: (_: Interpreter) => {
+        impl: (interpreter: Interpreter) => {
+            const remote = this.rendezvousCall(interpreter, "hasFocus");
+            if (remote !== undefined) {
+                return remote;
+            }
             return BrsBoolean.from(sgRoot.focused === this);
         },
     });
@@ -1221,6 +1468,10 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             returns: ValueKind.Boolean,
         },
         impl: (interpreter: Interpreter, on: BrsBoolean) => {
+            const remote = this.rendezvousCall(interpreter, "setFocus", [on]);
+            if (remote !== undefined) {
+                return remote;
+            }
             this.location = interpreter.formatLocation();
             return BrsBoolean.from(this.setNodeFocus(on.toBoolean()));
         },
@@ -1235,7 +1486,11 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             args: [],
             returns: ValueKind.Boolean,
         },
-        impl: (_: Interpreter) => {
+        impl: (interpreter: Interpreter) => {
+            const remote = this.rendezvousCall(interpreter, "isInFocusChain");
+            if (remote !== undefined) {
+                return remote;
+            }
             // loop through all children DFS and check if any children has focus
             if (sgRoot.focused === this) {
                 return BrsBoolean.True;
@@ -1254,7 +1509,11 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             args: [new StdlibArgument("name", ValueKind.String)],
             returns: ValueKind.Dynamic,
         },
-        impl: (_: Interpreter, name: BrsString) => {
+        impl: (interpreter: Interpreter, name: BrsString) => {
+            const remote = this.rendezvousCall(interpreter, "findNode", [name]);
+            if (remote !== undefined) {
+                return remote;
+            }
             const id = name.getValue();
             if (id.trim() === "") return BrsInvalid.Instance;
             // perform search to child nodes
@@ -1276,7 +1535,11 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             args: [new StdlibArgument("nodeType", ValueKind.String)],
             returns: ValueKind.Boolean,
         },
-        impl: (_: Interpreter, nodeType: BrsString) => {
+        impl: (interpreter: Interpreter, nodeType: BrsString) => {
+            const remote = this.rendezvousCall(interpreter, "isSubtype", [nodeType]);
+            if (remote !== undefined) {
+                return remote;
+            }
             return BrsBoolean.from(isSubtypeCheck(this.nodeSubtype, nodeType.getValue()));
         },
     });
@@ -1290,7 +1553,11 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             args: [new StdlibArgument("nodeType", ValueKind.String)],
             returns: ValueKind.Object,
         },
-        impl: (_: Interpreter, nodeType: BrsString) => {
+        impl: (interpreter: Interpreter, nodeType: BrsString) => {
+            const remote = this.rendezvousCall(interpreter, "parentSubtype", [nodeType]);
+            if (remote !== undefined) {
+                return remote;
+            }
             const parentType = subtypeHierarchy.get(nodeType.getValue().toLowerCase());
             if (parentType) {
                 return new BrsString(parentType);
@@ -1308,7 +1575,11 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             args: [new StdlibArgument("roSGNode", ValueKind.Dynamic)],
             returns: ValueKind.Boolean,
         },
-        impl: (_: Interpreter, roSGNode: RoSGNode) => {
+        impl: (interpreter: Interpreter, roSGNode: RoSGNode) => {
+            const remote = this.rendezvousCall(interpreter, "isSameNode", [roSGNode]);
+            if (remote !== undefined) {
+                return remote;
+            }
             return BrsBoolean.from(this.compareNodes(roSGNode));
         },
     });
@@ -1319,7 +1590,11 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             args: [],
             returns: ValueKind.String,
         },
-        impl: (_: Interpreter) => {
+        impl: (interpreter: Interpreter) => {
+            const remote = this.rendezvousCall(interpreter, "subtype");
+            if (remote !== undefined) {
+                return remote;
+            }
             return new BrsString(this.nodeSubtype);
         },
     });
@@ -1330,7 +1605,11 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             args: [],
             returns: ValueKind.String,
         },
-        impl: (_: Interpreter) => {
+        impl: (interpreter: Interpreter) => {
+            const remote = this.rendezvousCall(interpreter, "getSubtype");
+            if (remote !== undefined) {
+                return remote;
+            }
             return new BrsString(this.nodeSubtype);
         },
     });
@@ -1342,17 +1621,25 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             returns: ValueKind.Object,
         },
         impl: (interpreter: Interpreter, isDeepCopy: BrsBoolean) => {
+            const remote = this.rendezvousCall(interpreter, "clone", [isDeepCopy]);
+            if (remote !== undefined) {
+                return remote;
+            }
             return this.cloneNode(isDeepCopy.toBoolean(), interpreter);
         },
     });
 
     /* Returns the node's root Scene. This returns a valid Scene even if the node is not parented. */
-    protected readonly getScene = new Callable("getScene", {
+    protected readonly getScene: Callable = new Callable("getScene", {
         signature: {
             args: [],
             returns: ValueKind.Object,
         },
-        impl: (_: Interpreter) => {
+        impl: (interpreter: Interpreter) => {
+            const remote = this.rendezvousCall(interpreter, "getScene");
+            if (remote !== undefined) {
+                return remote;
+            }
             return sgRoot.scene ?? BrsInvalid.Instance;
         },
     });
@@ -1363,7 +1650,11 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             args: [],
             returns: ValueKind.Object,
         },
-        impl: (_: Interpreter) => {
+        impl: (interpreter: Interpreter) => {
+            const remote = this.rendezvousCall(interpreter, "getHttpAgent");
+            if (remote !== undefined) {
+                return remote;
+            }
             return this.httpAgent;
         },
     });
@@ -1374,7 +1665,11 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             args: [new StdlibArgument("httpAgent", ValueKind.Object)],
             returns: ValueKind.Boolean,
         },
-        impl: (_: Interpreter, httpAgent: RoHttpAgent) => {
+        impl: (interpreter: Interpreter, httpAgent: RoHttpAgent) => {
+            const remote = this.rendezvousCall(interpreter, "setHttpAgent", [httpAgent]);
+            if (remote !== undefined) {
+                return remote;
+            }
             if (httpAgent instanceof RoHttpAgent) {
                 this.httpAgent = httpAgent;
                 this.registerHttpAgent(httpAgent);

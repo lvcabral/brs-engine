@@ -127,7 +127,6 @@ export class ContentNode extends Node {
      * This creates an easy way to track whether a field is a metadata field or not.
      * The reason to keep track is because metadata fields should print out in all caps.
      */
-    private readonly metaDataFields = new Set<string>(this.defaultFields.map((field) => field.name.toLowerCase()));
     private readonly parentFields = new Set<Field>();
 
     constructor(readonly name: string = SGNodeType.ContentNode) {
@@ -144,9 +143,9 @@ export class ContentNode extends Node {
     }
 
     /** @override */
-    setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind) {
+    setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind, sync?: boolean) {
         this.notified = false;
-        super.setValue(index, value, alwaysNotify, kind);
+        super.setValue(index, value, alwaysNotify, kind, sync);
         // Propagate changes notification to parent fields
         if (this.parentFields.size && this.notified) {
             for (const field of this.parentFields) {

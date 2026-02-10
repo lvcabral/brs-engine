@@ -44,6 +44,7 @@ import {
     ObserverScope,
     FieldAliasTarget,
     isTaskLike,
+    MethodCallPayload,
 } from "../SGTypes";
 import { RoSGNode } from "../components/RoSGNode";
 import { createNodeByType, getBrsValueFromFieldType, subtypeHierarchy } from "../factory/NodeFactory";
@@ -81,6 +82,8 @@ export class Node extends RoSGNode implements BrsValue {
     protected parent: Node | BrsInvalid;
     /** Thread identifier that owns the node instance. */
     protected owner: number;
+    /** Sync domain used for remote field and method requests. */
+    protected syncType: SyncType;
     /** Hex-like identifier exposed via introspection APIs. */
     protected address: string;
     /** Flags whether structural or field state changed since last render. */
@@ -106,14 +109,22 @@ export class Node extends RoSGNode implements BrsValue {
      * @param initializedFields Associative-array style entries coming from XML attributes.
      * @param nodeSubtype Concrete subtype identifier used for serialization and debugging.
      */
-    constructor(initializedFields: AAMember[] = [], readonly nodeSubtype: string = SGNodeType.Node) {
+    constructor(
+        initializedFields: AAMember[] = [],
+        readonly nodeSubtype: string = SGNodeType.Node,
+        nodeType?: SGNodeType,
+    ) {
         super([], nodeSubtype);
+        this.syncType = "node";
         this.address = genHexAddress();
         this.fields = new Map();
         this.aliases = new Map();
         this.children = [];
         this.parent = BrsInvalid.Instance;
         this.owner = sgRoot.threadId;
+        if (nodeType) {
+            this.setExtendsType(nodeSubtype, nodeType);
+        }
 
         // All nodes start have some built-in fields when created.
         this.registerDefaultFields(this.defaultFields);
@@ -284,17 +295,20 @@ export class Node extends RoSGNode implements BrsValue {
         if (!isBrsString(index)) {
             throw new Error("Node indexes must be strings");
         }
-        // TODO: this works for now, in that a property with the same name as a method essentially
-        // overwrites the method. The only reason this doesn't work is that getting a method from an
-        // associative array and _not_ calling it returns `invalid`, but calling it returns the
-        // function itself. I'm not entirely sure why yet, but it's gotta have something to do with
-        // how methods are implemented within RBI.
-        //
-        // Are they stored separately from elements, like they are here? Or does
-        // `Interpreter#visitCall` need to check for `invalid` in its callable, then try to find a
-        // method with the desired name separately? That last bit would work but it's pretty gross.
-        // That'd allow roArrays to have methods with the methods not accessible via `arr["count"]`.
-        // Same with RoAssociativeArrays I guess.
+        if (this.shouldRendezvous() && this.syncType !== "task") {
+            const key = index.toString().toLowerCase();
+            if (this.fields.has(key)) {
+                const task = sgRoot.getCurrentThreadTask();
+                if (task?.active && !this.consumeFreshField(key)) {
+                    task.requestFieldValue(this.syncType, this.address, key);
+                }
+            } else {
+                const method = this.getMethod(key);
+                if (method) {
+                    return method;
+                }
+            }
+        }
         const field = this.fields.get(index.getValue().toLowerCase());
         if (field) {
             const value = field.getValue();
@@ -337,7 +351,7 @@ export class Node extends RoSGNode implements BrsValue {
      * @param kind Optional explicit field kind used when creating new dynamic fields.
      * @param sync Optional flag indicating whether to synchronize this field change with other threads.
      */
-    setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind, _sync?: boolean) {
+    setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind, sync: boolean = true) {
         const mapKey = index.toLowerCase();
         const fieldType = kind ?? FieldKind.fromBrsType(value);
         let field = this.fields.get(mapKey);
@@ -384,6 +398,11 @@ export class Node extends RoSGNode implements BrsValue {
         if (errorMsg.length > 0) {
             BrsDevice.stderr.write(`warning,${errorMsg} ${this.location || "(internal)"}`);
         }
+        this.markFieldFresh(mapKey);
+        if (sync && this.changed && this.shouldRendezvous() && this.syncType !== "task") {
+            this.syncRemoteField(mapKey);
+            this.changed = false;
+        }
     }
 
     /**
@@ -410,6 +429,7 @@ export class Node extends RoSGNode implements BrsValue {
             this.fields.set(mapKey, field);
             this.makeDirty();
         }
+        this.markFieldFresh(mapKey);
     }
 
     /**
@@ -1592,6 +1612,52 @@ export class Node extends RoSGNode implements BrsValue {
     public markFieldFresh(fieldName: string) {
         const mapKey = fieldName.toLowerCase();
         this.freshFields.set(mapKey, { remaining: FreshFieldBudget, timestamp: Date.now() });
+    }
+
+    /**
+     * Returns true when this node should rendezvous through the task thread.
+     */
+    protected shouldRendezvous(): boolean {
+        return sgRoot.inTaskThread() && this.owner !== sgRoot.threadId;
+    }
+
+    /**
+     * Synchronizes a field change back to the owning thread when applicable.
+     * @param key Field name to synchronize.
+     */
+    protected syncRemoteField(key: string) {
+        const field = this.fields.get(key.toLowerCase());
+        if (!field || !this.shouldRendezvous()) {
+            return;
+        }
+        const fieldValue = field.getValue(false);
+        const deep = fieldValue instanceof Node;
+        this.sendThreadUpdate(sgRoot.threadId, "set", this.syncType, this.address, key, fieldValue, deep);
+    }
+
+    /**
+     * Helper to perform a rendezvous method call via the current task.
+     * @param interpreter Current BrightScript interpreter.
+     * @param method Name of the method to call.
+     * @param args Arguments to pass to the remote method.
+     * @returns Result of the remote method call, or undefined if not available.
+     */
+    protected rendezvousCall(interpreter: Interpreter, method: string, args?: BrsType[]): BrsType | undefined {
+        if (!this.shouldRendezvous()) {
+            return undefined;
+        }
+        const task = sgRoot.getCurrentThreadTask();
+        if (task?.active) {
+            let host = this.address;
+            const hostNode = interpreter.environment.hostNode;
+            if (hostNode instanceof Node) {
+                host = hostNode.getAddress();
+            }
+            const location = interpreter.location;
+            const payload: MethodCallPayload = args ? { host, args, location } : { host, location };
+            return task.requestMethodCall(this.syncType, this.address, method, payload);
+        }
+        return undefined;
     }
 
     /**

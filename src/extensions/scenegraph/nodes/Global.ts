@@ -5,6 +5,7 @@ import { SGNodeType } from ".";
 export class Global extends Node {
     constructor(members: AAMember[] = []) {
         super([], SGNodeType.Node);
+        this.syncType = "global";
         this.registerInitializedFields(members);
         this.owner = 0; // Global node is always owned by render thread
     }

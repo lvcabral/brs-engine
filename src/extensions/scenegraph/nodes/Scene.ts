@@ -37,6 +37,7 @@ export class Scene extends Group {
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.Scene) {
         super([], name);
+        this.syncType = "scene";
         this.setExtendsType(name, SGNodeType.Group);
 
         this.registerDefaultFields(this.defaultFields);
@@ -62,13 +63,13 @@ export class Scene extends Group {
         }
     }
 
-    setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind, sync: boolean = true) {
+    setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind, sync?: boolean) {
         if (this._initState === "none" && !sgRoot.inTaskThread()) {
             this._preInitSet.set(index, value);
             return;
         }
         const fieldName = index.toLowerCase();
-        if (fieldName === "dialog") {
+        if (fieldName === "dialog" && !sgRoot.inTaskThread()) {
             if (value instanceof Dialog || value instanceof StandardDialog) {
                 this.dialog?.setValue("close", BrsBoolean.True);
                 if (value instanceof StandardDialog) {
@@ -83,7 +84,7 @@ export class Scene extends Group {
                 return;
             }
         }
-        super.setValue(index, value, alwaysNotify, kind);
+        super.setValue(index, value, alwaysNotify, kind, sync);
     }
 
     protected cloneNode(_isDeepCopy: boolean, _interpreter?: Interpreter): BrsType {

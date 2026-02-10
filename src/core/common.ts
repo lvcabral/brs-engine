@@ -425,7 +425,6 @@ export function isThreadUpdate(value: any): value is ThreadUpdate {
         isSyncType(value.type) &&
         typeof value.address === "string" &&
         typeof value.key === "string" &&
-        value.value !== undefined &&
         (typeof value.requestId === "number" || value.requestId === undefined)
     );
 }

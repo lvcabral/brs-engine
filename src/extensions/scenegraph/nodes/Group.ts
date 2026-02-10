@@ -70,7 +70,7 @@ export class Group extends Node {
         this.isDirty = true;
     }
 
-    setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind) {
+    setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind, sync?: boolean) {
         const mapKey = index.toLowerCase();
         const field = this.fields.get(mapKey);
 
@@ -91,7 +91,7 @@ export class Group extends Node {
             }
         }
         this.isDirty = true;
-        super.setValue(index, value, alwaysNotify, kind);
+        super.setValue(index, value, alwaysNotify, kind, sync);
     }
 
     setValueSilent(fieldName: string, value: BrsType): void {
