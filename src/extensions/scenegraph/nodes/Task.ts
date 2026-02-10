@@ -15,6 +15,7 @@ import {
     SyncType,
     RoArray,
     toAssociativeArray,
+    isSyncAction,
 } from "brs-engine";
 import { sgRoot } from "../SGRoot";
 import { brsValueOf, fromAssociativeArray, fromSGNode, updateSGNode } from "../factory/Serializer";
@@ -81,8 +82,6 @@ export class Task extends Node {
                     if (!this.consumeFreshField(fieldName)) {
                         this.requestFieldValue("task", this.address, fieldName);
                     }
-                } else if (this.thread) {
-                    this.updateTask();
                 }
             }
         }
@@ -162,7 +161,7 @@ export class Task extends Node {
         }
     }
 
-    private respondToFieldRequest(node: Node | Global | Scene, update: ThreadUpdate) {
+    private handleFieldRequest(node: Node | Global | Scene, update: ThreadUpdate) {
         if (update.id < 0) {
             return;
         }
@@ -262,6 +261,8 @@ export class Task extends Node {
             const update = this.processThreadUpdate();
             if (update?.action === "set" && update.type === type && update.key === fieldName) {
                 return true;
+            } else if (update?.action === "nil" && update.type === type && update.key === fieldName) {
+                return false;
             }
             const remaining = deadline - Date.now();
             if (remaining <= 0) {
@@ -395,15 +396,21 @@ export class Task extends Node {
                 }
                 return update;
             }
+            if (update.action === "nil") {
+                return update;
+            }
             const node = this.getNodeToUpdate(update);
             if (!node) {
+                const replied = this.handleUnresolvedNode(update);
                 BrsDevice.stderr.write(
-                    `warning,[task:${sgRoot.threadId}] Node sync type: ${update.type}, from ${update.id} ${update.action} '${update.key}' - target node not found!`
+                    `warning,[task:${sgRoot.threadId}] Node sync type: ${update.type}, from ${update.id} ${
+                        update.action
+                    } '${update.key}' - target node not found! It was ${replied ? "replied" : "not replied"}`
                 );
                 return undefined;
             }
             if (update.action === "get") {
-                this.respondToFieldRequest(node, update);
+                this.handleFieldRequest(node, update);
                 return undefined;
             }
             if (update.action === "call") {
@@ -490,6 +497,31 @@ export class Task extends Node {
         const location = payload.location ?? sgRoot.interpreter.location;
         const result = sgRoot.interpreter.call(method, args, hostNode.m, location, hostNode);
         this.sendThreadUpdate(update.id, "resp", update.type, update.address, update.key, result, false);
+    }
+
+    handleUnresolvedNode(update: ThreadUpdate) {
+        let responseAction = "";
+        if (update.action === "set" && update.requestId !== undefined) {
+            responseAction = "ack";
+        } else if (update.action === "call") {
+            responseAction = "resp";
+        } else if (update.action === "get") {
+            responseAction = "nil";
+        }
+        if (isSyncAction(responseAction)) {
+            this.sendThreadUpdate(
+                update.id,
+                responseAction,
+                update.type,
+                update.address,
+                update.key,
+                BrsInvalid.Instance,
+                false,
+                update.requestId
+            );
+            return true;
+        }
+        return false;
     }
 
     /**

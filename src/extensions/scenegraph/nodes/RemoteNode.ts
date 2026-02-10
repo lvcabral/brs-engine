@@ -149,10 +149,23 @@ export class RemoteNode extends Node implements BrsValue {
         );
         const fieldName = index.toLowerCase();
         super.setValue(index, value, alwaysNotify, kind);
+        this.markFieldFresh(fieldName);
         if (sync && this.changed) {
             this.syncRemoteField(fieldName);
             this.changed = false;
         }
+    }
+
+    /**
+     * @override
+     * Writes a field value bypassing validation and observer notification.
+     * @param fieldName Field name to mutate.
+     * @param value Value to assign.
+     * @param hidden Optional hidden flag override applied when creating the field.
+     */
+    setValueSilent(fieldName: string, value: BrsType, hidden?: boolean): void {
+        super.setValueSilent(fieldName, value, hidden);
+        this.markFieldFresh(fieldName);
     }
 
     /**
