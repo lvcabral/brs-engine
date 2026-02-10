@@ -309,7 +309,6 @@ export function toRemoteNode(obj: any, type: string, subtype: string, nodeMap?: 
     return newNode;
 }
 
-
 /**
  * Retrieves the serialized node type and subtype information from a serialized node object.
  * @param value The serialized node object.

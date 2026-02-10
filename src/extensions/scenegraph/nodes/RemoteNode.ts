@@ -31,11 +31,7 @@ export class RemoteNode extends Node implements BrsValue {
      * @param nodeSubtype Concrete subtype identifier used for serialization and debugging.
      * @param syncType Sync type used for remote field and method requests.
      */
-    constructor(
-        readonly nodeType: SGNodeType,
-        readonly nodeSubtype: string,
-        readonly syncType: SyncType
-    ) {
+    constructor(readonly nodeType: SGNodeType, readonly nodeSubtype: string, readonly syncType: SyncType) {
         super([], nodeSubtype);
         this.setExtendsType(nodeSubtype, nodeType);
         this.owner = 0; // Remote node is always owned by render thread

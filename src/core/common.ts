@@ -390,7 +390,7 @@ export function isTaskData(value: any): value is TaskData {
     );
 }
 
-export type SyncAction = "set" | "get"| "nil" | "ack" | "call" | "resp";
+export type SyncAction = "set" | "get" | "nil" | "ack" | "call" | "resp";
 
 export function isSyncAction(value: any): value is SyncAction {
     return typeof value === "string" && ["set", "get", "nil", "ack", "call", "resp"].includes(value);
