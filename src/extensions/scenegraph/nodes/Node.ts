@@ -295,21 +295,18 @@ export class Node extends RoSGNode implements BrsValue {
         if (!isBrsString(index)) {
             throw new Error("Node indexes must be strings");
         }
-        if (this.shouldRendezvous() && this.syncType !== "task") {
-            const key = index.toString().toLowerCase();
+        const key = index.toString().toLowerCase();
+        if (this.shouldRendezvous()) {
             if (this.fields.has(key)) {
                 const task = sgRoot.getCurrentThreadTask();
                 if (task?.active && !this.consumeFreshField(key)) {
                     task.requestFieldValue(this.syncType, this.address, key);
                 }
             } else {
-                const method = this.getMethod(key);
-                if (method) {
-                    return method;
-                }
+                return this.getMethod(key) || BrsInvalid.Instance;
             }
         }
-        const field = this.fields.get(index.getValue().toLowerCase());
+        const field = this.fields.get(key);
         if (field) {
             const value = field.getValue();
             if (value instanceof RoAssociativeArray || value instanceof RoArray) {
@@ -319,7 +316,7 @@ export class Node extends RoSGNode implements BrsValue {
             }
             return value;
         }
-        return this.getMethod(index.getValue()) || BrsInvalid.Instance;
+        return this.getMethod(key) || BrsInvalid.Instance;
     }
 
     /**

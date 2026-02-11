@@ -70,25 +70,6 @@ export class Task extends Node {
     }
 
     /**
-     * Overrides `Node.get` to add task update semantics when accessed from a task thread.
-     * @param index Field name being retrieved.
-     * @returns The BrightScript value of the requested field.
-     */
-    get(index: BrsType): BrsType {
-        if (this.active && isBrsString(index)) {
-            const fieldName = index.toString().toLowerCase();
-            if (this.fields.has(fieldName)) {
-                if (this.owner !== sgRoot.threadId && this.threadId >= 0) {
-                    if (!this.consumeFreshField(fieldName)) {
-                        this.requestFieldValue("task", this.address, fieldName);
-                    }
-                }
-            }
-        }
-        return super.get(index);
-    }
-
-    /**
      * Overrides `Node.setValue` to add control/state synchronization semantics.
      * @param index Field name being updated.
      * @param value New BrightScript value.
