@@ -95,10 +95,8 @@ export class BrightScriptExtension implements BrsExtension {
     }
 
     tick(_: Interpreter) {
-        if (sgRoot.inTaskThread()) {
-            const task = sgRoot.getThreadTask(sgRoot.threadId);
-            task?.updateTask();
-        }
+        const task = sgRoot.getCurrentThreadTask();
+        task?.processThreadUpdate();
     }
 
     execTask(interpreter: Interpreter, payload: TaskPayload) {

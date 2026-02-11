@@ -378,7 +378,7 @@ export class Task extends Node {
         if (this.taskBuffer && this.inThread) {
             const timeout = wait === 0 ? undefined : wait;
             this.taskBuffer.waitVersion(0, timeout);
-            this.updateTask();
+            this.processThreadUpdate();
         }
         return new Array<BrsEvent>();
     }
@@ -411,35 +411,6 @@ export class Task extends Node {
     }
 
     /**
-     * Processes shared-buffer updates and synchronizes dirty child nodes back to the main thread.
-     * @returns True when updates were applied, otherwise false.
-     */
-    updateTask() {
-        const updates = this.processThreadUpdate();
-        const state = this.getValueJS("state") as string;
-        if (!this.inThread || state !== "run") {
-            return updates !== undefined;
-        }
-        // Check for changed Node fields to notify updates to the Main thread
-        for (const [name, field] of this.getNodeFields()) {
-            const value = field.getValue();
-            if (!field.isHidden() && value instanceof Node && value.changed) {
-                const update: ThreadUpdate = {
-                    id: this.threadId,
-                    action: "set",
-                    type: this.syncType,
-                    address: this.address,
-                    key: name,
-                    value: fromSGNode(value, true),
-                };
-                value.changed = false;
-                this.sendThreadUpdate(update);
-            }
-        }
-        return updates !== undefined;
-    }
-
-    /**
      * Posts a serialized node update to the owning thread.
      * @param update ThreadUpdate containing the details of the field change and optional rendezvous requestId for acknowledgements.
      * @param requestAck When true (default) the method will wait for an acknowledgement from the main thread confirming the update was processed, otherwise it will fire-and-forget without waiting. This should be false for updates originating from the main thread to avoid deadlocks, and can be true for updates originating from the task thread when the caller needs to ensure the main thread has processed the change before proceeding.
@@ -460,7 +431,7 @@ export class Task extends Node {
      * Applies pending updates stored in the shared buffer that originated from another thread.
      * @returns The ThreadUpdate that was applied, if any.
      */
-    private processThreadUpdate(): ThreadUpdate | undefined {
+    processThreadUpdate(): ThreadUpdate | undefined {
         const currentVersion = this.taskBuffer?.getVersion() ?? -1;
         // Only process updates when the buffer version is exactly 1,
         // which indicates a new update is available from the other thread.

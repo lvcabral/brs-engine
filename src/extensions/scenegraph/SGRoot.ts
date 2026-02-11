@@ -239,7 +239,7 @@ export class SGRoot {
         let updates = false;
         for (const thread of this._threads.values()) {
             const task = thread.task;
-            updates = task?.updateTask() || updates;
+            updates = task?.processThreadUpdate() !== undefined || updates;
             if (task?.active) {
                 task.checkTaskRun();
             }
