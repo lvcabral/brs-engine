@@ -586,13 +586,7 @@ export class Task extends Node {
             );
             return;
         }
-        const hostNode = this.resolveNode(payload.host);
-        if (!hostNode) {
-            BrsDevice.stderr.write(
-                `warning,[task:${sgRoot.threadId}] Unable to resolve host node '${payload.host}' for method call request: ${update.type}.${update.key}`
-            );
-            return;
-        }
+        const hostNode = this.resolveNode(payload.host) ?? target;
         const method = target.getMethod(update.key);
         if (!method || !sgRoot.interpreter) {
             return;
