@@ -31,7 +31,6 @@ import {
     RuntimeError,
     BrsError,
     SyncType,
-    SyncAction,
 } from "brs-engine";
 import {
     FieldAlias,
