@@ -20,7 +20,6 @@ import {
     Uninitialized,
     ValueKind,
     genHexAddress,
-    ThreadUpdate,
     generateArgumentMismatchError,
     Rect,
     IfDraw2D,
@@ -48,7 +47,7 @@ import {
 import { RoSGNode } from "../components/RoSGNode";
 import { createNode, createNodeRunInit, getBrsValueFromFieldType, subtypeHierarchy } from "../factory/NodeFactory";
 import { Field } from "../nodes/Field";
-import { toAssociativeArray, jsValueOf, fromSGNode } from "../factory/Serializer";
+import { toAssociativeArray, jsValueOf } from "../factory/Serializer";
 import { sgRoot } from "../SGRoot";
 import { SGNodeType } from ".";
 import { ComponentDefinition } from "../parser/ComponentDefinition";
@@ -396,12 +395,8 @@ export class Node extends RoSGNode implements BrsValue {
             BrsDevice.stderr.write(`warning,${errorMsg} ${this.location || "(internal)"}`);
         }
         this.markFieldFresh(mapKey);
-        if (field && sync && this.changed && this.shouldRendezvous() && this.syncType !== "task") {
-            const task = sgRoot.getCurrentThreadTask();
-            if (task?.active) {
-                task.syncRemoteField(field, mapKey, this.syncType, this.address);
-            }
-            this.changed = false;
+        if (field && sync && this.syncType !== "task") {
+            this.rendezvousSet(mapKey, field.getValue(false));
         }
     }
 
@@ -1613,6 +1608,20 @@ export class Node extends RoSGNode implements BrsValue {
      */
     protected shouldRendezvous(): boolean {
         return sgRoot.inTaskThread() && this.owner !== sgRoot.threadId;
+    }
+
+    /**
+     * Helper to perform a rendezvous field set via the current task.
+     * @param field Name of the field being set.
+     * @param value Value being assigned to the field.
+     */
+    protected rendezvousSet(field: string, value: BrsType) {
+        if (!this.shouldRendezvous() || !this.changed) {
+            return undefined;
+        }
+        const task = sgRoot.getCurrentThreadTask();
+        task?.syncRemoteField(field, value, this.syncType, this.address);
+        this.changed = false;
     }
 
     /**

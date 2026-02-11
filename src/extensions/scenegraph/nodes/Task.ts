@@ -100,7 +100,7 @@ export class Task extends Node {
         super.setValue(index, value, alwaysNotify, kind);
         // Notify other threads of field changes
         if (field && sync && this.changed) {
-            this.syncRemoteField(field, mapKey);
+            this.syncRemoteField(mapKey, field.getValue(false));
             this.changed = false;
         }
     }
@@ -244,21 +244,15 @@ export class Task extends Node {
 
     /**
      * Synchronizes a field change back to the owning thread when applicable.
-     * @param field The field instance that has changed and needs synchronization.
      * @param key Field name to synchronize.
+     * @param fieldValue The new value of the field being synchronized.
      * @param type The sync type domain (e.g. "task") for the update message.
      * @param address The address of the node for the update message (defaults to this node's address).
      */
-    syncRemoteField(
-        field: Field,
-        key: string,
-        type: SyncType = this.syncType,
-        address: string = this.address
-    ) {
+    syncRemoteField(key: string, fieldValue: BrsType, type: SyncType = this.syncType, address: string = this.address) {
         if (this.threadId < 0 || !this.active) {
             return;
         }
-        const fieldValue = field.getValue(false);
         const value = fieldValue instanceof Node ? fromSGNode(fieldValue, true) : jsValueOf(fieldValue);
         if (fieldValue instanceof Node) {
             fieldValue.changed = false;
