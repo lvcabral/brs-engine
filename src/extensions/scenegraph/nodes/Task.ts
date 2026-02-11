@@ -14,11 +14,10 @@ import {
     ThreadUpdate,
     SyncType,
     RoArray,
-    toAssociativeArray,
     isSyncAction,
 } from "brs-engine";
 import { sgRoot } from "../SGRoot";
-import { brsValueOf, fromAssociativeArray, fromSGNode, updateSGNode } from "../factory/Serializer";
+import { brsValueOf, fromAssociativeArray, fromSGNode, jsValueOf, updateSGNode } from "../factory/Serializer";
 import { FieldKind, FieldModel, MethodCallPayload, isMethodCallPayload } from "../SGTypes";
 import { Node } from "./Node";
 import { Global } from "./Global";
@@ -46,7 +45,7 @@ export class Task extends Node {
     /** Whether the task has started execution at least once. */
     started: boolean;
     /** True when this instance runs on a dedicated worker thread. */
-    thread: boolean;
+    inThread: boolean;
     /** Incrementing identifier for rendezvous acknowledgements. */
     private syncRequestId: number = 1;
     /** Tracks acknowledgements completed by the main thread. */
@@ -64,7 +63,7 @@ export class Task extends Node {
         this.threadId = -1; // Not activated yet
         this.active = false;
         this.started = false;
-        this.thread = false;
+        this.inThread = false;
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(members);
@@ -143,25 +142,50 @@ export class Task extends Node {
             state.setValue(new BrsString(control));
             this.fields.set("state", state);
             // Notify other threads of field changes
-            if (this.threadId >= 0 && this.thread && sync) {
-                this.sendThreadUpdate(this.threadId, "set", "task", this.address, "control", new BrsString(control));
+            if (this.threadId >= 0 && this.inThread && sync) {
+                const update: ThreadUpdate = {
+                    id: this.threadId,
+                    action: "set",
+                    type: this.syncType,
+                    address: this.address,
+                    key: "control",
+                    value: control,
+                };
+                this.sendThreadUpdate(update);
             }
         }
     }
 
+    /**
+     * Synchronizes a specific field's value to the worker thread.
+     * @param field The field instance to synchronize.
+     * @param fieldName The name of the field.
+     */
     private syncTaskField(field: Field, fieldName: string) {
         if (this.threadId < 0) {
             return;
         }
-        const currentValue = field.getValue(false);
-        const deep = currentValue instanceof Node;
-        const requestId = this.thread ? this.syncRequestId++ : undefined;
-        this.sendThreadUpdate(this.threadId, "set", "task", this.address, fieldName, currentValue, deep, requestId);
-        if (requestId !== undefined) {
-            this.waitForFieldAck(fieldName, requestId);
+        const value = field.getValue(false);
+        const serializedValue = value instanceof Node ? fromSGNode(value, true) : jsValueOf(value);
+        if (value instanceof Node) {
+            value.changed = false;
         }
+        const update: ThreadUpdate = {
+            id: this.threadId,
+            action: "set",
+            type: this.syncType,
+            address: this.address,
+            key: fieldName,
+            value: serializedValue,
+        };
+        this.sendThreadUpdate(update);
     }
 
+    /**
+     * Handles a request from a worker thread to retrieve a field value from the main thread.
+     * @param node The node (or Global/Scene) being queried.
+     * @param update The thread update request containing the field key.
+     */
     private handleGetFieldRequest(node: Node | Global | Scene, update: ThreadUpdate) {
         if (update.id < 0) {
             return;
@@ -170,10 +194,19 @@ export class Task extends Node {
         BrsDevice.stdout.write(
             `debug,[task-sync] Task #${sgRoot.threadId} responding to field request for ${update.type}.${update.key} from thread ${update.id}`
         );
-        const deep = value instanceof Node;
-        this.sendThreadUpdate(update.id, "set", update.type, node.getAddress(), update.key, value, deep);
+        update.action = "set";
+        update.address = node.getAddress();
+        update.value = value instanceof Node ? fromSGNode(value, true) : jsValueOf(value);
+        this.sendThreadUpdate(update);
     }
 
+    /**
+     * Waits for an acknowledgement from the main thread for a specific field update.
+     * @param fieldName Name of the field being updated.
+     * @param requestId Unique identifier for the update request.
+     * @param timeoutMs Time to wait in milliseconds (default 10000).
+     * @returns True if acknowledgement was received, false on timeout.
+     */
     private waitForFieldAck(fieldName: string, requestId: number, timeoutMs: number = 10000) {
         if (!this.taskBuffer) {
             return false;
@@ -204,7 +237,7 @@ export class Task extends Node {
      */
     private activateTask() {
         this.active = true;
-        if (this.thread) return;
+        if (this.inThread) return;
         // In main thread add this task to sgRoot. (in a task thread it's added by `loadTaskData()`)
         if (this.threadId < 0) {
             sgRoot.addTask(this);
@@ -229,6 +262,9 @@ export class Task extends Node {
         this.active = false;
     }
 
+    /**
+     * Sends a stop command to the worker thread to terminate execution.
+     */
     stopTask() {
         const update: ThreadUpdate = {
             id: this.threadId,
@@ -251,11 +287,28 @@ export class Task extends Node {
         this.active = true;
     }
 
+    /**
+     * Requests a field value from the task thread using the rendezvous mechanism.
+     * Blocks until the value is received or timeout occurs.
+     * @param type The sync type domain (e.g. "task").
+     * @param address The address of the node.
+     * @param fieldName The field to retrieve.
+     * @param timeoutMs Timeout in milliseconds.
+     * @returns True if the value was successfully retrieved.
+     */
     requestFieldValue(type: SyncType, address: string, fieldName: string, timeoutMs: number = 10000): boolean {
         if (!this.taskBuffer || this.threadId < 0) {
             return false;
         }
-        this.sendThreadUpdate(this.threadId, "get", type, address, fieldName, BrsInvalid.Instance, false);
+        const update: ThreadUpdate = {
+            id: this.threadId,
+            action: "get",
+            type,
+            address,
+            key: fieldName,
+            value: null,
+        };
+        this.sendThreadUpdate(update);
         const deadline = Date.now() + timeoutMs;
 
         while (true) {
@@ -280,6 +333,16 @@ export class Task extends Node {
         return false;
     }
 
+    /**
+     * Requests a method call on the task thread (or from task to main) using rendezvous.
+     * Blocks until the return value is received or timeout occurs.
+     * @param type The sync type domain.
+     * @param address The address of the target node.
+     * @param methodName The method name to call.
+     * @param payload Optional arguments and context for the call.
+     * @param timeoutMs Timeout in milliseconds.
+     * @returns The method return value or undefined on error/timeout.
+     */
     requestMethodCall(
         type: SyncType,
         address: string,
@@ -290,8 +353,16 @@ export class Task extends Node {
         if (!this.taskBuffer || this.threadId < 0) {
             return undefined;
         }
-        const value = payload ? toAssociativeArray(payload) : BrsInvalid.Instance;
-        this.sendThreadUpdate(this.threadId, "call", type, address, methodName, value, false);
+        const value = payload ?? null;
+        const update: ThreadUpdate = {
+            id: this.threadId,
+            action: "call",
+            type,
+            address,
+            key: methodName,
+            value,
+        };
+        this.sendThreadUpdate(update);
         const deadline = Date.now() + timeoutMs;
 
         while (true) {
@@ -323,7 +394,7 @@ export class Task extends Node {
      * @returns Array of generated events (empty for Task nodes).
      */
     protected getNewEvents(_: Interpreter, wait: number) {
-        if (this.taskBuffer && this.thread) {
+        if (this.taskBuffer && this.inThread) {
             const timeout = wait === 0 ? undefined : wait;
             this.taskBuffer.waitVersion(0, timeout);
             this.updateTask();
@@ -365,17 +436,43 @@ export class Task extends Node {
     updateTask() {
         const updates = this.processThreadUpdate();
         const state = this.getValueJS("state") as string;
-        if (!this.thread || state !== "run") {
+        if (!this.inThread || state !== "run") {
             return updates !== undefined;
         }
         // Check for changed Node fields to notify updates to the Main thread
         for (const [name, field] of this.getNodeFields()) {
             const value = field.getValue();
             if (!field.isHidden() && value instanceof Node && value.changed) {
-                this.sendThreadUpdate(this.threadId, "set", "task", this.address, name, value, true);
+                const update: ThreadUpdate = {
+                    id: this.threadId,
+                    action: "set",
+                    type: this.syncType,
+                    address: this.address,
+                    key: name,
+                    value: fromSGNode(value, true),
+                };
+                value.changed = false;
+                this.sendThreadUpdate(update);
             }
         }
         return updates !== undefined;
+    }
+
+    /**
+     * Posts a serialized node update to the owning thread.
+     * @param update ThreadUpdate containing the details of the field change and optional rendezvous requestId for acknowledgements.
+     * @param requestAck When true (default) the method will wait for an acknowledgement from the main thread confirming the update was processed, otherwise it will fire-and-forget without waiting. This should be false for updates originating from the main thread to avoid deadlocks, and can be true for updates originating from the task thread when the caller needs to ensure the main thread has processed the change before proceeding.
+     */
+    sendThreadUpdate(update: ThreadUpdate, requestAck: boolean = true) {
+        if (this.inThread && update.action === "set") {
+            update.requestId = requestAck ? this.syncRequestId++ : undefined;
+        } else if (update.action !== "ack") {
+            update.requestId = undefined;
+        }
+        postMessage(update);
+        if (this.inThread && update.requestId !== undefined && update.action !== "ack") {
+            this.waitForFieldAck(update.key, update.requestId);
+        }
     }
 
     /**
@@ -394,7 +491,7 @@ export class Task extends Node {
         const update = this.taskBuffer.load(true);
         if (isThreadUpdate(update)) {
             if (update.action === "ack") {
-                if (this.thread && update.requestId !== undefined) {
+                if (this.inThread && update.requestId !== undefined) {
                     this.completedAcks.add(update.requestId);
                 }
                 return update;
@@ -459,7 +556,7 @@ export class Task extends Node {
     private handleSetFieldRequest(node: Node, update: ThreadUpdate) {
         const oldValue = node.getValue(update.key);
         let value: BrsType;
-        if (!this.thread && oldValue instanceof Node && oldValue.getAddress() === update.value._address_) {
+        if (!this.inThread && oldValue instanceof Node && oldValue.getAddress() === update.value._address_) {
             // Update existing node to preserve references
             value = updateSGNode(update.value, oldValue);
         } else {
@@ -468,17 +565,10 @@ export class Task extends Node {
         node.markFieldFresh(update.key);
         node.setValue(update.key, value, false, undefined, false);
         // Send acknowledgement back to the other thread if needed
-        if (!this.thread && update.requestId !== undefined) {
-            this.sendThreadUpdate(
-                update.id,
-                "ack",
-                update.type,
-                update.address,
-                update.key,
-                BrsInvalid.Instance,
-                false,
-                update.requestId
-            );
+        if (!this.inThread && update.requestId !== undefined) {
+            update.action = "ack";
+            update.value = null;
+            this.sendThreadUpdate(update);
         }
         return update;
     }
@@ -511,9 +601,18 @@ export class Task extends Node {
         const args: BrsType[] = value instanceof RoArray ? value.getElements() : [];
         const location = payload.location ?? sgRoot.interpreter.location;
         const result = sgRoot.interpreter.call(method, args, hostNode.m, location, hostNode);
-        this.sendThreadUpdate(update.id, "resp", update.type, update.address, update.key, result, false);
+        const serializedValue = result instanceof Node ? fromSGNode(result, true) : jsValueOf(result);
+        update.action = "resp";
+        update.value = serializedValue;
+        this.sendThreadUpdate(update);
     }
 
+    /**
+     * Handles cases where the target node for an update cannot be found.
+     * Sends appropriate error/nil responses back to the caller.
+     * @param update The failed update request.
+     * @returns True if a response was sent back.
+     */
     handleUnresolvedNode(update: ThreadUpdate) {
         let responseAction = "";
         if (update.action === "set" && update.requestId !== undefined) {
@@ -522,16 +621,9 @@ export class Task extends Node {
             responseAction = "nil";
         }
         if (isSyncAction(responseAction)) {
-            this.sendThreadUpdate(
-                update.id,
-                responseAction,
-                update.type,
-                update.address,
-                update.key,
-                BrsInvalid.Instance,
-                false,
-                update.requestId
-            );
+            update.action = responseAction;
+            update.value = BrsInvalid.Instance;
+            this.sendThreadUpdate(update);
             return true;
         }
         return false;

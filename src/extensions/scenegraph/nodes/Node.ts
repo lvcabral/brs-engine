@@ -108,6 +108,7 @@ export class Node extends RoSGNode implements BrsValue {
      * Creates a new node instance, registering default and initial fields.
      * @param initializedFields Associative-array style entries coming from XML attributes.
      * @param nodeSubtype Concrete subtype identifier used for serialization and debugging.
+     * @param nodeType Optional explicit node type to map in inheritance hierarchy.
      */
     constructor(
         initializedFields: AAMember[] = [],
@@ -1615,7 +1616,8 @@ export class Node extends RoSGNode implements BrsValue {
     }
 
     /**
-     * Returns true when this node should rendezvous through the task thread.
+     * Checks if the node should perform a rendezvous through the task thread.
+     * @returns True if the node is owned by another thread and we are in a task thread.
      */
     protected shouldRendezvous(): boolean {
         return sgRoot.inTaskThread() && this.owner !== sgRoot.threadId;
@@ -1630,9 +1632,23 @@ export class Node extends RoSGNode implements BrsValue {
         if (!field || !this.shouldRendezvous()) {
             return;
         }
-        const fieldValue = field.getValue(false);
-        const deep = fieldValue instanceof Node;
-        this.sendThreadUpdate(sgRoot.threadId, "set", this.syncType, this.address, key, fieldValue, deep);
+        const task = sgRoot.getCurrentThreadTask();
+        if (task?.active) {
+            const fieldValue = field.getValue(false);
+            const serializedValue = fieldValue instanceof Node ? fromSGNode(fieldValue, true) : jsValueOf(fieldValue);
+            if (fieldValue instanceof Node) {
+                fieldValue.changed = false;
+            }
+            const update: ThreadUpdate = {
+                id: sgRoot.threadId,
+                action: "set",
+                type: this.syncType,
+                key,
+                value: serializedValue,
+                address: this.address,
+            };
+            task.sendThreadUpdate(update);
+        }
     }
 
     /**
@@ -1654,7 +1670,9 @@ export class Node extends RoSGNode implements BrsValue {
                 host = hostNode.getAddress();
             }
             const location = interpreter.location;
-            const payload: MethodCallPayload = args ? { host, args, location } : { host, location };
+            const payload: MethodCallPayload = args
+                ? { host, args: args.map((arg: BrsType) => jsValueOf(arg)), location }
+                : { host, location };
             return task.requestMethodCall(this.syncType, this.address, method, payload);
         }
         return undefined;
@@ -1680,38 +1698,6 @@ export class Node extends RoSGNode implements BrsValue {
             this.freshFields.delete(mapKey);
         }
         return true;
-    }
-
-    /**
-     * Posts a serialized node update to the owning thread.
-     * @param id Target thread id.
-     * @param action Sync action.
-     * @param type Update domain.
-     * @param address Node address for the update.
-     * @param key Field name being synchronized.
-     * @param value Value to send.
-     * @param deep When true nested nodes are deeply serialized.
-     * @param requestId Optional request identifier for correlation.
-     */
-    protected sendThreadUpdate(
-        id: number,
-        action: SyncAction,
-        type: SyncType,
-        address: string,
-        key: string,
-        value: BrsType,
-        deep: boolean = false,
-        requestId?: number
-    ) {
-        const serializedValue = value instanceof Node ? fromSGNode(value, deep) : jsValueOf(value);
-        const update: ThreadUpdate = { id, action, type, key, value: serializedValue, address };
-        if (requestId !== undefined) {
-            update.requestId = requestId;
-        }
-        if (sgRoot.inTaskThread() && value instanceof Node && action === "set") {
-            value.changed = false;
-        }
-        postMessage(update);
     }
 
     /**

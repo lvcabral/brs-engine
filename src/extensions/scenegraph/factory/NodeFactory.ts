@@ -512,7 +512,7 @@ export function initializeTask(interpreter: Interpreter, taskData: TaskData) {
         // Configure Threads
         sgRoot.setThread(0, taskData.render);
         node.threadId = taskData.id;
-        node.thread = true;
+        node.inThread = true;
         sgRoot.addTask(node, taskData.id);
         interpreter.environment.hostNode = node;
 
