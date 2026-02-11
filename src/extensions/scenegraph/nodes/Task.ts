@@ -99,8 +99,8 @@ export class Task extends Node {
         }
         super.setValue(index, value, alwaysNotify, kind);
         // Notify other threads of field changes
-        if (this.threadId >= 0 && field && sync && this.changed) {
-            this.syncTaskField(field, mapKey);
+        if (field && sync && this.changed) {
+            this.syncRemoteField(field, mapKey);
             this.changed = false;
         }
     }
@@ -135,31 +135,6 @@ export class Task extends Node {
                 this.sendThreadUpdate(update);
             }
         }
-    }
-
-    /**
-     * Synchronizes a specific field's value to the worker thread.
-     * @param field The field instance to synchronize.
-     * @param fieldName The name of the field.
-     */
-    private syncTaskField(field: Field, fieldName: string) {
-        if (this.threadId < 0) {
-            return;
-        }
-        const value = field.getValue(false);
-        const serializedValue = value instanceof Node ? fromSGNode(value, true) : jsValueOf(value);
-        if (value instanceof Node) {
-            value.changed = false;
-        }
-        const update: ThreadUpdate = {
-            id: this.threadId,
-            action: "set",
-            type: this.syncType,
-            address: this.address,
-            key: fieldName,
-            value: serializedValue,
-        };
-        this.sendThreadUpdate(update);
     }
 
     /**
@@ -265,6 +240,38 @@ export class Task extends Node {
         this.taskBuffer = new SharedObject();
         this.taskBuffer.setBuffer(data);
         this.active = true;
+    }
+
+    /**
+     * Synchronizes a field change back to the owning thread when applicable.
+     * @param field The field instance that has changed and needs synchronization.
+     * @param key Field name to synchronize.
+     * @param type The sync type domain (e.g. "task") for the update message.
+     * @param address The address of the node for the update message (defaults to this node's address).
+     */
+    syncRemoteField(
+        field: Field,
+        key: string,
+        type: SyncType = this.syncType,
+        address: string = this.address
+    ) {
+        if (this.threadId < 0 || !this.active) {
+            return;
+        }
+        const fieldValue = field.getValue(false);
+        const value = fieldValue instanceof Node ? fromSGNode(fieldValue, true) : jsValueOf(fieldValue);
+        if (fieldValue instanceof Node) {
+            fieldValue.changed = false;
+        }
+        const update: ThreadUpdate = {
+            id: this.threadId,
+            action: "set",
+            type,
+            address,
+            key,
+            value,
+        };
+        this.sendThreadUpdate(update);
     }
 
     /**

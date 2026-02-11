@@ -396,8 +396,11 @@ export class Node extends RoSGNode implements BrsValue {
             BrsDevice.stderr.write(`warning,${errorMsg} ${this.location || "(internal)"}`);
         }
         this.markFieldFresh(mapKey);
-        if (sync && this.changed && this.shouldRendezvous() && this.syncType !== "task") {
-            this.syncRemoteField(mapKey);
+        if (field && sync && this.changed && this.shouldRendezvous() && this.syncType !== "task") {
+            const task = sgRoot.getCurrentThreadTask();
+            if (task?.active) {
+                task.syncRemoteField(field, mapKey, this.syncType, this.address);
+            }
             this.changed = false;
         }
     }
@@ -1610,34 +1613,6 @@ export class Node extends RoSGNode implements BrsValue {
      */
     protected shouldRendezvous(): boolean {
         return sgRoot.inTaskThread() && this.owner !== sgRoot.threadId;
-    }
-
-    /**
-     * Synchronizes a field change back to the owning thread when applicable.
-     * @param key Field name to synchronize.
-     */
-    protected syncRemoteField(key: string) {
-        const field = this.fields.get(key.toLowerCase());
-        if (!field || !this.shouldRendezvous()) {
-            return;
-        }
-        const task = sgRoot.getCurrentThreadTask();
-        if (task?.active) {
-            const fieldValue = field.getValue(false);
-            const serializedValue = fieldValue instanceof Node ? fromSGNode(fieldValue, true) : jsValueOf(fieldValue);
-            if (fieldValue instanceof Node) {
-                fieldValue.changed = false;
-            }
-            const update: ThreadUpdate = {
-                id: sgRoot.threadId,
-                action: "set",
-                type: this.syncType,
-                key,
-                value: serializedValue,
-                address: this.address,
-            };
-            task.sendThreadUpdate(update);
-        }
     }
 
     /**
