@@ -226,7 +226,7 @@ function fromObject(obj: any, cs?: boolean, nodeMap?: Map<string, Node>): BrsTyp
  * @param subtype The subtype of the node.
  * @param child Whether this node should deserialize its children.
  * @param nodeMap Optional map to track nodes by ID for resolving circular references.
- * @returns A remote RoSGNode with the converted fields.
+ * @returns A RoSGNode with the converted fields and optionally its children.
  */
 export function toSGNode(obj: any, type: string, subtype: string, child?: boolean, nodeMap?: Map<string, Node>): Node {
     // Initialize nodeMap on first call

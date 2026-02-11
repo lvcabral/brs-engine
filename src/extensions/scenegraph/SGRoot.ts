@@ -212,7 +212,6 @@ export class SGRoot {
     setCurrentThread(threadId: number) {
         this._threadId = threadId;
         BrsDevice.threadId = threadId;
-        this._mGlobal = new Global();
     }
 
     /**
