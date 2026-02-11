@@ -430,11 +430,8 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             args: [],
             returns: ValueKind.Object,
         },
-        impl: (interpreter: Interpreter) => {
-            const remote = this.rendezvousCall(interpreter, "threadInfo");
-            if (remote !== undefined) {
-                return remote;
-            }
+        impl: (_: Interpreter) => {
+            // This method does not Rendezvous because it needs to get information about the current thread.
             return this.getThreadInfo();
         },
     });
