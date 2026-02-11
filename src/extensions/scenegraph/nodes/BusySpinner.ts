@@ -27,8 +27,8 @@ export class BusySpinner extends Group {
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
 
-        this.poster = this.addPoster(`common:/images/${this.resolution}/spinner.png`, [0, 0]);
-        this.poster.noScaling = true;
+        const size = this.resolution === "FHD" ? 120 : 80;
+        this.poster = this.addPoster(`common:/images/${this.resolution}/spinner.png`, [0, 0], size, size);
         this.setValueSilent("poster", this.poster);
     }
 
