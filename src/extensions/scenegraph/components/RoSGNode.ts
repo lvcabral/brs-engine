@@ -22,9 +22,9 @@ import {
     Rect,
 } from "brs-engine";
 import { sgRoot } from "../SGRoot";
-import { createNodeByType, getNodeType, isSubtypeCheck, subtypeHierarchy } from "../factory/NodeFactory";
+import { createNodeRunInit, getNodeType, isSubtypeCheck, subtypeHierarchy } from "../factory/NodeFactory";
 import { toAssociativeArray } from "../factory/Serializer";
-import { FieldKind, isContentNode } from "../SGTypes";
+import { FieldKind, isContentNode, ObserverScope } from "../SGTypes";
 import type { SGNodeType } from "../nodes";
 
 export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode {
@@ -160,9 +160,13 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
     abstract getElements(): BrsString[];
     abstract getValue(fieldName: string): BrsType;
     abstract getValues(): BrsType[];
-    abstract setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind): void;
+    abstract setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind, sync?: boolean): void;
     abstract setValueSilent(fieldName: string, value: BrsType, alwaysNotify?: boolean): void;
-    abstract addNodeField(fieldName: string, type: string, alwaysNotify: boolean): void;
+    abstract addNodeField(fieldName: string, type: string, alwaysNotify: boolean, sync: boolean): void;
+    abstract getAddress(): string;
+    abstract setAddress(address: string): void;
+    abstract getOwner(): number;
+    abstract setOwner(owner: number): void;
 
     abstract getNodeChildren(): BrsType[];
     abstract getNodeParent(): RoSGNode | BrsInvalid;
@@ -170,10 +174,10 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
     abstract appendChildToParent(child: BrsType): boolean;
     abstract addObserver(
         interpreter: Interpreter,
-        scope: "permanent" | "scoped" | "unscoped",
+        scope: ObserverScope,
         fieldName: BrsString,
         funcOrPort: BrsString | RoMessagePort,
-        infoFields?: RoArray
+        infoFields?: RoArray | BrsInvalid
     ): BrsBoolean;
     protected abstract removeObserver(fieldName: string, node?: RoSGNode): void;
     protected abstract cloneNode(isDeepCopy: boolean, interpreter?: Interpreter): BrsType;
@@ -207,10 +211,13 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
     protected abstract compareNodes(other: RoSGNode): boolean;
     protected abstract getThreadInfo(): RoAssociativeArray;
 
+    protected abstract shouldRendezvous(): boolean;
+    protected abstract rendezvousCall(interpreter: Interpreter, method: string, args?: BrsType[]): BrsType | undefined;
+
     /**
      * Calls the function specified on this node.
      */
-    private readonly callFunc = new Callable(
+    protected readonly callFunc = new Callable(
         "callFunc",
         ...Callable.variadic({
             signature: {
@@ -218,30 +225,42 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
                 returns: ValueKind.Dynamic,
             },
             impl: (interpreter: Interpreter, functionName: BrsString, ...functionArgs: BrsType[]) => {
+                const remote = this.rendezvousCall(interpreter, "callFunc", [functionName, ...functionArgs]);
+                if (remote !== undefined) {
+                    return remote;
+                }
                 return this.callFunction(interpreter, functionName, ...functionArgs);
             },
         })
     );
 
     /** Removes all fields from the node */
-    private readonly clear = new Callable("clear", {
+    protected readonly clear = new Callable("clear", {
         signature: {
             args: [],
             returns: ValueKind.Void,
         },
-        impl: (_: Interpreter) => {
+        impl: (interpreter: Interpreter) => {
+            const remote = this.rendezvousCall(interpreter, "clear");
+            if (remote !== undefined) {
+                return remote;
+            }
             this.clearNodeFields();
             return Uninitialized.Instance;
         },
     });
 
     /** Removes a given item from the node */
-    private readonly delete = new Callable("delete", {
+    protected readonly delete = new Callable("delete", {
         signature: {
             args: [new StdlibArgument("str", ValueKind.String)],
             returns: ValueKind.Boolean,
         },
-        impl: (_: Interpreter, str: BrsString) => {
+        impl: (interpreter: Interpreter, str: BrsString) => {
+            const remote = this.rendezvousCall(interpreter, "delete", [str]);
+            if (remote !== undefined) {
+                return remote;
+            }
             this.removeFieldEntry(str.getValue());
             return BrsBoolean.True; //RBI always returns true
         },
@@ -250,12 +269,16 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
     /** Given a key and value, adds an item to the node if it doesn't exist
      * Or replaces the value of a key that already exists in the node
      */
-    private readonly addReplace = new Callable("addReplace", {
+    protected readonly addReplace = new Callable("addReplace", {
         signature: {
             args: [new StdlibArgument("key", ValueKind.String), new StdlibArgument("value", ValueKind.Dynamic)],
             returns: ValueKind.Void,
         },
         impl: (interpreter: Interpreter, key: BrsString, value: BrsType) => {
+            const remote = this.rendezvousCall(interpreter, "addReplace", [key, value]);
+            if (remote !== undefined) {
+                return remote;
+            }
             this.location = interpreter.formatLocation();
             this.setValue(key.getValue(), value);
             return Uninitialized.Instance;
@@ -268,29 +291,41 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             args: [],
             returns: ValueKind.Int32,
         },
-        impl: (_: Interpreter) => {
+        impl: (interpreter: Interpreter) => {
+            const remote = this.rendezvousCall(interpreter, "count");
+            if (remote !== undefined) {
+                return remote;
+            }
             return new Int32(this.getElements().length);
         },
     });
 
     /** Returns a boolean indicating whether or not a given key exists in the node */
-    private readonly doesExist = new Callable("doesExist", {
+    protected readonly doesExist = new Callable("doesExist", {
         signature: {
             args: [new StdlibArgument("str", ValueKind.String)],
             returns: ValueKind.Boolean,
         },
-        impl: (_: Interpreter, str: BrsString) => {
+        impl: (interpreter: Interpreter, str: BrsString) => {
+            const remote = this.rendezvousCall(interpreter, "doesExist", [str]);
+            if (remote !== undefined) {
+                return remote;
+            }
             return BrsBoolean.from(this.getElements().some((key) => key.getValue() === str.getValue().toLowerCase()));
         },
     });
 
     /** Appends a new node to another. If two keys are the same, the value of the original AA is replaced with the new one. */
-    private readonly append = new Callable("append", {
+    protected readonly append = new Callable("append", {
         signature: {
             args: [new StdlibArgument("obj", ValueKind.Object)],
             returns: ValueKind.Void,
         },
-        impl: (_: Interpreter, obj: BrsType) => {
+        impl: (interpreter: Interpreter, obj: BrsType) => {
+            const remote = this.rendezvousCall(interpreter, "append", [obj]);
+            if (remote !== undefined) {
+                return remote;
+            }
             this.appendNodeFields(obj);
             return Uninitialized.Instance;
         },
@@ -302,7 +337,11 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             args: [],
             returns: ValueKind.Object,
         },
-        impl: (_: Interpreter) => {
+        impl: (interpreter: Interpreter) => {
+            const remote = this.rendezvousCall(interpreter, "keys");
+            if (remote !== undefined) {
+                return remote;
+            }
             return new RoArray(this.getElements());
         },
     });
@@ -313,7 +352,11 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             args: [],
             returns: ValueKind.Object,
         },
-        impl: (_: Interpreter) => {
+        impl: (interpreter: Interpreter) => {
+            const remote = this.rendezvousCall(interpreter, "items");
+            if (remote !== undefined) {
+                return remote;
+            }
             return new RoArray(
                 this.getElements().map((key: BrsString) => {
                     return toAssociativeArray({ key: key, value: this.get(key) });
@@ -323,21 +366,25 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
     });
 
     /** Given a key, returns the value associated with that key. This method is case insensitive. */
-    private readonly lookup = new Callable("lookup", {
+    protected readonly lookup = new Callable("lookup", {
         signature: {
             args: [new StdlibArgument("key", ValueKind.String)],
             returns: ValueKind.Dynamic,
         },
-        impl: (_: Interpreter, key: BrsString) => {
+        impl: (interpreter: Interpreter, key: BrsString) => {
+            const remote = this.rendezvousCall(interpreter, "lookup", [key]);
+            if (remote !== undefined) {
+                return remote;
+            }
             return this.get(key);
         },
     });
 
     /** Given a key, returns the value associated with that key. This method is case insensitive. */
-    private readonly lookupCI = new Callable("lookupCI", this.lookup.signatures[0]);
+    protected readonly lookupCI = new Callable("lookupCI", this.lookup.signatures[0]);
 
     /** Adds a new field to the node, if the field already exists it doesn't change the current value. */
-    private readonly addField = new Callable("addField", {
+    protected readonly addField = new Callable("addField", {
         signature: {
             args: [
                 new StdlibArgument("fieldName", ValueKind.String),
@@ -347,19 +394,27 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             returns: ValueKind.Boolean,
         },
         impl: (interpreter: Interpreter, fieldName: BrsString, type: BrsString, alwaysNotify: BrsBoolean) => {
+            const remote = this.rendezvousCall(interpreter, "addField", [fieldName, type, alwaysNotify]);
+            if (remote !== undefined) {
+                return remote;
+            }
             this.location = interpreter.formatLocation();
-            this.addNodeField(fieldName.getValue(), type.getValue(), alwaysNotify.toBoolean());
+            this.addNodeField(fieldName.getValue(), type.getValue(), alwaysNotify.toBoolean(), true);
             return BrsBoolean.True;
         },
     });
 
     /** Adds one or more fields defined as an associative array of key values. */
-    private readonly addFields = new Callable("addFields", {
+    protected readonly addFields = new Callable("addFields", {
         signature: {
             args: [new StdlibArgument("fields", ValueKind.Object)],
             returns: ValueKind.Boolean,
         },
         impl: (interpreter: Interpreter, fields: RoAssociativeArray) => {
+            const remote = this.rendezvousCall(interpreter, "addFields", [fields]);
+            if (remote !== undefined) {
+                return remote;
+            }
             if (!(fields instanceof RoAssociativeArray)) {
                 return BrsBoolean.False;
             }
@@ -370,35 +425,44 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
     });
 
     /** Returns an object containing thread information for debugging purposes. */
-    private readonly threadInfo = new Callable("threadInfo", {
+    protected readonly threadInfo = new Callable("threadInfo", {
         signature: {
             args: [],
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter) => {
+            // This method does not Rendezvous because it needs to get information about the current thread.
             return this.getThreadInfo();
         },
     });
 
     /** Makes subsequent operations on the node fields to queue on the node itself rather than on the Scene node render thread. */
-    private readonly queueFields = new Callable("queueFields", {
+    protected readonly queueFields = new Callable("queueFields", {
         signature: {
             args: [new StdlibArgument("queueNode", ValueKind.Boolean)],
             returns: ValueKind.Void,
         },
-        impl: (_: Interpreter, _queueNode: BrsBoolean) => {
+        impl: (interpreter: Interpreter, queueNode: BrsBoolean) => {
+            const remote = this.rendezvousCall(interpreter, "queueFields", [queueNode]);
+            if (remote !== undefined) {
+                return remote;
+            }
             // Not implemented yet. Mocking to prevent crash on usage.
             return Uninitialized.Instance;
         },
     });
 
     /** Moves an object into an roSGNode field, which must be an associative array. */
-    private readonly moveIntoField = new Callable("moveIntoField", {
+    protected readonly moveIntoField = new Callable("moveIntoField", {
         signature: {
             args: [new StdlibArgument("fieldName", ValueKind.String), new StdlibArgument("data", ValueKind.Object)],
             returns: ValueKind.Int32,
         },
         impl: (interpreter: Interpreter, fieldName: BrsString, data: RoAssociativeArray) => {
+            const remote = this.rendezvousCall(interpreter, "moveIntoField", [fieldName, data]);
+            if (remote !== undefined) {
+                return remote;
+            }
             let result: { code: number; msg?: string };
             if (data instanceof RoAssociativeArray) {
                 result = this.moveObjectIntoField(fieldName.getValue(), data);
@@ -416,12 +480,16 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
     });
 
     /** Moves an object out of an roSGNode field (an associative array). */
-    private readonly moveFromField = new Callable("moveFromField", {
+    protected readonly moveFromField = new Callable("moveFromField", {
         signature: {
             args: [new StdlibArgument("fieldName", ValueKind.String)],
             returns: ValueKind.Object,
         },
         impl: (interpreter: Interpreter, fieldName: BrsString) => {
+            const remote = this.rendezvousCall(interpreter, "moveFromField", [fieldName]);
+            if (remote !== undefined) {
+                return remote;
+            }
             const result = this.moveObjectFromField(fieldName.getValue());
             if (typeof result === "string") {
                 const location = interpreter.formatLocation();
@@ -433,12 +501,16 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
     });
 
     /** Assigns an associative array to the field of a roSGNode via reference. */
-    private readonly setRef = new Callable("setRef", {
+    protected readonly setRef = new Callable("setRef", {
         signature: {
             args: [new StdlibArgument("fieldName", ValueKind.String), new StdlibArgument("data", ValueKind.Object)],
             returns: ValueKind.Boolean,
         },
         impl: (interpreter: Interpreter, fieldName: BrsString, data: RoAssociativeArray) => {
+            const remote = this.rendezvousCall(interpreter, "setRef", [fieldName, data]);
+            if (remote !== undefined) {
+                return remote;
+            }
             if (sgRoot.inTaskThread() || !(data instanceof RoAssociativeArray)) {
                 return BrsBoolean.False;
             }
@@ -454,23 +526,31 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
     });
 
     /** Indicates whether the GetRef() function will succeed in the current context. */
-    private readonly canGetRef = new Callable("canGetRef", {
+    protected readonly canGetRef = new Callable("canGetRef", {
         signature: {
             args: [new StdlibArgument("fieldName", ValueKind.String)],
             returns: ValueKind.Boolean,
         },
-        impl: (_: Interpreter, fieldName: BrsString) => {
+        impl: (interpreter: Interpreter, fieldName: BrsString) => {
+            const remote = this.rendezvousCall(interpreter, "canGetRef", [fieldName]);
+            if (remote !== undefined) {
+                return remote;
+            }
             return BrsBoolean.from(this.canGetFieldByRef(fieldName.getValue()));
         },
     });
 
     /** Returns a reference to the value of an roSGNode field, which must be an associative array and be set by SetRef() */
-    private readonly getRef = new Callable("getRef", {
+    protected readonly getRef = new Callable("getRef", {
         signature: {
             args: [new StdlibArgument("fieldName", ValueKind.String)],
             returns: ValueKind.Dynamic,
         },
         impl: (interpreter: Interpreter, fieldName: BrsString) => {
+            const remote = this.rendezvousCall(interpreter, "getRef", [fieldName]);
+            if (remote !== undefined) {
+                return remote;
+            }
             const result = this.getFieldByRef(fieldName.getValue());
             if (typeof result === "string" && result.length > 0) {
                 const location = interpreter.formatLocation();
@@ -483,34 +563,46 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
     });
 
     /** Returns the value of the field passed as argument, if the field doesn't exist it returns invalid. */
-    private readonly getField = new Callable("getField", {
+    protected readonly getField = new Callable("getField", {
         signature: {
             args: [new StdlibArgument("fieldName", ValueKind.String)],
             returns: ValueKind.Dynamic,
         },
-        impl: (_: Interpreter, fieldName: BrsString) => {
+        impl: (interpreter: Interpreter, fieldName: BrsString) => {
+            const remote = this.rendezvousCall(interpreter, "getField", [fieldName]);
+            if (remote !== undefined) {
+                return remote;
+            }
             return this.get(fieldName);
         },
     });
 
     /** Returns the names and values of all the fields in the node. */
-    private readonly getFields = new Callable("getFields", {
+    protected readonly getFields = new Callable("getFields", {
         signature: {
             args: [],
             returns: ValueKind.Object,
         },
-        impl: (_: Interpreter) => {
+        impl: (interpreter: Interpreter) => {
+            const remote = this.rendezvousCall(interpreter, "getFields");
+            if (remote !== undefined) {
+                return remote;
+            }
             return this.getNodeFieldsAsAA();
         },
     });
 
     /** Returns the type of a specific field of the subject node. */
-    private readonly getFieldType = new Callable("getFieldType", {
+    protected readonly getFieldType = new Callable("getFieldType", {
         signature: {
             args: [new StdlibArgument("fieldName", ValueKind.String)],
             returns: ValueKind.String,
         },
-        impl: (_: Interpreter, fieldName: BrsString) => {
+        impl: (interpreter: Interpreter, fieldName: BrsString) => {
+            const remote = this.rendezvousCall(interpreter, "getFieldType", [fieldName]);
+            if (remote !== undefined) {
+                return remote;
+            }
             const types = this.getNodeFieldTypes();
             const fieldType = types.get(fieldName);
             return fieldType instanceof BrsString ? fieldType : new BrsString("<NoSuchField>");
@@ -518,12 +610,16 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
     });
 
     /** Returns the names and types of all the fields in the node. */
-    private readonly getFieldTypes = new Callable("getFieldTypes", {
+    protected readonly getFieldTypes = new Callable("getFieldTypes", {
         signature: {
             args: [],
             returns: ValueKind.Object,
         },
-        impl: (_: Interpreter) => {
+        impl: (interpreter: Interpreter) => {
+            const remote = this.rendezvousCall(interpreter, "getFieldTypes");
+            if (remote !== undefined) {
+                return remote;
+            }
             return this.getNodeFieldTypes();
         },
     });
@@ -534,13 +630,17 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             args: [new StdlibArgument("fieldName", ValueKind.String)],
             returns: ValueKind.Boolean,
         },
-        impl: (_: Interpreter, fieldName: BrsString) => {
+        impl: (interpreter: Interpreter, fieldName: BrsString) => {
+            const remote = this.rendezvousCall(interpreter, "hasField", [fieldName]);
+            if (remote !== undefined) {
+                return remote;
+            }
             return BrsBoolean.from(this.hasNodeField(fieldName.getValue()));
         },
     });
 
     /** Registers a callback to be executed when the value of the field changes */
-    private readonly observeField = new Callable(
+    protected readonly observeField = new Callable(
         "observeField",
         {
             signature: {
@@ -552,6 +652,10 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
                 returns: ValueKind.Boolean,
             },
             impl: (interpreter: Interpreter, fieldName: BrsString, funcName: BrsString, infoFields: RoArray) => {
+                const remote = this.rendezvousCall(interpreter, "observeField", [fieldName, funcName, infoFields]);
+                if (remote !== undefined) {
+                    return remote;
+                }
                 return this.addObserver(interpreter, "unscoped", fieldName, funcName, infoFields);
             },
         },
@@ -565,26 +669,21 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
                 returns: ValueKind.Boolean,
             },
             impl: (interpreter: Interpreter, fieldName: BrsString, port: RoMessagePort, infoFields: RoArray) => {
+                this.rendezvousCall(interpreter, "observeField", [fieldName, port, infoFields]);
                 return this.addObserver(interpreter, "unscoped", fieldName, port, infoFields);
             },
         }
     );
 
     /** Removes all observers of a given field, regardless of whether or not the host node is the subscriber. */
-    private readonly unobserveField = new Callable("unobserveField", {
+    protected readonly unobserveField = new Callable("unobserveField", {
         signature: {
             args: [new StdlibArgument("fieldName", ValueKind.String)],
             returns: ValueKind.Boolean,
         },
         impl: (interpreter: Interpreter, fieldName: BrsString) => {
+            this.rendezvousCall(interpreter, "unobserveField", [fieldName]);
             const name = fieldName.getValue();
-            if (!interpreter.environment.hostNode) {
-                const location = interpreter.formatLocation();
-                BrsDevice.stderr.write(
-                    `warning,BRIGHTSCRIPT: ERROR: roSGNode.unObserveField: "${this.nodeSubtype}.${name}" no active host node: ${location}`
-                );
-                return BrsBoolean.False;
-            }
             this.removeObserver(name);
             // returns true, even if the field doesn't exist
             return BrsBoolean.True;
@@ -592,7 +691,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
     });
 
     /** Sets up a connection between the observed node's field and the current component from which this call is made. */
-    private readonly observeFieldScoped = new Callable(
+    protected readonly observeFieldScoped = new Callable(
         "observeFieldScoped",
         {
             signature: {
@@ -604,6 +703,14 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
                 returns: ValueKind.Boolean,
             },
             impl: (interpreter: Interpreter, fieldName: BrsString, funcName: BrsString, infoFields: RoArray) => {
+                const remote = this.rendezvousCall(interpreter, "observeFieldScoped", [
+                    fieldName,
+                    funcName,
+                    infoFields,
+                ]);
+                if (remote !== undefined) {
+                    return remote;
+                }
                 return this.addObserver(interpreter, "scoped", fieldName, funcName, infoFields);
             },
         },
@@ -617,13 +724,14 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
                 returns: ValueKind.Boolean,
             },
             impl: (interpreter: Interpreter, fieldName: BrsString, port: RoMessagePort, infoFields: RoArray) => {
+                this.rendezvousCall(interpreter, "observeFieldScoped", [fieldName, port, infoFields]);
                 return this.addObserver(interpreter, "scoped", fieldName, port, infoFields);
             },
         }
     );
 
     /** Sets up a connection between the observed node's field and the current component from which this call is made. */
-    private readonly observeFieldScopedEx = new Callable(
+    protected readonly observeFieldScopedEx = new Callable(
         "observeFieldScopedEx",
         {
             signature: {
@@ -635,6 +743,14 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
                 returns: ValueKind.Boolean,
             },
             impl: (interpreter: Interpreter, fieldName: BrsString, funcName: BrsString, infoFields: RoArray) => {
+                const remote = this.rendezvousCall(interpreter, "observeFieldScopedEx", [
+                    fieldName,
+                    funcName,
+                    infoFields,
+                ]);
+                if (remote !== undefined) {
+                    return remote;
+                }
                 return this.addObserver(interpreter, "scoped", fieldName, funcName, infoFields);
             },
         },
@@ -648,18 +764,20 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
                 returns: ValueKind.Boolean,
             },
             impl: (interpreter: Interpreter, fieldName: BrsString, port: RoMessagePort, infoFields: RoArray) => {
+                this.rendezvousCall(interpreter, "observeFieldScopedEx", [fieldName, port, infoFields]);
                 return this.addObserver(interpreter, "scoped", fieldName, port, infoFields);
             },
         }
     );
 
     /** Removes the connection between the observing component and the observed node's field. */
-    private readonly unobserveFieldScoped = new Callable("unobserveFieldScoped", {
+    protected readonly unobserveFieldScoped = new Callable("unobserveFieldScoped", {
         signature: {
             args: [new StdlibArgument("fieldName", ValueKind.String)],
             returns: ValueKind.Boolean,
         },
         impl: (interpreter: Interpreter, fieldName: BrsString) => {
+            this.rendezvousCall(interpreter, "unobserveFieldScoped", [fieldName]);
             const name = fieldName.getValue();
             if (!interpreter.environment.hostNode) {
                 const location = interpreter.formatLocation();
@@ -675,24 +793,32 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
     });
 
     /** Removes the given field from the node */
-    private readonly removeField = new Callable("removeField", {
+    protected readonly removeField = new Callable("removeField", {
         signature: {
             args: [new StdlibArgument("fieldName", ValueKind.String)],
             returns: ValueKind.Boolean,
         },
-        impl: (_: Interpreter, fieldName: BrsString) => {
+        impl: (interpreter: Interpreter, fieldName: BrsString) => {
+            const remote = this.rendezvousCall(interpreter, "removeField", [fieldName]);
+            if (remote !== undefined) {
+                return remote;
+            }
             this.removeFieldEntry(fieldName.getValue());
             return BrsBoolean.True; //RBI always returns true
         },
     });
 
     /** Removes one or more fields from the node */
-    private readonly removeFields = new Callable("removeFields", {
+    protected readonly removeFields = new Callable("removeFields", {
         signature: {
             args: [new StdlibArgument("fieldNames", ValueKind.Object)],
             returns: ValueKind.Boolean,
         },
-        impl: (_: Interpreter, fieldNames: RoArray) => {
+        impl: (interpreter: Interpreter, fieldNames: RoArray) => {
+            const remote = this.rendezvousCall(interpreter, "removeFields", [fieldNames]);
+            if (remote !== undefined) {
+                return remote;
+            }
             if (!(fieldNames instanceof RoArray)) {
                 return BrsBoolean.False;
             }
@@ -712,12 +838,16 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
     });
 
     /** Updates the value of an existing field only if the field exists and types match. */
-    private readonly setField = new Callable("setField", {
+    protected readonly setField = new Callable("setField", {
         signature: {
             args: [new StdlibArgument("fieldName", ValueKind.String), new StdlibArgument("value", ValueKind.Dynamic)],
             returns: ValueKind.Boolean,
         },
         impl: (interpreter: Interpreter, fieldName: BrsString, value: BrsType) => {
+            const remote = this.rendezvousCall(interpreter, "setField", [fieldName, value]);
+            if (remote !== undefined) {
+                return remote;
+            }
             const name = fieldName.getValue();
             this.location = interpreter.formatLocation();
             if (
@@ -741,12 +871,16 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
     });
 
     /** Updates the value of multiple existing field only if the field exists and types match. */
-    private readonly setFields = new Callable("setFields", {
+    protected readonly setFields = new Callable("setFields", {
         signature: {
             args: [new StdlibArgument("fields", ValueKind.Object)],
             returns: ValueKind.Boolean,
         },
         impl: (interpreter: Interpreter, fields: RoAssociativeArray) => {
+            const remote = this.rendezvousCall(interpreter, "setFields", [fields]);
+            if (remote !== undefined) {
+                return remote;
+            }
             if (!(fields instanceof RoAssociativeArray)) {
                 return BrsBoolean.False;
             }
@@ -758,7 +892,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
 
     /* Updates the value of multiple existing field only if the types match.
     In contrast to setFields method, update always return Uninitialized */
-    private readonly update = new Callable("update", {
+    protected readonly update = new Callable("update", {
         signature: {
             args: [
                 new StdlibArgument("content", ValueKind.Object),
@@ -767,6 +901,10 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             returns: ValueKind.Uninitialized,
         },
         impl: (interpreter: Interpreter, content: RoAssociativeArray | RoArray, createFields: BrsBoolean) => {
+            const remote = this.rendezvousCall(interpreter, "update", [content, createFields]);
+            if (remote !== undefined) {
+                return remote;
+            }
             this.location = interpreter.formatLocation();
             this.updateFields(interpreter, content, createFields.toBoolean());
             return Uninitialized.Instance;
@@ -774,7 +912,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
     });
 
     /** Signals start and/or stop points for measuring app launch and Electronic Program Grid (EPG) launch times. */
-    private readonly signalBeacon = new Callable("signalBeacon", {
+    protected readonly signalBeacon = new Callable("signalBeacon", {
         signature: {
             args: [new StdlibArgument("beacon", ValueKind.String)],
             returns: ValueKind.Int32,
@@ -791,26 +929,36 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
         },
     });
 
-    /* Return the current number of children in the subject node list of children.
-    This is always a non-negative number. */
-    private readonly getChildCount = new Callable("getChildCount", {
+    /**
+     * Returns the current number of children in the subject node list of children.
+     * This is always a non-negative number.
+     */
+    protected readonly getChildCount = new Callable("getChildCount", {
         signature: {
             args: [],
             returns: ValueKind.Int32,
         },
-        impl: (_: Interpreter) => {
+        impl: (interpreter: Interpreter) => {
+            const remote = this.rendezvousCall(interpreter, "getChildCount");
+            if (remote !== undefined) {
+                return remote;
+            }
             return new Int32(this.getNodeChildren().length);
         },
     });
 
     /* Adds a child node to the end of the subject node list of children so that it is
     traversed last (of those children) during render. */
-    private readonly appendChild = new Callable("appendChild", {
+    protected readonly appendChild = new Callable("appendChild", {
         signature: {
             args: [new StdlibArgument("child", ValueKind.Dynamic)],
             returns: ValueKind.Boolean,
         },
-        impl: (_: Interpreter, child: BrsType) => {
+        impl: (interpreter: Interpreter, child: BrsType) => {
+            const remote = this.rendezvousCall(interpreter, "appendChild", [child]);
+            if (remote !== undefined) {
+                return remote;
+            }
             return BrsBoolean.from(this.appendChildToParent(child));
         },
     });
@@ -818,12 +966,16 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
     /* Retrieves the number of child nodes specified by num_children from the subject
     node, starting at the position specified by index. Returns an array of the child nodes
     retrieved. If num_children is -1, return all the children. */
-    private readonly getChildren = new Callable("getChildren", {
+    protected readonly getChildren = new Callable("getChildren", {
         signature: {
             args: [new StdlibArgument("num_children", ValueKind.Int32), new StdlibArgument("index", ValueKind.Int32)],
             returns: ValueKind.Object,
         },
-        impl: (_: Interpreter, num_children: Int32, index: Int32) => {
+        impl: (interpreter: Interpreter, num_children: Int32, index: Int32) => {
+            const remote = this.rendezvousCall(interpreter, "getChildren", [num_children, index]);
+            if (remote !== undefined) {
+                return remote;
+            }
             const numChildrenValue = num_children.getValue();
             const indexValue = index.getValue();
             const children = this.getNodeChildren();
@@ -854,36 +1006,48 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
     remove it from the list of children. The match is made on the basis of actual
     object identity, that is, the value of the pointer to the child node.
     return false if trying to remove anything that's not a node */
-    private readonly removeChild = new Callable("removeChild", {
+    protected readonly removeChild = new Callable("removeChild", {
         signature: {
             args: [new StdlibArgument("child", ValueKind.Dynamic)],
             returns: ValueKind.Boolean,
         },
-        impl: (_: Interpreter, child: BrsType) => {
+        impl: (interpreter: Interpreter, child: BrsType) => {
+            const remote = this.rendezvousCall(interpreter, "removeChild", [child]);
+            if (remote !== undefined) {
+                return remote;
+            }
             return BrsBoolean.from(this.removeChildByReference(child));
         },
     });
     /* If the subject node has been added to a parent node list of children,
     return the parent node, otherwise return invalid.*/
-    private readonly getParent = new Callable("getParent", {
+    protected readonly getParent = new Callable("getParent", {
         signature: {
             args: [],
             returns: ValueKind.Dynamic,
         },
-        impl: (_: Interpreter) => {
+        impl: (interpreter: Interpreter) => {
+            const remote = this.rendezvousCall(interpreter, "getParent");
+            if (remote !== undefined) {
+                return remote;
+            }
             return this.getNodeParent();
         },
     });
 
     /* Creates a child node of type nodeType, and adds the new node to the end of the
     subject node list of children */
-    private readonly createChild = new Callable("createChild", {
+    protected readonly createChild = new Callable("createChild", {
         signature: {
             args: [new StdlibArgument("nodeType", ValueKind.String)],
             returns: ValueKind.Object,
         },
         impl: (interpreter: Interpreter, nodeType: BrsString) => {
-            const child = createNodeByType(nodeType.getValue(), interpreter);
+            const remote = this.rendezvousCall(interpreter, "createChild", [nodeType]);
+            if (remote !== undefined) {
+                return remote;
+            }
+            const child = createNodeRunInit(nodeType.getValue(), interpreter);
             if (child instanceof RoSGNode) {
                 this.appendChildToParent(child);
             }
@@ -896,12 +1060,16 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
      * node with the newChild node in the subject node list of children, otherwise do nothing.
      */
 
-    private readonly replaceChild = new Callable("replaceChild", {
+    protected readonly replaceChild = new Callable("replaceChild", {
         signature: {
             args: [new StdlibArgument("newChild", ValueKind.Dynamic), new StdlibArgument("index", ValueKind.Int32)],
             returns: ValueKind.Boolean,
         },
-        impl: (_: Interpreter, newChild: BrsType, index: Int32) => {
+        impl: (interpreter: Interpreter, newChild: BrsType, index: Int32) => {
+            const remote = this.rendezvousCall(interpreter, "replaceChild", [newChild, index]);
+            if (remote !== undefined) {
+                return remote;
+            }
             if (!(newChild instanceof RoSGNode)) {
                 return BrsBoolean.False;
             }
@@ -913,12 +1081,16 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
      * Removes the child nodes specified by child_nodes from the subject node. Returns
      * true if the child nodes were successfully removed.
      */
-    private readonly removeChildren = new Callable("removeChildren", {
+    protected readonly removeChildren = new Callable("removeChildren", {
         signature: {
             args: [new StdlibArgument("child_nodes", ValueKind.Dynamic)],
             returns: ValueKind.Boolean,
         },
-        impl: (_: Interpreter, child_nodes: BrsType) => {
+        impl: (interpreter: Interpreter, child_nodes: BrsType) => {
+            const remote = this.rendezvousCall(interpreter, "removeChildren", [child_nodes]);
+            if (remote !== undefined) {
+                return remote;
+            }
             if (child_nodes instanceof RoArray) {
                 const childNodesElements = child_nodes.getElements();
                 if (childNodesElements.length !== 0) {
@@ -936,12 +1108,16 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
      * Removes the number of child nodes specified by num_children from the subject node
      * starting at the position specified by index.
      */
-    private readonly removeChildrenIndex = new Callable("removeChildrenIndex", {
+    protected readonly removeChildrenIndex = new Callable("removeChildrenIndex", {
         signature: {
             args: [new StdlibArgument("num_children", ValueKind.Int32), new StdlibArgument("index", ValueKind.Int32)],
             returns: ValueKind.Boolean,
         },
-        impl: (_: Interpreter, num_children: Int32, index: Int32) => {
+        impl: (interpreter: Interpreter, num_children: Int32, index: Int32) => {
+            const remote = this.rendezvousCall(interpreter, "removeChildrenIndex", [num_children, index]);
+            if (remote !== undefined) {
+                return remote;
+            }
             const count = num_children.getValue();
             const idx = index.getValue();
             return BrsBoolean.from(this.removeChildrenAtIndex(idx, count));
@@ -952,12 +1128,16 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
      * If the subject node has a child node at the index position, return it, otherwise
      * return invalid.
      */
-    private readonly getChild = new Callable("getChild", {
+    protected readonly getChild = new Callable("getChild", {
         signature: {
             args: [new StdlibArgument("index", ValueKind.Int32)],
             returns: ValueKind.Dynamic,
         },
-        impl: (_: Interpreter, index: Int32) => {
+        impl: (interpreter: Interpreter, index: Int32) => {
+            const remote = this.rendezvousCall(interpreter, "getChild", [index]);
+            if (remote !== undefined) {
+                return remote;
+            }
             const indexValue = index.getValue();
             const children = this.getNodeChildren();
             let child: BrsType = BrsInvalid.Instance;
@@ -971,12 +1151,16 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
     /**
      * Appends the nodes specified by child_nodes to the subject node.
      */
-    private readonly appendChildren = new Callable("appendChildren", {
+    protected readonly appendChildren = new Callable("appendChildren", {
         signature: {
             args: [new StdlibArgument("child_nodes", ValueKind.Dynamic)],
             returns: ValueKind.Boolean,
         },
-        impl: (_: Interpreter, child_nodes: BrsType) => {
+        impl: (interpreter: Interpreter, child_nodes: BrsType) => {
+            const remote = this.rendezvousCall(interpreter, "appendChildren", [child_nodes]);
+            if (remote !== undefined) {
+                return remote;
+            }
             if (child_nodes instanceof RoArray) {
                 const childNodesElements = child_nodes.getElements();
                 if (childNodesElements.length !== 0) {
@@ -997,7 +1181,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
     /** Creates the number of children specified by num_children for the subject node,
      *  of the type or extended type specified by subtype.
      */
-    private readonly createChildren = new Callable("createChildren", {
+    protected readonly createChildren = new Callable("createChildren", {
         signature: {
             args: [
                 new StdlibArgument("num_children", ValueKind.Int32),
@@ -1006,10 +1190,14 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             returns: ValueKind.Dynamic,
         },
         impl: (interpreter: Interpreter, num_children: Int32, subtype: BrsString) => {
+            const remote = this.rendezvousCall(interpreter, "createChildren", [num_children, subtype]);
+            if (remote !== undefined) {
+                return remote;
+            }
             const numChildrenValue = num_children.getValue();
             const addedChildren: RoSGNode[] = [];
             for (let i = 0; i < numChildrenValue; i++) {
-                const child = createNodeByType(subtype.getValue(), interpreter);
+                const child = createNodeRunInit(subtype.getValue(), interpreter);
                 if (child instanceof RoSGNode) {
                     this.appendChildToParent(child);
                     addedChildren.push(child);
@@ -1022,12 +1210,16 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
     /** Replaces the child nodes in the subject node, starting at the position specified
      *  by index, with new child nodes specified by child_nodes.
      */
-    private readonly replaceChildren = new Callable("replaceChildren", {
+    protected readonly replaceChildren = new Callable("replaceChildren", {
         signature: {
             args: [new StdlibArgument("child_nodes", ValueKind.Dynamic), new StdlibArgument("index", ValueKind.Int32)],
             returns: ValueKind.Boolean,
         },
-        impl: (_: Interpreter, child_nodes: BrsType, index: Int32) => {
+        impl: (interpreter: Interpreter, child_nodes: BrsType, index: Int32) => {
+            const remote = this.rendezvousCall(interpreter, "replaceChildren", [child_nodes, index]);
+            if (remote !== undefined) {
+                return remote;
+            }
             if (child_nodes instanceof RoArray) {
                 let indexValue = index.getValue();
                 const childNodesElements = child_nodes.getElements();
@@ -1049,12 +1241,16 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
      * Inserts the child nodes specified by child_nodes to the subject node starting
      * at the position specified by index.
      */
-    private readonly insertChildren = new Callable("insertChildren", {
+    protected readonly insertChildren = new Callable("insertChildren", {
         signature: {
             args: [new StdlibArgument("child_nodes", ValueKind.Dynamic), new StdlibArgument("index", ValueKind.Int32)],
             returns: ValueKind.Boolean,
         },
-        impl: (_: Interpreter, child_nodes: BrsType, index: Int32) => {
+        impl: (interpreter: Interpreter, child_nodes: BrsType, index: Int32) => {
+            const remote = this.rendezvousCall(interpreter, "insertChildren", [child_nodes, index]);
+            if (remote !== undefined) {
+                return remote;
+            }
             if (child_nodes instanceof RoArray) {
                 let indexValue = index.getValue();
                 const childNodesElements = child_nodes.getElements();
@@ -1075,12 +1271,16 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
      * node list of children, so that this is the position that the new child node
      * is traversed during render.
      */
-    private readonly insertChild = new Callable("insertChild", {
+    protected readonly insertChild = new Callable("insertChild", {
         signature: {
             args: [new StdlibArgument("child", ValueKind.Dynamic), new StdlibArgument("index", ValueKind.Int32)],
             returns: ValueKind.Boolean,
         },
-        impl: (_: Interpreter, child: BrsType, index: Int32) => {
+        impl: (interpreter: Interpreter, child: BrsType, index: Int32) => {
+            const remote = this.rendezvousCall(interpreter, "insertChild", [child, index]);
+            if (remote !== undefined) {
+                return remote;
+            }
             return BrsBoolean.from(this.insertChildAtIndex(child, index.getValue()));
         },
     });
@@ -1089,12 +1289,16 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
      * If the subject node has a child node in the index position, remove that child
      * node from the subject node list of children.
      */
-    private readonly removeChildIndex = new Callable("removeChildIndex", {
+    protected readonly removeChildIndex = new Callable("removeChildIndex", {
         signature: {
             args: [new StdlibArgument("index", ValueKind.Int32)],
             returns: ValueKind.Boolean,
         },
-        impl: (_: Interpreter, index: Int32) => {
+        impl: (interpreter: Interpreter, index: Int32) => {
+            const remote = this.rendezvousCall(interpreter, "removeChildIndex", [index]);
+            if (remote !== undefined) {
+                return remote;
+            }
             return BrsBoolean.from(this.removeChildrenAtIndex(index.getValue(), 1));
         },
     });
@@ -1107,7 +1311,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
      * transformation factor fields, in which case, the re-parenting operation could cause the node to jump to a
      * new position on the screen.
      */
-    private readonly reparent = new Callable("reparent", {
+    protected readonly reparent = new Callable("reparent", {
         signature: {
             args: [
                 new StdlibArgument("newParent", ValueKind.Dynamic),
@@ -1115,7 +1319,11 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             ],
             returns: ValueKind.Boolean,
         },
-        impl: (_: Interpreter, newParent: BrsType, adjustTransform: BrsBoolean) => {
+        impl: (interpreter: Interpreter, newParent: BrsType, adjustTransform: BrsBoolean) => {
+            const remote = this.rendezvousCall(interpreter, "reparent", [newParent, adjustTransform]);
+            if (remote !== undefined) {
+                return remote;
+            }
             if (newParent instanceof RoSGNode && newParent !== this) {
                 // TODO: adjustTransform has to be implemented probably by traversing the
                 // entire parent tree to get to the top, calculate the absolute transform
@@ -1134,45 +1342,61 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
     });
 
     /* Returns the Node bounding rectangle */
-    private readonly boundingRect = new Callable("boundingRect", {
+    protected readonly boundingRect = new Callable("boundingRect", {
         signature: {
             args: [],
             returns: ValueKind.Dynamic,
         },
         impl: (interpreter: Interpreter) => {
+            const remote = this.rendezvousCall(interpreter, "boundingRect");
+            if (remote !== undefined) {
+                return remote;
+            }
             return toAssociativeArray(this.getBoundingRect("toParent", interpreter));
         },
     });
 
     /* Returns the Node local bounding rectangle */
-    private readonly localBoundingRect = new Callable("localBoundingRect", {
+    protected readonly localBoundingRect = new Callable("localBoundingRect", {
         signature: {
             args: [],
             returns: ValueKind.Dynamic,
         },
         impl: (interpreter: Interpreter) => {
+            const remote = this.rendezvousCall(interpreter, "localBoundingRect");
+            if (remote !== undefined) {
+                return remote;
+            }
             return toAssociativeArray(this.getBoundingRect("local", interpreter));
         },
     });
 
     /* Returns the bounding rectangle for scene components. */
-    private readonly sceneBoundingRect = new Callable("sceneBoundingRect", {
+    protected readonly sceneBoundingRect = new Callable("sceneBoundingRect", {
         signature: {
             args: [],
             returns: ValueKind.Dynamic,
         },
         impl: (interpreter: Interpreter) => {
+            const remote = this.rendezvousCall(interpreter, "sceneBoundingRect");
+            if (remote !== undefined) {
+                return remote;
+            }
             return toAssociativeArray(this.getBoundingRect("toScene", interpreter));
         },
     });
 
     /* Returns the bounding rectangle in relation to an ancestor component. */
-    private readonly ancestorBoundingRect = new Callable("ancestorBoundingRect", {
+    protected readonly ancestorBoundingRect = new Callable("ancestorBoundingRect", {
         signature: {
             args: [new StdlibArgument("ancestor", ValueKind.Object)],
             returns: ValueKind.Dynamic,
         },
         impl: (interpreter: Interpreter, ancestor: RoSGNode) => {
+            const remote = this.rendezvousCall(interpreter, "ancestorBoundingRect", [ancestor]);
+            if (remote !== undefined) {
+                return remote;
+            }
             const boundingRect = this.getBoundingRect("toParent", interpreter);
             const ancestorRect = { ...boundingRect };
             let ancestorFound = false;
@@ -1191,45 +1415,57 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
     });
 
     /* Returns true if the subject node has the remote control focus, and false otherwise */
-    private readonly hasFocus = new Callable("hasFocus", {
+    protected readonly hasFocus = new Callable("hasFocus", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
         },
-        impl: (_: Interpreter) => {
+        impl: (interpreter: Interpreter) => {
+            const remote = this.rendezvousCall(interpreter, "hasFocus");
+            if (remote !== undefined) {
+                return remote;
+            }
             return BrsBoolean.from(sgRoot.focused === this);
         },
     });
 
     /**
-     *  If on is set to true, sets the current remote control focus to the subject node,
-     *  also automatically removing it from the node on which it was previously set.
-     *  If on is set to false, removes focus from the subject node if it had it.
+     * If on is set to true, sets the current remote control focus to the subject node,
+     * also automatically removing it from the node on which it was previously set.
+     * If on is set to false, removes focus from the subject node if it had it.
      *
-     *  It also runs through all of the ancestors of the node that was focused prior to this call,
-     *  and the newly focused node, and sets the `focusedChild` field of each to reflect the new state.
+     * It also runs through all of the ancestors of the node that was focused prior to this call,
+     * and the newly focused node, and sets the `focusedChild` field of each to reflect the new state.
      */
-    private readonly setFocus = new Callable("setFocus", {
+    protected readonly setFocus = new Callable("setFocus", {
         signature: {
             args: [new StdlibArgument("on", ValueKind.Boolean)],
             returns: ValueKind.Boolean,
         },
         impl: (interpreter: Interpreter, on: BrsBoolean) => {
+            const remote = this.rendezvousCall(interpreter, "setFocus", [on]);
+            if (remote !== undefined) {
+                return remote;
+            }
             this.location = interpreter.formatLocation();
             return BrsBoolean.from(this.setNodeFocus(on.toBoolean()));
         },
     });
 
     /**
-     *  Returns true if the subject node or any of its descendants in the SceneGraph node tree
-     *  has remote control focus
+     * Returns true if the subject node or any of its descendants in the SceneGraph node tree
+     * has remote control focus
      */
-    private readonly isInFocusChain = new Callable("isInFocusChain", {
+    protected readonly isInFocusChain = new Callable("isInFocusChain", {
         signature: {
             args: [],
             returns: ValueKind.Boolean,
         },
-        impl: (_: Interpreter) => {
+        impl: (interpreter: Interpreter) => {
+            const remote = this.rendezvousCall(interpreter, "isInFocusChain");
+            if (remote !== undefined) {
+                return remote;
+            }
             // loop through all children DFS and check if any children has focus
             if (sgRoot.focused === this) {
                 return BrsBoolean.True;
@@ -1238,15 +1474,21 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
         },
     });
 
-    /* Returns the node that is a descendant of the nearest component ancestor of the subject node whose id field matches the given name,
-        otherwise return invalid.
-        Implemented as a DFS from the top of parent hierarchy to match the observed behavior as opposed to the BFS mentioned in the docs. */
-    private readonly findNode = new Callable("findNode", {
+    /**
+     * Returns the node that is a descendant of the nearest component ancestor of the subject node whose id field matches the given name,
+     * otherwise return invalid.
+     * Implemented as a DFS from the top of parent hierarchy to match the observed behavior as opposed to the BFS mentioned in the docs.
+     */
+    protected readonly findNode = new Callable("findNode", {
         signature: {
             args: [new StdlibArgument("name", ValueKind.String)],
             returns: ValueKind.Dynamic,
         },
-        impl: (_: Interpreter, name: BrsString) => {
+        impl: (interpreter: Interpreter, name: BrsString) => {
+            const remote = this.rendezvousCall(interpreter, "findNode", [name]);
+            if (remote !== undefined) {
+                return remote;
+            }
             const id = name.getValue();
             if (id.trim() === "") return BrsInvalid.Instance;
             // perform search to child nodes
@@ -1259,30 +1501,38 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
         },
     });
 
-    /* Checks whether the subtype of the subject node is a descendant of the subtype nodeType
+    /**
+     * Checks whether the subtype of the subject node is a descendant of the subtype nodeType
      * in the SceneGraph node class hierarchy.
-     *
-     *
      */
-    private readonly isSubtype = new Callable("isSubtype", {
+    protected readonly isSubtype = new Callable("isSubtype", {
         signature: {
             args: [new StdlibArgument("nodeType", ValueKind.String)],
             returns: ValueKind.Boolean,
         },
-        impl: (_: Interpreter, nodeType: BrsString) => {
+        impl: (interpreter: Interpreter, nodeType: BrsString) => {
+            const remote = this.rendezvousCall(interpreter, "isSubtype", [nodeType]);
+            if (remote !== undefined) {
+                return remote;
+            }
             return BrsBoolean.from(isSubtypeCheck(this.nodeSubtype, nodeType.getValue()));
         },
     });
 
-    /* Checks whether the subtype of the subject node is a descendant of the subtype nodeType
+    /**
+     * Checks whether the subtype of the subject node is a descendant of the subtype nodeType
      * in the SceneGraph node class hierarchy.
      */
-    private readonly parentSubtype = new Callable("parentSubtype", {
+    protected readonly parentSubtype = new Callable("parentSubtype", {
         signature: {
             args: [new StdlibArgument("nodeType", ValueKind.String)],
             returns: ValueKind.Object,
         },
-        impl: (_: Interpreter, nodeType: BrsString) => {
+        impl: (interpreter: Interpreter, nodeType: BrsString) => {
+            const remote = this.rendezvousCall(interpreter, "parentSubtype", [nodeType]);
+            if (remote !== undefined) {
+                return remote;
+            }
             const parentType = subtypeHierarchy.get(nodeType.getValue().toLowerCase());
             if (parentType) {
                 return new BrsString(parentType);
@@ -1291,80 +1541,110 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
         },
     });
 
-    /* Returns a Boolean value indicating whether the roSGNode parameter
-            refers to the same node object as this node */
-    private readonly isSameNode = new Callable("isSameNode", {
+    /**
+     * Returns a Boolean value indicating whether the roSGNode parameter
+     * refers to the same node object as this node
+     */
+    protected readonly isSameNode = new Callable("isSameNode", {
         signature: {
             args: [new StdlibArgument("roSGNode", ValueKind.Dynamic)],
             returns: ValueKind.Boolean,
         },
-        impl: (_: Interpreter, roSGNode: RoSGNode) => {
+        impl: (interpreter: Interpreter, roSGNode: RoSGNode) => {
+            const remote = this.rendezvousCall(interpreter, "isSameNode", [roSGNode]);
+            if (remote !== undefined) {
+                return remote;
+            }
             return BrsBoolean.from(this.compareNodes(roSGNode));
         },
     });
 
     /* Returns the subtype of this node as specified when it was created */
-    private readonly subtype = new Callable("subtype", {
+    protected readonly subtype = new Callable("subtype", {
         signature: {
             args: [],
             returns: ValueKind.String,
         },
-        impl: (_: Interpreter) => {
+        impl: (interpreter: Interpreter) => {
+            const remote = this.rendezvousCall(interpreter, "subtype");
+            if (remote !== undefined) {
+                return remote;
+            }
             return new BrsString(this.nodeSubtype);
         },
     });
 
     /* Returns the subtype of this node as specified when it was created */
-    private readonly getSubtype = new Callable("getSubtype", {
+    protected readonly getSubtype = new Callable("getSubtype", {
         signature: {
             args: [],
             returns: ValueKind.String,
         },
-        impl: (_: Interpreter) => {
+        impl: (interpreter: Interpreter) => {
+            const remote = this.rendezvousCall(interpreter, "getSubtype");
+            if (remote !== undefined) {
+                return remote;
+            }
             return new BrsString(this.nodeSubtype);
         },
     });
 
     /* Returns a copy of the entire node tree or just a shallow copy. */
-    private readonly clone = new Callable("clone", {
+    protected readonly clone = new Callable("clone", {
         signature: {
             args: [new StdlibArgument("isDeepCopy", ValueKind.Boolean)],
             returns: ValueKind.Object,
         },
         impl: (interpreter: Interpreter, isDeepCopy: BrsBoolean) => {
+            const remote = this.rendezvousCall(interpreter, "clone", [isDeepCopy]);
+            if (remote !== undefined) {
+                return remote;
+            }
             return this.cloneNode(isDeepCopy.toBoolean(), interpreter);
         },
     });
 
     /* Returns the node's root Scene. This returns a valid Scene even if the node is not parented. */
-    private readonly getScene = new Callable("getScene", {
+    protected readonly getScene: Callable = new Callable("getScene", {
         signature: {
             args: [],
             returns: ValueKind.Object,
         },
-        impl: (_: Interpreter) => {
+        impl: (interpreter: Interpreter) => {
+            const remote = this.rendezvousCall(interpreter, "getScene");
+            if (remote !== undefined) {
+                return remote;
+            }
             return sgRoot.scene ?? BrsInvalid.Instance;
         },
     });
 
     /* Returns the roHttpAgent object for the node. */
-    private readonly getHttpAgent = new Callable("getHttpAgent", {
+    protected readonly getHttpAgent = new Callable("getHttpAgent", {
         signature: {
             args: [],
             returns: ValueKind.Object,
         },
-        impl: (_: Interpreter) => {
+        impl: (interpreter: Interpreter) => {
+            const remote = this.rendezvousCall(interpreter, "getHttpAgent");
+            if (remote !== undefined) {
+                return remote;
+            }
             return this.httpAgent;
         },
     });
 
     /** Sets an roHttpAgent object for the node. */
-    private readonly setHttpAgent = new Callable("setHttpAgent", {
+    protected readonly setHttpAgent = new Callable("setHttpAgent", {
         signature: {
             args: [new StdlibArgument("httpAgent", ValueKind.Object)],
             returns: ValueKind.Boolean,
         },
-        impl: (_: Interpreter, httpAgent: RoHttpAgent) => {
+        impl: (interpreter: Interpreter, httpAgent: RoHttpAgent) => {
+            const remote = this.rendezvousCall(interpreter, "setHttpAgent", [httpAgent]);
+            if (remote !== undefined) {
+                return remote;
+            }
             if (httpAgent instanceof RoHttpAgent) {
                 this.httpAgent = httpAgent;
                 this.registerHttpAgent(httpAgent);

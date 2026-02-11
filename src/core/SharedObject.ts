@@ -97,7 +97,6 @@ class SharedObject {
                 result.value.then((status) => {
                     if (status === "ok") {
                         this.store(obj);
-                        console.debug("[SharedObject] Buffer released. Stored data.", obj.field, this.getVersion());
                     } else {
                         console.error("[SharedObject] Error storing shared data", status, obj.field);
                     }
@@ -107,7 +106,6 @@ class SharedObject {
                 });
             } else if (result.value === "not-equal") {
                 this.store(obj);
-                console.debug("[SharedObject] Buffer is free. Stored data.", obj.field, this.getVersion());
                 this.queue.shift();
                 this.isProcessing = false;
                 this.processQueue();
@@ -122,7 +120,6 @@ class SharedObject {
             const start = Date.now();
             const checkCondition = () => {
                 if (Atomics.load(this.atomicView, this.versionIdx) !== version) {
-                    console.debug("[SharedObject] Buffer is free. Storing data.");
                     this.store(obj);
                     this.queue.shift();
                     this.isProcessing = false;

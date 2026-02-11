@@ -29,7 +29,7 @@ describe("Circular Reference Handling", () => {
 
             // Deserialize the node
             const nodeInfo = serialized._node_.split(":");
-            const deserialized = toSGNode(serialized, nodeInfo[0], nodeInfo[1]);
+            const deserialized = toSGNode(serialized, nodeInfo[0], nodeInfo[1], true);
 
             // Verify the deserialized structure
             expect(deserialized).toBeDefined();
@@ -72,7 +72,7 @@ describe("Circular Reference Handling", () => {
 
             // Deserialize
             const nodeInfo = serialized._node_.split(":");
-            const deserialized = toSGNode(serialized, nodeInfo[0], nodeInfo[1]);
+            const deserialized = toSGNode(serialized, nodeInfo[0], nodeInfo[1], true);
 
             // Verify structure
             expect(deserialized).toBeDefined();
@@ -98,7 +98,7 @@ describe("Circular Reference Handling", () => {
 
             // Deserialize
             const nodeInfo = serialized._node_.split(":");
-            const deserialized = toSGNode(serialized, nodeInfo[0], nodeInfo[1]);
+            const deserialized = toSGNode(serialized, nodeInfo[0], nodeInfo[1], true);
 
             // Verify self-reference
             const myselfRef = deserialized.getValue("myself");

@@ -147,17 +147,21 @@ export const ListDir = new Callable("ListDir", {
     },
     impl: (_: Interpreter, dir: BrsString) => {
         const fsys = BrsDevice.fileSystem;
+        let errorMessage = "";
         try {
             if (!validUri(dir.value)) {
-                BrsDevice.stderr.write(`warning,*** ERROR: Missing or invalid PHY: '${dir.value}'`);
+                errorMessage = `warning,*** ERROR: Missing or invalid PHY: '${dir.value}'`;
             } else if (fsys.existsSync(dir.value)) {
                 const subPaths = fsys.readdirSync(dir.value).map((s) => new BrsString(s));
                 return new RoList(subPaths);
             }
         } catch (err: any) {
             if (BrsDevice.isDevMode) {
-                BrsDevice.stderr.write(`warning,*** ERROR: Listing '${dir.value}': ${err.message}`);
+                errorMessage = `warning,*** ERROR: Listing '${dir.value}': ${err.message}`;
             }
+        }
+        if (errorMessage) {
+            BrsDevice.stderr.write(errorMessage);
         }
         return new RoList([]);
     },
@@ -177,12 +181,13 @@ export const ReadAsciiFile = new Callable("ReadAsciiFile", {
             }
             return new BrsString(fsys.readFileSync(filePath.value, "utf8"));
         } catch (err: any) {
+            let errMessage = `warning,BRIGHTSCRIPT: ERROR: ReadAsciiFile: file open for read failed: ${interpreter.formatLocation()}`;
             if (BrsDevice.isDevMode) {
-                BrsDevice.stderr.write(`warning,*** ERROR: Reading '${filePath.value}': ${err.message}`);
+                errMessage = `warning,*** ERROR: ReadAsciiFile: Reading '${filePath.value}': ${
+                    err.message
+                } - ${interpreter.formatLocation()}`;
             }
-            BrsDevice.stderr.write(
-                `warning,BRIGHTSCRIPT: ERROR: ReadAsciiFile: file open for read failed: ${interpreter.formatLocation()}`
-            );
+            BrsDevice.stderr.write(errMessage);
             return new BrsString("");
         }
     },
@@ -194,7 +199,7 @@ export const WriteAsciiFile = new Callable("WriteAsciiFile", {
         args: [new StdlibArgument("filepath", ValueKind.String), new StdlibArgument("text", ValueKind.String)],
         returns: ValueKind.Boolean,
     },
-    impl: (_: Interpreter, filePath: BrsString, text: BrsString) => {
+    impl: (interpreter: Interpreter, filePath: BrsString, text: BrsString) => {
         const fsys = BrsDevice.fileSystem;
         try {
             if (!writeUri(filePath.value)) {
@@ -203,9 +208,13 @@ export const WriteAsciiFile = new Callable("WriteAsciiFile", {
             fsys.writeFileSync(filePath.value, text.value, "utf8");
             return BrsBoolean.True;
         } catch (err: any) {
+            let errMessage = `warning,BRIGHTSCRIPT: ERROR: WriteAsciiFile: file open for write failed: ${interpreter.formatLocation()}`;
             if (BrsDevice.isDevMode) {
-                BrsDevice.stderr.write(`warning,*** ERROR: Writing '${filePath.value}': ${err.message}`);
+                errMessage = `warning,*** ERROR: Writing '${filePath.value}': ${
+                    err.message
+                } - ${interpreter.formatLocation()}`;
             }
+            BrsDevice.stderr.write(errMessage);
             return BrsBoolean.False;
         }
     },

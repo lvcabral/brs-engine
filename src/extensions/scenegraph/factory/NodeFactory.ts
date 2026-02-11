@@ -19,7 +19,6 @@ import {
     Uninitialized,
     ValueKind,
     RuntimeError,
-    BrsError,
 } from "brs-engine";
 import {
     ArrayGrid,
@@ -263,14 +262,39 @@ export class SGNodeFactory {
 }
 
 /**
- * Creates a node by its type name as defined in XML component files.
- * Handles both built-in node types and custom component definitions.
- * Automatically registers Task nodes in the task list.
+ * Creates a SceneGraph node based on the specified type and subtype.
+ * Focused on serialization, custom XML nodes are created without children and not initialized.
  * @param type Type name of the node to create
- * @param interpreter Optional interpreter instance for custom component initialization
+ * @param subtype Subtype name of the node to create
  * @returns Created node instance or BrsInvalid if creation fails
  */
-export function createNodeByType(type: string, interpreter?: Interpreter): Node | BrsInvalid {
+export function createNode(type: string, subtype: string): Node | BrsInvalid {
+    let node: Node | BrsInvalid = BrsInvalid.Instance;
+    const typeDef = sgRoot.nodeDefMap.get(subtype.toLowerCase());
+    if (typeDef) {
+        node = createNodeByTypeDef(typeDef, subtype);
+    }
+    if (node instanceof BrsInvalid) {
+        node = SGNodeFactory.createNode(type, subtype) ?? BrsInvalid.Instance;
+    }
+    if (node instanceof BrsInvalid) {
+        BrsDevice.stderr.write(
+            `warning,Warning: Failed to create roSGNode with type ${type}:${subtype}: ${
+                sgRoot.interpreter?.formatLocation() ?? ""
+            }`
+        );
+    }
+    return node;
+}
+
+/**
+ * Creates a node by its type name as defined in XML component files and initializes it.
+ * Handles both built-in node types and custom component definitions.
+ * @param type Type name of the node to create
+ * @param interpreter Optional interpreter instance for component initialization
+ * @returns Created node instance or BrsInvalid if creation fails
+ */
+export function createNodeRunInit(type: string, interpreter?: Interpreter): Node | BrsInvalid {
     // If this is a built-in node component, then return it.
     let node = SGNodeFactory.createNode(type) ?? BrsInvalid.Instance;
     if (node instanceof BrsInvalid) {
@@ -280,10 +304,7 @@ export function createNodeByType(type: string, interpreter?: Interpreter): Node 
         } else if (typeDef && sgRoot.inTaskThread() && sgRoot.interpreter) {
             node = initializeNode(sgRoot.interpreter, type, typeDef);
         } else if (typeDef) {
-            const typeDefStack = updateTypeDefHierarchy(typeDef);
-            // Get the "basemost" component of the inheritance tree.
-            typeDef = typeDefStack.pop();
-            node = SGNodeFactory.createNode(typeDef!.extends as SGNodeType, type) ?? BrsInvalid.Instance;
+            node = createNodeByTypeDef(typeDef, type);
             if (node instanceof BrsInvalid) {
                 node = new Node([], type);
             }
@@ -299,6 +320,31 @@ export function createNodeByType(type: string, interpreter?: Interpreter): Node 
         const task = sgRoot.getCurrentThreadTask();
         if (task && isInvalid(node.getNodeParent())) {
             node.setNodeParent(task);
+        }
+    }
+    return node;
+}
+
+/**
+ * Creates a SceneGraph node based on a component definition (simplified without children).
+ * @param typeDef Definition of the component to create a node from
+ * @param subtype Subtype name of the node to create
+ * @returns Created node instance or BrsInvalid if creation fails
+ */
+function createNodeByTypeDef(typeDef: ComponentDefinition, subtype: string): Node | BrsInvalid {
+    let node: Node | BrsInvalid = BrsInvalid.Instance;
+    const typeDefStack = updateTypeDefHierarchy(typeDef);
+    const nodeDef = typeDefStack.pop();
+    if (nodeDef) {
+        node = SGNodeFactory.createNode(nodeDef.extends as SGNodeType, subtype) ?? BrsInvalid.Instance;
+        if (node instanceof Node) {
+            const fields = nodeDef.fields;
+            for (const [fieldName, fieldValue] of Object.entries(fields)) {
+                if (!(fieldValue instanceof Object)) {
+                    continue;
+                }
+                node.addNodeField(fieldName, fieldValue.type, fieldValue.alwaysNotify === "true", false);
+            }
         }
     }
     return node;
@@ -366,16 +412,13 @@ export function initializeNode(interpreter: Interpreter, type: string, typeDef?:
         // Default to Node as parent.
         node ??= new Node([], type);
         const mPointer = new RoAssociativeArray([]);
-        currentEnv?.setM(new RoAssociativeArray([]));
         if (currentEnv) {
+            currentEnv.setM(new RoAssociativeArray([]));
             currentEnv.hostNode = node;
         }
-
         // Add children, fields and call each init method starting from the
         // "basemost" component of the tree.
         while (typeDef) {
-            let init: BrsType;
-
             interpreter.inSubEnv((subInterpreter) => {
                 if (node instanceof Scene) {
                     node.setInitState("initializing");
@@ -390,9 +433,8 @@ export function initializeNode(interpreter: Interpreter, type: string, typeDef?:
                 node.renderNode(interpreter, [0, 0], 0, 1);
             }
 
-            interpreter.inSubEnv((subInterpreter: Interpreter) => {
-                init = subInterpreter.getCallableFunction("init");
-                return BrsInvalid.Instance;
+            const init = interpreter.inSubEnv((subInterpreter: Interpreter) => {
+                return subInterpreter.getCallableFunction("init");
             }, typeDef.environment);
 
             interpreter.inSubEnv((subInterpreter: Interpreter) => {
@@ -454,40 +496,55 @@ export function initializeNode(interpreter: Interpreter, type: string, typeDef?:
  * @returns Initialized Task node or BrsInvalid if initialization fails
  */
 export function initializeTask(interpreter: Interpreter, taskData: TaskData) {
+    sgRoot.setCurrentThread(taskData.id);
     const type = taskData.name;
     let typeDef = sgRoot.nodeDefMap.get(type.toLowerCase());
     if (typeDef) {
         //use typeDef object to tack on all the bells & whistles of a custom node
-        let typeDefStack = updateTypeDefHierarchy(typeDef);
-        let currentEnv = typeDef.environment?.createSubEnvironment();
+        const typeDefStack = updateTypeDefHierarchy(typeDef);
+        const currentEnv = typeDef.environment?.createSubEnvironment();
 
         // Start from the "basemost" component of the tree.
         typeDef = typeDefStack.pop();
-
-        // Create the node.
-        const node = SGNodeFactory.createNode(typeDef!.extends as SGNodeType, type) || new Task([], type);
+        if (typeDef?.extends !== SGNodeType.Task) {
+            BrsDevice.stderr.write(
+                `error,ERROR: Task node type mismatch: expected 'Task' but got '${
+                    typeDef?.extends ?? "undefined"
+                }' in node "${type}"!`
+            );
+            return BrsInvalid.Instance;
+        }
+        // Create the Task node.
+        const node = new Task([], type);
         const mPointer = new RoAssociativeArray([]);
-        currentEnv?.setM(new RoAssociativeArray([]));
         if (currentEnv) {
+            currentEnv.setM(new RoAssociativeArray([]));
             currentEnv.hostNode = node;
         }
+
+        // Configure Threads
+        sgRoot.setThread(0, taskData.render);
+        node.threadId = taskData.id;
+        node.inThread = true;
+        sgRoot.addTask(node, taskData.id);
+        interpreter.environment.hostNode = node;
 
         // Add children and fields starting from the "basemost" component of the tree.
         while (typeDef) {
             interpreter.inSubEnv((subInterpreter: Interpreter) => {
-                addChildren(subInterpreter, node!, typeDef!);
-                addFields(subInterpreter, node!, typeDef!);
+                addChildren(subInterpreter, node, typeDef!);
+                addFields(subInterpreter, node, typeDef!);
                 return BrsInvalid.Instance;
             }, currentEnv);
 
             interpreter.inSubEnv((subInterpreter: Interpreter) => {
                 subInterpreter.environment.hostNode = node;
 
-                mPointer.set(new BrsString("top"), node!);
+                mPointer.set(new BrsString("top"), node);
                 mPointer.set(new BrsString("global"), sgRoot.mGlobal);
                 subInterpreter.environment.setM(mPointer);
                 subInterpreter.environment.setRootM(mPointer);
-                node!.m = mPointer;
+                node.m = mPointer;
                 return BrsInvalid.Instance;
             }, currentEnv);
 
@@ -512,28 +569,6 @@ export function initializeTask(interpreter: Interpreter, taskData: TaskData) {
  * @param taskData Serialized task data with field values and state
  */
 function loadTaskData(interpreter: Interpreter, node: Node, taskData: TaskData) {
-    if (taskData.scene?.["_node_"]) {
-        const nodeInfo = getSerializedNodeInfo(taskData.scene);
-        const sceneName = nodeInfo?.subtype || SGNodeType.Scene;
-        const scene = createSceneByType(interpreter, sceneName);
-        if (scene instanceof Scene) {
-            sgRoot.setScene(scene);
-            restoreNode(interpreter, taskData.scene, scene);
-        } else {
-            BrsDevice.stderr.write(
-                `warning,Warning: Failed to create Scene of type ${sceneName} for Task ${taskData.name} (${
-                    taskData.id
-                }): ${interpreter.formatLocation()}`
-            );
-        }
-    }
-    if (node instanceof Task) {
-        sgRoot.setThread(0, false, taskData.render);
-        node.threadId = taskData.id;
-        node.thread = true;
-        sgRoot.addTask(node, taskData.id, true);
-        interpreter.environment.hostNode = node;
-    }
     let port: RoMessagePort | undefined;
     if (taskData.m) {
         for (let [key, value] of Object.entries(taskData.m)) {
@@ -546,6 +581,15 @@ function loadTaskData(interpreter: Interpreter, node: Node, taskData: TaskData) 
                 port = brsValue;
             }
             node.m.set(new BrsString(key), brsValue);
+        }
+    }
+    if (taskData.scene?.["_node_"]) {
+        const nodeInfo = getSerializedNodeInfo(taskData.scene);
+        const sceneName = nodeInfo?.subtype || SGNodeType.Scene;
+        const scene = createNode(SGNodeType.Scene, sceneName);
+        if (scene instanceof Scene) {
+            sgRoot.setScene(scene);
+            restoreNode(interpreter, taskData.scene, scene, port);
         }
     }
     if (taskData.m?.global) {
@@ -593,13 +637,22 @@ export function updateTypeDefHierarchy(typeDef: ComponentDefinition | undefined)
  */
 function restoreNode(interpreter: Interpreter, source: any, node: Node, port?: RoMessagePort) {
     const observedFields = source["_observed_"];
-    node.owner = source["_owner_"] ?? sgRoot.threadId;
+    node.setOwner(source["_owner_"] ?? sgRoot.threadId);
+    node.setAddress(source["_address_"] ?? node.getAddress());
     for (let [key, value] of Object.entries(source)) {
         if (key.startsWith("_") && key.endsWith("_") && key.length > 2) {
-            // Ignore transfer metadata fields
+            // Ignore serialization metadata fields
             continue;
         }
-        node.setValueSilent(key, brsValueOf(value));
+        const brsValue = brsValueOf(value);
+        if (brsValue instanceof Node) {
+            postMessage(
+                `debug,[thread:${sgRoot.threadId}] Restoring Node ${
+                    node.nodeSubtype
+                } field ${key} with value ${brsValue.toString()}`
+            );
+        }
+        node.setValueSilent(key, brsValue);
         if (port && Array.isArray(observedFields)) {
             const observed = observedFields.find((field: ObservedField) => field.name === key);
             if (observed) {
@@ -643,7 +696,7 @@ function addFields(interpreter: Interpreter, node: Node, typeDef: ComponentDefin
                 BrsDevice.stderr.write(msg);
                 return;
             }
-            node.addNodeField(fieldName, fieldValue.type, fieldValue.alwaysNotify === "true");
+            node.addNodeField(fieldName, fieldValue.type, fieldValue.alwaysNotify === "true", false);
             // set default value if it was specified in xml
             if (fieldValue.value) {
                 node.setValueSilent(fieldName, getBrsValueFromFieldType(fieldValue.type, fieldValue.value));
@@ -735,7 +788,7 @@ function addChildren(interpreter: Interpreter, node: Node, typeDef: ComponentDef
     const appendChild = node.getMethod("appendchild");
 
     for (let child of children) {
-        const newChild = createNodeByType(child.name, interpreter);
+        const newChild = createNodeRunInit(child.name, interpreter);
         if (newChild instanceof Node) {
             newChild.location = interpreter.formatLocation();
             const nodeFields = newChild.getNodeFields();
@@ -754,9 +807,8 @@ function addChildren(interpreter: Interpreter, node: Node, typeDef: ComponentDef
                     }
                     node.setValue(targetField, newChild, false);
                 } else {
-                    throw new BrsError(
-                        `Role/Field ${targetField} does not exist in ${node.getId()} node`,
-                        interpreter.location
+                    BrsDevice.stderr.write(
+                        `warning,WARNING: Role/Field ${targetField} does not exist in ${node.getId()} node: ${interpreter.formatLocation()}`
                     );
                 }
             } else if (appendChild) {

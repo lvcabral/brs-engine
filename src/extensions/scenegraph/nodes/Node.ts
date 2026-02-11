@@ -20,7 +20,6 @@ import {
     Uninitialized,
     ValueKind,
     genHexAddress,
-    ThreadUpdate,
     generateArgumentMismatchError,
     Rect,
     IfDraw2D,
@@ -30,12 +29,25 @@ import {
     BrsDevice,
     RuntimeError,
     BrsError,
+    SyncType,
 } from "brs-engine";
+import {
+    FieldAlias,
+    FieldEntry,
+    FieldKind,
+    FieldModel,
+    FreshFieldBudget,
+    FreshFieldWindowMS,
+    FreshFieldState,
+    ObserverScope,
+    FieldAliasTarget,
+    isTaskLike,
+    MethodCallPayload,
+} from "../SGTypes";
 import { RoSGNode } from "../components/RoSGNode";
-import { createNodeByType, getBrsValueFromFieldType, subtypeHierarchy } from "../factory/NodeFactory";
+import { createNode, createNodeRunInit, getBrsValueFromFieldType, subtypeHierarchy } from "../factory/NodeFactory";
 import { Field } from "../nodes/Field";
-import { FieldAlias, FieldAliasTarget, FieldEntry, FieldKind, FieldModel } from "../SGTypes";
-import { toAssociativeArray, jsValueOf, fromSGNode } from "../factory/Serializer";
+import { toAssociativeArray, jsValueOf } from "../factory/Serializer";
 import { sgRoot } from "../SGRoot";
 import { SGNodeType } from ".";
 import { ComponentDefinition } from "../parser/ComponentDefinition";
@@ -61,13 +73,17 @@ export class Node extends RoSGNode implements BrsValue {
     protected triedInitFocus: boolean = false;
     /** Tracks whether the most recent field mutation triggered observers. */
     protected notified: boolean = false;
+    /** Tracks recently synchronized fields to avoid redundant rendezvous calls. */
+    protected readonly freshFields: Map<string, FreshFieldState> = new Map();
 
     /** Parent node reference or invalid when detached. */
     protected parent: Node | BrsInvalid;
-    /** Hex-like identifier exposed via introspection APIs. */
-    address: string;
     /** Thread identifier that owns the node instance. */
-    owner: number;
+    protected owner: number;
+    /** Sync domain used for remote field and method requests. */
+    protected syncType: SyncType;
+    /** Hex-like identifier exposed via introspection APIs. */
+    protected address: string;
     /** Flags whether structural or field state changed since last render. */
     changed: boolean = false;
 
@@ -90,15 +106,24 @@ export class Node extends RoSGNode implements BrsValue {
      * Creates a new node instance, registering default and initial fields.
      * @param initializedFields Associative-array style entries coming from XML attributes.
      * @param nodeSubtype Concrete subtype identifier used for serialization and debugging.
+     * @param nodeType Optional explicit node type to map in inheritance hierarchy.
      */
-    constructor(initializedFields: AAMember[] = [], readonly nodeSubtype: string = SGNodeType.Node) {
+    constructor(
+        initializedFields: AAMember[] = [],
+        readonly nodeSubtype: string = SGNodeType.Node,
+        nodeType?: SGNodeType
+    ) {
         super([], nodeSubtype);
+        this.syncType = "node";
         this.address = genHexAddress();
         this.fields = new Map();
         this.aliases = new Map();
         this.children = [];
         this.parent = BrsInvalid.Instance;
         this.owner = sgRoot.threadId;
+        if (nodeType) {
+            this.setExtendsType(nodeSubtype, nodeType);
+        }
 
         // All nodes start have some built-in fields when created.
         this.registerDefaultFields(this.defaultFields);
@@ -269,18 +294,18 @@ export class Node extends RoSGNode implements BrsValue {
         if (!isBrsString(index)) {
             throw new Error("Node indexes must be strings");
         }
-        // TODO: this works for now, in that a property with the same name as a method essentially
-        // overwrites the method. The only reason this doesn't work is that getting a method from an
-        // associative array and _not_ calling it returns `invalid`, but calling it returns the
-        // function itself. I'm not entirely sure why yet, but it's gotta have something to do with
-        // how methods are implemented within RBI.
-        //
-        // Are they stored separately from elements, like they are here? Or does
-        // `Interpreter#visitCall` need to check for `invalid` in its callable, then try to find a
-        // method with the desired name separately? That last bit would work but it's pretty gross.
-        // That'd allow roArrays to have methods with the methods not accessible via `arr["count"]`.
-        // Same with RoAssociativeArrays I guess.
-        const field = this.fields.get(index.getValue().toLowerCase());
+        const key = index.toString().toLowerCase();
+        if (this.shouldRendezvous()) {
+            if (this.fields.has(key)) {
+                const task = sgRoot.getCurrentThreadTask();
+                if (task?.active && !this.consumeFreshField(key)) {
+                    task.requestFieldValue(this.syncType, this.address, key);
+                }
+            } else {
+                return this.getMethod(key) || BrsInvalid.Instance;
+            }
+        }
+        const field = this.fields.get(key);
         if (field) {
             const value = field.getValue();
             if (value instanceof RoAssociativeArray || value instanceof RoArray) {
@@ -290,7 +315,7 @@ export class Node extends RoSGNode implements BrsValue {
             }
             return value;
         }
-        return (this as any).getMethod(index.getValue()) || BrsInvalid.Instance;
+        return this.getMethod(key) || BrsInvalid.Instance;
     }
 
     /**
@@ -320,8 +345,9 @@ export class Node extends RoSGNode implements BrsValue {
      * @param value New BrightScript value.
      * @param alwaysNotify When provided, controls observer notification behavior for new fields.
      * @param kind Optional explicit field kind used when creating new dynamic fields.
+     * @param sync Optional flag indicating whether to synchronize this field change with other threads.
      */
-    setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind) {
+    setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind, sync: boolean = true) {
         const mapKey = index.toLowerCase();
         const fieldType = kind ?? FieldKind.fromBrsType(value);
         let field = this.fields.get(mapKey);
@@ -368,6 +394,10 @@ export class Node extends RoSGNode implements BrsValue {
         if (errorMsg.length > 0) {
             BrsDevice.stderr.write(`warning,${errorMsg} ${this.location || "(internal)"}`);
         }
+        this.markFieldFresh(mapKey);
+        if (field && sync && this.syncType !== "task") {
+            this.rendezvousSet(mapKey, field);
+        }
     }
 
     /**
@@ -394,6 +424,7 @@ export class Node extends RoSGNode implements BrsValue {
             this.fields.set(mapKey, field);
             this.makeDirty();
         }
+        this.markFieldFresh(mapKey);
     }
 
     /**
@@ -420,7 +451,7 @@ export class Node extends RoSGNode implements BrsValue {
         if (visitedNodes.has(this)) {
             return visitedNodes.get(this)!;
         }
-        const clonedNode = createNodeByType(this.nodeSubtype);
+        const clonedNode = createNode(this.nodeType, this.nodeSubtype);
         if (!(clonedNode instanceof RoSGNode)) {
             return BrsInvalid.Instance;
         }
@@ -470,7 +501,7 @@ export class Node extends RoSGNode implements BrsValue {
      */
     deepCopy(visitedNodes?: WeakMap<Node, Node>): BrsType {
         visitedNodes ??= new WeakMap<Node, Node>();
-        const copiedNode = createNodeByType(this.nodeSubtype);
+        const copiedNode = createNode(this.nodeType, this.nodeSubtype);
         if (!(copiedNode instanceof Node)) {
             return new RoInvalid();
         }
@@ -562,13 +593,14 @@ export class Node extends RoSGNode implements BrsValue {
      * @param fieldName Name of the field to create.
      * @param type Roku field type string.
      * @param alwaysNotify Whether observers should always fire for the field.
+     * @param sync Whether the field update should be synchronized with other threads.
      */
-    addNodeField(fieldName: string, type: string, alwaysNotify: boolean) {
+    addNodeField(fieldName: string, type: string, alwaysNotify: boolean, sync?: boolean) {
         let defaultValue = getBrsValueFromFieldType(type);
         let fieldKind = FieldKind.fromString(type);
 
         if (defaultValue !== Uninitialized.Instance && !this.fields.has(fieldName.toLowerCase())) {
-            this.setValue(fieldName, defaultValue, alwaysNotify, fieldKind);
+            this.setValue(fieldName, defaultValue, alwaysNotify, fieldKind, sync);
             this.makeDirty();
         }
     }
@@ -789,7 +821,7 @@ export class Node extends RoSGNode implements BrsValue {
      */
     addObserver(
         interpreter: Interpreter,
-        scope: "permanent" | "scoped" | "unscoped",
+        scope: ObserverScope,
         fieldName: BrsString,
         funcOrPort: BrsString | RoMessagePort,
         infoFields?: BrsType
@@ -813,8 +845,10 @@ export class Node extends RoSGNode implements BrsValue {
                     return result;
                 }
                 observer = interpreter.getCallableFunction(funcOrPort.getValue());
-            } else if (funcOrPort instanceof RoMessagePort && host instanceof Node) {
-                funcOrPort.registerCallback(host.nodeSubtype, host.getNewEvents.bind(host));
+            } else if (funcOrPort instanceof RoMessagePort) {
+                if (isTaskLike(host)) {
+                    funcOrPort.registerCallback(host.nodeSubtype, host.getNewEvents.bind(host));
+                }
                 observer = funcOrPort;
             }
             if (!(observer instanceof BrsInvalid)) {
@@ -920,9 +954,10 @@ export class Node extends RoSGNode implements BrsValue {
      * @param node Root to inspect.
      * @param id Identifier to seek (case-insensitive).
      * @param ignoreRoot Whether to ignore the root node in the search.
+     * @param visited Set of previously visited nodes to prevent infinite recursion.
      * @returns The matching node or BrsInvalid when not found.
      */
-    findNodeById(node: Node, id: string, ignoreRoot?: boolean): Node | BrsInvalid {
+    findNodeById(node: Node, id: string, ignoreRoot?: boolean, visited: Set<Node> = new Set()): Node | BrsInvalid {
         if (!ignoreRoot) {
             // test current node in tree
             const myId = node.getValue("id");
@@ -930,18 +965,79 @@ export class Node extends RoSGNode implements BrsValue {
                 return node;
             }
         }
+        if (visited.has(node)) {
+            return BrsInvalid.Instance;
+        }
+        visited.add(node);
         // visit each child
         for (const child of node.children) {
             if (!(child instanceof Node)) {
                 continue;
             }
-            const result = this.findNodeById(child, id, false);
+            const result = this.findNodeById(child, id, false, visited);
             if (result instanceof Node) {
                 return result;
             }
         }
         // name was not found anywhere in tree
         return BrsInvalid.Instance;
+    }
+
+    /**
+     * Searches the subtree rooted at the provided node for a matching address.
+     * @param root Root to inspect.
+     * @param address Address to seek.
+     * @param searchFields Whether to also search fields for node references.
+     * @param visited Set of previously visited nodes to prevent infinite recursion.
+     * @returns The matching node or undefined when not found.
+     */
+    findNodeByAddress(
+        root: Node | undefined,
+        address: string,
+        searchFields: boolean = false,
+        visited: Set<Node> = new Set()
+    ): Node | undefined {
+        if (!root || visited.has(root)) {
+            return undefined;
+        }
+        visited.add(root);
+        if (root.address === address) {
+            return root;
+        }
+
+        // Helper to search through a collection of potential nodes
+        const searchCollection = (items: Iterable<BrsType>): Node | undefined => {
+            for (const item of items) {
+                if (item instanceof Node) {
+                    const match = this.findNodeByAddress(item, address, searchFields, visited);
+                    if (match) return match;
+                }
+            }
+            return undefined;
+        };
+
+        // Search fields if requested
+        if (searchFields) {
+            for (const [_, field] of root.fields) {
+                const value = field.getValue();
+                if (value instanceof Node) {
+                    const match = this.findNodeByAddress(value, address, searchFields, visited);
+                    if (match) return match;
+                } else if (value instanceof RoAssociativeArray) {
+                    const match = searchCollection(value.elements.values());
+                    if (match) return match;
+                } else if (value instanceof RoArray) {
+                    const match = searchCollection(value.getElements());
+                    if (match) return match;
+                }
+            }
+        }
+
+        // Search children
+        const match = searchCollection(root.getNodeChildren());
+        if (match) return match;
+
+        return undefined;
     }
 
     /**
@@ -1059,7 +1155,7 @@ export class Node extends RoSGNode implements BrsValue {
             if (element instanceof RoAssociativeArray) {
                 // Create a new child node based on the subtype
                 const childSubtype = jsValueOf(element.get(new BrsString("subtype"))) ?? subtype;
-                const childNode = createNodeByType(childSubtype, interpreter);
+                const childNode = createNodeRunInit(childSubtype, interpreter);
                 if (childNode instanceof RoSGNode) {
                     this.populateNodeFromAA(interpreter, childNode, element, createFields, childSubtype);
                     node.appendChildToParent(childNode);
@@ -1449,28 +1545,141 @@ export class Node extends RoSGNode implements BrsValue {
     }
 
     /**
-     * Posts a serialized node update to the owning thread.
-     * @param id Target thread id.
-     * @param type Update domain.
-     * @param field Field name being synchronized.
-     * @param value Value to send.
-     * @param deep When true nested nodes are deeply serialized.
+     * Sets the owning thread identifier for this node.
+     * @param threadId Thread identifier.
      */
-    protected sendThreadUpdate(
-        id: number,
-        type: "scene" | "global" | "task",
-        field: string,
-        value: BrsType,
-        deep: boolean = false
-    ) {
-        const update: ThreadUpdate = {
-            id: id,
-            type: type,
-            field: field,
-            value: value instanceof Node ? fromSGNode(value, deep) : jsValueOf(value),
-        };
-        if (sgRoot.inTaskThread() && value instanceof Node) value.changed = false;
-        postMessage(update);
+    public setOwner(threadId: number) {
+        if (this.owner === threadId) {
+            return;
+        }
+        this.owner = threadId;
+        // replace ownership on node fields
+        for (const field of this.fields.values()) {
+            if (field.getType() === FieldKind.Node) {
+                const fieldValue = field.getValue();
+                if (fieldValue instanceof Node) {
+                    fieldValue.setOwner(threadId);
+                }
+            }
+        }
+        // replace ownership on children
+        for (const child of this.children) {
+            if (child instanceof Node) {
+                child.setOwner(threadId);
+            }
+        }
+    }
+
+    /**
+     * Gets the owning thread identifier for this node.
+     * @returns Thread identifier.
+     */
+    public getOwner() {
+        return this.owner;
+    }
+
+    /** Sets the unique address for this node.
+     * @param address Node address.
+     */
+    public setAddress(address: string) {
+        this.address = address;
+    }
+
+    /**
+     * Gets the unique address for this node.
+     * @returns Node address.
+     */
+    public getAddress() {
+        return this.address;
+    }
+
+    /**
+     * Marks a field as fresh, allowing it to be synchronized without delay.
+     * @param fieldName Field to mark as fresh.
+     */
+    public markFieldFresh(fieldName: string) {
+        const mapKey = fieldName.toLowerCase();
+        this.freshFields.set(mapKey, { remaining: FreshFieldBudget, timestamp: Date.now() });
+    }
+
+    /**
+     * Checks if the node should perform a rendezvous through the task thread.
+     * @returns True if the node is owned by another thread and we are in a task thread.
+     */
+    protected shouldRendezvous(): boolean {
+        return sgRoot.inTaskThread() && this.owner !== sgRoot.threadId;
+    }
+
+    /**
+     * Helper to perform a rendezvous field set via the current task.
+     * @param fieldName Name of the field being set.
+     * @param field Field object for the field being set.
+     */
+    protected rendezvousSet(fieldName: string, field: Field) {
+        if (!this.changed) {
+            return undefined;
+        }
+        const value = field.getValue(false);
+        if (this.shouldRendezvous()) {
+            const task = sgRoot.getCurrentThreadTask();
+            task?.syncRemoteField(fieldName, value, this.syncType, this.address);
+            this.changed = false;
+        } else if (!sgRoot.inTaskThread()) {
+            for (const task of sgRoot.threadTasks) {
+                if (task.active && field.isPortObserved(task)) {
+                    task.syncRemoteField(fieldName, value, this.syncType, this.address);
+                }
+            }
+        }
+    }
+
+    /**
+     * Helper to perform a rendezvous method call via the current task.
+     * @param interpreter Current BrightScript interpreter.
+     * @param method Name of the method to call.
+     * @param args Arguments to pass to the remote method.
+     * @returns Result of the remote method call, or undefined if not available.
+     */
+    protected rendezvousCall(interpreter: Interpreter, method: string, args?: BrsType[]): BrsType | undefined {
+        if (!this.shouldRendezvous()) {
+            return undefined;
+        }
+        const task = sgRoot.getCurrentThreadTask();
+        if (task?.active) {
+            let host = this.address;
+            const hostNode = interpreter.environment.hostNode;
+            if (hostNode instanceof Node) {
+                host = hostNode.getAddress();
+            }
+            const location = interpreter.location;
+            const payload: MethodCallPayload = args
+                ? { host, args: args.map((arg: BrsType) => jsValueOf(arg)), location }
+                : { host, location };
+            return task.requestMethodCall(this.syncType, this.address, method, payload);
+        }
+        return undefined;
+    }
+
+    /**
+     * Consumes a fresh field allowance when applicable.
+     * @param fieldName Field to consume.
+     * @returns True when the field is still fresh.
+     */
+    protected consumeFreshField(fieldName: string): boolean {
+        const mapKey = fieldName.toLowerCase();
+        const entry = this.freshFields.get(mapKey);
+        if (!entry) {
+            return false;
+        }
+        if (Date.now() - entry.timestamp > FreshFieldWindowMS) {
+            this.freshFields.delete(mapKey);
+            return false;
+        }
+        entry.remaining--;
+        if (entry.remaining <= 0) {
+            this.freshFields.delete(mapKey);
+        }
+        return true;
     }
 
     /**

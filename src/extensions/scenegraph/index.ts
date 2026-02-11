@@ -15,7 +15,6 @@ import {
     Stmt,
     Callable,
     TaskState,
-    ThreadUpdate,
     BrsInvalid,
     BrsObjects,
     BrsString,
@@ -24,7 +23,7 @@ import {
 import { getComponentDefinitionMap, setupInterpreterWithSubEnvs } from "./parser/ComponentDefinition";
 import { sgRoot } from "./SGRoot";
 import { Task } from "./nodes/Task";
-import { initializeTask, createNodeByType, updateTypeDefHierarchy, getNodeType } from "./factory/NodeFactory";
+import { initializeTask, createNodeRunInit, updateTypeDefHierarchy, getNodeType } from "./factory/NodeFactory";
 import { RoSGScreen } from "./components/RoSGScreen";
 import packageInfo from "../../../packages/scenegraph/package.json";
 
@@ -48,7 +47,7 @@ export class BrightScriptExtension implements BrsExtension {
         BrsObjects.set("roSGScreen", () => new RoSGScreen(), 0);
         BrsObjects.set(
             "roSGNode",
-            (interpreter: Interpreter, nodeType: BrsString) => createNodeByType(nodeType.getValue(), interpreter),
+            (interpreter: Interpreter, nodeType: BrsString) => createNodeRunInit(nodeType.getValue(), interpreter),
             1
         );
     }
@@ -68,14 +67,14 @@ export class BrightScriptExtension implements BrsExtension {
             } else {
                 const componentsDirExists = BrsDevice.fileSystem.existsSync("pkg:/components");
                 if (componentsDirExists) {
-                    postMessage(`warning,[sg] No SceneGraph components found!`);
+                    BrsDevice.stderr.write(`warning,[sg] No SceneGraph components found!`);
                 }
             }
         } catch (err: any) {
             if (err instanceof BrsError) {
                 interpreter.addError(err);
             } else {
-                postMessage(`error,[sg] Failed to load SceneGraph components: ${err.message}`);
+                BrsDevice.stderr.write(`error,[sg] Failed to load SceneGraph components: ${err.message}`);
             }
         }
     }
@@ -97,8 +96,8 @@ export class BrightScriptExtension implements BrsExtension {
 
     tick(_: Interpreter) {
         if (sgRoot.inTaskThread()) {
-            const task = sgRoot.getThreadTask(sgRoot.threadId);
-            task?.updateTask();
+            const task = sgRoot.getCurrentThreadTask();
+            task?.processThreadUpdate();
         }
     }
 
@@ -109,7 +108,7 @@ export class BrightScriptExtension implements BrsExtension {
         if (!(taskNode instanceof Task) || !functionName) {
             return;
         }
-        postMessage(`debug,[sg] Calling Task in new Worker: ${taskData.name} ${functionName}`);
+        BrsDevice.stdout.write(`debug,[sg] Calling Task in new Worker: ${taskData.name} ${functionName}`);
         if (taskData.buffer) {
             taskNode.setTaskBuffer(taskData.buffer);
         }
@@ -124,7 +123,9 @@ export class BrightScriptExtension implements BrsExtension {
                     subInterpreter.environment.setM(mPointer);
                     subInterpreter.environment.setRootM(mPointer);
                     if (funcToCall instanceof Callable) {
-                        postMessage(`debug,[sg] Task function called: ${taskData.name} ${functionName}`);
+                        BrsDevice.stdout.write(
+                            `debug,[sg] Task function called: ${taskData.name} ${functionName} active: ${taskNode.active}`
+                        );
                         const funcLoc = funcToCall.getLocation() ?? interpreter.location;
                         interpreter.addToStack({
                             functionName: functionName,
@@ -132,28 +133,28 @@ export class BrightScriptExtension implements BrsExtension {
                             callLocation: interpreter.location,
                             signature: funcToCall.signatures[0].signature,
                         });
+                        taskNode.started = true;
                         funcToCall.call(subInterpreter);
-                        postMessage(`debug,[sg] Task function finished: ${taskData.name} ${functionName}`);
-                        const update: ThreadUpdate = {
-                            id: taskNode.threadId,
-                            type: "task",
-                            field: "control",
-                            value: "stop",
-                        };
-                        postMessage(update);
+                        BrsDevice.stdout.write(
+                            `debug,[sg] Task function finished: ${taskData.name} ${functionName} active: ${taskNode.active}`
+                        );
+                        taskNode.stopTask();
                         taskData.state = TaskState.STOP;
                         postMessage(taskData);
                     } else {
-                        postMessage(`warning,[sg] Warning: Task function '${functionName}' not found!`);
+                        BrsDevice.stderr.write(`warning,[sg] Warning: Task function '${functionName}' not found!`);
                     }
                     return BrsInvalid.Instance;
                 }, taskEnv);
             } catch (err: any) {
                 if (err instanceof Stmt.ReturnValue) {
                     // ignore return value from Task function, closing the Task
-                    postMessage(
+                    BrsDevice.stdout.write(
                         `debug,[sg] Returned from Task function: ${taskData.name} ${functionName} ${err.value ?? ""}`
                     );
+                    taskNode.stopTask();
+                    taskData.state = TaskState.STOP;
+                    postMessage(taskData);
                     return;
                 } else if (err instanceof RuntimeError) {
                     interpreter.checkCrashDebug(err);

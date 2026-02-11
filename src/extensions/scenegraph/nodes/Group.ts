@@ -26,7 +26,7 @@ import { Node } from "./Node";
 import { FieldKind, FieldModel, isFont } from "../SGTypes";
 import { SGNodeType } from ".";
 import { convertHexColor, rotateRect, unionRect } from "../SGUtil";
-import { createNodeByType } from "../factory/NodeFactory";
+import { SGNodeFactory } from "../factory/NodeFactory";
 import { jsValueOf } from "../factory/Serializer";
 
 export class Group extends Node {
@@ -70,13 +70,13 @@ export class Group extends Node {
         this.isDirty = true;
     }
 
-    setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind) {
+    setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind, sync?: boolean) {
         const mapKey = index.toLowerCase();
         const field = this.fields.get(mapKey);
 
         if (field?.getType() === FieldKind.Font && isBrsString(value)) {
             const strFont = value.getValue();
-            const font = createNodeByType("Font") as Font;
+            const font = SGNodeFactory.createNode(SGNodeType.Font) as Font;
             if (strFont.startsWith("font:") && font.setSystemFont(strFont.slice(5).toLowerCase())) {
                 value = font;
             } else {
@@ -91,7 +91,7 @@ export class Group extends Node {
             }
         }
         this.isDirty = true;
-        super.setValue(index, value, alwaysNotify, kind);
+        super.setValue(index, value, alwaysNotify, kind, sync);
     }
 
     setValueSilent(fieldName: string, value: BrsType): void {
@@ -111,7 +111,7 @@ export class Group extends Node {
     }
 
     protected addPoster(uri: string, translation: number[], width?: number, height?: number) {
-        const poster = createNodeByType("Poster") as Poster;
+        const poster = SGNodeFactory.createNode(SGNodeType.Poster) as Poster;
         if (uri) {
             poster.setValue("uri", new BrsString(uri));
         }
@@ -136,7 +136,7 @@ export class Group extends Node {
         horizAlign?: string,
         wrap?: boolean
     ) {
-        const label = createNodeByType("Label") as Label;
+        const label = SGNodeFactory.createNode(SGNodeType.Label) as Label;
         if (colorField) {
             this.copyField(label, "color", colorField);
         }
@@ -178,7 +178,7 @@ export class Group extends Node {
         speed?: number,
         repeat?: number
     ) {
-        const label = createNodeByType("ScrollingLabel") as ScrollingLabel;
+        const label = SGNodeFactory.createNode(SGNodeType.ScrollingLabel) as ScrollingLabel;
         if (colorField) {
             this.copyField(label, "color", colorField);
         }
@@ -212,7 +212,7 @@ export class Group extends Node {
     }
 
     protected addRectangle(colorField: string, translation: number[], width?: number, height?: number) {
-        const rectangle = createNodeByType("Rectangle") as Rectangle;
+        const rectangle = SGNodeFactory.createNode(SGNodeType.Rectangle) as Rectangle;
         this.copyField(rectangle, "color", colorField);
         if (width !== undefined) {
             rectangle.setValueSilent("width", new Float(width));

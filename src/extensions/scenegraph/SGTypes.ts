@@ -183,7 +183,7 @@ export namespace FieldKind {
     }
 }
 
-// Definitions to avoid circular dependencies
+// Definition of ContentNode-like type to avoid circular dependencies
 type ContentNodeLike = Node & {
     addParentField(parentField: Field): void;
     removeParentField(parentField: Field): void;
@@ -203,6 +203,7 @@ export function isContentNode(value: BrsType): value is ContentNodeLike {
     );
 }
 
+// Definition of Font-like type to avoid circular dependency
 type FontLike = Node & {
     setSize(fontSize: number): void;
     setSystemFont(fontName: string): boolean;
@@ -236,3 +237,47 @@ export function isTaskLike(value: any): value is TaskLike {
 
 /** Represents an observed field with optional info fields. */
 export type ObservedField = { name: string; info?: string[] };
+
+// Thread information type
+export type ThreadInfo = {
+    id: string;
+    type: "Main" | "Render" | "Task";
+    name?: string;
+};
+
+// Method call payload type
+export type MethodCallPayload = {
+    host: string;
+    args?: any[];
+    location?: any;
+};
+
+export function isMethodCallPayload(obj: any): obj is MethodCallPayload {
+    return (
+        obj &&
+        typeof obj.host === "string" &&
+        (obj.args === undefined || Array.isArray(obj.args)) &&
+        (obj.location === undefined || typeof obj.location === "object")
+    );
+}
+
+// Observer scope definitions
+export type ObserverScope = "permanent" | "scoped" | "unscoped";
+
+/**
+ * Type guard to check if a value is a valid ObserverScope.
+ * @param value The value to check.
+ * @returns True if the value is an ObserverScope, false otherwise.
+ */
+export function isObserverScope(value: any): value is ObserverScope {
+    return value === "permanent" || value === "scoped" || value === "unscoped";
+}
+
+// Fresh field constants and state type
+export const FreshFieldWindowMS = 10;
+export const FreshFieldBudget = 4;
+
+export type FreshFieldState = {
+    remaining: number;
+    timestamp: number;
+};

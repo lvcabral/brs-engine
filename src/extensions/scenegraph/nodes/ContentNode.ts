@@ -127,7 +127,6 @@ export class ContentNode extends Node {
      * This creates an easy way to track whether a field is a metadata field or not.
      * The reason to keep track is because metadata fields should print out in all caps.
      */
-    private readonly metaDataFields = new Set<string>(this.defaultFields.map((field) => field.name.toLowerCase()));
     private readonly parentFields = new Set<Field>();
 
     constructor(readonly name: string = SGNodeType.ContentNode) {
@@ -135,7 +134,7 @@ export class ContentNode extends Node {
         this.setExtendsType(name, SGNodeType.Node);
 
         this.registerDefaultFields(this.defaultFields);
-        this.appendMethods([this.count, this.keys, this.items, this.hasField]);
+        this.overrideMethods([this.count, this.keys, this.items, this.hasField]);
     }
 
     private getVisibleFields() {
@@ -144,9 +143,9 @@ export class ContentNode extends Node {
     }
 
     /** @override */
-    setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind) {
+    setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind, sync?: boolean) {
         this.notified = false;
-        super.setValue(index, value, alwaysNotify, kind);
+        super.setValue(index, value, alwaysNotify, kind, sync);
         // Propagate changes notification to parent fields
         if (this.parentFields.size && this.notified) {
             for (const field of this.parentFields) {
@@ -192,7 +191,7 @@ export class ContentNode extends Node {
     replaceField(fieldName: string, type: string, defaultValue?: BrsType, alwaysNotify: boolean = false) {
         if (this.fields.has(fieldName.toLowerCase())) {
             this.fields.delete(fieldName.toLowerCase());
-            this.addNodeField(fieldName, type, alwaysNotify);
+            this.addNodeField(fieldName, type, alwaysNotify, false);
             // set default value if it was specified in xml
             if (defaultValue) {
                 this.setValueSilent(fieldName, defaultValue);

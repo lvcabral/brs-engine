@@ -5,26 +5,13 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import {
-    BrsDevice,
-    BufferType,
-    DataType,
-    genHexAddress,
-    Interpreter,
-    MediaEvent,
-    MediaTrack,
-    ThreadInfo,
-} from "brs-engine";
+import { BrsDevice, BufferType, DataType, genHexAddress, Interpreter, MediaEvent, MediaTrack } from "brs-engine";
 import { ComponentDefinition } from "./parser/ComponentDefinition";
 import { RoSGNode } from "./components/RoSGNode";
 import { Global } from "./nodes/Global";
-import { Scene } from "./nodes/Scene";
-import { Timer } from "./nodes/Timer";
-import { AnimationBase } from "./nodes/AnimationBase";
-import { Audio } from "./nodes/Audio";
 import { SoundEffect } from "./nodes/SoundEffect";
-import { Video } from "./nodes/Video";
-import { Task } from "./nodes/Task";
+import { ThreadInfo } from "./SGTypes";
+import type { AnimationBase, Audio, Dialog, Node, Scene, StandardDialog, Task, Timer, Video } from "./nodes";
 
 /**
  * A singleton object that holds the Node that represents the m.global, the root Scene,
@@ -54,12 +41,18 @@ export class SGRoot {
     }
 
     get mGlobal(): Global {
-        this._mGlobal ??= new Global([]);
+        this._mGlobal ??= new Global();
         return this._mGlobal;
     }
 
     get nodeDefMap(): Map<string, ComponentDefinition> {
         return this._nodeDefMap;
+    }
+
+    get threadTasks(): Task[] {
+        return Array.from(this._threads.values())
+            .map((thread) => thread.task)
+            .filter((task): task is Task => task !== undefined);
     }
 
     get scene(): Scene | undefined {
@@ -180,6 +173,16 @@ export class SGRoot {
     }
 
     /**
+     * Removes the dialog if the current one.
+     * @param dialog Dialog instance to set
+     */
+    removeDialog(dialog: Dialog | StandardDialog) {
+        if (this._scene?.dialog === dialog) {
+            this._scene.dialog = undefined;
+        }
+    }
+
+    /**
      * Sets the currently focused node.
      * @param node Node to set as focused, or undefined to clear focus
      */
@@ -191,27 +194,30 @@ export class SGRoot {
      * Adds a new task thread to the SGRoot.
      * @param task Task instance to add
      * @param threadId Optional thread ID (auto-assigned if not provided)
-     * @param makeCurrent Whether to make this the current thread (defaults to false)
      */
-    addTask(task: Task, threadId?: number, makeCurrent: boolean = false) {
+    addTask(task: Task, threadId?: number) {
         task.threadId = threadId ?? this._threads.size;
-        this.setThread(task.threadId, makeCurrent, task.address, task);
+        this.setThread(task.threadId, task.getAddress(), task);
     }
 
     /**
      * Sets thread data and optionally makes it the current thread.
      * @param threadId Thread ID (0 for render thread, >0 for task threads)
-     * @param makeCurrent Whether to make this the current thread (defaults to false)
      * @param address Optional hex address for the thread (auto-generated if not provided)
      * @param task Optional Task instance associated with the thread
      */
-    setThread(threadId: number, makeCurrent: boolean = false, address?: string, task?: Task) {
+    setThread(threadId: number, address?: string, task?: Task) {
         const threadInfo: ThreadInfo = { id: address ?? genHexAddress(), type: threadId > 0 ? "Task" : "Render" };
         this._threads.set(threadId, { info: threadInfo, task });
-        if (makeCurrent) {
-            this._threadId = threadId;
-            BrsDevice.threadId = threadId;
-        }
+    }
+
+    /**
+     * Sets the current thread ID and updates related properties.
+     * @param threadId The ID of the thread to set as current
+     */
+    setCurrentThread(threadId: number) {
+        this._threadId = threadId;
+        BrsDevice.threadId = threadId;
     }
 
     /**
@@ -239,7 +245,7 @@ export class SGRoot {
         let updates = false;
         for (const thread of this._threads.values()) {
             const task = thread.task;
-            updates = task?.updateTask() || updates;
+            updates = task?.processThreadUpdate() !== undefined || updates;
             if (task?.active) {
                 task.checkTaskRun();
             }

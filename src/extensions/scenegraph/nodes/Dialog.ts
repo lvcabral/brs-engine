@@ -157,9 +157,7 @@ export class Dialog extends Group {
             index = "wasClosed";
             value = BrsBoolean.True;
             this.setValue("visible", BrsBoolean.False);
-            if (sgRoot.scene?.dialog === this) {
-                sgRoot.scene.dialog = undefined;
-            }
+            sgRoot.removeDialog(this);
             if (this.lastFocus instanceof Group) {
                 sgRoot.setFocused(this.lastFocus);
                 this.lastFocus.isDirty = true;
