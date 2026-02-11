@@ -51,7 +51,7 @@ export class SGRoot {
 
     get threadTasks(): Task[] {
         return Array.from(this._threads.values())
-            .map(thread => thread.task)
+            .map((thread) => thread.task)
             .filter((task): task is Task => task !== undefined);
     }
 
