@@ -49,6 +49,12 @@ export class SGRoot {
         return this._nodeDefMap;
     }
 
+    get threadTasks(): Task[] {
+        return Array.from(this._threads.values())
+            .map(thread => thread.task)
+            .filter((task): task is Task => task !== undefined);
+    }
+
     get scene(): Scene | undefined {
         return this._scene;
     }

@@ -396,7 +396,7 @@ export class Node extends RoSGNode implements BrsValue {
         }
         this.markFieldFresh(mapKey);
         if (field && sync && this.syncType !== "task") {
-            this.rendezvousSet(mapKey, field.getValue(false));
+            this.rendezvousSet(mapKey, field);
         }
     }
 
@@ -1612,16 +1612,25 @@ export class Node extends RoSGNode implements BrsValue {
 
     /**
      * Helper to perform a rendezvous field set via the current task.
-     * @param field Name of the field being set.
-     * @param value Value being assigned to the field.
+     * @param fieldName Name of the field being set.
+     * @param field Field object for the field being set.
      */
-    protected rendezvousSet(field: string, value: BrsType) {
-        if (!this.shouldRendezvous() || !this.changed) {
+    protected rendezvousSet(fieldName: string, field: Field) {
+        if (!this.changed) {
             return undefined;
         }
-        const task = sgRoot.getCurrentThreadTask();
-        task?.syncRemoteField(field, value, this.syncType, this.address);
-        this.changed = false;
+        const value = field.getValue(false);
+        if (this.shouldRendezvous()) {
+            const task = sgRoot.getCurrentThreadTask();
+            task?.syncRemoteField(fieldName, value, this.syncType, this.address);
+            this.changed = false;
+        } else if (!sgRoot.inTaskThread()) {
+            for (const task of sgRoot.threadTasks) {
+                if (task.active && field.isPortObserved(task)) {
+                    task.syncRemoteField(fieldName, value, this.syncType, this.address);
+                }
+            }
+        }
     }
 
     /**

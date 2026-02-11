@@ -669,10 +669,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
                 returns: ValueKind.Boolean,
             },
             impl: (interpreter: Interpreter, fieldName: BrsString, port: RoMessagePort, infoFields: RoArray) => {
-                const remote = this.rendezvousCall(interpreter, "observeField", [fieldName, port, infoFields]);
-                if (remote !== undefined) {
-                    return remote;
-                }
+                this.rendezvousCall(interpreter, "observeField", [fieldName, port, infoFields]);
                 return this.addObserver(interpreter, "unscoped", fieldName, port, infoFields);
             },
         }
@@ -685,18 +682,8 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             returns: ValueKind.Boolean,
         },
         impl: (interpreter: Interpreter, fieldName: BrsString) => {
-            const remote = this.rendezvousCall(interpreter, "unobserveField", [fieldName]);
-            if (remote !== undefined) {
-                return remote;
-            }
+            this.rendezvousCall(interpreter, "unobserveField", [fieldName]);
             const name = fieldName.getValue();
-            if (!interpreter.environment.hostNode) {
-                const location = interpreter.formatLocation();
-                BrsDevice.stderr.write(
-                    `warning,BRIGHTSCRIPT: ERROR: roSGNode.unObserveField: "${this.nodeSubtype}.${name}" no active host node: ${location}`
-                );
-                return BrsBoolean.False;
-            }
             this.removeObserver(name);
             // returns true, even if the field doesn't exist
             return BrsBoolean.True;
@@ -737,10 +724,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
                 returns: ValueKind.Boolean,
             },
             impl: (interpreter: Interpreter, fieldName: BrsString, port: RoMessagePort, infoFields: RoArray) => {
-                const remote = this.rendezvousCall(interpreter, "observeFieldScoped", [fieldName, port, infoFields]);
-                if (remote !== undefined) {
-                    return remote;
-                }
+                this.rendezvousCall(interpreter, "observeFieldScoped", [fieldName, port, infoFields]);
                 return this.addObserver(interpreter, "scoped", fieldName, port, infoFields);
             },
         }
@@ -780,10 +764,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
                 returns: ValueKind.Boolean,
             },
             impl: (interpreter: Interpreter, fieldName: BrsString, port: RoMessagePort, infoFields: RoArray) => {
-                const remote = this.rendezvousCall(interpreter, "observeFieldScopedEx", [fieldName, port, infoFields]);
-                if (remote !== undefined) {
-                    return remote;
-                }
+                this.rendezvousCall(interpreter, "observeFieldScopedEx", [fieldName, port, infoFields]);
                 return this.addObserver(interpreter, "scoped", fieldName, port, infoFields);
             },
         }
@@ -796,10 +777,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             returns: ValueKind.Boolean,
         },
         impl: (interpreter: Interpreter, fieldName: BrsString) => {
-            const remote = this.rendezvousCall(interpreter, "unobserveFieldScoped", [fieldName]);
-            if (remote !== undefined) {
-                return remote;
-            }
+            this.rendezvousCall(interpreter, "unobserveFieldScoped", [fieldName]);
             const name = fieldName.getValue();
             if (!interpreter.environment.hostNode) {
                 const location = interpreter.formatLocation();
