@@ -215,7 +215,7 @@ export function handleThreadUpdate(threadUpdate: ThreadUpdate, fromTask: boolean
     } else if (threadUpdate.type !== "task") {
         // Propagate to other tasks
         for (const taskId of tasks.keys()) {
-            if (!fromTask || (taskId !== threadUpdate.id && !["get", "call"].includes(threadUpdate.action))) {
+            if (!fromTask || (taskId !== threadUpdate.id && threadUpdate.action === "set")) {
                 updateTask(taskId, threadUpdate);
             }
         }
