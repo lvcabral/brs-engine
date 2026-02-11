@@ -202,18 +202,17 @@ export class Task extends Node {
 
     /**
      * Waits for an acknowledgement from the main thread for a specific field update.
-     * @param fieldName Name of the field being updated.
-     * @param requestId Unique identifier for the update request.
+     * @param update The thread update request containing the field key and request ID.
      * @param timeoutMs Time to wait in milliseconds (default 10000).
      * @returns True if acknowledgement was received, false on timeout.
      */
-    private waitForFieldAck(fieldName: string, requestId: number, timeoutMs: number = 10000) {
-        if (!this.taskBuffer) {
+    private waitForFieldAck(update: ThreadUpdate, timeoutMs: number = 10000) {
+        if (!this.taskBuffer || update.requestId === undefined) {
             return false;
         }
         const deadline = Date.now() + timeoutMs;
         while (true) {
-            if (this.completedAcks.delete(requestId)) {
+            if (this.completedAcks.delete(update.requestId)) {
                 return true;
             }
             const remaining = deadline - Date.now();
@@ -227,7 +226,7 @@ export class Task extends Node {
             this.processThreadUpdate();
         }
         BrsDevice.stderr.write(
-            `warning,[task-sync] Task #${this.threadId} rendezvous ack timeout for task.${fieldName} (req=${requestId})`
+            `warning,[task-sync] Task #${this.threadId} rendezvous ack timeout for task.${update.key} (req=${update.id})`
         );
         return false;
     }
@@ -471,7 +470,7 @@ export class Task extends Node {
         }
         postMessage(update);
         if (this.inThread && update.requestId !== undefined && update.action !== "ack") {
-            this.waitForFieldAck(update.key, update.requestId);
+            this.waitForFieldAck(update);
         }
     }
 

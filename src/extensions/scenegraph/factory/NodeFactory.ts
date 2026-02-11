@@ -577,7 +577,6 @@ function loadTaskData(interpreter: Interpreter, node: Node, taskData: TaskData) 
                 continue;
             }
             const brsValue = brsValueOf(value);
-            postMessage(`debug,[thread:${sgRoot.threadId}] Restoring task m.${key} with value ${brsValue.toString()}`);
             if (!port && brsValue instanceof RoMessagePort) {
                 port = brsValue;
             }
