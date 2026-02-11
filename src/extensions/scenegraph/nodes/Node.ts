@@ -46,7 +46,7 @@ import {
     MethodCallPayload,
 } from "../SGTypes";
 import { RoSGNode } from "../components/RoSGNode";
-import { createNodeByType, getBrsValueFromFieldType, subtypeHierarchy } from "../factory/NodeFactory";
+import { createNode, createNodeRunInit, getBrsValueFromFieldType, subtypeHierarchy } from "../factory/NodeFactory";
 import { Field } from "../nodes/Field";
 import { toAssociativeArray, jsValueOf, fromSGNode } from "../factory/Serializer";
 import { sgRoot } from "../SGRoot";
@@ -456,7 +456,7 @@ export class Node extends RoSGNode implements BrsValue {
         if (visitedNodes.has(this)) {
             return visitedNodes.get(this)!;
         }
-        const clonedNode = createNodeByType(this.nodeSubtype);
+        const clonedNode = createNode(this.nodeType, this.nodeSubtype);
         if (!(clonedNode instanceof RoSGNode)) {
             return BrsInvalid.Instance;
         }
@@ -506,7 +506,7 @@ export class Node extends RoSGNode implements BrsValue {
      */
     deepCopy(visitedNodes?: WeakMap<Node, Node>): BrsType {
         visitedNodes ??= new WeakMap<Node, Node>();
-        const copiedNode = createNodeByType(this.nodeSubtype);
+        const copiedNode = createNode(this.nodeType, this.nodeSubtype);
         if (!(copiedNode instanceof Node)) {
             return new RoInvalid();
         }
@@ -1002,53 +1002,46 @@ export class Node extends RoSGNode implements BrsValue {
         searchFields: boolean = false,
         visited: Set<Node> = new Set()
     ): Node | undefined {
-        if (!root) {
-            return undefined;
-        }
-        if (visited.has(root)) {
+        if (!root || visited.has(root)) {
             return undefined;
         }
         visited.add(root);
         if (root.address === address) {
             return root;
         }
+
+        // Helper to search through a collection of potential nodes
+        const searchCollection = (items: Iterable<BrsType>): Node | undefined => {
+            for (const item of items) {
+                if (item instanceof Node) {
+                    const match = this.findNodeByAddress(item, address, searchFields, visited);
+                    if (match) return match;
+                }
+            }
+            return undefined;
+        };
+
+        // Search fields if requested
         if (searchFields) {
             for (const [_, field] of root.fields) {
                 const value = field.getValue();
                 if (value instanceof Node) {
-                    const match = this.findNodeByAddress(value, address, true, visited);
-                    if (match) {
-                        return match;
-                    }
+                    const match = this.findNodeByAddress(value, address, searchFields, visited);
+                    if (match) return match;
                 } else if (value instanceof RoAssociativeArray) {
-                    for (const [__, element] of value.elements) {
-                        if (element instanceof Node) {
-                            const match = this.findNodeByAddress(element, address, true, visited);
-                            if (match) {
-                                return match;
-                            }
-                        }
-                    }
+                    const match = searchCollection(value.elements.values());
+                    if (match) return match;
                 } else if (value instanceof RoArray) {
-                    for (const element of value.getElements()) {
-                        if (element instanceof Node) {
-                            const match = this.findNodeByAddress(element, address, true, visited);
-                            if (match) {
-                                return match;
-                            }
-                        }
-                    }
+                    const match = searchCollection(value.getElements());
+                    if (match) return match;
                 }
             }
         }
-        for (const child of root.getNodeChildren()) {
-            if (child instanceof Node) {
-                const match = this.findNodeByAddress(child, address, searchFields, visited);
-                if (match) {
-                    return match;
-                }
-            }
-        }
+
+        // Search children
+        const match = searchCollection(root.getNodeChildren());
+        if (match) return match;
+
         return undefined;
     }
 
@@ -1167,7 +1160,7 @@ export class Node extends RoSGNode implements BrsValue {
             if (element instanceof RoAssociativeArray) {
                 // Create a new child node based on the subtype
                 const childSubtype = jsValueOf(element.get(new BrsString("subtype"))) ?? subtype;
-                const childNode = createNodeByType(childSubtype, interpreter);
+                const childNode = createNodeRunInit(childSubtype, interpreter);
                 if (childNode instanceof RoSGNode) {
                     this.populateNodeFromAA(interpreter, childNode, element, createFields, childSubtype);
                     node.appendChildToParent(childNode);

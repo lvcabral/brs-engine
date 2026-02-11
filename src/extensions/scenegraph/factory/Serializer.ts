@@ -22,7 +22,7 @@ import {
     Callable,
     StdlibArgument,
 } from "brs-engine";
-import { SGNodeFactory, createNodeByType, createRemoteNodeByType, isSGNodeType } from "./NodeFactory";
+import { createNode } from "./NodeFactory";
 import { ContentNode, Node, SGNodeType } from "../nodes";
 import { ObservedField } from "../SGTypes";
 import { sgRoot } from "../SGRoot";
@@ -187,9 +187,8 @@ function fromObject(obj: any, cs?: boolean, nodeMap?: Map<string, Node>): BrsTyp
         // Handle both regular nodes and circular references
         const nodeInfo = getSerializedNodeInfo(obj);
         if (nodeInfo) {
-            return sgRoot.inTaskThread() && nodeInfo.type !== SGNodeType.ContentNode
-                ? toRemoteNode(obj, nodeInfo.type, nodeInfo.subtype, nodeMap)
-                : toSGNode(obj, nodeInfo.type, nodeInfo.subtype, nodeMap);
+            const includeChildren = !(sgRoot.inTaskThread() && nodeInfo.type !== SGNodeType.ContentNode);
+            return toSGNode(obj, nodeInfo.type, nodeInfo.subtype, includeChildren, nodeMap);
         }
         return BrsInvalid.Instance;
     } else if (obj["_component_"]) {
@@ -225,10 +224,11 @@ function fromObject(obj: any, cs?: boolean, nodeMap?: Map<string, Node>): BrsTyp
  * @param obj The JavaScript object to convert.
  * @param type The type of the node.
  * @param subtype The subtype of the node.
+ * @param child Whether this node should deserialize its children.
  * @param nodeMap Optional map to track nodes by ID for resolving circular references.
- * @returns A RoSGNode with the converted fields.
+ * @returns A remote RoSGNode with the converted fields.
  */
-export function toSGNode(obj: any, type: string, subtype: string, nodeMap?: Map<string, Node>): Node {
+export function toSGNode(obj: any, type: string, subtype: string, child?: boolean, nodeMap?: Map<string, Node>): Node {
     // Initialize nodeMap on first call
     nodeMap ??= new Map<string, Node>();
 
@@ -242,18 +242,14 @@ export function toSGNode(obj: any, type: string, subtype: string, nodeMap?: Map<
         // Return invalid for now (should not happen in valid serialized data)
         return BrsInvalid.Instance as any;
     }
-    let newNode: Node | BrsInvalid = BrsInvalid.Instance;
-    if (![SGNodeType.Scene, SGNodeType.OverhangPanelSetScene, SGNodeType.Task].includes(type as SGNodeType)) {
-        newNode = createNodeByType(subtype);
-    }
+    let newNode = createNode(type, subtype);
     if (newNode instanceof BrsInvalid) {
-        const nodeType = isSGNodeType(type) ? type : SGNodeType.Node;
-        newNode = SGNodeFactory.createNode(nodeType, subtype) ?? new Node([], subtype);
+        newNode = new Node([], subtype);
     }
     // Store the node in the map using the original address for circular reference resolution
     // Use the address from serialized data if available, otherwise use the new node's address
     newNode.setAddress(obj["_address_"] || newNode.getAddress());
-    newNode.setOwner(obj["_owner_"] ?? newNode.getOwner());
+    newNode.setOwner(obj["_owner_"] ?? 0);
     nodeMap.set(newNode.getAddress(), newNode);
 
     for (const key in obj) {
@@ -262,51 +258,16 @@ export function toSGNode(obj: any, type: string, subtype: string, nodeMap?: Map<
         }
         newNode.setValueSilent(key, brsValueOf(obj[key], undefined, nodeMap));
     }
-    if (obj["_children_"]) {
+    if (child && obj["_children_"]) {
         for (const child of obj["_children_"]) {
             const childInfo = getSerializedNodeInfo(child);
             if (childInfo) {
-                const childNode = toSGNode(child, childInfo.type, childInfo.subtype, nodeMap);
+                const childNode = toSGNode(child, childInfo.type, childInfo.subtype, true, nodeMap);
                 newNode.appendChildToParent(childNode);
             } else if (child["_invalid_"] !== undefined) {
                 newNode.appendChildToParent(BrsInvalid.Instance);
             }
         }
-    }
-    return newNode;
-}
-
-export function toRemoteNode(obj: any, type: string, subtype: string, nodeMap?: Map<string, Node>): Node {
-    // Initialize nodeMap on first call
-    nodeMap ??= new Map<string, Node>();
-
-    // Check if this is a circular reference
-    if (obj["_circular_"] && obj["_address_"]) {
-        const existingNode = nodeMap.get(obj["_address_"]);
-        if (existingNode) {
-            return existingNode;
-        }
-        // If we don't have the node yet, this might be a forward reference
-        // Return invalid for now (should not happen in valid serialized data)
-        return BrsInvalid.Instance as any;
-    }
-    let newNode = createRemoteNodeByType(type, subtype);
-    if (newNode instanceof BrsInvalid) {
-        const nodeType = isSGNodeType(type) ? type : SGNodeType.Node;
-        newNode = SGNodeFactory.createNode(nodeType, subtype) ?? new Node([], subtype);
-        newNode.setOwner(0);
-    }
-    // Store the node in the map using the original address for circular reference resolution
-    // Use the address from serialized data if available, otherwise use the new node's address
-    newNode.setAddress(obj["_address_"] || newNode.getAddress());
-    newNode.setOwner(obj["_owner_"] ?? newNode.getOwner());
-    nodeMap.set(newNode.getAddress(), newNode);
-
-    for (const key in obj) {
-        if (key.startsWith("_") && key.endsWith("_") && key.length > 2) {
-            continue;
-        }
-        newNode.setValueSilent(key, brsValueOf(obj[key], undefined, nodeMap));
     }
     return newNode;
 }
@@ -378,7 +339,7 @@ export function updateSGNode(obj: any, targetNode: Node, nodeMap?: Map<string, N
             ) {
                 nextNode = updateSGNode(fieldValue, existingFieldValue, nodeMap);
             } else {
-                nextNode = toSGNode(fieldValue, fieldInfo.type, fieldInfo.subtype, nodeMap);
+                nextNode = toSGNode(fieldValue, fieldInfo.type, fieldInfo.subtype, true, nodeMap);
             }
             targetNode.setValueSilent(key, nextNode);
             continue;
@@ -427,7 +388,7 @@ export function updateSGNode(obj: any, targetNode: Node, nodeMap?: Map<string, N
             if (childNode instanceof Node) {
                 childNode = updateSGNode(serializedChild, childNode, nodeMap);
             } else {
-                childNode = toSGNode(serializedChild, childInfo.type, childInfo.subtype, nodeMap);
+                childNode = toSGNode(serializedChild, childInfo.type, childInfo.subtype, true, nodeMap);
             }
             if (!(childNode instanceof Node)) {
                 continue;

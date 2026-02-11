@@ -23,7 +23,7 @@ import {
 import { getComponentDefinitionMap, setupInterpreterWithSubEnvs } from "./parser/ComponentDefinition";
 import { sgRoot } from "./SGRoot";
 import { Task } from "./nodes/Task";
-import { initializeTask, createNodeByType, updateTypeDefHierarchy, getNodeType } from "./factory/NodeFactory";
+import { initializeTask, createNodeRunInit, updateTypeDefHierarchy, getNodeType } from "./factory/NodeFactory";
 import { RoSGScreen } from "./components/RoSGScreen";
 import packageInfo from "../../../packages/scenegraph/package.json";
 
@@ -47,7 +47,7 @@ export class BrightScriptExtension implements BrsExtension {
         BrsObjects.set("roSGScreen", () => new RoSGScreen(), 0);
         BrsObjects.set(
             "roSGNode",
-            (interpreter: Interpreter, nodeType: BrsString) => createNodeByType(nodeType.getValue(), interpreter),
+            (interpreter: Interpreter, nodeType: BrsString) => createNodeRunInit(nodeType.getValue(), interpreter),
             1
         );
     }

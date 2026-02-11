@@ -22,7 +22,7 @@ import {
     Rect,
 } from "brs-engine";
 import { sgRoot } from "../SGRoot";
-import { createNodeByType, getNodeType, isSubtypeCheck, subtypeHierarchy } from "../factory/NodeFactory";
+import { createNodeRunInit, getNodeType, isSubtypeCheck, subtypeHierarchy } from "../factory/NodeFactory";
 import { toAssociativeArray } from "../factory/Serializer";
 import { FieldKind, isContentNode, ObserverScope } from "../SGTypes";
 import type { SGNodeType } from "../nodes";
@@ -1072,7 +1072,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             if (remote !== undefined) {
                 return remote;
             }
-            const child = createNodeByType(nodeType.getValue(), interpreter);
+            const child = createNodeRunInit(nodeType.getValue(), interpreter);
             if (child instanceof RoSGNode) {
                 this.appendChildToParent(child);
             }
@@ -1222,7 +1222,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             const numChildrenValue = num_children.getValue();
             const addedChildren: RoSGNode[] = [];
             for (let i = 0; i < numChildrenValue; i++) {
-                const child = createNodeByType(subtype.getValue(), interpreter);
+                const child = createNodeRunInit(subtype.getValue(), interpreter);
                 if (child instanceof RoSGNode) {
                     this.appendChildToParent(child);
                     addedChildren.push(child);

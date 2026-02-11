@@ -262,14 +262,39 @@ export class SGNodeFactory {
 }
 
 /**
- * Creates a node by its type name as defined in XML component files.
- * Handles both built-in node types and custom component definitions.
- * Automatically registers Task nodes in the task list.
+ * Creates a SceneGraph node based on the specified type and subtype.
+ * Focused on serialization, custom XML nodes are created without children and not initialized.
  * @param type Type name of the node to create
- * @param interpreter Optional interpreter instance for custom component initialization
+ * @param subtype Subtype name of the node to create
  * @returns Created node instance or BrsInvalid if creation fails
  */
-export function createNodeByType(type: string, interpreter?: Interpreter): Node | BrsInvalid {
+export function createNode(type: string, subtype: string): Node | BrsInvalid {
+    let node: Node | BrsInvalid = BrsInvalid.Instance;
+    const typeDef = sgRoot.nodeDefMap.get(subtype.toLowerCase());
+    if (typeDef) {
+        node = createNodeByTypeDef(typeDef, subtype);
+    }
+    if (node instanceof BrsInvalid) {
+        node = SGNodeFactory.createNode(type, subtype) ?? BrsInvalid.Instance;
+    }
+    if (node instanceof BrsInvalid) {
+        BrsDevice.stderr.write(
+            `warning,Warning: Failed to create roSGNode with type ${type}:${subtype}: ${
+                sgRoot.interpreter?.formatLocation() ?? ""
+            }`
+        );
+    }
+    return node;
+}
+
+/**
+ * Creates a node by its type name as defined in XML component files and initializes it.
+ * Handles both built-in node types and custom component definitions.
+ * @param type Type name of the node to create
+ * @param interpreter Optional interpreter instance for component initialization
+ * @returns Created node instance or BrsInvalid if creation fails
+ */
+export function createNodeRunInit(type: string, interpreter?: Interpreter): Node | BrsInvalid {
     // If this is a built-in node component, then return it.
     let node = SGNodeFactory.createNode(type) ?? BrsInvalid.Instance;
     if (node instanceof BrsInvalid) {
@@ -279,10 +304,7 @@ export function createNodeByType(type: string, interpreter?: Interpreter): Node 
         } else if (typeDef && sgRoot.inTaskThread() && sgRoot.interpreter) {
             node = initializeNode(sgRoot.interpreter, type, typeDef);
         } else if (typeDef) {
-            const typeDefStack = updateTypeDefHierarchy(typeDef);
-            // Get the "basemost" component of the inheritance tree.
-            typeDef = typeDefStack.pop();
-            node = SGNodeFactory.createNode(typeDef!.extends as SGNodeType, type) ?? BrsInvalid.Instance;
+            node = createNodeByTypeDef(typeDef, type);
             if (node instanceof BrsInvalid) {
                 node = new Node([], type);
             }
@@ -303,36 +325,27 @@ export function createNodeByType(type: string, interpreter?: Interpreter): Node 
     return node;
 }
 
-export function createRemoteNodeByType(type: string, subtype: string): Node | BrsInvalid {
-    const nodeType = isSGNodeType(type) ? type : SGNodeType.Node;
-    let node = SGNodeFactory.createNode(type) ?? BrsInvalid.Instance;
-    if (node instanceof BrsInvalid) {
-        let typeDef = sgRoot.nodeDefMap.get(subtype.toLowerCase());
-        //use typeDef object to tack on all the bells & whistles of a custom node
-        const typeDefStack = updateTypeDefHierarchy(typeDef);
-        // Start from the "basemost" component of the tree.
-        typeDef = typeDefStack.pop();
-        if (typeDef) {
-            node = SGNodeFactory.createNode(typeDef.extends as SGNodeType, type) ?? BrsInvalid.Instance;
-            if (node instanceof Node) {
-                const fields = typeDef.fields;
-                for (const [fieldName, fieldValue] of Object.entries(fields)) {
-                    if (!(fieldValue instanceof Object)) {
-                        continue;
-                    }
-                    node.addNodeField(fieldName, fieldValue.type, fieldValue.alwaysNotify === "true", false);
+/**
+ * Creates a SceneGraph node based on a component definition (simplified without children).
+ * @param typeDef Definition of the component to create a node from
+ * @param subtype Subtype name of the node to create
+ * @returns Created node instance or BrsInvalid if creation fails
+ */
+function createNodeByTypeDef(typeDef: ComponentDefinition, subtype: string): Node | BrsInvalid {
+    let node: Node | BrsInvalid = BrsInvalid.Instance;
+    const typeDefStack = updateTypeDefHierarchy(typeDef);
+    const nodeDef = typeDefStack.pop();
+    if (nodeDef) {
+        node = SGNodeFactory.createNode(nodeDef.extends as SGNodeType, subtype) ?? BrsInvalid.Instance;
+        if (node instanceof Node) {
+            const fields = nodeDef.fields;
+            for (const [fieldName, fieldValue] of Object.entries(fields)) {
+                if (!(fieldValue instanceof Object)) {
+                    continue;
                 }
+                node.addNodeField(fieldName, fieldValue.type, fieldValue.alwaysNotify === "true", false);
             }
         }
-    }
-    if (node instanceof Node) {
-        node.setOwner(0);
-    } else {
-        BrsDevice.stderr.write(
-            `warning,Warning: Failed to create roSGNode with type ${nodeType}:${subtype}: ${
-                sgRoot.interpreter?.formatLocation() ?? ""
-            }`
-        );
     }
     return node;
 }
@@ -574,7 +587,7 @@ function loadTaskData(interpreter: Interpreter, node: Node, taskData: TaskData) 
     if (taskData.scene?.["_node_"]) {
         const nodeInfo = getSerializedNodeInfo(taskData.scene);
         const sceneName = nodeInfo?.subtype || SGNodeType.Scene;
-        const scene = createRemoteNodeByType(SGNodeType.Scene, sceneName);
+        const scene = createNode(SGNodeType.Scene, sceneName);
         if (scene instanceof Scene) {
             sgRoot.setScene(scene);
             restoreNode(interpreter, taskData.scene, scene, port);
@@ -776,7 +789,7 @@ function addChildren(interpreter: Interpreter, node: Node, typeDef: ComponentDef
     const appendChild = node.getMethod("appendchild");
 
     for (let child of children) {
-        const newChild = createNodeByType(child.name, interpreter);
+        const newChild = createNodeRunInit(child.name, interpreter);
         if (newChild instanceof Node) {
             newChild.location = interpreter.formatLocation();
             const nodeFields = newChild.getNodeFields();
