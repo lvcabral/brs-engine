@@ -2,6 +2,86 @@
 
 All notable changes to this project will be documented in this file.
 
+
+<a name="v2.1.0"></a>
+
+## [v2.1.0 - Rendezvous and other major improvements and fixes](https://github.com/lvcabral/brs-engine/releases/tag/v2.1.0) - 11 February 2026
+
+This release brings major improvements both to the core engine and the SceneGraph extension, including better support for Task threads, introducing real Rendezvous, enhanced debugging capabilities, and various bug fixes and optimizations. Read the full release notes below for more details.
+
+### Release Changes
+
+* (api) Added support to load Worker as a `Blob` by [@lvcabral](https://github.com/lvcabral) in [#818](https://github.com/lvcabral/brs-engine/pull/818)
+* (brs) Handle Blowfish deprecation in `roEVPCipher` by [@lvcabral](https://github.com/lvcabral) in [#821](https://github.com/lvcabral/brs-engine/pull/821)
+* (brs) Fixed MicroDebugger stack trace and context (variables) by [@lvcabral](https://github.com/lvcabral) in [#822](https://github.com/lvcabral/brs-engine/pull/822)
+* (brs) Properly handle crash during debugger session by [@lvcabral](https://github.com/lvcabral) in [#824](https://github.com/lvcabral/brs-engine/pull/824)
+* (brs) Properly handle files with `UTF-8 BOM` on `Lexer` by [@lvcabral](https://github.com/lvcabral) in [#840](https://github.com/lvcabral/brs-engine/pull/840)
+* (brs) Implemented DRM detection in browser environment to populate `roDeviceInfo.getDrmInfoEx()` by [@lvcabral](https://github.com/lvcabral) in [#844](https://github.com/lvcabral/brs-engine/pull/844)
+* (brs) Fix video URL handling to correctly process package video files by [@lvcabral](https://github.com/lvcabral) in [#845](https://github.com/lvcabral/brs-engine/pull/845)
+* (brs) Added support for the `milliseconds` param on `roDateTime.toISOString()` by [@lvcabral](https://github.com/lvcabral) in [#846](https://github.com/lvcabral/brs-engine/pull/846)
+* (brs) Allowed to use `global` as function parameter name by [@lvcabral](https://github.com/lvcabral) in [#850](https://github.com/lvcabral/brs-engine/pull/850)
+* (brs) Refactored `Interpreter` to extract `call` from `visitCall` by [@lvcabral](https://github.com/lvcabral) in [#873](https://github.com/lvcabral/brs-engine/pull/873)
+* (brs) Add log level management to device data and interpreter output by [@lvcabral](https://github.com/lvcabral) in [#881](https://github.com/lvcabral/brs-engine/pull/881)
+* (brs) Add LongInteger (Int64) support to Str() global function by [@saas817](https://github.com/saas817) in [#878](https://github.com/lvcabral/brs-engine/pull/878)
+* (chore) Small refactoring on API task module by [@lvcabral](https://github.com/lvcabral) in [#855](https://github.com/lvcabral/brs-engine/pull/855)
+* (chore) Bump lodash from 4.17.21 to 4.17.23 by [@dependabot](https://github.com/dependabot) in [#843](https://github.com/lvcabral/brs-engine/pull/843)
+* (chore) Bump webpack from 5.103.0 to 5.105.0 by [@dependabot](https://github.com/dependabot) in [#876](https://github.com/lvcabral/brs-engine/pull/876)
+* Changes on `brs-scenegraph` package (release v0.1.0):
+  * (rsg) Fixed `Scene` set fields before initialization by [@lvcabral](https://github.com/lvcabral) in [#819](https://github.com/lvcabral/brs-engine/pull/819)
+  * (rsg) Prevent block `setValue` when in the task thread by [@lvcabral](https://github.com/lvcabral) in [#820](https://github.com/lvcabral/brs-engine/pull/820)
+  * (rsg) Fixed `Scenegraph` crash handling and stack trace by [@lvcabral](https://github.com/lvcabral) in [#823](https://github.com/lvcabral/brs-engine/pull/823)
+  * (rsg) Implemented support for debugging Task threads by [@lvcabral](https://github.com/lvcabral) in [#825](https://github.com/lvcabral/brs-engine/pull/825)
+  * (rsg) Fixed line numbers on embedded XML scripts by [@lvcabral](https://github.com/lvcabral) in [#826](https://github.com/lvcabral/brs-engine/pull/826)
+  * (rsg) Properly handle `Task` function errors and prevent crash when `functionName` is not found by [@lvcabral](https://github.com/lvcabral) in [#827](https://github.com/lvcabral/brs-engine/pull/827)
+  * (rsg) Added `PosterGrid` and improved focus style handling on `ArrayGrid` based nodes by [@lvcabral](https://github.com/lvcabral) in [#828](https://github.com/lvcabral/brs-engine/pull/828)
+  * (rsg) Fixed `ScrollingLabel` to handle `horizAlign` and actually scroll when needed by [@lvcabral](https://github.com/lvcabral) in [#829](https://github.com/lvcabral/brs-engine/pull/829)
+  * (rsg) Added `InfoPane` node by [@lvcabral](https://github.com/lvcabral) in [#830](https://github.com/lvcabral/brs-engine/pull/830)
+  * (rsg) Fixed handling of boxed numbers on `setValue()` in several nodes by [@lvcabral](https://github.com/lvcabral) in [#831](https://github.com/lvcabral/brs-engine/pull/831)
+  * (rsg) Removed the interpreter parameter from `setNodeFocus` by [@lvcabral](https://github.com/lvcabral) in [#832](https://github.com/lvcabral/brs-engine/pull/832)
+  * (rsg) Fixed the handling of `OK` key in `RowList` and `ZoomRowList` by [@lvcabral](https://github.com/lvcabral) in [#833](https://github.com/lvcabral/brs-engine/pull/833)
+  * (rsg) Added `setNodeFocus` method to `ArrayGrid` to reset `itemFocused` when getting the focus by [@lvcabral](https://github.com/lvcabral) in [#834](https://github.com/lvcabral/brs-engine/pull/834)
+  * (rsg) Added `sgnodes` command to `MicroDebugger` to list node type statistics by [@lvcabral](https://github.com/lvcabral) in [#835](https://github.com/lvcabral/brs-engine/pull/835)
+  * (rsg) Added `MaskGroup` draft and fixed several issues with field assignment by [@lvcabral](https://github.com/lvcabral) in [#836](https://github.com/lvcabral/brs-engine/pull/836)
+  * (rsg) Fixed component XML parsing of `interface` to handle attributes as case-insensitive by [@lvcabral](https://github.com/lvcabral) in [#838](https://github.com/lvcabral/brs-engine/pull/838)
+  * (rsg) Improved parsing of field types: `StringArray`, `Vector2D` and `Vector2DArray` by [@lvcabral](https://github.com/lvcabral) in [#839](https://github.com/lvcabral/brs-engine/pull/839)
+  * (rsg) Fixed XML parsing to support `alias` field to be set without `type` by [@lvcabral](https://github.com/lvcabral) in [#841](https://github.com/lvcabral/brs-engine/pull/841)
+  * (rsg) Added support for default item component on `RowList` and item focus callback in `ArrayGrid` by [@lvcabral](https://github.com/lvcabral) in [#842](https://github.com/lvcabral/brs-engine/pull/842)
+  * (rsg) Implemented all `PanelSet` related nodes by [@lvcabral](https://github.com/lvcabral) in [#837](https://github.com/lvcabral/brs-engine/pull/837)
+  * (rsg) Fixed `role` fields to not be case sensitive by [@lvcabral](https://github.com/lvcabral) in [#847](https://github.com/lvcabral/brs-engine/pull/847)
+  * (rsg) Implemented the context expansion for the Main thread by [@lvcabral](https://github.com/lvcabral) in [#848](https://github.com/lvcabral/brs-engine/pull/848)
+  * (rsg) Allowed replacing hidden fields when extending `ContentNode` by [@lvcabral](https://github.com/lvcabral) in [#849](https://github.com/lvcabral/brs-engine/pull/849)
+  * (rsg) Prevent issues with `Video` node on startup (after the Splash) by [@lvcabral](https://github.com/lvcabral) in [#851](https://github.com/lvcabral/brs-engine/pull/851)
+  * (rsg) Improved handling of manifest entries `ui_resolutions` and `uri_resolution_autosub` by [@lvcabral](https://github.com/lvcabral) in [#852](https://github.com/lvcabral/brs-engine/pull/852)
+  * (rsg) Enhance autoSub URI replacement to support regex patterns by [@lvcabral](https://github.com/lvcabral) in [#853](https://github.com/lvcabral/brs-engine/pull/853)
+  * (rsg) Improved de-serialization of `Scene` and other nodes in `Task` threads by [@lvcabral](https://github.com/lvcabral) in [#854](https://github.com/lvcabral/brs-engine/pull/854)
+  * (rsg) Fixed crash when `m.top.getScene()` is used on `init()` in a `Task` thread by [@lvcabral](https://github.com/lvcabral) in [#857](https://github.com/lvcabral/brs-engine/pull/857)
+  * (rsg) Fixed handling of `Node` alias to support child changes by [@lvcabral](https://github.com/lvcabral) in [#859](https://github.com/lvcabral/brs-engine/pull/859)
+  * (rsg) Implemented `ancestorBoundingRect()` method by [@lvcabral](https://github.com/lvcabral) in [#860](https://github.com/lvcabral/brs-engine/pull/860)
+  * (rsg) Fixed `Node` field string assignment to keep the current value when parse fails by [@lvcabral](https://github.com/lvcabral) in [#861](https://github.com/lvcabral/brs-engine/pull/861)
+  * (rsg) Fixed rendering to prevent `rectBound` calculation to clear `isDirty` flag by [@lvcabral](https://github.com/lvcabral) in [#862](https://github.com/lvcabral/brs-engine/pull/862)
+  * (rsg) Added support for multiple `Node` field aliases (CSV) by [@lvcabral](https://github.com/lvcabral) in [#863](https://github.com/lvcabral/brs-engine/pull/863)
+  * (rsg) Fixed `Node.setValue()` signature to prevent field creation on assignment by [@lvcabral](https://github.com/lvcabral) in [#864](https://github.com/lvcabral/brs-engine/pull/864)
+  * (rsg) Fixed item component handling to not fail when fields are not defined in XML by [@lvcabral](https://github.com/lvcabral) in [#865](https://github.com/lvcabral/brs-engine/pull/865)
+  * (rsg) Fixed `Node` field aliases observer trigger by [@lvcabral](https://github.com/lvcabral) in [#866](https://github.com/lvcabral/brs-engine/pull/866)
+  * (rsg) Fixed `Node.setValue()` to update its field before the aliases by [@lvcabral](https://github.com/lvcabral) in [#867](https://github.com/lvcabral/brs-engine/pull/867)
+  * (rsg) Fixed `Poster`, `BusySpinner`, `Video` and `TrickPlayBar` to properly handle child nodes `uri` update by [@lvcabral](https://github.com/lvcabral) in [#868](https://github.com/lvcabral/brs-engine/pull/868)
+  * (rsg) Fixed `BusySpinner` dimensions calculation by [@lvcabral](https://github.com/lvcabral) in [#869](https://github.com/lvcabral/brs-engine/pull/869)
+  * (rsg) Fixed circular dependency issue when `Node` has child with its same `id` in `alias` by [@lvcabral](https://github.com/lvcabral) in [#870](https://github.com/lvcabral/brs-engine/pull/870)
+  * (rsg) Improved `Node.setValue()` exception handling by [@lvcabral](https://github.com/lvcabral) in [#871](https://github.com/lvcabral/brs-engine/pull/871)
+  * (rsg) Fixed `StandardDialog` focus and `back` key press handling by [@lvcabral](https://github.com/lvcabral) in [#872](https://github.com/lvcabral/brs-engine/pull/872)
+  * (rsg) Fixed observables serialization and handling of `InfoFields` by [@lvcabral](https://github.com/lvcabral) in [#874](https://github.com/lvcabral/brs-engine/pull/874)
+  * (rsg) Fixed `Serializer` to prevent circular dependency by [@lvcabral](https://github.com/lvcabral) in [#875](https://github.com/lvcabral/brs-engine/pull/875)
+  * (rsg) Changed `handleThreadUpdate` to preserve update id on relay to other threads by [@lvcabral](https://github.com/lvcabral) in [#879](https://github.com/lvcabral/brs-engine/pull/879)
+  * (rsg) Added `nodeType` to `RoSGNode` and updated stats call by [@lvcabral](https://github.com/lvcabral) in [#880](https://github.com/lvcabral/brs-engine/pull/880)
+  * (rsg) Fixed `BusySpinner` image size handling for resolution mismatch by [@lvcabral](https://github.com/lvcabral) in [#882](https://github.com/lvcabral/brs-engine/pull/882)
+  * (rsg) Implement thread updates similar to SceneGraph Rendezvous  by [@lvcabral](https://github.com/lvcabral) in [#856](https://github.com/lvcabral/brs-engine/pull/856)
+
+### New Contributors
+
+* @saas817 made their first contribution in [#878](https://github.com/lvcabral/brs-engine/pull/878) - welcome to the project!
+
+[Full Changelog][v2.1.0]
+
 <a name="v2.0.5"></a>
 
 ## [v2.0.5 - Animation and Interpolator Nodes](https://github.com/lvcabral/brs-engine/releases/tag/v2.0.5) - 5 January 2026
@@ -1335,6 +1415,7 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
+[v2.1.0]: https://github.com/lvcabral/brs-engine/compare/v2.0.5...v2.1.0
 [v2.0.5]: https://github.com/lvcabral/brs-engine/compare/v2.0.4...v2.0.5
 [v2.0.4]: https://github.com/lvcabral/brs-engine/compare/v2.0.3...v2.0.4
 [v2.0.3]: https://github.com/lvcabral/brs-engine/compare/v2.0.2...v2.0.3

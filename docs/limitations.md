@@ -9,7 +9,6 @@ The **BrightScript Engine** implements the BrightScript language specification u
   * Basic support for `roSGNode` and `roSGScreen` components and rendering.
   * The `Task` node is implemented but its behavior is limited:
     * For now only 10 task threads are supported per application
-    * The `m.global` object can have children, but changes on those nodes are not shared among the threads
     * Only one `port` instance can be used on Task `init()` to observe fields
   * The following nodes are already implemented:
     * The basic nodes: `ContentNode`, `Group`, `Scene`, `Global`, `Font`, `Timer`, `Rectangle`, `Label`, `ScrollingLabel`, `Poster`, `LayoutGroup` and `RSGPalette`
