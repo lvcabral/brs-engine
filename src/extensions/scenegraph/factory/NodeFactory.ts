@@ -801,22 +801,17 @@ function addChildren(interpreter: Interpreter, node: Node, typeDef: ComponentDef
             if (child.fields?.role) {
                 const targetField = child.fields.role;
                 if (node.getNodeFields().get(targetField.toLowerCase())) {
-                    if (child.children.length > 0) {
-                        // we need to add the child's own children
-                        addChildren(interpreter, newChild, child);
-                    }
                     node.setValue(targetField, newChild, false);
                 } else {
                     BrsDevice.stderr.write(
                         `warning,WARNING: Role/Field ${targetField} does not exist in ${node.getId()} node: ${interpreter.formatLocation()}`
                     );
                 }
-            } else if (appendChild) {
-                appendChild.call(interpreter, newChild);
-                if (child.children.length > 0) {
-                    // we need to add the child's own children
-                    addChildren(interpreter, newChild, child);
-                }
+            }
+            appendChild?.call(interpreter, newChild);
+            if (child.children.length > 0) {
+                // we need to add the child's own children
+                addChildren(interpreter, newChild, child);
             }
         }
     }
