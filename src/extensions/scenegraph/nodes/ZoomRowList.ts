@@ -387,8 +387,7 @@ export class ZoomRowList extends ArrayGrid {
         }
         const rows = this.getContentChildren(content);
         for (const [index, row] of rows.entries()) {
-            const children = row.getNodeChildren();
-            if (children.length === 0) {
+            if (!row || row.getNodeChildren().length === 0) {
                 continue;
             }
             this.rowFocus[index] ??= 0;
@@ -478,6 +477,9 @@ export class ZoomRowList extends ArrayGrid {
 
     private getRowContent(rowIndex: number) {
         const rowNode = this.content[rowIndex];
+        if (!rowNode) {
+            return [];
+        }
         return this.getContentChildren(rowNode);
     }
 
