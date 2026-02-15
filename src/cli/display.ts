@@ -5,7 +5,7 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { Canvas, createCanvas } from "canvas";
+import { Canvas, createCanvas } from "sharp-canvas";
 import chalk from "chalk";
 
 const ASCII_ALPHABET = ["@", "%", "#", "*", "+", "=", "-", ":", ".", " "];

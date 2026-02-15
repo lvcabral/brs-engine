@@ -14,7 +14,7 @@ import readline from "node:readline";
 import { Worker } from "node:worker_threads";
 import { gateway4sync } from "default-gateway";
 import envPaths from "env-paths";
-import { ImageData, createCanvas } from "canvas";
+import { ImageData, createCanvas } from "sharp-canvas";
 import chalk from "chalk";
 import { Command } from "commander";
 import stripAnsi from "strip-ansi";
