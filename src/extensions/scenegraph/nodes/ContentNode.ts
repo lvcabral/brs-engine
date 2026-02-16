@@ -175,7 +175,14 @@ export class ContentNode extends Node {
         }
         this.changed ||= success;
         if (added && appendedIndex !== null) {
+            this.makeDirty();
             this.recordChildChange("add", appendedIndex);
+            // Propagate changes notification to parent fields
+            if (this.parentFields.size) {
+                for (const field of this.parentFields) {
+                    field.notifyObservers();
+                }
+            }
         }
         return success;
     }

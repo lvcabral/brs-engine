@@ -255,6 +255,7 @@ export class Task extends Node {
         }
         const value = fieldValue instanceof Node ? fromSGNode(fieldValue, true) : jsValueOf(fieldValue);
         if (fieldValue instanceof Node) {
+            fieldValue.setOwner(0); // Once the Node is sent to the Render thread, it's forever owned by it
             fieldValue.changed = false;
         }
         const update: ThreadUpdate = {
