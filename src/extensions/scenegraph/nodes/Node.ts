@@ -1548,7 +1548,7 @@ export class Node extends RoSGNode implements BrsValue {
      */
     protected makeDirty() {
         this.changed = true;
-        if (this.parent instanceof Node) {
+        if (sgRoot.inTaskThread() && this.parent instanceof Node) {
             const root = this.findRootNode();
             root.changed = true;
         }
