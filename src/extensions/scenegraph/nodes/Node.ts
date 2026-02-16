@@ -47,7 +47,7 @@ import {
 import { RoSGNode } from "../components/RoSGNode";
 import { createNode, createNodeRunInit, getBrsValueFromFieldType, subtypeHierarchy } from "../factory/NodeFactory";
 import { Field } from "../nodes/Field";
-import { toAssociativeArray, jsValueOf } from "../factory/Serializer";
+import { toAssociativeArray, jsValueOf, fromSGNode } from "../factory/Serializer";
 import { sgRoot } from "../SGRoot";
 import { SGNodeType } from ".";
 import { ComponentDefinition } from "../parser/ComponentDefinition";
@@ -312,6 +312,8 @@ export class Node extends RoSGNode implements BrsValue {
                 return value.deepCopy();
             } else if (isUnboxable(value)) {
                 return value.copy();
+            } else if (sgRoot.inTaskThread() && value instanceof Node) {
+                value.setOwner(this.owner);
             }
             return value;
         }
@@ -957,7 +959,12 @@ export class Node extends RoSGNode implements BrsValue {
      * @param visited Set of previously visited nodes to prevent infinite recursion.
      * @returns The matching node or BrsInvalid when not found.
      */
-    findNodeById(node: Node, id: string, ignoreRoot?: boolean, visited: Set<Node> = new Set()): Node | BrsInvalid {
+    findNodeById(
+        node: Node,
+        id: string,
+        ignoreRoot?: boolean,
+        visited: WeakSet<Node> = new WeakSet()
+    ): Node | BrsInvalid {
         if (!ignoreRoot) {
             // test current node in tree
             const myId = node.getValue("id");
@@ -995,7 +1002,7 @@ export class Node extends RoSGNode implements BrsValue {
         root: Node | undefined,
         address: string,
         searchFields: boolean = false,
-        visited: Set<Node> = new Set()
+        visited: WeakSet<Node> = new WeakSet()
     ): Node | undefined {
         if (!root || visited.has(root)) {
             return undefined;
@@ -1539,13 +1546,11 @@ export class Node extends RoSGNode implements BrsValue {
     /**
      * Marks this node as dirty and notifies the SceneGraph root.
      */
-    private makeDirty() {
+    protected makeDirty() {
         this.changed = true;
-        if (sgRoot.inTaskThread() && this.parent instanceof Node) {
-            const pathToRoot = this.createPath(this.parent);
-            for (const node of pathToRoot) {
-                node.changed = true;
-            }
+        if (this.parent instanceof Node) {
+            const root = this.findRootNode();
+            root.changed = true;
         }
         sgRoot.makeDirty();
     }
@@ -1646,7 +1651,7 @@ export class Node extends RoSGNode implements BrsValue {
      * @param args Arguments to pass to the remote method.
      * @returns Result of the remote method call, or undefined if not available.
      */
-    protected rendezvousCall(interpreter: Interpreter, method: string, args?: BrsType[]): BrsType | undefined {
+    protected rendezvousCall(interpreter: Interpreter, method: string, callArgs?: BrsType[]): BrsType | undefined {
         if (!this.shouldRendezvous()) {
             return undefined;
         }
@@ -1658,9 +1663,14 @@ export class Node extends RoSGNode implements BrsValue {
                 host = hostNode.getAddress();
             }
             const location = interpreter.location;
-            const payload: MethodCallPayload = args
-                ? { host, args: args.map((arg: BrsType) => jsValueOf(arg)), location }
-                : { host, location };
+            const args = callArgs?.map((arg: BrsType) => {
+                if (arg instanceof Node) {
+                    arg.setOwner(0); // Node references sent to render thread will be owned by the render thread
+                    return fromSGNode(arg, true);
+                }
+                return jsValueOf(arg);
+            });
+            const payload: MethodCallPayload = args ? { host, args, location } : { host, location };
             return task.requestMethodCall(this.syncType, this.address, method, payload);
         }
         return undefined;

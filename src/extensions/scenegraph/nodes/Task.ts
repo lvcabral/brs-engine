@@ -255,6 +255,7 @@ export class Task extends Node {
         }
         const value = fieldValue instanceof Node ? fromSGNode(fieldValue, true) : jsValueOf(fieldValue);
         if (fieldValue instanceof Node) {
+            fieldValue.setOwner(0); // Once the Node is sent to the Render thread, it's forever owned by it
             fieldValue.changed = false;
         }
         const update: ThreadUpdate = {
@@ -381,29 +382,6 @@ export class Task extends Node {
             this.processThreadUpdate();
         }
         return new Array<BrsEvent>();
-    }
-
-    checkFieldChanges(syncType: SyncType) {
-        if (!this.inThread || !this.active) {
-            return;
-        }
-        const node = syncType === "global" ? sgRoot.mGlobal : this;
-        // Check for changed Node fields to notify updates to the Main thread
-        for (const [name, field] of node.getNodeFields()) {
-            const value = field.getValue();
-            if (!field.isHidden() && value instanceof Node && value.changed) {
-                const update: ThreadUpdate = {
-                    id: this.threadId,
-                    action: "set",
-                    type: syncType,
-                    address: node.getAddress(),
-                    key: name,
-                    value: fromSGNode(value, true),
-                };
-                value.changed = false;
-                this.sendThreadUpdate(update, false);
-            }
-        }
     }
 
     /**
