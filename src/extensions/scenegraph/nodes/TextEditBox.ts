@@ -224,7 +224,7 @@ export class TextEditBox extends Group {
 
         this.updateBoundingRects(rect, origin, rotation);
         this.renderChildren(interpreter, drawTrans, rotation, combinedOpacity, draw2D);
-        this.nodeRenderingDone(origin, angle, draw2D);
+        this.nodeRenderingDone(origin, angle, opacity, draw2D);
     }
 
     private getSecureText(text: string, now: number, secureMode: boolean, showHint: boolean): string {

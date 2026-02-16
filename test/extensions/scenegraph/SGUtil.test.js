@@ -1,13 +1,6 @@
 const scenegraph = require("../../../packages/scenegraph/lib/brs-sg.node.js");
-const {
-    rectContainsRect,
-    rotateRect,
-    rotateTranslation,
-    unionRect,
-    convertNumber,
-    convertLong,
-    convertHexColor,
-} = scenegraph;
+const { rectContainsRect, rotateRect, rotateTranslation, unionRect, convertNumber, convertLong, convertHexColor } =
+    scenegraph;
 const Long = require("long");
 
 describe("SGUtil", () => {

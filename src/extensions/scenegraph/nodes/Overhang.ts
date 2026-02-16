@@ -238,6 +238,6 @@ export class Overhang extends Group {
         opacity = opacity * this.getOpacity();
         this.updateBoundingRects(rect, origin, angle);
         this.renderChildren(interpreter, origin, angle, opacity, draw2D);
-        this.nodeRenderingDone(origin, angle, draw2D);
+        this.nodeRenderingDone(origin, angle, opacity, draw2D);
     }
 }

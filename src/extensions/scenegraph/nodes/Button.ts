@@ -184,6 +184,6 @@ export class Button extends Group {
         }
         this.updateBoundingRects(rect, origin, angle);
         this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);
-        this.nodeRenderingDone(origin, angle, draw2D);
+        this.nodeRenderingDone(origin, angle, opacity, draw2D);
     }
 }

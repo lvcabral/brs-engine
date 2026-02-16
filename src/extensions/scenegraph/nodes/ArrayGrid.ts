@@ -302,7 +302,7 @@ export class ArrayGrid extends Group {
         this.renderContent(interpreter, rect, rotation, opacity, draw2D);
         this.updateBoundingRects(rect, origin, rotation);
         this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);
-        this.nodeRenderingDone(origin, angle, draw2D);
+        this.nodeRenderingDone(origin, angle, opacity, draw2D);
     }
 
     protected renderContent(
