@@ -28,6 +28,7 @@ import { RoSGScreen } from "./components/RoSGScreen";
 import packageInfo from "../../../packages/scenegraph/package.json";
 
 export * from "./SGRoot";
+export * from "./SGUtil";
 export * from "./components/RoSGNode";
 export * from "./components/RoSGScreen";
 export * from "./events/RoSGNodeEvent";
