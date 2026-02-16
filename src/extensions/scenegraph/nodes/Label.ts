@@ -86,10 +86,7 @@ export class Label extends Group {
         rect.height = Math.max(this.measured.height, size.height);
         this.updateBoundingRects(rect, origin, rotation);
         this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);
-        this.updateParentRects(origin, angle);
-        if (draw2D) {
-            this.isDirty = false;
-        }
+        this.nodeRenderingDone(origin, angle, draw2D);
     }
 
     protected renderLabel(rect: Rect, rotation: number, opacity: number, draw2D?: IfDraw2D) {

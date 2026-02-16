@@ -707,7 +707,7 @@ export class Video extends Group {
         }
         this.updateBoundingRects(rect, origin, rotation);
         this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);
-        this.updateParentRects(origin, angle);
+        this.nodeRenderingDone(origin, angle, draw2D);
     }
 
     private resetSeeking() {

@@ -155,10 +155,7 @@ export class ButtonGroup extends LayoutGroup {
         // TODO: update then width/height based on the # of buttons and layout direction
         this.updateBoundingRects(boundingRect, origin, rotation);
         this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);
-        this.updateParentRects(origin, angle);
-        if (draw2D) {
-            this.isDirty = false;
-        }
+        this.nodeRenderingDone(origin, angle, draw2D);
     }
 
     private refreshButtons() {

@@ -118,7 +118,7 @@ export class StandardDialog extends Group {
         opacity = opacity * this.getOpacity();
         this.updateBoundingRects(boundingRect, origin, angle);
         this.renderChildren(interpreter, drawTrans, angle, opacity, draw2D);
-        this.updateParentRects(origin, angle);
+        this.nodeRenderingDone(origin, angle, draw2D);
     }
 
     getPaletteColors() {

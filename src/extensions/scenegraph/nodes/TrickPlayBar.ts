@@ -148,6 +148,6 @@ export class TrickPlayBar extends Group {
             };
             this.drawImage(this.stateIcon, iconRect, angle, opacity, draw2D);
         }
-        this.updateParentRects(origin, angle);
+        this.nodeRenderingDone(origin, angle, draw2D);
     }
 }

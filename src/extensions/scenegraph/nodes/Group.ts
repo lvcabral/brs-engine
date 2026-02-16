@@ -25,7 +25,7 @@ import type { ScrollingLabel } from "./ScrollingLabel";
 import { Node } from "./Node";
 import { FieldKind, FieldModel, isFont } from "../SGTypes";
 import { SGNodeType } from ".";
-import { convertHexColor, rotateRect, unionRect } from "../SGUtil";
+import { convertHexColor, rectContainsRect, rotateRect, unionRect } from "../SGUtil";
 import { SGNodeFactory } from "../factory/NodeFactory";
 import { jsValueOf } from "../factory/Serializer";
 
@@ -662,10 +662,7 @@ export class Group extends Node {
         opacity = opacity * this.getOpacity();
         this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);
         this.updateContainerBounds(nodeTrans, drawTrans);
-        this.updateParentRects(origin, angle);
-        if (draw2D) {
-            this.isDirty = false;
-        }
+        this.nodeRenderingDone(origin, angle, draw2D);
     }
 
     private updateContainerBounds(nodeTrans: number[], drawTrans: number[]) {
@@ -685,5 +682,20 @@ export class Group extends Node {
             width: rectLocal.width,
             height: rectLocal.height,
         };
+    }
+
+    protected nodeRenderingDone(origin: number[], angle: number, draw2D?: IfDraw2D) {
+        this.updateParentRects(origin, angle);
+        // Update render tracking as this is the end of the render chain for this node
+        const enableRenderTracking = this.getValueJS("enableRenderTracking") as boolean;
+        const renderTracking = this.getValueJS("renderTracking") as string;
+        const newStatus = enableRenderTracking ? rectContainsRect(this.sceneRect, this.rectToScene) : "disabled";
+        if (newStatus !== renderTracking) {
+            this.setValue("renderTracking", new BrsString(newStatus));
+        }
+        // Mark node as clean after rendering
+        if (draw2D) {
+            this.isDirty = false;
+        }
     }
 }

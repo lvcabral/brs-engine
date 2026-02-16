@@ -214,10 +214,7 @@ export class Dialog extends Group {
         opacity = opacity * this.getOpacity();
         this.updateBoundingRects(boundingRect, origin, rotation);
         this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);
-        this.updateParentRects(origin, angle);
-        if (draw2D) {
-            this.isDirty = false;
-        }
+        this.nodeRenderingDone(origin, angle, draw2D);
     }
 
     protected updateChildren() {

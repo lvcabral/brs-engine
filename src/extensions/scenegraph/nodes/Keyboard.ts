@@ -271,10 +271,7 @@ export class Keyboard extends Group {
 
         this.updateBoundingRects(rect, origin, rotation);
         this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);
-        this.updateParentRects(origin, angle);
-        if (draw2D) {
-            this.isDirty = false;
-        }
+        this.nodeRenderingDone(origin, angle, draw2D);
     }
 
     private renderLeftIcons(rect: Rect, opacity: number, isFocused: boolean, draw2D?: IfDraw2D) {

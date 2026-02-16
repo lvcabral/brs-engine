@@ -37,6 +37,6 @@ export class Rectangle extends Group {
         draw2D?.doDrawRotatedRect(rect, color, rotation, center, opacity);
         this.updateBoundingRects(rect, origin, rotation);
         this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);
-        this.updateParentRects(origin, angle);
+        this.nodeRenderingDone(origin, angle, draw2D);
     }
 }

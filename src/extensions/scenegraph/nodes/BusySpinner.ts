@@ -117,9 +117,6 @@ export class BusySpinner extends Group {
         const rect: Rect = { x: drawTrans[0], y: drawTrans[1], width: this.width, height: this.height };
         this.updateBoundingRects(rect, origin, rotation);
         this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);
-        this.updateParentRects(origin, angle);
-        if (draw2D) {
-            this.isDirty = false;
-        }
+        this.nodeRenderingDone(origin, angle, draw2D);
     }
 }
