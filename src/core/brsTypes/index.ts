@@ -91,6 +91,8 @@ export * from "./components/RoAppMemoryMonitor";
 export * from "./components/RoFileSystem";
 export * from "./components/RoChannelStore";
 export * from "./components/RoSocketAddress";
+export * from "./components/RoStreamSocket";
+export * from "./components/RoDataGramSocket";
 export * from "./components/RoTextureRequest";
 export * from "./components/RoTextureManager";
 export * from "./components/RoUtils";
