@@ -634,6 +634,7 @@ export class Group extends Node {
 
     renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
         if (!this.isVisible()) {
+            this.updateRenderTracking(true);
             return;
         }
         const nodeTrans = this.getTranslation();
@@ -686,18 +687,22 @@ export class Group extends Node {
 
     protected nodeRenderingDone(origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
         this.updateParentRects(origin, angle);
-        // Update render tracking as this is the end of the render chain for this node
-        const enableRenderTracking = this.getValueJS("enableRenderTracking") as boolean;
-        const renderTracking = this.getValueJS("renderTracking") as string;
-        const newStatus = enableRenderTracking ? rectContainsRect(this.sceneRect, this.rectToScene) : "disabled";
-        if (opacity !== 0 && newStatus !== renderTracking) {
-            this.setValue("renderTracking", new BrsString(newStatus));
-        } else if (opacity === 0 && enableRenderTracking && renderTracking !== "none") {
-            this.setValue("renderTracking", new BrsString("none"));
-        }
+        this.updateRenderTracking(opacity === 0);
         // Mark node as clean after rendering
         if (draw2D) {
             this.isDirty = false;
+        }
+    }
+
+    protected updateRenderTracking(invisible: boolean) {
+        const enableRenderTracking = this.getValueJS("enableRenderTracking") as boolean;
+        const renderTracking = this.getValueJS("renderTracking") as string;
+        let newStatus = "disabled";
+        if (enableRenderTracking) {
+            newStatus = invisible ? "none" : rectContainsRect(this.sceneRect, this.rectToScene);
+        }
+        if (newStatus !== renderTracking) {
+            this.setValue("renderTracking", new BrsString(newStatus));
         }
     }
 }
