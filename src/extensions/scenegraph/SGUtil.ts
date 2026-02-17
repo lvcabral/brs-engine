@@ -16,6 +16,36 @@ function isFiniteRect(rect: Rect) {
 }
 
 /**
+ * Determines if one rectangle is completely contained within another rectangle.
+ * Both rectangles must have finite properties to be considered valid.
+ * @param outer The rectangle that is expected to contain the other rectangle
+ * @param inner The rectangle that is expected to be contained within the other rectangle
+ * @returns "full" if inner is fully contained within outer, "partial" if inner is partially contained, or "none" if inner is not contained at all
+ */
+export function rectContainsRect(outer: Rect, inner: Rect) {
+    if (!isFiniteRect(outer) || !isFiniteRect(inner)) {
+        return "none";
+    }
+    if (
+        inner.x >= outer.x &&
+        inner.y >= outer.y &&
+        inner.x + inner.width <= outer.x + outer.width &&
+        inner.y + inner.height <= outer.y + outer.height
+    ) {
+        return "full";
+    } else if (
+        inner.x < outer.x + outer.width &&
+        inner.x + inner.width > outer.x &&
+        inner.y < outer.y + outer.height &&
+        inner.y + inner.height > outer.y
+    ) {
+        return "partial";
+    } else {
+        return "none";
+    }
+}
+
+/**
  * Calculates the bounding box of a rotated rectangle.
  * Rotates the rectangle around a specified center point.
  * @param rect Rectangle to rotate

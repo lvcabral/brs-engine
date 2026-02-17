@@ -120,6 +120,7 @@ export class Scene extends Group {
 
     renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
         if (!this.isVisible()) {
+            this.updateRenderTracking(true);
             return;
         }
         const rotation = angle + this.getRotation();
@@ -135,6 +136,13 @@ export class Scene extends Group {
             }
         }
         this.renderChildren(interpreter, origin, rotation, opacity, draw2D);
+        // Update render tracking as this is the end of the render chain
+        const enableRenderTracking = this.getValueJS("enableRenderTracking") as boolean;
+        const renderTracking = this.getValueJS("renderTracking") as string;
+        const newStatus = enableRenderTracking ? "full" : "disabled";
+        if (newStatus !== renderTracking) {
+            this.setValue("renderTracking", new BrsString(newStatus));
+        }
     }
 
     /** Handle SceneGraph onKeyEvent event */

@@ -174,6 +174,7 @@ export class TextEditBox extends Group {
 
     renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
         if (!this.isVisible()) {
+            this.updateRenderTracking(true);
             return;
         }
         const nodeTrans = this.getTranslation();
@@ -224,8 +225,7 @@ export class TextEditBox extends Group {
 
         this.updateBoundingRects(rect, origin, rotation);
         this.renderChildren(interpreter, drawTrans, rotation, combinedOpacity, draw2D);
-        this.updateParentRects(origin, angle);
-        this.isDirty = false;
+        this.nodeRenderingDone(origin, angle, opacity, draw2D);
     }
 
     private getSecureText(text: string, now: number, secureMode: boolean, showHint: boolean): string {

@@ -818,8 +818,12 @@ class PosterGridItem extends Group {
     }
 
     renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
-        if (!this.isVisible() || !this.layout || !this.content) {
+        const isVisible = this.isVisible();
+        if (!isVisible || !this.layout || !this.content) {
             this.clearChildNodes();
+            if (!isVisible) {
+                this.updateRenderTracking(true);
+            }
             return;
         }
         this.syncChildNodes();
@@ -839,10 +843,7 @@ class PosterGridItem extends Group {
         this.updateBoundingRects(rect, origin, rotation);
         const childOrigin = [drawTrans[0], drawTrans[1] + offsetY];
         this.renderChildren(interpreter, childOrigin, rotation, combinedOpacity, draw2D);
-        this.updateParentRects(origin, angle);
-        if (draw2D) {
-            this.isDirty = false;
-        }
+        this.nodeRenderingDone(origin, angle, combinedOpacity, draw2D);
     }
 
     private syncChildNodes() {

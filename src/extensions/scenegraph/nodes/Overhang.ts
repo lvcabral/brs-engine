@@ -227,6 +227,7 @@ export class Overhang extends Group {
 
     renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
         if (!this.isVisible()) {
+            this.updateRenderTracking(true);
             return;
         }
         if (this.isDirty) {
@@ -238,9 +239,6 @@ export class Overhang extends Group {
         opacity = opacity * this.getOpacity();
         this.updateBoundingRects(rect, origin, angle);
         this.renderChildren(interpreter, origin, angle, opacity, draw2D);
-        this.updateParentRects(origin, angle);
-        if (draw2D) {
-            this.isDirty = false;
-        }
+        this.nodeRenderingDone(origin, angle, opacity, draw2D);
     }
 }

@@ -36,6 +36,7 @@ export class StdDlgProgressItem extends Group {
 
     renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
         if (!this.isVisible()) {
+            this.updateRenderTracking(true);
             return;
         }
         const nodeTrans = this.getTranslation();
@@ -72,7 +73,7 @@ export class StdDlgProgressItem extends Group {
         opacity = opacity * this.getOpacity();
         this.updateBoundingRects(boundingRect, origin, angle);
         this.renderChildren(interpreter, drawTrans, angle, opacity, draw2D);
-        this.updateParentRects(origin, angle);
+        this.nodeRenderingDone(origin, angle, opacity, draw2D);
     }
 
     private getPaletteColors() {

@@ -86,6 +86,7 @@ export class BusySpinner extends Group {
 
     renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
         if (!this.isVisible()) {
+            this.updateRenderTracking(true);
             return;
         }
         const nodeTrans = this.getTranslation();
@@ -117,9 +118,6 @@ export class BusySpinner extends Group {
         const rect: Rect = { x: drawTrans[0], y: drawTrans[1], width: this.width, height: this.height };
         this.updateBoundingRects(rect, origin, rotation);
         this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);
-        this.updateParentRects(origin, angle);
-        if (draw2D) {
-            this.isDirty = false;
-        }
+        this.nodeRenderingDone(origin, angle, opacity, draw2D);
     }
 }

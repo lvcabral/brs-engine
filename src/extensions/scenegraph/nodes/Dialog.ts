@@ -193,6 +193,7 @@ export class Dialog extends Group {
 
     renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
         if (!this.isVisible()) {
+            this.updateRenderTracking(true);
             return;
         }
         const nodeTrans = this.getTranslation();
@@ -214,10 +215,7 @@ export class Dialog extends Group {
         opacity = opacity * this.getOpacity();
         this.updateBoundingRects(boundingRect, origin, rotation);
         this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);
-        this.updateParentRects(origin, angle);
-        if (draw2D) {
-            this.isDirty = false;
-        }
+        this.nodeRenderingDone(origin, angle, opacity, draw2D);
     }
 
     protected updateChildren() {

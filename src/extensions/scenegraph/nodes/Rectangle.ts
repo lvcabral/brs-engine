@@ -22,6 +22,7 @@ export class Rectangle extends Group {
 
     renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
         if (!this.isVisible()) {
+            this.updateRenderTracking(true);
             return;
         }
         const nodeTrans = this.getTranslation();
@@ -37,6 +38,6 @@ export class Rectangle extends Group {
         draw2D?.doDrawRotatedRect(rect, color, rotation, center, opacity);
         this.updateBoundingRects(rect, origin, rotation);
         this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);
-        this.updateParentRects(origin, angle);
+        this.nodeRenderingDone(origin, angle, opacity, draw2D);
     }
 }

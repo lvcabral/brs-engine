@@ -229,6 +229,7 @@ export class Keyboard extends Group {
 
     renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
         if (!this.isVisible()) {
+            this.updateRenderTracking(true);
             return;
         }
         const isFocused = sgRoot.focused === this;
@@ -271,10 +272,7 @@ export class Keyboard extends Group {
 
         this.updateBoundingRects(rect, origin, rotation);
         this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);
-        this.updateParentRects(origin, angle);
-        if (draw2D) {
-            this.isDirty = false;
-        }
+        this.nodeRenderingDone(origin, angle, opacity, draw2D);
     }
 
     private renderLeftIcons(rect: Rect, opacity: number, isFocused: boolean, draw2D?: IfDraw2D) {

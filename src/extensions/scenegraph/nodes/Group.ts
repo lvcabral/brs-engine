@@ -25,7 +25,7 @@ import type { ScrollingLabel } from "./ScrollingLabel";
 import { Node } from "./Node";
 import { FieldKind, FieldModel, isFont } from "../SGTypes";
 import { SGNodeType } from ".";
-import { convertHexColor, rotateRect, unionRect } from "../SGUtil";
+import { convertHexColor, rectContainsRect, rotateRect, unionRect } from "../SGUtil";
 import { SGNodeFactory } from "../factory/NodeFactory";
 import { jsValueOf } from "../factory/Serializer";
 
@@ -634,6 +634,7 @@ export class Group extends Node {
 
     renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
         if (!this.isVisible()) {
+            this.updateRenderTracking(true);
             return;
         }
         const nodeTrans = this.getTranslation();
@@ -662,10 +663,7 @@ export class Group extends Node {
         opacity = opacity * this.getOpacity();
         this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);
         this.updateContainerBounds(nodeTrans, drawTrans);
-        this.updateParentRects(origin, angle);
-        if (draw2D) {
-            this.isDirty = false;
-        }
+        this.nodeRenderingDone(origin, angle, opacity, draw2D);
     }
 
     private updateContainerBounds(nodeTrans: number[], drawTrans: number[]) {
@@ -685,5 +683,26 @@ export class Group extends Node {
             width: rectLocal.width,
             height: rectLocal.height,
         };
+    }
+
+    protected nodeRenderingDone(origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
+        this.updateParentRects(origin, angle);
+        this.updateRenderTracking(opacity === 0);
+        // Mark node as clean after rendering
+        if (draw2D) {
+            this.isDirty = false;
+        }
+    }
+
+    protected updateRenderTracking(invisible: boolean) {
+        const enableRenderTracking = this.getValueJS("enableRenderTracking") as boolean;
+        const renderTracking = this.getValueJS("renderTracking") as string;
+        let newStatus = "disabled";
+        if (enableRenderTracking) {
+            newStatus = invisible ? "none" : rectContainsRect(this.sceneRect, this.rectToScene);
+        }
+        if (newStatus !== renderTracking) {
+            this.setValue("renderTracking", new BrsString(newStatus));
+        }
     }
 }
