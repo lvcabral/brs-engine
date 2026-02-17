@@ -283,6 +283,8 @@ export class Field {
             value = this.convertNumber(value);
         } else if (isBrsBoolean(value) && this.type === FieldKind.String) {
             value = new BrsString(value.toBoolean() ? "1" : "0");
+        } else if (isInvalid(value) && this.type === FieldKind.StringArray) {
+            value = new RoArray([]);
         } else if (isBrsString(value) && this.type === FieldKind.Boolean) {
             value = BrsBoolean.from(value.getValue().toLowerCase() === "true");
         } else if (isBrsBoolean(value) && this.type === FieldKind.BoolArray) {

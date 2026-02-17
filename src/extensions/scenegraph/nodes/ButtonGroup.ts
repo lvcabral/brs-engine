@@ -11,12 +11,14 @@ import {
     IfDraw2D,
     Rect,
     BrsInvalid,
+    isBrsString,
 } from "brs-engine";
 import { sgRoot } from "../SGRoot";
 import { jsValueOf } from "../factory/Serializer";
 import { Button } from "./Button";
 import type { Font } from "./Font";
 import { Label } from "./Label";
+import { Group } from "./Group";
 import { LayoutGroup } from "./LayoutGroup";
 import { RoSGNode } from "../components/RoSGNode";
 import { FieldKind, FieldModel } from "../SGTypes";
@@ -80,7 +82,6 @@ export class ButtonGroup extends LayoutGroup {
         }
         this.setValueSilent("focusBitmapUri", new BrsString(Button.focusUri));
         this.setValueSilent("focusFootprintBitmapUri", new BrsString(Button.footprintUri));
-        this.setValueSilent("buttons", new RoArray([]));
         this.lastPressHandled = "";
     }
 
@@ -99,6 +100,19 @@ export class ButtonGroup extends LayoutGroup {
             this.refreshButtons();
             this.refreshFocus();
         }
+    }
+
+    appendChildToParent(child: BrsType): boolean {
+        if (child instanceof Group) {
+            const buttonText = child.getValue("text");
+            const buttons = this.getValue("buttons");
+            if (buttons instanceof RoArray && isBrsString(buttonText)) {
+                buttons.elements.push(buttonText);
+                this.setValueSilent("buttons", buttons);
+                this.isDirty = true;
+            }
+        }
+        return super.appendChildToParent(child);
     }
 
     setNodeFocus(focusOn: boolean): boolean {
@@ -171,25 +185,26 @@ export class ButtonGroup extends LayoutGroup {
         for (let i = 0; i < buttonsCount; i++) {
             const buttonText = buttons[i];
             if (buttonText) {
-                let button = this.children[i] as Button;
-                if (!button) {
+                let button = this.children[i];
+                if (!(button instanceof Group)) {
                     button = this.createButton();
                 }
-                button.iconSize = this.iconSize;
                 button.setValueSilent("text", new BrsString(buttonText));
-                this.copyField(button, "textColor");
-                this.copyField(button, "focusedTextColor");
-                this.copyField(button, "textFont");
-                this.copyField(button, "focusedTextFont");
-                this.copyField(button, "focusBitmapUri");
-                this.copyField(button, "focusFootprintBitmapUri");
-                this.copyField(button, "iconUri");
-                this.copyField(button, "focusedIconUri");
-                this.copyField(button, "height", "buttonHeight");
                 button.setValueSilent("minWidth", new Float(this.width));
-                this.copyField(button, "maxWidth");
+                this.copyField(button, "textColor");
+                if (button instanceof Button) {
+                    button.iconSize = this.iconSize;
+                    this.copyField(button, "focusedTextColor");
+                    this.copyField(button, "textFont");
+                    this.copyField(button, "focusedTextFont");
+                    this.copyField(button, "focusBitmapUri");
+                    this.copyField(button, "focusFootprintBitmapUri");
+                    this.copyField(button, "iconUri");
+                    this.copyField(button, "focusedIconUri");
+                    this.copyField(button, "height", "buttonHeight");
+                    this.copyField(button, "maxWidth");
+                }
                 button.setValueSilent("showFocusFootprint", BrsBoolean.from(this.focusIndex === i));
-                // TODO: Implement support for field layoutDirection (vert, horiz)
                 const buttonY = i * (Math.max(buttonHeight, this.iconSize[1]) - this.vertOffset);
                 const offsetY = Math.max((this.iconSize[1] - buttonHeight) / 2, 0);
                 button.setValueSilent("translation", new RoArray([new Float(0), new Float(buttonY + offsetY)]));
@@ -208,7 +223,7 @@ export class ButtonGroup extends LayoutGroup {
                 break;
             }
         }
-        this.appendChildToParent(button);
+        super.appendChildToParent(button);
         return button;
     }
 
