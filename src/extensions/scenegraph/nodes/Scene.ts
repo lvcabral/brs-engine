@@ -45,6 +45,9 @@ export class Scene extends Group {
 
         this.owner = 0; // Scene node is always owned by render thread
 
+        if (sgRoot.inTaskThread()) {
+            this._initState = "initialized";
+        }
         this.setResolution("HD");
     }
 
@@ -64,7 +67,9 @@ export class Scene extends Group {
     }
 
     setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind, sync?: boolean) {
-        if (this._initState === "none" && !sgRoot.inTaskThread()) {
+        if (sgRoot.inTaskThread()) {
+            return super.setValue(index, value, alwaysNotify, kind, sync);
+        } else if (this._initState === "none") {
             this._preInitSet.set(index, value);
             return;
         }

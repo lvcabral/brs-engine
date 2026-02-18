@@ -713,7 +713,7 @@ function mainCallback(event: MessageEvent) {
         handleTaskData(event.data, currentPayload);
     } else if (isThreadUpdate(event.data)) {
         deviceDebug(
-            `debug,[api] Update received from Main thread: ${event.data.id}, ${event.data.type}, ${event.data.key}\r\n`
+            `debug,[api] Update received from Main thread: ${event.data.id}, "${event.data.action}" ${event.data.type}.${event.data.key}\r\n`
         );
         handleThreadUpdate(event.data);
     } else if (isNDKStart(event.data)) {

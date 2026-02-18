@@ -79,7 +79,7 @@ import {
 } from "../nodes";
 import type { Field } from "../nodes/Field";
 import { ComponentDefinition, ComponentNode } from "../parser/ComponentDefinition";
-import { brsValueOf, getSerializedNodeInfo } from "./Serializer";
+import { brsValueOf } from "./Serializer";
 import { sgRoot } from "../SGRoot";
 import { convertHexColor, convertLong, convertNumber } from "../SGUtil";
 import { FieldAliasTarget, FieldKind, ObservedField } from "../SGTypes";
@@ -104,7 +104,8 @@ export class SGNodeFactory {
      * adding additional types (PinPad, BusySpinner, etc) that aren't here yet
      *
      * @static
-     * @param types Array of pairs of [nodeTypeName, construction function], such that when a given nodeType is requested, the construction function is called and returns one of those components
+     * @param types Array of pairs of [nodeTypeName, construction function], such that when a given nodeType is requested,
+     * the construction function is called and returns one of those components
      */
     public static addNodeTypes(types: [string, (name: string) => Node][]) {
         for (const [nodeType, ctor] of types) {
@@ -582,15 +583,6 @@ function loadTaskData(interpreter: Interpreter, node: Node, taskData: TaskData) 
                 port = brsValue;
             }
             node.m.set(new BrsString(key), brsValue);
-        }
-    }
-    if (taskData.scene?.["_node_"]) {
-        const nodeInfo = getSerializedNodeInfo(taskData.scene);
-        const sceneName = nodeInfo?.subtype || SGNodeType.Scene;
-        const scene = createFlatNode(SGNodeType.Scene, sceneName);
-        if (scene instanceof Scene) {
-            sgRoot.setScene(scene);
-            restoreNode(interpreter, taskData.scene, scene, port);
         }
     }
     if (taskData.m?.global) {
