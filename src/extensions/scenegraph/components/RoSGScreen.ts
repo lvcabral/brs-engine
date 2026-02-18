@@ -96,6 +96,12 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
                 getPortIface.getMessagePort,
             ],
         });
+        sgRoot.setScreen(this);
+    }
+
+    registerPort(port: RoMessagePort) {
+        const component = this.getComponentName();
+        port.registerCallback(component, this.getNewEvents.bind(this));
     }
 
     clearCanvas(rgba: number): void {

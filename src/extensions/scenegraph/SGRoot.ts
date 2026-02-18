@@ -7,11 +7,12 @@
  *--------------------------------------------------------------------------------------------*/
 import { BrsDevice, BufferType, DataType, genHexAddress, Interpreter, MediaEvent, MediaTrack } from "brs-engine";
 import { ComponentDefinition } from "./parser/ComponentDefinition";
-import { RoSGNode } from "./components/RoSGNode";
 import { Global } from "./nodes/Global";
-import { SoundEffect } from "./nodes/SoundEffect";
 import { ThreadInfo } from "./SGTypes";
-import type { AnimationBase, Audio, Dialog, Node, Scene, StandardDialog, Task, Timer, Video } from "./nodes";
+import type { SoundEffect } from "./nodes/SoundEffect";
+import type { RoSGNode } from "./components/RoSGNode";
+import type { RoSGScreen } from "./components/RoSGScreen";
+import type { AnimationBase, Audio, Dialog, Scene, StandardDialog, Task, Timer, Video } from "./nodes";
 
 /**
  * A singleton object that holds the Node that represents the m.global, the root Scene,
@@ -23,6 +24,7 @@ export class SGRoot {
     private _interpreter: Interpreter | undefined;
     private _mGlobal: Global | undefined;
     private _nodeDefMap: Map<string, ComponentDefinition>;
+    private _screen?: RoSGScreen;
     private _scene?: Scene;
     private _focused?: RoSGNode;
     private _threadId: number;
@@ -53,6 +55,10 @@ export class SGRoot {
         return Array.from(this._threads.values())
             .map((thread) => thread.task)
             .filter((task): task is Task => task !== undefined);
+    }
+
+    get screen(): RoSGScreen | undefined {
+        return this._screen;
     }
 
     get scene(): Scene | undefined {
@@ -161,6 +167,14 @@ export class SGRoot {
      */
     setNodeDefMap(nodeDefMap: Map<string, ComponentDefinition>) {
         this._nodeDefMap = nodeDefMap;
+    }
+
+    /**
+     * Sets the RoSGScreen instance for the application.
+     * @param screen RoSGScreen instance to set
+     */
+    setScreen(screen: RoSGScreen) {
+        this._screen = screen;
     }
 
     /**
