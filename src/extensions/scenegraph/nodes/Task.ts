@@ -20,9 +20,10 @@ import { sgRoot } from "../SGRoot";
 import { brsValueOf, fromAssociativeArray, fromSGNode, jsValueOf, updateSGNode } from "../factory/Serializer";
 import { FieldKind, FieldModel, MethodCallPayload, isMethodCallPayload } from "../SGTypes";
 import { Node } from "./Node";
+import { ContentNode } from "./ContentNode";
 import { Global } from "./Global";
-import type { Field, Scene } from "..";
 import { SGNodeType } from ".";
+import type { Field, Scene } from "..";
 
 /**
  * SceneGraph `Task` node implementation responsible for executing BrightScript in a worker thread.
@@ -152,7 +153,12 @@ export class Task extends Node {
         );
         update.action = "set";
         update.address = node.getAddress();
-        update.value = value instanceof Node ? fromSGNode(value, true) : jsValueOf(value);
+        if (value instanceof Node) {
+            const deep = value instanceof ContentNode;
+            update.value = fromSGNode(value, deep);
+        } else {
+            update.value = jsValueOf(value);
+        }
         this.sendThreadUpdate(update);
     }
 
@@ -547,9 +553,13 @@ export class Task extends Node {
         const args: BrsType[] = value instanceof RoArray ? value.getElements() : [];
         const location = payload.location ?? sgRoot.interpreter.location;
         const result = sgRoot.interpreter.call(method, args, hostNode.m, location, hostNode);
-        const serializedValue = result instanceof Node ? fromSGNode(result, true) : jsValueOf(result);
         update.action = "resp";
-        update.value = serializedValue;
+        if (result instanceof Node) {
+            const deep = result instanceof ContentNode;
+            update.value = fromSGNode(result, deep);
+        } else {
+            update.value = jsValueOf(result);
+        }
         this.sendThreadUpdate(update);
     }
 

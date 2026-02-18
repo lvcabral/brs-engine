@@ -231,7 +231,11 @@ export class ContentNode extends Node {
             args: [],
             returns: ValueKind.Int32,
         },
-        impl: (_: Interpreter) => {
+        impl: (interpreter: Interpreter) => {
+            const remote = this.rendezvousCall(interpreter, "count");
+            if (remote !== undefined) {
+                return remote;
+            }
             return new Int32(this.getVisibleFields().length);
         },
     });
@@ -245,7 +249,11 @@ export class ContentNode extends Node {
             args: [],
             returns: ValueKind.Object,
         },
-        impl: (_: Interpreter) => {
+        impl: (interpreter: Interpreter) => {
+            const remote = this.rendezvousCall(interpreter, "keys");
+            if (remote !== undefined) {
+                return remote;
+            }
             return new RoArray(this.getElements());
         },
     });
@@ -259,7 +267,11 @@ export class ContentNode extends Node {
             args: [],
             returns: ValueKind.Object,
         },
-        impl: (_: Interpreter) => {
+        impl: (interpreter: Interpreter) => {
+            const remote = this.rendezvousCall(interpreter, "items");
+            if (remote !== undefined) {
+                return remote;
+            }
             return new RoArray(
                 this.getElements().map((key: BrsString) => {
                     return toAssociativeArray({ key: key, value: this.get(key) });
@@ -277,7 +289,11 @@ export class ContentNode extends Node {
             args: [new StdlibArgument("fieldname", ValueKind.String)],
             returns: ValueKind.Boolean,
         },
-        impl: (_: Interpreter, fieldname: BrsString) => {
+        impl: (interpreter: Interpreter, fieldname: BrsString) => {
+            const remote = this.rendezvousCall(interpreter, "hasField", [fieldname]);
+            if (remote !== undefined) {
+                return remote;
+            }
             let field = this.getNodeFields().get(fieldname.value.toLowerCase());
             if (field) {
                 field.setHidden(false);
