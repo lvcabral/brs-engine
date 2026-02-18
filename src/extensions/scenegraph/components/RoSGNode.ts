@@ -25,7 +25,7 @@ import { sgRoot } from "../SGRoot";
 import { createNode, getNodeType, isSubtypeCheck, subtypeHierarchy } from "../factory/NodeFactory";
 import { toAssociativeArray } from "../factory/Serializer";
 import { FieldKind, isContentNode, ObserverScope } from "../SGTypes";
-import type { SGNodeType } from "../nodes";
+import type { Scene, SGNodeType } from "../nodes";
 
 export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode {
     readonly kind = ValueKind.Object;
@@ -1613,6 +1613,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
         impl: (interpreter: Interpreter) => {
             const remote = this.rendezvousCall(interpreter, "getScene");
             if (remote !== undefined) {
+                sgRoot.setScene(remote as Scene);
                 return remote;
             }
             return sgRoot.scene ?? BrsInvalid.Instance;

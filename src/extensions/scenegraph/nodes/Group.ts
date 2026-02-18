@@ -71,6 +71,9 @@ export class Group extends Node {
     }
 
     setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind, sync?: boolean) {
+        if (sgRoot.inTaskThread()) {
+            return super.setValue(index, value, alwaysNotify, kind, sync);
+        }
         const mapKey = index.toLowerCase();
         const field = this.fields.get(mapKey);
 

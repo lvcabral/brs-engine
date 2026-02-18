@@ -187,7 +187,7 @@ function taskCallback(event: MessageEvent) {
     } else if (isThreadUpdate(event.data)) {
         notifyAll(
             "debug",
-            `[task:api] Update received from Task thread: ${event.data.id}, ${event.data.action} ${event.data.type}.${event.data.key}`
+            `[task:api] Update received from Task thread: ${event.data.id}, "${event.data.action}" ${event.data.type}.${event.data.key}`
         );
         handleThreadUpdate(event.data, true);
     } else if (isNDKStart(event.data)) {

@@ -584,15 +584,6 @@ function loadTaskData(interpreter: Interpreter, node: Node, taskData: TaskData) 
             node.m.set(new BrsString(key), brsValue);
         }
     }
-    if (taskData.scene?.["_node_"]) {
-        const nodeInfo = getSerializedNodeInfo(taskData.scene);
-        const sceneName = nodeInfo?.subtype || SGNodeType.Scene;
-        const scene = createFlatNode(SGNodeType.Scene, sceneName);
-        if (scene instanceof Scene) {
-            sgRoot.setScene(scene);
-            restoreNode(interpreter, taskData.scene, scene, port);
-        }
-    }
     if (taskData.m?.global) {
         restoreNode(interpreter, taskData.m.global, sgRoot.mGlobal, port);
     }

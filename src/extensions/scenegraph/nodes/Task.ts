@@ -403,7 +403,6 @@ export class Task extends Node {
                 tmp: BrsDevice.getTmpVolume(),
                 cacheFS: BrsDevice.getCacheFS(),
                 m: fromAssociativeArray(this.m, true, this),
-                scene: sgRoot.scene ? fromSGNode(sgRoot.scene, false, this) : undefined,
                 render: sgRoot.getRenderThreadInfo()?.id,
             };
             postMessage(taskData);

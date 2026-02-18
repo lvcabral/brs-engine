@@ -368,7 +368,6 @@ export type TaskData = {
     tmp?: SharedArrayBuffer;
     cacheFS?: SharedArrayBuffer;
     m?: any;
-    scene?: any;
     render?: string;
 };
 
