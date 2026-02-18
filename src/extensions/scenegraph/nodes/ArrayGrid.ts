@@ -14,7 +14,7 @@ import {
 import { FieldKind, FieldModel } from "../SGTypes";
 import { Poster, SGNodeType } from ".";
 import { Group } from "./Group";
-import { createNodeRunInit } from "../factory/NodeFactory";
+import { createNode } from "../factory/NodeFactory";
 import { brsValueOf, jsValueOf } from "../factory/Serializer";
 import { sgRoot } from "../SGRoot";
 import { ContentNode } from "./ContentNode";
@@ -476,7 +476,7 @@ export class ArrayGrid extends Group {
             return new Group();
         }
         const itemCompName = this.getValueJS("itemComponentName") ?? "";
-        const itemComp = itemCompName ? createNodeRunInit(itemCompName, interpreter) : new ArrayGridItem();
+        const itemComp = itemCompName ? createNode(itemCompName, interpreter) : new ArrayGridItem();
         if (itemComp instanceof Group) {
             itemComp.setNodeParent(this);
             itemComp.setValue("width", brsValueOf(itemRect.width), false);

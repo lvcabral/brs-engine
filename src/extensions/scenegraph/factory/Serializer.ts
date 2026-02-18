@@ -22,7 +22,7 @@ import {
     Callable,
     StdlibArgument,
 } from "brs-engine";
-import { createNode } from "./NodeFactory";
+import { createFlatNode } from "./NodeFactory";
 import { ContentNode, Node, SGNodeType } from "../nodes";
 import { ObservedField } from "../SGTypes";
 import { sgRoot } from "../SGRoot";
@@ -242,7 +242,7 @@ export function toSGNode(obj: any, type: string, subtype: string, child?: boolea
         // Return invalid for now (should not happen in valid serialized data)
         return BrsInvalid.Instance as any;
     }
-    let newNode = createNode(type, subtype);
+    let newNode = createFlatNode(type, subtype);
     if (newNode instanceof BrsInvalid) {
         newNode = new Node([], subtype);
     }

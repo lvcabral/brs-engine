@@ -263,39 +263,13 @@ export class SGNodeFactory {
 }
 
 /**
- * Creates a SceneGraph node based on the specified type and subtype.
- * Focused on serialization, custom XML nodes are created without children and not initialized.
- * @param type Type name of the node to create
- * @param subtype Subtype name of the node to create
- * @returns Created node instance or BrsInvalid if creation fails
- */
-export function createNode(type: string, subtype: string): Node | BrsInvalid {
-    let node: Node | BrsInvalid = BrsInvalid.Instance;
-    const typeDef = sgRoot.nodeDefMap.get(subtype.toLowerCase());
-    if (typeDef) {
-        node = createNodeByTypeDef(typeDef, subtype);
-    }
-    if (node instanceof BrsInvalid) {
-        node = SGNodeFactory.createNode(type, subtype) ?? BrsInvalid.Instance;
-    }
-    if (node instanceof BrsInvalid) {
-        BrsDevice.stderr.write(
-            `warning,Warning: Failed to create roSGNode with type ${type}:${subtype}: ${
-                sgRoot.interpreter?.formatLocation() ?? ""
-            }`
-        );
-    }
-    return node;
-}
-
-/**
  * Creates a node by its type name as defined in XML component files and initializes it.
  * Handles both built-in node types and custom component definitions.
  * @param type Type name of the node to create
  * @param interpreter Optional interpreter instance for component initialization
  * @returns Created node instance or BrsInvalid if creation fails
  */
-export function createNodeRunInit(type: string, interpreter?: Interpreter): Node | BrsInvalid {
+export function createNode(type: string, interpreter?: Interpreter): Node | BrsInvalid {
     // If this is a built-in node component, then return it.
     let node = SGNodeFactory.createNode(type) ?? BrsInvalid.Instance;
     if (node instanceof BrsInvalid) {
@@ -322,6 +296,32 @@ export function createNodeRunInit(type: string, interpreter?: Interpreter): Node
         if (task && isInvalid(node.getNodeParent())) {
             node.setNodeParent(task);
         }
+    }
+    return node;
+}
+
+/**
+ * Creates a SceneGraph node based on the specified type and subtype.
+ * Focused on serialization, custom XML nodes are created flat, without children and not initialized.
+ * @param type Type name of the node to create
+ * @param subtype Subtype name of the node to create
+ * @returns Created node instance or BrsInvalid if creation fails
+ */
+export function createFlatNode(type: string, subtype: string): Node | BrsInvalid {
+    let node: Node | BrsInvalid = BrsInvalid.Instance;
+    const typeDef = sgRoot.nodeDefMap.get(subtype.toLowerCase());
+    if (typeDef) {
+        node = createNodeByTypeDef(typeDef, subtype);
+    }
+    if (node instanceof BrsInvalid) {
+        node = SGNodeFactory.createNode(type, subtype) ?? BrsInvalid.Instance;
+    }
+    if (node instanceof BrsInvalid) {
+        BrsDevice.stderr.write(
+            `warning,Warning: Failed to create roSGNode with type ${type}:${subtype}: ${
+                sgRoot.interpreter?.formatLocation() ?? ""
+            }`
+        );
     }
     return node;
 }
@@ -358,7 +358,7 @@ function createNodeByTypeDef(typeDef: ComponentDefinition, subtype: string): Nod
  * @param type Type name of the Scene to create
  * @returns Created Scene instance or BrsInvalid if creation fails or type is not a Scene subtype
  */
-export function createSceneByType(interpreter: Interpreter, type: string): Node | BrsInvalid {
+export function createScene(interpreter: Interpreter, type: string): Node | BrsInvalid {
     const sceneName = type.toLowerCase();
     if (sceneName === SGNodeType.Scene.toLowerCase()) {
         return new Scene([], SGNodeType.Scene);
@@ -587,7 +587,7 @@ function loadTaskData(interpreter: Interpreter, node: Node, taskData: TaskData) 
     if (taskData.scene?.["_node_"]) {
         const nodeInfo = getSerializedNodeInfo(taskData.scene);
         const sceneName = nodeInfo?.subtype || SGNodeType.Scene;
-        const scene = createNode(SGNodeType.Scene, sceneName);
+        const scene = createFlatNode(SGNodeType.Scene, sceneName);
         if (scene instanceof Scene) {
             sgRoot.setScene(scene);
             restoreNode(interpreter, taskData.scene, scene, port);
@@ -789,7 +789,7 @@ function addChildren(interpreter: Interpreter, node: Node, typeDef: ComponentDef
     const appendChild = node.getMethod("appendchild");
 
     for (let child of children) {
-        const newChild = createNodeRunInit(child.name, interpreter);
+        const newChild = createNode(child.name, interpreter);
         if (newChild instanceof Node) {
             newChild.location = interpreter.formatLocation();
             const nodeFields = newChild.getNodeFields();

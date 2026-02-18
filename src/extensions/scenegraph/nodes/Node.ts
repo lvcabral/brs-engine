@@ -45,7 +45,7 @@ import {
     MethodCallPayload,
 } from "../SGTypes";
 import { RoSGNode } from "../components/RoSGNode";
-import { createNode, createNodeRunInit, getBrsValueFromFieldType, subtypeHierarchy } from "../factory/NodeFactory";
+import { createFlatNode, createNode, getBrsValueFromFieldType, subtypeHierarchy } from "../factory/NodeFactory";
 import { Field } from "../nodes/Field";
 import { toAssociativeArray, jsValueOf, fromSGNode } from "../factory/Serializer";
 import { sgRoot } from "../SGRoot";
@@ -453,7 +453,7 @@ export class Node extends RoSGNode implements BrsValue {
         if (visitedNodes.has(this)) {
             return visitedNodes.get(this)!;
         }
-        const clonedNode = createNode(this.nodeType, this.nodeSubtype);
+        const clonedNode = createFlatNode(this.nodeType, this.nodeSubtype);
         if (!(clonedNode instanceof RoSGNode)) {
             return BrsInvalid.Instance;
         }
@@ -503,7 +503,7 @@ export class Node extends RoSGNode implements BrsValue {
      */
     deepCopy(visitedNodes?: WeakMap<Node, Node>): BrsType {
         visitedNodes ??= new WeakMap<Node, Node>();
-        const copiedNode = createNode(this.nodeType, this.nodeSubtype);
+        const copiedNode = createFlatNode(this.nodeType, this.nodeSubtype);
         if (!(copiedNode instanceof Node)) {
             return new RoInvalid();
         }
@@ -1162,7 +1162,7 @@ export class Node extends RoSGNode implements BrsValue {
             if (element instanceof RoAssociativeArray) {
                 // Create a new child node based on the subtype
                 const childSubtype = jsValueOf(element.get(new BrsString("subtype"))) ?? subtype;
-                const childNode = createNodeRunInit(childSubtype, interpreter);
+                const childNode = createNode(childSubtype, interpreter);
                 if (childNode instanceof RoSGNode) {
                     this.populateNodeFromAA(interpreter, childNode, element, createFields, childSubtype);
                     node.appendChildToParent(childNode);

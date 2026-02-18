@@ -1,13 +1,4 @@
-import {
-    Environment,
-    BrsError,
-    FileSystem,
-    ExecutionOptions,
-    Interpreter,
-    BrsInvalid,
-    RoAssociativeArray,
-    Platform,
-} from "brs-engine";
+import { Environment, BrsError, FileSystem, Interpreter, BrsInvalid, RoAssociativeArray, Platform } from "brs-engine";
 import { ComponentScopeResolver } from "./ComponentScopeResolver";
 import * as path from "path";
 import { XmlDocument, XmlElement } from "xmldoc";
@@ -232,17 +223,16 @@ async function processXmlTree(settledPromises: Promise<PromiseResult<ComponentDe
  * @param interpreter The interpreter where components will be registered
  * @param componentMap Map of all components to be assigned to this interpreter
  * @param manifest The manifest map for the current running application
- * @param options Execution options for the interpreter
  */
 export async function setupInterpreterWithSubEnvs(
     interpreter: Interpreter,
     componentMap: Map<string, ComponentDefinition>,
-    manifest: Map<string, string>,
-    options: Partial<ExecutionOptions>
+    manifest: Map<string, string>
 ) {
     if (!fs) {
         throw new Error("FileSystem not set");
     }
+    const options = interpreter.options;
     const entryPoint = options.entryPoint ?? false;
     const componentScopeResolver = new ComponentScopeResolver(componentMap, fs, manifest);
     await pSettle(
