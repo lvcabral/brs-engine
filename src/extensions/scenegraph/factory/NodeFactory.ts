@@ -140,6 +140,7 @@ export class SGNodeFactory {
                 return new Button([], name);
             case SGNodeType.ButtonGroup.toLowerCase():
                 return new ButtonGroup([], name);
+            case SGNodeType.StandardKeyboardDialog.toLowerCase():
             case SGNodeType.KeyboardDialog.toLowerCase():
                 return new KeyboardDialog([], name);
             case SGNodeType.Dialog.toLowerCase():

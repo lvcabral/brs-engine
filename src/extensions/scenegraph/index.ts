@@ -19,12 +19,14 @@ import {
     BrsObjects,
     BrsString,
     RuntimeError,
+    RoMessagePort,
 } from "brs-engine";
 import { getComponentDefinitionMap, setupInterpreterWithSubEnvs } from "./parser/ComponentDefinition";
 import { sgRoot } from "./SGRoot";
 import { Task } from "./nodes/Task";
 import { initializeTask, createNodeRunInit, updateTypeDefHierarchy, getNodeType } from "./factory/NodeFactory";
 import { RoSGScreen } from "./components/RoSGScreen";
+import { RoSGNode } from "./components/RoSGNode";
 import packageInfo from "../../../packages/scenegraph/package.json";
 
 export * from "./SGRoot";
@@ -51,6 +53,19 @@ export class BrightScriptExtension implements BrsExtension {
             (interpreter: Interpreter, nodeType: BrsString) => createNodeRunInit(nodeType.getValue(), interpreter),
             1
         );
+        BrsObjects.set("roMessagePort", (interpreter: Interpreter) => this.createMessagePort(interpreter), 0);
+    }
+
+    private createMessagePort(interpreter?: Interpreter): RoMessagePort {
+        const port = new RoMessagePort();
+        if (interpreter && !sgRoot.inTaskThread()) {
+            const inRender = interpreter.environment.getRootM().elements.get("top") instanceof RoSGNode;
+            if (!inRender) {
+                // All ports created in Main thread are registered to the screen
+                sgRoot.screen?.registerPort(port);
+            }
+        }
+        return port;
     }
 
     async onBeforeExecute(interpreter: Interpreter, payload: AppPayload) {
