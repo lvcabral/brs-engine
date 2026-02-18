@@ -647,11 +647,7 @@ function restoreNode(interpreter: Interpreter, source: any, node: Node, port?: R
         }
         const brsValue = brsValueOf(value);
         if (brsValue instanceof Node) {
-            postMessage(
-                `debug,[thread:${sgRoot.threadId}] Restoring Node ${
-                    node.nodeSubtype
-                } field ${key} with value ${brsValue.toString()}`
-            );
+            postMessage(`debug,[thread:${sgRoot.threadId}] Restoring Node ${node.nodeSubtype} field "${key}"`);
         }
         node.setValueSilent(key, brsValue);
         if (port && Array.isArray(observedFields)) {
