@@ -24,7 +24,7 @@ import {
 import { getComponentDefinitionMap, setupInterpreterWithSubEnvs } from "./parser/ComponentDefinition";
 import { sgRoot } from "./SGRoot";
 import { Task } from "./nodes/Task";
-import { initializeTask, createNodeRunInit, updateTypeDefHierarchy, getNodeType } from "./factory/NodeFactory";
+import { initializeTask, createNode, updateTypeDefHierarchy, getNodeType } from "./factory/NodeFactory";
 import { RoSGScreen } from "./components/RoSGScreen";
 import { RoSGNode } from "./components/RoSGNode";
 import packageInfo from "../../../packages/scenegraph/package.json";
@@ -42,17 +42,18 @@ export * from "./parser/ComponentScopeResolver";
 export * from "./nodes";
 
 export class BrightScriptExtension implements BrsExtension {
-    name = "SceneGraph";
-    version = packageInfo.version;
+    readonly name = "SceneGraph";
+    readonly version = packageInfo.version;
 
     onInit() {
         // Register SceneGraph components with BrsObjects so they can be created with CreateObject()
         BrsObjects.set("roSGScreen", () => new RoSGScreen(), 0);
         BrsObjects.set(
             "roSGNode",
-            (interpreter: Interpreter, nodeType: BrsString) => createNodeRunInit(nodeType.getValue(), interpreter),
+            (interpreter: Interpreter, type: BrsString) => createNode(type.getValue(), interpreter),
             1
         );
+        // Re-register roMessagePort to handle the specific case of ports created in the Main thread
         BrsObjects.set("roMessagePort", (interpreter: Interpreter) => this.createMessagePort(interpreter), 0);
     }
 
@@ -73,7 +74,7 @@ export class BrightScriptExtension implements BrsExtension {
         try {
             const components = await getComponentDefinitionMap(BrsDevice.fileSystem, []);
             if (components.size > 0) {
-                await setupInterpreterWithSubEnvs(interpreter, components, payload.manifest, interpreter.options);
+                await setupInterpreterWithSubEnvs(interpreter, components, payload.manifest);
                 sgRoot.setInterpreter(interpreter);
                 sgRoot.setNodeDefMap(components);
                 for (const [componentName, componentDef] of components.entries()) {

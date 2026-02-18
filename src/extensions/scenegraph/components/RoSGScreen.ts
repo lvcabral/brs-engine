@@ -30,7 +30,7 @@ import {
 } from "brs-engine";
 import { sgRoot } from "../SGRoot";
 import { Scene, Node, Dialog } from "../nodes";
-import { createSceneByType, initializeNode } from "../factory/NodeFactory";
+import { createScene, initializeNode } from "../factory/NodeFactory";
 import { RoSGScreenEvent } from "../events/RoSGScreenEvent";
 
 // Roku Remote Mapping
@@ -315,7 +315,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
                 this.canvas.width = this.width;
                 this.canvas.height = this.height;
             }
-            const scene = createSceneByType(interpreter, sceneType.value);
+            const scene = createScene(interpreter, sceneType.value);
             if (scene instanceof Scene) {
                 this.sceneType = sceneType;
                 sgRoot.setScene(scene);
