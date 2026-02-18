@@ -1613,7 +1613,9 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
         impl: (interpreter: Interpreter) => {
             const remote = this.rendezvousCall(interpreter, "getScene");
             if (remote !== undefined) {
-                sgRoot.setScene(remote as Scene);
+                if (remote instanceof RoSGNode && remote.nodeType === "Scene") {
+                    sgRoot.setScene(remote as Scene);
+                }
                 return remote;
             }
             return sgRoot.scene ?? BrsInvalid.Instance;

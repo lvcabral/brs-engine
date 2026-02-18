@@ -384,7 +384,6 @@ export function isTaskData(value: any): value is TaskData {
         Object.values(TaskState).includes(value.state) &&
         (value.buffer instanceof SharedArrayBuffer || value.buffer === undefined) &&
         (typeof value.m === "object" || value.m === undefined) &&
-        (typeof value.scene === "object" || value.scene === undefined) &&
         (typeof value.render === "string" || value.render === undefined)
     );
 }
