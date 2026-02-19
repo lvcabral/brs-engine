@@ -6,7 +6,7 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 import * as path from "path";
-import * as zenFS from "@lvcabral/zenfs";
+import * as zenFS from "@zenfs/core";
 import * as nodeFS from "fs";
 import { Zip } from "@lvcabral/zip";
 import { v5 as uuidv5 } from "uuid";
