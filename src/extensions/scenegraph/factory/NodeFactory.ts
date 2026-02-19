@@ -60,12 +60,14 @@ import {
     SGNodeType,
     SoundEffect,
     StandardDialog,
+    StandardKeyboardDialog,
     StandardProgressDialog,
     StdDlgContentArea,
     StdDlgProgressItem,
     StdDlgTitleArea,
     Task,
     TextEditBox,
+    VoiceTextEditBox,
     Timer,
     TrickPlayBar,
     Video,
@@ -141,7 +143,6 @@ export class SGNodeFactory {
                 return new Button([], name);
             case SGNodeType.ButtonGroup.toLowerCase():
                 return new ButtonGroup([], name);
-            case SGNodeType.StandardKeyboardDialog.toLowerCase():
             case SGNodeType.KeyboardDialog.toLowerCase():
                 return new KeyboardDialog([], name);
             case SGNodeType.Dialog.toLowerCase():
@@ -198,6 +199,8 @@ export class SGNodeFactory {
                 return new MiniKeyboard([], name);
             case SGNodeType.TextEditBox.toLowerCase():
                 return new TextEditBox([], name);
+            case SGNodeType.VoiceTextEditBox.toLowerCase():
+                return new VoiceTextEditBox([], name);
             case SGNodeType.Overhang.toLowerCase():
                 return new Overhang([], name);
             case SGNodeType.OverhangPanelSetScene.toLowerCase():
@@ -212,6 +215,8 @@ export class SGNodeFactory {
                 return new ListPanel([], name);
             case SGNodeType.StandardDialog.toLowerCase():
                 return new StandardDialog([], name);
+            case SGNodeType.StandardKeyboardDialog.toLowerCase():
+                return new StandardKeyboardDialog([], name);
             case SGNodeType.StandardProgressDialog.toLowerCase():
                 return new StandardProgressDialog([], name);
             case SGNodeType.StdDlgContentArea.toLowerCase():
