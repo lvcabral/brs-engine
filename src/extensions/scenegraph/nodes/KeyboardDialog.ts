@@ -12,7 +12,7 @@ export class KeyboardDialog extends Dialog {
     ];
 
     protected readonly minHeight: number;
-    private readonly keyboard: Keyboard;
+    protected readonly keyboard: Keyboard;
     private readonly keyboardY: number;
     private focus: string;
 

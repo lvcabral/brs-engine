@@ -38,12 +38,14 @@ export * from "./Scene";
 export * from "./ScrollingLabel";
 export * from "./SoundEffect";
 export * from "./StandardDialog";
+export * from "./StandardKeyboardDialog";
 export * from "./StandardProgressDialog";
 export * from "./StdDlgContentArea";
 export * from "./StdDlgProgressItem";
 export * from "./StdDlgTitleArea";
 export * from "./Task";
 export * from "./TextEditBox";
+export * from "./VoiceTextEditBox";
 export * from "./Timer";
 export * from "./TrickPlayBar";
 export * from "./Video";
@@ -80,7 +82,7 @@ export enum SGNodeType {
     PinDialog = "PinDialog", // Not yet implemented
     ParentalControlPinPad = "ParentalControlPinPad", // Not yet implemented
     StandardDialog = "StandardDialog",
-    StandardKeyboardDialog = "StandardKeyboardDialog", // Not yet implemented
+    StandardKeyboardDialog = "StandardKeyboardDialog",
     StandardMessageDialog = "StandardMessageDialog", // Not yet implemented
     StandardPinPadDialog = "StandardPinPadDialog", // Not yet implemented
     StandardProgressDialog = "StandardProgressDialog",
@@ -135,7 +137,7 @@ export enum SGNodeType {
     DynamicPinPad = "DynamicPinPad", // Not yet implemented
     DynamicKeyGrid = "DynamicKeyGrid", // Not yet implemented
     TextEditBox = "TextEditBox",
-    VoiceTextEditBox = "VoiceTextEditBox", // Not yet implemented
+    VoiceTextEditBox = "VoiceTextEditBox",
     Overhang = "Overhang",
     RSGPalette = "RSGPalette",
     Video = "Video",
