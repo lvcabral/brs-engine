@@ -51,6 +51,11 @@ export class ScrollableText extends Group {
     private visibleLines: number = 0;
     private needsScroll: boolean = false;
 
+    // Line-break cache — invalidated when text/font/width/lineSpacing change
+    private linesDirty: boolean = true;
+    private cachedNarrowLines: { text: string; width: number; height: number; ellipsized: boolean }[] = [];
+    private cachedWideLines: { text: string; width: number; height: number; ellipsized: boolean }[] = [];
+
     // Focus tracking
     private focused: boolean = false;
 
@@ -93,9 +98,10 @@ export class ScrollableText extends Group {
         }
         super.setValue(index, value, alwaysNotify, kind, sync);
         // Invalidate cached line layout when any relevant field changes
-        const textFields = ["text", "font", "width", "height", "linespacing"];
+        const textFields = ["text", "font", "width", "linespacing"];
         if (textFields.includes(fieldName)) {
             this.scrollTopLine = 0;
+            this.linesDirty = true;
         }
     }
 
@@ -176,22 +182,21 @@ export class ScrollableText extends Group {
         const nodeHeight = rect.height;
 
         // Calculate layout dimensions
-        this.lineHeight = drawFont.measureTextHeight();
+        if (this.linesDirty) {
+            this.lineHeight = drawFont.measureTextHeight();
+            const narrowWidth = nodeWidth - this.scrollbarWidth;
+            this.cachedNarrowLines = this.computeLines(text, drawFont, narrowWidth);
+            this.cachedWideLines = this.computeLines(text, drawFont, nodeWidth);
+            this.linesDirty = false;
+        }
         const effectiveLine = this.lineHeight + lineSpacing;
 
         // Determine max visible lines and whether we need a scrollbar
         const maxVisible = effectiveLine > 0 ? Math.floor((nodeHeight + lineSpacing) / effectiveLine) : 0;
 
-        // Pre-compute all lines using the full width first, then decide scrollbar
-        const textAreaWidth = nodeWidth - this.scrollbarWidth;
-        const textLines = this.computeLines(text, drawFont, textAreaWidth);
-        const totalCount = textLines.length;
-
-        const showScrollbar = totalCount > maxVisible;
-        const textWidth = showScrollbar ? textAreaWidth : nodeWidth;
-
-        // Recompute lines if width changed (no scrollbar case)
-        const finalLines = showScrollbar ? textLines : this.computeLines(text, drawFont, textWidth);
+        const showScrollbar = this.cachedNarrowLines.length > maxVisible;
+        const textWidth = showScrollbar ? nodeWidth - this.scrollbarWidth : nodeWidth;
+        const finalLines = showScrollbar ? this.cachedNarrowLines : this.cachedWideLines;
 
         this.totalLines = finalLines.length;
         this.visibleLines = Math.min(maxVisible, this.totalLines);
