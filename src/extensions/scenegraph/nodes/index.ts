@@ -35,6 +35,7 @@ export * from "./RadioButtonList";
 export * from "./Rectangle";
 export * from "./RowList";
 export * from "./Scene";
+export * from "./ScrollableText";
 export * from "./ScrollingLabel";
 export * from "./SoundEffect";
 export * from "./StandardDialog";
@@ -111,7 +112,7 @@ export enum SGNodeType {
     MultiStyleLabel = "MultiStyleLabel", // Not yet implemented
     MonospaceLabel = "MonospaceLabel", // Not yet implemented
     ScrollingLabel = "ScrollingLabel",
-    ScrollableText = "ScrollableText", // Not yet implemented
+    ScrollableText = "ScrollableText",
     InfoPane = "InfoPane",
     Font = "Font",
     ArrayGrid = "ArrayGrid",
