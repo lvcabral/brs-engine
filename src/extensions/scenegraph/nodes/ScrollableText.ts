@@ -38,15 +38,14 @@ export class ScrollableText extends Group {
     private readonly scrollbarWidth: number;
 
     // Cached bitmaps for scrollbar assets
-    private trackBitmap: RoBitmap | undefined;
-    private thumbOnBitmap: RoBitmap | undefined;
-    private thumbOffBitmap: RoBitmap | undefined;
+    private readonly trackBitmap: RoBitmap | undefined;
+    private readonly thumbOnBitmap: RoBitmap | undefined;
+    private readonly thumbOffBitmap: RoBitmap | undefined;
     private customTrackBitmap: RoBitmap | undefined;
     private customThumbBitmap: RoBitmap | undefined;
 
     // Scroll state
     private scrollTopLine: number = 0;
-    private allLines: { text: string; width: number; height: number; ellipsized: boolean }[] = [];
     private lineHeight: number = 0;
     private totalLines: number = 0;
     private visibleLines: number = 0;
@@ -65,9 +64,9 @@ export class ScrollableText extends Group {
         this.scrollbarWidth = this.resolution === "FHD" ? SCROLLBAR_WIDTH_FHD : SCROLLBAR_WIDTH_HD;
 
         if (this.resolution === "FHD") {
-            this.setValueSilent("lineSpacing", new Float(12));
-        } else {
             this.setValueSilent("lineSpacing", new Float(8));
+        } else {
+            this.setValueSilent("lineSpacing", new Float(6));
         }
 
         // Make this node focusable
@@ -85,41 +84,26 @@ export class ScrollableText extends Group {
         if (fieldName === "focusedchild") {
             // Track focus state: focusedChild is set to `this` when focused, BrsInvalid when unfocused
             this.focused = !(value instanceof BrsInvalid) && value !== null && value !== undefined;
-            super.setValue(index, value, alwaysNotify, kind, sync);
-            return;
-        }
-
-        if (fieldName === "scrollbartrackbitmapuri") {
-            super.setValue(index, value, alwaysNotify, kind, sync);
+        } else if (fieldName === "scrollbartrackbitmapuri") {
             const uri = value instanceof BrsString ? value.getValue() : "";
             this.customTrackBitmap = uri ? this.loadBitmap(uri) : undefined;
-            return;
-        }
-
-        if (fieldName === "scrollbarthumbbitmapuri") {
-            super.setValue(index, value, alwaysNotify, kind, sync);
+        } else if (fieldName === "scrollbarthumbbitmapuri") {
             const uri = value instanceof BrsString ? value.getValue() : "";
             this.customThumbBitmap = uri ? this.loadBitmap(uri) : undefined;
-            return;
         }
-
         super.setValue(index, value, alwaysNotify, kind, sync);
-
         // Invalidate cached line layout when any relevant field changes
         const textFields = ["text", "font", "width", "height", "linespacing"];
         if (textFields.includes(fieldName)) {
             this.scrollTopLine = 0;
-            this.allLines = [];
         }
     }
 
     handleKey(key: string, press: boolean): boolean {
-        if (!press) {
-            return this.needsScroll;
-        }
-        if (!this.needsScroll) {
+        if (!press || !this.needsScroll) {
             return false;
         }
+        let handled = false;
         const maxScroll = this.totalLines - this.visibleLines;
         // Page size: last line of current page becomes first line of next page
         const pageSize = Math.max(1, this.visibleLines - 1);
@@ -127,35 +111,28 @@ export class ScrollableText extends Group {
             if (this.scrollTopLine > 0) {
                 this.scrollTopLine--;
                 this.isDirty = true;
-                return true;
+                handled = true;
             }
-            return false;
-        }
-        if (key === "down") {
+        } else if (key === "down") {
             if (this.scrollTopLine < maxScroll) {
                 this.scrollTopLine++;
                 this.isDirty = true;
-                return true;
+                handled = true;
             }
-            return false;
-        }
-        if (key === "rewind") {
+        } else if (key === "rewind") {
             if (this.scrollTopLine > 0) {
                 this.scrollTopLine = Math.max(0, this.scrollTopLine - pageSize);
                 this.isDirty = true;
-                return true;
+                handled = true;
             }
-            return false;
-        }
-        if (key === "fastforward") {
+        } else if (key === "fastforward") {
             if (this.scrollTopLine < maxScroll) {
                 this.scrollTopLine = Math.min(maxScroll, this.scrollTopLine + pageSize);
                 this.isDirty = true;
-                return true;
+                handled = true;
             }
-            return false;
         }
-        return false;
+        return handled;
     }
 
     renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
@@ -216,7 +193,6 @@ export class ScrollableText extends Group {
         // Recompute lines if width changed (no scrollbar case)
         const finalLines = showScrollbar ? textLines : this.computeLines(text, drawFont, textWidth);
 
-        this.allLines = finalLines;
         this.totalLines = finalLines.length;
         this.visibleLines = Math.min(maxVisible, this.totalLines);
         this.needsScroll = showScrollbar;
