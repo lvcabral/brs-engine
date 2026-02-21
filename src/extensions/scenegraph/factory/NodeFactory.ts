@@ -56,6 +56,7 @@ import {
     RowList,
     RSGPalette,
     Scene,
+    ScrollableText,
     ScrollingLabel,
     SGNodeType,
     SoundEffect,
@@ -133,8 +134,9 @@ export class SGNodeFactory {
                 return new Node([], name);
             case SGNodeType.Group.toLowerCase():
             case SGNodeType.TargetGroup.toLowerCase():
-            case SGNodeType.ScrollableText.toLowerCase():
                 return new Group([], name);
+            case SGNodeType.ScrollableText.toLowerCase():
+                return new ScrollableText([], name);
             case SGNodeType.MaskGroup.toLowerCase():
                 return new MaskGroup([], name);
             case SGNodeType.LayoutGroup.toLowerCase():
