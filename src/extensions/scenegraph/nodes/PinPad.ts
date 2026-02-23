@@ -121,9 +121,17 @@ export class PinPad extends Group {
     setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind, sync: boolean = true) {
         const fieldName = index.toLowerCase();
         if (fieldName === "itemfocused" && isAnyNumber(value)) {
-            const itemFocused = jsValueOf(value) ?? 0;
-            this.keyFocus.row = Math.floor(itemFocused / 3);
-            this.keyFocus.col = itemFocused % 3;
+            const newValue = jsValueOf(value) ?? 0;
+            if (newValue >= 0 && newValue <= 11) {
+                const itemFocused = Math.max(0, Math.min(11, newValue));
+                this.keyFocus.row = Math.floor(itemFocused / 3);
+                this.keyFocus.col = itemFocused % 3;
+            }
+        } else if (fieldName === "pinlength" && isAnyNumber(value)) {
+            const newValue = jsValueOf(value) ?? this.pinLength;
+            if (newValue >= 0 && newValue !== this.pinLength) {
+                this.pinLength = newValue;
+            }
         }
         super.setValue(index, value, alwaysNotify, kind, sync);
     }
@@ -157,7 +165,7 @@ export class PinPad extends Group {
             handled = false;
         }
         if (handled) {
-            this.setValue("itemFocused", new Int32(this.keyFocus.row * 3 + this.keyFocus.col));
+            super.setValue("itemFocused", new Int32(this.keyFocus.row * 3 + this.keyFocus.col));
         }
         return handled;
     }
@@ -172,7 +180,7 @@ export class PinPad extends Group {
             handled = true;
         }
         if (handled) {
-            this.setValue("itemFocused", new Int32(this.keyFocus.row * 3 + this.keyFocus.col));
+            super.setValue("itemFocused", new Int32(this.keyFocus.row * 3 + this.keyFocus.col));
         }
         return handled;
     }
@@ -198,8 +206,7 @@ export class PinPad extends Group {
     }
 
     private addDigit(digit: string) {
-        const maxLen = (this.getValueJS("pinLength") as number) ?? this.pinLength;
-        if (this.pin.length >= maxLen) return false;
+        if (this.pin.length >= this.pinLength) return false;
         this.pin += digit;
         this.setValue("pin", new BrsString(this.pin));
         return true;
@@ -236,7 +243,6 @@ export class PinPad extends Group {
             this.focusedKeyColor = this.getValueJS("focusedKeyColor") as number;
             this.pinDisplayTextColor = this.getValueJS("pinDisplayTextColor") as number;
             this.pin = (this.getValueJS("pin") as string) ?? "";
-            this.pinLength = (this.getValueJS("pinLength") as number) ?? 4;
             this.secureMode = (this.getValueJS("secureMode") as boolean) ?? true;
             this.showPinDisplay = (this.getValueJS("showPinDisplay") as boolean) ?? true;
 
@@ -267,7 +273,7 @@ export class PinPad extends Group {
         this.renderKeys(rect.x + this.keyBaseX, topY + this.keyBaseY, opacity, isFocused, draw2D);
 
         // Draw pin entry display boxes above the keyboard
-        if (this.showPinDisplay) {
+        if (this.showPinDisplay && this.pinLength > 0) {
             this.renderPinDisplay(rect, opacity, draw2D);
         }
 
