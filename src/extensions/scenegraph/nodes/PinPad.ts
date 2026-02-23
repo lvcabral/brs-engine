@@ -53,9 +53,9 @@ export class PinPad extends Group {
     private bmpBack?: RoBitmap;
     private bmpFocus?: RoBitmap;
     private bmpInputField?: RoBitmap;
-    private bmpDot?: RoBitmap;
-    private bmpDelete?: RoBitmap;
-    private bmpClear?: RoBitmap;
+    private readonly bmpDot?: RoBitmap;
+    private readonly bmpDelete?: RoBitmap;
+    private readonly bmpClear?: RoBitmap;
 
     // Layout constants (set in constructor based on resolution)
     private readonly keyBaseX: number;
