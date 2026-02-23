@@ -14,7 +14,7 @@ The **BrightScript Engine** implements the BrightScript language specification u
     * The basic nodes: `ContentNode`, `Group`, `Scene`, `Global`, `Timer`, `Rectangle`, `Poster`, `LayoutGroup` and `RSGPalette`
     * Typographic nodes: `Font`, `Label`, `ScrollingLabel` and `ScrollableText`
     * Grids and list nodes based on `ArrayGrid`: `PosterGrid`, `LabelList`, `CheckList`, `RadioButtonList`, `MarkupList`, `MarkupGrid`, `RowList` and `ZoomRowList`
-    * Dialog related nodes: `Dialog`, `KeyboardDialog`, `PinDialog`, `StandardDialog`, `StandardProgressDialog`, `StdDlgProgressItem`, `StdDlgContentArea` and `StdDlgTitleArea`
+    * Dialog related nodes: `Dialog`, `KeyboardDialog`, `PinDialog`, `ProgressDialog`, `StandardDialog`, `StandardProgressDialog`, `StdDlgProgressItem`, `StdDlgContentArea` and `StdDlgTitleArea`
     * Media related nodes: `Audio`, `SoundEffect`, `Video` and `TrickPlayBar`
     * Animation related nodes: `AnimationBase`, `Animation`, `SequentialAnimation`, `ParallelAnimation`, `ColorFieldInterpolator`, `FloatFieldInterpolator` and `Vector2DFieldInterpolator`
     * Panel related nodes: `OverhangPanelSetScene`, `PanelSet`, `Panel`, `GridPanel` and `ListPanel`
