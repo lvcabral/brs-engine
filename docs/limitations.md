@@ -8,20 +8,21 @@ The **BrightScript Engine** implements the BrightScript language specification u
   * Load XML component files and create SceneGraph nodes tree.
   * Basic support for `roSGNode` and `roSGScreen` components and rendering.
   * The `Task` node is implemented but its behavior is limited:
-    * For now only 10 task threads are supported per application
+    * For now only 10 concurrent task threads are supported per application
     * Only one `port` instance can be used on Task `init()` to observe fields
   * The following nodes are already implemented:
-    * The basic nodes: `ContentNode`, `Group`, `Scene`, `Global`, `Font`, `Timer`, `Rectangle`, `Label`, `ScrollingLabel`, `Poster`, `LayoutGroup` and `RSGPalette`
+    * The basic nodes: `ContentNode`, `Group`, `Scene`, `Global`, `Timer`, `Rectangle`, `Poster`, `LayoutGroup` and `RSGPalette`
+    * Typographic nodes: `Font`, `Label`, `ScrollingLabel` and `ScrollableText`
     * Grids and list nodes based on `ArrayGrid`: `PosterGrid`, `LabelList`, `CheckList`, `RadioButtonList`, `MarkupList`, `MarkupGrid`, `RowList` and `ZoomRowList`
-    * Dialog related nodes: `Dialog`, `KeyboardDialog`, `StandardDialog`, `StandardProgressDialog`, `StdDlgProgressItem`, `StdDlgContentArea` and `StdDlgTitleArea`
+    * Dialog related nodes: `Dialog`, `KeyboardDialog`, `PinDialog`, `StandardDialog`, `StandardProgressDialog`, `StdDlgProgressItem`, `StdDlgContentArea` and `StdDlgTitleArea`
     * Media related nodes: `Audio`, `SoundEffect`, `Video` and `TrickPlayBar`
     * Animation related nodes: `AnimationBase`, `Animation`, `SequentialAnimation`, `ParallelAnimation`, `ColorFieldInterpolator`, `FloatFieldInterpolator` and `Vector2DFieldInterpolator`
     * Panel related nodes: `OverhangPanelSetScene`, `PanelSet`, `Panel`, `GridPanel` and `ListPanel`
-    * Other supported nodes: `Button`, `ButtonGroup`, `BusySpinner`, `Overhang`, `InfoPane`, `Keyboard`, `MiniKeyboard`, `TextEditBox` and `ChannelStore`
+    * Other supported nodes: `Button`, `ButtonGroup`, `BusySpinner`, `Overhang`, `InfoPane`, `Keyboard`, `MiniKeyboard`, `PinPad` and `TextEditBox`
   * Some of the nodes listed above may not have full functionality yet, please open a [GitHub issue](https://github.com/lvcabral/brs-engine/issues) if you find any problem or missing feature.
   * The following `ifSGNodeBoundingRect` methods are not implemented yet: `localSubBoundingRect`, `subBoundingRect`, `sceneSubBoundingRect` and `ancestorSubBoundingRect`
-  * The support for focus change animation on grid and list nodes is not yet implemented.
-  * All other nodes are either mocked or not implemented yet, and if used will be created as a plain `Node`.
+  * The support for focus change animation on grid, list and panel nodes is not implemented yet.
+  * All other nodes are either mocked or still not implemented, and if used will be created as a plain `Node`.
   * The component `roRenderThreadQueue` introduced in Roku OS 15 is still not implemented.
 * The following components are also not implemented yet:
   * Text to Speech components: `roAudioGuide`, `roMicrophone` and `roTextToSpeech`
@@ -50,8 +51,7 @@ The **BrightScript Engine** implements the BrightScript language specification u
   * The other Cookies related methods are just mocked and do nothing: `GetCookies`, `AddCookies`, `ClearCookies`.
   * The following methods are also only mocked but do nothing: `EnableResume`, `SetHttpVersion` and `SetMinimumTransferRate`.
 * The complete **Roku OS** file system is available and shared among threads (main, render and tasks), with all volumes: `pkg:`, `common:`, `tmp:`, `cachefs:` and `ext1:`. By default, the external volume (`ext1:`) and the writeable volumes (`tmp:` `cachefs:`) are limited to 32 MB each, see [customization documentation](./customization.md) to learn how to change the limits for writable volumes.
-* The `roFileSystem` is fully functional, including issuing message port event `roFileSystemEvent` for external volume changes.
-* The `roInput` deep link events are supported, but the events related to Voice Commands are not.
+* The `roInput` deep link events are supported, but the events related to Voice Commands are not yet.
 * The component `roAppMemoryMonitor` will only return measured data in Node.JS and Chromium browsers. For browsers the memory heap info only accounts for the main thread, as WebWorkers do not have support for `performance.memory` API. The `roAppMemoryMonitorEvent` is not yet implemented.
 * The global functions `Eval()`, `GetLastRunCompileError()` and `GetLastRunRuntimeError()` are not available.
 * The string `mod` cannot be used as variable or function parameter name, because it conflicts with remainder operator `Mod` (Roku devices allows that).
