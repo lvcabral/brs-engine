@@ -77,9 +77,6 @@ export class PinPad extends Group {
 
         this.font = new Font();
 
-        // --- resolution-dependent layout values ---
-        // HD  image: 272 × 252, margin=14 → inner 244×224, 3×4 grid → offsetX=81, offsetY=56
-        // FHD image: 408 × 378, margin=21 → inner 366×336, 3×4 grid → offsetX=122, offsetY=84
         if (this.resolution === "FHD") {
             this.keyBaseX = 21;
             this.keyBaseY = 21;
