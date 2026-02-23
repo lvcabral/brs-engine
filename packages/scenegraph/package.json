@@ -36,7 +36,7 @@
         "release": "webpack --config ./config/webpack.config.js --env production && tsc --project ./config/tsconfig.json",
         "clean": "rimraf ./lib ./types ./assets",
         "test": "jest",
-        "prepublishOnly": "npm-run-all --serial clean release"
+        "prepublishOnly": "npm run clean && npm run release"
     },
     "dependencies": {
         "xmldoc": "^1.3.0",
