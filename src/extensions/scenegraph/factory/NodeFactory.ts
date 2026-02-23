@@ -42,6 +42,7 @@ import {
     MarkupGrid,
     MarkupList,
     MiniKeyboard,
+    PinPad,
     Node,
     Overhang,
     OverhangPanelSetScene,
@@ -199,6 +200,8 @@ export class SGNodeFactory {
                 return new Keyboard([], name);
             case SGNodeType.MiniKeyboard.toLowerCase():
                 return new MiniKeyboard([], name);
+            case SGNodeType.PinPad.toLowerCase():
+                return new PinPad([], name);
             case SGNodeType.TextEditBox.toLowerCase():
                 return new TextEditBox([], name);
             case SGNodeType.VoiceTextEditBox.toLowerCase():
