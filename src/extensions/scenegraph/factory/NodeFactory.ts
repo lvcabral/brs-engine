@@ -65,6 +65,7 @@ import {
     StandardDialog,
     StandardKeyboardDialog,
     StandardProgressDialog,
+    ProgressDialog,
     StdDlgContentArea,
     StdDlgProgressItem,
     StdDlgTitleArea,
@@ -227,6 +228,8 @@ export class SGNodeFactory {
                 return new StandardKeyboardDialog([], name);
             case SGNodeType.StandardProgressDialog.toLowerCase():
                 return new StandardProgressDialog([], name);
+            case SGNodeType.ProgressDialog.toLowerCase():
+                return new ProgressDialog([], name);
             case SGNodeType.StdDlgContentArea.toLowerCase():
                 return new StdDlgContentArea([], name);
             case SGNodeType.StdDlgTitleArea.toLowerCase():

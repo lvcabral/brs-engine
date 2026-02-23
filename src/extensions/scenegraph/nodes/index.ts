@@ -43,6 +43,7 @@ export * from "./SoundEffect";
 export * from "./StandardDialog";
 export * from "./StandardKeyboardDialog";
 export * from "./StandardProgressDialog";
+export * from "./ProgressDialog";
 export * from "./StdDlgContentArea";
 export * from "./StdDlgProgressItem";
 export * from "./StdDlgTitleArea";
@@ -89,7 +90,7 @@ export enum SGNodeType {
     StandardMessageDialog = "StandardMessageDialog", // Not yet implemented
     StandardPinPadDialog = "StandardPinPadDialog", // Not yet implemented
     StandardProgressDialog = "StandardProgressDialog",
-    ProgressDialog = "ProgressDialog", // Not yet implemented
+    ProgressDialog = "ProgressDialog",
     StdDlgActionCardItem = "StdDlgActionCardItem", // Not yet implemented
     StdDlgAreaBase = "StdDlgAreaBase", // Not yet implemented
     StdDlgBulletTextItem = "StdDlgBulletTextItem", // Not yet implemented
