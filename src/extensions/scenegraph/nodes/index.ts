@@ -21,6 +21,7 @@ export * from "./LayoutGroup";
 export * from "./MarkupGrid";
 export * from "./MarkupList";
 export * from "./MiniKeyboard";
+export * from "./PinPad";
 export * from "./Node";
 export * from "./Overhang";
 export * from "./OverhangPanelSetScene";
@@ -79,7 +80,7 @@ export enum SGNodeType {
     OverhangPanelSetScene = "OverhangPanelSetScene",
     Dialog = "Dialog",
     KeyboardDialog = "KeyboardDialog",
-    PinPad = "PinPad", // Not yet implemented
+    PinPad = "PinPad",
     PinDialog = "PinDialog", // Not yet implemented
     ParentalControlPinPad = "ParentalControlPinPad", // Not yet implemented
     StandardDialog = "StandardDialog",
