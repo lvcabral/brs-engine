@@ -1,4 +1,16 @@
-import { AAMember, BrsBoolean, BrsString, Float, IfDraw2D, Interpreter, Int32, Rect, RoBitmap, BrsType, isAnyNumber } from "brs-engine";
+import {
+    AAMember,
+    BrsBoolean,
+    BrsString,
+    Float,
+    IfDraw2D,
+    Interpreter,
+    Int32,
+    Rect,
+    RoBitmap,
+    BrsType,
+    isAnyNumber,
+} from "brs-engine";
 import { FieldKind, FieldModel } from "../SGTypes";
 import { SGNodeType } from ".";
 import { Group } from "./Group";
@@ -115,7 +127,6 @@ export class PinPad extends Group {
         }
         super.setValue(index, value, alwaysNotify, kind, sync);
     }
-
 
     // -------------------------------------------------------------------------
     // Key handling
