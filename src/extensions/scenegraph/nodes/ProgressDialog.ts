@@ -5,9 +5,7 @@ import { Dialog } from "./Dialog";
 import { BusySpinner } from "./BusySpinner";
 
 export class ProgressDialog extends Dialog {
-    readonly defaultFields: FieldModel[] = [
-        { name: "busySpinner", type: "node" },
-    ];
+    readonly defaultFields: FieldModel[] = [{ name: "busySpinner", type: "node" }];
 
     protected readonly minHeight: number;
     private readonly spinner: BusySpinner;
