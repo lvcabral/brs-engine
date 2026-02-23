@@ -43,6 +43,7 @@ import {
     MarkupList,
     MiniKeyboard,
     PinPad,
+    PinDialog,
     Node,
     Overhang,
     OverhangPanelSetScene,
@@ -148,6 +149,8 @@ export class SGNodeFactory {
                 return new ButtonGroup([], name);
             case SGNodeType.KeyboardDialog.toLowerCase():
                 return new KeyboardDialog([], name);
+            case SGNodeType.PinDialog.toLowerCase():
+                return new PinDialog([], name);
             case SGNodeType.Dialog.toLowerCase():
                 return new Dialog([], name);
             case SGNodeType.Rectangle.toLowerCase():

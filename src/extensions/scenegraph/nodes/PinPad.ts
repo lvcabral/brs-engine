@@ -139,7 +139,13 @@ export class PinPad extends Group {
 
     handleKey(key: string, press: boolean): boolean {
         if (!press) return false;
-        if (key === "left" || key === "right") {
+        if (key.startsWith("Lit_")) {
+            const char = key.substring(4);
+            if (/^\d$/.test(char)) {
+                return this.addDigit(char);
+            }
+            return false;
+        } else if (key === "left" || key === "right") {
             return this.handleLeftRight(key);
         } else if (key === "up" || key === "down") {
             return this.handleUpDown(key);
@@ -147,6 +153,16 @@ export class PinPad extends Group {
             return this.handleOK();
         } else if (key === "replay") {
             return this.deleteLastDigit();
+        } else if (key === "rewind") {
+            if (this.keyFocus.row === 0) return false;
+            this.keyFocus.row = 0;
+            super.setValue("itemFocused", new Int32(this.keyFocus.col));
+            return true;
+        } else if (key === "fastforward") {
+            if (this.keyFocus.row === 3) return false;
+            this.keyFocus.row = 3;
+            super.setValue("itemFocused", new Int32(3 * 3 + this.keyFocus.col));
+            return true;
         }
         return false;
     }
