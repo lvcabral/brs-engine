@@ -54,6 +54,7 @@ export class Poster extends Group {
         if (fieldName === "uri") {
             const uri = jsValueOf(value);
             if (typeof uri === "string" && uri.trim() !== "" && this.uri !== uri) {
+                super.setValue("loadStatus", new BrsString("loading"));
                 this.uri = uri;
                 const loadStatus = this.loadUri(uri);
                 if (loadStatus !== "ready") {
