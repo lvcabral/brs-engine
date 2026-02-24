@@ -901,8 +901,6 @@ export class Node extends RoSGNode implements BrsValue {
                 return false;
             }
 
-            sgRoot.setFocused(this);
-
             // Get the focus chain, with lowest ancestor first.
             let newFocusChain = this.createPath();
 
@@ -925,6 +923,8 @@ export class Node extends RoSGNode implements BrsValue {
                     currFocusChain[i].setValue(focusedChild, BrsInvalid.Instance, false);
                 }
             }
+            // Set the global focused node reference to this node.
+            sgRoot.setFocused(this);
 
             // Set the focusedChild for each ancestor to the next node in the chain,
             // which is the current node's child.
