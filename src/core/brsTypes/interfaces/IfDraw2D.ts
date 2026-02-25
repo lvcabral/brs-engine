@@ -988,6 +988,9 @@ export function releaseCanvas(canvas: BrsCanvas) {
 }
 
 export function drawImageAtPos(image: BrsCanvas, ctx: BrsCanvasContext2D, x: number, y: number) {
+    if (image.width === 0 || image.height === 0) {
+        return;
+    }
     /// #if BROWSER
     if (ctx instanceof OffscreenCanvasRenderingContext2D && image instanceof OffscreenCanvas) {
         ctx.drawImage(image, x, y);
@@ -1069,6 +1072,9 @@ export function CircleCircle(circle1: Circle, circle2: Circle): boolean {
 }
 
 function drawChunk(ctx: BrsCanvasContext2D, image: BrsCanvas, chunk: DrawChunk) {
+    if (image.width === 0 || image.height === 0) {
+        return;
+    }
     const { sx, sy, sw, sh, dx, dy, dw, dh } = chunk;
     /// #if BROWSER
     if (ctx instanceof OffscreenCanvasRenderingContext2D && image instanceof OffscreenCanvas) {
