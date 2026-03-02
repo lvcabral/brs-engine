@@ -121,4 +121,47 @@ sub main()
     bar.pop()
     bar.pop()
     print "count: " + bar.count().toStr() + " capacity: " + bar.capacity().toStr() + " resizable: " + bar.isResizable().toStr() + " 5 pop()"
+
+    ' slice tests - array [10, 20, 30, 40, 50, 60]
+    bs = CreateObject("roByteArray")
+    bs.fromHexString("0A141E28323C")
+
+    ' slice from index 2 to end
+    s = bs.slice(2)
+    print s.count() = 4 and s[0] = 30 and s[3] = 60
+
+    ' slice from index 1 to 4 (exclusive)
+    s = bs.slice(1, 4)
+    print s.count() = 3 and s[0] = 20 and s[2] = 40
+
+    ' empty when start index >= array length
+    s = bs.slice(6)
+    print s.count() = 0
+
+    ' empty when start index > end index
+    s = bs.slice(4, 3)
+    print s.count() = 0
+
+    ' empty when start index = end index
+    s = bs.slice(3, 3)
+    print s.count() = 0
+
+    ' full array when negative start index exceeds array length
+    s = bs.slice(-7)
+    print s.count() = 6 and s[0] = 10 and s[5] = 60
+
+    ' last N bytes when negative start index is within array length
+    s = bs.slice(-4)
+    print s.count() = 4 and s[0] = 30 and s[3] = 60
+
+    ' empty when negative start resolves to position after end index
+    s = bs.slice(-2, 1)
+    print s.count() = 0
+
+    ' range when positive start and negative end
+    s = bs.slice(2, -2)
+    print s.count() = 2 and s[0] = 30 and s[1] = 40
+
+    ' original array is not modified
+    print bs.count() = 6 and bs[0] = 10 and bs[5] = 60
 end sub

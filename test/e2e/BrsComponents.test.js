@@ -271,6 +271,16 @@ describe("end to end brightscript functions", () => {
             "count: 7 capacity: 7 resizable: false append",
             "count: 7 capacity: 7 resizable: false append",
             "count: 2 capacity: 7 resizable: false 5 pop()",
+            "true",
+            "true",
+            "true",
+            "true",
+            "true",
+            "true",
+            "true",
+            "true",
+            "true",
+            "true",
         ]);
     });
 

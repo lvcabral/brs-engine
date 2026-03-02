@@ -52,6 +52,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             ],
             ifArrayGet: [this.getEntry],
             ifArraySet: [this.setEntry],
+            ifArraySlice: [this.slice],
             ifArraySizeInfo: [this.capacity, this.isResizable],
             ifEnum: [ifEnum.isEmpty, ifEnum.isNext, ifEnum.next, ifEnum.reset],
         });
@@ -652,6 +653,26 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
                 );
             }
             return this.set(index, value);
+        },
+    });
+
+    // ifArraySlice
+
+    /** Returns a copy of a portion of an array into a new array selected from start to end (end not included) */
+    private readonly slice = new Callable("slice", {
+        signature: {
+            args: [
+                new StdlibArgument("start", ValueKind.Int32 | ValueKind.Float, new Int32(0)),
+                new StdlibArgument("end", ValueKind.Int32 | ValueKind.Float, BrsInvalid.Instance),
+            ],
+            returns: ValueKind.Object,
+        },
+        impl: (_: Interpreter, start: Int32 | Float, end: Int32 | Float | BrsInvalid) => {
+            if (end instanceof BrsInvalid) {
+                return new RoByteArray(this.elements.slice(start.getValue()));
+            } else {
+                return new RoByteArray(this.elements.slice(start.getValue(), end.getValue()));
+            }
         },
     });
 
