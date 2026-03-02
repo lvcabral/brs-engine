@@ -149,6 +149,16 @@ export class Field {
         Field.flushNotificationQueue();
     }
 
+    /**
+     * Iteratively drains the notification queue, dispatching each field's observers
+     * exactly once per batch. Any observer that triggers further field changes will
+     * enqueue those fields rather than dispatching inline, breaking recursive cascades.
+     *
+     * NOTE: This changes nested observer dispatch from depth-first (inline/recursive)
+     * to breadth-first (queued/iterative). Observers that previously fired during a
+     * parent observer's callback now fire after it returns. Code that depends on
+     * observer execution order across fields may observe a different ordering.
+     */
     private static flushNotificationQueue() {
         if (Field.flushingNotifications) {
             return;
