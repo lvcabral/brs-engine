@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Reproduces cross-field observer recursion via ContentNode parentField propagation.
+
+    Two ContentNodes (A and B) are held in node-typed interface fields, which registers
+    them as parentFields. 1200 duplicate observers are registered per field. When A's
+    title changes, parentField propagation notifies itemContentA observers, each of which
+    mutates B's title, which in turn notifies itemContentB observers that mutate A.
+
+    Each observeField() call creates a distinct BrsCallback object, so the per-callback
+    re-entry guard (callback.running) only blocks the one currently executing. The remaining
+    1199 callbacks recurse deeper, producing ~1200 nested dispatchObservers frames.
+    Without the Field-level queued notification dispatch, this overflows the call stack.
+
+    With the fix, all 1200 callbacks on each field fire exactly once via the breadth-first
+    queue, completing normally.
+-->
+<component name="ContentLoopScene" extends="Scene">
+    <interface>
+        <field id="itemContentA" type="node" />
+        <field id="itemContentB" type="node" />
+    </interface>
+    <script type="text/brightscript">
+        <![CDATA[
+        sub init()
+            ' 1200 is enough to exceed Node.js stack limit (~8800 frames) via recursive
+            ' dispatch. Each pair of cross-callbacks adds ~7 stack frames.
+            m.callbackRepeats = 1200
+            m.countA = 0
+            m.countB = 0
+
+            m.contentA = CreateObject("roSGNode", "ContentNode")
+            m.contentB = CreateObject("roSGNode", "ContentNode")
+
+            m.top.itemContentA = m.contentA
+            m.top.itemContentB = m.contentB
+
+            for i = 0 to m.callbackRepeats - 1
+                m.top.observeField("itemContentA", "onItemContentA")
+                m.top.observeField("itemContentB", "onItemContentB")
+            end for
+
+            print "Observer registrations per field:"; m.callbackRepeats
+            runRepro()
+        end sub
+
+        sub runRepro()
+            print "Triggering ContentNode title update"
+            m.contentA.title = "start"
+            print "A callbacks fired:"; m.countA
+            print "B callbacks fired:"; m.countB
+        end sub
+
+        sub onItemContentA(event as Object)
+            m.countA = m.countA + 1
+            m.contentB.title = "b-" + m.countA.toStr()
+        end sub
+
+        sub onItemContentB(event as Object)
+            m.countB = m.countB + 1
+            m.contentA.title = "a-" + m.countB.toStr()
+        end sub
+        ]]>
+    </script>
+</component>

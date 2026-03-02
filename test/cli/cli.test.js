@@ -215,5 +215,46 @@ describe("cli", () => {
         ]);
     }, 10000);
 
+    it("ContentNode Recursion Repro Test", async () => {
+        let command = ["node", brsCliPath, "-r contentnode-recursion-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "=== ContentNode Recursion Repro ===",
+            "Observer registrations per field: 1200",
+            "Triggering ContentNode title update",
+            "A callbacks fired: 1200",
+            "B callbacks fired: 1200",
+            "=== ContentNode Recursion Repro Complete ===",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 10000);
+
+    it("ContentNode ParentField Recursion Repro Test", async () => {
+        let command = ["node", brsCliPath, "-r contentnode-parentfield-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "=== ContentNode ParentField Repro ===",
+            "Trigger 1: listActive = true",
+            "  Active: 1 ContentNotify: 1",
+            "Trigger 2: listActive = false",
+            "  Active: 3 ContentNotify: 2",
+            "Trigger 3: listActive = true",
+            "  Active: 6 ContentNotify: 3",
+            "=== ContentNode ParentField Repro Complete ===",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 10000);
+
+
     it.todo("add tests for the remaining CLI options");
 });

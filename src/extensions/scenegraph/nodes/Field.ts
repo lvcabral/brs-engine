@@ -35,9 +35,20 @@ import { fromAssociativeArray, toAssociativeArray, jsValueOf } from "../factory/
 import { BrsCallback, FieldKind, isContentNode } from "../SGTypes";
 
 export class Field {
+    /** Queue used to iteratively dispatch field notifications and avoid recursive observer cascades. */
+    private static readonly notifyQueue: Field[] = [];
+    /** Tracks fields currently queued for notification in the active dispatch cycle. */
+    private static readonly queuedFields: Set<Field> = new Set();
+    /** Indicates that notifications are currently being dispatched. */
+    private static flushingNotifications = false;
+    /** Monotonic identifier for the current notification dispatch cycle. */
+    private static currentBatchId = 0;
+
     private readonly permanentObservers: BrsCallback[] = [];
     private readonly unscopedObservers: BrsCallback[] = [];
     private readonly scopedObservers: Map<Node, BrsCallback[]> = new Map();
+    /** Records the most recent dispatch cycle in which this field observers were invoked. */
+    private lastNotifiedBatchId = -1;
 
     constructor(
         private readonly name: string = "",
@@ -127,6 +138,54 @@ export class Field {
     }
 
     notifyObservers() {
+        // Coalesce recursive notifications for the same field within one dispatch cycle.
+        if (Field.flushingNotifications && this.lastNotifiedBatchId === Field.currentBatchId) {
+            return;
+        }
+        if (!Field.queuedFields.has(this)) {
+            Field.notifyQueue.push(this);
+            Field.queuedFields.add(this);
+        }
+        Field.flushNotificationQueue();
+    }
+
+    /**
+     * Iteratively drains the notification queue, dispatching each field's observers
+     * exactly once per batch. Any observer that triggers further field changes will
+     * enqueue those fields rather than dispatching inline, breaking recursive cascades.
+     *
+     * NOTE: This changes nested observer dispatch from depth-first (inline/recursive)
+     * to breadth-first (queued/iterative). Observers that previously fired during a
+     * parent observer's callback now fire after it returns. Code that depends on
+     * observer execution order across fields may observe a different ordering.
+     */
+    private static flushNotificationQueue() {
+        if (Field.flushingNotifications) {
+            return;
+        }
+        Field.flushingNotifications = true;
+        Field.currentBatchId++;
+        try {
+            while (Field.notifyQueue.length > 0) {
+                const field = Field.notifyQueue.shift();
+                if (!field) {
+                    continue;
+                }
+                Field.queuedFields.delete(field);
+                if (field.lastNotifiedBatchId === Field.currentBatchId) {
+                    continue;
+                }
+                field.lastNotifiedBatchId = Field.currentBatchId;
+                field.dispatchObservers();
+            }
+        } finally {
+            Field.notifyQueue.length = 0;
+            Field.queuedFields.clear();
+            Field.flushingNotifications = false;
+        }
+    }
+
+    private dispatchObservers() {
         for (const observer of this.permanentObservers) {
             this.executeCallbacks(observer);
         }

@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+
+### Bug Fixes
+
+* (rsg) Fixed stack overflow from recursive ContentNode observer cascades by switching Field notification dispatch from inline (depth-first) to queued (breadth-first). **Note:** observers that previously fired during a parent observer's callback now fire after it returns, which may change execution ordering for code with nested cross-field observer chains.
+
 
 <a name="v2.1.0"></a>
 
