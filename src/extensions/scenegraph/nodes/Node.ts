@@ -354,14 +354,11 @@ export class Node extends RoSGNode implements BrsValue {
         const fieldType = kind ?? FieldKind.fromBrsType(value);
         let field = this.fields.get(mapKey);
         if (field && field.getType() !== FieldKind.String && isBrsString(value)) {
-            // If the field is not a string, but the value is a string, convert it.
-            // If the conversion fails, keep the original value.
             value = getBrsValueFromFieldType(field.getType(), value.getValue(), field.getValue());
         }
         let errorMsg = "";
         try {
             if (!field) {
-                // RBI does not create a new field if the value isn't valid.
                 if (fieldType && alwaysNotify !== undefined) {
                     field = new Field(index, value, fieldType, alwaysNotify);
                     this.fields.set(mapKey, field);
