@@ -226,6 +226,98 @@ describe("RoByteArray", () => {
             });
         });
 
+        describe("slice", () => {
+            it("returns a new byte array from the given start index to the end of the array", () => {
+                let src = new RoByteArray(new Uint8Array([10, 20, 30, 40, 50, 60]));
+
+                let slice = src.getMethod("slice");
+                expect(slice).toBeTruthy();
+                let result = slice.call(interpreter, new Int32(2));
+                expect(result.elements).toEqual(new Uint8Array([30, 40, 50, 60]));
+            });
+
+            it("returns a new byte array from the given start index to the given end index (exclusive)", () => {
+                let src = new RoByteArray(new Uint8Array([10, 20, 30, 40, 50, 60]));
+
+                let slice = src.getMethod("slice");
+                expect(slice).toBeTruthy();
+                let result = slice.call(interpreter, new Int32(1), new Int32(4));
+                expect(result.elements).toEqual(new Uint8Array([20, 30, 40]));
+            });
+
+            it("returns an empty byte array when the start index is greater than the array length", () => {
+                let src = new RoByteArray(new Uint8Array([10, 20, 30, 40, 50, 60]));
+
+                let slice = src.getMethod("slice");
+                expect(slice).toBeTruthy();
+                let result = slice.call(interpreter, new Int32(6));
+                expect(result.elements).toEqual(new Uint8Array([]));
+            });
+
+            it("returns an empty byte array when the start index is greater than the end index", () => {
+                let src = new RoByteArray(new Uint8Array([10, 20, 30, 40, 50, 60]));
+
+                let slice = src.getMethod("slice");
+                expect(slice).toBeTruthy();
+                let result = slice.call(interpreter, new Int32(4), new Int32(3));
+                expect(result.elements).toEqual(new Uint8Array([]));
+            });
+
+            it("returns an empty byte array when the start index is equal to the end index", () => {
+                let src = new RoByteArray(new Uint8Array([10, 20, 30, 40, 50, 60]));
+
+                let slice = src.getMethod("slice");
+                expect(slice).toBeTruthy();
+                let result = slice.call(interpreter, new Int32(3), new Int32(3));
+                expect(result.elements).toEqual(new Uint8Array([]));
+            });
+
+            it("returns the full byte array when the start index is negative and its absolute value exceeds the array length", () => {
+                let src = new RoByteArray(new Uint8Array([10, 20, 30, 40, 50, 60]));
+
+                let slice = src.getMethod("slice");
+                expect(slice).toBeTruthy();
+                let result = slice.call(interpreter, new Int32(-7));
+                expect(result.elements).toEqual(new Uint8Array([10, 20, 30, 40, 50, 60]));
+            });
+
+            it("returns the last N bytes when the start index is negative and within the array length", () => {
+                let src = new RoByteArray(new Uint8Array([10, 20, 30, 40, 50, 60]));
+
+                let slice = src.getMethod("slice");
+                expect(slice).toBeTruthy();
+                let result = slice.call(interpreter, new Int32(-4));
+                expect(result.elements).toEqual(new Uint8Array([30, 40, 50, 60]));
+            });
+
+            it("returns an empty byte array when the negative start index resolves to a position after the end index", () => {
+                let src = new RoByteArray(new Uint8Array([10, 20, 30, 40, 50, 60]));
+
+                let slice = src.getMethod("slice");
+                expect(slice).toBeTruthy();
+                let result = slice.call(interpreter, new Int32(-2), new Int32(1));
+                expect(result.elements).toEqual(new Uint8Array([]));
+            });
+
+            it("returns a range when the start index is positive and the end index is negative", () => {
+                let src = new RoByteArray(new Uint8Array([10, 20, 30, 40, 50, 60]));
+
+                let slice = src.getMethod("slice");
+                expect(slice).toBeTruthy();
+                let result = slice.call(interpreter, new Int32(2), new Int32(-2));
+                expect(result.elements).toEqual(new Uint8Array([30, 40]));
+            });
+
+            it("does not modify the original byte array", () => {
+                let src = new RoByteArray(new Uint8Array([10, 20, 30, 40, 50, 60]));
+
+                let slice = src.getMethod("slice");
+                expect(slice).toBeTruthy();
+                slice.call(interpreter, new Int32(1), new Int32(4));
+                expect(src.elements).toEqual(new Uint8Array([10, 20, 30, 40, 50, 60]));
+            });
+        });
+
         describe("ifByteArray methods", () => {
             describe("fromAsciiString", () => {
                 it("converts a string to a byte array", () => {
