@@ -1,4 +1,4 @@
-import { BrsType, Float, Int32, isBoxedNumber, isBrsNumber } from "..";
+import { BrsType, Float, Int32, isBoxedNumber, isBrsNumber, jsValueOf } from "..";
 import { BrsValue, ValueKind, BrsBoolean, BrsInvalid, BrsString } from "../BrsType";
 import { BrsComponent, BrsIterable } from "./BrsComponent";
 import { Callable, StdlibArgument } from "../Callable";
@@ -534,11 +534,11 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             args: [new StdlibArgument("byte", ValueKind.Dynamic)],
             returns: ValueKind.Void,
         },
-        impl: (interpreter: Interpreter, byte: Int32 | Float | BrsInvalid) => {
+        impl: (interpreter: Interpreter, byte: BrsType) => {
             if (isBrsNumber(byte)) {
                 if (this.resizable || this.elements.length < this.maxSize) {
                     let array = new Uint8Array(this.elements.length + 1);
-                    array[0] = byte.getValue();
+                    array[0] = jsValueOf(byte);
                     array.set(this.elements, 1);
                     this.elements = array;
                     this.updateNext();
@@ -646,7 +646,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             ],
             returns: ValueKind.Void,
         },
-        impl: (interpreter: Interpreter, index: Int32 | Float, value: BrsType) => {
+        impl: (interpreter: Interpreter, index: BrsType, value: BrsType) => {
             if (!isBrsNumber(value)) {
                 BrsDevice.stderr.write(
                     `warning,BRIGHTSCRIPT: ERROR: roByteArray.SetEntry: set ignored for non-numeric value: ${interpreter.formatLocation()}`
@@ -667,11 +667,11 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             ],
             returns: ValueKind.Object,
         },
-        impl: (_: Interpreter, start: Int32 | Float, end: Int32 | Float | BrsInvalid) => {
+        impl: (_: Interpreter, start: BrsType, end: BrsType) => {
             if (end instanceof BrsInvalid) {
-                return new RoByteArray(this.elements.slice(start.getValue()));
+                return new RoByteArray(this.elements.slice(jsValueOf(start)));
             } else {
-                return new RoByteArray(this.elements.slice(start.getValue(), end.getValue()));
+                return new RoByteArray(this.elements.slice(jsValueOf(start), jsValueOf(end)));
             }
         },
     });
