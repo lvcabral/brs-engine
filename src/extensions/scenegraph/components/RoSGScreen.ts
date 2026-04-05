@@ -62,6 +62,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     private sceneType?: BrsString;
     private alphaEnable: boolean;
     private lastMessage: number;
+    private rendering: boolean;
     width: number;
     height: number;
     scaleMode: number;
@@ -75,6 +76,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         this.alphaEnable = true;
         this.scaleMode = 1;
         this.isDirty = false;
+        this.rendering = false;
         this.lastMessage = performance.now();
         const maxFps = BrsDevice.deviceInfo.maxFps;
         this.maxMs = Math.trunc((1 / maxFps) * 1000);
@@ -174,43 +176,55 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
 
     /** Message callback to handle control keys and Scene rendering */
     private getNewEvents(interpreter: Interpreter) {
-        const events: BrsEvent[] = [];
-        // Handle control keys
-        const event = this.handleNextKey(interpreter);
-        if (event instanceof BrsEvent) {
-            events.push(event);
+        if (this.rendering || !interpreter) {
+            return [];
         }
-        // Handle Scene Events
-        if (sgRoot.scene instanceof Scene) {
-            const timersFired = sgRoot.processTimers();
-            const animUpdated = sgRoot.processAnimations();
-            const tasksUpdated = sgRoot.processTasks();
-            const audioUpdated = sgRoot.processAudio();
-            const sfxUpdated = sgRoot.processSFX();
-            const videoUpdated = sgRoot.processVideo();
-            this.isDirty ||= timersFired || animUpdated || tasksUpdated || audioUpdated || sfxUpdated || videoUpdated;
-            // Render Scene and Dialog
-            const showDialog = sgRoot.scene?.dialog instanceof Node;
-            if (sgRoot.isDirty || this.isDirty || showDialog) {
-                sgRoot.clearDirty();
-                sgRoot.scene.renderNode(interpreter, [0, 0], 0, 1, this.draw2D);
+        this.rendering = true;
+        try {
+            const events: BrsEvent[] = [];
+            // Handle control keys
+            const event = this.handleNextKey(interpreter);
+            if (event instanceof RoSGScreenEvent) {
+                // Route screen events to the screen's own port (matches Roku behavior)
+                this.port?.pushMessage(event);
+            } else if (event instanceof BrsEvent) {
+                events.push(event);
             }
-            if (showDialog) {
-                const dialog = sgRoot.scene.dialog!;
-                dialog.setValueSilent("visible", BrsBoolean.True);
-                const screenRect = { x: 0, y: 0, width: this.width, height: this.height };
-                this.draw2D.doDrawRotatedRect(screenRect, 255, 0, [0, 0], 0.5);
-                dialog.renderNode(interpreter, [0, 0], 0, 1, this.draw2D);
+            // Handle Scene Events
+            if (sgRoot.scene instanceof Scene) {
+                const timersFired = sgRoot.processTimers();
+                const animUpdated = sgRoot.processAnimations();
+                const tasksUpdated = sgRoot.processTasks();
+                const audioUpdated = sgRoot.processAudio();
+                const sfxUpdated = sgRoot.processSFX();
+                const videoUpdated = sgRoot.processVideo();
+                this.isDirty ||=
+                    timersFired || animUpdated || tasksUpdated || audioUpdated || sfxUpdated || videoUpdated;
+                // Render Scene and Dialog
+                const showDialog = sgRoot.scene?.dialog instanceof Node;
+                if (sgRoot.isDirty || this.isDirty || showDialog) {
+                    sgRoot.clearDirty();
+                    sgRoot.scene.renderNode(interpreter, [0, 0], 0, 1, this.draw2D);
+                }
+                if (showDialog) {
+                    const dialog = sgRoot.scene.dialog!;
+                    dialog.setValueSilent("visible", BrsBoolean.True);
+                    const screenRect = { x: 0, y: 0, width: this.width, height: this.height };
+                    this.draw2D.doDrawRotatedRect(screenRect, 255, 0, [0, 0], 0.5);
+                    dialog.renderNode(interpreter, [0, 0], 0, 1, this.draw2D);
+                }
+                // Limited FPS enforcement
+                let timeStamp = Date.now();
+                while (timeStamp - this.lastMessage < this.maxMs) {
+                    timeStamp = Date.now();
+                }
+                this.finishDraw();
+                this.lastMessage = timeStamp;
             }
-            // Limited FPS enforcement
-            let timeStamp = Date.now();
-            while (timeStamp - this.lastMessage < this.maxMs) {
-                timeStamp = Date.now();
-            }
-            this.finishDraw();
-            this.lastMessage = timeStamp;
+            return events;
+        } finally {
+            this.rendering = false;
         }
-        return events;
     }
 
     /** Handle control keys */

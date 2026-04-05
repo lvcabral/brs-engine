@@ -26,7 +26,6 @@ import { sgRoot } from "./SGRoot";
 import { Task } from "./nodes/Task";
 import { initializeTask, createNode, updateTypeDefHierarchy, getNodeType } from "./factory/NodeFactory";
 import { RoSGScreen } from "./components/RoSGScreen";
-import { RoSGNode } from "./components/RoSGNode";
 import packageInfo from "../../../packages/scenegraph/package.json";
 
 export * from "./SGRoot";
@@ -60,10 +59,11 @@ export class BrightScriptExtension implements BrsExtension {
     private createMessagePort(interpreter?: Interpreter): RoMessagePort {
         const port = new RoMessagePort();
         if (interpreter && !sgRoot.inTaskThread()) {
-            const inRender = interpreter.environment.getRootM().elements.get("top") instanceof RoSGNode;
-            if (!inRender) {
-                // All ports created in Main thread are registered to the screen
-                sgRoot.screen?.registerPort(port);
+            // All ports created in Main thread are registered to the screen
+            if (sgRoot.screen) {
+                sgRoot.screen.registerPort(port);
+            } else {
+                sgRoot.addPendingPort(port);
             }
         }
         return port;

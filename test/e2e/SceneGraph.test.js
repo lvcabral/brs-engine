@@ -206,6 +206,34 @@ describe("SceneGraph node tests", () => {
             "All subtype tests completed successfully!",
         ]);
     });
+    test("local-port-rendering.brs", async () => {
+        await execute([resourceFile("scenegraph", "local-port-rendering.brs")], outputStreams);
+
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
+            "=== Local Port Rendering Tests ===",
+            "Test 1: Screen and screen port created",
+            "Test 2: wait() on local port returned: Invalid",
+            "Test 3: getMessage() on local port returned: Invalid",
+            "Test 4: peekMessage() on local port returned: Invalid",
+            "Test 5: Field change event received on local port: roSGNodeEvent",
+            "Test 6: Field change event received on second local port: roSGNodeEvent",
+            "=== All Local Port Rendering Tests Passed ===",
+        ]);
+    });
+
+    test("port-before-screen.brs", async () => {
+        await execute([resourceFile("scenegraph", "port-before-screen.brs")], outputStreams);
+
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
+            "=== Port Before Screen Tests ===",
+            "Test 1: Port created before screen",
+            "Test 2: Screen created after port",
+            "Test 3: wait() on early port returned: Invalid",
+            "Test 4: Field change event on early port: roSGNodeEvent",
+            "=== All Port Before Screen Tests Passed ===",
+        ]);
+    });
+
     test("update-fields.brs", async () => {
         await execute([resourceFile("scenegraph", "update-fields.brs")], outputStreams);
 
