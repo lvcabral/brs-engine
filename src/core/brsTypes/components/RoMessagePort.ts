@@ -82,7 +82,7 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
 
     private updateMessageQueue(interpreter?: Interpreter, wait?: number) {
         BrsDevice.refreshExtVolume();
-        if (interpreter && this.callbackMap.size > 0) {
+        if (this.callbackMap.size > 0) {
             for (const [_, callback] of this.callbackMap.entries()) {
                 const events = callback(interpreter, wait);
                 this.messageQueue.push(...events.filter((e: BrsType) => e instanceof BrsEvent));
