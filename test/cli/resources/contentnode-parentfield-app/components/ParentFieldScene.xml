@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Reproduces observer recursion via ContentNode parentField propagation
+    combined with observer stacking (adding new observers inside callbacks).
+
+    The cycle:
+      1. A parent ContentNode has a custom "listActive" field and child ContentNodes.
+      2. A node-typed interface field holds the parent ContentNode, which registers
+         it as a parentField (via Field.setValue -> addParentField).
+      3. An observer on "listActive" mutates a child ContentNode's title field.
+      4. ContentNode.setValue propagates child mutations back through parentFields,
+         re-notifying the node-typed field's observers.
+      5. The parentField observer stacks another "listActive" observer each time it fires.
+      6. Each subsequent trigger fires more "listActive" callbacks (1, 2, 3, ...).
+
+    This pattern differs from the cross-field recursion test (contentnode-recursion-app)
+    because the recursion vector is ContentNode's parentField notification mechanism,
+    which bypasses the field equality check and always fires observers.
+
+    Without the Field-level queued notification dispatch, this causes a stack overflow
+    from recursive observer cascades.
+-->
+<component name="ParentFieldScene" extends="Scene">
+    <interface>
+        <field id="listContent" type="node" />
+    </interface>
+    <script type="text/brightscript">
+        <![CDATA[
+        sub init()
+            m.activeCount = 0
+            m.contentNotifyCount = 0
+
+            ' Parent ContentNode with a custom boolean field
+            m.parentContent = CreateObject("roSGNode", "ContentNode")
+            m.parentContent.addField("listActive", "boolean", false)
+
+            ' Child ContentNodes under the parent
+            child1 = CreateObject("roSGNode", "ContentNode")
+            child1.title = "Option 1"
+            m.parentContent.appendChild(child1)
+            child2 = CreateObject("roSGNode", "ContentNode")
+            child2.title = "Option 2"
+            m.parentContent.appendChild(child2)
+
+            ' Assign the parent ContentNode to a node-typed field.
+            ' Field.setValue calls value.addParentField(this), so any
+            ' field change on m.parentContent propagates back to
+            ' listContent observers via parentField notification.
+            m.top.listContent = m.parentContent
+
+            ' Observe the content-holding field (fires on parentField propagation)
+            m.top.observeField("listContent", "onContentNotify")
+
+            ' Initial observer on the parent's custom field
+            m.parentContent.observeField("listActive", "onListActiveChange")
+
+            runTest()
+        end sub
+
+        sub runTest()
+            ' Each trigger fires more listActive callbacks due to observer stacking
+            print "Trigger 1: listActive = true"
+            m.parentContent.listActive = true
+            print "  Active:"; m.activeCount; " ContentNotify:"; m.contentNotifyCount
+
+            print "Trigger 2: listActive = false"
+            m.parentContent.listActive = false
+            print "  Active:"; m.activeCount; " ContentNotify:"; m.contentNotifyCount
+
+            print "Trigger 3: listActive = true"
+            m.parentContent.listActive = true
+            print "  Active:"; m.activeCount; " ContentNotify:"; m.contentNotifyCount
+        end sub
+
+        ' Fires via parentField propagation when any field on parentContent changes.
+        ' Each invocation stacks another "listActive" observer, so subsequent
+        ' triggers fire an increasing number of callbacks.
+        sub onContentNotify(event as Object)
+            m.contentNotifyCount = m.contentNotifyCount + 1
+            m.parentContent.observeField("listActive", "onListActiveChange")
+        end sub
+
+        ' Fires when listActive changes on the parent ContentNode.
+        ' Mutates a child ContentNode, which triggers parentField propagation
+        ' on the parent (child.title change -> ContentNode.setValue -> parentFields notify).
+        sub onListActiveChange(event as Object)
+            m.activeCount = m.activeCount + 1
+            child = m.parentContent.getChild(0)
+            if child <> invalid
+                child.title = "updated-" + m.activeCount.toStr()
+            end if
+        end sub
+        ]]>
+    </script>
+</component>
