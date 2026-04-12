@@ -255,6 +255,5 @@ describe("cli", () => {
         ]);
     }, 10000);
 
-
     it.todo("add tests for the remaining CLI options");
 });
