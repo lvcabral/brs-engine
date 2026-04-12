@@ -5,7 +5,16 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { BrsDevice, BufferType, DataType, genHexAddress, Interpreter, MediaEvent, MediaTrack } from "brs-engine";
+import {
+    BrsDevice,
+    BufferType,
+    DataType,
+    genHexAddress,
+    Interpreter,
+    MediaEvent,
+    MediaTrack,
+    RoMessagePort,
+} from "brs-engine";
 import { ComponentDefinition } from "./parser/ComponentDefinition";
 import { Global } from "./nodes/Global";
 import { ThreadInfo } from "./SGTypes";
@@ -37,6 +46,7 @@ export class SGRoot {
     private _audio?: Audio;
     private _video?: Video;
     private _dirty: boolean = false;
+    private readonly _pendingPorts: RoMessagePort[] = [];
 
     get interpreter(): Interpreter | undefined {
         return this._interpreter;
@@ -170,11 +180,24 @@ export class SGRoot {
     }
 
     /**
+     * Stores a port to be registered with the screen once it is created.
+     * @param port RoMessagePort to register later
+     */
+    addPendingPort(port: RoMessagePort) {
+        this._pendingPorts.push(port);
+    }
+
+    /**
      * Sets the RoSGScreen instance for the application.
+     * Retroactively registers any ports created before the screen.
      * @param screen RoSGScreen instance to set
      */
     setScreen(screen: RoSGScreen) {
         this._screen = screen;
+        for (const port of this._pendingPorts) {
+            screen.registerPort(port);
+        }
+        this._pendingPorts.length = 0;
     }
 
     /**
