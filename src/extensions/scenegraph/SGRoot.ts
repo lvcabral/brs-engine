@@ -5,7 +5,16 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { BrsDevice, BufferType, DataType, genHexAddress, Interpreter, MediaEvent, MediaTrack, RoMessagePort } from "brs-engine";
+import {
+    BrsDevice,
+    BufferType,
+    DataType,
+    genHexAddress,
+    Interpreter,
+    MediaEvent,
+    MediaTrack,
+    RoMessagePort,
+} from "brs-engine";
 import { ComponentDefinition } from "./parser/ComponentDefinition";
 import { Global } from "./nodes/Global";
 import { ThreadInfo } from "./SGTypes";
