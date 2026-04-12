@@ -2,12 +2,49 @@
 
 All notable changes to this project will be documented in this file.
 
-## Unreleased
+<a name="v2.2.0"></a>
 
-### Bug Fixes
+## [v2.2.0 - `slice()` in `roByteArray` and new SG nodes](https://github.com/lvcabral/brs-engine/releases/tag/v2.2.0) - 12 April 2026
 
-* (rsg) Fixed stack overflow from recursive ContentNode observer cascades by switching Field notification dispatch from inline (depth-first) to queued (breadth-first). **Note:** observers that previously fired during a parent observer's callback now fire after it returns, which may change execution ordering for code with nested cross-field observer chains.
+This release introduces the `slice` method to `RoByteArray`, `ScrollableText`, `PinPad` and `PinDialog` nodes to the SceneGraph extension, along with various bug fixes and improvements.
 
+### Release Changes
+
+* (brs) Properly exported mocks of `roStreamSocket` and `roDataGramSocket` by [@lvcabral](https://github.com/lvcabral) in [#886](https://github.com/lvcabral/brs-engine/pull/886)
+* (brs) Prevent crash with empty images in `IfDraw2D` by [@lvcabral](https://github.com/lvcabral) in [#902](https://github.com/lvcabral/brs-engine/pull/902)
+* (brs) Add `slice` method to `RoByteArray` and corresponding tests by [@lvcabral](https://github.com/lvcabral) in [#906](https://github.com/lvcabral/brs-engine/pull/906)
+* (brs) Restored `roMessagePort` behavior when an `interpreter` instance is not used in `updateMessageQueue` [@lvcabral](https://github.com/lvcabral) in [#915](https://github.com/lvcabral/brs-engine/pull/915)
+* Changes on `brs-scenegraph` package (release v0.2.0):
+  * (rsg) Fixed handling of `Node` field `role` attribute and a crash in `ZoomRowList`with empty content by [@lvcabral](https://github.com/lvcabral) in [#884](https://github.com/lvcabral/brs-engine/pull/884)
+  * (rsg) Improve `Node` ownership management in rendezvous by [@lvcabral](https://github.com/lvcabral) in [#883](https://github.com/lvcabral/brs-engine/pull/883)
+  * (rsg) Implemented support for `renderTracking` field by [@lvcabral](https://github.com/lvcabral) in [#887](https://github.com/lvcabral/brs-engine/pull/887)
+  * (rsg) Fixed `ButtonGroup` to handle custom buttons defined in XML and fixed `StringArray` field parsing by [@lvcabral](https://github.com/lvcabral) in [#888](https://github.com/lvcabral/brs-engine/pull/888)
+  * (rsg) Added support for multiple `roMessagePort` to be used in `Main` thread by [@lvcabral](https://github.com/lvcabral) in [#889](https://github.com/lvcabral/brs-engine/pull/889)
+  * (rsg) Refactored `NodeFactory` functions to streamline node creation process by [@lvcabral](https://github.com/lvcabral) in [#890](https://github.com/lvcabral/brs-engine/pull/890)
+  * (rsg) Fixed `RowList` that was not setting `itemSelected` when OK was pressed by [@lvcabral](https://github.com/lvcabral) in [#891](https://github.com/lvcabral/brs-engine/pull/891)
+  * (rsg) Removed `scene` from `TaskData` by [@lvcabral](https://github.com/lvcabral) in [#892](https://github.com/lvcabral/brs-engine/pull/892)
+  * (rsg) Added `StandardKeyboardDialog` and `VoiceTextEditBox` nodes by [@lvcabral](https://github.com/lvcabral) in [#893](https://github.com/lvcabral/brs-engine/pull/893)
+  * (rsg) Implemented `ScrollableText` node by [@lvcabral](https://github.com/lvcabral) in [#895](https://github.com/lvcabral/brs-engine/pull/895)
+  * (rsg) Implemented `PinPad` widget node by [@lvcabral](https://github.com/lvcabral) in [#896](https://github.com/lvcabral/brs-engine/pull/896)
+  * (rsg) Implemented `PinDialog` and added literal keys support to `PinPad` by [@lvcabral](https://github.com/lvcabral) in [#898](https://github.com/lvcabral/brs-engine/pull/898)
+  * (rsg) Implemented ProgressDialog node by [@lvcabral](https://github.com/lvcabral) in [#899](https://github.com/lvcabral/brs-engine/pull/899)
+  * (rsg) Set `Poster` loadStatus to "loading" when URI is updated by [@lvcabral](https://github.com/lvcabral) in [#900](https://github.com/lvcabral/brs-engine/pull/900)
+  * (rsg) Fixed focus handling in `Node` to ensure global focus reference is set correctly by [@lvcabral](https://github.com/lvcabral) in [#901](https://github.com/lvcabral/brs-engine/pull/901)
+  * (rsg) Fix stack overflow from ContentNode parentField notification cascade by [@jeremy-albinet](https://github.com/jeremy-albinet) in https://github.com/lvcabral/brs-engine/pull/905
+  * (rsg) Support rendering during wait() on local roMessagePort by [@cewert](https://github.com/cewert) in https://github.com/lvcabral/brs-engine/pull/913
+* (chore) Reverted dependency to `@zenfs/core` v2.5.0 with synchronous config by [@lvcabral](https://github.com/lvcabral) in [#894](https://github.com/lvcabral/brs-engine/pull/894)
+* (chore): Removed unused dependencies and added override for minimatch to address security issue by [@lvcabral](https://github.com/lvcabral) in [#897](https://github.com/lvcabral/brs-engine/pull/897)
+* Bump qs from 6.14.1 to 6.14.2 by @dependabot[bot] in [#885](https://github.com/lvcabral/brs-engine/pull/885)
+* Bump minimatch from 10.2.2 to 10.2.4 by @dependabot[bot] in https://github.com/lvcabral/brs-engine/pull/903
+* Bump serialize-javascript and copy-webpack-plugin by @dependabot[bot] in https://github.com/lvcabral/brs-engine/pull/911
+* Bump lodash from 4.17.23 to 4.18.1 by @dependabot[bot] in https://github.com/lvcabral/brs-engine/pull/914
+
+## New Contributors
+
+* @jeremy-albinet made their first contribution in https://github.com/lvcabral/brs-engine/pull/905
+* @cewert made their first contribution in https://github.com/lvcabral/brs-engine/pull/913
+
+[Full Changelog][v2.2.0]
 
 <a name="v2.1.0"></a>
 
@@ -84,7 +121,7 @@ This release brings major improvements both to the core engine and the SceneGrap
 
 ### New Contributors
 
-* @saas817 made their first contribution in [#878](https://github.com/lvcabral/brs-engine/pull/878) - welcome to the project!
+* @fortuna97 made their first contribution in [#878](https://github.com/lvcabral/brs-engine/pull/878) - welcome to the project!
 
 [Full Changelog][v2.1.0]
 
@@ -1421,6 +1458,7 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
+[v2.2.0]: https://github.com/lvcabral/brs-engine/compare/v2.1.0...v2.2.0
 [v2.1.0]: https://github.com/lvcabral/brs-engine/compare/v2.0.5...v2.1.0
 [v2.0.5]: https://github.com/lvcabral/brs-engine/compare/v2.0.4...v2.0.5
 [v2.0.4]: https://github.com/lvcabral/brs-engine/compare/v2.0.3...v2.0.4

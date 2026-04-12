@@ -2,6 +2,34 @@
 
 All notable changes to `brs-scenegraph` extension will be documented in this file.
 
+<a name="v0.2.0"></a>
+
+## [v0.2.0 - Added ScrollableText, PinPad, PinDialog and ProgressDialog](https://github.com/lvcabral/brs-engine/releases/tag/brs-sg-v0.2.0) - 12 April 2026
+
+This release introduces the `ScrollableText`, `PinPad`, `PinDialog` and `ProgressDialog` nodes to the SceneGraph extension, along with various bug fixes and improvements. Read the full release notes below for more details.
+
+### Release Changes
+
+* (rsg) Fixed handling of `Node` field `role` attribute and a crash in `ZoomRowList`with empty content by [@lvcabral](https://github.com/lvcabral) in [#884](https://github.com/lvcabral/brs-engine/pull/884)
+* (rsg) Improve `Node` ownership management in rendezvous by [@lvcabral](https://github.com/lvcabral) in [#883](https://github.com/lvcabral/brs-engine/pull/883)
+* (rsg) Implemented support for `renderTracking` field by [@lvcabral](https://github.com/lvcabral) in [#887](https://github.com/lvcabral/brs-engine/pull/887)
+* (rsg) Fixed `ButtonGroup` to handle custom buttons defined in XML and fixed `StringArray` field parsing by [@lvcabral](https://github.com/lvcabral) in [#888](https://github.com/lvcabral/brs-engine/pull/888)
+* (rsg) Added support for multiple `roMessagePort` to be used in `Main` thread by [@lvcabral](https://github.com/lvcabral) in [#889](https://github.com/lvcabral/brs-engine/pull/889)
+* (rsg) Refactored `NodeFactory` functions to streamline node creation process by [@lvcabral](https://github.com/lvcabral) in [#890](https://github.com/lvcabral/brs-engine/pull/890)
+* (rsg) Fixed `RowList` that was not setting `itemSelected` when OK was pressed by [@lvcabral](https://github.com/lvcabral) in [#891](https://github.com/lvcabral/brs-engine/pull/891)
+* (rsg) Removed `scene` from `TaskData` by [@lvcabral](https://github.com/lvcabral) in [#892](https://github.com/lvcabral/brs-engine/pull/892)
+* (rsg) Added `StandardKeyboardDialog` and `VoiceTextEditBox` nodes by [@lvcabral](https://github.com/lvcabral) in [#893](https://github.com/lvcabral/brs-engine/pull/893)
+* (rsg) Implemented `ScrollableText` node by [@lvcabral](https://github.com/lvcabral) in [#895](https://github.com/lvcabral/brs-engine/pull/895)
+* (rsg) Implemented `PinPad` widget node by [@lvcabral](https://github.com/lvcabral) in [#896](https://github.com/lvcabral/brs-engine/pull/896)
+* (rsg) Implemented `PinDialog` and added literal keys support to `PinPad` by [@lvcabral](https://github.com/lvcabral) in [#898](https://github.com/lvcabral/brs-engine/pull/898)
+* (rsg) Implemented ProgressDialog node by [@lvcabral](https://github.com/lvcabral) in [#899](https://github.com/lvcabral/brs-engine/pull/899)
+* (rsg) Set `Poster` loadStatus to "loading" when URI is updated by [@lvcabral](https://github.com/lvcabral) in [#900](https://github.com/lvcabral/brs-engine/pull/900)
+* (rsg) Fixed focus handling in `Node` to ensure global focus reference is set correctly by [@lvcabral](https://github.com/lvcabral) in [#901](https://github.com/lvcabral/brs-engine/pull/901)
+* (rsg) Fix stack overflow from ContentNode parentField notification cascade by [@jeremy-albinet](https://github.com/jeremy-albinet) in https://github.com/lvcabral/brs-engine/pull/905
+* (rsg) Support rendering during wait() on local roMessagePort by [@cewert](https://github.com/cewert) in https://github.com/lvcabral/brs-engine/pull/913
+
+[Full Changelog][v0.2.0]
+
 <a name="v0.1.0"></a>
 
 ## [v0.1.0 - Rendezvous and other major improvements and fixes](https://github.com/lvcabral/brs-engine/releases/tag/brs-sg-v0.1.0) - 11 February 2026
@@ -147,6 +175,7 @@ This first alpha delivers the **SceneGraph** runtime as a standalone extension t
   * Media + utility nodes: `Audio`, `Video`, `SoundEffect`, `Task`, `Timer`, `ChannelStore`.
 * Published merged `assets/common.zip` so SceneGraph fonts, locale data, dialogs, and imagery are available through the simulated `common:/` volume in both `brs-engine` and `brs-node` packages.
 
+[v0.2.0]: https://github.com/lvcabral/brs-engine/compare/brs-sg-v0.1.0...brs-sg-v0.2.0
 [v0.1.0]: https://github.com/lvcabral/brs-engine/compare/brs-sg-v0.0.5...brs-sg-v0.1.0
 [v0.0.5]: https://github.com/lvcabral/brs-engine/compare/brs-sg-v0.0.4...brs-sg-v0.0.5
 [v0.0.4]: https://github.com/lvcabral/brs-engine/compare/brs-sg-v0.0.3...brs-sg-v0.0.4
