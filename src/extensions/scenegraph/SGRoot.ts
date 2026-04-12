@@ -46,7 +46,7 @@ export class SGRoot {
     private _audio?: Audio;
     private _video?: Video;
     private _dirty: boolean = false;
-    private _pendingPorts: RoMessagePort[] = [];
+    private readonly _pendingPorts: RoMessagePort[] = [];
 
     get interpreter(): Interpreter | undefined {
         return this._interpreter;
