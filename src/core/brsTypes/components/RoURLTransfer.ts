@@ -712,10 +712,10 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
     /** An optional function that enables HTTP/2 support. */
     private readonly setHttpVersion = new Callable("setHttpVersion", {
         signature: {
-            args: [new StdlibArgument("enable", ValueKind.Boolean)],
+            args: [new StdlibArgument("version", ValueKind.String)],
             returns: ValueKind.Void,
         },
-        impl: (_: Interpreter, enable: BrsBoolean) => {
+        impl: (_: Interpreter, version: BrsString) => {
             // This method is mocked for compatibility
             return BrsInvalid.Instance;
         },
