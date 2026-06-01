@@ -41,6 +41,8 @@ import { TrickPlayBar } from "./TrickPlayBar";
 
 export class Video extends Group {
     readonly defaultFields: FieldModel[] = [
+        { name: "width", type: "float", value: "0.0" },
+        { name: "height", type: "float", value: "0.0" },
         { name: "content", type: "node" },
         { name: "playStartInfo", type: "assocarray" },
         { name: "licenseStatus", type: "assocarray" },
@@ -309,7 +311,7 @@ export class Video extends Group {
                 this.showUI(false);
                 this.resetSeeking();
                 this.showHeader = now + 5000;
-                this.spinner.setValueSilent("visible", BrsBoolean.from(this.enableUI));
+                this.spinner.setValueSilent("visible", BrsBoolean.from(this.uiVisible()));
                 this.setBufferingStatus(eventIndex);
                 return;
             case MediaEvent.StartStream:
@@ -528,6 +530,20 @@ export class Video extends Group {
         }
     }
 
+    private isFullscreen(): boolean {
+        const size = this.getDimensions();
+        const width = size.width || this.sceneRect.width;
+        const height = size.height || this.sceneRect.height;
+        const [x, y] = this.getTranslation();
+        return x <= 0 && y <= 0 && width >= this.sceneRect.width && height >= this.sceneRect.height;
+    }
+
+    private uiVisible(): boolean {
+        // On Roku, a windowed (non-fullscreen) Video plane shows no overlay UI; the
+        // control commands still work, there is just no on-screen feedback.
+        return this.enableUI && this.isFullscreen();
+    }
+
     showUI(show: boolean) {
         if (sgRoot.inTaskThread()) return;
         if (!show) {
@@ -556,7 +572,7 @@ export class Video extends Group {
                 if (this.trickPlayPos >= 0) {
                     postMessage(`video,seek,${this.trickPlayPos * 1000}`);
                     this.trickPlayPos = -1;
-                    this.spinner.setValueSilent("visible", BrsBoolean.from(this.enableUI));
+                    this.spinner.setValueSilent("visible", BrsBoolean.from(this.uiVisible()));
                     this.seeking = true;
                     this.showUI(false);
                 } else {
@@ -576,7 +592,7 @@ export class Video extends Group {
             if (this.trickPlayPos >= 0) {
                 postMessage(`video,seek,${this.trickPlayPos * 1000}`);
                 this.trickPlayPos = -1;
-                this.spinner.setValueSilent("visible", BrsBoolean.from(this.enableUI));
+                this.spinner.setValueSilent("visible", BrsBoolean.from(this.uiVisible()));
                 this.showUI(false);
                 this.seeking = true;
                 handled = true;
@@ -704,7 +720,7 @@ export class Video extends Group {
                 const duration = this.getValueJS("duration") as number;
                 this.updateSeekStep(this.seekMode === "ff", duration, Math.trunc(1000 / this.seekLevel));
             }
-            this.showUI(this.enableUI);
+            this.showUI(this.uiVisible());
         }
         this.updateBoundingRects(rect, origin, rotation);
         this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);
