@@ -168,3 +168,23 @@ See `docs/extensions.md` and `packages/scenegraph/README.md` for the consumer-fa
 ## Documentation
 
 `docs/` is the source of truth for usage: `build-from-source.md`, `integrating.md`, `engine-api.md`, `customization.md`, `run-as-cli.md`, `using-node-library.md`, `extensions.md`, `remote-control.md`, `limitations.md`, `contributing.md`.
+
+## Roku reference documentation (`out/references/`)
+
+A local mirror of Roku's official BrightScript + SceneGraph reference lives in `out/references/` (HTML-flavored Markdown). **This is the authoritative spec** for what each component, interface, event, node, and global function should do — consult it whenever implementing, fixing, or verifying a missing/incomplete feature so the simulated behavior matches a real Roku device.
+
+> Note: `out/` is **gitignored**, so this folder is a local-only convenience and is not available to all contributors or CI. Treat it as a research aid, never as a build/runtime dependency.
+
+Layout and how it maps to the source tree:
+
+| Reference path | Documents | Implement / verify in |
+| --- | --- | --- |
+| `brightscript/components/roXxx.md` | `roXxx` component: how it's created, which interfaces/events it supports | `src/core/brsTypes/components/RoXxx.ts` (registered in `BrsObjects.ts`) |
+| `brightscript/interfaces/ifXxx.md` | An interface's method signatures, args, return types, defaults | the methods that component class exposes |
+| `brightscript/events/roXxxEvent.md` | Event objects returned via `roMessagePort` | the matching event component |
+| `brightscript/language/*.md` | Language spec: statements, expressions/types, error handling, conditional compilation, format strings, reserved words, and the global Math/String/Utility/Runtime functions | `src/core/lexer/`, `src/core/parser/`, `src/core/preprocessor/`, `src/core/stdlib/` |
+| `scenegraph/**/<node>.md` | SceneGraph node fields (name/type/default/access) and behavior, grouped by category (renderable, layout, list-and-grid, dialog, animation, media, …) | `src/extensions/scenegraph/nodes/<Node>.ts` (see "Creating a new Node type") |
+| `scenegraph/xml-elements/*.md`, `scenegraph/component-functions/*.md` | Component XML (`<component>`/`<interface>`/`<children>`/`<script>`) and `init`/`onKeyEvent` | `src/extensions/scenegraph/parser/`, `factory/` |
+| `deprecated-apis.md` | APIs Roku has deprecated — check before adding/relying on one | n/a (informational) |
+
+When implementing a node or component, match the documented **field names, types, defaults, and access permissions** exactly (e.g. a node's `defaultFields` should mirror the reference's Fields table). Use the `brs-reference` skill to look things up.
