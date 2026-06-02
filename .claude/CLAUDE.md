@@ -77,6 +77,12 @@ The Node CLI runs the interpreter on a **single thread**; remote control there r
 - `src/core/brsTypes/` — BrightScript values: primitives (`Int32`, `Float`, `Double`, `BrsString`, `Boolean`), `Callable`, plus `Coercion.ts`/`Boxing.ts` rules.
 - `src/core/brsTypes/components/` — the `roXxx` component objects (`RoArray`, `RoAssociativeArray`, `RoBitmap`, `RoAudioPlayer`, `RoDeviceInfo`, `RoMessagePort`, …); `BrsObjects.ts` is the `CreateObject` registry.
 
+#### Interfaces are method grouping, not separate types
+
+Roku documents a component's methods under `ifXxx` interfaces, but **we do not implement each `ifXxx` as its own type/contract**. A component implements all its methods and registers them via `registerMethods({ ifXxx: [...callables] })`, where the `ifXxx` key is just **metadata grouping** that mirrors the docs. Most methods are defined inline on the component class itself (e.g. `RoArray`'s `join`/`sort`, all of `RoVideoPlayer`'s `ifVideoPlayer` methods).
+
+`src/core/brsTypes/interfaces/` (`IfArray`, `IfEnum`, `IfHttpAgent`, `IfList`, `IfMessagePort`, `IfSocket`, `IfToStr`, `IfDraw2D`, …) holds a **small, deliberate set** of helper classes — effectively abstract/shared method bundles to **reduce duplication** across components that expose the same interface (e.g. `ifHttpAgent` is shared by many `roXxx`). They are instantiated with the owning component (`new IfArray(this)`) and their callables are spread into `registerMethods`. This is **not** a complete mirror of Roku's interface list — only the interfaces worth sharing live here; everything else is inline.
+
 ### Device, filesystem, stdlib, errors
 
 - `src/core/device/BrsDevice.ts` — simulated device state, the shared control array (`BrsDevice.sharedArray`, an `Int32Array`), registry, current `threadId`, stdout/stderr.
@@ -168,3 +174,23 @@ See `docs/extensions.md` and `packages/scenegraph/README.md` for the consumer-fa
 ## Documentation
 
 `docs/` is the source of truth for usage: `build-from-source.md`, `integrating.md`, `engine-api.md`, `customization.md`, `run-as-cli.md`, `using-node-library.md`, `extensions.md`, `remote-control.md`, `limitations.md`, `contributing.md`.
+
+## Roku reference documentation (`external/dev-doc` submodule)
+
+Roku's official, open-sourced developer docs ([rokudev/dev-doc](https://github.com/rokudev/dev-doc), branch `v2.0`) are vendored as a **git submodule** at `external/dev-doc`. The BrightScript + SceneGraph reference lives under **`external/dev-doc/docs/REFERENCES/`** (Markdown with YAML frontmatter). **This is the authoritative spec** for what each component, interface, event, node, and global function should do — consult it whenever implementing, fixing, or verifying a missing/incomplete feature so the simulated behavior matches a real Roku device.
+
+> The submodule is pinned to a specific commit and only populated after `git submodule update --init external/dev-doc` (a plain checkout leaves the folder empty). It is **reference only** — never make build/runtime code depend on it. Update it with `git -C external/dev-doc pull origin v2.0`, then commit the new pointer.
+
+Layout under `external/dev-doc/docs/REFERENCES/` and how it maps to the source tree:
+
+| Reference path | Documents | Implement / verify in |
+| --- | --- | --- |
+| `brightscript/components/roXxx.md` | `roXxx` component: how it's created, which interfaces/events it supports | `src/core/brsTypes/components/RoXxx.ts` (registered in `BrsObjects.ts`) |
+| `brightscript/interfaces/ifXxx.md` | An interface's method signatures, args, return types, defaults | methods on the component, grouped under the `ifXxx` key in `registerMethods` (see "Interfaces are method grouping" above) — **not** a standalone type |
+| `brightscript/events/roXxxEvent.md` | Event objects returned via `roMessagePort` | the matching event component |
+| `brightscript/language/*.md` | Language spec: statements, expressions/types, error handling, conditional compilation, format strings, reserved words, and the global Math/String/Utility/Runtime functions | `src/core/lexer/`, `src/core/parser/`, `src/core/preprocessor/`, `src/core/stdlib/` |
+| `scenegraph/**/<node>.md` | SceneGraph node fields (name/type/default/access) and behavior, grouped by category (renderable, layout, list-and-grid, dialog, animation, media, …) | `src/extensions/scenegraph/nodes/<Node>.ts` (see "Creating a new Node type") |
+| `scenegraph/xml-elements/*.md`, `scenegraph/component-functions/*.md` | Component XML (`<component>`/`<interface>`/`<children>`/`<script>`) and `init`/`onKeyEvent` | `src/extensions/scenegraph/parser/`, `factory/` |
+| `deprecated-apis.md` | APIs Roku has deprecated — check before adding/relying on one | n/a (informational) |
+
+When implementing a node or component, match the documented **field names, types, defaults, and access permissions** exactly (e.g. a node's `defaultFields` should mirror the reference's Fields table). Use the `brs-reference` skill to look things up.
