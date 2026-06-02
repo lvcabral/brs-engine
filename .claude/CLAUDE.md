@@ -77,6 +77,12 @@ The Node CLI runs the interpreter on a **single thread**; remote control there r
 - `src/core/brsTypes/` — BrightScript values: primitives (`Int32`, `Float`, `Double`, `BrsString`, `Boolean`), `Callable`, plus `Coercion.ts`/`Boxing.ts` rules.
 - `src/core/brsTypes/components/` — the `roXxx` component objects (`RoArray`, `RoAssociativeArray`, `RoBitmap`, `RoAudioPlayer`, `RoDeviceInfo`, `RoMessagePort`, …); `BrsObjects.ts` is the `CreateObject` registry.
 
+#### Interfaces are method grouping, not separate types
+
+Roku documents a component's methods under `ifXxx` interfaces, but **we do not implement each `ifXxx` as its own type/contract**. A component implements all its methods and registers them via `registerMethods({ ifXxx: [...callables] })`, where the `ifXxx` key is just **metadata grouping** that mirrors the docs. Most methods are defined inline on the component class itself (e.g. `RoArray`'s `join`/`sort`, all of `RoVideoPlayer`'s `ifVideoPlayer` methods).
+
+`src/core/brsTypes/interfaces/` (`IfArray`, `IfEnum`, `IfHttpAgent`, `IfList`, `IfMessagePort`, `IfSocket`, `IfToStr`, `IfDraw2D`, …) holds a **small, deliberate set** of helper classes — effectively abstract/shared method bundles to **reduce duplication** across components that expose the same interface (e.g. `ifHttpAgent` is shared by many `roXxx`). They are instantiated with the owning component (`new IfArray(this)`) and their callables are spread into `registerMethods`. This is **not** a complete mirror of Roku's interface list — only the interfaces worth sharing live here; everything else is inline.
+
 ### Device, filesystem, stdlib, errors
 
 - `src/core/device/BrsDevice.ts` — simulated device state, the shared control array (`BrsDevice.sharedArray`, an `Int32Array`), registry, current `threadId`, stdout/stderr.
@@ -180,7 +186,7 @@ Layout and how it maps to the source tree:
 | Reference path | Documents | Implement / verify in |
 | --- | --- | --- |
 | `brightscript/components/roXxx.md` | `roXxx` component: how it's created, which interfaces/events it supports | `src/core/brsTypes/components/RoXxx.ts` (registered in `BrsObjects.ts`) |
-| `brightscript/interfaces/ifXxx.md` | An interface's method signatures, args, return types, defaults | the methods that component class exposes |
+| `brightscript/interfaces/ifXxx.md` | An interface's method signatures, args, return types, defaults | methods on the component, grouped under the `ifXxx` key in `registerMethods` (see "Interfaces are method grouping" above) — **not** a standalone type |
 | `brightscript/events/roXxxEvent.md` | Event objects returned via `roMessagePort` | the matching event component |
 | `brightscript/language/*.md` | Language spec: statements, expressions/types, error handling, conditional compilation, format strings, reserved words, and the global Math/String/Utility/Runtime functions | `src/core/lexer/`, `src/core/parser/`, `src/core/preprocessor/`, `src/core/stdlib/` |
 | `scenegraph/**/<node>.md` | SceneGraph node fields (name/type/default/access) and behavior, grouped by category (renderable, layout, list-and-grid, dialog, animation, media, …) | `src/extensions/scenegraph/nodes/<Node>.ts` (see "Creating a new Node type") |

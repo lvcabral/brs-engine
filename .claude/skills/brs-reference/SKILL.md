@@ -29,7 +29,7 @@ feature, and before claiming a feature "matches Roku."
 | Reference glob | Topic | Source to edit |
 | --- | --- | --- |
 | `out/references/brightscript/components/roXxx.md` | Component overview + supported interfaces/events | `src/core/brsTypes/components/RoXxx.ts` (register in `BrsObjects.ts`) |
-| `out/references/brightscript/interfaces/ifXxx.md` | Method signatures, args, returns, defaults | the methods on that component |
+| `out/references/brightscript/interfaces/ifXxx.md` | Method signatures, args, returns, defaults | methods on the component, grouped under the `ifXxx` key in `registerMethods` — **not** a standalone type (see "Interfaces are method grouping" below) |
 | `out/references/brightscript/events/roXxxEvent.md` | Event objects from `roMessagePort` | the matching event component |
 | `out/references/brightscript/language/*.md` | Statements, types, errors, `#if`, format strings, reserved words, global functions | `src/core/lexer/`, `parser/`, `preprocessor/`, `stdlib/` |
 | `out/references/scenegraph/**/<node>.md` | SceneGraph node fields + behavior (by category) | `src/extensions/scenegraph/nodes/<Node>.ts` |
@@ -68,11 +68,44 @@ field/method tables as `<table>`, and code samples inside `<pre><code>`.
 - **Respect inheritance.** If the doc says a node `Extends Group`, the TS class should
   extend the matching base and `setExtendsType(name, SGNodeType.Group)` — only declare
   fields the doc adds beyond the base.
-- **Interfaces drive method surfaces.** Implement the methods (with correct arg order,
-  optional args, and return type) listed in the `ifXxx.md` the component supports.
+- **Interfaces drive method surfaces, but don't become types.** Use `ifXxx.md` to get the
+  correct method names, arg order, optional args, and return types — then implement those
+  methods on the **component** and register them under the `ifXxx` key in
+  `registerMethods({ ifXxx: [...] })`. Do **not** create a new `ifXxx` class just because
+  the docs list one. See "Interfaces are method grouping" below.
 - **Cross-check before saying "done."** When verifying a fix, re-read the relevant
   reference and confirm signatures, defaults, and edge cases (and that the API isn't in
   `deprecated-apis.md`) actually agree with the implementation.
+
+## Interfaces are method grouping, not separate types
+
+The reference's `ifXxx` files describe Roku's interfaces, but this codebase does **not**
+implement one type per interface. Follow the existing pattern:
+
+- A component implements its methods (mostly **inline** on the class) and registers them
+  with `registerMethods({ ifXxx: [callable, ...] })`. The `ifXxx` key is just a label that
+  mirrors the docs — there is no `ifXxx` contract being satisfied.
+  ```ts
+  // RoVideoPlayer.ts — methods defined inline, grouped under interface-name keys
+  this.registerMethods({
+      ifVideoPlayer: [this.play, this.stop, this.setContentList, /* ... */],
+      ifHttpAgent: [ifHttpAgent.addHeader, ifHttpAgent.setHeaders, /* ... */],
+  });
+  ```
+- `src/core/brsTypes/interfaces/` holds only a **small, deliberate set** of shared helper
+  classes (`IfArray`, `IfEnum`, `IfHttpAgent`, `IfList`, `IfMessagePort`, `IfSocket`,
+  `IfToStr`, `IfDraw2D`, …) — abstract/shared method bundles that exist purely to **reduce
+  duplication** when several components expose the same interface. Instantiate one with the
+  owning component and spread its callables into `registerMethods`:
+  ```ts
+  const ifArray = new IfArray(this);
+  this.registerMethods({ ifArray: [ifArray.peek, ifArray.pop, /* ... */] });
+  ```
+- **Decision rule when adding a method/interface to a component:**
+  - Shared by multiple components → add it to (or reuse) a helper in `interfaces/`.
+  - Specific to one component → define it inline on that component class.
+  - Either way, register it under the matching `ifXxx` key. **Do not** add a new file in
+    `interfaces/` just to mirror a documented interface that only one component uses.
 
 ## Wiring reminders (see CLAUDE.md for full detail)
 
