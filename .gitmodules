@@ -1,0 +1,4 @@
+[submodule "external/dev-doc"]
+	path = external/dev-doc
+	url = https://github.com/rokudev/dev-doc.git
+	branch = v2.0

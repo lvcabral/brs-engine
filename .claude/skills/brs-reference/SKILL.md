@@ -1,19 +1,23 @@
 ---
 name: brs-reference
-description: Look up Roku's official BrightScript/SceneGraph spec in out/references/ when implementing, fixing, or verifying an interpreter feature — components (roXxx), interfaces (ifXxx), events, SceneGraph nodes, global functions, or language behavior. Use it to confirm exact method signatures, node field names/types/defaults/access, and event semantics so simulated behavior matches a real Roku device.
+description: Look up Roku's official BrightScript/SceneGraph spec in the external/dev-doc submodule (docs/REFERENCES/) when implementing, fixing, or verifying an interpreter feature — components (roXxx), interfaces (ifXxx), events, SceneGraph nodes, global functions, or language behavior. Use it to confirm exact method signatures, node field names/types/defaults/access, and event semantics so simulated behavior matches a real Roku device.
 ---
 
 # brs-reference
 
-`out/references/` is a local mirror of Roku's **official** BrightScript + SceneGraph
-reference docs (HTML-flavored Markdown). It is the authoritative spec for *what the
-behavior should be* — the brs-engine code is *how we simulate it*. Reach for this skill
-whenever a task involves a missing, incomplete, or wrong-looking BrightScript/SceneGraph
-feature, and before claiming a feature "matches Roku."
+Roku's **official**, open-sourced BrightScript + SceneGraph reference docs are vendored as
+a git submodule ([rokudev/dev-doc](https://github.com/rokudev/dev-doc), branch `v2.0`) at
+`external/dev-doc`. The reference pages live under **`external/dev-doc/docs/REFERENCES/`**
+(Markdown with YAML frontmatter). They are the authoritative spec for *what the behavior
+should be* — the brs-engine code is *how we simulate it*. Reach for this skill whenever a
+task involves a missing, incomplete, or wrong-looking BrightScript/SceneGraph feature, and
+before claiming a feature "matches Roku."
 
-> `out/` is **gitignored** — this folder is a local convenience, not guaranteed present
-> for every contributor or in CI. Use it for research only; never make build/runtime
-> code depend on it. If the folder is absent, say so and fall back to
+In this skill `$REF` means `external/dev-doc/docs/REFERENCES`.
+
+> The submodule must be initialized: if `$REF` is empty/missing, run
+> `git submodule update --init external/dev-doc`. It is **reference only** — never make
+> build/runtime code depend on it. If it still can't be fetched, say so and fall back to
 > <https://developer.roku.com/docs/references/> (or skip the lookup).
 
 ## When to use
@@ -26,37 +30,42 @@ feature, and before claiming a feature "matches Roku."
 
 ## Where things live (and where to implement them)
 
+All paths below are relative to `$REF` (= `external/dev-doc/docs/REFERENCES`).
+
 | Reference glob | Topic | Source to edit |
 | --- | --- | --- |
-| `out/references/brightscript/components/roXxx.md` | Component overview + supported interfaces/events | `src/core/brsTypes/components/RoXxx.ts` (register in `BrsObjects.ts`) |
-| `out/references/brightscript/interfaces/ifXxx.md` | Method signatures, args, returns, defaults | methods on the component, grouped under the `ifXxx` key in `registerMethods` — **not** a standalone type (see "Interfaces are method grouping" below) |
-| `out/references/brightscript/events/roXxxEvent.md` | Event objects from `roMessagePort` | the matching event component |
-| `out/references/brightscript/language/*.md` | Statements, types, errors, `#if`, format strings, reserved words, global functions | `src/core/lexer/`, `parser/`, `preprocessor/`, `stdlib/` |
-| `out/references/scenegraph/**/<node>.md` | SceneGraph node fields + behavior (by category) | `src/extensions/scenegraph/nodes/<Node>.ts` |
-| `out/references/scenegraph/xml-elements/*.md`, `component-functions/*.md` | Component XML + `init`/`onKeyEvent` | `src/extensions/scenegraph/parser/`, `factory/` |
-| `out/references/deprecated-apis.md` | Deprecated APIs — check before relying on one | n/a |
+| `$REF/brightscript/components/roXxx.md` | Component overview + supported interfaces/events | `src/core/brsTypes/components/RoXxx.ts` (register in `BrsObjects.ts`) |
+| `$REF/brightscript/interfaces/ifXxx.md` | Method signatures, args, returns, defaults | methods on the component, grouped under the `ifXxx` key in `registerMethods` — **not** a standalone type (see "Interfaces are method grouping" below) |
+| `$REF/brightscript/events/roXxxEvent.md` | Event objects from `roMessagePort` | the matching event component |
+| `$REF/brightscript/language/*.md` | Statements, types, errors, `#if`, format strings, reserved words, global functions | `src/core/lexer/`, `parser/`, `preprocessor/`, `stdlib/` |
+| `$REF/scenegraph/**/<node>.md` | SceneGraph node fields + behavior (by category) | `src/extensions/scenegraph/nodes/<Node>.ts` |
+| `$REF/scenegraph/xml-elements/*.md`, `component-functions/*.md` | Component XML + `init`/`onKeyEvent` | `src/extensions/scenegraph/parser/`, `factory/` |
+| `$REF/deprecated-apis.md` | Deprecated APIs — check before relying on one | n/a |
 
 Filenames are lowercase, no spaces (e.g. `rovideoplayer.md`, `ifsgnodefield.md`,
-`renderable-nodes/rectangle.md`). Files are HTML fragments: headings as `<h1..h3>`,
-field/method tables as `<table>`, and code samples inside `<pre><code>`.
+`renderable-nodes/rectangle.md`). Files are Markdown: a YAML frontmatter block
+(`title`, `excerpt`, …) at the top, `##` headings, GitHub-style pipe tables for fields/
+methods, fenced or double-backtick code samples, and cross-links written as
+`[label](doc:slug)` (the slug is the target file's basename without `.md`).
 
 ## How to look up
 
 1. **Find the file.** Map the BrightScript name to a path with the table above. If unsure
    of the category for a SceneGraph node, search by filename:
    ```bash
-   ls out/references/scenegraph/**/ | grep -i <node>
-   find out/references -iname '*<name>*'
+   REF=external/dev-doc/docs/REFERENCES
+   find "$REF/scenegraph" -iname '*<node>*'
+   find "$REF" -iname '*<name>*'
    ```
-2. **Read it.** A component file lists its supported `ifXxx` interfaces — follow those to
-   the `interfaces/` files for the actual method signatures. A node file's **Fields**
-   table (Field / Type / Default / Access Permission / Description) is the spec for the
-   node's fields; note that base-class fields are inherited and documented separately
-   (the file says "Fields derived from the … base class can also be used").
+2. **Read it.** A component file lists its supported `ifXxx` interfaces (as `[ifXxx](doc:ifxxx)`
+   links) — follow those to the `interfaces/` files for the actual method signatures. A node
+   file's **Fields** table (Field / Type / Default / Access Permission / Description) is the
+   spec for the node's fields; note that base-class fields are inherited and documented
+   separately (the file says "Fields derived from the … base class can also be used").
 3. **Grep across the corpus** when you don't know where a method/field is defined:
    ```bash
-   grep -rin "getmessageport" out/references/brightscript/interfaces/
-   grep -rl "itemComponentName" out/references/scenegraph/
+   grep -rin "getmessageport" "$REF/brightscript/interfaces/"
+   grep -rl "itemComponentName" "$REF/scenegraph/"
    ```
 
 ## Applying it to the code

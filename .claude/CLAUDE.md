@@ -175,13 +175,13 @@ See `docs/extensions.md` and `packages/scenegraph/README.md` for the consumer-fa
 
 `docs/` is the source of truth for usage: `build-from-source.md`, `integrating.md`, `engine-api.md`, `customization.md`, `run-as-cli.md`, `using-node-library.md`, `extensions.md`, `remote-control.md`, `limitations.md`, `contributing.md`.
 
-## Roku reference documentation (`out/references/`)
+## Roku reference documentation (`external/dev-doc` submodule)
 
-A local mirror of Roku's official BrightScript + SceneGraph reference lives in `out/references/` (HTML-flavored Markdown). **This is the authoritative spec** for what each component, interface, event, node, and global function should do — consult it whenever implementing, fixing, or verifying a missing/incomplete feature so the simulated behavior matches a real Roku device.
+Roku's official, open-sourced developer docs ([rokudev/dev-doc](https://github.com/rokudev/dev-doc), branch `v2.0`) are vendored as a **git submodule** at `external/dev-doc`. The BrightScript + SceneGraph reference lives under **`external/dev-doc/docs/REFERENCES/`** (Markdown with YAML frontmatter). **This is the authoritative spec** for what each component, interface, event, node, and global function should do — consult it whenever implementing, fixing, or verifying a missing/incomplete feature so the simulated behavior matches a real Roku device.
 
-> Note: `out/` is **gitignored**, so this folder is a local-only convenience and is not available to all contributors or CI. Treat it as a research aid, never as a build/runtime dependency.
+> The submodule is pinned to a specific commit and only populated after `git submodule update --init external/dev-doc` (a plain checkout leaves the folder empty). It is **reference only** — never make build/runtime code depend on it. Update it with `git -C external/dev-doc pull origin v2.0`, then commit the new pointer.
 
-Layout and how it maps to the source tree:
+Layout under `external/dev-doc/docs/REFERENCES/` and how it maps to the source tree:
 
 | Reference path | Documents | Implement / verify in |
 | --- | --- | --- |
