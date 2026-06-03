@@ -32,7 +32,6 @@ const RowFocusStyle = {
 interface RowListRenderContext {
     itemSize: number[];
     globalSpacing: number[];
-    rowItemSize: number[][];
     rowHeights: number[];
     rowSpacings: number[];
     displayRows: number;
@@ -161,10 +160,8 @@ export class RowList extends ArrayGrid {
             this.rowScrollOffset[rowIndex] = 0;
         }
 
-        const itemSize = this.getValueJS("itemSize") as number[];
         const spacing = this.getRowItemSpacing(rowIndex); // Use the actual row's spacing
-        const rowItemSize = this.getValueJS("rowItemSize") as number[][];
-        const rowItemWidth = rowItemSize[rowIndex]?.[0] ?? itemSize[0];
+        const rowItemWidth = this.getRowItemWidth(rowIndex);
         const cols = this.content[rowIndex]?.getNodeChildren();
         const numCols = cols?.length ?? 0;
         const totalRowWidth = numCols * rowItemWidth + (numCols - 1) * spacing[0];
@@ -318,12 +315,15 @@ export class RowList extends ArrayGrid {
         return false;
     }
 
-    private getRowItemWidth(rowIndex: number): number {
+    private getRowItemSize(rowIndex: number): number[] {
         const itemSize = this.getValueJS("itemSize") as number[];
-        const rowItemSize = this.getValueJS("rowItemSize") as number[][];
+        // Per Roku docs, rowItemSize is indexed by absolute row; rows beyond the array reuse the
+        // last entry, and an empty array falls back to itemSize.
+        return this.resolveVector(this.getValueJS("rowItemSize"), rowIndex, itemSize);
+    }
 
-        // Per Roku docs, the per-row arrays are indexed by the absolute row index in `content`.
-        return rowItemSize[rowIndex]?.[0] ?? itemSize[0];
+    private getRowItemWidth(rowIndex: number): number {
+        return this.getRowItemSize(rowIndex)[0];
     }
 
     private getRowItemSpacing(rowIndex: number): number[] {
@@ -506,7 +506,6 @@ export class RowList extends ArrayGrid {
     ): RowListRenderContext {
         const itemSize = this.getValueJS("itemSize") as number[];
         const globalSpacing = this.getValueJS("itemSpacing") as number[];
-        const rowItemSize = this.getValueJS("rowItemSize") as number[][];
         const rowHeights = this.getValueJS("rowHeights") as number[];
         const rowSpacings = this.getValueJS("rowSpacings") as number[];
         const displayRows = Math.min(this.content.length, this.numRows);
@@ -514,7 +513,6 @@ export class RowList extends ArrayGrid {
         return {
             itemSize,
             globalSpacing,
-            rowItemSize,
             rowHeights,
             rowSpacings,
             displayRows,
@@ -536,9 +534,11 @@ export class RowList extends ArrayGrid {
         const numCols = cols.length;
 
         // Update row dimensions. Per Roku docs the per-row arrays are indexed by the absolute
-        // row index in `content`; fall back to `itemSize`, not the previous row's value.
-        context.rowItemWidth = context.rowItemSize[rowIndex]?.[0] ?? context.itemSize[0];
-        context.rowItemHeight = context.rowItemSize[rowIndex]?.[1] ?? context.itemSize[1];
+        // row index in `content`; rows beyond rowItemSize reuse its last entry (not itemSize,
+        // and not the previous row's leftover value).
+        const rowItemSize = this.getRowItemSize(rowIndex);
+        context.rowItemWidth = rowItemSize[0];
+        context.rowItemHeight = rowItemSize[1];
 
         const spacing = this.getRowItemSpacing(rowIndex);
         const rowWidth = numCols * context.rowItemWidth + (numCols - 1) * spacing[0];
