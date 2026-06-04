@@ -234,6 +234,24 @@ describe("SceneGraph node tests", () => {
         ]);
     });
 
+    test("maskgroup.brs", async () => {
+        await execute([resourceFile("scenegraph", "maskgroup.brs")], outputStreams);
+
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
+            "subtype: MaskGroup",
+            "isSubtype Node: true",
+            "maskUri: []",
+            "maskSize: 0,0",
+            "maskOffset: 0,0",
+            "maskBitmapWidth: 0",
+            "maskBitmapHeight: 0",
+            "set maskSize: 100,50",
+            "set maskOffset: 50,30",
+            "set maskUri: [pkg:/images/mask.png]",
+            "Test completed successfully!",
+        ]);
+    });
+
     test("update-fields.brs", async () => {
         await execute([resourceFile("scenegraph", "update-fields.brs")], outputStreams);
 

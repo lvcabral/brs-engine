@@ -1071,6 +1071,26 @@ export function CircleCircle(circle1: Circle, circle2: Circle): boolean {
     return dist <= circle1.r + circle2.r;
 }
 
+/**
+ * Blits a scaled sub-region of a source canvas onto a destination context, handling the
+ * OffscreenCanvas (browser) vs node `Canvas` type guards in one place so callers in other
+ * bundles don't have to duplicate them.
+ */
+export function drawCanvasRegion(
+    ctx: BrsCanvasContext2D,
+    image: BrsCanvas,
+    sx: number,
+    sy: number,
+    sw: number,
+    sh: number,
+    dx: number,
+    dy: number,
+    dw: number,
+    dh: number
+) {
+    drawChunk(ctx, image, { sx, sy, sw, sh, dx, dy, dw, dh });
+}
+
 function drawChunk(ctx: BrsCanvasContext2D, image: BrsCanvas, chunk: DrawChunk) {
     if (image.width === 0 || image.height === 0) {
         return;
