@@ -221,6 +221,9 @@ export class IfDraw2D {
         rgba = combineRgbaOpacity(rgba, opacity);
         const image = getCanvasFromDraw2d(bitmap, rgba);
         const patchSizes = bitmap.getPatchSizes();
+        if (!patchSizes) {
+            return;
+        }
         const x = rect.x;
         const y = rect.y;
         const width = rect.width;
@@ -228,10 +231,10 @@ export class IfDraw2D {
         const sw = image.width;
         const sh = image.height;
 
-        const lw = patchSizes.horizontal; // Left Width
-        const rw = patchSizes.horizontal; // Right Width (assuming symmetric)
-        const th = patchSizes.vertical; // Top Height
-        const bh = patchSizes.vertical; // Bottom Height (assuming symmetric)
+        const lw = patchSizes.left; // Left fixed-corner width
+        const rw = patchSizes.right; // Right fixed-corner width
+        const th = patchSizes.top; // Top fixed-corner height
+        const bh = patchSizes.bottom; // Bottom fixed-corner height
 
         const cw = Math.max(0, sw - 2 - lw - rw); // Center source width (drawable area)
         const ch = Math.max(0, sh - 2 - th - bh); // Center source height (drawable area)

@@ -135,12 +135,12 @@ export class Poster extends Group {
         this.bitmap = this.loadBitmap(uri);
         if (this.bitmap?.isValid()) {
             const margins = { left: 0, right: 0, top: 0, bottom: 0 };
-            if (this.bitmap.ninePatch) {
-                const sizes = this.bitmap.getPatchSizes();
-                margins.left = sizes.horizontal;
-                margins.right = sizes.horizontal;
-                margins.top = sizes.vertical;
-                margins.bottom = sizes.vertical;
+            const sizes = this.bitmap.ninePatch ? this.bitmap.getPatchSizes() : undefined;
+            if (sizes) {
+                margins.left = sizes.margins.left;
+                margins.right = sizes.margins.right;
+                margins.top = sizes.margins.top;
+                margins.bottom = sizes.margins.bottom;
             } else {
                 const loadWidth = this.getValueJS("loadWidth") as number;
                 const loadHeight = this.getValueJS("loadHeight") as number;
