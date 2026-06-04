@@ -157,16 +157,21 @@ export class SGRoot {
                 this._resolution = "SD";
             }
         }
-        const autoSub = interpreter.manifest.get("uri_resolution_autosub") ?? "";
-        if (autoSub.split(",").length === 4) {
-            const subs = autoSub.split(",");
-            this._autoSub.search = subs[0];
-            if (this._resolution === "SD") {
-                this._autoSub.replace = subs[1];
-            } else if (this._resolution === "HD") {
-                this._autoSub.replace = subs[2];
-            } else {
-                this._autoSub.replace = subs[3];
+        // Format: uri_resolution_autosub=<search>,<replace...>
+        // The full form lists replacements for SD, HD and FHD, but channels often omit the
+        // resolutions they don't ship (most commonly SD), e.g. "$$RES$$,hd,fhd". The replacements
+        // are an ascending-resolution suffix of [SD, HD, FHD] (FHD is always the last one), so map
+        // the current resolution from the end of the list. Roku trims surrounding whitespace.
+        const autoSub = (interpreter.manifest.get("uri_resolution_autosub") ?? "").trim();
+        if (autoSub) {
+            const subs = autoSub.split(",").map((sub) => sub.trim());
+            const replacements = subs.slice(1);
+            if (replacements.length && subs[0] !== "") {
+                this._autoSub.search = subs[0];
+                // Offset from the end: FHD = last, HD = second-to-last, SD = third-to-last.
+                const offset = this._resolution === "FHD" ? 1 : this._resolution === "HD" ? 2 : 3;
+                const index = Math.min(Math.max(replacements.length - offset, 0), replacements.length - 1);
+                this._autoSub.replace = replacements[index];
             }
         }
     }
