@@ -27,6 +27,17 @@ import BMP from "decode-bmp";
 import { WebPRiffParser, WebPDecoder } from "@lvcabral/libwebp";
 import { BrsDevice } from "../../device/BrsDevice";
 
+/** Parsed 9-patch (`.9.png`) layout, in source-pixel units (excluding the 1px marker border). */
+export interface NinePatch {
+    /** Fixed corner insets, derived from the TOP row + LEFT column stretch markers. */
+    left: number;
+    right: number;
+    top: number;
+    bottom: number;
+    /** Content padding, derived from the RIGHT column + BOTTOM row markers. */
+    margins: { left: number; right: number; top: number; bottom: number };
+}
+
 export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
     readonly kind = ValueKind.Object;
     readonly x: number = 0;
@@ -38,7 +49,7 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
     private readonly context: BrsCanvasContext2D;
     private readonly name: string;
     private readonly valid: boolean;
-    private readonly patchSizes?: { horizontal: number; vertical: number };
+    private readonly patchSizes?: NinePatch;
     private alphaEnable: boolean;
     private rgbaCanvas?: BrsCanvas;
     private rgbaLast: number;
@@ -188,8 +199,8 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
             ifBitmap: [this.getName],
         });
         if (this.valid && this.name.toLowerCase().endsWith(".9.png")) {
-            const sizes = this.getPatchSizes();
-            if (sizes.horizontal >= 0 && sizes.vertical >= 0) {
+            const sizes = this.parsePatchSizes();
+            if (sizes) {
                 this.ninePatch = true;
                 this.patchSizes = sizes;
             }
@@ -296,49 +307,81 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
         }
     }
 
-    getPatchSizes(): { horizontal: number; vertical: number } {
-        if (this.patchSizes) {
-            return this.patchSizes;
-        }
+    /** Returns the parsed 9-patch layout, or `undefined` for non 9-patch bitmaps. */
+    getPatchSizes(): NinePatch | undefined {
+        return this.patchSizes ?? this.parsePatchSizes();
+    }
+
+    /**
+     * Parses the 1px marker border of a `.9.png` image into fixed corner insets and content
+     * margins. The TOP row and LEFT column markers define the stretchable region (and thus the
+     * fixed corner insets); the RIGHT column and BOTTOM row markers define the content padding.
+     * Returns `undefined` when the image is not a valid 9-patch (no top/left stretch markers).
+     */
+    private parsePatchSizes(): NinePatch | undefined {
         const image = this.getCanvas();
         const ctx = this.getContext();
+        const width = image.width;
+        const height = image.height;
+        const data = ctx.getImageData(0, 0, width, height).data;
 
-        const imageData = ctx.getImageData(0, 0, image.width, image.height);
-        const data = imageData.data;
+        const isBlack = (x: number, y: number) => {
+            const i = (x + y * width) * 4;
+            // Marker pixels are opaque black (0, 0, 0, 255)
+            return data[i] === 0 && data[i + 1] === 0 && data[i + 2] === 0 && data[i + 3] === 255;
+        };
 
-        let horizPatchSize = -1;
-        let vertPatchSize = -1;
-
-        // Check the top row for the first black pixel (horizontal patch size)
-        for (let i = 0; i < image.width; i++) {
-            const index = (i + 0 * image.width) * 4;
-            const r = data[index];
-            const g = data[index + 1];
-            const b = data[index + 2];
-            const a = data[index + 3];
-
-            // Assuming black pixel (0, 0, 0, 255)
-            if (r === 0 && g === 0 && b === 0 && a === 255) {
-                horizPatchSize = i;
-                break;
+        // Scans an edge line and returns the [first, last] indices of its contiguous marker, or
+        // undefined when no marker pixel is found.
+        const scanMarker = (length: number, sample: (i: number) => boolean) => {
+            let first = -1;
+            let last = -1;
+            for (let i = 0; i < length; i++) {
+                if (sample(i)) {
+                    if (first < 0) {
+                        first = i;
+                    }
+                    last = i;
+                }
             }
+            return first < 0 ? undefined : { first, last };
+        };
+
+        // Content spans indices 1..length-2 (the marker border is excluded).
+        const inset = (marker: { first: number; last: number }, length: number) => ({
+            before: marker.first - 1,
+            after: length - 2 - marker.last,
+        });
+
+        const topMarker = scanMarker(width, (x) => isBlack(x, 0));
+        const leftMarker = scanMarker(height, (y) => isBlack(0, y));
+        if (!topMarker || !leftMarker) {
+            return undefined;
+        }
+        const horiz = inset(topMarker, width);
+        const vert = inset(leftMarker, height);
+
+        const bottomMarker = scanMarker(width, (x) => isBlack(x, height - 1));
+        const rightMarker = scanMarker(height, (y) => isBlack(width - 1, y));
+        let margins = { left: 0, right: 0, top: 0, bottom: 0 };
+        if (bottomMarker && rightMarker) {
+            const horizMargin = inset(bottomMarker, width);
+            const vertMargin = inset(rightMarker, height);
+            margins = {
+                left: horizMargin.before,
+                right: horizMargin.after,
+                top: vertMargin.before,
+                bottom: vertMargin.after,
+            };
         }
 
-        // Check the left column for the first black pixel (vertical patch size)
-        for (let i = 0; i < image.height; i++) {
-            const index = (0 + i * image.width) * 4;
-            const r = data[index];
-            const g = data[index + 1];
-            const b = data[index + 2];
-            const a = data[index + 3];
-
-            // Assuming black pixel (0, 0, 0, 255)
-            if (r === 0 && g === 0 && b === 0 && a === 255) {
-                vertPatchSize = i;
-                break;
-            }
-        }
-        return { horizontal: horizPatchSize, vertical: vertPatchSize };
+        return {
+            left: horiz.before,
+            right: horiz.after,
+            top: vert.before,
+            bottom: vert.after,
+            margins,
+        };
     }
 
     // ifBitmap  -----------------------------------------------------------------------------------
