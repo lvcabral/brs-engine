@@ -69,7 +69,7 @@ export enum SGNodeType {
     ContentNode = "ContentNode",
     Group = "Group",
     LayoutGroup = "LayoutGroup",
-    MaskGroup = "MaskGroup", // Not yet implemented
+    MaskGroup = "MaskGroup",
     TargetGroup = "TargetGroup", // Not yet implemented
     TargetList = "TargetList", // Not yet implemented
     TargetSet = "TargetSet", // Not yet implemented
