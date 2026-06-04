@@ -901,11 +901,21 @@ export class Node extends RoSGNode implements BrsValue {
             // Get the focus chain, with lowest ancestor first.
             let newFocusChain = this.createPath();
 
-            // If there's already a focused node somewhere, we need to remove focus
+            // Capture the previously focused node, then update the global focus
+            // reference up front so any observers fired while we rewrite the
+            // focusedChild fields below already see the new focus state
+            // (hasFocus() === sgRoot.focused === this). Otherwise, clearing the old
+            // focus chain flushes its observers synchronously while sgRoot.focused
+            // still points at the node losing focus, making it (incorrectly) report
+            // hasFocus() === true alongside the node gaining focus.
+            const prevFocused = sgRoot.focused;
+            sgRoot.setFocused(this);
+
+            // If there was already a focused node somewhere, we need to remove focus
             // from it and its ancestors.
-            if (sgRoot.focused instanceof Node) {
+            if (prevFocused instanceof Node) {
                 // Get the focus chain, with root-most ancestor first.
-                let currFocusChain = this.createPath(sgRoot.focused);
+                let currFocusChain = this.createPath(prevFocused);
 
                 // Find the lowest common ancestor (LCA) between the newly focused node
                 // and the current focused node.
@@ -920,8 +930,6 @@ export class Node extends RoSGNode implements BrsValue {
                     currFocusChain[i].setValue(focusedChild, BrsInvalid.Instance, false);
                 }
             }
-            // Set the global focused node reference to this node.
-            sgRoot.setFocused(this);
 
             // Set the focusedChild for each ancestor to the next node in the chain,
             // which is the current node's child.
