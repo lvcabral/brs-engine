@@ -1063,10 +1063,12 @@ export class Node extends RoSGNode implements BrsValue {
         if (!uri?.trim()) {
             return undefined;
         }
-        if (sgRoot.autoSub.search && sgRoot.autoSub.replace) {
+        if (sgRoot.autoSub.search) {
+            // Replace the configured token with the resolution-specific string. An empty replacement
+            // is valid (it removes the token), so only the search string needs to be configured.
             const escapedSearch = sgRoot.autoSub.search.replaceAll(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
-            const searchPattern = new RegExp(escapedSearch, "i");
-            uri = uri.replace(searchPattern, sgRoot.autoSub.replace);
+            const searchPattern = new RegExp(escapedSearch, "gi");
+            uri = uri.replaceAll(searchPattern, () => sgRoot.autoSub.replace);
         }
         return getTextureManager().loadTexture(uri, this.httpAgent.customHeaders);
     }
