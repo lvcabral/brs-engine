@@ -16,6 +16,10 @@ This is an npm **workspaces** monorepo (root package `brs-engine-workspace`). Al
 - **brs-node** (`packages/node`) — Node.js library plus the `brs-cli` command, ECP + SSDP servers. Build output: `packages/node/bin/{brs.cli.js, brs.ecp.js, brs.node.js}`.
 - **brs-scenegraph** (`packages/scenegraph`) — SceneGraph runtime shipped as a standalone **extension** bundle (`brs-sg.js` / `brs-sg.node.js`) that auto-loads when an app contains `pkg:/components/` assets.
 
+### Required deployment asset: `assets/common.zip`
+
+`packages/browser/assets/common.zip` (and its SceneGraph-aware counterpart in `packages/scenegraph/assets/common.zip`) is the **`common:/` volume** — it contains the default fonts, system audio, CA certificates, and BrightScript library stubs (`LibCore`, `roku_ads`, `roku_analytics`, `roku_browser`) that all BrightScript apps expect to be present. **Any web app that embeds the engine must serve this file at `./assets/common.zip` relative to `brs.api.js`.** The API library fetches it automatically on startup via `fetch('./assets/common.zip')` — if the file is missing, fonts and system libraries will be unavailable and most apps will fail or look broken.
+
 ## Commands
 
 Run from the repo root (scripts fan out to workspaces):
@@ -106,6 +110,7 @@ Registration / loading:
 
 - `registerExtension(() => new BrightScriptExtension())` adds a factory; `instantiateExtensions()` builds fresh instances per interpreter. `clearExtensions()` resets (used in tests).
 - In the browser worker, `loadExtension()` in `src/core/index.ts` calls `importScripts()` on the extension's bundle URL (resolved from `DeviceInfo.extensions: Map<SupportedExtension, string>`), exposes the engine to it via `globalThis.brsEngine = createWorkerExports()`, then reads `globalThis[moduleId].BrightScriptExtension`. So the extension imports `"brs-engine"` and at runtime is wired to the host's already-loaded engine, not a second copy.
+- **Extension paths in `DeviceInfo.extensions` are resolved by the worker (`brs.worker.js`), not the page.** Because `importScripts()` runs inside the Web Worker, the URL is relative to the worker bundle's location — not to `index.html`. If your worker lives at `lib/brs.worker.js` and `brs-sg.js` sits next to it (`lib/brs-sg.js`), the correct value is `"./brs-sg.js"`, **not** `"./lib/brs-sg.js"`. Getting this wrong produces a silent failure: SceneGraph apps load but `roSGScreen` / `roSGNode` are unregistered. The simplest layout is to keep all engine bundles in the same folder so the relative path is just `./brs-sg.js`.
 - `brs-node` and the CLI register the SceneGraph extension automatically; `--no-sg` disables it. The core stays SceneGraph-agnostic: it only knows the minimal `ISGNode` interface (`isSceneGraphNode()`), never the concrete node classes.
 
 ## SceneGraph extension (`src/extensions/scenegraph/`)
