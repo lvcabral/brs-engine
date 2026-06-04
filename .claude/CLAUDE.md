@@ -166,6 +166,7 @@ See `docs/extensions.md` and `packages/scenegraph/README.md` for the consumer-fa
 
 ## Conventions
 
+- **ALWAYS run `npm run lint` and `npm run prettier:write` before every commit.** Both must pass with no errors; fix any issues they surface before committing.
 - **Conditional compilation:** `/// #if BROWSER` … `/// #endif` blocks (via `ifdef-loader`) tailor the same `src/` to browser vs. node builds. Keep platform-specific imports inside these guards.
 - **ESLint** uses `@typescript-eslint` with the `prettier` config and type-aware rules (`await-thenable`, `promise-function-async`, `no-for-in-array`, `prefer-for-of`, `eqeqeq: smart`). `import/no-extraneous-dependencies` is enforced. Run `npm run lint` and `npm run prettier:write` before committing.
 - The SceneGraph extension imports the engine as the package `"brs-engine"`, never via relative `../core` paths — it is compiled as a separate bundle and bound to the host engine at load time.
