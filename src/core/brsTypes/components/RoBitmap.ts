@@ -261,7 +261,11 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
         }) as BrsCanvasContext2D;
         drawImageAtPos(this.canvas, ctx, 0, 0);
         ctx.globalCompositeOperation = "multiply";
-        ctx.fillStyle = rgbaIntToHex(rgba);
+        // Apply the RGB tint at full strength: blendColor's alpha controls the resulting
+        // transparency (handled separately via globalAlpha when blitting), not the tint
+        // strength. Using the color's alpha here would weaken the multiply and lighten the
+        // result, diverging from Roku (e.g. 0x0B001980 must render dark, not near-white).
+        ctx.fillStyle = rgbaIntToHex(rgba, false);
         ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         ctx.globalCompositeOperation = "destination-in";
         drawImageAtPos(this.canvas, ctx, 0, 0);
