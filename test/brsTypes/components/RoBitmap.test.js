@@ -14,10 +14,7 @@ describe("RoBitmap 9-patch parsing", () => {
     });
 
     it("parses asymmetric stretch markers and content margins (inputField.9.png)", () => {
-        const fixture = path.join(
-            __dirname,
-            "../../../src/extensions/scenegraph/common/images/inputField.9.png"
-        );
+        const fixture = path.join(__dirname, "../../../src/extensions/scenegraph/common/images/inputField.9.png");
         const bitmap = new RoBitmap(fs.readFileSync(fixture), "pkg:/images/inputField.9.png");
 
         expect(bitmap.ninePatch).toBe(true);
