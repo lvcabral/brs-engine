@@ -11,6 +11,7 @@ import {
     IfDraw2D,
     RuntimeError,
     DebugMode,
+    BrsDevice,
 } from "brs-engine";
 import { toAssociativeArray } from "../factory/Serializer";
 import { sgRoot } from "../SGRoot";
@@ -31,6 +32,7 @@ export class Scene extends Group {
         { name: "dialog", type: FieldKind.Node },
         { name: "currentDesignResolution", type: FieldKind.AssocArray },
         { name: "palette", type: FieldKind.Node },
+        { name: "allowBackgroundTask", type: FieldKind.Boolean, value: "false" },
     ];
     readonly ui = { width: 1280, height: 720, resolution: "HD" };
     dialog?: Dialog | StandardDialog;
@@ -88,6 +90,10 @@ export class Scene extends Group {
             } else {
                 return;
             }
+        } else if (fieldName === "allowbackgroundtask") {
+            BrsDevice.stderr.write(
+                `warning,Warning -  Setting field 'allowBackgroundTask' on Scene node has no effect as Instant Resume is not supported.`
+            );
         }
         super.setValue(index, value, alwaysNotify, kind, sync);
     }
