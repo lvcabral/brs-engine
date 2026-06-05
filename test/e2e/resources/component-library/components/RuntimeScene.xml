@@ -16,7 +16,8 @@
         sub onLoadStatusChanged()
             print "runtime loadStatus changed: " + m.lib.loadStatus
             if m.lib.loadStatus = "ready"
-                bar = createObject("roSGNode", "RuntimeLib:Bar")
+                ' Namespace comes from the library manifest, not the node id ("RuntimeLib").
+                bar = createObject("roSGNode", "MyComponentLib:Bar")
                 print "runtime bar subtype: " + bar.subtype()
             end if
         end sub

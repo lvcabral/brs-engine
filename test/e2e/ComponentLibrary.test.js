@@ -30,9 +30,11 @@ describe("ComponentLibrary", () => {
             // first render frame so the observeField() callback is notified.
             "init loadStatus: loading",
             "loadStatus changed: ready",
-            "[MyLib:Bar::init]",
-            "bar subtype: MyLib:Bar",
-            "bar message: Hello from MyLib:Bar",
+            // The namespace is the library manifest's sg_component_libs_provided ("MyComponentLib"),
+            // not the node id ("MyLib").
+            "[Bar::init]",
+            "bar subtype: MyComponentLib:Bar",
+            "bar message: Hello from MyComponentLib:Bar",
         ]);
     });
 
@@ -48,8 +50,8 @@ describe("ComponentLibrary", () => {
             "after set id: none",
             "after set uri: loading",
             "runtime loadStatus changed: ready",
-            "[MyLib:Bar::init]",
-            "runtime bar subtype: RuntimeLib:Bar",
+            "[Bar::init]",
+            "runtime bar subtype: MyComponentLib:Bar",
         ]);
     });
 });

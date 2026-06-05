@@ -43,23 +43,23 @@ export class ComponentScopeResolver {
      * @returns A collection of statements that have been flattened based on hierarchy.
      */
     private flatten(statementMap: Stmt.Statement[][]): Stmt.Statement[] {
-        let statements = statementMap.shift() || [];
-        let statementMemo = new Set(
-            statements.filter((_): _ is Stmt.Function => true).map((statement) => statement.name.text.toLowerCase())
-        );
+        const isFunction = (statement: Stmt.Statement): statement is Stmt.Function =>
+            statement instanceof Stmt.Function;
+        // Component scripts only contribute their function definitions to the component's scope;
+        // top-level executable statements (e.g. a stray `print` or `library`) must not be run.
+        let statements: Stmt.Function[] = (statementMap.shift() || []).filter(isFunction);
+        let statementMemo = new Set(statements.map((statement) => statement.name.text.toLowerCase()));
         while (statementMap.length > 0) {
             let extendedFns = statementMap.shift() || [];
             statements = statements.concat(
-                extendedFns
-                    .filter((_): _ is Stmt.Function => true)
-                    .filter((statement) => {
-                        let statementName = statement.name.text.toLowerCase();
-                        let haveFnName = statementMemo.has(statementName);
-                        if (!haveFnName) {
-                            statementMemo.add(statementName);
-                        }
-                        return !haveFnName && !this.excludedNames.includes(statementName);
-                    })
+                extendedFns.filter(isFunction).filter((statement) => {
+                    let statementName = statement.name.text.toLowerCase();
+                    let haveFnName = statementMemo.has(statementName);
+                    if (!haveFnName) {
+                        statementMemo.add(statementName);
+                    }
+                    return !haveFnName && !this.excludedNames.includes(statementName);
+                })
             );
         }
         return statements;

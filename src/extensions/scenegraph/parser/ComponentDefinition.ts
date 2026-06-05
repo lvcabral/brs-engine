@@ -250,16 +250,21 @@ export function setupInterpreterWithSubEnvs(
     const entryPoint = options.entryPoint ?? false;
     const componentScopeResolver = new ComponentScopeResolver(componentMap, fs, manifest);
     for (const [, component] of componentMap) {
-        component.environment = interpreter.environment.createSubEnvironment(/* includeModuleScope */ false);
-        const statements = componentScopeResolver.resolve(component);
-        interpreter.inSubEnv((subInterpreter) => {
-            const componentMPointer = new RoAssociativeArray([]);
-            subInterpreter.options.entryPoint = false;
-            subInterpreter.environment.setM(componentMPointer);
-            subInterpreter.environment.setRootM(componentMPointer);
-            subInterpreter.exec(statements);
-            return BrsInvalid.Instance;
-        }, component.environment);
+        try {
+            component.environment = interpreter.environment.createSubEnvironment(/* includeModuleScope */ false);
+            const statements = componentScopeResolver.resolve(component);
+            interpreter.inSubEnv((subInterpreter) => {
+                const componentMPointer = new RoAssociativeArray([]);
+                subInterpreter.options.entryPoint = false;
+                subInterpreter.environment.setM(componentMPointer);
+                subInterpreter.environment.setRootM(componentMPointer);
+                subInterpreter.exec(statements);
+                return BrsInvalid.Instance;
+            }, component.environment);
+        } catch (err: any) {
+            // A single malformed component must not abort loading the rest of the app.
+            postMessage(`error,[sg] Failed to set up component "${component.name}": ${err.message}`);
+        }
     }
     interpreter.options.entryPoint = entryPoint;
 }

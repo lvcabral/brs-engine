@@ -118,11 +118,11 @@ export class BrightScriptExtension implements BrsExtension {
                 if (node.name.toLowerCase() === "componentlibrary") {
                     const id = node.fields?.id?.trim();
                     const uri = node.fields?.uri?.trim();
+                    // Only pre-load libraries that declare a static uri in XML; libraries whose
+                    // uri is assigned at runtime are loaded lazily by the ComponentLibrary node.
                     if (id && uri && !declarations.has(id.toLowerCase())) {
                         declarations.set(id.toLowerCase(), { id, uri });
                         sgRoot.setLibraryStatus(id, "none");
-                    } else if (id && !uri) {
-                        BrsDevice.stderr.write(`warning,[sg] ComponentLibrary "${id}" is missing a uri field`);
                     }
                 }
                 if (node.children.length > 0) {
