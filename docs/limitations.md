@@ -18,8 +18,13 @@ The **BrightScript Engine** implements the BrightScript language specification u
     * Media related nodes: `Audio`, `SoundEffect`, `Video` and `TrickPlayBar`
     * Animation related nodes: `AnimationBase`, `Animation`, `SequentialAnimation`, `ParallelAnimation`, `ColorFieldInterpolator`, `FloatFieldInterpolator` and `Vector2DFieldInterpolator`
     * Panel related nodes: `OverhangPanelSetScene`, `PanelSet`, `Panel`, `GridPanel` and `ListPanel`
-    * Other supported nodes: `Button`, `ButtonGroup`, `BusySpinner`, `Overhang`, `InfoPane`, `Keyboard`, `MiniKeyboard`, `PinPad` and `TextEditBox`
+    * Other supported nodes: `Button`, `ButtonGroup`, `BusySpinner`, `Overhang`, `InfoPane`, `Keyboard`, `MiniKeyboard`, `PinPad`, `TextEditBox` and `ComponentLibrary`
   * Some of the nodes listed above may not have full functionality yet, please open a [GitHub issue](https://github.com/lvcabral/brs-engine/issues) if you find any problem or missing feature.
+  * **Component Libraries** are supported: declare a `<ComponentLibrary id="MyLib" uri="..."/>` element (its `id` is the namespace) inside a component/scene and reference its components as `MyLib:ComponentName`. The `uri` may point to a local volume (`pkg:/`, `tmp:/`, `ext1:/`) or a remote `http(s)://` package. Current limitations:
+    * Libraries are downloaded and compiled synchronously at startup. A `ComponentLibrary` node declared in XML reports `loadStatus = "loading"` during its scene's `init()` and transitions to `"ready"`/`"failed"` on the first render frame, so `observeField("loadStatus", ...)` callbacks are notified as on a real device. A `ComponentLibrary` node created dynamically at runtime via `CreateObject` only reflects the status of a library already declared in XML.
+    * Inside a library, `pkg:/` still resolves to the host app's package (not the library's own); reference a library's bundled scripts with relative `uri` paths in its component XML.
+    * Library `source/` global functions and intra-library component inheritance (a library component extending another library component) are not supported yet.
+    * Encrypted/signed `.bpk` libraries are not supported yet (plain `.zip` only).
   * The following `ifSGNodeBoundingRect` methods are not implemented yet: `localSubBoundingRect`, `subBoundingRect`, `sceneSubBoundingRect` and `ancestorSubBoundingRect`
   * The support for focus change animation on grid, list and panel nodes is not implemented yet.
   * All other nodes are either mocked or still not implemented, and if used will be created as a plain `Node`.

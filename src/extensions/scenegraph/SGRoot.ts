@@ -33,6 +33,10 @@ export class SGRoot {
     private _interpreter: Interpreter | undefined;
     private _mGlobal: Global | undefined;
     private _nodeDefMap: Map<string, ComponentDefinition>;
+    /** Tracks the load status of component libraries, keyed by lowercase library id. */
+    private _componentLibraries: Map<string, string>;
+    /** Deferred ComponentLibrary loadStatus notifications, flushed on the next render frame. */
+    private readonly _pendingLibraryNotifications: (() => void)[] = [];
     private _screen?: RoSGScreen;
     private _scene?: Scene;
     private _focused?: RoSGNode;
@@ -127,6 +131,7 @@ export class SGRoot {
 
     constructor() {
         this._nodeDefMap = new Map<string, ComponentDefinition>();
+        this._componentLibraries = new Map<string, string>();
         this._sfx = [];
         this._timers = [];
         this._animations = [];
@@ -182,6 +187,52 @@ export class SGRoot {
      */
     setNodeDefMap(nodeDefMap: Map<string, ComponentDefinition>) {
         this._nodeDefMap = nodeDefMap;
+        this._componentLibraries = new Map<string, string>();
+        this._pendingLibraryNotifications.length = 0;
+    }
+
+    /**
+     * Records the load status of a component library.
+     * @param id Library id (the ComponentLibrary node's `id` field, used as namespace prefix)
+     * @param status Load status ("none" | "loading" | "ready" | "failed")
+     */
+    setLibraryStatus(id: string, status: string) {
+        this._componentLibraries.set(id.toLowerCase(), status);
+    }
+
+    /**
+     * Gets the load status of a previously loaded component library.
+     * @param id Library id to look up
+     * @returns The recorded load status, or undefined if the library was never loaded
+     */
+    getLibraryStatus(id: string): string | undefined {
+        return this._componentLibraries.get(id.toLowerCase());
+    }
+
+    /**
+     * Queues a deferred ComponentLibrary loadStatus notification. Because libraries load
+     * synchronously at startup (before the scene exists), the `loadStatus` transition to
+     * "ready"/"failed" is deferred to the next render frame so observers attached during a
+     * component's `init()` are notified, matching the asynchronous behavior on a Roku device.
+     * @param notify Callback that emits the loadStatus change with observer notification
+     */
+    addPendingLibraryNotification(notify: () => void) {
+        this._pendingLibraryNotifications.push(notify);
+    }
+
+    /**
+     * Flushes any deferred ComponentLibrary loadStatus notifications.
+     * @returns True if any notification was emitted, false otherwise
+     */
+    processComponentLibraries(): boolean {
+        if (this._pendingLibraryNotifications.length === 0) {
+            return false;
+        }
+        const pending = this._pendingLibraryNotifications.splice(0);
+        for (const notify of pending) {
+            notify();
+        }
+        return true;
     }
 
     /**

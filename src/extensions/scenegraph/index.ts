@@ -21,7 +21,13 @@ import {
     RuntimeError,
     RoMessagePort,
 } from "brs-engine";
-import { getComponentDefinitionMap, setupInterpreterWithSubEnvs } from "./parser/ComponentDefinition";
+import {
+    getComponentDefinitionMap,
+    setupInterpreterWithSubEnvs,
+    ComponentDefinition,
+    ComponentNode,
+} from "./parser/ComponentDefinition";
+import { loadComponentLibrary } from "./parser/ComponentLibrary";
 import { sgRoot } from "./SGRoot";
 import { Task } from "./nodes/Task";
 import { initializeTask, createNode, updateTypeDefHierarchy, getNodeType } from "./factory/NodeFactory";
@@ -81,6 +87,9 @@ export class BrightScriptExtension implements BrsExtension {
                     updateTypeDefHierarchy(componentDef);
                     BrsDevice.addNodeStat(getNodeType(componentName));
                 }
+                // Load any component libraries declared via <ComponentLibrary> elements so their
+                // namespaced components (libraryId:ComponentName) resolve before the app runs.
+                await this.loadComponentLibraries(components);
             } else {
                 const componentsDirExists = BrsDevice.fileSystem.existsSync("pkg:/components");
                 if (componentsDirExists) {
@@ -93,6 +102,47 @@ export class BrightScriptExtension implements BrsExtension {
             } else {
                 BrsDevice.stderr.write(`error,[sg] Failed to load SceneGraph components: ${err.message}`);
             }
+        }
+    }
+
+    /**
+     * Scans parsed component definitions for `<ComponentLibrary>` declarations and loads
+     * each unique library so its components become available with a namespace prefix.
+     * @param components Map of the app's parsed component definitions
+     */
+    private async loadComponentLibraries(components: Map<string, ComponentDefinition>) {
+        const declarations = new Map<string, { id: string; uri: string }>(); // lowercase id -> declaration
+        const collect = (nodes: ComponentNode[]) => {
+            for (const node of nodes) {
+                if (node.name.toLowerCase() === "componentlibrary") {
+                    const id = node.fields?.id?.trim();
+                    const uri = node.fields?.uri?.trim();
+                    if (id && uri && !declarations.has(id.toLowerCase())) {
+                        declarations.set(id.toLowerCase(), { id, uri });
+                        sgRoot.setLibraryStatus(id, "none");
+                    } else if (id && !uri) {
+                        BrsDevice.stderr.write(`warning,[sg] ComponentLibrary "${id}" is missing a uri field`);
+                    }
+                }
+                if (node.children.length > 0) {
+                    collect(node.children);
+                }
+            }
+        };
+        for (const component of components.values()) {
+            collect(component.children);
+        }
+        if (declarations.size > 0) {
+            BrsDevice.stdout.write(
+                `debug,[sg] Found ${declarations.size} ComponentLibrary declaration(s): ${Array.from(
+                    declarations.values()
+                )
+                    .map((d) => `${d.id}=${d.uri}`)
+                    .join(", ")}`
+            );
+        }
+        for (const { id, uri } of declarations.values()) {
+            await loadComponentLibrary(id, uri);
         }
     }
 

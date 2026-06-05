@@ -5,6 +5,7 @@ export * from "./Button";
 export * from "./ButtonGroup";
 export * from "./ChannelStore";
 export * from "./CheckList";
+export * from "./ComponentLibrary";
 export * from "./ContentNode";
 export * from "./Dialog";
 export * from "./Field";
@@ -157,5 +158,5 @@ export enum SGNodeType {
     ColorFieldInterpolator = "ColorFieldInterpolator",
     BusySpinner = "BusySpinner",
     ChannelStore = "ChannelStore",
-    ComponentLibrary = "ComponentLibrary", // Not yet implemented
+    ComponentLibrary = "ComponentLibrary",
 }

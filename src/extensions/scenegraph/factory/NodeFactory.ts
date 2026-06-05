@@ -28,6 +28,7 @@ import {
     ButtonGroup,
     ChannelStore,
     CheckList,
+    ComponentLibrary,
     ContentNode,
     Dialog,
     Font,
@@ -186,6 +187,8 @@ export class SGNodeFactory {
                 return new MarkupGrid([], name);
             case SGNodeType.ContentNode.toLowerCase():
                 return new ContentNode(name);
+            case SGNodeType.ComponentLibrary.toLowerCase():
+                return new ComponentLibrary([], name);
             case SGNodeType.Task.toLowerCase():
                 return new Task([], name);
             case SGNodeType.Timer.toLowerCase():
