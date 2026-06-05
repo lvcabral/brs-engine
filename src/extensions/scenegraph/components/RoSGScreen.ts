@@ -192,6 +192,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
             }
             // Handle Scene Events
             if (sgRoot.scene instanceof Scene) {
+                const libsUpdated = sgRoot.processComponentLibraries();
                 const timersFired = sgRoot.processTimers();
                 const animUpdated = sgRoot.processAnimations();
                 const tasksUpdated = sgRoot.processTasks();
@@ -199,7 +200,13 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
                 const sfxUpdated = sgRoot.processSFX();
                 const videoUpdated = sgRoot.processVideo();
                 this.isDirty ||=
-                    timersFired || animUpdated || tasksUpdated || audioUpdated || sfxUpdated || videoUpdated;
+                    libsUpdated ||
+                    timersFired ||
+                    animUpdated ||
+                    tasksUpdated ||
+                    audioUpdated ||
+                    sfxUpdated ||
+                    videoUpdated;
                 // Render Scene and Dialog
                 const showDialog = sgRoot.scene?.dialog instanceof Node;
                 if (sgRoot.isDirty || this.isDirty || showDialog) {

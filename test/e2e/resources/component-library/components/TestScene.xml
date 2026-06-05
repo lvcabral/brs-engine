@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="TestScene" extends="Scene">
+    <script type="text/brightscript">
+        <![CDATA[
+        sub init()
+            m.lib = m.top.findNode("MyLib")
+            print "init loadStatus: " + m.lib.loadStatus
+            m.lib.observeField("loadStatus", "onLoadStatusChanged")
+        end sub
+
+        sub onLoadStatusChanged()
+            print "loadStatus changed: " + m.lib.loadStatus
+            if m.lib.loadStatus = "ready"
+                bar = createObject("roSGNode", "MyLib:Bar")
+                print "bar subtype: " + bar.subtype()
+                print "bar message: " + bar.message
+            end if
+        end sub
+        ]]>
+    </script>
+    <children>
+        <ComponentLibrary id="MyLib" uri="pkg:/library.zip" />
+    </children>
+</component>

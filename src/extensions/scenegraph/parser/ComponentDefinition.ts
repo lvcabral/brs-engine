@@ -116,19 +116,23 @@ export class ComponentDefinition {
  * @param fileSystem The file system instance to use for reading files.
  * @param additionalDirs Additional directories to search for component XML files.
  * @param libraryName Optional library name to prefix component names.
+ * @param rootVolume Optional root volume to scan (defaults to "pkg:"). Used to load
+ *                   component libraries mounted on their own volume.
  * @returns A promise that resolves to a map of component definitions.
  */
 export async function getComponentDefinitionMap(
     fileSystem: FileSystem,
     additionalDirs: string[] = [],
-    libraryName?: string
+    libraryName?: string,
+    rootVolume: string = "pkg:"
 ) {
     fs = fileSystem;
+    const volume = rootVolume.endsWith(":") ? rootVolume : `${rootVolume}:`;
 
     const xmlFiles: string[] = [];
     const directories = ["components", ...additionalDirs];
     for (const dir of directories) {
-        const dirPath = `pkg:/${dir.replaceAll("\\", "/")}`;
+        const dirPath = `${volume}/${dir.replaceAll("\\", "/")}`;
         if (fs?.existsSync(dirPath)) {
             xmlFiles.push(...fs.findSync(dirPath, "xml"));
         }

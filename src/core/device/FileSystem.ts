@@ -33,6 +33,8 @@ export class FileSystem {
     private readonly cfs: typeof zenFS.fs; // cachefs:
     private pfs: typeof zenFS.fs | typeof nodeFS; // pkg:
     private xfs: typeof zenFS.fs | typeof nodeFS; // ext1:
+    /** Volume names (e.g. "complib_foo:") backed by zenFS for downloaded component libraries. */
+    private readonly libraryVolumes: Set<string> = new Set();
     private _root?: string;
     private _ext?: string;
 
@@ -165,6 +167,44 @@ export class FileSystem {
     }
 
     /**
+     * Mounts a downloaded component library zip as its own read-only volume.
+     * The volume is always backed by zenFS, regardless of how pkg: is mounted.
+     * @param volume Volume name to mount the library at (e.g. "complib_foo:")
+     * @param libZip ArrayBufferLike with the component library zip file data.
+     */
+    mountLibrary(volume: string, libZip: ArrayBufferLike) {
+        const mountName = volume.endsWith(":") ? volume : `${volume}:`;
+        const mountKey = mountName.toLowerCase();
+        if (zenFS.mounts.has(`/${mountName}`)) {
+            zenFS.umount(mountName);
+            this.notifyAll(mountName);
+        }
+        const libVol = zenFS.resolveMountConfigSync({
+            backend: Zip,
+            data: libZip,
+            caseFold: "lower" as const,
+        });
+        zenFS.mount(mountName, libVol);
+        this.libraryVolumes.add(mountKey);
+        this.volumes.set(mountKey, { blocks: 0, blocksize: 0, freeblocks: 0, usedblocks: 0 });
+    }
+
+    /**
+     * Unmounts a previously mounted component library volume.
+     * @param volume Volume name to unmount (e.g. "complib_foo:")
+     */
+    umountLibrary(volume: string) {
+        const mountName = volume.endsWith(":") ? volume : `${volume}:`;
+        const mountKey = mountName.toLowerCase();
+        if (zenFS.mounts.has(`/${mountName}`)) {
+            zenFS.umount(mountName);
+        }
+        this.libraryVolumes.delete(mountKey);
+        this.volumes.delete(mountKey);
+        this.notifyAll(mountName);
+    }
+
+    /**
      * Unmounts the ext1: volume.
      */
     umountExt() {
@@ -294,6 +334,12 @@ export class FileSystem {
             return this.mfs;
         } else if (uri.trim().toLowerCase().startsWith("ext1:")) {
             return this.xfs;
+        } else if (this.libraryVolumes.size > 0) {
+            const volume = getVolume(uri).toLowerCase();
+            if (this.libraryVolumes.has(volume)) {
+                // Component library volumes are always backed by zenFS, even when pkg: uses Node fs.
+                return this.mfs;
+            }
         }
         return this.pfs;
     }
