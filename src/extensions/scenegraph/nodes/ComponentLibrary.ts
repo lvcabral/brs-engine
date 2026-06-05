@@ -10,6 +10,7 @@ import { FieldKind, FieldModel } from "../SGTypes";
 import { SGNodeType } from ".";
 import { Node } from "./Node";
 import { sgRoot } from "../SGRoot";
+import { loadComponentLibrary } from "../parser/ComponentLibrary";
 
 /**
  * ComponentLibrary node: downloads a library of custom SceneGraph components so that
@@ -25,8 +26,8 @@ export class ComponentLibrary extends Node {
         { name: "id", type: "string" },
         { name: "uri", type: "string" },
     ];
-    /** Guards against queuing the deferred loadStatus notification more than once. */
-    private notificationQueued = false;
+    /** Guards against triggering the load / queuing the deferred notification more than once. */
+    private loadTriggered = false;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.ComponentLibrary) {
         super([], name);
@@ -34,11 +35,11 @@ export class ComponentLibrary extends Node {
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
-        this.refreshLoadStatus();
+        this.maybeLoadLibrary();
     }
 
     /**
-     * Re-evaluates the recorded library load status when the `id` changes.
+     * Triggers library loading once both `uri` and `id` are set.
      * @param index Field name being set
      * @param value New BrightScript value
      * @param alwaysNotify Observer notification override for new fields
@@ -47,32 +48,36 @@ export class ComponentLibrary extends Node {
      */
     setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind, sync: boolean = true) {
         super.setValue(index, value, alwaysNotify, kind, sync);
-        if (index.toLowerCase() === "id") {
-            this.refreshLoadStatus();
+        const field = index.toLowerCase();
+        if (field === "id" || field === "uri") {
+            this.maybeLoadLibrary();
         }
     }
 
     /**
-     * Reflects the recorded load status for this library's `id` into the `loadStatus` field.
-     * If the library already finished loading (synchronously, at startup), the final
-     * "ready"/"failed" transition is deferred to the next render frame so that observers
-     * attached during a component's `init()` are notified — mirroring a Roku device, where
-     * the library downloads asynchronously after the scene is constructed.
+     * Loads the library once its `uri` and `id` are both known. The library is fetched and
+     * compiled synchronously (the BrightScript event loop never yields, so an async load would
+     * never complete mid-execution), but the final "ready"/"failed" transition of `loadStatus`
+     * is deferred to the next render frame. This way an `observeField("loadStatus", ...)`
+     * callback attached after the node is created (or in a component's `init()`) is notified,
+     * mirroring a Roku device where the library downloads asynchronously.
      */
-    private refreshLoadStatus() {
-        const id = this.getValueJS("id") as string | undefined;
-        if (!id) {
+    private maybeLoadLibrary() {
+        if (this.loadTriggered) {
             return;
         }
-        const status = sgRoot.getLibraryStatus(id);
-        if ((status === "ready" || status === "failed") && !this.notificationQueued) {
-            this.notificationQueued = true;
-            // Show the in-progress state now; emit the final status on the next frame.
-            this.setValueSilent("loadStatus", new BrsString("loading"));
-            sgRoot.addPendingLibraryNotification(() => {
-                this.notificationQueued = false;
-                this.setValue("loadStatus", new BrsString(sgRoot.getLibraryStatus(id) ?? status));
-            });
+        const id = this.getValueJS("id") as string | undefined;
+        const uri = this.getValueJS("uri") as string | undefined;
+        if (!id || !uri) {
+            return;
         }
+        this.loadTriggered = true;
+        // Show the in-progress state now; emit the final status on the next frame.
+        this.setValueSilent("loadStatus", new BrsString("loading"));
+        // Synchronously load (no-op if already loaded, e.g. pre-loaded at startup or shared).
+        loadComponentLibrary(id, uri);
+        sgRoot.addPendingLibraryNotification(() => {
+            this.setValue("loadStatus", new BrsString(sgRoot.getLibraryStatus(id) ?? "failed"));
+        });
     }
 }

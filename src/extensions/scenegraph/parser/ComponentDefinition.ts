@@ -2,7 +2,6 @@ import { Environment, BrsError, FileSystem, Interpreter, BrsInvalid, RoAssociati
 import { ComponentScopeResolver } from "./ComponentScopeResolver";
 import * as path from "path";
 import { XmlDocument, XmlElement } from "xmldoc";
-import pSettle, { PromiseResult } from "p-settle";
 
 /**
  * Represents the attributes of a field within a component.
@@ -86,7 +85,7 @@ export class ComponentDefinition {
 
     constructor(readonly xmlPath: string) {}
 
-    async parse(): Promise<ComponentDefinition> {
+    parse(): ComponentDefinition {
         try {
             if (fs === undefined) {
                 throw new Error("FileSystem not set");
@@ -120,7 +119,7 @@ export class ComponentDefinition {
  *                   component libraries mounted on their own volume.
  * @returns A promise that resolves to a map of component definitions.
  */
-export async function getComponentDefinitionMap(
+export function getComponentDefinitionMap(
     fileSystem: FileSystem,
     additionalDirs: string[] = [],
     libraryName?: string,
@@ -140,19 +139,30 @@ export async function getComponentDefinitionMap(
     // sort files to ensure consistent processing order
     xmlFiles.sort((a, b) => a.localeCompare(b));
 
-    const defs = xmlFiles.map((file) => new ComponentDefinition(file));
-    const parsedPromises = defs.map(async (def) => def.parse());
-    return processXmlTree(pSettle(parsedPromises), libraryName);
+    const nodeDefs: ParsedDefinition[] = xmlFiles.map((file) => {
+        try {
+            return { fulfilled: true, value: new ComponentDefinition(file).parse() };
+        } catch {
+            // Parsing errors are reported by ComponentDefinition.parse(); skip the broken file.
+            return { fulfilled: false };
+        }
+    });
+    return processXmlTree(nodeDefs, libraryName);
+}
+
+/** Result of attempting to parse a single component XML file. */
+interface ParsedDefinition {
+    fulfilled: boolean;
+    value?: ComponentDefinition;
 }
 
 /**
  * Processes the XML tree of component definitions and builds a map of component definitions.
- * @param settledPromises A promise that resolves to an array of settled component definition promises.
+ * @param nodeDefs Array of parsed component definition results.
  * @param libraryName Optional library name to prefix component names.
- * @returns A promise that resolves to a map of component definitions.
+ * @returns A map of component definitions.
  */
-async function processXmlTree(settledPromises: Promise<PromiseResult<ComponentDefinition>[]>, libraryName?: string) {
-    const nodeDefs = await settledPromises;
+function processXmlTree(nodeDefs: ParsedDefinition[], libraryName?: string) {
     const nodeDefMap = new Map<string, ComponentDefinition>();
 
     // short circuit if no components are found
@@ -162,7 +172,7 @@ async function processXmlTree(settledPromises: Promise<PromiseResult<ComponentDe
 
     // create map of just ComponentDefinition objects
     for (const item of nodeDefs) {
-        if (item.isFulfilled && !item.isRejected) {
+        if (item.fulfilled) {
             let name = item.value?.name?.toLowerCase();
             if (libraryName) {
                 name = `${libraryName.toLowerCase()}:${name}`;
@@ -214,7 +224,7 @@ async function processXmlTree(settledPromises: Promise<PromiseResult<ComponentDe
         }
         if (nodeDef?.xmlNode) {
             nodeDef.children = getChildren(nodeDef.xmlNode);
-            nodeDef.scripts = await getScripts(nodeDef.xmlNode, nodeDef);
+            nodeDef.scripts = getScripts(nodeDef.xmlNode, nodeDef);
         }
     }
 
@@ -228,7 +238,7 @@ async function processXmlTree(settledPromises: Promise<PromiseResult<ComponentDe
  * @param componentMap Map of all components to be assigned to this interpreter
  * @param manifest The manifest map for the current running application
  */
-export async function setupInterpreterWithSubEnvs(
+export function setupInterpreterWithSubEnvs(
     interpreter: Interpreter,
     componentMap: Map<string, ComponentDefinition>,
     manifest: Map<string, string>
@@ -239,21 +249,18 @@ export async function setupInterpreterWithSubEnvs(
     const options = interpreter.options;
     const entryPoint = options.entryPoint ?? false;
     const componentScopeResolver = new ComponentScopeResolver(componentMap, fs, manifest);
-    await pSettle(
-        Array.from(componentMap).map(async (componentKV) => {
-            const [_, component] = componentKV;
-            component.environment = interpreter.environment.createSubEnvironment(/* includeModuleScope */ false);
-            const statements = await componentScopeResolver.resolve(component);
-            interpreter.inSubEnv((subInterpreter) => {
-                const componentMPointer = new RoAssociativeArray([]);
-                subInterpreter.options.entryPoint = false;
-                subInterpreter.environment.setM(componentMPointer);
-                subInterpreter.environment.setRootM(componentMPointer);
-                subInterpreter.exec(statements);
-                return BrsInvalid.Instance;
-            }, component.environment);
-        })
-    );
+    for (const [, component] of componentMap) {
+        component.environment = interpreter.environment.createSubEnvironment(/* includeModuleScope */ false);
+        const statements = componentScopeResolver.resolve(component);
+        interpreter.inSubEnv((subInterpreter) => {
+            const componentMPointer = new RoAssociativeArray([]);
+            subInterpreter.options.entryPoint = false;
+            subInterpreter.environment.setM(componentMPointer);
+            subInterpreter.environment.setRootM(componentMPointer);
+            subInterpreter.exec(statements);
+            return BrsInvalid.Instance;
+        }, component.environment);
+    }
     interpreter.options.entryPoint = entryPoint;
 }
 
@@ -379,7 +386,7 @@ function parseChildren(element: XmlElement, children: ComponentNode[]): void {
  * @param nodeDef The ComponentDefinition for error reporting
  * @returns An array of ComponentScript objects
  */
-async function getScripts(node: XmlDocument, nodeDef: ComponentDefinition): Promise<ComponentScript[]> {
+function getScripts(node: XmlDocument, nodeDef: ComponentDefinition): ComponentScript[] {
     const scripts = node.childrenNamed("script");
     const componentScripts: ComponentScript[] = [];
 
@@ -392,7 +399,7 @@ async function getScripts(node: XmlDocument, nodeDef: ComponentDefinition): Prom
                 ).trim()
             );
         } else if (script.attr?.uri) {
-            let absoluteUri = await getScriptUri(script, nodeDef);
+            let absoluteUri = getScriptUri(script, nodeDef);
             componentScripts.push({
                 type: script.attr.type,
                 uri: absoluteUri,
@@ -416,7 +423,7 @@ async function getScripts(node: XmlDocument, nodeDef: ComponentDefinition): Prom
  * @param nodeDef The ComponentDefinition for error reporting
  * @returns The absolute URI as a string
  */
-async function getScriptUri(script: XmlElement, nodeDef: ComponentDefinition): Promise<string> {
+function getScriptUri(script: XmlElement, nodeDef: ComponentDefinition): string {
     let absoluteUri: string;
 
     try {

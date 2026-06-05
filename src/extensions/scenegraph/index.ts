@@ -78,18 +78,19 @@ export class BrightScriptExtension implements BrsExtension {
     async onBeforeExecute(interpreter: Interpreter, payload: AppPayload) {
         // Look for SceneGraph components
         try {
-            const components = await getComponentDefinitionMap(BrsDevice.fileSystem, []);
+            const components = getComponentDefinitionMap(BrsDevice.fileSystem, []);
             if (components.size > 0) {
-                await setupInterpreterWithSubEnvs(interpreter, components, payload.manifest);
+                setupInterpreterWithSubEnvs(interpreter, components, payload.manifest);
                 sgRoot.setInterpreter(interpreter);
                 sgRoot.setNodeDefMap(components);
                 for (const [componentName, componentDef] of components.entries()) {
                     updateTypeDefHierarchy(componentDef);
                     BrsDevice.addNodeStat(getNodeType(componentName));
                 }
-                // Load any component libraries declared via <ComponentLibrary> elements so their
+                // Pre-load component libraries declared via <ComponentLibrary> elements so their
                 // namespaced components (libraryId:ComponentName) resolve before the app runs.
-                await this.loadComponentLibraries(components);
+                // Libraries created at runtime are loaded lazily by the ComponentLibrary node.
+                this.loadComponentLibraries(components);
             } else {
                 const componentsDirExists = BrsDevice.fileSystem.existsSync("pkg:/components");
                 if (componentsDirExists) {
@@ -110,7 +111,7 @@ export class BrightScriptExtension implements BrsExtension {
      * each unique library so its components become available with a namespace prefix.
      * @param components Map of the app's parsed component definitions
      */
-    private async loadComponentLibraries(components: Map<string, ComponentDefinition>) {
+    private loadComponentLibraries(components: Map<string, ComponentDefinition>) {
         const declarations = new Map<string, { id: string; uri: string }>(); // lowercase id -> declaration
         const collect = (nodes: ComponentNode[]) => {
             for (const node of nodes) {
@@ -142,7 +143,7 @@ export class BrightScriptExtension implements BrsExtension {
             );
         }
         for (const { id, uri } of declarations.values()) {
-            await loadComponentLibrary(id, uri);
+            loadComponentLibrary(id, uri);
         }
     }
 

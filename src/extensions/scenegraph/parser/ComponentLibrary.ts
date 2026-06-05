@@ -77,14 +77,15 @@ function fetchLibraryBytes(uri: string): ArrayBufferLike | undefined {
  * @param uri The library package URI (http(s):// or a local volume path)
  * @returns The resulting load status ("ready" on success, "failed" otherwise)
  */
-export async function loadComponentLibrary(id: string, uri: string): Promise<LibraryLoadStatus> {
+export function loadComponentLibrary(id: string, uri: string): LibraryLoadStatus {
     const interpreter = sgRoot.interpreter;
     if (!id.trim() || !uri.trim() || !interpreter) {
         return "failed";
     }
-    if (sgRoot.getLibraryStatus(id) === "ready") {
-        // Already loaded (e.g. shared by multiple components); nothing to do.
-        return "ready";
+    const currentStatus = sgRoot.getLibraryStatus(id);
+    if (currentStatus === "ready" || currentStatus === "failed") {
+        // Already resolved (e.g. shared by multiple components or pre-loaded at startup).
+        return currentStatus;
     }
     sgRoot.setLibraryStatus(id, "loading");
     BrsDevice.stdout.write(`debug,[sg] Loading component library "${id}" from ${uri}`);
@@ -100,7 +101,7 @@ export async function loadComponentLibrary(id: string, uri: string): Promise<Lib
             `debug,[sg] Mounted component library "${id}" (${bytes.byteLength} bytes) at volume ${volume}`
         );
 
-        const libMap = await getComponentDefinitionMap(BrsDevice.fileSystem, [], id, volume);
+        const libMap = getComponentDefinitionMap(BrsDevice.fileSystem, [], id, volume);
         if (libMap.size === 0) {
             BrsDevice.stderr.write(`warning,[sg] Component library "${id}" has no components: ${uri}`);
             sgRoot.setLibraryStatus(id, "failed");
@@ -111,7 +112,7 @@ export async function loadComponentLibrary(id: string, uri: string): Promise<Lib
         for (const [name, def] of libMap.entries()) {
             sgRoot.nodeDefMap.set(name, def);
         }
-        await setupInterpreterWithSubEnvs(interpreter, libMap, interpreter.manifest);
+        setupInterpreterWithSubEnvs(interpreter, libMap, interpreter.manifest);
         for (const [name, def] of libMap.entries()) {
             updateTypeDefHierarchy(def);
             BrsDevice.addNodeStat(getNodeType(name));

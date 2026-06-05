@@ -35,4 +35,21 @@ describe("ComponentLibrary", () => {
             "bar message: Hello from MyLib:Bar",
         ]);
     });
+
+    test("loads a library created and configured at runtime", async () => {
+        await execute([resourceFile("component-library", "source", "runtime.brs")], outputStreams);
+
+        const output = allArgs(outputStreams.stdout.write)
+            .map((arg) => arg.trimEnd())
+            .filter((arg) => arg !== "" && !arg.startsWith("[sg]"));
+
+        expect(output).toEqual([
+            // ComponentLibrary created via CreateObject; loading triggers once both id and uri are set.
+            "after set id: none",
+            "after set uri: loading",
+            "runtime loadStatus changed: ready",
+            "[MyLib:Bar::init]",
+            "runtime bar subtype: RuntimeLib:Bar",
+        ]);
+    });
 });

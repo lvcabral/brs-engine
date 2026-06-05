@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="RuntimeScene" extends="Scene">
+    <script type="text/brightscript">
+        <![CDATA[
+        sub init()
+            ' Mimics apps (e.g. a "RetryableComponentLibrary") that create the
+            ' ComponentLibrary node at runtime and configure it in BrightScript code.
+            m.lib = createObject("roSGNode", "ComponentLibrary")
+            m.lib.observeField("loadStatus", "onLoadStatusChanged")
+            m.lib.id = "RuntimeLib"
+            print "after set id: " + m.lib.loadStatus
+            m.lib.uri = "pkg:/library.zip"
+            print "after set uri: " + m.lib.loadStatus
+        end sub
+
+        sub onLoadStatusChanged()
+            print "runtime loadStatus changed: " + m.lib.loadStatus
+            if m.lib.loadStatus = "ready"
+                bar = createObject("roSGNode", "RuntimeLib:Bar")
+                print "runtime bar subtype: " + bar.subtype()
+            end if
+        end sub
+        ]]>
+    </script>
+</component>
