@@ -30,9 +30,28 @@ describe("ComponentLibrary", () => {
             // first render frame so the observeField() callback is notified.
             "init loadStatus: loading",
             "loadStatus changed: ready",
-            "[MyLib:Bar::init]",
-            "bar subtype: MyLib:Bar",
-            "bar message: Hello from MyLib:Bar",
+            // The namespace is the library manifest's sg_component_libs_provided ("MyComponentLib"),
+            // not the node id ("MyLib").
+            "[Bar::init]",
+            "bar subtype: MyComponentLib:Bar",
+            "bar message: Hello from MyComponentLib:Bar",
+        ]);
+    });
+
+    test("loads a library created and configured at runtime", async () => {
+        await execute([resourceFile("component-library", "source", "runtime.brs")], outputStreams);
+
+        const output = allArgs(outputStreams.stdout.write)
+            .map((arg) => arg.trimEnd())
+            .filter((arg) => arg !== "" && !arg.startsWith("[sg]"));
+
+        expect(output).toEqual([
+            // ComponentLibrary created via CreateObject; loading triggers once both id and uri are set.
+            "after set id: none",
+            "after set uri: loading",
+            "runtime loadStatus changed: ready",
+            "[Bar::init]",
+            "runtime bar subtype: MyComponentLib:Bar",
         ]);
     });
 });

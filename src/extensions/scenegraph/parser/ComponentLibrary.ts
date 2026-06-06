@@ -5,7 +5,7 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { BrsDevice, netlib } from "brs-engine";
+import { BrsDevice, netlib, parseManifest } from "brs-engine";
 import { getComponentDefinitionMap, setupInterpreterWithSubEnvs } from "./ComponentDefinition";
 import { getNodeType, updateTypeDefHierarchy } from "../factory/NodeFactory";
 import { sgRoot } from "../SGRoot";
@@ -38,6 +38,25 @@ function toArrayBuffer(data: unknown): ArrayBufferLike | undefined {
         return data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength);
     }
     return undefined;
+}
+
+/**
+ * Reads the namespace a component library provides from its manifest.
+ * @param volume The mounted library volume (e.g. "complib_foo:")
+ * @returns The `sg_component_libs_provided` value, or undefined if absent
+ */
+function readLibraryNamespace(volume: string): string | undefined {
+    const manifestPath = `${volume}/manifest`;
+    if (!BrsDevice.fileSystem.existsSync(manifestPath)) {
+        return undefined;
+    }
+    try {
+        const manifest = parseManifest(BrsDevice.fileSystem.readFileSync(manifestPath, "utf-8"));
+        const provided = manifest.get("sg_component_libs_provided")?.trim();
+        return provided && provided.length > 0 ? provided : undefined;
+    } catch {
+        return undefined;
+    }
 }
 
 /**
@@ -77,14 +96,15 @@ function fetchLibraryBytes(uri: string): ArrayBufferLike | undefined {
  * @param uri The library package URI (http(s):// or a local volume path)
  * @returns The resulting load status ("ready" on success, "failed" otherwise)
  */
-export async function loadComponentLibrary(id: string, uri: string): Promise<LibraryLoadStatus> {
+export function loadComponentLibrary(id: string, uri: string): LibraryLoadStatus {
     const interpreter = sgRoot.interpreter;
     if (!id.trim() || !uri.trim() || !interpreter) {
         return "failed";
     }
-    if (sgRoot.getLibraryStatus(id) === "ready") {
-        // Already loaded (e.g. shared by multiple components); nothing to do.
-        return "ready";
+    const currentStatus = sgRoot.getLibraryStatus(id);
+    if (currentStatus === "ready" || currentStatus === "failed") {
+        // Already resolved (e.g. shared by multiple components or pre-loaded at startup).
+        return currentStatus;
     }
     sgRoot.setLibraryStatus(id, "loading");
     BrsDevice.stdout.write(`debug,[sg] Loading component library "${id}" from ${uri}`);
@@ -96,11 +116,14 @@ export async function loadComponentLibrary(id: string, uri: string): Promise<Lib
         }
         const volume = libraryVolumeName(id);
         BrsDevice.fileSystem.mountLibrary(volume, bytes);
+        // The component namespace comes from the library manifest's `sg_component_libs_provided`
+        // (per Roku); fall back to the node `id` when the manifest does not declare it.
+        const namespace = readLibraryNamespace(volume) ?? id;
         BrsDevice.stdout.write(
-            `debug,[sg] Mounted component library "${id}" (${bytes.byteLength} bytes) at volume ${volume}`
+            `debug,[sg] Mounted component library "${id}" as "${namespace}" (${bytes.byteLength} bytes) at volume ${volume}`
         );
 
-        const libMap = await getComponentDefinitionMap(BrsDevice.fileSystem, [], id, volume);
+        const libMap = getComponentDefinitionMap(BrsDevice.fileSystem, [], namespace, volume);
         if (libMap.size === 0) {
             BrsDevice.stderr.write(`warning,[sg] Component library "${id}" has no components: ${uri}`);
             sgRoot.setLibraryStatus(id, "failed");
@@ -111,12 +134,14 @@ export async function loadComponentLibrary(id: string, uri: string): Promise<Lib
         for (const [name, def] of libMap.entries()) {
             sgRoot.nodeDefMap.set(name, def);
         }
-        await setupInterpreterWithSubEnvs(interpreter, libMap, interpreter.manifest);
+        setupInterpreterWithSubEnvs(interpreter, libMap, interpreter.manifest);
         for (const [name, def] of libMap.entries()) {
             updateTypeDefHierarchy(def);
             BrsDevice.addNodeStat(getNodeType(name));
         }
-        BrsDevice.stdout.write(`debug,[sg] Loaded component library "${id}" (${libMap.size} components) from ${uri}`);
+        BrsDevice.stdout.write(
+            `debug,[sg] Loaded component library "${namespace}" (${libMap.size} components) from ${uri}`
+        );
         sgRoot.setLibraryStatus(id, "ready");
         return "ready";
     } catch (err: any) {

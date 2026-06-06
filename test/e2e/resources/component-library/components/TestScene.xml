@@ -11,7 +11,9 @@
         sub onLoadStatusChanged()
             print "loadStatus changed: " + m.lib.loadStatus
             if m.lib.loadStatus = "ready"
-                bar = createObject("roSGNode", "MyLib:Bar")
+                ' Namespace comes from the library manifest (sg_component_libs_provided),
+                ' not the node id ("MyLib").
+                bar = createObject("roSGNode", "MyComponentLib:Bar")
                 print "bar subtype: " + bar.subtype()
                 print "bar message: " + bar.message
             end if

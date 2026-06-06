@@ -1,7 +1,6 @@
 import { Lexer, logError, Parser, preprocessor as PP, Stmt, FileSystem } from "brs-engine";
 import { ComponentDefinition, ComponentScript } from "./ComponentDefinition";
 import { SGNodeFactory } from "../factory/NodeFactory";
-import pSettle from "p-settle";
 import * as path from "path";
 
 /**
@@ -10,7 +9,7 @@ import * as path from "path";
  */
 export class ComponentScopeResolver {
     private readonly excludedNames: string[] = ["init"];
-    private readonly parserLexerFn: (scripts: ComponentScript[]) => Promise<Stmt.Statement[]>;
+    private readonly parserLexerFn: (scripts: ComponentScript[]) => Stmt.Statement[];
 
     /**
      * @param componentMap Component definition map to reference for function resolution.
@@ -30,18 +29,9 @@ export class ComponentScopeResolver {
      * @param component Instance of the component to resolve function scope for.
      * @returns All statements in scope for the resolved component
      */
-    public async resolve(component: ComponentDefinition): Promise<Stmt.Statement[]> {
-        let statementResults = await pSettle(Array.from(this.getStatements(component)));
-        let rejected = statementResults.filter((res) => res.isRejected);
-        if (rejected.length > 0) {
-            for (const rejection of rejected) {
-                for (const msg of (rejection as PromiseRejectedResult).reason.messages) {
-                    console.error(msg);
-                }
-            }
-            throw new Error(`Unable to resolve scope for component ${component.name}`);
-        }
-        return this.flatten(statementResults.map((res) => (res.isFulfilled ? res.value : [])));
+    public resolve(component: ComponentDefinition): Stmt.Statement[] {
+        const statementMap = Array.from(this.getStatements(component));
+        return this.flatten(statementMap);
     }
 
     /**
@@ -53,23 +43,23 @@ export class ComponentScopeResolver {
      * @returns A collection of statements that have been flattened based on hierarchy.
      */
     private flatten(statementMap: Stmt.Statement[][]): Stmt.Statement[] {
-        let statements = statementMap.shift() || [];
-        let statementMemo = new Set(
-            statements.filter((_): _ is Stmt.Function => true).map((statement) => statement.name.text.toLowerCase())
-        );
+        const isFunction = (statement: Stmt.Statement): statement is Stmt.Function =>
+            statement instanceof Stmt.Function;
+        // Component scripts only contribute their function definitions to the component's scope;
+        // top-level executable statements (e.g. a stray `print` or `library`) must not be run.
+        let statements: Stmt.Function[] = (statementMap.shift() || []).filter(isFunction);
+        let statementMemo = new Set(statements.map((statement) => statement.name.text.toLowerCase()));
         while (statementMap.length > 0) {
             let extendedFns = statementMap.shift() || [];
             statements = statements.concat(
-                extendedFns
-                    .filter((_): _ is Stmt.Function => true)
-                    .filter((statement) => {
-                        let statementName = statement.name.text.toLowerCase();
-                        let haveFnName = statementMemo.has(statementName);
-                        if (!haveFnName) {
-                            statementMemo.add(statementName);
-                        }
-                        return !haveFnName && !this.excludedNames.includes(statementName);
-                    })
+                extendedFns.filter(isFunction).filter((statement) => {
+                    let statementName = statement.name.text.toLowerCase();
+                    let haveFnName = statementMemo.has(statementName);
+                    if (!haveFnName) {
+                        statementMemo.add(statementName);
+                    }
+                    return !haveFnName && !this.excludedNames.includes(statementName);
+                })
             );
         }
         return statements;
@@ -114,12 +104,11 @@ export class ComponentScopeResolver {
      */
     private getLexerParserFn(fs: FileSystem, manifest: Map<string, string>) {
         /**
-         * Map file URIs or Source Content to promises. The promises resolve to an array of that script's statements.
-         * This allows us to only parse each shared file once.
+         * Map file URIs to that script's statements, so each shared file is only parsed once.
          */
-        const memoizedStatements = new Map<string, Promise<Stmt.Statement[]>>();
-        return async function parse(scripts: ComponentScript[]): Promise<Stmt.Statement[]> {
-            async function lexAndParseScript(script: ComponentScript) {
+        const memoizedStatements = new Map<string, Stmt.Statement[]>();
+        return function parse(scripts: ComponentScript[]): Stmt.Statement[] {
+            function lexAndParseScript(script: ComponentScript) {
                 let contents;
                 let filename;
                 if (script.uri !== undefined) {
@@ -162,37 +151,20 @@ export class ComponentScopeResolver {
                 return parseResults.statements;
             }
 
-            const promises: Promise<Stmt.Statement[]>[] = [];
+            const statements: Stmt.Statement[] = [];
             for (const script of scripts) {
                 if (script.uri !== undefined) {
-                    const maybeStatements = memoizedStatements.get(script.uri);
-                    if (maybeStatements) {
-                        promises.push(maybeStatements);
-                    } else {
-                        const statementsPromise = lexAndParseScript(script);
-                        if (!memoizedStatements.has(script.uri)) {
-                            memoizedStatements.set(script.uri, statementsPromise);
-                        }
-                        promises.push(statementsPromise);
+                    let parsed = memoizedStatements.get(script.uri);
+                    if (!parsed) {
+                        parsed = lexAndParseScript(script);
+                        memoizedStatements.set(script.uri, parsed);
                     }
+                    statements.push(...parsed);
                 } else if (script.content !== undefined) {
-                    promises.push(lexAndParseScript(script));
+                    statements.push(...lexAndParseScript(script));
                 }
             }
-            let parsedScripts = await pSettle(promises);
-
-            // don't execute anything if there were reading, lexing, or parsing errors
-            if (parsedScripts.some((script) => script.isRejected)) {
-                const messages = parsedScripts
-                    .filter((script) => script.isRejected)
-                    .map((rejection) => (rejection as PromiseRejectedResult).reason.message);
-                throw new Error(messages.join("\n"));
-            }
-
-            // combine statements from all scripts into one array
-            return parsedScripts
-                .map((script) => (script.isFulfilled ? script.value : []))
-                .reduce((allStatements, fileStatements) => [...allStatements, ...fileStatements], []);
+            return statements;
         };
     }
 }
