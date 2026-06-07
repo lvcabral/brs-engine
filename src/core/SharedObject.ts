@@ -19,6 +19,7 @@ class SharedObject {
     private maxSize: number;
     private atomicView: Int32Array;
     private isProcessing: boolean = false;
+    private disposed: boolean = false;
     /**
      * Optional sink for failures that would otherwise be silently dropped (buffer overflow, store
      * timeout). When set, the owner can surface these as app-visible errors instead of losing the
@@ -84,8 +85,22 @@ class SharedObject {
      * @param timeout Optional timeout in ms before the wait is considered failed.
      */
     waitStore(obj: any, version: number, timeout: number = 10000): void {
+        if (this.disposed) {
+            return;
+        }
         this.queue.push({ obj, version, timeout });
         this.processQueue();
+    }
+
+    /**
+     * Cancels any pending queued writes and detaches the error sink. Used when the owning task is
+     * torn down so an in-flight `Atomics.waitAsync` that resolves later (e.g. a timeout after the
+     * receiver worker was terminated) cannot surface a stale error against a subsequently-run app.
+     */
+    dispose(): void {
+        this.disposed = true;
+        this.onError = undefined;
+        this.queue.length = 0;
     }
 
     /**
@@ -102,7 +117,7 @@ class SharedObject {
      * Processes the wait queue sequentially, honoring Atomics.waitAsync when present.
      */
     private processQueue(): void {
-        if (this.isProcessing || this.queue.length === 0) {
+        if (this.isProcessing || this.queue.length === 0 || this.disposed) {
             return;
         }
 
@@ -113,6 +128,12 @@ class SharedObject {
             const result = Atomics.waitAsync(this.atomicView, this.versionIdx, version, timeout);
             if (result.async) {
                 result.value.then((status) => {
+                    // The owning task may have been torn down while this wait was pending; bail out
+                    // without storing or reporting so a late timeout can't error a subsequent app.
+                    if (this.disposed) {
+                        this.isProcessing = false;
+                        return;
+                    }
                     if (status === "ok") {
                         this.store(obj);
                     } else {
@@ -137,6 +158,10 @@ class SharedObject {
             // Fallback for browsers that do not support Atomics.waitAsync (e.g., Firefox)
             const start = Date.now();
             const checkCondition = () => {
+                if (this.disposed) {
+                    this.isProcessing = false;
+                    return;
+                }
                 if (Atomics.load(this.atomicView, this.versionIdx) !== version) {
                     this.store(obj);
                     this.queue.shift();
