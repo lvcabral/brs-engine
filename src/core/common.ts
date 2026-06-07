@@ -374,6 +374,8 @@ export type TaskData = {
     buffer?: SharedArrayBuffer;
     /** Phase 3a: dedicated buffer for direct render→task rendezvous responses (bypasses the broker). */
     directToTask?: SharedArrayBuffer;
+    /** Phase 3b: dedicated buffer for direct render→task fan-out of observed-field updates. */
+    fanout?: SharedArrayBuffer;
     tmp?: SharedArrayBuffer;
     cacheFS?: SharedArrayBuffer;
     m?: any;

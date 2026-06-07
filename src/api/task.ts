@@ -29,6 +29,9 @@ const threadSyncToTask: Map<number, SharedObject> = new Map();
 const threadSyncToMain: Map<number, SharedObject> = new Map();
 let sharedBuffer: ArrayBufferLike;
 let brsWrkLib: string;
+// Phase 3b: when a task is started with a dedicated fan-out buffer, the render thread delivers
+// fan-out and cross-task propagation directly, so the broker stops relaying those.
+let directMode: boolean = false;
 let inDebugLib: boolean = false;
 /// #if DEBUG
 inDebugLib = true;
@@ -119,10 +122,17 @@ function runTask(taskData: TaskData, currentPayload: AppPayload) {
     const taskWorker = new Worker(brsWrkLib);
     taskWorker.addEventListener("message", taskCallback);
     tasks.set(taskData.id, taskWorker);
-    if (!threadSyncToTask.has(taskData.id)) {
-        threadSyncToTask.set(taskData.id, createSharedObject());
+    if (taskData.fanout instanceof SharedArrayBuffer) {
+        // Phase 3b (direct mode): the render thread owns the render→task fan-out buffer; forward it
+        // to the task as its read buffer. The broker does not relay fan-out or cross-task updates.
+        directMode = true;
+        taskData.buffer = taskData.fanout;
+    } else {
+        if (!threadSyncToTask.has(taskData.id)) {
+            threadSyncToTask.set(taskData.id, createSharedObject());
+        }
+        taskData.buffer = threadSyncToTask.get(taskData.id)?.getBuffer();
     }
-    taskData.buffer = threadSyncToTask.get(taskData.id)?.getBuffer();
     const taskPayload: TaskPayload = {
         device: currentPayload.device,
         manifest: currentPayload.manifest,
@@ -174,6 +184,7 @@ export function resetTasks() {
     tasks.clear();
     threadSyncToTask.clear();
     threadSyncToMain.clear();
+    directMode = false;
 }
 
 /**
@@ -228,8 +239,13 @@ function taskCallback(event: MessageEvent) {
  */
 export function handleThreadUpdate(threadUpdate: ThreadUpdate, fromTask: boolean = false) {
     if (fromTask) {
-        // Update main thread buffer
+        // Update main thread buffer (relay the request/post to the render thread).
         threadSyncToMain.get(threadUpdate.id)?.waitStore(threadUpdate, 1);
+        // Phase 3b: in direct mode the render thread performs cross-task propagation itself, so the
+        // broker must not also fan a task's set out to the other tasks (which would double-deliver).
+        if (directMode) {
+            return;
+        }
     }
     if (threadUpdate.id > 0 && !fromTask) {
         updateTask(threadUpdate.id, threadUpdate);

@@ -1648,10 +1648,29 @@ export class Node extends RoSGNode implements BrsValue {
             task?.syncRemoteField(fieldName, value, this.syncType, this.address);
             this.changed = false;
         } else if (!sgRoot.inTaskThread()) {
-            for (const task of sgRoot.threadTasks) {
-                if (task.active && field.isPortObserved(task)) {
-                    task.syncRemoteField(fieldName, value, this.syncType, this.address);
-                }
+            this.fanOutFieldToObservingTasks(fieldName);
+        }
+    }
+
+    /**
+     * Fans a field value out (from the render thread) to every Task thread observing it via a port.
+     * Used both for the render thread's own field sets and to propagate a set the render applied on
+     * behalf of a Task to the *other* observing tasks (cross-task propagation).
+     * @param fieldName Field whose current value should be delivered.
+     * @param excludeThreadId Task thread id to skip (e.g. the originating task); -1 skips none.
+     */
+    fanOutFieldToObservingTasks(fieldName: string, excludeThreadId: number = -1) {
+        if (sgRoot.inTaskThread()) {
+            return;
+        }
+        const field = this.fields.get(fieldName.toLowerCase());
+        if (!field) {
+            return;
+        }
+        const value = field.getValue(false);
+        for (const task of sgRoot.threadTasks) {
+            if (task.active && task.threadId !== excludeThreadId && field.isPortObserved(task)) {
+                task.syncRemoteField(fieldName, value, this.syncType, this.address);
             }
         }
     }

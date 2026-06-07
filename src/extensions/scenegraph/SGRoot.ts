@@ -380,6 +380,8 @@ export class SGRoot {
             if (task?.active) {
                 task.checkTaskRun();
             }
+            // Phase 3b: drain any queued direct fan-out into the task's buffer (render thread only).
+            task?.flushFanout();
         }
         return updates;
     }
