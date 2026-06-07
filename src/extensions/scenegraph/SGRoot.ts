@@ -79,6 +79,13 @@ export class SGRoot {
      * `ExecutionTimeout` runtime error instead of silently returning `invalid`. Defaults to 10s.
      */
     rendezvousTimeout: number = 10000;
+    /**
+     * Experimental (Phase 3a): when true, the render thread delivers rendezvous responses directly to
+     * the requesting Task thread over a dedicated SharedArrayBuffer, bypassing the main-thread broker.
+     * Set from `DeviceInfo.rendezvousDirect`. Requests, fan-out, and cross-task propagation still use
+     * the broker. Defaults to false.
+     */
+    directRendezvous: boolean = false;
     /** roRenderThreadQueue instances on the render thread, keyed by node address, drained each frame. */
     private readonly _renderQueues: Map<string, RenderThreadQueue> = new Map();
 
@@ -181,6 +188,7 @@ export class SGRoot {
      */
     setInterpreter(interpreter: Interpreter) {
         this._interpreter = interpreter;
+        this.directRendezvous = BrsDevice.deviceInfo.rendezvousDirect ?? false;
         const resolutions = interpreter.manifest.get("ui_resolutions");
         if (resolutions?.length) {
             const resArray = resolutions.split(",");

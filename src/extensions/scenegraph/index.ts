@@ -186,6 +186,10 @@ export class BrightScriptExtension implements BrsExtension {
         if (taskData.buffer) {
             taskNode.setTaskBuffer(taskData.buffer);
         }
+        if (taskData.directToTask) {
+            // Phase 3a: render thread writes rendezvous responses directly into this buffer.
+            taskNode.setDirectBuffer(taskData.directToTask);
+        }
         const typeDef = sgRoot.nodeDefMap.get(taskNode.nodeSubtype.toLowerCase());
         const taskEnv = typeDef?.environment;
         if (taskEnv) {
