@@ -38,8 +38,14 @@ export class Task extends Node {
         { name: "state", type: "string", value: "init" },
         { name: "functionName", type: "string" },
     ];
-    /** Shared buffer used to communicate updates between host and task thread. */
+    /** Shared buffer used to communicate updates between host and task thread (via the broker). */
     private taskBuffer?: SharedObject;
+    /**
+     * Phase 3a: dedicated buffer carrying rendezvous responses directly between the render thread
+     * (writer) and this Task thread (reader), bypassing the main-thread broker. Present only when
+     * `DeviceInfo.rendezvousDirect` is enabled; otherwise responses arrive on `taskBuffer`.
+     */
+    private directBuffer?: SharedObject;
 
     /** Thread identifier assigned by sgRoot once scheduled. */
     threadId: number;
@@ -171,7 +177,9 @@ export class Task extends Node {
      * @returns True if acknowledgement was received, false on timeout.
      */
     private waitForFieldAck(update: ThreadUpdate, timeoutMs: number = sgRoot.rendezvousTimeout) {
-        if (!this.taskBuffer || update.requestId === undefined) {
+        // Phase 3a: responses (including acks) arrive on the direct buffer when enabled, else taskBuffer.
+        const responseBuffer = this.directBuffer ?? this.taskBuffer;
+        if (!responseBuffer || update.requestId === undefined) {
             return false;
         }
         const deadline = Date.now() + timeoutMs;
@@ -183,11 +191,11 @@ export class Task extends Node {
             if (remaining <= 0) {
                 break;
             }
-            const waitResult = this.taskBuffer.waitVersion(0, remaining);
+            const waitResult = responseBuffer.waitVersion(0, remaining);
             if (waitResult === "timed-out") {
                 break;
             }
-            this.processThreadUpdate();
+            this.processThreadUpdate(responseBuffer);
         }
         throw this.rendezvousTimeoutError("set", update.type, update.key);
     }
@@ -288,6 +296,15 @@ export class Task extends Node {
     }
 
     /**
+     * Initializes the dedicated direct-response buffer on the Task thread (Phase 3a).
+     * @param data Buffer the render thread writes rendezvous responses into.
+     */
+    setDirectBuffer(data: SharedArrayBuffer) {
+        this.directBuffer = new SharedObject();
+        this.directBuffer.setBuffer(data);
+    }
+
+    /**
      * Synchronizes a field change back to the owning thread when applicable.
      * @param key Field name to synchronize.
      * @param fieldValue The new value of the field being synchronized.
@@ -345,9 +362,10 @@ export class Task extends Node {
         const started = sgRoot.logRendezvous ? Date.now() : 0;
         this.sendThreadUpdate(request);
         const deadline = Date.now() + timeoutMs;
+        const responseBuffer = this.directBuffer ?? this.taskBuffer;
 
         while (true) {
-            const update = this.processThreadUpdate();
+            const update = this.processThreadUpdate(responseBuffer);
             if (update?.requestId === requestId) {
                 if (update.action === "set") {
                     this.logRendezvousTiming("get", type, fieldName, started);
@@ -361,7 +379,7 @@ export class Task extends Node {
             if (remaining <= 0) {
                 break;
             }
-            const waitResult = this.taskBuffer.waitVersion(0, remaining);
+            const waitResult = responseBuffer.waitVersion(0, remaining);
             if (waitResult === "timed-out") {
                 break;
             }
@@ -403,9 +421,10 @@ export class Task extends Node {
         const started = sgRoot.logRendezvous ? Date.now() : 0;
         this.sendThreadUpdate(request);
         const deadline = Date.now() + timeoutMs;
+        const responseBuffer = this.directBuffer ?? this.taskBuffer;
 
         while (true) {
-            const update = this.processThreadUpdate();
+            const update = this.processThreadUpdate(responseBuffer);
             if (update?.requestId === requestId) {
                 if (update.action === "resp") {
                     this.logRendezvousTiming("call", type, methodName, started);
@@ -419,7 +438,7 @@ export class Task extends Node {
             if (remaining <= 0) {
                 break;
             }
-            const waitResult = this.taskBuffer.waitVersion(0, remaining);
+            const waitResult = responseBuffer.waitVersion(0, remaining);
             if (waitResult === "timed-out") {
                 break;
             }
@@ -453,11 +472,17 @@ export class Task extends Node {
         }
         if (!this.started) {
             this.taskBuffer = new SharedObject();
+            // Phase 3a: when enabled, create a dedicated buffer the render thread writes responses
+            // into directly, so the blocked task wakes without a main-thread relay hop.
+            if (sgRoot.directRendezvous) {
+                this.directBuffer = new SharedObject();
+            }
             const taskData: TaskData = {
                 id: this.threadId,
                 name: this.nodeSubtype,
                 state: TaskState.RUN,
                 buffer: this.taskBuffer.getBuffer(),
+                directToTask: this.directBuffer?.getBuffer(),
                 tmp: BrsDevice.getTmpVolume(),
                 cacheFS: BrsDevice.getCacheFS(),
                 m: fromAssociativeArray(this.m, true, this),
@@ -480,6 +505,13 @@ export class Task extends Node {
         // requests preserve the requestId already present on the update.
         if (this.inThread && isRequest && requestAck && update.requestId === undefined) {
             update.requestId = this.syncRequestId++;
+        }
+        // Phase 3a: the render thread delivers a rendezvous *response* (it carries a requestId)
+        // directly to the requesting task's buffer, bypassing the broker. Fan-out sets (no requestId)
+        // and all task-originated traffic still go through the broker via postMessage.
+        if (!this.inThread && this.directBuffer && update.requestId !== undefined) {
+            this.directBuffer.store(update);
+            return;
         }
         postMessage(update);
         if (this.inThread && update.action === "set" && update.requestId !== undefined) {
@@ -510,16 +542,16 @@ export class Task extends Node {
      * Applies pending updates stored in the shared buffer that originated from another thread.
      * @returns The ThreadUpdate that was applied, if any.
      */
-    processThreadUpdate(): ThreadUpdate | undefined {
-        const currentVersion = this.taskBuffer?.getVersion() ?? -1;
+    processThreadUpdate(buffer: SharedObject | undefined = this.taskBuffer): ThreadUpdate | undefined {
+        const currentVersion = buffer?.getVersion() ?? -1;
         // Only process updates when the buffer version is exactly 1,
         // which indicates a new update is available from the other thread.
         // (Versioning protocol: 1 = update ready, 0 = idle/no update)
-        if (!this.taskBuffer || currentVersion !== 1) {
+        if (!buffer || currentVersion !== 1) {
             return undefined;
         }
         // Load update from buffer and reset version to 0 (idle)
-        const update = this.taskBuffer.load(true);
+        const update = buffer.load(true);
         if (isThreadUpdate(update)) {
             if (update.action === "ack") {
                 if (this.inThread && update.requestId !== undefined) {

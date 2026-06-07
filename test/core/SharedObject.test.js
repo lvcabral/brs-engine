@@ -121,5 +121,31 @@ describe("SharedObject", () => {
 
             expect(shared.load()).toEqual(queued);
         });
+
+        test("dispose cancels a pending queued write and detaches onError", async () => {
+            const shared = new SharedObject(64);
+            shared.store({ initial: true }); // version is now 1
+            const onError = jest.fn();
+            shared.onError = onError;
+            const originalWaitAsync = Atomics.waitAsync;
+
+            jest.useFakeTimers();
+            Atomics.waitAsync = undefined;
+
+            try {
+                // Waits for the version to change from 1 (it won't), so this write would time out.
+                shared.waitStore({ field: "late" }, shared.getVersion(), 1000);
+                // Tear down before the timeout fires.
+                shared.dispose();
+                await advanceTimers(2000);
+            } finally {
+                Atomics.waitAsync = originalWaitAsync;
+                jest.useRealTimers();
+            }
+
+            // The late timeout must not surface an error, and the queued payload was never written.
+            expect(onError).not.toHaveBeenCalled();
+            expect(shared.load()).toEqual({ initial: true });
+        });
     });
 });

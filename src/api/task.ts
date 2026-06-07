@@ -147,6 +147,10 @@ function endTask(taskId: number) {
         taskWorker.removeEventListener("message", taskCallback);
         taskWorker.terminate();
         tasks.delete(taskId);
+        // Cancel any pending queued writes so an in-flight wait that resolves after the worker is
+        // gone can't surface a stale "dropped update" error against the next app to run.
+        threadSyncToTask.get(taskId)?.dispose();
+        threadSyncToMain.get(taskId)?.dispose();
         threadSyncToTask.delete(taskId);
         threadSyncToMain.delete(taskId);
         notifyAll("debug", `[task:api] Task worker stopped: ${taskId}`);
@@ -160,6 +164,12 @@ export function resetTasks() {
     for (const [_id, worker] of tasks) {
         worker?.removeEventListener("message", taskCallback);
         worker?.terminate();
+    }
+    for (const shared of threadSyncToTask.values()) {
+        shared.dispose();
+    }
+    for (const shared of threadSyncToMain.values()) {
+        shared.dispose();
     }
     tasks.clear();
     threadSyncToTask.clear();
