@@ -15,6 +15,8 @@ import {
     SyncType,
     RoArray,
     isSyncAction,
+    RuntimeError,
+    RuntimeErrorDetail,
 } from "brs-engine";
 import { sgRoot } from "../SGRoot";
 import { brsValueOf, fromAssociativeArray, fromSGNode, jsValueOf, updateSGNode } from "../factory/Serializer";
@@ -168,7 +170,7 @@ export class Task extends Node {
      * @param timeoutMs Time to wait in milliseconds (default 10000).
      * @returns True if acknowledgement was received, false on timeout.
      */
-    private waitForFieldAck(update: ThreadUpdate, timeoutMs: number = 10000) {
+    private waitForFieldAck(update: ThreadUpdate, timeoutMs: number = sgRoot.rendezvousTimeout) {
         if (!this.taskBuffer || update.requestId === undefined) {
             return false;
         }
@@ -187,10 +189,25 @@ export class Task extends Node {
             }
             this.processThreadUpdate();
         }
-        BrsDevice.stderr.write(
-            `warning,[task-sync] Task #${this.threadId} rendezvous ack timeout for task.${update.key} (req=${update.id})`
+        throw this.rendezvousTimeoutError("set", update.type, update.key);
+    }
+
+    /**
+     * Builds the runtime error raised when a rendezvous is not served within the configured timeout.
+     * On a real device this corresponds to a blocked render thread, which terminates the app; here it
+     * surfaces as an `ExecutionTimeout` runtime error instead of silently returning `invalid`.
+     * @param action Rendezvous action that timed out (`get`, `set`, or `call`).
+     * @param type Sync type domain of the target node.
+     * @param key Field or method name involved in the rendezvous.
+     * @returns A RuntimeError carrying the ExecutionTimeout errno and a descriptive message.
+     */
+    private rendezvousTimeoutError(action: string, type: SyncType, key: string): RuntimeError {
+        const message = `Rendezvous timeout: render thread blocked while serving ${action} ${type}.${key} (thread ${this.threadId})`;
+        BrsDevice.stderr.write(`error,[task:${sgRoot.threadId}] ${message}`);
+        return new RuntimeError(
+            { errno: RuntimeErrorDetail.ExecutionTimeout.errno, message },
+            sgRoot.interpreter?.location
         );
-        return false;
     }
 
     /**
@@ -221,6 +238,28 @@ export class Task extends Node {
             this.started = false;
         }
         this.active = false;
+    }
+
+    /**
+     * Sends a fire-and-forget roRenderThreadQueue message to the render thread (non-blocking, unlike
+     * a rendezvous). Used by `RenderThreadQueue.PostMessage`/`CopyMessage` from a Task thread.
+     * @param address Address of the target render-thread queue node.
+     * @param messageId Channel id the message was posted to.
+     * @param value Serialized message payload.
+     */
+    postRenderQueueMessage(address: string, messageId: string, value: any) {
+        if (this.threadId < 0 || !this.active) {
+            return;
+        }
+        const update: ThreadUpdate = {
+            id: this.threadId,
+            action: "post",
+            type: "node",
+            address,
+            key: messageId,
+            value,
+        };
+        this.sendThreadUpdate(update);
     }
 
     /**
@@ -284,7 +323,12 @@ export class Task extends Node {
      * @param timeoutMs Timeout in milliseconds.
      * @returns True if the value was successfully retrieved.
      */
-    requestFieldValue(type: SyncType, address: string, fieldName: string, timeoutMs: number = 10000): boolean {
+    requestFieldValue(
+        type: SyncType,
+        address: string,
+        fieldName: string,
+        timeoutMs: number = sgRoot.rendezvousTimeout
+    ): boolean {
         if (!this.taskBuffer || this.threadId < 0) {
             return false;
         }
@@ -322,10 +366,7 @@ export class Task extends Node {
                 break;
             }
         }
-        BrsDevice.stderr.write(
-            `warning,[task:${sgRoot.threadId}] Rendezvous timeout for field ${type}.${fieldName} on thread ${this.threadId}`
-        );
-        return false;
+        throw this.rendezvousTimeoutError("get", type, fieldName);
     }
 
     /**
@@ -343,7 +384,7 @@ export class Task extends Node {
         address: string,
         methodName: string,
         payload?: MethodCallPayload,
-        timeoutMs: number = 10000
+        timeoutMs: number = sgRoot.rendezvousTimeout
     ): BrsType | undefined {
         if (!this.taskBuffer || this.threadId < 0) {
             return undefined;
@@ -383,10 +424,7 @@ export class Task extends Node {
                 break;
             }
         }
-        BrsDevice.stderr.write(
-            `warning,[task:${sgRoot.threadId}] Rendezvous timeout for method ${type}.${methodName}() on thread ${this.threadId}`
-        );
-        return undefined;
+        throw this.rendezvousTimeoutError("call", type, methodName);
     }
 
     /**
@@ -493,6 +531,11 @@ export class Task extends Node {
                 return update;
             }
             if (update.action === "nil") {
+                return update;
+            }
+            if (update.action === "post") {
+                // Fire-and-forget roRenderThreadQueue message: enqueue for the render-loop drain.
+                sgRoot.enqueueRenderQueueMessage(update.address, update.key, update.value);
                 return update;
             }
             const node = this.getNodeToUpdate(update);

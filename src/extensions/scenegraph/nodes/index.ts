@@ -45,6 +45,7 @@ export * from "./StandardDialog";
 export * from "./StandardKeyboardDialog";
 export * from "./StandardProgressDialog";
 export * from "./ProgressDialog";
+export * from "./RenderThreadQueue";
 export * from "./StdDlgContentArea";
 export * from "./StdDlgProgressItem";
 export * from "./StdDlgTitleArea";
@@ -132,6 +133,7 @@ export enum SGNodeType {
     TimeGrid = "TimeGrid", // Not yet implemented
     Task = "Task",
     Timer = "Timer",
+    RenderThreadQueue = "RenderThreadQueue",
     Scene = "Scene",
     Keyboard = "Keyboard",
     MiniKeyboard = "MiniKeyboard",

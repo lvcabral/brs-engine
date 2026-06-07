@@ -60,6 +60,12 @@ export class BrightScriptExtension implements BrsExtension {
         );
         // Re-register roMessagePort to handle the specific case of ports created in the Main thread
         BrsObjects.set("roMessagePort", (interpreter: Interpreter) => this.createMessagePort(interpreter), 0);
+        // roRenderThreadQueue (OS 15) can also be created directly via CreateObject().
+        BrsObjects.set(
+            "roRenderThreadQueue",
+            (interpreter: Interpreter) => createNode("RenderThreadQueue", interpreter),
+            0
+        );
     }
 
     private createMessagePort(interpreter?: Interpreter): RoMessagePort {

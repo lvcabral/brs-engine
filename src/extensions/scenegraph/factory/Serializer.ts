@@ -24,7 +24,7 @@ import {
 } from "brs-engine";
 import { createFlatNode } from "./NodeFactory";
 import { ContentNode, Node, SGNodeType } from "../nodes";
-import { ObservedField } from "../SGTypes";
+import { FieldKind, ObservedField } from "../SGTypes";
 import { sgRoot } from "../SGRoot";
 
 /**
@@ -252,11 +252,20 @@ export function toSGNode(obj: any, type: string, subtype: string, child?: boolea
     newNode.setOwner(obj["_owner_"] ?? 0);
     nodeMap.set(newNode.getAddress(), newNode);
 
+    const fieldTypes = obj["_fieldtypes_"] ?? {};
     for (const key in obj) {
         if (key.startsWith("_") && key.endsWith("_") && key.length > 2) {
             continue;
         }
-        newNode.setValueSilent(key, brsValueOf(obj[key], undefined, nodeMap));
+        const kind = FieldKind.fromString(fieldTypes[key] ?? "");
+        newNode.setValueSilent(key, brsValueOf(obj[key], undefined, nodeMap), undefined, kind);
+    }
+    // Recreate fields whose `invalid`/uninitialized value was omitted by JSON serialization, using
+    // the preserved declared type so they exist (as `invalid`) on the receiving thread.
+    for (const key in fieldTypes) {
+        if (!(key in obj)) {
+            newNode.setValueSilent(key, BrsInvalid.Instance, undefined, FieldKind.fromString(fieldTypes[key]));
+        }
     }
     if (child && obj["_children_"]) {
         for (const child of obj["_children_"]) {
@@ -322,6 +331,7 @@ export function updateSGNode(obj: any, targetNode: Node, nodeMap?: Map<string, N
     // Register/update in nodeMap
     nodeMap.set(targetNode.getAddress(), targetNode);
     // Update fields
+    const fieldTypes = obj["_fieldtypes_"] ?? {};
     for (const key in obj) {
         if (key.startsWith("_") && key.endsWith("_") && key.length > 2) {
             continue;
@@ -344,7 +354,14 @@ export function updateSGNode(obj: any, targetNode: Node, nodeMap?: Map<string, N
             targetNode.setValueSilent(key, nextNode);
             continue;
         }
-        targetNode.setValueSilent(key, brsValueOf(fieldValue, undefined, nodeMap));
+        const kind = FieldKind.fromString(fieldTypes[key] ?? "");
+        targetNode.setValueSilent(key, brsValueOf(fieldValue, undefined, nodeMap), undefined, kind);
+    }
+    // Recreate fields whose `invalid`/uninitialized value was omitted by JSON serialization.
+    for (const key in fieldTypes) {
+        if (!(key in obj)) {
+            targetNode.setValueSilent(key, BrsInvalid.Instance, undefined, FieldKind.fromString(fieldTypes[key]));
+        }
     }
     // Update children
     const serializedChildren = obj["_children_"];
@@ -442,6 +459,7 @@ export function fromSGNode(node: Node, deep: boolean = true, host?: Node, visite
     const result: FlexObject = {};
     const fields = node.getNodeFields();
     const observed: ObservedField[] = [];
+    const fieldTypes: FlexObject = {};
 
     result["_node_"] = `${node.nodeType}:${node.nodeSubtype}`;
     result["_address_"] = node.getAddress();
@@ -466,8 +484,17 @@ export function fromSGNode(node: Node, deep: boolean = true, host?: Node, visite
                 result[name] = fromSGNode(fieldValue, deep, host, visited);
                 continue;
             }
-            result[name] = jsValueOf(fieldValue, deep, host, visited);
+            const serialized = jsValueOf(fieldValue, deep, host, visited);
+            result[name] = serialized;
+            // A field holding `invalid` (or uninitialized) serializes to null/undefined, which loses
+            // its declared type on the receiver. Capture the type so the field can be recreated.
+            if (serialized === null || serialized === undefined) {
+                fieldTypes[name] = field.getType();
+            }
         }
+    }
+    if (Object.keys(fieldTypes).length) {
+        result["_fieldtypes_"] = fieldTypes;
     }
     if (observed.length) {
         result["_observed_"] = observed;

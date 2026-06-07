@@ -21,7 +21,17 @@ import { ThreadInfo } from "./SGTypes";
 import type { SoundEffect } from "./nodes/SoundEffect";
 import type { RoSGNode } from "./components/RoSGNode";
 import type { RoSGScreen } from "./components/RoSGScreen";
-import type { AnimationBase, Audio, Dialog, Scene, StandardDialog, Task, Timer, Video } from "./nodes";
+import type {
+    AnimationBase,
+    Audio,
+    Dialog,
+    RenderThreadQueue,
+    Scene,
+    StandardDialog,
+    Task,
+    Timer,
+    Video,
+} from "./nodes";
 
 /**
  * A singleton object that holds the Node that represents the m.global, the root Scene,
@@ -62,6 +72,15 @@ export class SGRoot {
      * SceneGraph debug console `logrendezvous` command). Defaults to `false`.
      */
     logRendezvous: boolean = false;
+    /**
+     * Maximum time (ms) a Task thread will wait for the render thread to serve a rendezvous before
+     * treating it as a blocked render thread. On a real device a render-thread block terminates the
+     * app (10s for production apps, 3s for sideloaded); on timeout the engine raises an
+     * `ExecutionTimeout` runtime error instead of silently returning `invalid`. Defaults to 10s.
+     */
+    rendezvousTimeout: number = 10000;
+    /** roRenderThreadQueue instances on the render thread, keyed by node address, drained each frame. */
+    private readonly _renderQueues: Map<string, RenderThreadQueue> = new Map();
 
     get interpreter(): Interpreter | undefined {
         return this._interpreter;
@@ -355,6 +374,41 @@ export class SGRoot {
             }
         }
         return updates;
+    }
+
+    /**
+     * Registers a roRenderThreadQueue instance (render thread) so it is drained each render frame.
+     * @param queue The queue node to register, keyed by its address.
+     */
+    registerRenderQueue(queue: RenderThreadQueue) {
+        this._renderQueues.set(queue.getAddress(), queue);
+    }
+
+    /**
+     * Enqueues a message (delivered from a Task thread via a `post` update) into the matching
+     * render-thread queue instance, if registered.
+     * @param address Address of the target roRenderThreadQueue node.
+     * @param messageId Channel id the message was posted to.
+     * @param data Serialized message payload.
+     */
+    enqueueRenderQueueMessage(address: string, messageId: string, data: any) {
+        this._renderQueues.get(address)?.enqueue(messageId, data);
+    }
+
+    /**
+     * Drains all registered render-thread queues, invoking their handlers. Called from the render
+     * loop (a safe, between-handler point) to avoid re-entering the interpreter mid-statement.
+     * @returns True if any queue had pending messages drained.
+     */
+    processRenderQueues(): boolean {
+        if (this._renderQueues.size === 0 || !this._interpreter) {
+            return false;
+        }
+        let drained = false;
+        for (const queue of this._renderQueues.values()) {
+            drained = queue.drain(this._interpreter) || drained;
+        }
+        return drained;
     }
 
     /**
