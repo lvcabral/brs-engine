@@ -408,7 +408,7 @@ export class Node extends RoSGNode implements BrsValue {
      * @param value Value to assign.
      * @param hidden Optional hidden flag override applied when creating the field.
      */
-    setValueSilent(fieldName: string, value: BrsType, hidden?: boolean) {
+    setValueSilent(fieldName: string, value: BrsType, hidden?: boolean, kind?: FieldKind) {
         const mapKey = fieldName.toLowerCase();
         let field = this.fields.get(mapKey);
         if (field) {
@@ -417,7 +417,9 @@ export class Node extends RoSGNode implements BrsValue {
                 field.setHidden(hidden);
             }
         } else {
-            const fieldType = FieldKind.fromBrsType(value);
+            // Prefer the value-inferred kind; fall back to the explicit kind (e.g. from serialized
+            // field metadata) so fields holding `invalid` are still created with their declared type.
+            const fieldType = FieldKind.fromBrsType(value) ?? kind;
             if (fieldType) {
                 field = new Field(fieldName, value, fieldType, false, false, hidden ?? false);
             }
