@@ -388,10 +388,11 @@ export function isTaskData(value: any): value is TaskData {
     );
 }
 
-export type SyncAction = "set" | "get" | "nil" | "ack" | "call" | "resp";
+// "post" is a fire-and-forget message used by roRenderThreadQueue (non-blocking, unlike a rendezvous).
+export type SyncAction = "set" | "get" | "nil" | "ack" | "call" | "resp" | "post";
 
 export function isSyncAction(value: any): value is SyncAction {
-    return typeof value === "string" && ["set", "get", "nil", "ack", "call", "resp"].includes(value);
+    return typeof value === "string" && ["set", "get", "nil", "ack", "call", "resp", "post"].includes(value);
 }
 
 export type SyncType = "global" | "task" | "scene" | "node";
