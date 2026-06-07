@@ -19,14 +19,20 @@ class SharedObject {
     private maxSize: number;
     private atomicView: Int32Array;
     private isProcessing: boolean = false;
+    /**
+     * Optional sink for failures that would otherwise be silently dropped (buffer overflow, store
+     * timeout). When set, the owner can surface these as app-visible errors instead of losing the
+     * update silently. Defaults to `console.error` when unset.
+     */
+    onError?: (message: string) => void;
 
     /**
      * @param initialSize Optional initial buffer size in bytes (defaults to 32KB).
-     * @param maxSize Optional hard cap for automatic growth (defaults to 3MB).
+     * @param maxSize Optional hard cap for automatic growth (defaults to 16MB).
      */
     constructor(initialSize?: number, maxSize?: number) {
         initialSize = initialSize ?? 32 * 1024; // 32KB default
-        this.maxSize = maxSize ?? 3 * 1024 * 1024; // 3MB default
+        this.maxSize = maxSize ?? 16 * 1024 * 1024; // 16MB default
         this.buffer = new SharedArrayBuffer(initialSize, { maxByteLength: this.maxSize });
         this.view = new Uint8Array(this.buffer);
         this.atomicView = new Int32Array(this.buffer, 0, 2);
@@ -57,6 +63,18 @@ class SharedObject {
      */
     getVersion(): number {
         return Atomics.load(this.atomicView, this.versionIdx);
+    }
+
+    /**
+     * Reports a failure that would otherwise lose data, via `onError` when set, else `console.error`.
+     * @param message Human-readable description of the failure.
+     */
+    private reportError(message: string): void {
+        if (this.onError) {
+            this.onError(message);
+        } else {
+            console.error(message);
+        }
     }
 
     /**
@@ -98,7 +116,7 @@ class SharedObject {
                     if (status === "ok") {
                         this.store(obj);
                     } else {
-                        console.error("[SharedObject] Error storing shared data", status, obj.field);
+                        this.reportError(`[SharedObject] Dropped update for "${obj?.field}" (wait: ${status})`);
                     }
                     this.queue.shift();
                     this.isProcessing = false;
@@ -110,7 +128,7 @@ class SharedObject {
                 this.isProcessing = false;
                 this.processQueue();
             } else {
-                console.error("[SharedObject] Error storing shared data: timeout", obj.field);
+                this.reportError(`[SharedObject] Dropped update for "${obj?.field}" (store timeout)`);
                 this.queue.shift();
                 this.isProcessing = false;
                 this.processQueue();
@@ -127,7 +145,7 @@ class SharedObject {
                 } else if (Date.now() - start < timeout) {
                     setTimeout(checkCondition, 10); // Check every 10ms
                 } else {
-                    console.error("[SharedObject] Error storing shared data: timeout", obj.field);
+                    this.reportError(`[SharedObject] Dropped update for "${obj?.field}" (store timeout)`);
                     this.queue.shift();
                     this.isProcessing = false;
                     this.processQueue();
@@ -171,7 +189,7 @@ class SharedObject {
         try {
             return JSON.parse(serialized);
         } catch (error) {
-            console.error("Error parsing data:", error, serialized);
+            this.reportError(`[SharedObject] Error parsing shared data: ${error}`);
             return {};
         }
     }
@@ -232,7 +250,9 @@ class SharedObject {
      */
     private ensureCapacity(size: number): boolean {
         if (size > this.maxSize) {
-            console.error(`[SharedObject] Buffer is full. Cannot store more data. ${size} > ${this.maxSize}`);
+            this.reportError(
+                `[SharedObject] Update dropped: payload of ${size} bytes exceeds the ${this.maxSize}-byte buffer limit`
+            );
             return false;
         }
         if (size > this.buffer.byteLength) {
@@ -242,7 +262,7 @@ class SharedObject {
                 this.view = new Uint8Array(this.buffer); // Update the view
                 this.atomicView = new Int32Array(this.buffer, 0, 2); // Update atomic offset view
             } catch (e) {
-                console.error("[SharedObject] Error growing buffer:", e);
+                this.reportError(`[SharedObject] Update dropped: failed to grow buffer to ${newSize} bytes: ${e}`);
                 return false;
             }
         }

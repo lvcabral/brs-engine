@@ -427,17 +427,25 @@ export function isThreadUpdate(value: any): value is ThreadUpdate {
     );
 }
 
+/** Monotonic per-process counter ensuring addresses are unique within a thread/worker. */
+let addressSequence = 0;
+
 /**
- * Generates a random 6-character hexadecimal address.
- * @returns A random hex string in uppercase format (e.g., "A1B2C3")
+ * Generates a unique hexadecimal address.
+ *
+ * The address combines a 24-bit random prefix with a monotonic per-process sequence suffix. The
+ * sequence guarantees uniqueness within a single thread/worker, while the random prefix makes
+ * collisions across threads (each of which has its own sequence) astronomically unlikely. This
+ * replaces the previous 24-bit random-only scheme, whose ~16M space risked birthday-paradox
+ * collisions in large, long-lived scenes.
+ * @returns A unique hex string in uppercase format (e.g., "A1B2C3000001").
  */
 export function genHexAddress(): string {
-    const randomInt = Math.floor(Math.random() * (0xffffff + 1));
-    let hexString = randomInt.toString(16);
-    while (hexString.length < 6) {
-        hexString = "0" + hexString;
-    }
-    return hexString.toUpperCase();
+    const random = Math.floor(Math.random() * (0xffffff + 1))
+        .toString(16)
+        .padStart(6, "0");
+    const sequence = (++addressSequence).toString(16).padStart(6, "0");
+    return (random + sequence).toUpperCase();
 }
 
 /* Package File Path Interface

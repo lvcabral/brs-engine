@@ -73,6 +73,17 @@ function notifyAll(eventName: string, eventData?: any) {
 }
 
 /**
+ * Creates a SharedObject whose failures (overflow / dropped updates) are surfaced as app-visible
+ * errors instead of being silently lost.
+ * @returns A new SharedObject wired to report errors through the task observers.
+ */
+function createSharedObject(): SharedObject {
+    const sharedObject = new SharedObject();
+    sharedObject.onError = (message: string) => notifyAll("error", `[task:api] ${message}`);
+    return sharedObject;
+}
+
+/**
  * Handles task data events from the engine.
  * Starts or stops tasks based on the task state.
  * @param taskData Task data containing state and configuration
@@ -81,7 +92,7 @@ function notifyAll(eventName: string, eventData?: any) {
 export function handleTaskData(taskData: TaskData, currentPayload: AppPayload) {
     if (taskData.state === TaskState.RUN) {
         if (taskData.buffer instanceof SharedArrayBuffer) {
-            const taskBuffer = new SharedObject();
+            const taskBuffer = createSharedObject();
             taskBuffer.setBuffer(taskData.buffer);
             threadSyncToMain.set(taskData.id, taskBuffer);
         }
@@ -109,7 +120,7 @@ function runTask(taskData: TaskData, currentPayload: AppPayload) {
     taskWorker.addEventListener("message", taskCallback);
     tasks.set(taskData.id, taskWorker);
     if (!threadSyncToTask.has(taskData.id)) {
-        threadSyncToTask.set(taskData.id, new SharedObject());
+        threadSyncToTask.set(taskData.id, createSharedObject());
     }
     taskData.buffer = threadSyncToTask.get(taskData.id)?.getBuffer();
     const taskPayload: TaskPayload = {
@@ -229,7 +240,7 @@ export function handleThreadUpdate(threadUpdate: ThreadUpdate, fromTask: boolean
  */
 function updateTask(targetId: number, data: ThreadUpdate) {
     if (!threadSyncToTask.has(targetId)) {
-        threadSyncToTask.set(targetId, new SharedObject());
+        threadSyncToTask.set(targetId, createSharedObject());
     }
     threadSyncToTask.get(targetId)?.waitStore(data, 1);
 }

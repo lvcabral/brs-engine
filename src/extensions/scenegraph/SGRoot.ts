@@ -51,6 +51,17 @@ export class SGRoot {
     private _video?: Video;
     private _dirty: boolean = false;
     private readonly _pendingPorts: RoMessagePort[] = [];
+    /**
+     * When `true`, recently-written fields can be re-read from the local copy for a short window,
+     * skipping a rendezvous (a performance heuristic). Defaults to `false` so that every Task-thread
+     * field get rendezvouses with the owning thread, matching real Roku device behavior.
+     */
+    fastFieldReads: boolean = false;
+    /**
+     * When `true`, each rendezvous logs its action, target, and duration (mirroring the Roku
+     * SceneGraph debug console `logrendezvous` command). Defaults to `false`.
+     */
+    logRendezvous: boolean = false;
 
     get interpreter(): Interpreter | undefined {
         return this._interpreter;

@@ -288,23 +288,30 @@ export class Task extends Node {
         if (!this.taskBuffer || this.threadId < 0) {
             return false;
         }
-        const update: ThreadUpdate = {
+        const requestId = this.syncRequestId++;
+        const request: ThreadUpdate = {
             id: this.threadId,
             action: "get",
             type,
             address,
             key: fieldName,
             value: null,
+            requestId,
         };
-        this.sendThreadUpdate(update);
+        const started = sgRoot.logRendezvous ? Date.now() : 0;
+        this.sendThreadUpdate(request);
         const deadline = Date.now() + timeoutMs;
 
         while (true) {
             const update = this.processThreadUpdate();
-            if (update?.action === "set" && update.type === type && update.key === fieldName) {
-                return true;
-            } else if (update?.action === "nil" && update.type === type && update.key === fieldName) {
-                return false;
+            if (update?.requestId === requestId) {
+                if (update.action === "set") {
+                    this.logRendezvousTiming("get", type, fieldName, started);
+                    return true;
+                } else if (update.action === "nil") {
+                    this.logRendezvousTiming("get", type, fieldName, started);
+                    return false;
+                }
             }
             const remaining = deadline - Date.now();
             if (remaining <= 0) {
@@ -342,23 +349,30 @@ export class Task extends Node {
             return undefined;
         }
         const value = payload ?? null;
-        const update: ThreadUpdate = {
+        const requestId = this.syncRequestId++;
+        const request: ThreadUpdate = {
             id: this.threadId,
             action: "call",
             type,
             address,
             key: methodName,
             value,
+            requestId,
         };
-        this.sendThreadUpdate(update);
+        const started = sgRoot.logRendezvous ? Date.now() : 0;
+        this.sendThreadUpdate(request);
         const deadline = Date.now() + timeoutMs;
 
         while (true) {
             const update = this.processThreadUpdate();
-            if (update?.action === "resp" && update.type === type && update.key === methodName) {
-                return brsValueOf(update.value);
-            } else if (update?.action === "nil" && update.type === type && update.key === methodName) {
-                return undefined;
+            if (update?.requestId === requestId) {
+                if (update.action === "resp") {
+                    this.logRendezvousTiming("call", type, methodName, started);
+                    return brsValueOf(update.value);
+                } else if (update.action === "nil") {
+                    this.logRendezvousTiming("call", type, methodName, started);
+                    return undefined;
+                }
             }
             const remaining = deadline - Date.now();
             if (remaining <= 0) {
@@ -422,14 +436,35 @@ export class Task extends Node {
      * @param requestAck When true (default) the method will wait for an acknowledgement from the main thread confirming the update was processed, otherwise it will fire-and-forget without waiting. This should be false for updates originating from the main thread to avoid deadlocks, and can be true for updates originating from the task thread when the caller needs to ensure the main thread has processed the change before proceeding.
      */
     sendThreadUpdate(update: ThreadUpdate, requestAck: boolean = true) {
-        if (this.inThread && update.action === "set") {
-            update.requestId = requestAck ? this.syncRequestId++ : undefined;
-        } else if (update.action !== "ack") {
-            update.requestId = undefined;
+        const isRequest = update.action === "set" || update.action === "get" || update.action === "call";
+        // Tag outbound requests originating from a task thread with a unique id so the matching
+        // response/ack can be correlated unambiguously. Responses (resp/ack/nil) and render-thread
+        // requests preserve the requestId already present on the update.
+        if (this.inThread && isRequest && requestAck && update.requestId === undefined) {
+            update.requestId = this.syncRequestId++;
         }
         postMessage(update);
-        if (this.inThread && update.requestId !== undefined && update.action !== "ack") {
+        if (this.inThread && update.action === "set" && update.requestId !== undefined) {
+            const started = sgRoot.logRendezvous ? Date.now() : 0;
             this.waitForFieldAck(update);
+            this.logRendezvousTiming("set", update.type, update.key, started);
+        }
+    }
+
+    /**
+     * Logs the duration of a completed rendezvous when `sgRoot.logRendezvous` is enabled, mirroring
+     * the Roku SceneGraph debug console `logrendezvous` command to help identify performance issues.
+     * @param action Rendezvous action performed (`get`, `set`, or `call`).
+     * @param type Sync type domain of the target (`global`, `task`, `scene`, or `node`).
+     * @param key Field or method name involved in the rendezvous.
+     * @param startedMs Timestamp (ms) captured before the rendezvous started.
+     */
+    private logRendezvousTiming(action: string, type: SyncType, key: string, startedMs: number) {
+        if (sgRoot.logRendezvous) {
+            const ms = Date.now() - startedMs;
+            BrsDevice.stdout.write(
+                `debug,[rendezvous] thread ${sgRoot.threadId} ${action} ${type}.${key} on thread ${this.threadId} took ${ms}ms`
+            );
         }
     }
 

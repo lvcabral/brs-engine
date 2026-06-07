@@ -298,7 +298,10 @@ export class Node extends RoSGNode implements BrsValue {
         if (this.shouldRendezvous()) {
             if (this.fields.has(key)) {
                 const task = sgRoot.getCurrentThreadTask();
-                if (task?.active && !this.consumeFreshField(key)) {
+                // By default every read of a render-owned field rendezvouses, matching real Roku
+                // behavior ("each dot represents a distinct rendezvous"). The freshFields read-cache
+                // is only consulted in the opt-in `fastFieldReads` performance mode.
+                if (task?.active && !(sgRoot.fastFieldReads && this.consumeFreshField(key))) {
                     task.requestFieldValue(this.syncType, this.address, key);
                 }
             } else {
