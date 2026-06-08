@@ -57,12 +57,6 @@ export interface DeviceInfo {
     debugOnCrash?: boolean;
     corsProxy?: string;
     extensions?: Map<SupportedExtension, string>;
-    /**
-     * Experimental (Phase 3a): when true, SceneGraph rendezvous responses are delivered directly
-     * from the render thread to the requesting Task thread over a dedicated SharedArrayBuffer,
-     * bypassing the main-thread broker. Defaults to false (responses relayed via the broker).
-     */
-    rendezvousDirect?: boolean;
 }
 
 export enum LogLevel {
@@ -158,7 +152,6 @@ export const DefaultDeviceInfo: DeviceInfo = {
     tmpVolSize: 32 * 1024 * 1024, // 32 MB
     cacheFSVolSize: 32 * 1024 * 1024, // 32 MB
     logLevel: LogLevel.Warning,
-    rendezvousDirect: false, // Experimental (Phase 3a): direct render→task rendezvous responses
 };
 
 // Valid Closed Captions Options
@@ -374,6 +367,8 @@ export type TaskData = {
     buffer?: SharedArrayBuffer;
     /** Phase 3a: dedicated buffer for direct render→task rendezvous responses (bypasses the broker). */
     directToTask?: SharedArrayBuffer;
+    /** Phase 3b: dedicated buffer for direct render→task fan-out of observed-field updates. */
+    fanout?: SharedArrayBuffer;
     tmp?: SharedArrayBuffer;
     cacheFS?: SharedArrayBuffer;
     m?: any;

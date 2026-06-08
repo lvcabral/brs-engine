@@ -29,6 +29,9 @@ const threadSyncToTask: Map<number, SharedObject> = new Map();
 const threadSyncToMain: Map<number, SharedObject> = new Map();
 let sharedBuffer: ArrayBufferLike;
 let brsWrkLib: string;
+// Phase 3b: when a task is started with a dedicated fan-out buffer, the render thread delivers
+// fan-out and cross-task propagation directly, so the broker stops relaying those.
+let directMode: boolean = false;
 let inDebugLib: boolean = false;
 /// #if DEBUG
 inDebugLib = true;
@@ -77,9 +80,9 @@ function notifyAll(eventName: string, eventData?: any) {
  * errors instead of being silently lost.
  * @returns A new SharedObject wired to report errors through the task observers.
  */
-function createSharedObject(): SharedObject {
+function createSharedObject(label: string = ""): SharedObject {
     const sharedObject = new SharedObject();
-    sharedObject.onError = (message: string) => notifyAll("error", `[task:api] ${message}`);
+    sharedObject.onError = (message: string) => notifyAll("error", `[task:api]${label ? ` ${label}` : ""} ${message}`);
     return sharedObject;
 }
 
@@ -92,7 +95,7 @@ function createSharedObject(): SharedObject {
 export function handleTaskData(taskData: TaskData, currentPayload: AppPayload) {
     if (taskData.state === TaskState.RUN) {
         if (taskData.buffer instanceof SharedArrayBuffer) {
-            const taskBuffer = createSharedObject();
+            const taskBuffer = createSharedObject(`toMain[${taskData.id}]`);
             taskBuffer.setBuffer(taskData.buffer);
             threadSyncToMain.set(taskData.id, taskBuffer);
         }
@@ -119,10 +122,17 @@ function runTask(taskData: TaskData, currentPayload: AppPayload) {
     const taskWorker = new Worker(brsWrkLib);
     taskWorker.addEventListener("message", taskCallback);
     tasks.set(taskData.id, taskWorker);
-    if (!threadSyncToTask.has(taskData.id)) {
-        threadSyncToTask.set(taskData.id, createSharedObject());
+    if (taskData.fanout instanceof SharedArrayBuffer) {
+        // Phase 3b (direct mode): the render thread owns the render→task fan-out buffer; forward it
+        // to the task as its read buffer. The broker does not relay fan-out or cross-task updates.
+        directMode = true;
+        taskData.buffer = taskData.fanout;
+    } else {
+        if (!threadSyncToTask.has(taskData.id)) {
+            threadSyncToTask.set(taskData.id, createSharedObject(`toTask[${taskData.id}]`));
+        }
+        taskData.buffer = threadSyncToTask.get(taskData.id)?.getBuffer();
     }
-    taskData.buffer = threadSyncToTask.get(taskData.id)?.getBuffer();
     const taskPayload: TaskPayload = {
         device: currentPayload.device,
         manifest: currentPayload.manifest,
@@ -174,6 +184,7 @@ export function resetTasks() {
     tasks.clear();
     threadSyncToTask.clear();
     threadSyncToMain.clear();
+    directMode = false;
 }
 
 /**
@@ -228,8 +239,13 @@ function taskCallback(event: MessageEvent) {
  */
 export function handleThreadUpdate(threadUpdate: ThreadUpdate, fromTask: boolean = false) {
     if (fromTask) {
-        // Update main thread buffer
+        // Update main thread buffer (relay the request/post to the render thread).
         threadSyncToMain.get(threadUpdate.id)?.waitStore(threadUpdate, 1);
+        // Phase 3b: in direct mode the render thread performs cross-task propagation itself, so the
+        // broker must not also fan a task's set out to the other tasks (which would double-deliver).
+        if (directMode) {
+            return;
+        }
     }
     if (threadUpdate.id > 0 && !fromTask) {
         updateTask(threadUpdate.id, threadUpdate);
@@ -249,8 +265,17 @@ export function handleThreadUpdate(threadUpdate: ThreadUpdate, fromTask: boolean
  * @param data Thread update data with field changes
  */
 function updateTask(targetId: number, data: ThreadUpdate) {
+    if (directMode) {
+        // In direct mode the render thread owns the render→task channel; the broker has no buffer the
+        // task actually reads. Routing here means a render-side fan-out escaped the direct path and
+        // will be dropped — surface it loudly so the offending update is identifiable.
+        notifyAll(
+            "warning",
+            `[task:api] Direct-mode fan-out leaked to broker for task ${targetId}: {${data.action} ${data.type}.${data.key}} — update will not reach the task`
+        );
+    }
     if (!threadSyncToTask.has(targetId)) {
-        threadSyncToTask.set(targetId, createSharedObject());
+        threadSyncToTask.set(targetId, createSharedObject(`toTask[${targetId}]`));
     }
     threadSyncToTask.get(targetId)?.waitStore(data, 1);
 }

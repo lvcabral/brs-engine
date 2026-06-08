@@ -9,6 +9,21 @@
  * SharedObject serializes JSON payloads or raw buffers into a resizable SharedArrayBuffer
  * to coordinate state between the host and worker threads via Atomics.
  */
+/**
+ * Builds a concise human-readable description of a dropped payload for diagnostics. Thread updates
+ * carry id/action/type/key; anything else falls back to its JSON shape.
+ * @param obj The payload that could not be delivered.
+ * @returns A short label identifying the payload.
+ */
+function describeUpdate(obj: any): string {
+    if (obj && typeof obj === "object" && "action" in obj) {
+        return `{id:${obj.id} ${obj.action} ${obj.type}.${obj.key}${
+            obj.requestId !== undefined ? ` #${obj.requestId}` : ""
+        }}`;
+    }
+    return `"${typeof obj}"`;
+}
+
 class SharedObject {
     private readonly offset = 8;
     private readonly queue: { obj: any; version: number; timeout: number }[] = [];
@@ -137,7 +152,7 @@ class SharedObject {
                     if (status === "ok") {
                         this.store(obj);
                     } else {
-                        this.reportError(`[SharedObject] Dropped update for "${obj?.field}" (wait: ${status})`);
+                        this.reportError(`[SharedObject] Dropped update ${describeUpdate(obj)} (wait: ${status})`);
                     }
                     this.queue.shift();
                     this.isProcessing = false;
@@ -170,7 +185,7 @@ class SharedObject {
                 } else if (Date.now() - start < timeout) {
                     setTimeout(checkCondition, 10); // Check every 10ms
                 } else {
-                    this.reportError(`[SharedObject] Dropped update for "${obj?.field}" (store timeout)`);
+                    this.reportError(`[SharedObject] Dropped update ${describeUpdate(obj)} (store timeout)`);
                     this.queue.shift();
                     this.isProcessing = false;
                     this.processQueue();

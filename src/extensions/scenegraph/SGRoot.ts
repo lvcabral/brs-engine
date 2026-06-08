@@ -79,13 +79,6 @@ export class SGRoot {
      * `ExecutionTimeout` runtime error instead of silently returning `invalid`. Defaults to 10s.
      */
     rendezvousTimeout: number = 10000;
-    /**
-     * Experimental (Phase 3a): when true, the render thread delivers rendezvous responses directly to
-     * the requesting Task thread over a dedicated SharedArrayBuffer, bypassing the main-thread broker.
-     * Set from `DeviceInfo.rendezvousDirect`. Requests, fan-out, and cross-task propagation still use
-     * the broker. Defaults to false.
-     */
-    directRendezvous: boolean = false;
     /** roRenderThreadQueue instances on the render thread, keyed by node address, drained each frame. */
     private readonly _renderQueues: Map<string, RenderThreadQueue> = new Map();
 
@@ -188,7 +181,6 @@ export class SGRoot {
      */
     setInterpreter(interpreter: Interpreter) {
         this._interpreter = interpreter;
-        this.directRendezvous = BrsDevice.deviceInfo.rendezvousDirect ?? false;
         const resolutions = interpreter.manifest.get("ui_resolutions");
         if (resolutions?.length) {
             const resArray = resolutions.split(",");
@@ -374,11 +366,24 @@ export class SGRoot {
      */
     processTasks(): boolean {
         let updates = false;
-        for (const thread of this._threads.values()) {
+        // Snapshot the thread list so a handler that creates/stops a task mid-iteration can't disturb
+        // the loop, and isolate each task: a fault while serving one task must never tear down the
+        // render thread (which would stall every rendezvous and silently drop in-flight updates).
+        for (const thread of [...this._threads.values()]) {
             const task = thread.task;
-            updates = task?.processThreadUpdate() !== undefined || updates;
-            if (task?.active) {
-                task.checkTaskRun();
+            try {
+                updates = task?.processThreadUpdate() !== undefined || updates;
+                if (task?.active) {
+                    task.checkTaskRun();
+                }
+                // Phase 3b: drain any queued direct fan-out into the task's buffer (render thread only).
+                task?.flushFanout();
+            } catch (err: any) {
+                BrsDevice.stderr.write(
+                    `error,[sg] Error processing task ${task?.nodeSubtype} (thread ${task?.threadId}): ${
+                        err?.message ?? err
+                    }${err?.stack ? `\n${err.stack}` : ""}`
+                );
             }
         }
         return updates;

@@ -41,11 +41,22 @@ export class Task extends Node {
     /** Shared buffer used to communicate updates between host and task thread (via the broker). */
     private taskBuffer?: SharedObject;
     /**
-     * Phase 3a: dedicated buffer carrying rendezvous responses directly between the render thread
-     * (writer) and this Task thread (reader), bypassing the main-thread broker. Present only when
-     * `DeviceInfo.rendezvousDirect` is enabled; otherwise responses arrive on `taskBuffer`.
+     * Dedicated buffer carrying rendezvous responses directly between the render thread (writer) and
+     * this Task thread (reader), bypassing the main-thread broker. Allocated on the render-thread
+     * instance when the task activates.
      */
     private directBuffer?: SharedObject;
+    /**
+     * Render-side write handle for the dedicated fan-out buffer (render → this task) used to deliver
+     * observed-field updates directly. Present only on the render-thread instance.
+     */
+    private fanoutBuffer?: SharedObject;
+    /**
+     * Render-side queue of pending fan-out updates for this task, flushed synchronously into
+     * `fanoutBuffer` during `processTasks` (the render thread can't rely on async writes — it
+     * busy-waits for FPS and doesn't yield its event loop mid-frame).
+     */
+    private readonly fanoutQueue: ThreadUpdate[] = [];
 
     /** Thread identifier assigned by sgRoot once scheduled. */
     threadId: number;
@@ -177,7 +188,7 @@ export class Task extends Node {
      * @returns True if acknowledgement was received, false on timeout.
      */
     private waitForFieldAck(update: ThreadUpdate, timeoutMs: number = sgRoot.rendezvousTimeout) {
-        // Phase 3a: responses (including acks) arrive on the direct buffer when enabled, else taskBuffer.
+        // Responses (including acks) arrive on the dedicated direct buffer; taskBuffer is the fallback.
         const responseBuffer = this.directBuffer ?? this.taskBuffer;
         if (!responseBuffer || update.requestId === undefined) {
             return false;
@@ -224,11 +235,35 @@ export class Task extends Node {
     private activateTask() {
         this.active = true;
         if (this.inThread) return;
+        // Create the direct render→task buffers up front — before any field can be synced — so every
+        // render-side fan-out takes the direct path. Done lazily in checkTaskRun they would miss the
+        // window between activation and the first processTasks pass, where a field set (e.g. a Task's
+        // `request`) would fall back to the broker, which in direct mode has no read buffer for the
+        // task and silently drops the update.
+        this.ensureDirectBuffers();
         // In main thread add this task to sgRoot. (in a task thread it's added by `loadTaskData()`)
         if (this.threadId < 0) {
             sgRoot.addTask(this);
         } else if (sgRoot.getThreadTask(this.threadId) !== this) {
             sgRoot.setThread(this.threadId, this.address, this);
+        }
+    }
+
+    /**
+     * Allocates the dedicated render→task rendezvous buffers (direct response + observed-field
+     * fan-out) so the render thread delivers them straight to the Task thread without a main-thread
+     * relay hop. Idempotent and render-thread only.
+     */
+    private ensureDirectBuffers() {
+        if (this.inThread || this.fanoutBuffer) {
+            return;
+        }
+        this.directBuffer = new SharedObject();
+        this.fanoutBuffer = new SharedObject();
+        if (sgRoot.logRendezvous) {
+            BrsDevice.stdout.write(
+                `debug,[rendezvous] thread ${sgRoot.threadId} allocated direct buffers for task ${this.nodeSubtype} (thread ${this.threadId})`
+            );
         }
     }
 
@@ -317,7 +352,13 @@ export class Task extends Node {
         }
         const value = fieldValue instanceof Node ? fromSGNode(fieldValue, true) : jsValueOf(fieldValue);
         if (fieldValue instanceof Node) {
-            fieldValue.setOwner(0); // Once the Node is sent to the Render thread, it's forever owned by it
+            // Re-own to the render thread only when the node actually crosses task → render (a task
+            // setting a field). On the render side this is a fan-out (render → task): the node stays
+            // render-authoritative and the task receives a serialized copy, so mutating its ownership
+            // here would corrupt the live node tree (setOwner recurses into children).
+            if (this.inThread) {
+                fieldValue.setOwner(0); // Once the Node is sent to the Render thread, it's forever owned by it
+            }
             fieldValue.changed = false;
         }
         const update: ThreadUpdate = {
@@ -328,7 +369,56 @@ export class Task extends Node {
             key,
             value,
         };
+        // Phase 3b: on the render thread, queue fan-out for direct delivery (drained in processTasks)
+        // instead of relaying it through the main-thread broker.
+        if (this.fanoutBuffer && !this.inThread) {
+            this.fanoutQueue.push(update);
+            if (sgRoot.logRendezvous) {
+                BrsDevice.stdout.write(
+                    `debug,[rendezvous] thread ${sgRoot.threadId} queued fan-out ${type}.${key} -> task thread ${this.threadId} (queue ${this.fanoutQueue.length})`
+                );
+            }
+            return;
+        }
+        if (sgRoot.logRendezvous) {
+            BrsDevice.stdout.write(
+                `debug,[rendezvous] thread ${sgRoot.threadId} broker fan-out ${type}.${key} -> task thread ${
+                    this.threadId
+                } (inThread=${this.inThread} fanoutBuffer=${!!this.fanoutBuffer})`
+            );
+        }
         this.sendThreadUpdate(update);
+    }
+
+    /**
+     * Flushes queued fan-out updates into the dedicated buffer (render thread only). Writes are
+     * synchronous and non-blocking: one update is stored whenever the single slot is free, leaving
+     * the rest queued for the next render pass so a slow task can never stall the render thread.
+     */
+    flushFanout() {
+        if (!this.fanoutBuffer) {
+            return;
+        }
+        while (this.fanoutQueue.length > 0 && this.fanoutBuffer.getVersion() === 0) {
+            const update = this.fanoutQueue.shift();
+            try {
+                this.fanoutBuffer.store(update);
+                if (sgRoot.logRendezvous) {
+                    BrsDevice.stdout.write(
+                        `debug,[rendezvous] thread ${sgRoot.threadId} flushed fan-out ${update?.type}.${update?.key} -> task thread ${this.threadId} (queue ${this.fanoutQueue.length})`
+                    );
+                }
+            } catch (err: any) {
+                // A non-serializable payload (e.g. a value with a cycle) must never propagate out of
+                // here: on the render thread this runs inside the render loop, so a throw would stall
+                // every rendezvous. Drop just this update and keep draining the rest.
+                BrsDevice.stderr.write(
+                    `error,[task:${sgRoot.threadId}] Dropped fan-out ${update?.type}.${update?.key} to thread ${
+                        this.threadId
+                    }: ${err?.message ?? err}`
+                );
+            }
+        }
     }
 
     /**
@@ -472,17 +562,16 @@ export class Task extends Node {
         }
         if (!this.started) {
             this.taskBuffer = new SharedObject();
-            // Phase 3a: when enabled, create a dedicated buffer the render thread writes responses
-            // into directly, so the blocked task wakes without a main-thread relay hop.
-            if (sgRoot.directRendezvous) {
-                this.directBuffer = new SharedObject();
-            }
+            // Direct render→task buffers (responses + fan-out) are normally allocated at activation;
+            // ensure they exist here too in case the task was started without going through activate.
+            this.ensureDirectBuffers();
             const taskData: TaskData = {
                 id: this.threadId,
                 name: this.nodeSubtype,
                 state: TaskState.RUN,
                 buffer: this.taskBuffer.getBuffer(),
                 directToTask: this.directBuffer?.getBuffer(),
+                fanout: this.fanoutBuffer?.getBuffer(),
                 tmp: BrsDevice.getTmpVolume(),
                 cacheFS: BrsDevice.getCacheFS(),
                 m: fromAssociativeArray(this.m, true, this),
@@ -632,6 +721,19 @@ export class Task extends Node {
         }
         node.markFieldFresh(update.key);
         node.setValue(update.key, value, false, undefined, false);
+        if (sgRoot.logRendezvous) {
+            BrsDevice.stdout.write(
+                `debug,[rendezvous] thread ${sgRoot.threadId} applied set ${update.type}.${update.key} from thread ${update.id}`
+            );
+        }
+        // The render fans a task's applied set out to the other observing tasks itself (targeted to
+        // observers, excluding the originator) rather than relying on the broker to blind-relay. Only
+        // shared domains (global/scene/node) cross between tasks — `task`-type fields are private to a
+        // single task, mirroring the broker's `type !== "task"` guard; fanning them out would deliver
+        // one task's field into another task's identically-named field (and corrupt node ownership).
+        if (this.fanoutBuffer && !this.inThread && update.type !== "task") {
+            node.fanOutFieldToObservingTasks(update.key, update.id);
+        }
         // Send acknowledgement back to the other thread if needed
         if (!this.inThread && update.requestId !== undefined) {
             update.action = "ack";
