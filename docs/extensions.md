@@ -29,6 +29,8 @@ registerExtension(() => new MyExtension());
 
 The SceneGraph runtime ships as a standalone extension located under `packages/scenegraph`. It owns the XML component parser, `RoSGScreen`, nodes, and task execution helpers.
 
+For how `Task` nodes read and write render‑owned nodes across threads — the direct render→task rendezvous channel and its design rationale — see [`scenegraph-rendezvous.md`](./scenegraph-rendezvous.md).
+
 ### Browser integrations
 
 1. Ship `brs.worker.js`, `brs.api.js`, and `brs-sg.js` together under the `lib/` folder.

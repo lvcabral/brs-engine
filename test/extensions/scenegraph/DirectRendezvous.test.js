@@ -121,4 +121,44 @@ describe("Phase 3b direct fan-out", () => {
         task.syncRemoteField("foo", new BrsString("bar"), "node", "ABC123");
         expect(global.postMessage).toHaveBeenCalledTimes(1);
     });
+
+    test("render-side fan-out does not re-own the node (ownership stays render-authoritative)", () => {
+        const task = renderSideTask();
+        attachFanout(task);
+
+        // A node owned by a task thread, held in a render-owned field being fanned out. Re-owning it to
+        // thread 0 here would recurse into its children and corrupt the live tree (the rokanban bug).
+        const node = new Task([], "Inner");
+        node.setOwner(7);
+        task.syncRemoteField("foo", node, "node", "ABC123");
+
+        expect(node.getOwner()).toBe(7); // unchanged on the render side
+    });
+
+    test("a task-thread set DOES re-own the node to the render thread", () => {
+        const task = renderSideTask();
+        task.inThread = true; // simulate running on the task worker
+        const node = new Task([], "Inner");
+        node.setOwner(7);
+        task.syncRemoteField("foo", node, "node", "ABC123");
+
+        expect(node.getOwner()).toBe(0); // crossed task -> render, now render-owned
+    });
+
+    test("a non-serializable fan-out is dropped without throwing; the rest still flush", () => {
+        const task = renderSideTask();
+        const reader = attachFanout(task);
+
+        // A payload with a cycle: JSON.stringify (used by store) throws on this. flushFanout runs on
+        // the render loop, so it must swallow the error, drop the bad update, and keep draining.
+        const cyclic = { id: 1, action: "set", type: "node", address: "ABC123", key: "bad", value: {} };
+        cyclic.value.self = cyclic.value;
+        task.fanoutQueue.push(cyclic);
+        task.syncRemoteField("good", new BrsString("ok"), "node", "ABC123");
+
+        expect(() => task.flushFanout()).not.toThrow();
+        // Bad update dropped (version untouched by it), good update delivered into the single slot.
+        expect(reader.getVersion()).toBe(1);
+        expect(reader.load(true).key).toBe("good");
+    });
 });

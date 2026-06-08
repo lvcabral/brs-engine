@@ -163,7 +163,7 @@ Because a node's authoritative copy lives on its owner thread, reading/writing a
 - **Crossing into a node sends ownership**: a `Node` value passed from a task to the render thread is re-owned (`setOwner(0)`) so subsequent access from the task rendezvouses back.
 - **Task startup** — when a Task's `control` becomes `"run"`, `checkTaskRun` posts a `TaskData` (with the shared buffer, serialized `m`, render-thread id, `tmp:`/`cachefs:` volumes). The core spins up a worker, which calls the extension's `execTask` → `initializeTask` to rebuild the node tree on the new thread and invoke the task function. The extension's `tick` hook drains incoming thread updates each iteration via `task.processThreadUpdate()`.
 
-See `docs/extensions.md` and `packages/scenegraph/README.md` for the consumer-facing view.
+See `docs/extensions.md` and `packages/scenegraph/README.md` for the consumer-facing view, and `docs/scenegraph-rendezvous.md` for the rendezvous design (broker → direct render→task channel) and its performance/reliability/memory/fidelity analysis.
 
 ## CLI
 
@@ -179,7 +179,7 @@ See `docs/extensions.md` and `packages/scenegraph/README.md` for the consumer-fa
 
 ## Documentation
 
-`docs/` is the source of truth for usage: `build-from-source.md`, `integrating.md`, `engine-api.md`, `customization.md`, `run-as-cli.md`, `using-node-library.md`, `extensions.md`, `remote-control.md`, `limitations.md`, `contributing.md`.
+`docs/` is the source of truth for usage: `build-from-source.md`, `integrating.md`, `engine-api.md`, `customization.md`, `run-as-cli.md`, `using-node-library.md`, `extensions.md`, `scenegraph-rendezvous.md`, `remote-control.md`, `limitations.md`, `contributing.md`.
 
 ## Roku reference documentation (`external/dev-doc` submodule)
 
