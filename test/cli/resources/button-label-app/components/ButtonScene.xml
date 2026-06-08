@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="ButtonScene" extends="Scene">
+    <children>
+        <FancyButton id="myButton" translation="[100, 100]" />
+    </children>
+</component>

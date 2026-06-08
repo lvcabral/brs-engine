@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+<a name="unreleased"></a>
+
+## [Unreleased]
+
+### Release Changes
+
+* Changes on `brs-scenegraph` package:
+  * (rsg) Fixed SceneGraph field observers to dispatch synchronously (depth-first) with a per-field re-entrancy guard, restoring Roku-accurate ordering and sequential re-notifications — replaces the breadth-first/coalescing queue from [#905](https://github.com/lvcabral/brs-engine/pull/905) that dropped a field's repeated notification within a cascade and left dependent fields (e.g. a custom button's inner `Label`) blank, while still preventing the `ContentNode` `parentField` cascade stack overflow ([#904](https://github.com/lvcabral/brs-engine/issues/904)).
+
 <a name="v2.2.0"></a>
 
 ## [v2.2.0 - `slice()` in `roByteArray` and new SG nodes](https://github.com/lvcabral/brs-engine/releases/tag/v2.2.0) - 12 April 2026
