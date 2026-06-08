@@ -35,20 +35,11 @@ import { fromAssociativeArray, toAssociativeArray, jsValueOf } from "../factory/
 import { BrsCallback, FieldKind, isContentNode } from "../SGTypes";
 
 export class Field {
-    /** Queue used to iteratively dispatch field notifications and avoid recursive observer cascades. */
-    private static readonly notifyQueue: Field[] = [];
-    /** Tracks fields currently queued for notification in the active dispatch cycle. */
-    private static readonly queuedFields: Set<Field> = new Set();
-    /** Indicates that notifications are currently being dispatched. */
-    private static flushingNotifications = false;
-    /** Monotonic identifier for the current notification dispatch cycle. */
-    private static currentBatchId = 0;
-
     private readonly permanentObservers: BrsCallback[] = [];
     private readonly unscopedObservers: BrsCallback[] = [];
     private readonly scopedObservers: Map<Node, BrsCallback[]> = new Map();
-    /** Records the most recent dispatch cycle in which this field observers were invoked. */
-    private lastNotifiedBatchId = -1;
+    /** True while this field's observers are dispatching, to break re-entrant cascades. */
+    private notifying = false;
 
     constructor(
         private readonly name: string = "",
@@ -137,51 +128,23 @@ export class Field {
         return false;
     }
 
-    notifyObservers() {
-        // Coalesce recursive notifications for the same field within one dispatch cycle.
-        if (Field.flushingNotifications && this.lastNotifiedBatchId === Field.currentBatchId) {
-            return;
-        }
-        if (!Field.queuedFields.has(this)) {
-            Field.notifyQueue.push(this);
-            Field.queuedFields.add(this);
-        }
-        Field.flushNotificationQueue();
-    }
-
     /**
-     * Iteratively drains the notification queue, dispatching each field's observers
-     * exactly once per batch. Any observer that triggers further field changes will
-     * enqueue those fields rather than dispatching inline, breaking recursive cascades.
-     *
-     * NOTE: This changes nested observer dispatch from depth-first (inline/recursive)
-     * to breadth-first (queued/iterative). Observers that previously fired during a
-     * parent observer's callback now fire after it returns. Code that depends on
-     * observer execution order across fields may observe a different ordering.
+     * Dispatches this field's observers synchronously (depth-first), matching Roku's
+     * observer semantics. If an observer mutates other fields whose observers cascade back
+     * to this same field while it is still dispatching, the re-entrant notification is
+     * suppressed. This preserves ordering and sequential re-notifications (e.g. a field
+     * legitimately notified twice within one cascade) while breaking the cyclic ContentNode
+     * parentField cascades that overflowed the call stack (#904).
      */
-    private static flushNotificationQueue() {
-        if (Field.flushingNotifications) {
+    notifyObservers() {
+        if (this.notifying) {
             return;
         }
-        Field.flushingNotifications = true;
-        Field.currentBatchId++;
+        this.notifying = true;
         try {
-            while (Field.notifyQueue.length > 0) {
-                const field = Field.notifyQueue.shift();
-                if (!field) {
-                    continue;
-                }
-                Field.queuedFields.delete(field);
-                if (field.lastNotifiedBatchId === Field.currentBatchId) {
-                    continue;
-                }
-                field.lastNotifiedBatchId = Field.currentBatchId;
-                field.dispatchObservers();
-            }
+            this.dispatchObservers();
         } finally {
-            Field.notifyQueue.length = 0;
-            Field.queuedFields.clear();
-            Field.flushingNotifications = false;
+            this.notifying = false;
         }
     }
 

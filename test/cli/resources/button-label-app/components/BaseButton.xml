@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    A button-like component with an inner Label. Setting "text" clears the label, then
+    pulses a "render" field whose observer fills the label in. The pulse fires twice in
+    the same cascade (clear pass + fill pass); both firings of the "render" observer must
+    happen, otherwise the inner Label keeps the value from the first (cleared) pass.
+
+    On a real Roku, observers dispatch synchronously and a field may notify more than once
+    within a cascade, so the fill pass runs and the label shows the text. A dispatcher that
+    coalesces a field to a single notification per cascade drops the fill pass and the
+    inner Label is left blank.
+-->
+<component name="BaseButton" extends="Group">
+    <interface>
+        <field id="text" type="string" />
+        <field id="render" type="integer" />
+    </interface>
+    <children>
+        <Label id="innerLabel" />
+    </children>
+    <script type="text/brightscript">
+        <![CDATA[
+        sub init()
+            m.innerLabel = m.top.findNode("innerLabel")
+            m.pending = ""
+            m.top.observeField("text", "onText")
+            m.top.observeField("render", "onRender")
+        end sub
+
+        sub onText()
+            ' Clear pass: render an empty label.
+            m.pending = ""
+            m.top.render = m.top.render + 1
+            ' Fill pass: render the actual text.
+            m.pending = m.top.text
+            m.top.render = m.top.render + 1
+        end sub
+
+        sub onRender()
+            m.innerLabel.text = m.pending
+        end sub
+        ]]>
+    </script>
+</component>

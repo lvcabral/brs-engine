@@ -223,10 +223,9 @@ describe("cli", () => {
         });
         expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
             "=== ContentNode Recursion Repro ===",
-            "Observer registrations per field: 1200",
+            "Observer registrations: 1200",
             "Triggering ContentNode title update",
-            "A callbacks fired: 1200",
-            "B callbacks fired: 1200",
+            "Callbacks fired: 1200",
             "=== ContentNode Recursion Repro Complete ===",
             "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
             "",
@@ -249,6 +248,25 @@ describe("cli", () => {
             "Trigger 3: listActive = true",
             "  Active: 6 ContentNotify: 3",
             "=== ContentNode ParentField Repro Complete ===",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 10000);
+
+    it("Button Label Observer Order Test", async () => {
+        let command = ["node", brsCliPath, "-r button-label-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // A field observed inside one cascade must be able to notify more than once
+        // (clear pass + fill pass); if the second notification is dropped the button's
+        // inner Label is left blank.
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "=== Button Label Repro ===",
+            "label.text = Save",
+            "=== Button Label Repro Complete ===",
             "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
             "",
             "",
