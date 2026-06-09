@@ -17,6 +17,8 @@ export class Button extends Group {
         { name: "focusedTextFont", type: "font", value: "font:MediumBoldSystemFont" },
         { name: "focusBitmapUri", type: "uri", value: "" },
         { name: "focusFootprintBitmapUri", type: "uri", value: "" },
+        { name: "focusBitmapBlendColor", type: "color", value: "0xFFFFFFFF" },
+        { name: "focusFootprintBlendColor", type: "color", value: "0xFFFFFFFF" },
         { name: "iconUri", type: "uri", value: "" },
         { name: "focusedIconUri", type: "uri", value: "" },
         { name: "minWidth", type: "float", value: "250" },
@@ -126,6 +128,10 @@ export class Button extends Group {
         if (nodeFocus || footprint) {
             const backgroundUri = this.getValue(nodeFocus ? "focusBitmapUri" : footprint);
             this.background.setValue("uri", backgroundUri);
+            this.background.setValue(
+                "blendColor",
+                this.getValue(nodeFocus ? "focusBitmapBlendColor" : "focusFootprintBlendColor")
+            );
         } else {
             this.background.setValue("uri", new BrsString(""));
         }

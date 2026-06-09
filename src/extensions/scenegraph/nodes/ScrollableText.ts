@@ -33,6 +33,9 @@ export class ScrollableText extends Group {
         { name: "vertAlign", type: "string", value: "top" },
         { name: "scrollbarTrackBitmapUri", type: "uri", value: "" },
         { name: "scrollbarThumbBitmapUri", type: "uri", value: "" },
+        { name: "scrollbarTrackBlendColor", type: "color", value: "0xFFFFFFFF" },
+        { name: "scrollbarThumbBlendColor", type: "color", value: "0xFFFFFFFF" },
+        { name: "scrollbarThumbFocusedBlendColor", type: "color", value: "0xFFFFFFFF" },
     ];
 
     private readonly scrollbarWidth: number;
@@ -275,11 +278,12 @@ export class ScrollableText extends Group {
         const sbX = rect.x + nodeWidth - this.scrollbarWidth;
         const sbY = rect.y;
 
-        // Draw track
+        // Draw track (tinted with its palette blend color, e.g. DialogFootprintColor in dialogs)
+        const trackBlend = this.getValueJS("scrollbarTrackBlendColor") as number;
         const trackBmp = this.customTrackBitmap ?? this.trackBitmap;
         if (trackBmp?.isValid()) {
             const trackRect: Rect = { x: sbX, y: sbY, width: this.scrollbarWidth, height: nodeHeight };
-            this.drawImage(trackBmp, trackRect, rotation, opacity, draw2D);
+            this.drawImage(trackBmp, trackRect, rotation, opacity, draw2D, trackBlend);
         } else {
             // Fallback: draw a semi-transparent rectangle as track
             draw2D.doDrawRotatedRect(
@@ -303,7 +307,12 @@ export class ScrollableText extends Group {
             const thumbTrackRange = nodeHeight - thumbHeight;
             const thumbY = maxScroll > 0 ? sbY + Math.round((this.scrollTopLine / maxScroll) * thumbTrackRange) : sbY;
             const thumbRect: Rect = { x: sbX, y: thumbY, width: this.scrollbarWidth, height: thumbHeight };
-            this.drawImage(thumbBmp, thumbRect, rotation, opacity, draw2D);
+            // Focused thumb uses its focus blend color (DialogFocusColor), unfocused uses the track
+            // blend color (DialogFootprintColor) in dialogs.
+            const thumbBlend = this.getValueJS(
+                this.focused ? "scrollbarThumbFocusedBlendColor" : "scrollbarThumbBlendColor"
+            ) as number;
+            this.drawImage(thumbBmp, thumbRect, rotation, opacity, draw2D, thumbBlend);
         }
     }
 }

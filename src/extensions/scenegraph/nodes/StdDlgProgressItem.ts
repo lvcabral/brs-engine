@@ -6,9 +6,10 @@ import { BusySpinner } from "./BusySpinner";
 import { Label } from "./Label";
 import { StandardDialog } from "./StandardDialog";
 import { StdDlgContentArea } from "./StdDlgContentArea";
+import { StdDlgItem } from "./StdDlgItemBase";
 import { rotateTranslation } from "../SGUtil";
 
-export class StdDlgProgressItem extends Group {
+export class StdDlgProgressItem extends Group implements StdDlgItem {
     readonly defaultFields: FieldModel[] = [
         { name: "text", type: "string", value: "" },
         { name: "scrollable", type: "boolean", value: "false" },
@@ -32,6 +33,19 @@ export class StdDlgProgressItem extends Group {
         this.label = new Label();
         this.appendChildToParent(this.label);
         this.linkField(this.label, "text");
+    }
+
+    layoutItem(width: number): number {
+        const spinnerSize = this.spinner.getDimensions();
+        const labelSize = this.label.getMeasured();
+        const totalWidth = spinnerSize.width > 0 ? spinnerSize.width + this.gap + labelSize.width : labelSize.width;
+        const height = Math.max(spinnerSize.height, labelSize.height);
+        // Center the spinner + label row within the content width, keeping the stacking y.
+        const trans = this.getValueJS("translation") as number[];
+        this.setTranslation([Math.max(0, (width - totalWidth) / 2), trans[1]]);
+        this.setValueSilent("width", new Float(totalWidth));
+        this.setValueSilent("height", new Float(height));
+        return height;
     }
 
     renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {

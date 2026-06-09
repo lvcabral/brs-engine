@@ -1,4 +1,4 @@
-import { AAMember, Interpreter, BrsBoolean, BrsType, RoArray, IfDraw2D } from "brs-engine";
+import { AAMember, Interpreter, BrsBoolean, BrsType, Float, RoArray, IfDraw2D } from "brs-engine";
 import { FieldKind, FieldModel } from "../SGTypes";
 import { SGNodeType } from ".";
 import { jsValueOf } from "../factory/Serializer";
@@ -180,6 +180,25 @@ export class LayoutGroup extends Group {
                     primaryStart: positionOffset,
                 });
             }
+        }
+
+        // Report the group's own bounding size so parents can measure it (e.g. a StdDlgCustomItem
+        // sizing the dialog around it). The primary axis is the stacked total; the cross axis is the
+        // widest/tallest child.
+        const maxCross = metricsList.reduce((acc, m) => Math.max(acc, m.cross), 0);
+        if (direction === "horiz") {
+            this.setLayoutDimensions(totalPrimary, maxCross);
+        } else {
+            this.setLayoutDimensions(maxCross, totalPrimary);
+        }
+    }
+
+    private setLayoutDimensions(width: number, height: number) {
+        if (!this.nearlyEqual(this.getValueJS("width") as number, width)) {
+            super.setValueSilent("width", new Float(width));
+        }
+        if (!this.nearlyEqual(this.getValueJS("height") as number, height)) {
+            super.setValueSilent("height", new Float(height));
         }
     }
 

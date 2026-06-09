@@ -34,6 +34,7 @@ export class PinPad extends Group {
         { name: "secureMode", type: "boolean", value: "true" },
         { name: "keyColor", type: "color", value: "0xFFFFFFFF" },
         { name: "focusedKeyColor", type: "color", value: "0x000000FF" },
+        { name: "focusBitmapBlendColor", type: "color", value: "0xFFFFFFFF" },
         { name: "pinDisplayTextColor", type: "color", value: "0xFFFFFFFF" },
         { name: "keyboardBitmapUri", type: "uri", value: "" },
         { name: "pinDisplayBitmapUri", type: "uri", value: "" },
@@ -49,6 +50,7 @@ export class PinPad extends Group {
     private showPinDisplay: boolean = true;
     private keyColor: number;
     private focusedKeyColor: number;
+    private focusBlendColor: number = 0xffffffff;
     private pinDisplayTextColor: number;
     private bmpBack?: RoBitmap;
     private bmpFocus?: RoBitmap;
@@ -254,6 +256,7 @@ export class PinPad extends Group {
         if (this.isDirty) {
             this.keyColor = this.getValueJS("keyColor") as number;
             this.focusedKeyColor = this.getValueJS("focusedKeyColor") as number;
+            this.focusBlendColor = this.getValueJS("focusBitmapBlendColor") as number;
             this.pinDisplayTextColor = this.getValueJS("pinDisplayTextColor") as number;
             this.pin = (this.getValueJS("pin") as string) ?? "";
             this.secureMode = (this.getValueJS("secureMode") as boolean) ?? true;
@@ -376,7 +379,7 @@ export class PinPad extends Group {
                         width: buttonRect.width + 2 * this.keyFocusDelta,
                         height: buttonRect.height + 2 * this.keyFocusDelta,
                     };
-                    this.drawImage(this.bmpFocus, focusRect, 0, opacity, draw2D);
+                    this.drawImage(this.bmpFocus, focusRect, 0, opacity, draw2D, this.focusBlendColor);
                 }
 
                 if (key === "clear" || key === "delete") {

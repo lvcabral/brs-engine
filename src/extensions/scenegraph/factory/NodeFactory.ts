@@ -65,11 +65,23 @@ import {
     SoundEffect,
     StandardDialog,
     StandardKeyboardDialog,
+    StandardMessageDialog,
+    StandardPinPadDialog,
     StandardProgressDialog,
+    ParentalControlPinPad,
     ProgressDialog,
     RenderThreadQueue,
+    StdDlgActionCardItem,
+    StdDlgBulletTextItem,
+    StdDlgButton,
+    StdDlgButtonArea,
     StdDlgContentArea,
+    StdDlgCustomItem,
+    StdDlgDeterminateProgressItem,
+    StdDlgKeyboardItem,
     StdDlgProgressItem,
+    StdDlgSideCardArea,
+    StdDlgTextItem,
     StdDlgTitleArea,
     Task,
     TextEditBox,
@@ -212,6 +224,8 @@ export class SGNodeFactory {
                 return new MiniKeyboard([], name);
             case SGNodeType.PinPad.toLowerCase():
                 return new PinPad([], name);
+            case SGNodeType.ParentalControlPinPad.toLowerCase():
+                return new ParentalControlPinPad([], name);
             case SGNodeType.TextEditBox.toLowerCase():
                 return new TextEditBox([], name);
             case SGNodeType.VoiceTextEditBox.toLowerCase():
@@ -232,16 +246,38 @@ export class SGNodeFactory {
                 return new StandardDialog([], name);
             case SGNodeType.StandardKeyboardDialog.toLowerCase():
                 return new StandardKeyboardDialog([], name);
+            case SGNodeType.StandardMessageDialog.toLowerCase():
+                return new StandardMessageDialog([], name);
+            case SGNodeType.StandardPinPadDialog.toLowerCase():
+                return new StandardPinPadDialog([], name);
             case SGNodeType.StandardProgressDialog.toLowerCase():
                 return new StandardProgressDialog([], name);
             case SGNodeType.ProgressDialog.toLowerCase():
                 return new ProgressDialog([], name);
             case SGNodeType.StdDlgContentArea.toLowerCase():
                 return new StdDlgContentArea([], name);
+            case SGNodeType.StdDlgCustomItem.toLowerCase():
+                return new StdDlgCustomItem([], name);
+            case SGNodeType.StdDlgDeterminateProgressItem.toLowerCase():
+                return new StdDlgDeterminateProgressItem([], name);
             case SGNodeType.StdDlgTitleArea.toLowerCase():
                 return new StdDlgTitleArea([], name);
+            case SGNodeType.StdDlgTextItem.toLowerCase():
+                return new StdDlgTextItem([], name);
+            case SGNodeType.StdDlgActionCardItem.toLowerCase():
+                return new StdDlgActionCardItem([], name);
+            case SGNodeType.StdDlgBulletTextItem.toLowerCase():
+                return new StdDlgBulletTextItem([], name);
+            case SGNodeType.StdDlgButton.toLowerCase():
+                return new StdDlgButton([], name);
+            case SGNodeType.StdDlgButtonArea.toLowerCase():
+                return new StdDlgButtonArea([], name);
+            case SGNodeType.StdDlgKeyboardItem.toLowerCase():
+                return new StdDlgKeyboardItem([], name);
             case SGNodeType.StdDlgProgressItem.toLowerCase():
                 return new StdDlgProgressItem([], name);
+            case SGNodeType.StdDlgSideCardArea.toLowerCase():
+                return new StdDlgSideCardArea([], name);
             case SGNodeType.BusySpinner.toLowerCase():
                 return new BusySpinner([], name);
             case SGNodeType.RSGPalette.toLowerCase():
