@@ -386,19 +386,22 @@ describe("Standard Dialog Framework nodes", () => {
             expect(dialog.getValueJS("height")).toBeGreaterThan(0);
         });
 
-        test("sizes to its content — narrower than a width-filling text dialog", () => {
+        test("sizes to its content — narrower and shorter than a fuller dialog", () => {
             const progress = SGNodeFactory.createNode("StandardProgressDialog");
             progress.setValue("message", new BrsString("Loading..."));
             progress.renderNode(fakeInterpreter, [0, 0], 0, 1);
 
             const message = SGNodeFactory.createNode("StandardMessageDialog");
-            message.setValue("message", stringArray(["Some message text"]));
+            message.setValue("message", stringArray(["Line one", "Line two", "Line three", "Line four"]));
+            message.setValue("buttons", stringArray(["OK", "Cancel"]));
             message.renderNode(fakeInterpreter, [0, 0], 0, 1);
 
             // The progress dialog (spinner + short message) wraps its compact content rather than
-            // forcing the full dialog width like a text dialog does.
+            // forcing the full dialog width/height like a fuller text dialog does.
             expect(progress.getValueJS("width")).toBeGreaterThan(0);
+            expect(progress.getValueJS("height")).toBeGreaterThan(0);
             expect(progress.getValueJS("width")).toBeLessThan(message.getValueJS("width"));
+            expect(progress.getValueJS("height")).toBeLessThan(message.getValueJS("height"));
         });
     });
 

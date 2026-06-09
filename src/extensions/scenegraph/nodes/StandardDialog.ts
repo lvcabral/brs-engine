@@ -59,6 +59,7 @@ export class StandardDialog extends Group {
     protected readonly dialogDividerUri = "common:/images/dialog_divider.9.png";
     protected readonly dialogTrans: number[];
     protected readonly background: Poster;
+    /** Initial background-image height before the first layout (the dialog then sizes to content). */
     protected readonly minHeight: number;
     protected readonly maxWidth: number;
     /** Horizontal/vertical inset of the 9-patch background relative to the content origin. */
@@ -295,9 +296,8 @@ export class StandardDialog extends Group {
             width = Math.max(width, this.buttonArea.getDimensions().width);
         }
         const contentHeight = y + buttonHeight;
-        // The button area is always pinned to the bottom of the dialog's content region (which may
-        // be taller than the content when minHeight applies).
-        const bgHeight = Math.max(this.minHeight, contentHeight + 2 * this.padY);
+        // Size to content (no artificial minimum) and pin the button area to the bottom.
+        const bgHeight = contentHeight + 2 * this.padY;
         if (this.buttonArea && buttonHeight > 0) {
             this.buttonArea.setTranslation([0, bgHeight - 2 * this.padY - buttonHeight]);
         }
@@ -371,7 +371,7 @@ export class StandardDialog extends Group {
         }
         card.setTranslation([cardX, cardY]);
 
-        const bgHeight = Math.max(this.minHeight, innerHeight + 2 * this.padY, minBgHeight);
+        const bgHeight = Math.max(innerHeight + 2 * this.padY, minBgHeight);
         // The button area is always pinned to the bottom of the dialog's content region.
         const regionHeight = bgHeight - 2 * this.padY;
         if (this.buttonArea && column.buttonHeight > 0) {
@@ -418,7 +418,7 @@ export class StandardDialog extends Group {
      */
     protected layoutBackground(contentWidth: number, contentHeight: number, minBgHeight: number = 0) {
         const bgWidth = contentWidth + 2 * this.padX;
-        const bgHeight = Math.max(this.minHeight, contentHeight + 2 * this.padY, minBgHeight);
+        const bgHeight = Math.max(contentHeight + 2 * this.padY, minBgHeight);
         this.width = bgWidth;
         this.background.setValueSilent("width", new Float(bgWidth));
         this.background.setValueSilent("height", new Float(bgHeight));
