@@ -385,6 +385,21 @@ describe("Standard Dialog Framework nodes", () => {
             expect(contentArea.getNodeChildren().map((c) => c.constructor.name)).toEqual(["StdDlgProgressItem"]);
             expect(dialog.getValueJS("height")).toBeGreaterThan(0);
         });
+
+        test("sizes to its content — narrower than a width-filling text dialog", () => {
+            const progress = SGNodeFactory.createNode("StandardProgressDialog");
+            progress.setValue("message", new BrsString("Loading..."));
+            progress.renderNode(fakeInterpreter, [0, 0], 0, 1);
+
+            const message = SGNodeFactory.createNode("StandardMessageDialog");
+            message.setValue("message", stringArray(["Some message text"]));
+            message.renderNode(fakeInterpreter, [0, 0], 0, 1);
+
+            // The progress dialog (spinner + short message) wraps its compact content rather than
+            // forcing the full dialog width like a text dialog does.
+            expect(progress.getValueJS("width")).toBeGreaterThan(0);
+            expect(progress.getValueJS("width")).toBeLessThan(message.getValueJS("width"));
+        });
     });
 
     describe("authored StdDlgButtonArea children", () => {

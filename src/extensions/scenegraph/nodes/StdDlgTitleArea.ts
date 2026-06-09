@@ -50,6 +50,7 @@ export class StdDlgTitleArea extends Group {
         const text = (this.getValueJS("primaryTitle") as string) ?? "";
         if (text === "") {
             this.divider.setValueSilent("visible", BrsBoolean.False);
+            this.setValueSilent("width", new Float(0));
             this.setValueSilent("height", new Float(0));
             return 0;
         }

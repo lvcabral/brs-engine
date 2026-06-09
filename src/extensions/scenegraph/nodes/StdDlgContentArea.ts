@@ -32,7 +32,10 @@ export class StdDlgContentArea extends Group {
     layoutArea(width: number): number {
         let y = 0;
         let laidOut = 0;
-        let maxWidth = width;
+        // Report the items' actual max width (not the available width) so the dialog can size to its
+        // content — items that fill the width (text/bullet) report `width`, while compact items
+        // (e.g. a spinner progress item) report their natural width and let the dialog shrink.
+        let maxWidth = 0;
         for (const child of this.children) {
             if (isStdDlgItem(child)) {
                 child.setTranslation([0, y]);

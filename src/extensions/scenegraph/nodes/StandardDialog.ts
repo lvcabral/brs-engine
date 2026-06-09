@@ -262,11 +262,15 @@ export class StandardDialog extends Group {
             this.layoutWithSideCard();
             return;
         }
-        let width = this.contentWidth;
+        // Lay content out into the available width (so text wraps to it) but size the dialog to the
+        // areas' actual widths, so compact content (e.g. a spinner progress item) yields a narrow
+        // dialog while text/keyboard content keeps the full width.
+        const layoutWidth = this.contentWidth;
+        let width = 0;
         let y = 0;
         if (this.titleArea) {
             this.titleArea.setTranslation([0, y]);
-            const height = this.titleArea.layoutTitle(width);
+            const height = this.titleArea.layoutTitle(layoutWidth);
             width = Math.max(width, this.titleArea.getDimensions().width);
             if (height > 0) {
                 y += height + this.sectionGap;
@@ -274,7 +278,7 @@ export class StandardDialog extends Group {
         }
         if (this.contentArea) {
             this.contentArea.setTranslation([0, y]);
-            const height = this.contentArea.layoutArea(width);
+            const height = this.contentArea.layoutArea(layoutWidth);
             width = Math.max(width, this.contentArea.getDimensions().width);
             if (height > 0) {
                 y += height + this.sectionGap;
@@ -286,7 +290,9 @@ export class StandardDialog extends Group {
             if (Array.isArray(buttons) && buttons.length) {
                 this.buttonArea.setButtons(buttons);
             }
-            buttonHeight = this.buttonArea.layoutArea(width);
+            // Buttons fill the resolved dialog width (at least one button's min width).
+            buttonHeight = this.buttonArea.layoutArea(Math.max(width, 1));
+            width = Math.max(width, this.buttonArea.getDimensions().width);
         }
         const contentHeight = y + buttonHeight;
         // The button area is always pinned to the bottom of the dialog's content region (which may
