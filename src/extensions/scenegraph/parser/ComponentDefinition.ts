@@ -486,5 +486,5 @@ function getScriptTagLocation(nodeDef: ComponentDefinition, script: XmlElement) 
  * @return the corrected column number for the last line of text as parsed by `xmlDoc`
  */
 function columnsInLastLine(lines: string[]): number {
-    return lines[lines.length - 1].length + lines.length - 1;
+    return lines.at(-1)!.length + lines.length - 1;
 }

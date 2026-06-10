@@ -363,7 +363,7 @@ export class Parser {
                     leftParen = consume(`Expected '(' after ${functionType.text} name`, Lexeme.LeftParen);
 
                     //prevent functions from ending with type designators
-                    let lastChar = name.text[name.text.length - 1];
+                    let lastChar = name.text.at(-1)!;
                     if (["$", "%", "!", "#", "&"].includes(lastChar)) {
                         //don't throw this error; let the parser continue
                         addError(name, `Function name '${name.text}' cannot end with type designator '${lastChar}'`);

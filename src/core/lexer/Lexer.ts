@@ -741,7 +741,7 @@ export class Lexer {
          * @param kind
          */
         function checkPrevious(kind: Lexeme) {
-            let previous = tokens[tokens.length - 1];
+            let previous = tokens.at(-1);
             if (previous && previous.kind === kind) {
                 return true;
             } else {
@@ -832,7 +832,7 @@ export class Lexer {
          * @returns the most recently added token.
          */
         function peekPrevious(): Token | undefined {
-            return tokens[tokens.length - 1];
+            return tokens.at(-1);
         }
 
         /**

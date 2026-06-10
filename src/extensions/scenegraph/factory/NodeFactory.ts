@@ -43,6 +43,7 @@ import {
     MarkupGrid,
     MarkupList,
     MiniKeyboard,
+    MultiStyleLabel,
     PinPad,
     PinDialog,
     Node,
@@ -80,6 +81,7 @@ import {
     StdDlgCustomItem,
     StdDlgDeterminateProgressItem,
     StdDlgKeyboardItem,
+    StdDlgMultiStyleTextItem,
     StdDlgProgressItem,
     StdDlgSideCardArea,
     StdDlgTextItem,
@@ -179,6 +181,8 @@ export class SGNodeFactory {
                 return new Label([], name);
             case SGNodeType.SimpleLabel.toLowerCase():
                 return new SimpleLabel([], name);
+            case SGNodeType.MultiStyleLabel.toLowerCase():
+                return new MultiStyleLabel([], name);
             case SGNodeType.InfoPane.toLowerCase():
                 return new InfoPane([], name);
             case SGNodeType.ScrollingLabel.toLowerCase():
@@ -281,6 +285,8 @@ export class SGNodeFactory {
                 return new StdDlgButtonArea([], name);
             case SGNodeType.StdDlgKeyboardItem.toLowerCase():
                 return new StdDlgKeyboardItem([], name);
+            case SGNodeType.StdDlgMultiStyleTextItem.toLowerCase():
+                return new StdDlgMultiStyleTextItem([], name);
             case SGNodeType.StdDlgProgressItem.toLowerCase():
                 return new StdDlgProgressItem([], name);
             case SGNodeType.StdDlgSideCardArea.toLowerCase():

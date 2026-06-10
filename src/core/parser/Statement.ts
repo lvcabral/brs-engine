@@ -223,7 +223,7 @@ export class If implements Statement {
         } else if (this.elseBranch) {
             return this.elseBranch.location;
         } else if (this.elseIfs.length) {
-            return this.elseIfs[this.elseIfs.length - 1].thenBranch.location;
+            return this.elseIfs.at(-1)!.thenBranch.location;
         } else {
             return this.thenBranch.location;
         }
@@ -288,9 +288,7 @@ export class Print implements Statement {
     }
 
     get location() {
-        let end = this.expressions.length
-            ? this.expressions[this.expressions.length - 1].location.end
-            : this.tokens.print.location.end;
+        let end = this.expressions.length ? this.expressions.at(-1)!.location.end : this.tokens.print.location.end;
 
         return {
             file: this.tokens.print.location.file,

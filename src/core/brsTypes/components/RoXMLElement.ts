@@ -65,7 +65,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
     private static syncDerivedState(element: XmlElement) {
         const children = element.children ?? [];
         element.firstChild = children.length > 0 ? children[0] : null;
-        element.lastChild = children.length > 0 ? children[children.length - 1] : null;
+        element.lastChild = children.length > 0 ? children.at(-1)! : null;
         const textParts: string[] = [];
         for (const child of children) {
             if (isTextNode(child)) {

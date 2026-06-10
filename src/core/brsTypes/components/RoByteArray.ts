@@ -457,7 +457,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Dynamic,
         },
         impl: (_: Interpreter) => {
-            const item = this.elements[this.elements.length - 1];
+            const item = this.elements.at(-1);
             return item ? new Int32(item) : BrsInvalid.Instance;
         },
     });

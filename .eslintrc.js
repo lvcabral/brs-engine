@@ -18,6 +18,7 @@ module.exports = {
     "plugins": [
         "eslint-plugin-import",
         "eslint-plugin-jsdoc",
+        "eslint-plugin-unicorn",
         "@typescript-eslint"
     ],
     "root": true,
@@ -117,6 +118,7 @@ module.exports = {
             "off",
             "never"
         ],
+        "unicorn/prefer-at": "error",
         "use-isnan": "error"
     },
     "overrides": [

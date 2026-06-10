@@ -153,18 +153,31 @@ export class StandardDialog extends Group {
                 this.lastFocus = undefined;
             }
         } else if (fieldName === "width") {
-            const newWidth = jsValueOf(value) as number;
-            if (newWidth > this.maxWidth) {
-                value = new BrsString(this.maxWidth.toString());
+            // Roku accepts a resolution-dependent { fhd, hd } map here as well as a plain number.
+            const resolved = this.resolveResolutionValue(value);
+            if (Number.isFinite(resolved)) {
+                this.width = Math.min(resolved, this.maxWidth);
+                this.contentWidth = Math.max(this.contentWidth, this.width - 2 * this.padX);
+                // Store a numeric value so the float `width` field accepts it (an AA would type-mismatch).
+                value = new Float(this.width);
             }
-            this.width = jsValueOf(value) as number;
-            this.contentWidth = Math.max(this.contentWidth, this.width - 2 * this.padX);
         }
         super.setValue(index, value, alwaysNotify, kind);
     }
 
     setDefaultTranslation() {
         this.setTranslation(this.dialogTrans);
+    }
+
+    /** Resolves a value that may be a plain number/string or a Roku `{ fhd, hd }` resolution map. */
+    private resolveResolutionValue(value: BrsType): number {
+        const resolved = jsValueOf(value);
+        if (resolved !== null && typeof resolved === "object") {
+            const map = resolved as Record<string, unknown>;
+            const key = this.resolution === "FHD" ? "fhd" : "hd";
+            return Number(map[key] ?? map[key.toUpperCase()] ?? map.hd ?? map.fhd);
+        }
+        return Number(resolved);
     }
 
     /** Requests a re-layout on the next frame (used by content items whose size is only known after

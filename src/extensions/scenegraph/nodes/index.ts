@@ -17,6 +17,7 @@ export * from "./Keyboard";
 export * from "./KeyboardDialog";
 export * from "./Label";
 export * from "./SimpleLabel";
+export * from "./MultiStyleLabel";
 export * from "./InfoPane";
 export * from "./LabelList";
 export * from "./LayoutGroup";
@@ -58,6 +59,7 @@ export * from "./StdDlgContentArea";
 export * from "./StdDlgCustomItem";
 export * from "./StdDlgDeterminateProgressItem";
 export * from "./StdDlgKeyboardItem";
+export * from "./StdDlgMultiStyleTextItem";
 export * from "./StdDlgProgressItem";
 export * from "./StdDlgSideCardArea";
 export * from "./StdDlgTextItem";
@@ -118,7 +120,7 @@ export enum SGNodeType {
     StdDlgItemBase = "StdDlgItemBase", // Mocked as Group
     StdDlgItemGroup = "StdDlgItemGroup", // Mocked as Group
     StdDlgKeyboardItem = "StdDlgKeyboardItem",
-    StdDlgMultiStyleTextItem = "StdDlgMultiStyleTextItem", // Not yet implemented
+    StdDlgMultiStyleTextItem = "StdDlgMultiStyleTextItem",
     StdDlgProgressItem = "StdDlgProgressItem",
     StdDlgSideCardArea = "StdDlgSideCardArea",
     StdDlgTextItem = "StdDlgTextItem",
@@ -127,7 +129,7 @@ export enum SGNodeType {
     Poster = "Poster",
     Label = "Label",
     SimpleLabel = "SimpleLabel",
-    MultiStyleLabel = "MultiStyleLabel", // Not yet implemented
+    MultiStyleLabel = "MultiStyleLabel",
     MonospaceLabel = "MonospaceLabel", // Not yet implemented
     ScrollingLabel = "ScrollingLabel",
     ScrollableText = "ScrollableText",
