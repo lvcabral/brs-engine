@@ -341,10 +341,10 @@ export class MultiStyleLabel extends Group {
     /** The implicit default style: a system-default font plus the node's `color`. */
     private getDefaultStyle(): DrawStyle {
         const color = this.getValueJS("color") as number;
-        if (!this.defaultStyle) {
-            this.defaultStyle = { font: SGNodeFactory.createNode(SGNodeType.Font) as Font, color };
-        } else {
+        if (this.defaultStyle) {
             this.defaultStyle.color = color;
+        } else {
+            this.defaultStyle = { font: SGNodeFactory.createNode(SGNodeType.Font) as Font, color };
         }
         return this.defaultStyle;
     }
@@ -540,7 +540,12 @@ export class MultiStyleLabel extends Group {
                 used += token.width;
                 continue;
             }
-            if (!onBoundary) {
+            if (onBoundary) {
+                // Whole-word ellipsis: drop trailing whitespace-only tokens.
+                while (result.length > 0 && result.at(-1)!.text.trim() === "") {
+                    result.pop();
+                }
+            } else {
                 // Character-level truncation within the overflowing token.
                 let truncated = "";
                 for (const char of token.text) {
@@ -553,12 +558,6 @@ export class MultiStyleLabel extends Group {
                 if (truncated.length > 0) {
                     const measured = token.font.measureText(truncated);
                     result.push({ ...token, text: truncated, width: measured.width, height: measured.height });
-                    used += measured.width;
-                }
-            } else {
-                // Whole-word ellipsis: drop trailing whitespace-only tokens.
-                while (result.length > 0 && result.at(-1)!.text.trim() === "") {
-                    result.pop();
                 }
             }
             break;

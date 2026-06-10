@@ -19,7 +19,7 @@ export class StdDlgMultiStyleTextItem extends Group implements StdDlgItem {
         { name: "drawingStyles", type: "assocarray" },
         { name: "audioGuideText", type: "string", value: "" },
     ];
-    private label: MultiStyleLabel;
+    private readonly label: MultiStyleLabel;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.StdDlgMultiStyleTextItem) {
         super([], name);
