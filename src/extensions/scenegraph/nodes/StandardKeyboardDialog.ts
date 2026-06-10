@@ -117,11 +117,11 @@ export class StandardKeyboardDialog extends StandardDialog {
             return;
         }
         this.contentArea.clearItems();
-        (this.getValueJS("message") as string[])?.forEach((text) => {
+        for (const text of (this.getValueJS("message") as string[]) ?? []) {
             const item = new StdDlgTextItem();
             item.setValue("text", new BrsString(text));
-            this.contentArea!.addItem(item);
-        });
+            this.contentArea.addItem(item);
+        }
         this.contentArea.addItem(this.keyboardItem);
         this.contentDirty = false;
     }

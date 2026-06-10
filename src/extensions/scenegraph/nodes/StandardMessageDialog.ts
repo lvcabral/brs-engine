@@ -68,7 +68,9 @@ export class StandardMessageDialog extends StandardDialog {
             item.setValue("text", new BrsString(text));
             this.contentArea!.addItem(item);
         };
-        (this.getValueJS("message") as string[])?.forEach(addText);
+        for (const text of (this.getValueJS("message") as string[]) ?? []) {
+            addText(text);
+        }
 
         const bulletText = (this.getValueJS("bulletText") as string[]) ?? [];
         if (bulletText.length) {
@@ -78,7 +80,9 @@ export class StandardMessageDialog extends StandardDialog {
             this.contentArea.addItem(bullets);
         }
 
-        (this.getValueJS("bottomMessage") as string[])?.forEach(addText);
+        for (const text of (this.getValueJS("bottomMessage") as string[]) ?? []) {
+            addText(text);
+        }
         this.contentDirty = false;
     }
 }

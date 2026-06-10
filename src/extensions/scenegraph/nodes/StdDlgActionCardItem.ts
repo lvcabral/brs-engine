@@ -101,13 +101,14 @@ export class StdDlgActionCardItem extends Group implements StdDlgItem {
 
         const content = this.contentChildren();
         let y = this.pad;
-        content.forEach((child, index) => {
+        for (let index = 0; index < content.length; index++) {
+            const child = content[index];
             child.setTranslation([contentX, y]);
             y += this.childHeight(child);
             if (index < content.length - 1) {
                 y += lineGap;
             }
-        });
+        }
         const contentHeight = y - this.pad;
         const rowHeight = Math.max(contentHeight, this.iconSize) + 2 * this.pad;
 

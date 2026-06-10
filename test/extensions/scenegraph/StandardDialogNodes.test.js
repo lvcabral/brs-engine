@@ -527,10 +527,10 @@ describe("Standard Dialog Framework nodes", () => {
             expect(buttonTop).toBeGreaterThan(contentBottom + 50);
 
             // The standard dialog buttons carry no icon.
-            buttonArea.getNodeChildren().forEach((button) => {
+            for (const button of buttonArea.getNodeChildren()) {
                 expect(button.getValueJS("iconUri")).toBe("");
                 expect(button.getValueJS("focusedIconUri")).toBe("");
-            });
+            }
         });
 
         test("places the card to the left of the column for horizAlign left", () => {
@@ -685,11 +685,11 @@ describe("Standard Dialog Framework nodes", () => {
             const list = SGNodeFactory.createNode("LayoutGroup");
             list.setValue("layoutDirection", new BrsString("vert"));
             list.setValue("itemSpacings", new RoArray([new Float(20)]));
-            ["One Week", "One Month", "One Year"].forEach((t) => {
+            for (const t of ["One Week", "One Month", "One Year"]) {
                 const label = SGNodeFactory.createNode("Label");
                 label.setValue("text", new BrsString(t));
                 list.appendChildToParent(label);
-            });
+            }
             custom.appendChildToParent(list);
             contentArea.appendChildToParent(custom);
             const buttonArea = SGNodeFactory.createNode("StdDlgButtonArea");
