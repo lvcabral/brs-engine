@@ -59,6 +59,7 @@ export * from "./StdDlgContentArea";
 export * from "./StdDlgCustomItem";
 export * from "./StdDlgDeterminateProgressItem";
 export * from "./StdDlgKeyboardItem";
+export * from "./StdDlgMultiStyleTextItem";
 export * from "./StdDlgProgressItem";
 export * from "./StdDlgSideCardArea";
 export * from "./StdDlgTextItem";
@@ -119,7 +120,7 @@ export enum SGNodeType {
     StdDlgItemBase = "StdDlgItemBase", // Mocked as Group
     StdDlgItemGroup = "StdDlgItemGroup", // Mocked as Group
     StdDlgKeyboardItem = "StdDlgKeyboardItem",
-    StdDlgMultiStyleTextItem = "StdDlgMultiStyleTextItem", // Not yet implemented
+    StdDlgMultiStyleTextItem = "StdDlgMultiStyleTextItem",
     StdDlgProgressItem = "StdDlgProgressItem",
     StdDlgSideCardArea = "StdDlgSideCardArea",
     StdDlgTextItem = "StdDlgTextItem",

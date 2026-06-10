@@ -62,6 +62,7 @@ describe("Standard Dialog Framework nodes", () => {
             ["ParentalControlPinPad", "ParentalControlPinPad"],
             ["StdDlgTextItem", "StdDlgTextItem"],
             ["StdDlgBulletTextItem", "StdDlgBulletTextItem"],
+            ["StdDlgMultiStyleTextItem", "StdDlgMultiStyleTextItem"],
             ["StdDlgButton", "StdDlgButton"],
             ["StdDlgButtonArea", "StdDlgButtonArea"],
             ["StdDlgKeyboardItem", "StdDlgKeyboardItem"],
@@ -216,6 +217,97 @@ describe("Standard Dialog Framework nodes", () => {
             expect(child.constructor.name).toBe("ScrollableText");
             expect(item.getNodeChildren().length).toBe(1);
             expect(child.getValueJS("text")).toBe("Toggle me");
+        });
+    });
+
+    describe("StdDlgMultiStyleTextItem", () => {
+        /** Builds a case-preserving drawingStyles AA (as the interpreter does). */
+        function drawingStyles(styles) {
+            const outer = Object.entries(styles).map(([name, def]) => {
+                const inner = [];
+                if (def.fontUri !== undefined)
+                    inner.push({ name: new BrsString("fontUri"), value: new BrsString(def.fontUri) });
+                if (def.fontSize !== undefined)
+                    inner.push({ name: new BrsString("fontSize"), value: new Int32(def.fontSize) });
+                if (def.color !== undefined)
+                    inner.push({ name: new BrsString("color"), value: new BrsString(def.color) });
+                return { name: new BrsString(name), value: new RoAssociativeArray(inner) };
+            });
+            return new RoAssociativeArray(outer);
+        }
+
+        test("exposes the documented fields with their defaults", () => {
+            const item = SGNodeFactory.createNode("StdDlgMultiStyleTextItem");
+            expect(item.getValueJS("text")).toBe("");
+            expect(item.getValueJS("audioGuideText")).toBe("");
+            expect(item.getNodeFields().get("drawingstyles")).toBeDefined();
+        });
+
+        test("renders the text through a wrapping MultiStyleLabel sharing text/drawingStyles", () => {
+            const item = SGNodeFactory.createNode("StdDlgMultiStyleTextItem");
+            item.setValue(
+                "drawingStyles",
+                drawingStyles({
+                    default: { fontUri: "font:MediumSystemFont", color: "#EFEFEFFF" },
+                    url: { fontUri: "font:MediumSystemFont", color: "#00FF00FF" },
+                })
+            );
+            item.setValue("text", new BrsString("Visit <url>http://www.roku.com</url> for details."));
+
+            const label = item.getNodeChildren()[0];
+            expect(label.constructor.name).toBe("MultiStyleLabel");
+            expect(label.getValueJS("wrap")).toBe(true);
+            // The shared fields drive the inner label.
+            expect(label.getValueJS("text")).toContain("roku.com");
+            expect(label.getValueJS("drawingStyles").url.color).toBe("#00FF00FF");
+
+            const height = item.layoutItem(600);
+            expect(height).toBeGreaterThan(0);
+            expect(item.getValueJS("width")).toBe(600);
+            expect(item.getValueJS("height")).toBe(height);
+            expect(label.getValueJS("width")).toBe(600);
+        });
+
+        test("lays out inside a StandardDialog content area", () => {
+            const dialog = SGNodeFactory.createNode("StandardDialog");
+            const content = SGNodeFactory.createNode("StdDlgContentArea");
+            const item = SGNodeFactory.createNode("StdDlgMultiStyleTextItem");
+            item.setValue("drawingStyles", drawingStyles({ default: { fontUri: "font:MediumSystemFont" } }));
+            item.setValue("text", new BrsString("Plain dialog text item"));
+            content.appendChildToParent(item);
+            dialog.appendChildToParent(content);
+
+            expect(() => dialog.renderNode(fakeInterpreter, [0, 0], 0, 1)).not.toThrow();
+            expect(item.getValueJS("height")).toBeGreaterThan(0);
+        });
+    });
+
+    describe("StandardDialog width", () => {
+        test("resolves a { fhd, hd } resolution map (and recenters to a valid position)", () => {
+            const dialog = SGNodeFactory.createNode("StandardDialog");
+            const content = SGNodeFactory.createNode("StdDlgContentArea");
+            const item = SGNodeFactory.createNode("StdDlgTextItem");
+            item.setValue("text", new BrsString("Body"));
+            content.appendChildToParent(item);
+            dialog.appendChildToParent(content);
+
+            // Roku accepts a resolution-dependent width map; HD picks the `hd` value.
+            dialog.setValue(
+                "width",
+                new RoAssociativeArray([
+                    { name: new BrsString("fhd"), value: new Int32(1380) },
+                    { name: new BrsString("hd"), value: new Int32(920) },
+                ])
+            );
+            dialog.renderNode(fakeInterpreter, [0, 0], 0, 1);
+
+            expect(dialog.getValueJS("width")).toBe(920);
+            // Layout produced finite geometry (a broken width collapses everything to NaN/0).
+            const translation = dialog.getValueJS("translation");
+            expect(Number.isFinite(translation[0])).toBe(true);
+            expect(Number.isFinite(translation[1])).toBe(true);
+            expect(dialog.getValueJS("height")).toBeGreaterThan(0);
+            expect(content.getValueJS("width")).toBeGreaterThan(0);
         });
     });
 
