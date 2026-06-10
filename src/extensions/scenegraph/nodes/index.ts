@@ -17,6 +17,7 @@ export * from "./Keyboard";
 export * from "./KeyboardDialog";
 export * from "./Label";
 export * from "./SimpleLabel";
+export * from "./MultiStyleLabel";
 export * from "./InfoPane";
 export * from "./LabelList";
 export * from "./LayoutGroup";
@@ -127,7 +128,7 @@ export enum SGNodeType {
     Poster = "Poster",
     Label = "Label",
     SimpleLabel = "SimpleLabel",
-    MultiStyleLabel = "MultiStyleLabel", // Not yet implemented
+    MultiStyleLabel = "MultiStyleLabel",
     MonospaceLabel = "MonospaceLabel", // Not yet implemented
     ScrollingLabel = "ScrollingLabel",
     ScrollableText = "ScrollableText",
