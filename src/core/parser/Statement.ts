@@ -288,9 +288,7 @@ export class Print implements Statement {
     }
 
     get location() {
-        let end = this.expressions.length
-            ? this.expressions.at(-1)!.location.end
-            : this.tokens.print.location.end;
+        let end = this.expressions.length ? this.expressions.at(-1)!.location.end : this.tokens.print.location.end;
 
         return {
             file: this.tokens.print.location.file,
