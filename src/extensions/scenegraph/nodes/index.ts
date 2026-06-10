@@ -16,6 +16,7 @@ export * from "./MaskGroup";
 export * from "./Keyboard";
 export * from "./KeyboardDialog";
 export * from "./Label";
+export * from "./SimpleLabel";
 export * from "./InfoPane";
 export * from "./LabelList";
 export * from "./LayoutGroup";
@@ -106,16 +107,16 @@ export enum SGNodeType {
     StandardProgressDialog = "StandardProgressDialog",
     ProgressDialog = "ProgressDialog",
     StdDlgActionCardItem = "StdDlgActionCardItem",
-    StdDlgAreaBase = "StdDlgAreaBase", // Not yet implemented
+    StdDlgAreaBase = "StdDlgAreaBase", // Mocked as Group
     StdDlgBulletTextItem = "StdDlgBulletTextItem",
     StdDlgButton = "StdDlgButton",
     StdDlgButtonArea = "StdDlgButtonArea",
     StdDlgContentArea = "StdDlgContentArea",
     StdDlgCustomItem = "StdDlgCustomItem",
     StdDlgDeterminateProgressItem = "StdDlgDeterminateProgressItem",
-    StdDlgGraphicItem = "StdDlgGraphicItem", // Not yet implemented
-    StdDlgItemBase = "StdDlgItemBase", // Not yet implemented
-    StdDlgItemGroup = "StdDlgItemGroup", // Not yet implemented
+    StdDlgGraphicItem = "StdDlgGraphicItem", // Mocked as Group
+    StdDlgItemBase = "StdDlgItemBase", // Mocked as Group
+    StdDlgItemGroup = "StdDlgItemGroup", // Mocked as Group
     StdDlgKeyboardItem = "StdDlgKeyboardItem",
     StdDlgMultiStyleTextItem = "StdDlgMultiStyleTextItem", // Not yet implemented
     StdDlgProgressItem = "StdDlgProgressItem",
@@ -125,7 +126,7 @@ export enum SGNodeType {
     Rectangle = "Rectangle",
     Poster = "Poster",
     Label = "Label",
-    SimpleLabel = "SimpleLabel", // Not yet implemented
+    SimpleLabel = "SimpleLabel",
     MultiStyleLabel = "MultiStyleLabel", // Not yet implemented
     MonospaceLabel = "MonospaceLabel", // Not yet implemented
     ScrollingLabel = "ScrollingLabel",
