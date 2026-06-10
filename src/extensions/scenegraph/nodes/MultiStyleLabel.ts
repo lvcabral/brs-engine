@@ -368,7 +368,7 @@ export class MultiStyleLabel extends Group {
         let match: RegExpExecArray | null;
         while ((match = tagRe.exec(text)) !== null) {
             if (match.index > last) {
-                runs.push({ text: text.slice(last, match.index), style: stack[stack.length - 1] });
+                runs.push({ text: text.slice(last, match.index), style: stack.at(-1)! });
             }
             const name = match[2].toLowerCase();
             if (match[1] === "/") {
@@ -383,7 +383,7 @@ export class MultiStyleLabel extends Group {
             last = tagRe.lastIndex;
         }
         if (last < text.length) {
-            runs.push({ text: text.slice(last), style: stack[stack.length - 1] });
+            runs.push({ text: text.slice(last), style: stack.at(-1)! });
         }
         return runs;
     }
@@ -530,7 +530,7 @@ export class MultiStyleLabel extends Group {
         if (line.tokens.length === 0) {
             return { ...line, ellipsized: true };
         }
-        const lastToken = line.tokens[line.tokens.length - 1];
+        const lastToken = line.tokens.at(-1)!;
         const budget = maxWidth - lastToken.font.measureTextWidth(ellipsis).width;
         const result: Token[] = [];
         let used = 0;
@@ -557,14 +557,14 @@ export class MultiStyleLabel extends Group {
                 }
             } else {
                 // Whole-word ellipsis: drop trailing whitespace-only tokens.
-                while (result.length > 0 && result[result.length - 1].text.trim() === "") {
+                while (result.length > 0 && result.at(-1)!.text.trim() === "") {
                     result.pop();
                 }
             }
             break;
         }
-        const ellipsisFont = result.length > 0 ? result[result.length - 1].font : lastToken.font;
-        const ellipsisColor = result.length > 0 ? result[result.length - 1].color : lastToken.color;
+        const ellipsisFont = result.length > 0 ? result.at(-1)!.font : lastToken.font;
+        const ellipsisColor = result.length > 0 ? result.at(-1)!.color : lastToken.color;
         result.push({
             text: ellipsis,
             font: ellipsisFont,

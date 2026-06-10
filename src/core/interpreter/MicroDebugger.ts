@@ -325,7 +325,7 @@ function debugHandleCommand(interpreter: Interpreter, currLoc: Location, lastLoc
 function debugList(backTrace: TracePoint[], currLines: string[], flagLine: number): string {
     let list = "";
     if (backTrace.length > 0) {
-        const func = backTrace[backTrace.length - 1];
+        const func = backTrace.at(-1)!;
         const start = func.functionLocation.start.line;
         const end = Math.min(func.functionLocation.end.line, currLines.length);
         for (let index = start; index <= end; index++) {
