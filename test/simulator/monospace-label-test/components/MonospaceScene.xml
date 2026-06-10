@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+  MonospaceLabel example scene.
+
+  MonospaceLabel draws a single line of text with every character spaced at a fixed
+  distance, turning a proportional font into a monospaced one. Each glyph is centered in
+  its own fixed-width "character box". This demo shows:
+
+    * fixed-column alignment (the same column index lands at the same x across rows)
+    * an explicit characterWidth vs. the default ('M' width)
+    * firstCharTrueLeftAlign
+    * horizAlign within an oversized width
+    * ellipsis when the text is wider than width
+    * the classic real-world win: a counter that updates without horizontal jitter
+-->
+<component name="MonospaceScene" extends="Scene">
+    <children>
+        <Rectangle width="1920" height="1080" color="0x101418FF" />
+
+        <Label id="title" text="MonospaceLabel" font="font:LargeBoldSystemFont"
+               color="0xFFFFFFFF" translation="[60, 30]" />
+
+        <!-- Fixed-column alignment: same characterWidth, different text. The Nth glyph of
+             every row shares the same x, so the characters line up in a grid. -->
+        <Label text="Fixed columns (characterWidth = 56):" font="font:MediumBoldSystemFont"
+               color="0x8AB4F8FF" translation="[60, 130]" />
+        <MonospaceLabel text="ABCDEFGH" characterWidth="56" font="font:LargeSystemFont"
+                        color="0xDDDDDDFF" translation="[60, 180]" />
+        <MonospaceLabel text="il1mwMW." characterWidth="56" font="font:LargeSystemFont"
+                        color="0xDDDDDDFF" translation="[60, 240]" />
+        <MonospaceLabel text="01234567" characterWidth="56" font="font:LargeSystemFont"
+                        color="0xDDDDDDFF" translation="[60, 300]" />
+
+        <!-- firstCharTrueLeftAlign: with it off (default) a single glyph is centered in its
+             box; with it on the first glyph hugs the left edge of the box. -->
+        <Label text="firstCharTrueLeftAlign:" font="font:MediumBoldSystemFont"
+               color="0x8AB4F8FF" translation="[60, 410]" />
+        <MonospaceLabel text="off: W" characterWidth="56" font="font:LargeSystemFont"
+                        color="0xDDDDDDFF" translation="[60, 460]" />
+        <MonospaceLabel text="on:  W" characterWidth="56" firstCharTrueLeftAlign="true"
+                        font="font:LargeSystemFont" color="0xDDDDDDFF" translation="[60, 520]" />
+
+        <!-- horizAlign inside a fixed width box (box edge drawn for reference). -->
+        <Label text="horizAlign in width=560:" font="font:MediumBoldSystemFont"
+               color="0x8AB4F8FF" translation="[60, 630]" />
+        <Rectangle width="560" height="180" color="0x202832FF" translation="[60, 680]" />
+        <MonospaceLabel text="left" characterWidth="40" width="560" horizAlign="left"
+                        font="font:MediumSystemFont" color="0xDDDDDDFF" translation="[60, 680]" />
+        <MonospaceLabel text="center" characterWidth="40" width="560" horizAlign="center"
+                        font="font:MediumSystemFont" color="0xDDDDDDFF" translation="[60, 740]" />
+        <MonospaceLabel text="right" characterWidth="40" width="560" horizAlign="right"
+                        font="font:MediumSystemFont" color="0xDDDDDDFF" translation="[60, 800]" />
+
+        <!-- Ellipsis: text wider than width is clipped with "..." (per-character here). -->
+        <Label text="ellipsis (width=520):" font="font:MediumBoldSystemFont"
+               color="0x8AB4F8FF" translation="[760, 130]" />
+        <MonospaceLabel id="ellip" text="The quick brown fox jumps"
+                        characterWidth="40" width="520" font="font:MediumSystemFont"
+                        color="0xDDDDDDFF" translation="[760, 180]" />
+
+        <!-- Jitter-free counter: a proportional Label shifts as digit widths change, while
+             the MonospaceLabel keeps every digit in a fixed column. Both updated on a Timer. -->
+        <Label text="Updating counter (Label vs MonospaceLabel):" font="font:MediumBoldSystemFont"
+               color="0x8AB4F8FF" translation="[760, 300]" />
+        <Label text="Label:" font="font:MediumSystemFont" color="0x9AA0A6FF" translation="[760, 360]" />
+        <Label id="plCounter" text="00000000" font="font:LargeSystemFont"
+               color="0xF28B82FF" horizAlign="right" width="420" translation="[940, 350]" />
+        <Label text="Mono:" font="font:MediumSystemFont" color="0x9AA0A6FF" translation="[760, 430]" />
+        <MonospaceLabel id="msCounter" text="00000000" characterWidth="44" font="font:LargeSystemFont"
+                        color="0x81C995FF" horizAlign="right" width="420" translation="[940, 420]" />
+
+        <Timer id="ticker" repeat="true" duration="0.15" />
+    </children>
+
+    <script type="text/brightscript" uri="MonospaceScene.brs" />
+</component>

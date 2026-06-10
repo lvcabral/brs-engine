@@ -44,6 +44,7 @@ import {
     MarkupList,
     MiniKeyboard,
     MultiStyleLabel,
+    MonospaceLabel,
     PinPad,
     PinDialog,
     Node,
@@ -183,6 +184,8 @@ export class SGNodeFactory {
                 return new SimpleLabel([], name);
             case SGNodeType.MultiStyleLabel.toLowerCase():
                 return new MultiStyleLabel([], name);
+            case SGNodeType.MonospaceLabel.toLowerCase():
+                return new MonospaceLabel([], name);
             case SGNodeType.InfoPane.toLowerCase():
                 return new InfoPane([], name);
             case SGNodeType.ScrollingLabel.toLowerCase():
