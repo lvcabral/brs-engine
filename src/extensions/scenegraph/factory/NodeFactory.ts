@@ -61,6 +61,7 @@ import {
     Scene,
     ScrollableText,
     ScrollingLabel,
+    SimpleLabel,
     SGNodeType,
     SoundEffect,
     StandardDialog,
@@ -151,6 +152,10 @@ export class SGNodeFactory {
                 return new Node([], name);
             case SGNodeType.Group.toLowerCase():
             case SGNodeType.TargetGroup.toLowerCase():
+            case SGNodeType.StdDlgGraphicItem.toLowerCase():
+            case SGNodeType.StdDlgAreaBase.toLowerCase():
+            case SGNodeType.StdDlgItemBase.toLowerCase():
+            case SGNodeType.StdDlgItemGroup.toLowerCase():
                 return new Group([], name);
             case SGNodeType.ScrollableText.toLowerCase():
                 return new ScrollableText([], name);
@@ -172,6 +177,8 @@ export class SGNodeFactory {
                 return new Rectangle([], name);
             case SGNodeType.Label.toLowerCase():
                 return new Label([], name);
+            case SGNodeType.SimpleLabel.toLowerCase():
+                return new SimpleLabel([], name);
             case SGNodeType.InfoPane.toLowerCase():
                 return new InfoPane([], name);
             case SGNodeType.ScrollingLabel.toLowerCase():
