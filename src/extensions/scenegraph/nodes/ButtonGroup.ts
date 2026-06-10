@@ -33,6 +33,8 @@ export class ButtonGroup extends LayoutGroup {
         { name: "focusedTextFont", type: "font", value: "font:MediumBoldSystemFont" },
         { name: "focusBitmapUri", type: "uri", value: "" },
         { name: "focusFootprintBitmapUri", type: "string", value: "" },
+        { name: "focusBitmapBlendColor", type: "color", value: "0xFFFFFFFF" },
+        { name: "focusFootprintBlendColor", type: "color", value: "0xFFFFFFFF" },
         { name: "iconUri", type: "uri", value: "" },
         { name: "focusedIconUri", type: "uri", value: "" },
         { name: "minWidth", type: "float", value: "0.0" },
@@ -199,6 +201,8 @@ export class ButtonGroup extends LayoutGroup {
                     this.copyField(button, "focusedTextFont");
                     this.copyField(button, "focusBitmapUri");
                     this.copyField(button, "focusFootprintBitmapUri");
+                    this.copyField(button, "focusBitmapBlendColor");
+                    this.copyField(button, "focusFootprintBlendColor");
                     this.copyField(button, "iconUri");
                     this.copyField(button, "focusedIconUri");
                     this.copyField(button, "height", "buttonHeight");

@@ -17,6 +17,7 @@ export class Keyboard extends Group {
         { name: "text", type: "string", value: "" },
         { name: "keyColor", type: "color", value: "0xFFFFFFFF" },
         { name: "focusedKeyColor", type: "color", value: "0x000000FF" },
+        { name: "focusBitmapBlendColor", type: "color", value: "0xFFFFFFFF" },
         { name: "keyboardBitmapUri", type: "uri", value: "" },
         { name: "focusBitmapUri", type: "uri", value: "" },
         { name: "textEditBox", type: "node" },
@@ -30,6 +31,7 @@ export class Keyboard extends Group {
     private shift: boolean;
     private keyColor: number;
     private focusedKeyColor: number;
+    private focusBlendColor: number = 0xffffffff;
     private bmpBack?: RoBitmap;
     private bmpFocus?: RoBitmap;
     private readonly textEditX: number;
@@ -246,6 +248,7 @@ export class Keyboard extends Group {
         if (this.isDirty) {
             this.keyColor = this.getValueJS("keyColor") as number;
             this.focusedKeyColor = this.getValueJS("focusedKeyColor") as number;
+            this.focusBlendColor = this.getValueJS("focusBitmapBlendColor") as number;
             this.showTextEdit = this.getValueJS("showTextEditBox") as boolean;
             this.textEditBox.setValueSilent("visible", BrsBoolean.from(this.showTextEdit));
             this.setValueSilent("height", new Float(rect.height));
@@ -333,7 +336,7 @@ export class Keyboard extends Group {
                         width: buttonRect.width + 2 * this.keyFocusDelta,
                         height: buttonRect.height + 2 * this.keyFocusDelta,
                     };
-                    this.drawImage(this.bmpFocus!, focusRect, 0, opacity, draw2D);
+                    this.drawImage(this.bmpFocus!, focusRect, 0, opacity, draw2D, this.focusBlendColor);
                 }
                 if (key.length) {
                     this.drawText(key, this.font, color, opacity, buttonRect, "center", "center", 0, draw2D, "", index);
@@ -360,7 +363,7 @@ export class Keyboard extends Group {
                     width: 2 * this.keyWidth + 2 * this.keyFocusDelta,
                     height: this.keyHeight + 2 * this.keyFocusDelta,
                 };
-                this.drawImage(this.bmpFocus!, focusRect, 0, opacity, draw2D);
+                this.drawImage(this.bmpFocus!, focusRect, 0, opacity, draw2D, this.focusBlendColor);
             }
             this.renderIcon(rect, bmp, this.iconRightX, offY, color, opacity, draw2D);
         }
@@ -375,7 +378,7 @@ export class Keyboard extends Group {
             width: width + 2 * this.keyFocusDelta,
             height: this.keyHeight + 2 * this.keyFocusDelta,
         };
-        this.drawImage(this.bmpFocus!, focusRect, 0, opacity, draw2D);
+        this.drawImage(this.bmpFocus!, focusRect, 0, opacity, draw2D, this.focusBlendColor);
     }
 
     private renderIcon(

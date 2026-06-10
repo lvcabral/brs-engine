@@ -10,25 +10,23 @@ import { StdDlgKeyboardItem } from "./StdDlgKeyboardItem";
 import { sgRoot } from "../SGRoot";
 
 /**
- * StandardKeyboardDialog — text/voice entry of alphanumeric strings (Roku's replacement for the
- * legacy KeyboardDialog). Composed of a title area, a content area with optional message text plus
- * a keyboard item hosting a keyboard, and a button area. The embedded keyboard reuses the existing
- * Keyboard node. The base class handles layout, button wiring, and close; this class adds the
- * keyboard ⇄ buttons focus model.
+ * StandardPinPadDialog — text/voice entry of numeric PIN codes (Roku's replacement for the legacy
+ * PinDialog). Composed of a title area, a content area with optional message text plus a keyboard
+ * item hosting a pin pad, and a button area. The embedded pad reuses the existing PinPad. The base
+ * class handles layout, button wiring, and close; this class adds the pad ⇄ buttons focus model.
  */
-export class StandardKeyboardDialog extends StandardDialog {
+export class StandardPinPadDialog extends StandardDialog {
     readonly defaultFields: FieldModel[] = [
         { name: "title", type: "string", value: "" },
         { name: "message", type: "stringarray", value: "[]" },
         { name: "buttons", type: "stringarray", value: "[]" },
         { name: "textEditBox", type: "node" },
-        { name: "text", type: "string", value: "" },
-        { name: "keyboardDomain", type: "string", value: "generic" },
+        { name: "pin", type: "string", value: "" },
     ];
     private readonly keyboardItem: StdDlgKeyboardItem;
     private contentDirty = true;
 
-    constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.StandardKeyboardDialog) {
+    constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.StandardPinPadDialog) {
         super([], name);
         this.setExtendsType(name, SGNodeType.StandardDialog);
 
@@ -43,14 +41,13 @@ export class StandardKeyboardDialog extends StandardDialog {
         this.appendChildToParent(new StdDlgButtonArea());
 
         this.keyboardItem = new StdDlgKeyboardItem();
-        this.keyboardItem.setValue("keyLayout", new BrsString("keyboard"));
+        this.keyboardItem.setValue("keyLayout", new BrsString("pinpad"));
 
-        // Widen the dialog to fit the keyboard, then share text/textEditBox.
-        const keyboard = this.keyboardItem.keyboard;
-        if (keyboard) {
-            this.contentWidth = Math.max(this.contentWidth, keyboard.getDimensions().width);
+        // Share the entered PIN and expose the internal VoiceTextEditBox.
+        const pinPad = this.keyboardItem.pinPad;
+        if (pinPad) {
+            this.linkField(pinPad, "pin", "pin");
         }
-        this.linkField(this.keyboardItem, "text", "text");
         this.linkField(this.keyboardItem, "textEditBox", "textEditBox");
     }
 
@@ -64,14 +61,14 @@ export class StandardKeyboardDialog extends StandardDialog {
     setNodeFocus(focusOn: boolean): boolean {
         if (focusOn && sgRoot.focused && this.lastFocus === undefined) {
             this.lastFocus = sgRoot.focused;
-            sgRoot.setFocused(this.keyboardItem.keyboard ?? this);
+            sgRoot.setFocused(this.keyboardItem.pinPad ?? this);
             this.isDirty = true;
         }
         return true;
     }
 
     handleKey(key: string, press: boolean): boolean {
-        const keyboard = this.keyboardItem.keyboard;
+        const pad = this.keyboardItem.pinPad;
         if (press && key === "back") {
             this.setValue("close", BrsBoolean.True);
             return true;
@@ -81,8 +78,8 @@ export class StandardKeyboardDialog extends StandardDialog {
             this.buttonArea !== undefined &&
             (focused === this.buttonArea || focused?.getNodeParent() === this.buttonArea);
 
-        if (keyboard && focused === keyboard) {
-            let handled = keyboard.handleKey(key, press);
+        if (pad && focused === pad) {
+            let handled = pad.handleKey(key, press);
             if (!handled && press && key === "down" && this.buttonArea?.hasButtons) {
                 sgRoot.setFocused(this.buttonArea);
                 this.isDirty = true;
@@ -91,8 +88,8 @@ export class StandardKeyboardDialog extends StandardDialog {
             return handled;
         } else if (buttonsFocused) {
             let handled = this.buttonArea!.handleKey(key, press);
-            if (!handled && press && key === "up" && keyboard) {
-                sgRoot.setFocused(keyboard);
+            if (!handled && press && key === "up" && pad) {
+                sgRoot.setFocused(pad);
                 this.isDirty = true;
                 handled = true;
             }
@@ -109,6 +106,7 @@ export class StandardKeyboardDialog extends StandardDialog {
         if (this.contentDirty) {
             this.rebuildContent();
         }
+        this.keyboardItem.syncTextLimit();
         super.renderNode(interpreter, origin, angle, opacity, draw2D);
     }
 
