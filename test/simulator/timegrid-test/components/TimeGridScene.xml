@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+  TimeGrid example scene.
+
+  TimeGrid implements an Electronic Program Guide (EPG): channels are horizontal rows, and
+  each program is a cell whose width is proportional to its duration relative to the visible
+  time window (the `duration` field, in seconds). A channel-info column sits on the left, a
+  time bar with 30-minute labels runs across the top, and a vertical "now" bar marks the
+  current time. Programs airing before "now" are dimmed by the past-time screen.
+
+  This demo shows:
+
+    * the channels -> programs ContentNode model (TITLE / PLAYSTART / PLAYDURATION)
+    * duration-sized program cells laid out against a real time window
+    * the channel-info column and 30-minute time bar
+    * fillProgramGaps inserting a "No Data Available" cell for schedule gaps
+    * remote navigation: Up/Down change channel, Left/Right move between programs and scroll
+      time, OK selects (events logged from TimeGridScene.brs)
+
+  Navigation events (channelFocused / programFocused / programSelected) are observed in the
+  script and printed to the console so the EPG can be driven from the remote.
+-->
+<component name="TimeGridScene" extends="Scene">
+    <children>
+        <Rectangle width="1920" height="1080" color="0x101418FF" />
+
+        <Label id="title" text="TimeGrid - Electronic Program Guide" font="font:LargeBoldSystemFont"
+               color="0xFFFFFFFF" translation="[60, 30]" />
+
+        <Label id="hint" text="Up/Down: channel   Left/Right: program + scroll time   OK: select"
+               font="font:MediumSystemFont" color="0x9AA0A6FF" translation="[60, 90]" />
+
+        <!-- The EPG. Content is populated programmatically in TimeGridScene.brs so the demo
+             is self-contained (no network or pkg: data files needed). -->
+        <TimeGrid id="epg"
+                  translation="[60, 150]"
+                  width="1800"
+                  height="860"
+                  numRows="6"
+                  duration="9000"
+                  channelInfoWidth="320"
+                  channelInfoColumnLabel="CHANNELS"
+                  fillProgramGaps="true"
+                  showPastTimeScreen="true" />
+    </children>
+
+    <script type="text/brightscript" uri="TimeGridScene.brs" />
+</component>

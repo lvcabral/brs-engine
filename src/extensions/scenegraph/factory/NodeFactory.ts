@@ -89,6 +89,7 @@ import {
     StdDlgTitleArea,
     Task,
     TextEditBox,
+    TimeGrid,
     VoiceTextEditBox,
     Timer,
     TrickPlayBar,
@@ -212,6 +213,8 @@ export class SGNodeFactory {
                 return new MarkupList([], name);
             case SGNodeType.MarkupGrid.toLowerCase():
                 return new MarkupGrid([], name);
+            case SGNodeType.TimeGrid.toLowerCase():
+                return new TimeGrid([], name);
             case SGNodeType.ContentNode.toLowerCase():
                 return new ContentNode(name);
             case SGNodeType.ComponentLibrary.toLowerCase():

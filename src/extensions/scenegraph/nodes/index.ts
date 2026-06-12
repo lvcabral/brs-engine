@@ -67,6 +67,7 @@ export * from "./StdDlgTextItem";
 export * from "./StdDlgTitleArea";
 export * from "./Task";
 export * from "./TextEditBox";
+export * from "./TimeGrid";
 export * from "./VoiceTextEditBox";
 export * from "./Timer";
 export * from "./TrickPlayBar";
@@ -146,7 +147,7 @@ export enum SGNodeType {
     MarkupList = "MarkupList",
     ZoomRowList = "ZoomRowList",
     MarkupGrid = "MarkupGrid",
-    TimeGrid = "TimeGrid", // Not yet implemented
+    TimeGrid = "TimeGrid",
     Task = "Task",
     Timer = "Timer",
     RenderThreadQueue = "RenderThreadQueue",
