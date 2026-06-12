@@ -81,6 +81,13 @@ module.exports = {
         "jsdoc/check-indentation": "off",
         "jsdoc/newline-after-description": "off",
         "linebreak-style": "off",
+        "logical-assignment-operators": [
+            "error",
+            "always",
+            {
+                "enforceForIfStatements": true
+            }
+        ],
         "max-len": "off",
         "new-parens": "error",
         "newline-per-chained-call": "off",

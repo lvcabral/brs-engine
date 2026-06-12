@@ -259,7 +259,7 @@ export class MultiStyleLabel extends Group {
             const { ascent, descent } = lineMetrics[i];
             const baseline = y + ascent;
             maxWidth = Math.max(maxWidth, line.width);
-            ellipsized = ellipsized || line.ellipsized;
+            ellipsized ||= line.ellipsized;
             let x = rect.x;
             if (rect.width > line.width) {
                 if (horizAlign === "center") {

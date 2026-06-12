@@ -1,0 +1,14 @@
+##   Channel Details
+title=TimeGrid Test
+major_version=1
+minor_version=0
+build_version=00001
+
+splash_color=#000000
+splash_min_time=1
+
+mm_icon_focus_hd=pkg:/images/icon_focus_hd.png
+mm_icon_focus_fhd=pkg:/images/icon_focus_hd.png
+splash_screen_hd=pkg:/images/splash_hd.jpg
+
+ui_resolutions=fhd

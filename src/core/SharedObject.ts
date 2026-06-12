@@ -47,7 +47,7 @@ class SharedObject {
      * @param maxSize Optional hard cap for automatic growth (defaults to 16MB).
      */
     constructor(initialSize?: number, maxSize?: number) {
-        initialSize = initialSize ?? 32 * 1024; // 32KB default
+        initialSize ??= 32 * 1024; // 32KB default
         this.maxSize = maxSize ?? 16 * 1024 * 1024; // 16MB default
         this.buffer = new SharedArrayBuffer(initialSize, { maxByteLength: this.maxSize });
         this.view = new Uint8Array(this.buffer);

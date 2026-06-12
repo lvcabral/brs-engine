@@ -591,7 +591,7 @@ export class ArrayGrid extends Group {
     }
 
     protected getIndex(offset: number = 0, currIndex?: number) {
-        currIndex = currIndex ?? this.focusIndex;
+        currIndex ??= this.focusIndex;
         const numCols = this.numCols || 1;
         const focusRow = Math.floor(currIndex / numCols);
         const maxRows = Math.ceil(this.content.length / numCols);

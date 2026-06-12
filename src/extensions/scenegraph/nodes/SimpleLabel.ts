@@ -52,9 +52,7 @@ export class SimpleLabel extends Group {
         if (this.font && this.appliedFont === signature) {
             return;
         }
-        if (!this.font) {
-            this.font = SGNodeFactory.createNode(SGNodeType.Font) as Font;
-        }
+        this.font ||= SGNodeFactory.createNode(SGNodeType.Font) as Font;
         if (uri.startsWith("font:")) {
             // System fonts are fixed size; the fontSize field is ignored.
             this.font.setSystemFont(uri.slice(5));
