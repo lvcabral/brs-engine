@@ -143,15 +143,9 @@ function notifyAll(eventName: string, eventData?: any) {
  * @param dpr Optional device pixel ratio
  */
 export function redrawDisplay(running?: boolean, fullScreen?: boolean, width?: number, height?: number, dpr?: number) {
-    if (!width) {
-        width = globalThis.innerWidth;
-    }
-    if (!height) {
-        height = globalThis.innerHeight;
-    }
-    if (!dpr) {
-        dpr = globalThis.devicePixelRatio;
-    }
+    width ||= globalThis.innerWidth;
+    height ||= globalThis.innerHeight;
+    dpr ||= globalThis.devicePixelRatio;
     screenSize.width = width;
     screenSize.height = Math.trunc(screenSize.width / aspectRatio);
     if (screenSize.height > height) {
@@ -344,9 +338,7 @@ function drawVideoFrame() {
  * @param ctx Canvas 2D rendering context
  */
 function drawSubtitles(ctx: CanvasRenderingContext2D) {
-    if (!deviceData.captionStyle) {
-        deviceData.captionStyle = [];
-    }
+    deviceData.captionStyle ||= [];
     // Draw active subtitles
     const fhd = ctx.canvas.height === 1080 ? 1 : 0;
     const backgroundColor = getCaptionStyleOption("background/color", "black");

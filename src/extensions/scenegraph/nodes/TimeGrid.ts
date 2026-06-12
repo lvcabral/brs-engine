@@ -235,9 +235,7 @@ export class TimeGrid extends ArrayGrid {
             this.programStart.push(starts);
             this.programDuration.push(durs);
             this.gapFlags.push(gaps);
-            if (this.programIndexByChannel[ch] === undefined) {
-                this.programIndexByChannel[ch] = 0;
-            }
+            this.programIndexByChannel[ch] ??= 0;
         }
         if (this.viewStartTime === 0) {
             const cst = (this.getValueJS("contentStartTime") as number) ?? 0;

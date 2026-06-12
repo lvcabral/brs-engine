@@ -376,9 +376,7 @@ export class XMLHttpRequest {
         } else if (data) {
             this._headers["Content-Length"] = Buffer.isBuffer(data) ? data.length : Buffer.byteLength(data);
 
-            if (!this._headers["Content-Type"]) {
-                this._headers["Content-Type"] = "text/plain;charset=UTF-8";
-            }
+            this._headers["Content-Type"] ||= "text/plain;charset=UTF-8";
         } else if (this._settings.method === "POST") {
             // For a post with no data set Content-Length: 0.
             // This is required by buggy servers that don't meet the specs.

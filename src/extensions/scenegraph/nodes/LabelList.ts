@@ -207,7 +207,7 @@ export class LabelList extends ArrayGrid {
         if (drawFocus && drawFocusOnTop) {
             this.renderFocus(rect, opacity, nodeFocus, draw2D);
         }
-        this.hasNinePatch = this.hasNinePatch && drawFocus;
+        this.hasNinePatch &&= drawFocus;
     }
 
     protected renderIcon(bmp: RoBitmap, rect: Rect, opacity: number, draw2D?: IfDraw2D, color?: number) {

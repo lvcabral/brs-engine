@@ -242,8 +242,6 @@ export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpA
 
 // Function to get the singleton instance of RoTextureManager
 export function getTextureManager(): RoTextureManager {
-    if (!textureManager) {
-        textureManager = new RoTextureManager();
-    }
+    textureManager ||= new RoTextureManager();
     return textureManager;
 }

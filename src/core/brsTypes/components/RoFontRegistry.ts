@@ -294,8 +294,6 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
 
 // Function to get the singleton instance of Font Registry
 export function getFontRegistry(): RoFontRegistry {
-    if (!fontRegistry) {
-        fontRegistry = new RoFontRegistry();
-    }
+    fontRegistry ||= new RoFontRegistry();
     return fontRegistry;
 }

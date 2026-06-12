@@ -491,7 +491,7 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
         },
         impl: (_: Interpreter, attr: BrsString, value: BrsString) => {
             const element = this.getElement();
-            element.attr = element.attr ?? {};
+            element.attr ??= {};
             element.attr[attr.value] = value.value;
             return BrsInvalid.Instance;
         },
