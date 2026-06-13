@@ -87,6 +87,9 @@ import {
     StdDlgSideCardArea,
     StdDlgTextItem,
     StdDlgTitleArea,
+    TargetSet,
+    TargetGroup,
+    TargetList,
     Task,
     TextEditBox,
     TimeGrid,
@@ -155,12 +158,17 @@ export class SGNodeFactory {
             case SGNodeType.Node.toLowerCase():
                 return new Node([], name);
             case SGNodeType.Group.toLowerCase():
-            case SGNodeType.TargetGroup.toLowerCase():
             case SGNodeType.StdDlgGraphicItem.toLowerCase():
             case SGNodeType.StdDlgAreaBase.toLowerCase():
             case SGNodeType.StdDlgItemBase.toLowerCase():
             case SGNodeType.StdDlgItemGroup.toLowerCase():
                 return new Group([], name);
+            case SGNodeType.TargetSet.toLowerCase():
+                return new TargetSet([], name);
+            case SGNodeType.TargetGroup.toLowerCase():
+                return new TargetGroup([], name);
+            case SGNodeType.TargetList.toLowerCase():
+                return new TargetList([], name);
             case SGNodeType.ScrollableText.toLowerCase():
                 return new ScrollableText([], name);
             case SGNodeType.MaskGroup.toLowerCase():
