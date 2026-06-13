@@ -65,6 +65,9 @@ export * from "./StdDlgProgressItem";
 export * from "./StdDlgSideCardArea";
 export * from "./StdDlgTextItem";
 export * from "./StdDlgTitleArea";
+export * from "./TargetSet";
+export * from "./TargetGroup";
+export * from "./TargetList";
 export * from "./Task";
 export * from "./TextEditBox";
 export * from "./TimeGrid";
@@ -89,9 +92,9 @@ export enum SGNodeType {
     Group = "Group",
     LayoutGroup = "LayoutGroup",
     MaskGroup = "MaskGroup",
-    TargetGroup = "TargetGroup", // Not yet implemented
-    TargetList = "TargetList", // Not yet implemented
-    TargetSet = "TargetSet", // Not yet implemented
+    TargetGroup = "TargetGroup",
+    TargetList = "TargetList",
+    TargetSet = "TargetSet",
     ButtonGroup = "ButtonGroup",
     Button = "Button",
     Panel = "Panel",
