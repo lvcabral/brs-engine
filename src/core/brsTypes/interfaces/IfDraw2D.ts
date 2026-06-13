@@ -238,8 +238,16 @@ export class IfDraw2D {
 
         const cw = Math.max(0, sw - 2 - lw - rw); // Center source width (drawable area)
         const ch = Math.max(0, sh - 2 - th - bh); // Center source height (drawable area)
-        const targetCW = Math.max(0, width - lw - rw); // Target center width
-        const targetCH = Math.max(0, height - th - bh); // Target center height
+
+        // A 9-patch cannot render smaller than its fixed corners, so clamp the drawn size to the
+        // corner sum. This keeps the rounded ends from overlapping/inverting at tiny sizes (e.g. a
+        // progress-bar fill at 0.0, which collapses to a single pill/dot instead of disappearing or
+        // rendering reversed). For normal sizes (width/height >= corner sum) this is a no-op.
+        const drawW = Math.max(width, lw + rw); // Drawn width (never below the fixed corners)
+        const drawH = Math.max(height, th + bh); // Drawn height (never below the fixed corners)
+
+        const targetCW = Math.max(0, drawW - lw - rw); // Target center width
+        const targetCH = Math.max(0, drawH - th - bh); // Target center height
 
         const drawPart = (
             sx: number,
@@ -278,7 +286,7 @@ export class IfDraw2D {
         drawPart(1 + lw, 1, cw, th, x + lw, y, targetCW, th);
 
         // Top-right corner
-        drawPart(sw - 1 - rw, 1, rw, th, x + width - rw, y, rw, th);
+        drawPart(sw - 1 - rw, 1, rw, th, x + drawW - rw, y, rw, th);
 
         // Left edge
         drawPart(1, 1 + th, lw, ch, x, y + th, lw, targetCH);
@@ -287,16 +295,16 @@ export class IfDraw2D {
         drawPart(1 + lw, 1 + th, cw, ch, x + lw, y + th, targetCW, targetCH);
 
         // Right edge
-        drawPart(sw - 1 - rw, 1 + th, rw, ch, x + width - rw, y + th, rw, targetCH);
+        drawPart(sw - 1 - rw, 1 + th, rw, ch, x + drawW - rw, y + th, rw, targetCH);
 
         // Bottom-left corner
-        drawPart(1, sh - 1 - bh, lw, bh, x, y + height - bh, lw, bh);
+        drawPart(1, sh - 1 - bh, lw, bh, x, y + drawH - bh, lw, bh);
 
         // Bottom edge
-        drawPart(1 + lw, sh - 1 - bh, cw, bh, x + lw, y + height - bh, targetCW, bh);
+        drawPart(1 + lw, sh - 1 - bh, cw, bh, x + lw, y + drawH - bh, targetCW, bh);
 
         // Bottom-right corner
-        drawPart(sw - 1 - rw, sh - 1 - bh, rw, bh, x + width - rw, y + height - bh, rw, bh);
+        drawPart(sw - 1 - rw, sh - 1 - bh, rw, bh, x + drawW - rw, y + drawH - bh, rw, bh);
 
         ctx.restore();
         this.component.makeDirty();
