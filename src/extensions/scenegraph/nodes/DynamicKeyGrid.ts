@@ -6,7 +6,6 @@ import {
     BrsDevice,
     Float,
     IfDraw2D,
-    Int32,
     Interpreter,
     Rect,
     RoArray,
@@ -36,6 +35,8 @@ interface SuggestionPopup {
     index: number;
     key: RenderedKey;
 }
+
+type NavKeys = "up" | "down" | "left" | "right";
 
 /**
  * DynamicKeyGrid implements a grid of keys defined by a Key Definition File (KDF).
@@ -70,7 +71,7 @@ export class DynamicKeyGrid extends Group {
     private popupSuppressed = false;
 
     private readonly font: Font;
-    private bmpFocus?: RoBitmap;
+    private readonly bmpFocus?: RoBitmap;
     private bmpBackground?: RoBitmap;
     private inset: KeyInset = { top: 0, right: 0, bottom: 0, left: 0 };
     private readonly keyFocusDelta: number;
@@ -292,7 +293,7 @@ export class DynamicKeyGrid extends Group {
         }
     }
 
-    private moveFocus(dir: "up" | "down" | "left" | "right"): boolean {
+    private moveFocus(dir: NavKeys): boolean {
         let next = this.findNeighbor(dir);
         if (next === undefined) {
             const horiz = dir === "left" || dir === "right";
@@ -312,7 +313,7 @@ export class DynamicKeyGrid extends Group {
     }
 
     /** Finds the nearest focusable key in a direction, or undefined if none. */
-    private findNeighbor(dir: "up" | "down" | "left" | "right"): number | undefined {
+    private findNeighbor(dir: NavKeys): number | undefined {
         const cur = this.renderedKeys[this.focusIndex];
         if (!cur) {
             return undefined;
@@ -357,7 +358,7 @@ export class DynamicKeyGrid extends Group {
     }
 
     /** Wraps focus to the opposite edge of the grid, aligned to the current key. */
-    private findWrap(dir: "up" | "down" | "left" | "right"): number | undefined {
+    private findWrap(dir: NavKeys): number | undefined {
         const cur = this.renderedKeys[this.focusIndex];
         if (!cur) {
             return undefined;
