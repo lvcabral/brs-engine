@@ -1,18 +1,20 @@
-import { AAMember, BrsType, Float, Int32 } from "brs-engine";
+import { AAMember, BrsType, Float } from "brs-engine";
 import { FieldKind, FieldModel } from "../SGTypes";
 import { SGNodeType } from ".";
 import { Group } from "./Group";
-import { PinPad } from "./PinPad";
-import { Keyboard } from "./Keyboard";
-import { VoiceTextEditBox } from "./VoiceTextEditBox";
+import { DynamicKeyboard } from "./DynamicKeyboard";
+import { DynamicPinPad } from "./DynamicPinPad";
+import { DynamicKeyboardBase } from "./DynamicKeyboardBase";
+import { RSGPalette } from "./RSGPalette";
 import { StdDlgItem, getDialogColors, colorFromPalette } from "./StdDlgItemBase";
-import { jsValueOf } from "../factory/Serializer";
+import { toAssociativeArray, jsValueOf } from "../factory/Serializer";
+import { convertHexColor } from "../SGUtil";
 
 /**
  * A content item that hosts a keyboard or pin pad inside a StandardDialog, selected by `keyLayout`
- * ("keyboard" or "pinpad"). Roku uses a DynamicKeyboard / DynamicPinPad; this engine reuses the
- * existing Keyboard / PinPad nodes. The item's `text` mirrors the entered string and `textEditBox`
- * exposes the widget's VoiceTextEditBox.
+ * ("keyboard" or "pinpad"). Per Roku's spec it hosts a DynamicKeyboard / DynamicPinPad, which bring
+ * voice entry. The item's `text` mirrors the entered string and `textEditBox` exposes the widget's
+ * VoiceTextEditBox.
  */
 export class StdDlgKeyboardItem extends Group implements StdDlgItem {
     readonly defaultFields: FieldModel[] = [
@@ -20,7 +22,8 @@ export class StdDlgKeyboardItem extends Group implements StdDlgItem {
         { name: "text", type: "string", value: "" },
         { name: "textEditBox", type: "node" },
     ];
-    private widget?: PinPad | Keyboard;
+    private widget?: DynamicKeyboardBase;
+    private keyPalette?: RSGPalette;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.StdDlgKeyboardItem) {
         super([], name);
@@ -44,29 +47,24 @@ export class StdDlgKeyboardItem extends Group implements StdDlgItem {
             return; // widget already created
         }
         if (layout === "pinpad") {
-            const pad = new PinPad();
-            const textEditBox = new VoiceTextEditBox();
-            // Default to a 4-digit PIN; apps widen it via textEditBox.maxTextLength.
-            textEditBox.setValueSilent("maxTextLength", new Int32(4));
-            this.setValueSilent("textEditBox", textEditBox);
-            this.widget = pad;
-            this.appendChildToParent(pad);
-            this.linkField(pad, "pin", "text");
+            this.widget = new DynamicPinPad();
         } else if (layout === "keyboard") {
-            const keyboard = new Keyboard();
-            this.setValueSilent("textEditBox", keyboard.textEditBox);
-            this.widget = keyboard;
-            this.appendChildToParent(keyboard);
-            this.linkField(keyboard, "text");
+            this.widget = new DynamicKeyboard();
+        } else {
+            return;
         }
+        // Expose the widget's VoiceTextEditBox and keep `text` as a single shared field.
+        this.setValueSilent("textEditBox", this.widget.textEditBox);
+        this.appendChildToParent(this.widget);
+        this.linkField(this.widget, "text");
     }
 
-    get pinPad(): PinPad | undefined {
-        return this.widget instanceof PinPad ? this.widget : undefined;
+    get pinPad(): DynamicPinPad | undefined {
+        return this.widget instanceof DynamicPinPad ? this.widget : undefined;
     }
 
-    get keyboard(): Keyboard | undefined {
-        return this.widget instanceof Keyboard ? this.widget : undefined;
+    get keyboard(): DynamicKeyboard | undefined {
+        return this.widget instanceof DynamicKeyboard ? this.widget : undefined;
     }
 
     /** The focusable widget (pin pad or keyboard), if any. */
@@ -74,33 +72,26 @@ export class StdDlgKeyboardItem extends Group implements StdDlgItem {
         return this.widget;
     }
 
-    /** Applies the keyboard item's text length limit to a pin pad widget. */
-    syncTextLimit() {
-        const textEditBox = this.getValue("textEditBox");
-        if (this.widget instanceof PinPad && textEditBox instanceof VoiceTextEditBox) {
-            const maxLength = textEditBox.getValueJS("maxTextLength") as number;
-            if (typeof maxLength === "number" && maxLength > 0) {
-                this.widget.setValue("pinLength", new Int32(maxLength));
-            }
-        }
-    }
-
-    /** Themes the embedded keyboard / pin pad from the dialog palette (key glyph colors). */
+    /**
+     * Themes the embedded keyboard / pin pad from the dialog palette. The Dynamic key grid resolves
+     * its glyph/focus colors from an ancestor `palette` (RSGPalette) node, so we bridge the dialog's
+     * `Dialog*` colors onto a palette node attached to the key grid using the names it expects.
+     */
     private applyPalette() {
         if (!this.widget) {
             return;
         }
         const colors = getDialogColors(this);
-        const keyColor = colorFromPalette(colors, "DialogTextColor", "0xFFFFFFFF");
-        const focusedKeyColor = colorFromPalette(colors, "DialogFocusItemColor", "0x000000FF");
-        const focusBlend = colorFromPalette(colors, "DialogFocusColor", "0xFFFFFFFF");
-        this.widget.setValueSilent("keyColor", new Int32(keyColor));
-        this.widget.setValueSilent("focusedKeyColor", new Int32(focusedKeyColor));
-        // Tint the per-key focus highlight 9-patch with the palette focus color.
-        this.widget.setValueSilent("focusBitmapBlendColor", new Int32(focusBlend));
-        if (this.widget instanceof PinPad) {
-            this.widget.setValueSilent("pinDisplayTextColor", new Int32(keyColor));
-        }
+        const paletteColors = toAssociativeArray({
+            PrimaryTextColor: colorFromPalette(colors, "DialogTextColor", "0xDDDDDDFF"),
+            FocusItemColor: colorFromPalette(colors, "DialogFocusItemColor", "0x262626FF"),
+            FocusColor: colorFromPalette(colors, "DialogFocusColor", "0xFFFFFFFF"),
+            SecondaryItemColor: colorFromPalette(colors, "DialogSecondaryItemColor", "0xAAAAAAFF"),
+            KeyboardColor: convertHexColor("0xFFFFFFFF"), // no tint on the keyboard background bitmap
+        });
+        this.keyPalette ??= new RSGPalette();
+        this.keyPalette.setValue("colors", paletteColors);
+        this.widget.keyGrid.setValue("palette", this.keyPalette);
     }
 
     layoutItem(width: number): number {

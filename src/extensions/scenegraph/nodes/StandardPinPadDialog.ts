@@ -12,8 +12,8 @@ import { sgRoot } from "../SGRoot";
 /**
  * StandardPinPadDialog — text/voice entry of numeric PIN codes (Roku's replacement for the legacy
  * PinDialog). Composed of a title area, a content area with optional message text plus a keyboard
- * item hosting a pin pad, and a button area. The embedded pad reuses the existing PinPad. The base
- * class handles layout, button wiring, and close; this class adds the pad ⇄ buttons focus model.
+ * item hosting a DynamicPinPad, and a button area. The base class handles layout, button wiring,
+ * and close; this class adds the pad ⇄ buttons focus model.
  */
 export class StandardPinPadDialog extends StandardDialog {
     readonly defaultFields: FieldModel[] = [
@@ -43,11 +43,8 @@ export class StandardPinPadDialog extends StandardDialog {
         this.keyboardItem = new StdDlgKeyboardItem();
         this.keyboardItem.setValue("keyLayout", new BrsString("pinpad"));
 
-        // Share the entered PIN and expose the internal VoiceTextEditBox.
-        const pinPad = this.keyboardItem.pinPad;
-        if (pinPad) {
-            this.linkField(pinPad, "pin", "pin");
-        }
+        // Share the entered PIN (the pad's `text`) and expose the internal VoiceTextEditBox.
+        this.linkField(this.keyboardItem, "text", "pin");
         this.linkField(this.keyboardItem, "textEditBox", "textEditBox");
     }
 
@@ -106,7 +103,6 @@ export class StandardPinPadDialog extends StandardDialog {
         if (this.contentDirty) {
             this.rebuildContent();
         }
-        this.keyboardItem.syncTextLimit();
         super.renderNode(interpreter, origin, angle, opacity, draw2D);
     }
 

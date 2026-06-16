@@ -12,9 +12,8 @@ import { sgRoot } from "../SGRoot";
 /**
  * StandardKeyboardDialog — text/voice entry of alphanumeric strings (Roku's replacement for the
  * legacy KeyboardDialog). Composed of a title area, a content area with optional message text plus
- * a keyboard item hosting a keyboard, and a button area. The embedded keyboard reuses the existing
- * Keyboard node. The base class handles layout, button wiring, and close; this class adds the
- * keyboard ⇄ buttons focus model.
+ * a keyboard item hosting a DynamicKeyboard, and a button area. The base class handles layout,
+ * button wiring, and close; this class adds the keyboard ⇄ buttons focus model.
  */
 export class StandardKeyboardDialog extends StandardDialog {
     readonly defaultFields: FieldModel[] = [
@@ -45,10 +44,11 @@ export class StandardKeyboardDialog extends StandardDialog {
         this.keyboardItem = new StdDlgKeyboardItem();
         this.keyboardItem.setValue("keyLayout", new BrsString("keyboard"));
 
-        // Widen the dialog to fit the keyboard, then share text/textEditBox.
+        // Widen the dialog to fit the keyboard, then share text/textEditBox and the entry domain.
         const keyboard = this.keyboardItem.keyboard;
         if (keyboard) {
             this.contentWidth = Math.max(this.contentWidth, keyboard.getDimensions().width);
+            this.linkField(keyboard, "domain", "keyboardDomain");
         }
         this.linkField(this.keyboardItem, "text", "text");
         this.linkField(this.keyboardItem, "textEditBox", "textEditBox");

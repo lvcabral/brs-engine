@@ -14,11 +14,11 @@ export class DynamicPinPad extends DynamicKeyboardBase {
         this.setExtendsType(name, SGNodeType.DynamicKeyboardBase);
         this.registerInitializedFields(initializedFields);
 
-        const maxTextLength = 4;
-        this.configureVoiceBox({ voiceEntryType: "numeric", voiceEnabled: true, maxTextLength });
-        // PIN entry hides the digits by default (shows dots).
+        this.configureVoiceBox({ voiceEntryType: "numeric", voiceEnabled: true, maxTextLength: 4 });
+        // PIN entry hides the digits by default (shows dots). The number of underline slots tracks
+        // `textEditBox.maxTextLength`, so apps (e.g. StandardPinPadDialog) resize the pin via that field.
         this.textEditBox.setValueSilent("secureMode", BrsBoolean.True);
-        this.textEditBox.setPinPadMode(maxTextLength);
+        this.textEditBox.setPinPadMode();
         this.setKeyDefinition(dynamicPinPadKDF, "", {
             name: "keyboard_pinpad",
             insetFHD: { top: 22, right: 23, bottom: 24, left: 21 },
