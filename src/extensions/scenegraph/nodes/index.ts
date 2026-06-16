@@ -25,6 +25,12 @@ export * from "./LayoutGroup";
 export * from "./MarkupGrid";
 export * from "./MarkupList";
 export * from "./MiniKeyboard";
+export * from "./DynamicKeyGrid";
+export * from "./DynamicKeyboardBase";
+export * from "./DynamicKeyboard";
+export * from "./DynamicMiniKeyboard";
+export * from "./DynamicPinPad";
+export * from "./DynamicCustomKeyboard";
 export * from "./PinPad";
 export * from "./PinDialog";
 export * from "./Node";
@@ -157,12 +163,12 @@ export enum SGNodeType {
     Scene = "Scene",
     Keyboard = "Keyboard",
     MiniKeyboard = "MiniKeyboard",
-    DynamicKeyboard = "DynamicKeyboard", // Not yet implemented
-    DynamicKeyboardBase = "DynamicKeyboardBase", // Not yet implemented
-    DynamicMiniKeyboard = "DynamicMiniKeyboard", // Not yet implemented
-    DynamicCustomKeyboard = "DynamicCustomKeyboard", // Not yet implemented
-    DynamicPinPad = "DynamicPinPad", // Not yet implemented
-    DynamicKeyGrid = "DynamicKeyGrid", // Not yet implemented
+    DynamicKeyboard = "DynamicKeyboard",
+    DynamicKeyboardBase = "DynamicKeyboardBase",
+    DynamicMiniKeyboard = "DynamicMiniKeyboard",
+    DynamicCustomKeyboard = "DynamicCustomKeyboard",
+    DynamicPinPad = "DynamicPinPad",
+    DynamicKeyGrid = "DynamicKeyGrid",
     TextEditBox = "TextEditBox",
     VoiceTextEditBox = "VoiceTextEditBox",
     Overhang = "Overhang",
