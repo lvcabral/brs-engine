@@ -386,11 +386,16 @@ describe("Standard Dialog Framework nodes", () => {
             dialog.renderNode(fakeInterpreter, [0, 0], 0, 1);
 
             const buttonArea = findDescendant(dialog, "StdDlgButtonArea");
-            const keyboard = findDescendant(dialog, "Keyboard");
+            const keyboard = findDescendant(dialog, "DynamicKeyboard");
             expect(keyboard).toBeDefined();
 
+            // The Dynamic key grid resolves its glyph/focus colors from a palette node bridged from
+            // the dialog's Dialog* colors, so it themes consistently with the button row.
+            const keyGrid = keyboard.getValue("keyGrid");
+            const keyColors = keyGrid.getValue("palette").getValueJS("colors");
+
             // Key glyphs and unfocused button text both use DialogTextColor.
-            const textColor = keyboard.getValueJS("keyColor");
+            const textColor = keyColors.PrimaryTextColor;
             expect(textColor).not.toBe(WHITE);
             expect(buttonArea.getValueJS("textColor")).toBe(textColor);
             // Focused button background uses DialogFocusColor; focused text uses DialogFocusItemColor.
@@ -401,8 +406,10 @@ describe("Standard Dialog Framework nodes", () => {
             const button = buttonArea.getNodeChildren()[0];
             expect(button.getValueJS("textColor")).toBe(textColor);
             expect(button.getValueJS("focusBitmapBlendColor")).toBe(buttonArea.getValueJS("focusBitmapBlendColor"));
-            // The per-key focus highlight is tinted with DialogFocusColor (same as the button focus).
-            expect(keyboard.getValueJS("focusBitmapBlendColor")).toBe(buttonArea.getValueJS("focusBitmapBlendColor"));
+            // The per-key focus highlight uses DialogFocusColor (same as the button focus), and the
+            // focused-key glyph uses DialogFocusItemColor (same as the focused-button text).
+            expect(keyColors.FocusColor).toBe(buttonArea.getValueJS("focusBitmapBlendColor"));
+            expect(keyColors.FocusItemColor).toBe(buttonArea.getValueJS("focusedTextColor"));
         });
 
         test("themes the scrollable text's scrollbar from the palette", () => {

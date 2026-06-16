@@ -35,8 +35,11 @@ export class VoiceTextEditBox extends TextEditBox {
         }
     }
 
-    /** Enables the per-digit underline display used by DynamicPinPad. */
-    setPinPadMode(slots: number) {
+    /**
+     * Enables the per-digit underline display used by DynamicPinPad. With no (or a zero) slot
+     * count the number of slots tracks `maxTextLength`, so apps can resize the pin via that field.
+     */
+    setPinPadMode(slots: number = 0) {
         this.pinPadMode = true;
         this.pinPadSlots = slots;
         this.pinPadFont = new Font(); // same default size as the regular text display
