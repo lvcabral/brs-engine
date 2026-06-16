@@ -10,16 +10,8 @@ The **BrightScript Engine** implements the BrightScript language specification u
   * The `Task` node is implemented but its behavior is limited:
     * For now only 10 concurrent task threads are supported per application
     * Only one `port` instance can be used on Task `init()` to observe fields
-  * The following nodes are already implemented:
-    * The basic nodes: `ContentNode`, `Group`, `Scene`, `Global`, `Timer`, `Rectangle`, `Poster`, `LayoutGroup` and `RSGPalette`
-    * Typographic nodes: `Font`, `Label`, `ScrollingLabel` and `ScrollableText`
-    * Grids and list nodes based on `ArrayGrid`: `PosterGrid`, `LabelList`, `CheckList`, `RadioButtonList`, `MarkupList`, `MarkupGrid`, `RowList` and `ZoomRowList`
-    * Dialog related nodes: `Dialog`, `KeyboardDialog`, `PinDialog`, `ProgressDialog`, `StandardDialog`, `StandardProgressDialog`, `StdDlgProgressItem`, `StdDlgContentArea` and `StdDlgTitleArea`
-    * Media related nodes: `Audio`, `SoundEffect`, `Video` and `TrickPlayBar`
-    * Animation related nodes: `AnimationBase`, `Animation`, `SequentialAnimation`, `ParallelAnimation`, `ColorFieldInterpolator`, `FloatFieldInterpolator` and `Vector2DFieldInterpolator`
-    * Panel related nodes: `OverhangPanelSetScene`, `PanelSet`, `Panel`, `GridPanel` and `ListPanel`
-    * Other supported nodes: `Button`, `ButtonGroup`, `BusySpinner`, `Overhang`, `InfoPane`, `Keyboard`, `MiniKeyboard`, `PinPad`, `TextEditBox` and `ComponentLibrary`
-  * Some of the nodes listed above may not have full functionality yet, please open a [GitHub issue](https://github.com/lvcabral/brs-engine/issues) if you find any problem or missing feature.
+  * Most SceneGraph nodes are implemented, covering the renderable, layout, list/grid, dialog, media, animation, panel and keyboard (including the dynamic voice keyboards) node families. Because the engine is a simulator and not a hardware emulator, expect **rendering differences** from a real Roku device, and some nodes may not have full functionality yet — please open a [GitHub issue](https://github.com/lvcabral/brs-engine/issues) if you find any problem or missing feature.
+  * Some abstract/base nodes are not implemented on their own and are mocked as a `Group` (for example the Standard Dialog framework's `StdDlgAreaBase`, `StdDlgItemBase`, `StdDlgItemGroup` and `StdDlgGraphicItem`).
   * **Component Libraries** are supported, both declared in XML (`<ComponentLibrary id="..." uri="..."/>`) and created at runtime via `CreateObject("roSGNode", "ComponentLibrary")` with the `uri` assigned in code. The component namespace is the library manifest's `sg_component_libs_provided` value (falling back to the node `id` when not declared), so its components are referenced as `LibraryName:ComponentName`. The `uri` may point to a local volume (`pkg:/`, `tmp:/`, `ext1:/`) or a remote `http(s)://` package (the configured CORS proxy is honored). Current limitations:
     * Libraries are fetched and compiled **synchronously** (the BrightScript event loop never yields, so an asynchronous load could not complete mid-execution). The node reports `loadStatus = "loading"` immediately and the `"ready"`/`"failed"` transition is emitted on the next render frame, so `observeField("loadStatus", ...)` callbacks are notified as on a real device — provided the app is pumping its screen message loop (`wait(...)`).
     * Inside a library, `pkg:/` still resolves to the host app's package (not the library's own); reference a library's bundled scripts with relative `uri` paths in its component XML.

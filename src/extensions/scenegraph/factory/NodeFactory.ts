@@ -43,6 +43,11 @@ import {
     MarkupGrid,
     MarkupList,
     MiniKeyboard,
+    DynamicKeyGrid,
+    DynamicKeyboard,
+    DynamicMiniKeyboard,
+    DynamicPinPad,
+    DynamicCustomKeyboard,
     MultiStyleLabel,
     MonospaceLabel,
     PinPad,
@@ -247,6 +252,16 @@ export class SGNodeFactory {
                 return new Keyboard([], name);
             case SGNodeType.MiniKeyboard.toLowerCase():
                 return new MiniKeyboard([], name);
+            case SGNodeType.DynamicKeyGrid.toLowerCase():
+                return new DynamicKeyGrid([], name);
+            case SGNodeType.DynamicKeyboard.toLowerCase():
+                return new DynamicKeyboard([], name);
+            case SGNodeType.DynamicMiniKeyboard.toLowerCase():
+                return new DynamicMiniKeyboard([], name);
+            case SGNodeType.DynamicPinPad.toLowerCase():
+                return new DynamicPinPad([], name);
+            case SGNodeType.DynamicCustomKeyboard.toLowerCase():
+                return new DynamicCustomKeyboard([], name);
             case SGNodeType.PinPad.toLowerCase():
                 return new PinPad([], name);
             case SGNodeType.ParentalControlPinPad.toLowerCase():
