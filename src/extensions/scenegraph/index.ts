@@ -32,12 +32,14 @@ import { sgRoot } from "./SGRoot";
 import { Task } from "./nodes/Task";
 import { initializeTask, createNode, updateTypeDefHierarchy, getNodeType } from "./factory/NodeFactory";
 import { RoSGScreen } from "./components/RoSGScreen";
+import { getRenderThreadQueue } from "./components/RoRenderThreadQueue";
 import packageInfo from "../../../packages/scenegraph/package.json";
 
 export * from "./SGRoot";
 export * from "./SGUtil";
 export * from "./components/RoSGNode";
 export * from "./components/RoSGScreen";
+export * from "./components/RoRenderThreadQueue";
 export * from "./events/RoSGNodeEvent";
 export * from "./events/RoSGScreenEvent";
 export * from "./factory/NodeFactory";
@@ -60,12 +62,8 @@ export class BrightScriptExtension implements BrsExtension {
         );
         // Re-register roMessagePort to handle the specific case of ports created in the Main thread
         BrsObjects.set("roMessagePort", (interpreter: Interpreter) => this.createMessagePort(interpreter), 0);
-        // roRenderThreadQueue (OS 15) can also be created directly via CreateObject().
-        BrsObjects.set(
-            "roRenderThreadQueue",
-            (interpreter: Interpreter) => createNode("RenderThreadQueue", interpreter),
-            0
-        );
+        // roRenderThreadQueue (OS 15) is a per-thread singleton component created via CreateObject().
+        BrsObjects.set("roRenderThreadQueue", () => getRenderThreadQueue(), 0);
     }
 
     private createMessagePort(interpreter?: Interpreter): RoMessagePort {

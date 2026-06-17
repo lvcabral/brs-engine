@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+  roRenderThreadQueue example scene.
+
+  Demonstrates the OS 15 `roRenderThreadQueue` component, which lets Task threads send
+  asynchronous, non-blocking messages to handlers running on the render thread (unlike a
+  rendezvous, the posting thread never blocks).
+
+  Two Task nodes (ProducerTaskA / ProducerTaskB) each create their OWN roRenderThreadQueue
+  with CreateObject and stream messages on named channels. Because the component is a
+  per-thread singleton routed by message id, the render thread's queue (which owns the
+  registered handlers) receives every message regardless of which thread/instance posted it.
+
+  This demo exercises:
+
+    * AddMessageHandler  - register handlers on the render thread (multiple per channel:
+                           the "status" channel has two handlers that both fire, in order)
+    * PostMessage        - move data (roAssociativeArray); Task B also PostMessages roSGNode
+                           (ContentNode) payloads, which must be copied (counts in NumCopies)
+    * CopyMessage        - copy data (roAssociativeArray); not counted by NumCopies
+    * NumCopies          - PostMessage copies only; reported by each task when it finishes
+                           (Task A: 0, Task B: 3)
+    * handler(data, msgInfo) signature, where msgInfo.id is the channel id
+
+  Every handler runs on the render thread and updates on-screen Labels live, so the message
+  stream is visible as each task produces it.
+-->
+<component name="RenderThreadQueueScene" extends="Scene">
+    <children>
+        <Rectangle width="1920" height="1080" color="0x0B0F14FF" />
+
+        <Label id="title" text="roRenderThreadQueue - Two Task Producers"
+               font="font:LargeBoldSystemFont" color="0xFFFFFFFF" translation="[60, 40]" />
+
+        <Label id="hint"
+               text="Two Task threads post async messages to render-thread handlers (non-blocking)."
+               font="font:MediumSystemFont" color="0x9AA0A6FF" translation="[60, 108]" />
+
+        <!-- Task A panel -->
+        <Rectangle translation="[60, 175]" width="880" height="640" color="0x14202EFF" />
+        <Label id="headerA" text="TASK A   own queue - PostMessage (move AA)"
+               font="font:MediumBoldSystemFont" color="0x7FD1FFFF" translation="[84, 192]" />
+        <Label id="logA" translation="[84, 250]" width="832" height="550"
+               wrap="true" numLines="11" lineSpacing="8"
+               font="font:MediumSystemFont" color="0xCFE3FFFF" />
+
+        <!-- Task B panel -->
+        <Rectangle translation="[980, 175]" width="880" height="640" color="0x1E1726FF" />
+        <Label id="headerB" text="TASK B   own queue - CopyMessage (aa) + PostMessage (node)"
+               font="font:MediumBoldSystemFont" color="0xC9A7FFFF" translation="[1004, 192]" />
+        <Label id="logB" translation="[1004, 250]" width="832" height="550"
+               wrap="true" numLines="11" lineSpacing="8"
+               font="font:MediumSystemFont" color="0xEAD9FFFF" />
+
+        <Label id="status" text="STATUS: waiting for tasks..."
+               font="font:MediumBoldSystemFont" color="0xFFD27FFF" translation="[60, 850]" />
+
+        <Label id="stats" text="Messages received: 0"
+               font="font:MediumSystemFont" color="0x9AA0A6FF" translation="[60, 912]" />
+    </children>
+
+    <script type="text/brightscript" uri="RenderThreadQueueScene.brs" />
+</component>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+  ProducerTaskA runs on its own Task thread. It creates a roRenderThreadQueue and streams a
+  sequence of roAssociativeArray messages with PostMessage (move semantics), sleeping between
+  posts so the render thread can be seen updating live without blocking.
+-->
+<component name="ProducerTaskA" extends="Task">
+    <script type="text/brightscript" uri="ProducerTaskA.brs" />
+</component>

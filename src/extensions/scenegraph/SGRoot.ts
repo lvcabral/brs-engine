@@ -21,17 +21,8 @@ import { ThreadInfo } from "./SGTypes";
 import type { SoundEffect } from "./nodes/SoundEffect";
 import type { RoSGNode } from "./components/RoSGNode";
 import type { RoSGScreen } from "./components/RoSGScreen";
-import type {
-    AnimationBase,
-    Audio,
-    Dialog,
-    RenderThreadQueue,
-    Scene,
-    StandardDialog,
-    Task,
-    Timer,
-    Video,
-} from "./nodes";
+import type { AnimationBase, Audio, Dialog, Scene, StandardDialog, Task, Timer, Video } from "./nodes";
+import type { RoRenderThreadQueue } from "./components/RoRenderThreadQueue";
 
 /**
  * A singleton object that holds the Node that represents the m.global, the root Scene,
@@ -79,8 +70,8 @@ export class SGRoot {
      * `ExecutionTimeout` runtime error instead of silently returning `invalid`. Defaults to 10s.
      */
     rendezvousTimeout: number = 10000;
-    /** roRenderThreadQueue instances on the render thread, keyed by node address, drained each frame. */
-    private readonly _renderQueues: Map<string, RenderThreadQueue> = new Map();
+    /** The render thread's roRenderThreadQueue singleton (holds handlers), drained each frame. */
+    private _renderQueue?: RoRenderThreadQueue;
 
     get interpreter(): Interpreter | undefined {
         return this._interpreter;
@@ -390,38 +381,34 @@ export class SGRoot {
     }
 
     /**
-     * Registers a roRenderThreadQueue instance (render thread) so it is drained each render frame.
-     * @param queue The queue node to register, keyed by its address.
+     * Registers the render-thread roRenderThreadQueue singleton so it is drained each render frame.
+     * @param queue The queue singleton holding the registered handlers.
      */
-    registerRenderQueue(queue: RenderThreadQueue) {
-        this._renderQueues.set(queue.getAddress(), queue);
+    registerRenderQueue(queue: RoRenderThreadQueue) {
+        this._renderQueue = queue;
     }
 
     /**
-     * Enqueues a message (delivered from a Task thread via a `post` update) into the matching
-     * render-thread queue instance, if registered.
-     * @param address Address of the target roRenderThreadQueue node.
+     * Enqueues a message (delivered from a Task thread via a `post` update) into the render-thread
+     * queue singleton, if registered.
      * @param messageId Channel id the message was posted to.
      * @param data Serialized message payload.
+     * @param fn Name of the BrightScript function that posted the message (for `msgInfo.function`).
      */
-    enqueueRenderQueueMessage(address: string, messageId: string, data: any) {
-        this._renderQueues.get(address)?.enqueue(messageId, data);
+    enqueueRenderQueueMessage(messageId: string, data: any, fn: string = "") {
+        this._renderQueue?.enqueue(messageId, data, fn);
     }
 
     /**
-     * Drains all registered render-thread queues, invoking their handlers. Called from the render
-     * loop (a safe, between-handler point) to avoid re-entering the interpreter mid-statement.
-     * @returns True if any queue had pending messages drained.
+     * Drains the render-thread queue singleton, invoking its handlers. Called from the render loop
+     * (a safe, between-handler point) to avoid re-entering the interpreter mid-statement.
+     * @returns True if the queue had pending messages drained.
      */
     processRenderQueues(): boolean {
-        if (this._renderQueues.size === 0 || !this._interpreter) {
+        if (!this._renderQueue || !this._interpreter) {
             return false;
         }
-        let drained = false;
-        for (const queue of this._renderQueues.values()) {
-            drained = queue.drain(this._interpreter) || drained;
-        }
-        return drained;
+        return this._renderQueue.drain(this._interpreter);
     }
 
     /**
