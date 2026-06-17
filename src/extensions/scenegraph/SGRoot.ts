@@ -393,9 +393,10 @@ export class SGRoot {
      * queue singleton, if registered.
      * @param messageId Channel id the message was posted to.
      * @param data Serialized message payload.
+     * @param fn Name of the BrightScript function that posted the message (for `msgInfo.function`).
      */
-    enqueueRenderQueueMessage(messageId: string, data: any) {
-        this._renderQueue?.enqueue(messageId, data);
+    enqueueRenderQueueMessage(messageId: string, data: any, fn: string = "") {
+        this._renderQueue?.enqueue(messageId, data, fn);
     }
 
     /**

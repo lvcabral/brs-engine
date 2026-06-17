@@ -286,11 +286,13 @@ export class Task extends Node {
     /**
      * Sends a fire-and-forget roRenderThreadQueue message to the render thread (non-blocking, unlike
      * a rendezvous). Used by `RoRenderThreadQueue.PostMessage`/`CopyMessage` from a Task thread. The
-     * render thread routes it to its queue singleton by message id, so no node address is needed.
+     * render thread routes it to its queue singleton by message id, so no node address is needed;
+     * the (otherwise unused) `address` field carries the posting function name for `msgInfo.function`.
      * @param messageId Channel id the message was posted to.
      * @param value Serialized message payload.
+     * @param fn Name of the BrightScript function that posted the message.
      */
-    postRenderQueueMessage(messageId: string, value: any) {
+    postRenderQueueMessage(messageId: string, value: any, fn: string = "") {
         if (this.threadId < 0 || !this.active) {
             return;
         }
@@ -298,7 +300,7 @@ export class Task extends Node {
             id: this.threadId,
             action: "post",
             type: "node",
-            address: "",
+            address: fn,
             key: messageId,
             value,
         };
@@ -656,7 +658,8 @@ export class Task extends Node {
             }
             if (update.action === "post") {
                 // Fire-and-forget roRenderThreadQueue message: enqueue for the render-loop drain.
-                sgRoot.enqueueRenderQueueMessage(update.key, update.value);
+                // `address` carries the posting function name (see postRenderQueueMessage).
+                sgRoot.enqueueRenderQueueMessage(update.key, update.value, update.address);
                 return update;
             }
             const node = this.getNodeToUpdate(update);

@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <!--
-  ProducerTaskB runs on its own Task thread. It alternates between PostMessage (move an
-  roAssociativeArray) and CopyMessage (copy an roSGNode ContentNode). Copied objects are
-  counted by NumCopies, which the task reports when it finishes.
+  ProducerTaskB runs on its own Task thread. It alternates between CopyMessage (copy an
+  roAssociativeArray - not counted by NumCopies) and PostMessage of an roSGNode ContentNode
+  (a node can't be moved, so PostMessage copies it - counted by NumCopies). The task reports
+  NumCopies when it finishes (expected: 3).
 -->
 <component name="ProducerTaskB" extends="Task">
     <script type="text/brightscript" uri="ProducerTaskB.brs" />

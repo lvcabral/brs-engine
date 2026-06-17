@@ -36,6 +36,8 @@ end sub
 
 sub onStatus(data, msgInfo)
     ' msgInfo carries: message_id (String), created (roDateTime), function (String), timespan (roTimespan)
+    print "DATA: "; data 
+    print "MSGINFO: "; msgInfo
     line = "STATUS [" + msgInfo.message_id + "]  Task " + data.from + ": " + data.state
     if data.state = "done" then line = line + "   (NumCopies=" + data.copies.ToStr() + ")"
     m.lblStatus.text = line
@@ -55,11 +57,11 @@ sub onTaskATick(data, msgInfo)
     updateStats()
 end sub
 
-' --- Task B: alternates moved AA and copied roSGNode payloads ------------------------------
+' --- Task B: CopyMessage(AA) does not count; PostMessage(node) is copied (counts in NumCopies) --
 
 sub onTaskBTick(data, msgInfo)
     m.countB = m.countB + 1
-    appendLog(m.logB, "#" + data.seq.ToStr() + "  (move)  " + data.note)
+    appendLog(m.logB, "#" + data.seq.ToStr() + "  (copy aa)   " + data.note)
     m.lblB.text = joinLines(m.logB)
     updateStats()
 end sub
@@ -72,7 +74,7 @@ sub onTaskBNode(data, msgInfo)
         title = data.title
         seq = data.seq.ToStr()
     end if
-    appendLog(m.logB, "#" + seq + "  (copy node)  " + title)
+    appendLog(m.logB, "#" + seq + "  (post node)  " + title)
     m.lblB.text = joinLines(m.logB)
     updateStats()
 end sub

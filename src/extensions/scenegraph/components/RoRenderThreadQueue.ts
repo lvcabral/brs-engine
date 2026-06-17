@@ -39,6 +39,8 @@ interface QueueHandler {
 interface PendingMessage {
     id: string;
     data: any;
+    /** Name of the BrightScript function that posted the message, surfaced as `function`. */
+    fn: string;
     /** Wall-clock creation time (epoch ms), surfaced as the `created` roDateTime. */
     time: number;
     /** `performance.now()` mark at creation, used to seed the `timespan` roTimespan. */
@@ -88,9 +90,10 @@ export class RoRenderThreadQueue extends BrsComponent implements BrsValue {
      * Enqueues a serialized message into this (render-thread) instance and registers it for draining.
      * @param messageId Channel id the message was posted to.
      * @param data Serialized (plain JS) message payload.
+     * @param fn Name of the BrightScript function that posted the message (for `msgInfo.function`).
      */
-    enqueue(messageId: string, data: any) {
-        this.pending.push({ id: messageId, data, time: Date.now(), mark: performance.now() });
+    enqueue(messageId: string, data: any, fn: string = "") {
+        this.pending.push({ id: messageId, data, fn, time: Date.now(), mark: performance.now() });
         sgRoot.registerRenderQueue(this);
     }
 
@@ -111,9 +114,8 @@ export class RoRenderThreadQueue extends BrsComponent implements BrsValue {
                 continue;
             }
             const data = brsValueOf(message.data);
+            const msgInfo = this.buildMsgInfo(message);
             for (const entry of handlers) {
-                // msgInfo is built per handler because `function` is the handler being invoked.
-                const msgInfo = this.buildMsgInfo(message, entry.handler);
                 this.invokeHandler(interpreter, entry, data, msgInfo);
             }
         }
@@ -162,8 +164,8 @@ export class RoRenderThreadQueue extends BrsComponent implements BrsValue {
             args: [new StdlibArgument("message_id", ValueKind.String), new StdlibArgument("data", ValueKind.Dynamic)],
             returns: ValueKind.Void,
         },
-        impl: (_: Interpreter, messageId: BrsString, data: BrsType) => {
-            this.dispatch(messageId.getValue(), data, false);
+        impl: (interpreter: Interpreter, messageId: BrsString, data: BrsType) => {
+            this.dispatch(messageId.getValue(), data, false, currentFunctionName(interpreter));
             return BrsInvalid.Instance;
         },
     });
@@ -174,13 +176,17 @@ export class RoRenderThreadQueue extends BrsComponent implements BrsValue {
             args: [new StdlibArgument("message_id", ValueKind.String), new StdlibArgument("data", ValueKind.Dynamic)],
             returns: ValueKind.Void,
         },
-        impl: (_: Interpreter, messageId: BrsString, data: BrsType) => {
-            this.dispatch(messageId.getValue(), data, true);
+        impl: (interpreter: Interpreter, messageId: BrsString, data: BrsType) => {
+            this.dispatch(messageId.getValue(), data, true, currentFunctionName(interpreter));
             return BrsInvalid.Instance;
         },
     });
 
-    /** Returns the number of objects copied (rather than moved) by PostMessage. */
+    /**
+     * Returns the number of objects that `PostMessage` had to copy instead of move. Per the spec
+     * this counts `PostMessage` copies only; `CopyMessage` (which always copies by design) is not
+     * counted.
+     */
     protected readonly numCopies = new Callable("NumCopies", {
         signature: { args: [], returns: ValueKind.Int32 },
         impl: (_: Interpreter) => new Int32(this.copyCount),
@@ -192,32 +198,34 @@ export class RoRenderThreadQueue extends BrsComponent implements BrsValue {
      * @param messageId Channel id to post to.
      * @param data Message payload.
      * @param copy Whether the caller requested a copy (CopyMessage) rather than a move (PostMessage).
+     * @param fn Name of the BrightScript function posting the message (for `msgInfo.function`).
      */
-    private dispatch(messageId: string, data: BrsType, copy: boolean) {
+    private dispatch(messageId: string, data: BrsType, copy: boolean, fn: string) {
         const serialized = this.serializeData(data, copy);
         if (sgRoot.inTaskThread()) {
             const task = sgRoot.getCurrentThreadTask();
-            task?.postRenderQueueMessage(messageId, serialized);
+            task?.postRenderQueueMessage(messageId, serialized, fn);
         } else {
-            this.enqueue(messageId, serialized);
+            this.enqueue(messageId, serialized, fn);
         }
     }
 
     /**
-     * Converts a message payload to a plain JS form suitable for cross-thread delivery, copying
-     * non-movable objects (nodes) and tracking the copy count.
+     * Converts a message payload to a plain JS form suitable for cross-thread delivery. Per the
+     * spec, `NumCopies` tracks objects that `PostMessage` had to copy instead of move: a node
+     * cannot be exclusively moved across threads, so a `PostMessage` of a node counts as a copy.
+     * Movable values (associative arrays, primitives) are moved, and `CopyMessage` is never counted.
      * @param data Message payload.
-     * @param copy Whether the caller requested an explicit copy.
+     * @param copy Whether the caller requested an explicit copy (CopyMessage).
      * @returns The serialized payload.
      */
     private serializeData(data: BrsType, copy: boolean): any {
         if (data instanceof Node) {
             data.setOwner(0); // Nodes posted to the render thread are owned by it.
-            this.copyCount++;
+            if (!copy) {
+                this.copyCount++; // PostMessage must copy a node rather than move it.
+            }
             return fromSGNode(data, true);
-        }
-        if (copy) {
-            this.copyCount++;
         }
         return jsValueOf(data);
     }
@@ -225,17 +233,16 @@ export class RoRenderThreadQueue extends BrsComponent implements BrsValue {
     /**
      * Builds the `msgInfo` metadata associative array passed as the handler's second argument,
      * matching the fields a real Roku device provides: `message_id` (channel id), `created`
-     * (roDateTime of creation), `function` (the handler being invoked), and `timespan` (roTimespan
-     * marked at creation, so a handler can measure how long the message waited).
+     * (roDateTime of creation), `function` (name of the function that posted the message), and
+     * `timespan` (roTimespan marked at creation, so a handler can measure how long it waited).
      * @param message The pending message being delivered.
-     * @param handlerName The name of the handler function about to be invoked.
      * @returns The populated metadata associative array.
      */
-    private buildMsgInfo(message: PendingMessage, handlerName: string): RoAssociativeArray {
+    private buildMsgInfo(message: PendingMessage): RoAssociativeArray {
         const msgInfo = new RoAssociativeArray([]);
         msgInfo.set(new BrsString("message_id"), new BrsString(message.id), true);
         msgInfo.set(new BrsString("created"), new RoDateTime(message.time / 1000), true);
-        msgInfo.set(new BrsString("function"), new BrsString(handlerName), true);
+        msgInfo.set(new BrsString("function"), new BrsString(message.fn), true);
         msgInfo.set(new BrsString("timespan"), new RoTimespan(message.mark), true);
         return msgInfo;
     }
@@ -282,6 +289,17 @@ export class RoRenderThreadQueue extends BrsComponent implements BrsValue {
             return BrsInvalid.Instance;
         }, environment);
     }
+}
+
+/**
+ * Returns the name of the BrightScript function currently executing (the one that called
+ * PostMessage/CopyMessage). Native callables don't push a stack frame, so the top of the call
+ * stack is the user function that posted the message.
+ * @param interpreter The interpreter whose call stack to inspect.
+ * @returns The posting function name, or "" if the stack is empty.
+ */
+function currentFunctionName(interpreter: Interpreter): string {
+    return interpreter.stackCopy.at(-1)?.functionName ?? "";
 }
 
 /** Per-thread singleton instance of `roRenderThreadQueue` (mirrors `getTextureManager`). */

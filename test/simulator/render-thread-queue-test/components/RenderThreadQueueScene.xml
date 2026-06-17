@@ -15,9 +15,11 @@
 
     * AddMessageHandler  - register handlers on the render thread (multiple per channel:
                            the "status" channel has two handlers that both fire, in order)
-    * PostMessage        - move data (roAssociativeArray) from a task to the render thread
-    * CopyMessage        - copy data; Task B posts roSGNode (ContentNode) payloads
-    * NumCopies          - reported by each task when it finishes
+    * PostMessage        - move data (roAssociativeArray); Task B also PostMessages roSGNode
+                           (ContentNode) payloads, which must be copied (counts in NumCopies)
+    * CopyMessage        - copy data (roAssociativeArray); not counted by NumCopies
+    * NumCopies          - PostMessage copies only; reported by each task when it finishes
+                           (Task A: 0, Task B: 3)
     * handler(data, msgInfo) signature, where msgInfo.id is the channel id
 
   Every handler runs on the render thread and updates on-screen Labels live, so the message
@@ -44,7 +46,7 @@
 
         <!-- Task B panel -->
         <Rectangle translation="[980, 175]" width="880" height="640" color="0x1E1726FF" />
-        <Label id="headerB" text="TASK B   own queue - PostMessage + CopyMessage (node)"
+        <Label id="headerB" text="TASK B   own queue - CopyMessage (aa) + PostMessage (node)"
                font="font:MediumBoldSystemFont" color="0xC9A7FFFF" translation="[1004, 192]" />
         <Label id="logB" translation="[1004, 250]" width="832" height="550"
                wrap="true" numLines="11" lineSpacing="8"
