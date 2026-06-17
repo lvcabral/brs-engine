@@ -18,6 +18,8 @@ import {
     Int32,
     Interpreter,
     RoAssociativeArray,
+    RoDateTime,
+    RoTimespan,
     StdlibArgument,
     ValueKind,
 } from "brs-engine";
@@ -37,7 +39,10 @@ interface QueueHandler {
 interface PendingMessage {
     id: string;
     data: any;
+    /** Wall-clock creation time (epoch ms), surfaced as the `created` roDateTime. */
     time: number;
+    /** `performance.now()` mark at creation, used to seed the `timespan` roTimespan. */
+    mark: number;
 }
 
 /**
@@ -85,7 +90,7 @@ export class RoRenderThreadQueue extends BrsComponent implements BrsValue {
      * @param data Serialized (plain JS) message payload.
      */
     enqueue(messageId: string, data: any) {
-        this.pending.push({ id: messageId, data, time: Date.now() });
+        this.pending.push({ id: messageId, data, time: Date.now(), mark: performance.now() });
         sgRoot.registerRenderQueue(this);
     }
 
@@ -106,8 +111,9 @@ export class RoRenderThreadQueue extends BrsComponent implements BrsValue {
                 continue;
             }
             const data = brsValueOf(message.data);
-            const msgInfo = toAssociativeArray({ id: message.id, time: message.time });
             for (const entry of handlers) {
+                // msgInfo is built per handler because `function` is the handler being invoked.
+                const msgInfo = this.buildMsgInfo(message, entry.handler);
                 this.invokeHandler(interpreter, entry, data, msgInfo);
             }
         }
@@ -214,6 +220,24 @@ export class RoRenderThreadQueue extends BrsComponent implements BrsValue {
             this.copyCount++;
         }
         return jsValueOf(data);
+    }
+
+    /**
+     * Builds the `msgInfo` metadata associative array passed as the handler's second argument,
+     * matching the fields a real Roku device provides: `message_id` (channel id), `created`
+     * (roDateTime of creation), `function` (the handler being invoked), and `timespan` (roTimespan
+     * marked at creation, so a handler can measure how long the message waited).
+     * @param message The pending message being delivered.
+     * @param handlerName The name of the handler function about to be invoked.
+     * @returns The populated metadata associative array.
+     */
+    private buildMsgInfo(message: PendingMessage, handlerName: string): RoAssociativeArray {
+        const msgInfo = new RoAssociativeArray([]);
+        msgInfo.set(new BrsString("message_id"), new BrsString(message.id), true);
+        msgInfo.set(new BrsString("created"), new RoDateTime(message.time / 1000), true);
+        msgInfo.set(new BrsString("function"), new BrsString(handlerName), true);
+        msgInfo.set(new BrsString("timespan"), new RoTimespan(message.mark), true);
+        return msgInfo;
     }
 
     /**

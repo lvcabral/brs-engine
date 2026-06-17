@@ -35,7 +35,8 @@ end sub
 ' --- "status" channel: two handlers registered, both fire in order -------------------------
 
 sub onStatus(data, msgInfo)
-    line = "STATUS [" + msgInfo.id + "]  Task " + data.from + ": " + data.state
+    ' msgInfo carries: message_id (String), created (roDateTime), function (String), timespan (roTimespan)
+    line = "STATUS [" + msgInfo.message_id + "]  Task " + data.from + ": " + data.state
     if data.state = "done" then line = line + "   (NumCopies=" + data.copies.ToStr() + ")"
     m.lblStatus.text = line
 end sub
