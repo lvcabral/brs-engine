@@ -78,7 +78,6 @@ import {
     StandardProgressDialog,
     ParentalControlPinPad,
     ProgressDialog,
-    RenderThreadQueue,
     StdDlgActionCardItem,
     StdDlgBulletTextItem,
     StdDlgButton,
@@ -236,8 +235,6 @@ export class SGNodeFactory {
                 return new Task([], name);
             case SGNodeType.Timer.toLowerCase():
                 return new Timer([], name);
-            case SGNodeType.RenderThreadQueue.toLowerCase():
-                return new RenderThreadQueue([], name);
             case SGNodeType.Scene.toLowerCase():
                 return new Scene([], name);
             case SGNodeType.Audio.toLowerCase():

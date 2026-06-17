@@ -57,7 +57,6 @@ export * from "./StandardPinPadDialog";
 export * from "./StandardProgressDialog";
 export * from "./ParentalControlPinPad";
 export * from "./ProgressDialog";
-export * from "./RenderThreadQueue";
 export * from "./StdDlgActionCardItem";
 export * from "./StdDlgBulletTextItem";
 export * from "./StdDlgButton";
@@ -159,7 +158,6 @@ export enum SGNodeType {
     TimeGrid = "TimeGrid",
     Task = "Task",
     Timer = "Timer",
-    RenderThreadQueue = "RenderThreadQueue",
     Scene = "Scene",
     Keyboard = "Keyboard",
     MiniKeyboard = "MiniKeyboard",

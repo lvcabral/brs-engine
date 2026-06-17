@@ -1,16 +1,19 @@
 const scenegraph = require("../../../packages/scenegraph/lib/brs-sg.node.js");
 
-const { RenderThreadQueue, sgRoot } = scenegraph;
+const { RoRenderThreadQueue, getRenderThreadQueue, sgRoot } = scenegraph;
 
 describe("roRenderThreadQueue", () => {
-    test("constructs as a RenderThreadQueue node", () => {
-        const queue = new RenderThreadQueue();
-        expect(queue.nodeSubtype).toBe("RenderThreadQueue");
-        expect(queue.getAddress()).toBeTruthy();
+    test("constructs as a roRenderThreadQueue component", () => {
+        const queue = new RoRenderThreadQueue();
+        expect(queue.getComponentName()).toBe("roRenderThreadQueue");
+    });
+
+    test("getRenderThreadQueue returns the per-thread singleton", () => {
+        expect(getRenderThreadQueue()).toBe(getRenderThreadQueue());
     });
 
     test("enqueue then drain reports pending work and clears the queue", () => {
-        const queue = new RenderThreadQueue();
+        const queue = new RoRenderThreadQueue();
         queue.enqueue("evt", { foo: "bar" });
 
         // No handler registered for "evt": drain reports it had pending work but invokes nothing,
@@ -20,16 +23,12 @@ describe("roRenderThreadQueue", () => {
         expect(queue.drain({})).toBe(false);
     });
 
-    test("sgRoot routes a posted message to the matching queue by address", () => {
-        const queue = new RenderThreadQueue();
+    test("sgRoot routes a posted message to the registered render-thread queue", () => {
+        const queue = new RoRenderThreadQueue();
         sgRoot.registerRenderQueue(queue);
 
-        sgRoot.enqueueRenderQueueMessage(queue.getAddress(), "evt", { a: 1 });
+        sgRoot.enqueueRenderQueueMessage("evt", { a: 1 });
         expect(queue.drain({})).toBe(true);
-        expect(queue.drain({})).toBe(false);
-
-        // An unknown address is a no-op (no queue registered for it).
-        sgRoot.enqueueRenderQueueMessage("DEADBEEF", "evt", { a: 1 });
         expect(queue.drain({})).toBe(false);
     });
 });

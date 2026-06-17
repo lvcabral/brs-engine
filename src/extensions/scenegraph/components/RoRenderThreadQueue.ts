@@ -6,11 +6,13 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 import {
-    AAMember,
+    BrsBoolean,
+    BrsComponent,
     BrsDevice,
     BrsInvalid,
     BrsString,
     BrsType,
+    BrsValue,
     Callable,
     Environment,
     Int32,
@@ -19,10 +21,9 @@ import {
     StdlibArgument,
     ValueKind,
 } from "brs-engine";
-import { Node } from "./Node";
+import { Node } from "../nodes";
 import { sgRoot } from "../SGRoot";
 import { brsValueOf, fromSGNode, jsValueOf, toAssociativeArray } from "../factory/Serializer";
-import { SGNodeType } from ".";
 
 /** A render-thread handler registered for a given message id. */
 interface QueueHandler {
@@ -40,15 +41,22 @@ interface PendingMessage {
 }
 
 /**
- * `roRenderThreadQueue` node (OS 15+). Queues messages to be consumed by handlers on the render
+ * `roRenderThreadQueue` component (OS 15+). Queues messages to be consumed by handlers on the render
  * thread, enabling asynchronous (non-blocking) communication from Task threads to the render thread
  * without the overhead/blocking of a rendezvous. See `ifRenderThreadQueue`.
  *
+ * It is registered with `CreateObject` by the SceneGraph extension and is a **per-thread singleton**
+ * (see `getRenderThreadQueue`), mirroring `roTextureManager`. The render thread's instance holds the
+ * registered handlers; a Task thread's instance is used only to `PostMessage`/`CopyMessage`, which are
+ * delivered to the render thread with a fire-and-forget `post` thread update and drained during the
+ * render loop. Channels are keyed globally by message id, so handler registration and message posting
+ * do not need to share object identity across threads.
+ *
  * Handler registration and invocation always happen on the render thread; `PostMessage`/`CopyMessage`
- * may be called from any thread. Posts from a Task thread are delivered with a fire-and-forget
- * `post` thread update and drained on the render thread during the render loop.
+ * may be called from any thread.
  */
-export class RenderThreadQueue extends Node {
+export class RoRenderThreadQueue extends BrsComponent implements BrsValue {
+    readonly kind = ValueKind.Object;
     /** Registered handlers keyed by message id (render-thread only). */
     private readonly handlers: Map<string, QueueHandler[]> = new Map();
     /** Messages awaiting delivery to handlers (render-thread only). */
@@ -56,13 +64,19 @@ export class RenderThreadQueue extends Node {
     /** Count of objects copied (rather than moved) when posting. */
     private copyCount: number = 0;
 
-    constructor(members: AAMember[] = [], readonly name: string = SGNodeType.RenderThreadQueue) {
-        super([], name);
-        this.setExtendsType(name, SGNodeType.Node);
-        this.registerInitializedFields(members);
+    constructor() {
+        super("roRenderThreadQueue");
         this.registerMethods({
             ifRenderThreadQueue: [this.addMessageHandler, this.postMessage, this.copyMessage, this.numCopies],
         });
+    }
+
+    equalTo(_other: BrsType) {
+        return BrsBoolean.False;
+    }
+
+    toString() {
+        return "<Component: roRenderThreadQueue>";
     }
 
     /**
@@ -121,11 +135,12 @@ export class RenderThreadQueue extends Node {
                 return BrsInvalid.Instance;
             }
             const id = messageId.getValue();
+            const hostNode = (interpreter.environment.hostNode ?? sgRoot.scene) as Node;
             const entry: QueueHandler = {
                 handler: handler.getValue(),
                 observer,
                 environment: interpreter.environment,
-                hostNode: (interpreter.environment.hostNode ?? this) as Node,
+                hostNode,
             };
             const list = this.handlers.get(id) ?? [];
             list.push(entry);
@@ -174,9 +189,9 @@ export class RenderThreadQueue extends Node {
      */
     private dispatch(messageId: string, data: BrsType, copy: boolean) {
         const serialized = this.serializeData(data, copy);
-        if (this.shouldRendezvous()) {
+        if (sgRoot.inTaskThread()) {
             const task = sgRoot.getCurrentThreadTask();
-            task?.postRenderQueueMessage(this.getAddress(), messageId, serialized);
+            task?.postRenderQueueMessage(messageId, serialized);
         } else {
             this.enqueue(messageId, serialized);
         }
@@ -243,4 +258,13 @@ export class RenderThreadQueue extends Node {
             return BrsInvalid.Instance;
         }, environment);
     }
+}
+
+/** Per-thread singleton instance of `roRenderThreadQueue` (mirrors `getTextureManager`). */
+let renderThreadQueue: RoRenderThreadQueue;
+
+/** Returns the per-thread singleton `roRenderThreadQueue` instance, creating it on first use. */
+export function getRenderThreadQueue(): RoRenderThreadQueue {
+    renderThreadQueue ||= new RoRenderThreadQueue();
+    return renderThreadQueue;
 }

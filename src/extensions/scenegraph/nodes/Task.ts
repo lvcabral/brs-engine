@@ -285,12 +285,12 @@ export class Task extends Node {
 
     /**
      * Sends a fire-and-forget roRenderThreadQueue message to the render thread (non-blocking, unlike
-     * a rendezvous). Used by `RenderThreadQueue.PostMessage`/`CopyMessage` from a Task thread.
-     * @param address Address of the target render-thread queue node.
+     * a rendezvous). Used by `RoRenderThreadQueue.PostMessage`/`CopyMessage` from a Task thread. The
+     * render thread routes it to its queue singleton by message id, so no node address is needed.
      * @param messageId Channel id the message was posted to.
      * @param value Serialized message payload.
      */
-    postRenderQueueMessage(address: string, messageId: string, value: any) {
+    postRenderQueueMessage(messageId: string, value: any) {
         if (this.threadId < 0 || !this.active) {
             return;
         }
@@ -298,7 +298,7 @@ export class Task extends Node {
             id: this.threadId,
             action: "post",
             type: "node",
-            address,
+            address: "",
             key: messageId,
             value,
         };
@@ -656,7 +656,7 @@ export class Task extends Node {
             }
             if (update.action === "post") {
                 // Fire-and-forget roRenderThreadQueue message: enqueue for the render-loop drain.
-                sgRoot.enqueueRenderQueueMessage(update.address, update.key, update.value);
+                sgRoot.enqueueRenderQueueMessage(update.key, update.value);
                 return update;
             }
             const node = this.getNodeToUpdate(update);
