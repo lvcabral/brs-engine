@@ -8,6 +8,11 @@ import { RoEVPCipher } from "./RoEVPCipher";
 import { RoEVPDigest } from "./RoEVPDigest";
 import { RoHMAC } from "./RoHMAC";
 import { RoDeviceCrypto } from "./RoDeviceCrypto";
+import { RoDSA } from "./RoDSA";
+import { RoRSA } from "./RoRSA";
+import { RoAudioGuide } from "./RoAudioGuide";
+import { RoTextToSpeech } from "./RoTextToSpeech";
+import { RoMicrophone } from "./RoMicrophone";
 import { RoChannelStore } from "./RoChannelStore";
 import { RoAppMemoryMonitor } from "./RoAppMemoryMonitor";
 import { RoDateTime } from "./RoDateTime";
@@ -129,6 +134,8 @@ export const BrsObjects = new BrsObjectsMap([
     ["roEVPDigest", (_?: Interpreter) => new RoEVPDigest()],
     ["roHMAC", (_?: Interpreter) => new RoHMAC()],
     ["roDeviceCrypto", (_?: Interpreter) => new RoDeviceCrypto()],
+    ["roDSA", (_?: Interpreter) => new RoDSA()],
+    ["roRSA", (_?: Interpreter) => new RoRSA()],
     ["roChannelStore", (_?: Interpreter) => new RoChannelStore()],
     ["roDateTime", (_?: Interpreter) => new RoDateTime()],
     ["roList", (_?: Interpreter) => new RoList()],
@@ -161,6 +168,9 @@ export const BrsObjects = new BrsObjectsMap([
     ["roAudioPlayer", (_?: Interpreter) => new RoAudioPlayer()],
     ["roAudioResource", (_: Interpreter, name: BrsString) => createAudioResource(name), 1],
     ["roAudioMetadata", (_?: Interpreter) => new RoAudioMetadata()],
+    ["roAudioGuide", (_?: Interpreter) => new RoAudioGuide()],
+    ["roTextToSpeech", (_?: Interpreter) => new RoTextToSpeech()],
+    ["roMicrophone", (_?: Interpreter) => new RoMicrophone()],
     ["roVideoPlayer", (_?: Interpreter) => new RoVideoPlayer()],
     ["roCompositor", (_?: Interpreter) => new RoCompositor()],
     [
