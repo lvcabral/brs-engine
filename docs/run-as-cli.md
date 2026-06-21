@@ -93,6 +93,12 @@ Dennis Ritchie said "Hello, World!"
 
 A folder can be passed with the flag `--root` to mount the `pkg:/` volume, and in this case, the BrightScript files path should be relative to the mounted root folder. Please be aware that this is using the host file system, so if you are running the CLI on a Linux machine the paths are case sensitive, unlike Roku (or using `zip` files with the engine).
 
+If `--root` is passed **without** any file arguments, the CLI runs the folder as a full application: it loads every `.brs` under `source/` and serves the `components/` tree (including SceneGraph components) from the mounted `pkg:/` volume, e.g:
+
+```console
+$ brs-cli --root ./my-app
+```
+
 It is also possible to run a full BrightScript application `.zip` or `.bpk` file, e.g:
 
 ```console

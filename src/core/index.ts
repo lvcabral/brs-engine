@@ -505,6 +505,28 @@ export async function createPayloadFromFileMap(
 }
 
 /**
+ * Recursively collects every `.brs` file path under a directory.
+ * Used to auto-discover an app's source files when only a root folder is provided.
+ * @param dir Directory to scan
+ * @returns Array of absolute (or root-relative, matching `dir`) `.brs` file paths
+ */
+function findSourceFiles(dir: string): string[] {
+    const results: string[] = [];
+    if (!fs.existsSync(dir)) {
+        return results;
+    }
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+        const fullPath = path.join(dir, entry.name);
+        if (entry.isDirectory()) {
+            results.push(...findSourceFiles(fullPath));
+        } else if (entry.name.toLowerCase().endsWith(".brs")) {
+            results.push(fullPath);
+        }
+    }
+    return results;
+}
+
+/**
  * Create the payload to run the app with the provided files.
  * @param files Code files to be executed
  * @param customDeviceData optional object with device info data
@@ -523,6 +545,15 @@ export async function createPayloadFromFiles(
     const paths: PkgFilePath[] = [];
     const source: string[] = [];
     let manifest: Map<string, string> | undefined;
+
+    // When only a root is provided, discover the app's source files automatically,
+    // allowing the CLI/library to run a folder app (including SceneGraph) from the root
+    // alone. Components under `components/` are served from disk via the root-mounted
+    // `pkg:/` volume and loaded by the SceneGraph extension, so they are not added here.
+    const discoverFromRoot = files.length === 0 && root !== undefined;
+    if (discoverFromRoot) {
+        files = findSourceFiles(path.join(root, "source")).map((file) => path.relative(root, file));
+    }
 
     let id = 0;
     for (const file of files) {
@@ -547,6 +578,9 @@ export async function createPayloadFromFiles(
         }
     }
     if (id === 0) {
+        if (discoverFromRoot && root !== undefined) {
+            throw new Error(`No BrightScript files found under '${path.join(root, "source")}'!`);
+        }
         throw new Error("Invalid or inexistent file(s)!");
     }
 
