@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Reproduces the JellyRock homescreen stack overflow:
+        WARNING: roSGNode.Set (unhandled exception): "HomeItem.itemContent": Maximum call stack size exceeded
+
+    A single ContentNode is held by MANY node-typed fields (mirroring a grid that shows the
+    same content node in several item components). Each assignment registers the field as a
+    parentField of the ContentNode (Field.setValue -> addParentField), so one change to the
+    ContentNode fans out to every field's observer.
+
+    The cycle (the JellyRock shape: an item's itemContent onChange writes back into the
+    content node, e.g. `itemData.Title = itemData.name`):
+      1. The shared ContentNode's title changes.
+      2. ContentNode.setValue propagates to all parentFields, firing every field's observer.
+      3. Each observer writes back into the same ContentNode (with a changing value, so the
+         field-equality short-circuit never stops it).
+      4. That write re-enters ContentNode.setValue, which propagates to the remaining
+         not-yet-dispatching fields, nesting one synchronous observer dispatch inside another.
+
+    Field.notifyObservers dispatches synchronously/depth-first (to preserve observer ordering
+    and legitimate sequential re-notifications - see #943), and its per-field re-entrancy guard
+    only blocks a field from re-entering itself. With many distinct fields sharing the node, the
+    cascade nests once per field and overflows the JS call stack.
+
+    The per-ContentNode propagation re-entrancy guard in ContentNode.notifyParentFields breaks
+    the self-cascade flat: while the node is already propagating, a nested setValue on the same
+    node skips re-propagation, so every observer fires exactly once at a bounded stack depth.
+-->
+<component name="SharedContentScene" extends="Scene">
+    <script type="text/brightscript">
+        <![CDATA[
+        sub init()
+            ' Enough distinct fields sharing one ContentNode to overflow via nested dispatch.
+            m.fieldCount = 1500
+            m.count = 0
+
+            m.content = CreateObject("roSGNode", "ContentNode")
+
+            for i = 0 to m.fieldCount - 1
+                fieldName = "item" + i.toStr()
+                m.top.addField(fieldName, "node", false)
+                m.top.setField(fieldName, m.content)
+                m.top.observeField(fieldName, "onItemContent")
+            end for
+
+            print "Shared content fields:"; m.fieldCount
+            runRepro()
+        end sub
+
+        sub runRepro()
+            print "Triggering shared ContentNode update"
+            m.content.title = "start"
+            print "Callbacks fired:"; m.count
+        end sub
+
+        sub onItemContent(event as Object)
+            m.count = m.count + 1
+            ' Write back into the shared ContentNode with a changing value.
+            m.content.title = "t-" + m.count.toStr()
+        end sub
+        ]]>
+    </script>
+</component>

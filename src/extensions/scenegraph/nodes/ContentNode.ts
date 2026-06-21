@@ -128,6 +128,19 @@ export class ContentNode extends Node {
      * The reason to keep track is because metadata fields should print out in all caps.
      */
     private readonly parentFields = new Set<Field>();
+    /**
+     * True while this node is notifying its parentFields, to break re-entrant cascades.
+     *
+     * A field-change observer commonly writes back into the same ContentNode (e.g. a grid
+     * item's `itemContent` onChange handler doing `m.top.itemContent.title = ...`). That write
+     * re-enters `setValue`, which would propagate to the same parentFields again, re-running the
+     * observer, and so on. Since `Field.notifyObservers` dispatches synchronously (depth-first,
+     * to preserve observer ordering and legitimate sequential re-notifications — see #943), this
+     * self-cascade grows the call stack until it overflows (#904, and the JellyRock homescreen
+     * "HomeItem.itemContent": Maximum call stack size exceeded). Guarding re-entry on the same
+     * node breaks the cascade flat while leaving cross-node parentField propagation intact.
+     */
+    private propagating = false;
 
     constructor(readonly name: string = SGNodeType.ContentNode) {
         super([], name);
@@ -147,10 +160,8 @@ export class ContentNode extends Node {
         this.notified = false;
         super.setValue(index, value, alwaysNotify, kind, sync);
         // Propagate changes notification to parent fields
-        if (this.parentFields.size && this.notified) {
-            for (const field of this.parentFields) {
-                field.notifyObservers();
-            }
+        if (this.notified) {
+            this.notifyParentFields();
         }
     }
 
@@ -178,13 +189,29 @@ export class ContentNode extends Node {
             this.makeDirty();
             this.recordChildChange("add", appendedIndex);
             // Propagate changes notification to parent fields
-            if (this.parentFields.size) {
-                for (const field of this.parentFields) {
-                    field.notifyObservers();
-                }
-            }
+            this.notifyParentFields();
         }
         return success;
+    }
+
+    /**
+     * Notifies the observers of every field that holds this ContentNode, so parent nodes react
+     * to changes within their content. Guarded against re-entry on the same node: an observer
+     * that mutates this same ContentNode would otherwise re-trigger propagation synchronously
+     * and overflow the call stack (see {@link propagating}).
+     */
+    private notifyParentFields() {
+        if (this.propagating || this.parentFields.size === 0) {
+            return;
+        }
+        this.propagating = true;
+        try {
+            for (const field of this.parentFields) {
+                field.notifyObservers();
+            }
+        } finally {
+            this.propagating = false;
+        }
     }
 
     addParentField(parentField: Field) {
