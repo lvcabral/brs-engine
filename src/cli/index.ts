@@ -107,6 +107,9 @@ program
         brs.registerCallback(messageCallback, sharedBuffer);
         if (brsFiles.length > 0) {
             await runAppFiles(brsFiles);
+        } else if (program.root) {
+            // Run a folder app (source/ + components/) from the root alone.
+            await runAppFiles([]);
         } else {
             displayTitle();
             repl();
@@ -177,6 +180,20 @@ async function loadSceneGraphExtension() {
  */
 async function runAppFiles(files: string[]) {
     try {
+        if (files.length === 0) {
+            // No positional files: run the folder app discovered from `--root`.
+            appFileName = path.basename(path.resolve(program.root));
+            deviceData.appList?.push({ id: "dev", title: appFileName, version: "1.0.0" });
+            const payload = await brs.createPayloadFromFiles(
+                files,
+                deviceData,
+                processDeepLink(),
+                program.root,
+                program.extVol
+            );
+            runApp(payload);
+            return;
+        }
         const filePath = files[0];
         const fileName = filePath.split(/.*[/|\\]/)[1] ?? filePath;
         const fileExt = fileName.split(".").pop()?.toLowerCase();

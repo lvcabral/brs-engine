@@ -293,5 +293,24 @@ describe("cli", () => {
         ]);
     }, 10000);
 
+    it("Run App from Root Folder Only", async () => {
+        // Issue #771: pointing the CLI at a folder with `--root` and no positional files
+        // discovers source/*.brs and loads components/ from the root-mounted pkg:/ volume,
+        // running the SceneGraph app the same way as passing `source/main.brs` explicitly.
+        let command = ["node", brsCliPath, "-r button-label-app", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "=== Button Label Repro ===",
+            "label.text = Save",
+            "=== Button Label Repro Complete ===",
+            "------ Finished 'button-label-app' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 10000);
+
     it.todo("add tests for the remaining CLI options");
 });
