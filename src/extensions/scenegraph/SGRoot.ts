@@ -51,6 +51,7 @@ export class SGRoot {
     private _audio?: Audio;
     private _video?: Video;
     private _dirty: boolean = false;
+    private _rendering: boolean = false;
     private readonly _pendingPorts: RoMessagePort[] = [];
     /**
      * When `true`, recently-written fields can be re-read from the local copy for a short window,
@@ -138,6 +139,19 @@ export class SGRoot {
 
     get isDirty(): boolean {
         return this._dirty;
+    }
+
+    /**
+     * True while the scene tree is being rendered. Used to suppress re-entrant full-scene
+     * re-renders triggered by `localBoundingRect`/`boundingRect` queries that run inside an
+     * observer or `init()` during rendering (which would otherwise recurse and overflow the stack).
+     */
+    get rendering(): boolean {
+        return this._rendering;
+    }
+
+    set rendering(value: boolean) {
+        this._rendering = value;
     }
 
     private audioFlags: number = -1;

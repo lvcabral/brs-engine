@@ -254,6 +254,26 @@ describe("cli", () => {
         ]);
     }, 10000);
 
+    it("Shared ContentNode Recursion Repro Test", async () => {
+        let command = ["node", brsCliPath, "-r sharedcontent-recursion-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // One ContentNode shared by many fields must fan out to every observer exactly once
+        // without overflowing the stack via nested parentField propagation (JellyRock #904).
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "=== Shared ContentNode Recursion Repro ===",
+            "Shared content fields: 1500",
+            "Triggering shared ContentNode update",
+            "Callbacks fired: 1500",
+            "=== Shared ContentNode Recursion Repro Complete ===",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 10000);
+
     it("Button Label Observer Order Test", async () => {
         let command = ["node", brsCliPath, "-r button-label-app", "source/main.brs", "-c 0"].join(" ");
 

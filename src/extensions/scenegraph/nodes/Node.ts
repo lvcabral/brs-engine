@@ -800,7 +800,13 @@ export class Node extends RoSGNode implements BrsValue {
      * @returns Bounding rectangle in the requested coordinate space.
      */
     getBoundingRect(type: string, interpreter?: Interpreter): Rect {
-        if (interpreter) {
+        // A bounding-rect query refreshes layout by rendering the whole tree from the root. When
+        // this is called from BrightScript that itself runs *during* a render (an observer or a
+        // freshly created item component's init() calling localBoundingRect/boundingRect), the
+        // re-render would re-enter rendering and recurse until the stack overflows (e.g. JellyRock
+        // RowList items measuring labels). Skip the refresh while a render is in progress and return
+        // the rects already computed by the active pass.
+        if (interpreter && !sgRoot.rendering) {
             const root = this.createPath()[0];
             root.renderNode(interpreter, [0, 0], 0, 1);
         }
