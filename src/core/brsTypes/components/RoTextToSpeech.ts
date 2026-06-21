@@ -14,7 +14,7 @@ import { IfSetMessagePort, IfGetMessagePort } from "../interfaces/IfMessagePort"
  */
 export class RoTextToSpeech extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
-    private port?: RoMessagePort;
+    private readonly port?: RoMessagePort;
     private speechId = 0;
     private language = "en-US";
     private voice = "";

@@ -13,7 +13,7 @@ import { IfSetMessagePort, IfGetMessagePort } from "../interfaces/IfMessagePort"
  */
 export class RoMicrophone extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
-    private port?: RoMessagePort;
+    private readonly port?: RoMessagePort;
 
     constructor() {
         super("roMicrophone");
