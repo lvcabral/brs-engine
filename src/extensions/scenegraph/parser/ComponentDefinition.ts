@@ -396,7 +396,8 @@ function getScripts(node: XmlDocument, nodeDef: ComponentDefinition): ComponentS
     const componentScripts: ComponentScript[] = [];
 
     for (const script of scripts) {
-        if (script.attr.uri && script.val) {
+        const scriptContent = script.val?.trim() ?? "";
+        if (script.attr.uri && scriptContent) {
             throw new Error(
                 BrsError.format(
                     `<script> element cannot contain both internal and external source`,
@@ -409,12 +410,12 @@ function getScripts(node: XmlDocument, nodeDef: ComponentDefinition): ComponentS
                 type: script.attr.type,
                 uri: absoluteUri,
             });
-        } else if (typeof script.val === "string") {
+        } else if (scriptContent) {
             // pad with new lines to match original XML line numbers
             const padLines = script.line > 0 ? "\n".repeat(script.line) : "";
             componentScripts.push({
                 type: script.attr.type,
-                content: `${padLines}${script.val}`,
+                content: `${padLines}${scriptContent}`,
                 xmlPath: nodeDef.xmlPath,
             });
         }
