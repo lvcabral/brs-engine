@@ -23,7 +23,7 @@ describe("ComponentDefinition script tag parsing", () => {
         };
     }
 
-    test("self-closing <script uri=\"...\" /> sets uri property", () => {
+    test('self-closing <script uri="..." /> sets uri property', () => {
         const xml = `<?xml version="1.0" encoding="utf-8"?>
 <component name="TestComponent" extends="Scene">
     <script type="text/brightscript" uri="test.brs" />
