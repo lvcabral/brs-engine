@@ -977,6 +977,7 @@ export function getValueKindFromFieldType(type: string) {
         case "roarray":
         case "array":
         case "roassociativearray":
+        case "associativearray":
         case "assocarray":
         case "rect2d":
         case "vector2d":
@@ -1069,6 +1070,7 @@ export function getBrsValueFromFieldType(type: string, value?: string, defaultVa
             returnValue = parseColorArray(value ?? "", defaultValue);
             break;
         case "roassociativearray":
+        case "associativearray":
         case "assocarray": {
             returnValue = parseAA(value ?? "", defaultValue);
             break;
