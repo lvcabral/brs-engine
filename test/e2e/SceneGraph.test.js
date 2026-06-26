@@ -286,4 +286,22 @@ describe("SceneGraph node tests", () => {
             "final",
         ]);
     });
+
+    test("add-field-types.brs", async () => {
+        await execute([resourceFile("scenegraph", "add-field-types.brs")], outputStreams);
+
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
+            // addField returns true for every AssocArray spelling
+            "true",
+            "true",
+            "true",
+            // every field is actually created on the node
+            "true",
+            "true",
+            "true",
+            // the field behaves as a writable AssocArray
+            "roAssociativeArray",
+            "bar",
+        ]);
+    });
 });
