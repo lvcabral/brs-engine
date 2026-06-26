@@ -111,6 +111,7 @@ export namespace FieldKind {
             case "rect2d":
                 return FieldKind.Rect2D;
             case "roassociativearray":
+            case "associativearray":
             case "assocarray":
                 return FieldKind.AssocArray;
             case "font":
