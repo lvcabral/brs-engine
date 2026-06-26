@@ -37,6 +37,22 @@ describe("end to end conditional compilation", () => {
         ]);
     });
 
+    test("case-insensitive-consts/main.brs", async () => {
+        await execute(
+            [
+                resourceFile("case-insensitive-consts", "manifest"),
+                resourceFile("case-insensitive-consts", "main.brs"),
+            ],
+            outputStreams
+        );
+
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
+            "All uppercase",
+            "All lowercase",
+            "Mixed case",
+        ]);
+    });
+
     describe("(with sterr captured)", () => {
         test("conditional-compilation/compile-error.brs", async () => {
             await execute(
