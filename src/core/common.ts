@@ -331,6 +331,7 @@ export type TaskPayload = {
     paths: PkgFilePath[];
     pkgZip?: ArrayBuffer;
     extZip?: SharedArrayBuffer;
+    password?: string;
     root?: string;
     ext?: string;
 };

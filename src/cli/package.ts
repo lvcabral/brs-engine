@@ -213,14 +213,24 @@ export function getModelType(): string {
  * Creates an encrypted package by replacing source code with pcode.
  * @param source Encrypted pcode data
  * @param iv Initialization vector for encryption
+ * @param packedFiles Relative paths (lowercase) of additional files folded into the encrypted blob
+ *                    (e.g. SceneGraph component .brs/.xml) that must be stripped from the package.
  * @returns New zip file as Uint8Array
  */
-export function updateAppZip(source: Uint8Array, iv: string) {
+export function updateAppZip(source: Uint8Array, iv: string, packedFiles: string[] = []) {
+    const stripped = new Set(packedFiles.map((file) => file.toLowerCase()));
     let newZip: Zippable = {};
     for (const filePath in currentZip) {
-        if (!filePath.toLowerCase().startsWith("source")) {
+        const lcasePath = filePath.toLowerCase();
+        if (!lcasePath.startsWith("source") && !stripped.has(lcasePath)) {
             newZip[filePath] = currentZip[filePath];
         }
+    }
+    // Keep a components/ directory marker so a SceneGraph app whose component files were stripped is
+    // still detectable when the encrypted package is loaded (e.g. in the browser).
+    const hasComponents = Object.keys(newZip).some((file) => file.toLowerCase().startsWith("components/"));
+    if (!hasComponents && [...stripped].some((file) => file.startsWith("components/"))) {
+        newZip["components/"] = new Uint8Array(0);
     }
     newZip["source/data"] = [source, { level: 0 }];
     newZip["source/var"] = [strToU8(iv), { level: 0 }];

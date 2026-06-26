@@ -141,6 +141,7 @@ function runTask(taskData: TaskData, currentPayload: AppPayload) {
         paths: currentPayload.paths,
         pkgZip: currentPayload.pkgZip,
         extZip: currentPayload.extZip,
+        password: currentPayload.password,
     };
     notifyAll("debug", `[task:api] Calling Task worker: ${taskData.id}, ${taskData.name}`);
     taskWorker.postMessage(sharedBuffer);

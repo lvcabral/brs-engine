@@ -307,7 +307,7 @@ async function runApp(payload: AppPayload) {
             // Generate the Encrypted App Package
             const filePath = path.join(program.out, appFileName.replaceAll(/.zip/gi, ".bpk"));
             try {
-                const buffer = updateAppZip(pkg.cipherText, pkg.iv);
+                const buffer = updateAppZip(pkg.cipherText, pkg.iv, pkg.packedFiles);
                 fs.writeFileSync(filePath, buffer);
                 console.log(
                     chalk.blueBright(

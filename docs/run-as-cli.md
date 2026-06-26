@@ -149,3 +149,13 @@ Packaging ../tests/test-sandbox.zip...
 Package file created as ./release/test-sandbox.bpk with 528 KB.
 
 ```
+
+SceneGraph applications are fully supported: in addition to the `pkg:/source/` code, every component file under `pkg:/components/` (both `.brs` scripts and `.xml` definitions, including their inline `<script>` blocks) is encrypted into the package and removed from the distributed `.bpk`. The component files are restored in memory only at runtime, after the package is decrypted with the password.
+
+To run an encrypted `.bpk`, provide the same password used to create it via `--pack`:
+
+```console
+$ brs-cli ./release/test-sandbox.bpk --pack b4bf93d0d5e547ca8edcc0f39c6bcc16
+```
+
+> **Note:** The package is only protected at rest. Anyone with the password can decrypt and run it, so keep the password private and never embed it in a public web app.

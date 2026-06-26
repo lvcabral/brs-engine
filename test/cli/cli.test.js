@@ -1,9 +1,30 @@
 const child_process = require("child_process");
 const path = require("path");
+const fs = require("fs");
+const os = require("os");
 const { promisify } = require("util");
+const { zipSync, unzipSync } = require("fflate");
 
 const exec = promisify(child_process.exec);
 const brsCliPath = path.join(process.cwd(), "packages", "node", "bin", "brs.cli.js");
+
+/** Recursively zips a folder into a Buffer using forward-slash relative paths. */
+function zipFolder(rootDir) {
+    const files = {};
+    const walk = (dir, prefix) => {
+        for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+            const full = path.join(dir, entry.name);
+            const rel = prefix ? `${prefix}/${entry.name}` : entry.name;
+            if (entry.isDirectory()) {
+                walk(full, rel);
+            } else {
+                files[rel] = new Uint8Array(fs.readFileSync(full));
+            }
+        }
+    };
+    walk(rootDir, "");
+    return Buffer.from(zipSync(files, { level: 6 }));
+}
 
 describe("cli", () => {
     it("run zip file", async () => {
@@ -311,6 +332,66 @@ describe("cli", () => {
             "",
         ]);
     }, 10000);
+
+    describe("SceneGraph .bpk encryption", () => {
+        const password = "abcdefghij0123456789abcdefghij01"; // 32 chars (AES-256 key)
+        const expected = [
+            "=== Button Label Repro ===",
+            "label.text = Save",
+            "=== Button Label Repro Complete ===",
+            "------ Finished 'app.bpk' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ];
+        let tmpDir;
+        let bpkPath;
+
+        beforeAll(async () => {
+            tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "brs-bpk-"));
+            // Package the SceneGraph button-label-app (inline-script XML components) into a zip.
+            const appDir = path.join(__dirname, "resources", "button-label-app");
+            const zipPath = path.join(tmpDir, "app.zip");
+            fs.writeFileSync(zipPath, zipFolder(appDir));
+            // Encrypt it into app.bpk.
+            await exec(
+                ["node", brsCliPath, '"' + zipPath + '"', "--pack", password, "--out", '"' + tmpDir + '"', "-c 0"].join(
+                    " "
+                )
+            );
+            bpkPath = path.join(tmpDir, "app.bpk");
+        }, 15000);
+
+        afterAll(() => {
+            if (tmpDir) fs.rmSync(tmpDir, { recursive: true, force: true });
+        });
+
+        it("strips component .brs/.xml from the package", () => {
+            const entries = Object.keys(unzipSync(new Uint8Array(fs.readFileSync(bpkPath))));
+            // Component code is encrypted into source/data and removed from the package.
+            expect(entries).toContain("source/data");
+            expect(entries).toContain("source/var");
+            expect(entries).toContain("manifest");
+            expect(entries.some((e) => /^components\/.+\.(brs|xml)$/i.test(e))).toBe(false);
+            // A components/ directory marker is preserved so the encrypted SceneGraph app is still
+            // detected at load time (the source zip here has no explicit directory entries).
+            expect(entries.some((e) => e.toLowerCase().startsWith("components/"))).toBe(true);
+        }, 15000);
+
+        it("runs the encrypted SceneGraph app with the correct password", async () => {
+            const { stdout } = await exec(
+                ["node", brsCliPath, '"' + bpkPath + '"', "--pack", password, "-c 0"].join(" ")
+            );
+            const lines = stdout.split("\n").map((line) => line.trimEnd());
+            expect(lines).toEqual(expect.arrayContaining(expected));
+        }, 15000);
+
+        it("fails cleanly with a wrong password", async () => {
+            const { stdout } = await exec(
+                ["node", brsCliPath, '"' + bpkPath + '"', "--pack", "x".repeat(32), "-c 0"].join(" ")
+            ).catch((e) => e); // non-zero exit code
+            expect(stdout).toContain("EXIT_UNPACK_FAILED");
+        }, 15000);
+    });
 
     it.todo("add tests for the remaining CLI options");
 });

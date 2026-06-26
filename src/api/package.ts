@@ -127,14 +127,25 @@ export function loadAppZip(fileName: string, file: ArrayBuffer, callback: Functi
     }
     // Process each file in the zip
     let hasSGComponents = false;
+    let hasComponentsFolder = false;
+    let isEncrypted = false;
     for (const filePath in currentZip) {
         processFile(filePath, currentZip[filePath]);
-        if (filePath.toLowerCase().startsWith("components/") && filePath.toLowerCase().endsWith(".xml")) {
-            hasSGComponents = true;
+        const lcasePath = filePath.toLowerCase();
+        if (lcasePath.startsWith("components/")) {
+            hasComponentsFolder = true;
+            if (lcasePath.endsWith(".xml")) {
+                hasSGComponents = true;
+            }
+        } else if (lcasePath === "source/data") {
+            isEncrypted = true;
         }
     }
-    // Add SceneGraph extension if components are present
-    if (hasSGComponents && deviceData.extensions?.has(SupportedExtension.SceneGraph)) {
+    // Add the SceneGraph extension when the app has components. For an unencrypted package we detect
+    // a component .xml; for an encrypted package the component .xml/.brs are folded into the blob and
+    // stripped, so we rely on the preserved components/ folder marker instead.
+    const hasSceneGraph = isEncrypted ? hasComponentsFolder : hasSGComponents;
+    if (hasSceneGraph && deviceData.extensions?.has(SupportedExtension.SceneGraph)) {
         extensions.push(SupportedExtension.SceneGraph);
     }
     // Mount external storage if present
@@ -264,18 +275,40 @@ export function getModelType(): string {
  * Creates a new zip package with encrypted content.
  * @param source Encrypted source data
  * @param iv Initialization vector for encryption
+ * @param packedFiles Relative paths (lowercase) of additional files folded into the encrypted blob
+ *                    (e.g. SceneGraph component .brs/.xml) that must be stripped from the package.
  * @returns New zip file as Uint8Array
  */
-export function updateAppZip(source: Uint8Array, iv: string) {
+export function updateAppZip(source: Uint8Array, iv: string, packedFiles: string[] = []) {
+    const stripped = new Set(packedFiles.map((file) => file.toLowerCase()));
     let newZip: Zippable = {};
     for (const filePath in currentZip) {
-        if (!filePath.toLowerCase().startsWith("source")) {
+        const lcasePath = filePath.toLowerCase();
+        if (!lcasePath.startsWith("source") && !stripped.has(lcasePath)) {
             newZip[filePath] = currentZip[filePath];
         }
     }
+    preserveComponentsMarker(newZip, stripped);
     newZip["source/data"] = [source, { level: 0 }];
     newZip["source/var"] = [strToU8(iv), { level: 0 }];
     return zipSync(newZip, { level: 6 });
+}
+
+/**
+ * Ensures a top-level `components/` directory entry remains in an encrypted package whose component
+ * files were stripped, so a SceneGraph app can still be detected at load time even when the source
+ * zip did not include explicit directory entries.
+ * @param newZip Zip being assembled.
+ * @param stripped Set of lowercase paths that were folded into the encrypted blob.
+ */
+export function preserveComponentsMarker(newZip: Zippable, stripped: Set<string>) {
+    if (stripped.size === 0) {
+        return;
+    }
+    const hasComponents = Object.keys(newZip).some((file) => file.toLowerCase().startsWith("components/"));
+    if (!hasComponents && [...stripped].some((file) => file.startsWith("components/"))) {
+        newZip["components/"] = new Uint8Array(0);
+    }
 }
 
 /**
