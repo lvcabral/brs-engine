@@ -44,9 +44,7 @@ export class Preprocessor implements CC.Visitor {
      *          compilation directives included within
      */
     filter(chunks: readonly CC.Chunk[], bsConst?: Map<string, boolean>): FilterResults {
-        this.constants = new Map(
-            [...(bsConst ?? [])].map(([key, value]) => [key.toLowerCase(), value])
-        );
+        this.constants = new Map([...(bsConst ?? [])].map(([key, value]) => [key.toLowerCase(), value]));
         return {
             processedTokens: chunks
                 .map((chunk) => chunk.accept(this))

@@ -267,12 +267,7 @@ describe("preprocessor", () => {
             it("matches #if with different case than #const declaration (lowercase)", () => {
                 new Preprocessor().filter([
                     new Chunk.Declaration(identifier("DEBUG"), token(Lexeme.True, "true", BrsBoolean.True)),
-                    new Chunk.If(
-                        identifier("debug"),
-                        false,
-                        [ifChunk],
-                        []
-                    ),
+                    new Chunk.If(identifier("debug"), false, [ifChunk], []),
                 ]);
 
                 expect(ifChunk.accept).toHaveBeenCalledTimes(1);
@@ -283,12 +278,7 @@ describe("preprocessor", () => {
             it("matches #if with different case than #const declaration (mixed case)", () => {
                 new Preprocessor().filter([
                     new Chunk.Declaration(identifier("DEBUG"), token(Lexeme.True, "true", BrsBoolean.True)),
-                    new Chunk.If(
-                        identifier("deBUG"),
-                        false,
-                        [ifChunk],
-                        []
-                    ),
+                    new Chunk.If(identifier("deBUG"), false, [ifChunk], []),
                 ]);
 
                 expect(ifChunk.accept).toHaveBeenCalledTimes(1);
@@ -298,17 +288,7 @@ describe("preprocessor", () => {
 
             it("uses bsConst values case-insensitively", () => {
                 let bsConst = new Map([["DEBUG", true]]);
-                new Preprocessor().filter(
-                    [
-                        new Chunk.If(
-                            identifier("debug"),
-                            false,
-                            [ifChunk],
-                            []
-                        ),
-                    ],
-                    bsConst
-                );
+                new Preprocessor().filter([new Chunk.If(identifier("debug"), false, [ifChunk], [])], bsConst);
 
                 expect(ifChunk.accept).toHaveBeenCalledTimes(1);
                 expect(elseIfChunk.accept).not.toHaveBeenCalled();
@@ -328,12 +308,7 @@ describe("preprocessor", () => {
                 new Preprocessor().filter([
                     new Chunk.Declaration(identifier("DEBUG"), token(Lexeme.True, "true", BrsBoolean.True)),
                     new Chunk.Declaration(identifier("MY_FLAG"), identifier("debug")),
-                    new Chunk.If(
-                        identifier("MY_FLAG"),
-                        false,
-                        [ifChunk],
-                        []
-                    ),
+                    new Chunk.If(identifier("MY_FLAG"), false, [ifChunk], []),
                 ]);
 
                 expect(ifChunk.accept).toHaveBeenCalledTimes(1);
@@ -343,17 +318,7 @@ describe("preprocessor", () => {
 
             it("negates bsConst value with 'not' and different case", () => {
                 let bsConst = new Map([["DEBUG", false]]);
-                new Preprocessor().filter(
-                    [
-                        new Chunk.If(
-                            identifier("DEBUG"),
-                            true,
-                            [ifChunk],
-                            []
-                        ),
-                    ],
-                    bsConst
-                );
+                new Preprocessor().filter([new Chunk.If(identifier("DEBUG"), true, [ifChunk], [])], bsConst);
 
                 expect(ifChunk.accept).toHaveBeenCalledTimes(1);
                 expect(elseIfChunk.accept).not.toHaveBeenCalled();

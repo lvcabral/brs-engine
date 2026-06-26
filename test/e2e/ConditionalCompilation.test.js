@@ -39,10 +39,7 @@ describe("end to end conditional compilation", () => {
 
     test("case-insensitive-consts/main.brs", async () => {
         await execute(
-            [
-                resourceFile("case-insensitive-consts", "manifest"),
-                resourceFile("case-insensitive-consts", "main.brs"),
-            ],
+            [resourceFile("case-insensitive-consts", "manifest"), resourceFile("case-insensitive-consts", "main.brs")],
             outputStreams
         );
 
