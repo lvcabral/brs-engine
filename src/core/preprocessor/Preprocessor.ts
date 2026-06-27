@@ -84,7 +84,7 @@ export class Preprocessor implements CC.Visitor {
             case Lexeme.False:
                 value = false;
                 break;
-            case Lexeme.Identifier:
+            case Lexeme.Identifier: {
                 const valueKey = chunk.value.text.toLowerCase();
                 if (this.constants.has(valueKey)) {
                     value = this.constants.get(valueKey) as boolean;
@@ -97,6 +97,7 @@ export class Preprocessor implements CC.Visitor {
                         chunk.value.location
                     )
                 );
+            }
             default:
                 return this.addError(
                     new BrsError(
@@ -169,7 +170,7 @@ export class Preprocessor implements CC.Visitor {
                 return true;
             case Lexeme.False:
                 return false;
-            case Lexeme.Identifier:
+            case Lexeme.Identifier: {
                 const lookupKey = token.text.toLowerCase();
                 if (this.constants.has(lookupKey)) {
                     return this.constants.get(lookupKey) as boolean;
@@ -181,6 +182,7 @@ export class Preprocessor implements CC.Visitor {
                         token.location
                     )
                 );
+            }
             default:
                 return this.addError(
                     new BrsError(
