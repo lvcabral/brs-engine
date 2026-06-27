@@ -50,6 +50,7 @@ export * from "./common";
 export * from "./device/BrsDevice";
 export * from "./brsTypes/components/RoFontRegistry";
 export * from "./device/FileSystem";
+export * from "./packageEncryption";
 export { default as SharedObject } from "./SharedObject";
 export type { ISGNode } from "./extensions";
 export { registerExtension, clearExtensions, instantiateExtensions, isSceneGraphNode } from "./extensions";

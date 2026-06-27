@@ -177,6 +177,18 @@ See `docs/extensions.md` and `packages/scenegraph/README.md` for the consumer-fa
 
 `brs-cli --pack <password> --out <dir>` turns a plaintext app (`.zip` or `--root` folder) into an **encrypted `.bpk`**. The password is the **raw AES-256-CTR key — it must be exactly 32 chars** (no KDF/salt). The same password is required to *run* the `.bpk` (`--pack <password>` on launch, or `options.password` in the browser API).
 
+There are **two independent encryption layers** with the same password:
+1. The **source blob** (`source/data`) — precompiled token stream + raw component text (below).
+2. The **whole-package container** — the entire zip is wrapped in AES-256-CTR so even the plaintext assets (images, fonts, data, manifest) are unreadable at rest (below).
+
+### Package container encryption (`src/core/packageEncryption.ts`)
+
+The standard libraries can't do per-entry zip encryption — **`fflate` (packer) has none and the `@lvcabral/zip` mount backend documents "No encryption."** So instead the whole zip is wrapped in a container: `[MAGIC "BRSBPK1\0"][16-byte IV][AES-256-CTR(zip)]`. `encryptPackage` wraps at pack time (CLI `runApp` after `updateAppZip`; exported for browser packers); `decryptPackage` unwraps in `loadAppZip` **before** `unzipSync` (both `src/cli/package.ts` and `src/api/package.ts`, which became `async` and take a `password`). The password reaches `loadAppZip` from `program.pack` (CLI) / `currentApp.password` (browser).
+
+- **Backward compatible by construction:** a real zip always starts with the `PK\x03\x04` header, never the `BRSBPK1` magic, so `decryptPackage` returns plain zips / legacy `.bpk`s untouched (no password needed). A wrong password is caught by checking the decrypted bytes start with `PK` → "Invalid password" (CTR has no auth tag).
+- **Uses Web Crypto (`globalThis.crypto.subtle`), not Node `crypto`.** The package is unzipped on the **main thread / API bundle (`target: web`), which has no `crypto`/`Buffer` polyfill** (only the worker does). Web Crypto is native in browsers (secure context already required) and Node 22+, so no polyfill/bundle-size cost. This layer is self-contained — same algorithm/params encrypt and decrypt.
+- **Performance: negligible.** Hardware AES (~6–8 GB/s): a 3.4 MB package decrypts in ~0.6 ms at load, a 50 MB one in ~8 ms — on par with the adjacent `unzip` and dwarfed by splash/parse. Container adds 24 bytes; no size change otherwise.
+
 ### What gets encrypted, and the blob format
 
 Two things are folded into a **single encrypted blob** (`encode({ pcode, files })` → `zlibSync` → AES-256-CTR), written to the package as `source/data` (ciphertext) + `source/var` (IV), with the originals stripped:
@@ -200,7 +212,7 @@ On decrypt (`runEncrypted`, and `executeTask` for browser Task threads), the `fi
 
 That marker matters because the **browser** decides whether to load the SceneGraph extension by scanning the package (`loadAppZip` in `src/api/package.ts`): an *unencrypted* app is detected by a `components/*.xml` entry, but an encrypted app's XML is gone — so it's detected by the preserved `components/` folder instead (`hasSceneGraph = isEncrypted ? hasComponentsFolder : hasSGComponents`). The CLI registers SceneGraph unconditionally (`--no-sg` to disable), so this detection is browser-only. `TaskPayload.password` is threaded through (`src/core/common.ts`, `src/api/task.ts`) so browser Task threads can decrypt the overlay.
 
-Regression coverage: the "SceneGraph .bpk encryption" suite in `test/cli/cli.test.js` (packs an inline-script SG app, asserts components stripped + `components/` marker kept, runs with correct password, fails cleanly on wrong password, prunes the nested component directory tree, and confirms a packed app's BrightScript cannot read its own component source back).
+Regression coverage: the "SceneGraph .bpk encryption" suite in `test/cli/cli.test.js` (asserts the container is encrypted/not a readable zip, components stripped + `components/` marker kept, runs with correct password, fails cleanly on wrong password at the container layer, prunes the nested component directory tree, and confirms a packed app's BrightScript cannot read its own component source back).
 
 ## CLI
 

@@ -26,6 +26,22 @@ function zipFolder(rootDir) {
     return Buffer.from(zipSync(files, { level: 6 }));
 }
 
+/** Mirrors core/packageEncryption: unwraps a container-encrypted .bpk to its inner zip bytes. */
+const BPK_MAGIC = [0x42, 0x52, 0x53, 0x42, 0x50, 0x4b, 0x31, 0x00]; // "BRSBPK1\0"
+async function decryptBpk(buffer, password) {
+    const data = new Uint8Array(buffer);
+    if (!BPK_MAGIC.every((b, i) => data[i] === b)) {
+        return data; // plain zip / legacy bpk
+    }
+    const iv = data.subarray(8, 24);
+    const cipher = data.subarray(24);
+    const keyBytes = new Uint8Array(32);
+    keyBytes.set(new TextEncoder().encode(password).subarray(0, 32));
+    const key = await crypto.subtle.importKey("raw", keyBytes, "AES-CTR", false, ["decrypt"]);
+    const plain = await crypto.subtle.decrypt({ name: "AES-CTR", counter: iv, length: 64 }, key, cipher);
+    return new Uint8Array(plain);
+}
+
 describe("cli", () => {
     it("run zip file", async () => {
         let command = ["node", brsCliPath, "requires-manifest.zip", "-c 0"].join(" ");
@@ -365,8 +381,16 @@ describe("cli", () => {
             if (tmpDir) fs.rmSync(tmpDir, { recursive: true, force: true });
         });
 
-        it("strips component .brs/.xml from the package", () => {
-            const entries = Object.keys(unzipSync(new Uint8Array(fs.readFileSync(bpkPath))));
+        it("encrypts the whole package container (not a readable zip without the password)", () => {
+            const raw = new Uint8Array(fs.readFileSync(bpkPath));
+            // Container starts with the BRSBPK1 magic, not the "PK" zip header.
+            expect(Array.from(raw.subarray(0, BPK_MAGIC.length))).toEqual(BPK_MAGIC);
+            // The plaintext assets are not extractable without the password.
+            expect(() => unzipSync(raw)).toThrow();
+        }, 15000);
+
+        it("strips component .brs/.xml from the package", async () => {
+            const entries = Object.keys(unzipSync(await decryptBpk(fs.readFileSync(bpkPath), password)));
             // Component code is encrypted into source/data and removed from the package.
             expect(entries).toContain("source/data");
             expect(entries).toContain("source/var");
@@ -386,10 +410,11 @@ describe("cli", () => {
         }, 15000);
 
         it("fails cleanly with a wrong password", async () => {
-            const { stdout } = await exec(
+            // A wrong password fails at the container layer, before any source is touched.
+            const { stderr } = await exec(
                 ["node", brsCliPath, '"' + bpkPath + '"', "--pack", "x".repeat(32), "-c 0"].join(" ")
-            ).catch((e) => e); // non-zero exit code
-            expect(stdout).toContain("EXIT_UNPACK_FAILED");
+            ).catch((e) => e);
+            expect(stderr).toContain("Invalid password for the encrypted package");
         }, 15000);
 
         // Build a nested SceneGraph app whose Main tries to read its own component source, to verify
@@ -438,8 +463,8 @@ describe("cli", () => {
                 protBpk = path.join(tmpDir, "prot.bpk");
             }, 15000);
 
-            it("prunes the empty component directory tree to a single marker", () => {
-                const entries = Object.keys(unzipSync(new Uint8Array(fs.readFileSync(protBpk))));
+            it("prunes the empty component directory tree to a single marker", async () => {
+                const entries = Object.keys(unzipSync(await decryptBpk(fs.readFileSync(protBpk), password)));
                 const componentEntries = entries.filter((e) => e.toLowerCase().startsWith("components/"));
                 // The components/sub/ tree (which only held encrypted files) is gone; only the marker remains.
                 expect(componentEntries).toEqual(["components/"]);

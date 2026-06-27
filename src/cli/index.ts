@@ -36,6 +36,7 @@ import {
     ExtVolMaxSize,
 } from "../core/common";
 import SharedObject from "../core/SharedObject";
+import { encryptPackage } from "../core/packageEncryption";
 import packageInfo from "../../packages/node/package.json";
 // @ts-ignore
 import * as brs from "./brs.node.js";
@@ -212,7 +213,7 @@ async function runAppFiles(files: string[]) {
             }
             const fileData = new Uint8Array(fs.readFileSync(filePath)).buffer;
             deviceData.entryPoint = true;
-            loadAppZip(fileName, fileData, runApp);
+            loadAppZip(fileName, fileData, runApp, program.pack);
             return;
         }
         // Run BrightScript files
@@ -307,7 +308,12 @@ async function runApp(payload: AppPayload) {
             // Generate the Encrypted App Package
             const filePath = path.join(program.out, appFileName.replaceAll(/.zip/gi, ".bpk"));
             try {
-                const buffer = updateAppZip(pkg.cipherText, pkg.iv, pkg.packedFiles);
+                // Encrypt the whole package container with the same password so the plaintext
+                // assets (images, fonts, data, manifest) are also protected at rest.
+                const buffer = await encryptPackage(
+                    updateAppZip(pkg.cipherText, pkg.iv, pkg.packedFiles),
+                    program.pack
+                );
                 fs.writeFileSync(filePath, buffer);
                 console.log(
                     chalk.blueBright(

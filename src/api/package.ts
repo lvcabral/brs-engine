@@ -26,6 +26,7 @@ import {
     ExtVolMaxSize,
 } from "../core/common";
 import SharedObject from "../core/SharedObject";
+import { decryptPackage } from "../core/packageEncryption";
 import models from "../core/common/models.csv";
 import packageInfo from "../../packages/browser/package.json";
 
@@ -89,11 +90,13 @@ const extZip: SharedArrayBuffer = extObj.getBuffer();
  * @param fileName Name of the zip file
  * @param file ArrayBuffer containing the zip data
  * @param callback Callback function to execute with the created payload
+ * @param password Password to open a container-encrypted package (`.bpk`); ignored for plain zips.
  */
-export function loadAppZip(fileName: string, file: ArrayBuffer, callback: Function) {
+export async function loadAppZip(fileName: string, file: ArrayBuffer, callback: Function, password: string = "") {
     try {
-        pkgZip = file;
-        currentZip = unzipSync(new Uint8Array(file));
+        const data = await decryptPackage(new Uint8Array(file), password);
+        pkgZip = data.buffer as ArrayBuffer;
+        currentZip = unzipSync(data);
     } catch (e: any) {
         notifyAll("error", `[package] Error reading ${fileName}: ${e.message}`);
         currentApp.running = false;
