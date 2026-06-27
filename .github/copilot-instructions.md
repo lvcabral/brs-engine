@@ -85,6 +85,7 @@ npm run start          # Start webpack dev server for browser package
 - Node package creates three: `brs.cli.js` (CLI), `brs.ecp.js` (ECP server), `brs.node.js` (library)
 - SceneGraph package creates two bundles: `brs-sg.js` (browser/Worker) and `brs-sg.node.js` (Node.js library)
 - SceneGraph build also assembles `assets/common.zip` (fonts, locale, images for `common:/` volume) and copies it to the browser and node packages
+- **Lint/format gate**: run `npm run lint` and `npm run prettier:write` before committing; both must be clean. ESLint enforces `no-case-declarations` — when a `switch` `case`/`default` declares a binding (`let`/`const`/`function`/`class`), wrap that case body in braces (`case X: { const y = ...; break; }`) so the binding doesn't leak into sibling cases.
 
 ### Running the CLI
 ```bash

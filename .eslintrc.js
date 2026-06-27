@@ -31,6 +31,7 @@ module.exports = {
         ],
         "@typescript-eslint/await-thenable": "error",
         "@typescript-eslint/consistent-type-assertions": "error",
+        "no-case-declarations": "error",
         "@typescript-eslint/indent": "off",
         "@typescript-eslint/member-delimiter-style": [
             "off",

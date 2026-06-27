@@ -69,11 +69,12 @@ function jsonOf(x: BrsType, flags: number = 0, key: string = ""): string {
         case ValueKind.Uninitialized:
         case ValueKind.Interface:
             break;
-        default:
+        default: {
             // Exhaustive check as per:
             // https://basarat.gitbooks.io/typescript/content/docs/types/discriminated-unions.html
             const _: never = x;
             break;
+        }
     }
     let xType = x instanceof BrsComponent ? x.getComponentName() : x;
     if (flags & 256) {

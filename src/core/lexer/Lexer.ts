@@ -146,7 +146,7 @@ export class Lexer {
                 case "\t":
                     // ignore whitespace; indentation isn't significant in BrightScript
                     break;
-                case "\n":
+                case "\n": {
                     // consecutive newlines aren't significant, because they're just blank lines
                     // so only add blank lines when they're not consecutive
                     let previous = peekPrevious();
@@ -158,6 +158,7 @@ export class Lexer {
                     // and always reset the column counter
                     column = 0;
                     break;
+                }
                 case ".":
                     // this might be a float/double literal, because decimals without a leading 0
                     // are allowed
