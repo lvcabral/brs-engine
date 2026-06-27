@@ -263,6 +263,69 @@ describe("preprocessor", () => {
             expect(elseChunk.accept).not.toHaveBeenCalled();
         });
 
+        describe("case-insensitive lookups", () => {
+            it("matches #if with different case than #const declaration (lowercase)", () => {
+                new Preprocessor().filter([
+                    new Chunk.Declaration(identifier("DEBUG"), token(Lexeme.True, "true", BrsBoolean.True)),
+                    new Chunk.If(identifier("debug"), false, [ifChunk], []),
+                ]);
+
+                expect(ifChunk.accept).toHaveBeenCalledTimes(1);
+                expect(elseIfChunk.accept).not.toHaveBeenCalled();
+                expect(elseChunk.accept).not.toHaveBeenCalled();
+            });
+
+            it("matches #if with different case than #const declaration (mixed case)", () => {
+                new Preprocessor().filter([
+                    new Chunk.Declaration(identifier("DEBUG"), token(Lexeme.True, "true", BrsBoolean.True)),
+                    new Chunk.If(identifier("deBUG"), false, [ifChunk], []),
+                ]);
+
+                expect(ifChunk.accept).toHaveBeenCalledTimes(1);
+                expect(elseIfChunk.accept).not.toHaveBeenCalled();
+                expect(elseChunk.accept).not.toHaveBeenCalled();
+            });
+
+            it("uses bsConst values case-insensitively", () => {
+                let bsConst = new Map([["DEBUG", true]]);
+                new Preprocessor().filter([new Chunk.If(identifier("debug"), false, [ifChunk], [])], bsConst);
+
+                expect(ifChunk.accept).toHaveBeenCalledTimes(1);
+                expect(elseIfChunk.accept).not.toHaveBeenCalled();
+                expect(elseChunk.accept).not.toHaveBeenCalled();
+            });
+
+            it("rejects re-declaration of #const with different case", () => {
+                expect(() =>
+                    new Preprocessor().filter([
+                        new Chunk.Declaration(identifier("FOO"), token(Lexeme.True, "true", BrsBoolean.True)),
+                        new Chunk.Declaration(identifier("foo"), token(Lexeme.False, "false", BrsBoolean.False)),
+                    ])
+                ).toThrow("Attempting to re-declare");
+            });
+
+            it("resolves #const alias case-insensitively", () => {
+                new Preprocessor().filter([
+                    new Chunk.Declaration(identifier("DEBUG"), token(Lexeme.True, "true", BrsBoolean.True)),
+                    new Chunk.Declaration(identifier("MY_FLAG"), identifier("debug")),
+                    new Chunk.If(identifier("MY_FLAG"), false, [ifChunk], []),
+                ]);
+
+                expect(ifChunk.accept).toHaveBeenCalledTimes(1);
+                expect(elseIfChunk.accept).not.toHaveBeenCalled();
+                expect(elseChunk.accept).not.toHaveBeenCalled();
+            });
+
+            it("negates bsConst value with 'not' and different case", () => {
+                let bsConst = new Map([["DEBUG", false]]);
+                new Preprocessor().filter([new Chunk.If(identifier("DEBUG"), true, [ifChunk], [])], bsConst);
+
+                expect(ifChunk.accept).toHaveBeenCalledTimes(1);
+                expect(elseIfChunk.accept).not.toHaveBeenCalled();
+                expect(elseChunk.accept).not.toHaveBeenCalled();
+            });
+        });
+
         it("enters #else if branch with negated condition", () => {
             new Preprocessor().filter([
                 new Chunk.If(

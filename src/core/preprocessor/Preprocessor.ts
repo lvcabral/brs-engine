@@ -43,8 +43,8 @@ export class Preprocessor implements CC.Visitor {
      * @returns an object containing an array of `errors` and an array of `processedTokens` filtered by conditional
      *          compilation directives included within
      */
-    filter(chunks: readonly CC.Chunk[], bsConst: Map<string, boolean>): FilterResults {
-        this.constants = new Map(bsConst);
+    filter(chunks: readonly CC.Chunk[], bsConst?: Map<string, boolean>): FilterResults {
+        this.constants = new Map([...(bsConst ?? [])].map(([key, value]) => [key.toLowerCase(), value]));
         return {
             processedTokens: chunks
                 .map((chunk) => chunk.accept(this))
@@ -69,7 +69,8 @@ export class Preprocessor implements CC.Visitor {
      * @returns an empty array, since `#const` directives are always removed from the evaluated script.
      */
     visitDeclaration(chunk: CC.Declaration) {
-        if (this.constants.has(chunk.name.text)) {
+        const nameKey = chunk.name.text.toLowerCase();
+        if (this.constants.has(nameKey)) {
             return this.addError(
                 new BrsError(`Attempting to re-declare #const with name '${chunk.name.text}'`, chunk.name.location)
             );
@@ -84,8 +85,9 @@ export class Preprocessor implements CC.Visitor {
                 value = false;
                 break;
             case Lexeme.Identifier:
-                if (this.constants.has(chunk.value.text)) {
-                    value = this.constants.get(chunk.value.text) as boolean;
+                const valueKey = chunk.value.text.toLowerCase();
+                if (this.constants.has(valueKey)) {
+                    value = this.constants.get(valueKey) as boolean;
                     break;
                 }
 
@@ -104,7 +106,7 @@ export class Preprocessor implements CC.Visitor {
                 );
         }
 
-        this.constants.set(chunk.name.text, value);
+        this.constants.set(nameKey, value);
 
         return [];
     }
@@ -168,8 +170,9 @@ export class Preprocessor implements CC.Visitor {
             case Lexeme.False:
                 return false;
             case Lexeme.Identifier:
-                if (this.constants.has(token.text)) {
-                    return this.constants.get(token.text) as boolean;
+                const lookupKey = token.text.toLowerCase();
+                if (this.constants.has(lookupKey)) {
+                    return this.constants.get(lookupKey) as boolean;
                 }
 
                 return this.addError(
