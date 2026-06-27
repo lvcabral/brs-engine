@@ -318,7 +318,7 @@ describe("preprocessor", () => {
 
             it("negates bsConst value with 'not' and different case", () => {
                 let bsConst = new Map([["DEBUG", false]]);
-                new Preprocessor().filter([new Chunk.If(identifier("DEBUG"), true, [ifChunk], [])], bsConst);
+                new Preprocessor().filter([new Chunk.If(identifier("deBUG"), true, [ifChunk], [])], bsConst);
 
                 expect(ifChunk.accept).toHaveBeenCalledTimes(1);
                 expect(elseIfChunk.accept).not.toHaveBeenCalled();
