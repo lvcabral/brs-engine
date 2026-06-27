@@ -3,7 +3,7 @@ const path = require("path");
 const fs = require("fs");
 const os = require("os");
 const { promisify } = require("util");
-const { zipSync, unzipSync } = require("fflate");
+const { zipSync, unzipSync, strToU8 } = require("fflate");
 
 const exec = promisify(child_process.exec);
 const brsCliPath = path.join(process.cwd(), "packages", "node", "bin", "brs.cli.js");
@@ -391,6 +391,70 @@ describe("cli", () => {
             ).catch((e) => e); // non-zero exit code
             expect(stdout).toContain("EXIT_UNPACK_FAILED");
         }, 15000);
+
+        // Build a nested SceneGraph app whose Main tries to read its own component source, to verify
+        // (1) the empty component directory tree is pruned and (2) the decrypted source is no longer
+        // reachable from BrightScript once the components have been parsed.
+        describe("source protection & structure", () => {
+            let protBpk;
+            const main = [
+                "sub main()",
+                '    print "READBRS:[" + ReadAsciiFile("pkg:/components/sub/Secret.brs") + "]"',
+                '    print "READXML:[" + ReadAsciiFile("pkg:/components/sub/Secret.xml") + "]"',
+                '    print "LISTDIR_COUNT:" + ListDir("pkg:/components").count().toStr()',
+                "end sub",
+            ].join("\n");
+            const secretXml =
+                '<?xml version="1.0" encoding="utf-8" ?>\n' +
+                '<component name="Secret" extends="Group">\n' +
+                '    <script type="text/brightscript" uri="pkg:/components/sub/Secret.brs" />\n' +
+                "</component>";
+            const secretBrs = "sub init()\n    ' TOP_SECRET_12345\nend sub";
+
+            beforeAll(async () => {
+                const zipPath = path.join(tmpDir, "prot.zip");
+                // Note: explicit directory entries are included so the pruning logic is exercised.
+                const zip = zipSync({
+                    manifest: strToU8("title=Prot\nmajor_version=1\nminor_version=0\nbuild_version=0\n"),
+                    "source/main.brs": strToU8(main),
+                    "components/": new Uint8Array(0),
+                    "components/sub/": new Uint8Array(0),
+                    "components/sub/Secret.xml": strToU8(secretXml),
+                    "components/sub/Secret.brs": strToU8(secretBrs),
+                });
+                fs.writeFileSync(zipPath, Buffer.from(zip));
+                await exec(
+                    [
+                        "node",
+                        brsCliPath,
+                        '"' + zipPath + '"',
+                        "--pack",
+                        password,
+                        "--out",
+                        '"' + tmpDir + '"',
+                        "-c 0",
+                    ].join(" ")
+                );
+                protBpk = path.join(tmpDir, "prot.bpk");
+            }, 15000);
+
+            it("prunes the empty component directory tree to a single marker", () => {
+                const entries = Object.keys(unzipSync(new Uint8Array(fs.readFileSync(protBpk))));
+                const componentEntries = entries.filter((e) => e.toLowerCase().startsWith("components/"));
+                // The components/sub/ tree (which only held encrypted files) is gone; only the marker remains.
+                expect(componentEntries).toEqual(["components/"]);
+            }, 15000);
+
+            it("does not let BrightScript read the decrypted component source", async () => {
+                const { stdout } = await exec(
+                    ["node", brsCliPath, '"' + protBpk + '"', "--pack", password, "-c 0"].join(" ")
+                );
+                expect(stdout).toContain("READBRS:[]");
+                expect(stdout).toContain("READXML:[]");
+                expect(stdout).toContain("LISTDIR_COUNT:0");
+                expect(stdout).not.toContain("TOP_SECRET");
+            }, 15000);
+        });
     });
 
     it.todo("add tests for the remaining CLI options");

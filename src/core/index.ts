@@ -775,6 +775,10 @@ async function runBeforeExecuteHooks(interpreter: Interpreter, payload: AppPaylo
             }
         }
     }
+    // The decrypted component files (SceneGraph .brs/.xml) were fully parsed by the hooks above.
+    // Drop the overlay now so the app's own BrightScript can no longer read the source back (via
+    // ReadAsciiFile, roFileSystem, MatchFiles, …) — matching the protection of tokenized source.
+    BrsDevice.fileSystem.clearSourceOverlay();
 }
 
 /**

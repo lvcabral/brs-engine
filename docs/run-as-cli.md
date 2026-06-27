@@ -150,7 +150,7 @@ Package file created as ./release/test-sandbox.bpk with 528 KB.
 
 ```
 
-SceneGraph applications are fully supported: in addition to the `pkg:/source/` code, every component file under `pkg:/components/` (both `.brs` scripts and `.xml` definitions, including their inline `<script>` blocks) is encrypted into the package and removed from the distributed `.bpk`. The component files are restored in memory only at runtime, after the package is decrypted with the password.
+SceneGraph applications are fully supported: in addition to the `pkg:/source/` code, every component file under `pkg:/components/` (both `.brs` scripts and `.xml` definitions, including their inline `<script>` blocks) is encrypted into the package and removed from the distributed `.bpk`. The component files are restored in memory only at runtime, after the package is decrypted with the password, and are dropped again once the engine has parsed them — so a packaged app cannot read its own component source back at runtime (e.g. via `ReadAsciiFile`), just like the encrypted `pkg:/source/` code. The empty `components/` directory tree is also pruned from the package so it does not reveal the app's structure.
 
 To run an encrypted `.bpk`, provide the same password used to create it via `--pack`:
 

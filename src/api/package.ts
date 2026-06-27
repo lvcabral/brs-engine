@@ -288,27 +288,36 @@ export function updateAppZip(source: Uint8Array, iv: string, packedFiles: string
             newZip[filePath] = currentZip[filePath];
         }
     }
-    preserveComponentsMarker(newZip, stripped);
+    stripEncryptedComponentDirs(newZip, stripped);
     newZip["source/data"] = [source, { level: 0 }];
     newZip["source/var"] = [strToU8(iv), { level: 0 }];
     return zipSync(newZip, { level: 6 });
 }
 
 /**
- * Ensures a top-level `components/` directory entry remains in an encrypted package whose component
- * files were stripped, so a SceneGraph app can still be detected at load time even when the source
- * zip did not include explicit directory entries.
+ * After encrypted component files are stripped, removes the now-empty `components/` directory tree
+ * (which would otherwise leak the app's structure), keeping directories that still hold surviving
+ * (non-encrypted) assets, plus a single top-level `components/` marker so an encrypted SceneGraph app
+ * remains detectable when the package is loaded.
  * @param newZip Zip being assembled.
- * @param stripped Set of lowercase paths that were folded into the encrypted blob.
+ * @param stripped Set of lowercase paths folded into the encrypted blob.
  */
-export function preserveComponentsMarker(newZip: Zippable, stripped: Set<string>) {
-    if (stripped.size === 0) {
+export function stripEncryptedComponentDirs(newZip: Zippable, stripped: Set<string>) {
+    if (![...stripped].some((file) => file.startsWith("components/"))) {
         return;
     }
-    const hasComponents = Object.keys(newZip).some((file) => file.toLowerCase().startsWith("components/"));
-    if (!hasComponents && [...stripped].some((file) => file.startsWith("components/"))) {
-        newZip["components/"] = new Uint8Array(0);
+    const survivors = Object.keys(newZip).filter(
+        (file) => !file.endsWith("/") && file.toLowerCase().startsWith("components/")
+    );
+    for (const key of Object.keys(newZip)) {
+        const lcase = key.toLowerCase();
+        if (key.endsWith("/") && lcase.startsWith("components/") && lcase !== "components/") {
+            if (!survivors.some((file) => file.toLowerCase().startsWith(lcase))) {
+                delete newZip[key];
+            }
+        }
     }
+    newZip["components/"] ??= new Uint8Array(0);
 }
 
 /**
