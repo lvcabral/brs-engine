@@ -173,6 +173,33 @@ Because a node's authoritative copy lives on its owner thread, reading/writing a
 
 See `docs/extensions.md` and `packages/scenegraph/README.md` for the consumer-facing view, and `docs/scenegraph-rendezvous.md` for the rendezvous design (broker → direct render→task channel) and its performance/reliability/memory/fidelity analysis.
 
+## App packaging & encryption (`.bpk`)
+
+`brs-cli --pack <password> --out <dir>` turns a plaintext app (`.zip` or `--root` folder) into an **encrypted `.bpk`**. The password is the **raw AES-256-CTR key — it must be exactly 32 chars** (no KDF/salt). The same password is required to *run* the `.bpk` (`--pack <password>` on launch, or `options.password` in the browser API).
+
+### What gets encrypted, and the blob format
+
+Two things are folded into a **single encrypted blob** (`encode({ pcode, files })` → `zlibSync` → AES-256-CTR), written to the package as `source/data` (ciphertext) + `source/var` (IV), with the originals stripped:
+
+- **`pkg:/source/*.brs`** → lexed/preprocessed to a **token stream** (`pcode`), the long-standing behavior (`runSource` in `src/core/index.ts`, via `lexParseSync`).
+- **`pkg:/components/**/*.{brs,xml}`** (SceneGraph) → stored as **raw text** in `files`, keyed by lowercase package-relative path (`collectComponentFiles` in `src/core/index.ts`). This covers external scripts *and* inline `<script>` blocks inside component XML.
+
+The format is **backward compatible**: legacy `.bpk`s have no `files` key and load unchanged. Core stays SceneGraph-agnostic — it treats `components/**` as opaque "extra encrypted files".
+
+### Runtime restore — the FileSystem overlay (do not replace with a mounted volume)
+
+On decrypt (`runEncrypted`, and `executeTask` for browser Task threads), the `files` map is pushed into an **opt-in in-memory overlay** on `FileSystem` via `setSourceOverlay` (`src/core/device/FileSystem.ts`). `existsSync`/`readFileSync`/`statSync`/`findSync` consult the overlay first **only when it's non-empty** (zero behavior change for normal apps); it's cleared on each `setup()`. The SceneGraph loader (`getComponentDefinitionMap` → `findSync`/`readFileSync`) and `ComponentScopeResolver` then read the decrypted components transparently.
+
+> The overlay was chosen deliberately over "decrypt then mount a reorganized `pkg:` volume". zenFS's `CopyOnWrite` backend **cannot be initialized through the synchronous `configureSync`** the engine uses (its `create()` is async → `EAGAIN`), and manual `CopyOnWriteFS` construction **loses `caseFold:"lower"`** (Roku fs is case-insensitive) and **crashes `readdir`** on the Zip's empty `components/` dir entry. The synchronous fallbacks (seed an InMemory volume with every entry, or rebuild+remount the zip) cost full-app memory/startup since the Zip backend otherwise reads lazily. The overlay is synchronous, case-correct (keyed on `getPath`'s lowercased path), minimal-memory, and free of zenFS internals.
+
+### Stripping & SceneGraph detection (two `updateAppZip`s + a `components/` marker)
+
+`updateAppZip(source, iv, packedFiles)` rebuilds the package, dropping `source/*` **and** every path in `packedFiles`. There are **two copies** that must stay in sync: `src/cli/package.ts` (CLI pack) and `src/api/package.ts` (browser pack). Both also **preserve a `components/` directory marker** when they strip component files.
+
+That marker matters because the **browser** decides whether to load the SceneGraph extension by scanning the package (`loadAppZip` in `src/api/package.ts`): an *unencrypted* app is detected by a `components/*.xml` entry, but an encrypted app's XML is gone — so it's detected by the preserved `components/` folder instead (`hasSceneGraph = isEncrypted ? hasComponentsFolder : hasSGComponents`). The CLI registers SceneGraph unconditionally (`--no-sg` to disable), so this detection is browser-only. `TaskPayload.password` is threaded through (`src/core/common.ts`, `src/api/task.ts`) so browser Task threads can decrypt the overlay.
+
+Regression coverage: the "SceneGraph .bpk encryption" suite in `test/cli/cli.test.js` (packs an inline-script SG app, asserts components stripped + `components/` marker kept, runs with correct password, fails cleanly on wrong password).
+
 ## CLI
 
 `src/cli/` builds into `packages/node/bin`. `brs-cli` runs `.brs` files, `.zip`/`.bpk` packages, or a REPL (no args). Key flags: `--ascii`/`--unicode` (render the screen as terminal art), `--ecp` (ECP control server on port 8060 + SSDP discovery), `--no-sg` (disable SceneGraph), `--pack`/`--out` (create encrypted `.bpk`), `--root` (mount `pkg:/` from a directory), `--ext-vol` (mount `ext1:`), `--deep-link`, `--registry`. See `docs/run-as-cli.md`.
