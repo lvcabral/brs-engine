@@ -173,6 +173,47 @@ Because a node's authoritative copy lives on its owner thread, reading/writing a
 
 See `docs/extensions.md` and `packages/scenegraph/README.md` for the consumer-facing view, and `docs/scenegraph-rendezvous.md` for the rendezvous design (broker → direct render→task channel) and its performance/reliability/memory/fidelity analysis.
 
+## App packaging & encryption (`.bpk`)
+
+`brs-cli --pack <password> --out <dir>` turns a plaintext app (`.zip` or `--root` folder) into an **encrypted `.bpk`**. The password is the **raw AES-256-CTR key — it must be exactly 32 chars** (no KDF/salt). The same password is required to *run* the `.bpk` (`--pack <password>` on launch, or `options.password` in the browser API).
+
+There are **two independent encryption layers** with the same password:
+1. The **source blob** (`source/data`) — precompiled token stream + raw component text (below).
+2. The **whole-package container** — the entire zip is wrapped in AES-256-CTR so even the plaintext assets (images, fonts, data, manifest) are unreadable at rest (below).
+
+### Package container encryption (`src/core/packageEncryption.ts`)
+
+The standard libraries can't do per-entry zip encryption — **`fflate` (packer) has none and the `@lvcabral/zip` mount backend documents "No encryption."** So instead the whole zip is wrapped in a container: `[MAGIC "BRSBPK1\0"][16-byte IV][AES-256-CTR(zip)]`. `encryptPackage` wraps at pack time (CLI `runApp` after `updateAppZip`; exported for browser packers); `decryptPackage` unwraps in `loadAppZip` **before** `unzipSync` (both `src/cli/package.ts` and `src/api/package.ts`, which became `async` and take a `password`). The password reaches `loadAppZip` from `program.pack` (CLI) / `currentApp.password` (browser).
+
+- **Backward compatible by construction:** a real zip always starts with the `PK\x03\x04` header, never the `BRSBPK1` magic, so `decryptPackage` returns plain zips / legacy `.bpk`s untouched (no password needed). A wrong password is caught by checking the decrypted bytes start with `PK` → "Invalid password" (CTR has no auth tag).
+- **Uses Web Crypto (`globalThis.crypto.subtle`), not Node `crypto`.** The package is unzipped on the **main thread / API bundle (`target: web`), which has no `crypto`/`Buffer` polyfill** (only the worker does). Web Crypto is native in browsers (secure context already required) and Node 22+, so no polyfill/bundle-size cost. This layer is self-contained — same algorithm/params encrypt and decrypt.
+- **Performance: negligible.** Hardware AES (~6–8 GB/s): a 3.4 MB package decrypts in ~0.6 ms at load, a 50 MB one in ~8 ms — on par with the adjacent `unzip` and dwarfed by splash/parse. Container adds 24 bytes; no size change otherwise.
+
+### What gets encrypted, and the blob format
+
+Two things are folded into a **single encrypted blob** (`encode({ pcode, files })` → `zlibSync` → AES-256-CTR), written to the package as `source/data` (ciphertext) + `source/var` (IV), with the originals stripped:
+
+- **`pkg:/source/*.brs`** → lexed/preprocessed to a **token stream** (`pcode`), the long-standing behavior (`runSource` in `src/core/index.ts`, via `lexParseSync`).
+- **`pkg:/components/**/*.{brs,xml}`** (SceneGraph) → stored as **raw text** in `files`, keyed by lowercase package-relative path (`collectComponentFiles` in `src/core/index.ts`). This covers external scripts *and* inline `<script>` blocks inside component XML.
+
+The format is **backward compatible**: legacy `.bpk`s have no `files` key and load unchanged. Core stays SceneGraph-agnostic — it treats `components/**` as opaque "extra encrypted files".
+
+### Runtime restore — the FileSystem overlay (do not replace with a mounted volume)
+
+On decrypt (`runEncrypted`, and `executeTask` for browser Task threads), the `files` map is pushed into an **opt-in in-memory overlay** on `FileSystem` via `setSourceOverlay` (`src/core/device/FileSystem.ts`). `existsSync`/`readFileSync`/`statSync`/`findSync` consult the overlay first **only when it's non-empty** (zero behavior change for normal apps). The SceneGraph loader (`getComponentDefinitionMap` → `findSync`/`readFileSync`) and `ComponentScopeResolver` then read the decrypted components transparently.
+
+**Source protection — the overlay is consumed, then dropped.** `setupInterpreterWithSubEnvs` (run from the SceneGraph `onBeforeExecute`) **eagerly parses every component's scripts** before the app's `Main` runs, so `runBeforeExecuteHooks` calls `clearSourceOverlay()` immediately after the hooks finish. From then on the app's own BrightScript (`ReadAsciiFile`, `roFileSystem`, `MatchFiles`/`ListDir`, …) sees the component `.brs`/`.xml` as absent — matching the protection that tokenized `source/` already gives (you can't read back the source you shipped). The overlay is also cleared on each `setup()`.
+
+> The overlay was chosen deliberately over "decrypt then mount a reorganized `pkg:` volume". zenFS's `CopyOnWrite` backend **cannot be initialized through the synchronous `configureSync`** the engine uses (its `create()` is async → `EAGAIN`), and manual `CopyOnWriteFS` construction **loses `caseFold:"lower"`** (Roku fs is case-insensitive) and **crashes `readdir`** on the Zip's empty `components/` dir entry. The synchronous fallbacks (seed an InMemory volume with every entry, or rebuild+remount the zip) cost full-app memory/startup since the Zip backend otherwise reads lazily. The overlay is synchronous, case-correct (keyed on `getPath`'s lowercased path), minimal-memory, and free of zenFS internals.
+
+### Stripping & SceneGraph detection (two `updateAppZip`s + a `components/` marker)
+
+`updateAppZip(source, iv, packedFiles)` rebuilds the package, dropping `source/*` **and** every path in `packedFiles`. There are **two copies** that must stay in sync: `src/cli/package.ts` (CLI pack) and `src/api/package.ts` (browser pack). Both then call `stripEncryptedComponentDirs`, which **prunes the now-empty `components/` subdirectory tree** (it would otherwise leak the app's structure) — keeping only directories that still hold surviving non-encrypted assets, plus a single top-level `components/` marker.
+
+That marker matters because the **browser** decides whether to load the SceneGraph extension by scanning the package (`loadAppZip` in `src/api/package.ts`): an *unencrypted* app is detected by a `components/*.xml` entry, but an encrypted app's XML is gone — so it's detected by the preserved `components/` folder instead (`hasSceneGraph = isEncrypted ? hasComponentsFolder : hasSGComponents`). The CLI registers SceneGraph unconditionally (`--no-sg` to disable), so this detection is browser-only. `TaskPayload.password` is threaded through (`src/core/common.ts`, `src/api/task.ts`) so browser Task threads can decrypt the overlay.
+
+Regression coverage: the "SceneGraph .bpk encryption" suite in `test/cli/cli.test.js` (asserts the container is encrypted/not a readable zip, components stripped + `components/` marker kept, runs with correct password, fails cleanly on wrong password at the container layer, prunes the nested component directory tree, and confirms a packed app's BrightScript cannot read its own component source back).
+
 ## CLI
 
 `src/cli/` builds into `packages/node/bin`. `brs-cli` runs `.brs` files, `.zip`/`.bpk` packages, or a REPL (no args). Key flags: `--ascii`/`--unicode` (render the screen as terminal art), `--ecp` (ECP control server on port 8060 + SSDP discovery), `--no-sg` (disable SceneGraph), `--pack`/`--out` (create encrypted `.bpk`), `--root` (mount `pkg:/` from a directory), `--ext-vol` (mount `ext1:`), `--deep-link`, `--registry`. See `docs/run-as-cli.md`.

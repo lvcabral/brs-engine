@@ -50,6 +50,7 @@ export * from "./common";
 export * from "./device/BrsDevice";
 export * from "./brsTypes/components/RoFontRegistry";
 export * from "./device/FileSystem";
+export * from "./packageEncryption";
 export { default as SharedObject } from "./SharedObject";
 export type { ISGNode } from "./extensions";
 export { registerExtension, clearExtensions, instantiateExtensions, isSceneGraphNode } from "./extensions";
@@ -689,6 +690,16 @@ export async function executeTask(payload: TaskPayload, customOptions?: Partial<
     // Setup the interpreter
     const interpreter = await createInterpreter(options);
     const sourceResult = setupPayload(interpreter, payload);
+    // For encrypted packages, restore the stripped component files into the file system overlay so
+    // this Task thread can rebuild its component definitions (it reads them from the file system).
+    const taskPassword = payload.password ?? "";
+    if (taskPassword.length > 0 && sourceResult.pcode && sourceResult.iv) {
+        try {
+            restoreEncryptedFiles(sourceResult.pcode, sourceResult.iv, taskPassword);
+        } catch (err: any) {
+            postMessage(`error,Error unpacking the app on Task: ${err.message}`);
+        }
+    }
     await runBeforeExecuteHooks(interpreter, payload);
     // Run the BrightScript Task
     try {
@@ -765,6 +776,10 @@ async function runBeforeExecuteHooks(interpreter: Interpreter, payload: AppPaylo
             }
         }
     }
+    // The decrypted component files (SceneGraph .brs/.xml) were fully parsed by the hooks above.
+    // Drop the overlay now so the app's own BrightScript can no longer read the source back (via
+    // ReadAsciiFile, roFileSystem, MatchFiles, …) — matching the protection of tokenized source.
+    BrsDevice.fileSystem.clearSourceOverlay();
 }
 
 /**
@@ -792,7 +807,12 @@ function setupPayload(interpreter: Interpreter, payload: AppPayload | TaskPayloa
 }
 
 interface SerializedPCode {
-    [pcode: string]: Token[];
+    pcode: Token[];
+    /**
+     * Decrypted raw-text pkg: files that were stripped from the package and folded into the
+     * encrypted blob (SceneGraph component .brs/.xml). Absent in legacy packages.
+     */
+    files?: Record<string, string>;
 }
 
 /**
@@ -924,7 +944,67 @@ export interface RunResult {
     exitReason: AppExitReason;
     cipherText?: Uint8Array;
     iv?: string;
+    /**
+     * Relative zip paths (lowercase, e.g. "components/foo.xml") that were encrypted into the blob
+     * and must therefore be stripped from the output package by the zip writer.
+     */
+    packedFiles?: string[];
 }
+/**
+ * Collects the SceneGraph component source files (.brs and .xml under pkg:/components) so they can
+ * be folded into the encrypted package blob and stripped from the distributed zip.
+ * @returns the raw-text file contents keyed by relative lowercase path, plus the list of those paths.
+ */
+function collectComponentFiles(fsys: typeof BrsDevice.fileSystem): {
+    files: Record<string, string>;
+    packedFiles: string[];
+} {
+    const files: Record<string, string> = {};
+    const packedFiles: string[] = [];
+    if (!fsys?.existsSync("pkg:/components")) {
+        return { files, packedFiles };
+    }
+    const root = fsys.root;
+    const found = [...fsys.findSync("pkg:/components", "xml"), ...fsys.findSync("pkg:/components", "brs")];
+    for (const fsPath of found) {
+        try {
+            // findSync returns backend paths: "pkg:/components/..." for zip-mounted packages, or an
+            // absolute "<root>/components/..." path in --root folder mode. Reduce both to the
+            // package-relative, lowercase key used for the encrypted blob and the strip list.
+            let rel = fsPath;
+            if (root && rel.toLowerCase().startsWith(root.toLowerCase())) {
+                rel = rel.slice(root.length);
+            } else {
+                rel = rel.replace(/^pkg:\//i, "");
+            }
+            rel = rel.replaceAll("\\", "/").replace(/^\/+/, "").toLowerCase();
+            files[rel] = fsys.readFileSync(fsPath, "utf8") as string;
+            packedFiles.push(rel);
+        } catch (err: any) {
+            postMessage(`error,Error reading component file ${fsPath} - ${err.message}`);
+        }
+    }
+    return { files, packedFiles };
+}
+
+/**
+ * Decrypts the package blob and, if it carries stripped pkg: files (SceneGraph components),
+ * restores them into the file system overlay so they can be read at runtime.
+ * @returns the decoded pcode tokens map, or undefined on failure.
+ */
+function restoreEncryptedFiles(pcode: Buffer, iv: string, password: string): Map<string, any> | undefined {
+    const decipher = crypto.createDecipheriv(algorithm, password, iv);
+    const inflated = unzlibSync(Buffer.concat([decipher.update(pcode), decipher.final()]));
+    const spcode = decode(inflated) as SerializedPCode;
+    if (!spcode) {
+        return undefined;
+    }
+    if (spcode.files && Object.keys(spcode.files).length > 0) {
+        BrsDevice.fileSystem.setSourceOverlay(spcode.files);
+    }
+    return new Map(Object.entries(spcode.pcode));
+}
+
 async function runSource(
     interpreter: Interpreter,
     sourceMap: Map<string, string>,
@@ -936,12 +1016,17 @@ async function runSource(
     if (exitReason !== AppExitReason.Crashed) {
         if (password.length > 0) {
             const tokens = parseResult.tokens;
+            const { files, packedFiles } = collectComponentFiles(BrsDevice.fileSystem);
             const iv = crypto.randomBytes(12).toString("base64");
             const cipher = crypto.createCipheriv(algorithm, password, iv);
-            const deflated = zlibSync(encode({ pcode: tokens }));
+            const payloadToEncode: SerializedPCode = { pcode: tokens };
+            if (Object.keys(files).length > 0) {
+                payloadToEncode.files = files;
+            }
+            const deflated = zlibSync(encode(payloadToEncode));
             const source = Buffer.from(deflated);
             const cipherText = Buffer.concat([cipher.update(source), cipher.final()]);
-            return { exitReason: AppExitReason.Packaged, cipherText: cipherText, iv: iv };
+            return { exitReason: AppExitReason.Packaged, cipherText: cipherText, iv: iv, packedFiles };
         }
         // Execute the BrightScript code
         exitReason = await executeApp(interpreter, parseResult.statements, payload, sourceMap);
@@ -966,11 +1051,9 @@ async function runEncrypted(
     // Decode Encrypted Parsed Code
     try {
         if (password.length > 0 && sourceResult.pcode && sourceResult.iv) {
-            const decipher = crypto.createDecipheriv(algorithm, password, sourceResult.iv);
-            const inflated = unzlibSync(Buffer.concat([decipher.update(sourceResult.pcode), decipher.final()]));
-            const spcode = decode(inflated) as SerializedPCode;
-            if (spcode) {
-                decodedTokens = new Map(Object.entries(spcode.pcode));
+            const tokens = restoreEncryptedFiles(sourceResult.pcode, sourceResult.iv, password);
+            if (tokens) {
+                decodedTokens = tokens;
             } else {
                 return { exitReason: AppExitReason.Invalid };
             }

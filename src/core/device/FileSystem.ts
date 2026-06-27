@@ -35,6 +35,13 @@ export class FileSystem {
     private xfs: typeof zenFS.fs | typeof nodeFS; // ext1:
     /** Volume names (e.g. "complib_foo:") backed by zenFS for downloaded component libraries. */
     private readonly libraryVolumes: Set<string> = new Set();
+    /**
+     * In-memory overlay of decrypted pkg: files (keyed by normalized lowercase `pkg:/...` path).
+     * Populated when running an encrypted package (.bpk) whose component files were stripped from
+     * the zip and folded into the encrypted blob. Consulted only when non-empty, so normal apps
+     * are completely unaffected.
+     */
+    private readonly overlay: Map<string, string> = new Map();
     private _root?: string;
     private _ext?: string;
 
@@ -83,6 +90,7 @@ export class FileSystem {
         root?: string,
         ext?: string
     ) {
+        this.overlay.clear();
         const fsConfig = { mounts: {}, caseFold: "lower" as const };
         // Basic mounts: common:, tmp:, cachefs:, pkg:
         if (zenFS.mounts.has("/common:")) zenFS.umount("common:");
@@ -321,6 +329,51 @@ export class FileSystem {
     }
 
     /**
+     * Restores a set of decrypted pkg: files into the in-memory overlay so they can be read as if
+     * they were present in the package. Used when running an encrypted package whose component
+     * files were stripped from the zip. Keys may be relative (e.g. "components/foo.xml") or full
+     * pkg: URIs; both are normalized to lowercase `pkg:/...`.
+     * @param files Map (or record) of file path to text content.
+     */
+    setSourceOverlay(files: Map<string, string> | Record<string, string>) {
+        const entries = files instanceof Map ? files.entries() : Object.entries(files);
+        for (const [key, content] of entries) {
+            let normalized = key.trim().toLowerCase().replaceAll("\\", "/");
+            if (!normalized.startsWith("pkg:/")) {
+                normalized = `pkg:/${normalized.replace(/^\/+/, "")}`;
+            }
+            normalized = normalized.replaceAll(/\/+/g, "/");
+            this.overlay.set(normalized, content);
+        }
+    }
+
+    /** Clears the decrypted pkg: file overlay. */
+    clearSourceOverlay() {
+        this.overlay.clear();
+    }
+
+    /**
+     * Checks whether a path matches an overlay file or an ancestor directory of an overlay file.
+     * @param fsPath Normalized lowercase path (as produced by getPath).
+     * @returns "file" if an exact overlay match, "dir" if an ancestor directory, otherwise undefined.
+     */
+    private overlayKind(fsPath: string): "file" | "dir" | undefined {
+        if (this.overlay.size === 0) {
+            return undefined;
+        }
+        if (this.overlay.has(fsPath)) {
+            return "file";
+        }
+        const prefix = fsPath.endsWith("/") ? fsPath : `${fsPath}/`;
+        for (const key of this.overlay.keys()) {
+            if (key.startsWith(prefix)) {
+                return "dir";
+            }
+        }
+        return undefined;
+    }
+
+    /**
      * Gets the appropriate file system for a given URI.
      * @param uri File URI with volume prefix
      * @returns File system instance for the volume
@@ -386,7 +439,13 @@ export class FileSystem {
      * @returns True if exists, false otherwise
      */
     existsSync(uri: string) {
-        return validUri(uri) && this.getFS(uri).existsSync(this.getPath(uri));
+        if (!validUri(uri)) {
+            return false;
+        }
+        if (this.overlay.size > 0 && this.overlayKind(this.getPath(uri))) {
+            return true;
+        }
+        return this.getFS(uri).existsSync(this.getPath(uri));
     }
 
     /**
@@ -396,8 +455,15 @@ export class FileSystem {
      * @returns File contents as string or Buffer
      */
     readFileSync(uri: string, encoding?: any) {
+        const fsPath = this.getPath(uri);
+        if (this.overlay.size > 0) {
+            const content = this.overlay.get(fsPath);
+            if (content !== undefined) {
+                return encoding ? content : Buffer.from(content);
+            }
+        }
         const fs = this.getFS(uri);
-        return (fs as any).readFileSync(this.getPath(uri), encoding);
+        return (fs as any).readFileSync(fsPath, encoding);
     }
 
     /**
@@ -484,6 +550,16 @@ export class FileSystem {
      * @returns Stats object with file information
      */
     statSync(uri: string) {
+        if (this.overlay.size > 0) {
+            const fsPath = this.getPath(uri);
+            const kind = this.overlayKind(fsPath);
+            if (kind === "file") {
+                const size = Buffer.byteLength(this.overlay.get(fsPath) ?? "");
+                return { isDirectory: () => false, isFile: () => true, size } as any;
+            } else if (kind === "dir") {
+                return { isDirectory: () => true, isFile: () => false, size: 0 } as any;
+            }
+        }
         return this.getFS(uri).statSync(this.getPath(uri));
     }
 
@@ -496,6 +572,7 @@ export class FileSystem {
     findSync(uri: string, ext: string): string[] {
         let results: string[] = [];
         const fs = this.getFS(uri);
+        const rootPath = this.getPath(uri);
 
         function readDirRecursive(currentDir: string) {
             const files = fs.readdirSync(currentDir);
@@ -512,7 +589,20 @@ export class FileSystem {
             }
         }
 
-        readDirRecursive(this.getPath(uri));
+        try {
+            readDirRecursive(rootPath);
+        } catch {
+            // The backend directory may not exist when every file under it lives only in the
+            // decrypted overlay (encrypted package). Overlay matches are appended below.
+        }
+        if (this.overlay.size > 0) {
+            const prefix = rootPath.endsWith("/") ? rootPath : `${rootPath}/`;
+            for (const key of this.overlay.keys()) {
+                if (key.startsWith(prefix) && path.extname(key) === `.${ext}` && !results.includes(key)) {
+                    results.push(key);
+                }
+            }
+        }
         return results;
     }
 }

@@ -17,7 +17,7 @@ To learn more about the _methods_ and _events_ exposed by the library visit the 
 There are two typical integration profiles:
 
 - **Draw 2D (`roScreen`) apps and games** – If your channel only uses the classic 2D APIs (`roScreen`, `roBitmap`, `roCompositor`, etc.) you only need to deploy `lib/brs.api.js`, `lib/brs.worker.js` and `assets/common.zip`. Nothing else is required because the interpreter ships those artifacts in the core bundle.
-- **SceneGraph apps (`roSGScreen`)** – If the package contains `pkg:/components/` XML files or you otherwise rely on SceneGraph nodes, bundle the [`brs-scenegraph`](../packages/scenegraph/README.md) extension next to the worker (`lib/brs-sg.js`). The packaging step automatically asks the worker to load it whenever components are detected, so keeping the file available is all that is needed.
+- **SceneGraph apps (`roSGScreen`)** – If the package contains `pkg:/components/` XML files or you otherwise rely on SceneGraph nodes, bundle the [`brs-scenegraph`](../packages/scenegraph/README.md) extension next to the worker (`lib/brs-sg.js`). The packaging step automatically asks the worker to load it whenever components are detected, so keeping the file available is all that is needed. For an encrypted `.bpk` the component files are folded into the encrypted blob and removed from the package, so a `components/` directory marker is preserved and used to detect the SceneGraph app instead.
 
 The additional bundle is only needed when SceneGraph is in play, which keeps Draw 2D deployments lean while allowing full SceneGraph parity when required.
 
@@ -25,7 +25,7 @@ The additional bundle is only needed when SceneGraph is in play, which keeps Dra
 
 Hosts now decide which extensions are available to the interpreter by setting the optional `extensions` map on the `DeviceInfo` object passed to `brs.initialize`. Each entry pairs a `SupportedExtension` enum value with the module path string the worker can load (e.g., `"./brs-sg.js"`). The packaging layer only injects an extension into the worker payload when:
 
-1. The app bundle needs it (e.g., contains `pkg:/components/`).
+1. The app bundle needs it (e.g., contains `pkg:/components/` files, or — for an encrypted `.bpk` — a `components/` directory marker).
 2. The extension exists in the `DeviceInfo.extensions` map.
 
 This makes it explicit which add-ons your deployment supports and prevents the worker from fetching bundles that the host has not approved.

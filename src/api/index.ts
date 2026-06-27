@@ -92,6 +92,7 @@ import packageInfo from "../../packages/browser/package.json";
 
 // Package API
 export { deviceData, loadAppZip, updateAppZip, getSerialNumber, mountExt, umountExt } from "./package";
+export { encryptPackage, decryptPackage, isEncryptedPackage } from "../core/packageEncryption";
 
 // Control API
 export {
@@ -366,7 +367,7 @@ export function execute(filePath: string, fileData: any, options: any = {}, deep
     muteVideo(options.muteSound);
 
     if (fileExt === "zip" || fileExt === "bpk") {
-        loadAppZip(fileName, fileData, runApp);
+        loadAppZip(fileName, fileData, runApp, currentApp.password);
     } else {
         loadSourceCode(fileName, fileData);
     }
