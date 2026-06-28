@@ -30,6 +30,7 @@ import {
     AppData,
     SupportedExtension,
     isRegistryData,
+    isGraphicsData,
     ExtensionInfo,
     DataType,
     ExtVolInitialSize,
@@ -569,6 +570,10 @@ function messageCallback(message: any, _?: any) {
             printFrame(renderUnicodeFrame(columns, canvas));
         } else {
             printFrame(renderAsciiFrame(columns, canvas));
+        }
+    } else if (isGraphicsData(message)) {
+        if (program.ecp) {
+            brsWorker?.postMessage(message);
         }
     } else if (isRegistryData(message)) {
         if (program.ecp) {

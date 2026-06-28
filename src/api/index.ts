@@ -30,6 +30,8 @@ import {
     RegistryData,
     isRegistryData,
     isExtensionInfo,
+    GraphicsData,
+    isGraphicsData,
     LogLevel,
 } from "../core/common";
 import {
@@ -511,6 +513,37 @@ export function debug(command: string): boolean {
     return handled;
 }
 
+// Pending promises awaiting a graphics/texture-memory snapshot from the worker.
+const pendingGraphics: ((data: GraphicsData) => void)[] = [];
+
+/**
+ * Requests the current graphics/texture-memory state (r2d2-bitmaps) from the running app.
+ * Sets the request flag in the shared buffer; the worker collects the data and posts it
+ * back, which also dispatches a "bitmaps" event to subscribers.
+ * @param timeoutMs How long to wait for a response before resolving with undefined
+ * @returns A promise resolving with the graphics data, or undefined on timeout
+ */
+export async function requestBitmaps(timeoutMs = 2000): Promise<GraphicsData | undefined> {
+    if (!currentApp.running) {
+        return undefined;
+    }
+    return new Promise((resolve) => {
+        const entry = (data: GraphicsData) => {
+            clearTimeout(timer);
+            resolve(data);
+        };
+        const timer = setTimeout(() => {
+            const index = pendingGraphics.indexOf(entry);
+            if (index !== -1) {
+                pendingGraphics.splice(index, 1);
+            }
+            resolve(undefined);
+        }, timeoutMs);
+        pendingGraphics.push(entry);
+        Atomics.store(sharedArray, DataType.BUF, BufferType.R2D2);
+    });
+}
+
 /**
  * Terminates and resets the BrightScript interpreter worker.
  * Cleans up all resources including tasks, sounds, and video.
@@ -681,6 +714,11 @@ function mainCallback(event: MessageEvent) {
         updateBuffer(event.data);
     } else if (isRegistryData(event.data)) {
         handleRegistryUpdate(event.data);
+    } else if (isGraphicsData(event.data)) {
+        for (const resolve of pendingGraphics.splice(0)) {
+            resolve(event.data.graphics);
+        }
+        notifyAll("bitmaps", event.data.graphics);
     } else if (isExtensionInfo(event.data)) {
         deviceDebug(
             `beacon,Loaded Extension: ${event.data.name} (v${event.data.version}) from ${event.data.library}\r\n`

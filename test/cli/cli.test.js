@@ -482,5 +482,69 @@ describe("cli", () => {
         });
     });
 
+    describe("ECP query/r2d2-bitmaps", () => {
+        const http = require("http");
+        let server;
+
+        /** Performs an HTTP GET, resolving with the body once the server responds. */
+        function httpGet(url) {
+            return new Promise((resolve, reject) => {
+                const req = http.get(url, (res) => {
+                    let body = "";
+                    res.on("data", (chunk) => (body += chunk));
+                    res.on("end", () => resolve(body));
+                });
+                req.on("error", reject);
+                req.setTimeout(2000, () => req.destroy(new Error("timeout")));
+            });
+        }
+
+        /** Polls the endpoint until the response satisfies `ready` (or the attempts run out). */
+        async function waitForEndpoint(url, ready, attempts = 40) {
+            let last = "";
+            for (let i = 0; i < attempts; i++) {
+                try {
+                    last = await httpGet(url);
+                    if (ready(last)) {
+                        return last;
+                    }
+                } catch {
+                    // server not up yet
+                }
+                await new Promise((r) => setTimeout(r, 500));
+            }
+            throw new Error(`ECP endpoint not ready, last response: ${last}`);
+        }
+
+        afterAll(() => {
+            server?.kill("SIGKILL");
+        });
+
+        it("returns texture-memory data for the running app's bitmaps and fonts", async () => {
+            server = child_process.spawn("node", [brsCliPath, "-r", "r2d2-bitmaps-app", "source/main.brs", "--ecp"], {
+                cwd: path.join(__dirname, "resources"),
+            });
+            const url = "http://localhost:8060/query/r2d2-bitmaps";
+            const xml = await waitForEndpoint(url, (body) => body.includes("pkg:/images/alpha.png"));
+
+            expect(xml).toContain("<r2d2-bitmaps>");
+            expect(xml).toContain("<status>OK</status>");
+            // Roku's element name typo is preserved verbatim.
+            expect(xml).toContain("<sytem-memory>");
+            // The two bitmaps created by the app, with alpha => bpp 4 and opaque => bpp 3.
+            expect(xml).toContain("<name>pkg:/images/alpha.png</name>");
+            expect(xml).toContain("<name>pkg:/images/opaque.jpg</name>");
+            expect(xml).toMatch(/<bpp>4<\/bpp>/);
+            expect(xml).toMatch(/<bpp>3<\/bpp>/);
+            // The registered fonts are listed as font atlases.
+            expect(xml).toContain("Font:");
+            // Texture memory used + available equals the configured maximum.
+            const used = Number(xml.match(/<texture-memory>\s*<used>(\d+)</)[1]);
+            const available = Number(xml.match(/<available>(\d+)</)[1]);
+            const max = Number(xml.match(/<max>(\d+)</)[1]);
+            expect(used + available).toEqual(max);
+        }, 30000);
+    });
+
     it.todo("add tests for the remaining CLI options");
 });

@@ -26,6 +26,7 @@ import * as JPEG from "jpeg-js";
 import BMP from "decode-bmp";
 import { WebPRiffParser, WebPDecoder } from "@lvcabral/libwebp";
 import { BrsDevice } from "../../device/BrsDevice";
+import { nextAddress, registerTexture, unregisterTexture } from "../../device/Graphics";
 
 /** Parsed 9-patch (`.9.png`) layout, in source-pixel units (excluding the 1px marker border). */
 export interface NinePatch {
@@ -55,6 +56,7 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
     private rgbaLast: number;
     rgbaRedraw: boolean;
     scaleMode: number;
+    readonly address: string = nextAddress();
 
     constructor(param: BrsType | ArrayBuffer | Buffer, name?: string) {
         super("roBitmap");
@@ -205,6 +207,15 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
                 this.patchSizes = sizes;
             }
         }
+        if (this.valid) {
+            // Track this bitmap in the global texture-memory registry (r2d2-bitmaps).
+            registerTexture(this);
+        }
+    }
+
+    /** Returns whether this bitmap is stored with an alpha channel. */
+    hasAlpha(): boolean {
+        return this.alphaEnable;
     }
 
     clearCanvas(rgba: number) {
@@ -305,6 +316,7 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
     }
 
     dispose() {
+        unregisterTexture(this);
         releaseCanvas(this.canvas);
         if (this.rgbaCanvas) {
             releaseCanvas(this.rgbaCanvas);

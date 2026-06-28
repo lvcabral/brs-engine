@@ -8,6 +8,9 @@ All notable changes to this project will be documented in this file.
 
 ### Release Changes
 
+* (brs) Added a global texture-memory registry that tracks every live `roBitmap` (and the registered fonts), modeling a Roku device's internal `roGraphics` object. The data is gathered on demand via the existing shared-array request flag and posted back to consumers.
+* (cli) Added the `query/r2d2-bitmaps` ECP endpoint (enabled with `--ecp`), returning the list of bitmaps loaded into texture memory (width, height, bpp, size, name), the registered fonts, and the system/texture memory totals as XML — mirroring a real Roku device.
+* (api) Added the `requestBitmaps()` method and the `bitmaps` event so host applications (e.g. brs-desktop) can read the same texture-memory data in the browser.
 * (cli) Added SceneGraph support to encrypted app packages: when creating a `.bpk`, every component file under `pkg:/components/` (both `.brs` scripts and `.xml` definitions, including inline `<script>` blocks) is now encrypted into the package and stripped from the distributed zip, then restored in memory only at runtime. Previously only `pkg:/source/` code was encrypted, leaving SceneGraph apps unprotected.
 * (brs) The decrypted component files are restored through an opt-in in-memory `FileSystem` overlay, so the SceneGraph loader (and Task worker threads) read them transparently with no behavior change for unencrypted apps. Once the components are parsed (before `Main` runs) the overlay is dropped, so a packaged app's own BrightScript can no longer read its component source back (`ReadAsciiFile`, `roFileSystem`, `ListDir`, …) — matching the protection of tokenized `source/`.
 * (cli) The empty `components/` directory tree left after stripping is pruned from the `.bpk` (keeping only directories with surviving assets plus a single `components/` marker), so the package no longer leaks the app's folder structure.

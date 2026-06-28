@@ -10,6 +10,8 @@ import { RoFont } from "./RoFont";
 import * as opentype from "@lvcabral/opentype.js";
 import { BrsDevice } from "../../device/BrsDevice";
 import { BrsCanvas, createNewCanvas, releaseCanvas } from "../interfaces/IfDraw2D";
+import { nextAddress, setFontTextureProvider } from "../../device/Graphics";
+import { GraphicsBitmap } from "../../common";
 
 export interface FontMetrics {
     ascent: number;
@@ -74,6 +76,30 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
 
         // Create a canvas for measuring text
         this.canvas = createNewCanvas(10, 10);
+
+        // Expose the registered fonts to the texture-memory debug data (r2d2-bitmaps).
+        setFontTextureProvider(this.getFontTextures.bind(this));
+    }
+
+    /**
+     * Returns the registered fonts as graphics bitmaps, mirroring how Roku reports each
+     * font as an SDF atlas in texture memory. Atlas dimensions are synthetic.
+     */
+    private getFontTextures(): GraphicsBitmap[] {
+        const fonts: GraphicsBitmap[] = [];
+        for (const [family, metrics] of this.fontRegistry) {
+            const style = metrics[0]?.style ?? "normal";
+            const weight = metrics[0]?.weight ?? "400";
+            fonts.push({
+                address: nextAddress(),
+                width: 4096,
+                height: 51,
+                bpp: 1,
+                size: 4096 * 51,
+                name: `Font: ${family} ${style} SDF ${weight}`,
+            });
+        }
+        return fonts;
     }
 
     toString(parent?: BrsType): string {

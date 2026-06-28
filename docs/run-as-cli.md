@@ -130,6 +130,45 @@ The `<columns>` defines the width in number of character columns, the height wil
 
 The CLI runs the BrightScript Engine on a single thread, if you need to use control simulation, enable the option `--ecp` that will launch the ECP Server in port 8060 (same as a Roku device). With this option enabled, you can connect to your computer using any remote control app that uses ECP, including the [Roku Remote Tool](https://devtools.web.roku.com/#remote-tool), the [Roku GamePad Gateway](http://github.com/lvcabral/roku-gpg) or the Roku mobile apps. This option also enables an SSDP service to allow it to be discovered in your local network.
 
+### Inspecting Texture Memory
+
+With the ECP server enabled (`--ecp`), the CLI also exposes the `query/r2d2-bitmaps` endpoint, mirroring a real Roku device. It returns, as XML, the list of bitmaps currently loaded into texture memory (width, height, bytes-per-pixel, size and name) together with the registered fonts and the system/texture memory totals. This is useful for diagnosing texture-memory pressure in 2D API apps and SceneGraph apps.
+
+```console
+$ curl http://localhost:8060/query/r2d2-bitmaps
+```
+
+```xml
+<?xml version="1.0"?>
+<r2d2-bitmaps>
+  <timestamp>1782607141042</timestamp>
+  <channel-id>dev</channel-id>
+  <graphics-instances>
+    <rographics>
+      <sytem-memory>
+        <used>0</used>
+      </sytem-memory>
+      <texture-memory>
+        <used>1298800</used>
+        <available>98701200</available>
+        <max>100000000</max>
+      </texture-memory>
+      <bitmap>
+        <width>100</width>
+        <height>100</height>
+        <bpp>4</bpp>
+        <size>40000</size>
+        <name>pkg:/images/alpha.png</name>
+      </bitmap>
+      <!-- ...one <bitmap> per loaded image and registered font... -->
+    </rographics>
+  </graphics-instances>
+  <status>OK</status>
+</r2d2-bitmaps>
+```
+
+> Sizes are an approximation (`width × height × bpp`); on a real device the texture allocator pads them to alignment boundaries.
+
 ### Creating an encrypted App package file
 
 If you want to protect your BrightScript application source code, you can create an encrypted package using the CLI, using the parameters:
