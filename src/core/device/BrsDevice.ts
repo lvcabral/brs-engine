@@ -24,7 +24,9 @@ import {
     TaskPayload,
     ExtVolInitialSize,
     ExtVolMaxSize,
+    BufferType,
 } from "../common";
+import { collectGraphicsData } from "./Graphics";
 import SharedObject from "../SharedObject";
 import { FileSystem } from "./FileSystem";
 import { OutputProxy } from "./OutputProxy";
@@ -47,6 +49,10 @@ export class BrsDevice {
     static stderr: OutputProxy = new OutputProxy(process.stderr, true);
 
     static sharedArray: Int32Array = new Int32Array(0);
+    /** Debug instrumentation / resource tracking enabled (false in production mode).
+     * Mirrors `debugOnCrash`: when off, the engine skips counting components/nodes,
+     * lexeme stats, the texture registry, and the crash/`bt` backtrace output. */
+    static tracking: boolean = false;
     static displayEnabled: boolean = true;
     static singleKeyEvents: boolean = true; // Default Roku behavior is `true`
     static useCORSProxy: boolean = true; // If CORS proxy is configured, use it by default
@@ -298,6 +304,7 @@ export class BrsDevice {
         this.clockFormat = BrsDevice.deviceInfo.clockFormat;
         this.timeZone = BrsDevice.deviceInfo.timeZone;
         this.locale = BrsDevice.deviceInfo.locale.replace("_", "-");
+        this.tracking = BrsDevice.deviceInfo.debugOnCrash === true;
     }
 
     /**
@@ -391,6 +398,13 @@ export class BrsDevice {
      * @returns Debug command code
      */
     static checkBreakCommand(debugSession: boolean): number {
+        // Serve on-demand graphics/texture-memory debug requests (r2d2-bitmaps). The
+        // request flag is set in the shared buffer by the ECP/API thread; collect the
+        // current texture memory state and post it back as a data object.
+        if (Atomics.load(this.sharedArray, DataType.BUF) === BufferType.R2D2) {
+            Atomics.store(this.sharedArray, DataType.BUF, -1);
+            postMessage({ graphics: collectGraphicsData("dev") });
+        }
         let cmd = debugSession ? DebugCommand.BREAK : -1;
         if (!debugSession) {
             cmd = Atomics.load(this.sharedArray, DataType.DBG);
@@ -556,6 +570,9 @@ export class BrsDevice {
      * @param nodeType The type of the node to add/increment
      */
     static addNodeStat(nodeType: string) {
+        if (!this.tracking) {
+            return;
+        }
         const count = this.nodes.get(nodeType.toLowerCase())?.count || 0;
         this.nodes.set(nodeType.toLowerCase(), { name: nodeType, count: count + 1 });
     }

@@ -413,8 +413,11 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             if (err instanceof Stmt.ReturnValue) {
                 results = [err.value ?? BrsInvalid.Instance];
             } else if (err instanceof BrsError) {
-                const backTrace = this.formatBacktrace(err.location ?? this.location, true, err.backTrace);
-                throw new Error(`${err.format()}\nBackTrace:\n${backTrace}`, { cause: err });
+                if (BrsDevice.tracking) {
+                    const backTrace = this.formatBacktrace(err.location ?? this.location, true, err.backTrace);
+                    throw new Error(`${err.format()}\nBackTrace:\n${backTrace}`, { cause: err });
+                }
+                throw new Error(err.format(), { cause: err });
             } else {
                 throw err;
             }
@@ -538,6 +541,11 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
     visitStop(statement: Stmt.Stop): BrsType {
         if (!this.inExitMode()) {
+            if (!BrsDevice.tracking) {
+                // Production mode: the Micro Debugger is disabled, so STOP exits the app.
+                this.debugMode = DebugMode.EXIT;
+                throw new Stmt.BlockEnd("debug-exit", statement.location);
+            }
             this.debugMode = DebugMode.DEBUG;
             this.checkDebugger(statement);
         }
@@ -1998,6 +2006,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         const inDebugSession = this.debugMode !== DebugMode.NONE;
         const cmd = BrsDevice.checkBreakCommand(inDebugSession);
         if (cmd === DebugCommand.BREAK) {
+            if (!BrsDevice.tracking) {
+                // Production mode: the Micro Debugger is disabled, so ignore break requests.
+                return;
+            }
             if (this.debugMode === DebugMode.NONE) this.debugMode = DebugMode.DEBUG;
             if (!(statement instanceof Stmt.Block)) {
                 if (!runDebugger(this, statement.location, this.location)) {

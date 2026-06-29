@@ -278,6 +278,48 @@ export function isRegistryData(value: any): value is RegistryData {
     );
 }
 
+/**
+ * Graphics (texture memory) debug data, modeling Roku's internal `roGraphics`
+ * object exposed via ECP `query/r2d2-bitmaps` and telnet `r2d2_bitmaps`. It lists
+ * every bitmap currently loaded into texture memory (and the registered fonts),
+ * plus the system/texture memory totals.
+ */
+export interface GraphicsBitmap {
+    address: string; // Synthetic pointer-like id (hex)
+    width: number;
+    height: number;
+    bpp: number; // Bytes per pixel: 4 with alpha, 3 opaque, 1 for font atlases
+    size: number; // Approximate texture size in bytes (width * height * bpp)
+    name: string; // File URI, URL or font descriptor
+}
+
+export interface GraphicsData {
+    timestamp: number;
+    channelId: string;
+    systemMemory: { used: number };
+    textureMemory: { used: number; available: number; max: number };
+    bitmaps: GraphicsBitmap[];
+}
+
+/**
+ * Type guard to check if a value is a graphics debug message ({ graphics: GraphicsData }).
+ * @param value the value to check
+ * @returns true if the value wraps a GraphicsData object, false otherwise
+ */
+export function isGraphicsData(value: any): value is { graphics: GraphicsData } {
+    return (
+        value &&
+        typeof value === "object" &&
+        value.graphics &&
+        typeof value.graphics === "object" &&
+        Array.isArray(value.graphics.bitmaps) &&
+        typeof value.graphics.textureMemory === "object"
+    );
+}
+
+// Default maximum texture memory (bytes) reported by the graphics debug data.
+export const MaxTextureMemory = 100000000;
+
 /* Execution Payload Interfaces
  *
  * These interfaces are used to provide information to the interpreter about the
@@ -751,6 +793,7 @@ export enum BufferType {
     MEDIA_TRACKS,
     SYS_LOG,
     INPUT,
+    R2D2, // Request flag for graphics/texture-memory debug data (r2d2-bitmaps)
 }
 
 // Default Roku Sounds

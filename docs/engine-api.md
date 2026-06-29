@@ -41,6 +41,7 @@ Check the [documentation](./integrating.md) to learn how to start using it. The 
 |getDebugState()|Returns `true` if debug functionality is enabled, `false` if disabled||
 |setDebugState(`enabled`)|Enables or disables the debug functionality|<ul><li>`enabled` (boolean): if `true` enables debug commands and data to be sent/received by the engine, if `false` disables debug functionality for production to avoid code injection.</li>|
 |getVersion()|Returns the version of the API library ||
+|requestBitmaps(`timeoutMs`)|Requests the current texture-memory state (the list of bitmaps and registered fonts loaded into memory, plus memory totals), equivalent to a Roku device's [`query/r2d2-bitmaps`](https://developer.roku.com/docs/developer-program/dev-tools/external-control-api.md) ECP endpoint. Returns a `Promise` that resolves with the data (or `undefined` if no app is running or the request times out). The same data is also dispatched to subscribers via the `bitmaps` event. **Requires developer mode**: the app must run with `debugOnCrash: true` (see `execute`), otherwise the bitmap list is empty. |<ul><li>`timeoutMs` (number, optional): how long to wait for a response before resolving with `undefined` (default `2000`).</li></ul>|
 
 ## Common API exports
 
@@ -71,4 +72,5 @@ The browser API now re-exports a small set of shared types and constants so host
 | launch     | Triggered when the methods `roAppManager.launchApp()` or `roNDK.start()` (with `SDKLauncher` app) are called from BrightScript | object: `{app: string, params: Map}`. |
 | browser    | Triggered when the library sub `RokuBrowser` is called from BrightScript | object: `{url: string, width: integer, height: integer}`. The parameters `width` and `height` defines the dimensions of the browser window |
 | debug      | Triggered when debug messages arrive from the worker library (BrightScript Interpreter) | object: `{level: string, content: string}`, levels are: `print`, `beacon`, `warning`, `error`, `stop`, `pause`, `continue` |
+| bitmaps    | Triggered when texture-memory data arrives from the worker library in response to `requestBitmaps()` | object: `{timestamp: number, channelId: string, systemMemory: {used: number}, textureMemory: {used: number, available: number, max: number}, bitmaps: Array<{address: string, width: number, height: number, bpp: number, size: number, name: string}>}` |
 | error      | Triggered when the any execution exception happens on the API library | string: The message describing the error |

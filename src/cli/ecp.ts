@@ -6,7 +6,16 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { enableSendKeys, initControlModule, sendInput, sendKey, subscribeControl } from "./control";
-import { DataType, DebugCommand, DeviceInfo, getRokuOSVersion } from "../core/common";
+import {
+    BufferType,
+    DataType,
+    DebugCommand,
+    DeviceInfo,
+    GraphicsData,
+    MaxTextureMemory,
+    getRokuOSVersion,
+    isGraphicsData,
+} from "../core/common";
 import { isMainThread, parentPort, workerData } from "node:worker_threads";
 import { Server as SSDP } from "@lvcabral/node-ssdp";
 import xmlbuilder from "xmlbuilder";
@@ -29,6 +38,8 @@ let device: DeviceInfo;
 let sharedArray: Int32Array;
 let isECPEnabled = false;
 let cliRegistry = new Map<string, string>();
+let lastGraphics: GraphicsData | undefined;
+const pendingGraphics: ((data: GraphicsData) => void)[] = [];
 
 if (!isMainThread && parentPort) {
     device = workerData.device;
@@ -42,6 +53,11 @@ if (!isMainThread && parentPort) {
             enableECP();
         } else if (data instanceof Map) {
             cliRegistry = data;
+        } else if (isGraphicsData(data)) {
+            lastGraphics = data.graphics;
+            while (pendingGraphics.length) {
+                pendingGraphics.shift()?.(data.graphics);
+            }
         }
     });
     parentPort.on("exit", disableECP);
@@ -71,6 +87,7 @@ function enableECP() {
     ecp.get("/query/active-app", sendActiveApp);
     ecp.get("/query/icon/:appID", sendAppIcon);
     ecp.get("/query/registry/:appID", sendRegistry);
+    ecp.get("/query/r2d2-bitmaps", sendR2D2Bitmaps);
     ecp.post("/input/:appID", sendInputQuery);
     ecp.post("/input", sendInputQuery);
     ecp.post("/launch/:appID", sendLaunchApp);
@@ -358,6 +375,42 @@ function sendRegistry(req: any, res: any) {
 }
 
 /**
+ * Requests the current graphics/texture-memory state from the interpreter.
+ * Sets the request flag in the shared buffer and waits for the interpreter to post
+ * back the data (forwarded by the main thread), falling back to the last snapshot on timeout.
+ * @param timeoutMs - How long to wait for a fresh response
+ * @returns The graphics data, or undefined if none is available
+ */
+async function requestGraphics(timeoutMs = 2000): Promise<GraphicsData | undefined> {
+    return new Promise((resolve) => {
+        const entry = (data: GraphicsData) => {
+            clearTimeout(timer);
+            resolve(data);
+        };
+        const timer = setTimeout(() => {
+            const index = pendingGraphics.indexOf(entry);
+            if (index !== -1) {
+                pendingGraphics.splice(index, 1);
+            }
+            resolve(lastGraphics);
+        }, timeoutMs);
+        pendingGraphics.push(entry);
+        Atomics.store(sharedArray, DataType.BUF, BufferType.R2D2);
+    });
+}
+
+/**
+ * Sends the texture-memory debug data (r2d2-bitmaps) as XML.
+ * @param req - The HTTP request object
+ * @param res - The HTTP response object
+ */
+async function sendR2D2Bitmaps(req: any, res: any) {
+    const data = await requestGraphics();
+    res.setHeader("content-type", "application/xml");
+    res.send(genR2D2BitmapsXml(data));
+}
+
+/**
  * Handles launch application requests.
  * @param req - The HTTP request object with appID parameter
  * @param res - The HTTP response object
@@ -640,6 +693,50 @@ function genAppRegistry(plugin: string, encrypt: boolean) {
     }
     const strXml = xml.end({ pretty: true });
     return encrypt ? Buffer.from(strXml).toString("base64") : strXml;
+}
+
+/**
+ * Generates the texture-memory debug data (r2d2-bitmaps) as XML, mirroring the format
+ * returned by a real Roku device. Note the `sytem-memory` element name keeps Roku's typo.
+ * @param data - The graphics data to render (uses an empty snapshot when undefined)
+ * @returns The r2d2-bitmaps XML string
+ */
+function genR2D2BitmapsXml(data?: GraphicsData) {
+    const graphics: GraphicsData = data ?? {
+        timestamp: Date.now(),
+        channelId: "dev",
+        systemMemory: { used: 0 },
+        textureMemory: { used: 0, available: MaxTextureMemory, max: MaxTextureMemory },
+        bitmaps: [],
+    };
+    const xml = xmlbuilder.create("r2d2-bitmaps");
+    xml.ele("timestamp", {}, graphics.timestamp);
+    xml.ele("channel-id", {}, graphics.channelId);
+    const instances = xml.ele("graphics-instances");
+    // Leading empty system instance (matches a real device's first rographics block).
+    const sysInstance = instances.ele("rographics");
+    sysInstance.ele("sytem-memory").ele("used", {}, 0);
+    const sysTexture = sysInstance.ele("texture-memory");
+    sysTexture.ele("used", {}, 0);
+    sysTexture.ele("available", {}, graphics.textureMemory.max);
+    sysTexture.ele("max", {}, graphics.textureMemory.max);
+    // App instance holding the loaded bitmaps and fonts.
+    const appInstance = instances.ele("rographics");
+    appInstance.ele("sytem-memory").ele("used", {}, graphics.systemMemory.used);
+    const appTexture = appInstance.ele("texture-memory");
+    appTexture.ele("used", {}, graphics.textureMemory.used);
+    appTexture.ele("available", {}, graphics.textureMemory.available);
+    appTexture.ele("max", {}, graphics.textureMemory.max);
+    for (const bitmap of graphics.bitmaps) {
+        const bmp = appInstance.ele("bitmap");
+        bmp.ele("width", {}, bitmap.width);
+        bmp.ele("height", {}, bitmap.height);
+        bmp.ele("bpp", {}, bitmap.bpp);
+        bmp.ele("size", {}, bitmap.size);
+        bmp.ele("name", {}, bitmap.name);
+    }
+    xml.ele("status", {}, "OK");
+    return xml.end({ pretty: true });
 }
 
 // Helper Functions

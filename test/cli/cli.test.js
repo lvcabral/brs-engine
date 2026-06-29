@@ -123,8 +123,28 @@ describe("cli", () => {
             throw `Script ran without error: ${filename}`;
         } catch (err) {
             let errors = err.stderr.match(new RegExp(filename, "g"));
-            expect(errors.length).toEqual(2);
+            // Production mode (default) prints the error once, without the BackTrace block
+            // (the backtrace is only emitted with --debug / debugOnCrash).
+            expect(errors.length).toEqual(1);
         }
+    }, 10000);
+
+    it("exits the app on STOP in production mode (no Micro Debugger)", async () => {
+        // Without --debug the Micro Debugger is disabled, so a STOP statement terminates the
+        // app (with the EXIT_BRIGHTSCRIPT_STOP reason) instead of opening the debugger.
+        let stdout = "";
+        try {
+            ({ stdout } = await exec(["node", brsCliPath, "stop-prod.brs", "-c 0"].join(" "), {
+                cwd: path.join(__dirname, "resources"),
+            }));
+        } catch (err) {
+            stdout = err.stdout ?? "";
+        }
+        expect(stdout).toContain("before stop");
+        expect(stdout).not.toContain("after stop");
+        expect(stdout).toContain("EXIT_BRIGHTSCRIPT_STOP");
+        // The interactive debugger (which would error on a non-TTY) must not be reached.
+        expect(stdout).not.toContain("interactive reading from TTY");
     }, 10000);
 
     it("SceneGraph App Test", async () => {
@@ -480,6 +500,142 @@ describe("cli", () => {
                 expect(stdout).not.toContain("TOP_SECRET");
             }, 15000);
         });
+    });
+
+    describe(".bpk forces Production mode", () => {
+        const password = "abcdefghij0123456789abcdefghij01"; // 32 chars (AES-256 key)
+        let tmpDir;
+        let bpkPath;
+
+        beforeAll(async () => {
+            tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "brs-bpk-prod-"));
+            const zipPath = path.join(tmpDir, "crash.zip");
+            fs.writeFileSync(zipPath, zipFolder(path.join(__dirname, "resources", "crash-app")));
+            await exec(
+                ["node", brsCliPath, '"' + zipPath + '"', "--pack", password, "--out", '"' + tmpDir + '"', "-c 0"].join(
+                    " "
+                )
+            );
+            bpkPath = path.join(tmpDir, "crash.bpk");
+        }, 15000);
+
+        afterAll(() => {
+            if (tmpDir) fs.rmSync(tmpDir, { recursive: true, force: true });
+        });
+
+        it("ignores --debug for an encrypted package (no debugger, no backtrace)", async () => {
+            // Even with --debug, a .bpk runs in Production mode: the crash must not open the
+            // (interactive) Micro Debugger nor print the BackTrace block.
+            let stdout = "";
+            let stderr = "";
+            try {
+                await exec(["node", brsCliPath, '"' + bpkPath + '"', "--pack", password, "--debug", "-c 0"].join(" "));
+            } catch (err) {
+                stdout = err.stdout ?? "";
+                stderr = err.stderr ?? "";
+            }
+            const output = stdout + stderr;
+            expect(output).toContain("'Dot' Operator attempted with invalid BrightScript Component");
+            expect(output).not.toContain("BackTrace:");
+            // The interactive debugger (which would error on a non-TTY) must not be reached.
+            expect(output).not.toContain("interactive reading from TTY");
+        }, 15000);
+    });
+
+    describe("ECP query/r2d2-bitmaps", () => {
+        const http = require("http");
+        let server;
+
+        /** Performs an HTTP GET, resolving with the body once the server responds. */
+        function httpGet(url) {
+            return new Promise((resolve, reject) => {
+                const req = http.get(url, (res) => {
+                    let body = "";
+                    res.on("data", (chunk) => (body += chunk));
+                    res.on("end", () => resolve(body));
+                });
+                req.on("error", reject);
+                req.setTimeout(2000, () => req.destroy(new Error("timeout")));
+            });
+        }
+
+        /** Polls the endpoint until the response satisfies `ready` (or the attempts run out). */
+        async function waitForEndpoint(url, ready, attempts = 40) {
+            let last = "";
+            for (let i = 0; i < attempts; i++) {
+                try {
+                    last = await httpGet(url);
+                    if (ready(last)) {
+                        return last;
+                    }
+                } catch {
+                    // server not up yet
+                }
+                await new Promise((r) => setTimeout(r, 500));
+            }
+            throw new Error(`ECP endpoint not ready, last response: ${last}`);
+        }
+
+        /** Resolves once the spawned server prints `text` on stdout (or the timeout elapses). */
+        function waitForStdout(child, text, timeoutMs = 15000) {
+            return new Promise((resolve, reject) => {
+                let buffer = "";
+                const timer = setTimeout(() => reject(new Error(`stdout did not contain "${text}"`)), timeoutMs);
+                child.stdout.on("data", (chunk) => {
+                    buffer += chunk.toString();
+                    if (buffer.includes(text)) {
+                        clearTimeout(timer);
+                        resolve(buffer);
+                    }
+                });
+            });
+        }
+
+        const url = "http://localhost:8060/query/r2d2-bitmaps";
+
+        afterEach(() => {
+            server?.kill("SIGKILL");
+            server = undefined;
+        });
+
+        it("returns texture-memory data for the running app's bitmaps and fonts in debug mode", async () => {
+            server = child_process.spawn(
+                "node",
+                [brsCliPath, "-r", "r2d2-bitmaps-app", "source/main.brs", "--ecp", "--debug"],
+                { cwd: path.join(__dirname, "resources") }
+            );
+            const xml = await waitForEndpoint(url, (body) => body.includes("pkg:/images/alpha.png"));
+
+            expect(xml).toContain("<r2d2-bitmaps>");
+            expect(xml).toContain("<status>OK</status>");
+            // Roku's element name typo is preserved verbatim.
+            expect(xml).toContain("<sytem-memory>");
+            // The two bitmaps created by the app, with alpha => bpp 4 and opaque => bpp 3.
+            expect(xml).toContain("<name>pkg:/images/alpha.png</name>");
+            expect(xml).toContain("<name>pkg:/images/opaque.jpg</name>");
+            expect(xml).toMatch(/<bpp>4<\/bpp>/);
+            expect(xml).toMatch(/<bpp>3<\/bpp>/);
+            // The registered fonts are listed as font atlases.
+            expect(xml).toContain("Font:");
+            // Texture memory used + available equals the configured maximum.
+            const used = Number(xml.match(/<texture-memory>\s*<used>(\d+)</)[1]);
+            const available = Number(xml.match(/<available>(\d+)</)[1]);
+            const max = Number(xml.match(/<max>(\d+)</)[1]);
+            expect(used + available).toEqual(max);
+        }, 30000);
+
+        it("returns no bitmaps in production mode (no --debug)", async () => {
+            server = child_process.spawn("node", [brsCliPath, "-r", "r2d2-bitmaps-app", "source/main.brs", "--ecp"], {
+                cwd: path.join(__dirname, "resources"),
+            });
+            // Wait until the app has created its bitmaps, then confirm the registry stayed empty.
+            await waitForStdout(server, "R2D2 ready");
+            const xml = await waitForEndpoint(url, (body) => body.includes("<status>OK</status>"));
+
+            expect(xml).toContain("<r2d2-bitmaps>");
+            expect(xml).not.toContain("<bitmap>");
+            expect(xml).not.toContain("pkg:/images/alpha.png");
+        }, 30000);
     });
 
     it.todo("add tests for the remaining CLI options");

@@ -119,7 +119,7 @@ export class BrsComponent {
      */
     addReference() {
         this.references++;
-        if (this.references === 1) {
+        if (this.references === 1 && BrsDevice.tracking) {
             const count = BrsDevice.bscs.get(this.componentName) ?? 0;
             BrsDevice.bscs.set(this.componentName, count + 1);
         }
@@ -133,9 +133,11 @@ export class BrsComponent {
     removeReference() {
         this.references--;
         if (this.references === 0 && !this.returnFlag) {
-            const count = BrsDevice.bscs.get(this.componentName);
-            if (count) {
-                BrsDevice.bscs.set(this.componentName, count - 1);
+            if (BrsDevice.tracking) {
+                const count = BrsDevice.bscs.get(this.componentName);
+                if (count) {
+                    BrsDevice.bscs.set(this.componentName, count - 1);
+                }
             }
             this.dispose();
         }

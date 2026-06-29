@@ -633,6 +633,10 @@ export async function executeFile(
     customOptions?: Partial<ExecutionOptions>,
     useMainEnv?: boolean
 ): Promise<RunResult> {
+    if (isEncryptedPayload(payload)) {
+        // Encrypted packages (.bpk) always run in Production mode (no debug instrumentation).
+        payload.device.debugOnCrash = false;
+    }
     const options = {
         entryPoint: payload.device.entryPoint ?? true,
         stopOnCrash: payload.device.debugOnCrash ?? false,
@@ -673,6 +677,10 @@ export async function executeFile(
  * @param customOptions Optional execution options to override defaults
  */
 export async function executeTask(payload: TaskPayload, customOptions?: Partial<ExecutionOptions>) {
+    if (isEncryptedPayload(payload)) {
+        // Encrypted packages (.bpk) always run in Production mode (no debug instrumentation).
+        payload.device.debugOnCrash = false;
+    }
     const options = {
         entryPoint: false,
         stopOnCrash: payload.device.debugOnCrash ?? false,
@@ -793,6 +801,15 @@ interface SourceResult {
     sourceMap: Map<string, string>;
     pcode?: Buffer;
     iv?: string;
+}
+
+/**
+ * Returns true if the payload is an encrypted package (.bpk), detected by the presence of a
+ * precompiled `pcode` entry in its file paths. Encrypted packages always run in Production mode.
+ * @param payload the app or task payload to inspect
+ */
+function isEncryptedPayload(payload: AppPayload | TaskPayload): boolean {
+    return Array.isArray(payload.paths) && payload.paths.some((p) => p.type === "pcode");
 }
 
 function setupPayload(interpreter: Interpreter, payload: AppPayload | TaskPayload): SourceResult {
@@ -1011,7 +1028,8 @@ async function runSource(
     payload: AppPayload
 ): Promise<RunResult> {
     const password = payload.password ?? "";
-    const parseResult = lexParseSync(BrsDevice.fileSystem, interpreter.manifest, sourceMap, password, BrsDevice.stats);
+    const parseStats = BrsDevice.tracking ? BrsDevice.stats : undefined;
+    const parseResult = lexParseSync(BrsDevice.fileSystem, interpreter.manifest, sourceMap, password, parseStats);
     let exitReason = parseResult.exitReason;
     if (exitReason !== AppExitReason.Crashed) {
         if (password.length > 0) {
