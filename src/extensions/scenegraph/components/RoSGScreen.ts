@@ -260,6 +260,12 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         const dialog = sgRoot.scene.dialog;
         if ((dialog instanceof Dialog || dialog instanceof StandardDialog) && dialog.isVisible()) {
             handled = dialog.handleKey(key.value, press.toBoolean());
+            if (!handled && dialog instanceof StandardDialog) {
+                // The StandardDialog framework navigation didn't consume the key. Route it through
+                // the normal focus chain so a custom dialog component's focused content (e.g. a
+                // plain ButtonGroup) and its onKeyEvent get a chance to handle it, as on Roku.
+                handled = sgRoot.scene.handleOnKeyEvent(interpreter, key, press);
+            }
         } else {
             handled = sgRoot.scene.handleOnKeyEvent(interpreter, key, press);
         }

@@ -350,6 +350,31 @@ describe("cli", () => {
         ]);
     }, 10000);
 
+    it("StandardDialog forwards focus to a custom component's nested button group", async () => {
+        let command = ["node", brsCliPath, "-r dialog-buttongroup-focus-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // Repro of the pplus-proxy ThemeDialog: a custom dialog on the StandardDialog framework whose
+        // interactive widget is a plain LayoutGroup-based button group (no StdDlgButtonArea). It drives
+        // focus via its own focusedChild observer + hasFocus(), with the dialog focused from inside a
+        // field-observer callback. setNodeFocus must make the dialog itself the focused node so that
+        // observer fires and forwards focus into the button group (otherwise no button is highlighted),
+        // and must re-deliver focus when the dialog is explicitly re-focused after focus moved away.
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "=== Dialog ButtonGroup Focus Repro ===",
+            "  ExButtons received focus -> highlight first button",
+            "after show: isInFocusChain = true",
+            "  ExButtons received focus -> highlight first button",
+            "after refocus: isInFocusChain = true",
+            "=== Dialog ButtonGroup Focus Complete ===",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 10000);
+
     it("Run App from Root Folder Only", async () => {
         // Issue #771: pointing the CLI at a folder with `--root` and no positional files
         // discovers source/*.brs and loads components/ from the root-mounted pkg:/ volume,

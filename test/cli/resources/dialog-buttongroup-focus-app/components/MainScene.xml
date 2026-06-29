@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="MainScene" extends="Scene">
+    <script type="text/brightscript" uri="pkg:/components/MainScene.brs" />
+    <interface>
+        <!-- Mirrors pplus-proxy: the dialog is delivered through a global-like field whose observer
+             parks focus and then focuses the dialog (all inside the observer callback). -->
+        <field id="sceneDialog" type="node" onChange="onDialogChanged" />
+    </interface>
+    <children>
+        <Rectangle id="background" width="1280" height="720" color="0x101010FF" />
+        <Rectangle id="nullFocus" focusable="true" />
+    </children>
+</component>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Mirrors pplus-proxy ButtonExGroup: a LayoutGroup that highlights its first child only when it
+     itself receives focus, detected via its own focusedChild observer + hasFocus(). -->
+<component name="ExButtons" extends="LayoutGroup">
+    <script type="text/brightscript" uri="./ExButtons.brs" />
+    <interface>
+        <function name="addButton" />
+    </interface>
+</component>
