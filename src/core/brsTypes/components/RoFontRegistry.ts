@@ -78,7 +78,10 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
         this.canvas = createNewCanvas(10, 10);
 
         // Expose the registered fonts to the texture-memory debug data (r2d2-bitmaps).
-        setFontTextureProvider(this.getFontTextures.bind(this));
+        // Only in debug mode — production mode keeps the texture registry empty.
+        if (BrsDevice.tracking) {
+            setFontTextureProvider(this.getFontTextures.bind(this));
+        }
     }
 
     /**

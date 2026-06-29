@@ -34,7 +34,7 @@ Options:
   -a, --ascii <columns>     Enable ASCII screen mode with # of columns.
   -u, --unicode             Render ASCII screen mode using Unicode block characters.
   -c, --colors <level>      Define the console color level (0 to disable). (default: 3)
-  -d, --debug               Open the micro debugger if the app crashes.
+  -d, --debug               Developer mode: micro debugger on crash + resource tracking.
   -e, --ecp                 Enable the ECP server for control simulation.
   -n, --no-sg               Disable the SceneGraph extension.
   -p, --pack <password>     The password to generate the encrypted package. (default: "")
@@ -130,9 +130,36 @@ The `<columns>` defines the width in number of character columns, the height wil
 
 The CLI runs the BrightScript Engine on a single thread, if you need to use control simulation, enable the option `--ecp` that will launch the ECP Server in port 8060 (same as a Roku device). With this option enabled, you can connect to your computer using any remote control app that uses ECP, including the [Roku Remote Tool](https://devtools.web.roku.com/#remote-tool), the [Roku GamePad Gateway](http://github.com/lvcabral/roku-gpg) or the Roku mobile apps. This option also enables an SSDP service to allow it to be discovered in your local network.
 
+### Production vs Developer mode
+
+By default the engine runs in **production mode**, which keeps it lean by skipping all debug
+instrumentation. Passing `--debug` (or setting `debugOnCrash` in the device info) switches to
+**developer mode**, which enables the Micro Debugger and the resource tracking used by its
+inspection commands.
+
+| Capability | Production (default) | Developer (`--debug`) |
+| --- | --- | --- |
+| Micro Debugger opens on crash | no | yes |
+| `bscs` / `sgnodes` / `stats` debug commands | empty | populated |
+| `bt` command & crash `BackTrace:` output | suppressed | shown |
+| ECP `query/r2d2-bitmaps` | empty | populated |
+| `try/catch` `e.backtrace` | works | works |
+| Reference counting, `dispose()`, error messages | unchanged | unchanged |
+
+This avoids the per-object/per-node bookkeeping overhead when you are just running an app. Note
+that `try/catch` exception backtraces (`e.backtrace`) keep working in both modes.
+
+Encrypted packages (`.bpk`) **always** run in production mode — `debugOnCrash` is forced off even
+if you pass `--debug` — so a protected app cannot be inspected through the debug instrumentation.
+
 ### Inspecting Texture Memory
 
-With the ECP server enabled (`--ecp`), the CLI also exposes the `query/r2d2-bitmaps` endpoint, mirroring a real Roku device. It returns, as XML, the list of bitmaps currently loaded into texture memory (width, height, bytes-per-pixel, size and name) together with the registered fonts and the system/texture memory totals. This is useful for diagnosing texture-memory pressure in 2D API apps and SceneGraph apps.
+With the ECP server **and** developer mode enabled (`--ecp --debug`), the CLI exposes the
+`query/r2d2-bitmaps` endpoint, mirroring a real Roku device (which likewise requires developer
+mode for this query). It returns, as XML, the list of bitmaps currently loaded into texture
+memory (width, height, bytes-per-pixel, size and name) together with the registered fonts and
+the system/texture memory totals. This is useful for diagnosing texture-memory pressure in 2D
+API apps and SceneGraph apps. In production mode the endpoint responds with an empty list.
 
 ```console
 $ curl http://localhost:8060/query/r2d2-bitmaps

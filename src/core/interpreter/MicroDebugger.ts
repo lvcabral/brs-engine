@@ -231,7 +231,9 @@ function debugHandleCommand(interpreter: Interpreter, currLoc: Location, lastLoc
     let debugMsg: string = "";
     switch (cmd) {
         case DebugCommand.BT:
-            debugMsg = `print,${interpreter.formatBacktrace(currLoc)}`;
+            debugMsg = BrsDevice.tracking
+                ? `print,${interpreter.formatBacktrace(currLoc)}`
+                : "print,Backtrace only available in dev mode (enable debugOnCrash)\r\n";
             break;
         case DebugCommand.HELP:
             debugMsg = `print,${debugHelp()}`;

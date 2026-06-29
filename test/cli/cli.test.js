@@ -123,7 +123,9 @@ describe("cli", () => {
             throw `Script ran without error: ${filename}`;
         } catch (err) {
             let errors = err.stderr.match(new RegExp(filename, "g"));
-            expect(errors.length).toEqual(2);
+            // Production mode (default) prints the error once, without the BackTrace block
+            // (the backtrace is only emitted with --debug / debugOnCrash).
+            expect(errors.length).toEqual(1);
         }
     }, 10000);
 
@@ -482,6 +484,46 @@ describe("cli", () => {
         });
     });
 
+    describe(".bpk forces Production mode", () => {
+        const password = "abcdefghij0123456789abcdefghij01"; // 32 chars (AES-256 key)
+        let tmpDir;
+        let bpkPath;
+
+        beforeAll(async () => {
+            tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "brs-bpk-prod-"));
+            const zipPath = path.join(tmpDir, "crash.zip");
+            fs.writeFileSync(zipPath, zipFolder(path.join(__dirname, "resources", "crash-app")));
+            await exec(
+                ["node", brsCliPath, '"' + zipPath + '"', "--pack", password, "--out", '"' + tmpDir + '"', "-c 0"].join(
+                    " "
+                )
+            );
+            bpkPath = path.join(tmpDir, "crash.bpk");
+        }, 15000);
+
+        afterAll(() => {
+            if (tmpDir) fs.rmSync(tmpDir, { recursive: true, force: true });
+        });
+
+        it("ignores --debug for an encrypted package (no debugger, no backtrace)", async () => {
+            // Even with --debug, a .bpk runs in Production mode: the crash must not open the
+            // (interactive) Micro Debugger nor print the BackTrace block.
+            let stdout = "";
+            let stderr = "";
+            try {
+                await exec(["node", brsCliPath, '"' + bpkPath + '"', "--pack", password, "--debug", "-c 0"].join(" "));
+            } catch (err) {
+                stdout = err.stdout ?? "";
+                stderr = err.stderr ?? "";
+            }
+            const output = stdout + stderr;
+            expect(output).toContain("'Dot' Operator attempted with invalid BrightScript Component");
+            expect(output).not.toContain("BackTrace:");
+            // The interactive debugger (which would error on a non-TTY) must not be reached.
+            expect(output).not.toContain("interactive reading from TTY");
+        }, 15000);
+    });
+
     describe("ECP query/r2d2-bitmaps", () => {
         const http = require("http");
         let server;
@@ -516,15 +558,34 @@ describe("cli", () => {
             throw new Error(`ECP endpoint not ready, last response: ${last}`);
         }
 
-        afterAll(() => {
+        /** Resolves once the spawned server prints `text` on stdout (or the timeout elapses). */
+        function waitForStdout(child, text, timeoutMs = 15000) {
+            return new Promise((resolve, reject) => {
+                let buffer = "";
+                const timer = setTimeout(() => reject(new Error(`stdout did not contain "${text}"`)), timeoutMs);
+                child.stdout.on("data", (chunk) => {
+                    buffer += chunk.toString();
+                    if (buffer.includes(text)) {
+                        clearTimeout(timer);
+                        resolve(buffer);
+                    }
+                });
+            });
+        }
+
+        const url = "http://localhost:8060/query/r2d2-bitmaps";
+
+        afterEach(() => {
             server?.kill("SIGKILL");
+            server = undefined;
         });
 
-        it("returns texture-memory data for the running app's bitmaps and fonts", async () => {
-            server = child_process.spawn("node", [brsCliPath, "-r", "r2d2-bitmaps-app", "source/main.brs", "--ecp"], {
-                cwd: path.join(__dirname, "resources"),
-            });
-            const url = "http://localhost:8060/query/r2d2-bitmaps";
+        it("returns texture-memory data for the running app's bitmaps and fonts in debug mode", async () => {
+            server = child_process.spawn(
+                "node",
+                [brsCliPath, "-r", "r2d2-bitmaps-app", "source/main.brs", "--ecp", "--debug"],
+                { cwd: path.join(__dirname, "resources") }
+            );
             const xml = await waitForEndpoint(url, (body) => body.includes("pkg:/images/alpha.png"));
 
             expect(xml).toContain("<r2d2-bitmaps>");
@@ -543,6 +604,19 @@ describe("cli", () => {
             const available = Number(xml.match(/<available>(\d+)</)[1]);
             const max = Number(xml.match(/<max>(\d+)</)[1]);
             expect(used + available).toEqual(max);
+        }, 30000);
+
+        it("returns no bitmaps in production mode (no --debug)", async () => {
+            server = child_process.spawn("node", [brsCliPath, "-r", "r2d2-bitmaps-app", "source/main.brs", "--ecp"], {
+                cwd: path.join(__dirname, "resources"),
+            });
+            // Wait until the app has created its bitmaps, then confirm the registry stayed empty.
+            await waitForStdout(server, "R2D2 ready");
+            const xml = await waitForEndpoint(url, (body) => body.includes("<status>OK</status>"));
+
+            expect(xml).toContain("<r2d2-bitmaps>");
+            expect(xml).not.toContain("<bitmap>");
+            expect(xml).not.toContain("pkg:/images/alpha.png");
         }, 30000);
     });
 

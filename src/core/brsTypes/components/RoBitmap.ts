@@ -207,7 +207,7 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
                 this.patchSizes = sizes;
             }
         }
-        if (this.valid) {
+        if (this.valid && BrsDevice.tracking) {
             // Track this bitmap in the global texture-memory registry (r2d2-bitmaps).
             registerTexture(this);
         }
@@ -316,7 +316,9 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
     }
 
     dispose() {
-        unregisterTexture(this);
+        if (BrsDevice.tracking) {
+            unregisterTexture(this);
+        }
         releaseCanvas(this.canvas);
         if (this.rgbaCanvas) {
             releaseCanvas(this.rgbaCanvas);

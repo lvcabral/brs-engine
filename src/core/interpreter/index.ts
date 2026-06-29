@@ -413,8 +413,11 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             if (err instanceof Stmt.ReturnValue) {
                 results = [err.value ?? BrsInvalid.Instance];
             } else if (err instanceof BrsError) {
-                const backTrace = this.formatBacktrace(err.location ?? this.location, true, err.backTrace);
-                throw new Error(`${err.format()}\nBackTrace:\n${backTrace}`, { cause: err });
+                if (BrsDevice.tracking) {
+                    const backTrace = this.formatBacktrace(err.location ?? this.location, true, err.backTrace);
+                    throw new Error(`${err.format()}\nBackTrace:\n${backTrace}`, { cause: err });
+                }
+                throw new Error(err.format(), { cause: err });
             } else {
                 throw err;
             }

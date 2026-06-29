@@ -71,7 +71,7 @@ program
     .option("-a, --ascii <columns>", "Enable ASCII screen mode with # of columns.")
     .option("-u, --unicode", "Render ASCII screen mode using Unicode block characters.", false)
     .option("-c, --colors <level>", "Define the console color level (0 to disable).", defaultLevel)
-    .option("-d, --debug", "Open the micro debugger if the app crashes.", false)
+    .option("-d, --debug", "Developer mode: micro debugger on crash + resource tracking.", false)
     .option("-e, --ecp", "Enable the ECP server for control simulation.", false)
     .option("-n, --no-sg", "Disable the SceneGraph extension.")
     .option("-p, --pack <password>", "The password to generate the encrypted package.", "")
