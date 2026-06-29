@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Mirrors pplus-proxy BaseStandardDialog: removes the firmware dialog's auto children and drives
+     focus via a focusedChild observer (the handler is overridden by the derived component). -->
+<component name="BaseStdDialog" extends="StandardDialog">
+    <script type="text/brightscript" uri="./BaseStdDialog.brs" />
+</component>

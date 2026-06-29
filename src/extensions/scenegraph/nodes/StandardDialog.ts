@@ -187,14 +187,23 @@ export class StandardDialog extends Group {
     }
 
     setNodeFocus(focusOn: boolean): boolean {
-        if (focusOn && sgRoot.focused && this.lastFocus === undefined) {
-            // Initial focus goes to the button row when present, otherwise to the first focusable
-            // content widget (e.g. a scrollable text item).
+        if (focusOn && sgRoot.focused) {
             const targets = this.getFocusTargets();
             const target = this.buttonArea?.hasButtons ? this.buttonArea : targets[0];
             if (target) {
-                this.lastFocus = sgRoot.focused;
-                this.focusTarget(target);
+                // Framework dialog: focus the button row / first content widget once (one-shot so
+                // the per-frame render doesn't fight the user's navigation).
+                if (this.lastFocus === undefined) {
+                    this.lastFocus = sgRoot.focused;
+                    this.focusTarget(target);
+                }
+            } else if (!this.isChildrenFocused() && sgRoot.focused !== this) {
+                // Custom dialog with no framework target (e.g. its own ButtonGroup): act like a
+                // normal focusable node so it becomes focused and its `focusedChild` observer /
+                // `initialFocus` can route focus to the buttons. Re-grab while focus is outside it.
+                this.lastFocus ??= sgRoot.focused;
+                this.isDirty = true;
+                super.setNodeFocus(true);
             }
         }
         return true;

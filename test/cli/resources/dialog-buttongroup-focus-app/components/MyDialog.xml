@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Mirrors pplus-proxy ThemeDialog/BaseThemeDialog: a custom dialog on the StandardDialog framework
+     whose interactive widget is a plain LayoutGroup-based button group (ExButtons) nested inside a
+     background/content layout. Focus is forwarded to the buttons from onFocusChanged once the dialog
+     itself has focus. -->
+<component name="MyDialog" extends="BaseStdDialog">
+    <script type="text/brightscript" uri="./MyDialog.brs" />
+    <interface>
+        <function name="setup" />
+    </interface>
+    <children>
+        <Rectangle id="background" width="1280" height="720" color="0x101010FF">
+            <LayoutGroup id="content" layoutDirection="vert">
+                <Label id="title" text="Exit?" />
+                <ExButtons id="buttons" layoutDirection="horiz" />
+            </LayoutGroup>
+        </Rectangle>
+    </children>
+</component>
