@@ -231,7 +231,7 @@ export class RowList extends ArrayGrid {
                 nextRow += this.content.length;
             }
         }
-        if (nextRow >= 0 && nextRow < this.content.length) {
+        if (nextRow >= 0 && nextRow < this.content.length && nextRow !== this.focusIndex) {
             const rowFocusStyle = (this.getValueJS("rowFocusAnimationStyle") as string).toLowerCase();
             const currentRow = this.focusIndex;
             const currentCol = this.rowFocus[currentRow] ?? 0;

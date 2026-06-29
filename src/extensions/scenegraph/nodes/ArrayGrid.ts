@@ -352,20 +352,30 @@ export class ArrayGrid extends Group {
 
     protected renderFocus(itemRect: Rect, opacity: number, nodeFocus: boolean, draw2D?: IfDraw2D) {
         const bmpUri = nodeFocus ? "focusBitmapUri" : "focusFootprintBitmapUri";
+        const blendField = nodeFocus ? "focusBitmapBlendColor" : "focusFootprintBlendColor";
         const bmp = this.getBitmap(bmpUri);
         if (!bmp?.isValid()) {
             return;
         }
         this.hasNinePatch = bmp.ninePatch;
+        // A 9-patch focus frame declares, via its content-margin markers, how far the framed item
+        // sits inside it. Honor those margins so the frame hugs the item the way it does on a device;
+        // fall back to the grid's marginX/marginY for frames that don't declare content margins.
+        const margins = bmp.ninePatch ? bmp.getPatchSizes()?.margins : undefined;
+        const left = margins?.left || this.marginX;
+        const right = margins?.right || this.marginX;
+        const top = margins?.top || this.marginY;
+        const bottom = margins?.bottom || this.marginY;
         let focusRect = bmp.ninePatch
             ? {
-                  x: itemRect.x - this.marginX,
-                  y: itemRect.y - this.marginY,
-                  width: itemRect.width + this.marginX * 2,
-                  height: itemRect.height + this.marginY * 2,
+                  x: itemRect.x - left,
+                  y: itemRect.y - top,
+                  width: itemRect.width + left + right,
+                  height: itemRect.height + top + bottom,
               }
             : itemRect;
-        this.drawImage(bmp, focusRect, 0, opacity, draw2D);
+        const blendColor = this.getValueJS(blendField) as number;
+        this.drawImage(bmp, focusRect, 0, opacity, draw2D, blendColor);
     }
 
     protected renderSectionDivider(
