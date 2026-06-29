@@ -404,7 +404,7 @@ renderNode(...) {
 ### Performance and Caching
 
 - **Text measurement caching**: Group.isDirty + cachedLines avoid re-measuring text on every frame
-- **Bitmap texture management**: `TextureManager` (global singleton) caches loaded images by URI
+- **Bitmap texture management**: `TextureManager` (global singleton) caches loaded images by URI; a separate global registry in `src/core/device/Graphics.ts` (gated by `BrsDevice.tracking`) tracks all live bitmaps/fonts for the `r2d2-bitmaps` debug query
 - **Lazy bounding rect updates**: Only recalculated during render pass when transforms change
 - **Conditional rendering**: Nodes check `visible` field early to skip invisible subtrees
 - **Transform accumulation**: Transforms calculated incrementally down tree, not recalculated from root
@@ -472,9 +472,11 @@ Common pattern: `src/core/index.ts` uses `/// #if BROWSER` to set up Worker `onm
 6. Export from `src/extensions/scenegraph/nodes/index.ts`
 
 ### Working with the Debugger
-- **Micro Debugger**: Set breakpoints with `STOP` statement in BrightScript
+- **Developer vs production mode**: The Micro Debugger and all debug instrumentation are gated behind `debugOnCrash` (CLI `--debug` / API `options.debugOnCrash`), via the `BrsDevice.tracking` flag. Production is the default. Encrypted `.bpk` packages always run in production mode.
+- **Micro Debugger** (developer mode only): Set breakpoints with the `STOP` statement in BrightScript. In production mode the debugger is disabled, so `STOP` exits the app (`EXIT_BRIGHTSCRIPT_STOP`) and break requests are ignored.
 - **Debug API**: Call `debug("break")` from host to pause interpreter
 - **Console integration**: `print` statements route through `BrsDevice.stdout`
+- **Gating new instrumentation**: counters/registries that exist only for debug commands (`bscs`, `sgnodes`, `stats`, the `r2d2-bitmaps` texture registry) must be gated behind `BrsDevice.tracking` so they add no overhead in production.
 
 ## Important Constraints
 

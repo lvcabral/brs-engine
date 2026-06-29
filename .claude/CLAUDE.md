@@ -216,7 +216,22 @@ Regression coverage: the "SceneGraph .bpk encryption" suite in `test/cli/cli.tes
 
 ## CLI
 
-`src/cli/` builds into `packages/node/bin`. `brs-cli` runs `.brs` files, `.zip`/`.bpk` packages, or a REPL (no args). Key flags: `--ascii`/`--unicode` (render the screen as terminal art), `--ecp` (ECP control server on port 8060 + SSDP discovery), `--no-sg` (disable SceneGraph), `--pack`/`--out` (create encrypted `.bpk`), `--root` (mount `pkg:/` from a directory), `--ext-vol` (mount `ext1:`), `--deep-link`, `--registry`. See `docs/run-as-cli.md`.
+`src/cli/` builds into `packages/node/bin`. `brs-cli` runs `.brs` files, `.zip`/`.bpk` packages, or a REPL (no args). Key flags: `--ascii`/`--unicode` (render the screen as terminal art), `--ecp` (ECP control server on port 8060 + SSDP discovery), `--debug` (developer mode — see below), `--no-sg` (disable SceneGraph), `--pack`/`--out` (create encrypted `.bpk`), `--root` (mount `pkg:/` from a directory), `--ext-vol` (mount `ext1:`), `--deep-link`, `--registry`. See `docs/run-as-cli.md`.
+
+### Production vs developer mode (`debugOnCrash`)
+
+The engine runs in **production mode by default**; `--debug` (CLI) / `options.debugOnCrash` (API) switches to **developer mode**. The single runtime gate is `BrsDevice.tracking` (set in `BrsDevice.setDeviceInfo` from `deviceInfo.debugOnCrash`). When off (production), the engine skips all debug instrumentation to avoid per-object/per-node overhead:
+
+- No component (`bscs`), SceneGraph node (`sgnodes`), or lexeme (`stats`) counting, and no texture-registry tracking (so `query/r2d2-bitmaps` / `requestBitmaps()` return empty).
+- The **Micro Debugger is disabled**: a `STOP` statement exits the app (`EXIT_BRIGHTSCRIPT_STOP`), break requests are ignored (the `exit-app` command still works), and the crash `BackTrace:` is suppressed.
+- The call stack is still maintained, so `try/catch`'s `e.backtrace` works in both modes; reference counting, `dispose()`, and error messages are unchanged.
+- **Encrypted `.bpk` packages always run in production mode** — `debugOnCrash` is forced off in `executeFile`/`executeTask` (`isEncryptedPayload`) so a protected app can't be inspected.
+
+When adding new debug/inspection bookkeeping, gate it behind `BrsDevice.tracking` (or `interpreter.options.stopOnCrash`).
+
+### Texture memory (`query/r2d2-bitmaps`)
+
+`src/core/device/Graphics.ts` is a global texture-memory registry modeling Roku's internal `roGraphics`. `RoBitmap` registers/unregisters live bitmaps and `RoFontRegistry` contributes fonts (both gated by `BrsDevice.tracking`). The data is requested on demand via the shared-array `BufferType.R2D2` flag (served in `BrsDevice.checkBreakCommand`) and returned as a `postMessage` `{ graphics }` object — surfaced by the CLI ECP endpoint `GET /query/r2d2-bitmaps` and the browser API `requestBitmaps()` + `bitmaps` event.
 
 ## Conventions
 
