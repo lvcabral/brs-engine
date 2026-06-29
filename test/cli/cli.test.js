@@ -350,6 +350,27 @@ describe("cli", () => {
         ]);
     }, 10000);
 
+    it("List item component can read its parent list during init()", async () => {
+        let command = ["node", brsCliPath, "-r list-item-parent-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // Repro of the JellyRock JRServer item: a custom list item sizes its focus border from
+        // m.top.getParent().itemSize in init(). The item must already be attached to its list when
+        // init() runs (as on a real device), so getParent() resolves the list and itemSize is read.
+        // Before the fix the parent was attached after init(), so getParent() was invalid and the
+        // border stayed 0x0 (rendered tiny in the corner).
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "=== List Item Parent Repro ===",
+            "ServerItem init: focusBorder = 1520x 100",
+            "=== List Item Parent Repro Complete ===",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 10000);
+
     it("StandardDialog forwards focus to a custom component's nested button group", async () => {
         let command = ["node", brsCliPath, "-r dialog-buttongroup-focus-app", "source/main.brs", "-c 0"].join(" ");
 

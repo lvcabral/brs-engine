@@ -476,7 +476,7 @@ export class ArrayGrid extends Group {
             return new Group();
         }
         const itemCompName = this.getValueJS("itemComponentName") ?? "";
-        const itemComp = itemCompName ? createNode(itemCompName, interpreter) : new ArrayGridItem();
+        const itemComp = itemCompName ? createNode(itemCompName, interpreter, this) : new ArrayGridItem();
         if (itemComp instanceof Group) {
             itemComp.setNodeParent(this);
             itemComp.setValue("width", brsValueOf(itemRect.width), false);

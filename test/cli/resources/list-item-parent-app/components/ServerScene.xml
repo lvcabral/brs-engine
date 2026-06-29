@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="ServerScene" extends="Scene">
+    <children>
+        <MarkupList
+            id="serverPicker"
+            itemComponentName="ServerItem"
+            itemSize="[1520, 100]"
+            numRows="3"
+            drawFocusFeedback="false" />
+    </children>
+</component>
