@@ -561,6 +561,103 @@ exports[`parser indexing one level dotted 1`] = `
 ]
 `;
 
+exports[`parser indexing one level dotted and bracketed optional dot 1`] = `
+[
+  Assignment {
+    "name": {
+      "isReserved": false,
+      "kind": "Identifier",
+      "literal": undefined,
+      "location": {
+        "end": {
+          "column": -9,
+          "line": -9,
+        },
+        "start": {
+          "column": -9,
+          "line": -9,
+        },
+      },
+      "text": "_",
+    },
+    "tokens": {
+      "equals": {
+        "isReserved": false,
+        "kind": "Equal",
+        "literal": undefined,
+        "location": {
+          "end": {
+            "column": -9,
+            "line": -9,
+          },
+          "start": {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": "=",
+      },
+    },
+    "value": IndexedGet {
+      "closingSquare": {
+        "isReserved": false,
+        "kind": "RightSquare",
+        "literal": undefined,
+        "location": {
+          "end": {
+            "column": -9,
+            "line": -9,
+          },
+          "start": {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": "]",
+      },
+      "indexes": [
+        Literal {
+          "_location": {
+            "end": {
+              "column": -9,
+              "line": -9,
+            },
+            "start": {
+              "column": -9,
+              "line": -9,
+            },
+          },
+          "value": Int32 {
+            "inArray": false,
+            "kind": 4,
+            "value": 2,
+          },
+        },
+      ],
+      "obj": Variable {
+        "name": {
+          "isReserved": false,
+          "kind": "Identifier",
+          "literal": undefined,
+          "location": {
+            "end": {
+              "column": -9,
+              "line": -9,
+            },
+            "start": {
+              "column": -9,
+              "line": -9,
+            },
+          },
+          "text": "foo",
+        },
+      },
+      "optional": true,
+    },
+  },
+]
+`;
+
 exports[`parser indexing one level dotted and bracketed single dot 1`] = `
 [
   Assignment {

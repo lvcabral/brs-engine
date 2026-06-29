@@ -1442,8 +1442,8 @@ export class Parser {
         function call(): Expression {
             let expr = primary();
 
-            function indexedGet() {
-                const optional = previous().text === "?[";
+            function indexedGet(dotOptional = false) {
+                const optional = previous().text === "?[" || dotOptional;
                 let elements: Expression[] = [];
 
                 while (match(Lexeme.Newline));
@@ -1482,10 +1482,10 @@ export class Parser {
                     name.kind = Lexeme.Identifier;
                     expr = new Expr.AtSignGet(expr, name as Identifier, optional);
                 } else if (match(Lexeme.Dot)) {
+                    const optionalDot = previous().text === "?.";
                     if (match(Lexeme.LeftSquare)) {
-                        indexedGet();
+                        indexedGet(optionalDot);
                     } else {
-                        const optional = previous().text === "?.";
                         while (match(Lexeme.Newline));
 
                         let name = consume("Expected property name after '.'", Lexeme.Identifier, ...allowedProperties);
@@ -1493,7 +1493,7 @@ export class Parser {
                         // force it into an identifier so the AST makes some sense
                         name.kind = Lexeme.Identifier;
                         countIdentifier(name.text);
-                        expr = new Expr.DottedGet(expr, name as Identifier, optional);
+                        expr = new Expr.DottedGet(expr, name as Identifier, optionalDot);
                     }
                 } else {
                     break;
