@@ -129,6 +129,24 @@ describe("cli", () => {
         }
     }, 10000);
 
+    it("exits the app on STOP in production mode (no Micro Debugger)", async () => {
+        // Without --debug the Micro Debugger is disabled, so a STOP statement terminates the
+        // app (with the EXIT_BRIGHTSCRIPT_STOP reason) instead of opening the debugger.
+        let stdout = "";
+        try {
+            ({ stdout } = await exec(["node", brsCliPath, "stop-prod.brs", "-c 0"].join(" "), {
+                cwd: path.join(__dirname, "resources"),
+            }));
+        } catch (err) {
+            stdout = err.stdout ?? "";
+        }
+        expect(stdout).toContain("before stop");
+        expect(stdout).not.toContain("after stop");
+        expect(stdout).toContain("EXIT_BRIGHTSCRIPT_STOP");
+        // The interactive debugger (which would error on a non-TTY) must not be reached.
+        expect(stdout).not.toContain("interactive reading from TTY");
+    }, 10000);
+
     it("SceneGraph App Test", async () => {
         let command = ["node", brsCliPath, "-r scenegraph", "source/Poster.brs", "-c 0"].join(" ");
 

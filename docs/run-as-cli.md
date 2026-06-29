@@ -139,9 +139,10 @@ inspection commands.
 
 | Capability | Production (default) | Developer (`--debug`) |
 | --- | --- | --- |
-| Micro Debugger opens on crash | no | yes |
+| Micro Debugger (on crash, `STOP`, or break) | disabled | enabled |
+| `STOP` statement | exits the app | opens the debugger |
 | `bscs` / `sgnodes` / `stats` debug commands | empty | populated |
-| `bt` command & crash `BackTrace:` output | suppressed | shown |
+| Crash `BackTrace:` output | suppressed | shown |
 | ECP `query/r2d2-bitmaps` | empty | populated |
 | `try/catch` `e.backtrace` | works | works |
 | Reference counting, `dispose()`, error messages | unchanged | unchanged |
