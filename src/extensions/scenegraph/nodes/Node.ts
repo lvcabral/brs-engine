@@ -727,6 +727,38 @@ export class Node extends RoSGNode implements BrsValue {
      */
     setNodeParent(parent: Node) {
         this.parent = parent;
+        this.restoreFocusChainOnAttach();
+    }
+
+    /**
+     * Repairs the `focusedChild` ancestry after this node gains a parent.
+     *
+     * When focus is set on a node before it is attached to its parent — e.g. a custom component
+     * calling `m.top.setFocus(true)` in `init()`, which runs before the node is appended — the
+     * focus chain built at that moment only reaches the still-parentless node, so the ancestors
+     * above it never get their `focusedChild` pointers set. Now that a parent exists, re-establish
+     * the chain from the root down to the focused node so `focusedChild` stays consistent with the
+     * live focus, as it is on a real device.
+     */
+    private restoreFocusChainOnAttach() {
+        const focused = sgRoot.focused;
+        if (!(focused instanceof Node)) {
+            return;
+        }
+        // Only act when the live focus is this node or one of its descendants (cheap upward walk).
+        let ancestor: BrsType = focused;
+        while (ancestor instanceof Node && ancestor !== this) {
+            ancestor = ancestor.parent;
+        }
+        if (ancestor !== this) {
+            return;
+        }
+        const chain = this.createPath(focused); // [root, ..., focused]
+        for (let i = 0; i < chain.length - 1; i++) {
+            if (chain[i].getValue("focusedchild") !== chain[i + 1]) {
+                chain[i].setValue("focusedchild", chain[i + 1], false);
+            }
+        }
     }
 
     /**

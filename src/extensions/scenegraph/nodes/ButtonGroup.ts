@@ -156,20 +156,25 @@ export class ButtonGroup extends LayoutGroup {
         const drawTrans = angle === 0 ? nodeTrans.slice() : rotateTranslation(nodeTrans, angle);
         drawTrans[0] += origin[0];
         drawTrans[1] += origin[1];
-        const size = this.getDimensions();
-        const boundingRect: Rect = {
-            x: drawTrans[0],
-            y: drawTrans[1],
-            width: this.width,
-            height: size.height,
-        };
+        // Refresh focus/buttons before building the bounding rect so `this.width` is current and
+        // the rect reflects the actual laid-out size (otherwise boundingRect() reports the stale
+        // width — 0 on the first pass — which breaks callers that center the group by its width).
         this.refreshFocus();
         if (this.isDirty) {
             this.refreshButtons();
         }
+        const buttons = jsValueOf(this.getValue("buttons")) as string[] | undefined;
+        const buttonsCount = buttons?.length ?? this.children.length;
+        const rowHeight = Math.max(this.getValueJS("buttonHeight") as number, this.iconSize[1]);
+        const height = buttonsCount > 0 ? (buttonsCount - 1) * (rowHeight - this.vertOffset) + rowHeight : 0;
+        const boundingRect: Rect = {
+            x: drawTrans[0],
+            y: drawTrans[1],
+            width: this.width,
+            height,
+        };
         const rotation = angle + this.getRotation();
         opacity = opacity * this.getOpacity();
-        // TODO: update then width/height based on the # of buttons and layout direction
         this.updateBoundingRects(boundingRect, origin, rotation);
         this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);
         this.nodeRenderingDone(origin, angle, opacity, draw2D);
