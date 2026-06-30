@@ -243,6 +243,8 @@ describe("end to end syntax", () => {
             "invalid",
             "invalid",
             "invalid",
+            "invalid",
+            "invalid",
             "error 244",
         ]);
     });

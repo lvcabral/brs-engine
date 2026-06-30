@@ -11,7 +11,10 @@ sub Main()
  	print thing?[0]
  	print thing?[0]?.property
  	print thing?[0]?.functionCall2?()
-  	print thing?.functionCall?(thing?[0]?.property, thing?[0]?.functionCall2?())
+   	print thing?.functionCall?(thing?[0]?.property, thing?[0]?.functionCall2?())
+   	print thing?.["key"]
+   	testConfig = {}
+   	print testConfig?.notThere?.["test"]
 	di = CreateObject("roDeviceInfo")
 	try
 		print di.action()
