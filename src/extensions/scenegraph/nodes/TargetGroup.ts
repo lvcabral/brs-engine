@@ -282,7 +282,7 @@ export class TargetGroup extends Group {
 
     protected createItemComponent(interpreter: Interpreter, itemRect: Rect, content: ContentNode) {
         const itemCompName = (this.getValueJS("itemComponentName") as string) ?? "";
-        const itemComp = itemCompName ? createNode(itemCompName, interpreter) : new Group();
+        const itemComp = itemCompName ? createNode(itemCompName, interpreter, this) : new Group();
         if (itemComp instanceof Group) {
             itemComp.setNodeParent(this);
             itemComp.setValue("width", new Float(itemRect.width), false);

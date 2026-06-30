@@ -367,15 +367,15 @@ export class SGNodeFactory {
  * @param interpreter Optional interpreter instance for component initialization
  * @returns Created node instance or BrsInvalid if creation fails
  */
-export function createNode(type: string, interpreter?: Interpreter): Node | BrsInvalid {
+export function createNode(type: string, interpreter?: Interpreter, parent?: Node): Node | BrsInvalid {
     // If this is a built-in node component, then return it.
     let node = SGNodeFactory.createNode(type) ?? BrsInvalid.Instance;
     if (node instanceof BrsInvalid) {
         let typeDef = sgRoot.nodeDefMap.get(type.toLowerCase());
         if (typeDef && interpreter instanceof Interpreter) {
-            node = initializeNode(interpreter, type, typeDef);
+            node = initializeNode(interpreter, type, typeDef, undefined, parent);
         } else if (typeDef && sgRoot.inTaskThread() && sgRoot.interpreter) {
-            node = initializeNode(sgRoot.interpreter, type, typeDef);
+            node = initializeNode(sgRoot.interpreter, type, typeDef, undefined, parent);
         } else if (typeDef) {
             node = createNodeByTypeDef(typeDef, type);
             if (node instanceof BrsInvalid) {
@@ -497,7 +497,13 @@ export function customNodeExists(node: string) {
  * @param node Optional pre-created node instance to initialize
  * @returns Initialized node instance or BrsInvalid if initialization fails
  */
-export function initializeNode(interpreter: Interpreter, type: string, typeDef?: ComponentDefinition, node?: Node) {
+export function initializeNode(
+    interpreter: Interpreter,
+    type: string,
+    typeDef?: ComponentDefinition,
+    node?: Node,
+    parent?: Node
+) {
     if (typeDef) {
         //use typeDef object to tack on all the bells & whistles of a custom node
         const typeDefStack = updateTypeDefHierarchy(typeDef);
@@ -510,6 +516,12 @@ export function initializeNode(interpreter: Interpreter, type: string, typeDef?:
         node ??= SGNodeFactory.createNode(typeDef!.extends as SGNodeType, type);
         // Default to Node as parent.
         node ??= new Node([], type);
+        // Attach the parent before running init() so a custom component's init() can read its
+        // parent (e.g. m.top.getParent().itemSize on a list item), matching a real device where
+        // the item component is already a child of its list when init() runs.
+        if (parent && isInvalid(node.getNodeParent())) {
+            node.setNodeParent(parent);
+        }
         const mPointer = new RoAssociativeArray([]);
         if (currentEnv) {
             currentEnv.setM(new RoAssociativeArray([]));
