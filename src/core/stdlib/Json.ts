@@ -99,21 +99,21 @@ function jsonString(x: string, escape: boolean): string {
     return `"${x.replace(pattern, (char) => {
         switch (char) {
             case '"':
-                return '\\"';
+                return String.raw`\"`;
             case "\\":
-                return "\\\\";
+                return String.raw`\\`;
             case "\b":
-                return "\\b";
+                return String.raw`\b`;
             case "\f":
-                return "\\f";
+                return String.raw`\f`;
             case "\n":
-                return "\\n";
+                return String.raw`\n`;
             case "\r":
-                return "\\r";
+                return String.raw`\r`;
             case "\t":
-                return "\\t";
+                return String.raw`\t`;
             default:
-                return `\\u${char.charCodeAt(0).toString(16).padStart(4, "0").toUpperCase()}`;
+                return String.raw`\u${char.charCodeAt(0).toString(16).padStart(4, "0").toUpperCase()}`;
         }
     })}"`;
 }
