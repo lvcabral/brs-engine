@@ -252,8 +252,8 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
             },
             impl: (_, startIndex: Int32, numChars: Int32) => {
                 let source = this.intrinsic.value;
-                let start = startIndex.getValue() > 0 ? startIndex.getValue() : 0;
-                let length = numChars.getValue() > 0 ? numChars.getValue() : 0;
+                let start = Math.max(startIndex.getValue(), 0);
+                let length = Math.max(numChars.getValue(), 0);
                 return new BrsString(source.substring(start, start + length));
             },
         }

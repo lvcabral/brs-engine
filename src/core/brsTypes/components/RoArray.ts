@@ -228,7 +228,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsArray {
     private aaCompare(fieldName: BrsString, flags: BrsString, a: RoAssociativeArray, b: RoAssociativeArray) {
         let compare = 0;
         const originalArrayCopy = [...this.elements];
-        const caseInsensitive = flags.toString().indexOf("i") > -1;
+        const caseInsensitive = flags.toString().includes("i");
         const aHasField = a.elements.has(fieldName.toString().toLowerCase());
         const bHasField = b.elements.has(fieldName.toString().toLowerCase());
         if (aHasField && bHasField) {
@@ -294,12 +294,12 @@ export class RoArray extends BrsComponent implements BrsValue, BrsArray {
         },
         impl: (_: Interpreter, flags: BrsString) => {
             if (flags.toString().match(/([^ir])/g) == null) {
-                const caseInsensitive = flags.toString().indexOf("i") > -1;
+                const caseInsensitive = flags.toString().includes("i");
                 const originalArrayCopy = [...this.elements];
                 this.elements.sort((a, b) => {
                     return sortCompare(originalArrayCopy, a, b, caseInsensitive);
                 });
-                if (flags.toString().indexOf("r") > -1) {
+                if (flags.toString().includes("r")) {
                     this.elements.reverse();
                 }
             } else if (BrsDevice.isDevMode) {
@@ -329,7 +329,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsArray {
                     }
                     return compare;
                 });
-                if (flags.toString().indexOf("r") > -1) {
+                if (flags.toString().includes("r")) {
                     this.elements.reverse();
                 }
             } else if (BrsDevice.isDevMode) {

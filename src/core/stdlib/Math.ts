@@ -136,8 +136,8 @@ function toInt32(x: BrsNumber, decimal = "floor"): Int32 {
 
 function SgnImpl(_: Interpreter, x: Int32 | Float) {
     let val = x.getValue();
-    if (val > 0.0) return new Int32(1);
-    else if (val < 0.0) return new Int32(-1);
+    if (val > 0) return new Int32(1);
+    else if (val < 0) return new Int32(-1);
     else return new Int32(0);
 }
 

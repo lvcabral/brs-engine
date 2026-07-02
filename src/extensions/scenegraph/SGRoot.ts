@@ -374,7 +374,7 @@ export class SGRoot {
         // Snapshot the thread list so a handler that creates/stops a task mid-iteration can't disturb
         // the loop, and isolate each task: a fault while serving one task must never tear down the
         // render thread (which would stall every rendezvous and silently drop in-flight updates).
-        for (const thread of [...this._threads.values()]) {
+        for (const thread of Array.from(this._threads.values())) {
             const task = thread.task;
             try {
                 updates = task?.processThreadUpdate() !== undefined || updates;
