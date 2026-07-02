@@ -69,14 +69,14 @@ export class StdDlgDeterminateProgressItem extends Group implements StdDlgItem {
     layoutItem(width: number): number {
         let y = 0;
         const text = (this.getValueJS("text") as string) ?? "";
-        if (text !== "") {
+        if (text === "") {
+            this.textLabel.setValueSilent("visible", BrsBoolean.False);
+        } else {
             this.textLabel.setValueSilent("visible", BrsBoolean.True);
             this.textLabel.setValueSilent("width", new Float(width));
             this.textLabel.setValue("font", new BrsString("font:SmallSystemFont"));
             this.textLabel.setTranslation([0, y]);
             y += this.textLabel.getMeasured().height + this.gap;
-        } else {
-            this.textLabel.setValueSilent("visible", BrsBoolean.False);
         }
 
         // Reserve room for the percent label (e.g. "100%") on the right of the bar.

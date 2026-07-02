@@ -18,7 +18,7 @@
 function describeUpdate(obj: any): string {
     if (obj && typeof obj === "object" && "action" in obj) {
         return `{id:${obj.id} ${obj.action} ${obj.type}.${obj.key}${
-            obj.requestId !== undefined ? ` #${obj.requestId}` : ""
+            obj.requestId === undefined ? "" : ` #${obj.requestId}`
         }}`;
     }
     return `"${typeof obj}"`;

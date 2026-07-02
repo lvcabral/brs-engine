@@ -120,11 +120,11 @@ export class ComponentScopeResolver {
                         let errno = (err as NodeJS.ErrnoException)?.errno || -4858;
                         throw new Error(`brs: can't open file '${filename}': [Errno ${errno}]`);
                     }
-                } else if (script.content !== undefined) {
+                } else if (script.content === undefined) {
+                    throw new Error("brs: invalid script object");
+                } else {
                     contents = script.content;
                     filename = script.xmlPath || "xml";
-                } else {
-                    throw new Error("brs: invalid script object");
                 }
                 const lexer = new Lexer();
                 const preprocessor = new PP.Preprocessor();

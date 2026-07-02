@@ -69,6 +69,9 @@ export function saveDataBuffer(sharedArray: Int32Array, data: string, type: Buff
     data = data.trim();
     let len = Math.min(data.length, DataBufferSize);
     for (let i = 0; i < len; i++) {
+        // Serialize UTF-16 code units one-per-slot (loop is indexed by data.length); codePointAt would
+        // desync surrogate pairs. Decoded back by BrsDevice.readDataBuffer via String.fromCharCode.
+        // eslint-disable-next-line unicorn/prefer-code-point
         Atomics.store(sharedArray, DataBufferIndex + i, data.charCodeAt(i));
     }
     // String terminator
@@ -238,7 +241,7 @@ String.prototype.hashCode = function (this: string) {
         chr: number;
     if (this.length === 0) return hash.toString();
     for (i = 0; i < this.length; i++) {
-        chr = this.charCodeAt(i);
+        chr = this.codePointAt(i) || 0;
         hash = (hash << 5) - hash + chr;
         hash |= 0; // Convert to 32bit integer
     }

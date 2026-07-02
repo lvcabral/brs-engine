@@ -48,7 +48,7 @@ export class StdDlgCustomItem extends Group implements StdDlgItem {
             const trans = (child.getValueJS("translation") as number[]) ?? [0, 0];
             let childHeight =
                 child instanceof Label ? child.getMeasured().height : (child.getValueJS("height") as number);
-            if (!(childHeight > 0)) {
+            if (childHeight <= 0) {
                 childHeight = (child.getValueJS("bitmapHeight") as number) ?? 0;
             }
             height = Math.max(height, trans[1] + childHeight);

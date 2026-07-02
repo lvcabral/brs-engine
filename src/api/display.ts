@@ -68,19 +68,19 @@ export function initDisplayModule(deviceInfo: DeviceInfo, perfStats = false) {
     // Initialize Display Canvas
     display = document.getElementById("display") as HTMLCanvasElement;
     ctx = display.getContext("2d", { alpha: false });
-    if (typeof OffscreenCanvas !== "undefined") {
+    if (typeof OffscreenCanvas === "undefined") {
+        notifyAll(
+            "warning",
+            `[display] Your browser does not support OffscreenCanvas, so the engine will not work properly, ` +
+                `to know more visit https://developer.mozilla.org/en-US/docs/Web/API/OffscreenCanvas`
+        );
+    } else {
         bufferCanvas = new OffscreenCanvas(screenSize.width, screenSize.height);
         bufferCtx = bufferCanvas.getContext("2d", {
             alpha: true,
         }) as CanvasRenderingContext2D | null;
         // Performance Statistics
         enableStats(perfStats);
-    } else {
-        notifyAll(
-            "warning",
-            `[display] Your browser does not support OffscreenCanvas, so the engine will not work properly, ` +
-                `to know more visit https://developer.mozilla.org/en-US/docs/Web/API/OffscreenCanvas`
-        );
     }
     // Display Dimensions and Aspect Ratio
     deviceData = deviceInfo;

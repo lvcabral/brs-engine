@@ -27,11 +27,7 @@ let envCounter = 0;
 export class Environment {
     public readonly id = envCounter++;
     constructor(mPointer: RoAssociativeArray, rootM?: RoAssociativeArray) {
-        if (!rootM) {
-            this.rootM = mPointer;
-        } else {
-            this.rootM = rootM;
-        }
+        this.rootM = rootM ?? mPointer;
         this.function.set("m", mPointer);
         mPointer.addReference();
         this.mPointer = mPointer;

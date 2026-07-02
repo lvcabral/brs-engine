@@ -30,7 +30,7 @@ export class StdDlgBulletTextItem extends Group implements StdDlgItem {
         if (bulletType === "numbered") {
             return `${index + 1}. `;
         } else if (bulletType === "lettered") {
-            return `${String.fromCharCode(97 + (index % 26))}. `;
+            return `${String.fromCodePoint(97 + (index % 26))}. `;
         }
         return "• ";
     }

@@ -442,7 +442,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
                 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/encodeURIComponent#Description
                 encodeURIComponent(this.intrinsic.value).replaceAll(
                     /[!'()*]/g,
-                    (c) => "%" + c.charCodeAt(0).toString(16).toUpperCase()
+                    (c) => "%" + c.codePointAt(0)!.toString(16).toUpperCase()
                 )
             );
         },

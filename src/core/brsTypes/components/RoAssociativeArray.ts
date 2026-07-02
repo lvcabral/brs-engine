@@ -230,7 +230,7 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
 
     private findElement(elementKey: string, isCaseSensitiveFind = false) {
         let realKey = this.findElementKey(elementKey, isCaseSensitiveFind);
-        return realKey !== undefined ? this.elements.get(realKey) : undefined;
+        return realKey === undefined ? undefined : this.elements.get(realKey);
     }
 
     /** Removes all elements from the associative array */

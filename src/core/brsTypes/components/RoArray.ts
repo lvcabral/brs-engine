@@ -293,11 +293,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsArray {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, flags: BrsString) => {
-            if (flags.toString().match(/([^ir])/g) != null) {
-                if (BrsDevice.isDevMode) {
-                    BrsDevice.stderr.write("warning,roArray.Sort: Flags contains invalid option(s).");
-                }
-            } else {
+            if (flags.toString().match(/([^ir])/g) == null) {
                 const caseInsensitive = flags.toString().indexOf("i") > -1;
                 const originalArrayCopy = [...this.elements];
                 this.elements.sort((a, b) => {
@@ -306,6 +302,8 @@ export class RoArray extends BrsComponent implements BrsValue, BrsArray {
                 if (flags.toString().indexOf("r") > -1) {
                     this.elements.reverse();
                 }
+            } else if (BrsDevice.isDevMode) {
+                BrsDevice.stderr.write("warning,roArray.Sort: Flags contains invalid option(s).");
             }
             return BrsInvalid.Instance;
         },
@@ -320,11 +318,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsArray {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, fieldName: BrsString, flags: BrsString) => {
-            if (flags.toString().match(/([^ir])/g) != null) {
-                if (BrsDevice.isDevMode) {
-                    BrsDevice.stderr.write("warning,roArray.SortBy: Flags contains invalid option(s).");
-                }
-            } else {
+            if (flags.toString().match(/([^ir])/g) == null) {
                 const originalArrayCopy = [...this.elements];
                 this.elements.sort((a, b) => {
                     let compare = 0;
@@ -338,6 +332,8 @@ export class RoArray extends BrsComponent implements BrsValue, BrsArray {
                 if (flags.toString().indexOf("r") > -1) {
                     this.elements.reverse();
                 }
+            } else if (BrsDevice.isDevMode) {
+                BrsDevice.stderr.write("warning,roArray.SortBy: Flags contains invalid option(s).");
             }
             return BrsInvalid.Instance;
         },
