@@ -205,20 +205,18 @@ export class Environment {
         }
 
         let lowercaseName = name.text.toLowerCase();
-        return (
-            scopeFilter
-                .map((scopeName) => {
-                    switch (scopeName) {
-                        case Scope.Global:
-                            return this.global;
-                        case Scope.Module:
-                            return this.module;
-                        case Scope.Function:
-                            return this.function;
-                    }
-                })
-                .find((scope) => scope.has(lowercaseName)) != null
-        );
+        return scopeFilter
+            .map((scopeName) => {
+                switch (scopeName) {
+                    case Scope.Global:
+                        return this.global;
+                    case Scope.Module:
+                        return this.module;
+                    case Scope.Function:
+                        return this.function;
+                }
+            })
+            .some((scope) => scope.has(lowercaseName));
     }
 
     /**

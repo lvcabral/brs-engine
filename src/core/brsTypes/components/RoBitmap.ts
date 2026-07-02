@@ -111,7 +111,7 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
             try {
                 let data;
                 const type = fileType(image);
-                if (type && type.mime === "image/png") {
+                if (type?.mime === "image/png") {
                     const png = UPNG.decode(image);
                     const dataArray = UPNG.toRGBA8(png);
                     if (dataArray.length) {
@@ -119,12 +119,12 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
                         this.width = png.width;
                         this.height = png.height;
                     }
-                } else if (type && type.mime === "image/jpeg") {
+                } else if (type?.mime === "image/jpeg") {
                     let jpg = JPEG.decode(image);
                     data = jpg.data;
                     this.width = jpg.width;
                     this.height = jpg.height;
-                } else if (type && type.mime === "image/webp") {
+                } else if (type?.mime === "image/webp") {
                     const webpDecoder = new WebPDecoder();
                     const imgBuffer = Buffer.from(image);
                     const imgArray = WebPRiffParser(imgBuffer, 0);
@@ -145,7 +145,7 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
                             this.width = aWidth[0];
                         }
                     }
-                } else if (type && type.mime === "image/gif") {
+                } else if (type?.mime === "image/gif") {
                     const gif = parseGIF(image);
                     const frames = decompressFrames(gif, true);
                     if (frames.length) {
@@ -153,7 +153,7 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
                         this.width = frames[0].dims.width;
                         this.height = frames[0].dims.height;
                     }
-                } else if (type && type.mime === "image/bmp") {
+                } else if (type?.mime === "image/bmp") {
                     let bmp = BMP(image);
                     data = bmp.data;
                     this.width = bmp.width;

@@ -1746,7 +1746,7 @@ export class Parser {
                 return false;
             }
 
-            return lexemes.some((lexeme) => peek().kind === lexeme);
+            return lexemes.includes(peek().kind);
         }
 
         function checkNext(...lexemes: Lexeme[]) {
@@ -1754,7 +1754,7 @@ export class Parser {
                 return false;
             }
 
-            return lexemes.some((lexeme) => peekNext().kind === lexeme);
+            return lexemes.includes(peekNext().kind);
         }
 
         function isAtEnd() {

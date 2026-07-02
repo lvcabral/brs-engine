@@ -165,7 +165,7 @@ export const Str = new Callable("Str", {
     },
     impl: (_: Interpreter, value: Double): BrsString => {
         const doubleValue = value.getValue();
-        const prefix = doubleValue >= 0.0 ? " " : "";
+        const prefix = doubleValue >= 0 ? " " : "";
         return new BrsString(prefix + String(doubleValue));
     },
 });

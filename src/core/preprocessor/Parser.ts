@@ -244,7 +244,7 @@ export class Parser {
                 return false;
             }
 
-            return lexemes.some((lexeme) => peek().kind === lexeme);
+            return lexemes.includes(peek().kind);
         }
 
         function isAtEnd() {
