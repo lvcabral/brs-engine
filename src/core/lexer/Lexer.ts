@@ -467,7 +467,7 @@ export class Lexer {
             advance();
 
             // trim the surrounding quotes, and replace the double-" literal with a single
-            let value = source.slice(start + 1, current - 1).replace(/""/g, '"');
+            let value = source.slice(start + 1, current - 1).replaceAll('""', '"');
             addToken(Lexeme.String, new BrsString(value));
         }
 
@@ -772,7 +772,7 @@ export class Lexer {
                 } // read the next word
 
                 let twoWords = source.slice(start, current).toLowerCase();
-                switch (twoWords.replace(/ {2,}/g, " ")) {
+                switch (twoWords.replaceAll(/ {2,}/g, " ")) {
                     case "#else if":
                         addToken(Lexeme.HashElseIf);
                         return;

@@ -627,22 +627,22 @@ function handleStringMessage(message: string) {
  */
 function colorize(log: string) {
     return log
-        .replace(/\b(down|error|errors|failure|fail|fatal|false)(:|\b)/gi, chalk.red("$1$2"))
-        .replace(/\b(warning|warn|test|null|undefined|invalid)(:|\b)/gi, chalk.yellow("$1$2"))
-        .replace(/\b(help|hint|info|information|true|log)(:|\b)/gi, chalk.cyan("$1$2"))
-        .replace(/\b(running|success|successfully|valid)(:|\b)/gi, chalk.green("$1$2"))
-        .replace(/\b(debug|roku|brs|brightscript)(:|\b)/gi, chalk.magenta("$1$2"))
-        .replace(/(\b\d+\.?\d*?\b)/g, chalk.ansi256(122)(`$1`)) // Numeric
-        .replace(/\S+@\S+\.\S+/g, (match: string) => {
+        .replaceAll(/\b(down|error|errors|failure|fail|fatal|false)(:|\b)/gi, chalk.red("$1$2"))
+        .replaceAll(/\b(warning|warn|test|null|undefined|invalid)(:|\b)/gi, chalk.yellow("$1$2"))
+        .replaceAll(/\b(help|hint|info|information|true|log)(:|\b)/gi, chalk.cyan("$1$2"))
+        .replaceAll(/\b(running|success|successfully|valid)(:|\b)/gi, chalk.green("$1$2"))
+        .replaceAll(/\b(debug|roku|brs|brightscript)(:|\b)/gi, chalk.magenta("$1$2"))
+        .replaceAll(/(\b\d+\.?\d*?\b)/g, chalk.ansi256(122)(`$1`)) // Numeric
+        .replaceAll(/\S+@\S+\.\S+/g, (match: string) => {
             return chalk.blueBright(stripAnsi(match)); // E-Mail
         })
-        .replace(/\b([a-z]+):\/{1,2}[^\/].*/gi, (match: string) => {
+        .replaceAll(/\b([a-z]+):\/{1,2}[^\/].*/gi, (match: string) => {
             return chalk.blue.underline(stripAnsi(match)); // URL
         })
-        .replace(/<(.*?)>/g, (match: string) => {
+        .replaceAll(/<(.*?)>/g, (match: string) => {
             return chalk.greenBright(stripAnsi(match)); // Delimiters < >
         })
-        .replace(/"(.*?)"/g, (match: string) => {
+        .replaceAll(/"(.*?)"/g, (match: string) => {
             return chalk.ansi256(222)(stripAnsi(match)); // Quotes
         });
 }

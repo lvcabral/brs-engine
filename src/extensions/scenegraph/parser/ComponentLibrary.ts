@@ -19,7 +19,7 @@ export type LibraryLoadStatus = "none" | "loading" | "ready" | "failed";
  * @returns A valid, unique volume name such as "complib_foo:"
  */
 export function libraryVolumeName(id: string): string {
-    const sanitized = id.toLowerCase().replace(/[^a-z0-9]+/g, "_");
+    const sanitized = id.toLowerCase().replaceAll(/[^a-z0-9]+/g, "_");
     return `complib_${sanitized}:`;
 }
 

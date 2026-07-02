@@ -127,6 +127,8 @@ module.exports = {
             "never"
         ],
         "unicorn/prefer-at": "error",
+        "unicorn/prefer-string-raw": "error",
+        "unicorn/prefer-string-replace-all": "error",
         "use-isnan": "error"
     },
     "overrides": [

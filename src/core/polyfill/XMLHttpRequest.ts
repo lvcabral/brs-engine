@@ -560,7 +560,13 @@ export class XMLHttpRequest {
                 syncFile +
                 "');" +
                 "});" +
-                (data ? "req.write('" + JSON.stringify(data).slice(1, -1).replace(/'/g, "\\'") + "');" : "") +
+                (data
+                    ? "req.write('" +
+                      JSON.stringify(data)
+                          .slice(1, -1)
+                          .replaceAll("'", String.raw`\'`) +
+                      "');"
+                    : "") +
                 "req.end();";
             // Start the other Node Process, executing this string
             const syncProc = spawn(process.argv[0], ["-e", execString]);
