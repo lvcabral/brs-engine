@@ -418,7 +418,7 @@ export class Keyboard extends Group {
     private setupKeyboardModes() {
         this.buttons.set("0L", "abcdefghijklmnopqrstuvwxyz-_123456789@.0".split(""));
         this.buttons.set("0U", "ABCDEFGHIJKLMNOPQRSTUVWXYZ-_123456789@.0".split(""));
-        this.buttons.set("1L", '!?*#$%^&,:;"(){}[]~¡¿<>|\\/´ˆ˜¨¯¸=+×÷±‰'.split(""));
+        this.buttons.set("1L", String.raw`!?*#$%^&,:;"(){}[]~¡¿<>|\/´ˆ˜¨¯¸=+×÷±‰`.split(""));
         this.buttons.set("1U", "•·¢£¥€§®©™«»‹›†‡ƒ¶¹²³º°ª…¼½¾“”„‘’‚–—".split(""));
         this.buttons.set("2L", "àáâãäåæèéêëìíîïòóôõöøœùúûüçñýÿšžðþß".split(""));
         this.buttons.set("2U", "ÀÁÂÃÄÅÆÈÉÊËÌÍÎÏÒÓÔÕÖØŒÙÚÛÜÇÑÝŸŠŽÐÞ".split(""));

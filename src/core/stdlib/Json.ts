@@ -113,7 +113,7 @@ function jsonString(x: string, escape: boolean): string {
             case "\t":
                 return String.raw`\t`;
             default:
-                return String.raw`\u${char.charCodeAt(0).toString(16).padStart(4, "0").toUpperCase()}`;
+                return `\\u${char.charCodeAt(0).toString(16).padStart(4, "0").toUpperCase()}`;
         }
     })}"`;
 }
