@@ -157,4 +157,10 @@ export class MarkupList extends ArrayGrid {
         }
         this.updateRect(rect, displayRows, itemSize);
     }
+
+    protected focusMargins() {
+        // Like LabelList, a MarkupList is a short-row list: use the grid's marginX/marginY, not the
+        // 9-patch's own 19px content margins, so the focus frame hugs the row instead of overflowing.
+        return { left: this.marginX, right: this.marginX, top: this.marginY, bottom: this.marginY };
+    }
 }

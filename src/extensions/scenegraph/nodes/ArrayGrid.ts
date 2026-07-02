@@ -10,6 +10,7 @@ import {
     isBrsString,
     IfDraw2D,
     Rect,
+    RoBitmap,
 } from "brs-engine";
 import { FieldKind, FieldModel } from "../SGTypes";
 import { Poster, SGNodeType } from ".";
@@ -358,14 +359,7 @@ export class ArrayGrid extends Group {
             return;
         }
         this.hasNinePatch = bmp.ninePatch;
-        // A 9-patch focus frame declares, via its content-margin markers, how far the framed item
-        // sits inside it. Honor those margins so the frame hugs the item the way it does on a device;
-        // fall back to the grid's marginX/marginY for frames that don't declare content margins.
-        const margins = bmp.ninePatch ? bmp.getPatchSizes()?.margins : undefined;
-        const left = margins?.left || this.marginX;
-        const right = margins?.right || this.marginX;
-        const top = margins?.top || this.marginY;
-        const bottom = margins?.bottom || this.marginY;
+        const { left, right, top, bottom } = this.focusMargins(bmp);
         let focusRect = bmp.ninePatch
             ? {
                   x: itemRect.x - left,
@@ -376,6 +370,23 @@ export class ArrayGrid extends Group {
             : itemRect;
         const blendColor = this.getValueJS(blendField) as number;
         this.drawImage(bmp, focusRect, 0, opacity, draw2D, blendColor);
+    }
+
+    /**
+     * Per-side outset (in pixels) applied to the item rect before drawing the focus 9-patch frame.
+     * Grids honor the 9-patch's own content-margin markers so the frame hugs large items, falling
+     * back to the grid's marginX/marginY for frames that don't declare content margins. List nodes
+     * (short rows) override this to keep the tighter marginX/marginY outset — the 9-patch's 19px
+     * margins would otherwise make the frame overflow into the neighbouring rows.
+     */
+    protected focusMargins(bmp: RoBitmap): { left: number; right: number; top: number; bottom: number } {
+        const margins = bmp.ninePatch ? bmp.getPatchSizes()?.margins : undefined;
+        return {
+            left: margins?.left || this.marginX,
+            right: margins?.right || this.marginX,
+            top: margins?.top || this.marginY,
+            bottom: margins?.bottom || this.marginY,
+        };
     }
 
     protected renderSectionDivider(

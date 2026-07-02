@@ -210,6 +210,12 @@ export class LabelList extends ArrayGrid {
         this.hasNinePatch &&= drawFocus;
     }
 
+    protected focusMargins() {
+        // Short list rows must hug: use the grid's marginX/marginY, not the 9-patch's own 19px
+        // content margins (which would make the focus frame overflow into the neighbouring rows).
+        return { left: this.marginX, right: this.marginX, top: this.marginY, bottom: this.marginY };
+    }
+
     protected renderIcon(bmp: RoBitmap, rect: Rect, opacity: number, draw2D?: IfDraw2D, color?: number) {
         const iconY = rect.y + (rect.height / 2 - bmp.height / 2);
         const iconRect = { ...rect, y: iconY, width: bmp.width, height: bmp.height };
