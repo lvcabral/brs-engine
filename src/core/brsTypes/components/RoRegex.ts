@@ -67,7 +67,7 @@ export class RoRegex extends BrsComponent implements BrsValue {
      * @returns Replaced string
      */
     private parseReplacementPattern(pattern: string): string {
-        return pattern.replace(/\\/g, "$");
+        return pattern.replaceAll('\\', "$");
     }
 
     /** Returns whether the string matched the regex or not */

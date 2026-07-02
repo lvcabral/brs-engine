@@ -309,7 +309,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
             // From Mozilla's guide to escaping regex:
             // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions#Escaping
             const escapedFrom = from.value.replaceAll(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
-            return new BrsString(this.intrinsic.value.replace(new RegExp(escapedFrom, "g"), to.value));
+            return new BrsString(this.intrinsic.value.replaceAll(new RegExp(escapedFrom, "g"), to.value));
         },
     });
 
@@ -426,7 +426,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
             returns: ValueKind.String,
         },
         impl: (_) => {
-            return new BrsString(this.intrinsic.value.replace(/(['"<>&])/g, String.raw`\$1`));
+            return new BrsString(this.intrinsic.value.replaceAll(/(['"<>&])/g, String.raw`\$1`));
         },
     });
 
@@ -440,7 +440,7 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
             return new BrsString(
                 // encoding courtesy of
                 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/encodeURIComponent#Description
-                encodeURIComponent(this.intrinsic.value).replace(
+                encodeURIComponent(this.intrinsic.value).replaceAll(
                     /[!'()*]/g,
                     (c) => "%" + c.charCodeAt(0).toString(16).toUpperCase()
                 )

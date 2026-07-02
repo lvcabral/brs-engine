@@ -564,7 +564,7 @@ export class XMLHttpRequest {
                     ? "req.write('" +
                       JSON.stringify(data)
                           .slice(1, -1)
-                          .replace(/'/g, String.raw`\'`) +
+                          .replaceAll('\'', String.raw`\'`) +
                       "');"
                     : "") +
                 "req.end();";
