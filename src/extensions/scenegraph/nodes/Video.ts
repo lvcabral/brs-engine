@@ -38,6 +38,7 @@ import { ScrollingLabel } from "./ScrollingLabel";
 import { Timer } from "./Timer";
 import { rotateTranslation } from "../SGUtil";
 import { TrickPlayBar } from "./TrickPlayBar";
+import { ProgressBar } from "./ProgressBar";
 
 export class Video extends Group {
     readonly defaultFields: FieldModel[] = [
@@ -133,6 +134,8 @@ export class Video extends Group {
     private readonly spinner: BusySpinner;
     private readonly pausedIcon: Poster;
     private readonly trickPlayBar: TrickPlayBar;
+    private readonly bufferingBar: ProgressBar;
+    private readonly retrievingBar: ProgressBar;
     private readonly backgroundOverlay: Poster;
     private lastPressHandled: string;
     private enableUI: boolean;
@@ -182,6 +185,12 @@ export class Video extends Group {
         this.clockText.setValueSilent("text", new BrsString(BrsDevice.getTime()));
         this.setValueSilent("trickPlayBar", this.trickPlayBar);
         this.appendChildToParent(this.trickPlayBar);
+        // Expose the internal default ProgressBar instances so apps can read/customize them.
+        // They are not appended to the render tree; the BusySpinner remains the visual indicator.
+        this.bufferingBar = new ProgressBar();
+        this.retrievingBar = new ProgressBar();
+        this.setValueSilent("bufferingBar", this.bufferingBar);
+        this.setValueSilent("retrievingBar", this.retrievingBar);
         this.showHeader = 0;
         this.showPaused = 0;
         this.showTrickPlay = 0;
