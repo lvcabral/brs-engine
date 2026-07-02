@@ -77,6 +77,46 @@ describe("global JSON functions", () => {
             expect(FormatJson.call(interpreter, new BrsString("ok"))).toEqual(new BrsString(`"ok"`));
         });
 
+        it("escapes backslashes so paths produce valid JSON", () => {
+            let aa = new RoAssociativeArray([
+                { name: new BrsString("path"), value: new BrsString("C:\\folder\\file.mp4") },
+            ]);
+            let actual = FormatJson.call(interpreter, aa);
+            expect(actual).toEqual(new BrsString(`{"path":"C:\\\\folder\\\\file.mp4"}`));
+            // The output must be valid JSON that round-trips to the original value.
+            expect(JSON.parse(actual.toString())).toEqual({ path: "C:\\folder\\file.mp4" });
+        });
+
+        it("escapes embedded double-quotes", () => {
+            expect(FormatJson.call(interpreter, new BrsString(`a"b`))).toEqual(new BrsString(`"a\\"b"`));
+        });
+
+        it("escapes control characters using shorthand forms", () => {
+            expect(FormatJson.call(interpreter, new BrsString("line1\nline2\tend\r"))).toEqual(
+                new BrsString(`"line1\\nline2\\tend\\r"`)
+            );
+        });
+
+        it("escapes other control characters as \\uHHHH", () => {
+            expect(FormatJson.call(interpreter, new BrsString(String.fromCharCode(0, 0x1f)))).toEqual(
+                new BrsString(`"\\u0000\\u001F"`)
+            );
+        });
+
+        it("escapes non-ASCII characters by default", () => {
+            expect(FormatJson.call(interpreter, new BrsString("€"))).toEqual(new BrsString(`"\\u20AC"`));
+        });
+
+        it("leaves non-ASCII characters raw with the DontEscape flag (1)", () => {
+            expect(FormatJson.call(interpreter, new BrsString("€"), new Int32(1))).toEqual(new BrsString(`"€"`));
+        });
+
+        it("still escapes mandatory characters with the DontEscape flag (1)", () => {
+            expect(FormatJson.call(interpreter, new BrsString("a\\b€"), new Int32(1))).toEqual(
+                new BrsString(`"a\\\\b€"`)
+            );
+        });
+
         it("converts BRS integer to bare integer string", () => {
             expect(FormatJson.call(interpreter, Int32.fromString("2147483647"))).toEqual(new BrsString("2147483647"));
         });

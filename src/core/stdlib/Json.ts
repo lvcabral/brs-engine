@@ -92,12 +92,30 @@ function jsonOf(x: BrsType, flags: number = 0, key: string = ""): string {
 }
 
 function jsonString(x: string, escape: boolean): string {
-    if (escape) {
-        return `"${x.replace(/[\u007F-\uFFFF]/g, (char) => {
-            return `\\u${char.charCodeAt(0).toString(16).padStart(4, "0").toUpperCase()}`;
-        })}"`;
-    }
-    return `"${x}"`;
+    // The JSON-mandatory escapes (\, ", and the C0 control characters) are
+    // always applied so the output is valid JSON; the DontEscape flag only
+    // governs whether non-ASCII characters are additionally escaped as \uHHHH.
+    const pattern = escape ? /[\\"\u0000-\u001F\u007F-\uFFFF]/g : /[\\"\u0000-\u001F]/g;
+    return `"${x.replace(pattern, (char) => {
+        switch (char) {
+            case '"':
+                return '\\"';
+            case "\\":
+                return "\\\\";
+            case "\b":
+                return "\\b";
+            case "\f":
+                return "\\f";
+            case "\n":
+                return "\\n";
+            case "\r":
+                return "\\r";
+            case "\t":
+                return "\\t";
+            default:
+                return `\\u${char.charCodeAt(0).toString(16).padStart(4, "0").toUpperCase()}`;
+        }
+    })}"`;
 }
 
 function logBrsErr(interpreter: Interpreter, functionName: string, err: Error): void {
