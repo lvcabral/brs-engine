@@ -126,7 +126,11 @@ module.exports = {
             "off",
             "never"
         ],
+        "unicorn/no-negated-condition": "error",
+        "unicorn/prefer-array-flat": "error",
         "unicorn/prefer-at": "error",
+        "unicorn/prefer-code-point": "error",
+        "unicorn/prefer-set-has": "error",
         "unicorn/prefer-string-raw": "error",
         "unicorn/prefer-string-replace-all": "error",
         "use-isnan": "error"

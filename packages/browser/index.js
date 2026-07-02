@@ -196,20 +196,18 @@ function runFile(file, password = "") {
         file.arrayBuffer()
             .then((data) => {
                 // file is loaded
-                if (password !== null) {
-                    currentZip = data;
-                    brs.execute(
-                        file.name,
-                        currentZip,
-                        {
-                            clearDisplayOnExit: true,
-                            muteSound: false,
-                            password: password,
-                            debugOnCrash: true,
-                        },
-                        new Map([["source", "auto-run-dev"]])
-                    );
-                }
+                currentZip = data;
+                brs.execute(
+                    file.name,
+                    currentZip,
+                    {
+                        clearDisplayOnExit: true,
+                        muteSound: false,
+                        password: password,
+                        debugOnCrash: true,
+                    },
+                    new Map([["source", "auto-run-dev"]])
+                );
             })
             .catch((err) => {
                 console.error(`Error opening ${file.name}:${err}`);

@@ -43,7 +43,7 @@ const defaultHeaders = {
 // These headers are not user setable.
 // The following are allowed but banned in the spec:
 // * user-agent
-const forbiddenRequestHeaders = [
+const forbiddenRequestHeaders = new Set([
     "accept-charset",
     "accept-encoding",
     "access-control-request-headers",
@@ -64,10 +64,10 @@ const forbiddenRequestHeaders = [
     "transfer-encoding",
     "upgrade",
     "via",
-];
+]);
 
 // These request methods are not allowed
-const forbiddenRequestMethods = ["TRACE", "TRACK", "CONNECT"];
+const forbiddenRequestMethods = new Set(["TRACE", "TRACK", "CONNECT"]);
 
 export class XMLHttpRequest {
     /**
@@ -145,7 +145,7 @@ export class XMLHttpRequest {
      * @return boolean False if not allowed, otherwise true
      */
     private isAllowedHttpHeader(header: string) {
-        return this._disableHeaderCheck || (header && !forbiddenRequestHeaders.includes(header.toLowerCase()));
+        return this._disableHeaderCheck || (header && !forbiddenRequestHeaders.has(header.toLowerCase()));
     }
 
     /**
@@ -155,7 +155,7 @@ export class XMLHttpRequest {
      * @return boolean False if not allowed, otherwise true
      */
     private isAllowedHttpMethod(method: string) {
-        return method && !forbiddenRequestMethods.includes(method);
+        return method && !forbiddenRequestMethods.has(method);
     }
 
     /**

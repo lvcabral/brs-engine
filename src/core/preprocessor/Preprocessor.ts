@@ -46,9 +46,7 @@ export class Preprocessor implements CC.Visitor {
     filter(chunks: readonly CC.Chunk[], bsConst?: Map<string, boolean>): FilterResults {
         this.constants = new Map([...(bsConst ?? [])].map(([key, value]) => [key.toLowerCase(), value]));
         return {
-            processedTokens: chunks
-                .map((chunk) => chunk.accept(this))
-                .reduce((allTokens: Token[], chunkTokens: Token[]) => [...allTokens, ...chunkTokens], []),
+            processedTokens: chunks.flatMap((chunk) => chunk.accept(this)),
             errors: this.errors,
         };
     }
@@ -133,9 +131,7 @@ export class Preprocessor implements CC.Visitor {
         }
 
         if (conditionResult) {
-            return chunk.thenChunks
-                .map((chunk) => chunk.accept(this))
-                .reduce((allTokens, chunkTokens: Token[]) => [...allTokens, ...chunkTokens], []);
+            return chunk.thenChunks.flatMap((chunk) => chunk.accept(this));
         } else {
             for (const elseIf of chunk.elseIfs) {
                 let elseIfResult = this.evaluateCondition(elseIf.condition);
@@ -143,17 +139,13 @@ export class Preprocessor implements CC.Visitor {
                     elseIfResult = !elseIfResult;
                 }
                 if (elseIfResult) {
-                    return elseIf.thenChunks
-                        .map((chunk) => chunk.accept(this))
-                        .reduce((allTokens, chunkTokens: Token[]) => [...allTokens, ...chunkTokens], []);
+                    return elseIf.thenChunks.flatMap((chunk) => chunk.accept(this));
                 }
             }
         }
 
         if (chunk.elseChunks) {
-            return chunk.elseChunks
-                .map((chunk) => chunk.accept(this))
-                .reduce((allTokens, chunkTokens: Token[]) => [...allTokens, ...chunkTokens], []);
+            return chunk.elseChunks.flatMap((chunk) => chunk.accept(this));
         }
 
         return [];

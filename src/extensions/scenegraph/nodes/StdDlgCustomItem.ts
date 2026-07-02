@@ -48,6 +48,8 @@ export class StdDlgCustomItem extends Group implements StdDlgItem {
             const trans = (child.getValueJS("translation") as number[]) ?? [0, 0];
             let childHeight =
                 child instanceof Label ? child.getMeasured().height : (child.getValueJS("height") as number);
+            // Not `childHeight <= 0`: childHeight can be NaN (unmeasured child), which must also fall
+            // back to bitmapHeight. `!(childHeight > 0)` is true for NaN, whereas `NaN <= 0` is false.
             if (!(childHeight > 0)) {
                 childHeight = (child.getValueJS("bitmapHeight") as number) ?? 0;
             }

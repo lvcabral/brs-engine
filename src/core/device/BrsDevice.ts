@@ -436,6 +436,8 @@ export class BrsDevice {
         let data = "";
         this.sharedArray.slice(DataBufferIndex).every((char) => {
             if (char > 0) {
+                // Decodes UTF-16 code units stored one-per-slot by saveDataBuffer (util.ts); not code points.
+                // eslint-disable-next-line unicorn/prefer-code-point
                 data += String.fromCharCode(char);
             }
             return char; // if \0 stops decoding

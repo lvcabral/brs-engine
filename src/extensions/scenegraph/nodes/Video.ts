@@ -671,14 +671,14 @@ export class Video extends Group {
         } else if (this.seekMode === "skip") {
             this.seekMode = mode;
             this.seekLevel = 1;
-        } else if (this.seekMode !== mode) {
+        } else if (this.seekMode === mode) {
+            this.seekLevel = Math.min(3, this.seekLevel + 1);
+        } else {
             this.seekMode = "skip";
             this.seekLevel = 1;
             this.seekTimeout = 0;
             this.trickPlayBar.setStateIcon("", 0);
             return true;
-        } else {
-            this.seekLevel = Math.min(3, this.seekLevel + 1);
         }
         this.updateSeekStep(mode === "ff", duration, Math.trunc(1000 / this.seekLevel));
         this.trickPlayBar.setStateIcon(`${this.seekMode}-x${this.seekLevel}`);

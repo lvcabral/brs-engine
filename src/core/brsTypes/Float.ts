@@ -34,7 +34,7 @@ export class Float implements Numeric, Comparable, Boxable {
      */
     constructor(value: number | Long, public inArray: boolean = false) {
         if (value instanceof Long) value = value.toNumber();
-        this.value = parseFloat(Math.fround(value).toPrecision(IEEE_FLOAT_SIGFIGS));
+        this.value = Number.parseFloat(Math.fround(value).toPrecision(IEEE_FLOAT_SIGFIGS));
     }
 
     /**
