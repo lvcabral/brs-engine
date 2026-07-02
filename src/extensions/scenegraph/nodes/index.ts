@@ -79,6 +79,7 @@ export * from "./TimeGrid";
 export * from "./VoiceTextEditBox";
 export * from "./Timer";
 export * from "./TrickPlayBar";
+export * from "./ProgressBar";
 export * from "./Video";
 export * from "./ZoomRowList";
 export * from "./AnimationBase";
@@ -175,6 +176,7 @@ export enum SGNodeType {
     Audio = "Audio",
     SoundEffect = "SoundEffect",
     TrickPlayBar = "TrickPlayBar",
+    ProgressBar = "ProgressBar",
     Animation = "Animation",
     AnimationBase = "AnimationBase",
     SequentialAnimation = "SequentialAnimation",

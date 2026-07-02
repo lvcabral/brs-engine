@@ -100,6 +100,7 @@ import {
     VoiceTextEditBox,
     Timer,
     TrickPlayBar,
+    ProgressBar,
     Video,
     ZoomRowList,
     Animation,
@@ -245,6 +246,8 @@ export class SGNodeFactory {
                 return new Video([], name);
             case SGNodeType.TrickPlayBar.toLowerCase():
                 return new TrickPlayBar([], name);
+            case SGNodeType.ProgressBar.toLowerCase():
+                return new ProgressBar([], name);
             case SGNodeType.Keyboard.toLowerCase():
                 return new Keyboard([], name);
             case SGNodeType.MiniKeyboard.toLowerCase():
