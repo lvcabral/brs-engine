@@ -241,7 +241,8 @@ String.prototype.hashCode = function (this: string) {
         chr: number;
     if (this.length === 0) return hash.toString();
     for (i = 0; i < this.length; i++) {
-        chr = this.codePointAt(i) || 0;
+        // eslint-disable-next-line unicorn/prefer-code-point
+        chr = this.charCodeAt(i);
         hash = (hash << 5) - hash + chr;
         hash |= 0; // Convert to 32bit integer
     }
