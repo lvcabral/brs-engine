@@ -350,6 +350,33 @@ describe("cli", () => {
         ]);
     }, 10000);
 
+    it("Allows redeclaring an inherited system field but still blocks XML duplicate fields", async () => {
+        let command = ["node", brsCliPath, "-r duplicate-system-field-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout, stderr } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // A field inherited from a built-in base type (a "system" field) may be redeclared in
+        // XML: the redeclared default is re-applied (opacity -> 0.5) and any field declared after
+        // it (customField) is still added. Before the fix the duplicate-field guard fired on the
+        // inherited "opacity", aborting addFields so both were lost.
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "=== Duplicate System Field Repro ===",
+            "opacity =  0.5",
+            "customField = hello",
+            "sharedField = base",
+            "afterField type = Invalid",
+            "=== Duplicate System Field Repro Complete ===",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+        // Redeclaring the inherited system field must NOT warn...
+        expect(stderr).not.toContain('duplicate field "opacity"');
+        // ...but redeclaring a field defined in an ancestor XML component still must.
+        expect(stderr).toContain('Attempt to add duplicate field "sharedField" to RokuML component "XmlChildComp"');
+    }, 10000);
+
     it("List item component can read its parent list during init()", async () => {
         let command = ["node", brsCliPath, "-r list-item-parent-app", "source/main.brs", "-c 0"].join(" ");
 
