@@ -148,13 +148,20 @@ export async function loadAppZip(fileName: string, file: ArrayBuffer, callback: 
     // a component .xml; for an encrypted package the component .xml/.brs are folded into the blob and
     // stripped, so we rely on the preserved components/ folder marker instead.
     const hasSceneGraph = isEncrypted ? hasComponentsFolder : hasSGComponents;
-    if (hasSceneGraph && deviceData.extensions?.has(SupportedExtension.SceneGraph)) {
-        extensions.push(SupportedExtension.SceneGraph);
+    if (hasSceneGraph) {
+        enableSceneGraphExtension();
     }
     // Mount external storage if present
     notifyAll("mount", extMounted ? 1 : 0);
     // Create and return the payload
     callback(createPayload(launchTime));
+}
+
+export function enableSceneGraphExtension() {
+    const sgExt = SupportedExtension.SceneGraph;
+    if (deviceData.extensions?.has(sgExt) && !extensions.includes(sgExt)) {
+        extensions.push(sgExt);
+    }
 }
 
 /**

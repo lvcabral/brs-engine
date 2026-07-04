@@ -47,6 +47,7 @@ import {
     setupDeepLink,
     getModelType,
     isMountedExt,
+    enableSceneGraphExtension,
 } from "./package";
 import {
     subscribeDisplay,
@@ -576,6 +577,7 @@ function loadSourceCode(fileName: string, fileData: any) {
     const reader = new FileReader();
     reader.onload = function (_) {
         if (typeof this.result === "string") {
+            const sourceCode = this.result;
             manifestMap.clear();
             manifestMap.set("title", "BRS File");
             manifestMap.set("major_version", "1");
@@ -584,10 +586,14 @@ function loadSourceCode(fileName: string, fileData: any) {
             manifestMap.set("splash_min_time", "0");
             currentApp.title = `BrightScript file: ${fileName}`;
             paths.length = 0;
-            source.push(this.result);
+            source.push(sourceCode);
             paths.push({ url: `source/${fileName}`, id: 0, type: "source" });
             clearDisplay(true);
             Atomics.store(sharedArray, DataType.EVE, isMountedExt() ? 1 : 0);
+            const lowSource = sourceCode.toLowerCase();
+            if (lowSource.includes("rosgnode") || lowSource.includes("rosgscreen")) {
+                enableSceneGraphExtension();
+            }
             runApp(createPayload(Date.now()));
         } else {
             apiException("error", `[api] Invalid data type in ${fileName}: ${typeof this.result}`);
