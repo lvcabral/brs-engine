@@ -102,13 +102,15 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
         return refs;
     }
 
-    deepCopy() {
+    deepCopy(boxContent = false) {
         const copiedElements: AAMember[] = [];
         for (const [key, value] of this.elements) {
-            if (value instanceof RoArray || value instanceof RoAssociativeArray || isSceneGraphNode(value)) {
+            if (value instanceof RoArray || value instanceof RoAssociativeArray) {
+                copiedElements.push({ name: new BrsString(key), value: value.deepCopy(boxContent) });
+            } else if (isSceneGraphNode(value)) {
                 copiedElements.push({ name: new BrsString(key), value: value.deepCopy() });
             } else if (isBoxable(value) && !(value instanceof Callable)) {
-                copiedElements.push({ name: new BrsString(key), value: value });
+                copiedElements.push({ name: new BrsString(key), value: boxContent ? value.box() : value });
             } else if (isUnboxable(value) && !(value instanceof RoFunction)) {
                 copiedElements.push({ name: new BrsString(key), value: value.copy() });
             }

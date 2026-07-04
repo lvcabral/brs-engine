@@ -304,4 +304,34 @@ describe("SceneGraph node tests", () => {
             "bar",
         ]);
     });
+
+    test("box-array-content-on-field.brs", async () => {
+        await execute([resourceFile("scenegraph", "box-array-content-on-field.brs")], outputStreams);
+
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
+            // a plain parseJson AA keeps unboxed scalar leaves; a number read from a
+            // container reports the legacy `roInteger` for type() (see stdlib/type-legacy.brs)
+            "button (aa): 0xCDCDCDFF, type: String, type3: roString",
+            "number (aa):  30, type: roInteger, type3: Integer",
+            // reading the same values back out of a node field boxes the leaves
+            "button (node.aa): 0xCDCDCDFF, type: roString, type3: roString",
+            "number (node.aa):  30, type: roInt, type3: roInt",
+            // every boxable scalar type is boxed when read from an AssocArray field
+            "str (node.aa): type: roString, type3: roString",
+            "int (node.aa): type: roInt, type3: roInt",
+            "flt (node.aa): type: roFloat, type3: roFloat",
+            "dbl (node.aa): type: roDouble, type3: roDouble",
+            "lng (node.aa): type: roLongInteger, type3: roLongInteger",
+            "bool (node.aa): type: roBoolean, type3: roBoolean",
+            // ...and likewise for an roArray field
+            "str (node.arr): type: roString, type3: roString",
+            "int (node.arr): type: roInt, type3: roInt",
+            "flt (node.arr): type: roFloat, type3: roFloat",
+            "dbl (node.arr): type: roDouble, type3: roDouble",
+            "lng (node.arr): type: roLongInteger, type3: roLongInteger",
+            "bool (node.arr): type: roBoolean, type3: roBoolean",
+            // boxing is recursive through a mixed array/AssocArray hierarchy
+            "nested (node.arr): type: roInt, type3: roInt",
+        ]);
+    });
 });

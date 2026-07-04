@@ -312,7 +312,7 @@ export class Node extends RoSGNode implements BrsValue {
         if (field) {
             const value = field.getValue();
             if (value instanceof RoAssociativeArray || value instanceof RoArray) {
-                return value.deepCopy();
+                return value.deepCopy(true);
             } else if (isUnboxable(value)) {
                 return value.copy();
             } else if (sgRoot.inTaskThread() && value instanceof Node) {
