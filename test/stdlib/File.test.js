@@ -36,9 +36,9 @@ describe("global file I/O functions", () => {
             fsys.writeFileSync("tmp:/test_dir/test3.txt", "test contents 3");
 
             expect(ListDir.call(interpreter, new BrsString("tmp:///")).elements).toEqual([
-                new BrsString("test1.txt", true),
-                new BrsString("test2.txt", true),
-                new BrsString("test_dir", true),
+                new BrsString("test1.txt", false, true),
+                new BrsString("test2.txt", false, true),
+                new BrsString("test_dir", false, true),
             ]);
         });
 
@@ -208,17 +208,20 @@ describe("global file I/O functions", () => {
                 let result = MatchFiles.call(interpreter, new BrsString("cachefs:/source"), new BrsString("*.brs"));
                 expect(result).toBeInstanceOf(RoList);
                 expect(result.elements).toEqual([
-                    new BrsString("foo.brs", true),
-                    new BrsString("bar.brs", true),
-                    new BrsString("baz.brs", true),
-                    new BrsString("car.brs", true),
+                    new BrsString("foo.brs", false, true),
+                    new BrsString("bar.brs", false, true),
+                    new BrsString("baz.brs", false, true),
+                    new BrsString("car.brs", false, true),
                 ]);
             });
 
             test("? matches a single character", () => {
                 let result = MatchFiles.call(interpreter, new BrsString("cachefs:/source"), new BrsString("ba?.brs"));
                 expect(result).toBeInstanceOf(RoList);
-                expect(result.elements).toEqual([new BrsString("bar.brs", true), new BrsString("baz.brs", true)]);
+                expect(result.elements).toEqual([
+                    new BrsString("bar.brs", false, true),
+                    new BrsString("baz.brs", false, true),
+                ]);
             });
 
             test("character classes in […]", () => {
@@ -228,7 +231,10 @@ describe("global file I/O functions", () => {
                     new BrsString("[a-c]ar.brs")
                 );
                 expect(result).toBeInstanceOf(RoList);
-                expect(result.elements).toEqual([new BrsString("bar.brs", true), new BrsString("car.brs", true)]);
+                expect(result.elements).toEqual([
+                    new BrsString("bar.brs", false, true),
+                    new BrsString("car.brs", false, true),
+                ]);
             });
 
             test("character class negation with [^…]", () => {
@@ -238,7 +244,10 @@ describe("global file I/O functions", () => {
                     new BrsString("[^d-zD-Z]ar.brs")
                 );
                 expect(result).toBeInstanceOf(RoList);
-                expect(result.elements).toEqual([new BrsString("bar.brs", true), new BrsString("car.brs", true)]);
+                expect(result.elements).toEqual([
+                    new BrsString("bar.brs", false, true),
+                    new BrsString("car.brs", false, true),
+                ]);
             });
 
             test("escaped special characters", () => {
@@ -248,7 +257,7 @@ describe("global file I/O functions", () => {
                     new BrsString(String.raw`*\**\?**\[*`)
                 );
                 expect(result).toBeInstanceOf(RoList);
-                expect(result.elements).toEqual([new BrsString("b*a?d na[me", true)]);
+                expect(result.elements).toEqual([new BrsString("b*a?d na[me", false, true)]);
             });
         });
     });

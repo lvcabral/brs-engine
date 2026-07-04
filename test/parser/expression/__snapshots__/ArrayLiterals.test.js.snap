@@ -70,6 +70,7 @@ exports[`parser array literals contents can contain expressions 1`] = `
             "value": Int32 {
               "kind": 4,
               "legacy": false,
+              "literal": false,
               "value": 1,
             },
           },
@@ -87,6 +88,7 @@ exports[`parser array literals contents can contain expressions 1`] = `
             "value": Int32 {
               "kind": 4,
               "legacy": false,
+              "literal": false,
               "value": 2,
             },
           },
@@ -138,6 +140,7 @@ exports[`parser array literals contents can contain expressions 1`] = `
             "value": BrsBoolean {
               "kind": 2,
               "legacy": false,
+              "literal": false,
               "value": false,
             },
           },
@@ -251,6 +254,7 @@ exports[`parser array literals contents can contain other arrays 1`] = `
               "value": Int32 {
                 "kind": 4,
                 "legacy": false,
+                "literal": false,
                 "value": 1,
               },
             },
@@ -268,6 +272,7 @@ exports[`parser array literals contents can contain other arrays 1`] = `
               "value": Int32 {
                 "kind": 4,
                 "legacy": false,
+                "literal": false,
                 "value": 2,
               },
             },
@@ -285,6 +290,7 @@ exports[`parser array literals contents can contain other arrays 1`] = `
               "value": Int32 {
                 "kind": 4,
                 "legacy": false,
+                "literal": false,
                 "value": 3,
               },
             },
@@ -338,6 +344,7 @@ exports[`parser array literals contents can contain other arrays 1`] = `
               "value": Int32 {
                 "kind": 4,
                 "legacy": false,
+                "literal": false,
                 "value": 4,
               },
             },
@@ -355,6 +362,7 @@ exports[`parser array literals contents can contain other arrays 1`] = `
               "value": Int32 {
                 "kind": 4,
                 "legacy": false,
+                "literal": false,
                 "value": 5,
               },
             },
@@ -372,6 +380,7 @@ exports[`parser array literals contents can contain other arrays 1`] = `
               "value": Int32 {
                 "kind": 4,
                 "legacy": false,
+                "literal": false,
                 "value": 6,
               },
             },
@@ -484,6 +493,7 @@ exports[`parser array literals contents can contain primitives 1`] = `
           "value": Int32 {
             "kind": 4,
             "legacy": false,
+            "literal": false,
             "value": 1,
           },
         },
@@ -501,6 +511,7 @@ exports[`parser array literals contents can contain primitives 1`] = `
           "value": Int32 {
             "kind": 4,
             "legacy": false,
+            "literal": false,
             "value": 2,
           },
         },
@@ -518,6 +529,7 @@ exports[`parser array literals contents can contain primitives 1`] = `
           "value": Int32 {
             "kind": 4,
             "legacy": false,
+            "literal": false,
             "value": 3,
           },
         },
@@ -764,6 +776,7 @@ exports[`parser array literals filled arrays on multiple lines with commas 1`] =
           "value": Int32 {
             "kind": 4,
             "legacy": false,
+            "literal": false,
             "value": 1,
           },
         },
@@ -781,6 +794,7 @@ exports[`parser array literals filled arrays on multiple lines with commas 1`] =
           "value": Int32 {
             "kind": 4,
             "legacy": false,
+            "literal": false,
             "value": 2,
           },
         },
@@ -798,6 +812,7 @@ exports[`parser array literals filled arrays on multiple lines with commas 1`] =
           "value": Int32 {
             "kind": 4,
             "legacy": false,
+            "literal": false,
             "value": 3,
           },
         },
@@ -892,6 +907,7 @@ exports[`parser array literals filled arrays on multiple lines without commas 1`
           "value": Int32 {
             "kind": 4,
             "legacy": false,
+            "literal": false,
             "value": 1,
           },
         },
@@ -909,6 +925,7 @@ exports[`parser array literals filled arrays on multiple lines without commas 1`
           "value": Int32 {
             "kind": 4,
             "legacy": false,
+            "literal": false,
             "value": 2,
           },
         },
@@ -926,6 +943,7 @@ exports[`parser array literals filled arrays on multiple lines without commas 1`
           "value": Int32 {
             "kind": 4,
             "legacy": false,
+            "literal": false,
             "value": 3,
           },
         },
@@ -1020,6 +1038,7 @@ exports[`parser array literals filled arrays on one line 1`] = `
           "value": Int32 {
             "kind": 4,
             "legacy": false,
+            "literal": false,
             "value": 1,
           },
         },
@@ -1037,6 +1056,7 @@ exports[`parser array literals filled arrays on one line 1`] = `
           "value": Int32 {
             "kind": 4,
             "legacy": false,
+            "literal": false,
             "value": 2,
           },
         },
@@ -1054,6 +1074,7 @@ exports[`parser array literals filled arrays on one line 1`] = `
           "value": Int32 {
             "kind": 4,
             "legacy": false,
+            "literal": false,
             "value": 3,
           },
         },

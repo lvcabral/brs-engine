@@ -37,7 +37,7 @@ describe("global runtime functions", () => {
                 { value: new BrsInterface("ifArray", []), type: "ifArray" },
                 { value: BrsInvalid.Instance, type: "Invalid" },
                 { value: BrsBoolean.False, type: "Boolean" },
-                { value: new BrsString("foo", false, true), type: "String" },
+                { value: new BrsString("foo", true), type: "String" },
                 { value: new Int32(5), type: "Integer" },
                 { value: new Int64(55), type: "LongInteger" },
                 { value: new Float(1.23), type: "Float" },

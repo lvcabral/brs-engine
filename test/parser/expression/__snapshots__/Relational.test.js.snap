@@ -52,6 +52,7 @@ exports[`parser relational expressions parses equality expressions 1`] = `
         "value": Int32 {
           "kind": 4,
           "legacy": false,
+          "literal": false,
           "value": 5,
         },
       },
@@ -69,6 +70,7 @@ exports[`parser relational expressions parses equality expressions 1`] = `
         "value": Int32 {
           "kind": 4,
           "legacy": false,
+          "literal": false,
           "value": 2,
         },
       },
@@ -145,6 +147,7 @@ exports[`parser relational expressions parses greater-than expressions 1`] = `
         "value": Int32 {
           "kind": 4,
           "legacy": false,
+          "literal": false,
           "value": 5,
         },
       },
@@ -162,6 +165,7 @@ exports[`parser relational expressions parses greater-than expressions 1`] = `
         "value": Int32 {
           "kind": 4,
           "legacy": false,
+          "literal": false,
           "value": 2,
         },
       },
@@ -238,6 +242,7 @@ exports[`parser relational expressions parses greater-than-or-equal-to expressio
         "value": Int32 {
           "kind": 4,
           "legacy": false,
+          "literal": false,
           "value": 5,
         },
       },
@@ -255,6 +260,7 @@ exports[`parser relational expressions parses greater-than-or-equal-to expressio
         "value": Int32 {
           "kind": 4,
           "legacy": false,
+          "literal": false,
           "value": 2,
         },
       },
@@ -331,6 +337,7 @@ exports[`parser relational expressions parses inequality expressions 1`] = `
         "value": Int32 {
           "kind": 4,
           "legacy": false,
+          "literal": false,
           "value": 5,
         },
       },
@@ -348,6 +355,7 @@ exports[`parser relational expressions parses inequality expressions 1`] = `
         "value": Int32 {
           "kind": 4,
           "legacy": false,
+          "literal": false,
           "value": 2,
         },
       },
@@ -424,6 +432,7 @@ exports[`parser relational expressions parses less-than expressions 1`] = `
         "value": Int32 {
           "kind": 4,
           "legacy": false,
+          "literal": false,
           "value": 5,
         },
       },
@@ -441,6 +450,7 @@ exports[`parser relational expressions parses less-than expressions 1`] = `
         "value": Int32 {
           "kind": 4,
           "legacy": false,
+          "literal": false,
           "value": 2,
         },
       },
@@ -517,6 +527,7 @@ exports[`parser relational expressions parses less-than-or-equal-to expressions 
         "value": Int32 {
           "kind": 4,
           "legacy": false,
+          "literal": false,
           "value": 5,
         },
       },
@@ -534,6 +545,7 @@ exports[`parser relational expressions parses less-than-or-equal-to expressions 
         "value": Int32 {
           "kind": 4,
           "legacy": false,
+          "literal": false,
           "value": 2,
         },
       },

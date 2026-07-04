@@ -78,8 +78,8 @@ describe("RoDeviceInfo", () => {
                 let aa = method.call(interpreter);
 
                 expect(method).toBeTruthy();
-                expect(aa.get(new BrsString("Manufacturer"))).toEqual(new BrsString("", true));
-                expect(aa.get(new BrsString("VendorName"))).toEqual(new BrsString("Roku", true));
+                expect(aa.get(new BrsString("Manufacturer"))).toEqual(new BrsString("", false, true));
+                expect(aa.get(new BrsString("VendorName"))).toEqual(new BrsString("Roku", false, true));
             });
         });
         describe("getFriendlyName", () => {

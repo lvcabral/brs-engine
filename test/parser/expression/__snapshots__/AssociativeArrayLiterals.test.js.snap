@@ -76,6 +76,7 @@ exports[`parser associative array literals allows a mix of quoted and unquoted k
             "value": Int32 {
               "kind": 4,
               "legacy": false,
+              "literal": false,
               "value": 1,
             },
           },
@@ -101,6 +102,7 @@ exports[`parser associative array literals allows a mix of quoted and unquoted k
             "value": Int32 {
               "kind": 4,
               "legacy": false,
+              "literal": false,
               "value": 2,
             },
           },
@@ -126,6 +128,7 @@ exports[`parser associative array literals allows a mix of quoted and unquoted k
             "value": Int32 {
               "kind": 4,
               "legacy": false,
+              "literal": false,
               "value": 3,
             },
           },
@@ -269,6 +272,7 @@ exports[`parser associative array literals allows separating properties with col
                     "value": Int32 {
                       "kind": 4,
                       "legacy": false,
+                      "literal": false,
                       "value": 3,
                     },
                   },
@@ -577,6 +581,7 @@ exports[`parser associative array literals filled arrays on multiple lines with 
             "value": Int32 {
               "kind": 4,
               "legacy": false,
+              "literal": false,
               "value": 1,
             },
           },
@@ -602,6 +607,7 @@ exports[`parser associative array literals filled arrays on multiple lines with 
             "value": Int32 {
               "kind": 4,
               "legacy": false,
+              "literal": false,
               "value": 2,
             },
           },
@@ -627,6 +633,7 @@ exports[`parser associative array literals filled arrays on multiple lines with 
             "value": Int32 {
               "kind": 4,
               "legacy": false,
+              "literal": false,
               "value": 3,
             },
           },
@@ -729,6 +736,7 @@ exports[`parser associative array literals filled arrays on multiple lines witho
             "value": Int32 {
               "kind": 4,
               "legacy": false,
+              "literal": false,
               "value": 1,
             },
           },
@@ -754,6 +762,7 @@ exports[`parser associative array literals filled arrays on multiple lines witho
             "value": Int32 {
               "kind": 4,
               "legacy": false,
+              "literal": false,
               "value": 2,
             },
           },
@@ -779,6 +788,7 @@ exports[`parser associative array literals filled arrays on multiple lines witho
             "value": Int32 {
               "kind": 4,
               "legacy": false,
+              "literal": false,
               "value": 3,
             },
           },
@@ -881,6 +891,7 @@ exports[`parser associative array literals filled arrays on one line 1`] = `
             "value": Int32 {
               "kind": 4,
               "legacy": false,
+              "literal": false,
               "value": 1,
             },
           },
@@ -906,6 +917,7 @@ exports[`parser associative array literals filled arrays on one line 1`] = `
             "value": Int32 {
               "kind": 4,
               "legacy": false,
+              "literal": false,
               "value": 2,
             },
           },
@@ -931,6 +943,7 @@ exports[`parser associative array literals filled arrays on one line 1`] = `
             "value": Int32 {
               "kind": 4,
               "legacy": false,
+              "literal": false,
               "value": 3,
             },
           },

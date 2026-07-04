@@ -119,19 +119,19 @@ export function parseDecodedTokens(fs: FileSystem, manifest: Map<string, any>, d
         if (token.literal) {
             if (token.kind === "Integer") {
                 const literal: number = token.literal.value;
-                token.literal = new BrsTypes.Int32(literal);
+                token.literal = new BrsTypes.Int32(literal, true);
             } else if (token.kind === "LongInteger") {
                 const literal: number = token.literal.value;
-                token.literal = new BrsTypes.Int64(literal);
+                token.literal = new BrsTypes.Int64(literal, true);
             } else if (token.kind === "Double") {
                 const literal: number = token.literal.value;
-                token.literal = new BrsTypes.Double(literal);
+                token.literal = new BrsTypes.Double(literal, true);
             } else if (token.kind === "Float") {
                 const literal: number = token.literal.value;
-                token.literal = new BrsTypes.Float(literal);
+                token.literal = new BrsTypes.Float(literal, true);
             } else if (token.kind === "String") {
                 const literal: string = token.literal.value;
-                token.literal = new BrsTypes.BrsString(literal, false, true);
+                token.literal = new BrsTypes.BrsString(literal, true);
             }
         }
         tokens.push(token);

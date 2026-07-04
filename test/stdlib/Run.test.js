@@ -60,7 +60,7 @@ describe("global Run function", () => {
         fs.existsSync.mockImplementationOnce(() => true);
         fs.readFileSync.mockImplementationOnce(() => `function main(): return "I'm a return value!": end function`);
         expect(Run.call(interpreter, new BrsString("pkg:/success/exec.brs"))).toEqual(
-            new BrsString("I'm a return value!", false, true)
+            new BrsString("I'm a return value!", true)
         );
     });
 
@@ -75,7 +75,7 @@ describe("global Run function", () => {
                 interpreter,
                 new RoArray([new BrsString("pkg:/success/exec.brs"), new BrsString("pkg:/success/greet.brs")])
             )
-        ).toEqual(new BrsString("hello!", false, true));
+        ).toEqual(new BrsString("hello!", true));
     });
 
     describe("args", () => {

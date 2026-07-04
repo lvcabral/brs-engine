@@ -110,7 +110,11 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
             } else if (isSceneGraphNode(value)) {
                 copiedElements.push({ name: new BrsString(key), value: value.deepCopy() });
             } else if (isBoxable(value) && !(value instanceof Callable)) {
-                copiedElements.push({ name: new BrsString(key), value: boxContent ? value.box() : value });
+                // Literal values (written directly in source) are not auto-boxed, matching Roku.
+                copiedElements.push({
+                    name: new BrsString(key),
+                    value: boxContent && !value.literal ? value.box() : value,
+                });
             } else if (isUnboxable(value) && !(value instanceof RoFunction)) {
                 copiedElements.push({ name: new BrsString(key), value: value.copy() });
             }

@@ -316,22 +316,26 @@ describe("SceneGraph node tests", () => {
             // reading the same values back out of a node field boxes the leaves
             "button (node.aa): 0xCDCDCDFF, type: roString, type3: roString",
             "number (node.aa):  30, type: roInt, type3: roInt",
-            // every boxable scalar type is boxed when read from an AssocArray field
-            "str (node.aa): type: roString, type3: roString",
-            "int (node.aa): type: roInt, type3: roInt",
-            "flt (node.aa): type: roFloat, type3: roFloat",
-            "dbl (node.aa): type: roDouble, type3: roDouble",
-            "lng (node.aa): type: roLongInteger, type3: roLongInteger",
-            "bool (node.aa): type: roBoolean, type3: roBoolean",
-            // ...and likewise for an roArray field
-            "str (node.arr): type: roString, type3: roString",
-            "int (node.arr): type: roInt, type3: roInt",
-            "flt (node.arr): type: roFloat, type3: roFloat",
-            "dbl (node.arr): type: roDouble, type3: roDouble",
-            "lng (node.arr): type: roLongInteger, type3: roLongInteger",
-            "bool (node.arr): type: roBoolean, type3: roBoolean",
-            // boxing is recursive through a mixed array/AssocArray hierarchy
-            "nested (node.arr): type: roInt, type3: roInt",
+            // non-literal scalars (from parseJson) are boxed on read
+            "str (json.aa): type: roString, type3: roString",
+            "int (json.aa): type: roInt, type3: roInt",
+            "flt (json.aa): type: roFloat, type3: roFloat",
+            // literal scalars are NOT boxed (report primitive/legacy types) in an AssocArray field
+            "str (lit.aa): type: roString, type3: String",
+            "int (lit.aa): type: roInteger, type3: Integer",
+            "flt (lit.aa): type: roFloat, type3: Float",
+            "dbl (lit.aa): type: roFloat, type3: Double",
+            "lng (lit.aa): type: LongInteger, type3: LongInteger",
+            // ...and likewise in an roArray field
+            "str (lit.arr): type: roString, type3: String",
+            "int (lit.arr): type: roInteger, type3: Integer",
+            "flt (lit.arr): type: roFloat, type3: Float",
+            "dbl (lit.arr): type: roFloat, type3: Double",
+            "lng (lit.arr): type: LongInteger, type3: LongInteger",
+            // booleans are interned singletons, so a literal boolean is still boxed (limitation)
+            "bool (lit.arr): type: roBoolean, type3: roBoolean",
+            // literalness is preserved recursively through a mixed array/AssocArray hierarchy
+            "nested (lit.arr): type: roInteger, type3: Integer",
         ]);
     });
 });

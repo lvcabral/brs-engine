@@ -95,6 +95,7 @@ exports[`stop statement can be used as an object property 1`] = `
                     "value": BrsBoolean {
                       "kind": 2,
                       "legacy": false,
+                      "literal": false,
                       "value": false,
                     },
                   },
@@ -171,6 +172,7 @@ exports[`stop statement can be used as an object property 1`] = `
               "value": BrsBoolean {
                 "kind": 2,
                 "legacy": false,
+                "literal": false,
                 "value": true,
               },
             },

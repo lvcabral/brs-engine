@@ -2,6 +2,7 @@ import { BrsType } from ".";
 
 export interface Boxable {
     box(): BrsType;
+    literal: boolean; // Flag marking a value written directly in source (skips auto-boxing)
     legacy: boolean; // Flag to inform `type()` to return legacy types
 }
 
@@ -11,7 +12,7 @@ export interface Unboxable {
 }
 
 export function isBoxable(value: BrsType): value is BrsType & Boxable {
-    return "box" in value && "legacy" in value;
+    return "box" in value && "literal" in value && "legacy" in value;
 }
 
 export function isUnboxable(value: BrsType): value is BrsType & Unboxable {

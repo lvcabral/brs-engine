@@ -15,33 +15,45 @@ sub main()
     print "button (node.aa): "; nodeColor; ", type: "; type(nodeColor); ", type3: "; type(nodeColor, 3)
     print "number (node.aa): "; nodeNumber; ", type: "; type(nodeNumber); ", type3: "; type(nodeNumber, 3)
 
-    ' Every boxable scalar type stored in an AssocArray field is boxed when read back.
-    scalars = { str: "text", int: 42, flt: 3.5, dbl: 2.5#, lng: 9000000000&, bool: true }
+    ' Non-literal scalars (parsed from JSON) are boxed when read from a node field.
+    parsed = parseJson("{ ""str"": ""text"", ""int"": 42, ""flt"": 1.5 }")
+    node.addField("parsed", "assocarray", false)
+    node.parsed = parsed
+    printType("str (json.aa)", node.parsed.str)
+    printType("int (json.aa)", node.parsed.int)
+    printType("flt (json.aa)", node.parsed.flt)
+
+    ' Literal scalars (written directly in source) are NOT boxed, matching Roku.
+    scalars = { str: "text", int: 42, flt: 3.5, dbl: 2.5#, lng: 9000000000& }
     node.addField("scalars", "assocarray", false)
     node.scalars = scalars
-    printType("str (node.aa)", node.scalars.str)
-    printType("int (node.aa)", node.scalars.int)
-    printType("flt (node.aa)", node.scalars.flt)
-    printType("dbl (node.aa)", node.scalars.dbl)
-    printType("lng (node.aa)", node.scalars.lng)
-    printType("bool (node.aa)", node.scalars.bool)
+    printType("str (lit.aa)", node.scalars.str)
+    printType("int (lit.aa)", node.scalars.int)
+    printType("flt (lit.aa)", node.scalars.flt)
+    printType("dbl (lit.aa)", node.scalars.dbl)
+    printType("lng (lit.aa)", node.scalars.lng)
 
-    ' The same happens for an roArray field (each element is boxed).
-    list = ["text", 42, 3.5, 2.5#, 9000000000&, true]
+    ' Same holds for a literal roArray field.
+    list = ["text", 42, 3.5, 2.5#, 9000000000&]
     node.addField("list", "array", false)
     node.list = list
-    printType("str (node.arr)", node.list[0])
-    printType("int (node.arr)", node.list[1])
-    printType("flt (node.arr)", node.list[2])
-    printType("dbl (node.arr)", node.list[3])
-    printType("lng (node.arr)", node.list[4])
-    printType("bool (node.arr)", node.list[5])
+    printType("str (lit.arr)", node.list[0])
+    printType("int (lit.arr)", node.list[1])
+    printType("flt (lit.arr)", node.list[2])
+    printType("dbl (lit.arr)", node.list[3])
+    printType("lng (lit.arr)", node.list[4])
 
-    ' Boxing is recursive through a mixed array/AssocArray hierarchy.
+    ' Booleans are interned singletons and cannot carry a per-instance literal flag,
+    ' so a literal boolean is still boxed (documented limitation).
+    node.addField("flag", "array", false)
+    node.flag = [true]
+    printType("bool (lit.arr)", node.flag[0])
+
+    ' Literalness is preserved recursively through a mixed array/AssocArray hierarchy.
     tree = [{ items: [7] }]
     node.addField("tree", "array", false)
     node.tree = tree
-    printType("nested (node.arr)", node.tree[0].items[0])
+    printType("nested (lit.arr)", node.tree[0].items[0])
 end sub
 
 sub printType(name as string, value as dynamic)

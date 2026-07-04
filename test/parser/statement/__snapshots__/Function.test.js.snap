@@ -59,6 +59,7 @@ exports[`parser function declarations does not allow type designators at end of 
                 "value": Int32 {
                   "kind": 4,
                   "legacy": false,
+                  "literal": true,
                   "value": 1,
                 },
               },
@@ -170,6 +171,7 @@ exports[`parser function declarations does not allow type designators at end of 
                 "value": Int32 {
                   "kind": 4,
                   "legacy": false,
+                  "literal": true,
                   "value": 1,
                 },
               },
@@ -281,6 +283,7 @@ exports[`parser function declarations does not allow type designators at end of 
                 "value": Int32 {
                   "kind": 4,
                   "legacy": false,
+                  "literal": true,
                   "value": 1,
                 },
               },
@@ -392,6 +395,7 @@ exports[`parser function declarations does not allow type designators at end of 
                 "value": Int32 {
                   "kind": 4,
                   "legacy": false,
+                  "literal": true,
                   "value": 1,
                 },
               },
@@ -523,6 +527,7 @@ exports[`parser function declarations parses functions with default argument exp
             "value": Int32 {
               "kind": 4,
               "legacy": false,
+              "literal": false,
               "value": 3,
             },
           },
@@ -583,6 +588,7 @@ exports[`parser function declarations parses functions with default argument exp
             "value": Int32 {
               "kind": 4,
               "legacy": false,
+              "literal": false,
               "value": 4,
             },
           },
@@ -662,6 +668,7 @@ exports[`parser function declarations parses functions with default argument exp
               "value": Int32 {
                 "kind": 4,
                 "legacy": false,
+                "literal": false,
                 "value": 5,
               },
             },
@@ -1135,6 +1142,7 @@ exports[`parser function declarations parses functions with typed arguments and 
             "value": Int32 {
               "kind": 4,
               "legacy": false,
+              "literal": false,
               "value": 3,
             },
           },
@@ -1213,6 +1221,7 @@ exports[`parser function declarations parses functions with typed arguments and 
               "value": Int32 {
                 "kind": 4,
                 "legacy": false,
+                "literal": false,
                 "value": 5,
               },
             },
@@ -2302,6 +2311,7 @@ exports[`parser sub declarations parses subs with default argument expressions 1
             "value": Int32 {
               "kind": 4,
               "legacy": false,
+              "literal": false,
               "value": 3,
             },
           },
@@ -2362,6 +2372,7 @@ exports[`parser sub declarations parses subs with default argument expressions 1
             "value": Int32 {
               "kind": 4,
               "legacy": false,
+              "literal": false,
               "value": 4,
             },
           },
@@ -2441,6 +2452,7 @@ exports[`parser sub declarations parses subs with default argument expressions 1
               "value": Int32 {
                 "kind": 4,
                 "legacy": false,
+                "literal": false,
                 "value": 5,
               },
             },
@@ -2914,6 +2926,7 @@ exports[`parser sub declarations parses subs with typed arguments and default ex
             "value": Int32 {
               "kind": 4,
               "legacy": false,
+              "literal": false,
               "value": 3,
             },
           },
@@ -2992,6 +3005,7 @@ exports[`parser sub declarations parses subs with typed arguments and default ex
               "value": Int32 {
                 "kind": 4,
                 "legacy": false,
+                "literal": false,
                 "value": 5,
               },
             },

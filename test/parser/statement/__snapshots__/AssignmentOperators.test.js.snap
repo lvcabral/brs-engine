@@ -70,6 +70,7 @@ exports[`parser assignment operators *= 1`] = `
         "value": Int32 {
           "kind": 4,
           "legacy": false,
+          "literal": false,
           "value": 3,
         },
       },
@@ -259,6 +260,7 @@ exports[`parser assignment operators /= 1`] = `
         "value": Int32 {
           "kind": 4,
           "legacy": false,
+          "literal": false,
           "value": 4,
         },
       },
@@ -353,6 +355,7 @@ exports[`parser assignment operators <<= 1`] = `
         "value": Int32 {
           "kind": 4,
           "legacy": false,
+          "literal": false,
           "value": 6,
         },
       },
@@ -447,6 +450,7 @@ exports[`parser assignment operators >>= 1`] = `
         "value": Int32 {
           "kind": 4,
           "legacy": false,
+          "literal": false,
           "value": 7,
         },
       },
@@ -541,6 +545,7 @@ exports[`parser assignment operators \\= 1`] = `
         "value": Int32 {
           "kind": 4,
           "legacy": false,
+          "literal": false,
           "value": 5,
         },
       },
@@ -635,6 +640,7 @@ exports[`parser assignment operators -= 1`] = `
         "value": Int32 {
           "kind": 4,
           "legacy": false,
+          "literal": false,
           "value": 1,
         },
       },

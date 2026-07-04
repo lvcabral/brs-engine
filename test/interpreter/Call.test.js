@@ -65,7 +65,7 @@ describe("interpreter calls", () => {
 
         let foo = interpreter.environment.get(identifier("foo"));
         expect(foo.kind).toBe(ValueKind.Object);
-        expect(foo.get(new BrsString("id"))).toEqual(new BrsString("this is an ID", true));
+        expect(foo.get(new BrsString("id"))).toEqual(new BrsString("this is an ID", false, true));
     });
 
     it("automatically boxes return values when appropriate", () => {
