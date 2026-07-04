@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Redeclares "sharedField", which is defined in the ANCESTOR XML component XmlBaseComp
+    (not a built-in system field). This is still a genuine duplicate: the guard fires,
+    addFields aborts, and the trailing "afterField" is never added (stays invalid).
+-->
+<component name="XmlChildComp" extends="XmlBaseComp">
+    <interface>
+        <field id="sharedField" type="string" value="child" />
+        <field id="afterField" type="string" value="never" />
+    </interface>
+</component>

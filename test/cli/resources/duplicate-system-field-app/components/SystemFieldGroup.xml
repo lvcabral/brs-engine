@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Redeclares "opacity", a system field inherited from the built-in Group base type,
+    then declares a brand-new "customField". Roku allows redeclaring an inherited
+    system field (it just re-applies the default), so addFields must NOT abort here:
+    both the redeclared opacity default (0.5) and the trailing customField must apply.
+-->
+<component name="SystemFieldGroup" extends="Group">
+    <interface>
+        <field id="opacity" type="float" value="0.5" />
+        <field id="customField" type="string" value="hello" />
+    </interface>
+</component>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    An XML component that declares "sharedField" in its own interface. A derived XML
+    component that redeclares this (non-system) field must still trigger the duplicate
+    field guard.
+-->
+<component name="XmlBaseComp" extends="Group">
+    <interface>
+        <field id="sharedField" type="string" value="base" />
+    </interface>
+</component>

@@ -789,7 +789,7 @@ function addFields(interpreter: Interpreter, node: Node, typeDef: ComponentDefin
                     ? getBrsValueFromFieldType(fieldValue.type, fieldValue.value)
                     : undefined;
                 node.replaceField(fieldName, fieldValue.type, defaultValue, fieldValue.alwaysNotify === "true");
-            } else if (field) {
+            } else if (field && !field.isSystem()) {
                 let msg = `warning,Error creating XML component ${node.nodeSubtype}\n`;
                 msg += `-- Attempt to add duplicate field "${fieldName}" to RokuML component "${node.nodeSubtype}"\n`;
                 msg += `---- Extends node type "${typeDef.extends}" already has a field named ${fieldName}\n`;

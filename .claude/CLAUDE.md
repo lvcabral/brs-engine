@@ -151,6 +151,15 @@ Key pieces:
 
 External consumers can also register node types at runtime without editing the factory via `SGNodeFactory.addNodeTypes([["mynode", (name) => new MyNode([], name)]])`.
 
+### XML `<interface>` field redeclaration — system vs. XML-defined (`addFields`)
+
+When `addFields` (in `factory/NodeFactory.ts`) builds a custom component's fields, a `<field>` whose name already exists on the node is handled by **who defined the existing field**, not merely that it collides:
+
+- A field inherited from a **built-in base type** (`Group`, `Label`, …) is a **system** field — created by `registerDefaultFields` with the `Field` `system` flag set (`field.isSystem()`). Roku lets a component **redeclare** such a field: the redeclaration re-applies the XML default/type and `addFields` continues, so a field declared *after* it is still added. Do **not** treat this as a duplicate — the guard is `else if (field && !field.isSystem())`.
+- A field defined in an **ancestor XML component's** `<interface>` is *not* a system field (added via `addNodeField`, `system=false`). Redeclaring it **is** a genuine duplicate: `addFields` writes the `Attempt to add duplicate field "…"` warning to `BrsDevice.stderr` and **returns early**, so the trailing fields in that component are never added (they read back as `invalid`).
+
+Because `addNodeField` is a no-op when the field already exists, a redeclared system field keeps its existing `Field` instance; the XML default is applied by the subsequent `setValueSilent`. Regression coverage: the `duplicate-system-field-app` fixture + test in `test/cli/cli.test.js` (system-field redeclaration applies the new default and adds the trailing field; an ancestor-XML-field redeclaration still warns and drops the trailing field).
+
 ### Stack-overflow hot paths (fragile — read before touching)
 
 Two distinct SceneGraph code paths can recurse until the JS call stack overflows; both surface to BrightScript as `roSGNode.Set (unhandled exception): "...": Maximum call stack size exceeded`. They are unrelated — diagnose which one before "fixing" the other. A real overflow's BrightScript backtrace is misleading (it often shows a single frame, because `Field.executeCallbacks` pops stack frames as the error unwinds); capture the **native JS stack** mid-recursion (a temporary depth tripwire dumping `new Error().stack` via `BrsDevice.stderr`) to see the real cycle.
