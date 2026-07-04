@@ -263,6 +263,19 @@ describe("end to end standard library", () => {
             "roString        String",
             "roInvalid       Invalid",
             "roBoolean       Boolean",
+            "registry        String          roString",
+            "aa-reg          String          roString",
+            "upper-reg       String          roString",
+            "left-reg        String          roString",
+            "value           String          String",
+            "upper           String          roString",
+            "left            String          roString",
+            "aa-val          roString        String",
+            "aa-upper        String          roString",
+            "aa-left         String          roString",
+            "aa-box          roString        roString",
+            "upper-box       String          roString",
+            "left-box        String          roString",
         ]);
     });
     test("stdlib/end.brs", async () => {

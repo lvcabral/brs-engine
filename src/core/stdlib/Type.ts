@@ -15,8 +15,14 @@ export const Type = new Callable("type", {
                 return new BrsString(variable.getComponentName());
             case ValueKind.Interface:
                 return new BrsString(variable.name);
+            case ValueKind.String: {
+                const legacy = variable.literal
+                    ? version.getValue() !== 3 && variable.legacy
+                    : version.getValue() === 3;
+                return new BrsString(ValueKind.toString(variable.kind, legacy));
+            }
             default: {
-                const legacy = version.getValue() !== 3 && isBoxable(variable) && variable.inArray;
+                const legacy = version.getValue() !== 3 && isBoxable(variable) && variable.legacy;
                 return new BrsString(ValueKind.toString(variable.kind, legacy));
             }
         }

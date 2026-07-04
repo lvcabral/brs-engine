@@ -131,7 +131,7 @@ export function parseDecodedTokens(fs: FileSystem, manifest: Map<string, any>, d
                 token.literal = new BrsTypes.Float(literal);
             } else if (token.kind === "String") {
                 const literal: string = token.literal.value;
-                token.literal = new BrsTypes.BrsString(literal);
+                token.literal = new BrsTypes.BrsString(literal, false, true);
             }
         }
         tokens.push(token);

@@ -51,8 +51,8 @@ exports[`parser additive expressions parses left-associative addition chains 1`]
             },
           },
           "value": Int32 {
-            "inArray": false,
             "kind": 4,
+            "legacy": false,
             "value": 1,
           },
         },
@@ -68,8 +68,8 @@ exports[`parser additive expressions parses left-associative addition chains 1`]
             },
           },
           "value": Int32 {
-            "inArray": false,
             "kind": 4,
+            "legacy": false,
             "value": 2,
           },
         },
@@ -102,8 +102,8 @@ exports[`parser additive expressions parses left-associative addition chains 1`]
           },
         },
         "value": Int32 {
-          "inArray": false,
           "kind": 4,
+          "legacy": false,
           "value": 3,
         },
       },
@@ -179,8 +179,8 @@ exports[`parser additive expressions parses left-associative subtraction chains 
             },
           },
           "value": Int32 {
-            "inArray": false,
             "kind": 4,
+            "legacy": false,
             "value": 1,
           },
         },
@@ -196,8 +196,8 @@ exports[`parser additive expressions parses left-associative subtraction chains 
             },
           },
           "value": Int32 {
-            "inArray": false,
             "kind": 4,
+            "legacy": false,
             "value": 2,
           },
         },
@@ -230,8 +230,8 @@ exports[`parser additive expressions parses left-associative subtraction chains 
           },
         },
         "value": Int32 {
-          "inArray": false,
           "kind": 4,
+          "legacy": false,
           "value": 3,
         },
       },

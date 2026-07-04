@@ -67,8 +67,8 @@ exports[`parser indexing multi-level bracketed 1`] = `
             },
           },
           "value": Int32 {
-            "inArray": false,
             "kind": 4,
+            "legacy": false,
             "value": 6,
           },
         },
@@ -103,8 +103,8 @@ exports[`parser indexing multi-level bracketed 1`] = `
               },
             },
             "value": Int32 {
-              "inArray": false,
               "kind": 4,
+              "legacy": false,
               "value": 0,
             },
           },
@@ -139,8 +139,8 @@ exports[`parser indexing multi-level bracketed 1`] = `
                 },
               },
               "value": Int32 {
-                "inArray": false,
                 "kind": 4,
+                "legacy": false,
                 "value": 2,
               },
             },
@@ -335,8 +335,8 @@ exports[`parser indexing multi-level mixed 1`] = `
               },
             },
             "value": Int32 {
-              "inArray": false,
               "kind": 4,
+              "legacy": false,
               "value": 0,
             },
           },
@@ -453,8 +453,8 @@ exports[`parser indexing one level bracketed 1`] = `
             },
           },
           "value": Int32 {
-            "inArray": false,
             "kind": 4,
+            "legacy": false,
             "value": 2,
           },
         },
@@ -628,8 +628,8 @@ exports[`parser indexing one level dotted and bracketed optional dot 1`] = `
             },
           },
           "value": Int32 {
-            "inArray": false,
             "kind": 4,
+            "legacy": false,
             "value": 2,
           },
         },
@@ -725,8 +725,8 @@ exports[`parser indexing one level dotted and bracketed single dot 1`] = `
             },
           },
           "value": Int32 {
-            "inArray": false,
             "kind": 4,
+            "legacy": false,
             "value": 2,
           },
         },

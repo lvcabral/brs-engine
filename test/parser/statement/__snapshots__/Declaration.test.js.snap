@@ -50,8 +50,8 @@ exports[`parser variable declarations parses evaluated value assignments 1`] = `
           },
         },
         "value": Int32 {
-          "inArray": false,
           "kind": 4,
+          "legacy": false,
           "value": 5,
         },
       },
@@ -67,8 +67,8 @@ exports[`parser variable declarations parses evaluated value assignments 1`] = `
           },
         },
         "value": Int32 {
-          "inArray": false,
           "kind": 4,
+          "legacy": false,
           "value": 3,
         },
       },
@@ -142,8 +142,8 @@ exports[`parser variable declarations parses literal value assignments 1`] = `
         },
       },
       "value": Int32 {
-        "inArray": false,
         "kind": 4,
+        "legacy": false,
         "value": 5,
       },
     },

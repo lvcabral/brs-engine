@@ -57,8 +57,9 @@ exports[`parser associative array literals allows a mix of quoted and unquoted k
       "elements": [
         {
           "name": BrsString {
-            "inArray": false,
             "kind": 3,
+            "legacy": false,
+            "literal": false,
             "value": "foo",
           },
           "value": Literal {
@@ -73,16 +74,17 @@ exports[`parser associative array literals allows a mix of quoted and unquoted k
               },
             },
             "value": Int32 {
-              "inArray": false,
               "kind": 4,
+              "legacy": false,
               "value": 1,
             },
           },
         },
         {
           "name": BrsString {
-            "inArray": false,
             "kind": 3,
+            "legacy": false,
+            "literal": false,
             "value": "bar",
           },
           "value": Literal {
@@ -97,16 +99,17 @@ exports[`parser associative array literals allows a mix of quoted and unquoted k
               },
             },
             "value": Int32 {
-              "inArray": false,
               "kind": 4,
+              "legacy": false,
               "value": 2,
             },
           },
         },
         {
           "name": BrsString {
-            "inArray": false,
             "kind": 3,
+            "legacy": false,
+            "literal": false,
             "value": "requires-hyphens",
           },
           "value": Literal {
@@ -121,8 +124,8 @@ exports[`parser associative array literals allows a mix of quoted and unquoted k
               },
             },
             "value": Int32 {
-              "inArray": false,
               "kind": 4,
+              "legacy": false,
               "value": 3,
             },
           },
@@ -221,8 +224,9 @@ exports[`parser associative array literals allows separating properties with col
               "elements": [
                 {
                   "name": BrsString {
-                    "inArray": false,
                     "kind": 3,
+                    "legacy": false,
+                    "literal": false,
                     "value": "name",
                   },
                   "value": Literal {
@@ -237,16 +241,18 @@ exports[`parser associative array literals allows separating properties with col
                       },
                     },
                     "value": BrsString {
-                      "inArray": false,
                       "kind": 3,
+                      "legacy": false,
+                      "literal": false,
                       "value": "Bob",
                     },
                   },
                 },
                 {
                   "name": BrsString {
-                    "inArray": false,
                     "kind": 3,
+                    "legacy": false,
+                    "literal": false,
                     "value": "age",
                   },
                   "value": Literal {
@@ -261,8 +267,8 @@ exports[`parser associative array literals allows separating properties with col
                       },
                     },
                     "value": Int32 {
-                      "inArray": false,
                       "kind": 4,
+                      "legacy": false,
                       "value": 3,
                     },
                   },
@@ -552,8 +558,9 @@ exports[`parser associative array literals filled arrays on multiple lines with 
       "elements": [
         {
           "name": BrsString {
-            "inArray": false,
             "kind": 3,
+            "legacy": false,
+            "literal": false,
             "value": "foo",
           },
           "value": Literal {
@@ -568,16 +575,17 @@ exports[`parser associative array literals filled arrays on multiple lines with 
               },
             },
             "value": Int32 {
-              "inArray": false,
               "kind": 4,
+              "legacy": false,
               "value": 1,
             },
           },
         },
         {
           "name": BrsString {
-            "inArray": false,
             "kind": 3,
+            "legacy": false,
+            "literal": false,
             "value": "bar",
           },
           "value": Literal {
@@ -592,16 +600,17 @@ exports[`parser associative array literals filled arrays on multiple lines with 
               },
             },
             "value": Int32 {
-              "inArray": false,
               "kind": 4,
+              "legacy": false,
               "value": 2,
             },
           },
         },
         {
           "name": BrsString {
-            "inArray": false,
             "kind": 3,
+            "legacy": false,
+            "literal": false,
             "value": "baz",
           },
           "value": Literal {
@@ -616,8 +625,8 @@ exports[`parser associative array literals filled arrays on multiple lines with 
               },
             },
             "value": Int32 {
-              "inArray": false,
               "kind": 4,
+              "legacy": false,
               "value": 3,
             },
           },
@@ -701,8 +710,9 @@ exports[`parser associative array literals filled arrays on multiple lines witho
       "elements": [
         {
           "name": BrsString {
-            "inArray": false,
             "kind": 3,
+            "legacy": false,
+            "literal": false,
             "value": "foo",
           },
           "value": Literal {
@@ -717,16 +727,17 @@ exports[`parser associative array literals filled arrays on multiple lines witho
               },
             },
             "value": Int32 {
-              "inArray": false,
               "kind": 4,
+              "legacy": false,
               "value": 1,
             },
           },
         },
         {
           "name": BrsString {
-            "inArray": false,
             "kind": 3,
+            "legacy": false,
+            "literal": false,
             "value": "bar",
           },
           "value": Literal {
@@ -741,16 +752,17 @@ exports[`parser associative array literals filled arrays on multiple lines witho
               },
             },
             "value": Int32 {
-              "inArray": false,
               "kind": 4,
+              "legacy": false,
               "value": 2,
             },
           },
         },
         {
           "name": BrsString {
-            "inArray": false,
             "kind": 3,
+            "legacy": false,
+            "literal": false,
             "value": "baz",
           },
           "value": Literal {
@@ -765,8 +777,8 @@ exports[`parser associative array literals filled arrays on multiple lines witho
               },
             },
             "value": Int32 {
-              "inArray": false,
               "kind": 4,
+              "legacy": false,
               "value": 3,
             },
           },
@@ -850,8 +862,9 @@ exports[`parser associative array literals filled arrays on one line 1`] = `
       "elements": [
         {
           "name": BrsString {
-            "inArray": false,
             "kind": 3,
+            "legacy": false,
+            "literal": false,
             "value": "foo",
           },
           "value": Literal {
@@ -866,16 +879,17 @@ exports[`parser associative array literals filled arrays on one line 1`] = `
               },
             },
             "value": Int32 {
-              "inArray": false,
               "kind": 4,
+              "legacy": false,
               "value": 1,
             },
           },
         },
         {
           "name": BrsString {
-            "inArray": false,
             "kind": 3,
+            "legacy": false,
+            "literal": false,
             "value": "bar",
           },
           "value": Literal {
@@ -890,16 +904,17 @@ exports[`parser associative array literals filled arrays on one line 1`] = `
               },
             },
             "value": Int32 {
-              "inArray": false,
               "kind": 4,
+              "legacy": false,
               "value": 2,
             },
           },
         },
         {
           "name": BrsString {
-            "inArray": false,
             "kind": 3,
+            "legacy": false,
+            "literal": false,
             "value": "baz",
           },
           "value": Literal {
@@ -914,8 +929,8 @@ exports[`parser associative array literals filled arrays on one line 1`] = `
               },
             },
             "value": Int32 {
-              "inArray": false,
               "kind": 4,
+              "legacy": false,
               "value": 3,
             },
           },

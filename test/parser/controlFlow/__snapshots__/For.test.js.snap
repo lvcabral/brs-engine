@@ -64,8 +64,8 @@ exports[`parser for loops accepts a 'step' clause 1`] = `
           },
         },
         "value": Int32 {
-          "inArray": false,
           "kind": 4,
+          "legacy": false,
           "value": 0,
         },
       },
@@ -82,8 +82,8 @@ exports[`parser for loops accepts a 'step' clause 1`] = `
         },
       },
       "value": Int32 {
-        "inArray": false,
         "kind": 4,
+        "legacy": false,
         "value": 5,
       },
     },
@@ -99,8 +99,8 @@ exports[`parser for loops accepts a 'step' clause 1`] = `
         },
       },
       "value": Int32 {
-        "inArray": false,
         "kind": 4,
+        "legacy": false,
         "value": 2,
       },
     },
@@ -238,8 +238,8 @@ exports[`parser for loops allows 'next' to terminate loop 1`] = `
           },
         },
         "value": Int32 {
-          "inArray": false,
           "kind": 4,
+          "legacy": false,
           "value": 0,
         },
       },
@@ -256,8 +256,8 @@ exports[`parser for loops allows 'next' to terminate loop 1`] = `
         },
       },
       "value": Int32 {
-        "inArray": false,
         "kind": 4,
+        "legacy": false,
         "value": 5,
       },
     },
@@ -273,8 +273,8 @@ exports[`parser for loops allows 'next' to terminate loop 1`] = `
         },
       },
       "value": Int32 {
-        "inArray": false,
         "kind": 4,
+        "legacy": false,
         "value": 1,
       },
     },
@@ -397,8 +397,8 @@ exports[`parser for loops defaults a missing 'step' clause to '1' 1`] = `
           },
         },
         "value": Int32 {
-          "inArray": false,
           "kind": 4,
+          "legacy": false,
           "value": 0,
         },
       },
@@ -415,8 +415,8 @@ exports[`parser for loops defaults a missing 'step' clause to '1' 1`] = `
         },
       },
       "value": Int32 {
-        "inArray": false,
         "kind": 4,
+        "legacy": false,
         "value": 5,
       },
     },
@@ -432,8 +432,8 @@ exports[`parser for loops defaults a missing 'step' clause to '1' 1`] = `
         },
       },
       "value": Int32 {
-        "inArray": false,
         "kind": 4,
+        "legacy": false,
         "value": 1,
       },
     },

@@ -207,7 +207,7 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
         if (value instanceof BrsComponent) {
             value.addReference();
         } else if (value && isBoxable(value)) {
-            value.inArray = true;
+            value.legacy = true;
         }
     }
 

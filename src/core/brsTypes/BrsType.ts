@@ -151,7 +151,7 @@ export interface Comparable {
 /** Internal representation of a string in BrightScript. */
 export class BrsString implements BrsValue, Comparable, Boxable {
     readonly kind = ValueKind.String;
-    constructor(readonly value: string, public inArray: boolean = false) {}
+    constructor(readonly value: string, public legacy: boolean = false, public literal: boolean = false) {}
 
     /**
      * Compares if this string is less than another value.
@@ -232,7 +232,7 @@ export class BrsString implements BrsValue, Comparable, Boxable {
 /** Internal representation of a boolean in BrightScript. */
 export class BrsBoolean implements BrsValue, Comparable, Boxable {
     readonly kind = ValueKind.Boolean;
-    private constructor(private readonly value: boolean, public inArray: boolean = false) {}
+    private constructor(private readonly value: boolean, public legacy: boolean = false) {}
 
     /**
      * Converts this BrsBoolean to a JavaScript boolean.
@@ -353,7 +353,7 @@ export class BrsBoolean implements BrsValue, Comparable, Boxable {
 /** Internal representation of the BrightScript `invalid` value. */
 export class BrsInvalid implements BrsValue, Comparable, Boxable {
     readonly kind = ValueKind.Invalid;
-    inArray: boolean = false;
+    legacy: boolean = false;
     static readonly Instance = new BrsInvalid();
 
     /**
