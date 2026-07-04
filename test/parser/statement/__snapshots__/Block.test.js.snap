@@ -125,8 +125,8 @@ exports[`block statements includes surrounding whitespace for a for-loop body 1`
                   },
                 },
                 "value": Int32 {
-                  "inArray": false,
                   "kind": 4,
+                  "legacy": false,
                   "value": 0,
                 },
               },
@@ -144,8 +144,8 @@ exports[`block statements includes surrounding whitespace for a for-loop body 1`
                 },
               },
               "value": Int32 {
-                "inArray": false,
                 "kind": 4,
+                "legacy": false,
                 "value": 10,
               },
             },
@@ -162,8 +162,8 @@ exports[`block statements includes surrounding whitespace for a for-loop body 1`
                 },
               },
               "value": Int32 {
-                "inArray": false,
                 "kind": 4,
+                "legacy": false,
                 "value": 1,
               },
             },
@@ -365,8 +365,8 @@ exports[`block statements includes surrounding whitespace for function body 1`] 
                 },
               },
               "value": Int32 {
-                "inArray": false,
                 "kind": 4,
+                "legacy": false,
                 "value": 1,
               },
             },
@@ -462,8 +462,8 @@ exports[`block statements includes surrounding whitespace for if-elseif-else sta
                 },
               },
               "value": BrsBoolean {
-                "inArray": false,
                 "kind": 2,
+                "legacy": false,
                 "value": true,
               },
             },
@@ -495,8 +495,9 @@ exports[`block statements includes surrounding whitespace for if-elseif-else sta
                         },
                       },
                       "value": BrsString {
-                        "inArray": false,
                         "kind": 3,
+                        "legacy": false,
+                        "literal": true,
                         "value": "true",
                       },
                     },
@@ -538,8 +539,8 @@ exports[`block statements includes surrounding whitespace for if-elseif-else sta
                     },
                   },
                   "value": BrsBoolean {
-                    "inArray": false,
                     "kind": 2,
+                    "legacy": false,
                     "value": true,
                   },
                 },
@@ -571,8 +572,9 @@ exports[`block statements includes surrounding whitespace for if-elseif-else sta
                             },
                           },
                           "value": BrsString {
-                            "inArray": false,
                             "kind": 3,
+                            "legacy": false,
+                            "literal": true,
                             "value": "true",
                           },
                         },
@@ -629,8 +631,9 @@ exports[`block statements includes surrounding whitespace for if-elseif-else sta
                         },
                       },
                       "value": BrsString {
-                        "inArray": false,
                         "kind": 3,
+                        "legacy": false,
+                        "literal": true,
                         "value": "true",
                       },
                     },

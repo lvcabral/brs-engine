@@ -247,13 +247,13 @@ describe("lexer", () => {
         it("produces string literal tokens", () => {
             let { tokens } = Lexer.scan(`"hello world"`);
             expect(tokens.map((t) => t.kind)).toEqual([Lexeme.String, Lexeme.Eof]);
-            expect(tokens[0].literal).toEqual(new BrsString("hello world"));
+            expect(tokens[0].literal).toEqual(new BrsString("hello world", false, true));
         });
 
         it(`safely escapes " literals`, () => {
             let { tokens } = Lexer.scan(`"the cat says ""meow"""`);
             expect(tokens[0].kind).toBe(Lexeme.String);
-            expect(tokens[0].literal).toEqual(new BrsString(`the cat says "meow"`));
+            expect(tokens[0].literal).toEqual(new BrsString(`the cat says "meow"`, false, true));
         });
 
         it("produces an error for unterminated strings", () => {

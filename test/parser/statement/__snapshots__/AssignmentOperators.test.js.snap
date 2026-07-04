@@ -68,8 +68,8 @@ exports[`parser assignment operators *= 1`] = `
           },
         },
         "value": Int32 {
-          "inArray": false,
           "kind": 4,
+          "legacy": false,
           "value": 3,
         },
       },
@@ -162,8 +162,9 @@ exports[`parser assignment operators += 1`] = `
           },
         },
         "value": BrsString {
-          "inArray": false,
           "kind": 3,
+          "legacy": false,
+          "literal": false,
           "value": "lorem",
         },
       },
@@ -256,8 +257,8 @@ exports[`parser assignment operators /= 1`] = `
           },
         },
         "value": Int32 {
-          "inArray": false,
           "kind": 4,
+          "legacy": false,
           "value": 4,
         },
       },
@@ -350,8 +351,8 @@ exports[`parser assignment operators <<= 1`] = `
           },
         },
         "value": Int32 {
-          "inArray": false,
           "kind": 4,
+          "legacy": false,
           "value": 6,
         },
       },
@@ -444,8 +445,8 @@ exports[`parser assignment operators >>= 1`] = `
           },
         },
         "value": Int32 {
-          "inArray": false,
           "kind": 4,
+          "legacy": false,
           "value": 7,
         },
       },
@@ -538,8 +539,8 @@ exports[`parser assignment operators \\= 1`] = `
           },
         },
         "value": Int32 {
-          "inArray": false,
           "kind": 4,
+          "legacy": false,
           "value": 5,
         },
       },
@@ -632,8 +633,8 @@ exports[`parser assignment operators -= 1`] = `
           },
         },
         "value": Int32 {
-          "inArray": false,
           "kind": 4,
+          "legacy": false,
           "value": 1,
         },
       },

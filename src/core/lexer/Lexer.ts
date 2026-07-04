@@ -468,7 +468,7 @@ export class Lexer {
 
             // trim the surrounding quotes, and replace the double-" literal with a single
             let value = source.slice(start + 1, current - 1).replaceAll('""', '"');
-            addToken(Lexeme.String, new BrsString(value));
+            addToken(Lexeme.String, new BrsString(value, false, true));
         }
 
         /**

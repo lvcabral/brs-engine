@@ -255,7 +255,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsArray {
         if (value instanceof BrsComponent) {
             value.addReference();
         } else if (value && isBoxable(value)) {
-            value.inArray = true;
+            value.legacy = true;
         }
     }
 

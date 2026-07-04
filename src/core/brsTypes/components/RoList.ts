@@ -227,7 +227,7 @@ export class RoList extends BrsComponent implements BrsValue, BrsList {
         if (value instanceof BrsComponent) {
             value.addReference();
         } else if (value && isBoxable(value)) {
-            value.inArray = true;
+            value.legacy = true;
         }
     }
 

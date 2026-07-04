@@ -50,8 +50,8 @@ exports[`parser boolean expressions parses boolean ANDs 1`] = `
           },
         },
         "value": BrsBoolean {
-          "inArray": false,
           "kind": 2,
+          "legacy": false,
           "value": true,
         },
       },
@@ -67,8 +67,8 @@ exports[`parser boolean expressions parses boolean ANDs 1`] = `
           },
         },
         "value": BrsBoolean {
-          "inArray": false,
           "kind": 2,
+          "legacy": false,
           "value": false,
         },
       },
@@ -143,8 +143,8 @@ exports[`parser boolean expressions parses boolean ORs 1`] = `
           },
         },
         "value": BrsBoolean {
-          "inArray": false,
           "kind": 2,
+          "legacy": false,
           "value": true,
         },
       },
@@ -160,8 +160,8 @@ exports[`parser boolean expressions parses boolean ORs 1`] = `
           },
         },
         "value": BrsBoolean {
-          "inArray": false,
           "kind": 2,
+          "legacy": false,
           "value": false,
         },
       },
