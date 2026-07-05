@@ -1,40 +1,67 @@
 sub main()
-    theme = "{""colors"": {""button"": ""0xCDCDCDFF""}, ""other"": {""number"": 30}, ""ui"": {}}"
-    aa = parseJson(theme)
-    color = aa.colors.button
-    print "button (aa): "; color; ", type: "; type(color); ", type3: "; type(color, 3)
-    number = aa.other.number
-    print "number (aa): "; number; ", type: "; type(number); ", type3: "; type(number, 3)
     node = CreateObject("roSGNode", "Node")
-    node.addField("colors", "assocarray", false)
-    node.addField("other", "assocarray", false)
-    node.colors = aa.colors
-    node.other = aa.other
-    nodeColor = node.colors.button
-    nodeNumber = node.other.number
-    print "button (node.aa): "; nodeColor; ", type: "; type(nodeColor); ", type3: "; type(nodeColor, 3)
-    print "number (node.aa): "; nodeNumber; ", type: "; type(nodeNumber); ", type3: "; type(nodeNumber, 3)
 
+    ' Literal Control
+    printType("str (lit)", "text")
+    printType("int (lit)", 42)
+    printType("flt (lit)", 1.5)
+    printType("dbl (lit)", 2.5#)
+    printType("lng (lit)", 9000000000&)
+    printType("bool (lit)", true)
+
+    ' Boxed Control
+    printType("str (box)", box("text"))
+    printType("int (box)", box(42))
+    printType("flt (box)", box(1.5))
+    printType("dbl (box)", box(2.5#))
+    printType("lng (box)", box(9000000000&))
+    printType("bool (box)", box(true))
+
+    ' Non-literal scalars (parsed from JSON) shows c-type returns.
+    parsed = parseJson("{ ""str"": ""text"", ""int"": 42, ""flt"": 1.5, ""bool"": true }")
+    parsed.int2 = 70 ' Literal integer to compare with parsed.int (parsed from JSON).
+    printType("str (aa)", parsed.str)
+    printType("int (aa)", parsed.int)
+    printType("int2 (aa)", parsed.int2)
+    printType("flt (aa)", parsed.flt)
+    printType("bool (aa)", parsed.bool)
     ' Non-literal scalars (parsed from JSON) are boxed when read from a node field.
-    parsed = parseJson("{ ""str"": ""text"", ""int"": 42, ""flt"": 1.5 }")
     node.addField("parsed", "assocarray", false)
     node.parsed = parsed
     printType("str (json.aa)", node.parsed.str)
     printType("int (json.aa)", node.parsed.int)
+    printType("int2 (json.aa)", node.parsed.int2)
     printType("flt (json.aa)", node.parsed.flt)
+    printType("bool (json.aa)", node.parsed.bool)
+
+    ' Literal scalars (written directly in source).
+    scalars = { str: "text", int: 42, flt: 3.5, dbl: 2.5#, lng: 9000000000& }
+    printType("str (lit.aa)", scalars.str)
+    printType("int (lit.aa)", scalars.int)
+    printType("flt (lit.aa)", scalars.flt)
+    printType("dbl (lit.aa)", scalars.dbl)
+    printType("lng (lit.aa)", scalars.lng)
 
     ' Literal scalars (written directly in source) are NOT boxed, matching Roku.
-    scalars = { str: "text", int: 42, flt: 3.5, dbl: 2.5#, lng: 9000000000& }
     node.addField("scalars", "assocarray", false)
     node.scalars = scalars
-    printType("str (lit.aa)", node.scalars.str)
-    printType("int (lit.aa)", node.scalars.int)
-    printType("flt (lit.aa)", node.scalars.flt)
-    printType("dbl (lit.aa)", node.scalars.dbl)
-    printType("lng (lit.aa)", node.scalars.lng)
+    printType("str (lit.node)", node.scalars.str)
+    printType("int (lit.node)", node.scalars.int)
+    printType("flt (lit.node)", node.scalars.flt)
+    printType("dbl (lit.node)", node.scalars.dbl)
+    printType("lng (lit.node)", node.scalars.lng)
+
+    ' Parsed arrays (from JSON) are boxed when read from a node field.
+    parsedArray = parseJson("[ ""text"", 42, 3.5, false ]")
+    node.addField("parsedArray", "array", false)
+    node.parsedArray = parsedArray
+    printType("str (json.arr)", node.parsedArray[0])
+    printType("int (json.arr)", node.parsedArray[1])
+    printType("flt (json.arr)", node.parsedArray[2])
+    printType("bool (json.arr)", node.parsedArray[3])
 
     ' Same holds for a literal roArray field.
-    list = ["text", 42, 3.5, 2.5#, 9000000000&]
+    list = ["text", 42, 3.5, 2.5#, 9000000000&, true]
     node.addField("list", "array", false)
     node.list = list
     printType("str (lit.arr)", node.list[0])
@@ -42,12 +69,7 @@ sub main()
     printType("flt (lit.arr)", node.list[2])
     printType("dbl (lit.arr)", node.list[3])
     printType("lng (lit.arr)", node.list[4])
-
-    ' Booleans are interned singletons and cannot carry a per-instance literal flag,
-    ' so a literal boolean is still boxed (documented limitation).
-    node.addField("flag", "array", false)
-    node.flag = [true]
-    printType("bool (lit.arr)", node.flag[0])
+    printType("bool (lit.arr)", node.list[5])
 
     ' Literalness is preserved recursively through a mixed array/AssocArray hierarchy.
     tree = [{ items: [7] }]

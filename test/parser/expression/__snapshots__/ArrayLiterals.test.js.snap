@@ -140,7 +140,7 @@ exports[`parser array literals contents can contain expressions 1`] = `
             "value": BrsBoolean {
               "kind": 2,
               "legacy": false,
-              "literal": false,
+              "literal": true,
               "value": false,
             },
           },

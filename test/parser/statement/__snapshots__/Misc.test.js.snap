@@ -144,7 +144,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "value": BrsBoolean {
                 "kind": 2,
                 "legacy": false,
-                "literal": false,
+                "literal": true,
                 "value": true,
               },
             },
@@ -201,7 +201,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "value": BrsBoolean {
                 "kind": 2,
                 "legacy": false,
-                "literal": false,
+                "literal": true,
                 "value": true,
               },
             },
@@ -258,7 +258,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "value": BrsBoolean {
                 "kind": 2,
                 "legacy": false,
-                "literal": false,
+                "literal": true,
                 "value": true,
               },
             },
@@ -315,7 +315,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "value": BrsBoolean {
                 "kind": 2,
                 "legacy": false,
-                "literal": false,
+                "literal": true,
                 "value": true,
               },
             },
@@ -372,7 +372,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "value": BrsBoolean {
                 "kind": 2,
                 "legacy": false,
-                "literal": false,
+                "literal": true,
                 "value": true,
               },
             },
@@ -429,7 +429,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "value": BrsBoolean {
                 "kind": 2,
                 "legacy": false,
-                "literal": false,
+                "literal": true,
                 "value": true,
               },
             },
@@ -486,7 +486,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "value": BrsBoolean {
                 "kind": 2,
                 "legacy": false,
-                "literal": false,
+                "literal": true,
                 "value": true,
               },
             },
@@ -543,7 +543,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "value": BrsBoolean {
                 "kind": 2,
                 "legacy": false,
-                "literal": false,
+                "literal": true,
                 "value": true,
               },
             },
@@ -600,7 +600,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "value": BrsBoolean {
                 "kind": 2,
                 "legacy": false,
-                "literal": false,
+                "literal": true,
                 "value": true,
               },
             },
@@ -657,7 +657,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "value": BrsBoolean {
                 "kind": 2,
                 "legacy": false,
-                "literal": false,
+                "literal": true,
                 "value": true,
               },
             },
@@ -714,7 +714,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "value": BrsBoolean {
                 "kind": 2,
                 "legacy": false,
-                "literal": false,
+                "literal": true,
                 "value": true,
               },
             },
@@ -771,7 +771,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "value": BrsBoolean {
                 "kind": 2,
                 "legacy": false,
-                "literal": false,
+                "literal": true,
                 "value": true,
               },
             },
@@ -828,7 +828,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "value": BrsBoolean {
                 "kind": 2,
                 "legacy": false,
-                "literal": false,
+                "literal": true,
                 "value": true,
               },
             },
@@ -885,7 +885,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "value": BrsBoolean {
                 "kind": 2,
                 "legacy": false,
-                "literal": false,
+                "literal": true,
                 "value": true,
               },
             },
@@ -942,7 +942,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "value": BrsBoolean {
                 "kind": 2,
                 "legacy": false,
-                "literal": false,
+                "literal": true,
                 "value": true,
               },
             },
@@ -999,7 +999,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "value": BrsBoolean {
                 "kind": 2,
                 "legacy": false,
-                "literal": false,
+                "literal": true,
                 "value": true,
               },
             },
@@ -1056,7 +1056,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "value": BrsBoolean {
                 "kind": 2,
                 "legacy": false,
-                "literal": false,
+                "literal": true,
                 "value": true,
               },
             },
@@ -1113,7 +1113,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "value": BrsBoolean {
                 "kind": 2,
                 "legacy": false,
-                "literal": false,
+                "literal": true,
                 "value": true,
               },
             },
@@ -1170,7 +1170,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "value": BrsBoolean {
                 "kind": 2,
                 "legacy": false,
-                "literal": false,
+                "literal": true,
                 "value": true,
               },
             },
@@ -1227,7 +1227,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "value": BrsBoolean {
                 "kind": 2,
                 "legacy": false,
-                "literal": false,
+                "literal": true,
                 "value": true,
               },
             },
@@ -1284,7 +1284,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "value": BrsBoolean {
                 "kind": 2,
                 "legacy": false,
-                "literal": false,
+                "literal": true,
                 "value": true,
               },
             },
@@ -1341,7 +1341,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "value": BrsBoolean {
                 "kind": 2,
                 "legacy": false,
-                "literal": false,
+                "literal": true,
                 "value": true,
               },
             },
@@ -1398,7 +1398,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "value": BrsBoolean {
                 "kind": 2,
                 "legacy": false,
-                "literal": false,
+                "literal": true,
                 "value": true,
               },
             },
@@ -1455,7 +1455,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "value": BrsBoolean {
                 "kind": 2,
                 "legacy": false,
-                "literal": false,
+                "literal": true,
                 "value": true,
               },
             },
@@ -1512,7 +1512,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "value": BrsBoolean {
                 "kind": 2,
                 "legacy": false,
-                "literal": false,
+                "literal": true,
                 "value": true,
               },
             },
@@ -1569,7 +1569,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "value": BrsBoolean {
                 "kind": 2,
                 "legacy": false,
-                "literal": false,
+                "literal": true,
                 "value": true,
               },
             },
@@ -1626,7 +1626,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "value": BrsBoolean {
                 "kind": 2,
                 "legacy": false,
-                "literal": false,
+                "literal": true,
                 "value": true,
               },
             },
@@ -1683,7 +1683,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "value": BrsBoolean {
                 "kind": 2,
                 "legacy": false,
-                "literal": false,
+                "literal": true,
                 "value": true,
               },
             },
@@ -1740,7 +1740,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "value": BrsBoolean {
                 "kind": 2,
                 "legacy": false,
-                "literal": false,
+                "literal": true,
                 "value": true,
               },
             },
@@ -1797,7 +1797,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "value": BrsBoolean {
                 "kind": 2,
                 "legacy": false,
-                "literal": false,
+                "literal": true,
                 "value": true,
               },
             },
@@ -1854,7 +1854,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "value": BrsBoolean {
                 "kind": 2,
                 "legacy": false,
-                "literal": false,
+                "literal": true,
                 "value": true,
               },
             },
@@ -1911,7 +1911,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "value": BrsBoolean {
                 "kind": 2,
                 "legacy": false,
-                "literal": false,
+                "literal": true,
                 "value": true,
               },
             },
@@ -1968,7 +1968,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "value": BrsBoolean {
                 "kind": 2,
                 "legacy": false,
-                "literal": false,
+                "literal": true,
                 "value": true,
               },
             },
@@ -2025,7 +2025,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "value": BrsBoolean {
                 "kind": 2,
                 "legacy": false,
-                "literal": false,
+                "literal": true,
                 "value": true,
               },
             },
@@ -2082,7 +2082,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "value": BrsBoolean {
                 "kind": 2,
                 "legacy": false,
-                "literal": false,
+                "literal": true,
                 "value": true,
               },
             },
@@ -2139,7 +2139,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "value": BrsBoolean {
                 "kind": 2,
                 "legacy": false,
-                "literal": false,
+                "literal": true,
                 "value": true,
               },
             },
@@ -2196,7 +2196,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "value": BrsBoolean {
                 "kind": 2,
                 "legacy": false,
-                "literal": false,
+                "literal": true,
                 "value": true,
               },
             },
@@ -2253,7 +2253,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "value": BrsBoolean {
                 "kind": 2,
                 "legacy": false,
-                "literal": false,
+                "literal": true,
                 "value": true,
               },
             },
@@ -2310,7 +2310,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "value": BrsBoolean {
                 "kind": 2,
                 "legacy": false,
-                "literal": false,
+                "literal": true,
                 "value": true,
               },
             },
@@ -2367,7 +2367,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "value": BrsBoolean {
                 "kind": 2,
                 "legacy": false,
-                "literal": false,
+                "literal": true,
                 "value": true,
               },
             },
@@ -2424,7 +2424,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "value": BrsBoolean {
                 "kind": 2,
                 "legacy": false,
-                "literal": false,
+                "literal": true,
                 "value": true,
               },
             },
@@ -2481,7 +2481,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "value": BrsBoolean {
                 "kind": 2,
                 "legacy": false,
-                "literal": false,
+                "literal": true,
                 "value": true,
               },
             },
@@ -2538,7 +2538,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "value": BrsBoolean {
                 "kind": 2,
                 "legacy": false,
-                "literal": false,
+                "literal": true,
                 "value": true,
               },
             },
@@ -2595,7 +2595,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "value": BrsBoolean {
                 "kind": 2,
                 "legacy": false,
-                "literal": false,
+                "literal": true,
                 "value": true,
               },
             },
@@ -2652,7 +2652,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "value": BrsBoolean {
                 "kind": 2,
                 "legacy": false,
-                "literal": false,
+                "literal": true,
                 "value": true,
               },
             },
@@ -2709,7 +2709,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "value": BrsBoolean {
                 "kind": 2,
                 "legacy": false,
-                "literal": false,
+                "literal": true,
                 "value": true,
               },
             },
@@ -2766,7 +2766,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "value": BrsBoolean {
                 "kind": 2,
                 "legacy": false,
-                "literal": false,
+                "literal": true,
                 "value": true,
               },
             },
@@ -2823,7 +2823,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "value": BrsBoolean {
                 "kind": 2,
                 "legacy": false,
-                "literal": false,
+                "literal": true,
                 "value": true,
               },
             },
@@ -2880,7 +2880,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "value": BrsBoolean {
                 "kind": 2,
                 "legacy": false,
-                "literal": false,
+                "literal": true,
                 "value": true,
               },
             },
@@ -2937,7 +2937,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "value": BrsBoolean {
                 "kind": 2,
                 "legacy": false,
-                "literal": false,
+                "literal": true,
                 "value": true,
               },
             },
@@ -2994,7 +2994,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "value": BrsBoolean {
                 "kind": 2,
                 "legacy": false,
-                "literal": false,
+                "literal": true,
                 "value": true,
               },
             },
@@ -3051,7 +3051,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "value": BrsBoolean {
                 "kind": 2,
                 "legacy": false,
-                "literal": false,
+                "literal": true,
                 "value": true,
               },
             },
@@ -3108,7 +3108,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "value": BrsBoolean {
                 "kind": 2,
                 "legacy": false,
-                "literal": false,
+                "literal": true,
                 "value": true,
               },
             },
@@ -3165,7 +3165,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
               "value": BrsBoolean {
                 "kind": 2,
                 "legacy": false,
-                "literal": false,
+                "literal": true,
                 "value": true,
               },
             },
@@ -3299,7 +3299,7 @@ exports[`parser certain reserved words are allowed as local var identifiers 1`] 
               "value": BrsBoolean {
                 "kind": 2,
                 "legacy": false,
-                "literal": false,
+                "literal": true,
                 "value": true,
               },
             },
@@ -3356,7 +3356,7 @@ exports[`parser certain reserved words are allowed as local var identifiers 1`] 
               "value": BrsBoolean {
                 "kind": 2,
                 "legacy": false,
-                "literal": false,
+                "literal": true,
                 "value": true,
               },
             },
@@ -3413,7 +3413,7 @@ exports[`parser certain reserved words are allowed as local var identifiers 1`] 
               "value": BrsBoolean {
                 "kind": 2,
                 "legacy": false,
-                "literal": false,
+                "literal": true,
                 "value": true,
               },
             },
@@ -3470,7 +3470,7 @@ exports[`parser certain reserved words are allowed as local var identifiers 1`] 
               "value": BrsBoolean {
                 "kind": 2,
                 "legacy": false,
-                "literal": false,
+                "literal": true,
                 "value": true,
               },
             },
@@ -3527,7 +3527,7 @@ exports[`parser certain reserved words are allowed as local var identifiers 1`] 
               "value": BrsBoolean {
                 "kind": 2,
                 "legacy": false,
-                "literal": false,
+                "literal": true,
                 "value": true,
               },
             },
@@ -3584,7 +3584,7 @@ exports[`parser certain reserved words are allowed as local var identifiers 1`] 
               "value": BrsBoolean {
                 "kind": 2,
                 "legacy": false,
-                "literal": false,
+                "literal": true,
                 "value": true,
               },
             },
@@ -3641,7 +3641,7 @@ exports[`parser certain reserved words are allowed as local var identifiers 1`] 
               "value": BrsBoolean {
                 "kind": 2,
                 "legacy": false,
-                "literal": false,
+                "literal": true,
                 "value": true,
               },
             },
@@ -3698,7 +3698,7 @@ exports[`parser certain reserved words are allowed as local var identifiers 1`] 
               "value": BrsBoolean {
                 "kind": 2,
                 "legacy": false,
-                "literal": false,
+                "literal": true,
                 "value": true,
               },
             },

@@ -472,7 +472,7 @@ describe("end to end brightscript functions", () => {
             "Double to string 123.456",
             "Float to string 789.012",
             "Integer to string 23",
-            "LongInteger object typeroLongInteger",
+            "LongInteger object type LongInteger",
             "LongInteger to string 2000111222333",
             "Integer truncated from LongInteger  2147483647",
             "Integer converted from LongInteger -1343537603",

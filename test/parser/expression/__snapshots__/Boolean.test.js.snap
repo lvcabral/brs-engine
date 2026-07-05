@@ -52,7 +52,7 @@ exports[`parser boolean expressions parses boolean ANDs 1`] = `
         "value": BrsBoolean {
           "kind": 2,
           "legacy": false,
-          "literal": false,
+          "literal": true,
           "value": true,
         },
       },
@@ -70,7 +70,7 @@ exports[`parser boolean expressions parses boolean ANDs 1`] = `
         "value": BrsBoolean {
           "kind": 2,
           "legacy": false,
-          "literal": false,
+          "literal": true,
           "value": false,
         },
       },
@@ -147,7 +147,7 @@ exports[`parser boolean expressions parses boolean ORs 1`] = `
         "value": BrsBoolean {
           "kind": 2,
           "legacy": false,
-          "literal": false,
+          "literal": true,
           "value": true,
         },
       },
@@ -165,7 +165,7 @@ exports[`parser boolean expressions parses boolean ORs 1`] = `
         "value": BrsBoolean {
           "kind": 2,
           "legacy": false,
-          "literal": false,
+          "literal": true,
           "value": false,
         },
       },

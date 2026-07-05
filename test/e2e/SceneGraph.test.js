@@ -309,33 +309,49 @@ describe("SceneGraph node tests", () => {
         await execute([resourceFile("scenegraph", "box-array-content-on-field.brs")], outputStreams);
 
         expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
-            // a plain parseJson AA keeps unboxed scalar leaves; a number read from a
-            // container reports the legacy `roInteger` for type() (see stdlib/type-legacy.brs)
-            "button (aa): 0xCDCDCDFF, type: String, type3: roString",
-            "number (aa):  30, type: roInteger, type3: Integer",
-            // reading the same values back out of a node field boxes the leaves
-            "button (node.aa): 0xCDCDCDFF, type: roString, type3: roString",
-            "number (node.aa):  30, type: roInt, type3: roInt",
-            // non-literal scalars (from parseJson) are boxed on read
+            "str (lit): type: String, type3: String",
+            "int (lit): type: Integer, type3: Integer",
+            "flt (lit): type: Float, type3: Float",
+            "dbl (lit): type: Double, type3: Double",
+            "lng (lit): type: LongInteger, type3: LongInteger",
+            "bool (lit): type: Boolean, type3: Boolean",
+            "str (box): type: roString, type3: roString",
+            "int (box): type: roInt, type3: roInt",
+            "flt (box): type: roFloat, type3: roFloat",
+            "dbl (box): type: Double, type3: Double",
+            "lng (box): type: LongInteger, type3: LongInteger",
+            "bool (box): type: roBoolean, type3: roBoolean",
+            "str (aa): type: String, type3: roString",
+            "int (aa): type: Integer, type3: Integer",
+            "int2 (aa): type: roInteger, type3: Integer",
+            "flt (aa): type: Float, type3: Float",
+            "bool (aa): type: Boolean, type3: Boolean",
             "str (json.aa): type: roString, type3: roString",
             "int (json.aa): type: roInt, type3: roInt",
-            "flt (json.aa): type: roFloat, type3: roFloat",
-            // literal scalars are NOT boxed (report primitive/legacy types) in an AssocArray field
+            "int2 (json.aa): type: roInt, type3: roInt",
+            "flt (json.aa): type: roFloat, type3: Float",
+            "bool (json.aa): type: roBoolean, type3: Boolean",
             "str (lit.aa): type: roString, type3: String",
             "int (lit.aa): type: roInteger, type3: Integer",
             "flt (lit.aa): type: roFloat, type3: Float",
             "dbl (lit.aa): type: roFloat, type3: Double",
             "lng (lit.aa): type: LongInteger, type3: LongInteger",
-            // ...and likewise in an roArray field
-            "str (lit.arr): type: roString, type3: String",
-            "int (lit.arr): type: roInteger, type3: Integer",
+            "str (lit.node): type: roString, type3: String",
+            "int (lit.node): type: roInt, type3: roInt", // Roku does box literal integers in AA (exception)
+            "flt (lit.node): type: roFloat, type3: Float",
+            "dbl (lit.node): type: Double, type3: Double",
+            "lng (lit.node): type: LongInteger, type3: LongInteger",
+            "str (json.arr): type: roString, type3: roString",
+            "int (json.arr): type: roInt, type3: roInt",
+            "flt (json.arr): type: roFloat, type3: Float",
+            "bool (json.arr): type: roBoolean, type3: Boolean",
+            "str (lit.arr): type: roString, type3: roString",
+            "int (lit.arr): type: roInt, type3: roInt",
             "flt (lit.arr): type: roFloat, type3: Float",
             "dbl (lit.arr): type: roFloat, type3: Double",
             "lng (lit.arr): type: LongInteger, type3: LongInteger",
-            // booleans are interned singletons, so a literal boolean is still boxed (limitation)
-            "bool (lit.arr): type: roBoolean, type3: roBoolean",
-            // literalness is preserved recursively through a mixed array/AssocArray hierarchy
-            "nested (lit.arr): type: roInteger, type3: Integer",
+            "bool (lit.arr): type: roBoolean, type3: Boolean",
+            "nested (lit.arr): type: roInt, type3: roInt",
         ]);
     });
 });

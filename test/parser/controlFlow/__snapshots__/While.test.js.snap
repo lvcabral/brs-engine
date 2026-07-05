@@ -541,7 +541,7 @@ exports[`parser while statements while with exit 1`] = `
       "value": BrsBoolean {
         "kind": 2,
         "legacy": false,
-        "literal": false,
+        "literal": true,
         "value": true,
       },
     },
@@ -655,7 +655,7 @@ exports[`parser while statements while without exit 1`] = `
       "value": BrsBoolean {
         "kind": 2,
         "legacy": false,
-        "literal": false,
+        "literal": true,
         "value": true,
       },
     },

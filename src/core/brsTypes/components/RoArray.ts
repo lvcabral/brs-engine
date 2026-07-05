@@ -143,8 +143,18 @@ export class RoArray extends BrsComponent implements BrsValue, BrsArray {
             } else if (isSceneGraphNode(value)) {
                 copiedElements.push(value.deepCopy());
             } else if (isBoxable(value) && !(value instanceof Callable)) {
-                // Literal values (written directly in source) are not auto-boxed, matching Roku.
-                copiedElements.push(boxContent && !value.literal ? value.box() : value);
+                let boxValue = false;
+                if (boxContent) {
+                    // Handling cases where Roku treats certain values as boxed and others keep their original type.
+                    const noBox = [ValueKind.Float, ValueKind.Double, ValueKind.Boolean];
+                    if (noBox.includes(value.kind)) {
+                        value.literal = true;
+                        value.legacy = true;
+                    }
+                    const toBox = [ValueKind.Int32, ValueKind.Int64, ValueKind.String];
+                    boxValue = !value.literal || toBox.includes(value.kind);
+                }
+                copiedElements.push(boxValue ? value.box() : value);
             } else if (isUnboxable(value) && !(value instanceof RoFunction)) {
                 copiedElements.push(value.copy());
             }

@@ -337,7 +337,7 @@ exports[`parser indexed assignment bracketed assigns boolean expressions 1`] = `
         "value": BrsBoolean {
           "kind": 2,
           "legacy": false,
-          "literal": false,
+          "literal": true,
           "value": true,
         },
       },
@@ -355,7 +355,7 @@ exports[`parser indexed assignment bracketed assigns boolean expressions 1`] = `
         "value": BrsBoolean {
           "kind": 2,
           "legacy": false,
-          "literal": false,
+          "literal": true,
           "value": false,
         },
       },
@@ -637,7 +637,7 @@ exports[`parser indexed assignment dotted assigns boolean expressions 1`] = `
         "value": BrsBoolean {
           "kind": 2,
           "legacy": false,
-          "literal": false,
+          "literal": true,
           "value": true,
         },
       },
@@ -655,7 +655,7 @@ exports[`parser indexed assignment dotted assigns boolean expressions 1`] = `
         "value": BrsBoolean {
           "kind": 2,
           "legacy": false,
-          "literal": false,
+          "literal": true,
           "value": false,
         },
       },

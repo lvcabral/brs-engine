@@ -27,7 +27,7 @@ sub main()
     print "Double to string "doubleObject.toStr()
     print "Float to string "floatObject.toStr()
     print "Integer to string "integerObject.toStr()
-    print "LongInteger object type"type(longIntegerObject)
+    print "LongInteger object type "type(longIntegerObject)
     print "LongInteger to string "longIntegerObject.toStr()
     print "Integer truncated from LongInteger "intTruncated
     print "Integer converted from LongInteger "intConverted

@@ -125,7 +125,7 @@ exports[`parser if statements block if allows 'then' to be skipped 1`] = `
             "value": BrsBoolean {
               "kind": 2,
               "legacy": false,
-              "literal": false,
+              "literal": true,
               "value": false,
             },
           },
@@ -313,7 +313,7 @@ exports[`parser if statements block if allows 'then' to be skipped 1`] = `
                 "value": BrsBoolean {
                   "kind": 2,
                   "legacy": false,
-                  "literal": false,
+                  "literal": true,
                   "value": true,
                 },
               },
@@ -387,7 +387,7 @@ exports[`parser if statements block if allows 'then' to be skipped 1`] = `
             "value": BrsBoolean {
               "kind": 2,
               "legacy": false,
-              "literal": false,
+              "literal": true,
               "value": true,
             },
           },
@@ -598,7 +598,7 @@ exports[`parser if statements block if parses if only 1`] = `
             "value": BrsBoolean {
               "kind": 2,
               "legacy": false,
-              "literal": false,
+              "literal": true,
               "value": true,
             },
           },
@@ -655,7 +655,7 @@ exports[`parser if statements block if parses if only 1`] = `
             "value": BrsBoolean {
               "kind": 2,
               "legacy": false,
-              "literal": false,
+              "literal": true,
               "value": true,
             },
           },
@@ -846,7 +846,7 @@ exports[`parser if statements block if parses if-else 1`] = `
             "value": BrsBoolean {
               "kind": 2,
               "legacy": false,
-              "literal": false,
+              "literal": true,
               "value": false,
             },
           },
@@ -903,7 +903,7 @@ exports[`parser if statements block if parses if-else 1`] = `
             "value": BrsBoolean {
               "kind": 2,
               "legacy": false,
-              "literal": false,
+              "literal": true,
               "value": false,
             },
           },
@@ -976,7 +976,7 @@ exports[`parser if statements block if parses if-else 1`] = `
             "value": BrsBoolean {
               "kind": 2,
               "legacy": false,
-              "literal": false,
+              "literal": true,
               "value": true,
             },
           },
@@ -1183,7 +1183,7 @@ exports[`parser if statements block if parses if-elseif-else 1`] = `
             "value": BrsBoolean {
               "kind": 2,
               "legacy": false,
-              "literal": false,
+              "literal": true,
               "value": false,
             },
           },
@@ -1371,7 +1371,7 @@ exports[`parser if statements block if parses if-elseif-else 1`] = `
                 "value": BrsBoolean {
                   "kind": 2,
                   "legacy": false,
-                  "literal": false,
+                  "literal": true,
                   "value": true,
                 },
               },
@@ -1445,7 +1445,7 @@ exports[`parser if statements block if parses if-elseif-else 1`] = `
             "value": BrsBoolean {
               "kind": 2,
               "legacy": false,
-              "literal": false,
+              "literal": true,
               "value": true,
             },
           },
@@ -1578,7 +1578,7 @@ exports[`parser if statements block if sets endif token properly 1`] = `
               "value": BrsBoolean {
                 "kind": 2,
                 "legacy": false,
-                "literal": false,
+                "literal": true,
                 "value": true,
               },
             },
@@ -1656,7 +1656,7 @@ exports[`parser if statements block if sets endif token properly 1`] = `
                   "value": BrsBoolean {
                     "kind": 2,
                     "legacy": false,
-                    "literal": false,
+                    "literal": true,
                     "value": true,
                   },
                 },
@@ -1749,7 +1749,7 @@ exports[`parser if statements block if sets endif token properly 1`] = `
                       "value": BrsBoolean {
                         "kind": 2,
                         "legacy": false,
-                        "literal": false,
+                        "literal": true,
                         "value": false,
                       },
                     },
@@ -2036,7 +2036,7 @@ exports[`parser if statements catches one-line if statement missing first colon 
             "value": BrsBoolean {
               "kind": 2,
               "legacy": false,
-              "literal": false,
+              "literal": true,
               "value": true,
             },
           },
@@ -2180,7 +2180,7 @@ exports[`parser if statements catches one-line if statement missing second colon
             "value": BrsBoolean {
               "kind": 2,
               "legacy": false,
-              "literal": false,
+              "literal": true,
               "value": true,
             },
           },
@@ -2284,7 +2284,7 @@ exports[`parser if statements catches one-line if statement with colon and missi
               "value": BrsBoolean {
                 "kind": 2,
                 "legacy": false,
-                "literal": false,
+                "literal": true,
                 "value": true,
               },
             },
@@ -2457,7 +2457,7 @@ exports[`parser if statements catches one-line if statement with else missing co
             "value": BrsBoolean {
               "kind": 2,
               "legacy": false,
-              "literal": false,
+              "literal": true,
               "value": false,
             },
           },
@@ -2513,7 +2513,7 @@ exports[`parser if statements catches one-line if statement with else missing co
             "value": BrsBoolean {
               "kind": 2,
               "legacy": false,
-              "literal": false,
+              "literal": true,
               "value": true,
             },
           },
@@ -2597,7 +2597,7 @@ exports[`parser if statements dotted set in else block 1`] = `
       "value": BrsBoolean {
         "kind": 2,
         "legacy": false,
-        "literal": false,
+        "literal": true,
         "value": true,
       },
     },
@@ -2686,7 +2686,7 @@ exports[`parser if statements dotted set in else block 1`] = `
             "value": BrsBoolean {
               "kind": 2,
               "legacy": false,
-              "literal": false,
+              "literal": true,
               "value": false,
             },
           },
@@ -2779,7 +2779,7 @@ exports[`parser if statements dotted set in else block 1`] = `
             "value": BrsBoolean {
               "kind": 2,
               "legacy": false,
-              "literal": false,
+              "literal": true,
               "value": true,
             },
           },
@@ -2964,7 +2964,7 @@ exports[`parser if statements single-line if allows 'then' to be skipped 1`] = `
             "value": BrsBoolean {
               "kind": 2,
               "legacy": false,
-              "literal": false,
+              "literal": true,
               "value": false,
             },
           },
@@ -3089,7 +3089,7 @@ exports[`parser if statements single-line if allows 'then' to be skipped 1`] = `
                 "value": BrsBoolean {
                   "kind": 2,
                   "legacy": false,
-                  "literal": false,
+                  "literal": true,
                   "value": true,
                 },
               },
@@ -3160,7 +3160,7 @@ exports[`parser if statements single-line if allows 'then' to be skipped 1`] = `
             "value": BrsBoolean {
               "kind": 2,
               "legacy": false,
-              "literal": false,
+              "literal": true,
               "value": true,
             },
           },
@@ -3243,7 +3243,7 @@ exports[`parser if statements single-line if inside multi-line if 1`] = `
       "value": BrsBoolean {
         "kind": 2,
         "legacy": false,
-        "literal": false,
+        "literal": true,
         "value": true,
       },
     },
@@ -3291,7 +3291,7 @@ exports[`parser if statements single-line if inside multi-line if 1`] = `
             "value": BrsBoolean {
               "kind": 2,
               "legacy": false,
-              "literal": false,
+              "literal": true,
               "value": true,
             },
           },
@@ -4620,7 +4620,7 @@ exports[`parser if statements single-line if parses if only 1`] = `
             "value": BrsBoolean {
               "kind": 2,
               "legacy": false,
-              "literal": false,
+              "literal": true,
               "value": true,
             },
           },
@@ -4787,7 +4787,7 @@ exports[`parser if statements single-line if parses if-else 1`] = `
             "value": BrsBoolean {
               "kind": 2,
               "legacy": false,
-              "literal": false,
+              "literal": true,
               "value": false,
             },
           },
@@ -4857,7 +4857,7 @@ exports[`parser if statements single-line if parses if-else 1`] = `
             "value": BrsBoolean {
               "kind": 2,
               "legacy": false,
-              "literal": false,
+              "literal": true,
               "value": true,
             },
           },
@@ -5039,7 +5039,7 @@ exports[`parser if statements single-line if parses if-elseif-else 1`] = `
             "value": BrsBoolean {
               "kind": 2,
               "legacy": false,
-              "literal": false,
+              "literal": true,
               "value": true,
             },
           },
@@ -5164,7 +5164,7 @@ exports[`parser if statements single-line if parses if-elseif-else 1`] = `
                 "value": BrsBoolean {
                   "kind": 2,
                   "legacy": false,
-                  "literal": false,
+                  "literal": true,
                   "value": true,
                 },
               },
@@ -5235,7 +5235,7 @@ exports[`parser if statements single-line if parses if-elseif-else 1`] = `
             "value": BrsBoolean {
               "kind": 2,
               "legacy": false,
-              "literal": false,
+              "literal": true,
               "value": true,
             },
           },
@@ -5333,7 +5333,7 @@ exports[`parser if statements supports colon after return in single-line if stat
       "value": BrsBoolean {
         "kind": 2,
         "legacy": false,
-        "literal": false,
+        "literal": true,
         "value": false,
       },
     },
@@ -5457,7 +5457,7 @@ exports[`parser if statements supports if elseif endif single line 1`] = `
       "value": BrsBoolean {
         "kind": 2,
         "legacy": false,
-        "literal": false,
+        "literal": true,
         "value": true,
       },
     },
@@ -5535,7 +5535,7 @@ exports[`parser if statements supports if elseif endif single line 1`] = `
           "value": BrsBoolean {
             "kind": 2,
             "legacy": false,
-            "literal": false,
+            "literal": true,
             "value": true,
           },
         },
@@ -5842,7 +5842,7 @@ exports[`parser if statements supports if statement with condition and action on
             "value": BrsBoolean {
               "kind": 2,
               "legacy": false,
-              "literal": false,
+              "literal": true,
               "value": true,
             },
           },
@@ -5910,7 +5910,7 @@ exports[`parser if statements supports one-line functions inside of one-line if 
       "value": BrsBoolean {
         "kind": 2,
         "legacy": false,
-        "literal": false,
+        "literal": true,
         "value": true,
       },
     },
@@ -6674,7 +6674,7 @@ exports[`parser if statements supports trailing colons for one-line if statement
             "value": BrsBoolean {
               "kind": 2,
               "legacy": false,
-              "literal": false,
+              "literal": true,
               "value": true,
             },
           },

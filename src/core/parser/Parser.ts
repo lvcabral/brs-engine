@@ -1538,9 +1538,9 @@ export class Parser {
         function primary(): Expression {
             switch (true) {
                 case match(Lexeme.False):
-                    return new Expr.Literal(BrsBoolean.False, previous().location);
+                    return new Expr.Literal(BrsBoolean.fromLiteral(false), previous().location);
                 case match(Lexeme.True):
-                    return new Expr.Literal(BrsBoolean.True, previous().location);
+                    return new Expr.Literal(BrsBoolean.fromLiteral(true), previous().location);
                 case match(Lexeme.Invalid):
                     return new Expr.Literal(BrsInvalid.Instance, previous().location);
                 case match(Lexeme.Integer, Lexeme.LongInteger, Lexeme.Float, Lexeme.Double, Lexeme.String):

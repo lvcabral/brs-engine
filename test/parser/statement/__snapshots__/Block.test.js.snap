@@ -468,7 +468,7 @@ exports[`block statements includes surrounding whitespace for if-elseif-else sta
               "value": BrsBoolean {
                 "kind": 2,
                 "legacy": false,
-                "literal": false,
+                "literal": true,
                 "value": true,
               },
             },
@@ -546,7 +546,7 @@ exports[`block statements includes surrounding whitespace for if-elseif-else sta
                   "value": BrsBoolean {
                     "kind": 2,
                     "legacy": false,
-                    "literal": false,
+                    "literal": true,
                     "value": true,
                   },
                 },

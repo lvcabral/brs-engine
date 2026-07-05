@@ -250,6 +250,17 @@ export class BrsBoolean implements BrsValue, Comparable, Boxable {
     static readonly True = new BrsBoolean(true);
 
     /**
+     * Creates a fresh boolean instance flagged as a source literal.
+     * A distinct instance (not the shared `True`/`False` singletons) is required so that
+     * literalness is tracked per occurrence and doesn't leak onto runtime/parsed booleans.
+     * @param value JavaScript boolean value
+     * @returns a new literal-flagged BrsBoolean
+     */
+    static fromLiteral(value: boolean) {
+        return new BrsBoolean(value, true);
+    }
+
+    /**
      * Creates a BrsBoolean from a JavaScript boolean value.
      * Returns the static True or False instance.
      * @param value JavaScript boolean value
