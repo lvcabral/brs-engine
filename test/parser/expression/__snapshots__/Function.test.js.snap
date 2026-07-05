@@ -232,6 +232,7 @@ exports[`parser function expressions parses functions with default argument expr
             "value": Int32 {
               "kind": 4,
               "legacy": false,
+              "literal": false,
               "value": 3,
             },
           },
@@ -292,6 +293,7 @@ exports[`parser function expressions parses functions with default argument expr
             "value": Int32 {
               "kind": 4,
               "legacy": false,
+              "literal": false,
               "value": 4,
             },
           },
@@ -371,6 +373,7 @@ exports[`parser function expressions parses functions with default argument expr
               "value": Int32 {
                 "kind": 4,
                 "legacy": false,
+                "literal": false,
                 "value": 5,
               },
             },
@@ -941,6 +944,7 @@ exports[`parser function expressions parses functions with typed arguments and d
             "value": Int32 {
               "kind": 4,
               "legacy": false,
+              "literal": false,
               "value": 3,
             },
           },
@@ -1019,6 +1023,7 @@ exports[`parser function expressions parses functions with typed arguments and d
               "value": Int32 {
                 "kind": 4,
                 "legacy": false,
+                "literal": false,
                 "value": 5,
               },
             },
@@ -1724,6 +1729,7 @@ exports[`parser sub expressions parses subs with default argument expressions 1`
             "value": Int32 {
               "kind": 4,
               "legacy": false,
+              "literal": false,
               "value": 3,
             },
           },
@@ -1784,6 +1790,7 @@ exports[`parser sub expressions parses subs with default argument expressions 1`
             "value": Int32 {
               "kind": 4,
               "legacy": false,
+              "literal": false,
               "value": 4,
             },
           },
@@ -1863,6 +1870,7 @@ exports[`parser sub expressions parses subs with default argument expressions 1`
               "value": Int32 {
                 "kind": 4,
                 "legacy": false,
+                "literal": false,
                 "value": 5,
               },
             },
@@ -2433,6 +2441,7 @@ exports[`parser sub expressions parses subs with typed arguments and default exp
             "value": Int32 {
               "kind": 4,
               "legacy": false,
+              "literal": false,
               "value": 3,
             },
           },
@@ -2511,6 +2520,7 @@ exports[`parser sub expressions parses subs with typed arguments and default exp
               "value": Int32 {
                 "kind": 4,
                 "legacy": false,
+                "literal": false,
                 "value": 5,
               },
             },

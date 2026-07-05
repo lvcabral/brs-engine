@@ -6,7 +6,7 @@ import { ReservedWords, KeyWords } from "./ReservedWords";
 import { BrsError } from "../error/BrsError";
 import { isAlpha, isDecimalDigit, isAlphaNumeric, isHexDigit } from "./Characters";
 
-import { BrsType, BrsString, Int32, Int64, Float, Double } from "../brsTypes";
+import { BrsType, BrsString, Int32, Int64, Float, Double, isBoxable } from "../brsTypes";
 
 /** The results of a Lexer's scanning pass. */
 interface ScanResults {
@@ -468,7 +468,7 @@ export class Lexer {
 
             // trim the surrounding quotes, and replace the double-" literal with a single
             let value = source.slice(start + 1, current - 1).replaceAll('""', '"');
-            addToken(Lexeme.String, new BrsString(value, false, true));
+            addToken(Lexeme.String, new BrsString(value));
         }
 
         /**
@@ -842,6 +842,11 @@ export class Lexer {
          * @param literal an optional literal value to include in the token.
          */
         function addToken(kind: Lexeme, literal?: BrsType): void {
+            // Values written directly in source are flagged as literals so they are not
+            // auto-boxed when later copied into a container (see RoArray/RoAssociativeArray.deepCopy).
+            if (literal !== undefined && isBoxable(literal)) {
+                literal.literal = true;
+            }
             let withWhitespace = source.slice(start, current);
             let text = withWhitespace.trimLeft() || withWhitespace;
             tokens.push({

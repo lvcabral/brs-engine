@@ -64,7 +64,7 @@ describe("interpreter increment/decrement operators", () => {
 
         interpreter.exec(ast);
 
-        expect(interpreter.environment.get(identifier("result"))).toEqual(new Int32(8, true));
+        expect(interpreter.environment.get(identifier("result"))).toEqual(new Int32(8, false, true));
     });
 
     it("decrements with indexed gets", () => {
@@ -99,6 +99,6 @@ describe("interpreter increment/decrement operators", () => {
 
         interpreter.exec(ast);
 
-        expect(interpreter.environment.get(identifier("result"))).toEqual(new Int32(10, true));
+        expect(interpreter.environment.get(identifier("result"))).toEqual(new Int32(10, false, true));
     });
 });

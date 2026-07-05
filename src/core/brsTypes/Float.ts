@@ -32,7 +32,7 @@ export class Float implements Numeric, Comparable, Boxable {
      * @param value the value to store in the BrightScript float, rounded to 32-bit floating point
      *              precision and maintaining only seven significant digits of accuracy.
      */
-    constructor(value: number | Long, public legacy: boolean = false) {
+    constructor(value: number | Long, public literal: boolean = false, public legacy: boolean = false) {
         if (value instanceof Long) value = value.toNumber();
         this.value = Number.parseFloat(Math.fround(value).toPrecision(IEEE_FLOAT_SIGFIGS));
     }

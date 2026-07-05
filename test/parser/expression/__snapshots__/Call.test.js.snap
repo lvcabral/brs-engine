@@ -19,6 +19,7 @@ exports[`parser call expressions accepts arguments 1`] = `
           "value": Int32 {
             "kind": 4,
             "legacy": false,
+            "literal": false,
             "value": 1,
           },
         },
@@ -36,6 +37,7 @@ exports[`parser call expressions accepts arguments 1`] = `
           "value": Int32 {
             "kind": 4,
             "legacy": false,
+            "literal": false,
             "value": 2,
           },
         },

@@ -247,13 +247,13 @@ describe("lexer", () => {
         it("produces string literal tokens", () => {
             let { tokens } = Lexer.scan(`"hello world"`);
             expect(tokens.map((t) => t.kind)).toEqual([Lexeme.String, Lexeme.Eof]);
-            expect(tokens[0].literal).toEqual(new BrsString("hello world", false, true));
+            expect(tokens[0].literal).toEqual(new BrsString("hello world", true));
         });
 
         it(`safely escapes " literals`, () => {
             let { tokens } = Lexer.scan(`"the cat says ""meow"""`);
             expect(tokens[0].kind).toBe(Lexeme.String);
-            expect(tokens[0].literal).toEqual(new BrsString(`the cat says "meow"`, false, true));
+            expect(tokens[0].literal).toEqual(new BrsString(`the cat says "meow"`, true));
         });
 
         it("produces an error for unterminated strings", () => {
@@ -271,49 +271,49 @@ describe("lexer", () => {
         it("respects '#' suffix", () => {
             let d = Lexer.scan("123#").tokens[0];
             expect(d.kind).toBe(Lexeme.Double);
-            expect(d.literal).toEqual(new Double(123));
+            expect(d.literal).toEqual(new Double(123, true));
         });
 
         it("respects '#' suffix on very long literals", () => {
             let d = Lexer.scan("0000000006#").tokens[0];
             expect(d.kind).toBe(Lexeme.Double);
-            expect(d.literal).toEqual(new Double(6));
+            expect(d.literal).toEqual(new Double(6, true));
         });
 
         it("forces literals >= 10 digits into doubles", () => {
             let d = Lexer.scan("0000000005").tokens[0];
             expect(d.kind).toBe(Lexeme.Double);
-            expect(d.literal).toEqual(new Double(5));
+            expect(d.literal).toEqual(new Double(5, true));
         });
 
         it("forces literals >= 10 digits with exponent into doubles", () => {
             let d = Lexer.scan("1.7976931348623158e+308").tokens[0];
             expect(d.kind).toBe(Lexeme.Double);
-            expect(d.literal).toEqual(new Double(1.7976931348623158e308));
+            expect(d.literal).toEqual(new Double(1.7976931348623158e308, true));
         });
 
         it("forces literals with 'D' in exponent into doubles", () => {
             let d = Lexer.scan("2.5d3").tokens[0];
             expect(d.kind).toBe(Lexeme.Double);
-            expect(d.literal).toEqual(new Double(2500));
+            expect(d.literal).toEqual(new Double(2500, true));
         });
 
         it("allows forced double literals with exponent", () => {
             let f = Lexer.scan("1.123e2#").tokens[0];
             expect(f.kind).toBe(Lexeme.Double);
-            expect(f.literal).toEqual(new Double(1.123e2));
+            expect(f.literal).toEqual(new Double(1.123e2, true));
         });
 
         it("allows digits before `.` to be elided", () => {
             let f = Lexer.scan(".123#").tokens[0];
             expect(f.kind).toBe(Lexeme.Double);
-            expect(f.literal).toEqual(new Double(0.123));
+            expect(f.literal).toEqual(new Double(0.123, true));
         });
 
         it("allows digits after `.` to be elided", () => {
             let f = Lexer.scan("12.#").tokens[0];
             expect(f.kind).toBe(Lexeme.Double);
-            expect(f.literal).toEqual(new Double(12));
+            expect(f.literal).toEqual(new Double(12, true));
         });
     });
 
@@ -323,31 +323,31 @@ describe("lexer", () => {
             expect(f.kind).toBe(Lexeme.Float);
             // Floating precision will make this *not* equal
             expect(f.literal).not.toBe(8e-8);
-            expect(f.literal).toEqual(new Float(0.00000008));
+            expect(f.literal).toEqual(new Float(0.00000008, true));
         });
 
         it("forces literals with a decimal into floats", () => {
             let f = Lexer.scan("1.0").tokens[0];
             expect(f.kind).toBe(Lexeme.Float);
-            expect(f.literal).toEqual(new Float(1000000000000e-12));
+            expect(f.literal).toEqual(new Float(1000000000000e-12, true));
         });
 
         it("forces literals with 'E' in exponent into floats", () => {
             let f = Lexer.scan("2.5e3").tokens[0];
             expect(f.kind).toBe(Lexeme.Float);
-            expect(f.literal).toEqual(new Float(2500));
+            expect(f.literal).toEqual(new Float(2500, true));
         });
 
         it("allows digits before `.` to be elided", () => {
             let f = Lexer.scan(".123").tokens[0];
             expect(f.kind).toBe(Lexeme.Float);
-            expect(f.literal).toEqual(new Float(0.123));
+            expect(f.literal).toEqual(new Float(0.123, true));
         });
 
         it("allows digits after `.` to be elided", () => {
             let f = Lexer.scan("12.").tokens[0];
             expect(f.kind).toBe(Lexeme.Float);
-            expect(f.literal).toEqual(new Float(12));
+            expect(f.literal).toEqual(new Float(12, true));
         });
     });
 
@@ -355,19 +355,21 @@ describe("lexer", () => {
         it("supports hexadecimal literals", () => {
             let i = Lexer.scan("&hf00d&").tokens[0];
             expect(i.kind).toBe(Lexeme.LongInteger);
-            expect(i.literal).toEqual(new Int64(61453));
+            expect(i.literal).toEqual(new Int64(61453, true));
         });
 
         it("allows very long Int64 literals", () => {
             let li = Lexer.scan("9876543210&").tokens[0];
             expect(li.kind).toBe(Lexeme.LongInteger);
-            expect(li.literal).toEqual(Int64.fromString("9876543210"));
+            const expected = Int64.fromString("9876543210");
+            expected.literal = true;
+            expect(li.literal).toEqual(expected);
         });
 
         it("forces literals with '&' suffix into Int64s", () => {
             let li = Lexer.scan("123&").tokens[0];
             expect(li.kind).toBe(Lexeme.LongInteger);
-            expect(li.literal).toEqual(new Int64(123));
+            expect(li.literal).toEqual(new Int64(123, true));
         });
     });
 
@@ -375,19 +377,19 @@ describe("lexer", () => {
         it("supports hexadecimal literals", () => {
             let i = Lexer.scan("&hFf").tokens[0];
             expect(i.kind).toBe(Lexeme.Integer);
-            expect(i.literal).toEqual(new Int32(255));
+            expect(i.literal).toEqual(new Int32(255, true));
         });
 
         it("supports '%' suffix", () => {
             let i = Lexer.scan("123%").tokens[0];
             expect(i.kind).toBe(Lexeme.Integer);
-            expect(i.literal).toEqual(new Int32(123));
+            expect(i.literal).toEqual(new Int32(123, true));
         });
 
         it("falls back to a regular integer", () => {
             let i = Lexer.scan("123").tokens[0];
             expect(i.kind).toBe(Lexeme.Integer);
-            expect(i.literal).toEqual(new Int32(123));
+            expect(i.literal).toEqual(new Int32(123, true));
         });
     });
 

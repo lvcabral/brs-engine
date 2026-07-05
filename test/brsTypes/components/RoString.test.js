@@ -466,28 +466,28 @@ describe("RoString", () => {
             it("splits characters with an empty string", () => {
                 let result = tokenize.call(interpreter, new BrsString(""));
                 expect(result).toBeInstanceOf(RoList);
-                expect(result.elements).toEqual([new BrsString("🐶good dog🐶", true)]);
+                expect(result.elements).toEqual([new BrsString("🐶good dog🐶", false, true)]);
             });
 
             it("returns one section for not-found delimiters", () => {
                 let result = tokenize.call(interpreter, new BrsString("/"));
                 expect(result).toBeInstanceOf(RoList);
-                expect(result.elements).toEqual([new BrsString("🐶good dog🐶", true)]);
+                expect(result.elements).toEqual([new BrsString("🐶good dog🐶", false, true)]);
             });
 
             it("split with leading and trailing matches", () => {
                 let result = tokenize.call(interpreter, new BrsString("🐶"));
                 expect(result).toBeInstanceOf(RoList);
-                expect(result.elements).toEqual([new BrsString("good dog", true)]);
+                expect(result.elements).toEqual([new BrsString("good dog", false, true)]);
             });
 
             it("splits on multi-character sequences", () => {
                 let result = tokenize.call(interpreter, new BrsString("oo"));
                 expect(result).toBeInstanceOf(RoList);
                 expect(result.elements).toEqual([
-                    new BrsString("🐶g", true),
-                    new BrsString("d d", true),
-                    new BrsString("g🐶", true),
+                    new BrsString("🐶g", false, true),
+                    new BrsString("d d", false, true),
+                    new BrsString("g🐶", false, true),
                 ]);
             });
 
@@ -495,10 +495,10 @@ describe("RoString", () => {
                 let result = tokenize.call(interpreter, new BrsString("o "));
                 expect(result).toBeInstanceOf(RoList);
                 expect(result.elements).toEqual([
-                    new BrsString("🐶g", true),
-                    new BrsString("d", true),
-                    new BrsString("d", true),
-                    new BrsString("g🐶", true),
+                    new BrsString("🐶g", false, true),
+                    new BrsString("d", false, true),
+                    new BrsString("d", false, true),
+                    new BrsString("g🐶", false, true),
                 ]);
             });
         });
@@ -541,30 +541,33 @@ describe("RoString", () => {
                 let result = split.call(interpreter, new BrsString(""));
                 expect(result).toBeInstanceOf(RoArray);
                 expect(result.elements).toEqual(
-                    ["🐶", "g", "o", "o", "d", " ", "d", "o", "g", "🐶"].map((c) => new BrsString(c, true))
+                    ["🐶", "g", "o", "o", "d", " ", "d", "o", "g", "🐶"].map((c) => new BrsString(c, false, true))
                 );
             });
 
             it("returns one section for not-found delimiters", () => {
                 let result = split.call(interpreter, new BrsString("/"));
                 expect(result).toBeInstanceOf(RoArray);
-                expect(result.elements).toEqual([new BrsString("🐶good dog🐶", true)]);
+                expect(result.elements).toEqual([new BrsString("🐶good dog🐶", false, true)]);
             });
 
             it("returns empty strings for leading and trailing matches", () => {
                 let result = split.call(interpreter, new BrsString("🐶"));
                 expect(result).toBeInstanceOf(RoArray);
                 expect(result.elements).toEqual([
-                    new BrsString("", true),
-                    new BrsString("good dog", true),
-                    new BrsString("", true),
+                    new BrsString("", false, true),
+                    new BrsString("good dog", false, true),
+                    new BrsString("", false, true),
                 ]);
             });
 
             it("splits on multi-character sequences", () => {
                 let result = split.call(interpreter, new BrsString("oo"));
                 expect(result).toBeInstanceOf(RoArray);
-                expect(result.elements).toEqual([new BrsString("🐶g", true), new BrsString("d dog🐶", true)]);
+                expect(result.elements).toEqual([
+                    new BrsString("🐶g", false, true),
+                    new BrsString("d dog🐶", false, true),
+                ]);
             });
         });
 

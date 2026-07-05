@@ -151,7 +151,7 @@ export interface Comparable {
 /** Internal representation of a string in BrightScript. */
 export class BrsString implements BrsValue, Comparable, Boxable {
     readonly kind = ValueKind.String;
-    constructor(readonly value: string, public legacy: boolean = false, public literal: boolean = false) {}
+    constructor(readonly value: string, public literal: boolean = false, public legacy: boolean = false) {}
 
     /**
      * Compares if this string is less than another value.
@@ -232,7 +232,11 @@ export class BrsString implements BrsValue, Comparable, Boxable {
 /** Internal representation of a boolean in BrightScript. */
 export class BrsBoolean implements BrsValue, Comparable, Boxable {
     readonly kind = ValueKind.Boolean;
-    private constructor(private readonly value: boolean, public legacy: boolean = false) {}
+    private constructor(
+        private readonly value: boolean,
+        public literal: boolean = false,
+        public legacy: boolean = false
+    ) {}
 
     /**
      * Converts this BrsBoolean to a JavaScript boolean.
@@ -244,6 +248,17 @@ export class BrsBoolean implements BrsValue, Comparable, Boxable {
 
     static readonly False = new BrsBoolean(false);
     static readonly True = new BrsBoolean(true);
+
+    /**
+     * Creates a fresh boolean instance flagged as a source literal.
+     * A distinct instance (not the shared `True`/`False` singletons) is required so that
+     * literalness is tracked per occurrence and doesn't leak onto runtime/parsed booleans.
+     * @param value JavaScript boolean value
+     * @returns a new literal-flagged BrsBoolean
+     */
+    static fromLiteral(value: boolean) {
+        return new BrsBoolean(value, true);
+    }
 
     /**
      * Creates a BrsBoolean from a JavaScript boolean value.
@@ -353,6 +368,7 @@ export class BrsBoolean implements BrsValue, Comparable, Boxable {
 /** Internal representation of the BrightScript `invalid` value. */
 export class BrsInvalid implements BrsValue, Comparable, Boxable {
     readonly kind = ValueKind.Invalid;
+    literal: boolean = false;
     legacy: boolean = false;
     static readonly Instance = new BrsInvalid();
 

@@ -25,7 +25,7 @@ export class Double implements Numeric, Comparable, Boxable {
      * @param value the value to store in the BrightScript double, rounded to 64-bit (double)
      *              precision.
      */
-    constructor(value: number | Long, public legacy: boolean = false) {
+    constructor(value: number | Long, public literal: boolean = false, public legacy: boolean = false) {
         this.value = value instanceof Long ? value.toNumber() : value;
     }
 

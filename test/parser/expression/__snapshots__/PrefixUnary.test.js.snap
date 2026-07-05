@@ -153,6 +153,7 @@ exports[`parser prefix unary expressions parses consecutive mixed unary operator
                   "value": Int32 {
                     "kind": 4,
                     "legacy": false,
+                    "literal": false,
                     "value": 5,
                   },
                 },
@@ -302,6 +303,7 @@ exports[`parser prefix unary expressions parses consecutive unary '+' 1`] = `
                 "value": Int32 {
                   "kind": 4,
                   "legacy": false,
+                  "literal": false,
                   "value": 5,
                 },
               },
@@ -450,6 +452,7 @@ exports[`parser prefix unary expressions parses consecutive unary '-' 1`] = `
                 "value": Int32 {
                   "kind": 4,
                   "legacy": false,
+                  "literal": false,
                   "value": 5,
                 },
               },
@@ -598,6 +601,7 @@ exports[`parser prefix unary expressions parses consecutive unary 'not' 1`] = `
                 "value": BrsBoolean {
                   "kind": 2,
                   "legacy": false,
+                  "literal": true,
                   "value": true,
                 },
               },
@@ -678,6 +682,7 @@ exports[`parser prefix unary expressions parses unary '+' 1`] = `
         "value": Int32 {
           "kind": 4,
           "legacy": false,
+          "literal": false,
           "value": 5,
         },
       },
@@ -754,6 +759,7 @@ exports[`parser prefix unary expressions parses unary '-' 1`] = `
         "value": Int32 {
           "kind": 4,
           "legacy": false,
+          "literal": false,
           "value": 5,
         },
       },
@@ -830,6 +836,7 @@ exports[`parser prefix unary expressions parses unary 'not' 1`] = `
         "value": BrsBoolean {
           "kind": 2,
           "legacy": false,
+          "literal": true,
           "value": true,
         },
       },

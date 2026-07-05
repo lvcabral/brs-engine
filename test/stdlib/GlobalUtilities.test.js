@@ -41,7 +41,7 @@ describe("global utility functions", () => {
             expect(iface).toBeInstanceOf(BrsInterface);
             expect(iface.name).toBe("ifAssociativeArray");
             let result = ObjFun.call(interpreter, assocarray, iface, new BrsString("lookup"), new BrsString("letter1"));
-            expect(result).toEqual(new BrsString("a", true));
+            expect(result).toEqual(new BrsString("a", false, true));
         });
     });
 });

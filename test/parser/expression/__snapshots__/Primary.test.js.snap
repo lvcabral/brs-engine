@@ -52,6 +52,7 @@ exports[`parser primary expressions parses expressions in parentheses 1`] = `
         "value": Int32 {
           "kind": 4,
           "legacy": false,
+          "literal": false,
           "value": 1,
         },
       },
@@ -71,6 +72,7 @@ exports[`parser primary expressions parses expressions in parentheses 1`] = `
             "value": Int32 {
               "kind": 4,
               "legacy": false,
+              "literal": false,
               "value": 2,
             },
           },
@@ -88,6 +90,7 @@ exports[`parser primary expressions parses expressions in parentheses 1`] = `
             "value": Int32 {
               "kind": 4,
               "legacy": false,
+              "literal": false,
               "value": 3,
             },
           },
@@ -215,6 +218,7 @@ exports[`parser primary expressions parses numeric literals 1`] = `
       "value": Int32 {
         "kind": 4,
         "legacy": false,
+        "literal": false,
         "value": 5,
       },
     },

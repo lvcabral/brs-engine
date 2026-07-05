@@ -102,13 +102,26 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
         return refs;
     }
 
-    deepCopy() {
+    deepCopy(boxContent = false) {
         const copiedElements: AAMember[] = [];
         for (const [key, value] of this.elements) {
-            if (value instanceof RoArray || value instanceof RoAssociativeArray || isSceneGraphNode(value)) {
+            if (value instanceof RoArray || value instanceof RoAssociativeArray) {
+                copiedElements.push({ name: new BrsString(key), value: value.deepCopy(boxContent) });
+            } else if (isSceneGraphNode(value)) {
                 copiedElements.push({ name: new BrsString(key), value: value.deepCopy() });
             } else if (isBoxable(value) && !(value instanceof Callable)) {
-                copiedElements.push({ name: new BrsString(key), value: value });
+                let boxValue = false;
+                if (boxContent) {
+                    // Handling cases where Roku treats certain values as boxed and others keep their original type.
+                    const noBox = [ValueKind.Float, ValueKind.Boolean];
+                    if (noBox.includes(value.kind)) {
+                        value.literal = true;
+                        value.legacy = true;
+                    }
+                    const toBox = [ValueKind.Int32, ValueKind.Int64, ValueKind.Double];
+                    boxValue = !value.literal || toBox.includes(value.kind);
+                }
+                copiedElements.push({ name: new BrsString(key), value: boxValue ? value.box() : value });
             } else if (isUnboxable(value) && !(value instanceof RoFunction)) {
                 copiedElements.push({ name: new BrsString(key), value: value.copy() });
             }

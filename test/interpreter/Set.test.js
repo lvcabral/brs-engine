@@ -51,7 +51,7 @@ describe("property setting", () => {
 
             interpreter.exec(ast);
 
-            expect(interpreter.environment.get(identifier("result"))).toEqual(new BrsString("new index0", true));
+            expect(interpreter.environment.get(identifier("result"))).toEqual(new BrsString("new index0", false, true));
         });
 
         test("multi-dimensional", () => {
@@ -120,7 +120,7 @@ describe("property setting", () => {
 
             interpreter.exec(ast);
 
-            expect(interpreter.environment.get(identifier("result"))).toEqual(new BrsString("new (2,1)", true));
+            expect(interpreter.environment.get(identifier("result"))).toEqual(new BrsString("new (2,1)", false, true));
         });
     });
 
@@ -166,8 +166,10 @@ describe("property setting", () => {
 
             interpreter.exec(ast);
 
-            expect(interpreter.environment.get(identifier("fooResult"))).toEqual(new BrsString("new foo", true));
-            expect(interpreter.environment.get(identifier("barResult"))).toEqual(new BrsString("added bar", true));
+            expect(interpreter.environment.get(identifier("fooResult"))).toEqual(new BrsString("new foo", false, true));
+            expect(interpreter.environment.get(identifier("barResult"))).toEqual(
+                new BrsString("added bar", false, true)
+            );
         });
 
         test("multi-dimensional", () => {
@@ -230,9 +232,11 @@ describe("property setting", () => {
 
             interpreter.exec(ast);
 
-            expect(interpreter.environment.get(identifier("barResult"))).toEqual(new BrsString("new aa.foo.bar", true));
+            expect(interpreter.environment.get(identifier("barResult"))).toEqual(
+                new BrsString("new aa.foo.bar", false, true)
+            );
             expect(interpreter.environment.get(identifier("bazResult"))).toEqual(
-                new BrsString("added aa.foo.baz", true)
+                new BrsString("added aa.foo.baz", false, true)
             );
         });
     });

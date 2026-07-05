@@ -45,7 +45,7 @@ describe("creating arrays using dim", () => {
         ];
 
         interpreter.exec(statements);
-        expect(interpreter.environment.get(identifier("result"))).toEqual(new BrsString("new index4", true));
+        expect(interpreter.environment.get(identifier("result"))).toEqual(new BrsString("new index4", false, true));
 
         // NOTE: Roku's dim implementation creates a resizeable, empty array for the
         //   bottom children. Resizeable arrays aren't implemented yet (issue #530),
@@ -95,7 +95,7 @@ describe("creating arrays using dim", () => {
 
         interpreter.exec(statements);
         expect(interpreter.environment.has(identifier("baseArray"))).toBe(true);
-        expect(interpreter.environment.get(identifier("result"))).toEqual(new BrsString("new (2,1)", true));
+        expect(interpreter.environment.get(identifier("result"))).toEqual(new BrsString("new (2,1)", false, true));
 
         // NOTE: Roku's dim implementation creates a resizeable, empty array for the
         //   bottom children. Resizeable arrays aren't implemented yet (issue #530),

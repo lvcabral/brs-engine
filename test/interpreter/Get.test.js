@@ -45,7 +45,7 @@ describe("property getting", () => {
 
             interpreter.exec(ast);
 
-            expect(interpreter.environment.get(identifier("result"))).toEqual(new BrsString("index1", true));
+            expect(interpreter.environment.get(identifier("result"))).toEqual(new BrsString("index1", false, true));
         });
 
         test("multi-dimensional", () => {
@@ -104,7 +104,7 @@ describe("property getting", () => {
 
             interpreter.exec(ast);
 
-            expect(interpreter.environment.get(identifier("result"))).toEqual(new BrsString("(2,1)", true));
+            expect(interpreter.environment.get(identifier("result"))).toEqual(new BrsString("(2,1)", false, true));
         });
     });
 
@@ -138,7 +138,9 @@ describe("property getting", () => {
 
             interpreter.exec(ast);
 
-            expect(interpreter.environment.get(identifier("result"))).toEqual(new BrsString("foo's value", true));
+            expect(interpreter.environment.get(identifier("result"))).toEqual(
+                new BrsString("foo's value", false, true)
+            );
         });
 
         test("multi-dimensional", () => {
@@ -178,7 +180,7 @@ describe("property getting", () => {
 
             interpreter.exec(ast);
             expect(interpreter.environment.get(identifier("result"))).toEqual(
-                new BrsString("aa.foo.bar's value", true)
+                new BrsString("aa.foo.bar's value", false, true)
             );
         });
     });
