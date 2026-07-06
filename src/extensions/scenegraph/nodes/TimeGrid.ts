@@ -128,6 +128,12 @@ export class TimeGrid extends ArrayGrid {
     protected channelIndex: number = 0;
     protected viewStartTime: number = 0;
     protected inChannelInfoColumn: boolean = false;
+    // True until focus has been resolved to a real program. The initial focus is often set while
+    // the focused channel is still empty (SGDEX assigns `content` before its rows lazy-load their
+    // programs), leaving focus on a placeholder program 0. Once the channel gains programs we snap
+    // focus to the program at the current view time so the highlight is visible and the grid scrolls
+    // to it — matching Roku, instead of leaving focus on an off-screen program until the user moves.
+    protected initialFocusPending: boolean = true;
 
     // Per-render layout caches (read by navigation between renders)
     protected gridX: number = 0;
@@ -162,6 +168,32 @@ export class TimeGrid extends ArrayGrid {
         this.programIndexByChannel[0] = 0;
     }
 
+    /**
+     * On gaining focus, (re)emit the focus event so observers fire — matching Roku, where
+     * focusing the grid notifies channelFocused/programFocused (both alwaysNotify) even
+     * before content has loaded. SGDEX's TimeGrid content manager relies on this to start
+     * lazy content loading when `content` was assigned before the view was shown.
+     *
+     * The base ArrayGrid.setNodeFocus only re-focuses when `itemFocused >= 0`, but TimeGrid
+     * tracks channel/program focus separately and never sets `itemFocused` (it stays -1), so
+     * without this override an empty TimeGrid stays silent on focus and never triggers loading.
+     */
+    setNodeFocus(focusOn: boolean): boolean {
+        const focus = super.setNodeFocus(focusOn);
+        if (focus) {
+            const ch = this.channelIndex;
+            const prog = this.programIndexByChannel[ch] ?? 0;
+            if (this.channels.length > 0) {
+                this.focusCell(ch, prog);
+            } else {
+                // No content yet: still notify so observers (e.g. the lazy loader) fire.
+                super.setValue("channelFocused", new Int32(ch));
+                super.setValue("programFocused", new Int32(prog));
+            }
+        }
+        return focus;
+    }
+
     setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind) {
         const fieldName = index.toLowerCase();
         if ((fieldName === "jumptochannel" || fieldName === "animatetochannel") && isNumberComp(value)) {
@@ -184,6 +216,9 @@ export class TimeGrid extends ArrayGrid {
             super.setValue(index, value, alwaysNotify, kind);
             this.scrollToTime(jsValueOf(value) as number);
             return;
+        } else if (fieldName === "content") {
+            // A newly assigned content tree needs its focus (re)resolved once programs are present.
+            this.initialFocusPending = true;
         }
         // `content` falls through to ArrayGrid.setValue, which calls refreshContent()
         // (overridden below) then setFocusedItem(0) (overridden below).
@@ -240,6 +275,13 @@ export class TimeGrid extends ArrayGrid {
         if (this.viewStartTime === 0) {
             const cst = (this.getValueJS("contentStartTime") as number) ?? 0;
             this.viewStartTime = cst > 0 ? cst : this.nowEpoch();
+        }
+        // If focus is still on the placeholder (content was assigned while the focused channel was
+        // empty), now that its programs have loaded, snap focus to the program at the view time.
+        // This scrolls the grid to the focused program and makes its highlight visible, instead of
+        // leaving focus on program 0 (which usually starts before the visible window).
+        if (this.initialFocusPending && (this.programs[this.channelIndex]?.length ?? 0) > 0) {
+            this.focusCell(this.channelIndex, this.programIndexAtTime(this.channelIndex, this.viewStartTime));
         }
     }
 
@@ -302,14 +344,23 @@ export class TimeGrid extends ArrayGrid {
         this.focusCell(ch, this.programIndexAtTime(ch, this.viewStartTime));
     }
 
-    /** Central focus mutator: updates channel/program focus and fires the read-only events. */
-    protected focusCell(newChannel: number, newProgram: number) {
+    /**
+     * Central focus mutator: updates channel/program focus and fires the read-only events.
+     * @param scroll When true (default, horizontal moves and jumps) the time window scrolls to
+     *   reveal the focused program. Vertical moves pass false to keep the window fixed — Roku does
+     *   not scroll the grid horizontally when changing rows.
+     */
+    protected focusCell(newChannel: number, newProgram: number, scroll: boolean = true) {
         if (this.channels.length === 0) {
             return;
         }
         newChannel = this.clamp(newChannel, 0, this.channels.length - 1);
         const progs = this.programs[newChannel] ?? [];
         newProgram = progs.length > 0 ? this.clamp(newProgram, 0, progs.length - 1) : 0;
+        if (progs.length > 0) {
+            // Focus is now on a real program; no longer a placeholder awaiting content.
+            this.initialFocusPending = false;
+        }
         const oldChannel = this.channelIndex;
         const oldProgram = this.programIndexByChannel[oldChannel] ?? 0;
         if (oldProgram !== newProgram || oldChannel !== newChannel) {
@@ -327,7 +378,9 @@ export class TimeGrid extends ArrayGrid {
         super.setValue("programFocusedDetails", brsValueOf({ focusChannelIndex: newChannel, focusIndex: newProgram }));
         super.setValue("channelFocused", new Int32(newChannel));
         super.setValue("programFocused", new Int32(newProgram));
-        this.ensureProgramVisible(newChannel, newProgram);
+        if (scroll) {
+            this.ensureProgramVisible(newChannel, newProgram);
+        }
         this.updateTopRow();
         this.isDirty = true;
     }
@@ -430,8 +483,12 @@ export class TimeGrid extends ArrayGrid {
             return false;
         }
         const curProg = this.programIndexByChannel[this.channelIndex] ?? 0;
-        const focusTime = this.programStart[this.channelIndex]?.[curProg] ?? this.viewStartTime;
-        this.focusCell(next, this.programIndexAtTime(next, focusTime));
+        const curStart = this.programStart[this.channelIndex]?.[curProg] ?? this.viewStartTime;
+        // Anchor to the focused program's start, clamped into the visible window, so the program
+        // airing at that time in the next channel is always at least partially on screen (the
+        // focused program often starts before the left edge). Keep the window fixed (scroll=false).
+        const anchorTime = this.clamp(curStart, this.viewStartTime, this.viewStartTime + this.getDurationSec());
+        this.focusCell(next, this.programIndexAtTime(next, anchorTime), false);
         return true;
     }
 

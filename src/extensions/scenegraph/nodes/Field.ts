@@ -27,6 +27,7 @@ import {
     isStringComp,
     RuntimeError,
     DebugMode,
+    Uninitialized,
 } from "brs-engine";
 import { Node } from "./Node";
 import { RoSGNodeEvent } from "../events/RoSGNodeEvent";
@@ -476,7 +477,22 @@ export class Field {
                 });
                 try {
                     if (signature.args.length > 0) {
-                        subInterpreter.environment.define(Scope.Function, signature.args[0].name.text, event);
+                        // Roku invokes an observer callback with only the event as its first
+                        // argument; any remaining declared parameters fall back to their default
+                        // values. Bind them all here — previously only the first parameter was
+                        // defined, leaving later ones <uninitialized> (e.g. a timer `fire`
+                        // callback declared as `sub cb(event, opt = true)` crashed reading `opt`).
+                        for (const [index, param] of signature.args.entries()) {
+                            let paramValue: BrsType;
+                            if (index === 0) {
+                                paramValue = event;
+                            } else if (param.defaultValue) {
+                                paramValue = subInterpreter.evaluate(param.defaultValue);
+                            } else {
+                                paramValue = Uninitialized.Instance;
+                            }
+                            subInterpreter.environment.define(Scope.Function, param.name.text, paramValue);
+                        }
                         impl(subInterpreter, event);
                     } else {
                         impl(subInterpreter);
