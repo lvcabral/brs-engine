@@ -1598,11 +1598,7 @@ export class Node extends RoSGNode implements BrsValue {
      */
     protected makeDirty() {
         this.changed = true;
-        // Propagate the dirty flag up to the content root so an ancestor ArrayGrid/TimeGrid
-        // re-parses its model when a descendant ContentNode changes. This must happen on any
-        // thread — in particular for mutations applied on the render thread on behalf of a Task
-        // (rendezvous), where inTaskThread() is false but the parent grid still needs to refresh.
-        if (this.parent instanceof Node) {
+        if (sgRoot.inTaskThread() && this.parent instanceof Node) {
             const root = this.findRootNode();
             root.changed = true;
         }
