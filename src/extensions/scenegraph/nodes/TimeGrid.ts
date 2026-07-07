@@ -18,6 +18,15 @@ import { Font } from "./Font";
 import { sgRoot } from "../SGRoot";
 import { brsValueOf, jsValueOf } from "../factory/Serializer";
 
+/** Cached parse of one channel's programs (see TimeGrid.channelParseCache). */
+interface ChannelParse {
+    childCount: number;
+    programs: ContentNode[];
+    starts: number[];
+    durations: number[];
+    gaps: boolean[];
+}
+
 /**
  * TimeGrid — Electronic Program Guide (EPG) node.
  *
@@ -123,6 +132,12 @@ export class TimeGrid extends ArrayGrid {
     protected readonly programDuration: number[][] = [];
     protected readonly gapFlags: boolean[][] = [];
     protected readonly programIndexByChannel: number[] = [];
+    // Cache of each channel's parsed program model, keyed by the channel ContentNode. refreshContent
+    // reuses a channel's parse while its child count is unchanged, so re-parsing (and the gap-node
+    // allocation it does) only happens for channels that actually gained programs — not the whole
+    // tree on every content change. Without this, incrementally loading N channels re-parses the
+    // entire tree N times (O(N²) allocation), which OOMs V8 on large EPG data.
+    private readonly channelParseCache = new WeakMap<ContentNode, ChannelParse>();
 
     // Navigation / time-domain state
     protected channelIndex: number = 0;
@@ -241,35 +256,20 @@ export class TimeGrid extends ArrayGrid {
         const noDataText = (this.getValueJS("channelNoDataText") as string) ?? "No Data Available";
         const channelNodes = this.getContentChildren(content);
         for (const [ch, channelNode] of channelNodes.entries()) {
-            const programNodes = this.getContentChildren(channelNode);
-            const progs: ContentNode[] = [];
-            const starts: number[] = [];
-            const durs: number[] = [];
-            const gaps: boolean[] = [];
-            let prevEnd: number | null = null;
-            for (const program of programNodes) {
-                const start = this.readEpoch(program, "PLAYSTART");
-                const dur = this.readSeconds(program, "PLAYDURATION");
-                if (fillGaps && prevEnd !== null && start > prevEnd) {
-                    const gapNode = new ContentNode("_nodata_");
-                    gapNode.setValueSilent("title", new BrsString(noDataText));
-                    progs.push(gapNode);
-                    starts.push(prevEnd);
-                    durs.push(start - prevEnd);
-                    gaps.push(true);
-                }
-                progs.push(program);
-                starts.push(start);
-                durs.push(dur);
-                gaps.push(false);
-                prevEnd = start + dur;
+            const childCount = channelNode.getNodeChildren().length;
+            // Reuse the cached parse while the channel's child count is unchanged — only re-parse
+            // (and re-allocate its gap nodes) a channel that actually gained/lost programs.
+            let parse = this.channelParseCache.get(channelNode);
+            if (!parse || parse.childCount !== childCount) {
+                parse = this.parseChannel(channelNode, childCount, fillGaps, noDataText);
+                this.channelParseCache.set(channelNode, parse);
             }
             this.content.push(channelNode);
             this.channels.push(channelNode);
-            this.programs.push(progs);
-            this.programStart.push(starts);
-            this.programDuration.push(durs);
-            this.gapFlags.push(gaps);
+            this.programs.push(parse.programs);
+            this.programStart.push(parse.starts);
+            this.programDuration.push(parse.durations);
+            this.gapFlags.push(parse.gaps);
             this.programIndexByChannel[ch] ??= 0;
         }
         if (this.viewStartTime === 0) {
@@ -283,6 +283,39 @@ export class TimeGrid extends ArrayGrid {
         if (this.initialFocusPending && (this.programs[this.channelIndex]?.length ?? 0) > 0) {
             this.focusCell(this.channelIndex, this.programIndexAtTime(this.channelIndex, this.viewStartTime));
         }
+    }
+
+    /** Parses one channel's program children into the cached model (with optional gap fill). */
+    private parseChannel(
+        channelNode: ContentNode,
+        childCount: number,
+        fillGaps: boolean,
+        noDataText: string
+    ): ChannelParse {
+        const programNodes = this.getContentChildren(channelNode);
+        const programs: ContentNode[] = [];
+        const starts: number[] = [];
+        const durations: number[] = [];
+        const gaps: boolean[] = [];
+        let prevEnd: number | null = null;
+        for (const program of programNodes) {
+            const start = this.readEpoch(program, "PLAYSTART");
+            const dur = this.readSeconds(program, "PLAYDURATION");
+            if (fillGaps && prevEnd !== null && start > prevEnd) {
+                const gapNode = new ContentNode("_nodata_");
+                gapNode.setValueSilent("title", new BrsString(noDataText));
+                programs.push(gapNode);
+                starts.push(prevEnd);
+                durations.push(start - prevEnd);
+                gaps.push(true);
+            }
+            programs.push(program);
+            starts.push(start);
+            durations.push(dur);
+            gaps.push(false);
+            prevEnd = start + dur;
+        }
+        return { childCount, programs, starts, durations, gaps };
     }
 
     /** Reads a unix-epoch (seconds) field, tolerating either an integer or roDateTime value. */
@@ -311,18 +344,26 @@ export class TimeGrid extends ArrayGrid {
         return Number.isFinite(duration) && duration > 0 ? duration : 9000;
     }
 
-    /** Index of the last program in `ch` starting at or before `time` (clamped to range). */
+    /**
+     * Index of the last program in `ch` starting at or before `time` (clamped to range).
+     * `programStart[ch]` is ascending, so this is a binary search — called per channel every
+     * render to skip straight to the first visible program (avoids scanning off-screen programs).
+     */
     protected programIndexAtTime(ch: number, time: number): number {
         const starts = this.programStart[ch] ?? [];
-        if (starts.length === 0) {
+        if (starts.length === 0 || starts[0] > time) {
             return 0;
         }
+        let lo = 0;
+        let hi = starts.length - 1;
         let idx = 0;
-        for (let i = 0; i < starts.length; i++) {
-            if (starts[i] <= time) {
-                idx = i;
+        while (lo <= hi) {
+            const mid = (lo + hi) >> 1;
+            if (starts[mid] <= time) {
+                idx = mid;
+                lo = mid + 1;
             } else {
-                break;
+                hi = mid - 1;
             }
         }
         return idx;
@@ -783,7 +824,15 @@ export class TimeGrid extends ArrayGrid {
 
             const progs = this.programs[ch] ?? [];
             const focusedProgram = this.programIndexByChannel[ch] ?? 0;
-            for (let p = 0; p < progs.length; p++) {
+            // Start at the first program touching the visible window (binary search) instead of
+            // scanning every off-screen program each frame; include the focused cell so its
+            // highlight always draws even if it starts just before the left edge.
+            let startP = this.programIndexAtTime(ch, this.viewStartTime);
+            if (ch === this.channelIndex) {
+                startP = Math.min(startP, focusedProgram);
+            }
+            startP = Math.max(0, startP);
+            for (let p = startP; p < progs.length; p++) {
                 const pStart = this.programStart[ch][p];
                 const pDuration = this.programDuration[ch][p];
                 const cellX = this.gridX + (pStart - this.viewStartTime) * secToPx;
