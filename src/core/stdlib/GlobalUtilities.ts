@@ -40,6 +40,8 @@ export const GetInterface = new Callable("GetInterface", {
         returns: ValueKind.Interface,
     },
     impl: (_: Interpreter, object: BrsComponent, ifname: BrsString): BrsInterface | BrsInvalid => {
+        // Components may build their interface/method maps lazily on first lookup.
+        object.ensureMethods();
         return object.interfaces.get(ifname.value.toLowerCase()) || BrsInvalid.Instance;
     },
 });

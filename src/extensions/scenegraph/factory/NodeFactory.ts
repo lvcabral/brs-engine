@@ -783,7 +783,9 @@ function addFields(interpreter: Interpreter, node: Node, typeDef: ComponentDefin
                 return;
             }
         } else {
-            const field = node.getNodeFields().get(fieldName.toLowerCase());
+            // resolveField materializes a ContentNode hidden metadata default so a component that
+            // redeclares one (e.g. "title") is still detected and routed through replaceField.
+            const field = node.resolveField(fieldName.toLowerCase());
             if (node instanceof ContentNode && field?.isHidden()) {
                 const defaultValue = fieldValue.value
                     ? getBrsValueFromFieldType(fieldValue.type, fieldValue.value)
@@ -834,7 +836,7 @@ function addAliases(fieldName: string, fieldAlias: string, node: Node, typeDef: 
         const [childName, childField] = aliasPart.split(/\.(.*)/s, 2);
         const childNode = node.findNodeById(node, childName, true);
         if (childNode instanceof Node && childField) {
-            const field = childNode.getNodeFields().get(childField.toLowerCase());
+            const field = childNode.resolveField(childField.toLowerCase());
             if (field) {
                 if (targets.length === 0) {
                     // Get first child field and type
@@ -892,16 +894,17 @@ function addChildren(interpreter: Interpreter, node: Node, typeDef: ComponentDef
         const newChild = createNode(child.name, interpreter);
         if (newChild instanceof Node) {
             newChild.location = interpreter.formatLocation();
-            const nodeFields = newChild.getNodeFields();
             for (let [key, value] of Object.entries(child.fields)) {
-                const field = nodeFields.get(key.toLowerCase());
+                // resolveField materializes a hidden metadata default (e.g. a ContentNode child
+                // declared with title="…" in XML) so its value is applied like any other field.
+                const field = newChild.resolveField(key.toLowerCase());
                 if (field) {
                     newChild.setValue(key, getBrsValueFromFieldType(field.getType(), value));
                 }
             }
             if (child.fields?.role) {
                 const targetField = child.fields.role;
-                if (node.getNodeFields().get(targetField.toLowerCase())) {
+                if (node.hasNodeField(targetField.toLowerCase())) {
                     node.setValue(targetField, newChild, false);
                 } else {
                     BrsDevice.stderr.write(

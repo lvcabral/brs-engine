@@ -173,8 +173,12 @@ export class Task extends Node {
         update.action = "set";
         update.address = node.getAddress();
         if (value instanceof Node) {
-            const deep = value instanceof ContentNode;
-            update.value = fromSGNode(value, deep);
+            // Serialize the node SHALLOW (identity + own fields, no children). The requester reads a
+            // node it does not own, so every child/method access rendezvouses back here anyway — the
+            // children are never read from the requester's local copy. Deep-serializing them made each
+            // `m.top.content` read cost O(programs) and, repeated across a Task's content build, drove
+            // an allocation storm that OOMs V8 on large content (e.g. a TimeGrid EPG with 1000s of items).
+            update.value = fromSGNode(value, false);
         } else {
             update.value = jsValueOf(value);
         }

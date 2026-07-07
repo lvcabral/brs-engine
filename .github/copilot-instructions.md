@@ -118,8 +118,9 @@ export const MyFunction = new Callable("myFunction", {
 
 ### SceneGraph Node Implementation
 - **RoSGNode is now abstract**: All SceneGraph nodes extend `RoSGNode` (abstract) or `Node` (concrete base class)
-- **Fields are declared** in `defaultFields: FieldModel[]` array with `name`, `type`, `value`, optional `alwaysNotify`
+- **Fields are declared** in `defaultFields: FieldModel[]` array with `name`, `type`, `value`, optional `alwaysNotify`, optional `hidden`
 - **Field system improvements**: Supports typed arrays (`intarray`, `floatarray`, `boolarray`, `stringarray`, `colorarray`, `timearray`)
+- **Lazy per-node allocation (large content trees)**: `hidden` default fields (ContentNode metadata) are not materialized up front — they live in a shared per-class spec and are built on first access via `resolveField`/`hasNodeField`; a node's ~70 method Callables are built on demand via `BrsComponent.buildMethods()`/`ensureMethods()` (RoSGNode methods are prototype getters, the per-node `RoHttpAgent` is lazy). Use `resolveField`/`hasNodeField` for by-name lookups that must see hidden metadata, and never treat a method getter as an identity-stable field. See the "Per-node memory" section of `.claude/CLAUDE.md`. Coverage: `test/extensions/scenegraph/{HiddenFields,LazyMethods}.test.js`
 - **System fields are protected**: Cannot be removed via `removeField()` or added via `setFields()`; use `addFields()` for new fields
 - **setValue vs setValueSilent**: `setValue()` triggers observers, `setValueSilent()` does not (used during initialization)
 - **Custom rendering** overrides `renderNode()` method, receives `IfDraw2D` context

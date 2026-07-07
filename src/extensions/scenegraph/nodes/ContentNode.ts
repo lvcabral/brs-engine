@@ -148,6 +148,11 @@ export class ContentNode extends Node {
         this.setExtendsType(name, SGNodeType.Node);
 
         this.registerDefaultFields(this.defaultFields);
+    }
+
+    /** @override — registers the base node methods, then overrides the AA-style introspection ones. */
+    protected buildMethods() {
+        super.buildMethods();
         this.overrideMethods([this.count, this.keys, this.items, this.hasField]);
     }
 
@@ -254,83 +259,93 @@ export class ContentNode extends Node {
      * @override
      * Returns the number of visible fields in the node.
      */
-    protected count = new Callable("count", {
-        signature: {
-            args: [],
-            returns: ValueKind.Int32,
-        },
-        impl: (interpreter: Interpreter) => {
-            const remote = this.rendezvousCall(interpreter, "count");
-            if (remote !== undefined) {
-                return remote;
-            }
-            return new Int32(this.getVisibleFields().length);
-        },
-    });
+    protected get count(): Callable {
+        return new Callable("count", {
+            signature: {
+                args: [],
+                returns: ValueKind.Int32,
+            },
+            impl: (interpreter: Interpreter) => {
+                const remote = this.rendezvousCall(interpreter, "count");
+                if (remote !== undefined) {
+                    return remote;
+                }
+                return new Int32(this.getVisibleFields().length);
+            },
+        });
+    }
 
     /**
      * @override
      * Returns an array of visible keys from the node in lexicographical order.
      */
-    protected keys = new Callable("keys", {
-        signature: {
-            args: [],
-            returns: ValueKind.Object,
-        },
-        impl: (interpreter: Interpreter) => {
-            const remote = this.rendezvousCall(interpreter, "keys");
-            if (remote !== undefined) {
-                return remote;
-            }
-            return new RoArray(this.getElements());
-        },
-    });
+    protected get keys(): Callable {
+        return new Callable("keys", {
+            signature: {
+                args: [],
+                returns: ValueKind.Object,
+            },
+            impl: (interpreter: Interpreter) => {
+                const remote = this.rendezvousCall(interpreter, "keys");
+                if (remote !== undefined) {
+                    return remote;
+                }
+                return new RoArray(this.getElements());
+            },
+        });
+    }
 
     /**
      * @override
      * Returns an array of visible values from the node in lexicographical order.
      */
-    protected items = new Callable("items", {
-        signature: {
-            args: [],
-            returns: ValueKind.Object,
-        },
-        impl: (interpreter: Interpreter) => {
-            const remote = this.rendezvousCall(interpreter, "items");
-            if (remote !== undefined) {
-                return remote;
-            }
-            return new RoArray(
-                this.getElements().map((key: BrsString) => {
-                    return toAssociativeArray({ key: key, value: this.get(key) });
-                })
-            );
-        },
-    });
+    protected get items(): Callable {
+        return new Callable("items", {
+            signature: {
+                args: [],
+                returns: ValueKind.Object,
+            },
+            impl: (interpreter: Interpreter) => {
+                const remote = this.rendezvousCall(interpreter, "items");
+                if (remote !== undefined) {
+                    return remote;
+                }
+                return new RoArray(
+                    this.getElements().map((key: BrsString) => {
+                        return toAssociativeArray({ key: key, value: this.get(key) });
+                    })
+                );
+            },
+        });
+    }
 
     /**
      * @override
      * Returns true if the field exists. Marks the field as not hidden.
      */
-    protected hasField = new Callable("hasField", {
-        signature: {
-            args: [new StdlibArgument("fieldname", ValueKind.String)],
-            returns: ValueKind.Boolean,
-        },
-        impl: (interpreter: Interpreter, fieldname: BrsString) => {
-            const remote = this.rendezvousCall(interpreter, "hasField", [fieldname]);
-            if (remote !== undefined) {
-                return remote;
-            }
-            let field = this.getNodeFields().get(fieldname.value.toLowerCase());
-            if (field) {
-                field.setHidden(false);
-                return BrsBoolean.True;
-            } else {
-                return BrsBoolean.False;
-            }
-        },
-    });
+    protected get hasField(): Callable {
+        return new Callable("hasField", {
+            signature: {
+                args: [new StdlibArgument("fieldname", ValueKind.String)],
+                returns: ValueKind.Boolean,
+            },
+            impl: (interpreter: Interpreter, fieldname: BrsString) => {
+                const remote = this.rendezvousCall(interpreter, "hasField", [fieldname]);
+                if (remote !== undefined) {
+                    return remote;
+                }
+                // resolveField materializes a not-yet-touched hidden default from the class spec, so a
+                // ContentNode metadata field (e.g. "title") reports as present and becomes visible.
+                const field = this.resolveField(fieldname.value.toLowerCase());
+                if (field) {
+                    field.setHidden(false);
+                    return BrsBoolean.True;
+                } else {
+                    return BrsBoolean.False;
+                }
+            },
+        });
+    }
 
     /**
      * Marks this node as dirty and notifies the SceneGraph root.
