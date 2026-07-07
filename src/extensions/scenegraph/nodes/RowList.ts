@@ -560,6 +560,7 @@ export class RowList extends ArrayGrid {
 
         // Render row label if needed
         const title = row.getValueJS("title") ?? "";
+        const rowTopY = context.itemRect.y;
         context.showRowLabel = this.getValueJS("showRowLabel")?.[rowIndex] ?? context.showRowLabel;
         if (title.length !== 0 && context.showRowLabel) {
             const divRect = { ...context.itemRect, width: rowWidth };
@@ -572,6 +573,10 @@ export class RowList extends ArrayGrid {
         context.itemRect.x = context.rect.x + xOffset;
 
         this.renderRowContent(rowIndex, cols, numCols, context.rowItemWidth, spacing, context.itemRect, context);
+
+        // Render the "N of M" row counter on the right edge of the focused row, AFTER the items so it
+        // stays visible on rows without a label whose items reach the row top (e.g. a tall hero row).
+        this.renderRowCounter(rowIndex, numCols, rowTopY, context);
 
         // Prepare for next row
         context.itemRect.x = context.rect.x;
@@ -667,6 +672,29 @@ export class RowList extends ArrayGrid {
         const maxVisibleItems = Math.ceil((this.sceneRect.width + spacing[0]) / (rowItemWidth + spacing[0]));
         const endCol = renderMode === "wrapMode" ? numCols : Math.min(startCol + maxVisibleItems, numCols);
 
+        // In wrap mode the focused item sits at the fixed focus offset; the row wraps in BOTH
+        // directions, so the tail end of the preceding (wrapped) item is partially visible in the
+        // margin to the LEFT of the focused item — matching a real device's fixedFocusWrap. Render
+        // those preceding items first (at decreasing x) until one falls fully off the left edge.
+        if (renderMode === "wrapMode") {
+            const pitch = rowItemWidth + spacing[0];
+            let leftX = itemRect.x - pitch;
+            for (let k = 1; pitch > 0 && k <= numCols && leftX + rowItemWidth > this.sceneRect.x; k++) {
+                const colIndex = (((startCol - k) % numCols) + numCols) % numCols;
+                this.renderRowItemComponent(
+                    context.interpreter,
+                    rowIndex,
+                    colIndex,
+                    cols,
+                    { ...itemRect, x: leftX },
+                    context.rotation,
+                    context.opacity,
+                    context.draw2D
+                );
+                leftX -= pitch;
+            }
+        }
+
         for (let c = 0; c < (renderMode === "wrapMode" ? numCols : endCol - startCol); c++) {
             let colIndex = startCol + c;
 
@@ -761,6 +789,46 @@ export class RowList extends ArrayGrid {
         if (focused && drawFocus && drawFocusOnTop) {
             this.renderFocus(itemRect, opacity, nodeFocus, draw2D);
         }
+    }
+
+    /**
+     * Renders the "current_item of total_items" counter on the right edge of the row. Per Roku, the
+     * counter is only shown for the FOCUSED row, and only when `showRowCounter` is true for that row
+     * (an empty array means no counters). `showRowCounterForShortRows` (default true) suppresses it on
+     * rows whose items all fit on screen. The counter uses the same font/color as the row label.
+     */
+    private renderRowCounter(rowIndex: number, numCols: number, topY: number, context: RowListRenderContext): void {
+        if (rowIndex !== this.focusIndex || numCols === 0) {
+            return;
+        }
+        if (!this.resolveBoolean(this.getValueJS("showRowCounter"), rowIndex, false)) {
+            return;
+        }
+        const showShortRows = (this.getValueJS("showRowCounterForShortRows") as boolean) ?? true;
+        if (!showShortRows && this.checkIfAllItemsFitOnScreen(numCols, context.rowItemWidth)) {
+            return;
+        }
+        const font = this.getValue("rowLabelFont") as Font;
+        const color = this.getValueJS("rowLabelColor");
+        const labelOffset = this.resolveVector(this.getValueJS("rowLabelOffset"), rowIndex, [0, 0]);
+        // Right edge is inset from the list's right edge by rowCounterRightOffset, or (when unset) by the
+        // row label's left offset so the counter mirrors the title's margin.
+        const rightInset = (this.getValueJS("rowCounterRightOffset") as number) || (labelOffset[0] ?? 0);
+        const listWidth = context.itemSize[0] || this.sceneRect.width;
+        const rightEdge = context.rect.x + listWidth - rightInset;
+        const counterText = `${(this.rowFocus[rowIndex] ?? 0) + 1} of ${numCols}`;
+        const drawFont = font.createDrawFont();
+        if (!(drawFont instanceof RoFont)) {
+            return;
+        }
+        // Draw directly rather than via `drawText`: that helper caches measured text in `cachedLines`
+        // keyed by row index, which the row label already uses for the SAME index — sharing it makes the
+        // counter overwrite the label (and vice-versa). The counter text also changes as the focused
+        // column moves, so it must be re-measured every frame, not cached.
+        const measured = drawFont.measureText(counterText);
+        const textX = rightEdge - measured.width;
+        const textY = topY + Math.max(0, (this.titleHeight - measured.height) / 2);
+        context.draw2D?.doDrawRotatedText(counterText, textX, textY, color, context.opacity, drawFont, 0);
     }
 
     protected renderRowDivider(title: string, itemRect: Rect, opacity: number, rowIndex: number, draw2D?: IfDraw2D) {

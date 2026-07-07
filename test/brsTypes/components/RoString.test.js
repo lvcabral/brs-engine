@@ -153,6 +153,33 @@ describe("RoString", () => {
             });
         });
 
+        describe("format", () => {
+            it("formats primitive string and number arguments", () => {
+                let s = new RoString(new BrsString("%s | %d"));
+                let format = s.getMethod("format");
+                const result = format.call(interpreter, new BrsString("A"), new Int32(5));
+                expect(result).toEqual(new BrsString("A | 5"));
+            });
+
+            it("unboxes boxed string arguments instead of rendering `undefined`", () => {
+                let s = new RoString(new BrsString("%s | %s"));
+                let format = s.getMethod("format");
+                const result = format.call(
+                    interpreter,
+                    new RoString(new BrsString("A")),
+                    new RoString(new BrsString("B"))
+                );
+                expect(result).toEqual(new BrsString("A | B"));
+            });
+
+            it("unboxes boxed number arguments", () => {
+                let s = new RoString(new BrsString("%d"));
+                let format = s.getMethod("format");
+                const result = format.call(interpreter, new Int32(42).box());
+                expect(result).toEqual(new BrsString("42"));
+            });
+        });
+
         describe("appendString", () => {
             let s, appendString;
 
