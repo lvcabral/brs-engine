@@ -77,6 +77,10 @@ export class RowList extends ArrayGrid {
     protected readonly rowItemComps: Group[][] = [[]];
     protected readonly rowFocus: number[];
     protected readonly rowScrollOffset: number[] = []; // Track scroll offset per row for floating focus
+    // Identity of the content node last parsed by refreshContent. Used to reset per-row horizontal
+    // focus/scroll only when a NEW content tree is assigned — a plain re-parse (triggered whenever a
+    // descendant ContentNode is marked changed) must preserve each row's focused column/scroll.
+    private parsedContentNode?: ContentNode;
     private readonly titleHeight: number;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.RowList) {
@@ -781,7 +785,16 @@ export class RowList extends ArrayGrid {
         this.content.length = 0;
         const content = this.getValue("content");
         if (!(content instanceof ContentNode)) {
+            this.parsedContentNode = undefined;
             return;
+        }
+        // Reset per-row horizontal focus/scroll only when a genuinely new content tree is assigned.
+        // A plain re-parse (any descendant ContentNode marked changed) must preserve them, otherwise
+        // horizontal navigation is wiped back to column 0 on the next render.
+        if (content !== this.parsedContentNode) {
+            this.parsedContentNode = content;
+            this.rowFocus.length = 0;
+            this.rowScrollOffset.length = 0;
         }
         const rows = this.getContentChildren(content);
         let itemIndex = 0;
@@ -790,8 +803,8 @@ export class RowList extends ArrayGrid {
             if (content.length === 0) {
                 continue;
             }
-            this.rowFocus[itemIndex] = 0;
-            this.rowScrollOffset[itemIndex] = 0; // Initialize scroll offset
+            this.rowFocus[itemIndex] ??= 0;
+            this.rowScrollOffset[itemIndex] ??= 0; // Initialize scroll offset (preserve existing)
             itemIndex++;
             this.content.push(row);
         }
