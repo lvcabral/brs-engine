@@ -322,7 +322,9 @@ export class ContentNode extends Node {
             if (remote !== undefined) {
                 return remote;
             }
-            let field = this.getNodeFields().get(fieldname.value.toLowerCase());
+            // resolveField materializes a not-yet-touched hidden default from the class spec, so a
+            // ContentNode metadata field (e.g. "title") reports as present and becomes visible.
+            const field = this.resolveField(fieldname.value.toLowerCase());
             if (field) {
                 field.setHidden(false);
                 return BrsBoolean.True;

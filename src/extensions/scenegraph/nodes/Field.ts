@@ -36,9 +36,13 @@ import { fromAssociativeArray, toAssociativeArray, jsValueOf } from "../factory/
 import { BrsCallback, FieldKind, isContentNode } from "../SGTypes";
 
 export class Field {
-    private readonly permanentObservers: BrsCallback[] = [];
-    private readonly unscopedObservers: BrsCallback[] = [];
-    private readonly scopedObservers: Map<Node, BrsCallback[]> = new Map();
+    // Observer collections are allocated lazily. A node like ContentNode registers ~100 default
+    // fields and is instantiated in the thousands (e.g. a TimeGrid EPG); eagerly allocating two
+    // arrays + a Map per field wastes hundreds of MB on fields that are never observed. Almost all
+    // fields have no observers, so these stay undefined until the first observeField.
+    private permanentObservers?: BrsCallback[];
+    private unscopedObservers?: BrsCallback[];
+    private scopedObservers?: Map<Node, BrsCallback[]>;
     /** True while this field's observers are dispatching, to break re-entrant cascades. */
     private notifying = false;
 
@@ -150,15 +154,21 @@ export class Field {
     }
 
     private dispatchObservers() {
-        for (const observer of this.permanentObservers) {
-            this.executeCallbacks(observer);
+        if (this.permanentObservers) {
+            for (const observer of this.permanentObservers) {
+                this.executeCallbacks(observer);
+            }
         }
-        for (const observer of this.unscopedObservers) {
-            this.executeCallbacks(observer);
+        if (this.unscopedObservers) {
+            for (const observer of this.unscopedObservers) {
+                this.executeCallbacks(observer);
+            }
         }
-        for (const [_node, callbacks] of this.scopedObservers) {
-            for (const callback of callbacks) {
-                this.executeCallbacks(callback);
+        if (this.scopedObservers) {
+            for (const [_node, callbacks] of this.scopedObservers) {
+                for (const callback of callbacks) {
+                    this.executeCallbacks(callback);
+                }
             }
         }
     }
@@ -242,29 +252,34 @@ export class Field {
             },
         };
         if (mode === "scoped") {
+            this.scopedObservers ??= new Map();
             const maybeCallbacks = this.scopedObservers.get(subscriber) || [];
             this.scopedObservers.set(subscriber, [...maybeCallbacks, brsCallback]);
         } else if (mode === "unscoped") {
-            this.unscopedObservers.push(brsCallback);
+            (this.unscopedObservers ??= []).push(brsCallback);
         } else {
-            this.permanentObservers.push(brsCallback);
+            (this.permanentObservers ??= []).push(brsCallback);
         }
     }
 
     getObserversWithPort(scope?: Node): BrsCallback[] {
         const observers: BrsCallback[] = [];
-        for (const callback of this.unscopedObservers) {
-            if (callback.observer instanceof RoMessagePort) {
-                observers.push(callback);
-            }
-        }
-        for (const [node, callbacks] of this.scopedObservers) {
-            if (scope !== undefined && node !== scope) {
-                continue;
-            }
-            for (const callback of callbacks) {
+        if (this.unscopedObservers) {
+            for (const callback of this.unscopedObservers) {
                 if (callback.observer instanceof RoMessagePort) {
                     observers.push(callback);
+                }
+            }
+        }
+        if (this.scopedObservers) {
+            for (const [node, callbacks] of this.scopedObservers) {
+                if (scope !== undefined && node !== scope) {
+                    continue;
+                }
+                for (const callback of callbacks) {
+                    if (callback.observer instanceof RoMessagePort) {
+                        observers.push(callback);
+                    }
                 }
             }
         }
@@ -272,29 +287,32 @@ export class Field {
     }
 
     removeUnscopedObservers() {
-        this.unscopedObservers.splice(0);
+        this.unscopedObservers?.splice(0);
     }
 
     removeScopedObservers(scope: Node) {
-        this.scopedObservers.get(scope)?.splice(0);
-        this.scopedObservers.delete(scope);
+        this.scopedObservers?.get(scope)?.splice(0);
+        this.scopedObservers?.delete(scope);
     }
 
     clearObservers() {
-        this.permanentObservers.length = 0;
-        this.unscopedObservers.length = 0;
-        this.scopedObservers.clear();
+        this.permanentObservers = undefined;
+        this.unscopedObservers = undefined;
+        this.scopedObservers = undefined;
     }
 
     isObserved() {
-        return this.permanentObservers.length > 0 || this.unscopedObservers.length > 0 || this.scopedObservers.size > 0;
+        return (
+            (this.permanentObservers?.length ?? 0) > 0 ||
+            (this.unscopedObservers?.length ?? 0) > 0 ||
+            (this.scopedObservers?.size ?? 0) > 0
+        );
     }
 
     isPortObserved(scope: Node) {
         return (
-            this.unscopedObservers.some((callback) => callback.observer instanceof RoMessagePort) ||
-            this.scopedObservers.get(scope)?.some((callback) => callback.observer instanceof RoMessagePort) ||
-            false
+            (this.unscopedObservers?.some((callback) => callback.observer instanceof RoMessagePort) ?? false) ||
+            (this.scopedObservers?.get(scope)?.some((callback) => callback.observer instanceof RoMessagePort) ?? false)
         );
     }
 

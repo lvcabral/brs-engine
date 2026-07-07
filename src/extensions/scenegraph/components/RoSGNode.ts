@@ -195,7 +195,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
     protected abstract removeFieldEntry(fieldName: string): boolean;
     protected abstract getNodeFieldsAsAA(): RoAssociativeArray;
     protected abstract getNodeFieldTypes(): RoAssociativeArray;
-    protected abstract hasNodeField(fieldName: string): boolean;
+    abstract hasNodeField(fieldName: string): boolean;
     protected abstract canAcceptValue(fieldName: string, value: BrsType): boolean;
     protected abstract clearNodeFields(): void;
 

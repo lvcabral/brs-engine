@@ -59,6 +59,17 @@ type ChangeOperation = "none" | "insert" | "add" | "remove" | "set" | "clear" | 
  * Handles BrightScript-facing field management, child lists, focus, observers, and rendering plumbing.
  */
 export class Node extends RoSGNode implements BrsValue {
+    /**
+     * Per-node-class registry of `hidden` default fields (name → model), shared across all
+     * instances of a class. Hidden default fields are metadata that is already excluded from
+     * getFields/serialization, so they are NOT materialized as `Field` objects up front — they
+     * live only in this spec and `resolveField` builds a real `Field` the first time one is read
+     * or written. A ContentNode has 103 hidden defaults but a program typically touches ~4, so
+     * this avoids ~100 `Field` allocations per node — critical for large content trees (EPG grids).
+     */
+    private static readonly hiddenSpecCache = new WeakMap<Function, Map<string, FieldModel>>();
+    /** Reference to this instance's class spec (see hiddenSpecCache). */
+    private hiddenFieldSpec?: Map<string, FieldModel>;
     /** Field registry keyed by lowercase name. */
     protected readonly fields: Map<string, Field>;
     /** Alias definitions pointing to fields on child nodes. */
@@ -249,8 +260,10 @@ export class Node extends RoSGNode implements BrsValue {
      * @param fieldName Field name in any casing.
      * @returns True when the field exists.
      */
-    protected hasNodeField(fieldName: string): boolean {
-        return this.fields.has(fieldName.toLowerCase());
+    hasNodeField(fieldName: string): boolean {
+        const mapKey = fieldName.toLowerCase();
+        // A not-yet-materialized hidden default field still exists.
+        return this.fields.has(mapKey) || (this.hiddenFieldSpec?.has(mapKey) ?? false);
     }
 
     /**
@@ -260,7 +273,7 @@ export class Node extends RoSGNode implements BrsValue {
      * @returns True if the value passes validation.
      */
     protected canAcceptValue(fieldName: string, value: BrsType): boolean {
-        const field = this.fields.get(fieldName.toLowerCase());
+        const field = this.resolveField(fieldName.toLowerCase());
         if (!field?.canAcceptValue(value)) {
             return false;
         }
@@ -296,7 +309,7 @@ export class Node extends RoSGNode implements BrsValue {
         }
         const key = index.toString().toLowerCase();
         if (this.shouldRendezvous()) {
-            if (this.fields.has(key)) {
+            if (this.hasNodeField(key)) {
                 const task = sgRoot.getCurrentThreadTask();
                 // By default every read of a render-owned field rendezvouses, matching real Roku
                 // behavior ("each dot represents a distinct rendezvous"). The freshFields read-cache
@@ -308,7 +321,7 @@ export class Node extends RoSGNode implements BrsValue {
                 return this.getMethod(key) || BrsInvalid.Instance;
             }
         }
-        const field = this.fields.get(key);
+        const field = this.resolveField(key);
         if (field) {
             const value = field.getValue();
             if (value instanceof RoAssociativeArray || value instanceof RoArray) {
@@ -329,7 +342,7 @@ export class Node extends RoSGNode implements BrsValue {
      * @returns Stored BrightScript value.
      */
     getValue(fieldName: string) {
-        const field = this.fields.get(fieldName.toLowerCase());
+        const field = this.resolveField(fieldName.toLowerCase());
         return field ? field.getValue() : BrsInvalid.Instance;
     }
 
@@ -339,7 +352,7 @@ export class Node extends RoSGNode implements BrsValue {
      * @returns Native JS value or undefined.
      */
     getValueJS(fieldName: string) {
-        const field = this.fields.get(fieldName.toLowerCase());
+        const field = this.resolveField(fieldName.toLowerCase());
         const value = field?.getValue();
         return field && value ? jsValueOf(value) : undefined;
     }
@@ -355,7 +368,7 @@ export class Node extends RoSGNode implements BrsValue {
     setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind, sync: boolean = true) {
         const mapKey = index.toLowerCase();
         const fieldType = kind ?? FieldKind.fromBrsType(value);
-        let field = this.fields.get(mapKey);
+        let field = this.resolveField(mapKey);
         if (field && field.getType() !== FieldKind.String && isBrsString(value)) {
             value = getBrsValueFromFieldType(field.getType(), value.getValue(), field.getValue());
         }
@@ -410,7 +423,7 @@ export class Node extends RoSGNode implements BrsValue {
      */
     setValueSilent(fieldName: string, value: BrsType, hidden?: boolean, kind?: FieldKind) {
         const mapKey = fieldName.toLowerCase();
-        let field = this.fields.get(mapKey);
+        let field = this.resolveField(mapKey);
         if (field) {
             field.setValue(value, false);
             if (hidden !== undefined) {
@@ -552,7 +565,7 @@ export class Node extends RoSGNode implements BrsValue {
      * @returns Result metadata mirroring Roku behavior.
      */
     protected moveObjectIntoField(fieldName: string, data: RoAssociativeArray) {
-        const field = this.fields.get(fieldName.toLowerCase());
+        const field = this.resolveField(fieldName.toLowerCase());
         if (field === undefined) {
             return { code: -1, msg: `Could not find field '"${fieldName}"'` };
         } else if (field.getType() !== FieldKind.AssocArray) {
@@ -580,7 +593,7 @@ export class Node extends RoSGNode implements BrsValue {
      * @returns The moved value or an error string.
      */
     protected moveObjectFromField(fieldName: string): BrsType | string {
-        const field = this.fields.get(fieldName.toLowerCase());
+        const field = this.resolveField(fieldName.toLowerCase());
         if (field === undefined) {
             return `Could not find field '"${fieldName}"'`;
         } else if (field.getType() !== FieldKind.AssocArray) {
@@ -603,7 +616,7 @@ export class Node extends RoSGNode implements BrsValue {
         let defaultValue = getBrsValueFromFieldType(type);
         let fieldKind = FieldKind.fromString(type);
 
-        if (defaultValue !== Uninitialized.Instance && !this.fields.has(fieldName.toLowerCase())) {
+        if (defaultValue !== Uninitialized.Instance && !this.hasNodeField(fieldName.toLowerCase())) {
             this.setValue(fieldName, defaultValue, alwaysNotify, fieldKind, sync);
             this.makeDirty();
         }
@@ -647,7 +660,7 @@ export class Node extends RoSGNode implements BrsValue {
      */
     protected setNodeFields(fieldsToSet: RoAssociativeArray, addFields: boolean) {
         for (const [key, value] of fieldsToSet.elements) {
-            if (addFields || (!addFields && this.fields.has(key.toLowerCase()))) {
+            if (addFields || (!addFields && this.hasNodeField(key.toLowerCase()))) {
                 this.setValue(key, value, false);
                 this.makeDirty();
             }
@@ -675,7 +688,7 @@ export class Node extends RoSGNode implements BrsValue {
      * @returns Roku-style status code.
      */
     protected setFieldByRef(fieldName: string, data: RoAssociativeArray): number {
-        const field = this.fields.get(fieldName.toLowerCase());
+        const field = this.resolveField(fieldName.toLowerCase());
         if (!field) {
             return -1;
         } else if (field.getType() === FieldKind.AssocArray) {
@@ -691,7 +704,7 @@ export class Node extends RoSGNode implements BrsValue {
      * @returns True when the field can be returned by reference.
      */
     protected canGetFieldByRef(fieldName: string): boolean {
-        const field = this.fields.get(fieldName.toLowerCase());
+        const field = this.resolveField(fieldName.toLowerCase());
         return !!field && field.getType() === FieldKind.AssocArray && field.isValueRef();
     }
 
@@ -701,7 +714,7 @@ export class Node extends RoSGNode implements BrsValue {
      * @returns The AA reference or an error string.
      */
     protected getFieldByRef(fieldName: string): RoAssociativeArray | string {
-        const field = this.fields.get(fieldName.toLowerCase());
+        const field = this.resolveField(fieldName.toLowerCase());
         if (field === undefined) {
             return `Could not find field '"${fieldName}"'`;
         } else if (field.getType() === FieldKind.AssocArray && field.isValueRef()) {
@@ -870,7 +883,7 @@ export class Node extends RoSGNode implements BrsValue {
     ) {
         let result = BrsBoolean.False;
         const name = fieldName.getValue();
-        const field = this.fields.get(name.toLowerCase());
+        const field = this.resolveField(name.toLowerCase());
         if (field instanceof Field) {
             const host = interpreter.environment.hostNode;
             const alias = this.aliases.get(name.toLowerCase());
@@ -1163,7 +1176,9 @@ export class Node extends RoSGNode implements BrsValue {
      * @returns Linked field metadata or undefined.
      */
     protected linkField(node: Node, fieldName: string, thisField?: string) {
-        const field = node.fields.get(fieldName.toLowerCase());
+        // resolveField materializes a hidden default on the source node so it can be linked, matching
+        // the pre-lazy behavior where every default field was already a live Field.
+        const field = node.resolveField(fieldName.toLowerCase());
         if (field) {
             this.fields.set((thisField ?? fieldName).toLowerCase(), field);
         }
@@ -1256,7 +1271,7 @@ export class Node extends RoSGNode implements BrsValue {
                 continue;
             }
             // Set all other fields, respecting the createFields parameter
-            else if (node.fields.has(fieldName) || (createFields && !isInvalid(value))) {
+            else if (node.hasNodeField(fieldName) || (createFields && !isInvalid(value))) {
                 node.setValue(key, value, false);
                 this.makeDirty();
             }
@@ -1555,16 +1570,64 @@ export class Node extends RoSGNode implements BrsValue {
      * @param fields Field definitions including defaults.
      */
     protected registerDefaultFields(fields: FieldModel[]) {
+        // The class spec is keyed by the concrete class and shared across instances. This runs
+        // more than once per node (base fields during the Node ctor, then the subclass fields),
+        // all with the same `this.constructor`, so accumulate rather than rebuild.
+        const nodeClass = this.constructor;
+        let spec = Node.hiddenSpecCache.get(nodeClass);
+        if (!spec) {
+            spec = new Map();
+            Node.hiddenSpecCache.set(nodeClass, spec);
+        }
         for (const field of fields) {
-            const value = getBrsValueFromFieldType(field.type, field.value);
             const fieldType = FieldKind.fromString(field.type);
-            if (fieldType) {
-                this.fields.set(
-                    field.name.toLowerCase(),
-                    new Field(field.name, value, fieldType, !!field.alwaysNotify, true, field.hidden)
-                );
+            if (!fieldType) {
+                continue;
+            }
+            const mapKey = field.name.toLowerCase();
+            if (field.hidden) {
+                // Defer materialization: keep only the model in the shared spec. resolveField()
+                // creates the Field lazily on first access (matching Roku, where an untouched
+                // metadata field is absent from getFields until read/written).
+                if (!spec.has(mapKey)) {
+                    spec.set(mapKey, field);
+                }
+            } else {
+                const value = getBrsValueFromFieldType(field.type, field.value);
+                this.fields.set(mapKey, new Field(field.name, value, fieldType, !!field.alwaysNotify, true, false));
             }
         }
+        this.hiddenFieldSpec = spec;
+    }
+
+    /**
+     * Resolves a field by (lowercase) name, lazily materializing a `hidden` default field from the
+     * class spec on first access. Use this instead of `this.fields.get(...)` wherever a field is
+     * looked up by name, so hidden default fields behave as if they were always present.
+     * @param mapKey Lowercase field name.
+     * @returns The field, or undefined when no such field/default exists.
+     */
+    resolveField(mapKey: string): Field | undefined {
+        const existing = this.fields.get(mapKey);
+        if (existing) {
+            return existing;
+        }
+        const model = this.hiddenFieldSpec?.get(mapKey);
+        if (!model) {
+            return undefined;
+        }
+        const fieldType = FieldKind.fromString(model.type);
+        if (!fieldType) {
+            return undefined;
+        }
+        const value = getBrsValueFromFieldType(model.type, model.value);
+        // Materialize with the model's real flags (system + hidden), reproducing exactly the eager
+        // `Field` the constructor used to create. The field's own getValue/setValue/addObserver clear
+        // `hidden` on first real access, just as before — so a type-check-only resolve (canAcceptValue)
+        // leaves it hidden and it stays out of getFields until genuinely read or written.
+        const field = new Field(model.name, value, fieldType, !!model.alwaysNotify, true, !!model.hidden);
+        this.fields.set(mapKey, field);
+        return field;
     }
 
     /**
