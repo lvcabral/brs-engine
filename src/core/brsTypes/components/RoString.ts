@@ -5,7 +5,7 @@ import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid, Comparable } fr
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { BrsType, isBrsNumber, isBrsString, isStringComp } from "..";
-import { Unboxable } from "../Boxing";
+import { isUnboxable, Unboxable } from "../Boxing";
 import { Int32 } from "../Int32";
 import { Float } from "../Float";
 import { RuntimeError, RuntimeErrorDetail } from "../../error/BrsError";
@@ -567,7 +567,10 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
             // Documentation: https://developer.roku.com/docs/references/brightscript/language/format-strings.md
             let args: any[] = [];
             if (additionalArgs.length > 0) {
-                for (const element of additionalArgs) {
+                for (let element of additionalArgs) {
+                    if (isUnboxable(element)) {
+                        element = element.unbox();
+                    }
                     if (isBrsNumber(element)) {
                         args.push(element.getValue());
                     } else if (element instanceof BrsString) {

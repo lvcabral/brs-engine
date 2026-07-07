@@ -55,6 +55,13 @@ export class Poster extends Group {
             const uri = jsValueOf(value);
             if (typeof uri === "string" && uri.trim() !== "" && this.uri !== uri) {
                 super.setValue("loadStatus", new BrsString("loading"));
+                // On a real device bitmapWidth/bitmapHeight read 0 until the image finishes loading.
+                // Reset them here (silently) so the post-load values are always seen as a change and
+                // notify observers on every load — even when the new image has the same dimensions as
+                // the previous one (e.g. fixed loadWidth/loadHeight). Without this, an observer on
+                // bitmapWidth (a common cross-fade trigger) never fires for same-size images.
+                this.setValueSilent("bitmapWidth", new Float(0));
+                this.setValueSilent("bitmapHeight", new Float(0));
                 this.uri = uri;
                 const loadStatus = this.loadUri(uri);
                 if (loadStatus !== "ready") {

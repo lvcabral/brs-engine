@@ -313,7 +313,17 @@ export class Animation extends AnimationBase {
         if (!searchRoot) {
             return undefined;
         }
-        const found = this.findNodeById(searchRoot, nodeId);
+        // Prefer a DESCENDANT match first: the search root may be a custom-component instance whose
+        // own `id` is assigned in the parent's scope (e.g. `<FadingBackground id="Background">` around
+        // a child `<Poster id="background">`). Because ids match case-insensitively, that external id
+        // must not shadow a same-named child — otherwise the animation drives the wrong node.
+        let found = this.findNodeById(searchRoot, nodeId, true);
+        if (!(found instanceof Node)) {
+            // No descendant matched: fall back to the search root itself, which covers an animation
+            // whose target is its own enclosing node (e.g. `fieldToInterp="loadingIndicatorGroup.opacity"`
+            // on an Animation nested inside `<Group id="loadingIndicatorGroup">`).
+            found = this.findNodeById(searchRoot, nodeId, false);
+        }
         return found instanceof Node ? found : undefined;
     }
 
