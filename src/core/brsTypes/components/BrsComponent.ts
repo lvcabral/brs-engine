@@ -8,6 +8,7 @@ export class BrsComponent {
     protected readonly componentName: string;
     private readonly methods: Map<string, Callable> = new Map();
     private filter: string = "";
+    private methodsBuilt = false;
     protected references: number;
     protected returnFlag: boolean;
 
@@ -17,6 +18,28 @@ export class BrsComponent {
         this.componentName = name;
         this.references = 0;
         this.returnFlag = false;
+    }
+
+    /**
+     * Hook for components that build their method surface lazily. Overridden to call
+     * `registerMethods`/`appendMethods`; runs at most once, on the first method or interface
+     * lookup (see {@link ensureMethods}). The default is a no-op — components that register their
+     * methods eagerly in their constructor are unaffected.
+     */
+    protected buildMethods(): void {
+        // Overridden by subclasses that defer method construction.
+    }
+
+    /**
+     * Ensures {@link buildMethods} has run before the method/interface maps are consulted. Cheap
+     * (a boolean check) after the first call. Public so external reflection (e.g. `GetInterface`)
+     * can trigger the build before reading `interfaces` directly.
+     */
+    ensureMethods() {
+        if (!this.methodsBuilt) {
+            this.methodsBuilt = true;
+            this.buildMethods();
+        }
     }
 
     /**
@@ -33,6 +56,7 @@ export class BrsComponent {
      * @returns true if the component implements the interface, false otherwise.
      */
     hasInterface(interfaceName: string) {
+        this.ensureMethods();
         return this.interfaces.has(interfaceName.toLowerCase());
     }
 
@@ -88,6 +112,7 @@ export class BrsComponent {
      * @returns Callable if found, undefined otherwise
      */
     getMethod(index: string): Callable | undefined {
+        this.ensureMethods();
         const method = index.toLowerCase();
         if (this.filter !== "") {
             const iface = this.interfaces.get(this.filter);
