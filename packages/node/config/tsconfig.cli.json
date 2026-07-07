@@ -2,9 +2,9 @@
     "extends": "../../../tsconfig.json",
     "compilerOptions": {
         "target": "ES2022",                       /* Specify ECMAScript target version: 'ES3' (default), 'ES5', 'ES2015', 'ES2016', 'ES2017', or 'ESNEXT'. */
-        "module": "CommonJS",                     /* Specify module code generation: 'none', 'commonjs', 'amd', 'system', 'umd', 'es2015', or 'ESNext'. */
+        "module": "ESNext",                       /* webpack bundles the node target and emits require() for commonjs externals */
         "lib": ["dom", "DOM.Iterable", "webworker", "ESNext"],    /* Specify library files to be included in the compilation:  */
-        "moduleResolution": "node",               /* Specify module resolution strategy */
+        "moduleResolution": "bundler",            /* webpack/ts-loader resolves modules; "node"/"node10" are hard errors in TS7 */
         "declaration": true,                      /* Generates corresponding '.d.ts' file. */
         "declarationDir": "../types",             /* Output '.d.ts' files to the directory. */
         "outDir": "../bin",                       /* Redirect output structure to the directory. */
