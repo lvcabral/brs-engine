@@ -260,7 +260,7 @@ export class TimeGrid extends ArrayGrid {
             // Reuse the cached parse while the channel's child count is unchanged — only re-parse
             // (and re-allocate its gap nodes) a channel that actually gained/lost programs.
             let parse = this.channelParseCache.get(channelNode);
-            if (!parse || parse.childCount !== childCount) {
+            if (parse?.childCount !== childCount) {
                 parse = this.parseChannel(channelNode, childCount, fillGaps, noDataText);
                 this.channelParseCache.set(channelNode, parse);
             }
