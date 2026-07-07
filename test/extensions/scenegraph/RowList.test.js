@@ -3,7 +3,7 @@ const path = require("path");
 const scenegraph = require("../../../packages/scenegraph/lib/brs-sg.node.js");
 const core = require("../../../packages/node/bin/brs.node.js");
 
-const { SGNodeFactory, sgRoot } = scenegraph;
+const { SGNodeFactory, sgRoot, getBrsValueFromFieldType } = scenegraph;
 const { BrsDevice, BrsString, Int32, RoArray } = core;
 
 /**
@@ -180,6 +180,83 @@ describe("RowList key handling", () => {
         render();
         expect(drawn).toContain("My Row");
         expect(drawn.some((t) => /of 15/.test(t))).toBe(false);
+    });
+
+    test("a row label updated after the first render is redrawn (not served stale from the cache)", () => {
+        // Regression: the row label was drawn via the drawText line cache keyed by row index, which is
+        // only refreshed when the RowList node itself is marked dirty. A title updated later on the
+        // row's ContentNode (e.g. after a Task loads) did not dirty the RowList, so the label kept
+        // rendering the stale cached text (or never appeared). The label is now drawn directly.
+        const list = SGNodeFactory.createNode("RowList");
+        const content = buildContent([["A", "B"]]);
+        const rowNode = content.getNodeChildren()[0];
+        rowNode.setValue("title", new BrsString("Old"));
+        list.setValue("content", content);
+        list.setValue("itemSize", new RoArray([new Int32(1280), new Int32(220)]));
+        list.setValue("numRows", new Int32(1));
+        list.setValue("rowItemSize", new RoArray([new RoArray([new Int32(375), new Int32(197)])]));
+        list.setValue("showRowLabel", new RoArray([core.BrsBoolean.True]));
+
+        const drawn = [];
+        const draw2D = new Proxy(
+            {},
+            { get: (_t, prop) => (prop === "doDrawRotatedText" ? (text) => drawn.push(text) : () => 0) }
+        );
+        const render = () => {
+            drawn.length = 0;
+            list.renderNode({}, [0, 0], 0, 1, draw2D);
+        };
+
+        render();
+        expect(drawn).toContain("Old");
+
+        // Update the title on the row's ContentNode only (the RowList's own fields are untouched).
+        rowNode.setValue("title", new BrsString("New"));
+        render();
+        expect(drawn).toContain("New");
+        expect(drawn).not.toContain("Old");
+    });
+
+    test("showRowLabel scalar shorthand ('true') shows row labels (regression: Home screen titles)", () => {
+        // Regression (jellyfin-roku Home): showRowLabel="true" is Roku shorthand for "all rows show
+        // labels". The XML loader must parse the scalar to [true], not [] — an empty array reads as
+        // unset (no labels), so the row titles never rendered.
+        expect(
+            getBrsValueFromFieldType("boolarray", "true")
+                .getValue()
+                .map((b) => b.toBoolean())
+        ).toEqual([true]);
+        expect(
+            getBrsValueFromFieldType("boolarray", "false")
+                .getValue()
+                .map((b) => b.toBoolean())
+        ).toEqual([false]);
+        // An array literal is still parsed as-is, and an unset value stays empty (no labels).
+        expect(
+            getBrsValueFromFieldType("boolarray", "[false,true]")
+                .getValue()
+                .map((b) => b.toBoolean())
+        ).toEqual([false, true]);
+        expect(getBrsValueFromFieldType("boolarray", undefined).getValue()).toEqual([]);
+
+        const list = SGNodeFactory.createNode("RowList");
+        const content = buildContent([["A", "B"]]);
+        content.getNodeChildren()[0].setValue("title", new BrsString("Continue Watching"));
+        list.setValue("content", content);
+        list.setValue("itemSize", new RoArray([new Int32(1280), new Int32(220)]));
+        list.setValue("numRows", new Int32(1));
+        list.setValue("rowItemSize", new RoArray([new RoArray([new Int32(375), new Int32(197)])]));
+        // Apply showRowLabel exactly as the XML loader does for showRowLabel="true".
+        list.setValue("showRowLabel", getBrsValueFromFieldType("boolarray", "true"));
+        expect(list.getValueJS("showRowLabel")).toEqual([true]);
+
+        const drawn = [];
+        const draw2D = new Proxy(
+            {},
+            { get: (_t, prop) => (prop === "doDrawRotatedText" ? (text) => drawn.push(text) : () => 0) }
+        );
+        list.renderNode({}, [0, 0], 0, 1, draw2D);
+        expect(drawn).toContain("Continue Watching");
     });
 
     test("item uses rowItemSize (not rowHeights) and sits below the counter band on a label-less row", () => {

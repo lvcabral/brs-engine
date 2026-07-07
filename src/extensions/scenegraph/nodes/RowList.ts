@@ -862,7 +862,18 @@ export class RowList extends ArrayGrid {
         if (title.length !== 0) {
             const font = this.getValue("rowLabelFont") as Font;
             const color = this.getValueJS("rowLabelColor");
-            this.drawText(title, font, color, opacity, divRect, "left", "center", 0, draw2D, "...", rowIndex);
+            // Draw directly rather than via `drawText`: that helper caches the measured text in
+            // `cachedLines` keyed by row index and only refreshes it when the RowList node itself is
+            // marked dirty. The label text comes from the row's ContentNode `title`, which can change
+            // without dirtying the RowList, so a title updated after the first render would keep drawing
+            // the stale cached value. Re-measuring every frame keeps the label in sync with the content
+            // (and matches how the row counter is drawn).
+            const drawFont = font.createDrawFont();
+            if (drawFont instanceof RoFont) {
+                const measured = drawFont.measureText(title, divRect.width, "...");
+                const textY = divRect.y + Math.max(0, (this.titleHeight - measured.height) / 2);
+                draw2D?.doDrawRotatedText(measured.text, divRect.x, textY, color, opacity, drawFont, 0);
+            }
         }
 
         // Return height of title plus vertical offset (spacing between title and items)

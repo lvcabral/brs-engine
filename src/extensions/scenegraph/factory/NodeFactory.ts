@@ -1064,11 +1064,23 @@ export function getBrsValueFromFieldType(type: string, value?: string, defaultVa
         case "font":
             returnValue = parseFont(value ?? "", defaultValue);
             break;
+        case "boolarray": {
+            // Roku accepts a scalar shorthand for boolean arrays (e.g. showRowLabel="true" or
+            // variableWidthItems="true"), meaning "this value for every row". A bare true/false that is
+            // not an array literal becomes a single-element array so per-row resolution repeats it —
+            // otherwise parseArray would yield an empty array and the flag would read as unset.
+            const trimmed = value?.trim();
+            if (trimmed && !trimmed.startsWith("[")) {
+                returnValue = new RoArray([BrsBoolean.from(trimmed.toLowerCase() === "true")]);
+            } else {
+                returnValue = parseArray(value ?? "", defaultValue);
+            }
+            break;
+        }
         case "roarray":
         case "array":
         case "vector2d":
         case "rect2d":
-        case "boolarray":
         case "floatarray":
         case "intarray":
         case "timearray":
