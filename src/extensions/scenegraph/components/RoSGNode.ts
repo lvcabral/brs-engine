@@ -135,7 +135,8 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
 
     /** roHttpAgent, created on first access (rendering reads customHeaders; methods register it lazily). */
     protected get httpAgent(): RoHttpAgent {
-        return (this.lazyHttpAgent ??= new RoHttpAgent());
+        this.lazyHttpAgent ??= new RoHttpAgent();
+        return this.lazyHttpAgent;
     }
 
     protected set httpAgent(agent: RoHttpAgent) {

@@ -256,9 +256,11 @@ export class Field {
             const maybeCallbacks = this.scopedObservers.get(subscriber) || [];
             this.scopedObservers.set(subscriber, [...maybeCallbacks, brsCallback]);
         } else if (mode === "unscoped") {
-            (this.unscopedObservers ??= []).push(brsCallback);
+            this.unscopedObservers ??= [];
+            this.unscopedObservers.push(brsCallback);
         } else {
-            (this.permanentObservers ??= []).push(brsCallback);
+            this.permanentObservers ??= [];
+            this.permanentObservers.push(brsCallback);
         }
     }
 
