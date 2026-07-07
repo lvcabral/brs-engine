@@ -547,8 +547,14 @@ export class RowList extends ArrayGrid {
         const spacing = this.getRowItemSpacing(rowIndex);
         const rowWidth = numCols * context.rowItemWidth + (numCols - 1) * spacing[0];
 
+        // Per Roku, `itemSize`/`rowHeights` size the entire ROW; `rowItemSize` sizes the individual
+        // poster. The item rect carries the poster dimensions (drives the item component's width/height
+        // and the focus 9-patch); the row's own height only advances the next row down. `rowHeights`
+        // falls back to `itemSize.y` for rows beyond the array (NOT the poster height) — using the
+        // poster height would leave no room above it and make short rows (e.g. a grid row) overlap.
         context.itemRect.width = context.rowItemWidth;
-        context.itemRect.height = context.rowHeights[rowIndex] ?? context.rowItemHeight;
+        context.itemRect.height = context.rowItemHeight;
+        const rowHeight = context.rowHeights[rowIndex] ?? context.itemSize[1] ?? context.rowItemHeight;
 
         // Render wrap divider if needed
         if (this.wrap && rowIndex === 0 && displayRowIndex > 0) {
@@ -558,15 +564,26 @@ export class RowList extends ArrayGrid {
             context.itemRect.y += divHeight + spacing[1];
         }
 
-        // Render row label if needed
+        // The row label (left) and the "N of M" counter (right) sit in a band at the TOP of the row,
+        // and the poster items are pushed down below it. When the band fits within the row's natural
+        // slack (rowHeight - posterHeight), the row keeps its height (hero/standard rows). When it does
+        // NOT fit — a dense grid row whose rowHeight falls back to itemSize.y — the row is grown by the
+        // band height (see the advance below) so the pushed-down poster still never spills into the next
+        // row, while the label/counter stay at the row top with the row's normal spacing above them.
         const title = row.getValueJS("title") ?? "";
         const rowTopY = context.itemRect.y;
-        context.showRowLabel = this.getValueJS("showRowLabel")?.[rowIndex] ?? context.showRowLabel;
-        if (title.length !== 0 && context.showRowLabel) {
-            const divRect = { ...context.itemRect, width: rowWidth };
-            const divHeight = this.renderRowDivider(title, divRect, context.opacity, rowIndex, context.draw2D);
-            context.itemRect.y += divHeight;
+        const showLabel = this.resolveBoolean(this.getValueJS("showRowLabel"), rowIndex, false);
+        const showCounter = this.resolveBoolean(this.getValueJS("showRowCounter"), rowIndex, false);
+        context.showRowLabel = showLabel;
+        const labelOffset = this.resolveVector(this.getValueJS("rowLabelOffset"), rowIndex, [0, 0]);
+        const hasLabel = showLabel && title.length !== 0;
+        const bandHeight = hasLabel || showCounter ? this.titleHeight + (labelOffset[1] ?? 0) : 0;
+        const bandFits = bandHeight <= Math.max(0, rowHeight - context.rowItemHeight);
+        if (hasLabel) {
+            const divRect = { ...context.itemRect, y: rowTopY, width: rowWidth };
+            this.renderRowDivider(title, divRect, context.opacity, rowIndex, context.draw2D);
         }
+        context.itemRect.y = rowTopY + bandHeight;
 
         // Apply horizontal offset and render items
         const xOffset = this.getRowXOffset(rowIndex);
@@ -574,14 +591,15 @@ export class RowList extends ArrayGrid {
 
         this.renderRowContent(rowIndex, cols, numCols, context.rowItemWidth, spacing, context.itemRect, context);
 
-        // Render the "N of M" row counter on the right edge of the focused row, AFTER the items so it
-        // stays visible on rows without a label whose items reach the row top (e.g. a tall hero row).
+        // Render the "N of M" row counter in the label band at the row top, AFTER the items.
         this.renderRowCounter(rowIndex, numCols, rowTopY, context);
 
-        // Prepare for next row
+        // Prepare for next row: advance by the ROW height (not the poster height) from the row top,
+        // grown by the band height when the band did not fit in the row's slack so a labeled short row
+        // (e.g. the first "The Grid" row) does not overlap the next.
         context.itemRect.x = context.rect.x;
         const rowSpacing = this.calculateRowSpacing(rowIndex, context.rowSpacings, context.globalSpacing);
-        context.itemRect.y += context.itemRect.height + rowSpacing;
+        context.itemRect.y = rowTopY + rowHeight + (bandFits ? 0 : bandHeight) + rowSpacing;
 
         return RectRect(this.sceneRect, context.itemRect);
     }
@@ -618,9 +636,11 @@ export class RowList extends ArrayGrid {
     }
 
     private calculateRowSpacing(rowIndex: number, rowSpacings: number[], globalSpacing: number[]): number {
-        const rowSpacing = rowSpacings[rowIndex] ?? globalSpacing[1];
-        const defaultRowSpacing = this.resolution === "FHD" ? 60 : 40;
-        return rowSpacing !== undefined && rowSpacing !== 0 ? rowSpacing : defaultRowSpacing;
+        // Per Roku, the vertical gap between rows is rowSpacings[row], falling back to itemSpacing.y
+        // (globalSpacing[1]) for rows beyond the array — and defaults to 0. The full row height
+        // (rowHeights / itemSize.y) already accounts for each row's visual extent, so no implicit
+        // spacing is added on top of it.
+        return rowSpacings[rowIndex] ?? globalSpacing[1] ?? 0;
     }
 
     private calculateActualRowIndex(displayRowIndex: number): number {

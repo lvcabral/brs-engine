@@ -181,4 +181,94 @@ describe("RowList key handling", () => {
         expect(drawn).toContain("My Row");
         expect(drawn.some((t) => /of 15/.test(t))).toBe(false);
     });
+
+    test("item uses rowItemSize (not rowHeights) and sits below the counter band on a label-less row", () => {
+        // Regression: the hero row of a RowList (showRowLabel=false, showRowCounter=true) rendered its
+        // items at rowHeights (the ROW height) instead of rowItemSize (the poster height), and drew the
+        // "N of M" counter on top of the items instead of in a band above them.
+        const list = SGNodeFactory.createNode("RowList");
+        list.setValue("content", buildContent([["A", "B", "C"]]));
+        list.setValue("numRows", new Int32(1));
+        // itemSize.y (220) and rowHeights (800) both differ from the poster height (700).
+        list.setValue("itemSize", new RoArray([new Int32(1920), new Int32(220)]));
+        list.setValue("rowHeights", new RoArray([new Int32(800)]));
+        list.setValue("rowItemSize", new RoArray([new RoArray([new Int32(1600), new Int32(700)])]));
+        list.setValue("rowLabelOffset", new RoArray([new RoArray([new Int32(165), new Int32(8)])]));
+        list.setValue("showRowLabel", new RoArray([core.BrsBoolean.False]));
+        list.setValue("showRowCounter", new RoArray([core.BrsBoolean.True]));
+
+        const items = [];
+        const original = list.createItemComponent.bind(list);
+        list.createItemComponent = (interp, itemRect, content) => {
+            const comp = original(interp, itemRect, content);
+            const render = comp.renderNode.bind(comp);
+            comp.renderNode = (i2, origin, angle, opacity, draw2D) => {
+                items.push({
+                    height: comp.getValueJS("height"),
+                    width: comp.getValueJS("width"),
+                    y: Math.round(origin[1]),
+                });
+                return render(i2, origin, angle, opacity, draw2D);
+            };
+            return comp;
+        };
+        list.renderNode({}, [0, 0], 0, 1);
+
+        // The item takes the poster size, not the row height...
+        expect(items[0].height).toBe(700);
+        expect(items[0].width).toBe(1600);
+        // ...and is pushed below the counter/label band (titleHeight + rowLabelOffset.y) even though
+        // this row has no visible label, so the counter (drawn at the row top) does not overlap it.
+        expect(items[0].y).toBe(Math.round(list.titleHeight + 8));
+    });
+
+    test("short rows (rowHeights fallback to itemSize.y) do not overlap — grid rows", () => {
+        // Regression ("The Grid" section of hero-grid-channel): rows beyond the rowHeights array take
+        // itemSize.y as their height. When that row is too short to fit the label band above the poster,
+        // the row is grown by the band height so the pushed-down poster never spills into the next
+        // (unlabeled) row, while the label stays at the row top with normal spacing above it.
+        const list = SGNodeFactory.createNode("RowList");
+        // Row 0 has a title (label shown), row 1 does not — mirroring the first "The Grid" row.
+        const content = buildContent([
+            ["A", "B"],
+            ["C", "D"],
+        ]);
+        content.getNodeChildren()[0].setValue("title", new BrsString("The Grid"));
+        list.setValue("content", content);
+        list.setValue("numRows", new Int32(2));
+        // itemSize.y (220) is the row-height fallback; no rowHeights set. Poster is 375x197.
+        list.setValue("itemSize", new RoArray([new Int32(1920), new Int32(220)]));
+        list.setValue("rowItemSize", new RoArray([new RoArray([new Int32(375), new Int32(197)])]));
+        list.setValue("showRowLabel", new RoArray([core.BrsBoolean.True]));
+
+        const rows = [];
+        const original = list.createItemComponent.bind(list);
+        list.createItemComponent = (interp, itemRect, content) => {
+            const comp = original(interp, itemRect, content);
+            const render = comp.renderNode.bind(comp);
+            comp.renderNode = (i2, origin, angle, opacity, draw2D) => {
+                rows.push({
+                    title: content.getValueJS("title"),
+                    y: Math.round(origin[1]),
+                    h: comp.getValueJS("height"),
+                });
+                return render(i2, origin, angle, opacity, draw2D);
+            };
+            return comp;
+        };
+        list.renderNode({}, [0, 0], 0, 1);
+
+        const row0 = rows.find((r) => r.title === "A");
+        const row1 = rows.find((r) => r.title === "C");
+        const band = Math.round(list.titleHeight); // rowLabelOffset.y defaults to 0
+        // The band (titleHeight) is taller than the 23px slack above the poster, so the labeled row is
+        // grown by the band: the poster is pushed down below the label...
+        expect(row0.h).toBe(197);
+        expect(list.titleHeight).toBeGreaterThan(220 - 197);
+        expect(row0.y).toBe(band);
+        // ...and the next row advances by the row height PLUS the band, clearing the first row's poster
+        // and preserving the natural 23px gap (rowHeight 220 - poster 197) below it.
+        expect(row1.y).toBe(220 + band);
+        expect(row1.y - (row0.y + row0.h)).toBe(220 - 197);
+    });
 });
