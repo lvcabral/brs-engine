@@ -14,6 +14,7 @@ import { Node } from "./Node";
 import type { Field } from "./Field";
 import { FieldKind, FieldModel } from "../SGTypes";
 import { SGNodeType } from ".";
+import { sgRoot } from "../SGRoot";
 import { toAssociativeArray } from "../factory/Serializer";
 
 export class ContentNode extends Node {
@@ -330,4 +331,20 @@ export class ContentNode extends Node {
             }
         },
     });
+
+    /**
+     * Marks this node as dirty and notifies the SceneGraph root.
+     */
+    protected makeDirty() {
+        this.changed = true;
+        // Propagate the dirty flag up to the content root so an ancestor ArrayGrid/TimeGrid
+        // re-parses its model when a descendant ContentNode changes. This must happen on any
+        // thread — in particular for mutations applied on the render thread on behalf of a Task
+        // (rendezvous), where inTaskThread() is false but the parent grid still needs to refresh.
+        if (this.parent instanceof Node) {
+            const root = this.findRootNode();
+            root.changed = true;
+        }
+        sgRoot.makeDirty();
+    }
 }

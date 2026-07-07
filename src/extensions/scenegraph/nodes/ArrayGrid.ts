@@ -114,7 +114,9 @@ export class ArrayGrid extends Group {
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
 
-        this.setValueSilent("content", new ContentNode());
+        // Roku leaves the `content` node field invalid until the app assigns it; apps rely on
+        // `content = invalid` to detect "not loaded yet" (e.g. SGDEX's lazy content managers).
+        // Do NOT seed an empty ContentNode here — all readers guard with `instanceof ContentNode`.
         if (this.resolution === "FHD") {
             this.marginX = 36;
             this.marginY = 6;

@@ -4,7 +4,7 @@ const scenegraph = require("../../../packages/scenegraph/lib/brs-sg.node.js");
 const core = require("../../../packages/node/bin/brs.node.js");
 
 const { SGNodeFactory, sgRoot } = scenegraph;
-const { BrsDevice, BrsString } = core;
+const { BrsDevice, BrsString, Int32, RoArray } = core;
 
 /**
  * Builds a root → rows → items ContentNode tree.
@@ -63,5 +63,27 @@ describe("RowList key handling", () => {
         expect(list.getValueJS("itemFocused")).toBe(0);
         expect(list.handleKey("up", true)).toBe(true);
         expect(list.getValueJS("itemFocused")).toBe(2);
+    });
+
+    test("a content re-parse preserves per-row column focus (regression: horizontal navigation)", () => {
+        // Regression: ContentNode.makeDirty now marks the content root "changed" on any mutation, so
+        // ArrayGrid.renderNode re-parses via refreshContent far more often. RowList.refreshContent used
+        // to unconditionally zero rowFocus/rowScrollOffset for every row, wiping the just-set column
+        // back to 0 every frame — breaking horizontal navigation while vertical (row) focus survived.
+        const list = SGNodeFactory.createNode("RowList");
+        list.setValue("content", buildContent([["A", "B", "C", "D"]]));
+
+        // Move column focus within row 0 to item 2 (render-geometry-independent path).
+        list.setValue("jumpToRowItem", new RoArray([new Int32(0), new Int32(2)]));
+        expect(list.rowFocus[0]).toBe(2);
+
+        // A plain re-parse of the SAME content tree (what a spurious content.changed triggers) must
+        // preserve the focused column.
+        list.refreshContent();
+        expect(list.rowFocus[0]).toBe(2);
+
+        // Assigning a genuinely NEW content tree does reset column focus to 0.
+        list.setValue("content", buildContent([["X", "Y", "Z"]]));
+        expect(list.rowFocus[0]).toBe(0);
     });
 });
