@@ -96,14 +96,14 @@ export function brsValueOf(value: any, cs?: boolean, nodeMap?: Map<string, Node>
         case "boolean":
             return BrsBoolean.from(value);
         case "string":
-            return new BrsString(value);
+            return new BrsString(value, true, true);
         case "number":
             if (Number.isInteger(value)) {
-                return value >= -maxInt && value < maxInt ? new Int32(value) : new Int64(value);
+                return value >= -maxInt && value < maxInt ? new Int32(value, true, true) : new Int64(value, true, true);
             } else if (Number.isNaN(value)) {
-                return new Float(value);
+                return new Float(value, true, true);
             }
-            return value >= -3.4e38 && value <= 3.4e38 ? new Float(value) : new Double(value);
+            return value >= -3.4e38 && value <= 3.4e38 ? new Float(value, true, true) : new Double(value, true, true);
         case "object":
             return fromObject(value, cs, nodeMap);
         case "undefined":
