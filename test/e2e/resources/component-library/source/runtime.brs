@@ -1,4 +1,4 @@
-sub main()
+sub runUserInterface()
     screen = createObject("roSGScreen")
     m.port = createObject("roMessagePort")
     screen.setMessagePort(m.port)
