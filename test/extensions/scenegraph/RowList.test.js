@@ -129,6 +129,83 @@ describe("RowList key handling", () => {
         expect(wrapped.x + 375).toBeGreaterThan(0);
     });
 
+    test("fixedFocusWrap draws no preceding item when focusXOffset is 0 (item at the list's left edge)", () => {
+        // Regression (SceneGraphTutorial rowlist): with the default focusXOffset (0) the focused item
+        // sits at the RowList's OWN left edge, so there is no room for a partial preceding item. The
+        // wrapped tail must be clipped to the list's left edge (translation.x), not the scene's (0) —
+        // otherwise a partial item bleeds into the margin to the left of the list.
+        const list = SGNodeFactory.createNode("RowList");
+        const items = [];
+        for (let i = 0; i < 15; i++) {
+            items.push("A" + i);
+        }
+        list.setValue("content", buildContent([items]));
+        list.setValue("itemSize", new RoArray([new Int32(536 * 3), new Int32(308)]));
+        list.setValue("numRows", new Int32(1));
+        // The list is translated right; its left edge (and the focused item) is at x = 130.
+        list.setValue("translation", new RoArray([new Int32(130), new Int32(0)]));
+        list.setValue("rowItemSize", new RoArray([new RoArray([new Int32(536), new Int32(308)])]));
+        list.setValue("rowFocusAnimationStyle", new BrsString("FixedFocusWrap"));
+        // focusXOffset left at its default of 0.
+
+        const positions = [];
+        const original = list.createItemComponent.bind(list);
+        list.createItemComponent = (interp, itemRect, content) => {
+            const comp = original(interp, itemRect, content);
+            const render = comp.renderNode.bind(comp);
+            comp.renderNode = (i2, origin, angle, opacity, draw2D) => {
+                positions.push({ title: content.getValueJS("title"), x: Math.round(origin[0]) });
+                return render(i2, origin, angle, opacity, draw2D);
+            };
+            return comp;
+        };
+        list.renderNode({}, [0, 0], 0, 1);
+
+        // The focused item A0 sits at the list's left edge, and nothing is drawn to its left.
+        expect(positions.find((p) => p.title === "A0").x).toBe(130);
+        expect(Math.min(...positions.map((p) => p.x))).toBe(130);
+    });
+
+    test("clips row items to the list's own bounds when the content overflows the row width", () => {
+        // Regression (jellyfin Home): items whose row is narrower than the screen (itemSize width set to
+        // cut off at the safe zone) must be clipped at the LIST's right edge — aligned with the row
+        // counter — not bleed to the screen border. The clip is widened by the focus-feedback margin so
+        // the focused item's indicator is not cut, and is only applied when the content overflows.
+        function makeList(itemCount) {
+            const list = SGNodeFactory.createNode("RowList");
+            const items = [];
+            for (let i = 0; i < itemCount; i++) {
+                items.push("A" + i);
+            }
+            list.setValue("content", buildContent([items]));
+            list.setValue("itemSize", new RoArray([new Int32(1703), new Int32(300)]));
+            list.setValue("numRows", new Int32(1));
+            list.setValue("translation", new RoArray([new Int32(100), new Int32(0)]));
+            list.setValue("rowItemSize", new RoArray([new RoArray([new Int32(300), new Int32(300)])]));
+            return list;
+        }
+        const capture = (list) => {
+            const clips = [];
+            const draw2D = new Proxy(
+                {},
+                { get: (_t, prop) => (prop === "pushClip" ? (rect) => clips.push({ ...rect }) : () => 0) }
+            );
+            list.renderNode({}, [0, 0], 0, 1, draw2D);
+            return clips;
+        };
+
+        // 10 items of 300 (3000+) overflow the 1703 row → clipped to the list's bounds, widened by the
+        // focus margin so the focused item's indicator (which outsets the poster) is not cut.
+        const wide = makeList(10);
+        const wideClips = capture(wide);
+        expect(wideClips.length).toBeGreaterThan(0);
+        expect(wideClips[0].x).toBe(100 - wide.marginX);
+        expect(wideClips[0].width).toBe(1703 + wide.marginX * 2);
+
+        // 3 items of 300 (900) fit within the 1703 row → no clip is pushed (optimization).
+        expect(capture(makeList(3))).toEqual([]);
+    });
+
     test("renders the 'N of M' row counter for the focused row without clobbering the row label", () => {
         const list = SGNodeFactory.createNode("RowList");
         const items = [];

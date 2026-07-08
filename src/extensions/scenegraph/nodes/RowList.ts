@@ -589,7 +589,27 @@ export class RowList extends ArrayGrid {
         const xOffset = this.getRowXOffset(rowIndex);
         context.itemRect.x = context.rect.x + xOffset;
 
+        // Clip the row items to the list's own horizontal bounds (x .. x + itemSize.width) ONLY when the
+        // row content is wider than the row — otherwise everything already fits and no clip is needed.
+        // When clipping, matching a real device: a poster that extends past the row's right edge is cut
+        // off there (aligned with the row counter) instead of bleeding over the screen, and a wrapped
+        // partial item on the left is cut at the list's left edge. The bounds are widened by the focus
+        // feedback margin so the focused item's indicator (which outsets the poster) is not clipped. The
+        // label and counter are drawn outside this clip.
+        const clip = xOffset + rowWidth > context.itemSize[0];
+        if (clip) {
+            const focusMargin = this.getValueJS("drawFocusFeedback") ? this.marginX : 0;
+            context.draw2D?.pushClip({
+                x: context.rect.x - focusMargin,
+                y: this.sceneRect.y,
+                width: context.itemSize[0] + focusMargin * 2,
+                height: this.sceneRect.height,
+            });
+        }
         this.renderRowContent(rowIndex, cols, numCols, context.rowItemWidth, spacing, context.itemRect, context);
+        if (clip) {
+            context.draw2D?.popClip();
+        }
 
         // Render the "N of M" row counter in the label band at the row top, AFTER the items.
         this.renderRowCounter(rowIndex, numCols, rowTopY, context);
@@ -694,12 +714,14 @@ export class RowList extends ArrayGrid {
 
         // In wrap mode the focused item sits at the fixed focus offset; the row wraps in BOTH
         // directions, so the tail end of the preceding (wrapped) item is partially visible in the
-        // margin to the LEFT of the focused item — matching a real device's fixedFocusWrap. Render
-        // those preceding items first (at decreasing x) until one falls fully off the left edge.
+        // margin to the LEFT of the focused item — matching a real device's fixedFocusWrap. This only
+        // happens when the focus offset leaves room to the left of the focused item: the preceding item
+        // is clipped to the LIST's own left edge (context.rect.x), not the scene's. With the default
+        // focusXOffset of 0 the focused item sits at the list's left edge, so no preceding item shows.
         if (renderMode === "wrapMode") {
             const pitch = rowItemWidth + spacing[0];
             let leftX = itemRect.x - pitch;
-            for (let k = 1; pitch > 0 && k <= numCols && leftX + rowItemWidth > this.sceneRect.x; k++) {
+            for (let k = 1; pitch > 0 && k <= numCols && leftX + rowItemWidth > context.rect.x; k++) {
                 const colIndex = (((startCol - k) % numCols) + numCols) % numCols;
                 this.renderRowItemComponent(
                     context.interpreter,
