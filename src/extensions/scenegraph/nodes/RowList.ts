@@ -547,8 +547,14 @@ export class RowList extends ArrayGrid {
         const spacing = this.getRowItemSpacing(rowIndex);
         const rowWidth = numCols * context.rowItemWidth + (numCols - 1) * spacing[0];
 
+        // Per Roku, `itemSize`/`rowHeights` size the entire ROW; `rowItemSize` sizes the individual
+        // poster. The item rect carries the poster dimensions (drives the item component's width/height
+        // and the focus 9-patch); the row's own height only advances the next row down. `rowHeights`
+        // falls back to `itemSize.y` for rows beyond the array (NOT the poster height) — using the
+        // poster height would leave no room above it and make short rows (e.g. a grid row) overlap.
         context.itemRect.width = context.rowItemWidth;
-        context.itemRect.height = context.rowHeights[rowIndex] ?? context.rowItemHeight;
+        context.itemRect.height = context.rowItemHeight;
+        const rowHeight = context.rowHeights[rowIndex] ?? context.itemSize[1] ?? context.rowItemHeight;
 
         // Render wrap divider if needed
         if (this.wrap && rowIndex === 0 && displayRowIndex > 0) {
@@ -558,30 +564,62 @@ export class RowList extends ArrayGrid {
             context.itemRect.y += divHeight + spacing[1];
         }
 
-        // Render row label if needed
+        // The row label (left) and the "N of M" counter (right) sit in a band at the TOP of the row,
+        // and the poster items are pushed down below it. When the band fits within the row's natural
+        // slack (rowHeight - posterHeight), the row keeps its height (hero/standard rows). When it does
+        // NOT fit — a dense grid row whose rowHeight falls back to itemSize.y — the row is grown by the
+        // band height (see the advance below) so the pushed-down poster still never spills into the next
+        // row, while the label/counter stay at the row top with the row's normal spacing above them.
         const title = row.getValueJS("title") ?? "";
         const rowTopY = context.itemRect.y;
-        context.showRowLabel = this.getValueJS("showRowLabel")?.[rowIndex] ?? context.showRowLabel;
-        if (title.length !== 0 && context.showRowLabel) {
-            const divRect = { ...context.itemRect, width: rowWidth };
-            const divHeight = this.renderRowDivider(title, divRect, context.opacity, rowIndex, context.draw2D);
-            context.itemRect.y += divHeight;
+        const showLabel = this.resolveBoolean(this.getValueJS("showRowLabel"), rowIndex, false);
+        const showCounter = this.resolveBoolean(this.getValueJS("showRowCounter"), rowIndex, false);
+        context.showRowLabel = showLabel;
+        const labelOffset = this.resolveVector(this.getValueJS("rowLabelOffset"), rowIndex, [0, 0]);
+        const hasLabel = showLabel && title.length !== 0;
+        const bandHeight = hasLabel || showCounter ? this.titleHeight + (labelOffset[1] ?? 0) : 0;
+        const bandFits = bandHeight <= Math.max(0, rowHeight - context.rowItemHeight);
+        if (hasLabel) {
+            const divRect = { ...context.itemRect, y: rowTopY, width: rowWidth };
+            this.renderRowDivider(title, divRect, context.opacity, rowIndex, context.draw2D);
         }
+        context.itemRect.y = rowTopY + bandHeight;
 
         // Apply horizontal offset and render items
         const xOffset = this.getRowXOffset(rowIndex);
         context.itemRect.x = context.rect.x + xOffset;
 
+        // Clip the row items to the list's own horizontal bounds (x .. x + itemSize.width) ONLY when the
+        // row content is wider than the row — otherwise everything already fits and no clip is needed.
+        // When clipping, matching a real device: a poster that extends past the row's right edge is cut
+        // off there (aligned with the row counter) instead of bleeding over the screen, and a wrapped
+        // partial item on the left is cut at the list's left edge. The bounds are widened by the focus
+        // feedback margin so the focused item's indicator (which outsets the poster) is not clipped. The
+        // label and counter are drawn outside this clip.
+        const clip = xOffset + rowWidth > context.itemSize[0];
+        if (clip) {
+            const focusMargin = this.getValueJS("drawFocusFeedback") ? this.marginX : 0;
+            context.draw2D?.pushClip({
+                x: context.rect.x - focusMargin,
+                y: this.sceneRect.y,
+                width: context.itemSize[0] + focusMargin * 2,
+                height: this.sceneRect.height,
+            });
+        }
         this.renderRowContent(rowIndex, cols, numCols, context.rowItemWidth, spacing, context.itemRect, context);
+        if (clip) {
+            context.draw2D?.popClip();
+        }
 
-        // Render the "N of M" row counter on the right edge of the focused row, AFTER the items so it
-        // stays visible on rows without a label whose items reach the row top (e.g. a tall hero row).
+        // Render the "N of M" row counter in the label band at the row top, AFTER the items.
         this.renderRowCounter(rowIndex, numCols, rowTopY, context);
 
-        // Prepare for next row
+        // Prepare for next row: advance by the ROW height (not the poster height) from the row top,
+        // grown by the band height when the band did not fit in the row's slack so a labeled short row
+        // (e.g. the first "The Grid" row) does not overlap the next.
         context.itemRect.x = context.rect.x;
         const rowSpacing = this.calculateRowSpacing(rowIndex, context.rowSpacings, context.globalSpacing);
-        context.itemRect.y += context.itemRect.height + rowSpacing;
+        context.itemRect.y = rowTopY + rowHeight + (bandFits ? 0 : bandHeight) + rowSpacing;
 
         return RectRect(this.sceneRect, context.itemRect);
     }
@@ -618,9 +656,11 @@ export class RowList extends ArrayGrid {
     }
 
     private calculateRowSpacing(rowIndex: number, rowSpacings: number[], globalSpacing: number[]): number {
-        const rowSpacing = rowSpacings[rowIndex] ?? globalSpacing[1];
-        const defaultRowSpacing = this.resolution === "FHD" ? 60 : 40;
-        return rowSpacing !== undefined && rowSpacing !== 0 ? rowSpacing : defaultRowSpacing;
+        // Per Roku, the vertical gap between rows is rowSpacings[row], falling back to itemSpacing.y
+        // (globalSpacing[1]) for rows beyond the array — and defaults to 0. The full row height
+        // (rowHeights / itemSize.y) already accounts for each row's visual extent, so no implicit
+        // spacing is added on top of it.
+        return rowSpacings[rowIndex] ?? globalSpacing[1] ?? 0;
     }
 
     private calculateActualRowIndex(displayRowIndex: number): number {
@@ -674,12 +714,14 @@ export class RowList extends ArrayGrid {
 
         // In wrap mode the focused item sits at the fixed focus offset; the row wraps in BOTH
         // directions, so the tail end of the preceding (wrapped) item is partially visible in the
-        // margin to the LEFT of the focused item — matching a real device's fixedFocusWrap. Render
-        // those preceding items first (at decreasing x) until one falls fully off the left edge.
+        // margin to the LEFT of the focused item — matching a real device's fixedFocusWrap. This only
+        // happens when the focus offset leaves room to the left of the focused item: the preceding item
+        // is clipped to the LIST's own left edge (context.rect.x), not the scene's. With the default
+        // focusXOffset of 0 the focused item sits at the list's left edge, so no preceding item shows.
         if (renderMode === "wrapMode") {
             const pitch = rowItemWidth + spacing[0];
             let leftX = itemRect.x - pitch;
-            for (let k = 1; pitch > 0 && k <= numCols && leftX + rowItemWidth > this.sceneRect.x; k++) {
+            for (let k = 1; pitch > 0 && k <= numCols && leftX + rowItemWidth > context.rect.x; k++) {
                 const colIndex = (((startCol - k) % numCols) + numCols) % numCols;
                 this.renderRowItemComponent(
                     context.interpreter,
@@ -842,7 +884,18 @@ export class RowList extends ArrayGrid {
         if (title.length !== 0) {
             const font = this.getValue("rowLabelFont") as Font;
             const color = this.getValueJS("rowLabelColor");
-            this.drawText(title, font, color, opacity, divRect, "left", "center", 0, draw2D, "...", rowIndex);
+            // Draw directly rather than via `drawText`: that helper caches the measured text in
+            // `cachedLines` keyed by row index and only refreshes it when the RowList node itself is
+            // marked dirty. The label text comes from the row's ContentNode `title`, which can change
+            // without dirtying the RowList, so a title updated after the first render would keep drawing
+            // the stale cached value. Re-measuring every frame keeps the label in sync with the content
+            // (and matches how the row counter is drawn).
+            const drawFont = font.createDrawFont();
+            if (drawFont instanceof RoFont) {
+                const measured = drawFont.measureText(title, divRect.width, "...");
+                const textY = divRect.y + Math.max(0, (this.titleHeight - measured.height) / 2);
+                draw2D?.doDrawRotatedText(measured.text, divRect.x, textY, color, opacity, drawFont, 0);
+            }
         }
 
         // Return height of title plus vertical offset (spacing between title and items)
