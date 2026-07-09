@@ -227,6 +227,7 @@ export class Video extends Group {
         postMessage({ supportCaptions: true });
         postMessage({ captionMode: BrsDevice.deviceInfo.captionMode });
         postMessage({ captionStyle: new Array<CaptionStyleOption>() });
+        postMessage({ captionRenderArea: { mode: "fullscreen" } });
 
         // Set itself as the root video object
         sgRoot.setVideo(this);
@@ -306,6 +307,8 @@ export class Video extends Group {
             }
         } else if (fieldName === "captionstyle" && value instanceof RoAssociativeArray) {
             this.setCaptionStyle(fromAssociativeArray(value));
+        } else if (fieldName === "captionrenderarea" && value instanceof RoAssociativeArray) {
+            if (!sgRoot.inTaskThread()) postMessage({ captionRenderArea: fromAssociativeArray(value) });
         } else if (fieldName === "trickplaybackgroundoverlay") {
             this.backgroundOverlay.setValue("uri", value);
         }

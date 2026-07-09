@@ -49,6 +49,30 @@ let overscanMode = "disabled";
 let aspectRatio = 16 / 9;
 let trickPlayBar = false;
 let supportCaptions = false;
+
+/** OS 15.3 `Video.captionRenderArea` — where/how captions are rendered on screen. */
+interface CaptionRenderArea {
+    mode: "fullscreen" | "auto" | "override";
+    overridePlacement: boolean;
+    scaleFonts: "off" | "by-width" | "by-height";
+    keepSafeMargins: boolean;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+}
+// Default keeps the pre-15.3 behavior: captions only in full-screen playback.
+let captionRenderArea: CaptionRenderArea = {
+    mode: "fullscreen",
+    overridePlacement: false,
+    scaleFonts: "by-width",
+    keepSafeMargins: true,
+    x: 0,
+    y: 0,
+    width: 0,
+    height: 0,
+};
+
 interface CachedSubtitleMeasurement {
     metricsWidth: number;
     calculatedBoxWidth: number; // Stores (metrics.width + padding * 2)
@@ -324,7 +348,7 @@ function drawVideoFrame() {
         if (lastImage) {
             bufferCtx.drawImage(lastImage, 0, 0);
         }
-        if (getCaptionState() && !trickPlayBar) {
+        if (getCaptionState() && !trickPlayBar && shouldDrawCaptions()) {
             drawSubtitles(bufferCtx);
         }
     }
@@ -351,7 +375,20 @@ function drawSubtitles(ctx: CanvasRenderingContext2D) {
     const textOpacity = CaptionOpacities.get(getCaptionStyleOption("text/opacity")) ?? 1;
     const textSize = getCaptionStyleOption("text/size");
     const textEffect = getCaptionStyleOption("text/effect");
-    const fontSize = CaptionSizes.get(textSize)![fhd];
+
+    // Resolve the render area (canvas coords) from captionRenderArea.mode; `raw` is the
+    // area before safe-margin insets (used for font scaling), `area` after insets (placement).
+    const { raw, area } = getCaptionArea(ctx.canvas.width, ctx.canvas.height);
+
+    // Scale the caption font relative to the render area vs. full screen (non-fullscreen modes only).
+    let fontSize = CaptionSizes.get(textSize)![fhd];
+    if (captionRenderArea.mode !== "fullscreen") {
+        if (captionRenderArea.scaleFonts === "by-width") {
+            fontSize = Math.max(1, Math.round(fontSize * (raw.width / ctx.canvas.width)));
+        } else if (captionRenderArea.scaleFonts === "by-height") {
+            fontSize = Math.max(1, Math.round(fontSize * (raw.height / ctx.canvas.height)));
+        }
+    }
     ctx.font = `${fontSize}px ${fontFamily}, sans-serif`;
 
     if (lastCachedFontSize !== fontSize || lastCachedFontFamily !== fontFamily) {
@@ -361,9 +398,13 @@ function drawSubtitles(ctx: CanvasRenderingContext2D) {
     ctx.fillStyle = textColor!;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    const baseX = ctx.canvas.width / 2;
+    const baseX = area.x + area.width / 2;
     const lineHeight = fontSize * 1.2;
-    let y = ctx.canvas.height * 0.9 - lineHeight / 2;
+    // Captions sit at the center-bottom of the render area. In `override` mode with
+    // overridePlacement disabled the app opts out of forced placement, so anchor to the
+    // area's vertical center instead (content-driven cue positions are not rendered).
+    const anchorBottom = captionRenderArea.overridePlacement || captionRenderArea.mode !== "override";
+    let y = anchorBottom ? area.y + area.height - lineHeight / 2 : area.y + area.height / 2 - lineHeight / 2;
 
     for (const track of player.textTracks) {
         if (track.mode !== "showing" || !track.activeCues?.length) {
@@ -643,6 +684,89 @@ export function getCaptionMode() {
 function getCaptionState(): boolean {
     const mode = deviceData.captionMode;
     return supportCaptions && (mode === "On" || (mode === "When mute" && isVideoMuted()));
+}
+
+/**
+ * Determines whether the video plane currently covers the whole display.
+ * Mirrors the fallback used by `drawVideoFrame` (a zero width/height rect means full-screen).
+ * @returns True if the video is rendered full-screen
+ */
+function isVideoFullscreen(): boolean {
+    if (!bufferCanvas) {
+        return true;
+    }
+    const width = videoRect.w || bufferCanvas.width;
+    const height = videoRect.h || bufferCanvas.height;
+    return videoRect.x <= 0 && videoRect.y <= 0 && width >= bufferCanvas.width && height >= bufferCanvas.height;
+}
+
+/**
+ * Applies the captionRenderArea `mode` gate. On a real Roku captions only appear during
+ * full-screen playback (the default `fullscreen` mode); `auto`/`override` opt into rendering
+ * captions for windowed/preview video as well.
+ * @returns True if captions may be drawn for the current video geometry
+ */
+function shouldDrawCaptions(): boolean {
+    return captionRenderArea.mode === "fullscreen" ? isVideoFullscreen() : true;
+}
+
+/**
+ * Resolves the caption render rectangle (in canvas coordinates) from the current
+ * captionRenderArea mode. Returns both the `raw` area (before safe-margin insets, used for
+ * font scaling) and the placement `area` (after insets).
+ * @param canvasW Canvas width in pixels
+ * @param canvasH Canvas height in pixels
+ */
+function getCaptionArea(canvasW: number, canvasH: number) {
+    let x = 0;
+    let y = 0;
+    let width = canvasW;
+    let height = canvasH;
+    if (captionRenderArea.mode === "auto") {
+        x = videoRect.x || 0;
+        y = videoRect.y || 0;
+        width = videoRect.w || canvasW;
+        height = videoRect.h || canvasH;
+    } else if (captionRenderArea.mode === "override") {
+        x = captionRenderArea.x;
+        y = captionRenderArea.y;
+        width = captionRenderArea.width || canvasW;
+        height = captionRenderArea.height || canvasH;
+    }
+    const raw = { x, y, width, height };
+    const area = { ...raw };
+    if (captionRenderArea.keepSafeMargins) {
+        const insetX = width * 0.1;
+        const insetY = height * 0.1;
+        area.x += insetX;
+        area.y += insetY;
+        area.width -= insetX * 2;
+        area.height -= insetY * 2;
+    }
+    return { raw, area };
+}
+
+/**
+ * Sets the OS 15.3 `Video.captionRenderArea`, normalizing its attributes with the documented
+ * per-mode defaults. Keys arrive lowercased from the SceneGraph associative-array serializer.
+ * @param area Render-area object posted from the worker (or a bare `{ mode }` reset)
+ */
+export function setCaptionRenderArea(area: { [key: string]: any }) {
+    const rawMode = typeof area?.mode === "string" ? area.mode.toLowerCase() : "fullscreen";
+    const mode = rawMode === "auto" || rawMode === "override" ? rawMode : "fullscreen";
+    const isOverride = mode === "override";
+    const rawScale = typeof area?.scalefonts === "string" ? area.scalefonts.toLowerCase() : "by-width";
+    const scaleFonts = rawScale === "off" || rawScale === "by-height" ? rawScale : "by-width";
+    captionRenderArea = {
+        mode,
+        overridePlacement: typeof area?.overrideplacement === "boolean" ? area.overrideplacement : isOverride,
+        scaleFonts,
+        keepSafeMargins: typeof area?.keepsafemargins === "boolean" ? area.keepsafemargins : !isOverride,
+        x: Math.trunc(area?.x ?? 0),
+        y: Math.trunc(area?.y ?? 0),
+        width: Math.trunc(area?.width ?? 0),
+        height: Math.trunc(area?.height ?? 0),
+    };
 }
 
 /**

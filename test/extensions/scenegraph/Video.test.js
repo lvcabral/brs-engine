@@ -89,6 +89,26 @@ describe("Video bufferingBar and retrievingBar fields", () => {
         expect(result.height).toBe(120);
     });
 
+    test("setting captionRenderArea forwards it to the render thread (Roku OS 15.3)", () => {
+        const video = SGNodeFactory.createNode("Video");
+        // Ignore the messages posted during construction (control/caption defaults).
+        global.postMessage.mockClear();
+
+        const area = new RoAssociativeArray([
+            { name: new BrsString("mode"), value: new BrsString("override") },
+            { name: new BrsString("x"), value: new Int32(100) },
+            { name: new BrsString("y"), value: new Int32(200) },
+            { name: new BrsString("width"), value: new Int32(1280) },
+            { name: new BrsString("height"), value: new Int32(120) },
+        ]);
+
+        video.setValue("captionRenderArea", area);
+
+        expect(global.postMessage).toHaveBeenCalledWith({
+            captionRenderArea: { mode: "override", x: 100, y: 200, width: 1280, height: 120 },
+        });
+    });
+
     afterAll(() => {
         sgRoot.setVideo();
     });
