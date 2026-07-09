@@ -61,6 +61,7 @@ import {
     setDisplayState,
     setCaptionMode,
     setAppCaptionStyle,
+    setCaptionRenderArea,
     setTrickPlayBar,
     setSupportCaptions,
 } from "./display";
@@ -747,6 +748,8 @@ function mainCallback(event: MessageEvent) {
         setSupportCaptions(event.data.supportCaptions);
     } else if (Array.isArray(event.data.captionStyle)) {
         setAppCaptionStyle(event.data.captionStyle);
+    } else if (typeof event.data.captionRenderArea === "object" && event.data.captionRenderArea !== null) {
+        setCaptionRenderArea(event.data.captionRenderArea);
     } else if (typeof event.data.trickPlayBarVisible === "boolean") {
         setTrickPlayBar(event.data.trickPlayBarVisible);
     } else if (isAppData(event.data)) {

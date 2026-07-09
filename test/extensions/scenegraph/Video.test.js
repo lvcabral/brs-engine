@@ -4,7 +4,7 @@ const scenegraph = require("../../../packages/scenegraph/lib/brs-sg.node.js");
 const core = require("../../../packages/node/bin/brs.node.js");
 
 const { SGNodeFactory, sgRoot } = scenegraph;
-const { BrsDevice, BrsString, Int32 } = core;
+const { BrsDevice, BrsString, Int32, RoAssociativeArray } = core;
 
 describe("Video bufferingBar and retrievingBar fields", () => {
     let originalPostMessage;
@@ -66,6 +66,47 @@ describe("Video bufferingBar and retrievingBar fields", () => {
         const bar = SGNodeFactory.createNode("ProgressBar");
         expect(bar).toBeDefined();
         expect(bar.nodeSubtype).toBe("ProgressBar");
+    });
+
+    test("captionRenderArea accepts and reads back an associative array (Roku OS 15.3)", () => {
+        const video = SGNodeFactory.createNode("Video");
+
+        const area = new RoAssociativeArray([
+            { name: new BrsString("mode"), value: new BrsString("override") },
+            { name: new BrsString("x"), value: new Int32(100) },
+            { name: new BrsString("y"), value: new Int32(200) },
+            { name: new BrsString("width"), value: new Int32(1280) },
+            { name: new BrsString("height"), value: new Int32(120) },
+        ]);
+
+        video.setValue("captionRenderArea", area);
+        const result = video.getValueJS("captionRenderArea");
+
+        expect(result.mode).toBe("override");
+        expect(result.x).toBe(100);
+        expect(result.y).toBe(200);
+        expect(result.width).toBe(1280);
+        expect(result.height).toBe(120);
+    });
+
+    test("setting captionRenderArea forwards it to the render thread (Roku OS 15.3)", () => {
+        const video = SGNodeFactory.createNode("Video");
+        // Ignore the messages posted during construction (control/caption defaults).
+        global.postMessage.mockClear();
+
+        const area = new RoAssociativeArray([
+            { name: new BrsString("mode"), value: new BrsString("override") },
+            { name: new BrsString("x"), value: new Int32(100) },
+            { name: new BrsString("y"), value: new Int32(200) },
+            { name: new BrsString("width"), value: new Int32(1280) },
+            { name: new BrsString("height"), value: new Int32(120) },
+        ]);
+
+        video.setValue("captionRenderArea", area);
+
+        expect(global.postMessage).toHaveBeenCalledWith({
+            captionRenderArea: { mode: "override", x: 100, y: 200, width: 1280, height: 120 },
+        });
     });
 
     afterAll(() => {
