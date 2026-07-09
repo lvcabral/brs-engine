@@ -112,6 +112,7 @@ export class Video extends Group {
         { name: "currentSubtitleTrack", type: "string", value: "" },
         { name: "availableSubtitleTracks", type: "array" },
         { name: "captionStyle", type: "assocarray" },
+        { name: "captionRenderArea", type: "assocarray" },
         { name: "mute", type: "boolean", value: "false" },
         { name: "audioTrack", type: "string", value: "" },
         { name: "currentAudioTrack", type: "string", value: "" },
