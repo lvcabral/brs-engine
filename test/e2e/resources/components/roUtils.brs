@@ -101,4 +101,17 @@ sub main()
     my_aa = n.MoveFromField("aa_field")
     print my_aa ' prints {key: "value"}
     print n.aa_field ' invalid
+
+    ' Roku OS 15.3 - roUtils predicates
+    print "isNumber int: "; utils.isNumber(42)
+    print "isNumber boxed float: "; utils.isNumber(box(3.14))
+    print "isNumber invalid: "; utils.isNumber(invalid)
+    print "isNumber string: "; utils.isNumber("foo")
+    print "isString str: "; utils.isString("foo")
+    print "isString boxed str: "; utils.isString(box("foo"))
+    print "isString int: "; utils.isString(42)
+    print "isFloatingPoint float: "; utils.isFloatingPoint(3.14)
+    print "isFloatingPoint boxed float: "; utils.isFloatingPoint(box(3.14))
+    print "isFloatingPoint double: "; utils.isFloatingPoint(3.14#)
+    print "isFloatingPoint int: "; utils.isFloatingPoint(42)
 end sub

@@ -1,6 +1,6 @@
 import { BrsValue, ValueKind, BrsBoolean } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsType, RoArray, RoAssociativeArray, RoInvalid } from "..";
+import { BrsType, RoArray, RoAssociativeArray, RoInvalid, isAnyNumber, isBrsString, isBoxedNumber } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { isSceneGraphNode } from "../../extensions";
@@ -10,7 +10,9 @@ export class RoUtils extends BrsComponent implements BrsValue {
 
     constructor() {
         super("roUtils");
-        this.registerMethods({ ifUtils: [this.deepCopy, this.isSameObject] });
+        this.registerMethods({
+            ifUtils: [this.deepCopy, this.isSameObject, this.isNumber, this.isString, this.isFloatingPoint],
+        });
     }
 
     toString(parent?: BrsType): string {
@@ -45,6 +47,40 @@ export class RoUtils extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, data1: BrsComponent, data2: BrsComponent) => {
             return BrsBoolean.from(data1 === data2);
+        },
+    });
+
+    /** Checks whether the given value is any kind of number, boxed or unboxed. */
+    private readonly isNumber = new Callable("isNumber", {
+        signature: {
+            args: [new StdlibArgument("value", ValueKind.Dynamic)],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter, value: BrsType) => {
+            return BrsBoolean.from(isAnyNumber(value));
+        },
+    });
+
+    /** Checks whether the given value is a string, boxed or unboxed. */
+    private readonly isString = new Callable("isString", {
+        signature: {
+            args: [new StdlibArgument("value", ValueKind.Dynamic)],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter, value: BrsType) => {
+            return BrsBoolean.from(isBrsString(value));
+        },
+    });
+
+    /** Checks whether the given value is a floating-point number (Float or Double), boxed or unboxed. */
+    private readonly isFloatingPoint = new Callable("isFloatingPoint", {
+        signature: {
+            args: [new StdlibArgument("value", ValueKind.Dynamic)],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter, value: BrsType) => {
+            const unboxed = isBoxedNumber(value) ? value.unbox() : value;
+            return BrsBoolean.from(unboxed.kind === ValueKind.Float || unboxed.kind === ValueKind.Double);
         },
     });
 }
