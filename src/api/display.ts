@@ -728,8 +728,9 @@ function getCaptionArea(canvasW: number, canvasH: number) {
         width = videoRect.w || canvasW;
         height = videoRect.h || canvasH;
     } else if (captionRenderArea.mode === "override") {
-        x = captionRenderArea.x;
-        y = captionRenderArea.y;
+        // Per the spec, override x/y are offsets relative to the video's on-screen position.
+        x = (videoRect.x || 0) + captionRenderArea.x;
+        y = (videoRect.y || 0) + captionRenderArea.y;
         width = captionRenderArea.width || canvasW;
         height = captionRenderArea.height || canvasH;
     }
