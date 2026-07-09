@@ -377,6 +377,28 @@ describe("cli", () => {
         expect(stderr).toContain('Attempt to add duplicate field "sharedField" to RokuML component "XmlChildComp"');
     }, 10000);
 
+    it("Resolves an anonymous function observer registered by its toStr() name", async () => {
+        let command = ["node", brsCliPath, "-r anon-observer-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // rokucommunity/promises (used by Rooibos node tests) registers a callback by identifying an
+        // anonymous function via the name reported by toStr(), then passing that name to observeField.
+        // brs-engine names anonymous functions "$anon_..." but did not make them resolvable by that
+        // name, so observeField silently failed and the Timer's "fire" observer never ran (every
+        // @SGNode Rooibos suite hung). The anonymous-callable registry makes the name resolve again.
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "=== Anon Observer Repro ===",
+            "observe ok=true",
+            "OBSERVER FIRED",
+            "=== Anon Observer Repro Complete ===",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 10000);
+
     it("List item component can read its parent list during init()", async () => {
         let command = ["node", brsCliPath, "-r list-item-parent-app", "source/main.brs", "-c 0"].join(" ");
 

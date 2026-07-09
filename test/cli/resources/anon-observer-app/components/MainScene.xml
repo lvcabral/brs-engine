@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="MainScene" extends="Scene">
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        ' Mirrors how rokucommunity/promises registers a callback: it identifies an anonymous
+        ' function by the name reported by toStr() and passes that name to observeField.
+        cb = sub(event as object)
+            print "OBSERVER FIRED"
+        end sub
+        name = cb.toStr().tokenize(" ").peek()
+        timer = createObject("roSGNode", "Timer")
+        timer.duration = 0.01
+        timer.repeat = false
+        m.timer = timer
+        ok = timer.observeFieldScoped("fire", name)
+        print "observe ok="; ok
+        timer.control = "start"
+    end sub
+    ]]></script>
+</component>
