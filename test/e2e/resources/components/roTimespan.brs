@@ -10,4 +10,9 @@ sub main()
     print "can return seconds from date until now: " ts.getsecondstoiso8601date("2030-11")
     print "can return seconds from date until now: " ts.getsecondstoiso8601date("2030")
     print "can return 2077252342 for date that can't be parsed: " ts.getsecondstoiso8601date("14 Jun 2017 00:00:00 PDT")
+
+    ' Roku OS 15.3 - LongInteger totals from the mark point
+    ts.mark()
+    print "total milliseconds long: " ts.totalMillisecondsLong()
+    print "total microseconds long: " ts.totalMicrosecondsLong()
 end sub
