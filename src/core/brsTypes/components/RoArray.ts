@@ -10,6 +10,7 @@ import {
     isBrsBoolean,
     isAnyNumber,
     jsValueOf,
+    isNumberKind,
 } from "..";
 import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid, Comparable } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
@@ -36,6 +37,10 @@ export class RoArray extends BrsComponent implements BrsValue, BrsArray {
         this.elements = [];
         if (args.length === 1 && Array.isArray(args[0])) {
             for (const element of args[0]) {
+                if (isBoxable(element) && isNumberKind(element.kind) && element.legacy) {
+                    // set the literal flag of numeric values, when legacy was already set, to cover a Roku edge case for Type()
+                    element.literal = true;
+                }
                 this.addChildRef(element);
                 this.elements.push(element);
             }
