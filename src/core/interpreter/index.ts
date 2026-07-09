@@ -36,6 +36,7 @@ import {
     BrsInterface,
     toAssociativeArray,
     isCollection,
+    resolveAnonymousCallable,
 } from "../brsTypes";
 import { BrsExtension, ISGNode, isSceneGraphNode } from "../extensions";
 import { tryCoerce } from "../brsTypes/Coercion";
@@ -442,6 +443,15 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         let maybeCallback = this.evaluate(callbackVariable);
         if (maybeCallback.kind === ValueKind.Callable) {
             return maybeCallback;
+        }
+        // Anonymous functions aren't bound to any variable, but they carry a generated name
+        // (see Callable) that some libraries round-trip through `toStr()` and hand to
+        // `observeField`. Resolve those by name from the anonymous-callable registry.
+        if (functionName.toLowerCase().startsWith("$anon_")) {
+            const anon = resolveAnonymousCallable(functionName);
+            if (anon) {
+                return anon;
+            }
         }
 
         return BrsInvalid.Instance;

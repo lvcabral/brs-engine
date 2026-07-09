@@ -8,6 +8,35 @@ import { generateArgumentMismatchError } from "../error/ArgumentMismatch";
 
 let anonCounter = 0;
 
+/**
+ * Registry that lets an anonymous function be resolved back to its `Callable` by the name
+ * reported by `Callable.toString()`. Some BrightScript libraries identify a function argument
+ * by round-tripping it through `toStr()` and then passing that name to `observeField`
+ * (e.g. rokucommunity/promises' `observeFieldScoped(node, field, sub(...))`). Anonymous
+ * `Callable`s are minted per evaluation, so this map is capped (oldest entries evicted) to keep
+ * memory bounded no matter how many anonymous functions an app creates — resolution only ever
+ * needs the most recently created ones, since the lookup happens synchronously right after
+ * the function value is produced.
+ */
+const anonRegistry = new Map<string, Callable>();
+const ANON_REGISTRY_MAX = 1024;
+
+/** Registers an anonymous `Callable` so it can be looked up by its generated name. */
+function registerAnonymousCallable(callable: Callable) {
+    anonRegistry.set(callable.getName().toLowerCase(), callable);
+    if (anonRegistry.size > ANON_REGISTRY_MAX) {
+        const oldest = anonRegistry.keys().next().value;
+        if (oldest !== undefined) {
+            anonRegistry.delete(oldest);
+        }
+    }
+}
+
+/** Resolves an anonymous `Callable` previously registered under `name` (case-insensitive). */
+export function resolveAnonymousCallable(name: string): Callable | undefined {
+    return anonRegistry.get(name.toLowerCase());
+}
+
 /** An argument to a BrightScript `function` or `sub`. */
 export interface Argument {
     /** Where the argument exists in the parsed source file(s). */
@@ -221,7 +250,12 @@ export class Callable implements Brs.BrsValue, Brs.Boxable {
         this.name = name;
         this.signatures = signatures;
         if (this.signatures.length && (!this.name || this.name === "[Function]")) {
+            // Anonymous function: give it a unique name and register it so it can be resolved back by
+            // that name (see anonRegistry). The name is kept deterministic (a monotonic counter, which
+            // costs no memory) so `toStr()` output is stable; unbounded growth is prevented by the
+            // capped registry, not by the id scheme.
             this.name = `$anon_${++anonCounter}`;
+            registerAnonymousCallable(this);
         }
     }
 
