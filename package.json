@@ -24,6 +24,7 @@
     "release": "npm run release --workspaces",
     "start": "npm run start -w brs-engine",
     "clean": "npm run clean --workspaces",
+    "docs:update": "git submodule update --init --remote external/dev-doc",
     "test": "jest",
     "lint": "eslint -c .eslintrc.js --ext .ts ./src",
     "prettier:write": "prettier --write \"{packages,src,test}/**/*.{js,ts}\"",
