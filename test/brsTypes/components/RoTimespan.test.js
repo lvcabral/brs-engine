@@ -1,6 +1,6 @@
 const brs = require("../../../packages/node/bin/brs.node");
 const { Interpreter } = brs;
-const { RoTimespan, Int32, BrsString, BrsInvalid } = brs.types;
+const { RoTimespan, Int32, Int64, BrsString, BrsInvalid } = brs.types;
 const fakeTimer = require("@sinonjs/fake-timers");
 
 describe("Timespan", () => {
@@ -60,6 +60,20 @@ describe("Timespan", () => {
             });
         });
 
+        describe("totalMicrosecondsLong", () => {
+            it("returns microseconds from marked time until now as a LongInteger", () => {
+                let advanceTime = 50000;
+                let totalMicrosecondsLong = ts.getMethod("totalmicrosecondslong");
+
+                clock.tick(advanceTime);
+
+                let result = totalMicrosecondsLong.call(interpreter);
+                expect(totalMicrosecondsLong).toBeTruthy();
+                expect(result).toEqual(new Int64(advanceTime * 1000));
+                expect(result.kind).toBe(new Int64(0).kind);
+            });
+        });
+
         describe("totalMilliseconds", () => {
             it("returns milliseconds from marked time until now", () => {
                 let advanceTime = 50000;
@@ -70,6 +84,20 @@ describe("Timespan", () => {
                 let result = totalMilliseconds.call(interpreter);
                 expect(totalMilliseconds).toBeTruthy();
                 expect(result).toEqual(new Int32(advanceTime));
+            });
+        });
+
+        describe("totalMillisecondsLong", () => {
+            it("returns milliseconds from marked time until now as a LongInteger", () => {
+                let advanceTime = 50000;
+                let totalMillisecondsLong = ts.getMethod("totalmillisecondslong");
+
+                clock.tick(advanceTime);
+
+                let result = totalMillisecondsLong.call(interpreter);
+                expect(totalMillisecondsLong).toBeTruthy();
+                expect(result).toEqual(new Int64(advanceTime));
+                expect(result.kind).toBe(new Int64(0).kind);
             });
         });
 
