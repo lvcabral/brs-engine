@@ -50,6 +50,7 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
                 this.doesExist,
                 this.append,
                 this.keys,
+                this.values,
                 this.items,
                 this.lookup,
                 this.lookupCI,
@@ -362,6 +363,17 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
         },
         impl: (_: Interpreter) => {
             return new RoArray(this.getElements());
+        },
+    });
+
+    /** Returns an array of the associative array's values, ordered by their keys. */
+    private readonly values = new Callable("values", {
+        signature: {
+            args: [],
+            returns: ValueKind.Object,
+        },
+        impl: (_: Interpreter) => {
+            return new RoArray(this.getElements().map((key: BrsString) => this.get(key)));
         },
     });
 

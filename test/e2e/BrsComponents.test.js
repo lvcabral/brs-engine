@@ -72,6 +72,8 @@ describe("end to end brightscript functions", () => {
             "saved key after accessing by dot: dd",
             "saved key after accessing by index: Dd",
             "AA keys size:  1",
+            "values() count:  3",
+            "values() in key order: Los Angeles, Chicago, New York",
         ]);
     });
 
@@ -802,6 +804,17 @@ describe("end to end brightscript functions", () => {
             "<Component: roArray> =\n[\n    4\n    5\n    6\n]",
             '<Component: roAssociativeArray> =\n{\n    key: "value"\n}',
             "<Component: roInvalid>",
+            "isNumber int: true",
+            "isNumber boxed float: true",
+            "isNumber invalid: false",
+            "isNumber string: false",
+            "isString str: true",
+            "isString boxed str: true",
+            "isString int: false",
+            "isFloatingPoint float: true",
+            "isFloatingPoint boxed float: true",
+            "isFloatingPoint double: true",
+            "isFloatingPoint int: false",
         ]);
     });
 });

@@ -35,4 +35,9 @@ sub main()
     aa["Dd"] = 3
     print "saved key after accessing by index: "aa.keys()[0] ' => Dd
     print "AA keys size: " aa.keys().count() ' => 1
+
+    ' Roku OS 15.3 - values() returns the values ordered by key
+    conventions = {"2027": "Chicago", "2026": "Los Angeles", "2028": "New York"}
+    print "values() count: " conventions.values().count()        ' => 3
+    print "values() in key order: " conventions.values().join(", ") ' => Los Angeles, Chicago, New York
 end sub
