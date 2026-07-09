@@ -356,6 +356,8 @@ describe("end to end brightscript functions", () => {
             "can return seconds from date until now:  372649229",
             "can return seconds from date until now:  346383629",
             "can return 2077252342 for date that can't be parsed:  2077252342",
+            "total milliseconds long:  0",
+            "total microseconds long:  0",
         ]);
     });
 

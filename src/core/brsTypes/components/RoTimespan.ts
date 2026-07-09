@@ -4,6 +4,7 @@ import { BrsType, ValidDateFormats } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
+import { Int64 } from "../Int64";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import customParseFormat from "dayjs/plugin/customParseFormat";
@@ -25,7 +26,9 @@ export class RoTimespan extends BrsComponent implements BrsValue {
             ifTimespan: [
                 this.mark,
                 this.totalMicroseconds,
+                this.totalMicrosecondsLong,
                 this.totalMilliseconds,
+                this.totalMillisecondsLong,
                 this.totalSeconds,
                 this.getSecondsToISO8601Date,
             ],
@@ -66,6 +69,17 @@ export class RoTimespan extends BrsComponent implements BrsValue {
         },
     });
 
+    /** Returns total microseconds from the mark time to now as a LongInteger */
+    private readonly totalMicrosecondsLong = new Callable("totalMicrosecondsLong", {
+        signature: {
+            args: [],
+            returns: ValueKind.Int64,
+        },
+        impl: (_: Interpreter) => {
+            return new Int64(Math.floor((performance.now() - this.markTime) * 1000));
+        },
+    });
+
     /** Returns total milliseconds from the mark time to now */
     private readonly totalMilliseconds = new Callable("totalMilliseconds", {
         signature: {
@@ -74,6 +88,17 @@ export class RoTimespan extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter) => {
             return new Int32(Math.floor(performance.now() - this.markTime));
+        },
+    });
+
+    /** Returns total milliseconds from the mark time to now as a LongInteger */
+    private readonly totalMillisecondsLong = new Callable("totalMillisecondsLong", {
+        signature: {
+            args: [],
+            returns: ValueKind.Int64,
+        },
+        impl: (_: Interpreter) => {
+            return new Int64(Math.floor(performance.now() - this.markTime));
         },
     });
 
