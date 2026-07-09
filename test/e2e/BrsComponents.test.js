@@ -72,6 +72,8 @@ describe("end to end brightscript functions", () => {
             "saved key after accessing by dot: dd",
             "saved key after accessing by index: Dd",
             "AA keys size:  1",
+            "values() count:  3",
+            "values() in key order: Los Angeles, Chicago, New York",
         ]);
     });
 

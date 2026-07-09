@@ -247,6 +247,33 @@ describe("RoAssociativeArray", () => {
             });
         });
 
+        describe("values", () => {
+            it("returns the values ordered by their keys, not by value", () => {
+                let aa = new RoAssociativeArray([
+                    { name: new BrsString("zebra"), value: new BrsString("apple") },
+                    { name: new BrsString("apple"), value: new BrsString("zebra") },
+                    { name: new BrsString("mango"), value: new BrsString("mango") },
+                ]);
+
+                let values = aa.getMethod("values");
+                expect(values).toBeTruthy();
+
+                let result = values.call(interpreter);
+                // keys sorted -> apple, mango, zebra => values zebra, mango, apple
+                expect(result.elements.map((e) => e.toString())).toEqual(["zebra", "mango", "apple"]);
+            });
+
+            it("returns an empty array from an empty associative array", () => {
+                let aa = new RoAssociativeArray([]);
+
+                let values = aa.getMethod("values");
+                expect(values).toBeTruthy();
+
+                let result = values.call(interpreter);
+                expect(result.elements).toEqual(new RoArray([]).elements);
+            });
+        });
+
         describe("items", () => {
             it("returns an array of values from the associative array in lexicographical order", () => {
                 let cletter = new BrsString("c");
