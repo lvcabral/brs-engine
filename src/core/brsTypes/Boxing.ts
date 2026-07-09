@@ -12,9 +12,9 @@ export interface Unboxable {
 }
 
 export function isBoxable(value: BrsType): value is BrsType & Boxable {
-    return "box" in value && "literal" in value && "legacy" in value;
+    return value !== undefined && "box" in value && "literal" in value && "legacy" in value;
 }
 
 export function isUnboxable(value: BrsType): value is BrsType & Unboxable {
-    return "unbox" in value && "copy" in value;
+    return value !== undefined && "unbox" in value && "copy" in value;
 }

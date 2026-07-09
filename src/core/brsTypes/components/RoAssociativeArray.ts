@@ -1,6 +1,6 @@
 import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid } from "../BrsType";
 import { BrsComponent, BrsIterable } from "./BrsComponent";
-import { BrsType, isBoxable, isUnboxable, RoFunction } from "..";
+import { BrsType, isBoxable, isNumberKind, isUnboxable, RoFunction } from "..";
 import { isSceneGraphNode } from "../../extensions";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
@@ -31,8 +31,13 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
         super("roAssociativeArray");
         this.modeCaseSensitive = cs;
         for (const member of elements) {
-            this.addChildRef(member.value);
-            this.set(member.name, member.value, true);
+            const element = member.value;
+            if (isBoxable(element) && isNumberKind(element.kind) && element.legacy) {
+                // set the literal flag of numeric values, when legacy was already set, to cover a Roku edge case for Type()
+                element.literal = true;
+            }
+            this.addChildRef(element);
+            this.set(member.name, element, true);
         }
         this.enumIndex = elements.length ? 0 : -1;
         const ifEnum = new IfEnum(this);
