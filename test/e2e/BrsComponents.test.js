@@ -815,6 +815,10 @@ describe("end to end brightscript functions", () => {
             "isFloatingPoint boxed float: true",
             "isFloatingPoint double: true",
             "isFloatingPoint int: false",
+            "hasComponent roArray: true",
+            "hasComponent rodeviceinfo: true",
+            "hasComponent roSGNode: true",
+            "hasComponent roBogus: false",
         ]);
     });
 });

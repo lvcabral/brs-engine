@@ -17,6 +17,26 @@ describe("RoUtils", () => {
         });
     });
 
+    describe("hasComponent", () => {
+        let hasComponent;
+        beforeEach(() => {
+            hasComponent = utils.getMethod("hasComponent");
+        });
+
+        it("returns true for registered components, case-insensitively", () => {
+            expect(hasComponent.call(interpreter, new BrsString("roDeviceInfo"))).toBe(BrsBoolean.True);
+            expect(hasComponent.call(interpreter, new BrsString("rodeviceinfo"))).toBe(BrsBoolean.True);
+            expect(hasComponent.call(interpreter, new BrsString("roArray"))).toBe(BrsBoolean.True);
+        });
+
+        it("returns false for unregistered component names", () => {
+            expect(hasComponent.call(interpreter, new BrsString("roNotAThing"))).toBe(BrsBoolean.False);
+            // roSGNode is only registered once the SceneGraph extension is loaded,
+            // which does not happen in this unit-test harness.
+            expect(hasComponent.call(interpreter, new BrsString("roSGNode"))).toBe(BrsBoolean.False);
+        });
+    });
+
     describe("isNumber", () => {
         let isNumber;
         beforeEach(() => {

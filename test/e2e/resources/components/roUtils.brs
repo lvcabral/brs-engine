@@ -114,4 +114,10 @@ sub main()
     print "isFloatingPoint boxed float: "; utils.isFloatingPoint(box(3.14))
     print "isFloatingPoint double: "; utils.isFloatingPoint(3.14#)
     print "isFloatingPoint int: "; utils.isFloatingPoint(42)
+
+    ' Roku OS 15.2 - hasComponent
+    print "hasComponent roArray: "; utils.hasComponent("roArray")
+    print "hasComponent rodeviceinfo: "; utils.hasComponent("rodeviceinfo")
+    print "hasComponent roSGNode: "; utils.hasComponent("roSGNode")
+    print "hasComponent roBogus: "; utils.hasComponent("roBogus")
 end sub

@@ -1,6 +1,15 @@
-import { BrsValue, ValueKind, BrsBoolean } from "../BrsType";
+import { BrsValue, ValueKind, BrsBoolean, BrsString } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsType, RoArray, RoAssociativeArray, RoInvalid, isAnyNumber, isBrsString, isBoxedNumber } from "..";
+import {
+    BrsType,
+    BrsObjects,
+    RoArray,
+    RoAssociativeArray,
+    RoInvalid,
+    isAnyNumber,
+    isBrsString,
+    isBoxedNumber,
+} from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { isSceneGraphNode } from "../../extensions";
@@ -11,7 +20,14 @@ export class RoUtils extends BrsComponent implements BrsValue {
     constructor() {
         super("roUtils");
         this.registerMethods({
-            ifUtils: [this.deepCopy, this.isSameObject, this.isNumber, this.isString, this.isFloatingPoint],
+            ifUtils: [
+                this.deepCopy,
+                this.isSameObject,
+                this.hasComponent,
+                this.isNumber,
+                this.isString,
+                this.isFloatingPoint,
+            ],
         });
     }
 
@@ -47,6 +63,17 @@ export class RoUtils extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, data1: BrsComponent, data2: BrsComponent) => {
             return BrsBoolean.from(data1 === data2);
+        },
+    });
+
+    /** Verifies whether a component name is already registered (creatable via CreateObject). */
+    private readonly hasComponent = new Callable("hasComponent", {
+        signature: {
+            args: [new StdlibArgument("componentName", ValueKind.String)],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter, componentName: BrsString) => {
+            return BrsBoolean.from(BrsObjects.has(componentName.value));
         },
     });
 
