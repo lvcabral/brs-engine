@@ -623,5 +623,23 @@ describe("RoDeviceInfo", () => {
                 expect(method.call(interpreter)).toEqual(BrsBoolean.False);
             });
         });
+        describe("isHDMIConnected", () => {
+            it("should return true as a simulated player is treated as connected", () => {
+                let deviceInfo = new RoDeviceInfo(interpreter);
+                let method = deviceInfo.getMethod("isHDMIConnected");
+
+                expect(method).toBeTruthy();
+                expect(method.call(interpreter)).toEqual(BrsBoolean.True);
+            });
+        });
+        describe("isPassthruCodecActive", () => {
+            it("should return false as audio is decoded locally", () => {
+                let deviceInfo = new RoDeviceInfo(interpreter);
+                let method = deviceInfo.getMethod("isPassthruCodecActive");
+
+                expect(method).toBeTruthy();
+                expect(method.call(interpreter)).toEqual(BrsBoolean.False);
+            });
+        });
     });
 });
