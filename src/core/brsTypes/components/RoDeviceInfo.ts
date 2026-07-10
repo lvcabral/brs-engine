@@ -89,8 +89,10 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
                 this.getCaptionsOption,
                 this.canDecodeAudio,
                 this.getAudioOutputChannel,
+                this.isPassthruCodecActive,
                 this.getAudioDecodeInfo, // deprecated
                 this.getVideoDecodeInfo, // deprecated
+                this.isHDMIConnected, // deprecated
                 this.canDecodeVideo,
                 this.isAudioGuideEnabled,
                 this.isAutoPlayEnabled, // since OS 13.0
@@ -747,6 +749,18 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         },
     });
 
+    /** Indicates whether an external passthrough device (TV/receiver/soundbar) is rendering audio. */
+    private readonly isPassthruCodecActive = new Callable("isPassthruCodecActive", {
+        signature: {
+            args: [],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter) => {
+            // The engine decodes audio locally; no external passthrough device is active.
+            return BrsBoolean.False;
+        },
+    });
+
     /** Lists each audio decoder supported by the device.*/
     private readonly getAudioDecodeInfo = new Callable("getAudioDecodeInfo", {
         signature: {
@@ -778,6 +792,21 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
         impl: (_: Interpreter) => {
             // This method is deprecated in Roku
             return toAssociativeArray({ H264: "", MPEG2: "", MPEG4: "" });
+        },
+    });
+
+    /** Checks for an HDMI connection to a TV. */
+    private readonly isHDMIConnected = new Callable("isHDMIConnected", {
+        signature: {
+            args: [],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter) => {
+            BrsDevice.stderr.write(
+                `warning,BRIGHTSCRIPT: WARNING: roDeviceInfo.IsHDMIConnected: This function is deprecated`
+            );
+            // A simulated player is treated as connected to a display.
+            return BrsBoolean.True;
         },
     });
 
