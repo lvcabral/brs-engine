@@ -377,6 +377,29 @@ describe("cli", () => {
         expect(stderr).toContain('Attempt to add duplicate field "sharedField" to RokuML component "XmlChildComp"');
     }, 10000);
 
+    it("Resolves a component method in call position when an XML field shadows its name", async () => {
+        let command = ["node", brsCliPath, "-r method-shadow-field-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // A component may declare an <interface> field named after a built-in method
+        // (e.g. isInFocusChain). On Roku the field only shadows the method for reads:
+        // call syntax still resolves the interface method, while plain reads and
+        // observeField target the XML field (Tubi's TubiProgressBar relies on this).
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "=== Method Shadow Field Repro ===",
+            "init call isInFocusChain() = false",
+            "observer fired with true",
+            "field read = true",
+            "method call = false",
+            "=== Method Shadow Field Repro Complete ===",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 10000);
+
     it("Resolves an anonymous function observer registered by its toStr() name", async () => {
         let command = ["node", brsCliPath, "-r anon-observer-app", "source/main.brs", "-c 0"].join(" ");
 
