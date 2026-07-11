@@ -15,6 +15,7 @@ import {
 import { FieldKind, FieldModel } from "../SGTypes";
 import { Poster, SGNodeType } from ".";
 import { Group } from "./Group";
+import { Node } from "./Node";
 import { createNode } from "../factory/NodeFactory";
 import { brsValueOf, jsValueOf } from "../factory/Serializer";
 import { sgRoot } from "../SGRoot";
@@ -220,6 +221,28 @@ export class ArrayGrid extends Group {
             return this.metadata.findIndex((item) => item.index === index);
         }
         return index;
+    }
+
+    /**
+     * Resolves an ifSGNodeBoundingRect sub part identifier to the matching item component:
+     * `itemX` (data-model index X), `itemX_Y` (row X — list nodes hold one component per row),
+     * `focusItem` and `focusIndicator` (the focused item; the indicator hugs the item rect).
+     * Item components are created lazily during rendering, so an off-screen item resolves to
+     * undefined and the caller falls back to the node's own bounding rect (matching Roku's
+     * "if the subpart does not exist" behavior).
+     */
+    protected resolveSubpart(itemNumber: string): Node | undefined {
+        const name = itemNumber.trim().toLowerCase();
+        let compIndex = -1;
+        if (name === "focusitem" || name === "focusindicator") {
+            compIndex = this.focusIndex;
+        } else if (name.startsWith("item")) {
+            const contentIndex = Number.parseInt(name.slice(4), 10);
+            if (Number.isInteger(contentIndex)) {
+                compIndex = this.findContentIndex(contentIndex);
+            }
+        }
+        return compIndex >= 0 ? this.itemComps[compIndex] : undefined;
     }
 
     protected updateItemFocus(index: number, focus: boolean, nodeFocus: boolean) {

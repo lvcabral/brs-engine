@@ -866,6 +866,49 @@ export class Node extends RoSGNode implements BrsValue {
     }
 
     /**
+     * Returns the bounding rectangle of an identified sub part (ifSGNodeBoundingRect's
+     * subBoundingRect/localSubBoundingRect/sceneSubBoundingRect). Sub parts (`itemX`, `itemX_Y`,
+     * `focusItem`, `focusIndicator`) only exist on ArrayGrid-derived nodes, which override
+     * `resolveSubpart`. Per the Roku spec, when the sub part does not exist the node's own
+     * bounding rectangle (in the requested coordinate space) is returned.
+     * @param type Rectangle type: `local`, `toScene`, or any other value for parent space.
+     * @param itemNumber Sub part identifier (e.g. "item3", "item4_11", "focusItem").
+     * @param interpreter Interpreter used to refresh layout before measuring.
+     * @returns Bounding rectangle of the sub part in the requested coordinate space.
+     */
+    getSubBoundingRect(type: string, itemNumber: string, interpreter?: Interpreter): Rect {
+        // Refresh layout the same way getBoundingRect does (guarded against re-entrant renders).
+        const ownRect = this.getBoundingRect(type, interpreter);
+        const subpart = this.resolveSubpart(itemNumber);
+        if (!subpart) {
+            return ownRect;
+        }
+        const subScene = subpart.rectToScene;
+        if (type === "toScene") {
+            return { ...subScene };
+        }
+        // The subpart rect is tracked in scene coordinates; re-express it relative to this
+        // node's position in the requested space.
+        const base = type === "local" ? this.rectLocal : this.rectToParent;
+        return {
+            x: base.x + (subScene.x - this.rectToScene.x),
+            y: base.y + (subScene.y - this.rectToScene.y),
+            width: subScene.width,
+            height: subScene.height,
+        };
+    }
+
+    /**
+     * Resolves a bounding-rect sub part identifier to a node. Only ArrayGrid-derived nodes
+     * have sub parts; the base implementation reports "no such sub part".
+     * @param _itemNumber Sub part identifier.
+     * @returns The sub part node, or undefined when the node has no such sub part.
+     */
+    protected resolveSubpart(_itemNumber: string): Node | undefined {
+        return undefined;
+    }
+
+    /**
      * Registers a field observer callback or message port.
      * @param interpreter Active interpreter owning the observer.
      * @param scope Observer lifetime scope.
