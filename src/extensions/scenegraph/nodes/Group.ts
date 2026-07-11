@@ -636,8 +636,7 @@ export class Group extends Node {
     }
 
     renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
-        if (!this.isVisible()) {
-            this.updateRenderTracking(true);
+        if (this.skipRender(draw2D)) {
             return;
         }
         const nodeTrans = this.getTranslation();
@@ -663,7 +662,10 @@ export class Group extends Node {
             width: 0,
             height: 0,
         };
-        opacity = opacity * this.getOpacity();
+        // An invisible group traversed by a measurement pass propagates opacity 0 so its (visible)
+        // descendants compute their rects but keep reporting renderTracking "none" — they are laid
+        // out, not displayed.
+        opacity = this.isVisible() ? opacity * this.getOpacity() : 0;
         this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);
         this.updateContainerBounds(nodeTrans, drawTrans);
         this.nodeRenderingDone(origin, angle, opacity, draw2D);
@@ -689,12 +691,38 @@ export class Group extends Node {
     }
 
     protected nodeRenderingDone(origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
-        this.updateParentRects(origin, angle);
-        this.updateRenderTracking(opacity === 0);
+        // An invisible node only reaches here on a measurement pass (skipRender lets it through
+        // when there is no draw target): its own rects were refreshed for bounding-rect queries,
+        // but it must not contribute to the parent's bounds nor report as rendered.
+        if (this.isVisible()) {
+            this.updateParentRects(origin, angle);
+        }
+        this.updateRenderTracking(opacity === 0 || !this.isVisible());
         // Mark node as clean after rendering
         if (draw2D) {
             this.isDirty = false;
         }
+    }
+
+    /**
+     * Whether renderNode must skip this node. Invisible nodes are skipped during frame draws
+     * (draw2D present). A layout/measurement pass (no draw target — e.g. getBoundingRect's
+     * refresh render) still traverses invisible plain containers so that nodes inside a hidden
+     * ancestor get their bounding rects computed: on Roku, layout and bounding rects are
+     * independent of visibility, and apps commonly measure UI before showing it (a component
+     * built while an ancestor screen group is still hidden, then centered via boundingRect()).
+     * Renderable/complex nodes (Poster, Label, ArrayGrid, …) keep their own hard skip when
+     * invisible so hidden UI does not load textures or create item components.
+     */
+    protected skipRender(draw2D?: IfDraw2D): boolean {
+        if (this.isVisible()) {
+            return false;
+        }
+        if (!draw2D) {
+            return false;
+        }
+        this.updateRenderTracking(true);
+        return true;
     }
 
     protected updateRenderTracking(invisible: boolean) {
