@@ -377,6 +377,30 @@ describe("cli", () => {
         expect(stderr).toContain('Attempt to add duplicate field "sharedField" to RokuML component "XmlChildComp"');
     }, 10000);
 
+    it("Guards bounding-rect refresh renders against re-entrant measurement", async () => {
+        let command = ["node", brsCliPath, "-r grid-measure-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // A bounding-rect query outside a frame render refreshes layout by rendering the whole
+        // tree, lazily creating grid item components. An item's field observer calling
+        // boundingRect() inside that refresh must reuse the active pass (sgRoot.rendering guard)
+        // instead of starting another refresh — item creation would re-enter itself and overflow
+        // the JS call stack ('roSGNode.Set: Maximum call stack size exceeded').
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "=== Grid Measure Repro ===",
+            "onHeightChange measured height =  72",
+            "onHeightChange measured height =  72",
+            "onHeightChange measured height =  72",
+            "grid rect height =  276",
+            "=== Grid Measure Repro Complete ===",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 10000);
+
     it("Resolves an anonymous function observer registered by its toStr() name", async () => {
         let command = ["node", brsCliPath, "-r anon-observer-app", "source/main.brs", "-c 0"].join(" ");
 
