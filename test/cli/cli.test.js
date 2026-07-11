@@ -396,6 +396,9 @@ describe("cli", () => {
             "onHeightChange measured height =  72",
             "grid rect height =  276",
             "=== Grid Measure Repro Complete ===",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
         ]);
     }, 10000);
     it("Resolves a component method in call position when an XML field shadows its name", async () => {
