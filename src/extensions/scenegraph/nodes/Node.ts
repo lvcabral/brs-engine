@@ -1067,6 +1067,14 @@ export class Node extends RoSGNode implements BrsValue {
 
     /**
      * Searches the subtree rooted at the provided node for a matching `id`.
+     *
+     * Per Roku's ifSGNodeDict spec, findNode is a BREADTH-FIRST search: every node at one depth
+     * is tested before any deeper node. This matters when ids collide across depths — a
+     * depth-first walk would descend into an earlier sibling's subtree (including a custom
+     * component's internal children) and return a deep node whose id shadows a shallower
+     * sibling's (e.g. a list container whose first child component internally names a node
+     * "rowList" while the container's own sibling grid is "RowList" — breadth-first, matching a
+     * device, resolves to the sibling).
      * @param node Root to inspect.
      * @param id Identifier to seek (case-insensitive).
      * @param ignoreRoot Whether to ignore the root node in the search.
@@ -1079,25 +1087,34 @@ export class Node extends RoSGNode implements BrsValue {
         ignoreRoot?: boolean,
         visited: WeakSet<Node> = new WeakSet()
     ): Node | BrsInvalid {
-        if (!ignoreRoot) {
-            // test current node in tree
-            const myId = node.getValue("id");
-            if (myId?.toString().toLowerCase() === id.toLowerCase()) {
-                return node;
+        const target = id.toLowerCase();
+        const queue: Node[] = [];
+        if (ignoreRoot) {
+            visited.add(node);
+            for (const child of node.children) {
+                if (child instanceof Node) {
+                    queue.push(child);
+                }
             }
+        } else {
+            queue.push(node);
         }
-        if (visited.has(node)) {
-            return BrsInvalid.Instance;
-        }
-        visited.add(node);
-        // visit each child
-        for (const child of node.children) {
-            if (!(child instanceof Node)) {
+        let head = 0;
+        while (head < queue.length) {
+            const current = queue[head];
+            head++;
+            if (visited.has(current)) {
                 continue;
             }
-            const result = this.findNodeById(child, id, false, visited);
-            if (result instanceof Node) {
-                return result;
+            visited.add(current);
+            const myId = current.getValue("id");
+            if (myId?.toString().toLowerCase() === target) {
+                return current;
+            }
+            for (const child of current.children) {
+                if (child instanceof Node) {
+                    queue.push(child);
+                }
             }
         }
         // name was not found anywhere in tree
