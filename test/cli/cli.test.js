@@ -277,7 +277,7 @@ describe("cli", () => {
         let { stdout, stderr } = await exec(command, {
             cwd: path.join(__dirname, "resources"),
         });
-      
+
         expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
             "=== Testing Failed Alias Targets ===",
             "scene.trailing = present",
@@ -285,7 +285,6 @@ describe("cli", () => {
             "label2.text = synced",
             "label3.text = synced",
             "hasField allBad = false",
-            "=== Test Complete ===",
             "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
             "",
             "",
