@@ -251,6 +251,7 @@ export function toSGNode(obj: any, type: string, subtype: string, child?: boolea
     newNode.setAddress(obj["_address_"] || newNode.getAddress());
     newNode.setOwner(obj["_owner_"] ?? 0);
     nodeMap.set(newNode.getAddress(), newNode);
+    sgRoot.registerCrossThreadNode(newNode);
 
     const fieldTypes = obj["_fieldtypes_"] ?? {};
     for (const key in obj) {
@@ -330,6 +331,7 @@ export function updateSGNode(obj: any, targetNode: Node, nodeMap?: Map<string, N
     targetNode.setOwner(obj["_owner_"] ?? targetNode.getOwner());
     // Register/update in nodeMap
     nodeMap.set(targetNode.getAddress(), targetNode);
+    sgRoot.registerCrossThreadNode(targetNode);
     // Update fields
     const fieldTypes = obj["_fieldtypes_"] ?? {};
     for (const key in obj) {
@@ -455,6 +457,9 @@ export function fromSGNode(node: Node, deep: boolean = true, host?: Node, visite
         };
     }
     visited.add(node);
+    // A serialized node's address may be used by the other thread to rendezvous back into this
+    // one long after the local trees stopped referencing it — keep it resolvable by address.
+    sgRoot.registerCrossThreadNode(node);
 
     const result: FlexObject = {};
     const fields = node.getNodeFields();

@@ -21,7 +21,7 @@ import { ThreadInfo } from "./SGTypes";
 import type { SoundEffect } from "./nodes/SoundEffect";
 import type { RoSGNode } from "./components/RoSGNode";
 import type { RoSGScreen } from "./components/RoSGScreen";
-import type { AnimationBase, Audio, Dialog, Scene, StandardDialog, Task, Timer, Video } from "./nodes";
+import type { AnimationBase, Audio, Dialog, Node, Scene, StandardDialog, Task, Timer, Video } from "./nodes";
 import type { RoRenderThreadQueue } from "./components/RoRenderThreadQueue";
 
 /**
@@ -73,6 +73,20 @@ export class SGRoot {
     rendezvousTimeout: number = 10000;
     /** The render thread's roRenderThreadQueue singleton (holds handlers), drained each frame. */
     private _renderQueue?: RoRenderThreadQueue;
+    /**
+     * Nodes that have crossed the thread boundary (serialized to, or rebuilt from, another thread),
+     * keyed by address. A rendezvous update targets a node by this address, and on a real Roku any
+     * node the other thread holds a reference to stays reachable — even when it is no longer part of
+     * the task/scene/global trees (e.g. a per-request callback node that a field stopped pointing
+     * at). WeakRefs keep the registry from retaining nodes; the FinalizationRegistry prunes entries
+     * once a node is collected.
+     */
+    private readonly _crossThreadNodes = new Map<string, WeakRef<Node>>();
+    private readonly _crossThreadCleanup = new FinalizationRegistry((address: string) => {
+        if (this._crossThreadNodes.get(address)?.deref() === undefined) {
+            this._crossThreadNodes.delete(address);
+        }
+    });
 
     get interpreter(): Interpreter | undefined {
         return this._interpreter;
@@ -316,6 +330,29 @@ export class SGRoot {
      */
     setFocused(node?: RoSGNode) {
         this._focused = node;
+    }
+
+    /**
+     * Records a node whose address has crossed the thread boundary, so later rendezvous
+     * updates can resolve it even when it is unreachable from the task/scene/global trees.
+     * @param node Node being serialized to (or rebuilt from) another thread
+     */
+    registerCrossThreadNode(node: Node) {
+        const address = node.getAddress();
+        if (this._crossThreadNodes.get(address)?.deref() === node) {
+            return;
+        }
+        this._crossThreadNodes.set(address, new WeakRef(node));
+        this._crossThreadCleanup.register(node, address);
+    }
+
+    /**
+     * Resolves a previously registered cross-thread node by address.
+     * @param address Node address to look up
+     * @returns The live node, or undefined if never registered or already collected
+     */
+    getCrossThreadNode(address: string): Node | undefined {
+        return this._crossThreadNodes.get(address)?.deref();
     }
 
     /**
