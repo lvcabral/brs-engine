@@ -779,9 +779,9 @@ function addFields(interpreter: Interpreter, node: Node, typeDef: ComponentDefin
             continue;
         }
         if (fieldValue.alias?.includes(".")) {
-            if (!addAliases(fieldName, fieldValue.alias, node, typeDef)) {
-                return;
-            }
+            // An unresolvable alias target only warns (like a device): the remaining targets are
+            // still tried, and the fields declared after this one are still added.
+            addAliases(fieldName, fieldValue.alias, node, typeDef);
         } else {
             // resolveField materializes a ContentNode hidden metadata default so a component that
             // redeclares one (e.g. "title") is still detected and routed through replaceField.
@@ -820,13 +820,18 @@ function addFields(interpreter: Interpreter, node: Node, typeDef: ComponentDefin
 
 /**
  * Add aliases for a field to a node based on the component definition.
+ *
+ * An unresolvable target (missing node or missing field) writes the device-style warning and is
+ * skipped — the remaining targets are still tried, so an alias whose FIRST target is bad still
+ * binds to any later valid ones (and vice versa). Matching a real device, a failed alias never
+ * aborts the component: fields declared after it must still be added, so callers must not treat
+ * this as fatal. When no target resolves at all, the field is simply not created.
  * @param fieldName The name of the field to alias.
  * @param fieldAlias The alias string specifying target nodes and fields.
  * @param node The node to which aliases are added.
  * @param typeDef The component definition containing field specifications.
- * @returns True if aliases were successfully added, false otherwise.
  */
-function addAliases(fieldName: string, fieldAlias: string, node: Node, typeDef: ComponentDefinition): boolean {
+function addAliases(fieldName: string, fieldAlias: string, node: Node, typeDef: ComponentDefinition) {
     // Parse comma-separated alias list (e.g., "child1.field1,child2.field2")
     const aliasParts = fieldAlias.split(",").map((s: string) => s.trim());
     const targets: FieldAliasTarget[] = [];
@@ -838,11 +843,11 @@ function addAliases(fieldName: string, fieldAlias: string, node: Node, typeDef: 
         if (childNode instanceof Node && childField) {
             const field = childNode.resolveField(childField.toLowerCase());
             if (field) {
-                if (targets.length === 0) {
+                if (!sharedField) {
                     // Get first child field and type
                     sharedField = field;
                     fieldType = field.getType();
-                } else if (sharedField && field.getType() === fieldType) {
+                } else if (field.getType() === fieldType) {
                     // Set siblings with the shared field
                     childNode.getNodeFields().set(childField.toLowerCase(), sharedField);
                 } else {
@@ -855,27 +860,17 @@ function addAliases(fieldName: string, fieldAlias: string, node: Node, typeDef: 
                 msg += `-- Interface field alias failed: Node "${childName}" has no field named "${childField}"\n`;
                 msg += `-- Error found ${typeDef.xmlPath}`;
                 BrsDevice.stderr.write(msg);
-                if (sharedField) {
-                    break;
-                }
-                return false;
             }
         } else {
             let msg = `warning,Error creating XML component ${node.nodeSubtype}\n`;
             msg += `-- Interface field alias failed: No node named ${childName}\n`;
             msg += `-- Error found ${typeDef.xmlPath}`;
             BrsDevice.stderr.write(msg);
-            if (sharedField) {
-                break;
-            }
-            return false;
         }
     }
     if (targets.length > 0 && sharedField) {
         node.addNodeFieldAlias(fieldName, targets, sharedField);
-        return true;
     }
-    return false;
 }
 
 /**
