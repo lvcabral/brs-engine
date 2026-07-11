@@ -116,6 +116,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     private _tryMode = false;
     private _debugMode: DebugMode = DebugMode.NONE;
     private _dotLevel = 0;
+    /** The callee expression of the `Expr.Call` currently being evaluated (call position). */
+    private _activeCallee?: Expr.Expression;
     private _printed = false; // Prevent the warning when no entry point exists
     private _lastStmt: Stmt.Statement | null = null;
 
@@ -1251,7 +1253,14 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
     visitCall(expression: Expr.Call) {
         // evaluate the function to call (it could be the result of another function call)
-        const evaluated = this.evaluate(expression.callee);
+        const prevCallee = this._activeCallee;
+        this._activeCallee = expression.callee;
+        let evaluated: BrsType;
+        try {
+            evaluated = this.evaluate(expression.callee);
+        } finally {
+            this._activeCallee = prevCallee;
+        }
         const callee = evaluated instanceof RoFunction ? evaluated.unbox() : evaluated;
         // evaluate all of the arguments as well (they could also be function calls)
         let args = expression.args.map(this.evaluate, this);
@@ -1336,6 +1345,15 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 const target = source.get(new BrsString(expression.name.text));
                 if (isBrsCallable(target) && source instanceof RoAssociativeArray) {
                     target.setContext(source);
+                }
+                // A SceneGraph node may declare an XML <interface> field named after one of its
+                // component methods (e.g. a boolean field `isInFocusChain`). On Roku the field only
+                // shadows the method for reads — call syntax still resolves the interface method.
+                if (!isBrsCallable(target) && this._activeCallee === expression && isSceneGraphNode(source)) {
+                    const method = source.getMethod(expression.name.text);
+                    if (method) {
+                        return method;
+                    }
                 }
                 return target;
             } catch (err: any) {
