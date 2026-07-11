@@ -168,12 +168,20 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
         let oldKey = this.findElementKey(index.value);
         this.addChildRef(value);
         if (oldKey) this.removeChildRef(this.elements.get(oldKey));
+        let indexValue = isCaseSensitive ? index.value : index.value.toLowerCase();
         if (!this.modeCaseSensitive && oldKey) {
+            if (oldKey === indexValue) {
+                // Replace in place: keep the key's position in the backing Map. Roku does not
+                // reorder an AA when an existing key's value is replaced — a delete + re-insert
+                // here moved the key to the end, which made a `for each` that assigns to existing
+                // keys of the same AA skip entries (and visit others twice).
+                this.elements.set(oldKey, value);
+                return BrsInvalid.Instance;
+            }
+            // Different casing: re-case the stored key to the latest write (matching Roku).
             this.elements.delete(oldKey);
             this.keyMap.set(oldKey.toLowerCase(), new Set()); // clear key set cuz in insensitive mode we should have 1 key in set
         }
-
-        let indexValue = isCaseSensitive ? index.value : index.value.toLowerCase();
         this.elements.set(indexValue, value);
 
         let lkey = index.value.toLowerCase();
