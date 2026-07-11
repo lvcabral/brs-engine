@@ -126,6 +126,9 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
                 this.boundingRect,
                 this.localBoundingRect,
                 this.sceneBoundingRect,
+                this.subBoundingRect,
+                this.localSubBoundingRect,
+                this.sceneSubBoundingRect,
                 this.ancestorBoundingRect,
             ],
             ifSGNodeHttpAgentAccess: [this.getHttpAgent, this.setHttpAgent],
@@ -229,6 +232,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
     protected abstract findRootNode(start?: RoSGNode): RoSGNode;
 
     protected abstract getBoundingRect(type: string, interpreter?: Interpreter): Rect;
+    protected abstract getSubBoundingRect(type: string, itemNumber: string, interpreter?: Interpreter): Rect;
     protected abstract compareNodes(other: RoSGNode): boolean;
     protected abstract getThreadInfo(): RoAssociativeArray;
 
@@ -1534,6 +1538,57 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
                     return remote;
                 }
                 return toAssociativeArray(this.getBoundingRect("toScene", interpreter));
+            },
+        });
+    }
+
+    /* Returns the bounding rectangle of an identified sub part, in the parent's coordinate system. */
+    protected get subBoundingRect(): Callable {
+        return new Callable("subBoundingRect", {
+            signature: {
+                args: [new StdlibArgument("itemNumber", ValueKind.String)],
+                returns: ValueKind.Dynamic,
+            },
+            impl: (interpreter: Interpreter, itemNumber: BrsString) => {
+                const remote = this.rendezvousCall(interpreter, "subBoundingRect", [itemNumber]);
+                if (remote !== undefined) {
+                    return remote;
+                }
+                return toAssociativeArray(this.getSubBoundingRect("toParent", itemNumber.getValue(), interpreter));
+            },
+        });
+    }
+
+    /* Returns the bounding rectangle of an identified sub part, in the node's local coordinate system. */
+    protected get localSubBoundingRect(): Callable {
+        return new Callable("localSubBoundingRect", {
+            signature: {
+                args: [new StdlibArgument("itemNumber", ValueKind.String)],
+                returns: ValueKind.Dynamic,
+            },
+            impl: (interpreter: Interpreter, itemNumber: BrsString) => {
+                const remote = this.rendezvousCall(interpreter, "localSubBoundingRect", [itemNumber]);
+                if (remote !== undefined) {
+                    return remote;
+                }
+                return toAssociativeArray(this.getSubBoundingRect("local", itemNumber.getValue(), interpreter));
+            },
+        });
+    }
+
+    /* Returns the bounding rectangle of an identified sub part, in the Scene's coordinate system. */
+    protected get sceneSubBoundingRect(): Callable {
+        return new Callable("sceneSubBoundingRect", {
+            signature: {
+                args: [new StdlibArgument("itemNumber", ValueKind.String)],
+                returns: ValueKind.Dynamic,
+            },
+            impl: (interpreter: Interpreter, itemNumber: BrsString) => {
+                const remote = this.rendezvousCall(interpreter, "sceneSubBoundingRect", [itemNumber]);
+                if (remote !== undefined) {
+                    return remote;
+                }
+                return toAssociativeArray(this.getSubBoundingRect("toScene", itemNumber.getValue(), interpreter));
             },
         });
     }

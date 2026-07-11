@@ -383,6 +383,7 @@ describe("cli", () => {
         let { stdout } = await exec(command, {
             cwd: path.join(__dirname, "resources"),
         });
+
         // A bounding-rect query outside a frame render refreshes layout by rendering the whole
         // tree, lazily creating grid item components. An item's field observer calling
         // boundingRect() inside that refresh must reuse the active pass (sgRoot.rendering guard)
@@ -395,6 +396,26 @@ describe("cli", () => {
             "onHeightChange measured height =  72",
             "grid rect height =  276",
             "=== Grid Measure Repro Complete ===",
+        ]);
+    }, 10000);
+    it("Resolves a component method in call position when an XML field shadows its name", async () => {
+        let command = ["node", brsCliPath, "-r method-shadow-field-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+
+        // A component may declare an <interface> field named after a built-in method
+        // (e.g. isInFocusChain). On Roku the field only shadows the method for reads:
+        // call syntax still resolves the interface method, while plain reads and
+        // observeField target the XML field (Tubi's TubiProgressBar relies on this).
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "=== Method Shadow Field Repro ===",
+            "init call isInFocusChain() = false",
+            "observer fired with true",
+            "field read = true",
+            "method call = false",
+            "=== Method Shadow Field Repro Complete ===",
             "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
             "",
             "",

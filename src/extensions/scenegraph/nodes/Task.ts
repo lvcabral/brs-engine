@@ -672,7 +672,9 @@ export class Task extends Node {
                 BrsDevice.stdout.write(
                     `debug,[task:${sgRoot.threadId}] Node sync type: ${update.type}, from ${update.id} ${
                         update.action
-                    } '${update.key}' - target node not found! It was ${replied ? "replied" : "not replied"}`
+                    } '${update.key}' address ${update.address ?? "n/a"} - target node not found! It was ${
+                        replied ? "replied" : "not replied"
+                    }`
                 );
                 return undefined;
             }
@@ -811,6 +813,12 @@ export class Task extends Node {
      */
     private resolveNode(address: string, searchFields: boolean = false): Node | undefined {
         if (address) {
+            // Nodes that crossed the thread boundary stay resolvable by address even when no
+            // longer reachable from the trees below (mirroring Roku's process-wide references).
+            const crossThreadNode = sgRoot.getCrossThreadNode(address);
+            if (crossThreadNode) {
+                return crossThreadNode;
+            }
             const rootNodes = [this, sgRoot.scene, sgRoot.mGlobal];
             for (const rootNode of rootNodes) {
                 const foundNode = this.findNodeByAddress(rootNode, address, searchFields);
