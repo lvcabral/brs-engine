@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="AdRowLike" extends="Group">
+  <children>
+    <!-- Internally uses the same id (different case) as the sibling grid in the parent component -->
+    <Group id="rowList">
+      <Label id="innerLabel" text="ad row internals" />
+    </Group>
+  </children>
+</component>

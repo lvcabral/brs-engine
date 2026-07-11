@@ -248,6 +248,27 @@ describe("cli", () => {
         ]);
     }, 10000);
 
+    it("findNode resolves ids breadth-first (shallow sibling wins over a child component's internals)", async () => {
+        // Regression: findNodeById was depth-first, so it descended into an earlier sibling's
+        // subtree — including a custom component's INTERNAL children — and returned a deep node
+        // whose id shadowed a shallower sibling's (different case). Per Roku's ifSGNodeDict spec
+        // the search is breadth-first: all nodes at one depth are tested before any deeper node.
+        let command = ["node", brsCliPath, "-r find-node-bfs-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "=== Testing findNode Breadth-First Order ===",
+            "host findNode result = RowList:Label",
+            "deep findNode result = innerLabel",
+            "=== Test Complete ===",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 10000);
+
     it("SceneGraph Observers Test", async () => {
         let command = ["node", brsCliPath, "-r observer-app", "source/main.brs", "-c 0"].join(" ");
 

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="GridHostLike" extends="Group">
+  <script type="text/brightscript" uri="GridHostLike.brs" />
+  <interface>
+    <field id="result" type="string" />
+  </interface>
+  <children>
+    <!-- First child: a custom component whose INTERNAL tree contains id "rowList" -->
+    <AdRowLike id="adRow" />
+    <!-- Sibling declared AFTER it, same id in a different case -->
+    <Label id="RowList" text="the real grid" />
+  </children>
+</component>
