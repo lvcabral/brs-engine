@@ -446,6 +446,10 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             impl: (interpreter: Interpreter, fieldName: BrsString, type: BrsString, alwaysNotify: BrsBoolean) => {
                 const remote = this.rendezvousCall(interpreter, "addField", [fieldName, type, alwaysNotify]);
                 if (remote !== undefined) {
+                    // Mirror the field on this thread's copy: subsequent local reads/writes consult
+                    // hasNodeField before rendezvousing, so without the mirror a field added through
+                    // a rendezvous stays invisible here (set fails, get returns invalid).
+                    this.addNodeField(fieldName.getValue(), type.getValue(), alwaysNotify.toBoolean(), true);
                     return remote;
                 }
                 this.location = interpreter.formatLocation();
@@ -465,6 +469,10 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             impl: (interpreter: Interpreter, fields: RoAssociativeArray) => {
                 const remote = this.rendezvousCall(interpreter, "addFields", [fields]);
                 if (remote !== undefined) {
+                    // Mirror the fields on this thread's copy (see addField).
+                    if (fields instanceof RoAssociativeArray) {
+                        this.setNodeFields(fields, true);
+                    }
                     return remote;
                 }
                 if (!(fields instanceof RoAssociativeArray)) {
@@ -891,6 +899,8 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             impl: (interpreter: Interpreter, fieldName: BrsString) => {
                 const remote = this.rendezvousCall(interpreter, "removeField", [fieldName]);
                 if (remote !== undefined) {
+                    // Mirror the removal on this thread's copy (see addField).
+                    this.removeFieldEntry(fieldName.getValue());
                     return remote;
                 }
                 this.removeFieldEntry(fieldName.getValue());
@@ -909,6 +919,14 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             impl: (interpreter: Interpreter, fieldNames: RoArray) => {
                 const remote = this.rendezvousCall(interpreter, "removeFields", [fieldNames]);
                 if (remote !== undefined) {
+                    // Mirror the removals on this thread's copy (see addField).
+                    if (fieldNames instanceof RoArray) {
+                        for (const fieldName of fieldNames.getElements()) {
+                            if (isBrsString(fieldName)) {
+                                this.removeFieldEntry(fieldName.getValue());
+                            }
+                        }
+                    }
                     return remote;
                 }
                 if (!(fieldNames instanceof RoArray)) {
