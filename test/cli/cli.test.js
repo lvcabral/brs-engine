@@ -248,6 +248,32 @@ describe("cli", () => {
         ]);
     }, 10000);
 
+    it("Keeps a component usable when interface field aliases have unresolvable targets", async () => {
+        // Regression: a failed alias target (missing node or missing field) used to abort addFields,
+        // dropping every <interface> field declared after it. A device only warns: the remaining
+        // alias targets still bind and the trailing fields are still added.
+        let command = ["node", brsCliPath, "-r bad-alias-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout, stderr } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "=== Testing Failed Alias Targets ===",
+            "scene.trailing = present",
+            "label1.text = bound",
+            "label2.text = synced",
+            "label3.text = synced",
+            "hasField allBad = false",
+            "=== Test Complete ===",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+        // The device-style warnings are still written for each unresolvable target.
+        expect(stderr).toContain("-- Interface field alias failed: No node named ghost");
+        expect(stderr).toContain('-- Interface field alias failed: Node "label1" has no field named "nosuchfield"');
+    }, 10000);
+
     it("SceneGraph Observers Test", async () => {
         let command = ["node", brsCliPath, "-r observer-app", "source/main.brs", "-c 0"].join(" ");
 
