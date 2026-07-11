@@ -83,6 +83,10 @@ export class ArrayGrid extends Group {
         { name: "itemUnfocused", type: "integer", value: "-1", alwaysNotify: true },
         { name: "jumpToItem", type: "integer", value: "-1", alwaysNotify: true },
         { name: "animateToItem", type: "integer", value: "-1", alwaysNotify: true },
+        // Read-only on device: true while the list/grid is scrolling the focus. Documented under
+        // ZoomRowList but present on all ArrayGrid-derived nodes on a real Roku (apps alias it on
+        // plain RowList). Scrolling here is instant, so it stays false.
+        { name: "scrollingStatus", type: "boolean", value: "false" },
         { name: "currFocusRow", type: "float", value: "0.0" },
         { name: "currFocusColumn", type: "float", value: "0.0" },
         { name: "currFocusSection", type: "float", value: "0.0" },
