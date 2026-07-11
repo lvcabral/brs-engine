@@ -152,6 +152,7 @@ Key pieces:
    ```
 3. Wire it into `SGNodeFactory.createNode`'s `switch` in `factory/NodeFactory.ts` so `CreateObject("roSGNode", "MyNode")` and XML `<MyNode>` resolve.
 4. Rendering contract: `renderNode` should early-return via `updateRenderTracking(true)` when not visible, apply translation/rotation/opacity, draw through the passed `IfDraw2D`, update bounding rects, then call `renderChildren(...)` and `nodeRenderingDone(...)`.
+5. **Visibility vs. measurement:** plain containers (`Group`, `LayoutGroup`, `MaskGroup`) do their invisible early-return through the shared `Group.skipRender(draw2D)` helper, which lets a **measurement pass** (a render with no `draw2D` — `getBoundingRect`'s refresh) traverse them when invisible: on Roku, layout/bounding rects are independent of visibility, and apps measure UI under a still-hidden ancestor before revealing it. A measured invisible container propagates opacity 0 (descendants keep `renderTracking` `"none"`) and does not union into its visible parent's bounds (`nodeRenderingDone` skips `updateParentRects` when invisible). Renderable/complex nodes (Poster, Label, ArrayGrid, …) keep the plain hard skip of step 4 so hidden UI never loads textures or creates item components. Regression coverage: `test/extensions/scenegraph/HiddenMeasure.test.js`.
 
 External consumers can also register node types at runtime without editing the factory via `SGNodeFactory.addNodeTypes([["mynode", (name) => new MyNode([], name)]])`.
 

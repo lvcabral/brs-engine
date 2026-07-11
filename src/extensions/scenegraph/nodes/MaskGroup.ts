@@ -31,8 +31,7 @@ export class MaskGroup extends Group {
     }
 
     renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
-        if (!this.isVisible()) {
-            this.updateRenderTracking(true);
+        if (this.skipRender(draw2D)) {
             return;
         }
         const maskUri = this.getValueJS("maskUri") as string;
