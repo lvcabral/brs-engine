@@ -336,6 +336,10 @@ export class ArrayGrid extends Group {
                 this.itemComps[index] = itemComp;
             }
         }
+        if (!this.itemComps[index]) {
+            // Item component creation failed: skip the slot instead of crashing the render pass.
+            return;
+        }
         if (content.changed) {
             this.itemComps[index].setValue("itemContent", content, true);
             content.changed = false;
