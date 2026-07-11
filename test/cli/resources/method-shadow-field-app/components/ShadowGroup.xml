@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Declares an <interface> field named after a built-in component method
+    (isInFocusChain, from ifSGNodeFocus). On a real Roku the field only shadows
+    the method for reads: call syntax (node.isInFocusChain()) still resolves the
+    interface method, while a plain read (node.isInFocusChain) and observeField
+    target the XML field. Tubi's TubiProgressBar relies on exactly this.
+-->
+<component name="ShadowGroup" extends="Group">
+    <interface>
+        <field id="isInFocusChain" type="boolean" value="false" alwaysNotify="true" />
+    </interface>
+    <script type="text/brightscript">
+    <![CDATA[
+        sub init()
+            m.top.observeField("isInFocusChain", "onShadowChange")
+            print "init call isInFocusChain() = "; m.top.isInFocusChain()
+        end sub
+
+        sub onShadowChange(msg)
+            print "observer fired with "; msg.getData()
+        end sub
+    ]]>
+    </script>
+</component>

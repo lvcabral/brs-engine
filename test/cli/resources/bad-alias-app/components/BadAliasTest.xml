@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="BadAliasTest" extends="Scene">
+  <interface>
+    <!-- First target references a node that does not exist; the later valid target must still bind -->
+    <field id="firstBad" alias="ghost.text, label1.text" />
+    <!-- Middle target references a field that does not exist; valid siblings must still bind -->
+    <field id="midBad" alias="label2.text, label1.nosuchfield, label3.text" />
+    <!-- No target resolves: the field is not created, but it must not abort the component -->
+    <field id="allBad" alias="ghost.text" />
+    <!-- Declared after the failed aliases: must still be added (no cascade) -->
+    <field id="trailing" type="string" value="present" />
+  </interface>
+  <children>
+    <Label id="label1" />
+    <Label id="label2" />
+    <Label id="label3" />
+  </children>
+</component>

@@ -2,6 +2,7 @@ import {
     AAMember,
     Interpreter,
     BrsBoolean,
+    BrsDevice,
     BrsString,
     BrsType,
     Float,
@@ -766,6 +767,22 @@ export class RowList extends ArrayGrid {
         }
     }
 
+    private itemCompFailureLogged = false;
+
+    /** Writes a single error (not one per slot/frame) when item components cannot be created. */
+    private logItemCompFailure() {
+        if (this.itemCompFailureLogged) {
+            return;
+        }
+        this.itemCompFailureLogged = true;
+        const itemCompName = this.getValueJS("itemComponentName") ?? "";
+        BrsDevice.stderr.write(
+            `error,[sg.rowlist.create.fail] Failed to create item component: ${
+                itemCompName || "missing 'itemComponentName'"
+            }`
+        );
+    }
+
     protected renderRowItemComponent(
         interpreter: Interpreter,
         rowIndex: number,
@@ -809,17 +826,21 @@ export class RowList extends ArrayGrid {
         }
         // Update the component's focus state
         const itemComp = this.rowItemComps[rowIndex][colIndex];
-        if (itemComp) {
-            itemComp.setValue("rowHasFocus", BrsBoolean.from(this.focusIndex === rowIndex), false);
-            itemComp.setValue(this.focusField, BrsBoolean.from(nodeFocus), false);
-            itemComp.setValue("itemHasFocus", BrsBoolean.from(focused), false);
-            if (content.changed) {
-                itemComp.setValue("itemContent", content, true);
-                content.changed = false;
-            }
-            itemComp.setValue("focusPercent", new Float(focused ? 1 : 0), false);
-            itemComp.setValue("rowFocusPercent", new Float(this.focusIndex === rowIndex ? 1 : 0), false);
+        if (!itemComp) {
+            // Item component creation failed (e.g. an unresolvable itemComponentName): skip the
+            // slot instead of crashing the whole render pass on the undefined reference.
+            this.logItemCompFailure();
+            return;
         }
+        itemComp.setValue("rowHasFocus", BrsBoolean.from(this.focusIndex === rowIndex), false);
+        itemComp.setValue(this.focusField, BrsBoolean.from(nodeFocus), false);
+        itemComp.setValue("itemHasFocus", BrsBoolean.from(focused), false);
+        if (content.changed) {
+            itemComp.setValue("itemContent", content, true);
+            content.changed = false;
+        }
+        itemComp.setValue("focusPercent", new Float(focused ? 1 : 0), false);
+        itemComp.setValue("rowFocusPercent", new Float(this.focusIndex === rowIndex ? 1 : 0), false);
 
         const drawFocus = this.getValueJS("drawFocusFeedback");
         const drawFocusOnTop = this.getValueJS("drawFocusFeedbackOnTop");
@@ -827,7 +848,7 @@ export class RowList extends ArrayGrid {
             this.renderFocus(itemRect, opacity, nodeFocus, draw2D);
         }
         const itemOrigin = [itemRect.x, itemRect.y];
-        this.rowItemComps[rowIndex][colIndex].renderNode(interpreter, itemOrigin, rotation, opacity, draw2D);
+        itemComp.renderNode(interpreter, itemOrigin, rotation, opacity, draw2D);
         if (focused && drawFocus && drawFocusOnTop) {
             this.renderFocus(itemRect, opacity, nodeFocus, draw2D);
         }

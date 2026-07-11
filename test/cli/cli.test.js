@@ -262,11 +262,37 @@ describe("cli", () => {
             "=== Testing findNode Breadth-First Order ===",
             "host findNode result = RowList:Label",
             "deep findNode result = innerLabel",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 10000);
+
+    it("Keeps a component usable when interface field aliases have unresolvable targets", async () => {
+        // Regression: a failed alias target (missing node or missing field) used to abort addFields,
+        // dropping every <interface> field declared after it. A device only warns: the remaining
+        // alias targets still bind and the trailing fields are still added.
+        let command = ["node", brsCliPath, "-r bad-alias-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout, stderr } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+      
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "=== Testing Failed Alias Targets ===",
+            "scene.trailing = present",
+            "label1.text = bound",
+            "label2.text = synced",
+            "label3.text = synced",
+            "hasField allBad = false",
             "=== Test Complete ===",
             "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
             "",
             "",
         ]);
+        // The device-style warnings are still written for each unresolvable target.
+        expect(stderr).toContain("-- Interface field alias failed: No node named ghost");
+        expect(stderr).toContain('-- Interface field alias failed: Node "label1" has no field named "nosuchfield"');
     }, 10000);
 
     it("SceneGraph Observers Test", async () => {
@@ -396,6 +422,54 @@ describe("cli", () => {
         expect(stderr).not.toContain('duplicate field "opacity"');
         // ...but redeclaring a field defined in an ancestor XML component still must.
         expect(stderr).toContain('Attempt to add duplicate field "sharedField" to RokuML component "XmlChildComp"');
+    }, 10000);
+
+    it("Guards bounding-rect refresh renders against re-entrant measurement", async () => {
+        let command = ["node", brsCliPath, "-r grid-measure-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+
+        // A bounding-rect query outside a frame render refreshes layout by rendering the whole
+        // tree, lazily creating grid item components. An item's field observer calling
+        // boundingRect() inside that refresh must reuse the active pass (sgRoot.rendering guard)
+        // instead of starting another refresh — item creation would re-enter itself and overflow
+        // the JS call stack ('roSGNode.Set: Maximum call stack size exceeded').
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "=== Grid Measure Repro ===",
+            "onHeightChange measured height =  72",
+            "onHeightChange measured height =  72",
+            "onHeightChange measured height =  72",
+            "grid rect height =  276",
+            "=== Grid Measure Repro Complete ===",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 10000);
+    it("Resolves a component method in call position when an XML field shadows its name", async () => {
+        let command = ["node", brsCliPath, "-r method-shadow-field-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+
+        // A component may declare an <interface> field named after a built-in method
+        // (e.g. isInFocusChain). On Roku the field only shadows the method for reads:
+        // call syntax still resolves the interface method, while plain reads and
+        // observeField target the XML field (Tubi's TubiProgressBar relies on this).
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "=== Method Shadow Field Repro ===",
+            "init call isInFocusChain() = false",
+            "observer fired with true",
+            "field read = true",
+            "method call = false",
+            "=== Method Shadow Field Repro Complete ===",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
     }, 10000);
 
     it("Resolves an anonymous function observer registered by its toStr() name", async () => {
