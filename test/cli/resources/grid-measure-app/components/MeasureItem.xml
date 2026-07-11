@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Grid item component whose height observer measures itself with boundingRect().
+    The grid sets width/height on each item component as it is created during a
+    render pass; if that pass was itself started by a bounding-rect query (not by
+    the screen's frame render), the nested boundingRect() here must NOT start
+    another full-tree refresh — item creation would re-enter itself and recurse
+    until the JS call stack overflows.
+-->
+<component name="MeasureItem" extends="Group">
+    <interface>
+        <field id="itemContent" type="node" />
+        <field id="height" type="float" alwaysNotify="true" />
+        <field id="width" type="float" />
+    </interface>
+    <script type="text/brightscript">
+    <![CDATA[
+        sub init()
+            m.label = m.top.createChild("Label")
+            m.measured = 0
+            m.top.observeFieldScoped("height", "onHeightChange")
+        end sub
+
+        sub onHeightChange()
+            rect = m.top.boundingRect()
+            m.measured = m.measured + 1
+            if m.measured = 1
+                print "onHeightChange measured height = "; m.top.height
+            end if
+        end sub
+    ]]>
+    </script>
+</component>

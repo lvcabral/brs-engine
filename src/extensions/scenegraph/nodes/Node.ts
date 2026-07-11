@@ -853,7 +853,17 @@ export class Node extends RoSGNode implements BrsValue {
         // the rects already computed by the active pass.
         if (interpreter && !sgRoot.rendering) {
             const root = this.createPath()[0];
-            root.renderNode(interpreter, [0, 0], 0, 1);
+            // Mark this refresh as an active render. BrightScript that runs inside it (an item
+            // component's init() or a field observer measuring a Label) must not start another
+            // full-tree refresh, or the passes recurse until the JS stack overflows — the same
+            // guard RoSGScreen applies around frame renders, extended to refreshes initiated by
+            // a bounding-rect query itself. Nested queries return the rects this pass computes.
+            sgRoot.rendering = true;
+            try {
+                root.renderNode(interpreter, [0, 0], 0, 1);
+            } finally {
+                sgRoot.rendering = false;
+            }
         }
         switch (type) {
             case "local":
