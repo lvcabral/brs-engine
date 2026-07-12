@@ -24,6 +24,7 @@ const deviceInfo = {
   localIps: ["eth1,127.0.0.1"], // In a Browser isn't possible to get a real IP, populate it on NodeJS or Electron
   audioVolume: 50, // Defines the default volume level for system sounds - valid: (0-100)
   audioLanguage: "en", // Preferred audio track language
+  autoPlayEnabled: true, // Autoplay device setting, returned by `roDeviceInfo.IsAutoplayEnabled()` (default: enabled)
   maxFps: 60, // Maximum frames per second for rendering
   tmpVolSize: 32 * 1024 * 1024, // Allocated size for `tmp:/` volume (32 MB)
   cacheFSVolSize: 32 * 1024 * 1024, // Allocated size for `cachefs:/` volume (32 MB)

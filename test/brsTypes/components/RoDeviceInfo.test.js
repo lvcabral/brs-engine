@@ -10,6 +10,7 @@ global.Intl.DateTimeFormat = jest.fn().mockImplementation(() => {
 });
 const brs = require("../../../packages/node/bin/brs.node");
 const { Interpreter, netlib } = brs;
+const { BrsDevice } = brs;
 const { RoDeviceInfo, RoAssociativeArray, RoArray, BrsBoolean, BrsString, Int32, Int64 } = brs.types;
 
 describe("RoDeviceInfo", () => {
@@ -606,12 +607,24 @@ describe("RoDeviceInfo", () => {
             });
         });
         describe("isAutoPlayEnabled", () => {
-            it("should return false as auto play is not supported", () => {
+            it("should return true as auto play is enabled by default", () => {
                 let deviceInfo = new RoDeviceInfo(interpreter);
                 let method = deviceInfo.getMethod("isAutoPlayEnabled");
 
                 expect(method).toBeTruthy();
-                expect(method.call(interpreter)).toEqual(BrsBoolean.False);
+                expect(method.call(interpreter)).toEqual(BrsBoolean.True);
+            });
+            it("should reflect the configurable autoPlayEnabled device setting", () => {
+                const original = BrsDevice.deviceInfo.autoPlayEnabled;
+                try {
+                    BrsDevice.deviceInfo.autoPlayEnabled = false;
+                    let deviceInfo = new RoDeviceInfo(interpreter);
+                    let method = deviceInfo.getMethod("isAutoPlayEnabled");
+
+                    expect(method.call(interpreter)).toEqual(BrsBoolean.False);
+                } finally {
+                    BrsDevice.deviceInfo.autoPlayEnabled = original;
+                }
             });
         });
         describe("IsAutoAdjustRefreshRateEnabled", () => {

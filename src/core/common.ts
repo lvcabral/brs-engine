@@ -42,6 +42,7 @@ export interface DeviceInfo {
     startTime: number;
     audioVolume: number;
     audioLanguage: SupportedLanguage;
+    autoPlayEnabled: boolean;
     maxFps: number;
     tmpVolSize: number;
     cacheFSVolSize: number;
@@ -148,6 +149,7 @@ export const DefaultDeviceInfo: DeviceInfo = {
     startTime: Date.now(),
     audioVolume: 50, // Defines the default volume level for system sounds - valid: (0-100)
     audioLanguage: "en",
+    autoPlayEnabled: true, // Autoplay device setting - enabled by default, as on a real Roku device
     maxFps: 60,
     tmpVolSize: 32 * 1024 * 1024, // 32 MB
     cacheFSVolSize: 32 * 1024 * 1024, // 32 MB

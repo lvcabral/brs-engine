@@ -166,7 +166,7 @@ export function handleVideoEvent(eventData: string) {
     const data = eventData.split(",");
     if (data[1] === "play") {
         playVideo();
-    } else if (data[1] === "load") {
+    } else if (data[1] === "load" || data[1] === "prebuffer") {
         loadVideo(true);
     } else if (data[1] === "rect" && data.length === 6) {
         notifyAll("rect", {
