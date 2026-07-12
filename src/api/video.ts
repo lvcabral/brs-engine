@@ -324,8 +324,22 @@ export function addVideoPlaylist(newList: any[]) {
  */
 export function resetVideo() {
     stopVideo();
-    if (player.src.startsWith("blob:")) {
-        revokeVideoURL(player.src);
+    if (player) {
+        // stopVideo() is a no-op once a video has finished or was already stopped
+        // (playerState === "stop"), which leaves the previous video's source, buffered
+        // frames and text tracks attached to the shared player element. Release them
+        // unconditionally here so nothing bleeds into the next app that gets loaded.
+        if (hls) {
+            destroyHls();
+        }
+        if (player.src.startsWith("blob:")) {
+            revokeVideoURL(player.src);
+        }
+        if (player.getAttribute("src") !== null) {
+            player.removeAttribute("src");
+            player.load();
+        }
+        clearVideoTracking();
     }
     playList = new Array();
     packageVideos = new Map();
@@ -335,6 +349,8 @@ export function resetVideo() {
     startPosition = 0;
     playerState = "stop";
     videosState = false;
+    bufferOnly = false;
+    canPlay = false;
 }
 
 /**
