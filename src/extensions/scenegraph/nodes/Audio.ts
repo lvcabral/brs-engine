@@ -46,8 +46,10 @@ export class Audio extends Node {
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(members);
 
-        // Prevent initialize Audio in task thread
-        if (sgRoot.inTaskThread()) {
+        // Prevent initializing Audio in a Task thread, or when rebuilt as a cross-thread serialization
+        // proxy on the render thread — a proxy running the render-init below would hijack
+        // `sgRoot.audio` (see the matching guard in Video) and reset the real player.
+        if (sgRoot.inTaskThread() || sgRoot.deserializing) {
             return;
         }
 

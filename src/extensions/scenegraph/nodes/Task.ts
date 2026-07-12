@@ -813,18 +813,26 @@ export class Task extends Node {
      */
     private resolveNode(address: string, searchFields: boolean = false): Node | undefined {
         if (address) {
-            // Nodes that crossed the thread boundary stay resolvable by address even when no
-            // longer reachable from the trees below (mirroring Roku's process-wide references).
-            const crossThreadNode = sgRoot.getCrossThreadNode(address);
-            if (crossThreadNode) {
-                return crossThreadNode;
-            }
+            // Live reachability wins. The cross-thread registry can hold a *stale duplicate* instance
+            // for an address: `toSGNode` copies `_address_` when it rebuilds a node on the receiving
+            // thread, so repeated serializations of the same logical node mint new instances that share
+            // its address, and `registerCrossThreadNode` keeps only the latest. Resolving the registry
+            // first therefore risks targeting a detached duplicate instead of the node actually wired
+            // into the scene (field writes/observers landing on the wrong copy). Walk the trees first so
+            // a node still reachable from task/scene/global always resolves to its authoritative copy.
             const rootNodes = [this, sgRoot.scene, sgRoot.mGlobal];
             for (const rootNode of rootNodes) {
                 const foundNode = this.findNodeByAddress(rootNode, address, searchFields);
                 if (foundNode) {
                     return foundNode;
                 }
+            }
+            // Fallback: a node held only by the other thread (a true orphan — e.g. a per-request
+            // callback node a task keeps a reference to) is unreachable from the trees above; resolve it
+            // by address so late write-backs still reach it, mirroring Roku's process-wide references.
+            const crossThreadNode = sgRoot.getCrossThreadNode(address);
+            if (crossThreadNode) {
+                return crossThreadNode;
             }
         }
         return undefined;

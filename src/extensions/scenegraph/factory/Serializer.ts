@@ -242,7 +242,13 @@ export function toSGNode(obj: any, type: string, subtype: string, child?: boolea
         // Return invalid for now (should not happen in valid serialized data)
         return BrsInvalid.Instance as any;
     }
+    // Guard the construction so media nodes (Video/Audio) rebuilt as cross-thread proxies do not run
+    // their render-init (which would hijack the singleton sgRoot.video/audio and reset the real
+    // player). Restore the prior value to stay correct under nested/recursive deserialization.
+    const wasDeserializing = sgRoot.deserializing;
+    sgRoot.deserializing = true;
     let newNode = createFlatNode(type, subtype);
+    sgRoot.deserializing = wasDeserializing;
     if (newNode instanceof BrsInvalid) {
         newNode = new Node([], subtype);
     }
