@@ -203,8 +203,13 @@ export class Video extends Group {
         this.statusChanged = false;
         this.lastPressHandled = "";
 
-        // Prevent initializing Video in Task Thread
-        if (sgRoot.inTaskThread()) {
+        // Prevent initializing Video in a Task thread, and — critically — when this instance is being
+        // rebuilt as a cross-thread serialization proxy (`toSGNode`/`brsValueOf` on the render thread).
+        // The render-init below registers this instance as `sgRoot.video` and posts player-reset
+        // messages; a proxy doing so hijacks the root video (`processVideo` would drive the
+        // observer-less proxy, so a `Video` node's `state` observers stop firing — e.g. the SGDEX
+        // auto-close on "finished") and resets the real player. A proxy is a data carrier only.
+        if (sgRoot.inTaskThread() || sgRoot.deserializing) {
             return;
         }
         // Initialize Clock Timer

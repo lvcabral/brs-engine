@@ -71,6 +71,13 @@ export class SGRoot {
      * `ExecutionTimeout` runtime error instead of silently returning `invalid`. Defaults to 10s.
      */
     rendezvousTimeout: number = 10000;
+    /**
+     * True while the serializer is rebuilding a node from cross-thread data (`toSGNode`). Media nodes
+     * (`Video`/`Audio`) check this in their constructor to skip the render-init that registers them as
+     * the singleton `sgRoot.video`/`sgRoot.audio` and posts player-reset messages — a deserialization
+     * proxy must never hijack the real player instance the app created.
+     */
+    deserializing: boolean = false;
     /** The render thread's roRenderThreadQueue singleton (holds handlers), drained each frame. */
     private _renderQueue?: RoRenderThreadQueue;
     /**

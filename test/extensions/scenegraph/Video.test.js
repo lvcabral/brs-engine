@@ -113,3 +113,48 @@ describe("Video bufferingBar and retrievingBar fields", () => {
         sgRoot.setVideo();
     });
 });
+
+describe("Video cross-thread deserialization guard", () => {
+    let originalPostMessage;
+
+    beforeAll(() => {
+        const commonZip = fs.readFileSync(path.join(__dirname, "../../../packages/scenegraph/assets/common.zip"));
+        BrsDevice.fileSystem.setup(commonZip.buffer, new ArrayBuffer(1024 * 1024), new ArrayBuffer(1024 * 1024));
+    });
+
+    beforeEach(() => {
+        originalPostMessage = global.postMessage;
+        global.postMessage = jest.fn();
+        sgRoot.deserializing = false;
+        sgRoot.setVideo();
+    });
+
+    afterEach(() => {
+        global.postMessage = originalPostMessage;
+        sgRoot.deserializing = false;
+        sgRoot.setVideo();
+    });
+
+    test("a normally-created Video registers as the root video", () => {
+        const video = SGNodeFactory.createNode("Video");
+        expect(sgRoot.video).toBe(video);
+    });
+
+    test("a Video rebuilt while deserializing does NOT hijack the root video or reset the player", () => {
+        // Mirrors the regression: applying a task's cross-thread update re-deserializes the Video
+        // (toSGNode -> new Video). Before the guard, its constructor called setVideo + posted player
+        // resets, so processVideo drove an observer-less proxy and 'finished' never triggered close.
+        const real = SGNodeFactory.createNode("Video");
+        expect(sgRoot.video).toBe(real);
+        global.postMessage.mockClear();
+
+        sgRoot.deserializing = true;
+        const proxy = SGNodeFactory.createNode("Video");
+        sgRoot.deserializing = false;
+
+        expect(proxy.nodeSubtype).toBe("Video");
+        expect(sgRoot.video).toBe(real); // root video unchanged
+        expect(sgRoot.video).not.toBe(proxy);
+        expect(global.postMessage).not.toHaveBeenCalledWith("video,loop,false");
+    });
+});
