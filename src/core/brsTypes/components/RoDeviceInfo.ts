@@ -894,7 +894,7 @@ export class RoDeviceInfo extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
-            return BrsBoolean.False;
+            return BrsBoolean.from(BrsDevice.deviceInfo.autoPlayEnabled);
         },
     });
 

@@ -601,7 +601,7 @@ describe("end to end brightscript functions", () => {
             "false",
             "false",
             "false",
-            "false",
+            "true",
         ]);
     });
 
