@@ -157,4 +157,40 @@ describe("Video cross-thread deserialization guard", () => {
         expect(sgRoot.video).not.toBe(proxy);
         expect(global.postMessage).not.toHaveBeenCalledWith("video,loop,false");
     });
+
+    test("a newly created Video does NOT steal the root from an already-active Video", () => {
+        // Regression: the single shared player's events are routed by processVideo to sgRoot.video.
+        // A Video created while another is still playing (e.g. an app building its player UI during
+        // a startup video) must not hijack that routing in its constructor, or the playing Video's
+        // 'state' would never reach 'finished'/'stopped' and its observers would be stranded.
+        const active = SGNodeFactory.createNode("Video");
+        expect(sgRoot.video).toBe(active);
+
+        const other = SGNodeFactory.createNode("Video");
+        expect(other.nodeSubtype).toBe("Video");
+        expect(sgRoot.video).toBe(active); // routing stays with the active Video
+        expect(sgRoot.video).not.toBe(other);
+    });
+
+    test("a Video claims the root when it starts playback (play/prebuffer/resume/replay)", () => {
+        for (const control of ["play", "prebuffer", "resume", "replay"]) {
+            sgRoot.setVideo();
+            const active = SGNodeFactory.createNode("Video");
+            const other = SGNodeFactory.createNode("Video");
+            expect(sgRoot.video).toBe(active);
+
+            other.setValue("control", new BrsString(control));
+            expect(sgRoot.video).toBe(other); // playback command takes over routing
+        }
+    });
+
+    test("a non-playback control (pause/stop) does not steal the root", () => {
+        sgRoot.setVideo();
+        const active = SGNodeFactory.createNode("Video");
+        const other = SGNodeFactory.createNode("Video");
+        expect(sgRoot.video).toBe(active);
+
+        other.setValue("control", new BrsString("stop"));
+        expect(sgRoot.video).toBe(active); // stop/pause don't hijack routing
+    });
 });

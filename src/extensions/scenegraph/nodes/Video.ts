@@ -234,8 +234,15 @@ export class Video extends Group {
         postMessage({ captionStyle: new Array<CaptionStyleOption>() });
         postMessage({ captionRenderArea: { mode: "fullscreen" } });
 
-        // Set itself as the root video object
-        sgRoot.setVideo(this);
+        // Become the root video object only if none is active yet. A newly created Video must NOT
+        // steal event routing from a Video that is already playing: `processVideo` delivers the
+        // single shared player's events to `sgRoot.video`, so if a second Video (e.g. one the app
+        // builds while a startup logo is still playing) hijacked it here, the playing Video's
+        // `state` would never reach "finished"/"stopped" and its observers would be stranded.
+        // A Video that later starts playback claims the root in the `control` setter instead.
+        if (!sgRoot.video) {
+            sgRoot.setVideo(this);
+        }
     }
 
     get(index: BrsType) {
@@ -259,7 +266,14 @@ export class Video extends Group {
             const control = value.getValue().toLowerCase();
             if (validControl.includes(control)) {
                 this.checkContentChanged();
-                if (!sgRoot.inTaskThread()) postMessage(`video,${control}`);
+                if (!sgRoot.inTaskThread()) {
+                    // A playback-starting command makes this the active video that `processVideo`
+                    // routes the shared player's events to, taking over from any previous one.
+                    if (["play", "prebuffer", "resume", "replay"].includes(control) && sgRoot.video !== this) {
+                        sgRoot.setVideo(this);
+                    }
+                    postMessage(`video,${control}`);
+                }
             } else if (control !== "none") {
                 BrsDevice.stderr.write(`warning,${getNow()} [sg.video.cntrl.bad] control field set to invalid value`);
                 return;
