@@ -4,7 +4,7 @@ const scenegraph = require("../../../packages/scenegraph/lib/brs-sg.node.js");
 const core = require("../../../packages/node/bin/brs.node.js");
 
 const { SGNodeFactory, sgRoot } = scenegraph;
-const { BrsDevice, BrsString, Int32, RoAssociativeArray } = core;
+const { BrsDevice, BrsString, Int32, RoAssociativeArray, Interpreter, MediaEvent } = core;
 
 describe("Video bufferingBar and retrievingBar fields", () => {
     let originalPostMessage;
@@ -192,5 +192,90 @@ describe("Video cross-thread deserialization guard", () => {
 
         other.setValue("control", new BrsString("stop"));
         expect(sgRoot.video).toBe(active); // stop/pause don't hijack routing
+    });
+});
+
+describe("Video renderNode clears its rect only while actively displaying frames", () => {
+    // Regression: renderNode punched a transparent hole (doDrawClearedRect) over the Video's
+    // rectangle whenever the node was merely visible, erasing the poster the app drew behind it.
+    // The main thread only paints real <video> frames into that hole while playing/paused
+    // (display.ts drawVideoFrame), so a visible-but-not-playing Video showed the Scene background
+    // through the hole as a grey box. The clear is now gated on the Video being the active player
+    // AND actually playing/paused.
+    let interpreter;
+    let originalPostMessage;
+
+    beforeAll(() => {
+        const commonZip = fs.readFileSync(path.join(__dirname, "../../../packages/scenegraph/assets/common.zip"));
+        BrsDevice.fileSystem.setup(commonZip.buffer, new ArrayBuffer(1024 * 1024), new ArrayBuffer(1024 * 1024));
+    });
+
+    beforeEach(() => {
+        interpreter = new Interpreter();
+        originalPostMessage = global.postMessage;
+        global.postMessage = jest.fn();
+        sgRoot.setVideo();
+    });
+
+    afterEach(() => {
+        global.postMessage = originalPostMessage;
+        sgRoot.setVideo();
+    });
+
+    function mountVideo() {
+        const scene = SGNodeFactory.createNode("Scene");
+        const video = SGNodeFactory.createNode("Video");
+        scene.appendChildToParent(video);
+        return { scene, video };
+    }
+
+    test("a freshly created (state 'none') active Video does not clear its rect", () => {
+        const { video } = mountVideo();
+        expect(sgRoot.video).toBe(video);
+        expect(video.getValueJS("state")).toBe("none");
+
+        const draw2D = { doDrawClearedRect: jest.fn() };
+        video.renderNode(interpreter, [0, 0], 0, 1, draw2D);
+
+        expect(draw2D.doDrawClearedRect).not.toHaveBeenCalled();
+    });
+
+    test("the active Video clears its rect once it is playing", () => {
+        const { video } = mountVideo();
+        video.setState(MediaEvent.StartStream, 0);
+        expect(video.getValueJS("state")).toBe("playing");
+
+        const draw2D = { doDrawClearedRect: jest.fn() };
+        video.renderNode(interpreter, [0, 0], 0, 1, draw2D);
+
+        expect(draw2D.doDrawClearedRect).toHaveBeenCalledTimes(1);
+    });
+
+    test("the Video stops clearing its rect after playback finishes", () => {
+        const { video } = mountVideo();
+        video.setState(MediaEvent.StartStream, 0);
+        video.setState(MediaEvent.Finished, 0);
+        expect(video.getValueJS("state")).toBe("finished");
+
+        const draw2D = { doDrawClearedRect: jest.fn() };
+        video.renderNode(interpreter, [0, 0], 0, 1, draw2D);
+
+        expect(draw2D.doDrawClearedRect).not.toHaveBeenCalled();
+    });
+
+    test("a non-active Video does not clear even if its state is 'playing'", () => {
+        const { scene, video: active } = mountVideo();
+        const other = SGNodeFactory.createNode("Video");
+        scene.appendChildToParent(other);
+        expect(sgRoot.video).toBe(active);
+
+        other.setState(MediaEvent.StartStream, 0);
+        expect(other.getValueJS("state")).toBe("playing");
+        expect(sgRoot.video).not.toBe(other);
+
+        const draw2D = { doDrawClearedRect: jest.fn() };
+        other.renderNode(interpreter, [0, 0], 0, 1, draw2D);
+
+        expect(draw2D.doDrawClearedRect).not.toHaveBeenCalled();
     });
 });

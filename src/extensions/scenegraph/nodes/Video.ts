@@ -745,7 +745,9 @@ export class Video extends Group {
         }
         if (draw2D) {
             this.isDirty = false;
-            draw2D.doDrawClearedRect(rect);
+            if (this.isDisplayingVideo()) {
+                draw2D.doDrawClearedRect(rect);
+            }
         }
         if (this.statusChanged) {
             if (this.seekTimeout > 0 && this.seekTimeout < Date.now() && ["rw", "ff"].includes(this.seekMode)) {
@@ -757,6 +759,20 @@ export class Video extends Group {
         this.updateBoundingRects(rect, origin, rotation);
         this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);
         this.nodeRenderingDone(origin, angle, opacity, draw2D);
+    }
+
+    /**
+     * The transparent hole punched by `doDrawClearedRect` is only filled with real <video>
+     * frames while the shared player is actually playing/paused (see `drawVideoFrame` in
+     * `src/api/display.ts`, gated on `["play", "pause"].includes(videoState)`). Punching it at
+     * any other time just erases the poster the app drew behind the Video, showing the Scene
+     * background through it as a grey box. Only the current `sgRoot.video` owns the shared
+     * player's frames, so a previously-active Video whose state is frozen at playing/paused must
+     * not clear either.
+     */
+    private isDisplayingVideo(): boolean {
+        const state = this.getValueJS("state");
+        return sgRoot.video === this && (state === "playing" || state === "paused");
     }
 
     private resetSeeking() {
