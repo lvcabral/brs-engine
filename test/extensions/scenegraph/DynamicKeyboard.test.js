@@ -4,9 +4,24 @@ const scenegraph = require("../../../packages/scenegraph/lib/brs-sg.node.js");
 const core = require("../../../packages/node/bin/brs.node.js");
 
 const { SGNodeFactory, sgRoot } = scenegraph;
-const { BrsDevice, BrsString, Int32, RoArray } = core;
+const { BrsDevice, BrsString, Int32, RoArray, RoAssociativeArray } = core;
 
 const fakeInterpreter = {};
+
+/**
+ * Builds an RSGPalette node from a name→color map. A number is stored as an integer color, a
+ * BrsString as a hex-string color — so a single helper covers both storage forms a palette may use.
+ */
+function makePalette(colors) {
+    const members = Object.entries(colors).map(([name, value]) => ({
+        name: new BrsString(name),
+        // Colors are 32-bit; store as signed (`| 0`) so a high-alpha value isn't clamped by Int32.
+        value: typeof value === "number" ? new Int32(value | 0) : value,
+    }));
+    const palette = SGNodeFactory.createNode("RSGPalette");
+    palette.setValue("colors", new RoAssociativeArray(members));
+    return palette;
+}
 
 /** Builds a jumpToKey array value [section, row, key]. */
 function coords(section, row, key) {
@@ -91,6 +106,80 @@ describe("Dynamic voice keyboards", () => {
                 expect(kbd.textEditBox.getValueJS("voiceEnabled")).toBe(true);
                 expect(kbd.textEditBox.getValueJS("maxTextLength")).toBe(maxLen);
             }
+        });
+
+        test("all dynamic keyboards expose a palette node field that defaults to invalid", () => {
+            for (const type of ["DynamicKeyboard", "DynamicMiniKeyboard", "DynamicPinPad", "DynamicCustomKeyboard"]) {
+                const kbd = SGNodeFactory.createNode(type);
+                const field = kbd.getNodeFields().get("palette");
+                expect(field).toBeDefined();
+                expect(field.getType()).toBe("node");
+                expect(kbd.getValueJS("palette")).toBeNull();
+                expect(kbd.getValue("palette").constructor.name).toBe("RoInvalid");
+            }
+        });
+
+        test("a palette set on the keyboard themes its key grid via the shared Node resolution", () => {
+            const kbd = SGNodeFactory.createNode("DynamicKeyboard");
+            const palette = makePalette({ PrimaryTextColor: 0x112233ff, FocusItemColor: 0x445566ff });
+            kbd.setValue("palette", palette);
+            // The key grid is a child of the keyboard, so Node.resolvePaletteColor walks up from the
+            // grid, finds the keyboard-level palette, and returns its colors (integer or hex-string).
+            expect(kbd.keyGrid.getNodeParent()).toBe(kbd);
+            expect(kbd.keyGrid.resolvePaletteColor("PrimaryTextColor", 0xffffffff)).toBe(0x112233ff);
+            expect(kbd.keyGrid.resolvePaletteColor("FocusItemColor", 0xffffffff)).toBe(0x445566ff);
+            // A color the palette doesn't define falls back to the caller's default.
+            expect(kbd.keyGrid.resolvePaletteColor("KeyboardColor", 0xabcdef12)).toBe(0xabcdef12);
+        });
+
+        test("resolvePaletteColor accepts hex-string palette values", () => {
+            const kbd = SGNodeFactory.createNode("DynamicKeyboard");
+            kbd.setValue("palette", makePalette({ FocusColor: new BrsString("#0A0B0CFF") }));
+            expect(kbd.keyGrid.resolvePaletteColor("FocusColor", 0xffffffff)).toBe(0x0a0b0cff);
+        });
+
+        test("rendering themes the text box from the resolved palette, with a fallback", () => {
+            const draw2D = {
+                doDrawRotatedText() {},
+                doDrawScaledObject() {},
+                doDrawRotatedBitmap() {},
+                drawNinePatch() {},
+                doDrawRotatedRect() {},
+            };
+            const kbd = SGNodeFactory.createNode("DynamicKeyboard");
+            sgRoot.setFocused(kbd);
+            const textColor = () => kbd.textEditBox.getValueJS("textColor") >>> 0;
+
+            // No palette anywhere: the text box keeps its own default textColor untouched.
+            kbd.renderNode(fakeInterpreter, [0, 0], 0, 1, draw2D);
+            expect(textColor()).toBe(0xddddddff);
+
+            // A palette defining PrimaryTextColor themes the typed text to match the keys.
+            kbd.setValue("palette", makePalette({ PrimaryTextColor: 0x223344ff }));
+            kbd.renderNode(fakeInterpreter, [0, 0], 0, 1, draw2D);
+            expect(textColor()).toBe(0x223344ff);
+
+            // A palette present but missing PrimaryTextColor falls back to the default keyboard color.
+            kbd.setValue("palette", makePalette({ FocusColor: 0x010203ff }));
+            kbd.renderNode(fakeInterpreter, [0, 0], 0, 1, draw2D);
+            expect(textColor()).toBe(0xffffffff);
+        });
+
+        test("PIN pad digits are themed by the palette PrimaryTextColor", () => {
+            const draw2D = {
+                doDrawRotatedText() {},
+                doDrawScaledObject() {},
+                doDrawRotatedBitmap() {},
+                drawNinePatch() {},
+                doDrawRotatedRect() {},
+            };
+            const pad = SGNodeFactory.createNode("DynamicPinPad");
+            sgRoot.setFocused(pad);
+            pad.setValue("palette", makePalette({ PrimaryTextColor: 0x99aabbff }));
+            pad.renderNode(fakeInterpreter, [0, 0], 0, 1, draw2D);
+            // The PIN slots/digits read the same textColor field the palette themes. 0x99AABBFF has a
+            // high top byte, so this also covers the signed-color path (no Int32 clamping).
+            expect(pad.textEditBox.getValueJS("textColor") >>> 0).toBe(0x99aabbff);
         });
     });
 

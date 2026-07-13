@@ -51,6 +51,7 @@ import { toAssociativeArray, jsValueOf, fromSGNode } from "../factory/Serializer
 import { sgRoot } from "../SGRoot";
 import { SGNodeType } from ".";
 import { ComponentDefinition } from "../parser/ComponentDefinition";
+import { convertHexColor } from "../SGUtil";
 
 type ChangeOperation = "none" | "insert" | "add" | "remove" | "set" | "clear" | "move" | "setall" | "modify";
 
@@ -732,6 +733,57 @@ export class Node extends RoSGNode implements BrsValue {
      */
     getNodeParent() {
         return this.parent;
+    }
+
+    /**
+     * Resolves the RSGPalette color set that themes this node.
+     *
+     * On Roku, palette colors cascade down the scene graph: a node is themed by the nearest
+     * `palette` (an RSGPalette node holding a `colors` assocarray) found by walking up from itself
+     * through its ancestors — its own `palette` field first, then each parent up to the Scene. This
+     * is the resolution documented for the DynamicKeyGrid, but it is a general capability every node
+     * shares (Scene, StandardDialog, the dynamic keyboards, …). Returns the matched `colors`
+     * assocarray, or `undefined` when no node in the chain sets a palette.
+     */
+    resolvePaletteColors(): RoAssociativeArray | undefined {
+        let node: Node | undefined = this;
+        while (node) {
+            const palette = node.getValue("palette");
+            if (palette instanceof Node) {
+                const colors = palette.getValue("colors");
+                if (colors instanceof RoAssociativeArray) {
+                    return colors;
+                }
+            }
+            const parent = node.getNodeParent();
+            node = parent instanceof Node ? parent : undefined;
+        }
+        return undefined;
+    }
+
+    /**
+     * Resolves a single named palette color (as an `0xRRGGBBAA` integer) for this node, returning
+     * `fallback` when no ancestor palette is set or it lacks the named color. Palette color values
+     * may be stored as integers or as hex-string colors (e.g. "0xRRGGBBAA" / "#RRGGBBAA"); both are
+     * accepted so an app-supplied RSGPalette works regardless of how its colors were written.
+     */
+    resolvePaletteColor(name: string, fallback: number): number {
+        const colors = this.resolvePaletteColors();
+        if (colors) {
+            const color = colors.get(new BrsString(name));
+            if (isBrsString(color)) {
+                const parsed = convertHexColor(color.getValue());
+                if (parsed >= 0) {
+                    return parsed;
+                }
+            } else {
+                const value = jsValueOf(color);
+                if (typeof value === "number") {
+                    return value;
+                }
+            }
+        }
+        return fallback;
     }
 
     /**

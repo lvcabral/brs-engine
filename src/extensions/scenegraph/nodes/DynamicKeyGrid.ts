@@ -21,8 +21,12 @@ import { sgRoot } from "../SGRoot";
 import { jsValueOf } from "../factory/Serializer";
 import { computeLayout, KeyInset, keyboardSize, KeyLayout, RenderedKey, resolveKeyIcon } from "./kdf/KeyDefinition";
 
-/** Default palette colors used when no RSGPalette is found in the scene graph. */
-const DEFAULT_PALETTE: Record<string, number> = {
+/**
+ * Default keyboard palette colors used when no RSGPalette is found in the scene graph (the gray
+ * background / white text default from the DynamicKeyGrid spec). Shared with DynamicKeyboardBase so
+ * the key grid and the text edit box fall back to the same theme.
+ */
+export const DEFAULT_KEYBOARD_PALETTE: Record<string, number> = {
     KeyboardColor: 0xffffffff, // no tint applied to the keyboard background bitmap
     PrimaryTextColor: 0xffffffff,
     SecondaryItemColor: 0x808080ff,
@@ -469,20 +473,9 @@ export class DynamicKeyGrid extends Group {
     // -------------------------------------------------------------------------
 
     private getPaletteColor(name: string): number {
-        let node: Node | undefined = this;
-        while (node) {
-            const palette = node.getValue("palette");
-            if (palette instanceof Node) {
-                const colors = palette.getValue("colors");
-                const value = (jsValueOf(colors) as Record<string, unknown>)?.[name];
-                if (typeof value === "number") {
-                    return value;
-                }
-            }
-            const parent = node.getNodeParent();
-            node = parent instanceof Node ? parent : undefined;
-        }
-        return DEFAULT_PALETTE[name];
+        // Palette resolution (walk this node's ancestors for the nearest RSGPalette) is a shared
+        // Node capability; the key grid only supplies its own per-color defaults.
+        return this.resolvePaletteColor(name, DEFAULT_KEYBOARD_PALETTE[name]);
     }
 
     // -------------------------------------------------------------------------
