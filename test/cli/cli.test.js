@@ -112,6 +112,25 @@ describe("cli", () => {
         ]);
     }, 10000);
 
+    it("only warns once for a repeatedly-requested missing local texture", async () => {
+        let command = ["node", brsCliPath, "roTextureManagerMissingFile.brs", "-c 0"].join(" ");
+
+        let { stdout, stderr } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+            env: { ...process.env, NODE_ENV: "development" },
+        });
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "first request state: 4",
+            "second request state: 4",
+            "------ Finished 'roTextureManagerMissingFile.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+        // The second identical request must not re-hit the filesystem or re-log the warning.
+        let warnings = stderr.match(/Error requesting texture pkg:\/images\/does-not-exist\.png/g) ?? [];
+        expect(warnings.length).toEqual(1);
+    }, 10000);
+
     it("prints syntax errors once", async () => {
         let folder = "errors";
         let filename = "uninitialized-object.brs";
