@@ -613,6 +613,62 @@ describe("cli", () => {
         ]);
     }, 10000);
 
+    it("PanelSet creates the right panel on item focus without hasNextPanel", async () => {
+        let command = ["node", brsCliPath, "-r panelset-nextpanel-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // Repro of a sliding-panels settings screen showing only its left menu. The right detail
+        // panel is created via the createNextPanelOnItemFocus mechanism: focusing a grid item sets
+        // createNextPanelIndex, and the app responds by setting nextPanel. That whole chain must be
+        // driven by createNextPanelOnItemFocus, NOT gated on hasNextPanel (which only governs the
+        // right-arrow indicator / forward navigation to a further panel). Before the fix the menu
+        // panel's hasNextPanel was false, so the nextPanel callback was never wired: no second panel
+        // was appended and numPanels stayed 1.
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "=== PanelSet NextPanel Repro ===",
+            "before focus numPanels =  1",
+            "created right panel for index  0",
+            "after focus numPanels =  2",
+            "=== PanelSet NextPanel Repro Complete ===",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 10000);
+
+    it("PanelSet clears the trailing detail panel when the app supplies no next panel", async () => {
+        let command = ["node", brsCliPath, "-r panelset-clearpanel-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // Repro of a sliding-panels settings menu. The left ListPanel uses the
+        // createNextPanelOnItemFocus mechanism: focusing a menu item sets createNextPanelIndex and the
+        // app responds by assigning a detail Panel to nextPanel. Item 0 supplies a focusable detail
+        // panel (numPanels 1 -> 2); item 1 supplies an informational About panel that replaces it
+        // (numPanels stays 2); item 2 ("Exit") supplies NO panel — the engine must then clear the
+        // trailing detail panel so only the menu remains (numPanels drops back to 1). Before the fix
+        // the stale previous detail panel was kept, matching neither Roku nor the app's intent.
+        // Returning to item 0 re-creates its detail panel (1 -> 2). Re-focusing the SAME item (as the
+        // PanelSet does when focus returns from the left) re-fires createNextPanelIndex for that index;
+        // the app re-supplies the same panel and it must NOT be cleared (numPanels stays 2) — the clear
+        // only runs on a genuine move to a new item whose app supplies nothing.
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "=== PanelSet ClearPanel Repro ===",
+            "item 0 numPanels =  2",
+            "item 1 numPanels =  2",
+            "item 2 numPanels =  1",
+            "back to 0 numPanels =  2",
+            "re-focus 0 numPanels =  2",
+            "=== PanelSet ClearPanel Repro Complete ===",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 10000);
+
     it("Run App from Root Folder Only", async () => {
         // Issue #771: pointing the CLI at a folder with `--root` and no positional files
         // discovers source/*.brs and loads components/ from the root-mounted pkg:/ volume,

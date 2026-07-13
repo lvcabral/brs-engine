@@ -22,6 +22,10 @@ export class GridPanel extends Panel {
     private readonly labelOffsetX: number;
     private readonly labelOffsetY: number;
     public nextPanelCallback?: (panel: Panel) => void;
+    public clearNextPanelCallback?: () => void;
+    private nextPanelForwarded: boolean = false;
+    private processingItemFocus: boolean = false;
+    private lastNextPanelIndex: number = -1;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.GridPanel) {
         super([], name);
@@ -80,8 +84,11 @@ export class GridPanel extends Panel {
                 rightLabel.setValueSilent(index, new Float(width - this.labelOffsetX * 5));
             }
         } else if (fieldName === "nextpanel") {
-            const hasNextPanel = this.getValueJS("hasNextPanel") === true;
-            if (hasNextPanel && value instanceof Panel && this.nextPanelCallback) {
+            // nextPanel is write-only: setting it forwards the new panel to the PanelSet.
+            // Gated on the create-next-panel wiring, not on hasNextPanel (which only governs
+            // the right-arrow indicator / forward navigation to a further panel).
+            if (value instanceof Panel && this.nextPanelCallback) {
+                this.nextPanelForwarded = true;
                 this.nextPanelCallback(value);
             }
         }
@@ -97,8 +104,33 @@ export class GridPanel extends Panel {
     }
 
     private onItemFocusChanged(index: number) {
-        if (this.getValueJS("createNextPanelOnItemFocus") === true && this.nextPanelCallback) {
+        if (this.getValueJS("createNextPanelOnItemFocus") !== true || !this.nextPanelCallback) {
+            return;
+        }
+        // Appending/replacing the detail panel re-focuses the grid, which re-enters this callback
+        // for the same item. Ignore that nested call so the clear path does not remove the panel
+        // that was just created.
+        if (this.processingItemFocus) {
+            return;
+        }
+        // Whether this is a genuine move to a *different* item. createNextPanelIndex also fires when
+        // the PanelSet re-focuses this list from the left (e.g. going back), re-notifying the same
+        // item; the clear path must not run then — the app simply re-supplies the same detail panel.
+        const indexChanged = index !== this.lastNextPanelIndex;
+        this.lastNextPanelIndex = index;
+        this.processingItemFocus = true;
+        this.nextPanelForwarded = false;
+        try {
+            // Observers dispatch synchronously: if the app assigns nextPanel during this setValue,
+            // the nextpanel handler flips nextPanelForwarded to true before we return here.
             this.setValue("createNextPanelIndex", new Int32(index));
+        } finally {
+            this.processingItemFocus = false;
+        }
+        if (indexChanged && !this.nextPanelForwarded && this.clearNextPanelCallback) {
+            // App produced no next panel for this newly-focused item (e.g. Exit returns invalid):
+            // clear the trailing detail panel, matching Roku's fade-out-to-empty behavior.
+            this.clearNextPanelCallback();
         }
     }
 }

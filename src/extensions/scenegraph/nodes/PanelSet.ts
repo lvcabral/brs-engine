@@ -147,24 +147,38 @@ export class PanelSet extends Group {
     }
 
     protected goForward() {
-        if (this.focusIndex >= this.panels.length - 1) {
+        // Find the next focusable panel to the right, skipping any non-focusable ones. A panel's own
+        // `focusable` field is Roku's authoritative signal for whether the PanelSet can move focus
+        // into it: an informational detail panel (e.g. an About panel) sets focusable=false and must
+        // not receive focus, while a Panel left at its default (focusable=true) is navigable. Skipping
+        // non-focusable panels lets focus reach a focusable panel that sits past a non-focusable one.
+        let targetIndex = -1;
+        for (let i = this.focusIndex + 1; i < this.panels.length; i++) {
+            if (this.panels[i].isFocusable()) {
+                targetIndex = i;
+                break;
+            }
+        }
+        if (targetIndex === -1) {
             return false;
         }
         const currentPanel = this.panels.at(this.focusIndex);
-        if (currentPanel?.getValueJS("hasNextPanel") === true) {
-            this.focusIndex++;
-            super.setValue("isGoingBack", BrsBoolean.False);
-            currentPanel.setNodeFocus(false);
-            this.setNodeFocus(true);
-            return true;
-        }
-        return false;
+        this.focusIndex = targetIndex;
+        super.setValue("isGoingBack", BrsBoolean.False);
+        currentPanel?.setNodeFocus(false);
+        this.setNodeFocus(true);
+        return true;
     }
 
     appendChildToParent(child: BrsType): boolean {
         const added = super.appendChildToParent(child);
         if (added && child instanceof Panel) {
             this.panels.push(child);
+            if (child instanceof GridPanel) {
+                // Wire the create-next-panel callback at append time so it does not depend on the
+                // PanelSet itself receiving focus — apps commonly focus a contained Panel directly.
+                this.wireNextPanel(child);
+            }
             if (child.getValueJS("isFullScreen") === true) {
                 this.focusIndex = this.panels.length - 1;
             } else {
@@ -218,25 +232,46 @@ export class PanelSet extends Group {
         this.changed = false;
     }
 
+    private wireNextPanel(panel: GridPanel) {
+        panel.nextPanelCallback = (nextPanel: Panel) => {
+            if (this.panels.length === 1) {
+                this.appendChildToParent(nextPanel);
+                return;
+            }
+            const removed = this.panels.splice(-1, 1, nextPanel);
+            const removedIndex = this.children.indexOf(removed[0]);
+            this.replaceChildAtIndex(nextPanel, removedIndex);
+        };
+        panel.clearNextPanelCallback = () => this.clearTrailingPanel(panel);
+    }
+
+    private clearTrailingPanel(source: GridPanel) {
+        // Only clear when the trailing panel is the detail panel fed by this menu — i.e. the
+        // source menu panel is second-to-last. First-ever focus (menu is the only panel) no-ops.
+        if (this.panels.length < 2 || this.panels.at(-2) !== source) {
+            return;
+        }
+        const removed = this.panels.pop();
+        if (removed) {
+            this.removeChildByReference(removed);
+        }
+        this.focusIndex = Math.max(0, this.panels.length - 1);
+        super.setValue("numPanels", new Float(this.panels.length));
+        this.isDirty = true;
+    }
+
     private refreshFocus() {
         const currentFocus = sgRoot.focused;
         if (this.panels.length && (currentFocus === this || this.isChildrenFocused())) {
             const focusedPanel = this.panels[this.focusIndex];
             if (focusedPanel && currentFocus !== focusedPanel) {
                 this.handleSelect = focusedPanel.getValueJS("selectButtonMovesPanelForward") === true;
-                const hasNextPanel = focusedPanel.getValueJS("hasNextPanel") === true;
-                if (hasNextPanel && focusedPanel instanceof GridPanel) {
-                    focusedPanel.nextPanelCallback = (nextPanel: Panel) => {
-                        if (this.panels.length === 1) {
-                            this.appendChildToParent(nextPanel);
-                            return;
-                        }
-                        const removed = this.panels.splice(-1, 1, nextPanel);
-                        const removedIndex = this.children.indexOf(removed[0]);
-                        this.replaceChildAtIndex(nextPanel, removedIndex);
-                    };
-                } else if (focusedPanel instanceof GridPanel) {
-                    focusedPanel.nextPanelCallback = undefined;
+                // Ensure the focused GridPanel's create-next-panel callback is wired (also done at
+                // append time). The mechanism is driven by createNextPanelOnItemFocus (checked in
+                // GridPanel), not by hasNextPanel — that field only controls the right-arrow
+                // indicator / forward navigation to a further panel.
+                if (focusedPanel instanceof GridPanel) {
+                    this.wireNextPanel(focusedPanel);
                 }
                 const isFull = focusedPanel.getValueJS("isFullScreen") === true;
                 const isLast = this.focusIndex === this.panels.length - 1;

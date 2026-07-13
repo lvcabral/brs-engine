@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- An informational panel with only Labels (no focusable content). The app sets focusable=false,
+     so RIGHT/OK must not move focus into it. -->
+<component name="AboutPanel" extends="Panel">
+    <children>
+        <Label id="aboutTitle" text="About" />
+        <Label id="aboutText" text="Informational text only" />
+    </children>
+</component>

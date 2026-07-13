@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- A PanelSet holding a left ListPanel menu. Detail panels are created dynamically via the
+     createNextPanelOnItemFocus mechanism. Some menu items supply a next panel, one supplies none
+     (mirroring an "Exit" option) — that case must clear the trailing detail panel. -->
+<component name="MainScene" extends="Scene">
+    <children>
+        <PanelSet id="panelSet" />
+    </children>
+</component>

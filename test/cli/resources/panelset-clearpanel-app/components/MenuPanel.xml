@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Left menu panel: a ListPanel whose MarkupGrid and its content ContentNode are declared in XML,
+     mirroring a real settings menu. Three items are added in place after build. The app responds to
+     createNextPanelIndex by supplying a detail panel for items 0 and 1, but NOT for item 2 (an
+     "Exit"-style option) — which must clear the trailing detail panel. -->
+<component name="MenuPanel" extends="ListPanel">
+    <script type="text/brightscript" uri="pkg:/components/MenuPanel.brs" />
+    <children>
+        <Group id="menuGroup">
+            <MarkupGrid id="grid" itemComponentName="MenuItem" numRows="6" numColumns="1" itemSize="[437,72]">
+                <ContentNode id="menuContent" role="content" />
+            </MarkupGrid>
+        </Group>
+    </children>
+</component>

@@ -194,9 +194,20 @@ export class ArrayGrid extends Group {
 
     setNodeFocus(focusOn: boolean): boolean {
         const focus = super.setNodeFocus(focusOn);
-        const focusIndex = this.getValueJS("itemFocused") as number;
-        if (focus && focusIndex >= 0) {
-            this.setFocusedItem(focusIndex);
+        if (focus) {
+            let focusIndex = this.getValueJS("itemFocused") as number;
+            if (focusIndex < 0) {
+                // No item has been focused yet: default to the first item (Roku's itemFocused
+                // default is 0). Rebuild the internal content view first so items added in place
+                // (e.g. via ContentNode.update() after the content node was assigned empty) count.
+                this.refreshContent();
+                if (this.content.length > 0) {
+                    focusIndex = 0;
+                }
+            }
+            if (focusIndex >= 0) {
+                this.setFocusedItem(focusIndex);
+            }
         }
         return focus;
     }

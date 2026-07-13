@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- A focusable detail panel (contains a Button) — RIGHT/OK can move focus into it. -->
+<component name="DetailPanel" extends="Panel">
+    <children>
+        <Button id="detailButton" text="Detail" />
+    </children>
+</component>
