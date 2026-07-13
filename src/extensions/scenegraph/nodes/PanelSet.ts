@@ -147,19 +147,23 @@ export class PanelSet extends Group {
     }
 
     protected goForward() {
-        if (this.focusIndex >= this.panels.length - 1) {
+        // Find the next focusable panel to the right, skipping any non-focusable ones. A panel's own
+        // `focusable` field is Roku's authoritative signal for whether the PanelSet can move focus
+        // into it: an informational detail panel (e.g. an About panel) sets focusable=false and must
+        // not receive focus, while a Panel left at its default (focusable=true) is navigable. Skipping
+        // non-focusable panels lets focus reach a focusable panel that sits past a non-focusable one.
+        let targetIndex = -1;
+        for (let i = this.focusIndex + 1; i < this.panels.length; i++) {
+            if (this.panels[i].isFocusable()) {
+                targetIndex = i;
+                break;
+            }
+        }
+        if (targetIndex === -1) {
             return false;
         }
         const currentPanel = this.panels.at(this.focusIndex);
-        const nextPanel = this.panels[this.focusIndex + 1];
-        // Move focus into the adjacent (already-present) panel only if it has interactive content
-        // to receive focus — a ListPanel's grid, buttons, etc. A purely informational panel (only
-        // labels) is not navigable, matching Roku. hasNextPanel governs the right-arrow indicator
-        // and drilling into a *further* panel, not whether the visible detail panel can be entered.
-        if (!nextPanel.hasFocusableDescendant()) {
-            return false;
-        }
-        this.focusIndex++;
+        this.focusIndex = targetIndex;
         super.setValue("isGoingBack", BrsBoolean.False);
         currentPanel?.setNodeFocus(false);
         this.setNodeFocus(true);
@@ -238,6 +242,22 @@ export class PanelSet extends Group {
             const removedIndex = this.children.indexOf(removed[0]);
             this.replaceChildAtIndex(nextPanel, removedIndex);
         };
+        panel.clearNextPanelCallback = () => this.clearTrailingPanel(panel);
+    }
+
+    private clearTrailingPanel(source: GridPanel) {
+        // Only clear when the trailing panel is the detail panel fed by this menu — i.e. the
+        // source menu panel is second-to-last. First-ever focus (menu is the only panel) no-ops.
+        if (this.panels.length < 2 || this.panels.at(-2) !== source) {
+            return;
+        }
+        const removed = this.panels.pop();
+        if (removed) {
+            this.removeChildByReference(removed);
+        }
+        this.focusIndex = Math.max(0, this.panels.length - 1);
+        super.setValue("numPanels", new Float(this.panels.length));
+        this.isDirty = true;
     }
 
     private refreshFocus() {
