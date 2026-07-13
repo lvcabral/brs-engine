@@ -1732,7 +1732,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         let current: BrsType = source;
         for (let i = 0; i < statement.indexes.length; i++) {
             let index = this.evaluate(statement.indexes[i]);
-            if (!isBrsNumber(index)) {
+            if (!isAnyNumber(index)) {
                 this.addError(new RuntimeError(RuntimeErrorDetail.NonNumericArrayIndex, statement.indexes[i].location));
             }
 
