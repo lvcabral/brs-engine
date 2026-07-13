@@ -101,6 +101,10 @@ describe("ancestorSubBoundingRect", () => {
         scene.appendChildToParent(group);
         group.appendChildToParent(grid);
 
+        // Inject a non-zero local rect on every ancestor so getBoundingRect treats them as already
+        // laid out and returns these values as-is (a zero-sized local rect signals an unmeasured
+        // node, which getBoundingRect re-measures with a local render even while `rendering`).
+        group.rectLocal = { x: 0, y: 0, width: 500, height: 900 };
         group.rectToParent = { x: 50, y: 60, width: 500, height: 900 };
         grid.rectToParent = { x: 10, y: 20, width: 438, height: 800 };
         grid.rectLocal = { x: 0, y: 0, width: 438, height: 800 };

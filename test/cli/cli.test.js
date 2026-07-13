@@ -470,6 +470,38 @@ describe("cli", () => {
             "",
         ]);
     }, 10000);
+    it("Measures a freshly-created grid item's content during the render pass that creates it", async () => {
+        let command = ["node", brsCliPath, "-r button-measure-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+
+        // Repro of a fit-to-content button's pill background collapsing to a circle. An ArrayGrid
+        // lazily creates each item component and assigns its itemContent DURING the grid's render
+        // pass. The item's itemContent observer sets its label text and then sizes a background from
+        // elementsGroup.boundingRect().width (as EnhancedButton.renderButton does). That measurement
+        // runs while sgRoot.rendering is true, on a content subtree the pass has not laid out yet.
+        // getBoundingRect must render just that unmeasured subtree (not skip and return a stale 0),
+        // so the content width is real and the background is not collapsed. Before the fix every
+        // measurement read 0 (in the app: a 9-patch pill drawn at its corner sum — a circle).
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "=== Button Measure Repro ===",
+            "content measured > 0 = true",
+            "background wider than padding = true",
+            "content measured > 0 = true",
+            "background wider than padding = true",
+            "content measured > 0 = true",
+            "background wider than padding = true",
+            "content measured > 0 = true",
+            "background wider than padding = true",
+            "grid rect height =  184",
+            "=== Button Measure Repro Complete ===",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 10000);
     it("Resolves a component method in call position when an XML field shadows its name", async () => {
         let command = ["node", brsCliPath, "-r method-shadow-field-app", "source/main.brs", "-c 0"].join(" ");
 
@@ -480,7 +512,7 @@ describe("cli", () => {
         // A component may declare an <interface> field named after a built-in method
         // (e.g. isInFocusChain). On Roku the field only shadows the method for reads:
         // call syntax still resolves the interface method, while plain reads and
-        // observeField target the XML field (Tubi's TubiProgressBar relies on this).
+        // observeField target the XML field (a custom progress-bar component relies on this).
         expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
             "=== Method Shadow Field Repro ===",
             "init call isInFocusChain() = false",

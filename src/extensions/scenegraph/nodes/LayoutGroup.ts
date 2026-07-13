@@ -103,6 +103,7 @@ export class LayoutGroup extends Group {
 
         this.metricsUsedThisPass = undefined;
         if (layoutChildren.length && this.layoutDirty) {
+            this.measureUnsizedChildren(layoutChildren, interpreter);
             this.metricsUsedThisPass = new WeakMap<Node, LayoutMetrics>();
             this.applyLayout(layoutChildren, direction, spacings, addAfter, this.metricsUsedThisPass);
             this.layoutDirty = false;
@@ -112,6 +113,25 @@ export class LayoutGroup extends Group {
 
         if (layoutChildren.length) {
             this.synchronizeChildMetrics(layoutChildren, direction);
+        }
+    }
+
+    /**
+     * A child whose size derives from ITS OWN children (e.g. an icon `Group` wrapping a `Poster`, or
+     * a nested `LayoutGroup`) reports width/height 0 until it has rendered — `getDimensions()` reads
+     * its unset width field and `chooseActiveRect` finds no laid-out rect, so `applyLayout` would drop
+     * it from the row total (a button's background then fits only the text, not the icon). Render such
+     * a child's subtree once as a measurement pass (no `draw2D`, so nothing is drawn) to populate its
+     * `rectToParent` before it is measured. Children that already know their size (Labels, sized
+     * Posters, already-laid-out nodes) are skipped, so this is a no-op in the common case.
+     */
+    private measureUnsizedChildren(children: Group[], interpreter: Interpreter) {
+        for (const child of children) {
+            const dims = child.getDimensions();
+            const rectKnown = child.rectToParent.width > 0 || child.rectToScene.width > 0 || child.rectLocal.width > 0;
+            if (!rectKnown && !(typeof dims.width === "number" && dims.width > 0)) {
+                child.renderNode(interpreter, [0, 0], 0, 1);
+            }
         }
     }
 

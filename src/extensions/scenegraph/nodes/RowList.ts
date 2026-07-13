@@ -344,6 +344,24 @@ export class RowList extends ArrayGrid {
         return this.getRowItemSize(rowIndex)[0];
     }
 
+    /**
+     * Width of a single item. Uniform rows use the row's `rowItemSize.x`; a row flagged in
+     * `variableWidthItems` instead takes each item's width from the `[SD/HD/FHD]ItemWidth` field of
+     * its ContentNode (the resolution matching the manifest `ui_resolutions`), falling back to the
+     * row's `rowItemSize.x` when an item does not specify one — per the RowList reference.
+     * @param rowIndex Absolute row index.
+     * @param colIndex Column (item) index within the row.
+     * @param cols The row's content children.
+     * @param rowItemWidth The row's uniform width (fallback and non-variable result).
+     */
+    private getItemWidth(rowIndex: number, colIndex: number, cols: ContentNode[], rowItemWidth: number): number {
+        if (!this.resolveBoolean(this.getValueJS("variableWidthItems"), rowIndex, false)) {
+            return rowItemWidth;
+        }
+        const itemWidth = cols[colIndex]?.getValueJS(`${sgRoot.resolution}ItemWidth`);
+        return typeof itemWidth === "number" && itemWidth > 0 ? itemWidth : rowItemWidth;
+    }
+
     private getRowItemSpacing(rowIndex: number): number[] {
         let fallback = [0, 0];
         const itemSpacing = this.getValueJS("itemSpacing") as number[];
@@ -722,8 +740,13 @@ export class RowList extends ArrayGrid {
             startCol = this.rowScrollOffset[rowIndex] ?? 0;
         }
 
+        // With variable-width items the uniform maxVisibleItems estimate can undercount how many
+        // narrower items fit, cutting off the tail of the row; render through the last column and let
+        // the right-edge break below stop the loop once an item lands off-screen.
+        const variableWidth = this.resolveBoolean(this.getValueJS("variableWidthItems"), rowIndex, false);
         const maxVisibleItems = Math.ceil((this.sceneRect.width + spacing[0]) / (rowItemWidth + spacing[0]));
-        const endCol = renderMode === "wrapMode" ? numCols : Math.min(startCol + maxVisibleItems, numCols);
+        const endCol =
+            renderMode === "wrapMode" || variableWidth ? numCols : Math.min(startCol + maxVisibleItems, numCols);
 
         // In wrap mode the focused item sits at the fixed focus offset; the row wraps in BOTH
         // directions, so the tail end of the preceding (wrapped) item is partially visible in the
@@ -761,6 +784,10 @@ export class RowList extends ArrayGrid {
                 break;
             }
 
+            // Size the slot to this specific item (a no-op for uniform rows) so the item component is
+            // sized correctly and the next item advances by this item's own width — otherwise variable
+            // items are positioned on a uniform pitch and overlap (or leave gaps).
+            itemRect.width = this.getItemWidth(rowIndex, colIndex, cols, rowItemWidth);
             this.renderRowItemComponent(
                 context.interpreter,
                 rowIndex,
@@ -846,7 +873,13 @@ export class RowList extends ArrayGrid {
         }
         itemComp.setValue("rowHasFocus", BrsBoolean.from(this.focusIndex === rowIndex), false);
         itemComp.setValue(this.focusField, BrsBoolean.from(nodeFocus), false);
-        itemComp.setValue("itemHasFocus", BrsBoolean.from(focused), false);
+        // itemHasFocus is true only when this item is the focused column AND the list itself has
+        // focus. Per the RowList reference, "if the RowList does not focus, all itemHasFocus fields
+        // ... should be false". Gating on nodeFocus makes the field transition (and its observers
+        // fire) when the list gains/loses focus while the same item stays the focused column —
+        // otherwise a button focused on the first render never shows its focused state once the list
+        // is focused afterwards (focusPercent stays 1, so a focusPercent observer never re-fires).
+        itemComp.setValue("itemHasFocus", BrsBoolean.from(focused && nodeFocus), false);
         if (content.changed) {
             itemComp.setValue("itemContent", content, true);
             content.changed = false;

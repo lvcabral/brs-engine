@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Grid item component that sizes a background to its label content, the way a
+    fit-to-content button does: on itemContent it sets the label text and then measures its
+    content with boundingRect().width to compute the background width. The grid creates
+    and assigns itemContent to each item DURING its render pass, so this measurement runs
+    while sgRoot.rendering is true, on a content subtree that pass has not laid out yet.
+    Before the fix, boundingRect() returned a stale 0-sized rect during that render, so the
+    background collapsed (with a 9-patch background, a pill drawn at its corner sum: a circle).
+-->
+<component name="PillButton" extends="Group">
+    <interface>
+        <field id="itemContent" type="node" />
+        <field id="width" type="float" />
+        <field id="height" type="float" />
+    </interface>
+    <children>
+        <LayoutGroup id="elementsGroup" layoutDirection="horiz">
+            <Label id="label" />
+        </LayoutGroup>
+        <Rectangle id="background" width="0" height="72" />
+    </children>
+    <script type="text/brightscript">
+    <![CDATA[
+        sub init()
+            m.elementsGroup = m.top.findNode("elementsGroup")
+            m.label = m.top.findNode("label")
+            m.background = m.top.findNode("background")
+            m.top.observeFieldScoped("itemContent", "onItemContentChange")
+        end sub
+
+        sub onItemContentChange()
+            item = m.top.itemContent
+            if item = invalid then return
+            m.label.text = item.title
+            ' Measure the laid-out content width, mirroring EnhancedButton.renderButton.
+            contentWidth = m.elementsGroup.boundingRect().width
+            padding = 24
+            m.background.width = contentWidth + (padding * 2)
+            print "content measured > 0 = "; (contentWidth > 0)
+            print "background wider than padding = "; (m.background.width > padding * 2)
+        end sub
+    ]]>
+    </script>
+</component>

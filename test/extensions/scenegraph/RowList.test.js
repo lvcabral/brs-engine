@@ -4,7 +4,7 @@ const scenegraph = require("../../../packages/scenegraph/lib/brs-sg.node.js");
 const core = require("../../../packages/node/bin/brs.node.js");
 
 const { SGNodeFactory, sgRoot, getBrsValueFromFieldType } = scenegraph;
-const { BrsDevice, BrsString, Int32, RoArray } = core;
+const { BrsDevice, BrsString, Int32, Float, RoArray } = core;
 
 /**
  * Builds a root → rows → items ContentNode tree.
@@ -453,5 +453,31 @@ describe("RowList key handling", () => {
         // and preserving the natural 23px gap (rowHeight 220 - poster 197) below it.
         expect(row1.y).toBe(220 + band);
         expect(row1.y - (row0.y + row0.h)).toBe(220 - 197);
+    });
+
+    test("itemHasFocus is false until the list itself has focus (focused column alone is not enough)", () => {
+        // Regression: a button focused on the first render did not show its focused
+        // state once the list gained focus afterwards. itemHasFocus was set from the focused COLUMN
+        // only, so it stayed true and never transitioned when the list's focus changed — the item's
+        // itemHasFocus observer (which drives the focused background) therefore never re-fired. Per the
+        // RowList reference, itemHasFocus must be false while the list is unfocused, and become true
+        // (a real change → observers fire) when the list gains focus.
+        const list = SGNodeFactory.createNode("RowList");
+        list.setValue("numRows", new Int32(1));
+        list.setValue("itemSize", new RoArray([new Float(1280), new Float(72)]));
+        list.setValue("rowHeights", new RoArray([new Float(72)]));
+        list.setValue("rowItemSize", new RoArray([new RoArray([new Float(200), new Float(72)])]));
+        list.setValue("content", buildContent([["A", "B"]]));
+
+        // Unfocused list: the focused column's item still reports itemHasFocus=false.
+        list.renderNode({}, [0, 0], 0, 1);
+        const item0 = list.rowItemComps[0][0];
+        expect(item0.getValueJS("itemHasFocus")).toBe(false);
+
+        // Give the list focus and render again: the same item now has focus (a false→true change).
+        sgRoot.setFocused(list);
+        list.renderNode({}, [0, 0], 0, 1);
+        expect(item0.getValueJS("itemHasFocus")).toBe(true);
+        expect(item0.getValueJS("rowListHasFocus")).toBe(true);
     });
 });

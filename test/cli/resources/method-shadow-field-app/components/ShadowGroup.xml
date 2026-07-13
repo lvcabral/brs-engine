@@ -4,7 +4,7 @@
     (isInFocusChain, from ifSGNodeFocus). On a real Roku the field only shadows
     the method for reads: call syntax (node.isInFocusChain()) still resolves the
     interface method, while a plain read (node.isInFocusChain) and observeField
-    target the XML field. Tubi's TubiProgressBar relies on exactly this.
+    target the XML field. A custom progress-bar component relies on exactly this.
 -->
 <component name="ShadowGroup" extends="Group">
     <interface>
