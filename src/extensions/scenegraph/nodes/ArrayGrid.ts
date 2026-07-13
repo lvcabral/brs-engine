@@ -252,7 +252,9 @@ export class ArrayGrid extends Group {
     protected updateItemFocus(index: number, focus: boolean, nodeFocus: boolean) {
         const itemComp = this.itemComps[index];
         if (!itemComp) return;
-        itemComp.setValue("itemHasFocus", BrsBoolean.from(focus), false);
+        // Per the reference, an item only "has focus" when it is the focused cell AND the grid itself
+        // has focus; a defocused grid must report itemHasFocus=false for every item (see RowList).
+        itemComp.setValue("itemHasFocus", BrsBoolean.from(focus && nodeFocus), false);
         itemComp.setValue(this.focusField, BrsBoolean.from(nodeFocus), false);
         itemComp.setValue("focusPercent", new Float(focus ? 1 : 0), false);
     }

@@ -52,6 +52,7 @@ export class SGRoot {
     private _video?: Video;
     private _dirty: boolean = false;
     private _rendering: boolean = false;
+    private _measuring: boolean = false;
     private readonly _pendingPorts: RoMessagePort[] = [];
     /**
      * When `true`, recently-written fields can be re-read from the local copy for a short window,
@@ -173,6 +174,20 @@ export class SGRoot {
 
     set rendering(value: boolean) {
         this._rendering = value;
+    }
+
+    /**
+     * True while a bounding-rect query is measuring a single node's subtree from inside an active
+     * render (see `Node.getBoundingRect`). A nested query raised during that local measurement pass
+     * must return the rects it is computing rather than starting yet another local pass — this flag
+     * bounds that recursion, the same way `rendering` bounds full-scene refreshes.
+     */
+    get measuring(): boolean {
+        return this._measuring;
+    }
+
+    set measuring(value: boolean) {
+        this._measuring = value;
     }
 
     private audioFlags: number = -1;

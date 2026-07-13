@@ -929,6 +929,30 @@ export class Node extends RoSGNode implements BrsValue {
             } finally {
                 sgRoot.rendering = false;
             }
+        } else if (
+            interpreter &&
+            sgRoot.rendering &&
+            !sgRoot.measuring &&
+            this.rectLocal.width <= 0 &&
+            this.rectLocal.height <= 0
+        ) {
+            // A query raised *during* an active render, on a node this pass has not laid out yet
+            // (its local rect is still zero) — most commonly a freshly-created ArrayGrid item
+            // component measuring its own content synchronously (e.g. a button sizing its background
+            // from `elementsGroup.boundingRect().width`) before the pass reaches it. A full-tree
+            // refresh from the scene root is unavailable here (it would re-enter the owning grid's
+            // item creation and recurse), so instead render only THIS node's own subtree to populate
+            // its rects. The grid is an ancestor, so a local pass cannot re-enter item creation.
+            // `.width`/`.height` are translation-invariant, so measuring at origin [0,0] yields the
+            // correct size; the true toScene/toParent origin is recomputed when the pass reaches this
+            // node. Restricting to zero-sized rects leaves already-measured nodes (and callers that
+            // inject rects while `rendering`) untouched. `measuring` bounds nested queries.
+            sgRoot.measuring = true;
+            try {
+                this.renderNode(interpreter, [0, 0], 0, 1);
+            } finally {
+                sgRoot.measuring = false;
+            }
         }
         switch (type) {
             case "local":

@@ -74,7 +74,7 @@ describe("RoAssociativeArray", () => {
         it("keeps a replaced key's enumeration position (for each + assign must not skip keys)", () => {
             // Roku does not reorder an AA when an existing key's value is replaced. A delete +
             // re-insert moved the key to the end of the backing Map, so a `for each` that assigns
-            // to existing keys of the same AA skipped entries (Tubi's request-options merge loop).
+            // to existing keys of the same AA skipped entries (an options-merge loop).
             let aa = new RoAssociativeArray([
                 { name: new BrsString("method"), value: new BrsString("GET") },
                 { name: new BrsString("params"), value: new RoAssociativeArray([]) },

@@ -643,7 +643,8 @@ export class ZoomRowList extends ArrayGrid {
             itemComp.setValue("height", brsValueOf(itemRect.height), false);
             itemComp.setValue("rowHasFocus", BrsBoolean.from(this.focusIndex === rowIndex), false);
             itemComp.setValue(this.focusField, BrsBoolean.from(nodeFocus), false);
-            itemComp.setValue("itemHasFocus", BrsBoolean.from(focused), false);
+            // Only the focused item of a focused list reports itemHasFocus=true (see RowList).
+            itemComp.setValue("itemHasFocus", BrsBoolean.from(focused && nodeFocus), false);
             itemComp.setValue("focusPercent", new Float(focused ? 1 : 0), false);
             itemComp.setValue("rowFocusPercent", new Float(this.focusIndex === rowIndex ? 1 : 0), false);
         }
