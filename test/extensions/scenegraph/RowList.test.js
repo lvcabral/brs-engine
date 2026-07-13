@@ -49,6 +49,35 @@ describe("RowList key handling", () => {
         expect(list.getValueJS("itemFocused")).toBe(0);
     });
 
+    test("currFocusRow/currFocusColumn track the focused item on horizontal and vertical navigation", () => {
+        // Regression: currFocusRow/currFocusColumn (inherited ArrayGrid fields) were declared but never
+        // written, so they stayed pinned at their 0.0 default. Apps that observe/alias them to drive a
+        // focused-item overlay (e.g. a home-screen metadata/poster panel) never left item [0, 0]. They
+        // must mirror rowItemFocused as focus moves.
+        const list = SGNodeFactory.createNode("RowList");
+        list.setValue("content", buildContent([["A", "B", "C"], ["D", "E"], ["F"]]));
+
+        // Fresh list: focus at [0, 0].
+        expect(list.getValueJS("currFocusRow")).toBe(0);
+        expect(list.getValueJS("currFocusColumn")).toBe(0);
+
+        // Horizontal move within row 0 updates the column (row stays 0).
+        list.handleKey("right", true);
+        expect(list.getValueJS("currFocusRow")).toBe(0);
+        expect(list.getValueJS("currFocusColumn")).toBe(1);
+        expect(list.getValueJS("rowItemFocused")).toEqual([0, 1]);
+
+        // Vertical move to row 1 updates the row.
+        list.handleKey("down", true);
+        expect(list.getValueJS("currFocusRow")).toBe(1);
+        expect(list.getValueJS("rowItemFocused")[0]).toBe(1);
+
+        // A programmatic jumpToRowItem also syncs both fields.
+        list.setValue("jumpToRowItem", new RoArray([new Int32(2), new Int32(0)]));
+        expect(list.getValueJS("currFocusRow")).toBe(2);
+        expect(list.getValueJS("currFocusColumn")).toBe(0);
+    });
+
     test("a multi-row fixedFocusWrap list still wraps (down/up stay handled)", () => {
         const list = SGNodeFactory.createNode("RowList");
         list.setValue("vertFocusAnimationStyle", new BrsString("fixedFocusWrap"));
