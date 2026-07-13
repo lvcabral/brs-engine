@@ -874,6 +874,24 @@ export class Node extends RoSGNode implements BrsValue {
     }
 
     /**
+     * Indicates whether this node's subtree contains a visible, focusable descendant (the node
+     * itself is not counted). Used to decide whether focus can meaningfully move into a container
+     * — e.g. a PanelSet only navigates into a panel that has interactive content to receive focus.
+     * @returns True when a visible descendant is focusable.
+     */
+    hasFocusableDescendant(): boolean {
+        for (const child of this.getNodeChildren()) {
+            if (!(child instanceof Node) || child.getValueJS("visible") === false) {
+                continue;
+            }
+            if (child.isFocusable() || child.hasFocusableDescendant()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Base render entry point that simply delegates to child nodes.
      * @param interpreter Active interpreter.
      * @param origin Parent-space translation.

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- A PanelSet holding a left ListPanel menu. The right detail panel is created dynamically
+     via the createNextPanelOnItemFocus mechanism (never via hasNextPanel). -->
+<component name="MainScene" extends="Scene">
+    <children>
+        <PanelSet id="panelSet" />
+    </children>
+</component>

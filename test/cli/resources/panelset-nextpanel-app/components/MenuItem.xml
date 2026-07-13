@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Minimal grid item component so the MarkupGrid can create items for its content. -->
+<component name="MenuItem" extends="Group">
+    <interface>
+        <field id="itemContent" type="node" />
+        <field id="width" type="float" />
+        <field id="height" type="float" />
+    </interface>
+</component>

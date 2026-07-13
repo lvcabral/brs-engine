@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Left menu panel: a ListPanel whose MarkupGrid and its content ContentNode are declared in XML
+     (role="content"), mirroring a real settings menu. Items are added to that content node in place
+     after build (like ContentNode.update). It enables createNextPanelOnItemFocus but intentionally
+     leaves hasNextPanel at its default (false): focusing an item must still create the right panel. -->
+<component name="MenuPanel" extends="ListPanel">
+    <script type="text/brightscript" uri="pkg:/components/MenuPanel.brs" />
+    <children>
+        <Group id="menuGroup">
+            <MarkupGrid id="grid" itemComponentName="MenuItem" numRows="6" numColumns="1" itemSize="[437,72]">
+                <ContentNode id="menuContent" role="content" />
+            </MarkupGrid>
+        </Group>
+    </children>
+</component>

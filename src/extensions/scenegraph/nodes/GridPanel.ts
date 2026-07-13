@@ -80,8 +80,10 @@ export class GridPanel extends Panel {
                 rightLabel.setValueSilent(index, new Float(width - this.labelOffsetX * 5));
             }
         } else if (fieldName === "nextpanel") {
-            const hasNextPanel = this.getValueJS("hasNextPanel") === true;
-            if (hasNextPanel && value instanceof Panel && this.nextPanelCallback) {
+            // nextPanel is write-only: setting it forwards the new panel to the PanelSet.
+            // Gated on the create-next-panel wiring, not on hasNextPanel (which only governs
+            // the right-arrow indicator / forward navigation to a further panel).
+            if (value instanceof Panel && this.nextPanelCallback) {
                 this.nextPanelCallback(value);
             }
         }
