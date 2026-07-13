@@ -31,6 +31,7 @@ let textureManager: RoTextureManager;
 export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpAgent {
     readonly kind = ValueKind.Object;
     private readonly textures: Map<string, RoBitmap>;
+    private readonly failedLocalUris: Set<string>;
     private readonly brsFS = BrsDevice.fileSystem;
     readonly requests: Map<number, RoTextureRequest>;
     private port?: RoMessagePort;
@@ -45,6 +46,7 @@ export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpA
         this.certificatesFile = DefaultCertificatesFile;
         this.requests = new Map<number, RoTextureRequest>();
         this.textures = new Map<string, RoBitmap>();
+        this.failedLocalUris = new Set<string>();
         this.customHeaders = new Map<string, string>();
         const ifHttpAgent = new IfHttpAgent(this);
         const setPortIface = new IfSetMessagePort(this, this.getNewEvents.bind(this));
@@ -119,6 +121,12 @@ export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpA
                 this.textures.delete(uri);
             }
         }
+        for (const uri of this.failedLocalUris) {
+            const uriVolume = `${uri.split(":/")[0]}:`;
+            if (uriVolume === volume) {
+                this.failedLocalUris.delete(uri);
+            }
+        }
     }
 
     loadTexture(uri: string, headers?: Map<string, string>): RoBitmap | undefined {
@@ -158,6 +166,9 @@ export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpA
     }
 
     private loadLocalFile(uri: string) {
+        if (this.failedLocalUris.has(uri)) {
+            return undefined;
+        }
         try {
             const fsys = BrsDevice.fileSystem;
             let assetPath = uri;
@@ -174,6 +185,7 @@ export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpA
             }
             return fsys.readFileSync(assetPath);
         } catch (err: any) {
+            this.failedLocalUris.add(uri);
             if (BrsDevice.isDevMode) {
                 BrsDevice.stderr.write(`warning,[roTextureManager] Error requesting texture ${uri}: ${err.message}`);
             }
@@ -226,6 +238,7 @@ export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpA
         },
         impl: (_: Interpreter, url: BrsString) => {
             this.textures.delete(url.value);
+            this.failedLocalUris.delete(url.value);
             return Uninitialized.Instance;
         },
     });
@@ -235,6 +248,7 @@ export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpA
         signature: { args: [], returns: ValueKind.Void },
         impl: (_: Interpreter) => {
             this.textures.clear();
+            this.failedLocalUris.clear();
             return Uninitialized.Instance;
         },
     });
