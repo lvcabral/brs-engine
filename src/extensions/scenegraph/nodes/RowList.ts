@@ -212,7 +212,20 @@ export class RowList extends ArrayGrid {
         }
 
         super.setValue("itemFocused", new Int32(rowIndex));
+        this.setRowItemFocused(rowIndex, colIndex);
+    }
+
+    /**
+     * Records the focused [row, column] and mirrors it into the inherited ArrayGrid
+     * currFocusRow/currFocusColumn fields. Roku keeps those two fields in sync with the focus
+     * position as the grid scrolls (see arraygrid.md); apps observe/alias them to track which
+     * row and column is focused. Without this mirror they stay pinned at their 0.0 default, so an
+     * app driving a focused-item overlay from currFocusRow/currFocusColumn never leaves item [0,0].
+     */
+    protected setRowItemFocused(rowIndex: number, colIndex: number) {
         super.setValue("rowItemFocused", new RoArray([new Int32(rowIndex), new Int32(colIndex)]));
+        super.setValue("currFocusRow", new Float(rowIndex));
+        super.setValue("currFocusColumn", new Float(colIndex));
     }
 
     protected handleUpDown(key: string) {
@@ -353,7 +366,7 @@ export class RowList extends ArrayGrid {
 
         if (nextCol !== this.rowFocus[currentRow]) {
             this.rowFocus[currentRow] = nextCol;
-            super.setValue("rowItemFocused", new RoArray([new Int32(currentRow), new Int32(nextCol)]));
+            this.setRowItemFocused(currentRow, nextCol);
             return true;
         }
         return false;
@@ -369,7 +382,7 @@ export class RowList extends ArrayGrid {
         }
 
         this.rowFocus[currentRow] = nextCol;
-        super.setValue("rowItemFocused", new RoArray([new Int32(currentRow), new Int32(nextCol)]));
+        this.setRowItemFocused(currentRow, nextCol);
         return true;
     }
 
@@ -380,7 +393,7 @@ export class RowList extends ArrayGrid {
         if (nextCol !== this.rowFocus[currentRow]) {
             this.rowFocus[currentRow] = nextCol;
             this.rowScrollOffset[currentRow] = nextCol;
-            super.setValue("rowItemFocused", new RoArray([new Int32(currentRow), new Int32(nextCol)]));
+            this.setRowItemFocused(currentRow, nextCol);
             return true;
         }
         return false;
@@ -415,8 +428,7 @@ export class RowList extends ArrayGrid {
         }
 
         if (handled) {
-            const value = new RoArray([new Int32(currentRow), new Int32(this.rowFocus[currentRow])]);
-            super.setValue("rowItemFocused", value);
+            this.setRowItemFocused(currentRow, this.rowFocus[currentRow]);
         }
         return handled;
     }
