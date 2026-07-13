@@ -55,6 +55,18 @@ import { convertHexColor } from "../SGUtil";
 
 type ChangeOperation = "none" | "insert" | "add" | "remove" | "set" | "clear" | "move" | "setall" | "modify";
 
+/** Reads the RSGPalette `colors` set held directly on `node` (an RSGPalette in its `palette` field). */
+function paletteColorsOf(node: Node): RoAssociativeArray | undefined {
+    const palette = node.getValue("palette");
+    if (palette instanceof Node) {
+        const colors = palette.getValue("colors");
+        if (colors instanceof RoAssociativeArray) {
+            return colors;
+        }
+    }
+    return undefined;
+}
+
 /**
  * Base implementation for a SceneGraph node used by custom Roku components.
  * Handles BrightScript-facing field management, child lists, focus, observers, and rendering plumbing.
@@ -746,17 +758,18 @@ export class Node extends RoSGNode implements BrsValue {
      * assocarray, or `undefined` when no node in the chain sets a palette.
      */
     resolvePaletteColors(): RoAssociativeArray | undefined {
-        let node: Node | undefined = this;
-        while (node) {
-            const palette = node.getValue("palette");
-            if (palette instanceof Node) {
-                const colors = palette.getValue("colors");
-                if (colors instanceof RoAssociativeArray) {
-                    return colors;
-                }
+        // Check this node first, then walk up through its ancestors.
+        const own = paletteColorsOf(this);
+        if (own) {
+            return own;
+        }
+        let ancestor: Node | BrsInvalid = this.getNodeParent();
+        while (ancestor instanceof Node) {
+            const colors = paletteColorsOf(ancestor);
+            if (colors) {
+                return colors;
             }
-            const parent = node.getNodeParent();
-            node = parent instanceof Node ? parent : undefined;
+            ancestor = ancestor.getNodeParent();
         }
         return undefined;
     }

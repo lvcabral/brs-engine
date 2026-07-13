@@ -19,7 +19,6 @@ import { sgRoot } from "../SGRoot";
 import { Node } from "./Node";
 import { Poster } from "./Poster";
 import { Rectangle } from "./Rectangle";
-import { RSGPalette } from "./RSGPalette";
 import { RoSGNode } from "../components/RoSGNode";
 import { StdDlgTitleArea } from "./StdDlgTitleArea";
 import { StdDlgContentArea } from "./StdDlgContentArea";
