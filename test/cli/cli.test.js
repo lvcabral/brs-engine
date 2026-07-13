@@ -398,6 +398,27 @@ describe("cli", () => {
         ]);
     }, 10000);
 
+    it("Poster preload-and-swap: the loadStatus observer's uri clear is not clobbered", async () => {
+        let command = ["node", brsCliPath, "-r poster-preload-swap-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // The preloader's loadStatus="ready" observer copies its uri onto the visible poster and then
+        // clears its own uri (""). The Poster must commit the uri field BEFORE the synchronous load +
+        // loadStatus notification so that clear sticks; otherwise a trailing re-commit reverts the
+        // preloader's uri to the loaded image.
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "=== Poster Preload Swap Repro ===",
+            "visiblePoster.uri = common:/images/icon_options.png",
+            "preloadPoster.uri =",
+            "=== Poster Preload Swap Repro Complete ===",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 10000);
+
     it("Allows redeclaring an inherited system field but still blocks XML duplicate fields", async () => {
         let command = ["node", brsCliPath, "-r duplicate-system-field-app", "source/main.brs", "-c 0"].join(" ");
 

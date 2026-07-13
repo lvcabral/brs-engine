@@ -63,12 +63,23 @@ export class Poster extends Group {
                 this.setValueSilent("bitmapWidth", new Float(0));
                 this.setValueSilent("bitmapHeight", new Float(0));
                 this.uri = uri;
+                // Commit the uri field BEFORE the (synchronous) load and the loadStatus
+                // notification below, so that when the resulting loadStatus="ready"/"failed"
+                // change is observed, .uri already holds the new value — matching Roku, where the
+                // uri field is set before the asynchronous image load completes. Apps commonly
+                // preload an image on an off-screen Poster and, in its loadStatus observer, copy
+                // .uri onto a visible Poster and then clear the preloader's uri; if the uri were
+                // committed only afterwards (the trailing super.setValue), that clear would be
+                // clobbered by the deferred write and the real image would revert to a placeholder.
+                // Returning here avoids that trailing re-commit.
+                super.setValue(index, value, alwaysNotify, kind);
                 const loadStatus = this.loadUri(uri);
                 if (loadStatus !== "ready") {
                     const failedUri = this.getValueJS("failedBitmapUri") as string;
                     this.loadUri(failedUri);
                 }
                 super.setValue("loadStatus", new BrsString(loadStatus));
+                return;
             } else if (typeof uri !== "string" || uri.trim() === "") {
                 this.uri = "";
                 this.bitmap = undefined;

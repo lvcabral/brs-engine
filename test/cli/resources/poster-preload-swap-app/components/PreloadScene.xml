@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Reproduces the very common "preload and swap" Poster pattern: an off-screen Poster preloads
+    the real image, and in its loadStatus="ready" observer the app copies the loaded .uri onto a
+    visible Poster and then CLEARS the preloader's uri ("").
+
+    On a real Roku the uri field is set before the (asynchronous) image load completes, so when the
+    loadStatus observer runs, the preloader's uri already holds the new value and the app's clear to
+    "" sticks. If the engine committed the uri field only AFTER the synchronous load + loadStatus
+    notification, that trailing write would clobber the observer's clear and the preloader's uri
+    would revert to the loaded image (defeating the swap and, in real apps, tripping a safety timer
+    that reverts the visible poster to a placeholder).
+-->
+<component name="PreloadScene" extends="Scene">
+    <interface>
+        <field id="visibleUri" type="string" />
+        <field id="preloadUri" type="string" />
+    </interface>
+    <children>
+        <Poster id="visiblePoster" />
+    </children>
+    <script type="text/brightscript">
+        <![CDATA[
+        sub init()
+            m.visiblePoster = m.top.findNode("visiblePoster")
+            m.preloadPoster = CreateObject("roSGNode", "Poster")
+            m.preloadPoster.observeField("loadStatus", "onPreloadStatus")
+            m.preloadPoster.uri = "common:/images/icon_options.png"
+            ' Publish the final field values so the harness can read them back.
+            m.top.visibleUri = m.visiblePoster.uri
+            m.top.preloadUri = m.preloadPoster.uri
+        end sub
+
+        sub onPreloadStatus()
+            if m.preloadPoster.loadStatus = "ready"
+                m.visiblePoster.uri = m.preloadPoster.uri
+                m.preloadPoster.uri = ""
+            end if
+        end sub
+        ]]>
+    </script>
+</component>
