@@ -130,6 +130,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
                 this.localSubBoundingRect,
                 this.sceneSubBoundingRect,
                 this.ancestorBoundingRect,
+                this.ancestorSubBoundingRect,
             ],
             ifSGNodeHttpAgentAccess: [this.getHttpAgent, this.setHttpAgent],
         });
@@ -1637,6 +1638,39 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
                     ancestorRect.y += nodeRect.y;
                 }
                 return ancestorFound ? toAssociativeArray(ancestorRect) : toAssociativeArray(boundingRect);
+            },
+        });
+    }
+
+    /* Returns the bounding rectangle of an identified sub part, in relation to an ancestor component. */
+    protected get ancestorSubBoundingRect(): Callable {
+        return new Callable("ancestorSubBoundingRect", {
+            signature: {
+                args: [
+                    new StdlibArgument("itemNumber", ValueKind.String),
+                    new StdlibArgument("ancestor", ValueKind.Object),
+                ],
+                returns: ValueKind.Dynamic,
+            },
+            impl: (interpreter: Interpreter, itemNumber: BrsString, ancestor: RoSGNode) => {
+                const remote = this.rendezvousCall(interpreter, "ancestorSubBoundingRect", [itemNumber, ancestor]);
+                if (remote !== undefined) {
+                    return remote;
+                }
+                const subRect = this.getSubBoundingRect("toParent", itemNumber.getValue(), interpreter);
+                const ancestorRect = { ...subRect };
+                let ancestorFound = false;
+                const path = this.createPath(this, false).slice(1);
+                for (const node of path) {
+                    if (ancestor === node) {
+                        ancestorFound = true;
+                        break;
+                    }
+                    const nodeRect = node.getBoundingRect("toParent", interpreter);
+                    ancestorRect.x += nodeRect.x;
+                    ancestorRect.y += nodeRect.y;
+                }
+                return ancestorFound ? toAssociativeArray(ancestorRect) : toAssociativeArray(subRect);
             },
         });
     }

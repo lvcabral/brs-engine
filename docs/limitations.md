@@ -19,7 +19,6 @@ The **BrightScript Engine** implements the BrightScript language specification u
     * Inside a library, `pkg:/` still resolves to the host app's package (not the library's own); reference a library's bundled scripts with relative `uri` paths in its component XML.
     * Library `source/` global functions and intra-library component inheritance (a library component extending another library component) are not supported yet.
     * Encrypted/signed `.bpk` libraries are not supported yet (plain `.zip` only).
-  * The following `ifSGNodeBoundingRect` methods are not implemented yet: `localSubBoundingRect`, `subBoundingRect`, `sceneSubBoundingRect` and `ancestorSubBoundingRect`
 * Audio playback is implemented via `roAudioResources`, `roAudioPlayer` components and `SoundEffect`, `Audio` nodes, but with some limitations:
   * Only one instance of `roAudioPlayer` component or `Audio` node should be used, if more are created those will share the content playlist.
   * If the `roAudioPlayer` component or `Audio` node instance is destroyed the audio keeps playing, make sure to stop the playback before discarding the object.
