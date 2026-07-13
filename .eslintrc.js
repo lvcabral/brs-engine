@@ -128,6 +128,7 @@ module.exports = {
         ],
         "unicorn/no-negated-condition": "error",
         "unicorn/no-useless-spread": "error",
+        "unicorn/no-this-assignment": "error",
         "unicorn/no-zero-fractions": "error",
         "unicorn/prefer-array-flat": "error",
         "unicorn/prefer-array-some": "error",

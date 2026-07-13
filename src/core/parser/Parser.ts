@@ -213,7 +213,9 @@ export class Parser {
      *          program
      */
     parse(toParse: readonly Token[]): ParseResults {
-        const self = this;
+        // Capture the (readonly) stats map so the nested `function` declarations below — which have
+        // their own `this` — can reach it without aliasing `this`.
+        const stats = this.stats;
         let current = 0;
         let tokens = toParse;
         let parsingTryBlock = false;
@@ -1526,7 +1528,7 @@ export class Parser {
                 // RBI doesn't count the object name, but only if a single argument is passed
                 if (args.length === 1 && args[0] instanceof Expr.Literal) {
                     const name = args[0].value.toString();
-                    const strings = self.stats.get(Lexeme.String);
+                    const strings = stats.get(Lexeme.String);
                     if (strings && strings.has(name) && Array.from(strings).pop() === name) {
                         strings.delete(name);
                     }
@@ -1804,21 +1806,21 @@ export class Parser {
         }
 
         function countFunction(name: string) {
-            const funcs = self.stats.get(Lexeme.Function);
+            const funcs = stats.get(Lexeme.Function);
             if (funcs) {
                 funcs.add(`${name.toLowerCase()}(${funcs.size})`);
             }
         }
 
         function countLiteral(lexeme: Lexeme, value?: BrsType) {
-            const literals = self.stats.get(lexeme);
+            const literals = stats.get(lexeme);
             if (literals && value && !literals.has(value.toString())) {
                 literals.add(value.toString());
             }
         }
 
         function countIdentifier(name: string) {
-            const identifiers = self.stats.get(Lexeme.Identifier);
+            const identifiers = stats.get(Lexeme.Identifier);
             if (identifiers && !identifiers?.has(name.toLowerCase())) {
                 identifiers.add(name.toLowerCase());
             }

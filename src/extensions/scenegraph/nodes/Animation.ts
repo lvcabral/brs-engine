@@ -4,7 +4,6 @@ import { SGNodeType } from ".";
 import { Interpolator } from "./Interpolator";
 import { Node } from "./Node";
 import { FieldKind, FieldModel } from "../SGTypes";
-import { sgRoot } from "../SGRoot";
 
 type TargetBinding = {
     node: Node;
@@ -332,16 +331,20 @@ export class Animation extends AnimationBase {
      * becomes the scope root for resolving `findNodeById` lookups.
      */
     private getSearchRoot(): Node | undefined {
-        let cursor: Node | undefined = this;
-
+        // `this` (an Animation) is itself an AnimationBase, so start the walk at its parent and climb
+        // past any nested animation containers to the first non-animation node.
+        let parent = this.getNodeParent();
+        if (!(parent instanceof Node)) {
+            return this;
+        }
+        let cursor: Node = parent;
         while (cursor instanceof AnimationBase) {
-            const parent = cursor.getNodeParent();
+            parent = cursor.getNodeParent();
             if (!(parent instanceof Node)) {
                 return cursor;
             }
             cursor = parent;
         }
-
-        return cursor ?? (sgRoot.scene instanceof Node ? sgRoot.scene : undefined);
+        return cursor;
     }
 }

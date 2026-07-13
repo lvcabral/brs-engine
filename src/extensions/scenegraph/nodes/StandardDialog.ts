@@ -19,7 +19,6 @@ import { sgRoot } from "../SGRoot";
 import { Node } from "./Node";
 import { Poster } from "./Poster";
 import { Rectangle } from "./Rectangle";
-import { RSGPalette } from "./RSGPalette";
 import { RoSGNode } from "../components/RoSGNode";
 import { StdDlgTitleArea } from "./StdDlgTitleArea";
 import { StdDlgContentArea } from "./StdDlgContentArea";
@@ -514,15 +513,12 @@ export class StandardDialog extends Group {
     }
 
     getPaletteColors() {
-        let palette = this.getValue("palette");
-        if (!(palette instanceof RSGPalette) && sgRoot.scene) {
-            palette = sgRoot.scene.getValue("palette");
-        }
-        if (palette instanceof RSGPalette) {
-            const colors = palette.getValue("colors");
-            if (colors instanceof RoAssociativeArray) {
-                return colors;
-            }
+        // Resolve the nearest RSGPalette by walking this dialog's ancestors (its own `palette`
+        // field, then up through any intermediate palette group to the Scene) — the shared Node
+        // resolution, rather than only checking self + Scene.
+        const colors = this.resolvePaletteColors();
+        if (colors) {
+            return colors;
         }
         // Fallback to default colors
         const defaultColors = {

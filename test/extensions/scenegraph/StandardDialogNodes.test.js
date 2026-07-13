@@ -389,15 +389,20 @@ describe("Standard Dialog Framework nodes", () => {
             const keyboard = findDescendant(dialog, "DynamicKeyboard");
             expect(keyboard).toBeDefined();
 
-            // The Dynamic key grid resolves its glyph/focus colors from a palette node bridged from
-            // the dialog's Dialog* colors, so it themes consistently with the button row.
+            // The dialog bridges its Dialog* colors onto a palette node attached to the keyboard
+            // widget; both the key grid and the text box resolve their colors from it (walking up),
+            // so the whole keyboard themes consistently with the button row.
             const keyGrid = keyboard.getValue("keyGrid");
-            const keyColors = keyGrid.getValue("palette").getValueJS("colors");
+            const keyColors = keyboard.getValue("palette").getValueJS("colors");
 
             // Key glyphs and unfocused button text both use DialogTextColor.
             const textColor = keyColors.PrimaryTextColor;
             expect(textColor).not.toBe(WHITE);
             expect(buttonArea.getValueJS("textColor")).toBe(textColor);
+            // The key grid inherits the widget palette via its ancestor walk...
+            expect(keyGrid.resolvePaletteColor("PrimaryTextColor", WHITE)).toBe(textColor);
+            // ...and the keyboard's typed-text color is themed from the same DialogTextColor.
+            expect(keyboard.textEditBox.getValueJS("textColor")).toBe(textColor);
             // Focused button background uses DialogFocusColor; focused text uses DialogFocusItemColor.
             expect(buttonArea.getValueJS("focusBitmapBlendColor")).not.toBe(WHITE);
             expect(buttonArea.getValueJS("focusBitmapBlendColor")).not.toBe(textColor);

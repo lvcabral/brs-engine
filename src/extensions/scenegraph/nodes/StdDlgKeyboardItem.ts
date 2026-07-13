@@ -73,9 +73,11 @@ export class StdDlgKeyboardItem extends Group implements StdDlgItem {
     }
 
     /**
-     * Themes the embedded keyboard / pin pad from the dialog palette. The Dynamic key grid resolves
-     * its glyph/focus colors from an ancestor `palette` (RSGPalette) node, so we bridge the dialog's
-     * `Dialog*` colors onto a palette node attached to the key grid using the names it expects.
+     * Themes the embedded keyboard / pin pad from the dialog palette. Both the Dynamic key grid (its
+     * glyph/focus colors) and the keyboard's text box resolve colors from the nearest ancestor
+     * `palette` (RSGPalette) node, so we bridge the dialog's `Dialog*` colors onto a palette node
+     * attached to the widget — the key grid and text box both inherit it — using the names they
+     * expect.
      */
     private applyPalette() {
         if (!this.widget) {
@@ -91,7 +93,7 @@ export class StdDlgKeyboardItem extends Group implements StdDlgItem {
         });
         this.keyPalette ??= new RSGPalette();
         this.keyPalette.setValue("colors", paletteColors);
-        this.widget.keyGrid.setValue("palette", this.keyPalette);
+        this.widget.setValue("palette", this.keyPalette);
     }
 
     layoutItem(width: number): number {

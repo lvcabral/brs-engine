@@ -3,7 +3,7 @@ import { FieldModel } from "../SGTypes";
 import { SGNodeType } from ".";
 import { Group } from "./Group";
 import { VoiceTextEditBox } from "./VoiceTextEditBox";
-import { DynamicKeyGrid } from "./DynamicKeyGrid";
+import { DynamicKeyGrid, DEFAULT_KEYBOARD_PALETTE } from "./DynamicKeyGrid";
 import { KeyInset, KeyLayout } from "./kdf/KeyDefinition";
 import { sgRoot } from "../SGRoot";
 
@@ -20,6 +20,7 @@ export class DynamicKeyboardBase extends Group {
         { name: "hideTextBox", type: "boolean", value: "false" },
         { name: "keyGrid", type: "node" },
         { name: "domain", type: "string", value: "generic" },
+        { name: "palette", type: "node" },
     ];
 
     readonly textEditBox: VoiceTextEditBox;
@@ -199,6 +200,29 @@ export class DynamicKeyboardBase extends Group {
     // Input routing + rendering
     // -------------------------------------------------------------------------
 
+    /**
+     * Themes the keyboard from its resolved RSGPalette, mirroring how StandardDialog applies its
+     * palette to its parts. The DynamicKeyGrid resolves and applies its own key colors while it
+     * renders (walking up to the nearest palette), but the shared VoiceTextEditBox reads a plain
+     * `textColor` field — so push the resolved PrimaryTextColor onto it (with the same default
+     * fallback the key grid uses) so the typed text and PIN digits match the key labels under a
+     * custom palette. `resolvePaletteColor` walks from this node up to the nearest ancestor palette.
+     */
+    protected applyPalette() {
+        // Only theme from a palette when one is actually resolved in the scene graph; with no palette
+        // present the text box keeps its own `textColor` (default or app-set) rather than being forced
+        // to the default here.
+        if (!this.resolvePaletteColors()) {
+            return;
+        }
+        const primary = this.resolvePaletteColor("PrimaryTextColor", DEFAULT_KEYBOARD_PALETTE.PrimaryTextColor);
+        // `textColor` is the same Field the internal text label reads (linkField), so this themes the
+        // regular flowing text, the secure display, and the DynamicPinPad underline slots/digits.
+        // Colors are stored as signed 32-bit ints (`| 0`) so a high-alpha value like 0xFFFFFFFF is not
+        // clamped to 0x7FFFFFFF by Int32.
+        this.textEditBox.setValueSilent("textColor", new Int32(primary | 0));
+    }
+
     handleKey(key: string, press: boolean): boolean {
         if (!press) {
             return false;
@@ -218,6 +242,7 @@ export class DynamicKeyboardBase extends Group {
         const hideTextBox = this.getValueJS("hideTextBox") as boolean;
         this.syncSize();
         this.layoutChildren(hideTextBox);
+        this.applyPalette();
         this.textEditBox.setActive(focused);
         this.keyGrid.setFocusActive(focused);
         super.renderNode(interpreter, origin, angle, opacity, draw2D);
