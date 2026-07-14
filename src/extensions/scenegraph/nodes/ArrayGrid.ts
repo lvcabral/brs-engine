@@ -343,9 +343,13 @@ export class ArrayGrid extends Group {
             this.refreshContent();
             content.changed = false;
         }
+        const clipped = this.pushClippingRect(drawTrans, draw2D);
         this.renderContent(interpreter, rect, rotation, opacity, draw2D);
         this.updateBoundingRects(rect, origin, rotation);
         this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);
+        if (clipped) {
+            draw2D?.popClip();
+        }
         this.nodeRenderingDone(origin, angle, opacity, draw2D);
     }
 
