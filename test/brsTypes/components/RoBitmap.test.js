@@ -54,4 +54,37 @@ describe("RoBitmap 9-patch parsing", () => {
             margins: { left: 0, right: 0, top: 0, bottom: 0 },
         });
     });
+
+    it("accepts a single-axis 9-patch (top stretch marker only, no left marker)", () => {
+        // A horizontal pill: only the TOP row has a stretch marker (fixed rounded caps, stretch
+        // center); the LEFT column is blank because the height is fixed. This must still be a valid
+        // 9-patch — the missing axis is fully stretchable (0 fixed insets), so it scales uniformly.
+        // Requiring both markers rejected it, and it then drew as a plain stretched bitmap that
+        // scaled the black marker border into view (visible edge lines).
+        const w = 20;
+        const h = 12;
+        const canvas = createCanvas(w, h);
+        const ctx = canvas.getContext("2d");
+        ctx.fillStyle = "rgba(255, 255, 255, 1)";
+        ctx.fillRect(1, 1, w - 2, h - 2);
+        ctx.fillStyle = "rgba(0, 0, 0, 1)";
+        // Top stretch marker spanning the middle (fixed caps of 8 on each side: content 1..18,
+        // marker 9..10 => before/after = 8).
+        ctx.fillRect(9, 0, 2, 1);
+        // No left column marker. Content-padding markers on bottom/right (full content).
+        ctx.fillRect(1, h - 1, w - 2, 1);
+        ctx.fillRect(w - 1, 1, 1, h - 2);
+
+        const bitmap = new RoBitmap(canvas.toBuffer("image/png"), "pkg:/images/hpill.9.png");
+
+        expect(bitmap.ninePatch).toBe(true);
+        expect(bitmap.getPatchSizes()).toEqual({
+            left: 8,
+            right: 8,
+            // No left marker => the whole height is stretchable: top/bottom fixed insets are 0.
+            top: 0,
+            bottom: 0,
+            margins: { left: 0, right: 0, top: 0, bottom: 0 },
+        });
+    });
 });

@@ -334,7 +334,14 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
      * Parses the 1px marker border of a `.9.png` image into fixed corner insets and content
      * margins. The TOP row and LEFT column markers define the stretchable region (and thus the
      * fixed corner insets); the RIGHT column and BOTTOM row markers define the content padding.
-     * Returns `undefined` when the image is not a valid 9-patch (no top/left stretch markers).
+     *
+     * A valid 9-patch needs a stretch marker on at least ONE axis. Some authored `.9.png`s only
+     * mark the axis they intend to stretch (e.g. a horizontal pill marks only the top row and
+     * leaves the left column blank because its height is fixed). A missing stretch marker means
+     * that whole axis is a single stretchable span — fixed insets of 0 on that axis — so the
+     * dimension scales uniformly. Requiring both markers rejected such images, and they then
+     * rendered as a plain stretched bitmap that scaled the marker border into view (visible black
+     * edge lines). Returns `undefined` only when NEITHER axis has a stretch marker.
      */
     private parsePatchSizes(): NinePatch | undefined {
         const image = this.getCanvas();
@@ -373,25 +380,24 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
 
         const topMarker = scanMarker(width, (x) => isBlack(x, 0));
         const leftMarker = scanMarker(height, (y) => isBlack(0, y));
-        if (!topMarker || !leftMarker) {
+        if (!topMarker && !leftMarker) {
             return undefined;
         }
-        const horiz = inset(topMarker, width);
-        const vert = inset(leftMarker, height);
+        // A missing stretch marker on an axis => that axis is fully stretchable (0 fixed insets).
+        const horiz = topMarker ? inset(topMarker, width) : { before: 0, after: 0 };
+        const vert = leftMarker ? inset(leftMarker, height) : { before: 0, after: 0 };
 
         const bottomMarker = scanMarker(width, (x) => isBlack(x, height - 1));
         const rightMarker = scanMarker(height, (y) => isBlack(width - 1, y));
-        let margins = { left: 0, right: 0, top: 0, bottom: 0 };
-        if (bottomMarker && rightMarker) {
-            const horizMargin = inset(bottomMarker, width);
-            const vertMargin = inset(rightMarker, height);
-            margins = {
-                left: horizMargin.before,
-                right: horizMargin.after,
-                top: vertMargin.before,
-                bottom: vertMargin.after,
-            };
-        }
+        // Content-padding markers are independent per edge: honor whichever are present.
+        const horizMargin = bottomMarker ? inset(bottomMarker, width) : { before: 0, after: 0 };
+        const vertMargin = rightMarker ? inset(rightMarker, height) : { before: 0, after: 0 };
+        const margins = {
+            left: horizMargin.before,
+            right: horizMargin.after,
+            top: vertMargin.before,
+            bottom: vertMargin.after,
+        };
 
         return {
             left: horiz.before,
