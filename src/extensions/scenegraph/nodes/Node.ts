@@ -624,13 +624,19 @@ export class Node extends RoSGNode implements BrsValue {
      * @param type Roku field type string.
      * @param alwaysNotify Whether observers should always fire for the field.
      * @param sync Whether the field update should be synchronized with other threads.
+     * @param silent When true the field is created without notifying observers or rendezvousing
+     *        (used to mirror a field already added authoritatively on the owning thread).
      */
-    addNodeField(fieldName: string, type: string, alwaysNotify: boolean, sync?: boolean) {
+    addNodeField(fieldName: string, type: string, alwaysNotify: boolean, sync?: boolean, silent = false) {
         let defaultValue = getBrsValueFromFieldType(type);
         let fieldKind = FieldKind.fromString(type);
 
         if (defaultValue !== Uninitialized.Instance && !this.hasNodeField(fieldName.toLowerCase())) {
-            this.setValue(fieldName, defaultValue, alwaysNotify, fieldKind, sync);
+            if (silent) {
+                this.setValueSilent(fieldName, defaultValue, undefined, fieldKind);
+            } else {
+                this.setValue(fieldName, defaultValue, alwaysNotify, fieldKind, sync);
+            }
             this.makeDirty();
         }
     }
@@ -670,11 +676,17 @@ export class Node extends RoSGNode implements BrsValue {
      * Sets one or more fields from an associative array.
      * @param fieldsToSet Data source.
      * @param addFields If true, missing fields are created.
+     * @param silent When true the fields are set without notifying observers or rendezvousing
+     *        (used to mirror fields already added authoritatively on the owning thread).
      */
-    protected setNodeFields(fieldsToSet: RoAssociativeArray, addFields: boolean) {
+    protected setNodeFields(fieldsToSet: RoAssociativeArray, addFields: boolean, silent = false) {
         for (const [key, value] of fieldsToSet.elements) {
             if (addFields || (!addFields && this.hasNodeField(key.toLowerCase()))) {
-                this.setValue(key, value, false);
+                if (silent) {
+                    this.setValueSilent(key, value);
+                } else {
+                    this.setValue(key, value, false);
+                }
                 this.makeDirty();
             }
         }

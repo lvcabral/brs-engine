@@ -187,7 +187,13 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
     abstract getValues(): BrsType[];
     abstract setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind, sync?: boolean): void;
     abstract setValueSilent(fieldName: string, value: BrsType, alwaysNotify?: boolean): void;
-    abstract addNodeField(fieldName: string, type: string, alwaysNotify: boolean, sync: boolean): void;
+    abstract addNodeField(
+        fieldName: string,
+        type: string,
+        alwaysNotify: boolean,
+        sync: boolean,
+        silent?: boolean
+    ): void;
     abstract getAddress(): string;
     abstract setAddress(address: string): void;
     abstract getOwner(): number;
@@ -216,7 +222,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
     protected abstract getFieldByRef(fieldName: string): RoAssociativeArray | string;
     protected abstract updateFields(interpreter: Interpreter, content: BrsType, createFields: boolean): void;
     protected abstract appendNodeFields(fieldsToAppend: BrsType): void;
-    protected abstract setNodeFields(fieldsToAppend: BrsType, addFields?: boolean): void;
+    protected abstract setNodeFields(fieldsToAppend: BrsType, addFields?: boolean, silent?: boolean): void;
     protected abstract removeFieldEntry(fieldName: string): boolean;
     protected abstract getNodeFieldsAsAA(): RoAssociativeArray;
     protected abstract getNodeFieldTypes(): RoAssociativeArray;
@@ -449,8 +455,11 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
                 if (remote !== undefined) {
                     // Mirror the field on this thread's copy: subsequent local reads/writes consult
                     // hasNodeField before rendezvousing, so without the mirror a field added through
-                    // a rendezvous stays invisible here (set fails, get returns invalid).
-                    this.addNodeField(fieldName.getValue(), type.getValue(), alwaysNotify.toBoolean(), true);
+                    // a rendezvous stays invisible here (set fails, get returns invalid). The mirror is
+                    // silent — the owning thread already notified observers and fanned the change out,
+                    // so notifying/re-syncing here would double-fire (e.g. a parentField observer that
+                    // counts content rows would over-count).
+                    this.addNodeField(fieldName.getValue(), type.getValue(), alwaysNotify.toBoolean(), true, true);
                     return remote;
                 }
                 this.location = interpreter.formatLocation();
@@ -470,9 +479,10 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
             impl: (interpreter: Interpreter, fields: RoAssociativeArray) => {
                 const remote = this.rendezvousCall(interpreter, "addFields", [fields]);
                 if (remote !== undefined) {
-                    // Mirror the fields on this thread's copy (see addField).
+                    // Mirror the fields on this thread's copy (see addField) — silently, so the local
+                    // copy is visible without re-notifying observers already notified by the owner.
                     if (fields instanceof RoAssociativeArray) {
-                        this.setNodeFields(fields, true);
+                        this.setNodeFields(fields, true, true);
                     }
                     return remote;
                 }
