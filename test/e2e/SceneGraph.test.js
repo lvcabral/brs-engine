@@ -206,6 +206,36 @@ describe("SceneGraph node tests", () => {
             "All subtype tests completed successfully!",
         ]);
     });
+    test("update-nested-node-field.brs", async () => {
+        await execute([resourceFile("scenegraph", "update-nested-node-field.brs")], outputStreams);
+
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
+            "Testing update() with a nested {subtype:...} AA on an arbitrary field",
+            "",
+            "Test 1: fresh field with a valid subtype",
+            "  type(n1.thing): roSGNode",
+            "  n1.thing.subtype(): Node",
+            "",
+            "Test 2: fresh field with an invalid subtype",
+            "  n2.hasField(thing): true",
+            "  type(n2.thing): roInvalid",
+            "",
+            "Test 3: fresh field with a plain (non-subtype) AA",
+            "  type(n3.meta): roAssociativeArray",
+            "  n3.meta.foo: bar",
+            "",
+            "Test 4: pre-declared placeholder field accepts a real node later",
+            "  Pre-declared type(responseNode.result): roSGNode",
+            "  After real update, type(responseNode.result): roSGNode",
+            "  responseNode.result.code: 200",
+            "",
+            "Test 5: children[] alongside a sibling subtype-node field",
+            "  parent.getChildCount(): 2",
+            "  type(parent.linked): roSGNode",
+            "",
+            "Test completed successfully!",
+        ]);
+    });
     test("local-port-rendering.brs", async () => {
         await execute([resourceFile("scenegraph", "local-port-rendering.brs")], outputStreams);
 

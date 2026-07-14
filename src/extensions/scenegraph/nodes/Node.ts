@@ -1428,6 +1428,25 @@ export class Node extends RoSGNode implements BrsValue {
             } else if (fieldName === "subtype") {
                 // Skip the "subtype" field, already handled
                 continue;
+            } else if (
+                value instanceof RoAssociativeArray &&
+                this.isNodeCreationDirective(node, fieldName, value, createFields)
+            ) {
+                // A nested AA carrying a "subtype" key is a node-creation directive on real Roku
+                // for ANY field - not just "children" array elements - as long as the target
+                // field either doesn't exist yet (createFields) or is already typed as Node; a
+                // field declared with another type keeps the AA as a literal value (see below).
+                const childSubtype = jsValueOf(value.get(new BrsString("subtype"))) ?? subtype;
+                const childNode = createNode(childSubtype, interpreter);
+                if (childNode instanceof RoSGNode) {
+                    this.populateNodeFromAA(interpreter, childNode, value, createFields, childSubtype);
+                    node.setValue(key, childNode, false, FieldKind.Node);
+                } else {
+                    // Unknown/invalid subtype: the field is still typed as Node (matching Roku),
+                    // but its value is Invalid since no node could be created.
+                    node.setValue(key, BrsInvalid.Instance, false, FieldKind.Node);
+                }
+                this.makeDirty();
             }
             // Set all other fields, respecting the createFields parameter
             else if (node.hasNodeField(fieldName) || (createFields && !isInvalid(value))) {
@@ -1435,6 +1454,31 @@ export class Node extends RoSGNode implements BrsValue {
                 this.makeDirty();
             }
         }
+    }
+
+    /**
+     * Checks whether a nested AA value (from an update()/populateNodeFromAA call) carrying a
+     * `subtype` key should be treated as a node-creation directive for `fieldName` on `node`,
+     * matching Roku's behavior: this applies to any field, but only when the target field either
+     * doesn't exist yet (and will be freshly created) or already has FieldKind.Node - a field
+     * declared with another type (e.g. assocarray) is left storing the AA as a literal value.
+     * @param node Node the field belongs to.
+     * @param fieldName Lowercased field name being set.
+     * @param value Candidate AA value for the field.
+     * @param createFields Whether new fields may be created by this update() call.
+     * @returns True when `value` should be converted into a real node instead of stored as-is.
+     */
+    private isNodeCreationDirective(
+        node: Node,
+        fieldName: string,
+        value: RoAssociativeArray,
+        createFields: boolean
+    ): boolean {
+        if (value.get(new BrsString("subtype")) instanceof BrsInvalid) {
+            return false;
+        }
+        const field = node.resolveField(fieldName);
+        return field ? field.getType() === FieldKind.Node : createFields;
     }
 
     /**
