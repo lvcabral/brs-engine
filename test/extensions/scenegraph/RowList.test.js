@@ -455,6 +455,33 @@ describe("RowList key handling", () => {
         expect(row1.y - (row0.y + row0.h)).toBe(220 - 197);
     });
 
+    test("a cached item is resized when rowItemSize is applied after its first render (regression: stretched first item)", () => {
+        // Regression: a RowList that declares a near-full-width `itemSize` fallback and only assigns
+        // the real per-item `rowItemSize` later at runtime. Item [0] is created on an early render
+        // pass while the width is still the full-row fallback; its width/height used to be set only
+        // at creation time and never re-applied, so the first item stayed frozen at full row width
+        // while later items sized correctly.
+        const list = SGNodeFactory.createNode("RowList");
+        list.setValue("numRows", new Int32(1));
+        // itemSize is the (wide) fallback width used until the app assigns rowItemSize; no
+        // rowItemSize yet, so getRowItemSize falls back to itemSize and item [0] is created wide.
+        list.setValue("itemSize", new RoArray([new Float(600), new Float(350)]));
+        list.setValue("content", buildContent([["A", "B"]]));
+
+        // First render creates item [0] with the fallback (full-width) size.
+        list.renderNode({}, [0, 0], 0, 1);
+        const item0 = list.rowItemComps[0][0];
+        expect(item0.getValueJS("width")).toBe(600);
+
+        // The app now assigns the real per-item size and re-renders. The SAME cached item must be
+        // resized to the per-item width, not stay frozen at the full-row fallback.
+        list.setValue("rowItemSize", new RoArray([new RoArray([new Float(310), new Float(442)])]));
+        list.renderNode({}, [0, 0], 0, 1);
+        expect(list.rowItemComps[0][0]).toBe(item0);
+        expect(item0.getValueJS("width")).toBe(310);
+        expect(item0.getValueJS("height")).toBe(442);
+    });
+
     test("itemHasFocus is false until the list itself has focus (focused column alone is not enough)", () => {
         // Regression: a button focused on the first render did not show its focused
         // state once the list gained focus afterwards. itemHasFocus was set from the focused COLUMN

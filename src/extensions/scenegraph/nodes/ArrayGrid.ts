@@ -380,6 +380,11 @@ export class ArrayGrid extends Group {
             // Item component creation failed: skip the slot instead of crashing the render pass.
             return;
         }
+        // Re-apply the per-item size every frame. Width/height are otherwise only set at creation
+        // time (createItemComponent); a cached item first created before the grid's real item size
+        // was applied would stay frozen at the wrong (full-width) size — stretching the item.
+        this.itemComps[index].setValue("width", new Float(itemRect.width), false);
+        this.itemComps[index].setValue("height", new Float(itemRect.height), false);
         if (content.changed) {
             this.itemComps[index].setValue("itemContent", content, true);
             content.changed = false;

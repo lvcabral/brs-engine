@@ -871,6 +871,13 @@ export class RowList extends ArrayGrid {
             this.logItemCompFailure();
             return;
         }
+        // Re-apply the per-item size every frame. The item component's width/height are otherwise
+        // only set at creation time (createItemComponent); if item [0] is first created while the
+        // list is still using its full-width `itemSize` fallback (before the app assigns the real
+        // `rowItemSize`), it would stay frozen at full row width — stretching the first poster.
+        // `itemRect` carries the authoritative per-item dimensions (see initializeRowRenderContext).
+        itemComp.setValue("width", new Float(itemRect.width), false);
+        itemComp.setValue("height", new Float(itemRect.height), false);
         itemComp.setValue("rowHasFocus", BrsBoolean.from(this.focusIndex === rowIndex), false);
         itemComp.setValue(this.focusField, BrsBoolean.from(nodeFocus), false);
         // itemHasFocus is true only when this item is the focused column AND the list itself has
