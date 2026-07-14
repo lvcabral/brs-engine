@@ -6,6 +6,9 @@ const core = require("../../../packages/node/bin/brs.node.js");
 const { SGNodeFactory, sgRoot } = scenegraph;
 const { BrsDevice, BrsString, Int32 } = core;
 
+/** Minimal fake interpreter accepted by getBoundingRect (mirrors Poster.test.js). */
+const fakeObserverInterpreter = { environment: {}, inSubEnv: () => {} };
+
 /** Minimal interpreter accepted by renderNode → renderChildren (never dereferenced when draw2D is absent). */
 const fakeInterpreter = {};
 
@@ -76,6 +79,37 @@ describe("SimpleLabel node", () => {
         const measured = label.getMeasured();
         expect(measured.width).toBeGreaterThan(0);
         expect(measured.height).toBeGreaterThan(0);
+    });
+
+    /**
+     * Regression: boundingRect() queried during a render on a label whose cached rect is degenerate
+     * in ONLY one dimension must still re-measure. A text label first measured while its text was
+     * empty caches width 0 but a non-zero, text-independent line height. When a consumer then reads
+     * boundingRect() mid-render (e.g. an item component sizing a background from the label), the
+     * getBoundingRect measuring fallback used to require BOTH width and height to be zero, so a
+     * {width:0, height:N} rect skipped the refresh and returned width 0 — collapsing the background
+     * to padding. The fallback now triggers when EITHER dimension is zero.
+     */
+    test("boundingRect() re-measures a zero-width/non-zero-height label queried mid-render", () => {
+        const label = SGNodeFactory.createNode("SimpleLabel");
+        label.setValue("fontUri", new BrsString("font:MediumSystemFont"));
+        label.setValue("fontSize", new Int32(16));
+        label.setValue("text", new BrsString("Measured"));
+        const trueWidth = label.getMeasured().width;
+        expect(trueWidth).toBeGreaterThan(0);
+
+        // Poison the cached rect to width 0 with a non-zero height, as an empty-text measure leaves it.
+        label.rectLocal = { x: 0, y: 0, width: 0, height: 22 };
+        label.rectToParent = { x: 0, y: 0, width: 0, height: 22 };
+        label.rectToScene = { x: 0, y: 0, width: 0, height: 22 };
+
+        sgRoot.rendering = true;
+        try {
+            const rect = label.getBoundingRect("toParent", fakeObserverInterpreter);
+            expect(rect.width).toBe(trueWidth);
+        } finally {
+            sgRoot.rendering = false;
+        }
     });
 
     test("renders without a draw surface for every origin combination", () => {
