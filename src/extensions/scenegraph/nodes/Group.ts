@@ -666,9 +666,40 @@ export class Group extends Node {
         // descendants compute their rects but keep reporting renderTracking "none" — they are laid
         // out, not displayed.
         opacity = this.isVisible() ? opacity * this.getOpacity() : 0;
+        const clipped = this.pushClippingRect(drawTrans, draw2D);
         this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);
+        if (clipped) {
+            draw2D?.popClip();
+        }
         this.updateContainerBounds(nodeTrans, drawTrans);
         this.nodeRenderingDone(origin, angle, opacity, draw2D);
+    }
+
+    /**
+     * Applies this node's `clippingRect`, limiting where the node and its children may draw.
+     * The rect is in the node's local coordinate system (per the SceneGraph reference), so it is
+     * translated to scene/screen space by the node's draw translation before being pushed. An
+     * empty rect (width or height ≤ 0, the default `[0,0,0,0]`) disables clipping. Clipping is only
+     * applied on a real draw pass (`draw2D` present); a measurement/layout pass (no draw target)
+     * must remain unclipped so hidden-UI bounding rects still compute. The canvas clip intersects
+     * any already-active clip, so nested/ancestor `clippingRect`s compose and stay bounded by the
+     * screen. Returns whether a clip was pushed (caller must `popClip()` when true).
+     */
+    protected pushClippingRect(drawTrans: number[], draw2D?: IfDraw2D): boolean {
+        if (!draw2D) {
+            return false;
+        }
+        const clip = this.getValueJS("clippingRect") as { x: number; y: number; width: number; height: number };
+        if (!clip || clip.width <= 0 || clip.height <= 0) {
+            return false;
+        }
+        draw2D.pushClip({
+            x: clip.x + drawTrans[0],
+            y: clip.y + drawTrans[1],
+            width: clip.width,
+            height: clip.height,
+        });
+        return true;
     }
 
     private updateContainerBounds(nodeTrans: number[], drawTrans: number[]) {
