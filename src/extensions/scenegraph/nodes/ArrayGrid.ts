@@ -656,10 +656,22 @@ export class ArrayGrid extends Group {
 
     protected updateRect(rect: Rect, numRows: number, itemSize: number[]) {
         const numCols = this.numCols || 1;
+        // Inter-item spacing is part of the laid-out extent: the render loop advances by
+        // `itemSize + itemSpacing` per row/column, so N rows span `N*itemH + (N-1)*spacing`
+        // (and likewise across columns). `boundingRect` reported only `N*itemH` before, omitting
+        // the gaps — an app centering a vertical menu via `(screenH - boundingRect().height)/2`
+        // then placed it too low by the total gap height. `itemSpacing` defaults to [0,0].
+        const spacing = this.getValueJS("itemSpacing") as number[];
+        const colSpacing = Array.isArray(spacing) ? spacing[0] ?? 0 : 0;
+        const rowSpacing = Array.isArray(spacing) ? spacing[1] ?? 0 : 0;
         rect.x = rect.x - (this.hasNinePatch ? this.marginX : 0);
         rect.y = rect.y - (this.hasNinePatch ? this.marginY : 0);
-        rect.width = numCols * (itemSize[0] + (this.hasNinePatch ? this.marginX * 2 : 0));
-        rect.height = numRows * (itemSize[1] + (this.hasNinePatch ? this.marginY * 2 : 0));
+        rect.width =
+            numCols * (itemSize[0] + (this.hasNinePatch ? this.marginX * 2 : 0)) +
+            Math.max(0, numCols - 1) * colSpacing;
+        rect.height =
+            numRows * (itemSize[1] + (this.hasNinePatch ? this.marginY * 2 : 0)) +
+            Math.max(0, numRows - 1) * rowSpacing;
     }
 
     protected getIndex(offset: number = 0, currIndex?: number) {
