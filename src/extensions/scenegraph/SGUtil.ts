@@ -192,3 +192,52 @@ export function convertHexColor(strColor: string): number {
     }
     return color;
 }
+
+/**
+ * Maps an ifSGNodeBoundingRect sub-part id to a rendered item component in a row-based grid's
+ * `rowItemComps[row][col]` store. Shared by RowList and ZoomRowList, which both hold a 2-D grid of
+ * components (unlike the flat ArrayGrid `itemComps[]` the base resolver assumes), so
+ * `subBoundingRect("item<row>_<col>")` can resolve the focused poster instead of the whole-list rect.
+ *
+ *   - `focusItem` / `focusIndicator` → the focused row's focused column.
+ *   - `item<row>_<col>` → that exact cell (split on `_` before parsing — a plain `parseInt` drops the
+ *     `_col`).
+ *   - `item<row>` (no underscore) → the row's currently focused column, matching Roku's single-index
+ *     addressing of a row-list row.
+ *
+ * Generic over the element type to avoid a Group/Node import here (SGUtil is dependency-free). Returns
+ * undefined for an out-of-range or not-yet-rendered cell so the caller keeps its documented fallback.
+ * @param itemNumber The sub-part identifier.
+ * @param rowItemComps The grid's per-row component arrays.
+ * @param focusIndex The focused row index.
+ * @param rowFocus Per-row focused column indices.
+ */
+export function resolveRowItemSubpart<T>(
+    itemNumber: string,
+    rowItemComps: T[][],
+    focusIndex: number,
+    rowFocus: number[]
+): T | undefined {
+    const name = itemNumber.trim().toLowerCase();
+    if (name === "focusitem" || name === "focusindicator") {
+        return rowItemComps[focusIndex]?.[rowFocus[focusIndex] ?? 0];
+    }
+    if (!name.startsWith("item")) {
+        return undefined;
+    }
+    const parts = name.slice(4).split("_");
+    const row = Number.parseInt(parts[0], 10);
+    if (!Number.isInteger(row)) {
+        return undefined;
+    }
+    let col: number;
+    if (parts.length > 1) {
+        col = Number.parseInt(parts[1], 10);
+        if (!Number.isInteger(col)) {
+            return undefined;
+        }
+    } else {
+        col = rowFocus[row] ?? 0;
+    }
+    return rowItemComps[row]?.[col];
+}

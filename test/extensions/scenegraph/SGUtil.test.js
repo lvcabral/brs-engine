@@ -1,6 +1,14 @@
 const scenegraph = require("../../../packages/scenegraph/lib/brs-sg.node.js");
-const { rectContainsRect, rotateRect, rotateTranslation, unionRect, convertNumber, convertLong, convertHexColor } =
-    scenegraph;
+const {
+    rectContainsRect,
+    rotateRect,
+    rotateTranslation,
+    unionRect,
+    convertNumber,
+    convertLong,
+    convertHexColor,
+    resolveRowItemSubpart,
+} = scenegraph;
 const Long = require("long");
 
 describe("SGUtil", () => {
@@ -572,6 +580,48 @@ describe("SGUtil", () => {
             test("handles no prefix", () => {
                 expect(convertHexColor("FF0000")).toBe(-16776961);
             });
+        });
+    });
+
+    describe("resolveRowItemSubpart", () => {
+        // A row-based grid stores item components as grid[row][col]. Strings tag each cell so we can
+        // assert which one the helper resolves. Row 1 is focused; its focused column is 2.
+        const grid = [
+            ["0_0", "0_1", "0_2"],
+            ["1_0", "1_1", "1_2"],
+        ];
+        const focusIndex = 1;
+        const rowFocus = [1, 2];
+
+        test("item<row>_<col> resolves that exact cell (col is not dropped)", () => {
+            expect(resolveRowItemSubpart("item1_2", grid, focusIndex, rowFocus)).toBe("1_2");
+            expect(resolveRowItemSubpart("item0_0", grid, focusIndex, rowFocus)).toBe("0_0");
+        });
+
+        test("item<row> with no underscore resolves the row's focused column", () => {
+            expect(resolveRowItemSubpart("item0", grid, focusIndex, rowFocus)).toBe("0_1");
+            expect(resolveRowItemSubpart("item1", grid, focusIndex, rowFocus)).toBe("1_2");
+        });
+
+        test("focusItem/focusIndicator resolve the focused row's focused column", () => {
+            expect(resolveRowItemSubpart("focusItem", grid, focusIndex, rowFocus)).toBe("1_2");
+            expect(resolveRowItemSubpart("focusIndicator", grid, focusIndex, rowFocus)).toBe("1_2");
+        });
+
+        test("is case-insensitive and trims whitespace", () => {
+            expect(resolveRowItemSubpart("  ITEM1_0  ", grid, focusIndex, rowFocus)).toBe("1_0");
+        });
+
+        test("returns undefined for out-of-range, non-item, or malformed ids", () => {
+            expect(resolveRowItemSubpart("item9_9", grid, focusIndex, rowFocus)).toBeUndefined();
+            expect(resolveRowItemSubpart("item1_9", grid, focusIndex, rowFocus)).toBeUndefined();
+            expect(resolveRowItemSubpart("focusRing", grid, focusIndex, rowFocus)).toBeUndefined();
+            expect(resolveRowItemSubpart("itemX", grid, focusIndex, rowFocus)).toBeUndefined();
+            expect(resolveRowItemSubpart("item1_X", grid, focusIndex, rowFocus)).toBeUndefined();
+        });
+
+        test("falls back to column 0 when the row has no recorded focus", () => {
+            expect(resolveRowItemSubpart("item0", grid, focusIndex, [])).toBe("0_0");
         });
     });
 });
