@@ -370,10 +370,12 @@ export class Group extends Node {
             this.refreshLines(text, drawFont, rect, ellipsis, numLines, maxLines, lineSpacing, displayPartialLines);
         }
         let y = rect.y;
-        if (vertAlign === "center") {
-            y += (rect.height - this.cachedHeight) / 2;
-        } else if (vertAlign === "bottom") {
-            y += rect.height - this.cachedHeight;
+        if (rect.height > this.cachedHeight) {
+            if (vertAlign === "center") {
+                y += (rect.height - this.cachedHeight) / 2;
+            } else if (vertAlign === "bottom") {
+                y += rect.height - this.cachedHeight;
+            }
         }
         let ellipsized = false;
         for (const line of this.cachedLines) {
@@ -409,7 +411,9 @@ export class Group extends Node {
         const lines = this.breakTextIntoLines(text, drawFont, rect.width);
         const lineHeight = drawFont.measureTextHeight();
         let renderedLines = lines;
-        let totalHeight = lines.length * lineHeight;
+        // Match the draw loop in drawTextWrap, which advances by lineHeight + lineSpacing
+        // between lines: the visible extent of N lines is N*lineHeight + (N-1)*lineSpacing.
+        let totalHeight = lines.length * lineHeight + (lines.length > 1 ? (lines.length - 1) * lineSpacing : 0);
 
         if (rect.height > 0) {
             const maxRenderedLines = Math.floor((rect.height + lineSpacing) / (lineHeight + lineSpacing));
