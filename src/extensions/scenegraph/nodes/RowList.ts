@@ -223,9 +223,16 @@ export class RowList extends ArrayGrid {
      * app driving a focused-item overlay from currFocusRow/currFocusColumn never leaves item [0,0].
      */
     protected setRowItemFocused(rowIndex: number, colIndex: number) {
-        super.setValue("rowItemFocused", new RoArray([new Int32(rowIndex), new Int32(colIndex)]));
+        // Emit currFocusRow/currFocusColumn BEFORE rowItemFocused. On a real device the focus fields
+        // pass through in-transit (fractional) values during the scroll animation and rowItemFocused
+        // settles last, so apps treat the rowItemFocused observer as the authoritative "focus settled"
+        // callback (e.g. the one that positions a per-row overlay on the final row). Since our scroll is
+        // instant, honoring that ordering — the settle notification fires last — keeps such an app from
+        // being stranded in its transient state (an observer on currFocusRow that computes an in-transit
+        // row from the scroll direction would otherwise run last and win). Regression: RowList.test.js.
         super.setValue("currFocusRow", new Float(rowIndex));
         super.setValue("currFocusColumn", new Float(colIndex));
+        super.setValue("rowItemFocused", new RoArray([new Int32(rowIndex), new Int32(colIndex)]));
     }
 
     protected handleUpDown(key: string) {
@@ -283,7 +290,12 @@ export class RowList extends ArrayGrid {
 
             const rowItem = new RoArray([new Int32(nextRow), new Int32(targetColIndex)]);
             this.currRow += this.wrap ? 0 : offset; // Update currRow before setFocusedItem
+            // Publish the vertical scroll direction BEFORE the focus change so observers of the focus
+            // fields see the correct direction, then reset it to "none" after (mirroring a real device,
+            // where the direction is transient and settles back to none once scrolling completes).
+            super.setValue("vertFocusDirection", new BrsString(offset > 0 ? "down" : "up"));
             this.setValue("jumpToRowItem", rowItem);
+            super.setValue("vertFocusDirection", new BrsString("none"));
             handled = true;
         }
         return handled;

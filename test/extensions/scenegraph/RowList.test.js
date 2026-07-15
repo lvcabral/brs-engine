@@ -78,6 +78,46 @@ describe("RowList key handling", () => {
         expect(list.getValueJS("currFocusColumn")).toBe(0);
     });
 
+    test("vertical nav emits vertFocusDirection (then resets to none) and settles rowItemFocused last", () => {
+        // Regression: an app that positions a per-row overlay reads the vertical scroll direction from
+        // vertFocusDirection and treats the rowItemFocused observer as the authoritative "settled"
+        // callback. (1) vertFocusDirection must report up/down during the move and reset to "none"
+        // afterward; (2) currFocusRow must be emitted BEFORE rowItemFocused so the settle notification
+        // fires last (an observer on rowItemFocused must already see the final row).
+        const { RoMessagePort } = core;
+        const fakeInterpreter = { environment: {}, inSubEnv: () => {} };
+        const list = SGNodeFactory.createNode("RowList");
+        list.setValue("content", buildContent([["A", "B"], ["C", "D"], ["E"]]));
+
+        // Capture the order of focus-field notifications across one vertical move.
+        const port = new RoMessagePort();
+        const order = [];
+        const originalPush = port.pushMessage.bind(port);
+        port.pushMessage = (event) => {
+            order.push(event.fieldName ? event.fieldName.getValue() : "");
+            originalPush(event);
+        };
+        list.addObserver(fakeInterpreter, "unscoped", new BrsString("currFocusRow"), port);
+        list.addObserver(fakeInterpreter, "unscoped", new BrsString("rowItemFocused"), port);
+
+        list.handleKey("down", true);
+
+        // Down moved to row 1 and the direction settled back to none.
+        expect(list.getValueJS("rowItemFocused")[0]).toBe(1);
+        expect(list.getValueJS("vertFocusDirection")).toBe("none");
+
+        // currFocusRow was notified before rowItemFocused (settle fires last).
+        const rowIdx = order.indexOf("currFocusRow");
+        const itemIdx = order.lastIndexOf("rowItemFocused");
+        expect(rowIdx).toBeGreaterThanOrEqual(0);
+        expect(itemIdx).toBeGreaterThan(rowIdx);
+
+        // Up reports the opposite direction, then resets.
+        list.handleKey("up", true);
+        expect(list.getValueJS("rowItemFocused")[0]).toBe(0);
+        expect(list.getValueJS("vertFocusDirection")).toBe("none");
+    });
+
     test("a multi-row fixedFocusWrap list still wraps (down/up stay handled)", () => {
         const list = SGNodeFactory.createNode("RowList");
         list.setValue("vertFocusAnimationStyle", new BrsString("fixedFocusWrap"));

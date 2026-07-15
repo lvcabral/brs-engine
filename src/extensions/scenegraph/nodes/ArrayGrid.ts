@@ -91,6 +91,11 @@ export class ArrayGrid extends Group {
         { name: "currFocusRow", type: "float", value: "0.0" },
         { name: "currFocusColumn", type: "float", value: "0.0" },
         { name: "currFocusSection", type: "float", value: "0.0" },
+        // Read-only on device: the direction ("up"/"down"/"none") of the most recent vertical focus
+        // move. Undocumented in the public reference but present on real Roku ArrayGrid-derived nodes;
+        // apps observe it to track scroll direction (e.g. to position an in-transit overlay toward the
+        // incoming row). Emitted as up/down on a vertical nav then reset to "none".
+        { name: "vertFocusDirection", type: "string", value: "none" },
     ];
     protected readonly dividerUri = "common:/images/dividerHorizontal.9.png";
     protected readonly content: ContentNode[] = [];
