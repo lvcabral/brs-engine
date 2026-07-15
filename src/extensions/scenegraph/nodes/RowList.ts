@@ -18,6 +18,7 @@ import { ContentNode } from "./ContentNode";
 import { brsValueOf, jsValueOf } from "../factory/Serializer";
 import { Font } from "./Font";
 import { Group } from "./Group";
+import { Node } from "./Node";
 import { ArrayGrid, FocusStyle } from "./ArrayGrid";
 import { FieldKind, FieldModel } from "../SGTypes";
 import { SGNodeType } from ".";
@@ -93,10 +94,16 @@ export class RowList extends ArrayGrid {
 
         if (this.resolution === "FHD") {
             this.marginX = 33;
-            this.marginY = 33;
+            // Vertical bounding-rect outset. A real device reports a RowList's boundingRect (and its
+            // item subBoundingRects) outset by only ~6px on the Y axis — the focus 9-patch's own
+            // content margins drive the focus RING (see ArrayGrid.focusMargins, which prefers the
+            // bitmap's declared margins over this value), so marginY here affects ONLY the reported
+            // rects, not the drawn focus frame. A larger square value pushed subBoundingRect.y down,
+            // so an app placing a focused-item overlay from it sat the overlay too low.
+            this.marginY = 6;
         } else {
             this.marginX = 22;
-            this.marginY = 22;
+            this.marginY = 4;
         }
         this.gap = 0;
         this.setValueSilent("focusBitmapUri", new BrsString(this.focusUri));
@@ -343,6 +350,49 @@ export class RowList extends ArrayGrid {
             }
         }
         return false;
+    }
+
+    /**
+     * Resolves an ifSGNodeBoundingRect sub part to the matching rendered item component. A RowList
+     * holds a 2-D grid of components in `rowItemComps[row][col]` (not the flat ArrayGrid `itemComps[]`,
+     * which stays empty here), so the base resolver — which parses `item<row>_<col>` as one index into
+     * `itemComps[]` — never matches and every query falls back to the whole-list rect. On a real device
+     * `subBoundingRect("item<row>_<col>")` returns the focused poster's rect, which apps use to place a
+     * focused-item overlay; without this override the overlay cannot track the row's item layout.
+     *
+     *   - `focusItem` / `focusIndicator` → the focused row's focused column.
+     *   - `item<row>_<col>` → that exact cell (split on `_` before parsing — the base `parseInt` drops
+     *     the `_col`).
+     *   - `item<row>` (no underscore) → the row's currently focused column, matching Roku's single-index
+     *     addressing of a RowList row.
+     *
+     * Returns undefined for an out-of-range or not-yet-rendered cell so `getSubBoundingRect` keeps its
+     * documented fallback to the node's own bounding rect.
+     */
+    protected resolveSubpart(itemNumber: string): Node | undefined {
+        const name = itemNumber.trim().toLowerCase();
+        if (name === "focusitem" || name === "focusindicator") {
+            const row = this.focusIndex;
+            return this.rowItemComps[row]?.[this.rowFocus[row] ?? 0];
+        }
+        if (!name.startsWith("item")) {
+            return undefined;
+        }
+        const parts = name.slice(4).split("_");
+        const row = Number.parseInt(parts[0], 10);
+        if (!Number.isInteger(row)) {
+            return undefined;
+        }
+        let col: number;
+        if (parts.length > 1) {
+            col = Number.parseInt(parts[1], 10);
+            if (!Number.isInteger(col)) {
+                return undefined;
+            }
+        } else {
+            col = this.rowFocus[row] ?? 0;
+        }
+        return this.rowItemComps[row]?.[col];
     }
 
     private getRowItemSize(rowIndex: number): number[] {

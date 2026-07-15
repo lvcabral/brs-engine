@@ -19,6 +19,7 @@ import { customNodeExists } from "../factory/NodeFactory";
 import { brsValueOf, jsValueOf } from "../factory/Serializer";
 import { Font } from "./Font";
 import { Group } from "./Group";
+import { Node } from "./Node";
 import { ArrayGrid, FocusStyle } from "./ArrayGrid";
 import { FieldKind, FieldModel } from "../SGTypes";
 import { SGNodeType } from ".";
@@ -282,6 +283,40 @@ export class ZoomRowList extends ArrayGrid {
             return true;
         }
         return false;
+    }
+
+    /**
+     * Resolves an ifSGNodeBoundingRect sub part to the matching rendered item component. Like RowList,
+     * a ZoomRowList holds a 2-D grid of components in `rowItemComps[row][col]` (not the flat ArrayGrid
+     * `itemComps[]`), so the base resolver never matches and every query falls back to the whole-list
+     * rect. `focusItem`/`focusIndicator` map to the focused cell; `item<row>_<col>` to that exact cell
+     * (row/col split before parsing); `item<row>` to the row's focused column. Out-of-range or
+     * not-yet-rendered cells return undefined so the caller keeps its fallback to the node's own rect.
+     */
+    protected resolveSubpart(itemNumber: string): Node | undefined {
+        const name = itemNumber.trim().toLowerCase();
+        if (name === "focusitem" || name === "focusindicator") {
+            const row = this.focusIndex;
+            return this.rowItemComps[row]?.[this.rowFocus[row] ?? 0];
+        }
+        if (!name.startsWith("item")) {
+            return undefined;
+        }
+        const parts = name.slice(4).split("_");
+        const row = Number.parseInt(parts[0], 10);
+        if (!Number.isInteger(row)) {
+            return undefined;
+        }
+        let col: number;
+        if (parts.length > 1) {
+            col = Number.parseInt(parts[1], 10);
+            if (!Number.isInteger(col)) {
+                return undefined;
+            }
+        } else {
+            col = this.rowFocus[row] ?? 0;
+        }
+        return this.rowItemComps[row]?.[col];
     }
 
     protected renderContent(
