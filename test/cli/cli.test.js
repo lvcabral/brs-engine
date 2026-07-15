@@ -267,6 +267,31 @@ describe("cli", () => {
         ]);
     }, 10000);
 
+    it("applies an interface field's default value through its alias targets", async () => {
+        // Regression: addFields applied a field's XML default only on the non-alias branch, so an
+        // aliased field with a default (e.g. `height` value="42" aliased to a child's height) never
+        // wrote the default. The aliased child then read 0 — and a background Poster sized this way
+        // would fall back to its bitmap's native size instead of the intended height.
+        let command = ["node", brsCliPath, "-r alias-default-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "=== Testing Aliased Field Default ===",
+            "scene.boxHeight = 42",
+            "box1.height = 42",
+            "box2.height = 42",
+            "scene.boxWidth = 100",
+            "box1.width = 100",
+            "scene.trailing = present",
+            "=== Test Complete ===",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 10000);
+
     it("findNode resolves ids breadth-first (shallow sibling wins over a child component's internals)", async () => {
         // Regression: findNodeById was depth-first, so it descended into an earlier sibling's
         // subtree — including a custom component's INTERNAL children — and returned a deep node
