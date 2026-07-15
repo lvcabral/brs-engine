@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="AliasDefaultTest" extends="Scene">
+  <interface>
+    <!-- An interface field with BOTH a default value and an alias to child fields must apply the
+         default through the alias. The child Rectangles declare no height, so their height comes
+         only from this default; without it they read 0 (and a Poster would fall back to its
+         bitmap's native size). Also covers a single-target aliased default.
+         NOTE: no `type` attribute — an aliased field's type comes from its target child field.
+         Coercing the default off a missing `type` must NOT throw (which would abort addFields and
+         drop every field declared after this one). A trailing field asserts no such cascade. -->
+    <field id="boxHeight" alias="box1.height, box2.height" value="42" />
+    <field id="boxWidth" alias="box1.width" value="100" />
+    <field id="trailing" type="string" value="present" />
+  </interface>
+  <children>
+    <Rectangle id="box1" />
+    <Rectangle id="box2" />
+  </children>
+</component>

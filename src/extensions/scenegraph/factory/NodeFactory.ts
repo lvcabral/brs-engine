@@ -782,6 +782,16 @@ function addFields(interpreter: Interpreter, node: Node, typeDef: ComponentDefin
             // An unresolvable alias target only warns (like a device): the remaining targets are
             // still tried, and the fields declared after this one are still added.
             addAliases(fieldName, fieldValue.alias, node, typeDef);
+            // Apply the XML default, mirroring the non-alias branch below. Alias targets share the
+            // parent field's Field instance, so this single write propagates the default to every
+            // target child (e.g. a `height` field defaulting to "42" and aliased to a child Poster's
+            // height, which would otherwise stay 0 and fall back to the bitmap's native size).
+            // An aliased field typically has no `type` attribute — its type comes from the shared
+            // target field — so coerce the value using the resolved field's type, not fieldValue.type.
+            const aliasField = node.resolveField(fieldName.toLowerCase());
+            if (fieldValue.value && aliasField) {
+                node.setValueSilent(fieldName, getBrsValueFromFieldType(aliasField.getType(), fieldValue.value));
+            }
         } else {
             // resolveField materializes a ContentNode hidden metadata default so a component that
             // redeclares one (e.g. "title") is still detected and routed through replaceField.
