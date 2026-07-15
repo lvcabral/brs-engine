@@ -19,8 +19,10 @@ import { customNodeExists } from "../factory/NodeFactory";
 import { brsValueOf, jsValueOf } from "../factory/Serializer";
 import { Font } from "./Font";
 import { Group } from "./Group";
+import { Node } from "./Node";
 import { ArrayGrid, FocusStyle } from "./ArrayGrid";
 import { FieldKind, FieldModel } from "../SGTypes";
+import { resolveRowItemSubpart } from "../SGUtil";
 import { SGNodeType } from ".";
 
 interface RowMetrics {
@@ -282,6 +284,16 @@ export class ZoomRowList extends ArrayGrid {
             return true;
         }
         return false;
+    }
+
+    /**
+     * Resolves an ifSGNodeBoundingRect sub part to the matching rendered item component. Like RowList,
+     * a ZoomRowList holds a 2-D grid of components in `rowItemComps[row][col]` (not the flat ArrayGrid
+     * `itemComps[]`), so the base resolver never matches and every query falls back to the whole-list
+     * rect. See `resolveRowItemSubpart` for the id mapping.
+     */
+    protected resolveSubpart(itemNumber: string): Node | undefined {
+        return resolveRowItemSubpart(itemNumber, this.rowItemComps, this.focusIndex, this.rowFocus);
     }
 
     protected renderContent(

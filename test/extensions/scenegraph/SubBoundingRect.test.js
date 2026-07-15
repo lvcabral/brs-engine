@@ -3,7 +3,7 @@ const path = require("path");
 const scenegraph = require("../../../packages/scenegraph/lib/brs-sg.node.js");
 const core = require("../../../packages/node/bin/brs.node.js");
 
-const { Node, Group, MarkupGrid, ContentNode, sgRoot } = scenegraph;
+const { Node, Group, MarkupGrid, RowList, ZoomRowList, ContentNode, sgRoot } = scenegraph;
 const { BrsDevice, Interpreter, BrsString } = core;
 
 describe("ifSGNodeBoundingRect sub-part methods", () => {
@@ -70,6 +70,49 @@ describe("ifSGNodeBoundingRect sub-part methods", () => {
         // An item that was never rendered (no component yet) falls back to the grid's rect.
         expect(grid.getSubBoundingRect("toParent", "item7")).toEqual(grid.rectToParent);
     });
+
+    // RowList (and ZoomRowList) hold a 2-D grid of item components in rowItemComps[row][col], not the
+    // flat itemComps[] array, so they need their own resolveSubpart. Apps place a focused-item overlay
+    // from subBoundingRect("item<row>_<col>"); before the override every query fell back to the
+    // whole-list rect (verified against a real device, which returns the focused poster's rect). The
+    // resolved path also must NOT force a re-render — it reads the item's cached last-frame rect.
+    for (const { label, make } of [
+        { label: "RowList", make: () => new RowList() },
+        { label: "ZoomRowList", make: () => new ZoomRowList() },
+    ]) {
+        test(`resolves item<row>_<col>/item<row>/focusItem on a ${label} from cached rects`, () => {
+            const list = make();
+            list.rectToParent = { x: 10, y: 20, width: 1000, height: 400 };
+            list.rectLocal = { x: 0, y: 0, width: 1000, height: 400 };
+            list.rectToScene = { x: 100, y: 200, width: 1000, height: 400 };
+
+            // Inject rendered item components (poster-sized, as after a normal frame — the resolver
+            // reads these cached rects and must not force a re-render that could capture a row-sized rect).
+            const cell = (x, y) => {
+                const g = new Group([], "Group");
+                g.rectToScene = { x, y, width: 200, height: 120 };
+                return g;
+            };
+            list.rowItemComps[0] = [cell(100, 200), cell(320, 200), cell(540, 200)];
+            list.rowItemComps[1] = [cell(100, 340), cell(320, 340), cell(540, 340)];
+            list.content.push(new ContentNode(), new ContentNode());
+            list.focusIndex = 1;
+            list.rowFocus[0] = 1;
+            list.rowFocus[1] = 2;
+
+            // item<row>_<col> resolves to that exact cell (the base parseInt would drop the _col).
+            expect(list.getSubBoundingRect("toScene", "item1_2")).toEqual(list.rowItemComps[1][2].rectToScene);
+            expect(list.getSubBoundingRect("toScene", "item0_0")).toEqual(list.rowItemComps[0][0].rectToScene);
+            // item<row> (no underscore) resolves to that row's focused column.
+            expect(list.getSubBoundingRect("toScene", "item0")).toEqual(list.rowItemComps[0][1].rectToScene);
+            expect(list.getSubBoundingRect("toScene", "item1")).toEqual(list.rowItemComps[1][2].rectToScene);
+            // focusItem/focusIndicator resolve to the focused row's focused column.
+            expect(list.getSubBoundingRect("toScene", "focusItem")).toEqual(list.rowItemComps[1][2].rectToScene);
+            expect(list.getSubBoundingRect("toScene", "focusIndicator")).toEqual(list.rowItemComps[1][2].rectToScene);
+            // An unrendered cell falls back to the list's own rect.
+            expect(list.getSubBoundingRect("toScene", "item9_9")).toEqual(list.rectToScene);
+        });
+    }
 });
 
 describe("ancestorSubBoundingRect", () => {

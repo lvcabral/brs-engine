@@ -989,12 +989,21 @@ export class Node extends RoSGNode implements BrsValue {
      * @returns Bounding rectangle of the sub part in the requested coordinate space.
      */
     getSubBoundingRect(type: string, itemNumber: string, interpreter?: Interpreter): Rect {
-        // Refresh layout the same way getBoundingRect does (guarded against re-entrant renders).
-        const ownRect = this.getBoundingRect(type, interpreter);
         const subpart = this.resolveSubpart(itemNumber);
         if (!subpart) {
-            return ownRect;
+            // No such sub part: return the node's own bounding rect, refreshing layout the same way
+            // getBoundingRect does (guarded against re-entrant renders).
+            return this.getBoundingRect(type, interpreter);
         }
+        // A resolved sub part is an already-rendered item component carrying a valid rect from the last
+        // frame. Do NOT force a full-tree re-render here (getBoundingRect): subBoundingRect is queried
+        // on every focus/scroll change, so re-rendering the whole scene per query is prohibitively slow
+        // AND can capture a transient, mid-layout size (an item briefly at the row's full itemSize
+        // instead of its poster size). The cached rects are at most one frame old, matching a real
+        // device (subBoundingRect reports the location at call time); for the fixed-focus lists that
+        // drive a focused-item overlay from this, the focused item's position is constant, so the cached
+        // value is exact. this.rect* are this node's own cached rects (it renders every frame), so they
+        // are consistent with the sub part's scene rect.
         const subScene = subpart.rectToScene;
         if (type === "toScene") {
             return { ...subScene };
