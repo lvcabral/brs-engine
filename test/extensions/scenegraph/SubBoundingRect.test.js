@@ -74,45 +74,74 @@ describe("ifSGNodeBoundingRect sub-part methods", () => {
     // RowList (and ZoomRowList) hold a 2-D grid of item components in rowItemComps[row][col], not the
     // flat itemComps[] array, so they need their own resolveSubpart. Apps place a focused-item overlay
     // from subBoundingRect("item<row>_<col>"); before the override every query fell back to the
-    // whole-list rect (verified against a real device, which returns the focused poster's rect). The
+    // whole-list rect (verified against a real device, which returns the focused item's rect). The
     // resolved path also must NOT force a re-render — it reads the item's cached last-frame rect.
+    // Shared fixture: two rows of three poster-sized cells, row 1 / col 2 focused.
+    const buildRowGrid = (list) => {
+        list.rectToParent = { x: 10, y: 20, width: 1000, height: 400 };
+        list.rectLocal = { x: 0, y: 0, width: 1000, height: 400 };
+        list.rectToScene = { x: 100, y: 200, width: 1000, height: 400 };
+        const cell = (x, y) => {
+            const g = new Group([], "Group");
+            g.rectToScene = { x, y, width: 200, height: 120 };
+            return g;
+        };
+        list.rowItemComps[0] = [cell(100, 200), cell(320, 200), cell(540, 200)];
+        list.rowItemComps[1] = [cell(100, 340), cell(320, 340), cell(540, 340)];
+        list.content.push(new ContentNode(), new ContentNode());
+        list.focusIndex = 1;
+        list.rowFocus[0] = 1;
+        list.rowFocus[1] = 2;
+    };
+
     for (const { label, make } of [
         { label: "RowList", make: () => new RowList() },
         { label: "ZoomRowList", make: () => new ZoomRowList() },
     ]) {
         test(`resolves item<row>_<col>/item<row>/focusItem on a ${label} from cached rects`, () => {
             const list = make();
-            list.rectToParent = { x: 10, y: 20, width: 1000, height: 400 };
-            list.rectLocal = { x: 0, y: 0, width: 1000, height: 400 };
-            list.rectToScene = { x: 100, y: 200, width: 1000, height: 400 };
+            buildRowGrid(list);
 
-            // Inject rendered item components (poster-sized, as after a normal frame — the resolver
-            // reads these cached rects and must not force a re-render that could capture a row-sized rect).
-            const cell = (x, y) => {
-                const g = new Group([], "Group");
-                g.rectToScene = { x, y, width: 200, height: 120 };
-                return g;
-            };
-            list.rowItemComps[0] = [cell(100, 200), cell(320, 200), cell(540, 200)];
-            list.rowItemComps[1] = [cell(100, 340), cell(320, 340), cell(540, 340)];
-            list.content.push(new ContentNode(), new ContentNode());
-            list.focusIndex = 1;
-            list.rowFocus[0] = 1;
-            list.rowFocus[1] = 2;
-
-            // item<row>_<col> resolves to that exact cell (the base parseInt would drop the _col).
-            expect(list.getSubBoundingRect("toScene", "item1_2")).toEqual(list.rowItemComps[1][2].rectToScene);
+            // A NON-focused cell resolves to its exact poster rect (the base parseInt would drop the _col).
             expect(list.getSubBoundingRect("toScene", "item0_0")).toEqual(list.rowItemComps[0][0].rectToScene);
-            // item<row> (no underscore) resolves to that row's focused column.
+            // item<row> (no underscore) resolves to that row's focused column (non-focused row 0 → col 1).
             expect(list.getSubBoundingRect("toScene", "item0")).toEqual(list.rowItemComps[0][1].rectToScene);
-            expect(list.getSubBoundingRect("toScene", "item1")).toEqual(list.rowItemComps[1][2].rectToScene);
-            // focusItem/focusIndicator resolve to the focused row's focused column.
-            expect(list.getSubBoundingRect("toScene", "focusItem")).toEqual(list.rowItemComps[1][2].rectToScene);
-            expect(list.getSubBoundingRect("toScene", "focusIndicator")).toEqual(list.rowItemComps[1][2].rectToScene);
             // An unrendered cell falls back to the list's own rect.
             expect(list.getSubBoundingRect("toScene", "item9_9")).toEqual(list.rectToScene);
         });
     }
+
+    // RowList extends the FOCUSED cell's rect upward by the focus-feedback top margin so an app that
+    // offsets its overlay by the focus footprint lands the overlay on the poster (the item component's
+    // own rect is the bare poster; the focus 9-patch frame is drawn outset above it). Only the focused
+    // cell draws the frame, so only its rect is adjusted.
+    test("RowList outsets the focused item's rect by the focus-feedback top margin", () => {
+        const list = new RowList();
+        buildRowGrid(list);
+        const focusedPoster = list.rowItemComps[1][2].rectToScene;
+
+        for (const id of ["item1_2", "item1", "focusItem", "focusIndicator"]) {
+            const r = list.getSubBoundingRect("toScene", id);
+            const top = focusedPoster.y - r.y;
+            expect(top).toBeGreaterThan(0); // outset above the poster
+            expect(r.x).toBe(focusedPoster.x);
+            expect(r.width).toBe(focusedPoster.width);
+            expect(r.height).toBe(focusedPoster.height + top); // grows by the same top margin
+        }
+
+        // A non-focused cell is NOT outset — it reports its bare poster rect.
+        expect(list.getSubBoundingRect("toScene", "item0_0")).toEqual(list.rowItemComps[0][0].rectToScene);
+
+        // The outset is keyed to the focus bitmap, not drawFocusFeedback: suppressing the drawn frame
+        // still reserves the footprint (apps that render their own focus indicator rely on this).
+        list.setValue("drawFocusFeedback", core.BrsBoolean.False);
+        expect(list.getSubBoundingRect("toScene", "item1_2").y).toBeLessThan(focusedPoster.y);
+
+        // With no focus bitmap there is no footprint, so the focused cell reports its bare poster rect.
+        list.setValue("focusBitmapUri", new core.BrsString(""));
+        list.setValue("focusFootprintBitmapUri", new core.BrsString(""));
+        expect(list.getSubBoundingRect("toScene", "item1_2")).toEqual(focusedPoster);
+    });
 });
 
 describe("ancestorSubBoundingRect", () => {

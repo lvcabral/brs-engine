@@ -365,6 +365,40 @@ export class RowList extends ArrayGrid {
         return resolveRowItemSubpart(itemNumber, this.rowItemComps, this.focusIndex, this.rowFocus);
     }
 
+    /**
+     * Returns a sub part's bounding rect, extending the FOCUSED item's rect upward by the focus-feedback
+     * top margin. On a real device the focused cell's reported rect spans the focus-feedback footprint
+     * (the focus 9-patch outsets above the poster), not the bare poster — so an app that places a
+     * focused-item overlay from this rect lands the overlay on the poster. The item component's own
+     * `rectToScene` is the poster rect (it renders at `itemRect`; the focus frame is drawn separately,
+     * outset by `focusMargins`), so without this the overlay sits one focus-line too low and the poster
+     * shows above it. The outset is keyed to the focus bitmap being present, NOT `drawFocusFeedback`: a
+     * device reserves the footprint region whenever a focus bitmap is set even if the app suppresses the
+     * drawn frame (a common pattern for apps that render their own focus indicator). Only the focused
+     * cell has the footprint, so only its rect is adjusted; other sub parts pass through.
+     */
+    getSubBoundingRect(type: string, itemNumber: string, interpreter?: Interpreter): Rect {
+        const rect = super.getSubBoundingRect(type, itemNumber, interpreter);
+        const subpart = this.resolveSubpart(itemNumber);
+        const focusedItem = this.rowItemComps[this.focusIndex]?.[this.rowFocus[this.focusIndex] ?? 0];
+        // Reserve the focus-feedback footprint whenever a focus bitmap is set (the focus indicator,
+        // or its footprint when the list is unfocused). Keyed on the bitmap URI, NOT drawFocusFeedback,
+        // so it still applies when an app suppresses the drawn frame but relies on the reserved footprint
+        // (e.g. to place its own indicator). Both URIs are consulted because subBoundingRect reflects the
+        // focused item regardless of whether the list node currently holds live focus.
+        const bmpUri = this.getValueJS("focusBitmapUri") ? "focusBitmapUri" : "focusFootprintBitmapUri";
+        if (subpart && subpart === focusedItem && this.getValueJS(bmpUri)) {
+            // Match the focus frame's own outset: the 9-patch's declared top margin, falling back to
+            // marginY when the bitmap hasn't loaded (mirrors ArrayGrid.focusMargins).
+            const bmp = this.getBitmap(bmpUri);
+            const top = bmp?.isValid() ? this.focusMargins(bmp).top : this.marginY;
+            if (top) {
+                return { ...rect, y: rect.y - top, height: rect.height + top };
+            }
+        }
+        return rect;
+    }
+
     private getRowItemSize(rowIndex: number): number[] {
         const itemSize = this.getValueJS("itemSize") as number[];
         // Per Roku docs, rowItemSize is indexed by absolute row; rows beyond the array reuse the
