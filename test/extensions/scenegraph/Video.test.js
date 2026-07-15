@@ -4,7 +4,7 @@ const scenegraph = require("../../../packages/scenegraph/lib/brs-sg.node.js");
 const core = require("../../../packages/node/bin/brs.node.js");
 
 const { SGNodeFactory, sgRoot } = scenegraph;
-const { BrsDevice, BrsString, Int32, RoAssociativeArray } = core;
+const { BrsDevice, BrsString, BrsBoolean, Int32, RoAssociativeArray, DataType, MediaEvent } = core;
 
 describe("Video bufferingBar and retrievingBar fields", () => {
     let originalPostMessage;
@@ -192,5 +192,66 @@ describe("Video cross-thread deserialization guard", () => {
 
         other.setValue("control", new BrsString("stop"));
         expect(sgRoot.video).toBe(active); // stop/pause don't hijack routing
+    });
+});
+
+describe("Video asyncStopSemantics stopping->stopped transition", () => {
+    let originalPostMessage;
+
+    beforeAll(() => {
+        const commonZip = fs.readFileSync(path.join(__dirname, "../../../packages/scenegraph/assets/common.zip"));
+        BrsDevice.fileSystem.setup(commonZip.buffer, new ArrayBuffer(1024 * 1024), new ArrayBuffer(1024 * 1024));
+    });
+
+    beforeEach(() => {
+        originalPostMessage = global.postMessage;
+        global.postMessage = jest.fn();
+        sgRoot.setVideo();
+    });
+
+    afterEach(() => {
+        global.postMessage = originalPostMessage;
+        sgRoot.setVideo();
+    });
+
+    test("a stop while playing reports 'stopping' immediately, then 'stopped' when the stop lands", () => {
+        // Roku OS 12.5+ async stop: control="stop" is non-blocking and surfaces its progress through
+        // the state field so an app can serialize a following play behind the stop. Without the
+        // "stopping" edge the app never learns the stop began and its queued play is dropped.
+        const video = SGNodeFactory.createNode("Video");
+        sgRoot.setVideo(video);
+        video.setValue("asyncStopSemantics", BrsBoolean.from(true));
+
+        // Drive it to playing, then async-stop.
+        video.setState(MediaEvent.StartStream, 0);
+        expect(video.getValueJS("state")).toBe("playing");
+
+        video.setValue("control", new BrsString("stop"));
+        // The stop is in progress; the state reflects that synchronously.
+        expect(video.getValueJS("state")).toBe("stopping");
+
+        // The main thread confirms the stop (Partial); the node then settles to stopped.
+        video.setState(MediaEvent.Partial, 0);
+        expect(video.getValueJS("state")).toBe("stopped");
+    });
+
+    test("a stop when already stopped settles synchronously (no hang in 'stopping')", () => {
+        const video = SGNodeFactory.createNode("Video");
+        sgRoot.setVideo(video);
+        video.setValue("asyncStopSemantics", BrsBoolean.from(true));
+
+        // Fresh node is in "none"; an async stop must not strand it in "stopping" (no event will come).
+        video.setValue("control", new BrsString("stop"));
+        expect(video.getValueJS("state")).toBe("stopped");
+    });
+
+    test("without asyncStopSemantics a stop does NOT enter 'stopping'", () => {
+        const video = SGNodeFactory.createNode("Video");
+        sgRoot.setVideo(video);
+        video.setState(MediaEvent.StartStream, 0);
+
+        video.setValue("control", new BrsString("stop"));
+        // Synchronous stop semantics: state is unchanged by the control write itself.
+        expect(video.getValueJS("state")).not.toBe("stopping");
     });
 });

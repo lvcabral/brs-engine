@@ -272,6 +272,19 @@ export class Video extends Group {
                     if (["play", "prebuffer", "resume", "replay"].includes(control) && sgRoot.video !== this) {
                         sgRoot.setVideo(this);
                     }
+                    // asyncStopSemantics (Roku OS 12.5+): a "stop" is non-blocking and reports its
+                    // progress through the state field — "stopping" the moment the stop begins, then
+                    // "stopped" once it completes. Apps use that transition to serialize a following
+                    // play/prebuffer (which needs the underlying player freed) behind the stop; without
+                    // the "stopping" edge, such an app never learns the stop started and its queued play
+                    // is dropped, leaving the next content unplayed. The completing "stopped" is emitted
+                    // by setState when the main thread's stop lands (MediaEvent.Partial). If the player
+                    // is already stopped there is no event to come, so settle synchronously instead of
+                    // stranding the node in "stopping".
+                    if (control === "stop" && this.getValueJS("asyncStopSemantics") === true) {
+                        const settled = this.getValueJS("state") === "stopped" || this.getValueJS("state") === "none";
+                        super.setValue("state", new BrsString(settled ? "stopped" : "stopping"));
+                    }
                     postMessage(`video,${control}`);
                 }
             } else if (control !== "none") {
