@@ -402,7 +402,7 @@ export class PosterGrid extends ArrayGrid {
             this.focusLayoutOverride = undefined;
         }
         const itemOrigin = [itemRect.x, itemRect.y];
-        itemComp.renderNode(interpreter, itemOrigin, rotation, opacity, draw2D);
+        this.renderItemClipped(interpreter, itemComp, itemOrigin, itemRect, rotation, opacity, draw2D);
         if (focused && drawFocus && drawFocusOnTop) {
             this.focusLayoutOverride = layout;
             this.renderFocus(itemRect, opacity, nodeFocus, draw2D);

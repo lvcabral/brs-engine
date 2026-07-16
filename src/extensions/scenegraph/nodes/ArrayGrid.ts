@@ -431,9 +431,35 @@ export class ArrayGrid extends Group {
             this.renderFocus(itemRect, opacity, nodeFocus, draw2D);
         }
         const itemOrigin = [itemRect.x, itemRect.y];
-        this.itemComps[index].renderNode(interpreter, itemOrigin, rotation, opacity, draw2D);
+        this.renderItemClipped(interpreter, this.itemComps[index], itemOrigin, itemRect, rotation, opacity, draw2D);
         if (focused && drawFocus && drawFocusOnTop) {
             this.renderFocus(itemRect, opacity, nodeFocus, draw2D);
+        }
+    }
+
+    /**
+     * Renders an item component clipped to its cell (`itemRect`, i.e. the grid's `itemSize`), matching
+     * Roku: content an item draws beyond its own width/height is not shown. Apps rely on this to collapse
+     * item content by shrinking `itemSize` — e.g. a vertical button bar whose label is parked just past the
+     * item's right edge so only the icon shows until the bar expands. Clipping only happens on a real draw
+     * pass; a measurement pass (no `draw2D`) must stay unclipped so hidden-UI bounding rects still compute.
+     * The focus feedback is drawn by the caller outside this clip so its indicator can outset the item.
+     */
+    protected renderItemClipped(
+        interpreter: Interpreter,
+        itemComp: Group,
+        itemOrigin: number[],
+        itemRect: Rect,
+        rotation: number,
+        opacity: number,
+        draw2D?: IfDraw2D
+    ) {
+        if (draw2D) {
+            draw2D.pushClip({ x: itemRect.x, y: itemRect.y, width: itemRect.width, height: itemRect.height });
+        }
+        itemComp.renderNode(interpreter, itemOrigin, rotation, opacity, draw2D);
+        if (draw2D) {
+            draw2D.popClip();
         }
     }
 
