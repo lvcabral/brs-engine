@@ -167,9 +167,7 @@ export class ArrayGrid extends Group {
             super.setValue(index, value, alwaysNotify, kind);
             this.itemComps.length = 0;
             this.refreshContent();
-            if (this.content.length > 0) {
-                this.setFocusedItem(0);
-            }
+            this.resetFocusForNewContent(true);
             return;
         } else if (["jumptoitem", "animatetoitem"].includes(fieldName) && isNumberComp(value)) {
             this.setFocusedItem(jsValueOf(value));
@@ -227,6 +225,52 @@ export class ArrayGrid extends Group {
         return focus;
     }
 
+    /**
+     * Reconciles the focus cursor after the content view changes (a fresh `content` assignment, or
+     * an in-place populate/mutation detected during render).
+     *
+     * On a real device `itemFocused` only changes when focus moves onto an item — loading content
+     * into a list that is not in the focus chain does NOT fire it (verified on hardware). So:
+     * - If the grid currently has focus and content is non-empty, focus item 0 now (emitting
+     *   `itemFocused`) so a focused list reflects the newly loaded content, matching Roku.
+     * - If the grid is not focused, stay silent: reset the internal cursor and, for a fresh content
+     *   assignment, clear `itemFocused` back to the "never focused" sentinel so a later focus-gain
+     *   (`setNodeFocus`) fires `itemFocused = 0`. A non-fresh in-place change on an unfocused grid
+     *   leaves any established value untouched.
+     *
+     * @param freshContent True when a brand-new `content` node was assigned (vs. an in-place
+     *   populate/mutation of the existing tree). A fresh assignment resets the cursor to item 0.
+     */
+    protected resetFocusForNewContent(freshContent: boolean) {
+        const focused = sgRoot.focused === this || this.isChildrenFocused();
+        if (focused) {
+            if (this.content.length > 0 && (freshContent || (this.getValueJS("itemFocused") as number) < 0)) {
+                this.setFocusedItem(0);
+            }
+            return;
+        }
+        if (freshContent) {
+            // Unfocused, brand-new content: reset the cursor and the sentinel silently (no observer
+            // fire). setNodeFocus will emit itemFocused = 0 when focus later lands on the grid.
+            this.focusIndex = 0;
+            this.focusLayoutDirty = true;
+            this.setValueSilent("itemFocused", new Int32(-1));
+        }
+    }
+
+    /**
+     * Moves the focus cursor to `index`, emitting the focus-move fields (`itemUnfocused`,
+     * `itemFocused`) ONLY when the grid is actually in the focus chain.
+     *
+     * On a real device `itemFocused` changes only when an item gains the key focus — writing
+     * `jumpToItem`/`animateToItem`, assigning `content`, or populating content on a grid that is
+     * NOT in the focus chain does not fire it (verified on hardware). So when the grid is unfocused
+     * this records the target index SILENTLY (no observer notification): the internal cursor and the
+     * `itemFocused` value are updated so the position is remembered, and `setNodeFocus` re-emits
+     * `itemFocused` when focus later lands on the grid. This prevents list-driven side effects (e.g.
+     * an app starting a preview video off an `itemFocused` observer) from triggering while focus is
+     * still elsewhere.
+     */
     protected setFocusedItem(index: number) {
         const newFocus = this.findContentIndex(index);
         if (newFocus === -1) {
@@ -234,12 +278,19 @@ export class ArrayGrid extends Group {
         }
         const focusedIndex = this.getValueJS("itemFocused") as number;
         const nodeFocus = sgRoot.focused === this;
+        const inFocusChain = nodeFocus || this.isChildrenFocused();
         this.updateItemFocus(this.focusIndex, false, nodeFocus);
-        super.setValue("itemUnfocused", new Int32(focusedIndex));
         this.focusIndex = newFocus;
         this.focusLayoutDirty = true;
         this.updateItemFocus(this.focusIndex, true, nodeFocus);
-        super.setValue("itemFocused", new Int32(index));
+        if (inFocusChain) {
+            super.setValue("itemUnfocused", new Int32(focusedIndex));
+            super.setValue("itemFocused", new Int32(index));
+        } else {
+            // Unfocused: remember the target without notifying observers. setNodeFocus emits it on
+            // focus-gain (it reads itemFocused, defaulting to 0 when still at the -1 sentinel).
+            this.setValueSilent("itemFocused", new Int32(index));
+        }
         if (this.itemFocusCallback) {
             this.itemFocusCallback(index);
         }
@@ -363,14 +414,14 @@ export class ArrayGrid extends Group {
             this.refreshContent();
             content.changed = false;
             // The content node was populated after being assigned (an app assigns an empty
-            // ContentNode, then a content-loading Task appends the items). Give the first item
-            // initial focus so itemFocused fires — mirroring the content-assignment path. Apps
-            // observe itemFocused to show the focused item's metadata, which otherwise appears only
-            // after the user first navigates. Gated on the -1 "never focused" sentinel so it fires
-            // once and never overrides a focus the app or user already established.
-            if (this.content.length > 0 && (this.getValueJS("itemFocused") as number) < 0) {
-                this.setFocusedItem(0);
-            }
+            // ContentNode, then a content-loading Task appends the items). If the grid already has
+            // focus but nothing has been focused yet, give the first item focus now so itemFocused
+            // fires; if the grid is not focused, do NOT emit itemFocused — on a real device the
+            // field only changes when focus moves onto an item, so loading content into an
+            // unfocused list stays silent until focus reaches it (see resetFocusForNewContent).
+            // Not a fresh-content reset: this fires on in-place mutations too, so an active focus
+            // on a focused grid must be preserved (never snapped back to item 0 mid-navigation).
+            this.resetFocusForNewContent(false);
         }
         const clipped = this.pushClippingRect(drawTrans, draw2D);
         this.renderContent(interpreter, rect, rotation, opacity, draw2D);

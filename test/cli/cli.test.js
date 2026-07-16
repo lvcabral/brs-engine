@@ -448,12 +448,13 @@ describe("cli", () => {
         let { stdout } = await exec(command, {
             cwd: path.join(__dirname, "resources"),
         });
-        // onSelected assigns two lists' content + focus (firing itemFocused observers) BEFORE it
-        // assigns dayList.content. On Roku those observers run from the message loop after the
-        // handler returns, so they see the assigned dayList.content. With synchronous/inline
-        // dispatch they ran reentrantly while dayList.content was still invalid -> crash. The
-        // deferred dispatch drains them after onSelected unwinds: "onSelected done" prints before
-        // any "onDateFocused", and each reads the valid 31-child dayList content.
+        // onSelected focuses two lists and moves focus via jumpToItem (firing their itemFocused
+        // observers) BEFORE it assigns dayList.content. On Roku those observers run from the message
+        // loop after the handler returns, so they see the assigned dayList.content. With
+        // synchronous/inline dispatch they ran reentrantly while dayList.content was still invalid
+        // -> crash. The deferred dispatch drains them after onSelected unwinds: "onSelected done"
+        // prints before any "onDateFocused", and each reads the valid 31-child dayList content.
+        // Each focused list fires itemFocused twice (on focus-gain, then on the jumpToItem move).
         expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
             "=== Deferred Observer Repro ===",
             "onSelected",
@@ -470,21 +471,24 @@ describe("cli", () => {
         ]);
     }, 10000);
 
-    it("Fires initial itemFocused when a list's content is populated after assignment", async () => {
+    it("Fires itemFocused only when a list gains focus, not on content population while unfocused", async () => {
         let command = ["node", brsCliPath, "-r list-initial-focus-app", "source/main.brs", "-c 0"].join(" ");
 
         let { stdout } = await exec(command, {
             cwd: path.join(__dirname, "resources"),
         });
         // The list is assigned an EMPTY content node, then that same node is populated afterwards
-        // (as a content-loading Task does). On a real Roku the first item gains focus on load and
-        // itemFocused fires, so an app's observer shows the focused item's metadata. The list is
-        // deliberately never given focus, proving the initial notification fires on content
-        // population regardless of remote focus. Before the fix itemFocused stayed at its -1
-        // sentinel and "onItemFocused" never printed until the user navigated.
+        // (as a content-loading Task does) - all while the list is NOT in the focus chain. Verified
+        // on a real Roku: itemFocused only changes when focus moves onto an item, so populating an
+        // unfocused list fires no observer and the field stays at its -1 "never focused" sentinel.
+        // Only when the list is given focus does the first item gain focus and itemFocused fire
+        // (index 0). This guards against re-emitting itemFocused on unfocused content load, which
+        // makes list-driven side effects (e.g. a focused-item preview) trigger prematurely.
         expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
             "=== List Initial Focus Repro ===",
             "itemFocused before populate = -1",
+            "itemFocused after populate (unfocused) = -1",
+            "focusing the list",
             "onItemFocused index =  0",
             "=== List Initial Focus Repro Complete ===",
             "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",

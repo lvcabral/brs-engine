@@ -5,8 +5,8 @@ sub Main()
     screen.setMessagePort(port)
     scene = screen.CreateScene("MainScene")
     screen.show()
-    ' Pump a few frames so the list renders: the content node was populated after being
-    ' assigned, so the first item gains focus during render and itemFocused fires.
+    ' Pump a few frames so the list renders and the focus-driven itemFocused observer (queued
+    ' when the list gained focus in init) is dispatched from the message loop.
     for i = 0 to 5
         msg = wait(20, port)
     end for

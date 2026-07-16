@@ -1,13 +1,17 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <!--
-    Models a real library screen: a list is assigned an EMPTY content node, then a
-    content-loading Task fills that same node afterwards (appendChildren). On a real Roku the
-    first item gains focus on load and `itemFocused` fires, so the app's observer shows the
-    focused item's metadata. In the simulator the initial notification used to never fire —
-    metadata only appeared once the user navigated to another item.
+    Models a real library screen: a list is assigned an EMPTY content node, then that same node
+    is populated afterwards (as an async content-loading Task does with appendChildren).
 
-    Here the list is deliberately NOT given focus, to prove the initial `itemFocused` fires on
-    content population regardless of remote focus (mirroring the content-assignment path).
+    Verified on a real Roku device: `itemFocused` only changes when focus moves onto an item.
+    Loading content into a list that is NOT in the focus chain does NOT fire `itemFocused` — the
+    field stays at its "never focused" state until focus actually reaches the list. Only when the
+    list gains focus does the first item become focused and `itemFocused` fire (index 0).
+
+    This app proves both halves:
+      1. Populating the list while it is unfocused fires no `itemFocused` observer (the field
+         stays at the -1 "never focused" sentinel).
+      2. Giving the list focus then fires `itemFocused = 0` (the observer runs once).
 -->
 <component name="MainScene" extends="Scene">
     <script type="text/brightscript"><![CDATA[
@@ -22,7 +26,7 @@
         m.list.observeField("itemFocused", "onItemFocused")
 
         ' Assign an EMPTY content node first (as apps do before an async content-loading Task
-        ' returns), then populate that same node afterwards.
+        ' returns), then populate that same node afterwards - all while the list is unfocused.
         m.data = createObject("roSGNode", "ContentNode")
         m.list.content = m.data
         print "itemFocused before populate = "; m.list.itemFocused
@@ -32,9 +36,16 @@
             item = row.createChild("ContentNode")
             item.title = "Item " + i.toStr()
         end for
+        ' Still unfocused: no itemFocused observer should have fired, field stays at the sentinel.
+        print "itemFocused after populate (unfocused) = "; m.list.itemFocused
+
+        ' Now move focus onto the list: this is when the first item gains focus on a real device,
+        ' so itemFocused fires with index 0 (dispatched after init returns).
+        print "focusing the list"
+        m.list.setFocus(true)
     end sub
 
-    ' The metadata trigger: fires when the first item gains focus on content load.
+    ' The metadata trigger: fires only when the list actually gains focus, not on content load.
     sub onItemFocused()
         print "onItemFocused index = "; m.list.itemFocused
     end sub
