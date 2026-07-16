@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Minimal RowList item component: a colored rectangle sized to the item's width/height so the
+    component has a non-degenerate bounding rect for subBoundingRect to report.
+-->
+<component name="RowItem" extends="Group">
+    <interface>
+        <field id="width" type="float" />
+        <field id="height" type="float" />
+        <field id="itemContent" type="node" />
+    </interface>
+    <script type="text/brightscript">
+    <![CDATA[
+        sub init()
+            m.rect = m.top.createChild("Rectangle")
+            m.rect.color = "0xFF0000FF"
+            m.top.observeFieldScoped("width", "onSize")
+            m.top.observeFieldScoped("height", "onSize")
+        end sub
+
+        sub onSize()
+            m.rect.width = m.top.width
+            m.rect.height = m.top.height
+        end sub
+    ]]>
+    </script>
+</component>

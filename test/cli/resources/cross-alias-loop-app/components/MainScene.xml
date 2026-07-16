@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Reproduces the manual field-alias flood: two alwaysNotify fields whose onChange
+    handlers write each other (F.onChange -> G, G.onChange -> F), reassigned from inside an
+    observer so both defer. Synchronously the nested `notifying` guards (F held while G runs)
+    terminate this in one round; the flattened deferred FIFO loses that nesting and loops.
+-->
+<component name="MainScene" extends="Scene">
+    <interface>
+        <field id="runTrigger" type="integer" onChange="onStart" />
+        <field id="fieldF" type="vector2d" alwaysNotify="true" onChange="onF" />
+        <field id="fieldG" type="vector2d" alwaysNotify="true" onChange="onG" />
+    </interface>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.fCount = 0
+        m.gCount = 0
+    end sub
+
+    sub onStart()
+        print "onStart"
+        ' Reentrant: onF runs deferred.
+        m.top.fieldF = [1, 1]
+        print "onStart done"
+    end sub
+
+    sub onF()
+        m.fCount = m.fCount + 1
+        if m.fCount <= 3 then print "onF count="; m.fCount
+        m.top.fieldG = [2, 2]
+    end sub
+
+    sub onG()
+        m.gCount = m.gCount + 1
+        if m.gCount <= 3 then print "onG count="; m.gCount
+        m.top.fieldF = [1, 1]
+    end sub
+    ]]></script>
+</component>

@@ -442,6 +442,80 @@ describe("cli", () => {
         ]);
     }, 10000);
 
+    it("Reentrant field observers are deferred until the current handler returns", async () => {
+        let command = ["node", brsCliPath, "-r deferred-observer-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // onSelected assigns two lists' content + focus (firing itemFocused observers) BEFORE it
+        // assigns dayList.content. On Roku those observers run from the message loop after the
+        // handler returns, so they see the assigned dayList.content. With synchronous/inline
+        // dispatch they ran reentrantly while dayList.content was still invalid -> crash. The
+        // deferred dispatch drains them after onSelected unwinds: "onSelected done" prints before
+        // any "onDateFocused", and each reads the valid 31-child dayList content.
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "=== Deferred Observer Repro ===",
+            "onSelected",
+            "Setting dayList content",
+            "onSelected done",
+            "onDateFocused dayCount= 31",
+            "onDateFocused dayCount= 31",
+            "onDateFocused dayCount= 31",
+            "onDateFocused dayCount= 31",
+            "=== Deferred Observer Repro Complete ===",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 10000);
+
+    it("A deferred observer that rewrites its own alwaysNotify field does not loop", async () => {
+        let command = ["node", brsCliPath, "-r observer-loop-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // aliasField is alwaysNotify with an onChange (onAlias) that writes the same field back to
+        // itself. When onAlias runs deferred (reassigned from inside onSelected), the per-field
+        // notifying guard must stay held across the deferred run so the self-write is suppressed;
+        // otherwise it re-enqueues forever (observer drain limit). onAlias must fire exactly once.
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "=== Observer Loop Repro ===",
+            "onSelected",
+            "onSelected done",
+            "onAlias count= 1",
+            "=== Observer Loop Repro Complete ===",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 10000);
+
+    it("Two cross-aliased alwaysNotify fields whose observers write each other do not loop", async () => {
+        let command = ["node", brsCliPath, "-r cross-alias-loop-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // fieldF.onChange writes fieldG and fieldG.onChange writes fieldF (both alwaysNotify),
+        // reassigned from inside an observer so both defer. Deferral must happen only at the
+        // original handler boundary; once draining, the cascade runs synchronously/nested so the
+        // per-field notifying guards terminate it. Each observer fires exactly once (the manual
+        // field-alias ping-pong flood).
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "=== Cross Alias Loop Repro ===",
+            "onStart",
+            "onStart done",
+            "onF count= 1",
+            "onG count= 1",
+            "=== Cross Alias Loop Repro Complete ===",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 10000);
+
     it("Poster preload-and-swap: the loadStatus observer's uri clear is not clobbered", async () => {
         let command = ["node", brsCliPath, "-r poster-preload-swap-app", "source/main.brs", "-c 0"].join(" ");
 
@@ -509,6 +583,31 @@ describe("cli", () => {
             "onHeightChange measured height =  72",
             "grid rect height =  300",
             "=== Grid Measure Repro Complete ===",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 10000);
+    it("Reports a RowList's newly focused item at the settled focus band, not its pre-scroll position", async () => {
+        let command = ["node", brsCliPath, "-r rowlist-subrect-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+
+        // A RowList lays out its focused row at the fixed focus band (renderNode sets currRow =
+        // focusIndex). After a vertical focus change, an app's rowItemFocused observer measures the
+        // newly focused item synchronously via subBoundingRect BEFORE the next frame re-lays-out the
+        // grid, so the cached item rect is stale (the item still sits at its previous, pre-scroll
+        // stacked position). subBoundingRect must refresh layout when a focus change is pending so it
+        // reports the settled band position — matching a real device where the observer fires
+        // post-layout. Without the refresh, row 1 reads its stacked y (band + one row height).
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "=== RowList SubRect Repro ===",
+            "band row0 y = -15",
+            "focused row1 y = -15",
+            "SAME BAND: true",
+            "=== RowList SubRect Repro Complete ===",
             "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
             "",
             "",

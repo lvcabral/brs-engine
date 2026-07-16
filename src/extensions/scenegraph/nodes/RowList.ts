@@ -231,6 +231,12 @@ export class RowList extends ArrayGrid {
      * app driving a focused-item overlay from currFocusRow/currFocusColumn never leaves item [0,0].
      */
     protected setRowItemFocused(rowIndex: number, colIndex: number) {
+        // The focus/scroll position is about to change, so the item components' cached rects no
+        // longer match it (the newly focused row/column has not been re-laid-out yet). Mark layout
+        // dirty BEFORE firing the focus fields below: an app's rowItemFocused observer measures the
+        // focused item synchronously via subBoundingRect, and the dirty flag makes that query refresh
+        // layout first so it reports the settled focus-band position (see needsSubBoundingRectRefresh).
+        this.focusLayoutDirty = true;
         // Emit currFocusRow/currFocusColumn BEFORE rowItemFocused. On a real device the focus fields
         // pass through in-transit (fractional) values during the scroll animation and rowItemFocused
         // settles last, so apps treat the rowItemFocused observer as the authoritative "focus settled"

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Models the "manual field alias" pattern that regressed when reentrant observers began
+    deferring: an alwaysNotify field (aliasField) whose onChange handler (onAlias) writes the SAME
+    field back to itself. Synchronously the per-field `notifying` guard suppresses that re-entrant
+    self-write; the deferred dispatch must keep that guard held across the deferred run, otherwise
+    the self-write re-enqueues onAlias forever (observer-drain-limit flood).
+-->
+<component name="MainScene" extends="Scene">
+    <interface>
+        <field id="runTrigger" type="integer" onChange="onSelected" />
+        <field id="aliasField" type="vector2d" alwaysNotify="true" onChange="onAlias" />
+    </interface>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.aliasCount = 0
+    end sub
+
+    sub onSelected()
+        print "onSelected"
+        ' Reentrant assignment: aliasField's onChange runs deferred.
+        m.top.aliasField = [1, 2]
+        print "onSelected done"
+    end sub
+
+    sub onAlias()
+        m.aliasCount = m.aliasCount + 1
+        print "onAlias count="; m.aliasCount
+        ' Self-write back to the same alwaysNotify field must NOT re-trigger onAlias.
+        m.top.aliasField = m.top.aliasField
+    end sub
+    ]]></script>
+</component>
