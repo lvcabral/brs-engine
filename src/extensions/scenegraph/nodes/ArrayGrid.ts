@@ -173,10 +173,6 @@ export class ArrayGrid extends Group {
             return;
         } else if (["jumptoitem", "animatetoitem"].includes(fieldName) && isNumberComp(value)) {
             this.setFocusedItem(jsValueOf(value));
-        } else if (fieldName === "numrows" && isNumberComp(value)) {
-            this.numRows = jsValueOf(value) as number;
-        } else if (fieldName === "numcolumns" && isNumberComp(value)) {
-            this.numCols = jsValueOf(value) as number;
         } else if (fieldName === "vertfocusanimationstyle" && isBrsString(value)) {
             const style = value.toString().toLowerCase();
             if (ValidVertStyles.has(style)) {
@@ -195,6 +191,15 @@ export class ArrayGrid extends Group {
             return;
         }
         super.setValue(index, value, alwaysNotify, kind);
+        // Refresh cached row/column counts from the (possibly coerced) field value, so a
+        // numeric string such as "7" from a settings lookup is honored — not just a raw
+        // number. super.setValue coerces the string into the integer field the same way a
+        // Roku device does, making the field the single source of truth.
+        if (fieldName === "numrows") {
+            this.numRows = this.getValueJS("numrows") as number;
+        } else if (fieldName === "numcolumns") {
+            this.numCols = this.getValueJS("numcolumns") as number;
+        }
         const rowFields = ["vertfocusanimationstyle", "numrows", "focusrow"];
         // Update the current row if some fields changed
         if (rowFields.includes(fieldName)) {
