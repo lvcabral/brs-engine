@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Models a real library screen: a list is assigned an EMPTY content node, then a
+    content-loading Task fills that same node afterwards (appendChildren). On a real Roku the
+    first item gains focus on load and `itemFocused` fires, so the app's observer shows the
+    focused item's metadata. In the simulator the initial notification used to never fire —
+    metadata only appeared once the user navigated to another item.
+
+    Here the list is deliberately NOT given focus, to prove the initial `itemFocused` fires on
+    content population regardless of remote focus (mirroring the content-assignment path).
+-->
+<component name="MainScene" extends="Scene">
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.list = createObject("roSGNode", "RowList")
+        m.list.itemComponentName = "GridItem"
+        m.list.itemSize = [1700, 210]
+        m.list.rowItemSize = [[120, 180]]
+        m.list.numRows = 2
+        m.top.appendChild(m.list)
+
+        m.list.observeField("itemFocused", "onItemFocused")
+
+        ' Assign an EMPTY content node first (as apps do before an async content-loading Task
+        ' returns), then populate that same node afterwards.
+        m.data = createObject("roSGNode", "ContentNode")
+        m.list.content = m.data
+        print "itemFocused before populate = "; m.list.itemFocused
+
+        row = m.data.createChild("ContentNode")
+        for i = 1 to 3
+            item = row.createChild("ContentNode")
+            item.title = "Item " + i.toStr()
+        end for
+    end sub
+
+    ' The metadata trigger: fires when the first item gains focus on content load.
+    sub onItemFocused()
+        print "onItemFocused index = "; m.list.itemFocused
+    end sub
+    ]]></script>
+</component>

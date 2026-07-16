@@ -362,6 +362,15 @@ export class ArrayGrid extends Group {
         if (content instanceof ContentNode && content.changed) {
             this.refreshContent();
             content.changed = false;
+            // The content node was populated after being assigned (an app assigns an empty
+            // ContentNode, then a content-loading Task appends the items). Give the first item
+            // initial focus so itemFocused fires — mirroring the content-assignment path. Apps
+            // observe itemFocused to show the focused item's metadata, which otherwise appears only
+            // after the user first navigates. Gated on the -1 "never focused" sentinel so it fires
+            // once and never overrides a focus the app or user already established.
+            if (this.content.length > 0 && (this.getValueJS("itemFocused") as number) < 0) {
+                this.setFocusedItem(0);
+            }
         }
         const clipped = this.pushClippingRect(drawTrans, draw2D);
         this.renderContent(interpreter, rect, rotation, opacity, draw2D);
