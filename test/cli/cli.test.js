@@ -470,6 +470,29 @@ describe("cli", () => {
         ]);
     }, 10000);
 
+    it("Fires initial itemFocused when a list's content is populated after assignment", async () => {
+        let command = ["node", brsCliPath, "-r list-initial-focus-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // The list is assigned an EMPTY content node, then that same node is populated afterwards
+        // (as a content-loading Task does). On a real Roku the first item gains focus on load and
+        // itemFocused fires, so an app's observer shows the focused item's metadata. The list is
+        // deliberately never given focus, proving the initial notification fires on content
+        // population regardless of remote focus. Before the fix itemFocused stayed at its -1
+        // sentinel and "onItemFocused" never printed until the user navigated.
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "=== List Initial Focus Repro ===",
+            "itemFocused before populate = -1",
+            "onItemFocused index =  0",
+            "=== List Initial Focus Repro Complete ===",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 10000);
+
     it("A deferred observer that rewrites its own alwaysNotify field does not loop", async () => {
         let command = ["node", brsCliPath, "-r observer-loop-app", "source/main.brs", "-c 0"].join(" ");
 

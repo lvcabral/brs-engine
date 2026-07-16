@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Minimal RowList item component so the list renders without an item-creation error. -->
+<component name="GridItem" extends="Group">
+    <children>
+        <Poster id="poster" width="120" height="180" />
+    </children>
+</component>
