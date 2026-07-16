@@ -11,7 +11,7 @@ import {
     BrsInvalid,
 } from "brs-engine";
 import { Node } from "./Node";
-import type { Field } from "./Field";
+import { Field } from "./Field";
 import { FieldKind, FieldModel } from "../SGTypes";
 import { SGNodeType } from ".";
 import { sgRoot } from "../SGRoot";
@@ -211,11 +211,15 @@ export class ContentNode extends Node {
             return;
         }
         this.propagating = true;
+        // Mark this as a ContentNode parentField cascade so its observers dispatch synchronously
+        // (inline) rather than being deferred — the #904/#905/#943 termination guards rely on it.
+        Field.enterParentCascade();
         try {
             for (const field of this.parentFields) {
                 field.notifyObservers();
             }
         } finally {
+            Field.exitParentCascade();
             this.propagating = false;
         }
     }

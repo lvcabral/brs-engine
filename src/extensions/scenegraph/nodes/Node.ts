@@ -916,6 +916,37 @@ export class Node extends RoSGNode implements BrsValue {
     }
 
     /**
+     * Refreshes layout by rendering the whole tree from the root, guarding against re-entrant
+     * renders. Mark this refresh as an active render: BrightScript that runs inside it (an item
+     * component's init() or a field observer measuring a Label) must not start another full-tree
+     * refresh, or the passes recurse until the JS stack overflows — the same guard RoSGScreen
+     * applies around frame renders, extended to refreshes initiated by a bounding-rect query.
+     * Nested queries return the rects this pass computes. Callers must first check `!sgRoot.rendering`.
+     */
+    private refreshLayoutFromRoot(interpreter: Interpreter) {
+        const root = this.createPath()[0];
+        sgRoot.rendering = true;
+        try {
+            root.renderNode(interpreter, [0, 0], 0, 1);
+        } finally {
+            sgRoot.rendering = false;
+        }
+    }
+
+    /**
+     * Whether a `subBoundingRect` query must refresh layout before reading the cached sub-part rect.
+     * Overridden by ArrayGrid-derived nodes: after a focus/scroll change the newly focused item's
+     * cached rect is stale (it still sits at its previous, pre-scroll position) until the next frame
+     * re-lays-out the grid — but an app's `rowItemFocused` observer measures it synchronously before
+     * that frame. Refreshing then makes the query report the settled focus-band position, matching a
+     * real device (where the observer fires after the render thread laid out the new focus). Default
+     * false so non-grid nodes keep returning their cached, at-most-one-frame-old sub-part rects.
+     */
+    protected needsSubBoundingRectRefresh(): boolean {
+        return false;
+    }
+
+    /**
      * Forces a render pass and returns the requested bounding rectangle.
      * @param type Rectangle type: `local`, `toScene`, or any other value for parent space.
      * @param interpreter Interpreter used to render the root path.
@@ -929,18 +960,7 @@ export class Node extends RoSGNode implements BrsValue {
         // RowList items measuring labels). Skip the refresh while a render is in progress and return
         // the rects already computed by the active pass.
         if (interpreter && !sgRoot.rendering) {
-            const root = this.createPath()[0];
-            // Mark this refresh as an active render. BrightScript that runs inside it (an item
-            // component's init() or a field observer measuring a Label) must not start another
-            // full-tree refresh, or the passes recurse until the JS stack overflows — the same
-            // guard RoSGScreen applies around frame renders, extended to refreshes initiated by
-            // a bounding-rect query itself. Nested queries return the rects this pass computes.
-            sgRoot.rendering = true;
-            try {
-                root.renderNode(interpreter, [0, 0], 0, 1);
-            } finally {
-                sgRoot.rendering = false;
-            }
+            this.refreshLayoutFromRoot(interpreter);
         } else if (
             interpreter &&
             sgRoot.rendering &&
@@ -989,6 +1009,16 @@ export class Node extends RoSGNode implements BrsValue {
      * @returns Bounding rectangle of the sub part in the requested coordinate space.
      */
     getSubBoundingRect(type: string, itemNumber: string, interpreter?: Interpreter): Rect {
+        // If a focus/scroll change is pending (e.g. a vertical row change just fired its
+        // rowItemFocused observer before the next frame re-laid-out the grid), the cached item rects
+        // are stale — the newly focused item still sits at its previous, pre-scroll position. Refresh
+        // layout the same guarded way getBoundingRect does so subBoundingRect reports the settled
+        // focus-band position, matching a real device where the observer fires post-layout. Only when
+        // safe (not already inside a render) and only when actually needed (the dirty flag), so
+        // steady-state queries still read the cached rect without re-rendering per call.
+        if (interpreter && !sgRoot.rendering && this.needsSubBoundingRectRefresh()) {
+            this.refreshLayoutFromRoot(interpreter);
+        }
         const subpart = this.resolveSubpart(itemNumber);
         if (!subpart) {
             // No such sub part: return the node's own bounding rect, refreshing layout the same way

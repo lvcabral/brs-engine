@@ -30,6 +30,7 @@ import {
 import { loadComponentLibrary } from "./parser/ComponentLibrary";
 import { sgRoot } from "./SGRoot";
 import { Task } from "./nodes/Task";
+import { Field } from "./nodes/Field";
 import { initializeTask, createNode, updateTypeDefHierarchy, getNodeType } from "./factory/NodeFactory";
 import { RoSGScreen } from "./components/RoSGScreen";
 import { getRenderThreadQueue } from "./components/RoRenderThreadQueue";
@@ -53,6 +54,8 @@ export class BrightScriptExtension implements BrsExtension {
     readonly version = packageInfo.version;
 
     onInit() {
+        // Reset per-thread deferred observer-dispatch state so nothing leaks across app runs.
+        Field.resetDispatch();
         // Register SceneGraph components with BrsObjects so they can be created with CreateObject()
         BrsObjects.set("roSGScreen", () => new RoSGScreen(), 0);
         BrsObjects.set(

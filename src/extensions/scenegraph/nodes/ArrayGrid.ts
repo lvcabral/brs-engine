@@ -110,6 +110,11 @@ export class ArrayGrid extends Group {
     protected numCols: number = 0;
     protected currRow: number = 0;
     protected topRow: number = 0;
+    // Set when the focus/scroll position changes and cleared once renderNode re-lays-out the grid.
+    // While set, a subBoundingRect query refreshes layout first so it reports the settled focus-band
+    // position instead of the newly focused item's stale, pre-scroll cached rect (see
+    // needsSubBoundingRectRefresh / Node.getSubBoundingRect).
+    protected focusLayoutDirty: boolean = false;
     protected wrap: boolean = false;
     protected lastPressHandled: string;
     protected hasNinePatch: boolean;
@@ -227,6 +232,7 @@ export class ArrayGrid extends Group {
         this.updateItemFocus(this.focusIndex, false, nodeFocus);
         super.setValue("itemUnfocused", new Int32(focusedIndex));
         this.focusIndex = newFocus;
+        this.focusLayoutDirty = true;
         this.updateItemFocus(this.focusIndex, true, nodeFocus);
         super.setValue("itemFocused", new Int32(index));
         if (this.itemFocusCallback) {
@@ -251,6 +257,10 @@ export class ArrayGrid extends Group {
      * undefined and the caller falls back to the node's own bounding rect (matching Roku's
      * "if the subpart does not exist" behavior).
      */
+    protected needsSubBoundingRectRefresh(): boolean {
+        return this.focusLayoutDirty;
+    }
+
     protected resolveSubpart(itemNumber: string): Node | undefined {
         const name = itemNumber.trim().toLowerCase();
         let compIndex = -1;
@@ -350,6 +360,8 @@ export class ArrayGrid extends Group {
         }
         const clipped = this.pushClippingRect(drawTrans, draw2D);
         this.renderContent(interpreter, rect, rotation, opacity, draw2D);
+        // The grid was just laid out for the current focus/scroll state, so item rects are fresh.
+        this.focusLayoutDirty = false;
         this.updateBoundingRects(rect, origin, rotation);
         this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);
         if (clipped) {

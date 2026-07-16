@@ -28,6 +28,7 @@ import {
     RuntimeError,
     DebugMode,
     Uninitialized,
+    BrsDevice,
 } from "brs-engine";
 import { Node } from "./Node";
 import { RoSGNodeEvent } from "../events/RoSGNodeEvent";
@@ -45,6 +46,48 @@ export class Field {
     private scopedObservers?: Map<Node, BrsCallback[]>;
     /** True while this field's observers are dispatching, to break re-entrant cascades. */
     private notifying = false;
+
+    // ---- Roku-accurate deferred observer dispatch (per Worker thread) -------------------------
+    // On a real Roku, a function-name field observer is dispatched from the owning thread's
+    // message loop; it does NOT run reentrantly in the middle of another observer's execution.
+    // We reproduce that: when a Callable observer would fire while another Callable observer is
+    // already executing (reentrant) — and the notification is not part of a ContentNode
+    // parentField cascade — we queue it and drain it FIFO once the outermost dispatch unwinds.
+    // Same-field re-notification (`notifying`) and same-ContentNode re-entry (`propagating`) are
+    // still suppressed before reaching this path, so the #904/#905/#943 cascades are unaffected.
+    /** Depth of Callable observers currently executing on this thread (the reentrancy gate). */
+    private static observerDepth = 0;
+    /** >0 while inside `ContentNode.notifyParentFields`; disables deferral for cascade observers. */
+    private static parentCascadeDepth = 0;
+    /**
+     * True while draining the deferred queue. Deferral happens only ONCE, at the boundary of the
+     * original top-level handler; once we start draining, the reentrant cascade runs synchronously
+     * (nested, with the normal per-field `notifying` stack) — the pre-existing behavior that
+     * terminates same-field and cross-field observer cascades. Without this, flattening the nested
+     * dispatch into a FIFO loses the guard nesting and two alwaysNotify fields whose observers write
+     * each other (a manual field-alias ping-pong) loop forever.
+     */
+    private static draining = false;
+    /** Deferred reentrant observer invocations, drained at the outermost unwind. */
+    private static readonly deferredQueue: { field: Field; callback: BrsCallback; event: RoSGNodeEvent }[] = [];
+
+    /** Marks entry into a ContentNode parentField cascade, so its observers dispatch inline. */
+    static enterParentCascade() {
+        Field.parentCascadeDepth++;
+    }
+
+    /** Marks exit from a ContentNode parentField cascade. */
+    static exitParentCascade() {
+        Field.parentCascadeDepth--;
+    }
+
+    /** Resets deferred-dispatch state between app runs so nothing leaks across setups. */
+    static resetDispatch() {
+        Field.observerDepth = 0;
+        Field.parentCascadeDepth = 0;
+        Field.draining = false;
+        Field.deferredQueue.length = 0;
+    }
 
     constructor(
         private readonly name: string = "",
@@ -454,8 +497,43 @@ export class Field {
             // Prevent stack overflow by not re-entering a running callback
             return;
         }
-        const { interpreter, observer, hostNode, environment, eventParams } = callback;
+        // Snapshot the event (value + info fields) at notification time, matching the RoMessagePort
+        // branch which also builds the event before deferring via pushMessage.
+        const event = this.buildEvent(callback);
 
+        if (callback.observer instanceof RoMessagePort) {
+            callback.observer.pushMessage(event);
+            return;
+        }
+
+        // Roku-accurate deferral: if another Callable observer is already executing (reentrant) and
+        // this notification is not part of a ContentNode parentField cascade, queue it and let the
+        // outermost dispatch drain it after the current handler returns.
+        // Defer only while inside the ORIGINAL top-level handler (not while draining). Once draining,
+        // the cascade runs synchronously/nested so the per-field `notifying` guards terminate it.
+        if (Field.observerDepth > 0 && !Field.draining && Field.parentCascadeDepth === 0) {
+            Field.deferredQueue.push({ field: this, callback, event });
+            return;
+        }
+
+        Field.observerDepth++;
+        try {
+            this.invoke(callback, event);
+            if (Field.observerDepth === 1 && !Field.draining) {
+                this.drainDeferred();
+            }
+        } finally {
+            Field.observerDepth--;
+            if (Field.observerDepth === 0) {
+                // Safety: on an exception unwinding through the drain, don't leave stale work queued.
+                Field.deferredQueue.length = 0;
+            }
+        }
+    }
+
+    /** Builds the event delivered to an observer, snapshotting the field value and info fields. */
+    private buildEvent(callback: BrsCallback): RoSGNodeEvent {
+        const { eventParams } = callback;
         // Get info fields current value, if exists.
         let infoFields: RoAssociativeArray | undefined;
         if (eventParams.infoFields) {
@@ -471,13 +549,52 @@ export class Field {
             infoFields = toAssociativeArray(fieldsMap);
         }
         // Every time a callback happens, a new event is created.
-        const event = new RoSGNodeEvent(eventParams.node, eventParams.fieldName, this.value, infoFields);
+        return new RoSGNodeEvent(eventParams.node, eventParams.fieldName, this.value, infoFields);
+    }
 
-        if (observer instanceof RoMessagePort) {
-            observer.pushMessage(event);
+    /**
+     * Drains deferred reentrant observer invocations FIFO. `observerDepth` stays at 1 for the whole
+     * drain, so a callback that itself triggers a reentrant notification re-enqueues and is picked
+     * up by the loop — iterating until quiescent, in the order the fields changed.
+     */
+    private drainDeferred() {
+        Field.draining = true;
+        try {
+            let guard = 0;
+            while (Field.deferredQueue.length > 0) {
+                if (++guard > 100000) {
+                    BrsDevice.stderr.write("error,[sg] observer drain exceeded limit; possible observer loop");
+                    Field.deferredQueue.length = 0;
+                    break;
+                }
+                const deferred = Field.deferredQueue.shift()!;
+                const field = deferred.field;
+                // Run the deferred callback synchronously (nested): while it executes, hold the
+                // field's `notifying` guard and count it in `observerDepth`, so any notifications it
+                // triggers dispatch inline with the normal per-field guard stack. This mirrors what
+                // the original synchronous dispatch did before the handler-boundary deferral, and is
+                // what terminates same-field self-writes and cross-field alias ping-pongs.
+                const wasNotifying = field.notifying;
+                field.notifying = true;
+                Field.observerDepth++;
+                try {
+                    field.invoke(deferred.callback, deferred.event);
+                } finally {
+                    Field.observerDepth--;
+                    field.notifying = wasNotifying;
+                }
+            }
+        } finally {
+            Field.draining = false;
+        }
+    }
+
+    /** Runs a single Callable observer callback with the caller's host node / m scope restored. */
+    private invoke(callback: BrsCallback, event: RoSGNodeEvent) {
+        const { interpreter, observer, hostNode, environment } = callback;
+        if (!(observer instanceof Callable)) {
             return;
         }
-
         interpreter.inSubEnv((subInterpreter) => {
             callback.running = true;
             subInterpreter.environment.hostNode = hostNode;

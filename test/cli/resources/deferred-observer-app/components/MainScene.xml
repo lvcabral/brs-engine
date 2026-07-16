@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Models a real app crash exposed after ArrayGrid's `content` field began defaulting to
+    `invalid` (PR #982). A field observer (onSelected) assigns content + moves focus on two lists
+    before assigning the third list's content. Moving focus fires each list's `itemFocused`
+    observer (onDateFocused), which reads m.dayList.content. On a real Roku those observers are
+    dispatched from the message loop AFTER onSelected returns, so m.dayList.content is already set.
+
+    With the old synchronous/inline dispatch, onDateFocused ran reentrantly in the middle of
+    onSelected while m.dayList.content was still `invalid` -> dot-on-invalid crash. The deferred
+    dispatch queues the reentrant observers and drains them once onSelected unwinds, matching Roku.
+-->
+<component name="MainScene" extends="Scene">
+    <interface>
+        <field id="runTrigger" type="integer" />
+    </interface>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.yearList = createObject("roSGNode", "LabelList")
+        m.monthList = createObject("roSGNode", "LabelList")
+        m.dayList = createObject("roSGNode", "LabelList")
+        m.top.appendChild(m.yearList)
+        m.top.appendChild(m.monthList)
+        m.top.appendChild(m.dayList)
+        m.yearList.observeField("itemFocused", "onDateFocused")
+        m.monthList.observeField("itemFocused", "onDateFocused")
+        m.top.observeField("runTrigger", "onSelected")
+    end sub
+
+    sub onSelected(event as object)
+        print "onSelected"
+        m.yearList.content = buildContent(6)
+        m.yearList.jumpToItem = 3
+        m.monthList.content = buildContent(12)
+        m.monthList.jumpToItem = 5
+        ' dayList content is assigned LAST, after the focus moves above have fired their observers.
+        print "Setting dayList content"
+        m.dayList.content = buildContent(31)
+        print "onSelected done"
+    end sub
+
+    ' Fires when a list's itemFocused changes. Reads m.dayList.content, which is only valid once
+    ' onSelected has assigned it - so this must run deferred (after onSelected), not reentrantly.
+    sub onDateFocused(event as object)
+        childCount = m.dayList.content.getChildCount()
+        print "onDateFocused dayCount="; childCount
+    end sub
+
+    function buildContent(count as integer) as object
+        content = createObject("roSGNode", "ContentNode")
+        for i = 1 to count
+            item = createObject("roSGNode", "ContentNode")
+            item.title = i.toStr()
+            content.appendChild(item)
+        end for
+        return content
+    end function
+    ]]></script>
+</component>
