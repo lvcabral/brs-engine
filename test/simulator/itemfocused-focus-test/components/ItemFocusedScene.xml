@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Roku ground-truth probe for a brs-engine behavior question, modeled on a common
+    master/detail screen where a left list drives the content of a right grid.
+
+    QUESTION: When content is loaded into the right MarkupGrid while focus is on the LEFT
+    list (so the grid is NOT in the focus chain), does the grid fire its `itemFocused`
+    observer? Two triggers are exercised on each load, both while unfocused:
+      1. assigning `grid.content = <node>`   (content-set path), and
+      2. writing `grid.jumpToItem = 0`       (a common app pattern: a "jump to remembered
+         index" field defaults to 0, so a `>= 0` guard writes jumpToItem = 0 on every load).
+
+    A master/detail app commonly drives a preview video off an itemFocused observer, so if
+    EITHER trigger fires itemFocused while the grid is unfocused, the preview starts
+    prematurely (audio plays while the video stays hidden, because visibility is separately
+    focus-gated). On a real device the preview starts only when focus reaches the grid. This
+    app settles, per trigger, whether itemFocused fires while unfocused.
+
+    NAVIGATION:
+      - Focus starts on the LEFT list.
+      - UP/DOWN in the left list changes the RIGHT grid's content (a new item set loads).
+      - RIGHT moves focus from the left list into the grid.
+      - LEFT inside the grid moves the focus left; pressing LEFT at the grid's left edge
+        returns focus to the left list.
+
+    HOW TO READ THE RESULT (watch the on-screen log and/or the console):
+      * If "*** grid itemFocused=0 inFocusChain=false" appears while focus is still on the
+        left list (on the initial load, and again each time you move UP/DOWN) -> Roku DOES
+        fire itemFocused on an unfocused grid. Note which line precedes it: the content-set
+        (line above "writing grid.jumpToItem") or the jumpToItem write.
+      * If NO grid itemFocused line appears until you press RIGHT to move focus onto the
+        grid, and it THEN fires with inFocusChain=true -> Roku fires itemFocused only when
+        focus moves in, for BOTH triggers. brs-engine must gate jumpToItem (and content-set)
+        on focus.
+-->
+<component name="ItemFocusedScene" extends="Scene">
+    <children>
+        <LabelList id="categories" translation="[60, 80]" itemSize="[300, 60]" numRows="6" />
+
+        <Label id="gridTitle" translation="[420, 60]" text="Content grid (right)" color="0xAAB4C8FF" />
+        <MarkupGrid id="grid" translation="[420, 90]" itemComponentName="GridItem"
+            itemSize="[180, 100]" numRows="2" numColumns="4" itemSpacing="[20, 20]" />
+
+        <Label id="log" translation="[60, 560]" width="1800" height="480" wrap="true"
+            color="0x8CF0A0FF" text="Focus is on the category list. Nothing should fire yet if Roku gates on focus." />
+    </children>
+    <script type="text/brightscript" uri="pkg:/components/ItemFocusedScene.brs" />
+</component>

@@ -42,6 +42,10 @@ describe("RowList key handling", () => {
         const list = SGNodeFactory.createNode("RowList");
         list.setValue("vertFocusAnimationStyle", new BrsString("fixedFocusWrap"));
         list.setValue("content", buildContent([["A", "B"]]));
+        // Focus the list before driving keys: on a real device a list handles up/down only while
+        // focused, and itemFocused fires (index 0) on that focus-gain. Loading content into an
+        // unfocused list does not move focus, so itemFocused would otherwise stay at its sentinel.
+        list.setNodeFocus(true);
 
         expect(list.handleKey("down", true)).toBe(false);
         expect(list.handleKey("up", true)).toBe(false);
@@ -88,6 +92,10 @@ describe("RowList key handling", () => {
         const fakeInterpreter = { environment: {}, inSubEnv: () => {} };
         const list = SGNodeFactory.createNode("RowList");
         list.setValue("content", buildContent([["A", "B"], ["C", "D"], ["E"]]));
+        // Focus the list: itemFocused/rowItemFocused/currFocusRow notify observers only while the
+        // list is in the focus chain (a real device only navigates a focused list). Without focus
+        // the focus fields update silently and no observer notification is emitted.
+        list.setNodeFocus(true);
 
         // Capture the order of focus-field notifications across one vertical move.
         const port = new RoMessagePort();

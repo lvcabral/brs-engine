@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Minimal item component for the category content grid in the itemFocused focus test. -->
+<component name="GridItem" extends="Group">
+    <interface>
+        <field id="itemContent" type="node" onChange="onContentSet" />
+        <field id="width" type="float" />
+        <field id="height" type="float" />
+    </interface>
+    <children>
+        <Rectangle id="bg" width="180" height="100" color="0x303848FF" />
+        <Label id="label" width="180" height="100" horizAlign="center" vertAlign="center" color="0xFFFFFFFF" />
+    </children>
+    <script type="text/brightscript" uri="pkg:/components/GridItem.brs" />
+</component>

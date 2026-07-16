@@ -156,8 +156,13 @@ export class RowList extends ArrayGrid {
         }
         const oldRow = this.focusIndex;
         const isChangingRow = oldRow !== rowIndex;
+        // itemFocused/rowItemFocused only change when a row gains the key focus on a real device
+        // (verified on hardware). When the list is not in the focus chain — e.g. an app writes
+        // jumpToRowItem or assigns content while focus is elsewhere — update the cursor/scroll state
+        // but do NOT notify observers; setNodeFocus re-emits on focus-gain. See ArrayGrid.setFocusedItem.
+        const inFocusChain = sgRoot.focused === this || this.isChildrenFocused();
 
-        if (isChangingRow) {
+        if (isChangingRow && inFocusChain) {
             super.setValue("itemUnfocused", new Int32(oldRow));
         }
 
@@ -219,8 +224,18 @@ export class RowList extends ArrayGrid {
             }
         }
 
-        super.setValue("itemFocused", new Int32(rowIndex));
-        this.setRowItemFocused(rowIndex, colIndex);
+        if (inFocusChain) {
+            super.setValue("itemFocused", new Int32(rowIndex));
+            this.setRowItemFocused(rowIndex, colIndex);
+        } else {
+            // Unfocused: remember the row/column silently (no observer notification). The values are
+            // re-emitted by setNodeFocus when focus lands on the list.
+            this.focusLayoutDirty = true;
+            this.setValueSilent("itemFocused", new Int32(rowIndex));
+            this.setValueSilent("currFocusRow", new Float(rowIndex));
+            this.setValueSilent("currFocusColumn", new Float(colIndex));
+            this.setValueSilent("rowItemFocused", new RoArray([new Int32(rowIndex), new Int32(colIndex)]));
+        }
     }
 
     /**
