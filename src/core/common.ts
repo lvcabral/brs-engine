@@ -44,6 +44,7 @@ export interface DeviceInfo {
     audioLanguage: SupportedLanguage;
     autoPlayEnabled: boolean;
     maxFps: number;
+    minVideoBufferMs?: number;
     tmpVolSize: number;
     cacheFSVolSize: number;
     logLevel: LogLevel;
@@ -151,6 +152,8 @@ export const DefaultDeviceInfo: DeviceInfo = {
     audioLanguage: "en",
     autoPlayEnabled: true, // Autoplay device setting - enabled by default, as on a real Roku device
     maxFps: 60,
+    minVideoBufferMs: 700, // Simulated minimum buffering floor (ms) before playback starts; only affects instant/cached sources
+
     tmpVolSize: 32 * 1024 * 1024, // 32 MB
     cacheFSVolSize: 32 * 1024 * 1024, // 32 MB
     logLevel: LogLevel.Warning,

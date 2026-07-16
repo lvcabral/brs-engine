@@ -41,6 +41,9 @@ let videoMuted = false;
 let uiMuted = false;
 let previousBuffered = 0;
 let previousTime = Date.now();
+const DEFAULT_MIN_VIDEO_BUFFER_MS = 700; // fallback floor if DeviceInfo omits minVideoBufferMs
+let bufferFloorStart = 0; // Date.now() when the current load began
+let playFloorTimer: ReturnType<typeof setTimeout> | undefined; // pending deferred play
 const audioTracks: MediaTrack[] = [];
 const textTracks: MediaTrack[] = [];
 
@@ -351,6 +354,7 @@ export function resetVideo() {
     videosState = false;
     bufferOnly = false;
     canPlay = false;
+    clearPlayFloor(); // stopVideo() is a no-op when already stopped, so clear unconditionally here
 }
 
 /**
@@ -439,6 +443,9 @@ function loadAudioTracks() {
         playList[playIndex].audioTrack = activeTrack;
         if (activeTrack > -1 && playerState !== "play") {
             player.currentTime = 1; // Force HLS to load audio track
+            // Intentionally not gated by the buffering floor: HLS is network-fed and already has a
+            // natural buffering gap, and this play() primes the audio track load rather than the
+            // preview start that the floor targets.
             player.play();
         }
     }
@@ -546,6 +553,10 @@ function loadVideo(buffer = false) {
     const video = playList[playIndex];
     if (video && player) {
         notifyAll("load");
+        // Start the buffering floor now and cancel any deferred play from the previous content,
+        // so a rapid navigation can never fire a stale play onto the wrong item.
+        bufferFloorStart = Date.now();
+        clearPlayFloor();
         let videoSrc = getVideoUrl(video);
         clearVideoTracking();
         bufferOnly = buffer;
@@ -619,28 +630,71 @@ function getVideoUrl(video: any): string {
 }
 
 /**
+ * Cancels any pending deferred play scheduled by the buffering floor.
+ */
+function clearPlayFloor() {
+    if (playFloorTimer !== undefined) {
+        clearTimeout(playFloorTimer);
+        playFloorTimer = undefined;
+    }
+}
+
+/**
  * Plays the loaded video.
  * Loads video first if not ready, handles autoplay restrictions.
  */
 function playVideo() {
     if (canPlay) {
-        previousBuffered = 0;
-        previousTime = Date.now();
-        const promise = player.play();
-        if (promise !== undefined) {
-            promise
-                .then(function () {
-                    player.muted = uiMuted || videoMuted;
-                })
-                .catch(function (error) {
-                    notifyAll(
-                        "warning",
-                        `[video] Browser prevented the auto-play, press pause and play to start the video.`
-                    );
-                });
-        }
+        scheduleBufferedPlay();
     } else {
         loadVideo();
+    }
+}
+
+/**
+ * Enforces a minimum buffering floor before actual playback starts, mirroring a real Roku
+ * device where network buffering guarantees a visible gap before the video appears. The floor
+ * is measured from load-start (see loadVideo), so it is self-limiting: real network video
+ * already spends longer than the floor loading and incurs no added latency, while instant
+ * (cached/local) sources are held back just enough to let a preceding poster overlay render
+ * first, restoring the "poster first, then video" ordering.
+ */
+function scheduleBufferedPlay() {
+    clearPlayFloor();
+    const floor = deviceData?.minVideoBufferMs ?? DEFAULT_MIN_VIDEO_BUFFER_MS;
+    const remaining = floor - (Date.now() - bufferFloorStart);
+    if (remaining <= 0) {
+        beginPlayback();
+    } else {
+        playFloorTimer = setTimeout(() => {
+            playFloorTimer = undefined;
+            // A stop or a new load cancels this timer via clearPlayFloor(); canPlay guards
+            // against the source having been torn down while the floor was pending.
+            if (canPlay) {
+                beginPlayback();
+            }
+        }, remaining);
+    }
+}
+
+/**
+ * Starts the actual media playback and handles autoplay restrictions.
+ */
+function beginPlayback() {
+    previousBuffered = 0;
+    previousTime = Date.now();
+    const promise = player.play();
+    if (promise !== undefined) {
+        promise
+            .then(function () {
+                player.muted = uiMuted || videoMuted;
+            })
+            .catch(function (error) {
+                notifyAll(
+                    "warning",
+                    `[video] Browser prevented the auto-play, press pause and play to start the video.`
+                );
+            });
     }
 }
 
@@ -711,6 +765,7 @@ function stopVideo(error?: boolean) {
         clearVideoTracking();
         startPosition = 0;
         canPlay = false;
+        clearPlayFloor(); // drop any pending deferred play so it can't fire after stop
     }
 }
 
@@ -723,6 +778,7 @@ function pauseVideo() {
         player.pause();
         notifyAll("pause");
         Atomics.store(sharedArray, DataType.VDO, MediaEvent.Paused);
+        clearPlayFloor(); // pausing during the buffering floor drops the deferred start
     }
 }
 
