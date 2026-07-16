@@ -69,7 +69,7 @@ export class Field {
      */
     private static draining = false;
     /** Deferred reentrant observer invocations, drained at the outermost unwind. */
-    private static deferredQueue: { field: Field; callback: BrsCallback; event: RoSGNodeEvent }[] = [];
+    private static readonly deferredQueue: { field: Field; callback: BrsCallback; event: RoSGNodeEvent }[] = [];
 
     /** Marks entry into a ContentNode parentField cascade, so its observers dispatch inline. */
     static enterParentCascade() {
