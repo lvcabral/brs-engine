@@ -141,6 +141,7 @@ export class ScrollingLabel extends Label {
         const textHeight = drawFont.measureTextHeight();
         const horizAlign = (this.getValueJS("horizAlign") as string) || "left";
         const constrainedWidth = maxWidth > 0 ? maxWidth : rect.width;
+        const boxHeight = rect.height;
         rect.width = constrainedWidth;
         rect.height = textHeight;
         const color = this.getValueJS("color") as number;
@@ -209,13 +210,15 @@ export class ScrollingLabel extends Label {
             // Static case: Text fits or scrolling is disabled/not needed
             textToDraw = text;
         }
-        const clipRect: Rect = { ...rect };
+        const clipRect: Rect = { ...rect, height: Math.max(boxHeight, textHeight) };
         let drawX = rect.x + drawOffset;
         let drawY = rect.y;
-        if (vertAlign === "center") {
-            drawY += (rect.height - textHeight) / 2;
-        } else if (vertAlign === "bottom") {
-            drawY += rect.height - textHeight;
+        if (boxHeight > textHeight) {
+            if (vertAlign === "center") {
+                drawY += (boxHeight - textHeight) / 2;
+            } else if (vertAlign === "bottom") {
+                drawY += boxHeight - textHeight;
+            }
         }
         if (drawOffset === 0 && constrainedWidth > 0) {
             const measuredWidth = drawFont.measureTextWidth(textToDraw).width;
