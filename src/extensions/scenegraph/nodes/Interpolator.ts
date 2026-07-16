@@ -35,6 +35,12 @@ export abstract class Interpolator extends Node {
     /**
      * Given a normalized fraction, returns the surrounding keyframe indices and a local interpolation
      * parameter. This matches the behavior of Roku's Segment data structure.
+     *
+     * Each keyframe pairs `key[i]` (its position on the 0-1 progress axis) with `keyValue[i]` (the value
+     * at that position) BY ARRAY INDEX, so the animation fraction is compared DIRECTLY against the key
+     * positions — it is never remapped into the key domain. The `key` array is normally ascending, but
+     * apps also express a reversed sequence with a descending array (e.g. `key="[1.0,0.0]"` with
+     * `keyValue="[0,1]"` for a fade-out); handling each segment by its own direction supports both.
      */
     protected resolveSegment(fraction: number): { index: number; localT: number } {
         const keys = this.getKeyframes();
@@ -45,49 +51,29 @@ export abstract class Interpolator extends Node {
         }
 
         const lastIndex = keys.length - 1;
-        const startKey = keys[0];
-        const endKey = keys[lastIndex];
-        const domainSpan = endKey - startKey;
-        const monotonicAscending = endKey >= startKey;
-        let keyFraction = normalized;
 
-        if (domainSpan !== 0 && Number.isFinite(domainSpan)) {
-            keyFraction = startKey + domainSpan * normalized;
-        }
-
-        if (monotonicAscending) {
-            if (keyFraction <= startKey) {
-                return { index: 0, localT: 0 };
-            }
-            if (keyFraction >= endKey) {
-                return { index: lastIndex - 1, localT: 1 };
-            }
-        } else {
-            if (keyFraction >= startKey) {
-                return { index: 0, localT: 0 };
-            }
-            if (keyFraction <= endKey) {
-                return { index: lastIndex - 1, localT: 1 };
-            }
-        }
-
+        // Find the segment [key[i], key[i+1]] whose position range contains `normalized`, honoring
+        // whichever direction that segment runs.
         for (let i = 0; i < lastIndex; i++) {
             const start = keys[i];
             const end = keys[i + 1];
-            const segmentAscending = end >= start;
-            const inRange = segmentAscending
-                ? keyFraction >= start && keyFraction <= end
-                : keyFraction <= start && keyFraction >= end;
-
-            if (!inRange) {
-                continue;
+            const lo = Math.min(start, end);
+            const hi = Math.max(start, end);
+            if (normalized >= lo && normalized <= hi) {
+                const span = end - start;
+                const localT = span === 0 ? 0 : (normalized - start) / span;
+                return { index: i, localT };
             }
-
-            const span = end - start;
-            const localT = span === 0 ? 0 : (keyFraction - start) / span;
-            return { index: i, localT };
         }
 
+        // `normalized` falls outside every segment (a keyframe sequence that does not span the full
+        // 0-1 axis): clamp to the value of the nearest keyframe by position, matching Roku's behavior
+        // of holding the first/last keyValue beyond the first/last key percentage.
+        const firstPos = keys[0];
+        const lastPos = keys[lastIndex];
+        if (Math.abs(normalized - firstPos) <= Math.abs(normalized - lastPos)) {
+            return { index: 0, localT: 0 };
+        }
         return { index: lastIndex - 1, localT: 1 };
     }
 
