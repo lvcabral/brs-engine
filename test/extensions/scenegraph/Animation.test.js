@@ -44,6 +44,32 @@ describe("Animation target resolution", () => {
         expect(container.getValueJS("opacity")).toBe(1);
     });
 
+    test("fade-out defined with a descending key array reaches 0 (not back to 1)", () => {
+        // An overlay poster reveals a video underneath by fading its opacity 1 -> 0. Apps express this
+        // reversed keyframe sequence with a DESCENDING key array (key="[1.0,0.0]", keyValue="[0,1]"):
+        // at fraction 0 the field is keyValue-for-key-1.0 = 1 (opaque), at fraction 1 it is
+        // keyValue-for-key-0.0 = 0 (transparent). The fraction must be compared directly against the key
+        // positions, not remapped into the key domain -- otherwise the fade lands on 1 and the overlay
+        // stays covering the video.
+        const poster = SGNodeFactory.createNode("Poster");
+        poster.setValue("id", new BrsString("overlayPoster"));
+        poster.setValue("opacity", new Float(1)); // starts fully opaque, covering the video
+
+        const animation = SGNodeFactory.createNode("Animation");
+        animation.setValue("duration", new Float(0.9));
+        const interp = SGNodeFactory.createNode("FloatFieldInterpolator");
+        interp.setValue("fieldToInterp", new BrsString("overlayPoster.opacity"));
+        interp.setValue("key", floatArray([1.0, 0.0])); // descending key: reversed sequence
+        interp.setValue("keyValue", floatArray([0.0, 1.0]));
+        animation.appendChildToParent(interp);
+        poster.appendChildToParent(animation);
+
+        animation.setValue("control", new BrsString("finish"));
+
+        // The fade-out must end transparent, revealing the video beneath.
+        expect(poster.getValueJS("opacity")).toBeCloseTo(0, 5);
+    });
+
     test("interpolator resolves to its own enclosing node when no descendant matches", () => {
         // Mirrors LoadingIndicator's fade: an Animation nested inside <Group id="loadingIndicatorGroup">
         // targets "loadingIndicatorGroup.opacity" — its own parent. The target must still resolve.
