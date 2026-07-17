@@ -1,4 +1,4 @@
-import { Lexer, logError, Parser, preprocessor as PP, Stmt, FileSystem } from "brs-engine";
+import { getLibrarySource, Lexer, logError, Parser, preprocessor as PP, Stmt, FileSystem } from "brs-engine";
 import { ComponentDefinition, ComponentScript } from "./ComponentDefinition";
 import { SGNodeFactory } from "../factory/NodeFactory";
 import * as path from "path";
@@ -10,6 +10,8 @@ import * as path from "path";
 export class ComponentScopeResolver {
     private readonly excludedNames: string[] = ["init"];
     private readonly parserLexerFn: (scripts: ComponentScript[]) => Stmt.Statement[];
+    /** Parsed library function statements, keyed by library name — each library is parsed once per app. */
+    private readonly memoizedLibraries = new Map<string, Stmt.Function[]>();
 
     /**
      * @param componentMap Component definition map to reference for function resolution.
@@ -18,8 +20,8 @@ export class ComponentScopeResolver {
      */
     constructor(
         readonly componentMap: Map<string, ComponentDefinition>,
-        fs: FileSystem,
-        manifest: Map<string, string>
+        private readonly fs: FileSystem,
+        private readonly manifest: Map<string, string>
     ) {
         this.parserLexerFn = this.getLexerParserFn(fs, manifest);
     }
@@ -31,7 +33,57 @@ export class ComponentScopeResolver {
      */
     public resolve(component: ComponentDefinition): Stmt.Statement[] {
         const statementMap = Array.from(this.getStatements(component));
-        return this.flatten(statementMap);
+        return this.flatten(statementMap, this.getDeclaredLibraries(statementMap));
+    }
+
+    /**
+     * Collects the names of BrightScript libraries declared via `Library` statements
+     * in any script of the component hierarchy.
+     * @param statementMap Statement collections broken up by component.
+     * @returns The set of declared library names.
+     */
+    private getDeclaredLibraries(statementMap: Stmt.Statement[][]): Set<string> {
+        const libraryNames = new Set<string>();
+        for (const statements of statementMap) {
+            for (const statement of statements) {
+                const filePath = statement instanceof Stmt.Library ? statement.tokens.filePath : undefined;
+                if (filePath) {
+                    libraryNames.add(filePath.text.slice(1, filePath.text.length - 1));
+                }
+            }
+        }
+        // bslDefender depends on bslCore, so load it as well
+        if (libraryNames.has("v30/bslDefender.brs")) {
+            libraryNames.add("v30/bslCore.brs");
+        }
+        return libraryNames;
+    }
+
+    /**
+     * Loads and parses a BrightScript library, keeping only its function definitions.
+     * Results are memoized so each library is lexed/parsed at most once per resolver.
+     * @param libName The library name as declared in the `Library` statement.
+     * @returns The library's function statements (empty when unknown or not required by the manifest).
+     */
+    private getLibraryFunctions(libName: string): Stmt.Function[] {
+        let functions = this.memoizedLibraries.get(libName);
+        if (!functions) {
+            functions = [];
+            const source = getLibrarySource(this.fs, libName, this.manifest);
+            if (source !== undefined) {
+                const lexer = new Lexer();
+                const parser = new Parser();
+                lexer.onError(logError);
+                parser.onError(logError);
+                const scanResults = lexer.scan(source, libName);
+                const parseResults = parser.parse(scanResults.tokens);
+                functions = parseResults.statements.filter(
+                    (statement): statement is Stmt.Function => statement instanceof Stmt.Function
+                );
+            }
+            this.memoizedLibraries.set(libName, functions);
+        }
+        return functions;
     }
 
     /**
@@ -40,9 +92,10 @@ export class ComponentScopeResolver {
      * given in the statement map are in order of hierarchy with the furthest
      * inheriting component first.
      * @param statementMap Statement collections broken up by component.
+     * @param libraryNames Names of libraries declared by the hierarchy's scripts.
      * @returns A collection of statements that have been flattened based on hierarchy.
      */
-    private flatten(statementMap: Stmt.Statement[][]): Stmt.Statement[] {
+    private flatten(statementMap: Stmt.Statement[][], libraryNames: Set<string>): Stmt.Statement[] {
         const isFunction = (statement: Stmt.Statement): statement is Stmt.Function =>
             statement instanceof Stmt.Function;
         // Component scripts only contribute their function definitions to the component's scope;
@@ -61,6 +114,17 @@ export class ComponentScopeResolver {
                     return !haveFnName && !this.excludedNames.includes(statementName);
                 })
             );
+        }
+        // Append the functions of any `Library` declared by the hierarchy's scripts;
+        // functions defined by the components themselves take precedence.
+        for (const libName of libraryNames) {
+            for (const libFunction of this.getLibraryFunctions(libName)) {
+                const functionName = libFunction.name.text.toLowerCase();
+                if (!statementMemo.has(functionName)) {
+                    statementMemo.add(functionName);
+                    statements.push(libFunction);
+                }
+            }
         }
         return statements;
     }

@@ -615,6 +615,29 @@ describe("cli", () => {
         expect(stderr).toContain('Attempt to add duplicate field "sharedField" to RokuML component "XmlChildComp"');
     }, 10000);
 
+    it("Loads Library statements declared in component scripts into the component scope", async () => {
+        let command = ["node", brsCliPath, "-r component-library-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // A `Library` statement in a component <script> must load the library's functions
+        // into that component's scope (Roku_Ads is required by the manifest), while the
+        // manifest gate still keeps out declared-but-not-required libraries (IMA3).
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "=== Component Library Repro ===",
+            "rafType = roAssociativeArray",
+            "adUrl = http://ads.example.com/preroll",
+            "podCount =  1",
+            "libVersion = 3.5",
+            "imaLoaded = not loaded",
+            "=== Component Library Repro Complete ===",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 10000);
+
     it("Guards bounding-rect refresh renders against re-entrant measurement", async () => {
         let command = ["node", brsCliPath, "-r grid-measure-app", "source/main.brs", "-c 0"].join(" ");
 

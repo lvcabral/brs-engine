@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Declares `Library "Roku_Ads.brs"` (required by the manifest, so it must load into
+    this component's scope) and `Library "IMA3.brs"` (NOT required by the manifest, so
+    the gate must keep it out even though the statement is present).
+-->
+<component name="AdsComponent" extends="Group">
+    <interface>
+        <field id="rafType" type="string" />
+        <field id="adUrl" type="string" />
+        <field id="podCount" type="integer" />
+        <field id="libVersion" type="string" />
+        <field id="imaLoaded" type="string" />
+    </interface>
+    <script type="text/brightscript" uri="pkg:/components/AdsComponent.brs" />
+</component>

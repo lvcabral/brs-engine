@@ -156,6 +156,45 @@ export function parseDecodedTokens(fs: FileSystem, manifest: Map<string, any>, d
 }
 
 /**
+ * Resolves a BrightScript library name to its source code on the `common:` volume,
+ * honoring the manifest entry that gates each library.
+ * @param fs The interpreter file system
+ * @param libName The library name as declared in the `Library` statement (e.g. "Roku_Ads.brs")
+ * @param manifest Map with the manifest data
+ * @returns the library source code, or `undefined` when the name is unknown or the manifest does not require it
+ */
+export function getLibrarySource(fs: FileSystem, libName: string, manifest: Map<string, any>): string | undefined {
+    switch (libName) {
+        case "v30/bslDefender.brs":
+            return fs.readFileSync("common:/LibCore/v30/bslDefender.brs", "utf8");
+        case "v30/bslCore.brs":
+            return fs.readFileSync("common:/LibCore/v30/bslCore.brs", "utf8");
+        case "Roku_Ads.brs":
+            if (manifest.get("bs_libs_required")?.includes("roku_ads_lib")) {
+                return fs.readFileSync("common:/roku_ads/Roku_Ads.brs", "utf8");
+            }
+            return undefined;
+        case "IMA3.brs":
+            if (manifest.get("bs_libs_required")?.includes("googleima3")) {
+                return fs.readFileSync("common:/roku_ads/IMA3.brs", "utf8");
+            }
+            return undefined;
+        case "Roku_Event_Dispatcher.brs":
+            if (manifest.get("sg_component_libs_required")?.includes("roku_analytics")) {
+                return fs.readFileSync("common:/roku_analytics/Roku_Event_Dispatcher.brs", "utf8");
+            }
+            return undefined;
+        case "RokuBrowser.brs":
+            if (manifest.get("bs_libs_required")?.includes("Roku_Browser")) {
+                return fs.readFileSync("common:/roku_browser/RokuBrowser.brs", "utf8");
+            }
+            return undefined;
+        default:
+            return undefined;
+    }
+}
+
+/**
  * Evaluates parsed BrightScript code and add Libraries source
  * @param fs The interpreter file system
  * @param parseResults ParseResults object with the parsed code
@@ -178,41 +217,13 @@ function parseLibraries(
         lib.set("RokuBrowser.brs", "");
     }
     // Check for Libraries and add to the collection
-    if (parseResults.libraries.get("v30/bslDefender.brs") === true && lib.get("v30/bslDefender.brs") === "") {
-        lib.set("v30/bslDefender.brs", fs.readFileSync("common:/LibCore/v30/bslDefender.brs", "utf8"));
-        lib.set("v30/bslCore.brs", fs.readFileSync("common:/LibCore/v30/bslCore.brs", "utf8"));
-    } else if (parseResults.libraries.get("v30/bslCore.brs") === true && lib.get("v30/bslCore.brs") === "") {
-        lib.set("v30/bslCore.brs", fs.readFileSync("common:/LibCore/v30/bslCore.brs", "utf8"));
+    for (const [libName, used] of parseResults.libraries) {
+        if (used && lib.get(libName) === "") {
+            lib.set(libName, getLibrarySource(fs, libName, manifest) ?? "");
+        }
     }
-    if (
-        parseResults.libraries.get("Roku_Ads.brs") === true &&
-        lib.get("Roku_Ads.brs") === "" &&
-        manifest.get("bs_libs_required")?.includes("roku_ads_lib")
-    ) {
-        lib.set("Roku_Ads.brs", fs.readFileSync("common:/roku_ads/Roku_Ads.brs", "utf8"));
-    }
-    if (
-        parseResults.libraries.get("IMA3.brs") === true &&
-        lib.get("IMA3.brs") === "" &&
-        manifest.get("bs_libs_required")?.includes("googleima3")
-    ) {
-        lib.set("IMA3.brs", fs.readFileSync("common:/roku_ads/IMA3.brs", "utf8"));
-    }
-    if (
-        parseResults.libraries.get("Roku_Event_Dispatcher.brs") === true &&
-        lib.get("Roku_Event_Dispatcher.brs") === "" &&
-        manifest.get("sg_component_libs_required")?.includes("roku_analytics")
-    ) {
-        lib.set(
-            "Roku_Event_Dispatcher.brs",
-            fs.readFileSync("common:/roku_analytics/Roku_Event_Dispatcher.brs", "utf8")
-        );
-    }
-    if (
-        parseResults.libraries.get("RokuBrowser.brs") === true &&
-        lib.get("RokuBrowser.brs") === "" &&
-        manifest.get("bs_libs_required")?.includes("Roku_Browser")
-    ) {
-        lib.set("RokuBrowser.brs", fs.readFileSync("common:/roku_browser/RokuBrowser.brs", "utf8"));
+    // bslDefender depends on bslCore, so load it as well
+    if (lib.get("v30/bslDefender.brs") !== "" && lib.get("v30/bslCore.brs") === "") {
+        lib.set("v30/bslCore.brs", getLibrarySource(fs, "v30/bslCore.brs", manifest) ?? "");
     }
 }
