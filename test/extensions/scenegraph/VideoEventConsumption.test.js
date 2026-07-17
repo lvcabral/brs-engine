@@ -4,7 +4,7 @@ const scenegraph = require("../../../packages/scenegraph/lib/brs-sg.node.js");
 const core = require("../../../packages/node/bin/brs.node.js");
 
 const { SGNodeFactory, sgRoot } = scenegraph;
-const { BrsDevice, DataType, MediaEvent } = core;
+const { BrsDevice, DataType, MediaEvent, RoVideoPlayer, RoVideoPlayerEvent } = core;
 
 // The main thread publishes media events by storing MediaEvent values into the shared
 // array's VDO slot (VDX carries the event index). A consumer that dedupes on a snapshot
@@ -104,6 +104,65 @@ describe("SGRoot.processVideo exactly-once event consumption", () => {
         publishEvent(MediaEvent.StartStream);
         sgRoot.processVideo();
         expect(video.getValueJS("state")).toBe("playing");
+        expect(Atomics.load(sharedArray, DataType.VDO)).toBe(-1);
+    });
+});
+
+describe("roVideoPlayer getNewEvents exactly-once event consumption", () => {
+    let originalPostMessage;
+    let originalSharedArray;
+    let sharedArray;
+
+    beforeAll(() => {
+        originalSharedArray = BrsDevice.sharedArray;
+        sharedArray = new Int32Array(new SharedArrayBuffer(4096 * Int32Array.BYTES_PER_ELEMENT));
+        BrsDevice.setSharedArray(sharedArray);
+    });
+
+    beforeEach(() => {
+        // The roVideoPlayer constructor posts player-reset messages to the render thread.
+        originalPostMessage = global.postMessage;
+        global.postMessage = jest.fn();
+        sharedArray.fill(-1);
+    });
+
+    afterEach(() => {
+        global.postMessage = originalPostMessage;
+    });
+
+    afterAll(() => {
+        BrsDevice.setSharedArray(originalSharedArray);
+    });
+
+    test("two consecutive events with identical type and index both produce an event", () => {
+        const videoPlayer = new RoVideoPlayer();
+
+        Atomics.store(sharedArray, DataType.VDX, 5);
+        Atomics.store(sharedArray, DataType.VDO, MediaEvent.StartStream);
+        let events = videoPlayer.getNewEvents();
+        expect(events.length).toBe(1);
+        expect(events[0]).toBeInstanceOf(RoVideoPlayerEvent);
+        expect(Atomics.load(sharedArray, DataType.VDO)).toBe(-1);
+
+        // Republish the identical event before the next poll: the old type+index snapshot
+        // dedupe dropped it and left VDO stuck at StartStream.
+        Atomics.store(sharedArray, DataType.VDX, 5);
+        Atomics.store(sharedArray, DataType.VDO, MediaEvent.StartStream);
+        events = videoPlayer.getNewEvents();
+        expect(events.length).toBe(1);
+        expect(events[0]).toBeInstanceOf(RoVideoPlayerEvent);
+        expect(Atomics.load(sharedArray, DataType.VDO)).toBe(-1);
+    });
+
+    test("an empty slot produces no event and does not clear a later publish", () => {
+        const videoPlayer = new RoVideoPlayer();
+
+        expect(videoPlayer.getNewEvents().length).toBe(0);
+
+        Atomics.store(sharedArray, DataType.VDX, 0);
+        Atomics.store(sharedArray, DataType.VDO, MediaEvent.Paused);
+        const events = videoPlayer.getNewEvents();
+        expect(events.length).toBe(1);
         expect(Atomics.load(sharedArray, DataType.VDO)).toBe(-1);
     });
 });
