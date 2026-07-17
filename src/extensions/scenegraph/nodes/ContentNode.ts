@@ -179,6 +179,7 @@ export class ContentNode extends Node {
         if (child instanceof ContentNode) {
             success = true;
             if (!this.children.includes(child)) {
+                this.detachFromCurrentParent(child);
                 appendedIndex = this.children.length;
                 this.children.push(child);
                 child.setNodeParent(this);

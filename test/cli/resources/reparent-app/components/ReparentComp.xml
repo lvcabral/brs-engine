@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Moves an XML-declared child into a translated inner container during init(),
+    relying on appendChild's implicit reparent (a node has exactly one parent on Roku).
+    Before the fix the moved node stayed attached to BOTH parents and rendered twice:
+    once inside the translated container and once at its raw XML position.
+-->
+<component name="ReparentComp" extends="Group">
+    <script type="text/brightscript">
+        <![CDATA[
+        sub init()
+            m.top.findNode("innerGroup").appendChild(m.top.findNode("movedGroup"))
+        end sub
+        ]]>
+    </script>
+    <children>
+        <Group id="movedGroup" translation="[100, 0]" />
+        <Group id="innerGroup" translation="[0, 200]" />
+    </children>
+</component>

@@ -615,6 +615,35 @@ describe("cli", () => {
         expect(stderr).toContain('Attempt to add duplicate field "sharedField" to RokuML component "XmlChildComp"');
     }, 10000);
 
+    it("Reparents a node when it is attached to a different parent", async () => {
+        let command = ["node", brsCliPath, "-r reparent-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // On Roku a node has exactly one parent: appendChild/insertChild/replaceChild detach the
+        // node from its previous parent. Before the fix the old parent kept the node in its
+        // children array, so the render traversal drew the subtree twice — once inside the new
+        // (translated) container and once at the node's raw position under the old parent.
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "=== Reparent Repro ===",
+            "root child count =  1",
+            "inner child count =  1",
+            "moved parent is inner = true",
+            "a child count =  0",
+            "b child count =  1",
+            "c parent is b = true",
+            "b child count after insert =  0",
+            "c parent is d = true",
+            "d child count after replace =  0",
+            "c parent is e = true",
+            "=== Reparent Repro Complete ===",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 10000);
+
     it("Loads Library statements declared in component scripts into the component scope", async () => {
         let command = ["node", brsCliPath, "-r component-library-app", "source/main.brs", "-c 0"].join(" ");
 
