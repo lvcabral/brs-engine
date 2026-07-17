@@ -1564,6 +1564,18 @@ export class Node extends RoSGNode implements BrsValue {
     }
 
     /**
+     * Detaches a child from its current parent before attaching it elsewhere.
+     * Roku nodes have exactly one parent: appendChild/insertChild/replaceChild reparent implicitly.
+     * @param child Child about to be attached to this node.
+     */
+    protected detachFromCurrentParent(child: Node) {
+        const oldParent = child.getNodeParent();
+        if (oldParent instanceof RoSGNode && oldParent !== this) {
+            oldParent.removeChildByReference(child);
+        }
+    }
+
+    /**
      * Removes a contiguous range of children starting at the provided index.
      * @param index Start index.
      * @param count Number of children to remove.
@@ -1594,6 +1606,7 @@ export class Node extends RoSGNode implements BrsValue {
             if (this.children.includes(child)) {
                 return true;
             }
+            this.detachFromCurrentParent(child);
             const insertionIndex = this.children.length;
             this.children.push(child);
             child.setNodeParent(this);
@@ -1630,6 +1643,7 @@ export class Node extends RoSGNode implements BrsValue {
         if (oldChild instanceof Node) {
             oldChild.removeParent();
         }
+        this.detachFromCurrentParent(newChild);
         newChild.setNodeParent(this);
         this.children.splice(index, 1, newChild);
         this.makeDirty();
@@ -1668,6 +1682,7 @@ export class Node extends RoSGNode implements BrsValue {
             this.recordChildChange("insert", index, index);
             return true;
         }
+        this.detachFromCurrentParent(child);
         child.setNodeParent(this);
         this.children.splice(index, 0, child);
         this.makeDirty();
