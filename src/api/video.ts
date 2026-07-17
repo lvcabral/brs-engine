@@ -62,8 +62,16 @@ if (typeof document !== "undefined") {
 export function initVideoModule(array: Int32Array, deviceInfo: DeviceInfo, mute: boolean = false) {
     if (player) {
         player.addEventListener("canplay", (e: Event) => {
-            loadProgress = 1000;
-            Atomics.store(sharedArray, DataType.VLP, loadProgress);
+            // Publish load progress only while a load is in progress (loadVideo resets it to 0
+            // per load): canplay also refires after every seek and when the buffer refills
+            // during playback, and per the Roku spec bufferingStatus / state "buffering" are
+            // only valid at stream startup or during an actual rebuffer — a republished 1000
+            // would surface as a spurious buffering transition that resets the trick-play
+            // state machine (stuck spinner, pause/FF/REW keys gated off).
+            if (loadProgress < 1000) {
+                loadProgress = 1000;
+                Atomics.store(sharedArray, DataType.VLP, loadProgress);
+            }
             canPlay = true;
             if (playerState !== "play" && !bufferOnly) {
                 playVideo();
@@ -388,8 +396,12 @@ function startProgress(e: Event) {
             startPosition = 0;
         }
     }
-    loadProgress += 200;
-    Atomics.store(sharedArray, DataType.VLP, loadProgress);
+    // Only progress an in-flight load: durationchange can refire after playback started
+    // (e.g. HLS updates while paused) and must not publish stale load progress.
+    if (loadProgress < 1000) {
+        loadProgress += 200;
+        Atomics.store(sharedArray, DataType.VLP, loadProgress);
+    }
 }
 
 /**
