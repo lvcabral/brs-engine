@@ -44,6 +44,7 @@ let previousTime = Date.now();
 const DEFAULT_MIN_VIDEO_BUFFER_MS = 700; // fallback floor if DeviceInfo omits minVideoBufferMs
 let bufferFloorStart = 0; // Date.now() when the current load began
 let playFloorTimer: ReturnType<typeof setTimeout> | undefined; // pending deferred play
+let priming = false; // HLS audio-track priming play in flight; suppress its "playing" side effects
 const audioTracks: MediaTrack[] = [];
 const textTracks: MediaTrack[] = [];
 
@@ -69,8 +70,18 @@ export function initVideoModule(array: Int32Array, deviceInfo: DeviceInfo, mute:
             }
         });
         player.addEventListener("playing", (e: Event) => {
+            if (priming) {
+                // HLS audio-track priming play: halt immediately and report nothing to the
+                // worker (no StartStream, no notifyAll("play") — playerState stays non-"play"
+                // so the canplay handler still routes the real start through the buffering
+                // floor). The actual playback begins later via beginPlayback().
+                priming = false;
+                player.pause();
+                return;
+            }
             if (playerState !== "pause") {
                 setAudioTrack(playList[playIndex]?.audioTrack ?? -1);
+                // VDX must be stored before VDO — VDO is the publish flag the worker consumes.
                 Atomics.store(sharedArray, DataType.VDX, currentFrame);
                 Atomics.store(sharedArray, DataType.VDO, MediaEvent.StartStream);
             }
@@ -355,6 +366,7 @@ export function resetVideo() {
     bufferOnly = false;
     canPlay = false;
     clearPlayFloor(); // stopVideo() is a no-op when already stopped, so clear unconditionally here
+    priming = false;
 }
 
 /**
@@ -443,10 +455,14 @@ function loadAudioTracks() {
         playList[playIndex].audioTrack = activeTrack;
         if (activeTrack > -1 && playerState !== "play") {
             player.currentTime = 1; // Force HLS to load audio track
-            // Intentionally not gated by the buffering floor: HLS is network-fed and already has a
-            // natural buffering gap, and this play() primes the audio track load rather than the
-            // preview start that the floor targets.
-            player.play();
+            // This play() only primes the audio-track load; the "playing" handler pauses it and
+            // swallows its side effects (priming flag), so the real start still goes through the
+            // buffering floor and prebuffer never starts audible playback.
+            priming = true;
+            const promise = player.play();
+            promise?.catch(() => {
+                priming = false; // autoplay rejection: no "playing" event will fire to swallow
+            });
         }
     }
     return activeTrack;
@@ -557,6 +573,7 @@ function loadVideo(buffer = false) {
         // so a rapid navigation can never fire a stale play onto the wrong item.
         bufferFloorStart = Date.now();
         clearPlayFloor();
+        priming = false; // a stale armed priming flag would swallow this load's first real "playing"
         let videoSrc = getVideoUrl(video);
         clearVideoTracking();
         bufferOnly = buffer;
@@ -681,6 +698,10 @@ function scheduleBufferedPlay() {
  * Starts the actual media playback and handles autoplay restrictions.
  */
 function beginPlayback() {
+    // A real start supersedes any pending priming pause: if the floor elapses before the
+    // priming "playing" event fires, that single event must take the normal branch and
+    // publish StartStream (play() on an already-playing element fires no second event).
+    priming = false;
     previousBuffered = 0;
     previousTime = Date.now();
     const promise = player.play();
@@ -766,6 +787,7 @@ function stopVideo(error?: boolean) {
         startPosition = 0;
         canPlay = false;
         clearPlayFloor(); // drop any pending deferred play so it can't fire after stop
+        priming = false; // a stop before the priming "playing" fires must not leave the flag armed
     }
 }
 
