@@ -413,15 +413,6 @@ export class ArrayGrid extends Group {
         if (content instanceof ContentNode && content.changed) {
             this.refreshContent();
             content.changed = false;
-            // The content node was populated after being assigned (an app assigns an empty
-            // ContentNode, then a content-loading Task appends the items). If the grid already has
-            // focus but nothing has been focused yet, give the first item focus now so itemFocused
-            // fires; if the grid is not focused, do NOT emit itemFocused — on a real device the
-            // field only changes when focus moves onto an item, so loading content into an
-            // unfocused list stays silent until focus reaches it (see resetFocusForNewContent).
-            // Not a fresh-content reset: this fires on in-place mutations too, so an active focus
-            // on a focused grid must be preserved (never snapped back to item 0 mid-navigation).
-            this.resetFocusForNewContent(false);
         }
         const clipped = this.pushClippingRect(drawTrans, draw2D);
         this.renderContent(interpreter, rect, rotation, opacity, draw2D);
