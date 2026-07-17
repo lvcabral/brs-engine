@@ -1,0 +1,5 @@
+title=Component Library Test
+major_version=1
+minor_version=0
+build_version=0
+bs_libs_required=roku_ads_lib
