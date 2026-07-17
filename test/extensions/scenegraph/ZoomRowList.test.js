@@ -91,4 +91,19 @@ describe("ZoomRowList up/down propagation", () => {
         expect(clamped.handleKey("down", true)).toBe(true);
         expect(clamped.focusIndex).toBe(1);
     });
+
+    // Vertical wrap must be read live from the `wrap` field, not a cached mirror. Some field
+    // population paths (config append, factory setup) set the field without going through the
+    // overridden setValue, so a mirror seeded from the constructor default would stay stale and the
+    // grid would keep wrapping despite wrap=false. Regression for that silent-populate path.
+    test("wrap=false set via a silent path (bypassing setValue) still disables wrapping", () => {
+        const list = SGNodeFactory.createNode("ZoomRowList");
+        list.setValue("itemComponentName", new BrsString("X"));
+        list.setValueSilent("wrap", BrsBoolean.False);
+        list.setValue("content", buildContent([["A"], ["B"], ["C"]]));
+        list.setNodeFocus(true);
+        // up from row 0 has nowhere to go → unhandled (bubbles), focus stays.
+        expect(list.handleKey("up", true)).toBe(false);
+        expect(list.focusIndex).toBe(0);
+    });
 });

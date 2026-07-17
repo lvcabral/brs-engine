@@ -37,8 +37,6 @@ interface RowMetrics {
 
 const ValidFocusStyles = new Set(Object.values(FocusStyle).map((style) => style.toLowerCase()));
 
-const RowFocusStyleWrap = FocusStyle.FixedFocusWrap.toLowerCase();
-
 export class ZoomRowList extends ArrayGrid {
     readonly defaultFields: FieldModel[] = [
         { name: "itemComponentName", type: "string", value: "" },
@@ -133,8 +131,9 @@ export class ZoomRowList extends ArrayGrid {
         this.defaultItemZoomYOffset = 0;
         this.hasNinePatch = true;
         this.focusField = "zoomRowListHasFocus";
-        const rowFocusStyle = (this.getValueJS("rowFocusAnimationStyle") as string) ?? FocusStyle.FixedFocusWrap;
-        this.wrap = rowFocusStyle.toLowerCase() === RowFocusStyleWrap;
+        // Vertical (row-to-row) wrapping is controlled by the boolean `wrap` field, NOT by
+        // `rowFocusAnimationStyle` (which governs horizontal item focus within a row).
+        this.wrap = this.isWrapEnabled();
         this.focusIndex = 0;
         this.rowFocus[0] = 0;
         this.nodeWidth = this.sceneRect.width;
@@ -163,11 +162,11 @@ export class ZoomRowList extends ArrayGrid {
                 this.setFocusedItem(coords[0], coords[1]);
             }
         } else if (fieldName === "rowfocusanimationstyle" && value instanceof BrsString) {
+            // Horizontal item focus style; validate but do NOT let it drive vertical wrap.
             const style = value.toString().toLowerCase();
             if (!ValidFocusStyles.has(style)) {
                 return;
             }
-            this.wrap = style === RowFocusStyleWrap;
         } else if (fieldName === "wrap" && value instanceof BrsBoolean) {
             this.wrap = value.toBoolean();
         } else if (fieldName === "rowwidth" && isNumberComp(value)) {
@@ -212,6 +211,15 @@ export class ZoomRowList extends ArrayGrid {
         super.setValue("currFocusRow", new Float(rowIndex));
     }
 
+    /**
+     * Vertical (row-to-row) wrap state. Read live from the `wrap` field so it always reflects the
+     * current value regardless of how the field was populated (setValue, config append, or a silent
+     * factory path that bypasses the overridden setValue). See the Roku ZoomRowList `wrap` field.
+     */
+    private isWrapEnabled(): boolean {
+        return jsValueOf(this.getValue("wrap")) === true;
+    }
+
     protected handleUpDown(key: string) {
         let handled = false;
         let offset = 0;
@@ -227,7 +235,7 @@ export class ZoomRowList extends ArrayGrid {
             return false;
         }
         let next = this.focusIndex + offset;
-        if (this.wrap) {
+        if (this.isWrapEnabled()) {
             if (this.content.length === 0) {
                 return false;
             }
@@ -441,7 +449,12 @@ export class ZoomRowList extends ArrayGrid {
 
         const titleHeight = this.renderRowTitle(rowIndex, rect, this.nodeWidth, opacity, draw2D);
         const counterHeight = this.renderRowCounter(rowIndex, rect, metrics, this.nodeWidth, opacity, draw2D);
-        const rowY = rect.y + Math.max(titleHeight, counterHeight) + metrics.itemYOffset;
+        // `rowItemYOffset` positions the item row relative to the row top, independently of the
+        // title/counter (which draw at their own rowTitleOffset/rowCounterOffset). They are NOT
+        // stacked (Roku spec) — the title occupies the reserved offset band. Only when no offset is
+        // configured do we reserve the measured band so the title and posters do not overlap.
+        const reservedBand = metrics.itemYOffset > 0 ? 0 : Math.max(titleHeight, counterHeight);
+        const rowY = rect.y + metrics.itemYOffset + reservedBand;
 
         const itemRect: Rect = {
             x: rect.x,
@@ -515,7 +528,7 @@ export class ZoomRowList extends ArrayGrid {
     }
 
     private canWrapRows(displayRows: number): boolean {
-        return this.wrap && displayRows > 0 && this.content.length >= displayRows;
+        return this.isWrapEnabled() && displayRows > 0 && this.content.length >= displayRows;
     }
 
     private canWrapItems(numCols: number, metrics: RowMetrics, availableWidth: number) {
