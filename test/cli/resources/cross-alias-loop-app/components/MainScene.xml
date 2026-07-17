@@ -2,8 +2,9 @@
 <!--
     Reproduces the manual field-alias flood: two alwaysNotify fields whose onChange
     handlers write each other (F.onChange -> G, G.onChange -> F), reassigned from inside an
-    observer so both defer. Synchronously the nested `notifying` guards (F held while G runs)
-    terminate this in one round; the flattened deferred FIFO loses that nesting and loops.
+    observer. Direct BrightScript assignments dispatch synchronously even when reentrant (only
+    engine-initiated emissions such as itemFocused defer), so the nested `notifying` guards
+    (F held while G runs) must terminate this in one round instead of looping.
 -->
 <component name="MainScene" extends="Scene">
     <interface>
@@ -19,7 +20,7 @@
 
     sub onStart()
         print "onStart"
-        ' Reentrant: onF runs deferred.
+        ' Direct reentrant assignment: onF runs synchronously (nested).
         m.top.fieldF = [1, 1]
         print "onStart done"
     end sub

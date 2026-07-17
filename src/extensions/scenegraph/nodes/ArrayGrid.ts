@@ -16,6 +16,7 @@ import { FieldKind, FieldModel } from "../SGTypes";
 import { Poster, SGNodeType } from ".";
 import { Group } from "./Group";
 import { Node } from "./Node";
+import { Field } from "./Field";
 import { createNode } from "../factory/NodeFactory";
 import { brsValueOf, jsValueOf } from "../factory/Serializer";
 import { sgRoot } from "../SGRoot";
@@ -276,23 +277,31 @@ export class ArrayGrid extends Group {
         if (newFocus === -1) {
             return;
         }
-        const focusedIndex = this.getValueJS("itemFocused") as number;
-        const nodeFocus = sgRoot.focused === this;
-        const inFocusChain = nodeFocus || this.isChildrenFocused();
-        this.updateItemFocus(this.focusIndex, false, nodeFocus);
-        this.focusIndex = newFocus;
-        this.focusLayoutDirty = true;
-        this.updateItemFocus(this.focusIndex, true, nodeFocus);
-        if (inFocusChain) {
-            super.setValue("itemUnfocused", new Int32(focusedIndex));
-            super.setValue("itemFocused", new Int32(index));
-        } else {
-            // Unfocused: remember the target without notifying observers. setNodeFocus emits it on
-            // focus-gain (it reads itemFocused, defaulting to 0 when still at the -1 sentinel).
-            this.setValueSilent("itemFocused", new Int32(index));
-        }
-        if (this.itemFocusCallback) {
-            this.itemFocusCallback(index);
+        // Focus fields are emitted by the grid's internal machinery, not by a direct BrightScript
+        // assignment — on Roku their observers dispatch from the message loop, so a reentrant
+        // notification defers (see Field.enterInternalUpdate).
+        Field.enterInternalUpdate();
+        try {
+            const focusedIndex = this.getValueJS("itemFocused") as number;
+            const nodeFocus = sgRoot.focused === this;
+            const inFocusChain = nodeFocus || this.isChildrenFocused();
+            this.updateItemFocus(this.focusIndex, false, nodeFocus);
+            this.focusIndex = newFocus;
+            this.focusLayoutDirty = true;
+            this.updateItemFocus(this.focusIndex, true, nodeFocus);
+            if (inFocusChain) {
+                super.setValue("itemUnfocused", new Int32(focusedIndex));
+                super.setValue("itemFocused", new Int32(index));
+            } else {
+                // Unfocused: remember the target without notifying observers. setNodeFocus emits it on
+                // focus-gain (it reads itemFocused, defaulting to 0 when still at the -1 sentinel).
+                this.setValueSilent("itemFocused", new Int32(index));
+            }
+            if (this.itemFocusCallback) {
+                this.itemFocusCallback(index);
+            }
+        } finally {
+            Field.exitInternalUpdate();
         }
     }
 

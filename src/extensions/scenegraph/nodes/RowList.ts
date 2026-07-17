@@ -19,6 +19,7 @@ import { brsValueOf, jsValueOf } from "../factory/Serializer";
 import { Font } from "./Font";
 import { Group } from "./Group";
 import { Node } from "./Node";
+import { Field } from "./Field";
 import { ArrayGrid, FocusStyle } from "./ArrayGrid";
 import { FieldKind, FieldModel } from "../SGTypes";
 import { resolveRowItemSubpart } from "../SGUtil";
@@ -163,7 +164,15 @@ export class RowList extends ArrayGrid {
         const inFocusChain = sgRoot.focused === this || this.isChildrenFocused();
 
         if (isChangingRow && inFocusChain) {
-            super.setValue("itemUnfocused", new Int32(oldRow));
+            // Engine-initiated emission (not a direct BrightScript assignment): on Roku its
+            // observers dispatch from the message loop, so a reentrant notification defers
+            // (see Field.enterInternalUpdate).
+            Field.enterInternalUpdate();
+            try {
+                super.setValue("itemUnfocused", new Int32(oldRow));
+            } finally {
+                Field.exitInternalUpdate();
+            }
         }
 
         this.focusIndex = rowIndex;
@@ -225,7 +234,13 @@ export class RowList extends ArrayGrid {
         }
 
         if (inFocusChain) {
-            super.setValue("itemFocused", new Int32(rowIndex));
+            // Engine-initiated emission: reentrant observers defer (see Field.enterInternalUpdate).
+            Field.enterInternalUpdate();
+            try {
+                super.setValue("itemFocused", new Int32(rowIndex));
+            } finally {
+                Field.exitInternalUpdate();
+            }
             this.setRowItemFocused(rowIndex, colIndex);
         } else {
             // Unfocused: remember the row/column silently (no observer notification). The values are
@@ -252,16 +267,22 @@ export class RowList extends ArrayGrid {
         // focused item synchronously via subBoundingRect, and the dirty flag makes that query refresh
         // layout first so it reports the settled focus-band position (see needsSubBoundingRectRefresh).
         this.focusLayoutDirty = true;
-        // Emit currFocusRow/currFocusColumn BEFORE rowItemFocused. On a real device the focus fields
-        // pass through in-transit (fractional) values during the scroll animation and rowItemFocused
-        // settles last, so apps treat the rowItemFocused observer as the authoritative "focus settled"
-        // callback (e.g. the one that positions a per-row overlay on the final row). Since our scroll is
-        // instant, honoring that ordering — the settle notification fires last — keeps such an app from
-        // being stranded in its transient state (an observer on currFocusRow that computes an in-transit
-        // row from the scroll direction would otherwise run last and win). Regression: RowList.test.js.
-        super.setValue("currFocusRow", new Float(rowIndex));
-        super.setValue("currFocusColumn", new Float(colIndex));
-        super.setValue("rowItemFocused", new RoArray([new Int32(rowIndex), new Int32(colIndex)]));
+        // Engine-initiated emissions: reentrant observers defer (see Field.enterInternalUpdate).
+        Field.enterInternalUpdate();
+        try {
+            // Emit currFocusRow/currFocusColumn BEFORE rowItemFocused. On a real device the focus fields
+            // pass through in-transit (fractional) values during the scroll animation and rowItemFocused
+            // settles last, so apps treat the rowItemFocused observer as the authoritative "focus settled"
+            // callback (e.g. the one that positions a per-row overlay on the final row). Since our scroll is
+            // instant, honoring that ordering — the settle notification fires last — keeps such an app from
+            // being stranded in its transient state (an observer on currFocusRow that computes an in-transit
+            // row from the scroll direction would otherwise run last and win). Regression: RowList.test.js.
+            super.setValue("currFocusRow", new Float(rowIndex));
+            super.setValue("currFocusColumn", new Float(colIndex));
+            super.setValue("rowItemFocused", new RoArray([new Int32(rowIndex), new Int32(colIndex)]));
+        } finally {
+            Field.exitInternalUpdate();
+        }
     }
 
     protected handleUpDown(key: string) {
