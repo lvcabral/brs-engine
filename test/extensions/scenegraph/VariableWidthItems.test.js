@@ -69,6 +69,47 @@ describe("RowList variableWidthItems", () => {
         expect(items[2].rectToScene.x).toBe(320); // 110 + 200 + 10
     });
 
+    test("floats focus and stops at the edges when variable-width items fit, despite an oversized rowItemSize", () => {
+        // Regression (SGDEX ButtonBar): the app sets rowItemSize.x to the WHOLE bar width while each
+        // button is far narrower via HDItemWidth, and uses fixedFocusWrap. The "do all items fit?"
+        // check used numCols * rowItemSize.x (3 * 980 = 2940 > 1280) and wrongly concluded the row
+        // overflowed, pinning focus at column 0 and scrolling/wrapping the row. Summing the real
+        // per-item widths (100+200+150 + spacing = 470 < 1280) makes focus float per button and clamp
+        // at the first/last button with no wrap.
+        const list = SGNodeFactory.createNode("RowList");
+        list.setValue("numRows", new Float(1));
+        list.setValue("itemSize", new RoArray([new Float(1280), new Float(55)]));
+        list.setValue("rowHeights", new RoArray([new Float(55)]));
+        // Oversized uniform width: the whole bar, not a single button.
+        list.setValue("rowItemSize", new RoArray([new RoArray([new Float(980), new Float(55)])]));
+        list.setValue("rowItemSpacing", new RoArray([new RoArray([new Float(10), new Float(0)])]));
+        list.setValue("variableWidthItems", new RoArray([BrsBoolean.True]));
+        list.setValue("rowFocusAnimationStyle", new BrsString("fixedFocusWrap"));
+        list.setValue("content", buildRow([100, 200, 150]));
+        list.setNodeFocus(true);
+
+        expect(list.rowFocus[0]).toBe(0);
+
+        // Right floats focus button-to-button (the column advances; it is not pinned at 0).
+        expect(list.handleKey("right", true)).toBe(true);
+        expect(list.rowFocus[0]).toBe(1);
+        expect(list.getValueJS("rowItemFocused")).toEqual([0, 1]);
+        expect(list.handleKey("right", true)).toBe(true);
+        expect(list.rowFocus[0]).toBe(2);
+
+        // At the last button Right STOPS (no wrap back to 0) and reports the key as unhandled.
+        expect(list.handleKey("right", true)).toBe(false);
+        expect(list.rowFocus[0]).toBe(2);
+
+        // Left floats back and STOPS at the first button (no wrap to the last).
+        expect(list.handleKey("left", true)).toBe(true);
+        expect(list.rowFocus[0]).toBe(1);
+        expect(list.handleKey("left", true)).toBe(true);
+        expect(list.rowFocus[0]).toBe(0);
+        expect(list.handleKey("left", true)).toBe(false);
+        expect(list.rowFocus[0]).toBe(0);
+    });
+
     test("falls back to the row's rowItemSize width for an item without [res]ItemWidth", () => {
         const root = SGNodeFactory.createNode("ContentNode");
         const row = SGNodeFactory.createNode("ContentNode");

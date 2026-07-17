@@ -1,4 +1,4 @@
-import { AAMember, Interpreter, BrsBoolean, BrsType, Float, RoArray, IfDraw2D } from "brs-engine";
+import { AAMember, Interpreter, BrsBoolean, BrsType, Float, RoArray, IfDraw2D, Rect } from "brs-engine";
 import { FieldKind, FieldModel } from "../SGTypes";
 import { SGNodeType } from ".";
 import { jsValueOf } from "../factory/Serializer";
@@ -35,6 +35,11 @@ export class LayoutGroup extends Group {
     private layoutDirty = true;
     private metricsUsedThisPass?: WeakMap<Node, LayoutMetrics>;
     private readonly childSizes = new WeakMap<Node, NodeSize>();
+    // Translation applyLayout last assigned to each child. The LayoutGroup owns its children's
+    // managed-axis positions, so if a child's translation drifts from this (e.g. an app writes a
+    // child's translation directly after layout, as SGDEX ButtonBar does to its label), re-layout
+    // must run to re-impose the aligned position — a translation change alone does not dirty layout.
+    private readonly assignedTranslations = new WeakMap<Node, number[]>();
     private lastSpacingSignature = "";
     private lastChildCount = 0;
     private readonly epsilon = 0.25;
@@ -97,6 +102,23 @@ export class LayoutGroup extends Group {
         if (layoutChildren.length !== this.lastChildCount) {
             this.lastChildCount = layoutChildren.length;
             this.layoutDirty = true;
+        }
+
+        // Re-layout if any child's translation drifted from what applyLayout last assigned it — an
+        // external write to a managed child's translation would otherwise persist, since a translation
+        // change does not dirty layout on its own.
+        if (!this.layoutDirty) {
+            for (const child of layoutChildren) {
+                const assigned = this.assignedTranslations.get(child);
+                if (!assigned) {
+                    continue;
+                }
+                const current = this.getChildTranslation(child);
+                if (!this.nearlyEqual(assigned[0], current[0]) || !this.nearlyEqual(assigned[1], current[1])) {
+                    this.layoutDirty = true;
+                    break;
+                }
+            }
         }
 
         const addAfter = this.shouldAddSpacingAfterChild();
@@ -185,6 +207,7 @@ export class LayoutGroup extends Group {
             }
 
             this.setChildTranslation(child, translation);
+            this.assignedTranslations.set(child, translation.slice());
 
             currentOffset = positionOffset + metrics.primary;
             if (addSpacingAfterChild && i < childCount - 1) {
@@ -256,12 +279,28 @@ export class LayoutGroup extends Group {
         direction: LayoutDirection,
         metricsMap?: WeakMap<Node, LayoutMetrics>
     ): LayoutMetrics {
-        const rect = this.chooseActiveRect(child);
+        const { rect, cached } = this.chooseActiveRect(child);
+        let originX = rect.x;
+        let originY = rect.y;
+        // A cached rect's origin reflects the translation applyLayout assigned last time (the child
+        // rendered there), NOT the child's current translation. If the app has since moved the child,
+        // shift the measured origin by that drift so applyLayout positions from the CURRENT translation
+        // plus the child's intrinsic offset — otherwise the delta-based positioning below leaves the
+        // child at the app's translation on the managed axes (e.g. a ButtonBar label stuck low). The
+        // fallback rect already uses the current translation, so it needs no shift.
+        if (cached) {
+            const assigned = this.assignedTranslations.get(child);
+            if (assigned) {
+                const current = this.getChildTranslation(child);
+                originX += current[0] - assigned[0];
+                originY += current[1] - assigned[1];
+            }
+        }
         const metrics: LayoutMetrics = {
             primary: direction === "horiz" ? rect.width : rect.height,
             cross: direction === "horiz" ? rect.height : rect.width,
-            crossStart: direction === "horiz" ? rect.y : rect.x,
-            primaryStart: direction === "horiz" ? rect.x : rect.y,
+            crossStart: direction === "horiz" ? originY : originX,
+            primaryStart: direction === "horiz" ? originX : originY,
         };
 
         if (metricsMap) {
@@ -271,7 +310,7 @@ export class LayoutGroup extends Group {
         return metrics;
     }
 
-    private chooseActiveRect(child: Group) {
+    private chooseActiveRect(child: Group): { rect: Rect; cached: boolean } {
         const candidates = [child.rectToParent, child.rectToScene, child.rectLocal];
         for (const rect of candidates) {
             if (
@@ -282,7 +321,7 @@ export class LayoutGroup extends Group {
                 rect.width > 0 &&
                 rect.height > 0
             ) {
-                return rect;
+                return { rect, cached: true };
             }
         }
 
@@ -290,12 +329,13 @@ export class LayoutGroup extends Group {
         const dims = child.getDimensions();
         const cached = this.childSizes.get(child);
 
-        return {
+        const rect = {
             x: translation[0],
             y: translation[1],
             width: typeof dims.width === "number" && dims.width > 0 ? dims.width : cached?.width ?? 0,
             height: typeof dims.height === "number" && dims.height > 0 ? dims.height : cached?.height ?? 0,
         };
+        return { rect, cached: false };
     }
 
     private calculateTotalPrimary(metricsList: LayoutMetrics[], spacings: number[], addAfter: boolean) {
