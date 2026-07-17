@@ -598,21 +598,32 @@ export class SGRoot {
         }
         let isDirty = false;
         const progress = Atomics.load(BrsDevice.sharedArray, DataType.VLP);
-        if (progress >= 0 && progress <= 1000 && this.videoProgress !== progress) {
-            // Emit the intermediate buffering steps between the last reported value and the
-            // current one, so a consumer that gates on a specific percentage never misses a
-            // threshold when the render loop is starved (e.g. during Task startup) and the load
-            // progress jumps. Apps commonly start playback at ~33% ("prebufferDone") and reveal
-            // UI at ~99%; delivering only a jump straight to 100% would skip the 33% callback and
-            // the video would never start. Mirrors a real device's gradual buffering progression.
-            let reported = Math.max(this.videoProgress, 0);
-            while (reported + 200 < progress) {
-                reported += 200;
-                this._video.setState(MediaEvent.Loading, Math.trunc(reported / 10));
+        if (progress >= 0 && progress <= 1000) {
+            // Consume the slot so an identical value published by a LATER load is still seen.
+            // Apps commonly reuse a single Video node across content: nothing resets
+            // `videoProgress` between loads, and a fast (cached) load can climb back to the same
+            // value before this thread ever observes the main thread's load-start reset. A
+            // snapshot compare would then skip the whole buffering progression, and an app that
+            // requires bufferingStatus to reach 100% before state turns "playing" (a real-device
+            // guarantee) would never reveal its player.
+            if (Atomics.compareExchange(BrsDevice.sharedArray, DataType.VLP, progress, -1) === progress) {
+                // Emit the intermediate buffering steps between the last reported value and the
+                // current one, so a consumer that gates on a specific percentage never misses a
+                // threshold when the render loop is starved (e.g. during Task startup) and the
+                // load progress jumps. Apps commonly start playback at ~33% ("prebufferDone") and
+                // reveal UI at ~99%; delivering only a jump straight to 100% would skip the 33%
+                // callback and the video would never start. Mirrors a real device's gradual
+                // buffering progression. A regressed value means a new load began, so the
+                // progression restarts from zero.
+                let reported = progress < this.videoProgress ? 0 : Math.max(this.videoProgress, 0);
+                while (reported + 200 < progress) {
+                    reported += 200;
+                    this._video.setState(MediaEvent.Loading, Math.trunc(reported / 10));
+                }
+                this._video.setState(MediaEvent.Loading, Math.trunc(progress / 10));
+                this.videoProgress = progress;
             }
-            this._video.setState(MediaEvent.Loading, Math.trunc(progress / 10));
         }
-        this.videoProgress = progress;
         const eventType = Atomics.load(BrsDevice.sharedArray, DataType.VDO);
         if (eventType >= 0) {
             const eventIndex = Atomics.load(BrsDevice.sharedArray, DataType.VDX);

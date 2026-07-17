@@ -89,6 +89,58 @@ describe("SGRoot.processVideo exactly-once event consumption", () => {
         expect(Atomics.load(sharedArray, DataType.VDO)).toBe(-1);
     });
 
+    test("a reused Video node gets the buffering progression again when a fast reload republishes the same progress", () => {
+        // Apps commonly keep ONE Video node and swap its content per item, gating their poster
+        // overlay on bufferingStatus reaching 100% BEFORE state turns "playing" (a real-device
+        // guarantee). Nothing resets the worker's progress snapshot between loads of the same
+        // node, and a cached source can climb back to the same final value between two worker
+        // ticks — the progression must still be delivered, or the app never reveals the video.
+        const video = SGNodeFactory.createNode("Video");
+        sgRoot.setVideo(video);
+
+        // First content: load completes, then playback starts.
+        Atomics.store(sharedArray, DataType.VLP, 1000);
+        sgRoot.processVideo();
+        expect(video.getValueJS("state")).toBe("buffering");
+        expect(video.getValueJS("bufferingStatus").percentage).toBe(100);
+        publishEvent(MediaEvent.StartStream);
+        sgRoot.processVideo();
+        expect(video.getValueJS("state")).toBe("playing");
+
+        // Second content on the SAME node: the load-start reset and the whole climb back to
+        // 1000 happened between two worker ticks, so the worker only observes 1000 again.
+        Atomics.store(sharedArray, DataType.VLP, 1000);
+        sgRoot.processVideo();
+        expect(video.getValueJS("state")).toBe("buffering");
+        expect(video.getValueJS("bufferingStatus").percentage).toBe(100);
+
+        // ...and only then the play start.
+        publishEvent(MediaEvent.StartStream);
+        sgRoot.processVideo();
+        expect(video.getValueJS("state")).toBe("playing");
+    });
+
+    test("a regressed progress value restarts the buffering progression (new load on a reused node)", () => {
+        const video = SGNodeFactory.createNode("Video");
+        sgRoot.setVideo(video);
+
+        Atomics.store(sharedArray, DataType.VLP, 1000);
+        sgRoot.processVideo();
+        publishEvent(MediaEvent.StartStream);
+        sgRoot.processVideo();
+        expect(video.getValueJS("state")).toBe("playing");
+
+        // The next load is first observed mid-climb: lower than the stale base.
+        Atomics.store(sharedArray, DataType.VLP, 400);
+        sgRoot.processVideo();
+        expect(video.getValueJS("state")).toBe("buffering");
+        expect(video.getValueJS("bufferingStatus").percentage).toBe(40);
+
+        Atomics.store(sharedArray, DataType.VLP, 1000);
+        sgRoot.processVideo();
+        expect(video.getValueJS("bufferingStatus").percentage).toBe(100);
+    });
+
     test("distinct event transitions are consumed one per tick", () => {
         const video = SGNodeFactory.createNode("Video");
         sgRoot.setVideo(video);
@@ -152,6 +204,20 @@ describe("roVideoPlayer getNewEvents exactly-once event consumption", () => {
         expect(events.length).toBe(1);
         expect(events[0]).toBeInstanceOf(RoVideoPlayerEvent);
         expect(Atomics.load(sharedArray, DataType.VDO)).toBe(-1);
+    });
+
+    test("a fast reload republishing the same load progress still emits Loading and StartPlay", () => {
+        const videoPlayer = new RoVideoPlayer();
+
+        Atomics.store(sharedArray, DataType.VLP, 1000);
+        let events = videoPlayer.getNewEvents();
+        expect(events.length).toBe(2); // Loading(1000) + StartPlay
+
+        // Second load on the same player climbs back to 1000 between two polls.
+        Atomics.store(sharedArray, DataType.VLP, 1000);
+        events = videoPlayer.getNewEvents();
+        expect(events.length).toBe(2); // old snapshot compare: 0 — progression lost
+        expect(Atomics.load(sharedArray, DataType.VLP)).toBe(-1);
     });
 
     test("an empty slot produces no event and does not clear a later publish", () => {

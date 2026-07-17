@@ -162,11 +162,16 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
             }
         }
         const progress = Atomics.load(BrsDevice.sharedArray, DataType.VLP);
-        if (this.progress !== progress && progress >= 0 && progress <= 1000) {
-            this.progress = progress;
-            events.push(new RoVideoPlayerEvent(MediaEvent.Loading, progress));
-            if (progress === 1000) {
-                events.push(new RoVideoPlayerEvent(MediaEvent.StartPlay, 0));
+        if (progress >= 0 && progress <= 1000) {
+            // Consume the slot so an identical value published by a later load is still seen
+            // (a snapshot compare would skip the whole progression when a fast reload climbs
+            // back to the same value before this thread observes the load-start reset).
+            if (Atomics.compareExchange(BrsDevice.sharedArray, DataType.VLP, progress, -1) === progress) {
+                this.progress = progress;
+                events.push(new RoVideoPlayerEvent(MediaEvent.Loading, progress));
+                if (progress === 1000) {
+                    events.push(new RoVideoPlayerEvent(MediaEvent.StartPlay, 0));
+                }
             }
         }
         if (this.notificationPeriod >= 1) {
