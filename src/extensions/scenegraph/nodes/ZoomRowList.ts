@@ -233,7 +233,12 @@ export class ZoomRowList extends ArrayGrid {
             }
             next = (next + this.content.length) % this.content.length;
         }
-        if (next >= 0 && next < this.content.length) {
+        // Only consume the key when the focus actually moves to a different row. With a single row
+        // (or any wrap that lands back on the current row) the focus does not change, so the key must
+        // stay unhandled and propagate up the node tree — matching a real device, where up/down on a
+        // single-row grid moves focus to a sibling above/below (e.g. a ButtonBar). RowList guards the
+        // same way.
+        if (next >= 0 && next < this.content.length && next !== this.focusIndex) {
             super.setValue("scrollingStatus", BrsBoolean.True);
             this.focusIndex = next;
             this.rowFocus[next] ??= 0;

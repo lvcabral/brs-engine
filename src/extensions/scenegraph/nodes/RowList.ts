@@ -189,10 +189,8 @@ export class RowList extends ArrayGrid {
 
         const spacing = this.getRowItemSpacing(rowIndex); // Use the actual row's spacing
         const rowItemWidth = this.getRowItemWidth(rowIndex);
-        const cols = this.content[rowIndex]?.getNodeChildren();
-        const numCols = cols?.length ?? 0;
-        const totalRowWidth = numCols * rowItemWidth + (numCols - 1) * spacing[0];
-        const allItemsFitOnScreen = totalRowWidth <= this.sceneRect.width;
+        const cols = this.getContentChildren(this.content[rowIndex]);
+        const allItemsFitOnScreen = this.allItemsFitOnScreen(rowIndex, cols);
 
         // Adjust scroll offset based on animation style
         if (allItemsFitOnScreen && rowFocusStyle !== RowFocusStyle.Fixed) {
@@ -358,8 +356,8 @@ export class RowList extends ArrayGrid {
     protected handleLeftRight(key: string) {
         const offset = key === "left" ? -1 : 1;
         const currentRow = this.focusIndex;
-        const cols = this.content[currentRow]?.getNodeChildren();
-        const numCols = cols?.length ?? 0;
+        const cols = this.getContentChildren(this.content[currentRow]);
+        const numCols = cols.length;
 
         if (numCols <= 1) {
             return false;
@@ -368,7 +366,7 @@ export class RowList extends ArrayGrid {
         this.rowScrollOffset[currentRow] ??= 0;
 
         const rowItemWidth = this.getRowItemWidth(currentRow);
-        const allItemsFitOnScreen = this.checkIfAllItemsFitOnScreen(numCols, rowItemWidth);
+        const allItemsFitOnScreen = this.allItemsFitOnScreen(currentRow, cols);
         const rowFocusStyle = (this.getValueJS("rowFocusAnimationStyle") as string).toLowerCase();
 
         if (allItemsFitOnScreen && rowFocusStyle !== RowFocusStyle.Fixed) {
@@ -479,11 +477,30 @@ export class RowList extends ArrayGrid {
         return this.resolveVector(this.getValueJS("rowItemSpacing"), rowIndex, fallback);
     }
 
-    private checkIfAllItemsFitOnScreen(numCols: number, rowItemWidth: number): boolean {
-        // Use the focused row's spacing (this.focusIndex is the absolute row index)
-        const spacing = this.getRowItemSpacing(this.focusIndex);
-        const totalRowWidth = numCols * rowItemWidth + (numCols - 1) * spacing[0];
-        return totalRowWidth <= this.sceneRect.width;
+    /**
+     * Total laid-out width of a row's items plus inter-item spacing. For variable-width rows this sums
+     * each item's actual width (`getItemWidth`, which resolves the item's `[res]ItemWidth`) instead of
+     * `numCols * rowItemSize.x` — an app can set `rowItemSize.x` to the whole row/bar width (e.g. SGDEX
+     * ButtonBar) while the individual buttons are far narrower, so the uniform estimate hugely
+     * overshoots and makes the list think its items don't fit. Reduces to the uniform formula for
+     * non-variable rows.
+     */
+    private getTotalRowWidth(rowIndex: number, cols: ContentNode[]): number {
+        const numCols = cols.length;
+        if (numCols === 0) {
+            return 0;
+        }
+        const spacing = this.getRowItemSpacing(rowIndex);
+        const rowItemWidth = this.getRowItemWidth(rowIndex);
+        let total = (numCols - 1) * spacing[0];
+        for (let c = 0; c < numCols; c++) {
+            total += this.getItemWidth(rowIndex, c, cols, rowItemWidth);
+        }
+        return total;
+    }
+
+    private allItemsFitOnScreen(rowIndex: number, cols: ContentNode[]): boolean {
+        return this.getTotalRowWidth(rowIndex, cols) <= this.sceneRect.width;
     }
 
     private handleAllItemsFit(currentRow: number, numCols: number, offset: number): boolean {
@@ -745,7 +762,7 @@ export class RowList extends ArrayGrid {
                 height: this.sceneRect.height,
             });
         }
-        this.renderRowContent(rowIndex, cols, numCols, context.rowItemWidth, spacing, context.itemRect, context);
+        this.renderRowContent(rowIndex, cols, context.rowItemWidth, spacing, context.itemRect, context);
         if (clip) {
             context.draw2D?.popClip();
         }
@@ -777,14 +794,12 @@ export class RowList extends ArrayGrid {
     private renderRowContent(
         rowIndex: number,
         cols: ContentNode[],
-        numCols: number,
         rowItemWidth: number,
         spacing: number[],
         itemRect: Rect,
         context: RowListRenderContext
     ): void {
-        const totalRowWidth = numCols * rowItemWidth + (numCols - 1) * spacing[0];
-        const allItemsFitOnScreen = totalRowWidth <= this.sceneRect.width;
+        const allItemsFitOnScreen = this.allItemsFitOnScreen(rowIndex, cols);
         const rowFocusStyle = (this.getValueJS("rowFocusAnimationStyle") as string).toLowerCase();
 
         this.rowScrollOffset[rowIndex] ??= 0;
@@ -943,14 +958,8 @@ export class RowList extends ArrayGrid {
         const content = cols[colIndex];
         const nodeFocus = sgRoot.focused === this;
 
-        // Check if all items in this row fit on screen by checking if last item fits
-        const numCols = cols.length;
-        const rowItemWidth = itemRect.width;
-        const spacing = this.getRowItemSpacing(rowIndex);
-        const lastItemX =
-            itemRect.x - colIndex * (rowItemWidth + spacing[0]) + (numCols - 1) * (rowItemWidth + spacing[0]);
-        const lastItemRightEdge = lastItemX + rowItemWidth;
-        const allItemsFitOnScreen = lastItemRightEdge <= this.sceneRect.width;
+        // Sum the row's actual (possibly variable) item widths to decide whether it all fits.
+        const allItemsFitOnScreen = this.allItemsFitOnScreen(rowIndex, cols);
 
         // Determine focus behavior based on animation style and screen fit
         let focused = false;
@@ -1028,7 +1037,7 @@ export class RowList extends ArrayGrid {
             return;
         }
         const showShortRows = (this.getValueJS("showRowCounterForShortRows") as boolean) ?? true;
-        if (!showShortRows && this.checkIfAllItemsFitOnScreen(numCols, context.rowItemWidth)) {
+        if (!showShortRows && this.allItemsFitOnScreen(rowIndex, this.getContentChildren(this.content[rowIndex]))) {
             return;
         }
         const font = this.getValue("rowLabelFont") as Font;
