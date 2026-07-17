@@ -48,17 +48,31 @@ export class Field {
     private notifying = false;
 
     // ---- Roku-accurate deferred observer dispatch (per Worker thread) -------------------------
-    // On a real Roku, a function-name field observer is dispatched from the owning thread's
-    // message loop; it does NOT run reentrantly in the middle of another observer's execution.
-    // We reproduce that: when a Callable observer would fire while another Callable observer is
-    // already executing (reentrant) — and the notification is not part of a ContentNode
-    // parentField cascade — we queue it and drain it FIFO once the outermost dispatch unwinds.
+    // On a real Roku, a DIRECT BrightScript field assignment (`node.field = x`) on the owning
+    // thread fires function-name observers synchronously, even nested inside another observer —
+    // apps rely on set-then-read-back (assign a field, immediately read a value the observer
+    // computed). What Roku dispatches from the message loop are fields changed by a node's
+    // INTERNAL machinery (e.g. `itemFocused` emitted by an ArrayGrid processing `jumpToItem`,
+    // `content`, or a focus move): those observers do not run reentrantly in the middle of another
+    // observer's execution. We reproduce that: when a Callable observer for an engine-initiated
+    // emission (`internalUpdateDepth` > 0) would fire while another Callable observer is already
+    // executing (reentrant) — and the notification is not part of a ContentNode parentField
+    // cascade — we queue it and drain it FIFO once the outermost dispatch unwinds.
     // Same-field re-notification (`notifying`) and same-ContentNode re-entry (`propagating`) are
     // still suppressed before reaching this path, so the #904/#905/#943 cascades are unaffected.
     /** Depth of Callable observers currently executing on this thread (the reentrancy gate). */
     private static observerDepth = 0;
     /** >0 while inside `ContentNode.notifyParentFields`; disables deferral for cascade observers. */
     private static parentCascadeDepth = 0;
+    /**
+     * >0 while engine machinery (not app BrightScript) is emitting field changes — grid focus
+     * bookkeeping such as `itemFocused`/`rowItemFocused`. Only those notifications defer; a direct
+     * BrightScript assignment always dispatches synchronously (Roku's set-then-read-back
+     * semantics). Stashed to 0 while an observer callback executes (`invoke`), so a handler
+     * dispatched from inside an engine emission still has its own direct assignments treated as
+     * app-initiated; a nested engine site re-enters and is again marked internal.
+     */
+    private static internalUpdateDepth = 0;
     /**
      * True while draining the deferred queue. Deferral happens only ONCE, at the boundary of the
      * original top-level handler; once we start draining, the reentrant cascade runs synchronously
@@ -81,10 +95,21 @@ export class Field {
         Field.parentCascadeDepth--;
     }
 
+    /** Marks entry into an engine-initiated field emission (message-loop dispatch on Roku). */
+    static enterInternalUpdate() {
+        Field.internalUpdateDepth++;
+    }
+
+    /** Marks exit from an engine-initiated field emission. */
+    static exitInternalUpdate() {
+        Field.internalUpdateDepth--;
+    }
+
     /** Resets deferred-dispatch state between app runs so nothing leaks across setups. */
     static resetDispatch() {
         Field.observerDepth = 0;
         Field.parentCascadeDepth = 0;
+        Field.internalUpdateDepth = 0;
         Field.draining = false;
         Field.deferredQueue.length = 0;
     }
@@ -506,12 +531,19 @@ export class Field {
             return;
         }
 
-        // Roku-accurate deferral: if another Callable observer is already executing (reentrant) and
-        // this notification is not part of a ContentNode parentField cascade, queue it and let the
-        // outermost dispatch drain it after the current handler returns.
+        // Roku-accurate deferral: if this notification comes from an engine-initiated emission
+        // (grid focus bookkeeping — a direct BrightScript assignment never defers), another
+        // Callable observer is already executing (reentrant), and it is not part of a ContentNode
+        // parentField cascade, queue it and let the outermost dispatch drain it after the current
+        // handler returns.
         // Defer only while inside the ORIGINAL top-level handler (not while draining). Once draining,
         // the cascade runs synchronously/nested so the per-field `notifying` guards terminate it.
-        if (Field.observerDepth > 0 && !Field.draining && Field.parentCascadeDepth === 0) {
+        if (
+            Field.internalUpdateDepth > 0 &&
+            Field.observerDepth > 0 &&
+            !Field.draining &&
+            Field.parentCascadeDepth === 0
+        ) {
             Field.deferredQueue.push({ field: this, callback, event });
             return;
         }
@@ -591,6 +623,23 @@ export class Field {
 
     /** Runs a single Callable observer callback with the caller's host node / m scope restored. */
     private invoke(callback: BrsCallback, event: RoSGNodeEvent) {
+        if (!(callback.observer instanceof Callable)) {
+            return;
+        }
+        // While the handler's BrightScript executes, its direct field assignments are
+        // app-initiated even when this dispatch happens inside an engine emission site (e.g. a
+        // panel callback fired from ArrayGrid.setFocusedItem). Stash the internal-update marker
+        // and restore it after; a nested engine site re-enters it on its own.
+        const stashedInternalDepth = Field.internalUpdateDepth;
+        Field.internalUpdateDepth = 0;
+        try {
+            this.invokeCallable(callback, event);
+        } finally {
+            Field.internalUpdateDepth = stashedInternalDepth;
+        }
+    }
+
+    private invokeCallable(callback: BrsCallback, event: RoSGNodeEvent) {
         const { interpreter, observer, hostNode, environment } = callback;
         if (!(observer instanceof Callable)) {
             return;

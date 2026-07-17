@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Models a real app regression: a settings panel built inside a panel-creation observer sizes
+    its menu by creating a detached item component, assigning its `itemContent`, and immediately
+    reading back the `calculatedWidth` its observer computes. A direct BrightScript assignment
+    must dispatch the item's observer synchronously even though another observer (onBuild) is
+    already executing — deferring it makes the read-back see 0 and the menu collapses to zero
+    width. Only engine-initiated emissions (e.g. itemFocused) defer to the handler boundary.
+-->
+<component name="MainScene" extends="Scene">
+    <interface>
+        <field id="runTrigger" type="integer" onChange="onBuild" />
+    </interface>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+    end sub
+
+    sub onBuild()
+        print "onBuild"
+        widest = 0
+        for each title in ["Little Kids", "Older Kids", "Teens", "Adults"]
+            content = createObject("roSGNode", "ContentNode")
+            content.title = title
+            checkItem = createObject("roSGNode", "CheckItem")
+            ' Set-then-read-back: the itemContent observer computes calculatedWidth and it
+            ' must be visible on the very next statement.
+            checkItem.itemContent = content
+            if checkItem.calculatedWidth > widest
+                widest = checkItem.calculatedWidth
+            end if
+        end for
+        print "widest > 0: "; (widest > 0)
+        print "onBuild done"
+    end sub
+    ]]></script>
+</component>

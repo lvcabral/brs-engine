@@ -497,21 +497,22 @@ describe("cli", () => {
         ]);
     }, 10000);
 
-    it("A deferred observer that rewrites its own alwaysNotify field does not loop", async () => {
+    it("A reentrant observer that rewrites its own alwaysNotify field does not loop", async () => {
         let command = ["node", brsCliPath, "-r observer-loop-app", "source/main.brs", "-c 0"].join(" ");
 
         let { stdout } = await exec(command, {
             cwd: path.join(__dirname, "resources"),
         });
         // aliasField is alwaysNotify with an onChange (onAlias) that writes the same field back to
-        // itself. When onAlias runs deferred (reassigned from inside onSelected), the per-field
-        // notifying guard must stay held across the deferred run so the self-write is suppressed;
-        // otherwise it re-enqueues forever (observer drain limit). onAlias must fire exactly once.
+        // itself. A direct BrightScript assignment dispatches synchronously even inside another
+        // observer (only engine-initiated emissions defer), so onAlias runs nested inside
+        // onSelected and the per-field notifying guard suppresses the re-entrant self-write.
+        // onAlias must fire exactly once.
         expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
             "=== Observer Loop Repro ===",
             "onSelected",
-            "onSelected done",
             "onAlias count= 1",
+            "onSelected done",
             "=== Observer Loop Repro Complete ===",
             "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
             "",
@@ -526,17 +527,40 @@ describe("cli", () => {
             cwd: path.join(__dirname, "resources"),
         });
         // fieldF.onChange writes fieldG and fieldG.onChange writes fieldF (both alwaysNotify),
-        // reassigned from inside an observer so both defer. Deferral must happen only at the
-        // original handler boundary; once draining, the cascade runs synchronously/nested so the
-        // per-field notifying guards terminate it. Each observer fires exactly once (the manual
-        // field-alias ping-pong flood).
+        // reassigned from inside an observer. Direct BrightScript assignments dispatch
+        // synchronously/nested even when reentrant (only engine-initiated emissions defer), so the
+        // per-field notifying guards (F held while G runs) terminate the cascade in one round.
+        // Each observer fires exactly once (the manual field-alias ping-pong flood).
         expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
             "=== Cross Alias Loop Repro ===",
             "onStart",
-            "onStart done",
             "onF count= 1",
             "onG count= 1",
+            "onStart done",
             "=== Cross Alias Loop Repro Complete ===",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 10000);
+
+    it("Dispatches a direct field assignment's observer synchronously inside another observer", async () => {
+        let command = ["node", brsCliPath, "-r observer-readback-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // A panel-creation observer builds a menu by assigning a detached item component's
+        // itemContent and immediately reading back the calculatedWidth its observer computes
+        // (the fit-to-content list-sizing pattern). The assignment is direct BrightScript, so
+        // its observer must run synchronously even one observer level deep — deferring it makes
+        // the read-back see 0 and the menu collapses to zero width.
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "=== Observer Readback Repro ===",
+            "onBuild",
+            "widest > 0: true",
+            "onBuild done",
+            "=== Observer Readback Repro Complete ===",
             "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
             "",
             "",

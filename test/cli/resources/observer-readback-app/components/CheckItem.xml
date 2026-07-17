@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Models a fit-to-content list item: assigning `itemContent` triggers an observer that sets a
+    label's text, measures it, and publishes the result in `calculatedWidth`. Apps assign
+    `itemContent` and read `calculatedWidth` back on the very next statement, so the observer
+    must dispatch synchronously even when the assignment happens inside another observer.
+-->
+<component name="CheckItem" extends="Group">
+    <interface>
+        <field id="itemContent" type="node" />
+        <field id="calculatedWidth" type="float" value="0.0" />
+    </interface>
+    <children>
+        <Label id="itemLabel" />
+    </children>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.label = m.top.findNode("itemLabel")
+        m.top.observeFieldScoped("itemContent", "onItemContentChange")
+    end sub
+
+    sub onItemContentChange(event as object)
+        itemContent = event.getData()
+        if itemContent <> invalid
+            m.label.text = itemContent.title
+            ' Measure the label and publish the derived width for the owner to read back.
+            m.top.calculatedWidth = m.label.boundingRect().width + 32
+        end if
+    end sub
+    ]]></script>
+</component>
