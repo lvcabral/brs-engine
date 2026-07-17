@@ -194,7 +194,6 @@ export class SGRoot {
     private audioIndex: number = -1;
     private audioDuration: number = -1;
     private audioPosition: number = -1;
-    private videoEvent: number = -1;
     private videoIndex: number = -1;
     private videoProgress: number = -1;
     private videoDuration: number = -1;
@@ -575,7 +574,6 @@ export class SGRoot {
      */
     setVideo(video: Video) {
         this._video = video;
-        this.videoEvent = -1;
         this.videoIndex = -1;
         this.videoProgress = -1;
         this.videoDuration = -1;
@@ -616,12 +614,14 @@ export class SGRoot {
         }
         this.videoProgress = progress;
         const eventType = Atomics.load(BrsDevice.sharedArray, DataType.VDO);
-        const eventIndex = Atomics.load(BrsDevice.sharedArray, DataType.VDX);
-        if (eventType !== this.videoEvent) {
-            this.videoEvent = eventType;
-            if (eventType >= 0) {
+        if (eventType >= 0) {
+            const eventIndex = Atomics.load(BrsDevice.sharedArray, DataType.VDX);
+            // Consume the event exactly once: the CAS clears the slot so a same-type event
+            // published right after this one is still seen (a snapshot compare would drop it
+            // and leave the slot stuck). If the CAS fails, the main thread published a newer
+            // event between the load and the exchange; it is picked up next tick.
+            if (Atomics.compareExchange(BrsDevice.sharedArray, DataType.VDO, eventType, -1) === eventType) {
                 this._video.setState(eventType, eventIndex);
-                Atomics.store(BrsDevice.sharedArray, DataType.VDO, -1);
                 isDirty = true;
             }
         }
