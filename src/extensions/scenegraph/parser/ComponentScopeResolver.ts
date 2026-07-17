@@ -48,7 +48,7 @@ export class ComponentScopeResolver {
             for (const statement of statements) {
                 const filePath = statement instanceof Stmt.Library ? statement.tokens.filePath : undefined;
                 if (filePath) {
-                    libraryNames.add(filePath.text.slice(1, filePath.text.length - 1));
+                    libraryNames.add(filePath.text.slice(1, -1));
                 }
             }
         }
