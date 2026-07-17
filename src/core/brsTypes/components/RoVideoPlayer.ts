@@ -23,8 +23,6 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
     private port?: RoMessagePort;
     private contentList: RoAssociativeArray[];
     private notificationPeriod: number;
-    private eventType: number;
-    private eventIndex: number;
     private position: number;
     private progress: number;
     private selected: number;
@@ -38,8 +36,6 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
         super("roVideoPlayer");
         this.contentList = new Array();
         this.notificationPeriod = 0;
-        this.eventType = -1;
-        this.eventIndex = -1;
         this.position = 0;
         this.progress = -1;
         this.selected = 0;
@@ -154,22 +150,28 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
             }
         }
         const eventType = Atomics.load(BrsDevice.sharedArray, DataType.VDO);
-        const eventIndex = Atomics.load(BrsDevice.sharedArray, DataType.VDX);
-        if (eventType !== this.eventType || eventIndex !== this.eventIndex) {
-            this.eventType = eventType;
-            this.eventIndex = eventIndex;
-            if (this.eventType >= 0) {
-                events.push(new RoVideoPlayerEvent(this.eventType, this.eventIndex, this.selected));
-                Atomics.store(BrsDevice.sharedArray, DataType.VDO, -1);
+        if (eventType >= 0) {
+            const eventIndex = Atomics.load(BrsDevice.sharedArray, DataType.VDX);
+            // Consume the event exactly once: the CAS clears the slot so a same-type event
+            // published right after this one is still seen (a snapshot compare would drop it
+            // and leave the slot stuck). If the CAS fails, the render thread published a newer
+            // event between the load and the exchange; it is picked up next call.
+            if (Atomics.compareExchange(BrsDevice.sharedArray, DataType.VDO, eventType, -1) === eventType) {
+                events.push(new RoVideoPlayerEvent(eventType, eventIndex, this.selected));
                 Atomics.store(BrsDevice.sharedArray, DataType.VDX, -1);
             }
         }
         const progress = Atomics.load(BrsDevice.sharedArray, DataType.VLP);
-        if (this.progress !== progress && progress >= 0 && progress <= 1000) {
-            this.progress = progress;
-            events.push(new RoVideoPlayerEvent(MediaEvent.Loading, progress));
-            if (progress === 1000) {
-                events.push(new RoVideoPlayerEvent(MediaEvent.StartPlay, 0));
+        if (progress >= 0 && progress <= 1000) {
+            // Consume the slot so an identical value published by a later load is still seen
+            // (a snapshot compare would skip the whole progression when a fast reload climbs
+            // back to the same value before this thread observes the load-start reset).
+            if (Atomics.compareExchange(BrsDevice.sharedArray, DataType.VLP, progress, -1) === progress) {
+                this.progress = progress;
+                events.push(new RoVideoPlayerEvent(MediaEvent.Loading, progress));
+                if (progress === 1000) {
+                    events.push(new RoVideoPlayerEvent(MediaEvent.StartPlay, 0));
+                }
             }
         }
         if (this.notificationPeriod >= 1) {

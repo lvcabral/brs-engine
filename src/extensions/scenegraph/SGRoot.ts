@@ -194,7 +194,6 @@ export class SGRoot {
     private audioIndex: number = -1;
     private audioDuration: number = -1;
     private audioPosition: number = -1;
-    private videoEvent: number = -1;
     private videoIndex: number = -1;
     private videoProgress: number = -1;
     private videoDuration: number = -1;
@@ -575,7 +574,6 @@ export class SGRoot {
      */
     setVideo(video: Video) {
         this._video = video;
-        this.videoEvent = -1;
         this.videoIndex = -1;
         this.videoProgress = -1;
         this.videoDuration = -1;
@@ -600,28 +598,41 @@ export class SGRoot {
         }
         let isDirty = false;
         const progress = Atomics.load(BrsDevice.sharedArray, DataType.VLP);
-        if (progress >= 0 && progress <= 1000 && this.videoProgress !== progress) {
-            // Emit the intermediate buffering steps between the last reported value and the
-            // current one, so a consumer that gates on a specific percentage never misses a
-            // threshold when the render loop is starved (e.g. during Task startup) and the load
-            // progress jumps. Apps commonly start playback at ~33% ("prebufferDone") and reveal
-            // UI at ~99%; delivering only a jump straight to 100% would skip the 33% callback and
-            // the video would never start. Mirrors a real device's gradual buffering progression.
-            let reported = Math.max(this.videoProgress, 0);
-            while (reported + 200 < progress) {
-                reported += 200;
-                this._video.setState(MediaEvent.Loading, Math.trunc(reported / 10));
+        if (progress >= 0 && progress <= 1000) {
+            // Consume the slot so an identical value published by a LATER load is still seen.
+            // Apps commonly reuse a single Video node across content: nothing resets
+            // `videoProgress` between loads, and a fast (cached) load can climb back to the same
+            // value before this thread ever observes the main thread's load-start reset. A
+            // snapshot compare would then skip the whole buffering progression, and an app that
+            // requires bufferingStatus to reach 100% before state turns "playing" (a real-device
+            // guarantee) would never reveal its player.
+            if (Atomics.compareExchange(BrsDevice.sharedArray, DataType.VLP, progress, -1) === progress) {
+                // Emit the intermediate buffering steps between the last reported value and the
+                // current one, so a consumer that gates on a specific percentage never misses a
+                // threshold when the render loop is starved (e.g. during Task startup) and the
+                // load progress jumps. Apps commonly start playback at ~33% ("prebufferDone") and
+                // reveal UI at ~99%; delivering only a jump straight to 100% would skip the 33%
+                // callback and the video would never start. Mirrors a real device's gradual
+                // buffering progression. A regressed value means a new load began, so the
+                // progression restarts from zero.
+                let reported = progress < this.videoProgress ? 0 : Math.max(this.videoProgress, 0);
+                while (reported + 200 < progress) {
+                    reported += 200;
+                    this._video.setState(MediaEvent.Loading, Math.trunc(reported / 10));
+                }
+                this._video.setState(MediaEvent.Loading, Math.trunc(progress / 10));
+                this.videoProgress = progress;
             }
-            this._video.setState(MediaEvent.Loading, Math.trunc(progress / 10));
         }
-        this.videoProgress = progress;
         const eventType = Atomics.load(BrsDevice.sharedArray, DataType.VDO);
-        const eventIndex = Atomics.load(BrsDevice.sharedArray, DataType.VDX);
-        if (eventType !== this.videoEvent) {
-            this.videoEvent = eventType;
-            if (eventType >= 0) {
+        if (eventType >= 0) {
+            const eventIndex = Atomics.load(BrsDevice.sharedArray, DataType.VDX);
+            // Consume the event exactly once: the CAS clears the slot so a same-type event
+            // published right after this one is still seen (a snapshot compare would drop it
+            // and leave the slot stuck). If the CAS fails, the main thread published a newer
+            // event between the load and the exchange; it is picked up next tick.
+            if (Atomics.compareExchange(BrsDevice.sharedArray, DataType.VDO, eventType, -1) === eventType) {
                 this._video.setState(eventType, eventIndex);
-                Atomics.store(BrsDevice.sharedArray, DataType.VDO, -1);
                 isDirty = true;
             }
         }
