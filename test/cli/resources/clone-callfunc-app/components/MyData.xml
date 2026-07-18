@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="MyData" extends="ContentNode">
+    <interface>
+        <function name="readTop" />
+        <function name="readGlobal" />
+    </interface>
+    <script type="text/brightscript"><![CDATA[
+    function readTop() as string
+        if m.top <> invalid then
+            return m.top.subtype()
+        end if
+        return "INVALID_TOP"
+    end function
+
+    function readGlobal() as string
+        if m.global <> invalid then
+            return "VALID_GLOBAL"
+        end if
+        return "INVALID_GLOBAL"
+    end function
+    ]]></script>
+</component>

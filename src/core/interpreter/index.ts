@@ -1150,6 +1150,12 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             this._tryMode = tryMode;
         } catch (err: any) {
             this._tryMode = tryMode;
+            if (this.inExitMode()) {
+                // The debugger's `quit`/EXIT unwinds by re-throwing the original RuntimeError. Let it
+                // propagate past user try/catch so the app terminates instead of the catch block
+                // swallowing the exit and looping forever.
+                throw err;
+            }
             if (!(err instanceof BrsError) || err instanceof Stmt.GotoLabel || err instanceof Stmt.ReturnValue) {
                 throw err;
             }

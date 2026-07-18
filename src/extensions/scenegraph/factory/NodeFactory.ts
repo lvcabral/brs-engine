@@ -447,6 +447,14 @@ function createNodeByTypeDef(typeDef: ComponentDefinition, subtype: string): Nod
                 }
                 node.addNodeField(fieldName, fieldValue.type, fieldValue.alwaysNotify === "true", false);
             }
+            // Flat/deserialized nodes skip initializeNode(), so establish the `m` context here
+            // (top/global) that a custom component's script functions expect. Without it, invoking
+            // a public function via callFunc on a cross-thread-restored or cloned node runs with an
+            // empty `m`, so `m.top` is invalid and the call crashes.
+            const mPointer = new RoAssociativeArray([]);
+            mPointer.set(new BrsString("top"), node);
+            mPointer.set(new BrsString("global"), sgRoot.mGlobal);
+            node.m = mPointer;
         }
     }
     return node;

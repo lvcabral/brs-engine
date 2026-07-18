@@ -615,6 +615,28 @@ describe("cli", () => {
         expect(stderr).toContain('Attempt to add duplicate field "sharedField" to RokuML component "XmlChildComp"');
     }, 10000);
 
+    it("Restores the m context on a rebuilt custom component so callFunc sees m.top/m.global", async () => {
+        let command = ["node", brsCliPath, "-r clone-callfunc-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // A custom component subclassing a data node is rebuilt through createFlatNode (the same
+        // path a cross-thread Task copy takes; clone() exercises it single-threaded). Before the fix
+        // the rebuilt node had an empty `m`, so invoking a public function via callFunc ran with an
+        // invalid `m.top` and crashed. Both fields must now resolve.
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "=== Clone CallFunc Repro ===",
+            "clone subtype = MyData",
+            "readTop = MyData",
+            "readGlobal = VALID_GLOBAL",
+            "=== Clone CallFunc Repro Complete ===",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 10000);
+
     it("Reparents a node when it is attached to a different parent", async () => {
         let command = ["node", brsCliPath, "-r reparent-app", "source/main.brs", "-c 0"].join(" ");
 
