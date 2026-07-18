@@ -915,6 +915,30 @@ describe("cli", () => {
         ]);
     }, 10000);
 
+    it("includes the source location in roArray warnings (dev mode)", async () => {
+        let command = ["node", brsCliPath, "roArrayWarnings.brs", "-c 0"].join(" ");
+
+        let { stdout, stderr } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+            env: { ...process.env, NODE_ENV: "development" },
+        });
+
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "join result: []",
+            "done",
+            "------ Finished 'roArrayWarnings.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+        expect(stderr).toContain(
+            "roArray.Join: Array contains non-string value(s). pkg:/source/roArrayWarnings.brs(4)"
+        );
+        expect(stderr).toContain("roArray.Sort: Flags contains invalid option(s). pkg:/source/roArrayWarnings.brs(8)");
+        expect(stderr).toContain(
+            "roArray.SortBy: Flags contains invalid option(s). pkg:/source/roArrayWarnings.brs(12)"
+        );
+    }, 10000);
+
     describe("SceneGraph .bpk encryption", () => {
         const password = "abcdefghij0123456789abcdefghij01"; // 32 chars (AES-256 key)
         const expected = [

@@ -9,6 +9,7 @@ import {
     BrsEvent,
     RoVideoPlayerEvent,
     toAssociativeArray,
+    isBrsString,
 } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
@@ -105,20 +106,20 @@ export class RoVideoPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
         for (const aa of this.contentList) {
             const item = { url: "", streamFormat: "", audioTrack: -1 };
             let url = aa.get(new BrsString("url"));
-            if (url instanceof BrsString) {
-                item.url = this.getFullUrl(url.value);
+            if (isBrsString(url)) {
+                item.url = this.getFullUrl(url.getValue());
             } else {
                 const stream = aa.get(new BrsString("stream"));
                 if (stream instanceof RoAssociativeArray) {
                     url = stream.get(new BrsString("url"));
-                    if (url instanceof BrsString) {
-                        item.url = this.getFullUrl(url.value);
+                    if (isBrsString(url)) {
+                        item.url = this.getFullUrl(url.getValue());
                     }
                 }
             }
             let streamFormat = aa.get(new BrsString("streamFormat"));
-            if (streamFormat instanceof BrsString) {
-                item.streamFormat = streamFormat.value.toLowerCase();
+            if (isBrsString(streamFormat)) {
+                item.streamFormat = streamFormat.getValue().toLowerCase();
             }
             contents.push(item);
         }
