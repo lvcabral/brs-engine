@@ -1,6 +1,6 @@
 const brs = require("../../../packages/node/bin/brs.node");
 const { Interpreter } = brs;
-const { RoArray, RoAssociativeArray, BrsBoolean, BrsString, Int32, BrsInvalid, Float } = brs.types;
+const { RoArray, RoAssociativeArray, RoString, BrsBoolean, BrsString, Int32, BrsInvalid, Float } = brs.types;
 const { createMockStreams } = require("../../e2e/E2ETests");
 
 describe("RoArray", () => {
@@ -294,6 +294,25 @@ describe("RoArray", () => {
                 let join = src.getMethod("join");
                 expect(join).toBeTruthy();
                 expect(join.call(interpreter, new BrsString(","))).toEqual(new BrsString(""));
+            });
+
+            it("joins boxed string elements (roString)", () => {
+                let a = new RoString(new BrsString("a"));
+                let b = new BrsString("b");
+                let c = new RoString(new BrsString("c"));
+                let src = new RoArray([a, b, c]);
+
+                let join = src.getMethod("join");
+                expect(join).toBeTruthy();
+                expect(join.call(interpreter, new BrsString(","))).toEqual(new BrsString("a,b,c"));
+            });
+
+            it("joins an array of only boxed strings", () => {
+                let src = new RoArray([new RoString(new BrsString("x")), new RoString(new BrsString("y"))]);
+
+                let join = src.getMethod("join");
+                expect(join).toBeTruthy();
+                expect(join.call(interpreter, new BrsString("-"))).toEqual(new BrsString("x-y"));
             });
         });
 
