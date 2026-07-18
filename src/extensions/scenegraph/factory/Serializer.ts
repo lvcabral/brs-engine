@@ -21,6 +21,7 @@ import {
     BrsObjects,
     Callable,
     StdlibArgument,
+    BrsDevice,
 } from "brs-engine";
 import { createFlatNode } from "./NodeFactory";
 import { ContentNode, Node, SGNodeType } from "../nodes";
@@ -32,10 +33,13 @@ import { sgRoot } from "../SGRoot";
  * @param {BrsType} value Some BrsType value.
  * @param {boolean} deep Whether to recursively convert nested structures. Defaults to true.
  * @param {Node} host Optional host node for observing context.
- * @param {WeakSet<Node>} visitedNodes Optional set to track visited nodes for circular reference detection.
+ * @param {WeakSet<object>} visited Optional set tracking visited nodes and containers for circular
+ * reference detection. Nodes stay in the set for the whole pass (deduped as `_circular_` stubs);
+ * arrays/AAs are tracked per-path (entered on descent, released on return) so a container referenced
+ * twice still serializes both times, while a container reachable from itself serializes as `null`.
  * @return {any} The JavaScript representation of `x`.
  */
-export function jsValueOf(value: BrsType, deep: boolean = true, host?: Node, visitedNodes?: WeakSet<Node>): any {
+export function jsValueOf(value: BrsType, deep: boolean = true, host?: Node, visited?: WeakSet<object>): any {
     if (value?.kind === undefined) {
         return undefined;
     } else if (isUnboxable(value)) {
@@ -59,13 +63,28 @@ export function jsValueOf(value: BrsType, deep: boolean = true, host?: Node, vis
         case ValueKind.Interface:
         case ValueKind.Object:
             if (value instanceof RoArray || value instanceof RoList) {
-                return value.elements.map((el) => jsValueOf(el, deep, host, visitedNodes));
+                visited ??= new WeakSet<object>();
+                if (visited.has(value)) {
+                    warnCyclicContainer(value.getComponentName());
+                    return null;
+                }
+                visited.add(value);
+                try {
+                    const elements = value.elements.map((el) => jsValueOf(el, deep, host, visited));
+                    return elements;
+                } finally {
+                    visited.delete(value);
+                }
             } else if (value instanceof RoByteArray) {
                 return value.elements;
             } else if (value instanceof Node) {
-                return fromSGNode(value, deep, host, visitedNodes);
+                return fromSGNode(value, deep, host, visited);
             } else if (value instanceof RoAssociativeArray) {
-                return fromAssociativeArray(value, deep, host, visitedNodes);
+                if (visited?.has(value)) {
+                    warnCyclicContainer(value.getComponentName());
+                    return null;
+                }
+                return fromAssociativeArray(value, deep, host, visited);
             } else if (value instanceof BrsComponent) {
                 return { _component_: value.getComponentName() };
             } else if (value instanceof BrsInterface) {
@@ -74,6 +93,17 @@ export function jsValueOf(value: BrsType, deep: boolean = true, host?: Node, vis
             break;
         case ValueKind.Callable:
             return { _callable_: value.name };
+    }
+}
+
+/** One-shot warning when a cyclic container is dropped during cross-thread serialization. */
+let warnedCyclicContainer = false;
+function warnCyclicContainer(componentName: string) {
+    if (!warnedCyclicContainer) {
+        warnedCyclicContainer = true;
+        BrsDevice.stderr.write(
+            `warning,[sg] Dropped circular ${componentName} reference during cross-thread serialization`
+        );
     }
 }
 
@@ -118,20 +148,30 @@ export function brsValueOf(value: any, cs?: boolean, nodeMap?: Map<string, Node>
  * @param aa The RoAssociativeArray to convert.
  * @param deep Whether to recursively convert nested structures. Defaults to true.
  * @param host Optional host node for observing context.
- * @param visitedNodes Optional set to track visited nodes for circular reference detection.
+ * @param visited Optional set tracking visited nodes and containers for circular reference detection.
  * @returns A JavaScript object with the converted properties.
  */
 export function fromAssociativeArray(
     aa: RoAssociativeArray,
     deep: boolean = true,
     host?: Node,
-    visitedNodes?: WeakSet<Node>
+    visited?: WeakSet<object>
 ): FlexObject {
-    const result: FlexObject = {};
-    for (const [key, value] of aa.elements) {
-        result[key] = jsValueOf(value, deep, host, visitedNodes);
+    visited ??= new WeakSet<object>();
+    if (visited.has(aa)) {
+        warnCyclicContainer(aa.getComponentName());
+        return {};
     }
-    return result;
+    visited.add(aa);
+    try {
+        const result: FlexObject = {};
+        for (const [key, value] of aa.elements) {
+            result[key] = jsValueOf(value, deep, host, visited);
+        }
+        return result;
+    } finally {
+        visited.delete(aa);
+    }
 }
 
 /**
@@ -454,8 +494,8 @@ export function updateSGNode(obj: any, targetNode: Node, nodeMap?: Map<string, N
  * @param visited Optional WeakSet to track visited nodes and prevent circular references.
  * @returns A JavaScript object with the converted fields.
  */
-export function fromSGNode(node: Node, deep: boolean = true, host?: Node, visited?: WeakSet<Node>): FlexObject {
-    visited ??= new WeakSet<Node>();
+export function fromSGNode(node: Node, deep: boolean = true, host?: Node, visited?: WeakSet<object>): FlexObject {
+    visited ??= new WeakSet<object>();
     if (visited.has(node)) {
         return {
             _circular_: `${node.nodeType}:${node.nodeSubtype}`,
