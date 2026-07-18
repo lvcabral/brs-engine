@@ -144,6 +144,17 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
             headers = typeof headerValue === "string" ? headerValue : headers;
             this.failureReason = xhr.statusText ?? "";
             responseText = responseType === "text" ? xhr.responseText : "";
+            if (responseType === "text") {
+                const signature = detectBinarySignature(responseText);
+                if (signature) {
+                    const contentType = getResponseHeaderValue(headers, "content-type");
+                    const preview = responseText.slice(0, 16).replaceAll(/[^\x20-\x7e]/g, ".");
+                    BrsDevice.stderr.write(
+                        `warning,BRIGHTSCRIPT: WARNING: roUrlTransfer received binary (${signature}) where text was expected: ` +
+                            `url=${this.url} status=${status} content-type=${contentType} length=${responseText.length} preview="${preview}"`
+                    );
+                }
+            }
             onSuccess?.(xhr);
         } catch (error: any) {
             if (error instanceof HttpError) {
@@ -735,4 +746,38 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
             return new BrsString(`Roku/DVP-${short} (${long})`);
         },
     });
+}
+
+// Leading-byte signatures of common binary/image formats, keyed to a readable label.
+// Used to detect a binary payload delivered where a text (JSON/XML) body was expected.
+const BINARY_SIGNATURES: readonly [string, string][] = [
+    ["GIF87a", "GIF"],
+    ["GIF89a", "GIF"],
+    ["\x89PNG", "PNG"],
+    ["\xff\xd8\xff", "JPEG"],
+    ["PK\x03\x04", "ZIP"],
+    ["%PDF", "PDF"],
+    ["RIFF", "RIFF/WEBP"],
+];
+
+function detectBinarySignature(body: string): string | undefined {
+    for (const [magic, label] of BINARY_SIGNATURES) {
+        if (body.startsWith(magic)) {
+            return label;
+        }
+    }
+    return undefined;
+}
+
+// Pulls a single header value (case-insensitive) out of the raw header block produced by
+// XMLHttpRequest.getAllResponseHeaders() (CRLF-separated "Name: value" lines).
+function getResponseHeaderValue(headers: string, name: string): string {
+    const target = name.toLowerCase();
+    for (const line of headers.split("\n")) {
+        const idx = line.indexOf(":");
+        if (idx > 0 && line.slice(0, idx).trim().toLowerCase() === target) {
+            return line.slice(idx + 1).trim();
+        }
+    }
+    return "unknown";
 }
