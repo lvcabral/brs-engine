@@ -1454,7 +1454,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     visitFor(statement: Stmt.For): BrsType {
         // BrightScript for/to loops evaluate the counter initial value, final value, and increment
         // values *only once*, at the top of the for/to loop.
-        let increment = this.evaluate(statement.increment) as Int32 | Float;
+        // Boxed numbers (roInt/roFloat/…) are valid in every numeric slot, matching Roku — e.g. a
+        // SceneGraph field read returns a boxed value, and `for i = node.maxLines to 0 step -1`
+        // must not crash. Unbox them up front so the comparisons below see intrinsic types.
+        let increment = this.unboxIfNumber(this.evaluate(statement.increment)) as Int32 | Float;
         if (increment instanceof Float) {
             increment = new Int32(Math.trunc(increment.getValue()));
         }
@@ -1476,13 +1479,16 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         let startValue: BrsType;
         if (this.environment.continueFor) {
             this.execute(step);
-            startValue = this.evaluate(new Expr.Variable(counterName)) as Int32 | Float;
+            startValue = this.unboxIfNumber(this.evaluate(new Expr.Variable(counterName))) as Int32 | Float;
             this.environment.continueFor = false;
         } else {
             this.execute(statement.counterDeclaration);
-            startValue = this.evaluate(statement.counterDeclaration.value) as Int32 | Float;
+            startValue = this.unboxIfNumber(this.evaluate(statement.counterDeclaration.value)) as Int32 | Float;
+            // Keep the loop variable intrinsic even when the initial value was boxed, so the body
+            // and the comparisons below always see the same numeric type.
+            this.environment.define(Scope.Function, counterName.text, startValue, counterName.location);
         }
-        const finalValue = this.evaluate(statement.finalValue) as Int32 | Float;
+        const finalValue = this.unboxIfNumber(this.evaluate(statement.finalValue)) as Int32 | Float;
         if (
             (startValue.getValue() > finalValue.getValue() && increment.getValue() > 0) ||
             (startValue.getValue() < finalValue.getValue() && increment.getValue() < 0)
@@ -1493,7 +1499,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
         if (increment.getValue() > 0) {
             while (
-                (this.evaluate(new Expr.Variable(counterName)) as Int32 | Float)
+                (this.unboxIfNumber(this.evaluate(new Expr.Variable(counterName))) as Int32 | Float)
                     .greaterThan(finalValue)
                     .not()
                     .toBoolean()
@@ -1517,7 +1523,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             }
         } else {
             while (
-                (this.evaluate(new Expr.Variable(counterName)) as Int32 | Float).lessThan(finalValue).not().toBoolean()
+                (this.unboxIfNumber(this.evaluate(new Expr.Variable(counterName))) as Int32 | Float)
+                    .lessThan(finalValue)
+                    .not()
+                    .toBoolean()
             ) {
                 // execute the block
                 try {
@@ -1606,7 +1615,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     visitWhile(statement: Stmt.While): BrsType {
-        while (this.evaluate(statement.condition).equalTo(BrsBoolean.True).toBoolean()) {
+        while (this.evaluateCondition(statement.condition)) {
             try {
                 this.execute(statement.body);
             } catch (reason) {
@@ -1625,12 +1634,12 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     visitIf(statement: Stmt.If): BrsType {
-        if (this.evaluate(statement.condition).equalTo(BrsBoolean.True).toBoolean()) {
+        if (this.evaluateCondition(statement.condition)) {
             this.execute(statement.thenBranch);
             return BrsInvalid.Instance;
         } else {
             for (const elseIf of statement.elseIfs || []) {
-                if (this.evaluate(elseIf.condition).equalTo(BrsBoolean.True).toBoolean()) {
+                if (this.evaluateCondition(elseIf.condition)) {
                     this.execute(elseIf.thenBranch);
                     return BrsInvalid.Instance;
                 }
@@ -2350,5 +2359,29 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             return value.lessThan(compare);
         }
         return value < compare;
+    }
+
+    /**
+     * Unboxes boxed numeric components (roInt, roFloat, …) to their intrinsic value;
+     * returns any other value unchanged.
+     * @param value Value to unbox
+     * @returns The intrinsic number, or the original value
+     */
+    private unboxIfNumber(value: BrsType): BrsType {
+        return isBoxedNumber(value) ? value.unbox() : value;
+    }
+
+    /**
+     * Evaluates an `if`/`while` condition expression to a JS boolean. Boxed numbers
+     * (roInt, roFloat, …) are unboxed first so they truth-test like their intrinsic
+     * values, matching Roku (e.g. `if node.someIntField` where the field read returns
+     * a boxed roInt) — their `equalTo` only compares against the same class. roBoolean
+     * needs no unboxing: its `equalTo` already handles intrinsic booleans and numbers.
+     * @param condition The condition expression to evaluate
+     * @returns The truthiness of the condition
+     */
+    private evaluateCondition(condition: Expr.Expression): boolean {
+        const value = this.unboxIfNumber(this.evaluate(condition));
+        return value.equalTo(BrsBoolean.True).toBoolean();
     }
 }

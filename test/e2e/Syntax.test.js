@@ -326,6 +326,9 @@ describe("end to end syntax", () => {
             "for loop exit", // exit early
             " 0", // e after loop
             "initial = final", // loop where initial equals final
+            " 2",
+            " 1",
+            " 0", // boxed start/final/step count down
         ]);
     });
 
@@ -511,6 +514,9 @@ describe("end to end syntax", () => {
             "true false",
             "one false",
             "one true",
+            "boxed int true",
+            "boxed zero false",
+            "boxed int while",
         ]);
     });
 
