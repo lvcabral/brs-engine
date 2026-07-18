@@ -771,7 +771,7 @@ export class Video extends Group {
         const state = this.getValueJS("state") as string;
         const owner = sgRoot.video === this && opacity > 0;
         const presenting = owner && (state === "playing" || state === "paused");
-        const buffering = owner && state === "buffering" && this.isFullscreen();
+        const buffering = owner && state === "buffering" && this.uiVisible();
         if (this.isDirty && presenting) {
             postMessage(`video,rect,${rect.x},${rect.y},${rect.width},${rect.height}`);
         }
