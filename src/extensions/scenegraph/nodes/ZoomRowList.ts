@@ -12,6 +12,7 @@ import {
     IfDraw2D,
     Rect,
     RoFont,
+    isBrsString,
 } from "brs-engine";
 import { sgRoot } from "../SGRoot";
 import { ContentNode } from "./ContentNode";
@@ -161,7 +162,7 @@ export class ZoomRowList extends ArrayGrid {
             if (typeof coords[0] === "number" && typeof coords[1] === "number") {
                 this.setFocusedItem(coords[0], coords[1]);
             }
-        } else if (fieldName === "rowfocusanimationstyle" && value instanceof BrsString) {
+        } else if (fieldName === "rowfocusanimationstyle" && isBrsString(value)) {
             // Horizontal item focus style; validate but do NOT let it drive vertical wrap.
             const style = value.toString().toLowerCase();
             if (!ValidFocusStyles.has(style)) {
