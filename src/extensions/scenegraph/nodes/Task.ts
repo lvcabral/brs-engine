@@ -28,6 +28,15 @@ import { SGNodeType } from ".";
 import type { Field, Scene } from "..";
 
 /**
+ * Maximum time (ms) a blocking rendezvous wait sleeps before re-checking cooperative conditions.
+ * `Atomics.wait` on the response buffer can't simultaneously watch the debug-halt slot, so a wait
+ * that would otherwise sleep for the full rendezvous timeout is capped to this interval; each wake
+ * re-checks `BrsDevice.pauseIfDebugging()` so the thread freezes promptly when the Micro Debugger
+ * activates on another thread instead of running out the clock and throwing a spurious timeout.
+ */
+const RENDEZVOUS_POLL_MS = 100;
+
+/**
  * SceneGraph `Task` node implementation responsible for executing BrightScript in a worker thread.
  * Manages control/state fields, SharedArrayBuffer message passing, and thread synchronization.
  */
@@ -197,19 +206,24 @@ export class Task extends Node {
         if (!responseBuffer || update.requestId === undefined) {
             return false;
         }
-        const deadline = Date.now() + timeoutMs;
+        let deadline = Date.now() + timeoutMs;
         while (true) {
             if (this.completedAcks.delete(update.requestId)) {
                 return true;
+            }
+            if (BrsDevice.pauseIfDebugging()) {
+                // Frozen for a debug session on another thread; debug time must not count toward
+                // the rendezvous timeout, and the request has already been sent (do not re-send).
+                deadline = Date.now() + timeoutMs;
+                continue;
             }
             const remaining = deadline - Date.now();
             if (remaining <= 0) {
                 break;
             }
-            const waitResult = responseBuffer.waitVersion(0, remaining);
-            if (waitResult === "timed-out") {
-                break;
-            }
+            // Cap the sleep so the loop re-checks pauseIfDebugging even if the debugger activates
+            // after we entered the wait; the real timeout is enforced by the `remaining` check above.
+            responseBuffer.waitVersion(0, Math.min(remaining, RENDEZVOUS_POLL_MS));
             this.processThreadUpdate(responseBuffer);
         }
         throw this.rendezvousTimeoutError("set", update.type, update.key);
@@ -457,7 +471,7 @@ export class Task extends Node {
         };
         const started = sgRoot.logRendezvous ? Date.now() : 0;
         this.sendThreadUpdate(request);
-        const deadline = Date.now() + timeoutMs;
+        let deadline = Date.now() + timeoutMs;
         const responseBuffer = this.directBuffer ?? this.taskBuffer;
 
         while (true) {
@@ -471,14 +485,19 @@ export class Task extends Node {
                     return false;
                 }
             }
+            if (BrsDevice.pauseIfDebugging()) {
+                // Frozen for a debug session on another thread; debug time must not count toward
+                // the rendezvous timeout, and the request has already been sent (do not re-send).
+                deadline = Date.now() + timeoutMs;
+                continue;
+            }
             const remaining = deadline - Date.now();
             if (remaining <= 0) {
                 break;
             }
-            const waitResult = responseBuffer.waitVersion(0, remaining);
-            if (waitResult === "timed-out") {
-                break;
-            }
+            // Cap the sleep so the loop re-checks pauseIfDebugging even if the debugger activates
+            // after we entered the wait; the real timeout is enforced by the `remaining` check above.
+            responseBuffer.waitVersion(0, Math.min(remaining, RENDEZVOUS_POLL_MS));
         }
         throw this.rendezvousTimeoutError("get", type, fieldName);
     }
@@ -516,7 +535,7 @@ export class Task extends Node {
         };
         const started = sgRoot.logRendezvous ? Date.now() : 0;
         this.sendThreadUpdate(request);
-        const deadline = Date.now() + timeoutMs;
+        let deadline = Date.now() + timeoutMs;
         const responseBuffer = this.directBuffer ?? this.taskBuffer;
 
         while (true) {
@@ -530,14 +549,19 @@ export class Task extends Node {
                     return undefined;
                 }
             }
+            if (BrsDevice.pauseIfDebugging()) {
+                // Frozen for a debug session on another thread; debug time must not count toward
+                // the rendezvous timeout, and the request has already been sent (do not re-send).
+                deadline = Date.now() + timeoutMs;
+                continue;
+            }
             const remaining = deadline - Date.now();
             if (remaining <= 0) {
                 break;
             }
-            const waitResult = responseBuffer.waitVersion(0, remaining);
-            if (waitResult === "timed-out") {
-                break;
-            }
+            // Cap the sleep so the loop re-checks pauseIfDebugging even if the debugger activates
+            // after we entered the wait; the real timeout is enforced by the `remaining` check above.
+            responseBuffer.waitVersion(0, Math.min(remaining, RENDEZVOUS_POLL_MS));
         }
         throw this.rendezvousTimeoutError("call", type, methodName);
     }
@@ -550,6 +574,10 @@ export class Task extends Node {
      */
     protected getNewEvents(_: Interpreter, wait: number) {
         if (this.taskBuffer && this.inThread) {
+            // Freeze the task's idle wait while another thread owns the debug session.
+            if (BrsDevice.pauseIfDebugging()) {
+                return new Array<BrsEvent>();
+            }
             const timeout = wait === 0 ? undefined : wait;
             this.taskBuffer.waitVersion(0, timeout);
             this.processThreadUpdate();
