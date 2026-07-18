@@ -575,6 +575,17 @@ export class Video extends Group {
         }
     }
 
+    // The Video's children are all internal presentation nodes (trick-play bar, header
+    // labels, spinner, paused icon, background overlay, clock timer) created in the
+    // constructor and referenced by private fields that `showUI` updates every frame. They
+    // must never be serialized to a Task thread: a Task's `updateSGNode` reconciliation
+    // would replace them with fresh copies, splitting the rendered children from the fields
+    // being updated, and the overlay UI would stop appearing after the Task runs. A Task
+    // never renders, so it has no need for them. See Node.serializesChildren.
+    serializesChildren(): boolean {
+        return false;
+    }
+
     private isFullscreen(): boolean {
         const size = this.getDimensions();
         const width = size.width || this.sceneRect.width;

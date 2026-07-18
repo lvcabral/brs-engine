@@ -71,6 +71,17 @@ export class TrickPlayBar extends Group {
         ]);
     }
 
+    // The bar's visible parts (track, filled bar, ticker, time labels) are internal child
+    // nodes built in the constructor and held by private fields (this.backBack, this.barProgress,
+    // …). The Video exposes this bar as its `trickPlayBar` field, so it is serialized to a Task
+    // even though the Video itself no longer serializes its children. Opting out here keeps those
+    // internal children from being reconciled into fresh copies, which would leave the bar's field
+    // references pointing at nodes no longer in the render tree — so the bar would draw only its
+    // directly-painted state icon (ff/rw) and none of its child posters. See Node.serializesChildren.
+    serializesChildren(): boolean {
+        return false;
+    }
+
     setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind) {
         const fieldName = index.toLowerCase();
         if (fieldName === "textcolor") {

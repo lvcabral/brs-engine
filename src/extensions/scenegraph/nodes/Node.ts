@@ -311,6 +311,25 @@ export class Node extends RoSGNode implements BrsValue {
     }
 
     /**
+     * Whether this node's children should be included in cross-thread serialization.
+     *
+     * Most nodes serialize their children so a Task thread sees the full subtree. But a
+     * built-in composite node (e.g. Video) builds its visible children internally in its
+     * constructor and keeps private references to them (`this.trickPlayBar`, the spinner,
+     * the header labels, …), updating those references every frame (`showUI`). If such a
+     * node's children are serialized, a Task's reconciliation (`updateSGNode`) replaces
+     * the render-thread children with fresh deserialized copies while the private field
+     * references keep pointing at the originals — so per-frame updates land on nodes that
+     * are no longer in the render tree and the overlay silently stops appearing. These
+     * nodes override this to opt out; their children never need to cross a thread because a
+     * Task never renders them.
+     * @returns True when children participate in cross-thread serialization.
+     */
+    serializesChildren(): boolean {
+        return true;
+    }
+
+    /**
      * Looks up a field or method by name, mimicking BrightScript associative-array semantics.
      * @param index Field or method name as a BrightScript string value.
      * @throws Error when an unsupported index type is provided.
