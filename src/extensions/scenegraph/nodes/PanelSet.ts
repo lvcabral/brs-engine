@@ -205,8 +205,9 @@ export class PanelSet extends Group {
                     panel2.setTranslationX(panel2PosX);
                 } else {
                     panel.renderNode(interpreter, origin, angle, opacity, draw2D);
+                    // Per Roku spec: right panel origin = left panel leftPosition + left panel width + spacing
                     const panel2PosX =
-                        (panel2.getValueJS("leftPosition") as number) +
+                        (panel.getValueJS("leftPosition") as number) +
                         (panel.getValueJS("width") as number) +
                         (this.resolution === "HD" ? DefaultPanelGapHD : DefaultPanelGapHD * 1.5);
                     panel2.setTranslationX(panel2PosX);
