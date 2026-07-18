@@ -114,6 +114,7 @@ export class ContentNode extends Node {
         { name: "textOverlayUL", type: "string", hidden: true },
         { name: "textOverlayUR", type: "string", hidden: true },
         { name: "title", type: "string", hidden: true },
+        { name: "secondaryTitle", type: "string", hidden: true }, // Introduced in OS 11.5
         { name: "titleSeason", type: "string", hidden: true },
         { name: "trackIDAudio", type: "string", hidden: true },
         { name: "trackIDSubtitle", type: "string", hidden: true },
