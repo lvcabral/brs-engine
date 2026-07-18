@@ -1476,7 +1476,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 new Expr.Literal(increment, statement.increment.location)
             )
         );
-        let startValue: BrsType;
+        let startValue: Int32 | Float;
         if (this.environment.continueFor) {
             this.execute(step);
             startValue = this.unboxIfNumber(this.evaluate(new Expr.Variable(counterName))) as Int32 | Float;
