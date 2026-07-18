@@ -3,14 +3,13 @@ import {
     Interpreter,
     BrsBoolean,
     BrsInvalid,
-    BrsString,
+    isBrsString,
     BrsType,
     Float,
     IfDraw2D,
     RoBitmap,
     RoFont,
     Rect,
-    isBrsString,
 } from "brs-engine";
 import { FieldKind, FieldModel } from "../SGTypes";
 import { SGNodeType } from ".";
