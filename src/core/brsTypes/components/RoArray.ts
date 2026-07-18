@@ -292,7 +292,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsArray {
         impl: (interpreter: Interpreter, separator: BrsString) => {
             if (
                 this.elements.some(function (element) {
-                    return !(element instanceof BrsString);
+                    return !isBrsString(element);
                 })
             ) {
                 if (BrsDevice.isDevMode) {

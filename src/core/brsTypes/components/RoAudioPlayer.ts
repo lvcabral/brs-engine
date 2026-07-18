@@ -1,6 +1,6 @@
 import { BrsValue, ValueKind, BrsInvalid, BrsBoolean, BrsString } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsType, RoMessagePort, RoAssociativeArray, RoArray, RoAudioPlayerEvent, BrsEvent } from "..";
+import { BrsType, RoMessagePort, RoAssociativeArray, RoArray, RoAudioPlayerEvent, BrsEvent, isBrsString } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
@@ -82,11 +82,12 @@ export class RoAudioPlayer extends BrsComponent implements BrsValue, BrsHttpAgen
         const content = new Array<string>();
         for (const value of this.contentList) {
             let url = value.get(new BrsString("url"));
-            if (url instanceof BrsString) {
-                if (url.value.startsWith("http")) {
-                    content.push(BrsDevice.getCORSProxy(url.value));
+            if (isBrsString(url)) {
+                const urlValue = url.getValue();
+                if (urlValue.startsWith("http")) {
+                    content.push(BrsDevice.getCORSProxy(urlValue));
                 } else {
-                    content.push(url.value);
+                    content.push(urlValue);
                 }
             }
         }
