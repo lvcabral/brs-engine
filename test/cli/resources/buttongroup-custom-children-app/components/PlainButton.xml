@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="PlainButton" extends="Group">
+    <script type="text/brightscript" uri="pkg:/components/PlainButton.brs" />
+    <interface>
+        <field id="text" type="string" onChange="onTextChanged" />
+        <field id="width" type="float" onChange="onWidthChanged" />
+        <field id="selected" type="boolean" alwaysNotify="true" />
+    </interface>
+    <children>
+        <Rectangle id="bg" height="48" color="0x303030FF" />
+        <Label id="label" height="48" horizAlign="center" vertAlign="center" />
+    </children>
+</component>

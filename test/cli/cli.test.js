@@ -840,6 +840,35 @@ describe("cli", () => {
         ]);
     }, 10000);
 
+    it("ButtonGroup leaves custom (non-Button) children unmanaged", async () => {
+        let command = ["node", brsCliPath, "-r buttongroup-custom-children-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // Repro of a keyboard screen whose bottom row is a built-in ButtonGroup used purely as a
+        // horizontal layout container for custom Group-based button components, with the screen
+        // moving focus between them via setFocus(). The group must not manage such children: it
+        // used to capture them into `buttons`, re-stack them vertically at x=0 (drawing the right
+        // button over the left), steal focus back to index 0 on every render, and consume OK —
+        // firing buttonSelected for the wrong (hidden) button.
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "=== ButtonGroup Custom Children Repro ===",
+            "left x =  0",
+            "right x =  216",
+            "left text = Left",
+            "right text = Right",
+            "right hasFocus = true",
+            "left hasFocus = true",
+            "right x after focus =  216",
+            "children count =  2",
+            "=== ButtonGroup Custom Children Complete ===",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 10000);
+
     it("PanelSet creates the right panel on item focus without hasNextPanel", async () => {
         let command = ["node", brsCliPath, "-r panelset-nextpanel-app", "source/main.brs", "-c 0"].join(" ");
 

@@ -105,7 +105,9 @@ export class ButtonGroup extends LayoutGroup {
     }
 
     appendChildToParent(child: BrsType): boolean {
-        if (child instanceof Group) {
+        // Only Button children are managed by the group; custom Group components keep their
+        // own text/size/position and are laid out by the inherited LayoutGroup behavior.
+        if (child instanceof Button) {
             const buttonText = child.getValue("text");
             const buttons = this.getValue("buttons");
             if (buttons instanceof RoArray && isBrsString(buttonText)) {
@@ -117,6 +119,19 @@ export class ButtonGroup extends LayoutGroup {
         return super.appendChildToParent(child);
     }
 
+    /**
+     * The group manages layout, appearance and focus only for Button children (created from the
+     * `buttons` string array or appended directly). A group holding only custom Group components
+     * behaves as a plain LayoutGroup, as on Roku.
+     */
+    private isManagedMode(): boolean {
+        const buttons = jsValueOf(this.getValue("buttons")) as string[] | undefined;
+        if (buttons?.length) {
+            return true;
+        }
+        return this.children.some((child) => child instanceof Button);
+    }
+
     setNodeFocus(focusOn: boolean): boolean {
         const focus = super.setNodeFocus(focusOn);
         if (focus) {
@@ -126,6 +141,13 @@ export class ButtonGroup extends LayoutGroup {
     }
 
     handleKey(key: string, press: boolean): boolean {
+        // Only consume keys when the group manages Button children and the key focus is on the
+        // group or one of those buttons — otherwise let the key bubble to the app's onKeyEvent.
+        const focused = sgRoot.focused;
+        const focusWithin = focused === this || (focused instanceof Button && focused.getNodeParent() === this);
+        if (!this.isManagedMode() || !focusWithin) {
+            return false;
+        }
         if (!press && this.lastPressHandled === key) {
             this.lastPressHandled = "";
             return true;
@@ -148,6 +170,12 @@ export class ButtonGroup extends LayoutGroup {
     }
 
     renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
+        if (!this.isManagedMode()) {
+            // No managed Button children: behave as a plain LayoutGroup so the app's
+            // layoutDirection/itemSpacings and child translations are honored.
+            super.renderNode(interpreter, origin, angle, opacity, draw2D);
+            return;
+        }
         if (!this.isVisible()) {
             this.updateRenderTracking(true);
             return;
@@ -182,7 +210,7 @@ export class ButtonGroup extends LayoutGroup {
 
     private refreshButtons() {
         const buttons = jsValueOf(this.getValue("buttons")) as string[];
-        if (!buttons) {
+        if (!buttons?.length) {
             return;
         }
         const buttonsCount = Math.max(buttons.length, this.children.length);
@@ -193,7 +221,11 @@ export class ButtonGroup extends LayoutGroup {
             const buttonText = buttons[i];
             if (buttonText) {
                 let button = this.children[i];
-                if (!(button instanceof Group)) {
+                if (button instanceof Group && !(button instanceof Button)) {
+                    // Custom Group child: not managed — leave its text/size/position alone.
+                    continue;
+                }
+                if (!(button instanceof Button)) {
                     button = this.createButton();
                 }
                 button.setValueSilent("text", new BrsString(buttonText));
@@ -221,7 +253,12 @@ export class ButtonGroup extends LayoutGroup {
                 break;
             }
         }
-        this.children.splice(buttons.length);
+        // Drop only surplus managed Buttons beyond the `buttons` array — never custom children.
+        for (let i = this.children.length - 1; i >= buttons.length; i--) {
+            if (this.children[i] instanceof Button) {
+                this.children.splice(i, 1);
+            }
+        }
     }
 
     private createButton(): Button {
@@ -237,15 +274,29 @@ export class ButtonGroup extends LayoutGroup {
     }
 
     private refreshFocus() {
+        if (!this.isManagedMode()) {
+            return;
+        }
         const focusedNode = sgRoot.focused;
-        if (
-            this.children.length &&
-            focusedNode instanceof RoSGNode &&
-            (focusedNode === this || focusedNode.getNodeParent() === this)
-        ) {
+        if (this.children.length && focusedNode === this) {
+            // Per Roku: when the ButtonGroup itself has focus, key focus goes to one of its buttons.
             const focusedButton = this.children[this.focusIndex];
-            if (focusedNode !== focusedButton && focusedButton instanceof RoSGNode) {
+            if (focusedButton instanceof RoSGNode) {
                 sgRoot.setFocused(focusedButton);
+            }
+            this.wasFocused = true;
+        } else if (
+            focusedNode instanceof Button &&
+            focusedNode.getNodeParent() === this &&
+            this.children.includes(focusedNode)
+        ) {
+            // A managed button was focused directly (e.g. by app code): follow it instead of
+            // stealing focus back to the previously focused index.
+            const index = this.children.indexOf(focusedNode);
+            if (index !== this.focusIndex) {
+                this.focusIndex = index;
+                super.setValue("buttonFocused", new Int32(index));
+                this.isDirty = true;
             }
             this.wasFocused = true;
         } else if (this.wasFocused) {
