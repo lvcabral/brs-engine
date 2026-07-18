@@ -102,7 +102,7 @@ export class ContentNode extends Node {
         { name: "streamUrls", type: "stringarray", hidden: true },
         { name: "subtitleColor", type: "string", hidden: true },
         { name: "subtitleConfig", type: "assocarray", hidden: true },
-        { name: "subtitleTracks", type: "assocarray", hidden: true },
+        { name: "subtitleTracks", type: "array", hidden: true },
         { name: "subtitleUrl", type: "string", hidden: true },
         { name: "switchingStrategy", type: "string", hidden: true },
         { name: "targetRect", type: "assocarray", hidden: true },
