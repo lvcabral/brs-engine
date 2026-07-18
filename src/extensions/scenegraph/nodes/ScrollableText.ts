@@ -3,7 +3,7 @@ import {
     Interpreter,
     BrsBoolean,
     BrsInvalid,
-    BrsString,
+    isBrsString,
     BrsType,
     Float,
     IfDraw2D,
@@ -93,10 +93,10 @@ export class ScrollableText extends Group {
             // Track focus state: focusedChild is set to `this` when focused, BrsInvalid when unfocused
             this.focused = !(value instanceof BrsInvalid) && value !== null && value !== undefined;
         } else if (fieldName === "scrollbartrackbitmapuri") {
-            const uri = value instanceof BrsString ? value.getValue() : "";
+            const uri = isBrsString(value) ? value.getValue() : "";
             this.customTrackBitmap = uri ? this.loadBitmap(uri) : undefined;
         } else if (fieldName === "scrollbarthumbbitmapuri") {
-            const uri = value instanceof BrsString ? value.getValue() : "";
+            const uri = isBrsString(value) ? value.getValue() : "";
             this.customThumbBitmap = uri ? this.loadBitmap(uri) : undefined;
         }
         super.setValue(index, value, alwaysNotify, kind, sync);

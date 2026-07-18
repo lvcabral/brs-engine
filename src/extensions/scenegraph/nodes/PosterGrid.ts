@@ -9,6 +9,7 @@ import {
     IfDraw2D,
     Rect,
     RoFont,
+    isBrsString,
 } from "brs-engine";
 import { FieldKind, FieldModel } from "../SGTypes";
 import { SGNodeType } from ".";
@@ -121,7 +122,7 @@ export class PosterGrid extends ArrayGrid {
 
     setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind) {
         const fieldName = index.toLowerCase();
-        if (fieldName === "vertfocusanimationstyle" && value instanceof BrsString) {
+        if (fieldName === "vertfocusanimationstyle" && isBrsString(value)) {
             const style = value.getValue().toLowerCase();
             if (ValidFocusStyles.has(style)) {
                 this.vertFocusAnimationStyleName = style;
