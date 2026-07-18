@@ -195,6 +195,107 @@ describe("Video cross-thread deserialization guard", () => {
     });
 });
 
+describe("Video plane is only rendered by the owning, actively-presenting Video", () => {
+    let originalPostMessage;
+
+    beforeAll(() => {
+        const commonZip = fs.readFileSync(path.join(__dirname, "../../../packages/scenegraph/assets/common.zip"));
+        BrsDevice.fileSystem.setup(commonZip.buffer, new ArrayBuffer(1024 * 1024), new ArrayBuffer(1024 * 1024));
+    });
+
+    beforeEach(() => {
+        originalPostMessage = global.postMessage;
+        global.postMessage = jest.fn();
+        sgRoot.setVideo();
+    });
+
+    afterEach(() => {
+        global.postMessage = originalPostMessage;
+        sgRoot.setVideo();
+    });
+
+    // The engine shares ONE browser <video> element, but an app can hold several Video node
+    // instances (startup logo + preview player). The video plane is a transparent hole cleared
+    // into the graphics buffer that the main thread fills with that one element's frames — so only
+    // the node that OWNS the element (sgRoot.video) and is actively presenting a frame
+    // (playing/paused) may position it and punch the hole. Otherwise a non-owner (or a
+    // just-finished) Video resizes the element and leaks its stale last frame as a shrunken
+    // picture, or punches a frame-less hole that shows through as a black box.
+    function makeDraw2D() {
+        return {
+            cleared: [],
+            doDrawClearedRect(rect) {
+                this.cleared.push({ ...rect });
+            },
+        };
+    }
+
+    function fullScreenVideo() {
+        const video = SGNodeFactory.createNode("Video");
+        video.setValue("width", new core.Float(1920));
+        video.setValue("height", new core.Float(1080));
+        return video;
+    }
+
+    test("the owning, playing Video clears its rect and posts the geometry", () => {
+        const video = fullScreenVideo();
+        sgRoot.setVideo(video);
+        video.setState(MediaEvent.StartStream, 0); // -> "playing"
+        video.makeDirty();
+        const draw2D = makeDraw2D();
+        global.postMessage.mockClear();
+
+        video.renderNode({}, [0, 0], 0, 1, draw2D);
+
+        expect(draw2D.cleared).toHaveLength(1);
+        expect(draw2D.cleared[0]).toMatchObject({ x: 0, y: 0, width: 1920, height: 1080 });
+        expect(global.postMessage).toHaveBeenCalledWith("video,rect,0,0,1920,1080");
+    });
+
+    test("the owning Video does NOT render a plane once it has finished", () => {
+        const video = fullScreenVideo();
+        sgRoot.setVideo(video);
+        video.setState(MediaEvent.Finished, 0); // -> "finished"
+        video.makeDirty();
+        const draw2D = makeDraw2D();
+        global.postMessage.mockClear();
+
+        video.renderNode({}, [0, 0], 0, 1, draw2D);
+
+        expect(draw2D.cleared).toHaveLength(0);
+        expect(global.postMessage).not.toHaveBeenCalledWith(expect.stringContaining("video,rect"));
+    });
+
+    test("a non-owner Video does NOT render a plane even while playing", () => {
+        const owner = fullScreenVideo();
+        sgRoot.setVideo(owner);
+        // A second instance (e.g. a preview player) that does NOT own the shared element.
+        const other = fullScreenVideo();
+        other.setState(MediaEvent.StartStream, 0);
+        expect(sgRoot.video).toBe(owner);
+        const draw2D = makeDraw2D();
+        global.postMessage.mockClear();
+
+        other.renderNode({}, [0, 0], 0, 1, draw2D);
+
+        expect(draw2D.cleared).toHaveLength(0);
+        expect(global.postMessage).not.toHaveBeenCalledWith(expect.stringContaining("video,rect"));
+    });
+
+    test("the owning, playing Video at accumulated opacity 0 does NOT render a plane", () => {
+        const video = fullScreenVideo();
+        sgRoot.setVideo(video);
+        video.setState(MediaEvent.StartStream, 0);
+        video.makeDirty();
+        const draw2D = makeDraw2D();
+
+        // Ancestor group faded to opacity 0 propagates opacity 0 to the (visible) Video.
+        video.renderNode({}, [0, 0], 0, 0, draw2D);
+
+        expect(draw2D.cleared).toHaveLength(0);
+    });
+});
+
 describe("Video asyncStopSemantics stopping->stopped transition", () => {
     let originalPostMessage;
 

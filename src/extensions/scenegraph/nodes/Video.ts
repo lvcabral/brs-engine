@@ -753,12 +753,25 @@ export class Video extends Group {
         };
         const rotation = angle + this.getRotation();
         opacity = opacity * this.getOpacity();
-        if (this.isDirty) {
+        // The whole engine shares a SINGLE browser <video> element, but an app can hold several
+        // Video node instances (e.g. a startup logo and a preview player). The video plane is a
+        // transparent hole cleared into the graphics buffer that the main thread fills with that one
+        // element's frames — so only the node that currently OWNS the element (`sgRoot.video`) and
+        // is actively presenting a frame (playing/paused) may position it and punch the hole. A
+        // non-owner instance, or the owner once it is finished/stopped/buffering, punches nothing and
+        // disappears cleanly: this prevents a second Video (or the just-finished startup logo) from
+        // resizing the element and leaking its stale last frame as a shrunken picture, and prevents a
+        // frame-less hole from showing through as a black box before the next screen renders.
+        const state = this.getValueJS("state") as string;
+        const presenting = sgRoot.video === this && opacity > 0 && (state === "playing" || state === "paused");
+        if (this.isDirty && presenting) {
             postMessage(`video,rect,${rect.x},${rect.y},${rect.width},${rect.height}`);
         }
         if (draw2D) {
             this.isDirty = false;
-            draw2D.doDrawClearedRect(rect);
+            if (presenting) {
+                draw2D.doDrawClearedRect(rect);
+            }
         }
         if (this.statusChanged) {
             if (this.seekTimeout > 0 && this.seekTimeout < Date.now() && ["rw", "ff"].includes(this.seekMode)) {
