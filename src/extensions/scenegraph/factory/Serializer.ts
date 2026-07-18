@@ -22,6 +22,9 @@ import {
     Callable,
     StdlibArgument,
     BrsDevice,
+    Expr,
+    resolveAnonymousCallable,
+    toCallable,
 } from "brs-engine";
 import { createFlatNode } from "./NodeFactory";
 import { ContentNode, Node, SGNodeType } from "../nodes";
@@ -91,8 +94,21 @@ export function jsValueOf(value: BrsType, deep: boolean = true, host?: Node, vis
                 return { _interface_: value.getInterfaceName() };
             }
             break;
-        case ValueKind.Callable:
-            return { _callable_: value.name };
+        case ValueKind.Callable: {
+            const result: FlexObject = { _callable_: value.name ?? "" };
+            // A user-defined function can be faithfully rebuilt on the receiving thread from its
+            // source AST (BrightScript has no lexical closures — `m` binds to the receiver at call
+            // time), so ship its source location for the AST lookup in `restoreCallable`.
+            const location = value.isUserDefined() ? value.getLocation() : undefined;
+            if (location) {
+                result["_location_"] = {
+                    file: location.file,
+                    line: location.start.line,
+                    column: location.start.column,
+                };
+            }
+            return result;
+        }
     }
 }
 
@@ -245,18 +261,154 @@ function fromObject(obj: any, cs?: boolean, nodeMap?: Map<string, Node>): BrsTyp
     } else if (obj["_interface_"]) {
         return BrsInvalid.Instance;
     } else if (obj["_callable_"]) {
-        return new Callable(obj["_callable_"], {
-            signature: {
-                args: [new StdlibArgument("arg", ValueKind.Dynamic, BrsInvalid.Instance)],
-                variadic: true,
-                returns: ValueKind.Void,
-            },
-            impl: (_: any, ..._arg: BrsType[]) => {
-                return Uninitialized.Instance;
-            },
-        });
+        return restoreCallable(obj["_callable_"], obj["_location_"]);
     }
     return toAssociativeArray(obj, cs, nodeMap);
+}
+
+/** Serialized source position of a user-defined callable (see `jsValueOf`'s Callable case). */
+interface SerializedCallableLocation {
+    file: string;
+    line: number;
+    column: number;
+}
+
+/**
+ * Restores a function value transferred from another thread. A serialized callable is only a name
+ * plus (for user-defined functions) a source location, so resolution tries, in order:
+ * 1. The anonymous-callable registry — covers a `$anon_N` round-tripping back to the thread that
+ *    minted it (the registry is per-worker).
+ * 2. Rebuilding from the component AST retained by `setupInterpreterWithSubEnvs`, located by the
+ *    serialized file/line/column. BrightScript has no lexical closures (`m` binds to the receiver
+ *    at call time), so the AST alone reproduces the function faithfully — matching a device, where
+ *    a Task's copy of `m` keeps its function references callable.
+ * 3. A stub that returns `uninitialized` (what the call site would see for a lost function), with
+ *    a one-shot warning so the failure is never silent.
+ * @param name The callable's name (`$anon_N` for anonymous functions).
+ * @param location The serialized source location, when the function was user-defined.
+ * @returns The restored (or stub) Callable.
+ */
+function restoreCallable(name: string, location?: SerializedCallableLocation): Callable {
+    if (name.toLowerCase().startsWith("$anon_")) {
+        const anon = resolveAnonymousCallable(name);
+        // Each worker mints `$anon_N` names independently, so a registry hit may be a different
+        // function that happens to share the name — trust it only when the source location agrees
+        // (or when no location was serialized, the pre-existing name-only behavior).
+        const anonLoc = anon?.getLocation();
+        if (
+            anon &&
+            (!location ||
+                (anonLoc?.file === location.file &&
+                    anonLoc.start.line === location.line &&
+                    anonLoc.start.column === location.column))
+        ) {
+            return anon;
+        }
+    }
+    if (location) {
+        const funcExpr = findFunctionExpression(location);
+        if (funcExpr) {
+            return toCallable(funcExpr, name);
+        }
+    }
+    warnLostCallable(name);
+    return new Callable(name, {
+        signature: {
+            args: [new StdlibArgument("arg", ValueKind.Dynamic, BrsInvalid.Instance)],
+            variadic: true,
+            returns: ValueKind.Void,
+        },
+        impl: (_: any, ..._arg: BrsType[]) => {
+            return Uninitialized.Instance;
+        },
+    });
+}
+
+/** One-shot warning when a transferred function value cannot be restored on this thread. */
+let warnedLostCallable = false;
+function warnLostCallable(name: string) {
+    if (!warnedLostCallable) {
+        warnedLostCallable = true;
+        BrsDevice.stderr.write(
+            `warning,[sg] Unable to restore function "${name}" across threads; calls to it will return uninitialized`
+        );
+    }
+}
+
+/**
+ * Locates a function expression in the retained component ASTs by its source position.
+ * Results are memoized per position — a Task's `m` is re-serialized on every sync, so the same
+ * function is looked up repeatedly.
+ * @param location Source position captured when the callable was serialized.
+ * @returns The matching function expression, or undefined when not found.
+ */
+function findFunctionExpression(location: SerializedCallableLocation): Expr.Function | undefined {
+    const defMap = sgRoot.nodeDefMap;
+    let cache = functionExprCache.get(defMap);
+    if (!cache) {
+        cache = new Map<string, Expr.Function | undefined>();
+        functionExprCache.set(defMap, cache);
+    }
+    const key = `${location.file}:${location.line}:${location.column}`;
+    if (cache.has(key)) {
+        return cache.get(key);
+    }
+    let found: Expr.Function | undefined;
+    const seen = new Set<any>();
+    for (const def of defMap.values()) {
+        if (!def.scopeStatements) {
+            continue;
+        }
+        found = walkForFunction(def.scopeStatements, location, seen);
+        if (found) {
+            break;
+        }
+    }
+    cache.set(key, found);
+    return found;
+}
+
+// Memoized per nodeDefMap instance so a new app load (which replaces the map) can't serve stale ASTs.
+const functionExprCache = new WeakMap<Map<string, any>, Map<string, Expr.Function | undefined>>();
+
+/**
+ * Depth-first search over AST nodes for an `Expr.Function` starting at the given position.
+ * Walks own enumerable properties generically (the AST is a tree of plain objects/arrays), so it
+ * finds functions nested in any statement or expression, including anonymous functions inside AA
+ * literals. `seen` guards shared sub-trees across components (inherited/library statements are the
+ * same object instances in every component that includes them).
+ * @param value AST node, array of nodes, or leaf value to search.
+ * @param location Source position to match against `Expr.Function.location.start`.
+ * @param seen Object identity guard for already-visited AST nodes.
+ * @returns The matching function expression, or undefined.
+ */
+function walkForFunction(value: any, location: SerializedCallableLocation, seen: Set<any>): Expr.Function | undefined {
+    if (value === null || typeof value !== "object" || seen.has(value)) {
+        return undefined;
+    }
+    seen.add(value);
+    if (value instanceof Expr.Function) {
+        const loc = value.location;
+        if (loc.file === location.file && loc.start.line === location.line && loc.start.column === location.column) {
+            return value;
+        }
+    }
+    if (Array.isArray(value)) {
+        for (const item of value) {
+            const found = walkForFunction(item, location, seen);
+            if (found) {
+                return found;
+            }
+        }
+        return undefined;
+    }
+    for (const propKey of Object.keys(value)) {
+        const found = walkForFunction(value[propKey], location, seen);
+        if (found) {
+            return found;
+        }
+    }
+    return undefined;
 }
 
 /**

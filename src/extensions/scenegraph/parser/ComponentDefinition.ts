@@ -1,4 +1,13 @@
-import { Environment, BrsError, FileSystem, Interpreter, BrsInvalid, RoAssociativeArray, Platform } from "brs-engine";
+import {
+    Environment,
+    BrsError,
+    FileSystem,
+    Interpreter,
+    BrsInvalid,
+    RoAssociativeArray,
+    Platform,
+    Stmt,
+} from "brs-engine";
 import { ComponentScopeResolver } from "./ComponentScopeResolver";
 import * as path from "path";
 import { XmlDocument, XmlElement } from "xmldoc";
@@ -82,6 +91,13 @@ export class ComponentDefinition {
     public children: ComponentNode[] = [];
     public scripts: ComponentScript[] = [];
     public environment: Environment | undefined;
+    /**
+     * The component's full parsed scope (own + inherited scripts), retained after setup so a
+     * function value transferred across threads can be rebuilt from its AST by source location
+     * (see Serializer's `_callable_` handling). Costs no extra memory in practice: these AST
+     * nodes are already kept alive by the named-function Callables in `environment`.
+     */
+    public scopeStatements?: Stmt.Statement[];
 
     constructor(readonly xmlPath: string) {}
 
@@ -253,6 +269,7 @@ export function setupInterpreterWithSubEnvs(
         try {
             component.environment = interpreter.environment.createSubEnvironment(/* includeModuleScope */ false);
             const statements = componentScopeResolver.resolve(component);
+            component.scopeStatements = statements;
             interpreter.inSubEnv((subInterpreter) => {
                 const componentMPointer = new RoAssociativeArray([]);
                 subInterpreter.options.entryPoint = false;
