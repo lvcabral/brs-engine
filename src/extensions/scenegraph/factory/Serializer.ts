@@ -703,7 +703,7 @@ export function fromSGNode(node: Node, deep: boolean = true, host?: Node, visite
         result["_observed_"] = observed;
     }
     const children = node.getNodeChildren();
-    if (deep && children.length > 0) {
+    if (deep && children.length > 0 && node.serializesChildren()) {
         result["_children_"] = children.map((child: BrsType) => {
             if (child instanceof Node) {
                 return fromSGNode(child, deep, host, visited);
