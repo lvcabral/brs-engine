@@ -417,14 +417,28 @@ export class BrsDevice {
                 cmd = -1;
                 postMessage("command,continue");
             }
-            const dbt = Atomics.load(this.sharedArray, DataType.DBT);
-            if (dbt >= 0 && dbt !== this.threadId) {
-                // Another thread is in debug mode, pause this one
-                Atomics.wait(this.sharedArray, DataType.DBT, dbt);
+            if (this.pauseIfDebugging()) {
                 cmd = -1;
             }
         }
         return cmd;
+    }
+
+    /**
+     * Blocks the current thread while another thread owns the debug session, mirroring a real
+     * device where every thread freezes while the Micro Debugger is active. Used both by the
+     * per-statement/message-port poll (`checkBreakCommand`) and by the blocking cross-thread
+     * rendezvous waits, which would otherwise keep running (or time out) during a debug session.
+     * @returns True if this thread paused waiting for the debug session to end.
+     */
+    static pauseIfDebugging(): boolean {
+        const dbt = Atomics.load(this.sharedArray, DataType.DBT);
+        if (dbt >= 0 && dbt !== this.threadId) {
+            // Another thread is in debug mode, pause this one until the session ends.
+            Atomics.wait(this.sharedArray, DataType.DBT, dbt);
+            return true;
+        }
+        return false;
     }
 
     /**

@@ -74,6 +74,8 @@ export function runDebugger(
                 return true;
             case DebugCommand.EXIT:
                 interpreter.debugMode = DebugMode.EXIT;
+                // Release any threads paused waiting for this debug session before exiting.
+                BrsDevice.notifyDebugEnded();
                 return false;
         }
         debugHandleCommand(interpreter, nextLoc, lastLoc, command.cmd);

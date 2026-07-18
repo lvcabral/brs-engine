@@ -202,6 +202,10 @@ A node's authoritative copy lives on its owner thread, so reading/writing a node
 
 See `docs/extensions.md`, `packages/scenegraph/README.md`, and `docs/scenegraph-rendezvous.md` (design + performance/reliability/memory/fidelity analysis).
 
+### Debugger halts every thread (`DataType.DBT`)
+
+Entering the Micro Debugger (`STOP`, dev-mode crash, or `BREAK`) must freeze **all** threads. The handshake is one shared-array slot `DataType.DBT`: `notifyDebugStarted()` writes the debugging thread's id, `notifyDebugEnded()` clears it, and other threads block on it via **`BrsDevice.pauseIfDebugging()`** (the single definition, called by both `checkBreakCommand` and the Task rendezvous waits). But `DBT` is only *polled*, and a Task parked mid-rendezvous is blocked in `Atomics.wait` on its own response buffer, which can't watch `DBT`. So every blocking loop in `nodes/Task.ts` (`requestFieldValue`, `requestMethodCall`, `waitForFieldAck`, `getNewEvents`) **caps each sleep to `RENDEZVOUS_POLL_MS` (100 ms)** and re-checks `pauseIfDebugging()` each iteration — else a Task mid-rendezvous throws a spurious "Rendezvous timeout" out from under the debugger. **Invariants:** check `pauseIfDebugging()` *before* the timeout break and **reset the deadline** on pause (debug time mustn't count); the pause path **must not re-send** the request; `EXIT` calls `notifyDebugEnded()` (not only `CONT`) so `DBT` is never left set (deadlock). Normal latency is unaffected — a stored response wakes the waiter immediately via `notify`. Gap: `debugThreads` still lists only the current thread.
+
 ## App packaging & encryption (`.bpk`)
 
 `brs-cli --pack <password> --out <dir>` turns a plaintext app (`.zip` or `--root` folder) into an **encrypted `.bpk`**. The password is the **raw AES-256-CTR key — exactly 32 chars** (no KDF/salt), and is required to *run* the `.bpk` (`--pack <password>`, or `options.password` in the browser API).
