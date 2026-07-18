@@ -222,12 +222,24 @@ describe("Video plane is only rendered by the owning, actively-presenting Video"
     // just-finished) Video resizes the element and leaks its stale last frame as a shrunken
     // picture, or punches a frame-less hole that shows through as a black box.
     function makeDraw2D() {
-        return {
+        const target = {
             cleared: [],
+            filled: [],
             doDrawClearedRect(rect) {
                 this.cleared.push({ ...rect });
             },
+            doDrawRotatedRect(rect, rgba, rotation, center, opacity) {
+                this.filled.push({ rect: { ...rect }, rgba, rotation, opacity });
+            },
         };
+        // A buffering fullscreen Video renders its (now-visible) spinner child, which reaches for
+        // other IfDraw2D methods (doDrawScaledObject, …). Return a no-op for anything not tracked.
+        return new Proxy(target, {
+            get(obj, prop) {
+                if (prop in obj) return obj[prop];
+                return () => {};
+            },
+        });
     }
 
     function fullScreenVideo() {
@@ -293,6 +305,56 @@ describe("Video plane is only rendered by the owning, actively-presenting Video"
         video.renderNode({}, [0, 0], 0, 0, draw2D);
 
         expect(draw2D.cleared).toHaveLength(0);
+    });
+
+    // While buffering (loading, before the first frame), a full-screen owner shows a solid BLACK
+    // plane so the busy spinner appears over black — Roku's loading screen. It must NOT clear the
+    // transparent hole (the shared <video> element may still hold a stale frame that would leak
+    // through) and must NOT post the rect.
+    test("the owning full-screen Video paints a solid black plane while buffering", () => {
+        const video = fullScreenVideo();
+        sgRoot.setVideo(video);
+        video.setState(MediaEvent.Loading, 0); // -> "buffering"
+        video.makeDirty();
+        const draw2D = makeDraw2D();
+        global.postMessage.mockClear();
+
+        video.renderNode({}, [0, 0], 0, 1, draw2D);
+
+        expect(video.getValueJS("state")).toBe("buffering");
+        expect(draw2D.cleared).toHaveLength(0);
+        expect(draw2D.filled).toHaveLength(1);
+        expect(draw2D.filled[0].rect).toMatchObject({ x: 0, y: 0, width: 1920, height: 1080 });
+        expect(draw2D.filled[0].rgba >>> 0).toBe(0x000000ff);
+        expect(global.postMessage).not.toHaveBeenCalledWith(expect.stringContaining("video,rect"));
+    });
+
+    test("a non-owner buffering Video paints nothing", () => {
+        const owner = fullScreenVideo();
+        sgRoot.setVideo(owner);
+        const other = fullScreenVideo();
+        other.setState(MediaEvent.Loading, 0); // -> "buffering", but not the owner
+        expect(sgRoot.video).toBe(owner);
+        const draw2D = makeDraw2D();
+
+        other.renderNode({}, [0, 0], 0, 1, draw2D);
+
+        expect(draw2D.cleared).toHaveLength(0);
+        expect(draw2D.filled).toHaveLength(0);
+    });
+
+    test("a windowed buffering Video paints no black plane", () => {
+        const video = SGNodeFactory.createNode("Video");
+        video.setValue("width", new core.Float(640));
+        video.setValue("height", new core.Float(360));
+        sgRoot.setVideo(video);
+        video.setState(MediaEvent.Loading, 0); // -> "buffering"
+        const draw2D = makeDraw2D();
+
+        video.renderNode({}, [0, 0], 0, 1, draw2D);
+
+        expect(draw2D.cleared).toHaveLength(0);
+        expect(draw2D.filled).toHaveLength(0);
     });
 });
 

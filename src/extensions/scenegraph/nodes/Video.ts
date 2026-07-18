@@ -758,12 +758,20 @@ export class Video extends Group {
         // transparent hole cleared into the graphics buffer that the main thread fills with that one
         // element's frames — so only the node that currently OWNS the element (`sgRoot.video`) and
         // is actively presenting a frame (playing/paused) may position it and punch the hole. A
-        // non-owner instance, or the owner once it is finished/stopped/buffering, punches nothing and
-        // disappears cleanly: this prevents a second Video (or the just-finished startup logo) from
-        // resizing the element and leaking its stale last frame as a shrunken picture, and prevents a
-        // frame-less hole from showing through as a black box before the next screen renders.
+        // non-owner instance punches nothing and disappears cleanly: this prevents a second Video
+        // (or the just-finished startup logo) from resizing the element and leaking its stale last
+        // frame as a shrunken picture, and prevents a frame-less hole from showing through as a
+        // black box before the next screen renders.
+        //
+        // While the owner is BUFFERING (loading, before the first frame) a full-screen Video shows a
+        // black plane on Roku so the busy spinner appears over black. We must NOT clear a transparent
+        // hole here — the shared element may still hold a stale frame that would leak through — so we
+        // paint a solid black rect instead. Gated on `isFullscreen()` so it never reintroduces a
+        // black box over a windowed/preview Video.
         const state = this.getValueJS("state") as string;
-        const presenting = sgRoot.video === this && opacity > 0 && (state === "playing" || state === "paused");
+        const owner = sgRoot.video === this && opacity > 0;
+        const presenting = owner && (state === "playing" || state === "paused");
+        const buffering = owner && state === "buffering" && this.uiVisible();
         if (this.isDirty && presenting) {
             postMessage(`video,rect,${rect.x},${rect.y},${rect.width},${rect.height}`);
         }
@@ -771,6 +779,8 @@ export class Video extends Group {
             this.isDirty = false;
             if (presenting) {
                 draw2D.doDrawClearedRect(rect);
+            } else if (buffering) {
+                draw2D.doDrawRotatedRect(rect, 0x000000ff, 0, [0, 0], opacity);
             }
         }
         if (this.statusChanged) {
