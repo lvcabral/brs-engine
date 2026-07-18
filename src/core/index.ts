@@ -62,6 +62,7 @@ export * as types from "./brsTypes";
 export * as preprocessor from "./preprocessor";
 export { Preprocessor } from "./preprocessor/Preprocessor";
 export { Interpreter } from "./interpreter";
+export { toCallable } from "./interpreter/BrsFunction";
 export { Environment, Scope } from "./interpreter/Environment";
 export { BrsDevice } from "./device/BrsDevice";
 export { lexParseSync } from "./LexerParser";
@@ -75,6 +76,7 @@ import * as ParserExports from "./parser";
 import * as LexerExports from "./lexer";
 import * as EnvironmentExports from "./interpreter/Environment";
 import * as InterpreterExports from "./interpreter";
+import * as BrsFunctionExports from "./interpreter/BrsFunction";
 import * as BrsDeviceExports from "./device/BrsDevice";
 import * as BrsErrorExports from "./error/BrsError";
 import * as ArgumentMismatchExports from "./error/ArgumentMismatch";
@@ -192,6 +194,7 @@ function createWorkerExports() {
         LexerExports,
         ParserExports,
         EnvironmentExports,
+        BrsFunctionExports,
     ];
     for (const ns of namespaces) {
         mergeModuleExports(aggregated, ns);
