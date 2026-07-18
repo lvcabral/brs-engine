@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="MainScene" extends="Scene">
+    <script type="text/brightscript" uri="pkg:/components/MainScene.brs" />
+    <children>
+        <Rectangle id="background" width="1280" height="720" color="0x101010FF" />
+        <!-- A built-in ButtonGroup used purely as a horizontal layout container for custom
+             Group-based button components (a common app pattern) — the group must not manage
+             them: no repositioning, no focus stealing, no key consumption. -->
+        <ButtonGroup
+            id="buttonRow"
+            layoutDirection="horiz"
+            itemSpacings="[39]"
+            translation="[100, 600]">
+            <PlainButton id="leftButton" text="Left" width="177" />
+            <PlainButton id="rightButton" text="Right" width="500" />
+        </ButtonGroup>
+    </children>
+</component>
