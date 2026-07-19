@@ -30,10 +30,32 @@ export enum FocusStyle {
     FixedFocus = "fixedFocus",
 }
 
-const ValidVertStyles = new Set(Object.values(FocusStyle).map((style) => style.toLowerCase()));
 const ValidHorizStyles = new Set(
     [FocusStyle.FixedFocusWrap, FocusStyle.FloatingFocus].map((style) => style.toLowerCase())
 );
+
+/**
+ * Resolves a raw `vertFocusAnimationStyle` string to a canonical {@link FocusStyle}, or `undefined`
+ * when the value is not recognized. Matching is case-insensitive.
+ *
+ * The abbreviated value `"fixed"` is accepted as an alias for `fixedFocus`: real apps set
+ * `vertFocusAnimationStyle="fixed"` to mean non-wrapping fixed focus, and a device honors that
+ * intent rather than keeping the field's previous (possibly `fixedFocusWrap`) value. Without this,
+ * a grid whose default is `fixedFocusWrap` (MarkupGrid/PosterGrid) would keep wrapping and never let
+ * an Up press at the top row bubble to a parent that moves focus elsewhere.
+ */
+export function resolveVertFocusStyle(raw: string | undefined): FocusStyle | undefined {
+    const value = (raw ?? "").toLowerCase();
+    for (const style of Object.values(FocusStyle)) {
+        if (style.toLowerCase() === value) {
+            return style;
+        }
+    }
+    if (value === "fixed") {
+        return FocusStyle.FixedFocus;
+    }
+    return undefined;
+}
 
 export declare namespace ArrayGrid {
     type Metadata = {
@@ -120,7 +142,7 @@ export class ArrayGrid extends Group {
     protected lastPressHandled: string;
     protected hasNinePatch: boolean;
     protected focusField: string;
-    protected vertFocusAnimationStyleName: string;
+    protected vertFocusAnimationStyleName: string = FocusStyle.FloatingFocus.toLowerCase();
     public itemFocusCallback?: (index: number) => void;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.ArrayGrid) {
@@ -154,9 +176,7 @@ export class ArrayGrid extends Group {
         this.setValueSilent("focusable", BrsBoolean.True);
         this.setValueSilent("wrapDividerBitmapUri", new BrsString(this.dividerUri));
         this.setValueSilent("sectionDividerBitmapUri", new BrsString(this.dividerUri));
-        const style = (this.getValueJS("vertFocusAnimationStyle") as string) ?? FocusStyle.FloatingFocus;
-        this.vertFocusAnimationStyleName = style.toLowerCase();
-        this.wrap = this.vertFocusAnimationStyleName === FocusStyle.FixedFocusWrap.toLowerCase();
+        this.applyVertFocusStyle();
         this.lastPressHandled = "";
         this.hasNinePatch = false;
         this.focusField = "listHasFocus";
@@ -173,10 +193,10 @@ export class ArrayGrid extends Group {
         } else if (["jumptoitem", "animatetoitem"].includes(fieldName) && isNumberComp(value)) {
             this.setFocusedItem(jsValueOf(value));
         } else if (fieldName === "vertfocusanimationstyle" && isBrsString(value)) {
-            const style = value.toString().toLowerCase();
-            if (ValidVertStyles.has(style)) {
-                this.vertFocusAnimationStyleName = style;
-                this.wrap = style === FocusStyle.FixedFocusWrap.toLowerCase();
+            const style = resolveVertFocusStyle(value.toString());
+            if (style) {
+                this.vertFocusAnimationStyleName = style.toLowerCase();
+                this.wrap = style === FocusStyle.FixedFocusWrap;
             } else {
                 // Invalid vertFocusAnimationStyle
                 return;
@@ -675,6 +695,19 @@ export class ArrayGrid extends Group {
             this.vertFocusAnimationStyleName === FocusStyle.FixedFocusWrap.toLowerCase() ||
             this.vertFocusAnimationStyleName === FocusStyle.FixedFocus.toLowerCase()
         );
+    }
+
+    /**
+     * Derives the cached `vertFocusAnimationStyleName` and `wrap` flag from the current
+     * `vertFocusAnimationStyle` field, resolving aliases (e.g. `"fixed"` → `fixedFocus`) and falling
+     * back to `floatingFocus` for unrecognized values. Called from the constructors so the cached
+     * state stays consistent with whatever value XML/initialized fields stored on the node.
+     */
+    protected applyVertFocusStyle() {
+        const style =
+            resolveVertFocusStyle(this.getValueJS("vertFocusAnimationStyle") as string) ?? FocusStyle.FloatingFocus;
+        this.vertFocusAnimationStyleName = style.toLowerCase();
+        this.wrap = style === FocusStyle.FixedFocusWrap;
     }
 
     protected getRenderRowIndex(rowPosition: number) {
