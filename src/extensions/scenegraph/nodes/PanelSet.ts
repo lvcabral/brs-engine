@@ -2,6 +2,7 @@ import { AAMember, BrsBoolean, BrsString, BrsType, Float, IfDraw2D, Interpreter,
 import { FieldKind, FieldModel } from "../SGTypes";
 import { GridPanel, Panel, Poster, SGNodeType } from ".";
 import { Group } from "./Group";
+import { Node } from "./Node";
 import { sgRoot } from "../SGRoot";
 
 const DefaultPanelGapHD = 30;
@@ -29,6 +30,7 @@ export class PanelSet extends Group {
     private focusIndex: number = 0;
     private wasFocused: boolean = false;
     private handleSelect: boolean = true;
+    private appendingPreview: boolean = false;
     public focusedPanelCallback?: (panel: Panel) => void;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.PanelSet) {
@@ -134,12 +136,28 @@ export class PanelSet extends Group {
         this.focusIndex--;
         super.setValue("isGoingBack", BrsBoolean.True);
         if (this.panels.length > 2) {
-            const removedPanel = this.panels.pop();
-            if (removedPanel?.getValueJS("isFullScreen") === true) {
+            if (currentPanel === this.panels.at(-1) && currentPanel.getValueJS("isFullScreen") === true) {
+                // A displayed full-screen panel occupies both positions: going back slides it
+                // fully offscreen (removed), restoring the pair — and focus — that preceded it.
+                this.panels.pop();
                 this.focusIndex = Math.max(0, this.panels.length - 2);
+                this.removeChildByReference(currentPanel);
+                super.setValue("numPanels", new Float(this.panels.length));
+            } else {
+                // Only panels that slide fully off the right edge are auto-removed (Roku
+                // contract). After the slide the visible pair is [focusIndex, focusIndex + 1];
+                // going back from the LAST panel removes nothing — it stays as the right panel,
+                // reachable again with a right press.
+                let removed = false;
+                while (this.panels.length > 2 && this.panels.length - 1 > this.focusIndex + 1) {
+                    const removedPanel = this.panels.pop()!;
+                    this.removeChildByReference(removedPanel);
+                    removed = true;
+                }
+                if (removed) {
+                    super.setValue("numPanels", new Float(this.panels.length));
+                }
             }
-            this.removeChildByReference(removedPanel!);
-            super.setValue("numPanels", new Float(this.panels.length));
         }
         currentPanel.setNodeFocus(false);
         this.setNodeFocus(true);
@@ -179,10 +197,12 @@ export class PanelSet extends Group {
                 // PanelSet itself receiving focus — apps commonly focus a contained Panel directly.
                 this.wireNextPanel(child);
             }
-            if (child.getValueJS("isFullScreen") === true) {
-                this.focusIndex = this.panels.length - 1;
-            } else {
-                this.focusIndex = Math.max(0, this.panels.length - 2);
+            if (!this.appendingPreview) {
+                if (child.getValueJS("isFullScreen") === true) {
+                    this.focusIndex = this.panels.length - 1;
+                } else {
+                    this.focusIndex = Math.max(0, this.panels.length - 2);
+                }
             }
             super.setValue("numPanels", new Float(this.panels.length));
             this.refreshFocus();
@@ -200,7 +220,12 @@ export class PanelSet extends Group {
             panel.setTranslationX(panel.getValueJS("leftPosition") as number);
             if (visiblePanels.length > 1) {
                 const panel2 = visiblePanels[1];
-                if (panel2.getValueJS("isFullScreen") === true) {
+                // A full-screen panel occupies both positions only once it is the displayed
+                // (focused) panel; while it is still an unfocused nextPanel preview it sits on
+                // the right like any other panel, per the Roku Panel.isFullScreen contract.
+                const panel2TakesOver =
+                    panel2.getValueJS("isFullScreen") === true && this.panels[this.focusIndex] === panel2;
+                if (panel2TakesOver) {
                     const panel2PosX = panel2.getValueJS("leftPosition") as number;
                     panel2.setTranslationX(panel2PosX);
                 } else {
@@ -236,7 +261,14 @@ export class PanelSet extends Group {
     private wireNextPanel(panel: GridPanel) {
         panel.nextPanelCallback = (nextPanel: Panel) => {
             if (this.panels.length === 1) {
-                this.appendChildToParent(nextPanel);
+                // Appending a nextPanel preview must not move focus off the menu panel —
+                // even a full-screen preview (which takes over only via direct appendChild).
+                this.appendingPreview = true;
+                try {
+                    this.appendChildToParent(nextPanel);
+                } finally {
+                    this.appendingPreview = false;
+                }
                 return;
             }
             const removed = this.panels.splice(-1, 1, nextPanel);
@@ -282,12 +314,31 @@ export class PanelSet extends Group {
                     focusedPanel.setValue("leftOrientation", BrsBoolean.from(leftIndex === this.focusIndex));
                     this.focusedPanelCallback(focusedPanel);
                 }
-                focusedPanel.setNodeFocus(true);
+                // Don't steal focus when it already lives inside the focused panel — e.g. the
+                // app's focusedChild observer forwarded focus to a list nested in the panel, and
+                // that list's itemFocused observer appended the next detail panel (re-entering
+                // here). Re-focusing the panel would pull focus off the inner list, and the app's
+                // observer cannot repair it mid-dispatch (Field re-entrancy guard).
+                if (!this.isFocusWithin(focusedPanel, currentFocus)) {
+                    focusedPanel.setNodeFocus(true);
+                }
             }
             this.wasFocused = true;
         } else if (this.wasFocused) {
             this.wasFocused = false;
             this.isDirty = true;
         }
+    }
+
+    /** Whether `focused` is the panel itself or a node inside the panel's subtree. */
+    private isFocusWithin(panel: Panel, focused: unknown): boolean {
+        let node: unknown = focused;
+        while (node instanceof Node) {
+            if (node === panel) {
+                return true;
+            }
+            node = node.getNodeParent();
+        }
+        return false;
     }
 }
