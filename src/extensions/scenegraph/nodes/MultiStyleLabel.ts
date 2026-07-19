@@ -138,9 +138,15 @@ export class MultiStyleLabel extends Group {
             const size = this.getDimensions();
             const rect: Rect = { x: 0, y: 0, ...size };
             this.measured = this.renderLabel(rect, 0, 1);
-            rect.width = Math.max(this.measured.width, size.width);
-            rect.height = Math.max(this.measured.height, size.height);
-            this.rectLocal = { x: 0, y: 0, width: rect.width, height: rect.height };
+            const width = Math.max(this.measured.width, size.width);
+            const height = Math.max(this.measured.height, size.height);
+            // Keep all three coordinate-space rects in sync (see Label.getMeasured /
+            // SimpleLabel.getMeasured) so an eager boundingRect() query mid-render does
+            // not return a stale zero rectToParent/rectToScene.
+            const trans = this.getTranslation();
+            this.rectLocal = { x: 0, y: 0, width, height };
+            this.rectToParent = { x: trans[0], y: trans[1], width, height };
+            this.rectToScene = { x: trans[0], y: trans[1], width, height };
         }
         return this.measured;
     }
