@@ -27,6 +27,7 @@ export class DynamicKeyboardBase extends Group {
     readonly keyGrid: DynamicKeyGrid;
     private readonly textBoxHeight: number;
     private readonly gap: number;
+    private lastHideTextBox = false; // matches the hideTextBox default / textEditBox visible default
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.DynamicKeyboardBase) {
         super([], name);
@@ -96,7 +97,12 @@ export class DynamicKeyboardBase extends Group {
     }
 
     private layoutChildren(hideTextBox: boolean) {
-        this.textEditBox.setValueSilent("visible", BrsBoolean.from(!hideTextBox));
+        // Only sync `visible` when hideTextBox changes — an app may hide the box
+        // directly via textEditBox.visible, which must not be overwritten per frame.
+        if (this.lastHideTextBox !== hideTextBox) {
+            this.lastHideTextBox = hideTextBox;
+            this.textEditBox.setValueSilent("visible", BrsBoolean.from(!hideTextBox));
+        }
         this.textEditBox.setTranslation([0, 0]);
         this.keyGrid.setTranslation([0, hideTextBox ? 0 : this.textBoxHeight + this.gap]);
     }
@@ -246,5 +252,18 @@ export class DynamicKeyboardBase extends Group {
         this.textEditBox.setActive(focused);
         this.keyGrid.setFocusActive(focused);
         super.renderNode(interpreter, origin, angle, opacity, draw2D);
+        // Report the node's intrinsic size as its bounding rect (like the legacy Keyboard),
+        // not the children union: an app-hidden textEditBox still reserves its slot on Roku,
+        // so layout containers (e.g. a centered LayoutGroup) must keep measuring that space.
+        // Only hideTextBox collapses it, by moving the key grid to the top of the node.
+        const gridHeight = (this.keyGrid.getValueJS("height") as number) ?? 0;
+        const width = (this.getValueJS("width") as number) ?? 0;
+        const height = gridHeight + (hideTextBox ? 0 : this.textBoxHeight + this.gap);
+        if (width > 0 && height > 0) {
+            const nodeTrans = this.getTranslation();
+            const rect = { x: origin[0] + nodeTrans[0], y: origin[1] + nodeTrans[1], width, height };
+            this.updateBoundingRects(rect, origin, angle + this.getRotation());
+            this.updateParentRects(origin, angle);
+        }
     }
 }

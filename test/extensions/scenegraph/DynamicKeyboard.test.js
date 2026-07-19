@@ -138,6 +138,20 @@ describe("Dynamic voice keyboards", () => {
             expect(kbd.keyGrid.resolvePaletteColor("FocusColor", 0xffffffff)).toBe(0x0a0b0cff);
         });
 
+        test("resolvePaletteColor accepts high-alpha hex strings (signed parse) and opaque white", () => {
+            const kbd = SGNodeFactory.createNode("DynamicKeyboard");
+            // A top-bit color parses negative as a signed 32-bit int; it must still resolve
+            // (the focus indicator tint), not fall back.
+            kbd.setValue("palette", makePalette({ FocusColor: new BrsString("0xE13100FF") }));
+            expect(kbd.keyGrid.resolvePaletteColor("FocusColor", 0x12345678) >>> 0).toBe(0xe13100ff);
+            // Opaque white parses to -1, which must not collide with the invalid sentinel.
+            kbd.setValue("palette", makePalette({ FocusColor: new BrsString("0xFFFFFFFF") }));
+            expect(kbd.keyGrid.resolvePaletteColor("FocusColor", 0x12345678) >>> 0).toBe(0xffffffff);
+            // A non-color string still falls back.
+            kbd.setValue("palette", makePalette({ FocusColor: new BrsString("nonsense") }));
+            expect(kbd.keyGrid.resolvePaletteColor("FocusColor", 0x12345678) >>> 0).toBe(0x12345678);
+        });
+
         test("rendering themes the text box from the resolved palette, with a fallback", () => {
             const draw2D = {
                 doDrawRotatedText() {},
@@ -457,6 +471,80 @@ describe("Dynamic voice keyboards", () => {
                 expect(names.some((n) => n.includes(bg))).toBe(true);
             });
         }
+
+        test("an app-set textEditBox.visible=false survives rendering (layout unchanged)", () => {
+            const kbd = SGNodeFactory.createNode("DynamicCustomKeyboard");
+            sgRoot.setFocused(kbd);
+            const gridY = () => kbd.keyGrid.getTranslation()[1];
+            kbd.renderNode(fakeInterpreter, [0, 0], 0, 1, draw2D);
+            const offsetY = gridY();
+            expect(offsetY).toBeGreaterThan(0); // key grid sits below the text box
+            // The app hides the internal text box directly (not via hideTextBox).
+            kbd.textEditBox.setValue("visible", core.BrsBoolean.False);
+            kbd.renderNode(fakeInterpreter, [0, 0], 0, 1, draw2D);
+            kbd.renderNode(fakeInterpreter, [0, 0], 0, 1, draw2D);
+            expect(kbd.textEditBox.getValueJS("visible")).toBe(false);
+            // `visible` hides without re-layout: the key grid keeps its offset.
+            expect(gridY()).toBe(offsetY);
+        });
+
+        test("bounding rect keeps the hidden text box's slot (intrinsic size, not children union)", () => {
+            const kbd = SGNodeFactory.createNode("DynamicKeyboard");
+            sgRoot.setFocused(kbd);
+            kbd.renderNode(fakeInterpreter, [0, 0], 0, 1, draw2D);
+            const fullRect = { ...kbd.rectToParent };
+            expect(fullRect.y).toBe(0);
+            expect(fullRect.height).toBe(kbd.getValueJS("height"));
+            // Hiding the box via `visible` must NOT shrink the reported bounds — on Roku the
+            // node still reserves the text-box slot, so a centering LayoutGroup keeps its place.
+            kbd.textEditBox.setValue("visible", core.BrsBoolean.False);
+            kbd.renderNode(fakeInterpreter, [0, 0], 0, 1, draw2D);
+            expect(kbd.rectToParent).toEqual(fullRect);
+            // Only hideTextBox collapses the slot (key grid moves to the top of the node).
+            kbd.setValue("hideTextBox", core.BrsBoolean.True);
+            kbd.renderNode(fakeInterpreter, [0, 0], 0, 1, draw2D);
+            expect(kbd.rectToParent.height).toBeLessThan(fullRect.height);
+        });
+
+        test("hideTextBox still hides the text box and moves the key grid up", () => {
+            const kbd = SGNodeFactory.createNode("DynamicKeyboard");
+            sgRoot.setFocused(kbd);
+            kbd.setValue("hideTextBox", core.BrsBoolean.True);
+            kbd.renderNode(fakeInterpreter, [0, 0], 0, 1, draw2D);
+            expect(kbd.textEditBox.getValueJS("visible")).toBe(false);
+            expect(kbd.keyGrid.getTranslation()[1]).toBe(0);
+            // Toggling back restores the box and the layout.
+            kbd.setValue("hideTextBox", core.BrsBoolean.False);
+            kbd.renderNode(fakeInterpreter, [0, 0], 0, 1, draw2D);
+            expect(kbd.textEditBox.getValueJS("visible")).toBe(true);
+            expect(kbd.keyGrid.getTranslation()[1]).toBeGreaterThan(0);
+        });
+
+        test("the text-box cursor honors the box's opacity (near-zero opacity hides it)", () => {
+            const kbd = SGNodeFactory.createNode("DynamicCustomKeyboard");
+            // Apps "hide" the box while keeping it functional via a near-zero opacity;
+            // the blinking cursor must fade with it instead of drawing fully opaque.
+            kbd.textEditBox.setValue("opacity", new core.Float(0.00001));
+            kbd.setValue("text", new BrsString("batman"));
+            sgRoot.setFocused(kbd); // focused keyboard -> active text box -> cursor path
+            let cursorOpacity = null;
+            const capture = {
+                doDrawRotatedText() {},
+                doDrawRotatedRect() {},
+                drawNinePatch() {},
+                doDrawRotatedBitmap() {},
+                doDrawScaledObject(x, y, sx, sy, obj, rgba, opacity) {
+                    const n = obj && typeof obj.getImageName === "function" ? obj.getImageName() : "";
+                    if (n.includes("cursor")) cursorOpacity = opacity;
+                },
+            };
+            // Render a few frames to get past cursor blink phases.
+            for (let i = 0; i < 3 && cursorOpacity === null; i++) {
+                kbd.renderNode(fakeInterpreter, [0, 0], 0, 1, capture);
+            }
+            expect(cursorOpacity).not.toBeNull();
+            expect(cursorOpacity).toBeLessThan(0.001);
+        });
 
         test("DynamicCustomKeyboard draws no keyboard background until a KDF is set", () => {
             const names = drawnImageNames(SGNodeFactory.createNode("DynamicCustomKeyboard"));

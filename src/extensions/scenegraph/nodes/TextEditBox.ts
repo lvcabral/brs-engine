@@ -221,7 +221,7 @@ export class TextEditBox extends Group {
         this.hintLabel.setValueSilent("visible", BrsBoolean.from(showHint));
         this.secureLabel.setValueSilent("visible", BrsBoolean.from(!showHint && secureMode));
 
-        this.renderCursor(rect, now, text, secureMode, secureText, draw2D);
+        this.renderCursor(rect, now, text, secureMode, secureText, combinedOpacity, draw2D);
 
         this.updateBoundingRects(rect, origin, rotation);
         this.renderChildren(interpreter, drawTrans, rotation, combinedOpacity, draw2D);
@@ -251,6 +251,7 @@ export class TextEditBox extends Group {
         text: string,
         secureMode: boolean,
         secureText: string,
+        opacity: number,
         draw2D?: IfDraw2D
     ) {
         const isActive = this.getValueJS("active") as boolean;
@@ -291,8 +292,9 @@ export class TextEditBox extends Group {
                 width: this.cursor.width,
                 height: this.cursor.height,
             };
-            // Draw cursor
-            this.drawImage(this.cursor, cursorRect, 0, 1, draw2D);
+            // Draw cursor at the node's combined opacity — a near-transparent text box (e.g. an
+            // app "hiding" the box via opacity) must not show a fully opaque blinking cursor.
+            this.drawImage(this.cursor, cursorRect, 0, opacity, draw2D);
         }
     }
 }
