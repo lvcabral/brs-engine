@@ -150,6 +150,7 @@ export class Video extends Group {
     private seekTimeout: number;
     private statusChanged: boolean;
     private seeking: boolean;
+    private hasPresented: boolean;
 
     constructor(members: AAMember[] = [], readonly name: string = SGNodeType.Video) {
         super([], name);
@@ -201,6 +202,7 @@ export class Video extends Group {
         this.trickPlayPos = -1;
         this.seeking = false;
         this.statusChanged = false;
+        this.hasPresented = false;
         this.lastPressHandled = "";
 
         // Prevent initializing Video in a Task thread, and — critically — when this instance is being
@@ -362,12 +364,14 @@ export class Video extends Group {
             case MediaEvent.StartStream:
             case MediaEvent.Resumed:
                 state = "playing";
+                this.hasPresented = true;
                 this.resetSeeking();
                 this.spinner.setValueSilent("visible", BrsBoolean.False);
                 if (eventType === MediaEvent.Resumed) this.showUI(false);
                 break;
             case MediaEvent.Paused:
                 state = "paused";
+                this.hasPresented = true;
                 this.spinner.setValueSilent("visible", BrsBoolean.False);
                 if (this.trickPlayPos === -1) {
                     this.showHeader = now + 5000;
@@ -377,16 +381,19 @@ export class Video extends Group {
                 break;
             case MediaEvent.Partial:
                 state = "stopped";
+                this.hasPresented = false;
                 break;
             case MediaEvent.Finished:
             case MediaEvent.Full:
                 this.spinner.setValueSilent("visible", BrsBoolean.False);
                 this.showUI(false);
                 state = "finished";
+                this.hasPresented = false;
                 break;
             case MediaEvent.Failed:
                 this.setErrorFields(eventIndex);
                 state = "error";
+                this.hasPresented = false;
                 if (!sgRoot.inTaskThread()) postMessage(`video,error`);
                 break;
             default:
@@ -399,6 +406,7 @@ export class Video extends Group {
 
     private resetContent(content: ContentNode) {
         if (sgRoot.inTaskThread()) return;
+        this.hasPresented = false;
         postMessage({ videoPlaylist: this.formatContent(content) });
         if (this.contentTitles.length > 0) {
             this.setContentIndex(0);
@@ -768,21 +776,30 @@ export class Video extends Group {
         // Video node instances (e.g. a startup logo and a preview player). The video plane is a
         // transparent hole cleared into the graphics buffer that the main thread fills with that one
         // element's frames — so only the node that currently OWNS the element (`sgRoot.video`) and
-        // is actively presenting a frame (playing/paused) may position it and punch the hole. A
-        // non-owner instance punches nothing and disappears cleanly: this prevents a second Video
-        // (or the just-finished startup logo) from resizing the element and leaking its stale last
-        // frame as a shrunken picture, and prevents a frame-less hole from showing through as a
-        // black box before the next screen renders.
+        // is presenting a frame (playing/paused, or re-buffering after playback began) may position
+        // it and punch the hole. A non-owner instance punches nothing and disappears cleanly: this
+        // prevents a second Video (or the just-finished startup logo) from resizing the element and
+        // leaking its stale last frame as a shrunken picture, and prevents a frame-less hole from
+        // showing through as a black box before the next screen renders.
         //
-        // While the owner is BUFFERING (loading, before the first frame) a full-screen Video shows a
-        // black plane on Roku so the busy spinner appears over black. We must NOT clear a transparent
-        // hole here — the shared element may still hold a stale frame that would leak through — so we
-        // paint a solid black rect instead. Gated on `isFullscreen()` so it never reintroduces a
-        // black box over a windowed/preview Video.
+        // While the owner is INITIALLY buffering (loading, before the first frame has ever presented)
+        // a full-screen Video shows a black plane on Roku so the busy spinner appears over black. We
+        // must NOT clear a transparent hole here — the shared element may still hold a stale frame that
+        // would leak through — so we paint a solid black rect instead, gated on `uiVisible()` so it
+        // never reintroduces a black box over a windowed/preview Video.
+        //
+        // Once playback has actually started (`hasPresented`), a transient re-buffer must keep
+        // presenting the plane (the element still holds the last decoded frame), matching Roku where a
+        // mid-stream rebuffer shows the spinner over the frozen picture, not black. Without this, a
+        // media node whose `state` briefly flips to "buffering" — e.g. an SGDEX content handler / RAF
+        // Task mirroring the node cross-thread — would black out the plane for that frame and make a
+        // steadily-playing video flash black. `hasPresented` is driven only by real player events
+        // (setState), so those stray cross-thread `state` writes can never toggle it.
         const state = this.getValueJS("state") as string;
         const owner = sgRoot.video === this && opacity > 0;
-        const presenting = owner && (state === "playing" || state === "paused");
-        const buffering = owner && state === "buffering" && this.uiVisible();
+        const presenting =
+            owner && (state === "playing" || state === "paused" || (state === "buffering" && this.hasPresented));
+        const buffering = owner && state === "buffering" && !this.hasPresented && this.uiVisible();
         if (this.isDirty && presenting) {
             postMessage(`video,rect,${rect.x},${rect.y},${rect.width},${rect.height}`);
         }
