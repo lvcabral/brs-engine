@@ -163,4 +163,17 @@ export class MarkupList extends ArrayGrid {
         // 9-patch's own 19px content margins, so the focus frame hugs the row instead of overflowing.
         return { left: this.marginX, right: this.marginX, top: this.marginY, bottom: this.marginY };
     }
+
+    /**
+     * Like MarkupGrid, a real device reports a MarkupList's bounding rect as exactly the laid-out
+     * item extent (rows of itemSize plus spacing) with NO focus-bitmap outset. The outset would
+     * also be unstable: renderFocus re-derives hasNinePatch from whichever bitmap was drawn last,
+     * so a list whose focus bitmap is a 9-patch but whose footprint is a plain image would grow
+     * when focused and shrink when not — visibly shifting siblings a LayoutGroup places below it.
+     * The marginX/marginY outset still drives the drawn focus frame (focusMargins), just not the
+     * reported rects.
+     */
+    protected rectMargins(): { x: number; y: number } {
+        return { x: 0, y: 0 };
+    }
 }
