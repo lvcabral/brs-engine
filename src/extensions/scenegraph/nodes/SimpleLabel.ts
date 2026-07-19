@@ -72,19 +72,7 @@ export class SimpleLabel extends Group {
         if (this.measured === undefined) {
             const rect: Rect = { x: 0, y: 0, width: 0, height: 0 };
             this.measured = this.renderLabel(rect, 0, 1);
-            const width = this.measured.width;
-            const height = this.measured.height;
-            // Populate all three coordinate-space rects, not just rectLocal. A component that sizes
-            // itself from a SimpleLabel's `boundingRect()` (parent space) — e.g. a text pill fitting a
-            // 9-patch background to its label — queries this before the render pass reaches the label;
-            // getBoundingRect's measuring fallback is then skipped (rectLocal is already non-zero), so
-            // it must return the measured size in every space, not a stale zero rectToParent/rectToScene.
-            // Width/height are translation-invariant; the true origins are recomputed when the pass
-            // reaches this node in renderNode.
-            const trans = this.getTranslation();
-            this.rectLocal = { x: 0, y: 0, width, height };
-            this.rectToParent = { x: trans[0], y: trans[1], width, height };
-            this.rectToScene = { x: trans[0], y: trans[1], width, height };
+            this.setMeasuredBoundingRects(this.measured.width, this.measured.height);
         }
         return this.measured;
     }
