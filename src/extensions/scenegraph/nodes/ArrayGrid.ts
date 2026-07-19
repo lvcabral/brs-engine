@@ -428,6 +428,9 @@ export class ArrayGrid extends Group {
     renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
         if (!this.isVisible()) {
             this.updateRenderTracking(true);
+            if (!draw2D) {
+                this.measureHiddenExtent(origin, angle);
+            }
             return;
         }
         const nodeTrans = this.getTranslation();
@@ -463,6 +466,35 @@ export class ArrayGrid extends Group {
         _draw2D?: IfDraw2D
     ) {
         // To be overwritten by derivate classes
+    }
+
+    /**
+     * Refreshes this grid's bounding rects while it is invisible, for a measurement pass (no draw
+     * target). On Roku, layout and bounding rects are independent of visibility — apps size sibling
+     * UI (e.g. a background poster) from a hidden grid's boundingRect() before revealing it. The
+     * hard skip in renderNode must stay for real draws (a hidden grid must not create item
+     * components or load textures), so the extent is derived arithmetically from the content length,
+     * itemSize and spacing via updateRect — no item components are instantiated. renderNode still
+     * returns before nodeRenderingDone, so the hidden grid does not union into its parent's bounds.
+     */
+    protected measureHiddenExtent(origin: number[], angle: number) {
+        const contentNode = this.getValue("content");
+        if (contentNode instanceof ContentNode && contentNode.changed) {
+            this.refreshContent();
+            contentNode.changed = false;
+        }
+        const itemSize = this.getValueJS("itemSize") as number[];
+        if (this.content.length === 0 || !itemSize?.[0] || !itemSize?.[1] || !this.numRows || !this.numCols) {
+            return;
+        }
+        const nodeTrans = this.getTranslation();
+        const drawTrans = angle === 0 ? nodeTrans.slice() : rotateTranslation(nodeTrans, angle);
+        drawTrans[0] += origin[0];
+        drawTrans[1] += origin[1];
+        const rect = { x: drawTrans[0], y: drawTrans[1], ...this.getDimensions() };
+        const displayRows = Math.min(Math.ceil(this.content.length / this.numCols), this.numRows);
+        this.updateRect(rect, displayRows, itemSize);
+        this.updateBoundingRects(rect, origin, angle + this.getRotation());
     }
 
     protected renderItemComponent(
@@ -799,6 +831,19 @@ export class ArrayGrid extends Group {
         this.topRow = Math.max(0, Math.min(this.topRow, maxTopRow));
     }
 
+    /**
+     * Per-axis outset the reported bounding rect adds around the item extent when the focus
+     * bitmap is a 9-patch. This affects ONLY the rects reported by boundingRect() and friends,
+     * never the drawn focus frame (see focusMargins). Node types whose device-reported rect is
+     * exactly the laid-out item extent override this to zero (MarkupGrid).
+     */
+    protected rectMargins(): { x: number; y: number } {
+        if (this.hasNinePatch) {
+            return { x: this.marginX, y: this.marginY };
+        }
+        return { x: 0, y: 0 };
+    }
+
     protected updateRect(rect: Rect, numRows: number, itemSize: number[]) {
         const numCols = this.numCols || 1;
         // Inter-item spacing is part of the laid-out extent: the render loop advances by
@@ -809,14 +854,11 @@ export class ArrayGrid extends Group {
         const spacing = this.getValueJS("itemSpacing") as number[];
         const colSpacing = Array.isArray(spacing) ? spacing[0] ?? 0 : 0;
         const rowSpacing = Array.isArray(spacing) ? spacing[1] ?? 0 : 0;
-        rect.x = rect.x - (this.hasNinePatch ? this.marginX : 0);
-        rect.y = rect.y - (this.hasNinePatch ? this.marginY : 0);
-        rect.width =
-            numCols * (itemSize[0] + (this.hasNinePatch ? this.marginX * 2 : 0)) +
-            Math.max(0, numCols - 1) * colSpacing;
-        rect.height =
-            numRows * (itemSize[1] + (this.hasNinePatch ? this.marginY * 2 : 0)) +
-            Math.max(0, numRows - 1) * rowSpacing;
+        const margin = this.rectMargins();
+        rect.x = rect.x - margin.x;
+        rect.y = rect.y - margin.y;
+        rect.width = numCols * (itemSize[0] + margin.x * 2) + Math.max(0, numCols - 1) * colSpacing;
+        rect.height = numRows * (itemSize[1] + margin.y * 2) + Math.max(0, numRows - 1) * rowSpacing;
     }
 
     protected getIndex(offset: number = 0, currIndex?: number) {

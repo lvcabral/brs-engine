@@ -53,7 +53,9 @@ describe("attaching a node that already has a parent reparents it (single-parent
         expect(placeholder.getNodeParent()).toBe(BrsInvalid.Instance);
     });
 
-    test("same-parent append stays a no-op and keeps child order", () => {
+    test("same-parent append moves the child to the end without duplication", () => {
+        // Device behavior: re-appending an existing child reorders it to the end — apps rely on
+        // this to move a menu entry after a newly appended one (see AppendChildReorder.test.js).
         const parent = new Node([], "Group");
         const first = new Node([], "Group");
         const second = new Node([], "Group");
@@ -61,7 +63,8 @@ describe("attaching a node that already has a parent reparents it (single-parent
         parent.appendChildToParent(first);
         parent.appendChildToParent(second);
         parent.appendChildToParent(first);
-        expect(parent.getNodeChildren()).toEqual([first, second]);
+        expect(parent.getNodeChildren()).toEqual([second, first]);
+        expect(parent.getNodeChildren()).toHaveLength(2);
         expect(first.getNodeParent()).toBe(parent);
     });
 
