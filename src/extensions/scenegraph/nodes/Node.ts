@@ -816,9 +816,15 @@ export class Node extends RoSGNode implements BrsValue {
         if (colors) {
             const color = colors.get(new BrsString(name));
             if (isBrsString(color)) {
-                const parsed = convertHexColor(color.getValue());
-                if (parsed >= 0) {
-                    return parsed;
+                // convertHexColor returns a signed 32-bit int, so a high-alpha color like
+                // "0xE13100FF" parses negative, and opaque white collides with its -1 invalid
+                // sentinel — validate the hex digits here instead of gating on the parsed sign.
+                const hex = color
+                    .getValue()
+                    .trim()
+                    .replace(/^(#|0x|&h)/i, "");
+                if (/^[0-9a-f]{1,8}$/i.test(hex)) {
+                    return convertHexColor(hex);
                 }
             } else {
                 const value = jsValueOf(color);
