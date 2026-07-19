@@ -4,7 +4,7 @@ const scenegraph = require("../../../packages/scenegraph/lib/brs-sg.node.js");
 const core = require("../../../packages/node/bin/brs.node.js");
 
 const { SGNodeFactory, sgRoot } = scenegraph;
-const { BrsDevice, BrsString, BrsBoolean, Float, RoArray } = core;
+const { BrsDevice, BrsString, BrsBoolean, Float, Int32, RoArray } = core;
 
 /** Minimal interpreter accepted by renderNode → renderChildren (never dereferenced when draw2D is absent). */
 const fakeInterpreter = {};
@@ -180,5 +180,61 @@ describe("ButtonGroup with managed Button children", () => {
         group.renderNode(fakeInterpreter, [0, 0], 0, 1);
 
         expect(sgRoot.focused).toBe(first);
+    });
+
+    test("moves focus between buttons on up/down key navigation", () => {
+        // Regression (#1060): handleKey updated `focusButton`/`buttonFocused` but not the live
+        // focus, and the next render's refreshFocus snapped focusIndex back to the still-focused
+        // button — so a focused ButtonGroup could never move focus between its buttons.
+        const group = SGNodeFactory.createNode("ButtonGroup");
+        group.setValue("buttons", new RoArray([new BrsString("A"), new BrsString("B"), new BrsString("C")]));
+        group.setNodeFocus(true);
+        const children = group.getNodeChildren();
+        const focusedIndex = () => children.indexOf(sgRoot.focused);
+        expect(focusedIndex()).toBe(0);
+
+        group.handleKey("down", true);
+        group.handleKey("down", false);
+        expect(focusedIndex()).toBe(1);
+        // A render pass must not snap focus back to the previous button.
+        group.renderNode(fakeInterpreter, [0, 0], 0, 1);
+        expect(focusedIndex()).toBe(1);
+        expect(group.getValueJS("buttonFocused")).toBe(1);
+
+        group.handleKey("down", true);
+        group.handleKey("down", false);
+        expect(focusedIndex()).toBe(2);
+        // OK selects the button that actually holds focus.
+        group.handleKey("OK", true);
+        expect(group.getValueJS("buttonSelected")).toBe(2);
+
+        group.handleKey("up", true);
+        group.handleKey("up", false);
+        expect(focusedIndex()).toBe(1);
+    });
+
+    test("setting focusButton on a focused group moves the live focus", () => {
+        // App code sets `focusButton` to reposition focus; it must take effect immediately when
+        // the group already holds key focus (used by screens returning to a specific action).
+        const group = SGNodeFactory.createNode("ButtonGroup");
+        group.setValue("buttons", new RoArray([new BrsString("A"), new BrsString("B"), new BrsString("C")]));
+        group.setNodeFocus(true);
+        const children = group.getNodeChildren();
+
+        group.setValue("focusButton", new Int32(2));
+        expect(children.indexOf(sgRoot.focused)).toBe(2);
+        group.renderNode(fakeInterpreter, [0, 0], 0, 1);
+        expect(children.indexOf(sgRoot.focused)).toBe(2);
+    });
+
+    test("setting focusButton before the group is focused does not force focus", () => {
+        // onVisibleChange sets `focusButton = 0` before setFocus(true); it must not pull global
+        // focus onto the group while nothing in it is focused yet.
+        const group = SGNodeFactory.createNode("ButtonGroup");
+        group.setValue("buttons", new RoArray([new BrsString("A"), new BrsString("B")]));
+
+        group.setValue("focusButton", new Int32(0));
+        expect(sgRoot.focused).not.toBe(group);
+        expect(group.getNodeChildren().includes(sgRoot.focused)).toBe(false);
     });
 });

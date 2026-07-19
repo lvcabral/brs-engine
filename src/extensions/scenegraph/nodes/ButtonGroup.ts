@@ -95,6 +95,14 @@ export class ButtonGroup extends LayoutGroup {
             if (typeof newIndex === "number" && newIndex >= 0 && newIndex < buttons.length) {
                 this.focusIndex = newIndex;
                 super.setValue("buttonFocused", value);
+                // When key focus is already within the group, moving `focusButton` (via up/down
+                // navigation in handleKey, or app code) must move the actual focus to the target
+                // button. Otherwise refreshFocus would snap focusIndex back to the still-focused
+                // previous button and navigation would appear stuck.
+                const target = this.children[newIndex];
+                if (this.hasKeyFocus() && target instanceof RoSGNode && sgRoot.focused !== target) {
+                    sgRoot.setFocused(target);
+                }
             }
         }
         super.setValue(index, value, alwaysNotify, kind);
@@ -132,6 +140,12 @@ export class ButtonGroup extends LayoutGroup {
         return this.children.some((child) => child instanceof Button);
     }
 
+    /** True when key focus is on the group itself or on one of its managed Button children. */
+    private hasKeyFocus(): boolean {
+        const focused = sgRoot.focused;
+        return focused === this || (focused instanceof Button && focused.getNodeParent() === this);
+    }
+
     setNodeFocus(focusOn: boolean): boolean {
         const focus = super.setNodeFocus(focusOn);
         if (focus) {
@@ -143,9 +157,7 @@ export class ButtonGroup extends LayoutGroup {
     handleKey(key: string, press: boolean): boolean {
         // Only consume keys when the group manages Button children and the key focus is on the
         // group or one of those buttons — otherwise let the key bubble to the app's onKeyEvent.
-        const focused = sgRoot.focused;
-        const focusWithin = focused === this || (focused instanceof Button && focused.getNodeParent() === this);
-        if (!this.isManagedMode() || !focusWithin) {
+        if (!this.isManagedMode() || !this.hasKeyFocus()) {
             return false;
         }
         if (!press && this.lastPressHandled === key) {
