@@ -1,5 +1,5 @@
 const brs = require("../../packages/node/bin/brs.node");
-const { Interpreter, Lexeme, Expr, Stmt } = brs;
+const { Interpreter, Lexeme, Expr, Stmt, DebugMode } = brs;
 const { Int32, BrsString } = brs.types;
 
 const { createMockStreams, allArgs } = require("../e2e/E2ETests");
@@ -75,5 +75,34 @@ describe("interpreter try-catch blocks", () => {
         expect(catchSpy).toHaveBeenCalledTimes(1);
         const output = allArgs(stdout.write).filter((arg) => arg !== "\n");
         expect(output[0]).toMatch(/Type Mismatch./);
+    });
+
+    it("does not run the catch block when the interpreter is exiting", () => {
+        // After a Micro Debugger `quit`, the interpreter is in EXIT mode and unwinds by re-throwing
+        // the original RuntimeError. A user try/catch must let that error propagate (so the app
+        // terminates) instead of swallowing it and looping forever.
+        const badComparison = new Expr.Binary(
+            new Expr.Literal(new Int32(2)),
+            token(Lexeme.Less),
+            new Expr.Literal(new BrsString("1"))
+        );
+        const catchSpy = jest.spyOn(printError, "accept");
+
+        const statements = [
+            new Stmt.TryCatch(
+                /* try block */ new Stmt.Block([badComparison]),
+                /* catch block */ new Stmt.Block([printError]),
+                /* error binding */ new Expr.Variable(identifier("e")),
+                {
+                    try: token(Lexeme.Try, "try"),
+                    catch: token(Lexeme.Catch, "catch"),
+                    endtry: token(Lexeme.EndTry, "end try"),
+                }
+            ),
+        ];
+
+        interpreter.debugMode = DebugMode.EXIT;
+        expect(() => interpreter.exec(statements)).toThrow();
+        expect(catchSpy).not.toHaveBeenCalled();
     });
 });
