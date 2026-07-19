@@ -100,9 +100,7 @@ export class PosterGrid extends ArrayGrid {
         this.registerInitializedFields(initializedFields);
 
         this.setValueSilent("focusBitmapUri", new BrsString(this.focusUri));
-        const style = (this.getValueJS("vertFocusAnimationStyle") as string) ?? FocusStyle.FixedFocusWrap;
-        this.vertFocusAnimationStyleName = style.toLowerCase();
-        this.wrap = this.vertFocusAnimationStyleName === FocusStyle.FixedFocusWrap.toLowerCase();
+        this.applyVertFocusStyle();
         this.numRows = this.getValueJS("numRows") as number;
         this.numCols = this.getValueJS("numColumns") as number;
         this.hasNinePatch = true;

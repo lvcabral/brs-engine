@@ -37,8 +37,7 @@ export class MarkupGrid extends ArrayGrid {
         this.gap = 0;
         this.setValueSilent("focusBitmapUri", new BrsString(this.focusUri));
         this.setValueSilent("wrapDividerBitmapUri", new BrsString(this.dividerUri));
-        const style = this.getValueJS("vertFocusAnimationStyle") as string;
-        this.wrap = style.toLowerCase() === FocusStyle.FixedFocusWrap.toLowerCase();
+        this.applyVertFocusStyle();
         this.numRows = this.getValueJS("numRows") as number;
         this.numCols = this.getValueJS("numColumns") as number;
         this.hasNinePatch = true;
