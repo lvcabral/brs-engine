@@ -6,20 +6,21 @@ import { Group } from "./Group";
 /** Valid values for panel sizes in HD */
 export type PanelSizeValue = {
     width: number;
-    height: number;
     leftPos: number;
 };
 export const PanelSizeValues: Map<string, PanelSizeValue> = new Map([
-    ["narrow", { width: 388, height: 605, leftPos: 105 }],
-    ["medium", { width: 520, height: 605, leftPos: 105 }],
-    ["wide", { width: 645, height: 605, leftPos: 112 }],
-    ["full", { width: 940, height: 605, leftPos: 170 }],
+    ["narrow", { width: 388, leftPos: 105 }],
+    ["medium", { width: 520, leftPos: 105 }],
+    ["wide", { width: 645, leftPos: 112 }],
+    ["full", { width: 940, leftPos: 170 }],
 ]);
 
 export class Panel extends Group {
     readonly defaultFields: FieldModel[] = [
         { name: "width", type: "float", value: "388" },
-        { name: "height", type: "float", value: "605" },
+        // Per the Roku spec, height defaults to -1 and is set by the PanelSet at attach
+        // time — the notifying write is what fires app observers registered in init().
+        { name: "height", type: "float", value: "-1" },
         { name: "leftPosition", type: "float", value: "105" },
         { name: "panelSize", type: "string", value: "narrow", alwaysNotify: true },
         { name: "overhangTitle", type: "string", value: "" },
@@ -52,11 +53,10 @@ export class Panel extends Group {
     }
 
     protected setSizeAndPosition(sizeValue: PanelSizeValue) {
+        // panelSize sets only width and leftPosition (Roku spec); height comes from the PanelSet.
         const width = this.resolution === "HD" ? sizeValue.width : sizeValue.width * 1.5;
-        const height = this.resolution === "HD" ? sizeValue.height : sizeValue.height * 1.5;
         const leftPos = this.resolution === "HD" ? sizeValue.leftPos : sizeValue.leftPos * 1.5;
         this.setValue("width", new Float(width));
-        this.setValue("height", new Float(height));
         this.setValue("leftPosition", new Float(leftPos));
     }
 

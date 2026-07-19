@@ -713,6 +713,33 @@ describe("cli", () => {
             "",
         ]);
     }, 10000);
+
+    it("Sets an attached Panel's height from the PanelSet, firing observers registered in init()", async () => {
+        let command = ["node", brsCliPath, "-r panel-height-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+
+        // Per the Roku spec, Panel.height defaults to -1 and "will be set by the PanelSet";
+        // apps observe their panel's height in init() (before appendChild) to size
+        // panel-local UI. The attach-time write must be a notifying setValue, and a later
+        // PanelSet height change must propagate to attached panels.
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "=== Panel Height Repro ===",
+            "init height = -1",
+            "detached height = -1",
+            "observed height =  1080",
+            "attached height =  1080",
+            "observed height =  720",
+            "resized height =  720",
+            "=== Panel Height Repro Complete ===",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 10000);
+
     it("Reports a RowList's newly focused item at the settled focus band, not its pre-scroll position", async () => {
         let command = ["node", brsCliPath, "-r rowlist-subrect-app", "source/main.brs", "-c 0"].join(" ");
 

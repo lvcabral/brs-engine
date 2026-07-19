@@ -82,8 +82,23 @@ export class PanelSet extends Group {
                 this.goBack();
             }
             return;
+        } else if (fieldName === "height") {
+            super.setValue(index, value, alwaysNotify, kind);
+            for (const panel of this.panels) {
+                this.adoptPanel(panel);
+            }
+            return;
         }
         super.setValue(index, value, alwaysNotify, kind);
+    }
+
+    /**
+     * Per the Roku spec, the PanelSet sets each attached Panel's `height` field (apps treat
+     * it as read-only and often observe it to size panel-local UI). Must be a notifying
+     * write so observers registered in the component's init() fire.
+     */
+    private adoptPanel(panel: Panel) {
+        panel.setValue("height", this.getValue("height"));
     }
 
     private updateArrowPositions() {
@@ -192,6 +207,7 @@ export class PanelSet extends Group {
         const added = super.appendChildToParent(child);
         if (added && child instanceof Panel) {
             this.panels.push(child);
+            this.adoptPanel(child);
             if (child instanceof GridPanel) {
                 // Wire the create-next-panel callback at append time so it does not depend on the
                 // PanelSet itself receiving focus — apps commonly focus a contained Panel directly.
@@ -274,6 +290,7 @@ export class PanelSet extends Group {
             const removed = this.panels.splice(-1, 1, nextPanel);
             const removedIndex = this.children.indexOf(removed[0]);
             this.replaceChildAtIndex(nextPanel, removedIndex);
+            this.adoptPanel(nextPanel);
         };
         panel.clearNextPanelCallback = () => this.clearTrailingPanel(panel);
     }
