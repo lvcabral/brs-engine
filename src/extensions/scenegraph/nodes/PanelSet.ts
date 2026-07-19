@@ -136,12 +136,28 @@ export class PanelSet extends Group {
         this.focusIndex--;
         super.setValue("isGoingBack", BrsBoolean.True);
         if (this.panels.length > 2) {
-            const removedPanel = this.panels.pop();
-            if (removedPanel?.getValueJS("isFullScreen") === true) {
+            if (currentPanel === this.panels.at(-1) && currentPanel.getValueJS("isFullScreen") === true) {
+                // A displayed full-screen panel occupies both positions: going back slides it
+                // fully offscreen (removed), restoring the pair — and focus — that preceded it.
+                this.panels.pop();
                 this.focusIndex = Math.max(0, this.panels.length - 2);
+                this.removeChildByReference(currentPanel);
+                super.setValue("numPanels", new Float(this.panels.length));
+            } else {
+                // Only panels that slide fully off the right edge are auto-removed (Roku
+                // contract). After the slide the visible pair is [focusIndex, focusIndex + 1];
+                // going back from the LAST panel removes nothing — it stays as the right panel,
+                // reachable again with a right press.
+                let removed = false;
+                while (this.panels.length > 2 && this.panels.length - 1 > this.focusIndex + 1) {
+                    const removedPanel = this.panels.pop()!;
+                    this.removeChildByReference(removedPanel);
+                    removed = true;
+                }
+                if (removed) {
+                    super.setValue("numPanels", new Float(this.panels.length));
+                }
             }
-            this.removeChildByReference(removedPanel!);
-            super.setValue("numPanels", new Float(this.panels.length));
         }
         currentPanel.setNodeFocus(false);
         this.setNodeFocus(true);
