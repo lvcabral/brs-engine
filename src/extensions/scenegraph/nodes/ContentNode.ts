@@ -179,7 +179,19 @@ export class ContentNode extends Node {
         let appendedIndex: number | null = null;
         if (child instanceof ContentNode) {
             success = true;
-            if (!this.children.includes(child)) {
+            const existingIndex = this.children.indexOf(child);
+            if (existingIndex >= 0) {
+                // Re-appending an existing child MOVES it to the end (device behavior): apps
+                // reorder list content this way — e.g. append a new entry, then re-append an
+                // existing one so it becomes the last option.
+                if (existingIndex !== this.children.length - 1) {
+                    this.children.splice(existingIndex, 1);
+                    this.recordChildChange("remove", existingIndex, existingIndex);
+                    appendedIndex = this.children.length;
+                    this.children.push(child);
+                    added = true;
+                }
+            } else {
                 this.detachFromCurrentParent(child);
                 appendedIndex = this.children.length;
                 this.children.push(child);

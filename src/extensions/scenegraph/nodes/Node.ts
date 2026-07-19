@@ -1622,13 +1622,24 @@ export class Node extends RoSGNode implements BrsValue {
     }
 
     /**
-     * Appends a child node to this node's children collection.
+     * Appends a child node to this node's children collection. Appending a node that is
+     * already a child MOVES it to the end (matching a real device): apps reorder a list by
+     * re-appending an existing child — e.g. "move this menu entry after the one just added".
      * @param child Child to append.
      * @returns True when the child was appended.
      */
     appendChildToParent(child: BrsType): boolean {
         if (child instanceof Node) {
-            if (this.children.includes(child)) {
+            const existingIndex = this.children.indexOf(child);
+            if (existingIndex >= 0) {
+                if (existingIndex === this.children.length - 1) {
+                    return true;
+                }
+                this.children.splice(existingIndex, 1);
+                this.recordChildChange("remove", existingIndex, existingIndex);
+                this.children.push(child);
+                this.makeDirty();
+                this.recordChildChange("add", this.children.length - 1);
                 return true;
             }
             this.detachFromCurrentParent(child);

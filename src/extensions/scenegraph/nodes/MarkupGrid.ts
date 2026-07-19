@@ -44,6 +44,17 @@ export class MarkupGrid extends ArrayGrid {
         this.focusField = "gridHasFocus";
     }
 
+    /**
+     * A real device reports a MarkupGrid's bounding rect as exactly the laid-out item extent
+     * (rows/columns of itemSize plus spacing) with NO focus-bitmap outset: apps size sibling
+     * backgrounds from boundingRect() and on device they align flush with the items. The
+     * marginX/marginY outset still drives the drawn focus frame (focusMargins), just not the
+     * reported rects.
+     */
+    protected rectMargins(): { x: number; y: number } {
+        return { x: 0, y: 0 };
+    }
+
     protected handleUpDown(key: string) {
         let handled = false;
         let offset: number;
