@@ -9,6 +9,9 @@ const { BrsDevice, BrsString, BrsBoolean, Float, RoArray } = core;
 /** Minimal interpreter accepted by renderNode → renderChildren (never dereferenced when draw2D is absent). */
 const fakeInterpreter = {};
 
+/** Minimal fake interpreter accepted by getBoundingRect (mirrors SimpleLabel.test.js). */
+const fakeObserverInterpreter = { environment: {}, inSubEnv: () => {} };
+
 /** A float vector for translation-style fields. */
 function vector(values) {
     return new RoArray(values.map((v) => new Float(v)));
@@ -102,5 +105,62 @@ describe("Label node wrap/vertAlign", () => {
 
         const measured = label.getMeasured();
         expect(measured.height).toBeCloseTo(expected, 5);
+    });
+
+    /**
+     * Regression: a detached Label given explicit width/height (text not yet set) must report
+     * that size from boundingRect() even when queried during an active render pass. Apps center
+     * an overlay label over an icon by reading boundingRect() right after setting width/height
+     * and before appendChild; when that code runs inside a render (e.g. an item component
+     * created mid-frame), getBoundingRect skips the layout refresh and its measuring fallback
+     * (rectLocal is already populated by getMeasured), so getMeasured itself must keep
+     * rectToParent/rectToScene in sync with rectLocal rather than leaving them at zero —
+     * otherwise the app's centering math places the label's top-left at the icon's center.
+     */
+    test("detached sized Label reports its explicit size from boundingRect() mid-render", () => {
+        const label = SGNodeFactory.createNode("Label");
+        label.setValue("font", new BrsString("font:SmallestSystemFont"));
+        label.setValue("horizAlign", new BrsString("center"));
+        label.setValue("vertAlign", new BrsString("center"));
+        label.setValue("width", new Float(56));
+        label.setValue("height", new Float(56));
+        // NOT appended to any parent; text not set — exactly the eager-measure scenario.
+
+        sgRoot.rendering = true;
+        try {
+            const rect = label.getBoundingRect("toParent", fakeObserverInterpreter);
+            expect(rect.width).toBe(56);
+            expect(rect.height).toBe(56);
+            const scene = label.getBoundingRect("toScene", fakeObserverInterpreter);
+            expect(scene.width).toBe(56);
+            expect(scene.height).toBe(56);
+        } finally {
+            sgRoot.rendering = false;
+        }
+
+        // Outside a render pass the same query must also return the explicit size.
+        const rect = label.getBoundingRect("toParent", fakeObserverInterpreter);
+        expect(rect.width).toBe(56);
+        expect(rect.height).toBe(56);
+    });
+
+    test("detached sized Label boundingRect() carries its translation into parent space", () => {
+        const label = SGNodeFactory.createNode("Label");
+        label.setValue("font", new BrsString("font:SmallestSystemFont"));
+        label.setValue("translation", vector([10, 20]));
+        label.setValue("width", new Float(56));
+        label.setValue("height", new Float(56));
+
+        sgRoot.rendering = true;
+        try {
+            expect(label.getBoundingRect("toParent", fakeObserverInterpreter)).toEqual({
+                x: 10,
+                y: 20,
+                width: 56,
+                height: 56,
+            });
+        } finally {
+            sgRoot.rendering = false;
+        }
     });
 });

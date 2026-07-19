@@ -9,6 +9,9 @@ const { BrsDevice, BrsString, BrsBoolean, Int32, RoAssociativeArray } = core;
 /** Minimal interpreter accepted by renderNode → renderChildren (never dereferenced when draw2D is absent). */
 const fakeInterpreter = {};
 
+/** Minimal fake interpreter accepted by getBoundingRect (mirrors SimpleLabel.test.js). */
+const fakeObserverInterpreter = { environment: {}, inSubEnv: () => {} };
+
 /**
  * Builds a `drawingStyles` AA: { styleName: { fontUri, fontSize, color } }.
  * Uses the RoAssociativeArray constructor (not .set) so keys keep their original
@@ -203,5 +206,26 @@ describe("MultiStyleLabel node", () => {
         oneLine.setValue("drawingStyles", drawingStyles({ default: { fontUri: "font:MediumSystemFont" } }));
         oneLine.setValue("text", new BrsString("one"));
         expect(measured.height).toBeGreaterThan(oneLine.getMeasured().height);
+    });
+
+    /**
+     * Regression (see Label.test.js): a detached, explicitly sized label queried with
+     * boundingRect() during an active render pass must report its explicit size — getMeasured
+     * keeps rectToParent/rectToScene in sync with rectLocal instead of leaving them at zero.
+     */
+    test("detached sized MultiStyleLabel reports its explicit size from boundingRect() mid-render", () => {
+        const label = SGNodeFactory.createNode("MultiStyleLabel");
+        label.setValue("drawingStyles", drawingStyles({ default: { fontUri: "font:MediumSystemFont" } }));
+        label.setValue("width", new Int32(56));
+        label.setValue("height", new Int32(56));
+
+        sgRoot.rendering = true;
+        try {
+            const rect = label.getBoundingRect("toParent", fakeObserverInterpreter);
+            expect(rect.width).toBe(56);
+            expect(rect.height).toBe(56);
+        } finally {
+            sgRoot.rendering = false;
+        }
     });
 });

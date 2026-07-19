@@ -568,6 +568,22 @@ export class Group extends Node {
         return rect;
     }
 
+    /**
+     * Records a measured size in all three coordinate-space rects, not just rectLocal.
+     * Used by label getMeasured() implementations: a component sizing itself from a detached
+     * label's boundingRect() (parent space) can query before any render pass reaches the label,
+     * and mid-render getBoundingRect's measuring fallback is skipped when rectLocal is already
+     * non-zero — so the measure must land in every space rather than leave a stale zero
+     * rectToParent/rectToScene. Width/height are translation-invariant; the true origins are
+     * recomputed when a render pass reaches the node in renderNode.
+     */
+    protected setMeasuredBoundingRects(width: number, height: number) {
+        const trans = this.getTranslation();
+        this.rectLocal = { x: 0, y: 0, width, height };
+        this.rectToParent = { x: trans[0], y: trans[1], width, height };
+        this.rectToScene = { x: trans[0], y: trans[1], width, height };
+    }
+
     protected updateBoundingRects(drawRect: Rect, origin: number[], rotation: number) {
         const nodeTrans = this.getTranslation();
         this.rectLocal = { x: 0, y: 0, width: drawRect.width, height: drawRect.height };

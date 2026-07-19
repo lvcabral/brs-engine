@@ -62,9 +62,10 @@ export class Label extends Group {
             const size = this.getDimensions();
             const rect: Rect = { x: 0, y: 0, ...size };
             this.measured = this.renderLabel(rect, 0, 1);
-            rect.width = Math.max(this.measured.width, size.width);
-            rect.height = Math.max(this.measured.height, size.height);
-            this.rectLocal = { x: 0, y: 0, width: rect.width, height: rect.height };
+            this.setMeasuredBoundingRects(
+                Math.max(this.measured.width, size.width),
+                Math.max(this.measured.height, size.height)
+            );
         }
         return this.measured;
     }
