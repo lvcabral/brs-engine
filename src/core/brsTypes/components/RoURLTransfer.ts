@@ -227,7 +227,11 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
 
     postFromStringAsync(): BrsType {
         const request = this.postBody.shift();
-        if (!request) {
+        // An empty string is a valid POST body (e.g. token requests that carry auth in headers
+        // only), so guard on an empty queue (undefined) rather than falsiness — otherwise the
+        // async request is silently dropped, no roUrlEvent is posted, and the caller's
+        // waitMessage() blocks until timeout.
+        if (request === undefined) {
             return BrsInvalid.Instance;
         }
         return this.postFromStringEvent(request);
