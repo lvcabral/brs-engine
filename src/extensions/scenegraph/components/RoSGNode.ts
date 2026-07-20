@@ -1775,6 +1775,14 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
                     // if not found, search from root
                     node = this.findNodeById(this.findRootNode(), id);
                 }
+                const globalNode: RoSGNode = sgRoot.mGlobal;
+                if (node instanceof BrsInvalid && globalNode === this && sgRoot.scene) {
+                    // On a device the global node shares the render tree root with the scene, so
+                    // m.global.findNode() reaches scene nodes (apps use it to locate screens from
+                    // detached components); the global singleton has no parent here, so search the
+                    // scene tree explicitly.
+                    node = this.findNodeById(sgRoot.scene, id);
+                }
                 return node;
             },
         });
