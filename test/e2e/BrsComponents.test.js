@@ -74,6 +74,12 @@ describe("end to end brightscript functions", () => {
             "AA keys size:  1",
             "values() count:  3",
             "values() in key order: Los Angeles, Chicago, New York",
+            "missing items reads invalid: true",
+            "missing keys reads invalid: true",
+            "items() still callable:  2",
+            "key bracket call still works: passed",
+            "methods in bracket returns invalid: invalid",
+            "methods in bracket raise error: Function Call Operator ( ) attempted on non-function.",
         ]);
     });
 

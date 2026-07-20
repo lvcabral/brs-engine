@@ -143,18 +143,12 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
             throw new Error("Associative array indexes must be strings");
         }
 
-        // TODO: this works for now, in that a property with the same name as a method essentially
-        // overwrites the method. The only reason this doesn't work is that getting a method from an
-        // associative array and _not_ calling it returns `invalid`, but calling it returns the
-        // function itself. I'm not entirely sure why yet, but it's gotta have something to do with
-        // how methods are implemented within RBI.
-        //
-        // Are they stored separately from elements, like they are here? Or does
-        // `Interpreter#visitCall` need to check for `invalid` in its callable, then try to find a
-        // method with the desired name separately? That last bit would work but it's pretty gross.
-        // That'd allow roArrays to have methods with the methods not accessible via `arr["count"]`.
-        // Same with RoAssociativeArrays I guess.
-        return this.findElement(index.value, isCaseSensitive) || this.getMethod(index.value) || BrsInvalid.Instance;
+        // A member read only sees stored elements — on Roku `aa.items` is invalid when no such
+        // key exists, even though Items() is an interface method (apps rely on that to probe
+        // parsed JSON: `if invalid <> data.items`). Interface methods are resolvable only at a
+        // call site: the interpreter's DottedGet/IndexedGet visitors fall back to getMethod()
+        // when this get() yields invalid for a call's callee.
+        return this.findElement(index.value, isCaseSensitive) ?? BrsInvalid.Instance;
     }
 
     set(index: BrsType, value: BrsType, isCaseSensitive = false) {
