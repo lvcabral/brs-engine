@@ -112,7 +112,7 @@ import {
 } from "../nodes";
 import type { Field } from "../nodes/Field";
 import { ComponentDefinition, ComponentNode } from "../parser/ComponentDefinition";
-import { brsValueOf, replayPortNodeEvents } from "./Serializer";
+import { brsValueOf } from "./Serializer";
 import { sgRoot } from "../SGRoot";
 import { convertHexColor, convertLong, convertNumber } from "../SGUtil";
 import { FieldAliasTarget, FieldKind, ObservedField } from "../SGTypes";
@@ -710,11 +710,6 @@ function loadTaskData(interpreter: Interpreter, node: Node, taskData: TaskData) 
     }
     if (taskData.m?.top) {
         restoreNode(interpreter, taskData.m.top, node, port);
-    }
-    // Deliver events that were already queued on the task's ports before launch (a device task
-    // sees them because its copied `m` references the same native port).
-    if (taskData.portEvents) {
-        replayPortNodeEvents(taskData.portEvents, node.m, node, sgRoot.mGlobal);
     }
 }
 

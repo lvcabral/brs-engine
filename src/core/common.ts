@@ -419,8 +419,6 @@ export type TaskData = {
     tmp?: SharedArrayBuffer;
     cacheFS?: SharedArrayBuffer;
     m?: any;
-    /** roSGNodeEvents queued on ports held by the task's `m` before launch, keyed by m entry name. */
-    portEvents?: Record<string, any[]>;
     render?: string;
 };
 

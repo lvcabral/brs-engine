@@ -27,21 +27,6 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
         this.messageQueue.push(object);
     }
 
-    /**
-     * Removes and returns the queued events matching the predicate, preserving their order.
-     * Events not matching stay queued.
-     */
-    drainMessages(predicate: (event: BrsEvent) => boolean): BrsEvent[] {
-        const drained: BrsEvent[] = [];
-        for (let i = 0; i < this.messageQueue.length; i++) {
-            if (predicate(this.messageQueue[i])) {
-                drained.push(...this.messageQueue.splice(i, 1));
-                i--;
-            }
-        }
-        return drained;
-    }
-
     pushCallback(callback: Function) {
         this.callbackQueue.push(callback);
     }

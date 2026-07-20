@@ -25,13 +25,11 @@ import {
     Expr,
     resolveAnonymousCallable,
     toCallable,
-    RoMessagePort,
 } from "brs-engine";
 import { createFlatNode } from "./NodeFactory";
 import { ContentNode, Node, SGNodeType } from "../nodes";
 import { FieldKind, ObservedField } from "../SGTypes";
 import { sgRoot } from "../SGRoot";
-import { RoSGNodeEvent } from "../events/RoSGNodeEvent";
 
 /**
  * Converts a BrsType value to its representation as a JavaScript type.
@@ -190,32 +188,6 @@ export function fromAssociativeArray(
     } finally {
         visited.delete(aa);
     }
-}
-
-/**
- * Serializes a Task node's script-scope `m` for launch, shipping its render-owned `global` node
- * with node-valued fields as address-only references instead of deep copies. On a device `m.global`
- * is shared; here each Task worker gets a copy, and BET-scale apps keep most of their state as
- * node-valued global fields (managers, config, etc.), so a deep copy made every Task payload huge
- * (a dominant OOM driver under many concurrent tasks). Those fields are read via rendezvous on the
- * Task thread anyway (`Node.get`), so the reference is sufficient and the real value is fetched on
- * demand. `m.top` (the task's own node) and all other entries stay deep — the task reads them
- * locally without a rendezvous.
- * @param m The Task node's script-scope `m`.
- * @param host The Task node (observer context for serialization).
- * @returns The serialized `m` with a shallow-referenced `global`.
- */
-export function serializeTaskM(m: RoAssociativeArray, host: Node): FlexObject {
-    const visited = new WeakSet<object>();
-    const result: FlexObject = {};
-    for (const [key, value] of m.elements) {
-        if (key.toLowerCase() === "global" && value instanceof Node) {
-            result[key] = fromSGNode(value, true, host, visited, true);
-        } else {
-            result[key] = jsValueOf(value, true, host, visited);
-        }
-    }
-    return result;
 }
 
 /**
@@ -494,7 +466,6 @@ export function toSGNode(obj: any, type: string, subtype: string, child?: boolea
             newNode.setValueSilent(key, BrsInvalid.Instance, undefined, FieldKind.fromString(fieldTypes[key]));
         }
     }
-    restoreScriptScopeM(obj["_m_"], newNode, nodeMap);
     if (child && obj["_children_"]) {
         for (const child of obj["_children_"]) {
             const childInfo = getSerializedNodeInfo(child);
@@ -507,37 +478,6 @@ export function toSGNode(obj: any, type: string, subtype: string, child?: boolea
         }
     }
     return newNode;
-}
-
-/**
- * Merges a serialized script-scope `m` (see fromSGNode's `_m_` entry) into a node's `m`,
- * preserving the locally built `top`/`global` entries. No-op for payloads without `_m_`.
- * @param serializedM The serialized `_m_` object, if present.
- * @param node Node whose `m` receives the entries.
- * @param nodeMap Optional map tracking nodes by address for resolving circular references.
- */
-function restoreScriptScopeM(serializedM: any, node: Node, nodeMap?: Map<string, Node>) {
-    if (!serializedM || typeof serializedM !== "object") {
-        return;
-    }
-    for (const [key, value] of Object.entries(serializedM)) {
-        node.m.set(new BrsString(key), brsValueOf(value, undefined, nodeMap), true);
-    }
-}
-
-/**
- * Checks whether a node's `m` holds any script-scope entries beyond the automatic `top`/`global`.
- * @param node Node to inspect.
- * @returns True when `m` was populated (locally or by a previous restore).
- */
-function hasScriptScopeM(node: Node): boolean {
-    for (const key of node.m.elements.keys()) {
-        const lowerKey = key.toLowerCase();
-        if (lowerKey !== "top" && lowerKey !== "global") {
-            return true;
-        }
-    }
-    return false;
 }
 
 /**
@@ -623,12 +563,6 @@ export function updateSGNode(obj: any, targetNode: Node, nodeMap?: Map<string, N
             targetNode.setValueSilent(key, BrsInvalid.Instance, undefined, FieldKind.fromString(fieldTypes[key]));
         }
     }
-    // Populate script-scope `m` only when the target never had one (a flat-created cross-thread
-    // copy holding just top/global): a locally populated `m` is authoritative and must not be
-    // clobbered by a stale copy from the other thread.
-    if (!hasScriptScopeM(targetNode)) {
-        restoreScriptScopeM(obj["_m_"], targetNode, nodeMap);
-    }
     // Update children
     const serializedChildren = obj["_children_"];
     if (Array.isArray(serializedChildren)) {
@@ -705,41 +639,14 @@ export function updateSGNode(obj: any, targetNode: Node, nodeMap?: Map<string, N
 }
 
 /**
- * Serializes a node as an address-only reference: enough for the receiving thread to hold the
- * field and rendezvous back to the owner on access, without shipping the node's subtree. Used for
- * the render-owned node-valued fields of `m.global` at Task startup — those are read via
- * rendezvous anyway (see `Node.get`), so a deep copy would only bloat every Task's payload.
- * @param node Node to reference.
- * @returns A minimal serialized node stub (type/address/owner, no fields or children).
- */
-export function shallowNodeRef(node: Node): FlexObject {
-    // Keep it resolvable by address on the owner thread so the rendezvous read can find it.
-    sgRoot.registerCrossThreadNode(node);
-    return {
-        _node_: `${node.nodeType}:${node.nodeSubtype}`,
-        _address_: node.getAddress(),
-        _owner_: node.getOwner(),
-    };
-}
-
-/**
  * Converts a RoSGNode to a JavaScript object, converting each field to the corresponding JavaScript type.
  * @param node The RoSGNode to convert.
  * @param deep Whether to recursively convert child nodes. Defaults to true.
  * @param host Optional host node for observing context.
  * @param visited Optional WeakSet to track visited nodes and prevent circular references.
- * @param shallowRefs When true, node-valued fields are emitted as address-only references
- *   (see `shallowNodeRef`) instead of being recursed into. Applies only to this node's own
- *   fields — used when serializing `m.global` for a Task, whose node fields rendezvous on read.
  * @returns A JavaScript object with the converted fields.
  */
-export function fromSGNode(
-    node: Node,
-    deep: boolean = true,
-    host?: Node,
-    visited?: WeakSet<object>,
-    shallowRefs: boolean = false
-): FlexObject {
+export function fromSGNode(node: Node, deep: boolean = true, host?: Node, visited?: WeakSet<object>): FlexObject {
     visited ??= new WeakSet<object>();
     if (visited.has(node)) {
         return {
@@ -777,7 +684,7 @@ export function fromSGNode(
                 }
             }
             if (fieldValue instanceof Node) {
-                result[name] = shallowRefs ? shallowNodeRef(fieldValue) : fromSGNode(fieldValue, deep, host, visited);
+                result[name] = fromSGNode(fieldValue, deep, host, visited);
                 continue;
             }
             const serialized = jsValueOf(fieldValue, deep, host, visited);
@@ -795,24 +702,6 @@ export function fromSGNode(
     if (observed.length) {
         result["_observed_"] = observed;
     }
-    // A custom component's script-scope `m` (populated by its init() on the owning thread) must
-    // travel with the node: the receiving thread rebuilds the node without running init(), so a
-    // callFunc there would otherwise read init()-set variables back as invalid. `top`/`global`
-    // are excluded — the receiver rebuilds them locally, and serializing them here would re-walk
-    // the node and ship the entire global tree.
-    if (deep && sgRoot.nodeDefMap.has(node.nodeSubtype.toLowerCase())) {
-        const mData: FlexObject = {};
-        for (const [key, value] of node.m.elements) {
-            const lowerKey = key.toLowerCase();
-            if (lowerKey === "top" || lowerKey === "global") {
-                continue;
-            }
-            mData[key] = jsValueOf(value, deep, host, visited);
-        }
-        if (Object.keys(mData).length) {
-            result["_m_"] = mData;
-        }
-    }
     const children = node.getNodeChildren();
     if (deep && children.length > 0 && node.serializesChildren()) {
         result["_children_"] = children.map((child: BrsType) => {
@@ -824,94 +713,6 @@ export function fromSGNode(
     }
 
     return result;
-}
-
-/** Serialized form of a roSGNodeEvent queued on a task's port before the task thread launched. */
-export interface SerializedPortEvent {
-    /** Address of the node the event originated from. */
-    node: string;
-    field: string;
-    value: any;
-    info?: any;
-}
-
-/**
- * Drains the roSGNodeEvents queued on message ports held directly by a task's `m` and serializes
- * them for the launching task thread. On a device the task's copied `m` references the same native
- * port, so events queued before `control = "RUN"` (e.g. a field set right before launch, observed
- * by the port in init()) are seen by the task function's wait(); the simulator must carry them
- * across explicitly or the task blocks forever on a wait for an event that already fired.
- * @param m The task node's script-scope `m`.
- * @param host The task node (observer context for value serialization).
- * @returns Events keyed by the `m` entry holding the port, or undefined when none are queued.
- */
-export function collectPortNodeEvents(
-    m: RoAssociativeArray,
-    host: Node
-): Record<string, SerializedPortEvent[]> | undefined {
-    let result: Record<string, SerializedPortEvent[]> | undefined;
-    for (const [key, value] of m.elements) {
-        if (!(value instanceof RoMessagePort)) {
-            continue;
-        }
-        const events = value.drainMessages((event) => event instanceof RoSGNodeEvent) as RoSGNodeEvent[];
-        if (events.length === 0) {
-            continue;
-        }
-        result ??= {};
-        result[key] = events.map((event) => ({
-            node: event.node.getAddress(),
-            field: event.fieldName.getValue(),
-            value: jsValueOf(event.fieldValue, true, host),
-            info: event.infoFields ? fromAssociativeArray(event.infoFields, true, host) : undefined,
-        }));
-    }
-    return result;
-}
-
-/** One-shot warning when a pre-launch port event can't be re-targeted on the task thread. */
-let warnedUnresolvedPortEvent = false;
-
-/**
- * Replays pre-launch port events (see `collectPortNodeEvents`) into the task thread's restored
- * ports, re-targeting each event's node to its task-side instance. Events from nodes other than
- * the task node or the global node can't be resolved this early and are dropped with a warning.
- * @param portEvents Serialized events keyed by the `m` entry holding the port.
- * @param m The task-side `m` holding the restored ports.
- * @param taskNode The task node on the task thread.
- * @param globalNode The task thread's global node.
- */
-export function replayPortNodeEvents(
-    portEvents: Record<string, SerializedPortEvent[]>,
-    m: RoAssociativeArray,
-    taskNode: Node,
-    globalNode: Node
-): void {
-    for (const [key, events] of Object.entries(portEvents)) {
-        const port = m.get(new BrsString(key));
-        if (!(port instanceof RoMessagePort)) {
-            continue;
-        }
-        for (const event of events) {
-            let target: Node | undefined;
-            if (event.node === taskNode.getAddress()) {
-                target = taskNode;
-            } else if (event.node === globalNode.getAddress()) {
-                target = globalNode;
-            }
-            if (!target) {
-                if (!warnedUnresolvedPortEvent) {
-                    warnedUnresolvedPortEvent = true;
-                    BrsDevice.stderr.write(
-                        `warning,[sg] Dropped pre-launch port event for field "${event.field}": source node not available on the task thread`
-                    );
-                }
-                continue;
-            }
-            const info = event.info ? (brsValueOf(event.info) as RoAssociativeArray) : undefined;
-            port.pushMessage(new RoSGNodeEvent(target, new BrsString(event.field), brsValueOf(event.value), info));
-        }
-    }
 }
 
 /**

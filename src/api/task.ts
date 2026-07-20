@@ -21,7 +21,7 @@ import SharedObject from "../core/SharedObject";
 import { setAppCaptionStyle, setCaptionMode, setDisplayState } from "./display";
 import { SubscribeCallback } from "./util";
 
-const MAX_TASKS = 30;
+const MAX_TASKS = 10;
 
 // Active Tasks
 const tasks: Map<number, Worker> = new Map();
