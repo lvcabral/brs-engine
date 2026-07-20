@@ -77,3 +77,49 @@ describe("MarkupGrid vertFocusAnimationStyle handling (wrap vs. escape at the to
         expect(grid.handleKey("up", true)).toBe(true);
     });
 });
+
+describe("single-row grid: vertical keys bubble instead of wrapping onto themselves", () => {
+    beforeAll(() => {
+        const commonZip = fs.readFileSync(path.join(__dirname, "../../../packages/scenegraph/assets/common.zip"));
+        BrsDevice.fileSystem.setup(commonZip.buffer, new ArrayBuffer(1024 * 1024), new ArrayBuffer(1024 * 1024));
+    });
+
+    afterEach(() => {
+        sgRoot.setFocused();
+    });
+
+    /** A focused single-row strip (numRows=1, numColumns = content count) — the "related items
+     * row" recipe: under the default fixedFocusWrap a vertical wrap resolves to the focused item
+     * itself, which must NOT be reported handled or the key never reaches the screen's onKeyEvent. */
+    function singleRowGrid(count = 8) {
+        const grid = SGNodeFactory.createNode("MarkupGrid");
+        grid.setValue("numRows", new Int32(1));
+        grid.setValue("numColumns", new Int32(count));
+        grid.setValue("content", buildContent(count));
+        grid.setNodeFocus(true);
+        return grid;
+    }
+
+    test("MarkupGrid with one row: up/down presses and releases are unhandled (bubble)", () => {
+        const grid = singleRowGrid();
+        expect(grid.handleKey("up", true)).toBe(false);
+        expect(grid.handleKey("up", false)).toBe(false);
+        expect(grid.handleKey("down", true)).toBe(false);
+        expect(grid.handleKey("down", false)).toBe(false);
+        // rewind/fastforward page vertically; a single-row grid can't move either.
+        expect(grid.handleKey("rewind", true)).toBe(false);
+        expect(grid.handleKey("fastforward", true)).toBe(false);
+        // Horizontal navigation still works (proves the grid is live, just not consuming vertical).
+        expect(grid.handleKey("right", true)).toBe(true);
+        expect(grid.getValueJS("itemFocused")).toBe(1);
+    });
+
+    test("MarkupList with a single item: up/down are unhandled (bubble)", () => {
+        const list = SGNodeFactory.createNode("MarkupList");
+        list.setValue("content", buildContent(1));
+        list.setNodeFocus(true);
+        expect(list.handleKey("up", true)).toBe(false);
+        expect(list.handleKey("down", true)).toBe(false);
+        expect(list.handleKey("rewind", true)).toBe(false);
+    });
+});

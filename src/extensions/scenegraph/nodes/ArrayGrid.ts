@@ -30,21 +30,20 @@ export enum FocusStyle {
     FixedFocus = "fixedFocus",
 }
 
-const ValidHorizStyles = new Set(
-    [FocusStyle.FixedFocusWrap, FocusStyle.FloatingFocus].map((style) => style.toLowerCase())
-);
-
 /**
- * Resolves a raw `vertFocusAnimationStyle` string to a canonical {@link FocusStyle}, or `undefined`
- * when the value is not recognized. Matching is case-insensitive.
+ * Resolves a raw focus-animation-style string (either axis: `vertFocusAnimationStyle` or
+ * `horizFocusAnimationStyle`) to a canonical {@link FocusStyle}, or `undefined` when the value is
+ * not recognized. Matching is case-insensitive.
  *
  * The abbreviated value `"fixed"` is accepted as an alias for `fixedFocus`: real apps set
  * `vertFocusAnimationStyle="fixed"` to mean non-wrapping fixed focus, and a device honors that
  * intent rather than keeping the field's previous (possibly `fixedFocusWrap`) value. Without this,
  * a grid whose default is `fixedFocusWrap` (MarkupGrid/PosterGrid) would keep wrapping and never let
- * an Up press at the top row bubble to a parent that moves focus elsewhere.
+ * an Up press at the top row bubble to a parent that moves focus elsewhere. `fixedFocus` is likewise
+ * honored for the horizontal axis even though the reference's option table omits it — a real device
+ * accepts it and pins the focused column at the grid's left edge.
  */
-export function resolveVertFocusStyle(raw: string | undefined): FocusStyle | undefined {
+export function resolveFocusStyle(raw: string | undefined): FocusStyle | undefined {
     const value = (raw ?? "").toLowerCase();
     for (const style of Object.values(FocusStyle)) {
         if (style.toLowerCase() === value) {
@@ -143,6 +142,7 @@ export class ArrayGrid extends Group {
     protected hasNinePatch: boolean;
     protected focusField: string;
     protected vertFocusAnimationStyleName: string = FocusStyle.FloatingFocus.toLowerCase();
+    protected horizFocusAnimationStyleName: string = FocusStyle.FloatingFocus.toLowerCase();
     public itemFocusCallback?: (index: number) => void;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.ArrayGrid) {
@@ -177,6 +177,7 @@ export class ArrayGrid extends Group {
         this.setValueSilent("wrapDividerBitmapUri", new BrsString(this.dividerUri));
         this.setValueSilent("sectionDividerBitmapUri", new BrsString(this.dividerUri));
         this.applyVertFocusStyle();
+        this.applyHorizFocusStyle();
         this.lastPressHandled = "";
         this.hasNinePatch = false;
         this.focusField = "listHasFocus";
@@ -193,7 +194,7 @@ export class ArrayGrid extends Group {
         } else if (["jumptoitem", "animatetoitem"].includes(fieldName) && isNumberComp(value)) {
             this.setFocusedItem(jsValueOf(value));
         } else if (fieldName === "vertfocusanimationstyle" && isBrsString(value)) {
-            const style = resolveVertFocusStyle(value.toString());
+            const style = resolveFocusStyle(value.toString());
             if (style) {
                 this.vertFocusAnimationStyleName = style.toLowerCase();
                 this.wrap = style === FocusStyle.FixedFocusWrap;
@@ -201,13 +202,14 @@ export class ArrayGrid extends Group {
                 // Invalid vertFocusAnimationStyle
                 return;
             }
-        } else if (
-            fieldName === "horizfocusanimationstyle" &&
-            isBrsString(value) &&
-            !ValidHorizStyles.has(value.toString().toLowerCase())
-        ) {
-            // Invalid horizFocusAnimationStyle
-            return;
+        } else if (fieldName === "horizfocusanimationstyle" && isBrsString(value)) {
+            const style = resolveFocusStyle(value.toString());
+            if (style) {
+                this.horizFocusAnimationStyleName = style.toLowerCase();
+            } else {
+                // Invalid horizFocusAnimationStyle: keep the field's current value (device behavior)
+                return;
+            }
         }
         super.setValue(index, value, alwaysNotify, kind);
         // Refresh cached row/column counts from the (possibly coerced) field value, so a
@@ -308,6 +310,7 @@ export class ArrayGrid extends Group {
             this.updateItemFocus(this.focusIndex, false, nodeFocus);
             this.focusIndex = newFocus;
             this.focusLayoutDirty = true;
+            this.updateHorizScroll(newFocus);
             this.updateItemFocus(this.focusIndex, true, nodeFocus);
             if (inFocusChain) {
                 super.setValue("itemUnfocused", new Int32(focusedIndex));
@@ -387,6 +390,15 @@ export class ArrayGrid extends Group {
         }
         this.lastPressHandled = handled && key !== "OK" ? key : "";
         return handled;
+    }
+
+    /**
+     * Hook invoked by setFocusedItem after the focus cursor moves, so grid types that keep a
+     * horizontal column-scroll window (MarkupGrid) can update it for every focus path — key
+     * navigation, jumpToItem/animateToItem, and focus-gain. No-op for other node types.
+     */
+    protected updateHorizScroll(_index: number) {
+        // Overridden by MarkupGrid to maintain its horizontal column-scroll window.
     }
 
     protected handleUpDown(_key: string) {
@@ -737,9 +749,21 @@ export class ArrayGrid extends Group {
      */
     protected applyVertFocusStyle() {
         const style =
-            resolveVertFocusStyle(this.getValueJS("vertFocusAnimationStyle") as string) ?? FocusStyle.FloatingFocus;
+            resolveFocusStyle(this.getValueJS("vertFocusAnimationStyle") as string) ?? FocusStyle.FloatingFocus;
         this.vertFocusAnimationStyleName = style.toLowerCase();
         this.wrap = style === FocusStyle.FixedFocusWrap;
+    }
+
+    /**
+     * Derives the cached `horizFocusAnimationStyleName` from the current `horizFocusAnimationStyle`
+     * field, resolving aliases (e.g. `"fixed"` → `fixedFocus`) and falling back to `floatingFocus`
+     * for unrecognized values. Called from the constructors so the cached state stays consistent
+     * with whatever value XML/initialized fields stored on the node.
+     */
+    protected applyHorizFocusStyle() {
+        const style =
+            resolveFocusStyle(this.getValueJS("horizFocusAnimationStyle") as string) ?? FocusStyle.FloatingFocus;
+        this.horizFocusAnimationStyleName = style.toLowerCase();
     }
 
     protected getRenderRowIndex(rowPosition: number) {

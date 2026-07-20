@@ -76,7 +76,9 @@ export class MarkupList extends ArrayGrid {
         if (this.wrap) {
             nextIndex = this.getIndex(offset);
         }
-        if (nextIndex >= 0 && nextIndex < this.content.length) {
+        // A wrap on a single-item list resolves to the focused index itself: the move is a no-op
+        // and must NOT report handled, so the key bubbles to an ancestor's onKeyEvent.
+        if (nextIndex >= 0 && nextIndex < this.content.length && nextIndex !== this.focusIndex) {
             const itemIndex = this.metadata[nextIndex]?.index ?? nextIndex;
             this.setValue("animateToItem", new Int32(itemIndex));
             handled = true;
