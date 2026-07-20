@@ -110,6 +110,10 @@ export class RoRegistrySection extends BrsComponent implements BrsValue {
         impl: (_: Interpreter, roAA: RoAssociativeArray) => {
             BrsDevice.refreshRegistry();
             const devSection = `${this.devId}.${this.section}.`;
+            // Make sure all values are valid Strings otherwise save nothing
+            if (Array.from(roAA.elements.values()).some(value => !isStringComp(value))) {
+                return BrsBoolean.False;
+            }
             for (const [key, value] of roAA.elements) {
                 BrsDevice.registry.current.set(`${devSection}${key}`, value.toString());
                 BrsDevice.registry.isDirty = true;
