@@ -52,6 +52,8 @@ describe("RoURLTransfer", () => {
 
             let encoded = escape.call(interpreter, new BrsString("test=!@#"));
             expect(unescape.call(interpreter, encoded)).toEqual(new BrsString("test=!@#"));
+        });
+    });
 
     describe("AsyncPostFromString", () => {
         // A POST with an empty body is valid (e.g. token requests that carry auth in headers
