@@ -40,4 +40,18 @@ sub main()
     conventions = {"2027": "Chicago", "2026": "Los Angeles", "2028": "New York"}
     print "values() count: " conventions.values().count()        ' => 3
     print "values() in key order: " conventions.values().join(", ") ' => Los Angeles, Chicago, New York
+
+    ' A member read of a missing key returns invalid even when an interface method shares the
+    ' name (apps probe parsed JSON with `invalid <> data.items`); only a call site resolves it.
+    data = {"foo": 1, "testme": function() : return "passed" : end function}
+    print "missing items reads invalid: " invalid = data.items   ' => true
+    print "missing keys reads invalid: " invalid = data.keys     ' => true
+    print "items() still callable: " data.items().count()        ' => 1
+    print "key bracket call still works: " data["testme"]()      ' => passed
+    print "methods in bracket returns invalid: " data["count"]   ' => invalid
+    try
+        print "methods in bracket raise error: " data["count"]() ' => error
+    catch e
+        print "methods in bracket raise error: " e.message
+    end try
 end sub

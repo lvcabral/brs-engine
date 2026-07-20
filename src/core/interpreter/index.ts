@@ -1361,6 +1361,19 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                         return method;
                     }
                 }
+                // An AA member read never yields an interface method on Roku (`aa.items` with no
+                // such key is invalid); the method resolves only at a call site (`aa.items()`),
+                // where a stored element still shadows it (the classic `aa.count` gotcha).
+                if (
+                    target instanceof BrsInvalid &&
+                    this._activeCallee === expression &&
+                    source instanceof RoAssociativeArray
+                ) {
+                    const method = source.getMethod(expression.name.text);
+                    if (method) {
+                        return method;
+                    }
+                }
                 return target;
             } catch (err: any) {
                 this.addError(new BrsError(err.message, expression.name.location));
