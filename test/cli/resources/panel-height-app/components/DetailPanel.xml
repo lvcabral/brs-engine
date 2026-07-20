@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Panel-derived component that observes its own height field in init(), mirroring the
+    documented Roku contract: a Panel's height defaults to -1 and is set by the PanelSet
+    when the panel is attached, notifying observers. Apps rely on that notification to
+    size panel-local UI (e.g. centering a loading spinner over the panel area).
+-->
+<component name="DetailPanel" extends="Panel">
+    <script type="text/brightscript">
+    <![CDATA[
+        sub init()
+            print "init height = "; m.top.height
+            m.top.observeFieldScoped("height", "onHeightChange")
+        end sub
+
+        sub onHeightChange()
+            print "observed height = "; m.top.height
+        end sub
+    ]]>
+    </script>
+</component>
