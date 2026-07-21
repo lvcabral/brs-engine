@@ -177,6 +177,51 @@ describe("cli", () => {
             fs.rmSync(tmpDir, { recursive: true, force: true });
         }
     }, 15000);
+    it("Draws and measures empty strings without crashing", async () => {
+        // Regression: node-canvas v4 aborts the process (SIGTRAP) when its text APIs
+        // (measureText/fillText) receive an empty string — the engine must guard them.
+        let command = ["node", brsCliPath, "emptyTextDraw.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "empty width:  0",
+            "empty ellipsized:  0",
+            "normal width > 0: true",
+            "space width > 0: true",
+            "spaced wider: true",
+            "------ Finished 'emptyTextDraw.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 10000);
+
+    it("Saves the last rendered frame as a PNG image with --image", async () => {
+        const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "brs-image-"));
+        const imagePath = path.join(tmpDir, "frame.png");
+        try {
+            let command = ["node", brsCliPath, "emptyTextDraw.brs", "-i", imagePath, "-c 0"].join(" ");
+            let { stdout } = await exec(command, {
+                cwd: path.join(__dirname, "resources"),
+            });
+            expect(stdout).toContain(`Last frame saved as ${imagePath}`);
+            const png = fs.readFileSync(imagePath);
+            // PNG signature: 89 50 4E 47 0D 0A 1A 0A
+            expect([...png.subarray(0, 8)]).toEqual([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+            expect(png.length).toBeGreaterThan(100);
+        } finally {
+            fs.rmSync(tmpDir, { recursive: true, force: true });
+        }
+    }, 10000);
+
+    it("Warns when --image is used but the app renders no frame", async () => {
+        let command = ["node", brsCliPath, "roArrayWarnings.brs", "-i", "-c 0"].join(" ");
+        let { stderr } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        expect(stderr).toContain("No frame was rendered by the app, no image saved.");
+    }, 10000);
 
     it("only warns once for a repeatedly-requested missing local texture", async () => {
         let command = ["node", brsCliPath, "roTextureManagerMissingFile.brs", "-c 0"].join(" ");

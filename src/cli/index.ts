@@ -54,6 +54,7 @@ const BrsDevice = brs.BrsDevice;
 
 // Variables
 let appFileName = "";
+let lastFrame: ImageData | undefined;
 const extensions: ExtensionInfo[] = [];
 let brsWorker: Worker;
 let workerReady = false;
@@ -70,6 +71,7 @@ program
     .arguments(`brs-cli [brsFiles...]`)
     .option("-a, --ascii <columns>", "Enable ASCII screen mode with # of columns.")
     .option("-u, --unicode", "Render ASCII screen mode using Unicode block characters.", false)
+    .option("-i, --image [filename]", "Save the last rendered frame as a PNG image when the app ends.")
     .option("-c, --colors <level>", "Define the console color level (0 to disable).", defaultLevel)
     .option("-d, --debug", "Developer mode: micro debugger on crash + resource tracking.", false)
     .option("-e, --ecp", "Enable the ECP server for control simulation.", false)
@@ -333,6 +335,9 @@ async function runApp(payload: AppPayload) {
                 process.exitCode = 1;
                 console.log(chalk.redBright(msg));
             }
+            if (program.image) {
+                saveLastFrame();
+            }
         }
     } catch (err: any) {
         console.error(chalk.red(`Error executing app: ${err.message}`));
@@ -552,24 +557,29 @@ function packageCallback(event: string, data: any) {
 
 /**
  * Callback function for receiving messages from the interpreter.
- * Handles string messages, ImageData for ASCII rendering, and registry Map for persistence.
+ * Handles string messages, ImageData for ASCII/PNG rendering, and registry Map for persistence.
  * @param message - The message from interpreter (string, ImageData, or Map)
  * @param _ - Unused parameter
  */
 function messageCallback(message: any, _?: any) {
     if (typeof message === "string") {
         handleStringMessage(message);
-    } else if (program.ascii && message instanceof ImageData) {
-        const canvas = createCanvas(message.width, message.height);
-        const ctx = canvas.getContext("2d");
-        canvas.width = message.width;
-        canvas.height = message.height;
-        ctx.putImageData(message, 0, 0);
-        const columns = typeof program.ascii === "number" && program.ascii > 0 ? program.ascii : maxColumns;
-        if (program.unicode) {
-            printFrame(renderUnicodeFrame(columns, canvas));
-        } else {
-            printFrame(renderAsciiFrame(columns, canvas));
+    } else if (message instanceof ImageData) {
+        if (program.image) {
+            lastFrame = message;
+        }
+        if (program.ascii) {
+            const canvas = createCanvas(message.width, message.height);
+            const ctx = canvas.getContext("2d");
+            canvas.width = message.width;
+            canvas.height = message.height;
+            ctx.putImageData(message, 0, 0);
+            const columns = typeof program.ascii === "number" && program.ascii > 0 ? program.ascii : maxColumns;
+            if (program.unicode) {
+                printFrame(renderUnicodeFrame(columns, canvas));
+            } else {
+                printFrame(renderAsciiFrame(columns, canvas));
+            }
         }
     } else if (isGraphicsData(message)) {
         if (program.ecp) {
@@ -590,6 +600,33 @@ function messageCallback(message: any, _?: any) {
                 console.error(chalk.red(err.message));
             }
         }
+    }
+}
+
+/**
+ * Saves the last frame received from the interpreter as a PNG image file.
+ * Used when the `--image` option is enabled, after the app finishes execution.
+ */
+function saveLastFrame() {
+    if (!lastFrame) {
+        console.warn(chalk.yellow("No frame was rendered by the app, no image saved."));
+        return;
+    }
+    let filePath = typeof program.image === "string" ? program.image : "";
+    if (filePath === "") {
+        const appName = appFileName === "" ? "screen" : path.parse(appFileName).name;
+        filePath = `${appName}.png`;
+    } else if (path.extname(filePath).toLowerCase() !== ".png") {
+        filePath += ".png";
+    }
+    try {
+        const canvas = createCanvas(lastFrame.width, lastFrame.height);
+        canvas.getContext("2d").putImageData(lastFrame, 0, 0);
+        fs.writeFileSync(filePath, canvas.toBuffer("image/png"));
+        console.log(chalk.blueBright(`Last frame saved as ${path.resolve(filePath)}\n`));
+    } catch (err: any) {
+        console.error(chalk.red(`Error saving the image ${filePath}: ${err.message}`));
+        process.exitCode = 1;
     }
 }
 

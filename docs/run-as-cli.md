@@ -33,6 +33,7 @@ BrightScript Simulation Engine CLI
 Options:
   -a, --ascii <columns>     Enable ASCII screen mode with # of columns.
   -u, --unicode             Render ASCII screen mode using Unicode block characters.
+  -i, --image [filename]    Save the last rendered frame as a PNG image when the app ends.
   -c, --colors <level>      Define the console color level (0 to disable). (default: 3)
   -d, --debug               Developer mode: micro debugger on crash + resource tracking.
   -e, --ecp                 Enable the ECP server for control simulation.
@@ -125,6 +126,16 @@ $ brs-cli ../apps/collisions.zip --ascii 170
 The `<columns>` defines the width in number of character columns, the height will follow the screen proportion, if not provided, it will try to fit the terminal size.
 
 <p align="center"><img alt="Screen Rendering as ASCII Art" title="Screen Rendering as ASCII Art" src="images/screen-as-ascii-art.gif?raw=true"/></p>
+
+### Saving the Screen as a PNG Image
+
+If you pass the `--image` option, the CLI will save the last rendered frame as a PNG file when the app finishes, so you can inspect the final rendering. The filename is optional: if omitted, the image is saved next to the current directory using the app file name (e.g. `my-app.png`).
+
+```console
+$ brs-cli ../apps/collisions.zip --image screenshot.png
+```
+
+This option is independent of `--ascii`/`--unicode`: you can combine them or use `--image` alone.
 
 ### Controlling the App
 
