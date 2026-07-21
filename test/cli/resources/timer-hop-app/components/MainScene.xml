@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="MainScene" extends="Scene">
+    <script type="text/brightscript"><![CDATA[
+    ' Mirrors rokucommunity/promises' "essentially next tick" resolution pattern: each hop chains a
+    ' near-zero-duration Timer off the previous one's "fire" observer. If Timer polling is coupled to
+    ' the screen's frame-rate throttle, each hop costs up to a full frame period even though its
+    ' nominal duration is ~0, and the cost compounds across hops.
+    sub init()
+        m.ts = createObject("roTimespan")
+        timer = createObject("roSGNode", "Timer")
+        timer.duration = 0.125
+        timer.repeat = false
+        m.timer = timer
+        timer.observeFieldScoped("fire", "onFire")
+        timer.control = "start"
+    end sub
+
+    sub onFire()
+        m.hop1 = createObject("roSGNode", "Timer")
+        m.hop1.duration = 0.0001
+        m.hop1.repeat = false
+        m.hop1.observeFieldScoped("fire", "onHop1")
+        m.hop1.control = "start"
+    end sub
+
+    sub onHop1()
+        m.hop2 = createObject("roSGNode", "Timer")
+        m.hop2.duration = 0.0001
+        m.hop2.repeat = false
+        m.hop2.observeFieldScoped("fire", "onHop2")
+        m.hop2.control = "start"
+    end sub
+
+    sub onHop2()
+        print "total elapsed="; m.ts.totalMilliseconds()
+    end sub
+    ]]></script>
+</component>
