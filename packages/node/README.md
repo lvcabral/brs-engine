@@ -52,7 +52,12 @@ The **BrightScript Simulation Engine** provides a complete a set of libraries an
 
 ## SceneGraph Extension
 
-The [`brs-scenegraph`](https://www.npmjs.com/package/brs-scenegraph) extension is integrated to the `brs-node` package by default. The CLI app loads it so the REPL and apps can run SceneGraph without additional setup. Use the `--no-sg` flag if you want to disable it for a given CLI session. For your Node.js apps register it manually by calling `registerExtension(() => new BrightScriptExtension())`. Refer to [extensions guide](https://github.com/lvcabral/brs-engine/blob/master/docs/extensions.md) for more information about the extension package.
+The [`brs-scenegraph`](https://www.npmjs.com/package/brs-scenegraph) extension is bundled with the `brs-node` package (as `bin/brs-sg.node.js`). The CLI loads it automatically so the REPL and apps can run SceneGraph without additional setup — use the `--no-sg` flag to disable it for a given CLI session. When embedding the library:
+
+- With the synchronous `executeFile`, register it in-process: `registerExtension(() => new BrightScriptExtension())`.
+- With the worker-based `executeApp`, declare it on the payload (`payload.extensions` + `payload.device.extensions`) so every worker thread loads its own instance — see the [Node.js library guide](https://github.com/lvcabral/brs-engine/blob/master/docs/using-node-library.md#running-apps-on-worker-threads-with-scenegraph-task-support).
+
+Refer to the [extensions guide](https://github.com/lvcabral/brs-engine/blob/master/docs/extensions.md) for more information about the extension architecture.
 
 > ⚠️ Note:
 >
@@ -79,8 +84,17 @@ The package libraries require Node.js v22 or higher, and are organized as follow
 | Library File | Description |
 | --- | --- |
 | `bin/brs.cli.js` | Executable **[CLI](https://github.com/lvcabral/brs-engine/blob/master/docs/run-as-cli.md)** application that can be used from the terminal |
-| `bin/brs.node.js` | A NodeJS library, that exposes the language interpreter to be used by Node.js applications |
-| `bin/brs.ecp.js` | A **[NodeJS Worker](https://nodejs.org/api/worker_threads.html)** library, used by the CLI to launch the [ECP](https://developer.roku.com/docs/developer-program/dev-tools/external-control-api.md) and **SSDP** services. |
+| `bin/brs.node.js` | The engine library (the package `main`): exposes the interpreter to Node.js applications, and is also the **worker entry** used to run apps and SceneGraph Tasks on [worker threads](https://nodejs.org/api/worker_threads.html) |
+| `bin/brs.ecp.js` | A **worker thread** library, used by the CLI to launch the [ECP](https://developer.roku.com/docs/developer-program/dev-tools/external-control-api.md) and **SSDP** services |
+| `bin/brs-sg.node.js` | The [SceneGraph extension](https://www.npmjs.com/package/brs-scenegraph) bundle, loaded dynamically into the engine (and into each worker thread) when SceneGraph support is needed |
+
+#### How the libraries relate
+
+- **`brs.node.js` is the core** — everything else plugs into it. It offers two execution models:
+  - `executeFile(payload)` runs the interpreter **synchronously on the calling thread** — ideal for tests, CI and scripting. SceneGraph `Task` nodes do not spawn in this mode.
+  - `executeApp(payload)` runs the app on a dedicated **worker thread** and spawns one worker per running SceneGraph `Task`, mirroring the browser engine and a real Roku device. The worker entry is `brs.node.js` itself.
+- **`brs-sg.node.js` is deliberately a separate bundle** (not compiled into the core): the interpreter stays SceneGraph-agnostic and loads it through the public extension API — the same contract available to third-party extensions. It binds to the running engine at load time (its `brs-engine` import resolves to the already-loaded `brs.node.js` module), so both must always come from the **same package version**. The CLI loads it automatically (`--no-sg` disables); library consumers register it per the examples in the [Node.js library guide](https://github.com/lvcabral/brs-engine/blob/master/docs/using-node-library.md).
+- **`brs.cli.js` is a consumer of the other three**: it requires `brs.node.js` for execution, loads `brs-sg.node.js` for SceneGraph apps, and spawns `brs.ecp.js` as a worker when `--ecp` is passed.
 
 ## Documentation
 
