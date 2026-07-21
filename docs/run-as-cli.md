@@ -33,7 +33,8 @@ BrightScript Simulation Engine CLI
 Options:
   -a, --ascii <columns>     Enable ASCII screen mode with # of columns.
   -u, --unicode             Render ASCII screen mode using Unicode block characters.
-  -i, --image [filename]    Save the last rendered frame as a PNG image when the app ends.
+  -i, --image               Render the screen as images on the terminal (iTerm2/Kitty or ANSI).
+  -s, --snapshot [filename] Enable Ctrl+S to save the current screen as a PNG image.
   -c, --colors <level>      Define the console color level (0 to disable). (default: 3)
   -d, --debug               Developer mode: micro debugger on crash + resource tracking.
   -e, --ecp                 Enable the ECP server for control simulation.
@@ -128,15 +129,23 @@ The `<columns>` defines the width in number of character columns, the height wil
 
 <p align="center"><img alt="Screen Rendering as ASCII Art" title="Screen Rendering as ASCII Art" src="images/screen-as-ascii-art.gif?raw=true"/></p>
 
-### Saving the Screen as a PNG Image
+### Showing the Screen as Images on the Terminal
 
-If you pass the `--image` option, the CLI will save the last rendered frame as a PNG file when the app finishes, so you can inspect the final rendering. The filename is optional: if omitted, the image is saved next to the current directory using the app file name (e.g. `my-app.png`).
+The `--image` option renders the screen as actual images on the terminal (an alternative to `--ascii`/`--unicode`). On terminals with native graphics support (iTerm2, Kitty and compatible), frames display in full quality via the terminal's image protocol; elsewhere it falls back to ANSI half-block rendering.
 
 ```console
-$ brs-cli ../apps/collisions.zip --image screenshot.png
+$ brs-cli ../apps/collisions.zip --image
 ```
 
-This option is independent of `--ascii`/`--unicode`: you can combine them or use `--image` alone.
+### Saving the Screen as a PNG Image
+
+The `--snapshot` option enables the **Ctrl+S** keyboard shortcut: while the app is running, pressing it saves the current screen as a PNG file, so you can capture any moment of the rendering. The filename is optional: if omitted, the image is saved in the current directory using the app file name (e.g. `my-app.png`); each press overwrites the previous capture.
+
+```console
+$ brs-cli ../apps/collisions.zip --snapshot screenshot.png
+```
+
+This option is independent of the screen modes: you can combine it with `--ascii`, `--unicode` or `--image`, or use it alone.
 
 ### Controlling the App
 
@@ -155,6 +164,7 @@ The app runs on a dedicated worker thread, leaving the terminal free for interac
 | Insert or Ctrl+8 | Info (*) |
 | Ctrl+A / Ctrl+Z | A / B (game remote) |
 | Letters / digits | Text input (keyboard dialogs) |
+| Ctrl+S | Save a screenshot (requires `--snapshot`) |
 | Ctrl+B | Break into the Micro Debugger (requires `--debug`) |
 | Ctrl+C | Terminate the CLI |
 

@@ -72,7 +72,8 @@ program
     .arguments(`brs-cli [brsFiles...]`)
     .option("-a, --ascii <columns>", "Enable ASCII screen mode with # of columns.")
     .option("-u, --unicode", "Render ASCII screen mode using Unicode block characters.", false)
-    .option("-i, --image [filename]", "Save the last rendered frame as a PNG image when the app ends.")
+    .option("-i, --image", "Render the screen as images on the terminal (iTerm2/Kitty or ANSI).", false)
+    .option("-s, --snapshot [filename]", "Enable Ctrl+S to save the current screen as a PNG image.")
     .option("-c, --colors <level>", "Define the console color level (0 to disable).", defaultLevel)
     .option("-d, --debug", "Developer mode: micro debugger on crash + resource tracking.", false)
     .option("-e, --ecp", "Enable the ECP server for control simulation.", false)
@@ -322,9 +323,7 @@ async function runApp(payload: AppPayload) {
             // free to broker SceneGraph Task rendezvous, keyboard input and the Micro Debugger.
             payload.extensions = extensions.map((ext) => ext.name as SupportedExtension);
             brs.subscribeHost("cli", hostCallback);
-            startKeyboardControl(sharedArray, () => {
-                brs.terminateApp();
-            });
+            startKeyboardControl(sharedArray, () => brs.terminateApp(), program.snapshot ? saveScreenshot : undefined);
             enableFrameOutput();
             try {
                 const result = await brs.executeApp(payload, { sharedBuffer });
@@ -343,9 +342,6 @@ async function runApp(payload: AppPayload) {
         } else {
             process.exitCode = 1;
             console.log(chalk.redBright(msg));
-        }
-        if (program.image) {
-            saveLastFrame();
         }
     } catch (err: any) {
         console.error(chalk.red(`Error executing app: ${err.message}`));
@@ -625,10 +621,8 @@ function messageCallback(message: any, _?: any) {
     if (typeof message === "string") {
         handleStringMessage(message);
     } else if (message instanceof ImageData) {
-        if (program.image) {
-            lastFrame = message;
-        }
-        if (program.ascii) {
+        lastFrame = message;
+        if (program.ascii || program.image) {
             renderFrameToTerminal(message);
         }
     } else if (isGraphicsData(message)) {
@@ -653,6 +647,14 @@ function messageCallback(message: any, _?: any) {
     }
 }
 
+// terminal-image is ESM-only; load it lazily via dynamic import (kept external by webpack).
+type TerminalImage = typeof import("terminal-image").default;
+let terminalImage: TerminalImage | undefined;
+async function getTerminalImage(): Promise<TerminalImage> {
+    terminalImage ??= (await import("terminal-image")).default;
+    return terminalImage;
+}
+
 // The engine gates the frame rate (DeviceInfo.maxFps), so no CLI-side throttling is applied.
 // Terminal writes still need flow control: by default a TTY `stdout.write` is synchronous and
 // a slow terminal blocks the event loop inside write(2), starving stdin (in raw mode Ctrl+C
@@ -671,7 +673,7 @@ let frameOutputEnabled = false;
  */
 function enableFrameOutput() {
     frameOutputEnabled = true;
-    if (program.ascii && process.stdout.isTTY) {
+    if ((program.ascii || program.image) && process.stdout.isTTY) {
         (process.stdout as any)._handle?.setBlocking?.(false);
     }
 }
@@ -684,7 +686,7 @@ function disableFrameOutput() {
     frameOutputEnabled = false;
     pendingFrame = undefined;
     stdoutCongested = false;
-    if (program.ascii && process.stdout.isTTY) {
+    if ((program.ascii || program.image) && process.stdout.isTTY) {
         (process.stdout as any)._handle?.setBlocking?.(true);
     }
 }
@@ -707,23 +709,37 @@ function renderFrameToTerminal(frame: ImageData) {
 }
 
 /**
- * Renders the most recent pending frame as ASCII/Unicode art, pausing on stdout
- * backpressure and resuming on `drain`.
+ * Renders the most recent pending frame on the terminal — ASCII/Unicode art, or an
+ * image (terminal-image) with --image — pausing on stdout backpressure until `drain`.
+ * The scheduled flag is held for the whole (possibly async) render so frames arriving
+ * meanwhile only replace `pendingFrame` and are picked up right after, never in parallel.
  */
-function renderPendingFrame() {
-    frameRenderScheduled = false;
+async function renderPendingFrame() {
     const frame = pendingFrame;
     pendingFrame = undefined;
     if (!frame || !frameOutputEnabled) {
+        frameRenderScheduled = false;
         return;
     }
     const canvas = createCanvas(frame.width, frame.height);
     const ctx = canvas.getContext("2d");
     ctx.putImageData(frame, 0, 0);
-    const columns = typeof program.ascii === "number" && program.ascii > 0 ? program.ascii : maxColumns;
-    const flushed = program.unicode
-        ? printFrame(renderUnicodeFrame(columns, canvas))
-        : printFrame(renderAsciiFrame(columns, canvas));
+    let flushed = true;
+    if (program.image) {
+        // terminal-image renders via the terminal's native graphics protocol
+        // (iTerm2/Kitty) when available, falling back to ANSI half-blocks.
+        const imageRenderer = await getTerminalImage();
+        const rendered = await imageRenderer.buffer(canvas.toBuffer("image/png"), { height: "90%" });
+        if (frameOutputEnabled) {
+            flushed = process.stdout.write(`\x1b[H${rendered}`);
+        }
+    } else {
+        const columns = typeof program.ascii === "number" && program.ascii > 0 ? program.ascii : maxColumns;
+        flushed = program.unicode
+            ? printFrame(renderUnicodeFrame(columns, canvas))
+            : printFrame(renderAsciiFrame(columns, canvas));
+    }
+    frameRenderScheduled = false;
     if (!flushed) {
         stdoutCongested = true;
         process.stdout.once("drain", () => {
@@ -733,19 +749,23 @@ function renderPendingFrame() {
                 setImmediate(renderPendingFrame);
             }
         });
+    } else if (pendingFrame) {
+        // A newer frame arrived while this one was rendering (async image encode).
+        frameRenderScheduled = true;
+        setImmediate(renderPendingFrame);
     }
 }
 
 /**
- * Saves the last frame received from the interpreter as a PNG image file.
- * Used when the `--image` option is enabled, after the app finishes execution.
+ * Saves the current screen frame as a PNG image file.
+ * Triggered by the Ctrl+S shortcut when the `--snapshot` option is enabled.
  */
-function saveLastFrame() {
+function saveScreenshot() {
     if (!lastFrame) {
-        console.warn(chalk.yellow("No frame was rendered by the app, no image saved."));
+        console.warn(chalk.yellow("No frame was rendered by the app yet, no image saved."));
         return;
     }
-    let filePath = typeof program.image === "string" ? program.image : "";
+    let filePath = typeof program.snapshot === "string" ? program.snapshot : "";
     if (filePath === "") {
         const appName = appFileName === "" ? "screen" : path.parse(appFileName).name;
         filePath = `${appName}.png`;
@@ -756,10 +776,9 @@ function saveLastFrame() {
         const canvas = createCanvas(lastFrame.width, lastFrame.height);
         canvas.getContext("2d").putImageData(lastFrame, 0, 0);
         fs.writeFileSync(filePath, canvas.toBuffer("image/png"));
-        console.log(chalk.blueBright(`Last frame saved as ${path.resolve(filePath)}\n`));
+        console.log(chalk.blueBright(`Screenshot saved as ${path.resolve(filePath)}\n`));
     } catch (err: any) {
         console.error(chalk.red(`Error saving the image ${filePath}: ${err.message}`));
-        process.exitCode = 1;
     }
 }
 

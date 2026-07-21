@@ -197,30 +197,31 @@ describe("cli", () => {
         ]);
     }, 10000);
 
-    it("Saves the last rendered frame as a PNG image with --image", async () => {
-        const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "brs-image-"));
+    it("Renders frames as terminal images with --image", async () => {
+        let command = ["node", brsCliPath, "emptyTextDraw.brs", "-i", "-c 0"].join(" ");
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // terminal-image emits the rendered frame (ANSI fallback when piped) plus the
+        // cursor-home prefix used to repaint in place — absent without -i.
+        expect(stdout).toContain("\x1b[H");
+        expect(stdout).toContain("empty width:  0");
+    }, 10000);
+
+    it("Runs cleanly with --snapshot enabled (saving requires the Ctrl+S shortcut)", async () => {
+        const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "brs-snap-"));
         const imagePath = path.join(tmpDir, "frame.png");
         try {
-            let command = ["node", brsCliPath, "emptyTextDraw.brs", "-i", imagePath, "-c 0"].join(" ");
+            let command = ["node", brsCliPath, "emptyTextDraw.brs", "-s", imagePath, "-c 0"].join(" ");
             let { stdout } = await exec(command, {
                 cwd: path.join(__dirname, "resources"),
             });
-            expect(stdout).toContain(`Last frame saved as ${imagePath}`);
-            const png = fs.readFileSync(imagePath);
-            // PNG signature: 89 50 4E 47 0D 0A 1A 0A
-            expect([...png.subarray(0, 8)]).toEqual([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
-            expect(png.length).toBeGreaterThan(100);
+            // Non-TTY: the shortcut can never fire, so nothing is saved and nothing breaks.
+            expect(stdout).toContain("empty width:  0");
+            expect(fs.existsSync(imagePath)).toBe(false);
         } finally {
             fs.rmSync(tmpDir, { recursive: true, force: true });
         }
-    }, 10000);
-
-    it("Warns when --image is used but the app renders no frame", async () => {
-        let command = ["node", brsCliPath, "roArrayWarnings.brs", "-i", "-c 0"].join(" ");
-        let { stderr } = await exec(command, {
-            cwd: path.join(__dirname, "resources"),
-        });
-        expect(stderr).toContain("No frame was rendered by the app, no image saved.");
     }, 10000);
 
     it("only warns once for a repeatedly-requested missing local texture", async () => {

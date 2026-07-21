@@ -78,6 +78,7 @@
     "restana": "^5.0.0",
     "sax": "^1.2.4",
     "strip-ansi": "^7.1.0",
+    "terminal-image": "^5.0.1",
     "uuid": "^14.0.0",
     "ws": "^8.21.0",
     "xmlbuilder": "^13.0.2",

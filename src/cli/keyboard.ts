@@ -76,6 +76,7 @@ let keyUpTimer: NodeJS.Timeout | undefined;
 let lastKeyDown = "";
 let exitRequested = false;
 let exitHandler: () => void = () => process.exit(0);
+let snapshotHandler: (() => void) | undefined;
 // Debugger commands awaiting delivery: the shared data buffer holds a single command, so each
 // line is sent only after the worker consumed the previous one (DBG back to -1). Piped input
 // (tests, scripts) delivers many lines at once and would otherwise overwrite pending commands.
@@ -86,12 +87,14 @@ let debugFlusher: NodeJS.Timeout | undefined;
  * Starts keyboard remote control on stdin. No-op when stdin is not a TTY (tests, pipes, CI).
  * @param array Shared control Int32Array (keys + debug commands)
  * @param onExit Callback invoked when the user presses Ctrl+C
+ * @param onSnapshot Callback invoked when the user presses Ctrl+S (screenshot shortcut)
  */
-export function startKeyboardControl(array: Int32Array, onExit?: () => void) {
+export function startKeyboardControl(array: Int32Array, onExit?: () => void, onSnapshot?: () => void) {
     sharedArray = array;
     if (onExit) {
         exitHandler = onExit;
     }
+    snapshotHandler = onSnapshot;
     if (!process.stdin.isTTY) {
         // Non-TTY (tests, pipes, CI): no raw-mode keys, but the debugger line relay
         // (handleDebuggerCommand) still works with piped stdin.
@@ -134,6 +137,7 @@ export function stopKeyboardControl() {
         rawMode = false;
     }
     sharedArray = undefined;
+    snapshotHandler = undefined;
 }
 
 /**
@@ -180,6 +184,10 @@ function keypressHandler(str: string | undefined, key: { name?: string; ctrl?: b
         // Break into the Micro Debugger (same protocol as the browser API debug("break")).
         Atomics.store(sharedArray, DataType.DBG, DebugCommand.BREAK);
         Atomics.notify(sharedArray, DataType.DBG);
+        return;
+    }
+    if (key.ctrl && key.name === "s") {
+        snapshotHandler?.();
         return;
     }
     const rokuKey = translateKey(str, key);

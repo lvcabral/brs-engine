@@ -109,10 +109,15 @@ module.exports = (env) => {
                 "./brs.node.js": "commonjs ./brs.node.js",
                 "brs-engine": "commonjs ./brs.node.js",
                 canvas: "commonjs canvas",
+                // ESM-only package: loaded via dynamic import() from the CJS bundle
+                "terminal-image": "import terminal-image",
             },
             output: {
                 filename: libName + ".cli.js",
                 path: path.resolve(__dirname, cliPath),
+                // Node supports dynamic import() from CJS — needed for the ESM-only
+                // terminal-image external.
+                environment: { dynamicImport: true },
             },
         },
         {
