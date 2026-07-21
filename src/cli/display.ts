@@ -5,7 +5,7 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { Canvas, createCanvas } from "canvas";
+import { Canvas, createCanvas, ImageData } from "canvas";
 import chalk from "chalk";
 
 const ASCII_ALPHABET = ["@", "%", "#", "*", "+", "=", "-", ":", ".", " "];
@@ -295,4 +295,184 @@ function computeDisplayRatio(image: Canvas) {
 function clampRows(columns: number, ratio: number) {
     const computed = Math.trunc(columns / ratio);
     return Math.max(1, computed);
+}
+
+/**
+ * How the screen is presented on the terminal while the app runs.
+ */
+export interface DisplayMode {
+    /** ASCII/Unicode art column count (0 = fit the terminal); undefined disables art modes */
+    ascii?: number;
+    /** Render ASCII art using Unicode block characters */
+    unicode?: boolean;
+    /** Render frames as terminal images (iTerm2/Kitty native protocols or ANSI fallback) */
+    image?: boolean;
+}
+
+// terminal-image is ESM-only; load it lazily via dynamic import (kept external by webpack).
+type TerminalImage = typeof import("terminal-image").default;
+let terminalImage: TerminalImage | undefined;
+async function getTerminalImage(): Promise<TerminalImage> {
+    terminalImage ??= (await import("terminal-image")).default;
+    return terminalImage;
+}
+
+// The engine gates the frame rate (DeviceInfo.maxFps), so no CLI-side throttling is applied.
+// Terminal writes still need flow control: by default a TTY `stdout.write` is synchronous and
+// a slow terminal blocks the event loop inside write(2), starving stdin (in raw mode Ctrl+C
+// is just a keypress) and the task broker. `enableFrameOutput` switches stdout to
+// non-blocking, so a slow terminal surfaces as ordinary backpressure: rendering pauses on
+// `write() === false` and resumes on `drain`, dropping to the newest frame meanwhile. A
+// terminal that keeps up renders every engine frame.
+let displayMode: DisplayMode = {};
+let pendingFrame: ImageData | undefined;
+let frameRenderScheduled = false;
+let stdoutCongested = false;
+let frameOutputEnabled = false;
+
+/**
+ * Starts frame output for an app run: stores the display mode, makes stdout writes
+ * non-blocking (so frames can never block the event loop — a slow terminal becomes
+ * backpressure + `drain` instead) and hides the cursor in image mode.
+ * @param mode - The display mode selected by the CLI options
+ */
+export function enableFrameOutput(mode: DisplayMode) {
+    displayMode = mode;
+    frameOutputEnabled = true;
+    if ((displayMode.ascii !== undefined || displayMode.image) && process.stdout.isTTY) {
+        (process.stdout as any)._handle?.setBlocking?.(false);
+        if (displayMode.image) {
+            // Hide the cursor for the whole run; it would flicker at the image edge on
+            // every repaint (restored in disableFrameOutput).
+            process.stdout.write("\x1b[?25l");
+        }
+    }
+}
+
+/**
+ * Stops frame rendering (dropping any queued frame — the app is over) and restores
+ * blocking stdout writes so post-run output can never be truncated on exit.
+ */
+export function disableFrameOutput() {
+    frameOutputEnabled = false;
+    pendingFrame = undefined;
+    stdoutCongested = false;
+    if ((displayMode.ascii !== undefined || displayMode.image) && process.stdout.isTTY) {
+        (process.stdout as any)._handle?.setBlocking?.(true);
+        if (displayMode.image) {
+            process.stdout.write("\x1b[?25h");
+        }
+    }
+}
+
+/**
+ * Queues the latest frame for terminal rendering on the next event-loop turn,
+ * coalescing to the newest frame while a render is pending or stdout is congested.
+ * @param frame - The frame received from the interpreter
+ */
+export function renderFrameToTerminal(frame: ImageData) {
+    if (!frameOutputEnabled) {
+        return;
+    }
+    pendingFrame = frame;
+    if (frameRenderScheduled || stdoutCongested) {
+        return;
+    }
+    frameRenderScheduled = true;
+    setImmediate(renderPendingFrame);
+}
+
+/**
+ * Renders the most recent pending frame on the terminal — ASCII/Unicode art, or an
+ * image (terminal-image) in image mode — pausing on stdout backpressure until `drain`.
+ * The scheduled flag is held for the whole (possibly async) render so frames arriving
+ * meanwhile only replace `pendingFrame` and are picked up right after, never in parallel.
+ */
+async function renderPendingFrame() {
+    const frame = pendingFrame;
+    pendingFrame = undefined;
+    if (!frame || !frameOutputEnabled) {
+        frameRenderScheduled = false;
+        return;
+    }
+    const canvas = createCanvas(frame.width, frame.height);
+    const ctx = canvas.getContext("2d");
+    ctx.putImageData(frame, 0, 0);
+    let flushed = true;
+    if (displayMode.image) {
+        flushed = await renderImageFrame(canvas, frame.width, frame.height);
+    } else {
+        const columns = displayMode.ascii && displayMode.ascii > 0 ? displayMode.ascii : maxColumns;
+        flushed = displayMode.unicode
+            ? printFrame(renderUnicodeFrame(columns, canvas))
+            : printFrame(renderAsciiFrame(columns, canvas));
+    }
+    frameRenderScheduled = false;
+    if (!flushed) {
+        stdoutCongested = true;
+        process.stdout.once("drain", () => {
+            stdoutCongested = false;
+            if (pendingFrame && !frameRenderScheduled) {
+                frameRenderScheduled = true;
+                setImmediate(renderPendingFrame);
+            }
+        });
+    } else if (pendingFrame) {
+        // A newer frame arrived while this one was rendering (async image encode).
+        frameRenderScheduled = true;
+        setImmediate(renderPendingFrame);
+    }
+}
+
+/**
+ * Renders a frame as a terminal image via the terminal's native graphics protocol
+ * (iTerm2/Kitty) when available, falling back to ANSI half-blocks.
+ * @param canvas - Canvas holding the frame pixels
+ * @param width - Frame width in pixels
+ * @param height - Frame height in pixels
+ * @returns True if the write was flushed; false when stdout applies backpressure
+ */
+async function renderImageFrame(canvas: Canvas, width: number, height: number): Promise<boolean> {
+    const imageRenderer = await getTerminalImage();
+    // Flatten onto opaque black: a frame carrying alpha would let the terminal's own
+    // background color show through the inline image, flashing the theme color.
+    const opaque = createCanvas(width, height);
+    const octx = opaque.getContext("2d");
+    octx.fillStyle = "black";
+    octx.fillRect(0, 0, width, height);
+    octx.drawImage(canvas, 0, 0);
+    const png = opaque.toBuffer("image/png");
+    // Begin synchronized-output mode (DEC 2026) and home the cursor BEFORE rendering:
+    // the Kitty-protocol path inside terminal-image writes the image escape directly
+    // to stdout, so positioning/sync must already be in effect. 2026 makes the
+    // terminal swap the old and new frame atomically (no blank gap while the payload
+    // decodes); terminals without support ignore the escapes.
+    process.stdout.write("\x1b[?2026h\x1b[H");
+    let flushed = true;
+    try {
+        let rendered = await imageRenderer.buffer(png, { height: "90%" });
+        if (frameOutputEnabled) {
+            // iTerm2 protocol: keep the cursor at home so a frame can never scroll the
+            // screen (ansi-escapes does not expose the doNotMoveCursor flag).
+            rendered = rendered.replace("\x1b]1337;File=inline=1", "\x1b]1337;File=inline=1;doNotMoveCursor=1");
+            flushed = process.stdout.write(`${rendered}\x1b[?2026l`);
+        }
+    } finally {
+        if (!frameOutputEnabled) {
+            // App ended mid-render: drop the stale frame but close sync mode.
+            process.stdout.write("\x1b[?2026l");
+        }
+    }
+    return flushed;
+}
+
+/**
+ * Encodes a frame as a PNG buffer (used by the Ctrl+S screenshot shortcut).
+ * @param frame - The frame to encode
+ * @returns PNG file contents
+ */
+export function frameToPng(frame: ImageData): Buffer {
+    const canvas = createCanvas(frame.width, frame.height);
+    canvas.getContext("2d").putImageData(frame, 0, 0);
+    return canvas.toBuffer("image/png");
 }
