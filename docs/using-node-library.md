@@ -296,6 +296,57 @@ fileMap.set("components/MainScene.brs", new Blob([sceneBrs], { type: "text/plain
 })();
 ```
 
+### Running Apps on Worker Threads (with SceneGraph Task support)
+
+The synchronous `executeFile` runs the interpreter on the calling thread — ideal for tests and
+scripted execution, but SceneGraph `Task` nodes never spawn (they need a free host thread to
+broker cross-thread rendezvous). Use **`executeApp`** to run an app on a dedicated
+`worker_threads` thread (the render thread) with full Task support: each running `Task` node
+gets its own worker thread, mirroring the browser engine and a real Roku device.
+
+```javascript
+const brs = require("brs-node");
+
+// Subscribe to host events (replaces registerCallback for the worker path)
+brs.subscribeHost("my-app", (event, data) => {
+    if (event === "message" && typeof data === "string") {
+        // Same "type,content" strings the sync callback receives: print, error, end, ...
+        const [type] = data.split(",", 1);
+        if (type === "print") process.stdout.write(data.slice(6));
+    } else if (event === "frame") {
+        // A node-canvas ImageData with the latest rendered frame
+    } else if (event === "registry") {
+        // RegistryData to persist ({ current: Map, ... })
+    }
+});
+
+(async () => {
+    const payload = await brs.createPayloadFromFiles([], deviceData, undefined, "/path/to/app-root");
+    // Enable the SceneGraph extension in the worker threads:
+    payload.extensions = [brs.SupportedExtension.SceneGraph];
+    payload.device.extensions = new Map([[brs.SupportedExtension.SceneGraph, "brs-sg.node.js"]]);
+
+    const result = await brs.executeApp(payload);
+    console.log(`Exit reason: ${result.exitReason}`);
+})();
+```
+
+`executeApp(payload, options?)` accepts:
+
+- `options.sharedBuffer` — a control `SharedArrayBuffer` you own (keys, sounds, debug commands).
+  Write remote-control keys into it with `Atomics` (see [remote-control.md](./remote-control.md))
+  to control the running app; when omitted, the host creates one internally.
+- `options.workerEntry` — absolute path to the engine bundle used as the worker entry. Defaults
+  to the installed `brs.node.js`; set it if you relocate or bundle the library.
+
+Use `terminateApp()` to request a graceful exit of the running app. Only one app can run on the
+host at a time. Packaging (`.bpk` generation) is not supported through `executeApp` — use the
+synchronous `executeFile` for that.
+
+Host events: `message` (engine strings), `frame` (ImageData), `registry` (RegistryData),
+`graphics` (texture-memory data), `launch` (roAppManager launch requests), `ndkStart`,
+`component` (display/caption state objects), `error`/`warning`/`debug` (host diagnostics).
+
 ### Using the REPL Interpreter
 
 For interactive BrightScript execution or building a custom REPL:

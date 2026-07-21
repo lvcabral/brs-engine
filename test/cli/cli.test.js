@@ -932,6 +932,23 @@ describe("cli", () => {
         ]);
     }, 10000);
 
+    it("Runs a SceneGraph Task on a worker thread with cross-thread rendezvous", async () => {
+        let command = ["node", brsCliPath, "-r task-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // The Task's functionName runs on a dedicated worker thread: reading `input` and
+        // writing `result` both rendezvous with the render thread, and the observer fires
+        // back on the render thread. Debug lines from the task machinery may interleave,
+        // so assert the key lines instead of the exact output.
+        const lines = stdout.split("\n").map((line) => line.trimEnd());
+        expect(lines).toContain("=== Task Thread Repro ===");
+        expect(lines).toContain("TASK RESULT: from-task-thread:ping");
+        expect(lines).toContain("=== Task Thread Repro Complete ===");
+        expect(lines).toContain("------ Finished 'main.brs' execution [EXIT_USER_NAV] ------");
+    }, 15000);
+
     it("Resolves an anonymous function observer registered by its toStr() name", async () => {
         let command = ["node", brsCliPath, "-r anon-observer-app", "source/main.brs", "-c 0"].join(" ");
 

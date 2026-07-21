@@ -48,8 +48,13 @@ export function runDebugger(
         /// #if BROWSER
         line = nextDebugCommand();
         /// #else
-        BrsDevice.stdout.write(`print,\r\n`);
-        line = readline.prompt();
+        if (BrsDevice.isWorkerThread) {
+            // Worker thread: the host reads stdin and relays commands via the shared array.
+            line = nextDebugCommand();
+        } else {
+            BrsDevice.stdout.write(`print,\r\n`);
+            line = readline.prompt();
+        }
         /// #endif
         const command = parseCommand(line);
         if (command.cmd === DebugCommand.EXPR) {

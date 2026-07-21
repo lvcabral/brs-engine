@@ -61,11 +61,12 @@ export function deriveMaxColumns() {
  * Prints a rendered frame to stdout, clearing the terminal and hiding the cursor.
  * Automatically selects colored or plain output based on chalk color support level.
  * @param frame - The frame result containing plain and colored text versions
+ * @returns True if the write was flushed; false when stdout applies backpressure
+ *          (callers should drop frames until the stream drains)
  */
-export function printFrame({ plain, colored }: RenderFrameResult) {
+export function printFrame({ plain, colored }: RenderFrameResult): boolean {
     const output = chalk.level > 0 ? colored : plain;
-    process.stdout.write(`\x1b[H\u001B[?25l${output}`);
-    process.stdout.write("\u001B[?25h");
+    return process.stdout.write(`\x1b[H\u001B[?25l${output}\u001B[?25h`);
 }
 
 /**

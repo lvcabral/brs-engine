@@ -109,7 +109,8 @@ $ brs-cli ../tests/test-sandbox.zip
 #### Notes
 
 * If the app has `ifDraw2D` screens, the app will run but nothing is displayed, unless you use the `--ascii` parameter (see below).
-* As the CLI will run on a single thread, if you need to control the app you will have to enable the `--ecp` option (see below).
+* The app runs on a dedicated worker thread, so you can control it interactively with the keyboard (see below) or via the `--ecp` option.
+* SceneGraph `Task` nodes run on their own worker threads, mirroring the browser engine and a real device.
 * Use the flag `--registry` to have the device registry data saved to the disk, and restored in following app executions.
 * Use the flag `--ext-vol` to mount a directory or zip archive as the `ext1:` volume.
 * To send parameters (deep linking) to the app, use the flag `--deep-link` followed by the parameters in the format: key=value,...
@@ -139,14 +140,34 @@ This option is independent of `--ascii`/`--unicode`: you can combine them or use
 
 ### Controlling the App
 
-The CLI runs the BrightScript Engine on a single thread, if you need to use control simulation, enable the option `--ecp` that will launch the ECP Server in port 8060 (same as a Roku device). With this option enabled, you can connect to your computer using any remote control app that uses ECP, including the [Roku Remote Tool](https://devtools.web.roku.com/#remote-tool), the [Roku GamePad Gateway](http://github.com/lvcabral/roku-gpg) or the Roku mobile apps. This option also enables an SSDP service to allow it to be discovered in your local network.
+The app runs on a dedicated worker thread, leaving the terminal free for interactive control: when the CLI is attached to a terminal (TTY), the keyboard acts as the remote control while the app is running.
+
+| Key | Roku Remote |
+| --- | --- |
+| Arrow keys | Up / Down / Left / Right |
+| Enter | Select (OK) |
+| Esc or Delete | Back |
+| Home | Home (exits the app) |
+| Backspace | Instant Replay |
+| End | Play/Pause |
+| PageUp / PageDown | Rewind / Fast Forward |
+| Ctrl+Left / Ctrl+Right | Rewind / Fast Forward |
+| Insert or Ctrl+8 | Info (*) |
+| Ctrl+A / Ctrl+Z | A / B (game remote) |
+| Letters / digits | Text input (keyboard dialogs) |
+| Ctrl+B | Break into the Micro Debugger (requires `--debug`) |
+| Ctrl+C | Terminate the CLI |
+
+If you need remote control simulation from other devices, enable the option `--ecp` that will launch the ECP Server in port 8060 (same as a Roku device). With this option enabled, you can connect to your computer using any remote control app that uses ECP, including the [Roku Remote Tool](https://devtools.web.roku.com/#remote-tool), the [Roku GamePad Gateway](http://github.com/lvcabral/roku-gpg) or the Roku mobile apps. This option also enables an SSDP service to allow it to be discovered in your local network.
 
 ### Production vs Developer mode
 
 By default the engine runs in **production mode**, which keeps it lean by skipping all debug
 instrumentation. Passing `--debug` (or setting `debugOnCrash` in the device info) switches to
 **developer mode**, which enables the Micro Debugger and the resource tracking used by its
-inspection commands.
+inspection commands. In developer mode you can break into the debugger at any time with
+`Ctrl+B`; while the debugger is active the keyboard switches to line mode for entering debug
+commands and BrightScript expressions (`cont` resumes the app and restores remote-control keys).
 
 | Capability | Production (default) | Developer (`--debug`) |
 | --- | --- | --- |

@@ -259,6 +259,44 @@ export function isExtensionInfo(value: any): value is ExtensionInfo {
 }
 
 /**
+ * Frame (screen pixels) data wrapper used to send ImageData across Node worker_threads.
+ * node-canvas `ImageData` exposes width/height as prototype getters, which are lost by the
+ * structured clone, so the worker flattens frames into this plain shape and the host revives
+ * them into a real ImageData instance.
+ */
+export type FrameData = {
+    frameData: Uint8ClampedArray;
+    frameWidth: number;
+    frameHeight: number;
+};
+
+/** Type guard to check if a value is a FrameData object.
+ * @param value the value to check
+ * @returns true if the value is a FrameData object, false otherwise
+ */
+export function isFrameData(value: any): value is FrameData {
+    return (
+        value &&
+        typeof value === "object" &&
+        isTypeOf(value.frameData, "Uint8ClampedArray") &&
+        typeof value.frameWidth === "number" &&
+        typeof value.frameHeight === "number"
+    );
+}
+
+/**
+ * Realm-safe type-brand check: `instanceof` fails for objects deserialized from another JS
+ * realm (e.g. worker_threads messages received while running under jest's VM sandbox), so
+ * built-in kinds are matched by their `Object.prototype.toString` brand instead.
+ * @param value the value to check
+ * @param brand the built-in type name (e.g. "SharedArrayBuffer", "Map", "Uint8ClampedArray")
+ * @returns true if the value is of the given built-in kind, false otherwise
+ */
+export function isTypeOf(value: any, brand: string): boolean {
+    return Object.prototype.toString.call(value) === `[object ${brand}]`;
+}
+
+/**
  * Registry Data Interface
  */
 export interface RegistryData {
@@ -276,7 +314,7 @@ export function isRegistryData(value: any): value is RegistryData {
     return (
         value &&
         typeof value === "object" &&
-        value.current instanceof Map &&
+        isTypeOf(value.current, "Map") &&
         Array.isArray(value.removed) &&
         typeof value.isDirty === "boolean"
     );
@@ -433,7 +471,7 @@ export function isTaskData(value: any): value is TaskData {
         typeof value.id === "number" &&
         typeof value.name === "string" &&
         Object.values(TaskState).includes(value.state) &&
-        (value.buffer instanceof SharedArrayBuffer || value.buffer === undefined) &&
+        (isTypeOf(value.buffer, "SharedArrayBuffer") || value.buffer === undefined) &&
         (typeof value.m === "object" || value.m === undefined) &&
         (typeof value.render === "string" || value.render === undefined)
     );
@@ -570,7 +608,7 @@ export function isAppData(value: any): value is AppData {
         (typeof value.password === "string" || value.password === undefined) &&
         (typeof value.exitReason === "string" || value.exitReason === undefined) &&
         (typeof value.exitTime === "number" || value.exitTime === undefined) &&
-        (value.params instanceof Map || value.params === undefined) &&
+        (isTypeOf(value.params, "Map") || value.params === undefined) &&
         (typeof value.running === "boolean" || value.running === undefined)
     );
 }

@@ -195,8 +195,9 @@ above).
   multiple in‑flight messages without head‑of‑line blocking.
 - Carry payloads **once** in the SAB and switch node‑tree encoding to **msgpack** (already a
   dependency) to remove the remaining JSON encode/decode cost.
-- Task threading/rendezvous remains **browser‑only**; the Node CLI host does not yet spawn task
-  workers.
+- ~~Task threading/rendezvous remains **browser‑only**~~ — the Node host (`src/node/host.ts` +
+  `src/node/task.ts`, a port of `src/api/task.ts`) now spawns app and task workers via
+  `worker_threads`, with the same broker/direct-buffer data paths.
 
 ## Key source references
 
