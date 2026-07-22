@@ -478,6 +478,19 @@ export class BrsDevice {
     }
 
     /**
+     * Discards any buffered-but-undelivered key events and resets the press/release
+     * debounce state. Call this when a screen closes, so a key event still in flight
+     * for that screen (e.g. the release half of a press/release pair) is not later
+     * delivered to a different screen that becomes active next, as would never happen
+     * on a real device where key events are scoped to the currently displayed screen.
+     */
+    static resetKeysBuffer() {
+        this.keysBuffer.length = 0;
+        this.lastKey = -1;
+        this.lastMod = -1;
+    }
+
+    /**
      * Updates the control keys buffer from shared array and returns the next key.
      * Handles single key event mode and remote button press/release logic.
      * @returns Next key event to be handled or undefined if queue is empty
