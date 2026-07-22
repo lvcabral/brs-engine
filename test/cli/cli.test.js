@@ -177,6 +177,7 @@ describe("cli", () => {
             fs.rmSync(tmpDir, { recursive: true, force: true });
         }
     }, 15000);
+
     it("Draws and measures empty strings without crashing", async () => {
         // Regression: node-canvas v4 aborts the process (SIGTRAP) when its text APIs
         // (measureText/fillText) receive an empty string — the engine must guard them.
