@@ -47,7 +47,7 @@ Below is a table with the extended set of features, internally created by the en
 | Feature Name | Description |
 |--------------|-------------|
 | `simulation_engine` | Always `true` when running under `brs-engine` |
-| `ascii_rendering` | Returns `true` when running in the terminal in ASCII screen mode, see the [CLI doc](run-as-cli.md) for more details |
+| `platform_cli` | Returns `true` when running in the terminal, see the [CLI doc](run-as-cli.md) for more details |
 | `platform_browser` | Returns `true` when running under a Browser |
 | `platform_chromium` | Returns `true` when running under Chromium |
 | `platform_firefox` | Returns `true` when running under Firefox |

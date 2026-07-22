@@ -110,8 +110,10 @@ program
             return;
         }
         if (typeof deviceData === "object") {
-            deviceData.customFeatures.push("ascii_rendering");
-            //deviceData.maxFps = 30;
+            // Custom feature that apps can inspect using `roDeviceInfo.hasFeature()` and change behavior when ran under CLI
+            deviceData.customFeatures.push("platform_cli");
+            // CLI does not support Video playback, this makes apps UI looks better in terminal
+            deviceData.autoPlayEnabled = false;
             deviceData.assets = fs.readFileSync(path.join(__dirname, "../assets/common.zip"))?.buffer;
             deviceData.localIps = getLocalIps();
             try {
