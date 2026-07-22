@@ -227,9 +227,18 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
                         sgRoot.rendering = false;
                     }
                 }
-                // Limited FPS enforcement
+                // Limited FPS enforcement - caps redraw cadence only. Keep polling timers during
+                // the wait so near-zero-duration Timer nodes (e.g. the promise library's
+                // "essentially next tick" scheduling) fire as soon as they're due instead of being
+                // held hostage to a full frame period. Per the Roku docs, `duration` supports
+                // millisecond granularity and `fire` observers run on the render thread (not tied
+                // to draw cadence), and multi-hop Timer chains measurably don't accumulate this
+                // per-hop frame-period latency on a real device.
                 let timeStamp = Date.now();
                 while (timeStamp - this.lastMessage < this.maxMs) {
+                    if (sgRoot.processTimers()) {
+                        this.isDirty = true;
+                    }
                     timeStamp = Date.now();
                 }
                 this.finishDraw();

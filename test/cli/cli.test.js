@@ -843,6 +843,26 @@ describe("cli", () => {
         ]);
     }, 10000);
 
+    it("Resolves a chain of near-zero-duration Timer nodes without frame-period latency per hop", async () => {
+        let command = ["node", brsCliPath, "-r timer-hop-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // Rooibos-promises resolves promises via a chain of "essentially next tick" SGNode Timers
+        // (duration ~0). Timer polling used to be coupled to the screen's frame-rate-limiting busy
+        // wait, so each hop in the chain could cost up to a full frame period even though its nominal
+        // duration was ~0 - a 125ms Timer plus two such hops measured ~160ms+ instead of ~125ms (this
+        // is what made a Rooibos test that passes on a real device fail in brs-desktop/brs-cli). With
+        // polling decoupled from the frame throttle, the whole chain resolves within a few ms of the
+        // Timer's own duration.
+        const match = stdout.match(/total elapsed=\s*(\d+)/);
+        expect(match).not.toBeNull();
+        const elapsedMs = Number(match[1]);
+        expect(elapsedMs).toBeGreaterThanOrEqual(125);
+        expect(elapsedMs).toBeLessThan(145);
+    }, 10000);
+
     it("List item component can read its parent list during init()", async () => {
         let command = ["node", brsCliPath, "-r list-item-parent-app", "source/main.brs", "-c 0"].join(" ");
 
