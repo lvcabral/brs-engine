@@ -103,10 +103,11 @@ export function startKeyboardControl(array: Int32Array, onExit?: () => void, onS
     initControlModule(array);
     enableSendKeys(true);
     subscribeControl("keyboard", (event: string) => {
-        // The home key exits the app (same as the ECP `home` handling).
-        if ((event === "home" || event === "poweroff") && sharedArray) {
-            Atomics.store(sharedArray, DataType.DBG, DebugCommand.EXIT);
-            Atomics.notify(sharedArray, DataType.DBG);
+        // The home key exits the app like the browser API: request a graceful exit and let
+        // the host force-terminate the worker threads if the app doesn't finish in time
+        // (a raw EXIT write alone can't unblock a worker stuck outside the command poll).
+        if (event === "home" || event === "poweroff") {
+            exitHandler();
         }
     });
     readline.emitKeypressEvents(process.stdin);

@@ -86,6 +86,10 @@ let appWorker: Worker | undefined;
 let currentPayload: AppPayload | undefined;
 let controlArray: Int32Array | undefined;
 let finishApp: ((result: AppResult) => void) | undefined;
+// Reason for a host-initiated termination (home key, Ctrl+C, terminateApp caller): it
+// overrides the reason the worker posts, mirroring the browser API's terminate(reason) —
+// the worker only knows it was told to EXIT, not that the user pressed home.
+let terminateReason: AppExitReason | undefined;
 
 /**
  * Executes a BrightScript app on a dedicated worker thread, with SceneGraph Task support.
@@ -141,16 +145,18 @@ export async function executeApp(payload: AppPayload, options?: ExecuteAppOption
 /**
  * Requests the running app to terminate gracefully (same as the ECP `exit-app` command).
  * Falls back to hard-terminating the worker if it does not finish within the timeout.
+ * @param reason Exit reason reported for this termination (default: user navigation/home)
  * @param timeoutMs How long to wait for a graceful exit before force-terminating
  */
-export function terminateApp(timeoutMs: number = 3000) {
+export function terminateApp(reason: AppExitReason = AppExitReason.UserNav, timeoutMs: number = 3000) {
     if (!appWorker || !controlArray) {
         return;
     }
+    terminateReason = reason;
     Atomics.store(controlArray, DataType.DBG, DebugCommand.EXIT);
     Atomics.notify(controlArray, DataType.DBG);
     const timer = setTimeout(() => {
-        finishApp?.({ exitReason: AppExitReason.UserNav });
+        finishApp?.({ exitReason: reason });
     }, timeoutMs);
     timer.unref();
 }
@@ -164,6 +170,7 @@ async function cleanupApp() {
     appWorker = undefined;
     currentPayload = undefined;
     controlArray = undefined;
+    terminateReason = undefined;
     if (worker) {
         worker.removeAllListeners();
         await worker.terminate().catch(() => {});
@@ -209,10 +216,15 @@ function mainCallback(data: any) {
     } else if (isNDKStart(data)) {
         notifyAll("ndkStart", data);
     } else if (typeof data === "string") {
-        notifyAll("message", data);
         if (data.startsWith("end,")) {
-            finishApp?.({ exitReason: getExitReason(data.slice(4).trimEnd()) });
+            // A host-initiated termination (home key, terminateApp) reports its own reason:
+            // the worker unwinds via the debugger EXIT path and would report Stopped.
+            const reason = terminateReason ?? getExitReason(data.slice(4).trimEnd());
+            notifyAll("message", `end,${reason}`);
+            finishApp?.({ exitReason: reason });
+            return;
         }
+        notifyAll("message", data);
     } else if (typeof data === "object" && data !== null) {
         // Display/caption state and other component messages are host-level events in Node.
         notifyAll("component", data);
