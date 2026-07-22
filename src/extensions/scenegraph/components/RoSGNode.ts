@@ -1808,18 +1808,18 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
         return new Callable("parentSubtype", {
             signature: {
                 args: [new StdlibArgument("nodeType", ValueKind.String)],
-                returns: ValueKind.Object,
+                returns: ValueKind.String,
             },
             impl: (interpreter: Interpreter, nodeType: BrsString) => {
                 const remote = this.rendezvousCall(interpreter, "parentSubtype", [nodeType]);
                 if (remote !== undefined) {
                     return remote;
                 }
+                // Per the Roku docs this always returns a String - callers (e.g. the
+                // rokucommunity/promises library's isPromise()) walk the hierarchy checking
+                // for "" to detect the root, so returning Invalid here crashes them.
                 const parentType = subtypeHierarchy.get(nodeType.getValue().toLowerCase());
-                if (parentType) {
-                    return new BrsString(parentType);
-                }
-                return BrsInvalid.Instance;
+                return new BrsString(parentType ?? "");
             },
         });
     }
