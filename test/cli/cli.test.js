@@ -112,6 +112,72 @@ describe("cli", () => {
         ]);
     }, 10000);
 
+    it("follows HTTP redirects when downloading a texture", async () => {
+        // Regression: the synchronous download() path (roTextureManager -> loadTexture)
+        // must follow HTTP redirects. Many CDNs 302 image URLs; before the fix the sync
+        // XHR child process ignored the redirect and the texture failed to load.
+        const http = require("http");
+        const { createCanvas } = require("canvas");
+
+        // A real PNG node-canvas can decode back into a valid roBitmap.
+        const canvas = createCanvas(4, 4);
+        const ctx = canvas.getContext("2d");
+        ctx.fillStyle = "#ff0000";
+        ctx.fillRect(0, 0, 4, 4);
+        const png = canvas.toBuffer("image/png");
+
+        // Local server: /redirect.png -> 302 -> /image.png which serves the PNG.
+        const server = http.createServer((req, res) => {
+            if (req.url === "/redirect.png") {
+                res.writeHead(302, { Location: "/image.png" });
+                res.end();
+            } else if (req.url === "/image.png") {
+                res.writeHead(200, { "Content-Type": "image/png", "Content-Length": png.length });
+                res.end(png);
+            } else {
+                res.writeHead(404);
+                res.end();
+            }
+        });
+        await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+        const port = server.address().port;
+
+        const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "brs-redirect-"));
+        const brsPath = path.join(tmpDir, "redirectTexture.brs");
+        fs.writeFileSync(
+            brsPath,
+            [
+                "sub Main()",
+                '    msgport = CreateObject("roMessagePort")',
+                '    screen = CreateObject("roScreen", true, 854, 480)',
+                "    screen.SetMessagePort(msgport)",
+                '    mgr = CreateObject("roTextureManager")',
+                "    mgr.SetMessagePort(msgport)",
+                `    uri = "http://127.0.0.1:${port}/redirect.png"`,
+                '    request = CreateObject("roTextureRequest", uri)',
+                "    mgr.RequestTexture(request)",
+                "    msg = wait(0, msgport)",
+                '    if type(msg) = "roTextureRequestEvent" and msg.GetState() = 3 and type(msg.GetBitmap()) = "roBitmap"',
+                '        print "Image downloaded!"',
+                "    else",
+                '        print "Download failed"',
+                "    end if",
+                "end sub",
+                "",
+            ].join("\n")
+        );
+
+        try {
+            const command = ["node", brsCliPath, "redirectTexture.brs", "-c 0"].join(" ");
+            const { stdout } = await exec(command, { cwd: tmpDir });
+            expect(stdout).toContain("Image downloaded!");
+            expect(stdout).not.toContain("Download failed");
+        } finally {
+            await new Promise((resolve) => server.close(resolve));
+            fs.rmSync(tmpDir, { recursive: true, force: true });
+        }
+    }, 15000);
+
     it("only warns once for a repeatedly-requested missing local texture", async () => {
         let command = ["node", brsCliPath, "roTextureManagerMissingFile.brs", "-c 0"].join(" ");
 
