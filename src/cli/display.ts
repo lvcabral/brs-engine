@@ -5,6 +5,7 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
+import fs from "node:fs";
 import { Canvas, createCanvas, ImageData } from "canvas";
 import chalk from "chalk";
 
@@ -305,8 +306,11 @@ export interface DisplayMode {
     ascii?: number;
     /** Render ASCII art using Unicode block characters */
     unicode?: boolean;
-    /** Render frames as terminal images (iTerm2/Kitty native protocols or ANSI fallback) */
-    image?: boolean;
+    /**
+     * Render frames as terminal images (iTerm2/Kitty native protocols or ANSI fallback),
+     * scaled to this percentage of the terminal width (10-100); undefined/0 disables.
+     */
+    image?: number;
 }
 
 // terminal-image is ESM-only; load it lazily via dynamic import (kept external by webpack).
@@ -329,6 +333,53 @@ let pendingFrame: ImageData | undefined;
 let frameRenderScheduled = false;
 let stdoutCongested = false;
 let frameOutputEnabled = false;
+// Pixels of the frame currently on screen (image mode): repainting an identical frame
+// makes graphics terminals decode/swap a large image for no visual change — a flash.
+let lastRenderedPixels: Buffer | undefined;
+let lastRenderedWidth = 0;
+let lastRenderedHeight = 0;
+
+/**
+ * True when the frame's pixels match the image already painted on the terminal.
+ * @param frame - The candidate frame
+ */
+function isSameAsLastFrame(frame: ImageData): boolean {
+    if (!lastRenderedPixels || frame.width !== lastRenderedWidth || frame.height !== lastRenderedHeight) {
+        return false;
+    }
+    const pixels = Buffer.from(frame.data.buffer, frame.data.byteOffset, frame.data.byteLength);
+    return lastRenderedPixels.equals(pixels);
+}
+
+/**
+ * Records the pixels of the frame just painted (copied — the source buffer is reused).
+ * @param frame - The frame that was rendered to the terminal
+ */
+function rememberRenderedFrame(frame: ImageData) {
+    lastRenderedPixels = Buffer.from(
+        frame.data.buffer.slice(frame.data.byteOffset, frame.data.byteOffset + frame.data.byteLength)
+    );
+    lastRenderedWidth = frame.width;
+    lastRenderedHeight = frame.height;
+}
+
+// Text deferral: while frames own the terminal (image/ASCII modes on a TTY), any text
+// interleaved with the frames lands inside the frame region — on graphics terminals
+// (iTerm2/Kitty) writing text over image cells erases them, so every message shows as a
+// visible flicker until the next frame repaints (SceneGraph Task diagnostics triggered
+// exactly this). Text is held and flushed when frame output stops or the debugger opens.
+const MAX_DEFERRED_MESSAGES = 500;
+const deferredOutput: { text: string; toStderr: boolean }[] = [];
+let deferredDropped = 0;
+let deferralSuspended = false;
+// Optional log file (`--log <file>`): text output is appended there (ANSI stripped) as it
+// arrives, instead of being deferred — nothing but frames ever touches the terminal.
+let logStream: fs.WriteStream | undefined;
+// Local ANSI stripper (strip-ansi is ESM-only, which the test transpile loader can't require).
+const ansiPattern = /\u001B(?:\[[0-9;?]*[\dA-PR-TZcf-nq-uy=><~]|\][^\u0007\u001B]*(?:\u0007|\u001B\\))/g;
+function stripAnsiCodes(text: string): string {
+    return text.replaceAll(ansiPattern, "");
+}
 
 /**
  * Starts frame output for an app run: stores the display mode, makes stdout writes
@@ -339,6 +390,7 @@ let frameOutputEnabled = false;
 export function enableFrameOutput(mode: DisplayMode) {
     displayMode = mode;
     frameOutputEnabled = true;
+    deferralSuspended = false;
     if ((displayMode.ascii !== undefined || displayMode.image) && process.stdout.isTTY) {
         (process.stdout as any)._handle?.setBlocking?.(false);
         if (displayMode.image) {
@@ -350,19 +402,141 @@ export function enableFrameOutput(mode: DisplayMode) {
 }
 
 /**
- * Stops frame rendering (dropping any queued frame — the app is over) and restores
- * blocking stdout writes so post-run output can never be truncated on exit.
+ * Stops frame rendering (dropping any queued frame — the app is over), restores
+ * blocking stdout writes so post-run output can never be truncated on exit, and
+ * flushes any text messages deferred while frames owned the terminal.
  */
 export function disableFrameOutput() {
     frameOutputEnabled = false;
     pendingFrame = undefined;
     stdoutCongested = false;
+    lastRenderedPixels = undefined;
     if ((displayMode.ascii !== undefined || displayMode.image) && process.stdout.isTTY) {
         (process.stdout as any)._handle?.setBlocking?.(true);
         if (displayMode.image) {
             process.stdout.write("\x1b[?25h");
         }
+        moveCursorBelowFrame();
     }
+    flushDeferredText();
+}
+
+/**
+ * Writes app/engine text output to the terminal, deferring it while frames own the
+ * screen (image/ASCII modes on a TTY): text interleaved with frames lands inside the
+ * frame region and, on graphics terminals (iTerm2/Kitty), erases the image cells it
+ * touches — every message flashes as a visible flicker until the next frame repaints.
+ * Deferred messages are flushed by `disableFrameOutput` or `suspendTextDeferral`.
+ * @param text - The exact text to write (including any ANSI colors and newlines)
+ * @param toStderr - Write to stderr instead of stdout (warnings/errors)
+ */
+export function writeTerminalText(text: string, toStderr = false) {
+    if (logStream && !deferralSuspended) {
+        // Log-file mode: all text output is appended to the file (ANSI stripped) as it
+        // arrives, keeping the terminal exclusively for frames. While the Micro Debugger
+        // owns the terminal (deferral suspended) its output stays interactive on screen.
+        logStream.write(stripAnsiCodes(text));
+        return;
+    }
+    if (shouldDeferText()) {
+        if (deferredOutput.length >= MAX_DEFERRED_MESSAGES) {
+            deferredOutput.shift();
+            deferredDropped++;
+        }
+        deferredOutput.push({ text, toStderr });
+        return;
+    }
+    (toStderr ? process.stderr : process.stdout).write(text);
+}
+
+/**
+ * Redirects all subsequent text output (app prints, warnings, errors, diagnostics) to a
+ * log file instead of the terminal — the definitive fix for frame-mode flicker: nothing
+ * but frames is ever written to the screen. The file is appended to (ANSI colors
+ * stripped) and flushed live, so it can be followed with `tail -f`.
+ * @param filePath - Path of the log file to append to
+ * @returns The resolved path on success, or undefined when the file cannot be opened
+ */
+export function setLogFile(filePath: string): string | undefined {
+    try {
+        logStream = fs.createWriteStream(filePath, { flags: "a" });
+        return filePath;
+    } catch (err: any) {
+        process.stderr.write(chalk.red(`Error opening log file ${filePath}: ${err.message}\n`));
+        return undefined;
+    }
+}
+
+/**
+ * Closes the log file, restoring direct terminal text output.
+ */
+export function closeLogFile() {
+    logStream?.end();
+    logStream = undefined;
+}
+
+/**
+ * Suspends text deferral and flushes what was held — called when the Micro Debugger
+ * opens: the app is paused (no frames are painting) and the debugger needs the
+ * terminal for its banner, prompt and command output.
+ */
+export function suspendTextDeferral() {
+    if (deferralSuspended) {
+        return;
+    }
+    deferralSuspended = true;
+    if (shouldOwnTerminal()) {
+        moveCursorBelowFrame();
+    }
+    // Text is about to overwrite the frame region; forget the painted frame so the
+    // next render repaints even if the frame content hasn't changed.
+    lastRenderedPixels = undefined;
+    flushDeferredText();
+}
+
+/**
+ * Resumes text deferral after the debugger releases the terminal (app continues).
+ */
+export function resumeTextDeferral() {
+    deferralSuspended = false;
+}
+
+/**
+ * True when frame rendering owns the terminal (frames are being painted on a TTY).
+ */
+function shouldOwnTerminal() {
+    return frameOutputEnabled && process.stdout.isTTY && (displayMode.ascii !== undefined || displayMode.image);
+}
+
+/**
+ * True when text output must be held back instead of written immediately.
+ */
+function shouldDeferText() {
+    return shouldOwnTerminal() && !deferralSuspended;
+}
+
+/**
+ * In image mode the cursor is parked at home (frames repaint in place), so text written
+ * next would overwrite the top of the image; move to the bottom of the screen first.
+ */
+function moveCursorBelowFrame() {
+    if (displayMode.image) {
+        process.stdout.write("\x1b[999;1H\n");
+    }
+}
+
+/**
+ * Writes out all deferred text messages in arrival order, preserving their streams.
+ */
+function flushDeferredText() {
+    if (deferredDropped > 0) {
+        process.stdout.write(`... (${deferredDropped} earlier messages dropped)\n`);
+        deferredDropped = 0;
+    }
+    for (const message of deferredOutput) {
+        (message.toStderr ? process.stderr : process.stdout).write(message.text);
+    }
+    deferredOutput.length = 0;
 }
 
 /**
@@ -395,11 +569,24 @@ async function renderPendingFrame() {
         frameRenderScheduled = false;
         return;
     }
+    if (displayMode.image && isSameAsLastFrame(frame)) {
+        // The engine posts frames even when the screen is static (most SceneGraph apps
+        // idle between interactions). Rewriting an identical image forces the terminal
+        // to decode and swap a large payload in place, which flashes on iTerm2/Kitty —
+        // the image already on screen IS this frame, so paint nothing.
+        frameRenderScheduled = false;
+        if (pendingFrame) {
+            frameRenderScheduled = true;
+            setImmediate(renderPendingFrame);
+        }
+        return;
+    }
     const canvas = createCanvas(frame.width, frame.height);
     const ctx = canvas.getContext("2d");
     ctx.putImageData(frame, 0, 0);
     let flushed = true;
     if (displayMode.image) {
+        rememberRenderedFrame(frame);
         flushed = await renderImageFrame(canvas, frame.width, frame.height);
     } else {
         const columns = displayMode.ascii && displayMode.ascii > 0 ? displayMode.ascii : maxColumns;
@@ -450,7 +637,12 @@ async function renderImageFrame(canvas: Canvas, width: number, height: number): 
     process.stdout.write("\x1b[?2026h\x1b[H");
     let flushed = true;
     try {
-        let rendered = await imageRenderer.buffer(png, { height: "90%" });
+        // Scale to the configured percentage of the terminal width; the height cap keeps
+        // a full-width image from scrolling (aspect ratio is preserved, so the effective
+        // size is whichever dimension constrains it).
+        const widthPct = displayMode.image && displayMode.image > 0 ? Math.min(displayMode.image, 100) : 100;
+        const heightPct = Math.min(Math.round(widthPct * 0.9), 90);
+        let rendered = await imageRenderer.buffer(png, { width: `${widthPct}%`, height: `${heightPct}%` });
         if (frameOutputEnabled) {
             // iTerm2 protocol: keep the cursor at home so a frame can never scroll the
             // screen (ansi-escapes does not expose the doNotMoveCursor flag).

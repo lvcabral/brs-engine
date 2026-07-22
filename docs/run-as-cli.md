@@ -33,7 +33,8 @@ BrightScript Simulation Engine CLI
 Options:
   -a, --ascii <columns>     Enable ASCII screen mode with # of columns.
   -u, --unicode             Render ASCII screen mode using Unicode block characters.
-  -i, --image               Render the screen as images on the terminal (iTerm2/Kitty or ANSI).
+  -i, --image [percent]     Render the screen as images on the terminal with optional width % (default: 100).
+  -l, --log [filename]      Redirect the text output to a log file (default: brs-cli.log).
   -s, --snapshot [filename] Enable Ctrl+S to save the current screen as a PNG image.
   -c, --colors <level>      Define the console color level (0 to disable). (default: 3)
   -d, --debug               Developer mode: micro debugger on crash + resource tracking.
@@ -136,6 +137,22 @@ The `--image` option renders the screen as actual images on the terminal (an alt
 ```console
 $ brs-cli ../apps/collisions.zip --image
 ```
+
+The optional `[percent]` argument scales the image to a percentage of the terminal width (valid range: 10-100, default: 100), keeping the screen's aspect ratio:
+
+```console
+$ brs-cli ../apps/collisions.zip --image 60
+```
+
+### Redirecting the Text Output to a Log File
+
+While the screen is being rendered on the terminal (`--ascii`, `--unicode` or `--image`), any text the app or the engine prints is held back and only shown after the app finishes — writing text over the frames would corrupt (and on graphics terminals, flicker) the rendering. If you want to follow the output live instead, use the `--log` option to redirect all text output (prints, warnings, errors and diagnostics) to a file, appended as it arrives with ANSI colors stripped — so you can watch it from another terminal with `tail -f`:
+
+```console
+$ brs-cli ../apps/my-app.zip --image --log my-app.log
+```
+
+The filename is optional (default: `brs-cli.log`). When the Micro Debugger is active it takes over the terminal, so its interaction stays on screen regardless of this option.
 
 ### Saving the Screen as a PNG Image
 

@@ -101,7 +101,11 @@ function runTask(taskData: TaskData, currentPayload: AppPayload) {
         notifyHost("warning", `[task:host] Maximum number of tasks reached: ${tasks.size}`);
         return;
     }
-    const taskWorker = new Worker(workerEntry);
+    // Pipe stdout/stderr so console output from inside the task worker becomes a host
+    // event instead of writing straight to the terminal (see the app worker in host.ts).
+    const taskWorker = new Worker(workerEntry, { stdout: true, stderr: true });
+    taskWorker.stdout.on("data", (chunk: Buffer) => notifyHost("stdout", chunk.toString()));
+    taskWorker.stderr.on("data", (chunk: Buffer) => notifyHost("stderr", chunk.toString()));
     // A leaked task worker must never keep the host process alive after the app ends.
     taskWorker.unref();
     taskWorker.on("message", taskCallback);

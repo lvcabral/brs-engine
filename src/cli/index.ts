@@ -19,7 +19,18 @@ import chalk from "chalk";
 import { Command } from "commander";
 import stripAnsi from "strip-ansi";
 import { deviceData, loadAppZip, updateAppZip, subscribePackage, mountExt, setupDeepLink } from "./package";
-import { deriveMaxColumns, enableFrameOutput, disableFrameOutput, renderFrameToTerminal, frameToPng } from "./display";
+import {
+    deriveMaxColumns,
+    enableFrameOutput,
+    disableFrameOutput,
+    renderFrameToTerminal,
+    frameToPng,
+    writeTerminalText,
+    suspendTextDeferral,
+    resumeTextDeferral,
+    setLogFile,
+    closeLogFile,
+} from "./display";
 import { startKeyboardControl, stopKeyboardControl, handleDebuggerCommand } from "./keyboard";
 import { isNumber } from "../api/util";
 import {
@@ -72,7 +83,11 @@ program
     .arguments(`brs-cli [brsFiles...]`)
     .option("-a, --ascii <columns>", "Enable ASCII screen mode with # of columns.")
     .option("-u, --unicode", "Render ASCII screen mode using Unicode block characters.", false)
-    .option("-i, --image", "Render the screen as images on the terminal (iTerm2/Kitty or ANSI).", false)
+    .option(
+        "-i, --image [percent]",
+        "Render the screen as images on the terminal with optional width % (default: 100)."
+    )
+    .option("-l, --log [filename]", "Redirect the text output to a log file (default: brs-cli.log).")
     .option("-s, --snapshot [filename]", "Enable Ctrl+S to save the current screen as a PNG image.")
     .option("-c, --colors <level>", "Define the console color level (0 to disable).", defaultLevel)
     .option("-d, --debug", "Developer mode: micro debugger on crash + resource tracking.", false)
@@ -85,6 +100,12 @@ program
     .option("-k, --deep-link <params>", "Parameters to be passed to the application. (format: key=value,...)")
     .option("-y, --registry", "Persist the simulated device registry on disk.", false)
     .action(async (brsFiles, program) => {
+        if (typeof program.image === "string" && !isNumber(program.image)) {
+            // `-i <file>`: commander consumed the app path as the optional [percent]
+            // value; a percent is always numeric, so give the path back to the file list.
+            brsFiles.unshift(program.image);
+            program.image = true;
+        }
         if (!checkParameters()) {
             return;
         }
@@ -150,6 +171,21 @@ function checkParameters() {
         }
     } else if (program.unicode) {
         program.ascii = maxColumns;
+    }
+    if (program.image) {
+        // Optional width percent: `-i` alone means 100; `-i 60` scales the image to 60%
+        // of the terminal width (height follows the frame's aspect ratio).
+        let percent = 100;
+        if (typeof program.image === "string") {
+            if (isNumber(program.image) && +program.image >= 10 && +program.image <= 100) {
+                percent = Math.trunc(+program.image);
+            } else {
+                console.warn(
+                    chalk.yellow(`Invalid image width! Valid range is 10-100 (%), using default: ${percent}.`)
+                );
+            }
+        }
+        program.image = percent;
     }
     if (program.root && !fs.existsSync(program.root)) {
         console.error(chalk.red(`Root path not found: ${program.root}\n`));
@@ -325,6 +361,10 @@ async function runApp(payload: AppPayload) {
             payload.extensions = extensions.map((ext) => ext.name as SupportedExtension);
             brs.subscribeHost("cli", hostCallback);
             startKeyboardControl(sharedArray, () => brs.terminateApp(), program.snapshot ? saveScreenshot : undefined);
+            let logPath: string | undefined;
+            if (program.log) {
+                logPath = setLogFile(typeof program.log === "string" ? program.log : "brs-cli.log");
+            }
             enableFrameOutput({
                 ascii: typeof program.ascii === "number" ? program.ascii : undefined,
                 unicode: program.unicode,
@@ -335,7 +375,11 @@ async function runApp(payload: AppPayload) {
                 exitReason = result.exitReason;
             } finally {
                 disableFrameOutput();
+                closeLogFile();
                 stopKeyboardControl();
+                if (logPath) {
+                    console.log(chalk.blueBright(`Text output was logged to ${path.resolve(logPath)}\n`));
+                }
             }
         }
         if (program.ecp) {
@@ -391,7 +435,15 @@ async function savePackage(pkg: brs.RunResult) {
 function hostCallback(event: string, data: any) {
     if (event === "message" && typeof data === "string") {
         if (data.startsWith("command,")) {
-            handleDebuggerCommand(data.slice(8).trimEnd());
+            const command = data.slice(8).trimEnd();
+            // The debugger owns the terminal while the app is paused: release text
+            // deferral (flushing held messages) on stop, re-arm it on continue.
+            if (command === "stop") {
+                suspendTextDeferral();
+            } else if (command === "continue") {
+                resumeTextDeferral();
+            }
+            handleDebuggerCommand(command);
         }
         handleStringMessage(data);
     } else if (["frame", "registry", "graphics"].includes(event)) {
@@ -399,9 +451,13 @@ function hostCallback(event: string, data: any) {
         // in-process engine posts, so the existing message handler applies unchanged.
         messageCallback(data);
     } else if (event === "error") {
-        console.error(chalk.red(data));
+        writeTerminalText(chalk.red(data) + "\n", true);
     } else if (event === "warning") {
-        console.warn(chalk.yellow(data));
+        writeTerminalText(chalk.yellow(data) + "\n", true);
+    } else if (event === "stdout" || event === "stderr") {
+        // Console output written directly inside a worker (engine internals or third-party
+        // libraries): piped by the host so it never hits the terminal mid-frame.
+        writeTerminalText(data, event === "stderr");
     }
     // Host-internal "debug" diagnostics stay silent (matching the previous in-process output).
 }
@@ -658,7 +714,7 @@ function messageCallback(message: any, _?: any) {
  */
 function saveScreenshot() {
     if (!lastFrame) {
-        console.warn(chalk.yellow("No frame was rendered by the app yet, no image saved."));
+        writeTerminalText(chalk.yellow("No frame was rendered by the app yet, no image saved.") + "\n", true);
         return;
     }
     let filePath = typeof program.snapshot === "string" ? program.snapshot : "";
@@ -687,18 +743,18 @@ function handleStringMessage(message: string) {
     if (mType === "print" && msg.endsWith(DebugPrompt)) {
         process.stdout.write(msg);
     } else if (mType === "print") {
-        process.stdout.write(colorize(msg));
+        writeTerminalText(colorize(msg));
     } else if (mType === "warning") {
-        console.warn(chalk.yellow(msg.trimEnd()));
+        writeTerminalText(chalk.yellow(msg.trimEnd()) + "\n", true);
     } else if (mType === "error") {
-        console.error(chalk.red(msg.trimEnd()));
+        writeTerminalText(chalk.red(msg.trimEnd()) + "\n", true);
         process.exitCode = 1;
     } else if (mType === "debug") {
-        console.debug(chalk.gray(msg.trimEnd()));
+        writeTerminalText(chalk.gray(msg.trimEnd()) + "\n");
     } else if (mType === "end" && msg.trimEnd() !== AppExitReason.UserNav) {
         process.exitCode = 1;
     } else if (!["start", "command", "reset", "video", "audio", "syslog", "end"].includes(mType)) {
-        console.info(chalk.blueBright(message.trimEnd()));
+        writeTerminalText(chalk.blueBright(message.trimEnd()) + "\n");
     }
 }
 

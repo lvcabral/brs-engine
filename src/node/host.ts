@@ -121,7 +121,13 @@ export async function executeApp(payload: AppPayload, options?: ExecuteAppOption
             finishApp = undefined;
             cleanupApp().finally(() => resolve(result));
         };
-        appWorker = new Worker(workerEntry);
+        // Pipe the worker's stdout/stderr instead of inheriting the process streams: any
+        // console output from inside the worker (engine diagnostics, third-party libraries)
+        // must reach the host as an event, never the terminal directly — in frame-rendering
+        // modes a stray write lands inside the frame region and flickers the screen.
+        appWorker = new Worker(workerEntry, { stdout: true, stderr: true });
+        appWorker.stdout.on("data", (chunk: Buffer) => notifyAll("stdout", chunk.toString()));
+        appWorker.stderr.on("data", (chunk: Buffer) => notifyAll("stderr", chunk.toString()));
         appWorker.on("message", mainCallback);
         appWorker.on("error", (err: Error) => {
             notifyAll("error", `[host] App worker error: ${err.message}`);
