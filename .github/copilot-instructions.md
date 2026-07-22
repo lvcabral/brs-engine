@@ -72,7 +72,8 @@
 ```bash
 npm run build          # Build all three packages (outputs to packages/*/lib and packages/*/bin)
 npm run build:web      # Build browser + scenegraph packages and launch dev server
-npm run build:cli      # Build Node.js package only
+npm run build:node     # Build Node.js package only
+npm run build:cli      # Build Node.js + scenegraph packages
 npm run build:sg       # Build scenegraph extension package only
 npm run test           # Run Jest tests
 npm run start          # Start webpack dev server for browser package

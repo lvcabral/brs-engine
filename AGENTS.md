@@ -29,9 +29,10 @@ npm install              # install all workspace dependencies
 
 npm run build            # dev build of all packages (--workspaces)
 npm run build:api        # build only brs-engine (browser)
-npm run build:cli        # build only brs-node (CLI/Node library)
+npm run build:node        # build only brs-node (CLI/Node library)
 npm run build:sg         # build only brs-scenegraph
 npm run build:web        # build engine + scenegraph, then open the example web app
+npm run build:cli        # build Node + scenegraph
 npm run release          # minified production build of all packages
 npm run clean            # remove compiled lib/ bin/ types/ from all packages
 

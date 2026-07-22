@@ -3,7 +3,7 @@ const brs = require("../../packages/node/bin/brs.node");
 
 // Library-level tests for the worker host API (`executeApp`): the app runs on a
 // worker_threads thread (the render thread) and SceneGraph Tasks get their own workers,
-// mirroring the browser architecture. Requires `npm run build:cli` AND `npm run build:sg`.
+// mirroring the browser architecture. Requires `npm run build:cli`.
 
 const deviceData = {
     developerId: "34c6fceca75e456f25e7e99531e2425c6c1de443",
