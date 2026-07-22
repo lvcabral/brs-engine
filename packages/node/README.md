@@ -26,7 +26,8 @@ The **BrightScript Simulation Engine** provides a complete a set of libraries an
 - **File Execution** - Run `.brs`, `.zip`, and `.bpk` files directly
 - **Folder Execution** - Run BrightScript apps from a folder
 - **App Packaging** - Create encrypted `.bpk` packages from `.zip` files
-- **ASCII Rendering** - Run Roku apps using ASCII rendering in the terminal
+- **Terminal Screen Rendering** - Show the app screen as ASCII art, Unicode blocks or real images (iTerm2/Kitty)
+- **Interactive Control** - Keyboard remote control, PNG screenshots (Ctrl+S) and text output logging to file
 - **Batch Processing** - Execute multiple files and automate workflows
 
 ### ⚙️ BrightScript Interpreter

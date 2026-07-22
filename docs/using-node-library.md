@@ -35,7 +35,7 @@ This guide explains how to use the `brs-node` library in your Node.js applicatio
       - [`executeFile(payload, options?)`](#executefilepayload-options)
       - [`executeApp(payload, options?)`](#executeapppayload-options)
       - [`subscribeHost(observerId, callback)` / `unsubscribeHost(observerId)`](#subscribehostobserverid-callback--unsubscribehostobserverid)
-      - [`terminateApp(timeoutMs?)`](#terminateapptimeoutms)
+      - [`terminateApp(reason?, timeoutMs?)`](#terminateappreason-timeoutms)
       - [`getReplInterpreter(options)`](#getreplinterpreteroptions)
       - [`executeLine(line, interpreter)`](#executelineline-interpreter)
     - [File System API](#file-system-api)
@@ -407,13 +407,15 @@ brs.subscribeHost("my-app", (event, data) => {
 - `options.workerEntry` — absolute path to the engine bundle used as the worker entry. Defaults
   to the installed `brs.node.js`; set it if you relocate or bundle the library.
 
-Use `terminateApp()` to request a graceful exit of the running app. Only one app can run on the
-host at a time. Packaging (`.bpk` generation) is not supported through `executeApp` — use the
-synchronous `executeFile` for that.
+Use `terminateApp(reason?, timeoutMs?)` to request a graceful exit of the running app. Only one
+app can run on the host at a time. Packaging (`.bpk` generation) is not supported through
+`executeApp` — use the synchronous `executeFile` for that.
 
 Host events: `message` (engine strings), `frame` (ImageData), `registry` (RegistryData),
 `graphics` (texture-memory data), `launch` (roAppManager launch requests), `ndkStart`,
-`component` (display/caption state objects), `error`/`warning`/`debug` (host diagnostics).
+`component` (display/caption state objects), `stdout`/`stderr` (console output written directly
+inside a worker thread — the workers' streams are piped to the host, never to the terminal),
+`error`/`warning`/`debug` (host diagnostics).
 
 ### Using the REPL Interpreter
 
@@ -837,12 +839,16 @@ runs through `executeApp`.
 - `graphics` - texture-memory debug data
 - `launch` / `ndkStart` - app-launch requests
 - `component` - display/caption state objects
+- `stdout` / `stderr` - console output written directly inside a worker thread (piped to the host)
 - `error` / `warning` / `debug` - host diagnostics
 
-#### `terminateApp(timeoutMs?)`
+#### `terminateApp(reason?, timeoutMs?)`
 
 Requests a graceful exit of the app running through `executeApp` (same as the ECP `exit-app`
-command), force-terminating the worker if it does not finish within the timeout (default 3000 ms).
+command), force-terminating the app worker and all Task workers if it does not finish within
+the timeout (default 3000 ms). The optional `reason` (an `AppExitReason`, default
+`EXIT_USER_NAV`) is reported on the `end` event, mirroring the browser API's
+`terminate(reason)` — e.g. the CLI's Home key uses the default to report a user-initiated exit.
 
 #### `getReplInterpreter(options)`
 
