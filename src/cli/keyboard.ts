@@ -39,6 +39,7 @@ const keysMap: Map<string, string> = new Map([
     ["pageup", "rev"],
     ["pagedown", "fwd"],
     ["insert", "info"],
+    ["", "info"],
     ["ctrl+left", "rev"],
     ["ctrl+right", "fwd"],
     ["ctrl+backspace", "backspace"],
@@ -190,6 +191,9 @@ function keypressHandler(str: string | undefined, key: { name?: string; ctrl?: b
     if (key.ctrl && key.name === "s") {
         snapshotHandler?.();
         return;
+    }
+    if (key.name === undefined && key.sequence?.length) {
+        key.name = key.sequence;
     }
     const rokuKey = translateKey(str, key);
     if (!rokuKey) {
