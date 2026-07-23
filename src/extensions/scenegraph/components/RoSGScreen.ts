@@ -336,6 +336,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter) => {
+            BrsDevice.resetKeysBuffer();
             this.port?.pushMessage(new RoSGScreenEvent(BrsBoolean.True));
             return Uninitialized.Instance;
         },
