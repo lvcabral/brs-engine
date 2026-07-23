@@ -72,6 +72,7 @@ export function translateKey(str: string | undefined, key: { name?: string; ctrl
 // Module state
 let sharedArray: Int32Array | undefined;
 let rawMode = false;
+let debugEnabled = false;
 let debuggerRl: readline.Interface | undefined;
 let keyUpTimer: NodeJS.Timeout | undefined;
 let lastKeyDown = "";
@@ -87,11 +88,18 @@ let debugFlusher: NodeJS.Timeout | undefined;
 /**
  * Starts keyboard remote control on stdin. No-op when stdin is not a TTY (tests, pipes, CI).
  * @param array Shared control Int32Array (keys + debug commands)
- * @param onExit Callback invoked when the user presses Ctrl+C
+ * @param onExit Callback invoked when the user requests app termination (Ctrl+D, or Ctrl+C in production mode)
  * @param onSnapshot Callback invoked when the user presses Ctrl+S (screenshot shortcut)
+ * @param debugMode Developer mode (`--debug`): Ctrl+C breaks into the Micro Debugger instead of exiting
  */
-export function startKeyboardControl(array: Int32Array, onExit?: () => void, onSnapshot?: () => void) {
+export function startKeyboardControl(
+    array: Int32Array,
+    onExit?: () => void,
+    onSnapshot?: () => void,
+    debugMode = false
+) {
     sharedArray = array;
+    debugEnabled = debugMode;
     if (onExit) {
         exitHandler = onExit;
     }
@@ -140,6 +148,7 @@ export function stopKeyboardControl() {
     }
     sharedArray = undefined;
     snapshotHandler = undefined;
+    debugEnabled = false;
 }
 
 /**
@@ -172,9 +181,10 @@ function keypressHandler(str: string | undefined, key: { name?: string; ctrl?: b
     if (!rawMode || debuggerRl || !sharedArray) {
         return;
     }
-    if (key.ctrl && (key.name === "c" || key.name === "d")) {
-        // First press: graceful exit; second press: force-quit (the graceful path may be
-        // stuck if the app worker is unresponsive).
+    if (key.ctrl && (key.name === "d" || (key.name === "c" && !debugEnabled))) {
+        // Ctrl+D always terminates the app (Ctrl+C too in production mode, where the
+        // Micro Debugger is disabled). First press: graceful exit; second press:
+        // force-quit (the graceful path may be stuck if the app worker is unresponsive).
         if (exitRequested) {
             process.exit(130);
         }
@@ -182,8 +192,10 @@ function keypressHandler(str: string | undefined, key: { name?: string; ctrl?: b
         exitHandler();
         return;
     }
-    if (key.ctrl && key.name === "b") {
-        // Break into the Micro Debugger (same protocol as the browser API debug("break")).
+    if (key.ctrl && (key.name === "b" || key.name === "c")) {
+        // Break into the Micro Debugger, like a STOP statement (same protocol as the
+        // browser API debug("break")). Ctrl+C reaches here only in developer mode,
+        // mirroring the Roku telnet debugger where Ctrl+C breaks instead of exiting.
         Atomics.store(sharedArray, DataType.DBG, DebugCommand.BREAK);
         Atomics.notify(sharedArray, DataType.DBG);
         return;

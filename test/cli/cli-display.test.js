@@ -25,7 +25,103 @@ function loadRenderer() {
     return moduleExports.exports;
 }
 
-const { renderAsciiFrame, renderUnicodeFrame } = loadRenderer();
+const {
+    renderAsciiFrame,
+    renderUnicodeFrame,
+    enableFrameOutput,
+    disableFrameOutput,
+    renderFrameToTerminal,
+    writeTerminalText,
+    suspendTextDeferral,
+    resumeTextDeferral,
+} = loadRenderer();
+
+describe("Micro Debugger terminal handoff", () => {
+    const { ImageData } = require("canvas");
+    const realStdout = process.stdout;
+    let fakeStdout;
+    let written;
+
+    const makeFrame = (r, g, b) => {
+        const data = new Uint8ClampedArray(4 * 4 * 4);
+        for (let i = 0; i < data.length; i += 4) {
+            data[i] = r;
+            data[i + 1] = g;
+            data[i + 2] = b;
+            data[i + 3] = 255;
+        }
+        return new ImageData(data, 4, 4);
+    };
+
+    const flushImmediates = () => new Promise((resolve) => setImmediate(resolve));
+
+    beforeEach(() => {
+        chalk.level = 0;
+        written = [];
+        fakeStdout = {
+            isTTY: true,
+            columns: 80,
+            rows: 24,
+            write(text) {
+                written.push(text);
+                return true;
+            },
+            once() {},
+        };
+        Object.defineProperty(process, "stdout", { value: fakeStdout, configurable: true });
+    });
+
+    afterEach(() => {
+        disableFrameOutput();
+        Object.defineProperty(process, "stdout", { value: realStdout, configurable: true });
+    });
+
+    it("holds frames while the debugger owns the terminal and repaints the newest on resume", async () => {
+        enableFrameOutput({ ascii: 8 });
+        renderFrameToTerminal(makeFrame(0, 0, 0));
+        await flushImmediates();
+        const framesPainted = written.filter((text) => text.startsWith("\x1b[H")).length;
+        expect(framesPainted).toBe(1);
+
+        suspendTextDeferral();
+        written = [];
+        renderFrameToTerminal(makeFrame(255, 255, 255));
+        await flushImmediates();
+        expect(written.filter((text) => text.startsWith("\x1b[H"))).toHaveLength(0);
+
+        resumeTextDeferral();
+        await flushImmediates();
+        expect(written.some((text) => text.includes("\x1b[2J"))).toBe(true);
+        expect(written.filter((text) => text.startsWith("\x1b[H"))).toHaveLength(1);
+    });
+
+    it("repaints the last received frame on resume even when the app posts nothing new", async () => {
+        enableFrameOutput({ ascii: 8 });
+        renderFrameToTerminal(makeFrame(0, 0, 0));
+        await flushImmediates();
+
+        suspendTextDeferral();
+        written = [];
+        resumeTextDeferral();
+        await flushImmediates();
+        expect(written.filter((text) => text.startsWith("\x1b[H"))).toHaveLength(1);
+    });
+
+    it("writes text directly while the debugger owns the terminal, deferring it otherwise", async () => {
+        enableFrameOutput({ ascii: 8 });
+        writeTerminalText("deferred\n");
+        expect(written.join("")).not.toContain("deferred");
+
+        suspendTextDeferral();
+        expect(written.join("")).toContain("deferred");
+
+        written = [];
+        writeTerminalText("interactive\n");
+        expect(written.join("")).toContain("interactive");
+        resumeTextDeferral();
+        await flushImmediates();
+    });
+});
 
 describe("CLI display rendering", () => {
     describe("renderAsciiFrame", () => {

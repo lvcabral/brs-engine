@@ -183,7 +183,8 @@ The app runs on a dedicated worker thread, leaving the terminal free for interac
 | Letters / digits | Text input (keyboard dialogs) |
 | Ctrl+S | Save a screenshot (requires `--snapshot`) |
 | Ctrl+B | Break into the Micro Debugger (requires `--debug`) |
-| Ctrl+C | Terminate the CLI |
+| Ctrl+C | Production mode: terminate the CLI; with `--debug`: break into the Micro Debugger (like a `STOP`) |
+| Ctrl+D | Terminate the CLI |
 
 If you need remote control simulation from other devices, enable the option `--ecp` that will launch the ECP Server in port 8060 (same as a Roku device). With this option enabled, you can connect to your computer using any remote control app that uses ECP, including the [Roku Remote Tool](https://devtools.web.roku.com/#remote-tool), the [Roku GamePad Gateway](http://github.com/lvcabral/roku-gpg) or the Roku mobile apps. This option also enables an SSDP service to allow it to be discovered in your local network.
 

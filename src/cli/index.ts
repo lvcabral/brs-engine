@@ -362,7 +362,12 @@ async function runApp(payload: AppPayload) {
             // free to broker SceneGraph Task rendezvous, keyboard input and the Micro Debugger.
             payload.extensions = extensions.map((ext) => ext.name as SupportedExtension);
             brs.subscribeHost("cli", hostCallback);
-            startKeyboardControl(sharedArray, () => brs.terminateApp(), program.snapshot ? saveScreenshot : undefined);
+            startKeyboardControl(
+                sharedArray,
+                () => brs.terminateApp(),
+                program.snapshot ? saveScreenshot : undefined,
+                program.debug
+            );
             let logPath: string | undefined;
             if (program.log) {
                 logPath = setLogFile(typeof program.log === "string" ? program.log : "brs-cli.log");

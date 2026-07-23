@@ -338,6 +338,10 @@ let frameOutputEnabled = false;
 let lastRenderedPixels: Buffer | undefined;
 let lastRenderedWidth = 0;
 let lastRenderedHeight = 0;
+// Newest frame ever received: repainted when the debugger releases the terminal, so the
+// screen reverts from debugger text to the app's graphics even if the app is idle
+// (e.g. blocked in wait()) and won't post a new frame on its own.
+let lastReceivedFrame: ImageData | undefined;
 
 /**
  * True when the frame's pixels match the image already painted on the terminal.
@@ -409,6 +413,7 @@ export function enableFrameOutput(mode: DisplayMode) {
 export function disableFrameOutput() {
     frameOutputEnabled = false;
     pendingFrame = undefined;
+    lastReceivedFrame = undefined;
     stdoutCongested = false;
     lastRenderedPixels = undefined;
     if ((displayMode.ascii !== undefined || displayMode.image) && process.stdout.isTTY) {
@@ -487,6 +492,11 @@ export function suspendTextDeferral() {
     deferralSuspended = true;
     if (shouldOwnTerminal()) {
         moveCursorBelowFrame();
+        if (displayMode.image) {
+            // The cursor is hidden for the whole run in image mode; the debugger prompt
+            // needs it visible (re-hidden by resumeTextDeferral when frames resume).
+            process.stdout.write("\x1b[?25h");
+        }
     }
     // Text is about to overwrite the frame region; forget the painted frame so the
     // next render repaints even if the frame content hasn't changed.
@@ -495,10 +505,24 @@ export function suspendTextDeferral() {
 }
 
 /**
- * Resumes text deferral after the debugger releases the terminal (app continues).
+ * Resumes text deferral after the debugger releases the terminal (app continues),
+ * repainting the newest frame so the screen reverts from debugger text back to the
+ * app's graphics — even when the app is idle and won't post a new frame on its own.
  */
 export function resumeTextDeferral() {
     deferralSuspended = false;
+    if (!frameOutputEnabled) {
+        return;
+    }
+    if (shouldOwnTerminal()) {
+        // Clear the debugger transcript and re-hide the cursor before frames repaint.
+        process.stdout.write(displayMode.image ? "\x1b[2J\x1b[H\x1b[?25l" : "\x1b[2J\x1b[H");
+    }
+    pendingFrame ??= lastReceivedFrame;
+    if (pendingFrame && !frameRenderScheduled && !stdoutCongested) {
+        frameRenderScheduled = true;
+        setImmediate(renderPendingFrame);
+    }
 }
 
 /**
@@ -548,7 +572,13 @@ export function renderFrameToTerminal(frame: ImageData) {
     if (!frameOutputEnabled) {
         return;
     }
+    lastReceivedFrame = frame;
     pendingFrame = frame;
+    if (deferralSuspended) {
+        // The debugger owns the terminal (app paused): hold the frame instead of painting
+        // over the debugger text; resumeTextDeferral repaints it when the app continues.
+        return;
+    }
     if (frameRenderScheduled || stdoutCongested) {
         return;
     }
@@ -563,6 +593,12 @@ export function renderFrameToTerminal(frame: ImageData) {
  * meanwhile only replace `pendingFrame` and are picked up right after, never in parallel.
  */
 async function renderPendingFrame() {
+    if (deferralSuspended) {
+        // The debugger took the terminal after this render was scheduled: leave the frame
+        // pending (resumeTextDeferral repaints it) instead of drawing over debugger text.
+        frameRenderScheduled = false;
+        return;
+    }
     const frame = pendingFrame;
     pendingFrame = undefined;
     if (!frame || !frameOutputEnabled) {
