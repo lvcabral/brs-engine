@@ -49,6 +49,14 @@ describe("cli keyboard translateKey", () => {
         expect(translateKey(undefined, { name: "end" })).toEqual("play");
     });
 
+    it("maps function-key alternates for terminals without Home/End/PgUp/PgDn", () => {
+        expect(translateKey(undefined, { name: "f2" })).toEqual("home");
+        expect(translateKey(undefined, { name: "f7" })).toEqual("rev");
+        expect(translateKey(undefined, { name: "f8" })).toEqual("play");
+        expect(translateKey(undefined, { name: "f9" })).toEqual("fwd");
+        expect(translateKey(undefined, { name: "f10" })).toEqual("info");
+    });
+
     it("maps ctrl combinations to media keys", () => {
         expect(translateKey(undefined, { name: "left", ctrl: true })).toEqual("rev");
         expect(translateKey(undefined, { name: "right", ctrl: true })).toEqual("fwd");

@@ -173,12 +173,13 @@ The app runs on a dedicated worker thread, leaving the terminal free for interac
 | Arrow keys | Up / Down / Left / Right |
 | Enter | Select (OK) |
 | Esc or Delete | Back |
-| Home | Home (exits the app) |
+| Home or F2 | Home (exits the app) |
 | Backspace | Instant Replay |
-| End | Play/Pause |
+| End or F8 | Play/Pause |
 | PageUp / PageDown | Rewind / Fast Forward |
+| F7 / F9 | Rewind / Fast Forward |
 | Ctrl+Left / Ctrl+Right | Rewind / Fast Forward |
-| Insert or Ctrl+8 | Info (*) |
+| Insert or F10 | Info (*) |
 | Ctrl+A / Ctrl+Z | A / B (game remote) |
 | Letters / digits | Text input (keyboard dialogs) |
 | Ctrl+S | Save a screenshot (requires `--snapshot`) |

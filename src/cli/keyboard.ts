@@ -38,6 +38,11 @@ const keysMap: Map<string, string> = new Map([
     ["end", "play"],
     ["pageup", "rev"],
     ["pagedown", "fwd"],
+    ["f2", "home"],
+    ["f7", "rev"],
+    ["f8", "play"],
+    ["f9", "fwd"],
+    ["f10", "info"],
     ["insert", "info"],
     ["", "info"],
     ["ctrl+left", "rev"],
@@ -46,7 +51,6 @@ const keysMap: Map<string, string> = new Map([
     ["ctrl+return", "play"],
     ["ctrl+a", "a"],
     ["ctrl+z", "b"],
-    ["ctrl+8", "info"],
 ]);
 
 /**
