@@ -54,17 +54,25 @@ No extra glue code is required as long as `brs-sg.js` is served next to the work
 
 ### Node.js and CLI
 
-- The `brs-node` CLI registers the SceneGraph extension by default. Pass `--no-sg` to skip loading it.
-- When embedding the Node.js library you can register the extension yourself:
+- The `brs-node` CLI registers the SceneGraph extension by default (from the `brs-sg.node.js` bundle shipped in its `bin/` folder). Pass `--no-sg` to skip loading it.
+- When embedding the Node.js library, the registration path depends on the execution model:
+  - **Synchronous `executeFile`** — register the extension in-process before running:
 
-```ts
-import { registerExtension } from "brs-engine";
-import { BrightScriptExtension } from "brs-scenegraph";
+    ```ts
+    import { registerExtension } from "brs-node";
+    const { BrightScriptExtension } = require("brs-node/bin/brs-sg.node.js");
 
-registerExtension(() => new BrightScriptExtension());
-```
+    registerExtension(() => new BrightScriptExtension());
+    ```
 
-Once registered, every interpreter you create (via `createPayloadFromFiles`, CLI runs, tests, etc.) will run SceneGraph components.
+  - **Worker-based `executeApp`** — declare it on the payload instead; each worker thread is a fresh isolate and loads its own instance (paths resolve against `bin/`):
+
+    ```ts
+    payload.extensions = [SupportedExtension.SceneGraph];
+    payload.device.extensions = new Map([[SupportedExtension.SceneGraph, "brs-sg.node.js"]]);
+    ```
+
+See the [Node.js library guide](./using-node-library.md) for the full comparison of the two models.
 
 ### Common volume assets
 

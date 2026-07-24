@@ -33,6 +33,9 @@ BrightScript Simulation Engine CLI
 Options:
   -a, --ascii <columns>     Enable ASCII screen mode with # of columns.
   -u, --unicode             Render ASCII screen mode using Unicode block characters.
+  -i, --image [percent]     Render the screen as images on the terminal with optional width % (default: 100).
+  -l, --log [filename]      Redirect the text output to a log file (default: brs-cli.log).
+  -s, --snapshot [filename] Enable Ctrl+S to save the current screen as a PNG image.
   -c, --colors <level>      Define the console color level (0 to disable). (default: 3)
   -d, --debug               Developer mode: micro debugger on crash + resource tracking.
   -e, --ecp                 Enable the ECP server for control simulation.
@@ -108,7 +111,8 @@ $ brs-cli ../tests/test-sandbox.zip
 #### Notes
 
 * If the app has `ifDraw2D` screens, the app will run but nothing is displayed, unless you use the `--ascii` parameter (see below).
-* As the CLI will run on a single thread, if you need to control the app you will have to enable the `--ecp` option (see below).
+* The app runs on a dedicated worker thread, so you can control it interactively with the keyboard (see below) or via the `--ecp` option.
+* SceneGraph `Task` nodes run on their own worker threads, mirroring the browser engine and a real device.
 * Use the flag `--registry` to have the device registry data saved to the disk, and restored in following app executions.
 * Use the flag `--ext-vol` to mount a directory or zip archive as the `ext1:` volume.
 * To send parameters (deep linking) to the app, use the flag `--deep-link` followed by the parameters in the format: key=value,...
@@ -126,16 +130,73 @@ The `<columns>` defines the width in number of character columns, the height wil
 
 <p align="center"><img alt="Screen Rendering as ASCII Art" title="Screen Rendering as ASCII Art" src="images/screen-as-ascii-art.gif?raw=true"/></p>
 
+### Showing the Screen as Images on the Terminal
+
+The `--image` option renders the screen as actual images on the terminal (an alternative to `--ascii`/`--unicode`). On terminals with native graphics support (iTerm2, Kitty and compatible), frames display in full quality via the terminal's image protocol; elsewhere it falls back to ANSI half-block rendering.
+
+```console
+$ brs-cli ../apps/collisions.zip --image
+```
+
+The optional `[percent]` argument scales the image to a percentage of the terminal width (valid range: 10-100, default: 100), keeping the screen's aspect ratio:
+
+```console
+$ brs-cli ../apps/collisions.zip --image 60
+```
+
+### Redirecting the Text Output to a Log File
+
+While the screen is being rendered on the terminal (`--ascii`, `--unicode` or `--image`), any text the app or the engine prints is held back and only shown after the app finishes — writing text over the frames would corrupt (and on graphics terminals, flicker) the rendering. If you want to follow the output live instead, use the `--log` option to redirect all text output (prints, warnings, errors and diagnostics) to a file, appended as it arrives with ANSI colors stripped — so you can watch it from another terminal with `tail -f`:
+
+```console
+$ brs-cli ../apps/my-app.zip --image --log my-app.log
+```
+
+The filename is optional (default: `brs-cli.log`). When the Micro Debugger is active it takes over the terminal, so its interaction stays on screen regardless of this option.
+
+### Saving the Screen as a PNG Image
+
+The `--snapshot` option enables the **Ctrl+S** keyboard shortcut: while the app is running, pressing it saves the current screen as a PNG file, so you can capture any moment of the rendering. The filename is optional: if omitted, the image is saved in the current directory using the app file name (e.g. `my-app.png`); each press overwrites the previous capture.
+
+```console
+$ brs-cli ../apps/collisions.zip --snapshot screenshot.png
+```
+
+This option is independent of the screen modes: you can combine it with `--ascii`, `--unicode` or `--image`, or use it alone.
+
 ### Controlling the App
 
-The CLI runs the BrightScript Engine on a single thread, if you need to use control simulation, enable the option `--ecp` that will launch the ECP Server in port 8060 (same as a Roku device). With this option enabled, you can connect to your computer using any remote control app that uses ECP, including the [Roku Remote Tool](https://devtools.web.roku.com/#remote-tool), the [Roku GamePad Gateway](http://github.com/lvcabral/roku-gpg) or the Roku mobile apps. This option also enables an SSDP service to allow it to be discovered in your local network.
+The app runs on a dedicated worker thread, leaving the terminal free for interactive control: when the CLI is attached to a terminal (TTY), the keyboard acts as the remote control while the app is running.
+
+| Key | Roku Remote |
+| --- | --- |
+| Arrow keys | Up / Down / Left / Right |
+| Enter | Select (OK) |
+| Esc or Delete | Back |
+| Home or F2 | Home (exits the app) |
+| Backspace | Instant Replay |
+| End or F8 | Play/Pause |
+| PageUp / PageDown | Rewind / Fast Forward |
+| F7 / F9 | Rewind / Fast Forward |
+| Ctrl+Left / Ctrl+Right | Rewind / Fast Forward |
+| Insert or F10 | Info (*) |
+| Ctrl+A / Ctrl+Z | A / B (game remote) |
+| Letters / digits | Text input (keyboard dialogs) |
+| Ctrl+S | Save a screenshot (requires `--snapshot`) |
+| Ctrl+B | Break into the Micro Debugger (requires `--debug`) |
+| Ctrl+C | Production mode: terminate the CLI; with `--debug`: break into the Micro Debugger (like a `STOP`) |
+| Ctrl+D | Terminate the CLI |
+
+If you need remote control simulation from other devices, enable the option `--ecp` that will launch the ECP Server in port 8060 (same as a Roku device). With this option enabled, you can connect to your computer using any remote control app that uses ECP, including the [Roku Remote Tool](https://devtools.web.roku.com/#remote-tool), the [Roku GamePad Gateway](http://github.com/lvcabral/roku-gpg) or the Roku mobile apps. This option also enables an SSDP service to allow it to be discovered in your local network.
 
 ### Production vs Developer mode
 
 By default the engine runs in **production mode**, which keeps it lean by skipping all debug
 instrumentation. Passing `--debug` (or setting `debugOnCrash` in the device info) switches to
 **developer mode**, which enables the Micro Debugger and the resource tracking used by its
-inspection commands.
+inspection commands. In developer mode you can break into the debugger at any time with
+`Ctrl+B`; while the debugger is active the keyboard switches to line mode for entering debug
+commands and BrightScript expressions (`cont` resumes the app and restores remote-control keys).
 
 | Capability | Production (default) | Developer (`--debug`) |
 | --- | --- | --- |

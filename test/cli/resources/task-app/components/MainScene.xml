@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="MainScene" extends="Scene">
+    <interface>
+        <field id="done" type="boolean" value="false" />
+    </interface>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.task = createObject("roSGNode", "TaskTest")
+        m.task.observeField("result", "onResult")
+        m.task.input = "ping"
+        m.task.control = "run"
+    end sub
+
+    sub onResult(event as object)
+        print "TASK RESULT: "; event.getData()
+        m.top.done = true
+    end sub
+    ]]></script>
+</component>

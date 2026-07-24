@@ -23,6 +23,7 @@ import {
     ExtVolInitialSize,
     ExtVolMaxSize,
     Platform,
+    isTypeOf,
 } from "./common";
 import { Lexer, Token } from "./lexer";
 import { Parser, Stmt } from "./parser";
@@ -229,6 +230,11 @@ function mergeModuleExports(target: Record<string, any>, source: ModuleNamespace
     return target;
 }
 /// #else
+import { isMainThread, parentPort } from "node:worker_threads";
+import { ImageData as NodeImageData } from "canvas";
+export { executeApp, subscribeHost, unsubscribeHost, terminateApp } from "../node/host";
+export type { ExecuteAppOptions } from "../node/host";
+
 /**
  * Support postMessage when not running as Worker.
  * @param messageCallback function that will receive and process the messages.
@@ -237,6 +243,8 @@ function mergeModuleExports(target: Record<string, any>, source: ModuleNamespace
 declare global {
     function postMessage(message: any, options?: any): void;
 }
+declare const __non_webpack_require__: NodeJS.Require | undefined;
+const loadModule = typeof __non_webpack_require__ === "function" ? __non_webpack_require__ : eval("require");
 
 /**
  * Default implementation of the callback, only handles console messages
@@ -261,13 +269,93 @@ globalThis.postMessage = (message: any) => {
     }
 };
 
+if (!isMainThread && parentPort) {
+    // Worker thread context (Node analog of the browser Web Worker entry above): forward
+    // engine messages to the host thread and dispatch the payloads it sends.
+    const hostPort = parentPort;
+    BrsDevice.isWorkerThread = true;
+    globalThis.postMessage = (message: any) => {
+        if (message instanceof NodeImageData) {
+            // node-canvas ImageData width/height are prototype getters, lost in the structured
+            // clone; flatten frames so the host can revive them into a real ImageData.
+            hostPort.postMessage({ frameData: message.data, frameWidth: message.width, frameHeight: message.height });
+        } else {
+            hostPort.postMessage(message);
+        }
+    };
+    hostPort.on("message", (data: any) => {
+        if (isAppPayload(data)) {
+            loadNodeExtensions(data);
+            executeFile(data, {}, true).catch((err: any) => {
+                postMessage(`error,[core] Error executing app: ${err.message}`);
+                postMessage(`end,${AppExitReason.Crashed}`);
+            });
+        } else if (isTaskPayload(data)) {
+            postMessage(`debug,[core] Task payload received: ${data.taskData.id}:${data.taskData.name}`);
+            loadNodeExtensions(data);
+            executeTask(data);
+        } else if (isTypeOf(data, "SharedArrayBuffer")) {
+            // Setup Control Shared Array (realm-safe check: the buffer may come from a VM sandbox)
+            BrsDevice.setSharedArray(new Int32Array(data));
+        } else {
+            postMessage(`warning,[core] Invalid message received: ${data}`);
+        }
+    });
+}
+
+// Keep track of loaded extensions to avoid duplicates
+const loadedNodeExtensions = new Set<SupportedExtension>();
+
+/**
+ * Loads BrightScript extensions from the payload in a Node worker thread.
+ * Node analog of the browser `loadExtensions`: the extension bundle (e.g. `brs-sg.node.js`)
+ * is `require`d from this bundle's folder; its `brs-engine` external resolves back to this
+ * very module instance, so the extension is wired to the worker's own engine.
+ * @param payload App or Task payload containing extension configuration
+ */
+function loadNodeExtensions(payload: AppPayload | TaskPayload) {
+    const extensions = payload.extensions;
+    if (!Array.isArray(extensions)) {
+        return;
+    }
+    for (const extension of extensions) {
+        if (loadedNodeExtensions.has(extension)) {
+            continue;
+        }
+        const modulePath = payload.device.extensions?.get(extension) ?? "";
+        if (!modulePath) {
+            postMessage(`warning,[core] No module path provided for ${extension} extension.`);
+            continue;
+        }
+        try {
+            const resolved = path.isAbsolute(modulePath) ? modulePath : path.join(__dirname, modulePath);
+            const extensionModule = loadModule(resolved);
+            if (extensionModule?.BrightScriptExtension) {
+                const instance = new extensionModule.BrightScriptExtension();
+                registerExtension(() => instance);
+                loadedNodeExtensions.add(extension);
+                const extensionInfo: ExtensionInfo = {
+                    name: extension,
+                    library: modulePath,
+                    version: instance.version,
+                };
+                postMessage(extensionInfo);
+            } else {
+                postMessage(`warning,[core] The loaded library does not contain ${extension} Extension.`);
+            }
+        } catch (err: any) {
+            postMessage(`warning,[core] Failed to load ${extension} extension: ${err.message}`);
+        }
+    }
+}
+
 /**
  * Setup the callback function to handle messages from interpreter
  * @param messageCallback callback function to handle messages from interpreter
  * @param sharedBuffer shared buffer to control the interpreter
  */
 export function registerCallback(messageCallback: any, sharedBuffer?: SharedArrayBuffer) {
-    if (typeof onmessage === "undefined") {
+    if (typeof onmessage === "undefined" && isMainThread) {
         globalThis.postMessage = messageCallback;
         if (sharedBuffer) {
             BrsDevice.setSharedArray(new Int32Array(sharedBuffer));

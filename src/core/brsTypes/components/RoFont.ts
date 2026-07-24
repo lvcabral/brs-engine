@@ -36,20 +36,29 @@ export class RoFont extends BrsComponent implements BrsValue {
     }
 
     measureTextWidth(text: string, maxWidth?: number, ellipsis?: string) {
+        if (text === "") {
+            // node-canvas crashes on empty-string text APIs; measuring "" is always width 0
+            return { width: 0, text, ellipsized: false };
+        }
         const ctx = this.canvas.getContext("2d", { alpha: false }) as BrsCanvasContext2D;
         ctx.font = this.toFontString();
         ctx.textBaseline = "top";
-        let measure = ctx.measureText(text);
-        let length = maxWidth ? Math.min(measure.width, maxWidth) : measure.width;
+        let measuredWidth = ctx.measureText(text).width;
+        if (measuredWidth === 0 && text.trim() === "") {
+            // node-canvas v4 collapses whitespace-only strings to width 0 (browsers return
+            // the real advance). Measure between sentinels to recover it.
+            measuredWidth = ctx.measureText(`|${text}|`).width - ctx.measureText("||").width;
+        }
+        let length = maxWidth ? Math.min(measuredWidth, maxWidth) : measuredWidth;
         let ellipsizedText = text;
         let ellipsized = false;
 
-        if (ellipsis && maxWidth && measure.width > maxWidth) {
+        if (ellipsis && maxWidth && measuredWidth > maxWidth) {
             // Ellipsize the text
             let ellipsisWidth = ctx.measureText(ellipsis).width;
             let truncatedText = text;
 
-            while (ctx.measureText(truncatedText).width + ellipsisWidth > maxWidth && truncatedText.length > 0) {
+            while (truncatedText.length > 0 && ctx.measureText(truncatedText).width + ellipsisWidth > maxWidth) {
                 truncatedText = truncatedText.slice(0, -1);
             }
 

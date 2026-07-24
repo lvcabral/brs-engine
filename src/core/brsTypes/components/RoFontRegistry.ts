@@ -8,6 +8,9 @@ import { Int32 } from "../Int32";
 import { RoArray } from "./RoArray";
 import { RoFont } from "./RoFont";
 import * as opentype from "@lvcabral/opentype.js";
+/// #if !BROWSER
+import { FontFace as NodeFontFace, fonts as nodeFonts } from "canvas";
+/// #endif
 import { BrsDevice } from "../../device/BrsDevice";
 import { BrsCanvas, createNewCanvas, releaseCanvas } from "../interfaces/IfDraw2D";
 import { nextAddress, setFontTextureProvider } from "../../device/Graphics";
@@ -227,6 +230,7 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
                 }
                 return "";
             }
+            /// #if BROWSER
             if (typeof FontFace !== "undefined") {
                 const fontFace = new FontFace(fontFamily, fontData, {
                     weight: fontMetrics.weight,
@@ -234,6 +238,14 @@ export class RoFontRegistry extends BrsComponent implements BrsValue {
                 });
                 (self as any).fonts.add(fontFace);
             }
+            /// #else
+            nodeFonts.add(
+                new NodeFontFace(fontFamily, fontData, {
+                    weight: fontMetrics.weight,
+                    style: fontMetrics.style,
+                })
+            );
+            /// #endif
             const familyArray = this.fontRegistry.get(fontFamily);
             if (familyArray) {
                 familyArray.push(fontMetrics);

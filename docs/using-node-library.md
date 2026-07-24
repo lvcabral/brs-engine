@@ -7,12 +7,16 @@ This guide explains how to use the `brs-node` library in your Node.js applicatio
 - [Using the brs-node Library](#using-the-brs-node-library)
   - [Table of Contents](#table-of-contents)
   - [Installation](#installation)
+  - [Package Libraries](#package-libraries)
+    - [Choosing an Execution Model](#choosing-an-execution-model)
+    - [The SceneGraph Extension Bundle](#the-scenegraph-extension-bundle)
   - [Using in Node.js Applications](#using-in-nodejs-applications)
     - [Basic Setup](#basic-setup)
     - [Executing BrightScript Files](#executing-brightscript-files)
       - [Complete Example](#complete-example)
     - [Executing BrightScript from In-Memory Files](#executing-brightscript-from-in-memory-files)
       - [SceneGraph App Example](#scenegraph-app-example)
+    - [Running Apps on Worker Threads (with SceneGraph Task support)](#running-apps-on-worker-threads-with-scenegraph-task-support)
     - [Using the REPL Interpreter](#using-the-repl-interpreter)
     - [Handling Callbacks](#handling-callbacks)
     - [Working with SharedArrayBuffer](#working-with-sharedarraybuffer)
@@ -29,6 +33,9 @@ This guide explains how to use the `brs-node` library in your Node.js applicatio
       - [`createPayloadFromFiles(files, device, deepLink?, root?, ext?)`](#createpayloadfromfilesfiles-device-deeplink-root-ext)
       - [`createPayloadFromFileMap(fileMap, device, deepLink?)`](#createpayloadfromfilemapfilemap-device-deeplink)
       - [`executeFile(payload, options?)`](#executefilepayload-options)
+      - [`executeApp(payload, options?)`](#executeapppayload-options)
+      - [`subscribeHost(observerId, callback)` / `unsubscribeHost(observerId)`](#subscribehostobserverid-callback--unsubscribehostobserverid)
+      - [`terminateApp(reason?, timeoutMs?)`](#terminateappreason-timeoutms)
       - [`getReplInterpreter(options)`](#getreplinterpreteroptions)
       - [`executeLine(line, interpreter)`](#executelineline-interpreter)
     - [File System API](#file-system-api)
@@ -51,6 +58,58 @@ Or using yarn:
 ```bash
 yarn add brs-node
 ```
+
+---
+
+## Package Libraries
+
+The package ships four bundles under `bin/` (Node.js v22+ required):
+
+| Library File | Role |
+| --- | --- |
+| `brs.node.js` | The engine library — the package `main` (`require("brs-node")`). Also serves as the **worker entry** when apps run on worker threads. |
+| `brs-sg.node.js` | The **SceneGraph extension** bundle, loaded dynamically into the engine when SceneGraph support is needed. |
+| `brs.cli.js` | The `brs-cli` executable — a consumer of the two libraries above. |
+| `brs.ecp.js` | Worker-thread library for the ECP/SSDP servers, used by the CLI with `--ecp`. |
+
+### Choosing an Execution Model
+
+`brs-node` offers two ways to execute an app — pick per use case:
+
+| | `executeFile` (synchronous) | `executeApp` (worker threads) |
+| --- | --- | --- |
+| Runs on | the calling thread | a dedicated worker thread |
+| SceneGraph UI (`roSGScreen`, nodes) | ✅ supported | ✅ supported |
+| SceneGraph `Task` nodes | ❌ never spawn (no free host thread to broker them) | ✅ one worker thread per running Task |
+| Output delivery | `registerCallback` (synchronous calls) | `subscribeHost` events (asynchronous) |
+| Control input | shared buffer via `registerCallback` | shared buffer via `options.sharedBuffer` |
+| Packaging (`.bpk` generation) | ✅ returns `cipherText` | ❌ not supported |
+| Best for | tests, CI, scripting, packaging | running full apps, anything using Tasks |
+
+Both models accept the same payloads (`createPayloadFromFiles` / `createPayloadFromFileMap`) and simulate the same device. The browser package (`brs-engine`) only has the worker model; `executeFile` is unique to Node, kept for its simplicity and synchronous determinism in test suites.
+
+### The SceneGraph Extension Bundle
+
+The interpreter core is SceneGraph-agnostic: `roSGScreen`, `roSGNode` and the node types are provided by the separate `brs-sg.node.js` bundle, loaded through the public extension API (the same contract available to third-party extensions — see [extensions.md](./extensions.md)). What you must know as a consumer:
+
+- **It binds to the running engine at load time.** Its internal `brs-engine` import resolves to the already-loaded `brs.node.js` module instance, so the two bundles must come from the **same installed package version** — never mix a `brs-sg.node.js` from one version with a `brs.node.js` from another.
+- **How to enable it depends on the execution model:**
+  - `executeFile`: register it in-process before executing:
+
+    ```javascript
+    const brs = require("brs-node");
+    const sg = require("brs-node/bin/brs-sg.node.js");
+    brs.registerExtension(() => new sg.BrightScriptExtension());
+    ```
+
+  - `executeApp`: declare it on the payload; each worker thread is a fresh isolate and loads its own instance from the path in `device.extensions` (relative paths resolve against the `bin/` folder):
+
+    ```javascript
+    payload.extensions = [brs.SupportedExtension.SceneGraph];
+    payload.device.extensions = new Map([[brs.SupportedExtension.SceneGraph, "brs-sg.node.js"]]);
+    ```
+
+- **If you bundle your application** (webpack/esbuild), keep `brs-node` external (on disk): the worker entry and the extension are resolved by file path at runtime and cannot live inside your bundle. The `workerEntry` option of `executeApp` exists for custom layouts.
 
 ---
 
@@ -288,6 +347,11 @@ end function
 `;
 fileMap.set("components/MainScene.brs", new Blob([sceneBrs], { type: "text/plain" }));
 
+// Register the SceneGraph extension (required for roSGScreen/roSGNode — see
+// "The SceneGraph Extension Bundle" above)
+const sg = require("brs-node/bin/brs-sg.node.js");
+brs.registerExtension(() => new sg.BrightScriptExtension());
+
 // Execute SceneGraph app
 (async () => {
     const payload = await brs.createPayloadFromFileMap(fileMap, deviceData);
@@ -295,6 +359,63 @@ fileMap.set("components/MainScene.brs", new Blob([sceneBrs], { type: "text/plain
     // payload.pkgZip contains the complete app package
 })();
 ```
+
+> **Note:** with the synchronous `executeFile`, SceneGraph **`Task` nodes never run** (setting
+> `control = "run"` is a no-op). If the app depends on Tasks, run it with `executeApp` (next
+> section) instead.
+
+### Running Apps on Worker Threads (with SceneGraph Task support)
+
+The synchronous `executeFile` runs the interpreter on the calling thread — ideal for tests and
+scripted execution, but SceneGraph `Task` nodes never spawn (they need a free host thread to
+broker cross-thread rendezvous). Use **`executeApp`** to run an app on a dedicated
+`worker_threads` thread (the render thread) with full Task support: each running `Task` node
+gets its own worker thread, mirroring the browser engine and a real Roku device.
+
+```javascript
+const brs = require("brs-node");
+
+// Subscribe to host events (replaces registerCallback for the worker path)
+brs.subscribeHost("my-app", (event, data) => {
+    if (event === "message" && typeof data === "string") {
+        // Same "type,content" strings the sync callback receives: print, error, end, ...
+        const [type] = data.split(",", 1);
+        if (type === "print") process.stdout.write(data.slice(6));
+    } else if (event === "frame") {
+        // A node-canvas ImageData with the latest rendered frame
+    } else if (event === "registry") {
+        // RegistryData to persist ({ current: Map, ... })
+    }
+});
+
+(async () => {
+    const payload = await brs.createPayloadFromFiles([], deviceData, undefined, "/path/to/app-root");
+    // Enable the SceneGraph extension in the worker threads:
+    payload.extensions = [brs.SupportedExtension.SceneGraph];
+    payload.device.extensions = new Map([[brs.SupportedExtension.SceneGraph, "brs-sg.node.js"]]);
+
+    const result = await brs.executeApp(payload);
+    console.log(`Exit reason: ${result.exitReason}`);
+})();
+```
+
+`executeApp(payload, options?)` accepts:
+
+- `options.sharedBuffer` — a control `SharedArrayBuffer` you own (keys, sounds, debug commands).
+  Write remote-control keys into it with `Atomics` (see [remote-control.md](./remote-control.md))
+  to control the running app; when omitted, the host creates one internally.
+- `options.workerEntry` — absolute path to the engine bundle used as the worker entry. Defaults
+  to the installed `brs.node.js`; set it if you relocate or bundle the library.
+
+Use `terminateApp(reason?, timeoutMs?)` to request a graceful exit of the running app. Only one
+app can run on the host at a time. Packaging (`.bpk` generation) is not supported through
+`executeApp` — use the synchronous `executeFile` for that.
+
+Host events: `message` (engine strings), `frame` (ImageData), `registry` (RegistryData),
+`graphics` (texture-memory data), `launch` (roAppManager launch requests), `ndkStart`,
+`component` (display/caption state objects), `stdout`/`stderr` (console output written directly
+inside a worker thread — the workers' streams are piped to the host, never to the terminal),
+`error`/`warning`/`debug` (host diagnostics).
 
 ### Using the REPL Interpreter
 
@@ -328,6 +449,9 @@ const brs = require("brs-node");
 ```
 
 ### Handling Callbacks
+
+> Applies to the **synchronous model** (`executeFile`/REPL). With `executeApp`, output is
+> delivered through `subscribeHost` events instead — see the previous section.
 
 The callback function receives all output and events from the interpreter:
 
@@ -585,12 +709,14 @@ test("handles deep link parameters", async () => {
 
 #### `registerCallback(callback, sharedBuffer?)`
 
-Registers a callback function to receive interpreter messages and events.
+Registers a callback function to receive interpreter messages and events in the
+**synchronous model** (`executeFile`/REPL). Not used by `executeApp` — subscribe with
+`subscribeHost` instead.
 
 **Parameters:**
 
 - `callback: (message: any, data?: any) => void` - Function to handle messages
-- `sharedBuffer?: SharedArrayBuffer` - Optional shared buffer for worker threads
+- `sharedBuffer?: SharedArrayBuffer` - Optional shared buffer for control input (keys, debug commands)
 
 **Example:**
 
@@ -673,7 +799,9 @@ const payload = await brs.createPayloadFromFileMap(fileMap, deviceData);
 
 #### `executeFile(payload, options?)`
 
-Executes a BrightScript application payload.
+Executes a BrightScript application payload **synchronously on the calling thread**.
+SceneGraph `Task` nodes do not spawn in this mode (use `executeApp` for Task support).
+This is also the only mode that supports packaging (`cipherText` in the result).
 
 **Parameters:**
 
@@ -681,6 +809,46 @@ Executes a BrightScript application payload.
 - `options?: object` - Execution options
 
 **Returns:** `Promise<{ exitReason: string, cipherText?: ArrayBuffer, iv?: Uint8Array }>`
+
+#### `executeApp(payload, options?)`
+
+Executes a BrightScript application on a dedicated worker thread, with SceneGraph `Task`
+support (one worker thread per running Task). The promise resolves when the app finishes.
+Output and events are delivered to `subscribeHost` observers. Only one app can run at a time;
+packaging is not supported in this mode (use `executeFile`).
+
+**Parameters:**
+
+- `payload: AppPayload` - Application payload to execute (set `payload.extensions` and
+  `payload.device.extensions` to enable SceneGraph in the workers)
+- `options?: { sharedBuffer?: SharedArrayBuffer, workerEntry?: string }` - Optional control
+  buffer (for remote-control/debug input via `Atomics`) and worker entry path override
+
+**Returns:** `Promise<{ exitReason: string }>`
+
+#### `subscribeHost(observerId, callback)` / `unsubscribeHost(observerId)`
+
+Subscribes to (or removes a subscription from) events emitted by the worker host while an app
+runs through `executeApp`.
+
+**Callback:** `(event: string, data?: any) => void`, with events:
+
+- `message` - engine strings in `"type,content"` format (`print`, `error`, `end`, ...)
+- `frame` - a node-canvas `ImageData` with the latest rendered frame
+- `registry` - `RegistryData` to persist (`{ current: Map, ... }`)
+- `graphics` - texture-memory debug data
+- `launch` / `ndkStart` - app-launch requests
+- `component` - display/caption state objects
+- `stdout` / `stderr` - console output written directly inside a worker thread (piped to the host)
+- `error` / `warning` / `debug` - host diagnostics
+
+#### `terminateApp(reason?, timeoutMs?)`
+
+Requests a graceful exit of the app running through `executeApp` (same as the ECP `exit-app`
+command), force-terminating the app worker and all Task workers if it does not finish within
+the timeout (default 3000 ms). The optional `reason` (an `AppExitReason`, default
+`EXIT_USER_NAV`) is reported on the `end` event, mirroring the browser API's
+`terminate(reason)` — e.g. the CLI's Home key uses the default to report a user-initiated exit.
 
 #### `getReplInterpreter(options)`
 

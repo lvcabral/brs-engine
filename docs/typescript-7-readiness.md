@@ -43,6 +43,5 @@ Flip only when **all** of these hold:
    published packages ship `.d.ts` under `types/` — must not regress).
 
 Then: bump `typescript` → `^7.x`, `ts-loader` and `@typescript-eslint/*` to native-compatible versions;
-run `npm run build`, `npm test`, `npm run lint`, and `npm run build:sg` (build order caveat: `build:sg`
-runs after `build:cli`); verify the CLI and — since the CLI has no task threads — SceneGraph/Task behavior
+run `npm run build`, `npm test`, `npm run lint`, verify the CLI and — since the CLI has no task threads — SceneGraph/Task behavior
 via `npm start` in the browser.

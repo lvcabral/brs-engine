@@ -178,6 +178,53 @@ describe("cli", () => {
         }
     }, 15000);
 
+    it("Draws and measures empty strings without crashing", async () => {
+        // Regression: node-canvas v4 aborts the process (SIGTRAP) when its text APIs
+        // (measureText/fillText) receive an empty string — the engine must guard them.
+        let command = ["node", brsCliPath, "emptyTextDraw.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "empty width:  0",
+            "empty ellipsized:  0",
+            "normal width > 0: true",
+            "space width > 0: true",
+            "spaced wider: true",
+            "------ Finished 'emptyTextDraw.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 10000);
+
+    it("Renders frames as terminal images with --image", async () => {
+        let command = ["node", brsCliPath, "emptyTextDraw.brs", "-i", "-c 0"].join(" ");
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // terminal-image emits the rendered frame (ANSI fallback when piped) plus the
+        // cursor-home prefix used to repaint in place — absent without -i.
+        expect(stdout).toContain("\x1b[H");
+        expect(stdout).toContain("empty width:  0");
+    }, 10000);
+
+    it("Runs cleanly with --snapshot enabled (saving requires the Ctrl+S shortcut)", async () => {
+        const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "brs-snap-"));
+        const imagePath = path.join(tmpDir, "frame.png");
+        try {
+            let command = ["node", brsCliPath, "emptyTextDraw.brs", "-s", imagePath, "-c 0"].join(" ");
+            let { stdout } = await exec(command, {
+                cwd: path.join(__dirname, "resources"),
+            });
+            // Non-TTY: the shortcut can never fire, so nothing is saved and nothing breaks.
+            expect(stdout).toContain("empty width:  0");
+            expect(fs.existsSync(imagePath)).toBe(false);
+        } finally {
+            fs.rmSync(tmpDir, { recursive: true, force: true });
+        }
+    }, 10000);
+
     it("only warns once for a repeatedly-requested missing local texture", async () => {
         let command = ["node", brsCliPath, "roTextureManagerMissingFile.brs", "-c 0"].join(" ");
 
@@ -886,6 +933,23 @@ describe("cli", () => {
             "",
         ]);
     }, 10000);
+
+    it("Runs a SceneGraph Task on a worker thread with cross-thread rendezvous", async () => {
+        let command = ["node", brsCliPath, "-r task-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // The Task's functionName runs on a dedicated worker thread: reading `input` and
+        // writing `result` both rendezvous with the render thread, and the observer fires
+        // back on the render thread. Debug lines from the task machinery may interleave,
+        // so assert the key lines instead of the exact output.
+        const lines = stdout.split("\n").map((line) => line.trimEnd());
+        expect(lines).toContain("=== Task Thread Repro ===");
+        expect(lines).toContain("TASK RESULT: from-task-thread:ping");
+        expect(lines).toContain("=== Task Thread Repro Complete ===");
+        expect(lines).toContain("------ Finished 'main.brs' execution [EXIT_USER_NAV] ------");
+    }, 15000);
 
     it("Resolves an anonymous function observer registered by its toStr() name", async () => {
         let command = ["node", brsCliPath, "-r anon-observer-app", "source/main.brs", "-c 0"].join(" ");

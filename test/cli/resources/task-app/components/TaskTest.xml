@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="TaskTest" extends="Task">
+    <interface>
+        <field id="input" type="string" />
+        <field id="result" type="string" />
+    </interface>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.top.functionName = "runTask"
+    end sub
+
+    sub runTask()
+        ' Runs on a dedicated task thread; reading `input` and writing `result`
+        ' exercises the cross-thread rendezvous in both directions.
+        m.top.result = "from-task-thread:" + m.top.input
+    end sub
+    ]]></script>
+</component>

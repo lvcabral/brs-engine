@@ -13,12 +13,14 @@ Node.js **v22+** is required to build and run the CLI.
 npm **workspaces** monorepo (root package `brs-engine-workspace`). All TypeScript lives in top-level `src/`, compiled into three packages under `packages/`:
 
 - **brs-engine** (`packages/browser`) — browser / Web Worker interpreter for web, PWA, Electron. Output: `lib/brs.api.js` + `brs.worker.js`, types in `types/`.
-- **brs-node** (`packages/node`) — Node.js library plus the `brs-cli` command, ECP + SSDP servers. Output: `bin/{brs.cli.js, brs.ecp.js, brs.node.js}`.
-- **brs-scenegraph** (`packages/scenegraph`) — SceneGraph runtime as a standalone **extension** bundle (`brs-sg.js` / `brs-sg.node.js`) that auto-loads when an app contains `pkg:/components/` assets.
+- **brs-node** (`packages/node`) — Node.js library plus the `brs-cli` command, ECP + SSDP servers. Output: `bin/{brs.cli.js, brs.ecp.js, brs.node.js}`; `brs.node.js` is both the package `main` and the **worker entry** for app/Task threads. The scenegraph build also copies `brs-sg.node.js` into `bin/` so the published package is self-contained (guaranteed version match + same-module-instance binding — a separately installed copy could resolve a second `brs-node` instance and silently fail).
+- **brs-scenegraph** (`packages/scenegraph`) — SceneGraph runtime as a standalone **extension** bundle (`brs-sg.js` / `brs-sg.node.js`) that auto-loads when an app contains `pkg:/components/` assets. The npm package is what **browser** integrators install (to copy `lib/brs-sg.js` next to `brs.worker.js`); Node consumers use the copy bundled in `brs-node/bin/`.
 
 ### Required deployment asset: `assets/common.zip`
 
 `packages/browser/assets/common.zip` (and the SceneGraph counterpart in `packages/scenegraph/`) is the **`common:/` volume**: default fonts, system audio, CA certificates, and BrightScript library stubs (`LibCore`, `roku_ads`, `roku_analytics`, `roku_browser`). **Any web app embedding the engine must serve this file at `./assets/common.zip` relative to `brs.api.js`** — the API fetches it on startup. Missing it means no fonts or system libraries, and most apps break.
+
+**Build-order dependency (overwrite chain):** each package build zips a core-only `common.zip` from `src/core/common/`, but the **scenegraph** build creates a superset (core + `src/extensions/scenegraph/common/**` — Metropolis fonts, `system-fonts.json`, focus/dialog/keyboard 9-patches, video overlays) and its `afterEmit` hook copies that merged zip **over** `packages/{browser,node}/assets/common.zip`. So `npm run build:node` alone **downgrades** the node package's `common.zip` to core-only — always run `npm run build:sg` after `build:node` (the `npm run build:cli` and the full `npm run build` orders this correctly; `prepublishOnly` too). Symptom of a stale/core-only zip: ~20 `test/cli/cli.test.js` failures with `ENOENT: /common:/fonts/system-fonts.json`.
 
 ## Commands
 
@@ -29,9 +31,10 @@ npm install              # install all workspace dependencies
 
 npm run build            # dev build of all packages
 npm run build:api        # build only brs-engine (browser)
-npm run build:cli        # build only brs-node (CLI/Node library)
+npm run build:node        # build only brs-node (CLI/Node library)
 npm run build:sg         # build only brs-scenegraph
 npm run build:web        # build engine + scenegraph, open example web app
+npm run build:cli        # build brs-node + scenegraph
 npm run release          # minified production build
 npm run clean            # remove compiled lib/ bin/ types/
 
@@ -63,7 +66,13 @@ The browser build is two bundles on **separate threads**, communicating via `pos
 - **API library** — entry `src/api/index.ts` → `brs.api.js`. Runs on the **main thread**: manages the worker, renders the display canvas (expects a `canvas` named `display` and a `video` named `player` on `document`), plays audio, routes remote/gamepad input, and exposes the public API (`initialize`, `subscribe`, `execute`, `terminate`, `sendKeyPress`, `debug`, …). See `docs/engine-api.md`.
 - **Worker library** — entry `src/core/index.ts` → `brs.worker.js`. Runs in a **Web Worker** (browser) or **Worker Thread** (Node). Its `onmessage` receives a msgpack-encoded `AppPayload`/`TaskPayload` or the `SharedArrayBuffer` for control state (`BrsDevice.setSharedArray`). The interpreter executes here.
 
-The Node CLI runs the interpreter **single-threaded**; remote control there needs the ECP server (`--ecp`).
+The Node build mirrors this two-thread split via `worker_threads`: the CLI main thread is the **host** (`src/node/host.ts` `executeApp` + `src/node/task.ts` task broker — a port of `src/api/task.ts`, keep them in sync), the app runs in a worker whose entry is `bin/brs.node.js` itself (`parentPort` dispatcher in `src/core/index.ts`'s `#else` branch), and each SceneGraph Task gets its own worker. node-canvas `ImageData` doesn't survive the structured clone (width/height are prototype getters), so frames cross as `FrameData` (flatten in the worker shim, revive in the host). Type guards on worker messages must be realm-safe (`isTypeOf`, not `instanceof` — jest's VM sandbox breaks `instanceof SharedArrayBuffer`). The main thread also owns stdin: raw-mode keyboard remote control + Micro Debugger line-mode relay (`src/cli/keyboard.ts`); the worker-side debugger reads commands from the shared array (`BrsDevice.isWorkerThread`). REPL and `--pack` stay in-process (`executeFile`): packaging returns its result as a function value, and the REPL needs a same-isolate interpreter. Regression: `task-app` in `test/cli/cli.test.js` and `test/node/host.test.js`.
+
+Node-host invariants (all mirror the browser API):
+
+- **Workers never write to the terminal.** `host.ts`/`task.ts` spawn every worker with `{ stdout: true, stderr: true }` and surface the piped streams as host `stdout`/`stderr` events — a `console.log` inside a worker (engine internals, third-party libs) inheriting the process fds would land inside the frame region in `-i`/`-a` modes and flicker graphics terminals (text over image cells erases them on iTerm2/Kitty).
+- **Termination is host-driven** (`terminateApp(reason = UserNav, timeoutMs = 3000)`): write `DebugCommand.EXIT` for a graceful exit, then force-`terminate()` the app worker + all Task workers on timeout, and report the host's `reason` on `end` (the worker unwinding via the debugger EXIT path reports `EXIT_BRIGHTSCRIPT_STOP`, not `EXIT_USER_NAV`). The CLI home/poweroff key goes through this path — do **not** "simplify" it back to a bare `DBG=EXIT` write: a worker idling in `wait()` can miss it (see next point) and there is no backstop.
+- **EXIT must unwind `wait()` loops.** `RoMessagePort.wait` consumes the EXIT command, sets `debugMode = EXIT` and *returns* (it can't throw through the callable boundary); `Interpreter.checkDebugger` therefore **throws `BlockEnd("debug-exit")` when already in EXIT mode** instead of returning — otherwise an app in `while true : wait(0, port)` live-locks with `wait` returning instantly (the pre-fix home-key hang).
 
 ### Interpreter pipeline (`src/core/`)
 
@@ -253,7 +262,17 @@ Regression: the "SceneGraph .bpk encryption" suite in `test/cli/cli.test.js`.
 
 ## CLI
 
-`src/cli/` builds into `packages/node/bin`. `brs-cli` runs `.brs` files, `.zip`/`.bpk` packages, or a REPL (no args). Key flags: `--ascii`/`--unicode` (render the screen as terminal art), `--ecp` (ECP server on port 8060 + SSDP), `--debug` (developer mode), `--no-sg`, `--pack`/`--out` (create `.bpk`), `--root` (mount `pkg:/` from a dir), `--ext-vol` (mount `ext1:`), `--deep-link`, `--registry`. See `docs/run-as-cli.md`.
+`src/cli/` builds into `packages/node/bin`. `brs-cli` runs `.brs` files, `.zip`/`.bpk` packages, or a REPL (no args). Key flags: `--ascii`/`--unicode` (render the screen as terminal art), `--image [percent]` (render frames as terminal images — iTerm2/Kitty protocols or ANSI fallback — at an optional % of terminal width, 10-100), `--log [file]` (redirect all text output to a log file, ANSI stripped), `--snapshot [file]` (Ctrl+S saves the screen as PNG), `--ecp` (ECP server on port 8060 + SSDP), `--debug` (developer mode), `--no-sg`, `--pack`/`--out` (create `.bpk`), `--root` (mount `pkg:/` from a dir), `--ext-vol` (mount `ext1:`), `--deep-link`, `--registry`. See `docs/run-as-cli.md`. With a TTY, the keyboard is the remote control while the app runs (`src/cli/keyboard.ts`): arrows/select/back, Home exits via `terminateApp`, Ctrl+B breaks into the debugger (Ctrl+C too in `--debug` mode, like a `STOP`), Ctrl+D terminates (Ctrl+C too in production mode).
+
+### Terminal frame rendering (`src/cli/display.ts`) — flicker invariants
+
+All screen rendering (`-a`/`-u`/`-i`) lives in `display.ts`; the trio of image-mode flicker fixes must stay together:
+
+1. **Frames are flattened onto opaque black** before encoding — a frame carrying alpha lets the terminal's theme color show through the inline image (the "orange flash").
+2. **DEC 2026 synchronized-output opens *before* the render call** (the Kitty path inside terminal-image writes directly to stdout) and `doNotMoveCursor=1` is injected into the iTerm2 header; the cursor stays hidden for the whole run.
+3. **Byte-identical frames are skipped** (`Buffer.equals` vs the last painted frame): the SceneGraph render loop posts frames even when the screen is static, and rewriting a large image makes graphics terminals visibly decode/swap it. Cache cleared on `disableFrameOutput` and when the debugger takes the terminal.
+
+**Text never interleaves with frames.** While frames own a TTY, `writeTerminalText` defers text (flushed after the run, or immediately to the `--log` file); the Micro Debugger suspends deferral (app paused, no frames painting). Anything that prints mid-run must route through `writeTerminalText` — a raw `process.stdout.write`/`console.log` reintroduces the flicker. TTY stdout is switched non-blocking during the run (a slow terminal otherwise blocks the event loop inside write(2), starving raw-mode stdin — Ctrl+C is just a keypress); frames drop to newest on backpressure + `drain`. No CLI-side FPS throttling — `DeviceInfo.maxFps` is the engine-level gate.
 
 ### Production vs developer mode (`debugOnCrash`)
 

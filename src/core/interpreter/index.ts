@@ -2057,7 +2057,11 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
      */
     private checkDebugger(statement: Stmt.Statement) {
         if (this.debugMode === DebugMode.EXIT) {
-            return;
+            // EXIT can be entered outside the statement loop — e.g. `roMessagePort.wait`
+            // consumes the EXIT command, sets the mode and *returns* (it cannot throw
+            // through the callable boundary). Without unwinding here the app's message
+            // loop would keep executing (`wait` now returns instantly) and spin forever.
+            throw new Stmt.BlockEnd("debug-exit", statement.location);
         }
         const inDebugSession = this.debugMode !== DebugMode.NONE;
         const cmd = BrsDevice.checkBreakCommand(inDebugSession);

@@ -65,6 +65,10 @@ export class BrsDevice {
     /** Current Thread ID for the environment */
     static threadId: number = 0;
 
+    /** True when the engine is running inside a worker thread (Web Worker or Node worker_threads).
+     * The Micro Debugger uses it to read commands from the shared array instead of blocking stdin. */
+    static isWorkerThread: boolean = false;
+
     /** External Storage Volume (ext1:) properties */
     private static extVolVersion: number = -1;
     private static extVolMounted: boolean = false;
