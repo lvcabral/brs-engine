@@ -417,46 +417,56 @@ export class XMLHttpRequest {
             this.dispatchEvent("readystatechange");
 
             // Handler for the response
+            let redirectCount = 0;
             const responseHandler = (resp: any) => {
                 // Set response property to the response we got back
                 // This is so it remains accessible outside this scope
                 this._response = resp;
                 // Check for redirect
-                // @TODO Prevent looped redirects
-                if (
-                    this._response.statusCode === 302 ||
-                    this._response.statusCode === 303 ||
-                    this._response.statusCode === 307
-                ) {
-                    // Change URL to the redirect location
-                    this._settings.url = this._response.headers.location;
-                    const url = Url.parse(this._settings.url);
-                    // Set host variable in case it's used later
-                    host = url.hostname;
-                    // Options for the new request
-                    let newOptions: any = {
-                        hostname: url.hostname,
-                        port: url.port,
-                        path: url.path,
-                        method: this._response.statusCode === 303 ? "GET" : this._settings.method,
-                        headers: this._headers,
-                    };
+                const sc = this._response.statusCode;
+                if (sc === 301 || sc === 302 || sc === 303 || sc === 307 || sc === 308) {
+                    const location = this._response.headers.location;
+                    if (location && redirectCount < 10) {
+                        redirectCount++;
+                        resp.resume();
+                        // Resolve the (possibly relative) location against the current URL
+                        const redirectUrl = new URL(location, this._settings.url);
+                        this._settings.url = redirectUrl.href;
+                        // Set host variable in case it's used later
+                        host = redirectUrl.hostname;
+                        const newSsl = redirectUrl.protocol === "https:";
+                        const newHeaders = { ...this._headers };
+                        newHeaders["Host"] = redirectUrl.host;
+                        const isGet = sc === 303;
+                        if (isGet) {
+                            delete newHeaders["Content-Length"];
+                        }
+                        // Options for the new request
+                        const newOptions: any = {
+                            hostname: redirectUrl.hostname,
+                            port: redirectUrl.port || (newSsl ? 443 : 80),
+                            path: redirectUrl.pathname + redirectUrl.search,
+                            method: isGet ? "GET" : this._settings.method,
+                            headers: newHeaders,
+                        };
 
-                    if (ssl) {
-                        newOptions.pfx = this._opts.pfx;
-                        newOptions.key = this._opts.key;
-                        newOptions.passphrase = this._opts.passphrase;
-                        newOptions.cert = this._opts.cert;
-                        newOptions.ca = this._opts.ca;
-                        newOptions.ciphers = this._opts.ciphers;
-                        newOptions.rejectUnauthorized = this._opts.rejectUnauthorized === false ? false : true;
+                        if (newSsl) {
+                            newOptions.pfx = this._opts.pfx;
+                            newOptions.key = this._opts.key;
+                            newOptions.passphrase = this._opts.passphrase;
+                            newOptions.cert = this._opts.cert;
+                            newOptions.ca = this._opts.ca;
+                            newOptions.ciphers = this._opts.ciphers;
+                            newOptions.rejectUnauthorized = this._opts.rejectUnauthorized === false ? false : true;
+                        }
+
+                        // Issue the new request, switching protocol if the redirect changed it
+                        const redirectRequest = newSsl ? https.request : http.request;
+                        this._request = redirectRequest(newOptions, responseHandler).on("error", errorHandler);
+                        this._request.end();
+                        // @TODO Check if an XHR event needs to be fired here
+                        return;
                     }
-
-                    // Issue the new request
-                    this._request = doRequest(newOptions, responseHandler).on("error", errorHandler);
-                    this._request.end();
-                    // @TODO Check if an XHR event needs to be fired here
-                    return;
                 }
 
                 this.setState(this.HEADERS_RECEIVED);
@@ -519,55 +529,71 @@ export class XMLHttpRequest {
             const contentFile = `.node-xhr-content-${crypto.randomUUID()}`;
             const syncFile = `.node-xhr-sync-${crypto.randomUUID()}`;
             fs.writeFileSync(syncFile, "", "utf8");
-            // The async request the other Node process executes
-            const execString =
-                "const http = require('http'), https = require('https'), fs = require('fs');" +
-                "const doRequest = http" +
-                (ssl ? "s" : "") +
-                ".request;" +
-                "const options = " +
-                JSON.stringify(options) +
-                ";" +
-                "let responseText = '';" +
-                "let responseData = Buffer.alloc(0);" +
-                "let req = doRequest(options, function(response) {" +
-                "response.on('data', function(chunk) {" +
-                "  const data = Buffer.from(chunk);" +
-                "  responseText += data.toString('utf8');" +
-                "  responseData = Buffer.concat([responseData, data]);" +
-                "});" +
-                "response.on('end', function() {" +
-                "fs.writeFileSync('" +
-                contentFile +
-                "', JSON.stringify({err: null, data: {statusCode: response.statusCode, headers: response.headers, text: responseText, data: responseData.toString('base64')}}), 'utf8');" +
-                "fs.unlinkSync('" +
-                syncFile +
-                "');" +
-                "});" +
-                "response.on('error', function(error) {" +
-                "fs.writeFileSync('" +
-                contentFile +
-                "', 'NODE-XMLHTTPREQUEST-ERROR:' + JSON.stringify(error), 'utf8');" +
-                "fs.unlinkSync('" +
-                syncFile +
-                "');" +
-                "});" +
-                "}).on('error', function(error) {" +
-                "fs.writeFileSync('" +
-                contentFile +
-                "', 'NODE-XMLHTTPREQUEST-ERROR:' + JSON.stringify(error), 'utf8');" +
-                "fs.unlinkSync('" +
-                syncFile +
-                "');" +
-                "});" +
-                (data
-                    ? "req.write('" +
-                      JSON.stringify(data)
-                          .slice(1, -1)
-                          .replaceAll("'", String.raw`\'`) +
-                      "');"
-                    : "") +
-                "req.end();";
+            // The request body (if any) embedded as a single-quoted JS string literal.
+            const bodyLiteral = data
+                ? "'" +
+                  JSON.stringify(data)
+                      .slice(1, -1)
+                      .replaceAll("'", String.raw`\'`) +
+                  "'"
+                : "null";
+            // The async request the other Node process executes. It follows HTTP
+            // redirects (301/302/303/307/308) — switching protocol (http<->https),
+            // updating the Host header, and demoting 303 to GET — because this
+            // synchronous path backs download() for images and many CDNs 302-redirect.
+            const execString = `
+                const http = require('http'), https = require('https'), fs = require('fs');
+                const contentFile = ${JSON.stringify(contentFile)};
+                const syncFile = ${JSON.stringify(syncFile)};
+                const initialOptions = ${JSON.stringify(options)};
+                const initialSsl = ${ssl ? "true" : "false"};
+                const initialUrl = ${JSON.stringify(this._settings.url)};
+                const tlsKeys = ['pfx','key','passphrase','cert','ca','ciphers','rejectUnauthorized'];
+                const maxRedirects = 10;
+                let responseText = '';
+                let responseData = Buffer.alloc(0);
+                function finish(payload) { fs.writeFileSync(contentFile, payload, 'utf8'); fs.unlinkSync(syncFile); }
+                function fail(error) { finish('NODE-XMLHTTPREQUEST-ERROR:' + JSON.stringify(error)); }
+                function send(options, ssl, currentUrl, redirectsLeft, body) {
+                    const doRequest = ssl ? https.request : http.request;
+                    const req = doRequest(options, function(response) {
+                        const sc = response.statusCode;
+                        const loc = response.headers.location;
+                        if ((sc === 301 || sc === 302 || sc === 303 || sc === 307 || sc === 308) && loc) {
+                            response.resume();
+                            if (redirectsLeft <= 0) { fail({ message: 'Too many redirects' }); return; }
+                            const u = new URL(loc, currentUrl);
+                            const nextSsl = u.protocol === 'https:';
+                            const headers = Object.assign({}, options.headers);
+                            headers.Host = u.host;
+                            const isGet = sc === 303;
+                            if (isGet) { delete headers['Content-Length']; delete headers['content-length']; }
+                            const nextOptions = {
+                                hostname: u.hostname,
+                                port: u.port || (nextSsl ? 443 : 80),
+                                path: u.pathname + u.search,
+                                method: isGet ? 'GET' : options.method,
+                                headers: headers
+                            };
+                            for (const k of tlsKeys) { if (initialOptions[k] !== undefined) nextOptions[k] = initialOptions[k]; }
+                            send(nextOptions, nextSsl, u.href, redirectsLeft - 1, isGet ? null : body);
+                            return;
+                        }
+                        response.on('data', function(chunk) {
+                            const d = Buffer.from(chunk);
+                            responseText += d.toString('utf8');
+                            responseData = Buffer.concat([responseData, d]);
+                        });
+                        response.on('end', function() {
+                            finish(JSON.stringify({ err: null, data: { statusCode: response.statusCode, headers: response.headers, text: responseText, data: responseData.toString('base64') } }));
+                        });
+                        response.on('error', function(error) { fail(error); });
+                    }).on('error', function(error) { fail(error); });
+                    if (body) { req.write(body); }
+                    req.end();
+                }
+                send(initialOptions, initialSsl, initialUrl, maxRedirects, ${bodyLiteral});
+            `;
             // Start the other Node Process, executing this string
             const syncProc = spawn(process.argv[0], ["-e", execString]);
             while (fs.existsSync(syncFile)) {
