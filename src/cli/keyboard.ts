@@ -67,7 +67,7 @@ export function translateKey(str: string | undefined, key: { name?: string; ctrl
     if (mapped) {
         return mapped;
     }
-    if (!key.ctrl && str && str.length === 1 && str >= " " && str !== "\u007F") {
+    if (!key.ctrl && str?.length === 1 && str >= " " && str !== "\u007F") {
         return `lit_${str}`;
     }
     return undefined;

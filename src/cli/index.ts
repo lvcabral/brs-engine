@@ -423,7 +423,7 @@ async function savePackage(pkg: brs.RunResult) {
     try {
         // Encrypt the whole package container with the same password so the plaintext
         // assets (images, fonts, data, manifest) are also protected at rest.
-        const buffer = await encryptPackage(updateAppZip(pkg.cipherText!, pkg.iv!, pkg.packedFiles), program.pack);
+        const buffer = await encryptPackage(updateAppZip(pkg.cipherText, pkg.iv, pkg.packedFiles), program.pack);
         fs.writeFileSync(filePath, buffer);
         console.log(
             chalk.blueBright(`Package file created as ${filePath} with ${Math.round(buffer.length / 1024)} KB.\n`)

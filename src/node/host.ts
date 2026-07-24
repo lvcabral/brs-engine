@@ -5,7 +5,7 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import * as path from "path";
+import * as path from "node:path";
 import { Worker } from "node:worker_threads";
 import { ImageData as NodeImageData } from "canvas";
 import {
