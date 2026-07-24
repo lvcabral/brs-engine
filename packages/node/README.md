@@ -10,7 +10,7 @@ An interpreter for the BrightScript language that runs as a CLI and Roku apps in
 
 ## Overview
 
-The **BrightScript Simulation Engine** provides a complete a set of libraries and a command-line interface for executing, testing, and packaging [Roku apps](https://developer.roku.com/overview) on Node.js platforms. Perfect for automation, CI/CD pipelines, development workflows, and server-side BrightScript execution.
+The **BrightScript Simulation Engine** provides a complete a set of libraries and a command-line interface for executing, testing, and packaging [Roku apps](https://developer.roku.com/develop) on Node.js platforms. Perfect for automation, CI/CD pipelines, development workflows, and server-side BrightScript execution.
 
 > 🚨 Important:
 >
@@ -46,7 +46,7 @@ The **BrightScript Simulation Engine** provides a complete a set of libraries an
 - **File System Simulation** - Including `pkg:/`, `tmp:/`, `cachefs:/`, `common:/` and `ext1:/` volumes
 - **Registry simulation** - Roku device registry emulation saved on browser local storage
 - **Micro Debugger** - Step-through debugging capabilities, similar to the Roku experience
-- **ECP Server** - [External Control Protocol](https://developer.roku.com/docs/developer-program/dev-tools/external-control-api.md) for remote control
+- **ECP Server** - [External Control Protocol](https://developer.roku.com/dev/docs/external-control-api) for remote control
 - **SSDP Discovery** - Device discovery simulation
 - **Localization** - Language and region settings
 - **Customization** - You can customize device features and behaviors, see [docs](https://github.com/lvcabral/brs-engine/blob/master/docs/customization.md) for more details
@@ -86,7 +86,7 @@ The package libraries require Node.js v22 or higher, and are organized as follow
 | --- | --- |
 | `bin/brs.cli.js` | Executable **[CLI](https://github.com/lvcabral/brs-engine/blob/master/docs/run-as-cli.md)** application that can be used from the terminal |
 | `bin/brs.node.js` | The engine library (the package `main`): exposes the interpreter to Node.js applications, and is also the **worker entry** used to run apps and SceneGraph Tasks on [worker threads](https://nodejs.org/api/worker_threads.html) |
-| `bin/brs.ecp.js` | A **worker thread** library, used by the CLI to launch the [ECP](https://developer.roku.com/docs/developer-program/dev-tools/external-control-api.md) and **SSDP** services |
+| `bin/brs.ecp.js` | A **worker thread** library, used by the CLI to launch the [ECP](https://developer.roku.com/dev/docs/external-control-api) and **SSDP** services |
 | `bin/brs-sg.node.js` | The [SceneGraph extension](https://www.npmjs.com/package/brs-scenegraph) bundle, loaded dynamically into the engine (and into each worker thread) when SceneGraph support is needed |
 
 #### How the libraries relate

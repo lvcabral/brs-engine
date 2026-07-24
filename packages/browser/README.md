@@ -10,7 +10,7 @@ An interpreter for the BrightScript language that runs Roku apps in browser-base
 
 ## Overview
 
-The **BrightScript Simulation Engine** provides a complete BrightScript interpreter that runs directly in web browsers, allowing [Roku apps](https://developer.roku.com/overview) to be executed in web applications, PWAs and Electron applications.
+The **BrightScript Simulation Engine** provides a complete BrightScript interpreter that runs directly in web browsers, allowing [Roku apps](https://developer.roku.com/develop) to be executed in web applications, PWAs and Electron applications.
 This package includes a **Web Worker** library and an **Engine API** library for embedding the interpreter into web applications.
 > 🚨 Important:
 >
