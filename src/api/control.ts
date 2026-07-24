@@ -306,6 +306,10 @@ function handleKeyboardEvent(event: KeyboardEvent, mod: number) {
         event.preventDefault();
     } else if (!["Alt", "Control", "Meta", "Shift", "Tab", "Dead"].includes(event.key)) {
         sendKey(`lit_${event.key}`, mod, RemoteType.WD);
+        if (event.key === " ") {
+            // Prevent Space on Browsers (that cause a PgDown)
+            event.preventDefault();
+        }
     }
 }
 
