@@ -18,7 +18,7 @@ The **BrightScript Engine** implements the BrightScript language specification u
     * Libraries are fetched and compiled **synchronously** (the BrightScript event loop never yields, so an asynchronous load could not complete mid-execution). The node reports `loadStatus = "loading"` immediately and the `"ready"`/`"failed"` transition is emitted on the next render frame, so `observeField("loadStatus", ...)` callbacks are notified as on a real device — provided the app is pumping its screen message loop (`wait(...)`).
     * Inside a library, `pkg:/` still resolves to the host app's package (not the library's own); reference a library's bundled scripts with relative `uri` paths in its component XML.
     * Library `source/` global functions and intra-library component inheritance (a library component extending another library component) are not supported yet.
-    * Encrypted/signed `.bpk` libraries are not supported yet (plain `.zip` only).
+    * Encrypted/signed libraries are not supported (plain `.zip` only).
 * Audio playback is implemented via `roAudioResources`, `roAudioPlayer` components and `SoundEffect`, `Audio` nodes, but with some limitations:
   * Only one instance of `roAudioPlayer` component or `Audio` node should be used, if more are created those will share the content playlist.
   * If the `roAudioPlayer` component or `Audio` node instance is destroyed the audio keeps playing, make sure to stop the playback before discarding the object.
