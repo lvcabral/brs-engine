@@ -265,13 +265,12 @@ export function setCustomKeys(newKeys: Map<string, string>) {
 
 /**
  * Handles keyboard key down events.
- * Ignores repeated key events.
+ * Auto-repeated events are not sent to the app, but are still handled
+ * to prevent the browser default action while a key is held down.
  * @param event Keyboard event
  */
 function keyDownHandler(event: KeyboardEvent) {
-    if (!event.repeat) {
-        handleKeyboardEvent(event, 0);
-    }
+    handleKeyboardEvent(event, 0, event.repeat);
 }
 /**
  * Handles keyboard key up events.
@@ -285,8 +284,10 @@ function keyUpHandler(event: KeyboardEvent) {
  * Handles modifier keys and maps to Roku remote keys.
  * @param event Keyboard event
  * @param mod Key modifier (0 = down, 100 = up)
+ * @param repeat If true the key is auto-repeating: the browser default action is
+ *               still prevented, but no key event is sent to the app
  */
-function handleKeyboardEvent(event: KeyboardEvent, mod: number) {
+function handleKeyboardEvent(event: KeyboardEvent, mod: number, repeat = false) {
     if (!controls.keyboard) {
         return;
     }
@@ -302,10 +303,14 @@ function handleKeyboardEvent(event: KeyboardEvent, mod: number) {
     }
     const key = keysMap.get(keyCode);
     if (key && key.toLowerCase() !== "ignore") {
-        sendKey(key, mod, RemoteType.WD);
+        if (!repeat) {
+            sendKey(key, mod, RemoteType.WD);
+        }
         event.preventDefault();
     } else if (!["Alt", "Control", "Meta", "Shift", "Tab", "Dead"].includes(event.key)) {
-        sendKey(`lit_${event.key}`, mod, RemoteType.WD);
+        if (!repeat) {
+            sendKey(`lit_${event.key}`, mod, RemoteType.WD);
+        }
         if (event.key === " ") {
             // Prevent Space on Browsers (that cause a PgDown)
             event.preventDefault();
