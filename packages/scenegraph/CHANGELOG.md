@@ -4,9 +4,9 @@ All notable changes to `brs-scenegraph` extension will be documented in this fil
 
 <a name="v0.3.0"></a>
 
-## [v0.3.0 - SceneGraph Node Complete](https://github.com/lvcabral/brs-engine/releases/tag/brs-sg-v0.3.0) - 24 July 2026
+## [v0.3.0 (beta) - SceneGraph Node Complete](https://github.com/lvcabral/brs-engine/releases/tag/brs-sg-v0.3.0) - 25 July 2026
 
-This release completes the SceneGraph node set: every **concrete** node documented by Roku is now implemented, including the whole **Standard Dialog Framework**, the dynamic voice keyboards, the `TimeGrid` (EPG), the `Target*` nodes, the typographic labels and `MaskGroup` alpha-mask compositing. It also brings **Component Libraries**, `roRenderThreadQueue`, a hardened cross-thread rendezvous with direct render→task responses, and a large reduction of the per-node memory footprint for big content trees. Read the full release notes below for more details.
+With this release we graduate the extension from `alpha` to `beta` stage, it completes the SceneGraph node set: every **concrete** node documented by Roku is now implemented, including the whole **Standard Dialog Framework**, the dynamic voice keyboards, the `TimeGrid` (EPG), the `Target*` nodes, the typographic labels and `MaskGroup` alpha-mask compositing. It also brings **Component Libraries**, `roRenderThreadQueue`, a hardened cross-thread rendezvous with direct render→task responses, and a large reduction of the per-node memory footprint for big content trees. Read the full release notes below for more details.
 
 ### Release Changes
 
@@ -125,7 +125,7 @@ This release completes the SceneGraph node set: every **concrete** node document
 
 <a name="v0.2.0"></a>
 
-## [v0.2.0 - Added ScrollableText, PinPad, PinDialog and ProgressDialog](https://github.com/lvcabral/brs-engine/releases/tag/brs-sg-v0.2.0) - 12 April 2026
+## [v0.2.0 (alpha) - Added ScrollableText, PinPad, PinDialog and ProgressDialog](https://github.com/lvcabral/brs-engine/releases/tag/brs-sg-v0.2.0) - 12 April 2026
 
 This release introduces the `ScrollableText`, `PinPad`, `PinDialog` and `ProgressDialog` nodes to the SceneGraph extension, along with various bug fixes and improvements. Read the full release notes below for more details.
 
@@ -153,7 +153,7 @@ This release introduces the `ScrollableText`, `PinPad`, `PinDialog` and `Progres
 
 <a name="v0.1.0"></a>
 
-## [v0.1.0 - Rendezvous and other major improvements and fixes](https://github.com/lvcabral/brs-engine/releases/tag/brs-sg-v0.1.0) - 11 February 2026
+## [v0.1.0 (alpha) - Rendezvous and other major improvements and fixes](https://github.com/lvcabral/brs-engine/releases/tag/brs-sg-v0.1.0) - 11 February 2026
 
 This release brings major improvements both to the SceneGraph extension, including better support for Task threads, introducing real Rendezvous, support for new node components, and various bug fixes and optimizations. Read the full release notes below for more details.
 
@@ -212,7 +212,7 @@ This release brings major improvements both to the SceneGraph extension, includi
 
 <a name="v0.0.5"></a>
 
-## [v0.0.5 - Various Fixes and Improvements](https://github.com/lvcabral/brs-engine/releases/tag/brs-sg-v0.0.5) - 5 January 2026
+## [v0.0.5 (alpha) - Various Fixes and Improvements](https://github.com/lvcabral/brs-engine/releases/tag/brs-sg-v0.0.5) - 5 January 2026
 
 This release brings several fixes and improvements to the SceneGraph extension, including the implementation of `Animation` and `Interpolator` nodes, as well as various bug fixes related to node creation, focus management, and event handling.
 
@@ -249,7 +249,7 @@ This release brings several fixes and improvements to the SceneGraph extension f
 <a name="v0.0.3"></a>
 
 
-## [v0.0.3 - Node and Task improvements and fixes](https://github.com/lvcabral/brs-engine/releases/tag/brs-sg-v0.0.3) - 24 December 2025
+## [v0.0.3 (alpha) - Node and Task improvements and fixes](https://github.com/lvcabral/brs-engine/releases/tag/brs-sg-v0.0.3) - 24 December 2025
 
 This release brings several fixes and improvements to the SceneGraph extension for the BrightScript Simulation Engine, including support for the `change` field in `Node`, updates to `Task` behavior, and various bug fixes.
 
@@ -265,7 +265,7 @@ This release brings several fixes and improvements to the SceneGraph extension f
 
 <a name="v0.0.2"></a>
 
-## [v0.0.2 - Various Fixes and Improvements](https://github.com/lvcabral/brs-engine/releases/tag/brs-sg-v0.0.2) - 12 December 2025
+## [v0.0.2 (alpha) - Various Fixes and Improvements](https://github.com/lvcabral/brs-engine/releases/tag/brs-sg-v0.0.2) - 12 December 2025
 
 This release brings several fixes and improvements to the SceneGraph extension for the BrightScript Simulation Engine, including fixes for video UI handling, custom font management, and enhancements to node behavior.
 
@@ -281,7 +281,7 @@ This release brings several fixes and improvements to the SceneGraph extension f
 
 <a name="v0.0.1"></a>
 
-## [v0.0.1 - Initial alpha release](https://github.com/lvcabral/brs-engine/releases/tag/brs-sg-v0.0.1) - 05 December 2025
+## [v0.0.1 (alpha) - Initial release](https://github.com/lvcabral/brs-engine/releases/tag/brs-sg-v0.0.1) - 05 December 2025
 
 This first alpha delivers the **SceneGraph** runtime as a standalone extension that plugs into the **BrightScript Simulation Engine**. It bundles both browser (`brs-sg.js`) and Node.js (`brs-sg.node.js`) libraries, merges the core `common:/` assets with the SceneGraph-specific resources, and wires the lifecycle hooks (`onInit`, `onBeforeExecute`, `tick`, `execTask`) required for Roku SceneGraph apps.
 

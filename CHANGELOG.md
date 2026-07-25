@@ -4,9 +4,9 @@ All notable changes to this project will be documented in this file.
 
 <a name="v2.3.0"></a>
 
-## [v2.3.0 - CLI task threads and SG Node Complete](https://github.com/lvcabral/brs-engine/releases/tag/v2.3.0) - 24 July 2026
+## [v2.3.0 - SG Node Complete and CLI task threads](https://github.com/lvcabral/brs-engine/releases/tag/v2.3.0) - 25 July 2026
 
-This release completes the **SceneGraph** node set — every concrete node documented by Roku is now implemented, with only the abstract base nodes still mocked as `Group` — and rewrites the **CLI** on a worker-thread architecture where the app and each SceneGraph `Task` run on their own thread, adding terminal image rendering (`--image`), log redirection and screen snapshots. The core engine gains a **production mode** that removes all debug instrumentation by default, a texture memory registry exposed through the `query/r2d2-bitmaps` ECP endpoint, full `.bpk` encryption covering SceneGraph components and the package container, and several Roku OS 15.2/15.3 APIs. Read the full release notes below for more details.
+This release brings 160+ improvements and fixes, it completes the **SceneGraph** node set — every concrete node documented by Roku is now implemented, including support for **Component Libraries**. This version also rewrites the **CLI** on a worker-thread architecture where the app and each SceneGraph `Task` run on their own thread, adding keyboard control, terminal image rendering (`--image`), log redirection and screen snapshots. The core engine gains a **production mode** that removes all debug instrumentation by default, a texture memory registry exposed through the `query/r2d2-bitmaps` ECP endpoint, full `.bpk` encryption covering SceneGraph components and the package container, and several Roku OS 15.2/15.3 APIs. Read the full release notes below for more details.
 
 ### Release Changes
 
@@ -188,10 +188,6 @@ This release completes the **SceneGraph** node set — every concrete node docum
 * Bump shell-quote from 1.8.4 to 1.10.0 by @dependabot[bot] in [#1078](https://github.com/lvcabral/brs-engine/pull/1078)
 * Bump fast-uri from 3.1.2 to 3.1.4 by @dependabot[bot] in [#1079](https://github.com/lvcabral/brs-engine/pull/1079)
 * Bump uuid and webpack-dev-server by @dependabot[bot] in [#1080](https://github.com/lvcabral/brs-engine/pull/1080)
-
-## New Contributors
-
-* @markwpearce made their first contribution in https://github.com/lvcabral/brs-engine/pull/961 - welcome to the project!
 
 [Full Changelog][v2.3.0]
 
