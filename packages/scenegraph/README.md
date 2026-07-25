@@ -10,7 +10,7 @@ This package publishes the Roku SceneGraph support as a standalone extension for
 
 ## Overview
 
-- Implements the shared `BrsExtension` contract and hooks into interpreter lifecycle events (`onInit`, `onBeforeExecute`, `tick`, `execTask`).
+- Implements the shared `BrsExtension` contract and hooks into interpreter lifecycle events (`onInit`, `onBeforeExecute`, `updateSourceMap`, `tick`, `execTask`).
 - Parses component XML files, builds inheritance trees, and spins up sub-interpreter environments for each component script.
 - Registers `RoSGScreen`, `RoSGNode`, built-in SceneGraph nodes, events, and task helpers so Roku apps can execute unmodified.
 - Ships both browser (`lib/brs-sg.js`) and Node.js (`lib/brs-sg.node.js`) builds plus TypeScript definitions.
@@ -18,7 +18,7 @@ This package publishes the Roku SceneGraph support as a standalone extension for
 
 > ⚠️ Note:
 >
-> SceneGraph support is in active development and currently released as **alpha** builds.
+> SceneGraph support is mostly complete and currently released as **beta** builds.
 > See the current state of the SceneGraph implementation and other limitations of the **engine** in the [Current Limitations](https://github.com/lvcabral/brs-engine/blob/master/docs/limitations.md) document.
 
 ## Project packages
@@ -68,13 +68,15 @@ No extra glue is required if the file sits next to the worker bundle, but you ca
 - For custom Node.js scripts register it manually:
 
 ```ts
-import { registerExtension } from "brs-engine";
+import { registerExtension } from "brs-node";
 import { BrightScriptExtension } from "brs-scenegraph";
 
 registerExtension(() => new BrightScriptExtension());
 ```
 
 Call `registerExtension` before constructing or executing interpreters so tasks and nodes are ready.
+
+> Note that `registerExtension` is exported by the **interpreter** bundle (`brs-node`), not by the browser API bundle (`brs-engine`'s `lib/brs.api.js`). In browser hosts the extension is loaded by the worker through `DeviceInfo.extensions`, as shown above.
 
 ## Development scripts
 

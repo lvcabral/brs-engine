@@ -24,6 +24,7 @@ The default mapping of the keyboard and game pads to Roku remote control is desc
 | Ctrl+A      |    10      |     A        | A game button.                                                        |
 | Ctrl+Z      |    11      |     B        | B game button.                                                        |
 | F10         |    17      | Volume Mute  | Button to toggle the simulator audio mute on/off.                     |
+| Letters & digits |  n/a  | Text input   | Any other printable key is sent as a literal `lit_<char>` key, used by keyboard dialogs. |
 
 **Note:** There are mappings not listed above, specific for MacOS or Windows, please look at the file [`src/api/control.ts`](../src/api/control.ts) for details.
 

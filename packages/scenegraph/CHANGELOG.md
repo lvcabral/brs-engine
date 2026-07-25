@@ -2,9 +2,130 @@
 
 All notable changes to `brs-scenegraph` extension will be documented in this file.
 
+<a name="v0.3.0"></a>
+
+## [v0.3.0 (beta) - SceneGraph Node Complete](https://github.com/lvcabral/brs-engine/releases/tag/brs-sg-v0.3.0) - 25 July 2026
+
+With this release we graduate the extension from `alpha` to `beta` stage, it completes the SceneGraph node set: every **concrete** node documented by Roku is now implemented, including the whole **Standard Dialog Framework**, the dynamic voice keyboards, the `TimeGrid` (EPG), the `Target*` nodes, the typographic labels and `MaskGroup` alpha-mask compositing. It also brings **Component Libraries**, `roRenderThreadQueue`, a hardened cross-thread rendezvous with direct render→task responses, and a large reduction of the per-node memory footprint for big content trees. Read the full release notes below for more details.
+
+### Release Changes
+
+* (rsg) Added `width`/`height` fields to the `Video` node and suppress its UI when windowed by [@lvcabral](https://github.com/lvcabral) in [#928](https://github.com/lvcabral/brs-engine/pull/928)
+* (rsg) Index `RowList` per-row arrays by the absolute row index by [@lvcabral](https://github.com/lvcabral) in [#930](https://github.com/lvcabral/brs-engine/pull/930)
+* (rsg) Implemented `MaskGroup` alpha-mask compositing by [@lvcabral](https://github.com/lvcabral) in [#931](https://github.com/lvcabral/brs-engine/pull/931)
+* (rsg) Apply the `uri_resolution_autosub` manifest config more robustly by [@lvcabral](https://github.com/lvcabral) in [#932](https://github.com/lvcabral/brs-engine/pull/932)
+* (rsg) Update the global focus pointer before clearing the old focus chain by [@lvcabral](https://github.com/lvcabral) in [#934](https://github.com/lvcabral/brs-engine/pull/934)
+* (rsg) Implemented support for **Component Libraries** by [@lvcabral](https://github.com/lvcabral) in [#936](https://github.com/lvcabral/brs-engine/pull/936)
+* (rsg) Added the `allowBackgroundTask` field to `Scene` with a warning for unsupported Instant Resume by [@lvcabral](https://github.com/lvcabral) in [#937](https://github.com/lvcabral/brs-engine/pull/937)
+* (rsg) Load Component Libraries created at runtime by [@lvcabral](https://github.com/lvcabral) in [#938](https://github.com/lvcabral/brs-engine/pull/938)
+* (rsg) Hardened the cross-thread rendezvous (fidelity and reliability) by [@lvcabral](https://github.com/lvcabral) in [#939](https://github.com/lvcabral/brs-engine/pull/939)
+* (rsg) Rendezvous Phase 2 — `roRenderThreadQueue` and device-accurate timeouts by [@lvcabral](https://github.com/lvcabral) in [#940](https://github.com/lvcabral/brs-engine/pull/940)
+* (rsg) Rendezvous Phase 3a — direct render→task responses (feature-flagged) by [@lvcabral](https://github.com/lvcabral) in [#941](https://github.com/lvcabral/brs-engine/pull/941)
+* (rsg) Rendezvous Phase 3 — finalized the direct render→task responses by [@lvcabral](https://github.com/lvcabral) in [#942](https://github.com/lvcabral/brs-engine/pull/942)
+* (rsg) Restored synchronous (depth-first) observer dispatch with a per-field re-entrancy guard, fixing blank button labels by [@lvcabral](https://github.com/lvcabral) in [#943](https://github.com/lvcabral/brs-engine/pull/943)
+* (rsg) Implemented the **Standard Dialog Framework** nodes by [@lvcabral](https://github.com/lvcabral) in [#944](https://github.com/lvcabral/brs-engine/pull/944)
+* (rsg) Implemented the `SimpleLabel` node by [@lvcabral](https://github.com/lvcabral) in [#945](https://github.com/lvcabral/brs-engine/pull/945)
+* (rsg) Implemented the `MultiStyleLabel` and `StdDlgMultiStyleTextItem` nodes by [@lvcabral](https://github.com/lvcabral) in [#947](https://github.com/lvcabral/brs-engine/pull/947)
+* (rsg) Implemented the `MonospaceLabel` node by [@lvcabral](https://github.com/lvcabral) in [#948](https://github.com/lvcabral/brs-engine/pull/948)
+* (rsg) Implemented the `TimeGrid` node (EPG) by [@lvcabral](https://github.com/lvcabral) in [#949](https://github.com/lvcabral/brs-engine/pull/949)
+* (rsg) Implemented the `TargetSet`, `TargetGroup` and `TargetList` nodes by [@lvcabral](https://github.com/lvcabral) in [#951](https://github.com/lvcabral/brs-engine/pull/951)
+* (rsg) Implemented the Dynamic voice keyboard nodes by [@lvcabral](https://github.com/lvcabral) in [#952](https://github.com/lvcabral/brs-engine/pull/952)
+* (rsg) Use the Dynamic keyboards in the Standard dialog framework by [@lvcabral](https://github.com/lvcabral) in [#953](https://github.com/lvcabral/brs-engine/pull/953)
+* (rsg) Implemented the `roRenderThreadQueue` component (OS 15) by [@lvcabral](https://github.com/lvcabral) in [#954](https://github.com/lvcabral/brs-engine/pull/954)
+* (rsg) Prevent a stack overflow from re-entrant render and the `ContentNode` `parentField` cascade by [@lvcabral](https://github.com/lvcabral) in [#959](https://github.com/lvcabral/brs-engine/pull/959)
+* (rsg) Trim `script.val` in `getScripts()` to ignore whitespace-only bodies by [@markwpearce](https://github.com/markwpearce) in [#961](https://github.com/lvcabral/brs-engine/pull/961)
+* (rsg) Added support for `associativearray` in `FieldKind` and the value type checks by [@lvcabral](https://github.com/lvcabral) in [#963](https://github.com/lvcabral/brs-engine/pull/963)
+* (rsg) Give focus to a custom `StandardDialog`'s buttons by [@lvcabral](https://github.com/lvcabral) in [#968](https://github.com/lvcabral/brs-engine/pull/968)
+* (rsg) Corrected `UserSelect` focus traversal, button centering and grid focus feedback by [@lvcabral](https://github.com/lvcabral) in [#970](https://github.com/lvcabral/brs-engine/pull/970)
+* (rsg) Attach a list item component to its parent before `init()` by [@lvcabral](https://github.com/lvcabral) in [#971](https://github.com/lvcabral/brs-engine/pull/971)
+* (rsg) Implemented the `Video` node `bufferingBar` and `retrievingBar` fields by [@lvcabral](https://github.com/lvcabral) in [#972](https://github.com/lvcabral/brs-engine/pull/972)
+* (rsg) Hug the `LabelList` focus frame instead of overflowing rows by [@lvcabral](https://github.com/lvcabral) in [#976](https://github.com/lvcabral/brs-engine/pull/976)
+* (rsg) Only prevent duplicate fields when those are defined in XML by [@lvcabral](https://github.com/lvcabral) in [#978](https://github.com/lvcabral/brs-engine/pull/978)
+* (rsg) Box AA/Array node-field content the way Roku does (literal-aware) by [@lvcabral](https://github.com/lvcabral) in [#979](https://github.com/lvcabral/brs-engine/pull/979)
+* (rsg) Fixed issues rendering Task-loaded content in grids by [@lvcabral](https://github.com/lvcabral) in [#982](https://github.com/lvcabral/brs-engine/pull/982)
+* (rsg) Cut per-node memory for large content trees with lazy fields and lazy method Callables by [@lvcabral](https://github.com/lvcabral) in [#983](https://github.com/lvcabral/brs-engine/pull/983)
+* (rsg) SceneGraph list, animation and format fixes for the hero-grid and living-room samples by [@lvcabral](https://github.com/lvcabral) in [#984](https://github.com/lvcabral/brs-engine/pull/984)
+* (rsg) `RowList` rendering fixes — item sizing, counter, spacing, labels, wrap and clipping by [@lvcabral](https://github.com/lvcabral) in [#985](https://github.com/lvcabral/brs-engine/pull/985)
+* (rsg) Added the Roku OS 15.3 `Video.captionRenderArea` field with render-thread caption positioning; captions now only render during full-screen playback, as on a device by [@lvcabral](https://github.com/lvcabral) in [#991](https://github.com/lvcabral/brs-engine/pull/991)
+* (rsg) Added regression coverage for `double` SceneGraph fields (OS 15.3) by [@lvcabral](https://github.com/lvcabral) in [#992](https://github.com/lvcabral/brs-engine/pull/992)
+* (rsg) Resolve cross-thread nodes by address via a registry by [@lvcabral](https://github.com/lvcabral) in [#996](https://github.com/lvcabral/brs-engine/pull/996)
+* (rsg) Added the `ifSGNodeBoundingRect` sub-part methods by [@lvcabral](https://github.com/lvcabral) in [#999](https://github.com/lvcabral/brs-engine/pull/999)
+* (rsg) Guard the bounding-rect refresh renders against re-entrancy by [@lvcabral](https://github.com/lvcabral) in [#1000](https://github.com/lvcabral/brs-engine/pull/1000)
+* (rsg) Mirror a remote field add/remove on the local node copy by [@lvcabral](https://github.com/lvcabral) in [#1001](https://github.com/lvcabral/brs-engine/pull/1001)
+* (rsg) Added the `scrollingStatus` field to the `ArrayGrid` based nodes by [@lvcabral](https://github.com/lvcabral) in [#1002](https://github.com/lvcabral/brs-engine/pull/1002)
+* (rsg) Compute bounding rects for nodes under invisible ancestors by [@lvcabral](https://github.com/lvcabral) in [#1003](https://github.com/lvcabral/brs-engine/pull/1003)
+* (rsg) A failed interface field alias no longer aborts the component's remaining fields by [@lvcabral](https://github.com/lvcabral) in [#1004](https://github.com/lvcabral/brs-engine/pull/1004)
+* (rsg) Skip grid slots whose item component failed to create by [@lvcabral](https://github.com/lvcabral) in [#1005](https://github.com/lvcabral/brs-engine/pull/1005)
+* (rsg) `findNode()` searches breadth-first per the `ifSGNodeDict` spec by [@lvcabral](https://github.com/lvcabral) in [#1006](https://github.com/lvcabral/brs-engine/pull/1006)
+* (rsg) The media-node serialization proxy no longer hijacks the singleton player by [@lvcabral](https://github.com/lvcabral) in [#1007](https://github.com/lvcabral/brs-engine/pull/1007)
+* (rsg) `Video` node prebuffer, configurable autoplay, buffering-step delivery and active-player routing by [@lvcabral](https://github.com/lvcabral) in [#1008](https://github.com/lvcabral/brs-engine/pull/1008)
+* (rsg) `Poster` commits the `uri` field before its synchronous load and notification by [@lvcabral](https://github.com/lvcabral) in [#1010](https://github.com/lvcabral/brs-engine/pull/1010)
+* (rsg) `RowList` keeps `currFocusRow`/`currFocusColumn` in sync with the focused item by [@lvcabral](https://github.com/lvcabral) in [#1011](https://github.com/lvcabral/brs-engine/pull/1011)
+* (rsg) Implemented the `ifSGNodeBoundingRect` method `ancestorSubBoundingRect()` by [@lvcabral](https://github.com/lvcabral) in [#1013](https://github.com/lvcabral/brs-engine/pull/1013)
+* (rsg) `DynamicKeyboard` palette support and shared palette resolution by [@lvcabral](https://github.com/lvcabral) in [#1014](https://github.com/lvcabral/brs-engine/pull/1014)
+* (rsg) Corrected button and list layout — 9-patch width, variable-width rows, icon measure and item focus by [@lvcabral](https://github.com/lvcabral) in [#1015](https://github.com/lvcabral/brs-engine/pull/1015)
+* (rsg) Reliable `PanelSet` next-panel creation and focusable-based navigation by [@lvcabral](https://github.com/lvcabral) in [#1017](https://github.com/lvcabral/brs-engine/pull/1017)
+* (rsg) Re-apply the grid item size each frame and fixed WebP images with dropped bottom rows by [@lvcabral](https://github.com/lvcabral) in [#1019](https://github.com/lvcabral/brs-engine/pull/1019)
+* (rsg) `update()` converts a nested `{subtype:...}` AA to a node on any field, not just `children[]` by [@markwpearce](https://github.com/markwpearce) in [#1020](https://github.com/lvcabral/brs-engine/pull/1020)
+* (rsg) Include the inter-item spacing in the grid `boundingRect()` extent by [@lvcabral](https://github.com/lvcabral) in [#1021](https://github.com/lvcabral/brs-engine/pull/1021)
+* (rsg) Honor `clippingRect` to limit node and children rendering by [@lvcabral](https://github.com/lvcabral) in [#1022](https://github.com/lvcabral/brs-engine/pull/1022)
+* (rsg) Re-measure a degenerate bounding rect (either dimension zero) mid-render by [@lvcabral](https://github.com/lvcabral) in [#1023](https://github.com/lvcabral/brs-engine/pull/1023)
+* (rsg) Silence the local mirror of a rendezvous field add so observers fire once by [@lvcabral](https://github.com/lvcabral) in [#1025](https://github.com/lvcabral/brs-engine/pull/1025)
+* (rsg) Don't apply `Label` `vertAlign` when wrapped text has no explicit height by [@lvcabral](https://github.com/lvcabral) in [#1026](https://github.com/lvcabral/brs-engine/pull/1026)
+* (rsg) Apply an interface field's default value through its alias targets by [@lvcabral](https://github.com/lvcabral) in [#1027](https://github.com/lvcabral/brs-engine/pull/1027)
+* (rsg) Emit `vertFocusDirection` with settle-last focus order and honor `Video.asyncStopSemantics` by [@lvcabral](https://github.com/lvcabral) in [#1028](https://github.com/lvcabral/brs-engine/pull/1028)
+* (rsg) Resolve the `RowList`/`ZoomRowList` focused-item `subBoundingRect()` and corrected the vertical outset by [@lvcabral](https://github.com/lvcabral) in [#1029](https://github.com/lvcabral/brs-engine/pull/1029)
+* (rsg) Span the focus-feedback footprint in a `RowList` focused item's `subBoundingRect()` by [@lvcabral](https://github.com/lvcabral) in [#1030](https://github.com/lvcabral/brs-engine/pull/1030)
+* (rsg) Defer reentrant field observers and refresh `subBoundingRect()` on a pending focus change by [@lvcabral](https://github.com/lvcabral) in [#1032](https://github.com/lvcabral/brs-engine/pull/1032)
+* (rsg) Honor `vertAlign` in `ScrollingLabel` by centering against the node height by [@lvcabral](https://github.com/lvcabral) in [#1034](https://github.com/lvcabral/brs-engine/pull/1034)
+* (rsg) Honor numeric-string writes to `ArrayGrid` `numColumns`/`numRows` by [@lvcabral](https://github.com/lvcabral) in [#1035](https://github.com/lvcabral/brs-engine/pull/1035)
+* (rsg) Honor descending key arrays in the `FieldInterpolator` segment resolution by [@lvcabral](https://github.com/lvcabral) in [#1036](https://github.com/lvcabral/brs-engine/pull/1036)
+* (rsg) Fire the initial `itemFocused` when list/grid content is populated after assignment by [@lvcabral](https://github.com/lvcabral) in [#1037](https://github.com/lvcabral/brs-engine/pull/1037)
+* (rsg) Clip `ArrayGrid`/`PosterGrid` items to their cell so overflow is hidden by [@lvcabral](https://github.com/lvcabral) in [#1038](https://github.com/lvcabral/brs-engine/pull/1038)
+* (rsg) Fire `itemFocused` only when the list/grid is in the focus chain by [@lvcabral](https://github.com/lvcabral) in [#1039](https://github.com/lvcabral/brs-engine/pull/1039)
+* (rsg) Fixed the regression caused by [#1037](https://github.com/lvcabral/brs-engine/pull/1037) affecting `ArrayGrid` by [@lvcabral](https://github.com/lvcabral) in [#1040](https://github.com/lvcabral/brs-engine/pull/1040)
+* (rsg) Only defer reentrant observers for engine-initiated field emissions by [@lvcabral](https://github.com/lvcabral) in [#1042](https://github.com/lvcabral/brs-engine/pull/1042)
+* (rsg) Honor `Library` statements in component scripts and completed the RAF mock by [@lvcabral](https://github.com/lvcabral) in [#1043](https://github.com/lvcabral/brs-engine/pull/1043)
+* (rsg) Detach a node from its previous parent when it is attached elsewhere by [@lvcabral](https://github.com/lvcabral) in [#1044](https://github.com/lvcabral/brs-engine/pull/1044)
+* (rsg) `ButtonBar` sample — `RowList` fit check, `LayoutGroup` re-alignment and single-row grid key propagation by [@lvcabral](https://github.com/lvcabral) in [#1045](https://github.com/lvcabral/brs-engine/pull/1045)
+* (rsg) `ZoomRowList` vertical-wrap flag and row-title/poster spacing by [@lvcabral](https://github.com/lvcabral) in [#1046](https://github.com/lvcabral/brs-engine/pull/1046)
+* (rsg) Only the owning, presenting `Video` node renders the video plane by [@lvcabral](https://github.com/lvcabral) in [#1047](https://github.com/lvcabral/brs-engine/pull/1047)
+* (rsg) Added the missing `secondaryTitle` field to `ContentNode` by [@lvcabral](https://github.com/lvcabral) in [#1048](https://github.com/lvcabral/brs-engine/pull/1048)
+* (rsg) Changed the `ContentNode.subtitleTracks` type from `assocarray` to `array` by [@lvcabral](https://github.com/lvcabral) in [#1051](https://github.com/lvcabral/brs-engine/pull/1051)
+* (rsg) Properly handle boxed `String` in `PosterGrid`, `ScrollableText` and `ZoomRowList` by [@lvcabral](https://github.com/lvcabral) in [#1052](https://github.com/lvcabral/brs-engine/pull/1052)
+* (rsg) Position the `PanelSet` right panel using the left panel's `leftPosition` by [@lvcabral](https://github.com/lvcabral) in [#1053](https://github.com/lvcabral/brs-engine/pull/1053)
+* (rsg) Guard the cross-thread serialization against circular container references by [@lvcabral](https://github.com/lvcabral) in [#1055](https://github.com/lvcabral/brs-engine/pull/1055)
+* (rsg) Paint a black plane while a full-screen `Video` with UI enabled is buffering by [@lvcabral](https://github.com/lvcabral) in [#1056](https://github.com/lvcabral/brs-engine/pull/1056)
+* (rsg) Restore function values across `Task` threads from the component AST by [@lvcabral](https://github.com/lvcabral) in [#1057](https://github.com/lvcabral/brs-engine/pull/1057)
+* (rsg) Keep a `Video`'s internal children off the cross-thread serialization by [@lvcabral](https://github.com/lvcabral) in [#1059](https://github.com/lvcabral/brs-engine/pull/1059)
+* (rsg) Keep `ButtonGroup` from managing custom (non-`Button`) `Group` children by [@lvcabral](https://github.com/lvcabral) in [#1060](https://github.com/lvcabral/brs-engine/pull/1060)
+* (rsg) Restore the `m` context on rebuilt custom nodes and fixed the quit debugger loop by [@lvcabral](https://github.com/lvcabral) in [#1061](https://github.com/lvcabral/brs-engine/pull/1061)
+* (rsg) Honor the app-managed visibility/opacity of a dynamic keyboard's `textEditBox` by [@lvcabral](https://github.com/lvcabral) in [#1062](https://github.com/lvcabral/brs-engine/pull/1062)
+* (rsg) Resolve the `fixed` `vertFocusAnimationStyle` to the non-wrapping `fixedFocus` by [@lvcabral](https://github.com/lvcabral) in [#1063](https://github.com/lvcabral/brs-engine/pull/1063)
+* (rsg) Return the measured size from a detached `Label`'s `boundingRect()` mid-render by [@lvcabral](https://github.com/lvcabral) in [#1064](https://github.com/lvcabral/brs-engine/pull/1064)
+* (rsg) Move the live focus when a managed `ButtonGroup`'s `focusButton` changes by [@lvcabral](https://github.com/lvcabral) in [#1065](https://github.com/lvcabral/brs-engine/pull/1065)
+* (rsg) Measure hidden grids, flush `MarkupGrid` rects and reorder on re-append by [@lvcabral](https://github.com/lvcabral) in [#1066](https://github.com/lvcabral/brs-engine/pull/1066)
+* (rsg) Keep the video plane presenting through a mid-stream re-buffer by [@lvcabral](https://github.com/lvcabral) in [#1067](https://github.com/lvcabral/brs-engine/pull/1067)
+* (rsg) `PanelSet` full-screen preview position, focus handling and back-navigation panel retention by [@lvcabral](https://github.com/lvcabral) in [#1068](https://github.com/lvcabral/brs-engine/pull/1068)
+* (rsg) `PanelSet` sets the attached `Panel` height per the Roku spec by [@lvcabral](https://github.com/lvcabral) in [#1069](https://github.com/lvcabral/brs-engine/pull/1069)
+* (rsg) Let single-row `MarkupGrid` vertical keys bubble and honor `horizFocusAnimationStyle` `fixedFocus` by [@lvcabral](https://github.com/lvcabral) in [#1070](https://github.com/lvcabral/brs-engine/pull/1070)
+* (rsg) Decouple the `Timer` polling from the frame-rate-limiting busy-wait by [@markwpearce](https://github.com/markwpearce) in [#1076](https://github.com/lvcabral/brs-engine/pull/1076)
+* (rsg) `parentSubtype()` returns `Invalid` instead of `""` at the hierarchy root by [@markwpearce](https://github.com/markwpearce) in [#1077](https://github.com/lvcabral/brs-engine/pull/1077)
+* (rsg) Reset the key buffer when `roSGScreen` closes, to prevent a stale key leaking into the next screen by [@markwpearce](https://github.com/markwpearce) in [#1081](https://github.com/lvcabral/brs-engine/pull/1081)
+* Node types added in this release:
+  * Standard Dialog Framework: `StandardDialog`, `StandardMessageDialog`, `StandardKeyboardDialog`, `StandardPinPadDialog`, `StdDlgTitleArea`, `StdDlgContentArea`, `StdDlgButtonArea`, `StdDlgSideCardArea`, `StdDlgActionCardItem`, `StdDlgBulletTextItem`, `StdDlgButton`, `StdDlgCustomItem`, `StdDlgDeterminateProgressItem`, `StdDlgItemBase`, `StdDlgKeyboardItem`, `StdDlgMultiStyleTextItem`, `StdDlgTextItem`.
+  * Typographic labels: `SimpleLabel`, `MonospaceLabel`, `MultiStyleLabel`.
+  * Dynamic voice keyboards: `DynamicKeyboard`, `DynamicKeyboardBase`, `DynamicCustomKeyboard`, `DynamicMiniKeyboard`, `DynamicKeyGrid`, `DynamicPinPad`.
+  * Targets and layout: `TargetSet`, `TargetGroup`, `TargetList`, `MaskGroup`.
+  * Data-driven layouts: `TimeGrid` (EPG).
+  * Components: `roRenderThreadQueue`, `ComponentLibrary`.
+* Only the **abstract** base nodes remain mocked as `Group`: `StdDlgAreaBase`, `StdDlgGraphicItem` and `StdDlgItemGroup`.
+
+[Full Changelog][v0.3.0]
+
 <a name="v0.2.0"></a>
 
-## [v0.2.0 - Added ScrollableText, PinPad, PinDialog and ProgressDialog](https://github.com/lvcabral/brs-engine/releases/tag/brs-sg-v0.2.0) - 12 April 2026
+## [v0.2.0 (alpha) - Added ScrollableText, PinPad, PinDialog and ProgressDialog](https://github.com/lvcabral/brs-engine/releases/tag/brs-sg-v0.2.0) - 12 April 2026
 
 This release introduces the `ScrollableText`, `PinPad`, `PinDialog` and `ProgressDialog` nodes to the SceneGraph extension, along with various bug fixes and improvements. Read the full release notes below for more details.
 
@@ -32,7 +153,7 @@ This release introduces the `ScrollableText`, `PinPad`, `PinDialog` and `Progres
 
 <a name="v0.1.0"></a>
 
-## [v0.1.0 - Rendezvous and other major improvements and fixes](https://github.com/lvcabral/brs-engine/releases/tag/brs-sg-v0.1.0) - 11 February 2026
+## [v0.1.0 (alpha) - Rendezvous and other major improvements and fixes](https://github.com/lvcabral/brs-engine/releases/tag/brs-sg-v0.1.0) - 11 February 2026
 
 This release brings major improvements both to the SceneGraph extension, including better support for Task threads, introducing real Rendezvous, support for new node components, and various bug fixes and optimizations. Read the full release notes below for more details.
 
@@ -91,7 +212,7 @@ This release brings major improvements both to the SceneGraph extension, includi
 
 <a name="v0.0.5"></a>
 
-## [v0.0.5 - Various Fixes and Improvements](https://github.com/lvcabral/brs-engine/releases/tag/brs-sg-v0.0.5) - 5 January 2026
+## [v0.0.5 (alpha) - Various Fixes and Improvements](https://github.com/lvcabral/brs-engine/releases/tag/brs-sg-v0.0.5) - 5 January 2026
 
 This release brings several fixes and improvements to the SceneGraph extension, including the implementation of `Animation` and `Interpolator` nodes, as well as various bug fixes related to node creation, focus management, and event handling.
 
@@ -128,7 +249,7 @@ This release brings several fixes and improvements to the SceneGraph extension f
 <a name="v0.0.3"></a>
 
 
-## [v0.0.3 - Node and Task improvements and fixes](https://github.com/lvcabral/brs-engine/releases/tag/brs-sg-v0.0.3) - 24 December 2025
+## [v0.0.3 (alpha) - Node and Task improvements and fixes](https://github.com/lvcabral/brs-engine/releases/tag/brs-sg-v0.0.3) - 24 December 2025
 
 This release brings several fixes and improvements to the SceneGraph extension for the BrightScript Simulation Engine, including support for the `change` field in `Node`, updates to `Task` behavior, and various bug fixes.
 
@@ -144,7 +265,7 @@ This release brings several fixes and improvements to the SceneGraph extension f
 
 <a name="v0.0.2"></a>
 
-## [v0.0.2 - Various Fixes and Improvements](https://github.com/lvcabral/brs-engine/releases/tag/brs-sg-v0.0.2) - 12 December 2025
+## [v0.0.2 (alpha) - Various Fixes and Improvements](https://github.com/lvcabral/brs-engine/releases/tag/brs-sg-v0.0.2) - 12 December 2025
 
 This release brings several fixes and improvements to the SceneGraph extension for the BrightScript Simulation Engine, including fixes for video UI handling, custom font management, and enhancements to node behavior.
 
@@ -160,7 +281,7 @@ This release brings several fixes and improvements to the SceneGraph extension f
 
 <a name="v0.0.1"></a>
 
-## [v0.0.1 - Initial alpha release](https://github.com/lvcabral/brs-engine/releases/tag/brs-sg-v0.0.1) - 05 December 2025
+## [v0.0.1 (alpha) - Initial release](https://github.com/lvcabral/brs-engine/releases/tag/brs-sg-v0.0.1) - 05 December 2025
 
 This first alpha delivers the **SceneGraph** runtime as a standalone extension that plugs into the **BrightScript Simulation Engine**. It bundles both browser (`brs-sg.js`) and Node.js (`brs-sg.node.js`) libraries, merges the core `common:/` assets with the SceneGraph-specific resources, and wires the lifecycle hooks (`onInit`, `onBeforeExecute`, `tick`, `execTask`) required for Roku SceneGraph apps.
 
@@ -175,6 +296,7 @@ This first alpha delivers the **SceneGraph** runtime as a standalone extension t
   * Media + utility nodes: `Audio`, `Video`, `SoundEffect`, `Task`, `Timer`, `ChannelStore`.
 * Published merged `assets/common.zip` so SceneGraph fonts, locale data, dialogs, and imagery are available through the simulated `common:/` volume in both `brs-engine` and `brs-node` packages.
 
+[v0.3.0]: https://github.com/lvcabral/brs-engine/compare/brs-sg-v0.2.0...brs-sg-v0.3.0
 [v0.2.0]: https://github.com/lvcabral/brs-engine/compare/brs-sg-v0.1.0...brs-sg-v0.2.0
 [v0.1.0]: https://github.com/lvcabral/brs-engine/compare/brs-sg-v0.0.5...brs-sg-v0.1.0
 [v0.0.5]: https://github.com/lvcabral/brs-engine/compare/brs-sg-v0.0.4...brs-sg-v0.0.5
