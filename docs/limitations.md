@@ -1,6 +1,6 @@
 # BrightScript Engine Current Limitations
 
-The **BrightScript Engine** implements the BrightScript language specification up to Roku OS 15.0. However, some features and components remain unsupported or only partially implemented. These limitations fall into three categories: features planned for future development, components that will remain as mock objects for compatibility purposes, and functionality considered outside the project's scope. The following sections detail each category and its current status.
+The **BrightScript Engine** implements the BrightScript language specification up to Roku OS 15.3. However, some features and components remain unsupported or only partially implemented. These limitations fall into three categories: features planned for future development, components that will remain as mock objects for compatibility purposes, and functionality considered outside the project's scope. The following sections detail each category and its current status.
 
 ## In Scope (to be developed/fixed in future releases)
 
@@ -8,12 +8,13 @@ The **BrightScript Engine** implements the BrightScript language specification u
   * Load XML component files and create SceneGraph nodes tree.
   * Basic support for `roSGNode` and `roSGScreen` components and rendering.
   * The `Task` node is implemented but its behavior is limited:
-    * For now only 10 concurrent task threads are supported per application
+    * For now only 10 concurrent task threads are supported per application, both in the browser and under Node.js/CLI
     * Only one `port` instance can be used on Task `init()` to observe fields
     * Rendezvous is supported, but still not working properly for all edge cases.
-  * All documented SceneGraph nodes are implemented. Because the engine is a simulator and not a hardware emulator, expect **rendering differences** from a real Roku device, and some nodes may not have full functionality yet — please open a [GitHub issue](https://github.com/lvcabral/brs-engine/issues) if you find any problem or missing feature.
+    * `Task` nodes never spawn under the synchronous `executeFile()` execution model of the Node.js library — use `executeApp()` for Task support, see the [Node.js library guide](./using-node-library.md#running-apps-on-worker-threads-with-scenegraph-task-support).
+  * All **concrete** SceneGraph nodes documented by Roku are implemented. Because the engine is a simulator and not a hardware emulator, expect **rendering differences** from a real Roku device, and some nodes may not have full functionality yet — please open a [GitHub issue](https://github.com/lvcabral/brs-engine/issues) if you find any problem or missing feature.
   * The support for focus change animation on grids, lists and panel nodes is not implemented yet.
-  * Some abstract/base nodes are not implemented on their own (for example the Standard Dialog framework's `StdDlgAreaBase`, `StdDlgItemBase`, `StdDlgItemGroup` and `StdDlgGraphicItem`).
+  * The remaining **abstract** base nodes are not implemented on their own and fall back to a plain `Group` (the Standard Dialog framework's `StdDlgAreaBase`, `StdDlgItemGroup` and `StdDlgGraphicItem`).
   * **Component Libraries** are supported, both declared in XML (`<ComponentLibrary id="..." uri="..."/>`) and created at runtime via `CreateObject("roSGNode", "ComponentLibrary")` with the `uri` assigned in code. The component namespace is the library manifest's `sg_component_libs_provided` value (falling back to the node `id` when not declared), so its components are referenced as `LibraryName:ComponentName`. The `uri` may point to a local volume (`pkg:/`, `tmp:/`, `ext1:/`) or a remote `http(s)://` package (the configured CORS proxy is honored). Current limitations:
     * Libraries are fetched and compiled **synchronously** (the BrightScript event loop never yields, so an asynchronous load could not complete mid-execution). The node reports `loadStatus = "loading"` immediately and the `"ready"`/`"failed"` transition is emitted on the next render frame, so `observeField("loadStatus", ...)` callbacks are notified as on a real device — provided the app is pumping its screen message loop (`wait(...)`).
     * Inside a library, `pkg:/` still resolves to the host app's package (not the library's own); reference a library's bundled scripts with relative `uri` paths in its component XML.
@@ -29,6 +30,7 @@ The **BrightScript Engine** implements the BrightScript language specification u
   * If the instance of `roVideoPlayer` or `Video` is destroyed the video keeps playing, make sure to `stop` before discarding the object.
   * The following `roVideoPlayer` methods are not supported, implemented as mock: `setCGMS`, `setMaxVideoDecodeResolution`, `setTimedMetadataForKeys`, `getCaptionRenderer`
   * Check what formats (container and codec) can be used on each browser, using `roDeviceInfo.canDecodeVideo()`, to make sure your video can be played.
+  * Under **Node.js/CLI** there is no audio or video output: `autoPlayEnabled` is forced off and media events are only simulated, so apps behave as if playback never starts.
   * Subtitles are only supported for HLS streams and only in `Video` node, the `roVideoPlayer` does not support subtitles until `roCaptionRenderer` is implemented.
   * DASH streams and BIF (Base Index Frames) thumbnails are not yet supported.
 * The component `roUrlTransfer` is implemented with basic functionality but with the following limitations:
@@ -41,7 +43,7 @@ The **BrightScript Engine** implements the BrightScript language specification u
   * Cookies are only partially supported, if `EnableCookies` is called and `EnableFreshConnection` is set to `false`, then Cookies from previous calls will be preserved.
   * The other Cookies related methods are just mocked and do nothing: `GetCookies`, `AddCookies`, `ClearCookies`.
   * The following methods are also only mocked but do nothing: `EnableResume`, `SetHttpVersion` and `SetMinimumTransferRate`.
-* The complete **Roku OS** file system is available and shared among threads (main, render and tasks), with all volumes: `pkg:`, `common:`, `tmp:`, `cachefs:` and `ext1:`. By default, the external volume (`ext1:`) and the writeable volumes (`tmp:` `cachefs:`) are limited to 32 MB each, see [customization documentation](./customization.md) to learn how to change the limits for writable volumes.
+* The complete **Roku OS** file system is available and shared among threads (main, render and tasks), with all volumes: `pkg:`, `common:`, `tmp:`, `cachefs:` and `ext1:`. By default, the external volume (`ext1:`) and the writeable volumes (`tmp:` `cachefs:`) are limited to 32 MB each. The writable volumes `tmp:` and `cachefs:` are configurable, see [customization documentation](./customization.md); the `ext1:` limit is fixed.
 * The `roInput` deep link events are supported, but the events related to Voice Commands are not available yet.
 * The component `roAppMemoryMonitor` will only return measured data in Node.JS and Chromium browsers. For browsers the memory heap info only accounts for the main thread, as WebWorkers do not have support for `performance.memory` API. The `roAppMemoryMonitorEvent` is not yet implemented.
 * The global functions `Eval()`, `GetLastRunCompileError()` and `GetLastRunRuntimeError()` are not available.

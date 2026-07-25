@@ -57,7 +57,7 @@ An interactive BrightScript REPL (Read-Execute-Print Loop) is available by runni
 ```console
 $ brs-cli
 
-BrightScript Simulation Engine CLI [v2.2.0]
+BrightScript Simulation Engine CLI [v2.3.0]
 
 type `help` to see the list of valid REPL commands.
 
@@ -66,6 +66,20 @@ Dennis Ritchie said "Hello, World!"
 ```
 
 Quit by pressing `^D` (Control-D) or executing `exit`.
+
+Any valid BrightScript expression is compiled and run live. In addition, the REPL accepts the following commands:
+
+| Command | Description |
+| --- | --- |
+| `print` or `?` | Print a variable value or expression |
+| `var` or `vars [scope]` | Display variables and their types/values (`scope` is `global`, `module` or `function`) |
+| `vol` or `vols` | Display the file system mounted volumes |
+| `mnt` or `mount <path>` | Mount the `ext1:` volume from a directory or zip file |
+| `umt` or `umount` | Unmount the `ext1:` volume |
+| `xt` or `ext` | Display the loaded extensions |
+| `help` or `hint` | Show the REPL command list |
+| `clear` or `cls` | Clear the terminal screen |
+| `exit`, `quit` or `q` | Terminate the REPL session |
 
 ## Setting the Color Level
 
@@ -110,7 +124,7 @@ $ brs-cli ../tests/test-sandbox.zip
 
 #### Notes
 
-* If the app has `ifDraw2D` screens, the app will run but nothing is displayed, unless you use the `--ascii` parameter (see below).
+* If the app has `ifDraw2D` screens, the app will run but nothing is displayed, unless you use one of the screen rendering options `--ascii`, `--unicode` or `--image` (see below).
 * The app runs on a dedicated worker thread, so you can control it interactively with the keyboard (see below) or via the `--ecp` option.
 * SceneGraph `Task` nodes run on their own worker threads, mirroring the browser engine and a real device.
 * Use the flag `--registry` to have the device registry data saved to the disk, and restored in following app executions.
@@ -179,7 +193,9 @@ The app runs on a dedicated worker thread, leaving the terminal free for interac
 | PageUp / PageDown | Rewind / Fast Forward |
 | F7 / F9 | Rewind / Fast Forward |
 | Ctrl+Left / Ctrl+Right | Rewind / Fast Forward |
-| Insert or F10 | Info (*) |
+| Insert or F10 | Info |
+| Ctrl+Backspace | Backspace (deletes a character in keyboard dialogs) |
+| Ctrl+Enter | Play/Pause |
 | Ctrl+A / Ctrl+Z | A / B (game remote) |
 | Letters / digits | Text input (keyboard dialogs) |
 | Ctrl+S | Save a screenshot (requires `--snapshot`) |
@@ -270,7 +286,7 @@ If no password is provided the app will be executed and no encryption happens, b
 ```console
 $ brs-cli ../tests/test-sandbox.zip --pack b4bf93d0d5e547ca8edcc0f39c6bcc16 --out ./release
 
-BrightScript Simulation Engine CLI [v2.2.0]
+BrightScript Simulation Engine CLI [v2.3.0]
 
 Packaging ../tests/test-sandbox.zip...
 

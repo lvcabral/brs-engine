@@ -30,7 +30,7 @@ This package includes a **Web Worker** library and an **Engine API** library for
 
 ### ⚙️ BrightScript Interpreter
 
-- Full BrightScript language interpreter, with specs aligned up to Roku OS 15.0
+- Full BrightScript language interpreter, with specs aligned up to Roku OS 15.3
 - **Draw 2D API** - Full support for the BrightScript 2D drawing components
 - **SceneGraph Framework** - Experimental support for the BrightScript SceneGraph components
 - **Video Playback** - Via `roVideoPlayer` and `Video` node
@@ -54,7 +54,7 @@ SceneGraph support is provided by the optional [`brs-scenegraph`](https://www.np
 
 > ⚠️ Note:
 >
-> **SceneGraph** extension is currently under development, with pre-release **alpha** versions available for testing. See the current state of the SceneGraph implementation and other limitations of the **engine** in the [Current Limitations](https://github.com/lvcabral/brs-engine/blob/master/docs/limitations.md) document.
+> **SceneGraph** extension is mostly complete, with **beta** versions available for testing. See the current state of the SceneGraph implementation and other limitations of the **engine** in the [Current Limitations](https://github.com/lvcabral/brs-engine/blob/master/docs/limitations.md) document.
 
 ## Installation
 
@@ -66,8 +66,9 @@ npm install brs-engine
 
 | Library File | Description |
 | --- | --- |
-| `libs/brs.api.js` | The **[Engine API](https://github.com/lvcabral/brs-engine/blob/master/docs/engine-api.md)** library to be imported and used by the applications hosting the Simulator. |
-| `libs/brs.worker.js` | A **[Web Worker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers)** library that runs the language interpreter in a background thread on the browser platform. |
+| `lib/brs.api.js` | The **[Engine API](https://github.com/lvcabral/brs-engine/blob/master/docs/engine-api.md)** library to be imported and used by the applications hosting the Simulator. |
+| `lib/brs.worker.js` | A **[Web Worker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers)** library that runs the language interpreter in a background thread on the browser platform. |
+| `lib/brs-sg.js` | The optional **[SceneGraph extension](https://www.npmjs.com/package/brs-scenegraph)** bundle, loaded by the worker when the app contains `pkg:/components/`. Must be deployed in the same folder as the worker. |
 
 ### Compatibility
 

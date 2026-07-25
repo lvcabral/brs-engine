@@ -28,7 +28,7 @@ This repository is organized as a [monorepo](https://en.wikipedia.org/wiki/Monor
 
 > [!NOTE]
 >
-> - The **SceneGraph** support is currently in development, and released as an experimental feature. We have a lot of challenges ahead, feel free to reach out and learn how [you can help](docs/contributing.md).
+> - The **SceneGraph** support is mostly complete, and released as **beta** builds. We have a lot of challenges ahead, feel free to reach out and learn how [you can help](docs/contributing.md).
 > - Although **brs-engine** runs apps with user interface, it has no intention of emulating the full **Roku OS** or hardware devices, it is primarily aimed as a development tool for the **Roku Community**.
 > - The **simulation engine** can also to be used as a framework for running **BrightScript** apps and games in other platforms, like iOS, macOS, Android, Linux and Windows.
 > - Please check the [Current Limitations](docs/limitations.md) document for further details on what is still missing or out of scope.
@@ -40,7 +40,7 @@ This repository is organized as a [monorepo](https://en.wikipedia.org/wiki/Monor
 
 ### For web applications, PWAs, and Electron apps
 
-The browser package provides a complete BrightScript interpreter that runs directly in browser environments with full support for the BrightScript language up to Roku OS version 15.
+The browser package provides a complete BrightScript interpreter that runs directly in browser environments with full support for the BrightScript language up to Roku OS version 15.3.
 
 - **Client-side execution** - No server required
 - **Web Worker** - Interpreter runs in a Web Worker, optimized for browser performance
@@ -67,8 +67,11 @@ npm install brs-engine
 The Node.js package includes a complete CLI application, ECP and SSDP servers, and the Simulation Engine Node.js library that provides a powerful environment for running BrightScript applications in a server-side context or in test automation workflows.
 
 - **Interactive REPL** - Command-line BrightScript shell
-- **File Execution** - Run `.brs`, `.zip`, and `.bpk` files
-- **ASCII Rendering** - Simulates `roScreen` and `roSGScreen` output in the terminal
+- **File Execution** - Run `.brs`, `.zip`, and `.bpk` files, or a folder app via `--root`
+- **Worker Threads** - The app runs on its own worker thread, and so does each SceneGraph `Task`
+- **Terminal Rendering** - Simulates `roScreen` and `roSGScreen` output in the terminal as ASCII art, Unicode blocks or inline images (iTerm2/Kitty)
+- **Keyboard Remote** - The keyboard acts as the Roku remote control while the app runs
+- **Logs and Snapshots** - Redirect text output to a file (`--log`) and save the screen as PNG (`--snapshot`)
 - **ECP Server** - External Control Protocol implementation
 - **Package Creation** - Build and encrypt `.bpk` files
 - **CI/CD Integration** - Perfect for automated testing
@@ -105,6 +108,7 @@ There are many ways you can use and/or participate in the project, read the docu
 - [How to customize the Engine behavior](docs/customization.md)
 - [Remote Control Simulation](docs/remote-control.md)
 - [BrightScript Engine API reference](docs/engine-api.md)
+- [SceneGraph Rendezvous architecture](docs/scenegraph-rendezvous.md)
 - [BrightScript Engine Limitations](docs/limitations.md)
 - [How to contribute to this Project](docs/contributing.md)
 

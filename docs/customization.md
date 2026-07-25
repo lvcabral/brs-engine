@@ -25,6 +25,7 @@ const deviceInfo = {
   audioVolume: 50, // Defines the default volume level for system sounds - valid: (0-100)
   audioLanguage: "en", // Preferred audio track language
   autoPlayEnabled: true, // Autoplay device setting, returned by `roDeviceInfo.IsAutoplayEnabled()` (default: enabled)
+  minVideoBufferMs: 700, // Simulated minimum buffering floor (ms) before video playback starts
   maxFps: 60, // Maximum frames per second for rendering
   tmpVolSize: 32 * 1024 * 1024, // Allocated size for `tmp:/` volume (32 MB)
   cacheFSVolSize: 32 * 1024 * 1024, // Allocated size for `cachefs:/` volume (32 MB)

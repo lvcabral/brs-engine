@@ -25,6 +25,10 @@ class MyExtension implements BrsExtension {
 registerExtension(() => new MyExtension());
 ```
 
+> [!IMPORTANT]
+>
+> `registerExtension` lives in the **interpreter** bundle, not in the browser API bundle. It is exported at runtime by `brs-node` (and by `brs.worker.js`), but **not** by `brs-engine`'s `lib/brs.api.js`, which runs on the main thread. In the browser, an extension is therefore never registered from the page — declare it in `DeviceInfo.extensions` and let the worker load it, as described below.
+
 ## SceneGraph extension (`brs-scenegraph`)
 
 The SceneGraph runtime ships as a standalone extension located under `packages/scenegraph`. It owns the XML component parser, `RoSGScreen`, nodes, and task execution helpers.
@@ -76,7 +80,7 @@ See the [Node.js library guide](./using-node-library.md) for the full comparison
 
 ### Common volume assets
 
-SceneGraph needs fonts, locale tables, and imagery that do not ship with the core interpreter. During `npm run build` or `npm run release` inside `packages/scenegraph` so this package's assets build step runs:
+SceneGraph needs fonts, locale tables, and imagery that do not ship with the core interpreter. Run `npm run build` (or `npm run release`) inside `packages/scenegraph` so this package's assets build step runs. It will:
 
 - Copy the base assets from `src/core/common` and merge them with the extension overrides under `src/extensions/scenegraph/common` (extension files win on name collisions).
 - Zip the merged tree to `packages/scenegraph/assets/common.zip`, which mirrors Roku's `common:/` volume.

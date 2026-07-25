@@ -52,4 +52,5 @@ There aren't to many mandatory things for pull requests, besides what you'd expe
 
 1. Pull requests should be based on a pretty recent version of the `master` branch, to minimize merge conflicts.
 1. All tests should pass (run `npm test`).
+1. Code should be formatted and lint-clean (run `npm run prettier:write` and `npm run lint`).
 1. End to end tests written in BrightScript should be present to exercise the bug or new feature.  These don't need to be exhaustive &mdash; just enough to ensure that the major use-cases are covered.  More in-depth testing can happen via unit test.

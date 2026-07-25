@@ -191,7 +191,7 @@ const files = [
     path.join(__dirname, "lib", "utils.brs")
 ];
 
-const payload = brs.createPayloadFromFiles(
+const payload = await brs.createPayloadFromFiles(
     files,
     deviceData,
     new Map(), // deepLink parameters (optional)
@@ -426,12 +426,16 @@ const brs = require("brs-node");
 
 (async () => {
     // Get REPL interpreter instance
-    const replInterpreter = await brs.getReplInterpreter({
+    const replInterpreter = brs.getReplInterpreter({
         device: deviceData,
         root: "/path/to/pkg/root",    // optional
         ext: "/path/to/ext/root",      // optional
         extZip: undefined               // optional ArrayBuffer with zip data
     });
+    if (!replInterpreter) {
+        console.error("Could not create the REPL interpreter");
+        return;
+    }
 
     // Execute single line
     brs.executeLine("print \"Hello, World!\"", replInterpreter);
@@ -517,9 +521,8 @@ For advanced use cases with worker threads (like the ECP server):
 const { Worker } = require("worker_threads");
 
 // Create shared buffer for communication
-const dataBufferIndex = 128; // From brs.dataBufferIndex
-const dataBufferSize = 128;  // From brs.dataBufferSize
-const length = dataBufferIndex + dataBufferSize;
+// Always derive the size from the exported constants, never hardcode it
+const length = brs.DataBufferIndex + brs.DataBufferSize;
 const sharedBuffer = new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT * length);
 const sharedArray = new Int32Array(sharedBuffer);
 sharedArray.fill(-1);
@@ -599,7 +602,7 @@ async function execute(filenames, options = {}, deepLink) {
     // Reset file system for clean test
     brs.BrsDevice.fileSystem.resetMemoryFS();
 
-    const payload = brs.createPayloadFromFiles(filenames, deviceData);
+    const payload = await brs.createPayloadFromFiles(filenames, deviceData);
     if (deepLink) {
         payload.deepLink = deepLink;
     }
@@ -738,7 +741,7 @@ Creates an execution payload from BrightScript files.
 - `root?: string` - Root directory for `pkg:/` volume
 - `ext?: string` - Root directory for `ext1:/` volume
 
-**Returns:** `AppPayload`
+**Returns:** `Promise<AppPayload>`
 
 #### `createPayloadFromFileMap(fileMap, device, deepLink?)`
 
@@ -807,6 +810,7 @@ This is also the only mode that supports packaging (`cipherText` in the result).
 
 - `payload: AppPayload` - Application payload to execute
 - `options?: object` - Execution options
+- `useMainEnv?: boolean` - Run in the main environment instead of a fresh one; used by the CLI packaging path (`--pack`)
 
 **Returns:** `Promise<{ exitReason: string, cipherText?: ArrayBuffer, iv?: Uint8Array }>`
 
@@ -858,7 +862,7 @@ Creates a REPL interpreter instance for interactive execution.
 
 - `options: { device: DeviceInfo, root?: string, ext?: string, extZip?: ArrayBuffer }`
 
-**Returns:** `Promise<ReplInterpreter>`
+**Returns:** `Interpreter | null` - this function is **synchronous**; it returns `null` when the configuration is invalid (e.g. missing `device.assets`), so always null-check the result.
 
 #### `executeLine(line, interpreter)`
 

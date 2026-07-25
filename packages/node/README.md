@@ -32,7 +32,7 @@ The **BrightScript Simulation Engine** provides a complete a set of libraries an
 
 ### ⚙️ BrightScript Interpreter
 
-- Full BrightScript language interpreter, with specs aligned up to Roku OS 15.0
+- Full BrightScript language interpreter, with specs aligned up to Roku OS 15.3
 - **Draw 2D API** - Full support for the BrightScript 2D drawing components
 - **SceneGraph Framework** - Experimental support for the Roku SceneGraph components (see section below)
 - **Video Playback** - Via `roVideoPlayer` and `Video` node
@@ -44,7 +44,7 @@ The **BrightScript Simulation Engine** provides a complete a set of libraries an
 - **Screen resolutions** - Support for various Roku display modes
 - **Input Handling** - Keyboard and gamepad simulation for remote control input, see [docs](https://github.com/lvcabral/brs-engine/blob/master/docs/remote-control.md) for more details
 - **File System Simulation** - Including `pkg:/`, `tmp:/`, `cachefs:/`, `common:/` and `ext1:/` volumes
-- **Registry simulation** - Roku device registry emulation saved on browser local storage
+- **Registry simulation** - Roku device registry emulation, persisted to a local `registry.json` in the user data folder when `--registry` is used
 - **Micro Debugger** - Step-through debugging capabilities, similar to the Roku experience
 - **ECP Server** - [External Control Protocol](https://developer.roku.com/dev/docs/external-control-api) for remote control
 - **SSDP Discovery** - Device discovery simulation
@@ -62,7 +62,7 @@ Refer to the [extensions guide](https://github.com/lvcabral/brs-engine/blob/mast
 
 > ⚠️ Note:
 >
-> **SceneGraph** extension is currently under development, with pre-release **alpha** versions available for testing. See the current state of the SceneGraph implementation and other limitations of the **engine** in the [Current Limitations](https://github.com/lvcabral/brs-engine/blob/master/docs/limitations.md) document.
+> **SceneGraph** extension is mostly complete, with **beta** versions available for testing. See the current state of the SceneGraph implementation and other limitations of the **engine** in the [Current Limitations](https://github.com/lvcabral/brs-engine/blob/master/docs/limitations.md) document.
 
 ## Installation
 
