@@ -16,7 +16,7 @@ The monorepo publishes three packages, on two version lines:
    - Refresh the lock file with `npm install --package-lock-only`.
 2. Update `CHANGELOG.md` (engine and node) and `packages/scenegraph/CHANGELOG.md` (extension), adding the new
    version section and its reference link at the bottom of each file.
-3. Run `npm run prettier:write`, `npm run lint` and `npm test`.
+3. Run `npm run prettier:write`, `npm run lint`, `npm run build` and `npm test`.
 4. Commit as `Bump to vX.Y.Z (core) and v0.Y.Z (rsg)`, then tag that same commit twice: `vX.Y.Z` and `brs-sg-vX.Y.Z`.
 5. Build the production bundles with `npm run release` (the `prepublishOnly` script of each package also does this).
 6. Publish each package (see below).
@@ -28,8 +28,8 @@ The monorepo publishes three packages, on two version lines:
 ## Publish a Pre-Release Package
 
 - Run `npm publish -w <package-name> --tag alpha` to publish the package under the `alpha` tag
-- Run `npm publish -w <package-name> --tag beta` to publish the package under the `beta` tag — this is the
-  current tag used by `brs-scenegraph` while the SceneGraph extension is in beta
+- Run `npm publish -w <package-name> --tag beta` to publish the package under the `beta` tag
+- - Run `npm publish -w <package-name> --tag dev` to publish the package under the `dev` tag
 
 ## To check published versions
 
