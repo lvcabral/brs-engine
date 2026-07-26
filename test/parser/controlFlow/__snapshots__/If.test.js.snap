@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`parser if statements block if allows 'then' to be skipped 1`] = `
+exports[`parser if statements > block if > allows 'then' to be skipped 1`] = `
 [
   If {
     "condition": Binary {
@@ -471,7 +471,7 @@ exports[`parser if statements block if allows 'then' to be skipped 1`] = `
 ]
 `;
 
-exports[`parser if statements block if parses if only 1`] = `
+exports[`parser if statements > block if > parses if only 1`] = `
 [
   If {
     "condition": Binary {
@@ -721,7 +721,7 @@ exports[`parser if statements block if parses if only 1`] = `
 ]
 `;
 
-exports[`parser if statements block if parses if-else 1`] = `
+exports[`parser if statements > block if > parses if-else 1`] = `
 [
   If {
     "condition": Binary {
@@ -1058,7 +1058,7 @@ exports[`parser if statements block if parses if-else 1`] = `
 ]
 `;
 
-exports[`parser if statements block if parses if-elseif-else 1`] = `
+exports[`parser if statements > block if > parses if-elseif-else 1`] = `
 [
   If {
     "condition": Binary {
@@ -1545,7 +1545,7 @@ exports[`parser if statements block if parses if-elseif-else 1`] = `
 ]
 `;
 
-exports[`parser if statements block if sets endif token properly 1`] = `
+exports[`parser if statements > block if > sets endif token properly 1`] = `
 [
   Function {
     "func": Function {
@@ -1926,7 +1926,7 @@ exports[`parser if statements block if sets endif token properly 1`] = `
 ]
 `;
 
-exports[`parser if statements catches one-line if statement missing first colon 1`] = `
+exports[`parser if statements > catches one-line if statement missing first colon 1`] = `
 [
   If {
     "condition": Binary {
@@ -2070,7 +2070,7 @@ exports[`parser if statements catches one-line if statement missing first colon 
 ]
 `;
 
-exports[`parser if statements catches one-line if statement missing second colon 1`] = `
+exports[`parser if statements > catches one-line if statement missing second colon 1`] = `
 [
   If {
     "condition": Binary {
@@ -2230,9 +2230,9 @@ exports[`parser if statements catches one-line if statement missing second colon
 ]
 `;
 
-exports[`parser if statements catches one-line if statement with colon and missing end if 1`] = `[]`;
+exports[`parser if statements > catches one-line if statement with colon and missing end if 1`] = `[]`;
 
-exports[`parser if statements catches one-line if statement with colon and missing end if 2`] = `
+exports[`parser if statements > catches one-line if statement with colon and missing end if 2`] = `
 [
   Function {
     "func": Function {
@@ -2349,7 +2349,7 @@ exports[`parser if statements catches one-line if statement with colon and missi
 ]
 `;
 
-exports[`parser if statements catches one-line if statement with else missing colons 1`] = `
+exports[`parser if statements > catches one-line if statement with else missing colons 1`] = `
 [
   If {
     "condition": Binary {
@@ -2579,7 +2579,7 @@ exports[`parser if statements catches one-line if statement with else missing co
 ]
 `;
 
-exports[`parser if statements dotted set in else block 1`] = `
+exports[`parser if statements > dotted set in else block 1`] = `
 [
   If {
     "condition": Literal {
@@ -2845,7 +2845,7 @@ exports[`parser if statements dotted set in else block 1`] = `
 ]
 `;
 
-exports[`parser if statements single-line if allows 'then' to be skipped 1`] = `
+exports[`parser if statements > single-line if > allows 'then' to be skipped 1`] = `
 [
   If {
     "condition": Binary {
@@ -3225,7 +3225,823 @@ exports[`parser if statements single-line if allows 'then' to be skipped 1`] = `
 ]
 `;
 
-exports[`parser if statements single-line if inside multi-line if 1`] = `
+exports[`parser if statements > single-line if > parses if only 1`] = `
+[
+  If {
+    "condition": Binary {
+      "left": Literal {
+        "_location": {
+          "end": {
+            "column": -9,
+            "line": -9,
+          },
+          "start": {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "value": Int32 {
+          "kind": 4,
+          "legacy": false,
+          "literal": false,
+          "value": 1,
+        },
+      },
+      "right": Literal {
+        "_location": {
+          "end": {
+            "column": -9,
+            "line": -9,
+          },
+          "start": {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "value": Int32 {
+          "kind": 4,
+          "legacy": false,
+          "literal": false,
+          "value": 2,
+        },
+      },
+      "token": {
+        "isReserved": false,
+        "kind": "Less",
+        "literal": undefined,
+        "location": {
+          "end": {
+            "column": -9,
+            "line": -9,
+          },
+          "start": {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": "<",
+      },
+    },
+    "elseBranch": undefined,
+    "elseIfs": [],
+    "thenBranch": Block {
+      "location": {
+        "end": {
+          "column": -9,
+          "line": -9,
+        },
+        "file": undefined,
+        "start": {
+          "column": -9,
+          "line": -9,
+        },
+      },
+      "statements": [
+        Assignment {
+          "name": {
+            "isReserved": false,
+            "kind": "Identifier",
+            "literal": undefined,
+            "location": {
+              "end": {
+                "column": -9,
+                "line": -9,
+              },
+              "start": {
+                "column": -9,
+                "line": -9,
+              },
+            },
+            "text": "foo",
+          },
+          "tokens": {
+            "equals": {
+              "isReserved": false,
+              "kind": "Equal",
+              "literal": undefined,
+              "location": {
+                "end": {
+                  "column": -9,
+                  "line": -9,
+                },
+                "start": {
+                  "column": -9,
+                  "line": -9,
+                },
+              },
+              "text": "=",
+            },
+          },
+          "value": Literal {
+            "_location": {
+              "end": {
+                "column": -9,
+                "line": -9,
+              },
+              "start": {
+                "column": -9,
+                "line": -9,
+              },
+            },
+            "value": BrsBoolean {
+              "kind": 2,
+              "legacy": false,
+              "literal": true,
+              "value": true,
+            },
+          },
+        },
+      ],
+    },
+    "tokens": {
+      "else": undefined,
+      "elseIfs": [],
+      "endIf": undefined,
+      "if": {
+        "isReserved": true,
+        "kind": "If",
+        "literal": undefined,
+        "location": {
+          "end": {
+            "column": -9,
+            "line": -9,
+          },
+          "start": {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": "if",
+      },
+      "then": {
+        "isReserved": true,
+        "kind": "Identifier",
+        "literal": undefined,
+        "location": {
+          "end": {
+            "column": -9,
+            "line": -9,
+          },
+          "start": {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": "then",
+      },
+    },
+  },
+]
+`;
+
+exports[`parser if statements > single-line if > parses if-else 1`] = `
+[
+  If {
+    "condition": Binary {
+      "left": Literal {
+        "_location": {
+          "end": {
+            "column": -9,
+            "line": -9,
+          },
+          "start": {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "value": Int32 {
+          "kind": 4,
+          "legacy": false,
+          "literal": false,
+          "value": 1,
+        },
+      },
+      "right": Literal {
+        "_location": {
+          "end": {
+            "column": -9,
+            "line": -9,
+          },
+          "start": {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "value": Int32 {
+          "kind": 4,
+          "legacy": false,
+          "literal": false,
+          "value": 2,
+        },
+      },
+      "token": {
+        "isReserved": false,
+        "kind": "Less",
+        "literal": undefined,
+        "location": {
+          "end": {
+            "column": -9,
+            "line": -9,
+          },
+          "start": {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": "<",
+      },
+    },
+    "elseBranch": Block {
+      "location": {
+        "end": {
+          "column": -9,
+          "line": -9,
+        },
+        "file": undefined,
+        "start": {
+          "column": -9,
+          "line": -9,
+        },
+      },
+      "statements": [
+        Assignment {
+          "name": {
+            "isReserved": false,
+            "kind": "Identifier",
+            "literal": undefined,
+            "location": {
+              "end": {
+                "column": -9,
+                "line": -9,
+              },
+              "start": {
+                "column": -9,
+                "line": -9,
+              },
+            },
+            "text": "foo",
+          },
+          "tokens": {
+            "equals": {
+              "isReserved": false,
+              "kind": "Equal",
+              "literal": undefined,
+              "location": {
+                "end": {
+                  "column": -9,
+                  "line": -9,
+                },
+                "start": {
+                  "column": -9,
+                  "line": -9,
+                },
+              },
+              "text": "=",
+            },
+          },
+          "value": Literal {
+            "_location": {
+              "end": {
+                "column": -9,
+                "line": -9,
+              },
+              "start": {
+                "column": -9,
+                "line": -9,
+              },
+            },
+            "value": BrsBoolean {
+              "kind": 2,
+              "legacy": false,
+              "literal": true,
+              "value": false,
+            },
+          },
+        },
+      ],
+    },
+    "elseIfs": [],
+    "thenBranch": Block {
+      "location": {
+        "end": {
+          "column": -9,
+          "line": -9,
+        },
+        "file": undefined,
+        "start": {
+          "column": -9,
+          "line": -9,
+        },
+      },
+      "statements": [
+        Assignment {
+          "name": {
+            "isReserved": false,
+            "kind": "Identifier",
+            "literal": undefined,
+            "location": {
+              "end": {
+                "column": -9,
+                "line": -9,
+              },
+              "start": {
+                "column": -9,
+                "line": -9,
+              },
+            },
+            "text": "foo",
+          },
+          "tokens": {
+            "equals": {
+              "isReserved": false,
+              "kind": "Equal",
+              "literal": undefined,
+              "location": {
+                "end": {
+                  "column": -9,
+                  "line": -9,
+                },
+                "start": {
+                  "column": -9,
+                  "line": -9,
+                },
+              },
+              "text": "=",
+            },
+          },
+          "value": Literal {
+            "_location": {
+              "end": {
+                "column": -9,
+                "line": -9,
+              },
+              "start": {
+                "column": -9,
+                "line": -9,
+              },
+            },
+            "value": BrsBoolean {
+              "kind": 2,
+              "legacy": false,
+              "literal": true,
+              "value": true,
+            },
+          },
+        },
+      ],
+    },
+    "tokens": {
+      "else": {
+        "isReserved": true,
+        "kind": "Else",
+        "literal": undefined,
+        "location": {
+          "end": {
+            "column": -9,
+            "line": -9,
+          },
+          "start": {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": "else",
+      },
+      "elseIfs": [],
+      "endIf": undefined,
+      "if": {
+        "isReserved": true,
+        "kind": "If",
+        "literal": undefined,
+        "location": {
+          "end": {
+            "column": -9,
+            "line": -9,
+          },
+          "start": {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": "if",
+      },
+      "then": {
+        "isReserved": true,
+        "kind": "Identifier",
+        "literal": undefined,
+        "location": {
+          "end": {
+            "column": -9,
+            "line": -9,
+          },
+          "start": {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": "Then",
+      },
+    },
+  },
+]
+`;
+
+exports[`parser if statements > single-line if > parses if-elseif-else 1`] = `
+[
+  If {
+    "condition": Binary {
+      "left": Literal {
+        "_location": {
+          "end": {
+            "column": -9,
+            "line": -9,
+          },
+          "start": {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "value": Int32 {
+          "kind": 4,
+          "legacy": false,
+          "literal": false,
+          "value": 1,
+        },
+      },
+      "right": Literal {
+        "_location": {
+          "end": {
+            "column": -9,
+            "line": -9,
+          },
+          "start": {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "value": Int32 {
+          "kind": 4,
+          "legacy": false,
+          "literal": false,
+          "value": 2,
+        },
+      },
+      "token": {
+        "isReserved": false,
+        "kind": "Less",
+        "literal": undefined,
+        "location": {
+          "end": {
+            "column": -9,
+            "line": -9,
+          },
+          "start": {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": "<",
+      },
+    },
+    "elseBranch": Block {
+      "location": {
+        "end": {
+          "column": -9,
+          "line": -9,
+        },
+        "file": undefined,
+        "start": {
+          "column": -9,
+          "line": -9,
+        },
+      },
+      "statements": [
+        Assignment {
+          "name": {
+            "isReserved": false,
+            "kind": "Identifier",
+            "literal": undefined,
+            "location": {
+              "end": {
+                "column": -9,
+                "line": -9,
+              },
+              "start": {
+                "column": -9,
+                "line": -9,
+              },
+            },
+            "text": "foo",
+          },
+          "tokens": {
+            "equals": {
+              "isReserved": false,
+              "kind": "Equal",
+              "literal": undefined,
+              "location": {
+                "end": {
+                  "column": -9,
+                  "line": -9,
+                },
+                "start": {
+                  "column": -9,
+                  "line": -9,
+                },
+              },
+              "text": "=",
+            },
+          },
+          "value": Literal {
+            "_location": {
+              "end": {
+                "column": -9,
+                "line": -9,
+              },
+              "start": {
+                "column": -9,
+                "line": -9,
+              },
+            },
+            "value": BrsBoolean {
+              "kind": 2,
+              "legacy": false,
+              "literal": true,
+              "value": true,
+            },
+          },
+        },
+      ],
+    },
+    "elseIfs": [
+      {
+        "condition": Binary {
+          "left": Literal {
+            "_location": {
+              "end": {
+                "column": -9,
+                "line": -9,
+              },
+              "start": {
+                "column": -9,
+                "line": -9,
+              },
+            },
+            "value": Int32 {
+              "kind": 4,
+              "legacy": false,
+              "literal": false,
+              "value": 1,
+            },
+          },
+          "right": Literal {
+            "_location": {
+              "end": {
+                "column": -9,
+                "line": -9,
+              },
+              "start": {
+                "column": -9,
+                "line": -9,
+              },
+            },
+            "value": Int32 {
+              "kind": 4,
+              "legacy": false,
+              "literal": false,
+              "value": 2,
+            },
+          },
+          "token": {
+            "isReserved": false,
+            "kind": "Equal",
+            "literal": undefined,
+            "location": {
+              "end": {
+                "column": -9,
+                "line": -9,
+              },
+              "start": {
+                "column": -9,
+                "line": -9,
+              },
+            },
+            "text": "=",
+          },
+        },
+        "thenBranch": Block {
+          "location": {
+            "end": {
+              "column": -9,
+              "line": -9,
+            },
+            "file": undefined,
+            "start": {
+              "column": -9,
+              "line": -9,
+            },
+          },
+          "statements": [
+            Assignment {
+              "name": {
+                "isReserved": false,
+                "kind": "Identifier",
+                "literal": undefined,
+                "location": {
+                  "end": {
+                    "column": -9,
+                    "line": -9,
+                  },
+                  "start": {
+                    "column": -9,
+                    "line": -9,
+                  },
+                },
+                "text": "same",
+              },
+              "tokens": {
+                "equals": {
+                  "isReserved": false,
+                  "kind": "Equal",
+                  "literal": undefined,
+                  "location": {
+                    "end": {
+                      "column": -9,
+                      "line": -9,
+                    },
+                    "start": {
+                      "column": -9,
+                      "line": -9,
+                    },
+                  },
+                  "text": "=",
+                },
+              },
+              "value": Literal {
+                "_location": {
+                  "end": {
+                    "column": -9,
+                    "line": -9,
+                  },
+                  "start": {
+                    "column": -9,
+                    "line": -9,
+                  },
+                },
+                "value": BrsBoolean {
+                  "kind": 2,
+                  "legacy": false,
+                  "literal": true,
+                  "value": true,
+                },
+              },
+            },
+          ],
+        },
+      },
+    ],
+    "thenBranch": Block {
+      "location": {
+        "end": {
+          "column": -9,
+          "line": -9,
+        },
+        "file": undefined,
+        "start": {
+          "column": -9,
+          "line": -9,
+        },
+      },
+      "statements": [
+        Assignment {
+          "name": {
+            "isReserved": false,
+            "kind": "Identifier",
+            "literal": undefined,
+            "location": {
+              "end": {
+                "column": -9,
+                "line": -9,
+              },
+              "start": {
+                "column": -9,
+                "line": -9,
+              },
+            },
+            "text": "foo",
+          },
+          "tokens": {
+            "equals": {
+              "isReserved": false,
+              "kind": "Equal",
+              "literal": undefined,
+              "location": {
+                "end": {
+                  "column": -9,
+                  "line": -9,
+                },
+                "start": {
+                  "column": -9,
+                  "line": -9,
+                },
+              },
+              "text": "=",
+            },
+          },
+          "value": Literal {
+            "_location": {
+              "end": {
+                "column": -9,
+                "line": -9,
+              },
+              "start": {
+                "column": -9,
+                "line": -9,
+              },
+            },
+            "value": BrsBoolean {
+              "kind": 2,
+              "legacy": false,
+              "literal": true,
+              "value": true,
+            },
+          },
+        },
+      ],
+    },
+    "tokens": {
+      "else": {
+        "isReserved": true,
+        "kind": "Else",
+        "literal": undefined,
+        "location": {
+          "end": {
+            "column": -9,
+            "line": -9,
+          },
+          "start": {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": "else",
+      },
+      "elseIfs": [
+        {
+          "isReserved": false,
+          "kind": "ElseIf",
+          "literal": undefined,
+          "location": {
+            "end": {
+              "column": -9,
+              "line": -9,
+            },
+            "start": {
+              "column": -9,
+              "line": -9,
+            },
+          },
+          "text": "else if",
+        },
+      ],
+      "endIf": undefined,
+      "if": {
+        "isReserved": true,
+        "kind": "If",
+        "literal": undefined,
+        "location": {
+          "end": {
+            "column": -9,
+            "line": -9,
+          },
+          "start": {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": "if",
+      },
+      "then": {
+        "isReserved": true,
+        "kind": "Identifier",
+        "literal": undefined,
+        "location": {
+          "end": {
+            "column": -9,
+            "line": -9,
+          },
+          "start": {
+            "column": -9,
+            "line": -9,
+          },
+        },
+        "text": "then",
+      },
+    },
+  },
+]
+`;
+
+exports[`parser if statements > single-line if inside multi-line if 1`] = `
 [
   If {
     "condition": Literal {
@@ -3470,7 +4286,7 @@ exports[`parser if statements single-line if inside multi-line if 1`] = `
 ]
 `;
 
-exports[`parser if statements single-line if next to else or endif 1`] = `
+exports[`parser if statements > single-line if next to else or endif 1`] = `
 [
   If {
     "condition": Binary {
@@ -4499,823 +5315,7 @@ exports[`parser if statements single-line if next to else or endif 1`] = `
 ]
 `;
 
-exports[`parser if statements single-line if parses if only 1`] = `
-[
-  If {
-    "condition": Binary {
-      "left": Literal {
-        "_location": {
-          "end": {
-            "column": -9,
-            "line": -9,
-          },
-          "start": {
-            "column": -9,
-            "line": -9,
-          },
-        },
-        "value": Int32 {
-          "kind": 4,
-          "legacy": false,
-          "literal": false,
-          "value": 1,
-        },
-      },
-      "right": Literal {
-        "_location": {
-          "end": {
-            "column": -9,
-            "line": -9,
-          },
-          "start": {
-            "column": -9,
-            "line": -9,
-          },
-        },
-        "value": Int32 {
-          "kind": 4,
-          "legacy": false,
-          "literal": false,
-          "value": 2,
-        },
-      },
-      "token": {
-        "isReserved": false,
-        "kind": "Less",
-        "literal": undefined,
-        "location": {
-          "end": {
-            "column": -9,
-            "line": -9,
-          },
-          "start": {
-            "column": -9,
-            "line": -9,
-          },
-        },
-        "text": "<",
-      },
-    },
-    "elseBranch": undefined,
-    "elseIfs": [],
-    "thenBranch": Block {
-      "location": {
-        "end": {
-          "column": -9,
-          "line": -9,
-        },
-        "file": undefined,
-        "start": {
-          "column": -9,
-          "line": -9,
-        },
-      },
-      "statements": [
-        Assignment {
-          "name": {
-            "isReserved": false,
-            "kind": "Identifier",
-            "literal": undefined,
-            "location": {
-              "end": {
-                "column": -9,
-                "line": -9,
-              },
-              "start": {
-                "column": -9,
-                "line": -9,
-              },
-            },
-            "text": "foo",
-          },
-          "tokens": {
-            "equals": {
-              "isReserved": false,
-              "kind": "Equal",
-              "literal": undefined,
-              "location": {
-                "end": {
-                  "column": -9,
-                  "line": -9,
-                },
-                "start": {
-                  "column": -9,
-                  "line": -9,
-                },
-              },
-              "text": "=",
-            },
-          },
-          "value": Literal {
-            "_location": {
-              "end": {
-                "column": -9,
-                "line": -9,
-              },
-              "start": {
-                "column": -9,
-                "line": -9,
-              },
-            },
-            "value": BrsBoolean {
-              "kind": 2,
-              "legacy": false,
-              "literal": true,
-              "value": true,
-            },
-          },
-        },
-      ],
-    },
-    "tokens": {
-      "else": undefined,
-      "elseIfs": [],
-      "endIf": undefined,
-      "if": {
-        "isReserved": true,
-        "kind": "If",
-        "literal": undefined,
-        "location": {
-          "end": {
-            "column": -9,
-            "line": -9,
-          },
-          "start": {
-            "column": -9,
-            "line": -9,
-          },
-        },
-        "text": "if",
-      },
-      "then": {
-        "isReserved": true,
-        "kind": "Identifier",
-        "literal": undefined,
-        "location": {
-          "end": {
-            "column": -9,
-            "line": -9,
-          },
-          "start": {
-            "column": -9,
-            "line": -9,
-          },
-        },
-        "text": "then",
-      },
-    },
-  },
-]
-`;
-
-exports[`parser if statements single-line if parses if-else 1`] = `
-[
-  If {
-    "condition": Binary {
-      "left": Literal {
-        "_location": {
-          "end": {
-            "column": -9,
-            "line": -9,
-          },
-          "start": {
-            "column": -9,
-            "line": -9,
-          },
-        },
-        "value": Int32 {
-          "kind": 4,
-          "legacy": false,
-          "literal": false,
-          "value": 1,
-        },
-      },
-      "right": Literal {
-        "_location": {
-          "end": {
-            "column": -9,
-            "line": -9,
-          },
-          "start": {
-            "column": -9,
-            "line": -9,
-          },
-        },
-        "value": Int32 {
-          "kind": 4,
-          "legacy": false,
-          "literal": false,
-          "value": 2,
-        },
-      },
-      "token": {
-        "isReserved": false,
-        "kind": "Less",
-        "literal": undefined,
-        "location": {
-          "end": {
-            "column": -9,
-            "line": -9,
-          },
-          "start": {
-            "column": -9,
-            "line": -9,
-          },
-        },
-        "text": "<",
-      },
-    },
-    "elseBranch": Block {
-      "location": {
-        "end": {
-          "column": -9,
-          "line": -9,
-        },
-        "file": undefined,
-        "start": {
-          "column": -9,
-          "line": -9,
-        },
-      },
-      "statements": [
-        Assignment {
-          "name": {
-            "isReserved": false,
-            "kind": "Identifier",
-            "literal": undefined,
-            "location": {
-              "end": {
-                "column": -9,
-                "line": -9,
-              },
-              "start": {
-                "column": -9,
-                "line": -9,
-              },
-            },
-            "text": "foo",
-          },
-          "tokens": {
-            "equals": {
-              "isReserved": false,
-              "kind": "Equal",
-              "literal": undefined,
-              "location": {
-                "end": {
-                  "column": -9,
-                  "line": -9,
-                },
-                "start": {
-                  "column": -9,
-                  "line": -9,
-                },
-              },
-              "text": "=",
-            },
-          },
-          "value": Literal {
-            "_location": {
-              "end": {
-                "column": -9,
-                "line": -9,
-              },
-              "start": {
-                "column": -9,
-                "line": -9,
-              },
-            },
-            "value": BrsBoolean {
-              "kind": 2,
-              "legacy": false,
-              "literal": true,
-              "value": false,
-            },
-          },
-        },
-      ],
-    },
-    "elseIfs": [],
-    "thenBranch": Block {
-      "location": {
-        "end": {
-          "column": -9,
-          "line": -9,
-        },
-        "file": undefined,
-        "start": {
-          "column": -9,
-          "line": -9,
-        },
-      },
-      "statements": [
-        Assignment {
-          "name": {
-            "isReserved": false,
-            "kind": "Identifier",
-            "literal": undefined,
-            "location": {
-              "end": {
-                "column": -9,
-                "line": -9,
-              },
-              "start": {
-                "column": -9,
-                "line": -9,
-              },
-            },
-            "text": "foo",
-          },
-          "tokens": {
-            "equals": {
-              "isReserved": false,
-              "kind": "Equal",
-              "literal": undefined,
-              "location": {
-                "end": {
-                  "column": -9,
-                  "line": -9,
-                },
-                "start": {
-                  "column": -9,
-                  "line": -9,
-                },
-              },
-              "text": "=",
-            },
-          },
-          "value": Literal {
-            "_location": {
-              "end": {
-                "column": -9,
-                "line": -9,
-              },
-              "start": {
-                "column": -9,
-                "line": -9,
-              },
-            },
-            "value": BrsBoolean {
-              "kind": 2,
-              "legacy": false,
-              "literal": true,
-              "value": true,
-            },
-          },
-        },
-      ],
-    },
-    "tokens": {
-      "else": {
-        "isReserved": true,
-        "kind": "Else",
-        "literal": undefined,
-        "location": {
-          "end": {
-            "column": -9,
-            "line": -9,
-          },
-          "start": {
-            "column": -9,
-            "line": -9,
-          },
-        },
-        "text": "else",
-      },
-      "elseIfs": [],
-      "endIf": undefined,
-      "if": {
-        "isReserved": true,
-        "kind": "If",
-        "literal": undefined,
-        "location": {
-          "end": {
-            "column": -9,
-            "line": -9,
-          },
-          "start": {
-            "column": -9,
-            "line": -9,
-          },
-        },
-        "text": "if",
-      },
-      "then": {
-        "isReserved": true,
-        "kind": "Identifier",
-        "literal": undefined,
-        "location": {
-          "end": {
-            "column": -9,
-            "line": -9,
-          },
-          "start": {
-            "column": -9,
-            "line": -9,
-          },
-        },
-        "text": "Then",
-      },
-    },
-  },
-]
-`;
-
-exports[`parser if statements single-line if parses if-elseif-else 1`] = `
-[
-  If {
-    "condition": Binary {
-      "left": Literal {
-        "_location": {
-          "end": {
-            "column": -9,
-            "line": -9,
-          },
-          "start": {
-            "column": -9,
-            "line": -9,
-          },
-        },
-        "value": Int32 {
-          "kind": 4,
-          "legacy": false,
-          "literal": false,
-          "value": 1,
-        },
-      },
-      "right": Literal {
-        "_location": {
-          "end": {
-            "column": -9,
-            "line": -9,
-          },
-          "start": {
-            "column": -9,
-            "line": -9,
-          },
-        },
-        "value": Int32 {
-          "kind": 4,
-          "legacy": false,
-          "literal": false,
-          "value": 2,
-        },
-      },
-      "token": {
-        "isReserved": false,
-        "kind": "Less",
-        "literal": undefined,
-        "location": {
-          "end": {
-            "column": -9,
-            "line": -9,
-          },
-          "start": {
-            "column": -9,
-            "line": -9,
-          },
-        },
-        "text": "<",
-      },
-    },
-    "elseBranch": Block {
-      "location": {
-        "end": {
-          "column": -9,
-          "line": -9,
-        },
-        "file": undefined,
-        "start": {
-          "column": -9,
-          "line": -9,
-        },
-      },
-      "statements": [
-        Assignment {
-          "name": {
-            "isReserved": false,
-            "kind": "Identifier",
-            "literal": undefined,
-            "location": {
-              "end": {
-                "column": -9,
-                "line": -9,
-              },
-              "start": {
-                "column": -9,
-                "line": -9,
-              },
-            },
-            "text": "foo",
-          },
-          "tokens": {
-            "equals": {
-              "isReserved": false,
-              "kind": "Equal",
-              "literal": undefined,
-              "location": {
-                "end": {
-                  "column": -9,
-                  "line": -9,
-                },
-                "start": {
-                  "column": -9,
-                  "line": -9,
-                },
-              },
-              "text": "=",
-            },
-          },
-          "value": Literal {
-            "_location": {
-              "end": {
-                "column": -9,
-                "line": -9,
-              },
-              "start": {
-                "column": -9,
-                "line": -9,
-              },
-            },
-            "value": BrsBoolean {
-              "kind": 2,
-              "legacy": false,
-              "literal": true,
-              "value": true,
-            },
-          },
-        },
-      ],
-    },
-    "elseIfs": [
-      {
-        "condition": Binary {
-          "left": Literal {
-            "_location": {
-              "end": {
-                "column": -9,
-                "line": -9,
-              },
-              "start": {
-                "column": -9,
-                "line": -9,
-              },
-            },
-            "value": Int32 {
-              "kind": 4,
-              "legacy": false,
-              "literal": false,
-              "value": 1,
-            },
-          },
-          "right": Literal {
-            "_location": {
-              "end": {
-                "column": -9,
-                "line": -9,
-              },
-              "start": {
-                "column": -9,
-                "line": -9,
-              },
-            },
-            "value": Int32 {
-              "kind": 4,
-              "legacy": false,
-              "literal": false,
-              "value": 2,
-            },
-          },
-          "token": {
-            "isReserved": false,
-            "kind": "Equal",
-            "literal": undefined,
-            "location": {
-              "end": {
-                "column": -9,
-                "line": -9,
-              },
-              "start": {
-                "column": -9,
-                "line": -9,
-              },
-            },
-            "text": "=",
-          },
-        },
-        "thenBranch": Block {
-          "location": {
-            "end": {
-              "column": -9,
-              "line": -9,
-            },
-            "file": undefined,
-            "start": {
-              "column": -9,
-              "line": -9,
-            },
-          },
-          "statements": [
-            Assignment {
-              "name": {
-                "isReserved": false,
-                "kind": "Identifier",
-                "literal": undefined,
-                "location": {
-                  "end": {
-                    "column": -9,
-                    "line": -9,
-                  },
-                  "start": {
-                    "column": -9,
-                    "line": -9,
-                  },
-                },
-                "text": "same",
-              },
-              "tokens": {
-                "equals": {
-                  "isReserved": false,
-                  "kind": "Equal",
-                  "literal": undefined,
-                  "location": {
-                    "end": {
-                      "column": -9,
-                      "line": -9,
-                    },
-                    "start": {
-                      "column": -9,
-                      "line": -9,
-                    },
-                  },
-                  "text": "=",
-                },
-              },
-              "value": Literal {
-                "_location": {
-                  "end": {
-                    "column": -9,
-                    "line": -9,
-                  },
-                  "start": {
-                    "column": -9,
-                    "line": -9,
-                  },
-                },
-                "value": BrsBoolean {
-                  "kind": 2,
-                  "legacy": false,
-                  "literal": true,
-                  "value": true,
-                },
-              },
-            },
-          ],
-        },
-      },
-    ],
-    "thenBranch": Block {
-      "location": {
-        "end": {
-          "column": -9,
-          "line": -9,
-        },
-        "file": undefined,
-        "start": {
-          "column": -9,
-          "line": -9,
-        },
-      },
-      "statements": [
-        Assignment {
-          "name": {
-            "isReserved": false,
-            "kind": "Identifier",
-            "literal": undefined,
-            "location": {
-              "end": {
-                "column": -9,
-                "line": -9,
-              },
-              "start": {
-                "column": -9,
-                "line": -9,
-              },
-            },
-            "text": "foo",
-          },
-          "tokens": {
-            "equals": {
-              "isReserved": false,
-              "kind": "Equal",
-              "literal": undefined,
-              "location": {
-                "end": {
-                  "column": -9,
-                  "line": -9,
-                },
-                "start": {
-                  "column": -9,
-                  "line": -9,
-                },
-              },
-              "text": "=",
-            },
-          },
-          "value": Literal {
-            "_location": {
-              "end": {
-                "column": -9,
-                "line": -9,
-              },
-              "start": {
-                "column": -9,
-                "line": -9,
-              },
-            },
-            "value": BrsBoolean {
-              "kind": 2,
-              "legacy": false,
-              "literal": true,
-              "value": true,
-            },
-          },
-        },
-      ],
-    },
-    "tokens": {
-      "else": {
-        "isReserved": true,
-        "kind": "Else",
-        "literal": undefined,
-        "location": {
-          "end": {
-            "column": -9,
-            "line": -9,
-          },
-          "start": {
-            "column": -9,
-            "line": -9,
-          },
-        },
-        "text": "else",
-      },
-      "elseIfs": [
-        {
-          "isReserved": false,
-          "kind": "ElseIf",
-          "literal": undefined,
-          "location": {
-            "end": {
-              "column": -9,
-              "line": -9,
-            },
-            "start": {
-              "column": -9,
-              "line": -9,
-            },
-          },
-          "text": "else if",
-        },
-      ],
-      "endIf": undefined,
-      "if": {
-        "isReserved": true,
-        "kind": "If",
-        "literal": undefined,
-        "location": {
-          "end": {
-            "column": -9,
-            "line": -9,
-          },
-          "start": {
-            "column": -9,
-            "line": -9,
-          },
-        },
-        "text": "if",
-      },
-      "then": {
-        "isReserved": true,
-        "kind": "Identifier",
-        "literal": undefined,
-        "location": {
-          "end": {
-            "column": -9,
-            "line": -9,
-          },
-          "start": {
-            "column": -9,
-            "line": -9,
-          },
-        },
-        "text": "then",
-      },
-    },
-  },
-]
-`;
-
-exports[`parser if statements supports colon after return in single-line if statement 1`] = `
+exports[`parser if statements > supports colon after return in single-line if statement 1`] = `
 [
   If {
     "condition": Literal {
@@ -5439,7 +5439,7 @@ exports[`parser if statements supports colon after return in single-line if stat
 ]
 `;
 
-exports[`parser if statements supports if elseif endif single line 1`] = `
+exports[`parser if statements > supports if elseif endif single line 1`] = `
 [
   If {
     "condition": Literal {
@@ -5732,7 +5732,7 @@ exports[`parser if statements supports if elseif endif single line 1`] = `
 ]
 `;
 
-exports[`parser if statements supports if statement with condition and action on one line, but end if on separate line 1`] = `
+exports[`parser if statements > supports if statement with condition and action on one line, but end if on separate line 1`] = `
 [
   If {
     "condition": Binary {
@@ -5892,7 +5892,7 @@ exports[`parser if statements supports if statement with condition and action on
 ]
 `;
 
-exports[`parser if statements supports one-line functions inside of one-line if statement 1`] = `
+exports[`parser if statements > supports one-line functions inside of one-line if statement 1`] = `
 [
   If {
     "condition": Literal {
@@ -6123,7 +6123,7 @@ exports[`parser if statements supports one-line functions inside of one-line if 
 ]
 `;
 
-exports[`parser if statements supports trailing colons after conditional statements 1`] = `
+exports[`parser if statements > supports trailing colons after conditional statements 1`] = `
 [
   Function {
     "func": Function {
@@ -6564,7 +6564,7 @@ exports[`parser if statements supports trailing colons after conditional stateme
 ]
 `;
 
-exports[`parser if statements supports trailing colons for one-line if statements 1`] = `
+exports[`parser if statements > supports trailing colons for one-line if statements 1`] = `
 [
   If {
     "condition": Binary {

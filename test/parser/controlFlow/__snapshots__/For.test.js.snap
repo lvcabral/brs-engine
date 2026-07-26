@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`parser for loops accepts a 'step' clause 1`] = `
+exports[`parser for loops > accepts a 'step' clause 1`] = `
 [
   For {
     "body": Block {
@@ -177,7 +177,7 @@ exports[`parser for loops accepts a 'step' clause 1`] = `
 ]
 `;
 
-exports[`parser for loops allows 'next' to terminate loop 1`] = `
+exports[`parser for loops > allows 'next' to terminate loop 1`] = `
 [
   For {
     "body": Block {
@@ -339,7 +339,7 @@ exports[`parser for loops allows 'next' to terminate loop 1`] = `
 ]
 `;
 
-exports[`parser for loops defaults a missing 'step' clause to '1' 1`] = `
+exports[`parser for loops > defaults a missing 'step' clause to '1' 1`] = `
 [
   For {
     "body": Block {

@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`parser primary expressions parses expressions in parentheses 1`] = `
+exports[`parser primary expressions > parses expressions in parentheses 1`] = `
 [
   Assignment {
     "name": {
@@ -167,7 +167,7 @@ exports[`parser primary expressions parses expressions in parentheses 1`] = `
 ]
 `;
 
-exports[`parser primary expressions parses numeric literals 1`] = `
+exports[`parser primary expressions > parses numeric literals 1`] = `
 [
   Assignment {
     "name": {
@@ -226,7 +226,7 @@ exports[`parser primary expressions parses numeric literals 1`] = `
 ]
 `;
 
-exports[`parser primary expressions parses string literals 1`] = `
+exports[`parser primary expressions > parses string literals 1`] = `
 [
   Assignment {
     "name": {

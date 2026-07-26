@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`parser boolean expressions parses boolean ANDs 1`] = `
+exports[`parser boolean expressions > parses boolean ANDs 1`] = `
 [
   Assignment {
     "name": {
@@ -95,7 +95,7 @@ exports[`parser boolean expressions parses boolean ANDs 1`] = `
 ]
 `;
 
-exports[`parser boolean expressions parses boolean ORs 1`] = `
+exports[`parser boolean expressions > parses boolean ORs 1`] = `
 [
   Assignment {
     "name": {

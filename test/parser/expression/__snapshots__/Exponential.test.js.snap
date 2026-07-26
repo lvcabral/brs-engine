@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`parser exponential expressions parses exponential operators 1`] = `
+exports[`parser > exponential expressions > parses exponential operators 1`] = `
 [
   Assignment {
     "name": {
@@ -95,7 +95,7 @@ exports[`parser exponential expressions parses exponential operators 1`] = `
 ]
 `;
 
-exports[`parser exponential expressions parses repeated exponential operators as left-associative 1`] = `
+exports[`parser > exponential expressions > parses repeated exponential operators as left-associative 1`] = `
 [
   Assignment {
     "name": {

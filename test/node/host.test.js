@@ -14,9 +14,7 @@ const deviceData = {
     entryPoint: true,
 };
 
-describe("worker host (executeApp)", () => {
-    jest.setTimeout(30000);
-
+describe("worker host (executeApp)", { timeout: 30000 }, () => {
     it("runs a SceneGraph app with a Task thread and delivers events to subscribers", async () => {
         const root = path.join(__dirname, "..", "cli", "resources", "task-app");
         const payload = await brs.createPayloadFromFiles([], deviceData, undefined, root);

@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`parser prefix unary expressions parses consecutive mixed unary operators 1`] = `
+exports[`parser prefix unary expressions > parses consecutive mixed unary operators 1`] = `
 [
   Assignment {
     "name": {
@@ -167,7 +167,7 @@ exports[`parser prefix unary expressions parses consecutive mixed unary operator
 ]
 `;
 
-exports[`parser prefix unary expressions parses consecutive unary '+' 1`] = `
+exports[`parser prefix unary expressions > parses consecutive unary '+' 1`] = `
 [
   Assignment {
     "name": {
@@ -316,7 +316,7 @@ exports[`parser prefix unary expressions parses consecutive unary '+' 1`] = `
 ]
 `;
 
-exports[`parser prefix unary expressions parses consecutive unary '-' 1`] = `
+exports[`parser prefix unary expressions > parses consecutive unary '-' 1`] = `
 [
   Assignment {
     "name": {
@@ -465,7 +465,7 @@ exports[`parser prefix unary expressions parses consecutive unary '-' 1`] = `
 ]
 `;
 
-exports[`parser prefix unary expressions parses consecutive unary 'not' 1`] = `
+exports[`parser prefix unary expressions > parses consecutive unary 'not' 1`] = `
 [
   Assignment {
     "name": {
@@ -614,7 +614,7 @@ exports[`parser prefix unary expressions parses consecutive unary 'not' 1`] = `
 ]
 `;
 
-exports[`parser prefix unary expressions parses unary '+' 1`] = `
+exports[`parser prefix unary expressions > parses unary '+' 1`] = `
 [
   Assignment {
     "name": {
@@ -691,7 +691,7 @@ exports[`parser prefix unary expressions parses unary '+' 1`] = `
 ]
 `;
 
-exports[`parser prefix unary expressions parses unary '-' 1`] = `
+exports[`parser prefix unary expressions > parses unary '-' 1`] = `
 [
   Assignment {
     "name": {
@@ -768,7 +768,7 @@ exports[`parser prefix unary expressions parses unary '-' 1`] = `
 ]
 `;
 
-exports[`parser prefix unary expressions parses unary 'not' 1`] = `
+exports[`parser prefix unary expressions > parses unary 'not' 1`] = `
 [
   Assignment {
     "name": {

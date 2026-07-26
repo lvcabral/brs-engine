@@ -371,7 +371,7 @@ describe("Dynamic voice keyboards", () => {
 
         test("the @ pop-up auto-opens via the hover timer once the focus dwells on the key", () => {
             let now = 1000;
-            const spy = jest.spyOn(Date, "now").mockImplementation(() => now);
+            const spy = vi.spyOn(Date, "now").mockImplementation(() => now);
             try {
                 const kbd = SGNodeFactory.createNode("DynamicKeyboard");
                 sgRoot.setFocused(kbd);
@@ -397,7 +397,7 @@ describe("Dynamic voice keyboards", () => {
 
         test("after selecting an option the timer is suppressed until focus leaves and returns", () => {
             let now = 1000;
-            const spy = jest.spyOn(Date, "now").mockImplementation(() => now);
+            const spy = vi.spyOn(Date, "now").mockImplementation(() => now);
             try {
                 const kbd = SGNodeFactory.createNode("DynamicKeyboard");
                 sgRoot.setFocused(kbd);

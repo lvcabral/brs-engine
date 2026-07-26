@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`parser function expressions parses colon-separated function declarations 1`] = `
+exports[`parser > function expressions > parses colon-separated function declarations 1`] = `
 [
   Assignment {
     "name": {
@@ -132,7 +132,7 @@ exports[`parser function expressions parses colon-separated function declaration
 ]
 `;
 
-exports[`parser function expressions parses functions with default argument expressions 1`] = `
+exports[`parser > function expressions > parses functions with default argument expressions 1`] = `
 [
   Assignment {
     "name": {
@@ -443,7 +443,7 @@ exports[`parser function expressions parses functions with default argument expr
 ]
 `;
 
-exports[`parser function expressions parses functions with implicit-dynamic arguments 1`] = `
+exports[`parser > function expressions > parses functions with implicit-dynamic arguments 1`] = `
 [
   Assignment {
     "name": {
@@ -623,7 +623,7 @@ exports[`parser function expressions parses functions with implicit-dynamic argu
 ]
 `;
 
-exports[`parser function expressions parses functions with typed arguments 1`] = `
+exports[`parser > function expressions > parses functions with typed arguments 1`] = `
 [
   Assignment {
     "name": {
@@ -844,7 +844,7 @@ exports[`parser function expressions parses functions with typed arguments 1`] =
 ]
 `;
 
-exports[`parser function expressions parses functions with typed arguments and default expressions 1`] = `
+exports[`parser > function expressions > parses functions with typed arguments and default expressions 1`] = `
 [
   Assignment {
     "name": {
@@ -1092,7 +1092,7 @@ exports[`parser function expressions parses functions with typed arguments and d
 ]
 `;
 
-exports[`parser function expressions parses minimal empty function expressions 1`] = `
+exports[`parser > function expressions > parses minimal empty function expressions 1`] = `
 [
   Assignment {
     "name": {
@@ -1183,7 +1183,7 @@ exports[`parser function expressions parses minimal empty function expressions 1
 ]
 `;
 
-exports[`parser function expressions parses non-empty function expressions 1`] = `
+exports[`parser > function expressions > parses non-empty function expressions 1`] = `
 [
   Assignment {
     "name": {
@@ -1315,7 +1315,7 @@ exports[`parser function expressions parses non-empty function expressions 1`] =
 ]
 `;
 
-exports[`parser function expressions parses return types 1`] = `
+exports[`parser > function expressions > parses return types 1`] = `
 [
   Assignment {
     "name": {
@@ -1406,7 +1406,7 @@ exports[`parser function expressions parses return types 1`] = `
 ]
 `;
 
-exports[`parser sub expressions parses minimal sub expressions 1`] = `
+exports[`parser > sub expressions > parses minimal sub expressions 1`] = `
 [
   Assignment {
     "name": {
@@ -1497,7 +1497,7 @@ exports[`parser sub expressions parses minimal sub expressions 1`] = `
 ]
 `;
 
-exports[`parser sub expressions parses non-empty sub expressions 1`] = `
+exports[`parser > sub expressions > parses non-empty sub expressions 1`] = `
 [
   Assignment {
     "name": {
@@ -1629,7 +1629,7 @@ exports[`parser sub expressions parses non-empty sub expressions 1`] = `
 ]
 `;
 
-exports[`parser sub expressions parses subs with default argument expressions 1`] = `
+exports[`parser > sub expressions > parses subs with default argument expressions 1`] = `
 [
   Assignment {
     "name": {
@@ -1940,7 +1940,7 @@ exports[`parser sub expressions parses subs with default argument expressions 1`
 ]
 `;
 
-exports[`parser sub expressions parses subs with implicit-dynamic arguments 1`] = `
+exports[`parser > sub expressions > parses subs with implicit-dynamic arguments 1`] = `
 [
   Assignment {
     "name": {
@@ -2120,7 +2120,7 @@ exports[`parser sub expressions parses subs with implicit-dynamic arguments 1`] 
 ]
 `;
 
-exports[`parser sub expressions parses subs with typed arguments 1`] = `
+exports[`parser > sub expressions > parses subs with typed arguments 1`] = `
 [
   Assignment {
     "name": {
@@ -2341,7 +2341,7 @@ exports[`parser sub expressions parses subs with typed arguments 1`] = `
 ]
 `;
 
-exports[`parser sub expressions parses subs with typed arguments and default expressions 1`] = `
+exports[`parser > sub expressions > parses subs with typed arguments and default expressions 1`] = `
 [
   Assignment {
     "name": {
@@ -2589,7 +2589,7 @@ exports[`parser sub expressions parses subs with typed arguments and default exp
 ]
 `;
 
-exports[`parser usage allows function expressions in assignment RHS 1`] = `
+exports[`parser > usage > allows function expressions in assignment RHS 1`] = `
 [
   Assignment {
     "name": {
@@ -2721,7 +2721,7 @@ exports[`parser usage allows function expressions in assignment RHS 1`] = `
 ]
 `;
 
-exports[`parser usage allows sub expressions in call arguments 1`] = `
+exports[`parser > usage > allows sub expressions in call arguments 1`] = `
 [
   Expression {
     "expression": Call {

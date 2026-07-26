@@ -17,49 +17,59 @@ describe("global math functions", () => {
     });
 
     describe("Cdbl", () => {
-        let result = Cdbl.call(interpreter, new Int32(7));
-        expect(result.value).toBeCloseTo(7.0);
-        expect(result.kind).toBe(ValueKind.Float);
+        it("converts an integer to a float", () => {
+            let result = Cdbl.call(interpreter, new Int32(7));
+            expect(result.value).toBeCloseTo(7.0);
+            expect(result.kind).toBe(ValueKind.Float);
+        });
     });
 
     describe("Cint", () => {
-        let input = [2.1, 2.5, -2.2, -2.5, -2.6];
-        let expected = [2, 3, -2, -2, -3];
-        for (let i = 0; i < input.length; i++) {
-            let result = Cint.call(interpreter, new Float(input[i]));
-            expect(result.value).toEqual(expected[i]);
-            expect(result.kind).toBe(ValueKind.Int32);
-        }
+        it("rounds a float to the nearest integer", () => {
+            let input = [2.1, 2.5, -2.2, -2.5, -2.6];
+            let expected = [2, 3, -2, -2, -3];
+            for (let i = 0; i < input.length; i++) {
+                let result = Cint.call(interpreter, new Float(input[i]));
+                expect(result.value).toEqual(expected[i]);
+                expect(result.kind).toBe(ValueKind.Int32);
+            }
+        });
     });
 
     describe("Csng", () => {
-        let result = Csng.call(interpreter, new Int32(49));
-        expect(result.value).toBeCloseTo(49.0);
-        expect(result.kind).toBe(ValueKind.Float);
+        it("converts an integer to a float", () => {
+            let result = Csng.call(interpreter, new Int32(49));
+            expect(result.value).toBeCloseTo(49.0);
+            expect(result.kind).toBe(ValueKind.Float);
+        });
     });
 
     describe("Fix", () => {
-        let positiveResult = Fix.call(interpreter, new Float(2.2));
-        expect(positiveResult.value).toEqual(2);
-        expect(positiveResult.kind).toBe(ValueKind.Int32);
+        it("truncates a float toward zero", () => {
+            let positiveResult = Fix.call(interpreter, new Float(2.2));
+            expect(positiveResult.value).toEqual(2);
+            expect(positiveResult.kind).toBe(ValueKind.Int32);
 
-        let negativeResult = Fix.call(interpreter, new Float(-2.2));
-        expect(negativeResult.value).toEqual(-2);
-        expect(negativeResult.kind).toBe(ValueKind.Int32);
+            let negativeResult = Fix.call(interpreter, new Float(-2.2));
+            expect(negativeResult.value).toEqual(-2);
+            expect(negativeResult.kind).toBe(ValueKind.Int32);
+        });
     });
 
     describe("Int", () => {
-        let result1 = Int.call(interpreter, new Float(2.5));
-        expect(result1.value).toEqual(2);
-        expect(result1.kind).toBe(ValueKind.Int32);
+        it("floors a float toward negative infinity", () => {
+            let result1 = Int.call(interpreter, new Float(2.5));
+            expect(result1.value).toEqual(2);
+            expect(result1.kind).toBe(ValueKind.Int32);
 
-        let result2 = Int.call(interpreter, new Float(-2.5));
-        expect(result2.value).toEqual(-3);
-        expect(result2.kind).toBe(ValueKind.Int32);
+            let result2 = Int.call(interpreter, new Float(-2.5));
+            expect(result2.value).toEqual(-3);
+            expect(result2.kind).toBe(ValueKind.Int32);
 
-        let result3 = Int.call(interpreter, new Float(1000101.23));
-        expect(result3.value).toEqual(1000101);
-        expect(result3.kind).toBe(ValueKind.Int32);
+            let result3 = Int.call(interpreter, new Float(1000101.23));
+            expect(result3.value).toEqual(1000101);
+            expect(result3.kind).toBe(ValueKind.Int32);
+        });
     });
 
     describe("Atn", () => {
@@ -127,7 +137,7 @@ describe("global math functions", () => {
 
         it("calculates a random number between one and some number", () => {
             function mockRandomToAlwaysBe(val, cb) {
-                randomMock = jest.spyOn(global.Math, "random").mockImplementation(() => val);
+                const randomMock = vi.spyOn(global.Math, "random").mockImplementation(() => val);
                 cb();
                 randomMock.mockRestore();
             }

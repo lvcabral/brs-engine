@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`parser relational expressions parses equality expressions 1`] = `
+exports[`parser > relational expressions > parses equality expressions 1`] = `
 [
   Assignment {
     "name": {
@@ -95,7 +95,7 @@ exports[`parser relational expressions parses equality expressions 1`] = `
 ]
 `;
 
-exports[`parser relational expressions parses greater-than expressions 1`] = `
+exports[`parser > relational expressions > parses greater-than expressions 1`] = `
 [
   Assignment {
     "name": {
@@ -190,7 +190,7 @@ exports[`parser relational expressions parses greater-than expressions 1`] = `
 ]
 `;
 
-exports[`parser relational expressions parses greater-than-or-equal-to expressions 1`] = `
+exports[`parser > relational expressions > parses greater-than-or-equal-to expressions 1`] = `
 [
   Assignment {
     "name": {
@@ -285,7 +285,7 @@ exports[`parser relational expressions parses greater-than-or-equal-to expressio
 ]
 `;
 
-exports[`parser relational expressions parses inequality expressions 1`] = `
+exports[`parser > relational expressions > parses inequality expressions 1`] = `
 [
   Assignment {
     "name": {
@@ -380,7 +380,7 @@ exports[`parser relational expressions parses inequality expressions 1`] = `
 ]
 `;
 
-exports[`parser relational expressions parses less-than expressions 1`] = `
+exports[`parser > relational expressions > parses less-than expressions 1`] = `
 [
   Assignment {
     "name": {
@@ -475,7 +475,7 @@ exports[`parser relational expressions parses less-than expressions 1`] = `
 ]
 `;
 
-exports[`parser relational expressions parses less-than-or-equal-to expressions 1`] = `
+exports[`parser > relational expressions > parses less-than-or-equal-to expressions 1`] = `
 [
   Assignment {
     "name": {

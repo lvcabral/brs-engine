@@ -8,10 +8,10 @@ function bufferToArray(bufferLike) {
 }
 
 async function advanceTimers(ms) {
-    if (typeof jest.advanceTimersByTimeAsync === "function") {
-        await jest.advanceTimersByTimeAsync(ms);
+    if (typeof vi.advanceTimersByTimeAsync === "function") {
+        await vi.advanceTimersByTimeAsync(ms);
     } else {
-        jest.advanceTimersByTime(ms);
+        vi.advanceTimersByTime(ms);
         await Promise.resolve();
     }
 }
@@ -103,7 +103,7 @@ describe("SharedObject", () => {
             const queued = { field: "queued" };
             const originalWaitAsync = Atomics.waitAsync;
 
-            jest.useFakeTimers();
+            vi.useFakeTimers();
             Atomics.waitAsync = undefined;
 
             try {
@@ -116,7 +116,7 @@ describe("SharedObject", () => {
                 await advanceTimers(50);
             } finally {
                 Atomics.waitAsync = originalWaitAsync;
-                jest.useRealTimers();
+                vi.useRealTimers();
             }
 
             expect(shared.load()).toEqual(queued);
@@ -125,11 +125,11 @@ describe("SharedObject", () => {
         test("dispose cancels a pending queued write and detaches onError", async () => {
             const shared = new SharedObject(64);
             shared.store({ initial: true }); // version is now 1
-            const onError = jest.fn();
+            const onError = vi.fn();
             shared.onError = onError;
             const originalWaitAsync = Atomics.waitAsync;
 
-            jest.useFakeTimers();
+            vi.useFakeTimers();
             Atomics.waitAsync = undefined;
 
             try {
@@ -140,7 +140,7 @@ describe("SharedObject", () => {
                 await advanceTimers(2000);
             } finally {
                 Atomics.waitAsync = originalWaitAsync;
-                jest.useRealTimers();
+                vi.useRealTimers();
             }
 
             // The late timeout must not surface an error, and the queued payload was never written.

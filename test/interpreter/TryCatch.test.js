@@ -17,8 +17,8 @@ describe("interpreter try-catch blocks", () => {
     });
 
     afterEach(() => {
-        jest.resetAllMocks();
-        jest.restoreAllMocks();
+        vi.resetAllMocks();
+        vi.restoreAllMocks();
     });
 
     it("executes the try block when no errors are thrown", () => {
@@ -27,8 +27,8 @@ describe("interpreter try-catch blocks", () => {
             identifier("a"),
             new Expr.Literal(new Int32(0))
         );
-        const trySpy = jest.spyOn(varAssignment, "accept");
-        const catchSpy = jest.spyOn(printError, "accept");
+        const trySpy = vi.spyOn(varAssignment, "accept");
+        const catchSpy = vi.spyOn(printError, "accept");
 
         const statements = [
             new Stmt.TryCatch(
@@ -54,8 +54,8 @@ describe("interpreter try-catch blocks", () => {
             token(Lexeme.Less),
             new Expr.Literal(new BrsString("1"))
         );
-        const trySpy = jest.spyOn(badComparison, "accept");
-        const catchSpy = jest.spyOn(printError, "accept");
+        const trySpy = vi.spyOn(badComparison, "accept");
+        const catchSpy = vi.spyOn(printError, "accept");
 
         const statements = [
             new Stmt.TryCatch(
@@ -86,7 +86,7 @@ describe("interpreter try-catch blocks", () => {
             token(Lexeme.Less),
             new Expr.Literal(new BrsString("1"))
         );
-        const catchSpy = jest.spyOn(printError, "accept");
+        const catchSpy = vi.spyOn(printError, "accept");
 
         const statements = [
             new Stmt.TryCatch(

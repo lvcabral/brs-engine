@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`parser goto statements allows multiple goto statements on one line 1`] = `
+exports[`parser goto statements > allows multiple goto statements on one line 1`] = `
 [
   Function {
     "func": Function {
@@ -191,7 +191,7 @@ exports[`parser goto statements allows multiple goto statements on one line 1`] 
 ]
 `;
 
-exports[`parser goto statements detects labels 1`] = `
+exports[`parser goto statements > detects labels 1`] = `
 [
   Label {
     "tokens": {
@@ -232,7 +232,7 @@ exports[`parser goto statements detects labels 1`] = `
 ]
 `;
 
-exports[`parser goto statements parses standalone statement properly 1`] = `
+exports[`parser goto statements > parses standalone statement properly 1`] = `
 {
   "errors": [],
   "statements": [

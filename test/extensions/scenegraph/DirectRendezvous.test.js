@@ -20,7 +20,7 @@ describe("Phase 3a direct rendezvous responses", () => {
     let originalPostMessage;
     beforeEach(() => {
         originalPostMessage = global.postMessage;
-        global.postMessage = jest.fn();
+        global.postMessage = vi.fn();
     });
     afterEach(() => {
         global.postMessage = originalPostMessage;
@@ -69,7 +69,7 @@ describe("Phase 3b direct fan-out", () => {
     let originalPostMessage;
     beforeEach(() => {
         originalPostMessage = global.postMessage;
-        global.postMessage = jest.fn();
+        global.postMessage = vi.fn();
     });
     afterEach(() => {
         global.postMessage = originalPostMessage;

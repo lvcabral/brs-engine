@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`parser postfix unary expressions allows '++' at the end of a function 1`] = `
+exports[`parser postfix unary expressions > allows '++' at the end of a function 1`] = `
 [
   Function {
     "func": Function {
@@ -110,7 +110,7 @@ exports[`parser postfix unary expressions allows '++' at the end of a function 1
 ]
 `;
 
-exports[`parser postfix unary expressions parses postfix '++' for indexed get expressions 1`] = `
+exports[`parser postfix unary expressions > parses postfix '++' for indexed get expressions 1`] = `
 [
   Increment {
     "token": {
@@ -190,7 +190,7 @@ exports[`parser postfix unary expressions parses postfix '++' for indexed get ex
 ]
 `;
 
-exports[`parser postfix unary expressions parses postfix '++' for variables 1`] = `
+exports[`parser postfix unary expressions > parses postfix '++' for variables 1`] = `
 [
   Increment {
     "token": {
@@ -231,7 +231,7 @@ exports[`parser postfix unary expressions parses postfix '++' for variables 1`] 
 ]
 `;
 
-exports[`parser postfix unary expressions parses postfix '--' for dotted get expressions 1`] = `
+exports[`parser postfix unary expressions > parses postfix '--' for dotted get expressions 1`] = `
 [
   Increment {
     "token": {

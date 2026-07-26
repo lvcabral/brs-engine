@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`block statements includes surrounding whitespace for a for-loop body 1`] = `
+exports[`block statements > includes surrounding whitespace for a for-loop body 1`] = `
 [
   Function {
     "func": Function {
@@ -301,7 +301,7 @@ exports[`block statements includes surrounding whitespace for a for-loop body 1`
 ]
 `;
 
-exports[`block statements includes surrounding whitespace for function body 1`] = `
+exports[`block statements > includes surrounding whitespace for function body 1`] = `
 [
   Function {
     "func": Function {
@@ -435,7 +435,7 @@ exports[`block statements includes surrounding whitespace for function body 1`] 
 ]
 `;
 
-exports[`block statements includes surrounding whitespace for if-elseif-else statements 1`] = `
+exports[`block statements > includes surrounding whitespace for if-elseif-else statements 1`] = `
 [
   Function {
     "func": Function {

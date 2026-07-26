@@ -42,7 +42,10 @@ async function decryptBpk(buffer, password) {
     return new Uint8Array(plain);
 }
 
-describe("cli", () => {
+// Each test spawns its own isolated `node brs.cli.js` child process and shares no in-process
+// state, so they run concurrently (capped by `maxConcurrency` in vitest.config.mts). The ECP
+// suite is the exception - it binds a fixed port - and opts back out with `describe.sequential`.
+describe.concurrent("cli", () => {
     it("run zip file", async () => {
         let command = ["node", brsCliPath, "requires-manifest.zip", "-c 0"].join(" ");
 
@@ -51,7 +54,7 @@ describe("cli", () => {
         });
         let result = stdout.trim().match(/hi from foo\(\)/g);
         expect(result.length).toEqual(1);
-    }, 10000);
+    }, 30000);
 
     it("Channel Store Test", async () => {
         let command = ["node", brsCliPath, "-r channel-store", "source/main.brs", "-c 0"].join(" ");
@@ -86,7 +89,7 @@ describe("cli", () => {
             "",
             "",
         ]);
-    }, 10000);
+    }, 30000);
 
     it("Texture Manager Test", async () => {
         let command = ["node", brsCliPath, "roTextureManager.brs", "-c 0"].join(" ");
@@ -110,7 +113,7 @@ describe("cli", () => {
             "",
             "",
         ]);
-    }, 10000);
+    }, 30000);
 
     it("follows HTTP redirects when downloading a texture", async () => {
         // Regression: the synchronous download() path (roTextureManager -> loadTexture)
@@ -176,7 +179,7 @@ describe("cli", () => {
             await new Promise((resolve) => server.close(resolve));
             fs.rmSync(tmpDir, { recursive: true, force: true });
         }
-    }, 15000);
+    }, 30000);
 
     it("Draws and measures empty strings without crashing", async () => {
         // Regression: node-canvas v4 aborts the process (SIGTRAP) when its text APIs
@@ -196,7 +199,7 @@ describe("cli", () => {
             "",
             "",
         ]);
-    }, 10000);
+    }, 30000);
 
     it("Renders frames as terminal images with --image", async () => {
         let command = ["node", brsCliPath, "emptyTextDraw.brs", "-i", "-c 0"].join(" ");
@@ -207,7 +210,7 @@ describe("cli", () => {
         // cursor-home prefix used to repaint in place — absent without -i.
         expect(stdout).toContain("\x1b[H");
         expect(stdout).toContain("empty width:  0");
-    }, 10000);
+    }, 30000);
 
     it("Runs cleanly with --snapshot enabled (saving requires the Ctrl+S shortcut)", async () => {
         const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "brs-snap-"));
@@ -223,7 +226,7 @@ describe("cli", () => {
         } finally {
             fs.rmSync(tmpDir, { recursive: true, force: true });
         }
-    }, 10000);
+    }, 30000);
 
     it("only warns once for a repeatedly-requested missing local texture", async () => {
         let command = ["node", brsCliPath, "roTextureManagerMissingFile.brs", "-c 0"].join(" ");
@@ -242,7 +245,7 @@ describe("cli", () => {
         // The second identical request must not re-hit the filesystem or re-log the warning.
         let warnings = stderr.match(/Error requesting texture pkg:\/images\/does-not-exist\.png/g) ?? [];
         expect(warnings.length).toEqual(1);
-    }, 10000);
+    }, 30000);
 
     it("prints syntax errors once", async () => {
         let folder = "errors";
@@ -259,7 +262,7 @@ describe("cli", () => {
             // (the backtrace is only emitted with --debug / debugOnCrash).
             expect(errors.length).toEqual(1);
         }
-    }, 10000);
+    }, 30000);
 
     it("exits the app on STOP in production mode (no Micro Debugger)", async () => {
         // Without --debug the Micro Debugger is disabled, so a STOP statement terminates the
@@ -277,7 +280,7 @@ describe("cli", () => {
         expect(stdout).toContain("EXIT_BRIGHTSCRIPT_STOP");
         // The interactive debugger (which would error on a non-TTY) must not be reached.
         expect(stdout).not.toContain("interactive reading from TTY");
-    }, 10000);
+    }, 30000);
 
     it("SceneGraph App Test", async () => {
         let command = ["node", brsCliPath, "-r scenegraph", "source/Poster.brs", "-c 0"].join(" ");
@@ -347,7 +350,7 @@ describe("cli", () => {
             "",
             "",
         ]);
-    }, 10000);
+    }, 30000);
 
     it("SceneGraph Node Alias Test", async () => {
         let command = ["node", brsCliPath, "-r multi-alias-app", "source/main.brs", "-c 0"].join(" ");
@@ -378,7 +381,7 @@ describe("cli", () => {
             "",
             "",
         ]);
-    }, 10000);
+    }, 30000);
 
     it("applies an interface field's default value through its alias targets", async () => {
         // Regression: addFields applied a field's XML default only on the non-alias branch, so an
@@ -403,7 +406,7 @@ describe("cli", () => {
             "",
             "",
         ]);
-    }, 10000);
+    }, 30000);
 
     it("findNode resolves ids breadth-first (shallow sibling wins over a child component's internals)", async () => {
         // Regression: findNodeById was depth-first, so it descended into an earlier sibling's
@@ -424,7 +427,7 @@ describe("cli", () => {
             "",
             "",
         ]);
-    }, 10000);
+    }, 30000);
 
     it("Keeps a component usable when interface field aliases have unresolvable targets", async () => {
         // Regression: a failed alias target (missing node or missing field) used to abort addFields,
@@ -451,7 +454,7 @@ describe("cli", () => {
         // The device-style warnings are still written for each unresolvable target.
         expect(stderr).toContain("-- Interface field alias failed: No node named ghost");
         expect(stderr).toContain('-- Interface field alias failed: Node "label1" has no field named "nosuchfield"');
-    }, 10000);
+    }, 30000);
 
     it("SceneGraph Observers Test", async () => {
         let command = ["node", brsCliPath, "-r observer-app", "source/main.brs", "-c 0"].join(" ");
@@ -475,7 +478,7 @@ describe("cli", () => {
             "",
             "",
         ]);
-    }, 10000);
+    }, 30000);
 
     it("ContentNode Recursion Repro Test", async () => {
         let command = ["node", brsCliPath, "-r contentnode-recursion-app", "source/main.brs", "-c 0"].join(" ");
@@ -493,7 +496,7 @@ describe("cli", () => {
             "",
             "",
         ]);
-    }, 10000);
+    }, 30000);
 
     it("ContentNode ParentField Recursion Repro Test", async () => {
         let command = ["node", brsCliPath, "-r contentnode-parentfield-app", "source/main.brs", "-c 0"].join(" ");
@@ -514,7 +517,7 @@ describe("cli", () => {
             "",
             "",
         ]);
-    }, 10000);
+    }, 30000);
 
     it("Shared ContentNode Recursion Repro Test", async () => {
         let command = ["node", brsCliPath, "-r sharedcontent-recursion-app", "source/main.brs", "-c 0"].join(" ");
@@ -534,7 +537,7 @@ describe("cli", () => {
             "",
             "",
         ]);
-    }, 10000);
+    }, 30000);
 
     it("Button Label Observer Order Test", async () => {
         let command = ["node", brsCliPath, "-r button-label-app", "source/main.brs", "-c 0"].join(" ");
@@ -553,7 +556,7 @@ describe("cli", () => {
             "",
             "",
         ]);
-    }, 10000);
+    }, 30000);
 
     it("Reentrant field observers are deferred until the current handler returns", async () => {
         let command = ["node", brsCliPath, "-r deferred-observer-app", "source/main.brs", "-c 0"].join(" ");
@@ -582,7 +585,7 @@ describe("cli", () => {
             "",
             "",
         ]);
-    }, 10000);
+    }, 30000);
 
     it("Fires itemFocused only when a list gains focus, not on content population while unfocused", async () => {
         let command = ["node", brsCliPath, "-r list-initial-focus-app", "source/main.brs", "-c 0"].join(" ");
@@ -608,7 +611,7 @@ describe("cli", () => {
             "",
             "",
         ]);
-    }, 10000);
+    }, 30000);
 
     it("A reentrant observer that rewrites its own alwaysNotify field does not loop", async () => {
         let command = ["node", brsCliPath, "-r observer-loop-app", "source/main.brs", "-c 0"].join(" ");
@@ -631,7 +634,7 @@ describe("cli", () => {
             "",
             "",
         ]);
-    }, 10000);
+    }, 30000);
 
     it("Two cross-aliased alwaysNotify fields whose observers write each other do not loop", async () => {
         let command = ["node", brsCliPath, "-r cross-alias-loop-app", "source/main.brs", "-c 0"].join(" ");
@@ -655,7 +658,7 @@ describe("cli", () => {
             "",
             "",
         ]);
-    }, 10000);
+    }, 30000);
 
     it("Dispatches a direct field assignment's observer synchronously inside another observer", async () => {
         let command = ["node", brsCliPath, "-r observer-readback-app", "source/main.brs", "-c 0"].join(" ");
@@ -678,7 +681,7 @@ describe("cli", () => {
             "",
             "",
         ]);
-    }, 10000);
+    }, 30000);
 
     it("Poster preload-and-swap: the loadStatus observer's uri clear is not clobbered", async () => {
         let command = ["node", brsCliPath, "-r poster-preload-swap-app", "source/main.brs", "-c 0"].join(" ");
@@ -699,7 +702,7 @@ describe("cli", () => {
             "",
             "",
         ]);
-    }, 10000);
+    }, 30000);
 
     it("Allows redeclaring an inherited system field but still blocks XML duplicate fields", async () => {
         let command = ["node", brsCliPath, "-r duplicate-system-field-app", "source/main.brs", "-c 0"].join(" ");
@@ -726,7 +729,7 @@ describe("cli", () => {
         expect(stderr).not.toContain('duplicate field "opacity"');
         // ...but redeclaring a field defined in an ancestor XML component still must.
         expect(stderr).toContain('Attempt to add duplicate field "sharedField" to RokuML component "XmlChildComp"');
-    }, 10000);
+    }, 30000);
 
     it("Restores the m context on a rebuilt custom component so callFunc sees m.top/m.global", async () => {
         let command = ["node", brsCliPath, "-r clone-callfunc-app", "source/main.brs", "-c 0"].join(" ");
@@ -748,7 +751,7 @@ describe("cli", () => {
             "",
             "",
         ]);
-    }, 10000);
+    }, 30000);
 
     it("Reparents a node when it is attached to a different parent", async () => {
         let command = ["node", brsCliPath, "-r reparent-app", "source/main.brs", "-c 0"].join(" ");
@@ -777,7 +780,7 @@ describe("cli", () => {
             "",
             "",
         ]);
-    }, 10000);
+    }, 30000);
 
     it("Loads Library statements declared in component scripts into the component scope", async () => {
         let command = ["node", brsCliPath, "-r component-library-app", "source/main.brs", "-c 0"].join(" ");
@@ -800,7 +803,7 @@ describe("cli", () => {
             "",
             "",
         ]);
-    }, 10000);
+    }, 30000);
 
     it("Guards bounding-rect refresh renders against re-entrant measurement", async () => {
         let command = ["node", brsCliPath, "-r grid-measure-app", "source/main.brs", "-c 0"].join(" ");
@@ -825,7 +828,7 @@ describe("cli", () => {
             "",
             "",
         ]);
-    }, 10000);
+    }, 30000);
 
     it("Sets an attached Panel's height from the PanelSet, firing observers registered in init()", async () => {
         let command = ["node", brsCliPath, "-r panel-height-app", "source/main.brs", "-c 0"].join(" ");
@@ -851,7 +854,7 @@ describe("cli", () => {
             "",
             "",
         ]);
-    }, 10000);
+    }, 30000);
 
     it("Reports a RowList's newly focused item at the settled focus band, not its pre-scroll position", async () => {
         let command = ["node", brsCliPath, "-r rowlist-subrect-app", "source/main.brs", "-c 0"].join(" ");
@@ -877,7 +880,7 @@ describe("cli", () => {
             "",
             "",
         ]);
-    }, 10000);
+    }, 30000);
     it("Measures a freshly-created grid item's content during the render pass that creates it", async () => {
         let command = ["node", brsCliPath, "-r button-measure-app", "source/main.brs", "-c 0"].join(" ");
 
@@ -909,7 +912,7 @@ describe("cli", () => {
             "",
             "",
         ]);
-    }, 10000);
+    }, 30000);
     it("Resolves a component method in call position when an XML field shadows its name", async () => {
         let command = ["node", brsCliPath, "-r method-shadow-field-app", "source/main.brs", "-c 0"].join(" ");
 
@@ -932,7 +935,7 @@ describe("cli", () => {
             "",
             "",
         ]);
-    }, 10000);
+    }, 30000);
 
     it("Runs a SceneGraph Task on a worker thread with cross-thread rendezvous", async () => {
         let command = ["node", brsCliPath, "-r task-app", "source/main.brs", "-c 0"].join(" ");
@@ -949,7 +952,7 @@ describe("cli", () => {
         expect(lines).toContain("TASK RESULT: from-task-thread:ping");
         expect(lines).toContain("=== Task Thread Repro Complete ===");
         expect(lines).toContain("------ Finished 'main.brs' execution [EXIT_USER_NAV] ------");
-    }, 15000);
+    }, 30000);
 
     it("Resolves an anonymous function observer registered by its toStr() name", async () => {
         let command = ["node", brsCliPath, "-r anon-observer-app", "source/main.brs", "-c 0"].join(" ");
@@ -971,27 +974,37 @@ describe("cli", () => {
             "",
             "",
         ]);
-    }, 10000);
+    }, 30000);
 
-    it("Resolves a chain of near-zero-duration Timer nodes without frame-period latency per hop", async () => {
-        let command = ["node", brsCliPath, "-r timer-hop-app", "source/main.brs", "-c 0"].join(" ");
+    // This asserts a ~20ms wall-clock budget around a 125ms Timer chain, so it is opted out of the
+    // suite's concurrency (not measured while sibling CLI child processes run) and retried: under a
+    // fully loaded machine, scheduler noise alone can push a healthy run past the bound. Retrying is
+    // safe because the regression it guards is systematic - the frame-throttle coupling made *every*
+    // run ~160ms+ - so a genuine regression still fails all attempts.
+    it.sequential(
+        "Resolves a chain of near-zero-duration Timer nodes without frame-period latency per hop",
+        { retry: 2 },
+        async () => {
+            let command = ["node", brsCliPath, "-r timer-hop-app", "source/main.brs", "-c 0"].join(" ");
 
-        let { stdout } = await exec(command, {
-            cwd: path.join(__dirname, "resources"),
-        });
-        // Rooibos-promises resolves promises via a chain of "essentially next tick" SGNode Timers
-        // (duration ~0). Timer polling used to be coupled to the screen's frame-rate-limiting busy
-        // wait, so each hop in the chain could cost up to a full frame period even though its nominal
-        // duration was ~0 - a 125ms Timer plus two such hops measured ~160ms+ instead of ~125ms (this
-        // is what made a Rooibos test that passes on a real device fail in brs-desktop/brs-cli). With
-        // polling decoupled from the frame throttle, the whole chain resolves within a few ms of the
-        // Timer's own duration.
-        const match = stdout.match(/total elapsed=\s*(\d+)/);
-        expect(match).not.toBeNull();
-        const elapsedMs = Number(match[1]);
-        expect(elapsedMs).toBeGreaterThanOrEqual(125);
-        expect(elapsedMs).toBeLessThan(145);
-    }, 10000);
+            let { stdout } = await exec(command, {
+                cwd: path.join(__dirname, "resources"),
+            });
+            // Rooibos-promises resolves promises via a chain of "essentially next tick" SGNode Timers
+            // (duration ~0). Timer polling used to be coupled to the screen's frame-rate-limiting busy
+            // wait, so each hop in the chain could cost up to a full frame period even though its nominal
+            // duration was ~0 - a 125ms Timer plus two such hops measured ~160ms+ instead of ~125ms (this
+            // is what made a Rooibos test that passes on a real device fail in brs-desktop/brs-cli). With
+            // polling decoupled from the frame throttle, the whole chain resolves within a few ms of the
+            // Timer's own duration.
+            const match = stdout.match(/total elapsed=\s*(\d+)/);
+            expect(match).not.toBeNull();
+            const elapsedMs = Number(match[1]);
+            expect(elapsedMs).toBeGreaterThanOrEqual(125);
+            expect(elapsedMs).toBeLessThan(145);
+        },
+        30000
+    );
 
     it("List item component can read its parent list during init()", async () => {
         let command = ["node", brsCliPath, "-r list-item-parent-app", "source/main.brs", "-c 0"].join(" ");
@@ -1012,7 +1025,7 @@ describe("cli", () => {
             "",
             "",
         ]);
-    }, 10000);
+    }, 30000);
 
     it("StandardDialog forwards focus to a custom component's nested button group", async () => {
         let command = ["node", brsCliPath, "-r dialog-buttongroup-focus-app", "source/main.brs", "-c 0"].join(" ");
@@ -1037,7 +1050,7 @@ describe("cli", () => {
             "",
             "",
         ]);
-    }, 10000);
+    }, 30000);
 
     it("ButtonGroup leaves custom (non-Button) children unmanaged", async () => {
         let command = ["node", brsCliPath, "-r buttongroup-custom-children-app", "source/main.brs", "-c 0"].join(" ");
@@ -1066,7 +1079,7 @@ describe("cli", () => {
             "",
             "",
         ]);
-    }, 10000);
+    }, 30000);
 
     it("PanelSet creates the right panel on item focus without hasNextPanel", async () => {
         let command = ["node", brsCliPath, "-r panelset-nextpanel-app", "source/main.brs", "-c 0"].join(" ");
@@ -1091,7 +1104,7 @@ describe("cli", () => {
             "",
             "",
         ]);
-    }, 10000);
+    }, 30000);
 
     it("PanelSet clears the trailing detail panel when the app supplies no next panel", async () => {
         let command = ["node", brsCliPath, "-r panelset-clearpanel-app", "source/main.brs", "-c 0"].join(" ");
@@ -1122,7 +1135,7 @@ describe("cli", () => {
             "",
             "",
         ]);
-    }, 10000);
+    }, 30000);
 
     it("Run App from Root Folder Only", async () => {
         // Issue #771: pointing the CLI at a folder with `--root` and no positional files
@@ -1141,7 +1154,7 @@ describe("cli", () => {
             "",
             "",
         ]);
-    }, 10000);
+    }, 30000);
 
     it("includes the source location in roArray warnings (dev mode)", async () => {
         let command = ["node", brsCliPath, "roArrayWarnings.brs", "-c 0"].join(" ");
@@ -1165,7 +1178,7 @@ describe("cli", () => {
         expect(stderr).toContain(
             "roArray.SortBy: Flags contains invalid option(s). pkg:/source/roArrayWarnings.brs(12)"
         );
-    }, 10000);
+    }, 30000);
 
     describe("SceneGraph .bpk encryption", () => {
         const password = "abcdefghij0123456789abcdefghij01"; // 32 chars (AES-256 key)
@@ -1193,7 +1206,7 @@ describe("cli", () => {
                 )
             );
             bpkPath = path.join(tmpDir, "app.bpk");
-        }, 15000);
+        }, 30000);
 
         afterAll(() => {
             if (tmpDir) fs.rmSync(tmpDir, { recursive: true, force: true });
@@ -1205,7 +1218,7 @@ describe("cli", () => {
             expect(Array.from(raw.subarray(0, BPK_MAGIC.length))).toEqual(BPK_MAGIC);
             // The plaintext assets are not extractable without the password.
             expect(() => unzipSync(raw)).toThrow();
-        }, 15000);
+        }, 30000);
 
         it("strips component .brs/.xml from the package", async () => {
             const entries = Object.keys(unzipSync(await decryptBpk(fs.readFileSync(bpkPath), password)));
@@ -1217,7 +1230,7 @@ describe("cli", () => {
             // A components/ directory marker is preserved so the encrypted SceneGraph app is still
             // detected at load time (the source zip here has no explicit directory entries).
             expect(entries.some((e) => e.toLowerCase().startsWith("components/"))).toBe(true);
-        }, 15000);
+        }, 30000);
 
         it("runs the encrypted SceneGraph app with the correct password", async () => {
             const { stdout } = await exec(
@@ -1225,7 +1238,7 @@ describe("cli", () => {
             );
             const lines = stdout.split("\n").map((line) => line.trimEnd());
             expect(lines).toEqual(expect.arrayContaining(expected));
-        }, 15000);
+        }, 30000);
 
         it("fails cleanly with a wrong password", async () => {
             // A wrong password fails at the container layer, before any source is touched.
@@ -1233,7 +1246,7 @@ describe("cli", () => {
                 ["node", brsCliPath, '"' + bpkPath + '"', "--pack", "x".repeat(32), "-c 0"].join(" ")
             ).catch((e) => e);
             expect(stderr).toContain("Invalid password for the encrypted package");
-        }, 15000);
+        }, 30000);
 
         // Build a nested SceneGraph app whose Main tries to read its own component source, to verify
         // (1) the empty component directory tree is pruned and (2) the decrypted source is no longer
@@ -1279,14 +1292,14 @@ describe("cli", () => {
                     ].join(" ")
                 );
                 protBpk = path.join(tmpDir, "prot.bpk");
-            }, 15000);
+            }, 30000);
 
             it("prunes the empty component directory tree to a single marker", async () => {
                 const entries = Object.keys(unzipSync(await decryptBpk(fs.readFileSync(protBpk), password)));
                 const componentEntries = entries.filter((e) => e.toLowerCase().startsWith("components/"));
                 // The components/sub/ tree (which only held encrypted files) is gone; only the marker remains.
                 expect(componentEntries).toEqual(["components/"]);
-            }, 15000);
+            }, 30000);
 
             it("does not let BrightScript read the decrypted component source", async () => {
                 const { stdout } = await exec(
@@ -1296,7 +1309,7 @@ describe("cli", () => {
                 expect(stdout).toContain("READXML:[]");
                 expect(stdout).toContain("LISTDIR_COUNT:0");
                 expect(stdout).not.toContain("TOP_SECRET");
-            }, 15000);
+            }, 30000);
         });
     });
 
@@ -1315,7 +1328,7 @@ describe("cli", () => {
                 )
             );
             bpkPath = path.join(tmpDir, "crash.bpk");
-        }, 15000);
+        }, 30000);
 
         afterAll(() => {
             if (tmpDir) fs.rmSync(tmpDir, { recursive: true, force: true });
@@ -1337,10 +1350,12 @@ describe("cli", () => {
             expect(output).not.toContain("BackTrace:");
             // The interactive debugger (which would error on a non-TTY) must not be reached.
             expect(output).not.toContain("interactive reading from TTY");
-        }, 15000);
+        }, 30000);
     });
 
-    describe("ECP query/r2d2-bitmaps", () => {
+    // Binds a fixed port (8060) and shares a `server` handle across tests, so these must not
+    // overlap with each other.
+    describe.sequential("ECP query/r2d2-bitmaps", () => {
         const http = require("http");
         let server;
 

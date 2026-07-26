@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`parser try/catch statements accepts try/catch/end try 1`] = `
+exports[`parser try/catch statements > accepts try/catch/end try 1`] = `
 [
   TryCatch {
     "catchBlock": Block {
@@ -193,7 +193,7 @@ exports[`parser try/catch statements accepts try/catch/end try 1`] = `
 ]
 `;
 
-exports[`parser try/catch statements accepts try/catch/endtry 1`] = `
+exports[`parser try/catch statements > accepts try/catch/endtry 1`] = `
 [
   Function {
     "func": Function {
@@ -458,7 +458,7 @@ exports[`parser try/catch statements accepts try/catch/endtry 1`] = `
 ]
 `;
 
-exports[`parser try/catch statements allows try and catch as variable names 1`] = `
+exports[`parser try/catch statements > allows try and catch as variable names 1`] = `
 [
   Assignment {
     "name": {
@@ -577,7 +577,7 @@ exports[`parser try/catch statements allows try and catch as variable names 1`] 
 ]
 `;
 
-exports[`parser try/catch statements allows try/catch to nest in try 1`] = `
+exports[`parser try/catch statements > allows try/catch to nest in try 1`] = `
 [
   TryCatch {
     "catchBlock": Block {

@@ -8,11 +8,11 @@ describe("Runtime errors", () => {
     });
 
     afterEach(() => {
-        jest.resetAllMocks();
+        vi.clearAllMocks();
     });
 
     afterAll(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     test("components/errors/dotted-get.brs", async () => {

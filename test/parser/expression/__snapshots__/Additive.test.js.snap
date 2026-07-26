@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`parser additive expressions parses left-associative addition chains 1`] = `
+exports[`parser additive expressions > parses left-associative addition chains 1`] = `
 [
   Assignment {
     "name": {
@@ -131,7 +131,7 @@ exports[`parser additive expressions parses left-associative addition chains 1`]
 ]
 `;
 
-exports[`parser additive expressions parses left-associative subtraction chains 1`] = `
+exports[`parser additive expressions > parses left-associative subtraction chains 1`] = `
 [
   Assignment {
     "name": {

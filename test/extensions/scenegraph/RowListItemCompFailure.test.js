@@ -28,7 +28,7 @@ describe("RowList with an item component that cannot be created", () => {
 
     afterEach(() => {
         sgRoot.setFocused();
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     test("skips the slots and logs one error instead of crashing the render pass", () => {
@@ -48,7 +48,7 @@ describe("RowList with an item component that cannot be created", () => {
         );
 
         const errors = [];
-        jest.spyOn(BrsDevice.stderr, "write").mockImplementation((msg) => errors.push(msg));
+        vi.spyOn(BrsDevice.stderr, "write").mockImplementation((msg) => errors.push(msg));
 
         expect(() => list.renderNode(interpreter, [0, 0], 0, 1)).not.toThrow();
 

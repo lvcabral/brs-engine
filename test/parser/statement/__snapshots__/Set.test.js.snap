@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`parser indexed assignment bracketed assignment operator 1`] = `
+exports[`parser indexed assignment > bracketed > assignment operator 1`] = `
 [
   IndexedSet {
     "closingSquare": {
@@ -154,7 +154,7 @@ exports[`parser indexed assignment bracketed assignment operator 1`] = `
 ]
 `;
 
-exports[`parser indexed assignment bracketed assigns anonymous functions 1`] = `
+exports[`parser indexed assignment > bracketed > assigns anonymous functions 1`] = `
 [
   IndexedSet {
     "closingSquare": {
@@ -265,7 +265,7 @@ exports[`parser indexed assignment bracketed assigns anonymous functions 1`] = `
 ]
 `;
 
-exports[`parser indexed assignment bracketed assigns boolean expressions 1`] = `
+exports[`parser indexed assignment > bracketed > assigns boolean expressions 1`] = `
 [
   IndexedSet {
     "closingSquare": {
@@ -380,7 +380,7 @@ exports[`parser indexed assignment bracketed assigns boolean expressions 1`] = `
 ]
 `;
 
-exports[`parser indexed assignment dotted assignment operator 1`] = `
+exports[`parser indexed assignment > dotted > assignment operator 1`] = `
 [
   DottedSet {
     "name": {
@@ -494,7 +494,7 @@ exports[`parser indexed assignment dotted assignment operator 1`] = `
 ]
 `;
 
-exports[`parser indexed assignment dotted assigns anonymous functions 1`] = `
+exports[`parser indexed assignment > dotted > assigns anonymous functions 1`] = `
 [
   DottedSet {
     "name": {
@@ -585,7 +585,7 @@ exports[`parser indexed assignment dotted assigns anonymous functions 1`] = `
 ]
 `;
 
-exports[`parser indexed assignment dotted assigns boolean expressions 1`] = `
+exports[`parser indexed assignment > dotted > assigns boolean expressions 1`] = `
 [
   DottedSet {
     "name": {

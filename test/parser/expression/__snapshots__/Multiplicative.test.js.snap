@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`parser multiplicative expressions parses left-associative division chains 1`] = `
+exports[`parser > multiplicative expressions > parses left-associative division chains 1`] = `
 [
   Assignment {
     "name": {
@@ -131,7 +131,7 @@ exports[`parser multiplicative expressions parses left-associative division chai
 ]
 `;
 
-exports[`parser multiplicative expressions parses left-associative integer-division chains 1`] = `
+exports[`parser > multiplicative expressions > parses left-associative integer-division chains 1`] = `
 [
   Assignment {
     "name": {
@@ -262,7 +262,7 @@ exports[`parser multiplicative expressions parses left-associative integer-divis
 ]
 `;
 
-exports[`parser multiplicative expressions parses left-associative modulo chains 1`] = `
+exports[`parser > multiplicative expressions > parses left-associative modulo chains 1`] = `
 [
   Assignment {
     "name": {
@@ -393,7 +393,7 @@ exports[`parser multiplicative expressions parses left-associative modulo chains
 ]
 `;
 
-exports[`parser multiplicative expressions parses left-associative multiplication chains 1`] = `
+exports[`parser > multiplicative expressions > parses left-associative multiplication chains 1`] = `
 [
   Assignment {
     "name": {

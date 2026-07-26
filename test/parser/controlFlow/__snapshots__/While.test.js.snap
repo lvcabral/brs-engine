@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`parser while statements nested 1`] = `
+exports[`parser while statements > nested 1`] = `
 [
   While {
     "body": Block {
@@ -449,7 +449,7 @@ exports[`parser while statements nested 1`] = `
 ]
 `;
 
-exports[`parser while statements while with exit 1`] = `
+exports[`parser while statements > while with exit 1`] = `
 [
   While {
     "body": Block {
@@ -583,7 +583,7 @@ exports[`parser while statements while with exit 1`] = `
 ]
 `;
 
-exports[`parser while statements while without exit 1`] = `
+exports[`parser while statements > while without exit 1`] = `
 [
   While {
     "body": Block {

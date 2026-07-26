@@ -37,8 +37,8 @@ describe("roLongInteger", () => {
         });
 
         it("setLongInt", () => {
-            setLongIntA = a.getMethod("setLongInt");
-            setLongIntB = b.getMethod("setLongInt");
+            let setLongIntA = a.getMethod("setLongInt");
+            let setLongIntB = b.getMethod("setLongInt");
 
             expect(setLongIntA).toBeInstanceOf(Callable);
             expect(setLongIntB).toBeInstanceOf(Callable);
@@ -54,8 +54,8 @@ describe("roLongInteger", () => {
             a = new RoLongInteger(new Int64(someNumberA));
             b = new RoLongInteger(new Int64(someNumberB));
 
-            getLongIntA = a.getMethod("getLongInt");
-            getLongIntB = b.getMethod("getLongInt");
+            let getLongIntA = a.getMethod("getLongInt");
+            let getLongIntB = b.getMethod("getLongInt");
 
             expect(getLongIntA).toBeInstanceOf(Callable);
             expect(getLongIntB).toBeInstanceOf(Callable);
@@ -71,8 +71,8 @@ describe("roLongInteger", () => {
             a = new RoLongInteger(new Int64(someNumberA));
             b = new RoLongInteger(new Int64(someNumberB));
 
-            toStrA = a.getMethod("toStr");
-            toStrB = b.getMethod("toStr");
+            let toStrA = a.getMethod("toStr");
+            let toStrB = b.getMethod("toStr");
 
             let resultA = toStrA.call(interpreter);
             let resultB = toStrB.call(interpreter);

@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`parser associative array literals allows a mix of quoted and unquoted keys 1`] = `
+exports[`parser associative array literals > allows a mix of quoted and unquoted keys 1`] = `
 [
   Assignment {
     "name": {
@@ -155,7 +155,7 @@ exports[`parser associative array literals allows a mix of quoted and unquoted k
 ]
 `;
 
-exports[`parser associative array literals allows separating properties with colons 1`] = `
+exports[`parser associative array literals > allows separating properties with colons 1`] = `
 [
   Function {
     "func": Function {
@@ -353,7 +353,7 @@ exports[`parser associative array literals allows separating properties with col
 ]
 `;
 
-exports[`parser associative array literals empty associative arrays on multiple lines 1`] = `
+exports[`parser associative array literals > empty associative arrays > on multiple lines 1`] = `
 [
   Assignment {
     "name": {
@@ -429,7 +429,7 @@ exports[`parser associative array literals empty associative arrays on multiple 
 ]
 `;
 
-exports[`parser associative array literals empty associative arrays on one line 1`] = `
+exports[`parser associative array literals > empty associative arrays > on one line 1`] = `
 [
   Assignment {
     "name": {
@@ -505,7 +505,7 @@ exports[`parser associative array literals empty associative arrays on one line 
 ]
 `;
 
-exports[`parser associative array literals filled arrays on multiple lines with commas 1`] = `
+exports[`parser associative array literals > filled arrays > on multiple lines with commas 1`] = `
 [
   Assignment {
     "name": {
@@ -660,7 +660,7 @@ exports[`parser associative array literals filled arrays on multiple lines with 
 ]
 `;
 
-exports[`parser associative array literals filled arrays on multiple lines without commas 1`] = `
+exports[`parser associative array literals > filled arrays > on multiple lines without commas 1`] = `
 [
   Assignment {
     "name": {
@@ -815,7 +815,7 @@ exports[`parser associative array literals filled arrays on multiple lines witho
 ]
 `;
 
-exports[`parser associative array literals filled arrays on one line 1`] = `
+exports[`parser associative array literals > filled arrays > on one line 1`] = `
 [
   Assignment {
     "name": {

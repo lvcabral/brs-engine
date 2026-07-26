@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`parser print statements parses print lists with no separator 1`] = `
+exports[`parser print statements > parses print lists with no separator 1`] = `
 [
   Print {
     "expressions": [
@@ -81,7 +81,7 @@ exports[`parser print statements parses print lists with no separator 1`] = `
 ]
 `;
 
-exports[`parser print statements parses print lists with separators 1`] = `
+exports[`parser print statements > parses print lists with separators 1`] = `
 [
   Print {
     "expressions": [
@@ -194,7 +194,7 @@ exports[`parser print statements parses print lists with separators 1`] = `
 ]
 `;
 
-exports[`parser print statements parses singular print statements 1`] = `
+exports[`parser print statements > parses singular print statements 1`] = `
 [
   Print {
     "expressions": [
@@ -234,7 +234,7 @@ exports[`parser print statements parses singular print statements 1`] = `
 ]
 `;
 
-exports[`parser print statements supports empty print 1`] = `
+exports[`parser print statements > supports empty print 1`] = `
 [
   Print {
     "expressions": [

@@ -8,11 +8,11 @@ describe("end to end brightscript functions", () => {
     });
 
     afterEach(() => {
-        jest.resetAllMocks();
+        vi.clearAllMocks();
     });
 
     afterAll(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     test("multi-file/test1.brs and multi-file/test1.brs", async () => {

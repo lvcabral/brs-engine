@@ -24,8 +24,8 @@ describe("parser try/catch statements", () => {
             )
         );
 
-        expect(errors).toEqual(
-            expect.arrayContaining([new Error("Syntax Error. (compile error &h2) Found unexpected token 'end try'")])
+        expect(errors.map((error) => error.message)).toEqual(
+            expect.arrayContaining(["Syntax Error. (compile error &h2) Found unexpected token 'end try'"])
         );
     });
 
@@ -42,9 +42,9 @@ describe("parser try/catch statements", () => {
             )
         );
 
-        expect(errors).toEqual(
+        expect(errors.map((error) => error.message)).toEqual(
             expect.arrayContaining([
-                new Error("Syntax Error. (compile error &h2) Expected variable name for caught error after 'catch'"),
+                "Syntax Error. (compile error &h2) Expected variable name for caught error after 'catch'",
             ])
         );
     });
@@ -62,10 +62,8 @@ describe("parser try/catch statements", () => {
             )
         );
 
-        expect(errors).toEqual(
-            expect.arrayContaining([
-                new Error("(At end of file) Expected 'end try' or 'endtry' to terminate catch block"),
-            ])
+        expect(errors.map((error) => error.message)).toEqual(
+            expect.arrayContaining(["(At end of file) Expected 'end try' or 'endtry' to terminate catch block"])
         );
     });
 

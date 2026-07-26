@@ -34,8 +34,8 @@ describe("roFloat", () => {
         });
 
         it("setFloat", () => {
-            setFloatA = a.getMethod("setFloat");
-            setFloatB = b.getMethod("setFloat");
+            let setFloatA = a.getMethod("setFloat");
+            let setFloatB = b.getMethod("setFloat");
 
             expect(setFloatA).toBeInstanceOf(Callable);
             expect(setFloatB).toBeInstanceOf(Callable);
@@ -51,8 +51,8 @@ describe("roFloat", () => {
             a = new RoFloat(new Float(someNumberA));
             b = new RoFloat(new Float(someNumberB));
 
-            getFloatA = a.getMethod("getFloat");
-            getFloatB = b.getMethod("getFloat");
+            let getFloatA = a.getMethod("getFloat");
+            let getFloatB = b.getMethod("getFloat");
 
             expect(getFloatA).toBeInstanceOf(Callable);
             expect(getFloatB).toBeInstanceOf(Callable);
@@ -68,8 +68,8 @@ describe("roFloat", () => {
             a = new RoFloat(new Float(someNumberA));
             b = new RoFloat(new Float(someNumberB));
 
-            toStrA = a.getMethod("toStr");
-            toStrB = b.getMethod("toStr");
+            let toStrA = a.getMethod("toStr");
+            let toStrB = b.getMethod("toStr");
 
             let expectedA = parseFloat(Math.fround(someNumberA).toPrecision(6));
             let expectedB = parseFloat(Math.fround(someNumberB).toPrecision(6));

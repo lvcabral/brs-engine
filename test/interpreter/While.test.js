@@ -21,7 +21,7 @@ describe("interpreter while loops", () => {
     );
 
     beforeEach(() => {
-        decrementSpy = jest.spyOn(decrementFoo, "accept");
+        decrementSpy = vi.spyOn(decrementFoo, "accept");
 
         interpreter = new Interpreter();
     });
@@ -58,7 +58,7 @@ describe("interpreter while loops", () => {
             token(Lexeme.Greater, ">"),
             new Expr.Literal(new Int32(0))
         );
-        jest.spyOn(greaterThanZero, "accept");
+        vi.spyOn(greaterThanZero, "accept");
 
         const statements = [
             initializeFoo,

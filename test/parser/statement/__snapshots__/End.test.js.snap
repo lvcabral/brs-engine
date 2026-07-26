@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`\`end\` statement can be used as a property name on objects 1`] = `
+exports[`\`end\` statement > can be used as a property name on objects 1`] = `
 [
   Function {
     "func": Function {
@@ -180,7 +180,7 @@ exports[`\`end\` statement can be used as a property name on objects 1`] = `
 ]
 `;
 
-exports[`\`end\` statement does not produce errors 1`] = `
+exports[`\`end\` statement > does not produce errors 1`] = `
 [
   Function {
     "func": Function {
@@ -278,7 +278,7 @@ exports[`\`end\` statement does not produce errors 1`] = `
 ]
 `;
 
-exports[`\`end\` statement is not allowed as a standalone variable 1`] = `
+exports[`\`end\` statement > is not allowed as a standalone variable 1`] = `
 [
   Function {
     "func": Function {
@@ -376,7 +376,7 @@ exports[`\`end\` statement is not allowed as a standalone variable 1`] = `
 ]
 `;
 
-exports[`\`end\` statement is valid as a statement 1`] = `
+exports[`\`end\` statement > is valid as a statement 1`] = `
 [
   End {
     "tokens": {

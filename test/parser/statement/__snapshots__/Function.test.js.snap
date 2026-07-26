@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`parser function declarations does not allow type designators at end of name 1`] = `
+exports[`parser > function declarations > does not allow type designators at end of name 1`] = `
 {
   "errors": [
     [Error: Syntax Error. (compile error &h2) Function name 'StringFunc#' cannot end with type designator '#'],
@@ -461,7 +461,7 @@ exports[`parser function declarations does not allow type designators at end of 
 }
 `;
 
-exports[`parser function declarations parses functions with default argument expressions 1`] = `
+exports[`parser > function declarations > parses functions with default argument expressions 1`] = `
 [
   Function {
     "func": Function {
@@ -754,7 +754,7 @@ exports[`parser function declarations parses functions with default argument exp
 ]
 `;
 
-exports[`parser function declarations parses functions with implicit-dynamic arguments 1`] = `
+exports[`parser > function declarations > parses functions with implicit-dynamic arguments 1`] = `
 [
   Function {
     "func": Function {
@@ -916,7 +916,7 @@ exports[`parser function declarations parses functions with implicit-dynamic arg
 ]
 `;
 
-exports[`parser function declarations parses functions with typed arguments 1`] = `
+exports[`parser > function declarations > parses functions with typed arguments 1`] = `
 [
   Function {
     "func": Function {
@@ -1076,7 +1076,7 @@ exports[`parser function declarations parses functions with typed arguments 1`] 
 ]
 `;
 
-exports[`parser function declarations parses functions with typed arguments and default expressions 1`] = `
+exports[`parser > function declarations > parses functions with typed arguments and default expressions 1`] = `
 [
   Function {
     "func": Function {
@@ -1306,7 +1306,7 @@ exports[`parser function declarations parses functions with typed arguments and 
 ]
 `;
 
-exports[`parser function declarations parses minimal empty function declarations 1`] = `
+exports[`parser > function declarations > parses minimal empty function declarations 1`] = `
 [
   Function {
     "func": Function {
@@ -1379,7 +1379,7 @@ exports[`parser function declarations parses minimal empty function declarations
 ]
 `;
 
-exports[`parser function declarations parses non-empty function declarations 1`] = `
+exports[`parser > function declarations > parses non-empty function declarations 1`] = `
 [
   Function {
     "func": Function {
@@ -1493,7 +1493,7 @@ exports[`parser function declarations parses non-empty function declarations 1`]
 ]
 `;
 
-exports[`parser function declarations parses return types 1`] = `
+exports[`parser > function declarations > parses return types 1`] = `
 [
   Function {
     "func": Function {
@@ -1566,7 +1566,7 @@ exports[`parser function declarations parses return types 1`] = `
 ]
 `;
 
-exports[`parser function declarations recovers when using \`end sub\` instead of \`end function\` 1`] = `
+exports[`parser > function declarations > recovers when using \`end sub\` instead of \`end function\` 1`] = `
 {
   "errors": [
     [Error: Syntax Error. (compile error &h2) Expected 'end function' to terminate function block],
@@ -1761,7 +1761,7 @@ exports[`parser function declarations recovers when using \`end sub\` instead of
 }
 `;
 
-exports[`parser sub declarations does not allow type designators at end of name 1`] = `
+exports[`parser > sub declarations > does not allow type designators at end of name 1`] = `
 {
   "errors": [
     [Error: Syntax Error. (compile error &h2) Function name 'StringSub#' cannot end with type designator '#'],
@@ -2058,7 +2058,7 @@ exports[`parser sub declarations does not allow type designators at end of name 
 }
 `;
 
-exports[`parser sub declarations parses minimal sub declarations 1`] = `
+exports[`parser > sub declarations > parses minimal sub declarations 1`] = `
 [
   Function {
     "func": Function {
@@ -2131,7 +2131,7 @@ exports[`parser sub declarations parses minimal sub declarations 1`] = `
 ]
 `;
 
-exports[`parser sub declarations parses non-empty sub declarations 1`] = `
+exports[`parser > sub declarations > parses non-empty sub declarations 1`] = `
 [
   Function {
     "func": Function {
@@ -2245,7 +2245,7 @@ exports[`parser sub declarations parses non-empty sub declarations 1`] = `
 ]
 `;
 
-exports[`parser sub declarations parses subs with default argument expressions 1`] = `
+exports[`parser > sub declarations > parses subs with default argument expressions 1`] = `
 [
   Function {
     "func": Function {
@@ -2538,7 +2538,7 @@ exports[`parser sub declarations parses subs with default argument expressions 1
 ]
 `;
 
-exports[`parser sub declarations parses subs with implicit-dynamic arguments 1`] = `
+exports[`parser > sub declarations > parses subs with implicit-dynamic arguments 1`] = `
 [
   Function {
     "func": Function {
@@ -2700,7 +2700,7 @@ exports[`parser sub declarations parses subs with implicit-dynamic arguments 1`]
 ]
 `;
 
-exports[`parser sub declarations parses subs with typed arguments 1`] = `
+exports[`parser > sub declarations > parses subs with typed arguments 1`] = `
 [
   Function {
     "func": Function {
@@ -2860,7 +2860,7 @@ exports[`parser sub declarations parses subs with typed arguments 1`] = `
 ]
 `;
 
-exports[`parser sub declarations parses subs with typed arguments and default expressions 1`] = `
+exports[`parser > sub declarations > parses subs with typed arguments and default expressions 1`] = `
 [
   Function {
     "func": Function {
@@ -3090,7 +3090,7 @@ exports[`parser sub declarations parses subs with typed arguments and default ex
 ]
 `;
 
-exports[`parser sub declarations recovers when using \`end function\` instead of \`end sub\` 1`] = `
+exports[`parser > sub declarations > recovers when using \`end function\` instead of \`end sub\` 1`] = `
 {
   "errors": [
     [Error: Syntax Error. (compile error &h2) Expected 'end sub' to terminate sub block],

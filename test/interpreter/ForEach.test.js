@@ -22,14 +22,14 @@ describe("interpreter for-each loops", () => {
     });
 
     afterEach(() => {
-        jest.resetAllMocks();
-        jest.restoreAllMocks();
+        vi.resetAllMocks();
+        vi.restoreAllMocks();
     });
 
     it("iterates across all elements of an array", () => {
         const emptyBlock = new Stmt.Block([]);
         const receivedElements = [];
-        const emptyBlockSpy = jest
+        const emptyBlockSpy = vi
             .spyOn(emptyBlock, "accept")
             .mockImplementation((_interpreter) =>
                 receivedElements.push(_interpreter.environment.get(identifier("element")))
@@ -57,7 +57,7 @@ describe("interpreter for-each loops", () => {
 
     it("doesn't execute the body for empty arrays", () => {
         const emptyBlock = new Stmt.Block([]);
-        const emptyBlockSpy = jest.spyOn(emptyBlock, "accept");
+        const emptyBlockSpy = vi.spyOn(emptyBlock, "accept");
 
         const statements = [
             new Stmt.Assignment(
@@ -106,7 +106,7 @@ describe("interpreter for-each loops", () => {
 
     it("exits early when it encounters 'exit for'", () => {
         const block = new Stmt.Block([new Stmt.ExitFor({ exitFor: token(Lexeme.ExitFor, "exit for") })]);
-        const blockSpy = jest.spyOn(block, "accept");
+        const blockSpy = vi.spyOn(block, "accept");
 
         const statements = [
             new Stmt.Assignment({ equals: token(Lexeme.Equals, "=") }, identifier("array"), filledArray),
@@ -132,7 +132,7 @@ describe("interpreter for-each loops", () => {
             new Stmt.ContinueFor({ continueFor: token(Lexeme.ContinueFor, "continue for") }),
             new Stmt.ExitFor({ exitFor: token(Lexeme.ExitFor, "exit for") }),
         ]);
-        const blockSpy = jest.spyOn(block, "accept");
+        const blockSpy = vi.spyOn(block, "accept");
 
         const statements = [
             new Stmt.Assignment({ equals: token(Lexeme.Equals, "=") }, identifier("array"), filledArray),
