@@ -64,7 +64,7 @@ describe("RoString", () => {
 
         test("getString", () => {
             let s = new RoString(new BrsString("hello"));
-            getString = s.getMethod("getString");
+            let getString = s.getMethod("getString");
             expect(getString).toBeInstanceOf(Callable);
             expect(getString.call(interpreter)).toEqual(new BrsString("hello"));
         });

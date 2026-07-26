@@ -8,11 +8,11 @@ describe("end to end functions", () => {
     });
 
     afterEach(() => {
-        jest.resetAllMocks();
+        vi.clearAllMocks();
     });
 
     afterAll(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     test("function/arguments.brs", async () => {

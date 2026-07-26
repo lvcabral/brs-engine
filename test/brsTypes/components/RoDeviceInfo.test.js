@@ -1,5 +1,5 @@
 // Mock the resolvedOptions method of Intl.DateTimeFormat
-global.Intl.DateTimeFormat = jest.fn().mockImplementation(() => {
+global.Intl.DateTimeFormat = vi.fn().mockImplementation(() => {
     return {
         resolvedOptions: () => {
             return {
@@ -15,6 +15,7 @@ const { RoDeviceInfo, RoAssociativeArray, RoArray, BrsBoolean, BrsString, Int32,
 
 describe("RoDeviceInfo", () => {
     const OLD_ENV = process.env;
+    let interpreter;
 
     beforeEach(() => {
         process.env = { ...OLD_ENV };

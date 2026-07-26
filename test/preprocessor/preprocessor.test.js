@@ -106,13 +106,13 @@ describe("preprocessor", () => {
             elseIfChunk = new Chunk.BrightScript([]);
             elseChunk = new Chunk.BrightScript([]);
 
-            jest.spyOn(ifChunk, "accept");
-            jest.spyOn(elseIfChunk, "accept");
-            jest.spyOn(elseChunk, "accept");
+            vi.spyOn(ifChunk, "accept");
+            vi.spyOn(elseIfChunk, "accept");
+            vi.spyOn(elseChunk, "accept");
         });
 
         afterAll(() => {
-            jest.restoreAllMocks();
+            vi.restoreAllMocks();
         });
 
         it("enters #if branch", () => {

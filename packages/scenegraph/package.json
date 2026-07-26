@@ -35,7 +35,6 @@
         "build": "webpack --config ./config/webpack.config.js --env development && tsc --project ./config/tsconfig.json",
         "release": "webpack --config ./config/webpack.config.js --env production && tsc --project ./config/tsconfig.json",
         "clean": "rimraf ./lib ./types ./assets",
-        "test": "jest",
         "prepublishOnly": "npm run clean && npm run release"
     },
     "dependencies": {
@@ -50,7 +49,6 @@
         "@types/xmldoc": "^1.1.9",
         "typescript": "^5.9.3",
         "rimraf": "^2.6.2",
-        "jest": "^29.4.3",
         "process": "^0.11.10",
         "webpack": "^5.105.0",
         "webpack-cli": "^5.0.1",

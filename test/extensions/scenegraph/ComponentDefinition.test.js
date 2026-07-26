@@ -7,14 +7,14 @@ describe("ComponentDefinition script tag parsing", () => {
 
     function createMockFS(componentXml) {
         return {
-            existsSync: jest.fn(() => true),
-            findSync: jest.fn((uri, ext) => {
+            existsSync: vi.fn(() => true),
+            findSync: vi.fn((uri, ext) => {
                 if (ext === "xml") {
                     return [xmlPath];
                 }
                 return [];
             }),
-            readFileSync: jest.fn((path) => {
+            readFileSync: vi.fn((path) => {
                 if (path === xmlPath) {
                     return componentXml;
                 }

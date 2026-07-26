@@ -18,7 +18,7 @@ describe("Video bufferingBar and retrievingBar fields", () => {
     beforeEach(() => {
         // The Video constructor posts control/state messages to the render thread.
         originalPostMessage = global.postMessage;
-        global.postMessage = jest.fn();
+        global.postMessage = vi.fn();
     });
 
     afterEach(() => {
@@ -124,7 +124,7 @@ describe("Video cross-thread deserialization guard", () => {
 
     beforeEach(() => {
         originalPostMessage = global.postMessage;
-        global.postMessage = jest.fn();
+        global.postMessage = vi.fn();
         sgRoot.deserializing = false;
         sgRoot.setVideo();
     });
@@ -205,7 +205,7 @@ describe("Video plane is only rendered by the owning, actively-presenting Video"
 
     beforeEach(() => {
         originalPostMessage = global.postMessage;
-        global.postMessage = jest.fn();
+        global.postMessage = vi.fn();
         sgRoot.setVideo();
     });
 
@@ -368,7 +368,7 @@ describe("Video asyncStopSemantics stopping->stopped transition", () => {
 
     beforeEach(() => {
         originalPostMessage = global.postMessage;
-        global.postMessage = jest.fn();
+        global.postMessage = vi.fn();
         sgRoot.setVideo();
     });
 

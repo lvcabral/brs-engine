@@ -18,7 +18,7 @@ describe("RoAudioPlayer", () => {
         interpreter = new Interpreter();
         messages = [];
         originalPostMessage = global.postMessage;
-        global.postMessage = jest.fn((message) => messages.push(message));
+        global.postMessage = vi.fn((message) => messages.push(message));
     });
 
     afterEach(() => {

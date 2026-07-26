@@ -29,7 +29,7 @@ describe("SGRoot.processVideo exactly-once event consumption", () => {
     beforeEach(() => {
         // The Video constructor posts control/state messages to the render thread.
         originalPostMessage = global.postMessage;
-        global.postMessage = jest.fn();
+        global.postMessage = vi.fn();
         sharedArray.fill(-1);
         sgRoot.setVideo();
     });
@@ -174,7 +174,7 @@ describe("roVideoPlayer getNewEvents exactly-once event consumption", () => {
     beforeEach(() => {
         // The roVideoPlayer constructor posts player-reset messages to the render thread.
         originalPostMessage = global.postMessage;
-        global.postMessage = jest.fn();
+        global.postMessage = vi.fn();
         sharedArray.fill(-1);
     });
 

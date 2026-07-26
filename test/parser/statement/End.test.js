@@ -4,6 +4,8 @@ const { Lexeme } = brs;
 const { token, EOF } = require("../ParserTests");
 
 describe("`end` statement", () => {
+    let parser;
+
     beforeEach(() => {
         parser = new brs.Parser();
     });

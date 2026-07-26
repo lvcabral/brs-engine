@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`parser library statements adds error for library statements NOT at top of file 1`] = `
+exports[`parser library statements > adds error for library statements NOT at top of file 1`] = `
 {
   "errors": [
     [Error: Syntax Error. (compile error &h2) Library statements may only appear at the top of a file],
@@ -124,7 +124,7 @@ exports[`parser library statements adds error for library statements NOT at top 
 }
 `;
 
-exports[`parser library statements adds error for library statements inside of function body 1`] = `
+exports[`parser library statements > adds error for library statements inside of function body 1`] = `
 {
   "errors": [
     [Error: Syntax Error. (compile error &h2) Library statements may only appear at the top of a file],
@@ -249,7 +249,7 @@ exports[`parser library statements adds error for library statements inside of f
 }
 `;
 
-exports[`parser library statements does not prevent usage of \`library\` as object property name 1`] = `
+exports[`parser library statements > does not prevent usage of \`library\` as object property name 1`] = `
 {
   "errors": [],
   "statements": [
@@ -432,7 +432,7 @@ exports[`parser library statements does not prevent usage of \`library\` as obje
 }
 `;
 
-exports[`parser library statements does not prevent usage of \`library\` as varible name 1`] = `
+exports[`parser library statements > does not prevent usage of \`library\` as varible name 1`] = `
 {
   "errors": [],
   "statements": [
@@ -569,7 +569,7 @@ exports[`parser library statements does not prevent usage of \`library\` as vari
 }
 `;
 
-exports[`parser library statements parses rest of file with ONLY the library keyword present at root level 1`] = `
+exports[`parser library statements > parses rest of file with ONLY the library keyword present at root level 1`] = `
 {
   "errors": [
     [Error: Syntax Error. (compile error &h2) Missing string literal after library keyword],
@@ -730,7 +730,7 @@ exports[`parser library statements parses rest of file with ONLY the library key
 }
 `;
 
-exports[`parser library statements still parses entire file after invalid library statement 1`] = `
+exports[`parser library statements > still parses entire file after invalid library statement 1`] = `
 {
   "errors": [
     [Error: Syntax Error. (compile error &h2) Found unexpected token 'cat' after library statement],
@@ -835,7 +835,7 @@ exports[`parser library statements still parses entire file after invalid librar
 }
 `;
 
-exports[`parser library statements supports library statements at top of file 1`] = `
+exports[`parser library statements > supports library statements at top of file 1`] = `
 {
   "errors": [],
   "statements": [
@@ -957,7 +957,7 @@ exports[`parser library statements supports library statements at top of file 1`
 }
 `;
 
-exports[`parser library statements supports multiple library statements separated by colon 1`] = `
+exports[`parser library statements > supports multiple library statements separated by colon 1`] = `
 {
   "errors": [],
   "statements": [

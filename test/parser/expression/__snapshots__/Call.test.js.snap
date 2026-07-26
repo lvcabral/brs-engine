@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`parser call expressions accepts arguments 1`] = `
+exports[`parser call expressions > accepts arguments 1`] = `
 [
   Expression {
     "expression": Call {
@@ -82,7 +82,7 @@ exports[`parser call expressions accepts arguments 1`] = `
 ]
 `;
 
-exports[`parser call expressions allows closing parentheses on separate line 1`] = `
+exports[`parser call expressions > allows closing parentheses on separate line 1`] = `
 [
   Expression {
     "expression": Call {
@@ -127,7 +127,7 @@ exports[`parser call expressions allows closing parentheses on separate line 1`]
 ]
 `;
 
-exports[`parser call expressions does not invalidate the next statement on a multi-statement line 1`] = `
+exports[`parser call expressions > does not invalidate the next statement on a multi-statement line 1`] = `
 [
   Function {
     "func": Function {
@@ -332,7 +332,7 @@ exports[`parser call expressions does not invalidate the next statement on a mul
 ]
 `;
 
-exports[`parser call expressions does not invalidate the rest of the file on incomplete statement 1`] = `
+exports[`parser call expressions > does not invalidate the rest of the file on incomplete statement 1`] = `
 [
   Function {
     "func": Function {
@@ -479,7 +479,7 @@ exports[`parser call expressions does not invalidate the rest of the file on inc
 ]
 `;
 
-exports[`parser call expressions parses named function calls 1`] = `
+exports[`parser call expressions > parses named function calls 1`] = `
 [
   Expression {
     "expression": Call {

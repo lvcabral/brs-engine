@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`parser indexing multi-level bracketed 1`] = `
+exports[`parser indexing > multi-level > bracketed 1`] = `
 [
   Assignment {
     "name": {
@@ -176,7 +176,7 @@ exports[`parser indexing multi-level bracketed 1`] = `
 ]
 `;
 
-exports[`parser indexing multi-level dotted 1`] = `
+exports[`parser indexing > multi-level > dotted 1`] = `
 [
   Assignment {
     "name": {
@@ -254,7 +254,7 @@ exports[`parser indexing multi-level dotted 1`] = `
 ]
 `;
 
-exports[`parser indexing multi-level mixed 1`] = `
+exports[`parser indexing > multi-level > mixed 1`] = `
 [
   Assignment {
     "name": {
@@ -390,7 +390,7 @@ exports[`parser indexing multi-level mixed 1`] = `
 ]
 `;
 
-exports[`parser indexing one level bracketed 1`] = `
+exports[`parser indexing > one level > bracketed 1`] = `
 [
   Assignment {
     "name": {
@@ -488,7 +488,7 @@ exports[`parser indexing one level bracketed 1`] = `
 ]
 `;
 
-exports[`parser indexing one level dotted 1`] = `
+exports[`parser indexing > one level > dotted 1`] = `
 [
   Assignment {
     "name": {
@@ -566,7 +566,7 @@ exports[`parser indexing one level dotted 1`] = `
 ]
 `;
 
-exports[`parser indexing one level dotted and bracketed optional dot 1`] = `
+exports[`parser indexing > one level > dotted and bracketed > optional dot 1`] = `
 [
   Assignment {
     "name": {
@@ -664,7 +664,7 @@ exports[`parser indexing one level dotted and bracketed optional dot 1`] = `
 ]
 `;
 
-exports[`parser indexing one level dotted and bracketed single dot 1`] = `
+exports[`parser indexing > one level > dotted and bracketed > single dot 1`] = `
 [
   Assignment {
     "name": {

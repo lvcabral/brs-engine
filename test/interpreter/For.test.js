@@ -18,12 +18,12 @@ describe("interpreter for loops", () => {
     });
 
     afterEach(() => {
-        jest.resetAllMocks();
-        jest.restoreAllMocks();
+        vi.resetAllMocks();
+        vi.restoreAllMocks();
     });
 
     it("initializes the counter variable", () => {
-        const counterSpy = jest.spyOn(initializeCounter, "accept");
+        const counterSpy = vi.spyOn(initializeCounter, "accept");
 
         const statements = [
             new Stmt.For(
@@ -45,7 +45,7 @@ describe("interpreter for loops", () => {
 
     it("evaluates final value expression only once", () => {
         const finalValue = new Expr.Literal(new Int32(5));
-        const finalValueSpy = jest.spyOn(finalValue, "accept");
+        const finalValueSpy = vi.spyOn(finalValue, "accept");
 
         const statements = [
             new Stmt.For(
@@ -67,7 +67,7 @@ describe("interpreter for loops", () => {
 
     it("evaluates step expression only once", () => {
         const stepValue = new Expr.Literal(new Int32(1));
-        const stepValueSpy = jest.spyOn(stepValue, "accept");
+        const stepValueSpy = vi.spyOn(stepValue, "accept");
 
         const statements = [
             new Stmt.For(
@@ -89,7 +89,7 @@ describe("interpreter for loops", () => {
 
     it("executes block one last time when `counter = finalValue`", () => {
         const body = new Stmt.Block([]); // no need for anything in it
-        const bodySpy = jest.spyOn(body, "accept");
+        const bodySpy = vi.spyOn(body, "accept");
 
         const statements = [
             new Stmt.For(
@@ -133,7 +133,7 @@ describe("interpreter for loops", () => {
 
     it("can be exited", () => {
         const body = new Stmt.Block([new Stmt.ExitFor({ exitFor: token(Lexeme.ExitFor, "exit for") })]);
-        const bodySpy = jest.spyOn(body, "accept");
+        const bodySpy = vi.spyOn(body, "accept");
 
         const statements = [
             new Stmt.For(
@@ -158,7 +158,7 @@ describe("interpreter for loops", () => {
             new Stmt.ContinueFor({ continueFor: token(Lexeme.ContinueFor, "continue for") }),
             new Stmt.ExitFor({ exitFor: token(Lexeme.ExitFor, "exit for") }),
         ]);
-        const bodySpy = jest.spyOn(body, "accept");
+        const bodySpy = vi.spyOn(body, "accept");
 
         const statements = [
             new Stmt.For(

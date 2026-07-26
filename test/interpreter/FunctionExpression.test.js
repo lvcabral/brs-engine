@@ -12,6 +12,9 @@ describe("interpreter function expressions", () => {
         print: token(Lexeme.Print, "print"),
     };
 
+    let interpreter;
+    let stdout;
+
     beforeEach(() => {
         const outputStreams = createMockStreams();
         interpreter = new Interpreter(outputStreams);

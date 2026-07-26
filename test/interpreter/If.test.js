@@ -7,6 +7,8 @@ let interpreter;
 
 describe("interpreter if statements", () => {
     let assignTo;
+    let equals;
+    let interpreter;
 
     beforeEach(() => {
         equals = { equals: token(Lexeme.Equals, "=") };
@@ -24,7 +26,7 @@ describe("interpreter if statements", () => {
     });
 
     it("executes 'then' statements if 'condition' is 'true'", () => {
-        assignTo.bar.accept = jest.fn();
+        assignTo.bar.accept = vi.fn();
         let statements = [
             new Stmt.If(
                 {
@@ -42,7 +44,7 @@ describe("interpreter if statements", () => {
     });
 
     it("skips 'then' statements if 'condition' is 'false'", () => {
-        assignTo.foo.accept = jest.fn();
+        assignTo.foo.accept = vi.fn();
         let statements = [
             new Stmt.If(
                 {
@@ -60,8 +62,8 @@ describe("interpreter if statements", () => {
     });
 
     it("only executes one valid 'else if' that evaluates to 'true'", () => {
-        let shouldExecute = jest.fn();
-        let shouldNotExecute = jest.fn();
+        let shouldExecute = vi.fn();
+        let shouldNotExecute = vi.fn();
 
         [assignTo.foo, assignTo.bar, assignTo.dolor, assignTo.sit, assignTo.amet].forEach(
             (assignment) => (assignment.accept = shouldNotExecute)
@@ -99,8 +101,8 @@ describe("interpreter if statements", () => {
     });
 
     it("executes 'else' statements if nothing else matches", () => {
-        let shouldExecute = jest.fn();
-        let shouldNotExecute = jest.fn();
+        let shouldExecute = vi.fn();
+        let shouldNotExecute = vi.fn();
 
         [assignTo.foo, assignTo.bar, assignTo.lorem, assignTo.ipsum, assignTo.dolor, assignTo.sit].forEach(
             (assignment) => (assignment.accept = shouldNotExecute)

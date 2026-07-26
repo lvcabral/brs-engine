@@ -25,7 +25,7 @@ describe("Video internal children survive cross-thread serialization", () => {
 
     beforeEach(() => {
         originalPostMessage = global.postMessage;
-        global.postMessage = jest.fn();
+        global.postMessage = vi.fn();
         sgRoot.setVideo();
     });
 

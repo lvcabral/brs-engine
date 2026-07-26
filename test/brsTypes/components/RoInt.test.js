@@ -34,8 +34,8 @@ describe("roInt", () => {
         });
 
         it("setInt", () => {
-            setIntA = a.getMethod("setInt");
-            setIntB = b.getMethod("setInt");
+            let setIntA = a.getMethod("setInt");
+            let setIntB = b.getMethod("setInt");
 
             expect(setIntA).toBeInstanceOf(Callable);
             expect(setIntB).toBeInstanceOf(Callable);
@@ -51,8 +51,8 @@ describe("roInt", () => {
             a = new RoInt(new Int32(someNumberA));
             b = new RoInt(new Int32(someNumberB));
 
-            getIntA = a.getMethod("getInt");
-            getIntB = b.getMethod("getInt");
+            let getIntA = a.getMethod("getInt");
+            let getIntB = b.getMethod("getInt");
 
             expect(getIntA).toBeInstanceOf(Callable);
             expect(getIntB).toBeInstanceOf(Callable);
@@ -68,8 +68,8 @@ describe("roInt", () => {
             a = new RoInt(new Int32(someNumberA));
             b = new RoInt(new Int32(someNumberB));
 
-            toStrA = a.getMethod("toStr");
-            toStrB = b.getMethod("toStr");
+            let toStrA = a.getMethod("toStr");
+            let toStrB = b.getMethod("toStr");
 
             let resultA = toStrA.call(interpreter);
             let resultB = toStrB.call(interpreter);

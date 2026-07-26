@@ -4,6 +4,7 @@ const { RoSocketAddress, BrsBoolean, BrsString, Int32 } = brs.types;
 
 describe("RoDeviceInfo", () => {
     const OLD_ENV = process.env;
+    let interpreter;
 
     beforeEach(() => {
         process.env = { ...OLD_ENV };

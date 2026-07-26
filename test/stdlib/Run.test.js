@@ -4,18 +4,21 @@ const { Run } = brs.stdlib;
 const { Interpreter } = brs;
 const fs = require("fs");
 
-jest.mock("fs");
-
 describe("global Run function", () => {
     let interpreter;
     brs.registerCallback(() => {}); // register a callback to avoid display errors
 
     beforeEach(() => {
+        // Stand in for Jest's `jest.mock("fs")` automock: only `existsSync` and `readFileSync`
+        // are consulted here, and the automock's default return was `undefined` (i.e. "file
+        // missing" / "no source"). Individual tests override them per case.
+        vi.spyOn(fs, "existsSync").mockReturnValue(undefined);
+        vi.spyOn(fs, "readFileSync").mockReturnValue(undefined);
         interpreter = new Interpreter({ root: process.cwd() });
     });
 
     afterEach(() => {
-        fs.readFileSync.mockRestore();
+        vi.restoreAllMocks();
     });
 
     it("returns invalid for unrecognized devices", () => {

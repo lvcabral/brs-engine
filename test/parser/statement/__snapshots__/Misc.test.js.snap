@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`parser allows whitelisted reserved words as object properties 1`] = `
+exports[`parser > allows whitelisted reserved words as object properties 1`] = `
 [
   Function {
     "func": Function {
@@ -3230,7 +3230,7 @@ exports[`parser allows whitelisted reserved words as object properties 1`] = `
 ]
 `;
 
-exports[`parser certain reserved words are allowed as local var identifiers 1`] = `
+exports[`parser > certain reserved words are allowed as local var identifiers 1`] = `
 [
   Function {
     "func": Function {
@@ -3763,4 +3763,4 @@ exports[`parser certain reserved words are allowed as local var identifiers 1`] 
 ]
 `;
 
-exports[`parser most reserved words are not allowed as local var identifiers 1`] = `[]`;
+exports[`parser > most reserved words are not allowed as local var identifiers 1`] = `[]`;

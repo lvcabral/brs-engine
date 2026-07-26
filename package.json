@@ -26,7 +26,8 @@
     "start": "npm run start -w brs-engine",
     "clean": "npm run clean --workspaces",
     "docs:update": "git submodule update --init --remote external/dev-doc",
-    "test": "jest",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "lint": "eslint -c .eslintrc.js --ext .ts ./src",
     "prettier:write": "prettier --write \"{packages,src,test}/**/*.{js,ts}\"",
     "prettier": "prettier --check \"{packages,src,test}/**/*.{js,ts}\""
@@ -100,7 +101,6 @@
     "eslint-plugin-unicorn": "^56.0.1",
     "ifdef-loader": "^2.3.2",
     "javascript-obfuscator": "^4.0.2",
-    "jest": "^29.4.3",
     "lint-staged": "^12.5.0",
     "path-browserify": "^1.0.1",
     "prettier": "2",
@@ -109,6 +109,7 @@
     "stream-browserify": "^3.0.0",
     "ts-loader": "^9.5.1",
     "typescript": "^5.9.3",
+    "vitest": "^3.2.7",
     "webpack": "^5.105.0",
     "webpack-bundle-analyzer": "^4.10.1",
     "webpack-cli": "^5.0.1",
@@ -116,13 +117,6 @@
     "webpack-shebang-plugin": "^1.1.8",
     "webpack-stats-plugin": "^1.1.3",
     "zip-webpack-plugin": "^4.0.3"
-  },
-  "jest": {
-    "testEnvironment": "node",
-    "testPathIgnorePatterns": [
-      "node_modules/",
-      "out/"
-    ]
   },
   "overrides": {
     "minimatch": "^10.2.2"

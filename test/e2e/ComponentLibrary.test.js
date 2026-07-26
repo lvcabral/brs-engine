@@ -10,11 +10,11 @@ describe("ComponentLibrary", () => {
     });
 
     afterEach(() => {
-        jest.resetAllMocks();
+        vi.clearAllMocks();
     });
 
     afterAll(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     test("loads a component library and resolves its namespaced components", async () => {

@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`parser array literals contents can contain expressions 1`] = `
+exports[`parser array literals > contents > can contain expressions 1`] = `
 [
   Assignment {
     "name": {
@@ -167,7 +167,7 @@ exports[`parser array literals contents can contain expressions 1`] = `
 ]
 `;
 
-exports[`parser array literals contents can contain other arrays 1`] = `
+exports[`parser array literals > contents > can contain other arrays 1`] = `
 [
   Assignment {
     "name": {
@@ -424,7 +424,7 @@ exports[`parser array literals contents can contain other arrays 1`] = `
 ]
 `;
 
-exports[`parser array literals contents can contain primitives 1`] = `
+exports[`parser array literals > contents > can contain primitives 1`] = `
 [
   Assignment {
     "name": {
@@ -555,7 +555,7 @@ exports[`parser array literals contents can contain primitives 1`] = `
 ]
 `;
 
-exports[`parser array literals empty arrays on multiple lines 1`] = `
+exports[`parser array literals > empty arrays > on multiple lines 1`] = `
 [
   Assignment {
     "name": {
@@ -631,7 +631,7 @@ exports[`parser array literals empty arrays on multiple lines 1`] = `
 ]
 `;
 
-exports[`parser array literals empty arrays on one line 1`] = `
+exports[`parser array literals > empty arrays > on one line 1`] = `
 [
   Assignment {
     "name": {
@@ -707,7 +707,7 @@ exports[`parser array literals empty arrays on one line 1`] = `
 ]
 `;
 
-exports[`parser array literals filled arrays on multiple lines with commas 1`] = `
+exports[`parser array literals > filled arrays > on multiple lines with commas 1`] = `
 [
   Assignment {
     "name": {
@@ -838,7 +838,7 @@ exports[`parser array literals filled arrays on multiple lines with commas 1`] =
 ]
 `;
 
-exports[`parser array literals filled arrays on multiple lines without commas 1`] = `
+exports[`parser array literals > filled arrays > on multiple lines without commas 1`] = `
 [
   Assignment {
     "name": {
@@ -969,7 +969,7 @@ exports[`parser array literals filled arrays on multiple lines without commas 1`
 ]
 `;
 
-exports[`parser array literals filled arrays on one line 1`] = `
+exports[`parser array literals > filled arrays > on one line 1`] = `
 [
   Assignment {
     "name": {

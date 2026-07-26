@@ -29,8 +29,8 @@ describe("RoBoolean", () => {
             });
 
             it("overwrites its stored value", () => {
-                setBooleanA = a.getMethod("setBoolean");
-                setBooleanB = b.getMethod("setBoolean");
+                let setBooleanA = a.getMethod("setBoolean");
+                let setBooleanB = b.getMethod("setBoolean");
                 expect(setBooleanA).toBeInstanceOf(Callable);
                 expect(setBooleanB).toBeInstanceOf(Callable);
 
@@ -42,8 +42,8 @@ describe("RoBoolean", () => {
             });
 
             it("retrieve intrinsic value", () => {
-                getBooleanA = a.getMethod("getBoolean");
-                getBooleanB = b.getMethod("getBoolean");
+                let getBooleanA = a.getMethod("getBoolean");
+                let getBooleanB = b.getMethod("getBoolean");
                 expect(getBooleanA).toBeInstanceOf(Callable);
                 expect(getBooleanB).toBeInstanceOf(Callable);
 

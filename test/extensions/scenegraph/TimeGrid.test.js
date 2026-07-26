@@ -159,7 +159,7 @@ describe("TimeGrid node", () => {
         );
 
         const writes = () => spy.mock.calls.map((call) => String(call[0]).toLowerCase());
-        const spy = jest.spyOn(Node.prototype, "setValue");
+        const spy = vi.spyOn(Node.prototype, "setValue");
 
         // Focus change: details must precede the focused-index events.
         grid.handleKey("down", true);

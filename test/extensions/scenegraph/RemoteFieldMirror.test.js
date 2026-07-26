@@ -53,7 +53,7 @@ describe("remote field management mirrors on the local node copy", () => {
         // Force the child remote so addFields rendezvouses (the mirror branch under test).
         child.rendezvousCall = () => BrsBoolean.True;
 
-        const notifySpy = jest.spyOn(Field.prototype, "notifyObservers");
+        const notifySpy = vi.spyOn(Field.prototype, "notifyObservers");
         try {
             const addFields = child.getMethod("addFields");
             addFields.call(interpreter, new RoAssociativeArray([{ name: new BrsString("0"), value: new Int32(7) }]));

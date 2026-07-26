@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`parser foreach loops allows 'next' to terminate loop 1`] = `
+exports[`parser foreach loops > allows 'next' to terminate loop 1`] = `
 [
   ForEach {
     "body": Block {
@@ -105,7 +105,7 @@ exports[`parser foreach loops allows 'next' to terminate loop 1`] = `
 ]
 `;
 
-exports[`parser foreach loops requires a name and target 1`] = `
+exports[`parser foreach loops > requires a name and target 1`] = `
 [
   ForEach {
     "body": Block {

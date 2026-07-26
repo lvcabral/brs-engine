@@ -22,11 +22,11 @@ describe("global JSON functions", () => {
     });
 
     afterEach(() => {
-        jest.resetAllMocks();
+        vi.clearAllMocks();
     });
 
     afterAll(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     describe("FormatJson", () => {
@@ -251,7 +251,7 @@ describe("global JSON functions", () => {
             );
             let actual = ParseJson.call(interpreter, brsAssociativeArrayStrAsc);
             expect(actual).toBeInstanceOf(RoAssociativeArray);
-            actualKeys = actual.getElements();
+            let actualKeys = actual.getElements();
             expect(actualKeys).toEqual(expected.getElements());
             actualKeys.forEach((key) => {
                 expect(actual.get(key)).toEqual(expected.get(key));

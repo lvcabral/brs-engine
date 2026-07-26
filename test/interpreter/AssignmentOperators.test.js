@@ -5,6 +5,8 @@ const { Interpreter, Expr, Stmt, Lexeme } = brs;
 const { token, identifier } = require("../parser/ParserTests");
 
 describe("interpreter assignment operators", () => {
+    let interpreter;
+
     beforeEach(() => {
         interpreter = new Interpreter();
     });

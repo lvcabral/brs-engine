@@ -15,11 +15,11 @@ describe("createPayloadFromFileMap API", () => {
     });
 
     afterEach(() => {
-        jest.resetAllMocks();
+        vi.clearAllMocks();
     });
 
     afterAll(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     test("should execute single BrightScript file from file map", async () => {
@@ -30,7 +30,7 @@ describe("createPayloadFromFileMap API", () => {
         const regularOutput = allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd());
 
         // Reset mocks for file map execution
-        jest.resetAllMocks();
+        vi.clearAllMocks();
 
         // Test with file map execution
         await executeWithFileMap(resourceFiles, outputStreams);
@@ -48,7 +48,7 @@ describe("createPayloadFromFileMap API", () => {
         const regularOutput = allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd());
 
         // Reset mocks for file map execution
-        jest.resetAllMocks();
+        vi.clearAllMocks();
 
         // Test with file map execution
         await executeWithFileMap(resourceFiles, outputStreams);

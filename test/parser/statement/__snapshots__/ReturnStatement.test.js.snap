@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`parser return statements parses expression returns 1`] = `
+exports[`parser return statements > parses expression returns 1`] = `
 [
   Function {
     "func": Function {
@@ -132,7 +132,7 @@ exports[`parser return statements parses expression returns 1`] = `
 ]
 `;
 
-exports[`parser return statements parses literal returns 1`] = `
+exports[`parser return statements > parses literal returns 1`] = `
 [
   Function {
     "func": Function {
@@ -235,7 +235,7 @@ exports[`parser return statements parses literal returns 1`] = `
 ]
 `;
 
-exports[`parser return statements parses void returns 1`] = `
+exports[`parser return statements > parses void returns 1`] = `
 [
   Function {
     "func": Function {

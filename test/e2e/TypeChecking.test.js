@@ -8,11 +8,11 @@ describe("function argument type checking", () => {
     });
 
     afterEach(() => {
-        jest.resetAllMocks();
+        vi.clearAllMocks();
     });
 
     afterAll(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it("errors when too few args are passed", async () => {

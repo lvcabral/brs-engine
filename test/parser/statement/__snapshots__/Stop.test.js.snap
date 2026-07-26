@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`stop statement can be used as an object property 1`] = `
+exports[`stop statement > can be used as an object property 1`] = `
 [
   Function {
     "func": Function {
@@ -237,7 +237,7 @@ exports[`stop statement can be used as an object property 1`] = `
 ]
 `;
 
-exports[`stop statement cannot be used as a local variable 1`] = `
+exports[`stop statement > cannot be used as a local variable 1`] = `
 [
   Stop {
     "tokens": {
@@ -262,7 +262,7 @@ exports[`stop statement cannot be used as a local variable 1`] = `
 ]
 `;
 
-exports[`stop statement is valid as a statement 1`] = `
+exports[`stop statement > is valid as a statement 1`] = `
 [
   Stop {
     "tokens": {

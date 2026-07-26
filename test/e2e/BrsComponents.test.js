@@ -18,11 +18,11 @@ describe("end to end brightscript functions", () => {
 
     afterEach(() => {
         clock.uninstall();
-        jest.resetAllMocks();
+        vi.clearAllMocks();
     });
 
     afterAll(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
         process.env = OLD_ENV;
     });
 
