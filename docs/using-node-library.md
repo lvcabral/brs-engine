@@ -21,7 +21,7 @@ This guide explains how to use the `brs-node` library in your Node.js applicatio
     - [Handling Callbacks](#handling-callbacks)
     - [Working with SharedArrayBuffer](#working-with-sharedarraybuffer)
   - [Using in Tests](#using-in-tests)
-    - [Setting up Jest Tests](#setting-up-jest-tests)
+    - [Setting up Vitest Tests](#setting-up-vitest-tests)
     - [Testing with E2E Helper Functions](#testing-with-e2e-helper-functions)
     - [Testing Best Practices](#testing-best-practices)
       - [1. Reset File System Between Tests](#1-reset-file-system-between-tests)
@@ -541,12 +541,12 @@ worker.postMessage(sharedBuffer);
 
 The `brs-node` library is excellent for testing BrightScript code. Here are common patterns used in the project's test suite.
 
-### Setting up Jest Tests
+### Setting up Vitest Tests
 
-Install Jest and set up your test environment:
+Install Vitest and set up your test environment:
 
 ```bash
-npm install --save-dev jest
+npm install --save-dev vitest
 ```
 
 ### Testing with E2E Helper Functions
@@ -593,8 +593,8 @@ function createMockStreams() {
     return {
         stdout,
         stderr,
-        stdoutSpy: jest.spyOn(stdout, "write").mockImplementation(() => {}),
-        stderrSpy: jest.spyOn(stderr, "write").mockImplementation(() => {})
+        stdoutSpy: vi.spyOn(stdout, "write").mockImplementation(() => {}),
+        stderrSpy: vi.spyOn(stderr, "write").mockImplementation(() => {})
     };
 }
 
@@ -609,8 +609,8 @@ async function execute(filenames, options = {}, deepLink) {
     await brs.executeFile(payload, options);
 }
 
-function allArgs(jestMock) {
-    return jestMock.mock.calls
+function allArgs(mockFn) {
+    return mockFn.mock.calls
         .reduce((allArgs, thisCall) => allArgs.concat(thisCall), []);
 }
 
@@ -636,7 +636,9 @@ describe("BrightScript Components", () => {
     });
 
     afterEach(() => {
-        jest.resetAllMocks();
+        // clearAllMocks(), not resetAllMocks(): a reset restores the spy's original
+        // implementation, which reopens writes onto the shared (already-closed) PassThrough.
+        vi.clearAllMocks();
     });
 
     test("roArray operations", async () => {

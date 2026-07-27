@@ -78,13 +78,13 @@ To build and start the web application on your default browser just execute `npm
 
 ### Testing
 
-Tests are written in plain-old JavaScript with [Facebook's Jest](http://facebook.github.io/jest/), and can be run with the `test` target:
+Tests are written in plain-old JavaScript with [Vitest](https://vitest.dev/), and can be run with the `test` target:
 
 ```console
 $ npm run test
 ```
 
-If you need to update the snapshots use the command: `npx jest --updateSnapshot`
+If you need to update the snapshots use the command: `npx vitest run --update`
 
 ### Cleaning
 

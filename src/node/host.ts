@@ -186,8 +186,8 @@ async function cleanupApp() {
 function mainCallback(data: any) {
     if (isFrameData(data)) {
         // Revive the flattened frame into a real node-canvas ImageData instance. The pixels may
-        // come from another JS realm (jest VM sandbox), where instanceof-based native checks
-        // fail — rewrap them in a local Uint8ClampedArray view over the same buffer.
+        // come from another JS realm (a VM-sandboxed test runner pool), where instanceof-based
+        // native checks fail — rewrap them in a local Uint8ClampedArray view over the same buffer.
         let pixels: Uint8ClampedArray = data.frameData;
         if (!(pixels instanceof Uint8ClampedArray)) {
             const foreign = pixels as Uint8ClampedArray;

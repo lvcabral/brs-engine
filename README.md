@@ -56,7 +56,7 @@ The browser package provides a complete BrightScript interpreter that runs direc
 npm install brs-engine
 ```
 
-[📖 Browser Package: More details](./packages/browser/README.md) | [🚀 Live Demo](https://lvcabral.com/brs) | [🧑‍💻 Code Playground](http://brsFiddle.net) | [🖥️ Desktop App](https://github.com/lvcabral/brs-desktop)
+[📖 Browser Package: More details](./packages/browser/README.md) | [🚀 Live Demo](https://lvcabral.com/brs) | [🧑‍💻 Code Playground](https://brsFiddle.net) | [🖥️ Desktop App](https://github.com/lvcabral/brs-desktop)
 
 ## 📦 Node.js and CLI Package
 
