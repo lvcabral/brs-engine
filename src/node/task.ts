@@ -75,7 +75,7 @@ function createSharedObject(label: string = ""): SharedObject {
  */
 export function handleTaskData(taskData: TaskData, currentPayload: AppPayload) {
     if (taskData.state === TaskState.RUN) {
-        // instanceof is realm-sensitive (fails for worker messages under jest's VM sandbox).
+        // instanceof is realm-sensitive (fails for worker messages under a VM-sandboxed test runner pool).
         if (taskData.buffer && isTypeOf(taskData.buffer, "SharedArrayBuffer")) {
             const taskBuffer = createSharedObject(`toMain[${taskData.id}]`);
             taskBuffer.setBuffer(taskData.buffer);

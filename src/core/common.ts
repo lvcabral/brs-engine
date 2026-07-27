@@ -286,7 +286,8 @@ export function isFrameData(value: any): value is FrameData {
 
 /**
  * Realm-safe type-brand check: `instanceof` fails for objects deserialized from another JS
- * realm (e.g. worker_threads messages received while running under jest's VM sandbox), so
+ * realm (e.g. worker_threads messages received while running under a VM-sandboxed test
+ * runner pool, such as Vitest's `vmThreads`), so
  * built-in kinds are matched by their `Object.prototype.toString` brand instead.
  * @param value the value to check
  * @param brand the built-in type name (e.g. "SharedArrayBuffer", "Map", "Uint8ClampedArray")

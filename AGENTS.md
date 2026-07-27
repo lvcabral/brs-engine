@@ -42,15 +42,15 @@ npm run lint             # eslint over ./src
 npm run prettier         # check formatting (4-space indent, printWidth 120)
 npm run prettier:write   # auto-format
 
-npm test                 # jest (config is inline in root package.json)
+npm test                 # vitest (config in vitest.config.mts)
 ```
 
 Tests live in `test/` (`brsTypes/`, `core/`, `interpreter/`, `lexer/`, `parser/`, `preprocessor/`, `stdlib/`, `extensions/`, `simulator/`, `cli/`). The e2e suite in `test/e2e/` is driven by `test/e2e/E2ETests.js`, comparing interpreter output against `.brs` fixtures in `test/e2e/resources/`. Test files are plain `.test.js`.
 
 ```bash
-npx jest test/e2e/Functions.test.js     # run a single test file
-npx jest -t "name of the test"          # run by test name
-npx jest --updateSnapshot               # refresh snapshots
+npx vitest run test/e2e/Functions.test.js   # run a single test file
+npx vitest run -t "name of the test"        # run by test name
+npx vitest run --update                     # refresh snapshots
 ```
 
 After `npm run build:cli`, link the CLI for local use: `cd packages/node && npm link`, then `brs-cli`.

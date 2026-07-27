@@ -44,15 +44,15 @@ npm run lint             # eslint over ./src
 npm run prettier         # check formatting (4-space indent, printWidth 120)
 npm run prettier:write   # auto-format
 
-npm test                 # jest (config inline in root package.json)
+npm test                 # vitest (config in vitest.config.mts)
 ```
 
 Tests live in `test/` (`brsTypes/`, `core/`, `interpreter/`, `lexer/`, `parser/`, `preprocessor/`, `stdlib/`, `extensions/`, `simulator/`, `cli/`). The e2e suite (`test/e2e/E2ETests.js`) compares interpreter output against `.brs` fixtures in `test/e2e/resources/`. Test files are plain `.test.js`.
 
 ```bash
-npx jest test/e2e/Functions.test.js     # single file
-npx jest -t "name of the test"          # by test name
-npx jest --updateSnapshot               # refresh snapshots
+npx vitest run test/e2e/Functions.test.js   # single file
+npx vitest run -t "name of the test"        # by test name
+npx vitest run --update                     # refresh snapshots
 ```
 
 After `npm run build:cli`, link the CLI: `cd packages/node && npm link`, then `brs-cli`.
@@ -66,7 +66,7 @@ The browser build is two bundles on **separate threads**, communicating via `pos
 - **API library** — entry `src/api/index.ts` → `brs.api.js`. Runs on the **main thread**: manages the worker, renders the display canvas (expects a `canvas` named `display` and a `video` named `player` on `document`), plays audio, routes remote/gamepad input, and exposes the public API (`initialize`, `subscribe`, `execute`, `terminate`, `sendKeyPress`, `debug`, …). See `docs/engine-api.md`.
 - **Worker library** — entry `src/core/index.ts` → `brs.worker.js`. Runs in a **Web Worker** (browser) or **Worker Thread** (Node). Its `onmessage` receives a msgpack-encoded `AppPayload`/`TaskPayload` or the `SharedArrayBuffer` for control state (`BrsDevice.setSharedArray`). The interpreter executes here.
 
-The Node build mirrors this two-thread split via `worker_threads`: the CLI main thread is the **host** (`src/node/host.ts` `executeApp` + `src/node/task.ts` task broker — a port of `src/api/task.ts`, keep them in sync), the app runs in a worker whose entry is `bin/brs.node.js` itself (`parentPort` dispatcher in `src/core/index.ts`'s `#else` branch), and each SceneGraph Task gets its own worker. node-canvas `ImageData` doesn't survive the structured clone (width/height are prototype getters), so frames cross as `FrameData` (flatten in the worker shim, revive in the host). Type guards on worker messages must be realm-safe (`isTypeOf`, not `instanceof` — jest's VM sandbox breaks `instanceof SharedArrayBuffer`). The main thread also owns stdin: raw-mode keyboard remote control + Micro Debugger line-mode relay (`src/cli/keyboard.ts`); the worker-side debugger reads commands from the shared array (`BrsDevice.isWorkerThread`). REPL and `--pack` stay in-process (`executeFile`): packaging returns its result as a function value, and the REPL needs a same-isolate interpreter. Regression: `task-app` in `test/cli/cli.test.js` and `test/node/host.test.js`.
+The Node build mirrors this two-thread split via `worker_threads`: the CLI main thread is the **host** (`src/node/host.ts` `executeApp` + `src/node/task.ts` task broker — a port of `src/api/task.ts`, keep them in sync), the app runs in a worker whose entry is `bin/brs.node.js` itself (`parentPort` dispatcher in `src/core/index.ts`'s `#else` branch), and each SceneGraph Task gets its own worker. node-canvas `ImageData` doesn't survive the structured clone (width/height are prototype getters), so frames cross as `FrameData` (flatten in the worker shim, revive in the host). Type guards on worker messages must be realm-safe (`isTypeOf`, not `instanceof` — a VM-sandboxed test runner pool breaks `instanceof SharedArrayBuffer`, which is why `vitest.config.mts` pins `pool: "forks"` instead of `vmThreads`). The main thread also owns stdin: raw-mode keyboard remote control + Micro Debugger line-mode relay (`src/cli/keyboard.ts`); the worker-side debugger reads commands from the shared array (`BrsDevice.isWorkerThread`). REPL and `--pack` stay in-process (`executeFile`): packaging returns its result as a function value, and the REPL needs a same-isolate interpreter. Regression: `task-app` in `test/cli/cli.test.js` and `test/node/host.test.js`.
 
 Node-host invariants (all mirror the browser API):
 

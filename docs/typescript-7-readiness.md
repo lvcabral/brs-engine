@@ -11,7 +11,7 @@ Two build-critical tools call that API and therefore can't run against the nativ
 - **`ts-loader`** — transpiles every webpack bundle in all three packages (`packages/*/config/webpack.config.js`).
 - **`@typescript-eslint`** — powers `npm run lint`.
 
-Jest is unaffected (tests are plain `.js`, no `ts-jest`).
+Vitest is unaffected (tests are plain `.js`, no ts-node/type-checked transform in the loop).
 
 ## What was already done (forward-compatible under TS 5.x)
 

@@ -10,7 +10,7 @@ An interpreter for the BrightScript language that runs as a CLI and Roku apps in
 
 ## Overview
 
-The **BrightScript Simulation Engine** provides a complete a set of libraries and a command-line interface for executing, testing, and packaging [Roku apps](https://developer.roku.com/develop) on Node.js platforms. Perfect for automation, CI/CD pipelines, development workflows, and server-side BrightScript execution.
+The **BrightScript Simulation Engine** provides a complete BrightScript interpreter, bundled as a set of libraries and a command-line interface, for executing, testing, and packaging [Roku apps](https://developer.roku.com/develop) on Node.js platforms. Perfect for automation, CI/CD pipelines, development workflows, and server-side BrightScript execution.
 
 > 🚨 Important:
 >
@@ -118,7 +118,7 @@ Learn how to use the package and its libraries by reading the documents below:
 - My threads: [@lvcabral](https://www.threads.net/@lvcabral)
 - My Bluesky: [@lvcabral.com](https://bsky.app/profile/lvcabral.com)
 - My X/twitter: [@lvcabral](https://twitter.com/lvcabral)
-- My podcast: [PODebug Podcast](http://podebug.com)
+- My podcast: [PODebug Podcast](https://podebug.com)
 - Check my other [GitHub repositories](https://github.com/lvcabral)
 
 ## License
