@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Models a real screen that positions a UI element from a focusedChild observer.
+
+    In init() the common order is: set the initial focus FIRST (setFocus), then register the
+    focusedChild observer AFTER. Verified on a real Roku device: focus notifications raised by
+    setFocus() in init() are dispatched from the message loop AFTER init() returns, so the
+    observer registered later in the same init still fires (once) with the initial focus state.
+
+    Before the fix the simulator dispatched the focusedChild change synchronously and inline during
+    setFocus() - when the observer did not exist yet - so the notification was lost and the element
+    kept a stale initial position until the first real focus change.
+
+    This scene also guards against a double-fire during delivery: two nodes (top scene and an inner
+    group) both observe focusedChild and are both queued during init. When the delivered scene
+    observer re-focuses (setFocus) inside its handler, the inner group's focusedChild is re-written
+    inline; the delivery drain must NOT then fire the inner group's observer a second time.
+-->
+<component name="MainScene" extends="Scene">
+    <children>
+        <Group id="outer" focusable="true">
+            <Group id="inner" focusable="true" />
+        </Group>
+    </children>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.inner = m.top.findNode("inner")
+        m.outer = m.top.findNode("outer")
+        m.reFocused = false
+
+        ' 1) Set focus FIRST (as a screen does to place its initial focus). This writes focusedChild
+        ' on the scene, on outer, and on inner - all queued for delivery after init.
+        print "before setFocus"
+        m.inner.setFocus(true)
+
+        ' 2) Register the observers AFTER the focus call, still inside init().
+        m.top.observeField("focusedChild", "onSceneFocus")
+        m.outer.observeField("focusedChild", "onOuterFocus")
+        print "init done"
+    end sub
+
+    ' Delivered from the message loop after init. Re-focus outer once: this rewrites focusedChild on
+    ' the scene/outer/inner inline. The delivery drain must not double-fire onOuterFocus.
+    sub onSceneFocus()
+        print "onSceneFocus fired"
+        if m.reFocused = false
+            m.reFocused = true
+            m.outer.setFocus(true)
+        end if
+    end sub
+
+    sub onOuterFocus()
+        print "onOuterFocus fired"
+    end sub
+    ]]></script>
+</component>

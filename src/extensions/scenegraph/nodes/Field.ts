@@ -74,6 +74,22 @@ export class Field {
      */
     private static internalUpdateDepth = 0;
     /**
+     * >0 while a component's `init()` is running (the `init` hierarchy walk in `initializeNode`).
+     * Focus emissions raised during `init` must defer until the OUTERMOST init unwinds — on Roku a
+     * `setFocus(true)` in `init()` dispatches its `focusedChild` observers from the message loop
+     * after `init` returns, so an observer registered LATER in the same `init` still catches it.
+     * Nests: a component's `init` can create/append child components (their own `init` runs
+     * reentrantly), so the queue drains only when this returns to 0.
+     */
+    private static initDepth = 0;
+    /**
+     * >0 while `Node.setNodeFocus`/`restoreFocusChainOnAttach` is writing `focusedChild` down the
+     * ancestor chain. Combined with `initDepth`, this defers ONLY the init-time focus notifications;
+     * a focus change outside `init` (normal navigation, or reentrant from inside an observer) is
+     * unaffected and still dispatches synchronously.
+     */
+    private static focusEmissionDepth = 0;
+    /**
      * True while draining the deferred queue. Deferral happens only ONCE, at the boundary of the
      * original top-level handler; once we start draining, the reentrant cascade runs synchronously
      * (nested, with the normal per-field `notifying` stack) — the pre-existing behavior that
@@ -84,6 +100,15 @@ export class Field {
     private static draining = false;
     /** Deferred reentrant observer invocations, drained at the outermost unwind. */
     private static readonly deferredQueue: { field: Field; callback: BrsCallback; event: RoSGNodeEvent }[] = [];
+    /**
+     * Fields whose focus-chain notification was raised during a component's init() and deferred.
+     * The observer that reacts is often registered LATER in the same init (after the setFocus call),
+     * so we can't queue a specific callback at emission time — instead we remember the FIELD and
+     * re-run notifyObservers() at the outermost init unwind, reading whatever observers exist by then
+     * (matching Roku dispatching focus notifications from the message loop after init returns).
+     * A Set coalesces repeated writes to one final notification per field, in insertion order.
+     */
+    private static readonly pendingInitFocusFields = new Set<Field>();
 
     /** Marks entry into a ContentNode parentField cascade, so its observers dispatch inline. */
     static enterParentCascade() {
@@ -105,13 +130,77 @@ export class Field {
         Field.internalUpdateDepth--;
     }
 
+    /** Marks entry into a component's `init()` (the init hierarchy walk). */
+    static enterInit() {
+        Field.initDepth++;
+    }
+
+    /** Marks exit from a component's `init()`. The pending focus notifications are NOT dispatched
+     * here — they are delivered from the next message-loop iteration (see deliverPendingInitFocus),
+     * matching Roku, where a `setFocus` in init() fires its observers from the message loop after
+     * init returns rather than synchronously at the end of init. */
+    static exitInit() {
+        Field.initDepth--;
+    }
+
+    /**
+     * Delivers focus notifications deferred during init(), from the message loop (the extension
+     * `tick` hook) once the outermost init has fully unwound. Called on every tick; it is a cheap
+     * no-op unless there is pending work and it is safe to dispatch (not mid-init, not inside another
+     * observer, not already draining).
+     */
+    static deliverPendingInitFocus() {
+        if (
+            Field.pendingInitFocusFields.size > 0 &&
+            Field.initDepth === 0 &&
+            Field.observerDepth === 0 &&
+            !Field.draining
+        ) {
+            Field.drainInitFocus();
+        }
+    }
+
+    /**
+     * Re-notifies the fields whose focus-chain notification was deferred during init(). Runs each
+     * field's observers synchronously (they were never dispatched during init), draining in
+     * insertion order and picking up any fields a handler defers in turn, until quiescent.
+     */
+    private static drainInitFocus() {
+        let guard = 0;
+        // notifyObservers() consumes each field from the set as it dispatches (see the delete there),
+        // so an inline re-focus of a still-pending ancestor won't be dispatched twice. We still pop
+        // here to guarantee loop progress (e.g. if a field's dispatch is suppressed by `notifying`).
+        for (const field of Field.pendingInitFocusFields) {
+            if (++guard > 100000) {
+                BrsDevice.stderr.write("error,[sg] init focus drain exceeded limit; possible observer loop");
+                Field.pendingInitFocusFields.clear();
+                break;
+            }
+            Field.pendingInitFocusFields.delete(field);
+            field.notifyObservers();
+        }
+    }
+
+    /** Marks entry into a focus-chain emission (`focusedChild` writes in setNodeFocus/attach). */
+    static enterFocusEmission() {
+        Field.focusEmissionDepth++;
+    }
+
+    /** Marks exit from a focus-chain emission. */
+    static exitFocusEmission() {
+        Field.focusEmissionDepth--;
+    }
+
     /** Resets deferred-dispatch state between app runs so nothing leaks across setups. */
     static resetDispatch() {
         Field.observerDepth = 0;
         Field.parentCascadeDepth = 0;
         Field.internalUpdateDepth = 0;
+        Field.initDepth = 0;
+        Field.focusEmissionDepth = 0;
         Field.draining = false;
         Field.deferredQueue.length = 0;
+        Field.pendingInitFocusFields.clear();
     }
 
     constructor(
@@ -213,6 +302,19 @@ export class Field {
         if (this.notifying) {
             return;
         }
+        // Focus-chain notification raised during a component's init(): defer to the outermost init
+        // unwind and re-notify then, reading observers registered later in the same init. Recording
+        // the FIELD (not a callback) is what lets an observer added AFTER the setFocus call still
+        // fire — see pendingInitFocusFields / drainInitFocus. Skipped while draining.
+        if (Field.focusEmissionDepth > 0 && Field.initDepth > 0 && !Field.draining) {
+            Field.pendingInitFocusFields.add(this);
+            return;
+        }
+        // We are dispatching this field now, so consume any owed init-focus notification for it:
+        // if a drain is in progress and an earlier field's observer re-focused this one (an inline
+        // dispatch, since initDepth is 0 during delivery), removing it here stops drainInitFocus
+        // from dispatching the same field a second time.
+        Field.pendingInitFocusFields.delete(this);
         this.notifying = true;
         try {
             this.dispatchObservers();
@@ -552,7 +654,7 @@ export class Field {
         try {
             this.invoke(callback, event);
             if (Field.observerDepth === 1 && !Field.draining) {
-                this.drainDeferred();
+                Field.drainDeferred();
             }
         } finally {
             Field.observerDepth--;
@@ -589,7 +691,7 @@ export class Field {
      * drain, so a callback that itself triggers a reentrant notification re-enqueues and is picked
      * up by the loop — iterating until quiescent, in the order the fields changed.
      */
-    private drainDeferred() {
+    private static drainDeferred() {
         Field.draining = true;
         try {
             let guard = 0;
@@ -628,14 +730,18 @@ export class Field {
         }
         // While the handler's BrightScript executes, its direct field assignments are
         // app-initiated even when this dispatch happens inside an engine emission site (e.g. a
-        // panel callback fired from ArrayGrid.setFocusedItem). Stash the internal-update marker
-        // and restore it after; a nested engine site re-enters it on its own.
+        // panel callback fired from ArrayGrid.setFocusedItem, or a focus-chain write). Stash the
+        // internal-update and focus-emission markers and restore them after; a nested engine site
+        // re-enters them on its own.
         const stashedInternalDepth = Field.internalUpdateDepth;
+        const stashedFocusDepth = Field.focusEmissionDepth;
         Field.internalUpdateDepth = 0;
+        Field.focusEmissionDepth = 0;
         try {
             this.invokeCallable(callback, event);
         } finally {
             Field.internalUpdateDepth = stashedInternalDepth;
+            Field.focusEmissionDepth = stashedFocusDepth;
         }
     }
 

@@ -869,10 +869,17 @@ export class Node extends RoSGNode implements BrsValue {
             return;
         }
         const chain = this.createPath(focused); // [root, ..., focused]
-        for (let i = 0; i < chain.length - 1; i++) {
-            if (chain[i].getValue("focusedchild") !== chain[i + 1]) {
-                chain[i].setValue("focusedchild", chain[i + 1], false);
+        // Engine-initiated focus emission: when this attach happens inside a component's init(),
+        // the notifications defer until init returns (see Field.enterInit / setNodeFocus).
+        Field.enterFocusEmission();
+        try {
+            for (let i = 0; i < chain.length - 1; i++) {
+                if (chain[i].getValue("focusedchild") !== chain[i + 1]) {
+                    chain[i].setValue("focusedchild", chain[i + 1], false);
+                }
             }
+        } finally {
+            Field.exitFocusEmission();
         }
     }
 
@@ -1186,47 +1193,65 @@ export class Node extends RoSGNode implements BrsValue {
             const prevFocused = sgRoot.focused;
             sgRoot.setFocused(this);
 
-            // If there was already a focused node somewhere, we need to remove focus
-            // from it and its ancestors.
-            if (prevFocused instanceof Node) {
-                // Get the focus chain, with root-most ancestor first.
-                let currFocusChain = this.createPath(prevFocused);
+            // The focusedChild writes below are an engine-initiated focus emission. Marking them so
+            // that, when they happen during a component's init(), their observers defer until init
+            // returns (Roku dispatches focus notifications from the message loop) — see Field.enterInit.
+            Field.enterFocusEmission();
+            try {
+                // If there was already a focused node somewhere, we need to remove focus
+                // from it and its ancestors.
+                if (prevFocused instanceof Node) {
+                    // Get the focus chain, with root-most ancestor first.
+                    let currFocusChain = this.createPath(prevFocused);
 
-                // Find the lowest common ancestor (LCA) between the newly focused node
-                // and the current focused node.
-                let lcaIndex = 0;
-                while (lcaIndex < newFocusChain.length && lcaIndex < currFocusChain.length) {
-                    if (currFocusChain[lcaIndex] !== newFocusChain[lcaIndex]) break;
-                    lcaIndex++;
+                    // Find the lowest common ancestor (LCA) between the newly focused node
+                    // and the current focused node.
+                    let lcaIndex = 0;
+                    while (lcaIndex < newFocusChain.length && lcaIndex < currFocusChain.length) {
+                        if (currFocusChain[lcaIndex] !== newFocusChain[lcaIndex]) break;
+                        lcaIndex++;
+                    }
+
+                    // Unset all of the not-common ancestors of the current focused node.
+                    for (let i = lcaIndex; i < currFocusChain.length; i++) {
+                        currFocusChain[i].setValue(focusedChild, BrsInvalid.Instance, false);
+                    }
                 }
 
-                // Unset all of the not-common ancestors of the current focused node.
-                for (let i = lcaIndex; i < currFocusChain.length; i++) {
-                    currFocusChain[i].setValue(focusedChild, BrsInvalid.Instance, false);
+                // Set the focusedChild for each ancestor to the next node in the chain,
+                // which is the current node's child.
+                for (let i = 0; i < newFocusChain.length - 1; i++) {
+                    newFocusChain[i].setValue(focusedChild, newFocusChain[i + 1], false);
                 }
-            }
 
-            // Set the focusedChild for each ancestor to the next node in the chain,
-            // which is the current node's child.
-            for (let i = 0; i < newFocusChain.length - 1; i++) {
-                newFocusChain[i].setValue(focusedChild, newFocusChain[i + 1], false);
+                // Finally, set the focusedChild of the newly focused node to itself (to mimic RBI behavior).
+                this.setValue(focusedChild, this, false);
+            } finally {
+                Field.exitFocusEmission();
             }
-
-            // Finally, set the focusedChild of the newly focused node to itself (to mimic RBI behavior).
-            this.setValue(focusedChild, this, false);
         } else if (sgRoot.focused === this) {
             // If we're unsetting focus on ourself, we need to unset it on all ancestors as well.
             const currFocusedNode = sgRoot.focused;
             sgRoot.setFocused();
             // Get the focus chain, with root-most ancestor first.
             let currFocusChain = this.createPath(currFocusedNode as Node);
-            for (const node of currFocusChain) {
-                node.setValue(focusedChild, BrsInvalid.Instance, false);
+            Field.enterFocusEmission();
+            try {
+                for (const node of currFocusChain) {
+                    node.setValue(focusedChild, BrsInvalid.Instance, false);
+                }
+            } finally {
+                Field.exitFocusEmission();
             }
         } else {
             // If the node doesn't have focus already, and it's not gaining focus,
             // we don't need to notify any ancestors.
-            this.setValue(focusedChild, BrsInvalid.Instance, false);
+            Field.enterFocusEmission();
+            try {
+                this.setValue(focusedChild, BrsInvalid.Instance, false);
+            } finally {
+                Field.exitFocusEmission();
+            }
         }
         return this.isFocusable();
     }
