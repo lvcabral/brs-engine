@@ -110,7 +110,7 @@ import {
     ColorFieldInterpolator,
     Vector2DFieldInterpolator,
 } from "../nodes";
-import type { Field } from "../nodes/Field";
+import { Field } from "../nodes/Field";
 import { ComponentDefinition, ComponentNode } from "../parser/ComponentDefinition";
 import { brsValueOf } from "./Serializer";
 import { sgRoot } from "../SGRoot";
@@ -540,65 +540,78 @@ export function initializeNode(
         }
         // Add children, fields and call each init method starting from the
         // "basemost" component of the tree.
-        while (typeDef) {
-            interpreter.inSubEnv((subInterpreter) => {
+        //
+        // Mark the whole init scope so engine-initiated focus emissions raised here (a component's
+        // init calling setFocus, or a focus-before-attach chain repair) are recorded and deferred:
+        // on Roku those focus observers dispatch from the MESSAGE LOOP after init returns, so an
+        // observer registered LATER in the same init still catches them. Nesting is handled by
+        // initDepth — a child component created inside this init re-enters initializeNode; the
+        // pending notifications are delivered from the extension `tick` hook once initDepth is 0
+        // (see Field.enterInit/exitInit and Field.deliverPendingInitFocus).
+        Field.enterInit();
+        try {
+            while (typeDef) {
+                interpreter.inSubEnv((subInterpreter) => {
+                    if (node instanceof Scene) {
+                        node.setInitState("initializing");
+                    }
+                    addChildren(subInterpreter, node!, typeDef!);
+                    addFields(subInterpreter, node!, typeDef!);
+                    return BrsInvalid.Instance;
+                }, currentEnv);
+
+                // Pre-render default state of the tree.
                 if (node instanceof Scene) {
-                    node.setInitState("initializing");
+                    node.renderNode(interpreter, [0, 0], 0, 1);
                 }
-                addChildren(subInterpreter, node!, typeDef!);
-                addFields(subInterpreter, node!, typeDef!);
-                return BrsInvalid.Instance;
-            }, currentEnv);
 
-            // Pre-render default state of the tree.
-            if (node instanceof Scene) {
-                node.renderNode(interpreter, [0, 0], 0, 1);
-            }
+                const init = interpreter.inSubEnv((subInterpreter: Interpreter) => {
+                    return subInterpreter.getCallableFunction("init");
+                }, typeDef.environment);
 
-            const init = interpreter.inSubEnv((subInterpreter: Interpreter) => {
-                return subInterpreter.getCallableFunction("init");
-            }, typeDef.environment);
+                interpreter.inSubEnv((subInterpreter: Interpreter) => {
+                    subInterpreter.environment.hostNode = node;
 
-            interpreter.inSubEnv((subInterpreter: Interpreter) => {
-                subInterpreter.environment.hostNode = node;
-
-                mPointer.set(new BrsString("top"), node!);
-                mPointer.set(new BrsString("global"), sgRoot.mGlobal);
-                subInterpreter.environment.setM(mPointer);
-                subInterpreter.environment.setRootM(mPointer);
-                node!.m = mPointer;
-                if (init instanceof Callable) {
-                    const originalLocation = interpreter.location;
-                    const funcLoc = init.getLocation() ?? originalLocation;
-                    interpreter.addToStack({
-                        functionName: "init",
-                        functionLocation: funcLoc,
-                        callLocation: originalLocation,
-                        signature: init.signatures[0].signature,
-                    });
-                    try {
-                        node!.location = interpreter.formatLocation(funcLoc);
-                        init.call(subInterpreter);
-                        interpreter.popFromStack();
-                        interpreter.location = originalLocation;
-                    } catch (err) {
-                        if (err instanceof RuntimeError) {
-                            interpreter.checkCrashDebug(err);
-                        }
-                        if (!interpreter.inExitMode()) {
+                    mPointer.set(new BrsString("top"), node!);
+                    mPointer.set(new BrsString("global"), sgRoot.mGlobal);
+                    subInterpreter.environment.setM(mPointer);
+                    subInterpreter.environment.setRootM(mPointer);
+                    node!.m = mPointer;
+                    if (init instanceof Callable) {
+                        const originalLocation = interpreter.location;
+                        const funcLoc = init.getLocation() ?? originalLocation;
+                        interpreter.addToStack({
+                            functionName: "init",
+                            functionLocation: funcLoc,
+                            callLocation: originalLocation,
+                            signature: init.signatures[0].signature,
+                        });
+                        try {
+                            node!.location = interpreter.formatLocation(funcLoc);
+                            init.call(subInterpreter);
                             interpreter.popFromStack();
                             interpreter.location = originalLocation;
+                        } catch (err) {
+                            if (err instanceof RuntimeError) {
+                                interpreter.checkCrashDebug(err);
+                            }
+                            if (!interpreter.inExitMode()) {
+                                interpreter.popFromStack();
+                                interpreter.location = originalLocation;
+                            }
+                            throw err;
                         }
-                        throw err;
                     }
-                }
-                return BrsInvalid.Instance;
-            }, currentEnv);
+                    return BrsInvalid.Instance;
+                }, currentEnv);
 
-            typeDef = typeDefStack.pop();
-        }
-        if (node instanceof Scene) {
-            node.setInitState("initialized");
+                typeDef = typeDefStack.pop();
+            }
+            if (node instanceof Scene) {
+                node.setInitState("initialized");
+            }
+        } finally {
+            Field.exitInit();
         }
         return node;
     } else {

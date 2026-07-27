@@ -613,6 +613,36 @@ describe.concurrent("cli", () => {
         ]);
     }, 30000);
 
+    it("Defers a focusedChild notification raised during init() so a later-registered observer fires", async () => {
+        let command = ["node", brsCliPath, "-r init-focus-observer-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // init() sets focus FIRST, then registers the focusedChild observers AFTER, in the same init.
+        // Verified on a real Roku: focus notifications from setFocus() in init() dispatch from the
+        // message loop after init returns, so the later-registered observers still fire (once each).
+        // Before the fix the simulator dispatched focusedChild synchronously during setFocus() -
+        // when no observer existed yet - so the notification was lost. The fix defers the init-time
+        // focus notification and delivers it from the message loop after init: the observers
+        // therefore fire AFTER "init done".
+        //
+        // Double-fire guard: onSceneFocus re-focuses `outer` inside its handler, which rewrites
+        // `outer.focusedChild` inline. `outer` is still queued for delivery, so without the
+        // consume-on-dispatch fix its observer would fire twice. onOuterFocus must appear once.
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "=== Init Focus Observer Repro ===",
+            "before setFocus",
+            "init done",
+            "onSceneFocus fired",
+            "onOuterFocus fired",
+            "=== Init Focus Observer Repro Complete ===",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 30000);
+
     it("A reentrant observer that rewrites its own alwaysNotify field does not loop", async () => {
         let command = ["node", brsCliPath, "-r observer-loop-app", "source/main.brs", "-c 0"].join(" ");
 
