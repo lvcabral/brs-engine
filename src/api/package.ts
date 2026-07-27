@@ -6,7 +6,7 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { drawSplashScreen, clearDisplay, drawIconAsSplash } from "./display";
-import { bufferToBase64, parseCSV, SubscribeCallback } from "./util";
+import { bufferToBase64, parseCSV, resolvePackageAsset, stripEncryptedComponentDirs, SubscribeCallback } from "./util";
 import { unzipSync, zipSync, strFromU8, strToU8, Zippable, Unzipped } from "fflate";
 import { addSound, audioCodecs } from "./sound";
 import { addVideo, videoFormats } from "./video";
@@ -219,17 +219,14 @@ function processManifest(content: string): number {
     const iconKey = resKeys.find((key) => manifestMap.has(`mm_icon_focus_${key}`));
     const icon = manifestMap.get(`mm_icon_focus_${iconKey}`);
 
-    let iconFile;
-    if (icon?.slice(0, 5) === "pkg:/") {
-        iconFile = currentZip[icon.slice(5)];
-        if (iconFile) {
-            if (Platform.inBrowser) {
-                bufferToBase64(iconFile).then(function (iconBase64: string) {
-                    notifyAll("icon", iconBase64);
-                });
-            } else {
-                notifyAll("icon", Buffer.from(iconFile).toString("base64"));
-            }
+    const iconFile = resolvePackageAsset(currentZip, icon, deviceData.locale);
+    if (iconFile) {
+        if (Platform.inBrowser) {
+            bufferToBase64(iconFile).then(function (iconBase64: string) {
+                notifyAll("icon", iconBase64);
+            });
+        } else {
+            notifyAll("icon", Buffer.from(iconFile).toString("base64"));
         }
     }
     // Set Launch Time to calculate Splash Time later
@@ -246,11 +243,9 @@ function processManifest(content: string): number {
 function showSplashOrIcon(splash?: string, iconFile?: Uint8Array) {
     if (typeof createImageBitmap !== "undefined") {
         clearDisplay(true);
-        if (splash?.slice(0, 5) === "pkg:/") {
-            const splashFile = currentZip[splash.slice(5)];
-            if (splashFile) {
-                createImageBitmap(new Blob([splashFile as BlobPart])).then(drawSplashScreen);
-            }
+        const splashFile = resolvePackageAsset(currentZip, splash, deviceData.locale);
+        if (splashFile) {
+            createImageBitmap(new Blob([splashFile as BlobPart])).then(drawSplashScreen);
         } else if (iconFile) {
             createImageBitmap(new Blob([iconFile as BlobPart])).then(drawIconAsSplash);
         }
@@ -302,32 +297,6 @@ export function updateAppZip(source: Uint8Array, iv: string, packedFiles: string
     newZip["source/data"] = [source, { level: 0 }];
     newZip["source/var"] = [strToU8(iv), { level: 0 }];
     return zipSync(newZip, { level: 6 });
-}
-
-/**
- * After encrypted component files are stripped, removes the now-empty `components/` directory tree
- * (which would otherwise leak the app's structure), keeping directories that still hold surviving
- * (non-encrypted) assets, plus a single top-level `components/` marker so an encrypted SceneGraph app
- * remains detectable when the package is loaded.
- * @param newZip Zip being assembled.
- * @param stripped Set of lowercase paths folded into the encrypted blob.
- */
-export function stripEncryptedComponentDirs(newZip: Zippable, stripped: Set<string>) {
-    if (![...stripped].some((file) => file.startsWith("components/"))) {
-        return;
-    }
-    const survivors = Object.keys(newZip).filter(
-        (file) => !file.endsWith("/") && file.toLowerCase().startsWith("components/")
-    );
-    for (const key of Object.keys(newZip)) {
-        const lcase = key.toLowerCase();
-        if (key.endsWith("/") && lcase.startsWith("components/") && lcase !== "components/") {
-            if (!survivors.some((file) => file.toLowerCase().startsWith(lcase))) {
-                delete newZip[key];
-            }
-        }
-    }
-    newZip["components/"] ??= new Uint8Array(0);
 }
 
 /**
