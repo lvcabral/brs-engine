@@ -7,9 +7,67 @@
  *--------------------------------------------------------------------------------------------*/
 import { BufferType, DataBufferIndex, DataBufferSize, DataType, Platform } from "../core/common";
 import packageInfo from "../../packages/browser/package.json";
+import { Unzipped, Zippable } from "fflate";
 
 // Module callback function definition
 export type SubscribeCallback = (event: string, data?: any) => void;
+
+/**
+ * Resolves a `pkg:/` manifest asset path against a loaded zip, honoring the
+ * `pkg:/locale/images/` convention (Roku maps it to the current locale folder,
+ * falling back to `default`/`en_US`). The FileSystem isn't mounted yet at
+ * manifest-processing time, so this queries the unzipped map directly. Mirrors
+ * the resolution order in RoTextureManager.loadLocalFile.
+ * @param zip The unzipped package map (keyed by package-relative path)
+ * @param pkgPath Manifest path (expected to start with `pkg:/`)
+ * @param locale Current device locale
+ * @returns Resolved file data, or undefined if not found
+ */
+export function resolvePackageAsset(
+    zip: Unzipped,
+    pkgPath: string | undefined,
+    locale: string
+): Uint8Array | undefined {
+    if (pkgPath?.slice(0, 5) !== "pkg:/") {
+        return undefined;
+    }
+    const rel = pkgPath.slice(5);
+    let file = zip[rel];
+    if (!file && rel.startsWith("locale/images/")) {
+        const name = rel.substring("locale/images/".length);
+        file =
+            zip[`locale/${locale}/images/${name}`] ??
+            zip[`locale/default/images/${name}`] ??
+            zip[`locale/en_US/images/${name}`];
+    }
+    return file;
+}
+
+/**
+ * Prunes the now-empty `components/` subtree from a rebuilt encrypted package,
+ * keeping only directories that still hold surviving non-encrypted assets plus a
+ * single top-level `components/` marker (so the browser can still detect a
+ * SceneGraph app whose component XML has been stripped).
+ * @param newZip The rebuilt package being written
+ * @param stripped The set of paths that were removed (folded into the encrypted blob)
+ */
+export function stripEncryptedComponentDirs(newZip: Zippable, stripped: Set<string>) {
+    if (![...stripped].some((file) => file.startsWith("components/"))) {
+        return;
+    }
+    const survivors = Object.keys(newZip).filter(
+        (file) => !file.endsWith("/") && file.toLowerCase().startsWith("components/")
+    );
+    for (const key of Object.keys(newZip)) {
+        const lcase = key.toLowerCase();
+        if (key.endsWith("/") && lcase.startsWith("components/") && lcase !== "components/") {
+            if (!survivors.some((file) => file.toLowerCase().startsWith(lcase))) {
+                delete newZip[key];
+            }
+        }
+    }
+    newZip["components/"] ??= new Uint8Array(0);
+}
 
 /**
  * Gets the path to the API library script.
