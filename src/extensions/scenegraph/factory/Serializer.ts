@@ -25,11 +25,13 @@ import {
     Expr,
     resolveAnonymousCallable,
     toCallable,
+    RoMessagePort,
 } from "brs-engine";
 import { createFlatNode } from "./NodeFactory";
 import { ContentNode, Node, SGNodeType } from "../nodes";
 import { FieldKind, ObservedField } from "../SGTypes";
 import { sgRoot } from "../SGRoot";
+import { RoSGNodeEvent } from "../events/RoSGNodeEvent";
 
 /**
  * A `visited` view that forwards to a base set but can undo its own additions.
@@ -820,6 +822,110 @@ export function fromSGNode(node: Node, deep: boolean = true, host?: Node, visite
     }
 
     return result;
+}
+
+/** Serialized form of a roSGNodeEvent queued on a task's port before the task thread launched. */
+export interface SerializedPortEvent {
+    /** Address of the node the event originated from. */
+    node: string;
+    field: string;
+    value: any;
+    info?: any;
+}
+
+/**
+ * Drains the roSGNodeEvents queued on message ports held directly by a task's `m` and serializes
+ * them for the launching task thread. On a device the task's copied `m` references the same native
+ * port, so events queued before `control = "RUN"` (e.g. a field set right before launch, observed
+ * by the port in init()) are seen by the task function's wait(); the simulator must carry them
+ * across explicitly or the task blocks forever on a wait for an event that already fired.
+ * @param m The task node's script-scope `m`.
+ * @param host The task node (observer context for value serialization).
+ * @returns Events keyed by the `m` entry holding the port, or undefined when none are queued.
+ */
+export function collectPortNodeEvents(
+    m: RoAssociativeArray,
+    host: Node
+): Record<string, SerializedPortEvent[]> | undefined {
+    let result: Record<string, SerializedPortEvent[]> | undefined;
+    for (const [key, value] of m.elements) {
+        if (!(value instanceof RoMessagePort)) {
+            continue;
+        }
+        const events = value.drainMessages((event) => event instanceof RoSGNodeEvent) as RoSGNodeEvent[];
+        if (events.length === 0) {
+            continue;
+        }
+        result ??= {};
+        result[key] = events.map((event) => ({
+            node: event.node.getAddress(),
+            field: event.fieldName.getValue(),
+            value: jsValueOf(event.fieldValue, true, host),
+            info: event.infoFields ? fromAssociativeArray(event.infoFields, true, host) : undefined,
+        }));
+    }
+    return result;
+}
+
+/**
+ * Discards the node events queued on a task's render-side ports. While a task runs, field changes
+ * reach it live (the render thread pushes to the observing task), yet the render-side copy of the
+ * port keeps queueing the same events and nothing consumes them. Dropping them when the task stops
+ * keeps a restart replaying only what was queued while it was stopped — otherwise a stop/run cycle
+ * (the standard polling-task pattern) would replay the whole previous run's backlog at once.
+ * @param m The task node's script-scope `m`.
+ */
+export function dropPortNodeEvents(m: RoAssociativeArray): void {
+    for (const value of m.elements.values()) {
+        if (value instanceof RoMessagePort) {
+            value.drainMessages((event) => event instanceof RoSGNodeEvent);
+        }
+    }
+}
+
+/** One-shot warning when a pre-launch port event can't be re-targeted on the task thread. */
+let warnedUnresolvedPortEvent = false;
+
+/**
+ * Replays pre-launch port events (see `collectPortNodeEvents`) into the task thread's restored
+ * ports, re-targeting each event's node to its task-side instance. Events from nodes other than
+ * the task node or the global node can't be resolved this early and are dropped with a warning.
+ * @param portEvents Serialized events keyed by the `m` entry holding the port.
+ * @param m The task-side `m` holding the restored ports.
+ * @param taskNode The task node on the task thread.
+ * @param globalNode The task thread's global node.
+ */
+export function replayPortNodeEvents(
+    portEvents: Record<string, SerializedPortEvent[]>,
+    m: RoAssociativeArray,
+    taskNode: Node,
+    globalNode: Node
+): void {
+    for (const [key, events] of Object.entries(portEvents)) {
+        const port = m.get(new BrsString(key));
+        if (!(port instanceof RoMessagePort)) {
+            continue;
+        }
+        for (const event of events) {
+            let target: Node | undefined;
+            if (event.node === taskNode.getAddress()) {
+                target = taskNode;
+            } else if (event.node === globalNode.getAddress()) {
+                target = globalNode;
+            }
+            if (!target) {
+                if (!warnedUnresolvedPortEvent) {
+                    warnedUnresolvedPortEvent = true;
+                    BrsDevice.stderr.write(
+                        `warning,[sg] Dropped pre-launch port event for field "${event.field}": source node not available on the task thread`
+                    );
+                }
+                continue;
+            }
+            const info = event.info ? (brsValueOf(event.info) as RoAssociativeArray) : undefined;
+            port.pushMessage(new RoSGNodeEvent(target, new BrsString(event.field), brsValueOf(event.value), info));
+        }
+    }
 }
 
 /**
