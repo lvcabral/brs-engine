@@ -32,6 +32,24 @@ describe("m.global is parented to the Scene", () => {
         expect(scene.getNodeChildren()).not.toContain(sgRoot.mGlobal);
     });
 
+    test("does not find its own descendants — the search space is the Scene", () => {
+        const scene = SGNodeFactory.createNode("Scene");
+        sgRoot.setScene(scene);
+        const ownChild = new Node([], "Node");
+        ownChild.setValue("id", new BrsString("GlobalOwnChild"), false);
+        sgRoot.mGlobal.appendChildToParent(ownChild);
+
+        const interpreter = new Interpreter();
+        // Device-confirmed: a node appended to m.global is reachable from neither search, because
+        // the global node sits outside the Scene's children.
+        const globalFind = sgRoot.mGlobal.getMethod("findnode");
+        const args = [new BrsString("GlobalOwnChild")];
+        expect(isInvalid(interpreter.call(globalFind, args, sgRoot.mGlobal.m, interpreter.location))).toBe(true);
+
+        const sceneFind = scene.getMethod("findnode");
+        expect(isInvalid(interpreter.call(sceneFind, args, scene.m, interpreter.location))).toBe(true);
+    });
+
     test("finds a scene node by id from the global node", () => {
         const scene = SGNodeFactory.createNode("Scene");
         const screen = new Node([], "Group");
