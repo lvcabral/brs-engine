@@ -8,10 +8,30 @@ const { Interpreter, BrsString, BrsInvalid, isInvalid } = core;
  * Device-confirmed: `m.global.getParent()` returns the Scene, so the global node's nearest
  * component ancestor is the Scene and the ordinary ifSGNodeDict search reaches the scene tree.
  * Apps rely on this to find a screen from a still-detached component (e.g. a module whose setup
- * runs before it is inserted). The global singleton is parentless here, so findNode searches the
- * scene explicitly to reach the same result.
+ * runs before it is inserted).
  */
-describe("m.global.findNode scene fallback", () => {
+describe("m.global is parented to the Scene", () => {
+    test("getParent() reports the current Scene, and follows a Scene swap", () => {
+        const scene = SGNodeFactory.createNode("Scene");
+        sgRoot.setScene(scene);
+
+        const interpreter = new Interpreter();
+        const getParent = sgRoot.mGlobal.getMethod("getparent");
+        expect(interpreter.call(getParent, [], sgRoot.mGlobal.m, interpreter.location)).toBe(scene);
+
+        // Resolved on demand, so swapping the Scene never leaves a stale parent pointer.
+        const nextScene = SGNodeFactory.createNode("Scene");
+        sgRoot.setScene(nextScene);
+        expect(interpreter.call(getParent, [], sgRoot.mGlobal.m, interpreter.location)).toBe(nextScene);
+    });
+
+    test("the global node stays out of the Scene's children", () => {
+        const scene = SGNodeFactory.createNode("Scene");
+        sgRoot.setScene(scene);
+        // A device never renders or traverses into m.global from the Scene.
+        expect(scene.getNodeChildren()).not.toContain(sgRoot.mGlobal);
+    });
+
     test("finds a scene node by id from the global node", () => {
         const scene = SGNodeFactory.createNode("Scene");
         const screen = new Node([], "Group");
