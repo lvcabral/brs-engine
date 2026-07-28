@@ -19,7 +19,15 @@ import {
     RuntimeErrorDetail,
 } from "brs-engine";
 import { sgRoot } from "../SGRoot";
-import { brsValueOf, fromAssociativeArray, fromSGNode, jsValueOf, updateSGNode } from "../factory/Serializer";
+import {
+    brsValueOf,
+    collectPortNodeEvents,
+    dropPortNodeEvents,
+    fromAssociativeArray,
+    fromSGNode,
+    jsValueOf,
+    updateSGNode,
+} from "../factory/Serializer";
 import { FieldKind, FieldModel, MethodCallPayload, isMethodCallPayload } from "../SGTypes";
 import { Node } from "./Node";
 import { ContentNode } from "./ContentNode";
@@ -297,6 +305,9 @@ export class Task extends Node {
             };
             postMessage(taskData);
             this.started = false;
+            // The task consumed its events live while running; drop the render-side copies so a
+            // restart doesn't replay the whole previous run as pre-launch events.
+            dropPortNodeEvents(this.m);
         }
         this.active = false;
     }
@@ -611,6 +622,13 @@ export class Task extends Node {
                 m: fromAssociativeArray(this.m, true, this),
                 render: sgRoot.getRenderThreadInfo()?.id,
             };
+            // Events already queued on the task's ports (e.g. an observed field set right before
+            // `control = "RUN"`) must cross with `m`: on a device the copied `m` references the
+            // same native port, so the task function's wait() drains them after launch.
+            const portEvents = collectPortNodeEvents(this.m, this);
+            if (portEvents) {
+                taskData.portEvents = portEvents;
+            }
             postMessage(taskData);
             this.started = true;
         }
