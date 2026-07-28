@@ -5,9 +5,11 @@ const { Node, sgRoot, SGNodeFactory } = scenegraph;
 const { Interpreter, BrsString, BrsInvalid, isInvalid } = core;
 
 /**
- * On a device the global node shares the render tree root with the scene, so
- * m.global.findNode() locates scene nodes. Apps rely on this to find a screen from a
- * still-detached component (e.g. a module whose setup runs before it is inserted).
+ * Device-confirmed: `m.global.getParent()` returns the Scene, so the global node's nearest
+ * component ancestor is the Scene and the ordinary ifSGNodeDict search reaches the scene tree.
+ * Apps rely on this to find a screen from a still-detached component (e.g. a module whose setup
+ * runs before it is inserted). The global singleton is parentless here, so findNode searches the
+ * scene explicitly to reach the same result.
  */
 describe("m.global.findNode scene fallback", () => {
     test("finds a scene node by id from the global node", () => {
@@ -33,7 +35,13 @@ describe("m.global.findNode scene fallback", () => {
         expect(isInvalid(found)).toBe(true);
     });
 
-    test("a regular detached node does not search the scene", () => {
+    // Scoping check, not a fidelity claim: the fallback applies to the global node only.
+    //
+    // A device resolves findNode against the *creating component's* scope, so a detached plain
+    // node built inside a component's script does reach that component's tree — which this engine
+    // does not model (it has no creation-context link). Keeping the fallback narrow avoids
+    // guessing at that scope; broadening it is tracked separately.
+    test("the scene fallback applies to the global node only, not any detached node", () => {
         const scene = SGNodeFactory.createNode("Scene");
         const screen = new Node([], "Group");
         screen.setValue("id", new BrsString("HomeScreen"), false);
