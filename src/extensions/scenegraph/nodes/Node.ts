@@ -104,6 +104,13 @@ export class Node extends RoSGNode implements BrsValue {
     protected parent: Node | BrsInvalid;
     /** Thread identifier that owns the node instance. */
     protected owner: number;
+    /**
+     * Marks this instance as an address-only stand-in for a node owned by another thread: it was
+     * rebuilt from a reference carrying no fields, so its field list is *incomplete* and a miss
+     * means "not mirrored yet", not "does not exist". Reads of an unknown field therefore have to
+     * rendezvous to the owner instead of answering `invalid` locally (see `get`).
+     */
+    protected remoteProxy: boolean = false;
     /** Sync domain used for remote field and method requests. */
     protected syncType: SyncType;
     /** Hex-like identifier exposed via introspection APIs. */
@@ -341,16 +348,26 @@ export class Node extends RoSGNode implements BrsValue {
         }
         const key = index.toString().toLowerCase();
         if (this.shouldRendezvous()) {
-            if (this.hasNodeField(key)) {
-                const task = sgRoot.getCurrentThreadTask();
-                // By default every read of a render-owned field rendezvouses, matching real Roku
-                // behavior ("each dot represents a distinct rendezvous"). The freshFields read-cache
-                // is only consulted in the opt-in `fastFieldReads` performance mode.
-                if (task?.active && !(sgRoot.fastFieldReads && this.consumeFreshField(key))) {
-                    task.requestFieldValue(this.syncType, this.address, key);
-                }
-            } else {
+            // An address-only proxy knows none of the owner's fields, so an unknown key there means
+            // "not mirrored yet" and must still rendezvous — otherwise every field the owner added
+            // at runtime (addField/addFields, or a subclass's own XML interface) reads back invalid
+            // without ever asking the owner. Methods resolve locally either way.
+            const mirrored = this.hasNodeField(key);
+            if (!mirrored && !this.remoteProxy) {
                 return this.getMethod(key) || BrsInvalid.Instance;
+            }
+            if (!mirrored) {
+                const method = this.getMethod(key);
+                if (method) {
+                    return method;
+                }
+            }
+            const task = sgRoot.getCurrentThreadTask();
+            // By default every read of a render-owned field rendezvouses, matching real Roku
+            // behavior ("each dot represents a distinct rendezvous"). The freshFields read-cache
+            // is only consulted in the opt-in `fastFieldReads` performance mode.
+            if (task?.active && !(sgRoot.fastFieldReads && this.consumeFreshField(key))) {
+                task.requestFieldValue(this.syncType, this.address, key);
             }
         }
         const field = this.resolveField(key);
@@ -2009,6 +2026,23 @@ export class Node extends RoSGNode implements BrsValue {
             root.changed = true;
         }
         sgRoot.makeDirty();
+    }
+
+    /**
+     * Marks this instance as an address-only stand-in for a node owned by another thread, so reads
+     * of fields it has not mirrored yet rendezvous to the owner instead of answering `invalid`.
+     * @param isProxy Whether the node was rebuilt from a bare reference.
+     */
+    public setRemoteProxy(isProxy: boolean) {
+        this.remoteProxy = isProxy;
+    }
+
+    /**
+     * Whether this instance is an address-only stand-in for a node owned by another thread.
+     * @returns True when the node was rebuilt from a bare reference.
+     */
+    public isRemoteProxy(): boolean {
+        return this.remoteProxy;
     }
 
     /**

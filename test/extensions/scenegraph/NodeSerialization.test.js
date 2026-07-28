@@ -118,7 +118,7 @@ describe("SceneGraph node serialization", () => {
         // still see that state — init() is never re-run on the other side.
         //
         // `m` only travels on the ownership-transfer path, so these serialize with scriptScope on.
-        const withScope = (node, deep = true) => fromSGNode(node, deep, undefined, undefined, true);
+        const withScope = (node, deep = true) => fromSGNode(node, deep, undefined, undefined, { scriptScope: true });
         beforeEach(() => {
             const def = new ComponentDefinition("pkg:/components/CustomHelper.xml");
             def.name = "CustomHelper";
@@ -175,7 +175,7 @@ describe("SceneGraph node serialization", () => {
             expect(serialized.mynode.title).toBe("hello");
 
             // Same guarantee on the transfer path, where `_m_` is actually emitted.
-            const withM = fromSGNode(taskNode, true, taskNode, undefined, true);
+            const withM = fromSGNode(taskNode, true, taskNode, undefined, { scriptScope: true });
             expect(withM._m_.mynode._mref_).toBe(content.getAddress());
         });
 

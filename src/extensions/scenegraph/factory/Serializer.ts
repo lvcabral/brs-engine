@@ -496,6 +496,11 @@ export function toSGNode(obj: any, type: string, subtype: string, child?: boolea
     // Use the address from serialized data if available, otherwise use the new node's address
     newNode.setAddress(obj["_address_"] || newNode.getAddress());
     newNode.setOwner(obj["_owner_"] ?? 0);
+    // A bare reference carries no fields, so mark the rebuilt node as incomplete: a read of a field
+    // it has not mirrored must rendezvous to the owner rather than answer invalid (see Node.get).
+    if (obj["_proxy_"]) {
+        newNode.setRemoteProxy(true);
+    }
     nodeMap.set(newNode.getAddress(), newNode);
     sgRoot.registerCrossThreadNode(newNode);
 
@@ -779,6 +784,70 @@ export function updateSGNode(obj: any, targetNode: Node, nodeMap?: Map<string, N
     return targetNode;
 }
 
+/** Options controlling how a node is serialized for another thread. */
+export interface SerializeOptions {
+    /**
+     * Include the node's script-scope `m` (`_m_`). Only correct for an ownership transfer — a node
+     * keeping its owner is read back through a rendezvous to that owner, whose `m` is authoritative.
+     */
+    scriptScope?: boolean;
+    /**
+     * Emit this node's node-valued fields as address-only proxy references instead of recursing
+     * into them. Applies to the node's own fields only, not to anything nested below them.
+     */
+    shallowRefs?: boolean;
+}
+
+/**
+ * Serializes a node as an address-only reference: enough for the receiving thread to hold it and
+ * rendezvous to the owner on access, without shipping its subtree.
+ *
+ * The stub is flagged `_proxy_` so the rebuilt node knows its field list is incomplete. Normally
+ * the first read of the field holding it rendezvouses and replaces the stub with a full copy, but
+ * in `fastFieldReads` mode that read can be served from the local cache and hand the stub itself
+ * to the app — at which point a read of any field on it must still reach the owner rather than
+ * answer `invalid`.
+ * @param node Node to reference.
+ * @returns A minimal serialized node stub: type, address, owner, and the proxy flag.
+ */
+export function proxyNodeRef(node: Node): FlexObject {
+    // Keep it resolvable by address on the owner thread so the rendezvous read can find it.
+    sgRoot.registerCrossThreadNode(node);
+    return {
+        _node_: `${node.nodeType}:${node.nodeSubtype}`,
+        _address_: node.getAddress(),
+        _owner_: node.getOwner(),
+        _proxy_: true,
+    };
+}
+
+/**
+ * Serializes a Task node's script-scope `m` for launch, shipping the render-owned `global` node
+ * with its node-valued fields as proxy references instead of deep copies.
+ *
+ * On a device `m.global` is shared; here every Task worker gets a copy, and apps keep most of their
+ * state as node-valued global fields (managers, config, caches), so a deep copy made each Task
+ * payload carry the whole global tree — a dominant memory cost when many tasks run at once. Those
+ * fields rendezvous on read from a Task anyway (`Node.get`), which materializes the real value on
+ * first access, so the launch payload only has to carry the reference. `m.top` and every other
+ * entry stay deep: the task owns them and reads them locally.
+ * @param m The Task node's script-scope `m`.
+ * @param host The Task node (observer context for serialization).
+ * @returns The serialized `m`, with `global` shallow-referenced.
+ */
+export function serializeTaskM(m: RoAssociativeArray, host: Node): FlexObject {
+    const visited = new WeakSet<object>();
+    const result: FlexObject = {};
+    for (const [key, value] of m.elements) {
+        if (key.toLowerCase() === "global" && value instanceof Node) {
+            result[key] = fromSGNode(value, true, host, visited, { shallowRefs: true });
+        } else {
+            result[key] = jsValueOf(value, true, host, visited);
+        }
+    }
+    return result;
+}
+
 /**
  * Converts a RoSGNode to a JavaScript object, converting each field to the corresponding JavaScript type.
  * @param node The RoSGNode to convert.
@@ -792,8 +861,9 @@ export function fromSGNode(
     deep: boolean = true,
     host?: Node,
     visited?: WeakSet<object>,
-    scriptScope: boolean = false
+    options: SerializeOptions = {}
 ): FlexObject {
+    const scriptScope = options.scriptScope ?? false;
     visited ??= new WeakSet<object>();
     if (visited.has(node)) {
         return {
@@ -831,7 +901,9 @@ export function fromSGNode(
                 }
             }
             if (fieldValue instanceof Node) {
-                result[name] = fromSGNode(fieldValue, deep, host, visited, scriptScope);
+                result[name] = options.shallowRefs
+                    ? proxyNodeRef(fieldValue)
+                    : fromSGNode(fieldValue, deep, host, visited, { scriptScope });
                 continue;
             }
             const serialized = jsValueOf(fieldValue, deep, host, visited);
@@ -864,7 +936,7 @@ export function fromSGNode(
     if (deep && children.length > 0 && node.serializesChildren()) {
         result["_children_"] = children.map((child: BrsType) => {
             if (child instanceof Node) {
-                return fromSGNode(child, deep, host, visited, scriptScope);
+                return fromSGNode(child, deep, host, visited, { scriptScope });
             }
             return { _invalid_: null };
         });

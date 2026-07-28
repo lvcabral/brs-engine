@@ -23,9 +23,9 @@ import {
     brsValueOf,
     collectPortNodeEvents,
     dropPortNodeEvents,
-    fromAssociativeArray,
     fromSGNode,
     jsValueOf,
+    serializeTaskM,
     updateSGNode,
 } from "../factory/Serializer";
 import { FieldKind, FieldModel, MethodCallPayload, isMethodCallPayload } from "../SGTypes";
@@ -387,7 +387,7 @@ export class Task extends Node {
         // owner (device-confirmed), so shipping `m` there would only bloat the payload.
         const value =
             fieldValue instanceof Node
-                ? fromSGNode(fieldValue, true, undefined, undefined, this.inThread)
+                ? fromSGNode(fieldValue, true, undefined, undefined, { scriptScope: this.inThread })
                 : jsValueOf(fieldValue);
         if (fieldValue instanceof Node) {
             // Re-own to the render thread only when the node actually crosses task → render (a task
@@ -626,7 +626,7 @@ export class Task extends Node {
                 fanout: this.fanoutBuffer?.getBuffer(),
                 tmp: BrsDevice.getTmpVolume(),
                 cacheFS: BrsDevice.getCacheFS(),
-                m: fromAssociativeArray(this.m, true, this),
+                m: serializeTaskM(this.m, this),
                 render: sgRoot.getRenderThreadInfo()?.id,
             };
             // Events already queued on the task's ports (e.g. an observed field set right before
