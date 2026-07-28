@@ -1769,8 +1769,14 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
                 }
                 const id = name.getValue();
                 if (id.trim() === "") return BrsInvalid.Instance;
-                // perform search to child nodes
-                let node = this.findNodeById(this, id);
+                // The search space is the subject node's nearest component ancestor. The global
+                // node's is the Scene, and the global node itself sits *outside* the Scene's
+                // children, so its own descendants are not in that space: a device does not find a
+                // node appended to m.global via m.global.findNode(). Skipping the self-search keeps
+                // that boundary — every other node's subtree is part of its ancestor's anyway, so
+                // searching it first is only a shortcut.
+                const searchSelf: boolean = sgRoot.mGlobal !== this;
+                let node: RoSGNode | BrsInvalid = searchSelf ? this.findNodeById(this, id) : BrsInvalid.Instance;
                 if (node instanceof BrsInvalid) {
                     // if not found, search from root
                     node = this.findNodeById(this.findRootNode(), id);
