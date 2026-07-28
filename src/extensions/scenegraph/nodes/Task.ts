@@ -381,7 +381,14 @@ export class Task extends Node {
         if (this.threadId < 0 || !this.active) {
             return;
         }
-        const value = fieldValue instanceof Node ? fromSGNode(fieldValue, true) : jsValueOf(fieldValue);
+        // A node crossing task → render changes owner (below), so the receiver runs callFunc against
+        // its own copy and needs the script-scope `m` that init() populated here. Every other path
+        // leaves the owner unchanged, and a callFunc on a node owned elsewhere rendezvouses to that
+        // owner (device-confirmed), so shipping `m` there would only bloat the payload.
+        const value =
+            fieldValue instanceof Node
+                ? fromSGNode(fieldValue, true, undefined, undefined, this.inThread)
+                : jsValueOf(fieldValue);
         if (fieldValue instanceof Node) {
             // Re-own to the render thread only when the node actually crosses task → render (a task
             // setting a field). On the render side this is a fan-out (render → task): the node stays

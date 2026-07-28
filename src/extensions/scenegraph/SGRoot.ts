@@ -377,6 +377,35 @@ export class SGRoot {
     }
 
     /**
+     * Resolves an address to the instance of that node this thread should actually use.
+     *
+     * Live reachability wins over the cross-thread registry: `toSGNode` copies `_address_` when it
+     * rebuilds a node, so repeated serializations of one logical node mint instances sharing its
+     * address and the registry keeps only the latest. Walking the trees first means a node still
+     * wired into the scene, the global node or a task always resolves to its authoritative copy,
+     * with the registry left as the fallback for a true orphan held only by the other thread.
+     * Mirrors the ordering in `Task.resolveNode` — see the regression it documents.
+     * @param address Node address to resolve.
+     * @returns The live node, or undefined when this thread has no instance for that address.
+     */
+    resolveLiveNode(address: string): Node | undefined {
+        if (!address) {
+            return undefined;
+        }
+        const roots: (Node | undefined)[] = [this._scene, this._mGlobal];
+        for (const thread of this._threads.values()) {
+            roots.push(thread.task);
+        }
+        for (const root of roots) {
+            const found = root?.findNodeByAddress(root, address, true);
+            if (found) {
+                return found;
+            }
+        }
+        return this.getCrossThreadNode(address);
+    }
+
+    /**
      * Adds a new task thread to the SGRoot.
      * @param task Task instance to add
      * @param threadId Optional thread ID (auto-assigned if not provided)
