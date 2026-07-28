@@ -2,7 +2,7 @@ const scenegraph = require("../../../packages/scenegraph/lib/brs-sg.node.js");
 const core = require("../../../packages/node/bin/brs.node.js");
 
 const { Node, fromSGNode, toSGNode, updateSGNode, jsValueOf, fromAssociativeArray } = scenegraph;
-const { ComponentDefinition, sgRoot, createFlatNode } = scenegraph;
+const { ComponentDefinition, sgRoot, createFlatNode, SGNodeFactory } = scenegraph;
 const { BrsInvalid, isInvalid, BrsString, BrsBoolean, RoAssociativeArray, RoArray } = core;
 
 /** Simulates the structured/JSON round-trip a node undergoes when sent to a Task thread. */
@@ -116,6 +116,9 @@ describe("SceneGraph node serialization", () => {
         // Mirrors the device contract: a node created on a Task thread runs init() there
         // (populating its script-scope `m`), and a later callFunc on the receiving thread must
         // still see that state — init() is never re-run on the other side.
+        //
+        // `m` only travels on the ownership-transfer path, so these serialize with scriptScope on.
+        const withScope = (node, deep = true) => fromSGNode(node, deep, undefined, undefined, true);
         beforeEach(() => {
             const def = new ComponentDefinition("pkg:/components/CustomHelper.xml");
             def.name = "CustomHelper";
@@ -142,12 +145,12 @@ describe("SceneGraph node serialization", () => {
         }
 
         test("serializes init()-set m entries, excluding top and global", () => {
-            const serialized = fromSGNode(makeInitializedNode(), true);
+            const serialized = withScope(makeInitializedNode());
             expect(serialized._m_).toEqual({ setupCalled: false, label: "ready" });
         });
 
         test("restores m on the receiving thread so callFunc-visible state survives", () => {
-            const serialized = fromSGNode(makeInitializedNode(), true);
+            const serialized = withScope(makeInitializedNode());
             const target = toSGNode(transfer(serialized), "Node", "CustomHelper");
             expect(mValue(target, "setupCalled")).toBe(false);
             expect(mValue(target, "label")).toBe("ready");
@@ -170,20 +173,69 @@ describe("SceneGraph node serialization", () => {
             const serialized = fromAssociativeArray(m, true, taskNode);
             expect(serialized.mynode._circular_).toBeUndefined();
             expect(serialized.mynode.title).toBe("hello");
+
+            // Same guarantee on the transfer path, where `_m_` is actually emitted.
+            const withM = fromSGNode(taskNode, true, taskNode, undefined, true);
+            expect(withM._m_.mynode._mref_).toBe(content.getAddress());
         });
 
         test("a built-in node never emits _m_", () => {
             const node = new Node([], "Node");
             node.m.set(new BrsString("stuff"), new BrsString("internal"));
-            expect(fromSGNode(node, true)._m_).toBeUndefined();
+            expect(withScope(node)._m_).toBeUndefined();
+        });
+
+        test("emits _m_ only for an ownership transfer, not for an ordinary serialization", () => {
+            // A node keeping its owner is read back through a rendezvous to that owner, so its `m`
+            // never travels — shipping it would only bloat every field write and callFunc arg.
+            expect(fromSGNode(makeInitializedNode(), true)._m_).toBeUndefined();
+        });
+
+        test("stores a node in m as a live reference, not a copy of its subtree", () => {
+            const scene = SGNodeFactory.createNode("Scene");
+            const shared = new Node([], "ContentNode");
+            shared.setValue("id", new BrsString("SharedContent"), false);
+            shared.setValueSilent("title", new BrsString("set-in-task"));
+            scene.appendChildToParent(shared);
+            sgRoot.setScene(scene);
+
+            const node = makeInitializedNode();
+            node.m.set(new BrsString("stashed"), shared, true);
+
+            // Device-confirmed: `m` holds a live reference. It crosses as an address, not a subtree.
+            const serialized = withScope(node);
+            expect(serialized._m_.stashed).toEqual({ _mref_: shared.getAddress() });
+
+            // On the receiving side it resolves back to this thread's own instance, so a later
+            // mutation of that node is visible through `m` — a copy would have frozen the value.
+            const target = toSGNode(transfer(serialized), "Node", "CustomHelper");
+            const restored = target.m.get(new BrsString("stashed"));
+            expect(restored).toBe(shared);
+            shared.setValueSilent("title", new BrsString("changed-on-render"));
+            expect(jsValueOf(restored.getValue("title"))).toBe("changed-on-render");
+        });
+
+        test("drops a script-scope reference whose node has not crossed", () => {
+            sgRoot.setScene(SGNodeFactory.createNode("Scene"));
+            const node = makeInitializedNode();
+            const orphan = new Node([], "ContentNode");
+            node.m.set(new BrsString("stashed"), orphan, true);
+
+            const serialized = transfer(withScope(node));
+            // Force an address this thread cannot resolve to any live instance.
+            serialized._m_.stashed._mref_ = "DEADBEEF000000";
+            const target = toSGNode(serialized, "Node", "CustomHelper");
+            expect(isInvalid(target.m.get(new BrsString("stashed")))).toBe(true);
+            // The rest of `m` still restores.
+            expect(mValue(target, "label")).toBe("ready");
         });
 
         test("a shallow serialization (deep = false) skips m", () => {
-            expect(fromSGNode(makeInitializedNode(), false)._m_).toBeUndefined();
+            expect(withScope(makeInitializedNode(), false)._m_).toBeUndefined();
         });
 
         test("updateSGNode populates m on a flat node but never clobbers local state", () => {
-            const serialized = transfer(fromSGNode(makeInitializedNode(), true));
+            const serialized = transfer(withScope(makeInitializedNode()));
 
             const flat = createFlatNode("Node", "CustomHelper");
             updateSGNode(serialized, flat);

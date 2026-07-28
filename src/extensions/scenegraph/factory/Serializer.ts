@@ -530,6 +530,47 @@ export function toSGNode(obj: any, type: string, subtype: string, child?: boolea
 }
 
 /**
+ * Serializes a custom component's script-scope `m` for a node that is changing owner.
+ *
+ * Node-valued entries are emitted as address references, not copies. Device-confirmed: `m` holds a
+ * *live* reference — mutating the referenced node on the receiving thread is visible through `m` —
+ * so a deep copy is both wrong (a detached snapshot that silently stops tracking) and expensive: a
+ * component caching `m.scene`/`m.parentScreen` dragged the whole scene tree into every payload,
+ * measured at 44 KB against 0.2 KB for the same node with scalar-only `m`.
+ * @param node Node whose `m` is being serialized.
+ * @param host Optional host node for observing context.
+ * @param visited Visited set of the enclosing pass.
+ * @returns The serialized `m` entries, excluding `top`/`global`.
+ */
+function serializeScriptScopeM(node: Node, host: Node | undefined, visited: WeakSet<object>): FlexObject {
+    const mData: FlexObject = {};
+    // Scoped so the values serialized here don't stay marked as visited: the enclosing pass may
+    // reach the same values by another route and must serialize them in full (see ScopedVisited).
+    const scoped = new ScopedVisited(visited);
+    const scopedVisited = scoped as unknown as WeakSet<object>;
+    try {
+        for (const [key, value] of node.m.elements) {
+            const lowerKey = key.toLowerCase();
+            if (lowerKey === "top" || lowerKey === "global") {
+                continue;
+            }
+            if (value instanceof Node) {
+                sgRoot.registerCrossThreadNode(value);
+                mData[key] = { _mref_: value.getAddress() };
+                continue;
+            }
+            mData[key] = jsValueOf(value, true, host, scopedVisited);
+        }
+    } finally {
+        scoped.rollback();
+    }
+    return mData;
+}
+
+/** One-shot warning when a script-scope node reference has no instance on the receiving thread. */
+let warnedUnresolvedScriptScopeRef = false;
+
+/**
  * Merges a serialized script-scope `m` (see fromSGNode's `_m_` entry) into a node's `m`,
  * preserving the locally built `top`/`global` entries. No-op for payloads without `_m_`.
  * @param serializedM The serialized `_m_` object, if present.
@@ -541,6 +582,20 @@ function restoreScriptScopeM(serializedM: any, node: Node, nodeMap?: Map<string,
         return;
     }
     for (const [key, value] of Object.entries(serializedM)) {
+        const address: unknown = (value as FlexObject)?.["_mref_"];
+        if (typeof address === "string") {
+            // Resolve to this thread's own instance so `m` keeps referencing the live node.
+            const live = nodeMap?.get(address) ?? sgRoot.resolveLiveNode(address);
+            if (live) {
+                node.m.set(new BrsString(key), live, true);
+            } else if (!warnedUnresolvedScriptScopeRef) {
+                warnedUnresolvedScriptScopeRef = true;
+                BrsDevice.stderr.write(
+                    `warning,[sg] Dropped script-scope reference "${key}": the node it points at has not crossed to this thread`
+                );
+            }
+            continue;
+        }
         node.m.set(new BrsString(key), brsValueOf(value, undefined, nodeMap), true);
     }
 }
@@ -732,7 +787,13 @@ export function updateSGNode(obj: any, targetNode: Node, nodeMap?: Map<string, N
  * @param visited Optional WeakSet to track visited nodes and prevent circular references.
  * @returns A JavaScript object with the converted fields.
  */
-export function fromSGNode(node: Node, deep: boolean = true, host?: Node, visited?: WeakSet<object>): FlexObject {
+export function fromSGNode(
+    node: Node,
+    deep: boolean = true,
+    host?: Node,
+    visited?: WeakSet<object>,
+    scriptScope: boolean = false
+): FlexObject {
     visited ??= new WeakSet<object>();
     if (visited.has(node)) {
         return {
@@ -770,7 +831,7 @@ export function fromSGNode(node: Node, deep: boolean = true, host?: Node, visite
                 }
             }
             if (fieldValue instanceof Node) {
-                result[name] = fromSGNode(fieldValue, deep, host, visited);
+                result[name] = fromSGNode(fieldValue, deep, host, visited, scriptScope);
                 continue;
             }
             const serialized = jsValueOf(fieldValue, deep, host, visited);
@@ -793,20 +854,8 @@ export function fromSGNode(node: Node, deep: boolean = true, host?: Node, visite
     // callFunc there would otherwise read init()-set variables back as invalid. `top`/`global`
     // are excluded — the receiver rebuilds them locally, and serializing them here would re-walk
     // the node and ship the entire global tree.
-    if (deep && sgRoot.nodeDefMap.has(node.nodeSubtype.toLowerCase())) {
-        const mData: FlexObject = {};
-        // Scoped so the values serialized here don't stay marked as visited: the enclosing pass may
-        // reach the same values by another route and must serialize them in full (see ScopedVisited).
-        const scoped = new ScopedVisited(visited);
-        const scopedVisited = scoped as unknown as WeakSet<object>;
-        for (const [key, value] of node.m.elements) {
-            const lowerKey = key.toLowerCase();
-            if (lowerKey === "top" || lowerKey === "global") {
-                continue;
-            }
-            mData[key] = jsValueOf(value, deep, host, scopedVisited);
-        }
-        scoped.rollback();
+    if (deep && scriptScope && sgRoot.nodeDefMap.has(node.nodeSubtype.toLowerCase())) {
+        const mData = serializeScriptScopeM(node, host, visited);
         if (Object.keys(mData).length) {
             result["_m_"] = mData;
         }
@@ -815,7 +864,7 @@ export function fromSGNode(node: Node, deep: boolean = true, host?: Node, visite
     if (deep && children.length > 0 && node.serializesChildren()) {
         result["_children_"] = children.map((child: BrsType) => {
             if (child instanceof Node) {
-                return fromSGNode(child, deep, host, visited);
+                return fromSGNode(child, deep, host, visited, scriptScope);
             }
             return { _invalid_: null };
         });
