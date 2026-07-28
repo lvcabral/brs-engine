@@ -73,13 +73,10 @@ describe("m.global is parented to the Scene", () => {
         expect(isInvalid(found)).toBe(true);
     });
 
-    // Scoping check, not a fidelity claim: the fallback applies to the global node only.
-    //
-    // A device resolves findNode against the *creating component's* scope, so a detached plain
-    // node built inside a component's script does reach that component's tree — which this engine
-    // does not model (it has no creation-context link). Keeping the fallback narrow avoids
-    // guessing at that scope; broadening it is tracked separately.
-    test("the scene fallback applies to the global node only, not any detached node", () => {
+    // The Scene is reachable because it is the *global node's* parent, not because any detached
+    // node may search it. A detached node reaches a tree only through the component scope running
+    // the call (see ComponentScopeFindNode.test.js), and there is none here.
+    test("a detached node with no component scope does not reach the scene", () => {
         const scene = SGNodeFactory.createNode("Scene");
         const screen = new Node([], "Group");
         screen.setValue("id", new BrsString("HomeScreen"), false);

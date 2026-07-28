@@ -1752,6 +1752,36 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
     }
 
     /**
+     * Resolves a findNode miss against the component scope the subject node belongs to.
+     *
+     * A device does not rely on the parent chain alone: a node created inside a component's script
+     * and never attached still reaches that component's tree (device-confirmed — a detached plain
+     * `Group` built in a Scene's script finds the Scene's children). The owning scope is
+     * approximated by the component whose script is currently executing, which the environment
+     * already tracks as `hostNode`; a node is nearly always created and used within one component,
+     * and no per-node creation link has to be stored to get there.
+     *
+     * Only applies to a detached node that is not itself a custom component root — such a node is
+     * its own scope on a device and must never borrow the caller's.
+     * @param interpreter Calling interpreter, carrying the executing component in its environment.
+     * @param id Node id being searched for.
+     * @returns The matching node, or invalid when the subject has no separate component scope.
+     */
+    private findInComponentScope(interpreter: Interpreter, id: string): RoSGNode | BrsInvalid {
+        if (this.getNodeParent() instanceof RoSGNode) {
+            return BrsInvalid.Instance;
+        }
+        if (sgRoot.nodeDefMap.has(this.nodeSubtype.toLowerCase())) {
+            return BrsInvalid.Instance;
+        }
+        const host = interpreter.environment.hostNode;
+        if (!(host instanceof RoSGNode) || host === this) {
+            return BrsInvalid.Instance;
+        }
+        return this.findNodeById(this.findRootNode(host), id);
+    }
+
+    /**
      * Returns the node that is a descendant of the nearest component ancestor of the subject node whose id field matches the given name,
      * otherwise return invalid.
      * Implemented as a DFS from the top of parent hierarchy to match the observed behavior as opposed to the BFS mentioned in the docs.
@@ -1780,6 +1810,9 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
                 if (node instanceof BrsInvalid) {
                     // if not found, search from root
                     node = this.findNodeById(this.findRootNode(), id);
+                }
+                if (node instanceof BrsInvalid) {
+                    node = this.findInComponentScope(interpreter, id);
                 }
                 return node;
             },
