@@ -1812,8 +1812,12 @@ export class Node extends RoSGNode implements BrsValue {
      */
     protected findRootNode(start?: Node): Node {
         let root: Node = start ?? this;
-        while (root.parent instanceof Node) {
-            root = root.parent;
+        // Walk through getNodeParent() rather than the raw field so a node whose parent link is
+        // resolved on demand participates — the global node reports the Scene as its parent.
+        let parent = root.getNodeParent();
+        while (parent instanceof Node) {
+            root = parent;
+            parent = root.getNodeParent();
         }
         return root;
     }
