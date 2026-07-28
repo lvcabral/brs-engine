@@ -32,6 +32,52 @@ import { FieldKind, ObservedField } from "../SGTypes";
 import { sgRoot } from "../SGRoot";
 
 /**
+ * A `visited` view that forwards to a base set but can undo its own additions.
+ *
+ * Nodes normally stay in `visited` for a whole pass so a node reachable twice is deduped as a
+ * `_circular_` stub. That is wrong for a node's script-scope `m` (`_m_`), which is an *extra* copy
+ * of state that is usually also reachable from the enclosing pass — a Task's `m` serializes `m.top`
+ * (emitting its `_m_`) before its own sibling entries, so those siblings would degrade to stubs the
+ * receiver cannot resolve (`loadTaskData` rebuilds each entry with its own node map) and read back
+ * as `invalid`. Serializing `_m_` through a scoped view keeps cycle detection intact for the `_m_`
+ * subtree while leaving the enclosing pass free to serialize those values in full.
+ */
+class ScopedVisited {
+    private readonly added: object[] = [];
+    readonly [Symbol.toStringTag] = "WeakSet";
+
+    constructor(private readonly base: WeakSet<object>) {}
+
+    has(value: object): boolean {
+        return this.base.has(value);
+    }
+
+    add(value: object): this {
+        if (!this.base.has(value)) {
+            this.added.push(value);
+        }
+        this.base.add(value);
+        return this;
+    }
+
+    delete(value: object): boolean {
+        const index = this.added.indexOf(value);
+        if (index >= 0) {
+            this.added.splice(index, 1);
+        }
+        return this.base.delete(value);
+    }
+
+    /** Removes everything this view added, restoring the base set to its pre-scope state. */
+    rollback() {
+        for (const value of this.added) {
+            this.base.delete(value);
+        }
+        this.added.length = 0;
+    }
+}
+
+/**
  * Converts a BrsType value to its representation as a JavaScript type.
  * @param {BrsType} value Some BrsType value.
  * @param {boolean} deep Whether to recursively convert nested structures. Defaults to true.
@@ -466,6 +512,7 @@ export function toSGNode(obj: any, type: string, subtype: string, child?: boolea
             newNode.setValueSilent(key, BrsInvalid.Instance, undefined, FieldKind.fromString(fieldTypes[key]));
         }
     }
+    restoreScriptScopeM(obj["_m_"], newNode, nodeMap);
     if (child && obj["_children_"]) {
         for (const child of obj["_children_"]) {
             const childInfo = getSerializedNodeInfo(child);
@@ -478,6 +525,37 @@ export function toSGNode(obj: any, type: string, subtype: string, child?: boolea
         }
     }
     return newNode;
+}
+
+/**
+ * Merges a serialized script-scope `m` (see fromSGNode's `_m_` entry) into a node's `m`,
+ * preserving the locally built `top`/`global` entries. No-op for payloads without `_m_`.
+ * @param serializedM The serialized `_m_` object, if present.
+ * @param node Node whose `m` receives the entries.
+ * @param nodeMap Optional map tracking nodes by address for resolving circular references.
+ */
+function restoreScriptScopeM(serializedM: any, node: Node, nodeMap?: Map<string, Node>) {
+    if (!serializedM || typeof serializedM !== "object") {
+        return;
+    }
+    for (const [key, value] of Object.entries(serializedM)) {
+        node.m.set(new BrsString(key), brsValueOf(value, undefined, nodeMap), true);
+    }
+}
+
+/**
+ * Checks whether a node's `m` holds any script-scope entries beyond the automatic `top`/`global`.
+ * @param node Node to inspect.
+ * @returns True when `m` was populated (locally or by a previous restore).
+ */
+function hasScriptScopeM(node: Node): boolean {
+    for (const key of node.m.elements.keys()) {
+        const lowerKey = key.toLowerCase();
+        if (lowerKey !== "top" && lowerKey !== "global") {
+            return true;
+        }
+    }
+    return false;
 }
 
 /**
@@ -562,6 +640,12 @@ export function updateSGNode(obj: any, targetNode: Node, nodeMap?: Map<string, N
         if (!(key in obj)) {
             targetNode.setValueSilent(key, BrsInvalid.Instance, undefined, FieldKind.fromString(fieldTypes[key]));
         }
+    }
+    // Populate script-scope `m` only when the target never had one (a flat-created cross-thread
+    // copy holding just top/global): a locally populated `m` is authoritative and must not be
+    // clobbered by a stale copy from the other thread.
+    if (!hasScriptScopeM(targetNode)) {
+        restoreScriptScopeM(obj["_m_"], targetNode, nodeMap);
     }
     // Update children
     const serializedChildren = obj["_children_"];
@@ -701,6 +785,29 @@ export function fromSGNode(node: Node, deep: boolean = true, host?: Node, visite
     }
     if (observed.length) {
         result["_observed_"] = observed;
+    }
+    // A custom component's script-scope `m` (populated by its init() on the owning thread) must
+    // travel with the node: the receiving thread rebuilds the node without running init(), so a
+    // callFunc there would otherwise read init()-set variables back as invalid. `top`/`global`
+    // are excluded — the receiver rebuilds them locally, and serializing them here would re-walk
+    // the node and ship the entire global tree.
+    if (deep && sgRoot.nodeDefMap.has(node.nodeSubtype.toLowerCase())) {
+        const mData: FlexObject = {};
+        // Scoped so the values serialized here don't stay marked as visited: the enclosing pass may
+        // reach the same values by another route and must serialize them in full (see ScopedVisited).
+        const scoped = new ScopedVisited(visited);
+        const scopedVisited = scoped as unknown as WeakSet<object>;
+        for (const [key, value] of node.m.elements) {
+            const lowerKey = key.toLowerCase();
+            if (lowerKey === "top" || lowerKey === "global") {
+                continue;
+            }
+            mData[key] = jsValueOf(value, deep, host, scopedVisited);
+        }
+        scoped.rollback();
+        if (Object.keys(mData).length) {
+            result["_m_"] = mData;
+        }
     }
     const children = node.getNodeChildren();
     if (deep && children.length > 0 && node.serializesChildren()) {

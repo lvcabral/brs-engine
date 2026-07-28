@@ -1,8 +1,9 @@
 const scenegraph = require("../../../packages/scenegraph/lib/brs-sg.node.js");
 const core = require("../../../packages/node/bin/brs.node.js");
 
-const { Node, fromSGNode, toSGNode, jsValueOf, fromAssociativeArray } = scenegraph;
-const { BrsInvalid, isInvalid, BrsString, RoAssociativeArray, RoArray } = core;
+const { Node, fromSGNode, toSGNode, updateSGNode, jsValueOf, fromAssociativeArray } = scenegraph;
+const { ComponentDefinition, sgRoot, createFlatNode } = scenegraph;
+const { BrsInvalid, isInvalid, BrsString, BrsBoolean, RoAssociativeArray, RoArray } = core;
 
 /** Simulates the structured/JSON round-trip a node undergoes when sent to a Task thread. */
 function transfer(serialized) {
@@ -108,6 +109,93 @@ describe("SceneGraph node serialization", () => {
             const serialized = fromSGNode(node, true);
             expect(serialized.payload.helper.plugin).toBeNull();
             expect(() => JSON.stringify(serialized)).not.toThrow();
+        });
+    });
+
+    describe("custom component script-scope m", () => {
+        // Mirrors the device contract: a node created on a Task thread runs init() there
+        // (populating its script-scope `m`), and a later callFunc on the receiving thread must
+        // still see that state — init() is never re-run on the other side.
+        beforeEach(() => {
+            const def = new ComponentDefinition("pkg:/components/CustomHelper.xml");
+            def.name = "CustomHelper";
+            def.xmlNode = { attr: { name: "CustomHelper", extends: "Node" } };
+            sgRoot.setNodeDefMap(new Map([["customhelper", def]]));
+        });
+
+        afterEach(() => {
+            sgRoot.setNodeDefMap(new Map());
+        });
+
+        function makeInitializedNode() {
+            // Simulates initializeNode(): m holds top/global plus init()-set variables
+            // (BrightScript m writes preserve key case).
+            const node = new Node([], "CustomHelper");
+            node.m.set(new BrsString("top"), node, true);
+            node.m.set(new BrsString("setupCalled"), BrsBoolean.False, true);
+            node.m.set(new BrsString("label"), new BrsString("ready"), true);
+            return node;
+        }
+
+        function mValue(node, key) {
+            return jsValueOf(node.m.get(new BrsString(key)));
+        }
+
+        test("serializes init()-set m entries, excluding top and global", () => {
+            const serialized = fromSGNode(makeInitializedNode(), true);
+            expect(serialized._m_).toEqual({ setupCalled: false, label: "ready" });
+        });
+
+        test("restores m on the receiving thread so callFunc-visible state survives", () => {
+            const serialized = fromSGNode(makeInitializedNode(), true);
+            const target = toSGNode(transfer(serialized), "Node", "CustomHelper");
+            expect(mValue(target, "setupCalled")).toBe(false);
+            expect(mValue(target, "label")).toBe("ready");
+            // The locally built m.top still points at the restored node itself.
+            expect(target.m.get(new BrsString("top"))).toBe(target);
+        });
+
+        test("does not mark m values as visited for the enclosing serialization", () => {
+            // A task's `m` serializes `m.top` (which emits `_m_`) before its sibling entries. If the
+            // `_m_` pass left those values marked as visited, the sibling would degrade to a
+            // `_circular_` stub that the receiver rebuilds as `invalid` (it restores each entry with
+            // its own node map), silently losing the task's own state.
+            const taskNode = new Node([], "CustomHelper");
+            const content = new Node([], "ContentNode");
+            content.setValueSilent("title", new BrsString("hello"));
+            const m = taskNode.m;
+            m.set(new BrsString("top"), taskNode, true);
+            m.set(new BrsString("mynode"), content, true);
+
+            const serialized = fromAssociativeArray(m, true, taskNode);
+            expect(serialized.mynode._circular_).toBeUndefined();
+            expect(serialized.mynode.title).toBe("hello");
+        });
+
+        test("a built-in node never emits _m_", () => {
+            const node = new Node([], "Node");
+            node.m.set(new BrsString("stuff"), new BrsString("internal"));
+            expect(fromSGNode(node, true)._m_).toBeUndefined();
+        });
+
+        test("a shallow serialization (deep = false) skips m", () => {
+            expect(fromSGNode(makeInitializedNode(), false)._m_).toBeUndefined();
+        });
+
+        test("updateSGNode populates m on a flat node but never clobbers local state", () => {
+            const serialized = transfer(fromSGNode(makeInitializedNode(), true));
+
+            const flat = createFlatNode("Node", "CustomHelper");
+            updateSGNode(serialized, flat);
+            expect(mValue(flat, "setupCalled")).toBe(false);
+            expect(mValue(flat, "label")).toBe("ready");
+
+            const local = createFlatNode("Node", "CustomHelper");
+            local.m.set(new BrsString("setupCalled"), BrsBoolean.True);
+            updateSGNode(serialized, local);
+            // Locally mutated m is authoritative; the stale serialized copy must not overwrite it.
+            expect(mValue(local, "setupCalled")).toBe(true);
+            expect(isInvalid(local.m.get(new BrsString("label")))).toBe(true);
         });
     });
 });
