@@ -985,12 +985,10 @@ export class Node extends RoSGNode implements BrsValue {
      * @returns Bounding rectangle in the requested coordinate space.
      */
     getBoundingRect(type: string, interpreter?: Interpreter): Rect {
-        // A bounding-rect query refreshes layout by rendering the whole tree from the root. When
-        // this is called from BrightScript that itself runs *during* a render (an observer or a
-        // freshly created item component's init() calling localBoundingRect/boundingRect), the
-        // re-render would re-enter rendering and recurse until the stack overflows (e.g. JellyRock
-        // RowList items measuring labels). Skip the refresh while a render is in progress and return
-        // the rects already computed by the active pass.
+        // A bounding-rect query refreshes layout by rendering the tree, then returns a cached rect.
+        // When called from BrightScript that runs *during* a render (an observer or a freshly created
+        // item component's init() measuring a Label), a full refresh would re-enter rendering and
+        // overflow the stack, so it is skipped while a render is in progress.
         if (interpreter && !sgRoot.rendering) {
             this.refreshLayoutFromRoot(interpreter);
         } else if (
@@ -999,24 +997,34 @@ export class Node extends RoSGNode implements BrsValue {
             !sgRoot.measuring &&
             (this.rectLocal.width <= 0 || this.rectLocal.height <= 0)
         ) {
-            // A query raised *during* an active render, on a node this pass has not fully laid out
-            // yet (its local rect is degenerate in either dimension) — most commonly a freshly-created
-            // ArrayGrid item component measuring its own content synchronously (e.g. a button sizing
-            // its background from `elementsGroup.boundingRect().width`) before the pass reaches it.
-            // Either dimension being zero signals "not measured": a text label first measured while
-            // its text was still empty caches width 0 but a non-zero (text-independent) line height,
-            // so requiring BOTH to be zero would skip the refresh and return a stale zero width. A
-            // full-tree refresh from the scene root is unavailable here (it would re-enter the owning
-            // grid's item creation and recurse), so instead render only THIS node's own subtree to
-            // populate its rects. The grid is an ancestor, so a local pass cannot re-enter item
-            // creation. `.width`/`.height` are translation-invariant, so measuring at origin [0,0]
-            // yields the correct size; the true toScene/toParent origin is recomputed when the pass
-            // reaches this node. `measuring` bounds nested queries.
+            // Mid-render query on a node this pass hasn't laid out yet (its local rect is degenerate).
+            // A full refresh is unavailable (it would re-enter the owning grid's item creation and
+            // recurse), so render just this node's own subtree to populate its rects. Either dimension
+            // zero signals "not measured" — a label first measured with empty text caches width 0 but
+            // a non-zero line height, so requiring both zero would skip the refresh and return a stale
+            // width. Measuring at origin [0,0] is fine: width/height are translation-invariant and the
+            // true origin is recomputed when the pass reaches the node. `measuring` bounds nested queries.
+            //
+            // The subtree render's updateParentRects would union this child into its parent's cached
+            // bounds, but the parent hasn't been laid out this pass — unioning one child pollutes it
+            // with a partial rect (e.g. a button measured from its content group before its larger
+            // background sibling renders), making a later query on the parent skip its own fallback and
+            // return the too-small rect. Snapshot/restore the parent's rects so it stays degenerate and
+            // re-measures its full subtree when queried.
+            const parent = this.parent instanceof Node ? this.parent : undefined;
+            const savedLocal = parent ? { ...parent.rectLocal } : undefined;
+            const savedToParent = parent ? { ...parent.rectToParent } : undefined;
+            const savedToScene = parent ? { ...parent.rectToScene } : undefined;
             sgRoot.measuring = true;
             try {
                 this.renderNode(interpreter, [0, 0], 0, 1);
             } finally {
                 sgRoot.measuring = false;
+                if (parent && savedLocal && savedToParent && savedToScene) {
+                    parent.rectLocal = savedLocal;
+                    parent.rectToParent = savedToParent;
+                    parent.rectToScene = savedToScene;
+                }
             }
         }
         switch (type) {

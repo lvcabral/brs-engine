@@ -123,18 +123,33 @@ export class LayoutGroup extends Group {
 
         const addAfter = this.shouldAddSpacingAfterChild();
 
-        this.metricsUsedThisPass = undefined;
-        if (layoutChildren.length && this.layoutDirty) {
-            this.measureUnsizedChildren(layoutChildren, interpreter);
-            this.metricsUsedThisPass = new WeakMap<Node, LayoutMetrics>();
-            this.applyLayout(layoutChildren, direction, spacings, addAfter, this.metricsUsedThisPass);
-            this.layoutDirty = false;
-        }
+        // On a measurement pass (no draw target — getBoundingRect's full-tree refresh and its
+        // single-subtree fallback both render with draw2D undefined), converge the layout in this one
+        // pass instead of deferring to the next frame. When a child's settled size differs from what
+        // applyLayout used (a wrapped Label laid out at a shorter height then rendered taller shifts
+        // its siblings), synchronizeChildMetrics re-dirties the layout; a one-shot boundingRect() query
+        // would otherwise read the pre-convergence size. A real frame draw (draw2D present) keeps
+        // maxPasses = 1, preserving its next-frame correction. Capped at 2 to terminate.
+        const maxPasses = draw2D === undefined && layoutChildren.length ? 2 : 1;
+        for (let pass = 0; pass < maxPasses; pass++) {
+            this.metricsUsedThisPass = undefined;
+            if (layoutChildren.length && this.layoutDirty) {
+                this.measureUnsizedChildren(layoutChildren, interpreter);
+                this.metricsUsedThisPass = new WeakMap<Node, LayoutMetrics>();
+                this.applyLayout(layoutChildren, direction, spacings, addAfter, this.metricsUsedThisPass);
+                this.layoutDirty = false;
+            }
 
-        super.renderNode(interpreter, origin, angle, opacity, draw2D);
+            super.renderNode(interpreter, origin, angle, opacity, draw2D);
 
-        if (layoutChildren.length) {
-            this.synchronizeChildMetrics(layoutChildren, direction);
+            if (layoutChildren.length) {
+                this.synchronizeChildMetrics(layoutChildren, direction);
+            }
+
+            // Stop once the layout settled (or on a live frame's single pass).
+            if (!this.layoutDirty) {
+                break;
+            }
         }
     }
 
