@@ -1805,7 +1805,10 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
                 // node appended to m.global via m.global.findNode(). Skipping the self-search keeps
                 // that boundary — every other node's subtree is part of its ancestor's anyway, so
                 // searching it first is only a shortcut.
-                const searchSelf: boolean = sgRoot.mGlobal !== this;
+                // Widened to RoSGNode so the comparison type-checks: `sgRoot.mGlobal` is a `Global`,
+                // which TypeScript sees as having no overlap with the polymorphic `this`.
+                const globalNode: RoSGNode = sgRoot.mGlobal;
+                const searchSelf: boolean = globalNode !== this;
                 let node: RoSGNode | BrsInvalid = searchSelf ? this.findNodeById(this, id) : BrsInvalid.Instance;
                 if (node instanceof BrsInvalid) {
                     // if not found, search from root
