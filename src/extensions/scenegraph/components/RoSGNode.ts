@@ -1752,6 +1752,37 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
     }
 
     /**
+     * Whether anything above this node (or the node itself) roots a findNode search space.
+     *
+     * `ifSGNodeDict` scopes findNode to the descendants of the subject's *nearest component
+     * ancestor*, so a node with none — a plain node built with CreateObject and never attached —
+     * has no tree of its own to search, however many children it has. Device-confirmed: a detached
+     * `Node` holding ten `ContentNode` children returns `invalid` for its own child's id.
+     *
+     * The Scene counts as a component root, which is what keeps the global node searchable: its
+     * parent is the Scene, so the Scene's subtree is its search space.
+     * @returns True when a component ancestor exists.
+     */
+    private hasComponentAncestor(): boolean {
+        // Widened so the identity check type-checks against the polymorphic `this`.
+        const scene: RoSGNode | undefined = sgRoot.scene;
+        const rootsComponent = (node: RoSGNode) =>
+            node === scene || sgRoot.nodeDefMap.has(node.nodeSubtype.toLowerCase());
+
+        if (rootsComponent(this)) {
+            return true;
+        }
+        let ancestor: RoSGNode | BrsInvalid = this.getNodeParent();
+        while (ancestor instanceof RoSGNode) {
+            if (rootsComponent(ancestor)) {
+                return true;
+            }
+            ancestor = ancestor.getNodeParent();
+        }
+        return false;
+    }
+
+    /**
      * Resolves a findNode miss against the component scope the subject node belongs to.
      *
      * A device does not rely on the parent chain alone: a node created inside a component's script
@@ -1805,6 +1836,13 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
                 // node appended to m.global via m.global.findNode(). Skipping the self-search keeps
                 // that boundary — every other node's subtree is part of its ancestor's anyway, so
                 // searching it first is only a shortcut.
+                if (!this.hasComponentAncestor()) {
+                    // Nothing roots a search space above this node, so its own tree is not one
+                    // either — a device returns invalid for `detachedNode.findNode(<its own child>)`.
+                    // `findRootNode()` would just hand back the subject, so skip both walks and let
+                    // only the executing component's scope apply.
+                    return this.findInComponentScope(interpreter, id);
+                }
                 // Widened to RoSGNode so the comparison type-checks: `sgRoot.mGlobal` is a `Global`,
                 // which TypeScript sees as having no overlap with the polymorphic `this`.
                 const globalNode: RoSGNode = sgRoot.mGlobal;
