@@ -56,6 +56,9 @@ export class BrightScriptExtension implements BrsExtension {
     onInit() {
         // Reset per-thread deferred observer-dispatch state so nothing leaks across app runs.
         Field.resetDispatch();
+        // Mirrors Roku's `logrendezvous`. Set per thread (the render thread and every Task worker
+        // build their own extension instance), so a trace covers both ends of a rendezvous.
+        sgRoot.logRendezvous = BrsDevice.deviceInfo.logRendezvous === true;
         // Register SceneGraph components with BrsObjects so they can be created with CreateObject()
         BrsObjects.set("roSGScreen", () => new RoSGScreen(), 0);
         BrsObjects.set(

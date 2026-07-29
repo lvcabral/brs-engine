@@ -92,6 +92,7 @@ program
     .option("-s, --snapshot [filename]", "Enable Ctrl+S to save the current screen as a PNG image.")
     .option("-c, --colors <level>", "Define the console color level (0 to disable).", defaultLevel)
     .option("-d, --debug", "Developer mode: micro debugger on crash + resource tracking.", false)
+    .option("-z, --log-rendezvous", "Trace SceneGraph cross-thread rendezvous (like Roku's logrendezvous).", false)
     .option("-e, --ecp", "Enable the ECP server for control simulation.", false)
     .option("-n, --no-sg", "Disable the SceneGraph extension.")
     .option("-p, --pack <password>", "The password to generate the encrypted package.", "")
@@ -129,6 +130,7 @@ program
             }
             deviceData.connectionInfo.dns = dns.getServers();
             deviceData.debugOnCrash = program.debug ?? false;
+            deviceData.logRendezvous = program.logRendezvous ?? false;
             if (program.registry) {
                 deviceData.registry = getRegistry();
             }
