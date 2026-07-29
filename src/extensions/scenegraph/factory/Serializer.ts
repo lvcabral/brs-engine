@@ -468,6 +468,28 @@ function walkForFunction(value: any, location: SerializedCallableLocation, seen:
  * @param nodeMap Optional map to track nodes by ID for resolving circular references.
  * @returns A RoSGNode with the converted fields and optionally its children.
  */
+/**
+ * Attributes a rebuilt node's `_observed_` port observations to the thread they came from.
+ *
+ * A node built inside a task and observed there with a port carries those observations across, but
+ * the port itself cannot travel. Recording the originating thread against each field lets the render
+ * thread fan later updates back to where the real port is waiting.
+ * @param obj Serialized node data.
+ * @param node The rebuilt node.
+ */
+function applyRemotePortObservers(obj: any, node: Node) {
+    const observed = obj["_observed_"];
+    const threadId = sgRoot.deserializingThread;
+    if (threadId < 0 || !Array.isArray(observed)) {
+        return;
+    }
+    for (const entry of observed) {
+        if (typeof entry?.name === "string") {
+            node.resolveField(entry.name.toLowerCase())?.addRemotePortObserver(threadId);
+        }
+    }
+}
+
 export function toSGNode(obj: any, type: string, subtype: string, child?: boolean, nodeMap?: Map<string, Node>): Node {
     // Initialize nodeMap on first call
     nodeMap ??= new Map<string, Node>();
@@ -512,6 +534,7 @@ export function toSGNode(obj: any, type: string, subtype: string, child?: boolea
         const kind = FieldKind.fromString(fieldTypes[key] ?? "");
         newNode.setValueSilent(key, brsValueOf(obj[key], undefined, nodeMap), undefined, kind);
     }
+    applyRemotePortObservers(obj, newNode);
     // Recreate fields whose `invalid`/uninitialized value was omitted by JSON serialization, using
     // the preserved declared type so they exist (as `invalid`) on the receiving thread.
     for (const key in fieldTypes) {

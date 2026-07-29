@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="DispatchTask" extends="Task">
+    <interface>
+        <field id="got" type="string" />
+    </interface>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.top.functionName = "runDispatch"
+    end sub
+
+    sub runDispatch()
+        ' Runs on its own task thread. `m.global.slot` is another Task node owned by the
+        ' render thread, so writing its field has to rendezvous out through *this* thread's
+        ' channel and then be forwarded to the slot's thread.
+        slot = m.global.slot
+        if slot = invalid
+            print "DISPATCH: slot missing"
+            return
+        end if
+
+        ' The blocking-request pattern: build a result node here, observe it with a port
+        ' *before* handing it over, then park. The node is task-owned at observe time, so
+        ' that observeField never rendezvouses — the render thread only learns a port is
+        ' waiting on it from the `_observed_` data carried by appendChild.
+        result = CreateObject("roSGNode", "ResultNode")
+        port = CreateObject("roMessagePort")
+        result.observeField("isDone", port)
+        slot.appendChild(result)
+
+        slot.request = { text: "ping" }
+        print "DISPATCH: sent"
+
+        msg = wait(5000, port)
+        if type(msg) = "roSGNodeEvent"
+            print "DISPATCH GOT: "; result.payload
+            m.top.got = result.payload
+        else
+            print "DISPATCH: timed out"
+            m.top.got = "timeout"
+        end if
+    end sub
+    ]]></script>
+</component>

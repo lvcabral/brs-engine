@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="MainScene" extends="Scene">
+    <interface>
+        <field id="done" type="boolean" value="false" />
+    </interface>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        ' The documented Task pattern: the task registers a port observer in init() (which runs
+        ' on the render thread) and consumes it from its own thread. Here it watches a field on
+        ' m.global that the render thread writes after the task is up.
+        m.global.addFields({ ticket: "" })
+        m.task = createObject("roSGNode", "ObserverTask")
+        m.task.observeField("ready", "onTaskReady")
+        m.task.observeField("seen", "onTaskSeen")
+        m.task.control = "run"
+    end sub
+
+    sub onTaskReady(event as object)
+        if not event.getData() then return
+        print "TASK READY"
+        m.global.ticket = "hello"
+    end sub
+
+    sub onTaskSeen(event as object)
+        print "SCENE SAW: "; event.getData()
+        m.top.done = true
+    end sub
+    ]]></script>
+</component>

@@ -481,11 +481,62 @@ export class Field {
         );
     }
 
+    /**
+     * Whether `scope` observes this field through a port.
+     *
+     * The `hostNode` match matters: an unscoped observer used to answer true for *every* scope, so
+     * callers picking cross-thread fan-out targets delivered each update to every active task. The
+     * node that registered the observer is recorded on the callback, so attribution is exact — and
+     * for a Task that registered in `init()` (on the render thread, never via rendezvous) this is the
+     * only record that it is waiting.
+     * @param scope Node to test for port observation.
+     */
     isPortObserved(scope: Node) {
         return (
-            (this.unscopedObservers?.some((callback) => callback.observer instanceof RoMessagePort) ?? false) ||
+            (this.unscopedObservers?.some(
+                (callback) => callback.observer instanceof RoMessagePort && callback.hostNode === scope
+            ) ??
+                false) ||
             (this.scopedObservers?.get(scope)?.some((callback) => callback.observer instanceof RoMessagePort) ?? false)
         );
+    }
+
+    /**
+     * Task threads that observe this field through an `roMessagePort`.
+     *
+     * A port cannot cross a thread boundary: `observeField(field, port)` from a task rendezvouses
+     * the call here and the port is rebuilt as a fresh, empty one, while the task's real port is
+     * registered only on its own copy. So the render side cannot tell *which* thread is waiting by
+     * looking at its observer list — and `isPortObserved` answers true for any scope once a single
+     * unscoped port observer exists, which would broadcast every update to every task. Recording
+     * the originating thread id makes the fan-out exact.
+     */
+    private remotePortObservers?: Set<number>;
+
+    /**
+     * Registers a task thread as a port observer of this field.
+     * @param threadId Task thread that called observeField with a port.
+     */
+    addRemotePortObserver(threadId: number) {
+        this.hidden = false;
+        this.remotePortObservers ??= new Set();
+        this.remotePortObservers.add(threadId);
+    }
+
+    /**
+     * Removes a task thread's port observation of this field.
+     * @param threadId Task thread that called unobserveField.
+     */
+    removeRemotePortObserver(threadId: number) {
+        this.remotePortObservers?.delete(threadId);
+    }
+
+    /**
+     * Checks whether a task thread observes this field through a port.
+     * @param threadId Task thread to test.
+     */
+    hasRemotePortObserver(threadId: number) {
+        return this.remotePortObservers?.has(threadId) ?? false;
     }
 
     private convertValue(value: BrsType) {

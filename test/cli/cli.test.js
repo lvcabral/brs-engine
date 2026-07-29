@@ -984,6 +984,67 @@ describe.concurrent("cli", () => {
         expect(lines).toContain("------ Finished 'main.brs' execution [EXIT_USER_NAV] ------");
     }, 30000);
 
+    it("Delivers a field set from one Task thread to another Task's thread", async () => {
+        let command = ["node", brsCliPath, "-r task-pool-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // Worker-pool apps park a long-lived Task on a port and dispatch to it from other Task
+        // threads. That write was silently dropped: `Task.setValue` synced through the *target*
+        // Task as transport, but a foreign Task node is only a deserialized copy with no thread
+        // of its own (`threadId < 0`), so `syncRemoteField` returned early and nothing crossed.
+        // The coordinator's notification broke separately: `observeField(field, port)` from a task
+        // thread rendezvouses to the render thread, where the port is rebuilt as a fresh empty
+        // RoMessagePort, so the render side held a dead observer and the task's real port never
+        // fired. `task`-domain fan-out was also skipped wholesale, which is what "WATCHER SAW"
+        // guards — a coordinator watching a pool slot it does not own.
+        const lines = stdout.split("\n").map((line) => line.trimEnd());
+        expect(lines).toContain("=== Task Pool Repro ===");
+        expect(lines).toContain("SLOT READY");
+        expect(lines).toContain("WATCHER READY");
+        expect(lines).toContain("DISPATCH: sent");
+        expect(lines).toContain("SLOT RESPONSE: echo:ping");
+        expect(lines).toContain("WATCHER SAW: echo:ping");
+        // The blocking-request pattern: the caller builds a node, port-observes it while it is
+        // still task-owned (so that observeField never rendezvouses), then hands it over. The
+        // render thread only learns a port is waiting from the `_observed_` data carried across.
+        expect(lines).toContain("DISPATCH GOT: echo:ping");
+        expect(lines).toContain("DISPATCHER REPLY: echo:ping");
+        // One dispatch must raise exactly one event. The owner answers a rendezvous *read* with an
+        // update whose action is `set`, and applying it with notification made reading a field
+        // indistinguishable from changing it: the slot's own `req = m.top.request` re-fired its port,
+        // and an assocarray field always compares unequal so it never settled. A continuous-server
+        // loop then re-ran the same work indefinitely, and a coordinator keying completions off such
+        // a port credited responses to the wrong caller.
+        expect(lines).toContain("SLOT EVENT #1");
+        expect(lines).not.toContain("SLOT EVENT #2");
+        expect(lines).not.toContain("WATCHER PHANTOM EVENT");
+        expect(lines).toContain("=== Task Pool Repro Complete ===");
+        expect(lines).toContain("------ Finished 'main.brs' execution [EXIT_USER_NAV] ------");
+    }, 30000);
+
+    it("Delivers a field change to a port a Task registered during init()", async () => {
+        let command = ["node", brsCliPath, "-r task-globalobserve-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // The documented Task pattern (docs/limitations.md): the task registers a port observer in
+        // init() — which runs on the render thread, so it never goes through the rendezvous
+        // observeField path — and consumes events from its own thread. The only record that the task
+        // is waiting is the `hostNode` on the observer callback, so cross-thread fan-out has to
+        // attribute observers by it. Picking fan-out targets any other way either misses this task or
+        // (if it answers "observed" for every scope) broadcasts each update to all of them.
+        const lines = stdout.split("\n").map((line) => line.trimEnd());
+        expect(lines).toContain("=== Task Global Observe Repro ===");
+        expect(lines).toContain("TASK READY");
+        expect(lines).toContain("OBSERVER GOT: hello");
+        expect(lines).toContain("SCENE SAW: hello");
+        expect(lines).not.toContain("OBSERVER: timed out");
+        expect(lines).toContain("=== Task Global Observe Repro Complete ===");
+    }, 30000);
+
     it("Clears a node-valued field set to invalid from a Task thread", async () => {
         let command = ["node", brsCliPath, "-r task-clear-node-app", "source/main.brs", "-c 0"].join(" ");
 

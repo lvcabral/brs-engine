@@ -3,6 +3,7 @@ import {
     Interpreter,
     BrsDevice,
     BrsEvent,
+    BrsComponent,
     BrsInvalid,
     BrsString,
     BrsType,
@@ -43,6 +44,32 @@ import type { Field, Scene } from "..";
  * activates on another thread instead of running out the clock and throwing a spurious timeout.
  */
 const RENDEZVOUS_POLL_MS = 100;
+
+/**
+ * Renders a field value for a rendezvous trace, but only when it is cheap and safe to print.
+ * Nodes and containers are reported by kind alone — stringifying a content tree inside the render
+ * loop would cost more than the trace is worth.
+ * @param value Value to describe.
+ * @returns A short printable form.
+ */
+function describeSimpleValue(value: BrsType): string {
+    if (value === undefined || value === null) {
+        return "undefined";
+    }
+    if (value.kind === undefined) {
+        return "?";
+    }
+    if (isBrsString(value)) {
+        return `"${value.getValue().slice(0, 24)}"`;
+    }
+    // Never stringify a component: `toString` on an array or AA renders every element (a whole
+    // content tree, worst case) and this runs inside the rendezvous round trip being measured, so
+    // printing the value would distort the very timings the trace exists to expose.
+    if (value instanceof BrsComponent) {
+        return `<${value.getComponentName()}>`;
+    }
+    return String(value.toString()).slice(0, 24);
+}
 
 /**
  * SceneGraph `Task` node implementation responsible for executing BrightScript in a worker thread.
@@ -87,6 +114,18 @@ export class Task extends Node {
     private syncRequestId: number = 1;
     /** Tracks acknowledgements completed by the main thread. */
     private readonly completedAcks: Set<number> = new Set();
+    /**
+     * Request ids of rendezvous field *reads* still awaiting a response.
+     *
+     * The owner answers a `get` with an update whose action is `set`, so the reply travels the same
+     * path as a genuine push and used to be applied with notification — making a read of a field
+     * indistinguishable from a change to it, and firing the reader's own observers. That is never
+     * right (a read fires nothing on a device) and it is actively destructive for a port observer:
+     * an AA- or array-valued field always compares unequal (`RoAssociativeArray.equalTo` is
+     * unconditionally false), so *every* read pushed a phantom event onto the port. An app driving a
+     * dispatch loop off such a port sees completions that never happened.
+     */
+    private readonly pendingReads: Set<number> = new Set();
 
     /**
      * Creates a Task node, registering default and initial fields.
@@ -135,9 +174,23 @@ export class Task extends Node {
             return;
         }
         super.setValue(index, value, alwaysNotify, kind);
+        // Re-resolve: `super.setValue` may have *created* the field (the `alwaysNotify !== undefined`
+        // branch), and the pre-`super` lookup above used `fields.get`, which misses lazily
+        // materialized/aliased fields. Capturing it before the call skipped the sync entirely.
+        const synced = this.resolveField(mapKey);
         // Notify other threads of field changes
-        if (field && sync && this.changed) {
-            this.syncRemoteField(mapKey, field.getValue(false));
+        if (synced && sync && this.changed) {
+            const ownTask = sgRoot.getCurrentThreadTask();
+            if (ownTask && ownTask !== this && this.shouldRendezvous()) {
+                // A *foreign* Task node — another task's node, typically reached through `m.global`.
+                // This copy was never activated on this thread, so it has no thread of its own
+                // (`threadId < 0`) and its own `syncRemoteField` would drop the write silently. Send
+                // it out through the current thread's channel, addressed at the target node, exactly
+                // as `Node.rendezvousSet` does for non-Task nodes.
+                ownTask.syncRemoteField(mapKey, synced.getValue(false), this.syncType, this.address);
+            } else {
+                this.syncRemoteField(mapKey, synced.getValue(false));
+            }
             this.changed = false;
         }
     }
@@ -488,6 +541,9 @@ export class Task extends Node {
             requestId,
         };
         const started = sgRoot.logRendezvous ? Date.now() : 0;
+        // Mark before sending: the reply is applied inside `processThreadUpdate` below, which has to
+        // recognise it as a read and store the value without notifying observers.
+        this.pendingReads.add(requestId);
         this.sendThreadUpdate(request);
         let deadline = Date.now() + timeoutMs;
         const responseBuffer = this.directBuffer ?? this.taskBuffer;
@@ -496,9 +552,11 @@ export class Task extends Node {
             const update = this.processThreadUpdate(responseBuffer);
             if (update?.requestId === requestId) {
                 if (update.action === "set") {
+                    this.pendingReads.delete(requestId);
                     this.logRendezvousTiming("get", type, fieldName, started);
                     return true;
                 } else if (update.action === "nil") {
+                    this.pendingReads.delete(requestId);
                     this.logRendezvousTiming("get", type, fieldName, started);
                     return false;
                 }
@@ -517,6 +575,7 @@ export class Task extends Node {
             // after we entered the wait; the real timeout is enforced by the `remaining` check above.
             responseBuffer.waitVersion(0, Math.min(remaining, RENDEZVOUS_POLL_MS));
         }
+        this.pendingReads.delete(requestId);
         throw this.rendezvousTimeoutError("get", type, fieldName);
     }
 
@@ -758,6 +817,14 @@ export class Task extends Node {
         } else if (update.type === "scene") {
             return sgRoot.scene;
         } else if (update.type === "task") {
+            // A `task`-domain update normally targets the sending task's own node, whose address
+            // matches ours. A worker-pool dispatch (one task writing *another* Task node's field)
+            // carries the target's address instead, so honor it rather than assuming `this` —
+            // otherwise the write lands on the sender's node. Unresolvable falls through to
+            // `handleUnresolvedNode`, which still acks so the sender does not hang.
+            if (update.address && update.address !== this.address) {
+                return this.resolveNode(update.address, true);
+            }
             return this;
         } else if (update.address) {
             return this.resolveNode(update.address, true);
@@ -778,26 +845,69 @@ export class Task extends Node {
         // `update.value` is null when the other thread set the field to `invalid` (jsValueOf maps it
         // to null), which is a legitimate way to clear a node-valued field — reading `_address_` off
         // it threw and killed the whole task-update pass.
-        if (!this.inThread && oldValue instanceof Node && oldValue.getAddress() === update.value?._address_) {
-            // Update existing node to preserve references
-            value = updateSGNode(update.value, oldValue);
-        } else {
-            value = brsValueOf(update.value);
+        // As in `handleMethodCallRequest`: a node arriving as a field value carries its port
+        // observations, which belong to the sending thread.
+        const priorThread = sgRoot.deserializingThread;
+        sgRoot.deserializingThread = this.inThread ? -1 : update.id;
+        try {
+            if (!this.inThread && oldValue instanceof Node && oldValue.getAddress() === update.value?._address_) {
+                // Update existing node to preserve references
+                value = updateSGNode(update.value, oldValue);
+            } else {
+                value = brsValueOf(update.value);
+            }
+        } finally {
+            sgRoot.deserializingThread = priorThread;
         }
         node.markFieldFresh(update.key);
-        node.setValue(update.key, value, false, undefined, false);
+        // An update that lands on a node nobody is watching (a stale duplicate holding the same
+        // address) or whose value already equals what the field held (which suppresses notification)
+        // looks identical to a successful delivery unless the receiving side's state is reported.
+        const observed = sgRoot.logRendezvous
+            ? node.resolveField(update.key.toLowerCase())?.isObserved() ?? false
+            : false;
+        const previous = sgRoot.logRendezvous ? describeSimpleValue(oldValue) : "";
+        // A reply to one of *our* reads only mirrors the owner's value locally — it is not a change,
+        // so it must not fire this thread's observers (see `pendingReads`).
+        const isReadReply = update.requestId !== undefined && this.pendingReads.has(update.requestId);
+        if (isReadReply) {
+            node.setValueSilent(update.key, value);
+        } else {
+            node.setValue(update.key, value, false, undefined, false);
+        }
         if (sgRoot.logRendezvous) {
             BrsDevice.stdout.write(
-                `debug,[rendezvous] thread ${sgRoot.threadId} applied set ${update.type}.${update.key} from thread ${update.id}`
+                `debug,[rendezvous] thread ${sgRoot.threadId} applied set ${update.type}.${update.key} from thread ${
+                    update.id
+                } on ${
+                    node.nodeSubtype
+                }#${node.getAddress()} (observed=${observed} silent=${isReadReply} ${previous}->${describeSimpleValue(
+                    value
+                )})`
             );
         }
         // The render fans a task's applied set out to the other observing tasks itself (targeted to
-        // observers, excluding the originator) rather than relying on the broker to blind-relay. Only
-        // shared domains (global/scene/node) cross between tasks — `task`-type fields are private to a
-        // single task, mirroring the broker's `type !== "task"` guard; fanning them out would deliver
-        // one task's field into another task's identically-named field (and corrupt node ownership).
-        if (this.fanoutBuffer && !this.inThread && update.type !== "task") {
-            node.fanOutFieldToObservingTasks(update.key, update.id);
+        // observers, excluding the originator) rather than relying on the broker to blind-relay.
+        if (this.fanoutBuffer && !this.inThread) {
+            if (update.type === "task") {
+                // A `task`-domain field belongs to one specific Task node. Fanning it out *by type
+                // alone* used to be unsafe — it would land one task's field in another task's
+                // identically-named field — which is why this was skipped wholesale. Updates now
+                // carry the target's address and `getNodeToUpdate` resolves it, so both deliveries
+                // below are unambiguous.
+                //
+                // 1. The node's own thread, when the write came from somewhere else (a worker-pool
+                //    dispatch: one task writing another task's field).
+                const target = node !== this && node instanceof Task ? node : undefined;
+                target?.syncRemoteField(update.key, value);
+                // 2. Any *other* task port-observing the field — e.g. a coordinator watching its
+                //    pool slots' `response`. `observeField(field, port)` from a task rendezvouses
+                //    here and registers on the render copy, so `isPortObserved` sees it; without
+                //    this the observing task's own port never fires and it waits forever.
+                node.fanOutFieldToObservingTasks(update.key, update.id, target?.threadId ?? -1);
+            } else {
+                node.fanOutFieldToObservingTasks(update.key, update.id);
+            }
         }
         // Send acknowledgement back to the other thread if needed
         if (!this.inThread && update.requestId !== undefined) {
@@ -806,6 +916,45 @@ export class Task extends Node {
             this.sendThreadUpdate(update);
         }
         return update;
+    }
+
+    /**
+     * Records (or clears) a task thread's port observation when its `observeField`/`unobserveField`
+     * call arrives here by rendezvous.
+     *
+     * The `roMessagePort` argument does not survive serialization — it is rebuilt as a fresh, empty
+     * port — so the observer this call is about to register on the render copy can never fire.
+     * Remembering *which thread* asked lets `fanOutFieldToObservingTasks` push the value back to
+     * that thread, where the real port lives.
+     * @param target Node the method was called on.
+     * @param update Thread update carrying the originating thread id in `id`.
+     * @param args Serialized argument list from the method-call payload.
+     */
+    private trackRemotePortObserver(target: Node, update: ThreadUpdate, args: any) {
+        const method = update.key.toLowerCase();
+        const observing = method === "observefield" || method === "observefieldscoped";
+        const unobserving = method === "unobservefield" || method === "unobservefieldscoped";
+        if (!observing && !unobserving) {
+            return;
+        }
+        const fieldName = Array.isArray(args) ? args[0] : undefined;
+        if (typeof fieldName !== "string") {
+            return;
+        }
+        const field = target.resolveField(fieldName.toLowerCase());
+        if (!field) {
+            return;
+        }
+        // `observeField` is overloaded on its second argument; only the port form needs tracking,
+        // and a serialized port is the `{_component_: "roMessagePort"}` stub.
+        if (observing && args[1]?._component_?.toLowerCase() !== "romessageport") {
+            return;
+        }
+        if (observing) {
+            field.addRemotePortObserver(update.id);
+        } else {
+            field.removeRemotePortObserver(update.id);
+        }
     }
 
     /**
@@ -826,9 +975,21 @@ export class Task extends Node {
         if (!method || !sgRoot.interpreter) {
             return;
         }
-        const value = brsValueOf(payload.args);
+        // Attribute any `_observed_` carried by node arguments to the calling thread while they are
+        // rebuilt (see `applyRemotePortObservers`); restore so nested rebuilds stay correct.
+        const priorThread = sgRoot.deserializingThread;
+        sgRoot.deserializingThread = this.inThread ? -1 : update.id;
+        let value: BrsType;
+        try {
+            value = brsValueOf(payload.args);
+        } finally {
+            sgRoot.deserializingThread = priorThread;
+        }
         const args: BrsType[] = value instanceof RoArray ? value.getElements() : [];
         const location = payload.location ?? sgRoot.interpreter.location;
+        if (!this.inThread) {
+            this.trackRemotePortObserver(target, update, payload.args);
+        }
         const result = sgRoot.interpreter.call(method, args, hostNode.m, location, hostNode);
         update.action = "resp";
         if (result instanceof Node) {

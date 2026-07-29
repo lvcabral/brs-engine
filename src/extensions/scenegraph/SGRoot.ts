@@ -79,6 +79,13 @@ export class SGRoot {
      * proxy must never hijack the real player instance the app created.
      */
     deserializing: boolean = false;
+    /**
+     * Thread id the data currently being rebuilt came from, or -1 outside a cross-thread rebuild.
+     * `toSGNode` uses it to attribute a node's `_observed_` port observations to the thread whose
+     * real port is waiting on them (see `Field.remotePortObservers`); passing it through every
+     * serializer signature would touch a dozen call sites for one narrow need.
+     */
+    deserializingThread: number = -1;
     /** The render thread's roRenderThreadQueue singleton (holds handlers), drained each frame. */
     private _renderQueue?: RoRenderThreadQueue;
     /**
