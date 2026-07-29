@@ -1400,11 +1400,33 @@ describe.concurrent("cli", () => {
         }, 30000);
     });
 
-    // Binds a fixed port (8060) and shares a `server` handle across tests, so these must not
-    // overlap with each other.
+    // Shares a `server` handle across tests, so these must not overlap with each other.
     describe.sequential("ECP query/r2d2-bitmaps", () => {
         const http = require("http");
+        const net = require("net");
         let server;
+        let ecpPort;
+        let url;
+
+        /**
+         * Reserves a free port by binding to 0 and releasing it.
+         *
+         * The ECP server defaults to Roku's fixed 8060, which anything else on the machine may
+         * already hold — a desktop build of the engine, another instance, a remote-control tool.
+         * These tests then fail for a reason that has nothing to do with the code, so they bind
+         * somewhere unoccupied via BRS_ECP_PORT instead.
+         */
+        function reserveFreePort() {
+            return new Promise((resolve, reject) => {
+                const probe = net.createServer();
+                probe.unref();
+                probe.on("error", reject);
+                probe.listen(0, "127.0.0.1", () => {
+                    const { port } = probe.address();
+                    probe.close(() => resolve(port));
+                });
+            });
+        }
 
         /** Performs an HTTP GET, resolving with the body once the server responds. */
         function httpGet(url) {
@@ -1451,19 +1473,26 @@ describe.concurrent("cli", () => {
             });
         }
 
-        const url = "http://localhost:8060/query/r2d2-bitmaps";
+        beforeEach(async () => {
+            ecpPort = await reserveFreePort();
+            url = `http://localhost:${ecpPort}/query/r2d2-bitmaps`;
+        });
 
         afterEach(() => {
             server?.kill("SIGKILL");
             server = undefined;
         });
 
+        /** Spawns the CLI with the ECP server bound to this test's reserved port. */
+        function spawnEcp(args) {
+            return child_process.spawn("node", [brsCliPath, ...args], {
+                cwd: path.join(__dirname, "resources"),
+                env: { ...process.env, BRS_ECP_PORT: String(ecpPort) },
+            });
+        }
+
         it("returns texture-memory data for the running app's bitmaps and fonts in debug mode", async () => {
-            server = child_process.spawn(
-                "node",
-                [brsCliPath, "-r", "r2d2-bitmaps-app", "source/main.brs", "--ecp", "--debug"],
-                { cwd: path.join(__dirname, "resources") }
-            );
+            server = spawnEcp(["-r", "r2d2-bitmaps-app", "source/main.brs", "--ecp", "--debug"]);
             const xml = await waitForEndpoint(url, (body) => body.includes("pkg:/images/alpha.png"));
 
             expect(xml).toContain("<r2d2-bitmaps>");
@@ -1485,9 +1514,7 @@ describe.concurrent("cli", () => {
         }, 30000);
 
         it("returns no bitmaps in production mode (no --debug)", async () => {
-            server = child_process.spawn("node", [brsCliPath, "-r", "r2d2-bitmaps-app", "source/main.brs", "--ecp"], {
-                cwd: path.join(__dirname, "resources"),
-            });
+            server = spawnEcp(["-r", "r2d2-bitmaps-app", "source/main.brs", "--ecp"]);
             // Wait until the app has created its bitmaps, then confirm the registry stayed empty.
             await waitForStdout(server, "R2D2 ready");
             const xml = await waitForEndpoint(url, (body) => body.includes("<status>OK</status>"));

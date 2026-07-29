@@ -216,6 +216,14 @@ The app runs on a dedicated worker thread, leaving the terminal free for interac
 
 If you need remote control simulation from other devices, enable the option `--ecp` that will launch the ECP Server in port 8060 (same as a Roku device). With this option enabled, you can connect to your computer using any remote control app that uses ECP, including the [Roku Remote Tool](https://devtools.web.roku.com/#remote-tool), the [Roku GamePad Gateway](http://github.com/lvcabral/roku-gpg) or the Roku mobile apps. This option also enables an SSDP service to allow it to be discovered in your local network.
 
+If port 8060 is already taken — by another instance of the engine, a desktop build, or a remote control tool — set the `BRS_ECP_PORT` environment variable to bind elsewhere:
+
+```console
+$ BRS_ECP_PORT=8160 brs-cli --ecp app.zip
+```
+
+SSDP discovery is skipped on a non-default port: remote control apps only look for ECP on 8060, so advertising a relocated server would publish an endpoint nothing can use.
+
 ### Production vs Developer mode
 
 By default the engine runs in **production mode**, which keeps it lean by skipping all debug

@@ -28,8 +28,27 @@ import WebSocket, { WebSocketServer, RawData } from "ws";
 import packageInfo from "../../packages/node/package.json";
 
 const DEBUG = false;
-const ECPPORT = 8060;
+/** The port a Roku serves ECP on. Remote-control apps look for it here, so it stays the default. */
+const DEFAULT_ECPPORT = 8060;
+const ECPPORT = resolveEcpPort();
 const SSDPPORT = 1900;
+
+/**
+ * Resolves the ECP listen port, honoring `BRS_ECP_PORT`.
+ *
+ * The port is fixed on a real device, so it is fixed here too — but that makes the server
+ * unstartable whenever anything else already holds 8060 (another engine instance, a desktop build,
+ * a real remote-control tool). The override exists so those cases can bind elsewhere instead of
+ * failing; an unset or unusable value keeps the Roku default.
+ * @returns The port to listen on.
+ */
+function resolveEcpPort(): number {
+    const configured = Number(process.env.BRS_ECP_PORT);
+    if (Number.isInteger(configured) && configured > 0 && configured < 65536) {
+        return configured;
+    }
+    return DEFAULT_ECPPORT;
+}
 const MAC = getMacAddress();
 const UDN = "138aedd0-d6ad-11eb-b8bc-" + MAC.replaceAll(/:\s*/g, "");
 let ecp: restana.Service<restana.Protocol.HTTP>;
@@ -103,43 +122,52 @@ function enableECP() {
     }
     ecp.start(ECPPORT)
         .then((server) => {
-            // Create SSDP Server
-            ssdp = new SSDP({
-                location: {
-                    port: ECPPORT,
-                    path: "/",
-                },
-                adInterval: 120000,
-                ttl: 3600,
-                udn: `uuid:roku:ecp:${device.serialNumber}`,
-                ssdpSig: "Roku UPnP/1.0 Roku/9.1.0",
-                ssdpPort: SSDPPORT,
-                suppressRootDeviceAdvertisements: true,
-                headers: { "device-group.roku.com": "46F5CCE2472F2B14D77" },
-            });
-            ssdp.addUSN("roku:ecp");
-            ssdp._usns["roku:ecp"] = `uuid:roku:ecp:${device.serialNumber}`;
-            // Start server on all interfaces
-            ssdp.start()
-                .catch((e: Error) => {
-                    parentPort?.postMessage({
-                        ready: false,
-                        msg: `Failed to start SSDP server:${e.message}\n`,
-                    });
-                })
-                .then(() => {
-                    subscribeControl("ecp", (event: string) => {
-                        if (event === "home" || event === "poweroff") {
-                            Atomics.store(sharedArray, DataType.DBG, DebugCommand.EXIT);
-                        }
-                    });
-                    enableSendKeys(true);
-                    isECPEnabled = true;
-                    parentPort?.postMessage({
-                        ready: true,
-                        msg: "ECP and SSDP servers initialized!\n",
-                    });
+            /** Wires up control handling and reports the server as ready. */
+            const finishStartup = (msg: string) => {
+                subscribeControl("ecp", (event: string) => {
+                    if (event === "home" || event === "poweroff") {
+                        Atomics.store(sharedArray, DataType.DBG, DebugCommand.EXIT);
+                    }
                 });
+                enableSendKeys(true);
+                isECPEnabled = true;
+                parentPort?.postMessage({ ready: true, msg });
+            };
+            if (ECPPORT === DEFAULT_ECPPORT) {
+                // Create SSDP Server
+                ssdp = new SSDP({
+                    location: {
+                        port: ECPPORT,
+                        path: "/",
+                    },
+                    adInterval: 120000,
+                    ttl: 3600,
+                    udn: `uuid:roku:ecp:${device.serialNumber}`,
+                    ssdpSig: "Roku UPnP/1.0 Roku/9.1.0",
+                    ssdpPort: SSDPPORT,
+                    suppressRootDeviceAdvertisements: true,
+                    headers: { "device-group.roku.com": "46F5CCE2472F2B14D77" },
+                });
+                ssdp.addUSN("roku:ecp");
+                ssdp._usns["roku:ecp"] = `uuid:roku:ecp:${device.serialNumber}`;
+                // Start server on all interfaces
+                ssdp.start()
+                    .catch((e: Error) => {
+                        parentPort?.postMessage({
+                            ready: false,
+                            msg: `Failed to start SSDP server:${e.message}\n`,
+                        });
+                    })
+                    .then(() => {
+                        finishStartup("ECP and SSDP servers initialized!\n");
+                    });
+            } else {
+                // Discovery announces "a Roku serves ECP at this location", but a remote-control app
+                // only looks on the standard port, so advertising a relocated server publishes an
+                // endpoint nothing will use. SSDP also binds its own fixed port (1900), which is as
+                // likely to be held as the one we moved off — the reason for moving in the first place.
+                finishStartup(`ECP server initialized on port ${ECPPORT}, SSDP discovery disabled!\n`);
+            }
             // Create ECP-2 WebSocket Server
             const wss = new WebSocketServer({ noServer: true });
             wss.on("connection", function connection(ws) {
