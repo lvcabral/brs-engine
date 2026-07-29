@@ -19,6 +19,17 @@ You have two options to install the CLI application:
     $ npm link
     ```
 
+## Keeping the CLI Up to Date
+
+When running on an interactive terminal, the CLI checks the npm registry (at most once a day, in background) for a newer release of `brs-node`, and shows a notice with the command to upgrade the installation it detected (global, local or `npx`):
+
+```console
+Update available: 2.3.0 -> 2.4.0
+Run npm install -g brs-node@latest to update.
+```
+
+The check never delays the startup nor the exit: the notice is displayed from the previously cached result, while the registry request runs in background and is dropped if the app finishes first. To disable it, set either the `BRS_NO_UPDATE_CHECK` or the `NO_UPDATE_NOTIFIER` environment variable; it is also skipped when the output is redirected (not a terminal) or when `CI` is set.
+
 ## Usage
 
 Once installed, you can execute the `brs-cli` command, which operates as a REPL, runs source files or creates encrypted app packages.
