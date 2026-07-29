@@ -61,6 +61,44 @@ describe("findNode falls back to the executing component's scope", () => {
         expect(isInvalid(callFindNode(attached, "HomeScreen", scene))).toBe(true);
     });
 
+    test("a detached node does not search its own subtree", () => {
+        const { scene } = sceneWithScreen();
+        // Device-confirmed: a plain node built with CreateObject and never attached has no
+        // component ancestor, so its own children are not a search space however many it has.
+        const detachedRoot = new Node([], "Node");
+        const child = new Node([], "ContentNode");
+        child.setValue("id", new BrsString("Item7"), false);
+        detachedRoot.appendChildToParent(child);
+
+        expect(isInvalid(callFindNode(detachedRoot, "Item7", scene))).toBe(true);
+    });
+
+    test("an attached node still reaches its own subtree through its component ancestor", () => {
+        const { scene } = sceneWithScreen();
+        const group = new Node([], "Group");
+        const child = new Node([], "ContentNode");
+        child.setValue("id", new BrsString("Item7"), false);
+        group.appendChildToParent(child);
+        scene.appendChildToParent(group);
+
+        expect(callFindNode(group, "Item7", scene)).toBe(child);
+    });
+
+    test("a detached custom component root searches its own subtree — it is its own scope", () => {
+        const { scene } = sceneWithScreen();
+        const def = new ComponentDefinition("pkg:/components/DetachedHelper.xml");
+        def.name = "DetachedHelper";
+        def.xmlNode = { attr: { name: "DetachedHelper", extends: "Group" } };
+        sgRoot.setNodeDefMap(new Map([["detachedhelper", def]]));
+
+        const helper = new Node([], "DetachedHelper");
+        const child = new Node([], "ContentNode");
+        child.setValue("id", new BrsString("Inner"), false);
+        helper.appendChildToParent(child);
+
+        expect(callFindNode(helper, "Inner", scene)).toBe(child);
+    });
+
     test("without an executing component there is no scope to fall back to", () => {
         const { scene } = sceneWithScreen();
         const detached = new Node([], "Group");
