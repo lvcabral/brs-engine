@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="ClearingTask" extends="Task">
+    <interface>
+        <field id="payload" type="node" />
+        <field id="finished" type="boolean" value="false" />
+    </interface>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.top.functionName = "runTask"
+    end sub
+
+    sub runTask()
+        ' Hand a node to the render thread, then clear it. The render side still holds the
+        ' node while the incoming update carries a null value for that node-valued field.
+        node = createObject("roSGNode", "ContentNode")
+        node.id = "Payload"
+        m.top.payload = node
+        m.top.payload = invalid
+        m.top.finished = true
+    end sub
+    ]]></script>
+</component>
