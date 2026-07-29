@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="MainScene" extends="Scene">
+    <interface>
+        <field id="done" type="boolean" value="false" />
+    </interface>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.task = createObject("roSGNode", "ClearingTask")
+        m.task.observeField("payload", "onPayload")
+        m.task.observeField("finished", "onFinished")
+        m.task.control = "run"
+    end sub
+
+    sub onPayload(event as object)
+        node = event.getData()
+        if node = invalid
+            print "PAYLOAD: invalid"
+        else
+            print "PAYLOAD: "; node.id
+        end if
+    end sub
+
+    sub onFinished(event as object)
+        print "FINISHED: task completed"
+        m.top.done = true
+    end sub
+    ]]></script>
+</component>

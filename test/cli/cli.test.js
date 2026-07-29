@@ -984,6 +984,23 @@ describe.concurrent("cli", () => {
         expect(lines).toContain("------ Finished 'main.brs' execution [EXIT_USER_NAV] ------");
     }, 30000);
 
+    it("Clears a node-valued field set to invalid from a Task thread", async () => {
+        let command = ["node", brsCliPath, "-r task-clear-node-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // Setting a node-valued field to `invalid` from a task sends an update whose value is null.
+        // The render side read `_address_` off it to decide whether to reconcile against the node it
+        // already held, which threw and aborted the whole task-update pass — the task's later writes
+        // never landed and the app hung waiting for them.
+        const lines = stdout.split("\n").map((line) => line.trimEnd());
+        expect(lines).toContain("PAYLOAD: Payload");
+        expect(lines).toContain("PAYLOAD: invalid");
+        expect(lines).toContain("FINISHED: task completed");
+        expect(lines).toContain("=== Task Clear Node Repro Complete ===");
+    }, 30000);
+
     it("Resolves an anonymous function observer registered by its toStr() name", async () => {
         let command = ["node", brsCliPath, "-r anon-observer-app", "source/main.brs", "-c 0"].join(" ");
 

@@ -775,7 +775,10 @@ export class Task extends Node {
     private handleSetFieldRequest(node: Node, update: ThreadUpdate) {
         const oldValue = node.getValue(update.key);
         let value: BrsType;
-        if (!this.inThread && oldValue instanceof Node && oldValue.getAddress() === update.value._address_) {
+        // `update.value` is null when the other thread set the field to `invalid` (jsValueOf maps it
+        // to null), which is a legitimate way to clear a node-valued field — reading `_address_` off
+        // it threw and killed the whole task-update pass.
+        if (!this.inThread && oldValue instanceof Node && oldValue.getAddress() === update.value?._address_) {
             // Update existing node to preserve references
             value = updateSGNode(update.value, oldValue);
         } else {
