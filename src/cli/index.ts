@@ -32,6 +32,7 @@ import {
     closeLogFile,
 } from "./display";
 import { startKeyboardControl, stopKeyboardControl, handleDebuggerCommand } from "./keyboard";
+import { startUpdateCheck, printUpdateNotice } from "./update";
 import { isNumber } from "../api/util";
 import {
     DebugPrompt,
@@ -109,6 +110,9 @@ program
         if (!checkParameters()) {
             return;
         }
+        // Reads the cached npm registry result (and refreshes it in background when stale),
+        // so `printUpdateNotice()` can report a new release without adding startup latency.
+        startUpdateCheck();
         if (typeof deviceData === "object") {
             // Custom feature that apps can inspect using `roDeviceInfo.hasFeature()` and change behavior when ran under CLI
             deviceData.customFeatures.push("platform_cli");
@@ -315,6 +319,7 @@ function displayTitle() {
     /// #else
     console.log(`\n${appTitle} [${chalk.cyanBright(appVersion)}]\n`);
     /// #endif
+    printUpdateNotice();
 }
 
 /**
@@ -323,6 +328,9 @@ function displayTitle() {
  * @param payload - The application payload containing code, device info, and options
  */
 async function runApp(payload: AppPayload) {
+    // Covers the paths that don't display the title (`.brs` files and `--root` apps); it
+    // only prints once per process, and always before the frame output takes the terminal.
+    printUpdateNotice();
     payload.password = program.pack;
     if (program.ecp && !workerReady) {
         // Load ECP service as Worker
@@ -399,6 +407,9 @@ async function runApp(payload: AppPayload) {
             process.exitCode = 1;
             console.log(chalk.redBright(msg));
         }
+        // On a first run the registry response usually arrives while the app is running,
+        // so report it here (no-op when the notice was already displayed at startup).
+        printUpdateNotice();
     } catch (err: any) {
         console.error(chalk.red(`Error executing app: ${err.message}`));
         process.exitCode = 1;
