@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="WatcherTask" extends="Task">
+    <interface>
+        <field id="seen" type="string" />
+    </interface>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.top.functionName = "runWatcher"
+    end sub
+
+    sub runWatcher()
+        ' A coordinator watching a pool slot it does not own: observe another Task node's
+        ' field with a port from *this* thread, then park. The write happens on the slot's
+        ' own thread, so the value has to travel slot -> render -> here.
+        port = CreateObject("roMessagePort")
+        slot = m.global.slot
+        if slot = invalid
+            print "WATCHER: slot missing"
+            return
+        end if
+        slot.observeField("response", port)
+        m.top.seen = "waiting"
+        for i = 0 to 100
+            ' Reading an observed field must not look like a change to it. Each read rendezvouses to
+            ' the owner and the reply is applied locally; if that apply notifies, this loop sees a
+            ' phantom "response" event carrying whatever the field held, and a dispatch loop driven
+            ' off such a port credits a completion that never happened.
+            probe = slot.response
+            msg = wait(100, port)
+            if type(msg) = "roSGNodeEvent" and msg.getField() = "response"
+                data = msg.getData()
+                ' An assocarray field always compares unequal, so a read applied with notification
+                ' fires here carrying whatever the field held - usually nothing yet.
+                if type(data) <> "roAssociativeArray" or data.text = invalid
+                    print "WATCHER PHANTOM EVENT"
+                    m.top.seen = "phantom"
+                    return
+                end if
+                print "WATCHER SAW: "; data.text
+                m.top.seen = data.text
+                return
+            end if
+        end for
+        print "WATCHER: timed out"
+    end sub
+    ]]></script>
+</component>

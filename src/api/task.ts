@@ -21,10 +21,25 @@ import SharedObject from "../core/SharedObject";
 import { setAppCaptionStyle, setCaptionMode, setDisplayState } from "./display";
 import { SubscribeCallback } from "./util";
 
-const MAX_TASKS = 10;
+/**
+ * Concurrent task workers allowed at once. This is purely a guardrail against a runaway app spawning
+ * workers without end. Apps built around a persistent worker pool park several tasks in permanent loops
+ * and still need headroom for the transient ones, so the ceiling has to sit well above the pool size.
+ * Reaching it no longer drops the task: see `pendingTasks`.
+ */
+const MAX_TASKS = 30;
 
 // Active Tasks
 const tasks: Map<number, Worker> = new Map();
+/**
+ * Launches deferred because `MAX_TASKS` was reached, oldest first, started as slots free.
+ *
+ * The cap used to drop the launch outright, and the task node had already flipped to `started`, so
+ * it never retried — leaving it in `state = "run"` with no thread behind it for the rest of the
+ * session. A cap is a throttle, not a cliff: an app that fans out more sections than there are
+ * slots should load them late, not lose them.
+ */
+const pendingTasks: { taskData: TaskData; payload: AppPayload }[] = [];
 const threadSyncToTask: Map<number, SharedObject> = new Map();
 const threadSyncToMain: Map<number, SharedObject> = new Map();
 let sharedBuffer: ArrayBufferLike;
@@ -115,8 +130,14 @@ function runTask(taskData: TaskData, currentPayload: AppPayload) {
     if (tasks.has(taskData.id) || !taskData.m?.top?.functionname) {
         notifyAll("debug", `[task:api] Task already running or invalid task data: ${taskData.id}, ${taskData.name}`);
         return;
-    } else if (tasks.size === MAX_TASKS) {
-        notifyAll("warning", `[task:api] Maximum number of tasks reached: ${tasks.size}`);
+    } else if (tasks.size >= MAX_TASKS) {
+        if (!pendingTasks.some((pending) => pending.taskData.id === taskData.id)) {
+            pendingTasks.push({ taskData, payload: currentPayload });
+        }
+        notifyAll(
+            "warning",
+            `[task:api] Maximum number of tasks reached (${tasks.size}), queued: ${taskData.id}, ${taskData.name}`
+        );
         return;
     }
     const taskWorker = new Worker(brsWrkLib);
@@ -153,6 +174,11 @@ function runTask(taskData: TaskData, currentPayload: AppPayload) {
  * @param taskId ID of the task to terminate
  */
 function endTask(taskId: number) {
+    // A task stopped before its queued launch got a slot must not start afterwards.
+    const queued = pendingTasks.findIndex((pending) => pending.taskData.id === taskId);
+    if (queued >= 0) {
+        pendingTasks.splice(queued, 1);
+    }
     const taskWorker = tasks.get(taskId);
     if (taskWorker) {
         taskWorker.removeEventListener("message", taskCallback);
@@ -165,6 +191,16 @@ function endTask(taskId: number) {
         threadSyncToTask.delete(taskId);
         threadSyncToMain.delete(taskId);
         notifyAll("debug", `[task:api] Task worker stopped: ${taskId}`);
+    }
+    startPendingTasks();
+}
+
+/** Starts queued launches, oldest first, while slots are free. */
+function startPendingTasks() {
+    while (pendingTasks.length > 0 && tasks.size < MAX_TASKS) {
+        const next = pendingTasks.shift()!;
+        notifyAll("debug", `[task:api] Starting queued Task: ${next.taskData.id}, ${next.taskData.name}`);
+        runTask(next.taskData, next.payload);
     }
 }
 
@@ -183,6 +219,9 @@ export function resetTasks() {
         shared.dispose();
     }
     tasks.clear();
+    // Queued launches belong to the app being torn down; starting them against the next one would
+    // spawn workers with a stale payload.
+    pendingTasks.length = 0;
     threadSyncToTask.clear();
     threadSyncToMain.clear();
     directMode = false;

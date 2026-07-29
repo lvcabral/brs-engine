@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="ObserverTask" extends="Task">
+    <interface>
+        <field id="ready" type="boolean" value="false" />
+        <field id="seen" type="string" />
+    </interface>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.top.functionName = "runObserver"
+        ' Created and registered on the render thread; the task thread receives a copy of `m`
+        ' whose observers are re-registered against this same port.
+        m.port = CreateObject("roMessagePort")
+        m.global.observeField("ticket", m.port)
+    end sub
+
+    sub runObserver()
+        m.top.ready = true
+        for i = 0 to 100
+            msg = wait(100, m.port)
+            if type(msg) = "roSGNodeEvent" and msg.getField() = "ticket"
+                print "OBSERVER GOT: "; msg.getData()
+                m.top.seen = msg.getData()
+                return
+            end if
+        end for
+        print "OBSERVER: timed out"
+        m.top.seen = "timeout"
+    end sub
+    ]]></script>
+</component>

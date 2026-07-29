@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="SlotTask" extends="Task">
+    <interface>
+        <field id="isReady" type="boolean" value="false" />
+        <field id="request" type="assocarray" />
+        <field id="response" type="assocarray" />
+    </interface>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.top.functionName = "runSlot"
+    end sub
+
+    sub runSlot()
+        ' Continuous-server loop: park on the port and echo whatever is dispatched to us.
+        port = CreateObject("roMessagePort")
+        m.top.observeField("request", port)
+        ' Announce readiness only after the observer is registered, so the dispatcher
+        ' cannot write before we are listening.
+        m.top.isReady = true
+        events = 0
+        for i = 0 to 100
+            msg = wait(100, port)
+            if type(msg) = "roSGNodeEvent" and msg.getField() = "request"
+                events = events + 1
+                print "SLOT EVENT #"; events.ToStr()
+                ' Reading our own render-owned field rendezvouses. If that reply is applied with
+                ' notification, this read pushes another "request" event onto our own port and the
+                ' loop re-runs the same work forever - an assocarray field always compares unequal,
+                ' so it can never settle.
+                req = m.top.request
+                if events = 1
+                    reply = "echo:" + req.text
+                    ' The caller handed us its result node as a child. Writing to it crosses back
+                    ' through the render thread, which then has to notify the caller's port.
+                    count = m.top.getChildCount()
+                    if count > 0
+                        child = m.top.getChild(count - 1)
+                        child.payload = reply
+                        child.isDone = true
+                    end if
+                    m.top.response = { text: reply }
+                end if
+            end if
+        end for
+    end sub
+    ]]></script>
+</component>

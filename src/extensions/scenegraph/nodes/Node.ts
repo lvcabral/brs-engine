@@ -2135,9 +2135,10 @@ export class Node extends RoSGNode implements BrsValue {
      * Used both for the render thread's own field sets and to propagate a set the render applied on
      * behalf of a Task to the *other* observing tasks (cross-task propagation).
      * @param fieldName Field whose current value should be delivered.
-     * @param excludeThreadId Task thread id to skip (e.g. the originating task); -1 skips none.
+     * @param excludeThreadIds Task thread ids to skip — the originating task, plus any thread the
+     *   caller has already delivered to by another route (which would otherwise double-fire).
      */
-    fanOutFieldToObservingTasks(fieldName: string, excludeThreadId: number = -1) {
+    fanOutFieldToObservingTasks(fieldName: string, ...excludeThreadIds: number[]) {
         if (sgRoot.inTaskThread()) {
             return;
         }
@@ -2147,7 +2148,14 @@ export class Node extends RoSGNode implements BrsValue {
         }
         const value = field.getValue(false);
         for (const task of sgRoot.threadTasks) {
-            if (task.active && task.threadId !== excludeThreadId && field.isPortObserved(task)) {
+            // Deliver only to the threads that actually registered a port observer. `isPortObserved`
+            // cannot distinguish them (see `Field.remotePortObservers`) — using it here broadcast
+            // every update to every active task, which swamped the single-slot fan-out buffers.
+            if (
+                task.active &&
+                !excludeThreadIds.includes(task.threadId) &&
+                (field.isPortObserved(task) || field.hasRemotePortObserver(task.threadId))
+            ) {
                 task.syncRemoteField(fieldName, value, this.syncType, this.address);
             }
         }
@@ -2175,7 +2183,11 @@ export class Node extends RoSGNode implements BrsValue {
             const args = callArgs?.map((arg: BrsType) => {
                 if (arg instanceof Node) {
                     arg.setOwner(0); // Node references sent to render thread will be owned by the render thread
-                    return fromSGNode(arg, true);
+                    // Pass the task as host so port-observed fields are flagged `_observed_`. A node
+                    // built *inside* a task and observed there (the request/result node of a worker
+                    // pool) is task-owned at `observeField` time, so that call never rendezvoused and
+                    // the render thread would otherwise have no idea anyone is waiting on it.
+                    return fromSGNode(arg, true, task);
                 }
                 return jsValueOf(arg);
             });

@@ -11,6 +11,7 @@ import {
     ValueKind,
 } from "..";
 import { Interpreter } from "../../interpreter";
+import { BrsDevice } from "../../device/BrsDevice";
 import * as net from "net";
 
 /**
@@ -36,11 +37,18 @@ export class IfSocket {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter, data: RoByteArray, startIndex: Int32, length: Int32) => {
+            if (!this.component.socket?.writable) {
+                // Writing to a closed/destroyed socket does not throw — it reports asynchronously
+                // through the `error` event. Report "nothing sent" here instead of queueing a write
+                // that can only fail later.
+                this.component.errorCode = GENERIC_SOCKET_ERROR;
+                return new Int32(0);
+            }
             try {
-                const sent = this.component.socket?.write(data.getByteArray());
+                const sent = this.component.socket.write(data.getByteArray());
                 return new Int32(sent ? data.getElements().length : 0);
             } catch (err: any) {
-                this.component.errorCode = err.code;
+                this.component.errorCode = socketErrorCode(err);
                 return new Int32(0);
             }
         },
@@ -53,11 +61,15 @@ export class IfSocket {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter, data: BrsString) => {
+            if (!this.component.socket?.writable) {
+                this.component.errorCode = GENERIC_SOCKET_ERROR;
+                return new Int32(0);
+            }
             try {
-                const sent = this.component.socket?.write(data.value);
+                const sent = this.component.socket.write(data.value);
                 return new Int32(sent ? data.value.length : 0);
             } catch (err: any) {
-                this.component.errorCode = err.code ?? 3474;
+                this.component.errorCode = socketErrorCode(err);
                 return new Int32(0);
             }
         },
@@ -79,7 +91,7 @@ export class IfSocket {
                 buffer = this.component.socket?.read(length.getValue()) ?? Buffer.alloc(0);
                 return new Int32(buffer.length);
             } catch (err: any) {
-                this.component.errorCode = err.code ?? 3474;
+                this.component.errorCode = socketErrorCode(err);
                 return new Int32(0);
             }
         },
@@ -96,7 +108,7 @@ export class IfSocket {
                 const str = this.component.socket?.read(length.getValue()) ?? "";
                 return new Int32(str.length);
             } catch (err: any) {
-                this.component.errorCode = err.code ?? 3474;
+                this.component.errorCode = socketErrorCode(err);
                 return new Int32(0);
             }
         },
@@ -205,6 +217,67 @@ export class IfSocket {
         impl: (_: Interpreter) => {
             return new Int32(this.component.errorCode);
         },
+    });
+}
+
+/** Generic socket failure, used when a host error maps to nothing `ifSocketStatus` recognizes. */
+export const GENERIC_SOCKET_ERROR = 3474;
+
+/**
+ * Host error names mapped to the numeric codes `ifSocketStatus` compares against.
+ *
+ * Node reports a failure as a *name* (`err.code`, e.g. "EPIPE") plus `err.errno`, whose numeric value
+ * is the host platform's — and those differ (EAGAIN is 11 on Linux, 35 on BSD/macOS). The status
+ * predicates test fixed numbers, so mapping the stable name is what keeps `eAgain()` and friends
+ * answering the same thing regardless of where the simulator runs. Values follow Roku's Linux base,
+ * matching the constants those predicates already assert.
+ */
+const SOCKET_ERROR_CODES: Record<string, number> = {
+    EAGAIN: 11,
+    EWOULDBLOCK: 35,
+    EALREADY: 114,
+    EBADADDR: 14,
+    EBADF: 14,
+    EINVAL: 22,
+    EINPROGRESS: 36,
+    EDESTADDRREQ: 39,
+    EHOSTUNREACH: 65,
+};
+
+/**
+ * Normalizes a host socket error to the numeric code BrightScript reads back.
+ *
+ * `errorCode` is typed `number` and surfaces through `ifSocket.status()` as an `Int32` and through
+ * every `ifSocketStatus` predicate as an equality test. Assigning `err.code` straight through put a
+ * *string* there, so `status()` produced garbage and every predicate answered false.
+ * @param err Error thrown by, or emitted from, a Node socket.
+ * @returns A numeric code, or `GENERIC_SOCKET_ERROR` when the error maps to nothing known.
+ */
+export function socketErrorCode(err: any): number {
+    const name = typeof err?.code === "string" ? SOCKET_ERROR_CODES[err.code.toUpperCase()] : undefined;
+    if (name !== undefined) {
+        return name;
+    }
+    // `errno` is the host's own value, so it is a fallback rather than the primary source.
+    return typeof err?.errno === "number" && err.errno !== 0 ? Math.abs(err.errno) : GENERIC_SOCKET_ERROR;
+}
+
+/**
+ * Records socket failures Node reports asynchronously instead of letting them escape.
+ *
+ * `net.Socket` surfaces a failed `write()`/`connect()` on a destroyed socket through an `error`
+ * event, not as a throw the caller's try/catch can see. An EventEmitter with no `error` listener
+ * rethrows it as an uncaught exception, which took down the whole worker (`ERR_SOCKET_CLOSED`).
+ * Stash it in `errorCode` — the same place the synchronous paths put it — so BrightScript can read
+ * it back through `ifSocketStatus`.
+ * @param component Socket component owning the error state.
+ * @param socket Node socket to listen on.
+ * @param name Component name used in the warning.
+ */
+export function attachSocketErrorHandler(component: BrsSocket, socket: net.Socket, name: string) {
+    socket.on("error", (err: any) => {
+        component.errorCode = socketErrorCode(err);
+        BrsDevice.stderr.write(`warning,[${name}] Socket error: ${err?.code ?? err?.message ?? err}`);
     });
 }
 

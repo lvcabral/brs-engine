@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="ResultNode" extends="Node">
+    <interface>
+        <field id="payload" type="string" />
+        <field id="isDone" type="boolean" value="false" />
+    </interface>
+</component>

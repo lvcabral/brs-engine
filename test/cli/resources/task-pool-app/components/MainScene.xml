@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="MainScene" extends="Scene">
+    <interface>
+        <field id="done" type="boolean" value="false" />
+    </interface>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        ' Models a worker-pool app: a long-lived "slot" task parked on a port waiting for
+        ' work, published on m.global so any thread can dispatch to it; a "watcher" task
+        ' that observes the slot's output field with a port from its own thread (the
+        ' coordinator role); and a dispatcher task that hands the slot a request. Both the
+        ' dispatch and the watcher's notification cross a task -> render -> task boundary.
+        m.sawResponse = false
+        m.watcherSaw = false
+        m.dispatcherGot = false
+        m.slot = createObject("roSGNode", "SlotTask")
+        m.global.addFields({ slot: m.slot })
+        m.slot.observeField("isReady", "onSlotReady")
+        m.slot.observeField("response", "onSlotResponse")
+        m.slot.control = "run"
+    end sub
+
+    sub onSlotReady(event as object)
+        if not event.getData() then return
+        print "SLOT READY"
+        ' Start the watcher next; it reports "waiting" once its port observer is registered.
+        m.watcher = createObject("roSGNode", "WatcherTask")
+        m.watcher.observeField("seen", "onWatcherSeen")
+        m.watcher.control = "run"
+    end sub
+
+    sub onWatcherSeen(event as object)
+        seen = event.getData()
+        if seen = "waiting"
+            print "WATCHER READY"
+            ' Only now dispatch, so a missing notification can only mean the update was lost.
+            m.dispatcher = createObject("roSGNode", "DispatchTask")
+            m.dispatcher.observeField("got", "onDispatcherGot")
+            m.dispatcher.control = "run"
+            return
+        end if
+        m.watcherSaw = true
+        checkDone()
+    end sub
+
+    sub onDispatcherGot(event as object)
+        print "DISPATCHER REPLY: "; event.getData()
+        m.dispatcherGot = true
+        checkDone()
+    end sub
+
+    sub onSlotResponse(event as object)
+        print "SLOT RESPONSE: "; event.getData().text
+        m.sawResponse = true
+        checkDone()
+    end sub
+
+    sub checkDone()
+        if m.sawResponse and m.watcherSaw and m.dispatcherGot then m.top.done = true
+    end sub
+    ]]></script>
+</component>
