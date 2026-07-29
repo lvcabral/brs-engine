@@ -363,6 +363,9 @@ export function execute(filePath: string, fileData: any, options: any = {}, deep
     } else if (typeof options.debugOnCrash === "boolean") {
         deviceData.debugOnCrash = options.debugOnCrash;
     }
+    if (typeof options.logRendezvous === "boolean") {
+        setRendezvousLog(options.logRendezvous);
+    }
     if (brsWorker !== undefined) {
         resetWorker();
     }
@@ -457,6 +460,32 @@ export function setAudioMute(mute: boolean) {
         muteSound(mute);
         muteVideo(mute);
     }
+}
+
+/**
+ * Gets whether SceneGraph cross-thread rendezvous tracing is enabled.
+ * @returns True if rendezvous tracing is on
+ */
+export function getRendezvousLog(): boolean {
+    return Atomics.load(sharedArray, DataType.RDZ) === 1;
+}
+
+/**
+ * Enables or disables SceneGraph cross-thread rendezvous tracing — the equivalent of Roku's
+ * `logrendezvous` and of the CLI's `-z` flag. Each crossing then reports its action, target and
+ * duration as a `debug` event to subscribers.
+ *
+ * Takes effect immediately, including on Task threads already running: the flag lives in the shared
+ * control array, which every thread reads. It is also recorded on the device info so a Task started
+ * later inherits the current setting, and it persists across `execute()` calls until changed.
+ *
+ * Tracing is verbose on task-heavy apps — expect a line per field read, write and method call that
+ * crosses a thread.
+ * @param enable True to trace rendezvous, false to stop
+ */
+export function setRendezvousLog(enable: boolean) {
+    deviceData.logRendezvous = enable;
+    Atomics.store(sharedArray, DataType.RDZ, enable ? 1 : 0);
 }
 
 /**
@@ -567,6 +596,9 @@ function resetArray() {
         Atomics.store(sharedArray, index, -1);
         return index === DataBufferIndex - 1;
     });
+    // Rendezvous tracing is a host setting, not app state: restore it from the device info so it
+    // survives the worker reset that starts each app, rather than silently turning itself off.
+    Atomics.store(sharedArray, DataType.RDZ, deviceData.logRendezvous ? 1 : 0);
 }
 
 /**

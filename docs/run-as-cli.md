@@ -49,6 +49,7 @@ Options:
   -s, --snapshot [filename] Enable Ctrl+S to save the current screen as a PNG image.
   -c, --colors <level>      Define the console color level (0 to disable). (default: 3)
   -d, --debug               Developer mode: micro debugger on crash + resource tracking.
+  -z, --log-rendezvous      Trace SceneGraph cross-thread rendezvous (like Roku's logrendezvous).
   -e, --ecp                 Enable the ECP server for control simulation.
   -n, --no-sg               Disable the SceneGraph extension.
   -p, --pack <password>     The password to generate the encrypted package. (default: "")
@@ -240,6 +241,31 @@ that `try/catch` exception backtraces (`e.backtrace`) keep working in both modes
 
 Encrypted packages (`.bpk`) **always** run in production mode — `debugOnCrash` is forced off even
 if you pass `--debug` — so a protected app cannot be inspected through the debug instrumentation.
+
+### Tracing cross-thread rendezvous
+
+SceneGraph `Task` nodes run on their own worker threads, and every field read, field write, or
+method call that crosses a thread boundary goes through a *rendezvous* (see
+[SceneGraph Rendezvous](scenegraph-rendezvous.md)). Passing `-z`/`--log-rendezvous` — the equivalent of
+Roku's `logrendezvous` — makes each of those crossings print a `[rendezvous]` line:
+
+```console
+$ brs-cli -z --log trace.log app.zip
+```
+
+The flag is independent of `--debug` and applies to the render thread *and* every Task worker, so
+both ends of a crossing appear. It is held in the shared control array rather than per thread, so a
+host embedding the engine can also flip it mid-run (see `setRendezvousLog` in
+[the engine API](engine-api.md)). Typical lines:
+
+| Line | Meaning |
+| --- | --- |
+| `thread N queued fan-out task.request -> task thread M` | render thread has work for task `M` |
+| `thread N flushed fan-out task.request -> task thread M` | it was written into the shared buffer |
+| `thread 0 applied set node.content from thread N` | a task's write landed on the render thread |
+| `thread N broker fan-out …` | the update went through the main-thread broker |
+
+Combine it with `--log` to capture a full trace, since it is verbose on task-heavy apps.
 
 ### Inspecting Texture Memory
 

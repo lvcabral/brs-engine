@@ -60,11 +60,33 @@ export class SGRoot {
      * field get rendezvouses with the owning thread, matching real Roku device behavior.
      */
     fastFieldReads: boolean = false;
+    /** Fallback for `logRendezvous` before the shared control array is available. */
+    private localLogRendezvous: boolean = false;
+
     /**
      * When `true`, each rendezvous logs its action, target, and duration (mirroring the Roku
      * SceneGraph debug console `logrendezvous` command). Defaults to `false`.
+     *
+     * Backed by the shared control array rather than a per-thread field, because a rendezvous has
+     * two ends: tracing only the thread the flag was set on shows half of each exchange. Sharing it
+     * also makes the toggle live — a host can turn tracing on mid-run and every existing Task thread
+     * picks it up, instead of the value being frozen into each worker's launch payload.
      */
-    logRendezvous: boolean = false;
+    get logRendezvous(): boolean {
+        const shared = BrsDevice.sharedArray;
+        if (shared && shared.length > DataType.RDZ) {
+            return Atomics.load(shared, DataType.RDZ) === 1;
+        }
+        return this.localLogRendezvous;
+    }
+
+    set logRendezvous(enabled: boolean) {
+        this.localLogRendezvous = enabled;
+        const shared = BrsDevice.sharedArray;
+        if (shared && shared.length > DataType.RDZ) {
+            Atomics.store(shared, DataType.RDZ, enabled ? 1 : 0);
+        }
+    }
     /**
      * Maximum time (ms) a Task thread will wait for the render thread to serve a rendezvous before
      * treating it as a blocked render thread. On a real device a render-thread block terminates the

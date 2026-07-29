@@ -57,6 +57,7 @@ export interface DeviceInfo {
     appList?: AppData[];
     entryPoint?: boolean;
     debugOnCrash?: boolean;
+    logRendezvous?: boolean;
     corsProxy?: string;
     extensions?: Map<SupportedExtension, string>;
 }
@@ -712,6 +713,7 @@ export enum DataType {
     MUHS, // Memory Used Heap Size
     MHSL, // Memory Heap Size Limit
     MBWD, // Measured Bandwidth
+    RDZ, // Rendezvous Logging (0/1)
     CEC, // Consumer Electronics Control
     HDMI, // HDMI Status
     // Key Buffer starts here: KeyBufferSize * KeyArraySpots
