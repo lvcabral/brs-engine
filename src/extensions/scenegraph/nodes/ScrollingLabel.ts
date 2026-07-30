@@ -4,6 +4,7 @@ import { SGNodeType } from ".";
 import { Label } from "./Label";
 import { Font } from "./Font";
 import { sgRoot } from "../SGRoot";
+import { sgClock } from "../SGClock";
 
 // Enum to manage the scrolling state
 enum ScrollState {
@@ -43,7 +44,7 @@ export class ScrollingLabel extends Label {
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
 
-        this.lastUpdateTime = Date.now();
+        this.lastUpdateTime = sgClock.now();
         this.checkForScrolling();
     }
 
@@ -115,7 +116,7 @@ export class ScrollingLabel extends Label {
         this.scrollOffset = 0;
         this.elapsedTime = 0;
         this.currentRepeat = 0;
-        this.lastUpdateTime = Date.now();
+        this.lastUpdateTime = sgClock.now();
         this.measured = undefined;
     }
 
@@ -130,7 +131,7 @@ export class ScrollingLabel extends Label {
         if (!(drawFont instanceof RoFont)) {
             return { text, width: 0, height: 0, ellipsized: false };
         }
-        const now = Date.now();
+        const now = sgClock.now();
         const deltaTime = now - this.lastUpdateTime;
         this.lastUpdateTime = now;
         this.elapsedTime += deltaTime;

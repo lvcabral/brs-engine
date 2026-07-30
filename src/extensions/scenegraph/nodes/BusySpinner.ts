@@ -1,4 +1,5 @@
 import { AAMember, Interpreter, BrsString, BrsType, RoArray, Float, IfDraw2D, Rect } from "brs-engine";
+import { sgClock } from "../SGClock";
 import { FieldKind, FieldModel } from "../SGTypes";
 import { rotateTranslation } from "../SGUtil";
 import { SGNodeType } from ".";
@@ -39,7 +40,7 @@ export class BusySpinner extends Group {
             const control = value.toString();
             if (control === "start") {
                 this.active = true;
-                this.lastRenderTime = Date.now();
+                this.lastRenderTime = sgClock.now();
             } else if (control === "stop") {
                 this.active = false;
             } else {
@@ -100,9 +101,9 @@ export class BusySpinner extends Group {
         }
         if (this.active) {
             if (this.lastRenderTime === 0) {
-                this.lastRenderTime = Date.now();
+                this.lastRenderTime = sgClock.now();
             }
-            const now = Date.now();
+            const now = sgClock.now();
             const spinInterval = this.getValueJS("spinInterval") as number;
             const clockwise = this.getValueJS("clockwise") as boolean;
             const direction = clockwise ? -1 : 1;

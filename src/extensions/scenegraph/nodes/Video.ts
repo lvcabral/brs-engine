@@ -29,6 +29,7 @@ import {
 } from "brs-engine";
 import { fromAssociativeArray, toAssociativeArray, jsValueOf } from "../factory/Serializer";
 import { sgRoot } from "../SGRoot";
+import { sgClock } from "../SGClock";
 import { BusySpinner } from "./BusySpinner";
 import { ContentNode } from "./ContentNode";
 import { Label } from "./Label";
@@ -350,7 +351,7 @@ export class Video extends Group {
     }
 
     setState(eventType: number, eventIndex: number) {
-        const now = Date.now();
+        const now = sgClock.now();
         this.statusChanged = true;
         let state = "none";
         switch (eventType) {
@@ -615,7 +616,7 @@ export class Video extends Group {
             this.showPaused = 0;
             this.showTrickPlay = 0;
         }
-        const now = Date.now();
+        const now = sgClock.now();
         this.backgroundOverlay.setValueSilent("visible", BrsBoolean.from(this.showHeader > now));
         this.titleText.setValue("visible", BrsBoolean.from(this.showHeader > now));
         this.clockText.setValueSilent("visible", BrsBoolean.from(this.showHeader > now));
@@ -648,7 +649,7 @@ export class Video extends Group {
                 handled = true;
             }
         } else if (key === "OK" && this.enableTrickPlay) {
-            const now = Date.now();
+            const now = sgClock.now();
             if (this.showHeader < now) {
                 this.showHeader = now + 5000;
                 handled = true;
@@ -666,7 +667,7 @@ export class Video extends Group {
             if (state === "playing") {
                 const position = this.getValueJS("position") as number;
                 if (position > 0) {
-                    const now = Date.now();
+                    const now = sgClock.now();
                     postMessage(`video,seek,${Math.max(0, position - 20) * 1000}`);
                     this.showHeader = now + 1000;
                     this.showTrickPlay = now + 1000;
@@ -741,7 +742,7 @@ export class Video extends Group {
     }
 
     private updateSeekStep(forward: boolean, duration: number, timeout = 0) {
-        const now = Date.now();
+        const now = sgClock.now();
         const baseStep = Math.min(10, Math.max(1, Math.trunc(duration / 30)));
         const step = baseStep * Math.max(1, this.seekLevel * 3 - 3);
         this.showHeader = now + 30000;
@@ -812,7 +813,7 @@ export class Video extends Group {
             }
         }
         if (this.statusChanged) {
-            if (this.seekTimeout > 0 && this.seekTimeout < Date.now() && ["rw", "ff"].includes(this.seekMode)) {
+            if (this.seekTimeout > 0 && this.seekTimeout < sgClock.now() && ["rw", "ff"].includes(this.seekMode)) {
                 const duration = this.getValueJS("duration") as number;
                 this.updateSeekStep(this.seekMode === "ff", duration, Math.trunc(1000 / this.seekLevel));
             }

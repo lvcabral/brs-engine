@@ -5,6 +5,7 @@ import { Label } from "./Label";
 import { Poster } from "./Poster";
 import { Group } from "./Group";
 import { sgRoot } from "../SGRoot";
+import { sgClock } from "../SGClock";
 
 export class TrickPlayBar extends Group {
     readonly defaultFields: FieldModel[] = [
@@ -133,7 +134,7 @@ export class TrickPlayBar extends Group {
         }
         this.stateIcon = this.bmpIcons.get(iconName);
         if (this.stateIcon) {
-            this.stateIconTimeout = timeout > 0 ? Date.now() + timeout : -1;
+            this.stateIconTimeout = timeout > 0 ? sgClock.now() + timeout : -1;
         }
     }
 
@@ -151,7 +152,7 @@ export class TrickPlayBar extends Group {
         opacity = opacity * this.getOpacity();
         this.updateBoundingRects(rect, origin, angle);
         this.renderChildren(interpreter, drawTrans, angle, opacity, draw2D);
-        if (this.stateIcon && (this.stateIconTimeout === -1 || this.stateIconTimeout > Date.now())) {
+        if (this.stateIcon && (this.stateIconTimeout === -1 || this.stateIconTimeout > sgClock.now())) {
             const iconRect = {
                 x: rect.x + (size.width - this.stateIcon.width) / 2,
                 y: rect.y + this.barH,

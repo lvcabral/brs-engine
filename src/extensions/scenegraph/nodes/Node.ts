@@ -949,6 +949,49 @@ export class Node extends RoSGNode implements BrsValue {
     }
 
     /**
+     * Layout entry point: computes bounding rects for this node's subtree without drawing,
+     * advancing time-based state, or producing any other side effect. Must be idempotent —
+     * calling it twice with the same inputs and an unchanged tree yields identical rects.
+     * Default implementation runs `renderNode` with no draw target (today's measurement pass)
+     * under a `layout` render-pass context; node types with time-based render state gate that
+     * state on `isPaintPass`. See `docs/scenegraph-layout-passes.md`.
+     */
+    layoutNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number) {
+        const previousPass = sgRoot.renderPass;
+        sgRoot.renderPass = "layout";
+        try {
+            this.renderNode(interpreter, origin, angle, opacity);
+        } finally {
+            sgRoot.renderPass = previousPass;
+        }
+    }
+
+    /**
+     * Paint entry point: the per-frame render. Recomputes layout inline (as `renderNode` always
+     * has), advances time-based state (spinner rotation, marquee scroll, cursor blink, seek
+     * repeat), and draws through the required `IfDraw2D`.
+     */
+    paintNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D: IfDraw2D) {
+        const previousPass = sgRoot.renderPass;
+        sgRoot.renderPass = "paint";
+        try {
+            this.renderNode(interpreter, origin, angle, opacity, draw2D);
+        } finally {
+            sgRoot.renderPass = previousPass;
+        }
+    }
+
+    /**
+     * Whether the current traversal may advance time-based state and emit render side effects.
+     * True on paint passes and on direct `renderNode` calls with a draw target; false inside
+     * `layoutNode` traversals. The `draw2D` check keeps direct `renderNode(..., draw2D)` calls
+     * (external node registrations, tests) behaving as paint regardless of context.
+     */
+    protected isPaintPass(draw2D?: IfDraw2D): boolean {
+        return draw2D !== undefined || sgRoot.renderPass === "paint";
+    }
+
+    /**
      * Iterates through child nodes, invoking their render methods in order.
      * @param interpreter Active interpreter.
      * @param origin Parent-space translation.
@@ -978,7 +1021,7 @@ export class Node extends RoSGNode implements BrsValue {
         const root = this.createPath()[0];
         sgRoot.rendering = true;
         try {
-            root.renderNode(interpreter, [0, 0], 0, 1);
+            root.layoutNode(interpreter, [0, 0], 0, 1);
         } finally {
             sgRoot.rendering = false;
         }
@@ -1036,7 +1079,7 @@ export class Node extends RoSGNode implements BrsValue {
             const savedToScene = parent ? { ...parent.rectToScene } : undefined;
             sgRoot.measuring = true;
             try {
-                this.renderNode(interpreter, [0, 0], 0, 1);
+                this.layoutNode(interpreter, [0, 0], 0, 1);
             } finally {
                 sgRoot.measuring = false;
                 if (parent && savedLocal && savedToParent && savedToScene) {

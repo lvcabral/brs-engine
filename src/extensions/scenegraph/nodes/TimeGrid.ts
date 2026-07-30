@@ -16,6 +16,7 @@ import { ArrayGrid } from "./ArrayGrid";
 import { ContentNode } from "./ContentNode";
 import { Font } from "./Font";
 import { sgRoot } from "../SGRoot";
+import { sgClock } from "../SGClock";
 import { brsValueOf, jsValueOf } from "../factory/Serializer";
 
 /** Cached parse of one channel's programs (see TimeGrid.channelParseCache). */
@@ -336,7 +337,7 @@ export class TimeGrid extends ArrayGrid {
     }
 
     protected nowEpoch(): number {
-        return Math.floor(Date.now() / 1000);
+        return Math.floor(sgClock.now() / 1000);
     }
 
     protected getDurationSec(): number {

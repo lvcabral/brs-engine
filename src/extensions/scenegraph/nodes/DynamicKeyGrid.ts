@@ -17,6 +17,7 @@ import { SGNodeType } from ".";
 import { Group } from "./Group";
 import { Font } from "./Font";
 import { sgRoot } from "../SGRoot";
+import { sgClock } from "../SGClock";
 import { jsValueOf } from "../factory/Serializer";
 import { computeLayout, KeyInset, keyboardSize, KeyLayout, RenderedKey, resolveKeyIcon } from "./kdf/KeyDefinition";
 
@@ -171,7 +172,7 @@ export class DynamicKeyGrid extends Group {
         super.setValue("keyFocused", new BrsString(key?.out ?? ""));
         // Focus moved to a (possibly) different key: restart the hover dwell timer and
         // clear any pop-up suppression, so the timer applies again on the newly focused key.
-        this.lastFocusTime = Date.now();
+        this.lastFocusTime = sgClock.now();
         this.popupSuppressed = false;
     }
 
@@ -505,7 +506,7 @@ export class DynamicKeyGrid extends Group {
             if (
                 key?.suggestions &&
                 this.triggersInclude(key, "hover") &&
-                Date.now() - this.lastFocusTime > this.hoverDelay
+                sgClock.now() - this.lastFocusTime > this.hoverDelay
             ) {
                 this.openPopup(key);
             }

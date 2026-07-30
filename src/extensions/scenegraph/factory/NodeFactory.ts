@@ -560,9 +560,9 @@ export function initializeNode(
                     return BrsInvalid.Instance;
                 }, currentEnv);
 
-                // Pre-render default state of the tree.
+                // Pre-render default state of the tree (layout only — nothing to draw yet).
                 if (node instanceof Scene) {
-                    node.renderNode(interpreter, [0, 0], 0, 1);
+                    node.layoutNode(interpreter, [0, 0], 0, 1);
                 }
 
                 const init = interpreter.inSubEnv((subInterpreter: Interpreter) => {

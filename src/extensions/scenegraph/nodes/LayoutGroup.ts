@@ -167,7 +167,7 @@ export class LayoutGroup extends Group {
             const dims = child.getDimensions();
             const rectKnown = child.rectToParent.width > 0 || child.rectToScene.width > 0 || child.rectLocal.width > 0;
             if (!rectKnown && !(typeof dims.width === "number" && dims.width > 0)) {
-                child.renderNode(interpreter, [0, 0], 0, 1);
+                child.layoutNode(interpreter, [0, 0], 0, 1);
             }
         }
     }

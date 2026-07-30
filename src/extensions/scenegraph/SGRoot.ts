@@ -53,6 +53,7 @@ export class SGRoot {
     private _dirty: boolean = false;
     private _rendering: boolean = false;
     private _measuring: boolean = false;
+    private _renderPass: "layout" | "paint" = "paint";
     private readonly _pendingPorts: RoMessagePort[] = [];
     /**
      * When `true`, recently-written fields can be re-read from the local copy for a short window,
@@ -217,6 +218,22 @@ export class SGRoot {
 
     set measuring(value: boolean) {
         this._measuring = value;
+    }
+
+    /**
+     * Which kind of render pass is currently traversing the tree. A `layout` pass (started by
+     * `Node.layoutNode` — bounding-rect refreshes, `measureUnsizedChildren`) must be idempotent
+     * and clock-free: rects only. A `paint` pass (`Node.paintNode` — the per-frame render) may
+     * additionally advance time-based state and draw. Defaults to `paint` so direct `renderNode`
+     * calls (external node registrations, tests) keep today's semantics. See
+     * `docs/scenegraph-layout-passes.md`.
+     */
+    get renderPass(): "layout" | "paint" {
+        return this._renderPass;
+    }
+
+    set renderPass(value: "layout" | "paint") {
+        this._renderPass = value;
     }
 
     private audioFlags: number = -1;
