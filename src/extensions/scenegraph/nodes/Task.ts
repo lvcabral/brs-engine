@@ -47,6 +47,54 @@ import type { Field, Scene } from "..";
 const RENDEZVOUS_POLL_MS = 100;
 
 /**
+ * Countdown for a blocking rendezvous wait, measured against the render thread's liveness rather
+ * than wall time.
+ *
+ * Incoming requests are only served when the render thread reaches its message loop
+ * (`sgRoot.processTasks`), so app code that runs for longer than the timeout inside a single
+ * callback — a screen building hundreds of components, say — would otherwise fail a request the
+ * render thread has not had a chance to answer yet. The countdown therefore restarts whenever the
+ * render thread's heartbeat advances, and only expires when the render thread stops executing
+ * BrightScript altogether: dead, or blocked waiting on this thread. That is the deadlock the
+ * timeout exists to report; a busy render thread is a device-faithful wait, not a failure.
+ * @param timeoutMs Milliseconds of render-thread silence tolerated before the wait fails.
+ * @param label Describes the pending rendezvous for the one-shot "still waiting" warning.
+ * @returns A countdown exposing the remaining time and a restart for uncounted pauses.
+ */
+export function rendezvousDeadline(timeoutMs: number, label: () => string) {
+    const started = Date.now();
+    let beat = BrsDevice.readRenderHeartbeat();
+    let deadline = started + timeoutMs;
+    let warned = false;
+    return {
+        /**
+         * @returns Milliseconds left before the wait fails; positive while the render thread runs.
+         */
+        remaining(): number {
+            const current = BrsDevice.readRenderHeartbeat();
+            if (current !== beat) {
+                beat = current;
+                deadline = Date.now() + timeoutMs;
+                const elapsed = Date.now() - started;
+                if (!warned && elapsed > timeoutMs) {
+                    warned = true;
+                    BrsDevice.stderr.write(
+                        `warning,[task:${sgRoot.threadId}] Rendezvous ${label()} pending for ${elapsed}ms: ` +
+                            `the render thread is busy and has not reached its message loop`
+                    );
+                }
+            }
+            return deadline - Date.now();
+        },
+        /** Restarts the countdown, for time that must not be counted (e.g. a debug session). */
+        restart() {
+            beat = BrsDevice.readRenderHeartbeat();
+            deadline = Date.now() + timeoutMs;
+        },
+    };
+}
+
+/**
  * Renders a field value for a rendezvous trace, but only when it is cheap and safe to print.
  * Nodes and containers are reported by kind alone — stringifying a content tree inside the render
  * loop would cost more than the trace is worth.
@@ -268,7 +316,7 @@ export class Task extends Node {
         if (!responseBuffer || update.requestId === undefined) {
             return false;
         }
-        let deadline = Date.now() + timeoutMs;
+        const countdown = rendezvousDeadline(timeoutMs, () => `set ${update.type}.${update.key}`);
         while (true) {
             if (this.completedAcks.delete(update.requestId)) {
                 return true;
@@ -276,10 +324,10 @@ export class Task extends Node {
             if (BrsDevice.pauseIfDebugging()) {
                 // Frozen for a debug session on another thread; debug time must not count toward
                 // the rendezvous timeout, and the request has already been sent (do not re-send).
-                deadline = Date.now() + timeoutMs;
+                countdown.restart();
                 continue;
             }
-            const remaining = deadline - Date.now();
+            const remaining = countdown.remaining();
             if (remaining <= 0) {
                 break;
             }
@@ -293,8 +341,11 @@ export class Task extends Node {
 
     /**
      * Builds the runtime error raised when a rendezvous is not served within the configured timeout.
-     * On a real device this corresponds to a blocked render thread, which terminates the app; here it
-     * surfaces as an `ExecutionTimeout` runtime error instead of silently returning `invalid`.
+     * The countdown tracks the render thread's heartbeat (see {@link rendezvousDeadline}), so this
+     * only fires once the render thread has stopped executing BrightScript altogether — never merely
+     * because it is slow. On a real device that corresponds to a blocked render thread, which
+     * terminates the app; here it surfaces as an `ExecutionTimeout` runtime error instead of silently
+     * returning `invalid`.
      * @param action Rendezvous action that timed out (`get`, `set`, or `call`).
      * @param type Sync type domain of the target node.
      * @param key Field or method name involved in the rendezvous.
@@ -546,7 +597,7 @@ export class Task extends Node {
         // recognise it as a read and store the value without notifying observers.
         this.pendingReads.add(requestId);
         this.sendThreadUpdate(request);
-        let deadline = Date.now() + timeoutMs;
+        const countdown = rendezvousDeadline(timeoutMs, () => `get ${type}.${fieldName}`);
         const responseBuffer = this.directBuffer ?? this.taskBuffer;
 
         while (true) {
@@ -565,10 +616,10 @@ export class Task extends Node {
             if (BrsDevice.pauseIfDebugging()) {
                 // Frozen for a debug session on another thread; debug time must not count toward
                 // the rendezvous timeout, and the request has already been sent (do not re-send).
-                deadline = Date.now() + timeoutMs;
+                countdown.restart();
                 continue;
             }
-            const remaining = deadline - Date.now();
+            const remaining = countdown.remaining();
             if (remaining <= 0) {
                 break;
             }
@@ -613,7 +664,7 @@ export class Task extends Node {
         };
         const started = sgRoot.logRendezvous ? Date.now() : 0;
         this.sendThreadUpdate(request);
-        let deadline = Date.now() + timeoutMs;
+        const countdown = rendezvousDeadline(timeoutMs, () => `call ${type}.${methodName}`);
         const responseBuffer = this.directBuffer ?? this.taskBuffer;
 
         while (true) {
@@ -630,10 +681,10 @@ export class Task extends Node {
             if (BrsDevice.pauseIfDebugging()) {
                 // Frozen for a debug session on another thread; debug time must not count toward
                 // the rendezvous timeout, and the request has already been sent (do not re-send).
-                deadline = Date.now() + timeoutMs;
+                countdown.restart();
                 continue;
             }
-            const remaining = deadline - Date.now();
+            const remaining = countdown.remaining();
             if (remaining <= 0) {
                 break;
             }
