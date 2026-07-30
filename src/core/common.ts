@@ -716,6 +716,7 @@ export enum DataType {
     RDZ, // Rendezvous Logging (0/1)
     CEC, // Consumer Electronics Control
     HDMI, // HDMI Status
+    RHB, // Render Thread Heartbeat (statement counter, render thread writes only)
     // Key Buffer starts here: KeyBufferSize * KeyArraySpots
     RID, // Remote Id
     KEY, // Key Code
@@ -734,8 +735,10 @@ export const RegistryMaxSize = 64 * 1024;
 export const KeyBufferSize = 5;
 export const KeyArraySpots = 3;
 
-// Index where the data buffer starts and the size of the data buffer
-export const DataBufferIndex = DataType.HDMI + KeyBufferSize * KeyArraySpots;
+// Index where the data buffer starts and the size of the data buffer.
+// Derived from the first key slot so the data buffer always begins right after the key buffer,
+// no matter how many status slots are added above it.
+export const DataBufferIndex = DataType.RID + KeyBufferSize * KeyArraySpots;
 export const DataBufferSize = 1024;
 
 // Remote control type

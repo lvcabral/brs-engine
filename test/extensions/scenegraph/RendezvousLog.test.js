@@ -54,10 +54,10 @@ describe("rendezvous logging flag", () => {
     });
 
     test("does not collide with the key buffer that follows it", () => {
-        // `DataBufferIndex` is derived from `DataType.HDMI`, so a slot added after HDMI would overlap
-        // the key region. RDZ sits before it.
-        expect(DataType.RDZ).toBeLessThan(DataType.HDMI);
-        expect(DataType.HDMI).toBeLessThan(DataType.RID);
+        // The key buffer occupies KeyBufferSize * KeyArraySpots slots starting at RID, and
+        // `DataBufferIndex` is derived from RID so status slots can be added above it freely.
+        expect(DataType.RDZ).toBeLessThan(DataType.RID);
+        expect(DataBufferIndex).toBe(DataType.RID + 5 * 3);
 
         sgRoot.logRendezvous = true;
         expect(Atomics.load(sharedArray, DataType.RID)).toBe(-1);
