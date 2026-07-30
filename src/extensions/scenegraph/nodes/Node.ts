@@ -1114,6 +1114,10 @@ export class Node extends RoSGNode implements BrsValue {
                     parent.rectToParent = savedToParent;
                     parent.rectToScene = savedToScene;
                 }
+                // The [0,0] measurement clobbered this subtree's rectToScene with origin-less
+                // values; deep-mark it so the next pruned refresh re-descends and re-establishes
+                // in-tree rects instead of skipping the settled subtree.
+                this.markSubtreeStaleDeep();
             }
         }
         switch (type) {
@@ -2115,6 +2119,29 @@ export class Node extends RoSGNode implements BrsValue {
         while (ancestor) {
             ancestor.subtreeStale = true;
             ancestor = ancestor.parent instanceof Node ? ancestor.parent : undefined;
+        }
+    }
+
+    /**
+     * Marks this node, every descendant, AND the ancestor chain stale. Required after a scoped
+     * measurement rendered this subtree at origin [0,0] (`measureUnsizedChildren`,
+     * `getBoundingRect`'s mid-render fallback): that pass overwrites every descendant's
+     * `rectToScene` with origin-less values, relying on "the true origin is recomputed when the
+     * next pass reaches the node" — which a pruned refresh would skip. The deep mark forces the
+     * next refresh to re-descend and re-establish in-tree rects; the up-mark makes sure the
+     * refresh actually reaches this subtree.
+     */
+    markSubtreeStaleDeep() {
+        this.markSubtreeStale();
+        const stack: Node[] = [this];
+        while (stack.length > 0) {
+            const node = stack.pop()!;
+            node.subtreeStale = true;
+            for (const child of node.children) {
+                if (child instanceof Node) {
+                    stack.push(child);
+                }
+            }
         }
     }
 

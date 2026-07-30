@@ -205,6 +205,10 @@ export class LayoutGroup extends Group {
                     child.rectToParent.width > 0 || child.rectToScene.width > 0 || child.rectLocal.width > 0;
                 if (!rectKnown && !(typeof dims.width === "number" && dims.width > 0)) {
                     child.layoutNode(interpreter, [0, 0], 0, 1);
+                    // The [0,0] measurement clobbered the subtree's rectToScene with origin-less
+                    // values; deep-mark it so the surrounding pruned refresh re-descends and
+                    // re-establishes in-tree rects instead of skipping the settled subtree.
+                    child.markSubtreeStaleDeep();
                 }
             }
         } finally {
