@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="MainScene" extends="Scene">
+    <interface>
+        <field id="done" type="boolean" value="false" />
+    </interface>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.task = createObject("roSGNode", "CacheTask")
+        m.task.observeField("rowsSeen", "onRowsSeen")
+        m.task.control = "run"
+    end sub
+
+    sub onRowsSeen(event as object)
+        print "SCENE SAW ROWS: "; event.getData()
+        m.top.done = true
+    end sub
+    ]]></script>
+</component>

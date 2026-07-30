@@ -219,6 +219,13 @@ export class ContentNode extends Node {
      * to changes within their content. Guarded against re-entry on the same node: an observer
      * that mutates this same ContentNode would otherwise re-trigger propagation synchronously
      * and overflow the call stack (see {@link propagating}).
+     *
+     * Notification also crosses thread boundaries. On a device the parent field's port observer is
+     * the *same* native port the task is waiting on, so mutating content held by an observed field
+     * wakes that task no matter which thread performed the mutation. Here the task holds its own
+     * copy of the node, so the render thread has to push the change over — the same fan-out
+     * `Node.setValue` performs, which this path bypasses because it starts from a field rather than
+     * from the node that holds it.
      */
     private notifyParentFields() {
         if (this.propagating || this.parentFields.size === 0) {
@@ -231,6 +238,9 @@ export class ContentNode extends Node {
         try {
             for (const field of this.parentFields) {
                 field.notifyObservers();
+                // No-op off the render thread and when no task port-observes the field, so a purely
+                // local content update pays only the (short) walk over the active task list.
+                field.getContainer()?.fanOutFieldToObservingTasks(field.getName().toLowerCase());
             }
         } finally {
             Field.exitParentCascade();

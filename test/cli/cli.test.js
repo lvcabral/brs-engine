@@ -1045,6 +1045,26 @@ describe.concurrent("cli", () => {
         expect(lines).toContain("=== Task Global Observe Repro Complete ===");
     }, 30000);
 
+    it("Notifies a Task's port when it mutates a ContentNode held by an observed field", async () => {
+        let command = ["node", brsCliPath, "-r task-contentcache-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // A ContentNode assigned to a node-typed field notifies that field's observers when its own
+        // content changes (`ContentNode.notifyParentFields`) — but that path starts from the field,
+        // not from the node holding it, so it skipped the cross-thread fan-out `Node.setValue` does.
+        // A task mutating such a ContentNode (a rendezvous call, applied on the render thread) then
+        // never heard back about its own change and waited forever.
+        const lines = stdout.split("\n").map((line) => line.trimEnd());
+        expect(lines).toContain("=== Task ContentCache Repro ===");
+        expect(lines).toContain("TASK SAW CACHE CHANGE 1");
+        expect(lines).toContain("TASK SAW CACHE CHANGE 2");
+        expect(lines).toContain("TASK SAW CACHE CHANGE 3");
+        expect(lines).toContain("SCENE SAW ROWS:  3");
+        expect(lines).toContain("=== Task ContentCache Repro Complete ===");
+    }, 30000);
+
     it("Clears a node-valued field set to invalid from a Task thread", async () => {
         let command = ["node", brsCliPath, "-r task-clear-node-app", "source/main.brs", "-c 0"].join(" ");
 

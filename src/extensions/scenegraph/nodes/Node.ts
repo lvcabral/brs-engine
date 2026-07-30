@@ -459,6 +459,7 @@ export class Node extends RoSGNode implements BrsValue {
             BrsDevice.stderr.write(`warning,${errorMsg} ${this.location || "(internal)"}`);
         }
         this.markFieldFresh(mapKey);
+        field?.setContainer(this);
         if (field && sync && this.syncType !== "task") {
             this.rendezvousSet(mapKey, field);
         }
@@ -488,6 +489,7 @@ export class Node extends RoSGNode implements BrsValue {
         }
         if (field) {
             this.fields.set(mapKey, field);
+            field.setContainer(this);
             this.makeDirty();
         }
         this.markFieldFresh(mapKey);

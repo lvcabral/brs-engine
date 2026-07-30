@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="CacheTask" extends="Task">
+    <interface>
+        <!-- Holds a ContentNode the task mutates from its own thread. Because the node lives on
+             the render thread, the mutation crosses over as a rendezvous call and the change
+             notification has to come back the other way. -->
+        <field id="cache" type="node" />
+        <!-- How many cache notifications the task's own port received. -->
+        <field id="rowsSeen" type="integer" value="0" />
+    </interface>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.top.functionName = "fillCache"
+        m.port = CreateObject("roMessagePort")
+        m.top.cache = createObject("roSGNode", "ContentNode")
+        ' Registered on the render thread against the field that HOLDS the ContentNode — not
+        ' against the ContentNode itself. Mutating the held node must notify this observer.
+        m.top.observeField("cache", m.port)
+    end sub
+
+    sub fillCache()
+        rows = 0
+        for i = 0 to 2
+            row = createObject("roSGNode", "ContentNode")
+            row.title = "row" + i.toStr()
+            fields = {}
+            fields[i.toStr()] = row
+            ' Rendezvous call: applies on the render thread, where the real ContentNode lives.
+            m.top.cache.addFields(fields)
+            ' Drain whatever the mutation notified us about.
+            for attempt = 0 to 20
+                msg = wait(100, m.port)
+                if type(msg) = "roSGNodeEvent" and msg.getField() = "cache"
+                    rows = rows + 1
+                    print "TASK SAW CACHE CHANGE "; rows.toStr()
+                    exit for
+                end if
+            end for
+        end for
+        m.top.rowsSeen = rows
+    end sub
+    ]]></script>
+</component>

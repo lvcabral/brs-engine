@@ -250,6 +250,31 @@ export class Field {
         return this.name;
     }
 
+    /**
+     * Node this field belongs to, recorded the first time the owning node writes it.
+     *
+     * A `Field` is otherwise anonymous — it knows its name and value but not who holds it — which
+     * is fine for local notification (the observer callbacks carry the node) but not for
+     * cross-thread delivery, where the fan-out needs the owner's `syncType` and address. See
+     * `ContentNode.notifyParentFields`, the one notification path that starts from a field rather
+     * than from a node.
+     */
+    private container?: Node;
+
+    /**
+     * Records the node that holds this field. First writer wins, so a field shared through an
+     * alias keeps the node that originally defined it.
+     * @param node Node holding this field.
+     */
+    setContainer(node: Node) {
+        this.container ??= node;
+    }
+
+    /** Returns the node holding this field, when known. */
+    getContainer(): Node | undefined {
+        return this.container;
+    }
+
     getType(): FieldKind {
         return this.type;
     }
