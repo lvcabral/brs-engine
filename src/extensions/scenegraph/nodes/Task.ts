@@ -26,6 +26,7 @@ import {
     dropPortNodeEvents,
     fromSGNode,
     jsValueOf,
+    SerializedPortEvent,
     serializeTaskM,
     updateSGNode,
 } from "../factory/Serializer";
@@ -694,9 +695,56 @@ export class Task extends Node {
             const portEvents = collectPortNodeEvents(this.m, this);
             if (portEvents) {
                 taskData.portEvents = portEvents;
+                this.dropFanoutCoveredByReplay(portEvents);
             }
             postMessage(taskData);
             this.started = true;
+        }
+    }
+
+    /**
+     * Discards the queued fan-out updates that the launch payload's replayed port events already
+     * cover, so a single write is not delivered twice.
+     *
+     * Activation and launch are not the same moment: `control = "run"` runs `activateTask`
+     * synchronously, which turns render→task fan-out on, while this method (which posts the payload)
+     * only runs on the next `processTasks` pass. A write landing in between is captured by *both*
+     * paths — as a queued fan-out update and as an event on the render-side copy of the port that
+     * `collectPortNodeEvents` sweeps into the payload — and the task saw it twice.
+     *
+     * Matching is on the (node, field) pair, not on the value: a field written twice with the same
+     * value under `alwaysNotify` notifies twice but only syncs once, so comparing values would keep
+     * the wrong number of copies. Events the replay cannot re-target (a node that is neither the task
+     * node nor the global node, which `replayPortNodeEvents` drops with a warning) are deliberately
+     * left alone — for those the fan-out is the only path that can deliver.
+     * @param portEvents Pre-launch port events being shipped with the payload.
+     */
+    private dropFanoutCoveredByReplay(portEvents: Record<string, SerializedPortEvent[]>) {
+        if (this.fanoutQueue.length === 0) {
+            return;
+        }
+        const globalAddress = sgRoot.mGlobal.getAddress();
+        const replayed = new Set<string>();
+        for (const events of Object.values(portEvents)) {
+            for (const event of events) {
+                if (event.node === this.address || event.node === globalAddress) {
+                    replayed.add(`${event.node}|${event.field.toLowerCase()}`);
+                }
+            }
+        }
+        if (replayed.size === 0) {
+            return;
+        }
+        for (let i = this.fanoutQueue.length - 1; i >= 0; i--) {
+            const update = this.fanoutQueue[i];
+            if (replayed.has(`${update.address}|${update.key.toLowerCase()}`)) {
+                this.fanoutQueue.splice(i, 1);
+                if (sgRoot.logRendezvous) {
+                    BrsDevice.stdout.write(
+                        `debug,[rendezvous] thread ${sgRoot.threadId} dropped fan-out ${update.type}.${update.key} -> task thread ${this.threadId} (replayed at launch)`
+                    );
+                }
+            }
         }
     }
 

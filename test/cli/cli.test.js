@@ -1045,6 +1045,28 @@ describe.concurrent("cli", () => {
         expect(lines).toContain("=== Task Global Observe Repro Complete ===");
     }, 30000);
 
+    it("Delivers a field set between control=run and task launch exactly once", async () => {
+        let command = ["node", brsCliPath, "-r task-prelaunch-events-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // `control = "run"` activates the task synchronously (turning render->task fan-out on), but
+        // the payload that carries the pre-launch port backlog is only posted on the next
+        // processTasks pass. A write landing in between used to be captured by both paths and
+        // arrive twice. Both sides of that boundary are asserted here: writes issued *before*
+        // control=run must still arrive (they have no other carrier), and writes issued after it
+        // must arrive exactly once — including one on m.global, which reaches the task by a
+        // different fan-out route than the task node's own fields.
+        const lines = stdout.split("\n").map((line) => line.trimEnd());
+        expect(lines).toContain("=== Task Pre-launch Events Repro ===");
+        expect(lines).toContain(
+            "TASK SAW: request=before-1,request=before-2,request=after-1,request=after-2,ticket=global-1"
+        );
+        expect(lines).toContain("SCENE REPORT: 5 events");
+        expect(lines).toContain("=== Task Pre-launch Events Repro Complete ===");
+    }, 30000);
+
     it("Notifies a Task's port when it mutates a ContentNode held by an observed field", async () => {
         let command = ["node", brsCliPath, "-r task-contentcache-app", "source/main.brs", "-c 0"].join(" ");
 

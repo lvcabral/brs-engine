@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="MainScene" extends="Scene">
+    <interface>
+        <field id="done" type="boolean" value="false" />
+    </interface>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.global.addFields({ ticket: "" })
+        m.task = createObject("roSGNode", "WorkerTask")
+        m.task.observeField("report", "onReport")
+
+        ' (1) Written BEFORE control="run": the task thread does not exist and render->task
+        ' fan-out is off, so only the pre-launch replay can carry these. Guards #1093.
+        m.task.request = "before-1"
+        m.task.request = "before-2"
+
+        m.task.control = "run"
+
+        ' (2) Written AFTER control="run" but still inside init(), so before the render loop's
+        ' first processTasks() pass. Activation already turned fan-out on, but the task has not
+        ' launched yet — the window where both delivery paths used to fire (#1109).
+        m.task.request = "after-1"
+        m.task.request = "after-2"
+
+        ' (3) Same window, but a field on m.global rather than on the task node: a different
+        ' fan-out route (Node.rendezvousSet), which must still deliver exactly once.
+        m.global.ticket = "global-1"
+    end sub
+
+    sub onReport(event as object)
+        print "SCENE REPORT: "; event.getData()
+        m.top.done = true
+    end sub
+    ]]></script>
+</component>
