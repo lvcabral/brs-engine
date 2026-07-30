@@ -7,6 +7,14 @@ import { Int32 } from "../Int32";
 import { FontMetrics, getFontRegistry } from "./RoFontRegistry";
 import { BrsCanvas, BrsCanvasContext2D, MeasuredText } from "../interfaces/IfDraw2D";
 
+/**
+ * Cap on memoized measurements per font. Text is measured per *rendered string*, so an app with a
+ * clock, a counter or a scrolling label would otherwise grow this without bound. Clearing wholesale
+ * on overflow keeps the bookkeeping free — the entries a screen actually uses are re-measured once
+ * and the steady state is small.
+ */
+const MeasureCacheLimit = 4096;
+
 export class RoFont extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
     private readonly family: string;
@@ -15,6 +23,22 @@ export class RoFont extends BrsComponent implements BrsValue {
     private readonly italic: boolean;
     private readonly metrics: FontMetrics;
     private readonly canvas: BrsCanvas;
+    /**
+     * Memoized `measureTextWidth` results, keyed by the text and the constraints (this font's
+     * family/size/bold/italic are immutable, so they need no part in the key).
+     *
+     * Measuring is the single most expensive thing the text path does — a canvas `font` assignment
+     * plus `measureText`, and for an ellipsized string one `measureText` per character removed — and
+     * it is asked the same question over and over: a `LayoutGroup` lays out by running its children
+     * as *measurement* passes (`renderNode` with no draw target), and `Group.isDirty` is only cleared
+     * on a real frame draw, so every such pass re-measured every label underneath it. Appending one
+     * child re-measured the whole subtree, which made the cost of creating a node grow with the size
+     * of the tree (72 custom components: 178 ms each at the start, 386 ms each by the end; a device
+     * is flat at ~10 ms).
+     *
+     * Entries are returned as-is rather than copied, so callers must treat them as read-only.
+     */
+    private readonly measureCache = new Map<string, { width: number; text: string; ellipsized: boolean }>();
 
     // Constructor can only be used by RoFontRegistry()
     constructor(family: BrsString, size: Int32, bold: BrsBoolean, italic: BrsBoolean, metrics: FontMetrics) {
@@ -39,6 +63,13 @@ export class RoFont extends BrsComponent implements BrsValue {
         if (text === "") {
             // node-canvas crashes on empty-string text APIs; measuring "" is always width 0
             return { width: 0, text, ellipsized: false };
+        }
+        // The key separates its parts with an escaped NUL, which cannot appear in a rendered
+        // string, so no combination of width, ellipsis and text can collide with another.
+        const cacheKey = `${maxWidth ?? -1}\u0000${ellipsis ?? ""}\u0000${text}`;
+        const cached = this.measureCache.get(cacheKey);
+        if (cached) {
+            return cached;
         }
         const ctx = this.canvas.getContext("2d", { alpha: false }) as BrsCanvasContext2D;
         ctx.font = this.toFontString();
@@ -67,7 +98,12 @@ export class RoFont extends BrsComponent implements BrsValue {
             ellipsized = true;
         }
 
-        return { width: Math.round(length), text: ellipsizedText, ellipsized };
+        const measured = { width: Math.round(length), text: ellipsizedText, ellipsized };
+        if (this.measureCache.size >= MeasureCacheLimit) {
+            this.measureCache.clear();
+        }
+        this.measureCache.set(cacheKey, measured);
+        return measured;
     }
 
     measureText(text: string, maxWidth?: number, ellipsis?: string): MeasuredText {
