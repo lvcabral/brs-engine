@@ -201,6 +201,28 @@ describe.concurrent("cli", () => {
         ]);
     }, 30000);
 
+    it("Keeps memoized text measurements distinct per text, width and font", async () => {
+        // Measuring is memoized per font because a LayoutGroup re-measures its children on every
+        // layout pass (it lays out by rendering them with no draw target), which made the cost of
+        // adding a node grow with the size of the tree. The cache key has to keep every input
+        // apart, or labels would render at another string's width.
+        let command = ["node", brsCliPath, "fontMeasureCache.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "stable: true",
+            "clamped: true",
+            "unclamped: true",
+            "font isolated: true",
+            "text isolated: true",
+            "------ Finished 'fontMeasureCache.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 30000);
+
     it("Renders frames as terminal images with --image", async () => {
         let command = ["node", brsCliPath, "emptyTextDraw.brs", "-i", "-c 0"].join(" ");
         let { stdout } = await exec(command, {
