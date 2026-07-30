@@ -110,6 +110,50 @@ export class ScrollingLabel extends Label {
         }
     }
 
+    /**
+     * Advances the marquee state machine by the wall-clock time since the last paint. Called only
+     * from paint passes — layout renders the stored state without touching the clock.
+     */
+    private advanceScroll(scrollDistance: number, scrollDuration: number, repeatCount: number) {
+        const now = sgClock.now();
+        const deltaTime = now - this.lastUpdateTime;
+        this.lastUpdateTime = now;
+        this.elapsedTime += deltaTime;
+
+        switch (this.scrollState) {
+            case ScrollState.INITIAL_PAUSE:
+                if (this.elapsedTime >= INITIAL_PAUSE_MS) {
+                    this.scrollState = ScrollState.SCROLLING;
+                    this.elapsedTime = 0;
+                    this.scrollOffset = 0;
+                }
+                break;
+
+            case ScrollState.SCROLLING:
+                this.scrollOffset = Math.min(scrollDistance, (this.elapsedTime / scrollDuration) * scrollDistance);
+                if (this.elapsedTime >= scrollDuration) {
+                    this.scrollState = ScrollState.END_PAUSE;
+                    this.elapsedTime = 0;
+                    this.scrollOffset = scrollDistance; // Ensure it's exactly at the end
+                }
+                break;
+
+            case ScrollState.END_PAUSE:
+                if (this.elapsedTime >= END_PAUSE_MS) {
+                    this.currentRepeat++;
+                    if (repeatCount !== -1 && this.currentRepeat >= repeatCount) {
+                        this.scrollState = ScrollState.FINISHED;
+                    } else {
+                        // Repeat the cycle
+                        this.scrollState = ScrollState.INITIAL_PAUSE;
+                        this.elapsedTime = 0;
+                    }
+                    this.scrollOffset = 0;
+                }
+                break;
+        }
+    }
+
     // Reset scrolling state variables
     private resetScrollingState() {
         this.scrollState = this.needsScrolling ? ScrollState.INITIAL_PAUSE : ScrollState.STATIC;
@@ -131,11 +175,6 @@ export class ScrollingLabel extends Label {
         if (!(drawFont instanceof RoFont)) {
             return { text, width: 0, height: 0, ellipsized: false };
         }
-        const now = sgClock.now();
-        const deltaTime = now - this.lastUpdateTime;
-        this.lastUpdateTime = now;
-        this.elapsedTime += deltaTime;
-
         const scrollSpeed = this.getValueJS("scrollSpeed") as number;
         const repeatCount = this.getValueJS("repeatCount") as number;
         const maxWidth = this.getValueJS("maxWidth") as number;
@@ -148,68 +187,36 @@ export class ScrollingLabel extends Label {
         const color = this.getValueJS("color") as number;
         const vertAlign = this.getValueJS("vertAlign") || "top";
 
+        const scrollDistance = this.fullTextWidth - maxWidth; // How much the text needs to move
+        const scrollDuration = scrollDistance > 0 && scrollSpeed > 0 ? (scrollDistance / scrollSpeed) * 1000 : 0; // ms
+
+        // Advance the marquee only on a paint pass: a layout pass (a bounding-rect refresh) must
+        // be pure and clock-free — it renders the stored scroll position. Consuming the time delta
+        // here used to make measurement frequency change the scroll speed, and the makeDirty from
+        // inside a refresh re-dirtied the scene from a boundingRect() query.
+        if (this.needsScrolling && this.scrollState !== ScrollState.FINISHED && this.isPaintPass(draw2D)) {
+            sgRoot.makeDirty(); // Ensure continuous updates during scrolling
+            this.advanceScroll(scrollDistance, scrollDuration, repeatCount);
+        }
+
+        // Derive what to draw purely from the stored scroll state.
         let textToDraw = text;
         let drawOffset = 0;
         let isEllipsized = false;
-
-        if (this.needsScrolling && this.scrollState !== ScrollState.FINISHED) {
-            sgRoot.makeDirty(); // Ensure continuous updates during scrolling
-            const scrollDistance = this.fullTextWidth - maxWidth; // How much the text needs to move
-            const scrollDuration = scrollDistance > 0 && scrollSpeed > 0 ? (scrollDistance / scrollSpeed) * 1000 : 0; // ms
-
+        if (this.needsScrolling) {
             switch (this.scrollState) {
-                case ScrollState.INITIAL_PAUSE:
+                case ScrollState.SCROLLING:
+                    drawOffset = -this.scrollOffset;
+                    break;
+                case ScrollState.END_PAUSE:
+                    drawOffset = -scrollDistance;
+                    break;
+                default:
+                    // INITIAL_PAUSE and FINISHED show the truncated text at rest.
                     textToDraw = this.truncatedText;
                     isEllipsized = true;
-                    if (this.elapsedTime >= INITIAL_PAUSE_MS) {
-                        this.scrollState = ScrollState.SCROLLING;
-                        this.elapsedTime = 0;
-                    }
-                    break;
-
-                case ScrollState.SCROLLING:
-                    textToDraw = text; // Draw the full text
-                    // Calculate current offset based on elapsed time in this state
-                    this.scrollOffset = Math.min(scrollDistance, (this.elapsedTime / scrollDuration) * scrollDistance);
-                    drawOffset = -this.scrollOffset;
-
-                    if (this.elapsedTime >= scrollDuration) {
-                        this.scrollState = ScrollState.END_PAUSE;
-                        this.elapsedTime = 0;
-                        this.scrollOffset = scrollDistance; // Ensure it's exactly at the end
-                        drawOffset = -this.scrollOffset;
-                    }
-                    break;
-
-                case ScrollState.END_PAUSE:
-                    textToDraw = text; // Keep drawing full text, but fully scrolled
-                    drawOffset = -scrollDistance;
-                    if (this.elapsedTime >= END_PAUSE_MS) {
-                        this.currentRepeat++;
-                        if (repeatCount !== -1 && this.currentRepeat >= repeatCount) {
-                            this.scrollState = ScrollState.FINISHED;
-                            textToDraw = this.truncatedText; // Show truncated at the end
-                            drawOffset = 0;
-                            isEllipsized = true;
-                        } else {
-                            // Repeat the cycle
-                            this.scrollState = ScrollState.INITIAL_PAUSE;
-                            this.elapsedTime = 0;
-                            this.scrollOffset = 0;
-                            textToDraw = this.truncatedText;
-                            drawOffset = 0;
-                            isEllipsized = true;
-                        }
-                    }
                     break;
             }
-        } else if (this.scrollState === ScrollState.FINISHED) {
-            // If finished, just draw the truncated text statically
-            textToDraw = this.truncatedText;
-            isEllipsized = true;
-        } else {
-            // Static case: Text fits or scrolling is disabled/not needed
-            textToDraw = text;
         }
         const clipRect: Rect = { ...rect, height: Math.max(boxHeight, textHeight) };
         let drawX = rect.x + drawOffset;
@@ -234,6 +241,9 @@ export class ScrollingLabel extends Label {
         draw2D?.pushClip(clipRect);
         draw2D?.doDrawRotatedText(textToDraw, drawX, drawY, color, opacity, drawFont, rotation);
         draw2D?.popClip();
+        // Safe on layout passes too (matching the base Label): with the scroll state frozen
+        // during layout, the value derives purely from stored state, and setValue only notifies
+        // on a genuine change — idempotent.
         this.setEllipsized(isEllipsized);
         const measuredWidth = this.needsScrolling ? maxWidth : this.fullTextWidth;
         return {

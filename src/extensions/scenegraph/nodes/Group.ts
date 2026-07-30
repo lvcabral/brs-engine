@@ -776,6 +776,13 @@ export class Group extends Node {
         return true;
     }
 
+    /**
+     * Runs on layout passes too (not gated on `isPaintPass`): tracking is a deterministic
+     * function of layout state (rects + visibility), the write only fires on a genuine change,
+     * and HiddenMeasure pins that a bounding-rect refresh reports "none" for UI measured under a
+     * hidden ancestor. That keeps layout passes idempotent without freezing tracking between
+     * frames.
+     */
     protected updateRenderTracking(invisible: boolean) {
         const enableRenderTracking = this.getValueJS("enableRenderTracking") as boolean;
         const renderTracking = this.getValueJS("renderTracking") as string;

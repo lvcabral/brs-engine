@@ -488,7 +488,11 @@ export class StandardDialog extends Group {
             this.pendingRelayout = false;
             this.layoutStandardDialog();
         }
-        this.setNodeFocus(true);
+        // Claiming focus is a paint-side effect: a layout pass (a bounding-rect refresh that
+        // reaches the dialog) must not move focus.
+        if (this.isPaintPass(draw2D)) {
+            this.setNodeFocus(true);
+        }
         const nodeTrans = this.getTranslation();
         const drawTrans = angle === 0 ? nodeTrans.slice() : rotateTranslation(nodeTrans, angle);
         drawTrans[0] += origin[0];

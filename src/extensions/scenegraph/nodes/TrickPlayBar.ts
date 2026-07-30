@@ -28,6 +28,8 @@ export class TrickPlayBar extends Group {
     private readonly bmpIcons: Map<string, RoBitmap>;
     private stateIcon: RoBitmap | undefined;
     private stateIconTimeout: number = -1;
+    /** Clock captured on the last paint pass; layout passes reuse it instead of reading the clock. */
+    private lastPaintNow: number = 0;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.TrickPlayBar) {
         super([], name);
@@ -152,7 +154,12 @@ export class TrickPlayBar extends Group {
         opacity = opacity * this.getOpacity();
         this.updateBoundingRects(rect, origin, angle);
         this.renderChildren(interpreter, drawTrans, angle, opacity, draw2D);
-        if (this.stateIcon && (this.stateIconTimeout === -1 || this.stateIconTimeout > sgClock.now())) {
+        // Check the icon expiry against the clock only on a paint pass; a layout pass reuses the
+        // last paint's timestamp so the icon cannot flip mid-refresh (layout must be clock-free).
+        if (this.isPaintPass(draw2D)) {
+            this.lastPaintNow = sgClock.now();
+        }
+        if (this.stateIcon && (this.stateIconTimeout === -1 || this.stateIconTimeout > this.lastPaintNow)) {
             const iconRect = {
                 x: rect.x + (size.width - this.stateIcon.width) / 2,
                 y: rect.y + this.barH,

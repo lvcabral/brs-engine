@@ -801,8 +801,20 @@ export class Video extends Group {
         const presenting =
             owner && (state === "playing" || state === "paused" || (state === "buffering" && this.hasPresented));
         const buffering = owner && state === "buffering" && !this.hasPresented && this.uiVisible();
-        if (this.isDirty && presenting) {
-            postMessage(`video,rect,${rect.x},${rect.y},${rect.width},${rect.height}`);
+        // The video-plane rect postMessage, the ff/rw seek auto-repeat, and showUI's child field
+        // writes are paint-only: a layout pass (a bounding-rect refresh) must be pure — it would
+        // otherwise spam the host with rect messages and advance seek state per measurement.
+        if (this.isPaintPass(draw2D)) {
+            if (this.isDirty && presenting) {
+                postMessage(`video,rect,${rect.x},${rect.y},${rect.width},${rect.height}`);
+            }
+            if (this.statusChanged) {
+                if (this.seekTimeout > 0 && this.seekTimeout < sgClock.now() && ["rw", "ff"].includes(this.seekMode)) {
+                    const duration = this.getValueJS("duration") as number;
+                    this.updateSeekStep(this.seekMode === "ff", duration, Math.trunc(1000 / this.seekLevel));
+                }
+                this.showUI(this.uiVisible());
+            }
         }
         if (draw2D) {
             this.isDirty = false;
@@ -811,13 +823,6 @@ export class Video extends Group {
             } else if (buffering) {
                 draw2D.doDrawRotatedRect(rect, 0x000000ff, 0, [0, 0], opacity);
             }
-        }
-        if (this.statusChanged) {
-            if (this.seekTimeout > 0 && this.seekTimeout < sgClock.now() && ["rw", "ff"].includes(this.seekMode)) {
-                const duration = this.getValueJS("duration") as number;
-                this.updateSeekStep(this.seekMode === "ff", duration, Math.trunc(1000 / this.seekLevel));
-            }
-            this.showUI(this.uiVisible());
         }
         this.updateBoundingRects(rect, origin, rotation);
         this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);

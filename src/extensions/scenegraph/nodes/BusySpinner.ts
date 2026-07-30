@@ -1,5 +1,6 @@
 import { AAMember, Interpreter, BrsString, BrsType, RoArray, Float, IfDraw2D, Rect } from "brs-engine";
 import { sgClock } from "../SGClock";
+import { sgRoot } from "../SGRoot";
 import { FieldKind, FieldModel } from "../SGTypes";
 import { rotateTranslation } from "../SGUtil";
 import { SGNodeType } from ".";
@@ -99,7 +100,10 @@ export class BusySpinner extends Group {
         if (this.isDirty) {
             this.updateChildren();
         }
-        if (this.active) {
+        // Advance the spin only on a paint pass: a layout pass (a bounding-rect refresh) must be
+        // pure and clock-free — it renders the poster at its stored rotation. Consuming the time
+        // delta here would also make measurement frequency change the spin speed.
+        if (this.active && this.isPaintPass(draw2D)) {
             if (this.lastRenderTime === 0) {
                 this.lastRenderTime = sgClock.now();
             }
@@ -112,7 +116,10 @@ export class BusySpinner extends Group {
             if (rotationChange !== 0) {
                 this.currentRotation += direction * rotationChange;
                 const spin = this.currentRotation + rotation;
-                this.poster.setValue("rotation", new Float(spin));
+                // Silent write + explicit dirty: the internal poster's rotation has no app
+                // observers to notify, but the spinner still needs the next frame drawn.
+                this.poster.setValueSilent("rotation", new Float(spin));
+                sgRoot.makeDirty();
                 this.lastRenderTime = now;
             }
         }

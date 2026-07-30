@@ -501,7 +501,8 @@ export class DynamicKeyGrid extends Group {
 
         // Auto-open a "hover" suggestion pop-up once the focus has dwelled on the key, unless it
         // was suppressed by a previous selection (until focus leaves and returns to the key).
-        if (showFocus && !this.popup && !this.popupSuppressed) {
+        // Paint-only: opening a popup mutates the tree, which a layout pass must never do.
+        if (showFocus && !this.popup && !this.popupSuppressed && this.isPaintPass(draw2D)) {
             const key = this.renderedKeys[this.focusIndex];
             if (
                 key?.suggestions &&

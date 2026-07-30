@@ -39,6 +39,8 @@ export class TextEditBox extends Group {
     private cursorVisible: boolean = true;
     private lastCursorToggleTime: number = 0;
     private lastCharInputTime: number = 0;
+    /** Clock captured on the last paint pass; layout passes reuse it instead of reading the clock. */
+    private lastPaintNow: number = 0;
     private readonly cursor?: RoBitmap;
     private readonly textLabel: Label;
     private readonly secureLabel: Label;
@@ -187,7 +189,13 @@ export class TextEditBox extends Group {
         const combinedOpacity = opacity * this.getOpacity();
         const text = this.getValueJS("text") as string;
         const secureMode = this.getValueJS("secureMode") as boolean;
-        const now = sgClock.now(); // Get current time for checks
+        // Read the clock only on a paint pass; a layout pass reuses the last paint's timestamp so
+        // its output (secure-char reveal, cursor phase) is identical between frames — layout must
+        // be pure and clock-free.
+        if (this.isPaintPass(draw2D)) {
+            this.lastPaintNow = sgClock.now();
+        }
+        const now = this.lastPaintNow;
 
         // Ensure labels have correct width if TextEditBox width changes
         // And update background if URI changes
@@ -259,7 +267,8 @@ export class TextEditBox extends Group {
         if (!isActive || !this.cursor?.isValid()) {
             return;
         }
-        if (now - this.lastCursorToggleTime > this.cursorBlinkInterval) {
+        // Flip the blink phase only on a paint pass — layout renders the stored phase.
+        if (this.isPaintPass(draw2D) && now - this.lastCursorToggleTime > this.cursorBlinkInterval) {
             this.cursorVisible = !this.cursorVisible;
             this.lastCursorToggleTime = now;
         }
