@@ -694,8 +694,17 @@ export class Group extends Node {
         // wipe the mark those writes set and strand the change until something unrelated dirties
         // this subtree again. Record the incoming context a completed pass ran under; a pruned
         // refresh may only skip when the same context comes back.
-        this.subtreeStale = false;
-        this.lastLayoutContext = { x: origin[0], y: origin[1], angle, opacity };
+        //
+        // Both happen ONLY inside the pruned full refresh itself: scoped measurements (the
+        // mid-render fallback, measureUnsizedChildren) render at origin [0,0], and a detached
+        // component root's real refresh ALSO runs at [0,0] — if a scoped pass recorded that
+        // context and cleared the mark, the real refresh would skip on the scoped pass's partial
+        // rects (its parent's union was snapshot/restored away, or its layout hadn't been applied
+        // yet). Paint passes don't participate in pruning at all.
+        if (sgRoot.pruneLayout) {
+            this.subtreeStale = false;
+            this.lastLayoutContext = { x: origin[0], y: origin[1], angle, opacity };
+        }
         this.layoutPassCount++;
         const nodeTrans = this.getTranslation();
         const drawTrans = nodeTrans.slice();

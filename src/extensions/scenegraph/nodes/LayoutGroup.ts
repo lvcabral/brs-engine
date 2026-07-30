@@ -2,6 +2,7 @@ import { AAMember, Interpreter, BrsBoolean, BrsType, Float, RoArray, IfDraw2D, R
 import { FieldKind, FieldModel } from "../SGTypes";
 import { SGNodeType } from ".";
 import { jsValueOf } from "../factory/Serializer";
+import { sgRoot } from "../SGRoot";
 import { Group } from "./Group";
 import { Node } from "./Node";
 
@@ -173,12 +174,22 @@ export class LayoutGroup extends Group {
      * Posters, already-laid-out nodes) are skipped, so this is a no-op in the common case.
      */
     private measureUnsizedChildren(children: Group[], interpreter: Interpreter) {
-        for (const child of children) {
-            const dims = child.getDimensions();
-            const rectKnown = child.rectToParent.width > 0 || child.rectToScene.width > 0 || child.rectLocal.width > 0;
-            if (!rectKnown && !(typeof dims.width === "number" && dims.width > 0)) {
-                child.layoutNode(interpreter, [0, 0], 0, 1);
+        // Never prune this scoped measurement: it runs at origin [0,0] regardless of the child's
+        // tree position, so cached last-layout contexts do not apply — a skip here would also
+        // union the child's cached rect into this group's just-reset rects at the wrong moment.
+        const wasPruning = sgRoot.pruneLayout;
+        sgRoot.pruneLayout = false;
+        try {
+            for (const child of children) {
+                const dims = child.getDimensions();
+                const rectKnown =
+                    child.rectToParent.width > 0 || child.rectToScene.width > 0 || child.rectLocal.width > 0;
+                if (!rectKnown && !(typeof dims.width === "number" && dims.width > 0)) {
+                    child.layoutNode(interpreter, [0, 0], 0, 1);
+                }
             }
+        } finally {
+            sgRoot.pruneLayout = wasPruning;
         }
     }
 

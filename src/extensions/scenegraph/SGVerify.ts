@@ -63,12 +63,20 @@ function sameRect(a: Rect, b: Rect): boolean {
 }
 
 /**
- * Runs the layout refresh pruned then unpruned and reports any rect divergence to stderr.
+ * Runs the layout refresh pruned, then unpruned TWICE, and classifies every rect divergence:
+ *
+ * - `[layout-verify]` — the two full passes disagree with each other: the layout is not
+ *   idempotent for that node (a convergence bug — the pruned pass merely ran first and read the
+ *   pre-convergence value). Pruning is not the culprit; fix the node's layout.
+ * - `[prune-verify]` — the two full passes agree but the pruned pass differs: true pruning
+ *   unsoundness (a subtree was skipped whose layout inputs changed without a stale mark).
+ *
  * @returns The number of diverging nodes (0 = the pruned pass is sound for this refresh).
  */
 export function runPruneVerify(root: Node, interpreter: Interpreter): number {
     const pruned: RectSnapshot[] = [];
     const full: RectSnapshot[] = [];
+    const fullAgain: RectSnapshot[] = [];
 
     sgRoot.pruneLayout = !sgRoot.pruneDisabled;
     try {
@@ -81,15 +89,27 @@ export function runPruneVerify(root: Node, interpreter: Interpreter): number {
     root.layoutNode(interpreter, [0, 0], 0, 1);
     collectRects(root, `/${root.nodeSubtype}`, full);
 
+    root.layoutNode(interpreter, [0, 0], 0, 1);
+    collectRects(root, `/${root.nodeSubtype}`, fullAgain);
+
     const fullByPath = new Map(full.map((snapshot) => [snapshot.path, snapshot]));
+    const fullAgainByPath = new Map(fullAgain.map((snapshot) => [snapshot.path, snapshot]));
     let divergences = 0;
     for (const snapshot of pruned) {
         const reference = fullByPath.get(snapshot.path);
-        if (!reference) {
+        const confirmation = fullAgainByPath.get(snapshot.path);
+        if (!reference || !confirmation) {
             continue; // tree changed between passes (BrightScript ran inside the refresh)
         }
         for (const key of ["rectLocal", "rectToParent", "rectToScene"] as const) {
-            if (!sameRect(snapshot[key], reference[key])) {
+            if (!sameRect(reference[key], confirmation[key])) {
+                divergences++;
+                BrsDevice.stderr.write(
+                    `warning,[layout-verify] ${snapshot.path}.${key}: full1=${fmt(reference[key])} full2=${fmt(
+                        confirmation[key]
+                    )} (non-idempotent layout)`
+                );
+            } else if (!sameRect(snapshot[key], reference[key])) {
                 divergences++;
                 BrsDevice.stderr.write(
                     `warning,[prune-verify] ${snapshot.path}.${key}: pruned=${fmt(snapshot[key])} full=${fmt(

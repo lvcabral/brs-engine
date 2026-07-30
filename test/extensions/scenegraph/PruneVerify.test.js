@@ -42,7 +42,7 @@ describe("prune verifier", () => {
 
     test("silent on a consistent tree", () => {
         const { scene, rect } = buildScene();
-        scene.layoutNode(interpreter, [0, 0], 0, 1); // settle once
+        scene.getBoundingRect("toParent", interpreter); // settle once (pruned refresh)
         rect.setValue("width", new Float(220)); // then a normal write
 
         const divergences = runPruneVerify(scene, interpreter);
@@ -53,7 +53,9 @@ describe("prune verifier", () => {
 
     test("reports a path-addressed line when a skipped subtree lies about its rect", () => {
         const { scene, group, rect } = buildScene();
-        scene.layoutNode(interpreter, [0, 0], 0, 1); // settle: group is now skippable
+        // Settle through the pruned refresh (getBoundingRect): only that pass clears stale
+        // marks and records skip contexts — a direct layoutNode call is a scoped measurement.
+        scene.getBoundingRect("toParent", interpreter);
 
         // Corrupt the settled subtree's cached rect WITHOUT marking it stale — the pruned pass
         // skips it and hands the lie up; the full pass recomputes the truth. The verifier must
