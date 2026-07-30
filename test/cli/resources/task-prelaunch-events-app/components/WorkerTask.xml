@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="WorkerTask" extends="Task">
+    <interface>
+        <field id="request" type="string" alwaysNotify="true" />
+        <field id="report" type="string" />
+    </interface>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.top.functionName = "drain"
+        m.port = CreateObject("roMessagePort")
+        m.top.observeField("request", m.port)
+        m.global.observeField("ticket", m.port)
+    end sub
+
+    sub drain()
+        seen = []
+        ' Long enough to catch a late duplicate, so the test fails on an extra event rather than
+        ' racing past it.
+        for attempt = 0 to 30
+            msg = wait(100, m.port)
+            if type(msg) = "roSGNodeEvent"
+                data = msg.getData()
+                if data <> "" then seen.push(msg.getField() + "=" + data)
+            end if
+        end for
+        print "TASK SAW: "; seen.join(",")
+        m.top.report = seen.count().toStr() + " events"
+    end sub
+    ]]></script>
+</component>
