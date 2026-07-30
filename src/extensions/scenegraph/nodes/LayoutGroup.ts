@@ -140,8 +140,27 @@ export class LayoutGroup extends Group {
         // metrics oscillate (a bug to fix, not a state to paper over). A real frame draw (draw2D
         // present) keeps a single pass, preserving its next-frame correction.
         const maxPasses = draw2D === undefined && layoutChildren.length ? LayoutGroup.MAX_LAYOUT_PASSES : 1;
+        // Each inner pass ends with nodeRenderingDone → updateParentRects, unioning this group's
+        // rect into its PARENT — whose rects are reset once per ITS pass, not per inner pass here.
+        // Without restoring them between passes, a converging layout leaves the union of every
+        // intermediate position in the parent (e.g. a centered child's pre-center span ∪ its
+        // centered span — a 55-tall child reporting 82.5). Snapshot before the loop and restore
+        // before each retry so only the final, converged pass's union survives.
+        const parentGroup = this.parent instanceof Group ? this.parent : undefined;
+        const savedParentRects = parentGroup
+            ? {
+                  local: { ...parentGroup.rectLocal },
+                  toParent: { ...parentGroup.rectToParent },
+                  toScene: { ...parentGroup.rectToScene },
+              }
+            : undefined;
         this.lastPassCount = 0;
         for (let pass = 0; pass < maxPasses; pass++) {
+            if (pass > 0 && parentGroup && savedParentRects) {
+                parentGroup.rectLocal = { ...savedParentRects.local };
+                parentGroup.rectToParent = { ...savedParentRects.toParent };
+                parentGroup.rectToScene = { ...savedParentRects.toScene };
+            }
             this.lastPassCount = pass + 1;
             this.metricsUsedThisPass = undefined;
             if (layoutChildren.length && this.layoutDirty) {
