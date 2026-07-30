@@ -55,6 +55,8 @@ export const FindMemberFunction = new Callable(
         },
         impl: (_: Interpreter, object: BrsComponent, funName: BrsString): BrsInterface | BrsInvalid => {
             if (object instanceof BrsComponent) {
+                // Components may build their interface/method maps lazily on first lookup.
+                object.ensureMethods();
                 for (let [_, iface] of object.interfaces) {
                     if (iface.hasMethod(funName.value)) {
                         return iface;
@@ -95,6 +97,8 @@ export const ObjFun = new Callable("ObjFun", {
         funName: BrsString,
         ...args: BrsType[]
     ): BrsType => {
+        // Components may build their interface/method maps lazily on first lookup.
+        object.ensureMethods();
         for (let [_, objI] of object.interfaces) {
             if (iface.name === objI.name && iface.hasMethod(funName.value)) {
                 const func = object.getMethod(funName.value);
