@@ -49,6 +49,7 @@ import { createFlatNode, createNode, getBrsValueFromFieldType, subtypeHierarchy 
 import { Field } from "../nodes/Field";
 import { toAssociativeArray, jsValueOf, fromSGNode } from "../factory/Serializer";
 import { sgRoot } from "../SGRoot";
+import { runPruneVerify } from "../SGVerify";
 import { SGNodeType } from ".";
 import { ComponentDefinition } from "../parser/ComponentDefinition";
 import { convertHexColor } from "../SGUtil";
@@ -117,6 +118,15 @@ export class Node extends RoSGNode implements BrsValue {
     protected address: string;
     /** Flags whether structural or field state changed since last render. */
     changed: boolean = false;
+    /**
+     * True when this node or anything below it changed since its subtree last completed a layout
+     * pass. Set by `makeDirty()` (the funnel for every field write and child-list mutation) and
+     * propagated UP the parent chain, so a pruned layout refresh (`sgRoot.pruneLayout`) can skip
+     * settled subtrees. Cleared at the START of a node's layout pass — BrightScript running
+     * inside the pass (an item component's init(), a field observer) re-marks it and that mark
+     * must survive for the next refresh. Starts true so everything lays out on first pass.
+     */
+    subtreeStale: boolean = true;
 
     /** Node bounds in local coordinates. */
     rectLocal: Rect = { x: 0, y: 0, width: 0, height: 0 };
@@ -1021,7 +1031,18 @@ export class Node extends RoSGNode implements BrsValue {
         const root = this.createPath()[0];
         sgRoot.rendering = true;
         try {
-            root.layoutNode(interpreter, [0, 0], 0, 1);
+            if (sgRoot.pruneVerify) {
+                runPruneVerify(root, interpreter);
+            } else {
+                // Prune settled subtrees (sound because layout passes are pure). Only this
+                // full-tree refresh prunes — scoped subtree measurements never do.
+                sgRoot.pruneLayout = !sgRoot.pruneDisabled;
+                try {
+                    root.layoutNode(interpreter, [0, 0], 0, 1);
+                } finally {
+                    sgRoot.pruneLayout = false;
+                }
+            }
         } finally {
             sgRoot.rendering = false;
         }
@@ -1078,10 +1099,16 @@ export class Node extends RoSGNode implements BrsValue {
             const savedToParent = parent ? { ...parent.rectToParent } : undefined;
             const savedToScene = parent ? { ...parent.rectToScene } : undefined;
             sgRoot.measuring = true;
+            // A scoped subtree measurement never prunes (it can run nested inside a pruned
+            // full-tree refresh — e.g. item creation measuring a label): it measures at origin
+            // [0,0], so cached last-layout contexts from tree positions do not apply.
+            const wasPruning = sgRoot.pruneLayout;
+            sgRoot.pruneLayout = false;
             try {
                 this.layoutNode(interpreter, [0, 0], 0, 1);
             } finally {
                 sgRoot.measuring = false;
+                sgRoot.pruneLayout = wasPruning;
                 if (parent && savedLocal && savedToParent && savedToScene) {
                     parent.rectLocal = savedLocal;
                     parent.rectToParent = savedToParent;
@@ -2066,11 +2093,28 @@ export class Node extends RoSGNode implements BrsValue {
      */
     protected makeDirty() {
         this.changed = true;
+        this.markSubtreeStale();
         if (sgRoot.inTaskThread() && this.parent instanceof Node) {
             const root = this.findRootNode();
             root.changed = true;
         }
         sgRoot.makeDirty();
+    }
+
+    /**
+     * Marks this node and every ancestor stale for the pruned layout refresh. Walks the FULL
+     * parent chain (O(depth), trivial next to the cost of the setValue that got us here) rather
+     * than early-exiting at the first stale ancestor: a node whose own pass never runs (a
+     * hard-skipped invisible leaf, an off-screen grid item) keeps its stale mark while its
+     * ancestors' marks are cleared by their passes, so "this node is stale" does not imply the
+     * chain above it still is — an early exit would strand the write in a skipped subtree.
+     */
+    markSubtreeStale() {
+        let node: Node | undefined = this;
+        while (node) {
+            node.subtreeStale = true;
+            node = node.parent instanceof Node ? node.parent : undefined;
+        }
     }
 
     /**

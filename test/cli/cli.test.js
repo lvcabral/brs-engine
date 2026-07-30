@@ -989,6 +989,21 @@ describe.concurrent("cli", () => {
             expect(lines.some((line) => line.startsWith(marker))).toBe(true);
         }
     }, 60000);
+    it("Pruned layout refreshes agree with full refreshes (BRS_PRUNE_VERIFY silent)", async () => {
+        // The rect-diff verifier runs every bounding-rect refresh twice — pruned then unpruned —
+        // and prints a [prune-verify] line for any diverging node. Silence across both apps'
+        // refresh-heavy workloads (70 self-measuring components; re-entrant grid item creation)
+        // proves the pruned pass computes the same rects as a full pass.
+        for (const app of ["layout-perf-app", "grid-measure-app"]) {
+            let command = ["node", brsCliPath, `-r ${app}`, "source/main.brs", "-c 0"].join(" ");
+            let { stderr } = await exec(command, {
+                cwd: path.join(__dirname, "resources"),
+                env: { ...process.env, BRS_PRUNE_VERIFY: "1" },
+            });
+            const verifyLines = stderr.split("\n").filter((line) => line.includes("[prune-verify]"));
+            expect(verifyLines).toEqual([]);
+        }
+    }, 120000);
     it("Resolves a component method in call position when an XML field shadows its name", async () => {
         let command = ["node", brsCliPath, "-r method-shadow-field-app", "source/main.brs", "-c 0"].join(" ");
 

@@ -10,6 +10,26 @@ lazy-field/lazy-method memory paths. Companion: [threading-and-rendezvous.md](th
 translation/rotation/opacity, draws through the passed `IfDraw2D`, updates bounding rects, then calls
 `renderChildren(...)` and `nodeRenderingDone(...)`.
 
+**Layout passes are pure (docs/scenegraph-layout-passes.md).** `Node.layoutNode` /
+`Node.paintNode` wrap `renderNode`, setting `sgRoot.renderPass`; `Node.isPaintPass(draw2D)` is the
+gate. A `renderNode` call with no `draw2D` (a bounding-rect refresh, `measureUnsizedChildren`)
+must be **idempotent and clock-free**: no `Date.now`/`performance.now` reads (use `sgClock`, which
+tests replace via `setSource`), no field writes that aren't a pure function of layout state, no
+`sgRoot.makeDirty()`, no popups/focus moves/postMessage. Time-driven nodes (BusySpinner,
+ScrollingLabel, TextEditBox, TrickPlayBar, Video, DynamicKeyGrid, TimeGrid) advance state only
+under `isPaintPass` and render stored state otherwise — regressions: `LayoutPurity.test.js`,
+`BusySpinnerClock.test.js`, `ScrollingLabelClock.test.js`. This purity is what makes **pruned
+refreshes** sound: `refreshLayoutFromRoot` skips subtrees whose `subtreeStale` is false under an
+unchanged origin/angle/opacity context (`Group.skipSettledLayout`). Invariants: a skipped child
+still hands its cached rect up (`updateParentRects`), the stale mark is cleared **before** a
+node's pass (writes made inside it must survive), `Group.isDirty = true` routes through a setter
+that also stale-marks, and `ContentNode.makeDirty` hops the field boundary to stale-mark the
+consuming node (content trees aren't parented into the render tree). Regressions:
+`LayoutPruning.test.js`, `PruneVerify.test.js`, and the `BRS_PRUNE_VERIFY=1` CLI runs in
+`test/cli/cli.test.js`. Debug toggles: `BRS_PRUNE_VERIFY=1` (diff pruned vs full every refresh),
+`BRS_PRUNE_DISABLE=1` (turn pruning off). LayoutGroup converges to a fixed point on layout passes
+(`MAX_LAYOUT_PASSES` is a divergence backstop only) — regression: `LayoutConvergence.test.js`.
+
 **Visibility vs. measurement:** plain containers (`Group`, `LayoutGroup`, `MaskGroup`) do their
 invisible early-return through `Group.skipRender(draw2D)`, which lets a **measurement pass** (a render
 with no `draw2D` — `getBoundingRect`'s refresh) traverse them when invisible: on Roku, layout/bounding

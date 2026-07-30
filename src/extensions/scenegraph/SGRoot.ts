@@ -236,6 +236,24 @@ export class SGRoot {
         this._renderPass = value;
     }
 
+    /**
+     * True while a full-tree layout refresh may skip settled subtrees (`Node.subtreeStale` false
+     * and unchanged origin/angle/opacity). Enabled only around `refreshLayoutFromRoot`'s pass —
+     * scoped subtree measurements (the mid-render fallback, `measureUnsizedChildren`) never prune.
+     * Sound only because layout passes are pure (see docs/scenegraph-layout-passes.md).
+     */
+    pruneLayout: boolean = false;
+
+    /** Set by BRS_PRUNE_DISABLE: turns pruned layout refreshes off entirely (field debugging). */
+    pruneDisabled: boolean = false;
+
+    /**
+     * When true, every full-tree layout refresh runs twice — pruned then unpruned — and diffs
+     * every rect in the scene, reporting divergences to stderr (`[prune-verify]` lines). Enabled
+     * by the BRS_PRUNE_VERIFY env var (node builds) or programmatically (browser/tests).
+     */
+    pruneVerify: boolean = false;
+
     private audioFlags: number = -1;
     private audioIndex: number = -1;
     private audioDuration: number = -1;
@@ -259,6 +277,13 @@ export class SGRoot {
         // Default resolution and auto substitution parameters
         this._resolution = "HD";
         this._autoSub = { search: "", replace: "" };
+        // Pruned-layout debug toggles from the environment (node builds; browsers/tests set the
+        // fields programmatically). Runtime-guarded rather than ifdef'd — the same bundle also
+        // loads in Web Workers, where `process` does not exist.
+        if (typeof process !== "undefined" && process.env) {
+            this.pruneVerify = process.env.BRS_PRUNE_VERIFY === "1";
+            this.pruneDisabled = process.env.BRS_PRUNE_DISABLE === "1";
+        }
     }
 
     /**

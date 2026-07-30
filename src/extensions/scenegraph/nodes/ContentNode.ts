@@ -380,13 +380,23 @@ export class ContentNode extends Node {
      */
     protected makeDirty() {
         this.changed = true;
+        this.markSubtreeStale();
         // Propagate the dirty flag up to the content root so an ancestor ArrayGrid/TimeGrid
         // re-parses its model when a descendant ContentNode changes. This must happen on any
         // thread — in particular for mutations applied on the render thread on behalf of a Task
         // (rendezvous), where inTaskThread() is false but the parent grid still needs to refresh.
-        if (this.parent instanceof Node) {
-            const root = this.findRootNode();
-            root.changed = true;
+        // A content tree hangs off a FIELD (it is not parented into the render tree), so the
+        // stale walk above never reaches the render node consuming it — hop through the root's
+        // parent fields to their containers (the grid/label holding the content) so a pruned
+        // layout refresh re-descends into that consumer.
+        const root = this.parent instanceof Node ? this.findRootNode() : this;
+        root.changed = true;
+        // parentFields may be undefined here: the base Node constructor writes fields
+        // (setValueSilent → makeDirty) before this subclass's field initializers run.
+        if (root instanceof ContentNode && root.parentFields) {
+            for (const field of root.parentFields) {
+                field.getContainer()?.markSubtreeStale();
+            }
         }
         sgRoot.makeDirty();
     }
