@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="CrashTask" extends="Task">
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.top.functionName = "boom"
+    end sub
+
+    sub boom()
+        print "TASK CRASHING"
+        broken = invalid
+        print broken.nope
+        print "TASK NOT REACHED"
+    end sub
+    ]]></script>
+</component>
