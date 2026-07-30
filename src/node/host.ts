@@ -118,7 +118,7 @@ export async function executeApp(payload: AppPayload, options?: ExecuteAppOption
         registryBuffer.store(Object.fromEntries(payload.device.registry ?? new Map()));
         payload.device.registryBuffer = registryBuffer.getBuffer();
     }
-    initTaskModule(sharedBuffer, workerEntry, notifyAll);
+    initTaskModule(sharedBuffer, workerEntry, taskNotify);
     currentPayload = payload;
     return new Promise<AppResult>((resolve) => {
         finishApp = (result: AppResult) => {
@@ -159,6 +159,29 @@ export function terminateApp(reason: AppExitReason = AppExitReason.UserNav, time
         finishApp?.({ exitReason: reason });
     }, timeoutMs);
     timer.unref();
+}
+
+/**
+ * Relays task-broker events to host subscribers, escalating a dead task thread to app termination.
+ *
+ * A task thread that posts `end,<reason>` is gone — an uncaught error, or unwinding on a termination
+ * command — and on a device the app goes with it: an uncaught error in a Task thread terminates the
+ * app, and exiting the Micro Debugger a task crash opened ends it too. Only the *first* such report
+ * acts, so a termination already in flight (home key, poweroff) keeps its own reason rather than
+ * having it overwritten by every task unwinding behind it.
+ * @param event Task broker event name.
+ * @param data Event payload; the exit reason string for `appEnd`.
+ */
+function taskNotify(event: string, data?: any) {
+    if (event === "appEnd") {
+        const reason = getExitReason(String(data));
+        notifyAll("debug", `[host] Task thread ended the app: ${reason}`);
+        if (!terminateReason) {
+            terminateApp(reason);
+        }
+        return;
+    }
+    notifyAll(event, data);
 }
 
 /**

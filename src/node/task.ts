@@ -242,6 +242,16 @@ function taskCallback(data: any) {
     } else if (isNDKStart(data)) {
         notifyHost("ndkStart", data);
     } else if (typeof data === "string") {
+        // A task thread only posts `end,<reason>` when it dies: an uncaught error, or unwinding on a
+        // termination command. Either way the app goes with it on a device (an uncaught error in a
+        // Task thread terminates the app, and its own `exit` from the Micro Debugger ends it too), so
+        // the reason is escalated to the host instead of being surfaced as plain output. The browser
+        // API already behaves this way — there a task worker's string lands in the same
+        // `handleStringMessage` as the app worker's, whose `end,` calls `terminate()`.
+        if (data.startsWith("end,")) {
+            notifyHost("appEnd", data.slice(4).trimEnd());
+            return;
+        }
         notifyHost("message", data);
     } else if (typeof data === "object" && data !== null) {
         // Display/caption state and other component messages are host-level events in Node.

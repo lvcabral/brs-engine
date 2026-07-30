@@ -1067,6 +1067,36 @@ describe.concurrent("cli", () => {
         expect(lines).toContain("=== Task Pre-launch Events Repro Complete ===");
     }, 30000);
 
+    it("Terminates the app when a Task thread hits an uncaught error", async () => {
+        let command = ["node", brsCliPath, "-r task-crash-app", "source/main.brs", "-c 0"].join(" ");
+
+        // The crash makes the CLI exit non-zero, so the output comes off the rejection.
+        let stdout = "";
+        let stderr = "";
+        try {
+            ({ stdout, stderr } = await exec(command, {
+                cwd: path.join(__dirname, "resources"),
+            }));
+        } catch (err) {
+            stdout = err.stdout ?? "";
+            stderr = err.stderr ?? "";
+        }
+        // An uncaught error in a Task thread terminates the app on a device (device-verified), which
+        // is also what the engine does for the app thread and what the browser API already did for a
+        // task worker — a task's `end,` reaches the same handler as the app worker's. The Node host
+        // relayed it as plain output instead, so the app carried on running with a dead task thread.
+        const lines = stdout.split("\n").map((line) => line.trimEnd());
+        expect(lines).toContain("=== Task Crash Repro ===");
+        expect(lines).toContain("STATE: run");
+        expect(lines).toContain("TASK CRASHING");
+        expect(lines).not.toContain("TASK NOT REACHED");
+        expect(stdout + stderr).toContain("'Dot' Operator attempted with invalid BrightScript Component");
+        // The app is gone: its own completion print (after the render thread's wait loop) is never
+        // reached, and the run ends on the crash reason rather than a normal exit.
+        expect(lines).not.toContain("=== Task Crash Repro Complete ===");
+        expect(stdout).toContain("[EXIT_BRIGHTSCRIPT_CRASH]");
+    }, 30000);
+
     it("Notifies a Task's port when it mutates a ContentNode held by an observed field", async () => {
         let command = ["node", brsCliPath, "-r task-contentcache-app", "source/main.brs", "-c 0"].join(" ");
 
