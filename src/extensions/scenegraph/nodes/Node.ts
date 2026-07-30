@@ -2110,10 +2110,11 @@ export class Node extends RoSGNode implements BrsValue {
      * chain above it still is — an early exit would strand the write in a skipped subtree.
      */
     markSubtreeStale() {
-        let node: Node | undefined = this;
-        while (node) {
-            node.subtreeStale = true;
-            node = node.parent instanceof Node ? node.parent : undefined;
+        this.subtreeStale = true;
+        let ancestor = this.parent instanceof Node ? this.parent : undefined;
+        while (ancestor) {
+            ancestor.subtreeStale = true;
+            ancestor = ancestor.parent instanceof Node ? ancestor.parent : undefined;
         }
     }
 
