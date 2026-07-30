@@ -773,7 +773,7 @@ function handleStringMessage(message: string) {
         writeTerminalText(chalk.gray(msg.trimEnd()) + "\n");
     } else if (mType === "end" && msg.trimEnd() !== AppExitReason.UserNav) {
         process.exitCode = 1;
-    } else if (!["start", "command", "reset", "video", "audio", "syslog", "end"].includes(mType)) {
+    } else if (!["start", "command", "reset", "video", "audio", "sfx", "syslog", "end"].includes(mType)) {
         writeTerminalText(chalk.blueBright(message.trimEnd()) + "\n");
     }
 }
