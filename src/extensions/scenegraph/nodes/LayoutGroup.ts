@@ -32,6 +32,10 @@ export class LayoutGroup extends Group {
         { name: "addItemSpacingAfterChild", type: "boolean", value: "true" },
     ];
 
+    /** Divergence backstop for the layout-pass convergence loop; never reached by settling layouts. */
+    private static readonly MAX_LAYOUT_PASSES = 8;
+    /** @internal Passes the last layout call ran; exposed for convergence tests. */
+    lastPassCount = 0;
     private layoutDirty = true;
     private metricsUsedThisPass?: WeakMap<Node, LayoutMetrics>;
     private readonly childSizes = new WeakMap<Node, NodeSize>();
@@ -123,15 +127,21 @@ export class LayoutGroup extends Group {
 
         const addAfter = this.shouldAddSpacingAfterChild();
 
-        // On a measurement pass (no draw target — getBoundingRect's full-tree refresh and its
-        // single-subtree fallback both render with draw2D undefined), converge the layout in this one
-        // pass instead of deferring to the next frame. When a child's settled size differs from what
-        // applyLayout used (a wrapped Label laid out at a shorter height then rendered taller shifts
-        // its siblings), synchronizeChildMetrics re-dirties the layout; a one-shot boundingRect() query
-        // would otherwise read the pre-convergence size. A real frame draw (draw2D present) keeps
-        // maxPasses = 1, preserving its next-frame correction. Capped at 2 to terminate.
-        const maxPasses = draw2D === undefined && layoutChildren.length ? 2 : 1;
+        // On a layout/measurement pass (no draw target — getBoundingRect's full-tree refresh and
+        // its single-subtree fallback both render with draw2D undefined), converge the layout to a
+        // FIXED POINT in this one call instead of deferring to the next frame. When a child's
+        // settled size differs from what applyLayout used (a wrapped Label laid out at a shorter
+        // height then rendered taller shifts its siblings), synchronizeChildMetrics re-dirties the
+        // layout and the loop runs another pass; it exits only once a pass leaves the layout clean,
+        // so a one-shot boundingRect() query never reads a pre-convergence size. The former cap of
+        // 2 could exit while still dirty, returning rects that kept creeping on later refreshes.
+        // MAX_LAYOUT_PASSES is a divergence backstop, not the terminator — hitting it means child
+        // metrics oscillate (a bug to fix, not a state to paper over). A real frame draw (draw2D
+        // present) keeps a single pass, preserving its next-frame correction.
+        const maxPasses = draw2D === undefined && layoutChildren.length ? LayoutGroup.MAX_LAYOUT_PASSES : 1;
+        this.lastPassCount = 0;
         for (let pass = 0; pass < maxPasses; pass++) {
+            this.lastPassCount = pass + 1;
             this.metricsUsedThisPass = undefined;
             if (layoutChildren.length && this.layoutDirty) {
                 this.measureUnsizedChildren(layoutChildren, interpreter);
