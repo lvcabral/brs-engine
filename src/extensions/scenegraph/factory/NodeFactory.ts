@@ -719,31 +719,39 @@ function registerSerializedAddress(nodeMap: Map<string, Node>, source: any, node
  */
 function loadTaskData(interpreter: Interpreter, node: Node, taskData: TaskData) {
     let port: RoMessagePort | undefined;
-    // `m.global`/`m.top` are serialized first, so anything else in `m` that also references them
-    // (a script-scope cache, or a class instance that stored `GetGlobalAA().global` in a field)
-    // arrives as a `_circular_` stub pointing at their addresses. Seed the map with this thread's
-    // own instances so those stubs resolve to the live nodes instead of deserializing to invalid.
+    // Restore `m` in the order the payload was written. `serializeTaskM` emits `top` and `global`
+    // first and writes any node it has already emitted as a `_circular_` back-reference, so
+    // replaying that order is what makes those back-references resolve: every one of them points
+    // at a node an earlier entry has already rebuilt. Restoring the other entries first (as this
+    // did) turned every reference into a subtree of `top`/`global` into a forward reference with
+    // nothing to resolve against, and it deserialized to invalid.
     const nodeMap = new Map<string, Node>();
+    // `top`/`global` themselves are rebuilt by the caller, not by this pass — register the
+    // addresses they were serialized under so references to them resolve regardless of key order.
     registerSerializedAddress(nodeMap, taskData.m?.global, sgRoot.mGlobal);
     registerSerializedAddress(nodeMap, taskData.m?.top, node);
     if (taskData.m) {
         for (let [key, value] of Object.entries(taskData.m)) {
-            if (key === "global" || key === "top") {
-                // Ignore special fields to be set later
-                continue;
+            if (key === "global") {
+                restoreNodeFields(taskData.m.global, sgRoot.mGlobal, nodeMap);
+            } else if (key === "top") {
+                restoreNodeFields(taskData.m.top, node, nodeMap);
+            } else {
+                const brsValue = brsValueOf(value, undefined, nodeMap);
+                if (!port && brsValue instanceof RoMessagePort) {
+                    port = brsValue;
+                }
+                node.m.set(new BrsString(key), brsValue);
             }
-            const brsValue = brsValueOf(value, undefined, nodeMap);
-            if (!port && brsValue instanceof RoMessagePort) {
-                port = brsValue;
-            }
-            node.m.set(new BrsString(key), brsValue);
         }
-    }
-    if (taskData.m?.global) {
-        restoreNode(interpreter, taskData.m.global, sgRoot.mGlobal, port, nodeMap);
-    }
-    if (taskData.m?.top) {
-        restoreNode(interpreter, taskData.m.top, node, port, nodeMap);
+        // Observers are attached in a second pass: they need the task's message port, and that
+        // only turns up while restoring `m`'s other entries.
+        if (taskData.m.global) {
+            restoreNodeObservers(interpreter, taskData.m.global, sgRoot.mGlobal, port);
+        }
+        if (taskData.m.top) {
+            restoreNodeObservers(interpreter, taskData.m.top, node, port);
+        }
     }
     // Deliver events that were already queued on the task's ports before launch (a device task
     // sees them because its copied `m` references the same native port).
@@ -780,24 +788,20 @@ export function updateTypeDefHierarchy(typeDef: ComponentDefinition | undefined)
 }
 
 /**
- * Restores node fields from a serialized object.
- * Sets field values and reattaches field observers with message ports.
- * @param interpreter Interpreter instance for observer setup
+ * Restores a node's identity and field values from a serialized object.
+ *
+ * Split from observer restoration ({@link restoreNodeObservers}) so the fields can be rebuilt in
+ * payload order — the port the observers need is only discovered later.
  * @param source Serialized source object containing field values
  * @param node Node to restore fields into
- * @param port Optional message port for field observers
  * @param nodeMap Optional address map used to resolve circular references to already-known nodes
  */
-function restoreNode(
-    interpreter: Interpreter,
-    source: any,
-    node: Node,
-    port?: RoMessagePort,
-    nodeMap?: Map<string, Node>
-) {
-    const observedFields = source["_observed_"];
+function restoreNodeFields(source: any, node: Node, nodeMap?: Map<string, Node>) {
     node.setOwner(source["_owner_"] ?? sgRoot.threadId);
     node.setAddress(source["_address_"] ?? node.getAddress());
+    // Register under the address it was serialized with (which `setAddress` has just applied), so
+    // back-references to this node later in the payload resolve to it.
+    nodeMap?.set(node.getAddress(), node);
     for (let [key, value] of Object.entries(source)) {
         if (key.startsWith("_") && key.endsWith("_") && key.length > 2) {
             // Ignore serialization metadata fields
@@ -808,12 +812,29 @@ function restoreNode(
             postMessage(`debug,[thread:${sgRoot.threadId}] Restoring Node ${node.nodeSubtype} field "${key}"`);
         }
         node.setValueSilent(key, brsValue);
-        if (port && Array.isArray(observedFields)) {
-            const observed = observedFields.find((field: ObservedField) => field.name === key);
-            if (observed) {
-                const infoFields = observed.info ? brsValueOf(observed.info) : undefined;
-                node.addObserver(interpreter, "unscoped", new BrsString(key), port, infoFields);
-            }
+    }
+}
+
+/**
+ * Reattaches the field observers a serialized node carried, binding them to the task's port.
+ * @param interpreter Interpreter instance for observer setup
+ * @param source Serialized source object containing the observed-field list
+ * @param node Node to attach the observers to
+ * @param port Message port for the field observers; no-op when the task has none
+ */
+function restoreNodeObservers(interpreter: Interpreter, source: any, node: Node, port?: RoMessagePort) {
+    const observedFields = source["_observed_"];
+    if (!port || !Array.isArray(observedFields)) {
+        return;
+    }
+    for (const key of Object.keys(source)) {
+        if (key.startsWith("_") && key.endsWith("_") && key.length > 2) {
+            continue;
+        }
+        const observed = observedFields.find((field: ObservedField) => field.name === key);
+        if (observed) {
+            const infoFields = observed.info ? brsValueOf(observed.info) : undefined;
+            node.addObserver(interpreter, "unscoped", new BrsString(key), port, infoFields);
         }
     }
 }

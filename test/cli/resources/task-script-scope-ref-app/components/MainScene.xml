@@ -13,6 +13,9 @@
 
     sub onResult(event as object)
         print "TASK RESULT: "; event.getData()
+        ' The task wrote through its script-scope reference; the render thread holds the real
+        ' node, so the change is only visible here if that reference reached it.
+        print "RENDER SEES TITLE: "; m.task.payloadNode.title
         m.top.done = true
     end sub
     ]]></script>

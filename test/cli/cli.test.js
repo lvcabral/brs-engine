@@ -1208,15 +1208,24 @@ describe.concurrent("cli", () => {
         });
         // `m.global` and `m.top` are serialized before the rest of `m`, so any other entry holding
         // the same nodes (a cache, or a transpiled class instance that stored `GetGlobalAA().global`
-        // in a field) crosses as a `_circular_` stub. The task-side restore deserialized those with
-        // an empty address map, so every such reference came back `invalid` and the first dot access
-        // on it crashed the task thread.
+        // in a field) crosses as a `_circular_` back-reference. The task-side restore rebuilt `m`'s
+        // other entries *first*, so those references had nothing to resolve against: they came back
+        // `invalid` and the first dot access on one crashed the task thread.
         const lines = stdout.split("\n").map((line) => line.trimEnd());
         expect(lines).toContain("HELPER GLOBAL TYPE: roSGNode");
         expect(lines).toContain("HELPER TOP TYPE: roSGNode");
         expect(lines).toContain("HELPER GLOBAL VERSION: 10.9.0");
         expect(lines).toContain("HELPER TOP LABEL: grid");
+        // The same shape one level deeper — references to nodes *inside* the `m.top` subtree.
+        // Both must resolve to the one real node, not to a detached copy.
+        expect(lines).toContain("FIELD REF TYPE: roSGNode");
+        expect(lines).toContain("FIELD REF TITLE: payload-from-init");
+        expect(lines).toContain("FIELD REF SAME: true");
+        expect(lines).toContain("CHILD REF TYPE: roSGNode");
+        expect(lines).toContain("CHILD REF TITLE: child-from-init");
+        expect(lines).toContain("CHILD REF SAME: true");
         expect(lines).toContain("TASK RESULT: ok");
+        expect(lines).toContain("RENDER SEES TITLE: changed-in-task");
         expect(lines).toContain("=== Task Script Scope Ref Repro Complete ===");
     }, 30000);
 
