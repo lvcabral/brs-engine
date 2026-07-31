@@ -276,3 +276,37 @@ crash). So `Node.setNodeParent` (the single chokepoint all append paths call) **
 attach**: if live `sgRoot.focused` is within the newly parented subtree, it re-points `focusedChild` from
 the root down. Each attach extends the chain one level. Don't remove that repair as "redundant".
 Regression: `test/extensions/scenegraph/FocusBeforeAttach.test.js`.
+
+### A focus transaction commits before it notifies, and a focus-loss observer can't re-grab
+
+Two rules, both **device-measured** on a Roku Express 4K+ (OS 15.3) with `out/focus-probe*`. They exist
+because an app that re-grabs focus from its own `focusedChild` observer (sgRouter's outlet, and the same
+`OnFocusedChildChange` shape in several media apps) behaves on a device and used to corrupt the chain here.
+
+1. **Commit, then notify.** `setNodeFocus` stages *every* `focusedChild` write (`stageFocusedChild`) and
+   dispatches the observers only afterwards (`notifyStagedFocus`), losing subtree first. An observer must
+   therefore read the **finished** chain. Writing-and-notifying node by node — what the code did before —
+   let the losing subtree's observer see a half-rewritten chain (`sceneFC` still pointing at the old
+   subtree). Dispatch is still **synchronous**, inside the `setFocus` call: Roku commits atomically, it
+   does not defer these to the message loop. (Init-time focus emissions are the one exception — see
+   `pendingInitFocusFields` above.)
+
+2. **A focus request raised from a focus-LOSS notification is dropped** (`isFocusRequestDropped`, keyed
+   off the `focusNotifyOwners` stack). A Roku honors `setFocus` from a `focusedChild` observer only while
+   the observed node is still in the focus chain — the "forward focus" pattern where a container that
+   just *gained* focus hands it to an inner widget. The mirror case, a node re-grabbing focus as it
+   *loses* it, leaves the chain and the remote with the node the in-flight transaction focused.
+
+   Don't "simplify" this to dropping all nested focus changes: forward focus is how every custom dialog
+   highlights its buttons (`dialog-buttongroup-focus-app`). And don't drop only the chain writes while
+   letting `sgRoot.focused` move — that hybrid (live focus on one node, `focusedChild` on another) is the
+   original bug: the remote drove the old subtree while the chain said otherwise, so a key handler
+   returned `true` (playing the "handled" navigation sound) without focus visibly moving, and a
+   `scene.dialog` drew unfocused with up/down/OK falling through to the scene behind it.
+
+   **Deliberately not modeled:** on a device the node that lost the race keeps reporting `hasFocus() =
+   true` until the next focus transaction, so two nodes report focus at once. Reproducing that would make
+   both render focused. We report `hasFocus()` only for the live focus.
+
+   Regression: `focus-steal-app` in `test/cli/`, which must stay green alongside
+   `dialog-buttongroup-focus-app` and `init-focus-observer-app`.

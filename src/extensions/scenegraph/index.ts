@@ -31,6 +31,7 @@ import { loadComponentLibrary } from "./parser/ComponentLibrary";
 import { sgRoot } from "./SGRoot";
 import { Task } from "./nodes/Task";
 import { Field } from "./nodes/Field";
+import { Node } from "./nodes/Node";
 import { initializeTask, createNode, updateTypeDefHierarchy, getNodeType } from "./factory/NodeFactory";
 import { RoSGScreen } from "./components/RoSGScreen";
 import { getRenderThreadQueue } from "./components/RoRenderThreadQueue";
@@ -57,6 +58,7 @@ export class BrightScriptExtension implements BrsExtension {
     onInit() {
         // Reset per-thread deferred observer-dispatch state so nothing leaks across app runs.
         Field.resetDispatch();
+        Node.resetFocusDispatch();
         // Mirrors Roku's `logrendezvous`. Set per thread (the render thread and every Task worker
         // build their own extension instance), so a trace covers both ends of a rendezvous.
         sgRoot.logRendezvous = BrsDevice.deviceInfo.logRendezvous === true;

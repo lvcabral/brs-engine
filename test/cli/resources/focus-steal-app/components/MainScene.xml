@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Models the sgRouter/JellyRock shape: two SIBLING subtrees under the Scene (an "outlet" holding
+    the content, an "overhang" holding the top menu), where the outlet observes its own
+    `focusedChild` and re-grabs focus whenever focus leaves it.
+
+    Device-measured on a Roku Express 4K+ (OS 15.3) with the focus-probe apps:
+
+    1. The whole focus transaction is COMMITTED before any focusedChild observer runs, so an
+       observer reads the finished chain - never a half-rewritten one. Before the fix the outlet's
+       loss observer still saw `sceneFC=outlet` while focus had already moved to the overhang.
+
+    2. A `setFocus` raised from a focus-LOSS notification is IGNORED: the chain and the remote stay
+       with the node the in-flight transaction focused. Before the fix the re-grab won `sgRoot.focused`
+       while the outer transaction went on to write its own chain, leaving live focus and
+       `focusedChild` pointing at different nodes - the app kept the remote on the grid while the
+       chain said "tab bar", so the first UP press played the nav sound without moving focus (and a
+       dialog drew unfocused, with up/down/OK falling through to the scene behind it).
+
+    3. The mirror case must keep working: a container that just GAINED focus may hand it onward from
+       its own focusedChild observer (the "forward focus" pattern every custom dialog uses).
+-->
+<component name="MainScene" extends="Scene">
+    <interface>
+        <function name="runScenarios" />
+    </interface>
+    <children>
+        <Group id="outlet">
+            <Group id="page">
+                <Rectangle id="gridA" width="300" height="200" focusable="true" />
+                <Rectangle id="gridB" width="300" height="200" focusable="true" />
+            </Group>
+        </Group>
+        <Group id="overhang">
+            <Rectangle id="menuA" width="300" height="80" focusable="true" />
+            <Rectangle id="menuB" width="300" height="80" focusable="true" />
+        </Group>
+    </children>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.stealArmed = false
+        m.forwardArmed = false
+
+        m.outlet = m.top.findNode("outlet")
+        m.page = m.top.findNode("page")
+        m.gridA = m.top.findNode("gridA")
+        m.gridB = m.top.findNode("gridB")
+        m.overhang = m.top.findNode("overhang")
+        m.menuA = m.top.findNode("menuA")
+        m.menuB = m.top.findNode("menuB")
+
+        m.outlet.observeField("focusedChild", "onOutletFocus")
+        m.overhang.observeField("focusedChild", "onOverhangFocus")
+    end sub
+
+    function fcId(node as object) as string
+        fc = node.focusedChild
+        if fc = invalid then return "invalid"
+        return fc.id
+    end function
+
+    sub onOutletFocus()
+        if m.outlet.isInFocusChain() then return
+        ' The outlet just LOST focus. Report the chain the observer can see: on a device the whole
+        ' transaction is already committed by now.
+        print "  outlet lost focus: sceneFC = "; fcId(m.top); ", overhangFC = "; fcId(m.overhang)
+        if m.stealArmed
+            m.stealArmed = false
+            m.gridA.setFocus(true)
+        end if
+    end sub
+
+    sub onOverhangFocus()
+        if not m.overhang.isInFocusChain() then return
+        if m.forwardArmed
+            m.forwardArmed = false
+            ' Forward focus onward from the container that just gained it.
+            m.menuB.setFocus(true)
+        end if
+    end sub
+
+    sub runScenarios()
+        m.gridA.setFocus(true)
+
+        ' 1. Backwards steal from the loss observer: ignored.
+        m.stealArmed = true
+        m.menuA.setFocus(true)
+        print "after steal: menuA = "; m.menuA.hasFocus(); ", gridA = "; m.gridA.hasFocus()
+        print "after steal: sceneFC = "; fcId(m.top); ", outletFC = "; fcId(m.outlet); ", overhangFC = "; fcId(m.overhang)
+
+        ' 2. Forward focus from the gain observer: honored.
+        m.gridA.setFocus(true)
+        m.forwardArmed = true
+        m.menuA.setFocus(true)
+        print "after forward: menuB = "; m.menuB.hasFocus(); ", overhangFC = "; fcId(m.overhang)
+
+        ' 3. A plain focus move still works after a dropped steal.
+        m.gridB.setFocus(true)
+        print "after recover: gridB = "; m.gridB.hasFocus(); ", pageFC = "; fcId(m.page); ", sceneFC = "; fcId(m.top)
+    end sub
+    ]]></script>
+</component>

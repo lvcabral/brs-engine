@@ -1327,6 +1327,37 @@ describe.concurrent("cli", () => {
         ]);
     }, 30000);
 
+    it("Ignores a focus re-grab raised from a focus-loss observer, but honors a forward one", async () => {
+        let command = ["node", brsCliPath, "-r focus-steal-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // Repro of the sgRouter/JellyRock shape, pinned against a Roku Express 4K+ (OS 15.3) capture
+        // from the focus-probe apps. Two invariants, both device-measured:
+        //   1. A focusedChild observer reads the COMMITTED chain - the whole focus transaction lands
+        //      before any notification goes out ("outlet lost focus" already sees sceneFC = overhang).
+        //   2. A setFocus raised from a focus-LOSS notification is dropped, so the chain and the
+        //      remote stay with the node the in-flight transaction focused; the mirror-image FORWARD
+        //      case (a container handing focus onward after gaining it) is still honored.
+        // Before the fix the re-grab won live focus while the outer transaction wrote its own chain,
+        // so sgRoot.focused and focusedChild disagreed: the app kept the remote on the grid while the
+        // chain said "menu".
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "=== Focus Steal Repro ===",
+            "  outlet lost focus: sceneFC = overhang, overhangFC = menuA",
+            "after steal: menuA = true, gridA = false",
+            "after steal: sceneFC = overhang, outletFC = invalid, overhangFC = menuA",
+            "  outlet lost focus: sceneFC = overhang, overhangFC = menuA",
+            "after forward: menuB = true, overhangFC = menuB",
+            "after recover: gridB = true, pageFC = gridB, sceneFC = outlet",
+            "=== Focus Steal Repro Complete ===",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 30000);
+
     it("ButtonGroup leaves custom (non-Button) children unmanaged", async () => {
         let command = ["node", brsCliPath, "-r buttongroup-custom-children-app", "source/main.brs", "-c 0"].join(" ");
 
