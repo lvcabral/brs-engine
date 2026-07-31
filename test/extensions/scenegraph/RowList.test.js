@@ -555,4 +555,27 @@ describe("RowList key handling", () => {
         expect(item0.getValueJS("itemHasFocus")).toBe(true);
         expect(item0.getValueJS("rowListHasFocus")).toBe(true);
     });
+
+    test("a focused list with no content does not consume (or crash on) directional keys", () => {
+        // Regression: pressing left/right on a focused RowList whose content is empty threw
+        // "Cannot read properties of undefined (reading 'getNodeChildren')" — handleLeftRight looked up
+        // this.content[focusIndex] (undefined, because the content view is empty while the focus cursor
+        // still reads 0) and passed it straight to getContentChildren. The exception escaped to the
+        // message loop and killed the app. A real device just leaves the key unhandled so it bubbles to
+        // the parent (which is how an empty screen still navigates back to its menu).
+        // Both empty shapes: content never assigned, and an assigned-but-empty tree (the app loaded an
+        // empty result set — e.g. a favorites screen with no entries).
+        const unassigned = SGNodeFactory.createNode("RowList");
+        const emptyTree = SGNodeFactory.createNode("RowList");
+        emptyTree.setValue("content", buildContent([]));
+
+        for (const list of [unassigned, emptyTree]) {
+            list.setNodeFocus(true);
+            for (const key of ["left", "right", "up", "down", "rewind", "fastforward", "OK"]) {
+                expect(list.handleKey(key, true)).toBe(false);
+                expect(list.handleKey(key, false)).toBe(false);
+            }
+            list.setNodeFocus(false);
+        }
+    });
 });
