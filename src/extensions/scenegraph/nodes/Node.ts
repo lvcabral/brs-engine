@@ -140,6 +140,23 @@ export class Node extends RoSGNode implements BrsValue {
      * must survive for the next refresh. Starts true so everything lays out on first pass.
      */
     subtreeStale: boolean = true;
+    /**
+     * True when this node or anything below it was WRITTEN since its subtree last completed any
+     * layout pass — a full one or a scoped mid-render measurement. Set alongside `subtreeStale` by
+     * `markSubtreeStale()`, but cleared independently, because the two answer different questions:
+     *
+     * - `subtreeStale` — "may a pruned full refresh skip this subtree?" A scoped measurement at
+     *   origin [0,0] must LEAVE it set (`markSubtreeStaleDeep`), since it clobbered the subtree's
+     *   `rectToScene` with origin-less values that only a full refresh can re-establish.
+     * - `measureStale` — "would re-measuring this subtree produce a different size?" Sizes are
+     *   translation-invariant, so the scoped measurement fully answers it and CLEARS this flag.
+     *
+     * Sharing one flag forced a bad trade: keyed on `subtreeStale`, every repeat mid-render query
+     * re-rendered the subtree (the deep mark it just set made itself look stale again); keyed on a
+     * degenerate rect alone, a repeat query returned a stale cached size after the app changed
+     * something. This flag lets a changed subtree re-measure while an unchanged repeat hits the cache.
+     */
+    measureStale: boolean = true;
 
     /** Node bounds in local coordinates. */
     rectLocal: Rect = { x: 0, y: 0, width: 0, height: 0 };
@@ -1090,15 +1107,25 @@ export class Node extends RoSGNode implements BrsValue {
             interpreter &&
             sgRoot.rendering &&
             !sgRoot.measuring &&
-            (this.rectLocal.width <= 0 || this.rectLocal.height <= 0)
+            (this.rectLocal.width <= 0 || this.rectLocal.height <= 0 || this.measureStale)
         ) {
-            // Mid-render query on a node this pass hasn't laid out yet (its local rect is degenerate).
+            // Mid-render query on a node this pass hasn't laid out yet (its local rect is degenerate),
+            // or one whose subtree was written since its last measurement (`measureStale`).
             // A full refresh is unavailable (it would re-enter the owning grid's item creation and
             // recurse), so render just this node's own subtree to populate its rects. Either dimension
             // zero signals "not measured" — a label first measured with empty text caches width 0 but
             // a non-zero line height, so requiring both zero would skip the refresh and return a stale
             // width. Measuring at origin [0,0] is fine: width/height are translation-invariant and the
             // true origin is recomputed when the pass reaches the node. `measuring` bounds nested queries.
+            //
+            // `measureStale` is what makes REPEATED mid-render queries correct. A degenerate-rect test
+            // alone measures only the FIRST query of a render: once a rect is cached, every later query
+            // in that same render returns it verbatim, even after the app changed something. Apps size a
+            // background from a measured child in exactly that shape — set an icon, measure, set the
+            // text, measure again — and the second measurement silently returned the pre-text size, so
+            // the background fit the icon alone and the text overflowed it. The mark is set by
+            // `makeDirty()` (every field write), so this re-measures only when something actually
+            // changed; it is cleared below, so an unchanged repeat query still hits the cache.
             //
             // The subtree render's updateParentRects would union this child into its parent's cached
             // bounds, but the parent hasn't been laid out this pass — unioning one child pollutes it
@@ -1130,6 +1157,11 @@ export class Node extends RoSGNode implements BrsValue {
                 // values; deep-mark it so the next pruned refresh re-descends and re-establishes
                 // in-tree rects instead of skipping the settled subtree.
                 this.markSubtreeStaleDeep();
+                // ...but the SIZES this pass just computed are current (width/height are
+                // translation-invariant), so clear the measurement mark that the deep mark above
+                // re-set. Without this, the flag the fallback keys on is left set by the very pass
+                // meant to satisfy it, and every repeat query re-renders the subtree.
+                this.clearSubtreeMeasureStale();
             }
         }
         switch (type) {
@@ -2213,9 +2245,11 @@ export class Node extends RoSGNode implements BrsValue {
      */
     markSubtreeStale() {
         this.subtreeStale = true;
+        this.measureStale = true;
         let ancestor = this.parent instanceof Node ? this.parent : undefined;
         while (ancestor) {
             ancestor.subtreeStale = true;
+            ancestor.measureStale = true;
             ancestor = ancestor.parent instanceof Node ? ancestor.parent : undefined;
         }
     }
@@ -2235,6 +2269,26 @@ export class Node extends RoSGNode implements BrsValue {
         while (stack.length > 0) {
             const node = stack.pop()!;
             node.subtreeStale = true;
+            for (const child of node.children) {
+                if (child instanceof Node) {
+                    stack.push(child);
+                }
+            }
+        }
+    }
+
+    /**
+     * Clears `measureStale` on this node and every descendant after a scoped measurement pass
+     * computed their sizes. Only the sizes are guaranteed current — `subtreeStale` deliberately
+     * stays set, because the pass ran at origin [0,0] and left the subtree's scene-space origins
+     * wrong for anything but a full refresh. Ancestors are NOT cleared: they were not measured, so
+     * a later query on one must still re-measure to pick this subtree's new size up.
+     */
+    private clearSubtreeMeasureStale() {
+        const stack: Node[] = [this];
+        while (stack.length > 0) {
+            const node = stack.pop()!;
+            node.measureStale = false;
             for (const child of node.children) {
                 if (child instanceof Node) {
                     stack.push(child);

@@ -181,6 +181,12 @@ describe("ancestorSubBoundingRect", () => {
         grid.rectToParent = { x: 10, y: 20, width: 438, height: 800 };
         grid.rectLocal = { x: 0, y: 0, width: 438, height: 800 };
         grid.rectToScene = { x: 100, y: 200, width: 438, height: 800 };
+        // A real laid-out node also has `measureStale` clear; the tree above was assembled by field
+        // writes (which set it) and never rendered, so clear it too. Leaving it set makes the
+        // mid-render fallback re-measure these nodes at origin [0,0] and discard the injected rects.
+        for (const node of [scene, group, grid]) {
+            node.measureStale = false;
+        }
 
         const item1 = new Group([], "Group");
         item1.rectToScene = { x: 100, y: 284, width: 438, height: 72 };

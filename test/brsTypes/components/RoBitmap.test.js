@@ -87,4 +87,116 @@ describe("RoBitmap 9-patch parsing", () => {
             margins: { left: 0, right: 0, top: 0, bottom: 0 },
         });
     });
+
+    it("accepts semi-transparent marker pixels", () => {
+        // Authored `.9.png`s ship semi-transparent markers — a palette entry of rgba(0,0,0,128) is
+        // common, since some optimizers quantize the 1px border. Requiring fully opaque black made
+        // the scan miss those edges, so the insets came out wrong and the asset drew pinched at the
+        // ends with a bulging middle instead of a uniform bar.
+        const size = 10;
+        const canvas = createCanvas(size, size);
+        const ctx = canvas.getContext("2d");
+        ctx.fillStyle = "rgba(255, 255, 255, 1)";
+        ctx.fillRect(1, 1, size - 2, size - 2);
+        ctx.fillStyle = "rgba(0, 0, 0, 0.5)"; // 50% alpha markers, not opaque
+        ctx.fillRect(4, 0, 2, 1); // top stretch marker
+        ctx.fillRect(0, 4, 1, 2); // left stretch marker
+
+        const bitmap = new RoBitmap(canvas.toBuffer("image/png"), "pkg:/images/faint.9.png");
+
+        expect(bitmap.ninePatch).toBe(true);
+        // Content spans 1..8; marker at 4..5 => fixed insets of 3 on every side.
+        expect(bitmap.getPatchSizes()).toEqual({
+            left: 3,
+            right: 3,
+            top: 3,
+            bottom: 3,
+            margins: { left: 0, right: 0, top: 0, bottom: 0 },
+        });
+    });
+
+    it("ignores black corner pixels shared between two edge markers", () => {
+        // A marker only ever spans the content range, so a black CORNER belongs to no edge. Counting
+        // one dragged the marker's first/last index onto the border and yielded a NEGATIVE inset,
+        // which drawNinePatch turned into a center band overlapping the fixed corners. Assets that
+        // mark two adjacent edges commonly share the corner pixel, so this is not a malformed asset.
+        const size = 10;
+        const canvas = createCanvas(size, size);
+        const ctx = canvas.getContext("2d");
+        ctx.fillStyle = "rgba(255, 255, 255, 1)";
+        ctx.fillRect(1, 1, size - 2, size - 2);
+        ctx.fillStyle = "rgba(0, 0, 0, 1)";
+        ctx.fillRect(4, 0, 2, 1); // top stretch marker
+        ctx.fillRect(0, 4, 1, 2); // left stretch marker
+        // Bottom padding marker running into BOTH bottom corners, and a right marker into the
+        // bottom-right corner — the shared-corner case.
+        ctx.fillRect(0, size - 1, size, 1);
+        ctx.fillRect(size - 1, 1, 1, size - 1);
+
+        const bitmap = new RoBitmap(canvas.toBuffer("image/png"), "pkg:/images/corners.9.png");
+
+        expect(bitmap.ninePatch).toBe(true);
+        const sizes = bitmap.getPatchSizes();
+        // Every inset must be >= 0: a negative one is what produced the deformed render.
+        for (const key of ["left", "right", "top", "bottom"]) {
+            expect(sizes[key]).toBeGreaterThanOrEqual(0);
+        }
+        for (const key of ["left", "right", "top", "bottom"]) {
+            expect(sizes.margins[key]).toBeGreaterThanOrEqual(0);
+        }
+        expect(sizes).toEqual({
+            left: 3,
+            right: 3,
+            top: 3,
+            bottom: 3,
+            margins: { left: 0, right: 0, top: 0, bottom: 0 },
+        });
+    });
+
+    it("draws a wide bar from a small 9-patch at uniform height", () => {
+        // End-to-end shape of the deformed-progress-bar report: a small rounded-bar asset drawn much
+        // wider than its source must paint a CONSTANT height across its stretched middle. Wrong
+        // insets made the center band taller than the fixed ends — thin at the borders, bulging in
+        // the middle.
+        const size = 10;
+        const src = createCanvas(size, size);
+        const sctx = src.getContext("2d");
+        sctx.fillStyle = "rgba(255, 255, 255, 1)";
+        sctx.fillRect(1, 1, size - 2, size - 2);
+        sctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+        sctx.fillRect(4, 0, 2, 1);
+        sctx.fillRect(0, 4, 1, 2);
+        sctx.fillStyle = "rgba(0, 0, 0, 1)";
+        sctx.fillRect(0, size - 1, size, 1); // bottom marker through both corners
+        const bitmap = new RoBitmap(src.toBuffer("image/png"), "pkg:/images/bar.9.png");
+        expect(bitmap.ninePatch).toBe(true);
+
+        const { RoAssociativeArray, BrsString, Int32, BrsBoolean, IfDraw2D } = brs.types;
+        const target = new RoBitmap(
+            new RoAssociativeArray([
+                { name: new BrsString("width"), value: new Int32(60) },
+                { name: new BrsString("height"), value: new Int32(30) },
+                { name: new BrsString("alphaEnable"), value: BrsBoolean.True },
+            ])
+        );
+        const barHeight = 6;
+        new IfDraw2D(target).drawNinePatch(bitmap, { x: 0, y: 0, width: 40, height: barHeight }, undefined, 1);
+
+        const data = target.getContext().getImageData(0, 0, 60, 30).data;
+        const paintedHeight = (x) => {
+            let count = 0;
+            for (let y = 0; y < 30; y++) {
+                if (data[(x + y * 60) * 4 + 3] > 8) {
+                    count++;
+                }
+            }
+            return count;
+        };
+        // Sample across the stretched middle (past the 3px fixed caps on each end).
+        for (let x = 4; x < 36; x++) {
+            expect(paintedHeight(x)).toBe(barHeight);
+        }
+        // Nothing painted beyond the requested width.
+        expect(paintedHeight(41)).toBe(0);
+    });
 });

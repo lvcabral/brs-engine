@@ -4,12 +4,18 @@ const scenegraph = require("../../../packages/scenegraph/lib/brs-sg.node.js");
 const core = require("../../../packages/node/bin/brs.node.js");
 
 const { SGNodeFactory } = scenegraph;
-const { BrsDevice, BrsString, Float, RoMessagePort } = core;
+const { BrsDevice, BrsBoolean, BrsString, Float, Int32, IfDraw2D, RoAssociativeArray, RoBitmap, RoMessagePort } = core;
 
 /**
  * Minimal fake interpreter accepted by Node.addObserver for a port observer (mirrors HiddenFields.test.js).
  */
 const fakeInterpreter = { environment: {}, inSubEnv: () => {} };
+
+/** Mounts the common: volume (fonts, 9-patch images) that Poster loads its bitmaps from. */
+function mountCommonVolume() {
+    const commonZip = fs.readFileSync(path.join(__dirname, "../../../packages/scenegraph/assets/common.zip"));
+    BrsDevice.fileSystem.setup(commonZip.buffer, new ArrayBuffer(1024 * 1024), new ArrayBuffer(1024 * 1024));
+}
 
 /**
  * Poster load notifications: on a real device bitmapWidth/bitmapHeight read 0 until an image finishes
@@ -19,11 +25,7 @@ const fakeInterpreter = { environment: {}, inSubEnv: () => {} };
  * cross-fade pattern (observe bitmapWidth to start a fade-in when the next background finishes loading).
  */
 describe("Poster bitmap load notifications", () => {
-    beforeAll(() => {
-        // Poster loads images from the common: volume; mount it once.
-        const commonZip = fs.readFileSync(path.join(__dirname, "../../../packages/scenegraph/assets/common.zip"));
-        BrsDevice.fileSystem.setup(commonZip.buffer, new ArrayBuffer(1024 * 1024), new ArrayBuffer(1024 * 1024));
-    });
+    beforeAll(mountCommonVolume);
 
     test("bitmapWidth re-notifies on every load, even when the new image has identical dimensions", () => {
         const poster = SGNodeFactory.createNode("Poster");
@@ -49,5 +51,103 @@ describe("Poster bitmap load notifications", () => {
         poster.setValue("uri", new BrsString("common:/images/icon_options_off.png"));
         expect(poster.getValueJS("bitmapWidth")).toBe(firstWidth);
         expect(received.length).toBe(2);
+    });
+});
+
+/**
+ * A 9-patch's marker border is what declares which regions stretch (its fixed corners are blitted
+ * 1:1), so the Poster's width/height are authoritative and the SOURCE aspect ratio is meaningless.
+ * The aspect-preserving loadDisplayMode values must therefore not apply to a 9-patch. They used to:
+ * a pill sized from a measured label (a very common pattern — `background.width =
+ * label.boundingRect().width + padding`) whose asset is square then letterboxed down to a square the
+ * height of the rect, so every pill rendered at the same small size no matter how wide its text was,
+ * while boundingRect() still reported the assigned width (drawn and measured sizes disagreeing).
+ */
+describe("Poster 9-patch display modes", () => {
+    beforeAll(mountCommonVolume);
+
+    // A 75x75 9-patch (insets 11/10/12/12 — pinned in test/brsTypes/components/RoBitmap.test.js).
+    const ninePatchUri = "common:/images/inputField.9.png";
+    const plainUri = "common:/images/icon_options.png";
+
+    /** Renders `poster` onto a scratch canvas, capturing the rects handed to the draw primitives. */
+    function renderCapturing(poster) {
+        const target = new RoBitmap(
+            new RoAssociativeArray([
+                { name: new BrsString("width"), value: new Int32(400) },
+                { name: new BrsString("height"), value: new Int32(200) },
+                { name: new BrsString("alphaEnable"), value: BrsBoolean.True },
+            ])
+        );
+        const draw2D = new IfDraw2D(target);
+        const ninePatchRects = [];
+        const croppedRects = [];
+        const drawNinePatch = draw2D.drawNinePatch.bind(draw2D);
+        draw2D.drawNinePatch = (bitmap, rect, rgba, opacity) => {
+            ninePatchRects.push({ ...rect });
+            return drawNinePatch(bitmap, rect, rgba, opacity);
+        };
+        const doDrawCroppedBitmap = draw2D.doDrawCroppedBitmap.bind(draw2D);
+        draw2D.doDrawCroppedBitmap = (bitmap, source, dest, rgba, opacity) => {
+            croppedRects.push({ ...dest });
+            return doDrawCroppedBitmap(bitmap, source, dest, rgba, opacity);
+        };
+        const scaledRects = [];
+        const doDrawScaledObject = draw2D.doDrawScaledObject.bind(draw2D);
+        draw2D.doDrawScaledObject = (x, y, scaleX, scaleY, bitmap, rgba, opacity) => {
+            scaledRects.push({ x, y, width: scaleX * bitmap.width, height: scaleY * bitmap.height });
+            return doDrawScaledObject(x, y, scaleX, scaleY, bitmap, rgba, opacity);
+        };
+        poster.renderNode(fakeInterpreter, [0, 0], 0, 1, draw2D);
+        return { ninePatchRects, croppedRects, scaledRects };
+    }
+
+    /** A Poster sized like a text pill: much wider than tall, from a square-ish source asset. */
+    function createPillPoster(uri, displayMode) {
+        const poster = SGNodeFactory.createNode("Poster");
+        poster.setValue("loadDisplayMode", new BrsString(displayMode));
+        poster.setValue("width", new Float(200));
+        poster.setValue("height", new Float(40));
+        poster.setValue("uri", new BrsString(uri));
+        expect(poster.getValueJS("loadStatus")).toBe("ready");
+        return poster;
+    }
+
+    test("scaleToFit stretches a 9-patch to the full assigned rect instead of letterboxing it", () => {
+        const poster = createPillPoster(ninePatchUri, "scaleToFit");
+        const { ninePatchRects, croppedRects } = renderCapturing(poster);
+
+        expect(croppedRects).toEqual([]);
+        // Letterboxing a 75x75 source into 200x40 would give a 40x40 square centered at x=80.
+        expect(ninePatchRects).toEqual([{ x: 0, y: 0, width: 200, height: 40 }]);
+    });
+
+    test("scaleToZoom draws a 9-patch through drawNinePatch, uncropped", () => {
+        const poster = createPillPoster(ninePatchUri, "scaleToZoom");
+        const { ninePatchRects, croppedRects } = renderCapturing(poster);
+
+        // Cropping would slice through the marker border and the fixed corners.
+        expect(croppedRects).toEqual([]);
+        expect(ninePatchRects).toEqual([{ x: 0, y: 0, width: 200, height: 40 }]);
+    });
+
+    test("the drawn rect matches the reported bounding rect", () => {
+        const poster = createPillPoster(ninePatchUri, "scaleToFit");
+        renderCapturing(poster);
+
+        expect(poster.rectLocal).toEqual({ x: 0, y: 0, width: 200, height: 40 });
+        expect(poster.rectToParent).toEqual({ x: 0, y: 0, width: 200, height: 40 });
+    });
+
+    test("a plain (non 9-patch) bitmap still letterboxes under scaleToFit", () => {
+        const poster = createPillPoster(plainUri, "scaleToFit");
+        const { ninePatchRects, scaledRects } = renderCapturing(poster);
+
+        expect(ninePatchRects).toEqual([]);
+        expect(scaledRects.length).toBe(1);
+        // A square source pillarboxed into 200x40: 40x40, centered horizontally.
+        expect(scaledRects[0].width).toBeCloseTo(40);
+        expect(scaledRects[0].height).toBeCloseTo(40);
+        expect(scaledRects[0].x).toBeCloseTo(80);
     });
 });

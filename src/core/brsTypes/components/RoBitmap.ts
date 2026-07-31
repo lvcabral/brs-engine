@@ -352,16 +352,30 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
 
         const isBlack = (x: number, y: number) => {
             const i = (x + y * width) * 4;
-            // Marker pixels are opaque black (0, 0, 0, 255)
-            return data[i] === 0 && data[i + 1] === 0 && data[i + 2] === 0 && data[i + 3] === 255;
+            // Marker pixels are black and NOT transparent. The alpha test is `> 0`, not `=== 255`:
+            // real-world `.9.png`s ship semi-transparent markers (a palette entry of
+            // rgba(0,0,0,128) is common — some authoring/optimization tools quantize the 1px border
+            // that way), and requiring full opacity mis-parsed them. Because the scan then found the
+            // marker on only part of an edge — or missed an edge entirely — the insets came out wrong
+            // or negative, and `drawNinePatch` stretched the center band over the fixed corners: the
+            // asset rendered pinched at the ends and bulging in the middle instead of as a uniform bar.
+            // Only the fully transparent border pixels of an unmarked edge must read false.
+            return data[i] === 0 && data[i + 1] === 0 && data[i + 2] === 0 && data[i + 3] > 0;
         };
 
         // Scans an edge line and returns the [first, last] indices of its contiguous marker, or
         // undefined when no marker pixel is found.
+        //
+        // The four CORNER pixels are skipped (the scan runs 1..length-2). A marker only ever spans
+        // the content range, so a black corner belongs to no edge — but counting one dragged the
+        // marker's first/last index onto the border and produced a NEGATIVE inset (`before = -1` or
+        // `after = -1`), which `drawNinePatch` turned into an oversized center band overlapping the
+        // fixed corners. Assets that mark two adjacent edges commonly share the corner pixel between
+        // them, so this is not a malformed-asset case.
         const scanMarker = (length: number, sample: (i: number) => boolean) => {
             let first = -1;
             let last = -1;
-            for (let i = 0; i < length; i++) {
+            for (let i = 1; i < length - 1; i++) {
                 if (sample(i)) {
                     if (first < 0) {
                         first = i;
