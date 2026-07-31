@@ -422,13 +422,29 @@ export class LayoutGroup extends Group {
         this.setLayoutDimensions(maxWidth, maxHeight);
     }
 
+    /**
+     * The measured size of the laid-out run.
+     *
+     * A Roku LayoutGroup exposes **no** `width`/`height` fields — device-measured:
+     * `hasField("width")` returns false and `lg.width` reads `invalid`, while
+     * `localBoundingRect()` reports the real size. The engine used to publish its measurement as
+     * real node fields, which meant an app reading `lg.width` got a number here and `invalid` on
+     * hardware — a silent divergence that never surfaces as a crash.
+     *
+     * So the measurement lives here instead, surfaced through `getDimensions()`, which is what every
+     * internal measurement path actually reads (`chooseActiveRect`, `measureUnsizedChildren`, and a
+     * parent LayoutGroup measuring this one as a child).
+     */
+    private layoutWidth = 0;
+    private layoutHeight = 0;
+
+    getDimensions() {
+        return { width: this.layoutWidth, height: this.layoutHeight };
+    }
+
     private setLayoutDimensions(width: number, height: number) {
-        if (!this.nearlyEqual(this.getValueJS("width") as number, width)) {
-            super.setValueSilent("width", new Float(width));
-        }
-        if (!this.nearlyEqual(this.getValueJS("height") as number, height)) {
-            super.setValueSilent("height", new Float(height));
-        }
+        this.layoutWidth = width;
+        this.layoutHeight = height;
     }
 
     private synchronizeChildMetrics(children: Group[], direction: LayoutDirection) {

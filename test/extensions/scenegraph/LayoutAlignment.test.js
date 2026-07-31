@@ -58,6 +58,24 @@ function layoutCase(direction, fieldName, value, secondValue) {
     };
 }
 
+/** Appends the two probe children to an already-configured group, renders, and reports positions. */
+function buildAndRender(layout) {
+    for (const spec of [CHILD_A, CHILD_B]) {
+        const child = SGNodeFactory.createNode("Rectangle");
+        child.setValue("width", new Float(spec.width));
+        child.setValue("height", new Float(spec.height));
+        child.setValue("translation", vector(spec.translation));
+        layout.appendChildToParent(child);
+    }
+    layout.renderNode(fakeInterpreter, [0, 0], 0, 1);
+
+    const children = layout.getNodeChildren();
+    return {
+        first: children[0].getValueJS("translation"),
+        second: children[1].getValueJS("translation"),
+    };
+}
+
 function expectPositions(result, first, second) {
     expect(result.first[0]).toBeCloseTo(first[0]);
     expect(result.first[1]).toBeCloseTo(first[1]);
@@ -213,6 +231,54 @@ describe("LayoutGroup alignment fields match device enum behavior", () => {
 
         test("a rejected value written over a valid one also collapses", () => {
             expectPositions(layoutCase("horiz", "vertAlignment", "center", "bogus"), [0, 0], [0, 0]);
+        });
+    });
+
+    // Probe group R (Samples/layoutspacing-probe). The cross-axis collapse was extrapolated to these
+    // combinations before they were measured; hardware confirmed every one.
+    describe("rejected-value combinations", () => {
+        test("both alignments rejected still collapses (the cross-axis rule wins)", () => {
+            const layout = SGNodeFactory.createNode("LayoutGroup");
+            layout.setValue("layoutDirection", new BrsString("vert"));
+            layout.setValue("horizAlignment", new BrsString("bogus"));
+            layout.setValue("vertAlignment", new BrsString("bogus"));
+            expectPositions(buildAndRender(layout), [0, 0], [0, 0]);
+        });
+
+        test("a rejected layoutDirection resolves to horiz, making vertAlignment the cross field", () => {
+            // dir rejected → horizontal. A rejected vertAlignment is then the CROSS field → collapse.
+            const collapsing = SGNodeFactory.createNode("LayoutGroup");
+            collapsing.setValue("layoutDirection", new BrsString("bogus"));
+            collapsing.setValue("vertAlignment", new BrsString("bogus"));
+            expectPositions(buildAndRender(collapsing), [0, 0], [0, 0]);
+
+            // Whereas a rejected horizAlignment is the PRIMARY field there → plain left fallback.
+            const laying = SGNodeFactory.createNode("LayoutGroup");
+            laying.setValue("layoutDirection", new BrsString("bogus"));
+            laying.setValue("horizAlignment", new BrsString("bogus"));
+            laying.setValue("itemSpacings", vector([4]));
+            expectPositions(buildAndRender(laying), [0, 0], [34, 0]);
+        });
+    });
+
+    // Probe section F. Roku's Group/LayoutGroup declare no width/height, and the device confirms it:
+    // hasField("width") is false and lg.width reads invalid, while localBoundingRect() is correct.
+    describe("a LayoutGroup exposes no width/height fields", () => {
+        test("the fields are absent before and after layout, but getDimensions() reports the size", () => {
+            const layout = SGNodeFactory.createNode("LayoutGroup");
+            layout.setValue("layoutDirection", new BrsString("horiz"));
+            layout.setValue("itemSpacings", vector([4]));
+
+            expect(layout.hasNodeField("width")).toBe(false);
+            expect(layout.hasNodeField("height")).toBe(false);
+
+            buildAndRender(layout);
+
+            expect(layout.hasNodeField("width")).toBe(false);
+            expect(layout.hasNodeField("height")).toBe(false);
+            // 30 + 4 + 50 wide; tallest child is 16.
+            expect(layout.getDimensions().width).toBeCloseTo(84);
+            expect(layout.getDimensions().height).toBeCloseTo(16);
         });
     });
 

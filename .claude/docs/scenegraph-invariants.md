@@ -108,6 +108,42 @@ entries — zeroed expectations compared against real child sizes would re-dirty
 pass and burn the whole `MAX_LAYOUT_PASSES` budget. Regression:
 `test/extensions/scenegraph/LayoutAlignment.test.js`.
 
+## A LayoutGroup has NO `width`/`height` fields — read `getDimensions()`
+
+**Device-measured** (`Samples/layoutspacing-probe`): on a real LayoutGroup `hasField("width")` and
+`hasField("height")` are **false** and `lg.width` reads `invalid`, while `localBoundingRect()` reports
+the correct size. Roku declares neither field on `Group` or `LayoutGroup`.
+
+The engine used to publish its measurement by writing real `width`/`height` fields (`setValueSilent`
+creates a field that does not exist), so an app reading `lg.width` got a number here and `invalid` on
+hardware. The measurement now lives in the private `layoutWidth`/`layoutHeight` and is surfaced by
+overriding **`getDimensions()`**.
+
+So: **never read a LayoutGroup's size with `getValueJS("width")`** — use `getDimensions()`, which
+works for every node type (`Group.getDimensions` reads the fields; `LayoutGroup` overrides). This bit
+`StdDlgCustomItem.measureContentHeight`, which measured its children with the raw field and silently
+sized a dialog to 0 around a LayoutGroup once the fields went away. Regressions:
+`test/extensions/scenegraph/LayoutAlignment.test.js` (field absence) and the
+`StdDlgCustomItem` case in `StandardDialogNodes.test.js`.
+
+## `itemSpacings` — the last entry repeats, extra entries are dropped
+
+**Device-measured** (`Samples/layoutspacing-probe`, three children, all rows reproduced):
+
+- The **last entry repeats** for every gap past the end of the array, so `itemSpacings="[4]"` spaces
+  *every* gap by 4. Apps rely on this constantly; it was an assumption in `getSpacingValue` until the
+  probe confirmed it.
+- Entries **past the last gap are dropped** — `[4,9,15]` with three children lays out exactly like
+  `[4,9]` and produces the same group size. No trailing space is added, which matters because the
+  group's measured size is what parents lay out against.
+- Negative spacings **overlap** (not clamped); fractional spacings are used **as-is** (not rounded).
+- With `addItemSpacingAfterChild=false` the space is inserted **before** each child *including the
+  first*, so the whole run shifts by `spacings[0]` and the gaps come from the *following* entries
+  (`[4,9]` → run starts at 4, both gaps 9). A third entry is then genuinely used (`[4,9,15]` → gaps
+  9, 15) where the `true` case would have dropped it.
+
+Regression: `test/extensions/scenegraph/LayoutSpacing.test.js`.
+
 ## XML `<interface>` field redeclaration — system vs. XML-defined (`addFields`)
 
 When `addFields` builds a custom component's fields, a `<field>` whose name already exists is handled by
