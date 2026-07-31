@@ -1200,6 +1200,26 @@ describe.concurrent("cli", () => {
         expect(lines).toContain("=== Task Clear Node Repro Complete ===");
     }, 30000);
 
+    it("Keeps script-scope references to global/top alive across a Task launch", async () => {
+        let command = ["node", brsCliPath, "-r task-script-scope-ref-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // `m.global` and `m.top` are serialized before the rest of `m`, so any other entry holding
+        // the same nodes (a cache, or a transpiled class instance that stored `GetGlobalAA().global`
+        // in a field) crosses as a `_circular_` stub. The task-side restore deserialized those with
+        // an empty address map, so every such reference came back `invalid` and the first dot access
+        // on it crashed the task thread.
+        const lines = stdout.split("\n").map((line) => line.trimEnd());
+        expect(lines).toContain("HELPER GLOBAL TYPE: roSGNode");
+        expect(lines).toContain("HELPER TOP TYPE: roSGNode");
+        expect(lines).toContain("HELPER GLOBAL VERSION: 10.9.0");
+        expect(lines).toContain("HELPER TOP LABEL: grid");
+        expect(lines).toContain("TASK RESULT: ok");
+        expect(lines).toContain("=== Task Script Scope Ref Repro Complete ===");
+    }, 30000);
+
     it("Resolves an anonymous function observer registered by its toStr() name", async () => {
         let command = ["node", brsCliPath, "-r anon-observer-app", "source/main.brs", "-c 0"].join(" ");
 

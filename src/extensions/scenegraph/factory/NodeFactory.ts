@@ -696,6 +696,20 @@ export function initializeTask(interpreter: Interpreter, taskData: TaskData) {
 }
 
 /**
+ * Maps the address a node was serialized under to this thread's instance of it, so circular
+ * references elsewhere in the same payload resolve to the live node.
+ * @param nodeMap Address map being built.
+ * @param source Serialized node representation, if present.
+ * @param node This thread's instance of that node.
+ */
+function registerSerializedAddress(nodeMap: Map<string, Node>, source: any, node: Node | undefined) {
+    const address: unknown = source?.["_address_"];
+    if (node && typeof address === "string") {
+        nodeMap.set(address, node);
+    }
+}
+
+/**
  * Restores task fields and context from serialized task data.
  * Sets up the task's m pointer, global state, and scene reference.
  * Restores field observers and message port connections.
@@ -705,13 +719,20 @@ export function initializeTask(interpreter: Interpreter, taskData: TaskData) {
  */
 function loadTaskData(interpreter: Interpreter, node: Node, taskData: TaskData) {
     let port: RoMessagePort | undefined;
+    // `m.global`/`m.top` are serialized first, so anything else in `m` that also references them
+    // (a script-scope cache, or a class instance that stored `GetGlobalAA().global` in a field)
+    // arrives as a `_circular_` stub pointing at their addresses. Seed the map with this thread's
+    // own instances so those stubs resolve to the live nodes instead of deserializing to invalid.
+    const nodeMap = new Map<string, Node>();
+    registerSerializedAddress(nodeMap, taskData.m?.global, sgRoot.mGlobal);
+    registerSerializedAddress(nodeMap, taskData.m?.top, node);
     if (taskData.m) {
         for (let [key, value] of Object.entries(taskData.m)) {
             if (key === "global" || key === "top") {
                 // Ignore special fields to be set later
                 continue;
             }
-            const brsValue = brsValueOf(value);
+            const brsValue = brsValueOf(value, undefined, nodeMap);
             if (!port && brsValue instanceof RoMessagePort) {
                 port = brsValue;
             }
@@ -719,10 +740,10 @@ function loadTaskData(interpreter: Interpreter, node: Node, taskData: TaskData) 
         }
     }
     if (taskData.m?.global) {
-        restoreNode(interpreter, taskData.m.global, sgRoot.mGlobal, port);
+        restoreNode(interpreter, taskData.m.global, sgRoot.mGlobal, port, nodeMap);
     }
     if (taskData.m?.top) {
-        restoreNode(interpreter, taskData.m.top, node, port);
+        restoreNode(interpreter, taskData.m.top, node, port, nodeMap);
     }
     // Deliver events that were already queued on the task's ports before launch (a device task
     // sees them because its copied `m` references the same native port).
@@ -765,8 +786,15 @@ export function updateTypeDefHierarchy(typeDef: ComponentDefinition | undefined)
  * @param source Serialized source object containing field values
  * @param node Node to restore fields into
  * @param port Optional message port for field observers
+ * @param nodeMap Optional address map used to resolve circular references to already-known nodes
  */
-function restoreNode(interpreter: Interpreter, source: any, node: Node, port?: RoMessagePort) {
+function restoreNode(
+    interpreter: Interpreter,
+    source: any,
+    node: Node,
+    port?: RoMessagePort,
+    nodeMap?: Map<string, Node>
+) {
     const observedFields = source["_observed_"];
     node.setOwner(source["_owner_"] ?? sgRoot.threadId);
     node.setAddress(source["_address_"] ?? node.getAddress());
@@ -775,7 +803,7 @@ function restoreNode(interpreter: Interpreter, source: any, node: Node, port?: R
             // Ignore serialization metadata fields
             continue;
         }
-        const brsValue = brsValueOf(value);
+        const brsValue = brsValueOf(value, undefined, nodeMap);
         if (brsValue instanceof Node) {
             postMessage(`debug,[thread:${sgRoot.threadId}] Restoring Node ${node.nodeSubtype} field "${key}"`);
         }

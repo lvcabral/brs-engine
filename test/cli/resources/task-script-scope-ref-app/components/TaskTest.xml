@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="TaskTest" extends="Task">
+    <interface>
+        <field id="label" type="string" />
+        <field id="result" type="string" />
+    </interface>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.top.functionName = "runTask"
+        ' Mirrors what a transpiled BrighterScript class instance looks like in `m`: a plain AA
+        ' that cached the global/top nodes in its fields during construction. `m.global` and
+        ' `m.top` are serialized before it, so its copies of them cross as circular references.
+        m.helper = { global: GetGlobalAA().global, top: m.top }
+    end sub
+
+    sub runTask()
+        print "HELPER GLOBAL TYPE: "; type(m.helper.global)
+        print "HELPER TOP TYPE: "; type(m.helper.top)
+        print "HELPER GLOBAL VERSION: "; m.helper.global.server.version
+        print "HELPER TOP LABEL: "; m.helper.top.label
+        m.top.result = "ok"
+    end sub
+    ]]></script>
+</component>
