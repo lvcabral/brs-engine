@@ -4,7 +4,6 @@ import {
     BrsBoolean,
     BrsString,
     BrsType,
-    Float,
     RoArray,
     IfDraw2D,
     Rect,
