@@ -71,14 +71,14 @@ export class LayoutGroup extends Group {
 
     setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind) {
         const fieldName = index.toLowerCase();
-        super.setValue(index, this.canonicalizeDirection(fieldName, value), alwaysNotify, kind);
+        super.setValue(index, this.canonicalizeEnumField(fieldName, value), alwaysNotify, kind);
         if (this.isLayoutField(fieldName)) {
             this.layoutDirty = true;
         }
     }
 
     setValueSilent(fieldName: string, value: BrsType) {
-        super.setValueSilent(fieldName, this.canonicalizeDirection(fieldName.toLowerCase(), value));
+        super.setValueSilent(fieldName, this.canonicalizeEnumField(fieldName.toLowerCase(), value));
         if (this.isLayoutField(fieldName)) {
             this.layoutDirty = true;
         }
@@ -92,45 +92,66 @@ export class LayoutGroup extends Group {
      */
     protected registerInitializedFields(fields: AAMember[]) {
         super.registerInitializedFields(fields);
-        // Read the primitive: getValue hands back a boxed RoString for string fields.
-        const current = this.getValueJS("layoutDirection");
-        if (typeof current === "string") {
-            const canonical = this.canonicalDirectionValue(current);
+        for (const [mapKey, fieldName] of LayoutGroup.enumFieldNames) {
+            // Read the primitive: getValue hands back a boxed RoString for string fields.
+            const current = this.getValueJS(fieldName);
+            if (typeof current !== "string") {
+                continue;
+            }
+            const canonical = LayoutGroup.canonicalEnumValue(mapKey, current);
             if (canonical !== current) {
-                this.setValueSilent("layoutDirection", new BrsString(canonical));
+                this.setValueSilent(fieldName, new BrsString(canonical));
             }
         }
     }
 
     /**
-     * `layoutDirection` is an ENUM field on Roku, not free text. Device-measured behavior (all
-     * spellings below, identical for XML attributes and runtime writes):
+     * `layoutDirection`, `horizAlignment` and `vertAlignment` are ENUM fields on Roku, not free
+     * text. Device-measured (probe channels `Samples/layoutgroup-probe` and
+     * `Samples/layoutalign-probe`; every spelling tried on XML-attribute and runtime-write paths,
+     * three passes, all agreeing):
      *
-     * - `horiz` / `vert` match case-insensitively and are stored in canonical lowercase, so
-     *   writing `"HORIZ"` reads back as `"horiz"`.
-     * - Anything else is REJECTED rather than stored-and-ignored: the field reads back as `""`.
-     *   `horizontal`, `vertical`, `horz` and `bogus` all land here — near-misses get no leniency.
-     * - A rejected write clobbers a previously valid one (`horiz` then `horz` reads back `""`).
+     * - A documented value matches **case-insensitively** and is stored in **canonical lowercase**,
+     *   so writing `"HORIZ"` or `"LEFT"` reads back `"horiz"` / `"left"`.
+     * - Anything else is **REJECTED** rather than stored-and-ignored: the field reads back `""`.
+     *   Near-misses get no leniency — `horz`, `horizontal`, `centre`, `middle` and `bogus` all land
+     *   here, as does a value belonging to the *sibling* field (`horizAlignment = "top"`), so the
+     *   two alignment fields do not share one value table.
+     * - A rejected write **clobbers** a previously valid one (`center` then `bogus` reads back `""`).
      *
-     * The layout consequence of that empty state lives in `getLayoutDirection`.
+     * The layout consequences of the rejected state differ per field and live in
+     * `getLayoutDirection` (horizontal) and `applyLayout` (cross-axis collapse).
      */
-    private canonicalizeDirection(fieldName: string, value: BrsType): BrsType {
+    private static readonly enumFieldValues = new Map<string, ReadonlySet<string>>([
+        ["layoutdirection", new Set(["horiz", "vert"])],
+        ["horizalignment", new Set(["left", "center", "right", "custom"])],
+        ["vertalignment", new Set(["top", "center", "bottom", "custom"])],
+    ]);
+
+    /** Lowercase map key → the field's declared (camelCase) name. */
+    private static readonly enumFieldNames = new Map<string, string>([
+        ["layoutdirection", "layoutDirection"],
+        ["horizalignment", "horizAlignment"],
+        ["vertalignment", "vertAlignment"],
+    ]);
+
+    private canonicalizeEnumField(fieldName: string, value: BrsType): BrsType {
         // isBrsString (not instanceof) so a boxed roString assignment normalizes like a literal.
-        if (fieldName !== "layoutdirection" || !isBrsString(value)) {
+        if (!LayoutGroup.enumFieldValues.has(fieldName) || !isBrsString(value)) {
             return value;
         }
         const raw = jsValueOf(value);
         if (typeof raw !== "string") {
             return value;
         }
-        const canonical = this.canonicalDirectionValue(raw);
+        const canonical = LayoutGroup.canonicalEnumValue(fieldName, raw);
         return canonical === raw ? value : new BrsString(canonical);
     }
 
-    /** "horiz"/"vert" match case-insensitively; everything else collapses to the rejected state. */
-    private canonicalDirectionValue(value: string): string {
+    /** Documented values match case-insensitively; everything else becomes the rejected state. */
+    private static canonicalEnumValue(fieldName: string, value: string): string {
         const normalized = value.toLowerCase();
-        return normalized === "horiz" || normalized === "vert" ? normalized : "";
+        return LayoutGroup.enumFieldValues.get(fieldName)?.has(normalized) ? normalized : "";
     }
 
     appendChildToParent(child: BrsType): boolean {
@@ -283,6 +304,13 @@ export class LayoutGroup extends Group {
         addSpacingAfterChild: boolean,
         metricsMap: WeakMap<Node, LayoutMetrics>
     ) {
+        // A REJECTED cross-axis alignment abandons the layout entirely on the device — see
+        // collapseChildren. Checked before anything is measured, because nothing downstream runs.
+        if (this.isCrossAlignmentRejected(direction)) {
+            this.collapseChildren(children);
+            return;
+        }
+
         const metricsList = children.map((child) => this.measureChild(child, direction, metricsMap));
         const primaryAlignment =
             direction === "horiz" ? this.getHorizontalPrimaryAlignment() : this.getVerticalPrimaryAlignment();
@@ -352,6 +380,46 @@ export class LayoutGroup extends Group {
         } else {
             this.setLayoutDimensions(maxCross, totalPrimary);
         }
+    }
+
+    /**
+     * True when the alignment field governing the CROSS axis holds the rejected (`""`) state — i.e.
+     * `vertAlignment` for a horizontal group, `horizAlignment` for a vertical one. Never true unless
+     * an app wrote an unrecognized value: the defaults are `left`/`top`.
+     */
+    private isCrossAlignmentRejected(direction: LayoutDirection): boolean {
+        const fieldName = direction === "horiz" ? "vertAlignment" : "horizAlignment";
+        return this.getValueJS(fieldName) === "";
+    }
+
+    /**
+     * Device behavior when the CROSS-axis alignment is rejected: the group abandons layout and puts
+     * every child at its own origin — no stacking, no item spacing, and the children's own
+     * translations are discarded too (they measure at exactly (0,0), not at their authored offsets).
+     * The primary-axis alignment is ignored even when it is perfectly valid.
+     *
+     * Measured, not inferred: with `layoutDirection="vert"` and a junk `horizAlignment`, both probe
+     * children report offset (0,0) instead of the (0,0)/(0,12) a `left` fallback would produce; same
+     * for `layoutDirection="horiz"` with a junk `vertAlignment`. A rejected PRIMARY-axis alignment
+     * does not do this — it simply falls back to `left`/`top`, which the normalizers handle.
+     *
+     * This looks like a device bug, but reproducing it matters: an app with a typo'd alignment shows
+     * a pile-up at the origin on hardware, and a simulator that quietly lays the children out neatly
+     * would hide the breakage until it shipped.
+     */
+    private collapseChildren(children: Group[]) {
+        let maxWidth = 0;
+        let maxHeight = 0;
+        for (const child of children) {
+            this.setChildTranslation(child, [0, 0]);
+            this.assignedTranslations.set(child, [0, 0]);
+            const { rect } = this.chooseActiveRect(child);
+            maxWidth = Math.max(maxWidth, rect.width);
+            maxHeight = Math.max(maxHeight, rect.height);
+        }
+        // No metricsMap entries: synchronizeChildMetrics must not compare these against a laid-out
+        // expectation, or a collapsed group would re-dirty every pass and burn the whole budget.
+        this.setLayoutDimensions(maxWidth, maxHeight);
     }
 
     private setLayoutDimensions(width: number, height: number) {
@@ -555,24 +623,33 @@ export class LayoutGroup extends Group {
         return this.getValueJS("layoutDirection") === "vert" ? "vert" : "horiz";
     }
 
+    /**
+     * The stored value is already canonical (`canonicalizeEnumField`), so this only resolves the two
+     * documented context rules, both device-confirmed:
+     *
+     * - `custom` is a CROSS-axis-only setting. On the primary axis it falls back to `left`/`top`,
+     *   exactly as Roku documents ("If the layoutDirection is horiz, custom is not a valid setting").
+     * - The rejected (`""`) state falls back to `left`/`top`. Only reachable for the PRIMARY axis —
+     *   a rejected cross alignment never gets here, because `applyLayout` collapses first.
+     */
     private normalizeHorizAlignment(direction: LayoutDirection): HorizontalAlignment {
-        const raw = this.getValueJS("horizAlignment");
-        if (typeof raw === "string") {
-            const value = raw.toLowerCase() as HorizontalAlignment;
-            if (value === "left" || value === "center" || value === "right" || value === "custom") {
-                return direction === "horiz" && value === "custom" ? "left" : value;
-            }
+        const value = this.getValueJS("horizAlignment");
+        if (value === "left" || value === "center" || value === "right") {
+            return value;
+        }
+        if (value === "custom") {
+            return direction === "horiz" ? "left" : "custom";
         }
         return "left";
     }
 
     private normalizeVertAlignment(direction: LayoutDirection): VerticalAlignment {
-        const raw = this.getValueJS("vertAlignment");
-        if (typeof raw === "string") {
-            const value = raw.toLowerCase() as VerticalAlignment;
-            if (value === "top" || value === "center" || value === "bottom" || value === "custom") {
-                return direction === "vert" && value === "custom" ? "top" : value;
-            }
+        const value = this.getValueJS("vertAlignment");
+        if (value === "top" || value === "center" || value === "bottom") {
+            return value;
+        }
+        if (value === "custom") {
+            return direction === "vert" ? "top" : "custom";
         }
         return "top";
     }

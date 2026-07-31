@@ -69,12 +69,44 @@ Two counter-intuitive consequences, both easy to "simplify" away:
 
 `horizontal`/`vertical` are **not** aliases, despite reading like the obvious long forms; the engine
 used to accept them and mapped `vertical` → vert, the opposite of hardware. Canonicalization happens on
-write (`canonicalizeDirection`, applied in `setValue`, `setValueSilent`, and `registerInitializedFields`
+write (`canonicalizeEnumField`, applied in `setValue`, `setValueSilent`, and `registerInitializedFields`
 — the last because XML/deserialized fields are written straight into the field map, bypassing
 `setValue`); `getLayoutDirection` then only has to ask whether the stored value is `"vert"`. Use
 `isBrsString`, not `instanceof BrsString`, so a boxed `roString` normalizes too. `ButtonGroup` extends
 `LayoutGroup` and inherits all of this while keeping its `vert` default. Regression:
 `test/extensions/scenegraph/LayoutDirection.test.js`.
+
+## `horizAlignment`/`vertAlignment` are the same enum — and a rejected CROSS value collapses the layout
+
+**Device-measured** (probe channel: `Samples/layoutalign-probe`, 48 cases — 12 spellings × the four
+`layoutDirection`/field combinations × 3 passes; the engine now reproduces all 48 rows exactly).
+
+Storage works exactly like `layoutDirection` and shares `canonicalizeEnumField`: documented values
+(`left`/`center`/`right`/`custom`, `top`/`center`/`bottom`/`custom`) match case-insensitively and store
+lowercase; anything else is rejected to `""`; a rejected write clobbers a valid one. A value belonging
+to the **sibling** field is rejected too (`horizAlignment = "top"` → `""`), so the two fields do **not**
+share one value table.
+
+Geometry, however, splits by axis — and this is the part that is not guessable:
+
+| Stored value | Field governs the PRIMARY axis | Field governs the CROSS axis |
+| --- | --- | --- |
+| documented value | aligns the whole run | aligns each child independently |
+| `custom` | falls back to `left`/`top` (as documented) | honors each child's own translation |
+| rejected (`""`) | falls back to `left`/`top` | **collapses: every child at (0,0)** |
+
+The collapse (`collapseChildren`) is the surprise: a rejected cross-axis alignment makes the device
+**abandon layout entirely** — no primary-axis stacking, no item spacing, and the children's own
+translations are discarded (they land at exactly `(0,0)`, not at their authored offsets), even though
+the primary-axis alignment is still perfectly valid. It is almost certainly a device bug, but the
+engine reproduces it deliberately: an app with a typo'd alignment piles its children on the origin on
+hardware, and a simulator that quietly laid them out neatly would hide that until it shipped.
+
+Two implementation notes: `applyLayout` must check `isCrossAlignmentRejected` **before** measuring
+anything (nothing downstream runs), and `collapseChildren` must write **no** `metricsUsedThisPass`
+entries — zeroed expectations compared against real child sizes would re-dirty the layout on every
+pass and burn the whole `MAX_LAYOUT_PASSES` budget. Regression:
+`test/extensions/scenegraph/LayoutAlignment.test.js`.
 
 ## XML `<interface>` field redeclaration — system vs. XML-defined (`addFields`)
 
