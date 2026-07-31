@@ -23,8 +23,14 @@
 <component name="MainScene" extends="Scene">
     <interface>
         <function name="runScenarios" />
+        <function name="measureButton" />
+        <function name="focusButton" />
     </interface>
     <children>
+        <!-- Focusing must still run Group.setValue (which marks the node dirty), so the focused
+             font is applied on the next paint and the button grows. A focus write that bypasses the
+             subclass override leaves every focus visual stale. -->
+        <Button id="btn" text="Hello World" minWidth="0" textFont="font:SmallestSystemFont" focusedTextFont="font:LargeBoldSystemFont" />
         <Group id="outlet">
             <Group id="page">
                 <Rectangle id="gridA" width="300" height="200" focusable="true" />
@@ -40,6 +46,8 @@
     sub init()
         m.stealArmed = false
         m.forwardArmed = false
+        m.restoreArmed = false
+        m.btn = m.top.findNode("btn")
 
         m.outlet = m.top.findNode("outlet")
         m.page = m.top.findNode("page")
@@ -67,6 +75,12 @@
         if m.stealArmed
             m.stealArmed = false
             m.gridA.setFocus(true)
+        end if
+        if m.restoreArmed
+            ' Nothing is taking focus here (the outlet was UNFOCUSED), so this restore is the app's
+            ' only path back to a focused node - it must NOT be treated as a competing steal.
+            m.restoreArmed = false
+            m.gridB.setFocus(true)
         end if
     end sub
 
@@ -97,6 +111,20 @@
         ' 3. A plain focus move still works after a dropped steal.
         m.gridB.setFocus(true)
         print "after recover: gridB = "; m.gridB.hasFocus(); ", pageFC = "; fcId(m.page); ", sceneFC = "; fcId(m.top)
+
+        ' 4. A restore issued from an UNFOCUS observer is honored (no competing focus gain).
+        m.gridA.setFocus(true)
+        m.restoreArmed = true
+        m.gridA.setFocus(false)
+        print "after unfocus restore: gridB = "; m.gridB.hasFocus(); ", sceneFC = "; fcId(m.top)
+    end sub
+
+    sub measureButton(label as string)
+        print "button width "; label; ": "; m.btn.boundingRect().width
+    end sub
+
+    sub focusButton()
+        m.btn.setFocus(true)
     end sub
     ]]></script>
 </component>

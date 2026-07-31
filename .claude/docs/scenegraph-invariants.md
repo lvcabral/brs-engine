@@ -289,13 +289,27 @@ because an app that re-grabs focus from its own `focusedChild` observer (sgRoute
    let the losing subtree's observer see a half-rewritten chain (`sceneFC` still pointing at the old
    subtree). Dispatch is still **synchronous**, inside the `setFocus` call: Roku commits atomically, it
    does not defer these to the message loop. (Init-time focus emissions are the one exception — see
-   `pendingInitFocusFields` above.)
+   `pendingInitFocusFields` above.) `restoreFocusChainOnAttach` stages its repair the same way.
+
+   Staging holds back only the **notification**: the write itself goes through the regular virtual
+   `setValue` (suppressed via `focusStagingSink`), because subclasses override it — `Group.setValue`
+   marks the node dirty so focus visuals repaint, `ScrollableText.setValue` tracks its focused state.
+   Writing the `Field` directly instead silently freezes every focus visual (a `Button` keeps its
+   unfocused font, a `ScrollableText` its unfocused scrollbar thumb) while `hasFocus()` still reports
+   true.
 
 2. **A focus request raised from a focus-LOSS notification is dropped** (`isFocusRequestDropped`, keyed
    off the `focusNotifyOwners` stack). A Roku honors `setFocus` from a `focusedChild` observer only while
    the observed node is still in the focus chain — the "forward focus" pattern where a container that
    just *gained* focus hands it to an inner widget. The mirror case, a node re-grabbing focus as it
    *loses* it, leaves the chain and the remote with the node the in-flight transaction focused.
+
+   Scoped to transactions where a node is **taking** focus (`notifyStagedFocus`'s `gaining` flag). The
+   unfocus paths notify without classifying: with no competing target there is nothing to defend, and
+   swallowing an unfocus observer's restore would leave the app with **no focused node at all**. The
+   dropped path returns `false`, not `isFocusable()`, so a subclass override gated on
+   `super.setNodeFocus(...)` skips its own bookkeeping too (an `ArrayGrid` must not move `itemFocused`
+   for a grid that never took focus).
 
    Don't "simplify" this to dropping all nested focus changes: forward focus is how every custom dialog
    highlights its buttons (`dialog-buttongroup-focus-app`). And don't drop only the chain writes while

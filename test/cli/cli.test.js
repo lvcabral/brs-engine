@@ -1343,6 +1343,11 @@ describe.concurrent("cli", () => {
         // Before the fix the re-grab won live focus while the outer transaction wrote its own chain,
         // so sgRoot.focused and focusedChild disagreed: the app kept the remote on the grid while the
         // chain said "menu".
+        // Two further guards on the mechanism itself: the drop applies only while a node is TAKING
+        // focus (an unfocus observer's restore has no competing target, and swallowing it would
+        // leave nothing focused at all), and staging the chain must still run the subclass setValue
+        // overrides - a Button that bypasses Group.setValue never marks itself dirty, so its focused
+        // font is never applied and the button stays at its unfocused width.
         expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
             "=== Focus Steal Repro ===",
             "  outlet lost focus: sceneFC = overhang, overhangFC = menuA",
@@ -1351,6 +1356,11 @@ describe.concurrent("cli", () => {
             "  outlet lost focus: sceneFC = overhang, overhangFC = menuA",
             "after forward: menuB = true, overhangFC = menuB",
             "after recover: gridB = true, pageFC = gridB, sceneFC = outlet",
+            "  outlet lost focus: sceneFC = invalid, overhangFC = invalid",
+            "after unfocus restore: gridB = true, sceneFC = outlet",
+            "button width before:  179",
+            "  outlet lost focus: sceneFC = btn, overhangFC = invalid",
+            "button width after:  250",
             "=== Focus Steal Repro Complete ===",
             "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
             "",
