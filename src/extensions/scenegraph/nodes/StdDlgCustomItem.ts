@@ -46,8 +46,9 @@ export class StdDlgCustomItem extends Group implements StdDlgItem {
                 continue;
             }
             const trans = (child.getValueJS("translation") as number[]) ?? [0, 0];
-            let childHeight =
-                child instanceof Label ? child.getMeasured().height : (child.getValueJS("height") as number);
+            // getDimensions(), not the raw height field: a LayoutGroup has no width/height fields on
+            // a real device (see LayoutGroup.layoutHeight) and reports its measured size only here.
+            let childHeight = child instanceof Label ? child.getMeasured().height : child.getDimensions().height;
             // Not `childHeight <= 0`: childHeight can be NaN (unmeasured child), which must also fall
             // back to bitmapHeight. `!(childHeight > 0)` is true for NaN, whereas `NaN <= 0` is false.
             if (!(childHeight > 0)) {

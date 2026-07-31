@@ -45,6 +45,105 @@ Renderable/complex nodes (Poster, Label, ArrayGrid, …) keep the hard skip so h
 textures or creates item components. Regression:
 `test/extensions/scenegraph/HiddenMeasure.test.js`.
 
+## `LayoutGroup.layoutDirection` is an enum, and its rejected state is HORIZONTAL
+
+**Device-measured** (probe channel: `Samples/layoutgroup-probe`, 12 spellings × XML-attribute and
+runtime-write paths × 3 passes — every row agreed). Roku does **not** treat `layoutDirection` as free
+text:
+
+| Written | Reads back | Lays out |
+| --- | --- | --- |
+| never written | `"vert"` | **vert** |
+| `horiz` / `HORIZ` / `Horiz` | `"horiz"` | horiz |
+| `vert` | `"vert"` | vert |
+| `horz`, `horizontal`, `vertical`, `bogus`, `""` | `""` | **horiz** |
+
+Two counter-intuitive consequences, both easy to "simplify" away:
+
+1. An unrecognized value is **rejected, not stored-and-ignored** — the field reads back as `""`, and a
+   rejected write **clobbers** a previously valid one (`horiz` then `horz` → `""`).
+2. That empty state lays out **horizontally**, while the untouched `"vert"` default lays out
+   vertically. So `<LayoutGroup layoutDirection="horz" />` is a horizontal row on hardware. Do **not**
+   "fix" `getLayoutDirection` to fall back to the documented `vert` default — that silently stacks real
+   apps' menu bars (this is exactly the bug that prompted the probe).
+
+`horizontal`/`vertical` are **not** aliases, despite reading like the obvious long forms; the engine
+used to accept them and mapped `vertical` → vert, the opposite of hardware. Canonicalization happens on
+write (`canonicalizeEnumField`, applied in `setValue`, `setValueSilent`, and `registerInitializedFields`
+— the last because XML/deserialized fields are written straight into the field map, bypassing
+`setValue`); `getLayoutDirection` then only has to ask whether the stored value is `"vert"`. Use
+`isBrsString`, not `instanceof BrsString`, so a boxed `roString` normalizes too. `ButtonGroup` extends
+`LayoutGroup` and inherits all of this while keeping its `vert` default. Regression:
+`test/extensions/scenegraph/LayoutDirection.test.js`.
+
+## `horizAlignment`/`vertAlignment` are the same enum — and a rejected CROSS value collapses the layout
+
+**Device-measured** (probe channel: `Samples/layoutalign-probe`, 48 cases — 12 spellings × the four
+`layoutDirection`/field combinations × 3 passes; the engine now reproduces all 48 rows exactly).
+
+Storage works exactly like `layoutDirection` and shares `canonicalizeEnumField`: documented values
+(`left`/`center`/`right`/`custom`, `top`/`center`/`bottom`/`custom`) match case-insensitively and store
+lowercase; anything else is rejected to `""`; a rejected write clobbers a valid one. A value belonging
+to the **sibling** field is rejected too (`horizAlignment = "top"` → `""`), so the two fields do **not**
+share one value table.
+
+Geometry, however, splits by axis — and this is the part that is not guessable:
+
+| Stored value | Field governs the PRIMARY axis | Field governs the CROSS axis |
+| --- | --- | --- |
+| documented value | aligns the whole run | aligns each child independently |
+| `custom` | falls back to `left`/`top` (as documented) | honors each child's own translation |
+| rejected (`""`) | falls back to `left`/`top` | **collapses: every child at (0,0)** |
+
+The collapse (`collapseChildren`) is the surprise: a rejected cross-axis alignment makes the device
+**abandon layout entirely** — no primary-axis stacking, no item spacing, and the children's own
+translations are discarded (they land at exactly `(0,0)`, not at their authored offsets), even though
+the primary-axis alignment is still perfectly valid. It is almost certainly a device bug, but the
+engine reproduces it deliberately: an app with a typo'd alignment piles its children on the origin on
+hardware, and a simulator that quietly laid them out neatly would hide that until it shipped.
+
+Two implementation notes: `applyLayout` must check `isCrossAlignmentRejected` **before** measuring
+anything (nothing downstream runs), and `collapseChildren` must write **no** `metricsUsedThisPass`
+entries — zeroed expectations compared against real child sizes would re-dirty the layout on every
+pass and burn the whole `MAX_LAYOUT_PASSES` budget. Regression:
+`test/extensions/scenegraph/LayoutAlignment.test.js`.
+
+## A LayoutGroup has NO `width`/`height` fields — read `getDimensions()`
+
+**Device-measured** (`Samples/layoutspacing-probe`): on a real LayoutGroup `hasField("width")` and
+`hasField("height")` are **false** and `lg.width` reads `invalid`, while `localBoundingRect()` reports
+the correct size. Roku declares neither field on `Group` or `LayoutGroup`.
+
+The engine used to publish its measurement by writing real `width`/`height` fields (`setValueSilent`
+creates a field that does not exist), so an app reading `lg.width` got a number here and `invalid` on
+hardware. The measurement now lives in the private `layoutWidth`/`layoutHeight` and is surfaced by
+overriding **`getDimensions()`**.
+
+So: **never read a LayoutGroup's size with `getValueJS("width")`** — use `getDimensions()`, which
+works for every node type (`Group.getDimensions` reads the fields; `LayoutGroup` overrides). This bit
+`StdDlgCustomItem.measureContentHeight`, which measured its children with the raw field and silently
+sized a dialog to 0 around a LayoutGroup once the fields went away. Regressions:
+`test/extensions/scenegraph/LayoutAlignment.test.js` (field absence) and the
+`StdDlgCustomItem` case in `StandardDialogNodes.test.js`.
+
+## `itemSpacings` — the last entry repeats, extra entries are dropped
+
+**Device-measured** (`Samples/layoutspacing-probe`, three children, all rows reproduced):
+
+- The **last entry repeats** for every gap past the end of the array, so `itemSpacings="[4]"` spaces
+  *every* gap by 4. Apps rely on this constantly; it was an assumption in `getSpacingValue` until the
+  probe confirmed it.
+- Entries **past the last gap are dropped** — `[4,9,15]` with three children lays out exactly like
+  `[4,9]` and produces the same group size. No trailing space is added, which matters because the
+  group's measured size is what parents lay out against.
+- Negative spacings **overlap** (not clamped); fractional spacings are used **as-is** (not rounded).
+- With `addItemSpacingAfterChild=false` the space is inserted **before** each child *including the
+  first*, so the whole run shifts by `spacings[0]` and the gaps come from the *following* entries
+  (`[4,9]` → run starts at 4, both gaps 9). A third entry is then genuinely used (`[4,9,15]` → gaps
+  9, 15) where the `true` case would have dropped it.
+
+Regression: `test/extensions/scenegraph/LayoutSpacing.test.js`.
+
 ## XML `<interface>` field redeclaration — system vs. XML-defined (`addFields`)
 
 When `addFields` builds a custom component's fields, a `<field>` whose name already exists is handled by

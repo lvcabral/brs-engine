@@ -807,10 +807,14 @@ describe("Standard Dialog Framework nodes", () => {
             dialog.renderNode(fakeInterpreter, [0, 0], 0, 1, draw2D);
             dialog.renderNode(fakeInterpreter, [0, 0], 0, 1, draw2D);
 
-            const listHeight = list.getValueJS("height");
+            // getDimensions(), not getValueJS("height"): a LayoutGroup exposes no width/height FIELDS
+            // on a real device (hasField("width") is false, lg.width reads invalid — device-measured
+            // in Samples/layoutspacing-probe), so its measured size is only readable this way.
+            const listHeight = list.getDimensions().height;
             // The LayoutGroup reports its stacked size (3 rows + 2 gaps), and the custom item wraps it.
             expect(listHeight).toBeGreaterThan(0);
             expect(custom.getValueJS("height")).toBe(listHeight);
+            expect(list.hasNodeField("width")).toBe(false);
             // The button row sits below the custom item's content, not overlapping it.
             const buttonTop = buttonArea.getValueJS("translation")[1];
             const customBottom = custom.getValueJS("translation")[1] + custom.getValueJS("height");
