@@ -359,6 +359,8 @@ export class RowList extends ArrayGrid {
         const cols = this.getContentChildren(this.content[currentRow]);
         const numCols = cols.length;
 
+        // No row under the cursor (content not assigned yet, or an empty content tree), or a single
+        // column: nothing to move to, so the key is unhandled and bubbles to the parent.
         if (numCols <= 1) {
             return false;
         }
@@ -381,7 +383,10 @@ export class RowList extends ArrayGrid {
     }
 
     protected handleOK(press: boolean) {
-        if (press && this.focusIndex >= 0 && this.focusIndex < this.rowFocus.length) {
+        // Bound by the content view, not by `rowFocus` — the latter is seeded with row 0 in the
+        // constructor, so an empty list would otherwise report row 0 as selected and consume the key.
+        // With no content there is no item to select, so the key stays unhandled (device behavior).
+        if (press && this.focusIndex >= 0 && this.focusIndex < this.content.length) {
             const currentRow = this.focusIndex;
             const currentCol = this.rowFocus[currentRow];
             if (currentCol >= 0) {

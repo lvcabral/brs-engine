@@ -428,7 +428,17 @@ export class ArrayGrid extends Group {
         return new ContentNode();
     }
 
-    protected getContentChildren(content: ContentNode): ContentNode[] {
+    /**
+     * Children of a content row/section, tolerating a missing node. Callers index into `this.content`
+     * (`this.content[row]`), which is empty while the app has not assigned `content` yet or assigned an
+     * empty tree — the focus cursor can still point at row 0, so the lookup yields `undefined`. A real
+     * device simply has nothing to navigate there; returning an empty list lets the caller report the
+     * key as unhandled (so it bubbles to the parent) instead of throwing.
+     */
+    protected getContentChildren(content?: ContentNode): ContentNode[] {
+        if (!(content instanceof ContentNode)) {
+            return [];
+        }
         return content.getNodeChildren().map((child) => {
             if (child instanceof ContentNode) {
                 return child;
