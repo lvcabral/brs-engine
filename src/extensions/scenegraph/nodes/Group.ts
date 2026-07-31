@@ -703,6 +703,7 @@ export class Group extends Node {
         // yet). Paint passes don't participate in pruning at all.
         if (sgRoot.pruneLayout) {
             this.subtreeStale = false;
+            this.measureStale = false;
             this.lastLayoutContext = { x: origin[0], y: origin[1], angle, opacity };
         }
         this.layoutPassCount++;
