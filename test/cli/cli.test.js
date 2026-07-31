@@ -965,6 +965,45 @@ describe.concurrent("cli", () => {
             "",
         ]);
     }, 30000);
+    it("Builds the layout-pass performance probe (70 self-measuring components)", async () => {
+        let command = ["node", brsCliPath, "-r layout-perf-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+
+        // Committed form of the synthetic probe from docs/scenegraph-layout-passes.md: 70 custom
+        // components in a LayoutGroup, each measuring itself with boundingRect() from its `value`
+        // observer, so every append triggers a full-tree layout refresh. Only correctness is
+        // asserted (the layout height proves all 70 tiles laid out and stacked); the per-tile
+        // timings it prints are for the human device-shape comparison — flat per-component cost —
+        // and would be flaky as assertions. Height: 70 tiles * 60 + 69 gaps * 8 = 4752.
+        const lines = stdout.split("\n").map((line) => line.trimEnd());
+        expect(lines).toContain("=== Layout Perf Probe ===");
+        expect(lines).toContain("tiles =  70");
+        // 70 tiles, each 60 (background) + label rows overflow = stacked LayoutGroup height;
+        // proves all 70 laid out. Kept exact so tile-content changes are deliberate.
+        expect(lines).toContain("layout height =  15532");
+        expect(lines).toContain("=== Layout Perf Probe Complete ===");
+        for (const marker of ["q1 tile ms = ", "q2 tile ms = ", "q3 tile ms = ", "q4 tile ms = ", "total ms = "]) {
+            expect(lines.some((line) => line.startsWith(marker))).toBe(true);
+        }
+    }, 60000);
+    it("Pruned layout refreshes agree with full refreshes (BRS_PRUNE_VERIFY silent)", async () => {
+        // The rect-diff verifier runs every bounding-rect refresh twice — pruned then unpruned —
+        // and prints a [prune-verify] line for any diverging node. Silence across both apps'
+        // refresh-heavy workloads (70 self-measuring components; re-entrant grid item creation)
+        // proves the pruned pass computes the same rects as a full pass.
+        for (const app of ["layout-perf-app", "grid-measure-app"]) {
+            let command = ["node", brsCliPath, `-r ${app}`, "source/main.brs", "-c 0"].join(" ");
+            let { stderr } = await exec(command, {
+                cwd: path.join(__dirname, "resources"),
+                env: { ...process.env, BRS_PRUNE_VERIFY: "1" },
+            });
+            const verifyLines = stderr.split("\n").filter((line) => line.includes("[prune-verify]"));
+            expect(verifyLines).toEqual([]);
+        }
+    }, 120000);
     it("Resolves a component method in call position when an XML field shadows its name", async () => {
         let command = ["node", brsCliPath, "-r method-shadow-field-app", "source/main.brs", "-c 0"].join(" ");
 

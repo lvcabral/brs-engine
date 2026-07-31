@@ -1,7 +1,12 @@
 # Splitting `renderNode` into layout and paint passes
 
-**Status:** proposal, not implemented. Written after an attempt to optimize bounding-rect refreshes
-failed for reasons that are fixed only by this refactor.
+**Status:** implemented. Landed as four stacked PRs: the layout/paint seam + injectable `sgClock`
+(#1117), per-node clock/side-effect extraction (#1118), LayoutGroup fixed-point convergence
+(#1119), and subtree pruning + the `BRS_PRUNE_VERIFY` rect-diff verifier. The document below is
+the original proposal, kept for the analysis and the verification bar; where the implementation
+deviated (AnimationBase was already ticked outside render; `renderNode` remains the single
+override point with `layoutNode`/`paintNode` as base-class entry points setting
+`sgRoot.renderPass`), the PRs record why.
 
 ## The problem
 

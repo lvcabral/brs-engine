@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Synthetic probe component for the layout-pass performance fixture
+    (docs/scenegraph-layout-passes.md). Its `value` observer measures the component with
+    boundingRect() — the ordinary app pattern (e.g. sizing a focus ring from a field change)
+    that makes every component creation trigger a full-tree layout refresh. With N components
+    in a LayoutGroup, a screen build is O(n²) unless the refresh prunes settled subtrees.
+-->
+<component name="PerfTile" extends="Group">
+    <interface>
+        <field id="value" type="string" alwaysNotify="true" />
+        <field id="measuredHeight" type="float" />
+    </interface>
+    <script type="text/brightscript">
+    <![CDATA[
+        sub init()
+            m.background = m.top.createChild("Rectangle")
+            m.background.width = 438
+            m.background.height = 60
+            ' An inner LayoutGroup with several labels gives each tile a realistic node count
+            ' (real app components average dozens of nodes), so a full-tree refresh has
+            ' measurable per-tile cost and the quadratic rise is visible in the timings.
+            m.rows = m.top.createChild("LayoutGroup")
+            m.rows.layoutDirection = "vert"
+            m.rows.itemSpacings = [2]
+            m.rows.translation = [12, 8]
+            for r = 1 to 8
+                row = m.rows.createChild("Label")
+                row.width = 400
+            end for
+            m.label = m.rows.getChild(0)
+            m.top.observeFieldScoped("value", "onValueChange")
+        end sub
+
+        sub onValueChange()
+            m.label.text = m.top.value
+            rect = m.top.boundingRect()
+            m.top.measuredHeight = rect.height
+        end sub
+    ]]>
+    </script>
+</component>

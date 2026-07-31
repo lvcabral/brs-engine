@@ -49,6 +49,7 @@ import { createFlatNode, createNode, getBrsValueFromFieldType, subtypeHierarchy 
 import { Field } from "../nodes/Field";
 import { toAssociativeArray, jsValueOf, fromSGNode } from "../factory/Serializer";
 import { sgRoot } from "../SGRoot";
+import { runPruneVerify } from "../SGVerify";
 import { SGNodeType } from ".";
 import { ComponentDefinition } from "../parser/ComponentDefinition";
 import { convertHexColor } from "../SGUtil";
@@ -117,6 +118,15 @@ export class Node extends RoSGNode implements BrsValue {
     protected address: string;
     /** Flags whether structural or field state changed since last render. */
     changed: boolean = false;
+    /**
+     * True when this node or anything below it changed since its subtree last completed a layout
+     * pass. Set by `makeDirty()` (the funnel for every field write and child-list mutation) and
+     * propagated UP the parent chain, so a pruned layout refresh (`sgRoot.pruneLayout`) can skip
+     * settled subtrees. Cleared at the START of a node's layout pass — BrightScript running
+     * inside the pass (an item component's init(), a field observer) re-marks it and that mark
+     * must survive for the next refresh. Starts true so everything lays out on first pass.
+     */
+    subtreeStale: boolean = true;
 
     /** Node bounds in local coordinates. */
     rectLocal: Rect = { x: 0, y: 0, width: 0, height: 0 };
@@ -949,6 +959,49 @@ export class Node extends RoSGNode implements BrsValue {
     }
 
     /**
+     * Layout entry point: computes bounding rects for this node's subtree without drawing,
+     * advancing time-based state, or producing any other side effect. Must be idempotent —
+     * calling it twice with the same inputs and an unchanged tree yields identical rects.
+     * Default implementation runs `renderNode` with no draw target (today's measurement pass)
+     * under a `layout` render-pass context; node types with time-based render state gate that
+     * state on `isPaintPass`. See `docs/scenegraph-layout-passes.md`.
+     */
+    layoutNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number) {
+        const previousPass = sgRoot.renderPass;
+        sgRoot.renderPass = "layout";
+        try {
+            this.renderNode(interpreter, origin, angle, opacity);
+        } finally {
+            sgRoot.renderPass = previousPass;
+        }
+    }
+
+    /**
+     * Paint entry point: the per-frame render. Recomputes layout inline (as `renderNode` always
+     * has), advances time-based state (spinner rotation, marquee scroll, cursor blink, seek
+     * repeat), and draws through the required `IfDraw2D`.
+     */
+    paintNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D: IfDraw2D) {
+        const previousPass = sgRoot.renderPass;
+        sgRoot.renderPass = "paint";
+        try {
+            this.renderNode(interpreter, origin, angle, opacity, draw2D);
+        } finally {
+            sgRoot.renderPass = previousPass;
+        }
+    }
+
+    /**
+     * Whether the current traversal may advance time-based state and emit render side effects.
+     * True on paint passes and on direct `renderNode` calls with a draw target; false inside
+     * `layoutNode` traversals. The `draw2D` check keeps direct `renderNode(..., draw2D)` calls
+     * (external node registrations, tests) behaving as paint regardless of context.
+     */
+    protected isPaintPass(draw2D?: IfDraw2D): boolean {
+        return draw2D !== undefined || sgRoot.renderPass === "paint";
+    }
+
+    /**
      * Iterates through child nodes, invoking their render methods in order.
      * @param interpreter Active interpreter.
      * @param origin Parent-space translation.
@@ -978,7 +1031,18 @@ export class Node extends RoSGNode implements BrsValue {
         const root = this.createPath()[0];
         sgRoot.rendering = true;
         try {
-            root.renderNode(interpreter, [0, 0], 0, 1);
+            if (sgRoot.pruneVerify) {
+                runPruneVerify(root, interpreter);
+            } else {
+                // Prune settled subtrees (sound because layout passes are pure). Only this
+                // full-tree refresh prunes — scoped subtree measurements never do.
+                sgRoot.pruneLayout = !sgRoot.pruneDisabled;
+                try {
+                    root.layoutNode(interpreter, [0, 0], 0, 1);
+                } finally {
+                    sgRoot.pruneLayout = false;
+                }
+            }
         } finally {
             sgRoot.rendering = false;
         }
@@ -1035,15 +1099,25 @@ export class Node extends RoSGNode implements BrsValue {
             const savedToParent = parent ? { ...parent.rectToParent } : undefined;
             const savedToScene = parent ? { ...parent.rectToScene } : undefined;
             sgRoot.measuring = true;
+            // A scoped subtree measurement never prunes (it can run nested inside a pruned
+            // full-tree refresh — e.g. item creation measuring a label): it measures at origin
+            // [0,0], so cached last-layout contexts from tree positions do not apply.
+            const wasPruning = sgRoot.pruneLayout;
+            sgRoot.pruneLayout = false;
             try {
-                this.renderNode(interpreter, [0, 0], 0, 1);
+                this.layoutNode(interpreter, [0, 0], 0, 1);
             } finally {
                 sgRoot.measuring = false;
+                sgRoot.pruneLayout = wasPruning;
                 if (parent && savedLocal && savedToParent && savedToScene) {
                     parent.rectLocal = savedLocal;
                     parent.rectToParent = savedToParent;
                     parent.rectToScene = savedToScene;
                 }
+                // The [0,0] measurement clobbered this subtree's rectToScene with origin-less
+                // values; deep-mark it so the next pruned refresh re-descends and re-establishes
+                // in-tree rects instead of skipping the settled subtree.
+                this.markSubtreeStaleDeep();
             }
         }
         switch (type) {
@@ -2023,11 +2097,52 @@ export class Node extends RoSGNode implements BrsValue {
      */
     protected makeDirty() {
         this.changed = true;
+        this.markSubtreeStale();
         if (sgRoot.inTaskThread() && this.parent instanceof Node) {
             const root = this.findRootNode();
             root.changed = true;
         }
         sgRoot.makeDirty();
+    }
+
+    /**
+     * Marks this node and every ancestor stale for the pruned layout refresh. Walks the FULL
+     * parent chain (O(depth), trivial next to the cost of the setValue that got us here) rather
+     * than early-exiting at the first stale ancestor: a node whose own pass never runs (a
+     * hard-skipped invisible leaf, an off-screen grid item) keeps its stale mark while its
+     * ancestors' marks are cleared by their passes, so "this node is stale" does not imply the
+     * chain above it still is — an early exit would strand the write in a skipped subtree.
+     */
+    markSubtreeStale() {
+        this.subtreeStale = true;
+        let ancestor = this.parent instanceof Node ? this.parent : undefined;
+        while (ancestor) {
+            ancestor.subtreeStale = true;
+            ancestor = ancestor.parent instanceof Node ? ancestor.parent : undefined;
+        }
+    }
+
+    /**
+     * Marks this node, every descendant, AND the ancestor chain stale. Required after a scoped
+     * measurement rendered this subtree at origin [0,0] (`measureUnsizedChildren`,
+     * `getBoundingRect`'s mid-render fallback): that pass overwrites every descendant's
+     * `rectToScene` with origin-less values, relying on "the true origin is recomputed when the
+     * next pass reaches the node" — which a pruned refresh would skip. The deep mark forces the
+     * next refresh to re-descend and re-establish in-tree rects; the up-mark makes sure the
+     * refresh actually reaches this subtree.
+     */
+    markSubtreeStaleDeep() {
+        this.markSubtreeStale();
+        const stack: Node[] = [this];
+        while (stack.length > 0) {
+            const node = stack.pop()!;
+            node.subtreeStale = true;
+            for (const child of node.children) {
+                if (child instanceof Node) {
+                    stack.push(child);
+                }
+            }
+        }
     }
 
     /**

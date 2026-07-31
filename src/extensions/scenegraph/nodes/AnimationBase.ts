@@ -1,6 +1,7 @@
 import { AAMember, BrsString, BrsType, isBrsString } from "brs-engine";
 import { Node } from "./Node";
 import { sgRoot } from "../SGRoot";
+import { sgClock } from "../SGClock";
 import { FieldKind, FieldModel } from "../SGTypes";
 import { SGNodeType } from ".";
 
@@ -103,7 +104,7 @@ export abstract class AnimationBase extends Node {
             return false;
         }
 
-        const now = performance.now();
+        const now = sgClock.perfNow();
         const delta = (now - this.lastUpdateTime) / 1000; // seconds
         this.lastUpdateTime = now;
         let effectiveDelta = delta;
@@ -128,7 +129,7 @@ export abstract class AnimationBase extends Node {
             if (this.shouldRepeat()) {
                 this.elapsedTime = 0;
                 this.delayRemaining = this.getDelaySeconds();
-                this.lastUpdateTime = performance.now();
+                this.lastUpdateTime = sgClock.perfNow();
             } else {
                 this.stop();
             }
@@ -179,7 +180,7 @@ export abstract class AnimationBase extends Node {
     protected startFromBeginning() {
         this.elapsedTime = 0;
         this.delayRemaining = this.getDelaySeconds();
-        this.lastUpdateTime = performance.now();
+        this.lastUpdateTime = sgClock.perfNow();
         this.enterRunningState();
     }
 
@@ -187,7 +188,7 @@ export abstract class AnimationBase extends Node {
      * Continues from a paused state without resetting elapsed time.
      */
     protected resumeFromPause() {
-        this.lastUpdateTime = performance.now();
+        this.lastUpdateTime = sgClock.perfNow();
         this.enterRunningState();
     }
 

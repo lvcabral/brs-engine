@@ -2,6 +2,7 @@ import { AAMember, Interpreter, BrsBoolean, BrsType, Float, RoArray, IfDraw2D, R
 import { FieldKind, FieldModel } from "../SGTypes";
 import { SGNodeType } from ".";
 import { jsValueOf } from "../factory/Serializer";
+import { sgRoot } from "../SGRoot";
 import { Group } from "./Group";
 import { Node } from "./Node";
 
@@ -32,6 +33,10 @@ export class LayoutGroup extends Group {
         { name: "addItemSpacingAfterChild", type: "boolean", value: "true" },
     ];
 
+    /** Divergence backstop for the layout-pass convergence loop; never reached by settling layouts. */
+    private static readonly MAX_LAYOUT_PASSES = 8;
+    /** @internal Passes the last layout call ran; exposed for convergence tests. */
+    lastPassCount = 0;
     private layoutDirty = true;
     private metricsUsedThisPass?: WeakMap<Node, LayoutMetrics>;
     private readonly childSizes = new WeakMap<Node, NodeSize>();
@@ -123,15 +128,40 @@ export class LayoutGroup extends Group {
 
         const addAfter = this.shouldAddSpacingAfterChild();
 
-        // On a measurement pass (no draw target — getBoundingRect's full-tree refresh and its
-        // single-subtree fallback both render with draw2D undefined), converge the layout in this one
-        // pass instead of deferring to the next frame. When a child's settled size differs from what
-        // applyLayout used (a wrapped Label laid out at a shorter height then rendered taller shifts
-        // its siblings), synchronizeChildMetrics re-dirties the layout; a one-shot boundingRect() query
-        // would otherwise read the pre-convergence size. A real frame draw (draw2D present) keeps
-        // maxPasses = 1, preserving its next-frame correction. Capped at 2 to terminate.
-        const maxPasses = draw2D === undefined && layoutChildren.length ? 2 : 1;
+        // On a layout/measurement pass (no draw target — getBoundingRect's full-tree refresh and
+        // its single-subtree fallback both render with draw2D undefined), converge the layout to a
+        // FIXED POINT in this one call instead of deferring to the next frame. When a child's
+        // settled size differs from what applyLayout used (a wrapped Label laid out at a shorter
+        // height then rendered taller shifts its siblings), synchronizeChildMetrics re-dirties the
+        // layout and the loop runs another pass; it exits only once a pass leaves the layout clean,
+        // so a one-shot boundingRect() query never reads a pre-convergence size. The former cap of
+        // 2 could exit while still dirty, returning rects that kept creeping on later refreshes.
+        // MAX_LAYOUT_PASSES is a divergence backstop, not the terminator — hitting it means child
+        // metrics oscillate (a bug to fix, not a state to paper over). A real frame draw (draw2D
+        // present) keeps a single pass, preserving its next-frame correction.
+        const maxPasses = draw2D === undefined && layoutChildren.length ? LayoutGroup.MAX_LAYOUT_PASSES : 1;
+        // Each inner pass ends with nodeRenderingDone → updateParentRects, unioning this group's
+        // rect into its PARENT — whose rects are reset once per ITS pass, not per inner pass here.
+        // Without restoring them between passes, a converging layout leaves the union of every
+        // intermediate position in the parent (e.g. a centered child's pre-center span ∪ its
+        // centered span — a 55-tall child reporting 82.5). Snapshot before the loop and restore
+        // before each retry so only the final, converged pass's union survives.
+        const parentGroup = this.parent instanceof Group ? this.parent : undefined;
+        const savedParentRects = parentGroup
+            ? {
+                  local: { ...parentGroup.rectLocal },
+                  toParent: { ...parentGroup.rectToParent },
+                  toScene: { ...parentGroup.rectToScene },
+              }
+            : undefined;
+        this.lastPassCount = 0;
         for (let pass = 0; pass < maxPasses; pass++) {
+            if (pass > 0 && parentGroup && savedParentRects) {
+                parentGroup.rectLocal = { ...savedParentRects.local };
+                parentGroup.rectToParent = { ...savedParentRects.toParent };
+                parentGroup.rectToScene = { ...savedParentRects.toScene };
+            }
+            this.lastPassCount = pass + 1;
             this.metricsUsedThisPass = undefined;
             if (layoutChildren.length && this.layoutDirty) {
                 this.measureUnsizedChildren(layoutChildren, interpreter);
@@ -163,12 +193,26 @@ export class LayoutGroup extends Group {
      * Posters, already-laid-out nodes) are skipped, so this is a no-op in the common case.
      */
     private measureUnsizedChildren(children: Group[], interpreter: Interpreter) {
-        for (const child of children) {
-            const dims = child.getDimensions();
-            const rectKnown = child.rectToParent.width > 0 || child.rectToScene.width > 0 || child.rectLocal.width > 0;
-            if (!rectKnown && !(typeof dims.width === "number" && dims.width > 0)) {
-                child.renderNode(interpreter, [0, 0], 0, 1);
+        // Never prune this scoped measurement: it runs at origin [0,0] regardless of the child's
+        // tree position, so cached last-layout contexts do not apply — a skip here would also
+        // union the child's cached rect into this group's just-reset rects at the wrong moment.
+        const wasPruning = sgRoot.pruneLayout;
+        sgRoot.pruneLayout = false;
+        try {
+            for (const child of children) {
+                const dims = child.getDimensions();
+                const rectKnown =
+                    child.rectToParent.width > 0 || child.rectToScene.width > 0 || child.rectLocal.width > 0;
+                if (!rectKnown && !(typeof dims.width === "number" && dims.width > 0)) {
+                    child.layoutNode(interpreter, [0, 0], 0, 1);
+                    // The [0,0] measurement clobbered the subtree's rectToScene with origin-less
+                    // values; deep-mark it so the surrounding pruned refresh re-descends and
+                    // re-establishes in-tree rects instead of skipping the settled subtree.
+                    child.markSubtreeStaleDeep();
+                }
             }
+        } finally {
+            sgRoot.pruneLayout = wasPruning;
         }
     }
 

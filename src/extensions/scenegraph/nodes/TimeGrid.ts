@@ -16,6 +16,7 @@ import { ArrayGrid } from "./ArrayGrid";
 import { ContentNode } from "./ContentNode";
 import { Font } from "./Font";
 import { sgRoot } from "../SGRoot";
+import { sgClock } from "../SGClock";
 import { brsValueOf, jsValueOf } from "../factory/Serializer";
 
 /** Cached parse of one channel's programs (see TimeGrid.channelParseCache). */
@@ -154,6 +155,8 @@ export class TimeGrid extends ArrayGrid {
     protected gridX: number = 0;
     protected gridWidth: number = 0;
     protected rowHeight: number = 0;
+    /** "Now" epoch captured on the last paint pass; layout passes reuse it (clock-free layout). */
+    private cachedNowEpoch: number = 0;
     protected visibleChannels: number = 0;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.TimeGrid) {
@@ -336,7 +339,7 @@ export class TimeGrid extends ArrayGrid {
     }
 
     protected nowEpoch(): number {
-        return Math.floor(Date.now() / 1000);
+        return Math.floor(sgClock.now() / 1000);
     }
 
     protected getDurationSec(): number {
@@ -719,7 +722,13 @@ export class TimeGrid extends ArrayGrid {
         const secToPx = this.gridWidth / duration;
         this.updateTopRow();
         const topCh = this.topRow;
-        const now = this.nowEpoch();
+        // The "now" marker position is refreshed only on paint passes (or the first layout before
+        // any paint); a layout pass reuses the cached epoch so repeated bounding-rect refreshes
+        // are idempotent — layout must be clock-free.
+        if (this.isPaintPass(draw2D) || this.cachedNowEpoch === 0) {
+            this.cachedNowEpoch = this.nowEpoch();
+        }
+        const now = this.cachedNowEpoch;
         const center = this.getScaleRotateCenter();
         const nodeFocus = sgRoot.focused === this;
         let textIndex = 0;

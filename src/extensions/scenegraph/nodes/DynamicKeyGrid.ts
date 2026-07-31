@@ -17,6 +17,7 @@ import { SGNodeType } from ".";
 import { Group } from "./Group";
 import { Font } from "./Font";
 import { sgRoot } from "../SGRoot";
+import { sgClock } from "../SGClock";
 import { jsValueOf } from "../factory/Serializer";
 import { computeLayout, KeyInset, keyboardSize, KeyLayout, RenderedKey, resolveKeyIcon } from "./kdf/KeyDefinition";
 
@@ -171,7 +172,7 @@ export class DynamicKeyGrid extends Group {
         super.setValue("keyFocused", new BrsString(key?.out ?? ""));
         // Focus moved to a (possibly) different key: restart the hover dwell timer and
         // clear any pop-up suppression, so the timer applies again on the newly focused key.
-        this.lastFocusTime = Date.now();
+        this.lastFocusTime = sgClock.now();
         this.popupSuppressed = false;
     }
 
@@ -500,12 +501,13 @@ export class DynamicKeyGrid extends Group {
 
         // Auto-open a "hover" suggestion pop-up once the focus has dwelled on the key, unless it
         // was suppressed by a previous selection (until focus leaves and returns to the key).
-        if (showFocus && !this.popup && !this.popupSuppressed) {
+        // Paint-only: opening a popup mutates the tree, which a layout pass must never do.
+        if (showFocus && !this.popup && !this.popupSuppressed && this.isPaintPass(draw2D)) {
             const key = this.renderedKeys[this.focusIndex];
             if (
                 key?.suggestions &&
                 this.triggersInclude(key, "hover") &&
-                Date.now() - this.lastFocusTime > this.hoverDelay
+                sgClock.now() - this.lastFocusTime > this.hoverDelay
             ) {
                 this.openPopup(key);
             }

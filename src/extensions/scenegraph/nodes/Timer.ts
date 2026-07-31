@@ -1,6 +1,7 @@
 import { AAMember, BrsInvalid, BrsString, BrsType, isBrsString } from "brs-engine";
 import { Node } from "./Node";
 import { sgRoot } from "../SGRoot";
+import { sgClock } from "../SGClock";
 import { FieldKind, FieldModel } from "../SGTypes";
 import { SGNodeType } from ".";
 
@@ -34,7 +35,7 @@ export class Timer extends Node {
         if (field && mapKey === "control" && isBrsString(value)) {
             let control = value.getValue().toLowerCase();
             if (control === "start") {
-                this.lastFireTime = performance.now();
+                this.lastFireTime = sgClock.perfNow();
                 this.active = true;
             } else if (control === "stop") {
                 this.active = false;
@@ -53,7 +54,7 @@ export class Timer extends Node {
     }
 
     checkFire() {
-        const now = performance.now();
+        const now = sgClock.perfNow();
         const duration = this.getValueJS("duration") as number;
         const repeat = this.getValueJS("repeat") as boolean;
         if (this.active && (now - this.lastFireTime) / 1000 >= duration) {

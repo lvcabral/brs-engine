@@ -36,8 +36,10 @@ import { RoSGScreen } from "./components/RoSGScreen";
 import { getRenderThreadQueue } from "./components/RoRenderThreadQueue";
 import packageInfo from "../../../packages/scenegraph/package.json";
 
+export * from "./SGClock";
 export * from "./SGRoot";
 export * from "./SGUtil";
+export * from "./SGVerify";
 export * from "./components/RoSGNode";
 export * from "./components/RoSGScreen";
 export * from "./components/RoRenderThreadQueue";

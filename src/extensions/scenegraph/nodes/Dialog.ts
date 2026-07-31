@@ -210,7 +210,11 @@ export class Dialog extends Group {
         if (this.isDirty) {
             this.updateChildren();
         }
-        this.setNodeFocus(true);
+        // Claiming focus is a paint-side effect: a layout pass (a bounding-rect refresh that
+        // reaches the dialog) must not move focus.
+        if (this.isPaintPass(draw2D)) {
+            this.setNodeFocus(true);
+        }
         const rotation = angle + this.getRotation();
         opacity = opacity * this.getOpacity();
         this.updateBoundingRects(boundingRect, origin, rotation);

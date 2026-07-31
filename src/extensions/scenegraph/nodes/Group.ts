@@ -50,7 +50,34 @@ export class Group extends Node {
     protected resolution: string;
     private cachedLines: MeasuredText[] = [];
     private cachedHeight: number = 0;
-    isDirty: boolean;
+    private _isDirty: boolean = true;
+    /**
+     * The (origin, angle, opacity) context of this node's last completed layout pass. A pruned
+     * refresh may skip the subtree only when the incoming context matches EXACTLY (float
+     * equality): a moved/rotated/faded ancestor changes the context of every descendant, which
+     * re-renders them even though their own fields never changed.
+     */
+    private lastLayoutContext?: { x: number; y: number; angle: number; opacity: number };
+    /** @internal Number of non-skipped render passes this node has run; exposed for pruning tests. */
+    layoutPassCount = 0;
+
+    get isDirty(): boolean {
+        return this._isDirty;
+    }
+
+    /**
+     * Dirtying a node also marks its subtree stale for the pruned layout refresh: ~65 sites set
+     * `isDirty = true` directly (bypassing `makeDirty`), and each represents render-relevant state
+     * the next layout pass must see. Routing the stale mark through this setter keeps the pruning
+     * invariant without auditing every site. Clearing (`false`) leaves the stale mark alone —
+     * `subtreeStale` is cleared only at the start of the node's own layout pass.
+     */
+    set isDirty(value: boolean) {
+        this._isDirty = value;
+        if (value) {
+            this.markSubtreeStale();
+        }
+    }
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.Group) {
         super([], name);
@@ -659,6 +686,26 @@ export class Group extends Node {
         if (this.skipRender(draw2D)) {
             return;
         }
+        if (this.skipSettledLayout(origin, angle, opacity, draw2D)) {
+            return;
+        }
+        // Clear the stale mark BEFORE the pass, not after: BrightScript that runs inside it (an
+        // item component's init(), a field observer) can write fields — clearing afterwards would
+        // wipe the mark those writes set and strand the change until something unrelated dirties
+        // this subtree again. Record the incoming context a completed pass ran under; a pruned
+        // refresh may only skip when the same context comes back.
+        //
+        // Both happen ONLY inside the pruned full refresh itself: scoped measurements (the
+        // mid-render fallback, measureUnsizedChildren) render at origin [0,0], and a detached
+        // component root's real refresh ALSO runs at [0,0] — if a scoped pass recorded that
+        // context and cleared the mark, the real refresh would skip on the scoped pass's partial
+        // rects (its parent's union was snapshot/restored away, or its layout hadn't been applied
+        // yet). Paint passes don't participate in pruning at all.
+        if (sgRoot.pruneLayout) {
+            this.subtreeStale = false;
+            this.lastLayoutContext = { x: origin[0], y: origin[1], angle, opacity };
+        }
+        this.layoutPassCount++;
         const nodeTrans = this.getTranslation();
         const drawTrans = nodeTrans.slice();
         drawTrans[0] += origin[0];
@@ -756,6 +803,31 @@ export class Group extends Node {
     }
 
     /**
+     * Whether a pruned layout refresh may skip this settled subtree (docs/scenegraph-layout-passes.md).
+     * Active only during `refreshLayoutFromRoot`'s pruned pass (`sgRoot.pruneLayout`), never on
+     * paint. A subtree is skippable when nothing in it was written since its last layout pass
+     * (`subtreeStale` false — sound because layout passes are pure) AND the incoming
+     * origin/angle/opacity match the context that pass ran under. A skipped child must still hand
+     * its cached rect up: `updateBoundingRects` resets the parent's rects at the start of the
+     * parent's pass and rebuilds them from child unions, so skipping without contributing would
+     * make every ancestor's bounds come out short (a vertical LayoutGroup reporting one child's
+     * height instead of the stack's — MidRenderParentMeasure).
+     */
+    private skipSettledLayout(origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D): boolean {
+        if (draw2D || !sgRoot.pruneLayout || this.subtreeStale || !this.lastLayoutContext) {
+            return false;
+        }
+        const ctx = this.lastLayoutContext;
+        if (ctx.x !== origin[0] || ctx.y !== origin[1] || ctx.angle !== angle || ctx.opacity !== opacity) {
+            return false;
+        }
+        if (this.isVisible()) {
+            this.updateParentRects(origin, angle);
+        }
+        return true;
+    }
+
+    /**
      * Whether renderNode must skip this node. Invisible nodes are skipped during frame draws
      * (draw2D present). A layout/measurement pass (no draw target — e.g. getBoundingRect's
      * refresh render) still traverses invisible plain containers so that nodes inside a hidden
@@ -776,6 +848,13 @@ export class Group extends Node {
         return true;
     }
 
+    /**
+     * Runs on layout passes too (not gated on `isPaintPass`): tracking is a deterministic
+     * function of layout state (rects + visibility), the write only fires on a genuine change,
+     * and HiddenMeasure pins that a bounding-rect refresh reports "none" for UI measured under a
+     * hidden ancestor. That keeps layout passes idempotent without freezing tracking between
+     * frames.
+     */
     protected updateRenderTracking(invisible: boolean) {
         const enableRenderTracking = this.getValueJS("enableRenderTracking") as boolean;
         const renderTracking = this.getValueJS("renderTracking") as string;

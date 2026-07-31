@@ -10,6 +10,7 @@ import {
     Int32,
     BrsBoolean,
 } from "brs-engine";
+import { sgClock } from "../SGClock";
 import { FieldModel } from "../SGTypes";
 import { SGNodeType } from ".";
 import { Group } from "./Group";
@@ -38,6 +39,8 @@ export class TextEditBox extends Group {
     private cursorVisible: boolean = true;
     private lastCursorToggleTime: number = 0;
     private lastCharInputTime: number = 0;
+    /** Clock captured on the last paint pass; layout passes reuse it instead of reading the clock. */
+    private lastPaintNow: number = 0;
     private readonly cursor?: RoBitmap;
     private readonly textLabel: Label;
     private readonly secureLabel: Label;
@@ -93,7 +96,7 @@ export class TextEditBox extends Group {
         this.hintLabel.setValueSilent("color", new Int32(convertHexColor("0xAAAAAAFF")));
         this.linkField(this.hintLabel, "color", "hintTextColor");
 
-        this.lastCursorToggleTime = Date.now();
+        this.lastCursorToggleTime = sgClock.now();
     }
 
     private configureLabel(label: Label) {
@@ -125,7 +128,7 @@ export class TextEditBox extends Group {
                 position++;
                 this.setValue("text", new BrsString(text));
                 this.setValue("cursorPosition", new Float(position));
-                this.lastCharInputTime = Date.now();
+                this.lastCharInputTime = sgClock.now();
                 handled = true;
             }
         } else if (key === "replay") {
@@ -141,7 +144,7 @@ export class TextEditBox extends Group {
         // Reset cursor blink on key press
         if (handled) {
             this.cursorVisible = true;
-            this.lastCursorToggleTime = Date.now();
+            this.lastCursorToggleTime = sgClock.now();
         }
         return handled;
     }
@@ -169,7 +172,7 @@ export class TextEditBox extends Group {
         this.setValue("cursorPosition", new Float(position));
         // Reset cursor blink on move
         this.cursorVisible = true;
-        this.lastCursorToggleTime = Date.now();
+        this.lastCursorToggleTime = sgClock.now();
     }
 
     renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
@@ -186,7 +189,13 @@ export class TextEditBox extends Group {
         const combinedOpacity = opacity * this.getOpacity();
         const text = this.getValueJS("text") as string;
         const secureMode = this.getValueJS("secureMode") as boolean;
-        const now = Date.now(); // Get current time for checks
+        // Read the clock only on a paint pass; a layout pass reuses the last paint's timestamp so
+        // its output (secure-char reveal, cursor phase) is identical between frames — layout must
+        // be pure and clock-free.
+        if (this.isPaintPass(draw2D)) {
+            this.lastPaintNow = sgClock.now();
+        }
+        const now = this.lastPaintNow;
 
         // Ensure labels have correct width if TextEditBox width changes
         // And update background if URI changes
@@ -258,7 +267,8 @@ export class TextEditBox extends Group {
         if (!isActive || !this.cursor?.isValid()) {
             return;
         }
-        if (now - this.lastCursorToggleTime > this.cursorBlinkInterval) {
+        // Flip the blink phase only on a paint pass — layout renders the stored phase.
+        if (this.isPaintPass(draw2D) && now - this.lastCursorToggleTime > this.cursorBlinkInterval) {
             this.cursorVisible = !this.cursorVisible;
             this.lastCursorToggleTime = now;
         }
