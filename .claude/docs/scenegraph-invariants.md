@@ -20,15 +20,21 @@ ScrollingLabel, TextEditBox, TrickPlayBar, Video, DynamicKeyGrid, TimeGrid) adva
 under `isPaintPass` and render stored state otherwise — regressions: `LayoutPurity.test.js`,
 `BusySpinnerClock.test.js`, `ScrollingLabelClock.test.js`. This purity is what makes **pruned
 refreshes** sound: `refreshLayoutFromRoot` skips subtrees whose `subtreeStale` is false under an
-unchanged origin/angle/opacity context (`Group.skipSettledLayout`). Invariants: a skipped child
-still hands its cached rect up (`updateParentRects`), the stale mark is cleared **before** a
-node's pass (writes made inside it must survive), `Group.isDirty = true` routes through a setter
-that also stale-marks, and `ContentNode.makeDirty` hops the field boundary to stale-mark the
-consuming node (content trees aren't parented into the render tree). Regressions:
-`LayoutPruning.test.js`, `PruneVerify.test.js`, and the `BRS_PRUNE_VERIFY=1` CLI runs in
-`test/cli/cli.test.js`. Debug toggles: `BRS_PRUNE_VERIFY=1` (diff pruned vs full every refresh),
-`BRS_PRUNE_DISABLE=1` (turn pruning off). LayoutGroup converges to a fixed point on layout passes
-(`MAX_LAYOUT_PASSES` is a divergence backstop only) — regression: `LayoutConvergence.test.js`.
+unchanged origin/angle/opacity context (`Group.skipSettledLayout`). Invariants, each learned from
+a real-app divergence: a skipped child still hands its cached rect up (`updateParentRects`); the
+stale mark is cleared **before** a node's pass (writes made inside it must survive) and **only by
+the pruned refresh itself** — scoped `[0,0]` measurements (`measureUnsizedChildren`, the
+mid-render fallback, detached-root `getMeasured()`) must not clear marks or record skip contexts,
+and after clobbering a subtree's `rectToScene` with origin-less values they must
+`markSubtreeStaleDeep()` so the refresh re-descends; `Group.isDirty = true` routes through a
+setter that also stale-marks; `ContentNode.makeDirty` hops the field boundary to stale-mark the
+consuming node (content trees aren't parented into the render tree); and LayoutGroup restores its
+**parent's** rects between convergence passes (each inner pass unions into the parent — without
+the restore, a re-centered child leaves both positions in every ancestor's union). Regressions:
+`LayoutPruning.test.js` (including the two real-app scenarios) and the pruned-vs-`BRS_PRUNE_DISABLE=1`
+CLI comparison in `test/cli/cli.test.js`. `BRS_PRUNE_DISABLE=1` turns pruning off (field
+debugging). LayoutGroup converges to a fixed point on layout passes (`MAX_LAYOUT_PASSES` is a
+divergence backstop only) — regression: `LayoutConvergence.test.js`.
 
 **Visibility vs. measurement:** plain containers (`Group`, `LayoutGroup`, `MaskGroup`) do their
 invisible early-return through `Group.skipRender(draw2D)`, which lets a **measurement pass** (a render

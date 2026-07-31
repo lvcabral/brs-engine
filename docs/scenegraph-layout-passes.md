@@ -1,12 +1,16 @@
 # Splitting `renderNode` into layout and paint passes
 
-**Status:** implemented. Landed as four stacked PRs: the layout/paint seam + injectable `sgClock`
-(#1117), per-node clock/side-effect extraction (#1118), LayoutGroup fixed-point convergence
-(#1119), and subtree pruning + the `BRS_PRUNE_VERIFY` rect-diff verifier. The document below is
-the original proposal, kept for the analysis and the verification bar; where the implementation
-deviated (AnimationBase was already ticked outside render; `renderNode` remains the single
-override point with `layoutNode`/`paintNode` as base-class entry points setting
-`sgRoot.renderPass`), the PRs record why.
+**Status:** implemented (#1120): the layout/paint seam + injectable `sgClock`, per-node
+clock/side-effect extraction, LayoutGroup fixed-point convergence, and subtree pruning. Verified
+with a temporary `BRS_PRUNE_VERIFY` rect-diff harness against two production apps until silent —
+that harness surfaced three real divergence families (scoped-measurement bookkeeping leaks,
+convergence passes polluting ancestor unions, `[0,0]` scene-rect clobbering on zero-width
+subtrees), each fixed and pinned as regression tests (`LayoutPruning.test.js`), after which the
+harness was removed. `BRS_PRUNE_DISABLE=1` remains as a field-debugging escape hatch. The document
+below is the original proposal, kept for the analysis and the verification bar; where the
+implementation deviated (AnimationBase was already ticked outside render; `renderNode` remains the
+single override point with `layoutNode`/`paintNode` as base-class entry points setting
+`sgRoot.renderPass`), the PR records why.
 
 ## The problem
 

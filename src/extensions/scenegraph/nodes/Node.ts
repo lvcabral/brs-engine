@@ -49,7 +49,6 @@ import { createFlatNode, createNode, getBrsValueFromFieldType, subtypeHierarchy 
 import { Field } from "../nodes/Field";
 import { toAssociativeArray, jsValueOf, fromSGNode } from "../factory/Serializer";
 import { sgRoot } from "../SGRoot";
-import { runPruneVerify } from "../SGVerify";
 import { SGNodeType } from ".";
 import { ComponentDefinition } from "../parser/ComponentDefinition";
 import { convertHexColor } from "../SGUtil";
@@ -1031,17 +1030,13 @@ export class Node extends RoSGNode implements BrsValue {
         const root = this.createPath()[0];
         sgRoot.rendering = true;
         try {
-            if (sgRoot.pruneVerify) {
-                runPruneVerify(root, interpreter);
-            } else {
-                // Prune settled subtrees (sound because layout passes are pure). Only this
-                // full-tree refresh prunes — scoped subtree measurements never do.
-                sgRoot.pruneLayout = !sgRoot.pruneDisabled;
-                try {
-                    root.layoutNode(interpreter, [0, 0], 0, 1);
-                } finally {
-                    sgRoot.pruneLayout = false;
-                }
+            // Prune settled subtrees (sound because layout passes are pure). Only this
+            // full-tree refresh prunes — scoped subtree measurements never do.
+            sgRoot.pruneLayout = !sgRoot.pruneDisabled;
+            try {
+                root.layoutNode(interpreter, [0, 0], 0, 1);
+            } finally {
+                sgRoot.pruneLayout = false;
             }
         } finally {
             sgRoot.rendering = false;
