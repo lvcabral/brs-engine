@@ -1,4 +1,15 @@
-import { AAMember, Interpreter, BrsBoolean, BrsType, Float, RoArray, IfDraw2D, Rect } from "brs-engine";
+import {
+    AAMember,
+    Interpreter,
+    BrsBoolean,
+    BrsString,
+    BrsType,
+    Float,
+    RoArray,
+    IfDraw2D,
+    Rect,
+    isBrsString,
+} from "brs-engine";
 import { FieldKind, FieldModel } from "../SGTypes";
 import { SGNodeType } from ".";
 import { jsValueOf } from "../factory/Serializer";
@@ -60,17 +71,66 @@ export class LayoutGroup extends Group {
 
     setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind) {
         const fieldName = index.toLowerCase();
-        super.setValue(index, value, alwaysNotify, kind);
+        super.setValue(index, this.canonicalizeDirection(fieldName, value), alwaysNotify, kind);
         if (this.isLayoutField(fieldName)) {
             this.layoutDirty = true;
         }
     }
 
     setValueSilent(fieldName: string, value: BrsType) {
-        super.setValueSilent(fieldName, value);
+        super.setValueSilent(fieldName, this.canonicalizeDirection(fieldName.toLowerCase(), value));
         if (this.isLayoutField(fieldName)) {
             this.layoutDirty = true;
         }
+    }
+
+    /**
+     * XML attributes are written straight into the field map by `registerInitializedFields`, never
+     * through `setValue`, so canonicalize once more after they land. The device applies the same
+     * enum normalization to both paths — `<LayoutGroup layoutDirection="Horiz" />` reads back
+     * `"horiz"` exactly as a runtime write does.
+     */
+    protected registerInitializedFields(fields: AAMember[]) {
+        super.registerInitializedFields(fields);
+        // Read the primitive: getValue hands back a boxed RoString for string fields.
+        const current = this.getValueJS("layoutDirection");
+        if (typeof current === "string") {
+            const canonical = this.canonicalDirectionValue(current);
+            if (canonical !== current) {
+                this.setValueSilent("layoutDirection", new BrsString(canonical));
+            }
+        }
+    }
+
+    /**
+     * `layoutDirection` is an ENUM field on Roku, not free text. Device-measured behavior (all
+     * spellings below, identical for XML attributes and runtime writes):
+     *
+     * - `horiz` / `vert` match case-insensitively and are stored in canonical lowercase, so
+     *   writing `"HORIZ"` reads back as `"horiz"`.
+     * - Anything else is REJECTED rather than stored-and-ignored: the field reads back as `""`.
+     *   `horizontal`, `vertical`, `horz` and `bogus` all land here — near-misses get no leniency.
+     * - A rejected write clobbers a previously valid one (`horiz` then `horz` reads back `""`).
+     *
+     * The layout consequence of that empty state lives in `getLayoutDirection`.
+     */
+    private canonicalizeDirection(fieldName: string, value: BrsType): BrsType {
+        // isBrsString (not instanceof) so a boxed roString assignment normalizes like a literal.
+        if (fieldName !== "layoutdirection" || !isBrsString(value)) {
+            return value;
+        }
+        const raw = jsValueOf(value);
+        if (typeof raw !== "string") {
+            return value;
+        }
+        const canonical = this.canonicalDirectionValue(raw);
+        return canonical === raw ? value : new BrsString(canonical);
+    }
+
+    /** "horiz"/"vert" match case-insensitively; everything else collapses to the rejected state. */
+    private canonicalDirectionValue(value: string): string {
+        const normalized = value.toLowerCase();
+        return normalized === "horiz" || normalized === "vert" ? normalized : "";
     }
 
     appendChildToParent(child: BrsType): boolean {
@@ -482,18 +542,17 @@ export class LayoutGroup extends Group {
         return children;
     }
 
+    /**
+     * Only a stored `"vert"` lays out vertically. Every other state — `"horiz"`, or the `""` that
+     * `canonicalizeDirection` leaves after a rejected write — lays out HORIZONTALLY on the device.
+     *
+     * That asymmetry is the counter-intuitive part, so spell it out: an untouched field keeps its
+     * `"vert"` default and stacks vertically, but a field written with an unrecognized value ends
+     * up empty and rows out horizontally. `<LayoutGroup layoutDirection="horz" />` is therefore a
+     * horizontal row on hardware, even though `horz` is not a documented value.
+     */
     private getLayoutDirection(): LayoutDirection {
-        const direction = this.getValueJS("layoutDirection");
-        if (typeof direction === "string") {
-            const normalized = direction.toLowerCase();
-            if (normalized === "horiz" || normalized === "horizontal") {
-                return "horiz";
-            }
-            if (normalized === "vert" || normalized === "vertical") {
-                return "vert";
-            }
-        }
-        return "vert";
+        return this.getValueJS("layoutDirection") === "vert" ? "vert" : "horiz";
     }
 
     private normalizeHorizAlignment(direction: LayoutDirection): HorizontalAlignment {

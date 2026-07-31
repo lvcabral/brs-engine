@@ -45,6 +45,37 @@ Renderable/complex nodes (Poster, Label, ArrayGrid, …) keep the hard skip so h
 textures or creates item components. Regression:
 `test/extensions/scenegraph/HiddenMeasure.test.js`.
 
+## `LayoutGroup.layoutDirection` is an enum, and its rejected state is HORIZONTAL
+
+**Device-measured** (probe channel: `Samples/layoutgroup-probe`, 12 spellings × XML-attribute and
+runtime-write paths × 3 passes — every row agreed). Roku does **not** treat `layoutDirection` as free
+text:
+
+| Written | Reads back | Lays out |
+| --- | --- | --- |
+| never written | `"vert"` | **vert** |
+| `horiz` / `HORIZ` / `Horiz` | `"horiz"` | horiz |
+| `vert` | `"vert"` | vert |
+| `horz`, `horizontal`, `vertical`, `bogus`, `""` | `""` | **horiz** |
+
+Two counter-intuitive consequences, both easy to "simplify" away:
+
+1. An unrecognized value is **rejected, not stored-and-ignored** — the field reads back as `""`, and a
+   rejected write **clobbers** a previously valid one (`horiz` then `horz` → `""`).
+2. That empty state lays out **horizontally**, while the untouched `"vert"` default lays out
+   vertically. So `<LayoutGroup layoutDirection="horz" />` is a horizontal row on hardware. Do **not**
+   "fix" `getLayoutDirection` to fall back to the documented `vert` default — that silently stacks real
+   apps' menu bars (this is exactly the bug that prompted the probe).
+
+`horizontal`/`vertical` are **not** aliases, despite reading like the obvious long forms; the engine
+used to accept them and mapped `vertical` → vert, the opposite of hardware. Canonicalization happens on
+write (`canonicalizeDirection`, applied in `setValue`, `setValueSilent`, and `registerInitializedFields`
+— the last because XML/deserialized fields are written straight into the field map, bypassing
+`setValue`); `getLayoutDirection` then only has to ask whether the stored value is `"vert"`. Use
+`isBrsString`, not `instanceof BrsString`, so a boxed `roString` normalizes too. `ButtonGroup` extends
+`LayoutGroup` and inherits all of this while keeping its `vert` default. Regression:
+`test/extensions/scenegraph/LayoutDirection.test.js`.
+
 ## XML `<interface>` field redeclaration — system vs. XML-defined (`addFields`)
 
 When `addFields` builds a custom component's fields, a `<field>` whose name already exists is handled by
