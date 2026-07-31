@@ -119,9 +119,17 @@ export class Poster extends Group {
                 alpha = opacity * this.getValueJS("loadingBitmapOpacity");
             }
             this.bitmap.scaleMode = 1;
-            if (displayMode.trim().toLowerCase() === "scaletofit") {
+            // The aspect-preserving display modes do not apply to a 9-patch: its marker border is
+            // what declares which regions stretch (fixed corners are blitted 1:1), so the target
+            // rect is authoritative and the source aspect ratio is meaningless. Letterboxing it to
+            // the source ratio collapses a wide pill drawn from a square asset to a square the
+            // height of the rect — the app-assigned width is simply lost — and cropping it
+            // (scaleToZoom) slices through the markers. Same rationale as loadUri skipping
+            // loadWidth/loadHeight for 9-patches: the bitmap must reach drawNinePatch intact.
+            const mode = this.bitmap.ninePatch ? "noscale" : displayMode.trim().toLowerCase();
+            if (mode === "scaletofit") {
                 this.drawImage(this.bitmap, this.scaleToFit(rect), rotation, alpha, draw2D, rgba);
-            } else if (displayMode.trim().toLowerCase() === "scaletozoom") {
+            } else if (mode === "scaletozoom") {
                 draw2D?.doDrawCroppedBitmap(this.bitmap, this.scaleToZoom(rect), rect, rgba, alpha);
             } else {
                 this.drawImage(this.bitmap, rect, rotation, alpha, draw2D, rgba);
