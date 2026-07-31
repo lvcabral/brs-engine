@@ -2,6 +2,7 @@
 <component name="TaskTest" extends="Task">
     <interface>
         <field id="label" type="string" />
+        <field id="payloadNode" type="node" />
         <field id="result" type="string" />
     </interface>
     <script type="text/brightscript"><![CDATA[
@@ -11,6 +12,20 @@
         ' that cached the global/top nodes in its fields during construction. `m.global` and
         ' `m.top` are serialized before it, so its copies of them cross as circular references.
         m.helper = { global: GetGlobalAA().global, top: m.top }
+
+        ' The same shape one level deeper: references to nodes that live *inside* the `m.top`
+        ' subtree rather than being `m.top` itself — a node-valued field, and a child.
+        payload = CreateObject("roSGNode", "ContentNode")
+        payload.id = "PayloadNode"
+        payload.title = "payload-from-init"
+        m.top.payloadNode = payload
+
+        child = CreateObject("roSGNode", "ContentNode")
+        child.id = "ChildNode"
+        child.title = "child-from-init"
+        m.top.appendChild(child)
+
+        m.descendants = { field: payload, child: child }
     end sub
 
     sub runTask()
@@ -18,6 +33,18 @@
         print "HELPER TOP TYPE: "; type(m.helper.top)
         print "HELPER GLOBAL VERSION: "; m.helper.global.server.version
         print "HELPER TOP LABEL: "; m.helper.top.label
+
+        print "FIELD REF TYPE: "; type(m.descendants.field)
+        print "FIELD REF TITLE: "; m.descendants.field.title
+        print "FIELD REF SAME: "; m.descendants.field.isSameNode(m.top.payloadNode)
+
+        print "CHILD REF TYPE: "; type(m.descendants.child)
+        print "CHILD REF TITLE: "; m.descendants.child.title
+        print "CHILD REF SAME: "; m.descendants.child.isSameNode(m.top.getChild(0))
+
+        ' A write through the script-scope reference has to reach the one real node, so the
+        ' render thread sees it after the task finishes.
+        m.descendants.field.title = "changed-in-task"
         m.top.result = "ok"
     end sub
     ]]></script>

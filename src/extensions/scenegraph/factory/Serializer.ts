@@ -490,6 +490,24 @@ function applyRemotePortObservers(obj: any, node: Node) {
     }
 }
 
+/**
+ * Constructs a bare node of the given type, without running any render-side initialization.
+ *
+ * The `deserializing` guard keeps media nodes (Video/Audio) rebuilt as cross-thread copies from
+ * running their render-init, which would hijack the singleton `sgRoot.video`/`audio` and reset the
+ * real player. The prior value is restored so nested/recursive deserialization stays correct.
+ * @param type Serialized node type.
+ * @param subtype Serialized node subtype.
+ * @returns The new node, falling back to a plain `Node` for an unknown type.
+ */
+function buildFlatNode(type: string, subtype: string): Node {
+    const wasDeserializing = sgRoot.deserializing;
+    sgRoot.deserializing = true;
+    const created = createFlatNode(type, subtype);
+    sgRoot.deserializing = wasDeserializing;
+    return created instanceof BrsInvalid ? new Node([], subtype) : created;
+}
+
 export function toSGNode(obj: any, type: string, subtype: string, child?: boolean, nodeMap?: Map<string, Node>): Node {
     // Initialize nodeMap on first call
     nodeMap ??= new Map<string, Node>();
@@ -500,20 +518,20 @@ export function toSGNode(obj: any, type: string, subtype: string, child?: boolea
         if (existingNode) {
             return existingNode;
         }
-        // If we don't have the node yet, this might be a forward reference
-        // Return invalid for now (should not happen in valid serialized data)
-        return BrsInvalid.Instance as any;
+        // The node this points at was not rebuilt on this thread: the pass reached it by a route
+        // it does not restore locally — a runtime-appended child of the task node, say, whose
+        // `_children_` the receiver does not replay. The owner still resolves the address (it was
+        // registered when the full copy was written), so stand in an address-only proxy and let
+        // reads rendezvous. Answering invalid here crashes the app's first dot access instead.
+        const stub = buildFlatNode(type, subtype);
+        stub.setAddress(obj["_address_"]);
+        stub.setOwner(0);
+        stub.setRemoteProxy(true);
+        nodeMap.set(obj["_address_"], stub);
+        sgRoot.registerCrossThreadNode(stub);
+        return stub;
     }
-    // Guard the construction so media nodes (Video/Audio) rebuilt as cross-thread proxies do not run
-    // their render-init (which would hijack the singleton sgRoot.video/audio and reset the real
-    // player). Restore the prior value to stay correct under nested/recursive deserialization.
-    const wasDeserializing = sgRoot.deserializing;
-    sgRoot.deserializing = true;
-    let newNode = createFlatNode(type, subtype);
-    sgRoot.deserializing = wasDeserializing;
-    if (newNode instanceof BrsInvalid) {
-        newNode = new Node([], subtype);
-    }
+    const newNode = buildFlatNode(type, subtype);
     // Store the node in the map using the original address for circular reference resolution
     // Use the address from serialized data if available, otherwise use the new node's address
     newNode.setAddress(obj["_address_"] || newNode.getAddress());
