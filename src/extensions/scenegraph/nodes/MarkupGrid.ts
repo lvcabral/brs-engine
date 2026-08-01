@@ -58,6 +58,11 @@ export class MarkupGrid extends ArrayGrid {
         return { x: 0, y: 0 };
     }
 
+    /** A grid lays its columns out from columnWidths/columnSpacings; per the reference, lists do not. */
+    protected usesColumnWidths(): boolean {
+        return true;
+    }
+
     protected handleUpDown(key: string) {
         let handled = false;
         let offset: number;
@@ -209,7 +214,10 @@ export class MarkupGrid extends ArrayGrid {
             if (rowIndex < 0) {
                 break;
             }
-            itemRect.height = rowHeights[rowIndex / this.numCols] ?? itemSize[1];
+            // Per-row overrides are indexed by ABSOLUTE row, top to bottom — not by the display slot,
+            // which differs as soon as the grid is scrolled.
+            const absoluteRow = Math.floor(rowIndex / this.numCols);
+            itemRect.height = rowHeights[absoluteRow] ?? itemSize[1];
             if (!hasSections && this.wrap && rowIndex < lastIndex && r > 0) {
                 const divRect = { ...itemRect, width: rowWidth };
                 const divHeight = this.renderWrapDivider(divRect, opacity, draw2D);
@@ -238,11 +246,13 @@ export class MarkupGrid extends ArrayGrid {
                 }
             }
             itemRect.x = rect.x;
-            itemRect.y += itemRect.height + (rowSpacings[r] ?? spacing[1]);
+            itemRect.y += itemRect.height + (rowSpacings[absoluteRow] ?? spacing[1]);
             if (!RectRect(this.sceneRect, itemRect)) {
                 break;
             }
         }
-        this.updateRect(rect, displayRows, itemSize);
+        this.updateRect(rect, displayRows, itemSize, {
+            firstRow: Math.max(0, Math.floor(this.getRenderRowIndex(0) / this.numCols)),
+        });
     }
 }

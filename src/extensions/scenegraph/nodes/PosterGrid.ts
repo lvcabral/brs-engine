@@ -220,6 +220,13 @@ export class PosterGrid extends ArrayGrid {
         let sectionIndex = 0;
         let maxCellHeight = 0;
         const itemRect = { ...rect, width: columnWidths[0], height: baseSize[1] };
+        // Accumulate the extent actually laid out. Each row's height is its poster height PLUS its
+        // caption zone, which updateRect cannot re-derive from rowHeights alone — measuring from
+        // rowHeights there would silently drop every caption. `startY` is captured before the loop so
+        // wrap/section dividers, which also advance itemRect.y, are counted.
+        const startY = itemRect.y;
+        let renderedRows = 0;
+        let trailingGap = 0;
         for (let r = 0; r < displayRows; r++) {
             const rowIndex = this.getRenderRowIndex(r);
             if (rowIndex < 0 || rowIndex >= contentLength) {
@@ -281,13 +288,24 @@ export class PosterGrid extends ArrayGrid {
             maxCellHeight = Math.max(maxCellHeight, rowHeightWithCaptions);
             lastRowIndex = rowIndex;
             lastRowNumber = rowNumber;
+            renderedRows++;
+            trailingGap = this.resolveSpacingValue(rowSpacingValues, rowNumber, baseRowSpacing);
             if (itemRect.y > (this.sceneRect?.y ?? 0) + (this.sceneRect?.height ?? 0)) {
+                itemRect.y += rowHeightWithCaptions;
+                trailingGap = 0;
                 break;
             }
             const rowGap = this.resolveSpacingValue(rowSpacingValues, rowNumber, baseRowSpacing);
             itemRect.y += rowHeightWithCaptions + rowGap;
         }
-        this.updateRect(rect, displayRows, [Math.max(...columnWidths), maxCellHeight || baseSize[1]]);
+        // Explicit extents: the accumulated height (caption zones included) and the row width the
+        // layout already computes per row — the old `Math.max(...columnWidths) * numCols` ignored both
+        // per-column widths and column spacing.
+        const height = renderedRows === 0 ? 0 : itemRect.y - startY - trailingGap;
+        this.updateRect(rect, displayRows, [Math.max(...columnWidths), maxCellHeight || baseSize[1]], {
+            width: this.computeRowWidth(columnWidths, columnSpacings),
+            height,
+        });
     }
 
     protected handleUpDown(key: string) {

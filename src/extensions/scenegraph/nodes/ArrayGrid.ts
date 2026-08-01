@@ -601,7 +601,7 @@ export class ArrayGrid extends Group {
         drawTrans[1] += origin[1];
         const rect = { x: drawTrans[0], y: drawTrans[1], ...this.getDimensions() };
         const displayRows = Math.min(Math.ceil(this.content.length / this.numCols), this.numRows);
-        this.updateRect(rect, displayRows, itemSize);
+        this.updateRect(rect, displayRows, itemSize, { firstRow: this.topRow });
         this.updateBoundingRects(rect, origin, angle + this.getRotation());
     }
 
@@ -964,21 +964,100 @@ export class ArrayGrid extends Group {
         return { x: 0, y: 0 };
     }
 
-    protected updateRect(rect: Rect, numRows: number, itemSize: number[]) {
+    /**
+     * Whether this node lays its columns out from `columnWidths`/`columnSpacings`. Per the ArrayGrid
+     * reference those fields are "not used by lists", so only grids opt in.
+     */
+    protected usesColumnWidths(): boolean {
+        return false;
+    }
+
+    /**
+     * Resolves a per-row/per-column override array against its uniform fallback. Per the ArrayGrid
+     * reference the arrays are indexed by ABSOLUTE row/column, top to bottom, and any index past the
+     * end of the array falls back to the `itemSize`/`itemSpacing` value — it does NOT repeat the last
+     * entry (unlike `LayoutGroup.itemSpacings`, which is device-confirmed to repeat).
+     */
+    private resolveTrackValue(values: unknown, index: number, fallback: number): number {
+        if (!Array.isArray(values)) {
+            return fallback;
+        }
+        const value = values[index];
+        return typeof value === "number" && Number.isFinite(value) ? value : fallback;
+    }
+
+    /**
+     * Sizes the reported bounding rect to the laid-out extent.
+     *
+     * Inter-item spacing is part of that extent: the render loop advances by `itemSize + itemSpacing`
+     * per row/column, so N uniform rows span `N*itemH + (N-1)*spacing`. `boundingRect` reported only
+     * `N*itemH` before, omitting the gaps — an app centering a vertical menu via
+     * `(screenH - boundingRect().height)/2` then placed it too low by the total gap height.
+     *
+     * Rows and columns are not necessarily uniform, though: `rowHeights`/`rowSpacings` (and
+     * `columnWidths`/`columnSpacings` on grids) override `itemSize`/`itemSpacing` per track, and the
+     * render loops honor them. Measuring uniformly made every variable-height list report a rect that
+     * disagreed with what it drew.
+     *
+     * @param layout.firstRow Absolute index of the first RENDERED row — a scrolled list starts its
+     *   window at `topRow`, not 0, so the per-row overrides have to be indexed from there.
+     * @param layout.width/height An extent the caller already accumulated while laying out, which
+     *   wins over the arithmetic below. RowList and PosterGrid need this: their rows grow by amounts
+     *   (a label/counter band, a caption zone) that cannot be re-derived here without duplicating the
+     *   measurement.
+     */
+    protected updateRect(
+        rect: Rect,
+        numRows: number,
+        itemSize: number[],
+        layout?: { firstRow?: number; width?: number; height?: number }
+    ) {
         const numCols = this.numCols || 1;
-        // Inter-item spacing is part of the laid-out extent: the render loop advances by
-        // `itemSize + itemSpacing` per row/column, so N rows span `N*itemH + (N-1)*spacing`
-        // (and likewise across columns). `boundingRect` reported only `N*itemH` before, omitting
-        // the gaps — an app centering a vertical menu via `(screenH - boundingRect().height)/2`
-        // then placed it too low by the total gap height. `itemSpacing` defaults to [0,0].
         const spacing = this.getValueJS("itemSpacing") as number[];
         const colSpacing = Array.isArray(spacing) ? spacing[0] ?? 0 : 0;
         const rowSpacing = Array.isArray(spacing) ? spacing[1] ?? 0 : 0;
         const margin = this.rectMargins();
         rect.x = rect.x - margin.x;
         rect.y = rect.y - margin.y;
-        rect.width = numCols * (itemSize[0] + margin.x * 2) + Math.max(0, numCols - 1) * colSpacing;
-        rect.height = numRows * (itemSize[1] + margin.y * 2) + Math.max(0, numRows - 1) * rowSpacing;
+
+        if (typeof layout?.width === "number") {
+            rect.width = layout.width;
+        } else if (this.usesColumnWidths()) {
+            const columnWidths = this.getValueJS("columnWidths");
+            const columnSpacings = this.getValueJS("columnSpacings");
+            let width = 0;
+            for (let c = 0; c < numCols; c++) {
+                width += this.resolveTrackValue(columnWidths, c, itemSize[0]) + margin.x * 2;
+                if (c < numCols - 1) {
+                    width += this.resolveTrackValue(columnSpacings, c, colSpacing);
+                }
+            }
+            rect.width = width;
+        } else {
+            rect.width = numCols * (itemSize[0] + margin.x * 2) + Math.max(0, numCols - 1) * colSpacing;
+        }
+
+        if (typeof layout?.height === "number") {
+            rect.height = layout.height;
+            return;
+        }
+        const rowHeights = this.getValueJS("rowHeights");
+        const rowSpacings = this.getValueJS("rowSpacings");
+        const totalRows = Math.max(1, Math.ceil(this.content.length / numCols));
+        const firstRow = layout?.firstRow ?? 0;
+        let height = 0;
+        for (let r = 0; r < numRows; r++) {
+            // A wrapping list renders a contiguous window that can run past the last row and resume
+            // at the top, so the override arrays are indexed modulo the row count.
+            const absolute = this.wrap ? (((firstRow + r) % totalRows) + totalRows) % totalRows : firstRow + r;
+            height += this.resolveTrackValue(rowHeights, absolute, itemSize[1]) + margin.y * 2;
+            if (r < numRows - 1) {
+                // Per the reference, rowSpacings[i] is the spacing AFTER row i, so the last rendered
+                // row contributes none.
+                height += this.resolveTrackValue(rowSpacings, absolute, rowSpacing);
+            }
+        }
+        rect.height = height;
     }
 
     protected getIndex(offset: number = 0, currIndex?: number) {

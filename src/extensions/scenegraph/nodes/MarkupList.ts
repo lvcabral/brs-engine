@@ -152,12 +152,14 @@ export class MarkupList extends ArrayGrid {
             this.renderItemComponent(interpreter, index, itemRect, rotation, opacity, draw2D);
             lastIndex = index;
             itemRect.x = rect.x;
-            itemRect.y += itemRect.height + (rowSpacings[r] ?? spacing[1]);
+            // Per-row overrides are indexed by ABSOLUTE row, top to bottom — not by the display slot,
+            // which differs as soon as the list is scrolled (rowHeights above already does this).
+            itemRect.y += itemRect.height + (rowSpacings[rowIndex] ?? spacing[1]);
             if (!RectRect(this.sceneRect, itemRect)) {
                 break;
             }
         }
-        this.updateRect(rect, displayRows, itemSize);
+        this.updateRect(rect, displayRows, itemSize, { firstRow: Math.max(0, this.getRenderRowIndex(0)) });
     }
 
     protected focusMargins() {
