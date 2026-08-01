@@ -15,7 +15,6 @@ import { FieldKind, FieldModel } from "../SGTypes";
 import { SGNodeType } from ".";
 import { Group } from "./Group";
 import type { Font } from "./Font";
-import { rotateTranslation } from "../SGUtil";
 
 // Width reserved for the scrollbar (right side of the node)
 const SCROLLBAR_WIDTH_HD = 36;
@@ -144,16 +143,24 @@ export class ScrollableText extends Group {
         return handled;
     }
 
-    renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
+    /** Renderable node: an inherited rotation also rotates its own translation vector. */
+    protected rotatesDrawTranslation(): boolean {
+        return true;
+    }
+
+    protected renderNodeContent(
+        interpreter: Interpreter,
+        origin: number[],
+        angle: number,
+        opacity: number,
+        draw2D?: IfDraw2D
+    ) {
         if (!this.isVisible()) {
             this.updateRenderTracking(true);
             return;
         }
 
-        const nodeTrans = this.getTranslation();
-        const drawTrans = angle === 0 ? nodeTrans.slice() : rotateTranslation(nodeTrans, angle);
-        drawTrans[0] += origin[0];
-        drawTrans[1] += origin[1];
+        const drawTrans = this.getDrawTranslation(origin, angle);
         const rotation = angle + this.getRotation();
         opacity = opacity * this.getOpacity();
 
@@ -224,20 +231,23 @@ export class ScrollableText extends Group {
         const clipWidth = showScrollbar ? nodeWidth - this.scrollbarWidth : nodeWidth;
         const clipRect: Rect = { x: rect.x, y: rect.y, width: clipWidth, height: nodeHeight };
         draw2D.pushClip(clipRect);
-        const endLine = Math.min(this.scrollTopLine + this.visibleLines, this.totalLines);
-        let y = startY;
-        for (let i = this.scrollTopLine; i < endLine; i++) {
-            const line = finalLines[i];
-            let x = rect.x;
-            if (horizAlign === "center" && textWidth > line.width) {
-                x += (textWidth - line.width) / 2;
-            } else if (horizAlign === "right" && textWidth > line.width) {
-                x += textWidth - line.width;
+        try {
+            const endLine = Math.min(this.scrollTopLine + this.visibleLines, this.totalLines);
+            let y = startY;
+            for (let i = this.scrollTopLine; i < endLine; i++) {
+                const line = finalLines[i];
+                let x = rect.x;
+                if (horizAlign === "center" && textWidth > line.width) {
+                    x += (textWidth - line.width) / 2;
+                } else if (horizAlign === "right" && textWidth > line.width) {
+                    x += textWidth - line.width;
+                }
+                draw2D.doDrawRotatedText(line.text, x, y, color, opacity, drawFont, rotation);
+                y += this.lineHeight + lineSpacing;
             }
-            draw2D.doDrawRotatedText(line.text, x, y, color, opacity, drawFont, rotation);
-            y += this.lineHeight + lineSpacing;
+        } finally {
+            draw2D.popClip();
         }
-        draw2D.popClip();
 
         // Draw scrollbar if needed
         if (showScrollbar) {

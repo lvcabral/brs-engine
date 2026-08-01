@@ -23,7 +23,6 @@ import { LayoutGroup } from "./LayoutGroup";
 import { RoSGNode } from "../components/RoSGNode";
 import { FieldKind, FieldModel } from "../SGTypes";
 import { SGNodeType } from ".";
-import { rotateTranslation } from "../SGUtil";
 
 export class ButtonGroup extends LayoutGroup {
     readonly defaultFields: FieldModel[] = [
@@ -181,21 +180,29 @@ export class ButtonGroup extends LayoutGroup {
         return handled;
     }
 
-    renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
+    /** Renderable node: an inherited rotation also rotates its own translation vector. */
+    protected rotatesDrawTranslation(): boolean {
+        return true;
+    }
+
+    protected renderNodeContent(
+        interpreter: Interpreter,
+        origin: number[],
+        angle: number,
+        opacity: number,
+        draw2D?: IfDraw2D
+    ) {
         if (!this.isManagedMode()) {
             // No managed Button children: behave as a plain LayoutGroup so the app's
             // layoutDirection/itemSpacings and child translations are honored.
-            super.renderNode(interpreter, origin, angle, opacity, draw2D);
+            super.renderNodeContent(interpreter, origin, angle, opacity, draw2D);
             return;
         }
         if (!this.isVisible()) {
             this.updateRenderTracking(true);
             return;
         }
-        const nodeTrans = this.getTranslation();
-        const drawTrans = angle === 0 ? nodeTrans.slice() : rotateTranslation(nodeTrans, angle);
-        drawTrans[0] += origin[0];
-        drawTrans[1] += origin[1];
+        const drawTrans = this.getDrawTranslation(origin, angle);
         // Refresh focus/buttons before building the bounding rect so `this.width` is current and
         // the rect reflects the actual laid-out size (otherwise boundingRect() reports the stale
         // width — 0 on the first pass — which breaks callers that center the group by its width).

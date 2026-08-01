@@ -169,7 +169,13 @@ export class LayoutGroup extends Group {
         return removed;
     }
 
-    renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
+    protected renderNodeContent(
+        interpreter: Interpreter,
+        origin: number[],
+        angle: number,
+        opacity: number,
+        draw2D?: IfDraw2D
+    ) {
         if (this.skipRender(draw2D)) {
             return;
         }
@@ -250,7 +256,7 @@ export class LayoutGroup extends Group {
                 this.layoutDirty = false;
             }
 
-            super.renderNode(interpreter, origin, angle, opacity, draw2D);
+            super.renderNodeContent(interpreter, origin, angle, opacity, draw2D);
 
             if (layoutChildren.length) {
                 this.synchronizeChildMetrics(layoutChildren, direction);

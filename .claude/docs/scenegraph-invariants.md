@@ -4,11 +4,62 @@ Deep detail for the SceneGraph extension. Read this **before** changing node ren
 field/observer dispatch, focus handling, `NodeFactory`/`addFields`, `Serializer.ts`, or the
 lazy-field/lazy-method memory paths. Companion: [threading-and-rendezvous.md](threading-and-rendezvous.md).
 
-## Rendering contract (`renderNode`)
+## Rendering contract (`renderNode` is a template — override `renderNodeContent`)
 
-`renderNode` early-returns via `updateRenderTracking(true)` when not visible, applies
-translation/rotation/opacity, draws through the passed `IfDraw2D`, updates bounding rects, then calls
-`renderChildren(...)` and `nodeRenderingDone(...)`.
+`Group.renderNode` is a **template method and must not be overridden**. It calls `prepareRender`, derives
+the node's draw translation via `getDrawTranslation`, pushes the node's `clippingRect`, and runs
+`renderNodeContent` inside a `try/finally` that pops it. **A node type implements `renderNodeContent`**,
+which early-returns via `updateRenderTracking(true)` when not visible, applies translation/rotation/
+opacity, draws through the passed `IfDraw2D`, updates bounding rects, then calls `renderChildren(...)`
+and `nodeRenderingDone(...)`.
+
+**Why the clip lives in the template.** `clippingRect` is declared on `Group`, so every Group-derived
+node inherits it, and the reference says it limits *"all drawing by this node **and** its children"* —
+so it has to bracket the node's own geometry, not just the child traversal. It used to sit inside
+`Group.renderNode` and `ArrayGrid.renderNode` around `renderChildren` only, which meant (a) the ~25 node
+types that override the entry point ignored their own rect entirely, and because `Rectangle`/`Poster`/
+`Label` also render children, an ignored rect leaked the whole subtree; (b) even for `Group` it never
+covered self-drawn geometry. Putting it in the parent's `renderChildren` instead does **not** work: eight
+call sites render a child directly (`PanelSet`'s ordered panels, the grid/list item renderers,
+`TargetGroup`), and `RoSGScreen` paints the Scene and the active Dialog through `paintNode` with no
+parent above them. Regression: `ClippingRect.test.js`.
+
+**Sub-invariants, each of which broke something while this was being written:**
+
+- **Measurement passes stay unclipped.** `pushClippingRect` no-ops without a `draw2D`, so
+  `boundingRect()` still computes under a clip. Unchanged by the template, and load-bearing.
+- **The clip pops in a `finally`.** `pushClip`/`popClip` are `ctx.save()`/`ctx.restore()`, so a leaked
+  clip is *permanent canvas state* — every later frame draws inside it. Arbitrary app BrightScript runs
+  inside the bracket (an item component's `init()`, a field observer), so the pop cannot be a plain
+  trailing statement. Same reasoning for the four inner clip brackets that are not the template's:
+  `ArrayGrid.renderItemClipped`, `RowList.renderSingleRow`, `ScrollableText`, `ScrollingLabel`. Backstop:
+  `IfDraw2D.resetClips()` in a `finally` around the per-frame paint in `RoSGScreen`, so one bad frame
+  cannot poison the next.
+- **Every node positions its drawing through `getDrawTranslation`.** Nothing may compute its own
+  `drawTrans` inline — if it did, the clip position could drift from the paint position. `rotateTranslation`
+  now appears only in `Group.getDrawTranslation` (plus one unrelated use in `MonospaceLabel`).
+- **`rotatesDrawTranslation()` only selects between two pre-existing behaviors.** 18 renderable types
+  rotate their own translation vector under an inherited angle; `Group` and the keyboard/text-entry
+  containers do not. The two are identical whenever the inherited angle is 0. **NEEDS DEVICE
+  VERIFICATION** — the split looks accidental, and a rotated container places children differently
+  depending on which side it falls on. Preserved deliberately; do not "unify" it without a probe.
+- **The visibility gates stay inside each `renderNodeContent`.** They differ per node type (soft skip for
+  containers, hard skip for renderables, hidden-extent measurement for grids) — see the
+  visibility-vs-measurement rule below. Only the cheap `isVisible()` guard on the *push* lives in the
+  template.
+- **A node that self-translates during layout must do it in `prepareRender`.** The template derives
+  `drawTrans` before the content hook, so a node whose layout assigns its own `translation` would
+  otherwise get a clip at its pre-layout position. `StandardDialog.layoutStandardDialog` recenters the
+  dialog, so its relayout gate lives in `prepareRender` — and because the four `Standard*Dialog`
+  subclasses build content that *drives* that layout, their preambles moved into chained
+  `prepareRender` overrides too. Getting this order wrong sizes a dialog from stale content
+  (regressions in `StandardDialogNodes.test.js` caught exactly that).
+- **Subclass delegation calls `super.renderNodeContent`, never `super.renderNode`** — the latter would
+  push the clip a second time. `LayoutGroup` matters most: it calls super inside a convergence loop, so
+  the mistake shows up as N clips per pass.
+
+External node types registered via `SGNodeFactory.addNodeTypes` may still override `renderNode`; they
+simply bypass the clip, exactly as every node did before.
 
 **Layout passes are pure (docs/scenegraph-layout-passes.md).** `Node.layoutNode` /
 `Node.paintNode` wrap `renderNode`, setting `sgRoot.renderPass`; `Node.isPaintPass(draw2D)` is the

@@ -239,8 +239,11 @@ export class ScrollingLabel extends Label {
             }
         }
         draw2D?.pushClip(clipRect);
-        draw2D?.doDrawRotatedText(textToDraw, drawX, drawY, color, opacity, drawFont, rotation);
-        draw2D?.popClip();
+        try {
+            draw2D?.doDrawRotatedText(textToDraw, drawX, drawY, color, opacity, drawFont, rotation);
+        } finally {
+            draw2D?.popClip();
+        }
         // Safe on layout passes too (matching the base Label): with the scroll state frozen
         // during layout, the value derives purely from stored state, and setValue only notifies
         // on a genuine change — idempotent.

@@ -42,13 +42,19 @@ export class TargetList extends TargetGroup {
         super.setValue(index, value, alwaysNotify, kind);
     }
 
-    renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
+    protected renderNodeContent(
+        interpreter: Interpreter,
+        origin: number[],
+        angle: number,
+        opacity: number,
+        draw2D?: IfDraw2D
+    ) {
         // Swap the active target set when focus changes. The engine moves focus between sibling nodes
         // by rewriting the focus chain (it does not call setNodeFocus(false) on the node losing focus),
         // so detecting the transition here is the reliable place to react. Doing it before super's
         // render means the swap takes effect in this same frame.
         this.syncFocusTargetSet();
-        super.renderNode(interpreter, origin, angle, opacity, draw2D);
+        super.renderNodeContent(interpreter, origin, angle, opacity, draw2D);
     }
 
     private syncFocusTargetSet() {

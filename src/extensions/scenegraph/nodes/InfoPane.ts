@@ -97,11 +97,17 @@ export class InfoPane extends Group {
         super.setValue(index, value, alwaysNotify, kind);
     }
 
-    renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
+    protected renderNodeContent(
+        interpreter: Interpreter,
+        origin: number[],
+        angle: number,
+        opacity: number,
+        draw2D?: IfDraw2D
+    ) {
         if (this.isDirty) {
             this.updateLayout();
         }
-        super.renderNode(interpreter, origin, angle, opacity, draw2D);
+        super.renderNodeContent(interpreter, origin, angle, opacity, draw2D);
     }
 
     private updateLayout() {

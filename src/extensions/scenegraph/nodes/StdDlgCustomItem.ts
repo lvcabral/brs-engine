@@ -71,8 +71,14 @@ export class StdDlgCustomItem extends Group implements StdDlgItem {
         return height;
     }
 
-    renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
-        super.renderNode(interpreter, origin, angle, opacity, draw2D);
+    protected renderNodeContent(
+        interpreter: Interpreter,
+        origin: number[],
+        angle: number,
+        opacity: number,
+        draw2D?: IfDraw2D
+    ) {
+        super.renderNodeContent(interpreter, origin, angle, opacity, draw2D);
         // Children (e.g. a LayoutGroup) only know their size after rendering. If that changed the
         // content height from what layout assumed, ask the owning dialog to re-lay-out next frame so
         // the following areas (buttons) are positioned below this item rather than overlapping it.

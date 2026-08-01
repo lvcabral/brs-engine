@@ -2,7 +2,6 @@ import { FieldModel } from "../SGTypes";
 import { SGNodeType } from ".";
 import { AAMember, Interpreter, BrsBoolean, BrsString, Float, IfDraw2D, RoFont } from "brs-engine";
 import { Group } from "./Group";
-import { rotateTranslation } from "../SGUtil";
 import type { Poster } from "./Poster";
 import type { Label } from "./Label";
 import type { Font } from "./Font";
@@ -167,16 +166,24 @@ export class Button extends Group {
         this.iconHeight = height;
     }
 
-    renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
+    /** Renderable node: an inherited rotation also rotates its own translation vector. */
+    protected rotatesDrawTranslation(): boolean {
+        return true;
+    }
+
+    protected renderNodeContent(
+        interpreter: Interpreter,
+        origin: number[],
+        angle: number,
+        opacity: number,
+        draw2D?: IfDraw2D
+    ) {
         if (!this.isVisible()) {
             this.updateRenderTracking(true);
             return;
         }
         const nodeFocus = sgRoot.focused === this;
-        const nodeTrans = this.getTranslation();
-        const drawTrans = angle === 0 ? nodeTrans.slice() : rotateTranslation(nodeTrans, angle);
-        drawTrans[0] += origin[0];
-        drawTrans[1] += origin[1];
+        const drawTrans = this.getDrawTranslation(origin, angle);
         const size = this.getDimensions();
         const rect = {
             x: drawTrans[0],

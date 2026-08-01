@@ -22,7 +22,6 @@ import { brsValueOf, jsValueOf } from "../factory/Serializer";
 import { sgRoot } from "../SGRoot";
 import { ContentNode } from "./ContentNode";
 import { Font } from "./Font";
-import { rotateTranslation } from "../SGUtil";
 
 export enum FocusStyle {
     FixedFocusWrap = "fixedFocusWrap",
@@ -533,7 +532,18 @@ export class ArrayGrid extends Group {
         });
     }
 
-    renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
+    /** Renderable node: an inherited rotation also rotates its own translation vector. */
+    protected rotatesDrawTranslation(): boolean {
+        return true;
+    }
+
+    protected renderNodeContent(
+        interpreter: Interpreter,
+        origin: number[],
+        angle: number,
+        opacity: number,
+        draw2D?: IfDraw2D
+    ) {
         if (!this.isVisible()) {
             this.updateRenderTracking(true);
             if (!draw2D) {
@@ -541,10 +551,7 @@ export class ArrayGrid extends Group {
             }
             return;
         }
-        const nodeTrans = this.getTranslation();
-        const drawTrans = angle === 0 ? nodeTrans.slice() : rotateTranslation(nodeTrans, angle);
-        drawTrans[0] += origin[0];
-        drawTrans[1] += origin[1];
+        const drawTrans = this.getDrawTranslation(origin, angle);
         const size = this.getDimensions();
         const rect = { x: drawTrans[0], y: drawTrans[1], ...size };
         const rotation = angle + this.getRotation();
@@ -554,15 +561,12 @@ export class ArrayGrid extends Group {
             this.refreshContent();
             content.changed = false;
         }
-        const clipped = this.pushClippingRect(drawTrans, draw2D);
+        // The clippingRect bracket lives in the renderNode template, so it wraps this whole body.
         this.renderContent(interpreter, rect, rotation, opacity, draw2D);
         // The grid was just laid out for the current focus/scroll state, so item rects are fresh.
         this.focusLayoutDirty = false;
         this.updateBoundingRects(rect, origin, rotation);
         this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);
-        if (clipped) {
-            draw2D?.popClip();
-        }
         this.nodeRenderingDone(origin, angle, opacity, draw2D);
     }
 
@@ -595,10 +599,7 @@ export class ArrayGrid extends Group {
         if (this.content.length === 0 || !itemSize?.[0] || !itemSize?.[1] || !this.numRows || !this.numCols) {
             return;
         }
-        const nodeTrans = this.getTranslation();
-        const drawTrans = angle === 0 ? nodeTrans.slice() : rotateTranslation(nodeTrans, angle);
-        drawTrans[0] += origin[0];
-        drawTrans[1] += origin[1];
+        const drawTrans = this.getDrawTranslation(origin, angle);
         const rect = { x: drawTrans[0], y: drawTrans[1], ...this.getDimensions() };
         const displayRows = Math.min(Math.ceil(this.content.length / this.numCols), this.numRows);
         this.updateRect(rect, displayRows, itemSize);
@@ -668,9 +669,15 @@ export class ArrayGrid extends Group {
         if (draw2D) {
             draw2D.pushClip({ x: itemRect.x, y: itemRect.y, width: itemRect.width, height: itemRect.height });
         }
-        itemComp.renderNode(interpreter, itemOrigin, rotation, opacity, draw2D);
-        if (draw2D) {
-            draw2D.popClip();
+        try {
+            // The item component runs app BrightScript (its init(), field observers); an error
+            // escaping from there must not strand the cell clip on the canvas for the rest of the
+            // frame, which would silently clip everything drawn after it.
+            itemComp.renderNode(interpreter, itemOrigin, rotation, opacity, draw2D);
+        } finally {
+            if (draw2D) {
+                draw2D.popClip();
+            }
         }
     }
 
