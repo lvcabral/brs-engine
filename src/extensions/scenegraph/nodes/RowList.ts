@@ -10,7 +10,6 @@ import {
     RoArray,
     IfDraw2D,
     Rect,
-    RectRect,
     RoFont,
 } from "brs-engine";
 import { sgRoot } from "../SGRoot";
@@ -110,8 +109,12 @@ export class RowList extends ArrayGrid {
         this.gap = 0;
         this.setValueSilent("focusBitmapUri", new BrsString(this.focusUri));
         this.setValueSilent("wrapDividerBitmapUri", new BrsString(this.dividerUri));
-        const vertStyle = this.getValueJS("vertFocusAnimationStyle") as string;
-        this.wrap = vertStyle.toLowerCase() === RowFocusStyle.Wrap;
+        // Re-derive the cached vertical focus style AFTER registerDefaultFields has installed RowList's
+        // own default (fixedFocus). ArrayGrid's constructor already ran applyVertFocusStyle(), but at
+        // that point the field still held ArrayGrid's floatingFocus default, and registerDefaultFields
+        // bypasses setValue — so the cache said "floatingfocus" while the field read "fixedFocus".
+        // renderContent branches on isFixedFocusMode(), so the two must agree.
+        this.applyVertFocusStyle();
         this.numRows = this.getValueJS("numRows") as number;
         this.numCols = this.getValueJS("numColumns") as number;
         this.rowFocus = [];
@@ -337,7 +340,6 @@ export class RowList extends ArrayGrid {
             }
 
             const rowItem = new RoArray([new Int32(nextRow), new Int32(targetColIndex)]);
-            this.currRow += this.wrap ? 0 : offset; // Update currRow before setFocusedItem
             // Publish the vertical scroll direction BEFORE the focus change so observers of the focus
             // fields see the correct direction, then reset it to "none" after (mirroring a real device,
             // where the direction is transient and settles back to none once scrolling completes).
@@ -634,7 +636,19 @@ export class RowList extends ArrayGrid {
             return;
         }
         const context = this.initializeRenderContext(rect, interpreter, rotation, opacity, draw2D);
-        this.currRow = this.focusIndex;
+        // `currRow` is the ABSOLUTE index of the first row drawn (see calculateActualRowIndex), so it
+        // is what decides how far the list has scrolled internally. Per Roku, fixedFocus/fixedFocusWrap
+        // pin the focused row at the list top and scroll the rows above it off screen; floatingFocus
+        // instead keeps rows at fixed positions and only scrolls "if there are rows that were not
+        // visible" — i.e. never once numRows covers the whole content. Applying the fixedFocus rule to
+        // every style made a floatingFocus list scroll a full row pitch per Up/Down even when all its
+        // rows fit, which compounds with any translation an app applies to the node itself.
+        if (this.isFixedFocusMode()) {
+            this.currRow = this.focusIndex;
+        } else {
+            this.updateListCurrRow(); // maintains this.topRow, the first visible row of the window
+            this.currRow = this.topRow;
+        }
 
         for (let r = 0; r < context.displayRows; r++) {
             const rowIndex = this.calculateActualRowIndex(r);
@@ -782,7 +796,14 @@ export class RowList extends ArrayGrid {
         const rowSpacing = this.calculateRowSpacing(rowIndex, context.rowSpacings, context.globalSpacing);
         context.itemRect.y = rowTopY + rowHeight + (bandFits ? 0 : bandHeight) + rowSpacing;
 
-        return RectRect(this.sceneRect, context.itemRect);
+        // Stop only once the next row starts BELOW the viewport — everything after it is off screen.
+        // A row entirely ABOVE the viewport must not end the pass: this used to test the next row for
+        // intersection with the scene, which was safe only while rendering always began at the focused
+        // (on-screen) row. With floatingFocus the pass begins at the window's top row, so an app that
+        // scrolls by translating the list itself can park earlier rows off the top — and a full row of
+        // clearance up there would abort the pass before reaching the focused row, blanking it and
+        // every row below it.
+        return context.itemRect.y < this.sceneRect.y + this.sceneRect.height;
     }
 
     private getRowXOffset(rowIndex: number): number {
