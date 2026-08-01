@@ -90,6 +90,36 @@ export abstract class AnimationBase extends Node {
     }
 
     /**
+     * Whether this animation has finished, for a CONTAINER's completion polling.
+     *
+     * Containers must use this and NEVER the public `state` field. An animation with a pending
+     * `delay` publishes `state = "stopped"` (device-measured) while it is still live and scheduled,
+     * so polling the field makes a container treat a delayed child as already complete — stopping
+     * the whole group before it ever runs.
+     */
+    isSettled(): boolean {
+        return this._state === "stopped";
+    }
+
+    /** Whether this animation is paused, for a container deciding what `resume` may be sent to. */
+    isPaused(): boolean {
+        return this._state === "paused";
+    }
+
+    /**
+     * Whether this animation counts its own `delay` down in `tick()`.
+     *
+     * Leaf animations do. The container nodes override `tick()` entirely and never touch
+     * `delayRemaining`, so they must not publish the delay-pending `"stopped"` state — nothing would
+     * ever flip it back to `"running"` and the container would report stopped forever. (A container's
+     * own `delay` is effectively ignored today: it relays `start` to its children immediately. That
+     * predates this change and is unmeasured on hardware — don't infer it from here.)
+     */
+    protected countsOwnDelay(): boolean {
+        return true;
+    }
+
+    /**
      * Stops the animation, clears elapsed time/delay, and removes it from the global scheduler.
      */
     stop() {
@@ -233,7 +263,11 @@ export abstract class AnimationBase extends Node {
         // Only the initial delay was measured. The repeat path re-seeds `delayRemaining` between
         // iterations and deliberately does NOT publish "stopped" again, because what a repeating
         // delayed animation reports between cycles has not been measured — don't guess it.
-        this.updateStateField(this.delayRemaining > 0 ? "stopped" : "running");
+        //
+        // Gated on countsOwnDelay(): a node that never decrements `delayRemaining` would publish
+        // "stopped" and never take it back.
+        const delayPending = this.delayRemaining > 0 && this.countsOwnDelay();
+        this.updateStateField(delayPending ? "stopped" : "running");
         this.enqueue();
     }
 

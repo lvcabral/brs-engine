@@ -1,4 +1,4 @@
-import { AAMember, BrsString } from "brs-engine";
+import { AAMember, BrsString, isBrsString } from "brs-engine";
 import { AnimationBase } from "./AnimationBase";
 import { SGNodeType } from ".";
 
@@ -27,7 +27,9 @@ export class SequentialAnimation extends AnimationBase {
         // active child is no longer known.
         const activeIndex = this.currentChildIndex;
         super.setValue(index, value, alwaysNotify);
-        if (!isControl) {
+        // Guarded like AnimationBase.setValue: a BrightScript `anim.control = 5` must be ignored,
+        // not throw a JS TypeError out of the interpreter.
+        if (!isControl || !isBrsString(value)) {
             return;
         }
         const control = value.getValue().toLowerCase();
@@ -124,7 +126,9 @@ export class SequentialAnimation extends AnimationBase {
         if (this.currentChildIndex >= 0 && this.currentChildIndex < this.children.length) {
             const child = this.children[this.currentChildIndex];
             if (child instanceof AnimationBase) {
-                if (child.getValueJS("state") === "stopped") {
+                // isSettled(), not the public `state` field: a child with a pending `delay`
+                // publishes state="stopped" while still live, which would skip straight past it.
+                if (child.isSettled()) {
                     this.currentChildIndex++;
                     this.playNext();
                 }
@@ -149,6 +153,11 @@ export class SequentialAnimation extends AnimationBase {
         this.stopCurrent();
         this.currentChildIndex = -1;
         super.stop();
+    }
+
+    /** This node overrides tick() and never counts its own `delay` down — see AnimationBase. */
+    protected countsOwnDelay(): boolean {
+        return false;
     }
 
     /**

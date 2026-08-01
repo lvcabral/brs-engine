@@ -2,7 +2,7 @@ const scenegraph = require("../../../packages/scenegraph/lib/brs-sg.node.js");
 const core = require("../../../packages/node/bin/brs.node.js");
 
 const { SGNodeFactory } = scenegraph;
-const { BrsString, Float, RoArray } = core;
+const { BrsString, Float, Int32, RoArray } = core;
 
 const floatArray = (nums) => new RoArray(nums.map((n) => new Float(n)));
 
@@ -163,5 +163,97 @@ describe("Animation control conformance", () => {
         const { anim } = makeLeaf("a", "tNoDelay");
         anim.setValue("control", new BrsString("start"));
         expect(anim.getValueJS("state")).toBe("running");
+    });
+
+    /**
+     * The delay-pending state lag above publishes `state = "stopped"` on an animation that is still
+     * live. Containers poll their children for completion, so they must NOT read that public field —
+     * `isSettled()` reports the internal state instead. Polling the field made a container treat a
+     * delayed child as already finished and tear the whole group down before it ran.
+     */
+    describe("a pending delay must not read as completion to a container", () => {
+        /** A container whose children all sit behind a delay. */
+        function makeDelayedContainer(type, count, delaySeconds) {
+            const container = SGNodeFactory.createNode(type);
+            const targets = [];
+            for (let i = 0; i < count; i++) {
+                const { target, anim } = makeLeaf(`dc${i}`, `d${type}${i}`);
+                anim.setValue("delay", new Float(delaySeconds));
+                target.removeChildByReference(anim);
+                anim.appendChildToParent(target);
+                container.appendChildToParent(anim);
+                targets.push(target);
+            }
+            return { container, targets };
+        }
+
+        test("ParallelAnimation does not stop itself when every child is still delaying", () => {
+            const { container, targets } = makeDelayedContainer("ParallelAnimation", 2, 10);
+            container.setValue("control", new BrsString("start"));
+
+            container.tick();
+
+            expect(container.getValueJS("state")).toBe("running");
+            // And it did not tear the children down on the way past.
+            for (const child of container.getNodeChildren()) {
+                expect(child.isSettled()).toBe(false);
+            }
+            expect(targets.every((t) => opacityOf(t) === 0)).toBe(true);
+        });
+
+        test("SequentialAnimation waits for a delayed child instead of skipping it", () => {
+            const { container } = makeDelayedContainer("SequentialAnimation", 2, 10);
+            container.setValue("control", new BrsString("start"));
+
+            container.tick();
+
+            // The cursor must still be on child 0 — child 1 has not been started.
+            const children = container.getNodeChildren();
+            expect(children[0].isSettled()).toBe(false);
+            expect(children[1].getValueJS("state")).toBe("stopped");
+            expect(children[1].isSettled()).toBe(true);
+        });
+
+        test("a container with its own delay still reports 'running'", () => {
+            // The containers override tick() and never decrement their own delay, so the state lag
+            // must not apply to them — nothing would ever flip it back to "running".
+            for (const type of ["ParallelAnimation", "SequentialAnimation"]) {
+                const { container } = makeDelayedContainer(type, 1, 0);
+                container.setValue("delay", new Float(10));
+                container.setValue("control", new BrsString("start"));
+                expect(container.getValueJS("state")).toBe("running");
+            }
+        });
+    });
+
+    test("resume does not restart a child that had already completed before the pause", () => {
+        // `resume` on an animation that is not paused restarts it from the beginning, so a completed
+        // child must not receive it — otherwise a mixed-duration group replays its settled part.
+        const { container, targets } = makeContainer("ParallelAnimation", 2);
+        container.setValue("control", new BrsString("start"));
+
+        // Complete the first child while the group is running.
+        const children = container.getNodeChildren();
+        children[0].setValue("control", new BrsString("finish"));
+        expect(opacityOf(targets[0])).toBeCloseTo(1, 5);
+        expect(children[0].getValueJS("state")).toBe("stopped");
+
+        container.setValue("control", new BrsString("pause"));
+        container.setValue("control", new BrsString("resume"));
+
+        // The finished child stays finished; only the one that was actually paused resumes.
+        expect(children[0].getValueJS("state")).toBe("stopped");
+        expect(opacityOf(targets[0])).toBeCloseTo(1, 5);
+        expect(children[1].getValueJS("state")).toBe("running");
+    });
+
+    test("a non-string control write is ignored rather than throwing", () => {
+        // AnimationBase guards with isBrsString; the container overrides read `control` themselves
+        // and have to guard too, or a BrightScript `anim.control = 5` throws a JS TypeError out of
+        // the interpreter.
+        for (const type of ["ParallelAnimation", "SequentialAnimation", "Animation"]) {
+            const node = SGNodeFactory.createNode(type);
+            expect(() => node.setValue("control", new Int32(5))).not.toThrow();
+        }
     });
 });

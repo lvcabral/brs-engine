@@ -337,9 +337,13 @@ capture the **native JS stack** mid-recursion (a temporary depth tripwire dumpin
 ## Animation `control` — containers relay everything, `none` is inert, a pending `delay` reads "stopped"
 
 **Device-measured** (probe channel: `out/animation-control-probe`, Streaming Stick / Roku OS 15.2; the
-device and engine traces are committed next to it, and the engine now matches all 37 records on states
-and value buckets). Four rules, each of which the engine got wrong and none of which is guessable from
-the reference alone:
+engine reproduces all 37 records on states and value buckets). Four rules, each of which the engine got
+wrong and none of which is guessable from the reference alone.
+
+> The probe and its device/engine traces live in **gitignored** `out/` scratch (`.gitignore:14`), same
+> as `out/observer-signature-probe` — they are not committed, so re-measuring means rebuilding the
+> channel from this section plus the trace format described in its README. The four rules below are the
+> durable artifact; treat them as the record, not the traces.
 
 1. **`control = "none"` is inert.** Writing it to a *running* animation leaves it running and its
    interpolated fields keep advancing (opacity went 0.58 → 0.88 across the write). It used to route to
@@ -363,10 +367,24 @@ the reference alone:
    repeating delayed animation reports between cycles is unmeasured. Don't "make it consistent" without a
    probe.
 
+**Rule 4 has a sharp edge that bit twice during implementation.** A container polls its children to
+decide when the group is finished, and if it reads the *public* `state` field it sees a delay-pending
+child as `"stopped"` — so it tears the whole group down before anything runs (`ParallelAnimation`), or
+skips straight past the delayed child (`SequentialAnimation`). Containers must poll
+**`AnimationBase.isSettled()`** (internal `_state`), never the field. For the same reason the
+delay-pending publication is gated on `countsOwnDelay()`: both containers override `tick()` and never
+decrement `delayRemaining`, so publishing `"stopped"` on them would stick forever. A container's own
+`delay` is effectively ignored today (it relays `start` to its children immediately) — pre-existing and
+**unmeasured**, so don't infer container delay semantics from this section.
+
+Related edge: `resume` may only be relayed to children that are actually **paused**
+(`AnimationBase.isPaused()`). `handleControl("resume")` restarts a non-paused animation from the
+beginning, so relaying it blindly makes a child that had already *completed* before the pause replay its
+settled part — visible as a flicker in a mixed-duration parallel group.
+
 Two things the probe **cleared**, so don't "fix" them: a device does **not** snap the target to
 `keyValue[0]` when an animation with a delay starts (it stays at its authored value, as the engine
-already did), and `pause` leaves each child's own `state` reading `paused` — which is what
-`SequentialAnimation.tick` relies on, since it advances its cursor by polling `child.state = "stopped"`.
+already did), and `pause` leaves each child's own `state` reading `paused`.
 
 Regression: `test/extensions/scenegraph/AnimationControl.test.js`. Note the `resume` test asserts the
 *paused precondition* first — without pause propagation the children were never paused, so "they run
