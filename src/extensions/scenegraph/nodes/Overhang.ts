@@ -241,10 +241,15 @@ export class Overhang extends Group {
             this.alignChildren();
         }
         const size = this.getDimensions();
-        const rect = { x: origin[0], y: origin[1], width: size.width, height: size.height };
+        // Position through getDrawTranslation like every other node: this used to build its rect from
+        // `origin` alone and pass `origin` to its children, ignoring its own translation entirely — so
+        // a translated Overhang painted at the wrong place, and its reported rect (which came from the
+        // node translation) disagreed with where it drew.
+        const drawTrans = this.getDrawTranslation(origin, angle);
+        const rect = { x: drawTrans[0], y: drawTrans[1], width: size.width, height: size.height };
         opacity = opacity * this.getOpacity();
         this.updateBoundingRects(rect, origin, angle);
-        this.renderChildren(interpreter, origin, angle, opacity, draw2D);
+        this.renderChildren(interpreter, drawTrans, angle, opacity, draw2D);
         this.nodeRenderingDone(origin, angle, opacity, draw2D);
     }
 }

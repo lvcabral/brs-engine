@@ -248,9 +248,15 @@ export class PosterGrid extends ArrayGrid {
                 break;
             }
             const rowNumber = Math.floor(rowIndex / this.numCols);
-            const posterHeight = this.resolveNumber(rowHeights, rowNumber, baseSize[1]);
+            // resolveTrackValue, not resolveNumber: a row past the end of `rowHeights` falls back
+            // to basePosterSize.y rather than repeating the array's last entry, matching the rule the
+            // spacing arrays follow. (resolveNumber still repeats and is left alone — ZoomRowList
+            // depends on it and its behavior is unmeasured.)
+            const posterHeight = this.resolveTrackValue(rowHeights, rowNumber, baseSize[1]);
             const rowCaptionHeight = captionsExtendLayout ? this.computeRowCaptionHeight(rowIndex, placement) : 0;
-            const rowWidth = this.computeRowWidth(columnWidths, columnSpacings);
+            // Content-only width: the trailing gap belongs to the REPORTED extent (device-measured),
+            // not to the drawn section/wrap divider, which would otherwise extend past the last poster.
+            const rowWidth = this.computeRowWidth(columnWidths, columnSpacings, false);
             const rowHeightWithCaptions = posterHeight + rowCaptionHeight;
             itemRect.height = rowHeightWithCaptions;
             if (!hasSections && this.wrap && rowIndex < lastRowIndex && r > 0) {
@@ -304,13 +310,13 @@ export class PosterGrid extends ArrayGrid {
             lastRowIndex = rowIndex;
             lastRowNumber = rowNumber;
             renderedRows++;
-            if (itemRect.y > (this.sceneRect?.y ?? 0) + (this.sceneRect?.height ?? 0)) {
-                // Broke on the scene edge: count the row itself, but no gap was added after it.
-                itemRect.y += rowHeightWithCaptions;
-                break;
-            }
+            // Advance identically on both exits: the gap after the LAST row counts toward the
+            // extent, so breaking on the scene edge must not silently drop it.
             const rowGap = this.resolveSpacingValue(rowSpacingValues, rowNumber, baseRowSpacing);
             itemRect.y += rowHeightWithCaptions + rowGap;
+            if (itemRect.y > (this.sceneRect?.y ?? 0) + (this.sceneRect?.height ?? 0)) {
+                break;
+            }
         }
         // Explicit extents, both including the focus outset the arithmetic path would otherwise add
         // per track (these values are the whole reported rect, not just the content).
@@ -667,8 +673,12 @@ export class PosterGrid extends ArrayGrid {
      * 100 with `itemSpacing.x = 50` measured 478 (3 x 100 + 3 x 50 + margins), not 428. That matches
      * the reference's wording for the sibling field ("the spacing after each row").
      */
-    private computeRowWidth(widths: number[], spacings: number[]) {
-        return widths.reduce((acc, width, index) => acc + width + (spacings[index] ?? 0), 0);
+    private computeRowWidth(widths: number[], spacings: number[], includeTrailingGap: boolean = true) {
+        return widths.reduce((acc, width, index) => {
+            const isLast = index === widths.length - 1;
+            const gap = isLast && !includeTrailingGap ? 0 : spacings[index] ?? 0;
+            return acc + width + gap;
+        }, 0);
     }
 
     private computeRowCaptionHeight(rowIndex: number, placement: string) {

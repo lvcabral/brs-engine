@@ -4,7 +4,7 @@ const scenegraph = require("../../../packages/scenegraph/lib/brs-sg.node.js");
 const core = require("../../../packages/node/bin/brs.node.js");
 
 const { SGNodeFactory, sgRoot } = scenegraph;
-const { BrsDevice, Int32, Float, RoArray, Interpreter } = core;
+const { BrsDevice, BrsString, Int32, Float, RoArray, Interpreter } = core;
 
 const vector = (values) => new RoArray(values.map((v) => new Float(v)));
 
@@ -151,5 +151,66 @@ describe("PosterGrid reports the extent a device reports", () => {
             itemSpacing: vector([0, 0]),
         });
         expect(Math.round(rectOf(noArray).height) - Math.round(rectOf(noSpacing).height)).toBe(150);
+    });
+
+    test("rowHeights past the end of the array falls back, it does not repeat", () => {
+        // The same rule the spacing arrays follow. `rowHeights=[200]` over 3 rows is
+        // 200 + 100 + 100, not 3 x 200 — the latter is what repeating the last entry gives.
+        const grid = makeGrid(3, {
+            numColumns: new Int32(1),
+            numRows: new Int32(3),
+            itemSpacing: vector([0, 0]),
+            rowHeights: vector([200]),
+        });
+        expect(Math.round(rectOf(grid).height)).toBe(200 + 100 + 100 + 28);
+    });
+
+    test("local, parent and scene rects agree once the focus outset is applied", () => {
+        // The outset lives in the draw rect, so all three coordinate spaces have to carry it.
+        // Local is parent-space minus the node's own translation.
+        const grid = makeGrid(1, {
+            numColumns: new Int32(1),
+            numRows: new Int32(1),
+            itemSpacing: vector([0, 0]),
+            translation: vector([0, 320]),
+        });
+        const parent = grid.getBoundingRect("toParent", interpreter);
+        const local = grid.getBoundingRect("local", interpreter);
+        expect(Math.round(parent.x)).toBe(-14);
+        expect(Math.round(parent.y)).toBe(306);
+        expect(Math.round(local.x)).toBe(-14);
+        expect(Math.round(local.y)).toBe(-14);
+        expect(Math.round(local.x)).toBe(Math.round(parent.x) - 0);
+        expect(Math.round(local.y)).toBe(Math.round(parent.y) - 320);
+    });
+
+    test("a section divider is drawn at the content width, without the trailing gap", () => {
+        // The trailing gap is device-backed for the REPORTED extent only. Letting it into the drawn
+        // divider would run it 50px past the last poster's right edge.
+        const grid = SGNodeFactory.createNode("PosterGrid");
+        grid.setValue("basePosterSize", vector([100, 100]));
+        grid.setValue("numColumns", new Int32(3));
+        grid.setValue("numRows", new Int32(2));
+        grid.setValue("itemSpacing", vector([50, 0]));
+        grid.setValue("vertFocusAnimationStyle", new BrsString("fixedFocusWrap"));
+
+        const widths = [];
+        grid.renderWrapDivider = (rect) => {
+            widths.push(Math.round(rect.width));
+            return 0;
+        };
+
+        const root = SGNodeFactory.createNode("ContentNode");
+        for (let i = 0; i < 6; i++) {
+            root.appendChildToParent(SGNodeFactory.createNode("ContentNode"));
+        }
+        grid.setValue("content", root);
+        grid.setFocusedItem?.(3);
+        grid.renderNode({}, [0, 0], 0, 1);
+
+        // Content width is 3*100 + 2 gaps of 50 = 400; with the trailing gap it would be 450.
+        for (const width of widths) {
+            expect(width).toBe(400);
+        }
     });
 });

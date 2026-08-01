@@ -980,7 +980,7 @@ export class ArrayGrid extends Group {
      * end of the array falls back to the `itemSize`/`itemSpacing` value — it does NOT repeat the last
      * entry (unlike `LayoutGroup.itemSpacings`, which is device-confirmed to repeat).
      */
-    private resolveTrackValue(values: unknown, index: number, fallback: number): number {
+    protected resolveTrackValue(values: unknown, index: number, fallback: number): number {
         if (!Array.isArray(values)) {
             return fallback;
         }
