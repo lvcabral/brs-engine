@@ -63,8 +63,13 @@ export abstract class AnimationBase extends Node {
                 this.startFromBeginning();
                 break;
             case "stop":
-            case "none":
                 this.stop();
+                break;
+            case "none":
+                // DEVICE-MEASURED (Streaming Stick, Roku OS 15.2): writing "none" to a RUNNING
+                // animation is inert — it keeps running and its interpolated fields keep advancing.
+                // The reference calls `none` the "initial state with no associated action". This
+                // used to route to stop(), which froze the animation and reset its elapsed time.
                 break;
             case "pause":
                 this.pause();
@@ -115,6 +120,8 @@ export abstract class AnimationBase extends Node {
             }
             effectiveDelta = Math.abs(this.delayRemaining);
             this.delayRemaining = 0;
+            // The delay has elapsed, so the animation becomes visibly running (see enterRunningState).
+            this.updateStateField("running");
         }
 
         this.elapsedTime += effectiveDelta;
@@ -218,7 +225,15 @@ export abstract class AnimationBase extends Node {
      */
     private enterRunningState() {
         this._state = "running";
-        this.updateStateField("running");
+        // DEVICE-MEASURED (Streaming Stick, Roku OS 15.2): an animation with a pending `delay` keeps
+        // its PUBLIC `state` field at "stopped" until the delay elapses, then flips to "running" —
+        // it does not report "running" for the duration of the delay. The internal `_state` must
+        // still be running so tick() counts the delay down.
+        //
+        // Only the initial delay was measured. The repeat path re-seeds `delayRemaining` between
+        // iterations and deliberately does NOT publish "stopped" again, because what a repeating
+        // delayed animation reports between cycles has not been measured — don't guess it.
+        this.updateStateField(this.delayRemaining > 0 ? "stopped" : "running");
         this.enqueue();
     }
 

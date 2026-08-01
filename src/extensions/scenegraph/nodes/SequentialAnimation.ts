@@ -21,16 +21,65 @@ export class SequentialAnimation extends AnimationBase {
      * child animation.
      */
     setValue(index: string, value: any, alwaysNotify?: boolean) {
+        const isControl = index.toLowerCase() === "control";
+        // Captured BEFORE the base class acts: `finish` routes through finishImmediately() -> stop(),
+        // and this node's stop() override resets the cursor to -1, so by the time control returns the
+        // active child is no longer known.
+        const activeIndex = this.currentChildIndex;
         super.setValue(index, value, alwaysNotify);
-        if (index.toLowerCase() === "control") {
-            const control = value.getValue().toLowerCase();
-            if (control === "start") {
-                this.currentChildIndex = 0;
-                this.playNext();
-            } else if (control === "stop") {
-                this.stopCurrent();
-                this.currentChildIndex = -1;
+        if (!isControl) {
+            return;
+        }
+        const control = value.getValue().toLowerCase();
+        if (control === "start") {
+            this.currentChildIndex = 0;
+            this.playNext();
+        } else if (control === "stop") {
+            this.stopCurrent();
+            this.currentChildIndex = -1;
+        } else if (control === "pause" || control === "resume") {
+            // DEVICE-MEASURED: only the child that is actually running pauses/resumes; the ones that
+            // already completed and the ones not yet reached keep their own state. A resume continues
+            // from where the child paused rather than restarting it.
+            this.forwardToChild(activeIndex, control);
+        } else if (control === "finish") {
+            this.finishRemaining(activeIndex);
+        }
+    }
+
+    /**
+     * Fast-forwards the current child AND every child after it.
+     *
+     * DEVICE-MEASURED (Streaming Stick, Roku OS 15.2): finishing a sequence mid-way sets the animated
+     * field of every remaining child — including ones that never ran — to its final value, matching
+     * the reference ("All animated fields will be immediately set to their final values as if the
+     * animation had completed"). Previously nothing was forwarded, so a sequence finished after its
+     * first child left the later children's targets untouched at their authored values.
+     *
+     * The base `finishImmediately()` has already run `stop()` by this point, which sends `stop` to the
+     * child that was running; sending `finish` afterwards still lands its target on the final value,
+     * because `finishImmediately` applies fraction 1 regardless of the child's current state.
+     *
+     * A sequence that was never started has no cursor (-1); it finishes from the first child, which is
+     * the reading consistent with "all animated fields".
+     */
+    private finishRemaining(fromIndex: number) {
+        for (let i = Math.max(0, fromIndex); i < this.children.length; i++) {
+            const child = this.children[i];
+            if (child instanceof AnimationBase) {
+                child.setValue("control", new BrsString("finish"));
             }
+        }
+    }
+
+    /** Relays a control command to a single child by index, when that index addresses one. */
+    private forwardToChild(index: number, control: string) {
+        if (index < 0 || index >= this.children.length) {
+            return;
+        }
+        const child = this.children[index];
+        if (child instanceof AnimationBase) {
+            child.setValue("control", new BrsString(control));
         }
     }
 

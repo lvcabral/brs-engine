@@ -334,6 +334,44 @@ capture the **native JS stack** mid-recursion (a temporary depth tripwire dumpin
    "simplify" to whole-pass tracking like nodes — that drops diamond-shaped shared data. Regression:
    "circular container references" in `test/extensions/scenegraph/NodeSerialization.test.js`.
 
+## Animation `control` — containers relay everything, `none` is inert, a pending `delay` reads "stopped"
+
+**Device-measured** (probe channel: `out/animation-control-probe`, Streaming Stick / Roku OS 15.2; the
+device and engine traces are committed next to it, and the engine now matches all 37 records on states
+and value buckets). Four rules, each of which the engine got wrong and none of which is guessable from
+the reference alone:
+
+1. **`control = "none"` is inert.** Writing it to a *running* animation leaves it running and its
+   interpolated fields keep advancing (opacity went 0.58 → 0.88 across the write). It used to route to
+   `stop()`. The reference calls `none` the "initial state with no associated action" — which reads like
+   it only describes the initial value, so this needed measuring.
+2. **A container relays the whole control vocabulary, not just `start`/`stop`.** `ParallelAnimation` and
+   `SequentialAnimation` forward `pause`, `resume` and `finish` too. This matters because a container's
+   `updateAnimation` is a **no-op** — it animates nothing itself — so an un-forwarded `finish` flips only
+   the container's own `state` and leaves every target field untouched, directly contradicting
+   "All animated fields will be immediately set to their final values as if the animation had completed".
+3. **`SequentialAnimation.finish` fast-forwards children that never ran.** Finishing during child 1 put
+   children 2 *and* 3 on their final values. Capture the cursor **before** calling `super.setValue`:
+   `finishImmediately()` → `stop()` → this node's `stop()` override resets `currentChildIndex` to −1, so
+   afterwards the active child is unknown. Sending `finish` to an already-stopped child still lands its
+   target, because `finishImmediately` applies fraction 1 regardless of state.
+4. **A pending `delay` keeps the PUBLIC `state` at `"stopped"`.** With `delay = 1`, `state` read
+   `stopped` at start and through the delay, flipping to `running` only once it elapsed. The internal
+   `_state` must still be `running` so `tick()` counts the delay down — hence the split between `_state`
+   and `updateStateField`. **Only the initial delay was measured**: the repeat path re-seeds
+   `delayRemaining` between iterations and deliberately does *not* re-publish `"stopped"`, because what a
+   repeating delayed animation reports between cycles is unmeasured. Don't "make it consistent" without a
+   probe.
+
+Two things the probe **cleared**, so don't "fix" them: a device does **not** snap the target to
+`keyValue[0]` when an animation with a delay starts (it stays at its authored value, as the engine
+already did), and `pause` leaves each child's own `state` reading `paused` — which is what
+`SequentialAnimation.tick` relies on, since it advances its cursor by polling `child.state = "stopped"`.
+
+Regression: `test/extensions/scenegraph/AnimationControl.test.js`. Note the `resume` test asserts the
+*paused precondition* first — without pause propagation the children were never paused, so "they run
+after resume" would pass vacuously.
+
 ## `ArrayGrid.scrollingStatus` — a lazy pulse, ordered ahead of the focus settle
 
 Per `zoomrowlist.md` the field is "set to true whenever the list is scrolling the focus horizontally or
