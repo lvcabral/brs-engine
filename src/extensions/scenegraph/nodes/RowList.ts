@@ -665,16 +665,28 @@ export class RowList extends ArrayGrid {
             this.currRow = this.topRow;
         }
 
+        // Rows advance by their own height plus, when the label/counter band does not fit in the row's
+        // slack, that band's height (see renderSingleRow). No arithmetic in updateRect can reproduce
+        // that without re-measuring the label, so accumulate the extent the loop actually laid out and
+        // hand it over. `itemRect.y` ends one rowSpacing past the last row, which is dropped below.
+        const startY = context.itemRect.y;
+        let renderedRows = 0;
+        let trailingSpacing = 0;
         for (let r = 0; r < context.displayRows; r++) {
             const rowIndex = this.calculateActualRowIndex(r);
             if (rowIndex === -1) {
                 break;
             }
-            if (!this.renderSingleRow(rowIndex, r, context)) {
+            const fits = this.renderSingleRow(rowIndex, r, context);
+            renderedRows++;
+            trailingSpacing = this.calculateRowSpacing(rowIndex, context.rowSpacings, context.globalSpacing);
+            if (!fits) {
                 break;
             }
         }
-        this.updateRect(rect, context.displayRows, context.itemSize);
+        const margin = this.rectMargins();
+        const height = renderedRows === 0 ? 0 : context.itemRect.y - startY - trailingSpacing + margin.y * 2;
+        this.updateRect(rect, context.displayRows, context.itemSize, { height, firstRow: this.currRow });
     }
 
     private validateRenderPrerequisites(): boolean {
