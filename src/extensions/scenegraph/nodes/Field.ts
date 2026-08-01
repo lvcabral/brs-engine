@@ -35,6 +35,7 @@ import { RoSGNodeEvent } from "../events/RoSGNodeEvent";
 import { getValueKindFromFieldType } from "../factory/NodeFactory";
 import { fromAssociativeArray, toAssociativeArray, jsValueOf } from "../factory/Serializer";
 import { BrsCallback, FieldKind, isContentNode } from "../SGTypes";
+import { convertHexColor } from "../SGUtil";
 
 export class Field {
     // Observer collections are allocated lazily. A node like ContentNode registers ~100 default
@@ -584,6 +585,8 @@ export class Field {
             value = this.convertVector2D(value);
         } else if (this.type === FieldKind.Vector2DArray) {
             value = this.convertVector2DArray(value);
+        } else if (this.type === FieldKind.ColorArray && value instanceof RoArray) {
+            value = this.convertColorArray(value);
         } else if (this.type === FieldKind.String && isStringComp(value)) {
             value = new BrsString(value.getValue());
         }
@@ -677,6 +680,32 @@ export class Field {
             }
         }
         return vector2DArray;
+    }
+
+    /**
+     * Normalizes a `colorarray` so every element is stored as a packed `0xRRGGBBAA` integer.
+     *
+     * BrightScript apps routinely build color lists as hex STRINGS (e.g. an interpolator's
+     * `keyValue = [colorBlack + alpha60, colorBackgroundPrimary]`). Without this conversion the
+     * strings were stored verbatim, and consumers that do bitwise math on them (e.g.
+     * ColorFieldInterpolator's HSV blend, ArrayGrid.resolveColor) relied on JS `ToNumber`
+     * coercion instead: a 6-digit `"0x0D1117"` became `0x000D1117`, shifting every lane one byte
+     * right so the intended blue became the alpha (0x17, ~9% opaque) and the color was drawn
+     * nearly invisible. `convertHexColor` applies the implicit `FF` alpha a device assumes for a
+     * 6-digit color, and accepts the `#`/`0x`/`&h` prefixes interchangeably — matching the scalar
+     * `color` path (Group.setValue) and the XML attribute path (NodeFactory.parseColorArray).
+     */
+    private convertColorArray(value: RoArray): RoArray {
+        const colors: BrsType[] = [];
+        for (const element of value.elements) {
+            if (isBrsString(element)) {
+                colors.push(new Int32(convertHexColor(element.getValue())).box());
+            } else if (isAnyNumber(element)) {
+                const number = isBoxedNumber(element) ? element.unbox() : element;
+                colors.push(new Int32(number.getValue()).box());
+            }
+        }
+        return new RoArray(colors);
     }
 
     private isEqual(oldValue: BrsType, newValue: BrsType): boolean {
