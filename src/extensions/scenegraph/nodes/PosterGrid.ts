@@ -833,11 +833,6 @@ class PosterGridItem extends Group {
         super.setValue(index, value, alwaysNotify, kind);
     }
 
-    /** Renderable node: an inherited rotation also rotates its own translation vector. */
-    protected rotatesDrawTranslation(): boolean {
-        return true;
-    }
-
     protected renderNodeContent(
         interpreter: Interpreter,
         origin: number[],

@@ -38,11 +38,19 @@ parent above them. Regression: `ClippingRect.test.js`.
 - **Every node positions its drawing through `getDrawTranslation`.** Nothing may compute its own
   `drawTrans` inline — if it did, the clip position could drift from the paint position. `rotateTranslation`
   now appears only in `Group.getDrawTranslation` (plus one unrelated use in `MonospaceLabel`).
-- **`rotatesDrawTranslation()` only selects between two pre-existing behaviors.** 18 renderable types
-  rotate their own translation vector under an inherited angle; `Group` and the keyboard/text-entry
-  containers do not. The two are identical whenever the inherited angle is 0. **NEEDS DEVICE
-  VERIFICATION** — the split looks accidental, and a rotated container places children differently
-  depending on which side it falls on. Preserved deliberately; do not "unify" it without a probe.
+- **An inherited rotation rotates EVERY node type's own translation.** **Device-measured** (Streaming
+  Stick / Roku OS 15.2, probe `out/layout-measure-probe` case `R`): two identical hosts rotated 90° with
+  a child translated `[100, 0]` put the child at the same rotated position whether that child is a
+  `Group` or a `Rectangle`. The engine used to rotate for 18 renderable types but not for `Group` or the
+  keyboard/text-entry containers — a `rotatesDrawTranslation()` hook that this measurement removed. The
+  two behaviors are identical whenever the inherited angle is 0, which is why the split survived so
+  long. Regression: `RotatedTranslation.test.js`.
+
+  **Still open, and NOT the same bug:** a *container's* reported extent under rotation is off. With the
+  translation fixed, a `Group` wrapping a 20×20 marker under a 90°-rotated host reports scene y = 220
+  where the device says 200 — the container's union of a rotated child's *extent* (`updateParentRects`
+  → `rotateRect`) does not account for the child's own rotated bounding box. Only the translation half
+  was fixed; this residual needs its own measurement before anyone touches the union math.
 - **The visibility gates stay inside each `renderNodeContent`.** They differ per node type (soft skip for
   containers, hard skip for renderables, hidden-extent measurement for grids) — see the
   visibility-vs-measurement rule below. Only the cheap `isVisible()` guard on the *push* lives in the

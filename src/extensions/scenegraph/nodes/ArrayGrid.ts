@@ -532,11 +532,6 @@ export class ArrayGrid extends Group {
         });
     }
 
-    /** Renderable node: an inherited rotation also rotates its own translation vector. */
-    protected rotatesDrawTranslation(): boolean {
-        return true;
-    }
-
     protected renderNodeContent(
         interpreter: Interpreter,
         origin: number[],

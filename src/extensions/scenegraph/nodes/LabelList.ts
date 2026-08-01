@@ -112,6 +112,15 @@ export class LabelList extends ArrayGrid {
         let lastIndex = -1;
         const displayRows = Math.min(this.content.length, this.numRows);
         const itemSize = this.getValueJS("itemSize") as number[];
+        // DEVICE-MEASURED (Streaming Stick, Roku OS 15.2): a LabelList DOES honor rowHeights and
+        // rowSpacings, and there is no extra per-row pixel. With rowHeights [100,50,200] and
+        // rowSpacings [10,20] over itemSize.y = 40, the reported extent was 350 + 30 + margins —
+        // i.e. the per-row values, the gaps AFTER each row (the trailing entry dropped), and nothing
+        // else. This loop used to advance by `itemSize[1] + 1`, honoring none of it.
+        const rowHeights = this.getValueJS("rowHeights") as number[];
+        const rowSpacings = this.getValueJS("rowSpacings") as number[];
+        const spacing = this.getValueJS("itemSpacing") as number[];
+        const rowSpacingDefault = Array.isArray(spacing) ? spacing[1] ?? 0 : 0;
         const itemRect = { ...rect, width: itemSize[0], height: itemSize[1] };
         let sectionIndex = displayRows + 1;
         for (let r = 0; r < displayRows; r++) {
@@ -128,14 +137,17 @@ export class LabelList extends ArrayGrid {
                 itemRect.y += this.renderSectionDivider(divText, itemRect, opacity, sectionIndex, draw2D);
                 sectionIndex++;
             }
+            // Per-row overrides are indexed by ABSOLUTE row, top to bottom, falling back to
+            // itemSize.y / itemSpacing.y past the end of each array (never repeating the last entry).
+            itemRect.height = rowHeights[index] ?? itemSize[1];
             this.renderItem(index, item, itemRect, opacity, nodeFocus, focused, draw2D);
-            itemRect.y += itemSize[1] + 1;
+            itemRect.y += itemRect.height + (rowSpacings[index] ?? rowSpacingDefault);
             lastIndex = index;
             if (!RectRect(this.sceneRect, itemRect)) {
                 break;
             }
         }
-        this.updateRect(rect, displayRows, itemSize);
+        this.updateRect(rect, displayRows, itemSize, { firstRow: Math.max(0, this.getRenderRowIndex(0)) });
     }
 
     protected renderItem(

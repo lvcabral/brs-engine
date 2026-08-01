@@ -478,11 +478,6 @@ export class StandardDialog extends Group {
         );
     }
 
-    /** Renderable node: an inherited rotation also rotates its own translation vector. */
-    protected rotatesDrawTranslation(): boolean {
-        return true;
-    }
-
     /**
      * Settles the dialog's own position before the render template derives a draw translation from
      * it. `layoutStandardDialog` assigns THIS node's `translation` (it centers the dialog), so it has
