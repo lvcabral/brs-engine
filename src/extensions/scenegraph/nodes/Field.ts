@@ -821,6 +821,29 @@ export class Field {
         }
     }
 
+    /**
+     * Decides whether an observer callback receives the event as its argument.
+     *
+     * Device-measured on Roku OS 15.2: an observer registered by name is invoked with the event
+     * ONLY when it declares exactly ONE parameter whose declared type accepts an object. There is
+     * no coercion, and no partial binding — a callback declaring more than one parameter never
+     * receives the event, even when the extra parameters are optional and the first one is
+     * `as object`. A default on the single parameter is irrelevant: it still receives the event.
+     *
+     * When this returns undefined the caller falls back to a zero-argument call, which succeeds
+     * only when no parameter is required; otherwise the callback is not invoked at all (silently,
+     * as on device).
+     *
+     * @param observer the callable registered as the observer
+     * @param event the event to be delivered
+     * @returns the satisfied signature when the event is to be passed, otherwise undefined
+     */
+    private static satisfiedByEvent(observer: Callable, event: RoSGNodeEvent) {
+        return observer
+            .getAllSignatureMismatches([event])
+            .find((satisfaction) => satisfaction.mismatches.length === 0 && satisfaction.signature.args.length === 1);
+    }
+
     private invokeCallable(callback: BrsCallback, event: RoSGNodeEvent) {
         const { interpreter, observer, hostNode, environment } = callback;
         if (!(observer instanceof Callable)) {
@@ -831,8 +854,8 @@ export class Field {
             subInterpreter.environment.hostNode = hostNode;
             subInterpreter.environment.setRootM(hostNode.m);
             // Check whether the callback is expecting an event parameter.
-            const satisfiedSignature =
-                observer.getFirstSatisfiedSignature([event]) ?? observer.getFirstSatisfiedSignature([]);
+            const eventSatisfaction = Field.satisfiedByEvent(observer, event);
+            const satisfiedSignature = eventSatisfaction ?? observer.getFirstSatisfiedSignature([]);
             if (satisfiedSignature) {
                 const { signature, impl } = satisfiedSignature;
                 const originalLocation = interpreter.location;
@@ -844,25 +867,18 @@ export class Field {
                     signature: satisfiedSignature.signature,
                 });
                 try {
-                    if (signature.args.length > 0) {
-                        // Roku invokes an observer callback with only the event as its first
-                        // argument; any remaining declared parameters fall back to their default
-                        // values. Bind them all here — previously only the first parameter was
-                        // defined, leaving later ones <uninitialized> (e.g. a timer `fire`
-                        // callback declared as `sub cb(event, opt = true)` crashed reading `opt`).
-                        for (const [index, param] of signature.args.entries()) {
-                            let paramValue: BrsType;
-                            if (index === 0) {
-                                paramValue = event;
-                            } else if (param.defaultValue) {
-                                paramValue = subInterpreter.evaluate(param.defaultValue);
-                            } else {
-                                paramValue = Uninitialized.Instance;
-                            }
-                            subInterpreter.environment.define(Scope.Function, param.name.text, paramValue);
-                        }
+                    if (eventSatisfaction) {
+                        // The event is bound to the single declared parameter (see `satisfiedByEvent`).
+                        subInterpreter.environment.define(Scope.Function, signature.args[0].name.text, event);
                         impl(subInterpreter, event);
                     } else {
+                        // The event was not passed, so every declared parameter takes its default.
+                        for (const param of signature.args) {
+                            const paramValue: BrsType = param.defaultValue
+                                ? subInterpreter.evaluate(param.defaultValue)
+                                : Uninitialized.Instance;
+                            subInterpreter.environment.define(Scope.Function, param.name.text, paramValue);
+                        }
                         impl(subInterpreter);
                     }
                     interpreter.popFromStack();

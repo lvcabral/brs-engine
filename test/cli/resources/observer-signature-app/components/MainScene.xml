@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="MainScene" extends="Scene">
+    <!--
+        How an observer registered by name binds the roSGNodeEvent to its declared parameters.
+
+        Device-measured on Roku OS 15.2 (out/observer-signature-probe covers 16 signature shapes
+        across observeField / observeFieldScoped / Timer.fire / a string-typed field, all identical).
+        Roku attempts exactly two calls, with no coercion and no partial binding:
+
+          1. with the event, only when the callback declares exactly ONE parameter whose declared
+             type accepts an object (a default on it is irrelevant - it still gets the event);
+          2. otherwise with no arguments, only when no parameter is required (each takes its default);
+          3. otherwise the callback is not invoked at all, silently.
+
+        The shape that motivated this is `sub cb(state = "update" as string)` observing a Timer
+        `fire`: the engine used to bind the event to `state`, so a later `state = "stop"` raised
+        `Type Mismatch. Operator "=" can't be applied to "Object" and "String"` - a crash impossible
+        on a real device, where `state` is simply "update".
+    -->
+    <interface>
+        <field id="testDone" type="boolean" value="false" />
+        <field id="trigger" type="integer" value="0" />
+    </interface>
+    <children>
+        <Timer id="fireTimer" duration="0.05" repeat="false" />
+    </children>
+    <script type="text/brightscript"><![CDATA[
+
+    sub init()
+        ' Each case: observe `trigger` with one callback, write the field, print what arrived.
+        probe("noargs", "cbNoArgs")
+        probe("untyped", "cbUntyped")
+        probe("object", "cbObject")
+        probe("objectDefault", "cbObjectDefault")
+        probe("stringRequired", "cbStringRequired")
+        probe("stringDefault", "cbStringDefault")
+        probe("integerDefault", "cbIntegerDefault")
+        probe("twoParamsFirstRequired", "cbTwoParamsFirstRequired")
+        probe("twoParamsAllDefaulted", "cbTwoParamsAllDefaulted")
+        probe("objectThenStringDefault", "cbObjectThenStringDefault")
+
+        ' The JellyRock trigger: the same optional-typed-string shape on a Timer `fire`.
+        m.fireTimer = m.top.findNode("fireTimer")
+        m.fireTimer.observeField("fire", "cbTimerStringDefault")
+        m.fireTimer.control = "start"
+    end sub
+
+    sub probe(label as string, callback as string)
+        m.label = label
+        m.called = false
+        m.top.unobserveField("trigger")
+        m.top.observeField("trigger", callback)
+        m.top.trigger = m.top.trigger + 1
+        m.top.unobserveField("trigger")
+        if not m.called then print label + ": not called"
+    end sub
+
+    sub say(text as string)
+        m.called = true
+        print m.label + ": " + text
+    end sub
+
+    function bstr(b as boolean) as string
+        if b then return "true"
+        return "false"
+    end function
+
+    ' --- callbacks, one per signature shape -------------------------------------------------
+
+    sub cbNoArgs()
+        say("no parameters")
+    end sub
+
+    sub cbUntyped(e)
+        say("p1=" + type(e))
+    end sub
+
+    sub cbObject(e as object)
+        say("p1=" + type(e) + " field=" + e.getField())
+    end sub
+
+    ' Optional but compatible: receives the event, NOT its default.
+    sub cbObjectDefault(e = invalid as object)
+        say("p1=" + type(e))
+    end sub
+
+    ' Required and unsatisfiable: never called.
+    sub cbStringRequired(s as string)
+        say("p1=" + type(s))
+    end sub
+
+    ' The JellyRock shape: called with the default, so a string comparison is safe.
+    sub cbStringDefault(s = "update" as string)
+        say("p1=" + type(s) + " value=" + s + " isStop=" + bstr(s = "stop"))
+    end sub
+
+    sub cbIntegerDefault(n = 42 as integer)
+        say("p1=" + type(n) + " value=" + str(n).trim())
+    end sub
+
+    ' More than one declared parameter: the event is never passed, and the first parameter is
+    ' required, so there is no zero-argument call either. Never called.
+    sub cbTwoParamsFirstRequired(e, opt = true)
+        say("p1=" + type(e))
+    end sub
+
+    ' More than one declared parameter, but nothing is required: called with no arguments, so both
+    ' parameters take their defaults - the event does NOT go to the compatible second parameter.
+    sub cbTwoParamsAllDefaulted(s = "update" as string, e = invalid as object)
+        say("p1=" + type(s) + " value=" + s + " p2=" + type(e))
+    end sub
+
+    ' First parameter would accept the event and the second is optional, but two declared
+    ' parameters disqualify the event, and the required first one disqualifies the empty call.
+    sub cbObjectThenStringDefault(e as object, s = "update" as string)
+        say("p1=" + type(e) + " p2=" + s)
+    end sub
+
+    sub cbTimerStringDefault(state = "update" as string)
+        print "timerFire: p1=" + type(state) + " value=" + state + " isStop=" + bstr(state = "stop")
+        m.top.testDone = true
+    end sub
+
+    ]]></script>
+</component>
