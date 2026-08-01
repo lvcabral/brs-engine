@@ -405,6 +405,9 @@ export class TimeGrid extends ArrayGrid {
             // Focus is now on a real program; no longer a placeholder awaiting content.
             this.initialFocusPending = false;
         }
+        // Emit the scroll pulse before the settled focus fields go out (see
+        // ArrayGrid.armScrollPulse): the falling edge precedes the settle on a device.
+        this.emitScrollPulse();
         const oldChannel = this.channelIndex;
         const oldProgram = this.programIndexByChannel[oldChannel] ?? 0;
         if (oldProgram !== newProgram || oldChannel !== newChannel) {
@@ -514,6 +517,9 @@ export class TimeGrid extends ArrayGrid {
             if (next === this.channelIndex) {
                 return false;
             }
+            // Moving within the channel-info column publishes its focus fields directly, without
+            // focusCell, so the pulse is emitted here too (see ArrayGrid.armScrollPulse).
+            this.emitScrollPulse();
             super.setValue("channelInfoUnfocused", new Int32(this.channelIndex));
             this.channelIndex = next;
             this.focusIndex = next;
@@ -592,12 +598,18 @@ export class TimeGrid extends ArrayGrid {
 
     protected enterChannelInfo() {
         this.inChannelInfoColumn = true;
+        // Crossing into the channel-info column is a horizontal focus move that bypasses focusCell
+        // (see ArrayGrid.armScrollPulse for why the pulse precedes the settle).
+        this.emitScrollPulse();
         super.setValue("channelInfoFocused", new Int32(this.channelIndex));
         this.isDirty = true;
     }
 
     protected exitChannelInfo() {
         this.inChannelInfoColumn = false;
+        // Leaving the channel-info column publishes the grid's focus fields directly, without
+        // focusCell (see ArrayGrid.armScrollPulse).
+        this.emitScrollPulse();
         super.setValue("channelInfoUnfocused", new Int32(this.channelIndex));
         const prog = this.programIndexByChannel[this.channelIndex] ?? 0;
         super.setValue("programFocusedDetails", brsValueOf({ focusChannelIndex: this.channelIndex, focusIndex: prog }));
@@ -612,6 +624,9 @@ export class TimeGrid extends ArrayGrid {
         this.viewStartTime += duration / 2;
         this.clampViewStart();
         if (this.viewStartTime !== before) {
+            // Panning the time window is a horizontal scroll that publishes no focus fields via
+            // focusCell (see ArrayGrid.armScrollPulse).
+            this.emitScrollPulse();
             super.setValue("leftEdgeTargetTime", new Int32(Math.floor(this.viewStartTime)));
             this.isDirty = true;
             return true;

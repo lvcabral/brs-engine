@@ -166,6 +166,14 @@ export class RowList extends ArrayGrid {
         // but do NOT notify observers; setNodeFocus re-emits on focus-gain. See ArrayGrid.setFocusedItem.
         const inFocusChain = sgRoot.focused === this || this.isChildrenFocused();
 
+        if (inFocusChain) {
+            // Emit the scroll pulse before ANY of the settled focus fields go out — itemUnfocused
+            // below included, so the order matches ArrayGrid.setFocusedItem. See armScrollPulse for
+            // why the pulse precedes the settle, and why it is skipped entirely when the list is
+            // outside the focus chain (that path notifies nothing).
+            this.emitScrollPulse();
+        }
+
         if (isChangingRow && inFocusChain) {
             // Engine-initiated emission (not a direct BrightScript assignment): on Roku its
             // observers dispatch from the message loop, so a reentrant notification defers
@@ -268,6 +276,13 @@ export class RowList extends ArrayGrid {
         // focused item synchronously via subBoundingRect, and the dirty flag makes that query refresh
         // layout first so it reports the settled focus-band position (see needsSubBoundingRectRefresh).
         this.focusLayoutDirty = true;
+        // Emit the scroll pulse BEFORE the settled focus fields go out — the falling edge precedes
+        // the settle on a device and apps rely on that order (see ArrayGrid.armScrollPulse). The
+        // horizontal handlers reach this method directly, without setFocusedItem, so the pulse has to
+        // be emitted here too; it is idempotent per key press, so the vertical path (which already
+        // pulsed) does not double-emit. Outside the internal-update bracket below on purpose: these
+        // notifications must dispatch synchronously rather than defer past the settle.
+        this.emitScrollPulse();
         // Engine-initiated emissions: reentrant observers defer (see Field.enterInternalUpdate).
         Field.enterInternalUpdate();
         try {

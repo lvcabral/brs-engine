@@ -108,7 +108,7 @@ export class ArrayGrid extends Group {
         { name: "animateToItem", type: "integer", value: "-1", alwaysNotify: true },
         // Read-only on device: true while the list/grid is scrolling the focus. Documented under
         // ZoomRowList but present on all ArrayGrid-derived nodes on a real Roku (apps alias it on
-        // plain RowList). Scrolling here is instant, so it stays false.
+        // plain RowList). Pulsed true→false around a key-driven focus move (see armScrollPulse).
         { name: "scrollingStatus", type: "boolean", value: "false" },
         { name: "currFocusRow", type: "float", value: "0.0" },
         { name: "currFocusColumn", type: "float", value: "0.0" },
@@ -139,6 +139,13 @@ export class ArrayGrid extends Group {
     protected focusLayoutDirty: boolean = false;
     protected wrap: boolean = false;
     protected lastPressHandled: string;
+    /**
+     * A navigation key is being handled and `scrollingStatus` may still need its rising edge. Armed
+     * by `armScrollPulse`, consumed by the first `emitScrollPulse` (see `armScrollPulse`).
+     */
+    protected scrollPulseArmed: boolean = false;
+    /** The rising edge has been emitted and the falling edge is still owed. */
+    protected scrollPulseActive: boolean = false;
     protected hasNinePatch: boolean;
     protected focusField: string;
     protected vertFocusAnimationStyleName: string = FocusStyle.FloatingFocus.toLowerCase();
@@ -299,14 +306,24 @@ export class ArrayGrid extends Group {
         if (newFocus === -1) {
             return;
         }
+        const nodeFocus = sgRoot.focused === this;
+        const inFocusChain = nodeFocus || this.isChildrenFocused();
+        if (inFocusChain) {
+            // Emit the scroll pulse BEFORE the settled focus fields go out: on a device
+            // scrollingStatus falls while the scroll finishes and the focus settles afterward, and
+            // apps depend on that order (the falling edge tears transient scroll state down, the
+            // focus settle rebuilds it at the new position). Deliberately outside the internal-update
+            // bracket below — these notifications must dispatch synchronously here, not defer past
+            // the settle they precede. Skipped when unfocused: that path publishes no focus fields at
+            // all, so a pulse would be a teardown with nothing to rebuild from (see armScrollPulse).
+            this.emitScrollPulse();
+        }
         // Focus fields are emitted by the grid's internal machinery, not by a direct BrightScript
         // assignment — on Roku their observers dispatch from the message loop, so a reentrant
         // notification defers (see Field.enterInternalUpdate).
         Field.enterInternalUpdate();
         try {
             const focusedIndex = this.getValueJS("itemFocused") as number;
-            const nodeFocus = sgRoot.focused === this;
-            const inFocusChain = nodeFocus || this.isChildrenFocused();
             this.updateItemFocus(this.focusIndex, false, nodeFocus);
             this.focusIndex = newFocus;
             this.focusLayoutDirty = true;
@@ -373,20 +390,89 @@ export class ArrayGrid extends Group {
         itemComp.setValue("focusPercent", new Float(focus ? 1 : 0), false);
     }
 
+    /**
+     * Arms a `scrollingStatus` pulse for a navigation key, without emitting anything yet.
+     *
+     * `scrollingStatus` reports that the list is scrolling the focus (see zoomrowlist.md — the field
+     * is documented under ZoomRowList but exists on every ArrayGrid-derived node on a device, and
+     * apps alias it from a plain RowList). It was declared here but never emitted, so an observer on
+     * it never fired.
+     *
+     * On a device the scroll spans several frames: the field goes true, the focus fields pass
+     * through in-transit values, and it goes false BEFORE the focus finally settles. Apps rely on
+     * that interleave — the falling edge is where they tear transient scroll state down (hiding a
+     * shared overlay/preview player that belongs to the outgoing item), and the *settle* emission of
+     * the focus fields is what rebuilds it at the new position. Our scroll is instant, so both edges
+     * land in one frame and the ORDER is the whole contract: the falling edge must precede the focus
+     * settle, or the teardown runs last and the app is left with its overlay torn down and nothing
+     * to restore it.
+     *
+     * Hence "armed" rather than "open": the pulse is only *emitted* by `emitScrollPulse`, called
+     * from the focus-settle paths. A key that scrolls nothing — a boundary press on a non-wrapping
+     * list, or any key while the grid is outside the focus chain (both of which publish no focus
+     * fields at all) — must emit NOTHING, exactly as a device does. Pulsing there would hand an app
+     * a teardown edge with no settle behind it to rebuild from, which is the same failure as
+     * emitting the edges in the wrong order.
+     */
+    protected armScrollPulse() {
+        this.scrollPulseArmed = true;
+    }
+
+    /**
+     * Emits the rising edge the first time a focus move is about to publish its settled fields, then
+     * immediately the falling edge — the pair a device produces around an instant scroll. Called by
+     * every settle path right before it emits the focus fields, and idempotent per key press: later
+     * calls within the same press (a move that touches several settle paths) do nothing.
+     */
+    protected emitScrollPulse() {
+        if (!this.scrollPulseArmed) {
+            return;
+        }
+        this.scrollPulseArmed = false;
+        this.scrollPulseActive = true;
+        super.setValue("scrollingStatus", BrsBoolean.True);
+        this.scrollPulseActive = false;
+        super.setValue("scrollingStatus", BrsBoolean.False);
+    }
+
+    /**
+     * Disarms at the end of a key press, and closes the pulse if an exception unwound between the
+     * two edges — the field must never be left stranded at `true`, which would suppress every later
+     * notification (it is not `alwaysNotify`, so a same-value write is silent).
+     */
+    protected endScrollPulse() {
+        this.scrollPulseArmed = false;
+        if (!this.scrollPulseActive) {
+            return;
+        }
+        this.scrollPulseActive = false;
+        super.setValue("scrollingStatus", BrsBoolean.False);
+    }
+
     handleKey(key: string, press: boolean): boolean {
         if (!press && this.lastPressHandled === key) {
             this.lastPressHandled = "";
             return true;
         }
         let handled = false;
-        if (key === "up" || key === "down") {
-            handled = press ? this.handleUpDown(key) : false;
-        } else if (key === "left" || key === "right") {
-            handled = press ? this.handleLeftRight(key) : false;
-        } else if (key === "rewind" || key === "fastforward") {
-            handled = press ? this.handlePageUpDown(key) : false;
-        } else if (key === "OK") {
+        if (key === "OK") {
             handled = this.handleOK(press);
+        } else if (press && ["up", "down", "left", "right", "rewind", "fastforward"].includes(key)) {
+            try {
+                // Arm inside the try so an exception from either edge's observers still unwinds
+                // through the finally below and cannot strand the field at true.
+                this.armScrollPulse();
+                if (key === "up" || key === "down") {
+                    handled = this.handleUpDown(key);
+                } else if (key === "left" || key === "right") {
+                    handled = this.handleLeftRight(key);
+                } else {
+                    handled = this.handlePageUpDown(key);
+                }
+            } finally {
+                // Disarm: a key that scrolled nothing emits no pulse at all (see armScrollPulse).
+                this.endScrollPulse();
+            }
         }
         this.lastPressHandled = handled && key !== "OK" ? key : "";
         return handled;
