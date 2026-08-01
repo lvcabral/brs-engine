@@ -580,6 +580,39 @@ describe.concurrent("cli", () => {
         ]);
     }, 30000);
 
+    it("Binds an observer callback's parameters the way a device does", async () => {
+        let command = ["node", brsCliPath, "-r observer-signature-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // Device-measured on Roku OS 15.2 (see out/observer-signature-probe): an observer registered
+        // by name gets the event ONLY when it declares exactly one parameter whose type accepts an
+        // object; otherwise it is called with no arguments (every parameter taking its default),
+        // which requires that no parameter is required; otherwise it is not called at all. No
+        // coercion, and no partial binding. The `stringDefault`/`timerFire` rows are the shape that
+        // regressed: binding the event to a `as string` parameter made a later `state = "stop"`
+        // raise a Type Mismatch that cannot happen on a device.
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "=== Observer Signature Test ===",
+            "noargs: no parameters",
+            "untyped: p1=roSGNodeEvent",
+            "object: p1=roSGNodeEvent field=trigger",
+            "objectDefault: p1=roSGNodeEvent",
+            "stringRequired: not called",
+            "stringDefault: p1=String value=update isStop=false",
+            "integerDefault: p1=Integer value=42",
+            "twoParamsFirstRequired: not called",
+            "twoParamsAllDefaulted: p1=String value=update p2=Invalid",
+            "objectThenStringDefault: not called",
+            "timerFire: p1=String value=update isStop=false",
+            "=== Observer Signature Test Complete ===",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 30000);
+
     it("Reentrant field observers are deferred until the current handler returns", async () => {
         let command = ["node", brsCliPath, "-r deferred-observer-app", "source/main.brs", "-c 0"].join(" ");
 

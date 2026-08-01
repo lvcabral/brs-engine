@@ -245,6 +245,24 @@ capture the **native JS stack** mid-recursion (a temporary depth tripwire dumpin
    > and all five counters. Regression: `init-focus-observer-app` (deferred delivery + no double-fire)
    > plus the cascade apps above.
 
+   > **Argument binding is device-measured — `Field.satisfiedByEvent` (do not "generalize" it).** An
+   > observer registered by *name* is invoked with the `roSGNodeEvent` **only when it declares exactly one
+   > parameter whose declared type accepts an object**; otherwise it is called with **no arguments** (every
+   > parameter taking its declared default), which requires that no parameter is required; otherwise it is
+   > **not invoked at all, silently**. There is no coercion and no partial binding, so a callback declaring
+   > more than one parameter *never* receives the event — not even when the extras are optional and the
+   > first is `as object`. A default on the single parameter is irrelevant: `sub cb(e = invalid as object)`
+   > still receives the event, not its default. This is not BrightScript's normal call-binding rule (which
+   > would happily fill trailing optionals), so it cannot be delegated to `Callable.call` /
+   > `getFirstSatisfiedSignature([event])` alone — that fallback matched the *zero-argument* satisfaction
+   > while the binding loop still assigned the event to parameter 0, which is how
+   > `sub cb(state = "update" as string)` observing a Timer `fire` got an object in `state` and raised a
+   > `Type Mismatch` on a later `state = "stop"` — a crash impossible on a device. Measured across 16
+   > signature shapes × `observeField` / `observeFieldScoped` / `Timer.fire` / a string-typed field on Roku
+   > OS 15.2 (all four identical); the probe app and its device trace are in
+   > `out/observer-signature-probe/`. Regression: "Binds an observer callback's parameters the way a device
+   > does" in `test/cli/cli.test.js` (`observer-signature-app`).
+
 2. **Re-entrant render — `Node.getBoundingRect`.** `localBoundingRect`/`boundingRect` refresh layout by
    rendering the whole tree from the root. If BrightScript queries a bounding rect *while a render is
    running* — e.g. an `ArrayGrid`/`RowList` lazily creating an item whose `init()` or observer measures a
