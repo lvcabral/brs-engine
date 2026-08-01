@@ -955,10 +955,16 @@ describe.concurrent("cli", () => {
         // stacked position). subBoundingRect must refresh layout when a focus change is pending so it
         // reports the settled band position — matching a real device where the observer fires
         // post-layout. Without the refresh, row 1 reads its stacked y (band + one row height).
+        //
+        // The absolute y includes the grid's focus outset (RowList marginY), which the reported rect
+        // now carries: Group.updateBoundingRects used to build rectToParent from the node's
+        // translation and drop the outset that updateRect applies. A device does report it —
+        // measured on LabelList (x=-24) and PosterGrid (x=-14, y=-14). Both rows moved by the same
+        // 4px, so the invariant this test exists for ("SAME BAND") is unchanged.
         expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
             "=== RowList SubRect Repro ===",
-            "band row0 y = -15",
-            "focused row1 y = -15",
+            "band row0 y = -19",
+            "focused row1 y = -19",
             "SAME BAND: true",
             "=== RowList SubRect Repro Complete ===",
             "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",

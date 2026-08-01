@@ -618,9 +618,15 @@ export class Group extends Node {
         this.rectLocal = { x: 0, y: 0, width: drawRect.width, height: drawRect.height };
         if (rotation === 0) {
             this.rectToScene = drawRect;
+            // Parent-relative position comes from the DRAW rect, not from the node's translation.
+            // The two are the same for an ordinary node, but a grid's updateRect outsets drawRect by
+            // its focus margins — and a device reports that outset. Reading nodeTrans here dropped it,
+            // so a grid's reported rect had the widened width/height but the un-offset x/y.
+            // DEVICE-MEASURED: a PosterGrid at translation [0,320] reports y=306 (a 14px outset), and
+            // a LabelList at [0,0] reports x=-24.
             this.rectToParent = {
-                x: nodeTrans[0],
-                y: nodeTrans[1],
+                x: drawRect.x - origin[0],
+                y: drawRect.y - origin[1],
                 width: drawRect.width,
                 height: drawRect.height,
             };
