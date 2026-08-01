@@ -203,6 +203,59 @@ describe("TimeGrid node", () => {
         expect(grid.getValueJS("programFocused")).toBe(2);
     });
 
+    test("pulses scrollingStatus ahead of the settle on the channel-info and time-pan paths", () => {
+        // Those three paths (entering/leaving the channel-info column, moving inside it, and panning
+        // the time window) publish their focus fields directly instead of going through focusCell, so
+        // each has to emit the pulse itself — otherwise the falling edge lands AFTER the settle and an
+        // app that tears transient scroll state down on it is left with nothing to rebuild from.
+        // See ArrayGrid.armScrollPulse.
+        const grid = SGNodeFactory.createNode("TimeGrid");
+        const base = 1_000_000_000;
+        grid.setValue("contentStartTime", new Int32(base));
+        grid.setValue("numRows", new Int32(2));
+        grid.setValue("channelInfoFocusable", core.BrsBoolean.True);
+        grid.setValue(
+            "content",
+            buildContent([
+                { title: "Channel A", programs: [{ title: "A1", start: base, duration: 3600 }] },
+                { title: "Channel B", programs: [{ title: "B1", start: base, duration: 3600 }] },
+            ])
+        );
+        grid.setNodeFocus(true);
+
+        const log = [];
+        const port = new core.RoMessagePort();
+        port.pushMessage = (event) => {
+            log.push(`${event.fieldName.getValue()}=${event.fieldValue?.getValue?.()}`);
+        };
+        const fields = ["scrollingStatus", "channelInfoFocused", "channelInfoUnfocused", "channelFocused"];
+        for (const field of fields) {
+            grid.addObserver({ environment: {}, inSubEnv: () => {} }, "unscoped", new BrsString(field), port);
+        }
+
+        // Left → into the channel-info column.
+        grid.handleKey("left", true);
+        expect(log[0]).toBe("scrollingStatus=true");
+        expect(log[1]).toBe("scrollingStatus=false");
+        expect(log.indexOf("channelInfoFocused=0")).toBeGreaterThan(1);
+
+        // Down → moves within the channel-info column.
+        log.length = 0;
+        grid.handleKey("down", true);
+        expect(log[0]).toBe("scrollingStatus=true");
+        expect(log[1]).toBe("scrollingStatus=false");
+        expect(log.indexOf("channelInfoUnfocused=0")).toBeGreaterThan(1);
+        expect(log.indexOf("channelInfoFocused=1")).toBeGreaterThan(1);
+
+        // Right → back out of the channel-info column.
+        log.length = 0;
+        grid.handleKey("right", true);
+        expect(log[0]).toBe("scrollingStatus=true");
+        expect(log[1]).toBe("scrollingStatus=false");
+        expect(log.indexOf("channelInfoUnfocused=1")).toBeGreaterThan(1);
+        expect(grid.getValueJS("scrollingStatus")).toBe(false);
+    });
+
     test("renders without a draw surface", () => {
         const grid = SGNodeFactory.createNode("TimeGrid");
         const base = 1_000_000_000;

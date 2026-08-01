@@ -283,6 +283,56 @@ capture the **native JS stack** mid-recursion (a temporary depth tripwire dumpin
    "simplify" to whole-pass tracking like nodes — that drops diamond-shaped shared data. Regression:
    "circular container references" in `test/extensions/scenegraph/NodeSerialization.test.js`.
 
+## `ArrayGrid.scrollingStatus` — a lazy pulse, ordered ahead of the focus settle
+
+Per `zoomrowlist.md` the field is "set to true whenever the list is scrolling the focus horizontally or
+vertically". It is documented only under `ZoomRowList` but exists on **every** `ArrayGrid`-derived node on
+a device, and apps alias it up from a plain `RowList`. On a device the scroll spans several frames: the
+field goes true, the focus fields pass through in-transit values, and it goes **false before the focus
+finally settles**. Our scroll is instant, so both edges land in one frame — which makes their **order
+relative to the focus fields the entire contract**, and the two rules below easy to get backwards. Both
+were regressed once each while this was being written.
+
+1. **The falling edge must precede the settled focus fields.** Apps depend on the interleave in both
+   directions: the falling edge is where they tear transient scroll state down (hiding a shared
+   overlay/preview container that belongs to the *outgoing* item), and the **settle** emission of the focus
+   fields (`itemFocused`/`rowItemFocused`/`currFocusRow`…) is what rebuilds it at the new position. Put the
+   pulse *after* the settle and the teardown runs last: the app is left with its overlay torn down and
+   nothing to restore it — the symptom is the focused item's poster **and** its preview player both
+   vanishing. The edges are therefore emitted **outside** the `Field.enterInternalUpdate()` bracket on
+   purpose: inside it, a reentrant falling edge would defer past the very settle it must precede.
+
+2. **A key that scrolls nothing must emit NOTHING.** Hence the pulse is *armed* by `handleKey`
+   (`armScrollPulse`) and only *emitted* by the settle paths (`emitScrollPulse`, idempotent per press),
+   rather than opened before the handler and closed after it. A boundary press on a non-wrapping list, or
+   any key while the grid is outside the focus chain, publishes **no** focus fields at all — so a pulse
+   there is a teardown with no settle behind it, the same failure as rule 1. (Reachable in practice:
+   `StandardDialog`/`Dialog`/`PanelSet` forward keys to children without checking focus.) It is not
+   `alwaysNotify`, so a device emits nothing on those paths; don't add `alwaysNotify` — the pulse always
+   changes value, so both edges notify without it, and adding it resurrects the spurious same-value
+   notification that `ZoomRowList`'s old redeclaration produced.
+
+`handleKey` arms **inside** its `try` and disarms in the `finally`: an exception from either edge's
+observers must not strand the field at `true`, which would silently suppress every later notification.
+
+Every path that publishes settled focus fields must call `emitScrollPulse()` first — `ArrayGrid`.
+`setFocusedItem`, `RowList.setFocusedItem` *and* `setRowItemFocused` (the horizontal handlers reach the
+latter directly, bypassing the former), `ZoomRowList.setFocusedItem` *and* its direct `rowItemFocused`
+write in `handleLeftRight`, and `TimeGrid.focusCell` *plus* the three paths that bypass it
+(entering/leaving the channel-info column, moving within it, panning the time window). Adding a new
+navigation path means adding the call. Programmatic focus writes (`jumpToItem`/`jumpToRowItem`/
+`animateToItem`) deliberately do **not** pulse: those are content-loading paths and don't scroll the focus
+on a device.
+
+Related trap in the same area: `ZoomRowList.handleUpDown` must **not** pre-assign `this.focusIndex` before
+calling `setFocusedItem`, which reads it as the *outgoing* row to emit `rowUnfocused` (and assigns it
+itself). Pre-assigning made that emission dead, so an app collapsing the outgoing row never got the
+callback.
+
+Regression: `test/extensions/scenegraph/ArrayGridFields.test.js` (asserts on a merged notification log, so
+values *and* order are pinned — including three no-pulse cases) and the channel-info/time-pan test in
+`test/extensions/scenegraph/TimeGrid.test.js`.
+
 ## Focus chain consistency (`focusedChild` ↔ live focus)
 
 `focusedChild` is a stored, observable field: `Node.setNodeFocus` walks the parent chain (`createPath`) at

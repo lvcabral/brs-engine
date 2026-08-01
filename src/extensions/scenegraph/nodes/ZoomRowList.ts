@@ -72,7 +72,6 @@ export class ZoomRowList extends ArrayGrid {
         { name: "rowUnfocused", type: "integer", value: "-1", alwaysNotify: true },
         { name: "rowItemSelected", type: "intarray", value: "[]", alwaysNotify: true },
         { name: "rowItemFocused", type: "intarray", value: "[]", alwaysNotify: true },
-        { name: "scrollingStatus", type: "boolean", value: "false", alwaysNotify: true },
         { name: "rowsRendered", type: "intarray", value: "[]", alwaysNotify: true },
         { name: "rowItemsRendered", type: "intarray", value: "[]", alwaysNotify: true },
         { name: "currFocusRow", type: "float", value: "-1.0", alwaysNotify: true },
@@ -200,6 +199,9 @@ export class ZoomRowList extends ArrayGrid {
         } else {
             colIndex = 0;
         }
+        // Emit the scroll pulse BEFORE the settled focus fields go out — the falling edge precedes
+        // the settle on a device, and apps rely on that order (see ArrayGrid.armScrollPulse).
+        this.emitScrollPulse();
         const previousRow = this.focusIndex;
         if (previousRow !== rowIndex) {
             super.setValue("rowUnfocused", new Int32(previousRow));
@@ -248,14 +250,13 @@ export class ZoomRowList extends ArrayGrid {
         // single-row grid moves focus to a sibling above/below (e.g. a ButtonBar). RowList guards the
         // same way.
         if (next >= 0 && next < this.content.length && next !== this.focusIndex) {
-            super.setValue("scrollingStatus", BrsBoolean.True);
-            this.focusIndex = next;
             this.rowFocus[next] ??= 0;
+            // Do NOT assign this.focusIndex here: setFocusedItem reads it as the OUTGOING row to emit
+            // rowUnfocused (and assigns it itself). Setting it first made that emission dead, so an
+            // app collapsing the outgoing row off rowUnfocused never got the callback.
             this.setFocusedItem(next, this.rowFocus[next]);
-            super.setValue("currFocusRow", new Float(next));
             handled = true;
         }
-        super.setValue("scrollingStatus", BrsBoolean.False);
         return handled;
     }
 
@@ -281,9 +282,10 @@ export class ZoomRowList extends ArrayGrid {
         }
         if (nextCol !== this.rowFocus[currentRow]) {
             this.rowFocus[currentRow] = nextCol;
+            // This path emits the settle directly (it does not go through setFocusedItem), so the
+            // pulse is emitted here — see ArrayGrid.armScrollPulse for why the order matters.
+            this.emitScrollPulse();
             super.setValue("rowItemFocused", new RoArray([new Int32(currentRow), new Int32(nextCol)]));
-            super.setValue("scrollingStatus", BrsBoolean.True);
-            super.setValue("scrollingStatus", BrsBoolean.False);
             return true;
         }
         return false;

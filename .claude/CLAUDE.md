@@ -11,7 +11,7 @@ like harmless simplifications.
 
 | Read this | Before changing |
 | --- | --- |
-| [`.claude/docs/scenegraph-invariants.md`](docs/scenegraph-invariants.md) | Node rendering / `renderNode`, visibility vs. measurement, `Field` observer dispatch & deferral, `getBoundingRect`, focus chain, `NodeFactory`/`addFields`, `Serializer.ts`, lazy fields/methods |
+| [`.claude/docs/scenegraph-invariants.md`](docs/scenegraph-invariants.md) | Node rendering / `renderNode`, visibility vs. measurement, `Field` observer dispatch & deferral, `getBoundingRect`, focus chain, `ArrayGrid` focus/`scrollingStatus` emission order, `NodeFactory`/`addFields`, `Serializer.ts`, lazy fields/methods |
 | [`.claude/docs/threading-and-rendezvous.md`](docs/threading-and-rendezvous.md) | `src/node/{host,task}.ts`, worker messaging, termination, `nodes/Task.ts` rendezvous, shared control array, debugger multi-thread halt |
 | [`.claude/docs/packaging-encryption.md`](docs/packaging-encryption.md) | `--pack`/`.bpk`, `packageEncryption.ts`, `src/{cli,api}/package.ts`, FileSystem source overlay |
 | [`.claude/docs/cli-terminal-rendering.md`](docs/cli-terminal-rendering.md) | `src/cli/display.ts`, terminal frame output (`-a`/`-u`/`-i`), `--log`, anything printing mid-run |
@@ -237,7 +237,8 @@ Key pieces:
 [`.claude/docs/scenegraph-invariants.md`](docs/scenegraph-invariants.md)** — it covers the `renderNode`
 contract and the visibility-vs-measurement rule, XML field redeclaration (system vs. XML-defined), the
 lazy-field/lazy-method memory design, the three stack-overflow hot paths (observer dispatch, re-entrant
-`getBoundingRect`, AA/array cycles), and focus-chain repair on attach.
+`getBoundingRect`, AA/array cycles), focus-chain repair on attach, and the `ArrayGrid`
+`scrollingStatus`-vs-focus-settle emission order.
 
 For the multi-threaded Task model (rendezvous transport, ownership, startup, cross-thread serialization
 rules, the silence-based timeout, and the all-thread debugger halt), read
