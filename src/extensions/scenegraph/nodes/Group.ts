@@ -699,10 +699,12 @@ export class Group extends Node {
      */
     renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
         this.prepareRender(draw2D);
-        // An invisible node draws nothing, so skip the save()/restore() round trip entirely. The
-        // real visibility gates stay inside each renderNodeContent — they differ per node type
-        // (soft skip for containers, hard skip for renderables, hidden-extent measurement for grids).
-        const clipped = this.isVisible() && this.pushClippingRect(this.getDrawTranslation(origin, angle), draw2D);
+        // Order matters for cost, not just correctness. A layout/measure pass never clips (bounding
+        // rects must stay unclipped), and an invisible node draws nothing — check both before probing
+        // the field, so the overwhelmingly common case is one comparison. The real visibility gates
+        // stay inside each renderNodeContent: they differ per node type (soft skip for containers,
+        // hard skip for renderables, hidden-extent measurement for grids).
+        const clipped = draw2D !== undefined && this.isVisible() && this.pushClippingRect(origin, angle, draw2D);
         try {
             this.renderNodeContent(interpreter, origin, angle, opacity, draw2D);
         } finally {
@@ -830,7 +832,7 @@ export class Group extends Node {
      * any already-active clip, so nested/ancestor `clippingRect`s compose and stay bounded by the
      * screen. Returns whether a clip was pushed (caller must `popClip()` when true).
      */
-    protected pushClippingRect(drawTrans: number[], draw2D?: IfDraw2D): boolean {
+    protected pushClippingRect(origin: number[], angle: number, draw2D?: IfDraw2D): boolean {
         if (!draw2D) {
             return false;
         }
@@ -838,6 +840,9 @@ export class Group extends Node {
         if (!clip || clip.width <= 0 || clip.height <= 0) {
             return false;
         }
+        // Resolved only once a clip is known to be needed — `getDrawTranslation` allocates, and the
+        // node computes its own copy inside `renderNodeContent` anyway.
+        const drawTrans = this.getDrawTranslation(origin, angle);
         draw2D.pushClip({
             x: clip.x + drawTrans[0],
             y: clip.y + drawTrans[1],
