@@ -175,15 +175,18 @@ export class TextEditBox extends Group {
         this.lastCursorToggleTime = sgClock.now();
     }
 
-    renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
+    protected renderNodeContent(
+        interpreter: Interpreter,
+        origin: number[],
+        angle: number,
+        opacity: number,
+        draw2D?: IfDraw2D
+    ) {
         if (!this.isVisible()) {
             this.updateRenderTracking(true);
             return;
         }
-        const nodeTrans = this.getTranslation();
-        const drawTrans = nodeTrans.slice();
-        drawTrans[0] += origin[0];
-        drawTrans[1] += origin[1];
+        const drawTrans = this.getDrawTranslation(origin, angle);
         const size = this.getDimensions();
         const rotation = angle + this.getRotation();
         const combinedOpacity = opacity * this.getOpacity();

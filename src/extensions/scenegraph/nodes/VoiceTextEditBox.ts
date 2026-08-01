@@ -46,19 +46,22 @@ export class VoiceTextEditBox extends TextEditBox {
         this.pinPadBg = this.loadBitmap("common:/images/inputField.9.png");
     }
 
-    renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
+    protected renderNodeContent(
+        interpreter: Interpreter,
+        origin: number[],
+        angle: number,
+        opacity: number,
+        draw2D?: IfDraw2D
+    ) {
         if (!this.pinPadMode) {
-            super.renderNode(interpreter, origin, angle, opacity, draw2D);
+            super.renderNodeContent(interpreter, origin, angle, opacity, draw2D);
             return;
         }
         if (!this.isVisible()) {
             this.updateRenderTracking(true);
             return;
         }
-        const nodeTrans = this.getTranslation();
-        const drawTrans = nodeTrans.slice();
-        drawTrans[0] += origin[0];
-        drawTrans[1] += origin[1];
+        const drawTrans = this.getDrawTranslation(origin, angle);
         const size = this.getDimensions();
         const rotation = angle + this.getRotation();
         opacity *= this.getOpacity();

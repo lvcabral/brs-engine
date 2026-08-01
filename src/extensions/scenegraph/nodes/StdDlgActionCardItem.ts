@@ -7,7 +7,6 @@ import { Rectangle } from "./Rectangle";
 import { Label } from "./Label";
 import { StdDlgItem, getDialogColors, colorFromPalette } from "./StdDlgItemBase";
 import { sgRoot } from "../SGRoot";
-import { rotateTranslation } from "../SGUtil";
 
 /**
  * A focusable content-area item that highlights its child nodes on a rectangular background
@@ -162,16 +161,24 @@ export class StdDlgActionCardItem extends Group implements StdDlgItem {
         this.icon.setValueSilent("visible", BrsBoolean.from(uri !== ""));
     }
 
-    renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
+    /** Renderable node: an inherited rotation also rotates its own translation vector. */
+    protected rotatesDrawTranslation(): boolean {
+        return true;
+    }
+
+    protected renderNodeContent(
+        interpreter: Interpreter,
+        origin: number[],
+        angle: number,
+        opacity: number,
+        draw2D?: IfDraw2D
+    ) {
         if (!this.isVisible()) {
             this.updateRenderTracking(true);
             return;
         }
         this.updateVisuals();
-        const nodeTrans = this.getTranslation();
-        const drawTrans = angle === 0 ? nodeTrans.slice() : rotateTranslation(nodeTrans, angle);
-        drawTrans[0] += origin[0];
-        drawTrans[1] += origin[1];
+        const drawTrans = this.getDrawTranslation(origin, angle);
         const size = this.getDimensions();
         const boundingRect: Rect = {
             x: drawTrans[0],

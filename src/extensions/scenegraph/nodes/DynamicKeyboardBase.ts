@@ -239,7 +239,13 @@ export class DynamicKeyboardBase extends Group {
         return this.keyGrid.handleKey(key, press);
     }
 
-    renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
+    protected renderNodeContent(
+        interpreter: Interpreter,
+        origin: number[],
+        angle: number,
+        opacity: number,
+        draw2D?: IfDraw2D
+    ) {
         if (!this.isVisible()) {
             this.updateRenderTracking(true);
             return;
@@ -251,7 +257,7 @@ export class DynamicKeyboardBase extends Group {
         this.applyPalette();
         this.textEditBox.setActive(focused);
         this.keyGrid.setFocusActive(focused);
-        super.renderNode(interpreter, origin, angle, opacity, draw2D);
+        super.renderNodeContent(interpreter, origin, angle, opacity, draw2D);
         // Report the node's intrinsic size as its bounding rect (like the legacy Keyboard),
         // not the children union: an app-hidden textEditBox still reserves its slot on Roku,
         // so layout containers (e.g. a centered LayoutGroup) must keep measuring that space.

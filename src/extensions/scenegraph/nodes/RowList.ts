@@ -796,9 +796,14 @@ export class RowList extends ArrayGrid {
                 height: this.sceneRect.height,
             });
         }
-        this.renderRowContent(rowIndex, cols, context.rowItemWidth, spacing, context.itemRect, context);
-        if (clip) {
-            context.draw2D?.popClip();
+        try {
+            // Row items are app components: an error escaping their BrightScript must not strand the
+            // row clip on the canvas for the rest of the frame.
+            this.renderRowContent(rowIndex, cols, context.rowItemWidth, spacing, context.itemRect, context);
+        } finally {
+            if (clip) {
+                context.draw2D?.popClip();
+            }
         }
 
         // Render the "N of M" row counter in the label band at the row top, AFTER the items.

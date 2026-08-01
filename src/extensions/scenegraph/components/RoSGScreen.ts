@@ -225,6 +225,12 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
                         }
                     } finally {
                         sgRoot.rendering = false;
+                        // Frame-level backstop for the clip stack. Individual clips are bracketed with
+                        // try/finally, but an error escaping arbitrary BrightScript (an item
+                        // component's init(), a field observer) can unwind past a bracket that has not
+                        // been entered yet. A leaked clip is permanent canvas state, so without this
+                        // one bad frame would silently clip every frame after it.
+                        this.draw2D.resetClips();
                     }
                 }
                 // Limited FPS enforcement - caps redraw cadence only. Keep polling timers during

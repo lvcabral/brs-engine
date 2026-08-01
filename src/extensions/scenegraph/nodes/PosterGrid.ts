@@ -20,7 +20,6 @@ import { Group } from "./Group";
 import { Poster } from "./Poster";
 import { Label } from "./Label";
 import { ScrollingLabel } from "./ScrollingLabel";
-import { rotateTranslation } from "../SGUtil";
 import { sgRoot } from "../SGRoot";
 
 type PosterGridMetadata = ArrayGrid.Metadata & {
@@ -816,7 +815,18 @@ class PosterGridItem extends Group {
         super.setValue(index, value, alwaysNotify, kind);
     }
 
-    renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
+    /** Renderable node: an inherited rotation also rotates its own translation vector. */
+    protected rotatesDrawTranslation(): boolean {
+        return true;
+    }
+
+    protected renderNodeContent(
+        interpreter: Interpreter,
+        origin: number[],
+        angle: number,
+        opacity: number,
+        draw2D?: IfDraw2D
+    ) {
         const isVisible = this.isVisible();
         if (!isVisible || !this.layout || !this.content) {
             this.clearChildNodes();
@@ -826,10 +836,7 @@ class PosterGridItem extends Group {
             return;
         }
         this.syncChildNodes();
-        const nodeTrans = this.getTranslation();
-        const drawTrans = angle === 0 ? nodeTrans.slice() : rotateTranslation(nodeTrans, angle);
-        drawTrans[0] += origin[0];
-        drawTrans[1] += origin[1];
+        const drawTrans = this.getDrawTranslation(origin, angle);
         const offsetY = this.layout.offsetY ?? 0;
         const rect = {
             x: drawTrans[0],

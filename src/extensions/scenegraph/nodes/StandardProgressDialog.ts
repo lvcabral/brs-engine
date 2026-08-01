@@ -36,14 +36,31 @@ export class StandardProgressDialog extends StandardDialog {
         this.linkField(this.progressItem, "text", "message");
     }
 
-    renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
+    /**
+     * Applies the default message before StandardDialog lays the dialog out — the message drives the
+     * content height, which the layout then sizes and recenters the dialog from.
+     */
+    protected prepareRender(draw2D?: IfDraw2D) {
         if (!this.isVisible()) {
-            this.updateRenderTracking(true);
             return;
         }
         if ((this.getValueJS("message") as string) === "") {
             this.setValue("message", new BrsString(BrsDevice.getTerm("Please wait...")));
         }
-        super.renderNode(interpreter, origin, angle, opacity, draw2D);
+        super.prepareRender(draw2D);
+    }
+
+    protected renderNodeContent(
+        interpreter: Interpreter,
+        origin: number[],
+        angle: number,
+        opacity: number,
+        draw2D?: IfDraw2D
+    ) {
+        if (!this.isVisible()) {
+            this.updateRenderTracking(true);
+            return;
+        }
+        super.renderNodeContent(interpreter, origin, angle, opacity, draw2D);
     }
 }

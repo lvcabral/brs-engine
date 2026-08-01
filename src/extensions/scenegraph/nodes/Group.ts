@@ -7,8 +7,10 @@ import {
     BrsType,
     Float,
     Int32,
+    isAnyNumber,
     isBrsString,
     RoArray,
+    RoAssociativeArray,
     RoBitmap,
     RoFont,
     ValueKind,
@@ -25,7 +27,7 @@ import type { ScrollingLabel } from "./ScrollingLabel";
 import { Node } from "./Node";
 import { FieldKind, FieldModel, isFont } from "../SGTypes";
 import { SGNodeType } from ".";
-import { convertHexColor, rectContainsRect, rotateRect, unionRect } from "../SGUtil";
+import { convertHexColor, rectContainsRect, rotateRect, rotateTranslation, unionRect } from "../SGUtil";
 import { SGNodeFactory } from "../factory/NodeFactory";
 import { jsValueOf } from "../factory/Serializer";
 
@@ -682,7 +684,89 @@ export class Group extends Node {
         return false;
     }
 
+    /**
+     * Render entry point for every node. This is a TEMPLATE METHOD and should not be overridden —
+     * node types implement `renderNodeContent` instead, and this wrapper applies the node's own
+     * `clippingRect` around it.
+     *
+     * The clip lives here rather than inside each node's body because `clippingRect` is declared on
+     * `Group` and inherited by every renderable node, and per the SceneGraph reference it limits
+     * "all drawing by this node AND its children" — so it has to bracket the node's own geometry,
+     * not just the child traversal. Doing it in the parent's `renderChildren` instead would miss the
+     * eight call sites that render a child directly (PanelSet's ordered panels, the grid/list item
+     * renderers, TargetGroup) and both `RoSGScreen` entry points (Scene and Dialog are painted via
+     * `paintNode`, with no parent traversal above them).
+     *
+     * Measurement/layout passes stay unclipped: `pushClippingRect` no-ops without a `draw2D`.
+     */
     renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
+        this.prepareRender(draw2D);
+        // Order matters for cost, not just correctness. A layout/measure pass never clips (bounding
+        // rects must stay unclipped), and an invisible node draws nothing — check both before probing
+        // the field, so the overwhelmingly common case is one comparison. The real visibility gates
+        // stay inside each renderNodeContent: they differ per node type (soft skip for containers,
+        // hard skip for renderables, hidden-extent measurement for grids).
+        const clipped = draw2D !== undefined && this.isVisible() && this.pushClippingRect(origin, angle, draw2D);
+        try {
+            this.renderNodeContent(interpreter, origin, angle, opacity, draw2D);
+        } finally {
+            if (clipped) {
+                draw2D?.popClip();
+            }
+        }
+    }
+
+    /**
+     * Runs before the node's draw translation is computed, for node types that must settle their own
+     * position first. Default is a no-op; `StandardDialog` overrides it because its layout assigns
+     * its OWN translation, which the clip position then has to be derived from.
+     */
+    protected prepareRender(draw2D?: IfDraw2D) {
+        // override in derived classes
+    }
+
+    /**
+     * This node's draw translation: its own translation composed with the parent-space `origin`.
+     *
+     * Every node must position its own drawing through this method, so the clip `renderNode` pushes
+     * can never drift from where the node actually paints.
+     */
+    protected getDrawTranslation(origin: number[], angle: number): number[] {
+        const nodeTrans = this.getTranslation();
+        const drawTrans =
+            angle !== 0 && this.rotatesDrawTranslation() ? rotateTranslation(nodeTrans, angle) : nodeTrans.slice();
+        drawTrans[0] += origin[0];
+        drawTrans[1] += origin[1];
+        return drawTrans;
+    }
+
+    /**
+     * Whether an inherited (non-zero) rotation also rotates this node's OWN translation vector.
+     *
+     * Renderable nodes return true; `Group` and the keyboard/text-entry containers return false,
+     * which is what they have always done. The two are identical whenever the inherited angle is 0
+     * — i.e. everywhere nothing above the node is rotated — so this only selects between existing
+     * behaviors, it does not introduce one.
+     *
+     * NEEDS DEVICE VERIFICATION: the split looks accidental rather than intended (a rotated
+     * container would place its children differently depending on which of the two groups it falls
+     * in). Preserved as-is here deliberately; settling it needs a rotated-container probe channel,
+     * not a guess.
+     */
+    protected rotatesDrawTranslation(): boolean {
+        return false;
+    }
+
+    /**
+     * The node's actual rendering. Override this (never `renderNode`) in a derived node type.
+     */
+    protected renderNodeContent(
+        interpreter: Interpreter,
+        origin: number[],
+        angle: number,
+        opacity: number,
+        draw2D?: IfDraw2D
+    ) {
         if (this.skipRender(draw2D)) {
             return;
         }
@@ -708,9 +792,7 @@ export class Group extends Node {
         }
         this.layoutPassCount++;
         const nodeTrans = this.getTranslation();
-        const drawTrans = nodeTrans.slice();
-        drawTrans[0] += origin[0];
-        drawTrans[1] += origin[1];
+        const drawTrans = this.getDrawTranslation(origin, angle);
         const rotation = angle + this.getRotation();
         this.rectLocal = {
             x: Number.POSITIVE_INFINITY,
@@ -734,17 +816,16 @@ export class Group extends Node {
         // descendants compute their rects but keep reporting renderTracking "none" — they are laid
         // out, not displayed.
         opacity = this.isVisible() ? opacity * this.getOpacity() : 0;
-        const clipped = this.pushClippingRect(drawTrans, draw2D);
+        // The clippingRect bracket lives in the renderNode template, so it wraps this whole body.
         this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);
-        if (clipped) {
-            draw2D?.popClip();
-        }
         this.updateContainerBounds(nodeTrans, drawTrans);
         this.nodeRenderingDone(origin, angle, opacity, draw2D);
     }
 
     /**
-     * Applies this node's `clippingRect`, limiting where the node and its children may draw.
+     * Applies this node's `clippingRect`, limiting where the node and its children may draw. Pushed
+     * by the `renderNode` template so it brackets the node's OWN geometry as well as its children,
+     * per the reference ("all drawing by this node and its children").
      * The rect is in the node's local coordinate system (per the SceneGraph reference), so it is
      * translated to scene/screen space by the node's draw translation before being pushed. An
      * empty rect (width or height ≤ 0, the default `[0,0,0,0]`) disables clipping. Clipping is only
@@ -753,14 +834,33 @@ export class Group extends Node {
      * any already-active clip, so nested/ancestor `clippingRect`s compose and stay bounded by the
      * screen. Returns whether a clip was pushed (caller must `popClip()` when true).
      */
-    protected pushClippingRect(drawTrans: number[], draw2D?: IfDraw2D): boolean {
+    protected pushClippingRect(origin: number[], angle: number, draw2D?: IfDraw2D): boolean {
         if (!draw2D) {
             return false;
+        }
+        // Fast path for the overwhelmingly common "no clip" case. The generic read converts the whole
+        // rect2d associative array to a fresh JS object (allocating a WeakSet and walking its entries)
+        // — cheap once, but this now runs for every node on every paint pass, so an empty rect must
+        // not pay for it. `rect2d` values are always stored with lowercase numeric x/y/width/height
+        // (Field.convertRect2D rebuilds them), and anything that does not match falls through to the
+        // generic path below, so semantics are unchanged.
+        const raw = this.getValue("clippingRect");
+        if (raw instanceof RoAssociativeArray) {
+            const width = raw.elements.get("width");
+            const height = raw.elements.get("height");
+            if (width !== undefined && height !== undefined && isAnyNumber(width) && isAnyNumber(height)) {
+                if (Number(width.getValue()) <= 0 || Number(height.getValue()) <= 0) {
+                    return false;
+                }
+            }
         }
         const clip = this.getValueJS("clippingRect") as { x: number; y: number; width: number; height: number };
         if (!clip || clip.width <= 0 || clip.height <= 0) {
             return false;
         }
+        // Resolved only once a clip is known to be needed — `getDrawTranslation` allocates, and the
+        // node computes its own copy inside `renderNodeContent` anyway.
+        const drawTrans = this.getDrawTranslation(origin, angle);
         draw2D.pushClip({
             x: clip.x + drawTrans[0],
             y: clip.y + drawTrans[1],

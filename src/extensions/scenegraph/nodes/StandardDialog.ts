@@ -25,7 +25,6 @@ import { StdDlgContentArea } from "./StdDlgContentArea";
 import { StdDlgButtonArea } from "./StdDlgButtonArea";
 import { StdDlgSideCardArea } from "./StdDlgSideCardArea";
 import { colorFromPalette } from "./StdDlgItemBase";
-import { rotateTranslation } from "../SGUtil";
 
 /**
  * Base of the Standard Dialog Framework. Draws the 9-patch dialog background (palette-tinted) and
@@ -479,24 +478,44 @@ export class StandardDialog extends Group {
         );
     }
 
-    renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
+    /** Renderable node: an inherited rotation also rotates its own translation vector. */
+    protected rotatesDrawTranslation(): boolean {
+        return true;
+    }
+
+    /**
+     * Settles the dialog's own position before the render template derives a draw translation from
+     * it. `layoutStandardDialog` assigns THIS node's `translation` (it centers the dialog), so it has
+     * to run ahead of `getDrawTranslation` — otherwise a relayout frame would push the clippingRect
+     * at the dialog's previous position while it paints at the new one.
+     */
+    protected prepareRender(draw2D?: IfDraw2D) {
         if (!this.isVisible()) {
-            this.updateRenderTracking(true);
             return;
         }
         if (this.isDirty || this.pendingRelayout) {
             this.pendingRelayout = false;
             this.layoutStandardDialog();
         }
+    }
+
+    protected renderNodeContent(
+        interpreter: Interpreter,
+        origin: number[],
+        angle: number,
+        opacity: number,
+        draw2D?: IfDraw2D
+    ) {
+        if (!this.isVisible()) {
+            this.updateRenderTracking(true);
+            return;
+        }
         // Claiming focus is a paint-side effect: a layout pass (a bounding-rect refresh that
         // reaches the dialog) must not move focus.
         if (this.isPaintPass(draw2D)) {
             this.setNodeFocus(true);
         }
-        const nodeTrans = this.getTranslation();
-        const drawTrans = angle === 0 ? nodeTrans.slice() : rotateTranslation(nodeTrans, angle);
-        drawTrans[0] += origin[0];
-        drawTrans[1] += origin[1];
+        const drawTrans = this.getDrawTranslation(origin, angle);
         const size = this.getDimensions();
         const boundingRect: Rect = {
             x: drawTrans[0],

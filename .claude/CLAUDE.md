@@ -262,13 +262,18 @@ rules, the silence-based timeout, and the all-thread debugger halt), read
            this.registerDefaultFields(this.defaultFields);
            this.registerInitializedFields(initializedFields);
        }
-       renderNode(interpreter, origin, angle, opacity, draw2D?) { /* ... */ }
+       // Override renderNodeContent, NOT renderNode: renderNode is a template on Group that applies
+       // the node's clippingRect around this body. Position drawing via this.getDrawTranslation(...).
+       protected renderNodeContent(interpreter, origin, angle, opacity, draw2D?) { /* ... */ }
    }
    ```
 3. Wire it into `SGNodeFactory.createNode`'s `switch` so `CreateObject("roSGNode", "MyNode")` and XML
    `<MyNode>` resolve.
-4. Follow the `renderNode` contract and the visibility/measurement rule in
-   [`.claude/docs/scenegraph-invariants.md`](docs/scenegraph-invariants.md).
+4. Follow the `renderNodeContent` contract and the visibility/measurement rule in
+   [`.claude/docs/scenegraph-invariants.md`](docs/scenegraph-invariants.md). If the node draws its own
+   geometry under an inherited rotation, override `rotatesDrawTranslation()` to `true`; if its layout
+   assigns its **own** `translation`, do that in `prepareRender` so the clip is positioned from the
+   settled value.
 5. If the node builds visible children in its constructor and keeps private references to them, override
    `serializesChildren()` to `false` — see
    [`.claude/docs/threading-and-rendezvous.md`](docs/threading-and-rendezvous.md).

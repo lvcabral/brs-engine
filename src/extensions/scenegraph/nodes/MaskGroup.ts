@@ -30,7 +30,13 @@ export class MaskGroup extends Group {
         this.registerInitializedFields(initializedFields);
     }
 
-    renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
+    protected renderNodeContent(
+        interpreter: Interpreter,
+        origin: number[],
+        angle: number,
+        opacity: number,
+        draw2D?: IfDraw2D
+    ) {
         if (this.skipRender(draw2D)) {
             return;
         }
@@ -42,7 +48,7 @@ export class MaskGroup extends Group {
         // plain Group. This mirrors the documented behavior on Roku players without OpenGL, where
         // a MaskGroup just renders its children without applying the alpha mask.
         if (!draw2D || !maskBitmap?.isValid() || this.sceneRect.width <= 0 || this.sceneRect.height <= 0) {
-            super.renderNode(interpreter, origin, angle, opacity, draw2D);
+            super.renderNodeContent(interpreter, origin, angle, opacity, draw2D);
             return;
         }
 
@@ -53,7 +59,7 @@ export class MaskGroup extends Group {
         );
         const offDraw = new IfDraw2D(offscreen);
         // Group.renderNode handles transforms, child rendering, bounding rects, and render tracking.
-        super.renderNode(interpreter, origin, angle, opacity, offDraw);
+        super.renderNodeContent(interpreter, origin, angle, opacity, offDraw);
 
         // The mask coordinate system origin is the group origin in scene space (translation applied).
         // Note: any rotation on the MaskGroup itself rotates the children (handled above) but the mask
