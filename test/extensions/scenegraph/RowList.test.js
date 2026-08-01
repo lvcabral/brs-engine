@@ -725,6 +725,47 @@ describe("RowList vertical scrolling honors vertFocusAnimationStyle", () => {
         expect(drawn["R0"]).toBeUndefined();
     });
 
+    test("rows scrolled entirely above the viewport do not abort the pass", () => {
+        // An app that scrolls by translating the list itself parks the earlier rows off the TOP of the
+        // screen. The render loop used to stop at the first row that did not intersect the scene — safe
+        // only while the pass always began at the focused (on-screen) row. Starting at the window's top
+        // row instead, a full row of clearance above the viewport aborted the pass before reaching the
+        // focused row, blanking it and everything below it (the last row of a detail panel vanished
+        // while it still navigated normally).
+        const list = makeList(4, "floatingFocus", 4);
+        const bottomRow = 3;
+        list.setValue("jumpToRowItem", new RoArray([new Int32(bottomRow), new Int32(0)]));
+
+        // Translate so row 1 clears the top of the screen entirely, leaving the focused row on screen.
+        const listY = -(2 * PITCH + 10);
+        list.setValue("translation", new RoArray([new Int32(0), new Int32(listY)]));
+        expect(listY + PITCH + ROW_HEIGHT).toBeLessThan(0); // row 1 is fully above the viewport
+
+        const drawn = list.renderRows();
+        // Every row is still laid out at its own fixed position, focused row included.
+        for (let i = 0; i < 4; i++) {
+            expect(drawn["R" + i]).toBe(listY + i * PITCH);
+        }
+        expect(drawn["R" + bottomRow]).toBeGreaterThanOrEqual(0); // and it is genuinely on screen
+    });
+
+    test("the pass still stops at the first row below the viewport", () => {
+        // The early-out that keeps a long list from rendering rows nobody can see must survive: with the
+        // list at the top of the screen, only the rows that fit are drawn.
+        const list = makeList(40, "floatingFocus", 40);
+        list.setValue("translation", new RoArray([new Int32(0), new Int32(0)]));
+
+        const drawn = list.renderRows();
+        const sceneBottom = list.sceneRect.y + list.sceneRect.height;
+        const rendered = Object.keys(drawn).length;
+        expect(rendered).toBeGreaterThan(0);
+        expect(rendered).toBeLessThan(40);
+        // Nothing was drawn starting past the bottom edge.
+        for (const y of Object.values(drawn)) {
+            expect(y).toBeLessThan(sceneBottom);
+        }
+    });
+
     test("a fresh RowList's cached vertical focus style matches its fixedFocus field default", () => {
         // ArrayGrid's constructor caches the style while the field still holds ArrayGrid's own
         // floatingFocus default; RowList's fixedFocus default is installed afterwards via

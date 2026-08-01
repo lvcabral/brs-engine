@@ -10,7 +10,6 @@ import {
     RoArray,
     IfDraw2D,
     Rect,
-    RectRect,
     RoFont,
 } from "brs-engine";
 import { sgRoot } from "../SGRoot";
@@ -797,7 +796,14 @@ export class RowList extends ArrayGrid {
         const rowSpacing = this.calculateRowSpacing(rowIndex, context.rowSpacings, context.globalSpacing);
         context.itemRect.y = rowTopY + rowHeight + (bandFits ? 0 : bandHeight) + rowSpacing;
 
-        return RectRect(this.sceneRect, context.itemRect);
+        // Stop only once the next row starts BELOW the viewport — everything after it is off screen.
+        // A row entirely ABOVE the viewport must not end the pass: this used to test the next row for
+        // intersection with the scene, which was safe only while rendering always began at the focused
+        // (on-screen) row. With floatingFocus the pass begins at the window's top row, so an app that
+        // scrolls by translating the list itself can park earlier rows off the top — and a full row of
+        // clearance up there would abort the pass before reaching the focused row, blanking it and
+        // every row below it.
+        return context.itemRect.y < this.sceneRect.y + this.sceneRect.height;
     }
 
     private getRowXOffset(rowIndex: number): number {
