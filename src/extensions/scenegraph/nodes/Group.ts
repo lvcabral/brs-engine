@@ -7,8 +7,10 @@ import {
     BrsType,
     Float,
     Int32,
+    isAnyNumber,
     isBrsString,
     RoArray,
+    RoAssociativeArray,
     RoBitmap,
     RoFont,
     ValueKind,
@@ -835,6 +837,22 @@ export class Group extends Node {
     protected pushClippingRect(origin: number[], angle: number, draw2D?: IfDraw2D): boolean {
         if (!draw2D) {
             return false;
+        }
+        // Fast path for the overwhelmingly common "no clip" case. The generic read converts the whole
+        // rect2d associative array to a fresh JS object (allocating a WeakSet and walking its entries)
+        // — cheap once, but this now runs for every node on every paint pass, so an empty rect must
+        // not pay for it. `rect2d` values are always stored with lowercase numeric x/y/width/height
+        // (Field.convertRect2D rebuilds them), and anything that does not match falls through to the
+        // generic path below, so semantics are unchanged.
+        const raw = this.getValue("clippingRect");
+        if (raw instanceof RoAssociativeArray) {
+            const width = raw.elements.get("width");
+            const height = raw.elements.get("height");
+            if (width !== undefined && height !== undefined && isAnyNumber(width) && isAnyNumber(height)) {
+                if (Number(width.getValue()) <= 0 || Number(height.getValue()) <= 0) {
+                    return false;
+                }
+            }
         }
         const clip = this.getValueJS("clippingRect") as { x: number; y: number; width: number; height: number };
         if (!clip || clip.width <= 0 || clip.height <= 0) {
