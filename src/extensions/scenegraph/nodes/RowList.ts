@@ -95,12 +95,16 @@ export class RowList extends ArrayGrid {
 
         if (this.resolution === "FHD") {
             this.marginX = 33;
-            // Vertical bounding-rect outset. A real device reports a RowList's boundingRect (and its
-            // item subBoundingRects) outset by only ~6px on the Y axis — the focus 9-patch's own
-            // content margins drive the focus RING (see ArrayGrid.focusMargins, which prefers the
-            // bitmap's declared margins over this value), so marginY here affects ONLY the reported
-            // rects, not the drawn focus frame. A larger square value pushed subBoundingRect.y down,
-            // so an app placing a focused-item overlay from it sat the overlay too low.
+            // Vertical outset of THIS NODE's own reported rect (rectMargins -> ArrayGrid.updateRect).
+            // A real device reports a RowList's boundingRect outset by only ~6px on the Y axis, where
+            // the square 33 this used to hold was far too tall. It affects ONLY the reported rect, not
+            // the drawn focus frame: the focus RING uses the focus 9-patch's own declared content
+            // margins (ArrayGrid.focusMargins prefers them over this value).
+            //
+            // It does NOT reach an item subBoundingRect: Node.getSubBoundingRect re-expresses the item
+            // rect against this node's rectToParent/rectToScene, both of which now carry the outset
+            // identically, so it cancels. See resolveSubpart below — that cancellation is the whole
+            // reason the footprint outset that used to live here was wrong.
             this.marginY = 6;
         } else {
             this.marginX = 22;
@@ -422,43 +426,30 @@ export class RowList extends ArrayGrid {
      * whole-list rect. On a real device `subBoundingRect("item<row>_<col>")` returns the focused
      * poster's rect, which apps use to place a focused-item overlay; without this override the overlay
      * cannot track the row's item layout. See `resolveRowItemSubpart` for the id mapping.
+     *
+     * Resolution is ALL this node contributes: there is intentionally no `getSubBoundingRect` override.
+     * `Node.getSubBoundingRect` re-expresses the resolved item component's own rect, and a device reports
+     * exactly that — the bare poster — for both the focused and the unfocused cells. Three separate
+     * outsets are easy to conflate here, so keep them apart:
+     *
+     *  - the DRAWN focus frame is outset (`ArrayGrid.renderFocus` -> `focusMargins`, the 9-patch's own
+     *    declared content margins). That is paint only; nothing reports it.
+     *  - THIS NODE's own reported rect is outset (`rectMargins` -> `ArrayGrid.updateRect`, `marginX`/
+     *    `marginY`). It does not reach an item sub-rect: `Node.getSubBoundingRect` computes
+     *    `base.y + (subScene.y - this.rectToScene.y)`, and `base` (`rectToParent`/`rectLocal`) and
+     *    `rectToScene` carry that outset identically, so it cancels.
+     *  - an ITEM sub-rect is outset by nothing at all.
+     *
+     * Do NOT re-add a focus-footprint outset here. One was added once (subtracting the 9-patch top
+     * margin from the focused cell) to make an overlay land on the poster; it was double-counting from
+     * the day it landed, silently cancelled by a `rectToParent` bug that dropped the `rectMargins`
+     * outset from `base` and left a `+marginY` residue in the expression above. Fixing that bug — so
+     * the outset cancels as it should — surfaced the double subtraction as an overlay drawn one focus
+     * margin too HIGH. If a focused-item overlay looks misplaced, the paint path or the app's own
+     * offset is the suspect, not this rect.
      */
     protected resolveSubpart(itemNumber: string): Node | undefined {
         return resolveRowItemSubpart(itemNumber, this.rowItemComps, this.focusIndex, this.rowFocus);
-    }
-
-    /**
-     * Returns a sub part's bounding rect, extending the FOCUSED item's rect upward by the focus-feedback
-     * top margin. On a real device the focused cell's reported rect spans the focus-feedback footprint
-     * (the focus 9-patch outsets above the poster), not the bare poster — so an app that places a
-     * focused-item overlay from this rect lands the overlay on the poster. The item component's own
-     * `rectToScene` is the poster rect (it renders at `itemRect`; the focus frame is drawn separately,
-     * outset by `focusMargins`), so without this the overlay sits one focus-line too low and the poster
-     * shows above it. The outset is keyed to the focus bitmap being present, NOT `drawFocusFeedback`: a
-     * device reserves the footprint region whenever a focus bitmap is set even if the app suppresses the
-     * drawn frame (a common pattern for apps that render their own focus indicator). Only the focused
-     * cell has the footprint, so only its rect is adjusted; other sub parts pass through.
-     */
-    getSubBoundingRect(type: string, itemNumber: string, interpreter?: Interpreter): Rect {
-        const rect = super.getSubBoundingRect(type, itemNumber, interpreter);
-        const subpart = this.resolveSubpart(itemNumber);
-        const focusedItem = this.rowItemComps[this.focusIndex]?.[this.rowFocus[this.focusIndex] ?? 0];
-        // Reserve the focus-feedback footprint whenever a focus bitmap is set (the focus indicator,
-        // or its footprint when the list is unfocused). Keyed on the bitmap URI, NOT drawFocusFeedback,
-        // so it still applies when an app suppresses the drawn frame but relies on the reserved footprint
-        // (e.g. to place its own indicator). Both URIs are consulted because subBoundingRect reflects the
-        // focused item regardless of whether the list node currently holds live focus.
-        const bmpUri = this.getValueJS("focusBitmapUri") ? "focusBitmapUri" : "focusFootprintBitmapUri";
-        if (subpart && subpart === focusedItem && this.getValueJS(bmpUri)) {
-            // Match the focus frame's own outset: the 9-patch's declared top margin, falling back to
-            // marginY when the bitmap hasn't loaded (mirrors ArrayGrid.focusMargins).
-            const bmp = this.getBitmap(bmpUri);
-            const top = bmp?.isValid() ? this.focusMargins(bmp).top : this.marginY;
-            if (top) {
-                return { ...rect, y: rect.y - top, height: rect.height + top };
-            }
-        }
-        return rect;
     }
 
     private getRowItemSize(rowIndex: number): number[] {

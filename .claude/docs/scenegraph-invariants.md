@@ -430,6 +430,14 @@ discarding `drawRect.x/y`. Identical for an ordinary node, but a grid's `updateR
 by its focus margins — and a device reports that outset — so a grid's reported rect had the widened
 width/height with un-offset x/y. It now derives the position from `drawRect` too.
 
+The lesson below ("fixing two of three spaces is worse than fixing none, because the disagreement is
+silent") has a corollary that this fix went on to demonstrate: **a *compensating* error in a consumer is
+equally silent, and repairing the producer is what surfaces it.** The leaked `+marginY` above was being
+cancelled downstream by a `-focusMargins().top` subtraction in `RowList.getSubBoundingRect` (see the
+grid-sub-rect section below). Both were wrong; together they read as correct. So when you fix a geometry
+producer, audit its consumers for adjustments that were calibrated against the broken value — the tell is
+a consumer-side correction whose magnitude happens to match the producer's error.
+
 **All three coordinate spaces have to move together.** `rectLocal` stayed at `{0,0}` in the first cut,
 so `localBoundingRect()`/`localSubBoundingRect()` disagreed with the parent and scene rects by the
 margin (`Node.getSubBoundingRect` bases its `"local"` variant on `rectLocal`). Local is parent-space
@@ -460,6 +468,78 @@ short of a device. This is **not** the empty-caption background — setting
 mechanism is unknown, only HD was measured, and two data points cannot model ≥2 lines, so it is
 deliberately unfixed rather than approximated with a constant (a flat +36 would over-correct the
 one-caption case, where the engine's line height is already 12 too tall).
+
+## A grid's reported rect is outset — its item sub-rects are NOT
+
+Three outsets meet on `subBoundingRect("item<r>_<c>")` and only two of them exist. Keep them apart:
+
+| outset | applied by | shows up in |
+| --- | --- | --- |
+| `rectMargins()` → `marginX`/`marginY` | `ArrayGrid.updateRect` | the **grid's own** reported rect (device-measured) |
+| `focusMargins(bmp)` → the 9-patch's declared content margins | `ArrayGrid.renderFocus` | the **drawn** focus frame — paint only, nothing reports it |
+| *(none)* | — | an **item sub-rect** |
+
+The calibrated invariant is **`subBoundingRect("item<r>_<c>")` == the item component's own rect** — the
+bare poster, in all three coordinate spaces, focused cell included. `PosterGridItem` corroborates it
+independently (its sub-rect lands exactly on its poster). Pinned end-to-end over
+{HD,FHD} × {`RowList`,`ZoomRowList`} × translations by `RowListItemSubRect.test.js`, which asserts the
+*composition* rather than either mechanism, plus the CLI fixture `rowlist-subrect-app` (which derives its
+own expectation from its declared `translation`/`rowItemSize`, so no pixel constant can drift).
+
+**The grid's own outset does not leak into an item sub-rect only because it cancels.**
+`Node.getSubBoundingRect` re-expresses the item rect as `base.y + (subScene.y - this.rectToScene.y)`,
+where `base` is `rectToParent`/`rectLocal`. That subtraction cancels the outset **only if `base` and
+`rectToScene` carry it identically** (`Node.ts:1219-1226`). Any future per-space adjustment must therefore
+be applied to all three spaces, or it reappears as a residue in every sub-rect.
+
+### Worked example: two compensating errors that read as correct
+
+An app positioned a home-screen preview overlay from a `RowList`'s focused-item sub-rect. Three PRs each
+chased the same device symptom ("the overlay sits too low"), and two of them subtracted the *same* outset:
+
+| state | `sub.y − focusedPoster.y` |
+| --- | --- |
+| `marginY` = 33/22 (square, unmeasured) | +33 |
+| `marginY` → 6/4 (device-measured) | +6 |
+| plus a `− focusMargins(bmp).top` in `RowList.getSubBoundingRect` | **0** ← aligned, by two errors cancelling |
+| minus the `+marginY` leak, once `updateBoundingRects` was fixed | **−6** ← regression: overlay one margin too high |
+
+Why it stayed invisible: the cancellation was *exact* for that app, whose focus 9-patch declares 6px
+content margins — the same number as `RowList`'s FHD `marginY`. The default `focus_grid.9.png` declares
+19px, so the CLI fixture (HD, `marginY` 4) had visibly *un*-cancelled arithmetic all along, and that
+expectation was simply moved (`−15` → `−19`) rather than questioned. The footprint outset's own regression
+test asserted only the *shape* of the outset (`top > 0`), never a pixel count, so it never disagreed with
+a device either.
+
+Two facts settled which side was wrong: `sceneSubBoundingRect` was *already* `poster − top` before the
+producer fix (the three spaces silently disagreed by `marginY`, and the fix only made `toParent`/`local`
+agree with the space that already leaked), and `PosterGridItem`'s sub-rect independently moved onto its
+poster. The consumer-side subtraction was deleted; `RowList` now inherits `Node.getSubBoundingRect`
+verbatim, like `MarkupGrid`, `MarkupList`, `LabelList` and `ZoomRowList`. Its `resolveSubpart` override
+stays — mapping `item<row>_<col>` into the 2-D `rowItemComps[row][col]` is what makes the API work at all
+(the flat `itemComps[]` stays empty on row lists) — and carries a negative comment recording that the
+outset must not come back.
+
+Do not "fix" a misplaced focused-item overlay by adjusting this rect: the painted frame legitimately sits
+outside the reported rect, and that asymmetry is what makes the wrong fix look right.
+
+### Known fallout from the `updateBoundingRects` fix, still awaiting device measurements
+
+Each needs its own probe and PR; none is fixed:
+
+- **`LayoutGroup` displaces grid children.** `chooseActiveRect` (`LayoutGroup.ts:521-522`) prefers
+  `child.rectToParent` and `measureChild` derives `primaryStart`/`crossStart` from it, so a child now
+  measured with its outset gets *positioned* by it. Measured: a `LabelList` in a vertical LayoutGroup moved
+  from `translation [0,50]` to `[24,54]` — exactly `(marginX, marginY)`, and **stable**, so
+  `LayoutConvergence.test.js` does not catch it. A LayoutGroup positions by *paint* geometry, so the fix is
+  a paint-rect hook subtracted in `measureChild`, not a revert.
+- **`renderTracking` flips on the ancestor.** `updateParentRects` (`Group.ts:674-696`) unions the moved
+  `rectToParent` into the parent: a plain `Group` wrapping a `LabelList` went `{0,0,348,216}`/`"full"` →
+  `{-24,-4,348,216}`/`"partial"`. Apps gating viewable-impression work on `renderTracking == "full"`
+  silently stop firing.
+- **Two untested side effects**, both arguably now *correct* by the fix's own rationale and worth locking
+  in with a test rather than reverting: `SimpleLabel` reports the anchored glyph box (a center/center label
+  at `[500,300]` reports `{473,288}`), and `PosterGridItem`'s sub-rect landed on its poster (`sub.y` 4 → 0).
 
 ## `ArrayGrid.scrollingStatus` — a lazy pulse, ordered ahead of the focus settle
 

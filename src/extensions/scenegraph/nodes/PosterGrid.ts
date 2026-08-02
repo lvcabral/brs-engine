@@ -324,7 +324,7 @@ export class PosterGrid extends ArrayGrid {
         // DEVICE-MEASURED: the gap AFTER the last row counts, exactly as it does after the last
         // column — 3 rows of 100 with `itemSpacing.y = 50` measured 3 x 100 + 3 x 50 + margins, not
         // 2 gaps. So the loop's accumulated `itemRect.y` is used as-is, with nothing backed out (the
-        // early-break path above adds the row height without a gap, so it needs no adjustment).
+        // loop breaks AFTER advancing, so the scene-edge exit already includes that trailing gap too).
         const margin = this.rectMargins();
         const height = renderedRows === 0 ? 0 : itemRect.y - startY + margin.y * 2;
         this.updateRect(rect, displayRows, [Math.max(...columnWidths), maxCellHeight || baseSize[1]], {

@@ -956,16 +956,18 @@ describe.concurrent("cli", () => {
         // reports the settled band position — matching a real device where the observer fires
         // post-layout. Without the refresh, row 1 reads its stacked y (band + one row height).
         //
-        // The absolute y includes the grid's focus outset (RowList marginY), which the reported rect
-        // now carries: Group.updateBoundingRects used to build rectToParent from the node's
-        // translation and drop the outset that updateRect applies. A device does report it —
-        // measured on LabelList (x=-24) and PosterGrid (x=-14, y=-14). Both rows moved by the same
-        // 4px, so the invariant this test exists for ("SAME BAND") is unchanged.
+        // The reported y is the item component's own position — the grid's translation, here 120.
+        // An item sub-rect carries NO outset: not the grid's own reported outset (RowList marginY,
+        // applied by ArrayGrid.updateRect and cancelled in Node.getSubBoundingRect because base and
+        // rectToScene both carry it), and not the drawn focus 9-patch frame. Both printed booleans
+        // derive from the fixture's declared translation/rowItemSize, so nothing here can drift.
         expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
             "=== RowList SubRect Repro ===",
-            "band row0 y = -19",
-            "focused row1 y = -19",
+            "band row0 y =  120",
+            "focused row1 y =  120",
             "SAME BAND: true",
+            "ON POSTER: true",
+            "SIZE IS POSTER: true",
             "=== RowList SubRect Repro Complete ===",
             "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
             "",
