@@ -1,9 +1,13 @@
-# SceneGraph layout/clipping gaps: three unresolved divergences
+# SceneGraph layout/clipping gaps: three divergences (one now resolved)
 
 Three device-measured (or measurement-blocked) gaps surfaced while fixing PosterGrid's extent (#1138)
 and RowList/LabelList row layout (#1137). Each was deliberately left unfixed at the time — either the
 measurement was incomplete, or fixing it needs data no probe has gathered yet. This records what is
 known, what a probe or a fix would need to do, and why guessing is the wrong move for each.
+
+**Gap 1 has since been probed and fixed** (#1144) — and the probe disproved every model this document
+originally proposed for it. Its section below is kept as the worked example of why the "build the probe,
+do not guess" rule earns its keep: the answer was in a different mechanism entirely.
 
 Related: `.claude/docs/scenegraph-invariants.md` (the `PosterGrid` extent and per-row layout sections
 this follows on from), [`scenegraph-render-fields.md`](scenegraph-render-fields.md) (the sibling plan
@@ -11,7 +15,44 @@ for declared-but-unimplemented render fields — same shape of problem, differen
 
 ---
 
-## 1. `PosterGrid` caption zone — blocked on a device probe
+## 1. `PosterGrid` caption zone — RESOLVED (#1144): there was no caption zone
+
+> **Outcome, added after the probe ran.** The `postergrid-captions-probe` (now at
+> `test/simulator/probes/postergrid-captions-probe/`) measured 22 field combinations × {1 row, 2 rows} ×
+> {HD, FHD} = **88 readings**. **None of the models below was right, and neither was the framing.** The
+> +36 is not a caption zone and is not per-cell: it is the grid's own **bottom** outset. A PosterGrid's
+> reported vertical outset is asymmetric — **14 above the first row, 50 below the last** (21/75 FHD) —
+> where the horizontal one is 14 on both sides.
+>
+> ```
+> height      = rows * (posterHeight + captionZone) + rowSpacing terms + marginTop + marginBottom
+> marginTop   = 14 (HD) / 21 (FHD)        marginBottom = 50 (HD) / 75 (FHD)
+> captionZone = 0                                    when caption1NumLines + caption2NumLines == 0
+>             = 23 + Σ lineHeight(font_i) * lines_i + captionLineSpacing * gaps
+> gaps        = max(0, lines1-1) + max(0, lines2-1) + (both blocks present ? 1 : 0)
+> ```
+>
+> What ruled the candidates out: **`h2 − h1` is exactly one cell in all 22 cases**, so the allowance
+> appears once per *grid*, not per cell — solving for it from the 1-row and the 2-row readings
+> independently gives the same number, which no per-cell model can produce. It is also present with
+> `caption1NumLines = 0` and unchanged when `captionVertAlignment` is `center`/`above` (the caption draws
+> *over* the poster, so no zone is needed at all), and a 200- or 300-tall poster grows the cell 1:1, which
+> kills the `basePosterSize`-relative candidate. The caption base is a flat **23** — and it is the one
+> value in this node that does **not** scale 1.5× to FHD; it measured 23 at both resolutions.
+>
+> Two divergences remain, both out of scope for the height fix and each needing its own change:
+> `RoFont.measureTextHeight` returns a font's point size where a device returns its real line height
+> (1–2px short at every size, so captioned heights are still short by `lines × 1..2`) — that is
+> engine-wide and must not be patched inside PosterGrid; and caption2's default font *appears* to differ
+> from caption1's, which is an inference from two increments, not a measured font identity. Both are
+> recorded in `.claude/docs/scenegraph-invariants.md` ("The caption zone: there is no base caption zone").
+>
+> **The rest of this section is the pre-probe record, left as written.** It is a case study in a
+> plausible framing being wrong: five of the six candidate models it led to were variations on "base zone
+> + per-line", and the +36 was never caption-related at all. Note that both the fix and the probe live
+> where this section did not predict — a new `PosterGrid.rectMarginBottom()`, not
+> `computeCaptionMetrics`'s base term. Paths below referencing `out/` predate the move of probe apps to
+> `test/simulator/probes/` (#1143).
 
 ### What is measured
 
@@ -220,6 +261,16 @@ device verification" state should not persist past the first probe run.
    smallest fix (one `rectMargins()` override), lowest risk.
 2. **`RowList` item-cell clipping** — needs new probe infrastructure (visual/screenshot, not
    programmatic), but the fix — if confirmed — is a known, small, existing pattern to replicate.
-3. **`PosterGrid` caption zone** — highest probe cost (5+ new cases across two resolutions to
-   disambiguate several candidate models) and the fix shape depends entirely on what the probe finds,
-   so it should not be started until the measurement is in hand.
+3. ~~**`PosterGrid` caption zone**~~ — **done** (#1144). It was the most expensive of the three, as
+   predicted, and the cost went where it was not predicted: 22 cases × 2 row counts × 2 resolutions, and
+   the answer was a different mechanism than the section proposed.
+
+Two lessons from gap 1 worth carrying into gaps 2 and 3:
+
+- **Vary the count, not just the field.** The whole misdiagnosis rested on measuring one row count. It
+  was `h2 − h1` that revealed the allowance is per-grid rather than per-cell — a fact no amount of extra
+  *field* combinations at a single row count could have surfaced. Gap 2's probe should measure at
+  several row counts for the same reason.
+- **Pre-register the candidate models, and keep them after they lose.** All six of gap 1's were wrong,
+  which is exactly what made the run conclusive rather than confirmatory: each case had a stated
+  prediction to contradict. Writing the model after seeing the numbers proves nothing.
