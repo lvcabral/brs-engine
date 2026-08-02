@@ -94,6 +94,14 @@ Tests live in `test/` (`brsTypes/`, `core/`, `interpreter/`, `lexer/`, `parser/`
 `stdlib/`, `extensions/`, `simulator/`, `cli/`). The e2e suite (`test/e2e/E2ETests.js`) compares
 interpreter output against `.brs` fixtures in `test/e2e/resources/`. Test files are plain `.test.js`.
 
+**Device-diffing probe apps** — throwaway BrightScript apps built to compare engine behavior against a
+real Roku device (focus, layout/measurement, rendezvous, observer signatures, animation `control`, …) —
+belong in **`test/simulator/probes/<probe-name>/`** (`manifest`, `source/`, `components/`, `README.md`,
+device/engine trace captures), **not** the gitignored `out/` scratch dir. Committing them keeps the
+findings re-runnable and the docs in `.claude/docs/scenegraph-invariants.md` that cite them (e.g.
+`test/simulator/probes/focus-probe`, `.../observer-signature-probe`) point at real, checked-in fixtures.
+Exclude build artifacts (`.zip` packages) from what gets committed.
+
 ```bash
 npx vitest run test/e2e/Functions.test.js   # single file
 npx vitest run -t "name of the test"        # by test name
