@@ -63,8 +63,13 @@ export abstract class AnimationBase extends Node {
                 this.startFromBeginning();
                 break;
             case "stop":
-            case "none":
                 this.stop();
+                break;
+            case "none":
+                // DEVICE-MEASURED (Streaming Stick, Roku OS 15.2): writing "none" to a RUNNING
+                // animation is inert — it keeps running and its interpolated fields keep advancing.
+                // The reference calls `none` the "initial state with no associated action". This
+                // used to route to stop(), which froze the animation and reset its elapsed time.
                 break;
             case "pause":
                 this.pause();
@@ -82,6 +87,36 @@ export abstract class AnimationBase extends Node {
             default:
                 break;
         }
+    }
+
+    /**
+     * Whether this animation has finished, for a CONTAINER's completion polling.
+     *
+     * Containers must use this and NEVER the public `state` field. An animation with a pending
+     * `delay` publishes `state = "stopped"` (device-measured) while it is still live and scheduled,
+     * so polling the field makes a container treat a delayed child as already complete — stopping
+     * the whole group before it ever runs.
+     */
+    isSettled(): boolean {
+        return this._state === "stopped";
+    }
+
+    /** Whether this animation is paused, for a container deciding what `resume` may be sent to. */
+    isPaused(): boolean {
+        return this._state === "paused";
+    }
+
+    /**
+     * Whether this animation counts its own `delay` down in `tick()`.
+     *
+     * Leaf animations do. The container nodes override `tick()` entirely and never touch
+     * `delayRemaining`, so they must not publish the delay-pending `"stopped"` state — nothing would
+     * ever flip it back to `"running"` and the container would report stopped forever. (A container's
+     * own `delay` is effectively ignored today: it relays `start` to its children immediately. That
+     * predates this change and is unmeasured on hardware — don't infer it from here.)
+     */
+    protected countsOwnDelay(): boolean {
+        return true;
     }
 
     /**
@@ -115,6 +150,8 @@ export abstract class AnimationBase extends Node {
             }
             effectiveDelta = Math.abs(this.delayRemaining);
             this.delayRemaining = 0;
+            // The delay has elapsed, so the animation becomes visibly running (see enterRunningState).
+            this.updateStateField("running");
         }
 
         this.elapsedTime += effectiveDelta;
@@ -218,7 +255,19 @@ export abstract class AnimationBase extends Node {
      */
     private enterRunningState() {
         this._state = "running";
-        this.updateStateField("running");
+        // DEVICE-MEASURED (Streaming Stick, Roku OS 15.2): an animation with a pending `delay` keeps
+        // its PUBLIC `state` field at "stopped" until the delay elapses, then flips to "running" —
+        // it does not report "running" for the duration of the delay. The internal `_state` must
+        // still be running so tick() counts the delay down.
+        //
+        // Only the initial delay was measured. The repeat path re-seeds `delayRemaining` between
+        // iterations and deliberately does NOT publish "stopped" again, because what a repeating
+        // delayed animation reports between cycles has not been measured — don't guess it.
+        //
+        // Gated on countsOwnDelay(): a node that never decrements `delayRemaining` would publish
+        // "stopped" and never take it back.
+        const delayPending = this.delayRemaining > 0 && this.countsOwnDelay();
+        this.updateStateField(delayPending ? "stopped" : "running");
         this.enqueue();
     }
 
