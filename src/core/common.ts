@@ -717,6 +717,7 @@ export enum DataType {
     CEC, // Consumer Electronics Control
     HDMI, // HDMI Status
     RHB, // Render Thread Heartbeat (statement counter, render thread writes only)
+    RDN, // Rendezvous sequence Number (monotonic id shared by all threads for logRendezvous tracing)
     // Key Buffer starts here: KeyBufferSize * KeyArraySpots
     RID, // Remote Id
     KEY, // Key Code
@@ -1028,15 +1029,21 @@ export function getRokuOSVersion(firmware: string) {
 
 /**
  * Returns the current UTC timestamp in Roku beacon date format.
- * @returns Formatted date string (MM-DD HH:MM:SS.ms)
+ *
+ * `Intl.DateTimeFormat`'s `2-digit` style only zero-pads reliably when the field is formatted
+ * alongside a full date/time context; requested in isolation (as each component is here, so UTC
+ * conversion can be applied per-field) it silently drops the leading zero below 10 — so each part
+ * is padded manually instead of trusting the formatter's `2-digit` option.
+ * @returns Formatted date string (MM-DD HH:MM:SS.mmm)
  */
 export function getNow(): string {
     let d = new Date();
-    let mo = new Intl.DateTimeFormat("en-GB", { month: "2-digit", timeZone: "UTC" }).format(d);
-    let da = new Intl.DateTimeFormat("en-GB", { day: "2-digit", timeZone: "UTC" }).format(d);
-    let hr = new Intl.DateTimeFormat("en-GB", { hour: "2-digit", timeZone: "UTC" }).format(d);
-    let mn = new Intl.DateTimeFormat("en-GB", { minute: "2-digit", timeZone: "UTC" }).format(d);
-    let se = new Intl.DateTimeFormat("en-GB", { second: "2-digit", timeZone: "UTC" }).format(d);
-    let ms = d.getMilliseconds();
+    let pad = (value: string | number, width: number = 2) => String(value).padStart(width, "0");
+    let mo = pad(new Intl.DateTimeFormat("en-GB", { month: "2-digit", timeZone: "UTC" }).format(d));
+    let da = pad(new Intl.DateTimeFormat("en-GB", { day: "2-digit", timeZone: "UTC" }).format(d));
+    let hr = pad(new Intl.DateTimeFormat("en-GB", { hour: "2-digit", timeZone: "UTC" }).format(d));
+    let mn = pad(new Intl.DateTimeFormat("en-GB", { minute: "2-digit", timeZone: "UTC" }).format(d));
+    let se = pad(new Intl.DateTimeFormat("en-GB", { second: "2-digit", timeZone: "UTC" }).format(d));
+    let ms = pad(d.getMilliseconds(), 3);
     return `${mo}-${da} ${hr}:${mn}:${se}.${ms}`;
 }

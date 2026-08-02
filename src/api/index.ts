@@ -472,15 +472,19 @@ export function getRendezvousLog(): boolean {
 
 /**
  * Enables or disables SceneGraph cross-thread rendezvous tracing — the equivalent of Roku's
- * `logrendezvous` and of the CLI's `-z` flag. Each crossing then reports its action, target and
- * duration as a `debug` event to subscribers.
+ * `logrendezvous` and of the CLI's `-z` flag. Each crossing then reports a pair of `debug` events to
+ * subscribers, mirroring Roku's own console lines: a `[sg.node.BLOCK] Rendezvous[N] at <file>(<line>)`
+ * when the wait begins, and a `[sg.node.UNBLOCK] Rendezvous[N] completed in X.XXX s` when it ends
+ * (the duration clause is omitted when it rounds to zero). `N` is a monotonic id shared by every
+ * thread. When `deviceInfo.logLevel` is `LogLevel.Debug`, both lines also carry the action and
+ * target (`get`/`set`/`call` and the `type.key` accessed) — detail Roku's own console does not show.
  *
  * Takes effect immediately, including on Task threads already running: the flag lives in the shared
  * control array, which every thread reads. It is also recorded on the device info so a Task started
  * later inherits the current setting, and it persists across `execute()` calls until changed.
  *
- * Tracing is verbose on task-heavy apps — expect a line per field read, write and method call that
- * crosses a thread.
+ * Tracing is verbose on task-heavy apps — expect a BLOCK/UNBLOCK pair per field read, write and
+ * method call that crosses a thread.
  * @param enable True to trace rendezvous, false to stop
  */
 export function setRendezvousLog(enable: boolean) {
