@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    PosterGrid Row-Axis Probe.
+
+    Every fixture is ONE COLUMN, so the width contributes a known constant (poster 100 + 2*marginX 14
+    = 128 on a device) and only the height has to be decoded.
+
+    Decode order:
+      R1 -> baseline cell height for a 100-tall poster (the +36 to be explained)
+      R2 -> is that +36 the empty-caption background? (showBackgroundForEmptyCaptions = false)
+      R3 -> does a real caption line grow the cell further? (caption1NumLines = 1)
+      R4 -> row gap model with no arrays: trailing gap after the last row, or N-1 gaps?
+      R5 -> THE DISCRIMINATOR: rowSpacings=[10] with itemSpacing.y=50 - repeat or fall back?
+      R6 -> is rowHeights honored, or ignored the way columnWidths is?
+-->
+<component name="PosterRowsScene" extends="Scene">
+    <interface>
+        <field id="probeExit" type="boolean" value="false" />
+    </interface>
+    <children>
+        <!-- R1: one row, no spacing. height = cellHeight + 2*marginY. Establishes the cell height. -->
+        <PosterGrid id="r1" translation="[0,0]" basePosterSize="[100,100]"
+                    numColumns="1" numRows="1" itemSpacing="[0,0]" />
+
+        <!-- R2: same, empty-caption background OFF. If the +36 is a reserved caption zone this
+             shrinks back toward the poster height. -->
+        <PosterGrid id="r2" translation="[200,0]" basePosterSize="[100,100]"
+                    showBackgroundForEmptyCaptions="false"
+                    numColumns="1" numRows="1" itemSpacing="[0,0]" />
+
+        <!-- R3: same, but ask for one real caption line. Grows the cell by a line if the zone is
+             caption-driven. Content items carry a title only for this one (see init). -->
+        <PosterGrid id="r3" translation="[400,0]" basePosterSize="[100,100]"
+                    caption1NumLines="1"
+                    numColumns="1" numRows="1" itemSpacing="[0,0]" />
+
+        <!-- R4: three rows, NO spacing arrays, itemSpacing.y = 50.
+             mirrors the column axis -> 3*(cell + 50) + 2*marginY
+             N-1 gaps instead      -> 3*cell + 2*50 + 2*marginY      (50px apart) -->
+        <PosterGrid id="r4" translation="[600,0]" basePosterSize="[100,100]"
+                    numColumns="1" numRows="3" itemSpacing="[0,50]" />
+
+        <!-- R5: THE DISCRIMINATOR. One entry for three rows.
+             falls back to itemSpacing.y -> gaps 10 + 50 + 50
+             repeats the last entry      -> gaps 10 + 10 + 10        (80px apart) -->
+        <PosterGrid id="r5" translation="[800,0]" basePosterSize="[100,100]"
+                    rowSpacings="[10]" numColumns="1" numRows="3" itemSpacing="[0,50]" />
+
+        <!-- R6: does rowHeights override basePosterSize's height? columnWidths did NOT. -->
+        <PosterGrid id="r6" translation="[1000,0]" basePosterSize="[100,100]"
+                    rowHeights="[200,50,100]" numColumns="1" numRows="3" itemSpacing="[0,0]" />
+
+        <Timer id="settleTimer" duration="1.0" repeat="false" />
+    </children>
+    <script type="text/brightscript"><![CDATA[
+
+        sub init()
+            m.seq = 0
+            ' Content items carry NO fields, so nothing can widen or heighten a cell — except r3,
+            ' which needs a real caption to measure the caption zone.
+            for each id in ["r1", "r2", "r4", "r5", "r6"]
+                m.top.findNode(id).content = makeContent(3, false)
+            end for
+            m.top.findNode("r3").content = makeContent(3, true)
+
+            m.settleTimer = m.top.findNode("settleTimer")
+            m.settleTimer.observeField("fire", "onSettled")
+            m.settleTimer.control = "start"
+        end sub
+
+        function makeContent(count as integer, withTitle as boolean) as object
+            root = CreateObject("roSGNode", "ContentNode")
+            for i = 0 to count - 1
+                item = root.createChild("ContentNode")
+                if withTitle then item.title = "Cap" + itos(i)
+            end for
+            return root
+        end function
+
+        sub onSettled()
+            p("all", "start", "")
+            report("R1-one-row-baseline", "r1", "height=cell+2*marginY; poster is 100 tall - what is the cell?")
+            report("R2-no-empty-caption-bg", "r2", "showBackgroundForEmptyCaptions=false - does the extra height go away?")
+            report("R3-one-caption-line", "r3", "caption1NumLines=1 with titles - does the cell grow by a line?")
+            report("R4-three-rows-no-array", "r4", "3 rows, itemSpacing.y=50 -> TRAILING gap gives 3 gaps, N-1 gives 2")
+            report("R5-short-array", "r5", "3 rows, rowSpacings=[10], itemSpacing.y=50 -> FALLBACK gives 10+50+50, REPEAT gives 10+10+10")
+            report("R6-row-heights", "r6", "rowHeights=[200,50,100] - honored, or ignored like columnWidths?")
+            p("all", "done", "")
+            m.top.probeExit = true
+        end sub
+
+        sub report(caseId as string, nodeId as string, note as string)
+            node = m.top.findNode(nodeId)
+            p("R-postergrid", caseId, "rect=" + r(node.boundingRect()) + " | " + note)
+        end sub
+
+        '--------------------------------------------------------------------------------------
+        ' Helpers
+        '--------------------------------------------------------------------------------------
+
+        function r(rect as object) as string
+            if rect = invalid then return "<invalid>"
+            out = "{x=" + n(rect.x)
+            out = out + " y=" + n(rect.y)
+            out = out + " w=" + n(rect.width)
+            out = out + " h=" + n(rect.height)
+            return out + "}"
+        end function
+
+        function n(v as dynamic) as string
+            if v = invalid then return "?"
+            if v >= 0 then return itos(int(v + 0.5))
+            return itos(-int(-v + 0.5))
+        end function
+
+        function itos(i as integer) as string
+            return str(i).trim()
+        end function
+
+        sub p(phase as string, caseId as string, detail as string)
+            m.seq = m.seq + 1
+            s = itos(m.seq)
+            while s.len() < 3
+                s = "0" + s
+            end while
+            print "PROBE|" + s + "|" + phase + "|" + caseId + "|" + detail
+        end sub
+
+    ]]></script>
+</component>

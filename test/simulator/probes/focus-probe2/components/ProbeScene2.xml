@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Focus Chain Probe 2 - the nested-setFocus rule.
+
+    Probe 1 showed that on a real Roku a setFocus() issued from INSIDE a focusedChild observer, while
+    that observer is being dispatched for an in-flight focus change, does NOT rewrite the focus chain
+    (S4: the chain stayed on the original target). But the "forward focus" pattern - a container that
+    observes its own focusedChild and hands focus to an inner widget - demonstrably works on device.
+
+    Both are "a nested setFocus during a focusedChild notification", so one of these must be true:
+      (a) a nested focus request is dropped only when it targets a node OUTSIDE the chain that was
+          just committed (a backwards steal), while extending the committed chain is allowed; or
+      (b) nested focus requests are always dropped, and forward-focus works by some other route.
+
+    N1  container GAINS focus, its observer forwards focus to a sibling inside itself   (forward)
+    N2  same, one level deeper (outlet -> gridB while gridA was the target)             (forward)
+    N3  container LOSES focus, its observer grabs focus back into itself                (backwards, = S4)
+    N4  container GAINS focus, its observer re-asserts the node that just got focus     (idempotent)
+-->
+<component name="ProbeScene2" extends="Scene">
+    <interface>
+        <field id="probeExit" type="boolean" value="false" />
+    </interface>
+    <children>
+        <Group id="outlet">
+            <Group id="page">
+                <Rectangle id="gridA" width="300" height="200" translation="[100,400]" color="0x2277CCFF" focusable="true" />
+                <Rectangle id="gridB" width="300" height="200" translation="[450,400]" color="0x22CC77FF" focusable="true" />
+            </Group>
+        </Group>
+        <Group id="overhang">
+            <Rectangle id="menuA" width="300" height="80" translation="[100,100]" color="0xCC7722FF" focusable="true" />
+            <Rectangle id="menuB" width="300" height="80" translation="[450,100]" color="0xCC2277FF" focusable="true" />
+        </Group>
+        <Timer id="stepTimer" duration="0.6" repeat="true" />
+    </children>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.seq = 0
+        m.step = 0
+        m.scenario = "init"
+        m.mode = "none"
+        m.armed = false
+
+        m.outlet = m.top.findNode("outlet")
+        m.page = m.top.findNode("page")
+        m.gridA = m.top.findNode("gridA")
+        m.gridB = m.top.findNode("gridB")
+        m.overhang = m.top.findNode("overhang")
+        m.menuA = m.top.findNode("menuA")
+        m.menuB = m.top.findNode("menuB")
+
+        m.outlet.observeField("focusedChild", "onOutletFocus")
+        m.overhang.observeField("focusedChild", "onOverhangFocus")
+
+        p("init", "ready", fs())
+
+        m.stepTimer = m.top.findNode("stepTimer")
+        m.stepTimer.observeField("fire", "onStepTimer")
+        m.stepTimer.control = "start"
+    end sub
+
+    ' ---------------------------------------------------------------- trace helpers
+
+    sub p(scenario as string, point as string, detail = "" as string)
+        m.seq = m.seq + 1
+        num = "00" + str(m.seq).trim()
+        print "PROBE2|" + Right(num, 3) + "|" + scenario + "|" + point + "|" + detail
+    end sub
+
+    function b(value as boolean) as string
+        if value then return "T"
+        return "F"
+    end function
+
+    function fcId(node as object) as string
+        result = "<err>"
+        try
+            fc = node.focusedChild
+            if fc = invalid
+                result = "invalid"
+            else
+                id = fc.id
+                if id = "" then id = "<noid>"
+                result = id
+            end if
+        catch e
+            result = "<err>"
+        end try
+        return result
+    end function
+
+    function fs() as string
+        return "gridA=" + b(m.gridA.hasFocus()) + " gridB=" + b(m.gridB.hasFocus()) + " menuA=" + b(m.menuA.hasFocus()) + " menuB=" + b(m.menuB.hasFocus()) + " outletInChain=" + b(m.outlet.isInFocusChain()) + " outletFC=" + fcId(m.outlet) + " pageFC=" + fcId(m.page) + " overhangFC=" + fcId(m.overhang) + " sceneFC=" + fcId(m.top)
+    end function
+
+    function payload(event as object) as string
+        result = "<err>"
+        try
+            data = event.getData()
+            if data = invalid
+                result = "invalid"
+            else if type(data) = "roSGNode"
+                id = data.id
+                if id = "" then id = "<noid>"
+                result = "node:" + id
+            else
+                result = "type:" + type(data)
+            end if
+        catch e
+            result = "<err>"
+        end try
+        return result
+    end function
+
+    ' ---------------------------------------------------------------- observers
+
+    sub onOutletFocus(event as object)
+        p(m.scenario, "OBS-outlet", "data=" + payload(event) + " " + fs())
+        if not m.armed then return
+
+        if m.mode = "N2" and m.outlet.isInFocusChain()
+            m.armed = false
+            p(m.scenario, "OBS-outlet-nested", "calling gridB.setFocus(true)  [forward: inside the chain just committed]")
+            m.gridB.setFocus(true)
+            p(m.scenario, "OBS-outlet-nested-done", fs())
+        else if m.mode = "N3" and not m.outlet.isInFocusChain()
+            m.armed = false
+            p(m.scenario, "OBS-outlet-nested", "calling gridA.setFocus(true)  [backwards: outside the chain just committed]")
+            m.gridA.setFocus(true)
+            p(m.scenario, "OBS-outlet-nested-done", fs())
+        end if
+    end sub
+
+    sub onOverhangFocus(event as object)
+        p(m.scenario, "OBS-overhang", "data=" + payload(event) + " " + fs())
+        if not m.armed then return
+
+        if m.mode = "N1" and m.overhang.isInFocusChain()
+            m.armed = false
+            p(m.scenario, "OBS-overhang-nested", "calling menuB.setFocus(true)  [forward: sibling inside the chain just committed]")
+            m.menuB.setFocus(true)
+            p(m.scenario, "OBS-overhang-nested-done", fs())
+        end if
+    end sub
+
+    ' ---------------------------------------------------------------- scenario driver
+
+    sub onStepTimer()
+        m.step = m.step + 1
+
+        if m.step = 1
+            m.scenario = "prep"
+            m.gridA.setFocus(true)
+            p(m.scenario, "after", fs())
+
+        ' -------- N1: overhang gains focus; its observer forwards focus to menuB
+        else if m.step = 2
+            m.scenario = "N1-forward-sibling"
+            m.mode = "N1"
+            m.armed = true
+            p(m.scenario, "before", fs())
+            m.menuA.setFocus(true)
+            p(m.scenario, "after", fs())
+        else if m.step = 3
+            m.scenario = "N1-forward-sibling"
+            p(m.scenario, "settled", fs())
+
+        ' -------- N2: outlet gains focus; its observer forwards focus to gridB
+        else if m.step = 4
+            m.scenario = "N2-forward-deeper"
+            m.mode = "N2"
+            m.armed = true
+            p(m.scenario, "before", fs())
+            m.gridA.setFocus(true)
+            p(m.scenario, "after", fs())
+        else if m.step = 5
+            m.scenario = "N2-forward-deeper"
+            p(m.scenario, "settled", fs())
+
+        ' -------- N3: outlet loses focus; its observer grabs it back (the JellyRock steal)
+        else if m.step = 6
+            m.scenario = "N3-prep"
+            m.mode = "none"
+            m.armed = false
+            m.gridA.setFocus(true)
+            p(m.scenario, "after", fs())
+        else if m.step = 7
+            m.scenario = "N3-backwards-steal"
+            m.mode = "N3"
+            m.armed = true
+            p(m.scenario, "before", fs())
+            m.menuA.setFocus(true)
+            p(m.scenario, "after", fs())
+        else if m.step = 8
+            m.scenario = "N3-backwards-steal"
+            p(m.scenario, "settled", fs())
+
+        ' -------- N4: does a settled state recover? plain focus move after the steal
+        else if m.step = 9
+            m.scenario = "N4-recover"
+            m.mode = "none"
+            m.armed = false
+            p(m.scenario, "before", fs())
+            m.gridB.setFocus(true)
+            p(m.scenario, "after", fs())
+        else if m.step = 10
+            m.scenario = "N4-recover"
+            p(m.scenario, "settled", fs())
+            m.stepTimer.control = "stop"
+            print "PROBE2|---|done|MANUAL|Probe complete - press BACK to exit."
+
+        end if
+    end sub
+
+    function onKeyEvent(key as string, press as boolean) as boolean
+        if press
+            p(m.scenario, "SCENE-onKeyEvent", "key=" + key + " " + fs())
+        end if
+        if key = "back" and press
+            m.top.probeExit = true
+            return true
+        end if
+        return false
+    end function
+    ]]></script>
+</component>

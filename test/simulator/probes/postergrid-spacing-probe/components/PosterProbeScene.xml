@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    PosterGrid Spacing Probe.
+
+    Every fixture is ONE ROW, so the row axis contributes nothing and only the width has to be
+    decoded. Captions are off by default (caption1NumLines/caption2NumLines default to 0) and the
+    content items carry no title, so no caption zone can widen a cell.
+
+    Each grid is parked far apart vertically so a mis-sized one cannot overlap another and confuse a
+    visual check; only the reported rects matter.
+
+    Decode order:
+      P1 -> marginX, marginY, and the effective poster size (is basePosterSize honored?)
+      P2 -> does columnWidths override basePosterSize?
+      P3 -> is itemSpacing.x used for every gap when no array is given?
+      P4 -> THE DISCRIMINATOR (one unknown left by this point)
+      P5 -> control, both gaps given explicitly
+-->
+<component name="PosterProbeScene" extends="Scene">
+    <interface>
+        <field id="probeExit" type="boolean" value="false" />
+    </interface>
+    <children>
+        <!-- P1: one column, one row, no spacing anywhere.
+             width  = posterWidth  + 2*marginX
+             height = posterHeight + 2*marginY -->
+        <PosterGrid id="p1" translation="[0,0]" basePosterSize="[100,100]"
+                    numColumns="1" numRows="1" itemSpacing="[0,0]" />
+
+        <!-- P2: same, but columnWidths asks for 200. If honored, width jumps by 100. -->
+        <PosterGrid id="p2" translation="[0,200]" basePosterSize="[100,100]"
+                    columnWidths="[200]" numColumns="1" numRows="1" itemSpacing="[0,0]" />
+
+        <!-- P3: three columns, NO spacing arrays. Both gaps should be itemSpacing.x = 50.
+             width = 3*posterWidth + 2*50 + 2*marginX -->
+        <PosterGrid id="p3" translation="[0,400]" basePosterSize="[100,100]"
+                    numColumns="3" numRows="1" itemSpacing="[50,0]" />
+
+        <!-- P4: THE DISCRIMINATOR. One entry for two gaps.
+             last entry repeats  -> width = 3*poster + 10 + 10 + 2*marginX
+             falls back          -> width = 3*poster + 10 + 50 + 2*marginX   (40px apart) -->
+        <PosterGrid id="p4" translation="[0,600]" basePosterSize="[100,100]"
+                    columnSpacings="[10]" numColumns="3" numRows="1" itemSpacing="[50,0]" />
+
+        <!-- P5: control - both gaps given, so the answer is unambiguous either way.
+             width = 3*poster + 10 + 20 + 2*marginX -->
+        <PosterGrid id="p5" translation="[0,800]" basePosterSize="[100,100]"
+                    columnSpacings="[10,20]" numColumns="3" numRows="1" itemSpacing="[50,0]" />
+
+        <Timer id="settleTimer" duration="1.0" repeat="false" />
+    </children>
+    <script type="text/brightscript"><![CDATA[
+
+        sub init()
+            m.seq = 0
+            ' Content items carry NO fields: no title, no poster uri. Captions are off by default
+            ' (caption1NumLines = 0), and an absent image must not be allowed to resize a cell.
+            for each id in ["p1", "p2", "p3", "p4", "p5"]
+                m.top.findNode(id).content = makeContent(3)
+            end for
+
+            m.settleTimer = m.top.findNode("settleTimer")
+            m.settleTimer.observeField("fire", "onSettled")
+            m.settleTimer.control = "start"
+        end sub
+
+        function makeContent(count as integer) as object
+            root = CreateObject("roSGNode", "ContentNode")
+            for i = 0 to count - 1
+                root.createChild("ContentNode")
+            end for
+            return root
+        end function
+
+        sub onSettled()
+            p("all", "start", "")
+            report("P1-one-col-no-gap", "p1", "width=poster+2*marginX height=poster+2*marginY basePosterSize=[100,100]")
+            report("P2-column-widths", "p2", "columnWidths=[200] - does it override basePosterSize=[100,100]?")
+            report("P3-three-cols-no-array", "p3", "3 cols, no spacing arrays, itemSpacing.x=50 -> expect 2 gaps of 50")
+            report("P4-short-array", "p4", "3 cols, columnSpacings=[10], itemSpacing.x=50 -> REPEAT gives 10+10, FALLBACK gives 10+50")
+            report("P5-full-array", "p5", "3 cols, columnSpacings=[10,20] -> control, gaps 10+20")
+            p("all", "done", "")
+            m.top.probeExit = true
+        end sub
+
+        sub report(caseId as string, nodeId as string, note as string)
+            node = m.top.findNode(nodeId)
+            p("P-postergrid", caseId, "rect=" + r(node.boundingRect()) + " | " + note)
+        end sub
+
+        '--------------------------------------------------------------------------------------
+        ' Helpers
+        '--------------------------------------------------------------------------------------
+
+        function r(rect as object) as string
+            if rect = invalid then return "<invalid>"
+            out = "{x=" + n(rect.x)
+            out = out + " y=" + n(rect.y)
+            out = out + " w=" + n(rect.width)
+            out = out + " h=" + n(rect.height)
+            return out + "}"
+        end function
+
+        function n(v as dynamic) as string
+            if v = invalid then return "?"
+            if v >= 0 then return itos(int(v + 0.5))
+            return itos(-int(-v + 0.5))
+        end function
+
+        function itos(i as integer) as string
+            return str(i).trim()
+        end function
+
+        sub p(phase as string, caseId as string, detail as string)
+            m.seq = m.seq + 1
+            s = itos(m.seq)
+            while s.len() < 3
+                s = "0" + s
+            end while
+            print "PROBE|" + s + "|" + phase + "|" + caseId + "|" + detail
+        end sub
+
+    ]]></script>
+</component>

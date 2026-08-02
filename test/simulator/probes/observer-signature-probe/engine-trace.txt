@@ -1,0 +1,127 @@
+PROBE|000|boot|start|
+PROBE|000|boot|device|model=Roku TV os=15.0
+PROBE|001|all|start|cases=16
+PROBE|002|p1-observeField|A_noargs|begin sig=sub cbA() field=probeTrigger
+PROBE|003|p1-observeField|A_noargs|end bound=0 throw={}
+PROBE|004|p1-observeField|B_dynamic1|begin sig=sub cbB(e) field=probeTrigger
+PROBE|005|p1-observeField|B_dynamic1|end p1=roSGNodeEvent{field=probeTrigger data=roInt{2}} throw={}
+PROBE|006|p1-observeField|C_objectReq|begin sig=sub cbC(e as object) field=probeTrigger
+PROBE|007|p1-observeField|C_objectReq|end p1=roSGNodeEvent{field=probeTrigger data=roInt{3}} throw={}
+PROBE|008|p1-observeField|D_dynamicReq|begin sig=sub cbD(e as dynamic) field=probeTrigger
+PROBE|009|p1-observeField|D_dynamicReq|end p1=roSGNodeEvent{field=probeTrigger data=roInt{4}} throw={}
+PROBE|010|p1-observeField|E_stringReq|begin sig=sub cbE(s as string) field=probeTrigger
+PROBE|011|p1-observeField|E_stringReq|end <not-called> throw={}
+PROBE|012|p1-observeField|F_stringDef|begin sig=sub cbF(s = update as string) field=probeTrigger
+PROBE|013|p1-observeField|F_stringDef|end p1=roSGNodeEvent{field=probeTrigger data=roInt{6}} body-error={Type Mismatch. Operator "=" can't be applied to "Object" and "String". (#24)} throw={}
+PROBE|014|p1-observeField|G_intReq|begin sig=sub cbG(n as integer) field=probeTrigger
+PROBE|015|p1-observeField|G_intReq|end <not-called> throw={}
+PROBE|016|p1-observeField|H_intDef|begin sig=sub cbH(n = 42 as integer) field=probeTrigger
+PROBE|017|p1-observeField|H_intDef|end p1=roSGNodeEvent{field=probeTrigger data=roInt{8}} throw={}
+PROBE|018|p1-observeField|I_evtPlusOpt|begin sig=sub cbI(e, opt = true) field=probeTrigger
+PROBE|019|p1-observeField|I_evtPlusOpt|end p1=roSGNodeEvent{field=probeTrigger data=roInt{9}} p2=Boolean{true} throw={}
+PROBE|020|p1-observeField|J_twoReq|begin sig=sub cbJ(a, b) field=probeTrigger
+PROBE|021|p1-observeField|J_twoReq|end <not-called> throw={}
+PROBE|022|p1-observeField|K_strDefObjDef|begin sig=sub cbK(s = update as string, e = invalid as object) field=probeTrigger
+PROBE|023|p1-observeField|K_strDefObjDef|end p1=roSGNodeEvent{field=probeTrigger data=roInt{11}} p2=<Invalid> throw={}
+PROBE|024|p1-observeField|L_boolReq|begin sig=sub cbL(b as boolean) field=probeTrigger
+PROBE|025|p1-observeField|L_boolReq|end <not-called> throw={}
+PROBE|026|p1-observeField|M_objThenStrDef|begin sig=sub cbM(e as object, s = update as string) field=probeTrigger
+PROBE|027|p1-observeField|M_objThenStrDef|end p1=roSGNodeEvent{field=probeTrigger data=roInt{13}} p2=String{update} throw={}
+PROBE|028|p1-observeField|N_objDef|begin sig=sub cbN(e = invalid as object) field=probeTrigger
+PROBE|029|p1-observeField|N_objDef|end p1=roSGNodeEvent{field=probeTrigger data=roInt{14}} throw={}
+PROBE|030|p1-observeField|O_function|begin sig=function cbO(e as object) as string field=probeTrigger
+PROBE|031|p1-observeField|O_function|end p1=roSGNodeEvent{field=probeTrigger data=roInt{15}} throw={}
+PROBE|032|p1-observeField|P_objThenStrReq|begin sig=sub cbP(e as object, s as string) field=probeTrigger
+PROBE|033|p1-observeField|P_objThenStrReq|end <not-called> throw={}
+PROBE|034|p1-observeField|done|
+PROBE|035|p3-scopedObserve|A_noargs|begin sig=sub cbA() field=probeTrigger
+PROBE|036|p3-scopedObserve|A_noargs|end bound=0 throw={}
+PROBE|037|p3-scopedObserve|B_dynamic1|begin sig=sub cbB(e) field=probeTrigger
+PROBE|038|p3-scopedObserve|B_dynamic1|end p1=roSGNodeEvent{field=probeTrigger data=roInt{18}} throw={}
+PROBE|039|p3-scopedObserve|C_objectReq|begin sig=sub cbC(e as object) field=probeTrigger
+PROBE|040|p3-scopedObserve|C_objectReq|end p1=roSGNodeEvent{field=probeTrigger data=roInt{19}} throw={}
+PROBE|041|p3-scopedObserve|D_dynamicReq|begin sig=sub cbD(e as dynamic) field=probeTrigger
+PROBE|042|p3-scopedObserve|D_dynamicReq|end p1=roSGNodeEvent{field=probeTrigger data=roInt{20}} throw={}
+PROBE|043|p3-scopedObserve|E_stringReq|begin sig=sub cbE(s as string) field=probeTrigger
+PROBE|044|p3-scopedObserve|E_stringReq|end <not-called> throw={}
+PROBE|045|p3-scopedObserve|F_stringDef|begin sig=sub cbF(s = update as string) field=probeTrigger
+PROBE|046|p3-scopedObserve|F_stringDef|end p1=roSGNodeEvent{field=probeTrigger data=roInt{22}} body-error={Type Mismatch. Operator "=" can't be applied to "Object" and "String". (#24)} throw={}
+PROBE|047|p3-scopedObserve|G_intReq|begin sig=sub cbG(n as integer) field=probeTrigger
+PROBE|048|p3-scopedObserve|G_intReq|end <not-called> throw={}
+PROBE|049|p3-scopedObserve|H_intDef|begin sig=sub cbH(n = 42 as integer) field=probeTrigger
+PROBE|050|p3-scopedObserve|H_intDef|end p1=roSGNodeEvent{field=probeTrigger data=roInt{24}} throw={}
+PROBE|051|p3-scopedObserve|I_evtPlusOpt|begin sig=sub cbI(e, opt = true) field=probeTrigger
+PROBE|052|p3-scopedObserve|I_evtPlusOpt|end p1=roSGNodeEvent{field=probeTrigger data=roInt{25}} p2=Boolean{true} throw={}
+PROBE|053|p3-scopedObserve|J_twoReq|begin sig=sub cbJ(a, b) field=probeTrigger
+PROBE|054|p3-scopedObserve|J_twoReq|end <not-called> throw={}
+PROBE|055|p3-scopedObserve|K_strDefObjDef|begin sig=sub cbK(s = update as string, e = invalid as object) field=probeTrigger
+PROBE|056|p3-scopedObserve|K_strDefObjDef|end p1=roSGNodeEvent{field=probeTrigger data=roInt{27}} p2=<Invalid> throw={}
+PROBE|057|p3-scopedObserve|L_boolReq|begin sig=sub cbL(b as boolean) field=probeTrigger
+PROBE|058|p3-scopedObserve|L_boolReq|end <not-called> throw={}
+PROBE|059|p3-scopedObserve|M_objThenStrDef|begin sig=sub cbM(e as object, s = update as string) field=probeTrigger
+PROBE|060|p3-scopedObserve|M_objThenStrDef|end p1=roSGNodeEvent{field=probeTrigger data=roInt{29}} p2=String{update} throw={}
+PROBE|061|p3-scopedObserve|N_objDef|begin sig=sub cbN(e = invalid as object) field=probeTrigger
+PROBE|062|p3-scopedObserve|N_objDef|end p1=roSGNodeEvent{field=probeTrigger data=roInt{30}} throw={}
+PROBE|063|p3-scopedObserve|O_function|begin sig=function cbO(e as object) as string field=probeTrigger
+PROBE|064|p3-scopedObserve|O_function|end p1=roSGNodeEvent{field=probeTrigger data=roInt{31}} throw={}
+PROBE|065|p3-scopedObserve|P_objThenStrReq|begin sig=sub cbP(e as object, s as string) field=probeTrigger
+PROBE|066|p3-scopedObserve|P_objThenStrReq|end <not-called> throw={}
+PROBE|067|p3-scopedObserve|done|
+PROBE|068|p4-stringField|A_noargs|skipped not-in-subset
+PROBE|069|p4-stringField|B_dynamic1|begin sig=sub cbB(e) field=probeTriggerStr
+PROBE|070|p4-stringField|B_dynamic1|end p1=roSGNodeEvent{field=probeTriggerStr data=String{v33}} throw={}
+PROBE|071|p4-stringField|C_objectReq|begin sig=sub cbC(e as object) field=probeTriggerStr
+PROBE|072|p4-stringField|C_objectReq|end p1=roSGNodeEvent{field=probeTriggerStr data=String{v34}} throw={}
+PROBE|073|p4-stringField|D_dynamicReq|skipped not-in-subset
+PROBE|074|p4-stringField|E_stringReq|begin sig=sub cbE(s as string) field=probeTriggerStr
+PROBE|075|p4-stringField|E_stringReq|end <not-called> throw={}
+PROBE|076|p4-stringField|F_stringDef|begin sig=sub cbF(s = update as string) field=probeTriggerStr
+PROBE|077|p4-stringField|F_stringDef|end p1=roSGNodeEvent{field=probeTriggerStr data=String{v36}} body-error={Type Mismatch. Operator "=" can't be applied to "Object" and "String". (#24)} throw={}
+PROBE|078|p4-stringField|G_intReq|skipped not-in-subset
+PROBE|079|p4-stringField|H_intDef|skipped not-in-subset
+PROBE|080|p4-stringField|I_evtPlusOpt|skipped not-in-subset
+PROBE|081|p4-stringField|J_twoReq|skipped not-in-subset
+PROBE|082|p4-stringField|K_strDefObjDef|skipped not-in-subset
+PROBE|083|p4-stringField|L_boolReq|skipped not-in-subset
+PROBE|084|p4-stringField|M_objThenStrDef|skipped not-in-subset
+PROBE|085|p4-stringField|N_objDef|skipped not-in-subset
+PROBE|086|p4-stringField|O_function|skipped not-in-subset
+PROBE|087|p4-stringField|P_objThenStrReq|skipped not-in-subset
+PROBE|088|p4-stringField|done|
+PROBE|089|p2-timer-fire|A_noargs|begin sig=sub cbA() field=fire
+PROBE|090|p2-timer-fire|A_noargs|end bound=0
+PROBE|091|p2-timer-fire|B_dynamic1|begin sig=sub cbB(e) field=fire
+PROBE|092|p2-timer-fire|B_dynamic1|end p1=roSGNodeEvent{field=fire data=<roInvalid>}
+PROBE|093|p2-timer-fire|C_objectReq|begin sig=sub cbC(e as object) field=fire
+PROBE|094|p2-timer-fire|C_objectReq|end p1=roSGNodeEvent{field=fire data=<roInvalid>}
+PROBE|095|p2-timer-fire|D_dynamicReq|begin sig=sub cbD(e as dynamic) field=fire
+PROBE|096|p2-timer-fire|D_dynamicReq|end p1=roSGNodeEvent{field=fire data=<roInvalid>}
+PROBE|097|p2-timer-fire|E_stringReq|begin sig=sub cbE(s as string) field=fire
+PROBE|098|p2-timer-fire|E_stringReq|end <not-called>
+PROBE|099|p2-timer-fire|F_stringDef|begin sig=sub cbF(s = update as string) field=fire
+PROBE|100|p2-timer-fire|F_stringDef|end p1=roSGNodeEvent{field=fire data=<roInvalid>} body-error={Type Mismatch. Operator "=" can't be applied to "Object" and "String". (#24)}
+PROBE|101|p2-timer-fire|G_intReq|begin sig=sub cbG(n as integer) field=fire
+PROBE|102|p2-timer-fire|G_intReq|end <not-called>
+PROBE|103|p2-timer-fire|H_intDef|begin sig=sub cbH(n = 42 as integer) field=fire
+PROBE|104|p2-timer-fire|H_intDef|end p1=roSGNodeEvent{field=fire data=<roInvalid>}
+PROBE|105|p2-timer-fire|I_evtPlusOpt|begin sig=sub cbI(e, opt = true) field=fire
+PROBE|106|p2-timer-fire|I_evtPlusOpt|end p1=roSGNodeEvent{field=fire data=<roInvalid>} p2=Boolean{true}
+PROBE|107|p2-timer-fire|J_twoReq|begin sig=sub cbJ(a, b) field=fire
+PROBE|108|p2-timer-fire|J_twoReq|end <not-called>
+PROBE|109|p2-timer-fire|K_strDefObjDef|begin sig=sub cbK(s = update as string, e = invalid as object) field=fire
+PROBE|110|p2-timer-fire|K_strDefObjDef|end p1=roSGNodeEvent{field=fire data=<roInvalid>} p2=<Invalid>
+PROBE|111|p2-timer-fire|L_boolReq|begin sig=sub cbL(b as boolean) field=fire
+PROBE|112|p2-timer-fire|L_boolReq|end <not-called>
+PROBE|113|p2-timer-fire|M_objThenStrDef|begin sig=sub cbM(e as object, s = update as string) field=fire
+PROBE|114|p2-timer-fire|M_objThenStrDef|end p1=roSGNodeEvent{field=fire data=<roInvalid>} p2=String{update}
+PROBE|115|p2-timer-fire|N_objDef|begin sig=sub cbN(e = invalid as object) field=fire
+PROBE|116|p2-timer-fire|N_objDef|end p1=roSGNodeEvent{field=fire data=<roInvalid>}
+PROBE|117|p2-timer-fire|O_function|begin sig=function cbO(e as object) as string field=fire
+PROBE|118|p2-timer-fire|O_function|end p1=roSGNodeEvent{field=fire data=<roInvalid>}
+PROBE|119|p2-timer-fire|P_objThenStrReq|begin sig=sub cbP(e as object, s as string) field=fire
+PROBE|120|p2-timer-fire|P_objThenStrReq|end <not-called>
+PROBE|121|p2-timer-fire|done|
+PROBE|122|all|done|checkpoints-cleared
+PROBE|999|boot|end|
+------ Finished 'observer-signature-probe' execution [EXIT_USER_NAV] ------
+

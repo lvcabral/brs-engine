@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Focus Chain Probe.
+
+    Mirrors the shape that breaks in JellyRock: two SIBLING subtrees under the Scene (an "outlet"
+    holding the content, an "overhang" holding the top menu), with an observer on the outlet's
+    `focusedChild` that re-grabs focus when focus leaves the outlet.
+
+    Each scenario is stepped from a repeating Timer so the message loop drains in between. That is
+    what makes SYNCHRONOUS vs. DEFERRED observer dispatch visible: a synchronous notification prints
+    BETWEEN the "before" and "after" records of the setFocus call that caused it; a message-loop
+    notification prints AFTER "after".
+
+    Scenarios
+      S1  focus ENTERS the outlet subtree
+      S2  focus MOVES WITHIN the outlet subtree (does the ancestor re-notify?)
+      S3  focus LEAVES the outlet subtree (does it notify at all? with what getData()? when?)
+      S4  same leave, but the observer re-grabs focus (the re-entrant steal) - who wins?
+      S5  redundant/no-op focus writes (does a same-value write notify?)
+      S6  a StandardMessageDialog is shown while the outlet holds focus
+      S7  the app re-grabs focus BEHIND the visible dialog - is the dialog still modal?
+-->
+<component name="ProbeScene" extends="Scene">
+    <interface>
+        <field id="probeExit" type="boolean" value="false" />
+    </interface>
+    <children>
+        <Group id="outlet">
+            <Group id="page">
+                <Rectangle id="gridA" width="300" height="200" translation="[100,400]" color="0x2277CCFF" focusable="true" />
+                <Rectangle id="gridB" width="300" height="200" translation="[450,400]" color="0x22CC77FF" focusable="true" />
+            </Group>
+        </Group>
+        <Group id="overhang">
+            <Rectangle id="menuItem" width="300" height="80" translation="[100,100]" color="0xCC7722FF" focusable="true" />
+        </Group>
+        <Timer id="stepTimer" duration="0.6" repeat="true" />
+    </children>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.seq = 0
+        m.step = 0
+        m.scenario = "init"
+        m.stealOnLeave = false
+        m.stealDepth = 0
+
+        m.outlet = m.top.findNode("outlet")
+        m.page = m.top.findNode("page")
+        m.gridA = m.top.findNode("gridA")
+        m.gridB = m.top.findNode("gridB")
+        m.overhang = m.top.findNode("overhang")
+        m.menuItem = m.top.findNode("menuItem")
+
+        m.outlet.observeField("focusedChild", "onOutletFocus")
+        m.overhang.observeField("focusedChild", "onOverhangFocus")
+
+        p("init", "ready", fs())
+
+        m.stepTimer = m.top.findNode("stepTimer")
+        m.stepTimer.observeField("fire", "onStepTimer")
+        m.stepTimer.control = "start"
+    end sub
+
+    ' ---------------------------------------------------------------- trace helpers
+
+    sub p(scenario as string, point as string, detail = "" as string)
+        m.seq = m.seq + 1
+        num = "00" + str(m.seq).trim()
+        print "PROBE|" + Right(num, 3) + "|" + scenario + "|" + point + "|" + detail
+    end sub
+
+    function b(value as boolean) as string
+        if value then return "T"
+        return "F"
+    end function
+
+    ' Reads a node's `focusedChild`. Roku's docs claim reading this field raises a script error, so
+    ' the read is guarded - "<err>" in the trace is itself a finding.
+    function fcId(node as object) as string
+        result = "<err>"
+        try
+            fc = node.focusedChild
+            if fc = invalid
+                result = "invalid"
+            else
+                id = fc.id
+                if id = "" then id = "<noid>"
+                result = id
+            end if
+        catch e
+            result = "<err>"
+        end try
+        return result
+    end function
+
+    ' The live focus state, printed with every record.
+    function fs() as string
+        return "gridA=" + b(m.gridA.hasFocus()) + " gridB=" + b(m.gridB.hasFocus()) + " menu=" + b(m.menuItem.hasFocus()) + " outletInChain=" + b(m.outlet.isInFocusChain()) + " outletFC=" + fcId(m.outlet) + " overhangFC=" + fcId(m.overhang) + " sceneFC=" + fcId(m.top)
+    end function
+
+    ' Renders an observer payload without assuming it is a node.
+    function payload(event as object) as string
+        result = "<err>"
+        try
+            data = event.getData()
+            if data = invalid
+                result = "invalid"
+            else if type(data) = "roSGNode"
+                id = data.id
+                if id = "" then id = "<noid>"
+                result = "node:" + id + ":" + data.subtype()
+            else
+                result = "type:" + type(data)
+            end if
+        catch e
+            result = "<err>"
+        end try
+        return result
+    end function
+
+    ' ---------------------------------------------------------------- observers
+
+    sub onOutletFocus(event as object)
+        p(m.scenario, "OBS-outlet", "data=" + payload(event) + " " + fs())
+
+        ' The re-entrant steal: exactly what sgRouter does when focus leaves its outlet.
+        if m.stealOnLeave and not m.outlet.isInFocusChain() and m.stealDepth = 0
+            m.stealDepth = 1
+            p(m.scenario, "OBS-outlet-steal", "calling gridA.setFocus(true)")
+            m.gridA.setFocus(true)
+            p(m.scenario, "OBS-outlet-steal-done", fs())
+            m.stealDepth = 0
+        end if
+    end sub
+
+    sub onOverhangFocus(event as object)
+        p(m.scenario, "OBS-overhang", "data=" + payload(event) + " " + fs())
+    end sub
+
+    sub onDialogButton(event as object)
+        p(m.scenario, "DIALOG-buttonSelected", "index=" + str(event.getData()).trim() + " " + fs())
+        m.top.dialog = invalid
+    end sub
+
+    sub onDialogClosed(event as object)
+        p(m.scenario, "DIALOG-wasClosed", fs())
+    end sub
+
+    ' ---------------------------------------------------------------- scenario driver
+
+    sub onStepTimer()
+        m.step = m.step + 1
+
+        if m.step = 1
+            m.scenario = "S1-enter"
+            p(m.scenario, "before", fs())
+            m.gridA.setFocus(true)
+            p(m.scenario, "after", fs())
+
+        else if m.step = 2
+            m.scenario = "S2-move-within"
+            p(m.scenario, "before", fs())
+            m.gridB.setFocus(true)
+            p(m.scenario, "after", fs())
+
+        else if m.step = 3
+            m.scenario = "S3-leave"
+            p(m.scenario, "before", fs())
+            m.menuItem.setFocus(true)
+            p(m.scenario, "after", fs())
+
+        else if m.step = 4
+            m.scenario = "S4-prep"
+            p(m.scenario, "before", fs())
+            m.gridA.setFocus(true)
+            p(m.scenario, "after", fs())
+
+        else if m.step = 5
+            m.scenario = "S4-steal"
+            m.stealOnLeave = true
+            p(m.scenario, "before", fs())
+            m.menuItem.setFocus(true)
+            p(m.scenario, "after", fs())
+            m.stealOnLeave = false
+
+        else if m.step = 6
+            ' One settled frame after the steal: whoever actually owns focus should still own it.
+            m.scenario = "S4-settled"
+            p(m.scenario, "settled", fs())
+
+        else if m.step = 7
+            m.scenario = "S5-redundant"
+            p(m.scenario, "before", fs())
+            ' gridB does not hold focus - unsetting it is a no-op write.
+            m.gridB.setFocus(false)
+            p(m.scenario, "after-unfocus-idle-node", fs())
+            ' Re-focus the node that already holds focus - a same-value write up the whole chain.
+            if m.gridA.hasFocus()
+                m.gridA.setFocus(true)
+            else
+                m.menuItem.setFocus(true)
+            end if
+            p(m.scenario, "after-refocus-same-node", fs())
+
+        else if m.step = 8
+            m.scenario = "S6-prep"
+            p(m.scenario, "before", fs())
+            m.gridA.setFocus(true)
+            p(m.scenario, "after", fs())
+
+        else if m.step = 9
+            m.scenario = "S6-dialog"
+            dlg = createObject("roSGNode", "StandardMessageDialog")
+            dlg.title = "Focus Probe"
+            dlg.message = ["Press DOWN then OK"]
+            dlg.buttons = ["Cancel", "Exit"]
+            dlg.observeField("buttonSelected", "onDialogButton")
+            dlg.observeField("wasClosed", "onDialogClosed")
+            m.dialog = dlg
+            p(m.scenario, "before", fs())
+            m.top.dialog = dlg
+            p(m.scenario, "after", fs())
+
+        else if m.step = 10
+            ' The dialog claims focus on its first render, so sample once the frame has settled.
+            m.scenario = "S6-settled"
+            p(m.scenario, "settled", "dialogInChain=" + b(m.dialog.isInFocusChain()) + " dialogHasFocus=" + b(m.dialog.hasFocus()) + " " + fs())
+
+        else if m.step = 11
+            m.scenario = "S7-modal"
+            p(m.scenario, "before-steal", "dialogInChain=" + b(m.dialog.isInFocusChain()) + " " + fs())
+            m.gridA.setFocus(true)
+            p(m.scenario, "after-steal", "dialogInChain=" + b(m.dialog.isInFocusChain()) + " " + fs())
+            m.stepTimer.control = "stop"
+            print "PROBE|---|S7-modal|MANUAL|Now press DOWN, then OK, then BACK on the remote."
+
+        end if
+    end sub
+
+    ' ---------------------------------------------------------------- key trace
+    '
+    ' The Scene is always in the focus chain, so this fires for any key the framework routes to the
+    ' scene. While a dialog is visible it must NOT fire on a real device if dialogs are modal.
+    function onKeyEvent(key as string, press as boolean) as boolean
+        if press
+            p(m.scenario, "SCENE-onKeyEvent", "key=" + key + " " + fs())
+        end if
+        if key = "back" and press
+            p(m.scenario, "exit", "probe complete")
+            m.top.probeExit = true
+            return true
+        end if
+        return false
+    end function
+    ]]></script>
+</component>

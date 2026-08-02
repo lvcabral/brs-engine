@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Layout Measure Probe.
+
+    Everything is read back through boundingRect()/sceneBoundingRect() or a field read, so the trace
+    is fully programmatic and diffable between a device and the engine.
+
+    Measurements are taken from a Timer rather than init(), because a bounding rect is only settled
+    after the node has been laid out at least once - reading in init() reports pre-layout zeros on
+    both a device and the engine, which would make every case look identical.
+-->
+<component name="MeasureProbeScene" extends="Scene">
+    <interface>
+        <field id="probeExit" type="boolean" value="false" />
+    </interface>
+    <children>
+        <!-- ============ L: LabelList row geometry ============================================
+             Three rows, itemSize.y = 40, rowHeights = [100, 50, 200], rowSpacings = [10, 20].
+             Questions: are rowHeights honored? are rowSpacings? and what is the total height?
+             Engine today: ignores both, advances by itemSize.y + 1 per row (the "+1" is
+             undocumented), and reports a uniform boundingRect. -->
+        <LabelList id="labelListA" translation="[0,0]" itemSize="[300,40]"
+                   rowHeights="[100,50,200]" rowSpacings="[10,20]" numRows="3" />
+
+        <!-- Control: same list with NO overrides, to read the plain per-row pitch and confirm the
+             "+1" (or whatever the device uses) in isolation. -->
+        <LabelList id="labelListB" translation="[400,0]" itemSize="[300,40]" numRows="3" />
+
+        <!-- ============ P: PosterGrid spacing fall-back ======================================
+             3 columns x 2 rows but only ONE columnSpacings / rowSpacings entry. Does the single
+             entry repeat for the remaining gaps (engine), or do they fall back to itemSpacing
+             (ArrayGrid reference)? itemSpacing is deliberately different from the array entry so
+             the two answers produce different widths/heights. -->
+        <PosterGrid id="posterGridA" translation="[0,320]" basePosterSize="[100,100]"
+                    itemSpacing="[50,50]" columnSpacings="[10]" rowSpacings="[10]"
+                    numColumns="3" numRows="2" />
+
+        <!-- ============ R: rotated container ==================================================
+             A container rotated 90 degrees with a child translated [100, 0]. Does the child's own
+             translation get rotated by the inherited angle? Two container types, because the engine
+             answers differently for each: Group does NOT rotate, Rectangle DOES. -->
+        <Group id="rotHostA" translation="[600,320]" rotation="1.5708">
+            <Group id="rotGroupChild" translation="[100,0]">
+                <Rectangle id="rotGroupMarker" width="20" height="20" color="0xFF0000FF" />
+            </Group>
+        </Group>
+        <Group id="rotHostB" translation="[900,320]" rotation="1.5708">
+            <Rectangle id="rotRectChild" translation="[100,0]" width="20" height="20" color="0x0000FFFF" />
+        </Group>
+
+        <!-- ============ T: clippingRect vs renderTracking =====================================
+             Per the Group reference: "although the node could be completely within the bounds of the
+             specified clippingRect, its renderTracking field could be set to 'none' if the portion
+             of the clippingRect it occupies is completely offscreen."
+
+             trackOnscreen  - inside a clip that is on screen        -> expect "full"
+             trackClipped   - inside a clip positioned OFF screen    -> "none" per the reference
+             trackNoClip    - same off-screen position, NO clip      -> control (offscreen already
+                                                                       yields "none" without a clip) -->
+        <Group id="trackClipOn" translation="[0,400]" clippingRect="[0,0,200,100]">
+            <Rectangle id="trackOnscreen" width="50" height="50" color="0xFFFFFFFF" enableRenderTracking="true" />
+        </Group>
+        <Group id="trackClipOff" translation="[300,400]" clippingRect="[0,-4000,200,100]">
+            <Rectangle id="trackClipped" width="50" height="50" color="0xFFFFFFFF" enableRenderTracking="true" />
+        </Group>
+        <Group id="trackNoClipGrp" translation="[0,-4000]">
+            <Rectangle id="trackNoClip" width="50" height="50" color="0xFFFFFFFF" enableRenderTracking="true" />
+        </Group>
+
+        <Timer id="settleTimer" duration="1.0" repeat="false" />
+    </children>
+    <script type="text/brightscript"><![CDATA[
+
+        sub init()
+            m.seq = 0
+            ' Populate the lists/grids before measuring; content drives their laid-out extent.
+            m.top.findNode("labelListA").content = makeContent(3)
+            m.top.findNode("labelListB").content = makeContent(3)
+            m.top.findNode("posterGridA").content = makeContent(6)
+
+            ' Measure after a settle delay: bounding rects are only meaningful once the node has been
+            ' laid out, and reading in init() reports pre-layout zeros everywhere.
+            m.settleTimer = m.top.findNode("settleTimer")
+            m.settleTimer.observeField("fire", "onSettled")
+            m.settleTimer.control = "start"
+        end sub
+
+        function makeContent(count as integer) as object
+            root = CreateObject("roSGNode", "ContentNode")
+            for i = 0 to count - 1
+                item = root.createChild("ContentNode")
+                item.title = "Item " + itos(i)
+            end for
+            return root
+        end function
+
+        sub onSettled()
+            p("all", "start", "")
+            measureLabelList()
+            measurePosterGrid()
+            measureRotation()
+            measureRenderTracking()
+            p("all", "done", "")
+            m.top.probeExit = true
+        end sub
+
+        '--------------------------------------------------------------------------------------
+        ' L: LabelList honors rowHeights / rowSpacings?
+        '--------------------------------------------------------------------------------------
+        sub measureLabelList()
+            a = m.top.findNode("labelListA")
+            b = m.top.findNode("labelListB")
+
+            ' Overridden list: rowHeights [100,50,200] + rowSpacings [10,20].
+            '   honored  -> height 100+50+200 + 10+20 = 380
+            '   ignored  -> 3 * itemSize.y (+ whatever per-row gap) ~= 120..123
+            p("L-labellist", "with-overrides", "rect=" + r(a.boundingRect()) + " itemSize=[300,40] rowHeights=[100,50,200] rowSpacings=[10,20]")
+
+            ' Control: no overrides at all. Isolates the plain per-row pitch, including whether the
+            ' device really adds the engine's undocumented +1 per row.
+            p("L-labellist", "no-overrides", "rect=" + r(b.boundingRect()) + " itemSize=[300,40] expect-3-rows")
+
+            ' boundingRect is the MEASURED extent; subBoundingRect (when supported) reports where a
+            ' row was actually laid out. brs-engine already reports per-row heights in the measured
+            ' extent (PR #1134) while LabelList's render loop still advances by itemSize.y + 1, so
+            ' these two can disagree - which is precisely what needs settling on hardware.
+            p("L-labellist", "rows-with-overrides", "row0=" + r(a.subBoundingRect("0")) + " row1=" + r(a.subBoundingRect("1")) + " row2=" + r(a.subBoundingRect("2")))
+            p("L-labellist", "rows-no-overrides", "row0=" + r(b.subBoundingRect("0")) + " row1=" + r(b.subBoundingRect("1")) + " row2=" + r(b.subBoundingRect("2")))
+        end sub
+
+        '--------------------------------------------------------------------------------------
+        ' P: PosterGrid spacing fall-back when the array is SHORTER than the track count
+        '--------------------------------------------------------------------------------------
+        sub measurePosterGrid()
+            g = m.top.findNode("posterGridA")
+            ' 3 columns of 100 with columnSpacings=[10] and itemSpacing.x=50:
+            '   last-entry repeats -> 300 + 10 + 10 = 320
+            '   falls back to itemSpacing -> 300 + 10 + 50 = 360
+            ' 2 rows of 100 with rowSpacings=[10] and itemSpacing.y=50:
+            '   repeats -> 210 ; falls back -> 210 as well (only ONE gap for 2 rows), so the
+            '   column axis is the discriminating one here.
+            p("P-postergrid", "short-spacing-arrays", "rect=" + r(g.boundingRect()) + " cols=3 rows=2 poster=100x100 itemSpacing=[50,50] columnSpacings=[10] rowSpacings=[10]")
+        end sub
+
+        '--------------------------------------------------------------------------------------
+        ' R: does an inherited rotation rotate a child's own translation?
+        '--------------------------------------------------------------------------------------
+        sub measureRotation()
+            gChild = m.top.findNode("rotGroupChild")
+            rChild = m.top.findNode("rotRectChild")
+
+            ' Container at [600,320] rotated 90 deg, child translated [100,0]:
+            '   translation rotated  -> child lands ~[600, 420] in scene space
+            '   translation NOT rotated -> child lands ~[700, 320]
+            ' Same host shape both times; only the CHILD's node type differs. In the engine a Group
+            ' child does not rotate its own translation while a Rectangle child does, so these two
+            ' rows disagreeing IS the divergence. On a device they should agree with each other.
+            p("R-rotation", "group-child", "child-scene=" + r(gChild.sceneBoundingRect()) + " host=[600,320] rot=90deg child-translation=[100,0]")
+            p("R-rotation", "rectangle-child", "child-scene=" + r(rChild.sceneBoundingRect()) + " host=[900,320] rot=90deg child-translation=[100,0]")
+        end sub
+
+        '--------------------------------------------------------------------------------------
+        ' T: does clippingRect participate in renderTracking?
+        '--------------------------------------------------------------------------------------
+        sub measureRenderTracking()
+            on = m.top.findNode("trackOnscreen")
+            clipped = m.top.findNode("trackClipped")
+            noclip = m.top.findNode("trackNoClip")
+
+            p("T-tracking", "inside-onscreen-clip", "renderTracking=" + on.renderTracking + " expect=full")
+            ' The discriminating case: the node itself is on screen and fully inside its clippingRect,
+            ' but that clippingRect is positioned entirely off screen.
+            p("T-tracking", "inside-offscreen-clip", "renderTracking=" + clipped.renderTracking + " reference-says=none")
+            ' Control: an offscreen node with no clip at all - "none" here is expected on both.
+            p("T-tracking", "offscreen-no-clip", "renderTracking=" + noclip.renderTracking + " expect=none")
+        end sub
+
+        '--------------------------------------------------------------------------------------
+        ' Helpers
+        '--------------------------------------------------------------------------------------
+
+        function r(rect as object) as string
+            if rect = invalid then return "<invalid>"
+            out = "{x=" + n(rect.x)
+            out = out + " y=" + n(rect.y)
+            out = out + " w=" + n(rect.width)
+            out = out + " h=" + n(rect.height)
+            return out + "}"
+        end function
+
+        ' Round to the nearest integer: sub-pixel differences are not what any of these cases are
+        ' about, and rounding keeps the trace stable across device/engine float handling.
+        function n(v as dynamic) as string
+            if v = invalid then return "?"
+            if v >= 0 then return itos(int(v + 0.5))
+            return itos(-int(-v + 0.5))
+        end function
+
+        function itos(i as integer) as string
+            return str(i).trim()
+        end function
+
+        sub p(phase as string, caseId as string, detail as string)
+            m.seq = m.seq + 1
+            s = itos(m.seq)
+            while s.len() < 3
+                s = "0" + s
+            end while
+            print "PROBE|" + s + "|" + phase + "|" + caseId + "|" + detail
+        end sub
+
+    ]]></script>
+</component>

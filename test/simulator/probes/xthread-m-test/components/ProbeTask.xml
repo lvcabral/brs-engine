@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="ProbeTask" extends="Task">
+    <interface>
+        <field id="probeIn" type="node" />
+        <field id="probeOut" type="node" />
+        <field id="sharedOut" type="node" />
+        <field id="report" type="string" />
+    </interface>
+    <script type="text/brightscript" uri="pkg:/components/lib.brs" />
+    <script type="text/brightscript" uri="pkg:/components/ProbeTask.brs" />
+</component>
