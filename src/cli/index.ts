@@ -48,6 +48,7 @@ import {
     DataType,
     ExtVolInitialSize,
     ExtVolMaxSize,
+    LogLevel,
 } from "../core/common";
 import SharedObject from "../core/SharedObject";
 import { encryptPackage } from "../core/packageEncryption";
@@ -91,6 +92,7 @@ program
     .option("-l, --log [filename]", "Redirect the text output to a log file (default: brs-cli.log).")
     .option("-s, --snapshot [filename]", "Enable Ctrl+S to save the current screen as a PNG image.")
     .option("-c, --colors <level>", "Define the console color level (0 to disable).", defaultLevel)
+    .option("-g, --log-level <level>", "Set console log verbosity: debug, warning or error.", "warning")
     .option("-d, --debug", "Developer mode: micro debugger on crash + resource tracking.", false)
     .option("-z, --log-rendezvous", "Trace SceneGraph cross-thread rendezvous (like Roku's logrendezvous).", false)
     .option("-e, --ecp", "Enable the ECP server for control simulation.", false)
@@ -131,6 +133,7 @@ program
             deviceData.connectionInfo.dns = dns.getServers();
             deviceData.debugOnCrash = program.debug ?? false;
             deviceData.logRendezvous = program.logRendezvous ?? false;
+            deviceData.logLevel = program.logLevel;
             if (program.registry) {
                 deviceData.registry = getRegistry();
             }
@@ -155,6 +158,33 @@ program
     .parse(process.argv);
 
 /**
+ * Parses a `--log-level`/`loglevel` REPL value into a `LogLevel`, accepting the level name
+ * (`debug`, `warning`/`warn`, `error`) or its underlying numeric value.
+ * @param value The raw value to parse, or undefined.
+ * @returns The parsed LogLevel, or undefined when `value` is not a recognized level.
+ */
+function parseLogLevel(value?: string): LogLevel | undefined {
+    const normalized = value?.trim().toLowerCase();
+    if (normalized === "debug" || normalized === "0") {
+        return LogLevel.Debug;
+    } else if (normalized === "warning" || normalized === "warn" || normalized === "1") {
+        return LogLevel.Warning;
+    } else if (normalized === "error" || normalized === "2") {
+        return LogLevel.Error;
+    }
+    return undefined;
+}
+
+/**
+ * Formats a `LogLevel` back into the lower-case name accepted by `--log-level`/`loglevel`.
+ * @param level The LogLevel to format.
+ * @returns The level's name (`debug`, `warning` or `error`).
+ */
+function logLevelName(level: LogLevel): string {
+    return LogLevel[level].toLowerCase();
+}
+
+/**
  * Validates and normalizes CLI parameters.
  * Sets default values for color level, ASCII mode, and validates file paths.
  * @returns True if all parameters are valid, false otherwise
@@ -164,6 +194,17 @@ function checkParameters() {
         chalk.level = Math.trunc(program.colors) as chalk.Level;
     } else {
         console.warn(chalk.yellow(`Invalid color level! Valid range is 0-3, keeping default: ${defaultLevel}.`));
+    }
+    const logLevel = parseLogLevel(program.logLevel);
+    if (logLevel === undefined) {
+        console.warn(
+            chalk.yellow(
+                `Invalid log level "${program.logLevel}"! Valid values are debug, warning, error, using default: warning.`
+            )
+        );
+        program.logLevel = LogLevel.Warning;
+    } else {
+        program.logLevel = logLevel;
     }
     if (program.ascii) {
         if (isNumber(program.ascii)) {
@@ -577,6 +618,23 @@ async function repl() {
             process.stdout.write("\x1Bc");
         } else if (["help", "hint"].includes(line.toLowerCase().trim())) {
             printHelp();
+        } else if (["loglevel", "log-level"].includes(line.split(" ")[0]?.toLowerCase().trim())) {
+            const arg = line.split(" ")[1]?.trim();
+            if (arg) {
+                const parsed = parseLogLevel(arg);
+                if (parsed === undefined) {
+                    process.stdout.write(
+                        chalk.yellowBright(`\nInvalid log level "${arg}". Valid values: debug, warning, error.\n`)
+                    );
+                } else {
+                    BrsDevice.deviceInfo.logLevel = parsed;
+                    process.stdout.write(chalk.greenBright(`\nLog level set to: ${logLevelName(parsed)}\n`));
+                }
+            } else {
+                process.stdout.write(
+                    chalk.cyanBright(`\nCurrent log level: ${logLevelName(BrsDevice.deviceInfo.logLevel)}\n`)
+                );
+            }
         } else if (["vol", "vols"].includes(line.toLowerCase().trim())) {
             const vols = BrsDevice.fileSystem.volumesSync();
             process.stdout.write(chalk.cyanBright(`\nMounted volumes:\n\n`));
@@ -814,6 +872,7 @@ function printHelp() {
     helpMsg += "REPL Command List:\r\n";
     helpMsg += "   print|?           Print variable value or expression\r\n";
     helpMsg += "   var|vars [scope]  Display variables and their types/values\r\n";
+    helpMsg += "   loglevel [level]  Show or set the log level (debug, warning, error)\r\n";
     helpMsg += "   vol|vols          Display file system mounted volumes\r\n";
     helpMsg += "   mnt|mount <path>  Mount ext1: volume from directory or zip file\r\n";
     helpMsg += "   umt|umount        Unmount ext1: volume\r\n";

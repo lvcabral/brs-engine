@@ -48,6 +48,7 @@ Options:
   -l, --log [filename]      Redirect the text output to a log file (default: brs-cli.log).
   -s, --snapshot [filename] Enable Ctrl+S to save the current screen as a PNG image.
   -c, --colors <level>      Define the console color level (0 to disable). (default: 3)
+  -g, --log-level <level>   Set console log verbosity: debug, warning or error. (default: "warning")
   -d, --debug               Developer mode: micro debugger on crash + resource tracking.
   -z, --log-rendezvous      Trace SceneGraph cross-thread rendezvous (like Roku's logrendezvous).
   -e, --ecp                 Enable the ECP server for control simulation.
@@ -85,6 +86,7 @@ Any valid BrightScript expression is compiled and run live. In addition, the REP
 | --- | --- |
 | `print` or `?` | Print a variable value or expression |
 | `var` or `vars [scope]` | Display variables and their types/values (`scope` is `global`, `module` or `function`) |
+| `loglevel [level]` | Show the current log level, or set it (`level` is `debug`, `warning` or `error`) |
 | `vol` or `vols` | Display the file system mounted volumes |
 | `mnt` or `mount <path>` | Mount the `ext1:` volume from a directory or zip file |
 | `umt` or `umount` | Unmount the `ext1:` volume |
@@ -107,6 +109,33 @@ $ brs-cli --colors 0
 | `1` | Basic color support (16 colors) |
 | `2` | 256 color support |
 | `3` | Truecolor support (16 million colors) |
+
+## Setting the Log Level
+
+By default the CLI keeps console output at `warning` level, matching a Roku device out of the box.
+Pass `--log-level debug` to also print `debug`-level lines (e.g. the extra action/target detail on
+[rendezvous tracing](#tracing-cross-thread-rendezvous)), or `--log-level error` to silence
+`warning`-level lines too:
+
+```console
+$ brs-cli --log-level debug app.zip
+```
+
+In the REPL, use `loglevel` (no argument) to show the current level, or `loglevel <level>` to change
+it for the session:
+
+```console
+brs> loglevel
+Current log level: warning
+brs> loglevel debug
+Log level set to: debug
+```
+
+| Level | Description |
+| :---: | :--- |
+| `debug` | Everything: `debug`, `warning` and `error` lines |
+| `warning` | `warning` and `error` lines only (default) |
+| `error` | `error` lines only |
 
 ### Executing files
 
