@@ -284,16 +284,33 @@ if you pass `--debug` — so a protected app cannot be inspected through the deb
 SceneGraph `Task` nodes run on their own worker threads, and every field read, field write, or
 method call that crosses a thread boundary goes through a *rendezvous* (see
 [SceneGraph Rendezvous](scenegraph-rendezvous.md)). Passing `-z`/`--log-rendezvous` — the equivalent of
-Roku's `logrendezvous` — makes each of those crossings print a `[rendezvous]` line:
+Roku's `logrendezvous` — makes each crossing print a matched pair of lines, the same shape a real
+device prints to its debug console:
 
 ```console
 $ brs-cli -z --log trace.log app.zip
 ```
 
+```
+08-02 17:34:24.021 [sg.node.BLOCK] Rendezvous[63] at pkg:/components/ProbeTask.brs(11)
+08-02 17:34:24.146 [sg.node.UNBLOCK] Rendezvous[63] completed in 0.124 s
+```
+
+The `[sg.node.BLOCK]` line prints when the wait begins (with the BrightScript call site that
+triggered it); the matching `[sg.node.UNBLOCK]` line prints when it ends (with the elapsed time,
+omitted entirely when it rounds to zero). `Rendezvous[N]` is a monotonic id shared by every thread,
+so interleaved crossings from different Tasks can still be told apart. When the device's log
+verbosity (`deviceInfo.logLevel`) is set to `LogLevel.Debug`, both lines additionally show the
+action and target (`get`/`set`/`call` and the `type.key` accessed) — detail a real device's own
+console does not print.
+
 The flag is independent of `--debug` and applies to the render thread *and* every Task worker, so
 both ends of a crossing appear. It is held in the shared control array rather than per thread, so a
 host embedding the engine can also flip it mid-run (see `setRendezvousLog` in
-[the engine API](engine-api.md)). Typical lines:
+[the engine API](engine-api.md)).
+
+There are also lower-level structural trace lines (unrelated to the BLOCK/UNBLOCK pair above),
+tracing the fan-out queue that delivers observed-field updates to a Task:
 
 | Line | Meaning |
 | --- | --- |
