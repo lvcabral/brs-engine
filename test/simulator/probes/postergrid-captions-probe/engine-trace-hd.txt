@@ -1,0 +1,83 @@
+
+
+
+=== PosterGrid Caption Zone Probe ===
+resolution = HD  1280x 720
+poster = 100x100, itemSpacing = [0,0], numColumns = 1
+
+0.  baseline, no captions
+    h1 =  164   h2 =  264   CELL =  100
+A1. no captions, captionVertAlignment=center
+    h1 =  164   h2 =  264   CELL =  100
+A2. no captions, captionVertAlignment=above
+    h1 =  164   h2 =  264   CELL =  100
+B1. caption1NumLines=1
+    h1 =  207   h2 =  350   CELL =  143
+B2. caption1NumLines=2
+    h1 =  227   h2 =  390   CELL =  163
+B3. caption1NumLines=3
+    h1 =  247   h2 =  430   CELL =  183
+C1. caption1NumLines=1, no text
+    h1 =  207   h2 =  350   CELL =  143
+C2. caption1NumLines=2, no text
+    h1 =  227   h2 =  390   CELL =  163
+D1. caption2NumLines=1 only
+    h1 =  207   h2 =  350   CELL =  143
+D2. caption2NumLines=2 only
+    h1 =  227   h2 =  390   CELL =  163
+D3. caption1=1 + caption2=1
+    h1 =  227   h2 =  390   CELL =  163
+D4. caption1=2 + caption2=2
+    h1 =  267   h2 =  470   CELL =  203
+E1. caption1NumLines=1, lineSpacing=20
+    h1 =  207   h2 =  350   CELL =  143
+E2. caption1NumLines=2, lineSpacing=20
+    h1 =  247   h2 =  430   CELL =  183
+E3. caption1=1+caption2=1, lineSpacing=20
+    h1 =  247   h2 =  430   CELL =  183
+F1. caption1NumLines=1, caption1Font=Largest
+    h1 =  247   h2 =  430   CELL =  183
+F2. caption1NumLines=2, caption1Font=Largest
+    h1 =  307   h2 =  550   CELL =  243
+F3. caption1NumLines=1, caption1Font=Tiny
+    h1 =  203   h2 =  342   CELL =  139
+F4. caption1=1+caption2=1, caption2Font=Largest
+    h1 =  267   h2 =  470   CELL =  203
+G1. baseline, poster 200x200
+    h1 =  264   h2 =  464   CELL =  200
+G2. caption1NumLines=1, poster 200x200
+    h1 =  307   h2 =  550   CELL =  243
+G3. baseline, poster 100x300
+    h1 =  364   h2 =  664   CELL =  300
+
+--- CELL summary (poster height = 100 unless noted) ---
+    CELL =  100   over baseline =  0   0.  baseline, no captions
+    CELL =  100   over baseline =  0   A1. no captions, captionVertAlignment=center
+    CELL =  100   over baseline =  0   A2. no captions, captionVertAlignment=above
+    CELL =  143   over baseline =  43   B1. caption1NumLines=1
+    CELL =  163   over baseline =  63   B2. caption1NumLines=2
+    CELL =  183   over baseline =  83   B3. caption1NumLines=3
+    CELL =  143   over baseline =  43   C1. caption1NumLines=1, no text
+    CELL =  163   over baseline =  63   C2. caption1NumLines=2, no text
+    CELL =  143   over baseline =  43   D1. caption2NumLines=1 only
+    CELL =  163   over baseline =  63   D2. caption2NumLines=2 only
+    CELL =  163   over baseline =  63   D3. caption1=1 + caption2=1
+    CELL =  203   over baseline =  103   D4. caption1=2 + caption2=2
+    CELL =  143   over baseline =  43   E1. caption1NumLines=1, lineSpacing=20
+    CELL =  183   over baseline =  83   E2. caption1NumLines=2, lineSpacing=20
+    CELL =  183   over baseline =  83   E3. caption1=1+caption2=1, lineSpacing=20
+    CELL =  183   over baseline =  83   F1. caption1NumLines=1, caption1Font=Largest
+    CELL =  243   over baseline =  143   F2. caption1NumLines=2, caption1Font=Largest
+    CELL =  139   over baseline =  39   F3. caption1NumLines=1, caption1Font=Tiny
+    CELL =  203   over baseline =  103   F4. caption1=1+caption2=1, caption2Font=Largest
+    CELL =  200   over baseline =  100   G1. baseline, poster 200x200
+    CELL =  243   over baseline =  143   G2. caption1NumLines=1, poster 200x200
+    CELL =  300   over baseline =  200   G3. baseline, poster 100x300
+
+--- Label line heights (device font metrics) ---
+    font:SmallerBoldSystemFont  height =  20
+    font:LargestSystemFont  height =  60
+    font:TinySystemFont  height =  16
+
+=== PosterGrid Caption Zone Probe Complete ===
+------ Finished 'postergrid-captions-probe-hd.zip' execution [EXIT_USER_NAV] ------

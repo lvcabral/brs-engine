@@ -49,6 +49,21 @@ type PosterItemLayout = {
     offsetY?: number;
 };
 
+/**
+ * Vertical padding a device reserves around a cell's caption block, TOTAL (above plus below).
+ *
+ * DEVICE-MEASURED via the caption-zone probe: with `caption1NumLines = n` and no line spacing, a
+ * cell grows by `23 + n * lineHeight(font)` over the bare poster — 3 points (n = 1, 2, 3) put the
+ * intercept at 23 with no further step at the 0 -> 1 boundary. The zone is present only when at
+ * least one caption line is requested, and is font-metric-driven above that base (case F: Largest
+ * -> 61/line HD, Tiny -> 18/line HD, matching the device's own `Label` heights).
+ *
+ * This does NOT scale to FHD: it measured 23 at BOTH resolutions, unlike every other grid margin
+ * (which go 1.5x) and unlike the per-line term (which scales with the font). It replaced a
+ * `captionVerticalMargin * 2` term that gave 24 HD / 36 FHD.
+ */
+const CaptionZoneBase = 23;
+
 const HorizAlignments = new Set(["left", "center", "right"]);
 const VertAlignments = new Set(["above", "top", "center", "bottom", "below"]);
 const ValidFocusStyles = new Set(Object.values(FocusStyle).map((style) => style.toLowerCase()));
@@ -87,7 +102,6 @@ export class PosterGrid extends ArrayGrid {
     private readonly focusPaddingX: number;
     private readonly focusPaddingTop: number;
     private readonly focusPaddingBottom: number;
-    private readonly captionVerticalMargin: number;
     private readonly defaultCaptionBackgroundUri: string;
     private focusLayoutOverride?: PosterItemLayout;
 
@@ -106,11 +120,9 @@ export class PosterGrid extends ArrayGrid {
         if (this.resolution === "FHD") {
             this.focusPaddingTop = 18;
             this.focusPaddingBottom = 18;
-            this.captionVerticalMargin = 18;
         } else {
             this.focusPaddingTop = 12;
             this.focusPaddingBottom = 12;
-            this.captionVerticalMargin = 12;
         }
         this.focusPaddingX = this.marginX / 2;
         this.focusField = "gridHasFocus";
@@ -118,17 +130,39 @@ export class PosterGrid extends ArrayGrid {
     }
 
     /**
-     * Per-axis outset the reported bounding rect adds around the laid-out extent.
+     * Per-axis outset the reported bounding rect adds around the laid-out extent — LEFT, RIGHT and
+     * TOP only. The bottom is larger and lives in {@link rectMarginBottom}.
      *
      * DEVICE-MEASURED (Streaming Stick, Roku OS 15.2, HD 1280x720): a one-column one-row PosterGrid
-     * with `basePosterSize=[100,100]` reports `{x:-14, y:-14, w:128, h:...}` — a 14px outset on both
-     * axes, where ArrayGrid's shared default would give 24/4. The FHD value is NOT measured; 21 is
-     * the standard 1.5x design-resolution scale the other grid margins use (24->36), so it is an
-     * inference, not a measurement.
+     * with `basePosterSize=[100,100]` reports `{x:-14, y:-14, w:128, h:...}` — a 14px outset on the
+     * x axis and above the first row, where ArrayGrid's shared default would give 24/4. FHD is 21,
+     * the standard 1.5x design-resolution scale (14 -> 21), and is now device-confirmed by the
+     * caption-zone probe (see rectMarginBottom) rather than inferred.
      */
     protected rectMargins(): { x: number; y: number } {
         const margin = this.resolution === "FHD" ? 21 : 14;
         return { x: margin, y: margin };
+    }
+
+    /**
+     * Outset the reported rect adds BELOW the last row — 50 HD / 75 FHD, NOT the 14/21 added above it.
+     * A PosterGrid's reported vertical outset is asymmetric, which is why this is separate from
+     * {@link rectMargins} (one value per axis cannot express "14 above, 50 below").
+     *
+     * DEVICE-MEASURED via the caption-zone probe (Streaming Stick, Roku OS 15.2), 22 field
+     * combinations x {1 row, 2 rows} x {HD, FHD} = 88 readings, all reproduced exactly by:
+     *
+     *     height = rows * (posterHeight + captionZone) + rowSpacing terms + 14 + 50      (HD)
+     *
+     * The 36 HD / 54 FHD the engine was short by used to look like a missing per-cell "caption zone",
+     * and was recorded as one. It is not: `h2 - h1` is exactly one cell in every case, so the
+     * allowance appears ONCE per grid, and it is present with `caption1NumLines = 0` and unchanged
+     * when `captionVertAlignment` draws the caption over the poster (no zone needed at all). Solving
+     * for it from the 1-row and the 2-row readings independently gives the same number, which only a
+     * grid-level outset can do. Both outsets scale 1.5x to FHD.
+     */
+    protected rectMarginBottom(): number {
+        return this.resolution === "FHD" ? 75 : 50;
     }
 
     setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind) {
@@ -326,7 +360,8 @@ export class PosterGrid extends ArrayGrid {
         // 2 gaps. So the loop's accumulated `itemRect.y` is used as-is, with nothing backed out (the
         // loop breaks AFTER advancing, so the scene-edge exit already includes that trailing gap too).
         const margin = this.rectMargins();
-        const height = renderedRows === 0 ? 0 : itemRect.y - startY + margin.y * 2;
+        // Asymmetric on Y: `margin.y` above the first row, `rectMarginBottom()` below the last one.
+        const height = renderedRows === 0 ? 0 : itemRect.y - startY + margin.y + this.rectMarginBottom();
         this.updateRect(rect, displayRows, [Math.max(...columnWidths), maxCellHeight || baseSize[1]], {
             width: this.computeRowWidth(columnWidths, columnSpacings) + margin.x * 2,
             height,
@@ -722,7 +757,7 @@ export class PosterGrid extends ArrayGrid {
                 ? this.measureFontHeight(font2) * caption2Lines + lineSpacing * Math.max(0, caption2Lines - 1)
                 : 0;
         const textHeight = height1 + height2 + (caption1Lines > 0 && caption2Lines > 0 ? lineSpacing : 0);
-        const verticalMargins = caption1Lines > 0 || caption2Lines > 0 ? this.captionVerticalMargin * 2 : 0;
+        const verticalMargins = caption1Lines > 0 || caption2Lines > 0 ? CaptionZoneBase : 0;
         return {
             caption1Lines,
             caption2Lines,
@@ -806,7 +841,10 @@ export class PosterGrid extends ArrayGrid {
         metrics: CaptionMetrics,
         lineSpacing: number
     ) {
-        const textStartY = startY + this.captionVerticalMargin;
+        // Half the reserved base, so the text sits centered in the zone computeCaptionMetrics
+        // reserved. Derived from the same constant deliberately: reserving 23 while offsetting by an
+        // independently chosen value would push the last line past the bottom of the zone.
+        const textStartY = startY + CaptionZoneBase / 2;
         if (metrics.caption1Lines > 0) {
             layout.caption1Rect = { x: 0, y: textStartY, width: columnWidth, height: metrics.caption1Height };
         }
