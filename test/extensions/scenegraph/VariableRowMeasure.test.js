@@ -149,3 +149,85 @@ describe("boundingRect honors per-row and per-column overrides", () => {
 // (`customNodeExists`), which a unit test cannot construct — covering the loop needs a CLI fixture
 // app. The measurement above and the loop now read the same absolute index, so a future divergence
 // between them shows up as a measurement failure.
+
+/**
+ * DEVICE-MEASURED (Streaming Stick, Roku OS 15.2) via `out/layout-measure-probe`, case `L`.
+ *
+ * A LabelList DOES honor rowHeights and rowSpacings, and there is no extra per-row pixel. With
+ * rowHeights [100,50,200] and rowSpacings [10,20] over itemSize.y = 40 the device reported an extent
+ * of 350 + 30 + margins — the per-row heights, the gaps AFTER each row (trailing entry dropped), and
+ * nothing else. Its render loop used to advance by `itemSize.y + 1`, honoring none of that, which left
+ * it MEASURING per-row heights (since #1134) while DRAWING uniform rows.
+ */
+describe("LabelList lays rows out from rowHeights/rowSpacings", () => {
+    beforeAll(() => {
+        const commonZip = fs.readFileSync(path.join(__dirname, "../../../packages/scenegraph/assets/common.zip"));
+        BrsDevice.fileSystem.setup(commonZip.buffer, new ArrayBuffer(1024 * 1024), new ArrayBuffer(1024 * 1024));
+    });
+
+    function vector(values) {
+        return new RoArray(values.map((v) => new Float(v)));
+    }
+
+    /** Records the rect each row is actually drawn into, by intercepting renderItem. */
+    function renderRows(list) {
+        const rows = [];
+        const original = list.renderItem.bind(list);
+        list.renderItem = (index, item, itemRect, opacity, nodeFocus, focused, draw2D) => {
+            rows.push({ index, y: Math.round(itemRect.y), height: Math.round(itemRect.height) });
+            return original(index, item, itemRect, opacity, nodeFocus, focused, draw2D);
+        };
+        list.renderNode({}, [0, 0], 0, 1);
+        list.renderItem = original;
+        return rows;
+    }
+
+    function makeList(rowCount) {
+        const list = SGNodeFactory.createNode("LabelList");
+        const root = SGNodeFactory.createNode("ContentNode");
+        for (let i = 0; i < rowCount; i++) {
+            const item = SGNodeFactory.createNode("ContentNode");
+            item.setValue("title", new BrsString("R" + i));
+            root.appendChildToParent(item);
+        }
+        list.setValue("itemSize", vector([300, 40]));
+        list.setValue("numRows", new Int32(rowCount));
+        list.setValue("content", root);
+        return list;
+    }
+
+    test("rows advance by rowHeights plus rowSpacings, not by itemSize.y", () => {
+        const list = makeList(3);
+        list.setValue("rowHeights", vector([100, 50, 200]));
+        list.setValue("rowSpacings", vector([10, 20]));
+
+        const rows = renderRows(list);
+
+        expect(rows.map((r) => r.height)).toEqual([100, 50, 200]);
+        // Row 0 at 0; row 1 at 100 + 10; row 2 at 110 + 50 + 20.
+        expect(rows.map((r) => r.y)).toEqual([0, 110, 180]);
+    });
+
+    test("rows past the end of the arrays fall back to itemSize.y and itemSpacing.y", () => {
+        const list = makeList(4);
+        list.setValue("itemSpacing", vector([0, 5]));
+        list.setValue("rowHeights", vector([100]));
+        list.setValue("rowSpacings", vector([10]));
+
+        const rows = renderRows(list);
+
+        expect(rows.map((r) => r.height)).toEqual([100, 40, 40, 40]);
+        // 0; 100+10; 110+40+5; 155+40+5.
+        expect(rows.map((r) => r.y)).toEqual([0, 110, 155, 200]);
+    });
+
+    test("a plain list advances by exactly itemSize.y with no extra pixel", () => {
+        // The device's no-override extent decomposes with zero inter-row spacing, so the engine's
+        // undocumented `itemSize.y + 1` was wrong.
+        const list = makeList(3);
+
+        const rows = renderRows(list);
+
+        expect(rows.map((r) => r.y)).toEqual([0, 40, 80]);
+    });
+});

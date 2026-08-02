@@ -161,11 +161,6 @@ export class StdDlgActionCardItem extends Group implements StdDlgItem {
         this.icon.setValueSilent("visible", BrsBoolean.from(uri !== ""));
     }
 
-    /** Renderable node: an inherited rotation also rotates its own translation vector. */
-    protected rotatesDrawTranslation(): boolean {
-        return true;
-    }
-
     protected renderNodeContent(
         interpreter: Interpreter,
         origin: number[],

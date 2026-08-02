@@ -726,35 +726,26 @@ export class Group extends Node {
     }
 
     /**
-     * This node's draw translation: its own translation composed with the parent-space `origin`.
+     * This node's draw translation: its own translation composed with the parent-space `origin`,
+     * rotated by any inherited angle.
      *
      * Every node must position its own drawing through this method, so the clip `renderNode` pushes
      * can never drift from where the node actually paints.
+     *
+     * DEVICE-MEASURED (Streaming Stick, Roku OS 15.2; probe `out/layout-measure-probe`, case `R`):
+     * an inherited rotation rotates a child's own translation vector for EVERY node type. Two
+     * identical hosts rotated 90° with a child translated [100, 0] put the child at the same rotated
+     * position whether that child was a `Group` or a `Rectangle`. The engine used to rotate for 18
+     * renderable types but not for `Group` or the keyboard/text-entry containers — a split that
+     * looked accidental (#1133 preserved it pending exactly this measurement) and placed a container's
+     * children 100px off under a rotated ancestor.
      */
     protected getDrawTranslation(origin: number[], angle: number): number[] {
         const nodeTrans = this.getTranslation();
-        const drawTrans =
-            angle !== 0 && this.rotatesDrawTranslation() ? rotateTranslation(nodeTrans, angle) : nodeTrans.slice();
+        const drawTrans = angle === 0 ? nodeTrans.slice() : rotateTranslation(nodeTrans, angle);
         drawTrans[0] += origin[0];
         drawTrans[1] += origin[1];
         return drawTrans;
-    }
-
-    /**
-     * Whether an inherited (non-zero) rotation also rotates this node's OWN translation vector.
-     *
-     * Renderable nodes return true; `Group` and the keyboard/text-entry containers return false,
-     * which is what they have always done. The two are identical whenever the inherited angle is 0
-     * — i.e. everywhere nothing above the node is rotated — so this only selects between existing
-     * behaviors, it does not introduce one.
-     *
-     * NEEDS DEVICE VERIFICATION: the split looks accidental rather than intended (a rotated
-     * container would place its children differently depending on which of the two groups it falls
-     * in). Preserved as-is here deliberately; settling it needs a rotated-container probe channel,
-     * not a guess.
-     */
-    protected rotatesDrawTranslation(): boolean {
-        return false;
     }
 
     /**

@@ -76,11 +76,6 @@ export class SimpleLabel extends Group {
         return this.measured;
     }
 
-    /** Renderable node: an inherited rotation also rotates its own translation vector. */
-    protected rotatesDrawTranslation(): boolean {
-        return true;
-    }
-
     protected renderNodeContent(
         interpreter: Interpreter,
         origin: number[],
