@@ -113,9 +113,9 @@ $ brs-cli --colors 0
 ## Setting the Log Level
 
 By default the CLI keeps console output at `warning` level, matching a Roku device out of the box.
-Pass `--log-level debug` to also print `debug`-level lines (e.g. the extra action/target detail on
-[rendezvous tracing](#tracing-cross-thread-rendezvous)), or `--log-level error` to silence
-`warning`-level lines too:
+Pass `--log-level debug` to add the `threadID` in every print, and show `debug`-level lines (e.g. the extra
+action/target detail on [rendezvous tracing](#tracing-cross-thread-rendezvous)), or `--log-level error` to
+silence `warning`-level lines too:
 
 ```console
 $ brs-cli --log-level debug app.zip
