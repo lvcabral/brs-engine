@@ -89,11 +89,11 @@ program
         "-i, --image [percent]",
         "Render the screen as images on the terminal with optional width % (default: 100)."
     )
-    .option("-l, --log [filename]", "Redirect the text output to a log file (default: brs-cli.log).")
     .option("-s, --snapshot [filename]", "Enable Ctrl+S to save the current screen as a PNG image.")
     .option("-c, --colors <level>", "Define the console color level (0 to disable).", defaultLevel)
-    .option("-g, --log-level <level>", "Set console log verbosity: debug, warning or error.", "warning")
     .option("-d, --debug", "Developer mode: micro debugger on crash + resource tracking.", false)
+    .option("-l, --log [filename]", "Redirect the text output to a log file (default: brs-cli.log).")
+    .option("-g, --log-level <level>", "Set console log verbosity: debug, warning or error.", "warning")
     .option("-z, --log-rendezvous", "Trace SceneGraph cross-thread rendezvous (like Roku's logrendezvous).", false)
     .option("-e, --ecp", "Enable the ECP server for control simulation.", false)
     .option("-n, --no-sg", "Disable the SceneGraph extension.")

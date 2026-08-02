@@ -45,11 +45,11 @@ Options:
   -a, --ascii <columns>     Enable ASCII screen mode with # of columns.
   -u, --unicode             Render ASCII screen mode using Unicode block characters.
   -i, --image [percent]     Render the screen as images on the terminal with optional width % (default: 100).
-  -l, --log [filename]      Redirect the text output to a log file (default: brs-cli.log).
   -s, --snapshot [filename] Enable Ctrl+S to save the current screen as a PNG image.
   -c, --colors <level>      Define the console color level (0 to disable). (default: 3)
-  -g, --log-level <level>   Set console log verbosity: debug, warning or error. (default: "warning")
   -d, --debug               Developer mode: micro debugger on crash + resource tracking.
+  -l, --log [filename]      Redirect the text output to a log file (default: brs-cli.log).
+  -g, --log-level <level>   Set console log verbosity: debug, warning or error. (default: "warning")
   -z, --log-rendezvous      Trace SceneGraph cross-thread rendezvous (like Roku's logrendezvous).
   -e, --ecp                 Enable the ECP server for control simulation.
   -n, --no-sg               Disable the SceneGraph extension.
