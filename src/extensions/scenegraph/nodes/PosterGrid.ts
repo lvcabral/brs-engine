@@ -64,6 +64,21 @@ type PosterItemLayout = {
  */
 const CaptionZoneBase = 23;
 
+/**
+ * Where the caption text starts inside that reserved zone, measured from the poster's bottom edge.
+ *
+ * NOT measured — the probe reads `boundingRect().height` only, so it pins the zone's SIZE and says
+ * nothing about how the 23 divides above/below the text. 12 is `round(23 / 2)`, i.e. text centered in
+ * the zone, and it keeps the HD paint position byte-identical to the pre-fix `captionVerticalMargin`
+ * (12 HD). It is deliberately an integer: `23 / 2` puts the baseline on a half-pixel.
+ *
+ * FHD paint DOES move — the old value there was 18, so captions shift up 6px. That follows from the
+ * zone itself not scaling (it measured 23 at both resolutions), and the text still sits inside the
+ * reserved zone either way. Pinning the real FHD offset needs a probe that reports caption placement
+ * rather than grid height.
+ */
+const CaptionTextOffset = 12;
+
 const HorizAlignments = new Set(["left", "center", "right"]);
 const VertAlignments = new Set(["above", "top", "center", "bottom", "below"]);
 const ValidFocusStyles = new Set(Object.values(FocusStyle).map((style) => style.toLowerCase()));
@@ -135,9 +150,12 @@ export class PosterGrid extends ArrayGrid {
      *
      * DEVICE-MEASURED (Streaming Stick, Roku OS 15.2, HD 1280x720): a one-column one-row PosterGrid
      * with `basePosterSize=[100,100]` reports `{x:-14, y:-14, w:128, h:...}` — a 14px outset on the
-     * x axis and above the first row, where ArrayGrid's shared default would give 24/4. FHD is 21,
-     * the standard 1.5x design-resolution scale (14 -> 21), and is now device-confirmed by the
-     * caption-zone probe (see rectMarginBottom) rather than inferred.
+     * x axis and above the first row, where ArrayGrid's shared default would give 24/4.
+     *
+     * The FHD 21 is STILL AN INFERENCE from the standard 1.5x design-resolution scale, on both axes.
+     * The caption-zone probe reads only `boundingRect().height`, so at FHD it pins the vertical
+     * SUM (`21 + 75 = 96`) and says nothing about x or about where the split falls. Do not upgrade
+     * this to "measured" without a probe case that prints `boundingRect().x` / `.y` at FHD.
      */
     protected rectMargins(): { x: number; y: number } {
         const margin = this.resolution === "FHD" ? 21 : 14;
@@ -159,10 +177,81 @@ export class PosterGrid extends ArrayGrid {
      * allowance appears ONCE per grid, and it is present with `caption1NumLines = 0` and unchanged
      * when `captionVertAlignment` draws the caption over the poster (no zone needed at all). Solving
      * for it from the 1-row and the 2-row readings independently gives the same number, which only a
-     * grid-level outset can do. Both outsets scale 1.5x to FHD.
+     * grid-level outset can do.
+     *
+     * At HD the 14/50 split is pinned directly, because `y` was measured as -14. At FHD only the SUM
+     * is measured (96): the probe reads `height`, never `y`, so the 21/75 split assumes the top
+     * scales 1.5x. Getting the split wrong would keep every height correct and move every `y`.
      */
     protected rectMarginBottom(): number {
         return this.resolution === "FHD" ? 75 : 50;
+    }
+
+    /**
+     * Measure the extent while invisible using the SAME per-row terms the visible pass accumulates.
+     *
+     * `ArrayGrid.measureHiddenExtent` calls `updateRect` with no `layout.height`, which falls into the
+     * generic per-track arithmetic — `itemSize[1] + margin.y * 2` per row. That is device-correct for
+     * grids whose vertical outset is symmetric and per-row (`LabelList` measured
+     * `Σ rowHeights + gaps + rows * 2 * marginY`), but a PosterGrid is neither: its outset is
+     * asymmetric AND charged once per grid, and its rows carry a caption zone `rowHeights` cannot
+     * express. Left inherited, a hidden PosterGrid disagreed with its own visible extent by
+     * `36 - 28 * (rows - 1)` at HD — it happened to agree at exactly one row and diverged in BOTH
+     * directions either side of that, so the coincidence at 1 row is not evidence of anything.
+     *
+     * This matters for the case `measureHiddenExtent` exists for: an app assigns content to a still
+     * hidden grid, sizes a sibling background from `boundingRect()`, then reveals it. A background
+     * sized from the inherited arithmetic was short by a caption zone per row plus the bottom outset.
+     */
+    protected measureHiddenExtent(origin: number[], angle: number) {
+        const baseSize = this.getValueJS("basePosterSize") as number[];
+        if (this.content.length === 0 || !baseSize?.[0] || !baseSize?.[1]) {
+            super.measureHiddenExtent(origin, angle);
+            return;
+        }
+        const spacing = this.normalizeVector(this.getValueJS("itemSpacing"), [0, 0]);
+        const defaultColumnSpacing = this.resolveSpacingValue(this.getValueJS("columnSpacings"), 0, spacing[0]);
+        this.numCols = Math.max(1, this.numCols || this.inferColumnCount(baseSize[0], defaultColumnSpacing));
+        const totalRows = Math.ceil(this.content.length / this.numCols);
+        const desiredRows = Number.isFinite(this.numRows) && this.numRows > 0 ? Math.floor(this.numRows) : totalRows;
+        const displayRows = Math.max(1, Math.min(desiredRows, totalRows));
+        const columnWidths = this.resolveColumnWidths(baseSize[0]);
+        const columnSpacings = this.resolveColumnSpacings(spacing[0], this.getValueJS("columnSpacings"));
+        const margin = this.rectMargins();
+        const drawTrans = this.getDrawTranslation(origin, angle);
+        const rect = { x: drawTrans[0], y: drawTrans[1], ...this.getDimensions() };
+        this.updateRect(rect, displayRows, [Math.max(...columnWidths), baseSize[1]], {
+            width: this.computeRowWidth(columnWidths, columnSpacings) + margin.x * 2,
+            height: this.accumulateRowExtent(displayRows, baseSize) + margin.y + this.rectMarginBottom(),
+        });
+        this.updateBoundingRects(rect, origin, angle + this.getRotation());
+    }
+
+    /**
+     * Sum of every displayed row's height (poster + caption zone) plus the gap AFTER each row,
+     * including the last — the device-measured trailing-gap rule. This is the arithmetic-only twin of
+     * what `renderContent`'s loop accumulates into `itemRect.y`; the visible pass keeps its own copy
+     * because it has to advance `itemRect` as it draws, and it additionally counts section/wrap
+     * dividers, which only exist once items are laid out.
+     */
+    private accumulateRowExtent(displayRows: number, baseSize: number[]) {
+        const rowHeights = this.getValueJS("rowHeights") as number[];
+        const rowSpacingValues = this.getValueJS("rowSpacings");
+        const baseRowSpacing = this.normalizeVector(this.getValueJS("itemSpacing"), [0, 0])[1];
+        const placement = this.getCaptionPlacement();
+        const captionsExtendLayout = this.requiresCaptionZone(placement);
+        let extent = 0;
+        for (let r = 0; r < displayRows; r++) {
+            const rowIndex = this.getRenderRowIndex(r);
+            if (rowIndex < 0 || rowIndex >= this.content.length) {
+                break;
+            }
+            const rowNumber = Math.floor(rowIndex / this.numCols);
+            extent += this.resolveTrackValue(rowHeights, rowNumber, baseSize[1]);
+            extent += captionsExtendLayout ? this.computeRowCaptionHeight(rowIndex, placement) : 0;
+            extent += this.resolveSpacingValue(rowSpacingValues, rowNumber, baseRowSpacing);
+        }
+        return extent;
     }
 
     setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind) {
@@ -841,10 +930,9 @@ export class PosterGrid extends ArrayGrid {
         metrics: CaptionMetrics,
         lineSpacing: number
     ) {
-        // Half the reserved base, so the text sits centered in the zone computeCaptionMetrics
-        // reserved. Derived from the same constant deliberately: reserving 23 while offsetting by an
-        // independently chosen value would push the last line past the bottom of the zone.
-        const textStartY = startY + CaptionZoneBase / 2;
+        // Centered in the zone computeCaptionMetrics reserved. See CaptionTextOffset: the zone's size
+        // is device-measured, this split of it is not.
+        const textStartY = startY + CaptionTextOffset;
         if (metrics.caption1Lines > 0) {
             layout.caption1Rect = { x: 0, y: textStartY, width: columnWidth, height: metrics.caption1Height };
         }

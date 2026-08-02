@@ -4,7 +4,7 @@ const scenegraph = require("../../../packages/scenegraph/lib/brs-sg.node.js");
 const core = require("../../../packages/node/bin/brs.node.js");
 
 const { SGNodeFactory, sgRoot } = scenegraph;
-const { BrsDevice, BrsString, Int32, Float, RoArray, Interpreter } = core;
+const { BrsDevice, BrsString, BrsBoolean, Int32, Float, RoArray, Interpreter } = core;
 
 const vector = (values) => new RoArray(values.map((v) => new Float(v)));
 
@@ -278,6 +278,53 @@ describe("PosterGrid reports the extent a device reports", () => {
             });
         });
 
+        test.each([
+            ["HD", 14],
+            ["FHD", 21],
+        ])("%s: the outset above the first row is %d, not just the sum with the bottom", (resolution, top) => {
+            atResolution(resolution, () => {
+                // The height assertions above pin only `top + bottom`, so on their own they permit any
+                // split of that sum — including a wrong one, which would keep every height correct and
+                // move every `y`. `rect.y` is what separates them. At HD this is the device reading
+                // ({x:-14, y:-14}); at FHD the pair is an inference from the 1.5x scale, so this test
+                // pins the DECISION rather than a measurement — see PosterGrid.rectMargins.
+                const rect = rectOf(
+                    makeGrid(1, {
+                        numColumns: new Int32(1),
+                        numRows: new Int32(1),
+                        itemSpacing: vector([0, 0]),
+                    })
+                );
+                expect(Math.round(rect.y)).toBe(-top);
+                // ...and the horizontal outset, which no height assertion can see at all.
+                expect(Math.round(rect.x)).toBe(-top);
+                expect(Math.round(rect.width)).toBe(100 + top * 2);
+            });
+        });
+
+        test.each([["HD"], ["FHD"]])("%s: a hidden grid measures the same extent as a visible one", (resolution) => {
+            atResolution(resolution, () => {
+                // `ArrayGrid.measureHiddenExtent` re-derives the extent arithmetically for an app that
+                // sizes sibling UI from a still-hidden grid's boundingRect(). Its generic per-track path
+                // adds `margin.y * 2` PER ROW, which cannot agree with a once-per-grid asymmetric outset
+                // at more than one row count — so PosterGrid overrides it. Assert several row counts:
+                // the inherited arithmetic happened to agree at exactly 1 row and diverged in both
+                // directions either side of it, so a single-row check proves nothing here.
+                for (const rows of [1, 2, 3]) {
+                    const fields = {
+                        numColumns: new Int32(1),
+                        numRows: new Int32(rows),
+                        itemSpacing: vector([0, 50]),
+                        caption1NumLines: new Int32(1),
+                    };
+                    const visible = rectOf(makeGrid(rows, fields));
+                    const hidden = rectOf(makeGrid(rows, { ...fields, visible: BrsBoolean.False }));
+                    expect(Math.round(hidden.height)).toBe(Math.round(visible.height));
+                    expect(Math.round(hidden.width)).toBe(Math.round(visible.width));
+                }
+            });
+        });
+
         test.each([["HD"], ["FHD"]])("%s: no caption lines requested means no caption zone", (resolution) => {
             atResolution(resolution, () => {
                 const bare = heightOf(1);
@@ -346,6 +393,29 @@ describe("PosterGrid reports the extent a device reports", () => {
                 expect(heightOf(1, { caption1NumLines: new Int32(1), caption2NumLines: new Int32(1) })).toBe(
                     heightOf(1, { caption1NumLines: new Int32(2) })
                 );
+            });
+        });
+
+        test.each([["HD"], ["FHD"]])("%s: caption text is placed inside the zone that was reserved", (resolution) => {
+            atResolution(resolution, () => {
+                // The reserved SIZE is device-measured; how the base divides above/below the text is
+                // not (see PosterGrid.CaptionTextOffset). What must hold either way is containment:
+                // the text starts below the poster and its last line ends within the reserved zone.
+                // Without this, a future edit to the offset can push text out of the cell and no
+                // height assertion would notice — every test above reads `height` only.
+                const grid = makeGrid(1, {
+                    numColumns: new Int32(1),
+                    numRows: new Int32(1),
+                    itemSpacing: vector([0, 0]),
+                    caption1NumLines: new Int32(2),
+                });
+                const layout = grid.layoutByIndex.get(0);
+                const posterBottom = layout.posterRect.y + layout.posterRect.height;
+                const zoneBottom = posterBottom + 23 + layout.caption1Rect.height;
+                expect(layout.caption1Rect.y).toBeGreaterThanOrEqual(posterBottom);
+                expect(layout.caption1Rect.y + layout.caption1Rect.height).toBeLessThanOrEqual(zoneBottom);
+                // Integer, so a text baseline never lands on a half-pixel.
+                expect(Number.isInteger(layout.caption1Rect.y)).toBe(true);
             });
         });
 

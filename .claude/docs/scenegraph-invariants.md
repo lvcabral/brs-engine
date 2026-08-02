@@ -423,8 +423,11 @@ Five rules, each of which the engine had wrong:
    each row" wording. 3 columns of 100 at `itemSpacing.x = 50` measure 478, not 428.
 3. **The axes are NOT symmetric.** `columnWidths` is **ignored** (cell width always comes from
    `basePosterSize.x`) while `rowHeights` **is** honored. Do not unify them into one helper.
-4. **`rectMargins` is 14/14**, not `ArrayGrid`'s shared 24/4 — and FHD is 21, now confirmed by the
-   caption probe rather than inferred from the 1.5× scale.
+4. **`rectMargins` is 14/14**, not `ArrayGrid`'s shared 24/4. The FHD 21 is **still an inference** from
+   the 1.5× design scale: the caption probe reads `boundingRect().height` only, so at FHD it pins the
+   vertical *sum* (`21 + 75 = 96`) and nothing about x or about where the split falls. A wrong split
+   would keep every FHD height correct and move every `y` — which is why the test suite asserts
+   `rect.x`/`rect.y` at FHD as the pinned *decision*, not as a measurement.
 5. **The vertical outset is asymmetric: 14 above the first row, 50 below the last** (21/75 FHD), where
    the horizontal one is 14 on both sides. See the caption-zone section below — this was the "+36" that
    masqueraded as a missing caption zone for two rounds of probing.
@@ -512,6 +515,31 @@ One further **inference, not a measurement**: caption2's per-line cost measured 
 points to the device defaulting `caption2Font` to the non-bold face while the engine defaults both to
 `font:SmallerBoldSystemFont`. It is derived from two increments, not from reading a font identity, so it
 is left alone pending a probe case that sets `caption2Font` explicitly against a known face.
+
+**The probe measures heights, so anything that is not a height is unpinned by it.** Three values in this
+node ride along on the 88 readings without being measured by them, and each is marked as such in code:
+the FHD `rectMargins`/`rectMarginBottom` split (rule 4 above), the FHD **x** margin, and
+`CaptionTextOffset` — where the caption text starts *inside* the reserved zone. The zone's size is
+device-measured; how the 23 divides above and below the text is not. `CaptionTextOffset` is
+`round(23 / 2)` = 12, which keeps HD paint identical to the pre-fix `captionVerticalMargin` and moves FHD
+captions up 6px (the zone does not scale, so the offset cannot either without overflowing it). Deriving
+it as `CaptionZoneBase / 2` directly would put the baseline on a **half-pixel**; the test suite asserts
+integrality and containment rather than the exact offset, since only the latter two are defensible.
+
+### A hidden PosterGrid must measure what a visible one measures
+
+`ArrayGrid.measureHiddenExtent` re-derives the extent arithmetically for the case it exists for — an app
+assigns content to a still-hidden grid, sizes sibling UI from `boundingRect()`, then reveals it. Its
+generic path adds `itemSize[1] + margin.y * 2` **per row**, which is device-correct for a grid whose
+outset is symmetric and per-row (`LabelList` measured `Σ rowHeights + gaps + rows × 2 × marginY`) but
+cannot agree with PosterGrid's once-per-grid asymmetric outset at more than one row count, and cannot see
+a caption zone at all. So `PosterGrid` **overrides** `measureHiddenExtent`, and both paths derive their
+per-row terms from the same helper (`accumulateRowExtent`).
+
+The trap worth remembering: before the override, the inherited arithmetic agreed with the visible pass at
+**exactly one row** and diverged in *both* directions either side of it (HD: 0 at 1 row, −28 at 2, −56 at
+3). A single-row regression test would have passed and proved nothing. Any test here must vary the row
+count — that is the same lesson as "solve from 1 row *and* 2 rows", one layer down.
 
 ## A grid's reported rect is outset — its item sub-rects are NOT
 
