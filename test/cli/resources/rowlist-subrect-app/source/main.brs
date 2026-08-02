@@ -7,6 +7,9 @@ sub Main()
     grid.rowItemSize = [[300, 200]]
     grid.itemSpacing = [0, 0]
     grid.numRows = 2
+    ' Off-origin so the reported item y is distinguishable from the grid's own origin and from
+    ' any outset applied to the grid's own rect (the item rect must carry neither).
+    grid.translation = [40, 120]
 
     content = CreateObject("roSGNode", "ContentNode")
     for r = 0 to 1
@@ -32,5 +35,11 @@ sub Main()
 
     same = Abs(rect1.y - band.y) < 50
     print "SAME BAND: "; same
+
+    ' The reported item rect is the bare item component, so it derives entirely from the
+    ' fixture's own declared inputs: it sits at the grid's translation and is exactly one
+    ' row item tall. Neither the grid's own rect outset nor the focus 9-patch reaches it.
+    print "ON POSTER: "; rect1.y = grid.translation[1]
+    print "SIZE IS POSTER: "; rect1.height = grid.rowItemSize[0][1]
     print "=== RowList SubRect Repro Complete ==="
 end sub

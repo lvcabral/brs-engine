@@ -111,33 +111,29 @@ describe("ifSGNodeBoundingRect sub-part methods", () => {
         });
     }
 
-    // RowList extends the FOCUSED cell's rect upward by the focus-feedback top margin so an app that
-    // offsets its overlay by the focus footprint lands the overlay on the poster (the item component's
-    // own rect is the bare poster; the focus 9-patch frame is drawn outset above it). Only the focused
-    // cell draws the frame, so only its rect is adjusted.
-    test("RowList outsets the focused item's rect by the focus-feedback top margin", () => {
+    // A device reports the FOCUSED cell's sub-rect as the bare poster — the same rect it reports for a
+    // non-focused cell. The focus 9-patch frame is drawn outset around the poster, and the list's OWN
+    // boundingRect is outset by rectMargins, but neither reaches an item sub-rect. An outset used to be
+    // subtracted here (the 9-patch's top margin, to make an overlay land on the poster); it was double
+    // counting, silently cancelled by a rectToParent bug that dropped the rectMargins outset from the
+    // base rect. This pins the un-outset result so the subtraction is not re-introduced.
+    test("RowList reports the focused item's bare poster rect, not the focus-feedback footprint", () => {
         const list = new RowList();
         buildRowGrid(list);
         const focusedPoster = list.rowItemComps[1][2].rectToScene;
 
         for (const id of ["item1_2", "item1", "focusItem", "focusIndicator"]) {
-            const r = list.getSubBoundingRect("toScene", id);
-            const top = focusedPoster.y - r.y;
-            expect(top).toBeGreaterThan(0); // outset above the poster
-            expect(r.x).toBe(focusedPoster.x);
-            expect(r.width).toBe(focusedPoster.width);
-            expect(r.height).toBe(focusedPoster.height + top); // grows by the same top margin
+            expect(list.getSubBoundingRect("toScene", id)).toEqual(focusedPoster);
         }
 
-        // A non-focused cell is NOT outset — it reports its bare poster rect.
+        // A non-focused cell reports its bare poster rect too — focus makes no difference.
         expect(list.getSubBoundingRect("toScene", "item0_0")).toEqual(list.rowItemComps[0][0].rectToScene);
 
-        // The outset is keyed to the focus bitmap, not drawFocusFeedback: suppressing the drawn frame
-        // still reserves the footprint (apps that render their own focus indicator rely on this).
+        // Nothing about the focus feedback influences the reported rect: neither suppressing the drawn
+        // frame nor clearing both focus bitmaps changes it.
         list.setValue("drawFocusFeedback", core.BrsBoolean.False);
-        expect(list.getSubBoundingRect("toScene", "item1_2").y).toBeLessThan(focusedPoster.y);
+        expect(list.getSubBoundingRect("toScene", "item1_2")).toEqual(focusedPoster);
 
-        // With no focus bitmap there is no footprint, so the focused cell reports its bare poster rect.
         list.setValue("focusBitmapUri", new core.BrsString(""));
         list.setValue("focusFootprintBitmapUri", new core.BrsString(""));
         expect(list.getSubBoundingRect("toScene", "item1_2")).toEqual(focusedPoster);
