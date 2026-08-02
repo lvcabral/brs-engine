@@ -1,0 +1,17 @@
+PROBE|000|boot|start|
+PROBE|000|boot|device|model=Roku TV os=15.0
+PROBE|001|all|start|
+PROBE|002|L-labellist|with-overrides|rect={x=0 y=0 w=348 h=404} itemSize=[300,40] rowHeights=[100,50,200] rowSpacings=[10,20]
+PROBE|003|L-labellist|no-overrides|rect={x=400 y=0 w=348 h=144} itemSize=[300,40] expect-3-rows
+PROBE|004|L-labellist|rows-with-overrides|row0={x=0 y=0 w=348 h=404} row1={x=0 y=0 w=348 h=404} row2={x=0 y=0 w=348 h=404}
+PROBE|005|L-labellist|rows-no-overrides|row0={x=400 y=0 w=348 h=144} row1={x=400 y=0 w=348 h=144} row2={x=400 y=0 w=348 h=144}
+PROBE|006|P-postergrid|short-spacing-arrays|rect={x=0 y=320 w=320 h=210} cols=3 rows=2 poster=100x100 itemSpacing=[50,50] columnSpacings=[10] rowSpacings=[10]
+PROBE|007|R-rotation|group-child|child-scene={x=700 y=320 w=20 h=20} host=[600,320] rot=90deg child-translation=[100,0]
+PROBE|008|R-rotation|rectangle-child|child-scene={x=900 y=200 w=20 h=20} host=[900,320] rot=90deg child-translation=[100,0]
+PROBE|009|T-tracking|inside-onscreen-clip|renderTracking=full expect=full
+PROBE|010|T-tracking|inside-offscreen-clip|renderTracking=full reference-says=none
+PROBE|011|T-tracking|offscreen-no-clip|renderTracking=none expect=none
+PROBE|012|all|done|
+PROBE|999|boot|end|
+------ Finished 'layout-measure-probe' execution [EXIT_USER_NAV] ------
+

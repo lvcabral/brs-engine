@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="ProbeScene" extends="Scene">
+    <children>
+        <Label
+            id="keymap"
+            translation="[80,80]"
+            width="1760"
+            height="800"
+            wrap="true" />
+        <Label
+            id="status"
+            translation="[80,900]"
+            width="1760" />
+        <!-- Defers the render-thread busy-spin so it runs from the message loop, well after the
+             task has received the phase change. Spinning inline in onKeyEvent instead delays the
+             task's wake-up until the spin is already over, and nothing overlaps. -->
+        <Timer
+            id="spinTimer"
+            duration="0.5"
+            repeat="false" />
+    </children>
+    <script type="text/brightscript" uri="pkg:/components/ProbeScene.brs" />
+</component>

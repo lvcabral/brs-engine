@@ -1,0 +1,39 @@
+PROBE|000|boot|start|
+PROBE|000|boot|device|model=Roku TV os=15.0
+PROBE|001|all|start|steps=33
+PROBE|002|L-leaf|before-start|leafAnim.state=stopped rectA.opacity=0.00
+PROBE|003|L-leaf|immediately-after-start|leafAnim.state=running rectA.opacity=0.00
+PROBE|004|L-leaf|mid-run|leafAnim.state=running rectA.opacity=0.33
+PROBE|005|L-leaf|after-complete|leafAnim.state=stopped rectA.opacity=1.00
+PROBE|006|N-none|started|leafAnim.state=running rectA.opacity=0.00
+PROBE|007|N-none|before-none|leafAnim.state=running rectA.opacity=0.57
+PROBE|008|N-none|immediately-after-none|leafAnim.state=running rectA.opacity=0.57
+PROBE|009|N-none|settled|leafAnim.state=running rectA.opacity=0.87
+PROBE|010|PF-par-finish|started|par.state=running c1.state=running c2.state=running rectA.opacity=0.00 rectB.opacity=0.00
+PROBE|011|PF-par-finish|before-finish|par.state=running c1.state=running c2.state=running rectA.opacity=0.32 rectB.opacity=0.32
+PROBE|012|PF-par-finish|immediately-after-finish|par.state=stopped c1.state=stopped c2.state=stopped rectA.opacity=1.00 rectB.opacity=1.00
+PROBE|013|PF-par-finish|settled|par.state=stopped c1.state=stopped c2.state=stopped rectA.opacity=1.00 rectB.opacity=1.00
+PROBE|014|PP-par-pause|started|par.state=running c1.state=running c2.state=running rectA.opacity=0.00 rectB.opacity=0.00
+PROBE|015|PP-par-pause|immediately-after-pause|par.state=paused c1.state=paused c2.state=paused rectA.opacity=0.32 rectB.opacity=0.32
+PROBE|016|PP-par-pause|just-after-pause|par.state=paused c1.state=paused c2.state=paused rectA.opacity=0.32 rectB.opacity=0.32
+PROBE|017|PP-par-pause|one-second-later|par.state=paused c1.state=paused c2.state=paused rectA.opacity=0.32 rectB.opacity=0.32
+PROBE|018|PP-par-pause|immediately-after-resume|par.state=running c1.state=running c2.state=running rectA.opacity=0.32 rectB.opacity=0.32
+PROBE|019|PP-par-pause|after-resume|par.state=running c1.state=running c2.state=running rectA.opacity=0.57 rectB.opacity=0.57
+PROBE|020|PP-par-pause|settled|par.state=running c1.state=running c2.state=running rectA.opacity=0.98 rectB.opacity=0.98
+PROBE|021|SF-seq-finish|started|seq.state=running c1.state=running c2.state=stopped c3.state=stopped rectA.opacity=0.00 rectB.opacity=0.00 rectC.opacity=0.00
+PROBE|022|SF-seq-finish|before-finish|seq.state=running c1.state=running c2.state=stopped c3.state=stopped rectA.opacity=0.56 rectB.opacity=0.00 rectC.opacity=0.00
+PROBE|023|SF-seq-finish|immediately-after-finish|seq.state=stopped c1.state=stopped c2.state=stopped c3.state=stopped rectA.opacity=1.00 rectB.opacity=1.00 rectC.opacity=1.00
+PROBE|024|SF-seq-finish|settled|seq.state=stopped c1.state=stopped c2.state=stopped c3.state=stopped rectA.opacity=1.00 rectB.opacity=1.00 rectC.opacity=1.00
+PROBE|025|SP-seq-pause|started|seq.state=running c1.state=running c2.state=stopped c3.state=stopped rectA.opacity=0.00 rectB.opacity=0.00 rectC.opacity=0.00
+PROBE|026|SP-seq-pause|immediately-after-pause|seq.state=paused c1.state=paused c2.state=stopped c3.state=stopped rectA.opacity=0.56 rectB.opacity=0.00 rectC.opacity=0.00
+PROBE|027|SP-seq-pause|one-second-later|seq.state=paused c1.state=paused c2.state=stopped c3.state=stopped rectA.opacity=0.56 rectB.opacity=0.00 rectC.opacity=0.00
+PROBE|028|SP-seq-pause|immediately-after-resume|seq.state=running c1.state=running c2.state=stopped c3.state=stopped rectA.opacity=0.56 rectB.opacity=0.00 rectC.opacity=0.00
+PROBE|029|SP-seq-pause|after-resume|seq.state=running c1.state=running c2.state=stopped c3.state=stopped rectA.opacity=0.98 rectB.opacity=0.00 rectC.opacity=0.00
+PROBE|030|D-delay|before-start|rectD.opacity=0.00 state=stopped
+PROBE|031|D-delay|immediately-after-start|rectD.opacity=0.00 state=stopped
+PROBE|032|D-delay|during-delay|rectD.opacity=0.00 state=stopped
+PROBE|033|D-delay|after-delay|rectD.opacity=0.66 state=running
+PROBE|034|all|done|
+PROBE|999|boot|end|
+------ Finished 'animation-control-probe' execution [EXIT_USER_NAV] ------
+

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+  The real-world pattern under test: a custom component created with CreateObject and never
+  appended to the tree, whose init() tries to locate a screen through m.global.
+-->
+<component name="DetachedHelper" extends="Group">
+    <interface>
+        <field id="globalFind" type="string" />
+        <field id="topFind" type="string" />
+        <field id="globalParent" type="string" />
+    </interface>
+    <script type="text/brightscript" uri="pkg:/components/lib.brs" />
+    <script type="text/brightscript" uri="pkg:/components/DetachedHelper.brs" />
+</component>

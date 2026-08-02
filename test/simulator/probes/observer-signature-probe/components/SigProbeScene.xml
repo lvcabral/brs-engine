@@ -1,0 +1,407 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Observer Signature Probe.
+
+    An observer registered as observeField(field, "funcName") is invoked by the framework with (at
+    most) one argument: the roSGNodeEvent. This probe asks what Roku does when the callback's
+    declared signature cannot accept that argument, which is the JellyRock `reportPlayback` case:
+
+        sub reportPlayback(state = "update" as string)
+        ...
+        m.playbackTimer.observeField("fire", "reportPlayback")
+
+    On a real Roku this does not crash, so either the event is NOT passed (the default "update" is
+    used instead), or it is passed and the later `state = "stop"` comparison is tolerated. The probe
+    distinguishes those by printing type() and the value of every bound parameter.
+
+    Phases (each runs the same case table):
+      p1-observeField        callback bound with observeField, trigger = integer field write
+      p3-observeFieldScoped  same, via observeFieldScoped
+      p2-timer-fire          callback bound to a Timer `fire` field (the JellyRock trigger)
+      p4-stringField         subset, observing a STRING field - does the observed field's own type
+                             ever make an `as string` parameter satisfiable?
+
+    Cases (see the cb* functions below for the exact signatures).
+-->
+<component name="SigProbeScene" extends="Scene">
+    <interface>
+        <field id="probeExit" type="boolean" value="false" />
+        <field id="probeTrigger" type="integer" value="0" />
+        <field id="probeTriggerStr" type="string" value="" />
+    </interface>
+    <children>
+        <Timer id="stepTimer" duration="0.4" repeat="true" />
+        <Timer id="caseTimer" duration="0.1" repeat="false" />
+    </children>
+    <script type="text/brightscript"><![CDATA[
+
+        sub init()
+            m.seq = 0
+            m.result = "<not-called>"
+            m.trig = 0
+
+            m.cases = [
+                { id: "A_noargs",       cb: "cbA", sig: "sub cbA()" }
+                { id: "B_dynamic1",     cb: "cbB", sig: "sub cbB(e)" }
+                { id: "C_objectReq",    cb: "cbC", sig: "sub cbC(e as object)" }
+                { id: "D_dynamicReq",   cb: "cbD", sig: "sub cbD(e as dynamic)" }
+                { id: "E_stringReq",    cb: "cbE", sig: "sub cbE(s as string)" }
+                { id: "F_stringDef",    cb: "cbF", sig: "sub cbF(s = update as string)" }
+                { id: "G_intReq",       cb: "cbG", sig: "sub cbG(n as integer)" }
+                { id: "H_intDef",       cb: "cbH", sig: "sub cbH(n = 42 as integer)" }
+                { id: "I_evtPlusOpt",   cb: "cbI", sig: "sub cbI(e, opt = true)" }
+                { id: "J_twoReq",       cb: "cbJ", sig: "sub cbJ(a, b)" }
+                { id: "K_strDefObjDef", cb: "cbK", sig: "sub cbK(s = update as string, e = invalid as object)" }
+                { id: "L_boolReq",      cb: "cbL", sig: "sub cbL(b as boolean)" }
+                { id: "M_objThenStrDef", cb: "cbM", sig: "sub cbM(e as object, s = update as string)" }
+                { id: "N_objDef",       cb: "cbN", sig: "sub cbN(e = invalid as object)" }
+                { id: "O_function",     cb: "cbO", sig: "function cbO(e as object) as string" }
+                { id: "P_objThenStrReq", cb: "cbP", sig: "sub cbP(e as object, s as string)" }
+            ]
+
+            m.reg = CreateObject("roRegistrySection", "sigprobe")
+            m.stepTimer = m.top.findNode("stepTimer")
+            m.caseTimer = m.top.findNode("caseTimer")
+
+            p("all", "start", "cases=" + itos(m.cases.count()))
+
+            ' Synchronous phases: the observer runs inside the field write, so a try/catch around the
+            ' write can report an invocation-time error instead of taking the app down.
+            runFieldPhase("p1-observeField", false, "probeTrigger", [])
+            runFieldPhase("p3-scopedObserve", true, "probeTrigger", [])
+            runFieldPhase("p4-stringField", false, "probeTriggerStr", ["B_dynamic1", "C_objectReq", "E_stringReq", "F_stringDef"])
+
+            ' Asynchronous phase: a Timer `fire` observer runs from the render-thread message loop,
+            ' outside any try/catch we can install, so this one is checkpointed in the registry.
+            m.p2 = ckpt("p2next")
+            m.p2pending = false
+            m.stepTimer.observeField("fire", "onStep")
+            m.stepTimer.control = "start"
+        end sub
+
+        '--------------------------------------------------------------------------------------
+        ' Phase drivers
+        '--------------------------------------------------------------------------------------
+
+        sub runFieldPhase(phase as string, scoped as boolean, fieldName as string, only as object)
+            key = phase + "-next"
+            start = ckpt(key)
+            total = m.cases.count()
+            if start >= total
+                p(phase, "skip", "already-complete")
+                return
+            end if
+
+            for i = start to total - 1
+                c = m.cases[i]
+                setCkpt(key, i + 1)
+                if only.count() > 0 and not inList(only, c.id)
+                    p(phase, c.id, "skipped not-in-subset")
+                else
+                    p(phase, c.id, "begin sig=" + c.sig + " field=" + fieldName)
+                    m.result = "<not-called>"
+                    m.top.unobserveField(fieldName)
+                    m.top.unobserveFieldScoped(fieldName)
+                    if scoped
+                        m.top.observeFieldScoped(fieldName, c.cb)
+                    else
+                        m.top.observeField(fieldName, c.cb)
+                    end if
+
+                    thrown = ""
+                    try
+                        m.trig = m.trig + 1
+                        if fieldName = "probeTriggerStr"
+                            m.top.probeTriggerStr = "v" + itos(m.trig)
+                        else
+                            m.top.probeTrigger = m.trig
+                        end if
+                    catch e
+                        thrown = errText(e)
+                    end try
+
+                    m.top.unobserveField(fieldName)
+                    m.top.unobserveFieldScoped(fieldName)
+                    p(phase, c.id, "end " + m.result + " throw={" + thrown + "}")
+                end if
+            end for
+            p(phase, "done", "")
+        end sub
+
+        ' Timer `fire` axis - one case per stepTimer tick.
+        sub onStep()
+            if m.p2pending
+                done = m.cases[m.p2 - 1]
+                p("p2-timer-fire", done.id, "end " + m.result)
+                m.p2pending = false
+            end if
+
+            if m.p2 >= m.cases.count()
+                p("p2-timer-fire", "done", "")
+                finish()
+                return
+            end if
+
+            c = m.cases[m.p2]
+            m.p2 = m.p2 + 1
+            setCkpt("p2next", m.p2)
+            p("p2-timer-fire", c.id, "begin sig=" + c.sig + " field=fire")
+
+            m.result = "<not-called>"
+            m.caseTimer.unobserveField("fire")
+            m.caseTimer.observeField("fire", c.cb)
+            m.caseTimer.control = "start"
+            m.p2pending = true
+        end sub
+
+        sub finish()
+            m.stepTimer.control = "stop"
+            m.reg.Delete("p1-observeField-next")
+            m.reg.Delete("p3-scopedObserve-next")
+            m.reg.Delete("p4-stringField-next")
+            m.reg.Delete("p2next")
+            m.reg.Flush()
+            p("all", "done", "checkpoints-cleared")
+            m.top.probeExit = true
+        end sub
+
+        '--------------------------------------------------------------------------------------
+        ' Probe callbacks - one per declared-signature shape under test.
+        ' Each body is wrapped in try/catch so an <uninitialized> parameter is reported, not fatal.
+        '--------------------------------------------------------------------------------------
+
+        sub cbA()
+            rec("bound=0")
+        end sub
+
+        sub cbB(e)
+            try
+                rec("p1=" + d(e))
+            catch err
+                rec("body-error={" + errText(err) + "}")
+            end try
+        end sub
+
+        sub cbC(e as object)
+            try
+                rec("p1=" + d(e))
+            catch err
+                rec("body-error={" + errText(err) + "}")
+            end try
+        end sub
+
+        sub cbD(e as dynamic)
+            try
+                rec("p1=" + d(e))
+            catch err
+                rec("body-error={" + errText(err) + "}")
+            end try
+        end sub
+
+        ' Required, and an roSGNodeEvent can never satisfy it.
+        sub cbE(s as string)
+            try
+                rec("p1=" + d(s))
+            catch err
+                rec("body-error={" + errText(err) + "}")
+            end try
+        end sub
+
+        ' The JellyRock reportPlayback shape: optional, typed string, with a default.
+        sub cbF(s = "update" as string)
+            try
+                rec("p1=" + d(s))
+                rec("cmp-stop=" + btos(s = "stop"))
+            catch err
+                rec("body-error={" + errText(err) + "}")
+            end try
+        end sub
+
+        sub cbG(n as integer)
+            try
+                rec("p1=" + d(n))
+            catch err
+                rec("body-error={" + errText(err) + "}")
+            end try
+        end sub
+
+        sub cbH(n = 42 as integer)
+            try
+                rec("p1=" + d(n))
+            catch err
+                rec("body-error={" + errText(err) + "}")
+            end try
+        end sub
+
+        sub cbI(e, opt = true)
+            try
+                rec("p1=" + d(e))
+            catch err
+                rec("p1-error={" + errText(err) + "}")
+            end try
+            try
+                rec("p2=" + d(opt))
+            catch err
+                rec("p2-error={" + errText(err) + "}")
+            end try
+        end sub
+
+        sub cbJ(a, b)
+            try
+                rec("p1=" + d(a))
+            catch err
+                rec("p1-error={" + errText(err) + "}")
+            end try
+            try
+                rec("p2=" + d(b))
+            catch err
+                rec("p2-error={" + errText(err) + "}")
+            end try
+        end sub
+
+        sub cbK(s = "update" as string, e = invalid as object)
+            try
+                rec("p1=" + d(s))
+            catch err
+                rec("p1-error={" + errText(err) + "}")
+            end try
+            try
+                rec("p2=" + d(e))
+            catch err
+                rec("p2-error={" + errText(err) + "}")
+            end try
+        end sub
+
+        sub cbL(b as boolean)
+            try
+                rec("p1=" + d(b))
+            catch err
+                rec("body-error={" + errText(err) + "}")
+            end try
+        end sub
+
+        sub cbM(e as object, s = "update" as string)
+            try
+                rec("p1=" + d(e))
+            catch err
+                rec("p1-error={" + errText(err) + "}")
+            end try
+            try
+                rec("p2=" + d(s))
+            catch err
+                rec("p2-error={" + errText(err) + "}")
+            end try
+        end sub
+
+        sub cbN(e = invalid as object)
+            try
+                rec("p1=" + d(e))
+            catch err
+                rec("body-error={" + errText(err) + "}")
+            end try
+        end sub
+
+        function cbO(e as object) as string
+            try
+                rec("p1=" + d(e))
+            catch err
+                rec("body-error={" + errText(err) + "}")
+            end try
+            return "returned-value-ignored"
+        end function
+
+        sub cbP(e as object, s as string)
+            try
+                rec("p1=" + d(e))
+            catch err
+                rec("p1-error={" + errText(err) + "}")
+            end try
+            try
+                rec("p2=" + d(s))
+            catch err
+                rec("p2-error={" + errText(err) + "}")
+            end try
+        end sub
+
+        '--------------------------------------------------------------------------------------
+        ' Helpers
+        '--------------------------------------------------------------------------------------
+
+        sub rec(text as string)
+            if m.result = "<not-called>"
+                m.result = text
+            else
+                m.result = m.result + " " + text
+            end if
+        end sub
+
+        ' Describe any value: its type() plus a readable rendering, never throwing.
+        function d(v as dynamic) as string
+            t = "?"
+            try
+                t = type(v)
+            catch err
+                return "<unreadable:" + errText(err) + ">"
+            end try
+
+            if t = "roSGNodeEvent"
+                return "roSGNodeEvent{field=" + v.getField() + " data=" + d(v.getData()) + "}"
+            else if t = "String" or t = "roString"
+                return "String{" + v + "}"
+            else if t = "Integer" or t = "roInt" or t = "roInteger" or t = "LongInteger" or t = "roLongInteger"
+                return t + "{" + str(v).trim() + "}"
+            else if t = "Float" or t = "roFloat" or t = "Double" or t = "roDouble"
+                return t + "{" + str(v).trim() + "}"
+            else if t = "Boolean" or t = "roBoolean"
+                return t + "{" + btos(v) + "}"
+            else if t = "roSGNode"
+                return "roSGNode{" + v.subtype() + "}"
+            end if
+            return "<" + t + ">"
+        end function
+
+        function btos(b as dynamic) as string
+            if b = true then return "true"
+            return "false"
+        end function
+
+        function itos(i as integer) as string
+            return str(i).trim()
+        end function
+
+        function errText(e as object) as string
+            if type(e) <> "roAssociativeArray" then return "<non-aa-error>"
+            msg = ""
+            if e.message <> invalid then msg = e.message
+            if e.number <> invalid then msg = msg + " (#" + str(e.number).trim() + ")"
+            return msg
+        end function
+
+        function inList(arr as object, id as string) as boolean
+            for each item in arr
+                if item = id then return true
+            end for
+            return false
+        end function
+
+        function ckpt(key as string) as integer
+            if m.reg.Exists(key) then return int(val(m.reg.Read(key)))
+            return 0
+        end function
+
+        sub setCkpt(key as string, value as integer)
+            m.reg.Write(key, itos(value))
+            m.reg.Flush()
+        end sub
+
+        sub p(phase as string, caseId as string, detail as string)
+            m.seq = m.seq + 1
+            s = itos(m.seq)
+            while s.len() < 3
+                s = "0" + s
+            end while
+            print "PROBE|" + s + "|" + phase + "|" + caseId + "|" + detail
+        end sub
+
+    ]]></script>
+</component>

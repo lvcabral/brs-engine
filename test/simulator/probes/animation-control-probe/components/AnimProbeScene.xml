@@ -1,0 +1,344 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Animation Control Probe.
+
+    Each case drives one control transition and samples the ANIMATED TARGET FIELD (a Rectangle's
+    opacity/width) plus the animation's own `state`. The target value is what actually matters: an
+    engine can report the right `state` while never touching the field, which is exactly the
+    ParallelAnimation/SequentialAnimation `finish` bug this probe exists to confirm.
+
+    Every case is timed off a step Timer so animations get real frames. Values are sampled at fixed
+    checkpoints rather than continuously, so the trace is deterministic and diffable between a device
+    and the engine.
+
+    Fixtures (all interpolate a plain float field so the value is easy to read back):
+      rectA.opacity   driven by leafAnim / parAnim child 1 / seqAnim child 1
+      rectB.opacity   driven by parAnim child 2 / seqAnim child 2
+      rectC.opacity   driven by seqAnim child 3
+      rectD.opacity   driven by delayAnim (delay = 1.0s)
+-->
+<component name="AnimProbeScene" extends="Scene">
+    <interface>
+        <field id="probeExit" type="boolean" value="false" />
+    </interface>
+    <children>
+        <Rectangle id="rectA" width="100" height="100" color="0xFF0000FF" opacity="0.0" />
+        <Rectangle id="rectB" width="100" height="100" translation="[120,0]" color="0x00FF00FF" opacity="0.0" />
+        <Rectangle id="rectC" width="100" height="100" translation="[240,0]" color="0x0000FFFF" opacity="0.0" />
+        <Rectangle id="rectD" width="100" height="100" translation="[360,0]" color="0xFFFF00FF" opacity="0.0" />
+
+        <!-- A plain leaf animation: the control baseline every container case is compared against. -->
+        <Animation id="leafAnim" duration="2" repeat="false">
+            <FloatFieldInterpolator id="leafInterp" key="[0.0,1.0]" keyValue="[0.0,1.0]" fieldToInterp="rectA.opacity" />
+        </Animation>
+
+        <!-- Two children so a partial propagation (only the first child) is distinguishable. -->
+        <ParallelAnimation id="parAnim" duration="2" repeat="false">
+            <Animation id="parChild1" duration="2" repeat="false">
+                <FloatFieldInterpolator id="parInterp1" key="[0.0,1.0]" keyValue="[0.0,1.0]" fieldToInterp="rectA.opacity" />
+            </Animation>
+            <Animation id="parChild2" duration="2" repeat="false">
+                <FloatFieldInterpolator id="parInterp2" key="[0.0,1.0]" keyValue="[0.0,1.0]" fieldToInterp="rectB.opacity" />
+            </Animation>
+        </ParallelAnimation>
+
+        <!-- Three children: a `finish` must fast-forward the ones that never ran, not just the current. -->
+        <SequentialAnimation id="seqAnim" repeat="false">
+            <Animation id="seqChild1" duration="1" repeat="false">
+                <FloatFieldInterpolator id="seqInterp1" key="[0.0,1.0]" keyValue="[0.0,1.0]" fieldToInterp="rectA.opacity" />
+            </Animation>
+            <Animation id="seqChild2" duration="1" repeat="false">
+                <FloatFieldInterpolator id="seqInterp2" key="[0.0,1.0]" keyValue="[0.0,1.0]" fieldToInterp="rectB.opacity" />
+            </Animation>
+            <Animation id="seqChild3" duration="1" repeat="false">
+                <FloatFieldInterpolator id="seqInterp3" key="[0.0,1.0]" keyValue="[0.0,1.0]" fieldToInterp="rectC.opacity" />
+            </Animation>
+        </SequentialAnimation>
+
+        <!-- delay = 1s: is the target snapped to keyValue[0] at start, or left at its authored value? -->
+        <Animation id="delayAnim" duration="1" delay="1" repeat="false">
+            <FloatFieldInterpolator id="delayInterp" key="[0.0,1.0]" keyValue="[0.25,1.0]" fieldToInterp="rectD.opacity" />
+        </Animation>
+
+        <Timer id="stepTimer" duration="0.25" repeat="true" />
+    </children>
+    <script type="text/brightscript"><![CDATA[
+
+        sub init()
+            m.seq = 0
+            m.tick = 0
+
+            m.rectA = m.top.findNode("rectA")
+            m.rectB = m.top.findNode("rectB")
+            m.rectC = m.top.findNode("rectC")
+            m.rectD = m.top.findNode("rectD")
+            m.leafAnim = m.top.findNode("leafAnim")
+            m.parAnim = m.top.findNode("parAnim")
+            m.parChild1 = m.top.findNode("parChild1")
+            m.parChild2 = m.top.findNode("parChild2")
+            m.seqAnim = m.top.findNode("seqAnim")
+            m.seqChild1 = m.top.findNode("seqChild1")
+            m.seqChild2 = m.top.findNode("seqChild2")
+            m.seqChild3 = m.top.findNode("seqChild3")
+            m.delayAnim = m.top.findNode("delayAnim")
+
+            ' The script is a flat list of steps: each entry is { at: <tick>, act: "<step-id>" }.
+            ' Ticks are 0.25s apart, so `at` is quarter-seconds from the start of the run.
+            m.script = [
+                ' --- L: leaf baseline. Does start write keyValue[0] before the next frame? ---
+                { at: 1, act: "L_begin" }
+                { at: 2, act: "L_mid" }
+                { at: 10, act: "L_afterStop" }
+
+                ' --- N: control="none" on a RUNNING animation. Reference: "no associated action". ---
+                { at: 12, act: "N_start" }
+                { at: 14, act: "N_writeNone" }
+                { at: 16, act: "N_sample" }
+                { at: 17, act: "N_cleanup" }
+
+                ' --- PF: ParallelAnimation finish. Must set BOTH children's targets to final. ---
+                { at: 19, act: "PF_start" }
+                { at: 20, act: "PF_finish" }
+                { at: 21, act: "PF_sample" }
+                { at: 22, act: "PF_cleanup" }
+
+                ' --- PP: ParallelAnimation pause -> do the children actually stop advancing? ---
+                { at: 24, act: "PP_start" }
+                { at: 25, act: "PP_pause" }
+                { at: 26, act: "PP_sampleA" }
+                { at: 30, act: "PP_sampleB" }
+                { at: 31, act: "PP_resume" }
+                { at: 32, act: "PP_sampleC" }
+                { at: 36, act: "PP_cleanup" }
+
+                ' --- SF: SequentialAnimation finish during child 1 -> are children 2 AND 3 final? ---
+                { at: 38, act: "SF_start" }
+                { at: 39, act: "SF_finish" }
+                { at: 40, act: "SF_sample" }
+                { at: 41, act: "SF_cleanup" }
+
+                ' --- SP: SequentialAnimation pause/resume. ---
+                { at: 43, act: "SP_start" }
+                { at: 44, act: "SP_pause" }
+                { at: 48, act: "SP_sample" }
+                { at: 49, act: "SP_resume" }
+                { at: 51, act: "SP_sampleAfter" }
+                { at: 52, act: "SP_cleanup" }
+
+                ' --- D: delay. Is the target snapped to keyValue[0] while the delay runs? ---
+                { at: 54, act: "D_start" }
+                { at: 55, act: "D_duringDelay" }
+                { at: 59, act: "D_afterDelay" }
+                { at: 62, act: "D_cleanup" }
+
+                { at: 64, act: "FINISH" }
+            ]
+            m.scriptIndex = 0
+
+            p("all", "start", "steps=" + itos(m.script.count()))
+            m.stepTimer = m.top.findNode("stepTimer")
+            m.stepTimer.observeField("fire", "onStep")
+            m.stepTimer.control = "start"
+        end sub
+
+        sub onStep()
+            m.tick = m.tick + 1
+            while m.scriptIndex < m.script.count() and m.script[m.scriptIndex].at <= m.tick
+                runStep(m.script[m.scriptIndex].act)
+                m.scriptIndex = m.scriptIndex + 1
+            end while
+        end sub
+
+        sub runStep(id as string)
+            if id = "L_begin"
+                resetTargets()
+                p("L-leaf", "before-start", snapshot(m.leafAnim, "leafAnim"))
+                m.leafAnim.control = "start"
+                ' Sampled in the SAME message-loop turn as the write: if the engine only applies
+                ' keyValue[0] on the next frame, rectA.opacity is still its authored 0.0 here even
+                ' though keyValue[0] is also 0.0 - so the interpolator starts at 0.25 on rectD (case D)
+                ' to make that distinction visible. Here we only record that start was accepted.
+                p("L-leaf", "immediately-after-start", snapshot(m.leafAnim, "leafAnim"))
+            else if id = "L_mid"
+                p("L-leaf", "mid-run", snapshot(m.leafAnim, "leafAnim"))
+            else if id = "L_afterStop"
+                p("L-leaf", "after-complete", snapshot(m.leafAnim, "leafAnim"))
+                resetTargets()
+
+            else if id = "N_start"
+                resetTargets()
+                m.leafAnim.control = "start"
+                p("N-none", "started", snapshot(m.leafAnim, "leafAnim"))
+            else if id = "N_writeNone"
+                p("N-none", "before-none", snapshot(m.leafAnim, "leafAnim"))
+                m.leafAnim.control = "none"
+                p("N-none", "immediately-after-none", snapshot(m.leafAnim, "leafAnim"))
+            else if id = "N_sample"
+                ' If `none` was inert, the animation kept running and opacity advanced further.
+                ' If `none` stopped it, opacity is frozen at the before-none value.
+                p("N-none", "settled", snapshot(m.leafAnim, "leafAnim"))
+            else if id = "N_cleanup"
+                m.leafAnim.control = "stop"
+                resetTargets()
+
+            else if id = "PF_start"
+                resetTargets()
+                m.parAnim.control = "start"
+                p("PF-par-finish", "started", parSnapshot())
+            else if id = "PF_finish"
+                p("PF-par-finish", "before-finish", parSnapshot())
+                m.parAnim.control = "finish"
+                p("PF-par-finish", "immediately-after-finish", parSnapshot())
+            else if id = "PF_sample"
+                ' THE headline case: per the reference both targets must read 1.0 here.
+                p("PF-par-finish", "settled", parSnapshot())
+            else if id = "PF_cleanup"
+                m.parAnim.control = "stop"
+                resetTargets()
+
+            else if id = "PP_start"
+                resetTargets()
+                m.parAnim.control = "start"
+                p("PP-par-pause", "started", parSnapshot())
+            else if id = "PP_pause"
+                m.parAnim.control = "pause"
+                p("PP-par-pause", "immediately-after-pause", parSnapshot())
+            else if id = "PP_sampleA"
+                p("PP-par-pause", "just-after-pause", parSnapshot())
+            else if id = "PP_sampleB"
+                ' If the children ignored the pause they kept advancing between sampleA and sampleB.
+                p("PP-par-pause", "one-second-later", parSnapshot())
+            else if id = "PP_resume"
+                m.parAnim.control = "resume"
+                p("PP-par-pause", "immediately-after-resume", parSnapshot())
+            else if id = "PP_sampleC"
+                ' Continue from where it paused, or restart from 0?
+                p("PP-par-pause", "after-resume", parSnapshot())
+            else if id = "PP_cleanup"
+                p("PP-par-pause", "settled", parSnapshot())
+                m.parAnim.control = "stop"
+                resetTargets()
+
+            else if id = "SF_start"
+                resetTargets()
+                m.seqAnim.control = "start"
+                p("SF-seq-finish", "started", seqSnapshot())
+            else if id = "SF_finish"
+                p("SF-seq-finish", "before-finish", seqSnapshot())
+                m.seqAnim.control = "finish"
+                p("SF-seq-finish", "immediately-after-finish", seqSnapshot())
+            else if id = "SF_sample"
+                ' Per the reference all three targets must read 1.0, including children 2 and 3
+                ' which never got to run.
+                p("SF-seq-finish", "settled", seqSnapshot())
+            else if id = "SF_cleanup"
+                m.seqAnim.control = "stop"
+                resetTargets()
+
+            else if id = "SP_start"
+                resetTargets()
+                m.seqAnim.control = "start"
+                p("SP-seq-pause", "started", seqSnapshot())
+            else if id = "SP_pause"
+                m.seqAnim.control = "pause"
+                p("SP-seq-pause", "immediately-after-pause", seqSnapshot())
+            else if id = "SP_sample"
+                ' If the sequence ignored pause it has advanced into child 2 by now.
+                p("SP-seq-pause", "one-second-later", seqSnapshot())
+            else if id = "SP_resume"
+                m.seqAnim.control = "resume"
+                p("SP-seq-pause", "immediately-after-resume", seqSnapshot())
+            else if id = "SP_sampleAfter"
+                p("SP-seq-pause", "after-resume", seqSnapshot())
+            else if id = "SP_cleanup"
+                m.seqAnim.control = "stop"
+                resetTargets()
+
+            else if id = "D_start"
+                resetTargets()
+                p("D-delay", "before-start", "rectD.opacity=" + f(m.rectD.opacity) + " state=" + m.delayAnim.state)
+                m.delayAnim.control = "start"
+                ' keyValue[0] is 0.25 and the authored opacity is 0.0, so these are distinguishable:
+                ' 0.25 means the target was snapped at start, 0.0 means it was not.
+                p("D-delay", "immediately-after-start", "rectD.opacity=" + f(m.rectD.opacity) + " state=" + m.delayAnim.state)
+            else if id = "D_duringDelay"
+                p("D-delay", "during-delay", "rectD.opacity=" + f(m.rectD.opacity) + " state=" + m.delayAnim.state)
+            else if id = "D_afterDelay"
+                p("D-delay", "after-delay", "rectD.opacity=" + f(m.rectD.opacity) + " state=" + m.delayAnim.state)
+            else if id = "D_cleanup"
+                m.delayAnim.control = "stop"
+                resetTargets()
+
+            else if id = "FINISH"
+                p("all", "done", "")
+                m.stepTimer.control = "stop"
+                m.top.probeExit = true
+            end if
+        end sub
+
+        '--------------------------------------------------------------------------------------
+        ' Snapshots
+        '--------------------------------------------------------------------------------------
+
+        function snapshot(anim as object, label as string) as string
+            return label + ".state=" + anim.state + " rectA.opacity=" + f(m.rectA.opacity)
+        end function
+
+        function parSnapshot() as string
+            out = "par.state=" + m.parAnim.state
+            out = out + " c1.state=" + m.parChild1.state
+            out = out + " c2.state=" + m.parChild2.state
+            out = out + " rectA.opacity=" + f(m.rectA.opacity)
+            out = out + " rectB.opacity=" + f(m.rectB.opacity)
+            return out
+        end function
+
+        function seqSnapshot() as string
+            out = "seq.state=" + m.seqAnim.state
+            out = out + " c1.state=" + m.seqChild1.state
+            out = out + " c2.state=" + m.seqChild2.state
+            out = out + " c3.state=" + m.seqChild3.state
+            out = out + " rectA.opacity=" + f(m.rectA.opacity)
+            out = out + " rectB.opacity=" + f(m.rectB.opacity)
+            out = out + " rectC.opacity=" + f(m.rectC.opacity)
+            return out
+        end function
+
+        sub resetTargets()
+            m.rectA.opacity = 0.0
+            m.rectB.opacity = 0.0
+            m.rectC.opacity = 0.0
+            m.rectD.opacity = 0.0
+        end sub
+
+        '--------------------------------------------------------------------------------------
+        ' Helpers
+        '--------------------------------------------------------------------------------------
+
+        ' Two decimals, so a sample is stable across device/engine frame-timing jitter while still
+        ' distinguishing "reached the final value" from "stopped partway".
+        function f(v as dynamic) as string
+            if v = invalid then return "<invalid>"
+            n = int(v * 100 + 0.5)
+            whole = int(n / 100)
+            frac = n - whole * 100
+            fs = itos(frac)
+            if fs.len() < 2 then fs = "0" + fs
+            return itos(whole) + "." + fs
+        end function
+
+        function itos(i as integer) as string
+            return str(i).trim()
+        end function
+
+        sub p(phase as string, caseId as string, detail as string)
+            m.seq = m.seq + 1
+            s = itos(m.seq)
+            while s.len() < 3
+                s = "0" + s
+            end while
+            print "PROBE|" + s + "|" + phase + "|" + caseId + "|" + detail
+        end sub
+
+    ]]></script>
+</component>

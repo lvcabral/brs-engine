@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+  A custom component whose script-scope `m` carries state set after creation, including a node
+  reference. Reported back through callFunc so we can see what `m` looks like from the other thread.
+-->
+<component name="Probe" extends="Group">
+    <interface>
+        <function name="setOrigin" />
+        <function name="stash" />
+        <function name="report" />
+    </interface>
+    <script type="text/brightscript" uri="pkg:/components/lib.brs" />
+    <script type="text/brightscript" uri="pkg:/components/Probe.brs" />
+</component>

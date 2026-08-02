@@ -1,0 +1,40 @@
+PROBE|000|boot|start|
+PROBE|000|boot|device|model=Roku TV os=15.0
+PROBE|001|init|ready|gridA=F gridB=F menu=F outletInChain=F outletFC=invalid overhangFC=invalid sceneFC=invalid
+PROBE|002|S1-enter|before|gridA=F gridB=F menu=F outletInChain=F outletFC=invalid overhangFC=invalid sceneFC=invalid
+PROBE|003|S1-enter|OBS-outlet|data=node:page:Group gridA=T gridB=F menu=F outletInChain=T outletFC=page overhangFC=invalid sceneFC=outlet
+PROBE|004|S1-enter|after|gridA=T gridB=F menu=F outletInChain=T outletFC=page overhangFC=invalid sceneFC=outlet
+PROBE|005|S2-move-within|before|gridA=T gridB=F menu=F outletInChain=T outletFC=page overhangFC=invalid sceneFC=outlet
+PROBE|006|S2-move-within|OBS-outlet|data=node:page:Group gridA=F gridB=T menu=F outletInChain=T outletFC=page overhangFC=invalid sceneFC=outlet
+PROBE|007|S2-move-within|after|gridA=F gridB=T menu=F outletInChain=T outletFC=page overhangFC=invalid sceneFC=outlet
+PROBE|008|S3-leave|before|gridA=F gridB=T menu=F outletInChain=T outletFC=page overhangFC=invalid sceneFC=outlet
+PROBE|009|S3-leave|OBS-outlet|data=invalid gridA=F gridB=F menu=T outletInChain=F outletFC=invalid overhangFC=invalid sceneFC=outlet
+PROBE|010|S3-leave|OBS-overhang|data=node:menuItem:Rectangle gridA=F gridB=F menu=T outletInChain=F outletFC=invalid overhangFC=menuItem sceneFC=overhang
+PROBE|011|S3-leave|after|gridA=F gridB=F menu=T outletInChain=F outletFC=invalid overhangFC=menuItem sceneFC=overhang
+PROBE|012|S4-prep|before|gridA=F gridB=F menu=T outletInChain=F outletFC=invalid overhangFC=menuItem sceneFC=overhang
+PROBE|013|S4-prep|OBS-overhang|data=invalid gridA=T gridB=F menu=F outletInChain=T outletFC=invalid overhangFC=invalid sceneFC=overhang
+PROBE|014|S4-prep|OBS-outlet|data=node:page:Group gridA=T gridB=F menu=F outletInChain=T outletFC=page overhangFC=invalid sceneFC=outlet
+PROBE|015|S4-prep|after|gridA=T gridB=F menu=F outletInChain=T outletFC=page overhangFC=invalid sceneFC=outlet
+PROBE|016|S4-steal|before|gridA=T gridB=F menu=F outletInChain=T outletFC=page overhangFC=invalid sceneFC=outlet
+PROBE|017|S4-steal|OBS-outlet|data=invalid gridA=F gridB=F menu=T outletInChain=F outletFC=invalid overhangFC=invalid sceneFC=outlet
+PROBE|018|S4-steal|OBS-outlet-steal|calling gridA.setFocus(true)
+PROBE|019|S4-steal|OBS-overhang|data=invalid gridA=T gridB=F menu=F outletInChain=T outletFC=invalid overhangFC=invalid sceneFC=outlet
+PROBE|020|S4-steal|OBS-outlet-steal-done|gridA=T gridB=F menu=F outletInChain=T outletFC=page overhangFC=invalid sceneFC=outlet
+PROBE|021|S4-steal|OBS-overhang|data=node:menuItem:Rectangle gridA=T gridB=F menu=F outletInChain=T outletFC=page overhangFC=menuItem sceneFC=overhang
+PROBE|022|S4-steal|after|gridA=T gridB=F menu=F outletInChain=T outletFC=page overhangFC=menuItem sceneFC=overhang
+PROBE|023|S4-settled|settled|gridA=T gridB=F menu=F outletInChain=T outletFC=page overhangFC=menuItem sceneFC=overhang
+PROBE|024|S5-redundant|before|gridA=T gridB=F menu=F outletInChain=T outletFC=page overhangFC=menuItem sceneFC=overhang
+PROBE|025|S5-redundant|after-unfocus-idle-node|gridA=T gridB=F menu=F outletInChain=T outletFC=page overhangFC=menuItem sceneFC=overhang
+PROBE|026|S5-redundant|OBS-outlet|data=node:page:Group gridA=T gridB=F menu=F outletInChain=T outletFC=page overhangFC=menuItem sceneFC=outlet
+PROBE|027|S5-redundant|after-refocus-same-node|gridA=T gridB=F menu=F outletInChain=T outletFC=page overhangFC=menuItem sceneFC=outlet
+PROBE|028|S6-prep|before|gridA=T gridB=F menu=F outletInChain=T outletFC=page overhangFC=menuItem sceneFC=outlet
+PROBE|029|S6-prep|OBS-outlet|data=node:page:Group gridA=T gridB=F menu=F outletInChain=T outletFC=page overhangFC=menuItem sceneFC=outlet
+PROBE|030|S6-prep|after|gridA=T gridB=F menu=F outletInChain=T outletFC=page overhangFC=menuItem sceneFC=outlet
+PROBE|031|S6-dialog|before|gridA=T gridB=F menu=F outletInChain=T outletFC=page overhangFC=menuItem sceneFC=outlet
+PROBE|032|S6-dialog|after|gridA=T gridB=F menu=F outletInChain=T outletFC=page overhangFC=menuItem sceneFC=outlet
+PROBE|033|S6-dialog|OBS-outlet|data=invalid gridA=F gridB=F menu=F outletInChain=F outletFC=invalid overhangFC=menuItem sceneFC=outlet
+PROBE|034|S6-settled|settled|dialogInChain=T dialogHasFocus=F gridA=F gridB=F menu=F outletInChain=F outletFC=invalid overhangFC=menuItem sceneFC=<noid>
+PROBE|035|S7-modal|before-steal|dialogInChain=T gridA=F gridB=F menu=F outletInChain=F outletFC=invalid overhangFC=menuItem sceneFC=<noid>
+PROBE|036|S7-modal|OBS-outlet|data=node:page:Group gridA=T gridB=F menu=F outletInChain=T outletFC=page overhangFC=menuItem sceneFC=outlet
+PROBE|037|S7-modal|after-steal|dialogInChain=F gridA=T gridB=F menu=F outletInChain=T outletFC=page overhangFC=menuItem sceneFC=outlet
+PROBE|---|S7-modal|MANUAL|Now press DOWN, then OK, then BACK on the remote.

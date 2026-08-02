@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Stored in m.global. callFunc on it from a task must run against the render thread's `m`. -->
+<component name="ProbeComp" extends="Group">
+    <interface>
+        <function name="report" />
+    </interface>
+    <script type="text/brightscript" uri="pkg:/components/lib.brs" />
+    <script type="text/brightscript" uri="pkg:/components/ProbeComp.brs" />
+</component>

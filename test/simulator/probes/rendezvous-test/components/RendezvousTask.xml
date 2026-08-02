@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="RendezvousTask" extends="Task">
+    <interface>
+        <!-- Render -> task handshake, so phase 2 runs strictly after the render-side mutation. -->
+        <field id="phase" type="integer" value="1" />
+        <!-- Task -> render: 1 when phase 1 is reported, 2 when phase 2 is. -->
+        <field id="ready" type="integer" value="0" />
+        <field id="report1" type="string" />
+        <field id="report2" type="string" />
+        <field id="taskLocal" type="string" value="owned-by-task" />
+    </interface>
+    <script type="text/brightscript" uri="pkg:/components/lib.brs" />
+    <script type="text/brightscript" uri="pkg:/components/RendezvousTask.brs" />
+</component>

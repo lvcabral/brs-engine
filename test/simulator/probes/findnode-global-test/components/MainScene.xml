@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="MainScene" extends="Scene">
+    <script type="text/brightscript" uri="pkg:/components/lib.brs" />
+    <script type="text/brightscript" uri="pkg:/components/MainScene.brs" />
+    <children>
+        <!-- Plain scene subtree: the ids the global node will be asked to reach. -->
+        <Group id="SceneChild">
+            <Label id="NestedLabel" text="" />
+        </Group>
+        <!-- A custom component attached to the scene, to test reaching *inside* one. -->
+        <AttachedPanel id="AttachedPanel" />
+
+        <Label id="ResultsInit" translation="[40,20]" width="900" height="1040"
+               wrap="true" font="font:SmallestSystemFont" />
+        <Label id="ResultsSettled" translation="[970,20]" width="900" height="1040"
+               wrap="true" font="font:SmallestSystemFont" />
+    </children>
+</component>

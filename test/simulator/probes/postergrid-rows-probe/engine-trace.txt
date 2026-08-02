@@ -1,0 +1,14 @@
+PROBE|000|boot|start|
+PROBE|000|boot|device|model=Roku TV os=15.0
+PROBE|000|boot|ui|HD 1280x720
+PROBE|001|all|start|
+PROBE|002|R-postergrid|R1-one-row-baseline|rect={x=0 y=0 w=100 h=100} | height=cell+2*marginY; poster is 100 tall - what is the cell?
+PROBE|003|R-postergrid|R2-no-empty-caption-bg|rect={x=200 y=0 w=100 h=100} | showBackgroundForEmptyCaptions=false - does the extra height go away?
+PROBE|004|R-postergrid|R3-one-caption-line|rect={x=400 y=0 w=100 h=144} | caption1NumLines=1 with titles - does the cell grow by a line?
+PROBE|005|R-postergrid|R4-three-rows-no-array|rect={x=600 y=0 w=100 h=400} | 3 rows, itemSpacing.y=50 -> TRAILING gap gives 3 gaps, N-1 gives 2
+PROBE|006|R-postergrid|R5-short-array|rect={x=800 y=0 w=100 h=320} | 3 rows, rowSpacings=[10], itemSpacing.y=50 -> FALLBACK gives 10+50+50, REPEAT gives 10+10+10
+PROBE|007|R-postergrid|R6-row-heights|rect={x=1000 y=0 w=100 h=350} | rowHeights=[200,50,100] - honored, or ignored like columnWidths?
+PROBE|008|all|done|
+PROBE|999|boot|end|
+------ Finished 'postergrid-rows-probe' execution [EXIT_USER_NAV] ------
+

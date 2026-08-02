@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="MainScene" extends="Scene">
+    <script type="text/brightscript" uri="pkg:/components/lib.brs" />
+    <script type="text/brightscript" uri="pkg:/components/MainScene.brs" />
+    <children>
+        <Label id="Results" translation="[40,20]" width="1840" height="1040"
+               wrap="true" font="font:SmallestSystemFont" />
+    </children>
+</component>

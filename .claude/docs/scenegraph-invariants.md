@@ -39,7 +39,7 @@ parent above them. Regression: `ClippingRect.test.js`.
   `drawTrans` inline — if it did, the clip position could drift from the paint position. `rotateTranslation`
   now appears only in `Group.getDrawTranslation` (plus one unrelated use in `MonospaceLabel`).
 - **An inherited rotation rotates EVERY node type's own translation.** **Device-measured** (Streaming
-  Stick / Roku OS 15.2, probe `out/layout-measure-probe` case `R`): two identical hosts rotated 90° with
+  Stick / Roku OS 15.2, probe `test/simulator/probes/layout-measure-probe` case `R`): two identical hosts rotated 90° with
   a child translated `[100, 0]` put the child at the same rotated position whether that child is a
   `Group` or a `Rectangle`. The engine used to rotate for 18 renderable types but not for `Group` or the
   keyboard/text-entry containers — a `rotatesDrawTranslation()` hook that this measurement removed. The
@@ -319,7 +319,7 @@ capture the **native JS stack** mid-recursion (a temporary depth tripwire dumpin
    > `Type Mismatch` on a later `state = "stop"` — a crash impossible on a device. Measured across 16
    > signature shapes × `observeField` / `observeFieldScoped` / `Timer.fire` / a string-typed field on Roku
    > OS 15.2 (all four identical); the probe app and its device trace are in
-   > `out/observer-signature-probe/`. Regression: "Binds an observer callback's parameters the way a device
+   > `test/simulator/probes/observer-signature-probe/`. Regression: "Binds an observer callback's parameters the way a device
    > does" in `test/cli/cli.test.js` (`observer-signature-app`).
 
 2. **Re-entrant render — `Node.getBoundingRect`.** `localBoundingRect`/`boundingRect` refresh layout by
@@ -344,12 +344,12 @@ capture the **native JS stack** mid-recursion (a temporary depth tripwire dumpin
 
 ## Animation `control` — containers relay everything, `none` is inert, a pending `delay` reads "stopped"
 
-**Device-measured** (probe channel: `out/animation-control-probe`, Streaming Stick / Roku OS 15.2; the
+**Device-measured** (probe channel: `test/simulator/probes/animation-control-probe`, Streaming Stick / Roku OS 15.2; the
 engine reproduces all 37 records on states and value buckets). Four rules, each of which the engine got
 wrong and none of which is guessable from the reference alone.
 
-> The probe and its device/engine traces live in **gitignored** `out/` scratch (`.gitignore:14`), same
-> as `out/observer-signature-probe` — they are not committed, so re-measuring means rebuilding the
+> The probe and its device/engine traces live in `test/simulator/probes/animation-control-probe`, same
+> as `test/simulator/probes/observer-signature-probe` — re-measuring means rebuilding the
 > channel from this section plus the trace format described in its README. The four rules below are the
 > durable artifact; treat them as the record, not the traces.
 
@@ -399,8 +399,8 @@ Regression: `test/extensions/scenegraph/AnimationControl.test.js`. Note the `res
 after resume" would pass vacuously.
 ## `PosterGrid` extent — asymmetric axes, trailing gaps, fall-back spacing
 
-**Device-measured** (Streaming Stick / Roku OS 15.2, HD 1280x720; probes `out/postergrid-spacing-probe`
-and `out/postergrid-rows-probe`, each fixture isolating one unknown). The engine reproduces every
+**Device-measured** (Streaming Stick / Roku OS 15.2, HD 1280x720; probes `test/simulator/probes/postergrid-spacing-probe`
+and `test/simulator/probes/postergrid-rows-probe`, each fixture isolating one unknown). The engine reproduces every
 width and every x/y offset exactly:
 
 ```
@@ -525,7 +525,7 @@ Regression: `test/extensions/scenegraph/FocusBeforeAttach.test.js`.
 
 ### A focus transaction commits before it notifies, and a focus-loss observer can't re-grab
 
-Two rules, both **device-measured** on a Roku Express 4K+ (OS 15.3) with `out/focus-probe*`. They exist
+Two rules, both **device-measured** on a Roku Express 4K+ (OS 15.3) with `test/simulator/probes/focus-probe*`. They exist
 because an app that re-grabs focus from its own `focusedChild` observer (sgRouter's outlet, and the same
 `OnFocusedChildChange` shape in several media apps) behaves on a device and used to corrupt the chain here.
 
