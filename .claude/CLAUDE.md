@@ -19,7 +19,9 @@ like harmless simplifications.
 `docs/` (repo-level, user-facing) is the source of truth for usage: `build-from-source.md`,
 `integrating.md`, `engine-api.md`, `customization.md`, `run-as-cli.md`, `using-node-library.md`,
 `extensions.md`, `scenegraph-rendezvous.md`, `scenegraph-layout-passes.md`, `remote-control.md`,
-`limitations.md`, `contributing.md`.
+`limitations.md`, `contributing.md`. `scenegraph-layout-and-clipping-gaps.md` records three
+device-measured-or-blocked layout/clipping divergences awaiting a fix (`PosterGrid` caption zone,
+`LabelList` marginY, `RowList` item-cell clipping) and what each probe/fix needs.
 
 ## Overview
 
