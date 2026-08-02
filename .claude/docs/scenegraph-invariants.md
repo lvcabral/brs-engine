@@ -397,6 +397,69 @@ already did), and `pause` leaves each child's own `state` reading `paused`.
 Regression: `test/extensions/scenegraph/AnimationControl.test.js`. Note the `resume` test asserts the
 *paused precondition* first — without pause propagation the children were never paused, so "they run
 after resume" would pass vacuously.
+## `PosterGrid` extent — asymmetric axes, trailing gaps, fall-back spacing
+
+**Device-measured** (Streaming Stick / Roku OS 15.2, HD 1280x720; probes `out/postergrid-spacing-probe`
+and `out/postergrid-rows-probe`, each fixture isolating one unknown). The engine reproduces every
+width and every x/y offset exactly:
+
+```
+width  = Σ over ALL N cols of (basePosterSize.x + colSpacing_i) + 2*marginX    columnWidths IGNORED
+height = Σ over ALL N rows of (rowHeight_i      + rowSpacing_i) + 2*marginY    rowHeights HONORED
+spacing_i = (column|row)Spacings[i] ?? itemSpacing.(x|y)
+marginX = marginY = 14 (HD)
+```
+
+Four rules, each of which the engine had wrong:
+
+1. **Short spacing arrays fall back to `itemSpacing`, they do not repeat the last entry.**
+   `columnSpacings=[10]` across 3 columns measured 438 (`10 + 50 + 50`); repeating would have given
+   358. Note `LayoutGroup.itemSpacings` **is** device-confirmed to repeat — the two genuinely differ,
+   which is why this was measured rather than reasoned by analogy. Watch the *fallback value* too: it
+   is `itemSpacing`, not the array's first entry (the old `defaultColumnSpacing` derived from
+   `columnSpacings[0]`, which silently made short arrays behave like a repeat).
+2. **The gap AFTER the last track counts**, on both axes — matching the reference's "the spacing after
+   each row" wording. 3 columns of 100 at `itemSpacing.x = 50` measure 478, not 428.
+3. **The axes are NOT symmetric.** `columnWidths` is **ignored** (cell width always comes from
+   `basePosterSize.x`) while `rowHeights` **is** honored. Do not unify them into one helper.
+4. **`rectMargins` is 14/14**, not `ArrayGrid`'s shared 24/4. The FHD value (21) is *inferred* from the
+   standard 1.5× design-resolution scale, **not measured**.
+
+**Related general fix:** `Group.updateBoundingRects` built `rectToParent` from the node's *translation*,
+discarding `drawRect.x/y`. Identical for an ordinary node, but a grid's `updateRect` outsets `drawRect`
+by its focus margins — and a device reports that outset — so a grid's reported rect had the widened
+width/height with un-offset x/y. It now derives the position from `drawRect` too.
+
+**All three coordinate spaces have to move together.** `rectLocal` stayed at `{0,0}` in the first cut,
+so `localBoundingRect()`/`localSubBoundingRect()` disagreed with the parent and scene rects by the
+margin (`Node.getSubBoundingRect` bases its `"local"` variant on `rectLocal`). Local is parent-space
+minus the node's own translation; fixing two of three spaces is worse than fixing none, because the
+disagreement is silent.
+
+**`Overhang` was the one node not positioning through `getDrawTranslation`** — it built its rect from
+`origin` alone and passed `origin` to its children, ignoring its own `translation`. That made the
+general fix above report `{0,0}` for a translated Overhang (previously `{30,40}` from the translation
+path, which disagreed with where it actually painted). It now uses `getDrawTranslation` like every
+other node, so its paint position and its reported rect agree. Regression: `OverhangLayout.test.js`.
+
+**Per-track arrays: `rowHeights` follows the same fall-back rule as the spacing arrays.** It used to
+resolve through `ArrayGrid.resolveNumber`, which *repeats* the last entry — so `rowHeights=[200]` over
+3 rows measured `3 x 200` instead of `200 + 100 + 100`. `resolveNumber` itself is left alone:
+`ZoomRowList` depends on it and its behavior there is unmeasured.
+
+**The trailing gap belongs to the reported extent, not to drawn geometry.** `computeRowWidth` feeds
+both the reported width and the section/wrap divider rect; letting the trailing gap into the divider
+drew it past the last poster's right edge. The divider takes the content-only width
+(`includeTrailingGap: false`).
+
+**Still divergent — the caption zone.** A device reserves a base zone below the poster even with
+`caption1NumLines = 0`: a 100-tall poster yields a 136-tall cell (+36), and one caption line makes it
+168 (+32/line). The engine reserves 0 with no lines and 44 with one. So PosterGrid heights are ~36
+short of a device. This is **not** the empty-caption background — setting
+`showBackgroundForEmptyCaptions = false` changed nothing on device, which killed that hypothesis. The
+mechanism is unknown, only HD was measured, and two data points cannot model ≥2 lines, so it is
+deliberately unfixed rather than approximated with a constant (a flat +36 would over-correct the
+one-caption case, where the engine's line height is already 12 too tall).
 
 ## `ArrayGrid.scrollingStatus` — a lazy pulse, ordered ahead of the focus settle
 

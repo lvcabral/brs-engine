@@ -117,6 +117,20 @@ export class PosterGrid extends ArrayGrid {
         this.defaultCaptionBackgroundUri = `common:/images/${this.resolution}/caption_background.9.png`;
     }
 
+    /**
+     * Per-axis outset the reported bounding rect adds around the laid-out extent.
+     *
+     * DEVICE-MEASURED (Streaming Stick, Roku OS 15.2, HD 1280x720): a one-column one-row PosterGrid
+     * with `basePosterSize=[100,100]` reports `{x:-14, y:-14, w:128, h:...}` — a 14px outset on both
+     * axes, where ArrayGrid's shared default would give 24/4. The FHD value is NOT measured; 21 is
+     * the standard 1.5x design-resolution scale the other grid margins use (24->36), so it is an
+     * inference, not a measurement.
+     */
+    protected rectMargins(): { x: number; y: number } {
+        const margin = this.resolution === "FHD" ? 21 : 14;
+        return { x: margin, y: margin };
+    }
+
     setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind) {
         const fieldName = index.toLowerCase();
         if (fieldName === "vertfocusanimationstyle" && isBrsString(value)) {
@@ -208,7 +222,10 @@ export class PosterGrid extends ArrayGrid {
         const fixedFocusMode = this.isFixedFocusMode();
         this.currRow = fixedFocusMode ? this.updateCurrRow() : this.updateListCurrRow();
         const columnWidths = this.resolveColumnWidths(baseSize[0]);
-        const columnSpacings = this.resolveColumnSpacings(defaultColumnSpacing, columnSpacingValues);
+        // DEVICE-MEASURED: a column past the end of `columnSpacings` falls back to `itemSpacing.x`,
+        // NOT to the array's first entry (which is what `defaultColumnSpacing` holds — it stays for
+        // inferColumnCount, a separate "how many columns fit" heuristic).
+        const columnSpacings = this.resolveColumnSpacings(baseColumnSpacing, columnSpacingValues);
         const rowHeights = this.getValueJS("rowHeights") as number[];
         const rowSpacingValues = this.getValueJS("rowSpacings");
         const hasSections = this.metadata.length > 0;
@@ -225,16 +242,21 @@ export class PosterGrid extends ArrayGrid {
         // wrap/section dividers, which also advance itemRect.y, are counted.
         const startY = itemRect.y;
         let renderedRows = 0;
-        let trailingGap = 0;
         for (let r = 0; r < displayRows; r++) {
             const rowIndex = this.getRenderRowIndex(r);
             if (rowIndex < 0 || rowIndex >= contentLength) {
                 break;
             }
             const rowNumber = Math.floor(rowIndex / this.numCols);
-            const posterHeight = this.resolveNumber(rowHeights, rowNumber, baseSize[1]);
+            // resolveTrackValue, not resolveNumber: a row past the end of `rowHeights` falls back
+            // to basePosterSize.y rather than repeating the array's last entry, matching the rule the
+            // spacing arrays follow. (resolveNumber still repeats and is left alone — ZoomRowList
+            // depends on it and its behavior is unmeasured.)
+            const posterHeight = this.resolveTrackValue(rowHeights, rowNumber, baseSize[1]);
             const rowCaptionHeight = captionsExtendLayout ? this.computeRowCaptionHeight(rowIndex, placement) : 0;
-            const rowWidth = this.computeRowWidth(columnWidths, columnSpacings);
+            // Content-only width: the trailing gap belongs to the REPORTED extent (device-measured),
+            // not to the drawn section/wrap divider, which would otherwise extend past the last poster.
+            const rowWidth = this.computeRowWidth(columnWidths, columnSpacings, false);
             const rowHeightWithCaptions = posterHeight + rowCaptionHeight;
             itemRect.height = rowHeightWithCaptions;
             if (!hasSections && this.wrap && rowIndex < lastRowIndex && r > 0) {
@@ -288,21 +310,25 @@ export class PosterGrid extends ArrayGrid {
             lastRowIndex = rowIndex;
             lastRowNumber = rowNumber;
             renderedRows++;
-            trailingGap = this.resolveSpacingValue(rowSpacingValues, rowNumber, baseRowSpacing);
-            if (itemRect.y > (this.sceneRect?.y ?? 0) + (this.sceneRect?.height ?? 0)) {
-                itemRect.y += rowHeightWithCaptions;
-                trailingGap = 0;
-                break;
-            }
+            // Advance identically on both exits: the gap after the LAST row counts toward the
+            // extent, so breaking on the scene edge must not silently drop it.
             const rowGap = this.resolveSpacingValue(rowSpacingValues, rowNumber, baseRowSpacing);
             itemRect.y += rowHeightWithCaptions + rowGap;
+            if (itemRect.y > (this.sceneRect?.y ?? 0) + (this.sceneRect?.height ?? 0)) {
+                break;
+            }
         }
-        // Explicit extents: the accumulated height (caption zones included) and the row width the
-        // layout already computes per row — the old `Math.max(...columnWidths) * numCols` ignored both
-        // per-column widths and column spacing.
-        const height = renderedRows === 0 ? 0 : itemRect.y - startY - trailingGap;
+        // Explicit extents, both including the focus outset the arithmetic path would otherwise add
+        // per track (these values are the whole reported rect, not just the content).
+        //
+        // DEVICE-MEASURED: the gap AFTER the last row counts, exactly as it does after the last
+        // column — 3 rows of 100 with `itemSpacing.y = 50` measured 3 x 100 + 3 x 50 + margins, not
+        // 2 gaps. So the loop's accumulated `itemRect.y` is used as-is, with nothing backed out (the
+        // early-break path above adds the row height without a gap, so it needs no adjustment).
+        const margin = this.rectMargins();
+        const height = renderedRows === 0 ? 0 : itemRect.y - startY + margin.y * 2;
         this.updateRect(rect, displayRows, [Math.max(...columnWidths), maxCellHeight || baseSize[1]], {
-            width: this.computeRowWidth(columnWidths, columnSpacings),
+            width: this.computeRowWidth(columnWidths, columnSpacings) + margin.x * 2,
             height,
         });
     }
@@ -600,13 +626,17 @@ export class PosterGrid extends ArrayGrid {
         return Math.max(1, Math.floor(available / step));
     }
 
+    /**
+     * Column widths, all taken from `basePosterSize.x`.
+     *
+     * DEVICE-MEASURED: PosterGrid **ignores** the inherited ArrayGrid `columnWidths` field — a
+     * single-column grid with `basePosterSize=[100,100]` measured the same 128 whether or not
+     * `columnWidths=[200]` was set. Note the axes are NOT symmetric here: `rowHeights` IS honored
+     * (a 3-row grid with `rowHeights=[200,50,100]` measured those heights), so do not "unify" these
+     * two into one helper.
+     */
     private resolveColumnWidths(defaultWidth: number) {
-        const values = this.getValueJS("columnWidths");
-        const result: number[] = [];
-        for (let i = 0; i < this.numCols; i++) {
-            result.push(this.resolveNumber(values, i, defaultWidth));
-        }
-        return result;
+        return new Array(this.numCols).fill(defaultWidth);
     }
 
     private resolveColumnSpacings(defaultSpacing: number, values?: any) {
@@ -618,19 +648,36 @@ export class PosterGrid extends ArrayGrid {
         return result;
     }
 
+    /**
+     * Resolves one entry of `columnSpacings`/`rowSpacings`.
+     *
+     * DEVICE-MEASURED (Streaming Stick, Roku OS 15.2; probes `out/postergrid-spacing-probe` and
+     * `out/postergrid-rows-probe`): an index past the end of the array falls back to
+     * `itemSpacing.x`/`.y`. It does NOT repeat the last entry, which is what this used to do —
+     * `columnSpacings=[10]` across 3 columns measured 438 on device (10 + 50 + 50), where repeating
+     * would have given 358. Note `LayoutGroup.itemSpacings` IS device-confirmed to repeat, so the
+     * two genuinely differ; that is why this was measured rather than assumed.
+     */
     private resolveSpacingValue(values: any, index: number, fallback: number) {
-        if (!Array.isArray(values) || values.length === 0) {
+        if (!Array.isArray(values) || index >= values.length) {
             return fallback;
         }
-        const selected = index < values.length ? values[index] : values.at(-1);
-        const parsed = Number(selected);
+        const parsed = Number(values[index]);
         return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback;
     }
 
-    private computeRowWidth(widths: number[], spacings: number[]) {
+    /**
+     * Laid-out width of one row: every column's width plus its own trailing gap.
+     *
+     * DEVICE-MEASURED: the gap AFTER the last column is part of the reported extent — 3 columns of
+     * 100 with `itemSpacing.x = 50` measured 478 (3 x 100 + 3 x 50 + margins), not 428. That matches
+     * the reference's wording for the sibling field ("the spacing after each row").
+     */
+    private computeRowWidth(widths: number[], spacings: number[], includeTrailingGap: boolean = true) {
         return widths.reduce((acc, width, index) => {
-            const spacing = index < widths.length - 1 ? spacings[index] ?? 0 : 0;
-            return acc + width + spacing;
+            const isLast = index === widths.length - 1;
+            const gap = isLast && !includeTrailingGap ? 0 : spacings[index] ?? 0;
+            return acc + width + gap;
         }, 0);
     }
 
