@@ -587,10 +587,28 @@ cannot agree with PosterGrid's once-per-grid asymmetric outset at more than one 
 a caption zone at all. So `PosterGrid` **overrides** `measureHiddenExtent`, and both paths derive their
 per-row terms from the same helper (`accumulateRowExtent`).
 
+**The override is reached from the hidden branch of `renderNodeContent`, which runs none of the setup the
+visible branch does below it.** So everything the visible pass does before laying out a row, the hidden
+pass has to do for itself, and the list is longer than it looks:
+
+| shared step | why the hidden pass needs it | symptom when it's missing |
+| --- | --- | --- |
+| `content.changed` → `refreshContent()` | `renderNodeContent` runs it only on the visible path (the inherited `measureHiddenExtent` does it itself, so overriding it drops the step) | content appended *after* `content` was assigned is invisible to the measurement — a feed arriving late measures the stale row count |
+| `currRow` ← `isFixedFocusMode() ? updateCurrRow() : updateListCurrRow()` | `getRenderRowIndex(r)` maps a row *position* to a content index through `currRow` | a grid scrolled past its first page measures its ORIGINAL rows: wrong height under per-row `rowHeights`, and under fixedFocus a wrong drawn-column count, so a wrong width too |
+| `numCols` ← declared-or-inferred column count | `rectMarginBottom` and `computeReportedWidth` both read it | the strip gate and the reported width read 0 columns |
+| rows actually **covered**, not rows requested | the bottom allowance is gated on the count, and a row can drop out at either end (out-of-range index, scene-edge cutoff) | fixedFocus with a partial last page: 50 charged where the visible pass charged 14 |
+| wrap/section divider between rows | `wrapDividerHeight`/`sectionDividerHeight` are plain field reads — nothing about them needs laid-out items | fixedFocusWrap short by one divider (HD 24) once the window wraps past the last row |
+
+`resolveLayoutTerms` holds the first three and both passes call it, so they cannot drift again;
+`accumulateRowExtent` holds the last two and returns `renderedRows` alongside the extent.
+
 The trap worth remembering: before the override, the inherited arithmetic agreed with the visible pass at
 **exactly one row** and diverged in *both* directions either side of it (HD: 0 at 1 row, −28 at 2, −56 at
 3). A single-row regression test would have passed and proved nothing. Any test here must vary the row
-count — that is the same lesson as "solve from 1 row *and* 2 rows", one layer down.
+count *and* the scroll position *and* the focus style — the divergences above hid behind a grid measured
+unscrolled at `focusIndex` 0, which is exactly where all the paths coincide. Pinned by
+`PosterGridExtent.test.js` ("a hidden grid picks up content appended after the content node was assigned",
+"a hidden %s grid measures the same extent as a visible one after scrolling").
 
 ## A grid's reported rect is outset — its item sub-rects are NOT
 

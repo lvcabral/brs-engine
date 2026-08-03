@@ -328,6 +328,62 @@ describe("PosterGrid reports the extent a device reports", () => {
             });
         });
 
+        test("a hidden grid picks up content appended after the content node was assigned", () => {
+            // Assigning `content` refreshes the grid eagerly, so a grid built all at once never
+            // exercises the dirty-content path. An app that assigns an empty ContentNode and then
+            // fills it (a feed arriving after the screen is built) does: the append only marks the
+            // node changed, and the refresh happens in the next layout pass. The visible path runs
+            // it from `ArrayGrid.renderNodeContent`; the hidden path reaches `measureHiddenExtent`
+            // directly, so it has to run the refresh itself or it measures the stale row count.
+            const build = (visible) => {
+                const grid = SGNodeFactory.createNode("PosterGrid");
+                grid.setValue("basePosterSize", vector([100, 100]));
+                grid.setValue("numColumns", new Int32(1));
+                grid.setValue("numRows", new Int32(3));
+                grid.setValue("itemSpacing", vector([0, 0]));
+                const root = SGNodeFactory.createNode("ContentNode");
+                grid.setValue("content", root);
+                grid.setValue("visible", BrsBoolean.from(visible));
+                for (let i = 0; i < 3; i++) {
+                    root.appendChildToParent(SGNodeFactory.createNode("ContentNode"));
+                }
+                grid.renderNode({}, [0, 0], 0, 1);
+                return rectOf(grid);
+            };
+            const visible = build(true);
+            const hidden = build(false);
+            expect(Math.round(hidden.height)).toBe(Math.round(visible.height));
+            expect(Math.round(hidden.width)).toBe(Math.round(visible.width));
+        });
+
+        test.each([["floatingFocus"], ["fixedFocus"], ["fixedFocusWrap"]])(
+            "a hidden %s grid measures the same extent as a visible one after scrolling",
+            (style) => {
+                // Both passes resolve rows through `getRenderRowIndex`, which reads `currRow`. Only the
+                // visible path used to settle it, so a grid scrolled past its first page measured its
+                // ORIGINAL rows while hidden — with per-row `rowHeights` that is a different height,
+                // and under fixedFocus a different drawn-column count, so a different width too.
+                const fields = {
+                    numColumns: new Int32(2),
+                    numRows: new Int32(2),
+                    itemSpacing: vector([0, 0]),
+                    rowHeights: vector([100, 100, 250, 250]),
+                    vertFocusAnimationStyle: new BrsString(style),
+                };
+                const build = (visible) => {
+                    const grid = makeGrid(7, { ...fields, visible: BrsBoolean.from(visible) });
+                    // Past the first page, so the rows on screen are no longer rows 0..1.
+                    grid.setValue("jumpToItem", new Int32(6));
+                    grid.renderNode({}, [0, 0], 0, 1);
+                    return rectOf(grid);
+                };
+                const visible = build(true);
+                const hidden = build(false);
+                expect(Math.round(hidden.height)).toBe(Math.round(visible.height));
+                expect(Math.round(hidden.width)).toBe(Math.round(visible.width));
+            }
+        );
+
         test.each([["HD"], ["FHD"]])("%s: no caption lines requested means no caption zone", (resolution) => {
             atResolution(resolution, () => {
                 const bare = heightOf(1);
