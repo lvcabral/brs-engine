@@ -1,0 +1,95 @@
+=== PosterGrid Caption Zone Probe ===
+resolution = HD  1280 x 720 
+poster = 100x100, itemSpacing = [0,0], numColumns = 1
+0.  baseline, no captions
+    h1 =  164    h2 =  264    CELL =  100 
+A1. no captions, captionVertAlignment=center
+    h1 =  164    h2 =  264    CELL =  100 
+A2. no captions, captionVertAlignment=above
+    h1 =  164    h2 =  264    CELL =  100 
+B1. caption1NumLines=1
+    h1 =  208    h2 =  352    CELL =  144 
+B2. caption1NumLines=2
+    h1 =  229    h2 =  394    CELL =  165 
+B3. caption1NumLines=3
+    h1 =  250    h2 =  436    CELL =  186 
+=================================================================
+Warning occurred while setting a field of an RoSGNode
+-- Tried to set nonexistent field "notext" of a "PosterGrid" node
+   at line 112 of file pkg:/components/ProbeScene.brs
+=================================================================
+=================================================================
+Warning occurred while setting a field of an RoSGNode
+-- Tried to set nonexistent field "notext" of a "PosterGrid" node
+   at line 112 of file pkg:/components/ProbeScene.brs
+=================================================================
+C1. caption1NumLines=1, no text
+    h1 =  208    h2 =  352    CELL =  144 
+=================================================================
+Warning occurred while setting a field of an RoSGNode
+-- Tried to set nonexistent field "notext" of a "PosterGrid" node
+   at line 112 of file pkg:/components/ProbeScene.brs
+=================================================================
+=================================================================
+Warning occurred while setting a field of an RoSGNode
+-- Tried to set nonexistent field "notext" of a "PosterGrid" node
+   at line 112 of file pkg:/components/ProbeScene.brs
+=================================================================
+C2. caption1NumLines=2, no text
+    h1 =  229    h2 =  394    CELL =  165 
+D1. caption2NumLines=1 only
+    h1 =  207    h2 =  350    CELL =  143 
+D2. caption2NumLines=2 only
+    h1 =  227    h2 =  390    CELL =  163 
+D3. caption1=1 + caption2=1
+    h1 =  228    h2 =  392    CELL =  164 
+D4. caption1=2 + caption2=2
+    h1 =  269    h2 =  474    CELL =  205 
+E1. caption1NumLines=1, lineSpacing=20
+    h1 =  208    h2 =  352    CELL =  144 
+E2. caption1NumLines=2, lineSpacing=20
+    h1 =  249    h2 =  434    CELL =  185 
+E3. caption1=1+caption2=1, lineSpacing=20
+    h1 =  248    h2 =  432    CELL =  184 
+F1. caption1NumLines=1, caption1Font=Largest
+    h1 =  248    h2 =  432    CELL =  184 
+F2. caption1NumLines=2, caption1Font=Largest
+    h1 =  309    h2 =  554    CELL =  245 
+F3. caption1NumLines=1, caption1Font=Tiny
+    h1 =  205    h2 =  346    CELL =  141 
+F4. caption1=1+caption2=1, caption2Font=Largest
+    h1 =  269    h2 =  474    CELL =  205 
+G1. baseline, poster 200x200
+    h1 =  264    h2 =  464    CELL =  200 
+G2. caption1NumLines=1, poster 200x200
+    h1 =  308    h2 =  552    CELL =  244 
+G3. baseline, poster 100x300
+    h1 =  364    h2 =  664    CELL =  300 
+--- CELL summary (poster height = 100 unless noted) ---
+    CELL =  100    over baseline =  0    0.  baseline, no captions
+    CELL =  100    over baseline =  0    A1. no captions, captionVertAlignment=center
+    CELL =  100    over baseline =  0    A2. no captions, captionVertAlignment=above
+    CELL =  144    over baseline =  44    B1. caption1NumLines=1
+    CELL =  165    over baseline =  65    B2. caption1NumLines=2
+    CELL =  186    over baseline =  86    B3. caption1NumLines=3
+    CELL =  144    over baseline =  44    C1. caption1NumLines=1, no text
+    CELL =  165    over baseline =  65    C2. caption1NumLines=2, no text
+    CELL =  143    over baseline =  43    D1. caption2NumLines=1 only
+    CELL =  163    over baseline =  63    D2. caption2NumLines=2 only
+    CELL =  164    over baseline =  64    D3. caption1=1 + caption2=1
+    CELL =  205    over baseline =  105    D4. caption1=2 + caption2=2
+    CELL =  144    over baseline =  44    E1. caption1NumLines=1, lineSpacing=20
+    CELL =  185    over baseline =  85    E2. caption1NumLines=2, lineSpacing=20
+    CELL =  184    over baseline =  84    E3. caption1=1+caption2=1, lineSpacing=20
+    CELL =  184    over baseline =  84    F1. caption1NumLines=1, caption1Font=Largest
+    CELL =  245    over baseline =  145    F2. caption1NumLines=2, caption1Font=Largest
+    CELL =  141    over baseline =  41    F3. caption1NumLines=1, caption1Font=Tiny
+    CELL =  205    over baseline =  105    F4. caption1=1+caption2=1, caption2Font=Largest
+    CELL =  200    over baseline =  100    G1. baseline, poster 200x200
+    CELL =  244    over baseline =  144    G2. caption1NumLines=1, poster 200x200
+    CELL =  300    over baseline =  200    G3. baseline, poster 100x300
+--- Label line heights (device font metrics) ---
+    font:SmallerBoldSystemFont  height =  21 
+    font:LargestSystemFont  height =  61 
+    font:TinySystemFont  height =  18 
+=== PosterGrid Caption Zone Probe Complete ===

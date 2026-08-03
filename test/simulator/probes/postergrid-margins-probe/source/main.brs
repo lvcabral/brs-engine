@@ -1,0 +1,17 @@
+sub Main()
+    screen = CreateObject("roSGScreen")
+    port = CreateObject("roMessagePort")
+    screen.setMessagePort(port)
+    scene = screen.createScene("MarginsScene")
+    screen.show()
+
+    ' Unlike the captions probe, this one does NOT close the screen when it finishes printing: case P
+    ' leaves a calibrated layout on screen to be screenshotted. Press Back/Home to exit (under brs-cli,
+    ' Ctrl+D, or Ctrl+S first if you want the engine-side PNG).
+    scene.callFunc("runProbe", invalid)
+
+    while true
+        msg = wait(0, port)
+        if type(msg) = "roSGScreenEvent" and msg.isScreenClosed() then return
+    end while
+end sub

@@ -49,6 +49,24 @@ type PosterItemLayout = {
     offsetY?: number;
 };
 
+/**
+ * Vertical padding a device reserves around a cell's caption block, TOTAL (above plus below), added
+ * once when at least one caption line is requested. Above this base the zone is font-metric-driven.
+ *
+ * DEVICE-MEASURED, and it does NOT scale to FHD — 23 at both resolutions, unlike every other grid
+ * margin. See the caption-zone section in `.claude/docs/scenegraph-invariants.md`.
+ */
+const CaptionZoneBase = 23;
+
+/**
+ * Where the caption text starts inside {@link CaptionZoneBase}, from the poster's bottom edge.
+ *
+ * DEVICE-MEASURED as zero at both resolutions: the whole zone sits BELOW the text rather than being
+ * split around it. Named rather than folded away because the zone is still 23 tall and the text still
+ * sits inside it, so this is a measured placement, not an absence of one.
+ */
+const CaptionTextOffset = 0;
+
 const HorizAlignments = new Set(["left", "center", "right"]);
 const VertAlignments = new Set(["above", "top", "center", "bottom", "below"]);
 const ValidFocusStyles = new Set(Object.values(FocusStyle).map((style) => style.toLowerCase()));
@@ -87,7 +105,6 @@ export class PosterGrid extends ArrayGrid {
     private readonly focusPaddingX: number;
     private readonly focusPaddingTop: number;
     private readonly focusPaddingBottom: number;
-    private readonly captionVerticalMargin: number;
     private readonly defaultCaptionBackgroundUri: string;
     private focusLayoutOverride?: PosterItemLayout;
 
@@ -106,11 +123,9 @@ export class PosterGrid extends ArrayGrid {
         if (this.resolution === "FHD") {
             this.focusPaddingTop = 18;
             this.focusPaddingBottom = 18;
-            this.captionVerticalMargin = 18;
         } else {
             this.focusPaddingTop = 12;
             this.focusPaddingBottom = 12;
-            this.captionVerticalMargin = 12;
         }
         this.focusPaddingX = this.marginX / 2;
         this.focusField = "gridHasFocus";
@@ -118,17 +133,162 @@ export class PosterGrid extends ArrayGrid {
     }
 
     /**
-     * Per-axis outset the reported bounding rect adds around the laid-out extent.
+     * Per-axis outset the reported bounding rect adds around the laid-out extent — LEFT, RIGHT and
+     * TOP only. The bottom is larger and lives in {@link rectMarginBottom}.
      *
-     * DEVICE-MEASURED (Streaming Stick, Roku OS 15.2, HD 1280x720): a one-column one-row PosterGrid
-     * with `basePosterSize=[100,100]` reports `{x:-14, y:-14, w:128, h:...}` — a 14px outset on both
-     * axes, where ArrayGrid's shared default would give 24/4. The FHD value is NOT measured; 21 is
-     * the standard 1.5x design-resolution scale the other grid margins use (24->36), so it is an
-     * inference, not a measurement.
+     * DEVICE-MEASURED on both axes at both resolutions, where `ArrayGrid`'s shared default would give
+     * 24/4: `{x:-14, y:-14, w:128}` HD and `{x:-21, y:-21, w:142}` FHD, so `left == right == top`.
+     * Probe: `test/simulator/probes/postergrid-margins-probe` (group M).
      */
     protected rectMargins(): { x: number; y: number } {
         const margin = this.resolution === "FHD" ? 21 : 14;
         return { x: margin, y: margin };
+    }
+
+    /**
+     * Outset the reported rect adds BELOW the last row — 50 HD / 75 FHD, not the 14/21 added above it.
+     * A PosterGrid's vertical outset is asymmetric, which is why this is separate from
+     * {@link rectMargins} (one value per axis cannot express "14 above, 50 below").
+     *
+     * DEVICE-MEASURED, including the gate: the allowance is charged once per grid rather than per row,
+     * and is absent exactly when the grid is a horizontal strip — `rows == 1 && numColumns > 1`. That
+     * CONJUNCTION is load-bearing; every single-variable rule (column count, content shape, width
+     * threshold, drawn item count) was measured and rejected, so do not simplify the condition. See
+     * the `PosterGrid` extent section in `.claude/docs/scenegraph-invariants.md`.
+     *
+     * `rows` is the count actually DISPLAYED, so the hidden and visible passes agree and because the
+     * outset is a property of the laid-out extent. No probe case separates that from the declared
+     * `numRows` (every case set them equal), so a grid with `numRows = 12`, several columns and one
+     * row's worth of content is a GUESS.
+     */
+    protected rectMarginBottom(displayRows: number): number {
+        if (displayRows === 1 && this.numCols > 1) {
+            return this.rectMargins().y;
+        }
+        return this.resolution === "FHD" ? 75 : 50;
+    }
+
+    /**
+     * Row/column terms BOTH layout passes must derive identically, kept in one place because they
+     * silently drifted when each pass computed its own: `getRenderRowIndex` reads `currRow`, and
+     * `rectMarginBottom`/`computeReportedWidth` read `numCols`, so a pass that skips either resolves
+     * different rows for the same content and reports a different extent. `rowSpacing` is returned for
+     * the same reason — both passes charge a gap after every row, so it is resolved once and passed on
+     * rather than re-read from `itemSpacing` per pass.
+     */
+    private resolveLayoutTerms(baseSize: number[]) {
+        const spacing = this.normalizeVector(this.getValueJS("itemSpacing"), [0, 0]);
+        const columnSpacingValues = this.getValueJS("columnSpacings");
+        const defaultColumnSpacing = this.resolveSpacingValue(columnSpacingValues, 0, spacing[0]);
+        this.numCols = Math.max(1, this.numCols || this.inferColumnCount(baseSize[0], defaultColumnSpacing));
+        const totalRows = Math.ceil(this.content.length / this.numCols);
+        const desiredRows = Number.isFinite(this.numRows) && this.numRows > 0 ? Math.floor(this.numRows) : totalRows;
+        // Settle the scroll position before any row is resolved: a scrolled grid whose `currRow` is
+        // still 0 reads the wrong rows out of `getRenderRowIndex`.
+        this.currRow = this.isFixedFocusMode() ? this.updateCurrRow() : this.updateListCurrRow();
+        return {
+            rowSpacing: spacing[1],
+            defaultColumnSpacing,
+            displayRows: Math.max(1, Math.min(desiredRows, totalRows)),
+            columnWidths: this.resolveColumnWidths(baseSize[0]),
+            // DEVICE-MEASURED: a column past the end of `columnSpacings` falls back to `itemSpacing.x`,
+            // NOT to the array's first entry (which is what `defaultColumnSpacing` holds — it stays for
+            // inferColumnCount, a separate "how many columns fit" heuristic).
+            columnSpacings: this.resolveColumnSpacings(spacing[0], columnSpacingValues),
+        };
+    }
+
+    /**
+     * Measure the extent while invisible using the SAME per-row terms the visible pass accumulates.
+     *
+     * `ArrayGrid.measureHiddenExtent`'s generic per-track arithmetic (`itemSize[1] + margin.y * 2` per
+     * row) is correct only for grids whose vertical outset is symmetric and per-row. A PosterGrid is
+     * neither — its outset is asymmetric and charged once per grid, and its rows carry a caption zone
+     * `rowHeights` cannot express — so inheriting it made a hidden grid disagree with its own visible
+     * extent at every row count except one.
+     *
+     * Everything the two passes share goes through {@link resolveLayoutTerms}, and the content refresh
+     * below mirrors what `ArrayGrid.renderNodeContent` runs before the visible pass. Both are load
+     * bearing: this override is reached straight from the hidden branch of `renderNodeContent`, which
+     * does neither for us, so anything derived here that the visible pass derives differently shows up
+     * as a hidden grid disagreeing with itself.
+     */
+    protected measureHiddenExtent(origin: number[], angle: number) {
+        const contentNode = this.getValue("content");
+        if (contentNode instanceof ContentNode && contentNode.changed) {
+            this.refreshContent();
+            contentNode.changed = false;
+        }
+        const baseSize = this.getValueJS("basePosterSize") as number[];
+        if (this.content.length === 0 || !baseSize?.[0] || !baseSize?.[1]) {
+            super.measureHiddenExtent(origin, angle);
+            return;
+        }
+        const { rowSpacing, displayRows, columnWidths, columnSpacings } = this.resolveLayoutTerms(baseSize);
+        const margin = this.rectMargins();
+        const drawTrans = this.getDrawTranslation(origin, angle);
+        const rect = { x: drawTrans[0], y: drawTrans[1], ...this.getDimensions() };
+        const { extent, renderedRows } = this.accumulateRowExtent(displayRows, baseSize, drawTrans[1], rowSpacing);
+        this.updateRect(rect, displayRows, [Math.max(...columnWidths), baseSize[1]], {
+            width: this.computeReportedWidth(columnWidths, columnSpacings, displayRows),
+            // Both terms take the rows actually covered, not the rows requested — the same count the
+            // visible pass reports, which is what the bottom allowance is gated on.
+            height: renderedRows === 0 ? 0 : extent + margin.y + this.rectMarginBottom(renderedRows),
+        });
+        this.updateBoundingRects(rect, origin, angle + this.getRotation());
+    }
+
+    /**
+     * Sum of every displayed row's height (poster + caption zone) plus the gap AFTER each row,
+     * including the last — the device-measured trailing-gap rule. Arithmetic-only twin of what
+     * `renderContent`'s loop accumulates into `itemRect.y`, and it has to advance on exactly the same
+     * terms: the wrap/section divider between rows and the scene-edge cutoff both change the extent,
+     * and both are field reads that need no laid-out items. It also reports how many rows it actually
+     * covered, because the bottom allowance is gated on that count and not on the requested one.
+     *
+     * `startY` is where the visible pass starts advancing; it cancels out of the returned extent and
+     * matters only for the scene-edge test.
+     */
+    private accumulateRowExtent(displayRows: number, baseSize: number[], startY: number, baseRowSpacing: number) {
+        const rowHeights = this.getValueJS("rowHeights") as number[];
+        const rowSpacingValues = this.getValueJS("rowSpacings");
+        const placement = this.getCaptionPlacement();
+        const captionsExtendLayout = this.requiresCaptionZone(placement);
+        const hasSections = this.metadata.length > 0;
+        const sceneBottom = (this.sceneRect?.y ?? 0) + (this.sceneRect?.height ?? 0);
+        let lastRowIndex = -1;
+        let lastRowNumber = -1;
+        let renderedRows = 0;
+        let y = startY;
+        for (let r = 0; r < displayRows; r++) {
+            const rowIndex = this.getRenderRowIndex(r);
+            if (rowIndex < 0 || rowIndex >= this.content.length) {
+                break;
+            }
+            const rowNumber = Math.floor(rowIndex / this.numCols);
+            if (r > 0 && this.wrap) {
+                const divider = hasSections
+                    ? this.getPosterMetadata(rowIndex)?.divider && this.getValueJS("sectionDividerHeight")
+                    : rowIndex < lastRowIndex && this.getValueJS("wrapDividerHeight");
+                if (typeof divider === "number") {
+                    const gapAfterPreviousRow =
+                        lastRowNumber >= 0
+                            ? this.resolveSpacingValue(rowSpacingValues, lastRowNumber, baseRowSpacing)
+                            : baseRowSpacing;
+                    y += divider + gapAfterPreviousRow;
+                }
+            }
+            y += this.resolveTrackValue(rowHeights, rowNumber, baseSize[1]);
+            y += captionsExtendLayout ? this.computeRowCaptionHeight(rowIndex, placement) : 0;
+            y += this.resolveSpacingValue(rowSpacingValues, rowNumber, baseRowSpacing);
+            lastRowIndex = rowIndex;
+            lastRowNumber = rowNumber;
+            renderedRows++;
+            if (y > sceneBottom) {
+                break;
+            }
+        }
+        return { extent: y - startY, renderedRows };
     }
 
     setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind) {
@@ -210,22 +370,13 @@ export class PosterGrid extends ArrayGrid {
         }
         this.layoutByIndex.clear();
         this.fontHeightCache = new WeakMap();
-        const spacing = this.normalizeVector(this.getValueJS("itemSpacing"), [0, 0]);
-        const baseColumnSpacing = spacing[0];
-        const baseRowSpacing = spacing[1];
-        const columnSpacingValues = this.getValueJS("columnSpacings");
-        const defaultColumnSpacing = this.resolveSpacingValue(columnSpacingValues, 0, baseColumnSpacing);
-        this.numCols = Math.max(1, this.numCols || this.inferColumnCount(baseSize[0], defaultColumnSpacing));
-        const totalRows = Math.ceil(contentLength / this.numCols);
-        const desiredRows = Number.isFinite(this.numRows) && this.numRows > 0 ? Math.floor(this.numRows) : totalRows;
-        const displayRows = Math.max(1, Math.min(desiredRows, totalRows));
-        const fixedFocusMode = this.isFixedFocusMode();
-        this.currRow = fixedFocusMode ? this.updateCurrRow() : this.updateListCurrRow();
-        const columnWidths = this.resolveColumnWidths(baseSize[0]);
-        // DEVICE-MEASURED: a column past the end of `columnSpacings` falls back to `itemSpacing.x`,
-        // NOT to the array's first entry (which is what `defaultColumnSpacing` holds — it stays for
-        // inferColumnCount, a separate "how many columns fit" heuristic).
-        const columnSpacings = this.resolveColumnSpacings(baseColumnSpacing, columnSpacingValues);
+        const {
+            rowSpacing: baseRowSpacing,
+            defaultColumnSpacing,
+            displayRows,
+            columnWidths,
+            columnSpacings,
+        } = this.resolveLayoutTerms(baseSize);
         const rowHeights = this.getValueJS("rowHeights") as number[];
         const rowSpacingValues = this.getValueJS("rowSpacings");
         const hasSections = this.metadata.length > 0;
@@ -325,10 +476,15 @@ export class PosterGrid extends ArrayGrid {
         // column — 3 rows of 100 with `itemSpacing.y = 50` measured 3 x 100 + 3 x 50 + margins, not
         // 2 gaps. So the loop's accumulated `itemRect.y` is used as-is, with nothing backed out (the
         // loop breaks AFTER advancing, so the scene-edge exit already includes that trailing gap too).
+        //
+        // Asymmetric on Y: `margin.y` above the first row, `rectMarginBottom()` below the last. That
+        // bottom value is gated on the row count, so it takes the rows actually RENDERED — the same
+        // count `itemRect.y` accumulated over. The requested count would disagree with the extent
+        // whenever the scene edge cut the loop short.
         const margin = this.rectMargins();
-        const height = renderedRows === 0 ? 0 : itemRect.y - startY + margin.y * 2;
+        const height = renderedRows === 0 ? 0 : itemRect.y - startY + margin.y + this.rectMarginBottom(renderedRows);
         this.updateRect(rect, displayRows, [Math.max(...columnWidths), maxCellHeight || baseSize[1]], {
-            width: this.computeRowWidth(columnWidths, columnSpacings) + margin.x * 2,
+            width: this.computeReportedWidth(columnWidths, columnSpacings, displayRows),
             height,
         });
     }
@@ -639,6 +795,32 @@ export class PosterGrid extends ArrayGrid {
         return new Array(this.numCols).fill(defaultWidth);
     }
 
+    /**
+     * How many columns are actually occupied — the widest row that gets laid out.
+     *
+     * DEVICE-MEASURED: a grid declaring `numColumns = 3` but holding only 2 items reports a rect two
+     * cells wide (HD 228), so the reported WIDTH follows the items drawn. The same case measures the
+     * bottom allowance as absent, which only a gate reading the DECLARED `numColumns` produces — so
+     * this node holds two device-backed notions of "columns" at once, this one and
+     * {@link rectMarginBottom}'s. Do NOT unify them.
+     *
+     * Below `numCols` only when no row is full (`content.length < numColumns`).
+     */
+    private countDrawnColumns(displayRows: number) {
+        let drawn = 0;
+        for (let r = 0; r < displayRows; r++) {
+            const rowIndex = this.getRenderRowIndex(r);
+            if (rowIndex < 0 || rowIndex >= this.content.length) {
+                break;
+            }
+            drawn = Math.max(drawn, Math.min(this.numCols, this.content.length - rowIndex));
+            if (drawn >= this.numCols) {
+                break;
+            }
+        }
+        return Math.max(1, drawn);
+    }
+
     private resolveColumnSpacings(defaultSpacing: number, values?: any) {
         const source = values ?? this.getValueJS("columnSpacings");
         const result: number[] = [];
@@ -664,6 +846,15 @@ export class PosterGrid extends ArrayGrid {
         }
         const parsed = Number(values[index]);
         return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback;
+    }
+
+    /**
+     * Reported width: the drawn columns plus their gaps and the horizontal margins. Slicing to the
+     * drawn column count is device-measured — see {@link countDrawnColumns}.
+     */
+    private computeReportedWidth(widths: number[], spacings: number[], displayRows: number) {
+        const drawn = this.countDrawnColumns(displayRows);
+        return this.computeRowWidth(widths.slice(0, drawn), spacings) + this.rectMargins().x * 2;
     }
 
     /**
@@ -722,7 +913,7 @@ export class PosterGrid extends ArrayGrid {
                 ? this.measureFontHeight(font2) * caption2Lines + lineSpacing * Math.max(0, caption2Lines - 1)
                 : 0;
         const textHeight = height1 + height2 + (caption1Lines > 0 && caption2Lines > 0 ? lineSpacing : 0);
-        const verticalMargins = caption1Lines > 0 || caption2Lines > 0 ? this.captionVerticalMargin * 2 : 0;
+        const verticalMargins = caption1Lines > 0 || caption2Lines > 0 ? CaptionZoneBase : 0;
         return {
             caption1Lines,
             caption2Lines,
@@ -806,7 +997,9 @@ export class PosterGrid extends ArrayGrid {
         metrics: CaptionMetrics,
         lineSpacing: number
     ) {
-        const textStartY = startY + this.captionVerticalMargin;
+        // Flush with the top of the zone computeCaptionMetrics reserved: the whole CaptionZoneBase
+        // sits BELOW the text, not split around it. See CaptionTextOffset.
+        const textStartY = startY + CaptionTextOffset;
         if (metrics.caption1Lines > 0) {
             layout.caption1Rect = { x: 0, y: textStartY, width: columnWidth, height: metrics.caption1Height };
         }

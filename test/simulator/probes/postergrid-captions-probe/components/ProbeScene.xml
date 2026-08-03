@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="ProbeScene" extends="Scene">
+    <interface>
+        <!-- Driven from Main so the app can close the screen and exit when the probe finishes. -->
+        <function name="runProbe" />
+    </interface>
+    <script type="text/brightscript" uri="pkg:/components/ProbeScene.brs" />
+    <children>
+        <Group id="holder" />
+    </children>
+</component>
