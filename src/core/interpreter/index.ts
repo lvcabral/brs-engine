@@ -269,8 +269,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     constructor(options?: Partial<ExecutionOptions>, useMainEnv: boolean = false) {
         this._environment = useMainEnv ? MainEnvironment : new Environment(new RoAssociativeArray([]));
         Object.assign(this.options, options);
-        BrsDevice.stdout = new OutputProxy(this.options.stdout, this.options.post);
-        BrsDevice.stderr = new OutputProxy(this.options.stderr, this.options.post);
+        BrsDevice.stdout = new OutputProxy(this.options.stdout, this.options.post, BrsDevice.deviceInfo.logLevel);
+        BrsDevice.stderr = new OutputProxy(this.options.stderr, this.options.post, BrsDevice.deviceInfo.logLevel);
         if (this.options.root) {
             BrsDevice.fileSystem.setRoot(this.options.root);
         }

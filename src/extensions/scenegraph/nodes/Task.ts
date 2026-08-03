@@ -867,7 +867,7 @@ export class Task extends Node {
         const id = nextRendezvousId();
         const location = sgRoot.interpreter?.formatLocation() ?? "pkg:/unknown(??)";
         const detail = BrsDevice.deviceInfo.logLevel === LogLevel.Debug ? ` ${action} ${type}.${key}` : "";
-        BrsDevice.stdout.write(`debug,${getNow()} [sg.node.BLOCK] Rendezvous[${id}]${detail} at ${location}\r\n`);
+        BrsDevice.stdout.write(`print,${getNow()} [sg.node.BLOCK] Rendezvous[${id}]${detail} at ${location}\r\n`);
         return id;
     }
 
@@ -889,7 +889,7 @@ export class Task extends Node {
         const detail = BrsDevice.deviceInfo.logLevel === LogLevel.Debug ? ` ${action} ${type}.${key}` : "";
         const duration = elapsedMs > 0 ? ` in ${(elapsedMs / 1000).toFixed(3)} s` : "";
         BrsDevice.stdout.write(
-            `debug,${getNow()} [sg.node.UNBLOCK] Rendezvous[${id}]${detail} completed${duration}\r\n`
+            `print,${getNow()} [sg.node.UNBLOCK] Rendezvous[${id}]${detail} completed${duration}\r\n`
         );
     }
 
