@@ -172,7 +172,9 @@ export class PosterGrid extends ArrayGrid {
      * Row/column terms BOTH layout passes must derive identically, kept in one place because they
      * silently drifted when each pass computed its own: `getRenderRowIndex` reads `currRow`, and
      * `rectMarginBottom`/`computeReportedWidth` read `numCols`, so a pass that skips either resolves
-     * different rows for the same content and reports a different extent.
+     * different rows for the same content and reports a different extent. `rowSpacing` is returned for
+     * the same reason — both passes charge a gap after every row, so it is resolved once and passed on
+     * rather than re-read from `itemSpacing` per pass.
      */
     private resolveLayoutTerms(baseSize: number[]) {
         const spacing = this.normalizeVector(this.getValueJS("itemSpacing"), [0, 0]);
@@ -185,7 +187,7 @@ export class PosterGrid extends ArrayGrid {
         // still 0 reads the wrong rows out of `getRenderRowIndex`.
         this.currRow = this.isFixedFocusMode() ? this.updateCurrRow() : this.updateListCurrRow();
         return {
-            spacing,
+            rowSpacing: spacing[1],
             defaultColumnSpacing,
             displayRows: Math.max(1, Math.min(desiredRows, totalRows)),
             columnWidths: this.resolveColumnWidths(baseSize[0]),
@@ -222,11 +224,11 @@ export class PosterGrid extends ArrayGrid {
             super.measureHiddenExtent(origin, angle);
             return;
         }
-        const { displayRows, columnWidths, columnSpacings } = this.resolveLayoutTerms(baseSize);
+        const { rowSpacing, displayRows, columnWidths, columnSpacings } = this.resolveLayoutTerms(baseSize);
         const margin = this.rectMargins();
         const drawTrans = this.getDrawTranslation(origin, angle);
         const rect = { x: drawTrans[0], y: drawTrans[1], ...this.getDimensions() };
-        const { extent, renderedRows } = this.accumulateRowExtent(displayRows, baseSize, drawTrans[1]);
+        const { extent, renderedRows } = this.accumulateRowExtent(displayRows, baseSize, drawTrans[1], rowSpacing);
         this.updateRect(rect, displayRows, [Math.max(...columnWidths), baseSize[1]], {
             width: this.computeReportedWidth(columnWidths, columnSpacings, displayRows),
             // Both terms take the rows actually covered, not the rows requested — the same count the
@@ -247,10 +249,9 @@ export class PosterGrid extends ArrayGrid {
      * `startY` is where the visible pass starts advancing; it cancels out of the returned extent and
      * matters only for the scene-edge test.
      */
-    private accumulateRowExtent(displayRows: number, baseSize: number[], startY: number) {
+    private accumulateRowExtent(displayRows: number, baseSize: number[], startY: number, baseRowSpacing: number) {
         const rowHeights = this.getValueJS("rowHeights") as number[];
         const rowSpacingValues = this.getValueJS("rowSpacings");
-        const baseRowSpacing = this.normalizeVector(this.getValueJS("itemSpacing"), [0, 0])[1];
         const placement = this.getCaptionPlacement();
         const captionsExtendLayout = this.requiresCaptionZone(placement);
         const hasSections = this.metadata.length > 0;
@@ -369,10 +370,13 @@ export class PosterGrid extends ArrayGrid {
         }
         this.layoutByIndex.clear();
         this.fontHeightCache = new WeakMap();
-        const { spacing, defaultColumnSpacing, displayRows, columnWidths, columnSpacings } =
-            this.resolveLayoutTerms(baseSize);
-        const baseRowSpacing = spacing[1];
-        const fixedFocusMode = this.isFixedFocusMode();
+        const {
+            rowSpacing: baseRowSpacing,
+            defaultColumnSpacing,
+            displayRows,
+            columnWidths,
+            columnSpacings,
+        } = this.resolveLayoutTerms(baseSize);
         const rowHeights = this.getValueJS("rowHeights") as number[];
         const rowSpacingValues = this.getValueJS("rowSpacings");
         const hasSections = this.metadata.length > 0;
