@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component name="MainScene" extends="Scene">
+  <script type="text/brightscript" uri="pkg:/components/MainScene.brs" />
+
+  <children>
+    <Label id="title" text="LayoutGroup horizAlignment / vertAlignment - value probe" translation="[50, 22]" font="font:LargeBoldSystemFont" color="0xFFFFFFFF" />
+    <Label id="subtitle" translation="[50, 70]" font="font:SmallSystemFont" color="0xAAAAAAFF" />
+    <Label id="legend" translation="[50, 100]" font="font:SmallSystemFont" color="0x66CCFFFF"
+           text="behavior = what the geometry actually did, classified from the children's measured offsets. Full detail printed to the console." />
+
+    <!-- Cases are created in code; each column holds two case groups. -->
+    <Group id="colLeft" translation="[50, 140]" />
+    <Group id="colRight" translation="[990, 140]" />
+
+    <Timer id="probeTimer" repeat="true" duration="1.2" />
+  </children>
+</component>

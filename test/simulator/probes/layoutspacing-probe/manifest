@@ -1,0 +1,14 @@
+#
+#  LayoutGroup itemSpacings / addItemSpacingAfterChild probe
+#  Plus the two questions the alignment probe left open.
+#
+
+title=LayoutGroup Spacing Probe
+subtitle=itemSpacings, spacing placement, group rect
+major_version=1
+minor_version=0
+build_version=1
+
+ui_resolutions=fhd
+
+bs_const=DEBUG=false

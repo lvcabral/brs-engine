@@ -1,0 +1,14 @@
+#
+#  LayoutGroup layoutDirection probe
+#  Determines which layoutDirection spellings a real Roku device accepts.
+#
+
+title=LayoutGroup Direction Probe
+subtitle=layoutDirection spelling behavior
+major_version=1
+minor_version=0
+build_version=1
+
+ui_resolutions=fhd
+
+bs_const=DEBUG=false
