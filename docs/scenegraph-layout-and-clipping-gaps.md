@@ -25,34 +25,66 @@ for declared-but-unimplemented render fields — same shape of problem, differen
 > where the horizontal one is 14 on both sides.
 >
 > ```
-> height      = rows * (posterHeight + captionZone) + rowSpacing terms + marginTop + marginBottom
-> marginTop   = 14 (HD) / 21 (FHD)        marginBottom = 50 (HD) / 75 (FHD)
-> captionZone = 0                                    when caption1NumLines + caption2NumLines == 0
->             = 23 + Σ lineHeight(font_i) * lines_i + captionLineSpacing * gaps
-> gaps        = max(0, lines1-1) + max(0, lines2-1) + (both blocks present ? 1 : 0)
+> width        = Σ over DRAWN cols of (posterWidth + colSpacing_i) + marginX + marginX
+> height       = rows * (posterHeight + captionZone) + rowSpacing terms + marginTop + marginBottom
+> marginX      = marginTop = 14 (HD) / 21 (FHD)
+> marginBottom = 50 (HD) / 75 (FHD),  but == marginTop when rows == 1 && numColumns > 1
+> captionZone  = 0                                   when caption1NumLines + caption2NumLines == 0
+>              = 23 + Σ lineHeight(font_i) * lines_i + captionLineSpacing * gaps
+> gaps         = max(0, lines1-1) + max(0, lines2-1) + (both blocks present ? 1 : 0)
 > ```
 >
+> **Two terms there were corrected after this section was first written.** The 88 readings are heights, so
+> everything that is not a height rode along on them as an _inference_ — and two of those inferences were
+> wrong. `postergrid-margins-probe` and `postergrid-outset-axis-probe` (42 further readings) measured them:
+>
+> - `marginBottom` is **conditional**, absent exactly when the grid is a horizontal strip
+>   (`rows == 1 && numColumns > 1`). A conjunction, which is why all seven pre-registered single-variable
+>   models lost. The decisive readings: 3 columns × 4 rows keeps the allowance while 3 × 1 loses it (not
+>   the column count); one column 400 wide _keeps_ it (not the content shape); 700 wide keeps it while 90
+>   wide over 3 columns loses it (not a width threshold); and a captioned 3×1 grid reads HD **172** =
+>   `14 + 100 + 23 + 21 + 14`, which requires zone-present _and_ allowance-absent — so the zone and the
+>   allowance are independent terms, and the "+36 is a mis-attributed caption allowance" reading is dead.
+>   That last one is decidable only at **HD**: at FHD both readings give 196.
+> - the reported **width** counts the columns actually **drawn**, not the declared `numColumns` — a grid
+>   declaring 3 columns and holding 2 items reports two cells wide (HD 228). The allowance gate still
+>   reads the _declared_ count, so this node holds two different notions of "columns", both measured.
+>
+> The FHD 21 was also an inference and turned out **correct**, but only measurement could establish it: a
+> height-only run pins the vertical _sum_ (`21 + 75 = 96`), and any split summing to 96 keeps every FHD
+> height in the table correct while moving every `y`. The horizontal outset is invisible to heights
+> entirely. Likewise `CaptionTextOffset`, where the caption text starts inside the reserved zone, measured
+> **0** rather than the inferred `round(23 / 2)` = 12 — that one needed a screenshot, since no rect API
+> reaches a caption `Label` inside an item component.
+>
 > What ruled the candidates out: **`h2 − h1` is exactly one cell in all 22 cases**, so the allowance
-> appears once per *grid*, not per cell — solving for it from the 1-row and the 2-row readings
+> appears once per _grid_, not per cell — solving for it from the 1-row and the 2-row readings
 > independently gives the same number, which no per-cell model can produce. It is also present with
 > `caption1NumLines = 0` and unchanged when `captionVertAlignment` is `center`/`above` (the caption draws
-> *over* the poster, so no zone is needed at all), and a 200- or 300-tall poster grows the cell 1:1, which
+> _over_ the poster, so no zone is needed at all), and a 200- or 300-tall poster grows the cell 1:1, which
 > kills the `basePosterSize`-relative candidate. The caption base is a flat **23** — and it is the one
 > value in this node that does **not** scale 1.5× to FHD; it measured 23 at both resolutions.
 >
 > Two divergences remain, both out of scope for the height fix and each needing its own change:
 > `RoFont.measureTextHeight` returns a font's point size where a device returns its real line height
 > (1–2px short at every size, so captioned heights are still short by `lines × 1..2`) — that is
-> engine-wide and must not be patched inside PosterGrid; and caption2's default font *appears* to differ
-> from caption1's, which is an inference from two increments, not a measured font identity. Both are
+> engine-wide and must not be patched inside PosterGrid. The second — caption2's default font _appearing_
+> to differ from caption1's — was **measured false**: that reading came from a difference between two
+> derived quantities and inherited the metric error above in both terms. Setting `caption2Font` explicitly
+> to each face returned identical device heights, because `SmallerSystemFont` and `SmallerBoldSystemFont`
+> share a point size and height cannot separate them. The engine's bold default is correct. Both are
 > recorded in `.claude/docs/scenegraph-invariants.md` ("The caption zone: there is no base caption zone").
 >
 > **The rest of this section is the pre-probe record, left as written.** It is a case study in a
 > plausible framing being wrong: five of the six candidate models it led to were variations on "base zone
-> + per-line", and the +36 was never caption-related at all. Note that both the fix and the probe live
-> where this section did not predict — a new `PosterGrid.rectMarginBottom()`, not
-> `computeCaptionMetrics`'s base term. Paths below referencing `out/` predate the move of probe apps to
-> `test/simulator/probes/` (#1143).
+>
+> - per-line", and the +36 was never caption-related at all. Note that both the fix and the probe live
+>   where this section did not predict — a new `PosterGrid.rectMarginBottom()`, not
+>   `computeCaptionMetrics`'s base term. The follow-up above adds a second lesson on top of that one: a
+>   probe pins only what it _measures_, and the values that ride along on it need marking as inferences, or
+>   they read as measurements to the next person — which is how a flat `rectMarginBottom` and a
+>   `CaptionTextOffset` of 12 both got written down as facts. Paths below referencing `out/` predate the move of probe apps to
+>   `test/simulator/probes/` (#1143).
 
 ### What is measured
 
@@ -88,14 +120,14 @@ change.** Whatever reserves the +36, it is not that field.
 Two data points (0 lines → +36, 1 line → +32 marginal) cannot distinguish between several plausible
 models:
 
--   a fixed base zone (e.g. one font-line height) plus per-line growth that is _smaller_ than the base
-    line, which would mean 2 lines and 3 lines grow by a different increment than line 1 did;
--   the zone tracking `captionVerticalMargin` under a different multiplier than `* 2`;
--   something driven by the default caption font's line height (`caption1Font`/`caption2Font`, default
-    `font:SmallerBoldSystemFont`) rather than a fixed constant;
--   FHD scaling is completely unmeasured — this run was HD only, and PosterGrid's margins turned out to
-    be resolution-specific (`rectMargins()`, `.claude/docs/scenegraph-invariants.md`), so FHD cannot be
-    assumed to be 1.5×.
+- a fixed base zone (e.g. one font-line height) plus per-line growth that is _smaller_ than the base
+  line, which would mean 2 lines and 3 lines grow by a different increment than line 1 did;
+- the zone tracking `captionVerticalMargin` under a different multiplier than `* 2`;
+- something driven by the default caption font's line height (`caption1Font`/`caption2Font`, default
+  `font:SmallerBoldSystemFont`) rather than a fixed constant;
+- FHD scaling is completely unmeasured — this run was HD only, and PosterGrid's margins turned out to
+  be resolution-specific (`rectMargins()`, `.claude/docs/scenegraph-invariants.md`), so FHD cannot be
+  assumed to be 1.5×.
 
 A flat `+36` would **over-correct** the one-caption case (the engine's per-line height is already close
 but not identical to the device's), and get zero-caption and two-plus-caption cases wrong in unknown
@@ -269,7 +301,7 @@ Two lessons from gap 1 worth carrying into gaps 2 and 3:
 
 - **Vary the count, not just the field.** The whole misdiagnosis rested on measuring one row count. It
   was `h2 − h1` that revealed the allowance is per-grid rather than per-cell — a fact no amount of extra
-  *field* combinations at a single row count could have surfaced. Gap 2's probe should measure at
+  _field_ combinations at a single row count could have surfaced. Gap 2's probe should measure at
   several row counts for the same reason.
 - **Pre-register the candidate models, and keep them after they lose.** All six of gap 1's were wrong,
   which is exactly what made the run conclusive rather than confirmatory: each case had a stated
