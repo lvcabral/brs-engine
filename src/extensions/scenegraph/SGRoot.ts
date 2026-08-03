@@ -88,6 +88,30 @@ export class SGRoot {
             Atomics.store(shared, DataType.RDZ, enabled ? 1 : 0);
         }
     }
+    /** Fallback for `rendezvousTracking` before the shared control array is available. */
+    private localRendezvousTracking: boolean = false;
+
+    /**
+     * When `true`, each completed rendezvous is reported as a `RendezvousEvent` for ECP
+     * `query/sgrendezvous` to collect, independent of {@link logRendezvous}. Toggled by
+     * `sgrendezvous/track` and `sgrendezvous/untrack`. Backed by the shared control array for the
+     * same reason as `logRendezvous`: the toggle must be live and visible to every Task thread.
+     */
+    get rendezvousTracking(): boolean {
+        const shared = BrsDevice.sharedArray;
+        if (shared && shared.length > DataType.RDT) {
+            return Atomics.load(shared, DataType.RDT) === 1;
+        }
+        return this.localRendezvousTracking;
+    }
+
+    set rendezvousTracking(enabled: boolean) {
+        this.localRendezvousTracking = enabled;
+        const shared = BrsDevice.sharedArray;
+        if (shared && shared.length > DataType.RDT) {
+            Atomics.store(shared, DataType.RDT, enabled ? 1 : 0);
+        }
+    }
     /**
      * Maximum time (ms) a Task thread will wait for the render thread to serve a rendezvous before
      * treating it as a blocked render thread. On a real device a render-thread block terminates the

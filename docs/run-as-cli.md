@@ -270,6 +270,7 @@ commands and BrightScript expressions (`cont` resumes the app and restores remot
 | `bscs` / `sgnodes` / `stats` debug commands | empty | populated |
 | Crash `BackTrace:` output | suppressed | shown |
 | ECP `query/r2d2-bitmaps` | empty | populated |
+| ECP `sgrendezvous` tracking | disabled | enabled |
 | `try/catch` `e.backtrace` | works | works |
 | Reference counting, `dispose()`, error messages | unchanged | unchanged |
 
@@ -364,6 +365,65 @@ $ curl http://localhost:8060/query/r2d2-bitmaps
 ```
 
 > Sizes are an approximation (`width × height × bpp`); on a real device the texture allocator pads them to alignment boundaries.
+
+### Tracking SceneGraph rendezvous via ECP
+
+With the ECP server **and** developer mode enabled (`--ecp --debug`), the CLI also exposes Roku's
+`sgrendezvous` ECP commands: a queryable, queue-based tracker for cross-thread rendezvous events,
+independent of the `-z`/`--log-rendezvous` console trace described above. Start tracking, trigger some
+app activity, then read back the queued events:
+
+```console
+$ curl -d '' http://localhost:8060/sgrendezvous/track
+```
+
+```xml
+<?xml version="1.0"?>
+<sgrendezvous>
+  <tracking-enabled>true</tracking-enabled>
+  <status>OK</status>
+</sgrendezvous>
+```
+
+```console
+$ curl http://localhost:8060/query/sgrendezvous
+```
+
+```xml
+<?xml version="1.0"?>
+<sgrendezvous>
+  <data>
+    <tracking-enabled>true</tracking-enabled>
+    <plugin-id>dev</plugin-id>
+    <plugin-title>My App</plugin-title>
+    <drop-count>0</drop-count>
+    <count>1</count>
+    <item>
+      <id>63</id>
+      <start-tm>195918805</start-tm>
+      <end-tm>195918878</end-tm>
+      <line-number>11</line-number>
+      <file>pkg:/components/ProbeTask.brs</file>
+    </item>
+  </data>
+  <timestamp>1782607142000</timestamp>
+  <status>OK</status>
+</sgrendezvous>
+```
+
+`start-tm`/`end-tm` are a monotonic clock (matching a real device's small-magnitude, non-epoch
+`start-tm`/`end-tm`), not `Date.now()`; only `timestamp` (the query time) is epoch milliseconds.
+
+Each `GET` drains the queue: only events queued since tracking started, or since the previous `GET`,
+are returned. Up to 1,000 events are queued between calls; events beyond that cap are not kept, but
+counted in `drop-count`. Stop tracking with:
+
+```console
+$ curl -d '' http://localhost:8060/sgrendezvous/untrack
+```
+
+In production mode (`--ecp` without `--debug`) the endpoint always reports `tracking-enabled: false`
+with an empty item list, mirroring a real device's developer-mode requirement for this query.
 
 ### Creating an encrypted App package file
 

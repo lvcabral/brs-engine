@@ -13,8 +13,10 @@ import {
     DeviceInfo,
     GraphicsData,
     MaxTextureMemory,
+    RendezvousEvent,
     getRokuOSVersion,
     isGraphicsData,
+    isRendezvousEvent,
 } from "../core/common";
 import { isMainThread, parentPort, workerData } from "node:worker_threads";
 import { Server as SSDP } from "@lvcabral/node-ssdp";
@@ -59,6 +61,11 @@ let isECPEnabled = false;
 let cliRegistry = new Map<string, string>();
 let lastGraphics: GraphicsData | undefined;
 const pendingGraphics: ((data: GraphicsData) => void)[] = [];
+/** Maximum rendezvous events queued between two `query/sgrendezvous` calls (matches Roku's spec). */
+const MAX_RENDEZVOUS_QUEUE = 1000;
+const rendezvousQueue: RendezvousEvent[] = [];
+let rendezvousDropCount = 0;
+let rendezvousTracking = false;
 
 if (!isMainThread && parentPort) {
     device = workerData.device;
@@ -76,6 +83,12 @@ if (!isMainThread && parentPort) {
             lastGraphics = data.graphics;
             while (pendingGraphics.length) {
                 pendingGraphics.shift()?.(data.graphics);
+            }
+        } else if (isRendezvousEvent(data)) {
+            if (rendezvousQueue.length < MAX_RENDEZVOUS_QUEUE) {
+                rendezvousQueue.push(data.rendezvous);
+            } else {
+                rendezvousDropCount++;
             }
         }
     });
@@ -107,6 +120,10 @@ function enableECP() {
     ecp.get("/query/icon/:appID", sendAppIcon);
     ecp.get("/query/registry/:appID", sendRegistry);
     ecp.get("/query/r2d2-bitmaps", sendR2D2Bitmaps);
+    ecp.get("/query/sgrendezvous", sendRendezvousQuery);
+    ecp.post("/sgrendezvous/track", sendRendezvousTrack);
+    ecp.post("/sgrendezvous/track/:channelId", sendRendezvousTrack);
+    ecp.post("/sgrendezvous/untrack", sendRendezvousUntrack);
     ecp.post("/input/:appID", sendInputQuery);
     ecp.post("/input", sendInputQuery);
     ecp.post("/launch/:appID", sendLaunchApp);
@@ -439,6 +456,53 @@ async function sendR2D2Bitmaps(req: any, res: any) {
 }
 
 /**
+ * Starts ECP rendezvous tracking (`sgrendezvous/track`), like a real device requires developer mode
+ * (`--debug`) — in production mode this is a no-op and reports `tracking-enabled: false`, mirroring
+ * the empty `query/r2d2-bitmaps` response in production. Only one app can be tracked at a time, so
+ * starting tracking clears any previously queued events. The optional `channel_id` path parameter is
+ * accepted but ignored: the engine only ever runs one sideloaded app at a time.
+ * @param req - The HTTP request object
+ * @param res - The HTTP response object
+ */
+function sendRendezvousTrack(req: any, res: any) {
+    rendezvousTracking = device.debugOnCrash === true;
+    if (rendezvousTracking) {
+        rendezvousQueue.length = 0;
+        rendezvousDropCount = 0;
+    }
+    Atomics.store(sharedArray, DataType.RDT, rendezvousTracking ? 1 : 0);
+    res.setHeader("content-type", "application/xml");
+    res.send(genSgRendezvousStatusXml(rendezvousTracking));
+}
+
+/**
+ * Stops ECP rendezvous tracking (`sgrendezvous/untrack`). Any events already queued remain available
+ * for one final `query/sgrendezvous` call.
+ * @param req - The HTTP request object
+ * @param res - The HTTP response object
+ */
+function sendRendezvousUntrack(req: any, res: any) {
+    rendezvousTracking = false;
+    Atomics.store(sharedArray, DataType.RDT, 0);
+    res.setHeader("content-type", "application/xml");
+    res.send(genSgRendezvousStatusXml(false));
+}
+
+/**
+ * Returns the rendezvous events queued since tracking was enabled or the previous call
+ * (`query/sgrendezvous`), then drains the queue and drop count for the next window.
+ * @param req - The HTTP request object
+ * @param res - The HTTP response object
+ */
+function sendRendezvousQuery(req: any, res: any) {
+    const events = rendezvousQueue.splice(0);
+    const dropCount = rendezvousDropCount;
+    rendezvousDropCount = 0;
+    res.setHeader("content-type", "application/xml");
+    res.send(genSgRendezvousQueryXml(events, dropCount, rendezvousTracking));
+}
+
+/**
  * Handles launch application requests.
  * @param req - The HTTP request object with appID parameter
  * @param res - The HTTP response object
@@ -763,6 +827,46 @@ function genR2D2BitmapsXml(data?: GraphicsData) {
         bmp.ele("size", {}, bitmap.size);
         bmp.ele("name", {}, bitmap.name);
     }
+    xml.ele("status", {}, "OK");
+    return xml.end({ pretty: true });
+}
+
+/**
+ * Generates the `<sgrendezvous>` status response for `sgrendezvous/track` and `sgrendezvous/untrack`.
+ * @param enabled - Whether tracking is now enabled
+ * @returns The status XML string
+ */
+function genSgRendezvousStatusXml(enabled: boolean) {
+    const xml = xmlbuilder.create("sgrendezvous");
+    xml.ele("tracking-enabled", {}, enabled);
+    xml.ele("status", {}, "OK");
+    return xml.end({ pretty: true });
+}
+
+/**
+ * Generates the `<sgrendezvous>` events response for `query/sgrendezvous`.
+ * @param events - Rendezvous events queued since tracking started or the previous query
+ * @param dropCount - Number of events dropped because the queue exceeded its cap
+ * @param tracking - Whether tracking is currently enabled
+ * @returns The events XML string
+ */
+function genSgRendezvousQueryXml(events: RendezvousEvent[], dropCount: number, tracking: boolean) {
+    const xml = xmlbuilder.create("sgrendezvous");
+    const data = xml.ele("data");
+    data.ele("tracking-enabled", {}, tracking);
+    data.ele("plugin-id", {}, "dev");
+    data.ele("plugin-title", {}, device.appList?.find((app) => app.id === "dev")?.title ?? "dev");
+    data.ele("drop-count", {}, dropCount);
+    data.ele("count", {}, events.length);
+    for (const event of events) {
+        const item = data.ele("item");
+        item.ele("id", {}, event.id);
+        item.ele("start-tm", {}, event.startTm);
+        item.ele("end-tm", {}, event.endTm);
+        item.ele("line-number", {}, event.line);
+        item.ele("file", {}, event.file);
+    }
+    xml.ele("timestamp", {}, Date.now());
     xml.ele("status", {}, "OK");
     return xml.end({ pretty: true });
 }

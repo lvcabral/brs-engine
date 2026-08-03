@@ -22,6 +22,7 @@ import {
     LogLevel,
     getNow,
 } from "brs-engine";
+import { sgClock } from "../SGClock";
 import { sgRoot } from "../SGRoot";
 import {
     brsValueOf,
@@ -51,6 +52,14 @@ const RENDEZVOUS_POLL_MS = 100;
 
 /** Fallback counter used only when no shared array is present (e.g. isolated unit tests). */
 let localRendezvousId = 0;
+
+/** Context captured by {@link Task.beginRendezvous} and consumed by {@link Task.endRendezvous}. */
+interface RendezvousCtx {
+    id: number;
+    file: string;
+    line: number;
+    startedMs: number;
+}
 
 /**
  * Allocates the next id in the monotonic sequence Roku's SceneGraph debug console assigns to each
@@ -612,8 +621,7 @@ export class Task extends Node {
             value: null,
             requestId,
         };
-        const started = sgRoot.logRendezvous ? Date.now() : 0;
-        const rdzId = started ? this.logRendezvousBlock("get", type, fieldName) : 0;
+        const rdzCtx = this.beginRendezvous("get", type, fieldName);
         // Mark before sending: the reply is applied inside `processThreadUpdate` below, which has to
         // recognise it as a read and store the value without notifying observers.
         this.pendingReads.add(requestId);
@@ -626,11 +634,11 @@ export class Task extends Node {
             if (update?.requestId === requestId) {
                 if (update.action === "set") {
                     this.pendingReads.delete(requestId);
-                    this.logRendezvousUnblock(rdzId, "get", type, fieldName, started);
+                    this.endRendezvous(rdzCtx, "get", type, fieldName);
                     return true;
                 } else if (update.action === "nil") {
                     this.pendingReads.delete(requestId);
-                    this.logRendezvousUnblock(rdzId, "get", type, fieldName, started);
+                    this.endRendezvous(rdzCtx, "get", type, fieldName);
                     return false;
                 }
             }
@@ -683,8 +691,7 @@ export class Task extends Node {
             value,
             requestId,
         };
-        const started = sgRoot.logRendezvous ? Date.now() : 0;
-        const rdzId = started ? this.logRendezvousBlock("call", type, methodName) : 0;
+        const rdzCtx = this.beginRendezvous("call", type, methodName);
         this.sendThreadUpdate(request);
         const countdown = rendezvousDeadline(timeoutMs, () => `call ${type}.${methodName}`);
         const responseBuffer = this.directBuffer ?? this.taskBuffer;
@@ -693,10 +700,10 @@ export class Task extends Node {
             const update = this.processThreadUpdate(responseBuffer);
             if (update?.requestId === requestId) {
                 if (update.action === "resp") {
-                    this.logRendezvousUnblock(rdzId, "call", type, methodName, started);
+                    this.endRendezvous(rdzCtx, "call", type, methodName);
                     return brsValueOf(update.value);
                 } else if (update.action === "nil") {
-                    this.logRendezvousUnblock(rdzId, "call", type, methodName, started);
+                    this.endRendezvous(rdzCtx, "call", type, methodName);
                     return undefined;
                 }
             }
@@ -843,54 +850,72 @@ export class Task extends Node {
         }
         postMessage(update);
         if (this.inThread && update.action === "set" && update.requestId !== undefined) {
-            const started = sgRoot.logRendezvous ? Date.now() : 0;
-            const rdzId = started ? this.logRendezvousBlock("set", update.type, update.key) : 0;
+            const rdzCtx = this.beginRendezvous("set", update.type, update.key);
             this.waitForFieldAck(update);
-            this.logRendezvousUnblock(rdzId, "set", update.type, update.key, started);
+            this.endRendezvous(rdzCtx, "set", update.type, update.key);
         }
     }
 
     /**
-     * Prints the console line marking the start of a rendezvous wait, mirroring the `[sg.node.BLOCK]`
-     * line Roku's SceneGraph debug console prints when `logrendezvous` is on. Only call when
-     * `sgRoot.logRendezvous` is already known to be enabled.
+     * Marks the start of a rendezvous wait: prints the console `[sg.node.BLOCK]` line (when
+     * `sgRoot.logRendezvous` is on) and captures the id/call-site needed to later report the
+     * completed rendezvous to ECP `query/sgrendezvous` (when `sgRoot.rendezvousTracking` is on). A
+     * no-op (returns `undefined`) when neither consumer is active, so a plain run pays no cost.
      *
      * The BrightScript call site (`file(line)`) comes from this thread's own interpreter location:
      * `requestFieldValue`/`requestMethodCall`/`sendThreadUpdate` run synchronously on the thread whose
      * statement triggered the rendezvous, so `sgRoot.interpreter` here is that statement's interpreter.
+     * The id and location are computed once and shared by both consumers.
      * @param action Rendezvous action performed (`get`, `set`, or `call`).
      * @param type Sync type domain of the target (`global`, `task`, `scene`, or `node`).
      * @param key Field or method name involved in the rendezvous.
-     * @returns The id assigned to this rendezvous, to correlate with the completing UNBLOCK line.
+     * @returns Context to pass to {@link endRendezvous}, or `undefined` if tracing/tracking are off.
      */
-    private logRendezvousBlock(action: string, type: SyncType, key: string): number {
+    private beginRendezvous(action: string, type: SyncType, key: string): RendezvousCtx | undefined {
+        const tracking = sgRoot.rendezvousTracking && BrsDevice.tracking;
+        if (!sgRoot.logRendezvous && !tracking) {
+            return undefined;
+        }
         const id = nextRendezvousId();
-        const location = sgRoot.interpreter?.formatLocation() ?? "pkg:/unknown(??)";
-        const detail = BrsDevice.deviceInfo.logLevel === LogLevel.Debug ? ` ${action} ${type}.${key}` : "";
-        BrsDevice.stdout.write(`print,${getNow()} [sg.node.BLOCK] Rendezvous[${id}]${detail} at ${location}\r\n`);
-        return id;
+        const loc = sgRoot.interpreter?.location;
+        const file = loc ? (loc.file.startsWith("pkg:") ? loc.file : `pkg:/${loc.file}`) : "pkg:/unknown";
+        const line = loc?.start.line ?? 0;
+        if (sgRoot.logRendezvous) {
+            const location = line ? `${file}(${line})` : `${file}(??)`;
+            const detail = BrsDevice.deviceInfo.logLevel === LogLevel.Debug ? ` ${action} ${type}.${key}` : "";
+            BrsDevice.stdout.write(`print,${getNow()} [sg.node.BLOCK] Rendezvous[${id}]${detail} at ${location}\r\n`);
+        }
+        return { id, file, line, startedMs: Math.round(sgClock.perfNow()) };
     }
 
     /**
-     * Prints the console line marking the end of a rendezvous wait, mirroring Roku's `[sg.node.UNBLOCK]`
-     * line. A no-op when `id` is 0, meaning tracing was off when the matching BLOCK line would have
-     * printed.
-     * @param id The id returned by {@link logRendezvousBlock}, or 0 if tracing was off.
+     * Marks the end of a rendezvous wait: prints the console `[sg.node.UNBLOCK]` line (when
+     * `sgRoot.logRendezvous` is on) and, when `sgRoot.rendezvousTracking` is on, posts the completed
+     * `RendezvousEvent` for the host to queue for ECP `query/sgrendezvous`. A no-op when `ctx` is
+     * `undefined`, meaning both were off when the matching {@link beginRendezvous} ran.
+     * @param ctx The context returned by {@link beginRendezvous}, or `undefined`.
      * @param action Rendezvous action performed (`get`, `set`, or `call`).
      * @param type Sync type domain of the target (`global`, `task`, `scene`, or `node`).
      * @param key Field or method name involved in the rendezvous.
-     * @param startedMs Timestamp (ms) captured before the rendezvous started.
      */
-    private logRendezvousUnblock(id: number, action: string, type: SyncType, key: string, startedMs: number) {
-        if (id <= 0) {
+    private endRendezvous(ctx: RendezvousCtx | undefined, action: string, type: SyncType, key: string) {
+        if (!ctx) {
             return;
         }
-        const elapsedMs = Date.now() - startedMs;
-        const detail = BrsDevice.deviceInfo.logLevel === LogLevel.Debug ? ` ${action} ${type}.${key}` : "";
-        const duration = elapsedMs > 0 ? ` in ${(elapsedMs / 1000).toFixed(3)} s` : "";
-        BrsDevice.stdout.write(
-            `print,${getNow()} [sg.node.UNBLOCK] Rendezvous[${id}]${detail} completed${duration}\r\n`
-        );
+        const endedMs = Math.round(sgClock.perfNow());
+        if (sgRoot.logRendezvous) {
+            const elapsedMs = endedMs - ctx.startedMs;
+            const detail = BrsDevice.deviceInfo.logLevel === LogLevel.Debug ? ` ${action} ${type}.${key}` : "";
+            const duration = elapsedMs > 0 ? ` in ${(elapsedMs / 1000).toFixed(3)} s` : "";
+            BrsDevice.stdout.write(
+                `print,${getNow()} [sg.node.UNBLOCK] Rendezvous[${ctx.id}]${detail} completed${duration}\r\n`
+            );
+        }
+        if (sgRoot.rendezvousTracking && BrsDevice.tracking) {
+            postMessage({
+                rendezvous: { id: ctx.id, startTm: ctx.startedMs, endTm: endedMs, line: ctx.line, file: ctx.file },
+            });
+        }
     }
 
     /**

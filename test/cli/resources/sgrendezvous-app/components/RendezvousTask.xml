@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="RendezvousTask" extends="Task">
+    <interface>
+        <field id="counter" type="integer" value="0" />
+    </interface>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.top.functionName = "runTask"
+    end sub
+
+    sub runTask()
+        ' Continuously rendezvous with the render thread (a cross-thread field set), so an ECP
+        ' client can start tracking at any point and still observe an event shortly after.
+        while true
+            m.top.counter = m.top.counter + 1
+            sleep(200)
+        end while
+    end sub
+    ]]></script>
+</component>

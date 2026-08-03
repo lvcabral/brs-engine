@@ -1835,5 +1835,160 @@ describe.concurrent("cli", () => {
         }, 30000);
     });
 
+    // Shares a `server` handle across tests, so these must not overlap with each other.
+    describe.sequential("ECP query/sgrendezvous", () => {
+        const http = require("http");
+        const net = require("net");
+        let server;
+        let ecpPort;
+        let trackUrl;
+        let queryUrl;
+        let untrackUrl;
+
+        /** Reserves a free port by binding to 0 and releasing it (see the r2d2-bitmaps tests above). */
+        function reserveFreePort() {
+            return new Promise((resolve, reject) => {
+                const probe = net.createServer();
+                probe.unref();
+                probe.on("error", reject);
+                probe.listen(0, "127.0.0.1", () => {
+                    const { port } = probe.address();
+                    probe.close(() => resolve(port));
+                });
+            });
+        }
+
+        /** Performs an HTTP GET, resolving with the body once the server responds. */
+        function httpGet(url) {
+            return new Promise((resolve, reject) => {
+                const req = http.get(url, (res) => {
+                    let body = "";
+                    res.on("data", (chunk) => (body += chunk));
+                    res.on("end", () => resolve(body));
+                });
+                req.on("error", reject);
+                req.setTimeout(2000, () => req.destroy(new Error("timeout")));
+            });
+        }
+
+        /** Performs an HTTP POST with an empty body, resolving with the response body. */
+        function httpPost(url) {
+            return new Promise((resolve, reject) => {
+                const req = http.request(url, { method: "POST" }, (res) => {
+                    let body = "";
+                    res.on("data", (chunk) => (body += chunk));
+                    res.on("end", () => resolve(body));
+                });
+                req.on("error", reject);
+                req.setTimeout(2000, () => req.destroy(new Error("timeout")));
+                req.end();
+            });
+        }
+
+        /** Polls the endpoint until the response satisfies `ready` (or the attempts run out). */
+        async function waitForEndpoint(url, ready, attempts = 40) {
+            let last = "";
+            for (let i = 0; i < attempts; i++) {
+                try {
+                    last = await httpGet(url);
+                    if (ready(last)) {
+                        return last;
+                    }
+                } catch {
+                    // server not up yet
+                }
+                await new Promise((r) => setTimeout(r, 200));
+            }
+            throw new Error(`ECP endpoint not ready, last response: ${last}`);
+        }
+
+        /** Resolves once the spawned server prints `text` on stdout (or the timeout elapses). */
+        function waitForStdout(child, text, timeoutMs = 15000) {
+            return new Promise((resolve, reject) => {
+                let buffer = "";
+                const timer = setTimeout(() => reject(new Error(`stdout did not contain "${text}"`)), timeoutMs);
+                child.stdout.on("data", (chunk) => {
+                    buffer += chunk.toString();
+                    if (buffer.includes(text)) {
+                        clearTimeout(timer);
+                        resolve(buffer);
+                    }
+                });
+            });
+        }
+
+        let tmpDir;
+        let zipPath;
+
+        beforeEach(async () => {
+            ecpPort = await reserveFreePort();
+            trackUrl = `http://localhost:${ecpPort}/sgrendezvous/track`;
+            queryUrl = `http://localhost:${ecpPort}/query/sgrendezvous`;
+            untrackUrl = `http://localhost:${ecpPort}/sgrendezvous/untrack`;
+            // Run from a real zip package (not `-r`/`--root`) so `<file>` in the response matches
+            // how a packaged app resolves `pkg:/...` paths — `--root` mode records component script
+            // locations relative to the mounted folder, which would leak the fixture's folder name.
+            tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "brs-sgrdz-"));
+            zipPath = path.join(tmpDir, "app.zip");
+            fs.writeFileSync(zipPath, zipFolder(path.join(__dirname, "resources", "sgrendezvous-app")));
+        });
+
+        afterEach(() => {
+            server?.kill("SIGKILL");
+            server = undefined;
+            if (tmpDir) {
+                fs.rmSync(tmpDir, { recursive: true, force: true });
+            }
+        });
+
+        /** Spawns the CLI with the ECP server bound to this test's reserved port. */
+        function spawnEcp(args) {
+            return child_process.spawn("node", [brsCliPath, ...args], {
+                cwd: path.join(__dirname, "resources"),
+                env: { ...process.env, BRS_ECP_PORT: String(ecpPort) },
+            });
+        }
+
+        it("tracks and reports SceneGraph cross-thread rendezvous events in debug mode", async () => {
+            server = spawnEcp([zipPath, "--ecp", "--debug"]);
+            await waitForStdout(server, "SGRENDEZVOUS ready");
+
+            const trackXml = await httpPost(trackUrl);
+            expect(trackXml).toContain("<sgrendezvous>");
+            expect(trackXml).toContain("<tracking-enabled>true</tracking-enabled>");
+
+            // The task rendezvouses every 200ms, so a couple of poll cycles are enough to catch one.
+            const xml = await waitForEndpoint(queryUrl, (body) => body.includes("<item>"));
+            expect(xml).toContain("<sgrendezvous>");
+            expect(xml).toContain("<tracking-enabled>true</tracking-enabled>");
+            expect(xml).toContain("<plugin-id>dev</plugin-id>");
+            expect(xml).toContain("<plugin-title>SGRendezvous Test</plugin-title>");
+            expect(xml).toMatch(/<id>\d+<\/id>/);
+            expect(xml).toMatch(/<start-tm>\d+<\/start-tm>/);
+            expect(xml).toMatch(/<end-tm>\d+<\/end-tm>/);
+            expect(xml).toMatch(/<line-number>\d+<\/line-number>/);
+            expect(xml).toMatch(/<file>pkg:\/[^<]+<\/file>/);
+            expect(xml).toContain("<status>OK</status>");
+
+            const untrackXml = await httpPost(untrackUrl);
+            expect(untrackXml).toContain("<tracking-enabled>false</tracking-enabled>");
+        }, 30000);
+
+        it("reports tracking disabled and no events in production mode (no --debug)", async () => {
+            server = spawnEcp([zipPath, "--ecp"]);
+            await waitForStdout(server, "SGRENDEZVOUS ready");
+
+            const trackXml = await httpPost(trackUrl);
+            expect(trackXml).toContain("<tracking-enabled>false</tracking-enabled>");
+
+            // Give the task a couple of rendezvous cycles, then confirm none were queued.
+            await new Promise((r) => setTimeout(r, 700));
+            const xml = await httpGet(queryUrl);
+            expect(xml).toContain("<tracking-enabled>false</tracking-enabled>");
+            expect(xml).toContain("<count>0</count>");
+            expect(xml).not.toContain("<item>");
+        }, 30000);
+    });
+
     it.todo("add tests for the remaining CLI options");
 });
