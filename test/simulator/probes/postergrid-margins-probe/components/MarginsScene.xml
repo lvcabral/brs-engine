@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="MarginsScene" extends="Scene">
+    <interface>
+        <!-- Driven from Main so the printing cases run once and the paint ladder stays on screen. -->
+        <function name="runProbe" />
+    </interface>
+    <script type="text/brightscript" uri="pkg:/components/MarginsScene.brs" />
+    <children>
+        <!-- `measured` holds the grids the numeric cases build and tear down; it stays at [0,0] so a
+             grid's boundingRect() is reported in a coordinate system whose origin is the screen's. -->
+        <Group id="measured" />
+        <!-- `ladder` holds case P, which is READ FROM A SCREENSHOT and must stay on screen. -->
+        <Group id="ladder" />
+    </children>
+</component>

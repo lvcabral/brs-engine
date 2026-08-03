@@ -1,0 +1,69 @@
+=== PosterGrid Margins / Caption Placement Probe ===
+resolution = FHD  1920x 1080
+poster = 100x100 unless noted, itemSpacing = [0,0], grid.translation = [0,0] unless noted
+
+M1. 1 col x 1 row, poster 100x100
+    rect  x = -21  y = -21  w =  142  h =  196
+    local x = -21  y = -21  w =  142  h =  196
+M2. same, grid.translation=[300,200]
+    rect  x =  279  y =  179  w =  142  h =  196
+    local x = -21  y = -21  w =  142  h =  196
+M3. 1 col x 2 rows
+    rect  x = -21  y = -21  w =  142  h =  296
+    local x = -21  y = -21  w =  142  h =  296
+M4. 3 cols x 1 row
+    rect  x = -21  y = -21  w =  342  h =  196
+    local x = -21  y = -21  w =  342  h =  196
+M5. 1 col x 1 row, poster 200x200
+    rect  x = -21  y = -21  w =  242  h =  296
+    local x = -21  y = -21  w =  242  h =  296
+M6. 1 col x 1 row, itemSpacing=[0,40]
+    rect  x = -21  y = -21  w =  142  h =  236
+    local x = -21  y = -21  w =  142  h =  236
+N1. caption2NumLines=1, font defaulted
+    rect  x = -21  y = -21  w =  142  h =  249
+    local x = -21  y = -21  w =  142  h =  249
+N2. caption2NumLines=1, caption2Font=Smaller (non-bold)
+    rect  x = -21  y = -21  w =  142  h =  249
+    local x = -21  y = -21  w =  142  h =  249
+N3. caption2NumLines=1, caption2Font=SmallerBold
+    rect  x = -21  y = -21  w =  142  h =  249
+    local x = -21  y = -21  w =  142  h =  249
+N4. caption1NumLines=1, font defaulted (bold anchor)
+    rect  x = -21  y = -21  w =  142  h =  249
+    local x = -21  y = -21  w =  142  h =  249
+N5. caption1NumLines=1, caption1Font=Smaller (non-bold)
+    rect  x = -21  y = -21  w =  142  h =  249
+    local x = -21  y = -21  w =  142  h =  249
+
+--- per-side outsets (derived from each case's own declared inputs) ---
+    left = tx - x    top = ty - y    right = w - contentW - left    bottom = h - contentH - top
+    left =  21  top =  21  right =  21  bottom =  75   M1. 1 col x 1 row, poster 100x100
+    left =  21  top =  21  right =  21  bottom =  75   M2. same, grid.translation=[300,200]
+    left =  21  top =  21  right =  21  bottom =  75   M3. 1 col x 2 rows
+    left =  21  top =  21  right =  21  bottom =  75   M4. 3 cols x 1 row
+    left =  21  top =  21  right =  21  bottom =  75   M5. 1 col x 1 row, poster 200x200
+    left =  21  top =  21  right =  21  bottom =  75   M6. 1 col x 1 row, itemSpacing=[0,40]
+    left =  21  top =  21  right =  21  bottom =  128   N1. caption2NumLines=1, font defaulted
+    left =  21  top =  21  right =  21  bottom =  128   N2. caption2NumLines=1, caption2Font=Smaller (non-bold)
+    left =  21  top =  21  right =  21  bottom =  128   N3. caption2NumLines=1, caption2Font=SmallerBold
+    left =  21  top =  21  right =  21  bottom =  128   N4. caption1NumLines=1, font defaulted (bold anchor)
+    left =  21  top =  21  right =  21  bottom =  128   N5. caption1NumLines=1, caption1Font=Smaller (non-bold)
+
+--- Label line heights (device font metrics) ---
+    font:SmallerSystemFont  height =  30
+    font:SmallerBoldSystemFont  height =  30
+    font:MediumSystemFont  height =  36
+    font:MediumBoldSystemFont  height =  36
+
+--- group P: caption placement, read from a SCREENSHOT by subtraction ---
+    caption font = font:SmallerBoldSystemFont  device line height =  30
+    every poster is 100x100 with its BOTTOM EDGE at scene y =  360
+    P1 real, caption1 only        x =  60 ..  160
+    P2 reconstruction, offset 0   x =  260 ..  360
+    P3 real, caption1 + caption2  x =  460 ..  560
+    P4 reconstruction, offset 0   x =  660 ..  760
+    CaptionTextOffset = firstInkedRow(P1) - firstInkedRow(P2), and likewise P3 - P4
+    captions are pure red (0xFF0000FF); posters are red-free grey
+
+=== Probe printing complete — group P is on screen, take a screenshot now ===
