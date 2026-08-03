@@ -1,0 +1,92 @@
+=== PosterGrid Outset Axis Probe ===
+resolution = FHD  1920x 1080
+itemSpacing = [0,0] and grid.translation = [0,0] throughout unless a case says otherwise
+READ THE `bottom` COLUMN. Every case is a 1-row or 2-row grid whose content extent is known,
+so `bottom` is the whole subject; `left`/`top`/`right` are along as controls.
+
+A1. 1 col x 1 row, poster 100x100 (M1 repro: expect bottom 50)
+    rect  x = -21  y = -21  w =  142  h =  196
+    local x = -21  y = -21  w =  142  h =  196
+A2. 3 cols x 1 row, poster 100x100 (M4 repro: expect bottom 14)
+    rect  x = -21  y = -21  w =  342  h =  196
+    local x = -21  y = -21  w =  342  h =  196
+A3. 2 cols x 1 row, poster 100x100
+    rect  x = -21  y = -21  w =  242  h =  196
+    local x = -21  y = -21  w =  242  h =  196
+A4. 4 cols x 1 row, poster 100x100
+    rect  x = -21  y = -21  w =  442  h =  196
+    local x = -21  y = -21  w =  442  h =  196
+B1. 3 cols x 4 rows, poster 100x100 (300w x 400h)
+    rect  x = -21  y = -21  w =  342  h =  496
+    local x = -21  y = -21  w =  342  h =  496
+B2. 3 cols x 1 row, poster 100x400 (300w x 400h, one row)
+    rect  x = -21  y = -21  w =  342  h =  496
+    local x = -21  y = -21  w =  342  h =  496
+C1. 1 col x 1 row, poster 400x100 (400w x 100h, wide)
+    rect  x = -21  y = -21  w =  442  h =  196
+    local x = -21  y = -21  w =  442  h =  196
+C2. 1 col x 1 row, poster 100x400 (100w x 400h, tall)
+    rect  x = -21  y = -21  w =  142  h =  496
+    local x = -21  y = -21  w =  142  h =  496
+C3. 1 col x 1 row, poster 200x200 (square)
+    rect  x = -21  y = -21  w =  242  h =  296
+    local x = -21  y = -21  w =  242  h =  296
+D1. 1 col x 1 row, poster 700x100 (very wide, one column)
+    rect  x = -21  y = -21  w =  742  h =  196
+    local x = -21  y = -21  w =  742  h =  196
+D2. 1 col x 1 row, poster 100x700 (very tall, one column)
+    rect  x = -21  y = -21  w =  142  h =  796
+    local x = -21  y = -21  w =  142  h =  796
+D3. 3 cols x 1 row, poster 30x100 (90w, narrow, 3 columns)
+    rect  x = -21  y = -21  w =  132  h =  196
+    local x = -21  y = -21  w =  132  h =  196
+E1. 3 cols x 1 row, caption1NumLines=1
+    rect  x = -21  y = -21  w =  342  h =  249
+    local x = -21  y = -21  w =  342  h =  249
+E2. 1 col x 1 row, caption1NumLines=1
+    rect  x = -21  y = -21  w =  142  h =  249
+    local x = -21  y = -21  w =  142  h =  249
+F1. 3 cols x 1 row, itemSize=[100,100] explicit
+    rect  x = -21  y = -21  w =  342  h =  196
+    local x = -21  y = -21  w =  342  h =  196
+F2. 1 col x 1 row, itemSize=[100,100] explicit
+    rect  x = -21  y = -21  w =  142  h =  196
+    local x = -21  y = -21  w =  142  h =  196
+F3. 3 cols x 1 row, only 2 items (short last row)
+    rect  x = -21  y = -21  w =  342  h =  196
+    local x = -21  y = -21  w =  342  h =  196
+
+--- per-side outsets (derived from each case's own declared inputs) ---
+    left = -x    top = -y    right = w - contentW - left    bottom = h - contentH - top
+    `shape` is the CONTENT extent, the thing groups B and C cross against column count.
+
+    bottom =  75   left =  21 top =  21 right =  21   cols =  1 content =  100x 100 square   A1. 1 col x 1 row, poster 100x100 (M1 repro: expect bottom 50)
+    bottom =  75   left =  21 top =  21 right =  21   cols =  3 content =  300x 100 wide    A2. 3 cols x 1 row, poster 100x100 (M4 repro: expect bottom 14)
+    bottom =  75   left =  21 top =  21 right =  21   cols =  2 content =  200x 100 wide    A3. 2 cols x 1 row, poster 100x100
+    bottom =  75   left =  21 top =  21 right =  21   cols =  4 content =  400x 100 wide    A4. 4 cols x 1 row, poster 100x100
+    bottom =  75   left =  21 top =  21 right =  21   cols =  3 content =  300x 400 tall    B1. 3 cols x 4 rows, poster 100x100 (300w x 400h)
+    bottom =  75   left =  21 top =  21 right =  21   cols =  3 content =  300x 400 tall    B2. 3 cols x 1 row, poster 100x400 (300w x 400h, one row)
+    bottom =  75   left =  21 top =  21 right =  21   cols =  1 content =  400x 100 wide    C1. 1 col x 1 row, poster 400x100 (400w x 100h, wide)
+    bottom =  75   left =  21 top =  21 right =  21   cols =  1 content =  100x 400 tall    C2. 1 col x 1 row, poster 100x400 (100w x 400h, tall)
+    bottom =  75   left =  21 top =  21 right =  21   cols =  1 content =  200x 200 square   C3. 1 col x 1 row, poster 200x200 (square)
+    bottom =  75   left =  21 top =  21 right =  21   cols =  1 content =  700x 100 wide    D1. 1 col x 1 row, poster 700x100 (very wide, one column)
+    bottom =  75   left =  21 top =  21 right =  21   cols =  1 content =  100x 700 tall    D2. 1 col x 1 row, poster 100x700 (very tall, one column)
+    bottom =  75   left =  21 top =  21 right =  21   cols =  3 content =  90x 100 tall    D3. 3 cols x 1 row, poster 30x100 (90w, narrow, 3 columns)
+    bottom =  128   left =  21 top =  21 right =  21   cols =  3 content =  300x 100 wide    E1. 3 cols x 1 row, caption1NumLines=1
+    bottom =  128   left =  21 top =  21 right =  21   cols =  1 content =  100x 100 square   E2. 1 col x 1 row, caption1NumLines=1
+    bottom =  75   left =  21 top =  21 right =  21   cols =  3 content =  300x 100 wide    F1. 3 cols x 1 row, itemSize=[100,100] explicit
+    bottom =  75   left =  21 top =  21 right =  21   cols =  1 content =  100x 100 square   F2. 1 col x 1 row, itemSize=[100,100] explicit
+    bottom =  75   left =  21 top =  21 right =  21   cols =  3 content =  300x 100 wide    F3. 3 cols x 1 row, only 2 items (short last row)
+
+--- how to read it ---
+    A2 vs B1: same 3 columns, wide vs tall content. Differing bottoms => SHAPE governs.
+    A2 vs A3/A4: if the bottom switches at a column count, it is COLUMN COUNT.
+    C1 vs C2: one column throughout, wide vs tall. Differing bottoms => SHAPE, not columns.
+    B1 vs B2: same 300x400 extent, 4 rows vs 1. Differing bottoms => ROW COUNT matters too.
+    D3: 3 columns but only 90 wide. Follows A2 => columns; follows A1 => width/shape.
+    E1 vs E2: if a caption zone changes which rule applies, the 36 is caption-related.
+    If every case reports bottom = 50 except A2, re-run: A2 is then not reproducing.
+
+=== Probe complete ===
+------ Finished 'postergrid-outset-axis-probe' execution [EXIT_USER_NAV] ------
+

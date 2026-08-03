@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="OutsetAxisScene" extends="Scene">
+    <interface>
+        <!-- Driven from Main so the cases run once and the app can close the screen and exit. -->
+        <function name="runProbe" />
+    </interface>
+    <script type="text/brightscript" uri="pkg:/components/OutsetAxisScene.brs" />
+    <children>
+        <!-- Grids are built into here and torn down again. It stays at [0,0] so every boundingRect() is
+             reported in a coordinate system whose origin is the screen's, and the outsets read off
+             directly as -x / -y. -->
+        <Group id="measured" />
+    </children>
+</component>
