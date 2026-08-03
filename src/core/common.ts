@@ -364,6 +364,37 @@ export function isGraphicsData(value: any): value is { graphics: GraphicsData } 
 // Default maximum texture memory (bytes) reported by the graphics debug data.
 export const MaxTextureMemory = 100000000;
 
+/**
+ * A single cross-thread SceneGraph rendezvous, as reported by ECP `query/sgrendezvous`. Collected at
+ * the same instrumentation points as the `logrendezvous` console trace, but only when ECP tracking
+ * (`sgrendezvous/track`) is active.
+ */
+export interface RendezvousEvent {
+    id: number; // Monotonic id, shared with the `logrendezvous` console trace sequence
+    // Rendezvous start/end, monotonic ms (`sgClock.perfNow()` semantics) — device-observed `start-tm`/
+    // `end-tm` are a small-magnitude uptime-like clock, not epoch time, so this is NOT `Date.now()`.
+    startTm: number;
+    endTm: number;
+    line: number; // Source line of the call site that triggered the rendezvous
+    file: string; // Source file (pkg:/...) of the call site
+}
+
+/**
+ * Type guard to check if a value is a rendezvous debug message ({ rendezvous: RendezvousEvent }).
+ * @param value the value to check
+ * @returns true if the value wraps a RendezvousEvent object, false otherwise
+ */
+export function isRendezvousEvent(value: any): value is { rendezvous: RendezvousEvent } {
+    return (
+        value &&
+        typeof value === "object" &&
+        value.rendezvous &&
+        typeof value.rendezvous === "object" &&
+        typeof value.rendezvous.id === "number" &&
+        typeof value.rendezvous.file === "string"
+    );
+}
+
 /* Execution Payload Interfaces
  *
  * These interfaces are used to provide information to the interpreter about the
@@ -718,6 +749,7 @@ export enum DataType {
     HDMI, // HDMI Status
     RHB, // Render Thread Heartbeat (statement counter, render thread writes only)
     RDN, // Rendezvous sequence Number (monotonic id shared by all threads for logRendezvous tracing)
+    RDT, // Rendezvous Data Tracking (0/1), ECP `sgrendezvous` track/untrack state
     // Key Buffer starts here: KeyBufferSize * KeyArraySpots
     RID, // Remote Id
     KEY, // Key Code

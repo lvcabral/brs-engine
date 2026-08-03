@@ -44,6 +44,7 @@ import {
     SupportedExtension,
     isRegistryData,
     isGraphicsData,
+    isRendezvousEvent,
     ExtensionInfo,
     DataType,
     ExtVolInitialSize,
@@ -507,9 +508,9 @@ function hostCallback(event: string, data: any) {
             handleDebuggerCommand(command);
         }
         handleStringMessage(data);
-    } else if (["frame", "registry", "graphics"].includes(event)) {
-        // The revived ImageData, RegistryData and GraphicsData shapes are the same the
-        // in-process engine posts, so the existing message handler applies unchanged.
+    } else if (["frame", "registry", "graphics", "rendezvous"].includes(event)) {
+        // The revived ImageData, RegistryData, GraphicsData and RendezvousEvent shapes are the
+        // same the in-process engine posts, so the existing message handler applies unchanged.
         messageCallback(data);
     } else if (event === "error") {
         writeTerminalText(chalk.red(data) + "\n", true);
@@ -764,7 +765,7 @@ function messageCallback(message: any, _?: any) {
         if (program.ascii || program.image) {
             renderFrameToTerminal(message);
         }
-    } else if (isGraphicsData(message)) {
+    } else if (isGraphicsData(message) || isRendezvousEvent(message)) {
         if (program.ecp) {
             brsWorker?.postMessage(message);
         }

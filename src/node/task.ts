@@ -11,6 +11,7 @@ import {
     isExtensionInfo,
     isNDKStart,
     isRegistryData,
+    isRendezvousEvent,
     isTaskData,
     isThreadUpdate,
     isTypeOf,
@@ -226,6 +227,8 @@ export function resetTasks() {
 function taskCallback(data: any) {
     if (isRegistryData(data)) {
         notifyHost("registry", data);
+    } else if (isRendezvousEvent(data)) {
+        notifyHost("rendezvous", data);
     } else if (isExtensionInfo(data)) {
         notifyHost("debug", `[task:host] Loaded Extension: ${data.name} (v${data.version}) from ${data.library}\r\n`);
     } else if (isTaskData(data)) {
