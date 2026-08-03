@@ -50,39 +50,20 @@ type PosterItemLayout = {
 };
 
 /**
- * Vertical padding a device reserves around a cell's caption block, TOTAL (above plus below).
+ * Vertical padding a device reserves around a cell's caption block, TOTAL (above plus below), added
+ * once when at least one caption line is requested. Above this base the zone is font-metric-driven.
  *
- * DEVICE-MEASURED via the caption-zone probe: with `caption1NumLines = n` and no line spacing, a
- * cell grows by `23 + n * lineHeight(font)` over the bare poster — 3 points (n = 1, 2, 3) put the
- * intercept at 23 with no further step at the 0 -> 1 boundary. The zone is present only when at
- * least one caption line is requested, and is font-metric-driven above that base (case F: Largest
- * -> 61/line HD, Tiny -> 18/line HD, matching the device's own `Label` heights).
- *
- * This does NOT scale to FHD: it measured 23 at BOTH resolutions, unlike every other grid margin
- * (which go 1.5x) and unlike the per-line term (which scales with the font). It replaced a
- * `captionVerticalMargin * 2` term that gave 24 HD / 36 FHD.
+ * DEVICE-MEASURED, and it does NOT scale to FHD — 23 at both resolutions, unlike every other grid
+ * margin. See the caption-zone section in `.claude/docs/scenegraph-invariants.md`.
  */
 const CaptionZoneBase = 23;
 
 /**
- * Where the caption text starts inside that reserved zone, measured from the poster's bottom edge.
+ * Where the caption text starts inside {@link CaptionZoneBase}, from the poster's bottom edge.
  *
- * DEVICE-MEASURED as ZERO (Streaming Stick, Roku OS 15.2, HD and FHD) — the text starts immediately
- * below the poster and the whole {@link CaptionZoneBase} sits BELOW it, rather than being split
- * above/below. This value used to be `round(23 / 2)` = 12, which was explicitly an inference: the
- * caption-zone probe reads `boundingRect().height`, so it pinned the zone's SIZE and nothing about
- * how that size divides around the text.
- *
- * Measuring it needed a screenshot, not a rect: a caption `Label` lives inside an internal item
- * component, and `ArrayGrid.resolveSubpart` maps an item sub-rect to that component, so no
- * `findNode`/`localSubBoundingRect` path reaches the Label. The margins probe
- * (`test/simulator/probes/postergrid-margins-probe`, group P) renders a real cell beside a
- * reconstruction whose caption box is placed at a known offset of exactly 0 and subtracts the two
- * columns' first inked rows, so the glyph-box-vs-line-box term and the antialiasing cancel instead of
- * being eyeballed. Device: both differences 0, at both resolutions, with two caption-block counts.
- *
- * Kept as a named constant rather than folded away: the zone is still 23 tall and the text still sits
- * inside it, so the placement remains a deliberate, measured decision rather than an absence of one.
+ * DEVICE-MEASURED as zero at both resolutions: the whole zone sits BELOW the text rather than being
+ * split around it. Named rather than folded away because the zone is still 23 tall and the text still
+ * sits inside it, so this is a measured placement, not an absence of one.
  */
 const CaptionTextOffset = 0;
 
@@ -155,18 +136,9 @@ export class PosterGrid extends ArrayGrid {
      * Per-axis outset the reported bounding rect adds around the laid-out extent — LEFT, RIGHT and
      * TOP only. The bottom is larger and lives in {@link rectMarginBottom}.
      *
-     * DEVICE-MEASURED on BOTH axes at BOTH resolutions (Streaming Stick, Roku OS 15.2): a one-column
-     * one-row PosterGrid with `basePosterSize=[100,100]` reports `{x:-14, y:-14, w:128}` at HD and
-     * `{x:-21, y:-21, w:142}` at FHD — where ArrayGrid's shared default would give 24/4. So both axes
-     * do scale 1.5x, and `left == right == top`.
-     *
-     * The FHD 21 used to be an inference from the standard design-resolution scale, because the
-     * caption-zone probe reads only `boundingRect().height`: that pinned the vertical SUM
-     * (`21 + 75 = 96`) and said nothing about x, nor about where the vertical split falls. Any split
-     * summing to 96 keeps every FHD height correct while moving every `y`. The margins probe
-     * (`test/simulator/probes/postergrid-margins-probe`, group M) prints the full rect over 6 cases
-     * that hold the outset fixed against translation, row count, column count, poster size and item
-     * spacing, which settled both axes directly.
+     * DEVICE-MEASURED on both axes at both resolutions, where `ArrayGrid`'s shared default would give
+     * 24/4: `{x:-14, y:-14, w:128}` HD and `{x:-21, y:-21, w:142}` FHD, so `left == right == top`.
+     * Probe: `test/simulator/probes/postergrid-margins-probe` (group M).
      */
     protected rectMargins(): { x: number; y: number } {
         const margin = this.resolution === "FHD" ? 21 : 14;
@@ -174,42 +146,20 @@ export class PosterGrid extends ArrayGrid {
     }
 
     /**
-     * Outset the reported rect adds BELOW the last row — 50 HD / 75 FHD, NOT the 14/21 added above it,
-     * EXCEPT for a horizontal strip (see below), which gets the plain symmetric margin. A PosterGrid's
-     * reported vertical outset is asymmetric, which is why this is separate from {@link rectMargins}
-     * (one value per axis cannot express "14 above, 50 below").
+     * Outset the reported rect adds BELOW the last row — 50 HD / 75 FHD, not the 14/21 added above it.
+     * A PosterGrid's vertical outset is asymmetric, which is why this is separate from
+     * {@link rectMargins} (one value per axis cannot express "14 above, 50 below").
      *
-     * DEVICE-MEASURED (Streaming Stick, Roku OS 15.2). The caption-zone probe established the
-     * allowance itself over 88 readings: it is charged ONCE per grid, not per row (`h2 - h1` is exactly
-     * one cell in every case, and solving for it from the 1-row and 2-row readings independently gives
-     * the same number, which only a grid-level outset can do), it is present with
-     * `caption1NumLines = 0`, and it is unchanged when `captionVertAlignment` draws the caption over
-     * the poster. So it is not the missing per-cell "caption zone" it first looked like.
+     * DEVICE-MEASURED, including the gate: the allowance is charged once per grid rather than per row,
+     * and is absent exactly when the grid is a horizontal strip — `rows == 1 && numColumns > 1`. That
+     * CONJUNCTION is load-bearing; every single-variable rule (column count, content shape, width
+     * threshold, drawn item count) was measured and rejected, so do not simplify the condition. See
+     * the `PosterGrid` extent section in `.claude/docs/scenegraph-invariants.md`.
      *
-     * The GATE is a separate finding, from the outset-axis probe
-     * (`test/simulator/probes/postergrid-outset-axis-probe`, 17 cases x 2 resolutions):
-     *
-     *     the allowance is absent iff  rows == 1 && numColumns > 1     (a horizontal strip)
-     *
-     * It is a CONJUNCTION, which is why no single variable explains it and why five plausible
-     * single-axis rules were measured and rejected:
-     *
-     * - not the column count: 3 columns x 4 rows keeps the allowance, 3 columns x 1 row loses it.
-     * - not the content shape: a single column 400 wide by 100 tall KEEPS it, and 3 columns x 1 row
-     *   loses it even when the content is 300x400 (taller than wide).
-     * - not a width threshold: a single column 700 wide keeps it; 3 columns only 90 wide lose it.
-     * - not the drawn item count: 3 columns holding 2 items still loses it (the gate reads the
-     *   DECLARED `numColumns`, even though the reported WIDTH follows the items actually drawn).
-     * - not a mis-attributed caption allowance: a captioned 3x1 grid reports margin + poster + zone +
-     *   margin with no allowance (HD 172), so the zone and the allowance are independent terms. HD is
-     *   what proves this — at FHD that reading is ambiguous, since zone-present/allowance-absent and
-     *   zone-absent/allowance-present both give 196.
-     *
-     * NOT separated by any probe case: whether `rows` here means the DECLARED `numRows` or the number
-     * of rows actually displayed. Every case set `numRows` explicitly to the number of rows it filled,
-     * so the two were always equal. The displayed count is used, because the outset is a property of
-     * the laid-out extent and because the hidden and visible passes must agree on it. A grid with
-     * `numRows = 12`, several columns and only one row's worth of content is therefore a GUESS.
+     * `rows` is the count actually DISPLAYED, so the hidden and visible passes agree and because the
+     * outset is a property of the laid-out extent. No probe case separates that from the declared
+     * `numRows` (every case set them equal), so a grid with `numRows = 12`, several columns and one
+     * row's worth of content is a GUESS.
      */
     protected rectMarginBottom(displayRows: number): number {
         if (displayRows === 1 && this.numCols > 1) {
@@ -221,18 +171,11 @@ export class PosterGrid extends ArrayGrid {
     /**
      * Measure the extent while invisible using the SAME per-row terms the visible pass accumulates.
      *
-     * `ArrayGrid.measureHiddenExtent` calls `updateRect` with no `layout.height`, which falls into the
-     * generic per-track arithmetic — `itemSize[1] + margin.y * 2` per row. That is device-correct for
-     * grids whose vertical outset is symmetric and per-row (`LabelList` measured
-     * `Σ rowHeights + gaps + rows * 2 * marginY`), but a PosterGrid is neither: its outset is
-     * asymmetric AND charged once per grid, and its rows carry a caption zone `rowHeights` cannot
-     * express. Left inherited, a hidden PosterGrid disagreed with its own visible extent by
-     * `36 - 28 * (rows - 1)` at HD — it happened to agree at exactly one row and diverged in BOTH
-     * directions either side of that, so the coincidence at 1 row is not evidence of anything.
-     *
-     * This matters for the case `measureHiddenExtent` exists for: an app assigns content to a still
-     * hidden grid, sizes a sibling background from `boundingRect()`, then reveals it. A background
-     * sized from the inherited arithmetic was short by a caption zone per row plus the bottom outset.
+     * `ArrayGrid.measureHiddenExtent`'s generic per-track arithmetic (`itemSize[1] + margin.y * 2` per
+     * row) is correct only for grids whose vertical outset is symmetric and per-row. A PosterGrid is
+     * neither — its outset is asymmetric and charged once per grid, and its rows carry a caption zone
+     * `rowHeights` cannot express — so inheriting it made a hidden grid disagree with its own visible
+     * extent at every row count except one. Keep the two passes deriving the same terms.
      */
     protected measureHiddenExtent(origin: number[], angle: number) {
         const baseSize = this.getValueJS("basePosterSize") as number[];
@@ -260,10 +203,10 @@ export class PosterGrid extends ArrayGrid {
 
     /**
      * Sum of every displayed row's height (poster + caption zone) plus the gap AFTER each row,
-     * including the last — the device-measured trailing-gap rule. This is the arithmetic-only twin of
-     * what `renderContent`'s loop accumulates into `itemRect.y`; the visible pass keeps its own copy
-     * because it has to advance `itemRect` as it draws, and it additionally counts section/wrap
-     * dividers, which only exist once items are laid out.
+     * including the last — the device-measured trailing-gap rule. Arithmetic-only twin of what
+     * `renderContent`'s loop accumulates into `itemRect.y`; that pass keeps its own copy because it
+     * advances `itemRect` as it draws and additionally counts section/wrap dividers, which only exist
+     * once items are laid out.
      */
     private accumulateRowExtent(displayRows: number, baseSize: number[]) {
         const rowHeights = this.getValueJS("rowHeights") as number[];
@@ -479,11 +422,12 @@ export class PosterGrid extends ArrayGrid {
         // column — 3 rows of 100 with `itemSpacing.y = 50` measured 3 x 100 + 3 x 50 + margins, not
         // 2 gaps. So the loop's accumulated `itemRect.y` is used as-is, with nothing backed out (the
         // loop breaks AFTER advancing, so the scene-edge exit already includes that trailing gap too).
+        //
+        // Asymmetric on Y: `margin.y` above the first row, `rectMarginBottom()` below the last. That
+        // bottom value is gated on the row count, so it takes the rows actually RENDERED — the same
+        // count `itemRect.y` accumulated over. The requested count would disagree with the extent
+        // whenever the scene edge cut the loop short.
         const margin = this.rectMargins();
-        // Asymmetric on Y: `margin.y` above the first row, `rectMarginBottom()` below the last one —
-        // and that bottom value is gated on the row count, so it must be passed the rows actually
-        // RENDERED, which is the same count `itemRect.y` accumulated over. Using the requested row
-        // count would disagree with the extent whenever the scene edge cut the loop short.
         const height = renderedRows === 0 ? 0 : itemRect.y - startY + margin.y + this.rectMarginBottom(renderedRows);
         this.updateRect(rect, displayRows, [Math.max(...columnWidths), maxCellHeight || baseSize[1]], {
             width: this.computeReportedWidth(columnWidths, columnSpacings, displayRows),
@@ -800,18 +744,13 @@ export class PosterGrid extends ArrayGrid {
     /**
      * How many columns are actually occupied — the widest row that gets laid out.
      *
-     * DEVICE-MEASURED (`test/simulator/probes/postergrid-outset-axis-probe`, case F3): a grid declaring
-     * `numColumns = 3` but holding only 2 items reports a rect two cells wide (HD 228 = 2 x 100 + 14 x 2,
-     * FHD 242), not three. So the reported WIDTH follows the items actually drawn.
+     * DEVICE-MEASURED: a grid declaring `numColumns = 3` but holding only 2 items reports a rect two
+     * cells wide (HD 228), so the reported WIDTH follows the items drawn. The same case measures the
+     * bottom allowance as absent, which only a gate reading the DECLARED `numColumns` produces — so
+     * this node holds two device-backed notions of "columns" at once, this one and
+     * {@link rectMarginBottom}'s. Do NOT unify them.
      *
-     * The same case also measures the bottom allowance as ABSENT, which only a rule reading the DECLARED
-     * `numColumns` produces (2 drawn columns in 1 row is a strip either way, but see {@link
-     * rectMarginBottom} — its gate is `numColumns > 1`, and F3 is what pins it to the declared value).
-     * So this node holds two different notions of "columns" at once, both device-backed: the extent
-     * counts what was drawn, the gate counts what was declared. Do not unify them.
-     *
-     * This is below `numCols` only when NO row is full — `content.length < numColumns` — so any grid
-     * with a full first row is unaffected.
+     * Below `numCols` only when no row is full (`content.length < numColumns`).
      */
     private countDrawnColumns(displayRows: number) {
         let drawn = 0;
@@ -856,21 +795,21 @@ export class PosterGrid extends ArrayGrid {
     }
 
     /**
-     * Laid-out width of one row: every column's width plus its own trailing gap.
-     *
-     * DEVICE-MEASURED: the gap AFTER the last column is part of the reported extent — 3 columns of
-     * 100 with `itemSpacing.x = 50` measured 478 (3 x 100 + 3 x 50 + margins), not 428. That matches
-     * the reference's wording for the sibling field ("the spacing after each row").
-     */
-    /**
      * Reported width: the drawn columns plus their gaps and the horizontal margins. Slicing to the
-     * DRAWN column count is what case F3 measured — see {@link countDrawnColumns}.
+     * drawn column count is device-measured — see {@link countDrawnColumns}.
      */
     private computeReportedWidth(widths: number[], spacings: number[], displayRows: number) {
         const drawn = this.countDrawnColumns(displayRows);
         return this.computeRowWidth(widths.slice(0, drawn), spacings) + this.rectMargins().x * 2;
     }
 
+    /**
+     * Laid-out width of one row: every column's width plus its own trailing gap.
+     *
+     * DEVICE-MEASURED: the gap AFTER the last column is part of the reported extent — 3 columns of
+     * 100 with `itemSpacing.x = 50` measured 478 (3 x 100 + 3 x 50 + margins), not 428. That matches
+     * the reference's wording for the sibling field ("the spacing after each row").
+     */
     private computeRowWidth(widths: number[], spacings: number[], includeTrailingGap: boolean = true) {
         return widths.reduce((acc, width, index) => {
             const isLast = index === widths.length - 1;
@@ -1004,9 +943,8 @@ export class PosterGrid extends ArrayGrid {
         metrics: CaptionMetrics,
         lineSpacing: number
     ) {
-        // Flush with the top of the zone computeCaptionMetrics reserved — the whole CaptionZoneBase
-        // sits BELOW the text, not split around it. Both the zone's size and this offset are
-        // device-measured; see CaptionTextOffset.
+        // Flush with the top of the zone computeCaptionMetrics reserved: the whole CaptionZoneBase
+        // sits BELOW the text, not split around it. See CaptionTextOffset.
         const textStartY = startY + CaptionTextOffset;
         if (metrics.caption1Lines > 0) {
             layout.caption1Rect = { x: 0, y: textStartY, width: columnWidth, height: metrics.caption1Height };
