@@ -1,0 +1,14 @@
+#
+#  LayoutGroup horizAlignment / vertAlignment probe
+#  Determines how a real Roku device resolves alignment values, including invalid ones.
+#
+
+title=LayoutGroup Alignment Probe
+subtitle=horizAlignment / vertAlignment behavior
+major_version=1
+minor_version=0
+build_version=1
+
+ui_resolutions=fhd
+
+bs_const=DEBUG=false

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component name="MainScene" extends="Scene">
+  <script type="text/brightscript" uri="pkg:/components/MainScene.brs" />
+
+  <children>
+    <Label id="title" text="LayoutGroup.layoutDirection - spelling probe" translation="[55, 26]" font="font:LargeBoldSystemFont" color="0xFFFFFFFF" />
+    <Label id="subtitle" translation="[55, 78]" font="font:SmallSystemFont" color="0xAAAAAAFF" />
+    <Label id="hdrXml" text="DECLARED IN XML" translation="[55, 112]" font="font:SmallBoldSystemFont" color="0x66CCFFFF" />
+    <Label id="hdrRt" text="ASSIGNED FROM BRIGHTSCRIPT" translation="[980, 112]" font="font:SmallBoldSystemFont" color="0x66CCFFFF" />
+
+    <!--
+      Each LayoutGroup below carries a literal layoutDirection spelling. The value must be
+      hard-coded in XML (not assigned from code) so this column tests the XML parser's handling
+      of the attribute, which may differ from a runtime field write.
+      Case index is encoded in the id: x0..x9, matching caseList() in MainScene.brs.
+    -->
+    <Group id="xmlCol" translation="[55, 140]">
+      <LayoutGroup id="x0" itemSpacings="[5]" />
+      <LayoutGroup id="x1" layoutDirection="horiz" itemSpacings="[5]" />
+      <LayoutGroup id="x2" layoutDirection="vert" itemSpacings="[5]" />
+      <LayoutGroup id="x3" layoutDirection="horz" itemSpacings="[5]" />
+      <LayoutGroup id="x4" layoutDirection="horizontal" itemSpacings="[5]" />
+      <LayoutGroup id="x5" layoutDirection="vertical" itemSpacings="[5]" />
+      <LayoutGroup id="x6" layoutDirection="HORIZ" itemSpacings="[5]" />
+      <LayoutGroup id="x7" layoutDirection="Horiz" itemSpacings="[5]" />
+      <LayoutGroup id="x8" layoutDirection="" itemSpacings="[5]" />
+      <LayoutGroup id="x9" layoutDirection="bogus" itemSpacings="[5]" />
+    </Group>
+
+    <!-- Runtime cases are created in code and appended here. -->
+    <Group id="runtimeCol" translation="[980, 140]" />
+
+    <!-- Re-probes a few times: the first pass can read pre-layout rects. -->
+    <Timer id="probeTimer" repeat="true" duration="1.2" />
+  </children>
+</component>

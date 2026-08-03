@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component name="MainScene" extends="Scene">
+  <script type="text/brightscript" uri="pkg:/components/MainScene.brs" />
+
+  <children>
+    <Label id="title" text="LayoutGroup itemSpacings / addItemSpacingAfterChild - value probe" translation="[50, 22]" font="font:LargeBoldSystemFont" color="0xFFFFFFFF" />
+    <Label id="subtitle" translation="[50, 70]" font="font:SmallSystemFont" color="0xAAAAAAFF" />
+    <Label id="legend" translation="[50, 100]" font="font:SmallSystemFont" color="0x66CCFFFF"
+           text="3 children, each 30x10, no translations of their own. g = measured gap between consecutive children. Full detail printed to the console." />
+
+    <Group id="colLeft" translation="[50, 140]" />
+    <Group id="colRight" translation="[990, 140]" />
+
+    <Timer id="probeTimer" repeat="true" duration="1.2" />
+  </children>
+</component>
