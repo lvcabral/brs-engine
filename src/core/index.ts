@@ -97,7 +97,9 @@ if (typeof onmessage !== "undefined") {
             loadExtensions(event.data);
             executeFile(event.data, {}, true);
         } else if (isTaskPayload(event.data)) {
-            BrsDevice.stdout.write(`debug,[core] Task payload received: ${event.data.taskData.id}:${event.data.taskData.name}`);
+            BrsDevice.stdout.write(
+                `debug,[core] Task payload received: ${event.data.taskData.id}:${event.data.taskData.name}`
+            );
             loadExtensions(event.data);
             executeTask(event.data);
         } else if (typeof event.data === "string" && event.data === "getVersion") {
