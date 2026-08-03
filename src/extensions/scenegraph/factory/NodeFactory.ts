@@ -809,7 +809,9 @@ function restoreNodeFields(source: any, node: Node, nodeMap?: Map<string, Node>)
         }
         const brsValue = brsValueOf(value, undefined, nodeMap);
         if (brsValue instanceof Node) {
-            postMessage(`debug,[thread:${sgRoot.threadId}] Restoring Node ${node.nodeSubtype} field "${key}"`);
+            BrsDevice.stdout.write(
+                `debug,[thread:${sgRoot.threadId}] Restoring Node ${node.nodeSubtype} field "${key}"`
+            );
         }
         node.setValueSilent(key, brsValue);
     }

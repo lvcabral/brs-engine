@@ -6,6 +6,8 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+import { LogLevel } from "../common";
+
 /** Proxies a `stdout`-like stream to provide current-column tracking. */
 export class OutputProxy {
     currentLineLength = 0;
@@ -14,8 +16,13 @@ export class OutputProxy {
      * Creates a new proxy that tracks the current column of the provided stream.
      * @param outputStream the stream to proxy writes to
      * @param post whether to post messages to the parent thread. defaults to true
+     * @param logLevel the minimum log level to display
      */
-    constructor(private readonly outputStream: NodeJS.WriteStream, private readonly post: boolean = true) {}
+    constructor(
+        private readonly outputStream: NodeJS.WriteStream,
+        private readonly post: boolean = true,
+        private readonly logLevel: LogLevel = LogLevel.Warning
+    ) {}
 
     /**
      * Writes a string's worth of data to the proxied stream and updates the current output column.
@@ -24,6 +31,12 @@ export class OutputProxy {
     write(str: string) {
         let content = str;
         const level = str.split(",")[0];
+        if (
+            (level === "debug" && this.logLevel > LogLevel.Debug) ||
+            (level === "warning" && this.logLevel > LogLevel.Warning)
+        ) {
+            return;
+        }
         if (["print", "error", "warning", "debug"].includes(level)) {
             content = str.slice(level.length + 1);
             if (this.post) {

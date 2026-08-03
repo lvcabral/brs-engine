@@ -97,7 +97,9 @@ if (typeof onmessage !== "undefined") {
             loadExtensions(event.data);
             executeFile(event.data, {}, true);
         } else if (isTaskPayload(event.data)) {
-            postMessage(`debug,[core] Task payload received: ${event.data.taskData.id}:${event.data.taskData.name}`);
+            BrsDevice.stdout.write(
+                `debug,[core] Task payload received: ${event.data.taskData.id}:${event.data.taskData.name}`
+            );
             loadExtensions(event.data);
             executeTask(event.data);
         } else if (typeof event.data === "string" && event.data === "getVersion") {
@@ -106,7 +108,7 @@ if (typeof onmessage !== "undefined") {
             // Setup Control Shared Array
             BrsDevice.setSharedArray(new Int32Array(event.data));
         } else {
-            postMessage(`warning,[core] Invalid message received: ${event.data}`);
+            BrsDevice.stderr.write(`warning,[core] Invalid message received: ${event.data}`);
         }
     };
 }
@@ -138,7 +140,7 @@ function loadExtensions(payload: AppPayload | TaskPayload) {
  */
 function loadExtension(moduleId: SupportedExtension, modulePath: string) {
     if (!modulePath) {
-        postMessage(`warning,[core] No module path provided for ${moduleId} extension.`);
+        BrsDevice.stderr.write(`warning,[core] No module path provided for ${moduleId} extension.`);
         return;
     }
     try {
@@ -166,10 +168,10 @@ function loadExtension(moduleId: SupportedExtension, modulePath: string) {
             const extensionInfo: ExtensionInfo = { name: moduleId, library: modulePath, version: extension.version };
             postMessage(extensionInfo);
         } else {
-            postMessage(`warning,[core] The loaded library does not contain ${moduleId} Extension.`);
+            BrsDevice.stderr.write(`warning,[core] The loaded library does not contain ${moduleId} Extension.`);
         }
     } catch (err: any) {
-        postMessage(`warning,[core] Failed to load ${moduleId} extension: ${err.message}`);
+        BrsDevice.stderr.write(`warning,[core] Failed to load ${moduleId} extension: ${err.message}`);
     }
 }
 
@@ -287,18 +289,18 @@ if (!isMainThread && parentPort) {
         if (isAppPayload(data)) {
             loadNodeExtensions(data);
             executeFile(data, {}, true).catch((err: any) => {
-                postMessage(`error,[core] Error executing app: ${err.message}`);
+                BrsDevice.stderr.write(`error,[core] Error executing app: ${err.message}`);
                 postMessage(`end,${AppExitReason.Crashed}`);
             });
         } else if (isTaskPayload(data)) {
-            postMessage(`debug,[core] Task payload received: ${data.taskData.id}:${data.taskData.name}`);
+            BrsDevice.stdout.write(`debug,[core] Task payload received: ${data.taskData.id}:${data.taskData.name}`);
             loadNodeExtensions(data);
             executeTask(data);
         } else if (isTypeOf(data, "SharedArrayBuffer")) {
             // Setup Control Shared Array (realm-safe check: the buffer may come from a VM sandbox)
             BrsDevice.setSharedArray(new Int32Array(data));
         } else {
-            postMessage(`warning,[core] Invalid message received: ${data}`);
+            BrsDevice.stderr.write(`warning,[core] Invalid message received: ${data}`);
         }
     });
 }
@@ -324,7 +326,7 @@ function loadNodeExtensions(payload: AppPayload | TaskPayload) {
         }
         const modulePath = payload.device.extensions?.get(extension) ?? "";
         if (!modulePath) {
-            postMessage(`warning,[core] No module path provided for ${extension} extension.`);
+            BrsDevice.stderr.write(`warning,[core] No module path provided for ${extension} extension.`);
             continue;
         }
         try {
@@ -341,10 +343,10 @@ function loadNodeExtensions(payload: AppPayload | TaskPayload) {
                 };
                 postMessage(extensionInfo);
             } else {
-                postMessage(`warning,[core] The loaded library does not contain ${extension} Extension.`);
+                BrsDevice.stderr.write(`warning,[core] The loaded library does not contain ${extension} Extension.`);
             }
         } catch (err: any) {
-            postMessage(`warning,[core] Failed to load ${extension} extension: ${err.message}`);
+            BrsDevice.stderr.write(`warning,[core] Failed to load ${extension} extension: ${err.message}`);
         }
     }
 }
@@ -370,7 +372,7 @@ export function registerCallback(messageCallback: any, sharedBuffer?: SharedArra
  */
 export function getReplInterpreter(payload: Partial<AppPayload>) {
     if (!payload.device?.assets) {
-        postMessage("error,Invalid REPL configuration: Missing assets");
+        BrsDevice.stderr.write("error,Invalid REPL configuration: Missing assets");
         return null;
     }
     if (payload.device) {
@@ -383,7 +385,7 @@ export function getReplInterpreter(payload: Partial<AppPayload>) {
         BrsDevice.setupFileSystem(payload);
         BrsDevice.loadLocaleTerms();
     } catch (err: any) {
-        postMessage(`error,[repl] Error mounting File System: ${err.message}`);
+        BrsDevice.stderr.write(`error,[repl] Error mounting File System: ${err.message}`);
         return null;
     }
     const replInterpreter = new Interpreter();
@@ -425,7 +427,7 @@ export function executeLine(contents: string, interpreter: Interpreter) {
         }
     } catch (err: any) {
         if (!(err instanceof BrsError)) {
-            postMessage(`error,Interpreter execution error: ${err.message}`);
+            BrsDevice.stderr.write(`error,Interpreter execution error: ${err.message}`);
         }
     }
 }
@@ -739,7 +741,7 @@ export async function executeFile(
         BrsDevice.setupFileSystem(payload);
         BrsDevice.loadLocaleTerms();
     } catch (err: any) {
-        postMessage(`error,[core] Error mounting File System: ${err.message}`);
+        BrsDevice.stderr.write(`error,[core] Error mounting File System: ${err.message}`);
         return { exitReason: AppExitReason.Crashed };
     }
     // Setup the interpreter
@@ -783,7 +785,7 @@ export async function executeTask(payload: TaskPayload, customOptions?: Partial<
         BrsDevice.setupFileSystem(payload);
         BrsDevice.loadLocaleTerms();
     } catch (err: any) {
-        postMessage(`error,[core] Error mounting File System on Task: ${err.message}`);
+        BrsDevice.stderr.write(`error,[core] Error mounting File System on Task: ${err.message}`);
         return;
     }
     // Setup the interpreter
@@ -796,7 +798,7 @@ export async function executeTask(payload: TaskPayload, customOptions?: Partial<
         try {
             restoreEncryptedFiles(sourceResult.pcode, sourceResult.iv, taskPassword);
         } catch (err: any) {
-            postMessage(`error,Error unpacking the app on Task: ${err.message}`);
+            BrsDevice.stderr.write(`error,Error unpacking the app on Task: ${err.message}`);
         }
     }
     await runBeforeExecuteHooks(interpreter, payload);
@@ -815,7 +817,7 @@ export async function executeTask(payload: TaskPayload, customOptions?: Partial<
         if (BrsDevice.registry.isDirty) {
             BrsDevice.flushRegistry();
         }
-        postMessage(`debug,[core] Task ${payload.taskData.name} is done.`);
+        BrsDevice.stdout.write(`debug,[core] Task ${payload.taskData.name} is done.`);
     } catch (err: any) {
         if (TerminateReasons.includes(err.message)) {
             const reason = err.message === "debug-exit" ? AppExitReason.Stopped : AppExitReason.UserNav;
@@ -969,7 +971,7 @@ function setupPackageFiles(payload: AppPayload | TaskPayload): SourceResult {
                 result.sourceMap.set(pkgPath, fsys.readFileSync(pkgPath, "utf8"));
             }
         } catch (err: any) {
-            postMessage(`error,Error accessing file ${filePath.url} - ${err.message}`);
+            BrsDevice.stderr.write(`error,Error accessing file ${filePath.url} - ${err.message}`);
         }
     }
     return result;
@@ -997,7 +999,7 @@ function setupTranslations(interpreter: Interpreter) {
         }
         if (trType !== "") {
             if (xmlText.trim().length === 0) {
-                postMessage("error,Error parsing translation XML: Empty input");
+                BrsDevice.stderr.write("error,Error parsing translation XML: Empty input");
                 return;
             }
             try {
@@ -1031,12 +1033,12 @@ function setupTranslations(interpreter: Interpreter) {
                     }
                 }
             } catch (err: any) {
-                postMessage(`error,Error parsing XML: ${err?.message ?? err}`);
+                BrsDevice.stderr.write(`error,Error parsing XML: ${err?.message ?? err}`);
             }
         }
     } catch (err: any) {
         const badPath = `pkg:/locale/${locale}/`;
-        postMessage(`error,Invalid path: ${badPath} - ${err.message}`);
+        BrsDevice.stderr.write(`error,Invalid path: ${badPath} - ${err.message}`);
     }
 }
 
@@ -1089,7 +1091,7 @@ function collectComponentFiles(fsys: typeof BrsDevice.fileSystem): {
             files[rel] = fsys.readFileSync(fsPath, "utf8") as string;
             packedFiles.push(rel);
         } catch (err: any) {
-            postMessage(`error,Error reading component file ${fsPath} - ${err.message}`);
+            BrsDevice.stderr.write(`error,Error reading component file ${fsPath} - ${err.message}`);
         }
     }
     return { files, packedFiles };
@@ -1170,7 +1172,7 @@ async function runEncrypted(
             return { exitReason: AppExitReason.NoPassword };
         }
     } catch (err: any) {
-        postMessage(`error,Error unpacking the app: ${err.message}`);
+        BrsDevice.stderr.write(`error,Error unpacking the app: ${err.message}`);
         return { exitReason: AppExitReason.UnpackFail };
     }
     // Execute the decrypted source code
@@ -1179,7 +1181,7 @@ async function runEncrypted(
         const exitReason = await executeApp(interpreter, allStatements, payload);
         return { exitReason: exitReason };
     } catch (err: any) {
-        postMessage(`error,Error executing the app: ${err.message}`);
+        BrsDevice.stderr.write(`error,Error executing the app: ${err.message}`);
         return { exitReason: AppExitReason.Crashed };
     }
 }
