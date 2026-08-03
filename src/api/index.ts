@@ -121,6 +121,8 @@ export {
     setCaptionStyle,
     enableStats,
     getScreenshot,
+    setFrameNotify,
+    getDisplayBuffer,
 } from "./display";
 
 // Common API
@@ -219,7 +221,7 @@ export async function initialize(customDeviceInfo?: Partial<DeviceInfo>, options
                 terminate(AppExitReason.Settings);
             }
             notifyAll("display", data);
-        } else if (["redraw", "resolution"].includes(event)) {
+        } else if (["redraw", "resolution", "frame", "cleared"].includes(event)) {
             notifyAll(event, data);
         } else if (["error", "warning"].includes(event)) {
             apiException(event, data);

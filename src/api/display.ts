@@ -43,6 +43,10 @@ let videoState = "stop";
 let videoRect = { x: 0, y: 0, w: 0, h: 0 };
 let videoLoop = false;
 
+// Frame Notification (opt-in, for embedders mirroring the display elsewhere)
+let frameNotify = false;
+let frameCount = 0;
+
 // Initialize Display Module
 let displayState = true;
 let overscanMode = "disabled";
@@ -252,6 +256,35 @@ export function getScreenshot(): ImageData | null {
 }
 
 /**
+ * Enables or disables the `frame` and `cleared` events.
+ *
+ * The engine only repaints when the application actually draws something, so a settled app can go a
+ * long time without producing a frame. An embedder that mirrors the display elsewhere (for example to
+ * a video stream) cannot poll for that efficiently, so these events tell it exactly when the display
+ * changed. Disabled by default: when no one is listening the notification costs nothing.
+ * @param enabled True to report every display repaint, false to stop
+ */
+export function setFrameNotify(enabled: boolean) {
+    if (enabled && !frameNotify) {
+        frameCount = 0;
+    }
+    frameNotify = enabled;
+}
+
+/**
+ * Gets the display buffer canvas, the source the visible display is drawn from.
+ *
+ * Unlike the visible `#display` canvas, this is always at the native resolution of the current display
+ * mode and carries no overscan guidelines, so it is the canvas to copy when mirroring the screen. It is
+ * the live buffer and must be treated as read-only; the returned object stays valid for the session,
+ * though its dimensions change with the display mode.
+ * @returns The display buffer, or null if the display module is not initialized
+ */
+export function getDisplayBuffer(): OffscreenCanvas | null {
+    return bufferCtx ? bufferCanvas : null;
+}
+
+/**
  * Updates the display buffer with new image data.
  * @param buffer ImageData to render on the display
  */
@@ -267,7 +300,9 @@ export function updateBuffer(buffer: ImageData) {
             lastImage = bitmap;
         });
         if (!videoLoop) {
-            clearDisplay();
+            // Deliberately clearCanvas() and not clearDisplay(): this blank is transient, the repaint
+            // is queued right below, so it must not be reported as a frame.
+            clearCanvas();
             lastFrameReq = globalThis.requestAnimationFrame(drawBufferImage);
         }
         firstFrame = false;
@@ -303,9 +338,20 @@ function drawBufferImage() {
                 }
             }
         } else {
-            clearDisplay();
+            clearCanvas();
         }
         statsUpdate(true);
+        notifyFrame();
+    }
+}
+
+/**
+ * Notifies observers that the visible display changed, if frame notification is enabled.
+ * The counter is a plain number so that emitting on a 60fps path allocates nothing.
+ */
+function notifyFrame() {
+    if (frameNotify) {
+        notifyAll("frame", ++frameCount);
     }
 }
 
@@ -596,6 +642,20 @@ export function clearDisplay(cancelFrame?: boolean) {
         globalThis.cancelAnimationFrame(lastFrameReq);
         videoLoop = false;
     }
+    clearCanvas();
+    // Reported as its own event rather than as a frame, because it cannot be served from the buffer:
+    // clearing never touches bufferCanvas, so an embedder told "new frame" here would copy the last
+    // drawn image and show that instead of the black the display is actually showing.
+    if (frameNotify) {
+        notifyAll("cleared");
+    }
+}
+
+/**
+ * Blanks the display canvas without reporting a frame.
+ * Used where the blank is transient and a repaint is already queued.
+ */
+function clearCanvas() {
     if (ctx && Platform.inSafari) {
         ctx.fillStyle = "black";
         ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
