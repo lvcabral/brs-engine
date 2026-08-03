@@ -83,7 +83,15 @@ function ruleRow(data, imgWidth, imgHeight, scale) {
         let count = 0;
         for (let x = 0; x < imgWidth; x++) {
             const i = (y * imgWidth + x) * 4;
-            if (data[i + 1] > 150 && data[i] < 100 && data[i + 2] < 100) {
+            // Green-DOMINANT, not green-BRIGHT. A device anti-aliases the 1px rule across TWO rows at
+            // partial intensity and varying blend — the HD capture's row 360 ranges over g=40..190 with
+            // r and b lifted alongside it ([36,114,55], [85,198,96]) — where the engine writes one clean
+            // [0,255,0] row. An absolute `g > 150` test reported NOT FOUND on device captures where the
+            // rule was in fact drawn correctly, and a `g > 2r && g > 2b` ratio still missed half the row.
+            // Dominance by a fixed margin catches every blend of green-over-black without firing on the
+            // grey poster (r == g == b) or on near-black.
+            const [r, g, b] = [data[i], data[i + 1], data[i + 2]];
+            if (g > 40 && g > r + 15 && g > b + 15) {
                 count++;
             }
         }

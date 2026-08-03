@@ -227,17 +227,64 @@ rather than a coincidence. `CaptionTextOffset` was temporarily edited in
 So the reading follows the real constant, and a block-count-dependent offset would be **caught** rather
 than averaged into a plausible single number. The source was restored with `git checkout` afterwards.
 
-## After the run
+## RESULT (device: Streaming Stick, Roku OS 15.2, HD and FHD)
 
-1. Record the measured values here in a `RESULT` section, naming which case killed which candidate — the
-   captions probe's format.
-2. Update the docstrings in `src/extensions/scenegraph/nodes/PosterGrid.ts` for `rectMargins`,
-   `rectMarginBottom` and `CaptionTextOffset`, turning "inferred" into "measured" (or into a fix).
-3. Update `.claude/docs/scenegraph-invariants.md` — the caption-zone section's rule 4, and the paragraph
-   noting that a height-only probe leaves non-heights unpinned.
-4. Update the FHD comments in `test/extensions/scenegraph/PosterGridExtent.test.js` from *decision* to
-   *measurement*.
-5. Reconcile the captions probe's own wording: its RESULT section says FHD scaling "retroactively
-   confirm[ed] the previously *inferred* FHD 21", which overstates what a height-only run could show —
-   it confirmed the **sum**, which is what made this probe necessary. Same for the corresponding line in
-   PR #1139's `docs/scenegraph-layout-and-clipping-gaps.md`.
+**Two of the four values were wrong in the engine, and a fifth finding fell out of the run.**
+
+| value | candidate that won | engine before | verdict |
+| --- | --- | --- | --- |
+| 1. FHD vertical split | **S1** (both scale 1.5× → 21 / 75) | 21 / 75 | ✅ correct, now measured rather than inferred |
+| 2. FHD horizontal outset | **X1** (21, equal to the top) | 21 | ✅ correct, and `left == right == top` confirmed |
+| 3. `CaptionTextOffset` | **T2** (0) | 12 | ❌ **wrong** — fixed |
+| 4. `caption2` default font | **F2** (the default IS bold) | bold | ✅ engine correct; the captions probe's inference was wrong |
+
+**Value 1/2 — S1 and X1 win.** M1 read `x=-21 y=-21 w=142 h=196` at FHD, killing S2/X2 (non-scaling) and
+S3 (30/66) directly, since those move `y` while keeping `h = 196`. M1–M6 agree on all four sides, so S4
+(non-constant) is out too, and X4 is out because `left == right` in every case. The two axes are now
+measured independently — the captions probe had only ever pinned the vertical **sum**.
+
+**Value 3 — T2 wins: the offset is 0.** Both group-P pairs differenced to **0** at both resolutions, with
+two caption-block counts. So the text starts immediately below the poster and the whole 23px
+`CaptionZoneBase` sits **below** it, rather than being split around it. T1 (12, the engine's value) and T3
+(11) are both dead, and T5 is out because the two pairs agree. Note this could not have been measured with
+a rect: a caption `Label` lives inside an internal item component and `ArrayGrid.resolveSubpart` maps an
+item sub-rect to that component, so no `findNode`/`localSubBoundingRect` path reaches it — hence the
+screenshot subtraction, [mutation-tested](#the-group-p-method-was-mutation-tested) beforehand.
+
+**Value 4 — F2 wins, reversing the captions probe's inference.** N1 == N2 == N3 on device. Since
+`SmallerSystemFont` and `SmallerBoldSystemFont` are the same point size, N2 == N3 means this probe
+*cannot* distinguish bold from non-bold by height — so the earlier "caption2 defaults to the non-bold
+face" reading has no support, and the engine's `font:SmallerBoldSystemFont` default stands. The
+20/29-vs-21/31 gap that prompted the inference is fully explained by the separate `measureTextHeight`
+shortfall: the device's `Label` heights came back **21/26 HD, 31/38 FHD** where the engine returns the
+font's point size (20/24, 30/36). **No engine change for value 4**; the line-height shortfall is
+engine-wide (it moves every `Label`, not just a caption) and gets its own PR.
+
+**Fifth finding — case M4 diverged, and this probe could not explain it.** M4 (3 columns × 1 row) reported
+the plain symmetric **14** at the bottom where M1/M2/M3/M5/M6 all reported 50. M4 was the only
+multi-column case *and* the only one whose content was wider than tall, so column count, content shape,
+total width and items-per-row all predicted it equally. That confound is what
+[`postergrid-outset-axis-probe`](../postergrid-outset-axis-probe/README.md) was built for; it measured the
+rule as a conjunction (`rows == 1 && numColumns > 1`).
+
+### Incidental notes from the device captures
+
+- The device draws the 1px green registration rule **anti-aliased across two rows** at partial intensity
+  and a varying blend (HD row 360 ranges over `g = 40..190`, with r and b lifted alongside it:
+  `[36,114,55]`, `[85,198,96]`) where the engine writes one clean `[0,255,0]` row. The decoder's original
+  absolute `g > 150` test therefore reported NOT FOUND on both device shots — for a rule that was in fact
+  drawn correctly. **Fixed**: the test is now dominance by a fixed margin (`g > 40 && g > r+15 &&
+  g > b+15`), which catches every blend without firing on the grey poster (`r == g == b`). A `g > 2r &&
+  g > 2b` ratio was tried first and still missed half the row. All four captures now report a rule row
+  (engine 360/360, device 360 HD / 359 FHD — the 1px difference is which anti-aliased row crosses first),
+  and every group-P reading is unchanged. This was only ever a cross-check; the subtraction does not
+  depend on it.
+- The device's HD poster measured **99** rows tall where FHD and the engine give 100 — sub-pixel rounding
+  in the device's HD scaler. It cancels in the subtraction, since P1 and P2 share it.
+
+## Fixed as a result
+
+`CaptionTextOffset` 12 → **0** in `src/extensions/scenegraph/nodes/PosterGrid.ts`, and the `rectMargins`
+docstring upgraded from a one-axis inference to a both-axes measurement. Regression coverage for the
+placement is in `test/extensions/scenegraph/PosterGridExtent.test.js` ("caption text is placed inside the
+zone that was reserved").

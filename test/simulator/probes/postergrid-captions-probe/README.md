@@ -210,17 +210,29 @@ Which case killed what:
 - **Case F** confirmed the zone is font-metric-driven (H2's one correct instinct): Largest → 61/91,
   Tiny → 18/26, matching the printed device `Label` heights exactly.
 - **Case G** killed H5: the zone is poster-independent (G1/G3 track the poster 1:1).
-- **FHD** does scale 1.5× for both outsets (14→21, 50→75), retroactively confirming the previously
-  *inferred* FHD 21. The caption **base** is the lone non-scaling value: 23 at both.
+- **FHD** does scale 1.5× for the vertical **sum** (`top + bottom`: 64 → 96). The caption **base** is the
+  lone non-scaling value: 23 at both.
+
+  This is all a height-only run can show, and an earlier version of this section overstated it as
+  confirming "the previously inferred FHD 21" — a claim about the **split**, which no reading here
+  touches. Any split summing to 96 keeps every height in the table correct while moving every `y`, and
+  the horizontal outset is invisible to heights entirely. That gap is what
+  [`postergrid-margins-probe`](../postergrid-margins-probe/README.md) was built to close; it measured
+  both axes directly and the 21 does hold (`x=-21 y=-21 w=142`) — but as a measurement taken there, not
+  as something inferable from here.
 
 Two secondary divergences the run also exposed, both unmodelled:
 
 1. **The per-line term is a measured line height, not a point size.** Device `Label` heights sit 1–2px
    above the engine's at every size, so the engine is additionally short by `lines × 1..2`.
-2. **`caption2`'s default font differs from `caption1`'s** — 20/29 vs 21/31 per line, but *equal* when
-   both are set explicitly (F4). So the device's caption2 default is the non-bold face; the engine
-   defaults both to `font:SmallerBoldSystemFont`. This is an inference from two increments, not a
-   measured font identity.
+2. **`caption2`'s per-line increment differs from `caption1`'s** — 20/29 vs 21/31, but *equal* when both
+   are set explicitly (F4). This section originally read that as "the device's caption2 default is the
+   non-bold face". **That inference was measured false.** The margins probe set `caption2Font` explicitly
+   to each face in turn (its group N) and the device returned identical heights — `SmallerSystemFont` and
+   `SmallerBoldSystemFont` share a point size, so height cannot separate them and the increment gap was
+   never evidence about the font. The gap is fully accounted for by divergence 1: the device's real
+   `Label` line heights are 21/26 HD and 31/38 FHD against the engine's point sizes. The engine's
+   `font:SmallerBoldSystemFont` default is correct and stands.
 
 ## After the run — done
 
@@ -232,14 +244,21 @@ Two secondary divergences the run also exposed, both unmodelled:
    `PosterGrid.rectMarginBottom()` (50 HD / 75 FHD) plus a flat `CaptionZoneBase = 23` replacing
    `captionVerticalMargin * 2`. Pinned in `test/extensions/scenegraph/PosterGridExtent.test.js`
    (`describe("caption zone")`), with each expectation naming the probe case behind it.
-4. ✅ FHD **does** scale 1.5× for both outsets, retroactively confirming `rectMargins`' previously
-   inferred 21. The caption base (23) is the lone non-scaling value.
+4. ✅ FHD's vertical **sum** does scale 1.5×; the caption base (23) is the lone non-scaling value. The
+   **split** between top and bottom, and the horizontal outset, are not readable from heights and were
+   measured separately by [`postergrid-margins-probe`](../postergrid-margins-probe/README.md).
 
-Still open, both out of scope for the height fix and each needing its own change:
+Follow-ups, and what became of them:
 
-- `RoFont.measureTextHeight` returns the font's point size where a device returns its real line height
-  (1–2px short at every size). Engine-wide — it moves every `Label`, not just captions — so captioned
-  expectations in `PosterGridExtent.test.js` are written as increments to hold either way.
-- The `caption2` default-font difference is an **inference** from two increments, not a measured font
-  identity. Needs a probe case that prints the device's default `caption2Font` line height directly;
-  switching the engine default without first fixing the metric above makes HD worse, not better.
+- ✅ **The `caption2` default font** — resolved by the margins probe's group N: the engine's bold default
+  is **correct**, and this README's non-bold inference was wrong. See divergence 2 above.
+- ✅ **The bottom outset is not unconditional** — the margins probe's M4 and then
+  [`postergrid-outset-axis-probe`](../postergrid-outset-axis-probe/README.md) measured it absent for a
+  horizontal strip (`rows == 1 && numColumns > 1`). The flat 50/75 this run's fix introduced was
+  over-broad.
+- ✅ **`CaptionTextOffset`** — the 12 introduced alongside that fix was an inference; the margins probe's
+  group P measured it as **0**.
+- ⬜ **Still open:** `RoFont.measureTextHeight` returns the font's point size where a device returns its
+  real line height (1–2px short at every size). Engine-wide — it moves every `Label`, not just captions —
+  so captioned expectations in `PosterGridExtent.test.js` are written as increments to hold either way.
+  Its own PR.

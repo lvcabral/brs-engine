@@ -400,18 +400,20 @@ after resume" would pass vacuously.
 ## `PosterGrid` extent — asymmetric axes, trailing gaps, fall-back spacing
 
 **Device-measured** (Streaming Stick / Roku OS 15.2, HD 1280x720 and FHD 1920x1080; probes
-`postergrid-spacing-probe`, `postergrid-rows-probe` and `postergrid-captions-probe` under
-`test/simulator/probes/`, each fixture isolating one unknown). The engine reproduces every width, every
-x/y offset and every uncaptioned height exactly:
+`postergrid-spacing-probe`, `postergrid-rows-probe`, `postergrid-captions-probe`,
+`postergrid-margins-probe` and `postergrid-outset-axis-probe` under `test/simulator/probes/`, each fixture
+isolating one unknown). The engine reproduces every width, every x/y offset and every uncaptioned height
+exactly:
 
 ```
-width  = Σ over ALL N cols of (basePosterSize.x + colSpacing_i) + marginX + marginX
+width  = Σ over DRAWN cols of (basePosterSize.x + colSpacing_i) + marginX + marginX
 height = Σ over ALL N rows of (rowHeight_i + captionZone_i + rowSpacing_i) + marginTop + marginBottom
 spacing_i = (column|row)Spacings[i] ?? itemSpacing.(x|y)
-marginX = marginTop = 14 (HD) / 21 (FHD)      marginBottom = 50 (HD) / 75 (FHD)
+marginX = marginTop = 14 (HD) / 21 (FHD)
+marginBottom = 50 (HD) / 75 (FHD),  but == marginTop when rows == 1 && numColumns > 1
 ```
 
-Five rules, each of which the engine had wrong:
+Seven rules, each of which the engine had wrong:
 
 1. **Short spacing arrays fall back to `itemSpacing`, they do not repeat the last entry.**
    `columnSpacings=[10]` across 3 columns measured 438 (`10 + 50 + 50`); repeating would have given
@@ -423,14 +425,45 @@ Five rules, each of which the engine had wrong:
    each row" wording. 3 columns of 100 at `itemSpacing.x = 50` measure 478, not 428.
 3. **The axes are NOT symmetric.** `columnWidths` is **ignored** (cell width always comes from
    `basePosterSize.x`) while `rowHeights` **is** honored. Do not unify them into one helper.
-4. **`rectMargins` is 14/14**, not `ArrayGrid`'s shared 24/4. The FHD 21 is **still an inference** from
-   the 1.5× design scale: the caption probe reads `boundingRect().height` only, so at FHD it pins the
-   vertical *sum* (`21 + 75 = 96`) and nothing about x or about where the split falls. A wrong split
-   would keep every FHD height correct and move every `y` — which is why the test suite asserts
-   `rect.x`/`rect.y` at FHD as the pinned *decision*, not as a measurement.
+4. **`rectMargins` is 14/14 (HD) and 21/21 (FHD)**, not `ArrayGrid`'s shared 24/4 — now measured on
+   **both axes at both resolutions** by `postergrid-margins-probe` (`x=-14 y=-14 w=128` HD,
+   `x=-21 y=-21 w=142` FHD), with `left == right == top` in all six of its cases. The FHD pair used to be
+   an inference: the caption probe reads `boundingRect().height` only, so at FHD it pinned the vertical
+   *sum* (`21 + 75 = 96`) and nothing about x or about where the split falls. Any split summing to 96
+   keeps every FHD height correct while moving every `y`, which is why that inference had to be closed by
+   a probe printing the whole rect rather than argued from the design scale.
 5. **The vertical outset is asymmetric: 14 above the first row, 50 below the last** (21/75 FHD), where
    the horizontal one is 14 on both sides. See the caption-zone section below — this was the "+36" that
    masqueraded as a missing caption zone for two rounds of probing.
+6. **That extra bottom allowance is *conditional*** — absent exactly when the grid is a **horizontal
+   strip**:
+
+   ```
+   marginBottom == marginTop   iff   displayed rows == 1 && numColumns > 1
+   ```
+
+   A **conjunction**, which is why no single variable explains it. `postergrid-outset-axis-probe` crossed
+   17 cases × both resolutions specifically to kill the plausible single-axis rules, and killed all of
+   them: **not** the column count (3 columns × 4 rows keeps the allowance, 3 × 1 loses it), **not** the
+   content shape (one column 400 wide *keeps* it; 3 columns of 100×400 lose it), **not** a width
+   threshold (700 wide keeps it, 90 wide over 3 columns loses it — a threshold would have to be both
+   above 700 and below 90), **not** the drawn item count (see rule 7), and **not** a mis-attributed
+   caption allowance (a captioned 3×1 grid reads HD 172 = `14 + 100 + 23 + 21 + 14`, so the zone and the
+   allowance are independent terms). That last one is only decidable at **HD**: at FHD,
+   zone-present/allowance-absent and zone-absent/allowance-present both give 196. Run both resolutions —
+   they cross-check each other.
+
+   The one thing no case separates: whether `rows` means the declared `numRows` or the rows actually
+   displayed. Every case set them equal. The implementation uses the **displayed** count, so that the
+   hidden and visible passes agree and because the outset is a property of the laid-out extent — but a
+   grid with `numRows = 12`, several columns and one row of content is a **guess**, flagged as such in
+   `rectMarginBottom`'s docstring.
+7. **Width counts the columns actually drawn; the allowance gate counts the columns declared.** A grid
+   with `numColumns = 3` holding only 2 items reports a rect **two** cells wide (HD 228) — yet the
+   allowance is still absent, which only a gate reading the declared `numColumns` produces. Two different
+   notions of "columns" in one node, both device-measured (`countDrawnColumns` vs. `rectMarginBottom`).
+   **Do not unify them.** Only reachable when no row is full (`content.length < numColumns`), which is
+   why it went unnoticed until a probe case deliberately under-filled a row.
 
 **Related general fix:** `Group.updateBoundingRects` built `rectToParent` from the node's *translation*,
 discarding `drawRect.x/y`. Identical for an ordinary node, but a grid's `updateRect` outsets `drawRect`
@@ -510,21 +543,39 @@ and `ScrollableText` too, not just a caption — so it is deliberately **not** p
 where it would hide behind a grid-shaped fudge factor. `PosterGridExtent.test.js` therefore pins the
 uncaptioned heights absolutely and the captioned ones as *increments*, which hold under either metric.
 
-One further **inference, not a measurement**: caption2's per-line cost measured 20/29 against caption1's
-21/31 with both fields defaulted, yet the two were *equal* when set explicitly to the same font. That
-points to the device defaulting `caption2Font` to the non-bold face while the engine defaults both to
-`font:SmallerBoldSystemFont`. It is derived from two increments, not from reading a font identity, so it
-is left alone pending a probe case that sets `caption2Font` explicitly against a known face.
+**One inference from that run was later measured false, and is worth keeping as a worked example.**
+caption2's per-line cost measured 20/29 against caption1's 21/31 with both fields defaulted, yet the two
+were *equal* when set explicitly to the same font — read at the time as the device defaulting
+`caption2Font` to the non-bold face while the engine defaults both to `font:SmallerBoldSystemFont`. The
+margins probe set `caption2Font` explicitly to each face in turn (group N) and the device returned
+**identical heights for both**. `SmallerSystemFont` and `SmallerBoldSystemFont` share a point size, so
+height cannot separate them and the increment gap was never evidence about a font identity at all. It is
+fully explained by the metric gap in the previous paragraph: the device's real `Label` line heights are
+21/26 HD and 31/38 FHD against the engine's point sizes. **The engine's bold default is correct.** The
+lesson: an inference drawn from a *difference between two derived quantities* inherits every error in
+both, and here one of those errors was already known and documented one paragraph up.
 
 **The probe measures heights, so anything that is not a height is unpinned by it.** Three values in this
-node ride along on the 88 readings without being measured by them, and each is marked as such in code:
-the FHD `rectMargins`/`rectMarginBottom` split (rule 4 above), the FHD **x** margin, and
-`CaptionTextOffset` — where the caption text starts *inside* the reserved zone. The zone's size is
-device-measured; how the 23 divides above and below the text is not. `CaptionTextOffset` is
-`round(23 / 2)` = 12, which keeps HD paint identical to the pre-fix `captionVerticalMargin` and moves FHD
-captions up 6px (the zone does not scale, so the offset cannot either without overflowing it). Deriving
-it as `CaptionZoneBase / 2` directly would put the baseline on a **half-pixel**; the test suite asserts
-integrality and containment rather than the exact offset, since only the latter two are defensible.
+node rode along on the 88 readings without being measured by them — the FHD `rectMargins` split, the FHD
+**x** margin, and `CaptionTextOffset`. All three were marked as inferences in code, and
+`postergrid-margins-probe` then measured all three directly. **Two of the four things it checked were
+wrong**, which is the argument for marking inferences rather than letting them read as measurements:
+
+- the FHD split (21/75) and the FHD x margin (21) were **right** — the plain 1.5× scale wins, and
+  `left == right == top`;
+- `CaptionTextOffset` was **wrong**: device-measured **0**, not `round(23 / 2)` = 12. The text starts
+  immediately below the poster and the entire 23px base sits *below* it, rather than being split around
+  it.
+
+Why heights could not have settled the split: any pair summing to 96 keeps every FHD height in the 88
+readings correct while moving every `y`. Measuring `CaptionTextOffset` needed a **screenshot**, not a
+rect — a caption `Label` lives inside an internal item component and `ArrayGrid.resolveSubpart` maps an
+item sub-rect to that component, so no `findNode`/`localSubBoundingRect` path reaches the Label. The
+probe renders a real cell beside a reconstruction whose caption box is placed at a known offset of 0 and
+subtracts the two columns' first inked rows, so the glyph-box-vs-line-box term and the antialiasing
+cancel instead of being eyeballed; the decoder was mutation-tested first (`CaptionTextOffset = 20` → the
+subtraction reads 20; a block-count-dependent offset → the two pairs disagree). The test suite still
+asserts integrality and containment rather than only the constant, because those hold under any offset.
 
 ### A hidden PosterGrid must measure what a visible one measures
 

@@ -67,17 +67,24 @@ const CaptionZoneBase = 23;
 /**
  * Where the caption text starts inside that reserved zone, measured from the poster's bottom edge.
  *
- * NOT measured — the probe reads `boundingRect().height` only, so it pins the zone's SIZE and says
- * nothing about how the 23 divides above/below the text. 12 is `round(23 / 2)`, i.e. text centered in
- * the zone, and it keeps the HD paint position byte-identical to the pre-fix `captionVerticalMargin`
- * (12 HD). It is deliberately an integer: `23 / 2` puts the baseline on a half-pixel.
+ * DEVICE-MEASURED as ZERO (Streaming Stick, Roku OS 15.2, HD and FHD) — the text starts immediately
+ * below the poster and the whole {@link CaptionZoneBase} sits BELOW it, rather than being split
+ * above/below. This value used to be `round(23 / 2)` = 12, which was explicitly an inference: the
+ * caption-zone probe reads `boundingRect().height`, so it pinned the zone's SIZE and nothing about
+ * how that size divides around the text.
  *
- * FHD paint DOES move — the old value there was 18, so captions shift up 6px. That follows from the
- * zone itself not scaling (it measured 23 at both resolutions), and the text still sits inside the
- * reserved zone either way. Pinning the real FHD offset needs a probe that reports caption placement
- * rather than grid height.
+ * Measuring it needed a screenshot, not a rect: a caption `Label` lives inside an internal item
+ * component, and `ArrayGrid.resolveSubpart` maps an item sub-rect to that component, so no
+ * `findNode`/`localSubBoundingRect` path reaches the Label. The margins probe
+ * (`test/simulator/probes/postergrid-margins-probe`, group P) renders a real cell beside a
+ * reconstruction whose caption box is placed at a known offset of exactly 0 and subtracts the two
+ * columns' first inked rows, so the glyph-box-vs-line-box term and the antialiasing cancel instead of
+ * being eyeballed. Device: both differences 0, at both resolutions, with two caption-block counts.
+ *
+ * Kept as a named constant rather than folded away: the zone is still 23 tall and the text still sits
+ * inside it, so the placement remains a deliberate, measured decision rather than an absence of one.
  */
-const CaptionTextOffset = 12;
+const CaptionTextOffset = 0;
 
 const HorizAlignments = new Set(["left", "center", "right"]);
 const VertAlignments = new Set(["above", "top", "center", "bottom", "below"]);
@@ -148,14 +155,18 @@ export class PosterGrid extends ArrayGrid {
      * Per-axis outset the reported bounding rect adds around the laid-out extent — LEFT, RIGHT and
      * TOP only. The bottom is larger and lives in {@link rectMarginBottom}.
      *
-     * DEVICE-MEASURED (Streaming Stick, Roku OS 15.2, HD 1280x720): a one-column one-row PosterGrid
-     * with `basePosterSize=[100,100]` reports `{x:-14, y:-14, w:128, h:...}` — a 14px outset on the
-     * x axis and above the first row, where ArrayGrid's shared default would give 24/4.
+     * DEVICE-MEASURED on BOTH axes at BOTH resolutions (Streaming Stick, Roku OS 15.2): a one-column
+     * one-row PosterGrid with `basePosterSize=[100,100]` reports `{x:-14, y:-14, w:128}` at HD and
+     * `{x:-21, y:-21, w:142}` at FHD — where ArrayGrid's shared default would give 24/4. So both axes
+     * do scale 1.5x, and `left == right == top`.
      *
-     * The FHD 21 is STILL AN INFERENCE from the standard 1.5x design-resolution scale, on both axes.
-     * The caption-zone probe reads only `boundingRect().height`, so at FHD it pins the vertical
-     * SUM (`21 + 75 = 96`) and says nothing about x or about where the split falls. Do not upgrade
-     * this to "measured" without a probe case that prints `boundingRect().x` / `.y` at FHD.
+     * The FHD 21 used to be an inference from the standard design-resolution scale, because the
+     * caption-zone probe reads only `boundingRect().height`: that pinned the vertical SUM
+     * (`21 + 75 = 96`) and said nothing about x, nor about where the vertical split falls. Any split
+     * summing to 96 keeps every FHD height correct while moving every `y`. The margins probe
+     * (`test/simulator/probes/postergrid-margins-probe`, group M) prints the full rect over 6 cases
+     * that hold the outset fixed against translation, row count, column count, poster size and item
+     * spacing, which settled both axes directly.
      */
     protected rectMargins(): { x: number; y: number } {
         const margin = this.resolution === "FHD" ? 21 : 14;
@@ -163,27 +174,47 @@ export class PosterGrid extends ArrayGrid {
     }
 
     /**
-     * Outset the reported rect adds BELOW the last row — 50 HD / 75 FHD, NOT the 14/21 added above it.
-     * A PosterGrid's reported vertical outset is asymmetric, which is why this is separate from
-     * {@link rectMargins} (one value per axis cannot express "14 above, 50 below").
+     * Outset the reported rect adds BELOW the last row — 50 HD / 75 FHD, NOT the 14/21 added above it,
+     * EXCEPT for a horizontal strip (see below), which gets the plain symmetric margin. A PosterGrid's
+     * reported vertical outset is asymmetric, which is why this is separate from {@link rectMargins}
+     * (one value per axis cannot express "14 above, 50 below").
      *
-     * DEVICE-MEASURED via the caption-zone probe (Streaming Stick, Roku OS 15.2), 22 field
-     * combinations x {1 row, 2 rows} x {HD, FHD} = 88 readings, all reproduced exactly by:
+     * DEVICE-MEASURED (Streaming Stick, Roku OS 15.2). The caption-zone probe established the
+     * allowance itself over 88 readings: it is charged ONCE per grid, not per row (`h2 - h1` is exactly
+     * one cell in every case, and solving for it from the 1-row and 2-row readings independently gives
+     * the same number, which only a grid-level outset can do), it is present with
+     * `caption1NumLines = 0`, and it is unchanged when `captionVertAlignment` draws the caption over
+     * the poster. So it is not the missing per-cell "caption zone" it first looked like.
      *
-     *     height = rows * (posterHeight + captionZone) + rowSpacing terms + 14 + 50      (HD)
+     * The GATE is a separate finding, from the outset-axis probe
+     * (`test/simulator/probes/postergrid-outset-axis-probe`, 17 cases x 2 resolutions):
      *
-     * The 36 HD / 54 FHD the engine was short by used to look like a missing per-cell "caption zone",
-     * and was recorded as one. It is not: `h2 - h1` is exactly one cell in every case, so the
-     * allowance appears ONCE per grid, and it is present with `caption1NumLines = 0` and unchanged
-     * when `captionVertAlignment` draws the caption over the poster (no zone needed at all). Solving
-     * for it from the 1-row and the 2-row readings independently gives the same number, which only a
-     * grid-level outset can do.
+     *     the allowance is absent iff  rows == 1 && numColumns > 1     (a horizontal strip)
      *
-     * At HD the 14/50 split is pinned directly, because `y` was measured as -14. At FHD only the SUM
-     * is measured (96): the probe reads `height`, never `y`, so the 21/75 split assumes the top
-     * scales 1.5x. Getting the split wrong would keep every height correct and move every `y`.
+     * It is a CONJUNCTION, which is why no single variable explains it and why five plausible
+     * single-axis rules were measured and rejected:
+     *
+     * - not the column count: 3 columns x 4 rows keeps the allowance, 3 columns x 1 row loses it.
+     * - not the content shape: a single column 400 wide by 100 tall KEEPS it, and 3 columns x 1 row
+     *   loses it even when the content is 300x400 (taller than wide).
+     * - not a width threshold: a single column 700 wide keeps it; 3 columns only 90 wide lose it.
+     * - not the drawn item count: 3 columns holding 2 items still loses it (the gate reads the
+     *   DECLARED `numColumns`, even though the reported WIDTH follows the items actually drawn).
+     * - not a mis-attributed caption allowance: a captioned 3x1 grid reports margin + poster + zone +
+     *   margin with no allowance (HD 172), so the zone and the allowance are independent terms. HD is
+     *   what proves this — at FHD that reading is ambiguous, since zone-present/allowance-absent and
+     *   zone-absent/allowance-present both give 196.
+     *
+     * NOT separated by any probe case: whether `rows` here means the DECLARED `numRows` or the number
+     * of rows actually displayed. Every case set `numRows` explicitly to the number of rows it filled,
+     * so the two were always equal. The displayed count is used, because the outset is a property of
+     * the laid-out extent and because the hidden and visible passes must agree on it. A grid with
+     * `numRows = 12`, several columns and only one row's worth of content is therefore a GUESS.
      */
-    protected rectMarginBottom(): number {
+    protected rectMarginBottom(displayRows: number): number {
+        if (displayRows === 1 && this.numCols > 1) {
+            return this.rectMargins().y;
+        }
         return this.resolution === "FHD" ? 75 : 50;
     }
 
@@ -221,8 +252,8 @@ export class PosterGrid extends ArrayGrid {
         const drawTrans = this.getDrawTranslation(origin, angle);
         const rect = { x: drawTrans[0], y: drawTrans[1], ...this.getDimensions() };
         this.updateRect(rect, displayRows, [Math.max(...columnWidths), baseSize[1]], {
-            width: this.computeRowWidth(columnWidths, columnSpacings) + margin.x * 2,
-            height: this.accumulateRowExtent(displayRows, baseSize) + margin.y + this.rectMarginBottom(),
+            width: this.computeReportedWidth(columnWidths, columnSpacings, displayRows),
+            height: this.accumulateRowExtent(displayRows, baseSize) + margin.y + this.rectMarginBottom(displayRows),
         });
         this.updateBoundingRects(rect, origin, angle + this.getRotation());
     }
@@ -449,10 +480,13 @@ export class PosterGrid extends ArrayGrid {
         // 2 gaps. So the loop's accumulated `itemRect.y` is used as-is, with nothing backed out (the
         // loop breaks AFTER advancing, so the scene-edge exit already includes that trailing gap too).
         const margin = this.rectMargins();
-        // Asymmetric on Y: `margin.y` above the first row, `rectMarginBottom()` below the last one.
-        const height = renderedRows === 0 ? 0 : itemRect.y - startY + margin.y + this.rectMarginBottom();
+        // Asymmetric on Y: `margin.y` above the first row, `rectMarginBottom()` below the last one —
+        // and that bottom value is gated on the row count, so it must be passed the rows actually
+        // RENDERED, which is the same count `itemRect.y` accumulated over. Using the requested row
+        // count would disagree with the extent whenever the scene edge cut the loop short.
+        const height = renderedRows === 0 ? 0 : itemRect.y - startY + margin.y + this.rectMarginBottom(renderedRows);
         this.updateRect(rect, displayRows, [Math.max(...columnWidths), maxCellHeight || baseSize[1]], {
-            width: this.computeRowWidth(columnWidths, columnSpacings) + margin.x * 2,
+            width: this.computeReportedWidth(columnWidths, columnSpacings, displayRows),
             height,
         });
     }
@@ -763,6 +797,37 @@ export class PosterGrid extends ArrayGrid {
         return new Array(this.numCols).fill(defaultWidth);
     }
 
+    /**
+     * How many columns are actually occupied — the widest row that gets laid out.
+     *
+     * DEVICE-MEASURED (`test/simulator/probes/postergrid-outset-axis-probe`, case F3): a grid declaring
+     * `numColumns = 3` but holding only 2 items reports a rect two cells wide (HD 228 = 2 x 100 + 14 x 2,
+     * FHD 242), not three. So the reported WIDTH follows the items actually drawn.
+     *
+     * The same case also measures the bottom allowance as ABSENT, which only a rule reading the DECLARED
+     * `numColumns` produces (2 drawn columns in 1 row is a strip either way, but see {@link
+     * rectMarginBottom} — its gate is `numColumns > 1`, and F3 is what pins it to the declared value).
+     * So this node holds two different notions of "columns" at once, both device-backed: the extent
+     * counts what was drawn, the gate counts what was declared. Do not unify them.
+     *
+     * This is below `numCols` only when NO row is full — `content.length < numColumns` — so any grid
+     * with a full first row is unaffected.
+     */
+    private countDrawnColumns(displayRows: number) {
+        let drawn = 0;
+        for (let r = 0; r < displayRows; r++) {
+            const rowIndex = this.getRenderRowIndex(r);
+            if (rowIndex < 0 || rowIndex >= this.content.length) {
+                break;
+            }
+            drawn = Math.max(drawn, Math.min(this.numCols, this.content.length - rowIndex));
+            if (drawn >= this.numCols) {
+                break;
+            }
+        }
+        return Math.max(1, drawn);
+    }
+
     private resolveColumnSpacings(defaultSpacing: number, values?: any) {
         const source = values ?? this.getValueJS("columnSpacings");
         const result: number[] = [];
@@ -797,6 +862,15 @@ export class PosterGrid extends ArrayGrid {
      * 100 with `itemSpacing.x = 50` measured 478 (3 x 100 + 3 x 50 + margins), not 428. That matches
      * the reference's wording for the sibling field ("the spacing after each row").
      */
+    /**
+     * Reported width: the drawn columns plus their gaps and the horizontal margins. Slicing to the
+     * DRAWN column count is what case F3 measured — see {@link countDrawnColumns}.
+     */
+    private computeReportedWidth(widths: number[], spacings: number[], displayRows: number) {
+        const drawn = this.countDrawnColumns(displayRows);
+        return this.computeRowWidth(widths.slice(0, drawn), spacings) + this.rectMargins().x * 2;
+    }
+
     private computeRowWidth(widths: number[], spacings: number[], includeTrailingGap: boolean = true) {
         return widths.reduce((acc, width, index) => {
             const isLast = index === widths.length - 1;
@@ -930,8 +1004,9 @@ export class PosterGrid extends ArrayGrid {
         metrics: CaptionMetrics,
         lineSpacing: number
     ) {
-        // Centered in the zone computeCaptionMetrics reserved. See CaptionTextOffset: the zone's size
-        // is device-measured, this split of it is not.
+        // Flush with the top of the zone computeCaptionMetrics reserved — the whole CaptionZoneBase
+        // sits BELOW the text, not split around it. Both the zone's size and this offset are
+        // device-measured; see CaptionTextOffset.
         const textStartY = startY + CaptionTextOffset;
         if (metrics.caption1Lines > 0) {
             layout.caption1Rect = { x: 0, y: textStartY, width: columnWidth, height: metrics.caption1Height };

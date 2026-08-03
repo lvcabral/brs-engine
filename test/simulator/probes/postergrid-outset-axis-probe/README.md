@@ -144,13 +144,68 @@ G1–G6 winning means a change:
 A1 and C3 have device equivalents already (margins-probe M1 and M5) and must reproduce **50**; A2 must
 reproduce **14**. If A2 reads 50 on the device, see G7 — the fixture is the suspect, not the engine.
 
-## After the run
+The `?` columns above are the **pre-run** state, left as written. The device readings are in the RESULT
+section below.
 
-1. Record the result here, naming which case killed which candidate.
-2. Implement the winning rule in `rectMarginBottom()` (`src/extensions/scenegraph/nodes/PosterGrid.ts`),
-   which today returns the allowance unconditionally, and extend
-   `test/extensions/scenegraph/PosterGridExtent.test.js` with the deciding cases.
-3. This blocks **PR #1144** unless G7 wins: that PR introduces the unconditional
-   `rectMarginBottom()` this probe is testing.
-4. Independently of the outcome, the margins probe also measured `CaptionTextOffset` as **0**, not the
-   12 the same PR introduced — a separate one-line fix in the same file.
+## RESULT (device: Streaming Stick, Roku OS 15.2, HD and FHD)
+
+**Every pre-registered candidate lost.** The rule the 34 readings fit is a **conjunction**, which is
+exactly why no single-variable model could hold:
+
+```
+the extra bottom allowance (36 HD / 54 FHD) is absent  iff  rows == 1 && numColumns > 1
+```
+
+i.e. iff the grid is a **horizontal strip**. Verified against all 34 outset-axis readings plus the
+margins probe's 8, on **height and width both: zero mismatches.**
+
+| case | device HD `bottom` | device FHD `bottom` | what it settles |
+| --- | --- | --- | --- |
+| A1. 1 col × 1 row | 50 | 75 | reproduces M1 |
+| A2. 3 cols × 1 row | **14** | **21** | reproduces M4 → **kills G7** (fixture is not the suspect, so #1144 cannot merge as-is) |
+| A3. 2 cols × 1 row | 14 | 21 | the switch is at >1 column, not at 3 |
+| A4. 4 cols × 1 row | 14 | 21 | and it does not come back |
+| B1. 3 cols × 4 rows | **50** | **75** | **kills G1** — same 3 columns as A2, allowance present |
+| B2. 3 cols × 1 row, tall | 14 | 21 | 300x400 content, still absent → **kills G2** with C1 |
+| C1. 1 col, 400x100 wide | **50** | **75** | wide content, one column, allowance PRESENT → **kills G2** |
+| C2. 1 col, tall | 50 | 75 | control |
+| C3. 1 col, square | 50 | 75 | reproduces M5 |
+| D1. 1 col, 700 wide | **50** | **75** | **kills G3** with D3 |
+| D2. 1 col, 700 tall | 50 | 75 | control |
+| D3. 3 cols, 90 wide | 14 | 21 | narrow but 3 columns → absent. A threshold would need to be both above 700 and below 90 |
+| E1. 3 cols captioned | h = **172** | h = 196 | **kills G5** — see below |
+| E2. 1 col captioned | h = 208 | h = 250 | the captioned baseline |
+| F1. 3 cols, explicit itemSize | 14 | 21 | **kills G6** — matches A2 |
+| F2. 1 col, explicit itemSize | 50 | 75 | matches A1 |
+| F3. 3 cols, only 2 items | 14 | 21 | **kills G4** — the gate reads DECLARED `numColumns` |
+
+**G5 needed HD to die.** E1 read `h = 172 = 14 + 100 + 23 + 21 + 14`, which requires
+zone-present **and** allowance-absent; allowance-present with no zone gives 164. At FHD both readings
+give 196, so the two resolutions cross-check each other and the HD one is the proof.
+
+**Incidental find in F3 — a second divergence, also fixed.** Its `right` computed to `-86` in the
+summary because that column derives content width from the DECLARED columns. The device reports
+`w = 228` = **two** cells: the reported **width follows the items actually drawn**, while the
+**allowance gate follows the declared `numColumns`**. Two different notions of "columns" in one node,
+both device-backed (`countDrawnColumns` / `rectMarginBottom`), and neither may be unified into the
+other. Only reachable when no row is full (`content.length < numColumns`).
+
+**Not separated by any case:** whether `rows` in the gate means the declared `numRows` or the rows
+actually displayed. Every case set `numRows` to the number of rows it filled, so the two were always
+equal. The implementation uses the **displayed** count (the outset is a property of the laid-out
+extent, and the hidden and visible passes must agree). A grid with `numRows = 12`, several columns and
+one row's worth of content is therefore a **guess** — recorded as such in `rectMarginBottom`'s
+docstring.
+
+## Fixed as a result
+
+In `src/extensions/scenegraph/nodes/PosterGrid.ts`:
+
+1. `rectMarginBottom(displayRows)` — takes the row count and returns the symmetric margin for a strip.
+2. `countDrawnColumns` / `computeReportedWidth` — the F3 width finding.
+3. `CaptionTextOffset` 12 → **0**, from the margins probe's group P (independent of this probe).
+
+Regression coverage: `test/extensions/scenegraph/PosterGridExtent.test.js`, describe block *"the extra
+bottom allowance is gated on the grid being a horizontal strip"* — one test per killed candidate,
+named after it, at both resolutions. The losing models stay there as tests so a future
+"simplification" to any single variable fails locally rather than on a device.
