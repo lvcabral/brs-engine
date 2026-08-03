@@ -166,7 +166,7 @@ function loadExtension(moduleId: SupportedExtension, modulePath: string) {
             registerExtension(() => extension);
             loadedExtensions.add(moduleId);
             const extensionInfo: ExtensionInfo = { name: moduleId, library: modulePath, version: extension.version };
-            BrsDevice.stdout.write(`info,[core] Extension loaded: ${moduleId}`);
+            postMessage(extensionInfo);
         } else {
             BrsDevice.stderr.write(`warning,[core] The loaded library does not contain ${moduleId} Extension.`);
         }
