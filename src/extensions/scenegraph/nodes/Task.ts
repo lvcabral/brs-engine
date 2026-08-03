@@ -878,7 +878,10 @@ export class Task extends Node {
         }
         const id = nextRendezvousId();
         const loc = sgRoot.interpreter?.location;
-        const file = loc ? (loc.file.startsWith("pkg:") ? loc.file : `pkg:/${loc.file}`) : "pkg:/unknown";
+        let file = "pkg:/unknown";
+        if (loc) {
+            file = loc.file.startsWith("pkg:") ? loc.file : `pkg:/${loc.file}`;
+        }
         const line = loc?.start.line ?? 0;
         if (sgRoot.logRendezvous) {
             const location = line ? `${file}(${line})` : `${file}(??)`;

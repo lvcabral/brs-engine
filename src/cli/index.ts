@@ -765,11 +765,7 @@ function messageCallback(message: any, _?: any) {
         if (program.ascii || program.image) {
             renderFrameToTerminal(message);
         }
-    } else if (isGraphicsData(message)) {
-        if (program.ecp) {
-            brsWorker?.postMessage(message);
-        }
-    } else if (isRendezvousEvent(message)) {
+    } else if (isGraphicsData(message) || isRendezvousEvent(message)) {
         if (program.ecp) {
             brsWorker?.postMessage(message);
         }
