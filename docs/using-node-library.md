@@ -840,7 +840,8 @@ runs through `executeApp`.
 **Callback:** `(event: string, data?: any) => void`, with events:
 
 - `message` - engine strings in `"type,content"` format (`print`, `error`, `end`, ...)
-- `frame` - a node-canvas `ImageData` with the latest rendered frame
+- `frame` - a node-canvas `ImageData` with the latest rendered frame. Always emitted, and unrelated to
+  the browser library's opt-in `framePainted` event, which carries a frame counter instead
 - `registry` - `RegistryData` to persist (`{ current: Map, ... }`)
 - `graphics` - texture-memory debug data
 - `launch` / `ndkStart` - app-launch requests
