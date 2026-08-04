@@ -74,7 +74,6 @@ export class ContentNode extends Node {
         { name: "httpCookies", type: "stringarray", hidden: true },
         { name: "httpHeaders", type: "stringarray", hidden: true },
         { name: "httpSendClientCertificate", type: "boolean", hidden: true },
-        { name: "ignoreInitDataPssh", type: "string", value: "false", hidden: true }, // Introduced in OS 14.5
         { name: "ignoreStreamErrors", type: "boolean", hidden: true },
         { name: "isHD", type: "boolean", hidden: true },
         { name: "length", type: "integer", hidden: true },
