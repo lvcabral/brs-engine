@@ -135,6 +135,14 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
         return new RoAssociativeArray(copiedElements, this.modeCaseSensitive);
     }
 
+    boxLiterals() {
+        for (const [key, value] of this.elements) {
+            if (isBoxable(value) && !(value instanceof Callable)) {
+                this.elements.set(key, value.box());
+            }
+        }
+    }
+
     get(index: BrsType, isCaseSensitive = false) {
         if (isUnboxable(index)) {
             index = index.unbox();

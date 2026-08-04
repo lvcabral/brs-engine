@@ -167,6 +167,15 @@ export class RoArray extends BrsComponent implements BrsValue, BrsArray {
         return new RoArray(copiedElements);
     }
 
+    boxLiterals() {
+        for (let i = 0; i < this.elements.length; i++) {
+            const element = this.elements[i];
+            if (isBoxable(element) && !(element instanceof Callable)) {
+                this.elements[i] = element.box();
+            }
+        }
+    }
+
     get(index: BrsType) {
         if (isBoxedNumber(index)) {
             index = index.unbox();

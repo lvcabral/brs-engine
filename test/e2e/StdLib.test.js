@@ -276,6 +276,9 @@ describe("end to end standard library", () => {
             "aa-box          roString        roString",
             "upper-box       String          roString",
             "left-box        String          roString",
+            "arr-reg         String          roString",
+            "arr-upper       String          roString",
+            "arr-set         String          roString",
         ]);
     });
     test("stdlib/end.brs", async () => {

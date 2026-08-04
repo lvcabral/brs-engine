@@ -6,3 +6,5 @@ packages/node/types
 packages/node/assets
 package.json
 **/*.js.snap
+# Roku Qt Linguist translation files use a .ts extension but contain XML, not TypeScript.
+**/locale/**/translations.ts

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Same-thread callFunc/field target - lives in the render-thread scene tree, no Task involved. -->
+<component name="ProbeTarget" extends="Group">
+    <interface>
+        <field id="arrField" type="array" />
+        <field id="strField" type="string" />
+        <function name="receiveArgs" />
+    </interface>
+    <script type="text/brightscript" uri="pkg:/components/ProbeTarget.brs" />
+</component>

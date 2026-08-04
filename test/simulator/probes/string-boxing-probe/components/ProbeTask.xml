@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Cross-thread callFunc target - a genuine Task, to test whether Task rendezvous serialization
+     (Serializer.ts fromSGNode/jsValueOf) promotes string boxing differently from a same-thread call. -->
+<component name="ProbeTask" extends="Task">
+    <interface>
+        <field id="arrField" type="array" />
+        <function name="receiveArgs" />
+    </interface>
+    <script type="text/brightscript" uri="pkg:/components/ProbeTask.brs" />
+</component>

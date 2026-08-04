@@ -2083,7 +2083,15 @@ export class Node extends RoSGNode implements BrsValue {
                             signature: satisfiedSignature.signature,
                         });
                         addedToStack = true;
-                        const returnValue = functionToCall.call(subInterpreter, ...args);
+                        const boxedArgs = args.map((arg) => {
+                            if (arg instanceof RoArray || arg instanceof RoAssociativeArray) {
+                                arg.boxLiterals();
+                            } else if (isBoxable(arg)) {
+                                return arg.box();
+                            }
+                            return arg;
+                        });
+                        const returnValue = functionToCall.call(subInterpreter, ...boxedArgs);
                         interpreter.popFromStack();
                         interpreter.location = originalLocation;
                         return returnValue;
