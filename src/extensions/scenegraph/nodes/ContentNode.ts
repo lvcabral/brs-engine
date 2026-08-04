@@ -24,7 +24,6 @@ export class ContentNode extends Node {
         { name: "adaptiveMaxStartBitrate", type: "integer", hidden: true },
         { name: "adaptiveMinStartBitrate", type: "integer", hidden: true },
         { name: "album", type: "string", hidden: true },
-        { name: "appData", type: "string", value: "", hidden: true },
         { name: "artists", type: "stringarray", hidden: true },
         { name: "artist", type: "string", hidden: true },
         { name: "audioBlacklist", type: "string", hidden: true },
@@ -52,6 +51,7 @@ export class ContentNode extends Node {
         { name: "drmHttpCookies", type: "stringarray", hidden: true },
         { name: "drmHttpHeaders", type: "stringarray", hidden: true },
         { name: "drmHttpSendClientCertificate", type: "boolean", hidden: true },
+        { name: "drmParams", type: "assocarray", hidden: true },
         { name: "encodingKey", type: "string", hidden: true },
         { name: "encodingType", type: "string", hidden: true },
         { name: "episodeNumber", type: "string", hidden: true },
@@ -77,12 +77,7 @@ export class ContentNode extends Node {
         { name: "ignoreInitDataPssh", type: "string", value: "false", hidden: true }, // Introduced in OS 14.5
         { name: "ignoreStreamErrors", type: "boolean", hidden: true },
         { name: "isHD", type: "boolean", hidden: true },
-        { name: "keySystem", type: "string", value: "", hidden: true },
         { name: "length", type: "integer", hidden: true },
-        { name: "lic_acq_window", type: "string", hidden: true },
-        { name: "licenseRenewURL", type: "string", value: "", hidden: true },
-        { name: "licenseServerURL", type: "string", value: "", hidden: true },
-        { name: "licReqTemplate", type: "string", hidden: true }, // Introduced in OS 14.6
         { name: "live", type: "boolean", hidden: true },
         { name: "liveBoundsPauseBehavior", type: "string", hidden: true },
         { name: "maxBandwidth", type: "integer", hidden: true },
@@ -94,16 +89,12 @@ export class ContentNode extends Node {
         { name: "programID", type: "string", hidden: true },
         { name: "rating", type: "string", hidden: true },
         { name: "releaseDate", type: "string", hidden: true },
-        { name: "requestField", type: "string", hidden: true }, // Introduced in OS 14.6
-        { name: "responseField", type: "string", hidden: true }, // Introduced in OS 14.6
         { name: "sdBackgroundImageUrl", type: "string", hidden: true },
         { name: "sdBifUrl", type: "string", hidden: true },
         { name: "sdGridPosterUrl", type: "string", hidden: true },
         { name: "sdListItemIconSelectedUrl", type: "string", hidden: true },
         { name: "sdListItemIconUrl", type: "string", hidden: true },
         { name: "sdPosterUrl", type: "string", hidden: true },
-        { name: "serializationURL", type: "string", value: "", hidden: true },
-        { name: "serviceCert", type: "string", value: "", hidden: true },
         { name: "shortDescriptionLine1", type: "string", hidden: true },
         { name: "shortDescriptionLine2", type: "string", hidden: true },
         { name: "sourceRect", type: "assocarray", hidden: true },
@@ -125,7 +116,6 @@ export class ContentNode extends Node {
         { name: "targetRect", type: "assocarray", hidden: true },
         { name: "targetRotation", type: "float", hidden: true },
         { name: "targetTranslation", type: "assocarray", hidden: true },
-        { name: "templateType", type: "string", hidden: true }, // Introduced in OS 14.6
         { name: "text", type: "string", hidden: true },
         { name: "textAttrs", type: "assocarray", hidden: true },
         { name: "textOverlayBody", type: "string", hidden: true },
