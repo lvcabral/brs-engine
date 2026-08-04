@@ -156,6 +156,10 @@ let sharedBuffer: ArrayBufferLike;
 let sharedArray: Int32Array;
 let currentPayload: AppPayload;
 
+// Display events relayed to the host untouched. Hoisted because `framePainted` arrives on every
+// repaint (up to 60 times per second), so the lookup must not allocate.
+const forwardedDisplayEvents = new Set(["redraw", "resolution", "framePainted", "frameCleared"]);
+
 /**
  * Initializes the BrightScript engine with device configuration and options.
  * Sets up display, control, video, sound, and task modules.
@@ -221,7 +225,7 @@ export async function initialize(customDeviceInfo?: Partial<DeviceInfo>, options
                 terminate(AppExitReason.Settings);
             }
             notifyAll("display", data);
-        } else if (["redraw", "resolution", "frame", "cleared"].includes(event)) {
+        } else if (forwardedDisplayEvents.has(event)) {
             notifyAll(event, data);
         } else if (["error", "warning"].includes(event)) {
             apiException(event, data);
@@ -334,8 +338,16 @@ export function unsubscribe(observerId: string) {
  * @param eventData Optional data associated with the event
  */
 function notifyAll(eventName: string, eventData?: any) {
-    for (const [_id, callback] of observers) {
-        callback(eventName, eventData);
+    for (const [id, callback] of observers) {
+        try {
+            callback(eventName, eventData);
+        } catch (err: any) {
+            // Host callbacks are relayed from inside the display's requestAnimationFrame loop (see
+            // `framePainted`), which reschedules itself after notifying: an observer that throws would
+            // unwind past that and permanently stop rendering. Reported to the console rather than
+            // through `apiException`, which would recurse into the same faulty observer.
+            console.error(`[api] observer "${id}" failed on "${eventName}" event:`, err);
+        }
     }
 }
 
