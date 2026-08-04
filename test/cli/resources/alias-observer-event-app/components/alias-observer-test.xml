@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="AliasObserverTest" extends="Scene">
+  <interface>
+    <!-- Alias field: observing it by its own name must report that name, not the target's -->
+    <field id="aliasField" alias="child.text" />
+  </interface>
+  <children>
+    <Label id="child" translation="[0, 0]" />
+  </children>
+</component>

@@ -405,6 +405,27 @@ describe.concurrent("cli", () => {
         ]);
     }, 30000);
 
+    it("SceneGraph Alias Field Observer Event Name Test", async () => {
+        // Regression: Node.addObserver cached the alias's *target* field name (e.g. "text")
+        // instead of the alias's own declared name (e.g. "aliasField") into the observer's
+        // eventParams, so msg.getField() reported the wrong name for any observer registered
+        // on an alias field via observeField()/observeFieldScoped().
+        let command = ["node", brsCliPath, "-r alias-observer-event-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "=== Testing Alias Field Observer Event Name ===",
+            "field: aliasField",
+            "data: Hello, World!",
+            "=== Test Complete ===",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 30000);
+
     it("applies an interface field's default value through its alias targets", async () => {
         // Regression: addFields applied a field's XML default only on the non-alias branch, so an
         // aliased field with a default (e.g. `height` value="42" aliased to a child's height) never
