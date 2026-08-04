@@ -1258,7 +1258,7 @@ export class Node extends RoSGNode implements BrsValue {
         if (field instanceof Field) {
             const host = interpreter.environment.hostNode;
             const alias = this.aliases.get(name.toLowerCase());
-            const obsFieldName = new BrsString(alias?.targets[0]?.fieldName ?? field.getName());
+            const obsFieldName = new BrsString(alias?.aliasName ?? field.getName());
             const infoArray = infoFields instanceof RoArray ? infoFields : undefined;
             let observer: Callable | RoMessagePort | BrsInvalid = BrsInvalid.Instance;
             if (isBrsString(funcOrPort)) {
