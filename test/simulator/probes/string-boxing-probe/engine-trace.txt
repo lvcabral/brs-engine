@@ -1,0 +1,20 @@
+PROBE|000|boot|start|
+PROBE|001|control|String|roString|PROBE STRING
+PROBE|002|m-scope-roundtrip|String|roString|PROBE STRING
+PROBE|003|callfunc-plain|String|roString|PROBE STRING
+PROBE|004|callfunc-mscope|String|roString|PROBE STRING
+PROBE|005|field-custom-array|roString|roString|PROBE STRING
+PROBE|006|field-dialog-buttons|roString|roString|PROBE STRING
+PROBE|007|global-field-array|roString|roString|PROBE STRING
+PROBE|008|global-field-str-then-array|roString|roString|PROBE STRING
+PROBE|009|tr-hit-raw|String|roString|Translated Value
+PROBE|010|tr-miss-raw|String|String|Miss Key Not In Table
+PROBE|011|tr-hit-plain|String|roString|Translated Value
+PROBE|012|tr-miss-plain|roString|String|Miss Key Not In Table
+PROBE|013|tr-hit-callfunc|String|roString|Translated Value
+PROBE|014|tr-miss-callfunc|roString|String|Miss Key Not In Table
+PROBE|015|callfunc-task|String|roString|PROBE STRING
+PROBE|999|all|done|
+PROBE|999|boot|end|
+------ Finished 'string-boxing-probe' execution [EXIT_USER_NAV] ------
+

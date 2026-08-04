@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    String Boxing Probe.
+
+    jellyfin-roku's `SceneManager.brs` `optionDialog()` branches on:
+
+        if isStringEqual(type(buttons[0]), "rostring")
+            dialog.buttons = buttons
+        else
+            for each playlist in buttons : objectTitles.push(playlist.title) : end for
+        end if
+
+    `buttons` is built in `AlbumView.bs` `openMorePopup()` as a plain array of computed (non-literal)
+    strings:
+
+        m.favoritesOptionText = m.top.isFavorite ? tr("Remove From Favorites") : tr("Add To Favorites")
+        dialogData.push(m.favoritesOptionText)
+        dialogData.push(tr("Add To Playlist"))
+        m.global.sceneManager.callFunc("optionDialog", "libraryitem", ..., dialogData, paramData)
+
+    On a real Roku, `type(buttons[0])` reports "roString" (the dialog renders correctly, only possible
+    if the `if` branch is taken). In brs-engine it reports "String", so the `else` branch runs and
+    crashes on `playlist.title` (a plain String has no such member).
+
+    A plain local `roArray.push()` of a non-literal string (e.g. `ucase("x")`) was ALREADY confirmed by
+    a real-device test to report "String" at the default type() version (matching brs-engine) - so the
+    promotion to "roString" happens somewhere between building `dialogData` and the `type()` check
+    inside `optionDialog`, not from plain array-push boxing itself.
+
+    This probe isolates every boundary that `dialogData`/its elements could plausibly cross along that
+    path, to find which one actually causes the promotion on a real device:
+
+      control              plain local array + plain local function call (known-good baseline)
+      m-scope-roundtrip    array built from an undeclared `m.xxx` script-scope property (mirrors
+                            `m.favoritesOptionText = ... : dialogData.push(m.favoritesOptionText)`)
+      callfunc-plain       plain array crossed via callFunc to a sibling (non-Task) node
+      callfunc-mscope      m-scope-built array crossed via callFunc (exact AlbumView shape)
+      field-custom-array   a declared XML `type="array"` field, set then read back (no callFunc)
+      field-dialog-buttons the built-in Dialog node's own "buttons" field, set then read back
+      global-field-array   an `m.global`-added array field, set then read back
+      global-field-str-then-array   an `m.global` STRING field, set/read, then pushed into a new array
+      callfunc-task        plain array crossed via callFunc to a genuine Task (cross-thread rendezvous)
+
+    The real `tr()` global (src/core/stdlib/index.ts) returns a BRAND NEW non-literal BrsString when a
+    translation is found, but returns the ORIGINAL argument object UNCHANGED when it is not - so a
+    literal `tr("some untranslated literal")` call that misses preserves the caller's `literal=true`
+    flag, while a hit does not. These cases isolate that distinction (this probe ships its own
+    locale/en_US/translations.ts with exactly one entry, "Hit Key", so the hit/miss outcome is fixed):
+
+      tr-hit-raw           type() of tr("Hit Key") directly - no array, no callFunc
+      tr-miss-raw          type() of tr("Miss Key Not In Table") directly - guaranteed miss
+      tr-hit-plain          tr()-hit string pushed into a local array, no callFunc
+      tr-miss-plain         tr()-miss string pushed into a local array, no callFunc
+      tr-hit-callfunc       tr()-hit string pushed into an array crossed via callFunc
+      tr-miss-callfunc      tr()-miss string pushed into an array crossed via callFunc
+
+    Every case prints `type()`/`type(,3)`/the value via one line:
+
+        PROBE, seq, case, type-v2, type-v3, value  (pipe-separated)
+
+    See README.md for how to capture a run on device and in the engine.
+-->
+<component name="ProbeScene" extends="Scene">
+    <interface>
+        <field id="probeExit" type="boolean" value="false" />
+    </interface>
+    <children>
+        <ProbeTarget id="target" />
+        <Timer id="taskTimer" duration="0.3" repeat="false" />
+    </children>
+    <script type="text/brightscript"><![CDATA[
+
+        sub init()
+            m.seq = 0
+            m.target = m.top.findNode("target")
+            m.dlg = CreateObject("roSGNode", "Dialog")
+            m.global.addFields({ probeArr: [], probeStr: "" })
+
+            p("control", caseControl())
+            p("m-scope-roundtrip", caseMScopeRoundtrip())
+            p("callfunc-plain", caseCallFuncPlain())
+            p("callfunc-mscope", caseCallFuncMScope())
+            p("field-custom-array", caseFieldCustomArray())
+            p("field-dialog-buttons", caseFieldDialogButtons())
+            p("global-field-array", caseGlobalFieldArray())
+            p("global-field-str-then-array", caseGlobalFieldStringThenArray())
+            p("tr-hit-raw", caseTrHitRaw())
+            p("tr-miss-raw", caseTrMissRaw())
+            p("tr-hit-plain", caseTrHitPlain())
+            p("tr-miss-plain", caseTrMissPlain())
+            p("tr-hit-callfunc", caseTrHitCallFunc())
+            p("tr-miss-callfunc", caseTrMissCallFunc())
+
+            ' The Task case is deferred to a Timer tick: creating the Task and calling callFunc on it
+            ' synchronously inline here, before the render thread's message loop ever yields, risks a
+            ' deadlock (the Task's worker thread never gets a chance to spin up and service the
+            ' rendezvous). Yielding via the Timer avoids that.
+            m.taskTimer = m.top.findNode("taskTimer")
+            m.taskTimer.observeField("fire", "onTaskTimer")
+            m.taskTimer.control = "start"
+        end sub
+
+        sub onTaskTimer(event as object)
+            task = CreateObject("roSGNode", "ProbeTask")
+            task.control = "run"
+            p("callfunc-task", caseCallFuncTask(task))
+
+            print "PROBE|999|all|done|"
+            m.top.probeExit = true
+        end sub
+
+        ' A fresh, non-literal string each time - stands in for tr()'s runtime-computed return value.
+        function nonLiteral() as string
+            return ucase("probe string")
+        end function
+
+        function makeArr() as object
+            arr = []
+            arr.push(nonLiteral())
+            return arr
+        end function
+
+        function describe(v as dynamic) as string
+            return type(v) + "|" + type(v, 3) + "|" + v
+        end function
+
+        ' A: plain local array, plain local function call - no `m`, no node crossing at all.
+        function caseControl() as string
+            arr = makeArr()
+            return plainReceive(arr)
+        end function
+
+        function plainReceive(arr as object) as string
+            return describe(arr[0])
+        end function
+
+        ' B: array built from an undeclared `m.xxx` script-scope property, read back locally.
+        ' Mirrors `m.favoritesOptionText = tr(...) : dialogData.push(m.favoritesOptionText)` with no
+        ' callFunc crossing yet, to isolate whether the `m.` round-trip alone promotes the string.
+        function caseMScopeRoundtrip() as string
+            m.loose = nonLiteral()
+            arr = []
+            arr.push(m.loose)
+            return describe(arr[0])
+        end function
+
+        ' C: plain array (no `m.` step) crossed via callFunc to a sibling non-Task node.
+        function caseCallFuncPlain() as string
+            arr = makeArr()
+            return m.target.callFunc("receiveArgs", arr)
+        end function
+
+        ' D: the exact AlbumView.openMorePopup shape - `m.`-scope property, pushed, THEN callFunc.
+        function caseCallFuncMScope() as string
+            m.loose2 = nonLiteral()
+            arr = []
+            arr.push(m.loose2)
+            return m.target.callFunc("receiveArgs", arr)
+        end function
+
+        ' E: a declared XML `type="array"` interface field, set then read back (no callFunc).
+        function caseFieldCustomArray() as string
+            arr = makeArr()
+            m.target.arrField = arr
+            back = m.target.arrField
+            return describe(back[0])
+        end function
+
+        ' F: the built-in Dialog node's own "buttons" field - the exact field jellyfin-roku assigns.
+        function caseFieldDialogButtons() as string
+            arr = makeArr()
+            m.dlg.buttons = arr
+            back = m.dlg.buttons
+            return describe(back[0])
+        end function
+
+        ' G: an `m.global`-added array-typed field, set then read back.
+        function caseGlobalFieldArray() as string
+            arr = makeArr()
+            m.global.probeArr = arr
+            back = m.global.probeArr
+            return describe(back[0])
+        end function
+
+        ' H: an `m.global` STRING field (scalar, not array), set/read, then pushed into a fresh array.
+        function caseGlobalFieldStringThenArray() as string
+            m.global.probeStr = nonLiteral()
+            s = m.global.probeStr
+            arr = []
+            arr.push(s)
+            return describe(arr[0])
+        end function
+
+        ' I: plain array crossed via callFunc to a genuine Task (real cross-thread rendezvous).
+        function caseCallFuncTask(task as object) as string
+            arr = makeArr()
+            return task.callFunc("receiveArgs", arr)
+        end function
+
+        ' J/K: tr() called directly, no array/callFunc - isolates the return value's own boxing.
+        function caseTrHitRaw() as string
+            return describe(tr("Hit Key"))
+        end function
+
+        function caseTrMissRaw() as string
+            return describe(tr("Miss Key Not In Table"))
+        end function
+
+        ' L/M: tr() result pushed into a local array, no callFunc.
+        function caseTrHitPlain() as string
+            arr = []
+            arr.push(tr("Hit Key"))
+            return describe(arr[0])
+        end function
+
+        function caseTrMissPlain() as string
+            arr = []
+            arr.push(tr("Miss Key Not In Table"))
+            return describe(arr[0])
+        end function
+
+        ' N/O: tr() result pushed into an array crossed via callFunc - the exact AlbumView shape,
+        ' but with the real tr() global instead of the ucase() stand-in.
+        function caseTrHitCallFunc() as string
+            arr = []
+            arr.push(tr("Hit Key"))
+            return m.target.callFunc("receiveArgs", arr)
+        end function
+
+        function caseTrMissCallFunc() as string
+            arr = []
+            arr.push(tr("Miss Key Not In Table"))
+            return m.target.callFunc("receiveArgs", arr)
+        end function
+
+        sub p(caseId as string, result as string)
+            m.seq = m.seq + 1
+            s = itos(m.seq)
+            while s.len() < 3
+                s = "0" + s
+            end while
+            print "PROBE|" + s + "|" + caseId + "|" + result
+        end sub
+
+        function itos(i as integer) as string
+            return str(i).trim()
+        end function
+
+    ]]></script>
+</component>

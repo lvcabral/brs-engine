@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="Target" extends="Group">
+    <interface>
+        <function name="receiveArgs" />
+    </interface>
+    <script type="text/brightscript" uri="pkg:/components/Target.brs" />
+</component>

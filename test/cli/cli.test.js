@@ -838,6 +838,29 @@ describe.concurrent("cli", () => {
         ]);
     }, 30000);
 
+    it("Boxes a computed string argument crossing callFunc the same way a node field get/set already does", async () => {
+        let command = ["node", brsCliPath, "-r callfunc-string-boxing-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // A computed string pushed into an array reports type() as "String" until it crosses a node
+        // boundary. Node.get()/Field.convertValue already box field reads/writes this way, but
+        // callFunc passed its arguments through untouched - device-verified divergence (a real Roku
+        // always boxes callFunc arguments, same-thread included).
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "=== CallFunc String Boxing Repro ===",
+            "callfunc-plain = roString|roString",
+            "tr-hit-callfunc = roString|roString",
+            "tr-miss-callfunc = roString|roString",
+            "tr-miss-raw = String|String",
+            "=== CallFunc String Boxing Repro Complete ===",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 30000);
+
     it("Reparents a node when it is attached to a different parent", async () => {
         let command = ["node", brsCliPath, "-r reparent-app", "source/main.brs", "-c 0"].join(" ");
 

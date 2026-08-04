@@ -38,4 +38,13 @@ sub main()
     print "aa-box", type(aa.option3), type(aa.option3, 3)
     print "upper-box", type(ucase(aa.option3)), type(ucase(aa.option3), 3)
     print "left-box", type(aa.option3.left(1)), type(aa.option3.left(1), 3)
+    'Non-literal strings boxed by Array (push/literal/set)
+    arrPush = []
+    arrPush.push(value1)
+    print "arr-reg", type(arrPush[0]), type(arrPush[0], 3)
+    arrLit = [ucase(value2)]
+    print "arr-upper", type(arrLit[0]), type(arrLit[0], 3)
+    arrSet = [""]
+    arrSet[0] = value1.left(1)
+    print "arr-set", type(arrSet[0]), type(arrSet[0], 3)
 end sub
