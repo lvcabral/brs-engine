@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="CaptionOffsetScene" extends="Scene">
+    <interface>
+        <!-- Driven from Main so the ladder is built once and stays on screen for the screenshot. -->
+        <function name="runProbe" />
+    </interface>
+    <script type="text/brightscript" uri="pkg:/components/CaptionOffsetScene.brs" />
+    <children>
+        <!-- Holds every column. Stays at [0,0] so the whole ladder shares one screenshot coordinate
+             space with the registration rule. -->
+        <Group id="ladder" />
+    </children>
+</component>

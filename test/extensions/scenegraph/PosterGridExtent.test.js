@@ -508,6 +508,71 @@ describe("PosterGrid reports the extent a device reports", () => {
                 expect(large2 - large1).toBe(large1 - heightOf(1) - 23);
             });
         });
+
+        describe("on-poster caption placement (top/center/bottom) excludes the below/above zone", () => {
+            // requiresCaptionZone() is false for top/center/bottom — the caption draws OVER the poster,
+            // so none of the 23px zone reserved for below/above should factor into where it sits. A grid
+            // tall enough that neither offset clamps to 0 isolates the centering math from the outset.
+            function layoutOf(placement) {
+                const grid = makeGrid(1, {
+                    numColumns: new Int32(1),
+                    numRows: new Int32(1),
+                    itemSpacing: vector([0, 0]),
+                    basePosterSize: vector([100, 300]),
+                    caption1NumLines: new Int32(1),
+                    captionVertAlignment: new BrsString(placement),
+                });
+                return grid.getLayoutForIndex(0);
+            }
+
+            test("bottom: the caption's own bottom edge reaches the poster's bottom edge", () => {
+                const layout = layoutOf("bottom");
+                expect(layout.caption1Rect.y + layout.caption1Rect.height).toBeCloseTo(300);
+            });
+
+            test("center: the gap above the caption equals the gap below it", () => {
+                const layout = layoutOf("center");
+                const topGap = layout.caption1Rect.y;
+                const bottomGap = 300 - layout.caption1Rect.y - layout.caption1Rect.height;
+                expect(topGap).toBeCloseTo(bottomGap);
+            });
+        });
+
+        describe("below: the text offset follows the caption background's own 9-patch content-margin", () => {
+            // DEVICE-MEASURED via `postergrid-caption-offset-probe` (HD): a flat/non-9-patch background
+            // (no override resolved to a plain bitmap) reads offset 0 — the text sits flush against the
+            // poster, same as postergrid-margins-probe's group P. But the DEFAULT
+            // captionBackgroundBitmapUri is a real `.9.png`, and a device insets the text by that
+            // bitmap's own content-margin.top instead. FHD is inferred by the 1.5x scale other margins
+            // in this node use, not separately device-measured.
+            function textOffsetOf(fields) {
+                const grid = makeGrid(1, {
+                    numColumns: new Int32(1),
+                    numRows: new Int32(1),
+                    itemSpacing: vector([0, 0]),
+                    basePosterSize: vector([100, 100]),
+                    caption1NumLines: new Int32(1),
+                    ...fields,
+                });
+                const layout = grid.getLayoutForIndex(0);
+                return layout.caption1Rect.y - 100;
+            }
+
+            test.each([
+                ["HD", 11],
+                ["FHD", 17],
+            ])("%s: the default background insets the text by %dpx", (resolution, offset) => {
+                atResolution(resolution, () => {
+                    expect(textOffsetOf({})).toBe(offset);
+                });
+            });
+
+            test("a background bitmap that is not a 9-patch (no .9.png suffix) reads flush, offset 0", () => {
+                expect(
+                    textOffsetOf({ captionBackgroundBitmapUri: new BrsString("common:/images/HD/icon_generic.png") })
+                ).toBe(0);
+            });
+        });
     });
 
     /**

@@ -577,6 +577,41 @@ cancel instead of being eyeballed; the decoder was mutation-tested first (`Capti
 subtraction reads 20; a block-count-dependent offset → the two pairs disagree). The test suite still
 asserts integrality and containment rather than only the constant, because those hold under any offset.
 
+**`CaptionTextOffset = 0` was still only half the answer: it holds for a flat background, not the
+DEFAULT one.** `postergrid-margins-probe`'s group P fixture always overrode
+`captionBackgroundBitmapUri` to a transparent, non-`.9.png` bitmap to keep its ink detection clean — so
+it never saw what happens with the field left unset, which is what most real apps do (including Roku's
+own `PosterGridExample` sample). `postergrid-caption-offset-probe` re-ran the same subtraction crossed
+against caption font weight (bold vs. plain) and background (transparent override vs. default),
+8 columns / 5 pairs, one HD device run:
+
+```
+control (bold, transparent)        0   — reproduces group P exactly
+font weight (plain, transparent)   0   — NOT the cause
+default background (plain)         11
+default background (bold)          12  — 1px from the plain reading, attributed to ink-detection
+                                          noise (bolder strokes cross the threshold earlier), not a
+                                          real font-dependent term
+```
+
+Font weight was never the variable; **the default caption background is a real `.9.png`, and a device
+insets the caption text by that bitmap's own content-margin instead of drawing it flush** — the same
+mechanism `ArrayGrid.focusMargins()` already uses for a focus bitmap's content-margin over its flat
+`marginX`/`marginY` fallback, just never wired up for caption placement. `PosterGrid.ts` now resolves
+this via `resolveCaptionTextOffset()`: when the resolved caption-background bitmap is a valid 9-patch
+(`RoBitmap.ninePatch`), the offset is that bitmap's own `getPatchSizes().margins.top`; otherwise it
+falls back to the flat `CaptionTextOffset` (0). This only applies to the below/above (zone-reserving)
+branch — an on-poster caption (`top`/`center`/`bottom`) has no zone to be inset from.
+
+Because most real apps never set `captionBackgroundBitmapUri`, the DEFAULT case matters more than the
+override group P tested — so `caption_background.9.png`
+(`src/extensions/scenegraph/common/images/{HD,FHD}/`) was recalibrated to make its own `margins.top`
+match the reading (11 HD; a few 1px alpha-only marker pixels, no visible change). FHD (17) is the same
+1.5× inference this node uses for its other margins, **not** separately device-measured — this probe
+has not been run on an FHD device. A CUSTOM `captionBackgroundBitmapUri` that is itself a 9-patch
+inherits `resolveCaptionTextOffset()` by construction, but no probe case exercised one, so that path is
+also unmeasured.
+
 ### A hidden PosterGrid must measure what a visible one measures
 
 `ArrayGrid.measureHiddenExtent` re-derives the extent arithmetically for the case it exists for — an app

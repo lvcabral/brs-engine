@@ -1,0 +1,24 @@
+=== PosterGrid Caption Offset Probe ===
+resolution = FHD  1920x 1080
+every poster is 100x100, captionVertAlignment = below (the field default)
+
+bold line height  (font:SmallerBoldSystemFont) =  30
+plain line height (font:SmallerSystemFont) =  30
+
+    C1 real  bold  transparent single        x =  60 ..  160
+    C2 recon bold  offset 0    single         x =  215 ..  315
+    C3 real  plain transparent single        x =  370 ..  470
+    C4 recon plain offset 0    single         x =  525 ..  625
+    C5 real  plain DEFAULT-bg  single         x =  680 ..  780
+    C6 real  plain transparent stacked        x =  835 ..  935
+    C7 recon plain offset 0    stacked        x =  990 ..  1090
+    C8 real  bold  DEFAULT-bg  single         x =  1145 ..  1245
+
+pairs to decode (see decode-caption-offset.js):
+    control        : C1 - C2   (expect 0, matches postergrid-margins-probe group P)
+    font weight    : C3 - C4   (plain caption1Font, transparent bg)
+    default bg     : C5 - C4   (plain caption1Font, DEFAULT bg)
+    plain, stacked : C6 - C7   (plain caption1Font, transparent bg, 2 blocks)
+    default bg bold: C8 - C2   (bold caption1Font, DEFAULT bg)
+
+=== Probe printing complete — ladder is on screen, take a screenshot now ===
