@@ -151,6 +151,6 @@ translation was found.
 
 ## Regression coverage
 
-`test/cli/resources/callfunc-string-boxing-app` + the matching `cli.test.js` test pin both fixes
+`test/cli/resources/callfunc-string-boxing-app` + the matching `cli-scenegraph.test.js` test pin both fixes
 together with a deterministic, non-Task fixture (same-thread `callFunc` already reproduces the bug, so
 no Timer/Task deferral is needed for the regression test).

@@ -79,7 +79,7 @@ gone, so it's detected by the preserved folder
 unconditionally (`--no-sg` to disable), so this detection is browser-only. `TaskPayload.password` is
 threaded through (`src/core/common.ts`, `src/api/task.ts`) so browser Task threads can decrypt.
 
-Regression: the "SceneGraph .bpk encryption" suite in `test/cli/cli.test.js`.
+Regression: the "SceneGraph .bpk encryption" suite in `test/cli/cli-bpk.test.js`.
 
 ## Encrypted apps always run in production mode
 

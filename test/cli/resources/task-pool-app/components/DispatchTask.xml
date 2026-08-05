@@ -30,7 +30,9 @@
         slot.request = { text: "ping" }
         print "DISPATCH: sent"
 
-        msg = wait(5000, port)
+        ' Generous under CI concurrency (see main.brs) - the render thread's own polling loop is
+        ' the tighter budget, so this only fires as a deadlock safety net, not a normal-load timer.
+        msg = wait(12000, port)
         if type(msg) = "roSGNodeEvent"
             print "DISPATCH GOT: "; result.payload
             m.top.got = result.payload

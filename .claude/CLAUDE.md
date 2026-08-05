@@ -63,7 +63,8 @@ means no fonts or system libraries, and most apps break.
 `packages/{browser,node}/assets/common.zip`. So `npm run build:node` alone **downgrades** the node
 package's `common.zip` to core-only — always run `npm run build:sg` after `build:node` (the
 `npm run build:cli` and the full `npm run build` orders this correctly; `prepublishOnly` too). Symptom of a
-stale/core-only zip: ~20 `test/cli/cli.test.js` failures with `ENOENT: /common:/fonts/system-fonts.json`.
+stale/core-only zip: ~20 failures across `test/cli/cli-scenegraph.test.js` (and the `.bpk`/ECP suites in
+`cli-bpk.test.js`/`cli-ecp.test.js`, which also boot SceneGraph apps) with `ENOENT: /common:/fonts/system-fonts.json`.
 
 ## Commands
 
@@ -162,7 +163,7 @@ argument's name from `toStr()` and pass it to `observeField`/`observeFieldScoped
 **Invariants:** keep the name **deterministic** (a plain counter — a random/location id breaks stable
 `toStr()` output and the `roFunction` e2e snapshot; memory is bounded by the cap, not the id scheme), and
 keep the registry **capped** (anonymous callables are minted per evaluation). Regression: "Resolves an
-anonymous function observer registered by its toStr() name" in `test/cli/cli.test.js`
+anonymous function observer registered by its toStr() name" in `test/cli/cli-scenegraph.test.js`
 (`anon-observer-app`).
 
 #### Interfaces are method grouping, not separate types
