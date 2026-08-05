@@ -4,7 +4,7 @@ const scenegraph = require("../../../packages/scenegraph/lib/brs-sg.node.js");
 const core = require("../../../packages/node/bin/brs.node.js");
 
 const { SGNodeFactory, sgRoot } = scenegraph;
-const { BrsDevice, BrsString, Float, Int32, RoArray } = core;
+const { BrsBoolean, BrsDevice, BrsString, Float, Int32, RoArray } = core;
 
 /** Minimal interpreter accepted by renderNode → renderChildren when draw2D is absent. */
 const fakeInterpreter = {};
@@ -127,5 +127,74 @@ describe("LayoutGroup positions siblings after a non-scrolling ScrollingLabel's 
         // (1280) + spacing (20), regardless of how short the actual title text is.
         const expectedX = 80 + 20 + 1280 + 20;
         expect(length.getValueJS("translation")[0]).toBeCloseTo(expectedX);
+    });
+});
+
+/**
+ * Regression: a HIDDEN ScrollingLabel must not contribute to a vertical LayoutGroup's stack height.
+ * SGDEX's StandardGridItemComponent (playusb's main-menu grid items) uses exactly this shape — a
+ * "labelsLayout" LayoutGroup(vert, vertAlignment="bottom") with two ScrollingLabel lines, where an
+ * unused second line is hidden via setLabelDataOrHide: `label.text = ""` (always run, even redundantly,
+ * which Label.setValue's "force re-measure" path turns into an immediate getMeasured() call while the
+ * label is still momentarily visible), THEN `label.visible = false` and `label.scale = [0,0]`.
+ *
+ * Before #1154, ScrollingLabel's reported width for that forced empty-text measurement was 0
+ * (fullTextWidth for empty text), which failed LayoutGroup.chooseActiveRect's width>0-AND-height>0
+ * gate, so the stale rect fell back to zero size. #1154 made ScrollingLabel always report
+ * width = maxWidth (non-zero) regardless of text, so that same stale-but-nonzero-height rect started
+ * passing the gate — counting a full line-height + itemSpacing for a label that never draws anything,
+ * and shifting the bottom-aligned visible line upward (overlapping content above it, e.g. an icon).
+ */
+describe("LayoutGroup ignores a hidden ScrollingLabel's height in a vertical stack", () => {
+    beforeAll(() => {
+        const commonZip = fs.readFileSync(path.join(__dirname, "../../../packages/scenegraph/assets/common.zip"));
+        BrsDevice.fileSystem.setup(commonZip.buffer, new ArrayBuffer(1024 * 1024), new ArrayBuffer(1024 * 1024));
+    });
+
+    afterEach(() => {
+        sgRoot.setFocused();
+    });
+
+    function buildLabelsLayout(includeHiddenLine2) {
+        const layout = SGNodeFactory.createNode("LayoutGroup");
+        layout.setValue("layoutDirection", new BrsString("vert"));
+        layout.setValue("itemSpacings", vector([5]));
+        layout.setValue("vertAlignment", new BrsString("bottom"));
+
+        const line1 = SGNodeFactory.createNode("ScrollingLabel");
+        line1.setValue("font", new BrsString("font:SmallSystemFont"));
+        line1.setValue("maxWidth", new Int32(200));
+        line1.setValue("text", new BrsString("Recent Files"));
+        layout.appendChildToParent(line1);
+
+        if (includeHiddenLine2) {
+            const line2 = SGNodeFactory.createNode("ScrollingLabel");
+            line2.setValue("font", new BrsString("font:SmallSystemFont"));
+            line2.setValue("maxWidth", new Int32(200));
+            // Matches setLabelDataOrHide's exact field-write order: text cleared first (redundant —
+            // the field already defaults to "" — but still forces a re-measure), THEN hidden.
+            line2.setValue("text", new BrsString(""));
+            line2.setValue("visible", BrsBoolean.False);
+            line2.setValue("scale", vector([0, 0]));
+            layout.appendChildToParent(line2);
+        }
+
+        return { layout, line1 };
+    }
+
+    test("a hidden second line does not push the visible first line up", () => {
+        const { layout: layoutAlone, line1: line1Alone } = buildLabelsLayout(false);
+        layoutAlone.renderNode(fakeInterpreter, [0, 0], 0, 1);
+        // A hidden-but-still-present child contributes zero HEIGHT (this fix), but — pre-dating
+        // #1154 too, and out of scope here — calculateTotalPrimary still adds its one itemSpacings
+        // entry regardless of visibility. So the correct baseline is "line1 alone" minus that single
+        // spacing, not an exact match: this still pins the actual regression (a full extra line
+        // height, ~4x the spacing here) while not asserting an unrelated, pre-existing quirk away.
+        const expectedY = line1Alone.getValueJS("translation")[1] - 5;
+
+        const { layout: layoutWithHidden, line1: line1WithHidden } = buildLabelsLayout(true);
+        layoutWithHidden.renderNode(fakeInterpreter, [0, 0], 0, 1);
+
+        expect(line1WithHidden.getValueJS("translation")[1]).toBeCloseTo(expectedY);
     });
 });
