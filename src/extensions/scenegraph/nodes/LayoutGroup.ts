@@ -487,6 +487,26 @@ export class LayoutGroup extends Group {
         direction: LayoutDirection,
         metricsMap?: WeakMap<Node, LayoutMetrics>
     ): LayoutMetrics {
+        if (!child.isVisible()) {
+            // Mirrors Group.nodeRenderingDone's own rule ("an invisible node must not contribute to
+            // the parent's bounds"), which LayoutGroup's custom measurement otherwise bypasses. A
+            // hidden child's rect can be stale (Label.renderNodeContent hard-skips when invisible,
+            // so its rectToParent/rectToScene/rectLocal are never recomputed) and would otherwise
+            // still pass chooseActiveRect's width/height>0 gate, inflating the stack with a child
+            // that draws nothing — position is irrelevant since it never renders, so the current
+            // translation is reused as-is rather than a stale measured origin.
+            const translation = this.getChildTranslation(child);
+            const metrics: LayoutMetrics = {
+                primary: 0,
+                cross: 0,
+                crossStart: direction === "horiz" ? translation[1] : translation[0],
+                primaryStart: direction === "horiz" ? translation[0] : translation[1],
+            };
+            if (metricsMap) {
+                metricsMap.set(child, metrics);
+            }
+            return metrics;
+        }
         const { rect, cached } = this.chooseActiveRect(child);
         let originX = rect.x;
         let originY = rect.y;
