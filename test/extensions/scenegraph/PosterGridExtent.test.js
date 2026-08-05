@@ -537,6 +537,42 @@ describe("PosterGrid reports the extent a device reports", () => {
                 expect(topGap).toBeCloseTo(bottomGap);
             });
         });
+
+        describe("below: the text offset follows the caption background's own 9-patch content-margin", () => {
+            // DEVICE-MEASURED via `postergrid-caption-offset-probe` (HD): a flat/non-9-patch background
+            // (no override resolved to a plain bitmap) reads offset 0 — the text sits flush against the
+            // poster, same as postergrid-margins-probe's group P. But the DEFAULT
+            // captionBackgroundBitmapUri is a real `.9.png`, and a device insets the text by that
+            // bitmap's own content-margin.top instead. FHD is inferred by the 1.5x scale other margins
+            // in this node use, not separately device-measured.
+            function textOffsetOf(fields) {
+                const grid = makeGrid(1, {
+                    numColumns: new Int32(1),
+                    numRows: new Int32(1),
+                    itemSpacing: vector([0, 0]),
+                    basePosterSize: vector([100, 100]),
+                    caption1NumLines: new Int32(1),
+                    ...fields,
+                });
+                const layout = grid.getLayoutForIndex(0);
+                return layout.caption1Rect.y - 100;
+            }
+
+            test.each([
+                ["HD", 11],
+                ["FHD", 17],
+            ])("%s: the default background insets the text by %dpx", (resolution, offset) => {
+                atResolution(resolution, () => {
+                    expect(textOffsetOf({})).toBe(offset);
+                });
+            });
+
+            test("a background bitmap that is not a 9-patch (no .9.png suffix) reads flush, offset 0", () => {
+                expect(
+                    textOffsetOf({ captionBackgroundBitmapUri: new BrsString("common:/images/HD/icon_generic.png") })
+                ).toBe(0);
+            });
+        });
     });
 
     /**

@@ -60,11 +60,15 @@ type PosterItemLayout = {
 const CaptionZoneBase = 23;
 
 /**
- * Where the caption text starts inside {@link CaptionZoneBase}, from the poster's bottom edge.
+ * Where the caption text starts inside {@link CaptionZoneBase}, from the poster's bottom edge, when
+ * `captionBackgroundBitmapUri` resolves to a flat (non-9-patch) bitmap. DEVICE-MEASURED as zero at
+ * HD (`postergrid-margins-probe`, group P): the whole zone sits BELOW the text rather than being
+ * split around it.
  *
- * DEVICE-MEASURED as zero at both resolutions: the whole zone sits BELOW the text rather than being
- * split around it. Named rather than folded away because the zone is still 23 tall and the text still
- * sits inside it, so this is a measured placement, not an absence of one.
+ * That probe's fixture always overrode the background to a transparent, non-`.9.png` bitmap to keep
+ * its ink-detection clean — so it could not see what `postergrid-caption-offset-probe` measured next:
+ * with the DEFAULT background (a real 9-patch), a device insets the text by that bitmap's own
+ * content-margin instead of drawing it flush. See {@link resolveCaptionTextOffset}.
  */
 const CaptionTextOffset = 0;
 
@@ -693,6 +697,29 @@ export class PosterGrid extends ArrayGrid {
         return this.loadBitmap(this.defaultCaptionBackgroundUri);
     }
 
+    /**
+     * The below/above caption text's vertical offset from the top of its reserved zone.
+     *
+     * DEVICE-MEASURED (`postergrid-caption-offset-probe`, HD): a flat non-9-patch background (a
+     * transparent override, or none) reads {@link CaptionTextOffset} (0, text flush against the
+     * poster) — but the DEFAULT `captionBackgroundBitmapUri` resolves to a real `.9.png`, and a
+     * device insets the text by that bitmap's own content-margin instead, the same way
+     * `ArrayGrid.focusMargins()` already honors a focus bitmap's content-margin over a flat fallback.
+     * `caption_background.9.png` (`src/extensions/scenegraph/common/images/<res>/`) is calibrated so
+     * its `margins.top` matches this reading (11 HD) — a CUSTOM `captionBackgroundBitmapUri` that is
+     * itself a 9-patch is untested and simply inherited by this same mechanism.
+     *
+     * FHD (17) is INFERRED by the 1.5× scale other margins in this node use, not device-measured —
+     * see the caption-zone section of `.claude/docs/scenegraph-invariants.md`.
+     */
+    private resolveCaptionTextOffset(): number {
+        const background = this.getCaptionBackground();
+        if (!background?.ninePatch) {
+            return CaptionTextOffset;
+        }
+        return background.getPatchSizes()?.margins.top ?? CaptionTextOffset;
+    }
+
     shouldShowBackgroundForEmptyCaptions() {
         return Boolean(this.getValueJS("showBackgroundForEmptyCaptions"));
     }
@@ -967,11 +994,20 @@ export class PosterGrid extends ArrayGrid {
                 layout.posterRect.y = captionHeight;
             }
             layout.captionBackgroundRect = { x: 0, y: captionStart, width: columnWidth, height: captionHeight };
-            this.addCaptionRects(layout, captionStart, columnWidth, metrics, lineSpacing);
+            this.addCaptionRects(
+                layout,
+                captionStart,
+                columnWidth,
+                metrics,
+                lineSpacing,
+                this.resolveCaptionTextOffset()
+            );
         } else {
             // No zone is reserved for an on-poster caption (requiresCaptionZone() is false here), so
             // center/bottom on textHeight alone — NOT totalHeight, which adds CaptionZoneBase for the
-            // below/above zone that this branch never draws.
+            // below/above zone that this branch never draws. The background 9-patch's content-margin
+            // (below/above only, see resolveCaptionTextOffset) does not apply here either — an
+            // on-poster caption isn't inset from a zone edge, it's centered/aligned to the poster.
             let offset = 0;
             if (placement !== "top") {
                 offset =
@@ -979,7 +1015,7 @@ export class PosterGrid extends ArrayGrid {
                         ? Math.max(0, (posterHeight - metrics.textHeight) / 2)
                         : Math.max(0, posterHeight - metrics.textHeight);
             }
-            this.addCaptionRects(layout, offset, columnWidth, metrics, lineSpacing);
+            this.addCaptionRects(layout, offset, columnWidth, metrics, lineSpacing, 0);
             if (metrics.caption1Lines > 0 || metrics.caption2Lines > 0) {
                 const endY =
                     (layout.caption2Rect?.y ?? layout.caption1Rect?.y ?? offset) +
@@ -1000,11 +1036,10 @@ export class PosterGrid extends ArrayGrid {
         startY: number,
         columnWidth: number,
         metrics: CaptionMetrics,
-        lineSpacing: number
+        lineSpacing: number,
+        textOffset: number
     ) {
-        // Flush with the top of the zone computeCaptionMetrics reserved: the whole CaptionZoneBase
-        // sits BELOW the text, not split around it. See CaptionTextOffset.
-        const textStartY = startY + CaptionTextOffset;
+        const textStartY = startY + textOffset;
         if (metrics.caption1Lines > 0) {
             layout.caption1Rect = { x: 0, y: textStartY, width: columnWidth, height: metrics.caption1Height };
         }

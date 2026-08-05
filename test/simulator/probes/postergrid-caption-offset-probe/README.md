@@ -114,26 +114,71 @@ resolutions. In particular:
   block vs. two)? If not, the offset depends on block count the same way group P's T5 candidate
   would have, and a single constant cannot express it.
 
-## Engine-side baseline (already captured)
+## Engine-side baseline (post-fix)
 
-Both resolutions run clean under `brs-cli`: 0 warnings, rule row found, every column inked, all five
-pairs reading 0 — captured in `engine-trace-{hd,fhd}.txt` and `engine-shot-{hd,fhd}.png`. This is
-**not** evidence for any answer — it is the engine reproducing its own current constant
-(`CaptionTextOffset = 0`), which is circular by construction. Its purpose is to prove the fixture and
-decoder work, and to give the device screenshot something known-good to be compared against.
+Both resolutions run clean under `brs-cli`: 0 warnings, rule row found, every column inked —
+captured in `engine-trace-{hd,fhd}.txt` and `engine-shot-{hd,fhd}.png`. These now reflect the FIX
+(below), not the pre-fix `CaptionTextOffset = 0` constant: they are the engine reproducing its own
+current logic, which is circular by construction for the numbers it derives from this probe's own
+device run. Their purpose is to prove the fixture, decoder, and fix agree with each other.
 
 | | engine HD | engine FHD |
 | --- | --- | --- |
 | control (bold, transparent) | 0 | 0 |
 | font weight (plain, transparent) | 0 | 0 |
-| default background (plain) | 0 | 0 |
+| default background (plain) | 11 | 17 |
 | plain, stacked | 0 | 0 |
-| default background (bold) | 0 | 0 |
+| default background (bold) | 11 | 17 |
 
-## Status: awaiting a device run
+## RESULT (device: HD screenshot, `device-shot-hd.png`)
 
-No device readings yet. Do **not** change `CaptionTextOffset`, `CaptionZoneBase`,
-`test/extensions/scenegraph/PosterGridExtent.test.js`, or the caption-zone section of
-`.claude/docs/scenegraph-invariants.md` until this probe has been run on real hardware and the five
-pairs above are filled in — the same way group P's own RESULT section was written only after its
-device run, not before.
+**The font-weight hypothesis was wrong; the default-background hypothesis was right.**
+
+| pair | device HD |
+| --- | --- |
+| control (bold, transparent) | 0 — matches group P |
+| font weight (plain, transparent) | 0 — font weight is not the cause |
+| default background (plain) | **11** |
+| plain, stacked | 0 — agrees with the font-weight pair |
+| default background (bold) | **12** (1px from the plain reading, within ink-detection noise — see below) |
+
+The control and font-weight pairs read exactly 0, so `CaptionTextOffset = 0` is confirmed correct
+for a flat/non-9-patch background — group P's own result stands unmodified. The default-background
+pairs are what diverges: `captionBackgroundBitmapUri` unset (the sample's condition, and the
+majority of real apps') resolves to `common:/images/<res>/caption_background.9.png`, a genuine
+`.9.png`. A device insets the caption text by that bitmap's own content-margin instead of drawing it
+flush — the same mechanism `ArrayGrid.focusMargins()` already uses for a focus bitmap's content
+margin over its flat marginX/marginY fallback (`src/extensions/scenegraph/nodes/ArrayGrid.ts`), just
+never wired up for caption placement.
+
+The bold/plain default-background readings (12 vs. 11) are one device pixel apart despite both fonts
+sharing the same declared point size — most likely ink-detection rounding (a bolder stroke's
+anti-aliased top edge crosses the red-dominance threshold up to a pixel earlier), not a real
+font-dependent term; a flat per-resolution offset does not need to model it separately.
+
+### Fixed as a result
+
+- `src/extensions/scenegraph/nodes/PosterGrid.ts`: added `resolveCaptionTextOffset()`, which reads
+  the resolved caption-background bitmap's 9-patch `margins.top` (via `RoBitmap.getPatchSizes()`)
+  when it is a valid 9-patch, falling back to the flat `CaptionTextOffset` (0) otherwise.
+  `buildItemLayout`'s below/above branch now calls it instead of using the constant directly; the
+  on-poster (top/center/bottom) branch is unaffected — a caption drawn over the poster has no zone
+  to be inset from.
+- `src/extensions/scenegraph/common/images/{HD,FHD}/caption_background.9.png`: recalibrated the
+  content-margin marker (a few 1px alpha-only border pixels, no visible change) so the DEFAULT
+  background's own `margins.top` reads 11 (HD) — matching this device run — instead of the asset's
+  previous, never-measured 7. FHD (17) is scaled 1.5×, the same inference other margins in this node
+  use, not separately device-measured.
+- Regression coverage: `test/extensions/scenegraph/PosterGridExtent.test.js`, "below: the text
+  offset follows the caption background's own 9-patch content-margin" — asserts 11/17 for the
+  default background and 0 for an explicit non-9-patch override, at both resolutions.
+
+### Still open
+
+- FHD's 17 is an inference, not a device reading — this probe has not been run on an FHD device.
+- A CUSTOM `captionBackgroundBitmapUri` that is itself a 9-patch inherits this same mechanism by
+  construction, but that path is untested — no probe case used one.
+- The 1px bold/plain spread is attributed to ink-detection noise rather than measured as a genuine
+  font-dependent term; a probe designed to separate the two (e.g. reading sub-pixel coverage instead
+  of a hard threshold) could settle it, but the practical impact of being off by ≤1px did not
+  justify one here.
