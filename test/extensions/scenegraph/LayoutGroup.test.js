@@ -1,8 +1,10 @@
+const fs = require("fs");
+const path = require("path");
 const scenegraph = require("../../../packages/scenegraph/lib/brs-sg.node.js");
 const core = require("../../../packages/node/bin/brs.node.js");
 
 const { SGNodeFactory, sgRoot } = scenegraph;
-const { BrsString, Float, RoArray } = core;
+const { BrsDevice, BrsString, Float, Int32, RoArray } = core;
 
 /** Minimal interpreter accepted by renderNode → renderChildren when draw2D is absent. */
 const fakeInterpreter = {};
@@ -71,5 +73,59 @@ describe("LayoutGroup re-imposes child alignment after an external translation c
         // Primary axis stays stacked at 0; the custom cross axis keeps the app's value.
         expect(child.getValueJS("translation")[0]).toBeCloseTo(0);
         expect(child.getValueJS("translation")[1]).toBeCloseTo(100);
+    });
+});
+
+/**
+ * Regression: a ScrollingLabel column whose text currently fits within maxWidth (no scrolling
+ * needed) must still reserve the FULL maxWidth for a sibling LayoutGroup to measure — matching the
+ * device-documented behavior that horizAlign positions text "relative to the maximum width of the
+ * label as specified by the maxWidth field," not the actual rendered text width. Jellyfin-roku's
+ * AlbumTrackList uses this exact shape (Track / Title(ScrollingText, maxWidth-only) / Length /
+ * Plays columns): the bug reported the Length/Plays columns rendering too close to Title because
+ * the engine measured the ScrollingLabel's short, non-scrolling text instead of its reserved box.
+ */
+describe("LayoutGroup positions siblings after a non-scrolling ScrollingLabel's full maxWidth", () => {
+    beforeAll(() => {
+        // ScrollingLabel resolves its font from the common: volume; mount it once.
+        const commonZip = fs.readFileSync(path.join(__dirname, "../../../packages/scenegraph/assets/common.zip"));
+        BrsDevice.fileSystem.setup(commonZip.buffer, new ArrayBuffer(1024 * 1024), new ArrayBuffer(1024 * 1024));
+    });
+
+    afterEach(() => {
+        sgRoot.setFocused();
+    });
+
+    test("a trailing fixed-width sibling is offset by maxWidth, not the shorter text width", () => {
+        const layout = SGNodeFactory.createNode("LayoutGroup");
+        layout.setValue("layoutDirection", new BrsString("horiz"));
+        layout.setValue("itemSpacings", vector([20]));
+
+        const track = SGNodeFactory.createNode("Rectangle");
+        track.setValue("width", new Float(80));
+        track.setValue("height", new Float(50));
+
+        const title = SGNodeFactory.createNode("ScrollingLabel");
+        title.setValue("font", new BrsString("font:SmallSystemFont"));
+        title.setValue("maxWidth", new Int32(1280));
+        // Short text: well under maxWidth, so no scrolling is needed — this is the case that
+        // previously under-measured the node to its actual (much narrower) text width.
+        title.setValue("text", new BrsString("Track Title"));
+
+        const length = SGNodeFactory.createNode("Rectangle");
+        length.setValue("width", new Float(120));
+        length.setValue("height", new Float(50));
+
+        layout.appendChildToParent(track);
+        layout.appendChildToParent(title);
+        layout.appendChildToParent(length);
+
+        // Measurement pass (no draw2D) so the layout converges to a fixed point.
+        layout.renderNode(fakeInterpreter, [0, 0], 0, 1);
+
+        // "Length" must sit after Track (80) + spacing (20) + the full reserved Title column
+        // (1280) + spacing (20), regardless of how short the actual title text is.
+        const expectedX = 80 + 20 + 1280 + 20;
+        expect(length.getValueJS("translation")[0]).toBeCloseTo(expectedX);
     });
 });
