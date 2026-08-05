@@ -248,10 +248,15 @@ export class ScrollingLabel extends Label {
         // during layout, the value derives purely from stored state, and setValue only notifies
         // on a genuine change — idempotent.
         this.setEllipsized(isEllipsized);
-        const measuredWidth = this.needsScrolling ? maxWidth : this.fullTextWidth;
+        // The measured/reported width is always the constrained (maxWidth) box, not the actual
+        // text width — device-documented: horizAlign positions text "relative to the maximum
+        // width of the label as specified by the maxWidth field," regardless of whether the
+        // current text is short enough that no scrolling is needed. Reporting the shorter
+        // fullTextWidth here (only clamping to maxWidth while actively scrolling) under-measures
+        // the node to a sibling LayoutGroup, which then positions later siblings too close.
         return {
             text: textToDraw,
-            width: measuredWidth,
+            width: constrainedWidth,
             height: textHeight,
             ellipsized: isEllipsized,
         };
