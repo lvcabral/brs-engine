@@ -7,7 +7,8 @@ import { RuntimeError, RuntimeErrorDetail } from "../../error/BrsError";
 
 export class RoRegex extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
-    // 'x' flag is not implemented yet.
+    // JS RegExp has no native equivalent to the "x" (extended/free-spacing) flag, so it's handled
+    // by preprocessing the pattern in stripFreeSpacing() rather than being forwarded to new RegExp().
     readonly supportedFlags = "gims";
     private jsRegex: RegExp;
 
@@ -26,7 +27,12 @@ export class RoRegex extends BrsComponent implements BrsValue {
                     : RuntimeErrorDetail.TypeMismatch;
             throw new RuntimeError(errorDetail);
         }
-        this.jsRegex = new RegExp(expression.getValue(), this.parseFlags(flags.getValue()));
+        const rawFlags = flags.getValue();
+        let pattern = expression.getValue();
+        if (rawFlags.includes("x")) {
+            pattern = RoRegex.stripFreeSpacing(pattern);
+        }
+        this.jsRegex = new RegExp(pattern, this.parseFlags(rawFlags));
 
         this.registerMethods({
             ifRegex: [this.isMatch, this.match, this.replace, this.replaceAll, this.split, this.matchAll],
@@ -68,6 +74,54 @@ export class RoRegex extends BrsComponent implements BrsValue {
      */
     private parseReplacementPattern(pattern: string): string {
         return pattern.replaceAll("\\", "$");
+    }
+
+    private static readonly whitespacePattern = /\s/;
+
+    /**
+     * Implements the "x" (extended/free-spacing) flag, which JS RegExp has no native flag for:
+     * strips unescaped whitespace and "#...newline" comments from the pattern, leaving whitespace
+     * and "#" untouched when escaped (e.g. "\ ", "\#") or inside a character class ("[...]").
+     *
+     * Unlike PCRE, JS RegExp has no "leading ']' is literal" convention for character classes, so
+     * an unescaped "]" always closes the class here, even immediately after "[" or "[^" - matching
+     * how `new RegExp()` will itself interpret the (stripped) pattern.
+     * @param pattern Original pattern, as passed to CreateObject
+     * @returns Pattern with free-spacing whitespace and comments removed
+     */
+    private static stripFreeSpacing(pattern: string): string {
+        let result = "";
+        let inClass = false;
+        for (let i = 0; i < pattern.length; i++) {
+            const char = pattern[i];
+            if (char === "\\" && i + 1 < pattern.length) {
+                result += char + pattern[i + 1];
+                i++;
+                continue;
+            }
+            if (inClass) {
+                result += char;
+                if (char === "]") {
+                    inClass = false;
+                }
+                continue;
+            }
+            if (char === "[") {
+                inClass = true;
+                result += char;
+                continue;
+            }
+            if (RoRegex.whitespacePattern.test(char)) {
+                continue;
+            }
+            if (char === "#") {
+                const newline = pattern.indexOf("\n", i);
+                i = newline === -1 ? pattern.length : newline;
+                continue;
+            }
+            result += char;
+        }
+        return result;
     }
 
     /** Returns whether the string matched the regex or not */

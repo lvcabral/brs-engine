@@ -389,6 +389,7 @@ describe("end to end brightscript functions", () => {
             "[ aby, by ]",
             " ]",
             "${variable}variable",
+            "555-1234 is match of free-spacing phone pattern: true",
         ]);
     });
 

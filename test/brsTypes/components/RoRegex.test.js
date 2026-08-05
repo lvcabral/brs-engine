@@ -189,4 +189,49 @@ describe("RoRegex", () => {
             expect(thirdElement.get(new Int32(0)).value).toBe("789");
         });
     });
+
+    describe("x flag (extended/free-spacing)", () => {
+        it("ignores whitespace and newlines in the pattern", () => {
+            let regx = new RoRegex(new BrsString("(\\d{3})  -  (\\d{4})\n"), new BrsString("x"));
+            let isMatch = regx.getMethod("ismatch");
+
+            let result = isMatch.call(interpreter, new BrsString("555-1234"));
+            expect(result).toBe(BrsBoolean.True);
+        });
+
+        it("strips '#' comments up to the next newline", () => {
+            let regx = new RoRegex(new BrsString("\\d+ # matches one or more digits\nfoo"), new BrsString("x"));
+            let isMatch = regx.getMethod("ismatch");
+
+            let result = isMatch.call(interpreter, new BrsString("123foo"));
+            expect(result).toBe(BrsBoolean.True);
+        });
+
+        it("keeps escaped whitespace and '#' as literal characters", () => {
+            let regx = new RoRegex(new BrsString("a\\ b\\#c"), new BrsString("x"));
+            let isMatch = regx.getMethod("ismatch");
+
+            let result = isMatch.call(interpreter, new BrsString("a b#c"));
+            expect(result).toBe(BrsBoolean.True);
+
+            let noMatch = isMatch.call(interpreter, new BrsString("ab#c"));
+            expect(noMatch).toBe(BrsBoolean.False);
+        });
+
+        it("keeps whitespace literal inside a character class", () => {
+            let regx = new RoRegex(new BrsString("[a b]+"), new BrsString("x"));
+            let isMatch = regx.getMethod("ismatch");
+
+            let result = isMatch.call(interpreter, new BrsString("a b"));
+            expect(result).toBe(BrsBoolean.True);
+        });
+
+        it("combines with other flags, e.g. case-insensitive", () => {
+            let regx = new RoRegex(new BrsString("hello   world"), new BrsString("xi"));
+            let isMatch = regx.getMethod("ismatch");
+
+            let result = isMatch.call(interpreter, new BrsString("HELLOWORLD"));
+            expect(result).toBe(BrsBoolean.True);
+        });
+    });
 });
