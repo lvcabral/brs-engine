@@ -91,7 +91,7 @@ consuming node (content trees aren't parented into the render tree); and LayoutG
 **parent's** rects between convergence passes (each inner pass unions into the parent — without
 the restore, a re-centered child leaves both positions in every ancestor's union). Regressions:
 `LayoutPruning.test.js` (including the two real-app scenarios) and the pruned-vs-`BRS_PRUNE_DISABLE=1`
-CLI comparison in `test/cli/cli.test.js`. `BRS_PRUNE_DISABLE=1` turns pruning off (field
+CLI comparison in `test/cli/cli-scenegraph.test.js`. `BRS_PRUNE_DISABLE=1` turns pruning off (field
 debugging). LayoutGroup converges to a fixed point on layout passes (`MAX_LAYOUT_PASSES` is a
 divergence backstop only) — regression: `LayoutConvergence.test.js`.
 
@@ -219,7 +219,7 @@ When `addFields` builds a custom component's fields, a `<field>` whose name alre
 
 `addNodeField` is a no-op when the field exists, so a redeclared system field keeps its `Field` instance;
 the XML default is applied by the subsequent `setValueSilent`. Regression:
-`duplicate-system-field-app` in `test/cli/cli.test.js`.
+`duplicate-system-field-app` in `test/cli/cli-scenegraph.test.js`.
 
 ## Per-node memory: lazy fields and lazy methods (large content trees)
 
@@ -320,7 +320,7 @@ capture the **native JS stack** mid-recursion (a temporary depth tripwire dumpin
    > signature shapes × `observeField` / `observeFieldScoped` / `Timer.fire` / a string-typed field on Roku
    > OS 15.2 (all four identical); the probe app and its device trace are in
    > `test/simulator/probes/observer-signature-probe/`. Regression: "Binds an observer callback's parameters the way a device
-   > does" in `test/cli/cli.test.js` (`observer-signature-app`).
+   > does" in `test/cli/cli-scenegraph.test.js` (`observer-signature-app`).
 
 2. **Re-entrant render — `Node.getBoundingRect`.** `localBoundingRect`/`boundingRect` refresh layout by
    rendering the whole tree from the root. If BrightScript queries a bounding rect *while a render is

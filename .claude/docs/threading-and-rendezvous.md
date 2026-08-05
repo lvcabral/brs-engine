@@ -18,7 +18,7 @@ worker messages must be realm-safe (`isTypeOf`, not `instanceof` — a VM-sandbo
 line-mode relay (`src/cli/keyboard.ts`); the worker-side debugger reads commands from the shared array
 (`BrsDevice.isWorkerThread`). REPL and `--pack` stay in-process (`executeFile`): packaging returns its
 result as a function value, and the REPL needs a same-isolate interpreter. Regression: `task-app` in
-`test/cli/cli.test.js` and `test/node/host.test.js`.
+`test/cli/cli-scenegraph.test.js` and `test/node/host.test.js`.
 
 Node-host invariants (all mirror the browser API):
 

@@ -19,8 +19,9 @@
             return
         end if
         slot.observeField("response", port)
+        ' Stays alive at least as long as main.brs's own polling budget (see its comment).
         m.top.seen = "waiting"
-        for i = 0 to 100
+        for i = 0 to 150
             ' Reading an observed field must not look like a change to it. Each read rendezvouses to
             ' the owner and the reply is applied locally; if that apply notifies, this loop sees a
             ' phantom "response" event carrying whatever the field held, and a dispatch loop driven
