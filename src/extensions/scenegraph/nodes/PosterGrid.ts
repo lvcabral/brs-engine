@@ -32,6 +32,7 @@ type CaptionMetrics = {
     caption2Lines: number;
     caption1Height: number;
     caption2Height: number;
+    textHeight: number;
     totalHeight: number;
 };
 
@@ -919,6 +920,7 @@ export class PosterGrid extends ArrayGrid {
             caption2Lines,
             caption1Height: height1,
             caption2Height: height2,
+            textHeight,
             totalHeight: textHeight + verticalMargins,
         };
     }
@@ -967,12 +969,15 @@ export class PosterGrid extends ArrayGrid {
             layout.captionBackgroundRect = { x: 0, y: captionStart, width: columnWidth, height: captionHeight };
             this.addCaptionRects(layout, captionStart, columnWidth, metrics, lineSpacing);
         } else {
+            // No zone is reserved for an on-poster caption (requiresCaptionZone() is false here), so
+            // center/bottom on textHeight alone — NOT totalHeight, which adds CaptionZoneBase for the
+            // below/above zone that this branch never draws.
             let offset = 0;
             if (placement !== "top") {
                 offset =
                     placement === "center"
-                        ? Math.max(0, (posterHeight - metrics.totalHeight) / 2)
-                        : Math.max(0, posterHeight - metrics.totalHeight);
+                        ? Math.max(0, (posterHeight - metrics.textHeight) / 2)
+                        : Math.max(0, posterHeight - metrics.textHeight);
             }
             this.addCaptionRects(layout, offset, columnWidth, metrics, lineSpacing);
             if (metrics.caption1Lines > 0 || metrics.caption2Lines > 0) {

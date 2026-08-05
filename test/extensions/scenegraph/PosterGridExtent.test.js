@@ -508,6 +508,35 @@ describe("PosterGrid reports the extent a device reports", () => {
                 expect(large2 - large1).toBe(large1 - heightOf(1) - 23);
             });
         });
+
+        describe("on-poster caption placement (top/center/bottom) excludes the below/above zone", () => {
+            // requiresCaptionZone() is false for top/center/bottom — the caption draws OVER the poster,
+            // so none of the 23px zone reserved for below/above should factor into where it sits. A grid
+            // tall enough that neither offset clamps to 0 isolates the centering math from the outset.
+            function layoutOf(placement) {
+                const grid = makeGrid(1, {
+                    numColumns: new Int32(1),
+                    numRows: new Int32(1),
+                    itemSpacing: vector([0, 0]),
+                    basePosterSize: vector([100, 300]),
+                    caption1NumLines: new Int32(1),
+                    captionVertAlignment: new BrsString(placement),
+                });
+                return grid.getLayoutForIndex(0);
+            }
+
+            test("bottom: the caption's own bottom edge reaches the poster's bottom edge", () => {
+                const layout = layoutOf("bottom");
+                expect(layout.caption1Rect.y + layout.caption1Rect.height).toBeCloseTo(300);
+            });
+
+            test("center: the gap above the caption equals the gap below it", () => {
+                const layout = layoutOf("center");
+                const topGap = layout.caption1Rect.y;
+                const bottomGap = 300 - layout.caption1Rect.y - layout.caption1Rect.height;
+                expect(topGap).toBeCloseTo(bottomGap);
+            });
+        });
     });
 
     /**
