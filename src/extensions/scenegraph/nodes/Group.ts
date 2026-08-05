@@ -142,8 +142,15 @@ export class Group extends Node {
         return (this.getValueJS("visible") as boolean) ?? true;
     }
 
-    protected addPoster(uri: string, translation: number[], width?: number, height?: number) {
+    protected addPoster(uri: string, translation: number[], width?: number, height?: number, noScaling?: boolean) {
         const poster = SGNodeFactory.createNode(SGNodeType.Poster) as Poster;
+        if (noScaling) {
+            // Must be set before the uri load below: Poster.loadUri() bakes bitmapWidth/bitmapHeight
+            // from the current noScaling state on its very first (synchronous) run, so setting this
+            // afterward leaves a stale, resolution-scaled bitmapWidth that disagrees with the
+            // unscaled size noScaling actually draws at.
+            poster.forceNoScaling();
+        }
         if (uri) {
             poster.setValue("uri", new BrsString(uri));
         }

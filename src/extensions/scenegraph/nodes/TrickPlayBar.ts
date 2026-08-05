@@ -50,8 +50,13 @@ export class TrickPlayBar extends Group {
         const barBmpUri = `common:/images/${this.resolution}/trickplaybar.9.png`;
         this.backBack = this.addPoster(barBmpUri, [0, 0], this.barW, this.barH);
         this.barProgress = this.addPoster(barBmpUri, [0, 0], 1, this.barH);
-        this.barTicker = this.addPoster(`common:/images/${this.resolution}/trickplayticker.png`, [0, 0]);
-        this.barTicker.noScaling = true;
+        this.barTicker = this.addPoster(
+            `common:/images/${this.resolution}/trickplayticker.png`,
+            [0, 0],
+            undefined,
+            undefined,
+            true
+        );
         this.position = this.addLabel("textColor", [0, this.barH * 2], 0, this.barH * 2);
         this.backBack.setValueSilent("opacity", new Float(0.3));
         this.barProgress.setValueSilent("visible", BrsBoolean.False);
