@@ -43,4 +43,8 @@ sub main()
 	capitalize=match[1]
 	variable=match[2]
 	print match[0]; match[1]; match[2]
+
+    ' support for the "x" (extended/free-spacing) flag
+    regex = createObject("roRegex", "(\d{3})  -  (\d{4}) # phone number" + chr(10), "x")
+    print "555-1234 is match of free-spacing phone pattern: " regex.ismatch("555-1234")
 end sub
