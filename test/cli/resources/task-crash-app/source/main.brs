@@ -5,7 +5,7 @@ sub Main()
     screen.setMessagePort(port)
     scene = screen.CreateScene("MainScene")
     screen.show()
-    for i = 0 to 100
+    for i = 0 to 250
         msg = wait(20, port)
     end for
     ' The crash must take the app down before the render thread ever gets here.
