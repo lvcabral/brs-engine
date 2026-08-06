@@ -328,6 +328,36 @@ frame can call it once per unloaded row, each call needs its own slot in `Group.
 `cachedLines` cache (see the section above) or they'd collide. Regression: "automatic per-row loading
 feedback" in `TimeGrid.test.js`.
 
+**The loading text also needs a background panel, or it can be invisible.** Every other row's own
+cell drawing gives `programTitleColor` (default opaque white) something to contrast against — a plain
+translucent-white panel (`0xffffff0f`) or `programBackgroundBitmapUri`. The per-row loading branch
+skips ALL normal cell drawing (that's the whole point — there's no cell to draw), so without also
+painting that same panel first, the text sits directly on whatever's behind the grid (often the
+scene's own background), and white-on-a-light-background is invisible. Regression: "the loading text
+gets a background panel for contrast" in `TimeGrid.test.js`.
+
+## `TimeGrid.programIndexAtTime` must check whether the candidate has already ENDED, not just started
+
+`programIndexAtTime(ch, time)` binary-searches `programStart[ch]` (ascending) for the LAST program
+starting at or before `time`, and is the shared primitive behind both the render loop's per-row
+scan-start optimization and every focus-targeting call (`handleUpDown`'s vertical move/wrap,
+`jumpToChannel`, `jumpToTime`, `jumpToNow`). Checking START alone is wrong whenever `time` falls in a
+genuine gap — an unfilled schedule gap (`fillProgramGaps=false`, the default) or a channel whose guide
+data simply hasn't loaded that far: the nearest earlier program may have already **ended** before
+`time`, in which case it will never actually be drawn there (it fails the row loop's own start/end
+visibility check), yet `focusCell` would still park focus on it.
+
+Symptom (reported): the focus indicator sometimes vanished after a vertical **wrap** — wrap jumps to a
+channel that can have a very different, sparser schedule than the one just left, making a gap at the
+anchor time much more likely than an adjacent-row move — and the same failure then persisted on
+subsequent moves (pressing left from the now-invisible "focused" program), since the engine's own
+notion of "current program" was already wrong. Fix: after the binary search, if the candidate's own
+`start + duration <= time` (already ended), advance to the NEXT program instead, when one exists.
+Provably safe for the render-loop's `time = viewStartTime` scan-start usage too: a candidate that has
+already ended by `viewStartTime` is by definition entirely off-screen to the left, which the loop's own
+`continue` would have skipped anyway — the fix just avoids landing there in the first place.
+Regression: `programIndexAtTime` tests in `TimeGrid.test.js`.
+
 ## Per-node memory: lazy fields and lazy methods (large content trees)
 
 A large EPG (e.g. the SGDEX **TimeGridView** sample) creates thousands of `ContentNode`s. Two

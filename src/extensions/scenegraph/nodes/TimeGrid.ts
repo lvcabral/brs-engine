@@ -375,12 +375,23 @@ export class TimeGrid extends ArrayGrid {
     }
 
     /**
-     * Index of the last program in `ch` starting at or before `time` (clamped to range).
-     * `programStart[ch]` is ascending, so this is a binary search — called per channel every
-     * render to skip straight to the first visible program (avoids scanning off-screen programs).
+     * Index of the program in `ch` active AT `time` — or, if `time` falls in a gap (no program
+     * covers it: an unfilled schedule gap, or data that simply hasn't loaded that far), the NEXT
+     * program after the gap, so callers get something actually visible/upcoming rather than a
+     * program that has already ended.
+     *
+     * `programStart[ch]` is ascending, so finding the candidate is a binary search on START time
+     * alone (called per channel every render to skip straight to the first visible program,
+     * avoiding a scan of off-screen programs) — but START alone is not enough to decide whether
+     * that candidate still covers `time`: it may have already ENDED before `time` (its own duration
+     * elapsed). Regression: focusing/highlighting a channel reached by vertical wrap (which jumps
+     * far across channels with very different schedules) used to land on such a stale, already-ended
+     * program — invisible in the render loop's own start/end visibility check, so the row drew no
+     * focus indicator at all until the user navigated again.
      */
     protected programIndexAtTime(ch: number, time: number): number {
         const starts = this.programStart[ch] ?? [];
+        const durations = this.programDuration[ch] ?? [];
         if (starts.length === 0 || starts[0] > time) {
             return 0;
         }
@@ -395,6 +406,9 @@ export class TimeGrid extends ArrayGrid {
             } else {
                 hi = mid - 1;
             }
+        }
+        if (idx + 1 < starts.length && starts[idx] + (durations[idx] ?? 0) <= time) {
+            return idx + 1;
         }
         return idx;
     }
@@ -976,12 +990,17 @@ export class TimeGrid extends ArrayGrid {
                 }
             }
             if (!anyProgramVisible && autoLoading) {
-                this.renderLoading(
-                    { x: this.gridX, y, width: this.gridWidth, height: cellH },
-                    opacity,
-                    draw2D,
-                    textIndex++
-                );
+                // Give the loading text the same backdrop a normal (unfocused) program cell gets —
+                // without it, the text sits directly on whatever's behind the grid (often the
+                // scene's own background), and programTitleColor's default white can be invisible
+                // against a light one. Every other row already has this panel from its own cells.
+                const loadingRect = { x: this.gridX, y, width: this.gridWidth, height: cellH };
+                if (programBgBmp) {
+                    this.drawImage(programBgBmp, { ...loadingRect }, 0, opacity, draw2D);
+                } else {
+                    draw2D?.doDrawRotatedRect(loadingRect, 0xffffff0f, rotation, center, opacity);
+                }
+                this.renderLoading(loadingRect, opacity, draw2D, textIndex++);
             }
             y += rowHeight;
         }

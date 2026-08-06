@@ -597,5 +597,107 @@ describe("TimeGrid node", () => {
             // per-row automatic detection above.
             expect(drawn).toContain("Loading Data…");
         });
+
+        test("the loading text gets a background panel for contrast (regression: invisible white-on-white text)", () => {
+            const grid = SGNodeFactory.createNode("TimeGrid");
+            const base = 1_000_000_000;
+            grid.setValue("contentStartTime", new Int32(base));
+            grid.setValue("content", buildContent([{ title: "NotLoaded", programs: [] }]));
+
+            const rects = [];
+            grid.renderNode(fakeInterpreter, [0, 0], 0, 1, {
+                doDrawRotatedText: () => {},
+                doDrawRotatedRect: (_rect, color) => rects.push(color >>> 0),
+                doDrawRotatedBitmap: () => {},
+                drawNinePatch: () => {},
+            });
+
+            // The same translucent panel a normal (unfocused, non-past) program cell gets must be
+            // drawn behind the loading text — otherwise programTitleColor's default white sits
+            // directly on whatever's behind the grid, with nothing guaranteeing contrast.
+            expect(rects).toContain(0xffffff0f);
+        });
+    });
+
+    /**
+     * Regression: `programIndexAtTime` picked the nearest program STARTING at-or-before a target
+     * time without checking whether that program had already ENDED by then (a real gap: unfilled
+     * schedule data, or a channel whose guide simply hasn't loaded that far). A stale, already-ended
+     * program falls entirely outside the render loop's own visible-window check (see the row loop's
+     * start/end skip in `renderContent`), so the row drew NO focus indicator at all — reported as
+     * "the focus indicator sometimes disappears" after a vertical wrap (which can jump to a channel
+     * with very different, sparser schedule data) and after pressing left from the first program in
+     * a row (same underlying cause: the "current" program the engine thought was focused had never
+     * actually been visible to begin with).
+     */
+    describe("programIndexAtTime skips an already-ended program in favor of the next one", () => {
+        test("a time inside a gap resolves to the NEXT program, not the stale earlier one", () => {
+            const grid = SGNodeFactory.createNode("TimeGrid");
+            const base = 1_000_000_000;
+            grid.setValue("contentStartTime", new Int32(base));
+            grid.setValue(
+                "content",
+                buildContent([
+                    {
+                        title: "Channel A",
+                        programs: [
+                            { title: "Early", start: base, duration: 1800 }, // ends at base+1800
+                            // gap from base+1800 to base+7200
+                            { title: "Later", start: base + 7200, duration: 1800 },
+                        ],
+                    },
+                ])
+            );
+
+            // Still within "Early"'s own span: resolves to it, unaffected by the fix.
+            expect(grid.programIndexAtTime(0, base + 900)).toBe(0);
+            // Inside the gap, after "Early" ended and before "Later" starts: must resolve to
+            // "Later" (index 1), not the stale, already-ended "Early" (index 0).
+            expect(grid.programIndexAtTime(0, base + 3600)).toBe(1);
+            // Past the LAST program's end with nothing further loaded: falls back to the last
+            // index — there is nothing better to return.
+            expect(grid.programIndexAtTime(0, base + 100000)).toBe(1);
+        });
+
+        test("wrapping into a channel whose anchor-time program has already ended still shows a focus indicator", () => {
+            const grid = SGNodeFactory.createNode("TimeGrid");
+            const base = 1_000_000_000;
+            grid.setValue("contentStartTime", new Int32(base));
+            grid.setValue("duration", new Float(3600)); // 1-hour visible window: [base, base+3600)
+            grid.setValue(
+                "content",
+                buildContent([
+                    { title: "Channel A", programs: [{ title: "A1", start: base, duration: 3600 }] },
+                    {
+                        title: "Channel B",
+                        programs: [
+                            // Long since ended by the anchor time (base) — the stale candidate.
+                            { title: "Old Show", start: base - 7200, duration: 1800 },
+                            // Starts within the visible window — must be the one that gets focus.
+                            { title: "Later Show", start: base + 1800, duration: 1800 },
+                        ],
+                    },
+                ])
+            );
+            sgRoot.setFocused(grid);
+
+            // Wrap up from channel 0 (only 2 channels) lands on channel 1, anchored at `base`
+            // (channel 0's focused program "A1" starts at base) — a gap in channel 1's schedule.
+            grid.handleKey("up", true);
+            expect(grid.getValueJS("channelFocused")).toBe(1);
+            expect(grid.getValueJS("programFocused")).toBe(1); // "Later Show", not "Old Show"
+
+            const rects = [];
+            grid.renderNode(fakeInterpreter, [0, 0], 0, 1, {
+                doDrawRotatedText: () => {},
+                doDrawRotatedRect: (_rect, color) => rects.push(color >>> 0),
+                doDrawRotatedBitmap: () => {},
+                drawNinePatch: () => {},
+            });
+
+            // The solid white focus highlight (a focused cell while the grid itself has focus) must
+            // actually be drawn — it wasn't, when focus silently landed on the invisible stale cell.
+            expect(rects).toContain(0xffffffff);
+        });
     });
 });
