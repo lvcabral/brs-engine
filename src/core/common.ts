@@ -744,12 +744,12 @@ export enum DataType {
     MUHS, // Memory Used Heap Size
     MHSL, // Memory Heap Size Limit
     MBWD, // Measured Bandwidth
-    RDZ, // Rendezvous Logging (0/1)
     CEC, // Consumer Electronics Control
     HDMI, // HDMI Status
     RHB, // Render Thread Heartbeat (statement counter, render thread writes only)
     RDN, // Rendezvous sequence Number (monotonic id shared by all threads for logRendezvous tracing)
     RDT, // Rendezvous Data Tracking (0/1), ECP `sgrendezvous` track/untrack state
+    RDZ, // Rendezvous Logging (0/1), enable/disable logRendezvous console trace
     // Key Buffer starts here: KeyBufferSize * KeyArraySpots
     RID, // Remote Id
     KEY, // Key Code
