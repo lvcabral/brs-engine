@@ -221,6 +221,33 @@ When `addFields` builds a custom component's fields, a `<field>` whose name alre
 the XML default is applied by the subsequent `setValueSilent`. Regression:
 `duplicate-system-field-app` in `test/cli/cli-scenegraph.test.js`.
 
+## `TimeGrid.channelParseCache` must invalidate on in-place program mutation, not just count
+
+`TimeGrid` doesn't cache item *components* like `ArrayGrid`/`RowList` do — it draws its program cells
+directly — but it does cache each channel's **parsed** program model:
+`TimeGrid.channelParseCache` (a `WeakMap<ContentNode, ChannelParse>`) holds the flattened
+`programs`/`starts`/`durations`/`gaps` derived from a channel's program children, and the invalidation
+gate used to be the channel's program **count** alone. That misses two real in-place mutations that
+keep the count unchanged:
+
+- **`replaceChildAtIndex`** swapping a program for a different object at the same position —
+  `ContentNode.makeDirty` only dirties the **container** (the channel), never the replaced child, so a
+  count-only gate kept serving the stale (removed) program object — its title (read live from the
+  object at draw time) stayed wrong indefinitely, with no self-correcting path (unlike `ArrayGrid`'s
+  item cache, nothing here is refreshed by a focus move).
+- **A field edit on an existing program object** (e.g. a schedule correction to
+  `PLAYSTART`/`PLAYDURATION`) — count unchanged again, and the edit sets the **program's own**
+  `.changed`, not the channel's or the root's.
+
+Fix: `channelParseStale` also compares the channel's current program children against the cached
+`rawPrograms` by **object identity per index** and by each program's own `.changed` flag, re-parsing
+only that channel when either differs — preserving the cache's whole reason to exist (avoiding O(N²)
+reparsing while incrementally loading N channels; see the comment on `channelParseCache`'s
+declaration). Consumed programs have their `.changed` reset to `false` at the end of `parseChannel` —
+a `ContentNode`'s `.changed` is otherwise never cleared, since content trees aren't part of the render
+tree's per-frame reset (`Node.renderChildren`). Regression: the "channel parse cache invalidates on
+in-place program mutation" tests in `TimeGrid.test.js`.
+
 ## Per-node memory: lazy fields and lazy methods (large content trees)
 
 A large EPG (e.g. the SGDEX **TimeGridView** sample) creates thousands of `ContentNode`s. Two

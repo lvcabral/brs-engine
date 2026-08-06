@@ -266,4 +266,72 @@ describe("TimeGrid node", () => {
         grid.setValue("content", content);
         expect(() => grid.renderNode(fakeInterpreter, [0, 0], 0, 1)).not.toThrow();
     });
+
+    /**
+     * Regression: channelParseCache's invalidation gate used to be the channel's child COUNT
+     * alone. That misses in-place mutations that keep the count the same — the same species of
+     * bug as the ArrayGrid/RowList item-component cache fixed in ArrayGridItemReorder.test.js, but
+     * a different mechanism (a per-channel parse cache, not a position-keyed item-component cache).
+     */
+    describe("channel parse cache invalidates on in-place program mutation, not just count", () => {
+        test("a program replaced in place (same count) is not left stale", () => {
+            const grid = SGNodeFactory.createNode("TimeGrid");
+            const base = 1_000_000_000;
+            grid.setValue("contentStartTime", new Int32(base));
+            const content = buildContent([
+                {
+                    title: "Channel A",
+                    programs: [
+                        { title: "A1", start: base, duration: 1800 },
+                        { title: "A2", start: base + 1800, duration: 1800 },
+                    ],
+                },
+            ]);
+            grid.setValue("content", content);
+            expect(grid.programs[0][1].getValueJS("title")).toBe("A2");
+
+            // App swaps program index 1 for a different object at the same position (same channel
+            // child count) — mirrors an EPG data source replacing a program entry outright.
+            // ContentNode.makeDirty only dirties the CONTAINER (the channel), never the replaced
+            // child, so a count-only cache gate would keep serving the stale A2 object.
+            const channelA = content.getNodeChildren()[0];
+            const replacement = SGNodeFactory.createNode("ContentNode");
+            replacement.setValue("title", new BrsString("A2-updated"));
+            replacement.setValue("playStart", new Int32(base + 1800));
+            replacement.setValue("playDuration", new Int32(1800));
+            channelA.replaceChildAtIndex(replacement, 1);
+
+            grid.refreshContent();
+
+            expect(grid.programs[0][1].getValueJS("title")).toBe("A2-updated");
+        });
+
+        test("a program's PLAYDURATION edited in place (same count) updates the cached cell width", () => {
+            const grid = SGNodeFactory.createNode("TimeGrid");
+            const base = 1_000_000_000;
+            grid.setValue("contentStartTime", new Int32(base));
+            const content = buildContent([
+                {
+                    title: "Channel A",
+                    programs: [
+                        { title: "A1", start: base, duration: 1800 },
+                        { title: "A2", start: base + 1800, duration: 1800 },
+                    ],
+                },
+            ]);
+            grid.setValue("content", content);
+            expect(grid.programDuration[0][0]).toBe(1800);
+
+            // App corrects A1's schedule in place (e.g. a live event running long) — same object,
+            // same channel child count. ContentNode marks the PROGRAM's own `.changed`, not the
+            // channel's, so a count-only cache gate never sees this edit.
+            const channelA = content.getNodeChildren()[0];
+            const a1 = channelA.getNodeChildren()[0];
+            a1.setValue("playDuration", new Int32(3600));
+
+            grid.refreshContent();
+
+            expect(grid.programDuration[0][0]).toBe(3600);
+        });
+    });
 });

@@ -21,7 +21,8 @@ import { brsValueOf, jsValueOf } from "../factory/Serializer";
 
 /** Cached parse of one channel's programs (see TimeGrid.channelParseCache). */
 interface ChannelParse {
-    childCount: number;
+    /** The raw (pre-gap-fill) program children this parse was built from — identity + staleness. */
+    rawPrograms: ContentNode[];
     programs: ContentNode[];
     starts: number[];
     durations: number[];
@@ -134,10 +135,10 @@ export class TimeGrid extends ArrayGrid {
     protected readonly gapFlags: boolean[][] = [];
     protected readonly programIndexByChannel: number[] = [];
     // Cache of each channel's parsed program model, keyed by the channel ContentNode. refreshContent
-    // reuses a channel's parse while its child count is unchanged, so re-parsing (and the gap-node
-    // allocation it does) only happens for channels that actually gained programs — not the whole
-    // tree on every content change. Without this, incrementally loading N channels re-parses the
-    // entire tree N times (O(N²) allocation), which OOMs V8 on large EPG data.
+    // reuses a channel's parse while it is still fresh (see channelParseStale), so re-parsing (and
+    // the gap-node allocation it does) only happens for channels that actually changed — not the
+    // whole tree on every content change. Without this, incrementally loading N channels re-parses
+    // the entire tree N times (O(N²) allocation), which OOMs V8 on large EPG data.
     private readonly channelParseCache = new WeakMap<ContentNode, ChannelParse>();
 
     // Navigation / time-domain state
@@ -259,12 +260,12 @@ export class TimeGrid extends ArrayGrid {
         const noDataText = (this.getValueJS("channelNoDataText") as string) ?? "No Data Available";
         const channelNodes = this.getContentChildren(content);
         for (const [ch, channelNode] of channelNodes.entries()) {
-            const childCount = channelNode.getNodeChildren().length;
-            // Reuse the cached parse while the channel's child count is unchanged — only re-parse
-            // (and re-allocate its gap nodes) a channel that actually gained/lost programs.
+            const programNodes = this.getContentChildren(channelNode);
+            // Reuse the cached parse unless it's stale — only re-parse (and re-allocate gap nodes)
+            // a channel that actually changed (see channelParseStale for what "changed" covers).
             let parse = this.channelParseCache.get(channelNode);
-            if (parse?.childCount !== childCount) {
-                parse = this.parseChannel(channelNode, childCount, fillGaps, noDataText);
+            if (!parse || this.channelParseStale(parse, programNodes)) {
+                parse = this.parseChannel(programNodes, fillGaps, noDataText);
                 this.channelParseCache.set(channelNode, parse);
             }
             this.content.push(channelNode);
@@ -288,14 +289,24 @@ export class TimeGrid extends ArrayGrid {
         }
     }
 
+    /**
+     * Whether a cached channel parse no longer matches the channel's CURRENT program children.
+     * Child COUNT alone (the old gate) misses two real in-place mutations that keep the count the
+     * same: `replaceChildAtIndex` swapping a program for a different object at the same position
+     * (ContentNode.makeDirty only dirties the CONTAINER, i.e. the channel, not this — same trap as
+     * the ArrayGrid/RowList item-component cache, see ArrayGridItemReorder.test.js), and a field
+     * edit on an existing program object (e.g. a schedule correction to PLAYSTART/PLAYDURATION),
+     * which sets the PROGRAM's own `.changed`, not the channel's or the root's `childCount`.
+     */
+    private channelParseStale(parse: ChannelParse, programNodes: ContentNode[]): boolean {
+        if (parse.rawPrograms.length !== programNodes.length) {
+            return true;
+        }
+        return programNodes.some((node, i) => node !== parse.rawPrograms[i] || node.changed);
+    }
+
     /** Parses one channel's program children into the cached model (with optional gap fill). */
-    private parseChannel(
-        channelNode: ContentNode,
-        childCount: number,
-        fillGaps: boolean,
-        noDataText: string
-    ): ChannelParse {
-        const programNodes = this.getContentChildren(channelNode);
+    private parseChannel(programNodes: ContentNode[], fillGaps: boolean, noDataText: string): ChannelParse {
         const programs: ContentNode[] = [];
         const starts: number[] = [];
         const durations: number[] = [];
@@ -317,8 +328,12 @@ export class TimeGrid extends ArrayGrid {
             durations.push(dur);
             gaps.push(false);
             prevEnd = start + dur;
+            // Consumed into this parse — reset so a later real edit is detected again (this flag is
+            // never otherwise cleared for a ContentNode, since content trees aren't part of the
+            // render tree's generic per-frame `changed` reset).
+            program.changed = false;
         }
-        return { childCount, programs, starts, durations, gaps };
+        return { rawPrograms: programNodes, programs, starts, durations, gaps };
     }
 
     /** Reads a unix-epoch (seconds) field, tolerating either an integer or roDateTime value. */
