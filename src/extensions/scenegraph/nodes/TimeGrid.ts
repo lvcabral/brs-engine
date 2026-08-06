@@ -303,22 +303,17 @@ export class TimeGrid extends ArrayGrid {
             const cst = (this.getValueJS("contentStartTime") as number) ?? 0;
             this.viewStartTime = cst > 0 ? cst : this.nowEpoch();
         }
-        // If focus is still on the placeholder (content was assigned while the focused channel was
-        // empty), now that its programs have loaded, snap focus to the program at the view time.
-        // This scrolls the grid to the focused program and makes its highlight visible, instead of
-        // leaving focus on program 0 (which usually starts before the visible window).
-        if (this.initialFocusPending && (this.programs[this.channelIndex]?.length ?? 0) > 0) {
-            this.focusCell(this.channelIndex, this.programIndexAtTime(this.channelIndex, this.viewStartTime));
-        } else if (
-            this.focusedChannelPendingIndex === this.channelIndex &&
-            !this.isChannelPlaceholder(this.channelIndex)
-        ) {
-            // The channel the grid is CURRENTLY looking at just had its placeholder replaced by
-            // real data (a lazy per-row load completing while the user stayed on this row, rather
-            // than navigating away and back). programIndexByChannel is still pinned to whatever the
-            // placeholder's own single index used — re-snap onto the program actually covering the
-            // current view, exactly like the initial-focus case above, just not gated on "ever had
-            // any focus at all".
+        // Snap focus to the program at the view time whenever it's still pinned to a placeholder
+        // now that real content exists — either content was assigned while the focused channel was
+        // empty (initialFocusPending), or the channel the grid is CURRENTLY looking at just had ITS
+        // OWN placeholder replaced by real data (focusedChannelPendingIndex: a lazy per-row load
+        // completing while the user stayed on this row, rather than navigating away and back).
+        // Without this, programIndexByChannel stays pinned to whatever index the placeholder used,
+        // which after real data arrives may point at nothing visible, or simply the wrong program.
+        // This also scrolls the grid to the focused program, making its highlight visible.
+        const placeholderResolved =
+            this.focusedChannelPendingIndex === this.channelIndex && !this.isChannelPlaceholder(this.channelIndex);
+        if ((this.initialFocusPending && (this.programs[this.channelIndex]?.length ?? 0) > 0) || placeholderResolved) {
             this.focusCell(this.channelIndex, this.programIndexAtTime(this.channelIndex, this.viewStartTime));
         }
     }
